@@ -37,6 +37,7 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.node.Node;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Random;
 
 import static org.elasticsearch.client.Requests.createIndexRequest;
@@ -59,8 +60,10 @@ public class TermsFacetSearchBenchmark {
     static int QUERY_WARMUP = 20;
     static int QUERY_COUNT = 200;
     static int NUMBER_OF_TERMS = 200;
-    static int NUMBER_OF_MULTI_VALUE_TERMS = 10;
+    static int MIN_NUMBER_OF_MULTI_VALUE_TERMS = 10;
+    static int MAX_NUMBER_OF_MULTI_VALUE_TERMS = 10;
     static int STRING_TERM_SIZE = 5;
+    static Float ACCEPTABLE_OVERHEAD_RATIO = null; // If set will override defaults
 
     static Client client;
 
@@ -72,6 +75,8 @@ public class TermsFacetSearchBenchmark {
                 .put("gateway.type", "local")
                 .put(SETTING_NUMBER_OF_SHARDS, 1)
                 .put(SETTING_NUMBER_OF_REPLICAS, 0)
+                .put("cluster.name", String.format(Locale.US, "terms_no_%d_min_%d_max_%d",
+                        NUMBER_OF_TERMS, MIN_NUMBER_OF_MULTI_VALUE_TERMS, MAX_NUMBER_OF_MULTI_VALUE_TERMS))
                 .build();
 
         Node[] nodes = new Node[1];
@@ -113,13 +118,15 @@ public class TermsFacetSearchBenchmark {
                     builder.field("l_value", lValues[counter % lValues.length]);
 
                     builder.startArray("sm_value");
-                    for (int k = 0; k < NUMBER_OF_MULTI_VALUE_TERMS; k++) {
+                    int termNo = MIN_NUMBER_OF_MULTI_VALUE_TERMS;
+                    termNo += j % (1 + MAX_NUMBER_OF_MULTI_VALUE_TERMS - MIN_NUMBER_OF_MULTI_VALUE_TERMS);
+                    for (int k = 0; k < termNo; k++) {
                         builder.value(sValues[ThreadLocalRandom.current().nextInt(sValues.length)]);
                     }
                     builder.endArray();
 
                     builder.startArray("lm_value");
-                    for (int k = 0; k < NUMBER_OF_MULTI_VALUE_TERMS; k++) {
+                    for (int k = 0; k < termNo; k++) {
                         builder.value(lValues[ThreadLocalRandom.current().nextInt(sValues.length)]);
                     }
                     builder.endArray();
@@ -149,6 +156,18 @@ public class TermsFacetSearchBenchmark {
         client.admin().indices().prepareRefresh().execute().actionGet();
         COUNT = client.prepareCount().setQuery(matchAllQuery()).execute().actionGet().getCount();
         System.out.println("--> Number of docs in index: " + COUNT);
+
+
+        if (ACCEPTABLE_OVERHEAD_RATIO != null) {
+            System.out.println("--> Setting acceptable_overhead_ratio to: " + ACCEPTABLE_OVERHEAD_RATIO);
+            client.admin().indices().preparePutMapping("test").setType("type1").setSource(jsonBuilder().startObject().startObject("type1").startObject("properties")
+                    .startObject("s_value").field("type", "string").startObject("fielddata").field("acceptable_overhead_ratio", ACCEPTABLE_OVERHEAD_RATIO).endObject().endObject()
+                    .startObject("sm_value").field("type", "string").startObject("fielddata").field("acceptable_overhead_ratio", ACCEPTABLE_OVERHEAD_RATIO).endObject().endObject()
+                    .startObject("l_value").field("type", "long").startObject("fielddata").field("acceptable_overhead_ratio", ACCEPTABLE_OVERHEAD_RATIO).endObject().endObject()
+                    .startObject("lm_value").field("type", "long").startObject("fielddata").field("acceptable_overhead_ratio", ACCEPTABLE_OVERHEAD_RATIO).endObject().endObject()
+                    .endObject().endObject().endObject()
+            ).get();
+        }
 
 
         List<StatsResult> stats = Lists.newArrayList();
