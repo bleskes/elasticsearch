@@ -24,6 +24,7 @@ import org.apache.lucene.util.LongsRef;
 import org.apache.lucene.util.RamUsageEstimator;
 import org.apache.lucene.util.packed.MonotonicAppendingLongBuffer;
 import org.apache.lucene.util.packed.PackedInts;
+import org.apache.lucene.util.packed.AppendingDirect8LongBuffer;
 import org.apache.lucene.util.packed.XAppendingPackedLongBuffer;
 import org.elasticsearch.index.fielddata.ordinals.Ordinals.Docs.Iter;
 
@@ -38,14 +39,14 @@ public class MultiOrdinals implements Ordinals {
     private final boolean multiValued;
     private final long numOrds;
     private final MonotonicAppendingLongBuffer endOffsets;
-    private final XAppendingPackedLongBuffer ords;
+    private final AppendingDirect8LongBuffer ords;
     private final int bulkThreshold;
 
     public MultiOrdinals(OrdinalsBuilder builder, float acceptableOverheadRatio) {
         multiValued = builder.getNumMultiValuesDocs() > 0;
         numOrds = builder.getNumOrds();
         endOffsets = new MonotonicAppendingLongBuffer();
-        ords = new XAppendingPackedLongBuffer(OFFSET_INIT_PAGE_COUNT, OFFSETS_PAGE_SIZE, acceptableOverheadRatio);
+        ords = new AppendingDirect8LongBuffer(OFFSET_INIT_PAGE_COUNT, OFFSETS_PAGE_SIZE, acceptableOverheadRatio);
 
         long lastEndOffset = 0;
         for (int i = 0; i < builder.maxDoc(); ++i) {
@@ -57,6 +58,8 @@ public class MultiOrdinals implements Ordinals {
             }
             lastEndOffset = endOffset;
         }
+
+        ords.freeze();
 
         int expectedBits = PackedInts.fastestFormatAndBits(OFFSETS_PAGE_SIZE, PackedInts.bitsRequired(numOrds), acceptableOverheadRatio).bitsPerValue;
         if (expectedBits % 8 == 0) {
@@ -115,10 +118,9 @@ public class MultiOrdinals implements Ordinals {
 
         private final MultiOrdinals ordinals;
         private final MonotonicAppendingLongBuffer endOffsets;
-        private final XAppendingPackedLongBuffer ords;
+        private final AppendingDirect8LongBuffer ords;
         private final LongsRef longsScratch;
-        private final MultiIterBulkRead iterBulkRead;
-        private final MultiIterSingleRead iterSingleRead;
+        private final AppendingDirect8LongBuffer.Iter iter;
         private final long bulkThreshold;
 
         MultiDocs(MultiOrdinals ordinals, long bulkThreshold) {
@@ -127,8 +129,7 @@ public class MultiOrdinals implements Ordinals {
             this.ords = ordinals.ords;
             this.longsScratch = new LongsRef(16);
             this.bulkThreshold = bulkThreshold;
-            this.iterBulkRead = new MultiIterBulkRead(ords);
-            this.iterSingleRead = new MultiIterSingleRead(ords);
+            this.iter = new AppendingDirect8LongBuffer.Iter(ords);
         }
 
         @Override
@@ -187,14 +188,16 @@ public class MultiOrdinals implements Ordinals {
         public Iter getIter(int docId) {
             final long startOffset = docId > 0 ? endOffsets.get(docId - 1) : 0;
             final long endOffset = endOffsets.get(docId);
-            // only use bulk is faster for 4 items and more, because it's slower for small reads.
-            if (endOffset - startOffset > bulkThreshold) {
-                iterBulkRead.reset(startOffset, endOffset);
-                return iterBulkRead;
-            } else {
-                iterSingleRead.reset(startOffset, endOffset);
-                return iterSingleRead;
-            }
+            iter.reset(startOffset, endOffset);
+            return iter;
+//            // only use bulk is faster for 4 items and more, because it's slower for small reads.
+//            if (endOffset - startOffset > bulkThreshold) {
+//                iterBulkRead.reset(startOffset, endOffset);
+//                return iterBulkRead;
+//            } else {
+//                iterSingleRead.reset(startOffset, endOffset);
+//                return iterSingleRead;
+//            }
         }
 
     }
