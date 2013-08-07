@@ -18,10 +18,6 @@ package org.apache.lucene.util.packed;
  */
 
 
-import org.elasticsearch.index.fielddata.ordinals.Ordinals;
-
-import java.util.Arrays;
-
 /**
  * Utility class to buffer a list of signed longs in memory. This class only
  * supports appending and is optimized for the case where values are close to
@@ -96,49 +92,4 @@ public final class AppendingDirect8LongBuffer extends XAbstractAppendingLongBuff
         values[valuesOff] = mutable;
     }
 
-
-    static public class Iter implements Ordinals.Docs.Iter {
-
-        final AppendingDirect8LongBuffer ordinals;
-        int startBlock, endBlock;
-        int currentOffset, currentEndOffset, endOffsetInEndBlock;
-        Direct8 currentBlock;
-
-        public Iter(AppendingDirect8LongBuffer ordinals) {
-            this.ordinals = ordinals;
-        }
-
-        public void reset(long startOffset, long endOffset) {
-            startBlock = (int) (startOffset >> ordinals.pageShift);
-            endBlock = (int) (endOffset >> ordinals.pageShift);
-            currentOffset = (int) (startOffset & ordinals.pageMask);
-            endOffsetInEndBlock = (int) (endOffset & ordinals.pageMask);
-            currentBlock = (Direct8) ordinals.values[startBlock];
-            if (startBlock == endBlock) {
-                currentEndOffset = endOffsetInEndBlock;
-            } else {
-                currentEndOffset = currentBlock.size();
-            }
-        }
-
-
-        @Override
-        public long next() {
-            if (currentOffset >= currentEndOffset) {
-                if (startBlock == endBlock) {
-                    return 0L; // done
-                }
-                startBlock++;
-                currentBlock = (Direct8) ordinals.values[startBlock];
-                if (startBlock == endBlock) {
-                    currentEndOffset = endOffsetInEndBlock;
-                } else {
-                    currentEndOffset = currentBlock.size();
-                }
-                currentOffset = 0;
-            }
-            return 1L + currentBlock.get(currentOffset++);
-        }
-
-    }
 }

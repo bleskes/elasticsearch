@@ -22,9 +22,9 @@ package org.elasticsearch.index.fielddata.ordinals;
 import org.apache.lucene.util.ArrayUtil;
 import org.apache.lucene.util.LongsRef;
 import org.apache.lucene.util.RamUsageEstimator;
+import org.apache.lucene.util.packed.AppendingDirect8LongBuffer;
 import org.apache.lucene.util.packed.MonotonicAppendingLongBuffer;
 import org.apache.lucene.util.packed.PackedInts;
-import org.apache.lucene.util.packed.AppendingDirect8LongBuffer;
 import org.apache.lucene.util.packed.XAppendingPackedLongBuffer;
 import org.elasticsearch.index.fielddata.ordinals.Ordinals.Docs.Iter;
 
@@ -120,7 +120,7 @@ public class MultiOrdinals implements Ordinals {
         private final MonotonicAppendingLongBuffer endOffsets;
         private final AppendingDirect8LongBuffer ords;
         private final LongsRef longsScratch;
-        private final AppendingDirect8LongBuffer.Iter iter;
+        private final XAppendingPackedLongBuffer.Iter iter;
         private final long bulkThreshold;
 
         MultiDocs(MultiOrdinals ordinals, long bulkThreshold) {
@@ -129,7 +129,7 @@ public class MultiOrdinals implements Ordinals {
             this.ords = ordinals.ords;
             this.longsScratch = new LongsRef(16);
             this.bulkThreshold = bulkThreshold;
-            this.iter = new AppendingDirect8LongBuffer.Iter(ords);
+            this.iter = new XAppendingPackedLongBuffer.Iter(ords);
         }
 
         @Override

@@ -21,6 +21,7 @@ import org.apache.lucene.util.ArrayUtil;
 import org.apache.lucene.util.RamUsageEstimator;
 import org.apache.lucene.util.Version;
 import org.elasticsearch.common.lucene.Lucene;
+import org.elasticsearch.index.fielddata.ordinals.Ordinals;
 
 import java.util.Arrays;
 
@@ -136,6 +137,51 @@ abstract class XAbstractAppendingLongBuffer {
 
     abstract int get(int block, int element, long[] arr, int off, int len);
 
+
+    static public class Iter implements Ordinals.Docs.Iter {
+
+        final XAbstractAppendingLongBuffer ordinals;
+        int startBlock, endBlock;
+        int currentOffset, currentEndOffset, endOffsetInEndBlock;
+        PackedInts.Reader currentBlock;
+
+        public Iter(XAbstractAppendingLongBuffer ordinals) {
+            this.ordinals = ordinals;
+        }
+
+        public void reset(long startOffset, long endOffset) {
+            startBlock = (int) (startOffset >> ordinals.pageShift);
+            endBlock = (int) (endOffset >> ordinals.pageShift);
+            currentOffset = (int) (startOffset & ordinals.pageMask);
+            endOffsetInEndBlock = (int) (endOffset & ordinals.pageMask);
+            currentBlock = ordinals.values[startBlock];
+            if (startBlock == endBlock) {
+                currentEndOffset = endOffsetInEndBlock;
+            } else {
+                currentEndOffset = currentBlock.size();
+            }
+        }
+
+
+        @Override
+        public long next() {
+            if (currentOffset >= currentEndOffset) {
+                if (startBlock == endBlock) {
+                    return 0L; // done
+                }
+                startBlock++;
+                currentBlock = ordinals.values[startBlock];
+                if (startBlock == endBlock) {
+                    currentEndOffset = endOffsetInEndBlock;
+                } else {
+                    currentEndOffset = currentBlock.size();
+                }
+                currentOffset = 0;
+            }
+            return 1L + currentBlock.get(currentOffset++);
+        }
+
+    }
 
     /**
      * Return an iterator over the values of this buffer.
