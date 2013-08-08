@@ -19,16 +19,27 @@
 
 package org.elasticsearch.common.util;
 
-/** Abstraction of an array of integer values. */
+import org.elasticsearch.index.fielddata.ordinals.Ordinals;
+
+/**
+ * Abstraction of an array of integer values.
+ */
 public interface IntArray {
 
-    /** Get an element given its index. */
+    /**
+     * Get an element given its index.
+     */
     public abstract int get(long index);
 
-    /** Set a value at the given index. */
+    /**
+     * Set a value at the given index.
+     */
     public abstract void set(long index, int value);
 
-    /** Increment value at the given index by <code>inc</code> and return the value. */
+    /**
+     * Increment value at the given index by <code>inc</code> and return the value.
+     */
     public abstract int increment(long index, int inc);
 
+    void incrementByIter(Ordinals.Docs.Iter iter);
 }

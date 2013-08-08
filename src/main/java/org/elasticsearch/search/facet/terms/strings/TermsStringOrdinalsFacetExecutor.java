@@ -209,12 +209,12 @@ public class TermsStringOrdinalsFacetExecutor extends FacetExecutor {
 
         @Override
         public void collect(int doc) throws IOException {
-            Iter iter = ordinals.getIter(doc);
-            long ord = iter.next();
-            current.onOrdinal(doc, ord);
-            while ((ord = iter.next()) != 0) {
-                current.onOrdinal(doc, ord);
-            }
+            current.onOrdinals(doc, ordinals.getIter(doc));
+//            long ord = iter.next();
+//            current.onOrdinal(doc, ord);
+//            while ((ord = iter.next()) != 0) {
+//                current.onOrdinal(doc, ord);
+//            }
         }
 
         @Override
@@ -254,12 +254,17 @@ public class TermsStringOrdinalsFacetExecutor extends FacetExecutor {
             total++;
         }
 
+
         public boolean nextPosition() {
             if (++position >= maxOrd) {
                 return false;
             }
             current = values.getValueByOrd(position);
             return true;
+        }
+
+        public void onOrdinals(int doc, Iter iter) {
+            counts.incrementByIter(iter);
         }
     }
 

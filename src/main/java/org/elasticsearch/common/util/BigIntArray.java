@@ -20,6 +20,8 @@
 package org.elasticsearch.common.util;
 
 import org.apache.lucene.util.RamUsageEstimator;
+import org.elasticsearch.index.fielddata.ordinals.Ordinals;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 /**
  * Int array abstraction able to support more than 2B values. This implementation slices data into fixed-sized blocks of
@@ -63,6 +65,11 @@ public final class BigIntArray extends AbstractBigArray implements IntArray {
         final int pageIndex = pageIndex(index);
         final int indexInPage = indexInPage(index);
         return pages[pageIndex][indexInPage] += inc;
+    }
+
+    @Override
+    public void incrementByIter(Ordinals.Docs.Iter iter) {
+        throw new NotImplementedException();
     }
 
     @Override

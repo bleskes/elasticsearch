@@ -19,12 +19,19 @@
 
 package org.elasticsearch.common.util;
 
-/** Utility methods to work with {@link IntArray}s. */
+import org.elasticsearch.index.fielddata.ordinals.Ordinals;
+
+/**
+ * Utility methods to work with {@link IntArray}s.
+ */
 public class IntArrays {
 
-    private IntArrays() {}
+    private IntArrays() {
+    }
 
-    /** Return a {@link IntArray} view over the provided array. */
+    /**
+     * Return a {@link IntArray} view over the provided array.
+     */
     public static IntArray wrap(final int[] array) {
         return new IntArray() {
 
@@ -47,6 +54,15 @@ public class IntArrays {
             }
 
             @Override
+            public void incrementByIter(Ordinals.Docs.Iter iter) {
+                int ord = (int) iter.next();
+                array[ord]++;
+                while ((ord = (int) iter.next()) != 0) {
+                    array[ord]++;
+                }
+            }
+
+            @Override
             public int get(long index) {
                 checkIndex(index);
                 return array[(int) index];
@@ -54,7 +70,9 @@ public class IntArrays {
         };
     }
 
-    /** Return a newly allocated {@link IntArray} of the given length or more. */
+    /**
+     * Return a newly allocated {@link IntArray} of the given length or more.
+     */
     public static IntArray allocate(long length) {
         if (length <= BigIntArray.DEFAULT_PAGE_SIZE) {
             return wrap(new int[(int) length]);
