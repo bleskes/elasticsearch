@@ -95,6 +95,8 @@ public abstract class BytesValues {
 
         BytesRef next();
 
+        BytesRef next(BytesRef scratch);
+
         int hash();
 
         public static class Empty implements Iter {
@@ -108,6 +110,11 @@ public abstract class BytesValues {
 
             @Override
             public BytesRef next() {
+                throw new ElasticSearchIllegalStateException();
+            }
+
+            @Override
+            public BytesRef next(BytesRef scratch) {
                 throw new ElasticSearchIllegalStateException();
             }
 
@@ -142,6 +149,16 @@ public abstract class BytesValues {
                 return value;
             }
 
+            @Override
+            public BytesRef next(BytesRef scratch) {
+                assert !done;
+                done = true;
+                scratch.bytes = value.bytes;
+                scratch.length = value.length;
+                scratch.offset = value.offset;
+                return scratch;
+            }
+
             public int hash() {
                 return value.hashCode();
             }
@@ -174,6 +191,15 @@ public abstract class BytesValues {
 
             @Override
             public BytesRef next() {
+                withOrds.getValueScratchByOrd(innerOrd, scratch);
+                ord = innerOrd;
+                innerOrd = ordsIter.next();
+                return scratch;
+            }
+
+
+            @Override
+            public BytesRef next(BytesRef scratch) {
                 withOrds.getValueScratchByOrd(innerOrd, scratch);
                 ord = innerOrd;
                 innerOrd = ordsIter.next();

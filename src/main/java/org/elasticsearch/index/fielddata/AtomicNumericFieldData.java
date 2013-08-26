@@ -84,6 +84,12 @@ public abstract class AtomicNumericFieldData implements AtomicFieldData<ScriptDo
                         }
 
                         @Override
+                        public BytesRef next(BytesRef scratch) {
+                            scratch.copyChars(Double.toString(iter.next()));
+                            return scratch;
+                        }
+
+                        @Override
                         public int hash() {
                             return spare.hashCode();
                         }
@@ -123,6 +129,12 @@ public abstract class AtomicNumericFieldData implements AtomicFieldData<ScriptDo
 
                         @Override
                         public BytesRef next() {
+                            spare.copyChars(Long.toString(iter.next()));
+                            return spare;
+                        }
+
+                        @Override
+                        public BytesRef next(BytesRef spare) {
                             spare.copyChars(Long.toString(iter.next()));
                             return spare;
                         }

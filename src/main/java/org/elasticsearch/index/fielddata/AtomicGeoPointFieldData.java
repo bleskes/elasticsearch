@@ -22,7 +22,6 @@ package org.elasticsearch.index.fielddata;
 import org.apache.lucene.util.BytesRef;
 import org.elasticsearch.common.geo.GeoHashUtils;
 import org.elasticsearch.common.geo.GeoPoint;
-import org.elasticsearch.index.fielddata.BytesValues.Iter;
 
 /**
  */
@@ -64,7 +63,14 @@ public abstract class AtomicGeoPointFieldData<Script extends ScriptDocValues> im
 
                     @Override
                     public BytesRef next() {
-                        GeoPoint value  = iter.next();
+                        GeoPoint value = iter.next();
+                        spare.copyChars(GeoHashUtils.encode(value.lat(), value.lon()));
+                        return spare;
+                    }
+
+                    @Override
+                    public BytesRef next(BytesRef spare) {
+                        GeoPoint value = iter.next();
                         spare.copyChars(GeoHashUtils.encode(value.lat(), value.lon()));
                         return spare;
                     }

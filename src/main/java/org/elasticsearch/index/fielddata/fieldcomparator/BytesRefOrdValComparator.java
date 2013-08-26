@@ -38,7 +38,7 @@ import java.io.IOException;
  * to large results, this comparator will be much faster
  * than {@link org.apache.lucene.search.FieldComparator.TermValComparator}.  For very small
  * result sets it may be slower.
- *
+ * <p/>
  * Internally this comparator multiplies ordinals by 4 so that virtual ordinals can be inserted in-between the original field data ordinals.
  * Thanks to this, an ordinal for the missing value and the bottom value can be computed and all ordinals are directly comparable. For example,
  * if the field data ordinals are (a,1), (b,2) and (c,3), they will be internally stored as (a,4), (b,8), (c,12). Then the ordinal for the
@@ -196,6 +196,7 @@ public final class BytesRefOrdValComparator extends NestedWrappableComparator<By
 
         @Override
         public int compareDocToValue(int doc, BytesRef value) {
+            // TODO: BL - we do need to resolve the ordinal -> what if multi valued?
             return BytesRefOrdValComparator.this.compareDocToValue(doc, value);
         }
 
@@ -355,12 +356,13 @@ public final class BytesRefOrdValComparator extends NestedWrappableComparator<By
                 cmp = -1;
             }
 
-            if (cmp < 0)
+            if (cmp < 0) {
                 low = mid + 1;
-            else if (cmp > 0)
+            } else if (cmp > 0) {
                 high = mid - 1;
-            else
+            } else {
                 return mid;
+            }
         }
         return -(low + 1);
     }
