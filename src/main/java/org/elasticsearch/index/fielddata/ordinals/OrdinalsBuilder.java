@@ -394,7 +394,7 @@ public final class OrdinalsBuilder implements Closeable {
      * Builds an {@link Ordinals} instance from the builders current state.
      */
     public Ordinals build(Settings settings) {
-        final float acceptableOverheadRatio = settings.getAsFloat("acceptable_overhead_ratio", PackedInts.FAST);
+        final float acceptableOverheadRatio = settings.getAsFloat("acceptable_overhead_ratio", PackedInts.FASTEST);
         if (numMultiValuedDocs > 0) {
             // MultiOrdinals can be smaller than SinglePackedOrdinals for sparse fields
             return new MultiOrdinals(this, acceptableOverheadRatio);

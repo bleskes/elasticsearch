@@ -22,9 +22,8 @@ package org.elasticsearch.index.fielddata.ordinals;
 import org.apache.lucene.util.ArrayUtil;
 import org.apache.lucene.util.LongsRef;
 import org.apache.lucene.util.RamUsageEstimator;
-import org.apache.lucene.util.packed.MonotonicAppendingLongBuffer;
-import org.apache.lucene.util.packed.PackedInts;
 import org.apache.lucene.util.packed.AppendingDirect8LongBuffer;
+import org.apache.lucene.util.packed.PackedInts;
 import org.apache.lucene.util.packed.XAppendingPackedLongBuffer;
 import org.elasticsearch.index.fielddata.ordinals.Ordinals.Docs.Iter;
 
@@ -38,14 +37,14 @@ public class MultiOrdinals implements Ordinals {
 
     private final boolean multiValued;
     private final long numOrds;
-    private final MonotonicAppendingLongBuffer endOffsets;
+    private final XAppendingPackedLongBuffer endOffsets;
     private final AppendingDirect8LongBuffer ords;
     private final int bulkThreshold;
 
     public MultiOrdinals(OrdinalsBuilder builder, float acceptableOverheadRatio) {
         multiValued = builder.getNumMultiValuesDocs() > 0;
         numOrds = builder.getNumOrds();
-        endOffsets = new MonotonicAppendingLongBuffer();
+        endOffsets = new XAppendingPackedLongBuffer(OFFSET_INIT_PAGE_COUNT, OFFSETS_PAGE_SIZE, acceptableOverheadRatio);
         ords = new AppendingDirect8LongBuffer(OFFSET_INIT_PAGE_COUNT, OFFSETS_PAGE_SIZE, acceptableOverheadRatio);
 
         long lastEndOffset = 0;
@@ -117,7 +116,7 @@ public class MultiOrdinals implements Ordinals {
     static class MultiDocs implements Ordinals.Docs {
 
         private final MultiOrdinals ordinals;
-        private final MonotonicAppendingLongBuffer endOffsets;
+        private final XAppendingPackedLongBuffer endOffsets;
         private final AppendingDirect8LongBuffer ords;
         private final LongsRef longsScratch;
         private final AppendingDirect8LongBuffer.Iter iter;
