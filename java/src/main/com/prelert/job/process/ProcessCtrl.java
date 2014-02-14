@@ -427,11 +427,11 @@ public class ProcessCtrl
 				{
 					if (detector.getFieldName() != null)
 					{
-						command.add(detector.getFunction());
+						command.add(detector.getFunction() + "(" + detector.getFieldName() + ")");
 					}
 					else
 					{
-						command.add(detector.getFunction() + "(" + detector.getFieldName() + ")");
+						command.add(detector.getFunction());
 					}
 				}
 				else if (detector.getFieldName() != null)

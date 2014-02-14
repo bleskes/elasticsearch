@@ -631,7 +631,6 @@ public class JobsTest implements Closeable
 			for (AnomalyRecord r: b.getRecords())
 			{
 				// at a minimum all records should have these fields
-				test(r.getActual() != null);
 				test(r.getProbability() != null);
 				test(r.getAnomalyScore() != null);
 				test(r.getFunction() != null);
