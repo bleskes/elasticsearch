@@ -53,7 +53,7 @@
 
 	<!-- Set global properties for this build -->
 	<property name="name" value="prelert"/>
-	<property name="src.dir" location="${java.basedir}/src" />
+	<property name="src.dir" location="${java.basedir}/src/main" />
 	<property name="build.dir" location="${project.basedir}/build" />
 	<property name="git.basedir" location="${java.basedir}/.." />
 	<property name="prelert.home" location="${env.PRELERT_HOME}" />

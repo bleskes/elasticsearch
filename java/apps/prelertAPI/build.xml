@@ -53,7 +53,7 @@
 
 	<!-- Set global properties for this build -->
 	<property name="name" value="prelertApi"/>
-	<property name="src" location="${java.basedir}/src" />    
+	<property name="src" location="${java.basedir}/src/main" />    
 	<property name="resources" location="${java.basedir}/resources" />
 	<property name="web.dir" location="${project.basedir}/web" />
     <property name="build.dir" location="${project.basedir}/build" />

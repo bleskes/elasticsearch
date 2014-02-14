@@ -45,7 +45,7 @@
 
 
   <build>
-    <sourceDirectory>${basedir}/../../../src</sourceDirectory>
+    <sourceDirectory>${basedir}/../../../src/main</sourceDirectory>
 
     <plugins>
 

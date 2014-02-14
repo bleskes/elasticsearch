@@ -61,7 +61,7 @@
 	<!-- Set global properties for this build -->
     <!-- Set global properties for this build -->
     <property name="name" value="prelertHadoop"/>
-    <property name="src.dir" location="${java.basedir}/src" />    
+    <property name="src.dir" location="${java.basedir}/src/main" />    
     <property name="build.dir" location="${project.basedir}/build" />
     <property name="test.dir" location="${project.basedir}/tests" />
     <property name="test.build.dir" location="${test.dir}/build" />

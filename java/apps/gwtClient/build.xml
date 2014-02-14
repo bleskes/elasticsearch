@@ -50,7 +50,7 @@
     <property file="${property_file}" />
     
     <property name="name" value="prelert"/>
-    <property name="src" location="${java.basedir}/src" />
+    <property name="src" location="${java.basedir}/src/main" />
     <property name="src.config" location="${resources}/config" />
     <property name="resources" location="${java.basedir}/resources" />
     <property name="build" location="${project.basedir}/build" />

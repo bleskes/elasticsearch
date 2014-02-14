@@ -7,7 +7,7 @@
 	<property environment="env" />
 
 	<!-- Set global properties for this build -->
-	<property name="src" location="${basedir}/src" />
+	<property name="src" location="${basedir}/src/main" />
 	<property name="git.basedir" location="${basedir}/.." />
 	<property name="buildinfo.location" location="${src}/com/prelert/data" />
 	<property name="buildinfo.target" value="BuildInfo.java" />

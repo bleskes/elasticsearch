@@ -70,7 +70,7 @@
 
 
   <build>
-    <sourceDirectory>${basedir}/../../../src</sourceDirectory>
+    <sourceDirectory>${basedir}/../../../src/main</sourceDirectory>
     <testSourceDirectory>${basedir}/../../../src/test</testSourceDirectory>
     <!-- 
       Set the main and test output directories to the same directory so 

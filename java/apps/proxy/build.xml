@@ -67,7 +67,7 @@
 
 	<!-- Set global properties for this build -->
 	<property name="name" value="prelert"/>
-	<property name="src.dir" location="${java.basedir}/src" />
+	<property name="src.dir" location="${java.basedir}/src/main" />
 	<property name="build.dir" location="${project.basedir}/build" />
 	<property name="test.dir" location="${project.basedir}/tests" />
     <property name="test.build.dir" location="${test.dir}/build" />
@@ -797,7 +797,7 @@
 		</copy>
 
 		<!-- Copy the Java source files -->
-		<copy todir="${temp.dir}/src">
+		<copy todir="${temp.dir}/src/main">
 			<fileset dir="${src.dir}">
 				<include name="**/*.java" />
 				<include name="**/*.properties" />
