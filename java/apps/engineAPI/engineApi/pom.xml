@@ -1,0 +1,191 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <!-- 
+    The Engine REST API
+  -->
+
+  <groupId>com.prelert</groupId>
+  <artifactId>autodetectApi</artifactId>
+  <version>0.2.0</version>
+  <packaging>jar</packaging>
+
+  <name>autodetectApi</name>
+  <url>http://maven.apache.org</url>
+
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
+  <dependencies>
+    <!-- Test only -->
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.8.2</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit-dep</artifactId>
+      <version>4.8.2</version>
+      <scope>test</scope>
+    </dependency>   
+    <!-- provided jars -->
+    <dependency>     
+      <groupId>org.elasticsearch</groupId>
+      <artifactId>elasticsearch</artifactId>
+      <version>1.0.0.Beta2</version>
+      <scope>provided</scope>
+    </dependency>
+    <!-- runtime jars -->
+    <dependency>
+      <groupId>org.glassfish.jersey.core</groupId>
+      <artifactId>jersey-client</artifactId>
+      <version>2.5.1</version>
+    </dependency> 
+    <dependency>
+      <groupId>log4j</groupId>
+      <artifactId>log4j</artifactId>
+      <version>1.2.16</version>
+    </dependency>    
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-core</artifactId>
+      <version>2.2.3</version>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-annotations</artifactId>      
+      <version>2.2.3</version>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>      
+      <version>2.2.3</version>
+    </dependency>   
+    <dependency>
+      <groupId>net.sf.supercsv</groupId>
+      <artifactId>super-csv</artifactId>
+      <version>2.1.0</version>
+    </dependency>   
+    <dependency>
+      <groupId>org.apache.directory.studio</groupId>
+      <artifactId>org.apache.commons.lang</artifactId>
+      <version>2.6</version>
+    </dependency>
+  </dependencies>
+
+
+  <build>
+    <sourceDirectory>${basedir}/../../../src</sourceDirectory>
+    <testSourceDirectory>${basedir}/../../../src/test</testSourceDirectory>
+
+    <plugins>
+      <!-- Compile -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.1</version>
+        <configuration>
+          <source>1.7</source>
+          <target>1.7</target>
+          <verbose>false</verbose>
+        </configuration>
+
+        <executions> 
+          <!-- compile main -->
+          <execution> 
+            <id>default-compile</id>
+            <phase>compile</phase>
+            <goals>
+              <goal>compile</goal>
+            </goals>    
+            <configuration>
+              <includes>            
+                <include>com/prelert/job/**/*.java</include>
+                <include>com/prelert/rs/**/*.java</include>            
+              </includes>
+            
+              <excludes>
+                <exclude>com/prelert/rs/client/**/*.java</exclude>
+              </excludes>
+            </configuration>
+          </execution>
+          <!-- compile test -->
+          <execution> 
+            <id>default-testCompile</id>
+            <phase>test-compile</phase>
+            <goals>
+              <goal>testCompile</goal>
+            </goals>
+            <configuration>
+              <testIncludes>            
+                <include>com/prelert/job/**/*.java</include>
+                <include>com/prelert/rs/**/*.java</include>            
+              </testIncludes>
+            
+              <testExcludes>
+                <exclude>com/prelert/rs/client/*</exclude>
+              </testExcludes>
+            </configuration>
+          </execution>
+
+        </executions>
+                
+        
+      </plugin>
+
+      <!-- install dependencies -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>2.8</version>
+        <executions>
+          <execution>
+            <id>copy-dependencies</id>
+            <phase>install</phase>
+            <goals>
+              <goal>copy-dependencies</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${env.PRELERT_HOME}/cots/libjar</outputDirectory>
+              <overWriteReleases>tsrue</overWriteReleases>
+              <overWriteSnapshots>true</overWriteSnapshots>
+              <overWriteIfNewer>true</overWriteIfNewer>
+              <!-- Don't copy test jars (JUnit) or provided -->
+              <includeScope>runtime</includeScope>
+              <excludeScope>provided</excludeScope>
+            </configuration>
+          </execution>
+
+          <!-- install target jar -->
+          <execution>
+            <id>copy</id>
+            <phase>install</phase>
+            <goals>
+              <goal>copy</goal>
+            </goals>
+           <configuration>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>${project.groupId}</groupId>
+                  <artifactId>${project.artifactId}</artifactId>
+                  <version>${project.version}</version>
+                  <type>${project.packaging}</type>
+                  <outputDirectory>${env.PRELERT_HOME}/libjar</outputDirectory>
+                </artifactItem>
+              </artifactItems>
+              <stripVersion>true</stripVersion>
+            </configuration>
+          </execution>          
+
+        </executions>
+      </plugin>
+
+    </plugins>
+  </build>
+
+</project>
