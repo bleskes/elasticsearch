@@ -8,8 +8,8 @@
 
 	<!-- Set base directory properties -->
 	<property name="project.basedir" value="." />
-	<property name="gui.basedir" value="../.." />
-	<property name="resources" location="${gui.basedir}/resources" />
+	<property name="java.basedir" value="../.." />
+	<property name="resources" location="${java.basedir}/resources" />
 
 	<!-- Read Platfrom specfic property file --> 
 	<condition property="property_file" value="${resources}/ant/build_linux.properties">
@@ -54,7 +54,7 @@
 
 	<!-- Set global properties for this build -->
 	<property name="name" value="prelert"/>
-	<property name="src.dir" location="${gui.basedir}/src" />
+	<property name="src.dir" location="${java.basedir}/src" />
 	<property name="build.dir" location="${project.basedir}/build" />
     <property name="lib.dir" location="${project.basedir}/lib" />
 
@@ -197,7 +197,7 @@
         </condition>
         
         <!-- Read in version properties -->
-        <property file="${gui.basedir}/../version.properties"/>
+        <property file="${java.basedir}/../version.properties"/>
 
 		<!-- Here we exclude the individual plugin classes, as these must go in
 			 separate .jar files -->

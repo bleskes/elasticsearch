@@ -8,8 +8,8 @@
 	
 	<!-- Set base directory properties -->
 	<property name="project.basedir" value="." />
-	<property name="gui.basedir" value="../.." />
-	<property name="resources" location="${gui.basedir}/resources" />
+	<property name="java.basedir" value="../.." />
+	<property name="resources" location="${java.basedir}/resources" />
 
 	<!-- Read Platfrom specfic property file --> 
 	<condition property="property_file" value="${resources}/ant/build_linux.properties">
@@ -67,7 +67,7 @@
 
 	<!-- Set global properties for this build -->
 	<property name="name" value="prelert"/>
-	<property name="src.dir" location="${gui.basedir}/src" />
+	<property name="src.dir" location="${java.basedir}/src" />
 	<property name="build.dir" location="${project.basedir}/build" />
 	<property name="test.dir" location="${project.basedir}/tests" />
     <property name="test.build.dir" location="${test.dir}/build" />
@@ -76,7 +76,7 @@
     <property name="tmp.proxy.config.dir" location="${project.basedir}/tmpconfig"/>
 	<property name="test.config.dir" location="${test.dir}/config" />
     <property name="tmp.test.config.dir" location="${test.dir}/tmpconfig" />
-	<property name="git.basedir" location="${gui.basedir}/.." />
+	<property name="git.basedir" location="${java.basedir}/.." />
 	<property name="prelert.home" location="${env.PRELERT_HOME}" />	
     <property name="prelert.home.config" value="${prelert.home}/config" />
 	<property name="prelert.home.proxy" value="${prelert.home}/proxy" />
@@ -185,7 +185,7 @@
 	</path>
 	
 	<target name="genver" description="Generate BuildInfo.java containing the correct version/build numbers">
-		<ant dir="${gui.basedir}" antfile="genver.xml" inheritAll="false" />
+		<ant dir="${java.basedir}" antfile="genver.xml" inheritAll="false" />
 	</target>
 
 	<!-- Clean each plugin -->

@@ -26,15 +26,15 @@
 ############################################################
 include $(PRELERT_SRC_HOME)/mk/defines.mk
 
-GUI_BUILD_DIR=$(PRELERT_SRC_HOME)/gui/apps/v3gui
-INTROSCOPE_DOWNLOAD_UI_BUILD_DIR=$(PRELERT_SRC_HOME)/gui/apps/diagnosticsCA
-OPENAPI_DOWNLOAD_UI_BUILD_DIR=$(PRELERT_SRC_HOME)/gui/apps/openAPI
-DEMO_UI_BUILD_DIR=$(PRELERT_SRC_HOME)/gui/apps/demoUI
-PROXY_BUILD_DIR=$(PRELERT_SRC_HOME)/gui/apps/proxy
-DEVUTILS_BUILD_DIR=$(PRELERT_SRC_HOME)/gui/apps/devutils
-GWTCLIENT_BUILD_DIR=$(PRELERT_SRC_HOME)/gui/apps/gwtClient
-PRELERTAPI_BUILD_DIR=$(PRELERT_SRC_HOME)/gui/apps/prelertAPI
-ENGINEAPI_BUILD_DIR=$(PRELERT_SRC_HOME)/gui/apps/engineAPI
+V3GUI_BUILD_DIR=$(PRELERT_SRC_HOME)/java/apps/v3gui
+INTROSCOPE_DOWNLOAD_UI_BUILD_DIR=$(PRELERT_SRC_HOME)/java/apps/diagnosticsCA
+OPENAPI_DOWNLOAD_UI_BUILD_DIR=$(PRELERT_SRC_HOME)/java/apps/openAPI
+DEMO_UI_BUILD_DIR=$(PRELERT_SRC_HOME)/java/apps/demoUI
+PROXY_BUILD_DIR=$(PRELERT_SRC_HOME)/java/apps/proxy
+DEVUTILS_BUILD_DIR=$(PRELERT_SRC_HOME)/java/apps/devutils
+GWTCLIENT_BUILD_DIR=$(PRELERT_SRC_HOME)/java/apps/gwtClient
+PRELERTAPI_BUILD_DIR=$(PRELERT_SRC_HOME)/java/apps/prelertAPI
+ENGINEAPI_BUILD_DIR=$(PRELERT_SRC_HOME)/java/apps/engineAPI
 SPLUNK_GUI_INSTALL_DIR=$(PRELERT_HOME)/splunk_app/prelert/appserver/static
 
 # Some operating systems ship with Ant, and put a config file for it in /etc,
@@ -59,7 +59,7 @@ all: compile install
 
 compile_v3gui:
 	# Choose one of build_all_proxy, build_all_postgres, build_all_mysql
-	cd $(GUI_BUILD_DIR) && ant $(ANT_ARGS) $(ANT_PROPS) build_all_postgres
+	cd $(V3GUI_BUILD_DIR) && ant $(ANT_ARGS) $(ANT_PROPS) build_all_postgres
 
 compile_demoUI:
 	cd $(DEMO_UI_BUILD_DIR) && ant $(ANT_ARGS) $(ANT_PROPS) build
@@ -129,7 +129,7 @@ compile: compile_v3gui compile_demoUI compile_diagnosticsCA compile_openAPI comp
 # same time as compiling.
 install: compile
 	# Choose which GUI to install by altering the directory we change to
-	cd $(GUI_BUILD_DIR) && ant $(ANT_ARGS) $(ANT_PROPS) prelert-home-install
+	cd $(V3GUI_BUILD_DIR) && ant $(ANT_ARGS) $(ANT_PROPS) prelert-home-install
 	# Always additionally install the demo UI
 	cd $(DEMO_UI_BUILD_DIR) && ant $(ANT_ARGS) $(ANT_PROPS) prelert-home-install
 	# Choose between prelert-home-install-download, prelert-home-install-full
@@ -144,7 +144,7 @@ test:
 	cd $(PRELERTAPI_BUILD_DIR) && ant $(ANT_ARGS) $(ANT_PROPS) test
 
 clean:
-	cd $(GUI_BUILD_DIR) && ant $(ANT_ARGS) $(ANT_PROPS) clean
+	cd $(V3GUI_BUILD_DIR) && ant $(ANT_ARGS) $(ANT_PROPS) clean
 	cd $(DEMO_UI_BUILD_DIR) && ant $(ANT_ARGS) $(ANT_PROPS) clean
 	cd $(INTROSCOPE_DOWNLOAD_UI_BUILD_DIR) && ant $(ANT_ARGS) $(ANT_PROPS) clean
 	cd $(OPENAPI_DOWNLOAD_UI_BUILD_DIR) && ant $(ANT_ARGS) $(ANT_PROPS) clean

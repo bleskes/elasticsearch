@@ -8,8 +8,8 @@
 		
 	<!-- Set base directory properties -->
 	<property name="project.basedir" value="." />
-	<property name="gui.basedir" value="../.." />
-	<property name="resources" location="${gui.basedir}/resources" />
+	<property name="java.basedir" value="../.." />
+	<property name="resources" location="${java.basedir}/resources" />
 
 	<!-- Read Platfrom specfic property file --> 
 	<condition property="property_file" value="${resources}/ant/build_linux.properties">
@@ -52,13 +52,13 @@
 
 	<!-- Set global properties for this build -->
 	<property name="name" value="prelert_demo"/>
-	<property name="src" location="${gui.basedir}/src" />
+	<property name="src" location="${java.basedir}/src" />
 	<property name="src.war" location="${project.basedir}/war" />
 	<property name="src.config" location="${resources}/config" />
-	<property name="resources" location="${gui.basedir}/resources" />
+	<property name="resources" location="${java.basedir}/resources" />
 	<property name="build" location="${project.basedir}/build" />
 	<property name="build.web.dir" value="${build}/war"/>
-	<property name="git.basedir" location="${gui.basedir}/.." />
+	<property name="git.basedir" location="${java.basedir}/.." />
 	<property name="prelert.home" location="${env.PRELERT_HOME}" />
 	<property name="prelert.home.tomcat" location="${prelert.home}/cots/apache-tomcat" />
 
@@ -157,7 +157,7 @@
 
 
 	<target name="genver" description="Generate BuildInfo.java containing the correct version/build numbers">
-		<ant dir="${gui.basedir}" antfile="genver.xml" inheritAll="false" />
+		<ant dir="${java.basedir}" antfile="genver.xml" inheritAll="false" />
 	</target>
 
 

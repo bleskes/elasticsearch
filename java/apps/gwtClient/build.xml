@@ -7,8 +7,8 @@
     <!-- Set base directory properties -->
     <property environment="env" />
     <property name="project.basedir" value="." />
-    <property name="gui.basedir" value="../.." />
-    <property name="resources" location="${gui.basedir}/resources" />
+    <property name="java.basedir" value="../.." />
+    <property name="resources" location="${java.basedir}/resources" />
 
     <!-- Read Platfrom specfic property file --> 
     <condition property="property_file" value="${resources}/ant/build_linux.properties">
@@ -50,12 +50,12 @@
     <property file="${property_file}" />
     
     <property name="name" value="prelert"/>
-    <property name="src" location="${gui.basedir}/src" />
+    <property name="src" location="${java.basedir}/src" />
     <property name="src.config" location="${resources}/config" />
-    <property name="resources" location="${gui.basedir}/resources" />
+    <property name="resources" location="${java.basedir}/resources" />
     <property name="build" location="${project.basedir}/build" />
     <property name="war.dir" value="${project.basedir}/war"/>
-    <property name="git.basedir" location="${gui.basedir}/.." />
+    <property name="git.basedir" location="${java.basedir}/.." />
     <property name="prelert.home" location="${env.PRELERT_HOME}" />
     
     <!-- Arguments to gwt-compile and devmode targets -->
