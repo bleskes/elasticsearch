@@ -12,7 +12,7 @@
 
   <groupId>com.prelert</groupId>
   <version>0.2.0</version>
-  <artifactId>autodetect</artifactId>
+  <artifactId>engineAPI</artifactId>
   <packaging>pom</packaging>
 
   <modules>
