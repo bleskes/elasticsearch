@@ -7,11 +7,11 @@
   -->
 
   <groupId>com.prelert</groupId>
-  <artifactId>autodetectApi</artifactId>
+  <artifactId>engineApi</artifactId>
   <version>0.2.0</version>
   <packaging>jar</packaging>
 
-  <name>autodetectApi</name>
+  <name>engineApi</name>
   <url>http://maven.apache.org</url>
 
 
