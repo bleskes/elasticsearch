@@ -399,9 +399,9 @@ public class ElasticSearchPersister implements JobDataPersister
 		{
 			builder.field(AnomalyRecord.FIELD_NAME, record.getFieldName());
 		}
-		if (record.getFunctionName() != null)
+		if (record.getFunction() != null)
 		{
-			builder.field(AnomalyRecord.FUNCTION_NAME, record.getFunctionName());
+			builder.field(AnomalyRecord.FUNCTION, record.getFunction());
 		}
 		if (record.getPartitionFieldName() != null)
 		{

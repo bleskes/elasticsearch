@@ -61,7 +61,7 @@ public class AnomalyRecord
 	static final public String BY_FIELD_VALUE = "byFieldValue";
 	static final public String PARTITION_FIELD_NAME = "partitionFieldName";
 	static final public String PARTITION_FIELD_VALUE = "partitionFieldValue";
-	static final public String FUNCTION_NAME = "functionName";
+	static final public String FUNCTION = "function";
 	static final public String TYPICAL = "typical";
 	static final public String ACTUAL = "actual";
 
@@ -92,7 +92,7 @@ public class AnomalyRecord
 	private String m_ByFieldValue;
 	private String m_PartitionFieldName;
 	private String m_PartitionFieldValue;
-	private String m_FunctionName;
+	private String m_Function;
 	private Double m_Typical;
 	private Double m_Actual;
 
@@ -166,14 +166,14 @@ public class AnomalyRecord
 		m_PartitionFieldValue = value;
 	}
 
-	public String getFunctionName()
+	public String getFunction()
 	{
-		return m_FunctionName;
+		return m_Function;
 	}
 
-	public void setFunctionName(String name)
+	public void setFunction(String name)
 	{
-		m_FunctionName = name;
+		m_Function = name;
 	}
 
 	public Double getTypical()
@@ -377,11 +377,11 @@ public class AnomalyRecord
 								+ " as a string");
 					}
 					break;
-				case FUNCTION_NAME:
+				case FUNCTION:
 					token = parser.nextToken();
 					if (token == JsonToken.VALUE_STRING)
 					{
-						record.setFunctionName(parser.getText());
+						record.setFunction(parser.getText());
 					}
 					else
 					{
@@ -441,7 +441,7 @@ public class AnomalyRecord
 					token = parser.nextToken();
 					if (token == JsonToken.VALUE_STRING)
 					{
-						record.setPartitionFieldValue(parser.getText());
+						record.setOverFieldValue(parser.getText());
 					}
 					else
 					{

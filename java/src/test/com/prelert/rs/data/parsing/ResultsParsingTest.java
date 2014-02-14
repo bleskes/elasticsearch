@@ -49,7 +49,7 @@ import com.prelert.rs.data.parsing.AutoDetectResultsParser;
 public class ResultsParsingTest 
 {
 	public final static String METRIC_OUTPUT_SAMPLE = "[{\"timestamp\":1359450000,\"detectors\":[{\"name\":\"individual count//count\",\"records\":[{\"anomalyScore\":0,\"probability\":1,\"fieldName\":\"count\",\"actual\":806}]}],\"anomalyScore\":0,\"recordCount\":1}" 
-			+ ",{\"timestamp\":1359453600,\"detectors\":[{\"name\":\"individual count//count\",\"records\":[{\"anomalyScore\":0,\"probability\":1,\"fieldName\":\"count\",\"actual\":820}]},{\"name\":\"individual metric/responsetime/airline\",\"records\":[{\"anomalyScore\":0.00540641,\"probability\":0.0637541,\"byFieldName\":\"airline\",\"byFieldValue\":\"JZA\",\"typical\":1020.08,\"actual\":1042.14,\"fieldName\":\"responsetime\",\"functionName\":\"max\",\"partitionFieldName\":\"\",\"partitionFieldValue\":\"\"},{\"anomalyScore\":0.00359683,\"probability\":0.00748292,\"byFieldName\":\"airline\",\"byFieldValue\":\"AMX\",\"typical\":20.2137,\"actual\":22.8855,\"fieldName\":\"responsetime\",\"functionName\":\"max\",\"partitionFieldName\":\"\",\"partitionFieldValue\":\"\"},{\"anomalyScore\":0.00275615,\"probability\":0.023494,\"byFieldName\":\"airline\",\"byFieldValue\":\"DAL\",\"typical\":382.177,\"actual\":358.934,\"fieldName\":\"responsetime\",\"functionName\":\"min\",\"partitionFieldName\":\"\",\"partitionFieldValue\":\"\"},{\"anomalyScore\":0.00224113,\"probability\":0.0473552,\"byFieldName\":\"airline\",\"byFieldValue\":\"SWA\",\"typical\":152.148,\"actual\":96.6425,\"fieldName\":\"responsetime\",\"functionName\":\"min\",\"partitionFieldName\":\"\",\"partitionFieldValue\":\"\"}]}],\"anomalyScore\":0.0140005,\"recordCount\":5}"
+			+ ",{\"timestamp\":1359453600,\"detectors\":[{\"name\":\"individual count//count\",\"records\":[{\"anomalyScore\":0,\"probability\":1,\"fieldName\":\"count\",\"actual\":820}]},{\"name\":\"individual metric/responsetime/airline\",\"records\":[{\"anomalyScore\":0.00540641,\"probability\":0.0637541,\"byFieldName\":\"airline\",\"byFieldValue\":\"JZA\",\"typical\":1020.08,\"actual\":1042.14,\"fieldName\":\"responsetime\",\"function\":\"max\",\"partitionFieldName\":\"\",\"partitionFieldValue\":\"\"},{\"anomalyScore\":0.00359683,\"probability\":0.00748292,\"byFieldName\":\"airline\",\"byFieldValue\":\"AMX\",\"typical\":20.2137,\"actual\":22.8855,\"fieldName\":\"responsetime\",\"function\":\"max\",\"partitionFieldName\":\"\",\"partitionFieldValue\":\"\"},{\"anomalyScore\":0.00275615,\"probability\":0.023494,\"byFieldName\":\"airline\",\"byFieldValue\":\"DAL\",\"typical\":382.177,\"actual\":358.934,\"fieldName\":\"responsetime\",\"function\":\"min\",\"partitionFieldName\":\"\",\"partitionFieldValue\":\"\"},{\"anomalyScore\":0.00224113,\"probability\":0.0473552,\"byFieldName\":\"airline\",\"byFieldValue\":\"SWA\",\"typical\":152.148,\"actual\":96.6425,\"fieldName\":\"responsetime\",\"function\":\"min\",\"partitionFieldName\":\"\",\"partitionFieldValue\":\"\"}]}],\"anomalyScore\":0.0140005,\"recordCount\":5}"
 			+ "]";
 	
 	// Work around the constraint that java string literals cannot be larger 
@@ -104,7 +104,7 @@ public class ResultsParsingTest
 		assertEquals(1020.08, 0.001, buckets.get(1).getDetectors().get(1).getRecords().get(0).getTypical());
 		assertEquals(1042.14, 0.001, buckets.get(1).getDetectors().get(1).getRecords().get(0).getActual());	
 		assertEquals("responsetime", buckets.get(1).getDetectors().get(1).getRecords().get(0).getFieldName());
-		assertEquals("max", buckets.get(1).getDetectors().get(1).getRecords().get(0).getFunctionName());
+		assertEquals("max", buckets.get(1).getDetectors().get(1).getRecords().get(0).getFunction());
 		assertEquals("", buckets.get(1).getDetectors().get(1).getRecords().get(0).getPartitionFieldName());
 		assertEquals("", buckets.get(1).getDetectors().get(1).getRecords().get(0).getPartitionFieldValue());
 		
@@ -115,7 +115,7 @@ public class ResultsParsingTest
 		assertEquals(20.2137, 0.001, buckets.get(1).getDetectors().get(1).getRecords().get(1).getTypical());
 		assertEquals(22.8855, 0.001, buckets.get(1).getDetectors().get(1).getRecords().get(1).getActual());	
 		assertEquals("responsetime", buckets.get(1).getDetectors().get(1).getRecords().get(1).getFieldName());
-		assertEquals("max", buckets.get(1).getDetectors().get(1).getRecords().get(1).getFunctionName());
+		assertEquals("max", buckets.get(1).getDetectors().get(1).getRecords().get(1).getFunction());
 		assertEquals("", buckets.get(1).getDetectors().get(1).getRecords().get(1).getPartitionFieldName());
 		assertEquals("", buckets.get(1).getDetectors().get(1).getRecords().get(1).getPartitionFieldValue());		
 		
@@ -126,7 +126,7 @@ public class ResultsParsingTest
 		assertEquals(382.177, 0.001, buckets.get(1).getDetectors().get(1).getRecords().get(2).getTypical());
 		assertEquals(358.934, 0.001, buckets.get(1).getDetectors().get(1).getRecords().get(2).getActual());	
 		assertEquals("responsetime", buckets.get(1).getDetectors().get(1).getRecords().get(2).getFieldName());
-		assertEquals("min", buckets.get(1).getDetectors().get(1).getRecords().get(2).getFunctionName());
+		assertEquals("min", buckets.get(1).getDetectors().get(1).getRecords().get(2).getFunction());
 		assertEquals("", buckets.get(1).getDetectors().get(1).getRecords().get(2).getPartitionFieldName());
 		assertEquals("", buckets.get(1).getDetectors().get(1).getRecords().get(2).getPartitionFieldValue());	
 		
@@ -137,7 +137,7 @@ public class ResultsParsingTest
 		assertEquals(152.148, 0.001, buckets.get(1).getDetectors().get(1).getRecords().get(3).getTypical());
 		assertEquals(96.6425, 0.001, buckets.get(1).getDetectors().get(1).getRecords().get(3).getActual());	
 		assertEquals("responsetime", buckets.get(1).getDetectors().get(1).getRecords().get(3).getFieldName());
-		assertEquals("min", buckets.get(1).getDetectors().get(1).getRecords().get(3).getFunctionName());
+		assertEquals("min", buckets.get(1).getDetectors().get(1).getRecords().get(3).getFunction());
 		assertEquals("", buckets.get(1).getDetectors().get(1).getRecords().get(3).getPartitionFieldName());
 		assertEquals("", buckets.get(1).getDetectors().get(1).getRecords().get(3).getPartitionFieldValue());	
 	}		

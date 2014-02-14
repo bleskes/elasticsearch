@@ -634,7 +634,7 @@ public class JobsTest implements Closeable
 				test(r.getActual() != null);
 				test(r.getProbability() != null);
 				test(r.getAnomalyScore() != null);
-				test(r.getFunctionName() != null);
+				test(r.getFunction() != null);
 			}
 		}
 	}
