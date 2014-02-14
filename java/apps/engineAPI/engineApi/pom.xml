@@ -81,7 +81,7 @@
 
   <build>
     <sourceDirectory>${basedir}/../../../src/main</sourceDirectory>
-    <testSourceDirectory>${basedir}/../../../src/main/test</testSourceDirectory>
+    <testSourceDirectory>${basedir}/../../../src/test</testSourceDirectory>
 
     <plugins>
       <!-- Compile -->

@@ -173,7 +173,6 @@ public class ProcessCtrl
 	/**
 	 * Field config file strings
 	 */
-	static final private String DOT_IS_ENABLED = ".isEnabled";  
 	static final private String DOT_USE_NULL = ".useNull";
 	static final private String DOT_BY = ".by";
 	static final private String DOT_OVER = ".over";
@@ -410,39 +409,57 @@ public class ProcessCtrl
 		String logId = LOG_ID_ARG + job.getId();
 		command.add(logId);
 
-		
 		// now the actual field args
 		if (job.getAnalysisConfig() != null)
 		{
 			if (job.getAnalysisConfig().getDetectors().size() == 1)
 			{
-				// Only one set of field args so use the command line options	
+				// Only one set of field args so use the command line options
 				Detector detector = job.getAnalysisConfig().getDetectors().get(0);
-				
+
 				if (detector.isUseNull() != null)
 				{
 					String usenull = USE_NULL_ARG + detector.isUseNull();
 					command.add(usenull);
-				}	
-				
-				command.add(detector.getFieldName());
-				
+				}
+
+				if (detector.getFunction() != null)
+				{
+					if (detector.getFieldName() != null)
+					{
+						command.add(detector.getFunction());
+					}
+					else
+					{
+						command.add(detector.getFunction() + "(" + detector.getFieldName() + ")");
+					}
+				}
+				else if (detector.getFieldName() != null)
+				{
+					command.add(detector.getFieldName());
+				}
+				else
+				{
+					// TODO maybe return error instead?
+					command.add("count");
+				}
+
 				if (detector.getByFieldName() != null)
 				{
 					command.add(BY_ARG);
 					command.add(detector.getByFieldName());
 				}
-				else if (detector.getOverFieldName() != null)
+				if (detector.getOverFieldName() != null)
 				{
 					command.add(OVER_ARG);
 					command.add(detector.getOverFieldName());
-				}					
+				}
 			}
 			else
 			{
 				// write to a temporary field config file
 				File fieldConfigFile = File.createTempFile("fieldconfig", ".conf");
-				writeFieldConfig(job.getAnalysisConfig(), fieldConfigFile);		
+				writeFieldConfig(job.getAnalysisConfig(), fieldConfigFile);
 				String modelConfig = FIELD_CONFIG_ARG + fieldConfigFile.toString();
 				command.add(modelConfig);	
 			}
@@ -491,37 +508,48 @@ public class ProcessCtrl
 	
 	/**
 	 * Write the Prelert autodetect field options to <code>emptyConfFile</code>.
-	 * 
+	 *
 	 * @param emptyConfFile
 	 * @throws IOException
 	 */
-	private void writeFieldConfig(AnalysisConfig config, File emptyConfFile) 
-	throws IOException	
+	private void writeFieldConfig(AnalysisConfig config, File emptyConfFile)
+	throws IOException
 	{
 		StringBuilder contents = new StringBuilder();
-		contents.append("[AnonymousSource]").append(NEW_LINE);
-		
+
 		Set<String> detectorKeys = new HashSet<>();
 		for (Detector detector : config.getDetectors())
 		{
-			
-			StringBuilder keyBuilder = new StringBuilder(detector.getFieldName());
+			StringBuilder keyBuilder = new StringBuilder();
 			if (detector.getFunction() != null)
 			{
-				keyBuilder = new StringBuilder(detector.getFunction())
-							.append("(")
+				keyBuilder.append(detector.getFunction());
+				if (detector.getFieldName() != null)
+				{
+					keyBuilder.append("(")
 							.append(detector.getFieldName())
 							.append(")");
+				}
 			}
+			else if (detector.getFieldName() != null)
+			{
+				keyBuilder.append(detector.getFieldName());
+			}
+			else
+			{
+				// TODO maybe return error instead?
+				keyBuilder.append("count");
+			}
+
 			if (detector.getByFieldName() != null)
 			{
 				keyBuilder.append("-").append(detector.getByFieldName());
 			}
-			else if (detector.getOverFieldName() != null)
+			if (detector.getOverFieldName() != null)
 			{
 				keyBuilder.append("-").append(detector.getOverFieldName());
 			}
-				
+
 			String key = keyBuilder.toString();
 			if (detectorKeys.contains(key))
 			{
@@ -530,27 +558,24 @@ public class ProcessCtrl
 				continue;
 			}
 			detectorKeys.add(key);
-			
-			
-			contents.append(key).append(DOT_IS_ENABLED).append(" = true").append(NEW_LINE);
-			
+
 			if (detector.isUseNull() != null)
 			{
 				contents.append(key).append(DOT_USE_NULL)
 					.append((detector.isUseNull() ? " = true" : " = false"))
-					.append(NEW_LINE); 
+					.append(NEW_LINE);
 			}
-			
+
 			if (detector.getByFieldName() != null)
 			{
-				contents.append(key).append(DOT_BY).append(" = ").append(detector.getByFieldName()).append(NEW_LINE); 
+				contents.append(key).append(DOT_BY).append(" = ").append(detector.getByFieldName()).append(NEW_LINE);
 			}
-			else if (detector.getOverFieldName() != null)
+			if (detector.getOverFieldName() != null)
 			{
-				contents.append(key).append(DOT_OVER).append(" = ").append(detector.getOverFieldName()).append(NEW_LINE); 
+				contents.append(key).append(DOT_OVER).append(" = ").append(detector.getOverFieldName()).append(NEW_LINE);
 			}
 		}
-		
+
 		s_Logger.debug("FieldConfig = " + contents.toString());	
 
 		try (OutputStreamWriter osw = new OutputStreamWriter(
@@ -559,11 +584,10 @@ public class ProcessCtrl
 		{
 			osw.write(contents.toString());
 		}
-
 	}
 	
 	/**
-	 * Write the string <code>state</code> to <code>file</code>  
+	 * Write the string <code>state</code> to <code>file</code>
 	 * followed by a newline character.
 	 * 
 	 * @param state
