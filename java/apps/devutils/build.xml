@@ -54,7 +54,7 @@
 
 	<!-- Set global properties for this build -->
 	<property name="name" value="prelert"/>
-	<property name="src.dir" location="${java.basedir}/src" />
+	<property name="src.dir" location="${java.basedir}/src/main" />
 	<property name="build.dir" location="${project.basedir}/build" />
     <property name="lib.dir" location="${project.basedir}/lib" />
 

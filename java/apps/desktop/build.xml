@@ -8,7 +8,7 @@
 	<property file="build.properties" />
 	<property name="name" value="prelert"/>
 	<property name="module-shortname" value="prelertdesktop"/>
-	<property name="src" location="${project.basedir}/src" />
+	<property name="src" location="${project.basedir}/src/main" />
 	<property name="src.config" location="${project.basedir}/config" />
 	<property name="src.war" location="${project.basedir}/war" />
 	<property name="build" location="${project.basedir}/build" />
@@ -337,7 +337,7 @@
 		<mkdir dir="${code.drop.dir}" />
 		<mkdir dir="${code.drop.dir}/config" />
 		<mkdir dir="${code.drop.dir}/procs" />
-		<mkdir dir="${code.drop.dir}/src" />
+		<mkdir dir="${code.drop.dir}/src/main" />
 		<mkdir dir="${code.drop.dir}/war" />
 		
 		<!-- Copy the build files -->
@@ -357,7 +357,7 @@
 		</copy>
 			
 		<!-- Copy the Java source files -->
-		<copy todir="${code.drop.dir}/src">
+		<copy todir="${code.drop.dir}/src/main">
 			<fileset dir="${src}">
 				<include name="**/*.java" />
 			</fileset>
@@ -375,7 +375,7 @@
 				<exclude name="wallpapers/*.*"/>
 			</fileset>
 		</copy>
-		<copy file="${src}/com/prelert/Desktop.gwt.xml" todir="${code.drop.dir}/src/com/prelert"/>
+		<copy file="${src}/com/prelert/Desktop.gwt.xml" todir="${code.drop.dir}/src/main/com/prelert"/>
 		
 		<!-- Copy the web config files -->
 		<copy todir="${code.drop.dir}/war/WEB-INF">

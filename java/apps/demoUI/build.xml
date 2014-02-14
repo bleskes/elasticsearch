@@ -52,7 +52,7 @@
 
 	<!-- Set global properties for this build -->
 	<property name="name" value="prelert_demo"/>
-	<property name="src" location="${java.basedir}/src" />
+	<property name="src" location="${java.basedir}/src/main" />
 	<property name="src.war" location="${project.basedir}/war" />
 	<property name="src.config" location="${resources}/config" />
 	<property name="resources" location="${java.basedir}/resources" />
@@ -663,7 +663,7 @@
 
 		<mkdir dir="${code.drop.dir}" />
 		<mkdir dir="${code.drop.dir}/config" />
-		<mkdir dir="${code.drop.dir}/src" />
+		<mkdir dir="${code.drop.dir}/src/main" />
 		<mkdir dir="${code.drop.dir}/war" />
 
 		<!-- Copy the build files -->
@@ -683,7 +683,7 @@
 		</copy>
 
 		<!-- Copy the UI Java source files -->
-		<copy todir="${code.drop.dir}/src">
+		<copy todir="${code.drop.dir}/src/main">
 			<fileset dir="${src}">
 				<include name="**/*.java" />
 				<include name="**/*.png" />
@@ -694,7 +694,7 @@
 		</copy>
 
 		<!-- Copy the host html page, CSS stylesheets and images -->
-		<copy file="${src}/com/prelert/DiagnosticsDemo.gwt.xml" todir="${code.drop.dir}/src/com/prelert"/>
+		<copy file="${src}/com/prelert/DiagnosticsDemo.gwt.xml" todir="${code.drop.dir}/src/main/com/prelert"/>
 		<copy todir="${code.drop.dir}/war">
 			<fileset dir="${src.war}">
 				<include name="DiagnosticsDemo.html" />
