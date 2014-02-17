@@ -1,0 +1,1 @@
+java -classpath classes;config;lib/* demo.app.server.EpisodeGraphBuilder
