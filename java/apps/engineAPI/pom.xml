@@ -1,0 +1,54 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <!--
+    Main Maven build file for the Engine REST API.
+    Calls 3 sub-modules
+      Engine API - The REST API
+      Client - REST API test client written in Java
+      Server - The API server and dependencies
+    -->
+
+  <groupId>com.prelert</groupId>
+  <version>0.3.0</version>
+  <artifactId>engineAPI</artifactId>
+  <packaging>pom</packaging>
+
+  <modules>
+    <module>engineApi</module>
+    <module>apiClient</module>
+    <module>apiServer</module>
+  </modules>
+
+
+  <build>
+    <plugins>
+      <!-- Copy resources from ./config/ to the build area -->
+      <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>2.6</version>
+        <executions>
+          <execution>
+            <id>copy-resources</id>
+            <!-- here the phase you need -->
+            <phase>install</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${env.PRELERT_HOME}/config</outputDirectory>
+              <resources>          
+                <resource>
+                  <directory>${basedir}/config</directory>
+                  <filtering>true</filtering>
+                </resource>
+              </resources>              
+            </configuration>            
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+</project>
