@@ -206,7 +206,7 @@ public class JobManager implements JobDetailsProvider
 		FilterBuilder fb = FilterBuilders.matchAllFilter();
 		SearchResponse response = m_Client.prepareSearch("_all")
 				.setTypes(JobDetails.TYPE)
-				.setFilter(fb)
+				.setPostFilter(fb)
 				.setFrom(skip).setSize(take)
 				.addSort(JobDetails.ID, SortOrder.DESC)  
 				.get();
@@ -354,7 +354,7 @@ public class JobManager implements JobDetailsProvider
 		SearchResponse searchResponse = m_Client.prepareSearch(jobId)
 				.setTypes(Bucket.TYPE)		
 				.addSort(Bucket.ID, SortOrder.ASC)
-				.setFilter(fb)
+				.setPostFilter(fb)
 				.setFrom(skip).setSize(take)
 				.get();
 		
@@ -437,7 +437,7 @@ public class JobManager implements JobDetailsProvider
 
 		SearchResponse searchResponse = m_Client.prepareSearch(jobId)
 				.setTypes(Detector.TYPE)		
-				.setFilter(fb)
+				.setPostFilter(fb)
 				.setFrom(skip).setSize(take)
 				.get();
 
@@ -480,7 +480,7 @@ public class JobManager implements JobDetailsProvider
 
 		SearchResponse searchResponse = m_Client.prepareSearch(jobId)
 				.setTypes(AnomalyRecord.TYPE)
-				.setFilter(andFilter)
+				.setPostFilter(andFilter)
 				.setFrom(skip).setSize(take)
 				.addSort(AnomalyRecord.ANOMALY_SCORE, SortOrder.DESC)
 				.get();
@@ -520,7 +520,7 @@ public class JobManager implements JobDetailsProvider
 
 		SearchResponse searchResponse = m_Client.prepareSearch(jobId)
 				.setTypes(AnomalyRecord.TYPE)
-				.setFilter(parentFilter)
+				.setPostFilter(parentFilter)
 				.setFrom(skip).setSize(take)
 				.addSort(AnomalyRecord.ANOMALY_SCORE, SortOrder.DESC)
 				.get();

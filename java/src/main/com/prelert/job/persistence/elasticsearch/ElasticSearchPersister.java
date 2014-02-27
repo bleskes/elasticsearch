@@ -224,7 +224,7 @@ public class ElasticSearchPersister implements JobDataPersister
 		// don't ask for any documents (size = 0)
 		SearchRequestBuilder searchBuilder = m_Client.prepareSearch(m_JobId)
 				.setTypes(DetectorState.TYPE)		
-				.setFilter(fb)
+				.setPostFilter(fb)
 				.setFrom(0).setSize(0);
 		
 		SearchResponse searchResponse = searchBuilder.get();		
@@ -245,7 +245,7 @@ public class ElasticSearchPersister implements JobDataPersister
 		
 		SearchRequestBuilder searchBuilder = m_Client.prepareSearch(m_JobId)
 				.setTypes(DetectorState.TYPE)		
-				.setFilter(fb)
+				.setPostFilter(fb)
 				.addField(DetectorState.DETECTOR_NAME);
 		
 		
@@ -292,7 +292,7 @@ public class ElasticSearchPersister implements JobDataPersister
 		
 		SearchRequestBuilder searchBuilder = m_Client.prepareSearch(m_JobId)
 				.setTypes(DetectorState.TYPE)		
-				.setFilter(fb);
+				.setPostFilter(fb);
 			
 		try
 		{
