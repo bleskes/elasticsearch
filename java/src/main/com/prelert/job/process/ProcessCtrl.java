@@ -117,7 +117,7 @@ public class ProcessCtrl
 	
 	/**
 	 * Program arguments 
-	 */                                         
+	 */
 	static final public String BUCKET_SPAN_ARG = "--bucketspan=";
 	static final public String FIELD_CONFIG_ARG = "--fieldconfig=";
 	static final public String MODEL_CONFIG_ARG = "--modelconfig=";
@@ -173,6 +173,7 @@ public class ProcessCtrl
 	/**
 	 * Field config file strings
 	 */
+	static final private String DOT_IS_ENABLED = ".isEnabled";
 	static final private String DOT_USE_NULL = ".useNull";
 	static final private String DOT_BY = ".by";
 	static final private String DOT_OVER = ".over";
@@ -558,6 +559,15 @@ public class ProcessCtrl
 				continue;
 			}
 			detectorKeys.add(key);
+
+			// .isEnabled is only necessary if nothing else is going to be added
+			// for this key
+			if (detector.isUseNull() == null &&
+				detector.getByFieldName() == null &&
+				detector.getOverFieldName() == null)
+			{
+				contents.append(key).append(DOT_IS_ENABLED).append(" = true").append(NEW_LINE);
+			}
 
 			if (detector.isUseNull() != null)
 			{
