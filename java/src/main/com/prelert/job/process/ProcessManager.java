@@ -339,7 +339,7 @@ public class ProcessManager
 		}
 		else
 		{
-			future.cancel(false);			
+			future.cancel(false);
 		}		
 		m_JobIdToTimeoutFuture.remove(jobId);
 		
@@ -402,6 +402,7 @@ public class ProcessManager
 		try
 		{			
 			int exitValue = process.getProcess().exitValue();
+			
 			// If we get here the process has exited. 
 			String msg = String.format("Process exited with code %d.", exitValue);			
 			s_Logger.error(msg + "Removing resources for job " + jobId);
@@ -482,31 +483,38 @@ public class ProcessManager
 				throw new IOException(message);
 			}
 			
-			try (CsvListWriter csvWriter = new CsvListWriter(new OutputStreamWriter(os), csvPref))
-			{				
-				csvWriter.writeHeader(header);
 
-				DateFormat dateFormat = new SimpleDateFormat(dd.getTimeFormat());
 
-				List<String> line;
-				while ((line = csvReader.read()) != null)
+			// Don't close the output stream as it causes the autodetect 
+			// process to quit
+			@SuppressWarnings("resource")
+			CsvListWriter csvWriter = new CsvListWriter(new OutputStreamWriter(os), csvPref);
+
+			csvWriter.writeHeader(header);
+
+			DateFormat dateFormat = new SimpleDateFormat(dd.getTimeFormat());
+
+			List<String> line;
+			while ((line = csvReader.read()) != null)
+			{
+				try
 				{
-					try
-					{
-						String epoch =  new Long(dateFormat.parse(line.get(timeFieldIndex)).getTime() / 1000).toString();
-						line.set(timeFieldIndex, epoch);
+					String epoch =  new Long(dateFormat.parse(line.get(timeFieldIndex)).getTime() / 1000).toString();
+					line.set(timeFieldIndex, epoch);
 
-						csvWriter.write(line);
-					}
-					catch (ParseException pe)
-					{
-						String message = String.format("Cannot parse date '%s' with format string '%s'",
-								line.get(timeFieldIndex), dd.getTimeFormat());
-
-						s_Logger.error(message);
-					}		
+					csvWriter.write(line);
 				}
+				catch (ParseException pe)
+				{
+					String message = String.format("Cannot parse date '%s' with format string '%s'",
+							line.get(timeFieldIndex), dd.getTimeFormat());
+
+					s_Logger.error(message);
+				}		
 			}
+
+			
+			os.flush();
 		}
 	}
 	
