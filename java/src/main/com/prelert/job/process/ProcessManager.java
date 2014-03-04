@@ -238,7 +238,7 @@ public class ProcessManager
 			process.setInUse(false);
 			
 			// start a new timer 
-			future = startShutdownTimer(jobId, 30/*process.getTimeout()*/);
+			future = startShutdownTimer(jobId, process.getTimeout());
 			m_JobIdToTimeoutFuture.put(jobId, future);
 		}
 		
@@ -786,8 +786,12 @@ public class ProcessManager
 							ProcessStatus status = finishJob(jobId);
 							if (status == ProcessStatus.IN_USE)
 							{
+								int waitSeconds = 10;
+								s_Logger.info("The process is still in use and cannot be shutdown " +
+								"Rescheduling shutdown for " + waitSeconds + " seconds");
+								
 								// reschedule the shutdown
-								startShutdownTimer(jobId, 30); // TODO 10
+								startShutdownTimer(jobId, 10); 
 							}		
 						}
 						catch (UnknownJobException | NativeProcessRunException e)
