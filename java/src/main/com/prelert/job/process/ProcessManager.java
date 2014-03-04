@@ -163,7 +163,14 @@ public class ProcessManager
 		ScheduledFuture<?> future = m_JobIdToTimeoutFuture.remove(jobId);
 		if (future != null)
 		{
-			future.cancel(false);
+			if (future.cancel(false) == false)
+			{
+				s_Logger.warn("Failed to cancel future in dataToJob(,,,)");
+			}
+		}
+		else
+		{
+			s_Logger.debug("No future to cancel in dataToJob(,,,)");
 		}
 		
 		ProcessAndDataDescription process = m_JobIdToProcessMap.get(jobId);		
@@ -173,6 +180,7 @@ public class ProcessManager
 			// create the new process an restore its state 
 			// if it has been saved
 			process = createProcess(jobId);
+			m_JobIdToProcessMap.put(jobId, process);
 		}
 		
 		// We can't write data if someone is already writing to the process.
@@ -230,7 +238,7 @@ public class ProcessManager
 			process.setInUse(false);
 			
 			// start a new timer 
-			future = startShutdownTimer(jobId, process.getTimeout());
+			future = startShutdownTimer(jobId, 30/*process.getTimeout()*/);
 			m_JobIdToTimeoutFuture.put(jobId, future);
 		}
 		
@@ -295,14 +303,10 @@ public class ProcessManager
 					+ "for job " + job.getId(), e);
 		}				
 
-		m_JobIdToProcessMap.put(jobId, procAndDD);
-		ScheduledFuture<?> future = startShutdownTimer(jobId, job.getTimeout());
-		
-		m_JobIdToTimeoutFuture.put(jobId, future);
-
 		// Launch results parser in a new thread
 		Thread th = new Thread(m_ResultsReaderFactory.newResultsParser(jobId, 
-								procAndDD.getProcess().getInputStream()));
+								procAndDD.getProcess().getInputStream()),
+								"Bucket-Parser");
 		th.start();		
 		
 		s_Logger.debug("Created process for job " + jobId);
@@ -315,69 +319,91 @@ public class ProcessManager
 	 * Stop the running process.
 	 * Closing the stream into the native process causes the process
 	 * to terminate its IO loop and stop.<br/>
-	 * The return value is based on the status of the native process if it
-	 * cannot be found ProcessStatus.NOT_FOUND is returned else 
-	 * ProcessStatus.IN_USE if the process is currently processing data in which
-	 * case this function should be tried again after a wait period. If the
-	 * process is stopped successfully ProcessStatus.COMPLETED is returned.
+	 * The return value is based on the status of the native process  
+	 * ProcessStatus.IN_USE is returned if the process is currently processing
+	 * data in which case this function should be tried again after a wait period 
+	 * else the process is stopped successfully and ProcessStatus.COMPLETED is 
+	 * returned.
 	 * 
 	 * @param jobId
 	 * @return The process finished status
 	 * @throws UnknownJobException If the job is already finished or cannot be 
 	 * found
-	 * @throws NativeProcessRunException 
+	 * @throws NativeProcessRunException If the process has already terminated
 	 */
 	public ProcessStatus finishJob(String jobId) 
 	throws UnknownJobException, NativeProcessRunException 
 	{
 		s_Logger.info("Finishing job " + jobId);
 		
-		ScheduledFuture<?> future = m_JobIdToTimeoutFuture.get(jobId);
-		if (future == null)
+		ProcessAndDataDescription process = m_JobIdToProcessMap.get(jobId);	
+		if (process == null)
+		{						
+			s_Logger.error("No job with id '" + jobId + "' to shutdown");
+			// tidy up
+			m_JobIdToTimeoutFuture.remove(jobId);			
+			throw new UnknownJobException(jobId, "Cannot finish job");
+		}
+		
+		
+		if (process.isInUse())
 		{
-			s_Logger.error("No timeout future for job '" + jobId + "'");
+			s_Logger.error("Cannot finish job while it is reading data");
+			return ProcessStatus.IN_USE;
+		}
+		
+		
+		// cancel any time out futures
+		ScheduledFuture<?> future = m_JobIdToTimeoutFuture.get(jobId);
+		if (future != null)
+		{
+			if (future.cancel(false) == false)
+			{
+				s_Logger.warn("Failed to cancel future in finishJob()");
+			}
 		}
 		else
 		{
-			future.cancel(false);
-		}		
+			s_Logger.debug("No future to cancel in finishJob()");
+		}
 		m_JobIdToTimeoutFuture.remove(jobId);
 		
-		ProcessAndDataDescription process = m_JobIdToProcessMap.get(jobId);	
-		if (process == null)
-		{
-			s_Logger.error("No job with id '" + jobId + "' to shutdown");
-			throw new UnknownJobException(jobId, "Cannot finish job");
-		}
 		
 		try
 		{
 			// check the process is running, throws if not
-			processStillRunning(process, jobId);
-
-			if (process.isInUse())
+			if (processStillRunning(process, jobId))
 			{
-				s_Logger.error("Cannot finish job while it is reading data");
-				return ProcessStatus.IN_USE;
-			}
-
-			try 
-			{
-				// stop the process and remove from map
-				process.getProcess().getOutputStream().close();
-			} 
-			catch (IOException e) 
-			{
-				s_Logger.error("Error closing process stream", e);
-				// return process completed as if it's outputstream is 
-				// closed than it has stopped
+				m_JobIdToProcessMap.remove(jobId);	
+				try
+				{
+					process.getProcess().getOutputStream().close();
+				}
+				catch (IOException ioe)
+				{
+					s_Logger.debug("Exception closing running process input stream");
+				}
 			}
 		}
-		finally
+		catch (NativeProcessRunException e) 
 		{
-			m_JobIdToProcessMap.remove(jobId);		
+			s_Logger.error("Native process has already exited", e);
+			
+			// clean up resources and re-throw
+			m_JobIdToProcessMap.remove(jobId);				
+			try
+			{
+				process.getProcess().getOutputStream().close();
+			}
+			catch (IOException ioe)
+			{
+				s_Logger.debug("Exception closing stopped process input stream");
+			}
+			
+			throw e;
 		}
-				
+			
+
 		return ProcessStatus.COMPLETED;
 	}
 
@@ -761,7 +787,7 @@ public class ProcessManager
 							if (status == ProcessStatus.IN_USE)
 							{
 								// reschedule the shutdown
-								startShutdownTimer(jobId, 10);
+								startShutdownTimer(jobId, 30); // TODO 10
 							}		
 						}
 						catch (UnknownJobException | NativeProcessRunException e)
