@@ -492,11 +492,13 @@ public class ProcessCtrl
 		StringBuilder contents = new StringBuilder("[anomaly]").append(NEW_LINE);
 		if (options.getMaxFieldValues() > 0)
 		{
-			contents.append("maxfieldvalues = ").append(options.getMaxFieldValues()).append(NEW_LINE);
+			contents.append(AnalysisOptions.MAX_FIELD_VALUES + " = ")
+					.append(options.getMaxFieldValues()).append(NEW_LINE);
 		}
 		if (options.getMaxTimeBuckets() > 0)
 		{
-			contents.append("maxtimebuckets = ").append(options.getMaxTimeBuckets()).append(NEW_LINE);
+			contents.append(AnalysisOptions.MAX_TIME_BUCKETS + " = ")
+					.append(options.getMaxTimeBuckets()).append(NEW_LINE);
 		}
 
 		try (OutputStreamWriter osw = new OutputStreamWriter(
