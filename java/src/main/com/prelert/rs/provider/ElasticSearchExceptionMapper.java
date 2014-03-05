@@ -3,7 +3,7 @@ package com.prelert.rs.provider;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 
-import org.elasticsearch.ElasticSearchException;
+import org.elasticsearch.ElasticsearchException;
 
 
 /**
@@ -12,10 +12,10 @@ import org.elasticsearch.ElasticSearchException;
  * and exception message and returns in a a server error
  * (500) response.
  */
-public class ElasticSearchExceptionMapper implements ExceptionMapper<ElasticSearchException>
+public class ElasticSearchExceptionMapper implements ExceptionMapper<ElasticsearchException>
 {
 	@Override
-	public Response toResponse(ElasticSearchException e)
+	public Response toResponse(ElasticsearchException e)
 	{
 		String msg = String.format("Error in ElasticSearch status = %s, " 
 					+ "detailed error: %s\n", e.status().toString(), e.getDetailedMessage());

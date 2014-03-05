@@ -141,9 +141,11 @@ public class DetectorStateTest
 			
 			FilterBuilder fb = FilterBuilders.matchAllFilter();
 			
+			
+			
 			SearchRequestBuilder searchBuilder = client.prepareSearch(JOBID)
-					.setTypes(DetectorState.TYPE)		
-					.setFilter(fb)
+					.setTypes(DetectorState.TYPE)	
+					.setPostFilter(fb)
 					.setFrom(0).setSize(50)
 					.addField(DetectorState.DETECTOR_NAME);
 			

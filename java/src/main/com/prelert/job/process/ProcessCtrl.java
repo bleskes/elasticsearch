@@ -117,7 +117,7 @@ public class ProcessCtrl
 	
 	/**
 	 * Program arguments 
-	 */                                         
+	 */
 	static final public String BUCKET_SPAN_ARG = "--bucketspan=";
 	static final public String FIELD_CONFIG_ARG = "--fieldconfig=";
 	static final public String MODEL_CONFIG_ARG = "--modelconfig=";
@@ -173,6 +173,7 @@ public class ProcessCtrl
 	/**
 	 * Field config file strings
 	 */
+	static final private String DOT_IS_ENABLED = ".isEnabled";
 	static final private String DOT_USE_NULL = ".useNull";
 	static final private String DOT_BY = ".by";
 	static final private String DOT_OVER = ".over";
@@ -491,11 +492,13 @@ public class ProcessCtrl
 		StringBuilder contents = new StringBuilder("[anomaly]").append(NEW_LINE);
 		if (options.getMaxFieldValues() > 0)
 		{
-			contents.append("maxfieldvalues = ").append(options.getMaxFieldValues()).append(NEW_LINE);
+			contents.append(AnalysisOptions.MAX_FIELD_VALUES + " = ")
+					.append(options.getMaxFieldValues()).append(NEW_LINE);
 		}
 		if (options.getMaxTimeBuckets() > 0)
 		{
-			contents.append("maxtimebuckets = ").append(options.getMaxTimeBuckets()).append(NEW_LINE);
+			contents.append(AnalysisOptions.MAX_TIME_BUCKETS + " = ")
+					.append(options.getMaxTimeBuckets()).append(NEW_LINE);
 		}
 
 		try (OutputStreamWriter osw = new OutputStreamWriter(
@@ -558,6 +561,15 @@ public class ProcessCtrl
 				continue;
 			}
 			detectorKeys.add(key);
+
+			// .isEnabled is only necessary if nothing else is going to be added
+			// for this key
+			if (detector.isUseNull() == null &&
+				detector.getByFieldName() == null &&
+				detector.getOverFieldName() == null)
+			{
+				contents.append(key).append(DOT_IS_ENABLED).append(" = true").append(NEW_LINE);
+			}
 
 			if (detector.isUseNull() != null)
 			{

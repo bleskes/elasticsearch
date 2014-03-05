@@ -70,6 +70,7 @@ public class ProcessAndDataDescription
 
 	/**
 	 * True if the process is currently in use
+	 * Thread safe without synchronisation as this is a volatile field
 	 * @return
 	 */
 	public boolean isInUse()
@@ -79,6 +80,7 @@ public class ProcessAndDataDescription
 
 	/**
 	 * Set the process as in use
+	 * Thread safe without synchronisation as this is a volatile field
 	 * @param inUse
 	 */
 	public void setInUse(boolean inUse)
