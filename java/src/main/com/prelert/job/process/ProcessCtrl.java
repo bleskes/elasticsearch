@@ -314,6 +314,7 @@ public class ProcessCtrl
 			DetectorState detectorState)
 	throws IOException
 	{
+		// TODO unit test for this build command stuff
 		s_Logger.info("PRELERT_HOME is set to " + PRELERT_HOME);
 		
 		List<String> command = new ArrayList<>();
@@ -416,51 +417,20 @@ public class ProcessCtrl
 			if (job.getAnalysisConfig().getDetectors().size() == 1)
 			{
 				// Only one set of field args so use the command line options
-				Detector detector = job.getAnalysisConfig().getDetectors().get(0);
-
-				if (detector.isUseNull() != null)
-				{
-					String usenull = USE_NULL_ARG + detector.isUseNull();
-					command.add(usenull);
-				}
-
-				if (detector.getFunction() != null)
-				{
-					if (detector.getFieldName() != null)
-					{
-						command.add(detector.getFunction() + "(" + detector.getFieldName() + ")");
-					}
-					else
-					{
-						command.add(detector.getFunction());
-					}
-				}
-				else if (detector.getFieldName() != null)
-				{
-					command.add(detector.getFieldName());
-				}
-				else
-				{
-					// TODO maybe return error instead?
-					command.add("count");
-				}
-
-				if (detector.getByFieldName() != null)
-				{
-					command.add(BY_ARG);
-					command.add(detector.getByFieldName());
-				}
-				if (detector.getOverFieldName() != null)
-				{
-					command.add(OVER_ARG);
-					command.add(detector.getOverFieldName());
-				}
+				List<String> args = detectorConfigToCommandLinArgs(job.getAnalysisConfig().getDetectors().get(0));
+				command.addAll(args);			
 			}
 			else
 			{
 				// write to a temporary field config file
 				File fieldConfigFile = File.createTempFile("fieldconfig", ".conf");
-				writeFieldConfig(job.getAnalysisConfig(), fieldConfigFile);
+				try (OutputStreamWriter osw = new OutputStreamWriter(
+						new FileOutputStream(fieldConfigFile),
+						Charset.forName("UTF-8")))
+				{
+					writeFieldConfig(job.getAnalysisConfig(), osw);
+				}
+				
 				String modelConfig = FIELD_CONFIG_ARG + fieldConfigFile.toString();
 				command.add(modelConfig);	
 			}
@@ -509,13 +479,68 @@ public class ProcessCtrl
 		}		
 	}
 	
+	
 	/**
-	 * Write the Prelert autodetect field options to <code>emptyConfFile</code>.
+	 * Interpret the detector object as a list of strings in the format
+	 * expected by autodetect api to configure t 
+	 * 
+	 * @param detector
+	 * @return
+	 */
+	public List<String> detectorConfigToCommandLinArgs(Detector detector)
+	{
+		List<String> commandLineArgs = new ArrayList<>();
+		
+		if (detector.isUseNull() != null)
+		{
+			String usenull = USE_NULL_ARG + detector.isUseNull();
+			commandLineArgs.add(usenull);
+		}
+
+		if (detector.getFunction() != null)
+		{
+			if (detector.getFieldName() != null)
+			{
+				commandLineArgs.add(detector.getFunction() + "(" + detector.getFieldName() + ")");
+			}
+			else
+			{
+				commandLineArgs.add(detector.getFunction());
+			}
+		}
+		else if (detector.getFieldName() != null)
+		{
+			commandLineArgs.add(detector.getFieldName());
+		}
+		else
+		{
+			// TODO maybe return error instead?
+			commandLineArgs.add("count");
+		}
+
+		if (detector.getByFieldName() != null)
+		{
+			commandLineArgs.add(BY_ARG);
+			commandLineArgs.add(detector.getByFieldName());
+		}
+		if (detector.getOverFieldName() != null)
+		{
+			commandLineArgs.add(OVER_ARG);
+			commandLineArgs.add(detector.getOverFieldName());
+		}
+		
+		return commandLineArgs;
+	}
+	
+	
+	/**
+	 * Write the Prelert autodetect field options to the output stream.
 	 *
-	 * @param emptyConfFile
+	 * @param config The configuration to write
+	 * @param osw Stream to write to
 	 * @throws IOException
 	 */
-	private void writeFieldConfig(AnalysisConfig config, File emptyConfFile)
+	public void writeFieldConfig(AnalysisConfig config, OutputStreamWriter osw)
 	throws IOException
 	{
 		StringBuilder contents = new StringBuilder();
@@ -590,12 +615,7 @@ public class ProcessCtrl
 
 		s_Logger.debug("FieldConfig = " + contents.toString());	
 
-		try (OutputStreamWriter osw = new OutputStreamWriter(
-				new FileOutputStream(emptyConfFile),
-				Charset.forName("UTF-8")))
-		{
-			osw.write(contents.toString());
-		}
+		osw.write(contents.toString());
 	}
 	
 	/**
