@@ -115,7 +115,7 @@
             <configuration>
               <includes>            
                 <include>com/prelert/job/**/*.java</include>
-                <include>com/prelert/rs/*.java</include> 
+                <include>com/prelert/rs/**/*.java</include> 
               </includes>
             
               <excludes>
@@ -133,11 +133,11 @@
             <configuration>
               <testIncludes>            
                 <include>com/prelert/job/**/*.java</include>
-                <include>com/prelert/rs/*.java</include>
+                <include>com/prelert/rs/**/*.java</include>
               </testIncludes>
             
               <testExcludes>
-                <exclude>com/prelert/rs/client/**</exclude>
+                <exclude>com/prelert/rs/client/**/*.java</exclude>
               </testExcludes>
             </configuration>
           </execution>
