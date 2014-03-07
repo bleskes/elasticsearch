@@ -154,10 +154,9 @@ public class SoakTest
 	 */
 	static private class SoakTestProducer implements Runnable
 	{		
-		public static final long DEFAULT_NUMBER_TIME_SERIES = 200;
+		public static final long DEFAULT_NUMBER_TIME_SERIES = 100000;
 		public static final long DEFAULT_TIME_SERIES_POINT_INTERVAL_SECS = 15;
-		//public static final long DEFAULT_NUMBER_ITERATIONS = 1;
-		public static final long DEFAULT_NUMBER_ITERATIONS = 60 * (60 / DEFAULT_TIME_SERIES_POINT_INTERVAL_SECS);
+		public static final long DEFAULT_NUMBER_ITERATIONS = 100;
 		
 		private long m_NumberTimeSeries = DEFAULT_NUMBER_TIME_SERIES;
 		private long m_PointIntervalMs = DEFAULT_TIME_SERIES_POINT_INTERVAL_SECS * 1000;
@@ -199,7 +198,18 @@ public class SoakTest
 		@Override
 		public void run()
 		{					
-			// try to do this in real time  
+			// HACK wait for the parent thread to open the connection 
+			// before writing
+			try 
+			{
+				Thread.sleep(1000);
+			}
+			catch (InterruptedException e1) 
+			{
+				s_Logger.error("Producer interruputed pausing before write start");
+			}
+
+			
 			try
 			{
 				writeHeader();
@@ -266,6 +276,7 @@ public class SoakTest
 			try 
 			{
 				m_OutputStream.write(header.getBytes(Charset.forName(DEFAULT_CHARSET)));
+				m_OutputStream.write(10); // newline
 			} 
 			catch (IOException e) 
 			{
@@ -287,6 +298,7 @@ public class SoakTest
 			try 
 			{
 				m_OutputStream.write(row.getBytes(Charset.forName(DEFAULT_CHARSET)));
+				m_OutputStream.write(10); // newline
 			} 
 			catch (IOException e) 
 			{
@@ -301,9 +313,9 @@ public class SoakTest
 	throws FileNotFoundException, IOException
 	{
 		final String SIMPLE_JOB_CONFIG = "{\"analysisConfig\" : {"
-				+ "\"bucketSpan\":600,"  
+				+ "\"bucketSpan\":60,"  
 				+ "\"detectors\" :" 
-				+ "[{\"fieldName\":\"metric_field\",\"byFieldName\":\"metric_value\"}] },"
+				+ "[{\"fieldName\":\"metric_value\",\"byFieldName\":\"metric_field\"}] },"
 				+ "\"dataDescription\":{\"fieldDelimiter\":\",\"} }}";
 		
 		if (args.length == 0)

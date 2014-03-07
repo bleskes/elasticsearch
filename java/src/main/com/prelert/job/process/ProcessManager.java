@@ -165,12 +165,12 @@ public class ProcessManager
 		{
 			if (future.cancel(false) == false)
 			{
-				s_Logger.warn("Failed to cancel future in dataToJob(,,,)");
+				s_Logger.warn("Failed to cancel future in dataToJob(...)");
 			}
 		}
 		else
 		{
-			s_Logger.debug("No future to cancel in dataToJob(,,,)");
+			s_Logger.debug("No future to cancel in dataToJob(...)");
 		}
 		
 		ProcessAndDataDescription process = m_JobIdToProcessMap.get(jobId);		
