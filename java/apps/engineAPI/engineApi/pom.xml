@@ -1,3 +1,4 @@
+
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
@@ -8,7 +9,7 @@
 
   <groupId>com.prelert</groupId>
   <artifactId>engineApi</artifactId>
-  <version>0.3.0</version>
+  <version>0.3.1</version>
   <packaging>jar</packaging>
 
   <name>engineApi</name>
@@ -32,7 +33,15 @@
       <artifactId>junit-dep</artifactId>
       <version>4.8.2</version>
       <scope>test</scope>
-    </dependency>   
+    </dependency>       
+    <!-- enunciate 
+
+    <dependency>
+      <groupId>org.codehaus.enunciate</groupId>
+      <artifactId>enunciate-rt</artifactId>
+      <version>1.28</version>
+    </dependency>  
+    -->  
     <!-- provided jars -->
     <dependency>     
       <groupId>org.elasticsearch</groupId>
@@ -106,7 +115,7 @@
             <configuration>
               <includes>            
                 <include>com/prelert/job/**/*.java</include>
-                <include>com/prelert/rs/**/*.java</include>            
+                <include>com/prelert/rs/**/*.java</include> 
               </includes>
             
               <excludes>
@@ -124,11 +133,11 @@
             <configuration>
               <testIncludes>            
                 <include>com/prelert/job/**/*.java</include>
-                <include>com/prelert/rs/**/*.java</include>            
+                <include>com/prelert/rs/**/*.java</include>
               </testIncludes>
             
               <testExcludes>
-                <exclude>com/prelert/rs/client/*</exclude>
+                <exclude>com/prelert/rs/client/**/*.java</exclude>
               </testExcludes>
             </configuration>
           </execution>
@@ -184,6 +193,33 @@
 
         </executions>
       </plugin>
+
+      <!-- Enunciate API documentation 
+      <plugin>
+        <groupId>org.codehaus.enunciate</groupId>
+        <artifactId>maven-enunciate-plugin</artifactId>
+        <version>1.28</version>
+
+        <configuration>
+        
+        </configuration>
+        <executions>
+          <execution>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>assemble</goal>
+            </goals>
+          </execution>
+        </executions>
+        <dependencies>
+          <dependency>
+            <groupId>org.codehaus.enunciate</groupId>
+            <artifactId>enunciate-amf</artifactId>
+            <version>1.28</version>
+          </dependency>
+        </dependencies>
+      </plugin>
+    -->
 
     </plugins>
   </build>

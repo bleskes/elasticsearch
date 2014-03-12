@@ -254,7 +254,7 @@ public class AnomalyRecord
 		return m_IsSimpleCount;
 	}
 
-	public void setSimpleCount(boolean value)
+	public void setIsSimpleCount(boolean value)
 	{
 		m_IsSimpleCount = value;
 	}
@@ -465,7 +465,7 @@ public class AnomalyRecord
 					token = parser.nextToken();
 					if (token == JsonToken.VALUE_FALSE || token == JsonToken.VALUE_TRUE)
 					{
-						record.setSimpleCount(parser.getBooleanValue());
+						record.setIsSimpleCount(parser.getBooleanValue());
 					}
 					else
 					{
