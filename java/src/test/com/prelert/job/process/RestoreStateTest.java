@@ -43,6 +43,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
+import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.JobDetails;
@@ -85,10 +86,10 @@ public class RestoreStateTest
 		Logger.getRootLogger().addAppender(console);
 		
 		
-		AnalysisConfig.Detector detector = new AnalysisConfig.Detector();
+		Detector detector = new Detector();
 		detector.setFieldName("responsetime");
 		detector.setByFieldName("airline");
-		List<AnalysisConfig.Detector> d = new ArrayList<>();
+		List<Detector> d = new ArrayList<>();
 		d.add(detector);
 		AnalysisConfig config = new AnalysisConfig();
 		config.setDetectors(d);

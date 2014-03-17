@@ -34,7 +34,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
@@ -180,6 +179,7 @@ public class JobDetails
 	 * WARNING THE OBJECT MAY BE IN AN INCONSITENT STATE AFTER THIS CONSTRUCTOR
 	 * @param values
 	 */
+	@SuppressWarnings("unchecked")
 	public JobDetails(Map<String, Object> values)
 	{
 		final DateFormat isoDateParser = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
@@ -260,26 +260,26 @@ public class JobDetails
 		if (values.containsKey(ANALYSIS_CONFIG))
 		{
 			Object obj = values.get(ANALYSIS_CONFIG);
-			if (obj != null && obj instanceof HashMap)
+			if (obj != null && obj instanceof Map)
 			{
-				m_AnalysisConfig = new AnalysisConfig((HashMap<String, Object>)obj);
+				m_AnalysisConfig = new AnalysisConfig((Map<String, Object>)obj);
 			}
 		}
 		if (values.containsKey(ANALYSIS_OPTIONS))
 		{
 			Object obj = values.get(ANALYSIS_OPTIONS);
-			if (obj != null && obj instanceof HashMap)
+			if (obj != null && obj instanceof Map)
 			{
-				m_AnalysisOptions = new AnalysisOptions((HashMap<String, Object>)obj); 
+				m_AnalysisOptions = new AnalysisOptions((Map<String, Object>)obj); 
 			}
 		}
 		
 		if (values.containsKey(DATA_DESCRIPTION))
 		{
 			Object obj = values.get(DATA_DESCRIPTION);
-			if (obj != null && obj instanceof HashMap)
+			if (obj != null && obj instanceof Map)
 			{
-				m_DataDescription = new DataDescription((HashMap<String, Object>)obj);
+				m_DataDescription = new DataDescription((Map<String, Object>)obj);
 			}
 		}
 	}
@@ -547,7 +547,7 @@ public class JobDetails
 	 * @param o2
 	 * @return
 	 */
-	public static boolean bothNullOrEqual(Object o1, Object o2)
+	public static <T> boolean bothNullOrEqual(T o1, T o2)
 	{
 		if (o1 == null && o2 == null)
 		{

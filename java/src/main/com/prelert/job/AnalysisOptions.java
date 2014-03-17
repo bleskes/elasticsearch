@@ -30,7 +30,8 @@ package com.prelert.job;
 import java.util.Map;
 
 /**
- * Analysis options.
+ * Analysis options for autodetect (max field values, max time buckets). 
+ * 
  * If an option has not been set it's value will be 0 in which case it
  * shouldn't be used so the default value is picked up instead.
  */
@@ -61,6 +62,10 @@ public class AnalysisOptions
 		m_MaxTimeBuckets = maxTimeBuckets;
 	}
 	
+	/**
+	 * Create and set field values from the Map.
+	 * @param values
+	 */
 	public AnalysisOptions(Map<String, Object> values)
 	{
 		this();
@@ -70,7 +75,7 @@ public class AnalysisOptions
 			Object obj = values.get(MAX_FIELD_VALUES);
 			if (obj != null)
 			{
-				m_MaxFieldValues = (Long)obj;
+				m_MaxFieldValues = ((Number)obj).longValue();
 			}
 		}	
 		if (values.containsKey(MAX_TIME_BUCKETS))
@@ -78,7 +83,7 @@ public class AnalysisOptions
 			Object obj = values.get(MAX_TIME_BUCKETS);
 			if (obj != null)
 			{
-				m_MaxTimeBuckets = (Long)obj;
+				m_MaxTimeBuckets = ((Number)obj).longValue();
 			}
 		}		
 		
@@ -95,6 +100,11 @@ public class AnalysisOptions
 		return m_MaxFieldValues;
 	}
 	
+	public void setMaxFieldValues(long value)
+	{
+		m_MaxFieldValues = value;
+	}
+	
 	/**
 	 *  Maximum number of time buckets to process during anomaly detection 
 	 *  before ceasing to output results.
@@ -104,6 +114,11 @@ public class AnalysisOptions
 	public long getMaxTimeBuckets()
 	{
 		return m_MaxTimeBuckets;
+	}
+	
+	public void setMaxTimeBuckets(long value)
+	{
+		m_MaxTimeBuckets = value;
 	}
 	
 	

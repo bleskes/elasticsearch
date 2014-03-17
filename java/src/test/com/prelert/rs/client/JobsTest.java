@@ -54,6 +54,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
+import com.prelert.job.Detector;
 import com.prelert.job.JobDetails;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
@@ -212,7 +213,7 @@ public class JobsTest implements Closeable
 		}
 		JobDetails job = doc.getDocument();
 		
-		AnalysisConfig.Detector d = new AnalysisConfig.Detector();
+		Detector d = new Detector();
 		d.setFieldName("hitcount");
 		d.setByFieldName("url");
 		AnalysisConfig ac = new AnalysisConfig();
@@ -275,7 +276,7 @@ public class JobsTest implements Closeable
 		}
 		JobDetails job = doc.getDocument();
 		
-		AnalysisConfig.Detector d = new AnalysisConfig.Detector();
+		Detector d = new Detector();
 		d.setFieldName("responsetime");
 		d.setByFieldName("airline");
 		AnalysisConfig ac = new AnalysisConfig();
@@ -385,7 +386,7 @@ public class JobsTest implements Closeable
 	
 	private void verifyFareQuoteTimeFormatJobTest(JobDetails job, String location) 
 	{
-		AnalysisConfig.Detector d = new AnalysisConfig.Detector();
+		Detector d = new Detector();
 		d.setFieldName("responsetime");
 		d.setByFieldName("airline");
 		AnalysisConfig ac = new AnalysisConfig();
@@ -448,7 +449,7 @@ public class JobsTest implements Closeable
 		}
 		JobDetails job = doc.getDocument();
 		
-		AnalysisConfig.Detector d = new AnalysisConfig.Detector();
+		Detector d = new Detector();
 		d.setFieldName("responsetime");
 		d.setByFieldName("airline");
 		AnalysisConfig ac = new AnalysisConfig();
@@ -827,6 +828,8 @@ public class JobsTest implements Closeable
 		{
 			baseUrl = args[0];
 		}
+		
+		baseUrl = "http://vm-centos-62-64-1:8000/engine/beta/jobs";
 		
 		s_Logger.info("Testing Service at " + baseUrl);
 		

@@ -41,56 +41,7 @@ import java.util.List;
  */
 public class JobConfiguration 
 {
-	static public class JobConfigurationBuilder
-	{
-		private JobConfiguration m_JobConfig;
-		
-		public JobConfigurationBuilder(String jobReferenceId)
-		{
-			m_JobConfig = new JobConfiguration(jobReferenceId);
-		}
-		
-		public JobConfigurationBuilder(AnalysisConfig analysisConfig)
-		{
-			m_JobConfig = new JobConfiguration(analysisConfig);
-		}
-				
-		public JobConfigurationBuilder analysisOptions(AnalysisOptions analysisOptions)
-		{		
-			m_JobConfig.m_AnalysisOptions = analysisOptions;
-			return this;
-		}
-		
-		public JobConfigurationBuilder dataDescription(DataDescription dataDescription)
-		{		
-			m_JobConfig.m_DataDescription = dataDescription;
-			return this;
-		}
-		
-		public JobConfigurationBuilder addFile(URL url)
-		{		
-			m_JobConfig.m_FileUrls.add(url);
-			return this;
-		}
-		
-		public JobConfigurationBuilder timeout(Long timeout)
-		{
-			m_JobConfig.m_Timeout = timeout;
-			return this;
-		}
-		
-		public JobConfigurationBuilder persistModel(Boolean persist)
-		{
-			m_JobConfig.m_PersistModel = persist;
-			return this;
-		}
-		
-		public JobConfiguration build()
-		{
-			return m_JobConfig;
-		}
-	}
-		
+	
 	private AnalysisConfig m_AnalysisConfig;
 	private AnalysisOptions m_AnalysisOptions;
 	private DataDescription m_DataDescription;
@@ -220,5 +171,56 @@ public class JobConfiguration
 	public void setDataDescription(DataDescription description)
 	{
 		m_DataDescription = description;
+	}
+	
+	
+	static public class JobConfigurationBuilder
+	{
+		private JobConfiguration m_JobConfig;
+		
+		public JobConfigurationBuilder(String jobReferenceId)
+		{
+			m_JobConfig = new JobConfiguration(jobReferenceId);
+		}
+		
+		public JobConfigurationBuilder(AnalysisConfig analysisConfig)
+		{
+			m_JobConfig = new JobConfiguration(analysisConfig);
+		}
+				
+		public JobConfigurationBuilder analysisOptions(AnalysisOptions analysisOptions)
+		{		
+			m_JobConfig.m_AnalysisOptions = analysisOptions;
+			return this;
+		}
+		
+		public JobConfigurationBuilder dataDescription(DataDescription dataDescription)
+		{		
+			m_JobConfig.m_DataDescription = dataDescription;
+			return this;
+		}
+		
+		public JobConfigurationBuilder addFile(URL url)
+		{		
+			m_JobConfig.m_FileUrls.add(url);
+			return this;
+		}
+		
+		public JobConfigurationBuilder timeout(Long timeout)
+		{
+			m_JobConfig.m_Timeout = timeout;
+			return this;
+		}
+		
+		public JobConfigurationBuilder persistModel(Boolean persist)
+		{
+			m_JobConfig.m_PersistModel = persist;
+			return this;
+		}
+		
+		public JobConfiguration build()
+		{
+			return m_JobConfig;
+		}
 	}
 }
