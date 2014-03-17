@@ -243,7 +243,9 @@ public class ProcessManager
 			String msg = String.format("Exception writing to process for job %s", jobId);
 			s_Logger.error(msg, e);
 			
-			StringBuilder sb = new StringBuilder(msg).append('\n');
+			
+			StringBuilder sb = new StringBuilder(msg)
+					.append('\n').append(e.getMessage()).append('\n');
 			readProcessErrorOutput(process, sb);
 			
 			throw new NativeProcessRunException(sb.toString(), e);
@@ -935,6 +937,13 @@ public class ProcessManager
 	{
 		try
 		{
+			if (process.getErrorReader().ready() == false)
+			{
+				s_Logger.info("No Error output to read from native process");
+				return sb;				
+			}
+			
+			
 			String line;
 			while ((line = process.getErrorReader().readLine()) != null)
 			{
