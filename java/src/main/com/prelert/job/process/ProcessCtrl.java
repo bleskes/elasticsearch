@@ -48,6 +48,7 @@ import com.prelert.job.AnalysisConfig;
 import com.prelert.job.AnalysisConfig.Detector;
 import com.prelert.job.AnalysisOptions;
 import com.prelert.job.DataDescription;
+import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.DetectorState;
 import com.prelert.job.JobDetails;
 
@@ -128,6 +129,7 @@ public class ProcessCtrl
 	static final public String USE_NULL_ARG = "--usenull=";
 	static final public String LOG_ID_ARG = "--logid=";
 	static final public String DELIMITER_ARG = "--delimiter=";
+	static final public String LENGTH_ENCODED_INPUT_ARG = "--lengthEncodedInput";
 	static final public String TIME_FIELD_ARG = "--timefield=";
 	static final public String TIME_FORMAT_ARG = "--timeformat=";
 	static final public String RESTORE_STATE_ARG = "--restoreState=";
@@ -355,7 +357,11 @@ public class ProcessCtrl
 		DataDescription dataDescription = job.getDataDescription();
 		if (dataDescription != null)
 		{
-			if (dataDescription.getFieldDelimiter() != null)
+			if (dataDescription.getFormat() == DataFormat.JSON)
+			{
+				command.add(LENGTH_ENCODED_INPUT_ARG);
+			}
+			else if (dataDescription.getFieldDelimiter() != null)
 			{
 				String delimiterArg = DELIMITER_ARG
 						+  dataDescription.getFieldDelimiter();
