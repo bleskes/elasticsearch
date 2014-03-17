@@ -48,6 +48,7 @@ import com.prelert.job.AnalysisConfig;
 import com.prelert.job.AnalysisConfig.Detector;
 import com.prelert.job.AnalysisOptions;
 import com.prelert.job.DataDescription;
+import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.DetectorState;
 import com.prelert.job.JobDetails;
 
@@ -117,7 +118,7 @@ public class ProcessCtrl
 	
 	/**
 	 * Program arguments 
-	 */                                         
+	 */
 	static final public String BUCKET_SPAN_ARG = "--bucketspan=";
 	static final public String FIELD_CONFIG_ARG = "--fieldconfig=";
 	static final public String MODEL_CONFIG_ARG = "--modelconfig=";
@@ -128,6 +129,7 @@ public class ProcessCtrl
 	static final public String USE_NULL_ARG = "--usenull=";
 	static final public String LOG_ID_ARG = "--logid=";
 	static final public String DELIMITER_ARG = "--delimiter=";
+	static final public String LENGTH_ENCODED_INPUT_ARG = "--lengthEncodedInput";
 	static final public String TIME_FIELD_ARG = "--timefield=";
 	static final public String TIME_FORMAT_ARG = "--timeformat=";
 	static final public String RESTORE_STATE_ARG = "--restoreState=";
@@ -173,6 +175,7 @@ public class ProcessCtrl
 	/**
 	 * Field config file strings
 	 */
+	static final private String DOT_IS_ENABLED = ".isEnabled";
 	static final private String DOT_USE_NULL = ".useNull";
 	static final private String DOT_BY = ".by";
 	static final private String DOT_OVER = ".over";
@@ -313,6 +316,7 @@ public class ProcessCtrl
 			DetectorState detectorState)
 	throws IOException
 	{
+		// TODO unit test for this build command stuff
 		s_Logger.info("PRELERT_HOME is set to " + PRELERT_HOME);
 		
 		List<String> command = new ArrayList<>();
@@ -353,7 +357,11 @@ public class ProcessCtrl
 		DataDescription dataDescription = job.getDataDescription();
 		if (dataDescription != null)
 		{
-			if (dataDescription.getFieldDelimiter() != null)
+			if (dataDescription.getFormat() == DataFormat.JSON)
+			{
+				command.add(LENGTH_ENCODED_INPUT_ARG);
+			}
+			else if (dataDescription.getFieldDelimiter() != null)
 			{
 				String delimiterArg = DELIMITER_ARG
 						+  dataDescription.getFieldDelimiter();
@@ -415,51 +423,20 @@ public class ProcessCtrl
 			if (job.getAnalysisConfig().getDetectors().size() == 1)
 			{
 				// Only one set of field args so use the command line options
-				Detector detector = job.getAnalysisConfig().getDetectors().get(0);
-
-				if (detector.isUseNull() != null)
-				{
-					String usenull = USE_NULL_ARG + detector.isUseNull();
-					command.add(usenull);
-				}
-
-				if (detector.getFunction() != null)
-				{
-					if (detector.getFieldName() != null)
-					{
-						command.add(detector.getFunction() + "(" + detector.getFieldName() + ")");
-					}
-					else
-					{
-						command.add(detector.getFunction());
-					}
-				}
-				else if (detector.getFieldName() != null)
-				{
-					command.add(detector.getFieldName());
-				}
-				else
-				{
-					// TODO maybe return error instead?
-					command.add("count");
-				}
-
-				if (detector.getByFieldName() != null)
-				{
-					command.add(BY_ARG);
-					command.add(detector.getByFieldName());
-				}
-				if (detector.getOverFieldName() != null)
-				{
-					command.add(OVER_ARG);
-					command.add(detector.getOverFieldName());
-				}
+				List<String> args = detectorConfigToCommandLinArgs(job.getAnalysisConfig().getDetectors().get(0));
+				command.addAll(args);			
 			}
 			else
 			{
 				// write to a temporary field config file
 				File fieldConfigFile = File.createTempFile("fieldconfig", ".conf");
-				writeFieldConfig(job.getAnalysisConfig(), fieldConfigFile);
+				try (OutputStreamWriter osw = new OutputStreamWriter(
+						new FileOutputStream(fieldConfigFile),
+						Charset.forName("UTF-8")))
+				{
+					writeFieldConfig(job.getAnalysisConfig(), osw);
+				}
+				
 				String modelConfig = FIELD_CONFIG_ARG + fieldConfigFile.toString();
 				command.add(modelConfig);	
 			}
@@ -491,11 +468,13 @@ public class ProcessCtrl
 		StringBuilder contents = new StringBuilder("[anomaly]").append(NEW_LINE);
 		if (options.getMaxFieldValues() > 0)
 		{
-			contents.append("maxfieldvalues = ").append(options.getMaxFieldValues()).append(NEW_LINE);
+			contents.append(AnalysisOptions.MAX_FIELD_VALUES + " = ")
+					.append(options.getMaxFieldValues()).append(NEW_LINE);
 		}
 		if (options.getMaxTimeBuckets() > 0)
 		{
-			contents.append("maxtimebuckets = ").append(options.getMaxTimeBuckets()).append(NEW_LINE);
+			contents.append(AnalysisOptions.MAX_TIME_BUCKETS + " = ")
+					.append(options.getMaxTimeBuckets()).append(NEW_LINE);
 		}
 
 		try (OutputStreamWriter osw = new OutputStreamWriter(
@@ -506,13 +485,68 @@ public class ProcessCtrl
 		}		
 	}
 	
+	
 	/**
-	 * Write the Prelert autodetect field options to <code>emptyConfFile</code>.
+	 * Interpret the detector object as a list of strings in the format
+	 * expected by autodetect api to configure t 
+	 * 
+	 * @param detector
+	 * @return
+	 */
+	public List<String> detectorConfigToCommandLinArgs(Detector detector)
+	{
+		List<String> commandLineArgs = new ArrayList<>();
+		
+		if (detector.isUseNull() != null)
+		{
+			String usenull = USE_NULL_ARG + detector.isUseNull();
+			commandLineArgs.add(usenull);
+		}
+
+		if (detector.getFunction() != null)
+		{
+			if (detector.getFieldName() != null)
+			{
+				commandLineArgs.add(detector.getFunction() + "(" + detector.getFieldName() + ")");
+			}
+			else
+			{
+				commandLineArgs.add(detector.getFunction());
+			}
+		}
+		else if (detector.getFieldName() != null)
+		{
+			commandLineArgs.add(detector.getFieldName());
+		}
+		else
+		{
+			// TODO maybe return error instead?
+			commandLineArgs.add("count");
+		}
+
+		if (detector.getByFieldName() != null)
+		{
+			commandLineArgs.add(BY_ARG);
+			commandLineArgs.add(detector.getByFieldName());
+		}
+		if (detector.getOverFieldName() != null)
+		{
+			commandLineArgs.add(OVER_ARG);
+			commandLineArgs.add(detector.getOverFieldName());
+		}
+		
+		return commandLineArgs;
+	}
+	
+	
+	/**
+	 * Write the Prelert autodetect field options to the output stream.
 	 *
-	 * @param emptyConfFile
+	 * @param config The configuration to write
+	 * @param osw Stream to write to
 	 * @throws IOException
 	 */
-	private void writeFieldConfig(AnalysisConfig config, File emptyConfFile)
+	public void writeFieldConfig(AnalysisConfig config, OutputStreamWriter osw)
 	throws IOException
 	{
 		StringBuilder contents = new StringBuilder();
@@ -559,6 +593,15 @@ public class ProcessCtrl
 			}
 			detectorKeys.add(key);
 
+			// .isEnabled is only necessary if nothing else is going to be added
+			// for this key
+			if (detector.isUseNull() == null &&
+				detector.getByFieldName() == null &&
+				detector.getOverFieldName() == null)
+			{
+				contents.append(key).append(DOT_IS_ENABLED).append(" = true").append(NEW_LINE);
+			}
+
 			if (detector.isUseNull() != null)
 			{
 				contents.append(key).append(DOT_USE_NULL)
@@ -578,12 +621,7 @@ public class ProcessCtrl
 
 		s_Logger.debug("FieldConfig = " + contents.toString());	
 
-		try (OutputStreamWriter osw = new OutputStreamWriter(
-				new FileOutputStream(emptyConfFile),
-				Charset.forName("UTF-8")))
-		{
-			osw.write(contents.toString());
-		}
+		osw.write(contents.toString());
 	}
 	
 	/**

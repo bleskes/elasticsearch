@@ -27,11 +27,15 @@
 
 package com.prelert.job.process;
 
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -97,7 +101,12 @@ public class ProcessManager
 	public enum ProcessStatus {IN_USE, COMPLETED, NOT_FOUND};
 	
 	static private final Logger s_Logger = Logger.getLogger(ProcessManager.class);
-	
+
+	/**
+	 * Avoid looking up this same charset millions of times.
+	 */
+	static private final Charset UTF8_CHARSET = Charset.forName("UTF-8");
+
 	private ProcessCtrl m_ProcessCtrl;
 	
 	private ConcurrentMap<String, ProcessAndDataDescription> m_JobIdToProcessMap;
@@ -163,7 +172,14 @@ public class ProcessManager
 		ScheduledFuture<?> future = m_JobIdToTimeoutFuture.remove(jobId);
 		if (future != null)
 		{
-			future.cancel(false);
+			if (future.cancel(false) == false)
+			{
+				s_Logger.warn("Failed to cancel future in dataToJob(...)");
+			}
+		}
+		else
+		{
+			s_Logger.debug("No future to cancel in dataToJob(...)");
 		}
 		
 		ProcessAndDataDescription process = m_JobIdToProcessMap.get(jobId);		
@@ -173,6 +189,7 @@ public class ProcessManager
 			// create the new process an restore its state 
 			// if it has been saved
 			process = createProcess(jobId);
+			m_JobIdToProcessMap.put(jobId, process);
 		}
 		
 		// We can't write data if someone is already writing to the process.
@@ -188,29 +205,35 @@ public class ProcessManager
 		
 		// write the data to the process
 		try
-		{			
+		{
 			process.setInUse(true);
-			
+
+			// Oracle's documentation recommends buffering process streams
+			BufferedOutputStream os = new BufferedOutputStream(
+					process.getProcess().getOutputStream());
+
 			if (process.getDataDescription() != null &&
 					process.getDataDescription().transform())
 			{
 				if (process.getDataDescription().getFormat() == DataFormat.JSON)
 				{
-					transformAndPipeJson(process.getDataDescription(), input, 
-							process.getProcess().getOutputStream());
+					transformAndPipeJson(process.getDataDescription(), input,
+							os);
 				}
-				else 
-				{				
-					transformAndPipeCsv(process.getDataDescription(), input, 
-							process.getProcess().getOutputStream());
-				}				
+				else
+				{
+					transformAndPipeCsv(process.getDataDescription(), input,
+							os);
+				}
 			}
 			else
 			{
 				// no transform write the data straight through
-				pipe(input, process.getProcess().getOutputStream());
+				pipe(input, os);
 			}
-			
+
+			os.flush();
+
 			// check there wasn't an error in the input. 
 			// throws if there was. 
 			processStillRunning(process, jobId);
@@ -295,14 +318,10 @@ public class ProcessManager
 					+ "for job " + job.getId(), e);
 		}				
 
-		m_JobIdToProcessMap.put(jobId, procAndDD);
-		ScheduledFuture<?> future = startShutdownTimer(jobId, job.getTimeout());
-		
-		m_JobIdToTimeoutFuture.put(jobId, future);
-
 		// Launch results parser in a new thread
 		Thread th = new Thread(m_ResultsReaderFactory.newResultsParser(jobId, 
-								procAndDD.getProcess().getInputStream()));
+								procAndDD.getProcess().getInputStream()),
+								"Bucket-Parser");
 		th.start();		
 		
 		s_Logger.debug("Created process for job " + jobId);
@@ -315,69 +334,91 @@ public class ProcessManager
 	 * Stop the running process.
 	 * Closing the stream into the native process causes the process
 	 * to terminate its IO loop and stop.<br/>
-	 * The return value is based on the status of the native process if it
-	 * cannot be found ProcessStatus.NOT_FOUND is returned else 
-	 * ProcessStatus.IN_USE if the process is currently processing data in which
-	 * case this function should be tried again after a wait period. If the
-	 * process is stopped successfully ProcessStatus.COMPLETED is returned.
+	 * The return value is based on the status of the native process  
+	 * ProcessStatus.IN_USE is returned if the process is currently processing
+	 * data in which case this function should be tried again after a wait period 
+	 * else the process is stopped successfully and ProcessStatus.COMPLETED is 
+	 * returned.
 	 * 
 	 * @param jobId
 	 * @return The process finished status
 	 * @throws UnknownJobException If the job is already finished or cannot be 
 	 * found
-	 * @throws NativeProcessRunException 
+	 * @throws NativeProcessRunException If the process has already terminated
 	 */
 	public ProcessStatus finishJob(String jobId) 
 	throws UnknownJobException, NativeProcessRunException 
 	{
 		s_Logger.info("Finishing job " + jobId);
 		
-		ScheduledFuture<?> future = m_JobIdToTimeoutFuture.get(jobId);
-		if (future == null)
+		ProcessAndDataDescription process = m_JobIdToProcessMap.get(jobId);	
+		if (process == null)
+		{						
+			s_Logger.error("No job with id '" + jobId + "' to shutdown");
+			// tidy up
+			m_JobIdToTimeoutFuture.remove(jobId);			
+			throw new UnknownJobException(jobId, "Cannot finish job");
+		}
+		
+		
+		if (process.isInUse())
 		{
-			s_Logger.error("No timeout future for job '" + jobId + "'");
+			s_Logger.error("Cannot finish job while it is reading data");
+			return ProcessStatus.IN_USE;
+		}
+		
+		
+		// cancel any time out futures
+		ScheduledFuture<?> future = m_JobIdToTimeoutFuture.get(jobId);
+		if (future != null)
+		{
+			if (future.cancel(false) == false)
+			{
+				s_Logger.warn("Failed to cancel future in finishJob()");
+			}
 		}
 		else
 		{
-			future.cancel(false);			
-		}		
+			s_Logger.debug("No future to cancel in finishJob()");
+		}
 		m_JobIdToTimeoutFuture.remove(jobId);
 		
-		ProcessAndDataDescription process = m_JobIdToProcessMap.get(jobId);	
-		if (process == null)
-		{
-			s_Logger.error("No job with id '" + jobId + "' to shutdown");
-			throw new UnknownJobException(jobId, "Cannot finish job");
-		}
 		
 		try
 		{
 			// check the process is running, throws if not
-			processStillRunning(process, jobId);
-
-			if (process.isInUse())
+			if (processStillRunning(process, jobId))
 			{
-				s_Logger.error("Cannot finish job while it is reading data");
-				return ProcessStatus.IN_USE;
-			}
-
-			try 
-			{
-				// stop the process and remove from map
-				process.getProcess().getOutputStream().close();
-			} 
-			catch (IOException e) 
-			{
-				s_Logger.error("Error closing process stream", e);
-				// return process completed as if it's outputstream is 
-				// closed than it has stopped
+				m_JobIdToProcessMap.remove(jobId);	
+				try
+				{
+					process.getProcess().getOutputStream().close();
+				}
+				catch (IOException ioe)
+				{
+					s_Logger.debug("Exception closing running process input stream");
+				}
 			}
 		}
-		finally
+		catch (NativeProcessRunException e) 
 		{
-			m_JobIdToProcessMap.remove(jobId);		
+			s_Logger.error("Native process has already exited", e);
+			
+			// clean up resources and re-throw
+			m_JobIdToProcessMap.remove(jobId);				
+			try
+			{
+				process.getProcess().getOutputStream().close();
+			}
+			catch (IOException ioe)
+			{
+				s_Logger.debug("Exception closing stopped process input stream");
+			}
+			
+			throw e;
 		}
-				
+			
+
 		return ProcessStatus.COMPLETED;
 	}
 
@@ -402,6 +443,7 @@ public class ProcessManager
 		try
 		{			
 			int exitValue = process.getProcess().exitValue();
+			
 			// If we get here the process has exited. 
 			String msg = String.format("Process exited with code %d.", exitValue);			
 			s_Logger.error(msg + "Removing resources for job " + jobId);
@@ -437,7 +479,6 @@ public class ProcessManager
 		{
 			os.write(buffer, 0, n);
 		}		
-		os.flush();
 	}
 	
 	private void transformAndPipeCsv(DataDescription dd, InputStream is, OutputStream os)
@@ -482,30 +523,34 @@ public class ProcessManager
 				throw new IOException(message);
 			}
 			
-			try (CsvListWriter csvWriter = new CsvListWriter(new OutputStreamWriter(os), csvPref))
-			{				
-				csvWriter.writeHeader(header);
 
-				DateFormat dateFormat = new SimpleDateFormat(dd.getTimeFormat());
 
-				List<String> line;
-				while ((line = csvReader.read()) != null)
+			// Don't close the output stream as it causes the autodetect 
+			// process to quit
+			@SuppressWarnings("resource")
+			CsvListWriter csvWriter = new CsvListWriter(new OutputStreamWriter(os), csvPref);
+
+			csvWriter.writeHeader(header);
+
+			DateFormat dateFormat = new SimpleDateFormat(dd.getTimeFormat());
+
+			List<String> line;
+			while ((line = csvReader.read()) != null)
+			{
+				try
 				{
-					try
-					{
-						String epoch =  new Long(dateFormat.parse(line.get(timeFieldIndex)).getTime() / 1000).toString();
-						line.set(timeFieldIndex, epoch);
+					String epoch =  new Long(dateFormat.parse(line.get(timeFieldIndex)).getTime() / 1000).toString();
+					line.set(timeFieldIndex, epoch);
 
-						csvWriter.write(line);
-					}
-					catch (ParseException pe)
-					{
-						String message = String.format("Cannot parse date '%s' with format string '%s'",
-								line.get(timeFieldIndex), dd.getTimeFormat());
-
-						s_Logger.error(message);
-					}		
+					csvWriter.write(line);
 				}
+				catch (ParseException pe)
+				{
+					String message = String.format("Cannot parse date '%s' with format string '%s'",
+							line.get(timeFieldIndex), dd.getTimeFormat());
+
+					s_Logger.error(message);
+				}		
 			}
 		}
 	}
@@ -558,176 +603,235 @@ public class ProcessManager
 		{
 			pipeJson(parser, os);
 		}
-		os.flush();
-		
+
 		parser.close();	
 	}
-	
+
+
 	/**
 	 * Parse the Json objects and write to output stream.
-	 * 
+	 *
 	 * @param parser
 	 * @param os
-	 * @throws IOException 
-	 * @throws JsonParseException 
+	 * @throws IOException
+	 * @throws JsonParseException
 	 */
-	private void pipeJson(JsonParser parser, OutputStream os) 
+	private void pipeJson(JsonParser parser, OutputStream os)
 	throws JsonParseException, IOException
-	{	
-		StringBuilder line = new StringBuilder();
+	{
+		int numFields = 0;
+
 		// first extract the field names and write those as the header
+		// (the size will increase if necessary, but it's silly to start with
+		// the default of 32)
+		ByteArrayOutputStream header = new ByteArrayOutputStream(1024);
+		ByteArrayOutputStream firstLine = new ByteArrayOutputStream(1024);
 
-		StringBuilder header = new StringBuilder();
-		
-		JsonToken token = parser.nextToken();
-		while (token != JsonToken.END_OBJECT)
-		{
-			if (token == JsonToken.FIELD_NAME)
-			{
-				header.append(parser.getCurrentName())
-					.append(DataDescription.DEFAULT_DELIMITER);
-				
-				token = parser.nextToken();
-				line.append(parser.getText())
-				.	append(DataDescription.DEFAULT_DELIMITER);
-			}
-			token = parser.nextToken();
-		}		
-		// overwrite the extra delimiter char with a newline
-		header.setCharAt(header.length() -1, DataDescription.LINE_ENDING);
-		line.setCharAt(line.length() -1, DataDescription.LINE_ENDING);
+		// This will be used to convert 32 bit integers to network byte order
+		ByteBuffer lenBuffer = ByteBuffer.allocate(4);
 
-		
-		os.write(header.toString().getBytes("UTF-8"));
-		os.write(line.toString().getBytes("UTF-8"));
-		line.delete(0, line.length());
-		
-		// now send the rest of the data
-		int recordCount = 1;
-		token = parser.nextToken();
-		while (token == JsonToken.START_OBJECT)
-		{			
-			while (token != JsonToken.END_OBJECT)
-			{
-				if (token == JsonToken.FIELD_NAME)
-				{
-					token = parser.nextToken();
-					line.append(parser.getText())
-						.append(DataDescription.DEFAULT_DELIMITER);
-				}
-				token = parser.nextToken();
-			}
-			// remove the extra delimiter char
-			line.setCharAt(line.length() -1, DataDescription.LINE_ENDING);
-			
-			os.write(line.toString().getBytes("UTF-8"));
-
-			line.delete(0, line.length());
-			recordCount++;
-			token = parser.nextToken();
-		}
-		os.flush();
-		
-		s_Logger.info("Transferred " + recordCount + " Json records to autodetect.");
-	}	
-	
-	/**
-	 * Parse the Json objects convert the timestamp to epoch time
-	 * and write to output stream. This shares a lot of code with
-	 * {@linkplain #pipeJson(JsonParser, OutputStream)} repeated
-	 * for the sake of efficiency.
-	 * 
-	 * @param parser
-	 * @param os
-	 * @param dd
-	 * @throws IOException 
-	 * @throws JsonParseException 
-	 */
-	private void pipeJsonAndTransformTime(JsonParser parser, OutputStream os,
-			DataDescription dd) 
-	throws JsonParseException, IOException
-	{	
-		DateFormat dateFormat = new SimpleDateFormat(dd.getTimeFormat());
-		String timeField = dd.getTimeField();
-		if (timeField == null)
-		{
-			timeField = ProcessCtrl.DEFAULT_TIME_FIELD;
-		}
-		
-		
-		StringBuilder line = new StringBuilder();
-		// first extract the field names and write those as the header
-		StringBuilder header = new StringBuilder();
-		
 		JsonToken token = parser.nextToken();
 		while (token != JsonToken.END_OBJECT)
 		{
 			if (token == JsonToken.FIELD_NAME)
 			{
 				String fieldName = parser.getCurrentName();
-				header.append(fieldName)
-					.append(DataDescription.DEFAULT_DELIMITER);
-				
+				lenBuffer.clear();
+				lenBuffer.putInt(fieldName.length());
+				header.write(lenBuffer.array());
+				header.write(fieldName.getBytes(UTF8_CHARSET));
+
 				token = parser.nextToken();
-				String value = parser.getText();
-				
-				if (fieldName.equals(timeField))
-				{
-					try 
-					{
-						value = new Long(dateFormat.parse(value).getTime() / 1000).toString();
-					}
-					catch (ParseException e) 
-					{
-						s_Logger.error("Cannot parse '" + value + 
-								"' as a date using format string '" + 
-								dd.getTimeFormat() + "'");
-					}
-				}
-				
-				line.append(value)
-				.	append(DataDescription.DEFAULT_DELIMITER);
+				String fieldValue = parser.getText();
+				lenBuffer.clear();
+				lenBuffer.putInt(fieldValue.length());
+				firstLine.write(lenBuffer.array());
+				firstLine.write(fieldValue.getBytes(UTF8_CHARSET));
+
+				++numFields;
 			}
 			token = parser.nextToken();
-		}		
-		// overwrite the extra delimiter char with a newline
-		header.setCharAt(header.length() -1, DataDescription.LINE_ENDING);
-		line.setCharAt(line.length() -1, DataDescription.LINE_ENDING);
+		}
 
-		
-		os.write(header.toString().getBytes("UTF-8"));
-		os.write(line.toString().getBytes("UTF-8"));
-		line.delete(0, line.length());
-		
+		ByteBuffer numFieldsBuffer = ByteBuffer.allocate(4);
+		numFieldsBuffer.putInt(numFields);
+
+		// Each record consists of number of fields followed by length/value
+		// pairs.  See CLengthEncodedInputParser.h in the C++ code for a more
+		// detailed description.
+		header.flush();
+		os.write(numFieldsBuffer.array());
+		os.write(header.toByteArray());
+		header.close();
+
+		firstLine.flush();
+		os.write(numFieldsBuffer.array());
+		os.write(firstLine.toByteArray());
+		firstLine.close();
+
 		// now send the rest of the data
 		int recordCount = 1;
 		token = parser.nextToken();
 		while (token == JsonToken.START_OBJECT)
-		{			
+		{
+			os.write(numFieldsBuffer.array());
+
 			while (token != JsonToken.END_OBJECT)
 			{
 				if (token == JsonToken.FIELD_NAME)
 				{
 					token = parser.nextToken();
-					line.append(parser.getText())
-						.append(DataDescription.DEFAULT_DELIMITER);
+					String fieldValue = parser.getText();
+					lenBuffer.clear();
+					lenBuffer.putInt(fieldValue.length());
+					os.write(lenBuffer.array());
+					os.write(fieldValue.getBytes(UTF8_CHARSET));
 				}
 				token = parser.nextToken();
 			}
-			// remove the extra delimiter char
-			line.setCharAt(line.length() -1, DataDescription.LINE_ENDING);
-			
-			os.write(line.toString().getBytes("UTF-8"));
 
-			line.delete(0, line.length());
-			recordCount++;
+			++recordCount;
 			token = parser.nextToken();
 		}
-		os.flush();
-		
+
+		s_Logger.info("Transferred " + recordCount + " Json records to autodetect.");
+	}
+
+
+	/**
+	 * Parse the Json objects convert the timestamp to epoch time
+	 * and write to output stream. This shares a lot of code with
+	 * {@linkplain #pipeJson(JsonParser, OutputStream)} repeated
+	 * for the sake of efficiency.
+	 *
+	 * @param parser
+	 * @param os
+	 * @param dd
+	 * @throws IOException
+	 * @throws JsonParseException
+	 */
+	private void pipeJsonAndTransformTime(JsonParser parser, OutputStream os,
+			DataDescription dd)
+	throws JsonParseException, IOException
+	{
+		DateFormat dateFormat = new SimpleDateFormat(dd.getTimeFormat());
+		String timeField = dd.getTimeField();
+		if (timeField == null)
+		{
+			timeField = ProcessCtrl.DEFAULT_TIME_FIELD;
+		}
+
+		int numFields = 0;
+
+		// first extract the field names and write those as the header
+		// (the size will increase if necessary, but it's silly to start with
+		// the default of 32)
+		ByteArrayOutputStream header = new ByteArrayOutputStream(1024);
+		ByteArrayOutputStream firstLine = new ByteArrayOutputStream(1024);
+
+		// This will be used to convert 32 bit integers to network byte order
+		ByteBuffer lenBuffer = ByteBuffer.allocate(4);
+
+		JsonToken token = parser.nextToken();
+		while (token != JsonToken.END_OBJECT)
+		{
+			if (token == JsonToken.FIELD_NAME)
+			{
+				String fieldName = parser.getCurrentName();
+				lenBuffer.clear();
+				lenBuffer.putInt(fieldName.length());
+				header.write(lenBuffer.array());
+				header.write(fieldName.getBytes(UTF8_CHARSET));
+
+				token = parser.nextToken();
+				String fieldValue = parser.getText();
+
+				if (fieldName.equals(timeField))
+				{
+					try
+					{
+						fieldValue = Long.toString(dateFormat.parse(fieldValue).getTime() / 1000);
+					}
+					catch (ParseException e)
+					{
+						s_Logger.error("Cannot parse '" + fieldValue +
+								"' as a date using format string '" +
+								dd.getTimeFormat() + "'");
+					}
+				}
+
+				lenBuffer.clear();
+				lenBuffer.putInt(fieldValue.length());
+				firstLine.write(lenBuffer.array());
+				firstLine.write(fieldValue.getBytes(UTF8_CHARSET));
+
+				++numFields;
+			}
+			token = parser.nextToken();
+		}
+
+		ByteBuffer numFieldsBuffer = ByteBuffer.allocate(4);
+		numFieldsBuffer.putInt(numFields);
+
+		// Each record consists of number of fields followed by length/value
+		// pairs.  See CLengthEncodedInputParser.h in the C++ code for a more
+		// detailed description.
+		header.flush();
+		os.write(numFieldsBuffer.array());
+		os.write(header.toByteArray());
+		header.close();
+
+		firstLine.flush();
+		os.write(numFieldsBuffer.array());
+		os.write(firstLine.toByteArray());
+		firstLine.close();
+
+		// now send the rest of the data
+		int recordCount = 1;
+		token = parser.nextToken();
+		while (token == JsonToken.START_OBJECT)
+		{
+			os.write(numFieldsBuffer.array());
+
+			while (token != JsonToken.END_OBJECT)
+			{
+				if (token == JsonToken.FIELD_NAME)
+				{
+					String fieldName = parser.getCurrentName();
+
+					token = parser.nextToken();
+					String fieldValue = parser.getText();
+
+					if (fieldName.equals(timeField))
+					{
+						try
+						{
+							fieldValue = Long.toString(dateFormat.parse(fieldValue).getTime() / 1000);
+						}
+						catch (ParseException e)
+						{
+							s_Logger.error("Cannot parse '" + fieldValue +
+									"' as a date using format string '" +
+									dd.getTimeFormat() + "'");
+						}
+					}
+
+					lenBuffer.clear();
+					lenBuffer.putInt(fieldValue.length());
+					os.write(lenBuffer.array());
+					os.write(fieldValue.getBytes(UTF8_CHARSET));
+				}
+				token = parser.nextToken();
+			}
+
+			++recordCount;
+			token = parser.nextToken();
+		}
+
 		s_Logger.info("Transferred " + recordCount + " Json records to autodetect." );
 	}
-		
+
+
 	/**
 	 * Add the timeout schedule for <code>jobId</code>.
 	 * On time out it tries to shutdown the job but if the job 
@@ -752,8 +856,12 @@ public class ProcessManager
 							ProcessStatus status = finishJob(jobId);
 							if (status == ProcessStatus.IN_USE)
 							{
+								int waitSeconds = 10;
+								s_Logger.info("The process is still in use and cannot be shutdown " +
+								"Rescheduling shutdown for " + waitSeconds + " seconds");
+								
 								// reschedule the shutdown
-								startShutdownTimer(jobId, 10);
+								startShutdownTimer(jobId, 10); 
 							}		
 						}
 						catch (UnknownJobException | NativeProcessRunException e)
