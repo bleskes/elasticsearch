@@ -64,9 +64,10 @@ public class PrelertWebApp extends Application
 		m_ResourceClasses = new HashSet<>();	    
 		m_ResourceClasses.add(ApiBase.class);
 		m_ResourceClasses.add(Jobs.class);
-		m_ResourceClasses.add(Streaming.class);	      
+		m_ResourceClasses.add(Data.class);
 		m_ResourceClasses.add(Results.class);	   
 		m_ResourceClasses.add(Detectors.class);
+		m_ResourceClasses.add(Logs.class);
 		
 		// Message body writers
 		m_ResourceClasses.add(PaginationWriter.class);	   
