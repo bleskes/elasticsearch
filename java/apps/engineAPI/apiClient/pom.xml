@@ -108,6 +108,7 @@
                 <include>com/prelert/job/*.java</include>          
               </includes>
               <excludes>
+                <exclude>com/prelert/rs/resources/*.java</exclude>  
                 <exclude>com/prelert/job/JobManager*</exclude>   
                 <exclude>com/prelert/job/ProcessManager*</exclude>   
               </excludes>

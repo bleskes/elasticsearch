@@ -140,7 +140,7 @@ public class RestoreStateTest
 				anomalyScores.add((Double)bucket.get("anomalyScore"));			
 			}
 
-			String testResults = prelertSrcHome + "/gui/apps/autodetectAPI/test_data/flightcentre_split_results.json";
+			String testResults = prelertSrcHome + "/gui/apps/autodetectAPI/test_data/engine_api_integration_test/flightcentre_split_results.json";
 
 			ObjectMapper mapper = new ObjectMapper();
 			List<Map<String,Object>> standardBuckets = mapper.readValue(new File(testResults), 
