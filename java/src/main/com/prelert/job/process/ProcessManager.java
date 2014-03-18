@@ -203,31 +203,25 @@ public class ProcessManager
 		{
 			process.setInUse(true);
 
-			// Oracle's documentation recommends buffering process streams
-			BufferedOutputStream os = new BufferedOutputStream(
-					process.getProcess().getOutputStream());
-
 			if (process.getDataDescription() != null &&
 					process.getDataDescription().transform())
 			{
 				if (process.getDataDescription().getFormat() == DataFormat.JSON)
 				{
 					transformAndPipeJson(process.getDataDescription(), input,
-							os);
+							process.getProcess().getOutputStream());
 				}
 				else
 				{
 					transformAndPipeCsv(process.getDataDescription(), input,
-							os);
+							process.getProcess().getOutputStream());
 				}
 			}
 			else
 			{
 				// no transform write the data straight through
-				pipe(input, os);
+				pipe(input, process.getProcess().getOutputStream());
 			}
-
-			os.flush();
 
 			// check there wasn't an error in the input. 
 			// throws if there was. 
@@ -470,13 +464,27 @@ public class ProcessManager
 	throws IOException 
 	{
 		int n;
-		byte[] buffer = new byte[131072];
-		while((n = is.read(buffer)) > -1) 
+		byte[] buffer = new byte[131072]; // 128kB
+		while ((n = is.read(buffer)) > -1)
 		{
+			// os is not wrapped in a BufferedOutputStream because we're copying
+			// big chunks of data anyway
 			os.write(buffer, 0, n);
-		}		
+		}
+		os.flush();
 	}
-	
+
+
+	/**
+	 * Parse the contents from input stream, transform dates and write to output
+	 * stream.
+	 * Flushes the outputstream once all data is written.
+	 * 
+	 * @param dd 
+	 * @param is
+	 * @param os
+	 * @throws IOException
+	 */
 	private void transformAndPipeCsv(DataDescription dd, InputStream is, OutputStream os)
 	throws IOException 
 	{
@@ -495,12 +503,11 @@ public class ProcessManager
 		CsvPreference csvPref = new CsvPreference.Builder(
 				DataDescription.QUOTE_CHAR,
 				delimiter,
-				new String(new char [] {DataDescription.LINE_ENDING})).build();	
+				new String(new char[] {DataDescription.LINE_ENDING})).build();	
 		
 		try (CsvListReader csvReader = new CsvListReader(new InputStreamReader(is), csvPref))
 		{
-
-			String [] header = csvReader.getHeader(true);
+			String[] header = csvReader.getHeader(true);
 			int timeFieldIndex = -1;
 			for (int i=0; i<header.length; i++)
 			{
@@ -518,7 +525,6 @@ public class ProcessManager
 				s_Logger.error(message);
 				throw new IOException(message);
 			}
-			
 
 
 			// Don't close the output stream as it causes the autodetect 
@@ -548,6 +554,8 @@ public class ProcessManager
 					s_Logger.error(message);
 				}		
 			}
+
+			csvWriter.flush();
 		}
 	}
 	
@@ -589,16 +597,20 @@ public class ProcessManager
 					"Invalid JSON should start with an array of objects or an object."
 					+ "Bad token = " + token);
 		}
-		
+
+		// Oracle's documentation recommends buffering process streams
+		BufferedOutputStream bufferedStream = new BufferedOutputStream(os);
 
 		if (dd.getTimeFormat() != null)
 		{
-			pipeJsonAndTransformTime(parser, os, dd);
+			pipeJsonAndTransformTime(parser, bufferedStream, dd);
 		}
 		else
 		{
-			pipeJson(parser, os);
+			pipeJson(parser, bufferedStream);
 		}
+
+		bufferedStream.flush();
 
 		parser.close();	
 	}
@@ -625,7 +637,7 @@ public class ProcessManager
 
 		// This will be used to convert 32 bit integers to network byte order
 		ByteBuffer lenBuffer = ByteBuffer.allocate(4); // 4 == sizeof(int)
-		byte utf8Bytes[];
+		byte[] utf8Bytes;
 
 		JsonToken token = parser.nextToken();
 		while (token != JsonToken.END_OBJECT)
@@ -731,7 +743,7 @@ public class ProcessManager
 
 		// This will be used to convert 32 bit integers to network byte order
 		ByteBuffer lenBuffer = ByteBuffer.allocate(4); // 4 == sizeof(int)
-		byte utf8Bytes[];
+		byte[] utf8Bytes;
 
 		JsonToken token = parser.nextToken();
 		while (token != JsonToken.END_OBJECT)
