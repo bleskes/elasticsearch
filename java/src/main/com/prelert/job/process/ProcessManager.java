@@ -35,7 +35,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -101,11 +101,6 @@ public class ProcessManager
 	public enum ProcessStatus {IN_USE, COMPLETED, NOT_FOUND};
 	
 	static private final Logger s_Logger = Logger.getLogger(ProcessManager.class);
-
-	/**
-	 * Avoid looking up this same charset millions of times.
-	 */
-	static private final Charset UTF8_CHARSET = Charset.forName("UTF-8");
 
 	private ProcessCtrl m_ProcessCtrl;
 	
@@ -419,7 +414,6 @@ public class ProcessManager
 			
 			throw e;
 		}
-			
 
 		return ProcessStatus.COMPLETED;
 	}
@@ -630,7 +624,8 @@ public class ProcessManager
 		ByteArrayOutputStream firstLine = new ByteArrayOutputStream(1024);
 
 		// This will be used to convert 32 bit integers to network byte order
-		ByteBuffer lenBuffer = ByteBuffer.allocate(4);
+		ByteBuffer lenBuffer = ByteBuffer.allocate(4); // 4 == sizeof(int)
+		byte utf8Bytes[];
 
 		JsonToken token = parser.nextToken();
 		while (token != JsonToken.END_OBJECT)
@@ -638,24 +633,26 @@ public class ProcessManager
 			if (token == JsonToken.FIELD_NAME)
 			{
 				String fieldName = parser.getCurrentName();
+				utf8Bytes = fieldName.getBytes(StandardCharsets.UTF_8);
 				lenBuffer.clear();
-				lenBuffer.putInt(fieldName.length());
+				lenBuffer.putInt(utf8Bytes.length);
 				header.write(lenBuffer.array());
-				header.write(fieldName.getBytes(UTF8_CHARSET));
+				header.write(utf8Bytes);
 
 				token = parser.nextToken();
 				String fieldValue = parser.getText();
+				utf8Bytes = fieldValue.getBytes(StandardCharsets.UTF_8);
 				lenBuffer.clear();
-				lenBuffer.putInt(fieldValue.length());
+				lenBuffer.putInt(utf8Bytes.length);
 				firstLine.write(lenBuffer.array());
-				firstLine.write(fieldValue.getBytes(UTF8_CHARSET));
+				firstLine.write(utf8Bytes);
 
 				++numFields;
 			}
 			token = parser.nextToken();
 		}
 
-		ByteBuffer numFieldsBuffer = ByteBuffer.allocate(4);
+		ByteBuffer numFieldsBuffer = ByteBuffer.allocate(4); // 4 == sizeof(int)
 		numFieldsBuffer.putInt(numFields);
 
 		// Each record consists of number of fields followed by length/value
@@ -684,10 +681,11 @@ public class ProcessManager
 				{
 					token = parser.nextToken();
 					String fieldValue = parser.getText();
+					utf8Bytes = fieldValue.getBytes(StandardCharsets.UTF_8);
 					lenBuffer.clear();
-					lenBuffer.putInt(fieldValue.length());
+					lenBuffer.putInt(utf8Bytes.length);
 					os.write(lenBuffer.array());
-					os.write(fieldValue.getBytes(UTF8_CHARSET));
+					os.write(utf8Bytes);
 				}
 				token = parser.nextToken();
 			}
@@ -732,7 +730,8 @@ public class ProcessManager
 		ByteArrayOutputStream firstLine = new ByteArrayOutputStream(1024);
 
 		// This will be used to convert 32 bit integers to network byte order
-		ByteBuffer lenBuffer = ByteBuffer.allocate(4);
+		ByteBuffer lenBuffer = ByteBuffer.allocate(4); // 4 == sizeof(int)
+		byte utf8Bytes[];
 
 		JsonToken token = parser.nextToken();
 		while (token != JsonToken.END_OBJECT)
@@ -740,10 +739,11 @@ public class ProcessManager
 			if (token == JsonToken.FIELD_NAME)
 			{
 				String fieldName = parser.getCurrentName();
+				utf8Bytes = fieldName.getBytes(StandardCharsets.UTF_8);
 				lenBuffer.clear();
-				lenBuffer.putInt(fieldName.length());
+				lenBuffer.putInt(utf8Bytes.length);
 				header.write(lenBuffer.array());
-				header.write(fieldName.getBytes(UTF8_CHARSET));
+				header.write(utf8Bytes);
 
 				token = parser.nextToken();
 				String fieldValue = parser.getText();
@@ -762,17 +762,18 @@ public class ProcessManager
 					}
 				}
 
+				utf8Bytes = fieldValue.getBytes(StandardCharsets.UTF_8);
 				lenBuffer.clear();
-				lenBuffer.putInt(fieldValue.length());
+				lenBuffer.putInt(utf8Bytes.length);
 				firstLine.write(lenBuffer.array());
-				firstLine.write(fieldValue.getBytes(UTF8_CHARSET));
+				firstLine.write(utf8Bytes);
 
 				++numFields;
 			}
 			token = parser.nextToken();
 		}
 
-		ByteBuffer numFieldsBuffer = ByteBuffer.allocate(4);
+		ByteBuffer numFieldsBuffer = ByteBuffer.allocate(4); // 4 == sizeof(int)
 		numFieldsBuffer.putInt(numFields);
 
 		// Each record consists of number of fields followed by length/value
@@ -818,10 +819,11 @@ public class ProcessManager
 						}
 					}
 
+					utf8Bytes = fieldValue.getBytes(StandardCharsets.UTF_8);
 					lenBuffer.clear();
-					lenBuffer.putInt(fieldValue.length());
+					lenBuffer.putInt(utf8Bytes.length);
 					os.write(lenBuffer.array());
-					os.write(fieldValue.getBytes(UTF8_CHARSET));
+					os.write(utf8Bytes);
 				}
 				token = parser.nextToken();
 			}
