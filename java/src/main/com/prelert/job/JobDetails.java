@@ -34,7 +34,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
@@ -90,8 +89,9 @@ public class JobDetails
 	
 	/* These URIs are transient they don't need to be persisted */
 	private URI m_Location;
-	private URI m_StreamingEndpoint;
+	private URI m_DataEndpoint;
 	private URI m_ResultsEndpoint;
+	private URI m_LogsEndpoint;
 	
 	public JobDetails()
 	{
@@ -180,6 +180,7 @@ public class JobDetails
 	 * WARNING THE OBJECT MAY BE IN AN INCONSITENT STATE AFTER THIS CONSTRUCTOR
 	 * @param values
 	 */
+	@SuppressWarnings("unchecked")
 	public JobDetails(Map<String, Object> values)
 	{
 		final DateFormat isoDateParser = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
@@ -260,26 +261,26 @@ public class JobDetails
 		if (values.containsKey(ANALYSIS_CONFIG))
 		{
 			Object obj = values.get(ANALYSIS_CONFIG);
-			if (obj != null && obj instanceof HashMap)
+			if (obj != null && obj instanceof Map)
 			{
-				m_AnalysisConfig = new AnalysisConfig((HashMap<String, Object>)obj);
+				m_AnalysisConfig = new AnalysisConfig((Map<String, Object>)obj);
 			}
 		}
 		if (values.containsKey(ANALYSIS_OPTIONS))
 		{
 			Object obj = values.get(ANALYSIS_OPTIONS);
-			if (obj != null && obj instanceof HashMap)
+			if (obj != null && obj instanceof Map)
 			{
-				m_AnalysisOptions = new AnalysisOptions((HashMap<String, Object>)obj); 
+				m_AnalysisOptions = new AnalysisOptions((Map<String, Object>)obj); 
 			}
 		}
 		
 		if (values.containsKey(DATA_DESCRIPTION))
 		{
 			Object obj = values.get(DATA_DESCRIPTION);
-			if (obj != null && obj instanceof HashMap)
+			if (obj != null && obj instanceof Map)
 			{
-				m_DataDescription = new DataDescription((HashMap<String, Object>)obj);
+				m_DataDescription = new DataDescription((Map<String, Object>)obj);
 			}
 		}
 	}
@@ -487,26 +488,26 @@ public class JobDetails
 	}
 
 	/**
-	 * This Job's streaming data endpoint as the full URL path
-	 * in the form <pre><base_url{jobid}{@value #STREAMING_ENDPOINT}</pre>
+	 * This Job's data endpoint as the full URL path
+	 * in the form base_url/job_id/{@value com.prelert.rs.resources.Data#ENDPOINT}
 	 * @return
 	 */
-	public URI getStreamingEndpoint() 
+	public URI getDataEndpoint() 
 	{
-		return m_StreamingEndpoint;
+		return m_DataEndpoint;
 	}
 	
 	/**
-	 * Set this Job's streaming data endpoint
+	 * Set this Job's data endpoint
 	 */
-	public void setStreamingEndpoint(URI streaming) 
+	public void setDataEndpoint(URI value) 
 	{
-		m_StreamingEndpoint = streaming;
+		m_DataEndpoint = value;
 	}
 
 	/**
-	 * This Job's results endpoint as the full URL path
-	 * in the form <pre><base_url>{jobid}{@value #RESULTS_ENDPOINT}</pre>
+	 * This Job's resutls endpoint as the full URL path
+	 * in the form base_url/job_id/{@value com.prelert.rs.resources.Results#ENDPOINT}
 	 * @return
 	 */
 	public URI getResultsEndpoint() 
@@ -520,6 +521,25 @@ public class JobDetails
 	public void setResultsEndpoint(URI results) 
 	{
 		m_ResultsEndpoint = results;
+	}	
+	
+
+	/**
+	 * This Job's logs endpoint as the full URL path
+	 * in the form base_url/job_id/{@value com.prelert.rs.resources.Logs#ENDPOINT}
+	 * @return
+	 */
+	public URI getLogsEndpoint() 
+	{
+		return m_LogsEndpoint;
+	}	
+	
+	/**
+	 * Set this Job's logs endpoint
+	 */
+	public void setLogsEndpoint(URI value) 
+	{
+		m_LogsEndpoint = value;
 	}	
 	
 	/**
@@ -547,7 +567,7 @@ public class JobDetails
 	 * @param o2
 	 * @return
 	 */
-	public static boolean bothNullOrEqual(Object o1, Object o2)
+	public static <T> boolean bothNullOrEqual(T o1, T o2)
 	{
 		if (o1 == null && o2 == null)
 		{
@@ -593,7 +613,7 @@ public class JobDetails
 				bothNullOrEqual(this.m_AnalysisOptions, that.m_AnalysisOptions) &&
 				bothNullOrEqual(this.m_DataDescription, that.m_DataDescription) &&
 				bothNullOrEqual(this.m_Location, that.m_Location) &&
-				bothNullOrEqual(this.m_StreamingEndpoint, that.m_StreamingEndpoint) &&
+				bothNullOrEqual(this.m_DataEndpoint, that.m_DataEndpoint) &&
 				bothNullOrEqual(this.m_ResultsEndpoint, that.m_ResultsEndpoint);				
 	}
 }

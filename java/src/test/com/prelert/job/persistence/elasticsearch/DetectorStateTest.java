@@ -113,7 +113,7 @@ public class DetectorStateTest
 		final String JOBID = "test_detector_state";
 		
 		// setup elastic search
-		Node node = nodeBuilder().client(true).node();
+		Node node = nodeBuilder().clusterName("prelert").client(true).node();
 		Client client = node.client();
 		ElasticSearchPersister es = new ElasticSearchPersister(JOBID, client);
 		

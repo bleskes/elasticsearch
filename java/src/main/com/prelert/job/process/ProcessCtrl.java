@@ -45,7 +45,7 @@ import org.apache.commons.lang.SystemUtils;
 import org.apache.log4j.Logger;
 
 import com.prelert.job.AnalysisConfig;
-import com.prelert.job.AnalysisConfig.Detector;
+import com.prelert.job.Detector;
 import com.prelert.job.AnalysisOptions;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;

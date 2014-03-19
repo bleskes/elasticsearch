@@ -41,7 +41,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.log4j.Logger;
 
-import com.prelert.rs.client.AutodetectRsClient;
+import com.prelert.rs.client.EngineApiClient;
 
 /**
  * Creates a number of producer threads to write data to the Engine REST API
@@ -55,7 +55,7 @@ public class SoakTest
 	/**
 	 * The default base Url used in the test
 	 */
-	static final public String JOBS_URL = "http://localhost:8080/engine/beta/";
+	static final public String API_BASE_URL = "http://localhost:8080/engine/v0.3/";
 	
 	
 	/**
@@ -64,7 +64,7 @@ public class SoakTest
 	 */
 	static private class SoakTestRunner implements Runnable
 	{
-		private AutodetectRsClient m_ApiClient;
+		private EngineApiClient m_ApiClient;
 		private String m_BaseUrl;
 		private String m_CreateJobPayload;
 		
@@ -75,7 +75,7 @@ public class SoakTest
 	
 		public SoakTestRunner(String baseUrl, String createJobPayload)
 		{
-			m_ApiClient = new AutodetectRsClient();
+			m_ApiClient = new EngineApiClient();
 			m_BaseUrl = baseUrl;
 			m_CreateJobPayload = createJobPayload;
 		}
@@ -100,10 +100,10 @@ public class SoakTest
 		@Override
 		public void run()
 		{		
-			String jobUrl;
+			String jobId;
 			try 
 			{
-				jobUrl = m_ApiClient.createJob(m_BaseUrl +"/jobs", m_CreateJobPayload);
+				jobId = m_ApiClient.createJob(m_BaseUrl, m_CreateJobPayload);
 			}
 			catch (ClientProtocolException e) 
 			{
@@ -130,7 +130,7 @@ public class SoakTest
 			producerThread.start();
 			
 			try {
-				m_ApiClient.streamingUpload(jobUrl, inputStream, false);
+				m_ApiClient.streamingUpload(m_BaseUrl, jobId, inputStream, false);
 			} catch (IOException e) {
 				s_Logger.error("Error streaming data", e);
 			}

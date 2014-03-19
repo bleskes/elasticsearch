@@ -35,7 +35,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -101,11 +101,6 @@ public class ProcessManager
 	public enum ProcessStatus {IN_USE, COMPLETED, NOT_FOUND};
 	
 	static private final Logger s_Logger = Logger.getLogger(ProcessManager.class);
-
-	/**
-	 * Avoid looking up this same charset millions of times.
-	 */
-	static private final Charset UTF8_CHARSET = Charset.forName("UTF-8");
 
 	private ProcessCtrl m_ProcessCtrl;
 	
@@ -208,31 +203,25 @@ public class ProcessManager
 		{
 			process.setInUse(true);
 
-			// Oracle's documentation recommends buffering process streams
-			BufferedOutputStream os = new BufferedOutputStream(
-					process.getProcess().getOutputStream());
-
 			if (process.getDataDescription() != null &&
 					process.getDataDescription().transform())
 			{
 				if (process.getDataDescription().getFormat() == DataFormat.JSON)
 				{
 					transformAndPipeJson(process.getDataDescription(), input,
-							os);
+							process.getProcess().getOutputStream());
 				}
 				else
 				{
 					transformAndPipeCsv(process.getDataDescription(), input,
-							os);
+							process.getProcess().getOutputStream());
 				}
 			}
 			else
 			{
 				// no transform write the data straight through
-				pipe(input, os);
+				pipe(input, process.getProcess().getOutputStream());
 			}
-
-			os.flush();
 
 			// check there wasn't an error in the input. 
 			// throws if there was. 
@@ -243,7 +232,9 @@ public class ProcessManager
 			String msg = String.format("Exception writing to process for job %s", jobId);
 			s_Logger.error(msg, e);
 			
-			StringBuilder sb = new StringBuilder(msg).append('\n');
+			
+			StringBuilder sb = new StringBuilder(msg)
+					.append('\n').append(e.getMessage()).append('\n');
 			readProcessErrorOutput(process, sb);
 			
 			throw new NativeProcessRunException(sb.toString(), e);
@@ -417,7 +408,6 @@ public class ProcessManager
 			
 			throw e;
 		}
-			
 
 		return ProcessStatus.COMPLETED;
 	}
@@ -474,13 +464,27 @@ public class ProcessManager
 	throws IOException 
 	{
 		int n;
-		byte[] buffer = new byte[131072];
-		while((n = is.read(buffer)) > -1) 
+		byte[] buffer = new byte[131072]; // 128kB
+		while ((n = is.read(buffer)) > -1)
 		{
+			// os is not wrapped in a BufferedOutputStream because we're copying
+			// big chunks of data anyway
 			os.write(buffer, 0, n);
-		}		
+		}
+		os.flush();
 	}
-	
+
+
+	/**
+	 * Parse the contents from input stream, transform dates and write to output
+	 * stream.
+	 * Flushes the outputstream once all data is written.
+	 * 
+	 * @param dd 
+	 * @param is
+	 * @param os
+	 * @throws IOException
+	 */
 	private void transformAndPipeCsv(DataDescription dd, InputStream is, OutputStream os)
 	throws IOException 
 	{
@@ -499,12 +503,11 @@ public class ProcessManager
 		CsvPreference csvPref = new CsvPreference.Builder(
 				DataDescription.QUOTE_CHAR,
 				delimiter,
-				new String(new char [] {DataDescription.LINE_ENDING})).build();	
+				new String(new char[] {DataDescription.LINE_ENDING})).build();	
 		
 		try (CsvListReader csvReader = new CsvListReader(new InputStreamReader(is), csvPref))
 		{
-
-			String [] header = csvReader.getHeader(true);
+			String[] header = csvReader.getHeader(true);
 			int timeFieldIndex = -1;
 			for (int i=0; i<header.length; i++)
 			{
@@ -522,7 +525,6 @@ public class ProcessManager
 				s_Logger.error(message);
 				throw new IOException(message);
 			}
-			
 
 
 			// Don't close the output stream as it causes the autodetect 
@@ -552,6 +554,8 @@ public class ProcessManager
 					s_Logger.error(message);
 				}		
 			}
+
+			csvWriter.flush();
 		}
 	}
 	
@@ -593,16 +597,20 @@ public class ProcessManager
 					"Invalid JSON should start with an array of objects or an object."
 					+ "Bad token = " + token);
 		}
-		
+
+		// Oracle's documentation recommends buffering process streams
+		BufferedOutputStream bufferedStream = new BufferedOutputStream(os);
 
 		if (dd.getTimeFormat() != null)
 		{
-			pipeJsonAndTransformTime(parser, os, dd);
+			pipeJsonAndTransformTime(parser, bufferedStream, dd);
 		}
 		else
 		{
-			pipeJson(parser, os);
+			pipeJson(parser, bufferedStream);
 		}
+
+		bufferedStream.flush();
 
 		parser.close();	
 	}
@@ -628,7 +636,8 @@ public class ProcessManager
 		ByteArrayOutputStream firstLine = new ByteArrayOutputStream(1024);
 
 		// This will be used to convert 32 bit integers to network byte order
-		ByteBuffer lenBuffer = ByteBuffer.allocate(4);
+		ByteBuffer lenBuffer = ByteBuffer.allocate(4); // 4 == sizeof(int)
+		byte[] utf8Bytes;
 
 		JsonToken token = parser.nextToken();
 		while (token != JsonToken.END_OBJECT)
@@ -636,24 +645,26 @@ public class ProcessManager
 			if (token == JsonToken.FIELD_NAME)
 			{
 				String fieldName = parser.getCurrentName();
+				utf8Bytes = fieldName.getBytes(StandardCharsets.UTF_8);
 				lenBuffer.clear();
-				lenBuffer.putInt(fieldName.length());
+				lenBuffer.putInt(utf8Bytes.length);
 				header.write(lenBuffer.array());
-				header.write(fieldName.getBytes(UTF8_CHARSET));
+				header.write(utf8Bytes);
 
 				token = parser.nextToken();
 				String fieldValue = parser.getText();
+				utf8Bytes = fieldValue.getBytes(StandardCharsets.UTF_8);
 				lenBuffer.clear();
-				lenBuffer.putInt(fieldValue.length());
+				lenBuffer.putInt(utf8Bytes.length);
 				firstLine.write(lenBuffer.array());
-				firstLine.write(fieldValue.getBytes(UTF8_CHARSET));
+				firstLine.write(utf8Bytes);
 
 				++numFields;
 			}
 			token = parser.nextToken();
 		}
 
-		ByteBuffer numFieldsBuffer = ByteBuffer.allocate(4);
+		ByteBuffer numFieldsBuffer = ByteBuffer.allocate(4); // 4 == sizeof(int)
 		numFieldsBuffer.putInt(numFields);
 
 		// Each record consists of number of fields followed by length/value
@@ -682,10 +693,11 @@ public class ProcessManager
 				{
 					token = parser.nextToken();
 					String fieldValue = parser.getText();
+					utf8Bytes = fieldValue.getBytes(StandardCharsets.UTF_8);
 					lenBuffer.clear();
-					lenBuffer.putInt(fieldValue.length());
+					lenBuffer.putInt(utf8Bytes.length);
 					os.write(lenBuffer.array());
-					os.write(fieldValue.getBytes(UTF8_CHARSET));
+					os.write(utf8Bytes);
 				}
 				token = parser.nextToken();
 			}
@@ -730,7 +742,8 @@ public class ProcessManager
 		ByteArrayOutputStream firstLine = new ByteArrayOutputStream(1024);
 
 		// This will be used to convert 32 bit integers to network byte order
-		ByteBuffer lenBuffer = ByteBuffer.allocate(4);
+		ByteBuffer lenBuffer = ByteBuffer.allocate(4); // 4 == sizeof(int)
+		byte[] utf8Bytes;
 
 		JsonToken token = parser.nextToken();
 		while (token != JsonToken.END_OBJECT)
@@ -738,10 +751,11 @@ public class ProcessManager
 			if (token == JsonToken.FIELD_NAME)
 			{
 				String fieldName = parser.getCurrentName();
+				utf8Bytes = fieldName.getBytes(StandardCharsets.UTF_8);
 				lenBuffer.clear();
-				lenBuffer.putInt(fieldName.length());
+				lenBuffer.putInt(utf8Bytes.length);
 				header.write(lenBuffer.array());
-				header.write(fieldName.getBytes(UTF8_CHARSET));
+				header.write(utf8Bytes);
 
 				token = parser.nextToken();
 				String fieldValue = parser.getText();
@@ -760,17 +774,18 @@ public class ProcessManager
 					}
 				}
 
+				utf8Bytes = fieldValue.getBytes(StandardCharsets.UTF_8);
 				lenBuffer.clear();
-				lenBuffer.putInt(fieldValue.length());
+				lenBuffer.putInt(utf8Bytes.length);
 				firstLine.write(lenBuffer.array());
-				firstLine.write(fieldValue.getBytes(UTF8_CHARSET));
+				firstLine.write(utf8Bytes);
 
 				++numFields;
 			}
 			token = parser.nextToken();
 		}
 
-		ByteBuffer numFieldsBuffer = ByteBuffer.allocate(4);
+		ByteBuffer numFieldsBuffer = ByteBuffer.allocate(4); // 4 == sizeof(int)
 		numFieldsBuffer.putInt(numFields);
 
 		// Each record consists of number of fields followed by length/value
@@ -816,10 +831,11 @@ public class ProcessManager
 						}
 					}
 
+					utf8Bytes = fieldValue.getBytes(StandardCharsets.UTF_8);
 					lenBuffer.clear();
-					lenBuffer.putInt(fieldValue.length());
+					lenBuffer.putInt(utf8Bytes.length);
 					os.write(lenBuffer.array());
-					os.write(fieldValue.getBytes(UTF8_CHARSET));
+					os.write(utf8Bytes);
 				}
 				token = parser.nextToken();
 			}
@@ -935,6 +951,13 @@ public class ProcessManager
 	{
 		try
 		{
+			if (process.getErrorReader().ready() == false)
+			{
+				s_Logger.info("No Error output to read from native process");
+				return sb;				
+			}
+			
+			
 			String line;
 			while ((line = process.getErrorReader().readLine()) != null)
 			{

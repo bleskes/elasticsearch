@@ -47,6 +47,7 @@ import org.elasticsearch.node.Node;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
+import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
 import com.prelert.job.persistence.elasticsearch.ElasticSearchPersister;
@@ -129,10 +130,10 @@ public class ProcessTest
 		// Open input
 		FileInputStream fs = new FileInputStream(filePath);
 		
-		AnalysisConfig.Detector detector = new AnalysisConfig.Detector();
+		Detector detector = new Detector();
 		detector.setFieldName("hitcount");
 		detector.setByFieldName("url");
-		List<AnalysisConfig.Detector> d = new ArrayList<>();
+		List<Detector> d = new ArrayList<>();
 		d.add(detector);
 		AnalysisConfig conf = new AnalysisConfig();
 		conf.setDetectors(d);

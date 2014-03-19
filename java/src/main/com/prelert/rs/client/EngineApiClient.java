@@ -66,9 +66,9 @@ import com.prelert.rs.data.SingleDocument;
  * 
  * </br>Implements closeable so it can be used in a try-with-resource statement
  */
-public class AutodetectRsClient implements Closeable
+public class EngineApiClient implements Closeable
 {
-	static final private Logger s_Logger = Logger.getLogger(AutodetectRsClient.class);
+	static final private Logger s_Logger = Logger.getLogger(EngineApiClient.class);
 	
 	private ObjectMapper m_JsonMapper;
 		
@@ -78,7 +78,7 @@ public class AutodetectRsClient implements Closeable
 	 * Creates a new http client and Json object mapper.
 	 * Call {@linkplain #close()} once finished
 	 */
-	public AutodetectRsClient()
+	public EngineApiClient()
 	{
 		m_HttpClient = HttpClients.createDefault();
 		m_JsonMapper = new ObjectMapper();
@@ -96,13 +96,17 @@ public class AutodetectRsClient implements Closeable
 	/**
 	 * Get details of all the jobs in database
 	 * 
-	 * @param url The URL of the API's jobs end point
+	 * @param baseUrl The base URL for the REST API 
+	 * e.g <code>http://localhost:8080/engine/version/</code>
 	 * @return The pagination object containing a list of Jobs
 	 * @throws IOException
 	 */
-	public Pagination<JobDetails> getJobs(String url) 
+	public Pagination<JobDetails> getJobs(String baseUrl) 
 	throws IOException
 	{
+		String url = baseUrl + "/jobs";
+		s_Logger.debug("GET jobs: " + url);
+		
 		HttpGet get = new HttpGet(url);
 		get.addHeader("Content-Type", "application/json");
 		
@@ -132,29 +136,44 @@ public class AutodetectRsClient implements Closeable
 	/**
 	 * Get the individual job on the provided URL
 	 *  
-	 * @param jobUrl Full path to job ie. <code>/api/job/{jobId}</code>
+	 * @param baseUrl The base URL for the REST API 
+	 * e.g <code>http://localhost:8080/engine/version/</code>
+	 * @param jobId The Job's unique Id
+	 * 
 	 * @return If the job exists a {@link com.prelert.rs.data.SingleDocument SingleDocument}
 	 * containing the Job is returned else the SingleDocument is empty
 	 * @throws IOException
 	 */
-	public SingleDocument<JobDetails> getJob(String jobUrl) throws IOException
+	public SingleDocument<JobDetails> getJob(String baseUrl, String jobId)
+	throws IOException
 	{
-		HttpGet get = new HttpGet(jobUrl);
+		String url = baseUrl + "/jobs/" + jobId;
+		s_Logger.debug("GET job: " + url);
+		
+		HttpGet get = new HttpGet(url);
 		get.addHeader("Content-Type", "application/json");
 		
 		CloseableHttpResponse response = m_HttpClient.execute(get);
 		try
 		{
+			String content = EntityUtils.toString(response.getEntity());
+
 			if (response.getStatusLine().getStatusCode() == 200)
 			{
-				HttpEntity entity = response.getEntity();				
-				String content = EntityUtils.toString(entity);
 				SingleDocument<JobDetails> doc = m_JsonMapper.readValue(content, 
 						new TypeReference<SingleDocument<JobDetails>>() {} );
 				return doc;
 			}
 			else
 			{
+				String msg = String.format(
+						"Failed to get job %s, status code = %d. "
+						+ "Returned content: %s", 
+						jobId, response.getStatusLine().getStatusCode(),
+						content);
+				
+				s_Logger.error(msg);
+				
 				return new SingleDocument<>();
 			}
 		}
@@ -166,18 +185,23 @@ public class AutodetectRsClient implements Closeable
 	
 	/**
 	 * Create a new job with the configuration in <code>createJobPayload</code>
-	 * and return the full Url to the job's location 
+	 * and return the newly created job's Id
 	 * 
-	 * @param apiUrl The base URL of the autodetect REST API
+	 * @param baseUrl The base URL for the REST API 
+	 * e.g <code>http://localhost:8080/engine/version/</code>
 	 * @param createJobPayload The Json configuration for the new job
-	 * @return The job Url or an empty string if there was an error
+	 * @return The new job's Id or an empty string if there was an error
+	 * 
 	 * @throws ClientProtocolException
 	 * @throws IOException
 	 */
-	public String createJob(String apiUrl, String createJobPayload) 
+	public String createJob(String baseUrl, String createJobPayload) 
 	throws ClientProtocolException, IOException
 	{
-		HttpPost post = new HttpPost(apiUrl);
+		String url = baseUrl + "/jobs";
+		s_Logger.debug("Create job: " + url);
+		
+		HttpPost post = new HttpPost(url);
 		
 		StringEntity entity = new StringEntity(createJobPayload,
 				ContentType.create("application/json", "UTF-8"));
@@ -185,32 +209,74 @@ public class AutodetectRsClient implements Closeable
 		
 		try (CloseableHttpResponse response = m_HttpClient.execute(post))
 		{
+			HttpEntity responseEntity = response.getEntity();				
+			String content = EntityUtils.toString(responseEntity);
+
 			if (response.getStatusLine().getStatusCode() == 201)
 			{
-				if (response.containsHeader("Location"))
+				
+				Map<String, String> msg = m_JsonMapper.readValue(content, 
+						new TypeReference<Map<String, String>>() {} );
+				
+				if (msg.containsKey("id"))
 				{
-					return response.getFirstHeader("Location").getValue();
+					return msg.get("id");
 				}
+				else
+				{
+					s_Logger.error("Job created but no 'id' field in returned content");
+					s_Logger.error("Response Content = " + content);
+				}
+			}
+			else
+			{
+				String msg = String.format(
+						"Error creating job status code = %d. "
+						+ "Returned content: %s", 
+						response.getStatusLine().getStatusCode(),
+						content);
+				
+				s_Logger.error(msg);
 			}
 			return "";
 		}
 	}
 	
 	/**
-	 * Delete the individual job on the provided URL
+	 * Delete the individual job 
 	 *  
-	 * @param jobUrl Full path to job ie. <code>/api/job/{jobId}</code>
+	 * @param baseUrl The base URL for the REST API 
+	 * e.g <code>http://localhost:8080/engine/version/</code>
+	 * @param jobId The Job's unique Id
 	 * @return If the job exists as deleted return true else false
 	 * @throws IOException, ClientProtocolException
 	 */
-	public boolean deleteJob(String jobUrl) 
+	public boolean deleteJob(String baseUrl, String jobId) 
 	throws ClientProtocolException, IOException
 	{
-		HttpDelete delete = new HttpDelete(jobUrl);
+		String url = baseUrl + "/jobs/" + jobId;
+		s_Logger.debug("DELETE job: " + url);
+		
+		HttpDelete delete = new HttpDelete(url);
 		
 		try (CloseableHttpResponse response = m_HttpClient.execute(delete))
 		{
-			return (response.getStatusLine().getStatusCode() == 200);
+			if (response.getStatusLine().getStatusCode() == 200)
+			{
+				return true;
+			}
+			else 
+			{
+				String content = EntityUtils.toString(response.getEntity());
+				String msg = String.format(
+						"Error deleting job, status code = %d. "
+						+ "Returned content: %s", 
+						response.getStatusLine().getStatusCode(),
+						content);
+				
+				s_Logger.error(msg);
+				return false;
+			}
 		}
 	}
 	
@@ -221,17 +287,19 @@ public class AutodetectRsClient implements Closeable
 	 * it is send in fixed size blocks. The API will manage reconstructing 
 	 * the records from the chunks.
 	 * 
-	 * @param jobUrl Full path to job ie. <code>/api/job/{jobId}</code>
+	 * @param baseUrl The base URL for the REST API 
+	 * e.g <code>http://localhost:8080/engine/version/</code>
+	 * @param jobId The Job's unique Id
 	 * @param inputStream The data to write to the web service
 	 * @return
 	 * @throws IOException 
 	 */
-	public boolean chunkedUpload(String jobUrl, FileInputStream inputStream) 
-	throws IOException, InterruptedException
+	public boolean chunkedUpload(String baseUrl, String jobId,
+			FileInputStream inputStream) 
+	throws IOException
 	{
-		String postUrl = jobUrl + "/streaming/chunked_upload";	
-
-		s_Logger.info("Uploading chunked data to " + postUrl);
+		String postUrl = baseUrl + "/data/" + jobId; 	
+		s_Logger.debug("Uploading chunked data to " + postUrl);
 		
 		final int BUFF_SIZE = 4096 * 1024;
 		byte [] buffer = new byte[BUFF_SIZE];
@@ -246,32 +314,44 @@ public class AutodetectRsClient implements Closeable
 			
 			HttpPost post = new HttpPost(postUrl);			
 			post.setEntity(entity);
-			CloseableHttpResponse response = m_HttpClient.execute(post);
-			response.close(); // close connection
-			
-			// wait a little
-			Thread.sleep(500);
+			try (CloseableHttpResponse response = m_HttpClient.execute(post))
+			{
+				if (response.getStatusLine().getStatusCode() != 202)
+				{
+					String content = EntityUtils.toString(response.getEntity());
+
+					String msg = String.format(
+							"Upload of chunk %d failed, status code = %d. "
+							+ "Returned content: %s", 
+							uploadCount, response.getStatusLine().getStatusCode(),
+							content);
+					
+					s_Logger.error(msg);
+				}
+			}
 		}
 				
 		return true;
 	}
 	
 	/**
-	 * Stream the input stream to the service
+	 * Stream data from <code>inputStream</code> to the service
 	 * 
-	 * @param jobUrl Full path to job ie. <code>/api/job/{jobId}</code>
+	 * @param baseUrl The base URL for the REST API 
+	 * e.g <code>http://localhost:8080/engine/version/</code>
+	 * @param jobId The Job's unique Id
 	 * @param inputStream The data to write to the web service
 	 * @param compressed Is the data gzipped compressed?
 	 * @return
 	 * @throws IOException
 	 * @throws InterruptedException
 	 */
-	public boolean streamingUpload(String jobUrl, InputStream inputStream,
-			boolean compressed) 
+	public boolean streamingUpload(String baseUrl, String jobId,
+			InputStream inputStream, boolean compressed) 
 	throws IOException
 	{
-		String postUrl = jobUrl + "/streaming";	
-		s_Logger.info("Streaming data to " + postUrl);
+		String postUrl = baseUrl + "/data/" + jobId;	
+		s_Logger.debug("Uploading data to " + postUrl);
 
 		InputStreamEntity entity = new InputStreamEntity(inputStream);
 		entity.setContentType("application/octet-stream");
@@ -286,36 +366,58 @@ public class AutodetectRsClient implements Closeable
 		
         try (CloseableHttpResponse response = m_HttpClient.execute(post)) 
         {
-            HttpEntity resEntity = response.getEntity();
-            /*
-            if (resEntity != null) 
-            {
-            	s_Logger.info("Response content length: " + resEntity.getContentLength());
-            	s_Logger.info("Chunked?: " + resEntity.isChunked());
-            }
-            */
-            
-            EntityUtils.consume(resEntity);
+			if (response.getStatusLine().getStatusCode() != 202)
+			{
+				String content = EntityUtils.toString(response.getEntity());
+
+				String msg = String.format(
+						"Streaming upload failed, status code = %d. "
+						+ "Returned content: %s", 
+						response.getStatusLine().getStatusCode(),
+						content);
+				
+				s_Logger.error(msg);
+				return false;
+			}
+			
+			return true;
         } 
-		
-		return true;
 	}
 	
 	/**
 	 * Finish the job after all the data has been uploaded
 	 * 
-	 * @param jobUrl The URL for the job i.e <code>api/jobs/{jobid}</code>
+	 * @param baseUrl The base URL for the REST API 
+	 * e.g <code>http://localhost:8080/engine/version/</code>
+	 * @param jobId The Job's unique Id
 	 * @return
 	 * @throws IOException
 	 */
-	public boolean closeStreamingJob(String jobUrl)
+	public boolean closeJob(String baseUrl, String jobId)
 	throws IOException
 	{
 		// Send finish message
-		String closeUrl = jobUrl + "/streaming/close";	
+		String closeUrl = baseUrl + "/data/" + jobId + "/close";	
+		s_Logger.debug("Closing job " + closeUrl);
+		
 		HttpPost post = new HttpPost(closeUrl);		
-		CloseableHttpResponse response = m_HttpClient.execute(post);
-		response.close();
+		try (CloseableHttpResponse response = m_HttpClient.execute(post))
+		{
+			if (response.getStatusLine().getStatusCode() != 202)
+			{
+				String content = EntityUtils.toString(response.getEntity());
+
+				String msg = String.format(
+						"Error closing job %s, status code = %d. "
+						+ "Returned content: %s",
+						jobId,
+						response.getStatusLine().getStatusCode(),
+						content);
+				
+				s_Logger.error(msg);
+				return false;
+			}			
+		}
 		
 		return true;
 	}
@@ -324,15 +426,18 @@ public class AutodetectRsClient implements Closeable
 	/**
 	 * Get the detectors used a in particular job.
 	 * 
-	 * @param jobUrl The URL for the job i.e <code>api/jobs/{jobid}</code>
+	 * @param baseUrl The base URL for the REST API 
+	 * e.g <code>http://localhost:8080/engine/version/</code>
+	 * @param jobId The Job's unique Id
 	 * 
 	 * @return
 	 * @throws IOException 
 	 */
-	public Pagination<Detector> getDetectors(String jobUrl) 
+	public Pagination<Detector> getDetectors(String baseUrl, String jobId) 
 	throws IOException 
 	{
-		String url = jobUrl + "/detectors";
+		String url = baseUrl + "/detectors/" + jobId;
+		s_Logger.debug("GET detectors " + url);
 		
 		HttpGet get = new HttpGet(url);
 		get.addHeader("Content-Type", "application/json");
@@ -340,14 +445,24 @@ public class AutodetectRsClient implements Closeable
 		CloseableHttpResponse response = m_HttpClient.execute(get);
 		try
 		{
+			String content = EntityUtils.toString(response.getEntity());
+			
 			if (response.getStatusLine().getStatusCode() == 200)
 			{
-				HttpEntity entity = response.getEntity();				
-				String content = EntityUtils.toString(entity);
-				
 				Pagination<Detector> docs = m_JsonMapper.readValue(content, 
 						new TypeReference<Pagination<Detector>>() {} );
 				return docs;
+			}
+			else
+			{
+				String msg = String.format(
+						"Error getting detectors for job %s, status code = %d. "
+						+ "Returned content: %s",
+						jobId,
+						response.getStatusLine().getStatusCode(),
+						content);
+				
+				s_Logger.error(msg);
 			}
 		}
 		finally 
@@ -367,22 +482,27 @@ public class AutodetectRsClient implements Closeable
 	 * Calls {@link #getBuckets(String, boolean, Integer)} with the take
 	 * parameter set to <code>null</code>
 	 * 
-	 * @param jobUrl The URL for the job i.e <code>api/jobs/{jobid}</code>
+	 * @param baseUrl The base URL for the REST API 
+	 * e.g <code>http://localhost:8080/engine/version/</code>
+	 * @param jobId The Job's unique Id
 	 * @param expand If true return the anomaly records for the bucket
 	 * 
 	 * @return
 	 * @throws IOException 
 	 */
-	public Pagination<Bucket> getBuckets(String jobUrl, boolean expand) 
+	public Pagination<Bucket> getBuckets(String baseUrl, String jobId, 
+			boolean expand) 
 	throws IOException 
 	{
-		return getBuckets(jobUrl, expand, null, null);
+		return getBuckets(baseUrl, jobId, expand, null, null);
 	}
 			
 	/**
 	 * Get the bucket results for a particular job with paging parameters.
 	 * 
-	 * @param jobUrl The URL for the job i.e <code>api/jobs/{jobid}</code>
+	 * @param baseUrl The base URL for the REST API 
+	 * e.g <code>http://localhost:8080/engine/version/</code>
+	 * @param jobId The Job's unique Id
 	 * @param expand If true return the anomaly records for the bucket
 	 * @param skip The number of buckets to skip 
 	 * @param take The max number of buckets to request. 
@@ -390,18 +510,20 @@ public class AutodetectRsClient implements Closeable
 	 * @return
 	 * @throws IOException 
 	 */
-	public Pagination<Bucket> getBuckets(String jobUrl, boolean expand,
-			Long skip, Long take) 
+	public Pagination<Bucket> getBuckets(String baseUrl, String jobId,
+			boolean expand, Long skip, Long take) 
 	throws IOException
 	{
-		return this.<String>getBuckets(jobUrl, expand, skip, take, null, null);
+		return this.<String>getBuckets(baseUrl, jobId, expand, skip, take, null, null);
 	}
 	
 	/**
 	 * Get the bucket results filtered between the start and end dates.</br>
 	 * The arguments are optional only one of start/end needs be set
 	 * 
-	 * @param jobUrl The URL for the job i.e <code>api/jobs/{jobid}</code>
+	 * @param baseUrl The base URL for the REST API 
+	 * e.g <code>http://localhost:8080/engine/version/</code>
+	 * @param jobId The Job's unique Id
 	 * @param expand If true return the anomaly records for the bucket
 	 * @param skip The number of buckets to skip. If <code>null</code> then ignored 
 	 * @param take The max number of buckets to request. If <code>null</code> then ignored 
@@ -412,11 +534,11 @@ public class AutodetectRsClient implements Closeable
 	 * @return
 	 * @throws IOException
 	 */
-	public <T> Pagination<Bucket> getBuckets(String jobUrl, boolean expand,
-				Long skip, Long take, T start, T end) 
+	public <T> Pagination<Bucket> getBuckets(String baseUrl, String jobId, 
+			boolean expand, Long skip, Long take, T start, T end) 
 	throws IOException
 	{
-		String url = jobUrl + "/results";
+		String url = baseUrl + "/results/" + jobId ;
 		char queryChar = '?';
 		if (expand)
 		{
@@ -444,6 +566,7 @@ public class AutodetectRsClient implements Closeable
 			queryChar = '&';
 		}
 		
+		s_Logger.debug("GET buckets " + url);
 		
 		HttpGet get = new HttpGet(url);
 		get.addHeader("Content-Type", "application/json");
@@ -451,14 +574,24 @@ public class AutodetectRsClient implements Closeable
 		CloseableHttpResponse response = m_HttpClient.execute(get);
 		try
 		{
+			String content = EntityUtils.toString(response.getEntity());
+
 			if (response.getStatusLine().getStatusCode() == 200)
 			{
-				HttpEntity entity = response.getEntity();				
-				String content = EntityUtils.toString(entity);
-				
 				Pagination<Bucket> docs = m_JsonMapper.readValue(content, 
 						new TypeReference<Pagination<Bucket>>() {} );
 				return docs;
+			}
+			else
+			{
+				String msg = String.format(
+						"Error getting buckets for job %s, status code = %d. "
+						+ "Returned content: %s",
+						jobId,
+						response.getStatusLine().getStatusCode(),
+						content);
+				
+				s_Logger.error(msg);
 			}
 		}
 		finally 
@@ -473,23 +606,27 @@ public class AutodetectRsClient implements Closeable
 	}
 		
 	/**
-	 * Get the bucket results for a particular job.
+	 * Get a single bucket for a particular job and bucket Id
 	 * 
-	 * @param jobUrl The URL for the job i.e <code>api/jobs/{jobid}</code>
+	 * @param baseUrl The base URL for the REST API 
+	 * e.g <code>http://localhost:8080/engine/version/</code>
+	 * @param jobId The Job's unique Id
 	 * @param bucketId The bucket to get
 	 * @param expand If true return the anomaly records for the bucket
 	 * @return
 	 * @throws IOException 
 	 */
-	public SingleDocument<Bucket> getBucket(String jobUrl, String bucketId,
-			boolean expand) 
+	public SingleDocument<Bucket> getBucket(String baseUrl, String jobId, 
+			String bucketId, boolean expand) 
 	throws IOException
 	{
-		String url = jobUrl + "/results/" + bucketId;
+		String url = baseUrl + "/results/" + jobId + "/" + bucketId;
 		if (expand)
 		{
 			url += "?expand=true";
 		}
+		
+		s_Logger.debug("GET bucket " + url);
 		
 		HttpGet get = new HttpGet(url);
 		get.addHeader("Content-Type", "application/json");
@@ -497,14 +634,26 @@ public class AutodetectRsClient implements Closeable
 		CloseableHttpResponse response = m_HttpClient.execute(get);
 		try
 		{
+			String content = EntityUtils.toString(response.getEntity());
+			
 			if (response.getStatusLine().getStatusCode() == 200)
 			{
-				HttpEntity entity = response.getEntity();				
-				String content = EntityUtils.toString(entity);
+				
 				
 				SingleDocument<Bucket> docs = m_JsonMapper.readValue(content, 
 						new TypeReference<SingleDocument<Bucket>>() {} );
 				return docs;
+			}
+			else
+			{
+				String msg = String.format(
+						"Error getting single bucket for job %s and bucket %s, "
+						+ "status code = %d. Returned content: %s",
+						jobId, bucketId,
+						response.getStatusLine().getStatusCode(),
+						content);
+
+				s_Logger.error(msg);
 			}
 		}
 		finally 
@@ -524,15 +673,19 @@ public class AutodetectRsClient implements Closeable
 	 * with <code>expand=true</code> except the bucket isn't returned only the
 	 * anomaly records.
 	 * 
-	 * @param jobUrl The URL for the job i.e <code>api/jobs/{jobid}</code>
+	 * @param baseUrl The base URL for the REST API 
+	 * e.g <code>http://localhost:8080/engine/version/</code>
+	 * @param jobId The Job's unique Id
 	 * @param bucketId The bucket to get the anomaly records from
 	 * @return
 	 * @throws IOException 
 	 */
-	public Pagination<Map<String,Object>> getRecords(String jobUrl, String bucketId)
+	public Pagination<Map<String,Object>> getRecords(String baseUrl, 
+			String jobId, String bucketId)
 	throws IOException
 	{
-		String url = jobUrl + "/results/" + bucketId + "/records";
+		String url = baseUrl + "/results/" + jobId + "/" + bucketId + "/records";
+		s_Logger.debug("GET records " + url);
 		
 		HttpGet get = new HttpGet(url);
 		get.addHeader("Content-Type", "application/json");
@@ -540,15 +693,25 @@ public class AutodetectRsClient implements Closeable
 		CloseableHttpResponse response = m_HttpClient.execute(get);
 		try
 		{
+			String content = EntityUtils.toString(response.getEntity());
+
 			if (response.getStatusLine().getStatusCode() == 200)
 			{
-				HttpEntity entity = response.getEntity();				
-				String content = EntityUtils.toString(entity);
-				
 				Pagination<Map<String,Object>> docs = m_JsonMapper.readValue(content, 
 						new TypeReference<Pagination<Map<String,Object>>>() {} );
 				return docs;
 			}
+			else
+			{
+				String msg = String.format(
+						"Error getting records for job %s and bucket %s, "
+						+ "status code = %d. Returned content: %s",
+						jobId, bucketId,
+						response.getStatusLine().getStatusCode(),
+						content);
+
+				s_Logger.error(msg);
+			}			
 		}
 		finally 
 		{
@@ -566,17 +729,21 @@ public class AutodetectRsClient implements Closeable
 	 * This is similar to {@linkplain #getRecords(String, String)} but only 
 	 * the records produced by the detetor <code>detectorId</code> are returned.
 	 * 
-	 * @param jobUrl The URL for the job i.e <code>api/jobs/{jobid}</code>
+	 * @param baseUrl The base URL for the REST API 
+	 * e.g <code>http://localhost:8080/engine/version/</code>
+	 * @param jobId The Job's unique Id
 	 * @param bucketId The bucket to get the anomaly records from
-	 * @param detetorId Only get anomaly records from this detector
+	 * @param detectorId Only get anomaly records from this detector
 	 * @return
 	 * @throws IOException 
 	 */
-	public Pagination<Map<String,Object>> getRecordByDetector(String jobUrl, 
-			String bucketId, String detetorId)
+	public Pagination<Map<String,Object>> getRecordByDetector(String baseUrl, 
+			String jobId, String bucketId, String detectorId)
 	throws IOException
 	{
-		String url = jobUrl + "/results/" + bucketId + "/records/" + detetorId;
+		String url = baseUrl + "/results/" + jobId + "/" + bucketId + "/records/"
+				+ detectorId;
+		s_Logger.debug("GET records by detectors " + url);
 		
 		HttpGet get = new HttpGet(url);
 		get.addHeader("Content-Type", "application/json");
@@ -584,15 +751,25 @@ public class AutodetectRsClient implements Closeable
 		CloseableHttpResponse response = m_HttpClient.execute(get);
 		try
 		{
+			String content = EntityUtils.toString(response.getEntity());
+
 			if (response.getStatusLine().getStatusCode() == 200)
 			{
-				HttpEntity entity = response.getEntity();				
-				String content = EntityUtils.toString(entity);
-				
 				Pagination<Map<String,Object>> docs = m_JsonMapper.readValue(content, 
 						new TypeReference<Pagination<Map<String,Object>>>() {} );
 				return docs;
 			}
+			else
+			{
+				String msg = String.format(
+						"Error getting records for detector %s, job %s and bucket %s, "
+						+ "status code = %d. Returned content: %s",
+						detectorId, jobId, bucketId,
+						response.getStatusLine().getStatusCode(),
+						content);
+
+				s_Logger.error(msg);
+			}			
 		}
 		finally 
 		{
@@ -605,8 +782,8 @@ public class AutodetectRsClient implements Closeable
 	}
 	
 	/**
-	 * Generic get to the Url. The result is converted to the type
-	 * referenced in <code>typeRef</code>. A <code>TypeReference</code> 
+	 * A generic HTTP GET to any Url. The result is converted from Json to 
+	 * the type referenced in <code>typeRef</code>. A <code>TypeReference</code> 
 	 * has to be used to preserve the generic that is usually lost in
 	 * erasure.
 	 *  
@@ -620,20 +797,34 @@ public class AutodetectRsClient implements Closeable
 	public <T> T get(String fullUrl, TypeReference<T> typeRef) 
 	throws JsonParseException, JsonMappingException, IOException
 	{
+		s_Logger.debug("GET " + fullUrl + ". Return type = " 
+					+ typeRef.getType().toString());
+		
+		
 		HttpGet get = new HttpGet(fullUrl);
 		get.addHeader("Content-Type", "application/json");
 		
 		CloseableHttpResponse response = m_HttpClient.execute(get);
 		try
 		{
+			HttpEntity entity = response.getEntity();				
+			String content = EntityUtils.toString(entity);
+
 			if (response.getStatusLine().getStatusCode() == 200)
 			{
-				HttpEntity entity = response.getEntity();				
-				String content = EntityUtils.toString(entity);
-				
 				T docs = m_JsonMapper.readValue(content, typeRef);
 				return docs;
 			}
+			else
+			{
+				String msg = String.format(
+						"GET returned status code %d for url %s. "
+						+ "Returned content = %s",
+						response.getStatusLine().getStatusCode(), fullUrl,
+						content);
+
+				s_Logger.error(msg);
+			}				
 		}
 		finally 
 		{
