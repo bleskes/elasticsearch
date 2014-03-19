@@ -148,7 +148,7 @@ public class Jobs extends ResourceWithJobManager
     	setEndPointLinks(job);
     	
     	s_Logger.debug("Returning new job details location " + job.getLocation());
-    	String ent = String.format("{\"id\":\"%s\"}", job.getId()); 
+    	String ent = String.format("{\"id\":\"%s\"}\n", job.getId()); 
     	
 		return Response.created(job.getLocation()).entity(ent).build();
     }      

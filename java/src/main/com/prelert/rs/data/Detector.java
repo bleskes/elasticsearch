@@ -43,8 +43,8 @@ import com.fasterxml.jackson.core.JsonToken;
 import com.prelert.rs.data.parsing.AutoDetectParseException;
 
 /**
- * Detector POJO
- * Properties that return <code>null</code> won't be serialised.
+ * Represents the anomaly detector.
+ * Only the detector name is serialised anomaly records aren't.
  */
 @JsonInclude(Include.NON_NULL)
 @JsonIgnoreProperties({"records"})

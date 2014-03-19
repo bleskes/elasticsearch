@@ -61,7 +61,7 @@ import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
 
 /**
- * A Http Client to test/develop the Prelert Autodetect RESTful web service against.</br>
+ * A Http Client for the Prelert Engine RESTful API.</br>
  * Contains methods to create jobs, list jobs, upload data and query results.
  * 
  * </br>Implements closeable so it can be used in a try-with-resource statement
@@ -98,7 +98,7 @@ public class EngineApiClient implements Closeable
 	 * 
 	 * @param baseUrl The base URL for the REST API 
 	 * e.g <code>http://localhost:8080/engine/version/</code>
-	 * @return The pagination object containing a list of Jobs
+	 * @return The {@link Pagination} object containing a list of {@link JobDetails jobs}
 	 * @throws IOException
 	 */
 	public Pagination<JobDetails> getJobs(String baseUrl) 
@@ -141,7 +141,7 @@ public class EngineApiClient implements Closeable
 	 * @param jobId The Job's unique Id
 	 * 
 	 * @return If the job exists a {@link com.prelert.rs.data.SingleDocument SingleDocument}
-	 * containing the Job is returned else the SingleDocument is empty
+	 * containing the {@link JobDetails job} is returned else the SingleDocument is empty
 	 * @throws IOException
 	 */
 	public SingleDocument<JobDetails> getJob(String baseUrl, String jobId)
@@ -248,7 +248,7 @@ public class EngineApiClient implements Closeable
 	 * @param baseUrl The base URL for the REST API 
 	 * e.g <code>http://localhost:8080/engine/version/</code>
 	 * @param jobId The Job's unique Id
-	 * @return If the job exists as deleted return true else false
+	 * @return If the job existed and was deleted return true else false
 	 * @throws IOException, ClientProtocolException
 	 */
 	public boolean deleteJob(String baseUrl, String jobId) 
@@ -283,16 +283,17 @@ public class EngineApiClient implements Closeable
 	/**
 	 * Read the input stream in 4Mb chunks and upload making a new connection
 	 * for each chunk.
-	 * The data is not set line-by-line or broken in chunks on newline boundaries
-	 * it is send in fixed size blocks. The API will manage reconstructing 
-	 * the records from the chunks.
+	 * The data is not set line-by-line or broken in chunks on newline 
+	 * boundaries it is send in fixed size blocks. The API will manage 
+	 * reconstructing the records from the chunks.
 	 * 
 	 * @param baseUrl The base URL for the REST API 
 	 * e.g <code>http://localhost:8080/engine/version/</code>
 	 * @param jobId The Job's unique Id
 	 * @param inputStream The data to write to the web service
-	 * @return
+	 * @return True
 	 * @throws IOException 
+	 * @see {@link #streamingUpload(String, String, InputStream, boolean)}
 	 */
 	public boolean chunkedUpload(String baseUrl, String jobId,
 			FileInputStream inputStream) 
@@ -335,16 +336,20 @@ public class EngineApiClient implements Closeable
 	}
 	
 	/**
-	 * Stream data from <code>inputStream</code> to the service
+	 * Stream data from <code>inputStream</code> to the service.
+	 * This is different to {@link #chunkedUpload(String, String, FileInputStream)}
+	 * in that the entire stream is read and uploading at once without breaking
+	 * the connection.
 	 * 
 	 * @param baseUrl The base URL for the REST API 
 	 * e.g <code>http://localhost:8080/engine/version/</code>
 	 * @param jobId The Job's unique Id
 	 * @param inputStream The data to write to the web service
 	 * @param compressed Is the data gzipped compressed?
-	 * @return
+	 * @return True if successful
 	 * @throws IOException
 	 * @throws InterruptedException
+	 * @see {@link #chunkedUpload(String, String, FileInputStream)}
 	 */
 	public boolean streamingUpload(String baseUrl, String jobId,
 			InputStream inputStream, boolean compressed) 
@@ -390,7 +395,7 @@ public class EngineApiClient implements Closeable
 	 * @param baseUrl The base URL for the REST API 
 	 * e.g <code>http://localhost:8080/engine/version/</code>
 	 * @param jobId The Job's unique Id
-	 * @return
+	 * @return True if successful 
 	 * @throws IOException
 	 */
 	public boolean closeJob(String baseUrl, String jobId)
@@ -424,13 +429,14 @@ public class EngineApiClient implements Closeable
 	
 	
 	/**
-	 * Get the detectors used a in particular job.
+	 * Get the list of detectors used a in particular job.
 	 * 
 	 * @param baseUrl The base URL for the REST API 
 	 * e.g <code>http://localhost:8080/engine/version/</code>
 	 * @param jobId The Job's unique Id
 	 * 
-	 * @return
+	 * @return A {@link Pagination} object containing a list of 
+	 * {@link Detector detectors}
 	 * @throws IOException 
 	 */
 	public Pagination<Detector> getDetectors(String baseUrl, String jobId) 
@@ -479,15 +485,15 @@ public class EngineApiClient implements Closeable
 	
 	/**
 	 * Get the bucket results for a particular job.
-	 * Calls {@link #getBuckets(String, boolean, Integer)} with the take
-	 * parameter set to <code>null</code>
+	 * Calls {@link #getBuckets(String, boolean, Integer)} with the skip and
+	 * take parameters set to <code>null</code>
 	 * 
 	 * @param baseUrl The base URL for the REST API 
 	 * e.g <code>http://localhost:8080/engine/version/</code>
 	 * @param jobId The Job's unique Id
 	 * @param expand If true return the anomaly records for the bucket
 	 * 
-	 * @return
+	 * @return A {@link Pagination} object containing a list of {@link Bucket buckets}
 	 * @throws IOException 
 	 */
 	public Pagination<Bucket> getBuckets(String baseUrl, String jobId, 
@@ -507,7 +513,7 @@ public class EngineApiClient implements Closeable
 	 * @param skip The number of buckets to skip 
 	 * @param take The max number of buckets to request. 
 	 * 
-	 * @return
+	 * @return A {@link Pagination} object containing a list of {@link Bucket buckets}
 	 * @throws IOException 
 	 */
 	public Pagination<Bucket> getBuckets(String baseUrl, String jobId,
@@ -531,7 +537,7 @@ public class EngineApiClient implements Closeable
 	 * or an ISO 8601 date String. If <code>null</code> then ignored
 	 * @param end The end date filter as either a Long (seconds from epoch)
 	 * or an ISO 8601 date String. If <code>null</code> then ignored
-	 * @return
+	 * @return A {@link Pagination} object containing a list of {@link Bucket buckets}
 	 * @throws IOException
 	 */
 	public <T> Pagination<Bucket> getBuckets(String baseUrl, String jobId, 
@@ -613,7 +619,8 @@ public class EngineApiClient implements Closeable
 	 * @param jobId The Job's unique Id
 	 * @param bucketId The bucket to get
 	 * @param expand If true return the anomaly records for the bucket
-	 * @return
+	 * @return A {@link SingleDocument} object containing the requested 
+	 * {@link Bucket} or an empty {@link SingleDocument} if it does not exist 
 	 * @throws IOException 
 	 */
 	public SingleDocument<Bucket> getBucket(String baseUrl, String jobId, 
@@ -677,7 +684,7 @@ public class EngineApiClient implements Closeable
 	 * e.g <code>http://localhost:8080/engine/version/</code>
 	 * @param jobId The Job's unique Id
 	 * @param bucketId The bucket to get the anomaly records from
-	 * @return
+	 * @return A {@link Pagination} object containing a Map<String,Object>
 	 * @throws IOException 
 	 */
 	public Pagination<Map<String,Object>> getRecords(String baseUrl, 
@@ -724,7 +731,7 @@ public class EngineApiClient implements Closeable
 	}
 	
 	/**
-	 * Get the anomaly records from a particular anomlay detector 
+	 * Get the anomaly records from a particular anomaly detector 
 	 * in the given bucket.
 	 * This is similar to {@linkplain #getRecords(String, String)} but only 
 	 * the records produced by the detetor <code>detectorId</code> are returned.
@@ -734,7 +741,7 @@ public class EngineApiClient implements Closeable
 	 * @param jobId The Job's unique Id
 	 * @param bucketId The bucket to get the anomaly records from
 	 * @param detectorId Only get anomaly records from this detector
-	 * @return
+	 * @return A {@link Pagination} object containing a Map<String,Object>
 	 * @throws IOException 
 	 */
 	public Pagination<Map<String,Object>> getRecordByDetector(String baseUrl, 
@@ -780,12 +787,78 @@ public class EngineApiClient implements Closeable
 		Pagination<Map<String,Object>> page = new Pagination<>();
 		return page;
 	}
+
+
+	/**
+	 * Get the last 10 lines of the job's latest log file
+	 * 
+	 * @param baseUrl The base URL for the REST API 
+	 * e.g <code>http://localhost:8080/engine/version/</code>
+	 * @param jobId The Job's unique Id
+	 * @return
+	 * @throws ClientProtocolException
+	 * @throws IOException
+	 */
+	public String tailLog(String baseUrl, String jobId) 
+	throws ClientProtocolException, IOException
+	{
+		return tailLog(baseUrl, jobId, 10);
+	}
+	
+	/**
+	 * Tails the last <code>lineCount</code> lines from the job's
+	 * last log file
+	 * 
+	 * @param baseUrl The base URL for the REST API 
+	 * e.g <code>http://localhost:8080/engine/version/</code>
+	 * @param jobId The Job's unique Id
+	 * @param lineCount The number of lines to return 
+	 * @return
+	 * @throws ClientProtocolException
+	 * @throws IOException
+	 */
+	public String tailLog(String baseUrl, String jobId, int lineCount) 
+	throws ClientProtocolException, IOException
+	{
+		String url = String.format("%s/logs/%s/tail?lines=%d", 
+				baseUrl, jobId, lineCount);
+		
+		s_Logger.debug("GET tail log " + url);
+		
+		HttpGet get = new HttpGet(url);
+		get.addHeader("Content-Type", "application/json");
+		
+		try (CloseableHttpResponse response = m_HttpClient.execute(get))
+		{
+			String content = EntityUtils.toString(response.getEntity());
+
+			if (response.getStatusLine().getStatusCode() == 200)
+			{
+				return content;
+			}
+			else
+			{
+				String msg = String.format(
+						"Error tailing logs for job %s, status code = %d. "
+								+ "Returned content: %s",
+								jobId,
+								response.getStatusLine().getStatusCode(),
+								content);
+
+				s_Logger.error(msg);
+				return "";
+			}			
+		}		
+	}
+	
 	
 	/**
 	 * A generic HTTP GET to any Url. The result is converted from Json to 
 	 * the type referenced in <code>typeRef</code>. A <code>TypeReference</code> 
 	 * has to be used to preserve the generic that is usually lost in
-	 * erasure.
+	 * erasure.<br/>
+	 * This method is useful for paging through a set of results in a 
+	 * {@link Pagination} object.
 	 *  
 	 * @param fullUrl
 	 * @param typeRef

@@ -35,14 +35,17 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 /**
- * Generic wrapper class for results returned by the Web Service.
+ * Generic wrapper class for results returned by the RESTful API.
  * 
- * The service automatically pages results if more than 
- * {@link com.prelert.job.JobManager#DEFAULT_PAGE_SIZE}
- * are returned in this case {@link #getNextPage()} will not by <code>null</code> 
- * and the link is to the next page of results. Similarly if this is not the 
- * first page of results {@link #getPreviousPage()}. Skip and Take are the
- * arguments used in the query. 
+ * The API automatically pages results if more than the <code>skip</code> 
+ * query parameter are returned. If this is not the last page of results
+ * {@link #getNextPage()} will return a non <code>null</code> value
+ * that is the link to the next page of results. Similarly if this is not the 
+ * first page of results {@link #getPreviousPage()}.<br/>
+ * {@link #getDocuments()} Returns the actual list of requested documents the 
+ * size of that list will always be <= {@link #getTake()} 
+ * 
+ * <br/>Skip and Take are set to the argument values used in the query. 
  * 
  * @param <T> The type of the result
  */
