@@ -271,7 +271,7 @@ public class AnomalyRecord
 	 *
 	 * @param parser The JSON Parser should be pointing to the start of the object,
 	 * when the function returns it will be pointing to the end.
-	 * @return
+	 * @return The new AnomalyRecord
 	 * @throws JsonParseException
 	 * @throws IOException
 	 * @throws AutoDetectParseException

@@ -47,7 +47,7 @@ public class SingleDocument<T>
 	
 	/**
 	 * Return true if the requested document exists
-	 * @return
+	 * @return true is document exists
 	 */
 	public boolean isExists() 
 	{
@@ -61,7 +61,7 @@ public class SingleDocument<T>
 
 	/**
 	 * The type of the requested document
-	 * @return
+	 * @return The document type
 	 */
 	public String getType() 
 	{
@@ -75,7 +75,7 @@ public class SingleDocument<T>
 
 	/**
 	 * The id of the requested document
-	 * @return
+	 * @return The document Id
 	 */
 	public String getId() 
 	{

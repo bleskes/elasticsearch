@@ -286,8 +286,8 @@ public class JobDetails
 	}
 
 	/**
-	 * Return the JobId
-	 * @return
+	 * Return the Job Id
+	 * @return The job Id string
 	 */
 	public String getId()
 	{
@@ -310,7 +310,7 @@ public class JobDetails
 	/**
 	 * Return the Job Status. Jobs are initialised to {@link JobStatus.RUNNING}
 	 * when created.
-	 * @return
+	 * @return The job's status
 	 */
 	public JobStatus getStatus() 
 	{
@@ -324,7 +324,7 @@ public class JobDetails
 
 	/**
 	 * The Job creation time.
-	 * @return
+	 * @return The date the job was created
 	 */
 	public Date getCreateTime() 
 	{
@@ -338,7 +338,7 @@ public class JobDetails
 
 	/**
 	 * The time the job was finished or <code>null</code> if not finished.
-	 * @return
+	 * @return The date the job was last retired or <code>null</code> 
 	 */
 	public Date getFinishedTime() 
 	{
@@ -353,7 +353,7 @@ public class JobDetails
 	/**
 	 * The last time data was uploaded to the job or <code>null</code> 
 	 * if no data has been seen.
-	 * @return
+	 * @return The data at which the last data was processed
 	 */
 	public Date getLastDataTime() 
 	{
@@ -369,7 +369,7 @@ public class JobDetails
 	 * The number of records processed by the job. 
 	 * This value is only updated every time a complete bucket is processed
 	 * by the running job.  
-	 * @return
+	 * @return Number of records processed by this job
 	 */
 	public long getProcessedRecordCount() 
 	{
@@ -381,26 +381,11 @@ public class JobDetails
 		m_ProcessedRecordCount = count;
 	}
 
-/*	
-	/**
-	 * The list of files processed by the job.
-	 * @return
-	 */
-/*	
-	public List<URL> getFileUrls() 
-	{
-		return m_FileUrls;
-	}
-	
-	public void setFileUrls(List<URL> urls) 
-	{
-		m_FileUrls = urls;
-	}
-*/
 	/**
 	 * The job timeout setting in seconds. Jobs are retired if they do not 
 	 * receive data for this period of time.
-	 * @return
+	 * The default is 600 seconds
+	 * @return The timeout period in seconds
 	 */
 	public long getTimeout() 
 	{
@@ -414,7 +399,7 @@ public class JobDetails
 
 	/**
 	 * Is the job persisted
-	 * @return
+	 * @return true if the job's internal models have been persisted
 	 */
 	public boolean isPersistModel() 
 	{
@@ -428,7 +413,7 @@ public class JobDetails
 	
 	/**
 	 * The analysis configuration object
-	 * @return
+	 * @return The AnalysisConfig
 	 */
 	public AnalysisConfig getAnalysisConfig() 
 	{
@@ -442,7 +427,7 @@ public class JobDetails
 	
 	/**
 	 * The analysis options object
-	 * @return
+	 * @return The AnalysisOptions
 	 */
 	public AnalysisOptions getAnalysisOptions() 
 	{
@@ -472,7 +457,7 @@ public class JobDetails
 
 	/**
 	 * The URI of this resource
-	 * @return
+	 * @return The URI of this job
 	 */
 	public URI getLocation()
 	{
@@ -490,7 +475,7 @@ public class JobDetails
 	/**
 	 * This Job's data endpoint as the full URL path
 	 * in the form base_url/job_id/{@value com.prelert.rs.resources.Data#ENDPOINT}
-	 * @return
+	 * @return The Job's data URI
 	 */
 	public URI getDataEndpoint() 
 	{
@@ -508,7 +493,7 @@ public class JobDetails
 	/**
 	 * This Job's resutls endpoint as the full URL path
 	 * in the form base_url/job_id/{@value com.prelert.rs.resources.Results#ENDPOINT}
-	 * @return
+	 * @return The Job's results URI
 	 */
 	public URI getResultsEndpoint() 
 	{
@@ -527,7 +512,7 @@ public class JobDetails
 	/**
 	 * This Job's logs endpoint as the full URL path
 	 * in the form base_url/job_id/{@value com.prelert.rs.resources.Logs#ENDPOINT}
-	 * @return
+	 * @return The Job's logs URI
 	 */
 	public URI getLogsEndpoint() 
 	{
@@ -565,7 +550,7 @@ public class JobDetails
 	 * 
 	 * @param o1
 	 * @param o2
-	 * @return
+	 * @return True if both null or both are non-null and equal
 	 */
 	public static <T> boolean bothNullOrEqual(T o1, T o2)
 	{

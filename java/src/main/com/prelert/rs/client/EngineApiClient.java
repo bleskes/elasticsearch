@@ -485,8 +485,8 @@ public class EngineApiClient implements Closeable
 	
 	/**
 	 * Get the bucket results for a particular job.
-	 * Calls {@link #getBuckets(String, boolean, Integer)} with the skip and
-	 * take parameters set to <code>null</code>
+	 * Calls {@link #getBuckets(String, String, boolean, Long, Long)} with the 
+	 * skip and take parameters set to <code>null</code>
 	 * 
 	 * @param baseUrl The base URL for the REST API 
 	 * e.g <code>http://localhost:8080/engine/version/</code>
@@ -676,7 +676,7 @@ public class EngineApiClient implements Closeable
 	/**
 	 * Get the anomaly records for the bucket. Records from all detectors are
 	 * returned.
-	 * This is similar to calling {@linkplain #getBucket(String, String, boolean)}
+	 * This is similar to calling {@linkplain #getBucket(String, String, String, boolean)}
 	 * with <code>expand=true</code> except the bucket isn't returned only the
 	 * anomaly records.
 	 * 
@@ -733,8 +733,9 @@ public class EngineApiClient implements Closeable
 	/**
 	 * Get the anomaly records from a particular anomaly detector 
 	 * in the given bucket.
-	 * This is similar to {@linkplain #getRecords(String, String)} but only 
-	 * the records produced by the detetor <code>detectorId</code> are returned.
+	 * This is similar to {@linkplain #getRecords(String, String, String)}  
+	 * but only the records produced by the detetor <code>detectorId</code> 
+	 * are returned.
 	 * 
 	 * @param baseUrl The base URL for the REST API 
 	 * e.g <code>http://localhost:8080/engine/version/</code>
@@ -795,7 +796,7 @@ public class EngineApiClient implements Closeable
 	 * @param baseUrl The base URL for the REST API 
 	 * e.g <code>http://localhost:8080/engine/version/</code>
 	 * @param jobId The Job's unique Id
-	 * @return
+	 * @return The last 10 lines of the last log file
 	 * @throws ClientProtocolException
 	 * @throws IOException
 	 */
@@ -813,7 +814,7 @@ public class EngineApiClient implements Closeable
 	 * e.g <code>http://localhost:8080/engine/version/</code>
 	 * @param jobId The Job's unique Id
 	 * @param lineCount The number of lines to return 
-	 * @return
+	 * @return The last <code>lineCount</code> lines of the log file
 	 * @throws ClientProtocolException
 	 * @throws IOException
 	 */
