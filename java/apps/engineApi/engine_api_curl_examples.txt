@@ -86,8 +86,8 @@ record has a timestamp in the field 'time' and that timestamp is formatted as
 Putting it all together we can create a new job by posting this config to the
 jobs endpoint
 
-    curl -v -X POST -H 'Content-Type: application/json' 'http://localhost:8080/engine/v0.3/jobs' -d
-    '{"analysisConfig" : {
+    curl -X POST -H 'Content-Type: application/json' 'http://localhost:8080/engine/v0.3/jobs' -d '{
+        "analysisConfig" : {
             "bucketSpan":3600,
             "detectors" :[{"fieldName":"responsetime","byFieldName":"airline"}]
         },
@@ -204,7 +204,7 @@ returns the same empty results document we saw in section 1.
 
 In this example we are using the data in farequote_ISO_8601.csv.
 
-    curl 'http://localhost:8080/engine/v0.3/data/20140319133023-00005' --data-binary @farequote_ISO_8601.csv
+    curl -v 'http://localhost:8080/engine/v0.3/data/20140319133023-00005' --data-binary @farequote_ISO_8601.csv
 
 When using Curl remember to use --data-binary to preserve line endings in the
 text file
@@ -270,8 +270,8 @@ The 'analysisConfig' is the same as before but 'dataDescription' now tells the A
 that the data is in JSON format and has a 'timestamp' containing the time in
 seconds from the Epoch.
 
-    curl -v -X POST -H 'Content-Type: application/json' 'http://localhost:8080/engine/v0.3/jobs' -d
-    '{"analysisConfig" : {
+    curl -X POST -H 'Content-Type: application/json' 'http://localhost:8080/engine/v0.3/jobs' -d '{
+        "analysisConfig" : {
             "bucketSpan":3600,
             "detectors" :[{"fieldName":"responsetime","byFieldName":"airline"}]
         },
@@ -287,7 +287,7 @@ Returns
 
 and the data is uploaded using Curl
 
-    curl 'http://localhost:8080/engine/v0.3/data/20140319133023-00006/' --data-binary @flightcentre.json
+    curl -v 'http://localhost:8080/engine/v0.3/data/20140319133023-00006/' --data-binary @flightcentre.json
 
 
 6. Gzipped Data Example
@@ -296,8 +296,8 @@ and the data is uploaded using Curl
 This uses the same Farequote data but this time it is gzipped csv. The job
 configuration is similar to the other examples:
 
-    curl -v -X POST -H 'Content-Type: application/json' 'http://localhost:8080/engine/v0.3/jobs' -d
-    '{"analysisConfig" : {
+    curl -X POST -H 'Content-Type: application/json' 'http://localhost:8080/engine/v0.3/jobs' -d '{
+        "analysisConfig" : {
             "bucketSpan":3600,
             "detectors" :[{"fieldName":"responsetime","byFieldName":"airline"}]
         },
