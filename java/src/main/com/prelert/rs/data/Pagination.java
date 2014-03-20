@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Inc 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -69,7 +69,7 @@ public class Pagination<T>
 	 * The number of hits in the request. This does not
 	 * necessarily match the length of the number of documents returned 
 	 * if paging is in action.
-	 * @return
+	 * @return The number of search hits
 	 */
 	public long getHitCount()
 	{
@@ -84,7 +84,7 @@ public class Pagination<T>
 	/**
 	 * If the results are paged this is the starting point of that page.
 	 * 
-	 * @return
+	 * @return The skip query parameter used in the query
 	 */
 	public int getSkip()
 	{
@@ -99,7 +99,8 @@ public class Pagination<T>
 	/**
 	 * The number of documents requested this value can be greater than 
 	 * the number actually returned.
-	 * @return
+	 * 
+	 * @return The take query parameter used in the query
 	 */
 	public int getTake()
 	{
@@ -141,7 +142,8 @@ public class Pagination<T>
 	
 	/**
 	 * The documents.
-	 * @return may be <code>null</code>
+	 * @return The list of documents or <code>null</code> if 
+	 * {@link #getHitCount()} == 0
 	 */
 	public List<T> getDocuments()
 	{
@@ -156,7 +158,7 @@ public class Pagination<T>
 	/**
 	 * The number of documents returned in this document page.
 	 * This property calculated on the fly so shouldn't be serialised
-	 * @return
+	 * @return The number of documents in this page
 	 */
 	public int getDocumentCount()
 	{
@@ -167,7 +169,7 @@ public class Pagination<T>
 	 * True if all results are return i.e. there is no next page or previous page
 	 * and skip == 0
 	 * 
-	 * @return
+	 * @return True if all the requested documents are returned in this page
 	 */
 	@JsonIgnore()
 	public boolean isAllResults()
