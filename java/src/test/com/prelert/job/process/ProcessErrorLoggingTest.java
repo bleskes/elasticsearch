@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Inc 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -38,6 +38,7 @@ import java.util.Map;
 
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
+import com.prelert.job.Detector;
 import com.prelert.job.DetectorState;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
@@ -125,10 +126,10 @@ public class ProcessErrorLoggingTest
 	public static void main(String[] args) 
 	throws NativeProcessRunException, UnknownJobException, IOException 
 	{
-		AnalysisConfig.Detector detector = new AnalysisConfig.Detector();
+		Detector detector = new Detector();
 		detector.setFieldName("airline");
 		detector.setByFieldName("responsetime");
-		List<AnalysisConfig.Detector> d = new ArrayList<>();
+		List<Detector> d = new ArrayList<>();
 		d.add(detector);
 		
 		AnalysisConfig conf = new AnalysisConfig();

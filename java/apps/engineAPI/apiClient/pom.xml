@@ -11,7 +11,7 @@
 
   <groupId>com.prelert</groupId>
   <artifactId>apiClient</artifactId>
-  <version>0.3.0</version>
+  <version>0.4.0</version>
   <packaging>jar</packaging>
 
   <name>apiClient</name>
@@ -103,11 +103,12 @@
             </goals>     
             <configuration>         
               <includes>            
-                <include>com/prelert/rs/client/*.java</include>    
+                <include>com/prelert/rs/client/**/*.java</include>    
                 <include>com/prelert/rs/data/*.java</include>      
                 <include>com/prelert/job/*.java</include>          
               </includes>
               <excludes>
+                <exclude>com/prelert/rs/resources/*.java</exclude>  
                 <exclude>com/prelert/job/JobManager*</exclude>   
                 <exclude>com/prelert/job/ProcessManager*</exclude>   
               </excludes>
@@ -123,7 +124,7 @@
             </goals>
             <configuration>
               <testIncludes>
-                <include>com/prelert/rs/client/*.java</include>  
+                <include>com/prelert/rs/client/**/*.java</include>  
               </testIncludes>
             </configuration> 
           </execution>                  

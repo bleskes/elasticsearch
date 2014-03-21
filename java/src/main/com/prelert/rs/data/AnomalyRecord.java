@@ -254,7 +254,7 @@ public class AnomalyRecord
 		return m_IsSimpleCount;
 	}
 
-	public void setSimpleCount(boolean value)
+	public void setIsSimpleCount(boolean value)
 	{
 		m_IsSimpleCount = value;
 	}
@@ -271,7 +271,7 @@ public class AnomalyRecord
 	 *
 	 * @param parser The JSON Parser should be pointing to the start of the object,
 	 * when the function returns it will be pointing to the end.
-	 * @return
+	 * @return The new AnomalyRecord
 	 * @throws JsonParseException
 	 * @throws IOException
 	 * @throws AutoDetectParseException
@@ -465,7 +465,7 @@ public class AnomalyRecord
 					token = parser.nextToken();
 					if (token == JsonToken.VALUE_FALSE || token == JsonToken.VALUE_TRUE)
 					{
-						record.setSimpleCount(parser.getBooleanValue());
+						record.setIsSimpleCount(parser.getBooleanValue());
 					}
 					else
 					{

@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Inc 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -35,14 +35,17 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 /**
- * Generic wrapper class for results returned by the Web Service.
+ * Generic wrapper class for results returned by the RESTful API.
  * 
- * The service automatically pages results if more than 
- * {@link com.prelert.job.JobManager#DEFAULT_PAGE_SIZE}
- * are returned in this case {@link #getNextPage()} will not by <code>null</code> 
- * and the link is to the next page of results. Similarly if this is not the 
- * first page of results {@link #getPreviousPage()}. Skip and Take are the
- * arguments used in the query. 
+ * The API automatically pages results if more than the <code>skip</code> 
+ * query parameter are returned. If this is not the last page of results
+ * {@link #getNextPage()} will return a non <code>null</code> value
+ * that is the link to the next page of results. Similarly if this is not the 
+ * first page of results {@link #getPreviousPage()}.<br/>
+ * {@link #getDocuments()} Returns the actual list of requested documents the 
+ * size of that list will always be <= {@link #getTake()} 
+ * 
+ * <br/>Skip and Take are set to the argument values used in the query. 
  * 
  * @param <T> The type of the result
  */
@@ -66,7 +69,7 @@ public class Pagination<T>
 	 * The number of hits in the request. This does not
 	 * necessarily match the length of the number of documents returned 
 	 * if paging is in action.
-	 * @return
+	 * @return The number of search hits
 	 */
 	public long getHitCount()
 	{
@@ -81,7 +84,7 @@ public class Pagination<T>
 	/**
 	 * If the results are paged this is the starting point of that page.
 	 * 
-	 * @return
+	 * @return The skip query parameter used in the query
 	 */
 	public int getSkip()
 	{
@@ -96,7 +99,8 @@ public class Pagination<T>
 	/**
 	 * The number of documents requested this value can be greater than 
 	 * the number actually returned.
-	 * @return
+	 * 
+	 * @return The take query parameter used in the query
 	 */
 	public int getTake()
 	{
@@ -138,7 +142,8 @@ public class Pagination<T>
 	
 	/**
 	 * The documents.
-	 * @return may be <code>null</code>
+	 * @return The list of documents or <code>null</code> if 
+	 * {@link #getHitCount()} == 0
 	 */
 	public List<T> getDocuments()
 	{
@@ -153,7 +158,7 @@ public class Pagination<T>
 	/**
 	 * The number of documents returned in this document page.
 	 * This property calculated on the fly so shouldn't be serialised
-	 * @return
+	 * @return The number of documents in this page
 	 */
 	public int getDocumentCount()
 	{
@@ -164,7 +169,7 @@ public class Pagination<T>
 	 * True if all results are return i.e. there is no next page or previous page
 	 * and skip == 0
 	 * 
-	 * @return
+	 * @return True if all the requested documents are returned in this page
 	 */
 	@JsonIgnore()
 	public boolean isAllResults()

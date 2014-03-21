@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Inc 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -46,7 +46,7 @@ import com.prelert.rs.data.Pagination;
 /**
  * List all the detectors in this job.
  */
-@Path("/jobs/{jobId}/detectors")
+@Path("/detectors")
 public class Detectors extends ResourceWithJobManager
 {
 	static final private Logger s_Logger = Logger.getLogger(Detectors.class);
@@ -57,6 +57,7 @@ public class Detectors extends ResourceWithJobManager
 	static public final String ENDPOINT = "detectors";
 	
 	
+	@Path("/{jobId}")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	public Pagination<Detector> detectors(

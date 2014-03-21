@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Inc 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -50,7 +50,6 @@ import com.prelert.job.NativeProcessRunException;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobManager;
-import com.prelert.job.logs.JobLogs;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
 
@@ -65,6 +64,8 @@ import com.prelert.rs.data.SingleDocument;
  * <pre>curl 'http://localhost:8080/api/jobs/{job_id}'</pre>
  * or all jobs:</br> 
  * <pre>curl 'http://localhost:8080/api/jobs'</pre>
+ * Delete a job with:</br>
+ * <pre>curl -X DELETE 'http://localhost:8080/api/jobs/{job_id}'</pre>
  */
 
 @Path("/jobs")
@@ -147,7 +148,7 @@ public class Jobs extends ResourceWithJobManager
     	setEndPointLinks(job);
     	
     	s_Logger.debug("Returning new job details location " + job.getLocation());
-    	String ent = String.format("{\"id\":\"%s\"}", job.getId()); 
+    	String ent = String.format("{\"id\":\"%s\"}\n", job.getId()); 
     	
 		return Response.created(job.getLocation()).entity(ent).build();
     }      
@@ -185,54 +186,9 @@ public class Jobs extends ResourceWithJobManager
 		}
     }
     
-    /**
-     * Get the contents of the log directory zipped
-     * 
-     * @param jobId
-     * @return
-     * @throws UnknownJobException
-     */
-    @GET
-	@Path("/{jobId}/logs")
-    @Produces(MediaType.APPLICATION_OCTET_STREAM)
-    public Response jobLogFiles(@PathParam("jobId") String jobId)
-    throws UnknownJobException
-    {   	
-    	s_Logger.debug("Download logs for job '" + jobId + "'");
-    	
-		JobLogs logs = new JobLogs();
-		byte [] compressFiles = logs.zippedLogFiles(jobId);
-		
-		String filename = jobId + "_logs.zip";
-		
-		return Response.ok(compressFiles)
-				.header("Content-Disposition", "attachment; filename=\"" + filename + "\"")
-				.build();
-    }
-    
-    /**
-     * Tail the log file
-     * 
-     * @param jobId
-     * @param lines Number of lines to tail
-     * @return
-     * @throws UnknownJobException
-     */
-    @GET
-	@Path("/{jobId}/logs/tail")
-    @Produces(MediaType.TEXT_PLAIN)
-    public String tailLogFile(@PathParam("jobId") String jobId,
-    		@DefaultValue("10") @QueryParam("lines") int lines)
-    throws UnknownJobException
-    {   	
-    	s_Logger.debug("Tail log for job '" + jobId + "'");
-    	
-		JobLogs logs = new JobLogs();
-		return logs.tail(jobId, lines);
-    }
         
     /**
-     * Sets the URLs to the streaming & results endpoints and the 
+     * Sets the URLs to the data, logs & results endpoints and the 
      * location of this job 
      * @param job
      */
@@ -244,19 +200,23 @@ public class Jobs extends ResourceWithJobManager
 				.build();
     	job.setLocation(location);   	
     	
-    	URI streaming = m_UriInfo.getBaseUriBuilder()
-				.path(ENDPOINT)
+    	URI data = m_UriInfo.getBaseUriBuilder()
+				.path(Data.ENDPOINT)
 				.path(job.getId())
-				.path(Streaming.ENDPOINT)
 				.build();
-    	job.setStreamingEndpoint(streaming);
+    	job.setDataEndpoint(data);
     	
     	URI results = m_UriInfo.getBaseUriBuilder()
-				.path(ENDPOINT)
-				.path(job.getId())
 				.path(Results.ENDPOINT)
+				.path(job.getId())
 				.build();
-    	job.setResultsEndpoint(results);    	
+    	job.setResultsEndpoint(results);
+    	
+    	URI logs = m_UriInfo.getBaseUriBuilder()
+				.path(Logs.ENDPOINT)
+				.path(job.getId())
+				.build();
+    	job.setLogsEndpoint(logs);      	
     	
     }
 }
