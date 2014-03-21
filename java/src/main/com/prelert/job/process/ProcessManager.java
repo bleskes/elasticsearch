@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Inc 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -348,7 +348,7 @@ public class ProcessManager
 			s_Logger.error("No job with id '" + jobId + "' to shutdown");
 			// tidy up
 			m_JobIdToTimeoutFuture.remove(jobId);			
-			throw new UnknownJobException(jobId, "Cannot finish job");
+			throw new UnknownJobException(jobId, "Job is already finished or never started");
 		}
 		
 		

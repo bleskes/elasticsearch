@@ -1,0 +1,57 @@
+Prelert Engine API & Elasticsearch
+==================================
+In this example we present some example Python scripts showing how to read 
+records from an Elasticsearch database and upload them to the Prelert Engine
+API. We will then use Python to query the results from the API
+
+1. Getting Started
+-------------------
+First you will need to install the Elasticsearch Python client see
+    http://www.elasticsearch.org/guide/en/elasticsearch/client/python-api/current/index.html
+for details.
+
+Secondly you need the test data file airline_data_sample_w_anoms.csv and the
+Prelert Python scripts
+
+2. Write the Csv data to Elasticsearch
+---------------------------------------
+The csv_to_elasticsearch.py will create a new Elasticsearch index an define 
+mappings for the data then writes each csv record an a new Elasticsearch 
+document. The command is:
+    
+    python csv_to_elasticsearch.py --index=airlinetest --es_host=localhost --es_port=9200 ~/tmp/airline_data_sample_w_anoms.csv 
+or
+    python csv_to_elasticsearch.py -h
+for usage
+
+
+3. Run the analysis
+--------------------
+The script elasticsearch_to_engine_api.py creates a new Engine API job then
+reads data from Elasticsearch and sends it to the Prelert Engine for analysis.
+
+    python elasticsearch_to_engine_api.py --index=airlinetest --es_host=localhost --es_port=9200 --api_host=localhost --api_port=8080
+
+There are quite a few options here but the script uses sensible defaults.
+Help is available:
+    python elasticsearch_to_engine_api.py -h
+
+Once started the script will print a message like:
+    'Created job with id 20140321102851-00016'
+This job id is required for the next phase.
+
+
+4. Get the results
+-------------------
+engine_api_results.py queries the Prelert API for results and prints out 
+anomaly scores and date times in csv format. The script uses the Prelert 
+Engine API python client in engineApiClient/EngineApiClient.py to provide 
+the API functionality in Python.
+
+    python engine_api_results.py --api_host=localhost --api_port=8080 20140321102851-00016
+
+To get the results for an individual bucket supply the bucket id:
+    python engine_api_results.py --api_host=localhost --api_port=8080 --bucketid=1392793200 20140321102851-00016
+
+
+

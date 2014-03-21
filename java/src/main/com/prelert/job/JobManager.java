@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Inc 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -655,7 +655,7 @@ public class JobManager implements JobDetailsProvider
 		{
 			if (e.getCause() instanceof IndexMissingException)
 			{
-				String msg = "Cannot delete job";
+				String msg = String.format("No index with id '%s' in the database", jobId);
 				s_Logger.warn(msg);
 				throw new UnknownJobException(jobId, msg);
 			}
@@ -707,8 +707,12 @@ public class JobManager implements JobDetailsProvider
 			// rethrow
 			throw ne;
 		}
+		finally 
+		{
+			updateLastDataTime(jobId, new Date()); 
+		}
 		
-		return updateLastDataTime(jobId, new Date()); // time now
+		return true;
 	}
 	
 	/**

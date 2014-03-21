@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Inc 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -756,6 +756,40 @@ public class JobsTest implements Closeable
 		test(bucketCount == 0);
 	}
 	
+	/**
+	 * Tails the log files with requesting different numbers of lines
+	 * and checks that some content is present. 
+	 * Downloads the zipped log files and... TODO
+	 * 
+	 * @param baseUrl The URL of the REST API i.e. an URL like
+	 * 	<code>http://prelert-host:8080/engine/version/</code>
+	 * @param jobId The job id
+	 * 
+	 * @throws ClientProtocolException
+	 * @throws IOException
+	 */
+	public void testReadLogFiles(String baseUrl, String jobId) 
+	throws ClientProtocolException, IOException
+	{
+		String tail = m_WebServiceClient.tailLog(baseUrl, jobId, 2);
+		String [] tailLines = tail.split("\n");
+		test(tailLines.length > 0);
+		test(tailLines.length <= 2);
+		
+		tail = m_WebServiceClient.tailLog(baseUrl, jobId);
+		tailLines = tail.split("\n");
+		test(tailLines.length > 0);
+		test(tailLines.length <= 10);
+		
+		tail = m_WebServiceClient.tailLog(baseUrl, jobId, 50);
+		tailLines = tail.split("\n");
+		test(tailLines.length > 0);
+		test(tailLines.length <= 50);
+		
+		// TODO Download zip files and verify content
+		
+	}
+	
 
 	/**
 	 * Delete all the jobs in the list of job ids
@@ -856,6 +890,8 @@ public class JobsTest implements Closeable
 				"/engine_api_integration_test/flightcentre.csv.gz");
 		test.uploadData(baseUrl, flightCentreJobId, flightCentreData, true);
 		test.finishJob(baseUrl, flightCentreJobId);
+		
+		test.testReadLogFiles(baseUrl, flightCentreJobId);
 
 		// Give ElasticSearch a chance to index
 		Thread.sleep(1500);
@@ -872,7 +908,8 @@ public class JobsTest implements Closeable
 		flightCentreData = new File(prelertTestDataHome + 
 				"/engine_api_integration_test/flightcentre.json");
 		test.uploadData(baseUrl, flightCentreJsonJobId, flightCentreData, false);
-		test.finishJob(baseUrl, flightCentreJsonJobId);
+		test.finishJob(baseUrl, flightCentreJsonJobId);		
+		test.testReadLogFiles(baseUrl, flightCentreJsonJobId);
 
 		// Give ElasticSearch a chance to index
 		Thread.sleep(1500);
@@ -890,6 +927,7 @@ public class JobsTest implements Closeable
 				"/engine_api_integration_test/farequote_ISO_8601.csv");
 		test.slowUpload(baseUrl, farequoteTimeFormatJobId, fareQuoteData);
 		test.finishJob(baseUrl, farequoteTimeFormatJobId);
+		test.testReadLogFiles(baseUrl, farequoteTimeFormatJobId);
 
 		// Give ElasticSearch a chance to index
 		Thread.sleep(1500);
@@ -913,6 +951,7 @@ public class JobsTest implements Closeable
 		
 		test.uploadData(baseUrl, refJobId, fareQuoteData, false);
 		test.finishJob(baseUrl, refJobId);
+		test.testReadLogFiles(baseUrl, refJobId);
 
 		// Give ElasticSearch a chance to index
 		Thread.sleep(1500);
