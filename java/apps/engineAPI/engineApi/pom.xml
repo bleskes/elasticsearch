@@ -9,7 +9,7 @@
 
   <groupId>com.prelert</groupId>
   <artifactId>engineApi</artifactId>
-  <version>0.3.2</version>
+  <version>0.3.3</version>
   <packaging>jar</packaging>
 
   <name>engineApi</name>
