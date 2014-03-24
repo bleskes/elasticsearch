@@ -151,7 +151,7 @@ public class JobManager implements JobDetailsProvider
 	{
 		SingleDocument<JobDetails> doc = new SingleDocument<>();
 		doc.setType(JobDetails.TYPE);
-		doc.setId(jobId);
+		doc.setDocumentId(jobId);
 
 		doc.setDocument(this.getJobDetails(jobId));
 		doc.setExists(doc.getDocument() != null);
@@ -185,7 +185,7 @@ public class JobManager implements JobDetailsProvider
 		catch (IndexMissingException e)
 		{
 			// the job does not exist
-			String msg = "Missing Index: No job with id " + jobId;
+			String msg = "Missing Index no job with id " + jobId;
 			s_Logger.warn(msg);
 			throw new UnknownJobException(jobId, msg);
 		}
@@ -410,7 +410,7 @@ public class JobManager implements JobDetailsProvider
 		
 		SingleDocument<Map<String, Object>> doc = new SingleDocument<>();
 		doc.setType(Bucket.TYPE);
-		doc.setId(bucketId);
+		doc.setDocumentId(bucketId);
 		if (response.isExists())
 		{
 			doc.setDocument(bucket);
@@ -831,14 +831,13 @@ public class JobManager implements JobDetailsProvider
 			}
 			else
 			{
-				throw new UnknownJobException(refId, "Cannot create job from "
-					+ "referenced job id. Job with id '" + refId +"' does not exist");
+				throw new UnknownJobException(refId, "Cannot fined "
+					+ "referenced job with id '" + refId + "'");
 			}
 		}
 		catch (IndexMissingException e)
 		{
-			throw new UnknownJobException(refId, "Cannot create job from "
-					+ "referenced job. Job with id '" + refId +"' does not exist");			
+			throw new UnknownJobException(refId, "Missing index '" + refId +"'");			
 		}
 	}
 	

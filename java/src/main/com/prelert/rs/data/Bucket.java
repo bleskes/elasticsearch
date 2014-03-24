@@ -46,14 +46,14 @@ import org.apache.log4j.Logger;
 /**
  * Bucket Result POJO 
  */
-@JsonIgnoreProperties({"Id"})
+@JsonIgnoreProperties({"id"})
 @JsonInclude(Include.NON_NULL)
 public class Bucket 
 {
 	/*
 	 * Field Names
 	 */
-	public static final String ID = "Id";
+	public static final String ID = "id";
 	public static final String TIMESTAMP = "timestamp";
 	public static final String ANOMALY_SCORE =  "anomalyScore";
 	public static final String RECORD_COUNT = "recordCount";
