@@ -36,7 +36,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
  *
  * @param <T>
  */
-@JsonPropertyOrder({"id", "exists", "type", "document"})
+@JsonPropertyOrder({"documentId", "exists", "type", "document"})
 public class SingleDocument<T> 
 {
 	private boolean m_Exists;
@@ -77,12 +77,12 @@ public class SingleDocument<T>
 	 * The id of the requested document
 	 * @return The document Id
 	 */
-	public String getId() 
+	public String getDocumentId() 
 	{
 		return m_Id;
 	}
 
-	public void setId(String id) 
+	public void setDocumentId(String id) 
 	{
 		this.m_Id = id;
 	}
