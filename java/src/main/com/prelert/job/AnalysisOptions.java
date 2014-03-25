@@ -91,9 +91,9 @@ public class AnalysisOptions
 		
 	/**
 	 * Maximum number of distinct values of a single field before analysis
-	 * of that field will be halted. 
-	 * If 0 then invalid 
-	 * @return
+	 * of that field will be halted. If 0 then this is an invalid and the
+	 * native process's default will be used. 
+	 * @return The max distinct values in a single field
 	 */
 	public long getMaxFieldValues()
 	{
@@ -107,9 +107,10 @@ public class AnalysisOptions
 	
 	/**
 	 *  Maximum number of time buckets to process during anomaly detection 
-	 *  before ceasing to output results.
-	 *  If 0 then invalid
-	 * @return
+	 *  before ceasing to output results. If 0 then this is an invalid and the
+	 *  native process's default will be used. 
+	 *  
+	 * @return The max number of buckets to process in the job
 	 */
 	public long getMaxTimeBuckets()
 	{

@@ -60,7 +60,6 @@ import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.DetectorState;
 import com.prelert.job.JobDetails;
-import com.prelert.job.NativeProcessRunException;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.process.ProcessCtrl;
 

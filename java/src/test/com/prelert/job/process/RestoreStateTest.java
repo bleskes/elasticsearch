@@ -47,8 +47,7 @@ import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.JobDetails;
-import com.prelert.job.NativeProcessRunException;
-import com.prelert.job.JobManager;
+import com.prelert.job.manager.JobManager;
 import com.prelert.rs.data.Pagination;
 
 

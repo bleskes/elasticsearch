@@ -32,8 +32,9 @@ import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 /**
- * Describes the format of the data used in this job and how it should 
- * be interpreted by autodetect.<p/>
+ * Describes the format of the data used in the job and how it should 
+ * be interpreted by autodetect.
+ * <p/>
  * Data must either be in a textual delineated format i.e. csv, tsv or JSON
  * the {@linkplain DataFormat} enum indicates which. {@link #getTimeField()} is the name of
  * the field containing the timestamp and {@link #getTimeFormat()} is the strptime code 
@@ -41,6 +42,9 @@ import com.fasterxml.jackson.annotation.JsonCreator;
  */
 public class DataDescription 
 {
+	/**
+	 * Enum of the acceptable data formats. 
+	 */
 	public enum DataFormat 
 	{
 		JSON, DELINEATED;
@@ -50,7 +54,7 @@ public class DataDescription
 		 * Works with either JSON, json, etc. 
 		 * 
 		 * @param value
-		 * @return
+		 * @return The data format
 		 */
 		@JsonCreator
 		static public DataFormat forString(String value)
@@ -139,8 +143,8 @@ public class DataDescription
 	
 	/**
 	 * The format of the data to be processed. 
-	 * Defaults to DataFormat.DELINEATED
-	 * @return
+	 * Defaults to {@link DataDescription.DataFormat#DELINEATED}
+	 * @return The data format
 	 */
 	public DataFormat getFormat()
 	{
@@ -185,7 +189,7 @@ public class DataDescription
 	/**
 	 * If the data is in a delineated format with a header e.g. csv or tsv
 	 * this is the delimiter character used. This is only applicable if
-	 * {@linkplain #getDataFormat()} is {@link DataFormat.DELINEATED} 
+	 * {@linkplain #getFormat()} is {@link DataDescription.DataFormat#DELINEATED} 
 	 * @return A String if set or <code>null</code>
 	 */
 	public String getFieldDelimiter()

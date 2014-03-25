@@ -40,7 +40,7 @@ import org.apache.log4j.Logger;
 /**
  * This class represents a configured and created Job. The creation time is 
  * set to the time the object was constructed, Status is set to 
- * {@link JobStatus.RUNNING} and the finished time and last data time fields 
+ * {@link JobStatus#RUNNING} and the finished time and last data time fields 
  * are <code>null</code> until the job has seen some data or it is finished 
  * respectively. If the job was created to read data from a list of files
  * FileUrls will be a non-empty list else the expects data to be streamed to it. 
@@ -293,7 +293,7 @@ public class JobDetails
 	}
 	
 	/**
-	 * Return the Job Status. Jobs are initialised to {@link JobStatus.RUNNING}
+	 * Return the Job Status. Jobs are initialised to {@link JobStatus#RUNNING}
 	 * when created.
 	 * @return The job's status
 	 */
@@ -458,8 +458,8 @@ public class JobDetails
 	}
 
 	/**
-	 * This Job's data endpoint as the full URL path
-	 * in the form base_url/job_id/{@value com.prelert.rs.resources.Data#ENDPOINT}
+	 * This Job's data endpoint as the full URL 
+	 * 
 	 * @return The Job's data URI
 	 */
 	public URI getDataEndpoint() 
@@ -476,8 +476,8 @@ public class JobDetails
 	}
 
 	/**
-	 * This Job's resutls endpoint as the full URL path
-	 * in the form base_url/job_id/{@value com.prelert.rs.resources.Results#ENDPOINT}
+	 * This Job's results endpoint as the full URL path
+	 * 
 	 * @return The Job's results URI
 	 */
 	public URI getResultsEndpoint() 
@@ -495,8 +495,8 @@ public class JobDetails
 	
 
 	/**
-	 * This Job's logs endpoint as the full URL path
-	 * in the form base_url/job_id/{@value com.prelert.rs.resources.Logs#ENDPOINT}
+	 * This Job's logs endpoint as the full URL 
+	 * 
 	 * @return The Job's logs URI
 	 */
 	public URI getLogsEndpoint() 

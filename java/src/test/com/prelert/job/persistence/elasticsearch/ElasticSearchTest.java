@@ -49,7 +49,7 @@ import org.elasticsearch.node.Node;
 
 import com.prelert.job.DetectorState;
 import com.prelert.job.JobDetails;
-import com.prelert.job.JobManager;
+import com.prelert.job.manager.JobManager;
 import com.prelert.job.persistence.elasticsearch.ElasticSearchPersister;
 import com.prelert.job.persistence.elasticsearch.ElasticSearchMappings;
 import com.prelert.rs.data.AnomalyRecord;

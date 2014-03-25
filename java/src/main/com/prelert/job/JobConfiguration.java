@@ -30,7 +30,8 @@ package com.prelert.job;
 /**
  * This class encapsulates all the data required to create a new job it
  * does not represent the state of a created job (see {@linkplain JobDetails}
- * for that).<p/>
+ * for that).
+ * <p/>
  * If a value has not been set it will be <code>null</code> Object wrappers 
  * are used around integral types & booleans so they can take <code>null</code> 
  * values.
@@ -109,8 +110,8 @@ public class JobConfiguration
 	}
 	
 	/**
-	 * 
-	 * @return
+	 * The timeout period for the job in seconds
+	 * @return The timeout in seconds
 	 */
 	public Long getTimeout() 
 	{
@@ -141,7 +142,7 @@ public class JobConfiguration
 	
 	
 	/**
-	 *  
+	 * Builder for constructing JobConfiguration instances.
 	 */
 	static public class JobConfigurationBuilder
 	{

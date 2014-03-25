@@ -25,7 +25,7 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job;
+package com.prelert.job.manager;
 
 import static org.elasticsearch.node.NodeBuilder.nodeBuilder;
 
@@ -63,9 +63,14 @@ import com.prelert.job.persistence.elasticsearch.ElasticSearchMappings;
 import com.prelert.job.persistence.elasticsearch.ElasticSearchPersister;
 import com.prelert.job.persistence.elasticsearch.ElasticSearchResultsReaderFactory;
 import com.prelert.job.process.JobDetailsProvider;
+import com.prelert.job.process.NativeProcessRunException;
 import com.prelert.job.process.ProcessManager;
 import com.prelert.job.process.ProcessManager.ProcessStatus;
-import com.prelert.job.NativeProcessRunException;
+import com.prelert.job.DetectorState;
+import com.prelert.job.JobConfiguration;
+import com.prelert.job.JobDetails;
+import com.prelert.job.JobStatus;
+import com.prelert.job.UnknownJobException;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.Detector;

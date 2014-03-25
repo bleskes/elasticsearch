@@ -39,7 +39,7 @@ import javax.ws.rs.core.UriBuilderException;
 
 import org.apache.log4j.Logger;
 
-import com.prelert.job.JobManager;
+import com.prelert.job.manager.JobManager;
 import com.prelert.rs.data.Detector;
 import com.prelert.rs.data.Pagination;
 

@@ -33,8 +33,8 @@ import java.util.Map;
 
 /**
  * Autodetect analysis configuration options describes which fields are 
- * analysed and the functions to be used.<p/> 
- * 
+ * analysed and the functions to use. 
+ * <p/>
  * The configuration can contain multiple detectors, a new anomaly detector will 
  * be created for each detector configuration. The other fields 
  * <code>BucketSpan, PartitionField</code> etc apply to all detectors.<p/> 
@@ -225,7 +225,7 @@ public class AnalysisConfig
 	 * Segments the analysis along another field to have completely 
 	 * independent baselines for each instance of partitionfield
 	 *
-	 * @return
+	 * @return The Partition Field
 	 */
 	public String getPartitionField() 
 	{
@@ -240,8 +240,8 @@ public class AnalysisConfig
 
 	/**
 	 * The list of analysis detectors. In a valid configuration the list should
-	 * contain at least 1 element 
-	 * @return
+	 * contain at least 1 {@link Detector} 
+	 * @return The Detectors used in this job
 	 */
 	public List<Detector> getDetectors()
 	{

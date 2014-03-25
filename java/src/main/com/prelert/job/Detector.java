@@ -62,7 +62,7 @@ public class Detector
 	
 	/**
 	 * The Analysis field
-	 * @return
+	 * @return The field to analyse
 	 */
 	public String getFieldName() 
 	{
@@ -76,7 +76,7 @@ public class Detector
 	
 	/**
 	 * The 'by' field or <code>null</code> if not set. 
-	 * @return
+	 * @return The 'by' field
 	 */
 	public String getByFieldName() 
 	{
@@ -90,7 +90,7 @@ public class Detector
 	
 	/**
 	 * The 'over' field or <code>null</code> if not set. 
-	 * @return
+	 * @return The 'over' field
 	 */
 	public String getOverFieldName() 
 	{
@@ -105,7 +105,7 @@ public class Detector
 	/**
 	 * Where there isn't a value for the 'by' or 'over' field should a new
 	 * series be used as the 'null' series. 
-	 * @return
+	 * @return true if the 'null' series should be created
 	 */
 	public Boolean isUseNull() 
 	{

@@ -33,11 +33,20 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
-
+/**
+ * Simple program to upload a file to the Prelert Engine API.
+ * <br/>
+ * The job should have been created already and the job's data endpoint known
+ * as it is the first argument to this program, the second is the file to upload.
+ */
 public class StreamFile 
 {
 	/**
-	 * The program expects 2 arguments a Engine 
+	 * The program expects 2 arguments a the Url of the job's data endpoint 
+	 * and the file to upload. The use the additional flag <code>--compressed</code>
+	 * if the data file is gzip compresseed and <code>--close</code> if you wish
+	 * to close the job once the upload is complete.  
+	 * 
 	 * @param args
 	 * @throws IOException 
 	 */
