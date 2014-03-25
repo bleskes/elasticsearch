@@ -27,12 +27,16 @@
 
 package com.prelert.job;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+
 
 /**
  * Defines the fields to be used in the analysis. 
  * <code>Fieldname</code> must be set and only one of <code>ByFieldName</code> 
  * and <code>OverFieldName</code> should be set.
  */
+@JsonInclude(Include.NON_NULL)
 public class Detector
 {
 	private String m_Function;

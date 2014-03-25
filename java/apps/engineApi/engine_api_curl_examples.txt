@@ -294,11 +294,11 @@ and the data is uploaded using Curl
 ------------------------
 
 This uses the same Farequote data but this time it is gzipped csv. The job
-configuration is similar to the other examples:
+configuration is similar to the other examples except bucketSpan is set to 10 minutes.
 
     curl -X POST -H 'Content-Type: application/json' 'http://localhost:8080/engine/v0.3/jobs' -d '{
         "analysisConfig" : {
-            "bucketSpan":3600,
+            "bucketSpan":600,
             "detectors" :[{"fieldName":"responsetime","byFieldName":"airline"}]
         },
         "dataDescription" : {

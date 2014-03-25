@@ -28,13 +28,10 @@
 package com.prelert.job;
 
 import java.net.URI;
-import java.net.URL;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 
@@ -80,7 +77,6 @@ public class JobDetails
 	private Date m_FinishedTime; 
 	private Date m_LastDataTime;
 	private long m_ProcessedRecordCount;	
-	private List<URL> m_FileUrls;
 	private long m_Timeout;
 	private boolean m_PersistModel;
 	private AnalysisConfig m_AnalysisConfig;
@@ -92,10 +88,13 @@ public class JobDetails
 	private URI m_DataEndpoint;
 	private URI m_ResultsEndpoint;
 	private URI m_LogsEndpoint;
-	
+		
+	/**
+	 * Default constructor required for serialisation
+	 */
 	public JobDetails()
 	{
-		m_FileUrls = new ArrayList<>();
+		
 	}
 	
 	/**
@@ -112,11 +111,8 @@ public class JobDetails
 		m_Status = JobStatus.RUNNING;
 		m_CreateTime = new Date();		
 		m_Timeout = (jobConfig.getTimeout() != null) ? jobConfig.getTimeout() : DEFAULT_TIMEOUT; 		
-		m_PersistModel = (jobConfig.isPersistModel() != null) ? jobConfig.isPersistModel() : DEFAULT_PERSIST_MODEL;  
-					
-		m_FileUrls = new ArrayList<>();
-		m_FileUrls.addAll(jobConfig.getFileUrls());
-		
+		m_PersistModel = true;  
+						
 		m_AnalysisConfig = jobConfig.getAnalysisConfig();
 		m_AnalysisOptions = jobConfig.getAnalysisOptions();
 		m_DataDescription = jobConfig.getDataDescription();
@@ -149,10 +145,8 @@ public class JobDetails
 		{
 			m_Timeout = jobConfig.getTimeout();		
 		}
-		if (jobConfig.isPersistModel() != null)
-		{
-			m_PersistModel = jobConfig.isPersistModel();
-		}		
+		
+		m_PersistModel = true;
 		
 		if (jobConfig.getAnalysisConfig() != null)
 		{
@@ -167,12 +161,7 @@ public class JobDetails
 		if (jobConfig.getDataDescription() != null)
 		{
 			m_DataDescription = jobConfig.getDataDescription();
-		}
-		
-		if (jobConfig.getFileUrls().size() > 0)
-		{
-			m_FileUrls.addAll(jobConfig.getFileUrls());
-		}			
+		}		
 	}
 	
 	/**
@@ -245,10 +234,6 @@ public class JobDetails
 		if (values.containsKey(PROCESSED_RECORD_COUNT))
 		{
 			m_ProcessedRecordCount = (Integer)values.get(PROCESSED_RECORD_COUNT);
-		}
-		if (values.containsKey(FILE_URLS))
-		{
-			m_FileUrls = (List<URL>)values.get(FILE_URLS);
 		}
 		if (values.containsKey(TIMEOUT))
 		{

@@ -50,10 +50,12 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
 import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.Detector;
@@ -82,6 +84,7 @@ public class EngineApiClient implements Closeable
 	{
 		m_HttpClient = HttpClients.createDefault();
 		m_JsonMapper = new ObjectMapper();
+		m_JsonMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
 	}
 	
 	/**
@@ -182,6 +185,27 @@ public class EngineApiClient implements Closeable
 			response.close();
 		}
 	}
+	
+	
+	/**
+	 * Create a new Job from the <code>JobConfiguration</code> object.<br/>
+	 * Internally this function converts <code>jobConfig</code> to a JSON
+	 * string and calls {@link #createJob(String, String)}
+	 * 
+	 * @param baseUrl he base URL for the REST API 
+	 * e.g <code>http://localhost:8080/engine/version/</code>
+	 * @param jobConfig 
+	 * @return
+	 * @throws ClientProtocolException
+	 * @throws IOException
+	 */
+	public String createJob(String baseUrl, JobConfiguration jobConfig) 
+	throws ClientProtocolException, IOException
+	{
+		String payLoad = m_JsonMapper.writeValueAsString(jobConfig);
+		return createJob(baseUrl, payLoad);
+	}
+	
 	
 	/**
 	 * Create a new job with the configuration in <code>createJobPayload</code>
