@@ -97,7 +97,8 @@ public class SingleDocument<T>
 	}
 	
 	/**
-	 * Set the requested document.</br>
+	 * Set the requested document.
+	 * </br>
 	 * If the doc is non-null {@link #isExists() Exists} is set to true 
 	 * else it is false
 	 * @param doc

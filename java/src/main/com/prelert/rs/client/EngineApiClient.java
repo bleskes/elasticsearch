@@ -28,7 +28,6 @@
 package com.prelert.rs.client;
 
 import java.io.Closeable;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URLEncoder;
@@ -50,10 +49,12 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
 import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.Detector;
@@ -61,10 +62,11 @@ import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
 
 /**
- * A Http Client for the Prelert Engine RESTful API.</br>
+ * A Http Client for the Prelert Engine RESTful API.
+ * </br>
  * Contains methods to create jobs, list jobs, upload data and query results.
- * 
- * </br>Implements closeable so it can be used in a try-with-resource statement
+ * </br>
+ * Implements closeable so it can be used in a try-with-resource statement
  */
 public class EngineApiClient implements Closeable
 {
@@ -82,6 +84,7 @@ public class EngineApiClient implements Closeable
 	{
 		m_HttpClient = HttpClients.createDefault();
 		m_JsonMapper = new ObjectMapper();
+		m_JsonMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
 	}
 	
 	/**
@@ -183,6 +186,28 @@ public class EngineApiClient implements Closeable
 		}
 	}
 	
+	
+	/**
+	 * Create a new Job from the <code>JobConfiguration</code> object.
+	 * <br/>
+	 * Internally this function converts <code>jobConfig</code> to a JSON
+	 * string and calls {@link #createJob(String, String)}
+	 * 
+	 * @param baseUrl he base URL for the REST API 
+	 * e.g <code>http://localhost:8080/engine/version/</code>
+	 * @param jobConfig 
+	 * @return The new job's Id or an empty string if there was an error
+	 * @throws ClientProtocolException
+	 * @throws IOException
+	 */
+	public String createJob(String baseUrl, JobConfiguration jobConfig) 
+	throws ClientProtocolException, IOException
+	{
+		String payLoad = m_JsonMapper.writeValueAsString(jobConfig);
+		return createJob(baseUrl, payLoad);
+	}
+	
+	
 	/**
 	 * Create a new job with the configuration in <code>createJobPayload</code>
 	 * and return the newly created job's Id
@@ -243,7 +268,7 @@ public class EngineApiClient implements Closeable
 	}
 	
 	/**
-	 * Delete the individual job 
+	 * Delete an individual job 
 	 *  
 	 * @param baseUrl The base URL for the REST API 
 	 * e.g <code>http://localhost:8080/engine/version/</code>
@@ -293,10 +318,10 @@ public class EngineApiClient implements Closeable
 	 * @param inputStream The data to write to the web service
 	 * @return True
 	 * @throws IOException 
-	 * @see {@link #streamingUpload(String, String, InputStream, boolean)}
+	 * @see #streamingUpload(String, String, InputStream, boolean)
 	 */
 	public boolean chunkedUpload(String baseUrl, String jobId,
-			FileInputStream inputStream) 
+			InputStream inputStream) 
 	throws IOException
 	{
 		String postUrl = baseUrl + "/data/" + jobId; 	
@@ -337,7 +362,7 @@ public class EngineApiClient implements Closeable
 	
 	/**
 	 * Stream data from <code>inputStream</code> to the service.
-	 * This is different to {@link #chunkedUpload(String, String, FileInputStream)}
+	 * This is different to {@link #chunkedUpload(String, String, InputStream)}
 	 * in that the entire stream is read and uploading at once without breaking
 	 * the connection.
 	 * 
@@ -349,7 +374,7 @@ public class EngineApiClient implements Closeable
 	 * @return True if successful
 	 * @throws IOException
 	 * @throws InterruptedException
-	 * @see {@link #chunkedUpload(String, String, FileInputStream)}
+	 * @see #chunkedUpload(String, String, InputStream)
 	 */
 	public boolean streamingUpload(String baseUrl, String jobId,
 			InputStream inputStream, boolean compressed) 
@@ -524,7 +549,8 @@ public class EngineApiClient implements Closeable
 	}
 	
 	/**
-	 * Get the bucket results filtered between the start and end dates.</br>
+	 * Get the bucket results filtered between the start and end dates.
+	 * </br>
 	 * The arguments are optional only one of start/end needs be set
 	 * 
 	 * @param baseUrl The base URL for the REST API 

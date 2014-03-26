@@ -17,7 +17,6 @@
   <name>prelertEngineApiClient</name>
   <url>http://maven.apache.org</url>
 
-
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
@@ -192,12 +191,41 @@
         </executions>
       </plugin>
 
+      <!-- Include Source -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <version>2.2.1</version>
+        <executions>
+          <execution>
+            <id>attach-sources</id>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+          </execution>
+        </executions>
+
+        <configuration>
+          <sourcepath>${basedir}/../../../src/main</sourcepath>
+          <includes>            
+            <include>com/prelert/rs/data/*.java</include>
+            <include>com/prelert/job/*.java</include>
+            <include>com/prelert/rs/client/*.java</include>
+          </includes>
+          <excludes>            
+            <exclude>com/prelert/job/DetectorState.java</exclude>
+            <exclude>com/prelert/job/UnknownJobException.java</exclude>
+          </excludes>
+        </configuration>        
+      </plugin>
+
+
       <!-- JavaDoc -->
      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
         <version>2.9.1</version>
-      <!--  
+       
         <executions>
           <execution>
             <id>attach-javadocs</id>
@@ -206,28 +234,19 @@
             </goals>
           </execution>
         </executions>
-      -->
+      
         <configuration>
           <author>false</author>
           <show>public</show>
           <sourcepath>${basedir}/../../../src/main</sourcepath>
-
-          <excludePackageNames>com.prelert.job.logs;com.prelert.job.persistence*;com.prelert.job.process</excludePackageNames>
-          
           <sourceFileIncludes>            
-            <!-- <include>com/prelert/job/AnalysisConfig.java</include> 
-            <include>com/prelert/job/AnalysisOptions.java</include>
-            <include>com/prelert/job/DataDescription.java</include>
-            <include>com/prelert/job/Detector.java</include> 
-            <include>com/prelert/job/JobStatus.java</include> -->
-            <include>com/prelert/rs/client/*.java</include>
             <include>com/prelert/rs/data/*.java</include>
+            <include>com/prelert/job/*.java</include>
+            <include>com/prelert/rs/client/*.java</include>
           </sourceFileIncludes>
-
-          <sourceFileExcludes>
-            <exclude>com/prelert/job/JobManager.java</exclude>
+          <sourceFileExcludes>            
+            <exclude>com/prelert/job/DetectorState.java</exclude>
             <exclude>com/prelert/job/UnknownJobException.java</exclude>
-            <exclude>com/prelert/job/NativeProcessRunException.java</exclude>
           </sourceFileExcludes>
         </configuration>
       </plugin>

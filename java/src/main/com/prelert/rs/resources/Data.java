@@ -21,9 +21,9 @@ import javax.ws.rs.core.Response;
 
 import org.apache.log4j.Logger;
 
-import com.prelert.job.JobManager;
-import com.prelert.job.NativeProcessRunException;
 import com.prelert.job.UnknownJobException;
+import com.prelert.job.manager.JobManager;
+import com.prelert.job.process.NativeProcessRunException;
 import com.prelert.rs.provider.RestApiException;
 import com.prelert.rs.streaminginterceptor.StreamingInterceptor;
 
@@ -48,7 +48,7 @@ public class Data extends ResourceWithJobManager
 	/**
 	 * The name of this endpoint
 	 */
-	static public final String ENDPOINT = "data";
+	static final public String ENDPOINT = "data";
 	
 	private boolean m_isPersistData;
 	private String m_BaseDirectory;  

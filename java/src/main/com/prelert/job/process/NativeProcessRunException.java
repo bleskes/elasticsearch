@@ -25,7 +25,7 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job;
+package com.prelert.job.process;
 
 /**
  * Exception thrown when there is an error running 

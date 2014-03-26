@@ -79,7 +79,7 @@ public class DetectorState
 	
 	/**
 	 * The document type in most cases this will be {@value #MODEL_STATE}
-	 * @return
+	 * @return The document type
 	 */
 	public String getDocumentType()
 	{
@@ -94,7 +94,7 @@ public class DetectorState
 	
 	/**
 	 * Expose the map of detector names -> state
-	 * @return
+	 * @return Detector name -> state map
 	 */
 	public Map<String, String> getMap()
 	{
@@ -103,7 +103,7 @@ public class DetectorState
 	
 	/**
 	 * Get the set of all detector keys
-	 * @return
+	 * @return The set of detectors used in the job
 	 */
 	public Set<String> getDetectorKeys()
 	{
@@ -142,7 +142,7 @@ public class DetectorState
 	 * suffix e.g. detector1, detector2, etc.
 	 * 
 	 * @param parser
-	 * @return
+	 * @return A new DetectorState populated from the Xml
 	 * @throws JsonParseException
 	 * @throws IOException
 	 * @throws AutoDetectParseException

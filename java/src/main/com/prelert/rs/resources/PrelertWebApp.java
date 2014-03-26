@@ -32,7 +32,7 @@ import java.util.Set;
 
 import javax.ws.rs.core.Application;
 
-import com.prelert.job.JobManager;
+import com.prelert.job.manager.JobManager;
 import com.prelert.rs.provider.ElasticSearchExceptionMapper;
 import com.prelert.rs.provider.UnknownJobExceptionMapper;
 import com.prelert.rs.provider.NativeProcessRunExceptionMapper;

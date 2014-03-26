@@ -52,6 +52,7 @@ import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.Detector;
+import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
@@ -431,8 +432,20 @@ public class JobsTest implements Closeable
 	public String createFlightCentreJsonJobTest(String baseUrl) 
 	throws ClientProtocolException, IOException
 	{	
-		String jobId = m_WebServiceClient.createJob(baseUrl, 
-				FLIGHT_CENTRE_JSON_JOB_CONFIG);
+		Detector d = new Detector();
+		d.setFieldName("responsetime");
+		d.setByFieldName("airline");
+		AnalysisConfig ac = new AnalysisConfig();
+		ac.setBucketSpan(3600L);
+		ac.setDetectors(Arrays.asList(d));
+		
+		DataDescription dd = new DataDescription();
+		dd.setFormat(DataFormat.JSON);
+		dd.setTimeField("timestamp");
+		
+		JobConfiguration jobConfig = new JobConfiguration(ac);
+		jobConfig.setDataDescription(dd);
+		String jobId = m_WebServiceClient.createJob(baseUrl, jobConfig);
 		if (jobId == null)
 		{
 			s_Logger.error("No Job Id returned by create job");
@@ -446,18 +459,7 @@ public class JobsTest implements Closeable
 			s_Logger.error("No Job at URL " + jobId);
 		}
 		JobDetails job = doc.getDocument();
-		
-		Detector d = new Detector();
-		d.setFieldName("responsetime");
-		d.setByFieldName("airline");
-		AnalysisConfig ac = new AnalysisConfig();
-		ac.setBucketSpan(3600L);
-		ac.setDetectors(Arrays.asList(d));
-		
-		DataDescription dd = new DataDescription();
-		dd.setFormat(DataFormat.JSON);
-		dd.setTimeField("timestamp");
-		
+				
 		test(ac.equals(job.getAnalysisConfig()));
 		test(dd.equals(job.getDataDescription()));
 		test(job.getAnalysisOptions() == null);
@@ -880,14 +882,19 @@ public class JobsTest implements Closeable
 		JobsTest test = new JobsTest();	
 		List<String> jobUrls = new ArrayList<>();
 		
+		File flightCentreData = new File(prelertTestDataHome + 
+				"/engine_api_integration_test/flightcentre.csv.gz");
+		File fareQuoteData = new File(prelertTestDataHome + 
+				"/engine_api_integration_test/farequote_ISO_8601.csv");		
+		File flightCentreJsonData = new File(prelertTestDataHome + 
+				"/engine_api_integration_test/flightcentre.json");
+		
 		//=================
 		// CSV & Gzip test 
 		//
 		String flightCentreJobId = test.createFlightCentreJobTest(baseUrl);
 		test.getJobsTest(baseUrl);
 
-		File flightCentreData = new File(prelertTestDataHome + 
-				"/engine_api_integration_test/flightcentre.csv.gz");
 		test.uploadData(baseUrl, flightCentreJobId, flightCentreData, true);
 		test.finishJob(baseUrl, flightCentreJobId);
 		
@@ -904,10 +911,7 @@ public class JobsTest implements Closeable
 		//
 		String flightCentreJsonJobId = test.createFlightCentreJsonJobTest(baseUrl);
 		test.getJobsTest(baseUrl);
-
-		flightCentreData = new File(prelertTestDataHome + 
-				"/engine_api_integration_test/flightcentre.json");
-		test.uploadData(baseUrl, flightCentreJsonJobId, flightCentreData, false);
+		test.uploadData(baseUrl, flightCentreJsonJobId, flightCentreJsonData, false);
 		test.finishJob(baseUrl, flightCentreJsonJobId);		
 		test.testReadLogFiles(baseUrl, flightCentreJsonJobId);
 
@@ -923,8 +927,6 @@ public class JobsTest implements Closeable
 		String farequoteTimeFormatJobId = test.createFareQuoteTimeFormatJobTest(baseUrl);
 		test.getJobsTest(baseUrl);
 
-		File fareQuoteData = new File(prelertTestDataHome + 
-				"/engine_api_integration_test/farequote_ISO_8601.csv");
 		test.slowUpload(baseUrl, farequoteTimeFormatJobId, fareQuoteData);
 		test.finishJob(baseUrl, farequoteTimeFormatJobId);
 		test.testReadLogFiles(baseUrl, farequoteTimeFormatJobId);

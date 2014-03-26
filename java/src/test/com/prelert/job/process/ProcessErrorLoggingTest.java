@@ -42,7 +42,6 @@ import com.prelert.job.Detector;
 import com.prelert.job.DetectorState;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
-import com.prelert.job.NativeProcessRunException;
 import com.prelert.job.UnknownJobException;
 
 /**

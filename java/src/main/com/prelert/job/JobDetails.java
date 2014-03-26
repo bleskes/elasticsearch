@@ -28,13 +28,10 @@
 package com.prelert.job;
 
 import java.net.URI;
-import java.net.URL;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 
@@ -43,7 +40,7 @@ import org.apache.log4j.Logger;
 /**
  * This class represents a configured and created Job. The creation time is 
  * set to the time the object was constructed, Status is set to 
- * {@link JobStatus.RUNNING} and the finished time and last data time fields 
+ * {@link JobStatus#RUNNING} and the finished time and last data time fields 
  * are <code>null</code> until the job has seen some data or it is finished 
  * respectively. If the job was created to read data from a list of files
  * FileUrls will be a non-empty list else the expects data to be streamed to it. 
@@ -80,7 +77,6 @@ public class JobDetails
 	private Date m_FinishedTime; 
 	private Date m_LastDataTime;
 	private long m_ProcessedRecordCount;	
-	private List<URL> m_FileUrls;
 	private long m_Timeout;
 	private boolean m_PersistModel;
 	private AnalysisConfig m_AnalysisConfig;
@@ -92,10 +88,13 @@ public class JobDetails
 	private URI m_DataEndpoint;
 	private URI m_ResultsEndpoint;
 	private URI m_LogsEndpoint;
-	
+		
+	/**
+	 * Default constructor required for serialisation
+	 */
 	public JobDetails()
 	{
-		m_FileUrls = new ArrayList<>();
+		
 	}
 	
 	/**
@@ -112,11 +111,8 @@ public class JobDetails
 		m_Status = JobStatus.RUNNING;
 		m_CreateTime = new Date();		
 		m_Timeout = (jobConfig.getTimeout() != null) ? jobConfig.getTimeout() : DEFAULT_TIMEOUT; 		
-		m_PersistModel = (jobConfig.isPersistModel() != null) ? jobConfig.isPersistModel() : DEFAULT_PERSIST_MODEL;  
-					
-		m_FileUrls = new ArrayList<>();
-		m_FileUrls.addAll(jobConfig.getFileUrls());
-		
+		m_PersistModel = true;  
+						
 		m_AnalysisConfig = jobConfig.getAnalysisConfig();
 		m_AnalysisOptions = jobConfig.getAnalysisOptions();
 		m_DataDescription = jobConfig.getDataDescription();
@@ -149,10 +145,8 @@ public class JobDetails
 		{
 			m_Timeout = jobConfig.getTimeout();		
 		}
-		if (jobConfig.isPersistModel() != null)
-		{
-			m_PersistModel = jobConfig.isPersistModel();
-		}		
+		
+		m_PersistModel = true;
 		
 		if (jobConfig.getAnalysisConfig() != null)
 		{
@@ -167,12 +161,7 @@ public class JobDetails
 		if (jobConfig.getDataDescription() != null)
 		{
 			m_DataDescription = jobConfig.getDataDescription();
-		}
-		
-		if (jobConfig.getFileUrls().size() > 0)
-		{
-			m_FileUrls.addAll(jobConfig.getFileUrls());
-		}			
+		}		
 	}
 	
 	/**
@@ -246,10 +235,6 @@ public class JobDetails
 		{
 			m_ProcessedRecordCount = (Integer)values.get(PROCESSED_RECORD_COUNT);
 		}
-		if (values.containsKey(FILE_URLS))
-		{
-			m_FileUrls = (List<URL>)values.get(FILE_URLS);
-		}
 		if (values.containsKey(TIMEOUT))
 		{
 			m_Timeout = (Integer)values.get(TIMEOUT);
@@ -308,7 +293,7 @@ public class JobDetails
 	}
 	
 	/**
-	 * Return the Job Status. Jobs are initialised to {@link JobStatus.RUNNING}
+	 * Return the Job Status. Jobs are initialised to {@link JobStatus#RUNNING}
 	 * when created.
 	 * @return The job's status
 	 */
@@ -473,8 +458,8 @@ public class JobDetails
 	}
 
 	/**
-	 * This Job's data endpoint as the full URL path
-	 * in the form base_url/job_id/{@value com.prelert.rs.resources.Data#ENDPOINT}
+	 * This Job's data endpoint as the full URL 
+	 * 
 	 * @return The Job's data URI
 	 */
 	public URI getDataEndpoint() 
@@ -491,8 +476,8 @@ public class JobDetails
 	}
 
 	/**
-	 * This Job's resutls endpoint as the full URL path
-	 * in the form base_url/job_id/{@value com.prelert.rs.resources.Results#ENDPOINT}
+	 * This Job's results endpoint as the full URL path
+	 * 
 	 * @return The Job's results URI
 	 */
 	public URI getResultsEndpoint() 
@@ -510,8 +495,8 @@ public class JobDetails
 	
 
 	/**
-	 * This Job's logs endpoint as the full URL path
-	 * in the form base_url/job_id/{@value com.prelert.rs.resources.Logs#ENDPOINT}
+	 * This Job's logs endpoint as the full URL 
+	 * 
 	 * @return The Job's logs URI
 	 */
 	public URI getLogsEndpoint() 
