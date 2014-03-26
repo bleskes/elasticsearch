@@ -48,7 +48,6 @@ import com.prelert.job.AnalysisConfig;
 import com.prelert.job.Detector;
 import com.prelert.job.AnalysisOptions;
 import com.prelert.job.DataDescription;
-import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.DetectorState;
 import com.prelert.job.JobDetails;
 
@@ -354,14 +353,13 @@ public class ProcessCtrl
 			command.add(modelConfig);
 		}
 		
+		// Input is always length encoded
+		command.add(LENGTH_ENCODED_INPUT_ARG);
+		
 		DataDescription dataDescription = job.getDataDescription();
 		if (dataDescription != null)
 		{
-			if (dataDescription.getFormat() == DataFormat.JSON)
-			{
-				command.add(LENGTH_ENCODED_INPUT_ARG);
-			}
-			else if (dataDescription.getFieldDelimiter() != null)
+			if (dataDescription.getFieldDelimiter() != null)
 			{
 				String delimiterArg = DELIMITER_ARG
 						+  dataDescription.getFieldDelimiter();
