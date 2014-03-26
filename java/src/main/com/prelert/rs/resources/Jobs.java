@@ -46,8 +46,10 @@ import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.prelert.job.JobConfiguration;
+import com.prelert.job.JobInUseException;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.JobDetails;
+import com.prelert.job.logs.JobLogs;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.process.NativeProcessRunException;
 import com.prelert.rs.data.Pagination;
@@ -57,14 +59,14 @@ import com.prelert.rs.data.SingleDocument;
 /**
  * REST API Jobs end point use to create new Jobs list all jobs or get
  * details of a particular job.   
- * </br>
- * Jobs are created by POSTing to this endpoint:</br>
+ * <br/>
+ * Jobs are created by POSTing to this endpoint:<br/>
  * <pre>curl -X POST -H 'Content-Type: application/json' 'http://localhost:8080/api/jobs'</pre>
- * Get details of a specific job:</br> 
+ * Get details of a specific job:<br/> 
  * <pre>curl 'http://localhost:8080/api/jobs/{job_id}'</pre>
- * or all jobs:</br> 
+ * or all jobs:<br/> 
  * <pre>curl 'http://localhost:8080/api/jobs'</pre>
- * Delete a job with:</br>
+ * Delete a job with:<br/>
  * <pre>curl -X DELETE 'http://localhost:8080/api/jobs/{job_id}'</pre>
  */
 
@@ -161,11 +163,13 @@ public class Jobs extends ResourceWithJobManager
      * @return
      * @throws NativeProcessRunException If there is an error deleting the job
      * @throws UnknownJobException If the job id is not known
+     * @throws JobInUseException If the job cannot be deleted because the
+	 * native process is in use.
      */
     @DELETE
 	@Path("/{jobId}")
     public Response deleteJob(@PathParam("jobId") String jobId) 
-    throws UnknownJobException, NativeProcessRunException
+    throws UnknownJobException, NativeProcessRunException, JobInUseException
     {   	
     	s_Logger.debug("Delete job '" + jobId + "'");
     	
@@ -174,6 +178,8 @@ public class Jobs extends ResourceWithJobManager
 		
 		if (deleted)
 		{
+			new JobLogs().deleteLogs(jobId);
+			
 			s_Logger.debug("Job '" + jobId + "' deleted");
 			return Response.ok().build();
 		}
