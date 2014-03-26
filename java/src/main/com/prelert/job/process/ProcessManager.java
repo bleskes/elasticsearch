@@ -28,17 +28,14 @@
 package com.prelert.job.process;
 
 import java.io.BufferedOutputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -49,7 +46,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 import org.supercsv.io.CsvListReader;
-import org.supercsv.io.CsvListWriter;
 import org.supercsv.prefs.CsvPreference;
 
 import com.fasterxml.jackson.core.JsonFactory;
@@ -61,6 +57,7 @@ import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.DetectorState;
 import com.prelert.job.JobDetails;
 import com.prelert.job.UnknownJobException;
+import com.prelert.job.input.LengthEncodedWriter;
 import com.prelert.job.process.ProcessCtrl;
 
 /**
@@ -201,27 +198,10 @@ public class ProcessManager
 		try
 		{
 			process.setInUse(true);
-
-			if (process.getDataDescription() != null &&
-					process.getDataDescription().transform())
-			{
-				if (process.getDataDescription().getFormat() == DataFormat.JSON)
-				{
-					transformAndPipeJson(process.getDataDescription(), input,
-							process.getProcess().getOutputStream());
-				}
-				else
-				{
-					transformAndPipeCsv(process.getDataDescription(), input,
-							process.getProcess().getOutputStream());
-				}
-			}
-			else
-			{
-				// no transform write the data straight through
-				pipe(input, process.getProcess().getOutputStream());
-			}
-
+			
+			writeToJob(process.getDataDescription(), input,
+						process.getProcess().getOutputStream());
+						
 			// check there wasn't an error in the input. 
 			// throws if there was. 
 			processStillRunning(process, jobId);
@@ -451,14 +431,47 @@ public class ProcessManager
 		}
 	}
 	
+	
 	/**
-	 * Read the contents from input stream and write to output stream.
-	 * Flushes the outputstream once all data is written.
+	 * Transform the data according to the data description and
+	 * pipe to the output.
+	 * 
+	 * @param dataDescription
+	 * @param input
+	 * @param output
+	 * @throws IOException
+	 */
+	public void writeToJob(DataDescription dataDescription, 
+			InputStream input, OutputStream output) 
+	throws IOException
+	{
+		if (dataDescription != null && dataDescription.transform())
+		{
+			if (dataDescription.getFormat() == DataFormat.JSON)
+			{
+				transformAndPipeJson(dataDescription, input, output);
+			}
+			else
+			{
+				transformAndPipeCsv(dataDescription, input, output);
+			}
+		}
+		else
+		{			
+			pipeCsv(dataDescription, input, output);
+		}
+	}
+	
+	
+	/**
+	 * Pipes the raw data from the input to the output without any
+	 * encoding or transformations
 	 * 
 	 * @param is
 	 * @param os
 	 * @throws IOException
 	 */
+	@SuppressWarnings("unused")
 	private void pipe(InputStream is, OutputStream os) 
 	throws IOException 
 	{
@@ -473,10 +486,52 @@ public class ProcessManager
 		os.flush();
 	}
 
+	/**
+	 * Read the csv input, transform to length encoded values and pipe
+	 * to the native process.
+	 * 
+	 * @param dd
+	 * @param is
+	 * @param os
+	 * @throws IOException
+	 */
+	private void pipeCsv(DataDescription dd, InputStream is, OutputStream os)
+	throws IOException
+	{
+		char delimiter = ProcessCtrl.DEFAULT_DELIMITER; 
+		if (dd.getFieldDelimiter() != null)
+		{
+			delimiter = dd.getFieldDelimiter().charAt(0);
+		}
+		
+		CsvPreference csvPref = new CsvPreference.Builder(
+				dd.getQuoteCharacter(),
+				delimiter,
+				new String(new char[] {DataDescription.LINE_ENDING})).build();	
+		
+		try (CsvListReader csvReader = new CsvListReader(new InputStreamReader(is), csvPref))
+		{
+			String[] header = csvReader.getHeader(true);
+			
+			// Don't close the output stream as it causes the autodetect 
+			// process to quit
+			LengthEncodedWriter lengthEncodedWriter = new LengthEncodedWriter(os);
+			lengthEncodedWriter.writeRecord(header);
+
+			List<String> line;
+			while ((line = csvReader.read()) != null)
+			{
+				lengthEncodedWriter.writeRecord(line);				
+			}
+			
+			lengthEncodedWriter.flush();
+		}
+	}
+	
 
 	/**
-	 * Parse the contents from input stream, transform dates and write to output
-	 * stream.
+	 * Parse the contents from input stream, transform dates and write to 
+	 * the output stream as length encoded values.
 	 * Flushes the outputstream once all data is written.
 	 * 
 	 * @param dd 
@@ -500,7 +555,7 @@ public class ProcessManager
 		}
 		
 		CsvPreference csvPref = new CsvPreference.Builder(
-				DataDescription.QUOTE_CHAR,
+				dd.getQuoteCharacter(),
 				delimiter,
 				new String(new char[] {DataDescription.LINE_ENDING})).build();	
 		
@@ -528,10 +583,8 @@ public class ProcessManager
 
 			// Don't close the output stream as it causes the autodetect 
 			// process to quit
-			@SuppressWarnings("resource")
-			CsvListWriter csvWriter = new CsvListWriter(new OutputStreamWriter(os), csvPref);
-
-			csvWriter.writeHeader(header);
+			LengthEncodedWriter lengthEncodedWriter = new LengthEncodedWriter(os);
+			lengthEncodedWriter.writeRecord(header);
 
 			DateFormat dateFormat = new SimpleDateFormat(dd.getTimeFormat());
 
@@ -543,7 +596,7 @@ public class ProcessManager
 					String epoch =  new Long(dateFormat.parse(line.get(timeFieldIndex)).getTime() / 1000).toString();
 					line.set(timeFieldIndex, epoch);
 
-					csvWriter.write(line);
+					lengthEncodedWriter.writeRecord(line);
 				}
 				catch (ParseException pe)
 				{
@@ -553,8 +606,9 @@ public class ProcessManager
 					s_Logger.error(message);
 				}		
 			}
-
-			csvWriter.flush();
+			
+			// flush the output
+			os.flush();
 		}
 	}
 	
@@ -626,17 +680,9 @@ public class ProcessManager
 	private void pipeJson(JsonParser parser, OutputStream os)
 	throws JsonParseException, IOException
 	{
-		int numFields = 0;
-
-		// first extract the field names and write those as the header
-		// (the size will increase if necessary, but it's silly to start with
-		// the default of 32)
-		ByteArrayOutputStream header = new ByteArrayOutputStream(1024);
-		ByteArrayOutputStream firstLine = new ByteArrayOutputStream(1024);
-
-		// This will be used to convert 32 bit integers to network byte order
-		ByteBuffer lenBuffer = ByteBuffer.allocate(4); // 4 == sizeof(int)
-		byte[] utf8Bytes;
+		LengthEncodedWriter lengthEncodedWriter = new LengthEncodedWriter(os);
+		List<String> header = new ArrayList<>();
+		List<String> record = new ArrayList<>();
 
 		JsonToken token = parser.nextToken();
 		while (token != JsonToken.END_OBJECT)
@@ -644,63 +690,41 @@ public class ProcessManager
 			if (token == JsonToken.FIELD_NAME)
 			{
 				String fieldName = parser.getCurrentName();
-				utf8Bytes = fieldName.getBytes(StandardCharsets.UTF_8);
-				lenBuffer.clear();
-				lenBuffer.putInt(utf8Bytes.length);
-				header.write(lenBuffer.array());
-				header.write(utf8Bytes);
-
 				token = parser.nextToken();
 				String fieldValue = parser.getText();
-				utf8Bytes = fieldValue.getBytes(StandardCharsets.UTF_8);
-				lenBuffer.clear();
-				lenBuffer.putInt(utf8Bytes.length);
-				firstLine.write(lenBuffer.array());
-				firstLine.write(utf8Bytes);
-
-				++numFields;
+				
+				header.add(fieldName);
+				record.add(fieldValue);
 			}
 			token = parser.nextToken();
 		}
 
-		ByteBuffer numFieldsBuffer = ByteBuffer.allocate(4); // 4 == sizeof(int)
-		numFieldsBuffer.putInt(numFields);
-
 		// Each record consists of number of fields followed by length/value
 		// pairs.  See CLengthEncodedInputParser.h in the C++ code for a more
 		// detailed description.
-		header.flush();
-		os.write(numFieldsBuffer.array());
-		os.write(header.toByteArray());
-		header.close();
+		lengthEncodedWriter.writeRecord(header);
+		lengthEncodedWriter.writeRecord(record);
 
-		firstLine.flush();
-		os.write(numFieldsBuffer.array());
-		os.write(firstLine.toByteArray());
-		firstLine.close();
-
-		// now send the rest of the data
-		int recordCount = 1;
+		
+		int recordCount = (header.size() > 0) ? 1 : 0;
+		
 		token = parser.nextToken();
 		while (token == JsonToken.START_OBJECT)
 		{
-			os.write(numFieldsBuffer.array());
-
+			record.clear();
+			
 			while (token != JsonToken.END_OBJECT)
 			{
 				if (token == JsonToken.FIELD_NAME)
 				{
 					token = parser.nextToken();
 					String fieldValue = parser.getText();
-					utf8Bytes = fieldValue.getBytes(StandardCharsets.UTF_8);
-					lenBuffer.clear();
-					lenBuffer.putInt(utf8Bytes.length);
-					os.write(lenBuffer.array());
-					os.write(utf8Bytes);
+					record.add(fieldValue);
 				}
 				token = parser.nextToken();
 			}
 
+			lengthEncodedWriter.writeRecord(record);
 			++recordCount;
 			token = parser.nextToken();
 		}
@@ -732,34 +756,21 @@ public class ProcessManager
 			timeField = ProcessCtrl.DEFAULT_TIME_FIELD;
 		}
 
-		int numFields = 0;
-
-		// first extract the field names and write those as the header
-		// (the size will increase if necessary, but it's silly to start with
-		// the default of 32)
-		ByteArrayOutputStream header = new ByteArrayOutputStream(1024);
-		ByteArrayOutputStream firstLine = new ByteArrayOutputStream(1024);
-
-		// This will be used to convert 32 bit integers to network byte order
-		ByteBuffer lenBuffer = ByteBuffer.allocate(4); // 4 == sizeof(int)
-		byte[] utf8Bytes;
-
+		LengthEncodedWriter lengthEncodedWriter = new LengthEncodedWriter(os);
+		List<String> header = new ArrayList<>();
+		List<String> record = new ArrayList<>();
+		
+		
 		JsonToken token = parser.nextToken();
 		while (token != JsonToken.END_OBJECT)
 		{
 			if (token == JsonToken.FIELD_NAME)
 			{
 				String fieldName = parser.getCurrentName();
-				utf8Bytes = fieldName.getBytes(StandardCharsets.UTF_8);
-				lenBuffer.clear();
-				lenBuffer.putInt(utf8Bytes.length);
-				header.write(lenBuffer.array());
-				header.write(utf8Bytes);
-
 				token = parser.nextToken();
 				String fieldValue = parser.getText();
 
-				if (fieldName.equals(timeField))
+				if (timeField.equals(fieldName))
 				{
 					try
 					{
@@ -772,47 +783,33 @@ public class ProcessManager
 								dd.getTimeFormat() + "'");
 					}
 				}
-
-				utf8Bytes = fieldValue.getBytes(StandardCharsets.UTF_8);
-				lenBuffer.clear();
-				lenBuffer.putInt(utf8Bytes.length);
-				firstLine.write(lenBuffer.array());
-				firstLine.write(utf8Bytes);
-
-				++numFields;
+			
+				header.add(fieldName);
+				record.add(fieldValue);
 			}
+			
 			token = parser.nextToken();
 		}
-
-		ByteBuffer numFieldsBuffer = ByteBuffer.allocate(4); // 4 == sizeof(int)
-		numFieldsBuffer.putInt(numFields);
 
 		// Each record consists of number of fields followed by length/value
 		// pairs.  See CLengthEncodedInputParser.h in the C++ code for a more
 		// detailed description.
-		header.flush();
-		os.write(numFieldsBuffer.array());
-		os.write(header.toByteArray());
-		header.close();
-
-		firstLine.flush();
-		os.write(numFieldsBuffer.array());
-		os.write(firstLine.toByteArray());
-		firstLine.close();
+		lengthEncodedWriter.writeRecord(header);
+		lengthEncodedWriter.writeRecord(record);
+		
+		int recordCount = (header.size() > 0) ? 1 : 0;
 
 		// now send the rest of the data
-		int recordCount = 1;
 		token = parser.nextToken();
 		while (token == JsonToken.START_OBJECT)
 		{
-			os.write(numFieldsBuffer.array());
-
+			record.clear();
+			
 			while (token != JsonToken.END_OBJECT)
 			{
 				if (token == JsonToken.FIELD_NAME)
 				{
 					String fieldName = parser.getCurrentName();
-
 					token = parser.nextToken();
 					String fieldValue = parser.getText();
 
@@ -830,15 +827,12 @@ public class ProcessManager
 						}
 					}
 
-					utf8Bytes = fieldValue.getBytes(StandardCharsets.UTF_8);
-					lenBuffer.clear();
-					lenBuffer.putInt(utf8Bytes.length);
-					os.write(lenBuffer.array());
-					os.write(utf8Bytes);
+					record.add(fieldValue);
 				}
 				token = parser.nextToken();
 			}
 
+			lengthEncodedWriter.writeRecord(record);
 			++recordCount;
 			token = parser.nextToken();
 		}

@@ -35,10 +35,13 @@ import com.fasterxml.jackson.annotation.JsonCreator;
  * Describes the format of the data used in the job and how it should 
  * be interpreted by autodetect.
  * <p/>
- * Data must either be in a textual delineated format i.e. csv, tsv or JSON
- * the {@linkplain DataFormat} enum indicates which. {@link #getTimeField()} is the name of
- * the field containing the timestamp and {@link #getTimeFormat()} is the strptime code 
- * describing how to parse the time field. 
+ * Data must either be in a textual delineated format (e.g. csv, tsv) or JSON
+ * the {@linkplain DataFormat} enum indicates which. {@link #getTimeField()} 
+ * is the name of the field containing the timestamp and {@link #getTimeFormat()} 
+ * is the format code for the date string in as described by 
+ * {@link java.text.SimpleDateFormat}. The default quote character for 
+ * delineated formats is {@value #DEFAULT_QUOTE_CHAR} but any other character can be
+ * used.  
  */
 public class DataDescription 
 {
@@ -64,12 +67,25 @@ public class DataDescription
 	}
 	
 	/**
-	 * Serialisation names
+	 * The format field name
 	 */
 	static final public String FORMAT = "format"; 
+	/**
+	 * The time field name
+	 */
 	static final public String TIME_FIELD_NAME = "timeField";
+	/**
+	 * The timeFormat field name
+	 */	
 	static final public String TIME_FORMAT = "timeFormat";
+	/**
+	 * The field delimiter field name
+	 */
 	static final public String FIELD_DELIMITER = "fieldDelimiter";
+	/**
+	 * The quote char field name
+	 */
+	static final public String QUOTE_CHARACTER = "quoteCharacter";
 	
 	/**
 	 * The default field delimiter expected by the native autodetect_api
@@ -87,16 +103,18 @@ public class DataDescription
 	 * The default quote character used to escape text in 
 	 * delineated data formats 
 	 */
-	static final public char QUOTE_CHAR = '"';
+	static final public char DEFAULT_QUOTE_CHAR = '"';
 	
 	private DataFormat m_DataFormat;
 	private String m_TimeFieldName;
 	private String m_TimeFormat;
 	private String m_FieldDelimiter;
+	private char m_QuoteCharacter;
 	
 	public DataDescription()
 	{
 		m_DataFormat = DataFormat.DELINEATED;
+		m_QuoteCharacter = DEFAULT_QUOTE_CHAR;
 	}
 	
 	/**
@@ -203,6 +221,22 @@ public class DataDescription
 	}	
 	
 	/**
+	 * The quote character used in delineated formats.
+	 * Defaults to {@value #DEFAULT_QUOTE_CHAR}
+	 * @return The delineated format quote character
+	 */
+	public char getQuoteCharacter()
+	{
+		return m_QuoteCharacter;
+	}
+	
+	public void setQuoteCharacter(char value)
+	{
+		m_QuoteCharacter = value;
+	}
+	
+	
+	/**
 	 * Returns true if the data described by this object needs
 	 * at transforming before processing by autodetect.
 	 * A transformation must be applied if either a timeformat is
@@ -231,6 +265,7 @@ public class DataDescription
 		DataDescription that = (DataDescription)other;
 		
 		return this.m_DataFormat == that.m_DataFormat &&
+				this.m_QuoteCharacter == that.m_QuoteCharacter &&
 				JobDetails.bothNullOrEqual(this.m_TimeFieldName, that.m_TimeFieldName) &&
 				JobDetails.bothNullOrEqual(this.m_TimeFormat, that.m_TimeFormat) &&
 				JobDetails.bothNullOrEqual(this.m_FieldDelimiter, that.m_FieldDelimiter);	
