@@ -876,6 +876,9 @@ public class ProcessManager
 								// reschedule the shutdown
 								startShutdownTimer(jobId, 10); 
 							}		
+
+							m_JobDetailsProvider.setJobFinishedTimeandStatus(jobId, 
+									new Date(), JobStatus.FINISHED);
 						}
 						catch (UnknownJobException | NativeProcessRunException e)
 						{

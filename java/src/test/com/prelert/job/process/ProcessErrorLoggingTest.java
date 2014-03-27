@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +43,7 @@ import com.prelert.job.Detector;
 import com.prelert.job.DetectorState;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
+import com.prelert.job.JobStatus;
 import com.prelert.job.UnknownJobException;
 
 /**
@@ -95,6 +97,14 @@ public class ProcessErrorLoggingTest
 		public DetectorState getPersistedState(String jobId)
 		{
 			return null;
+		}
+
+		@Override
+		public boolean setJobFinishedTimeandStatus(String jobId, Date time,
+				JobStatus status) 
+		throws UnknownJobException 
+		{
+			return false;
 		}
 	}
 	

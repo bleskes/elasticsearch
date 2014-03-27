@@ -45,6 +45,7 @@ import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
 import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
+import com.prelert.job.JobInUseException;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.JobDetails;
 import com.prelert.job.manager.JobManager;
@@ -69,7 +70,7 @@ public class RestoreStateTest
 	 */
 	public static void main(String[] args) 
 	throws IOException, NativeProcessRunException, UnknownJobException,
-		InterruptedException, UnknownJobException 
+		InterruptedException, JobInUseException 
 	{
 		final String prelertSrcHome = System.getProperty("prelert.src.home");
 		if (prelertSrcHome == null)

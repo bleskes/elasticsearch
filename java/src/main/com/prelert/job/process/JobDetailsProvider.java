@@ -26,8 +26,11 @@
  ************************************************************/
 package com.prelert.job.process;
 
+import java.util.Date;
+
 import com.prelert.job.DetectorState;
 import com.prelert.job.JobDetails;
+import com.prelert.job.JobStatus;
 import com.prelert.job.UnknownJobException;
 
 public interface JobDetailsProvider 
@@ -48,4 +51,16 @@ public interface JobDetailsProvider
 	 * @throws UnknownJobException If the jobId is not recognised
 	 */
 	public DetectorState getPersistedState(String jobId) throws UnknownJobException;
+	
+	/**
+	 * Set the job status and finish time for the job.
+	 * 
+	 * @param jobId
+	 * @param time
+	 * @param status
+	 * @return
+	 * @throws UnknownJobException
+	 */
+	public boolean setJobFinishedTimeandStatus(String jobId, Date time, 
+			JobStatus status) throws UnknownJobException;
 }

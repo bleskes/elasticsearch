@@ -592,7 +592,8 @@ public class JobManager implements JobDetailsProvider
 	}
 	
 	
-	private boolean setJobFinishedTimeandStatus(String jobId, Date time, 
+	@Override
+	public boolean setJobFinishedTimeandStatus(String jobId, Date time, 
 			JobStatus status)
 	throws UnknownJobException
 	{
