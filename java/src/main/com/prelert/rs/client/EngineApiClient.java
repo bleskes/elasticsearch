@@ -63,9 +63,9 @@ import com.prelert.rs.data.SingleDocument;
 
 /**
  * A Http Client for the Prelert Engine RESTful API.
- * </br>
+ * <br/>
  * Contains methods to create jobs, list jobs, upload data and query results.
- * </br>
+ * <br/>
  * Implements closeable so it can be used in a try-with-resource statement
  */
 public class EngineApiClient implements Closeable
@@ -550,7 +550,6 @@ public class EngineApiClient implements Closeable
 	
 	/**
 	 * Get the bucket results filtered between the start and end dates.
-	 * </br>
 	 * The arguments are optional only one of start/end needs be set
 	 * 
 	 * @param baseUrl The base URL for the REST API 

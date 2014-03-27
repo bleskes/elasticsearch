@@ -36,6 +36,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -56,6 +57,7 @@ import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.DetectorState;
 import com.prelert.job.JobDetails;
+import com.prelert.job.JobStatus;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.input.LengthEncodedWriter;
 import com.prelert.job.process.ProcessCtrl;
@@ -434,7 +436,9 @@ public class ProcessManager
 	
 	/**
 	 * Transform the data according to the data description and
-	 * pipe to the output.
+	 * pipe to the output. 
+	 * Data is written via BufferedOutputStream which is more 
+	 * suited for small writes.
 	 * 
 	 * @param dataDescription
 	 * @param input
@@ -445,20 +449,23 @@ public class ProcessManager
 			InputStream input, OutputStream output) 
 	throws IOException
 	{
+		// Oracle's documentation recommends buffering process streams
+		BufferedOutputStream bufferedStream = new BufferedOutputStream(output);
+		
 		if (dataDescription != null && dataDescription.transform())
 		{
 			if (dataDescription.getFormat() == DataFormat.JSON)
 			{
-				transformAndPipeJson(dataDescription, input, output);
+				transformAndPipeJson(dataDescription, input, bufferedStream);
 			}
 			else
 			{
-				transformAndPipeCsv(dataDescription, input, output);
+				transformAndPipeCsv(dataDescription, input, bufferedStream);
 			}
 		}
 		else
 		{			
-			pipeCsv(dataDescription, input, output);
+			pipeCsv(dataDescription, input, bufferedStream);
 		}
 	}
 	
@@ -651,19 +658,16 @@ public class ProcessManager
 					+ "Bad token = " + token);
 		}
 
-		// Oracle's documentation recommends buffering process streams
-		BufferedOutputStream bufferedStream = new BufferedOutputStream(os);
-
 		if (dd.getTimeFormat() != null)
 		{
-			pipeJsonAndTransformTime(parser, bufferedStream, dd);
+			pipeJsonAndTransformTime(parser, os, dd);
 		}
 		else
 		{
-			pipeJson(parser, bufferedStream);
+			pipeJson(parser, os);
 		}
 
-		bufferedStream.flush();
+		os.flush();
 
 		parser.close();	
 	}
@@ -872,6 +876,9 @@ public class ProcessManager
 								// reschedule the shutdown
 								startShutdownTimer(jobId, 10); 
 							}		
+
+							m_JobDetailsProvider.setJobFinishedTimeandStatus(jobId, 
+									new Date(), JobStatus.FINISHED);
 						}
 						catch (UnknownJobException | NativeProcessRunException e)
 						{

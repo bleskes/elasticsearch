@@ -24,43 +24,38 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.process;
+package com.prelert.job;
 
-import java.util.Date;
-
-import com.prelert.job.DetectorState;
-import com.prelert.job.JobDetails;
-import com.prelert.job.JobStatus;
-import com.prelert.job.UnknownJobException;
-
-public interface JobDetailsProvider 
+/**
+ * This exception is thrown is an operation is attempted on a job that
+ * is already being used.  
+ * The message should explain the error
+ */
+public class JobInUseException extends Exception 
 {
-	/**
-	 * Get the <code>JobDetail</code>s for the given job id. 
-	 * 
-	 * @param jobId The job to look up
-	 * @return
-	 * @throws UnknownJobException If the jobId is not recognised
-	 */
-	public JobDetails getJobDetails(String jobId) throws UnknownJobException;
+	private static final long serialVersionUID = -2759814168552580059L;
+		
+	private String m_JobId;
 	
 	/**
-	 * Get the persisted detector state for the job or <code>null</code>
-	 * @param jobId
-	 * @return <code>null</code> or the DetectorState if it has been peristed
-	 * @throws UnknownJobException If the jobId is not recognised
+	 * Create a new JobInUseException.
+	 * 
+	 * @param jobId The Id of the job some operation was attempted on. 
+	 * @param message Details of error explaining the context 
 	 */
-	public DetectorState getPersistedState(String jobId) throws UnknownJobException;
+	public JobInUseException(String jobId, String message)
+	{
+		super(message);
+		this.m_JobId = jobId;
+	}
 	
 	/**
-	 * Set the job status and finish time for the job.
-	 * 
-	 * @param jobId
-	 * @param time
-	 * @param status
+	 * Get the <i>JobId</i> that was the source of the error.
 	 * @return
-	 * @throws UnknownJobException
 	 */
-	public boolean setJobFinishedTimeandStatus(String jobId, Date time, 
-			JobStatus status) throws UnknownJobException;
+	public String getJobId()
+	{
+		return m_JobId;
+	}
 }
+

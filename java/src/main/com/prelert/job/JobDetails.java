@@ -62,7 +62,6 @@ public class JobDetails
 	static final public String FINISHED_TIME = "finishedTime";
 	static final public String LAST_DATA_TIME = "lastDataTime";
 	static final public String PROCESSED_RECORD_COUNT = "processedRecordCount";
-	static final public String FILE_URLS = "fileUrls";
 	static final public String TIMEOUT = "timeout";
 	static final public String PERSIST_MODEL = "persistModel";
 	static final public String ANALYSIS_CONFIG = "analysisConfig";
@@ -280,7 +279,7 @@ public class JobDetails
 	}
 	
 	/**
-	 * Set the job's Id.</br>
+	 * Set the job's Id.
 	 * In general this method should not be used as the Id does not change 
 	 * once set. This method is provided for the Jackson object mapper to 
 	 * de-serialise this class from Json.

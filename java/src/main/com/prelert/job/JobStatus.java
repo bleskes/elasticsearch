@@ -39,7 +39,7 @@ public enum JobStatus
 			return true;
 		}
 	}, 
-	FINISHED, PERSISTED, KILLED, FAILED;
+	FINISHED, PERSISTED, FAILED;
 
 	public boolean isRunning()
 	{

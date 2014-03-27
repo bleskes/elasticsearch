@@ -57,7 +57,7 @@ public class ElasticSearchMappings
 	
 	
 	/**
-	 * Create the ElasticSearch mapping for {@linkplain com.prelert.job.JobDetails}.</br>
+	 * Create the ElasticSearch mapping for {@linkplain com.prelert.job.JobDetails}.
 	 * The '_all' field is disabled as the document isn't meant to be searched.
 	 * 
 	 * @return
@@ -87,9 +87,6 @@ public class ElasticSearchMappings
 						.endObject()						
 						.startObject(JobDetails.PROCESSED_RECORD_COUNT)
 							.field("type", "long").field(INDEX, NO)
-						.endObject()
-						.startObject(JobDetails.FILE_URLS) // is an array of string
-							.field("type", "string").field(INDEX, NOT_ANALYZED)
 						.endObject()
 						.startObject(JobDetails.TIMEOUT)
 							.field("type", "long").field(INDEX, NO)
@@ -176,7 +173,7 @@ public class ElasticSearchMappings
 	
 	
 	/**
-	 * Create the ElasticSearch mapping for {@linkplain com.prelert.rs.data.Bucket}.</br>
+	 * Create the ElasticSearch mapping for {@linkplain com.prelert.rs.data.Bucket}.
 	 * The '_all' field is disabled as the document isn't meant to be searched.
 	 * 
 	 * @return
@@ -213,8 +210,8 @@ public class ElasticSearchMappings
 	
 	
 	/**
-	 * Create the ElasticSearch mapping for {@linkplain com.prelert.rs.data.Detector}.</br>
-	 * The '_all' field is disabled as the document isn't meant to be searched.</br>
+	 * Create the ElasticSearch mapping for {@linkplain com.prelert.rs.data.Detector}.
+	 * The '_all' field is disabled as the document isn't meant to be searched.
 	 * 
 	 * @return
 	 * @throws IOException
@@ -241,9 +238,8 @@ public class ElasticSearchMappings
 	
 	
 	/**
-	 * Create the ElasticSearch mapping for {@linkplain com.prelert.rs.data.Detector}.</br>
-	 * The '_all' field is disabled as the document isn't meant to be searched.</br>
-	 * 
+	 * Create the ElasticSearch mapping for {@linkplain com.prelert.rs.data.Detector}.
+	 * The '_all' field is disabled as the document isn't meant to be searched.
 	 * Records have a _parent mapping to a {@linkplain com.prelert.rs.data.Bucket}.
 	 * 
 	 * @return
@@ -315,8 +311,8 @@ public class ElasticSearchMappings
 	}
 	
 	/**
-	 * Create the ElasticSearch mapping for {@linkplain DetectorState}.</br>
-	 * The '_all' field is disabled as the document isn't meant to be searched.</br>
+	 * Create the ElasticSearch mapping for {@linkplain DetectorState}.
+	 * The '_all' field is disabled as the document isn't meant to be searched.
 	 * 
 	 * The model state string is not searchable (index = 'no') as it could be
 	 * very large.  

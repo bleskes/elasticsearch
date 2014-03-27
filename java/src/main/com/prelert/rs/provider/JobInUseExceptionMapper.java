@@ -24,43 +24,26 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.process;
+package com.prelert.rs.provider;
 
-import java.util.Date;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.ext.ExceptionMapper;
 
-import com.prelert.job.DetectorState;
-import com.prelert.job.JobDetails;
-import com.prelert.job.JobStatus;
-import com.prelert.job.UnknownJobException;
+import com.prelert.job.JobInUseException;
 
-public interface JobDetailsProvider 
+/**
+ * Exception -> Response mapper for {@linkplain com.prelert.job.JobInUseException}.
+ */
+public class JobInUseExceptionMapper implements ExceptionMapper<JobInUseException>
 {
-	/**
-	 * Get the <code>JobDetail</code>s for the given job id. 
-	 * 
-	 * @param jobId The job to look up
-	 * @return
-	 * @throws UnknownJobException If the jobId is not recognised
-	 */
-	public JobDetails getJobDetails(String jobId) throws UnknownJobException;
-	
-	/**
-	 * Get the persisted detector state for the job or <code>null</code>
-	 * @param jobId
-	 * @return <code>null</code> or the DetectorState if it has been peristed
-	 * @throws UnknownJobException If the jobId is not recognised
-	 */
-	public DetectorState getPersistedState(String jobId) throws UnknownJobException;
-	
-	/**
-	 * Set the job status and finish time for the job.
-	 * 
-	 * @param jobId
-	 * @param time
-	 * @param status
-	 * @return
-	 * @throws UnknownJobException
-	 */
-	public boolean setJobFinishedTimeandStatus(String jobId, Date time, 
-			JobStatus status) throws UnknownJobException;
+	@Override
+	public Response toResponse(JobInUseException configException) 
+	{
+		String msg = String.format("Job wth id '%s' is in use.\n"
+				+ "Error message : %s\n",
+				configException.getJobId(), configException.getMessage());
+		
+		return Response.status(Response.Status.NOT_FOUND).
+				entity(msg).build();
+	}
 }
