@@ -54,6 +54,8 @@ import org.elasticsearch.index.query.RangeFilterBuilder;
 import org.elasticsearch.indices.IndexMissingException;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.sort.FieldSortBuilder;
+import org.elasticsearch.search.sort.SortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -210,11 +212,16 @@ public class JobManager implements JobDetailsProvider
 	public Pagination<JobDetails> getAllJobs(int skip, int take)
 	{
 		FilterBuilder fb = FilterBuilders.matchAllFilter();
+		SortBuilder sb = new FieldSortBuilder(JobDetails.ID)
+							.ignoreUnmapped(true)
+							.missing("_last")
+							.order(SortOrder.DESC);
+
 		SearchResponse response = m_Client.prepareSearch("_all")
 				.setTypes(JobDetails.TYPE)
 				.setPostFilter(fb)
 				.setFrom(skip).setSize(take)
-				.addSort(JobDetails.ID, SortOrder.DESC)  
+				.addSort(sb)
 				.get();
 
 		List<JobDetails> jobs = new ArrayList<>();
@@ -357,9 +364,14 @@ public class JobManager implements JobDetailsProvider
 				FilterBuilder fb)
 	{	
 				
+		SortBuilder sb = new FieldSortBuilder(Bucket.ID)
+								.ignoreUnmapped(true)
+								.missing("_last")
+								.order(SortOrder.ASC);
+		
 		SearchResponse searchResponse = m_Client.prepareSearch(jobId)
 				.setTypes(Bucket.TYPE)		
-				.addSort(Bucket.ID, SortOrder.ASC)
+				.addSort(sb)
 				.setPostFilter(fb)
 				.setFrom(skip).setSize(take)
 				.get();
@@ -483,12 +495,17 @@ public class JobManager implements JobDetailsProvider
 		FilterBuilder parentFilter = FilterBuilders.hasParentFilter(Bucket.TYPE, bucketFilter);
 		FilterBuilder fb = FilterBuilders.termFilter(AnomalyRecord.DETECTOR_NAME, detectorName);
 		FilterBuilder andFilter = FilterBuilders.andFilter(parentFilter, fb); 
+		
+		SortBuilder sb = new FieldSortBuilder(AnomalyRecord.ANOMALY_SCORE)
+									.ignoreUnmapped(true)
+									.missing("_last")
+									.order(SortOrder.DESC);
 
 		SearchResponse searchResponse = m_Client.prepareSearch(jobId)
 				.setTypes(AnomalyRecord.TYPE)
 				.setPostFilter(andFilter)
 				.setFrom(skip).setSize(take)
-				.addSort(AnomalyRecord.ANOMALY_SCORE, SortOrder.DESC)
+				.addSort(sb)
 				.get();
 
 		List<Map<String, Object>> results = new ArrayList<>();
@@ -523,12 +540,17 @@ public class JobManager implements JobDetailsProvider
 	{
 		FilterBuilder bucketFilter= FilterBuilders.termFilter("_id", bucketId);
 		FilterBuilder parentFilter = FilterBuilders.hasParentFilter(Bucket.TYPE, bucketFilter);
+				
+		SortBuilder sb = new FieldSortBuilder(AnomalyRecord.ANOMALY_SCORE)
+											.ignoreUnmapped(true)
+											.missing("_last")
+											.order(SortOrder.DESC);		
 
 		SearchResponse searchResponse = m_Client.prepareSearch(jobId)
 				.setTypes(AnomalyRecord.TYPE)
 				.setPostFilter(parentFilter)
 				.setFrom(skip).setSize(take)
-				.addSort(AnomalyRecord.ANOMALY_SCORE, SortOrder.DESC)
+				.addSort(sb)
 				.get();
 
 		List<Map<String, Object>> results = new ArrayList<>();
