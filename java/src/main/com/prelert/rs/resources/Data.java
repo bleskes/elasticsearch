@@ -114,10 +114,7 @@ public class Data extends ResourceWithJobManager
     		java.nio.file.Path filePath = FileSystems.getDefault().getPath(
     				m_BaseDirectory, jobId, s_DateFormat.format(new Date()) + ".gz"); 
     		
-    		if (m_isPersistData)
-    		{
-    			s_Logger.info("Data will be persisted to: " + filePath);
-    		}
+    		s_Logger.info("Data will be persisted to: " + filePath);
     		
     		// Create the interceptor for writing data to disk 
     		// and start running in a new thread.

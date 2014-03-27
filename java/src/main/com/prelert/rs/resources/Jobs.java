@@ -134,6 +134,7 @@ public class Jobs extends ResourceWithJobManager
 		
     @POST
     @Consumes(MediaType.APPLICATION_JSON)    
+    @Produces(MediaType.APPLICATION_JSON)
     public Response createJob(JobConfiguration config) 
     throws UnknownJobException, JsonProcessingException 
     {   		
