@@ -27,6 +27,10 @@
 
 package com.prelert.job;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
@@ -39,6 +43,25 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 @JsonInclude(Include.NON_NULL)
 public class Detector
 {
+	/**
+	 * The set of valid function names
+	 */
+	static private final Set<String> ANALYSIS_FUNCTIONS = 
+			new HashSet<String>(Arrays.<String>asList(new String [] {
+				"count", 
+				"high_count", 
+				"low_count",
+				"non_zero_count", "nzc",
+				"distinct_count", "dc",
+				"rare",
+				"freq_rare",
+				"metric",
+				"mean", "avg",
+				"min", 
+				"max",
+				"sum"
+			}));
+	
 	private String m_Function;
 	private String m_FieldName;
 	private String m_ByFieldName;
@@ -137,5 +160,43 @@ public class Detector
 				JobDetails.bothNullOrEqual(this.m_ByFieldName, that.m_ByFieldName) &&
 				JobDetails.bothNullOrEqual(this.m_OverFieldName, that.m_OverFieldName) &&
 				JobDetails.bothNullOrEqual(this.m_UseNull, that.m_UseNull);					
+	}
+	
+	/**
+	 * Checks the configuration is valid
+	 * <ol>
+	 * <li>One of FieldName, ByFieldName, OverFieldName or Function must be set</li>
+	 * <li>Unless the function is 'count' one of FieldName, ByFieldName 
+	 * or OverFieldName must be set"</li>
+	 * <li>Function is one of the strings in the set {@link #ANALYSIS_FUNCTIONS}</li>
+	 * </ol>
+	 * 
+	 * @return true
+	 * @throws JobConfigurationException
+	 */
+	public boolean verify()
+	throws JobConfigurationException
+	{	
+		if (m_FieldName == null && m_ByFieldName == null && m_OverFieldName == null)
+		{
+			if (m_Function == null)
+			{
+				throw new JobConfigurationException("One of FieldName, "
+						+ "ByFieldName, OverFieldName or Function must be set");
+			}
+			
+			if (!"count".equals(m_Function))
+			{
+				throw new JobConfigurationException("Unless the function is 'count'"
+						+ " one of FieldName, ByFieldName or OverFieldName must be set");
+			}
+		}
+		
+		if (m_Function != null && ANALYSIS_FUNCTIONS.contains(m_Function) == false)
+		{
+			throw new JobConfigurationException("Unknown function '" + m_Function + "'");
+		}
+		
+		return true;
 	}
 }

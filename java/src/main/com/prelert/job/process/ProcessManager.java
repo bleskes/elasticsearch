@@ -505,7 +505,7 @@ public class ProcessManager
 	private void pipeCsv(DataDescription dd, InputStream is, OutputStream os)
 	throws IOException
 	{
-		char delimiter = ProcessCtrl.DEFAULT_DELIMITER; 
+		char delimiter = DataDescription.DEFAULT_DELIMITER; 
 		if (dd.getFieldDelimiter() != null)
 		{
 			delimiter = dd.getFieldDelimiter().charAt(0);
@@ -555,7 +555,7 @@ public class ProcessManager
 			timeField = ProcessCtrl.DEFAULT_TIME_FIELD;
 		}
 		
-		char delimiter = ProcessCtrl.DEFAULT_DELIMITER; 
+		char delimiter = DataDescription.DEFAULT_DELIMITER; 
 		if (dd.getFieldDelimiter() != null)
 		{
 			delimiter = dd.getFieldDelimiter().charAt(0);

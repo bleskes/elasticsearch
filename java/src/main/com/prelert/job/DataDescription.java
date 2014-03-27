@@ -27,6 +27,7 @@
 
 package com.prelert.job;
 
+import java.text.SimpleDateFormat;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -94,8 +95,7 @@ public class DataDescription
 	static final public char DEFAULT_DELIMITER = '\t';
 	
 	/**
-	 * Data sent to the autodetect process must separate
-	 * records with this line ending
+	 * Csv data must have this line ending
 	 */
 	static final public char LINE_ENDING = '\n';
 	
@@ -156,7 +156,15 @@ public class DataDescription
 			{
 				m_FieldDelimiter = obj.toString();
 			}
-		}		
+		}
+		if (values.containsKey(QUOTE_CHARACTER))
+		{
+			Object obj = values.get(QUOTE_CHARACTER);
+			if (obj != null)
+			{
+				m_QuoteCharacter = obj.toString().charAt(0);
+			}
+		}	
 	}
 	
 	/**
@@ -269,5 +277,33 @@ public class DataDescription
 				JobDetails.bothNullOrEqual(this.m_TimeFieldName, that.m_TimeFieldName) &&
 				JobDetails.bothNullOrEqual(this.m_TimeFormat, that.m_TimeFormat) &&
 				JobDetails.bothNullOrEqual(this.m_FieldDelimiter, that.m_FieldDelimiter);	
+	}
+	
+	/**
+	 * Verify the data description configuration
+	 * <ol>
+	 * <li>Check the timeFormat - if set - is a valid format string</li>
+	 * <li></li>
+	 * </ol>
+	 * @return true
+	 * @throws JobConfigurationException
+	 */
+	public boolean verify()
+	throws JobConfigurationException
+	{
+		if (m_TimeFormat != null && m_TimeFormat.isEmpty() == false)
+		{
+			try
+			{
+				new SimpleDateFormat(m_TimeFormat);
+			}
+			catch (IllegalArgumentException e)
+			{
+				
+				throw new JobConfigurationException("Invalid Time format string", e);
+			}
+		}
+		
+		return true;
 	}
 }

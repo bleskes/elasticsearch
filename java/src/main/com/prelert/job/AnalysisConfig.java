@@ -297,5 +297,48 @@ public class AnalysisConfig
 		
 		return equal;
 	}
+	
+	/**
+	 * Checks the configuration is valid
+	 * <ol>
+	 * <li>Check that if non-null BucketSpan, BatchSpan and Period are &gt= 0</li>
+	 * <li>Check all the detectors are configured correctly</li>
+	 * </ol>
+	 * 	
+	 * @return true
+	 * @throws JobConfigurationException
+	 */
+	public boolean verify()
+	throws JobConfigurationException
+	{	
+		if (m_BucketSpan != null && m_BucketSpan < 0)
+		{
+			throw new JobConfigurationException("BucketSpan cannot be < 0."
+					+ " Value = " + m_BucketSpan);
+		}
 		
+		if (m_BatchSpan != null && m_BatchSpan < 0)
+		{
+			throw new JobConfigurationException("BatchSpan cannot be < 0."
+					+ " Value = " + m_BatchSpan);
+		}
+		
+		if (m_Period != null && m_Period < 0)
+		{
+			throw new JobConfigurationException("Period cannot be < 0."
+					+ " Value = " + m_Period);
+		}
+		
+		if (m_Detectors.size() == 0)
+		{
+			throw new JobConfigurationException("No detectors configured");
+		}
+		
+		for (Detector d : m_Detectors)
+		{
+			d.verify();
+		}
+		
+		return true;
+	}
 }

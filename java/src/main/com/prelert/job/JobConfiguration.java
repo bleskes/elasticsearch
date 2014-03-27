@@ -181,4 +181,52 @@ public class JobConfiguration
 			return m_JobConfig;
 		}
 	}
+	
+	/**
+	 * Checks the job configuration settings and throws an exception
+	 * if any values are invalid
+	 * 
+	 * <ol>
+	 * <li>Either an AnalysisConfig or Job reference must be set</li>
+	 * <li>Verify {@link AnalysisConfig#verify() AnalysisConfig}</li>
+	 * <li>Verify {@link AnalysisOptions#verify() AnalysisOptions}</li>
+	 * <li>Verify {@link DataDescription#verify() DataDescription}</li>
+	 * <li>Check timeout is a +ve number</li>
+	 * <li></li>
+	 * </ol>
+	 *  
+	 * @return true
+	 * @throws JobConfigurationException
+	 */
+	public boolean verify()
+	throws JobConfigurationException
+	{
+		if (m_AnalysisConfig == null && m_ReferenceJobId == null)
+		{
+			throw new JobConfigurationException("Either an an AnalysisConfig or "
+					+ " job reference id must be set");
+		}
+		
+		if (m_AnalysisConfig != null)
+		{
+			m_AnalysisConfig.verify();
+		}
+		if (m_AnalysisOptions != null)
+		{
+			m_AnalysisOptions.verify();
+		}
+		
+		if (m_DataDescription != null)
+		{
+			m_DataDescription.verify();
+		}
+		
+		if (m_Timeout != null && m_Timeout < 0)
+		{
+			throw new JobConfigurationException("Timeout can not be a negative "
+					+ "number. Value = " + m_Timeout);
+		}
+		
+		return true;
+	}
 }

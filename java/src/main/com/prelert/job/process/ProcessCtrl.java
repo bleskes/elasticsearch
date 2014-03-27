@@ -160,11 +160,7 @@ public class ProcessCtrl
 	 * By default autodetect expects the timestamp in a field with this name
 	 */
 	static final public String DEFAULT_TIME_FIELD = "_time";
-	/**
-	 * Default field delimiter (tsv)
-	 */
-	static final public char DEFAULT_DELIMITER = '\t';
-		
+			
 	/**
 	 * command line args
 	 */

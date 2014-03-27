@@ -142,5 +142,29 @@ public class AnalysisOptions
 		return (this.m_MaxFieldValues == that.m_MaxFieldValues) &&
 				(this.m_MaxTimeBuckets == that.m_MaxTimeBuckets);
 	}
-
+	
+	/**
+	 * Checks the analysis options and throws an exception if 
+	 * any fields are invalid.
+	 * 
+	 * @return true
+	 * @throws JobConfigurationException
+	 */
+	public boolean verify()
+	throws JobConfigurationException
+	{
+		if (m_MaxFieldValues < 0)
+		{
+			throw new JobConfigurationException(
+					"Invalid AnalysisOption MaxFieldValues must be >= 0");
+		}
+		if (m_MaxTimeBuckets < 0)
+		{
+			throw new JobConfigurationException(
+					"Invalid AnalysisOption MaxTimeBuckets must be >= 0");		
+		}
+		
+		return true;
+	}
+	
 }
