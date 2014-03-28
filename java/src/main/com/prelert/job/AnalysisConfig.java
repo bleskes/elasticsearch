@@ -115,7 +115,7 @@ public class AnalysisConfig
 		}
 		if (values.containsKey(PARTITION_FIELD))
 		{
-			Object obj = values.get(BATCH_SPAN);
+			Object obj = values.get(PARTITION_FIELD);
 			if (obj != null)
 			{
 				m_PartitionField = obj.toString();
