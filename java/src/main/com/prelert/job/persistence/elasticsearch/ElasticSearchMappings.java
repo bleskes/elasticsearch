@@ -271,7 +271,7 @@ public class ElasticSearchMappings
 							.field("type", "double").field(INDEX, NO)
 						.endObject()						
 						.startObject(AnomalyRecord.PROBABILITY)
-							.field("type", "double").field(INDEX)
+							.field("type", "double")
 						.endObject()		
 						.startObject(AnomalyRecord.FUNCTION)
 							.field("type", "string").field(INDEX, NOT_ANALYZED)

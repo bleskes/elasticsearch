@@ -367,14 +367,6 @@ public class ProcessCtrl
 						+  dataDescription.getTimeField();
 				command.add(timeFieldArg);
 			}
-			/* Do the date parsing in java rather than the C++ process
-			if (dataDescription.getTimeFormat() != null)
-			{
-				String timeFormatArg = TIME_FORMAT_ARG
-						+  dataDescription.getTimeFormat();
-				command.add(timeFormatArg);
-			}
-			*/	
 		}
 				
 		// Restoring the model state

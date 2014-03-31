@@ -83,7 +83,7 @@ public class JobsTest implements Closeable
 			+ "\"bucketSpan\":3600,"  
 			+ "\"detectors\":[{\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}] "
 			+ "},"
-			+ "\"dataDescription\":{\"fieldDelimiter\":\",\"} }}";		
+			+ "\"dataDescription\":{\"fieldDelimiter\":\",\", \"timeFormat\" : \"epoch\"} }}";		
 	
 	final String FLIGHT_CENTRE_JSON_JOB_CONFIG = "{\"analysisConfig\" : {"
 			+ "\"bucketSpan\":3600,"  
@@ -342,6 +342,148 @@ public class JobsTest implements Closeable
 		return jobId;
 	}
 	
+	
+	/**
+	 * Creates a job for the flightcentre csv data with the date in ms 
+	 * from the epoch
+	 * 
+	 * @param baseUrl The URL of the REST API i.e. an URL like
+	 * 	<code>http://prelert-host:8080/engine/version/</code>
+	 * 
+	 * @return The Id of the created job
+	 * @throws ClientProtocolException
+	 * @throws IOException
+	 */
+	public String createFlightCentreMsCsvFormatJobTest(String baseUrl) 
+	throws ClientProtocolException, IOException
+	{	
+		Detector d = new Detector();
+		d.setFieldName("responsetime");
+		d.setByFieldName("airline");
+		AnalysisConfig ac = new AnalysisConfig();
+		ac.setBucketSpan(3600L);
+		ac.setDetectors(Arrays.asList(d));
+		
+		DataDescription dd = new DataDescription();
+		dd.setFormat(DataFormat.DELINEATED);
+		dd.setFieldDelimiter(",");
+		dd.setTimeField("_time");
+		dd.setTimeFormat("epoch_ms");
+		
+		JobConfiguration config = new JobConfiguration(ac);
+		config.setDataDescription(dd);
+		
+				
+		String jobId = m_WebServiceClient.createJob(baseUrl, config);
+		if (jobId == null)
+		{
+			s_Logger.error("No Job Id returned by create job");
+			test(jobId != null);
+		}
+		
+		// get job by location, verify
+		SingleDocument<JobDetails> doc = m_WebServiceClient.getJob(baseUrl, jobId);
+		if (doc.isExists() == false)
+		{
+			s_Logger.error("No Job at URL " + jobId);
+		}
+		JobDetails job = doc.getDocument();
+		
+		
+		test(ac.equals(job.getAnalysisConfig()));
+		test(dd.equals(job.getDataDescription()));
+		test(job.getAnalysisOptions() == null);
+				
+		test(job.getLocation().toString().equals(baseUrl + "/jobs/" + jobId));
+		test(job.getResultsEndpoint().toString().equals(baseUrl + "/results/" + jobId));
+		test(job.getDataEndpoint().toString().equals(baseUrl + "/data/" + jobId));
+		
+		test(job.getLastDataTime() == null);
+		test(job.getFinishedTime() == null);
+		
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(new Date());
+		cal.add(Calendar.MINUTE, -2);
+		Date twoMinsAgo = cal.getTime();
+		cal.add(Calendar.MINUTE, 4);
+		Date twoMinsInFuture = cal.getTime();
+		
+		test(job.getCreateTime().after(twoMinsAgo) && job.getCreateTime().before(twoMinsInFuture));
+		
+		
+		return jobId;
+	}
+	
+	
+	/**
+	 * Creates a job for the flightcentre JSON data with the date in ms 
+	 * from the epoch
+	 * 
+	 * @param baseUrl The URL of the REST API i.e. an URL like
+	 * 	<code>http://prelert-host:8080/engine/version/</code>
+	 * 
+	 * @return The Id of the created job
+	 * @throws ClientProtocolException
+	 * @throws IOException
+	 */
+	public String createFlightCentreMsJsonFormatJobTest(String baseUrl) 
+	throws ClientProtocolException, IOException
+	{	
+		Detector d = new Detector();
+		d.setFieldName("responsetime");
+		d.setByFieldName("airline");
+		AnalysisConfig ac = new AnalysisConfig();
+		ac.setBucketSpan(3600L);
+		ac.setDetectors(Arrays.asList(d));
+		
+		DataDescription dd = new DataDescription();
+		dd.setFormat(DataFormat.JSON);
+		dd.setTimeField("timestamp");
+		dd.setTimeFormat("epoch_ms");
+		
+		JobConfiguration config = new JobConfiguration(ac);
+		config.setDataDescription(dd);
+		
+				
+		String jobId = m_WebServiceClient.createJob(baseUrl, config);
+		if (jobId == null)
+		{
+			s_Logger.error("No Job Id returned by create job");
+			test(jobId != null);
+		}
+		
+		// get job by location, verify
+		SingleDocument<JobDetails> doc = m_WebServiceClient.getJob(baseUrl, jobId);
+		if (doc.isExists() == false)
+		{
+			s_Logger.error("No Job at URL " + jobId);
+		}
+		JobDetails job = doc.getDocument();
+		
+		
+		test(ac.equals(job.getAnalysisConfig()));
+		test(dd.equals(job.getDataDescription()));
+		test(job.getAnalysisOptions() == null);
+				
+		test(job.getLocation().toString().equals(baseUrl + "/jobs/" + jobId));
+		test(job.getResultsEndpoint().toString().equals(baseUrl + "/results/" + jobId));
+		test(job.getDataEndpoint().toString().equals(baseUrl + "/data/" + jobId));
+		
+		test(job.getLastDataTime() == null);
+		test(job.getFinishedTime() == null);
+		
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(new Date());
+		cal.add(Calendar.MINUTE, -2);
+		Date twoMinsAgo = cal.getTime();
+		cal.add(Calendar.MINUTE, 4);
+		Date twoMinsInFuture = cal.getTime();
+		
+		test(job.getCreateTime().after(twoMinsAgo) && job.getCreateTime().before(twoMinsInFuture));
+		
+		
+		return jobId;
+	}
 	
 	/**
 	 * Create a new job base on configuration for job <code>refJobId</code>.
@@ -615,6 +757,9 @@ public class JobsTest implements Closeable
 			final long firstJan2010 = 1262304000000L;
 			test(date.after(new Date(firstJan2010)));
 			test(b.getTimestamp().after(new Date(firstJan2010)));
+			// data shouldn't be newer than now
+			test(b.getTimestamp().before(new Date()));
+			
 			// epoch and timestamp should be the same
 			test(date.equals(b.getTimestamp()));			
 		}
@@ -888,7 +1033,12 @@ public class JobsTest implements Closeable
 				"/engine_api_integration_test/farequote_ISO_8601.csv");		
 		File flightCentreJsonData = new File(prelertTestDataHome + 
 				"/engine_api_integration_test/flightcentre.json");
+		File flightCentreMsData = new File(prelertTestDataHome + 
+				"/engine_api_integration_test/flightcentre_ms.csv");
+		File flightCentreMsJsonData = new File(prelertTestDataHome + 
+				"/engine_api_integration_test/flightcentre_ms.json");
 		
+		/*
 		//=================
 		// CSV & Gzip test 
 		//
@@ -943,7 +1093,7 @@ public class JobsTest implements Closeable
 		test.testDateFilters(baseUrl, farequoteTimeFormatJobId, start, end);
 		
 		
-		//==========================
+		//============================
 		// Create another test based on
 		// the job config used above
 		//
@@ -960,6 +1110,37 @@ public class JobsTest implements Closeable
 
 		test.verifyJobResults(baseUrl, refJobId, 150);
 		jobUrls.add(refJobId);		
+		*/
+		
+		//=====================================================
+		// timestamp in ms from the epoch for both csv and json
+		//
+	 	String jobId = test.createFlightCentreMsCsvFormatJobTest(baseUrl);
+	 	jobUrls.add(jobId);	
+	 	
+	 	test.uploadData(baseUrl, jobId, flightCentreMsData, false);
+	 	test.testReadLogFiles(baseUrl, jobId);
+		
+		// Give ElasticSearch a chance to index
+		Thread.sleep(1500);
+
+		test.verifyJobResults(baseUrl, jobId, 150);
+		test.testDateFilters(baseUrl, jobId, new Date(1350824400000L), 
+				new Date(1350913371000L));
+		
+	 	jobId = test.createFlightCentreMsJsonFormatJobTest(baseUrl);
+	 	jobUrls.add(jobId);	
+	 	
+	 	test.uploadData(baseUrl, jobId, flightCentreMsJsonData, false);
+	 	test.testReadLogFiles(baseUrl, jobId);
+		
+		// Give ElasticSearch a chance to index
+		Thread.sleep(1500);
+
+		test.verifyJobResults(baseUrl, jobId, 150);
+		test.testDateFilters(baseUrl, jobId, new Date(1350824400000L), 
+				new Date(1350913371000L));		
+		
 		
 		//==========================
 		// Clean up test jobs

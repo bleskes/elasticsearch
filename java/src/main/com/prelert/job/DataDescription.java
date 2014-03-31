@@ -31,6 +31,9 @@ import java.text.SimpleDateFormat;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 /**
  * Describes the format of the data used in the job and how it should 
@@ -44,6 +47,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
  * delineated formats is {@value #DEFAULT_QUOTE_CHAR} but any other character can be
  * used.  
  */
+@JsonIgnoreProperties({"transformTime", "epochMs"})
+@JsonInclude(Include.NON_NULL)
 public class DataDescription 
 {
 	/**
@@ -66,6 +71,16 @@ public class DataDescription
 			return DataFormat.valueOf(value.toUpperCase());
 		}
 	}
+	
+	/**
+	 * Special time format string for epoch times (seconds)
+	 */
+	static final public String EPOCH = "epoch";
+	
+	/**
+	 * Special time format string for epoch times (milli-seconds)
+	 */
+	static final public String EPOCH_MS = "epoch_ms";
 	
 	/**
 	 * The format field name
@@ -115,6 +130,7 @@ public class DataDescription
 	{
 		m_DataFormat = DataFormat.DELINEATED;
 		m_QuoteCharacter = DEFAULT_QUOTE_CHAR;
+		m_TimeFormat = EPOCH;
 	}
 	
 	/**
@@ -197,9 +213,10 @@ public class DataDescription
 	}
 	
 	/**
-	 * The strptime format of the time stamp
-	 * If not set (is <code>null</code> or an empty string) then the date is
-	 * assumed to be in seconds from the epoch
+	 * Either {@value #EPOCH}, {@value #EPOCH} or a SimpleDateTime format string.
+	 * If not set (is <code>null</code> or an empty string) or set to 
+	 * {@value #EPOCH} (the default) then the date is assumed to be in 
+	 * seconds from the epoch.
 	 * @return A String if set or <code>null</code>
 	 */
 	public String getTimeFormat()
@@ -248,11 +265,34 @@ public class DataDescription
 	 * Returns true if the data described by this object needs
 	 * at transforming before processing by autodetect.
 	 * A transformation must be applied if either a timeformat is
-	 * set or the data is in Json format.
+	 * not in seconds since the epoch or the data is in Json format.
+	 * @return
 	 */
 	public boolean transform()
 	{
-		return m_TimeFormat != null || m_DataFormat == DataFormat.JSON;
+		return m_DataFormat == DataFormat.JSON || 
+				isTransformTime();
+	}
+
+	
+	/**
+	 * Return true if the time is in a format that needs transforming.
+	 * Anytime format this isn't {@value #EPOCH} or <code>null</code>
+	 * needs transforming.
+	 * @return
+	 */
+	public boolean isTransformTime()
+	{
+		return m_TimeFormat != null && !EPOCH.equals(m_TimeFormat);
+	}
+	
+	/**
+	 * Return true if the time format is {@value #EPOCH_MS}
+	 * @return
+	 */
+	public boolean isEpochMs()
+	{
+		return EPOCH_MS.equals(m_TimeFormat);
 	}
 	
 	/**
@@ -282,7 +322,8 @@ public class DataDescription
 	/**
 	 * Verify the data description configuration
 	 * <ol>
-	 * <li>Check the timeFormat - if set - is a valid format string</li>
+	 * <li>Check the timeFormat - if set - is either {@value #EPOCH},
+	 * {@value #EPOCH_MS} or a valid format string</li>
 	 * <li></li>
 	 * </ol>
 	 * @return true
@@ -293,6 +334,11 @@ public class DataDescription
 	{
 		if (m_TimeFormat != null && m_TimeFormat.isEmpty() == false)
 		{
+			if (m_TimeFormat.equals(EPOCH) || m_TimeFormat.equals(EPOCH_MS))
+			{
+				return true;
+			}
+			
 			try
 			{
 				new SimpleDateFormat(m_TimeFormat);
@@ -300,7 +346,8 @@ public class DataDescription
 			catch (IllegalArgumentException e)
 			{
 				
-				throw new JobConfigurationException("Invalid Time format string", e);
+				throw new JobConfigurationException(
+						"Invalid Time format string '" + m_TimeFormat + "'", e);
 			}
 		}
 		

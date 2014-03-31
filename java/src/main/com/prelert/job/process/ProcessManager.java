@@ -593,26 +593,51 @@ public class ProcessManager
 			LengthEncodedWriter lengthEncodedWriter = new LengthEncodedWriter(os);
 			lengthEncodedWriter.writeRecord(header);
 
-			DateFormat dateFormat = new SimpleDateFormat(dd.getTimeFormat());
-
 			List<String> line;
-			while ((line = csvReader.read()) != null)
+			if (dd.isEpochMs())
 			{
-				try
+				while ((line = csvReader.read()) != null)
 				{
-					String epoch =  new Long(dateFormat.parse(line.get(timeFieldIndex)).getTime() / 1000).toString();
-					line.set(timeFieldIndex, epoch);
+					try
+					{
+						long epoch = Long.parseLong(line.get(timeFieldIndex)) / 1000; 
+						line.set(timeFieldIndex, new Long(epoch).toString());
 
-					lengthEncodedWriter.writeRecord(line);
+						lengthEncodedWriter.writeRecord(line);
+					}
+					catch (NumberFormatException e)
+					{
+						String message = String.format(
+								"Cannot parse epoch ms timestamp '%s'",								
+								line.get(timeFieldIndex));
+
+						s_Logger.error(message);
+					}		
 				}
-				catch (ParseException pe)
-				{
-					String message = String.format("Cannot parse date '%s' with format string '%s'",
-							line.get(timeFieldIndex), dd.getTimeFormat());
-
-					s_Logger.error(message);
-				}		
 			}
+			else
+			{
+				DateFormat dateFormat = new SimpleDateFormat(dd.getTimeFormat());
+
+				while ((line = csvReader.read()) != null)
+				{
+					try
+					{
+						String epoch =  new Long(dateFormat.parse(line.get(timeFieldIndex)).getTime() / 1000).toString();
+						line.set(timeFieldIndex, epoch);
+
+						lengthEncodedWriter.writeRecord(line);
+					}
+					catch (ParseException pe)
+					{
+						String message = String.format("Cannot parse date '%s' with format string '%s'",
+								line.get(timeFieldIndex), dd.getTimeFormat());
+
+						s_Logger.error(message);
+					}		
+				}
+			}
+			
 			
 			// flush the output
 			os.flush();
@@ -658,7 +683,7 @@ public class ProcessManager
 					+ "Bad token = " + token);
 		}
 
-		if (dd.getTimeFormat() != null)
+		if (dd.isTransformTime())
 		{
 			pipeJsonAndTransformTime(parser, os, dd);
 		}
@@ -753,7 +778,6 @@ public class ProcessManager
 			DataDescription dd)
 	throws JsonParseException, IOException
 	{
-		DateFormat dateFormat = new SimpleDateFormat(dd.getTimeFormat());
 		String timeField = dd.getTimeField();
 		if (timeField == null)
 		{
@@ -763,7 +787,7 @@ public class ProcessManager
 		LengthEncodedWriter lengthEncodedWriter = new LengthEncodedWriter(os);
 		List<String> header = new ArrayList<>();
 		List<String> record = new ArrayList<>();
-		
+			
 		
 		JsonToken token = parser.nextToken();
 		while (token != JsonToken.END_OBJECT)
@@ -776,15 +800,33 @@ public class ProcessManager
 
 				if (timeField.equals(fieldName))
 				{
-					try
+					if (dd.isEpochMs())
 					{
-						fieldValue = Long.toString(dateFormat.parse(fieldValue).getTime() / 1000);
+						try
+						{
+							fieldValue = Long.toString(Long.parseLong(fieldValue) / 1000); 
+						}
+						catch (NumberFormatException e)
+						{
+							String message = String.format(
+									"Cannot parse epoch ms timestamp '%s'",								
+									fieldValue);
+							s_Logger.error(message);
+						}
 					}
-					catch (ParseException e)
+					else
 					{
-						s_Logger.error("Cannot parse '" + fieldValue +
-								"' as a date using format string '" +
-								dd.getTimeFormat() + "'");
+						try
+						{
+							DateFormat dateFormat = new SimpleDateFormat(dd.getTimeFormat());
+							fieldValue = Long.toString(dateFormat.parse(fieldValue).getTime() / 1000);
+						}
+						catch (ParseException e)
+						{
+							s_Logger.error("Cannot parse '" + fieldValue +
+									"' as a date using format string '" +
+									dd.getTimeFormat() + "'");
+						}
 					}
 				}
 			
@@ -803,44 +845,89 @@ public class ProcessManager
 		
 		int recordCount = (header.size() > 0) ? 1 : 0;
 
-		// now send the rest of the data
-		token = parser.nextToken();
-		while (token == JsonToken.START_OBJECT)
+		// is the timestamp a format string or epoch ms.
+		if (dd.isEpochMs())
 		{
-			record.clear();
-			
-			while (token != JsonToken.END_OBJECT)
+			token = parser.nextToken();
+			while (token == JsonToken.START_OBJECT)
 			{
-				if (token == JsonToken.FIELD_NAME)
+				record.clear();
+
+				while (token != JsonToken.END_OBJECT)
 				{
-					String fieldName = parser.getCurrentName();
-					token = parser.nextToken();
-					String fieldValue = parser.getText();
-
-					if (fieldName.equals(timeField))
+					if (token == JsonToken.FIELD_NAME)
 					{
-						try
-						{
-							fieldValue = Long.toString(dateFormat.parse(fieldValue).getTime() / 1000);
-						}
-						catch (ParseException e)
-						{
-							s_Logger.error("Cannot parse '" + fieldValue +
-									"' as a date using format string '" +
-									dd.getTimeFormat() + "'");
-						}
-					}
+						String fieldName = parser.getCurrentName();
+						token = parser.nextToken();
+						String fieldValue = parser.getText();
 
-					record.add(fieldValue);
+						if (fieldName.equals(timeField))
+						{
+							try
+							{
+								fieldValue = Long.toString(Long.parseLong(fieldValue) / 1000); 
+							}
+							catch (NumberFormatException e)
+							{
+								String message = String.format(
+										"Cannot parse epoch ms timestamp '%s'",								
+										fieldValue);
+								s_Logger.error(message);
+							}
+						}
+
+						record.add(fieldValue);
+					}
+					token = parser.nextToken();
 				}
+
+				lengthEncodedWriter.writeRecord(record);
+				++recordCount;
 				token = parser.nextToken();
 			}
-
-			lengthEncodedWriter.writeRecord(record);
-			++recordCount;
-			token = parser.nextToken();
 		}
+		else
+		{
+			DateFormat dateFormat = new SimpleDateFormat(dd.getTimeFormat());
+			
+			token = parser.nextToken();
+			while (token == JsonToken.START_OBJECT)
+			{
+				record.clear();
 
+				while (token != JsonToken.END_OBJECT)
+				{
+					if (token == JsonToken.FIELD_NAME)
+					{
+						String fieldName = parser.getCurrentName();
+						token = parser.nextToken();
+						String fieldValue = parser.getText();
+
+						if (fieldName.equals(timeField))
+						{
+							try
+							{
+								fieldValue = Long.toString(dateFormat.parse(fieldValue).getTime() / 1000);
+							}
+							catch (ParseException e)
+							{
+								s_Logger.error("Cannot parse '" + fieldValue +
+										"' as a date using format string '" +
+										dd.getTimeFormat() + "'");
+							}
+						}
+
+						record.add(fieldValue);
+					}
+					token = parser.nextToken();
+				}
+
+				lengthEncodedWriter.writeRecord(record);
+				++recordCount;
+				token = parser.nextToken();
+			}
+		}
+		
 		s_Logger.info("Transferred " + recordCount + " Json records to autodetect." );
 	}
 
