@@ -643,7 +643,7 @@ public class ProcessManager
 		JsonParser parser = new JsonFactory().createParser(is);
 		
 		JsonToken token = parser.nextToken();
-		// if start of an array ignore it, we expect an array of buckets
+		// if the first toke is the start of an array ignore it
 		if (token == JsonToken.START_ARRAY)
 		{
 			token = parser.nextToken();
