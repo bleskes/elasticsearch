@@ -28,26 +28,36 @@ package com.prelert.job.process;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.util.List;
 
 import com.prelert.job.DataDescription;
 
 /**
  * The native process and its data description object.
  * {@link #isInUse()} is true if the processes std in is 
- * being written to. 
+ * being written to. ErrorReader is a buffered reader \
+ * connected to the Process's error output.
  */
 public class ProcessAndDataDescription 
 {
-
 	final private Process m_Process;
 	final private DataDescription m_DataDescription; 
 	volatile private boolean m_IsInUse;
 	final private long m_TimeoutSeconds;
-	
 	final private BufferedReader m_ErrorReader;
+	final private List<String> m_InterestingFields;
 
+	/**
+	 * Object for grouping the native process, its data description
+	 * and interesting fields and its timeout period.
+	 * 
+	 * @param process The native process.
+	 * @param dd
+	 * @param timeout
+	 * @param interestingFields The list of fields used in the analysis
+	 */
 	public ProcessAndDataDescription(Process process, DataDescription dd,
-			long timeout)
+			long timeout, List<String> interestingFields)
 	{
 		m_Process = process;
 		m_DataDescription = dd;
@@ -56,6 +66,8 @@ public class ProcessAndDataDescription
 		
 		m_ErrorReader = new BufferedReader(
 				new InputStreamReader(m_Process.getErrorStream()));		
+		
+		m_InterestingFields = interestingFields;
 	}
 
 	public Process getProcess()
@@ -106,5 +118,15 @@ public class ProcessAndDataDescription
 	public BufferedReader getErrorReader()
 	{
 		return m_ErrorReader;
+	}
+	
+	/**
+	 * The list of fields required for the analysis. 
+	 * The remaining fields can be filtered out.
+	 * @return
+	 */
+	public List<String> getInterestingFields()
+	{
+		return m_InterestingFields;
 	}
 }

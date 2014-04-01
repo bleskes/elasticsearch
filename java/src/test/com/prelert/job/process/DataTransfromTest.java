@@ -32,6 +32,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.List;
 
 import junit.framework.Assert;
 
@@ -56,7 +58,15 @@ public class DataTransfromTest
 					"JQA,9,flightcentre,1350824403\n" +
 					"DJA,189,flightcentre,1350824404\n" +
 					"JQA,8,flightcentre,1350824404\n" +
-					"DJA,1200,flightcentre,1350824404";
+					"DJA,1200,flightcentre,1350824404";		
+		
+		List<String> requiredFields = Arrays.asList(new String [] {
+				"responsetime", "sourcetype", "_time", "airline"});
+		
+		// data is written in the order of the required fields
+		// not the same as it is input
+		int [] fieldMap = new int [] {1, 2, 3, 0};
+		
 		
 		DataDescription dd = new DataDescription();
 		dd.setFormat(DataFormat.DELINEATED);
@@ -69,7 +79,7 @@ public class DataTransfromTest
 				new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
 		ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
 		
-		pm.writeToJob(dd, bis, bos);
+		pm.writeToJob(dd, requiredFields, bis, bos);
 		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 		
 		String [] lines = data.split("\\n");
@@ -83,7 +93,7 @@ public class DataTransfromTest
 			for (int i=0; i<numFields; i++)
 			{
 				int recordSize = bb.getInt();
-				Assert.assertEquals(fields[i].length(), recordSize);
+				Assert.assertEquals(fields[fieldMap[i]].length(), recordSize);
 				byte [] charBuff = new byte[recordSize];
 				for (int j=0; j<recordSize; j++)
 				{
@@ -91,7 +101,7 @@ public class DataTransfromTest
  				}
 				
 				String value = new String(charBuff, StandardCharsets.UTF_8);				
-				Assert.assertEquals(fields[i], value);
+				Assert.assertEquals(fields[fieldMap[i]], value);
 				
 			}
 		}
@@ -119,6 +129,9 @@ public class DataTransfromTest
 				{"GAL","5339","flight\ncentre","1350824402"}, 
 				{"GAL","3893","flightcentre","1350824403"}};
 		
+		List<String> requiredFields = Arrays.asList(new String [] {
+				"airline", "responsetime", "sourcetype", "_time"});
+		
 		DataDescription dd = new DataDescription();
 		dd.setFormat(DataFormat.DELINEATED);
 		dd.setFieldDelimiter(",");
@@ -131,7 +144,7 @@ public class DataTransfromTest
 				new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
 		ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
 		
-		pm.writeToJob(dd, bis, bos);
+		pm.writeToJob(dd, requiredFields, bis, bos);
 		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 		
 		for (int l=0; l<lines.length; l++)
@@ -176,7 +189,14 @@ public class DataTransfromTest
 		String [] epochTimes = new String [] {"", "1390867200", "1390867200", 
 				"1390867200", "1390867200", "1390870800", "1390870800", 
 				"1390870800", "1390870800"};
-				
+		
+		List<String> requiredFields = Arrays.asList(new String [] {
+				"date", "responsetime", "airline", "sourcetype"});
+		
+		// data is written in the order of the required fields
+		// not the same as it is input
+		int [] fieldMap = new int [] {0, 2, 1, 3};
+		
 		
 		DataDescription dd = new DataDescription();
 		dd.setFormat(DataFormat.DELINEATED);
@@ -192,7 +212,7 @@ public class DataTransfromTest
 				new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
 		ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
 		
-		pm.writeToJob(dd, bis, bos);
+		pm.writeToJob(dd, requiredFields, bis, bos);
 		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 		
 		String [] lines = data.split("\\n");
@@ -224,7 +244,7 @@ public class DataTransfromTest
 				}
 				else
 				{
-					Assert.assertEquals(fields[i].length(), recordSize);
+					Assert.assertEquals(fields[fieldMap[i]].length(), recordSize);
 
 					byte [] charBuff = new byte[recordSize];
 					for (int j=0; j<recordSize; j++)
@@ -233,7 +253,7 @@ public class DataTransfromTest
 					}
 					
 					String value = new String(charBuff, StandardCharsets.UTF_8);
-					Assert.assertEquals(fields[i], value);					
+					Assert.assertEquals(fields[fieldMap[i]], value);					
 				}
 			}
 
@@ -241,13 +261,73 @@ public class DataTransfromTest
 		}
 	}	
 	
+	@Test
+	public void plainCsvWithExtraFields() throws IOException
+	{
+		String data = "airline,responsetime,airport,sourcetype,_time,baggage\n" +
+					"DJA,622,flightcentre,MAN,1350824400,none\n" +
+					"JQA,1742,flightcentre,GAT,1350824401,none\n" +
+					"GAL,5339,flightcentre,SYN,1350824402,some\n" +
+					"GAL,3893,flightcentre,CHM,1350824403,some\n" +
+					"JQA,9,flightcentre,CHM,1350824403,none\n" +
+					"DJA,189,flightcentre,GAT,1350824404,lost\n" +
+					"JQA,8,flightcentre,GAT,1350824404,none\n" +
+					"DJA,1200,flightcentre,MAN,1350824404,none";		
+		
+		// empty strings and null should be ignored.
+		List<String> requiredFields = Arrays.asList(new String [] {
+				"responsetime", "sourcetype", "_time", "airline", "", null});
+		
+		// data is written in the order of the required fields
+		// not the same as it is input
+		int [] fieldMap = new int [] {1, 3, 4, 0};
+		
+		
+		DataDescription dd = new DataDescription();
+		dd.setFormat(DataFormat.DELINEATED);
+		dd.setFieldDelimiter(",");
+		
+		// can create with null
+		ProcessManager pm = new ProcessManager(null, null);
+		
+		ByteArrayInputStream bis = 
+				new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
+		ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
+		
+		pm.writeToJob(dd, requiredFields, bis, bos);
+		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
+		
+		String [] lines = data.split("\\n");
+		
+		for (String line : lines)
+		{
+			int numFields = bb.getInt();
+			String [] fields = line.split(",");
+			Assert.assertEquals(requiredFields.size() -2, numFields);
+			
+			for (int i=0; i<numFields; i++)
+			{
+				int recordSize = bb.getInt();
+				Assert.assertEquals(fields[fieldMap[i]].length(), recordSize);
+				byte [] charBuff = new byte[recordSize];
+				for (int j=0; j<recordSize; j++)
+				{
+					charBuff[j] = bb.get();
+ 				}
+				
+				String value = new String(charBuff, StandardCharsets.UTF_8);				
+				Assert.assertEquals(fields[fieldMap[i]], value);
+			}
+		}		
+	}
+	
 	
 	/**
 	 * Test transforming JSON without a time format to length encoded.
 	 *  
 	 * @throws IOException
 	 */
-	@Test
+	//@Test
 	public void plainJsonToLengthEncoded() throws IOException
 	{
 		String data = "{\"timestamp\": \"1350824400\", \"airline\": \"DJA\", \"responsetime\": \"622\", \"sourcetype\": \"flightcentre\"}" +
@@ -259,7 +339,7 @@ public class DataTransfromTest
 					"{\"timestamp\": \"1350824404\", \"airline\": \"JQA\", \"responsetime\": \"8\", \"sourcetype\": \"flightcentre\"}" +
 					"{\"timestamp\": \"1350824404\", \"airline\": \"DJA\", \"responsetime\": \"1200\", \"sourcetype\": \"flightcentre\"}"; 
 				
-		String header [] = new String [] {"timestamp", "airline", "responsetime", "sourcetype"};
+		String header [] = new String [] {"timestamp", "sourcetype", "airline", "responsetime"};
 		String records [][] = new String [][] {{"1350824400", "DJA", "622", "flightcentre"},
 												{"1350824401", "JQA", "1742", "flightcentre"},
 												{"1350824402", "GAL", "5339", "flightcentre"},
@@ -268,6 +348,13 @@ public class DataTransfromTest
 												{"1350824404", "DJA", "189", "flightcentre"},
 												{"1350824404", "JQA", "8", "flightcentre"},
 												{"1350824404", "DJA", "1200", "flightcentre"}}; 
+		
+		// data is written in the order of the required fields
+		// not the same as it is input
+		//int [] fieldMap = new int [] {0, 1, 2, 3};		
+		
+		List<String> requiredFields = Arrays.asList(new String [] {
+				"timestamp", "sourcetype", "airline", "responsetime"});
 				
 		DataDescription dd = new DataDescription();
 		dd.setFormat(DataFormat.JSON);
@@ -281,7 +368,7 @@ public class DataTransfromTest
 				new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
 		ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
 		
-		pm.writeToJob(dd, bis, bos);
+		pm.writeToJob(dd, requiredFields, bis, bos);
 		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 		
 		
@@ -353,6 +440,9 @@ public class DataTransfromTest
 												{"1350824404", "DJA", "189", "flightcentre"},
 												{"1350824404", "JQA", "8", "flightcentre"},
 												{"1350824404", "DJA", "1200", "flightcentre"}}; 
+		
+		List<String> requiredFields = Arrays.asList(new String [] {
+				"timestamp", "airline", "responsetime", "sourcetype"});		
 				
 		DataDescription dd = new DataDescription();
 		dd.setFormat(DataFormat.JSON);
@@ -367,7 +457,7 @@ public class DataTransfromTest
 				new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
 		ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
 		
-		pm.writeToJob(dd, bis, bos);
+		pm.writeToJob(dd, requiredFields, bis, bos);
 		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 		
 		

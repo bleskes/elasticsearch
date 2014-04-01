@@ -36,8 +36,13 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
@@ -53,8 +58,10 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
+import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
+import com.prelert.job.Detector;
 import com.prelert.job.DetectorState;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobStatus;
@@ -201,8 +208,8 @@ public class ProcessManager
 		{
 			process.setInUse(true);
 			
-			writeToJob(process.getDataDescription(), input,
-						process.getProcess().getOutputStream());
+			writeToJob(process.getDataDescription(), process.getInterestingFields(),
+					input, process.getProcess().getOutputStream());
 						
 			// check there wasn't an error in the input. 
 			// throws if there was. 
@@ -258,7 +265,8 @@ public class ProcessManager
 	 * error if there is no state to restore
 	 * @return
 	 * @throws UnknownJobException If there is no job with <code>jobId</code>
-	 * @throws NativeProcessRunException
+	 * @throws NativeProcessRunException If an error is encountered creating
+	 * the native process
 	 */	
 	private ProcessAndDataDescription createProcess(JobDetails job, 
 										boolean restoreState)
@@ -278,10 +286,12 @@ public class ProcessManager
 			// if state is null or empty it will be ignored
 			// else it is used to restore the models			
 			Process nativeProcess = m_ProcessCtrl.buildProcess(
-					ProcessCtrl.AUTODETECT_API, job, state);				
+					ProcessCtrl.AUTODETECT_API, job, state);	
+			
+			List<String> analysisFields = analysisFields(job.getAnalysisConfig());
 
 			procAndDD = new ProcessAndDataDescription(nativeProcess, 
-					job.getDataDescription(), job.getTimeout());			
+					job.getDataDescription(), job.getTimeout(), analysisFields);			
 		} 
 		catch (IOException e) 
 		{
@@ -299,6 +309,30 @@ public class ProcessManager
 		s_Logger.debug("Created process for job " + jobId);
 		
 		return procAndDD;
+	}
+	
+	/**
+	 * Return the list of fields required by the analysis
+	 * @param ac
+	 * @return
+	 */
+	private List<String> analysisFields(AnalysisConfig ac)
+	{
+		Set<String> fields = new HashSet<>();
+		
+		fields.add(ac.getPartitionField());
+		for (Detector d : ac.getDetectors())
+		{
+			fields.add(d.getFieldName());
+			fields.add(d.getByFieldName() );
+			fields.add(d.getOverFieldName());
+		}
+		
+		// remove the null and empty strings
+		fields.remove("");
+		fields.remove(null);
+		
+		return new ArrayList<String>(fields);
 	}
 
 	
@@ -439,13 +473,17 @@ public class ProcessManager
 	 * pipe to the output. 
 	 * Data is written via BufferedOutputStream which is more 
 	 * suited for small writes.
+	 * Only the fields matching those in the list <code>analysisFields</code>  
+	 * are send to the process.
 	 * 
 	 * @param dataDescription
+	 * @param analysisFields
 	 * @param input
 	 * @param output
 	 * @throws IOException
 	 */
 	public void writeToJob(DataDescription dataDescription, 
+			List<String> analysisFields,
 			InputStream input, OutputStream output) 
 	throws IOException
 	{
@@ -456,16 +494,18 @@ public class ProcessManager
 		{
 			if (dataDescription.getFormat() == DataFormat.JSON)
 			{
-				transformAndPipeJson(dataDescription, input, bufferedStream);
+				transformAndPipeJson(dataDescription, analysisFields, input, 
+						bufferedStream);
 			}
 			else
 			{
-				transformAndPipeCsv(dataDescription, input, bufferedStream);
+				transformAndPipeCsv(dataDescription, analysisFields, input, 
+						bufferedStream);
 			}
 		}
 		else
 		{			
-			pipeCsv(dataDescription, input, bufferedStream);
+			pipeCsv(dataDescription, analysisFields, input, bufferedStream);
 		}
 	}
 	
@@ -498,11 +538,13 @@ public class ProcessManager
 	 * to the native process.
 	 * 
 	 * @param dd
+	 * @param analysisFields
 	 * @param is
 	 * @param os
 	 * @throws IOException
 	 */
-	private void pipeCsv(DataDescription dd, InputStream is, OutputStream os)
+	private void pipeCsv(DataDescription dd, List<String> analysisFields,
+		InputStream is, OutputStream os)
 	throws IOException
 	{
 		char delimiter = DataDescription.DEFAULT_DELIMITER; 
@@ -520,15 +562,44 @@ public class ProcessManager
 		{
 			String[] header = csvReader.getHeader(true);
 			
+			List<Pair<String, Integer>> fieldIndexes = 
+					findFieldIndexes(header, analysisFields);
+			
+			Iterator<Pair<String, Integer>> iter = fieldIndexes.iterator();
+			while (iter.hasNext())
+			{
+				Pair<String, Integer> p = iter.next();
+				if (p.Second < 0)
+				{
+					s_Logger.error(String.format("Field configured for analysis " 
+							+ "'%s' is not in the header '%s'", 
+							p.First, header));
+					
+					iter.remove();
+				}
+			}
+			
+			String [] filteredHeader = new String [fieldIndexes.size()];
+			int i=0;
+			for (Pair<String, Integer> p : fieldIndexes)
+			{
+				filteredHeader[i++] = p.First;
+			}
+			
 			// Don't close the output stream as it causes the autodetect 
 			// process to quit
 			LengthEncodedWriter lengthEncodedWriter = new LengthEncodedWriter(os);
-			lengthEncodedWriter.writeRecord(header);
+			lengthEncodedWriter.writeRecord(filteredHeader);
 
+			int numFields = fieldIndexes.size();
 			List<String> line;
 			while ((line = csvReader.read()) != null)
 			{
-				lengthEncodedWriter.writeRecord(line);				
+				lengthEncodedWriter.writeNumFields(numFields);				
+				for (Pair<String, Integer> p : fieldIndexes)
+				{
+					lengthEncodedWriter.writeField(line.get(p.Second));
+				}
 			}
 			
 			lengthEncodedWriter.flush();
@@ -542,11 +613,13 @@ public class ProcessManager
 	 * Flushes the outputstream once all data is written.
 	 * 
 	 * @param dd 
+	 * @param analysisFields
 	 * @param is
 	 * @param os
-	 * @throws IOException
+	 * @throws IOException If the time field cannot be found
 	 */
-	private void transformAndPipeCsv(DataDescription dd, InputStream is, OutputStream os)
+	private void transformAndPipeCsv(DataDescription dd, List<String> analysisFields,
+			InputStream is, OutputStream os)
 	throws IOException 
 	{
 		String timeField = dd.getTimeField();
@@ -568,25 +641,41 @@ public class ProcessManager
 		
 		try (CsvListReader csvReader = new CsvListReader(new InputStreamReader(is), csvPref))
 		{
-			String[] header = csvReader.getHeader(true);
-			int timeFieldIndex = -1;
-			for (int i=0; i<header.length; i++)
+			String[] header = csvReader.getHeader(true);			
+			List<Pair<String, Integer>> fieldIndexes = 
+					findFieldIndexes(header, analysisFields);
+							
+			Iterator<Pair<String, Integer>> iter = fieldIndexes.iterator();
+			while (iter.hasNext())
 			{
-				if (timeField.equals(header[i]))
+				Pair<String, Integer> p = iter.next();
+				if (p.Second < 0)
 				{
-					timeFieldIndex = i;
-					break;
-				}		
+					s_Logger.error(String.format("Field configured for analysis " 
+							+ "'%s' is not in the header '%s'", 
+							p.First, header));
+					
+					iter.remove();
+				}
+			}			
+			
+			// first write the header
+			header = new String [fieldIndexes.size()];
+			int i=0;
+			for (Pair<String, Integer> p : fieldIndexes)
+			{
+				header[i++] = p.First;
 			}
-
+			
+			int timeFieldIndex = Arrays.asList(header).indexOf(timeField);
 			if (timeFieldIndex < 0)
 			{
 				String message = String.format("Cannot find time field '%s' in CSV header '%s'",
 						timeField, header);
 				s_Logger.error(message);
 				throw new IOException(message);
-			}
-
+			}	
+			
 
 			// Don't close the output stream as it causes the autodetect 
 			// process to quit
@@ -594,16 +683,21 @@ public class ProcessManager
 			lengthEncodedWriter.writeRecord(header);
 
 			List<String> line;
+			String [] record = new String [fieldIndexes.size()];
 			if (dd.isEpochMs())
 			{
 				while ((line = csvReader.read()) != null)
 				{
+					i = 0;
+					for (Pair<String, Integer> p : fieldIndexes)
+					{
+						record[i++] = line.get(p.Second);
+					}
+					
 					try
 					{
-						long epoch = Long.parseLong(line.get(timeFieldIndex)) / 1000; 
-						line.set(timeFieldIndex, new Long(epoch).toString());
-
-						lengthEncodedWriter.writeRecord(line);
+						long epoch = Long.parseLong(record[timeFieldIndex]) / 1000; 
+						record[timeFieldIndex] = new Long(epoch).toString();
 					}
 					catch (NumberFormatException e)
 					{
@@ -611,8 +705,11 @@ public class ProcessManager
 								"Cannot parse epoch ms timestamp '%s'",								
 								line.get(timeFieldIndex));
 
-						s_Logger.error(message);
+						s_Logger.error(message);						
+						continue;
 					}		
+					
+					lengthEncodedWriter.writeRecord(record);
 				}
 			}
 			else
@@ -621,12 +718,15 @@ public class ProcessManager
 
 				while ((line = csvReader.read()) != null)
 				{
+					i = 0;
+					for (Pair<String, Integer> p : fieldIndexes)
+					{
+						record[i++] = line.get(p.Second);
+					}
+					
 					try
 					{
-						String epoch =  new Long(dateFormat.parse(line.get(timeFieldIndex)).getTime() / 1000).toString();
-						line.set(timeFieldIndex, epoch);
-
-						lengthEncodedWriter.writeRecord(line);
+						record[timeFieldIndex] =  new Long(dateFormat.parse(record[timeFieldIndex]).getTime() / 1000).toString();
 					}
 					catch (ParseException pe)
 					{
@@ -634,7 +734,10 @@ public class ProcessManager
 								line.get(timeFieldIndex), dd.getTimeFormat());
 
 						s_Logger.error(message);
+						continue;
 					}		
+
+					lengthEncodedWriter.writeRecord(record);
 				}
 			}
 			
@@ -644,6 +747,28 @@ public class ProcessManager
 		}
 	}
 	
+	/**
+	 * Finds the indexes of the analysis fields in the header.
+	 * @param header
+	 * @param analysisFields
+	 * @return
+	 */
+	private List<ProcessManager.Pair<String, Integer>> findFieldIndexes(
+			String [] header, List<String> analysisFields)
+	{
+		List<String> headerList = Arrays.asList(header);
+		
+		List<Pair<String, Integer>> fieldIndexes = new ArrayList<>();
+		
+		for (String field : analysisFields)
+		{
+			Pair<String, Integer> p = this.new Pair<>(field, headerList.indexOf(field));			
+			fieldIndexes.add(p);
+		}
+
+		return fieldIndexes;		
+	}		
+	
 	
 	/**
 	 * Relies on all the java objects being uniform i.e. having the 
@@ -651,12 +776,13 @@ public class ProcessManager
 	 * Flushes the outputstream once all data is written.
 	 * 
 	 * @param dd 
+	 * @param analysisFields
 	 * @param is
 	 * @param os
 	 * @throws IOException
 	 */
-	private void transformAndPipeJson(DataDescription dd, InputStream is, 
-			OutputStream os)
+	private void transformAndPipeJson(DataDescription dd, 
+			List<String> analysisFields, InputStream is, OutputStream os)
 	throws IOException 
 	{
 		String timeField = dd.getTimeField();
@@ -685,11 +811,11 @@ public class ProcessManager
 
 		if (dd.isTransformTime())
 		{
-			pipeJsonAndTransformTime(parser, os, dd);
+			pipeJsonAndTransformTime(parser, analysisFields, os, dd);
 		}
 		else
 		{
-			pipeJson(parser, os);
+			pipeJson(parser, analysisFields, os);
 		}
 
 		os.flush();
@@ -702,11 +828,13 @@ public class ProcessManager
 	 * Parse the Json objects and write to output stream.
 	 *
 	 * @param parser
+	 * @param analysisFields
 	 * @param os
 	 * @throws IOException
 	 * @throws JsonParseException
 	 */
-	private void pipeJson(JsonParser parser, OutputStream os)
+	private void pipeJson(JsonParser parser,
+			List<String> analysisFields, OutputStream os)
 	throws JsonParseException, IOException
 	{
 		LengthEncodedWriter lengthEncodedWriter = new LengthEncodedWriter(os);
@@ -769,12 +897,14 @@ public class ProcessManager
 	 * for the sake of efficiency.
 	 *
 	 * @param parser
+	 * @param analysisFields, 
 	 * @param os
 	 * @param dd
 	 * @throws IOException
 	 * @throws JsonParseException
 	 */
-	private void pipeJsonAndTransformTime(JsonParser parser, OutputStream os,
+	private void pipeJsonAndTransformTime(JsonParser parser, 
+			List<String> analysisFields, OutputStream os,
 			DataDescription dd)
 	throws JsonParseException, IOException
 	{
@@ -1057,5 +1187,16 @@ public class ProcessManager
 					+ "error output", e);
 		}
 		return sb;
+	}
+	
+	private class Pair<T,U>
+	{
+	    public final T First;
+	    public final U Second;
+	    public Pair(T first, U second)
+	    {
+	    	this.First = first;
+	    	this.Second = second;
+	    }
 	}
 }
