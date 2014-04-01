@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Inc 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -45,10 +45,9 @@ import org.apache.commons.lang.SystemUtils;
 import org.apache.log4j.Logger;
 
 import com.prelert.job.AnalysisConfig;
-import com.prelert.job.AnalysisConfig.Detector;
+import com.prelert.job.Detector;
 import com.prelert.job.AnalysisOptions;
 import com.prelert.job.DataDescription;
-import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.DetectorState;
 import com.prelert.job.JobDetails;
 
@@ -161,11 +160,7 @@ public class ProcessCtrl
 	 * By default autodetect expects the timestamp in a field with this name
 	 */
 	static final public String DEFAULT_TIME_FIELD = "_time";
-	/**
-	 * Default field delimiter (tsv)
-	 */
-	static final public char DEFAULT_DELIMITER = '\t';
-		
+			
 	/**
 	 * command line args
 	 */
@@ -354,14 +349,13 @@ public class ProcessCtrl
 			command.add(modelConfig);
 		}
 		
+		// Input is always length encoded
+		command.add(LENGTH_ENCODED_INPUT_ARG);
+		
 		DataDescription dataDescription = job.getDataDescription();
 		if (dataDescription != null)
 		{
-			if (dataDescription.getFormat() == DataFormat.JSON)
-			{
-				command.add(LENGTH_ENCODED_INPUT_ARG);
-			}
-			else if (dataDescription.getFieldDelimiter() != null)
+			if (dataDescription.getFieldDelimiter() != null)
 			{
 				String delimiterArg = DELIMITER_ARG
 						+  dataDescription.getFieldDelimiter();
@@ -373,14 +367,6 @@ public class ProcessCtrl
 						+  dataDescription.getTimeField();
 				command.add(timeFieldArg);
 			}
-			/* Do the date parsing in java rather than the C++ process
-			if (dataDescription.getTimeFormat() != null)
-			{
-				String timeFormatArg = TIME_FORMAT_ARG
-						+  dataDescription.getTimeFormat();
-				command.add(timeFormatArg);
-			}
-			*/	
 		}
 				
 		// Restoring the model state

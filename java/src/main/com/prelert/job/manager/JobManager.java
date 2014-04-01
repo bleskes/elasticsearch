@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Inc 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -25,7 +25,7 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job;
+package com.prelert.job.manager;
 
 import static org.elasticsearch.node.NodeBuilder.nodeBuilder;
 
@@ -54,6 +54,8 @@ import org.elasticsearch.index.query.RangeFilterBuilder;
 import org.elasticsearch.indices.IndexMissingException;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.sort.FieldSortBuilder;
+import org.elasticsearch.search.sort.SortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -63,9 +65,15 @@ import com.prelert.job.persistence.elasticsearch.ElasticSearchMappings;
 import com.prelert.job.persistence.elasticsearch.ElasticSearchPersister;
 import com.prelert.job.persistence.elasticsearch.ElasticSearchResultsReaderFactory;
 import com.prelert.job.process.JobDetailsProvider;
+import com.prelert.job.process.NativeProcessRunException;
 import com.prelert.job.process.ProcessManager;
 import com.prelert.job.process.ProcessManager.ProcessStatus;
-import com.prelert.job.NativeProcessRunException;
+import com.prelert.job.DetectorState;
+import com.prelert.job.JobConfiguration;
+import com.prelert.job.JobDetails;
+import com.prelert.job.JobInUseException;
+import com.prelert.job.JobStatus;
+import com.prelert.job.UnknownJobException;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.Detector;
@@ -151,7 +159,7 @@ public class JobManager implements JobDetailsProvider
 	{
 		SingleDocument<JobDetails> doc = new SingleDocument<>();
 		doc.setType(JobDetails.TYPE);
-		doc.setId(jobId);
+		doc.setDocumentId(jobId);
 
 		doc.setDocument(this.getJobDetails(jobId));
 		doc.setExists(doc.getDocument() != null);
@@ -185,7 +193,7 @@ public class JobManager implements JobDetailsProvider
 		catch (IndexMissingException e)
 		{
 			// the job does not exist
-			String msg = "Missing Index: No job with id " + jobId;
+			String msg = "Missing Index no job with id " + jobId;
 			s_Logger.warn(msg);
 			throw new UnknownJobException(jobId, msg);
 		}
@@ -204,11 +212,16 @@ public class JobManager implements JobDetailsProvider
 	public Pagination<JobDetails> getAllJobs(int skip, int take)
 	{
 		FilterBuilder fb = FilterBuilders.matchAllFilter();
+		SortBuilder sb = new FieldSortBuilder(JobDetails.ID)
+							.ignoreUnmapped(true)
+							.missing("_last")
+							.order(SortOrder.DESC);
+
 		SearchResponse response = m_Client.prepareSearch("_all")
 				.setTypes(JobDetails.TYPE)
 				.setPostFilter(fb)
 				.setFrom(skip).setSize(take)
-				.addSort(JobDetails.ID, SortOrder.DESC)  
+				.addSort(sb)
 				.get();
 
 		List<JobDetails> jobs = new ArrayList<>();
@@ -351,9 +364,14 @@ public class JobManager implements JobDetailsProvider
 				FilterBuilder fb)
 	{	
 				
+		SortBuilder sb = new FieldSortBuilder(Bucket.ID)
+								.ignoreUnmapped(true)
+								.missing("_last")
+								.order(SortOrder.ASC);
+		
 		SearchResponse searchResponse = m_Client.prepareSearch(jobId)
 				.setTypes(Bucket.TYPE)		
-				.addSort(Bucket.ID, SortOrder.ASC)
+				.addSort(sb)
 				.setPostFilter(fb)
 				.setFrom(skip).setSize(take)
 				.get();
@@ -410,7 +428,7 @@ public class JobManager implements JobDetailsProvider
 		
 		SingleDocument<Map<String, Object>> doc = new SingleDocument<>();
 		doc.setType(Bucket.TYPE);
-		doc.setId(bucketId);
+		doc.setDocumentId(bucketId);
 		if (response.isExists())
 		{
 			doc.setDocument(bucket);
@@ -477,12 +495,17 @@ public class JobManager implements JobDetailsProvider
 		FilterBuilder parentFilter = FilterBuilders.hasParentFilter(Bucket.TYPE, bucketFilter);
 		FilterBuilder fb = FilterBuilders.termFilter(AnomalyRecord.DETECTOR_NAME, detectorName);
 		FilterBuilder andFilter = FilterBuilders.andFilter(parentFilter, fb); 
+		
+		SortBuilder sb = new FieldSortBuilder(AnomalyRecord.ANOMALY_SCORE)
+									.ignoreUnmapped(true)
+									.missing("_last")
+									.order(SortOrder.DESC);
 
 		SearchResponse searchResponse = m_Client.prepareSearch(jobId)
 				.setTypes(AnomalyRecord.TYPE)
 				.setPostFilter(andFilter)
 				.setFrom(skip).setSize(take)
-				.addSort(AnomalyRecord.ANOMALY_SCORE, SortOrder.DESC)
+				.addSort(sb)
 				.get();
 
 		List<Map<String, Object>> results = new ArrayList<>();
@@ -517,12 +540,17 @@ public class JobManager implements JobDetailsProvider
 	{
 		FilterBuilder bucketFilter= FilterBuilders.termFilter("_id", bucketId);
 		FilterBuilder parentFilter = FilterBuilders.hasParentFilter(Bucket.TYPE, bucketFilter);
+				
+		SortBuilder sb = new FieldSortBuilder(AnomalyRecord.ANOMALY_SCORE)
+											.ignoreUnmapped(true)
+											.missing("_last")
+											.order(SortOrder.DESC);		
 
 		SearchResponse searchResponse = m_Client.prepareSearch(jobId)
 				.setTypes(AnomalyRecord.TYPE)
 				.setPostFilter(parentFilter)
 				.setFrom(skip).setSize(take)
-				.addSort(AnomalyRecord.ANOMALY_SCORE, SortOrder.DESC)
+				.addSort(sb)
 				.get();
 
 		List<Map<String, Object>> results = new ArrayList<>();
@@ -564,7 +592,8 @@ public class JobManager implements JobDetailsProvider
 	}
 	
 	
-	private boolean setJobFinishedTimeandStatus(String jobId, Date time, 
+	@Override
+	public boolean setJobFinishedTimeandStatus(String jobId, Date time, 
 			JobStatus status)
 	throws UnknownJobException
 	{
@@ -624,9 +653,11 @@ public class JobManager implements JobDetailsProvider
 	 * @return
 	 * @throws UnknownJobException If the jobId is not recognised
 	 * @throws NativeProcessRunException 
+	 * @throws JobInUseException If the job cannot be deleted because the
+	 * native process is in use.
 	 */
 	public boolean deleteJob(String jobId)
-	throws UnknownJobException, NativeProcessRunException
+	throws UnknownJobException, NativeProcessRunException, JobInUseException
 	{		
 		s_Logger.debug("Deleting job '" + jobId + "'");
 		
@@ -635,8 +666,9 @@ public class JobManager implements JobDetailsProvider
 			ProcessStatus stopStatus = m_ProcessManager.finishJob(jobId);
 			if (stopStatus == ProcessStatus.IN_USE)
 			{
-				s_Logger.error("Cannot delete job as the process is in use");
-				return false;
+				String msg = "Cannot delete job as the process is in use";
+				s_Logger.error(msg);
+				throw new JobInUseException(jobId, msg);
 			}
 		}
 		catch (UnknownJobException e)
@@ -655,7 +687,7 @@ public class JobManager implements JobDetailsProvider
 		{
 			if (e.getCause() instanceof IndexMissingException)
 			{
-				String msg = "Cannot delete job";
+				String msg = String.format("No index with id '%s' in the database", jobId);
 				s_Logger.warn(msg);
 				throw new UnknownJobException(jobId, msg);
 			}
@@ -707,8 +739,12 @@ public class JobManager implements JobDetailsProvider
 			// rethrow
 			throw ne;
 		}
+		finally 
+		{
+			updateLastDataTime(jobId, new Date()); 
+		}
 		
-		return updateLastDataTime(jobId, new Date()); // time now
+		return true;
 	}
 	
 	/**
@@ -783,7 +819,7 @@ public class JobManager implements JobDetailsProvider
 	/**
 	 * The job id is a concatenation of the date in 'yyyyMMddHHmmss' format 
 	 * and a sequence number that is a minimum of 5 digits wide left padded
-	 * with zeros.</br>
+	 * with zeros.<br/>
 	 * e.g. the first Id created 23rd November 2013 at 11am 
 	 * 	'20131125110000-00001' 
 	 * 
@@ -794,7 +830,6 @@ public class JobManager implements JobDetailsProvider
 		String id = String.format("%s-%05d", m_DateFormat.format(new Date()),
 						m_IdSequence.incrementAndGet());		
 		return id;
-		//return "testjob";
 	}		
 		
 	/**
@@ -827,14 +862,13 @@ public class JobManager implements JobDetailsProvider
 			}
 			else
 			{
-				throw new UnknownJobException(refId, "Cannot create job from "
-					+ "referenced job id. Job with id '" + refId +"' does not exist");
+				throw new UnknownJobException(refId, "Cannot fined "
+					+ "referenced job with id '" + refId + "'");
 			}
 		}
 		catch (IndexMissingException e)
 		{
-			throw new UnknownJobException(refId, "Cannot create job from "
-					+ "referenced job. Job with id '" + refId +"' does not exist");			
+			throw new UnknownJobException(refId, "Missing index '" + refId +"'");			
 		}
 	}
 	

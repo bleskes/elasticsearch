@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Inc 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -28,14 +28,10 @@
 package com.prelert.job;
 
 import java.net.URI;
-import java.net.URL;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 
@@ -44,7 +40,7 @@ import org.apache.log4j.Logger;
 /**
  * This class represents a configured and created Job. The creation time is 
  * set to the time the object was constructed, Status is set to 
- * {@link JobStatus.RUNNING} and the finished time and last data time fields 
+ * {@link JobStatus#RUNNING} and the finished time and last data time fields 
  * are <code>null</code> until the job has seen some data or it is finished 
  * respectively. If the job was created to read data from a list of files
  * FileUrls will be a non-empty list else the expects data to be streamed to it. 
@@ -66,7 +62,6 @@ public class JobDetails
 	static final public String FINISHED_TIME = "finishedTime";
 	static final public String LAST_DATA_TIME = "lastDataTime";
 	static final public String PROCESSED_RECORD_COUNT = "processedRecordCount";
-	static final public String FILE_URLS = "fileUrls";
 	static final public String TIMEOUT = "timeout";
 	static final public String PERSIST_MODEL = "persistModel";
 	static final public String ANALYSIS_CONFIG = "analysisConfig";
@@ -81,7 +76,6 @@ public class JobDetails
 	private Date m_FinishedTime; 
 	private Date m_LastDataTime;
 	private long m_ProcessedRecordCount;	
-	private List<URL> m_FileUrls;
 	private long m_Timeout;
 	private boolean m_PersistModel;
 	private AnalysisConfig m_AnalysisConfig;
@@ -90,12 +84,16 @@ public class JobDetails
 	
 	/* These URIs are transient they don't need to be persisted */
 	private URI m_Location;
-	private URI m_StreamingEndpoint;
+	private URI m_DataEndpoint;
 	private URI m_ResultsEndpoint;
-	
+	private URI m_LogsEndpoint;
+		
+	/**
+	 * Default constructor required for serialisation
+	 */
 	public JobDetails()
 	{
-		m_FileUrls = new ArrayList<>();
+		
 	}
 	
 	/**
@@ -112,11 +110,8 @@ public class JobDetails
 		m_Status = JobStatus.RUNNING;
 		m_CreateTime = new Date();		
 		m_Timeout = (jobConfig.getTimeout() != null) ? jobConfig.getTimeout() : DEFAULT_TIMEOUT; 		
-		m_PersistModel = (jobConfig.isPersistModel() != null) ? jobConfig.isPersistModel() : DEFAULT_PERSIST_MODEL;  
-					
-		m_FileUrls = new ArrayList<>();
-		m_FileUrls.addAll(jobConfig.getFileUrls());
-		
+		m_PersistModel = true;  
+						
 		m_AnalysisConfig = jobConfig.getAnalysisConfig();
 		m_AnalysisOptions = jobConfig.getAnalysisOptions();
 		m_DataDescription = jobConfig.getDataDescription();
@@ -149,10 +144,8 @@ public class JobDetails
 		{
 			m_Timeout = jobConfig.getTimeout();		
 		}
-		if (jobConfig.isPersistModel() != null)
-		{
-			m_PersistModel = jobConfig.isPersistModel();
-		}		
+		
+		m_PersistModel = true;
 		
 		if (jobConfig.getAnalysisConfig() != null)
 		{
@@ -167,12 +160,7 @@ public class JobDetails
 		if (jobConfig.getDataDescription() != null)
 		{
 			m_DataDescription = jobConfig.getDataDescription();
-		}
-		
-		if (jobConfig.getFileUrls().size() > 0)
-		{
-			m_FileUrls.addAll(jobConfig.getFileUrls());
-		}			
+		}		
 	}
 	
 	/**
@@ -180,6 +168,7 @@ public class JobDetails
 	 * WARNING THE OBJECT MAY BE IN AN INCONSITENT STATE AFTER THIS CONSTRUCTOR
 	 * @param values
 	 */
+	@SuppressWarnings("unchecked")
 	public JobDetails(Map<String, Object> values)
 	{
 		final DateFormat isoDateParser = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
@@ -245,10 +234,6 @@ public class JobDetails
 		{
 			m_ProcessedRecordCount = (Integer)values.get(PROCESSED_RECORD_COUNT);
 		}
-		if (values.containsKey(FILE_URLS))
-		{
-			m_FileUrls = (List<URL>)values.get(FILE_URLS);
-		}
 		if (values.containsKey(TIMEOUT))
 		{
 			m_Timeout = (Integer)values.get(TIMEOUT);
@@ -260,33 +245,33 @@ public class JobDetails
 		if (values.containsKey(ANALYSIS_CONFIG))
 		{
 			Object obj = values.get(ANALYSIS_CONFIG);
-			if (obj != null && obj instanceof HashMap)
+			if (obj != null && obj instanceof Map)
 			{
-				m_AnalysisConfig = new AnalysisConfig((HashMap<String, Object>)obj);
+				m_AnalysisConfig = new AnalysisConfig((Map<String, Object>)obj);
 			}
 		}
 		if (values.containsKey(ANALYSIS_OPTIONS))
 		{
 			Object obj = values.get(ANALYSIS_OPTIONS);
-			if (obj != null && obj instanceof HashMap)
+			if (obj != null && obj instanceof Map)
 			{
-				m_AnalysisOptions = new AnalysisOptions((HashMap<String, Object>)obj); 
+				m_AnalysisOptions = new AnalysisOptions((Map<String, Object>)obj); 
 			}
 		}
 		
 		if (values.containsKey(DATA_DESCRIPTION))
 		{
 			Object obj = values.get(DATA_DESCRIPTION);
-			if (obj != null && obj instanceof HashMap)
+			if (obj != null && obj instanceof Map)
 			{
-				m_DataDescription = new DataDescription((HashMap<String, Object>)obj);
+				m_DataDescription = new DataDescription((Map<String, Object>)obj);
 			}
 		}
 	}
 
 	/**
-	 * Return the JobId
-	 * @return
+	 * Return the Job Id
+	 * @return The job Id string
 	 */
 	public String getId()
 	{
@@ -294,7 +279,7 @@ public class JobDetails
 	}
 	
 	/**
-	 * Set the job's Id.</br>
+	 * Set the job's Id.
 	 * In general this method should not be used as the Id does not change 
 	 * once set. This method is provided for the Jackson object mapper to 
 	 * de-serialise this class from Json.
@@ -307,9 +292,9 @@ public class JobDetails
 	}
 	
 	/**
-	 * Return the Job Status. Jobs are initialised to {@link JobStatus.RUNNING}
+	 * Return the Job Status. Jobs are initialised to {@link JobStatus#RUNNING}
 	 * when created.
-	 * @return
+	 * @return The job's status
 	 */
 	public JobStatus getStatus() 
 	{
@@ -323,7 +308,7 @@ public class JobDetails
 
 	/**
 	 * The Job creation time.
-	 * @return
+	 * @return The date the job was created
 	 */
 	public Date getCreateTime() 
 	{
@@ -337,7 +322,7 @@ public class JobDetails
 
 	/**
 	 * The time the job was finished or <code>null</code> if not finished.
-	 * @return
+	 * @return The date the job was last retired or <code>null</code> 
 	 */
 	public Date getFinishedTime() 
 	{
@@ -352,7 +337,7 @@ public class JobDetails
 	/**
 	 * The last time data was uploaded to the job or <code>null</code> 
 	 * if no data has been seen.
-	 * @return
+	 * @return The data at which the last data was processed
 	 */
 	public Date getLastDataTime() 
 	{
@@ -368,7 +353,7 @@ public class JobDetails
 	 * The number of records processed by the job. 
 	 * This value is only updated every time a complete bucket is processed
 	 * by the running job.  
-	 * @return
+	 * @return Number of records processed by this job
 	 */
 	public long getProcessedRecordCount() 
 	{
@@ -380,26 +365,11 @@ public class JobDetails
 		m_ProcessedRecordCount = count;
 	}
 
-/*	
-	/**
-	 * The list of files processed by the job.
-	 * @return
-	 */
-/*	
-	public List<URL> getFileUrls() 
-	{
-		return m_FileUrls;
-	}
-	
-	public void setFileUrls(List<URL> urls) 
-	{
-		m_FileUrls = urls;
-	}
-*/
 	/**
 	 * The job timeout setting in seconds. Jobs are retired if they do not 
 	 * receive data for this period of time.
-	 * @return
+	 * The default is 600 seconds
+	 * @return The timeout period in seconds
 	 */
 	public long getTimeout() 
 	{
@@ -413,7 +383,7 @@ public class JobDetails
 
 	/**
 	 * Is the job persisted
-	 * @return
+	 * @return true if the job's internal models have been persisted
 	 */
 	public boolean isPersistModel() 
 	{
@@ -427,7 +397,7 @@ public class JobDetails
 	
 	/**
 	 * The analysis configuration object
-	 * @return
+	 * @return The AnalysisConfig
 	 */
 	public AnalysisConfig getAnalysisConfig() 
 	{
@@ -441,7 +411,7 @@ public class JobDetails
 	
 	/**
 	 * The analysis options object
-	 * @return
+	 * @return The AnalysisOptions
 	 */
 	public AnalysisOptions getAnalysisOptions() 
 	{
@@ -471,7 +441,7 @@ public class JobDetails
 
 	/**
 	 * The URI of this resource
-	 * @return
+	 * @return The URI of this job
 	 */
 	public URI getLocation()
 	{
@@ -487,27 +457,27 @@ public class JobDetails
 	}
 
 	/**
-	 * This Job's streaming data endpoint as the full URL path
-	 * in the form <pre><base_url{jobid}{@value #STREAMING_ENDPOINT}</pre>
-	 * @return
+	 * This Job's data endpoint as the full URL 
+	 * 
+	 * @return The Job's data URI
 	 */
-	public URI getStreamingEndpoint() 
+	public URI getDataEndpoint() 
 	{
-		return m_StreamingEndpoint;
+		return m_DataEndpoint;
 	}
 	
 	/**
-	 * Set this Job's streaming data endpoint
+	 * Set this Job's data endpoint
 	 */
-	public void setStreamingEndpoint(URI streaming) 
+	public void setDataEndpoint(URI value) 
 	{
-		m_StreamingEndpoint = streaming;
+		m_DataEndpoint = value;
 	}
 
 	/**
 	 * This Job's results endpoint as the full URL path
-	 * in the form <pre><base_url>{jobid}{@value #RESULTS_ENDPOINT}</pre>
-	 * @return
+	 * 
+	 * @return The Job's results URI
 	 */
 	public URI getResultsEndpoint() 
 	{
@@ -520,6 +490,25 @@ public class JobDetails
 	public void setResultsEndpoint(URI results) 
 	{
 		m_ResultsEndpoint = results;
+	}	
+	
+
+	/**
+	 * This Job's logs endpoint as the full URL 
+	 * 
+	 * @return The Job's logs URI
+	 */
+	public URI getLogsEndpoint() 
+	{
+		return m_LogsEndpoint;
+	}	
+	
+	/**
+	 * Set this Job's logs endpoint
+	 */
+	public void setLogsEndpoint(URI value) 
+	{
+		m_LogsEndpoint = value;
 	}	
 	
 	/**
@@ -545,9 +534,9 @@ public class JobDetails
 	 * 
 	 * @param o1
 	 * @param o2
-	 * @return
+	 * @return True if both null or both are non-null and equal
 	 */
-	public static boolean bothNullOrEqual(Object o1, Object o2)
+	public static <T> boolean bothNullOrEqual(T o1, T o2)
 	{
 		if (o1 == null && o2 == null)
 		{
@@ -593,7 +582,7 @@ public class JobDetails
 				bothNullOrEqual(this.m_AnalysisOptions, that.m_AnalysisOptions) &&
 				bothNullOrEqual(this.m_DataDescription, that.m_DataDescription) &&
 				bothNullOrEqual(this.m_Location, that.m_Location) &&
-				bothNullOrEqual(this.m_StreamingEndpoint, that.m_StreamingEndpoint) &&
+				bothNullOrEqual(this.m_DataEndpoint, that.m_DataEndpoint) &&
 				bothNullOrEqual(this.m_ResultsEndpoint, that.m_ResultsEndpoint);				
 	}
 }

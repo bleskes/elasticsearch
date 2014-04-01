@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Inc 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -39,12 +39,12 @@ import javax.ws.rs.core.UriInfo;
 
 import org.apache.log4j.Logger;
 
-import com.prelert.job.JobManager;
+import com.prelert.job.manager.JobManager;
 import com.prelert.rs.data.Pagination;
 
 /**
  * Abstract resource class that knows how to access a 
- * {@linkplain com.prelert.job.JobManager} 
+ * {@linkplain com.prelert.job.manager.JobManager} 
  */
 abstract public class ResourceWithJobManager 
 {

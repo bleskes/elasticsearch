@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Inc 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -33,8 +33,8 @@ import java.util.Map;
 
 /**
  * Autodetect analysis configuration options describes which fields are 
- * analysed and the functions to be used.<p/> 
- * 
+ * analysed and the functions to use. 
+ * <p/>
  * The configuration can contain multiple detectors, a new anomaly detector will 
  * be created for each detector configuration. The other fields 
  * <code>BucketSpan, PartitionField</code> etc apply to all detectors.<p/> 
@@ -59,114 +59,7 @@ public class AnalysisConfig
 	static final public String OVER_FIELD_NAME = "overFieldName";
 	static final public String USE_NULL = "useNull";
 	
-	
-	/**
-	 * Defines the fields to be used in the analysis. 
-	 * <code>Fieldname</code> must be set and only one of <code>ByFieldName</code> 
-	 * and OverFieldName should be set.
-	 */
-	static public class Detector
-	{
-		private String m_Function;
-		private String m_FieldName;
-		private String m_ByFieldName;
-		private String m_OverFieldName;		
-		private Boolean m_UseNull;		
-		
-		/**
-		 * The analysis function used e.g. count, rare, min etc. There is no 
-		 * validation to check this value is one a predefined set 
-		 * @return The function or <code>null</code> if not set
-		 */
-		public String getFunction() 
-		{
-			return m_Function;
-		}
-		
-		public void setFunction(String m_Function) 
-		{
-			this.m_Function = m_Function;
-		}
-		
-		/**
-		 * The Analysis field
-		 * @return
-		 */
-		public String getFieldName() 
-		{
-			return m_FieldName;
-		}
-		
-		public void setFieldName(String m_FieldName) 
-		{
-			this.m_FieldName = m_FieldName;
-		}
-		
-		/**
-		 * The 'by' field or <code>null</code> if not set. 
-		 * @return
-		 */
-		public String getByFieldName() 
-		{
-			return m_ByFieldName;
-		}
-		
-		public void setByFieldName(String m_ByFieldName) 
-		{
-			this.m_ByFieldName = m_ByFieldName;
-		}
-		
-		/**
-		 * The 'over' field or <code>null</code> if not set. 
-		 * @return
-		 */
-		public String getOverFieldName() 
-		{
-			return m_OverFieldName;
-		}
-		
-		public void setOverFieldName(String m_OverFieldName) 
-		{
-			this.m_OverFieldName = m_OverFieldName;
-		}	
-		
-		/**
-		 * Where there isn't a value for the 'by' or 'over' field should a new
-		 * series be used as the 'null' series. 
-		 * @return
-		 */
-		public Boolean isUseNull() 
-		{
-			return m_UseNull;
-		}
-		
-		public void setUseNull(Boolean useNull) 
-		{
-			this.m_UseNull = useNull;
-		}
-				
-		@Override 
-		public boolean equals(Object other)
-		{
-			if (this == other)
-			{
-				return true;
-			}
-			
-			if (other instanceof AnalysisConfig.Detector == false)
-			{
-				return false;
-			}
-			
-			AnalysisConfig.Detector that = (AnalysisConfig.Detector)other;
-					
-			return JobDetails.bothNullOrEqual(this.m_Function, that.m_Function) &&
-					JobDetails.bothNullOrEqual(this.m_FieldName, that.m_FieldName) &&
-					JobDetails.bothNullOrEqual(this.m_ByFieldName, that.m_ByFieldName) &&
-					JobDetails.bothNullOrEqual(this.m_OverFieldName, that.m_OverFieldName) &&
-					JobDetails.bothNullOrEqual(this.m_UseNull, that.m_UseNull);					
-		}
-	}
+
 	
 	/**
 	 * These values apply to all detectors
@@ -175,7 +68,7 @@ public class AnalysisConfig
 	private Long m_BatchSpan;
 	private Long m_Period;
 	private String m_PartitionField;
-	
+
 	private List<Detector> m_Detectors;
 	
 	/**
@@ -191,6 +84,7 @@ public class AnalysisConfig
 	 * nested elements in the map.
 	 * @param values
 	 */
+	@SuppressWarnings("unchecked")
 	public AnalysisConfig(Map<String, Object> values)
 	{	
 		this();
@@ -221,7 +115,7 @@ public class AnalysisConfig
 		}
 		if (values.containsKey(PARTITION_FIELD))
 		{
-			Object obj = values.get(BATCH_SPAN);
+			Object obj = values.get(PARTITION_FIELD);
 			if (obj != null)
 			{
 				m_PartitionField = obj.toString();
@@ -331,7 +225,7 @@ public class AnalysisConfig
 	 * Segments the analysis along another field to have completely 
 	 * independent baselines for each instance of partitionfield
 	 *
-	 * @return
+	 * @return The Partition Field
 	 */
 	public String getPartitionField() 
 	{
@@ -343,10 +237,11 @@ public class AnalysisConfig
 		this.m_PartitionField = m_PartitionField;
 	}
 	
+
 	/**
 	 * The list of analysis detectors. In a valid configuration the list should
-	 * contain at least 1 element 
-	 * @return
+	 * contain at least 1 {@link Detector} 
+	 * @return The Detectors used in this job
 	 */
 	public List<Detector> getDetectors()
 	{
@@ -383,6 +278,7 @@ public class AnalysisConfig
 			return false;
 		}
 		
+			
 		boolean equal = true;
 		for (int i=0; i<m_Detectors.size(); i++)
 		{
@@ -401,5 +297,48 @@ public class AnalysisConfig
 		
 		return equal;
 	}
+	
+	/**
+	 * Checks the configuration is valid
+	 * <ol>
+	 * <li>Check that if non-null BucketSpan, BatchSpan and Period are &gt= 0</li>
+	 * <li>Check all the detectors are configured correctly</li>
+	 * </ol>
+	 * 	
+	 * @return true
+	 * @throws JobConfigurationException
+	 */
+	public boolean verify()
+	throws JobConfigurationException
+	{	
+		if (m_BucketSpan != null && m_BucketSpan < 0)
+		{
+			throw new JobConfigurationException("BucketSpan cannot be < 0."
+					+ " Value = " + m_BucketSpan);
+		}
 		
+		if (m_BatchSpan != null && m_BatchSpan < 0)
+		{
+			throw new JobConfigurationException("BatchSpan cannot be < 0."
+					+ " Value = " + m_BatchSpan);
+		}
+		
+		if (m_Period != null && m_Period < 0)
+		{
+			throw new JobConfigurationException("Period cannot be < 0."
+					+ " Value = " + m_Period);
+		}
+		
+		if (m_Detectors.size() == 0)
+		{
+			throw new JobConfigurationException("No detectors configured");
+		}
+		
+		for (Detector d : m_Detectors)
+		{
+			d.verify();
+		}
+		
+		return true;
+	}
 }

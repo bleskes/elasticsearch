@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Inc 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -221,7 +221,7 @@ public class ElasticSearchPersister implements JobDataPersister
 	public boolean isDetectorStatePersisted() 
 	{
 		FilterBuilder fb = FilterBuilders.matchAllFilter();
-		// don't ask for any documents (size = 0)
+		// don't return for any documents (size = 0), just get hit count
 		SearchRequestBuilder searchBuilder = m_Client.prepareSearch(m_JobId)
 				.setTypes(DetectorState.TYPE)		
 				.setPostFilter(fb)

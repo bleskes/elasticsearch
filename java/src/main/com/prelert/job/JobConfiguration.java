@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Inc 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -27,82 +27,27 @@
 
 package com.prelert.job;
 
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * This class encapsulates all the data required to create a new job it
  * does not represent the state of a created job (see {@linkplain JobDetails}
- * for that).<p/>
+ * for that).
+ * <p/>
  * If a value has not been set it will be <code>null</code> Object wrappers 
  * are used around integral types & booleans so they can take <code>null</code> 
  * values.
  */
 public class JobConfiguration 
 {
-	static public class JobConfigurationBuilder
-	{
-		private JobConfiguration m_JobConfig;
-		
-		public JobConfigurationBuilder(String jobReferenceId)
-		{
-			m_JobConfig = new JobConfiguration(jobReferenceId);
-		}
-		
-		public JobConfigurationBuilder(AnalysisConfig analysisConfig)
-		{
-			m_JobConfig = new JobConfiguration(analysisConfig);
-		}
-				
-		public JobConfigurationBuilder analysisOptions(AnalysisOptions analysisOptions)
-		{		
-			m_JobConfig.m_AnalysisOptions = analysisOptions;
-			return this;
-		}
-		
-		public JobConfigurationBuilder dataDescription(DataDescription dataDescription)
-		{		
-			m_JobConfig.m_DataDescription = dataDescription;
-			return this;
-		}
-		
-		public JobConfigurationBuilder addFile(URL url)
-		{		
-			m_JobConfig.m_FileUrls.add(url);
-			return this;
-		}
-		
-		public JobConfigurationBuilder timeout(Long timeout)
-		{
-			m_JobConfig.m_Timeout = timeout;
-			return this;
-		}
-		
-		public JobConfigurationBuilder persistModel(Boolean persist)
-		{
-			m_JobConfig.m_PersistModel = persist;
-			return this;
-		}
-		
-		public JobConfiguration build()
-		{
-			return m_JobConfig;
-		}
-	}
-		
+	
 	private AnalysisConfig m_AnalysisConfig;
 	private AnalysisOptions m_AnalysisOptions;
 	private DataDescription m_DataDescription;
 	private String m_ReferenceJobId;
-	private List<URL> m_FileUrls;
 	private Long m_Timeout;
-	private Boolean m_PersistModel;
 	
 	
 	public JobConfiguration()
 	{
-		m_FileUrls = new ArrayList<>();
 	}
 	
 	public JobConfiguration(String jobReferenceId)
@@ -165,22 +110,8 @@ public class JobConfiguration
 	}
 	
 	/**
-	 * 
-	 * @return
-	 */
-	public List<URL> getFileUrls() 
-	{
-		return m_FileUrls;
-	}
-	
-	public void setFileUrls(List<URL> urls) 
-	{
-		m_FileUrls = urls;
-	}
-	
-	/**
-	 * 
-	 * @return
+	 * The timeout period for the job in seconds
+	 * @return The timeout in seconds
 	 */
 	public Long getTimeout() 
 	{
@@ -192,19 +123,6 @@ public class JobConfiguration
 		m_Timeout = timeout;
 	}
 	
-	/**
-	 * 
-	 * @return
-	 */
-	public Boolean isPersistModel() 
-	{
-		return m_PersistModel;
-	}
-	
-	public void setPersistModel(Boolean persist)
-	{
-		m_PersistModel = persist;
-	}
 	
 	/**
 	 * If not set the input data is assumed to be csv with a '_time' field 
@@ -220,5 +138,95 @@ public class JobConfiguration
 	public void setDataDescription(DataDescription description)
 	{
 		m_DataDescription = description;
+	}
+	
+	
+	/**
+	 * Builder for constructing JobConfiguration instances.
+	 */
+	static public class JobConfigurationBuilder
+	{
+		private JobConfiguration m_JobConfig;
+		
+		public JobConfigurationBuilder(String jobReferenceId)
+		{
+			m_JobConfig = new JobConfiguration(jobReferenceId);
+		}
+		
+		public JobConfigurationBuilder(AnalysisConfig analysisConfig)
+		{
+			m_JobConfig = new JobConfiguration(analysisConfig);
+		}
+				
+		public JobConfigurationBuilder analysisOptions(AnalysisOptions analysisOptions)
+		{		
+			m_JobConfig.m_AnalysisOptions = analysisOptions;
+			return this;
+		}
+		
+		public JobConfigurationBuilder dataDescription(DataDescription dataDescription)
+		{		
+			m_JobConfig.m_DataDescription = dataDescription;
+			return this;
+		}
+				
+		public JobConfigurationBuilder timeout(Long timeout)
+		{
+			m_JobConfig.m_Timeout = timeout;
+			return this;
+		}
+		
+		public JobConfiguration build()
+		{
+			return m_JobConfig;
+		}
+	}
+	
+	/**
+	 * Checks the job configuration settings and throws an exception
+	 * if any values are invalid
+	 * 
+	 * <ol>
+	 * <li>Either an AnalysisConfig or Job reference must be set</li>
+	 * <li>Verify {@link AnalysisConfig#verify() AnalysisConfig}</li>
+	 * <li>Verify {@link AnalysisOptions#verify() AnalysisOptions}</li>
+	 * <li>Verify {@link DataDescription#verify() DataDescription}</li>
+	 * <li>Check timeout is a +ve number</li>
+	 * <li></li>
+	 * </ol>
+	 *  
+	 * @return true
+	 * @throws JobConfigurationException
+	 */
+	public boolean verify()
+	throws JobConfigurationException
+	{
+		if (m_AnalysisConfig == null && m_ReferenceJobId == null)
+		{
+			throw new JobConfigurationException("Either an an AnalysisConfig or "
+					+ " job reference id must be set");
+		}
+		
+		if (m_AnalysisConfig != null)
+		{
+			m_AnalysisConfig.verify();
+		}
+		if (m_AnalysisOptions != null)
+		{
+			m_AnalysisOptions.verify();
+		}
+		
+		if (m_DataDescription != null)
+		{
+			m_DataDescription.verify();
+		}
+		
+		if (m_Timeout != null && m_Timeout < 0)
+		{
+			throw new JobConfigurationException("Timeout can not be a negative "
+					+ "number. Value = " + m_Timeout);
+		}
+		
+		return true;
 	}
 }

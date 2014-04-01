@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Inc 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -32,11 +32,11 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 /**
  * Generic wrapper class for returning a single document requested through
  * the REST API. If the requested document does not exist {@link #isExists()}
- * will be false and {@link #getDocument()} will return false.
+ * will be false and {@link #getDocument()} will return <code>null</code>.
  *
  * @param <T>
  */
-@JsonPropertyOrder({"id", "exists", "type", "document"})
+@JsonPropertyOrder({"documentId", "exists", "type", "document"})
 public class SingleDocument<T> 
 {
 	private boolean m_Exists;
@@ -47,7 +47,7 @@ public class SingleDocument<T>
 	
 	/**
 	 * Return true if the requested document exists
-	 * @return
+	 * @return true is document exists
 	 */
 	public boolean isExists() 
 	{
@@ -61,7 +61,7 @@ public class SingleDocument<T>
 
 	/**
 	 * The type of the requested document
-	 * @return
+	 * @return The document type
 	 */
 	public String getType() 
 	{
@@ -75,20 +75,20 @@ public class SingleDocument<T>
 
 	/**
 	 * The id of the requested document
-	 * @return
+	 * @return The document Id
 	 */
-	public String getId() 
+	public String getDocumentId() 
 	{
 		return m_Id;
 	}
 
-	public void setId(String id) 
+	public void setDocumentId(String id) 
 	{
 		this.m_Id = id;
 	}
 	
 	/**
-	 * Return the requested document or null 
+	 * Get the requested document or null 
 	 * @return The document or <code>null</code>
 	 */
 	public T getDocument()
@@ -97,9 +97,9 @@ public class SingleDocument<T>
 	}
 	
 	/**
-	 * Set the requested document.</br>
-	 * If the doc is non-null {@link #isExists() Exists} is set to true else it
-	 * is false
+	 * Set the requested document.
+	 * If the doc is non-null {@link #isExists() Exists} is set to true 
+	 * else it is false
 	 * @param doc
 	 */
 	public void setDocument(T doc)

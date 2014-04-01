@@ -2,6 +2,11 @@ package com.prelert.rs.resources;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipException;
 
@@ -16,33 +21,59 @@ import javax.ws.rs.core.Response;
 
 import org.apache.log4j.Logger;
 
-import com.prelert.job.JobManager;
-import com.prelert.job.NativeProcessRunException;
 import com.prelert.job.UnknownJobException;
+import com.prelert.job.manager.JobManager;
+import com.prelert.job.process.NativeProcessRunException;
 import com.prelert.rs.provider.RestApiException;
+import com.prelert.rs.streaminginterceptor.StreamingInterceptor;
 
 
 /**
  * Streaming data endpoint
  * 
- * <pre>curl -X POST 'http://localhost:8080/api/jobs/<jobid>/streaming/' --data @<filename></pre>
+ * <pre>curl -X POST 'http://localhost:8080/api/data/<jobid>/' --data @<filename></pre>
  * <br/>
  * Binary gzipped files must be POSTed with the --data-binary option 
- * <pre>curl -X POST 'http://localhost:8080/api/jobs/<jobid>/streaming/' --data-binary @<filename.gz></pre>
+ * <pre>curl -X POST 'http://localhost:8080/api/data/<jobid>/' --data-binary @<filename.gz></pre>
  *
  */
-@Path("/jobs/{jobId}/streaming")
-public class Streaming extends ResourceWithJobManager
+@Path("/data")
+public class Data extends ResourceWithJobManager
 {   
-	static final private Logger s_Logger = Logger.getLogger(Streaming.class);
+	static final private Logger s_Logger = Logger.getLogger(Data.class);
+	
+	static final private SimpleDateFormat s_DateFormat = 
+			new SimpleDateFormat("EEE_d_MMM_yyyy_HHmmss");
 	
 	/**
 	 * The name of this endpoint
 	 */
-	static public final String ENDPOINT = "streaming";
+	static final public String ENDPOINT = "data";
+	
+	private boolean m_isPersistData;
+	private String m_BaseDirectory;  
+	
+	public Data()
+	{
+		// should we save uploaded data and where
+		m_BaseDirectory = System.getProperty("persistbasedir");
+		m_isPersistData = m_BaseDirectory != null;	
+	}
 
 
+	/**
+	 * Data upload endpoint.
+	 * 
+	 * @param headers
+	 * @param jobId
+	 * @param input
+	 * @return
+	 * @throws IOException
+	 * @throws UnknownJobException
+	 * @throws NativeProcessRunException
+	 */
     @POST
+    @Path("/{jobId}")
     @Consumes({MediaType.APPLICATION_FORM_URLENCODED, MediaType.APPLICATION_JSON,
     	MediaType.APPLICATION_OCTET_STREAM})
     public Response streamData(@Context HttpHeaders headers,
@@ -67,10 +98,44 @@ public class Streaming extends ResourceWithJobManager
     		}
     	}
     	
+    	
+    	if (m_isPersistData)
+    	{   	
+    		try
+    		{
+    			Files.createDirectory(FileSystems.getDefault().getPath(
+    					m_BaseDirectory, jobId));
+    		}
+    		catch (FileAlreadyExistsException e)
+    		{
+    			// continue
+    		}
+    		
+    		java.nio.file.Path filePath = FileSystems.getDefault().getPath(
+    				m_BaseDirectory, jobId, s_DateFormat.format(new Date()) + ".gz"); 
+    		
+    		s_Logger.info("Data will be persisted to: " + filePath);
+    		
+    		// Create the interceptor for writing data to disk 
+    		// and start running in a new thread.
+    		final StreamingInterceptor si = new StreamingInterceptor(filePath);
+    		final InputStream uploadStream = input;
+    		
+    		input = si.createStream();
+    		
+    		new Thread() {
+    			@Override
+    			public void run()
+    			{
+    				si.pump(uploadStream);
+    			}
+    		}.start();
+    	}
+    	
     	try
     	{
     		handleStream(jobId, input);    
-    	} 
+    	}  
     	catch (NativeProcessRunException e) 
     	{
     		s_Logger.error("Error sending data to job " + jobId, e);
@@ -81,32 +146,18 @@ public class Streaming extends ResourceWithJobManager
     	return Response.accepted().build();
     }
      
-    @Path("/chunked_upload")
-    @POST
-    @Consumes({MediaType.APPLICATION_FORM_URLENCODED, MediaType.APPLICATION_JSON})
-    public Response chunkedUpload(@PathParam("jobId") String jobId, InputStream input)
-    throws UnknownJobException, NativeProcessRunException
-    {
-    	s_Logger.debug("Handle Post of chunked data to job = " + jobId);
-    	
-    	try
-    	{
-    		handleStream(jobId, input);    
-    	} 
-    	catch (NativeProcessRunException e) 
-    	{
-    		s_Logger.error("Error sending data to job " + jobId, e);
-    		throw e;
-    	}
-    	
-    	s_Logger.debug("Uploaded chunk to job " + jobId);    	    	
-    	return Response.accepted().build();
-    }
     
-    
-    @Path("/close")
+    /**
+     * Calling this endpoint indicates that data transfer is complete.
+     * The job is retired and cleaned up after this
+     * @param jobId
+     * @return
+     * @throws UnknownJobException
+     * @throws NativeProcessRunException
+     */
+    @Path("/{jobId}/close")
     @POST
-    public Response commitChunkedUpload(@PathParam("jobId") String jobId) 
+    public Response commitUpload(@PathParam("jobId") String jobId) 
     throws UnknownJobException, NativeProcessRunException
     {   	
     	s_Logger.debug("Post to close data upload for job " + jobId);
@@ -144,4 +195,7 @@ public class Streaming extends ResourceWithJobManager
 		return manager.dataToJob(jobId, input);
     }
 
+    
+    
+    
 }

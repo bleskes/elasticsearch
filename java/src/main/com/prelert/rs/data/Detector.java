@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Inc 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -43,8 +43,8 @@ import com.fasterxml.jackson.core.JsonToken;
 import com.prelert.rs.data.parsing.AutoDetectParseException;
 
 /**
- * Detector POJO
- * Properties that return <code>null</code> won't be serialised.
+ * Represents the anomaly detector.
+ * Only the detector name is serialised anomaly records aren't.
  */
 @JsonInclude(Include.NON_NULL)
 @JsonIgnoreProperties({"records"})
@@ -118,7 +118,7 @@ public class Detector
 	 * 
 	 * @param parser The JSON Parser should be pointing to the start of the object,
 	 * when the function returns it will be pointing to the end.
-	 * @return 
+	 * @return The new Detector
 	 * @throws JsonParseException
 	 * @throws IOException
 	 * @throws AutoDetectParseException

@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Inc 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -30,7 +30,8 @@ package com.prelert.job;
 import java.util.Map;
 
 /**
- * Analysis options.
+ * Analysis options for autodetect (max field values, max time buckets). 
+ * 
  * If an option has not been set it's value will be 0 in which case it
  * shouldn't be used so the default value is picked up instead.
  */
@@ -61,6 +62,10 @@ public class AnalysisOptions
 		m_MaxTimeBuckets = maxTimeBuckets;
 	}
 	
+	/**
+	 * Create and set field values from the Map.
+	 * @param values
+	 */
 	public AnalysisOptions(Map<String, Object> values)
 	{
 		this();
@@ -70,7 +75,7 @@ public class AnalysisOptions
 			Object obj = values.get(MAX_FIELD_VALUES);
 			if (obj != null)
 			{
-				m_MaxFieldValues = (Long)obj;
+				m_MaxFieldValues = ((Number)obj).longValue();
 			}
 		}	
 		if (values.containsKey(MAX_TIME_BUCKETS))
@@ -78,7 +83,7 @@ public class AnalysisOptions
 			Object obj = values.get(MAX_TIME_BUCKETS);
 			if (obj != null)
 			{
-				m_MaxTimeBuckets = (Long)obj;
+				m_MaxTimeBuckets = ((Number)obj).longValue();
 			}
 		}		
 		
@@ -86,24 +91,35 @@ public class AnalysisOptions
 		
 	/**
 	 * Maximum number of distinct values of a single field before analysis
-	 * of that field will be halted. 
-	 * If 0 then invalid 
-	 * @return
+	 * of that field will be halted. If 0 then this is an invalid and the
+	 * native process's default will be used. 
+	 * @return The max distinct values in a single field
 	 */
 	public long getMaxFieldValues()
 	{
 		return m_MaxFieldValues;
 	}
 	
+	public void setMaxFieldValues(long value)
+	{
+		m_MaxFieldValues = value;
+	}
+	
 	/**
 	 *  Maximum number of time buckets to process during anomaly detection 
-	 *  before ceasing to output results.
-	 *  If 0 then invalid
-	 * @return
+	 *  before ceasing to output results. If 0 then this is an invalid and the
+	 *  native process's default will be used. 
+	 *  
+	 * @return The max number of buckets to process in the job
 	 */
 	public long getMaxTimeBuckets()
 	{
 		return m_MaxTimeBuckets;
+	}
+	
+	public void setMaxTimeBuckets(long value)
+	{
+		m_MaxTimeBuckets = value;
 	}
 	
 	
@@ -126,5 +142,29 @@ public class AnalysisOptions
 		return (this.m_MaxFieldValues == that.m_MaxFieldValues) &&
 				(this.m_MaxTimeBuckets == that.m_MaxTimeBuckets);
 	}
-
+	
+	/**
+	 * Checks the analysis options and throws an exception if 
+	 * any fields are invalid.
+	 * 
+	 * @return true
+	 * @throws JobConfigurationException
+	 */
+	public boolean verify()
+	throws JobConfigurationException
+	{
+		if (m_MaxFieldValues < 0)
+		{
+			throw new JobConfigurationException(
+					"Invalid AnalysisOption MaxFieldValues must be >= 0");
+		}
+		if (m_MaxTimeBuckets < 0)
+		{
+			throw new JobConfigurationException(
+					"Invalid AnalysisOption MaxTimeBuckets must be >= 0");		
+		}
+		
+		return true;
+	}
+	
 }

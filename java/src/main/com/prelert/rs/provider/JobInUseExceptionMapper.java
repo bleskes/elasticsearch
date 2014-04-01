@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Inc 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -24,26 +24,26 @@
  *                                                          *
  *                                                          *
  ************************************************************/
+package com.prelert.rs.provider;
 
-package com.prelert.job;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.ext.ExceptionMapper;
+
+import com.prelert.job.JobInUseException;
 
 /**
- * Exception thrown when there is an error running 
- * a native process (autodetect).
+ * Exception -> Response mapper for {@linkplain com.prelert.job.JobInUseException}.
  */
-public class NativeProcessRunException extends Exception
+public class JobInUseExceptionMapper implements ExceptionMapper<JobInUseException>
 {
-	private static final long serialVersionUID = 5722287151589093943L;		
-	
-	public NativeProcessRunException(String message)
+	@Override
+	public Response toResponse(JobInUseException configException) 
 	{
-		super(message);
+		String msg = String.format("Job wth id '%s' is in use.\n"
+				+ "Error message : %s\n",
+				configException.getJobId(), configException.getMessage());
+		
+		return Response.status(Response.Status.NOT_FOUND).
+				entity(msg).build();
 	}
-	
-	public NativeProcessRunException(String message, Exception cause)
-	{
-		super(message, cause);
-	}
-	
-	
 }

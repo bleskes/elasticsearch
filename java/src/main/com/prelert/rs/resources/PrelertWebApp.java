@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Inc 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -32,8 +32,10 @@ import java.util.Set;
 
 import javax.ws.rs.core.Application;
 
-import com.prelert.job.JobManager;
+import com.prelert.job.manager.JobManager;
 import com.prelert.rs.provider.ElasticSearchExceptionMapper;
+import com.prelert.rs.provider.JobConfigurationExceptionMapper;
+import com.prelert.rs.provider.JobInUseExceptionMapper;
 import com.prelert.rs.provider.UnknownJobExceptionMapper;
 import com.prelert.rs.provider.NativeProcessRunExceptionMapper;
 import com.prelert.rs.provider.PaginationWriter;
@@ -64,9 +66,10 @@ public class PrelertWebApp extends Application
 		m_ResourceClasses = new HashSet<>();	    
 		m_ResourceClasses.add(ApiBase.class);
 		m_ResourceClasses.add(Jobs.class);
-		m_ResourceClasses.add(Streaming.class);	      
+		m_ResourceClasses.add(Data.class);
 		m_ResourceClasses.add(Results.class);	   
 		m_ResourceClasses.add(Detectors.class);
+		m_ResourceClasses.add(Logs.class);
 		
 		// Message body writers
 		m_ResourceClasses.add(PaginationWriter.class);	   
@@ -76,6 +79,8 @@ public class PrelertWebApp extends Application
 		// Exception mappers
 		m_ResourceClasses.add(NativeProcessRunExceptionMapper.class);
 		m_ResourceClasses.add(ElasticSearchExceptionMapper.class);
+		m_ResourceClasses.add(JobConfigurationExceptionMapper.class);
+		m_ResourceClasses.add(JobInUseExceptionMapper.class);
 		m_ResourceClasses.add(UnknownJobExceptionMapper.class);
 		
 		String elasticSearchClusterName = System.getProperty(ES_CLUSTER_NAME_PROP);

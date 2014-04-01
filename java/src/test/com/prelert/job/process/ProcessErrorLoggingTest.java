@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Inc 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -32,16 +32,18 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
+import com.prelert.job.Detector;
 import com.prelert.job.DetectorState;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
-import com.prelert.job.NativeProcessRunException;
+import com.prelert.job.JobStatus;
 import com.prelert.job.UnknownJobException;
 
 /**
@@ -96,6 +98,14 @@ public class ProcessErrorLoggingTest
 		{
 			return null;
 		}
+
+		@Override
+		public boolean setJobFinishedTimeandStatus(String jobId, Date time,
+				JobStatus status) 
+		throws UnknownJobException 
+		{
+			return false;
+		}
 	}
 	
 	
@@ -125,10 +135,10 @@ public class ProcessErrorLoggingTest
 	public static void main(String[] args) 
 	throws NativeProcessRunException, UnknownJobException, IOException 
 	{
-		AnalysisConfig.Detector detector = new AnalysisConfig.Detector();
+		Detector detector = new Detector();
 		detector.setFieldName("airline");
 		detector.setByFieldName("responsetime");
-		List<AnalysisConfig.Detector> d = new ArrayList<>();
+		List<Detector> d = new ArrayList<>();
 		d.add(detector);
 		
 		AnalysisConfig conf = new AnalysisConfig();

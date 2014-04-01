@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Inc 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -47,16 +47,18 @@ import javax.ws.rs.core.Response;
 
 import org.apache.log4j.Logger;
 
-import com.prelert.job.JobManager;
+import com.prelert.job.manager.JobManager;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
 import com.prelert.rs.provider.RestApiException;
 
 /**
- * API results end point 
+ * API results end point.
+ * Access buckets and anomaly records, use the <pre>expand</pre> query argument
+ * to get buckets and anomaly records in one query. 
+ * Buckets can be filtered by date. 
  */
-
-@Path("/jobs/{jobId}/results")
+@Path("/results")
 public class Results extends ResourceWithJobManager
 {
 	static private final Logger s_Logger = Logger.getLogger(Results.class);
@@ -93,7 +95,23 @@ public class Results extends ResourceWithJobManager
 	static private final String BAD_DATE_FROMAT_MSG = "Error: Query param '%s' with value" 
 						+ " '%s' cannot be parsed as a date or converted to a number (epoch)";
 	
+	/**
+	 * Get all the bucket results (in pages) for the job optionally filtered 
+	 * by date.
+	 * 
+	 * @param jobId
+	 * @param expand Return anomaly records in-line with the results,
+	 *  default is false
+	 * @param skip
+	 * @param take
+	 * @param start The filter start date see {@linkplain #paramToEpoch(String)}
+	 * for the format the date string should take
+	 * @param end The filter end date see {@linkplain #paramToEpoch(String)}
+	 * for the format the date string should take
+	 * @return
+	 */
 	@GET
+	@Path("/{jobId}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Pagination<Map<String, Object>> buckets(
 			@PathParam("jobId") String jobId,
@@ -147,9 +165,8 @@ public class Results extends ResourceWithJobManager
     	if (buckets.isAllResults() == false)
     	{
     		String path = new StringBuilder()
-								.append("/jobs/")
+								.append("/results/")
 								.append(jobId)
-								.append("/results")
 								.toString();
     		
     		List<ResourceWithJobManager.KeyValue> queryParams = new ArrayList<>();
@@ -171,8 +188,17 @@ public class Results extends ResourceWithJobManager
 		return buckets;
 	}
 	
-	@Path("/{bucketId}")
+	
+	/**
+	 * Get an individual bucket results
+	 * @param jobId
+	 * @param bucketId
+	 * @param expand Return anomaly records in-line with the bucket,
+	 * default is false
+	 * @return
+	 */
 	@GET
+	@Path("/{jobId}/{bucketId}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public SingleDocument<Map<String, Object>> bucket(@PathParam("jobId") String jobId,
 			@PathParam("bucketId") String bucketId,
@@ -199,7 +225,16 @@ public class Results extends ResourceWithJobManager
 		return bucket;
 	}
 	
-	@Path("/{bucketId}/records")
+	/**
+	 * Get the anomaly records for the bucket.
+	 * 
+	 * @param jobId
+	 * @param bucketId
+	 * @param skip
+	 * @param take
+	 * @return
+	 */
+	@Path("/{jobId}/{bucketId}/records")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	public Pagination<Map<String, Object>> bucketRecords(
@@ -219,9 +254,9 @@ public class Results extends ResourceWithJobManager
     	if (records.isAllResults() == false)
     	{
     		String path = new StringBuilder()
-								.append("/jobs/")
-								.append(jobId)
-								.append("/results")
+    							.append("/results/")
+    							.append(jobId)
+    							.append("/")
 								.append(bucketId)
 								.append("/records")
 								.toString();
@@ -235,7 +270,7 @@ public class Results extends ResourceWithJobManager
 		return records;
 	}
 	
-	@Path("/{bucketId}/{detectorId}/records")
+	@Path("/{jobId}/{bucketId}/{detectorId}/records")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	public Pagination<Map<String, Object>> bucketDetectorRecords(@PathParam("jobId") String jobId,
@@ -255,9 +290,9 @@ public class Results extends ResourceWithJobManager
     	if (records.isAllResults() == false)
     	{
     		String path = new StringBuilder()
-								.append("/jobs/")
+    							.append("/results/")
 								.append(jobId)
-								.append("/results/")
+								.append('/')
 								.append(bucketId)
 								.append("/")
 								.append(detectorId)

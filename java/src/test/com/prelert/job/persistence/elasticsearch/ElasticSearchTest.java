@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Inc 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -49,7 +49,7 @@ import org.elasticsearch.node.Node;
 
 import com.prelert.job.DetectorState;
 import com.prelert.job.JobDetails;
-import com.prelert.job.JobManager;
+import com.prelert.job.manager.JobManager;
 import com.prelert.job.persistence.elasticsearch.ElasticSearchPersister;
 import com.prelert.job.persistence.elasticsearch.ElasticSearchMappings;
 import com.prelert.rs.data.AnomalyRecord;
@@ -208,6 +208,7 @@ public class ElasticSearchTest
 			SingleDocument<Map<String, Object>> bucketDoc = jobManager.bucket(jobId, interestingBucket, true);
 			Map<String, Object> bucket = bucketDoc.getDocument();
 
+			@SuppressWarnings("unchecked")
 			List<Map<String, Object>> expandedRecords = (List<Map<String, Object>>)bucket.get("records");
 			s_Logger.info(String.format("%d records in bucket %s", expandedRecords.size(),
 					interestingBucket));

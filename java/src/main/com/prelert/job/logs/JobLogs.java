@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Inc 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -32,6 +32,10 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.file.DirectoryStream;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.zip.ZipEntry;
@@ -80,7 +84,7 @@ public class JobLogs
 	/**
 	 * Return the last N lines from the file or less if the file
 	 * is shorter than N lines.
-	 * </br>
+	 * <br/>
 	 * The algorithm is imprecise in that it first takes a guess
 	 * how far back from the end of the file N lines is based on the
 	 * <code>expectedLineSize</code> parameter then counts the lines 
@@ -302,5 +306,61 @@ public class JobLogs
 		}
 
 		return byteos.toByteArray();
+	}
+	
+	
+	/**
+	 * Delete all the log files and log directory associated with a job.
+	 * 
+	 * @param jobId
+	 * @return true if success. 
+	 */
+	public boolean deleteLogs(String jobId)
+	{
+		return deleteLogs(ProcessCtrl.LOG_DIR, jobId);
+	}
+	
+	/**
+	 * Delete all the files in the directory <pre>logDir/jobId</pre>.
+	 * 
+	 * @param logDir The base directory of the log files
+	 * @param jobId 
+	 * @return
+	 */
+	public boolean deleteLogs(String logDir, String jobId)
+	{
+		s_Logger.info(String.format("Deleting log files %s/%s", logDir, jobId));
+		Path logPath = FileSystems.getDefault().getPath(logDir, jobId);
+		 
+		try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(logPath))
+		{
+			for (Path logFile : directoryStream) 
+			{
+				try
+				{
+					Files.delete(logFile);
+				}
+				catch (IOException e) 
+				{
+					s_Logger.error("Error deleting log file: " + logFile, e);
+				}
+			}
+		} 
+		catch (IOException e) 
+		{
+			s_Logger.error("Error opening the log directory", e);
+		}
+		
+		// delete the directory
+		try
+		{
+			Files.delete(logPath);
+		}
+		catch (IOException e) 
+		{
+			s_Logger.error("Error deleting log directory " + logDir, e);
+		}
+		
+		return true;
 	}
 }

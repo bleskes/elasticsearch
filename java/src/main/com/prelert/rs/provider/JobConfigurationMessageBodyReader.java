@@ -1,6 +1,6 @@
 /************************************************************
 *                                                          *
-* Contents of file Copyright (c) Prelert Inc 2006-2014     *
+* Contents of file Copyright (c) Prelert Ltd 2006-2014     *
 *                                                          *
 *----------------------------------------------------------*
 *----------------------------------------------------------*
@@ -46,7 +46,7 @@ import com.prelert.job.JobConfiguration;
 /**
 * JobConfiguration entity provider.
 * Reads the http message body and converts it to a JobConfiguration
-* bean. Only conversion between JSON is supported.
+* bean. Only conversion from JSON is supported.
 */
 @Consumes(MediaType.APPLICATION_JSON)
 public class JobConfigurationMessageBodyReader implements MessageBodyReader<JobConfiguration> 

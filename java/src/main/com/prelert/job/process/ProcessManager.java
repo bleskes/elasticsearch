@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Inc 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -28,17 +28,15 @@
 package com.prelert.job.process;
 
 import java.io.BufferedOutputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -49,7 +47,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 import org.supercsv.io.CsvListReader;
-import org.supercsv.io.CsvListWriter;
 import org.supercsv.prefs.CsvPreference;
 
 import com.fasterxml.jackson.core.JsonFactory;
@@ -60,8 +57,9 @@ import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.DetectorState;
 import com.prelert.job.JobDetails;
-import com.prelert.job.NativeProcessRunException;
+import com.prelert.job.JobStatus;
 import com.prelert.job.UnknownJobException;
+import com.prelert.job.input.LengthEncodedWriter;
 import com.prelert.job.process.ProcessCtrl;
 
 /**
@@ -101,11 +99,6 @@ public class ProcessManager
 	public enum ProcessStatus {IN_USE, COMPLETED, NOT_FOUND};
 	
 	static private final Logger s_Logger = Logger.getLogger(ProcessManager.class);
-
-	/**
-	 * Avoid looking up this same charset millions of times.
-	 */
-	static private final Charset UTF8_CHARSET = Charset.forName("UTF-8");
 
 	private ProcessCtrl m_ProcessCtrl;
 	
@@ -207,33 +200,10 @@ public class ProcessManager
 		try
 		{
 			process.setInUse(true);
-
-			// Oracle's documentation recommends buffering process streams
-			BufferedOutputStream os = new BufferedOutputStream(
-					process.getProcess().getOutputStream());
-
-			if (process.getDataDescription() != null &&
-					process.getDataDescription().transform())
-			{
-				if (process.getDataDescription().getFormat() == DataFormat.JSON)
-				{
-					transformAndPipeJson(process.getDataDescription(), input,
-							os);
-				}
-				else
-				{
-					transformAndPipeCsv(process.getDataDescription(), input,
-							os);
-				}
-			}
-			else
-			{
-				// no transform write the data straight through
-				pipe(input, os);
-			}
-
-			os.flush();
-
+			
+			writeToJob(process.getDataDescription(), input,
+						process.getProcess().getOutputStream());
+						
 			// check there wasn't an error in the input. 
 			// throws if there was. 
 			processStillRunning(process, jobId);
@@ -243,7 +213,9 @@ public class ProcessManager
 			String msg = String.format("Exception writing to process for job %s", jobId);
 			s_Logger.error(msg, e);
 			
-			StringBuilder sb = new StringBuilder(msg).append('\n');
+			
+			StringBuilder sb = new StringBuilder(msg)
+					.append('\n').append(e.getMessage()).append('\n');
 			readProcessErrorOutput(process, sb);
 			
 			throw new NativeProcessRunException(sb.toString(), e);
@@ -357,7 +329,7 @@ public class ProcessManager
 			s_Logger.error("No job with id '" + jobId + "' to shutdown");
 			// tidy up
 			m_JobIdToTimeoutFuture.remove(jobId);			
-			throw new UnknownJobException(jobId, "Cannot finish job");
+			throw new UnknownJobException(jobId, "Job is already finished or never started");
 		}
 		
 		
@@ -417,7 +389,6 @@ public class ProcessManager
 			
 			throw e;
 		}
-			
 
 		return ProcessStatus.COMPLETED;
 	}
@@ -462,25 +433,119 @@ public class ProcessManager
 		}
 	}
 	
+	
 	/**
-	 * Read the contents from input stream and write to output stream.
-	 * Flushes the outputstream once all data is written.
+	 * Transform the data according to the data description and
+	 * pipe to the output. 
+	 * Data is written via BufferedOutputStream which is more 
+	 * suited for small writes.
+	 * 
+	 * @param dataDescription
+	 * @param input
+	 * @param output
+	 * @throws IOException
+	 */
+	public void writeToJob(DataDescription dataDescription, 
+			InputStream input, OutputStream output) 
+	throws IOException
+	{
+		// Oracle's documentation recommends buffering process streams
+		BufferedOutputStream bufferedStream = new BufferedOutputStream(output);
+		
+		if (dataDescription != null && dataDescription.transform())
+		{
+			if (dataDescription.getFormat() == DataFormat.JSON)
+			{
+				transformAndPipeJson(dataDescription, input, bufferedStream);
+			}
+			else
+			{
+				transformAndPipeCsv(dataDescription, input, bufferedStream);
+			}
+		}
+		else
+		{			
+			pipeCsv(dataDescription, input, bufferedStream);
+		}
+	}
+	
+	
+	/**
+	 * Pipes the raw data from the input to the output without any
+	 * encoding or transformations
 	 * 
 	 * @param is
 	 * @param os
 	 * @throws IOException
 	 */
+	@SuppressWarnings("unused")
 	private void pipe(InputStream is, OutputStream os) 
 	throws IOException 
 	{
 		int n;
-		byte[] buffer = new byte[131072];
-		while((n = is.read(buffer)) > -1) 
+		byte[] buffer = new byte[131072]; // 128kB
+		while ((n = is.read(buffer)) > -1)
 		{
+			// os is not wrapped in a BufferedOutputStream because we're copying
+			// big chunks of data anyway
 			os.write(buffer, 0, n);
-		}		
+		}
+		os.flush();
+	}
+
+	/**
+	 * Read the csv input, transform to length encoded values and pipe
+	 * to the native process.
+	 * 
+	 * @param dd
+	 * @param is
+	 * @param os
+	 * @throws IOException
+	 */
+	private void pipeCsv(DataDescription dd, InputStream is, OutputStream os)
+	throws IOException
+	{
+		char delimiter = DataDescription.DEFAULT_DELIMITER; 
+		if (dd.getFieldDelimiter() != null)
+		{
+			delimiter = dd.getFieldDelimiter().charAt(0);
+		}
+		
+		CsvPreference csvPref = new CsvPreference.Builder(
+				dd.getQuoteCharacter(),
+				delimiter,
+				new String(new char[] {DataDescription.LINE_ENDING})).build();	
+		
+		try (CsvListReader csvReader = new CsvListReader(new InputStreamReader(is), csvPref))
+		{
+			String[] header = csvReader.getHeader(true);
+			
+			// Don't close the output stream as it causes the autodetect 
+			// process to quit
+			LengthEncodedWriter lengthEncodedWriter = new LengthEncodedWriter(os);
+			lengthEncodedWriter.writeRecord(header);
+
+			List<String> line;
+			while ((line = csvReader.read()) != null)
+			{
+				lengthEncodedWriter.writeRecord(line);				
+			}
+			
+			lengthEncodedWriter.flush();
+		}
 	}
 	
+
+	/**
+	 * Parse the contents from input stream, transform dates and write to 
+	 * the output stream as length encoded values.
+	 * Flushes the outputstream once all data is written.
+	 * 
+	 * @param dd 
+	 * @param is
+	 * @param os
+	 * @throws IOException
+	 */
 	private void transformAndPipeCsv(DataDescription dd, InputStream is, OutputStream os)
 	throws IOException 
 	{
@@ -490,21 +555,20 @@ public class ProcessManager
 			timeField = ProcessCtrl.DEFAULT_TIME_FIELD;
 		}
 		
-		char delimiter = ProcessCtrl.DEFAULT_DELIMITER; 
+		char delimiter = DataDescription.DEFAULT_DELIMITER; 
 		if (dd.getFieldDelimiter() != null)
 		{
 			delimiter = dd.getFieldDelimiter().charAt(0);
 		}
 		
 		CsvPreference csvPref = new CsvPreference.Builder(
-				DataDescription.QUOTE_CHAR,
+				dd.getQuoteCharacter(),
 				delimiter,
-				new String(new char [] {DataDescription.LINE_ENDING})).build();	
+				new String(new char[] {DataDescription.LINE_ENDING})).build();	
 		
 		try (CsvListReader csvReader = new CsvListReader(new InputStreamReader(is), csvPref))
 		{
-
-			String [] header = csvReader.getHeader(true);
+			String[] header = csvReader.getHeader(true);
 			int timeFieldIndex = -1;
 			for (int i=0; i<header.length; i++)
 			{
@@ -522,36 +586,61 @@ public class ProcessManager
 				s_Logger.error(message);
 				throw new IOException(message);
 			}
-			
 
 
 			// Don't close the output stream as it causes the autodetect 
 			// process to quit
-			@SuppressWarnings("resource")
-			CsvListWriter csvWriter = new CsvListWriter(new OutputStreamWriter(os), csvPref);
-
-			csvWriter.writeHeader(header);
-
-			DateFormat dateFormat = new SimpleDateFormat(dd.getTimeFormat());
+			LengthEncodedWriter lengthEncodedWriter = new LengthEncodedWriter(os);
+			lengthEncodedWriter.writeRecord(header);
 
 			List<String> line;
-			while ((line = csvReader.read()) != null)
+			if (dd.isEpochMs())
 			{
-				try
+				while ((line = csvReader.read()) != null)
 				{
-					String epoch =  new Long(dateFormat.parse(line.get(timeFieldIndex)).getTime() / 1000).toString();
-					line.set(timeFieldIndex, epoch);
+					try
+					{
+						long epoch = Long.parseLong(line.get(timeFieldIndex)) / 1000; 
+						line.set(timeFieldIndex, new Long(epoch).toString());
 
-					csvWriter.write(line);
+						lengthEncodedWriter.writeRecord(line);
+					}
+					catch (NumberFormatException e)
+					{
+						String message = String.format(
+								"Cannot parse epoch ms timestamp '%s'",								
+								line.get(timeFieldIndex));
+
+						s_Logger.error(message);
+					}		
 				}
-				catch (ParseException pe)
-				{
-					String message = String.format("Cannot parse date '%s' with format string '%s'",
-							line.get(timeFieldIndex), dd.getTimeFormat());
-
-					s_Logger.error(message);
-				}		
 			}
+			else
+			{
+				DateFormat dateFormat = new SimpleDateFormat(dd.getTimeFormat());
+
+				while ((line = csvReader.read()) != null)
+				{
+					try
+					{
+						String epoch =  new Long(dateFormat.parse(line.get(timeFieldIndex)).getTime() / 1000).toString();
+						line.set(timeFieldIndex, epoch);
+
+						lengthEncodedWriter.writeRecord(line);
+					}
+					catch (ParseException pe)
+					{
+						String message = String.format("Cannot parse date '%s' with format string '%s'",
+								line.get(timeFieldIndex), dd.getTimeFormat());
+
+						s_Logger.error(message);
+					}		
+				}
+			}
+			
+			
+			// flush the output
+			os.flush();
 		}
 	}
 	
@@ -579,7 +668,7 @@ public class ProcessManager
 		JsonParser parser = new JsonFactory().createParser(is);
 		
 		JsonToken token = parser.nextToken();
-		// if start of an array ignore it, we expect an array of buckets
+		// if the first toke is the start of an array ignore it
 		if (token == JsonToken.START_ARRAY)
 		{
 			token = parser.nextToken();
@@ -593,9 +682,8 @@ public class ProcessManager
 					"Invalid JSON should start with an array of objects or an object."
 					+ "Bad token = " + token);
 		}
-		
 
-		if (dd.getTimeFormat() != null)
+		if (dd.isTransformTime())
 		{
 			pipeJsonAndTransformTime(parser, os, dd);
 		}
@@ -603,6 +691,8 @@ public class ProcessManager
 		{
 			pipeJson(parser, os);
 		}
+
+		os.flush();
 
 		parser.close();	
 	}
@@ -619,16 +709,9 @@ public class ProcessManager
 	private void pipeJson(JsonParser parser, OutputStream os)
 	throws JsonParseException, IOException
 	{
-		int numFields = 0;
-
-		// first extract the field names and write those as the header
-		// (the size will increase if necessary, but it's silly to start with
-		// the default of 32)
-		ByteArrayOutputStream header = new ByteArrayOutputStream(1024);
-		ByteArrayOutputStream firstLine = new ByteArrayOutputStream(1024);
-
-		// This will be used to convert 32 bit integers to network byte order
-		ByteBuffer lenBuffer = ByteBuffer.allocate(4);
+		LengthEncodedWriter lengthEncodedWriter = new LengthEncodedWriter(os);
+		List<String> header = new ArrayList<>();
+		List<String> record = new ArrayList<>();
 
 		JsonToken token = parser.nextToken();
 		while (token != JsonToken.END_OBJECT)
@@ -636,60 +719,41 @@ public class ProcessManager
 			if (token == JsonToken.FIELD_NAME)
 			{
 				String fieldName = parser.getCurrentName();
-				lenBuffer.clear();
-				lenBuffer.putInt(fieldName.length());
-				header.write(lenBuffer.array());
-				header.write(fieldName.getBytes(UTF8_CHARSET));
-
 				token = parser.nextToken();
 				String fieldValue = parser.getText();
-				lenBuffer.clear();
-				lenBuffer.putInt(fieldValue.length());
-				firstLine.write(lenBuffer.array());
-				firstLine.write(fieldValue.getBytes(UTF8_CHARSET));
-
-				++numFields;
+				
+				header.add(fieldName);
+				record.add(fieldValue);
 			}
 			token = parser.nextToken();
 		}
 
-		ByteBuffer numFieldsBuffer = ByteBuffer.allocate(4);
-		numFieldsBuffer.putInt(numFields);
-
 		// Each record consists of number of fields followed by length/value
 		// pairs.  See CLengthEncodedInputParser.h in the C++ code for a more
 		// detailed description.
-		header.flush();
-		os.write(numFieldsBuffer.array());
-		os.write(header.toByteArray());
-		header.close();
+		lengthEncodedWriter.writeRecord(header);
+		lengthEncodedWriter.writeRecord(record);
 
-		firstLine.flush();
-		os.write(numFieldsBuffer.array());
-		os.write(firstLine.toByteArray());
-		firstLine.close();
-
-		// now send the rest of the data
-		int recordCount = 1;
+		
+		int recordCount = (header.size() > 0) ? 1 : 0;
+		
 		token = parser.nextToken();
 		while (token == JsonToken.START_OBJECT)
 		{
-			os.write(numFieldsBuffer.array());
-
+			record.clear();
+			
 			while (token != JsonToken.END_OBJECT)
 			{
 				if (token == JsonToken.FIELD_NAME)
 				{
 					token = parser.nextToken();
 					String fieldValue = parser.getText();
-					lenBuffer.clear();
-					lenBuffer.putInt(fieldValue.length());
-					os.write(lenBuffer.array());
-					os.write(fieldValue.getBytes(UTF8_CHARSET));
+					record.add(fieldValue);
 				}
 				token = parser.nextToken();
 			}
 
+			lengthEncodedWriter.writeRecord(record);
 			++recordCount;
 			token = parser.nextToken();
 		}
@@ -714,98 +778,47 @@ public class ProcessManager
 			DataDescription dd)
 	throws JsonParseException, IOException
 	{
-		DateFormat dateFormat = new SimpleDateFormat(dd.getTimeFormat());
 		String timeField = dd.getTimeField();
 		if (timeField == null)
 		{
 			timeField = ProcessCtrl.DEFAULT_TIME_FIELD;
 		}
 
-		int numFields = 0;
-
-		// first extract the field names and write those as the header
-		// (the size will increase if necessary, but it's silly to start with
-		// the default of 32)
-		ByteArrayOutputStream header = new ByteArrayOutputStream(1024);
-		ByteArrayOutputStream firstLine = new ByteArrayOutputStream(1024);
-
-		// This will be used to convert 32 bit integers to network byte order
-		ByteBuffer lenBuffer = ByteBuffer.allocate(4);
-
+		LengthEncodedWriter lengthEncodedWriter = new LengthEncodedWriter(os);
+		List<String> header = new ArrayList<>();
+		List<String> record = new ArrayList<>();
+			
+		
 		JsonToken token = parser.nextToken();
 		while (token != JsonToken.END_OBJECT)
 		{
 			if (token == JsonToken.FIELD_NAME)
 			{
 				String fieldName = parser.getCurrentName();
-				lenBuffer.clear();
-				lenBuffer.putInt(fieldName.length());
-				header.write(lenBuffer.array());
-				header.write(fieldName.getBytes(UTF8_CHARSET));
-
 				token = parser.nextToken();
 				String fieldValue = parser.getText();
 
-				if (fieldName.equals(timeField))
+				if (timeField.equals(fieldName))
 				{
-					try
-					{
-						fieldValue = Long.toString(dateFormat.parse(fieldValue).getTime() / 1000);
-					}
-					catch (ParseException e)
-					{
-						s_Logger.error("Cannot parse '" + fieldValue +
-								"' as a date using format string '" +
-								dd.getTimeFormat() + "'");
-					}
-				}
-
-				lenBuffer.clear();
-				lenBuffer.putInt(fieldValue.length());
-				firstLine.write(lenBuffer.array());
-				firstLine.write(fieldValue.getBytes(UTF8_CHARSET));
-
-				++numFields;
-			}
-			token = parser.nextToken();
-		}
-
-		ByteBuffer numFieldsBuffer = ByteBuffer.allocate(4);
-		numFieldsBuffer.putInt(numFields);
-
-		// Each record consists of number of fields followed by length/value
-		// pairs.  See CLengthEncodedInputParser.h in the C++ code for a more
-		// detailed description.
-		header.flush();
-		os.write(numFieldsBuffer.array());
-		os.write(header.toByteArray());
-		header.close();
-
-		firstLine.flush();
-		os.write(numFieldsBuffer.array());
-		os.write(firstLine.toByteArray());
-		firstLine.close();
-
-		// now send the rest of the data
-		int recordCount = 1;
-		token = parser.nextToken();
-		while (token == JsonToken.START_OBJECT)
-		{
-			os.write(numFieldsBuffer.array());
-
-			while (token != JsonToken.END_OBJECT)
-			{
-				if (token == JsonToken.FIELD_NAME)
-				{
-					String fieldName = parser.getCurrentName();
-
-					token = parser.nextToken();
-					String fieldValue = parser.getText();
-
-					if (fieldName.equals(timeField))
+					if (dd.isEpochMs())
 					{
 						try
 						{
+							fieldValue = Long.toString(Long.parseLong(fieldValue) / 1000); 
+						}
+						catch (NumberFormatException e)
+						{
+							String message = String.format(
+									"Cannot parse epoch ms timestamp '%s'",								
+									fieldValue);
+							s_Logger.error(message);
+						}
+					}
+					else
+					{
+						try
+						{
+							DateFormat dateFormat = new SimpleDateFormat(dd.getTimeFormat());
 							fieldValue = Long.toString(dateFormat.parse(fieldValue).getTime() / 1000);
 						}
 						catch (ParseException e)
@@ -815,19 +828,106 @@ public class ProcessManager
 									dd.getTimeFormat() + "'");
 						}
 					}
-
-					lenBuffer.clear();
-					lenBuffer.putInt(fieldValue.length());
-					os.write(lenBuffer.array());
-					os.write(fieldValue.getBytes(UTF8_CHARSET));
 				}
-				token = parser.nextToken();
+			
+				header.add(fieldName);
+				record.add(fieldValue);
 			}
-
-			++recordCount;
+			
 			token = parser.nextToken();
 		}
 
+		// Each record consists of number of fields followed by length/value
+		// pairs.  See CLengthEncodedInputParser.h in the C++ code for a more
+		// detailed description.
+		lengthEncodedWriter.writeRecord(header);
+		lengthEncodedWriter.writeRecord(record);
+		
+		int recordCount = (header.size() > 0) ? 1 : 0;
+
+		// is the timestamp a format string or epoch ms.
+		if (dd.isEpochMs())
+		{
+			token = parser.nextToken();
+			while (token == JsonToken.START_OBJECT)
+			{
+				record.clear();
+
+				while (token != JsonToken.END_OBJECT)
+				{
+					if (token == JsonToken.FIELD_NAME)
+					{
+						String fieldName = parser.getCurrentName();
+						token = parser.nextToken();
+						String fieldValue = parser.getText();
+
+						if (fieldName.equals(timeField))
+						{
+							try
+							{
+								fieldValue = Long.toString(Long.parseLong(fieldValue) / 1000); 
+							}
+							catch (NumberFormatException e)
+							{
+								String message = String.format(
+										"Cannot parse epoch ms timestamp '%s'",								
+										fieldValue);
+								s_Logger.error(message);
+							}
+						}
+
+						record.add(fieldValue);
+					}
+					token = parser.nextToken();
+				}
+
+				lengthEncodedWriter.writeRecord(record);
+				++recordCount;
+				token = parser.nextToken();
+			}
+		}
+		else
+		{
+			DateFormat dateFormat = new SimpleDateFormat(dd.getTimeFormat());
+			
+			token = parser.nextToken();
+			while (token == JsonToken.START_OBJECT)
+			{
+				record.clear();
+
+				while (token != JsonToken.END_OBJECT)
+				{
+					if (token == JsonToken.FIELD_NAME)
+					{
+						String fieldName = parser.getCurrentName();
+						token = parser.nextToken();
+						String fieldValue = parser.getText();
+
+						if (fieldName.equals(timeField))
+						{
+							try
+							{
+								fieldValue = Long.toString(dateFormat.parse(fieldValue).getTime() / 1000);
+							}
+							catch (ParseException e)
+							{
+								s_Logger.error("Cannot parse '" + fieldValue +
+										"' as a date using format string '" +
+										dd.getTimeFormat() + "'");
+							}
+						}
+
+						record.add(fieldValue);
+					}
+					token = parser.nextToken();
+				}
+
+				lengthEncodedWriter.writeRecord(record);
+				++recordCount;
+				token = parser.nextToken();
+			}
+		}
+		
 		s_Logger.info("Transferred " + recordCount + " Json records to autodetect." );
 	}
 
@@ -863,6 +963,9 @@ public class ProcessManager
 								// reschedule the shutdown
 								startShutdownTimer(jobId, 10); 
 							}		
+
+							m_JobDetailsProvider.setJobFinishedTimeandStatus(jobId, 
+									new Date(), JobStatus.FINISHED);
 						}
 						catch (UnknownJobException | NativeProcessRunException e)
 						{
@@ -935,6 +1038,13 @@ public class ProcessManager
 	{
 		try
 		{
+			if (process.getErrorReader().ready() == false)
+			{
+				s_Logger.info("No Error output to read from native process");
+				return sb;				
+			}
+			
+			
 			String line;
 			while ((line = process.getErrorReader().readLine()) != null)
 			{

@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Inc 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -40,6 +40,7 @@ import java.util.Set;
 import org.junit.Test;
 
 import com.prelert.job.AnalysisConfig;
+import com.prelert.job.Detector;
 
 /**
  * Test the functions in {@linkplain com.prelert.job.process.ProcessCtl} for
@@ -57,7 +58,7 @@ public class FieldConfigTest
 		ProcessCtrl processCtl = new ProcessCtrl();
 			
 		// simple case of a by b
-		AnalysisConfig.Detector d = new AnalysisConfig.Detector();
+		Detector d = new Detector();
 		d.setFieldName("Integer_Value");
 		d.setByFieldName("ts_hash");
 		
@@ -68,7 +69,7 @@ public class FieldConfigTest
 		assertEquals(args.get(2), d.getByFieldName());
 		
 		// no field name should default to the count funtion
-		d = new AnalysisConfig.Detector();
+		d = new Detector();
 		d.setByFieldName("ts_hash");
 		
 		// TODO is 'rare by field' a valid config? 
@@ -80,7 +81,7 @@ public class FieldConfigTest
 		assertEquals(args.get(2), d.getByFieldName());
 				
 		// function and field
-		d = new AnalysisConfig.Detector();
+		d = new Detector();
 		d.setFunction("max");
 		d.setFieldName("responseTime");
 		
@@ -89,7 +90,7 @@ public class FieldConfigTest
 		assertEquals(args.get(0), "max(responseTime)");
 		
 		// function and field and by field
-		d = new AnalysisConfig.Detector();
+		d = new Detector();
 		d.setFunction("max");
 		d.setFieldName("responseTime");
 		d.setByFieldName("airline");
@@ -101,7 +102,7 @@ public class FieldConfigTest
 		assertEquals(args.get(2), d.getByFieldName());
 		
 		// function and field over field
-		d = new AnalysisConfig.Detector();
+		d = new Detector();
 		d.setFunction("min");
 		d.setFieldName("responseTime");
 		d.setOverFieldName("region");
@@ -113,7 +114,7 @@ public class FieldConfigTest
 		assertEquals(args.get(2), d.getOverFieldName());
 		
 		// function and field, by field and over field
-		d = new AnalysisConfig.Detector();
+		d = new Detector();
 		d.setFunction("max");
 		d.setFieldName("responseTime");
 		d.setByFieldName("airline");
@@ -135,15 +136,15 @@ public class FieldConfigTest
 	{
 		ProcessCtrl processCtl = new ProcessCtrl();
 		
-		List<AnalysisConfig.Detector> detectors = new ArrayList<>();
+		List<Detector> detectors = new ArrayList<>();
 		
 		
 		
-		AnalysisConfig.Detector d = new AnalysisConfig.Detector();
+		Detector d = new Detector();
 		d.setFieldName("Integer_Value");
 		d.setByFieldName("ts_hash");
 		detectors.add(d);
-		AnalysisConfig.Detector d2 = new AnalysisConfig.Detector();
+		Detector d2 = new Detector();
 		d2.setFunction("count");
 		d2.setByFieldName("ts_hash");
 		detectors.add(d2);

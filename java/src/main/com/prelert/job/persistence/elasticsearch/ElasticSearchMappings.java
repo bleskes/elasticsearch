@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Inc 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -57,7 +57,7 @@ public class ElasticSearchMappings
 	
 	
 	/**
-	 * Create the ElasticSearch mapping for {@linkplain com.prelert.job.JobDetails}.</br>
+	 * Create the ElasticSearch mapping for {@linkplain com.prelert.job.JobDetails}.
 	 * The '_all' field is disabled as the document isn't meant to be searched.
 	 * 
 	 * @return
@@ -77,19 +77,16 @@ public class ElasticSearchMappings
 							.field("type", "string").field(INDEX, NOT_ANALYZED)
 						.endObject()
 						.startObject(JobDetails.CREATE_TIME)
-							.field("type", "date").field(INDEX, NOT_ANALYZED)
+							.field("type", "date")
 						.endObject()
 						.startObject(JobDetails.FINISHED_TIME)
-							.field("type", "date").field(INDEX, NOT_ANALYZED)
+							.field("type", "date")
 						.endObject()
 						.startObject(JobDetails.LAST_DATA_TIME)
-							.field("type", "date").field(INDEX, NOT_ANALYZED)
+							.field("type", "date")
 						.endObject()						
 						.startObject(JobDetails.PROCESSED_RECORD_COUNT)
-							.field("type", "long").field(INDEX, NO)
-						.endObject()
-						.startObject(JobDetails.FILE_URLS) // is an array of string
-							.field("type", "string").field(INDEX, NOT_ANALYZED)
+							.field("type", "long")
 						.endObject()
 						.startObject(JobDetails.TIMEOUT)
 							.field("type", "long").field(INDEX, NO)
@@ -158,7 +155,10 @@ public class ElasticSearchMappings
 								.endObject()
 								.startObject(DataDescription.FIELD_DELIMITER)
 										.field("type", "string").field(INDEX, NOT_ANALYZED)
-								.endObject()								
+								.endObject()
+								.startObject(DataDescription.QUOTE_CHARACTER)
+										.field("type", "string").field(INDEX, NOT_ANALYZED)
+								.endObject()									
 							.endObject()	
 						.endObject()																		
 					.endObject() 
@@ -173,7 +173,7 @@ public class ElasticSearchMappings
 	
 	
 	/**
-	 * Create the ElasticSearch mapping for {@linkplain com.prelert.rs.data.Bucket}.</br>
+	 * Create the ElasticSearch mapping for {@linkplain com.prelert.rs.data.Bucket}.
 	 * The '_all' field is disabled as the document isn't meant to be searched.
 	 * 
 	 * @return
@@ -190,16 +190,16 @@ public class ElasticSearchMappings
 					.endObject()				
 					.startObject("properties")
 						.startObject(Bucket.ID)
-							.field("type", "long").field(INDEX, NOT_ANALYZED)
+							.field("type", "long")
 						.endObject()
 						.startObject(Bucket.TIMESTAMP)
-							.field("type", "date").field(INDEX, NOT_ANALYZED)
+							.field("type", "date")
 						.endObject()						
 						.startObject(Bucket.ANOMALY_SCORE)
-							.field("type", "double").field(INDEX, NO)
+							.field("type", "double")
 						.endObject()
 						.startObject(Bucket.RECORD_COUNT)
-							.field("type", "long").field(INDEX, NO)
+							.field("type", "long")
 						.endObject()	
 					.endObject()
 				.endObject()
@@ -210,8 +210,8 @@ public class ElasticSearchMappings
 	
 	
 	/**
-	 * Create the ElasticSearch mapping for {@linkplain com.prelert.rs.data.Detector}.</br>
-	 * The '_all' field is disabled as the document isn't meant to be searched.</br>
+	 * Create the ElasticSearch mapping for {@linkplain com.prelert.rs.data.Detector}.
+	 * The '_all' field is disabled as the document isn't meant to be searched.
 	 * 
 	 * @return
 	 * @throws IOException
@@ -238,9 +238,8 @@ public class ElasticSearchMappings
 	
 	
 	/**
-	 * Create the ElasticSearch mapping for {@linkplain com.prelert.rs.data.Detector}.</br>
-	 * The '_all' field is disabled as the document isn't meant to be searched.</br>
-	 * 
+	 * Create the ElasticSearch mapping for {@linkplain com.prelert.rs.data.Detector}.
+	 * The '_all' field is disabled as the document isn't meant to be searched.
 	 * Records have a _parent mapping to a {@linkplain com.prelert.rs.data.Bucket}.
 	 * 
 	 * @return
@@ -263,7 +262,7 @@ public class ElasticSearchMappings
 							.field("type", "string").field(INDEX, NOT_ANALYZED)
 						.endObject()	
 						.startObject(AnomalyRecord.ANOMALY_SCORE)
-							.field("type", "double").field(INDEX, NOT_ANALYZED)
+							.field("type", "double")
 						.endObject()
 						.startObject(AnomalyRecord.ACTUAL)
 							.field("type", "double").field(INDEX, NO)
@@ -272,7 +271,7 @@ public class ElasticSearchMappings
 							.field("type", "double").field(INDEX, NO)
 						.endObject()						
 						.startObject(AnomalyRecord.PROBABILITY)
-							.field("type", "double").field(INDEX, NO)
+							.field("type", "double")
 						.endObject()		
 						.startObject(AnomalyRecord.FUNCTION)
 							.field("type", "string").field(INDEX, NOT_ANALYZED)
@@ -299,10 +298,10 @@ public class ElasticSearchMappings
 							.field("type", "string").field(INDEX, NOT_ANALYZED)
 						.endObject()
 						.startObject(AnomalyRecord.IS_OVERALL_RESULT)
-							.field("type", "boolean").field(INDEX, NOT_ANALYZED)
+							.field("type", "boolean")
 						.endObject()
 						.startObject(AnomalyRecord.IS_SIMPLE_COUNT)
-							.field("type", "boolean").field(INDEX, NOT_ANALYZED)
+							.field("type", "boolean")
 						.endObject()
 					.endObject()
 				.endObject()
@@ -312,8 +311,8 @@ public class ElasticSearchMappings
 	}
 	
 	/**
-	 * Create the ElasticSearch mapping for {@linkplain DetectorState}.</br>
-	 * The '_all' field is disabled as the document isn't meant to be searched.</br>
+	 * Create the ElasticSearch mapping for {@linkplain DetectorState}.
+	 * The '_all' field is disabled as the document isn't meant to be searched.
 	 * 
 	 * The model state string is not searchable (index = 'no') as it could be
 	 * very large.  

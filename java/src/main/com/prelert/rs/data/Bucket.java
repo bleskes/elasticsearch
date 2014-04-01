@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Inc 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -46,14 +46,14 @@ import org.apache.log4j.Logger;
 /**
  * Bucket Result POJO 
  */
-@JsonIgnoreProperties({"Id"})
+@JsonIgnoreProperties({"id"})
 @JsonInclude(Include.NON_NULL)
 public class Bucket 
 {
 	/*
 	 * Field Names
 	 */
-	public static final String ID = "Id";
+	public static final String ID = "id";
 	public static final String TIMESTAMP = "timestamp";
 	public static final String ANOMALY_SCORE =  "anomalyScore";
 	public static final String RECORD_COUNT = "recordCount";
@@ -77,7 +77,7 @@ public class Bucket
 	 * from the epoch. As the id is derived from the timestamp 
 	 * field it doesn't need to be serialised.
 	 *  
-	 * @return
+	 * @return The bucket id
 	 */
 	public String getId()
 	{
@@ -118,9 +118,9 @@ public class Bucket
 	}
 	
 	/**
-	 * Get the list of detectors.
+	 * Get the list of detectors that produced output in this bucket
 	 * 
-	 * @return 
+	 * @return A list of detector 
 	 */	
 	public List<Detector> getDetectors()
 	{
@@ -135,7 +135,7 @@ public class Bucket
 	
 	/**
 	 * Get all the anomaly records associated with this bucket
-	 * @return
+	 * @return All the anomaly records
 	 */
 	public List<AnomalyRecord> getRecords()
 	{
@@ -159,7 +159,7 @@ public class Bucket
 	 * 
 	 * @param parser The JSON Parser should be pointing to the start of the object,
 	 * when the function returns it will be pointing to the end.
-	 * @return 
+	 * @return The new bucket
 	 * @throws JsonParseException
 	 * @throws IOException
 	 * @throws AutoDetectParseException

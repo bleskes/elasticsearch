@@ -39,9 +39,9 @@ import com.fasterxml.jackson.core.JsonToken;
 import com.prelert.rs.data.parsing.AutoDetectParseException;
 
 /**
- * Anomaly Record POJO
- * Uses the object wrappers Boolean Double so null values
- * can be returned if the members are not set.
+ * Anomaly Record POJO.
+ * Uses the object wrappers Boolean and Double so <code>null</code> values
+ * can be returned if the members have not been set.
  */
 @JsonInclude(Include.NON_NULL)
 public class AnomalyRecord
@@ -271,7 +271,7 @@ public class AnomalyRecord
 	 *
 	 * @param parser The JSON Parser should be pointing to the start of the object,
 	 * when the function returns it will be pointing to the end.
-	 * @return
+	 * @return The new AnomalyRecord
 	 * @throws JsonParseException
 	 * @throws IOException
 	 * @throws AutoDetectParseException

@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Inc 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -55,7 +55,7 @@ public class ServerMain
 	/**
 	 * Base URI, all web service endpoints should match this path
 	 */
-	public static final String BASE_PATH = "/engine/beta/*";
+	public static final String BASE_PATH = "/engine/v0.3/*";
 	
 	/**
 	 * The default port the server will run on.

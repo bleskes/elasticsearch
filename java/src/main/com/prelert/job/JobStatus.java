@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Inc 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -39,7 +39,7 @@ public enum JobStatus
 			return true;
 		}
 	}, 
-	FINISHED, PERSISTED, KILLED, FAILED;
+	FINISHED, PERSISTED, FAILED;
 
 	public boolean isRunning()
 	{

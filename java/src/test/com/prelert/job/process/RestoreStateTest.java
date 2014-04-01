@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Inc 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -43,11 +43,12 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
+import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
+import com.prelert.job.JobInUseException;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.JobDetails;
-import com.prelert.job.NativeProcessRunException;
-import com.prelert.job.JobManager;
+import com.prelert.job.manager.JobManager;
 import com.prelert.rs.data.Pagination;
 
 
@@ -69,7 +70,7 @@ public class RestoreStateTest
 	 */
 	public static void main(String[] args) 
 	throws IOException, NativeProcessRunException, UnknownJobException,
-		InterruptedException, UnknownJobException 
+		InterruptedException, JobInUseException 
 	{
 		final String prelertSrcHome = System.getProperty("prelert.src.home");
 		if (prelertSrcHome == null)
@@ -85,10 +86,10 @@ public class RestoreStateTest
 		Logger.getRootLogger().addAppender(console);
 		
 		
-		AnalysisConfig.Detector detector = new AnalysisConfig.Detector();
+		Detector detector = new Detector();
 		detector.setFieldName("responsetime");
 		detector.setByFieldName("airline");
-		List<AnalysisConfig.Detector> d = new ArrayList<>();
+		List<Detector> d = new ArrayList<>();
 		d.add(detector);
 		AnalysisConfig config = new AnalysisConfig();
 		config.setDetectors(d);
@@ -139,7 +140,7 @@ public class RestoreStateTest
 				anomalyScores.add((Double)bucket.get("anomalyScore"));			
 			}
 
-			String testResults = prelertSrcHome + "/gui/apps/autodetectAPI/test_data/flightcentre_split_results.json";
+			String testResults = prelertSrcHome + "/gui/apps/autodetectAPI/test_data/engine_api_integration_test/flightcentre_split_results.json";
 
 			ObjectMapper mapper = new ObjectMapper();
 			List<Map<String,Object>> standardBuckets = mapper.readValue(new File(testResults), 

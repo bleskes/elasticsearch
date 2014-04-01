@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Inc 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -132,7 +132,14 @@ public class AutoDetectResultsParser
 		if (token == JsonToken.END_ARRAY)
 		{
 			s_Logger.info("Empty results array, 0 buckets parsed");
-			return new BucketsAndState();
+			
+			// Parse the serialised detector state and persist
+			DetectorState state = parseState(parser);
+			persister.persistDetectorState(state);		
+			BucketsAndState parsedData = new BucketsAndState();
+			parsedData.m_State = state;
+			
+			return parsedData;
 		}
 		else if (token != JsonToken.START_OBJECT)
 		{
@@ -166,12 +173,24 @@ public class AutoDetectResultsParser
 
 		
 		// All the results have been read now read the serialised state
-		// if it has been written
-		token = parser.nextToken();
+		DetectorState state = parseState(parser);
+		persister.persistDetectorState(state);		
+		parsedData.m_State = state;
+		
+		return parsedData;
+	}
+	
+	
+	static private DetectorState parseState(JsonParser parser) 
+	throws JsonParseException, IOException, AutoDetectParseException
+	{
+		s_Logger.debug("Parsing serialised detector state");
+		
+		JsonToken token = parser.nextToken();
 		if (token == null)
 		{
 			s_Logger.info("End of input no detector state to parse");
-			return parsedData;
+			return null;
 		}
 		else if (token != JsonToken.START_OBJECT)
 		{
@@ -179,14 +198,9 @@ public class AutoDetectResultsParser
 					"Invalid JSON should start with an array of objects or an object = " + token);
 		}
 		
-		s_Logger.debug("Parsing serialised detector state");
-		
 		// Parse the serialised detector state and persist
 		DetectorState state = DetectorState.parseJson(parser);
-		persister.persistDetectorState(state);		
-		parsedData.m_State = state;
-		
-		return parsedData;
+		return state;
 	}
 }		
 

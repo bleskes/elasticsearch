@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Inc 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -46,11 +46,13 @@ import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.prelert.job.JobConfiguration;
-import com.prelert.job.NativeProcessRunException;
+import com.prelert.job.JobConfigurationException;
+import com.prelert.job.JobInUseException;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.JobDetails;
-import com.prelert.job.JobManager;
 import com.prelert.job.logs.JobLogs;
+import com.prelert.job.manager.JobManager;
+import com.prelert.job.process.NativeProcessRunException;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
 
@@ -58,13 +60,15 @@ import com.prelert.rs.data.SingleDocument;
 /**
  * REST API Jobs end point use to create new Jobs list all jobs or get
  * details of a particular job.   
- * </br>
- * Jobs are created by POSTing to this endpoint:</br>
+ * <br/>
+ * Jobs are created by POSTing to this endpoint:<br/>
  * <pre>curl -X POST -H 'Content-Type: application/json' 'http://localhost:8080/api/jobs'</pre>
- * Get details of a specific job:</br> 
+ * Get details of a specific job:<br/> 
  * <pre>curl 'http://localhost:8080/api/jobs/{job_id}'</pre>
- * or all jobs:</br> 
+ * or all jobs:<br/> 
  * <pre>curl 'http://localhost:8080/api/jobs'</pre>
+ * Delete a job with:<br/>
+ * <pre>curl -X DELETE 'http://localhost:8080/api/jobs/{job_id}'</pre>
  */
 
 @Path("/jobs")
@@ -131,10 +135,14 @@ public class Jobs extends ResourceWithJobManager
 		
     @POST
     @Consumes(MediaType.APPLICATION_JSON)    
+    @Produces(MediaType.APPLICATION_JSON)
     public Response createJob(JobConfiguration config) 
-    throws UnknownJobException, JsonProcessingException 
+    throws UnknownJobException, JsonProcessingException, JobConfigurationException 
     {   		
     	s_Logger.debug("Creating new job");
+    	
+    	// throws if a bad config
+    	config.verify();
     	
     	JobManager manager = jobManager();
     	JobDetails job = manager.createJob(config);
@@ -147,7 +155,7 @@ public class Jobs extends ResourceWithJobManager
     	setEndPointLinks(job);
     	
     	s_Logger.debug("Returning new job details location " + job.getLocation());
-    	String ent = String.format("{\"id\":\"%s\"}", job.getId()); 
+    	String ent = String.format("{\"id\":\"%s\"}\n", job.getId()); 
     	
 		return Response.created(job.getLocation()).entity(ent).build();
     }      
@@ -160,11 +168,13 @@ public class Jobs extends ResourceWithJobManager
      * @return
      * @throws NativeProcessRunException If there is an error deleting the job
      * @throws UnknownJobException If the job id is not known
+     * @throws JobInUseException If the job cannot be deleted because the
+	 * native process is in use.
      */
     @DELETE
 	@Path("/{jobId}")
     public Response deleteJob(@PathParam("jobId") String jobId) 
-    throws UnknownJobException, NativeProcessRunException
+    throws UnknownJobException, NativeProcessRunException, JobInUseException
     {   	
     	s_Logger.debug("Delete job '" + jobId + "'");
     	
@@ -173,6 +183,8 @@ public class Jobs extends ResourceWithJobManager
 		
 		if (deleted)
 		{
+			new JobLogs().deleteLogs(jobId);
+			
 			s_Logger.debug("Job '" + jobId + "' deleted");
 			return Response.ok().build();
 		}
@@ -185,54 +197,9 @@ public class Jobs extends ResourceWithJobManager
 		}
     }
     
-    /**
-     * Get the contents of the log directory zipped
-     * 
-     * @param jobId
-     * @return
-     * @throws UnknownJobException
-     */
-    @GET
-	@Path("/{jobId}/logs")
-    @Produces(MediaType.APPLICATION_OCTET_STREAM)
-    public Response jobLogFiles(@PathParam("jobId") String jobId)
-    throws UnknownJobException
-    {   	
-    	s_Logger.debug("Download logs for job '" + jobId + "'");
-    	
-		JobLogs logs = new JobLogs();
-		byte [] compressFiles = logs.zippedLogFiles(jobId);
-		
-		String filename = jobId + "_logs.zip";
-		
-		return Response.ok(compressFiles)
-				.header("Content-Disposition", "attachment; filename=\"" + filename + "\"")
-				.build();
-    }
-    
-    /**
-     * Tail the log file
-     * 
-     * @param jobId
-     * @param lines Number of lines to tail
-     * @return
-     * @throws UnknownJobException
-     */
-    @GET
-	@Path("/{jobId}/logs/tail")
-    @Produces(MediaType.TEXT_PLAIN)
-    public String tailLogFile(@PathParam("jobId") String jobId,
-    		@DefaultValue("10") @QueryParam("lines") int lines)
-    throws UnknownJobException
-    {   	
-    	s_Logger.debug("Tail log for job '" + jobId + "'");
-    	
-		JobLogs logs = new JobLogs();
-		return logs.tail(jobId, lines);
-    }
         
     /**
-     * Sets the URLs to the streaming & results endpoints and the 
+     * Sets the URLs to the data, logs & results endpoints and the 
      * location of this job 
      * @param job
      */
@@ -244,19 +211,23 @@ public class Jobs extends ResourceWithJobManager
 				.build();
     	job.setLocation(location);   	
     	
-    	URI streaming = m_UriInfo.getBaseUriBuilder()
-				.path(ENDPOINT)
+    	URI data = m_UriInfo.getBaseUriBuilder()
+				.path(Data.ENDPOINT)
 				.path(job.getId())
-				.path(Streaming.ENDPOINT)
 				.build();
-    	job.setStreamingEndpoint(streaming);
+    	job.setDataEndpoint(data);
     	
     	URI results = m_UriInfo.getBaseUriBuilder()
-				.path(ENDPOINT)
-				.path(job.getId())
 				.path(Results.ENDPOINT)
+				.path(job.getId())
 				.build();
-    	job.setResultsEndpoint(results);    	
+    	job.setResultsEndpoint(results);
+    	
+    	URI logs = m_UriInfo.getBaseUriBuilder()
+				.path(Logs.ENDPOINT)
+				.path(job.getId())
+				.build();
+    	job.setLogsEndpoint(logs);      	
     	
     }
 }
