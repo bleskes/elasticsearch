@@ -546,7 +546,7 @@ public class JobManager implements JobDetailsProvider
 											.ignoreUnmapped(true)
 											.missing("_last")
 											.order(SortOrder.DESC);		
-
+		
 		SearchResponse searchResponse = m_Client.prepareSearch(jobId)
 				.setTypes(AnomalyRecord.TYPE)
 				.setPostFilter(parentFilter)
@@ -558,6 +558,12 @@ public class JobManager implements JobDetailsProvider
 		for (SearchHit hit : searchResponse.getHits().getHits())
 		{
 			Map<String, Object> m  = hit.getSource();
+			
+			// TODO
+			// This a hack to work round the deficiency in the 
+			// Java API where source filtering hasn't been implemented.			
+			m.remove(AnomalyRecord.DETECTOR_NAME);
+			
 			results.add(m);
 		}
 		
