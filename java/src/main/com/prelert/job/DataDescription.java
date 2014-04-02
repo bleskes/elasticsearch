@@ -90,6 +90,12 @@ public class DataDescription
 	 * The time field name
 	 */
 	static final public String TIME_FIELD_NAME = "timeField";
+	
+	/**
+	 * By default autodetect expects the timestamp in a field with this name
+	 */
+	static final public String DEFAULT_TIME_FIELD = "_time";
+	
 	/**
 	 * The timeFormat field name
 	 */	
@@ -123,14 +129,16 @@ public class DataDescription
 	private DataFormat m_DataFormat;
 	private String m_TimeFieldName;
 	private String m_TimeFormat;
-	private String m_FieldDelimiter;
+	private char m_FieldDelimiter;
 	private char m_QuoteCharacter;
 	
 	public DataDescription()
 	{
 		m_DataFormat = DataFormat.DELINEATED;
-		m_QuoteCharacter = DEFAULT_QUOTE_CHAR;
+		m_TimeFieldName = DEFAULT_TIME_FIELD;
 		m_TimeFormat = EPOCH;
+		m_FieldDelimiter = DEFAULT_DELIMITER;
+		m_QuoteCharacter = DEFAULT_QUOTE_CHAR;
 	}
 	
 	/**
@@ -170,7 +178,7 @@ public class DataDescription
 			Object obj = values.get(FIELD_DELIMITER);
 			if (obj != null)
 			{
-				m_FieldDelimiter = obj.toString();
+				m_FieldDelimiter = obj.toString().charAt(0);
 			}
 		}
 		if (values.containsKey(QUOTE_CHARACTER))
@@ -232,15 +240,17 @@ public class DataDescription
 	/**
 	 * If the data is in a delineated format with a header e.g. csv or tsv
 	 * this is the delimiter character used. This is only applicable if
-	 * {@linkplain #getFormat()} is {@link DataDescription.DataFormat#DELINEATED} 
-	 * @return A String if set or <code>null</code>
+	 * {@linkplain #getFormat()} is {@link DataDescription.DataFormat#DELINEATED}.
+	 * The default value is {@value #DEFAULT_DELIMITER} 
+	 * 
+	 * @return A char 
 	 */
-	public String getFieldDelimiter()
+	public char getFieldDelimiter()
 	{
 		return m_FieldDelimiter;
 	}
 	
-	public void setFieldDelimiter(String delimiter)
+	public void setFieldDelimiter(char delimiter)
 	{
 		m_FieldDelimiter = delimiter;
 	}	

@@ -219,7 +219,7 @@ public class JobsTest implements Closeable
 		ac.setDetectors(Arrays.asList(d));
 		
 		DataDescription dd = new DataDescription();
-		dd.setFieldDelimiter("\t");
+		dd.setFieldDelimiter('\t');
 		
 
 		test(ac.equals(job.getAnalysisConfig()));
@@ -282,7 +282,7 @@ public class JobsTest implements Closeable
 		ac.setDetectors(Arrays.asList(d));
 		
 		DataDescription dd = new DataDescription();
-		dd.setFieldDelimiter(",");
+		dd.setFieldDelimiter(',');
 		
 
 		test(ac.equals(job.getAnalysisConfig()));
@@ -366,7 +366,7 @@ public class JobsTest implements Closeable
 		
 		DataDescription dd = new DataDescription();
 		dd.setFormat(DataFormat.DELINEATED);
-		dd.setFieldDelimiter(",");
+		dd.setFieldDelimiter(',');
 		dd.setTimeField("_time");
 		dd.setTimeFormat("epoch_ms");
 		
@@ -535,7 +535,7 @@ public class JobsTest implements Closeable
 		ac.setDetectors(Arrays.asList(d));
 		
 		DataDescription dd = new DataDescription();
-		dd.setFieldDelimiter(",");
+		dd.setFieldDelimiter(',');
 		dd.setTimeField("time");
 		dd.setTimeFormat("yyyy-MM-dd HH:mm:ss");
 
@@ -1038,7 +1038,7 @@ public class JobsTest implements Closeable
 		File flightCentreMsJsonData = new File(prelertTestDataHome + 
 				"/engine_api_integration_test/flightcentre_ms.json");
 		
-		/*
+	
 		//=================
 		// CSV & Gzip test 
 		//
@@ -1110,7 +1110,7 @@ public class JobsTest implements Closeable
 
 		test.verifyJobResults(baseUrl, refJobId, 150);
 		jobUrls.add(refJobId);		
-		*/
+
 		
 		//=====================================================
 		// timestamp in ms from the epoch for both csv and json
@@ -1119,6 +1119,7 @@ public class JobsTest implements Closeable
 	 	jobUrls.add(jobId);	
 	 	
 	 	test.uploadData(baseUrl, jobId, flightCentreMsData, false);
+	 	test.finishJob(baseUrl, jobId);	
 	 	test.testReadLogFiles(baseUrl, jobId);
 		
 		// Give ElasticSearch a chance to index
@@ -1132,6 +1133,7 @@ public class JobsTest implements Closeable
 	 	jobUrls.add(jobId);	
 	 	
 	 	test.uploadData(baseUrl, jobId, flightCentreMsJsonData, false);
+	 	test.finishJob(baseUrl, jobId);	
 	 	test.testReadLogFiles(baseUrl, jobId);
 		
 		// Give ElasticSearch a chance to index

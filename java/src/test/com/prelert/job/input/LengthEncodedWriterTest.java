@@ -49,16 +49,20 @@ public class LengthEncodedWriterTest
 	{
 		{
 			String [] header = {"one", "two", "three", "four", "five"};
-			String [] record = {"r1", "r2", "rr3", "rrr4", "r5"};
+			String [] record1 = {"r1", "r2", "rr3", "rrr4", "r5"};
+			String [] record2 = {"y1", "y2", "yy3", "yyy4", "y5"};
 		
 			ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
 
 			LengthEncodedWriter writer = new LengthEncodedWriter(bos);
 			writer.writeRecord(header);
+			
+			// write the same record this number of times
 			final int NUM_RECORDS = 5;
 			for (int i=0; i<NUM_RECORDS; i++)
 			{
-				writer.writeRecord(record);
+				writer.writeRecord(record1);
+				writer.writeRecord(record2);
 			}
 
 			ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
@@ -83,7 +87,7 @@ public class LengthEncodedWriterTest
 			for (int n=0; n<NUM_RECORDS; n++) 
 			{
 				numFields = bb.getInt();
-				Assert.assertEquals(numFields, record.length);		
+				Assert.assertEquals(numFields, record1.length);		
 				for (int i=0; i<numFields; i++)
 				{
 					int recordSize = bb.getInt();
@@ -94,7 +98,22 @@ public class LengthEncodedWriterTest
 					}
 
 					String value = new String(charBuff, StandardCharsets.UTF_8);
-					Assert.assertEquals(value, record[i]);
+					Assert.assertEquals(value, record1[i]);
+				}
+				
+				numFields = bb.getInt();
+				Assert.assertEquals(numFields, record2.length);		
+				for (int i=0; i<numFields; i++)
+				{
+					int recordSize = bb.getInt();
+					byte [] charBuff = new byte[recordSize];
+					for (int j=0; j<recordSize; j++)
+					{
+						charBuff[j] = bb.get();
+					}
+
+					String value = new String(charBuff, StandardCharsets.UTF_8);
+					Assert.assertEquals(value, record2[i]);
 				}
 			}
 		}
@@ -102,16 +121,20 @@ public class LengthEncodedWriterTest
 		// same again but using lists
 		{
 			List<String> header = Arrays.asList(new String [] {"one", "two", "three", "four", "five"});
-			List<String> record = Arrays.asList(new String [] {"r1", "r2", "rr3", "rrr4", "r5"});
+			List<String> record1 = Arrays.asList(new String [] {"r1", "r2", "rr3", "rrr4", "r5"});
+			List<String> record2 = Arrays.asList(new String [] {"y1", "y2", "yy3", "yyy4", "y5"});
 			
 			ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
 
 			LengthEncodedWriter writer = new LengthEncodedWriter(bos);
 			writer.writeRecord(header);
+			
+			// write the same record this number of times
 			final int NUM_RECORDS = 5;
 			for (int i=0; i<NUM_RECORDS; i++)
 			{
-				writer.writeRecord(record);
+				writer.writeRecord(record1);
+				writer.writeRecord(record2);
 			}
 			
 
@@ -138,7 +161,7 @@ public class LengthEncodedWriterTest
 			for (int n=0; n<NUM_RECORDS; n++) 
 			{
 				numFields = bb.getInt();
-				Assert.assertEquals(numFields, record.size());		
+				Assert.assertEquals(numFields, record1.size());		
 				for (int i=0; i<numFields; i++)
 				{
 					int recordSize = bb.getInt();
@@ -150,7 +173,118 @@ public class LengthEncodedWriterTest
 					
 					String value = new String(charBuff, StandardCharsets.UTF_8);
 					
-					Assert.assertEquals(record.get(i), value);
+					Assert.assertEquals(record1.get(i), value);
+				}
+				
+				numFields = bb.getInt();
+				Assert.assertEquals(numFields, record2.size());		
+				for (int i=0; i<numFields; i++)
+				{
+					int recordSize = bb.getInt();
+					byte [] charBuff = new byte[recordSize];
+					for (int j=0; j<recordSize; j++)
+					{
+						charBuff[j] = bb.get();
+	 				}
+					
+					String value = new String(charBuff, StandardCharsets.UTF_8);
+					
+					Assert.assertEquals(record2.get(i), value);
+				}				
+			}
+		}
+	}
+	
+	
+	/**
+	 * Test the writeField and writeNumFields methods of LengthEncodedWriter
+	 * @throws IOException 
+	 */
+	@Test	
+	public void testLengthEncodedWriterIndividualRecords() 
+	throws IOException
+	{
+		{
+			String [] header = {"one", "two", "three", "four", "five"};
+			String [] record1 = {"r1", "r2", "rr3", "rrr4", "r5"};
+			String [] record2 = {"y1", "y2", "yy3", "yyy4", "y5"};
+		
+			ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
+
+			LengthEncodedWriter writer = new LengthEncodedWriter(bos);
+			
+			writer.writeNumFields(header.length);
+			for (int i=0; i<header.length; i++)
+			{
+				writer.writeField(header[i]);
+			}
+			
+			// write the same record this number of times
+			final int NUM_RECORDS = 5;
+			for (int i=0; i<NUM_RECORDS; i++)
+			{
+				writer.writeNumFields(record1.length);
+				for (int j=0; j<record1.length; j++)
+				{
+					writer.writeField(record1[j]);
+				}
+				
+				writer.writeNumFields(record2.length);
+				for (int j=0; j<record2.length; j++)
+				{
+					writer.writeField(record2[j]);
+				}
+			}
+
+			ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
+
+			// read header
+			int numFields = bb.getInt();
+			Assert.assertEquals(numFields, header.length);		
+			for (int i=0; i<numFields; i++)
+			{
+				int recordSize = bb.getInt();
+				byte [] charBuff = new byte[recordSize];
+				for (int j=0; j<recordSize; j++)
+				{
+					charBuff[j] = bb.get();
+ 				}
+				
+				String value = new String(charBuff, StandardCharsets.UTF_8);
+				Assert.assertEquals(header[i], value);
+			}
+
+			// read records
+			for (int n=0; n<NUM_RECORDS; n++) 
+			{
+				numFields = bb.getInt();
+				Assert.assertEquals(numFields, record1.length);		
+				for (int i=0; i<numFields; i++)
+				{
+					int recordSize = bb.getInt();
+					byte [] charBuff = new byte[recordSize];
+					for (int j=0; j<recordSize; j++)
+					{
+						charBuff[j] = bb.get();
+					}
+
+					String value = new String(charBuff, StandardCharsets.UTF_8);
+					Assert.assertEquals(value, record1[i]);
+				}
+				
+				numFields = bb.getInt();
+				Assert.assertEquals(numFields, record2.length);		
+				for (int i=0; i<numFields; i++)
+				{
+					int recordSize = bb.getInt();
+					byte [] charBuff = new byte[recordSize];
+					for (int j=0; j<recordSize; j++)
+					{
+						charBuff[j] = bb.get();
+					}
+
+					String value = new String(charBuff, StandardCharsets.UTF_8);
+					Assert.assertEquals(value, record2[i]);
 				}
 			}
 		}

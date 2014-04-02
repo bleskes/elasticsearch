@@ -65,6 +65,7 @@ import com.prelert.job.persistence.elasticsearch.ElasticSearchMappings;
 import com.prelert.job.persistence.elasticsearch.ElasticSearchPersister;
 import com.prelert.job.persistence.elasticsearch.ElasticSearchResultsReaderFactory;
 import com.prelert.job.process.JobDetailsProvider;
+import com.prelert.job.process.MissingFieldException;
 import com.prelert.job.process.NativeProcessRunException;
 import com.prelert.job.process.ProcessManager;
 import com.prelert.job.process.ProcessManager.ProcessStatus;
@@ -713,9 +714,11 @@ public class JobManager implements JobDetailsProvider
 	 * @throws NativeProcessRunException If there is an error starting the native 
 	 * process
 	 * @throws UnknownJobException If the jobId is not recognised
+	 * @throws MissingFieldException If a configured field is missing from 
+	 * the CSV header
 	 */
 	public boolean dataToJob(String jobId, InputStream input) 
-	throws UnknownJobException, NativeProcessRunException
+	throws UnknownJobException, NativeProcessRunException, MissingFieldException 
 	{
 		try
 		{

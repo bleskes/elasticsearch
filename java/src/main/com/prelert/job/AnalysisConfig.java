@@ -28,8 +28,10 @@
 package com.prelert.job;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Autodetect analysis configuration options describes which fields are 
@@ -251,6 +253,33 @@ public class AnalysisConfig
 	public void setDetectors(List<Detector> detectors)
 	{
 		m_Detectors = detectors;
+	}
+	
+	/**
+	 * Return the list of fields required by the analysis. 
+	 * These are the partition, field, by field and over fields.
+	 * <code>null</code> and empty strings are filtered from the 
+	 * config
+	 * 
+	 * @return List of required fields.
+	 */
+	public List<String> analysisFields()
+	{
+		Set<String> fields = new HashSet<>();
+		
+		fields.add(getPartitionField());
+		for (Detector d : getDetectors())
+		{
+			fields.add(d.getFieldName());
+			fields.add(d.getByFieldName() );
+			fields.add(d.getOverFieldName());
+		}
+		
+		// remove the null and empty strings
+		fields.remove("");
+		fields.remove(null);
+		
+		return new ArrayList<String>(fields);
 	}
 	
 	/**

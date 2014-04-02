@@ -23,6 +23,7 @@ import org.apache.log4j.Logger;
 
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.manager.JobManager;
+import com.prelert.job.process.MissingFieldException;
 import com.prelert.job.process.NativeProcessRunException;
 import com.prelert.rs.provider.RestApiException;
 import com.prelert.rs.streaminginterceptor.StreamingInterceptor;
@@ -71,6 +72,7 @@ public class Data extends ResourceWithJobManager
 	 * @throws IOException
 	 * @throws UnknownJobException
 	 * @throws NativeProcessRunException
+	 * @throws MissingFieldException
 	 */
     @POST
     @Path("/{jobId}")
@@ -78,7 +80,8 @@ public class Data extends ResourceWithJobManager
     	MediaType.APPLICATION_OCTET_STREAM})
     public Response streamData(@Context HttpHeaders headers,
     		@PathParam("jobId") String jobId, InputStream input)  
-    throws IOException, UnknownJobException, NativeProcessRunException
+    throws IOException, UnknownJobException, NativeProcessRunException,
+    	MissingFieldException
     {   	   	
     	s_Logger.debug("Handle Post data to job = " + jobId);
     	
@@ -187,9 +190,11 @@ public class Data extends ResourceWithJobManager
 	 * @throws NativeProcessRunException If there is an error starting the native 
 	 * process
 	 * @throws UnknownJobException If the jobId is not recognised
+	 * @throws MissingFieldException If a configured field is missing from 
+	 * the CSV header
 	 */
     private boolean handleStream(String jobId, InputStream input)
-    throws NativeProcessRunException, UnknownJobException	
+    throws NativeProcessRunException, UnknownJobException, MissingFieldException
     {
     	JobManager manager = jobManager();
 		return manager.dataToJob(jobId, input);

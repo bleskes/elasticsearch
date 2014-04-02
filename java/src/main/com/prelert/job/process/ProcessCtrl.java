@@ -155,11 +155,6 @@ public class ProcessCtrl
 	 * model state files. 
 	 */
 	static final public String BASE_STATE_FILE_EXTENSION = ".xml";
-
-	/**
-	 * By default autodetect expects the timestamp in a field with this name
-	 */
-	static final public String DEFAULT_TIME_FIELD = "_time";
 			
 	/**
 	 * command line args
@@ -355,13 +350,14 @@ public class ProcessCtrl
 		DataDescription dataDescription = job.getDataDescription();
 		if (dataDescription != null)
 		{
-			if (dataDescription.getFieldDelimiter() != null)
+			if (dataDescription.getFieldDelimiter() != DataDescription.DEFAULT_DELIMITER)
 			{
 				String delimiterArg = DELIMITER_ARG
 						+  dataDescription.getFieldDelimiter();
 				command.add(delimiterArg);
 			}
-			if (dataDescription.getTimeField() != null)
+			if (DataDescription.DEFAULT_TIME_FIELD.equals(dataDescription.getTimeField())
+					== false)
 			{
 				String timeFieldArg = TIME_FIELD_ARG
 						+  dataDescription.getTimeField();

@@ -133,7 +133,7 @@ public class ProcessErrorLoggingTest
 	 * @throws IOException 
 	 */
 	public static void main(String[] args) 
-	throws NativeProcessRunException, UnknownJobException, IOException 
+	throws NativeProcessRunException, UnknownJobException, IOException, MissingFieldException
 	{
 		Detector detector = new Detector();
 		detector.setFieldName("airline");
@@ -145,7 +145,7 @@ public class ProcessErrorLoggingTest
 		conf.setDetectors(d);
 
 		DataDescription dd = new DataDescription();
-		dd.setFieldDelimiter("\t");
+		dd.setFieldDelimiter('\t');
 		
 		String jobId = "TestJob";
 		JobDetails job = new JobDetails(jobId, 

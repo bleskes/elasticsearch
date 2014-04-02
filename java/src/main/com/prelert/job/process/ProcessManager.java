@@ -30,19 +30,9 @@ package com.prelert.job.process;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
@@ -51,23 +41,13 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
-import org.supercsv.io.CsvListReader;
-import org.supercsv.prefs.CsvPreference;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
-import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
-import com.prelert.job.Detector;
 import com.prelert.job.DetectorState;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobStatus;
 import com.prelert.job.UnknownJobException;
-import com.prelert.job.input.LengthEncodedWriter;
-import com.prelert.job.process.ProcessCtrl;
 
 /**
  * Manages the native processes channelling data to them and parsing the 
@@ -157,6 +137,9 @@ public class ProcessManager
 	 * <br/>
 	 * If there is an error due to the data being in the wrong format or some 
 	 * other runtime error a {@linkplain NativeProcessRunException} is thrown
+	 * <br/>
+	 * For CSV data if a configured field is missing from the header
+	 * a {@linkplain MissingFieldException} is thrown
 	 *  
 	 * @param jobId
 	 * @param input 
@@ -164,9 +147,11 @@ public class ProcessManager
 	 * it is already processing some data
 	 * @throws UnknownJobException 
 	 * @throws NativeProcessRunException If there is a problem creating a new process
+	 * @throws MissingFieldException If a configured field is missing from 
+	 * the CSV header
 	 */
 	public boolean dataToJob(String jobId, InputStream input)
-	throws UnknownJobException, NativeProcessRunException
+	throws UnknownJobException, NativeProcessRunException, MissingFieldException
 	{
 		// stop the timeout 
 		ScheduledFuture<?> future = m_JobIdToTimeoutFuture.remove(jobId);
@@ -288,7 +273,7 @@ public class ProcessManager
 			Process nativeProcess = m_ProcessCtrl.buildProcess(
 					ProcessCtrl.AUTODETECT_API, job, state);	
 			
-			List<String> analysisFields = analysisFields(job.getAnalysisConfig());
+			List<String> analysisFields = job.getAnalysisConfig().analysisFields();
 
 			procAndDD = new ProcessAndDataDescription(nativeProcess, 
 					job.getDataDescription(), job.getTimeout(), analysisFields);			
@@ -310,32 +295,7 @@ public class ProcessManager
 		
 		return procAndDD;
 	}
-	
-	/**
-	 * Return the list of fields required by the analysis
-	 * @param ac
-	 * @return
-	 */
-	private List<String> analysisFields(AnalysisConfig ac)
-	{
-		Set<String> fields = new HashSet<>();
 		
-		fields.add(ac.getPartitionField());
-		for (Detector d : ac.getDetectors())
-		{
-			fields.add(d.getFieldName());
-			fields.add(d.getByFieldName() );
-			fields.add(d.getOverFieldName());
-		}
-		
-		// remove the null and empty strings
-		fields.remove("");
-		fields.remove(null);
-		
-		return new ArrayList<String>(fields);
-	}
-
-	
 	/**
 	 * Stop the running process.
 	 * Closing the stream into the native process causes the process
@@ -475,17 +435,21 @@ public class ProcessManager
 	 * suited for small writes.
 	 * Only the fields matching those in the list <code>analysisFields</code>  
 	 * are send to the process.
+	 * For CSV data <code>MissingFieldException</code> is 
+	 * thrown if any fields are missing from the header JSON objects may
+	 * be different so an error is logged in that case. 
 	 * 
 	 * @param dataDescription
 	 * @param analysisFields
 	 * @param input
 	 * @param output
-	 * @throws IOException
+	 * @throws IOException 
+	 * @throws MissingFieldException If any fields are missing from the CSV header
 	 */
 	public void writeToJob(DataDescription dataDescription, 
 			List<String> analysisFields,
 			InputStream input, OutputStream output) 
-	throws IOException
+	throws IOException, MissingFieldException
 	{
 		// Oracle's documentation recommends buffering process streams
 		BufferedOutputStream bufferedStream = new BufferedOutputStream(output);
@@ -494,573 +458,22 @@ public class ProcessManager
 		{
 			if (dataDescription.getFormat() == DataFormat.JSON)
 			{
-				transformAndPipeJson(dataDescription, analysisFields, input, 
-						bufferedStream);
+				PipeToProcess.transformAndPipeJson(dataDescription, analysisFields, input, 
+						bufferedStream, s_Logger);
 			}
 			else
 			{
-				transformAndPipeCsv(dataDescription, analysisFields, input, 
-						bufferedStream);
+				PipeToProcess.transformAndPipeCsv(dataDescription, analysisFields, input, 
+						bufferedStream, s_Logger);
 			}
 		}
 		else
 		{			
-			pipeCsv(dataDescription, analysisFields, input, bufferedStream);
+			PipeToProcess.pipeCsv(dataDescription, analysisFields, input, 
+					bufferedStream, s_Logger);
 		}
 	}
 	
-	
-	/**
-	 * Pipes the raw data from the input to the output without any
-	 * encoding or transformations
-	 * 
-	 * @param is
-	 * @param os
-	 * @throws IOException
-	 */
-	@SuppressWarnings("unused")
-	private void pipe(InputStream is, OutputStream os) 
-	throws IOException 
-	{
-		int n;
-		byte[] buffer = new byte[131072]; // 128kB
-		while ((n = is.read(buffer)) > -1)
-		{
-			// os is not wrapped in a BufferedOutputStream because we're copying
-			// big chunks of data anyway
-			os.write(buffer, 0, n);
-		}
-		os.flush();
-	}
-
-	/**
-	 * Read the csv input, transform to length encoded values and pipe
-	 * to the native process.
-	 * 
-	 * @param dd
-	 * @param analysisFields
-	 * @param is
-	 * @param os
-	 * @throws IOException
-	 */
-	private void pipeCsv(DataDescription dd, List<String> analysisFields,
-		InputStream is, OutputStream os)
-	throws IOException
-	{
-		char delimiter = DataDescription.DEFAULT_DELIMITER; 
-		if (dd.getFieldDelimiter() != null)
-		{
-			delimiter = dd.getFieldDelimiter().charAt(0);
-		}
-		
-		CsvPreference csvPref = new CsvPreference.Builder(
-				dd.getQuoteCharacter(),
-				delimiter,
-				new String(new char[] {DataDescription.LINE_ENDING})).build();	
-		
-		try (CsvListReader csvReader = new CsvListReader(new InputStreamReader(is), csvPref))
-		{
-			String[] header = csvReader.getHeader(true);
-			
-			List<Pair<String, Integer>> fieldIndexes = 
-					findFieldIndexes(header, analysisFields);
-			
-			Iterator<Pair<String, Integer>> iter = fieldIndexes.iterator();
-			while (iter.hasNext())
-			{
-				Pair<String, Integer> p = iter.next();
-				if (p.Second < 0)
-				{
-					s_Logger.error(String.format("Field configured for analysis " 
-							+ "'%s' is not in the header '%s'", 
-							p.First, header));
-					
-					iter.remove();
-				}
-			}
-			
-			String [] filteredHeader = new String [fieldIndexes.size()];
-			int i=0;
-			for (Pair<String, Integer> p : fieldIndexes)
-			{
-				filteredHeader[i++] = p.First;
-			}
-			
-			// Don't close the output stream as it causes the autodetect 
-			// process to quit
-			LengthEncodedWriter lengthEncodedWriter = new LengthEncodedWriter(os);
-			lengthEncodedWriter.writeRecord(filteredHeader);
-
-			int numFields = fieldIndexes.size();
-			List<String> line;
-			while ((line = csvReader.read()) != null)
-			{
-				lengthEncodedWriter.writeNumFields(numFields);				
-				for (Pair<String, Integer> p : fieldIndexes)
-				{
-					lengthEncodedWriter.writeField(line.get(p.Second));
-				}
-			}
-			
-			lengthEncodedWriter.flush();
-		}
-	}
-	
-
-	/**
-	 * Parse the contents from input stream, transform dates and write to 
-	 * the output stream as length encoded values.
-	 * Flushes the outputstream once all data is written.
-	 * 
-	 * @param dd 
-	 * @param analysisFields
-	 * @param is
-	 * @param os
-	 * @throws IOException If the time field cannot be found
-	 */
-	private void transformAndPipeCsv(DataDescription dd, List<String> analysisFields,
-			InputStream is, OutputStream os)
-	throws IOException 
-	{
-		String timeField = dd.getTimeField();
-		if (timeField == null)
-		{
-			timeField = ProcessCtrl.DEFAULT_TIME_FIELD;
-		}
-		
-		char delimiter = DataDescription.DEFAULT_DELIMITER; 
-		if (dd.getFieldDelimiter() != null)
-		{
-			delimiter = dd.getFieldDelimiter().charAt(0);
-		}
-		
-		CsvPreference csvPref = new CsvPreference.Builder(
-				dd.getQuoteCharacter(),
-				delimiter,
-				new String(new char[] {DataDescription.LINE_ENDING})).build();	
-		
-		try (CsvListReader csvReader = new CsvListReader(new InputStreamReader(is), csvPref))
-		{
-			String[] header = csvReader.getHeader(true);			
-			List<Pair<String, Integer>> fieldIndexes = 
-					findFieldIndexes(header, analysisFields);
-							
-			Iterator<Pair<String, Integer>> iter = fieldIndexes.iterator();
-			while (iter.hasNext())
-			{
-				Pair<String, Integer> p = iter.next();
-				if (p.Second < 0)
-				{
-					s_Logger.error(String.format("Field configured for analysis " 
-							+ "'%s' is not in the header '%s'", 
-							p.First, header));
-					
-					iter.remove();
-				}
-			}			
-			
-			// first write the header
-			header = new String [fieldIndexes.size()];
-			int i=0;
-			for (Pair<String, Integer> p : fieldIndexes)
-			{
-				header[i++] = p.First;
-			}
-			
-			int timeFieldIndex = Arrays.asList(header).indexOf(timeField);
-			if (timeFieldIndex < 0)
-			{
-				String message = String.format("Cannot find time field '%s' in CSV header '%s'",
-						timeField, header);
-				s_Logger.error(message);
-				throw new IOException(message);
-			}	
-			
-
-			// Don't close the output stream as it causes the autodetect 
-			// process to quit
-			LengthEncodedWriter lengthEncodedWriter = new LengthEncodedWriter(os);
-			lengthEncodedWriter.writeRecord(header);
-
-			List<String> line;
-			String [] record = new String [fieldIndexes.size()];
-			if (dd.isEpochMs())
-			{
-				while ((line = csvReader.read()) != null)
-				{
-					i = 0;
-					for (Pair<String, Integer> p : fieldIndexes)
-					{
-						record[i++] = line.get(p.Second);
-					}
-					
-					try
-					{
-						long epoch = Long.parseLong(record[timeFieldIndex]) / 1000; 
-						record[timeFieldIndex] = new Long(epoch).toString();
-					}
-					catch (NumberFormatException e)
-					{
-						String message = String.format(
-								"Cannot parse epoch ms timestamp '%s'",								
-								line.get(timeFieldIndex));
-
-						s_Logger.error(message);						
-						continue;
-					}		
-					
-					lengthEncodedWriter.writeRecord(record);
-				}
-			}
-			else
-			{
-				DateFormat dateFormat = new SimpleDateFormat(dd.getTimeFormat());
-
-				while ((line = csvReader.read()) != null)
-				{
-					i = 0;
-					for (Pair<String, Integer> p : fieldIndexes)
-					{
-						record[i++] = line.get(p.Second);
-					}
-					
-					try
-					{
-						record[timeFieldIndex] =  new Long(dateFormat.parse(record[timeFieldIndex]).getTime() / 1000).toString();
-					}
-					catch (ParseException pe)
-					{
-						String message = String.format("Cannot parse date '%s' with format string '%s'",
-								line.get(timeFieldIndex), dd.getTimeFormat());
-
-						s_Logger.error(message);
-						continue;
-					}		
-
-					lengthEncodedWriter.writeRecord(record);
-				}
-			}
-			
-			
-			// flush the output
-			os.flush();
-		}
-	}
-	
-	/**
-	 * Finds the indexes of the analysis fields in the header.
-	 * @param header
-	 * @param analysisFields
-	 * @return
-	 */
-	private List<ProcessManager.Pair<String, Integer>> findFieldIndexes(
-			String [] header, List<String> analysisFields)
-	{
-		List<String> headerList = Arrays.asList(header);
-		
-		List<Pair<String, Integer>> fieldIndexes = new ArrayList<>();
-		
-		for (String field : analysisFields)
-		{
-			Pair<String, Integer> p = this.new Pair<>(field, headerList.indexOf(field));			
-			fieldIndexes.add(p);
-		}
-
-		return fieldIndexes;		
-	}		
-	
-	
-	/**
-	 * Relies on all the java objects being uniform i.e. having the 
-	 * same fields in the same order.
-	 * Flushes the outputstream once all data is written.
-	 * 
-	 * @param dd 
-	 * @param analysisFields
-	 * @param is
-	 * @param os
-	 * @throws IOException
-	 */
-	private void transformAndPipeJson(DataDescription dd, 
-			List<String> analysisFields, InputStream is, OutputStream os)
-	throws IOException 
-	{
-		String timeField = dd.getTimeField();
-		if (timeField == null)
-		{
-			timeField = ProcessCtrl.DEFAULT_TIME_FIELD;
-		}
-		
-		JsonParser parser = new JsonFactory().createParser(is);
-		
-		JsonToken token = parser.nextToken();
-		// if the first toke is the start of an array ignore it
-		if (token == JsonToken.START_ARRAY)
-		{
-			token = parser.nextToken();
-			s_Logger.debug("JSON starts with an array");
-		}
-
-		if (token != JsonToken.START_OBJECT)
-		{
-			s_Logger.error("Expecting Json Start Object token");
-			throw new IOException(
-					"Invalid JSON should start with an array of objects or an object."
-					+ "Bad token = " + token);
-		}
-
-		if (dd.isTransformTime())
-		{
-			pipeJsonAndTransformTime(parser, analysisFields, os, dd);
-		}
-		else
-		{
-			pipeJson(parser, analysisFields, os);
-		}
-
-		os.flush();
-
-		parser.close();	
-	}
-
-
-	/**
-	 * Parse the Json objects and write to output stream.
-	 *
-	 * @param parser
-	 * @param analysisFields
-	 * @param os
-	 * @throws IOException
-	 * @throws JsonParseException
-	 */
-	private void pipeJson(JsonParser parser,
-			List<String> analysisFields, OutputStream os)
-	throws JsonParseException, IOException
-	{
-		LengthEncodedWriter lengthEncodedWriter = new LengthEncodedWriter(os);
-		List<String> header = new ArrayList<>();
-		List<String> record = new ArrayList<>();
-
-		JsonToken token = parser.nextToken();
-		while (token != JsonToken.END_OBJECT)
-		{
-			if (token == JsonToken.FIELD_NAME)
-			{
-				String fieldName = parser.getCurrentName();
-				token = parser.nextToken();
-				String fieldValue = parser.getText();
-				
-				header.add(fieldName);
-				record.add(fieldValue);
-			}
-			token = parser.nextToken();
-		}
-
-		// Each record consists of number of fields followed by length/value
-		// pairs.  See CLengthEncodedInputParser.h in the C++ code for a more
-		// detailed description.
-		lengthEncodedWriter.writeRecord(header);
-		lengthEncodedWriter.writeRecord(record);
-
-		
-		int recordCount = (header.size() > 0) ? 1 : 0;
-		
-		token = parser.nextToken();
-		while (token == JsonToken.START_OBJECT)
-		{
-			record.clear();
-			
-			while (token != JsonToken.END_OBJECT)
-			{
-				if (token == JsonToken.FIELD_NAME)
-				{
-					token = parser.nextToken();
-					String fieldValue = parser.getText();
-					record.add(fieldValue);
-				}
-				token = parser.nextToken();
-			}
-
-			lengthEncodedWriter.writeRecord(record);
-			++recordCount;
-			token = parser.nextToken();
-		}
-
-		s_Logger.info("Transferred " + recordCount + " Json records to autodetect.");
-	}
-
-
-	/**
-	 * Parse the Json objects convert the timestamp to epoch time
-	 * and write to output stream. This shares a lot of code with
-	 * {@linkplain #pipeJson(JsonParser, OutputStream)} repeated
-	 * for the sake of efficiency.
-	 *
-	 * @param parser
-	 * @param analysisFields, 
-	 * @param os
-	 * @param dd
-	 * @throws IOException
-	 * @throws JsonParseException
-	 */
-	private void pipeJsonAndTransformTime(JsonParser parser, 
-			List<String> analysisFields, OutputStream os,
-			DataDescription dd)
-	throws JsonParseException, IOException
-	{
-		String timeField = dd.getTimeField();
-		if (timeField == null)
-		{
-			timeField = ProcessCtrl.DEFAULT_TIME_FIELD;
-		}
-
-		LengthEncodedWriter lengthEncodedWriter = new LengthEncodedWriter(os);
-		List<String> header = new ArrayList<>();
-		List<String> record = new ArrayList<>();
-			
-		
-		JsonToken token = parser.nextToken();
-		while (token != JsonToken.END_OBJECT)
-		{
-			if (token == JsonToken.FIELD_NAME)
-			{
-				String fieldName = parser.getCurrentName();
-				token = parser.nextToken();
-				String fieldValue = parser.getText();
-
-				if (timeField.equals(fieldName))
-				{
-					if (dd.isEpochMs())
-					{
-						try
-						{
-							fieldValue = Long.toString(Long.parseLong(fieldValue) / 1000); 
-						}
-						catch (NumberFormatException e)
-						{
-							String message = String.format(
-									"Cannot parse epoch ms timestamp '%s'",								
-									fieldValue);
-							s_Logger.error(message);
-						}
-					}
-					else
-					{
-						try
-						{
-							DateFormat dateFormat = new SimpleDateFormat(dd.getTimeFormat());
-							fieldValue = Long.toString(dateFormat.parse(fieldValue).getTime() / 1000);
-						}
-						catch (ParseException e)
-						{
-							s_Logger.error("Cannot parse '" + fieldValue +
-									"' as a date using format string '" +
-									dd.getTimeFormat() + "'");
-						}
-					}
-				}
-			
-				header.add(fieldName);
-				record.add(fieldValue);
-			}
-			
-			token = parser.nextToken();
-		}
-
-		// Each record consists of number of fields followed by length/value
-		// pairs.  See CLengthEncodedInputParser.h in the C++ code for a more
-		// detailed description.
-		lengthEncodedWriter.writeRecord(header);
-		lengthEncodedWriter.writeRecord(record);
-		
-		int recordCount = (header.size() > 0) ? 1 : 0;
-
-		// is the timestamp a format string or epoch ms.
-		if (dd.isEpochMs())
-		{
-			token = parser.nextToken();
-			while (token == JsonToken.START_OBJECT)
-			{
-				record.clear();
-
-				while (token != JsonToken.END_OBJECT)
-				{
-					if (token == JsonToken.FIELD_NAME)
-					{
-						String fieldName = parser.getCurrentName();
-						token = parser.nextToken();
-						String fieldValue = parser.getText();
-
-						if (fieldName.equals(timeField))
-						{
-							try
-							{
-								fieldValue = Long.toString(Long.parseLong(fieldValue) / 1000); 
-							}
-							catch (NumberFormatException e)
-							{
-								String message = String.format(
-										"Cannot parse epoch ms timestamp '%s'",								
-										fieldValue);
-								s_Logger.error(message);
-							}
-						}
-
-						record.add(fieldValue);
-					}
-					token = parser.nextToken();
-				}
-
-				lengthEncodedWriter.writeRecord(record);
-				++recordCount;
-				token = parser.nextToken();
-			}
-		}
-		else
-		{
-			DateFormat dateFormat = new SimpleDateFormat(dd.getTimeFormat());
-			
-			token = parser.nextToken();
-			while (token == JsonToken.START_OBJECT)
-			{
-				record.clear();
-
-				while (token != JsonToken.END_OBJECT)
-				{
-					if (token == JsonToken.FIELD_NAME)
-					{
-						String fieldName = parser.getCurrentName();
-						token = parser.nextToken();
-						String fieldValue = parser.getText();
-
-						if (fieldName.equals(timeField))
-						{
-							try
-							{
-								fieldValue = Long.toString(dateFormat.parse(fieldValue).getTime() / 1000);
-							}
-							catch (ParseException e)
-							{
-								s_Logger.error("Cannot parse '" + fieldValue +
-										"' as a date using format string '" +
-										dd.getTimeFormat() + "'");
-							}
-						}
-
-						record.add(fieldValue);
-					}
-					token = parser.nextToken();
-				}
-
-				lengthEncodedWriter.writeRecord(record);
-				++recordCount;
-				token = parser.nextToken();
-			}
-		}
-		
-		s_Logger.info("Transferred " + recordCount + " Json records to autodetect." );
-	}
-
 
 	/**
 	 * Add the timeout schedule for <code>jobId</code>.
@@ -1188,15 +601,5 @@ public class ProcessManager
 		}
 		return sb;
 	}
-	
-	private class Pair<T,U>
-	{
-	    public final T First;
-	    public final U Second;
-	    public Pair(T first, U second)
-	    {
-	    	this.First = first;
-	    	this.Second = second;
-	    }
-	}
+
 }

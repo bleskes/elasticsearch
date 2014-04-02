@@ -139,7 +139,7 @@ public class ProcessTest
 		conf.setDetectors(d);
 
 		DataDescription dd = new DataDescription();
-		dd.setFieldDelimiter("\t");
+		dd.setFieldDelimiter('\t');
 		
 		String jobId = "TestJob";
 		JobDetails job = new JobDetails(jobId, 
