@@ -159,17 +159,18 @@ public class ProcessCtrl
 	/**
 	 * command line args
 	 */
-	static final private String BY_ARG = "by";
-	static final private String OVER_ARG = "over";
+	static final public String BY_ARG = "by";
+	static final public String OVER_ARG = "over";
 	
 	/**
 	 * Field config file strings
 	 */
-	static final private String DOT_IS_ENABLED = ".isEnabled";
-	static final private String DOT_USE_NULL = ".useNull";
-	static final private String DOT_BY = ".by";
-	static final private String DOT_OVER = ".over";
-	static final private char NEW_LINE = '\n';
+	static final public String DOT_IS_ENABLED = ".isEnabled";
+	static final public String DOT_USE_NULL = ".useNull";
+	static final public String DOT_BY = ".by";
+	static final public String DOT_OVER = ".over";
+	static final public String DOT_PARTITION = ".partition";
+	static final public char NEW_LINE = '\n';
 	
 	
 	/**
@@ -328,11 +329,6 @@ public class ProcessCtrl
 			{
 				String period = PERIOD_ARG + job.getAnalysisConfig().getPeriod();
 				command.add(period);
-			}	
-			if (job.getAnalysisConfig().getPartitionField() != null)
-			{
-				String partition = PARTITION_FIELD_ARG + job.getAnalysisConfig().getPartitionField();
-				command.add(partition);
 			}		
 		}
 		
@@ -350,7 +346,7 @@ public class ProcessCtrl
 		DataDescription dataDescription = job.getDataDescription();
 		if (dataDescription != null)
 		{
-			if (dataDescription.getFieldDelimiter() != DataDescription.DEFAULT_DELIMITER)
+			if (DataDescription.DEFAULT_DELIMITER != dataDescription.getFieldDelimiter())
 			{
 				String delimiterArg = DELIMITER_ARG
 						+  dataDescription.getFieldDelimiter();
@@ -485,9 +481,9 @@ public class ProcessCtrl
 			commandLineArgs.add(usenull);
 		}
 
-		if (detector.getFunction() != null)
+		if (isNotNullOrEmpty(detector.getFunction()))
 		{
-			if (detector.getFieldName() != null)
+			if (isNotNullOrEmpty(detector.getFieldName() ))
 			{
 				commandLineArgs.add(detector.getFunction() + "(" + detector.getFieldName() + ")");
 			}
@@ -496,26 +492,26 @@ public class ProcessCtrl
 				commandLineArgs.add(detector.getFunction());
 			}
 		}
-		else if (detector.getFieldName() != null)
+		else if (isNotNullOrEmpty(detector.getFieldName()))
 		{
 			commandLineArgs.add(detector.getFieldName());
 		}
-		else
-		{
-			// TODO maybe return error instead?
-			commandLineArgs.add("count");
-		}
 
-		if (detector.getByFieldName() != null)
+		if (isNotNullOrEmpty(detector.getByFieldName()))
 		{
 			commandLineArgs.add(BY_ARG);
 			commandLineArgs.add(detector.getByFieldName());
 		}
-		if (detector.getOverFieldName() != null)
+		if (isNotNullOrEmpty(detector.getOverFieldName()))
 		{
 			commandLineArgs.add(OVER_ARG);
 			commandLineArgs.add(detector.getOverFieldName());
 		}
+		if (isNotNullOrEmpty(detector.getPartitionFieldName()))
+		{
+			String partition = PARTITION_FIELD_ARG + detector.getPartitionFieldName();
+			commandLineArgs.add(partition);
+		}	
 		
 		return commandLineArgs;
 	}
@@ -537,7 +533,7 @@ public class ProcessCtrl
 		for (Detector detector : config.getDetectors())
 		{
 			StringBuilder keyBuilder = new StringBuilder();
-			if (detector.getFunction() != null)
+			if (isNotNullOrEmpty(detector.getFunction()))
 			{
 				keyBuilder.append(detector.getFunction());
 				if (detector.getFieldName() != null)
@@ -547,39 +543,39 @@ public class ProcessCtrl
 							.append(")");
 				}
 			}
-			else if (detector.getFieldName() != null)
+			else if (isNotNullOrEmpty(detector.getFieldName()))
 			{
 				keyBuilder.append(detector.getFieldName());
 			}
-			else
-			{
-				// TODO maybe return error instead?
-				keyBuilder.append("count");
-			}
 
-			if (detector.getByFieldName() != null)
+			if (isNotNullOrEmpty(detector.getByFieldName()))
 			{
 				keyBuilder.append("-").append(detector.getByFieldName());
 			}
-			if (detector.getOverFieldName() != null)
+			if (isNotNullOrEmpty(detector.getOverFieldName()))
 			{
 				keyBuilder.append("-").append(detector.getOverFieldName());
+			}
+			if (isNotNullOrEmpty(detector.getPartitionFieldName()))
+			{
+				keyBuilder.append("-").append(detector.getPartitionFieldName());
 			}
 
 			String key = keyBuilder.toString();
 			if (detectorKeys.contains(key))
 			{
-				s_Logger.warn(String.format(
+				s_Logger.error(String.format(
 						"Duplicate detector key '%s' ignorning this detector", key));
 				continue;
 			}
 			detectorKeys.add(key);
-
+			
 			// .isEnabled is only necessary if nothing else is going to be added
 			// for this key
 			if (detector.isUseNull() == null &&
-				detector.getByFieldName() == null &&
-				detector.getOverFieldName() == null)
+					isNullOrEmpty(detector.getByFieldName()) &&
+					isNullOrEmpty(detector.getOverFieldName()) && 
+					isNullOrEmpty(detector.getPartitionFieldName()))
 			{
 				contents.append(key).append(DOT_IS_ENABLED).append(" = true").append(NEW_LINE);
 			}
@@ -591,17 +587,21 @@ public class ProcessCtrl
 					.append(NEW_LINE);
 			}
 
-			if (detector.getByFieldName() != null)
+			if (isNotNullOrEmpty(detector.getByFieldName()))
 			{
 				contents.append(key).append(DOT_BY).append(" = ").append(detector.getByFieldName()).append(NEW_LINE);
 			}
-			if (detector.getOverFieldName() != null)
+			if (isNotNullOrEmpty(detector.getOverFieldName()))
 			{
 				contents.append(key).append(DOT_OVER).append(" = ").append(detector.getOverFieldName()).append(NEW_LINE);
 			}
+			if (isNotNullOrEmpty(detector.getPartitionFieldName()))
+			{
+				contents.append(key).append(DOT_PARTITION).append(" = ").append(detector.getPartitionFieldName()).append(NEW_LINE);
+			}
 		}
 
-		s_Logger.debug("FieldConfig = " + contents.toString());	
+		s_Logger.debug("FieldConfig: \n" + contents.toString());	
 
 		osw.write(contents.toString());
 	}
@@ -624,6 +624,26 @@ public class ProcessCtrl
 			osw.write(state);
 			osw.write('\n');
 		}
+	}
+	
+	/**
+	 * Returns true if the string arg is not null and not empty
+	 * i.e. it is a valid string
+	 * @param arg
+	 */
+	private static boolean isNotNullOrEmpty(String arg)
+	{
+		return (arg != null && arg.isEmpty() == false);
+	}
+	
+	/**
+	 * Returns true if the string arg is either null or empty
+	 * i.e. it is NOT a valid string
+	 * @param arg
+	 */
+	private static boolean isNullOrEmpty(String arg)
+	{
+		return (arg == null || arg.isEmpty());
 	}
 	
 }

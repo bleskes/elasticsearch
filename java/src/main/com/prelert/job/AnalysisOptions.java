@@ -153,15 +153,15 @@ public class AnalysisOptions
 	public boolean verify()
 	throws JobConfigurationException
 	{
-		if (m_MaxFieldValues < 0)
+		if (m_MaxFieldValues < 2)
 		{
 			throw new JobConfigurationException(
-					"Invalid AnalysisOption MaxFieldValues must be >= 0");
+					"Invalid AnalysisOption MaxFieldValues must be >= 2");
 		}
-		if (m_MaxTimeBuckets < 0)
+		if (m_MaxTimeBuckets < 2)
 		{
 			throw new JobConfigurationException(
-					"Invalid AnalysisOption MaxTimeBuckets must be >= 0");		
+					"Invalid AnalysisOption MaxTimeBuckets must be >= 2");		
 		}
 		
 		return true;

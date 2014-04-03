@@ -52,16 +52,7 @@ public class AnalysisConfig
 	static final public String BUCKET_SPAN = "bucketSpan";
 	static final public String BATCH_SPAN = "batchSpan";
 	static final public String PERIOD = "period";
-	static final public String PARTITION_FIELD = "partitionField";
 	static final public String DETECTORS = "detectors";
-
-	static final public String FUNCTION = "function";
-	static final public String FIELD_NAME = "fieldName";
-	static final public String BY_FIELD_NAME = "byFieldName";
-	static final public String OVER_FIELD_NAME = "overFieldName";
-	static final public String USE_NULL = "useNull";
-	
-
 	
 	/**
 	 * These values apply to all detectors
@@ -69,8 +60,6 @@ public class AnalysisConfig
 	private Long m_BucketSpan;
 	private Long m_BatchSpan;
 	private Long m_Period;
-	private String m_PartitionField;
-
 	private List<Detector> m_Detectors;
 	
 	/**
@@ -114,14 +103,6 @@ public class AnalysisConfig
 			{
 				m_Period = ((Integer)obj).longValue();
 			}
-		}
-		if (values.containsKey(PARTITION_FIELD))
-		{
-			Object obj = values.get(PARTITION_FIELD);
-			if (obj != null)
-			{
-				m_PartitionField = obj.toString();
-			}
 		}				
 		if (values.containsKey(DETECTORS))
 		{
@@ -130,48 +111,7 @@ public class AnalysisConfig
 			{
 				for (Map<String, Object> detectorMap : (ArrayList<Map<String, Object>>)obj)
 				{
-					Detector detector = new Detector();
-					if (detectorMap.containsKey(FUNCTION))
-					{
-						Object field = detectorMap.get(FUNCTION);
-						if (field != null)
-						{
-							detector.setFunction(field.toString());
-						}
-					}
-					if (detectorMap.containsKey(FIELD_NAME))
-					{
-						Object field = detectorMap.get(FIELD_NAME);
-						if (field != null)
-						{
-							detector.setFieldName(field.toString());
-						}
-					}
-					if (detectorMap.containsKey(BY_FIELD_NAME))
-					{
-						Object field = detectorMap.get(BY_FIELD_NAME);
-						if (field != null)
-						{
-							detector.setByFieldName(field.toString());
-						}
-					}
-					if (detectorMap.containsKey(OVER_FIELD_NAME))
-					{
-						Object field = detectorMap.get(OVER_FIELD_NAME);
-						if (field != null)
-						{
-							detector.setOverFieldName(field.toString());
-						}
-					}				
-					if (values.containsKey(USE_NULL))
-					{
-						Object field = detectorMap.get(USE_NULL);
-						if (field != null && field instanceof Boolean)
-						{
-							detector.setUseNull((Boolean)field);
-						}
-					}						
-					
+					Detector detector = new Detector(detectorMap);
 					m_Detectors.add(detector);
 				}
 			}
@@ -222,23 +162,6 @@ public class AnalysisConfig
 	{
 		this.m_Period = m_Period;
 	}
-	
-	/**
-	 * Segments the analysis along another field to have completely 
-	 * independent baselines for each instance of partitionfield
-	 *
-	 * @return The Partition Field
-	 */
-	public String getPartitionField() 
-	{
-		return m_PartitionField;
-	}
-	
-	public void setPartitionField(String m_PartitionField) 
-	{
-		this.m_PartitionField = m_PartitionField;
-	}
-	
 
 	/**
 	 * The list of analysis detectors. In a valid configuration the list should
@@ -267,12 +190,12 @@ public class AnalysisConfig
 	{
 		Set<String> fields = new HashSet<>();
 		
-		fields.add(getPartitionField());
 		for (Detector d : getDetectors())
 		{
 			fields.add(d.getFieldName());
 			fields.add(d.getByFieldName() );
 			fields.add(d.getOverFieldName());
+			fields.add(d.getPartitionFieldName());
 		}
 		
 		// remove the null and empty strings
@@ -321,8 +244,7 @@ public class AnalysisConfig
 		
 		equal = equal && JobDetails.bothNullOrEqual(this.m_BucketSpan, that.m_BucketSpan) &&
 				JobDetails.bothNullOrEqual(this.m_BatchSpan, that.m_BatchSpan) &&
-				JobDetails.bothNullOrEqual(this.m_Period, that.m_Period) &&
-				JobDetails.bothNullOrEqual(this.m_PartitionField, that.m_PartitionField);	
+				JobDetails.bothNullOrEqual(this.m_Period, that.m_Period);
 		
 		return equal;
 	}

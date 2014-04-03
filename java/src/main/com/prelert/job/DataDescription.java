@@ -355,7 +355,6 @@ public class DataDescription
 			}
 			catch (IllegalArgumentException e)
 			{
-				
 				throw new JobConfigurationException(
 						"Invalid Time format string '" + m_TimeFormat + "'", e);
 			}

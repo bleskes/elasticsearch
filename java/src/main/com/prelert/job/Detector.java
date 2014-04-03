@@ -260,6 +260,23 @@ public class Detector
 	}	
 	
 	/**
+	 * Segments the analysis along another field to have completely 
+	 * independent baselines for each instance of partitionfield
+	 *
+	 * @return The Partition Field
+	 */
+	public String getPartitionFieldName() 
+	{
+		return m_PartitionFieldName;
+	}
+	
+	public void setPartitionFieldName(String partitionFieldName) 
+	{
+		this.m_PartitionFieldName = partitionFieldName;
+	}
+	
+	
+	/**
 	 * Where there isn't a value for the 'by' or 'over' field should a new
 	 * series be used as the 'null' series. 
 	 * @return true if the 'null' series should be created
@@ -293,6 +310,7 @@ public class Detector
 				JobDetails.bothNullOrEqual(this.m_FieldName, that.m_FieldName) &&
 				JobDetails.bothNullOrEqual(this.m_ByFieldName, that.m_ByFieldName) &&
 				JobDetails.bothNullOrEqual(this.m_OverFieldName, that.m_OverFieldName) &&
+				JobDetails.bothNullOrEqual(this.m_PartitionFieldName, that.m_PartitionFieldName) &&
 				JobDetails.bothNullOrEqual(this.m_UseNull, that.m_UseNull);					
 	}
 	
@@ -302,12 +320,16 @@ public class Detector
 	 * <li>One of FieldName, ByFieldName, OverFieldName or Function must be set</li>
 	 * <li>Unless the function is 'count' one of FieldName, ByFieldName 
 	 * or OverFieldName must be set"</li>
+	 * <li>If byFieldName is set function or fieldName must bet set</li>
+	 * <li>If overFieldName is set function or fieldName must bet set</li>
 	 * <li>Function is one of the strings in the set {@link #ANALYSIS_FUNCTIONS}</li>
 	 * <li>If function is not set but the fieldname happens to be the same 
 	 * as one of the function names (e.g.a field called 'count')
 	 * set function to 'metric'</li>
 	 * <li>Check the metric/by/over fields are set as required by the different
 	 * functions</li> 
+	 * <li>Check the metric/by/over fields that cannot be set with certain 
+	 * functions are not set</li> 
 	 * </ol>
 	 * 
 	 * @return true
@@ -354,12 +376,22 @@ public class Detector
 		}
 		
 		
-		if (!emptyByField || !emptyOverField)
+		if (!emptyByField)
 		{
 			if (emptyField && emptyFunction)
 			{
 				throw new JobConfigurationException(
-						"A byFieldName or overFieldName must be used in "
+						"byFieldName must be used in "
+						+ "conjunction with fieldName or function");
+			}
+		}
+		
+		if (!emptyOverField)
+		{
+			if (emptyField && emptyFunction)
+			{
+				throw new JobConfigurationException(
+						"overFieldName must be used in "
 						+ "conjunction with fieldName or function");
 			}
 		}

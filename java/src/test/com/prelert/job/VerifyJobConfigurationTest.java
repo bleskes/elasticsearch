@@ -63,6 +63,7 @@ public class VerifyJobConfigurationTest
 		Assert.assertTrue("Good time format", dd.verify());
 	}
 	
+	
 	@Test 
 	public void analysisConfigTest()
 	throws JobConfigurationException
@@ -97,6 +98,7 @@ public class VerifyJobConfigurationTest
 		
 		// should work now
 		d.setFieldName("somefield");
+		d.setOverFieldName("over");
 		ac.verify();
 		
 		d.setFunction("made_up_function");
@@ -286,9 +288,9 @@ public class VerifyJobConfigurationTest
 		Detector d3 = new Detector();
 		d3.setFunction("count");
 		d3.setByFieldName("by2");
+		d3.setPartitionFieldName("partition");
 		
 		ac = new AnalysisConfig();
-		ac.setPartitionField("partition");
 		ac.setDetectors(Arrays.asList(new Detector[] {d1, d2, d3}));
 		
 		analysisFields = ac.analysisFields();

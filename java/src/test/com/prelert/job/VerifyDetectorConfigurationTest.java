@@ -62,8 +62,33 @@ public class VerifyDetectorConfigurationTest
 			}
 		}
 		
+		// a byField on its own is invalid
+		d = new Detector();
+		d.setByFieldName("by");
+		try
+		{
+			d.verify();
+			Assert.assertTrue(false); // should throw
+		}
+		catch (JobConfigurationException e)
+		{
+		}
+		
+		// an overField on its own is invalid
+		d = new Detector();
+		d.setOverFieldName("over");
+		try
+		{
+			d.verify();
+			Assert.assertTrue(false); // should throw
+		}
+		catch (JobConfigurationException e)
+		{
+		}
+		
 		// certain fields aren't allowed with certain functions
 		// first do the over field
+		d = new Detector();
 		d.setOverFieldName("over");
 		d.setFunction(Detector.NON_ZERO_COUNT);
 		try
