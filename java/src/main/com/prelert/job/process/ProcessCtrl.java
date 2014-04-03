@@ -278,10 +278,11 @@ public class ProcessCtrl
 	 * 
 	 * @param processName The name of program to execute this should exist in the 
 	 * directory PRELERT_HOME/bin/ 
+	 * @param logger The job's logger
 	 * @return A Java Process object
 	 * @throws IOException
 	 */
-	public Process buildProcess(String processName, JobDetails job)
+	public Process buildProcess(String processName, JobDetails job, Logger logger)
 	throws IOException	
 	{
 		return buildProcess(processName, job, null);
@@ -299,16 +300,16 @@ public class ProcessCtrl
 	 * @param job The job configuration
 	 * @param detectorState if <code>null</code> this parameter is 
 	 * ignored else the models' state is restored from this object 
+	 * @param logger The job's logger
 	 * 
 	 * @return A Java Process object
 	 * @throws IOException 
 	 */
 	public Process buildProcess(String processName, JobDetails job,
-			DetectorState detectorState)
+			DetectorState detectorState, Logger logger)
 	throws IOException
 	{
-		// TODO unit test for this build command stuff
-		s_Logger.info("PRELERT_HOME is set to " + PRELERT_HOME);
+		logger.info("PRELERT_HOME is set to " + PRELERT_HOME);
 		
 		List<String> command = new ArrayList<>();
 		command.add(AUTODETECT_PATH);
@@ -364,7 +365,7 @@ public class ProcessCtrl
 		// Restoring the model state
 		if (detectorState != null && detectorState.getDetectorKeys().size() > 0)
 		{
-			s_Logger.info("Restoring models for job '" + job.getId() +"'");
+			logger.info("Restoring models for job '" + job.getId() +"'");
 
 			Path tempDir = Files.createTempDirectory(null);
 			String tempDirStr = tempDir.toString();
@@ -412,7 +413,7 @@ public class ProcessCtrl
 						new FileOutputStream(fieldConfigFile),
 						Charset.forName("UTF-8")))
 				{
-					writeFieldConfig(job.getAnalysisConfig(), osw);
+					writeFieldConfig(job.getAnalysisConfig(), osw, logger);
 				}
 				
 				String modelConfig = FIELD_CONFIG_ARG + fieldConfigFile.toString();
@@ -421,13 +422,13 @@ public class ProcessCtrl
 		}
 		
 		// Build the process
-		s_Logger.info("Starting native process with command: " +  command);
+		logger.info("Starting native process with command: " +  command);
 		ProcessBuilder pb = new ProcessBuilder(command); 		
 		
-		s_Logger.info(String.format("%s=%s", PRELERT_HOME_ENV, PRELERT_HOME));
+		logger.info(String.format("%s=%s", PRELERT_HOME_ENV, PRELERT_HOME));
 		pb.environment().put(PRELERT_HOME_ENV, PRELERT_HOME);
 		
-		s_Logger.info(String.format("%s=%s", LIB_PATH_ENV, LIB_PATH));
+		logger.info(String.format("%s=%s", LIB_PATH_ENV, LIB_PATH));
 		pb.environment().put(LIB_PATH_ENV, LIB_PATH);
 		
 		return pb.start();		
@@ -522,9 +523,11 @@ public class ProcessCtrl
 	 *
 	 * @param config The configuration to write
 	 * @param osw Stream to write to
+	 * @param logger
 	 * @throws IOException
 	 */
-	public void writeFieldConfig(AnalysisConfig config, OutputStreamWriter osw)
+	public void writeFieldConfig(AnalysisConfig config, OutputStreamWriter osw,
+			Logger logger)
 	throws IOException
 	{
 		StringBuilder contents = new StringBuilder();
@@ -564,7 +567,7 @@ public class ProcessCtrl
 			String key = keyBuilder.toString();
 			if (detectorKeys.contains(key))
 			{
-				s_Logger.error(String.format(
+				logger.warn(String.format(
 						"Duplicate detector key '%s' ignorning this detector", key));
 				continue;
 			}
@@ -601,7 +604,7 @@ public class ProcessCtrl
 			}
 		}
 
-		s_Logger.debug("FieldConfig: \n" + contents.toString());	
+		logger.debug("FieldConfig: \n" + contents.toString());	
 
 		osw.write(contents.toString());
 	}

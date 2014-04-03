@@ -64,11 +64,13 @@ public class ProcessTest
 	static private class ReadOutput implements Runnable
 	{
 		private InputStream m_Stream;		
+		private Logger m_Logger;
 		private AutoDetectResultsParser.BucketsAndState m_BucketsAndState;
 		
-		public ReadOutput(InputStream stream)
+		public ReadOutput(InputStream stream, Logger logger)
 		{
 			m_Stream = stream;
+			m_Logger = logger;
 		}
 		
 		public AutoDetectResultsParser.BucketsAndState getParsedData()
@@ -88,7 +90,7 @@ public class ProcessTest
 			try 
 			{
 				m_BucketsAndState = AutoDetectResultsParser.parseResults(m_Stream, 
-						persister);				
+						persister, m_Logger);				
 			}
 			catch (JsonParseException e) 
 			{
@@ -150,10 +152,11 @@ public class ProcessTest
 				
 		// Start autodetect 
 		ProcessCtrl ctrl = new ProcessCtrl();		
-		Process pr = ctrl.buildProcess(ProcessCtrl.AUTODETECT_API, job);
+		Process pr = ctrl.buildProcess(ProcessCtrl.AUTODETECT_API, job,
+				Logger.getRootLogger());
 
 		// thread to read the autodetect output
-		ReadOutput read = new ReadOutput(pr.getInputStream());
+		ReadOutput read = new ReadOutput(pr.getInputStream(), Logger.getRootLogger());
 		Thread th = new Thread(read);
 		th.start();
 		

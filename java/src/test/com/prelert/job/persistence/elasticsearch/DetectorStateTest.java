@@ -136,7 +136,7 @@ public class DetectorStateTest
 		try
 		{
 			InputStream fs = new FileInputStream(new File(filePath));
-			AutoDetectResultsParser.parseResults(fs, es);
+			AutoDetectResultsParser.parseResults(fs, es, s_Logger);
 			
 			
 			FilterBuilder fb = FilterBuilders.matchAllFilter();

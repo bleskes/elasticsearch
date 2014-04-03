@@ -31,6 +31,10 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -40,8 +44,12 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.apache.log4j.PatternLayout;
+import org.apache.log4j.RollingFileAppender;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.DetectorState;
@@ -149,9 +157,11 @@ public class ProcessManager
 	 * @throws NativeProcessRunException If there is a problem creating a new process
 	 * @throws MissingFieldException If a configured field is missing from 
 	 * the CSV header
+	 * @throws JsonParseException 
 	 */
 	public boolean dataToJob(String jobId, InputStream input)
-	throws UnknownJobException, NativeProcessRunException, MissingFieldException
+	throws UnknownJobException, NativeProcessRunException, MissingFieldException,
+		JsonParseException
 	{
 		// stop the timeout 
 		ScheduledFuture<?> future = m_JobIdToTimeoutFuture.remove(jobId);
@@ -181,12 +191,12 @@ public class ProcessManager
 		if (process.isInUse())
 		{
 			s_Logger.error("Cannot write to process whilst it is in use");
+			process.getLogger().error("Cannot write to process whilst it is in use");
 			return false;
 		}
 				
 		// check the process is running, throws if not
 		processStillRunning(process, jobId);
-		
 		
 		// write the data to the process
 		try
@@ -194,18 +204,26 @@ public class ProcessManager
 			process.setInUse(true);
 			
 			writeToJob(process.getDataDescription(), process.getInterestingFields(),
-					input, process.getProcess().getOutputStream());
+					input, process.getProcess().getOutputStream(), process.getLogger());
 						
 			// check there wasn't an error in the input. 
 			// throws if there was. 
 			processStillRunning(process, jobId);
 		}
+		catch (MissingFieldException mfe)
+		{
+			throw mfe;
+		}
+		catch (JsonParseException pe)
+		{
+			throw pe;
+		}
 		catch (IOException e)
 		{
 			String msg = String.format("Exception writing to process for job %s", jobId);
-			s_Logger.error(msg, e);
-			
-			
+			s_Logger.error(msg);
+			process.getLogger().error(msg);
+						
 			StringBuilder sb = new StringBuilder(msg)
 					.append('\n').append(e.getMessage()).append('\n');
 			readProcessErrorOutput(process, sb);
@@ -259,39 +277,45 @@ public class ProcessManager
 	{
 		String jobId = job.getId();
 		
-		ProcessAndDataDescription procAndDD = null;
-		try 
+		Logger logger = createLogger(job.getId());
+
+		DetectorState state = null;
+		if (restoreState)
 		{
-			DetectorState state = null;
-			if (restoreState)
-			{
-				state = m_JobDetailsProvider.getPersistedState(jobId);			
-			}
-			
+			state = m_JobDetailsProvider.getPersistedState(jobId);			
+		}
+
+		Process nativeProcess = null;
+		try
+		{
 			// if state is null or empty it will be ignored
 			// else it is used to restore the models			
-			Process nativeProcess = m_ProcessCtrl.buildProcess(
-					ProcessCtrl.AUTODETECT_API, job, state);	
-			
-			List<String> analysisFields = job.getAnalysisConfig().analysisFields();
-
-			procAndDD = new ProcessAndDataDescription(nativeProcess, 
-					job.getDataDescription(), job.getTimeout(), analysisFields);			
+			nativeProcess = m_ProcessCtrl.buildProcess(
+					ProcessCtrl.AUTODETECT_API, job, state, logger);	
 		} 
 		catch (IOException e) 
 		{
-			s_Logger.error("Failed to launch process for job " + job.getId(), e);
+			String msg = "Failed to launch process for job " + job.getId();
+			s_Logger.error(msg);
+			logger.error(msg, e);
 			throw new NativeProcessRunException("Error starting the native process "
 					+ "for job " + job.getId(), e);
 		}				
 
+		List<String> analysisFields = job.getAnalysisConfig().analysisFields();
+
+		ProcessAndDataDescription procAndDD = new ProcessAndDataDescription(
+				nativeProcess, job.getId(),
+				job.getDataDescription(), job.getTimeout(), analysisFields, logger);			
+
 		// Launch results parser in a new thread
 		Thread th = new Thread(m_ResultsReaderFactory.newResultsParser(jobId, 
-								procAndDD.getProcess().getInputStream()),
+								procAndDD.getProcess().getInputStream(),
+								logger),
 								"Bucket-Parser");
 		th.start();		
 		
-		s_Logger.debug("Created process for job " + jobId);
+		logger.debug("Created process for job " + jobId);
 		
 		return procAndDD;
 	}
@@ -326,10 +350,12 @@ public class ProcessManager
 			throw new UnknownJobException(jobId, "Job is already finished or never started");
 		}
 		
+		process.getLogger().info("Finishing job " + jobId);
 		
 		if (process.isInUse())
 		{
 			s_Logger.error("Cannot finish job while it is reading data");
+			process.getLogger().error("Cannot finish job while it is reading data");
 			return ProcessStatus.IN_USE;
 		}
 		
@@ -362,13 +388,17 @@ public class ProcessManager
 				}
 				catch (IOException ioe)
 				{
-					s_Logger.debug("Exception closing running process input stream");
+					String msg = "Exception closing running process input stream";
+					s_Logger.warn(msg);
+					process.getLogger().debug(msg);
 				}
 			}
 		}
 		catch (NativeProcessRunException e) 
 		{
-			s_Logger.error("Native process has already exited", e);
+			String msg = "Native process has already exited";
+			s_Logger.error(msg);
+			process.getLogger().error(msg);
 			
 			// clean up resources and re-throw
 			m_JobIdToProcessMap.remove(jobId);				
@@ -410,7 +440,9 @@ public class ProcessManager
 			int exitValue = process.getProcess().exitValue();
 			
 			// If we get here the process has exited. 
-			String msg = String.format("Process exited with code %d.", exitValue);			
+			String msg = String.format("Process exited with code %d.", exitValue);	
+			process.getLogger().warn(msg);
+			
 			s_Logger.error(msg + "Removing resources for job " + jobId);
 
 			// Read any error output from the process and 
@@ -443,13 +475,15 @@ public class ProcessManager
 	 * @param analysisFields
 	 * @param input
 	 * @param output
-	 * @throws IOException 
+	 * @param jobLogger
+	 * @throws JsonParseException 
 	 * @throws MissingFieldException If any fields are missing from the CSV header
+	 * @throws IOException 
 	 */
 	public void writeToJob(DataDescription dataDescription, 
 			List<String> analysisFields,
-			InputStream input, OutputStream output) 
-	throws IOException, MissingFieldException
+			InputStream input, OutputStream output, Logger jobLogger) 
+	throws JsonParseException, MissingFieldException, IOException
 	{
 		// Oracle's documentation recommends buffering process streams
 		BufferedOutputStream bufferedStream = new BufferedOutputStream(output);
@@ -459,18 +493,18 @@ public class ProcessManager
 			if (dataDescription.getFormat() == DataFormat.JSON)
 			{
 				PipeToProcess.transformAndPipeJson(dataDescription, analysisFields, input, 
-						bufferedStream, s_Logger);
+						bufferedStream, jobLogger);
 			}
 			else
 			{
 				PipeToProcess.transformAndPipeCsv(dataDescription, analysisFields, input, 
-						bufferedStream, s_Logger);
+						bufferedStream, jobLogger);
 			}
 		}
 		else
 		{			
 			PipeToProcess.pipeCsv(dataDescription, analysisFields, input, 
-					bufferedStream, s_Logger);
+					bufferedStream, jobLogger);
 		}
 	}
 	
@@ -583,7 +617,6 @@ public class ProcessManager
 		{
 			if (process.getErrorReader().ready() == false)
 			{
-				s_Logger.info("No Error output to read from native process");
 				return sb;				
 			}
 			
@@ -601,5 +634,61 @@ public class ProcessManager
 		}
 		return sb;
 	}
+
+	
+	/**
+	 * Create the job's logger.
+	 * 
+	 * @param jobId
+	 * @return
+	 */
+	private Logger createLogger(String jobId) 
+	{		
+		try
+		{
+			try
+			{
+				Path logDir = FileSystems.getDefault().getPath(ProcessCtrl.LOG_DIR, jobId);		
+				Files.createDirectory(logDir);
+			}
+			catch (FileAlreadyExistsException e)
+			{
+			}
+
+			Logger logger = Logger.getLogger(jobId);
+			logger.setAdditivity(false);
+			logger.setLevel(Level.DEBUG);
+
+			if (logger.getAppender("engine_api_file_appender") == null)
+			{
+				Path logFile = FileSystems.getDefault().getPath(ProcessCtrl.LOG_DIR,
+						jobId, "engine_api.log");
+				RollingFileAppender fileAppender = new RollingFileAppender(
+						new PatternLayout("%d{dd MMM yyyy HH:mm:ss zz} [%t] %-5p %c{3} - %m%n"),
+						logFile.toString());
+
+				fileAppender.setName("engine_api_file_appender");
+				fileAppender.setMaxFileSize("1MB");
+				fileAppender.setMaxBackupIndex(9);
+
+				logger.addAppender(fileAppender);
+
+				//			ConsoleAppender consoleAppender = new ConsoleAppender(
+				//					new PatternLayout("%d{dd MMM yyyy HH:mm:ss zz} [%t] %-5p %c{3} - %m%n"));
+				//			
+				//			logger.addAppender(consoleAppender);
+			}
+
+			return logger;
+		}
+		catch (IOException e)
+		{
+			Logger logger = Logger.getLogger(ProcessAndDataDescription.class);
+			logger.error(String.format("Cannot create logger for job '%s' using default",
+					jobId), e);
+
+			return logger;
+		}
+	}	
 
 }

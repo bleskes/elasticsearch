@@ -30,6 +30,8 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.List;
 
+import org.apache.log4j.Logger;
+
 import com.prelert.job.DataDescription;
 
 /**
@@ -37,6 +39,8 @@ import com.prelert.job.DataDescription;
  * {@link #isInUse()} is true if the processes std in is 
  * being written to. ErrorReader is a buffered reader \
  * connected to the Process's error output.
+ * {@link #getLogger} returns a logger that logs to the
+ * jobs log directory
  */
 public class ProcessAndDataDescription 
 {
@@ -44,20 +48,25 @@ public class ProcessAndDataDescription
 	final private DataDescription m_DataDescription; 
 	volatile private boolean m_IsInUse;
 	final private long m_TimeoutSeconds;
-	final private BufferedReader m_ErrorReader;
-	final private List<String> m_InterestingFields;
+	private BufferedReader m_ErrorReader;	
+	private List<String> m_InterestingFields;
+	private Logger m_JobLogger;
 
 	/**
 	 * Object for grouping the native process, its data description
 	 * and interesting fields and its timeout period.
 	 * 
 	 * @param process The native process.
+	 * @param jobId
 	 * @param dd
 	 * @param timeout
 	 * @param interestingFields The list of fields used in the analysis
+	 * @param logger The job's logger
 	 */
-	public ProcessAndDataDescription(Process process, DataDescription dd,
-			long timeout, List<String> interestingFields)
+	public ProcessAndDataDescription(Process process, String jobId, 
+			DataDescription dd,
+			long timeout, List<String> interestingFields,
+			Logger logger)
 	{
 		m_Process = process;
 		m_DataDescription = dd;
@@ -68,6 +77,8 @@ public class ProcessAndDataDescription
 				new InputStreamReader(m_Process.getErrorStream()));		
 		
 		m_InterestingFields = interestingFields;
+		
+		m_JobLogger = logger;
 	}
 
 	public Process getProcess()
@@ -129,4 +140,11 @@ public class ProcessAndDataDescription
 	{
 		return m_InterestingFields;
 	}
+	
+	
+	public Logger getLogger()
+	{
+		return m_JobLogger;
+	}
+	
 }

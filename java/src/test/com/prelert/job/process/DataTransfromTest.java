@@ -35,15 +35,18 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 
-import junit.framework.Assert;
-
+import org.apache.log4j.Logger;
 import org.junit.Test;
+
+import junit.framework.Assert;
 
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
 
 public class DataTransfromTest 
 {
+	static private Logger s_Logger = Logger.getLogger(DataTransfromTest.class);
+	
 	/**
 	 * Test transforming csv data with time in epoch format 
 	 */
@@ -80,7 +83,7 @@ public class DataTransfromTest
 				new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
 		ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
 		
-		pm.writeToJob(dd, analysisFields, bis, bos);
+		pm.writeToJob(dd, analysisFields, bis, bos, s_Logger);
 		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 		
 		String [] lines = data.split("\\n");
@@ -149,7 +152,7 @@ public class DataTransfromTest
 				new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
 		ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
 		
-		pm.writeToJob(dd, analysisFields, bis, bos);
+		pm.writeToJob(dd, analysisFields, bis, bos, s_Logger);
 		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 		
 		for (int l=0; l<lines.length; l++)
@@ -217,7 +220,7 @@ public class DataTransfromTest
 				new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
 		ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
 		
-		pm.writeToJob(dd, analysisFields, bis, bos);
+		pm.writeToJob(dd, analysisFields, bis, bos, s_Logger);
 		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 		
 		String [] lines = data.split("\\n");
@@ -305,7 +308,7 @@ public class DataTransfromTest
 				new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
 		ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
 		
-		pm.writeToJob(dd, analysisFields, bis, bos);
+		pm.writeToJob(dd, analysisFields, bis, bos, s_Logger);
 		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 		
 		String [] lines = data.split("\\n");
@@ -369,7 +372,7 @@ public class DataTransfromTest
 		
 		try 
 		{
-			pm.writeToJob(dd, analysisFields, bis, bos);
+			pm.writeToJob(dd, analysisFields, bis, bos, s_Logger);
 			Assert.assertTrue(false); // should throw
 		} 
 		catch (MissingFieldException e)
@@ -390,7 +393,7 @@ public class DataTransfromTest
 		
 		try 
 		{
-			pm.writeToJob(dd, analysisFields, bis, bos);
+			pm.writeToJob(dd, analysisFields, bis, bos, s_Logger);
 			Assert.assertTrue(false); // should throw
 		} 
 		catch (MissingFieldException e)
@@ -437,7 +440,7 @@ public class DataTransfromTest
 		
 		try 
 		{
-			pm.writeToJob(dd, analysisFields, bis, bos);
+			pm.writeToJob(dd, analysisFields, bis, bos, s_Logger);
 			Assert.assertTrue(false); // should throw
 		} 
 		catch (MissingFieldException e)
@@ -455,7 +458,7 @@ public class DataTransfromTest
 		
 		try 
 		{
-			pm.writeToJob(dd, analysisFields, bis, bos);
+			pm.writeToJob(dd, analysisFields, bis, bos, s_Logger);
 			Assert.assertTrue(false); // should throw
 		} 
 		catch (MissingFieldException e)
@@ -513,7 +516,7 @@ public class DataTransfromTest
 				new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
 		ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
 		
-		pm.writeToJob(dd, analysisFields, bis, bos);
+		pm.writeToJob(dd, analysisFields, bis, bos, s_Logger);
 		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 		
 		
@@ -607,7 +610,7 @@ public class DataTransfromTest
 				new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
 		ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
 		
-		pm.writeToJob(dd, analysisFields, bis, bos);
+		pm.writeToJob(dd, analysisFields, bis, bos, s_Logger);
 		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 		
 		
@@ -702,7 +705,7 @@ public class DataTransfromTest
 				new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
 		ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
 		
-		pm.writeToJob(dd, analysisFields, bis, bos);
+		pm.writeToJob(dd, analysisFields, bis, bos, s_Logger);
 		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 		
 		

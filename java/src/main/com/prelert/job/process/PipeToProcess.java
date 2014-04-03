@@ -135,6 +135,7 @@ public class PipeToProcess
 			
 			lengthEncodedWriter.flush();
 		}
+
 	}
 	
 
@@ -337,12 +338,13 @@ public class PipeToProcess
 	 * @param is
 	 * @param os
 	 * @param logger Errors are logged to this logger 
+	 * @throws JsonParseException 
 	 * @throws IOException
 	 */
 	static public void transformAndPipeJson(DataDescription dd, 
 			List<String> analysisFields, InputStream is, OutputStream os,
-			Logger logger)
-	throws IOException 
+			Logger logger) 
+	throws JsonParseException, IOException
 	{
 		JsonParser parser = new JsonFactory().createParser(is);
 		

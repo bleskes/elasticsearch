@@ -21,6 +21,7 @@ import javax.ws.rs.core.Response;
 
 import org.apache.log4j.Logger;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.process.MissingFieldException;
@@ -135,15 +136,7 @@ public class Data extends ResourceWithJobManager
     		}.start();
     	}
     	
-    	try
-    	{
-    		handleStream(jobId, input);    
-    	}  
-    	catch (NativeProcessRunException e) 
-    	{
-    		s_Logger.error("Error sending data to job " + jobId, e);
-    		throw e;
-    	}	 
+   		handleStream(jobId, input);    
     	
     	s_Logger.debug("File uploaded to job " + jobId);
     	return Response.accepted().build();
@@ -192,9 +185,11 @@ public class Data extends ResourceWithJobManager
 	 * @throws UnknownJobException If the jobId is not recognised
 	 * @throws MissingFieldException If a configured field is missing from 
 	 * the CSV header
+     * @throws JsonParseException 
 	 */
     private boolean handleStream(String jobId, InputStream input)
-    throws NativeProcessRunException, UnknownJobException, MissingFieldException
+    throws NativeProcessRunException, UnknownJobException, MissingFieldException, 
+    JsonParseException
     {
     	JobManager manager = jobManager();
 		return manager.dataToJob(jobId, input);

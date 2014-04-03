@@ -38,6 +38,8 @@ import java.util.List;
 
 import junit.framework.Assert;
 
+import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.Logger;
 import org.ini4j.Config;
 import org.ini4j.Ini;
 import org.ini4j.Profile.Section;
@@ -214,7 +216,10 @@ public class FieldConfigTest
 		ByteArrayOutputStream ba = new ByteArrayOutputStream();
 		try (OutputStreamWriter osw = new OutputStreamWriter(ba, "UTF-8"))
 		{
-			processCtl.writeFieldConfig(config, osw);
+			BasicConfigurator.configure();
+			Logger logger = Logger.getLogger(FieldConfigTest.class);
+			
+			processCtl.writeFieldConfig(config, osw, logger);
 		}
 		
 		// read the ini file - all the settings are in the global section
