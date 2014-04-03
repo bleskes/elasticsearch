@@ -28,6 +28,8 @@
 package com.prelert.rs.resources;
 
 
+import java.io.IOException;
+
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.PathParam;
@@ -117,7 +119,7 @@ public class Logs extends ResourceWithJobManager
     }
     
     /**
-     * Tail the log file
+     * Tail the log file with the same name as the job id.
      * 
      * @param jobId
      * @param lines Number of lines to tail
@@ -127,7 +129,7 @@ public class Logs extends ResourceWithJobManager
     @GET
 	@Path("/{jobId}/tail")
     @Produces(MediaType.TEXT_PLAIN)
-    public String tailLogFile(@PathParam("jobId") String jobId,
+    public String tailDefauldLogFile(@PathParam("jobId") String jobId,
     		@DefaultValue("10") @QueryParam("lines") int lines)
     throws UnknownJobException
     {   	
@@ -136,6 +138,51 @@ public class Logs extends ResourceWithJobManager
 		JobLogs logs = new JobLogs();
 		return logs.tail(jobId, lines);
     }
-        
+    
+    /**
+     * Read the entire log file
+     * 
+     * @param jobId
+     * @param lines Number of lines to tail
+     * @return
+     * @throws UnknownJobException
+     * @throws IOException 
+     */
+    @GET
+	@Path("/{jobId}/{filename}")
+    @Produces(MediaType.TEXT_PLAIN)
+    public String getLogFile(@PathParam("jobId") String jobId,
+    		@PathParam("filename") String filename)
+    throws UnknownJobException
+    {   	
+    	s_Logger.debug(String.format("Get the log file %s for job %s", 
+    			filename, jobId));
+    	
+		JobLogs logs = new JobLogs();
+		return logs.file(jobId, filename);
+    }
+    
+    
+    /**
+     * Tail the specific log file
+     * 
+     * @param jobId
+     * @param lines Number of lines to tail
+     * @return
+     * @throws UnknownJobException
+     */
+    @GET
+	@Path("/{jobId}/{filename}/tail")
+    @Produces(MediaType.TEXT_PLAIN)
+    public String tailLogFile(@PathParam("jobId") String jobId,
+    		@PathParam("filename") String filename,
+    		@DefaultValue("10") @QueryParam("lines") int lines)
+    throws UnknownJobException
+    {   	
+    	s_Logger.debug("Tail log for job '" + jobId + "'");
+    	
+		JobLogs logs = new JobLogs();
+		return logs.tail(jobId, filename, lines);
+    }
 
 }

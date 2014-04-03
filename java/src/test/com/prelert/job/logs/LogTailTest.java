@@ -139,6 +139,29 @@ public class LogTailTest
 		tmpLogFile.delete();
 	}
 	
+	@Test
+	public void testReadEntireFile() throws IOException
+	{
+		// write the log to temp file
+		File tmpLogFile = File.createTempFile("tmp", ".log");
+		FileWriter fw = new FileWriter(tmpLogFile);
+		for (String ln : LOG_CONTENTS)
+		{
+			fw.append(ln);			
+		}
+		fw.close();
+		
+		
+		JobLogs jobLogs = new JobLogs(); 
+		String allLines = jobLogs.file(tmpLogFile.toPath());		
+		String [] lines = allLines.split("\n");		
+		assertEquals(lines.length, LOG_CONTENTS.length);		
+		verifyLinesEqual(LOG_CONTENTS.length - lines.length, lines.length, lines);
+		
+		// clean up
+		tmpLogFile.delete();		
+	}
+	
 	private void verifyLinesEqual(int offset, int count, String [] lines)
 	{
 		for (int i=0; i<count; i++)
