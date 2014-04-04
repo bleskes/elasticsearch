@@ -109,7 +109,7 @@ public class ProcessCtrl
 	/**
 	 * Windows library path variable
 	 */	
-	static final public String WIN_LIB_PATH_ENV = "PATH"; 
+	static final public String WIN_LIB_PATH_ENV = "Path"; 
 	/**
 	 * Solaris library path variable
 	 */	
@@ -245,6 +245,8 @@ public class ProcessCtrl
 		// Build the process
 		ProcessBuilder pb = new ProcessBuilder(command); 		
 		
+		// Always clear inherited environment variables
+		pb.environment().clear();
 
 		s_Logger.info(String.format("%s=%s", PRELERT_HOME_ENV, PRELERT_HOME));
 		pb.environment().put(PRELERT_HOME_ENV, PRELERT_HOME);
@@ -254,22 +256,43 @@ public class ProcessCtrl
 		
 		try
 		{
-			Process proc = pb.start();	
-			BufferedReader reader = new BufferedReader(
-					new InputStreamReader(proc.getErrorStream()));
+			Process proc = pb.start();
+			try
+			{
+				int exitValue = proc.waitFor();
+				if (exitValue == 0)
+				{
+					BufferedReader reader = new BufferedReader(
+							new InputStreamReader(proc.getErrorStream()));
+	
+					String output = reader.readLine();
+					s_Logger.debug("autodetect version output = " + output);
+					if (output == null)
+					{
+						return UNKNOWN_VERSION;						
+					}
+					
+					s_AnalyticsVersion = output;
+					return s_AnalyticsVersion;
+				}
+				else
+				{
+					return String.format("Error autodetect returned %d. %s",
+							exitValue, UNKNOWN_VERSION);
+				}
+			}
+			catch (InterruptedException ie)
+			{
+				s_Logger.error("Interrupted reading analytics version number", ie);
+				return UNKNOWN_VERSION;
+			}
 			
-			String output = reader.readLine();
-			s_Logger.debug("autodetect version output = " + output);
-			
-			s_AnalyticsVersion = output;			
 		}
 		catch (IOException e)
 		{
 			s_Logger.error("Error reading analytics version number", e);
 			return UNKNOWN_VERSION;
 		}
-		
-		return s_AnalyticsVersion;
 	}
 	
 	/**
@@ -424,6 +447,9 @@ public class ProcessCtrl
 		// Build the process
 		logger.info("Starting native process with command: " +  command);
 		ProcessBuilder pb = new ProcessBuilder(command); 		
+		
+		// Always clear inherited environment variables
+		pb.environment().clear();
 		
 		logger.info(String.format("%s=%s", PRELERT_HOME_ENV, PRELERT_HOME));
 		pb.environment().put(PRELERT_HOME_ENV, PRELERT_HOME);
