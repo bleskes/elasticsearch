@@ -28,8 +28,10 @@
 package com.prelert.job;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Autodetect analysis configuration options describes which fields are 
@@ -50,16 +52,7 @@ public class AnalysisConfig
 	static final public String BUCKET_SPAN = "bucketSpan";
 	static final public String BATCH_SPAN = "batchSpan";
 	static final public String PERIOD = "period";
-	static final public String PARTITION_FIELD = "partitionField";
 	static final public String DETECTORS = "detectors";
-
-	static final public String FUNCTION = "function";
-	static final public String FIELD_NAME = "fieldName";
-	static final public String BY_FIELD_NAME = "byFieldName";
-	static final public String OVER_FIELD_NAME = "overFieldName";
-	static final public String USE_NULL = "useNull";
-	
-
 	
 	/**
 	 * These values apply to all detectors
@@ -67,8 +60,6 @@ public class AnalysisConfig
 	private Long m_BucketSpan;
 	private Long m_BatchSpan;
 	private Long m_Period;
-	private String m_PartitionField;
-
 	private List<Detector> m_Detectors;
 	
 	/**
@@ -112,14 +103,6 @@ public class AnalysisConfig
 			{
 				m_Period = ((Integer)obj).longValue();
 			}
-		}
-		if (values.containsKey(PARTITION_FIELD))
-		{
-			Object obj = values.get(BATCH_SPAN);
-			if (obj != null)
-			{
-				m_PartitionField = obj.toString();
-			}
 		}				
 		if (values.containsKey(DETECTORS))
 		{
@@ -128,48 +111,7 @@ public class AnalysisConfig
 			{
 				for (Map<String, Object> detectorMap : (ArrayList<Map<String, Object>>)obj)
 				{
-					Detector detector = new Detector();
-					if (detectorMap.containsKey(FUNCTION))
-					{
-						Object field = detectorMap.get(FUNCTION);
-						if (field != null)
-						{
-							detector.setFunction(field.toString());
-						}
-					}
-					if (detectorMap.containsKey(FIELD_NAME))
-					{
-						Object field = detectorMap.get(FIELD_NAME);
-						if (field != null)
-						{
-							detector.setFieldName(field.toString());
-						}
-					}
-					if (detectorMap.containsKey(BY_FIELD_NAME))
-					{
-						Object field = detectorMap.get(BY_FIELD_NAME);
-						if (field != null)
-						{
-							detector.setByFieldName(field.toString());
-						}
-					}
-					if (detectorMap.containsKey(OVER_FIELD_NAME))
-					{
-						Object field = detectorMap.get(OVER_FIELD_NAME);
-						if (field != null)
-						{
-							detector.setOverFieldName(field.toString());
-						}
-					}				
-					if (values.containsKey(USE_NULL))
-					{
-						Object field = detectorMap.get(USE_NULL);
-						if (field != null && field instanceof Boolean)
-						{
-							detector.setUseNull((Boolean)field);
-						}
-					}						
-					
+					Detector detector = new Detector(detectorMap);
 					m_Detectors.add(detector);
 				}
 			}
@@ -220,23 +162,6 @@ public class AnalysisConfig
 	{
 		this.m_Period = m_Period;
 	}
-	
-	/**
-	 * Segments the analysis along another field to have completely 
-	 * independent baselines for each instance of partitionfield
-	 *
-	 * @return The Partition Field
-	 */
-	public String getPartitionField() 
-	{
-		return m_PartitionField;
-	}
-	
-	public void setPartitionField(String m_PartitionField) 
-	{
-		this.m_PartitionField = m_PartitionField;
-	}
-	
 
 	/**
 	 * The list of analysis detectors. In a valid configuration the list should
@@ -251,6 +176,33 @@ public class AnalysisConfig
 	public void setDetectors(List<Detector> detectors)
 	{
 		m_Detectors = detectors;
+	}
+	
+	/**
+	 * Return the list of fields required by the analysis. 
+	 * These are the partition, field, by field and over fields.
+	 * <code>null</code> and empty strings are filtered from the 
+	 * config
+	 * 
+	 * @return List of required fields.
+	 */
+	public List<String> analysisFields()
+	{
+		Set<String> fields = new HashSet<>();
+		
+		for (Detector d : getDetectors())
+		{
+			fields.add(d.getFieldName());
+			fields.add(d.getByFieldName() );
+			fields.add(d.getOverFieldName());
+			fields.add(d.getPartitionFieldName());
+		}
+		
+		// remove the null and empty strings
+		fields.remove("");
+		fields.remove(null);
+		
+		return new ArrayList<String>(fields);
 	}
 	
 	/**
@@ -292,10 +244,53 @@ public class AnalysisConfig
 		
 		equal = equal && JobDetails.bothNullOrEqual(this.m_BucketSpan, that.m_BucketSpan) &&
 				JobDetails.bothNullOrEqual(this.m_BatchSpan, that.m_BatchSpan) &&
-				JobDetails.bothNullOrEqual(this.m_Period, that.m_Period) &&
-				JobDetails.bothNullOrEqual(this.m_PartitionField, that.m_PartitionField);	
+				JobDetails.bothNullOrEqual(this.m_Period, that.m_Period);
 		
 		return equal;
 	}
+	
+	/**
+	 * Checks the configuration is valid
+	 * <ol>
+	 * <li>Check that if non-null BucketSpan, BatchSpan and Period are &gt= 0</li>
+	 * <li>Check there is at least one detector configured</li>
+	 * <li>Check all the detectors are configured correctly</li>
+	 * </ol>
+	 * 	
+	 * @return true
+	 * @throws JobConfigurationException
+	 */
+	public boolean verify()
+	throws JobConfigurationException
+	{	
+		if (m_BucketSpan != null && m_BucketSpan < 0)
+		{
+			throw new JobConfigurationException("BucketSpan cannot be < 0."
+					+ " Value = " + m_BucketSpan);
+		}
 		
+		if (m_BatchSpan != null && m_BatchSpan < 0)
+		{
+			throw new JobConfigurationException("BatchSpan cannot be < 0."
+					+ " Value = " + m_BatchSpan);
+		}
+		
+		if (m_Period != null && m_Period < 0)
+		{
+			throw new JobConfigurationException("Period cannot be < 0."
+					+ " Value = " + m_Period);
+		}
+		
+		if (m_Detectors.size() == 0)
+		{
+			throw new JobConfigurationException("No detectors configured");
+		}
+		
+		for (Detector d : m_Detectors)
+		{
+			d.verify();
+		}
+		
+		return true;
+	}
 }

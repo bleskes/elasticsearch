@@ -58,6 +58,7 @@ import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -65,6 +66,7 @@ import com.prelert.job.persistence.elasticsearch.ElasticSearchMappings;
 import com.prelert.job.persistence.elasticsearch.ElasticSearchPersister;
 import com.prelert.job.persistence.elasticsearch.ElasticSearchResultsReaderFactory;
 import com.prelert.job.process.JobDetailsProvider;
+import com.prelert.job.process.MissingFieldException;
 import com.prelert.job.process.NativeProcessRunException;
 import com.prelert.job.process.ProcessManager;
 import com.prelert.job.process.ProcessManager.ProcessStatus;
@@ -295,12 +297,11 @@ public class JobManager implements JobDetailsProvider
 		}
 		catch (JsonProcessingException e)
 		{
-			s_Logger.error(e);
-			throw e;
+			s_Logger.error("Error parsing converting JobDetails to json", e);
 		}
 		catch (IOException e)
 		{
-			s_Logger.error(e);
+			s_Logger.error("Error writing ElasticSearch mappings", e);
 		}
 
 		return null;
@@ -545,7 +546,7 @@ public class JobManager implements JobDetailsProvider
 											.ignoreUnmapped(true)
 											.missing("_last")
 											.order(SortOrder.DESC);		
-
+		
 		SearchResponse searchResponse = m_Client.prepareSearch(jobId)
 				.setTypes(AnomalyRecord.TYPE)
 				.setPostFilter(parentFilter)
@@ -557,6 +558,12 @@ public class JobManager implements JobDetailsProvider
 		for (SearchHit hit : searchResponse.getHits().getHits())
 		{
 			Map<String, Object> m  = hit.getSource();
+			
+			// TODO
+			// This a hack to work round the deficiency in the 
+			// Java API where source filtering hasn't been implemented.			
+			m.remove(AnomalyRecord.DETECTOR_NAME);
+			
 			results.add(m);
 		}
 		
@@ -694,7 +701,7 @@ public class JobManager implements JobDetailsProvider
 			else
 			{
 				String msg = "Error deleting index " + jobId;
-				s_Logger.error(msg, e);
+				s_Logger.error(msg);
 				throw new NativeProcessRunException(msg, e);
 			}
 		}
@@ -713,9 +720,13 @@ public class JobManager implements JobDetailsProvider
 	 * @throws NativeProcessRunException If there is an error starting the native 
 	 * process
 	 * @throws UnknownJobException If the jobId is not recognised
+	 * @throws MissingFieldException If a configured field is missing from 
+	 * the CSV header
+	 * @throws JsonParseException 
 	 */
 	public boolean dataToJob(String jobId, InputStream input) 
-	throws UnknownJobException, NativeProcessRunException
+	throws UnknownJobException, NativeProcessRunException, MissingFieldException, 
+		JsonParseException 
 	{
 		try
 		{
@@ -766,7 +777,7 @@ public class JobManager implements JobDetailsProvider
 			
 			if (response.isExists() == false)
 			{				
-				s_Logger.error("Cannot finish job. No job found with jobId = " + jobId);
+				s_Logger.error("Cannot update last data time- no job found with jobId = " + jobId);
 				return false;
 			}
 
@@ -781,10 +792,10 @@ public class JobManager implements JobDetailsProvider
 			{
 				content = jobToContent(job);
 			}
-			catch (IOException ioe)
+			catch (JsonProcessingException e)
 			{
 				s_Logger.error("Error serialising job cannot update time of "
-						+ "last data");
+						+ "last data", e);
 				return false;
 			}
 
@@ -873,7 +884,7 @@ public class JobManager implements JobDetailsProvider
 	}
 	
 	private String jobToContent(JobDetails job)
-	throws IOException
+	throws JsonProcessingException
 	{
 		String json = m_ObjectMapper.writeValueAsString(job);
 		return json;

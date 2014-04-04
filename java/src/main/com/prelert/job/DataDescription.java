@@ -27,9 +27,13 @@
 
 package com.prelert.job;
 
+import java.text.SimpleDateFormat;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 /**
  * Describes the format of the data used in the job and how it should 
@@ -43,6 +47,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
  * delineated formats is {@value #DEFAULT_QUOTE_CHAR} but any other character can be
  * used.  
  */
+@JsonIgnoreProperties({"transformTime", "epochMs"})
+@JsonInclude(Include.NON_NULL)
 public class DataDescription 
 {
 	/**
@@ -67,6 +73,16 @@ public class DataDescription
 	}
 	
 	/**
+	 * Special time format string for epoch times (seconds)
+	 */
+	static final public String EPOCH = "epoch";
+	
+	/**
+	 * Special time format string for epoch times (milli-seconds)
+	 */
+	static final public String EPOCH_MS = "epoch_ms";
+	
+	/**
 	 * The format field name
 	 */
 	static final public String FORMAT = "format"; 
@@ -74,6 +90,12 @@ public class DataDescription
 	 * The time field name
 	 */
 	static final public String TIME_FIELD_NAME = "timeField";
+	
+	/**
+	 * By default autodetect expects the timestamp in a field with this name
+	 */
+	static final public String DEFAULT_TIME_FIELD = "_time";
+	
 	/**
 	 * The timeFormat field name
 	 */	
@@ -94,8 +116,7 @@ public class DataDescription
 	static final public char DEFAULT_DELIMITER = '\t';
 	
 	/**
-	 * Data sent to the autodetect process must separate
-	 * records with this line ending
+	 * Csv data must have this line ending
 	 */
 	static final public char LINE_ENDING = '\n';
 	
@@ -108,12 +129,15 @@ public class DataDescription
 	private DataFormat m_DataFormat;
 	private String m_TimeFieldName;
 	private String m_TimeFormat;
-	private String m_FieldDelimiter;
+	private char m_FieldDelimiter;
 	private char m_QuoteCharacter;
 	
 	public DataDescription()
 	{
 		m_DataFormat = DataFormat.DELINEATED;
+		m_TimeFieldName = DEFAULT_TIME_FIELD;
+		m_TimeFormat = EPOCH;
+		m_FieldDelimiter = DEFAULT_DELIMITER;
 		m_QuoteCharacter = DEFAULT_QUOTE_CHAR;
 	}
 	
@@ -154,9 +178,17 @@ public class DataDescription
 			Object obj = values.get(FIELD_DELIMITER);
 			if (obj != null)
 			{
-				m_FieldDelimiter = obj.toString();
+				m_FieldDelimiter = obj.toString().charAt(0);
 			}
-		}		
+		}
+		if (values.containsKey(QUOTE_CHARACTER))
+		{
+			Object obj = values.get(QUOTE_CHARACTER);
+			if (obj != null)
+			{
+				m_QuoteCharacter = obj.toString().charAt(0);
+			}
+		}	
 	}
 	
 	/**
@@ -189,9 +221,10 @@ public class DataDescription
 	}
 	
 	/**
-	 * The strptime format of the time stamp
-	 * If not set (is <code>null</code> or an empty string) then the date is
-	 * assumed to be in seconds from the epoch
+	 * Either {@value #EPOCH}, {@value #EPOCH} or a SimpleDateTime format string.
+	 * If not set (is <code>null</code> or an empty string) or set to 
+	 * {@value #EPOCH} (the default) then the date is assumed to be in 
+	 * seconds from the epoch.
 	 * @return A String if set or <code>null</code>
 	 */
 	public String getTimeFormat()
@@ -207,15 +240,17 @@ public class DataDescription
 	/**
 	 * If the data is in a delineated format with a header e.g. csv or tsv
 	 * this is the delimiter character used. This is only applicable if
-	 * {@linkplain #getFormat()} is {@link DataDescription.DataFormat#DELINEATED} 
-	 * @return A String if set or <code>null</code>
+	 * {@linkplain #getFormat()} is {@link DataDescription.DataFormat#DELINEATED}.
+	 * The default value is {@value #DEFAULT_DELIMITER} 
+	 * 
+	 * @return A char 
 	 */
-	public String getFieldDelimiter()
+	public char getFieldDelimiter()
 	{
 		return m_FieldDelimiter;
 	}
 	
-	public void setFieldDelimiter(String delimiter)
+	public void setFieldDelimiter(char delimiter)
 	{
 		m_FieldDelimiter = delimiter;
 	}	
@@ -240,11 +275,34 @@ public class DataDescription
 	 * Returns true if the data described by this object needs
 	 * at transforming before processing by autodetect.
 	 * A transformation must be applied if either a timeformat is
-	 * set or the data is in Json format.
+	 * not in seconds since the epoch or the data is in Json format.
+	 * @return
 	 */
 	public boolean transform()
 	{
-		return m_TimeFormat != null || m_DataFormat == DataFormat.JSON;
+		return m_DataFormat == DataFormat.JSON || 
+				isTransformTime();
+	}
+
+	
+	/**
+	 * Return true if the time is in a format that needs transforming.
+	 * Anytime format this isn't {@value #EPOCH} or <code>null</code>
+	 * needs transforming.
+	 * @return
+	 */
+	public boolean isTransformTime()
+	{
+		return m_TimeFormat != null && !EPOCH.equals(m_TimeFormat);
+	}
+	
+	/**
+	 * Return true if the time format is {@value #EPOCH_MS}
+	 * @return
+	 */
+	public boolean isEpochMs()
+	{
+		return EPOCH_MS.equals(m_TimeFormat);
 	}
 	
 	/**
@@ -269,5 +327,39 @@ public class DataDescription
 				JobDetails.bothNullOrEqual(this.m_TimeFieldName, that.m_TimeFieldName) &&
 				JobDetails.bothNullOrEqual(this.m_TimeFormat, that.m_TimeFormat) &&
 				JobDetails.bothNullOrEqual(this.m_FieldDelimiter, that.m_FieldDelimiter);	
+	}
+	
+	/**
+	 * Verify the data description configuration
+	 * <ol>
+	 * <li>Check the timeFormat - if set - is either {@value #EPOCH},
+	 * {@value #EPOCH_MS} or a valid format string</li>
+	 * <li></li>
+	 * </ol>
+	 * @return true
+	 * @throws JobConfigurationException
+	 */
+	public boolean verify()
+	throws JobConfigurationException
+	{
+		if (m_TimeFormat != null && m_TimeFormat.isEmpty() == false)
+		{
+			if (m_TimeFormat.equals(EPOCH) || m_TimeFormat.equals(EPOCH_MS))
+			{
+				return true;
+			}
+			
+			try
+			{
+				new SimpleDateFormat(m_TimeFormat);
+			}
+			catch (IllegalArgumentException e)
+			{
+				throw new JobConfigurationException(
+						"Invalid Time format string '" + m_TimeFormat + "'", e);
+			}
+		}
+		
+		return true;
 	}
 }

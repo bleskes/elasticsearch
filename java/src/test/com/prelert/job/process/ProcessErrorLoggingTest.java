@@ -37,6 +37,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
+
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
 import com.prelert.job.Detector;
@@ -112,7 +114,8 @@ public class ProcessErrorLoggingTest
 	static class DoNothingResultsPersister implements ResultsReaderFactory 
 	{
 		@Override
-		public Runnable newResultsParser(String jobId, InputStream autoDetectOutput)
+		public Runnable newResultsParser(String jobId, InputStream autoDetectOutput, 
+				Logger logger)
 		{
 			return new Runnable() {				
 				@Override
@@ -133,7 +136,7 @@ public class ProcessErrorLoggingTest
 	 * @throws IOException 
 	 */
 	public static void main(String[] args) 
-	throws NativeProcessRunException, UnknownJobException, IOException 
+	throws NativeProcessRunException, UnknownJobException, IOException, MissingFieldException
 	{
 		Detector detector = new Detector();
 		detector.setFieldName("airline");
@@ -145,7 +148,7 @@ public class ProcessErrorLoggingTest
 		conf.setDetectors(d);
 
 		DataDescription dd = new DataDescription();
-		dd.setFieldDelimiter("\t");
+		dd.setFieldDelimiter('\t');
 		
 		String jobId = "TestJob";
 		JobDetails job = new JobDetails(jobId, 

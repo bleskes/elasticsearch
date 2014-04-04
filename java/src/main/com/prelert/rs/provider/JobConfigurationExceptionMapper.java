@@ -24,49 +24,27 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.rs.resources;
+package com.prelert.rs.provider;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.ext.ExceptionMapper;
 
-import org.apache.log4j.Logger;
-
-import com.prelert.job.manager.JobManager;
-
-
+import com.prelert.job.JobConfigurationException;
 
 /**
- * API base resource  
- *
+ * Exception -> Response mapper for {@linkplain JobConfigurationException}.
  */
-@Path("")
-public class ApiBase extends ResourceWithJobManager
-{	
-	private final Logger s_Logger = Logger.getLogger(ApiBase.class);
-	
-	private static final String VERSION_HTML = 
-			"<!DOCTYPE html>\n"
-			+ "<html>\n"
-			+ "<head><title>Prelert Engine</title></head>\n"
-			+ "<body>\n"
-			+ "<h1>Prelert Engine REST API</h1>\n"
-			+ "<h2>Analytics Version:</h2>\n"
-			+ "<p>%s</p>\n"
-			+ "</body>\n"
-			+ "</html>";
+public class JobConfigurationExceptionMapper implements ExceptionMapper<JobConfigurationException>
+{
+	@Override
+	public Response toResponse(JobConfigurationException configException) 
+	{
+		String msg = String.format("Invalid Job configuration: %s\n",
+				configException.getMessage());
 		
-    @GET
-    @Produces(MediaType.TEXT_HTML)
-    public String version() 
-    {      
-    	s_Logger.debug("Get API Base document");
-    	
-    	JobManager manager = jobManager();
-    	String version = manager.getAnalyticsVersion();
-    	version = version.replace("\n", "<br/>");
-
-    	return String.format(VERSION_HTML, version);
-    }
+		return Response.status(Response.Status.BAD_REQUEST).
+				entity(msg).build();
+	}
 }
+
+

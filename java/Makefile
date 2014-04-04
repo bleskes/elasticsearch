@@ -99,6 +99,9 @@ test:
 clean:
 	cd $(ENGINEAPI_BUILD_DIR) && mvn $(MAVEN_ARGS) $(MAVEN_PROPS) clean
 
+deptree:
+	cd $(ENGINEAPI_BUILD_DIR) && mvn $(MAVEN_ARGS) $(MAVEN_PROPS) dependency:tree
+
 endif
 ifdef OEM_NAME
 

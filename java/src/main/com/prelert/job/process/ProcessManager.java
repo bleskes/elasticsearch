@@ -30,12 +30,11 @@ package com.prelert.job.process;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -45,22 +44,18 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.supercsv.io.CsvListReader;
-import org.supercsv.prefs.CsvPreference;
+import org.apache.log4j.PatternLayout;
+import org.apache.log4j.RollingFileAppender;
 
-import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.DetectorState;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobStatus;
 import com.prelert.job.UnknownJobException;
-import com.prelert.job.input.LengthEncodedWriter;
-import com.prelert.job.process.ProcessCtrl;
 
 /**
  * Manages the native processes channelling data to them and parsing the 
@@ -150,6 +145,9 @@ public class ProcessManager
 	 * <br/>
 	 * If there is an error due to the data being in the wrong format or some 
 	 * other runtime error a {@linkplain NativeProcessRunException} is thrown
+	 * <br/>
+	 * For CSV data if a configured field is missing from the header
+	 * a {@linkplain MissingFieldException} is thrown
 	 *  
 	 * @param jobId
 	 * @param input 
@@ -157,9 +155,13 @@ public class ProcessManager
 	 * it is already processing some data
 	 * @throws UnknownJobException 
 	 * @throws NativeProcessRunException If there is a problem creating a new process
+	 * @throws MissingFieldException If a configured field is missing from 
+	 * the CSV header
+	 * @throws JsonParseException 
 	 */
 	public boolean dataToJob(String jobId, InputStream input)
-	throws UnknownJobException, NativeProcessRunException
+	throws UnknownJobException, NativeProcessRunException, MissingFieldException,
+		JsonParseException
 	{
 		// stop the timeout 
 		ScheduledFuture<?> future = m_JobIdToTimeoutFuture.remove(jobId);
@@ -189,31 +191,39 @@ public class ProcessManager
 		if (process.isInUse())
 		{
 			s_Logger.error("Cannot write to process whilst it is in use");
+			process.getLogger().error("Cannot write to process whilst it is in use");
 			return false;
 		}
 				
 		// check the process is running, throws if not
 		processStillRunning(process, jobId);
 		
-		
 		// write the data to the process
 		try
 		{
 			process.setInUse(true);
 			
-			writeToJob(process.getDataDescription(), input,
-						process.getProcess().getOutputStream());
+			writeToJob(process.getDataDescription(), process.getInterestingFields(),
+					input, process.getProcess().getOutputStream(), process.getLogger());
 						
 			// check there wasn't an error in the input. 
 			// throws if there was. 
 			processStillRunning(process, jobId);
 		}
+		catch (MissingFieldException mfe)
+		{
+			throw mfe;
+		}
+		catch (JsonParseException pe)
+		{
+			throw pe;
+		}
 		catch (IOException e)
 		{
 			String msg = String.format("Exception writing to process for job %s", jobId);
-			s_Logger.error(msg, e);
-			
-			
+			s_Logger.error(msg);
+			process.getLogger().error(msg);
+						
 			StringBuilder sb = new StringBuilder(msg)
 					.append('\n').append(e.getMessage()).append('\n');
 			readProcessErrorOutput(process, sb);
@@ -258,7 +268,8 @@ public class ProcessManager
 	 * error if there is no state to restore
 	 * @return
 	 * @throws UnknownJobException If there is no job with <code>jobId</code>
-	 * @throws NativeProcessRunException
+	 * @throws NativeProcessRunException If an error is encountered creating
+	 * the native process
 	 */	
 	private ProcessAndDataDescription createProcess(JobDetails job, 
 										boolean restoreState)
@@ -266,42 +277,49 @@ public class ProcessManager
 	{
 		String jobId = job.getId();
 		
-		ProcessAndDataDescription procAndDD = null;
-		try 
+		Logger logger = createLogger(job.getId());
+
+		DetectorState state = null;
+		if (restoreState)
 		{
-			DetectorState state = null;
-			if (restoreState)
-			{
-				state = m_JobDetailsProvider.getPersistedState(jobId);			
-			}
-			
+			state = m_JobDetailsProvider.getPersistedState(jobId);			
+		}
+
+		Process nativeProcess = null;
+		try
+		{
 			// if state is null or empty it will be ignored
 			// else it is used to restore the models			
-			Process nativeProcess = m_ProcessCtrl.buildProcess(
-					ProcessCtrl.AUTODETECT_API, job, state);				
-
-			procAndDD = new ProcessAndDataDescription(nativeProcess, 
-					job.getDataDescription(), job.getTimeout());			
+			nativeProcess = m_ProcessCtrl.buildProcess(
+					ProcessCtrl.AUTODETECT_API, job, state, logger);	
 		} 
 		catch (IOException e) 
 		{
-			s_Logger.error("Failed to launch process for job " + job.getId(), e);
+			String msg = "Failed to launch process for job " + job.getId();
+			s_Logger.error(msg);
+			logger.error(msg, e);
 			throw new NativeProcessRunException("Error starting the native process "
 					+ "for job " + job.getId(), e);
 		}				
 
+		List<String> analysisFields = job.getAnalysisConfig().analysisFields();
+
+		ProcessAndDataDescription procAndDD = new ProcessAndDataDescription(
+				nativeProcess, job.getId(),
+				job.getDataDescription(), job.getTimeout(), analysisFields, logger);			
+
 		// Launch results parser in a new thread
 		Thread th = new Thread(m_ResultsReaderFactory.newResultsParser(jobId, 
-								procAndDD.getProcess().getInputStream()),
+								procAndDD.getProcess().getInputStream(),
+								logger),
 								"Bucket-Parser");
 		th.start();		
 		
-		s_Logger.debug("Created process for job " + jobId);
+		logger.debug("Created process for job " + jobId);
 		
 		return procAndDD;
 	}
-
-	
+		
 	/**
 	 * Stop the running process.
 	 * Closing the stream into the native process causes the process
@@ -332,10 +350,12 @@ public class ProcessManager
 			throw new UnknownJobException(jobId, "Job is already finished or never started");
 		}
 		
+		process.getLogger().info("Finishing job " + jobId);
 		
 		if (process.isInUse())
 		{
 			s_Logger.error("Cannot finish job while it is reading data");
+			process.getLogger().error("Cannot finish job while it is reading data");
 			return ProcessStatus.IN_USE;
 		}
 		
@@ -368,13 +388,17 @@ public class ProcessManager
 				}
 				catch (IOException ioe)
 				{
-					s_Logger.debug("Exception closing running process input stream");
+					String msg = "Exception closing running process input stream";
+					s_Logger.warn(msg);
+					process.getLogger().debug(msg);
 				}
 			}
 		}
 		catch (NativeProcessRunException e) 
 		{
-			s_Logger.error("Native process has already exited", e);
+			String msg = "Native process has already exited";
+			s_Logger.error(msg);
+			process.getLogger().error(msg);
 			
 			// clean up resources and re-throw
 			m_JobIdToProcessMap.remove(jobId);				
@@ -416,7 +440,9 @@ public class ProcessManager
 			int exitValue = process.getProcess().exitValue();
 			
 			// If we get here the process has exited. 
-			String msg = String.format("Process exited with code %d.", exitValue);			
+			String msg = String.format("Process exited with code %d.", exitValue);	
+			process.getLogger().warn(msg);
+			
 			s_Logger.error(msg + "Removing resources for job " + jobId);
 
 			// Read any error output from the process and 
@@ -439,15 +465,25 @@ public class ProcessManager
 	 * pipe to the output. 
 	 * Data is written via BufferedOutputStream which is more 
 	 * suited for small writes.
+	 * Only the fields matching those in the list <code>analysisFields</code>  
+	 * are send to the process.
+	 * For CSV data <code>MissingFieldException</code> is 
+	 * thrown if any fields are missing from the header JSON objects may
+	 * be different so an error is logged in that case. 
 	 * 
 	 * @param dataDescription
+	 * @param analysisFields
 	 * @param input
 	 * @param output
-	 * @throws IOException
+	 * @param jobLogger
+	 * @throws JsonParseException 
+	 * @throws MissingFieldException If any fields are missing from the CSV header
+	 * @throws IOException 
 	 */
 	public void writeToJob(DataDescription dataDescription, 
-			InputStream input, OutputStream output) 
-	throws IOException
+			List<String> analysisFields,
+			InputStream input, OutputStream output, Logger jobLogger) 
+	throws JsonParseException, MissingFieldException, IOException
 	{
 		// Oracle's documentation recommends buffering process streams
 		BufferedOutputStream bufferedStream = new BufferedOutputStream(output);
@@ -456,394 +492,22 @@ public class ProcessManager
 		{
 			if (dataDescription.getFormat() == DataFormat.JSON)
 			{
-				transformAndPipeJson(dataDescription, input, bufferedStream);
+				PipeToProcess.transformAndPipeJson(dataDescription, analysisFields, input, 
+						bufferedStream, jobLogger);
 			}
 			else
 			{
-				transformAndPipeCsv(dataDescription, input, bufferedStream);
+				PipeToProcess.transformAndPipeCsv(dataDescription, analysisFields, input, 
+						bufferedStream, jobLogger);
 			}
 		}
 		else
 		{			
-			pipeCsv(dataDescription, input, bufferedStream);
+			PipeToProcess.pipeCsv(dataDescription, analysisFields, input, 
+					bufferedStream, jobLogger);
 		}
 	}
 	
-	
-	/**
-	 * Pipes the raw data from the input to the output without any
-	 * encoding or transformations
-	 * 
-	 * @param is
-	 * @param os
-	 * @throws IOException
-	 */
-	@SuppressWarnings("unused")
-	private void pipe(InputStream is, OutputStream os) 
-	throws IOException 
-	{
-		int n;
-		byte[] buffer = new byte[131072]; // 128kB
-		while ((n = is.read(buffer)) > -1)
-		{
-			// os is not wrapped in a BufferedOutputStream because we're copying
-			// big chunks of data anyway
-			os.write(buffer, 0, n);
-		}
-		os.flush();
-	}
-
-	/**
-	 * Read the csv input, transform to length encoded values and pipe
-	 * to the native process.
-	 * 
-	 * @param dd
-	 * @param is
-	 * @param os
-	 * @throws IOException
-	 */
-	private void pipeCsv(DataDescription dd, InputStream is, OutputStream os)
-	throws IOException
-	{
-		char delimiter = ProcessCtrl.DEFAULT_DELIMITER; 
-		if (dd.getFieldDelimiter() != null)
-		{
-			delimiter = dd.getFieldDelimiter().charAt(0);
-		}
-		
-		CsvPreference csvPref = new CsvPreference.Builder(
-				dd.getQuoteCharacter(),
-				delimiter,
-				new String(new char[] {DataDescription.LINE_ENDING})).build();	
-		
-		try (CsvListReader csvReader = new CsvListReader(new InputStreamReader(is), csvPref))
-		{
-			String[] header = csvReader.getHeader(true);
-			
-			// Don't close the output stream as it causes the autodetect 
-			// process to quit
-			LengthEncodedWriter lengthEncodedWriter = new LengthEncodedWriter(os);
-			lengthEncodedWriter.writeRecord(header);
-
-			List<String> line;
-			while ((line = csvReader.read()) != null)
-			{
-				lengthEncodedWriter.writeRecord(line);				
-			}
-			
-			lengthEncodedWriter.flush();
-		}
-	}
-	
-
-	/**
-	 * Parse the contents from input stream, transform dates and write to 
-	 * the output stream as length encoded values.
-	 * Flushes the outputstream once all data is written.
-	 * 
-	 * @param dd 
-	 * @param is
-	 * @param os
-	 * @throws IOException
-	 */
-	private void transformAndPipeCsv(DataDescription dd, InputStream is, OutputStream os)
-	throws IOException 
-	{
-		String timeField = dd.getTimeField();
-		if (timeField == null)
-		{
-			timeField = ProcessCtrl.DEFAULT_TIME_FIELD;
-		}
-		
-		char delimiter = ProcessCtrl.DEFAULT_DELIMITER; 
-		if (dd.getFieldDelimiter() != null)
-		{
-			delimiter = dd.getFieldDelimiter().charAt(0);
-		}
-		
-		CsvPreference csvPref = new CsvPreference.Builder(
-				dd.getQuoteCharacter(),
-				delimiter,
-				new String(new char[] {DataDescription.LINE_ENDING})).build();	
-		
-		try (CsvListReader csvReader = new CsvListReader(new InputStreamReader(is), csvPref))
-		{
-			String[] header = csvReader.getHeader(true);
-			int timeFieldIndex = -1;
-			for (int i=0; i<header.length; i++)
-			{
-				if (timeField.equals(header[i]))
-				{
-					timeFieldIndex = i;
-					break;
-				}		
-			}
-
-			if (timeFieldIndex < 0)
-			{
-				String message = String.format("Cannot find time field '%s' in CSV header '%s'",
-						timeField, header);
-				s_Logger.error(message);
-				throw new IOException(message);
-			}
-
-
-			// Don't close the output stream as it causes the autodetect 
-			// process to quit
-			LengthEncodedWriter lengthEncodedWriter = new LengthEncodedWriter(os);
-			lengthEncodedWriter.writeRecord(header);
-
-			DateFormat dateFormat = new SimpleDateFormat(dd.getTimeFormat());
-
-			List<String> line;
-			while ((line = csvReader.read()) != null)
-			{
-				try
-				{
-					String epoch =  new Long(dateFormat.parse(line.get(timeFieldIndex)).getTime() / 1000).toString();
-					line.set(timeFieldIndex, epoch);
-
-					lengthEncodedWriter.writeRecord(line);
-				}
-				catch (ParseException pe)
-				{
-					String message = String.format("Cannot parse date '%s' with format string '%s'",
-							line.get(timeFieldIndex), dd.getTimeFormat());
-
-					s_Logger.error(message);
-				}		
-			}
-			
-			// flush the output
-			os.flush();
-		}
-	}
-	
-	
-	/**
-	 * Relies on all the java objects being uniform i.e. having the 
-	 * same fields in the same order.
-	 * Flushes the outputstream once all data is written.
-	 * 
-	 * @param dd 
-	 * @param is
-	 * @param os
-	 * @throws IOException
-	 */
-	private void transformAndPipeJson(DataDescription dd, InputStream is, 
-			OutputStream os)
-	throws IOException 
-	{
-		String timeField = dd.getTimeField();
-		if (timeField == null)
-		{
-			timeField = ProcessCtrl.DEFAULT_TIME_FIELD;
-		}
-		
-		JsonParser parser = new JsonFactory().createParser(is);
-		
-		JsonToken token = parser.nextToken();
-		// if start of an array ignore it, we expect an array of buckets
-		if (token == JsonToken.START_ARRAY)
-		{
-			token = parser.nextToken();
-			s_Logger.debug("JSON starts with an array");
-		}
-
-		if (token != JsonToken.START_OBJECT)
-		{
-			s_Logger.error("Expecting Json Start Object token");
-			throw new IOException(
-					"Invalid JSON should start with an array of objects or an object."
-					+ "Bad token = " + token);
-		}
-
-		if (dd.getTimeFormat() != null)
-		{
-			pipeJsonAndTransformTime(parser, os, dd);
-		}
-		else
-		{
-			pipeJson(parser, os);
-		}
-
-		os.flush();
-
-		parser.close();	
-	}
-
-
-	/**
-	 * Parse the Json objects and write to output stream.
-	 *
-	 * @param parser
-	 * @param os
-	 * @throws IOException
-	 * @throws JsonParseException
-	 */
-	private void pipeJson(JsonParser parser, OutputStream os)
-	throws JsonParseException, IOException
-	{
-		LengthEncodedWriter lengthEncodedWriter = new LengthEncodedWriter(os);
-		List<String> header = new ArrayList<>();
-		List<String> record = new ArrayList<>();
-
-		JsonToken token = parser.nextToken();
-		while (token != JsonToken.END_OBJECT)
-		{
-			if (token == JsonToken.FIELD_NAME)
-			{
-				String fieldName = parser.getCurrentName();
-				token = parser.nextToken();
-				String fieldValue = parser.getText();
-				
-				header.add(fieldName);
-				record.add(fieldValue);
-			}
-			token = parser.nextToken();
-		}
-
-		// Each record consists of number of fields followed by length/value
-		// pairs.  See CLengthEncodedInputParser.h in the C++ code for a more
-		// detailed description.
-		lengthEncodedWriter.writeRecord(header);
-		lengthEncodedWriter.writeRecord(record);
-
-		
-		int recordCount = (header.size() > 0) ? 1 : 0;
-		
-		token = parser.nextToken();
-		while (token == JsonToken.START_OBJECT)
-		{
-			record.clear();
-			
-			while (token != JsonToken.END_OBJECT)
-			{
-				if (token == JsonToken.FIELD_NAME)
-				{
-					token = parser.nextToken();
-					String fieldValue = parser.getText();
-					record.add(fieldValue);
-				}
-				token = parser.nextToken();
-			}
-
-			lengthEncodedWriter.writeRecord(record);
-			++recordCount;
-			token = parser.nextToken();
-		}
-
-		s_Logger.info("Transferred " + recordCount + " Json records to autodetect.");
-	}
-
-
-	/**
-	 * Parse the Json objects convert the timestamp to epoch time
-	 * and write to output stream. This shares a lot of code with
-	 * {@linkplain #pipeJson(JsonParser, OutputStream)} repeated
-	 * for the sake of efficiency.
-	 *
-	 * @param parser
-	 * @param os
-	 * @param dd
-	 * @throws IOException
-	 * @throws JsonParseException
-	 */
-	private void pipeJsonAndTransformTime(JsonParser parser, OutputStream os,
-			DataDescription dd)
-	throws JsonParseException, IOException
-	{
-		DateFormat dateFormat = new SimpleDateFormat(dd.getTimeFormat());
-		String timeField = dd.getTimeField();
-		if (timeField == null)
-		{
-			timeField = ProcessCtrl.DEFAULT_TIME_FIELD;
-		}
-
-		LengthEncodedWriter lengthEncodedWriter = new LengthEncodedWriter(os);
-		List<String> header = new ArrayList<>();
-		List<String> record = new ArrayList<>();
-		
-		
-		JsonToken token = parser.nextToken();
-		while (token != JsonToken.END_OBJECT)
-		{
-			if (token == JsonToken.FIELD_NAME)
-			{
-				String fieldName = parser.getCurrentName();
-				token = parser.nextToken();
-				String fieldValue = parser.getText();
-
-				if (timeField.equals(fieldName))
-				{
-					try
-					{
-						fieldValue = Long.toString(dateFormat.parse(fieldValue).getTime() / 1000);
-					}
-					catch (ParseException e)
-					{
-						s_Logger.error("Cannot parse '" + fieldValue +
-								"' as a date using format string '" +
-								dd.getTimeFormat() + "'");
-					}
-				}
-			
-				header.add(fieldName);
-				record.add(fieldValue);
-			}
-			
-			token = parser.nextToken();
-		}
-
-		// Each record consists of number of fields followed by length/value
-		// pairs.  See CLengthEncodedInputParser.h in the C++ code for a more
-		// detailed description.
-		lengthEncodedWriter.writeRecord(header);
-		lengthEncodedWriter.writeRecord(record);
-		
-		int recordCount = (header.size() > 0) ? 1 : 0;
-
-		// now send the rest of the data
-		token = parser.nextToken();
-		while (token == JsonToken.START_OBJECT)
-		{
-			record.clear();
-			
-			while (token != JsonToken.END_OBJECT)
-			{
-				if (token == JsonToken.FIELD_NAME)
-				{
-					String fieldName = parser.getCurrentName();
-					token = parser.nextToken();
-					String fieldValue = parser.getText();
-
-					if (fieldName.equals(timeField))
-					{
-						try
-						{
-							fieldValue = Long.toString(dateFormat.parse(fieldValue).getTime() / 1000);
-						}
-						catch (ParseException e)
-						{
-							s_Logger.error("Cannot parse '" + fieldValue +
-									"' as a date using format string '" +
-									dd.getTimeFormat() + "'");
-						}
-					}
-
-					record.add(fieldValue);
-				}
-				token = parser.nextToken();
-			}
-
-			lengthEncodedWriter.writeRecord(record);
-			++recordCount;
-			token = parser.nextToken();
-		}
-
-		s_Logger.info("Transferred " + recordCount + " Json records to autodetect." );
-	}
-
 
 	/**
 	 * Add the timeout schedule for <code>jobId</code>.
@@ -953,7 +617,6 @@ public class ProcessManager
 		{
 			if (process.getErrorReader().ready() == false)
 			{
-				s_Logger.info("No Error output to read from native process");
 				return sb;				
 			}
 			
@@ -971,4 +634,61 @@ public class ProcessManager
 		}
 		return sb;
 	}
+
+	
+	/**
+	 * Create the job's logger.
+	 * 
+	 * @param jobId
+	 * @return
+	 */
+	private Logger createLogger(String jobId) 
+	{		
+		try
+		{
+			try
+			{
+				Path logDir = FileSystems.getDefault().getPath(ProcessCtrl.LOG_DIR, jobId);		
+				Files.createDirectory(logDir);
+			}
+			catch (FileAlreadyExistsException e)
+			{
+			}
+
+			Logger logger = Logger.getLogger(jobId);
+			logger.setAdditivity(false);
+			logger.setLevel(Level.DEBUG);
+
+			if (logger.getAppender("engine_api_file_appender") == null)
+			{
+				Path logFile = FileSystems.getDefault().getPath(ProcessCtrl.LOG_DIR,
+						jobId, "engine_api.log");
+				RollingFileAppender fileAppender = new RollingFileAppender(
+						new PatternLayout("%d{dd MMM yyyy HH:mm:ss zz} [%t] %-5p %c{3} - %m%n"),
+						logFile.toString());
+
+				fileAppender.setName("engine_api_file_appender");
+				fileAppender.setMaxFileSize("1MB");
+				fileAppender.setMaxBackupIndex(9);
+
+				logger.addAppender(fileAppender);
+
+				//			ConsoleAppender consoleAppender = new ConsoleAppender(
+				//					new PatternLayout("%d{dd MMM yyyy HH:mm:ss zz} [%t] %-5p %c{3} - %m%n"));
+				//			
+				//			logger.addAppender(consoleAppender);
+			}
+
+			return logger;
+		}
+		catch (IOException e)
+		{
+			Logger logger = Logger.getLogger(ProcessAndDataDescription.class);
+			logger.error(String.format("Cannot create logger for job '%s' using default",
+					jobId), e);
+
+			return logger;
+		}
+	}	
+
 }

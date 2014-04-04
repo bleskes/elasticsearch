@@ -46,6 +46,7 @@ import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.prelert.job.JobConfiguration;
+import com.prelert.job.JobConfigurationException;
 import com.prelert.job.JobInUseException;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.JobDetails;
@@ -136,9 +137,12 @@ public class Jobs extends ResourceWithJobManager
     @Consumes(MediaType.APPLICATION_JSON)    
     @Produces(MediaType.APPLICATION_JSON)
     public Response createJob(JobConfiguration config) 
-    throws UnknownJobException, JsonProcessingException 
+    throws UnknownJobException, JsonProcessingException, JobConfigurationException 
     {   		
     	s_Logger.debug("Creating new job");
+    	
+    	// throws if a bad config
+    	config.verify();
     	
     	JobManager manager = jobManager();
     	JobDetails job = manager.createJob(config);
