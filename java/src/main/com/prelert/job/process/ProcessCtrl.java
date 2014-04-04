@@ -260,13 +260,14 @@ public class ProcessCtrl
 			try
 			{
 				int exitValue = proc.waitFor();
-				if (exitValue == 0)
+				BufferedReader reader = new BufferedReader(
+						new InputStreamReader(proc.getErrorStream()));
+				
+				String output = reader.readLine();
+				s_Logger.debug("autodetect version output = " + output);
+
+				if (exitValue >= 0) 
 				{
-					BufferedReader reader = new BufferedReader(
-							new InputStreamReader(proc.getErrorStream()));
-	
-					String output = reader.readLine();
-					s_Logger.debug("autodetect version output = " + output);
 					if (output == null)
 					{
 						return UNKNOWN_VERSION;						
@@ -277,8 +278,8 @@ public class ProcessCtrl
 				}
 				else
 				{
-					return String.format("Error autodetect returned %d. %s",
-							exitValue, UNKNOWN_VERSION);
+					return String.format("Error autodetect returned %d. \nError Output = '%s'.\n%s",
+							exitValue, output, UNKNOWN_VERSION);
 				}
 			}
 			catch (InterruptedException ie)
