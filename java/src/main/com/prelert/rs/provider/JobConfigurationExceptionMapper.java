@@ -42,7 +42,7 @@ public class JobConfigurationExceptionMapper implements ExceptionMapper<JobConfi
 		String msg = String.format("Invalid Job configuration: %s\n",
 				configException.getMessage());
 		
-		return Response.status(Response.Status.NOT_FOUND).
+		return Response.status(Response.Status.BAD_REQUEST).
 				entity(msg).build();
 	}
 }
