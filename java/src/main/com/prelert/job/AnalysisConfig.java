@@ -253,6 +253,7 @@ public class AnalysisConfig
 	 * Checks the configuration is valid
 	 * <ol>
 	 * <li>Check that if non-null BucketSpan, BatchSpan and Period are &gt= 0</li>
+	 * <li>Check there is at least one detector configured</li>
 	 * <li>Check all the detectors are configured correctly</li>
 	 * </ol>
 	 * 	

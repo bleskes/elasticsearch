@@ -319,7 +319,7 @@ public class Detector
 	 * <ol>
 	 * <li>One of FieldName, ByFieldName, OverFieldName or Function must be set</li>
 	 * <li>Unless the function is 'count' one of FieldName, ByFieldName 
-	 * or OverFieldName must be set"</li>
+	 * or OverFieldName must be set</li>
 	 * <li>If byFieldName is set function or fieldName must bet set</li>
 	 * <li>If overFieldName is set function or fieldName must bet set</li>
 	 * <li>Function is one of the strings in the set {@link #ANALYSIS_FUNCTIONS}</li>
@@ -330,6 +330,8 @@ public class Detector
 	 * functions</li> 
 	 * <li>Check the metric/by/over fields that cannot be set with certain 
 	 * functions are not set</li> 
+	 * <li>If the function is HIGH_COUNT, LOW_COUNT, NON_ZERO_COUNT or NZC
+	 * then either byFieldName or overFieldName must be set</li>
 	 * </ol>
 	 * 
 	 * @return true
