@@ -92,7 +92,6 @@ public class JobsTest implements Closeable
 			+ "\"dataDescription\":{\"format\":\"json\",\"timeField\":\"timestamp\"} }}";
 	
 	final String FARE_QUOTE_TIME_FORMAT_CONFIG = "{\"analysisConfig\" : {"
-			+ "\"bucketSpan\":3600,"  
 			+ "\"detectors\":[{\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}] "
 			+ "},"
 			+ "\"dataDescription\":{\"fieldDelimiter\":\",\", \"timeField\":\"time\", " 
@@ -531,7 +530,6 @@ public class JobsTest implements Closeable
 		d.setFieldName("responsetime");
 		d.setByFieldName("airline");
 		AnalysisConfig ac = new AnalysisConfig();
-		ac.setBucketSpan(3600L);
 		ac.setDetectors(Arrays.asList(d));
 		
 		DataDescription dd = new DataDescription();

@@ -95,10 +95,17 @@ public class PipeToProcess
 			List<Pair<String, Integer>> fieldIndexes = 
 					findFieldIndexes(header, dd.getTimeField(), analysisFields);
 			
+			int maxIndex = 0;
 			Iterator<Pair<String, Integer>> iter = fieldIndexes.iterator();
 			while (iter.hasNext())
 			{
 				Pair<String, Integer> p = iter.next();
+				
+				if (p.Second > maxIndex)
+				{
+					maxIndex = p.Second;
+				}
+				
 				if (p.Second < 0)
 				{
 					String msg = String.format("Field configured for analysis " 
@@ -126,10 +133,18 @@ public class PipeToProcess
 			List<String> line;
 			while ((line = csvReader.read()) != null)
 			{
+				if (line.size() <= maxIndex)
+				{
+					// if the record is incomplete don't write it
+					logger.warn("Incomplete CSV record: " + line);
+					continue;
+				}
+				
 				lengthEncodedWriter.writeNumFields(numFields);				
 				for (Pair<String, Integer> p : fieldIndexes)
 				{
-					lengthEncodedWriter.writeField(line.get(p.Second));
+					String record = line.get(p.Second);
+					lengthEncodedWriter.writeField((record == null) ? "" : record);
 				}
 			}
 			
@@ -172,10 +187,17 @@ public class PipeToProcess
 			List<Pair<String, Integer>> fieldIndexes = 
 					findFieldIndexes(header, timeField, analysisFields);
 							
+			int maxIndex = 0;
 			Iterator<Pair<String, Integer>> iter = fieldIndexes.iterator();
 			while (iter.hasNext())
 			{
 				Pair<String, Integer> p = iter.next();
+				
+				if (p.Second > maxIndex)
+				{
+					maxIndex = p.Second;
+				}
+				
 				if (p.Second < 0)
 				{				
 					String msg = String.format("Field configured for analysis " 
@@ -211,28 +233,30 @@ public class PipeToProcess
 			lengthEncodedWriter.writeRecord(header);
 
 			List<String> line;
-			String [] record = new String [fieldIndexes.size()];
+			int lineCount = 0;
+			
+			int numFields = fieldIndexes.size();
+			String [] record = new String [numFields];
 			if (dd.isEpochMs())
 			{
+
 				while ((line = csvReader.read()) != null)
-				{
+				{					
+					lineCount++;
+					if (maxIndex >= line.size())
+					{
+						logger.error("Not enough fields in csv record " + line);
+						continue;
+					}
+					
 					i = 0;
 					for (Pair<String, Integer> p : fieldIndexes)
 					{
-						try
-						{
-							record[i] = line.get(p.Second);
-						}
-						catch (IndexOutOfBoundsException e)
-						{
-							logger.error("Not enough fields in csv record " 
-									+ line, e);
-							record[i] = "";
-						}
-						
+						String field = line.get(p.Second);
+						record[i] = (field == null) ? "" : field;	
 						i++;
 					}
-					
+
 					try
 					{
 						long epoch = Long.parseLong(record[timeFieldIndex]) / 1000; 
@@ -257,20 +281,18 @@ public class PipeToProcess
 
 				while ((line = csvReader.read()) != null)
 				{
+					lineCount++;
+					if (maxIndex >= line.size())
+					{
+						logger.error("Not enough fields in csv record " + line);
+						continue;
+					}
+					
 					i = 0;
 					for (Pair<String, Integer> p : fieldIndexes)
 					{
-						try
-						{
-							record[i] = line.get(p.Second);
-						}
-						catch (IndexOutOfBoundsException e)
-						{
-							logger.error("Not enough fields in csv record " 
-									+ line, e);
-							record[i] = "";
-						}
-						
+						String field = line.get(p.Second);
+						record[i] = (field == null) ? "" : field;	
 						i++;
 					}
 					
@@ -291,6 +313,7 @@ public class PipeToProcess
 				}
 			}
 			
+			logger.info(lineCount + " csv records processed");
 			
 			// flush the output
 			os.flush();
@@ -310,7 +333,7 @@ public class PipeToProcess
 	static private List<Pair<String, Integer>> findFieldIndexes(
 			String [] header, String timeField, List<String> analysisFields)
 	{
-		List<String> headerList = Arrays.asList(header);
+		List<String> headerList = Arrays.asList(header);  // TODO header could be empty
 		
 		List<Pair<String, Integer>> fieldIndexes = new ArrayList<>();
 		

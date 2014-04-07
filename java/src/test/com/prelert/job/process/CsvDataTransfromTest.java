@@ -43,9 +43,9 @@ import junit.framework.Assert;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
 
-public class DataTransfromTest 
+public class CsvDataTransfromTest 
 {
-	static private Logger s_Logger = Logger.getLogger(DataTransfromTest.class);
+	static private Logger s_Logger = Logger.getLogger(CsvDataTransfromTest.class);
 	
 	/**
 	 * Test transforming csv data with time in epoch format 
@@ -452,7 +452,7 @@ public class DataTransfromTest
 		// so a different code path will be taken
 		// 
 		dd.setTimeFormat(DataDescription.EPOCH_MS);
-		
+	
 		bis = new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
 		bos = new ByteArrayOutputStream(1024);
 		
@@ -469,285 +469,96 @@ public class DataTransfromTest
 	
 	
 	/**
-	 * Test transforming JSON without a time format to length encoded
-	 * with the extra fields not used in the analysis filtered out
-	 *  
+	 * Tests writing csv records where some records have
+	 * missing values. Tests for epoch, epoch_ms and timeformat
+	 * 
 	 * @throws IOException
+	 * @throws MissingFieldException 
 	 */
-	@Test
-	public void plainJsonToLengthEncoded() 
+	@Test 
+	public void plainCsvWithIncompleteRecords()
 	throws IOException, MissingFieldException
 	{
-		String data = "{\"timestamp\": \"1350824400\", \"airline\": \"DJA\", \"junk_field\": \"nonsense\", \"responsetime\": \"622\", \"sourcetype\": \"flightcentre\"}" +
-					"{\"timestamp\": \"1350824401\", \"airline\": \"JQA\", \"junk_field\": \"nonsense\", \"responsetime\": \"1742\", \"sourcetype\": \"flightcentre\"}" +
-					"{\"timestamp\": \"1350824402\", \"airline\": \"GAL\", \"junk_field\": \"nonsense\", \"responsetime\": \"5339\", \"sourcetype\": \"flightcentre\"}" +
-					"{\"timestamp\": \"1350824403\", \"airline\": \"GAL\", \"junk_field\": \"nonsense\", \"responsetime\": \"3893\", \"sourcetype\": \"flightcentre\"}" +
-					"{\"timestamp\": \"1350824403\", \"airline\": \"JQA\", \"junk_field\": \"nonsense\", \"responsetime\": \"9\", \"sourcetype\": \"flightcentre\"}" +
-					"{\"timestamp\": \"1350824404\", \"airline\": \"DJA\", \"junk_field\": \"nonsense\", \"responsetime\": \"189\", \"sourcetype\": \"flightcentre\"}" +
-					"{\"timestamp\": \"1350824404\", \"airline\": \"JQA\", \"junk_field\": \"nonsense\", \"responsetime\": \"8\", \"sourcetype\": \"flightcentre\"}" +
-					"{\"timestamp\": \"1350824404\", \"airline\": \"DJA\", \"junk_field\": \"nonsense\", \"responsetime\": \"1200\", \"sourcetype\": \"flightcentre\"}"; 
-				
-		String header [] = new String [] {"timestamp", "airline", "responsetime", "sourcetype"};
-		String records [][] = new String [][] {{"1350824400", "DJA", "622", "flightcentre"},
-												{"1350824401", "JQA", "1742", "flightcentre"},
-												{"1350824402", "GAL", "5339", "flightcentre"},
-												{"1350824403", "GAL", "3893", "flightcentre"},
-												{"1350824403", "JQA", "9", "flightcentre"},
-												{"1350824404", "DJA", "189", "flightcentre"},
-												{"1350824404", "JQA", "8", "flightcentre"},
-												{"1350824404", "DJA", "1200", "flightcentre"}}; 
+		String epoch_data = "_time,airline,responsetime,sourcetype,airport,baggage\n" +
+				"1350824400,DJA,622,flightcentre,MAN,none\n" +
+				"1350824401,JQA,1742,,\n" +  // this field is't written
+				"1350824402,GAL,,flightcentre,SYN,some\n" +
+				"1350824403,GAL,3893,flightcentre,CHM,some\n" +
+				"1350824403,\n" +   // this field is't written
+				"1350824404,DJA,189,flightcentre,GAT,lost\n";
 		
-		// data is written in the order of the required fields
-		// then the time field
-		int [] fieldMap = new int [] {3, 1, 2, 0};		
+		String epoch_ms_data = "_time,airline,responsetime,sourcetype,airport,baggage\n" +
+				"1350824400000,DJA,622,flightcentre,MAN,none\n" +
+				"1350824401000,JQA,1742,,\n" + // this field is't written
+				"1350824402000,GAL,,flightcentre,SYN,some\n" +
+				"1350824403000,GAL,3893,flightcentre,CHM,some\n" +
+				"1350824403000,\n" +   // this field is't written
+				"1350824404000,DJA,189,flightcentre,GAT,lost\n";
 		
-		List<String> analysisFields = Arrays.asList(new String [] {
-				"sourcetype", "airline", "responsetime"});
-				
-		DataDescription dd = new DataDescription();
-		dd.setFormat(DataFormat.JSON);
-		dd.setTimeField("timestamp");
+		String epoch_timeformat_data = "_time,airline,responsetime,sourcetype,airport,baggage\n" +
+				"2012-10-21 13:00:00 Z,DJA,622,flightcentre,MAN,none\n" +
+				"2012-10-21 13:00:01 Z,JQA,1742,,\n" + // this field is't written
+				"2012-10-21 13:00:02 Z,GAL,,flightcentre,SYN,some\n" +
+				"2012-10-21 13:00:03 Z,GAL,3893,flightcentre,CHM,some\n" +
+				"2012-10-21 13:00:03 Z,\n" +   // this field is't written
+				"2012-10-21 13:00:04 Z,DJA,189,flightcentre,GAT,lost\n";		
 		
+		List<String> analysisFields = Arrays.asList(new String [] {"airline", "responsetime", "baggage"});
 		
-		// can create with null
-		ProcessManager pm = new ProcessManager(null, null);
-		
-		ByteArrayInputStream bis = 
-				new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
-		ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
-		
-		pm.writeToJob(dd, analysisFields, bis, bos, s_Logger);
-		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
+		String [][] lines = new String [] [] {{"_time","airline", "responsetime","baggage"},
+				{"1350824400", "DJA", "622", "none"},
+				{"1350824402", "GAL", "", "some"},
+				{"1350824403", "GAL", "3893", "some"},
+				{"1350824404", "DJA", "189", "lost"}};
 		
 		
-		// check header
-		int numFields = bb.getInt();		
-		Assert.assertEquals(header.length, numFields);
-		
-		for (int i=0; i<numFields; i++)
+		int loop = 0;
+		for (String data : new String[] {epoch_data, epoch_ms_data, epoch_timeformat_data})
 		{
-			int recordSize = bb.getInt();
-			Assert.assertEquals(header[fieldMap[i]].length(), recordSize);
-			byte [] charBuff = new byte[recordSize];
-			for (int j=0; j<recordSize; j++)
+			loop++;
+			
+			DataDescription dd = new DataDescription();
+			dd.setFormat(DataFormat.DELINEATED);
+			dd.setFieldDelimiter(',');
+			if (loop == 2)
 			{
-				charBuff[j] = bb.get();
+				dd.setTimeFormat("epoch_ms");
+			}
+			else if (loop == 3)
+			{
+				dd.setTimeFormat("yyyy-MM-dd HH:mm:ss X");
 			}
 			
-			String value = new String(charBuff, StandardCharsets.UTF_8);				
-			Assert.assertEquals(header[fieldMap[i]], value);			
-		}
-		
-		
-		// check records
-		for (String [] fields : records)
-		{
-			numFields = bb.getInt();
-			Assert.assertEquals(fields.length, numFields);
-			
-			for (int i=0; i<numFields; i++)
-			{
-				int recordSize = bb.getInt();
-				Assert.assertEquals(fields[fieldMap[i]].length(), recordSize);
-				byte [] charBuff = new byte[recordSize];
-				for (int j=0; j<recordSize; j++)
-				{
-					charBuff[j] = bb.get();
- 				}
-				
-				String value = new String(charBuff, StandardCharsets.UTF_8);
-				Assert.assertEquals(fields[fieldMap[i]], value);
-			}
-		}
-	}
+			// can create with null
+			ProcessManager pm = new ProcessManager(null, null);
 
-	
-	/**
-	 * Test transforming JSON with a time format to length encoded.
-	 *  
-	 * @throws IOException
-	 */
-	@Test
-	public void jsonWithDateFormatToLengthEncoded() 
-	throws IOException, MissingFieldException
-	{
-		String data = "{\"timestamp\": \"2012-10-21T14:00:00\", \"airline\": \"DJA\", \"responsetime\": \"622\", \"sourcetype\": \"flightcentre\"}" +
-					"{\"timestamp\": \"2012-10-21T14:00:01\", \"airline\": \"JQA\", \"responsetime\": \"1742\", \"sourcetype\": \"flightcentre\"}" +
-					"{\"timestamp\": \"2012-10-21T14:00:02\", \"airline\": \"GAL\", \"responsetime\": \"5339\", \"sourcetype\": \"flightcentre\"}" +
-					"{\"timestamp\": \"2012-10-21T14:00:03\", \"airline\": \"GAL\", \"responsetime\": \"3893\", \"sourcetype\": \"flightcentre\"}" +
-					"{\"timestamp\": \"2012-10-21T14:00:03\", \"airline\": \"JQA\", \"responsetime\": \"9\", \"sourcetype\": \"flightcentre\"}" +
-					"{\"timestamp\": \"2012-10-21T14:00:04\", \"airline\": \"DJA\", \"responsetime\": \"189\", \"sourcetype\": \"flightcentre\"}" +
-					"{\"timestamp\": \"2012-10-21T14:00:04\", \"airline\": \"JQA\", \"responsetime\": \"8\", \"sourcetype\": \"flightcentre\"}" +
-					"{\"timestamp\": \"2012-10-21T14:00:04\", \"airline\": \"DJA\", \"responsetime\": \"1200\", \"sourcetype\": \"flightcentre\"}"; 
-				
-		String header [] = new String [] {"timestamp", "airline", "responsetime", "sourcetype"};
-		String records [][] = new String [][] {{"1350824400", "DJA", "622", "flightcentre"},
-												{"1350824401", "JQA", "1742", "flightcentre"},
-												{"1350824402", "GAL", "5339", "flightcentre"},
-												{"1350824403", "GAL", "3893", "flightcentre"},
-												{"1350824403", "JQA", "9", "flightcentre"},
-												{"1350824404", "DJA", "189", "flightcentre"},
-												{"1350824404", "JQA", "8", "flightcentre"},
-												{"1350824404", "DJA", "1200", "flightcentre"}}; 
-		
-		List<String> analysisFields = Arrays.asList(new String [] {
-				"airline", "responsetime", "sourcetype"});		
-		
-		// data is written in the order of the required fields
-		// then the time field
-		int [] fieldMap = new int [] {1, 2, 3, 0};		
-				
-		DataDescription dd = new DataDescription();
-		dd.setFormat(DataFormat.JSON);
-		dd.setTimeField("timestamp");
-		dd.setTimeFormat("yyyy-MM-dd'T'HH:mm:ss");
-		
-		
-		// can create with null
-		ProcessManager pm = new ProcessManager(null, null);
-		
-		ByteArrayInputStream bis = 
-				new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
-		ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
-		
-		pm.writeToJob(dd, analysisFields, bis, bos, s_Logger);
-		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
-		
-		
-		// check header
-		int numFields = bb.getInt();		
-		Assert.assertEquals(header.length, numFields);
-		
-		for (int i=0; i<numFields; i++)
-		{
-			int recordSize = bb.getInt();
-			Assert.assertEquals(header[fieldMap[i]].length(), recordSize);
-			byte [] charBuff = new byte[recordSize];
-			for (int j=0; j<recordSize; j++)
-			{
-				charBuff[j] = bb.get();
-			}
-			
-			String value = new String(charBuff, StandardCharsets.UTF_8);				
-			Assert.assertEquals(header[fieldMap[i]], value);			
-		}
-		
-		
-		// check records
-		for (String [] fields : records)
-		{
-			numFields = bb.getInt();
-			Assert.assertEquals(fields.length, numFields);
-			
-			for (int i=0; i<numFields; i++)
-			{
-				int recordSize = bb.getInt();
-				Assert.assertEquals(fields[fieldMap[i]].length(), recordSize);
-				byte [] charBuff = new byte[recordSize];
-				for (int j=0; j<recordSize; j++)
-				{
-					charBuff[j] = bb.get();
- 				}
-				
-				String value = new String(charBuff, StandardCharsets.UTF_8);
-				Assert.assertEquals(fields[fieldMap[i]], value);
-			}
-		}
-	}
-	
-	
-	/**
-	 * Test transforming JSON with a time format 
-	 * and extra fields to length encoded.
-	 *  
-	 * @throws IOException
-	 */
-	@Test
-	public void jsonWithDateFormatAndExtraFieldsToLengthEncoded() 
-	throws IOException, MissingFieldException
-	{
-		String data = "{\"timestamp\": \"2012-10-21T14:00:00\", \"extra_field\": \"extra\", \"airline\": \"DJA\", \"responsetime\": \"622\", \"sourcetype\": \"flightcentre\", \"junk_field\": \"nonsense\"}" +
-					"{\"timestamp\": \"2012-10-21T14:00:01\", \"extra_field\": \"extra\", \"airline\": \"JQA\", \"responsetime\": \"1742\", \"sourcetype\": \"flightcentre\", \"junk_field\": \"nonsense\"}" +
-					"{\"timestamp\": \"2012-10-21T14:00:02\", \"extra_field\": \"extra\", \"airline\": \"GAL\", \"responsetime\": \"5339\", \"sourcetype\": \"flightcentre\", \"junk_field\": \"nonsense\"}" +
-					"{\"timestamp\": \"2012-10-21T14:00:03\", \"extra_field\": \"extra\", \"airline\": \"GAL\", \"responsetime\": \"3893\", \"sourcetype\": \"flightcentre\", \"junk_field\": \"nonsense\"}" +
-					"{\"timestamp\": \"2012-10-21T14:00:03\", \"extra_field\": \"extra\", \"airline\": \"JQA\", \"responsetime\": \"9\", \"sourcetype\": \"flightcentre\", \"junk_field\": \"nonsense\"}" +
-					"{\"timestamp\": \"2012-10-21T14:00:04\", \"extra_field\": \"extra\", \"airline\": \"DJA\", \"responsetime\": \"189\", \"sourcetype\": \"flightcentre\", \"junk_field\": \"nonsense\"}" +
-					"{\"timestamp\": \"2012-10-21T14:00:04\", \"extra_field\": \"extra\", \"airline\": \"JQA\", \"responsetime\": \"8\", \"sourcetype\": \"flightcentre\", \"junk_field\": \"nonsense\"}" +
-					"{\"timestamp\": \"2012-10-21T14:00:04\", \"extra_field\": \"extra\", \"airline\": \"DJA\", \"responsetime\": \"1200\", \"sourcetype\": \"flightcentre\", \"junk_field\": \"nonsense\"}"; 
-				
-		String header [] = new String [] {"timestamp", "airline", "responsetime", "sourcetype"};
-		String records [][] = new String [][] {{"1350824400", "DJA", "622", "flightcentre"},
-												{"1350824401", "JQA", "1742", "flightcentre"},
-												{"1350824402", "GAL", "5339", "flightcentre"},
-												{"1350824403", "GAL", "3893", "flightcentre"},
-												{"1350824403", "JQA", "9", "flightcentre"},
-												{"1350824404", "DJA", "189", "flightcentre"},
-												{"1350824404", "JQA", "8", "flightcentre"},
-												{"1350824404", "DJA", "1200", "flightcentre"}}; 
-		
-		List<String> analysisFields = Arrays.asList(new String [] {
-				"responsetime", "sourcetype", "airline"});		
-		
-		// data is written in the order of the required fields
-		// then the time field
-		int [] fieldMap = new int [] {2, 3, 1, 0};		
-				
-		DataDescription dd = new DataDescription();
-		dd.setFormat(DataFormat.JSON);
-		dd.setTimeField("timestamp");
-		dd.setTimeFormat("yyyy-MM-dd'T'HH:mm:ss");
-		
-		
-		// can create with null
-		ProcessManager pm = new ProcessManager(null, null);
-		
-		ByteArrayInputStream bis = 
-				new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
-		ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
-		
-		pm.writeToJob(dd, analysisFields, bis, bos, s_Logger);
-		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
-		
-		
-		// check header
-		int numFields = bb.getInt();		
-		Assert.assertEquals(header.length, numFields);
-		
-		for (int i=0; i<numFields; i++)
-		{
-			int recordSize = bb.getInt();
-			Assert.assertEquals(header[fieldMap[i]].length(), recordSize);
-			byte [] charBuff = new byte[recordSize];
-			for (int j=0; j<recordSize; j++)
-			{
-				charBuff[j] = bb.get();
-			}
-			
-			String value = new String(charBuff, StandardCharsets.UTF_8);				
-			Assert.assertEquals(header[fieldMap[i]], value);			
-		}
-		
-		
-		// check records
-		for (String [] fields : records)
-		{
-			numFields = bb.getInt();
-			Assert.assertEquals(fields.length, numFields);
-			
-			for (int i=0; i<numFields; i++)
-			{
-				int recordSize = bb.getInt();
-				Assert.assertEquals(fields[fieldMap[i]].length(), recordSize);
-				byte [] charBuff = new byte[recordSize];
-				for (int j=0; j<recordSize; j++)
-				{
-					charBuff[j] = bb.get();
- 				}
-				
-				String value = new String(charBuff, StandardCharsets.UTF_8);
-				Assert.assertEquals(fields[fieldMap[i]], value);
-			}
-		}
-	}
+			ByteArrayInputStream bis = 
+					new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
+			ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
 
+			pm.writeToJob(dd, analysisFields, bis, bos, s_Logger);
+			ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
+
+			for (String [] fields : lines)
+			{
+				int numFields = bb.getInt();
+				Assert.assertEquals(analysisFields.size() +1, numFields);
+
+				for (int i=0; i<numFields; i++)
+				{
+					int recordSize = bb.getInt();
+					Assert.assertEquals(fields[i].length(), recordSize);
+					byte [] charBuff = new byte[recordSize];
+					for (int j=0; j<recordSize; j++)
+					{
+						charBuff[j] = bb.get();
+					}
+
+					String value = new String(charBuff, StandardCharsets.UTF_8);				
+					Assert.assertEquals(fields[i], value);
+				}
+			}	
+		}
+	}
+	
 }

@@ -82,7 +82,7 @@ public class ElasticSearchResultsReaderFactory implements ResultsReaderFactory
 				s_Logger.info("Error parsing autodetect_api output", e);
 			}
 
-			s_Logger.info("Parse results Complete");
+			m_Logger.info("Parse results Complete");
 		}		
 	}
 }
