@@ -31,6 +31,7 @@ import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -154,7 +155,7 @@ public class ElasticSearchPersister implements JobDataPersister
 				int count = 1;
 				for (AnomalyRecord record : detector.getRecords())
 				{
-					content = serialiseRecord(record, detector.getName());
+					content = serialiseRecord(record, detector.getName(), bucket.getTimestamp());
 					
 					String recordId = bucket.getId() + detector.getName() + count;					
 					bulkRequest.add(m_Client.prepareIndex(m_JobId, AnomalyRecord.TYPE, recordId)
@@ -371,16 +372,18 @@ public class ElasticSearchPersister implements JobDataPersister
 	 * 
 	 * @param record Record to serialise
 	 * @param detectorKey The detector's name
+	 * @param bucketTime The timestamp of the anomaly record parent bucket
 	 * @return
 	 * @throws IOException
 	 */
-	private XContentBuilder serialiseRecord(AnomalyRecord record, String detectorKey) 
+	private XContentBuilder serialiseRecord(AnomalyRecord record, String detectorKey, Date bucketTime) 
 	throws IOException
 	{		
 		XContentBuilder builder = jsonBuilder().startObject()
 				.field(AnomalyRecord.ANOMALY_SCORE, record.getAnomalyScore())
 				.field(AnomalyRecord.PROBABILITY, record.getProbability())
-				.field(AnomalyRecord.DETECTOR_NAME, detectorKey);
+				.field(AnomalyRecord.DETECTOR_NAME, detectorKey)
+				.field(Bucket.TIMESTAMP, bucketTime);
 
 		if (record.getByFieldName() != null)
 		{
