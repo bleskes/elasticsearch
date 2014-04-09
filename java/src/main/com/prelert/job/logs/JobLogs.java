@@ -46,6 +46,7 @@ import org.apache.log4j.Logger;
 
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.process.ProcessCtrl;
+import com.prelert.rs.data.ErrorCodes;
 
 /**
  * Read/Tail the logs 
@@ -281,7 +282,8 @@ public class JobLogs
 		catch (FileNotFoundException e)
 		{
 			s_Logger.warn("Cannot find log file " + file);
-			throw new UnknownJobException(jobId, "Cannot open log file");
+			throw new UnknownJobException(jobId, "Cannot open log file",
+					 ErrorCodes.MISSING_LOG_FILE);
 		}
 		catch (IOException e)
 		{
@@ -326,7 +328,7 @@ public class JobLogs
 		{
 			String msg = "Cannot open log file directory " + logDirectory;
 			s_Logger.error(msg);
-			throw new UnknownJobException(jobId, msg);
+			throw new UnknownJobException(jobId, msg, ErrorCodes.CANNOT_OPEN_DIRECTORY);
 		}
 		
 		ByteArrayOutputStream byteos = new ByteArrayOutputStream();
@@ -358,7 +360,7 @@ public class JobLogs
 				catch (FileNotFoundException e) 
 				{
 					s_Logger.error("Missing log file '" + file 
-							+ "' will not be added compressed logs"); 
+							+ "' will not be added to zipped logs file"); 
 				}
 				catch (IOException e) 
 				{
@@ -366,7 +368,6 @@ public class JobLogs
 				}
 			}
 			
-			//zos.closeEntry();
 			zos.finish();
 			
 		} catch (IOException e1) 

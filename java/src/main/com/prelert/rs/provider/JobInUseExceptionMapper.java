@@ -30,6 +30,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 
 import com.prelert.job.JobInUseException;
+import com.prelert.rs.data.ApiError;
 
 /**
  * Exception -> Response mapper for {@linkplain com.prelert.job.JobInUseException}.
@@ -37,13 +38,12 @@ import com.prelert.job.JobInUseException;
 public class JobInUseExceptionMapper implements ExceptionMapper<JobInUseException>
 {
 	@Override
-	public Response toResponse(JobInUseException configException) 
+	public Response toResponse(JobInUseException e) 
 	{
-		String msg = String.format("Job wth id '%s' is in use.\n"
-				+ "Error message : %s\n",
-				configException.getJobId(), configException.getMessage());
+		ApiError error = new ApiError(e.getErrorCode());
+		error.setMessage(e.getMessage());
+		error.setCause(e.getCause());		
 		
-		return Response.status(Response.Status.NOT_FOUND).
-				entity(msg).build();
+		return Response.status(Response.Status.BAD_REQUEST).entity(error.toJson()).build();
 	}
 }

@@ -56,6 +56,7 @@ import com.prelert.job.DetectorState;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobStatus;
 import com.prelert.job.UnknownJobException;
+import com.prelert.rs.data.ErrorCodes;
 
 /**
  * Manages the native processes channelling data to them and parsing the 
@@ -228,7 +229,8 @@ public class ProcessManager
 					.append('\n').append(e.getMessage()).append('\n');
 			readProcessErrorOutput(process, sb);
 			
-			throw new NativeProcessRunException(sb.toString(), e);
+			throw new NativeProcessRunException(sb.toString(), 
+					ErrorCodes.NATIVE_PROCESS_WRITE_ERROR);
 		}
 		finally
 		{
@@ -298,8 +300,8 @@ public class ProcessManager
 			String msg = "Failed to launch process for job " + job.getId();
 			s_Logger.error(msg);
 			logger.error(msg, e);
-			throw new NativeProcessRunException("Error starting the native process "
-					+ "for job " + job.getId(), e);
+			throw new NativeProcessRunException(msg, 
+					ErrorCodes.NATIVE_PROCESS_START_ERROR, e);
 		}				
 
 		List<String> analysisFields = job.getAnalysisConfig().analysisFields();
@@ -333,21 +335,22 @@ public class ProcessManager
 	 * @param jobId
 	 * @return The process finished status
 	 * @throws UnknownJobException If the job is already finished or cannot be 
-	 * found
+	 * found in the local map of processes.
 	 * @throws NativeProcessRunException If the process has already terminated
 	 */
 	public ProcessStatus finishJob(String jobId) 
-	throws UnknownJobException, NativeProcessRunException 
+	throws NativeProcessRunException 
 	{
 		s_Logger.info("Finishing job " + jobId);
 		
 		ProcessAndDataDescription process = m_JobIdToProcessMap.get(jobId);	
 		if (process == null)
 		{						
-			s_Logger.error("No job with id '" + jobId + "' to shutdown");
+			s_Logger.warn("No job with id '" + jobId + "' to shutdown");
 			// tidy up
-			m_JobIdToTimeoutFuture.remove(jobId);			
-			throw new UnknownJobException(jobId, "Job is already finished or never started");
+			m_JobIdToTimeoutFuture.remove(jobId);
+			
+			return ProcessStatus.COMPLETED;
 		}
 		
 		process.getLogger().info("Finishing job " + jobId);
@@ -450,7 +453,8 @@ public class ProcessManager
 			StringBuilder sb = new StringBuilder(msg).append('\n');
 			readProcessErrorOutput(process, sb);
 			
-			throw new NativeProcessRunException(sb.toString());
+			throw new NativeProcessRunException(sb.toString(), 
+					ErrorCodes.NATIVE_PROCESS_ERROR);
 		}
 		catch (IllegalThreadStateException e)
 		{
@@ -585,7 +589,7 @@ public class ProcessManager
 			{
 				finishJob(jobId);
 			}
-			catch (UnknownJobException | NativeProcessRunException e) 
+			catch (NativeProcessRunException e) 
 			{
 				s_Logger.error("Error stopping running job " + jobId);
 			}

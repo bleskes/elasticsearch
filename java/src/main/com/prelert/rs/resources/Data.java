@@ -26,6 +26,7 @@ import com.prelert.job.UnknownJobException;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.process.MissingFieldException;
 import com.prelert.job.process.NativeProcessRunException;
+import com.prelert.rs.data.ErrorCodes;
 import com.prelert.rs.provider.RestApiException;
 import com.prelert.rs.streaminginterceptor.StreamingInterceptor;
 
@@ -97,7 +98,8 @@ public class Data extends ResourceWithJobManager
     		catch (ZipException ze)
     		{
     			throw new RestApiException("Content-Encoding = gzip "
-    					+ "but the data is not in gzip format", 
+    					+ "but the data is not in gzip format",
+    					ErrorCodes.UNCOMPRESSED_DATA,
     					Response.Status.BAD_REQUEST);
     		}
     	}

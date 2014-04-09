@@ -38,7 +38,6 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -84,7 +83,7 @@ public class Jobs extends ResourceWithJobManager
 	/**
 	 * Get all job details.
 	 * 
-	 * @return Array of JSON objects stringn 
+	 * @return Array of JSON objects string
 	 */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -120,13 +119,7 @@ public class Jobs extends ResourceWithJobManager
     	
 		JobManager manager = jobManager();
 		SingleDocument<JobDetails> job = manager.getJob(jobId);
-		
-		if (job.isExists() == false)
-		{
-			s_Logger.debug("Job " + jobId + " not found");			
-			throw new WebApplicationException(Response.Status.NOT_FOUND);
-		}
-		
+				
 		setEndPointLinks(job.getDocument());
 		
 		s_Logger.debug("Returning job '" + job + "'");
@@ -134,7 +127,7 @@ public class Jobs extends ResourceWithJobManager
     }
 		
     @POST
-    @Consumes(MediaType.APPLICATION_JSON)    
+    @Consumes(MediaType.APPLICATION_JSON)  
     @Produces(MediaType.APPLICATION_JSON)
     public Response createJob(JobConfiguration config) 
     throws UnknownJobException, JsonProcessingException, JobConfigurationException 

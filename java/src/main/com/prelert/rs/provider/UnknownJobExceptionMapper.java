@@ -30,6 +30,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 
 import com.prelert.job.UnknownJobException;
+import com.prelert.rs.data.ApiError;
 
 /**
  * Exception -> Response mapper for {@linkplain UnknownJobException}.
@@ -37,13 +38,13 @@ import com.prelert.job.UnknownJobException;
 public class UnknownJobExceptionMapper implements ExceptionMapper<UnknownJobException>
 {
 	@Override
-	public Response toResponse(UnknownJobException configException) 
+	public Response toResponse(UnknownJobException e) 
 	{
-		String msg = String.format("Unknown job wth id '%s'.\n"
-				+ "Error message : %s\n",
-				configException.getJobId(), configException.getMessage());
+		ApiError error = new ApiError(e.getErrorCode());
+		error.setCause(e.getCause());
+		error.setMessage(error.getMessage());
 		
 		return Response.status(Response.Status.NOT_FOUND).
-				entity(msg).build();
+				entity(error.toJson()).build();
 	}
 }

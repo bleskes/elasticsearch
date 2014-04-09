@@ -55,6 +55,7 @@ import com.prelert.job.persistence.JobDataPersister;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.Detector;
+import com.prelert.rs.data.ErrorCodes;
 
 /**
  * Saves result Buckets and DetectorState to ElasticSearch<br/>
@@ -325,7 +326,8 @@ public class ElasticSearchPersister implements JobDataPersister
 		catch (IndexMissingException e)
 		{
 			s_Logger.error("Unknown job '" + m_JobId + "'. Cannot read persisted state");
-			throw new UnknownJobException(m_JobId, "Cannot read persisted state");
+			throw new UnknownJobException(m_JobId, 
+					"Cannot read persisted state", ErrorCodes.MISSING_DETECTOR_STATE);
 		}
 		return detectorState;
 	}

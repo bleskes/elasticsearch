@@ -35,17 +35,28 @@ public class UnknownJobException extends Exception
 	private static final long serialVersionUID = 8603362038035845948L;
 
 	private String m_JobId;
+	private int m_ErrorCode;
 	
 	/**
-	 * Create a new UnknownJobException.
+	 * Create a new UnknownJobException with an error code
 	 * 
 	 * @param jobId The Job Id that could not be found
 	 * @param message Details of error explaining the context 
+	 * @param errorCode
 	 */
-	public UnknownJobException(String jobId, String message)
+	public UnknownJobException(String jobId, String message, int errorCode)
 	{
 		super(message);
-		this.m_JobId = jobId;
+		m_JobId = jobId;
+		m_ErrorCode = errorCode;
+	}
+	
+	public UnknownJobException(String jobId, String message, int errorCode,
+			Throwable cause)
+	{
+		super(message, cause);
+		m_JobId = jobId;
+		m_ErrorCode = errorCode;
 	}
 	
 	/**
@@ -55,5 +66,15 @@ public class UnknownJobException extends Exception
 	public String getJobId()
 	{
 		return m_JobId;
+	}
+	
+	/**
+	 * Get the error code or 0 if not set.
+	 * 
+	 * @return
+	 */
+	public int getErrorCode()
+	{
+		return m_ErrorCode;
 	}
 }

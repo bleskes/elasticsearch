@@ -35,16 +35,23 @@ public class MissingFieldException extends Exception
 	private static final long serialVersionUID = -5303432170987377451L;
 	
 	private String m_MissingFieldName;
+	private int m_ErrorCode;
 	
-	public MissingFieldException(String fieldName, String message)
+	public MissingFieldException(String fieldName, String message, int errorCode)
 	{
 		super(message);
 		m_MissingFieldName = fieldName;
+		m_ErrorCode = errorCode;
 	}
 	
 	public String getMissingFieldName()
 	{
 		return m_MissingFieldName;
+	}
+	
+	public int getErrorCode()
+	{
+		return m_ErrorCode;
 	}
 
 }

@@ -26,43 +26,27 @@
  ************************************************************/
 package com.prelert.rs.provider;
 
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.ext.ExceptionMapper;
 
+import com.prelert.job.process.MissingFieldException;
 import com.prelert.rs.data.ApiError;
-import com.prelert.rs.data.ErrorCodes;
 
 /**
- * Represents an error in parsing the configuration for a new job.
- * Returns a 400 Bad Request status code and a message.
+ * Exception -> Response mapper for {@linkplain MissingFieldExceptionMapper}.
  */
-public class JobConfigurationParseException extends WebApplicationException
+public class MissingFieldExceptionMapper implements ExceptionMapper<MissingFieldException>
 {
-	private static final long serialVersionUID = -7189040309467301076L;
-	
-	private int m_ErrorCode;
-	
-	public JobConfigurationParseException(String message, Throwable cause)
-	{
-		super(message, cause);
-		m_ErrorCode = ErrorCodes.JOB_CONFIG_PARSE_ERROR;
-	}
-	
-	
-	public JobConfigurationParseException(String message, Throwable cause, 
-			int errorCode)
-	{
-		super(message, cause);
-		m_ErrorCode = errorCode;
-	}
-	
 	@Override
-	public Response getResponse()
-	{
-		ApiError err = new ApiError(m_ErrorCode);
-		err.setMessage(this.getMessage());
-		err.setCause(this.getCause());
+	public Response toResponse(MissingFieldException e) 
+	{	
+		ApiError error = new ApiError(e.getErrorCode());
+		error.setMessage(e.getMessage());
+		error.setCause(e.getCause());		
 		
-		return Response.status(Response.Status.BAD_REQUEST).entity(err.toJson()).build();
+		return Response.status(Response.Status.BAD_REQUEST).entity(error.toJson()).build();
 	}
 }
+
+
+

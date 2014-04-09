@@ -50,6 +50,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.prelert.job.DataDescription;
 import com.prelert.job.input.LengthEncodedWriter;
+import com.prelert.rs.data.ErrorCodes;
 
 
 /**
@@ -113,7 +114,8 @@ public class PipeToProcess
 							p.First, Arrays.toString(header));
 					logger.error(msg);
 
-					throw new MissingFieldException(p.First, msg);
+					throw new MissingFieldException(p.First, msg, 
+							ErrorCodes.MISSING_FIELD);
 				}
 			}
 			
@@ -205,7 +207,7 @@ public class PipeToProcess
 								p.First, Arrays.toString(header));
 					logger.error(msg);
 			
-					throw new MissingFieldException(p.First, msg);
+					throw new MissingFieldException(p.First, msg, ErrorCodes.MISSING_FIELD);
 				}
 			}			
 			
@@ -223,7 +225,7 @@ public class PipeToProcess
 				String message = String.format("Cannot find timestamp field '%s'"
 						+ " in CSV header '%s'", timeField, Arrays.toString(header));
 				logger.error(message);
-				throw new MissingFieldException(timeField, message);
+				throw new MissingFieldException(timeField, message, ErrorCodes.MISSING_FIELD);
 			}	
 			
 
