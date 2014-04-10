@@ -52,6 +52,7 @@ public class JobConfigurationException extends Exception
 	public JobConfigurationException(String message, int errorCode, Throwable cause)
 	{
 		super(message, cause);
+		m_ErrorCode = errorCode;
 	}
 	
 	

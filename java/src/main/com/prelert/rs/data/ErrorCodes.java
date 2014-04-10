@@ -72,24 +72,24 @@ public class ErrorCodes
 	 * @see com.prelert.job.Detector#ANALYSIS_FUNCTIONS
 	 */
 	final public static int UNKNOWN_FUNCTION = 10105;
+		
+	/**
+	 * In the {@link com.prelert.job.Detector} some combinations
+	 * of fieldName/byFieldName/overFieldName and function are invalid.
+	 */
+	final public static int INVALID_FIELD_SELECTION = 10106;
+	
+	/**
+	 * The job configuration is not fully defined.
+	 */
+	final public static int INCOMPLETE_CONFIGURATION = 10107;
 	
 	/**
 	 * The date format pattern cannot be interpreted as a valid 
 	 * Java date format pattern.
 	 * @see java.text.SimpleDateFormat
 	 */
-	final public static int INVALID_DATE_FORMAT = 10106;
-	
-	/**
-	 * In the {@link com.prelert.job.Detector} some combinations
-	 * of fieldName/byFieldName/overFieldName and function are invalid.
-	 */
-	final public static int INVALID_FIELD_SELECTION = 10107;
-	
-	/**
-	 * The job configuration is not fully defined.
-	 */
-	final public static int INCOMPLETE_CONFIGURATION = 10108;
+	final public static int INVALID_DATE_FORMAT = 10108;
 	
 	
 	// Data store errors
@@ -121,13 +121,13 @@ public class ErrorCodes
 	 * a certain field and that field isn't present in the CSV
 	 * header this error is returned.
 	 */
-	final public static int MISSING_FIELD = 30100;
+	final public static int MISSING_FIELD = 30101;
 	
 	/**
 	 * Data was defined to be gzip encoded ('Content-Encoding:gzip') 
 	 * but isn't actually.
 	 */
-	final public static int UNCOMPRESSED_DATA = 30101;
+	final public static int UNCOMPRESSED_DATA = 30102;
 	
 	
 	
@@ -166,6 +166,9 @@ public class ErrorCodes
 	final public static int MISSING_LOG_FILE = 50102;
 	
 	// Rest API errors
-	final public static int UNPARSEABLE_DATE_ARGUMENT = 60100; 
+	/**
+	 * The date query parameter is unparsable as a date
+	 */
+	final public static int UNPARSEABLE_DATE_ARGUMENT = 60101; 
 	
 }
