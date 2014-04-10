@@ -26,6 +26,8 @@
  ************************************************************/
 package com.prelert.rs.data;
 
+import org.elasticsearch.common.jackson.core.io.JsonStringEncoder;
+
 /**
  * Encapsulates the an API error condition.
  * The errorCode identifies the error type and the message 
@@ -49,7 +51,7 @@ public class ApiError
 	 */
 	public ApiError(long errorCode)
 	{
-		m_ErrorCode = errorCode;
+		m_ErrorCode = errorCode;		
 	}
 	
 	/**
@@ -116,17 +118,33 @@ public class ApiError
 	 */
 	public String toJson()
 	{
+		JsonStringEncoder encoder = JsonStringEncoder.getInstance();
+
 		StringBuilder builder = new StringBuilder();
-		builder.append("{\n  \"message\" : \"").append(m_Message).append('"');
+		builder.append('{');
+				
+		boolean needComma = true;
+		if (m_Message != null)
+		{
+			char [] message = encoder.quoteAsString(m_Message.toString());
+			builder.append("\n  \"message\" : \"").append(message).append('"').append(',');
+			needComma = false;
+		}
 		
 		if (m_ErrorCode > 0)
 		{
-			builder.append(",\n  \"errorCode\" : ").append(m_ErrorCode);
+			builder.append("\n  \"errorCode\" : ").append(m_ErrorCode);
+			needComma = true;
 		}
 		
 		if (m_Cause != null)
 		{
-			builder.append(",\n  \"cause\" : \"").append(m_Cause).append('"');
+			if (needComma)
+			{
+				builder.append(',');
+			}
+			char [] cause = encoder.quoteAsString(m_Cause.toString());
+			builder.append("\n  \"cause\" : \"").append(cause).append('"');
 		}
 		
 		builder.append("\n}\n");

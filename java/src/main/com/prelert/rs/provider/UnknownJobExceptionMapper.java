@@ -42,7 +42,7 @@ public class UnknownJobExceptionMapper implements ExceptionMapper<UnknownJobExce
 	{
 		ApiError error = new ApiError(e.getErrorCode());
 		error.setCause(e.getCause());
-		error.setMessage(error.getMessage());
+		error.setMessage(e.getMessage());
 		
 		return Response.status(Response.Status.NOT_FOUND).
 				entity(error.toJson()).build();

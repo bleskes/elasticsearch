@@ -135,6 +135,7 @@ public class ProcessCtrl
 	static final public String DELETE_STATE_FILES_ARG = "--deleteStateFiles";
 	static final public String PERSIST_STATE_ARG = "--persistState";
 	static final public String VERSION_ARG = "--version";
+	static final public String INFO_ARG = "--info";
 	
 	/**
 	 * The unknown analytics version number string returned when the version 
@@ -228,7 +229,25 @@ public class ProcessCtrl
 	static final private Logger s_Logger = Logger.getLogger(ProcessCtrl.class);
 	
 	static String s_AnalyticsVersion;
-	
+
+
+	/**
+	 * Set up an environment containing the PRELERT_HOME and LD_LIBRARY_PATH
+	 * (or equivalent) environment variables.
+	 */
+	private void buildEnvironment(ProcessBuilder pb)
+	{
+		// Always clear inherited environment variables
+		pb.environment().clear();
+
+		s_Logger.info(String.format("%s=%s", PRELERT_HOME_ENV, PRELERT_HOME));
+		pb.environment().put(PRELERT_HOME_ENV, PRELERT_HOME);
+
+		s_Logger.info(String.format("%s=%s", LIB_PATH_ENV, LIB_PATH));
+		pb.environment().put(LIB_PATH_ENV, LIB_PATH);
+	}
+
+
 	synchronized public String getAnalyticsVersion()
 	{
 		if (s_AnalyticsVersion != null) 
@@ -243,17 +262,9 @@ public class ProcessCtrl
 		s_Logger.info("Getting version number from " + command);
 		
 		// Build the process
-		ProcessBuilder pb = new ProcessBuilder(command); 		
-		
-		// Always clear inherited environment variables
-		pb.environment().clear();
+		ProcessBuilder pb = new ProcessBuilder(command);
+		buildEnvironment(pb);
 
-		s_Logger.info(String.format("%s=%s", PRELERT_HOME_ENV, PRELERT_HOME));
-		pb.environment().put(PRELERT_HOME_ENV, PRELERT_HOME);
-		
-		s_Logger.info(String.format("%s=%s", LIB_PATH_ENV, LIB_PATH));
-		pb.environment().put(LIB_PATH_ENV, LIB_PATH);
-		
 		try
 		{
 			Process proc = pb.start();
@@ -295,7 +306,56 @@ public class ProcessCtrl
 			return UNKNOWN_VERSION;
 		}
 	}
-	
+
+
+	/**
+	 * Get the C++ process to print a JSON document containing some of the usage
+	 * info
+	 */
+	synchronized public String getUsageInfo()
+	{
+		List<String> command = new ArrayList<>();
+		command.add(AUTODETECT_PATH);
+		command.add(INFO_ARG);
+
+		s_Logger.info("Getting info from " + command);
+
+		// Build the process
+		ProcessBuilder pb = new ProcessBuilder(command);
+		buildEnvironment(pb);
+
+		try
+		{
+			Process proc = pb.start();
+			try
+			{
+				int exitValue = proc.waitFor();
+				BufferedReader reader = new BufferedReader(
+						new InputStreamReader(proc.getInputStream()));
+
+				String output = reader.readLine();
+				s_Logger.debug("autodetect info output = " + output);
+
+				if (exitValue >= 0 && output != null)
+				{
+					return output;
+				}
+			}
+			catch (InterruptedException ie)
+			{
+				s_Logger.error("Interrupted reading autodetect info", ie);
+			}
+		}
+		catch (IOException e)
+		{
+			s_Logger.error("Error reading autodetect info", e);
+		}
+
+		// On error return an empty JSON document
+		return "{}";
+	}
+
+
 	/**
 	 * Calls {@link #buildProcess(String, JobDetails, DetectorState)} with 
 	 * detectorState set to <code>null</code>.
@@ -447,17 +507,9 @@ public class ProcessCtrl
 		
 		// Build the process
 		logger.info("Starting native process with command: " +  command);
-		ProcessBuilder pb = new ProcessBuilder(command); 		
-		
-		// Always clear inherited environment variables
-		pb.environment().clear();
-		
-		logger.info(String.format("%s=%s", PRELERT_HOME_ENV, PRELERT_HOME));
-		pb.environment().put(PRELERT_HOME_ENV, PRELERT_HOME);
-		
-		logger.info(String.format("%s=%s", LIB_PATH_ENV, LIB_PATH));
-		pb.environment().put(LIB_PATH_ENV, LIB_PATH);
-		
+		ProcessBuilder pb = new ProcessBuilder(command);
+		buildEnvironment(pb);
+
 		return pb.start();		
 	}
 	

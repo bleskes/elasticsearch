@@ -595,7 +595,8 @@ public class ProcessManager
 			}
 		}
 	}
-	
+
+
 	/**
 	 * Get the analytics version string.
 	 * 
@@ -605,7 +606,18 @@ public class ProcessManager
 	{
 		return m_ProcessCtrl.getAnalyticsVersion();
 	}
-	
+
+
+	/**
+	 * Get a JSON document containing some of the usage info.
+	 * 
+	 * @return The JSON document in string form
+	 */
+	public String getUsageInfo()
+	{
+		return m_ProcessCtrl.getUsageInfo();
+	}
+
 
 	/**
 	 * Read the error output from the process into the string builder.
