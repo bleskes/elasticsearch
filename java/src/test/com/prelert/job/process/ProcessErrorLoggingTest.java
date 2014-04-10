@@ -47,6 +47,7 @@ import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobStatus;
 import com.prelert.job.UnknownJobException;
+import com.prelert.rs.data.ErrorCodes;
 
 /**
  * Launch processes with various bad configuration/inputs that
@@ -92,7 +93,8 @@ public class ProcessErrorLoggingTest
 			else 
 			{
 				throw new UnknownJobException(jobId, 
-						"SingleJobDetailsProvider cannot find job");
+						"SingleJobDetailsProvider cannot find job",
+						ErrorCodes.MISSING_JOB_ERROR);
 			}
 		}
 		@Override

@@ -5,6 +5,9 @@ import javax.ws.rs.ext.ExceptionMapper;
 
 import org.elasticsearch.ElasticsearchException;
 
+import com.prelert.rs.data.ApiError;
+import com.prelert.rs.data.ErrorCodes;
+
 
 /**
  * ElasticSearch exception mapper. 
@@ -17,9 +20,10 @@ public class ElasticSearchExceptionMapper implements ExceptionMapper<Elasticsear
 	@Override
 	public Response toResponse(ElasticsearchException e)
 	{
-		String msg = String.format("Error in ElasticSearch status = %s, " 
-					+ "detailed error: %s\n", e.status().toString(), e.getDetailedMessage());
+		ApiError error = new ApiError(ErrorCodes.DATA_STORE_ERROR);
+		error.setMessage("Error in ElasticSearch status = " + e.status().toString());
+		error.setCause(e);
 		
-		return Response.serverError().entity(msg).build();
+		return Response.serverError().entity(error.toJson()).build();
 	}
 }

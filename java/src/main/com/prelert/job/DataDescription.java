@@ -34,6 +34,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.prelert.rs.data.ErrorCodes;
 
 /**
  * Describes the format of the data used in the job and how it should 
@@ -276,7 +277,7 @@ public class DataDescription
 	 * at transforming before processing by autodetect.
 	 * A transformation must be applied if either a timeformat is
 	 * not in seconds since the epoch or the data is in Json format.
-	 * @return
+	 * @return True if the data should be transformed.
 	 */
 	public boolean transform()
 	{
@@ -289,7 +290,7 @@ public class DataDescription
 	 * Return true if the time is in a format that needs transforming.
 	 * Anytime format this isn't {@value #EPOCH} or <code>null</code>
 	 * needs transforming.
-	 * @return
+	 * @return True if the time field needs to be transformed.
 	 */
 	public boolean isTransformTime()
 	{
@@ -298,7 +299,7 @@ public class DataDescription
 	
 	/**
 	 * Return true if the time format is {@value #EPOCH_MS}
-	 * @return
+	 * @return True if the date is in milli-seconds since the epoch.
 	 */
 	public boolean isEpochMs()
 	{
@@ -356,7 +357,8 @@ public class DataDescription
 			catch (IllegalArgumentException e)
 			{
 				throw new JobConfigurationException(
-						"Invalid Time format string '" + m_TimeFormat + "'", e);
+						"Invalid Time format string '" + m_TimeFormat + "'", 
+						ErrorCodes.INVALID_DATE_FORMAT, e);
 			}
 		}
 		

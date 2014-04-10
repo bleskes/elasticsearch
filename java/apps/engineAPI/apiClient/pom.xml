@@ -9,7 +9,7 @@
 
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>com.prelert</groupId>
+  <groupId>com.prelert.client</groupId>
   <artifactId>prelertEngineApiClient</artifactId>
   <version>0.4.0</version>
   <packaging>jar</packaging>
@@ -253,6 +253,5 @@
 
     </plugins>
   </build>
-
 
 </project>

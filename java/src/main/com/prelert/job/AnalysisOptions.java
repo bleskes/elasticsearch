@@ -29,6 +29,8 @@ package com.prelert.job;
 
 import java.util.Map;
 
+import com.prelert.rs.data.ErrorCodes;
+
 /**
  * Analysis options for autodetect (max field values, max time buckets). 
  * 
@@ -156,12 +158,14 @@ public class AnalysisOptions
 		if (m_MaxFieldValues < 2)
 		{
 			throw new JobConfigurationException(
-					"Invalid AnalysisOption MaxFieldValues must be >= 2");
+					"Invalid AnalysisOption MaxFieldValues must be >= 2",
+					ErrorCodes.INVALID_VALUE);
 		}
 		if (m_MaxTimeBuckets < 2)
 		{
 			throw new JobConfigurationException(
-					"Invalid AnalysisOption MaxTimeBuckets must be >= 2");		
+					"Invalid AnalysisOption MaxTimeBuckets must be >= 2",
+					ErrorCodes.INVALID_VALUE);		
 		}
 		
 		return true;

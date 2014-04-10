@@ -33,6 +33,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.prelert.rs.data.ErrorCodes;
+
 /**
  * Autodetect analysis configuration options describes which fields are 
  * analysed and the functions to use. 
@@ -266,24 +268,25 @@ public class AnalysisConfig
 		if (m_BucketSpan != null && m_BucketSpan < 0)
 		{
 			throw new JobConfigurationException("BucketSpan cannot be < 0."
-					+ " Value = " + m_BucketSpan);
+					+ " Value = " + m_BucketSpan, ErrorCodes.INVALID_VALUE);
 		}
 		
 		if (m_BatchSpan != null && m_BatchSpan < 0)
 		{
 			throw new JobConfigurationException("BatchSpan cannot be < 0."
-					+ " Value = " + m_BatchSpan);
+					+ " Value = " + m_BatchSpan, ErrorCodes.INVALID_VALUE);
 		}
 		
 		if (m_Period != null && m_Period < 0)
 		{
 			throw new JobConfigurationException("Period cannot be < 0."
-					+ " Value = " + m_Period);
+					+ " Value = " + m_Period, ErrorCodes.INVALID_VALUE);
 		}
 		
 		if (m_Detectors.size() == 0)
 		{
-			throw new JobConfigurationException("No detectors configured");
+			throw new JobConfigurationException("No detectors configured",
+					ErrorCodes.INVALID_VALUE);
 		}
 		
 		for (Detector d : m_Detectors)

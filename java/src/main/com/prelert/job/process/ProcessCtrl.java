@@ -359,10 +359,10 @@ public class ProcessCtrl
 		
 		if (job.getAnalysisOptions() != null)
 		{			
-			File modelConfigFile = File.createTempFile("modelconfig", ".conf");
-			writeModelOptions(job.getAnalysisOptions(), modelConfigFile);		
-			String modelConfig = MODEL_CONFIG_ARG + modelConfigFile.toString();
-			command.add(modelConfig);
+			File limitConfigFile = File.createTempFile("limitconfig", ".conf");
+			writeModelOptions(job.getAnalysisOptions(), limitConfigFile);		
+			String limitConfig = LIMIT_CONFIG_ARG + limitConfigFile.toString();
+			command.add(limitConfig);
 		}
 		
 		// Input is always length encoded

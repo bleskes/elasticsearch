@@ -36,12 +36,14 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.MessageBodyReader;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.prelert.job.JobConfiguration;
+import com.prelert.rs.data.ErrorCodes;
 
 /**
 * JobConfiguration entity provider.
@@ -75,9 +77,9 @@ public class JobConfigurationMessageBodyReader implements MessageBodyReader<JobC
        if (mediaType.equals(MediaType.APPLICATION_JSON_TYPE) == false)
        {
            if (mediaType.equals(MediaType.APPLICATION_JSON_TYPE.withCharset("UTF-8")) == false)
-           {            
-               throw new WebApplicationException("Only the " + MediaType.APPLICATION_JSON 
-                   + " media type is accecpted");
+           {
+        	   throw new WebApplicationException(
+        			   Response.status(Response.Status.UNSUPPORTED_MEDIA_TYPE).build());        	   
            }
        }
 
@@ -88,11 +90,15 @@ public class JobConfigurationMessageBodyReader implements MessageBodyReader<JobC
        }
        catch (JsonParseException e)       
        {
-    	   throw new JobConfigurationParseException(e.getMessage());
+    	   throw new JobConfigurationParseException(
+    			   "JSON parse error reading the job configuration", e, 
+    			   ErrorCodes.JOB_CONFIG_PARSE_ERROR);
        }
        catch (JsonMappingException e)
        {
-    	   throw new JobConfigurationParseException(e.getMessage());
+    	   throw new JobConfigurationParseException(
+    			   "JSON mapping error reading the job configuration", e,
+    			   ErrorCodes.JOB_CONFIG_UNKNOWN_FIELD_ERROR);
        }       
    }
 
