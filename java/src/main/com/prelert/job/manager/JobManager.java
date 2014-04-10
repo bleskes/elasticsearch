@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -62,6 +63,7 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.prelert.job.persistence.elasticsearch.ElasticSearchMappings;
 import com.prelert.job.persistence.elasticsearch.ElasticSearchPersister;
 import com.prelert.job.persistence.elasticsearch.ElasticSearchResultsReaderFactory;
@@ -91,7 +93,20 @@ import com.prelert.rs.data.SingleDocument;
 public class JobManager implements JobDetailsProvider
 {
 	static public final Logger s_Logger = Logger.getLogger(JobManager.class);
-	
+
+	/**
+	 * Field name in which to store the API version in the usage info
+	 */
+	static public final String APP_VER_FIELDNAME = "appVer";
+
+	/**
+	 * Where to store the usage info in ElasticSearch - must match what's
+	 * expected by kibana/engineAPI/app/directives/prelertLogUsage.js
+	 */
+	static public final String USAGE_INFO_INDEX = "prelert-int";
+	static public final String USAGE_INFO_TYPE = "usage";
+	static public final String USAGE_INFO_ID = "usageStats";
+
 	/**
 	 * The default number of documents returned in queries as a string.
 	 */
@@ -149,6 +164,10 @@ public class JobManager implements JobDetailsProvider
 				 
 		m_ObjectMapper = new ObjectMapper();
 		m_ObjectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+
+		// This requires the process manager and ElasticSearch connection in
+		// order to work, but failure is considered non-fatal
+		saveUsageInfo();
 	}	
 	
 	/**
@@ -902,7 +921,8 @@ public class JobManager implements JobDetailsProvider
 		String json = m_ObjectMapper.writeValueAsString(job);
 		return json;
 	}
-	
+
+
 	/**
 	 * Get the analytics version string.
 	 * 
@@ -913,4 +933,71 @@ public class JobManager implements JobDetailsProvider
 		return  m_ProcessManager.getAnalyticsVersion();
 	}
 
+
+	/**
+	 * Attempt to get usage info from the C++ process, add extra fields and
+	 * persist to ElasticSearch.  Any failures are logged but do not otherwise
+	 * impact operation of this process.
+	 */
+	private void saveUsageInfo()
+	{
+		// This will be a JSON document in string form
+		String backendUsageInfo = m_ProcessManager.getUsageInfo();
+
+		// Try to parse the string returned from the C++ process and add the
+		// extra fields
+		ObjectNode doc;
+		try
+		{
+			doc = (ObjectNode)m_ObjectMapper.readTree(backendUsageInfo);
+		}
+		catch (IOException e)
+		{
+			s_Logger.warn("Failed to parse JSON document " + backendUsageInfo, e);
+			return;
+		}
+		catch (ClassCastException e)
+		{
+			s_Logger.warn("Parsed non-object JSON document " + backendUsageInfo, e);
+			return;
+		}
+
+		// Try to add extra fields (just appVer for now)
+		try
+		{
+			Properties props = new Properties();
+			// Try to get the API version as recorded by Maven at build time
+			InputStream is = getClass().getResourceAsStream("/META-INF/maven/com.prelert/engineApi/pom.properties");
+			if (is != null)
+			{
+				props.load(is);
+			}
+			doc.put(APP_VER_FIELDNAME, props.getProperty("version"));
+		}
+		catch (IOException e)
+		{
+			s_Logger.warn("Failed to load API version meta-data", e);
+			return;
+		}
+		catch (IllegalArgumentException e)
+		{
+			s_Logger.warn("Malformed API version meta-data", e);
+			return;
+		}
+
+		// Try to persist the modified document to ElasticSearch
+		try
+		{
+			m_Client.prepareIndex(USAGE_INFO_INDEX, USAGE_INFO_TYPE, USAGE_INFO_ID)
+					.setSource(doc.toString())
+					.execute().actionGet();
+		}
+		catch (Exception e)
+		{
+			s_Logger.warn("Error writing Prelert info to ElasticSearch", e);
+			return;
+		}
+
+		s_Logger.info("Wrote Prelert info " + doc.toString() + " to ElasticSearch");
+	}
 }
