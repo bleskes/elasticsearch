@@ -30,22 +30,42 @@
         <version>2.6</version>
         <executions>
           <execution>
-            <id>copy-resources</id>
-            <!-- here the phase you need -->
+            <id>copy-resources-config</id>
             <phase>install</phase>
             <goals>
               <goal>copy-resources</goal>
             </goals>
             <configuration>
               <outputDirectory>${env.PRELERT_HOME}/config</outputDirectory>
-              <resources>          
+              <resources>
                 <resource>
                   <directory>${basedir}/config</directory>
                   <filtering>true</filtering>
                 </resource>
-              </resources>              
-            </configuration>            
+              </resources>
+            </configuration>      
           </execution>
+
+
+          <execution>
+            <id>copy-resources-readme</id>
+            <phase>install</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${env.PRELERT_HOME}</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${basedir}</directory>
+                  <include>README.txt</include>
+                  <filtering>true</filtering>
+                </resource>
+              </resources>
+            </configuration>          
+          </execution>
+
+
         </executions>
       </plugin>
     </plugins>
