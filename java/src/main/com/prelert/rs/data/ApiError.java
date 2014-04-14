@@ -26,7 +26,8 @@
  ************************************************************/
 package com.prelert.rs.data;
 
-import org.elasticsearch.common.jackson.core.io.JsonStringEncoder;
+import com.fasterxml.jackson.core.io.JsonStringEncoder;
+
 
 /**
  * Encapsulates the an API error condition.
