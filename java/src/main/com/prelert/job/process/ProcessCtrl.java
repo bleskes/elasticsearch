@@ -72,9 +72,13 @@ public class ProcessCtrl
 	 */
 	static final public String PRELERT_HOME;
 	/**
-	 * The base log file directory. Equivalant to $PRELERT_HOME/logs
+	 * The base log file directory. Equivalent to $PRELERT_HOME/logs
 	 */
 	static final public String LOG_DIR;	
+	/**
+	 * The config directory. Equivalent to $PRELERT_HOME/config
+	 */
+	static final public String CONFIG_DIR;	
 	/**
 	 * The full to the autodetect program 
 	 */
@@ -138,6 +142,11 @@ public class ProcessCtrl
 	static final public String INFO_ARG = "--info";
 	
 	/**
+	 * Name of the model config file
+	 */
+	static final public String PRELERT_MODEL_CONF = "prelertmodel.conf";
+	
+	/**
 	 * The unknown analytics version number string returned when the version 
 	 * cannot be read 
 	 */
@@ -197,6 +206,9 @@ public class ProcessCtrl
 		
 		File logDir = new File(PRELERT_HOME, "logs");	
 		LOG_DIR = logDir.toString();
+		
+		File configDir = new File(PRELERT_HOME, "config");	
+		CONFIG_DIR = configDir.toString();
 				
 		String libSubDirectory = "lib";
 		if (SystemUtils.IS_OS_MAC_OSX)
@@ -424,6 +436,12 @@ public class ProcessCtrl
 			String limitConfig = LIMIT_CONFIG_ARG + limitConfigFile.toString();
 			command.add(limitConfig);
 		}
+				
+		if (modelConfigFilePresent())
+		{
+			String modelConfigFile = new File(CONFIG_DIR, PRELERT_MODEL_CONF).toString();
+			command.add(MODEL_CONFIG_ARG + modelConfigFile);
+		}
 		
 		// Input is always length encoded
 		command.add(LENGTH_ENCODED_INPUT_ARG);
@@ -500,8 +518,8 @@ public class ProcessCtrl
 					writeFieldConfig(job.getAnalysisConfig(), osw, logger);
 				}
 				
-				String modelConfig = FIELD_CONFIG_ARG + fieldConfigFile.toString();
-				command.add(modelConfig);	
+				String fieldConfig = FIELD_CONFIG_ARG + fieldConfigFile.toString();
+				command.add(fieldConfig);	
 			}
 		}
 		
@@ -541,6 +559,18 @@ public class ProcessCtrl
 		{
 			osw.write(contents.toString());
 		}		
+	}
+	
+	
+	/**
+	 * Return true if there is a file PRELERT_HOME/config/model.conf
+	 * @return
+	 */
+	private boolean modelConfigFilePresent()
+	{
+		File f = new File(CONFIG_DIR, PRELERT_MODEL_CONF);
+		
+		return f.exists() && !f.isDirectory();
 	}
 	
 	

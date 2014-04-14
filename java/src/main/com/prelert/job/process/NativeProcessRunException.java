@@ -40,11 +40,13 @@ public class NativeProcessRunException extends Exception
 	public NativeProcessRunException(String message, int errorCode)
 	{
 		super(message);
+		m_ErrorCode = errorCode;
 	}
 	
 	public NativeProcessRunException(String message, int errorCode, Throwable cause)
 	{
 		super(message, cause);
+		m_ErrorCode = errorCode;
 	}
 	
 	public int getErrorCode()
