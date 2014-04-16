@@ -45,6 +45,14 @@ public class ApiError
 	private Throwable m_Cause;
 	
 	/**
+	 * Default cons for serialisation (Jackson)
+	 */
+	public ApiError()
+	{
+
+	}
+
+	/**
 	 * Create a new ApiError from one of the list of error codes.
 	 * 
 	 * @param errorCode
