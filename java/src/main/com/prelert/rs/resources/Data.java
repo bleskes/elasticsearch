@@ -22,6 +22,7 @@ import javax.ws.rs.core.Response;
 import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.core.JsonParseException;
+import com.prelert.job.JobInUseException;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.process.MissingFieldException;
@@ -75,6 +76,8 @@ public class Data extends ResourceWithJobManager
 	 * @throws UnknownJobException
 	 * @throws NativeProcessRunException
 	 * @throws MissingFieldException
+     * @throws JobInUseException if the data cannot be written to because 
+	 * the job is already handling data
 	 */
     @POST
     @Path("/{jobId}")
@@ -83,7 +86,7 @@ public class Data extends ResourceWithJobManager
     public Response streamData(@Context HttpHeaders headers,
     		@PathParam("jobId") String jobId, InputStream input)  
     throws IOException, UnknownJobException, NativeProcessRunException,
-    	MissingFieldException
+    	MissingFieldException, JobInUseException
     {   	   	
     	s_Logger.debug("Handle Post data to job = " + jobId);
     	
@@ -152,11 +155,12 @@ public class Data extends ResourceWithJobManager
      * @return
      * @throws UnknownJobException
      * @throws NativeProcessRunException
+     * @throws JobInUseException 
      */
     @Path("/{jobId}/close")
     @POST
     public Response commitUpload(@PathParam("jobId") String jobId) 
-    throws UnknownJobException, NativeProcessRunException
+    throws UnknownJobException, NativeProcessRunException, JobInUseException
     {   	
     	s_Logger.debug("Post to close data upload for job " + jobId);
 
@@ -188,16 +192,14 @@ public class Data extends ResourceWithJobManager
 	 * @throws MissingFieldException If a configured field is missing from 
 	 * the CSV header
      * @throws JsonParseException 
+     * @throws JobInUseException if the data cannot be written to because 
+	 * the job is already handling data
 	 */
     private boolean handleStream(String jobId, InputStream input)
     throws NativeProcessRunException, UnknownJobException, MissingFieldException, 
-    JsonParseException
+    JsonParseException, JobInUseException
     {
     	JobManager manager = jobManager();
 		return manager.dataToJob(jobId, input);
     }
-
-    
-    
-    
 }

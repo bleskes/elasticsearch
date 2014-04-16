@@ -71,7 +71,6 @@ import com.prelert.job.process.JobDetailsProvider;
 import com.prelert.job.process.MissingFieldException;
 import com.prelert.job.process.NativeProcessRunException;
 import com.prelert.job.process.ProcessManager;
-import com.prelert.job.process.ProcessManager.ProcessStatus;
 import com.prelert.job.DetectorState;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
@@ -608,17 +607,19 @@ public class JobManager implements JobDetailsProvider
 	 * @return true if the job stopped successfully
 	 * @throws UnknownJobException 
 	 * @throws NativeProcessRunException 
+	 * @throws JobInUseException if the job cannot be closed because data is
+	 * being streamed to it
 	 */
 	public boolean finishJob(String jobId) 
-	throws UnknownJobException, NativeProcessRunException
+	throws UnknownJobException, NativeProcessRunException, JobInUseException
 	{
 		s_Logger.debug("Finish job " + jobId);
 		
 		// First check the job is in the database.
-		// this method throws if it isnt'
+		// this method throws if it isn't
 		getJobDetails(jobId);
 		
-		ProcessManager.ProcessStatus processStatus = m_ProcessManager.finishJob(jobId);			
+		ProcessManager.ProcessStatus processStatus = m_ProcessManager.finishJob(jobId);	
 		if (processStatus != ProcessManager.ProcessStatus.COMPLETED)
 		{
 			return false;
@@ -700,15 +701,7 @@ public class JobManager implements JobDetailsProvider
 	{		
 		s_Logger.debug("Deleting job '" + jobId + "'");
 
-		ProcessStatus stopStatus = m_ProcessManager.finishJob(jobId);
-		if (stopStatus == ProcessStatus.IN_USE)
-		{
-			String msg = String.format(
-					"Cannot delete job '%s' as the process is in use", jobId);
-			s_Logger.error(msg);
-			throw new JobInUseException(jobId, msg, ErrorCodes.NATIVE_PROCESS_RUNNING_ERROR);
-		}
-
+		m_ProcessManager.finishJob(jobId);
 		
 		try 
 		{
@@ -752,10 +745,12 @@ public class JobManager implements JobDetailsProvider
 	 * @throws MissingFieldException If a configured field is missing from 
 	 * the CSV header
 	 * @throws JsonParseException 
+	 * @throws JobInUseException if the job cannot be written to because 
+	 * it is already handling data
 	 */
 	public boolean dataToJob(String jobId, InputStream input) 
 	throws UnknownJobException, NativeProcessRunException, MissingFieldException, 
-		JsonParseException 
+		JsonParseException, JobInUseException 
 	{
 		try
 		{

@@ -63,5 +63,12 @@ public class JobInUseException extends Exception
 	{
 		return m_ErrorCode;
 	}
+	
+	@Override
+	public String getMessage()
+	{
+		String msg = "JobId = " + m_JobId + ". "  + super.getMessage();
+		return msg;
+	}
 }
 

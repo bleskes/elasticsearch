@@ -45,6 +45,7 @@ import com.prelert.job.Detector;
 import com.prelert.job.DetectorState;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
+import com.prelert.job.JobInUseException;
 import com.prelert.job.JobStatus;
 import com.prelert.job.UnknownJobException;
 import com.prelert.rs.data.ErrorCodes;
@@ -138,7 +139,8 @@ public class ProcessErrorLoggingTest
 	 * @throws IOException 
 	 */
 	public static void main(String[] args) 
-	throws NativeProcessRunException, UnknownJobException, IOException, MissingFieldException
+	throws NativeProcessRunException, UnknownJobException, IOException, 
+	MissingFieldException, JobInUseException
 	{
 		Detector detector = new Detector();
 		detector.setFieldName("airline");

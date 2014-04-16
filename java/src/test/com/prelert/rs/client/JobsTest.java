@@ -55,12 +55,18 @@ import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
 import com.prelert.rs.data.AnomalyRecord;
+import com.prelert.rs.data.ApiError;
 import com.prelert.rs.data.Bucket;
+import com.prelert.rs.data.ErrorCodes;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
 
+// TODO Get whole log file
+// TODO Get zipped log files
 /**
- * Autodetect REST API integration test.
+ * Test the Engine REST API endpoints.
+ * Creates jobs, uploads data closes the jobs then gets the results.
+ * Tests all the API endpoints and query parameters
  * <br/>
  * The system property 'prelert.test.data.home' must be set and point
  * to a directory containing these 3 files:
@@ -624,8 +630,9 @@ public class JobsTest implements Closeable
 	}
 
 	/**
-	 * Slowly upload the contents of <code>dataFile</code> to the server.
-	 * Starts a background thread to write the data and sleep between uploads. 
+	 * Slowly upload the contents of <code>dataFile</code> 1024 bytes at a 
+	 * time to the server. Starts a background thread to write the data 
+	 * and sleeps between each 1024B upload. 
 	 * </br>
 	 * This is to show that a slow streaming server works the 
 	 * same as a faster local server. 
@@ -634,10 +641,11 @@ public class JobsTest implements Closeable
 	 * 	<code>http://prelert-host:8080/engine/version/</code>
 	 * @param jobId The Job's Id
 	 * @param dataFile Should match the data configuration format of the job
-	 * @param compressed Is the data gzipped compressed?
+	 * @param sleepTimeMs The duration of the sleep in milliseconds
 	 * @throws IOException
 	 */
-	public void slowUpload(String baseUrl, String jobId, final File dataFile) 
+	public void slowUpload(String baseUrl, String jobId, final File dataFile,
+			final long sleepTimeMs) 
 	throws IOException
 	{
 		final PipedInputStream pipedIn = new PipedInputStream();
@@ -647,7 +655,7 @@ public class JobsTest implements Closeable
 			@Override
 			public void run() {
 				int n;
-				byte [] buf = new byte[131072];
+				byte [] buf = new byte[2048];
 				try
 				{
 					FileInputStream fs;
@@ -664,7 +672,7 @@ public class JobsTest implements Closeable
 					while((n = fs.read(buf)) > -1) 
 					{
 						pipedOut.write(buf, 0, n);
-						Thread.sleep(100);
+						Thread.sleep(sleepTimeMs);
 					}	
 					fs.close();
 
@@ -713,7 +721,7 @@ public class JobsTest implements Closeable
 	 * @return
 	 * @throws IOException 
 	 */
-	public boolean finishJob(String baseUrl, String jobId) 
+	public boolean closeJob(String baseUrl, String jobId) 
 	throws IOException
 	{
 		boolean closed = m_WebServiceClient.closeJob(baseUrl, jobId);
@@ -931,7 +939,7 @@ public class JobsTest implements Closeable
 		test(tailLines.length > 0);
 		test(tailLines.length <= 50);
 		
-		// TODO Download zip files and verify content
+		// TODO Download whole file, zip files and verify content
 		
 	}
 	
@@ -965,8 +973,10 @@ public class JobsTest implements Closeable
 		for (String jobId : jobIds)
 		{
 			SingleDocument<JobDetails> doc = m_WebServiceClient.getJob(baseUrl, jobId);
-			
 			test(doc.isExists() == false);
+			
+			ApiError error = m_WebServiceClient.getLastError();
+			test(error.getErrorCode() == ErrorCodes.MISSING_JOB_ERROR);
 		}
 	}
 	
@@ -1044,7 +1054,7 @@ public class JobsTest implements Closeable
 		test.getJobsTest(baseUrl);
 
 		test.uploadData(baseUrl, flightCentreJobId, flightCentreData, true);
-		test.finishJob(baseUrl, flightCentreJobId);
+		test.closeJob(baseUrl, flightCentreJobId);
 		
 		test.testReadLogFiles(baseUrl, flightCentreJobId);
 
@@ -1060,7 +1070,7 @@ public class JobsTest implements Closeable
 		String flightCentreJsonJobId = test.createFlightCentreJsonJobTest(baseUrl);
 		test.getJobsTest(baseUrl);
 		test.uploadData(baseUrl, flightCentreJsonJobId, flightCentreJsonData, false);
-		test.finishJob(baseUrl, flightCentreJsonJobId);		
+		test.closeJob(baseUrl, flightCentreJsonJobId);		
 		test.testReadLogFiles(baseUrl, flightCentreJsonJobId);
 
 		// Give ElasticSearch a chance to index
@@ -1075,8 +1085,8 @@ public class JobsTest implements Closeable
 		String farequoteTimeFormatJobId = test.createFareQuoteTimeFormatJobTest(baseUrl);
 		test.getJobsTest(baseUrl);
 
-		test.slowUpload(baseUrl, farequoteTimeFormatJobId, fareQuoteData);
-		test.finishJob(baseUrl, farequoteTimeFormatJobId);
+		test.slowUpload(baseUrl, farequoteTimeFormatJobId, fareQuoteData, 10);
+		test.closeJob(baseUrl, farequoteTimeFormatJobId);
 		test.testReadLogFiles(baseUrl, farequoteTimeFormatJobId);
 
 		// Give ElasticSearch a chance to index
@@ -1100,7 +1110,7 @@ public class JobsTest implements Closeable
 		String refJobId = test.createJobFromFareQuoteTimeFormatRefId(baseUrl, job.getId());
 		
 		test.uploadData(baseUrl, refJobId, fareQuoteData, false);
-		test.finishJob(baseUrl, refJobId);
+		test.closeJob(baseUrl, refJobId);
 		test.testReadLogFiles(baseUrl, refJobId);
 
 		// Give ElasticSearch a chance to index
@@ -1117,7 +1127,7 @@ public class JobsTest implements Closeable
 	 	jobUrls.add(jobId);	
 	 	
 	 	test.uploadData(baseUrl, jobId, flightCentreMsData, false);
-	 	test.finishJob(baseUrl, jobId);	
+	 	test.closeJob(baseUrl, jobId);	
 	 	test.testReadLogFiles(baseUrl, jobId);
 		
 		// Give ElasticSearch a chance to index
@@ -1131,7 +1141,7 @@ public class JobsTest implements Closeable
 	 	jobUrls.add(jobId);	
 	 	
 	 	test.uploadData(baseUrl, jobId, flightCentreMsJsonData, false);
-	 	test.finishJob(baseUrl, jobId);	
+	 	test.closeJob(baseUrl, jobId);	
 	 	test.testReadLogFiles(baseUrl, jobId);
 		
 		// Give ElasticSearch a chance to index
