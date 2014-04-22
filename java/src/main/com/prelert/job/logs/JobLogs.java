@@ -32,6 +32,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -45,6 +46,7 @@ import org.apache.log4j.Logger;
 
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.process.ProcessCtrl;
+import com.prelert.rs.data.ErrorCodes;
 
 /**
  * Read/Tail the logs 
@@ -61,6 +63,53 @@ public class JobLogs
 	 */
 	public static final int EXPECTED_LINE_LENGTH = 132;
 	
+	/**
+	 * Read the entire contents of the file and return
+	 * as a string. The file should be UTF-8 encoded.
+	 * If <code>filename</code> does not end with {@value #LOG_FILE_EXTENSION}
+	 * then {@value #LOG_FILE_EXTENSION} is appended to it, this means
+	 * only files ending in {@value #LOG_FILE_EXTENSION} can be read.
+	 * 
+	 * @param jobId
+	 * @param filename 
+	 * @return
+	 */
+	public String file(String jobId, String filename) 
+	{	
+		if (filename.endsWith(LOG_FILE_EXTENSION) == false)
+		{
+			filename = filename + LOG_FILE_EXTENSION;
+		}
+		
+		Path filePath = FileSystems.getDefault().getPath(ProcessCtrl.LOG_DIR, 
+				jobId, filename);	
+		
+		return file(filePath);
+	}
+	
+	
+	/**
+	 * Read the entire contents of the file and return
+	 * as a string. The file should be UTF-8 encoded.
+	 * 
+	 * @param filePath
+	 * @return
+	 */
+	public String file(Path filePath) 
+	{
+		try
+		{
+			byte[] encoded = Files.readAllBytes(filePath);
+			return new String(encoded, StandardCharsets.UTF_8);
+		}
+		catch (IOException e)
+		{
+			s_Logger.error("Cannot read log file " + filePath.toString(), e);
+			return "";
+		}
+		
+	}
+	
 	
 	/**
 	 * Return the last N lines from the file or less if the file
@@ -74,12 +123,33 @@ public class JobLogs
 	 */
 	public String tail(String jobId, int nLines)
 	throws UnknownJobException
+	{	
+		return tail(jobId, jobId + LOG_FILE_EXTENSION, nLines);
+	}
+	
+	/**
+	 * Return the last N lines from the file or less if the file
+	 * is shorter than N lines.
+	 * 
+	 * @param jobId Read the log file for this job
+	 * @param nLines Lines to tail
+	 * @return
+	 * @throws UnknownJobException If jobId is not recognised
+	 * @see {@link #tail(File, String, int, int)}
+	 */
+	public String tail(String jobId, String filename, int nLines)
+	throws UnknownJobException
 	{
-		File file = new File(new File(ProcessCtrl.LOG_DIR, jobId), 
-				jobId + LOG_FILE_EXTENSION);
+		if (filename.endsWith(LOG_FILE_EXTENSION) == false)
+		{
+			filename = filename + LOG_FILE_EXTENSION;
+		}
+		
+		File file = new File(new File(ProcessCtrl.LOG_DIR, jobId), filename);
 		
 		return tail(file, jobId, nLines, EXPECTED_LINE_LENGTH);
 	}
+	
 	
 	/**
 	 * Return the last N lines from the file or less if the file
@@ -212,7 +282,8 @@ public class JobLogs
 		catch (FileNotFoundException e)
 		{
 			s_Logger.warn("Cannot find log file " + file);
-			throw new UnknownJobException(jobId, "Cannot open log file");
+			throw new UnknownJobException(jobId, "Cannot open log file",
+					 ErrorCodes.MISSING_LOG_FILE);
 		}
 		catch (IOException e)
 		{
@@ -257,7 +328,7 @@ public class JobLogs
 		{
 			String msg = "Cannot open log file directory " + logDirectory;
 			s_Logger.error(msg);
-			throw new UnknownJobException(jobId, msg);
+			throw new UnknownJobException(jobId, msg, ErrorCodes.CANNOT_OPEN_DIRECTORY);
 		}
 		
 		ByteArrayOutputStream byteos = new ByteArrayOutputStream();
@@ -289,7 +360,7 @@ public class JobLogs
 				catch (FileNotFoundException e) 
 				{
 					s_Logger.error("Missing log file '" + file 
-							+ "' will not be added compressed logs"); 
+							+ "' will not be added to zipped logs file"); 
 				}
 				catch (IOException e) 
 				{
@@ -297,7 +368,6 @@ public class JobLogs
 				}
 			}
 			
-			//zos.closeEntry();
 			zos.finish();
 			
 		} catch (IOException e1) 

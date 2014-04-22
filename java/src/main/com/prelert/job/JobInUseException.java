@@ -27,15 +27,15 @@
 package com.prelert.job;
 
 /**
- * This exception is thrown is an operation is attempted on a job that
- * is already being used.  
- * The message should explain the error
+ * This exception is thrown is an operation is attempted on a job 
+ * that can't be executed as the job is already being used.  
  */
 public class JobInUseException extends Exception 
 {
 	private static final long serialVersionUID = -2759814168552580059L;
 		
 	private String m_JobId;
+	private int m_ErrorCode;
 	
 	/**
 	 * Create a new JobInUseException.
@@ -43,19 +43,32 @@ public class JobInUseException extends Exception
 	 * @param jobId The Id of the job some operation was attempted on. 
 	 * @param message Details of error explaining the context 
 	 */
-	public JobInUseException(String jobId, String message)
+	public JobInUseException(String jobId, String message, int errorCode)
 	{
 		super(message);
-		this.m_JobId = jobId;
+		m_JobId = jobId;
+		m_ErrorCode = errorCode;
 	}
 	
 	/**
 	 * Get the <i>JobId</i> that was the source of the error.
-	 * @return
+	 * @return The job id string
 	 */
 	public String getJobId()
 	{
 		return m_JobId;
+	}
+	
+	public int getErrorCode()
+	{
+		return m_ErrorCode;
+	}
+	
+	@Override
+	public String getMessage()
+	{
+		String msg = "JobId = " + m_JobId + ". "  + super.getMessage();
+		return msg;
 	}
 }
 

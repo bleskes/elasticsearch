@@ -29,25 +29,32 @@ package com.prelert.rs.provider;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
+import com.prelert.rs.data.ApiError;
+
 /**
  * Overrides the default {@linkplain WebApplicationException} 
- * response to include the error message
+ * response to include the error code and message 
  */
 public class RestApiException extends WebApplicationException 
 {
 	private static final long serialVersionUID = -4162139513941557651L;
 	
+	private int m_ErrorCode;
 	private Response.Status m_Status;
 	
-	public RestApiException(String msg, Response.Status status)
+	public RestApiException(String msg, int errorCode, Response.Status status)
 	{
 		super(msg);
+		m_ErrorCode = errorCode;
 		m_Status = status;
 	}
 
 	@Override
 	public Response getResponse()
 	{
-		return Response.status(m_Status).entity(getMessage() + "\n").build();
+		ApiError err = new ApiError(m_ErrorCode);
+		err.setMessage(this.getMessage());
+		
+		return Response.status(m_Status).entity(err.toJson()).build();		
 	}
 }

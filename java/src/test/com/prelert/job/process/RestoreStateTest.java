@@ -67,10 +67,11 @@ public class RestoreStateTest
 	 * @throws NativeProcessRunException 
 	 * @throws InterruptedException 
 	 * @throws UnknownJobException 
+	 * @throws MissingFieldException
 	 */
 	public static void main(String[] args) 
 	throws IOException, NativeProcessRunException, UnknownJobException,
-		InterruptedException, JobInUseException 
+		InterruptedException, JobInUseException, MissingFieldException
 	{
 		final String prelertSrcHome = System.getProperty("prelert.src.home");
 		if (prelertSrcHome == null)
@@ -96,7 +97,7 @@ public class RestoreStateTest
 		config.setBucketSpan(3600L);
 		
 		DataDescription dd = new DataDescription();
-		dd.setFieldDelimiter(",");
+		dd.setFieldDelimiter(',');
 				
 		JobConfiguration jobConfig = new JobConfiguration.JobConfigurationBuilder(config)
 				.dataDescription(dd)

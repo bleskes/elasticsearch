@@ -35,14 +35,23 @@ public class NativeProcessRunException extends Exception
 {
 	private static final long serialVersionUID = 5722287151589093943L;		
 	
-	public NativeProcessRunException(String message)
+	private int m_ErrorCode;
+	
+	public NativeProcessRunException(String message, int errorCode)
 	{
 		super(message);
+		m_ErrorCode = errorCode;
 	}
 	
-	public NativeProcessRunException(String message, Exception cause)
+	public NativeProcessRunException(String message, int errorCode, Throwable cause)
 	{
 		super(message, cause);
+		m_ErrorCode = errorCode;
+	}
+	
+	public int getErrorCode()
+	{
+		return m_ErrorCode;
 	}
 	
 	

@@ -34,6 +34,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.prelert.rs.data.ErrorCodes;
 
 /**
  * Describes the format of the data used in the job and how it should 
@@ -90,6 +91,12 @@ public class DataDescription
 	 * The time field name
 	 */
 	static final public String TIME_FIELD_NAME = "timeField";
+	
+	/**
+	 * By default autodetect expects the timestamp in a field with this name
+	 */
+	static final public String DEFAULT_TIME_FIELD = "_time";
+	
 	/**
 	 * The timeFormat field name
 	 */	
@@ -123,14 +130,16 @@ public class DataDescription
 	private DataFormat m_DataFormat;
 	private String m_TimeFieldName;
 	private String m_TimeFormat;
-	private String m_FieldDelimiter;
+	private char m_FieldDelimiter;
 	private char m_QuoteCharacter;
 	
 	public DataDescription()
 	{
 		m_DataFormat = DataFormat.DELINEATED;
-		m_QuoteCharacter = DEFAULT_QUOTE_CHAR;
+		m_TimeFieldName = DEFAULT_TIME_FIELD;
 		m_TimeFormat = EPOCH;
+		m_FieldDelimiter = DEFAULT_DELIMITER;
+		m_QuoteCharacter = DEFAULT_QUOTE_CHAR;
 	}
 	
 	/**
@@ -170,7 +179,7 @@ public class DataDescription
 			Object obj = values.get(FIELD_DELIMITER);
 			if (obj != null)
 			{
-				m_FieldDelimiter = obj.toString();
+				m_FieldDelimiter = obj.toString().charAt(0);
 			}
 		}
 		if (values.containsKey(QUOTE_CHARACTER))
@@ -232,15 +241,17 @@ public class DataDescription
 	/**
 	 * If the data is in a delineated format with a header e.g. csv or tsv
 	 * this is the delimiter character used. This is only applicable if
-	 * {@linkplain #getFormat()} is {@link DataDescription.DataFormat#DELINEATED} 
-	 * @return A String if set or <code>null</code>
+	 * {@linkplain #getFormat()} is {@link DataDescription.DataFormat#DELINEATED}.
+	 * The default value is {@value #DEFAULT_DELIMITER} 
+	 * 
+	 * @return A char 
 	 */
-	public String getFieldDelimiter()
+	public char getFieldDelimiter()
 	{
 		return m_FieldDelimiter;
 	}
 	
-	public void setFieldDelimiter(String delimiter)
+	public void setFieldDelimiter(char delimiter)
 	{
 		m_FieldDelimiter = delimiter;
 	}	
@@ -266,7 +277,7 @@ public class DataDescription
 	 * at transforming before processing by autodetect.
 	 * A transformation must be applied if either a timeformat is
 	 * not in seconds since the epoch or the data is in Json format.
-	 * @return
+	 * @return True if the data should be transformed.
 	 */
 	public boolean transform()
 	{
@@ -279,7 +290,7 @@ public class DataDescription
 	 * Return true if the time is in a format that needs transforming.
 	 * Anytime format this isn't {@value #EPOCH} or <code>null</code>
 	 * needs transforming.
-	 * @return
+	 * @return True if the time field needs to be transformed.
 	 */
 	public boolean isTransformTime()
 	{
@@ -288,7 +299,7 @@ public class DataDescription
 	
 	/**
 	 * Return true if the time format is {@value #EPOCH_MS}
-	 * @return
+	 * @return True if the date is in milli-seconds since the epoch.
 	 */
 	public boolean isEpochMs()
 	{
@@ -345,9 +356,9 @@ public class DataDescription
 			}
 			catch (IllegalArgumentException e)
 			{
-				
 				throw new JobConfigurationException(
-						"Invalid Time format string '" + m_TimeFormat + "'", e);
+						"Invalid Time format string '" + m_TimeFormat + "'", 
+						ErrorCodes.INVALID_DATE_FORMAT, e);
 			}
 		}
 		

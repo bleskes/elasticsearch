@@ -131,7 +131,7 @@ public class ElasticSearchTest
 		try
 		{
 			InputStream fs = new FileInputStream(new File(args[0]));
-			AutoDetectResultsParser.parseResults(fs, es);
+			AutoDetectResultsParser.parseResults(fs, es, s_Logger);
 
 			// now read back results
 			JobManager jobManager = new JobManager(node);

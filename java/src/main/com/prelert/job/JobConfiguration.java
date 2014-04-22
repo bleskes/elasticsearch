@@ -27,6 +27,8 @@
 
 package com.prelert.job;
 
+import com.prelert.rs.data.ErrorCodes;
+
 /**
  * This class encapsulates all the data required to create a new job it
  * does not represent the state of a created job (see {@linkplain JobDetails}
@@ -204,7 +206,8 @@ public class JobConfiguration
 		if (m_AnalysisConfig == null && m_ReferenceJobId == null)
 		{
 			throw new JobConfigurationException("Either an an AnalysisConfig or "
-					+ " job reference id must be set");
+					+ " job reference id must be set",
+					ErrorCodes.INCOMPLETE_CONFIGURATION);
 		}
 		
 		if (m_AnalysisConfig != null)
@@ -224,7 +227,8 @@ public class JobConfiguration
 		if (m_Timeout != null && m_Timeout < 0)
 		{
 			throw new JobConfigurationException("Timeout can not be a negative "
-					+ "number. Value = " + m_Timeout);
+					+ "number. Value = " + m_Timeout,
+					ErrorCodes.INVALID_VALUE);
 		}
 		
 		return true;

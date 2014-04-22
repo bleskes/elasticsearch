@@ -24,27 +24,34 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.rs.provider;
-
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
-
-import com.prelert.job.UnknownJobException;
-import com.prelert.rs.data.ApiError;
+package com.prelert.job.process;
 
 /**
- * Exception -> Response mapper for {@linkplain UnknownJobException}.
+ * Represents the case where a job has been configured to use
+ * a specific field but that field is missing from the data.
  */
-public class UnknownJobExceptionMapper implements ExceptionMapper<UnknownJobException>
+public class MissingFieldException extends Exception 
 {
-	@Override
-	public Response toResponse(UnknownJobException e) 
+	private static final long serialVersionUID = -5303432170987377451L;
+	
+	private String m_MissingFieldName;
+	private int m_ErrorCode;
+	
+	public MissingFieldException(String fieldName, String message, int errorCode)
 	{
-		ApiError error = new ApiError(e.getErrorCode());
-		error.setCause(e.getCause());
-		error.setMessage(e.getMessage());
-		
-		return Response.status(Response.Status.NOT_FOUND).
-				entity(error.toJson()).build();
+		super(message);
+		m_MissingFieldName = fieldName;
+		m_ErrorCode = errorCode;
 	}
+	
+	public String getMissingFieldName()
+	{
+		return m_MissingFieldName;
+	}
+	
+	public int getErrorCode()
+	{
+		return m_ErrorCode;
+	}
+
 }

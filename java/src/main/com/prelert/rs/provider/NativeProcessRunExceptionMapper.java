@@ -31,6 +31,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 
 import com.prelert.job.process.NativeProcessRunException;
+import com.prelert.rs.data.ApiError;
 
 /**
  * Exception -> Response mapper for {@linkplain NativeProcessRunException}.
@@ -41,6 +42,10 @@ public class NativeProcessRunExceptionMapper implements ExceptionMapper<NativePr
 	@Override
 	public Response toResponse(NativeProcessRunException e) 
 	{
-		return Response.serverError().entity(e.getMessage()).build();
+		ApiError error = new ApiError(e.getErrorCode());
+		error.setCause(e.getCause());
+		error.setMessage(e.getMessage());
+		
+		return Response.serverError().entity(error.toJson()).build();
 	}
 }

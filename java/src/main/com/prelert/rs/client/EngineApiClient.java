@@ -56,6 +56,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
+import com.prelert.rs.data.ApiError;
 import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.Detector;
 import com.prelert.rs.data.Pagination;
@@ -63,6 +64,7 @@ import com.prelert.rs.data.SingleDocument;
 
 /**
  * A Http Client for the Prelert Engine RESTful API.
+ *
  * <br/>
  * Contains methods to create jobs, list jobs, upload data and query results.
  * <br/>
@@ -75,6 +77,8 @@ public class EngineApiClient implements Closeable
 	private ObjectMapper m_JsonMapper;
 		
 	private CloseableHttpClient m_HttpClient;
+	
+	private ApiError m_LastError;
 
 	/**
 	 * Creates a new http client and Json object mapper.
@@ -116,14 +120,19 @@ public class EngineApiClient implements Closeable
 		CloseableHttpResponse response = m_HttpClient.execute(get);
 		try
 		{
+			HttpEntity entity = response.getEntity();				
+			String content = EntityUtils.toString(entity);
+
 			if (response.getStatusLine().getStatusCode() == 200)
 			{
-				HttpEntity entity = response.getEntity();				
-				String content = EntityUtils.toString(entity);
-				
 				Pagination<JobDetails> docs = m_JsonMapper.readValue(content, 
 						new TypeReference<Pagination<JobDetails>>() {} );
 				return docs;
+			}
+			else
+			{
+				m_LastError = m_JsonMapper.readValue(content, 
+						new TypeReference<ApiError>() {} );
 			}
 		}
 		finally 
@@ -176,6 +185,9 @@ public class EngineApiClient implements Closeable
 						content);
 				
 				s_Logger.error(msg);
+				
+				m_LastError = m_JsonMapper.readValue(content, 
+							new TypeReference<ApiError>() {} );
 				
 				return new SingleDocument<>();
 			}
@@ -262,7 +274,11 @@ public class EngineApiClient implements Closeable
 						content);
 				
 				s_Logger.error(msg);
+				
+				m_LastError = m_JsonMapper.readValue(content, 
+						new TypeReference<ApiError>() {} );
 			}
+			
 			return "";
 		}
 	}
@@ -300,6 +316,10 @@ public class EngineApiClient implements Closeable
 						content);
 				
 				s_Logger.error(msg);
+				
+				m_LastError = m_JsonMapper.readValue(content, 
+						new TypeReference<ApiError>() {} );
+				
 				return false;
 			}
 		}
@@ -342,10 +362,11 @@ public class EngineApiClient implements Closeable
 			post.setEntity(entity);
 			try (CloseableHttpResponse response = m_HttpClient.execute(post))
 			{
+
+				String content = EntityUtils.toString(response.getEntity());
+
 				if (response.getStatusLine().getStatusCode() != 202)
 				{
-					String content = EntityUtils.toString(response.getEntity());
-
 					String msg = String.format(
 							"Upload of chunk %d failed, status code = %d. "
 							+ "Returned content: %s", 
@@ -353,6 +374,9 @@ public class EngineApiClient implements Closeable
 							content);
 					
 					s_Logger.error(msg);
+					
+					m_LastError = m_JsonMapper.readValue(content, 
+							new TypeReference<ApiError>() {} );
 				}
 			}
 		}
@@ -396,10 +420,10 @@ public class EngineApiClient implements Closeable
 		
         try (CloseableHttpResponse response = m_HttpClient.execute(post)) 
         {
-			if (response.getStatusLine().getStatusCode() != 202)
-			{
-				String content = EntityUtils.toString(response.getEntity());
+        	String content = EntityUtils.toString(response.getEntity());
 
+        	if (response.getStatusLine().getStatusCode() != 202)
+			{
 				String msg = String.format(
 						"Streaming upload failed, status code = %d. "
 						+ "Returned content: %s", 
@@ -407,6 +431,10 @@ public class EngineApiClient implements Closeable
 						content);
 				
 				s_Logger.error(msg);
+				
+				m_LastError = m_JsonMapper.readValue(content, 
+						new TypeReference<ApiError>() {} );
+				
 				return false;
 			}
 			
@@ -433,10 +461,10 @@ public class EngineApiClient implements Closeable
 		HttpPost post = new HttpPost(closeUrl);		
 		try (CloseableHttpResponse response = m_HttpClient.execute(post))
 		{
+			String content = EntityUtils.toString(response.getEntity());
+
 			if (response.getStatusLine().getStatusCode() != 202)
 			{
-				String content = EntityUtils.toString(response.getEntity());
-
 				String msg = String.format(
 						"Error closing job %s, status code = %d. "
 						+ "Returned content: %s",
@@ -445,6 +473,10 @@ public class EngineApiClient implements Closeable
 						content);
 				
 				s_Logger.error(msg);
+				
+				m_LastError = m_JsonMapper.readValue(content, 
+						new TypeReference<ApiError>() {} );
+				
 				return false;
 			}			
 		}
@@ -494,6 +526,9 @@ public class EngineApiClient implements Closeable
 						content);
 				
 				s_Logger.error(msg);
+				
+				m_LastError = m_JsonMapper.readValue(content, 
+						new TypeReference<ApiError>() {} );
 			}
 		}
 		finally 
@@ -623,6 +658,9 @@ public class EngineApiClient implements Closeable
 						content);
 				
 				s_Logger.error(msg);
+				
+				m_LastError = m_JsonMapper.readValue(content, 
+						new TypeReference<ApiError>() {} );
 			}
 		}
 		finally 
@@ -686,6 +724,9 @@ public class EngineApiClient implements Closeable
 						content);
 
 				s_Logger.error(msg);
+				
+				m_LastError = m_JsonMapper.readValue(content, 
+						new TypeReference<ApiError>() {} );
 			}
 		}
 		finally 
@@ -743,6 +784,9 @@ public class EngineApiClient implements Closeable
 						content);
 
 				s_Logger.error(msg);
+				
+				m_LastError = m_JsonMapper.readValue(content, 
+						new TypeReference<ApiError>() {} );
 			}			
 		}
 		finally 
@@ -802,6 +846,9 @@ public class EngineApiClient implements Closeable
 						content);
 
 				s_Logger.error(msg);
+				
+				m_LastError = m_JsonMapper.readValue(content, 
+						new TypeReference<ApiError>() {} );
 			}			
 		}
 		finally 
@@ -872,6 +919,10 @@ public class EngineApiClient implements Closeable
 								content);
 
 				s_Logger.error(msg);
+				
+				m_LastError = m_JsonMapper.readValue(content, 
+						new TypeReference<ApiError>() {} );
+				
 				return "";
 			}			
 		}		
@@ -923,6 +974,9 @@ public class EngineApiClient implements Closeable
 						content);
 
 				s_Logger.error(msg);
+				
+				m_LastError = m_JsonMapper.readValue(content, 
+						new TypeReference<ApiError>() {} );
 			}				
 		}
 		finally 
@@ -931,5 +985,15 @@ public class EngineApiClient implements Closeable
 		}	
 		
 		return null;		
+	}
+	
+	
+	/**
+	 * Get the last error message
+	 * @return The error or null if no errors have occurred 
+	 */
+	public ApiError getLastError()
+	{
+		return m_LastError;
 	}
 }

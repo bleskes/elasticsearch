@@ -29,22 +29,24 @@ package com.prelert.rs.provider;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 
-import com.prelert.job.UnknownJobException;
+import com.prelert.job.process.MissingFieldException;
 import com.prelert.rs.data.ApiError;
 
 /**
- * Exception -> Response mapper for {@linkplain UnknownJobException}.
+ * Exception -> Response mapper for {@linkplain MissingFieldExceptionMapper}.
  */
-public class UnknownJobExceptionMapper implements ExceptionMapper<UnknownJobException>
+public class MissingFieldExceptionMapper implements ExceptionMapper<MissingFieldException>
 {
 	@Override
-	public Response toResponse(UnknownJobException e) 
-	{
+	public Response toResponse(MissingFieldException e) 
+	{	
 		ApiError error = new ApiError(e.getErrorCode());
-		error.setCause(e.getCause());
 		error.setMessage(e.getMessage());
+		error.setCause(e.getCause());		
 		
-		return Response.status(Response.Status.NOT_FOUND).
-				entity(error.toJson()).build();
+		return Response.status(Response.Status.BAD_REQUEST).entity(error.toJson()).build();
 	}
 }
+
+
+

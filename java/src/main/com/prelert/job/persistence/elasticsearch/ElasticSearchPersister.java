@@ -31,6 +31,7 @@ import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -55,6 +56,7 @@ import com.prelert.job.persistence.JobDataPersister;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.Detector;
+import com.prelert.rs.data.ErrorCodes;
 
 /**
  * Saves result Buckets and DetectorState to ElasticSearch<br/>
@@ -154,7 +156,7 @@ public class ElasticSearchPersister implements JobDataPersister
 				int count = 1;
 				for (AnomalyRecord record : detector.getRecords())
 				{
-					content = serialiseRecord(record, detector.getName());
+					content = serialiseRecord(record, detector.getName(), bucket.getTimestamp());
 					
 					String recordId = bucket.getId() + detector.getName() + count;					
 					bulkRequest.add(m_Client.prepareIndex(m_JobId, AnomalyRecord.TYPE, recordId)
@@ -325,7 +327,8 @@ public class ElasticSearchPersister implements JobDataPersister
 		catch (IndexMissingException e)
 		{
 			s_Logger.error("Unknown job '" + m_JobId + "'. Cannot read persisted state");
-			throw new UnknownJobException(m_JobId, "Cannot read persisted state");
+			throw new UnknownJobException(m_JobId, 
+					"Cannot read persisted state", ErrorCodes.MISSING_DETECTOR_STATE);
 		}
 		return detectorState;
 	}
@@ -371,16 +374,18 @@ public class ElasticSearchPersister implements JobDataPersister
 	 * 
 	 * @param record Record to serialise
 	 * @param detectorKey The detector's name
+	 * @param bucketTime The timestamp of the anomaly record parent bucket
 	 * @return
 	 * @throws IOException
 	 */
-	private XContentBuilder serialiseRecord(AnomalyRecord record, String detectorKey) 
+	private XContentBuilder serialiseRecord(AnomalyRecord record, String detectorKey, Date bucketTime) 
 	throws IOException
 	{		
 		XContentBuilder builder = jsonBuilder().startObject()
 				.field(AnomalyRecord.ANOMALY_SCORE, record.getAnomalyScore())
 				.field(AnomalyRecord.PROBABILITY, record.getProbability())
-				.field(AnomalyRecord.DETECTOR_NAME, detectorKey);
+				.field(AnomalyRecord.DETECTOR_NAME, detectorKey)
+				.field(Bucket.TIMESTAMP, bucketTime);
 
 		if (record.getByFieldName() != null)
 		{

@@ -1,0 +1,147 @@
+Bad Job configurations
+======================
+-- empty
+curl -X POST -H 'Content-Type: application/json' 'http://localhost:8080/engine/v0.3/jobs' -d '{}'
+
+-- unknow reference job id
+curl -X POST -H 'Content-Type: application/json' 'http://localhost:8080/engine/v0.3/jobs' -d '{"referenceJobId":"unknown_job_id"}'
+
+
+
+-- Invalid Analysis Configs
+curl -X POST -H 'Content-Type: application/json' 'http://localhost:8080/engine/v0.3/jobs' -d '{
+	"analysisConfig" : {
+		"bucketSpan":lll,
+		"detectors" :[]		
+	}
+}'
+
+curl -X POST -H 'Content-Type: application/json' 'http://localhost:8080/engine/v0.3/jobs' -d '{
+	"analysisConfig" : {
+		"bucketSpan":100,
+		"detectors" :[]		
+	}
+}'
+
+curl -X POST -H 'Content-Type: application/json' 'http://localhost:8080/engine/v0.3/jobs' -d '{
+	"analysisConfig" : {
+		"bucketSpan":-10,
+		"detectors" :[{"fieldName":"responsetime","byFieldName":"airline"}]			
+	}
+}'
+
+curl -X POST -H 'Content-Type: application/json' 'http://localhost:8080/engine/v0.3/jobs' -d '{
+	"analysisConfig" : {
+		"batchSpan":-10,
+		"detectors" :[{"fieldName":"responsetime","byFieldName":"airline"}]			
+	}
+}'
+
+curl -X POST -H 'Content-Type: application/json' 'http://localhost:8080/engine/v0.3/jobs' -d '{
+	"analysisConfig" : {
+		"period":-10,
+		"detectors" :[{"fieldName":"responsetime","byFieldName":"airline"}]			
+	}
+}'
+
+
+-- Invalid Analysis Options
+curl -X POST -H 'Content-Type: application/json' 'http://localhost:8080/engine/v0.3/jobs' -d '{
+	"analysisConfig" : {
+		"bucketSpan":3600,
+		"detectors" :[{"fieldName":"responsetime","byFieldName":"airline"}]		
+	},
+	"analysisOptions" : {"maxFieldValues" : 1}
+}'
+
+curl -X POST -H 'Content-Type: application/json' 'http://localhost:8080/engine/v0.3/jobs' -d '{
+	"analysisConfig" : {
+		"bucketSpan":3600,
+		"detectors" :[{"fieldName":"responsetime","byFieldName":"airline"}]		
+	},
+	"analysisOptions" : {"maxTimeBuckets" : -1}
+}'
+
+
+-- Bad Detector configurations
+curl -X POST -H 'Content-Type: application/json' 'http://localhost:8080/engine/v0.3/jobs' -d '{
+	"analysisConfig" : {
+		"detectors" :[{}]			
+	}
+}'
+
+curl -X POST -H 'Content-Type: application/json' 'http://localhost:8080/engine/v0.3/jobs' -d '{
+	"analysisConfig" : {
+		"detectors" :[{"function" : "rare"}]			
+	}
+}'
+
+curl -X POST -H 'Content-Type: application/json' 'http://localhost:8080/engine/v0.3/jobs' -d '{
+	"analysisConfig" : {
+		"detectors" :[{"byFieldName" : "by"}]			
+	}
+}'
+
+curl -X POST -H 'Content-Type: application/json' 'http://localhost:8080/engine/v0.3/jobs' -d '{
+	"analysisConfig" : {
+		"detectors" :[{"overFieldName" : "over"}]			
+	}
+}'
+
+curl -X POST -H 'Content-Type: application/json' 'http://localhost:8080/engine/v0.3/jobs' -d '{
+	"analysisConfig" : {
+		"detectors" :[{"overFieldName" : "over", "byFieldName" : "by"}]			
+	}
+}'
+
+curl -X POST -H 'Content-Type: application/json' 'http://localhost:8080/engine/v0.3/jobs' -d '{
+	"analysisConfig" : {
+		"detectors" :[{"fieldName" : "f", "function" : "unknown_function"}]			
+	}
+}'
+
+
+curl -X POST -H 'Content-Type: application/json' 'http://localhost:8080/engine/v0.3/jobs' -d '{
+	"analysisConfig" : {
+		"detectors" :[{"fieldName" : "f", "function" : "high_count"}]			
+	}
+}'
+
+-- and lots of combinations of invalid functions & fieldName/byFieldName/overFieldName 
+
+
+
+Bad Data Test
+==============
+-- Configured fields not present in csv header
+curl -X POST -H 'Content-Type: application/json' 'http://localhost:8080/engine/v0.3/jobs' -d '{
+	"analysisConfig" : {
+		"bucketSpan":3600,
+		"detectors" :[{"fieldName":"responsetime","byFieldName":"airline"}]		
+	},
+  	"dataDescription" : {"fieldDelimiter":","}
+}'
+
+curl http://localhost:8080/engine/v0.3/data/20140404151242-00003/ --data-binary 'budget_airline,responsetime,sourcetype,_time
+DJA,622,flightcentre,1350824400
+JQA,1742,flightcentre,1350824401
+GAL,5339,flightcentre,1350824402'
+
+-- data not gzipped but content encoding == gzip
+curl -X POST -H 'Content-Type: application/json' 'http://localhost:8080/engine/v0.3/jobs' -d '{
+	"analysisConfig" : {
+		"bucketSpan":3600,
+		"detectors" :[{"fieldName":"responsetime","byFieldName":"airline"}]		
+	},
+  	"dataDescription" : {"fieldDelimiter":","}
+}'
+
+curl -H'Content-Encoding:gzip' http://localhost:8080/engine/v0.3/data/20140404150842-00002/ --data-binary 'airline,responsetime,sourcetype,_time
+DJA,622,flightcentre,1350824400
+JQA,1742,flightcentre,1350824401
+GAL,5339,flightcentre,1350824402'
+
+
+
+
+

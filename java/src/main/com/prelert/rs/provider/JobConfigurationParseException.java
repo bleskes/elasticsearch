@@ -29,6 +29,9 @@ package com.prelert.rs.provider;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
+import com.prelert.rs.data.ApiError;
+import com.prelert.rs.data.ErrorCodes;
+
 /**
  * Represents an error in parsing the configuration for a new job.
  * Returns a 400 Bad Request status code and a message.
@@ -37,15 +40,29 @@ public class JobConfigurationParseException extends WebApplicationException
 {
 	private static final long serialVersionUID = -7189040309467301076L;
 	
-	public JobConfigurationParseException(String message)
+	private int m_ErrorCode;
+	
+	public JobConfigurationParseException(String message, Throwable cause)
 	{
-		super(message);
+		super(message, cause);
+		m_ErrorCode = ErrorCodes.JOB_CONFIG_PARSE_ERROR;
+	}
+	
+	
+	public JobConfigurationParseException(String message, Throwable cause, 
+			int errorCode)
+	{
+		super(message, cause);
+		m_ErrorCode = errorCode;
 	}
 	
 	@Override
 	public Response getResponse()
 	{
-		String msg = "Error parsing Job configuration.\n" + getMessage();
-		return Response.status(Response.Status.BAD_REQUEST).entity(msg).build();
+		ApiError err = new ApiError(m_ErrorCode);
+		err.setMessage(this.getMessage());
+		err.setCause(this.getCause());
+		
+		return Response.status(Response.Status.BAD_REQUEST).entity(err.toJson()).build();
 	}
 }

@@ -48,6 +48,7 @@ import javax.ws.rs.core.Response;
 import org.apache.log4j.Logger;
 
 import com.prelert.job.manager.JobManager;
+import com.prelert.rs.data.ErrorCodes;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
 import com.prelert.rs.provider.RestApiException;
@@ -133,7 +134,8 @@ public class Results extends ResourceWithJobManager
 			{
 				String msg = String.format(BAD_DATE_FROMAT_MSG, START_QUERY_PARAM, start);
 				s_Logger.info(msg);
-				throw new RestApiException(msg, Response.Status.BAD_REQUEST);
+				throw new RestApiException(msg, ErrorCodes.UNPARSEABLE_DATE_ARGUMENT,
+						Response.Status.BAD_REQUEST);
 			}
 		}
 		
@@ -145,7 +147,8 @@ public class Results extends ResourceWithJobManager
 			{
 				String msg = String.format(BAD_DATE_FROMAT_MSG, START_QUERY_PARAM, end);
 				s_Logger.info(msg);
-				throw new RestApiException(msg, Response.Status.BAD_REQUEST);
+				throw new RestApiException(msg, ErrorCodes.UNPARSEABLE_DATE_ARGUMENT,
+						Response.Status.BAD_REQUEST);
 			}			
 		}		
 		

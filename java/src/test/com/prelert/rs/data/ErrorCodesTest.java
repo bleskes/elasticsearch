@@ -24,27 +24,47 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.rs.provider;
 
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
+package com.prelert.rs.data;
 
-import com.prelert.job.UnknownJobException;
-import com.prelert.rs.data.ApiError;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import junit.framework.Assert;
+
+import org.junit.Test;
 
 /**
- * Exception -> Response mapper for {@linkplain UnknownJobException}.
+ * This test ensures that all the error values in {@linkplain ErrorCodes}
+ * are unique so no 2 conditions can return the same error code.
+ * This tests is designed to catch copy/paste errors.  
  */
-public class UnknownJobExceptionMapper implements ExceptionMapper<UnknownJobException>
+public class ErrorCodesTest 
 {
-	@Override
-	public Response toResponse(UnknownJobException e) 
+	@Test
+	public void errorCodesUnique() 
+	throws IllegalArgumentException, IllegalAccessException
 	{
-		ApiError error = new ApiError(e.getErrorCode());
-		error.setCause(e.getCause());
-		error.setMessage(e.getMessage());
+		Field[] declaredFields = ErrorCodes.class.getDeclaredFields();
 		
-		return Response.status(Response.Status.NOT_FOUND).
-				entity(error.toJson()).build();
+		List<Field> staticFields = new ArrayList<Field>();
+		Set<Integer> errorValueSet = new HashSet<>();
+
+		for (Field field : declaredFields) 
+		{
+		    if (java.lang.reflect.Modifier.isStatic(field.getModifiers())) 
+		    {
+		        staticFields.add(field);
+		        errorValueSet.add(field.getInt(null));
+		    }
+		}
+		
+		int numStaticFields = staticFields.size();
+		
+		Assert.assertEquals(numStaticFields, errorValueSet.size());
 	}
+
 }

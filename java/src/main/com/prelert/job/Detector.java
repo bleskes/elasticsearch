@@ -29,10 +29,12 @@ package com.prelert.job;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.prelert.rs.data.ErrorCodes;
 
 
 /**
@@ -43,30 +45,163 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 @JsonInclude(Include.NON_NULL)
 public class Detector
 {
+	static final public String FUNCTION = "function";
+	static final public String FIELD_NAME = "fieldName";
+	static final public String BY_FIELD_NAME = "byFieldName";
+	static final public String OVER_FIELD_NAME = "overFieldName";
+	static final public String PARTITION_FIELD_NAME = "partitionFieldName";
+	static final public String USE_NULL = "useNull";
+	
+	
+	static final public String COUNT = "count";
+	static final public String HIGH_COUNT = "high_count";
+	static final public String LOW_COUNT = "low_count";
+	static final public String NON_ZERO_COUNT = "non_zero_count";
+	static final public String NZC = "nzc";
+	static final public String DISTINCT_COUNT = "distinct_count";
+	static final public String DC = "dc";
+	static final public String RARE = "rare";
+	static final public String FREQ_RARE = "freq_rare";
+	static final public String METRIC = "metric";
+	static final public String MEAN = "mean";
+	static final public String AVG = "avg";
+	static final public String MIN = "min";
+	static final public String MAX = "max";
+	static final public String SUM = "sum";
+	
 	/**
-	 * The set of valid function names
+	 * The set of valid function names.
 	 */
-	static private final Set<String> ANALYSIS_FUNCTIONS = 
+	static public final Set<String> ANALYSIS_FUNCTIONS = 
 			new HashSet<String>(Arrays.<String>asList(new String [] {
-				"count", 
-				"high_count", 
-				"low_count",
-				"non_zero_count", "nzc",
-				"distinct_count", "dc",
-				"rare",
-				"freq_rare",
-				"metric",
-				"mean", "avg",
-				"min", 
-				"max",
-				"sum"
+				COUNT, 
+				HIGH_COUNT, 
+				LOW_COUNT,
+				NON_ZERO_COUNT, NZC,
+				DISTINCT_COUNT, DC,
+				RARE,
+				FREQ_RARE,
+				METRIC,
+				MEAN, AVG,
+				MIN, 
+				MAX,
+				SUM
 			}));
+	
+	/**
+	 * The set of count functions requiring a by or over field
+	 */
+	static public final Set<String> COUNT_BY_OVER_FUNCTIONS = 
+			new HashSet<String>(Arrays.<String>asList(new String [] {
+				HIGH_COUNT, 
+				LOW_COUNT,
+				NON_ZERO_COUNT, NZC,
+			}));
+	
+
+	/**
+	 * The set of functions that require a fieldname
+	 */
+	static public final Set<String> FIELD_NAME_FUNCTIONS = 
+			new HashSet<String>(Arrays.<String>asList(new String [] {
+				DISTINCT_COUNT, DC,
+				METRIC,
+				MEAN, AVG,
+				MIN, 
+				MAX,
+				SUM
+			}));
+	
+	/**
+	 * The set of functions that require a by fieldname
+	 */
+	static public final Set<String> BY_FIELD_NAME_FUNCTIONS = 
+			new HashSet<String>(Arrays.<String>asList(new String [] {
+				RARE,
+				FREQ_RARE
+			}));
+	
+	/**
+	 * The set of functions that require a over fieldname
+	 */
+	static public final Set<String> OVER_FIELD_NAME_FUNCTIONS = 
+			new HashSet<String>(Arrays.<String>asList(new String [] {
+				DISTINCT_COUNT, DC,
+				FREQ_RARE
+			}));
+	
+	
 	
 	private String m_Function;
 	private String m_FieldName;
 	private String m_ByFieldName;
 	private String m_OverFieldName;		
+	private String m_PartitionFieldName;
 	private Boolean m_UseNull;		
+		
+	public Detector()
+	{
+		
+	}
+	
+	/**
+	 * Populate the detector from the String -> object map.
+	 * 
+	 * @param detectorMap
+	 */
+	public Detector(Map<String, Object> detectorMap)
+	{
+		if (detectorMap.containsKey(FUNCTION))
+		{
+			Object field = detectorMap.get(FUNCTION);
+			if (field != null)
+			{
+				this.setFunction(field.toString());
+			}
+		}
+		if (detectorMap.containsKey(FIELD_NAME))
+		{
+			Object field = detectorMap.get(FIELD_NAME);
+			if (field != null)
+			{
+				this.setFieldName(field.toString());
+			}
+		}
+		if (detectorMap.containsKey(BY_FIELD_NAME))
+		{
+			Object field = detectorMap.get(BY_FIELD_NAME);
+			if (field != null)
+			{
+				this.setByFieldName(field.toString());
+			}
+		}
+		if (detectorMap.containsKey(OVER_FIELD_NAME))
+		{
+			Object field = detectorMap.get(OVER_FIELD_NAME);
+			if (field != null)
+			{
+				this.setOverFieldName(field.toString());
+			}
+		}				
+		if (detectorMap.containsKey(PARTITION_FIELD_NAME))
+		{
+			Object obj = detectorMap.get(PARTITION_FIELD_NAME);
+			if (obj != null)
+			{
+				m_PartitionFieldName = obj.toString();
+			}
+		}
+		if (detectorMap.containsKey(USE_NULL))
+		{
+			Object field = detectorMap.get(USE_NULL);
+			if (field != null && field instanceof Boolean)
+			{
+				this.setUseNull((Boolean)field);
+			}
+		}						
+	}
+	
+	
 	
 	/**
 	 * The analysis function used e.g. count, rare, min etc. There is no 
@@ -126,6 +261,23 @@ public class Detector
 	}	
 	
 	/**
+	 * Segments the analysis along another field to have completely 
+	 * independent baselines for each instance of partitionfield
+	 *
+	 * @return The Partition Field
+	 */
+	public String getPartitionFieldName() 
+	{
+		return m_PartitionFieldName;
+	}
+	
+	public void setPartitionFieldName(String partitionFieldName) 
+	{
+		this.m_PartitionFieldName = partitionFieldName;
+	}
+	
+	
+	/**
 	 * Where there isn't a value for the 'by' or 'over' field should a new
 	 * series be used as the 'null' series. 
 	 * @return true if the 'null' series should be created
@@ -159,6 +311,7 @@ public class Detector
 				JobDetails.bothNullOrEqual(this.m_FieldName, that.m_FieldName) &&
 				JobDetails.bothNullOrEqual(this.m_ByFieldName, that.m_ByFieldName) &&
 				JobDetails.bothNullOrEqual(this.m_OverFieldName, that.m_OverFieldName) &&
+				JobDetails.bothNullOrEqual(this.m_PartitionFieldName, that.m_PartitionFieldName) &&
 				JobDetails.bothNullOrEqual(this.m_UseNull, that.m_UseNull);					
 	}
 	
@@ -167,8 +320,19 @@ public class Detector
 	 * <ol>
 	 * <li>One of FieldName, ByFieldName, OverFieldName or Function must be set</li>
 	 * <li>Unless the function is 'count' one of FieldName, ByFieldName 
-	 * or OverFieldName must be set"</li>
+	 * or OverFieldName must be set</li>
+	 * <li>If byFieldName is set function or fieldName must bet set</li>
+	 * <li>If overFieldName is set function or fieldName must bet set</li>
 	 * <li>Function is one of the strings in the set {@link #ANALYSIS_FUNCTIONS}</li>
+	 * <li>If function is not set but the fieldname happens to be the same 
+	 * as one of the function names (e.g.a field called 'count')
+	 * set function to 'metric'</li>
+	 * <li>Check the metric/by/over fields are set as required by the different
+	 * functions</li> 
+	 * <li>Check the metric/by/over fields that cannot be set with certain 
+	 * functions are not set</li> 
+	 * <li>If the function is HIGH_COUNT, LOW_COUNT, NON_ZERO_COUNT or NZC
+	 * then either byFieldName or overFieldName must be set</li>
 	 * </ol>
 	 * 
 	 * @return true
@@ -177,26 +341,146 @@ public class Detector
 	public boolean verify()
 	throws JobConfigurationException
 	{	
-		if (m_FieldName == null && m_ByFieldName == null && m_OverFieldName == null)
+		boolean emptyField = m_FieldName == null || m_FieldName.isEmpty();
+		boolean emptyByField = m_ByFieldName == null || m_ByFieldName.isEmpty();
+		boolean emptyOverField = m_OverFieldName == null || m_OverFieldName.isEmpty();
+		boolean emptyFunction = m_Function == null || m_Function.isEmpty();
+		
+		
+		if (emptyField && emptyByField && emptyOverField)
 		{
-			if (m_Function == null)
+			if (emptyFunction)
 			{
 				throw new JobConfigurationException("One of FieldName, "
-						+ "ByFieldName, OverFieldName or Function must be set");
+						+ "ByFieldName, OverFieldName or Function must be set",
+						ErrorCodes.INVALID_FIELD_SELECTION);
 			}
 			
-			if (!"count".equals(m_Function))
+			if (!COUNT.equals(m_Function))
 			{
 				throw new JobConfigurationException("Unless the function is 'count'"
-						+ " one of FieldName, ByFieldName or OverFieldName must be set");
+						+ " one of FieldName, ByFieldName or OverFieldName must be set",
+						ErrorCodes.INVALID_FIELD_SELECTION);
 			}
 		}
 		
-		if (m_Function != null && ANALYSIS_FUNCTIONS.contains(m_Function) == false)
+		if (!emptyFunction && ANALYSIS_FUNCTIONS.contains(m_Function) == false)
 		{
-			throw new JobConfigurationException("Unknown function '" + m_Function + "'");
+			throw new JobConfigurationException("Unknown function '" + m_Function + "'",
+					ErrorCodes.UNKNOWN_FUNCTION);
 		}
+		
+		// If function is not set but the fieldname happens 
+		// to be the same as one of the function names (e.g. 
+		// a field called 'count' set function to 'metric'
+		if (emptyFunction)
+		{
+			if (ANALYSIS_FUNCTIONS.contains(m_FieldName))
+			{
+				m_Function = METRIC;
+			}
+		}
+		
+		
+		if (!emptyByField)
+		{
+			if (emptyField && emptyFunction)
+			{
+				throw new JobConfigurationException(
+						"byFieldName must be used in "
+						+ "conjunction with fieldName or function",
+						ErrorCodes.INVALID_FIELD_SELECTION);
+			}
+		}
+		
+		if (!emptyOverField)
+		{
+			if (emptyField && emptyFunction)
+			{
+				throw new JobConfigurationException(
+						"overFieldName must be used in "
+						+ "conjunction with fieldName or function",
+						ErrorCodes.INVALID_FIELD_SELECTION);
+			}
+		}
+		
+		// check functions have required fields
+		if (!emptyFunction)
+		{
+			if (FIELD_NAME_FUNCTIONS.contains(m_Function))
+			{
+				if (emptyField)
+				{
+					throw new JobConfigurationException(
+							String.format("The fieldName must be set when the "
+									+ " '%s' function is used", m_Function),
+							ErrorCodes.INVALID_FIELD_SELECTION);
+				}
+			}
+			
+			if (!emptyField && (FIELD_NAME_FUNCTIONS.contains(m_Function) == false))
+			{
+				throw new JobConfigurationException(
+						String.format("fieldName cannot be used with function '%s'",
+								m_Function),
+						ErrorCodes.INVALID_FIELD_SELECTION);
+			}
+			
+			if (BY_FIELD_NAME_FUNCTIONS.contains(m_Function))
+			{
+				if (emptyByField)
+				{
+					throw new JobConfigurationException(
+							String.format("The byFieldName must be set when the "
+									+ " '%s' function is used", m_Function),
+							ErrorCodes.INVALID_FIELD_SELECTION);
+				}
+			}
+			
+			if (!emptyByField && (DISTINCT_COUNT.equals(m_Function) || DC.equals(m_Function)))
+			{
+				throw new JobConfigurationException(
+						String.format("byFieldName cannot be used with function '%s'",
+								m_Function),
+						ErrorCodes.INVALID_FIELD_SELECTION);
+			}
+			
+			if (OVER_FIELD_NAME_FUNCTIONS.contains(m_Function))
+			{
+				if (emptyOverField)
+				{
+					throw new JobConfigurationException(
+							String.format("The overFieldName must be set when the "
+									+ " '%s' function is used", m_Function),
+							ErrorCodes.INVALID_FIELD_SELECTION);
+				}
+			}		
+			
+			if (!emptyOverField && (NON_ZERO_COUNT.equals(m_Function) || NZC.equals(m_Function)))
+			{
+				throw new JobConfigurationException(
+						String.format("overFieldName cannot be used with function '%s'",
+								m_Function),
+						ErrorCodes.INVALID_FIELD_SELECTION);
+			}
+			
+			if (COUNT_BY_OVER_FUNCTIONS.contains(m_Function))
+			{
+				if (emptyByField && emptyOverField)
+				{
+					throw new JobConfigurationException(
+							String.format("Either byFieldName or overFieldName "
+									+ "must be specified for function '%s'",
+									m_Function),
+							ErrorCodes.INVALID_FIELD_SELECTION);
+				}
+			}
+		}
+		
 		
 		return true;
 	}
+	
+	
+	
 }

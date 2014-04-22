@@ -77,9 +77,9 @@ public class LengthEncodedWriter
 		m_LengthBuffer.putInt(record.length);
 		m_OutputStream.write(m_LengthBuffer.array());
 		
-		for (String fieldname : record)
+		for (String field : record)
 		{
-			utf8Bytes = fieldname.getBytes(StandardCharsets.UTF_8);
+			utf8Bytes = field.getBytes(StandardCharsets.UTF_8);
 			m_LengthBuffer.clear();			
 			m_LengthBuffer.putInt(utf8Bytes.length);
 			m_OutputStream.write(m_LengthBuffer.array());
@@ -104,15 +104,49 @@ public class LengthEncodedWriter
 		m_LengthBuffer.putInt(record.size());
 		m_OutputStream.write(m_LengthBuffer.array());
 		
-		for (String fieldname : record)
+		for (String field : record)
 		{
-			utf8Bytes = fieldname.getBytes(StandardCharsets.UTF_8);
+			utf8Bytes = field.getBytes(StandardCharsets.UTF_8);
 			m_LengthBuffer.clear();			
 			m_LengthBuffer.putInt(utf8Bytes.length);
 			m_OutputStream.write(m_LengthBuffer.array());
 			m_OutputStream.write(utf8Bytes);			
 		}		
 	}
+		
+	/**
+	 * Lower level functions to write records individually.
+	 * After this function is called {@link #writeField(String)} 
+	 * must be called <code>numFields</code> times.
+	 * 
+	 * @param numFields
+	 * @throws IOException
+	 * @see {@link #writeField(String)}
+	 */
+	public void writeNumFields(int numFields) throws IOException
+	{
+		// number fields
+		m_LengthBuffer.clear(); 
+		m_LengthBuffer.putInt(numFields);
+		m_OutputStream.write(m_LengthBuffer.array());
+	}
+	
+	/**
+	 * Lower level functions to write record fields individually.
+	 * 
+	 * @param numFields
+	 * @throws IOException
+	 * @see {@link #writeNumFields(int)}
+	 */
+	public void writeField(String field) throws IOException
+	{
+		byte[] utf8Bytes = field.getBytes(StandardCharsets.UTF_8);
+		m_LengthBuffer.clear();			
+		m_LengthBuffer.putInt(utf8Bytes.length);
+		m_OutputStream.write(m_LengthBuffer.array());
+		m_OutputStream.write(utf8Bytes);	
+	}
+	
 	
 	/**
 	 * Flush the output stream.

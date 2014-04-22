@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -58,16 +59,18 @@ import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.prelert.job.persistence.elasticsearch.ElasticSearchMappings;
 import com.prelert.job.persistence.elasticsearch.ElasticSearchPersister;
 import com.prelert.job.persistence.elasticsearch.ElasticSearchResultsReaderFactory;
 import com.prelert.job.process.JobDetailsProvider;
+import com.prelert.job.process.MissingFieldException;
 import com.prelert.job.process.NativeProcessRunException;
 import com.prelert.job.process.ProcessManager;
-import com.prelert.job.process.ProcessManager.ProcessStatus;
 import com.prelert.job.DetectorState;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
@@ -77,6 +80,7 @@ import com.prelert.job.UnknownJobException;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.Detector;
+import com.prelert.rs.data.ErrorCodes;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
 
@@ -88,7 +92,20 @@ import com.prelert.rs.data.SingleDocument;
 public class JobManager implements JobDetailsProvider
 {
 	static public final Logger s_Logger = Logger.getLogger(JobManager.class);
-	
+
+	/**
+	 * Field name in which to store the API version in the usage info
+	 */
+	static public final String APP_VER_FIELDNAME = "appVer";
+
+	/**
+	 * Where to store the usage info in ElasticSearch - must match what's
+	 * expected by kibana/engineAPI/app/directives/prelertLogUsage.js
+	 */
+	static public final String USAGE_INFO_INDEX = "prelert-int";
+	static public final String USAGE_INFO_TYPE = "usage";
+	static public final String USAGE_INFO_ID = "usageStats";
+
 	/**
 	 * The default number of documents returned in queries as a string.
 	 */
@@ -146,6 +163,10 @@ public class JobManager implements JobDetailsProvider
 				 
 		m_ObjectMapper = new ObjectMapper();
 		m_ObjectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+
+		// This requires the process manager and ElasticSearch connection in
+		// order to work, but failure is considered non-fatal
+		saveUsageInfo();
 	}	
 	
 	/**
@@ -187,7 +208,10 @@ public class JobManager implements JobDetailsProvider
 			}		
 			else 
 			{
-				throw new UnknownJobException(jobId, "No job details for job");
+				String msg = "No details for job with id " + jobId;
+				s_Logger.warn(msg);
+				throw new UnknownJobException(jobId, msg,
+						ErrorCodes.MISSING_JOB_ERROR);
 			}
 		}
 		catch (IndexMissingException e)
@@ -195,7 +219,8 @@ public class JobManager implements JobDetailsProvider
 			// the job does not exist
 			String msg = "Missing Index no job with id " + jobId;
 			s_Logger.warn(msg);
-			throw new UnknownJobException(jobId, msg);
+			throw new UnknownJobException(jobId, msg, 
+					ErrorCodes.MISSING_JOB_ERROR);
 		}
 	}
 	
@@ -250,7 +275,7 @@ public class JobManager implements JobDetailsProvider
 	 * @throws JsonProcessingException 
 	 */
 	public JobDetails createJob(JobConfiguration jobConfig)
-	throws UnknownJobException, JsonProcessingException
+	throws UnknownJobException , JsonProcessingException
 	{
 		String jobId = generateJobId();
 		JobDetails jobDetails;
@@ -293,14 +318,9 @@ public class JobManager implements JobDetailsProvider
 						
 			return jobDetails;
 		}
-		catch (JsonProcessingException e)
-		{
-			s_Logger.error(e);
-			throw e;
-		}
 		catch (IOException e)
 		{
-			s_Logger.error(e);
+			s_Logger.error("Error writing ElasticSearch mappings", e);
 		}
 
 		return null;
@@ -545,7 +565,7 @@ public class JobManager implements JobDetailsProvider
 											.ignoreUnmapped(true)
 											.missing("_last")
 											.order(SortOrder.DESC);		
-
+		
 		SearchResponse searchResponse = m_Client.prepareSearch(jobId)
 				.setTypes(AnomalyRecord.TYPE)
 				.setPostFilter(parentFilter)
@@ -557,6 +577,16 @@ public class JobManager implements JobDetailsProvider
 		for (SearchHit hit : searchResponse.getHits().getHits())
 		{
 			Map<String, Object> m  = hit.getSource();
+			
+			// TODO
+			// This a hack to work round the deficiency in the 
+			// Java API where source filtering hasn't been implemented.			
+			m.remove(AnomalyRecord.DETECTOR_NAME);
+			// TODO
+			// remove the timestamp field that was added so the 
+			// records can be sorted in Kibanna
+			m.remove(Bucket.TIMESTAMP);
+			
 			results.add(m);
 		}
 		
@@ -577,12 +607,19 @@ public class JobManager implements JobDetailsProvider
 	 * @return true if the job stopped successfully
 	 * @throws UnknownJobException 
 	 * @throws NativeProcessRunException 
+	 * @throws JobInUseException if the job cannot be closed because data is
+	 * being streamed to it
 	 */
 	public boolean finishJob(String jobId) 
-	throws UnknownJobException, NativeProcessRunException
+	throws UnknownJobException, NativeProcessRunException, JobInUseException
 	{
 		s_Logger.debug("Finish job " + jobId);
-		ProcessManager.ProcessStatus processStatus = m_ProcessManager.finishJob(jobId);			
+		
+		// First check the job is in the database.
+		// this method throws if it isn't
+		getJobDetails(jobId);
+		
+		ProcessManager.ProcessStatus processStatus = m_ProcessManager.finishJob(jobId);	
 		if (processStatus != ProcessManager.ProcessStatus.COMPLETED)
 		{
 			return false;
@@ -638,7 +675,10 @@ public class JobManager implements JobDetailsProvider
 		}
 		catch (IndexMissingException e)
 		{
-			throw new UnknownJobException(jobId, "Error writing the job's finish time.");
+			String msg = String.format("Error writing the job '%s' finish time.", 
+					jobId);
+			s_Logger.error(msg);
+			throw new UnknownJobException(jobId, msg, ErrorCodes.MISSING_JOB_ERROR);
 		}
 		
 		return true;	
@@ -660,21 +700,8 @@ public class JobManager implements JobDetailsProvider
 	throws UnknownJobException, NativeProcessRunException, JobInUseException
 	{		
 		s_Logger.debug("Deleting job '" + jobId + "'");
-		
-		try
-		{
-			ProcessStatus stopStatus = m_ProcessManager.finishJob(jobId);
-			if (stopStatus == ProcessStatus.IN_USE)
-			{
-				String msg = "Cannot delete job as the process is in use";
-				s_Logger.error(msg);
-				throw new JobInUseException(jobId, msg);
-			}
-		}
-		catch (UnknownJobException e)
-		{
-			// if the job is already finished then catch this
-		}
+
+		m_ProcessManager.finishJob(jobId);
 		
 		try 
 		{
@@ -689,13 +716,15 @@ public class JobManager implements JobDetailsProvider
 			{
 				String msg = String.format("No index with id '%s' in the database", jobId);
 				s_Logger.warn(msg);
-				throw new UnknownJobException(jobId, msg);
+				throw new UnknownJobException(jobId, msg, 
+						ErrorCodes.MISSING_JOB_ERROR);
 			}
 			else
 			{
 				String msg = "Error deleting index " + jobId;
-				s_Logger.error(msg, e);
-				throw new NativeProcessRunException(msg, e);
+				s_Logger.error(msg);
+				throw new UnknownJobException(jobId, msg, 
+						ErrorCodes.DATA_STORE_ERROR, e.getCause());
 			}
 		}
 	}
@@ -713,9 +742,15 @@ public class JobManager implements JobDetailsProvider
 	 * @throws NativeProcessRunException If there is an error starting the native 
 	 * process
 	 * @throws UnknownJobException If the jobId is not recognised
+	 * @throws MissingFieldException If a configured field is missing from 
+	 * the CSV header
+	 * @throws JsonParseException 
+	 * @throws JobInUseException if the job cannot be written to because 
+	 * it is already handling data
 	 */
 	public boolean dataToJob(String jobId, InputStream input) 
-	throws UnknownJobException, NativeProcessRunException
+	throws UnknownJobException, NativeProcessRunException, MissingFieldException, 
+		JsonParseException, JobInUseException 
 	{
 		try
 		{
@@ -730,7 +765,7 @@ public class JobManager implements JobDetailsProvider
 			{
 				m_ProcessManager.finishJob(jobId);
 			}
-			catch (UnknownJobException | NativeProcessRunException e)
+			catch (NativeProcessRunException e)
 			{
 				s_Logger.warn("Error finished job after dataToJob failed", e);
 			}
@@ -766,7 +801,7 @@ public class JobManager implements JobDetailsProvider
 			
 			if (response.isExists() == false)
 			{				
-				s_Logger.error("Cannot finish job. No job found with jobId = " + jobId);
+				s_Logger.error("Cannot update last data time- no job found with jobId = " + jobId);
 				return false;
 			}
 
@@ -781,10 +816,10 @@ public class JobManager implements JobDetailsProvider
 			{
 				content = jobToContent(job);
 			}
-			catch (IOException ioe)
+			catch (JsonProcessingException e)
 			{
 				s_Logger.error("Error serialising job cannot update time of "
-						+ "last data");
+						+ "last data", e);
 				return false;
 			}
 
@@ -802,7 +837,8 @@ public class JobManager implements JobDetailsProvider
 		}
 		catch (IndexMissingException e)
 		{
-			throw new UnknownJobException(jobId, "Error writing the job's last data time.");
+			String msg = String.format("Error writing the job '%s' last data time.", jobId);
+			throw new UnknownJobException(jobId, msg, ErrorCodes.MISSING_JOB_ERROR);
 		}
 	}
 	
@@ -862,23 +898,26 @@ public class JobManager implements JobDetailsProvider
 			}
 			else
 			{
-				throw new UnknownJobException(refId, "Cannot fined "
-					+ "referenced job with id '" + refId + "'");
+				throw new UnknownJobException(refId, "Cannot find "
+					+ "referenced job with id '" + refId + "'", ErrorCodes.UNKNOWN_JOB_REFERENCE);
 			}
 		}
 		catch (IndexMissingException e)
 		{
-			throw new UnknownJobException(refId, "Missing index '" + refId +"'");			
+			throw new UnknownJobException(refId, "Missing index: Cannot find "
+					+ "referenced job with id '" + refId + "'", ErrorCodes.UNKNOWN_JOB_REFERENCE);
+	
 		}
 	}
 	
 	private String jobToContent(JobDetails job)
-	throws IOException
+	throws JsonProcessingException
 	{
 		String json = m_ObjectMapper.writeValueAsString(job);
 		return json;
 	}
-	
+
+
 	/**
 	 * Get the analytics version string.
 	 * 
@@ -889,4 +928,71 @@ public class JobManager implements JobDetailsProvider
 		return  m_ProcessManager.getAnalyticsVersion();
 	}
 
+
+	/**
+	 * Attempt to get usage info from the C++ process, add extra fields and
+	 * persist to ElasticSearch.  Any failures are logged but do not otherwise
+	 * impact operation of this process.
+	 */
+	private void saveUsageInfo()
+	{
+		// This will be a JSON document in string form
+		String backendUsageInfo = m_ProcessManager.getUsageInfo();
+
+		// Try to parse the string returned from the C++ process and add the
+		// extra fields
+		ObjectNode doc;
+		try
+		{
+			doc = (ObjectNode)m_ObjectMapper.readTree(backendUsageInfo);
+		}
+		catch (IOException e)
+		{
+			s_Logger.warn("Failed to parse JSON document " + backendUsageInfo, e);
+			return;
+		}
+		catch (ClassCastException e)
+		{
+			s_Logger.warn("Parsed non-object JSON document " + backendUsageInfo, e);
+			return;
+		}
+
+		// Try to add extra fields (just appVer for now)
+		try
+		{
+			Properties props = new Properties();
+			// Try to get the API version as recorded by Maven at build time
+			InputStream is = getClass().getResourceAsStream("/META-INF/maven/com.prelert/engineApi/pom.properties");
+			if (is != null)
+			{
+				props.load(is);
+			}
+			doc.put(APP_VER_FIELDNAME, props.getProperty("version"));
+		}
+		catch (IOException e)
+		{
+			s_Logger.warn("Failed to load API version meta-data", e);
+			return;
+		}
+		catch (IllegalArgumentException e)
+		{
+			s_Logger.warn("Malformed API version meta-data", e);
+			return;
+		}
+
+		// Try to persist the modified document to ElasticSearch
+		try
+		{
+			m_Client.prepareIndex(USAGE_INFO_INDEX, USAGE_INFO_TYPE, USAGE_INFO_ID)
+					.setSource(doc.toString())
+					.execute().actionGet();
+		}
+		catch (Exception e)
+		{
+			s_Logger.warn("Error writing Prelert info to ElasticSearch", e);
+			return;
+		}
+
+		s_Logger.info("Wrote Prelert info " + doc.toString() + " to ElasticSearch");
+	}
 }

@@ -28,6 +28,7 @@
 package com.prelert.job;
 
 import java.util.Arrays;
+import java.util.List;
 
 import junit.framework.Assert;
 
@@ -61,6 +62,7 @@ public class VerifyJobConfigurationTest
 		dd.setTimeFormat(goodFormat);
 		Assert.assertTrue("Good time format", dd.verify());
 	}
+	
 	
 	@Test 
 	public void analysisConfigTest()
@@ -96,6 +98,7 @@ public class VerifyJobConfigurationTest
 		
 		// should work now
 		d.setFieldName("somefield");
+		d.setOverFieldName("over");
 		ac.verify();
 		
 		d.setFunction("made_up_function");
@@ -247,10 +250,63 @@ public class VerifyJobConfigurationTest
 		
 		jc.setTimeout(300L);
 		jc.verify(); 
+
+	}
+	
+	
+	/**
+	 * Test the {@link AnalysisConfig#analysisFields()} method which produces
+	 * a list of analysis fields from the detectors
+	 */
+	@Test
+	public void testAnalysisConfigRequiredFields()
+	{
+		Detector d1 = new Detector();
+		d1.setFieldName("field");
+		d1.setByFieldName("by");
+		d1.setFunction("max");
 		
+		Detector d2 = new Detector();
+		d2.setFieldName("field2");
+		d2.setOverFieldName("over");
 		
+		AnalysisConfig ac = new AnalysisConfig();
+		ac.setDetectors(Arrays.asList(new Detector[] {d1, d2}));
 		
+		List<String> analysisFields = ac.analysisFields();
+		Assert.assertTrue(analysisFields.size() == 4);
 		
+		Assert.assertTrue(analysisFields.contains("field"));
+		Assert.assertTrue(analysisFields.contains("by"));
+		Assert.assertTrue(analysisFields.contains("field2"));
+		Assert.assertTrue(analysisFields.contains("over"));
+		
+		Assert.assertFalse(analysisFields.contains("max"));
+		Assert.assertFalse(analysisFields.contains(""));
+		Assert.assertFalse(analysisFields.contains(null));
+		
+		Detector d3 = new Detector();
+		d3.setFunction("count");
+		d3.setByFieldName("by2");
+		d3.setPartitionFieldName("partition");
+		
+		ac = new AnalysisConfig();
+		ac.setDetectors(Arrays.asList(new Detector[] {d1, d2, d3}));
+		
+		analysisFields = ac.analysisFields();
+		Assert.assertTrue(analysisFields.size() == 6);
+		
+		Assert.assertTrue(analysisFields.contains("partition"));
+		Assert.assertTrue(analysisFields.contains("field"));
+		Assert.assertTrue(analysisFields.contains("by"));
+		Assert.assertTrue(analysisFields.contains("by2"));
+		Assert.assertTrue(analysisFields.contains("field2"));
+		Assert.assertTrue(analysisFields.contains("over"));
+		
+		Assert.assertFalse(analysisFields.contains("count"));
+		Assert.assertFalse(analysisFields.contains("max"));
+		Assert.assertFalse(analysisFields.contains(""));
+		Assert.assertFalse(analysisFields.contains(null));
 	}
 	
 }

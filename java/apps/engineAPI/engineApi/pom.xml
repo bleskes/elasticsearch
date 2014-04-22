@@ -33,7 +33,13 @@
       <artifactId>junit-dep</artifactId>
       <version>4.8.2</version>
       <scope>test</scope>
-    </dependency>       
+    </dependency>      
+    <dependency>
+      <groupId>org.ini4j</groupId>
+      <artifactId>ini4j</artifactId>
+      <version>0.5.2</version>
+      <scope>test</scope>
+    </dependency>     
     <!-- enunciate 
 
     <dependency>
@@ -143,7 +149,6 @@
           </execution>
 
         </executions>
-                
         
       </plugin>
 

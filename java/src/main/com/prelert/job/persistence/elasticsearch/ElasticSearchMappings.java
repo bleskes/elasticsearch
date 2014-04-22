@@ -36,11 +36,11 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.AnalysisOptions;
 import com.prelert.job.DataDescription;
+import com.prelert.job.Detector;
 import com.prelert.job.DetectorState;
 import com.prelert.job.JobDetails;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
-import com.prelert.rs.data.Detector;
 
 /**
  * Static methods to create ElasticSearch mappings for the autodetect 
@@ -106,24 +106,24 @@ public class ElasticSearchMappings
 								.startObject(AnalysisConfig.PERIOD)
 									.field("type", "long").field(INDEX, NO)
 								.endObject()
-								.startObject(AnalysisConfig.PARTITION_FIELD)
-									.field("type", "string").field(INDEX, NOT_ANALYZED)
-								.endObject()
 								.startObject(AnalysisConfig.DETECTORS)
 									.startObject("properties")
-										.startObject(AnalysisConfig.FUNCTION)
+										.startObject(Detector.FUNCTION)
 											.field("type", "string").field(INDEX, NOT_ANALYZED)
 										.endObject()									
-										.startObject(AnalysisConfig.FIELD_NAME)
+										.startObject(Detector.FIELD_NAME)
 											.field("type", "string").field(INDEX, NOT_ANALYZED)
 										.endObject()	
-										.startObject(AnalysisConfig.BY_FIELD_NAME)
+										.startObject(Detector.BY_FIELD_NAME)
 											.field("type", "string").field(INDEX, NOT_ANALYZED)
 										.endObject()	
-										.startObject(AnalysisConfig.OVER_FIELD_NAME)
+										.startObject(Detector.OVER_FIELD_NAME)
 											.field("type", "string").field(INDEX, NOT_ANALYZED)
 										.endObject()		
-										.startObject(AnalysisConfig.USE_NULL)
+										.startObject(Detector.PARTITION_FIELD_NAME)
+											.field("type", "string").field(INDEX, NOT_ANALYZED)
+										.endObject()
+										.startObject(Detector.USE_NULL)
 											.field("type", "boolean").field(INDEX, NOT_ANALYZED)
 										.endObject()	
 									.endObject()
@@ -221,12 +221,12 @@ public class ElasticSearchMappings
 	{
 		XContentBuilder mapping = jsonBuilder()
 			.startObject()
-				.startObject(Detector.TYPE)
+				.startObject(com.prelert.rs.data.Detector.TYPE)
 					.startObject("_all")
 						.field("enabled", false)
 					.endObject()
 					.startObject("properties")
-						.startObject(Detector.NAME)
+						.startObject(com.prelert.rs.data.Detector.NAME)
 							.field("type", "string").field(INDEX, NOT_ANALYZED)
 						.endObject()					
 					.endObject()
@@ -264,11 +264,14 @@ public class ElasticSearchMappings
 						.startObject(AnomalyRecord.ANOMALY_SCORE)
 							.field("type", "double")
 						.endObject()
+						.startObject(Bucket.TIMESTAMP)
+							.field("type", "date")
+						.endObject()
 						.startObject(AnomalyRecord.ACTUAL)
-							.field("type", "double").field(INDEX, NO)
+							.field("type", "double").field(INDEX, NOT_ANALYZED)
 						.endObject()						
 						.startObject(AnomalyRecord.TYPICAL)
-							.field("type", "double").field(INDEX, NO)
+							.field("type", "double").field(INDEX, NOT_ANALYZED)
 						.endObject()						
 						.startObject(AnomalyRecord.PROBABILITY)
 							.field("type", "double")

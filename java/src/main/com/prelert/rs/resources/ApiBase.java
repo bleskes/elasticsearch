@@ -65,6 +65,7 @@ public class ApiBase extends ResourceWithJobManager
     	
     	JobManager manager = jobManager();
     	String version = manager.getAnalyticsVersion();
+    	version = version.replace("\n", "<br/>");
 
     	return String.format(VERSION_HTML, version);
     }

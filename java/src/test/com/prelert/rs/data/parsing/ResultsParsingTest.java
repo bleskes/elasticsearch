@@ -35,6 +35,8 @@ import java.io.InputStream;
 import java.util.Date;
 import java.util.List;
 
+import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.Logger;
 import org.junit.Test;
 
 import com.fasterxml.jackson.core.JsonParseException;
@@ -68,9 +70,12 @@ public class ResultsParsingTest
 	@Test
 	public void testParser() throws JsonParseException, IOException, AutoDetectParseException
 	{
+		BasicConfigurator.configure();
+		Logger logger = Logger.getLogger(ResultsParsingTest.class);
+		
 		InputStream inputStream = new ByteArrayInputStream(METRIC_OUTPUT_SAMPLE.getBytes("UTF-8"));
 			
-		AutoDetectResultsParser.BucketsAndState results = AutoDetectResultsParser.parseResults(inputStream);
+		AutoDetectResultsParser.BucketsAndState results = AutoDetectResultsParser.parseResults(inputStream, logger);
 		assertNull(results.getDetectorState());
 		
 		List<Bucket> buckets = results.getBuckets();
@@ -151,8 +156,12 @@ public class ResultsParsingTest
 		builder.append(RESULTS_WITH_STATE_2);
 		builder.append(RESULTS_WITH_STATE_3);
 		
+		BasicConfigurator.configure();
+		Logger logger = Logger.getLogger(ResultsParsingTest.class);
+		
+		
 		InputStream inputStream = new ByteArrayInputStream(builder.toString().getBytes("UTF-8"));
-		AutoDetectResultsParser.BucketsAndState results = AutoDetectResultsParser.parseResults(inputStream);
+		AutoDetectResultsParser.BucketsAndState results = AutoDetectResultsParser.parseResults(inputStream, logger);
 		
 		List<Bucket> buckets = results.getBuckets();		
 		assertEquals(4, buckets.size());	

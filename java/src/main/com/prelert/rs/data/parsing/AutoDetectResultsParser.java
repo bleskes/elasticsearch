@@ -51,8 +51,6 @@ import com.prelert.rs.data.*;
  */
 public class AutoDetectResultsParser 
 {
-	static public final Logger s_Logger = Logger.getLogger(AutoDetectResultsParser.class);
-	
 	/**
 	 * Utility class for grouping the parsed buckets and detector state.
 	 * If the state isn't saved then it will be <code>null</code>
@@ -86,12 +84,14 @@ public class AutoDetectResultsParser
 	 * {@linkplain com.prelert.rs.data.Bucket}s objects.
 	 * 
 	 * @param inputStream Source of the JSON input
+	 * @param logger
 	 * @return
 	 * @throws JsonParseException
 	 * @throws IOException
 	 * @throws AutoDetectParseException
 	 */
-	static public BucketsAndState parseResults(InputStream inputStream) 
+	static public BucketsAndState parseResults(InputStream inputStream, 
+			Logger logger) 
 	throws JsonParseException, IOException, AutoDetectParseException
 	{
 		return AutoDetectResultsParser.parseResults(inputStream, 
@@ -110,12 +110,25 @@ public class AutoDetectResultsParser
 					{
 						return false;
 					}
-				});
+				},
+				logger);
 	}
 	
 	
+	/**
+	 * Parse the bucket results from inputstream and perist
+	 * via the JobDataPersister.
+	 * 
+	 * @param inputStream
+	 * @param persister
+	 * @param logger 
+	 * @return
+	 * @throws JsonParseException
+	 * @throws IOException
+	 * @throws AutoDetectParseException
+	 */
 	static public BucketsAndState parseResults(InputStream inputStream,
-			JobDataPersister persister) 
+			JobDataPersister persister, Logger logger) 
 	throws JsonParseException, IOException, AutoDetectParseException
 	{
 		JsonParser parser = new JsonFactory().createParser(inputStream);
@@ -126,15 +139,15 @@ public class AutoDetectResultsParser
 		if (token == JsonToken.START_ARRAY)
 		{
 			token = parser.nextToken();
-			s_Logger.debug("JSON starts with an array");
+			logger.debug("JSON starts with an array");
 		}
 
 		if (token == JsonToken.END_ARRAY)
 		{
-			s_Logger.info("Empty results array, 0 buckets parsed");
+			logger.info("Empty results array, 0 buckets parsed");
 			
 			// Parse the serialised detector state and persist
-			DetectorState state = parseState(parser);
+			DetectorState state = parseState(parser, logger);
 			persister.persistDetectorState(state);		
 			BucketsAndState parsedData = new BucketsAndState();
 			parsedData.m_State = state;
@@ -143,7 +156,7 @@ public class AutoDetectResultsParser
 		}
 		else if (token != JsonToken.START_OBJECT)
 		{
-			s_Logger.error("Expecting Json Start Object token after the Start Array token");
+			logger.error("Expecting Json Start Object token after the Start Array token");
 			throw new AutoDetectParseException(
 					"Invalid JSON should start with an array of objects or an object = " + token);
 		}
@@ -154,14 +167,14 @@ public class AutoDetectResultsParser
 		{			
 			if (token == null) // end of input
 			{				
-				s_Logger.error("Unexpected end of Json input");
+				logger.error("Unexpected end of Json input");
 				break;
 			}
 			Bucket bucket = Bucket.parseJson(parser);
 			persister.persistBucket(bucket);
 			
 			buckets.add(bucket);
-			s_Logger.debug("Bucket number " + buckets.size() + " parsed from output");
+			logger.debug("Bucket number " + buckets.size() + " parsed from output");
 
 			token = parser.nextToken();
 		}
@@ -169,11 +182,11 @@ public class AutoDetectResultsParser
 		BucketsAndState parsedData = new BucketsAndState();
 		parsedData.m_Buckets = buckets;
 		
-		s_Logger.info(buckets.size() + " buckets parsed from autodetect output");
+		logger.info(buckets.size() + " buckets parsed from autodetect output");
 
 		
 		// All the results have been read now read the serialised state
-		DetectorState state = parseState(parser);
+		DetectorState state = parseState(parser, logger);
 		persister.persistDetectorState(state);		
 		parsedData.m_State = state;
 		
@@ -181,15 +194,15 @@ public class AutoDetectResultsParser
 	}
 	
 	
-	static private DetectorState parseState(JsonParser parser) 
+	static private DetectorState parseState(JsonParser parser, Logger logger) 
 	throws JsonParseException, IOException, AutoDetectParseException
 	{
-		s_Logger.debug("Parsing serialised detector state");
+		logger.debug("Parsing serialised detector state");
 		
 		JsonToken token = parser.nextToken();
 		if (token == null)
 		{
-			s_Logger.info("End of input no detector state to parse");
+			logger.info("End of input no detector state to parse");
 			return null;
 		}
 		else if (token != JsonToken.START_OBJECT)

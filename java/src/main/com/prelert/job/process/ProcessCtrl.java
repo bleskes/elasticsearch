@@ -72,9 +72,13 @@ public class ProcessCtrl
 	 */
 	static final public String PRELERT_HOME;
 	/**
-	 * The base log file directory. Equivalant to $PRELERT_HOME/logs
+	 * The base log file directory. Equivalent to $PRELERT_HOME/logs
 	 */
 	static final public String LOG_DIR;	
+	/**
+	 * The config directory. Equivalent to $PRELERT_HOME/config
+	 */
+	static final public String CONFIG_DIR;	
 	/**
 	 * The full to the autodetect program 
 	 */
@@ -109,7 +113,7 @@ public class ProcessCtrl
 	/**
 	 * Windows library path variable
 	 */	
-	static final public String WIN_LIB_PATH_ENV = "PATH"; 
+	static final public String WIN_LIB_PATH_ENV = "Path"; 
 	/**
 	 * Solaris library path variable
 	 */	
@@ -135,6 +139,12 @@ public class ProcessCtrl
 	static final public String DELETE_STATE_FILES_ARG = "--deleteStateFiles";
 	static final public String PERSIST_STATE_ARG = "--persistState";
 	static final public String VERSION_ARG = "--version";
+	static final public String INFO_ARG = "--info";
+	
+	/**
+	 * Name of the model config file
+	 */
+	static final public String PRELERT_MODEL_CONF = "prelertmodel.conf";
 	
 	/**
 	 * The unknown analytics version number string returned when the version 
@@ -155,26 +165,22 @@ public class ProcessCtrl
 	 * model state files. 
 	 */
 	static final public String BASE_STATE_FILE_EXTENSION = ".xml";
-
-	/**
-	 * By default autodetect expects the timestamp in a field with this name
-	 */
-	static final public String DEFAULT_TIME_FIELD = "_time";
 			
 	/**
 	 * command line args
 	 */
-	static final private String BY_ARG = "by";
-	static final private String OVER_ARG = "over";
+	static final public String BY_ARG = "by";
+	static final public String OVER_ARG = "over";
 	
 	/**
 	 * Field config file strings
 	 */
-	static final private String DOT_IS_ENABLED = ".isEnabled";
-	static final private String DOT_USE_NULL = ".useNull";
-	static final private String DOT_BY = ".by";
-	static final private String DOT_OVER = ".over";
-	static final private char NEW_LINE = '\n';
+	static final public String DOT_IS_ENABLED = ".isEnabled";
+	static final public String DOT_USE_NULL = ".useNull";
+	static final public String DOT_BY = ".by";
+	static final public String DOT_OVER = ".over";
+	static final public String DOT_PARTITION = ".partition";
+	static final public char NEW_LINE = '\n';
 	
 	
 	/**
@@ -200,6 +206,9 @@ public class ProcessCtrl
 		
 		File logDir = new File(PRELERT_HOME, "logs");	
 		LOG_DIR = logDir.toString();
+		
+		File configDir = new File(PRELERT_HOME, "config");	
+		CONFIG_DIR = configDir.toString();
 				
 		String libSubDirectory = "lib";
 		if (SystemUtils.IS_OS_MAC_OSX)
@@ -232,7 +241,25 @@ public class ProcessCtrl
 	static final private Logger s_Logger = Logger.getLogger(ProcessCtrl.class);
 	
 	static String s_AnalyticsVersion;
-	
+
+
+	/**
+	 * Set up an environment containing the PRELERT_HOME and LD_LIBRARY_PATH
+	 * (or equivalent) environment variables.
+	 */
+	private void buildEnvironment(ProcessBuilder pb)
+	{
+		// Always clear inherited environment variables
+		pb.environment().clear();
+
+		s_Logger.info(String.format("%s=%s", PRELERT_HOME_ENV, PRELERT_HOME));
+		pb.environment().put(PRELERT_HOME_ENV, PRELERT_HOME);
+
+		s_Logger.info(String.format("%s=%s", LIB_PATH_ENV, LIB_PATH));
+		pb.environment().put(LIB_PATH_ENV, LIB_PATH);
+	}
+
+
 	synchronized public String getAnalyticsVersion()
 	{
 		if (s_AnalyticsVersion != null) 
@@ -247,45 +274,111 @@ public class ProcessCtrl
 		s_Logger.info("Getting version number from " + command);
 		
 		// Build the process
-		ProcessBuilder pb = new ProcessBuilder(command); 		
-		
+		ProcessBuilder pb = new ProcessBuilder(command);
+		buildEnvironment(pb);
 
-		s_Logger.info(String.format("%s=%s", PRELERT_HOME_ENV, PRELERT_HOME));
-		pb.environment().put(PRELERT_HOME_ENV, PRELERT_HOME);
-		
-		s_Logger.info(String.format("%s=%s", LIB_PATH_ENV, LIB_PATH));
-		pb.environment().put(LIB_PATH_ENV, LIB_PATH);
-		
 		try
 		{
-			Process proc = pb.start();	
-			BufferedReader reader = new BufferedReader(
-					new InputStreamReader(proc.getErrorStream()));
+			Process proc = pb.start();
+			try
+			{
+				int exitValue = proc.waitFor();
+				BufferedReader reader = new BufferedReader(
+						new InputStreamReader(proc.getErrorStream()));
+				
+				String output = reader.readLine();
+				s_Logger.debug("autodetect version output = " + output);
+
+				if (exitValue >= 0) 
+				{
+					if (output == null)
+					{
+						return UNKNOWN_VERSION;						
+					}
+					
+					s_AnalyticsVersion = output;
+					return s_AnalyticsVersion;
+				}
+				else
+				{
+					return String.format("Error autodetect returned %d. \nError Output = '%s'.\n%s",
+							exitValue, output, UNKNOWN_VERSION);
+				}
+			}
+			catch (InterruptedException ie)
+			{
+				s_Logger.error("Interrupted reading analytics version number", ie);
+				return UNKNOWN_VERSION;
+			}
 			
-			String output = reader.readLine();
-			s_Logger.debug("autodetect version output = " + output);
-			
-			s_AnalyticsVersion = output;			
 		}
 		catch (IOException e)
 		{
 			s_Logger.error("Error reading analytics version number", e);
 			return UNKNOWN_VERSION;
 		}
-		
-		return s_AnalyticsVersion;
 	}
-	
+
+
+	/**
+	 * Get the C++ process to print a JSON document containing some of the usage
+	 * info
+	 */
+	synchronized public String getUsageInfo()
+	{
+		List<String> command = new ArrayList<>();
+		command.add(AUTODETECT_PATH);
+		command.add(INFO_ARG);
+
+		s_Logger.info("Getting info from " + command);
+
+		// Build the process
+		ProcessBuilder pb = new ProcessBuilder(command);
+		buildEnvironment(pb);
+
+		try
+		{
+			Process proc = pb.start();
+			try
+			{
+				int exitValue = proc.waitFor();
+				BufferedReader reader = new BufferedReader(
+						new InputStreamReader(proc.getInputStream()));
+
+				String output = reader.readLine();
+				s_Logger.debug("autodetect info output = " + output);
+
+				if (exitValue >= 0 && output != null)
+				{
+					return output;
+				}
+			}
+			catch (InterruptedException ie)
+			{
+				s_Logger.error("Interrupted reading autodetect info", ie);
+			}
+		}
+		catch (IOException e)
+		{
+			s_Logger.error("Error reading autodetect info", e);
+		}
+
+		// On error return an empty JSON document
+		return "{}";
+	}
+
+
 	/**
 	 * Calls {@link #buildProcess(String, JobDetails, DetectorState)} with 
 	 * detectorState set to <code>null</code>.
 	 * 
 	 * @param processName The name of program to execute this should exist in the 
 	 * directory PRELERT_HOME/bin/ 
+	 * @param logger The job's logger
 	 * @return A Java Process object
 	 * @throws IOException
 	 */
-	public Process buildProcess(String processName, JobDetails job)
+	public Process buildProcess(String processName, JobDetails job, Logger logger)
 	throws IOException	
 	{
 		return buildProcess(processName, job, null);
@@ -303,16 +396,16 @@ public class ProcessCtrl
 	 * @param job The job configuration
 	 * @param detectorState if <code>null</code> this parameter is 
 	 * ignored else the models' state is restored from this object 
+	 * @param logger The job's logger
 	 * 
 	 * @return A Java Process object
 	 * @throws IOException 
 	 */
 	public Process buildProcess(String processName, JobDetails job,
-			DetectorState detectorState)
+			DetectorState detectorState, Logger logger)
 	throws IOException
 	{
-		// TODO unit test for this build command stuff
-		s_Logger.info("PRELERT_HOME is set to " + PRELERT_HOME);
+		logger.info("PRELERT_HOME is set to " + PRELERT_HOME);
 		
 		List<String> command = new ArrayList<>();
 		command.add(AUTODETECT_PATH);
@@ -333,20 +426,21 @@ public class ProcessCtrl
 			{
 				String period = PERIOD_ARG + job.getAnalysisConfig().getPeriod();
 				command.add(period);
-			}	
-			if (job.getAnalysisConfig().getPartitionField() != null)
-			{
-				String partition = PARTITION_FIELD_ARG + job.getAnalysisConfig().getPartitionField();
-				command.add(partition);
 			}		
 		}
 		
 		if (job.getAnalysisOptions() != null)
 		{			
-			File modelConfigFile = File.createTempFile("modelconfig", ".conf");
-			writeModelOptions(job.getAnalysisOptions(), modelConfigFile);		
-			String modelConfig = MODEL_CONFIG_ARG + modelConfigFile.toString();
-			command.add(modelConfig);
+			File limitConfigFile = File.createTempFile("limitconfig", ".conf");
+			writeModelOptions(job.getAnalysisOptions(), limitConfigFile);		
+			String limitConfig = LIMIT_CONFIG_ARG + limitConfigFile.toString();
+			command.add(limitConfig);
+		}
+				
+		if (modelConfigFilePresent())
+		{
+			String modelConfigFile = new File(CONFIG_DIR, PRELERT_MODEL_CONF).toString();
+			command.add(MODEL_CONFIG_ARG + modelConfigFile);
 		}
 		
 		// Input is always length encoded
@@ -355,13 +449,14 @@ public class ProcessCtrl
 		DataDescription dataDescription = job.getDataDescription();
 		if (dataDescription != null)
 		{
-			if (dataDescription.getFieldDelimiter() != null)
+			if (DataDescription.DEFAULT_DELIMITER != dataDescription.getFieldDelimiter())
 			{
 				String delimiterArg = DELIMITER_ARG
 						+  dataDescription.getFieldDelimiter();
 				command.add(delimiterArg);
 			}
-			if (dataDescription.getTimeField() != null)
+			if (DataDescription.DEFAULT_TIME_FIELD.equals(dataDescription.getTimeField())
+					== false)
 			{
 				String timeFieldArg = TIME_FIELD_ARG
 						+  dataDescription.getTimeField();
@@ -372,7 +467,7 @@ public class ProcessCtrl
 		// Restoring the model state
 		if (detectorState != null && detectorState.getDetectorKeys().size() > 0)
 		{
-			s_Logger.info("Restoring models for job '" + job.getId() +"'");
+			logger.info("Restoring models for job '" + job.getId() +"'");
 
 			Path tempDir = Files.createTempDirectory(null);
 			String tempDirStr = tempDir.toString();
@@ -420,24 +515,19 @@ public class ProcessCtrl
 						new FileOutputStream(fieldConfigFile),
 						Charset.forName("UTF-8")))
 				{
-					writeFieldConfig(job.getAnalysisConfig(), osw);
+					writeFieldConfig(job.getAnalysisConfig(), osw, logger);
 				}
 				
-				String modelConfig = FIELD_CONFIG_ARG + fieldConfigFile.toString();
-				command.add(modelConfig);	
+				String fieldConfig = FIELD_CONFIG_ARG + fieldConfigFile.toString();
+				command.add(fieldConfig);	
 			}
 		}
 		
 		// Build the process
-		s_Logger.info("Starting native process with command: " +  command);
-		ProcessBuilder pb = new ProcessBuilder(command); 		
-		
-		s_Logger.info(String.format("%s=%s", PRELERT_HOME_ENV, PRELERT_HOME));
-		pb.environment().put(PRELERT_HOME_ENV, PRELERT_HOME);
-		
-		s_Logger.info(String.format("%s=%s", LIB_PATH_ENV, LIB_PATH));
-		pb.environment().put(LIB_PATH_ENV, LIB_PATH);
-		
+		logger.info("Starting native process with command: " +  command);
+		ProcessBuilder pb = new ProcessBuilder(command);
+		buildEnvironment(pb);
+
 		return pb.start();		
 	}
 	
@@ -473,6 +563,18 @@ public class ProcessCtrl
 	
 	
 	/**
+	 * Return true if there is a file PRELERT_HOME/config/model.conf
+	 * @return
+	 */
+	private boolean modelConfigFilePresent()
+	{
+		File f = new File(CONFIG_DIR, PRELERT_MODEL_CONF);
+		
+		return f.exists() && !f.isDirectory();
+	}
+	
+	
+	/**
 	 * Interpret the detector object as a list of strings in the format
 	 * expected by autodetect api to configure t 
 	 * 
@@ -489,9 +591,9 @@ public class ProcessCtrl
 			commandLineArgs.add(usenull);
 		}
 
-		if (detector.getFunction() != null)
+		if (isNotNullOrEmpty(detector.getFunction()))
 		{
-			if (detector.getFieldName() != null)
+			if (isNotNullOrEmpty(detector.getFieldName() ))
 			{
 				commandLineArgs.add(detector.getFunction() + "(" + detector.getFieldName() + ")");
 			}
@@ -500,26 +602,26 @@ public class ProcessCtrl
 				commandLineArgs.add(detector.getFunction());
 			}
 		}
-		else if (detector.getFieldName() != null)
+		else if (isNotNullOrEmpty(detector.getFieldName()))
 		{
 			commandLineArgs.add(detector.getFieldName());
 		}
-		else
-		{
-			// TODO maybe return error instead?
-			commandLineArgs.add("count");
-		}
 
-		if (detector.getByFieldName() != null)
+		if (isNotNullOrEmpty(detector.getByFieldName()))
 		{
 			commandLineArgs.add(BY_ARG);
 			commandLineArgs.add(detector.getByFieldName());
 		}
-		if (detector.getOverFieldName() != null)
+		if (isNotNullOrEmpty(detector.getOverFieldName()))
 		{
 			commandLineArgs.add(OVER_ARG);
 			commandLineArgs.add(detector.getOverFieldName());
 		}
+		if (isNotNullOrEmpty(detector.getPartitionFieldName()))
+		{
+			String partition = PARTITION_FIELD_ARG + detector.getPartitionFieldName();
+			commandLineArgs.add(partition);
+		}	
 		
 		return commandLineArgs;
 	}
@@ -530,9 +632,11 @@ public class ProcessCtrl
 	 *
 	 * @param config The configuration to write
 	 * @param osw Stream to write to
+	 * @param logger
 	 * @throws IOException
 	 */
-	public void writeFieldConfig(AnalysisConfig config, OutputStreamWriter osw)
+	public void writeFieldConfig(AnalysisConfig config, OutputStreamWriter osw,
+			Logger logger)
 	throws IOException
 	{
 		StringBuilder contents = new StringBuilder();
@@ -541,7 +645,7 @@ public class ProcessCtrl
 		for (Detector detector : config.getDetectors())
 		{
 			StringBuilder keyBuilder = new StringBuilder();
-			if (detector.getFunction() != null)
+			if (isNotNullOrEmpty(detector.getFunction()))
 			{
 				keyBuilder.append(detector.getFunction());
 				if (detector.getFieldName() != null)
@@ -551,39 +655,39 @@ public class ProcessCtrl
 							.append(")");
 				}
 			}
-			else if (detector.getFieldName() != null)
+			else if (isNotNullOrEmpty(detector.getFieldName()))
 			{
 				keyBuilder.append(detector.getFieldName());
 			}
-			else
-			{
-				// TODO maybe return error instead?
-				keyBuilder.append("count");
-			}
 
-			if (detector.getByFieldName() != null)
+			if (isNotNullOrEmpty(detector.getByFieldName()))
 			{
 				keyBuilder.append("-").append(detector.getByFieldName());
 			}
-			if (detector.getOverFieldName() != null)
+			if (isNotNullOrEmpty(detector.getOverFieldName()))
 			{
 				keyBuilder.append("-").append(detector.getOverFieldName());
+			}
+			if (isNotNullOrEmpty(detector.getPartitionFieldName()))
+			{
+				keyBuilder.append("-").append(detector.getPartitionFieldName());
 			}
 
 			String key = keyBuilder.toString();
 			if (detectorKeys.contains(key))
 			{
-				s_Logger.warn(String.format(
+				logger.warn(String.format(
 						"Duplicate detector key '%s' ignorning this detector", key));
 				continue;
 			}
 			detectorKeys.add(key);
-
+			
 			// .isEnabled is only necessary if nothing else is going to be added
 			// for this key
 			if (detector.isUseNull() == null &&
-				detector.getByFieldName() == null &&
-				detector.getOverFieldName() == null)
+					isNullOrEmpty(detector.getByFieldName()) &&
+					isNullOrEmpty(detector.getOverFieldName()) && 
+					isNullOrEmpty(detector.getPartitionFieldName()))
 			{
 				contents.append(key).append(DOT_IS_ENABLED).append(" = true").append(NEW_LINE);
 			}
@@ -595,17 +699,21 @@ public class ProcessCtrl
 					.append(NEW_LINE);
 			}
 
-			if (detector.getByFieldName() != null)
+			if (isNotNullOrEmpty(detector.getByFieldName()))
 			{
 				contents.append(key).append(DOT_BY).append(" = ").append(detector.getByFieldName()).append(NEW_LINE);
 			}
-			if (detector.getOverFieldName() != null)
+			if (isNotNullOrEmpty(detector.getOverFieldName()))
 			{
 				contents.append(key).append(DOT_OVER).append(" = ").append(detector.getOverFieldName()).append(NEW_LINE);
 			}
+			if (isNotNullOrEmpty(detector.getPartitionFieldName()))
+			{
+				contents.append(key).append(DOT_PARTITION).append(" = ").append(detector.getPartitionFieldName()).append(NEW_LINE);
+			}
 		}
 
-		s_Logger.debug("FieldConfig = " + contents.toString());	
+		logger.debug("FieldConfig: \n" + contents.toString());	
 
 		osw.write(contents.toString());
 	}
@@ -628,6 +736,26 @@ public class ProcessCtrl
 			osw.write(state);
 			osw.write('\n');
 		}
+	}
+	
+	/**
+	 * Returns true if the string arg is not null and not empty
+	 * i.e. it is a valid string
+	 * @param arg
+	 */
+	private static boolean isNotNullOrEmpty(String arg)
+	{
+		return (arg != null && arg.isEmpty() == false);
+	}
+	
+	/**
+	 * Returns true if the string arg is either null or empty
+	 * i.e. it is NOT a valid string
+	 * @param arg
+	 */
+	private static boolean isNullOrEmpty(String arg)
+	{
+		return (arg == null || arg.isEmpty());
 	}
 	
 }

@@ -30,6 +30,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 
 import com.prelert.job.JobConfigurationException;
+import com.prelert.rs.data.ApiError;
 
 /**
  * Exception -> Response mapper for {@linkplain JobConfigurationException}.
@@ -39,11 +40,11 @@ public class JobConfigurationExceptionMapper implements ExceptionMapper<JobConfi
 	@Override
 	public Response toResponse(JobConfigurationException configException) 
 	{
-		String msg = String.format("Invalid Job configuration: %s\n",
-				configException.getMessage());
+		ApiError error = new ApiError(configException.getErrorCode());
+		error.setMessage(configException.getMessage());
+		error.setCause(configException.getCause());
 		
-		return Response.status(Response.Status.NOT_FOUND).
-				entity(msg).build();
+		return Response.status(Response.Status.BAD_REQUEST).entity(error.toJson()).build();
 	}
 }
 

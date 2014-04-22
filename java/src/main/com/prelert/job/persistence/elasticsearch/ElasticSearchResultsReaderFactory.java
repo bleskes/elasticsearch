@@ -33,9 +33,11 @@ public class ElasticSearchResultsReaderFactory implements ResultsReaderFactory
 	}
 	
 	@Override
-	public Runnable newResultsParser(String jobId, InputStream autoDetectOutput) 
+	public Runnable newResultsParser(String jobId, InputStream autoDetectOutput,
+			Logger logger) 
 	{
-		return new ReadAutoDetectOutput(jobId, autoDetectOutput, m_Node.client());
+		return new ReadAutoDetectOutput(jobId, autoDetectOutput, m_Node.client(),
+				logger);
 	}
 
 	
@@ -48,12 +50,15 @@ public class ElasticSearchResultsReaderFactory implements ResultsReaderFactory
 		private String m_JobId;
 		private Client m_Client;
 		private InputStream m_Stream;	
+		private Logger m_Logger;
 		
-		public ReadAutoDetectOutput(String jobId, InputStream stream, Client client)
+		public ReadAutoDetectOutput(String jobId, InputStream stream, Client client, 
+				Logger logger)
 		{
 			m_JobId = jobId;
 			m_Stream = stream;
 			m_Client = client;
+			m_Logger = logger;
 		}
 		
 		public void run() 
@@ -62,7 +67,7 @@ public class ElasticSearchResultsReaderFactory implements ResultsReaderFactory
 			
 			try 
 			{
-				AutoDetectResultsParser.parseResults(m_Stream, persister);				
+				AutoDetectResultsParser.parseResults(m_Stream, persister, m_Logger);				
 			}
 			catch (JsonParseException e) 
 			{
@@ -77,7 +82,7 @@ public class ElasticSearchResultsReaderFactory implements ResultsReaderFactory
 				s_Logger.info("Error parsing autodetect_api output", e);
 			}
 
-			s_Logger.info("Parse results Complete");
+			m_Logger.info("Parse results Complete");
 		}		
 	}
 }
