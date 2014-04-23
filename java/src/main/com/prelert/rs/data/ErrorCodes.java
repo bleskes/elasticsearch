@@ -148,7 +148,7 @@ public class ErrorCodes
 	final public static int NATIVE_PROCESS_WRITE_ERROR = 40102;
 	
 	/**
-	 * Certain opertations e.g. delete cannot be applied 
+	 * Certain operations e.g. delete cannot be applied 
 	 * to running jobs.
 	 */
 	final public static int NATIVE_PROCESS_RUNNING_ERROR = 40103;
@@ -167,7 +167,7 @@ public class ErrorCodes
 	
 	// Rest API errors
 	/**
-	 * The date query parameter is unparsable as a date
+	 * The date query parameter is un-parsable as a date
 	 */
 	final public static int UNPARSEABLE_DATE_ARGUMENT = 60101; 
 	

@@ -432,8 +432,11 @@ public class EngineApiClient implements Closeable
 				
 				s_Logger.error(msg);
 				
-				m_LastError = m_JsonMapper.readValue(content, 
-						new TypeReference<ApiError>() {} );
+				if (content.isEmpty() == false)
+				{
+					m_LastError = m_JsonMapper.readValue(content, 
+							new TypeReference<ApiError>() {} );
+				}
 				
 				return false;
 			}

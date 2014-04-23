@@ -52,9 +52,7 @@ public class SoakTest
 	 */
 	static final public String API_BASE_URL = "http://localhost:8080/engine/v0.3/";
 	
-	
-	
-	
+		
 	
 	public static void main(String[] args) 
 	throws FileNotFoundException, IOException
@@ -82,6 +80,8 @@ public class SoakTest
 		{
 			CsvDataRunner test = new CsvDataRunner(serviceUrl, numTimeSeries,
 					numInteration, pointInterval, bucketSpan);  
+			
+			test.createJob();
 			
 			Thread testThread = new Thread(test);
 			testThread.start();
