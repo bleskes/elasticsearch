@@ -48,8 +48,12 @@ public class ProcessAndDataDescription
 	final private DataDescription m_DataDescription; 
 	volatile private boolean m_IsInUse;
 	final private long m_TimeoutSeconds;
-	private BufferedReader m_ErrorReader;	
+	final private BufferedReader m_ErrorReader;	
 	private List<String> m_InterestingFields;
+	
+	final private Runnable m_OutputParser;
+	private Thread m_OutputParserThread;
+
 	private Logger m_JobLogger;
 
 	/**
@@ -66,7 +70,7 @@ public class ProcessAndDataDescription
 	public ProcessAndDataDescription(Process process, String jobId, 
 			DataDescription dd,
 			long timeout, List<String> interestingFields,
-			Logger logger)
+			Logger logger, Runnable outputParser)
 	{
 		m_Process = process;
 		m_DataDescription = dd;
@@ -76,9 +80,13 @@ public class ProcessAndDataDescription
 		m_ErrorReader = new BufferedReader(
 				new InputStreamReader(m_Process.getErrorStream()));		
 		
-		m_InterestingFields = interestingFields;
-		
+		m_InterestingFields = interestingFields;		
 		m_JobLogger = logger;
+		
+		m_OutputParser = outputParser;
+		
+		m_OutputParserThread = new Thread(m_OutputParser, jobId + "-Bucket-Parser");
+		m_OutputParserThread.start();
 	}
 
 	public Process getProcess()
@@ -145,6 +153,18 @@ public class ProcessAndDataDescription
 	public Logger getLogger()
 	{
 		return m_JobLogger;
+	}
+	
+	
+	/**
+	 * Wait for the output parser thread to finish
+	 * 
+	 * @throws InterruptedException
+	 */
+	public void joinParserThread() 
+	throws InterruptedException
+	{
+		m_OutputParserThread.join();
 	}
 	
 }

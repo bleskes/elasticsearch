@@ -38,6 +38,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
+import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
@@ -174,7 +175,8 @@ public class ElasticSearchPersister implements JobDataPersister
 						s_Logger.error(item.getFailureMessage());
 					}
 				}
-			}		
+			}	
+			
 		}
 		catch (IOException e) 
 		{
@@ -187,12 +189,19 @@ public class ElasticSearchPersister implements JobDataPersister
 	 * will be written to an separate document. For each ES index, 
 	 * which corresponds to a job, there can  only be 1 serialised state for 
 	 * each detector. If the detectors state is updated the last state is 
-	 * simply overwritten
+	 * simply overwritten.
+	 * @param state If <code>null</code> then returns straight away.
 	 * @throws IOException 
 	 */
 	@Override
 	public void persistDetectorState(DetectorState state) 
 	{
+		if (state == null)
+		{
+			s_Logger.warn("No detector state to persist for job " + m_JobId);
+			return;
+		}
+		
 		try
 		{
 			for (Map.Entry<String, String> entry : state.getMap().entrySet())
@@ -231,6 +240,18 @@ public class ElasticSearchPersister implements JobDataPersister
 		
 		SearchResponse searchResponse = searchBuilder.get();		
 		return searchResponse.getHits().totalHits() > 0;
+	}
+	
+	/**
+	 * Refreshes the elastic search index
+	 * @return
+	 */
+	@Override 
+	public boolean commitWrites()
+	{
+		// refresh the index so the buckets are immediately searchable
+		m_Client.admin().indices().refresh(new RefreshRequest(m_JobId));
+		return true;		
 	}
 	
 	/**

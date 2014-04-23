@@ -55,4 +55,13 @@ public interface JobDataPersister
 	 * @return
 	 */
 	public boolean isDetectorStatePersisted();
+	
+	/**
+	 * Once all the job data has been written this function will be 
+	 * called to commit the data if the implementing persister requries
+	 * it. 
+	 * 
+	 * @return True if successful
+	 */
+	public boolean commitWrites();
 }

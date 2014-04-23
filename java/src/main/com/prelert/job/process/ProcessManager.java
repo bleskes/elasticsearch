@@ -300,16 +300,13 @@ public class ProcessManager
 
 		List<String> analysisFields = job.getAnalysisConfig().analysisFields();
 
+		
 		ProcessAndDataDescription procAndDD = new ProcessAndDataDescription(
 				nativeProcess, job.getId(),
-				job.getDataDescription(), job.getTimeout(), analysisFields, logger);			
-
-		// Launch results parser in a new thread
-		Thread th = new Thread(m_ResultsReaderFactory.newResultsParser(jobId, 
-								procAndDD.getProcess().getInputStream(),
-								logger),
-								jobId + "-Bucket-Parser");
-		th.start();		
+				job.getDataDescription(), job.getTimeout(), analysisFields, logger,
+				m_ResultsReaderFactory.newResultsParser(jobId, 
+						nativeProcess.getInputStream(),
+						logger));		
 		
 		logger.debug("Created process for job " + jobId);
 		
@@ -405,6 +402,9 @@ public class ProcessManager
 						throw new NativeProcessRunException(sb.toString(), 
 								ErrorCodes.NATIVE_PROCESS_ERROR);		
 					}
+					
+					// wait for the results parsing and write to to the datastore
+					process.joinParserThread();
 				}
 				catch (IOException ioe)
 				{
