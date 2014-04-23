@@ -308,7 +308,7 @@ public class ProcessManager
 		Thread th = new Thread(m_ResultsReaderFactory.newResultsParser(jobId, 
 								procAndDD.getProcess().getInputStream(),
 								logger),
-								"Bucket-Parser");
+								jobId + "-Bucket-Parser");
 		th.start();		
 		
 		logger.debug("Created process for job " + jobId);
@@ -392,15 +392,15 @@ public class ProcessManager
 					// wait for the process to exit
 					int exitValue = process.getProcess().waitFor();
 					
-					String msg = String.format("Process exited with code %d.", exitValue);	
-					process.getLogger().warn(msg);
-					s_Logger.error(msg + " Removing resources for job " + jobId);
+					String msg = String.format("Process returned with value %d.", exitValue);	
+					process.getLogger().info(msg);
 
 					if (exitValue != 0)
 					{
 						// Read any error output from the process
 						StringBuilder sb = new StringBuilder();
 						readProcessErrorOutput(process, sb);
+						process.getLogger().error(sb);
 						
 						throw new NativeProcessRunException(sb.toString(), 
 								ErrorCodes.NATIVE_PROCESS_ERROR);		
@@ -468,13 +468,13 @@ public class ProcessManager
 			// If we get here the process has exited. 
 			String msg = String.format("Process exited with code %d.", exitValue);	
 			process.getLogger().warn(msg);
-			
-			s_Logger.error(msg + "Removing resources for job " + jobId);
-
+						
 			// Read any error output from the process and 
 			// add to the returned error. 
 			StringBuilder sb = new StringBuilder(msg).append('\n');
 			readProcessErrorOutput(process, sb);
+			
+			process.getLogger().warn(sb);
 						
 			throw new NativeProcessRunException(sb.toString(), 
 					ErrorCodes.NATIVE_PROCESS_ERROR);
@@ -585,13 +585,20 @@ public class ProcessManager
 									}
 								}		
 							}
-
+						}
+						catch (NativeProcessRunException e)
+						{
+							s_Logger.error(String.format("Error in job %s finish timeout", jobId), e);
+						}
+						
+						try 
+						{
 							m_JobDetailsProvider.setJobFinishedTimeandStatus(jobId, 
 									new Date(), JobStatus.FINISHED);
 						}
-						catch (UnknownJobException | NativeProcessRunException e)
+						catch (UnknownJobException e) 
 						{
-							s_Logger.error("Error in job finish timeout", e);
+							s_Logger.warn(String.format("Error in job %s finish timeout", jobId), e);
 						}
 					
 					}
