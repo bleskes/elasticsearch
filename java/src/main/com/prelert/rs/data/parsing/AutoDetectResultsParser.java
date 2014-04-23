@@ -110,6 +110,11 @@ public class AutoDetectResultsParser
 					{
 						return false;
 					}
+					@Override
+					public boolean commitWrites() 
+					{
+						return true;
+					}
 				},
 				logger);
 	}
@@ -186,9 +191,13 @@ public class AutoDetectResultsParser
 
 		
 		// All the results have been read now read the serialised state
+		logger.debug("Persisting detector state");
 		DetectorState state = parseState(parser, logger);
 		persister.persistDetectorState(state);		
 		parsedData.m_State = state;
+		
+		// commit data to the datastore
+		persister.commitWrites();
 		
 		return parsedData;
 	}

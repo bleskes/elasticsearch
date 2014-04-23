@@ -967,9 +967,6 @@ public class JobsTest implements Closeable
 			}
 		}
 		
-		// Sleep for a second to give ElasticSearch a chance to catch up.
-		Thread.sleep(1200);
-		
 		for (String jobId : jobIds)
 		{
 			SingleDocument<JobDetails> doc = m_WebServiceClient.getJob(baseUrl, jobId);
@@ -1057,8 +1054,7 @@ public class JobsTest implements Closeable
 		test.closeJob(baseUrl, flightCentreJobId);
 		
 		test.testReadLogFiles(baseUrl, flightCentreJobId);
-
-		// Give ElasticSearch a chance to index
+		
 		Thread.sleep(1500);
 
 		test.verifyJobResults(baseUrl, flightCentreJobId, 100);
@@ -1072,10 +1068,6 @@ public class JobsTest implements Closeable
 		test.uploadData(baseUrl, flightCentreJsonJobId, flightCentreJsonData, false);
 		test.closeJob(baseUrl, flightCentreJsonJobId);		
 		test.testReadLogFiles(baseUrl, flightCentreJsonJobId);
-
-		// Give ElasticSearch a chance to index
-		Thread.sleep(1500);
-
 		test.verifyJobResults(baseUrl, flightCentreJsonJobId, 100);
 		jobUrls.add(flightCentreJsonJobId);	
 			
@@ -1087,12 +1079,8 @@ public class JobsTest implements Closeable
 
 		test.slowUpload(baseUrl, farequoteTimeFormatJobId, fareQuoteData, 10);
 		test.closeJob(baseUrl, farequoteTimeFormatJobId);
-		test.testReadLogFiles(baseUrl, farequoteTimeFormatJobId);
-
-		// Give ElasticSearch a chance to index
-		Thread.sleep(1500);
-
 		test.verifyJobResults(baseUrl, farequoteTimeFormatJobId, 150);
+		test.testReadLogFiles(baseUrl, farequoteTimeFormatJobId);
 		jobUrls.add(farequoteTimeFormatJobId);		
 					
 		// known dates for the farequote data
@@ -1111,29 +1099,21 @@ public class JobsTest implements Closeable
 		
 		test.uploadData(baseUrl, refJobId, fareQuoteData, false);
 		test.closeJob(baseUrl, refJobId);
-		test.testReadLogFiles(baseUrl, refJobId);
-
-		// Give ElasticSearch a chance to index
-		Thread.sleep(1500);
-
 		test.verifyJobResults(baseUrl, refJobId, 150);
+		test.testReadLogFiles(baseUrl, refJobId);
 		jobUrls.add(refJobId);		
 
 		
 		//=====================================================
 		// timestamp in ms from the epoch for both csv and json
 		//
-	 	String jobId = test.createFlightCentreMsCsvFormatJobTest(baseUrl);
+		String jobId = test.createFlightCentreMsCsvFormatJobTest(baseUrl);
 	 	jobUrls.add(jobId);	
 	 	
 	 	test.uploadData(baseUrl, jobId, flightCentreMsData, false);
 	 	test.closeJob(baseUrl, jobId);	
+	 	test.verifyJobResults(baseUrl, jobId, 150);
 	 	test.testReadLogFiles(baseUrl, jobId);
-		
-		// Give ElasticSearch a chance to index
-		Thread.sleep(1500);
-
-		test.verifyJobResults(baseUrl, jobId, 150);
 		test.testDateFilters(baseUrl, jobId, new Date(1350824400000L), 
 				new Date(1350913371000L));
 		
@@ -1142,15 +1122,10 @@ public class JobsTest implements Closeable
 	 	
 	 	test.uploadData(baseUrl, jobId, flightCentreMsJsonData, false);
 	 	test.closeJob(baseUrl, jobId);	
-	 	test.testReadLogFiles(baseUrl, jobId);
-		
-		// Give ElasticSearch a chance to index
-		Thread.sleep(1500);
-
 		test.verifyJobResults(baseUrl, jobId, 150);
 		test.testDateFilters(baseUrl, jobId, new Date(1350824400000L), 
 				new Date(1350913371000L));		
-		
+		test.testReadLogFiles(baseUrl, jobId);
 		
 		//==========================
 		// Clean up test jobs
