@@ -412,13 +412,17 @@ public class JobLogs
 				}
 				catch (IOException e) 
 				{
-					s_Logger.error("Error deleting log file: " + logFile, e);
+					String msg = "Error deleting log file " + logDir + ". ";
+					msg += (e.getCause() != null) ? e.getCause().getMessage() : e.getMessage();
+					s_Logger.warn(msg);							
 				}
 			}
 		} 
 		catch (IOException e) 
 		{
-			s_Logger.error("Error opening the log directory", e);
+			String msg = "Error opening the log directory " + logDir + ". ";
+			msg += (e.getCause() != null) ? e.getCause().getMessage() : e.getMessage();
+			s_Logger.warn(msg);			
 		}
 		
 		// delete the directory
@@ -428,7 +432,9 @@ public class JobLogs
 		}
 		catch (IOException e) 
 		{
-			s_Logger.error("Error deleting log directory " + logDir, e);
+			String msg = "Error deleting log directory " + logDir + ". ";
+			msg += (e.getCause() != null) ? e.getCause().getMessage() : e.getMessage();
+			s_Logger.warn(msg);
 		}
 		
 		return true;

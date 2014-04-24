@@ -18,8 +18,6 @@ import com.prelert.rs.data.parsing.AutoDetectResultsParser;
  */
 public class ElasticSearchResultsReaderFactory implements ResultsReaderFactory
 {
-	private final static Logger s_Logger = Logger.getLogger(ElasticSearchResultsReaderFactory.class);
-	
 	private Node m_Node;
 	
 	/**
@@ -71,15 +69,15 @@ public class ElasticSearchResultsReaderFactory implements ResultsReaderFactory
 			}
 			catch (JsonParseException e) 
 			{
-				s_Logger.info("Error parsing autodetect_api output", e);
+				m_Logger.info("Error parsing autodetect_api output", e);
 			}
 			catch (IOException e) 
 			{
-				s_Logger.info("Error parsing autodetect_api output", e);
+				m_Logger.info("Error parsing autodetect_api output", e);
 			}
 			catch (AutoDetectParseException e) 
 			{
-				s_Logger.info("Error parsing autodetect_api output", e);
+				m_Logger.info("Error parsing autodetect_api output", e);
 			}
 
 			m_Logger.info("Parse results Complete");

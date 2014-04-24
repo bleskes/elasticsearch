@@ -166,19 +166,27 @@ public class Pagination<T>
 	}
 	
 	/**
-	 * True if all results are return i.e. there is no next page or previous page
-	 * and skip == 0
+	 * True if all results are return i.e. <code>documents.size() == hitcount</code> 
+	 * and there is no next page or previous page
+	 * If the object contains 0 documents it returns false.
 	 * 
 	 * @return True if all the requested documents are returned in this page
 	 */
 	@JsonIgnore()
 	public boolean isAllResults()
 	{
-		return m_GotAllResults;
+		if (m_Documents == null)
+		{
+			return false;
+		}
+		else 
+		{
+			return m_Documents.size() == m_HitCount;
+		}
 	}
 	
-	public void setAllResults(boolean value)
-	{
-		m_GotAllResults = value;
-	}
+//	public void setAllResults(boolean value)
+//	{
+//		m_GotAllResults = value;
+//	}
 }

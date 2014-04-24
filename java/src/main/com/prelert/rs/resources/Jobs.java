@@ -27,6 +27,7 @@
 
 package com.prelert.rs.resources;
 
+import java.io.IOException;
 import java.net.URI;
 
 import javax.ws.rs.Consumes;
@@ -130,7 +131,7 @@ public class Jobs extends ResourceWithJobManager
     @Consumes(MediaType.APPLICATION_JSON)  
     @Produces(MediaType.APPLICATION_JSON)
     public Response createJob(JobConfiguration config) 
-    throws UnknownJobException, JsonProcessingException, JobConfigurationException 
+    throws UnknownJobException, JobConfigurationException, IOException 
     {   		
     	s_Logger.debug("Creating new job");
     	
