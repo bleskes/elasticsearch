@@ -36,9 +36,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 import org.apache.log4j.Logger;
 import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
+import org.elasticsearch.action.admin.indices.refresh.RefreshResponse;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
@@ -245,12 +247,14 @@ public class ElasticSearchPersister implements JobDataPersister
 	/**
 	 * Refreshes the elastic search index
 	 * @return
+	 * @throws ExecutionException 
+	 * @throws InterruptedException 
 	 */
 	@Override 
-	public boolean commitWrites()
+	public boolean commitWrites() 
 	{
 		// refresh the index so the buckets are immediately searchable
-		m_Client.admin().indices().refresh(new RefreshRequest(m_JobId));
+		m_Client.admin().indices().refresh(new RefreshRequest(m_JobId)).actionGet();	
 		return true;		
 	}
 	
