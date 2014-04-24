@@ -25,7 +25,7 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.rs.client;
+package com.prelert.rs.client.datauploader;
 
 import java.io.IOException;
 import java.io.PipedInputStream;
@@ -35,6 +35,8 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import org.apache.http.client.ClientProtocolException;
 import org.apache.log4j.Logger;
+
+import com.prelert.rs.client.EngineApiClient;
 
 
 

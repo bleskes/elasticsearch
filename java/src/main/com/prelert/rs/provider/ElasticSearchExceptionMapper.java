@@ -21,7 +21,7 @@ public class ElasticSearchExceptionMapper implements ExceptionMapper<Elasticsear
 	public Response toResponse(ElasticsearchException e)
 	{
 		ApiError error = new ApiError(ErrorCodes.DATA_STORE_ERROR);
-		error.setMessage("Error in ElasticSearch status = " + e.status().toString());
+		error.setMessage("Error in ElasticSearch: = " + e.getDetailedMessage());
 		error.setCause(e);
 		
 		return Response.serverError().entity(error.toJson()).build();

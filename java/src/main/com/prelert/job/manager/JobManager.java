@@ -44,6 +44,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.apache.log4j.Logger;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse;
+import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchResponse;
@@ -239,10 +240,9 @@ public class JobManager implements JobDetailsProvider
 		FilterBuilder fb = FilterBuilders.matchAllFilter();
 		SortBuilder sb = new FieldSortBuilder(JobDetails.ID)
 							.ignoreUnmapped(true)
-							.missing("_last")
 							.order(SortOrder.DESC);
 
-		SearchResponse response = m_Client.prepareSearch("_all")
+		SearchResponse response = m_Client.prepareSearch("_all") 
 				.setTypes(JobDetails.TYPE)
 				.setPostFilter(fb)
 				.setFrom(skip).setSize(take)
@@ -260,7 +260,6 @@ public class JobManager implements JobDetailsProvider
 		page.setHitCount(response.getHits().getTotalHits());
 		page.setSkip(skip);
 		page.setTake(take);
-		page.setAllResults(response.getHits().getHits().length == page.getHitCount());
 		
 		return page;
 	}
@@ -272,10 +271,10 @@ public class JobManager implements JobDetailsProvider
 	 * @param jobConfig
 	 * @return The new job or <code>null</code> if an exception occurs.
 	 * @throws UnknownJobException
-	 * @throws JsonProcessingException 
+	 * @throws IOException 
 	 */
 	public JobDetails createJob(JobConfiguration jobConfig)
-	throws UnknownJobException , JsonProcessingException
+	throws UnknownJobException , IOException
 	{
 		String jobId = generateJobId();
 		JobDetails jobDetails;
@@ -308,22 +307,24 @@ public class JobManager implements JobDetailsProvider
 					.addMapping(AnomalyRecord.TYPE, recordMapping)
 					.addMapping(DetectorState.TYPE, detectorStateMapping)
 					.get();
-								
-			String json = m_ObjectMapper.writeValueAsString(jobDetails);
 			
-			m_Client.prepareIndex(
-					jobId, JobDetails.TYPE, jobId)
+			String json = m_ObjectMapper.writeValueAsString(jobDetails);
+			m_Client.prepareIndex(jobId, JobDetails.TYPE, jobId)
 					.setSource(json)
 					.get();
-						
+					
+			// wait for the job to be indexed in ElasticSearch			
+			m_Client.admin().indices().refresh(new RefreshRequest(jobId)).actionGet();
+			
 			return jobDetails;
 		}
 		catch (IOException e)
 		{
 			s_Logger.error("Error writing ElasticSearch mappings", e);
+			throw e;
 		}
 
-		return null;
+		//return null;
 	}
 	
 	/**
@@ -418,7 +419,6 @@ public class JobManager implements JobDetailsProvider
 		page.setHitCount(searchResponse.getHits().getTotalHits());
 		page.setSkip(skip);
 		page.setTake(take);
-		page.setAllResults(searchResponse.getHits().getHits().length == page.getHitCount());
 		
 		return page;
 	}
@@ -491,7 +491,6 @@ public class JobManager implements JobDetailsProvider
 		page.setHitCount(searchResponse.getHits().getTotalHits());
 		page.setSkip(skip);
 		page.setTake(take);
-		page.setAllResults(searchResponse.getHits().getHits().length == page.getHitCount());
 		
 		return page;		
 	}
@@ -540,7 +539,6 @@ public class JobManager implements JobDetailsProvider
 		page.setHitCount(searchResponse.getHits().getTotalHits());
 		page.setSkip(skip);
 		page.setTake(take);
-		page.setAllResults(searchResponse.getHits().getHits().length == page.getHitCount());
 		
 		return page;	
 	}
@@ -595,7 +593,6 @@ public class JobManager implements JobDetailsProvider
 		page.setHitCount(searchResponse.getHits().getTotalHits());
 		page.setSkip(skip);
 		page.setTake(take);
-		page.setAllResults(searchResponse.getHits().getHits().length == page.getHitCount());
 		
 		return page;	
 	}

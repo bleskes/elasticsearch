@@ -25,7 +25,7 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.rs.client.soak;
+package com.prelert.rs.client;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -36,7 +36,7 @@ import java.util.Properties;
 
 import org.apache.log4j.Logger;
 
-import com.prelert.rs.client.CsvDataRunner;
+import com.prelert.rs.client.datauploader.CsvDataRunner;
 
 /**
  * Creates a number of producer threads to write data to the Engine REST API

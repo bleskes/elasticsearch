@@ -153,7 +153,7 @@ public class JobsTest implements Closeable
 	{
 		Pagination<JobDetails> jobs = m_WebServiceClient.getJobs(baseUrl); 
 		
-		test(jobs.getHitCount() == jobs.getDocuments().size());
+		test(jobs.getHitCount() >= jobs.getDocuments().size());
 		test(jobs.getTake() > 0);
 		if (jobs.getHitCount() < jobs.getTake())
 		{
@@ -738,16 +738,20 @@ public class JobsTest implements Closeable
 	 * 	<code>http://prelert-host:8080/engine/version/</code>
 	 * @param jobId The job id
 	 * @param take The max number of buckets to return
+	 * @param expectedNumBuckets The expected number of result buckets in the job
 	 * 
 	 * @throws IOException 
 	 */
-	public void verifyJobResults(String baseUrl, String jobId, long take) 
+	public void verifyJobResults(String baseUrl, String jobId, long take, 
+			long expectedNumBuckets) 
 	throws IOException
 	{
 		s_Logger.debug("Verifying results for job " + jobId);
 		Pagination<Bucket> buckets = m_WebServiceClient.getBuckets(baseUrl, 
 				jobId, false, 0L, take);
 		
+		test(buckets.getHitCount() == expectedNumBuckets);
+
 		test(buckets.getDocumentCount() <= take);
 		for (Bucket b : buckets.getDocuments())
 		{			
@@ -1043,21 +1047,20 @@ public class JobsTest implements Closeable
 		File flightCentreMsJsonData = new File(prelertTestDataHome + 
 				"/engine_api_integration_test/flightcentre_ms.json");
 		
+		final long FLIGHT_CENTRE_NUM_BUCKETS = 24;
+		final long FARE_QUOTE_NUM_BUCKETS = 1439;
 	
+		
 		//=================
 		// CSV & Gzip test 
 		//
 		String flightCentreJobId = test.createFlightCentreJobTest(baseUrl);
 		test.getJobsTest(baseUrl);
-
+		
 		test.uploadData(baseUrl, flightCentreJobId, flightCentreData, true);
 		test.closeJob(baseUrl, flightCentreJobId);
-		
 		test.testReadLogFiles(baseUrl, flightCentreJobId);
-		
-		Thread.sleep(1500);
-
-		test.verifyJobResults(baseUrl, flightCentreJobId, 100);
+		test.verifyJobResults(baseUrl, flightCentreJobId, 100, FLIGHT_CENTRE_NUM_BUCKETS);
 		jobUrls.add(flightCentreJobId);		
 
 		//=================
@@ -1068,27 +1071,26 @@ public class JobsTest implements Closeable
 		test.uploadData(baseUrl, flightCentreJsonJobId, flightCentreJsonData, false);
 		test.closeJob(baseUrl, flightCentreJsonJobId);		
 		test.testReadLogFiles(baseUrl, flightCentreJsonJobId);
-		test.verifyJobResults(baseUrl, flightCentreJsonJobId, 100);
+		test.verifyJobResults(baseUrl, flightCentreJsonJobId, 100, FLIGHT_CENTRE_NUM_BUCKETS);
 		jobUrls.add(flightCentreJsonJobId);	
 			
 		//=================
 		// Time format test
 		//
 		String farequoteTimeFormatJobId = test.createFareQuoteTimeFormatJobTest(baseUrl);
+		jobUrls.add(farequoteTimeFormatJobId);		
 		test.getJobsTest(baseUrl);
 
 		test.slowUpload(baseUrl, farequoteTimeFormatJobId, fareQuoteData, 10);
 		test.closeJob(baseUrl, farequoteTimeFormatJobId);
-		test.verifyJobResults(baseUrl, farequoteTimeFormatJobId, 150);
+		test.verifyJobResults(baseUrl, farequoteTimeFormatJobId, 150, FARE_QUOTE_NUM_BUCKETS);
 		test.testReadLogFiles(baseUrl, farequoteTimeFormatJobId);
-		jobUrls.add(farequoteTimeFormatJobId);		
 					
 		// known dates for the farequote data
 		Date start = new Date(1359406800000L);
 		Date end = new Date(1359662400000L);
 		test.testDateFilters(baseUrl, farequoteTimeFormatJobId, start, end);
-		
-		
+			
 		//============================
 		// Create another test based on
 		// the job config used above
@@ -1096,10 +1098,10 @@ public class JobsTest implements Closeable
 		JobDetails job = test.getJob(baseUrl, farequoteTimeFormatJobId);
 		test(job.getId().equals(farequoteTimeFormatJobId));
 		String refJobId = test.createJobFromFareQuoteTimeFormatRefId(baseUrl, job.getId());
-		
+		test.getJobsTest(baseUrl);
 		test.uploadData(baseUrl, refJobId, fareQuoteData, false);
 		test.closeJob(baseUrl, refJobId);
-		test.verifyJobResults(baseUrl, refJobId, 150);
+		test.verifyJobResults(baseUrl, refJobId, 150, FARE_QUOTE_NUM_BUCKETS);
 		test.testReadLogFiles(baseUrl, refJobId);
 		jobUrls.add(refJobId);		
 
@@ -1109,28 +1111,30 @@ public class JobsTest implements Closeable
 		//
 		String jobId = test.createFlightCentreMsCsvFormatJobTest(baseUrl);
 	 	jobUrls.add(jobId);	
-	 	
+	 	test.getJobsTest(baseUrl);
 	 	test.uploadData(baseUrl, jobId, flightCentreMsData, false);
 	 	test.closeJob(baseUrl, jobId);	
-	 	test.verifyJobResults(baseUrl, jobId, 150);
+	 	test.verifyJobResults(baseUrl, jobId, 150, FLIGHT_CENTRE_NUM_BUCKETS);
 	 	test.testReadLogFiles(baseUrl, jobId);
 		test.testDateFilters(baseUrl, jobId, new Date(1350824400000L), 
 				new Date(1350913371000L));
 		
 	 	jobId = test.createFlightCentreMsJsonFormatJobTest(baseUrl);
 	 	jobUrls.add(jobId);	
-	 	
+	 	test.getJobsTest(baseUrl);
 	 	test.uploadData(baseUrl, jobId, flightCentreMsJsonData, false);
 	 	test.closeJob(baseUrl, jobId);	
-		test.verifyJobResults(baseUrl, jobId, 150);
+		test.verifyJobResults(baseUrl, jobId, 150, FLIGHT_CENTRE_NUM_BUCKETS);
 		test.testDateFilters(baseUrl, jobId, new Date(1350824400000L), 
 				new Date(1350913371000L));		
 		test.testReadLogFiles(baseUrl, jobId);
 		
 		//==========================
 		// Clean up test jobs
-		test.deleteJobsTest(baseUrl, jobUrls);		
+		test.deleteJobsTest(baseUrl, jobUrls);
+
 		test.close();
+		
 	}
 
 }
