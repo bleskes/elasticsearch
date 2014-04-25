@@ -30,6 +30,7 @@ package com.prelert.rs.data;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -71,6 +72,12 @@ public class Bucket
 	private List<Detector> m_Detectors = new ArrayList<>();
 	private String m_Id;
 	private List<AnomalyRecord> m_Records = new ArrayList<>();
+	
+	public Bucket()
+	{
+		m_Records = Collections.emptyList();
+		m_Detectors = Collections.emptyList();
+	}
 	
 	/**
 	 * The bucket Id is the bucket's timestamp in seconds 
