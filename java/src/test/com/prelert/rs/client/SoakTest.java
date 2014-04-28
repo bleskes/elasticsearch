@@ -25,7 +25,7 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.rs.client.soak;
+package com.prelert.rs.client;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -36,7 +36,7 @@ import java.util.Properties;
 
 import org.apache.log4j.Logger;
 
-import com.prelert.rs.client.CsvDataRunner;
+import com.prelert.rs.client.datauploader.CsvDataRunner;
 
 /**
  * Creates a number of producer threads to write data to the Engine REST API
@@ -52,9 +52,7 @@ public class SoakTest
 	 */
 	static final public String API_BASE_URL = "http://localhost:8080/engine/v0.3/";
 	
-	
-	
-	
+		
 	
 	public static void main(String[] args) 
 	throws FileNotFoundException, IOException
@@ -82,6 +80,8 @@ public class SoakTest
 		{
 			CsvDataRunner test = new CsvDataRunner(serviceUrl, numTimeSeries,
 					numInteration, pointInterval, bucketSpan);  
+			
+			test.createJob();
 			
 			Thread testThread = new Thread(test);
 			testThread.start();

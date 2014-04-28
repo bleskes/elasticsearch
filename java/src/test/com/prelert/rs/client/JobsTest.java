@@ -153,7 +153,7 @@ public class JobsTest implements Closeable
 	{
 		Pagination<JobDetails> jobs = m_WebServiceClient.getJobs(baseUrl); 
 		
-		test(jobs.getHitCount() == jobs.getDocuments().size());
+		test(jobs.getHitCount() >= jobs.getDocuments().size());
 		test(jobs.getTake() > 0);
 		if (jobs.getHitCount() < jobs.getTake())
 		{
@@ -738,64 +738,133 @@ public class JobsTest implements Closeable
 	 * 	<code>http://prelert-host:8080/engine/version/</code>
 	 * @param jobId The job id
 	 * @param take The max number of buckets to return
+	 * @param expectedNumBuckets The expected number of result buckets in the job
+	 * @param bucketSpan Bucket span in seconds
 	 * 
 	 * @throws IOException 
 	 */
-	public void verifyJobResults(String baseUrl, String jobId, long take) 
+	public void verifyJobResults(String baseUrl, String jobId, long take, 
+			long expectedNumBuckets, long bucketSpan) 
 	throws IOException
 	{
 		s_Logger.debug("Verifying results for job " + jobId);
-		Pagination<Bucket> buckets = m_WebServiceClient.getBuckets(baseUrl, 
-				jobId, false, 0L, take);
 		
-		test(buckets.getDocumentCount() <= take);
-		for (Bucket b : buckets.getDocuments())
+		long skip = 0;		
+		long lastBucketTime = 0;
+		while (true) // break when getNextUrl() == false
+		{
+			Pagination<Bucket> buckets = m_WebServiceClient.getBuckets(baseUrl, 
+					jobId, false, skip, take);
+			
+			test(buckets.getHitCount() == expectedNumBuckets);
+			test(buckets.getDocumentCount() <= take);
+			validateBuckets(buckets.getDocuments(), bucketSpan, lastBucketTime, false);
+						
+			if (buckets.getNextPage() == null)
+			{
+				test(expectedNumBuckets == (skip + buckets.getDocumentCount()));		
+				break;
+			}
+			
+			// time in seconds
+			lastBucketTime = buckets.getDocuments().get(
+					buckets.getDocuments().size() -1).getTimestamp().getTime() / 1000;
+			skip += take;
+		}
+		
+		// the same with expanded buckets
+		skip = 0;		
+		lastBucketTime = 0;
+		while (true) // break when getNextUrl() == false
+		{
+			Pagination<Bucket> buckets = m_WebServiceClient.getBuckets(baseUrl, 
+					jobId, true, skip, take);
+
+			test(buckets.getHitCount() == expectedNumBuckets);
+			test(buckets.getDocumentCount() <= take);
+			validateBuckets(buckets.getDocuments(), bucketSpan, lastBucketTime, true);
+			
+			if (buckets.getNextPage() == null)
+			{
+				test(expectedNumBuckets == (skip + buckets.getDocumentCount()));		
+				break;
+			}
+			
+			// time in seconds
+			lastBucketTime = buckets.getDocuments().get(
+					buckets.getDocuments().size() -1).getTimestamp().getTime() / 1000;			
+			skip += take;
+		}		
+	}
+	
+	
+	/**
+	 * Simple verification that the buckets have sensible values
+	 * 
+	 * @param buckets
+	 * @param bucketSpan
+	 * @param lastBucketTime The first bucket in this list should be at time
+	 * <code>lastBucketTime + bucketSpan</code> unless this value is 0
+	 * in which case the bucket is the first ever.
+	 * @param expanded
+	 */
+	private void validateBuckets(List<Bucket> buckets, long bucketSpan,
+			long lastBucketTime, boolean expanded)
+	{
+		test(buckets.size() > 0);
+		
+		
+		for (Bucket b : buckets)
 		{			
 			test(b.getAnomalyScore() >= 0.0);
-			test(b.getRecordCount() > 0);
-			test(b.getRecords().size() == 0);
+			test(b.getRecordCount() > 0);			
 			test(b.getDetectors().size() == 0);
 			test(b.getId() != null && b.getId().isEmpty() == false);			
 			long epoch = Long.parseLong(b.getId()); // will throw if not a number
 			Date date = new Date(epoch * 1000);
-			
+
 			// sanity check, the data may be old but it should be newer than 2010
 			final long firstJan2010 = 1262304000000L;
 			test(date.after(new Date(firstJan2010)));
 			test(b.getTimestamp().after(new Date(firstJan2010)));
 			// data shouldn't be newer than now
 			test(b.getTimestamp().before(new Date()));
-			
-			// epoch and timestamp should be the same
-			test(date.equals(b.getTimestamp()));			
-		}
-		
-		// this time get the anomaly records at the same time
-		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, true, 0L, take);				
-		test(buckets.getDocumentCount() <= take);		
-		for (Bucket b : buckets.getDocuments())
-		{
-			test(b.getRecordCount() > 0);
-			test(b.getDetectors().size() == 0);
-			test(b.getId() != null && b.getId().isEmpty() == false);			
-			long epoch = Long.parseLong(b.getId()); // will throw if not a number
-			Date date = new Date(epoch * 1000);
-			
-			// sanity check, the data may be old but it should be newer than 2010
-			final long firstJan2010 = 1262304000000L;
-			test(date.after(new Date(firstJan2010)));
-			test(b.getTimestamp().after(new Date(firstJan2010)));
-			// epoch and timestamp should be the same
-			test(date.equals(b.getTimestamp()));			
 
-			for (AnomalyRecord r: b.getRecords())
+			// epoch and timestamp should be the same
+			test(date.equals(b.getTimestamp()));	
+			
+			
+			if (lastBucketTime > 0)
 			{
-				// at a minimum all records should have these fields
-				test(r.getProbability() != null);
-				test(r.getAnomalyScore() != null);
-				test(r.getFunction() != null);
+				lastBucketTime += bucketSpan;
+				test(epoch == lastBucketTime);
+			}
+			
+//			test(b.getDetectors().size() > 0);
+//			for (com.prelert.rs.data.Detector d : b.getDetectors())
+//			{
+//				test(d.getName().isEmpty() == false);
+//			}
+			
+			if (expanded)
+			{
+				test(b.getRecords().size() > 0);
+				test(b.getRecordCount() > 0);
+				test(b.getRecordCount() == b.getRecords().size());
+				for (AnomalyRecord r: b.getRecords())
+				{
+					// at a minimum all records should have these fields
+					test(r.getProbability() != null);
+					test(r.getAnomalyScore() != null);
+					test(r.getFunction() != null);
+				}
+			}
+			else
+			{
+				test(b.getRecords().size() == 0);
 			}
 		}
+		
 	}
 	
 	
@@ -967,9 +1036,6 @@ public class JobsTest implements Closeable
 			}
 		}
 		
-		// Sleep for a second to give ElasticSearch a chance to catch up.
-		Thread.sleep(1200);
-		
 		for (String jobId : jobIds)
 		{
 			SingleDocument<JobDetails> doc = m_WebServiceClient.getJob(baseUrl, jobId);
@@ -1046,22 +1112,20 @@ public class JobsTest implements Closeable
 		File flightCentreMsJsonData = new File(prelertTestDataHome + 
 				"/engine_api_integration_test/flightcentre_ms.json");
 		
+		final long FLIGHT_CENTRE_NUM_BUCKETS = 24;
+		final long FARE_QUOTE_NUM_BUCKETS = 1439;
 	
+		
 		//=================
 		// CSV & Gzip test 
 		//
 		String flightCentreJobId = test.createFlightCentreJobTest(baseUrl);
 		test.getJobsTest(baseUrl);
-
+		
 		test.uploadData(baseUrl, flightCentreJobId, flightCentreData, true);
 		test.closeJob(baseUrl, flightCentreJobId);
-		
 		test.testReadLogFiles(baseUrl, flightCentreJobId);
-
-		// Give ElasticSearch a chance to index
-		Thread.sleep(1500);
-
-		test.verifyJobResults(baseUrl, flightCentreJobId, 100);
+		test.verifyJobResults(baseUrl, flightCentreJobId, 100, FLIGHT_CENTRE_NUM_BUCKETS, 3600);
 		jobUrls.add(flightCentreJobId);		
 
 		//=================
@@ -1072,35 +1136,26 @@ public class JobsTest implements Closeable
 		test.uploadData(baseUrl, flightCentreJsonJobId, flightCentreJsonData, false);
 		test.closeJob(baseUrl, flightCentreJsonJobId);		
 		test.testReadLogFiles(baseUrl, flightCentreJsonJobId);
-
-		// Give ElasticSearch a chance to index
-		Thread.sleep(1500);
-
-		test.verifyJobResults(baseUrl, flightCentreJsonJobId, 100);
+		test.verifyJobResults(baseUrl, flightCentreJsonJobId, 100, FLIGHT_CENTRE_NUM_BUCKETS, 3600);
 		jobUrls.add(flightCentreJsonJobId);	
 			
 		//=================
 		// Time format test
 		//
 		String farequoteTimeFormatJobId = test.createFareQuoteTimeFormatJobTest(baseUrl);
+		jobUrls.add(farequoteTimeFormatJobId);		
 		test.getJobsTest(baseUrl);
 
 		test.slowUpload(baseUrl, farequoteTimeFormatJobId, fareQuoteData, 10);
 		test.closeJob(baseUrl, farequoteTimeFormatJobId);
+		test.verifyJobResults(baseUrl, farequoteTimeFormatJobId, 150, FARE_QUOTE_NUM_BUCKETS, 300);
 		test.testReadLogFiles(baseUrl, farequoteTimeFormatJobId);
-
-		// Give ElasticSearch a chance to index
-		Thread.sleep(1500);
-
-		test.verifyJobResults(baseUrl, farequoteTimeFormatJobId, 150);
-		jobUrls.add(farequoteTimeFormatJobId);		
 					
 		// known dates for the farequote data
 		Date start = new Date(1359406800000L);
 		Date end = new Date(1359662400000L);
 		test.testDateFilters(baseUrl, farequoteTimeFormatJobId, start, end);
-		
-		
+			
 		//============================
 		// Create another test based on
 		// the job config used above
@@ -1108,54 +1163,43 @@ public class JobsTest implements Closeable
 		JobDetails job = test.getJob(baseUrl, farequoteTimeFormatJobId);
 		test(job.getId().equals(farequoteTimeFormatJobId));
 		String refJobId = test.createJobFromFareQuoteTimeFormatRefId(baseUrl, job.getId());
-		
+		test.getJobsTest(baseUrl);
 		test.uploadData(baseUrl, refJobId, fareQuoteData, false);
 		test.closeJob(baseUrl, refJobId);
+		test.verifyJobResults(baseUrl, refJobId, 150, FARE_QUOTE_NUM_BUCKETS, 300);
 		test.testReadLogFiles(baseUrl, refJobId);
-
-		// Give ElasticSearch a chance to index
-		Thread.sleep(1500);
-
-		test.verifyJobResults(baseUrl, refJobId, 150);
 		jobUrls.add(refJobId);		
 
 		
 		//=====================================================
 		// timestamp in ms from the epoch for both csv and json
 		//
-	 	String jobId = test.createFlightCentreMsCsvFormatJobTest(baseUrl);
+		String jobId = test.createFlightCentreMsCsvFormatJobTest(baseUrl);
 	 	jobUrls.add(jobId);	
-	 	
+	 	test.getJobsTest(baseUrl);
 	 	test.uploadData(baseUrl, jobId, flightCentreMsData, false);
 	 	test.closeJob(baseUrl, jobId);	
+	 	test.verifyJobResults(baseUrl, jobId, 150, FLIGHT_CENTRE_NUM_BUCKETS, 3600);
 	 	test.testReadLogFiles(baseUrl, jobId);
-		
-		// Give ElasticSearch a chance to index
-		Thread.sleep(1500);
-
-		test.verifyJobResults(baseUrl, jobId, 150);
 		test.testDateFilters(baseUrl, jobId, new Date(1350824400000L), 
 				new Date(1350913371000L));
 		
 	 	jobId = test.createFlightCentreMsJsonFormatJobTest(baseUrl);
 	 	jobUrls.add(jobId);	
-	 	
+	 	test.getJobsTest(baseUrl);
 	 	test.uploadData(baseUrl, jobId, flightCentreMsJsonData, false);
 	 	test.closeJob(baseUrl, jobId);	
-	 	test.testReadLogFiles(baseUrl, jobId);
-		
-		// Give ElasticSearch a chance to index
-		Thread.sleep(1500);
-
-		test.verifyJobResults(baseUrl, jobId, 150);
+		test.verifyJobResults(baseUrl, jobId, 150, FLIGHT_CENTRE_NUM_BUCKETS, 3600);
 		test.testDateFilters(baseUrl, jobId, new Date(1350824400000L), 
 				new Date(1350913371000L));		
-		
+		test.testReadLogFiles(baseUrl, jobId);
 		
 		//==========================
 		// Clean up test jobs
-		test.deleteJobsTest(baseUrl, jobUrls);		
+		test.deleteJobsTest(baseUrl, jobUrls);
+
 		test.close();
+		
 	}
 
 }

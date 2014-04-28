@@ -27,10 +27,15 @@
 package com.prelert.jetty;
 
 
+import java.io.File;
+
 import org.apache.log4j.Logger;
 import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.server.handler.HandlerCollection;
+import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.glassfish.jersey.servlet.ServletProperties;
@@ -65,6 +70,7 @@ public class ServerMain
 	public static final int JETTY_PORT = 8080;
 	
 	private static final String JETTY_PORT_PROPERTY = "jetty.port";
+	private static final String JETTY_HOME_PROPERTY = "jetty.home";
 	
 	public static void main(String[] args) 
 	throws Exception 
@@ -91,23 +97,27 @@ public class ServerMain
 			
 			s_Logger.info("Using default port " + JETTY_PORT);
 		}
-		
-		Server server = new Server();
-        ServerConnector connector = new ServerConnector(server);
-        connector.setPort(jettyPort);
-        server.setConnectors(new Connector[] { connector });
-        
-        ServletContextHandler context = new ServletContextHandler();
-        context.setContextPath("/");
-        
-        context.setErrorHandler(new ApiErrorHandler());
-        
 
-        ServletHolder jerseyServlet = context.addServlet(
+		String jettyHome = System.getProperty(JETTY_HOME_PROPERTY);
+		if (jettyHome == null)
+		{
+			s_Logger.info("Using default " + JETTY_HOME_PROPERTY +
+							" of current directory");
+			jettyHome = ".";
+		}
+
+		Server server = new Server(jettyPort);
+
+		// This serves the Engine API
+		ServletContextHandler servletHandler = new ServletContextHandler();
+		servletHandler.setContextPath("/");
+		servletHandler.setErrorHandler(new ApiErrorHandler());
+
+        ServletHolder jerseyServlet = servletHandler.addServlet(
         		org.glassfish.jersey.servlet.ServletContainer.class, 
         		BASE_PATH);
         jerseyServlet.setInitOrder(1);
-        
+
         /*  Either set the application class or the resource package */        
         // Application class
         jerseyServlet.setInitParameter(ServletProperties.JAXRS_APPLICATION_CLASS,
@@ -115,9 +125,16 @@ public class ServerMain
         // Resources
 //        jerseyServlet.setInitParameter(ServerProperties.PROVIDER_PACKAGES, 
 //        		RESOURCE_PACKAGE);
-        
-        server.setHandler(context);       
-        server.start();
-        server.join();
-    }
+
+		// This serves the Kibana-based dashboard
+		ResourceHandler dashboardHandler = new ResourceHandler();
+		dashboardHandler.setResourceBase(jettyHome + File.separator + "webapps");
+
+		HandlerCollection handlerCollection = new HandlerCollection();
+		handlerCollection.setHandlers(new Handler[] { dashboardHandler, servletHandler });
+
+		server.setHandler(handlerCollection);
+		server.start();
+		server.join();
+	}
 }

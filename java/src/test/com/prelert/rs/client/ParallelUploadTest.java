@@ -35,6 +35,7 @@ import java.nio.charset.StandardCharsets;
 
 import org.apache.log4j.Logger;
 
+import com.prelert.rs.client.datauploader.CsvDataRunner;
 import com.prelert.rs.data.ApiError;
 import com.prelert.rs.data.ErrorCodes;
 
