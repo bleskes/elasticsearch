@@ -69,14 +69,14 @@ public class Bucket
 	private Date m_Timestamp;
 	private double m_AnomalyScore;	
 	private int m_RecordCount;
-	private List<Detector> m_Detectors = new ArrayList<>();
+	private List<Detector> m_Detectors;
 	private String m_Id;
-	private List<AnomalyRecord> m_Records = new ArrayList<>();
+	private List<AnomalyRecord> m_Records; 
 	
 	public Bucket()
 	{
-		m_Records = Collections.emptyList();
-		m_Detectors = Collections.emptyList();
+		m_Records = new ArrayList<>();
+		m_Detectors = new ArrayList<>();
 	}
 	
 	/**
