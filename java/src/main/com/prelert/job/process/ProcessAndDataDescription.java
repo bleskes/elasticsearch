@@ -33,6 +33,7 @@ import java.util.List;
 import org.apache.log4j.Logger;
 
 import com.prelert.job.DataDescription;
+import com.prelert.job.warnings.StatusReporter;
 
 /**
  * The native process and its data description object.
@@ -55,6 +56,8 @@ public class ProcessAndDataDescription
 	private Thread m_OutputParserThread;
 
 	private Logger m_JobLogger;
+	
+	private StatusReporter m_StatusReporter;
 
 	/**
 	 * Object for grouping the native process, its data description
@@ -70,7 +73,7 @@ public class ProcessAndDataDescription
 	public ProcessAndDataDescription(Process process, String jobId, 
 			DataDescription dd,
 			long timeout, List<String> interestingFields,
-			Logger logger, Runnable outputParser)
+			Logger logger, StatusReporter reporter, Runnable outputParser)
 	{
 		m_Process = process;
 		m_DataDescription = dd;
@@ -80,7 +83,9 @@ public class ProcessAndDataDescription
 		m_ErrorReader = new BufferedReader(
 				new InputStreamReader(m_Process.getErrorStream()));		
 		
-		m_InterestingFields = interestingFields;		
+		m_InterestingFields = interestingFields;
+		
+		m_StatusReporter = reporter;
 		m_JobLogger = logger;
 		
 		m_OutputParser = outputParser;
@@ -154,6 +159,12 @@ public class ProcessAndDataDescription
 	{
 		return m_JobLogger;
 	}
+	
+	public StatusReporter getStatusReporter()
+	{
+		return m_StatusReporter;
+	}
+	
 	
 	
 	/**

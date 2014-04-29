@@ -27,6 +27,8 @@
 
 package com.prelert.job.process;
 
+import com.prelert.rs.data.ErrorCodes;
+
 /**
  * Exception thrown when there is an error running 
  * a native process (autodetect).
@@ -35,21 +37,21 @@ public class NativeProcessRunException extends Exception
 {
 	private static final long serialVersionUID = 5722287151589093943L;		
 	
-	private int m_ErrorCode;
+	private ErrorCodes m_ErrorCode;
 	
-	public NativeProcessRunException(String message, int errorCode)
+	public NativeProcessRunException(String message, ErrorCodes errorCode)
 	{
 		super(message);
 		m_ErrorCode = errorCode;
 	}
 	
-	public NativeProcessRunException(String message, int errorCode, Throwable cause)
+	public NativeProcessRunException(String message, ErrorCodes errorCode, Throwable cause)
 	{
 		super(message, cause);
 		m_ErrorCode = errorCode;
 	}
 	
-	public int getErrorCode()
+	public ErrorCodes getErrorCode()
 	{
 		return m_ErrorCode;
 	}

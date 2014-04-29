@@ -72,6 +72,8 @@ import com.prelert.job.process.JobDetailsProvider;
 import com.prelert.job.process.MissingFieldException;
 import com.prelert.job.process.NativeProcessRunException;
 import com.prelert.job.process.ProcessManager;
+import com.prelert.job.warnings.HighProportionOfBadRecordsException;
+import com.prelert.job.warnings.elasticsearch.ElasticSearchStatusReporterFactory;
 import com.prelert.job.DetectorState;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
@@ -157,7 +159,8 @@ public class JobManager implements JobDetailsProvider
 		m_Client = m_Node.client();
 		
 		m_ProcessManager = new ProcessManager(this, 
-				new ElasticSearchResultsReaderFactory(m_Node));
+				new ElasticSearchResultsReaderFactory(m_Node),
+				new ElasticSearchStatusReporterFactory(m_Node));
 		
 		m_IdSequence = new AtomicLong();		
 		m_DateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
@@ -238,7 +241,7 @@ public class JobManager implements JobDetailsProvider
 	public Pagination<JobDetails> getAllJobs(int skip, int take)
 	{
 		FilterBuilder fb = FilterBuilders.matchAllFilter();
-		SortBuilder sb = new FieldSortBuilder(JobDetails.ID)
+		SortBuilder sb = new FieldSortBuilder("_id")
 							.ignoreUnmapped(true)
 							.order(SortOrder.DESC);
 
@@ -744,10 +747,11 @@ public class JobManager implements JobDetailsProvider
 	 * @throws JsonParseException 
 	 * @throws JobInUseException if the job cannot be written to because 
 	 * it is already handling data
+	 * @throws HighProportionOfBadRecordsException 
 	 */
 	public boolean dataToJob(String jobId, InputStream input) 
 	throws UnknownJobException, NativeProcessRunException, MissingFieldException, 
-		JsonParseException, JobInUseException 
+		JsonParseException, JobInUseException, HighProportionOfBadRecordsException 
 	{
 		try
 		{

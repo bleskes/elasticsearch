@@ -61,8 +61,6 @@ public class Pagination<T>
 	private URI m_NextPage;
 	private URI m_PreviousPage;
 	
-	private boolean m_GotAllResults;
-	
 	private List<T> m_Documents;
 	
 	/**

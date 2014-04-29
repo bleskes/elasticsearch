@@ -40,7 +40,7 @@ public class JobConfigurationParseException extends WebApplicationException
 {
 	private static final long serialVersionUID = -7189040309467301076L;
 	
-	private int m_ErrorCode;
+	private ErrorCodes m_ErrorCode;
 	
 	public JobConfigurationParseException(String message, Throwable cause)
 	{
@@ -50,7 +50,7 @@ public class JobConfigurationParseException extends WebApplicationException
 	
 	
 	public JobConfigurationParseException(String message, Throwable cause, 
-			int errorCode)
+			ErrorCodes errorCode)
 	{
 		super(message, cause);
 		m_ErrorCode = errorCode;

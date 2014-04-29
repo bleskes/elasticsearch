@@ -44,7 +44,6 @@ import javax.ws.rs.core.Response;
 
 import org.apache.log4j.Logger;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobConfigurationException;
 import com.prelert.job.JobInUseException;

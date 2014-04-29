@@ -41,6 +41,8 @@ import org.junit.Test;
 
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
+import com.prelert.job.warnings.DummyStatusReporter;
+import com.prelert.job.warnings.HighProportionOfBadRecordsException;
 
 public class JsonDataTransformTest 
 {
@@ -52,10 +54,11 @@ public class JsonDataTransformTest
 	 * with the extra fields not used in the analysis filtered out
 	 *  
 	 * @throws IOException
+	 * @throws HighProportionOfBadRecordsException 
 	 */
 	@Test
 	public void plainJsonToLengthEncoded() 
-	throws IOException, MissingFieldException
+	throws IOException, MissingFieldException, HighProportionOfBadRecordsException
 	{
 		String data = "{\"timestamp\": \"1350824400\", \"airline\": \"DJA\", \"junk_field\": \"nonsense\", \"responsetime\": \"622\", \"sourcetype\": \"flightcentre\"}" +
 					"{\"timestamp\": \"1350824401\", \"airline\": \"JQA\", \"junk_field\": \"nonsense\", \"responsetime\": \"1742\", \"sourcetype\": \"flightcentre\"}" +
@@ -89,15 +92,22 @@ public class JsonDataTransformTest
 		
 		
 		// can create with null
-		ProcessManager pm = new ProcessManager(null, null);
+		ProcessManager pm = new ProcessManager(null, null, null);
 		
 		ByteArrayInputStream bis = 
 				new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
 		ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
 		
-		pm.writeToJob(dd, analysisFields, bis, bos, s_Logger);
+		DummyStatusReporter reporter = new DummyStatusReporter();
+		
+		pm.writeToJob(dd, analysisFields, bis, bos, reporter, s_Logger);
 		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 		
+		Assert.assertEquals(8, reporter.getRecordsWritten());
+		Assert.assertEquals(0, reporter.getRecordsDiscarded());
+		Assert.assertEquals(0, reporter.getMissingFieldErrorCount());
+		Assert.assertEquals(0, reporter.getDateParseErrorsCount());
+		Assert.assertEquals(0, reporter.getOutOfOrderRecordCount());
 		
 		// check header
 		int numFields = bb.getInt();		
@@ -145,10 +155,11 @@ public class JsonDataTransformTest
 	 * Test transforming JSON with a time format to length encoded.
 	 *  
 	 * @throws IOException
+	 * @throws HighProportionOfBadRecordsException 
 	 */
 	@Test
 	public void jsonWithDateFormatToLengthEncoded() 
-	throws IOException, MissingFieldException
+	throws IOException, MissingFieldException, HighProportionOfBadRecordsException
 	{
 		// The json docs are have different field orders
 		String data = "{\"airline\": \"DJA\", \"timestamp\": \"2012-10-21T14:00:00\", \"responsetime\": \"622\", \"sourcetype\": \"flightcentre\"}" +
@@ -184,15 +195,22 @@ public class JsonDataTransformTest
 		
 		
 		// can create with null
-		ProcessManager pm = new ProcessManager(null, null);
+		ProcessManager pm = new ProcessManager(null, null, null);
 		
 		ByteArrayInputStream bis = 
 				new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
 		ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
 		
-		pm.writeToJob(dd, analysisFields, bis, bos, s_Logger);
+		DummyStatusReporter reporter = new DummyStatusReporter();
+		
+		pm.writeToJob(dd, analysisFields, bis, bos, reporter, s_Logger);
 		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 		
+		Assert.assertEquals(8, reporter.getRecordsWritten());
+		Assert.assertEquals(0, reporter.getRecordsDiscarded());
+		Assert.assertEquals(0, reporter.getMissingFieldErrorCount());
+		Assert.assertEquals(0, reporter.getDateParseErrorsCount());
+		Assert.assertEquals(0, reporter.getOutOfOrderRecordCount());
 		
 		// check header
 		int numFields = bb.getInt();		
@@ -241,10 +259,11 @@ public class JsonDataTransformTest
 	 * and extra fields to length encoded.
 	 *  
 	 * @throws IOException
+	 * @throws HighProportionOfBadRecordsException 
 	 */
 	@Test
 	public void jsonWithDateFormatAndExtraFieldsToLengthEncoded() 
-	throws IOException, MissingFieldException
+	throws IOException, MissingFieldException, HighProportionOfBadRecordsException
 	{
 		// Document fields are not in the same order
 		String data = "{\"extra_field\": \"extra\", \"timestamp\": \"2012-10-21T14:00:00\", \"airline\": \"DJA\", \"responsetime\": \"622\", \"sourcetype\": \"flightcentre\", \"junk_field\": \"nonsense\"}" +
@@ -280,15 +299,22 @@ public class JsonDataTransformTest
 		
 		
 		// can create with null
-		ProcessManager pm = new ProcessManager(null, null);
+		ProcessManager pm = new ProcessManager(null, null, null);
 		
 		ByteArrayInputStream bis = 
 				new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
 		ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
 		
-		pm.writeToJob(dd, analysisFields, bis, bos, s_Logger);
+		DummyStatusReporter reporter = new DummyStatusReporter();
+		
+		pm.writeToJob(dd, analysisFields, bis, bos, reporter, s_Logger);
 		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 		
+		Assert.assertEquals(8, reporter.getRecordsWritten());
+		Assert.assertEquals(0, reporter.getRecordsDiscarded());
+		Assert.assertEquals(0, reporter.getMissingFieldErrorCount());
+		Assert.assertEquals(0, reporter.getDateParseErrorsCount());
+		Assert.assertEquals(0, reporter.getOutOfOrderRecordCount());
 		
 		// check header
 		int numFields = bb.getInt();		
@@ -338,10 +364,11 @@ public class JsonDataTransformTest
 	 * 
 	 * @throws IOException
 	 * @throws MissingFieldException
+	 * @throws HighProportionOfBadRecordsException 
 	 */
 	@Test
-	public void outOfOrderJsonToLengthEncoded() 
-	throws IOException, MissingFieldException
+	public void differentFieldsOrderJsonToLengthEncoded() 
+	throws IOException, MissingFieldException, HighProportionOfBadRecordsException
 	{
 		String data = "{\"timestamp\": \"1350824400\", \"airline\": \"DJA\", \"junk_field\": \"nonsense\", \"responsetime\": \"622\", \"sourcetype\": \"flightcentre\"}" +
 					"{\"junk_field\": \"nonsense\", \"airline\": \"JQA\", \"timestamp\": \"1350824401\", \"responsetime\": \"1742\", \"sourcetype\": \"flightcentre\"}" +
@@ -375,15 +402,22 @@ public class JsonDataTransformTest
 		
 		
 		// can create with null
-		ProcessManager pm = new ProcessManager(null, null);
+		ProcessManager pm = new ProcessManager(null, null, null);
 		
 		ByteArrayInputStream bis = 
 				new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
 		ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
 		
-		pm.writeToJob(dd, analysisFields, bis, bos, s_Logger);
+		DummyStatusReporter reporter = new DummyStatusReporter();
+		
+		pm.writeToJob(dd, analysisFields, bis, bos, reporter, s_Logger);
 		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 		
+		Assert.assertEquals(8, reporter.getRecordsWritten());
+		Assert.assertEquals(0, reporter.getRecordsDiscarded());
+		Assert.assertEquals(0, reporter.getMissingFieldErrorCount());
+		Assert.assertEquals(0, reporter.getDateParseErrorsCount());
+		Assert.assertEquals(0, reporter.getOutOfOrderRecordCount());
 		
 		// check header
 		int numFields = bb.getInt();		
@@ -432,13 +466,14 @@ public class JsonDataTransformTest
 	 * passes records with empty strings for the missing fields.
 	 *  
 	 * @throws IOException
+	 * @throws HighProportionOfBadRecordsException 
 	 */
 	@Test
 	public void jsonWithDateFormatMissingFieldsToLengthEncoded() 
-	throws IOException, MissingFieldException
+	throws IOException, MissingFieldException, HighProportionOfBadRecordsException
 	{
-		// Document fields are not in the same order
-		String data = "{\"timestamp\": \"2012-10-21T14:00:00\", \"airline\": \"DJA\", \"responsetime\": \"622\", \"sourcetype\": \"flightcentre\"}" +
+		
+		String dateFormatData = "{\"timestamp\": \"2012-10-21T14:00:00\", \"airline\": \"DJA\", \"responsetime\": \"622\", \"sourcetype\": \"flightcentre\"}" +
 					"{\"timestamp\": \"2012-10-21T14:00:01\", \"airline\": \"JQA\", \"responsetime\": \"1742\", \"sourcetype\": \"flightcentre\"}" +
 					"{\"timestamp\": \"2012-10-21T14:00:02\", \"airline\": \"GAL\",                             \"sourcetype\": \"flightcentre\"}" +
 					"{\"timestamp\": \"2012-10-21T14:00:03\", \"airline\": \"GAL\", \"responsetime\": \"3893\", \"sourcetype\": \"flightcentre\"}" +
@@ -446,7 +481,25 @@ public class JsonDataTransformTest
 					"{\"timestamp\": \"2012-10-21T14:00:04\", \"airline\": \"DJA\", \"responsetime\": \"189\", \"sourcetype\": \"flightcentre\"}" +
 					"{\"timestamp\": \"2012-10-21T14:00:04\", \"airline\": \"JQA\", \"responsetime\": \"8\", \"sourcetype\": \"flightcentre\"}" +
 					"{\"timestamp\": \"2012-10-21T14:00:04\", \"airline\": \"DJA\", \"responsetime\": \"1200\", \"sourcetype\": \"flightcentre\"}"; 
+		
+		String epochData = "{\"timestamp\": 1350824400, \"airline\": \"DJA\", \"responsetime\": \"622\", \"sourcetype\": \"flightcentre\"}" +
+				"{\"timestamp\": 1350824401, \"airline\": \"JQA\", \"responsetime\": \"1742\", \"sourcetype\": \"flightcentre\"}" +
+				"{\"timestamp\": 1350824402, \"airline\": \"GAL\",                             \"sourcetype\": \"flightcentre\"}" +
+				"{\"timestamp\": 1350824403, \"airline\": \"GAL\", \"responsetime\": \"3893\", \"sourcetype\": \"flightcentre\"}" +
+				"{\"timestamp\": 1350824403, 				         \"responsetime\": \"9\", \"sourcetype\": \"flightcentre\"}" +
+				"{\"timestamp\": 1350824404, \"airline\": \"DJA\", \"responsetime\": \"189\", \"sourcetype\": \"flightcentre\"}" +
+				"{\"timestamp\": 1350824404, \"airline\": \"JQA\", \"responsetime\": \"8\", \"sourcetype\": \"flightcentre\"}" +
+				"{\"timestamp\": 1350824404, \"airline\": \"DJA\", \"responsetime\": \"1200\", \"sourcetype\": \"flightcentre\"}"; 	
 				
+		String epochMsData = "{\"timestamp\": 1350824400000, \"airline\": \"DJA\", \"responsetime\": \"622\", \"sourcetype\": \"flightcentre\"}" +
+				"{\"timestamp\": 1350824401000, \"airline\": \"JQA\", \"responsetime\": \"1742\", \"sourcetype\": \"flightcentre\"}" +
+				"{\"timestamp\": 1350824402000, \"airline\": \"GAL\",                             \"sourcetype\": \"flightcentre\"}" +
+				"{\"timestamp\": 1350824403000, \"airline\": \"GAL\", \"responsetime\": \"3893\", \"sourcetype\": \"flightcentre\"}" +
+				"{\"timestamp\": 1350824403000, 				         \"responsetime\": \"9\", \"sourcetype\": \"flightcentre\"}" +
+				"{\"timestamp\": 1350824404500, \"airline\": \"DJA\", \"responsetime\": \"189\", \"sourcetype\": \"flightcentre\"}" +
+				"{\"timestamp\": 1350824404400, \"airline\": \"JQA\", \"responsetime\": \"8\", \"sourcetype\": \"flightcentre\"}" +
+				"{\"timestamp\": 1350824404200, \"airline\": \"DJA\", \"responsetime\": \"1200\", \"sourcetype\": \"flightcentre\"}"; 	
+		
 		String header [] = new String [] {"timestamp", "airline", "responsetime", "sourcetype"};
 		String records [][] = new String [][] {{"1350824400", "DJA", "622", "flightcentre"},
 												{"1350824401", "JQA", "1742", "flightcentre"},
@@ -463,61 +516,86 @@ public class JsonDataTransformTest
 		// data is written in the order of the required fields
 		// then the time field
 		int [] fieldMap = new int [] {2, 3, 1, 0};		
-				
-		DataDescription dd = new DataDescription();
-		dd.setFormat(DataFormat.JSON);
-		dd.setTimeField("timestamp");
-		dd.setTimeFormat("yyyy-MM-dd'T'HH:mm:ss");
 		
+		
+		DataDescription dateFormatDD = new DataDescription();
+		dateFormatDD.setFormat(DataFormat.JSON);
+		dateFormatDD.setTimeField("timestamp");
+		dateFormatDD.setTimeFormat("yyyy-MM-dd'T'HH:mm:ss");
+		
+		DataDescription epochFormatDD = new DataDescription();
+		epochFormatDD.setFormat(DataFormat.JSON);
+		epochFormatDD.setTimeField("timestamp");
+		
+		DataDescription epochMsFormatDD = new DataDescription();
+		epochMsFormatDD.setFormat(DataFormat.JSON);
+		epochMsFormatDD.setTimeField("timestamp");
+		epochMsFormatDD.setTimeFormat("epoch_ms");
+		
+		DataDescription [] dds = new DataDescription [] {dateFormatDD, epochFormatDD,
+				epochMsFormatDD};
 		
 		// can create with null
-		ProcessManager pm = new ProcessManager(null, null);
+		ProcessManager pm = new ProcessManager(null, null, null);
 		
-		ByteArrayInputStream bis = 
-				new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
-		ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
-		
-		pm.writeToJob(dd, analysisFields, bis, bos, s_Logger);
-		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
-		
-		
-		// check header
-		int numFields = bb.getInt();		
-		Assert.assertEquals(header.length, numFields);
-		
-		for (int i=0; i<numFields; i++)
+		int count = 0;
+		for (String data : new String [] {dateFormatData, epochData, epochMsData})
 		{
-			int recordSize = bb.getInt();
-			Assert.assertEquals(header[fieldMap[i]].length(), recordSize);
-			byte [] charBuff = new byte[recordSize];
-			for (int j=0; j<recordSize; j++)
-			{
-				charBuff[j] = bb.get();
-			}
+			ByteArrayInputStream bis = 
+					new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
+			ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
+
+			DummyStatusReporter reporter = new DummyStatusReporter();
 			
-			String value = new String(charBuff, StandardCharsets.UTF_8);				
-			Assert.assertEquals(header[fieldMap[i]], value);			
-		}
-		
-		
-		// check records
-		for (String [] fields : records)
-		{
-			numFields = bb.getInt();
-			Assert.assertEquals(fields.length, numFields);
-			
+			DataDescription dd = dds[count++];
+
+			pm.writeToJob(dd, analysisFields, bis, bos, reporter, s_Logger);
+			ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
+
+			Assert.assertEquals(8, reporter.getRecordsWritten());
+			Assert.assertEquals(0, reporter.getRecordsDiscarded());
+			Assert.assertEquals(2, reporter.getMissingFieldErrorCount());
+			Assert.assertEquals(0, reporter.getDateParseErrorsCount());
+			Assert.assertEquals(0, reporter.getOutOfOrderRecordCount());
+
+			// check header
+			int numFields = bb.getInt();		
+			Assert.assertEquals(header.length, numFields);
+
 			for (int i=0; i<numFields; i++)
 			{
 				int recordSize = bb.getInt();
-				Assert.assertEquals(fields[fieldMap[i]].length(), recordSize);
+				Assert.assertEquals(header[fieldMap[i]].length(), recordSize);
 				byte [] charBuff = new byte[recordSize];
 				for (int j=0; j<recordSize; j++)
 				{
 					charBuff[j] = bb.get();
- 				}
-				
-				String value = new String(charBuff, StandardCharsets.UTF_8);
-				Assert.assertEquals(fields[fieldMap[i]], value);
+				}
+
+				String value = new String(charBuff, StandardCharsets.UTF_8);				
+				Assert.assertEquals(header[fieldMap[i]], value);			
+			}
+
+
+			// check records
+			for (String [] fields : records)
+			{
+				numFields = bb.getInt();
+				Assert.assertEquals(fields.length, numFields);
+
+				for (int i=0; i<numFields; i++)
+				{
+					int recordSize = bb.getInt();
+					Assert.assertEquals(fields[fieldMap[i]].length(), recordSize);
+					byte [] charBuff = new byte[recordSize];
+					for (int j=0; j<recordSize; j++)
+					{
+						charBuff[j] = bb.get();
+					}
+
+					String value = new String(charBuff, StandardCharsets.UTF_8);
+					Assert.assertEquals(fields[fieldMap[i]], value);
+				}
 			}
 		}
 	}

@@ -24,38 +24,32 @@
  *                                                          *
  *                                                          *
  ************************************************************/
+package com.prelert.job.warnings.elasticsearch;
 
-package com.prelert.rs.data;
+import org.apache.log4j.Logger;
+import org.elasticsearch.node.Node;
 
-import java.util.HashSet;
-import java.util.Set;
+import com.prelert.job.warnings.StatusReporter;
+import com.prelert.job.warnings.StatusReporterFactory;
 
-import junit.framework.Assert;
-
-import org.junit.Test;
-
-/**
- * This test ensures that all the error values in {@linkplain ErrorCodes}
- * are unique so no 2 conditions can return the same error code.
- * This tests is designed to catch copy/paste errors.  
- */
-public class ErrorCodesTest 
+public class ElasticSearchStatusReporterFactory implements StatusReporterFactory 
 {
-	@Test
-	public void errorCodesUnique() 
-	throws IllegalArgumentException, IllegalAccessException
+	private Node m_Node;
+	
+	/**
+	 * Construct the factory
+	 * 
+	 * @param node The ElasticSearch node
+	 */
+	public ElasticSearchStatusReporterFactory(Node node)
 	{
-		ErrorCodes[] values = ErrorCodes.class.getEnumConstants();
-		
-		Set<Long> errorValueSet = new HashSet<>();
+		m_Node = node;
+	}
 
-		for (ErrorCodes value : values) 
-		{
-			errorValueSet.add(value.getValue());
-		}
-		
-		
-		Assert.assertEquals(values.length, errorValueSet.size());
+	@Override
+	public StatusReporter newStatusReporter(String jobId, Logger logger) 
+	{
+		return new ElasticSearchStatusReporter(m_Node.client(), jobId, logger);
 	}
 
 }

@@ -26,6 +26,8 @@
  ************************************************************/
 package com.prelert.job.process;
 
+import com.prelert.rs.data.ErrorCodes;
+
 /**
  * Represents the case where a job has been configured to use
  * a specific field but that field is missing from the data.
@@ -35,9 +37,9 @@ public class MissingFieldException extends Exception
 	private static final long serialVersionUID = -5303432170987377451L;
 	
 	private String m_MissingFieldName;
-	private int m_ErrorCode;
+	private ErrorCodes m_ErrorCode;
 	
-	public MissingFieldException(String fieldName, String message, int errorCode)
+	public MissingFieldException(String fieldName, String message, ErrorCodes errorCode)
 	{
 		super(message);
 		m_MissingFieldName = fieldName;
@@ -49,7 +51,7 @@ public class MissingFieldException extends Exception
 		return m_MissingFieldName;
 	}
 	
-	public int getErrorCode()
+	public ErrorCodes getErrorCode()
 	{
 		return m_ErrorCode;
 	}

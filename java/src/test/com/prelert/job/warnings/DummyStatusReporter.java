@@ -24,38 +24,72 @@
  *                                                          *
  *                                                          *
  ************************************************************/
+package com.prelert.job.warnings;
 
-package com.prelert.rs.data;
-
-import java.util.HashSet;
-import java.util.Set;
-
-import junit.framework.Assert;
-
-import org.junit.Test;
-
-/**
- * This test ensures that all the error values in {@linkplain ErrorCodes}
- * are unique so no 2 conditions can return the same error code.
- * This tests is designed to catch copy/paste errors.  
- */
-public class ErrorCodesTest 
+public class DummyStatusReporter implements StatusReporter 
 {
-	@Test
-	public void errorCodesUnique() 
-	throws IllegalArgumentException, IllegalAccessException
+	private int m_RecordsWritten = 0;
+	private int m_RecordsDiscarded = 0;
+	private int m_DateParseErrorsCount = 0;
+	private int m_MissingFieldErrorCount = 0;
+	private int m_OutOfOrderRecordCount = 0;
+	
+	public DummyStatusReporter()
 	{
-		ErrorCodes[] values = ErrorCodes.class.getEnumConstants();
 		
-		Set<Long> errorValueSet = new HashSet<>();
-
-		for (ErrorCodes value : values) 
-		{
-			errorValueSet.add(value.getValue());
-		}
+	}
 		
-		
-		Assert.assertEquals(values.length, errorValueSet.size());
+	@Override
+	public void reportRecordsWritten(int recordsWritten, int recordsDiscarded)
+	throws HighProportionOfBadRecordsException 
+	{
+		m_RecordsWritten = recordsWritten;
+		m_RecordsDiscarded = recordsDiscarded;
 	}
 
+	@Override
+	public void reportDateParseError(String date)
+	throws HighProportionOfBadRecordsException 
+	{
+		m_DateParseErrorsCount++;
+	}
+
+	@Override
+	public void reportMissingField(String field) 
+	{
+		m_MissingFieldErrorCount++;
+	}
+
+
+	@Override
+	public void reportOutOfOrderRecord(long date, long previousDate)
+	throws OutOfOrderRecordsException 
+	{
+		m_OutOfOrderRecordCount++;
+	}
+
+	public int getRecordsWritten() 
+	{
+		return m_RecordsWritten;
+	}
+
+	public int getRecordsDiscarded() 
+	{
+		return m_RecordsDiscarded;
+	}
+
+	public int getDateParseErrorsCount() 
+	{
+		return m_DateParseErrorsCount;
+	}
+
+	public int getMissingFieldErrorCount() 
+	{
+		return m_MissingFieldErrorCount;
+	}
+
+	public int getOutOfOrderRecordCount() 
+	{
+		return m_OutOfOrderRecordCount;
+	}
 }

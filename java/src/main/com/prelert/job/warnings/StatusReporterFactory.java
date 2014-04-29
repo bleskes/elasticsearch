@@ -25,37 +25,21 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.rs.data;
+package com.prelert.job.warnings;
 
-import java.util.HashSet;
-import java.util.Set;
-
-import junit.framework.Assert;
-
-import org.junit.Test;
+import org.apache.log4j.Logger;
 
 /**
- * This test ensures that all the error values in {@linkplain ErrorCodes}
- * are unique so no 2 conditions can return the same error code.
- * This tests is designed to catch copy/paste errors.  
+ * Abstract Factory method for creating new {@link StatusReporter} 
+ * instances. 
  */
-public class ErrorCodesTest 
+public interface StatusReporterFactory 
 {
-	@Test
-	public void errorCodesUnique() 
-	throws IllegalArgumentException, IllegalAccessException
-	{
-		ErrorCodes[] values = ErrorCodes.class.getEnumConstants();
-		
-		Set<Long> errorValueSet = new HashSet<>();
-
-		for (ErrorCodes value : values) 
-		{
-			errorValueSet.add(value.getValue());
-		}
-		
-		
-		Assert.assertEquals(values.length, errorValueSet.size());
-	}
-
+	/**
+	 * Return a new StatusReporter for the given job id. 
+	 * @param jobId
+	 * @param logger The job logger
+	 * @return
+	 */
+	public StatusReporter newStatusReporter(String jobId, Logger logger);
 }

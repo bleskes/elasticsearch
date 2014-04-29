@@ -40,7 +40,7 @@ import com.fasterxml.jackson.core.io.JsonStringEncoder;
  */
 public class ApiError 
 {
-	private long m_ErrorCode;
+	private ErrorCodes m_ErrorCode;
 	private String m_Message;
 	private Throwable m_Cause;
 	
@@ -58,7 +58,7 @@ public class ApiError
 	 * @param errorCode
 	 * @see ErrorCodes 
 	 */
-	public ApiError(long errorCode)
+	public ApiError(ErrorCodes errorCode)
 	{
 		m_ErrorCode = errorCode;		
 	}
@@ -68,7 +68,7 @@ public class ApiError
 	 * @see ErrorCodes
 	 * @return one of {@linkplain ErrorCodes}
 	 */
-	public long getErrorCode()
+	public ErrorCodes getErrorCode()
 	{
 		return m_ErrorCode;
 	}
@@ -78,7 +78,7 @@ public class ApiError
 	 * @see ErrorCodes
 	 * @param value
 	 */
-	public void setErrorCode(long value)
+	public void setErrorCode(ErrorCodes value)
 	{
 		m_ErrorCode = value;
 	}
@@ -140,7 +140,7 @@ public class ApiError
 			needComma = false;
 		}
 		
-		if (m_ErrorCode > 0)
+		if (m_ErrorCode != null)
 		{
 			builder.append("\n  \"errorCode\" : ").append(m_ErrorCode);
 			needComma = true;

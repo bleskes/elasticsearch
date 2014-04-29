@@ -52,6 +52,9 @@ import org.apache.log4j.RollingFileAppender;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
+import com.prelert.job.warnings.HighProportionOfBadRecordsException;
+import com.prelert.job.warnings.StatusReporter;
+import com.prelert.job.warnings.StatusReporterFactory;
 import com.prelert.job.DetectorState;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobInUseException;
@@ -106,9 +109,12 @@ public class ProcessManager
 	private JobDetailsProvider m_JobDetailsProvider;
 	
 	private ResultsReaderFactory m_ResultsReaderFactory;
+	private StatusReporterFactory m_StatusReporterFactory;
+	
 	
 	public ProcessManager(JobDetailsProvider jobDetails, 
-							ResultsReaderFactory readerFactory)
+							ResultsReaderFactory readerFactory,
+							StatusReporterFactory statusReporterFactory)
 	{
 		m_ProcessCtrl = new ProcessCtrl();
 						
@@ -119,6 +125,8 @@ public class ProcessManager
 		
 		m_JobDetailsProvider = jobDetails;
 		m_ResultsReaderFactory = readerFactory;
+		
+		m_StatusReporterFactory = statusReporterFactory;
 		
 		addShutdownHook();
 	}	
@@ -161,10 +169,11 @@ public class ProcessManager
 	 * @throws JsonParseException 
 	 * @throws JobInUseException if the data cannot be written to because 
 	 * the job is already handling data
+	 * @throws HighProportionOfBadRecordsException 
 	 */
 	public boolean dataToJob(String jobId, InputStream input)
 	throws UnknownJobException, NativeProcessRunException, MissingFieldException,
-		JsonParseException, JobInUseException
+		JsonParseException, JobInUseException, HighProportionOfBadRecordsException
 	{
 		// stop the timeout 
 		ScheduledFuture<?> future = m_JobIdToTimeoutFuture.remove(jobId);
@@ -207,7 +216,8 @@ public class ProcessManager
 			process.setInUse(true);
 			
 			writeToJob(process.getDataDescription(), process.getInterestingFields(),
-					input, process.getProcess().getOutputStream(), process.getLogger());
+					input, process.getProcess().getOutputStream(), 
+					process.getStatusReporter(), process.getLogger());
 						
 			// check there wasn't an error in the input. 
 			// throws if there was. 
@@ -302,8 +312,9 @@ public class ProcessManager
 
 		
 		ProcessAndDataDescription procAndDD = new ProcessAndDataDescription(
-				nativeProcess, job.getId(),
+				nativeProcess, jobId,
 				job.getDataDescription(), job.getTimeout(), analysisFields, logger,
+				m_StatusReporterFactory.newStatusReporter(jobId, logger),
 				m_ResultsReaderFactory.newResultsParser(jobId, 
 						nativeProcess.getInputStream(),
 						logger));		
@@ -502,15 +513,19 @@ public class ProcessManager
 	 * @param analysisFields
 	 * @param input
 	 * @param output
+	 * @param reporter
 	 * @param jobLogger
 	 * @throws JsonParseException 
 	 * @throws MissingFieldException If any fields are missing from the CSV header
 	 * @throws IOException 
+	 * @throws HighProportionOfBadRecordsException 
 	 */
 	public void writeToJob(DataDescription dataDescription, 
 			List<String> analysisFields,
-			InputStream input, OutputStream output, Logger jobLogger) 
-	throws JsonParseException, MissingFieldException, IOException
+			InputStream input, OutputStream output, 
+			StatusReporter reporter, Logger jobLogger) 
+	throws JsonParseException, MissingFieldException, IOException,
+		HighProportionOfBadRecordsException
 	{
 		// Oracle's documentation recommends buffering process streams
 		BufferedOutputStream bufferedStream = new BufferedOutputStream(output);
@@ -520,18 +535,18 @@ public class ProcessManager
 			if (dataDescription.getFormat() == DataFormat.JSON)
 			{
 				PipeToProcess.transformAndPipeJson(dataDescription, analysisFields, input, 
-						bufferedStream, jobLogger);
+						bufferedStream, reporter, jobLogger);
 			}
 			else
 			{
 				PipeToProcess.transformAndPipeCsv(dataDescription, analysisFields, input, 
-						bufferedStream, jobLogger);
+						bufferedStream, reporter, jobLogger);
 			}
 		}
 		else
 		{			
 			PipeToProcess.pipeCsv(dataDescription, analysisFields, input, 
-					bufferedStream, jobLogger);
+					bufferedStream, reporter, jobLogger);
 		}
 	}
 	

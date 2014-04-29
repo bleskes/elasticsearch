@@ -48,6 +48,10 @@ import com.prelert.job.JobDetails;
 import com.prelert.job.JobInUseException;
 import com.prelert.job.JobStatus;
 import com.prelert.job.UnknownJobException;
+import com.prelert.job.warnings.DummyStatusReporter;
+import com.prelert.job.warnings.HighProportionOfBadRecordsException;
+import com.prelert.job.warnings.StatusReporter;
+import com.prelert.job.warnings.StatusReporterFactory;
 import com.prelert.rs.data.ErrorCodes;
 
 /**
@@ -129,6 +133,17 @@ public class ProcessErrorLoggingTest
 		}
 	}
 	
+	static class SimpleStatusReporterFactory implements StatusReporterFactory 
+	{
+
+		@Override
+		public StatusReporter newStatusReporter(String jobId, Logger logger) 
+		{
+			return new DummyStatusReporter();
+		}
+
+	}
+	
 	
 	/**
 	 * No arguments but -Dprelert.home must be set.
@@ -137,10 +152,11 @@ public class ProcessErrorLoggingTest
 	 * @throws NativeProcessRunException
 	 * @throws UnknownJobException
 	 * @throws IOException 
+	 * @throws HighProportionOfBadRecordsException 
 	 */
 	public static void main(String[] args) 
 	throws NativeProcessRunException, UnknownJobException, IOException, 
-	MissingFieldException, JobInUseException
+	MissingFieldException, JobInUseException, HighProportionOfBadRecordsException
 	{
 		Detector detector = new Detector();
 		detector.setFieldName("airline");
@@ -173,7 +189,8 @@ public class ProcessErrorLoggingTest
 		
 		
 		ProcessManager manager = new ProcessManager(jobDetailsProvider,
-										new DoNothingResultsPersister());
+										new DoNothingResultsPersister(),
+										new SimpleStatusReporterFactory());
 		try
 		{
 
