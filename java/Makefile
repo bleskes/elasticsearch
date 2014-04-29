@@ -34,7 +34,7 @@ PROXY_BUILD_DIR=$(PRELERT_SRC_HOME)/java/apps/proxy
 DEVUTILS_BUILD_DIR=$(PRELERT_SRC_HOME)/java/apps/devutils
 GWTCLIENT_BUILD_DIR=$(PRELERT_SRC_HOME)/java/apps/gwtClient
 PRELERTAPI_BUILD_DIR=$(PRELERT_SRC_HOME)/java/apps/prelertAPI
-ENGINEAPI_BUILD_DIR=$(PRELERT_SRC_HOME)/java/apps/engineAPI
+ENGINEAPI_BUILD_DIR=$(PRELERT_SRC_HOME)/java/apps/engineApi
 SPLUNK_GUI_INSTALL_DIR=$(PRELERT_HOME)/splunk_app/prelert/appserver/static
 
 # Some operating systems ship with Ant, and put a config file for it in /etc,
