@@ -183,6 +183,18 @@ public class JobsTest implements Closeable
 					nextPageUrl.equals(jobs.getNextPage().toString()));
 		}
 		
+		// jobs should be sorted by Id
+		if (jobs.getDocuments().size() > 1)
+		{
+			String lastId = jobs.getDocuments().get(0).getId();
+			for (int i=1; i<jobs.getDocuments().size(); i++)
+			{
+				test(lastId.compareTo(jobs.getDocuments().get(i).getId()) > 0);
+				
+				lastId = jobs.getDocuments().get(i).getId();
+			}
+		}
+		
 			
 		return true;
 	}
@@ -1127,7 +1139,7 @@ public class JobsTest implements Closeable
 		test.testReadLogFiles(baseUrl, flightCentreJobId);
 		test.verifyJobResults(baseUrl, flightCentreJobId, 100, FLIGHT_CENTRE_NUM_BUCKETS, 3600);
 		jobUrls.add(flightCentreJobId);		
-
+/*
 		//=================
 		// JSON test
 		//
@@ -1196,8 +1208,8 @@ public class JobsTest implements Closeable
 		
 		//==========================
 		// Clean up test jobs
-		test.deleteJobsTest(baseUrl, jobUrls);
-
+		//test.deleteJobsTest(baseUrl, jobUrls);
+*/
 		test.close();
 		
 	}
