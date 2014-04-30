@@ -79,6 +79,26 @@ public class ElasticSearchResultsReaderFactory implements ResultsReaderFactory
 			{
 				m_Logger.info("Error parsing autodetect_api output", e);
 			}
+			finally
+			{
+				try 
+				{
+					// read anything left in the stream before
+					// closing the stream otherwise it the proccess 
+					// tries to write more after the close it gets 
+					// a SIGPIPE
+					byte [] buff = new byte [512];
+					while (m_Stream.read(buff) >= 0)
+					{
+						;
+					}
+					m_Stream.close();
+				} 
+				catch (IOException e) 
+				{
+					m_Logger.warn("Error closing result parser input stream", e);
+				}
+			}
 
 			m_Logger.info("Parse results Complete");
 		}		
