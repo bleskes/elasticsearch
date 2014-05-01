@@ -49,6 +49,8 @@ import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.common.settings.ImmutableSettings;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.index.query.FilterBuilder;
 import org.elasticsearch.index.query.FilterBuilders;
@@ -122,7 +124,21 @@ public class JobManager implements JobDetailsProvider
 		DEFAULT_PAGE_SIZE = Integer.parseInt(DEFAULT_PAGE_SIZE_STR);
 	}
 
-	
+	/**
+	 * ElasticSearch settings that instruct the node not to accept HTTP, not to
+	 * attempt multicast discovery and to only look for another node to connect
+	 * to on the local machine.
+	 */
+    static public final Settings LOCAL_SETTINGS;
+	static
+	{
+		LOCAL_SETTINGS = ImmutableSettings.settingsBuilder()
+				.put("http.enabled", "false")
+				.put("discovery.zen.ping.multicast.enabled", "false")
+				.put("discovery.zen.ping.unicast.hosts", "localhost")
+				.build();
+	}
+
 	private Node m_Node;
 	private Client m_Client;
 	
@@ -141,9 +157,12 @@ public class JobManager implements JobDetailsProvider
 	 */
 	public JobManager(String elasticSearchClusterName)
 	{
-		this(nodeBuilder().client(true).clusterName(elasticSearchClusterName).node());
+		// Multicast discovery is expected to be disabled on the ElasticSearch
+		// data node, so disable it for this embedded node too and tell it to
+		// expect the data node to be on the same machine
+		this(nodeBuilder().settings(LOCAL_SETTINGS).client(true).clusterName(elasticSearchClusterName).node());
 
-		s_Logger.info("Connecting to ElasticSearch cluster '" 
+		s_Logger.info("Connecting to ElasticSearch cluster '"
 				+ elasticSearchClusterName + "'");
 	}	
 		
