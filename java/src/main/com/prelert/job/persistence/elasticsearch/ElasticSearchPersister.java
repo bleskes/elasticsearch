@@ -368,7 +368,7 @@ public class ElasticSearchPersister implements JobDataPersister
 	throws IOException
 	{
 		XContentBuilder builder = jsonBuilder().startObject()
-				.field(Bucket.EPOCH, bucket.getEpoch())
+				.field(Bucket.ID, bucket.getId())
 				.field(Bucket.TIMESTAMP, bucket.getTimestamp())
 				.field(Bucket.ANOMALY_SCORE, bucket.getAnomalyScore())
 				.field(Bucket.RECORD_COUNT, bucket.getRecordCount())

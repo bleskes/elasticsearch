@@ -53,7 +53,7 @@ public class Bucket
 	/*
 	 * Field Names
 	 */
-	public static final String EPOCH = "epoch";
+	public static final String ID = "id";
 	public static final String TIMESTAMP = "timestamp";
 	public static final String ANOMALY_SCORE =  "anomalyScore";
 	public static final String RECORD_COUNT = "recordCount";
@@ -94,6 +94,15 @@ public class Bucket
 	 * Get the epoch as a string
 	 */
 	public String getEpochString()
+	{
+		return Long.toString(m_Epoch);
+	}
+	
+	/**
+	 * Same as getEpochString but serialised as the 'id' field. 
+	 * @return
+	 */
+	public String getId()
 	{
 		return Long.toString(m_Epoch);
 	}

@@ -831,7 +831,7 @@ public class JobsTest implements Closeable
 			test(b.getAnomalyScore() >= 0.0);
 			test(b.getRecordCount() > 0);			
 			test(b.getDetectors().size() == 0);
-			test(b.getEpoch() > 0);
+			test(b.getId() != null && b.getId().isEmpty() == false);
 			long epoch = b.getEpoch();
 			Date date = new Date(epoch * 1000);
 

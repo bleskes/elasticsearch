@@ -369,7 +369,7 @@ public class JobManager implements JobDetailsProvider
 			boolean expand, int skip, int take,
 			long startBucket, long endBucket)
 	{
-		RangeFilterBuilder fb = FilterBuilders.rangeFilter(Bucket.EPOCH);
+		RangeFilterBuilder fb = FilterBuilders.rangeFilter(Bucket.ID);
 		if (startBucket > 0)
 		{
 			fb = fb.gte(startBucket);
@@ -388,7 +388,7 @@ public class JobManager implements JobDetailsProvider
 				FilterBuilder fb)
 	{	
 				
-		SortBuilder sb = new FieldSortBuilder(Bucket.EPOCH)
+		SortBuilder sb = new FieldSortBuilder(Bucket.ID)
 								.ignoreUnmapped(true)
 								.order(SortOrder.ASC);
 		
@@ -441,6 +441,7 @@ public class JobManager implements JobDetailsProvider
 		GetResponse response = m_Client.prepareGet(jobId, Bucket.TYPE, bucketId).get();
 				
 		Map<String, Object> bucket = response.getSource();
+		
 		if (response.isExists() && expand)
 		{
 			Pagination<Map<String, Object>> page = this.records(jobId, 
