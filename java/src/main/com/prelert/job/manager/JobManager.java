@@ -238,10 +238,10 @@ public class JobManager implements JobDetailsProvider
 	 * @param take Take only this number of Jobs
 	 * @return
 	 */
-	public Pagination<JobDetails> getAllJobs(int skip, int take)
+	public Pagination<JobDetails> getJobs(int skip, int take)
 	{
 		FilterBuilder fb = FilterBuilders.matchAllFilter();
-		SortBuilder sb = new FieldSortBuilder("_id")
+		SortBuilder sb = new FieldSortBuilder(JobDetails.ID)
 							.ignoreUnmapped(true)
 							.order(SortOrder.DESC);
 
@@ -369,7 +369,7 @@ public class JobManager implements JobDetailsProvider
 			boolean expand, int skip, int take,
 			long startBucket, long endBucket)
 	{
-		RangeFilterBuilder fb = FilterBuilders.rangeFilter(Bucket.ID);
+		RangeFilterBuilder fb = FilterBuilders.rangeFilter(Bucket.EPOCH);
 		if (startBucket > 0)
 		{
 			fb = fb.gte(startBucket);
@@ -388,9 +388,8 @@ public class JobManager implements JobDetailsProvider
 				FilterBuilder fb)
 	{	
 				
-		SortBuilder sb = new FieldSortBuilder(Bucket.ID)
+		SortBuilder sb = new FieldSortBuilder(Bucket.EPOCH)
 								.ignoreUnmapped(true)
-								.missing("_last")
 								.order(SortOrder.ASC);
 		
 		SearchResponse searchResponse = m_Client.prepareSearch(jobId)

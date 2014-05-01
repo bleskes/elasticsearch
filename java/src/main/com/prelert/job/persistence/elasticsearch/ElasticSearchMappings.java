@@ -198,7 +198,7 @@ public class ElasticSearchMappings
 						.field("enabled", false)
 					.endObject()				
 					.startObject("properties")
-						.startObject(Bucket.ID)
+						.startObject(Bucket.EPOCH)
 							.field("type", "long")
 						.endObject()
 						.startObject(Bucket.TIMESTAMP)

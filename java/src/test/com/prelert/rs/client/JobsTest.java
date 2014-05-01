@@ -831,8 +831,8 @@ public class JobsTest implements Closeable
 			test(b.getAnomalyScore() >= 0.0);
 			test(b.getRecordCount() > 0);			
 			test(b.getDetectors().size() == 0);
-			test(b.getId() != null && b.getId().isEmpty() == false);			
-			long epoch = Long.parseLong(b.getId()); // will throw if not a number
+			test(b.getEpoch() > 0);
+			long epoch = b.getEpoch();
 			Date date = new Date(epoch * 1000);
 
 			// sanity check, the data may be old but it should be newer than 2010
@@ -1209,6 +1209,7 @@ public class JobsTest implements Closeable
 		//==========================
 		// Clean up test jobs
 		//test.deleteJobsTest(baseUrl, jobUrls);
+
 
 		test.close();
 		

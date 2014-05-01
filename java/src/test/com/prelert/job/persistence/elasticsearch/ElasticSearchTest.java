@@ -145,7 +145,7 @@ public class ElasticSearchTest
 			String interestingBucket = null;
 			for (Map<String, Object> bucket : buckets)			
 			{
-				long epoch = Long.parseLong(bucket.get(Bucket.ID).toString());
+				long epoch = Long.parseLong(bucket.get(Bucket.EPOCH).toString());
 				if (epoch <= bucketEpoch)
 				{
 					s_Logger.error("Out of order");
@@ -158,7 +158,7 @@ public class ElasticSearchTest
 				double anomalyScore = Double.parseDouble(bucket.get(Bucket.ANOMALY_SCORE).toString());
 				if (anomalyScore > 0.0)
 				{
-					interestingBucket = bucket.get(Bucket.ID).toString();
+					interestingBucket = bucket.get(Bucket.EPOCH).toString();
 				}
 			}
 
