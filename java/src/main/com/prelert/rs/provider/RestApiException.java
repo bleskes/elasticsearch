@@ -30,7 +30,7 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
 import com.prelert.rs.data.ApiError;
-import com.prelert.rs.data.ErrorCodes;
+import com.prelert.rs.data.ErrorCode;
 
 /**
  * Overrides the default {@linkplain WebApplicationException} 
@@ -40,10 +40,10 @@ public class RestApiException extends WebApplicationException
 {
 	private static final long serialVersionUID = -4162139513941557651L;
 	
-	private ErrorCodes m_ErrorCode;
+	private ErrorCode m_ErrorCode;
 	private Response.Status m_Status;
 	
-	public RestApiException(String msg, ErrorCodes errorCode, Response.Status status)
+	public RestApiException(String msg, ErrorCode errorCode, Response.Status status)
 	{
 		super(msg);
 		m_ErrorCode = errorCode;

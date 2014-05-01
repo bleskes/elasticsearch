@@ -43,7 +43,7 @@ import junit.framework.Assert;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.warnings.DummyStatusReporter;
-import com.prelert.job.warnings.HighProportionOfBadRecordsException;
+import com.prelert.job.warnings.HighProportionOfBadTimestampsException;
 
 public class CsvDataTransfromTest 
 {
@@ -51,11 +51,11 @@ public class CsvDataTransfromTest
 	
 	/**
 	 * Test transforming csv data with time in epoch format 
-	 * @throws HighProportionOfBadRecordsException 
+	 * @throws HighProportionOfBadTimestampsException 
 	 */
 	@Test
 	public void plainCSVToLengthEncoded() 
-	throws IOException, MissingFieldException,HighProportionOfBadRecordsException
+	throws IOException, MissingFieldException,HighProportionOfBadTimestampsException
 	{
 		String data = "airline,responsetime,sourcetype,_time\n" +
 					"DJA,622,flightcentre,1350824400\n" +
@@ -125,11 +125,11 @@ public class CsvDataTransfromTest
 	/**
 	 * Test transforming csv data with time in epoch format 
 	 * and a non-standard quote character
-	 * @throws HighProportionOfBadRecordsException 
+	 * @throws HighProportionOfBadTimestampsException 
 	 */
 	@Test
 	public void quotedCSVToLengthEncoded() 
-	throws IOException, MissingFieldException, HighProportionOfBadRecordsException
+	throws IOException, MissingFieldException, HighProportionOfBadTimestampsException
 	{
 		// ? is the quote char
 		String data = "airline,responsetime,sourcetype,_time\n" +
@@ -201,11 +201,11 @@ public class CsvDataTransfromTest
 	
 	/**
 	 * Test transforming csv data with a time format
-	 * @throws HighProportionOfBadRecordsException 
+	 * @throws HighProportionOfBadTimestampsException 
 	 */
 	@Test
 	public void csvWithDateFormat() 
-	throws IOException, MissingFieldException, HighProportionOfBadRecordsException
+	throws IOException, MissingFieldException, HighProportionOfBadTimestampsException
 	{
 		// ? is the quote char
 		String data = "date,airline,responsetime,sourcetype\n" +
@@ -305,10 +305,10 @@ public class CsvDataTransfromTest
 	 * 
 	 * @throws IOException
 	 * @throws MissingFieldException
-	 * @throws HighProportionOfBadRecordsException 
+	 * @throws HighProportionOfBadTimestampsException 
 	 */
 	@Test
-	public void plainCsvWithExtraFields() throws IOException, MissingFieldException, HighProportionOfBadRecordsException
+	public void plainCsvWithExtraFields() throws IOException, MissingFieldException, HighProportionOfBadTimestampsException
 	{
 		String data = "airline,responsetime,airport,sourcetype,_time,baggage\n" +
 					"DJA,622,flightcentre,MAN,1350824400,none\n" +
@@ -380,11 +380,11 @@ public class CsvDataTransfromTest
 	 * a MissingFieldException 
 	 * 
 	 * @throws IOException
-	 * @throws HighProportionOfBadRecordsException 
+	 * @throws HighProportionOfBadTimestampsException 
 	 */
 	@Test 
 	public void plainCsvWithMissingTimeField()
-	throws IOException, HighProportionOfBadRecordsException
+	throws IOException, HighProportionOfBadTimestampsException
 	{
 		// no time field
 		String data = "airline,responsetime,airport,sourcetype,baggage\n" +
@@ -452,11 +452,11 @@ public class CsvDataTransfromTest
 	 * a MissingFieldException 
 	 * 
 	 * @throws IOException
-	 * @throws HighProportionOfBadRecordsException 
+	 * @throws HighProportionOfBadTimestampsException 
 	 */
 	@Test 
 	public void plainCsvWithMissingField()
-	throws IOException, HighProportionOfBadRecordsException
+	throws IOException, HighProportionOfBadTimestampsException
 	{
 		String data = "airline,responsetime,airport,sourcetype,_time,baggage\n" +
 				"DJA,622,flightcentre,MAN,1350824400,none\n" +
@@ -520,11 +520,11 @@ public class CsvDataTransfromTest
 	 * 
 	 * @throws IOException
 	 * @throws MissingFieldException 
-	 * @throws HighProportionOfBadRecordsException 
+	 * @throws HighProportionOfBadTimestampsException 
 	 */
 	@Test 
 	public void plainCsvWithIncompleteRecords()
-	throws IOException, MissingFieldException, HighProportionOfBadRecordsException
+	throws IOException, MissingFieldException, HighProportionOfBadTimestampsException
 	{
 		String epoch_data = "_time,airline,responsetime,sourcetype,airport,baggage\n" +
 				"1350824400,DJA,622,flightcentre,MAN,none\n" +

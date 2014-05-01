@@ -57,7 +57,7 @@ import com.prelert.job.JobDetails;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.ApiError;
 import com.prelert.rs.data.Bucket;
-import com.prelert.rs.data.ErrorCodes;
+import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
 
@@ -1054,7 +1054,7 @@ public class JobsTest implements Closeable
 			test(doc.isExists() == false);
 			
 			ApiError error = m_WebServiceClient.getLastError();
-			test(error.getErrorCode() == ErrorCodes.MISSING_JOB_ERROR);
+			test(error.getErrorCode() == ErrorCode.MISSING_JOB_ERROR);
 		}
 	}
 	
@@ -1139,7 +1139,7 @@ public class JobsTest implements Closeable
 		test.testReadLogFiles(baseUrl, flightCentreJobId);
 		test.verifyJobResults(baseUrl, flightCentreJobId, 100, FLIGHT_CENTRE_NUM_BUCKETS, 3600);
 		jobUrls.add(flightCentreJobId);		
-/*
+
 		//=================
 		// JSON test
 		//
@@ -1209,7 +1209,7 @@ public class JobsTest implements Closeable
 		//==========================
 		// Clean up test jobs
 		//test.deleteJobsTest(baseUrl, jobUrls);
-*/
+
 		test.close();
 		
 	}

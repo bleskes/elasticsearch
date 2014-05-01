@@ -26,7 +26,7 @@
  ************************************************************/
 package com.prelert.job.process;
 
-import com.prelert.rs.data.ErrorCodes;
+import com.prelert.rs.data.ErrorCode;
 
 /**
  * Represents the case where a job has been configured to use
@@ -37,9 +37,9 @@ public class MissingFieldException extends Exception
 	private static final long serialVersionUID = -5303432170987377451L;
 	
 	private String m_MissingFieldName;
-	private ErrorCodes m_ErrorCode;
+	private ErrorCode m_ErrorCode;
 	
-	public MissingFieldException(String fieldName, String message, ErrorCodes errorCode)
+	public MissingFieldException(String fieldName, String message, ErrorCode errorCode)
 	{
 		super(message);
 		m_MissingFieldName = fieldName;
@@ -51,7 +51,7 @@ public class MissingFieldException extends Exception
 		return m_MissingFieldName;
 	}
 	
-	public ErrorCodes getErrorCode()
+	public ErrorCode getErrorCode()
 	{
 		return m_ErrorCode;
 	}

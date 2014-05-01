@@ -28,7 +28,7 @@
 package com.prelert.rs.data;
 
 /**
- * Static error codes returned in reponse to internal errors in the API.
+ * Static error codes returned in response to internal errors in the API.
  * The codes are grouped in the following way:
  * <ul>
  * <li>10XXX Codes are related to job creation</li>
@@ -39,7 +39,7 @@ package com.prelert.rs.data;
  * <li>60XXX Codes are related to errors from the REST API</li> 
  * </ul>
  */
-public enum ErrorCodes 
+public enum ErrorCode 
 {
 	// job create errors
 	/**
@@ -129,12 +129,17 @@ public enum ErrorCodes
 	 */
 	UNCOMPRESSED_DATA(30102),
 	
-	
 	/**
 	 * As a proportion of all the records sent too many
 	 * are either missing a date or the date cannot be parsed. 
 	 */
 	TOO_MANY_BAD_DATES(30103),
+	
+	/**
+	 * As a proportion of all the records sent a high number are
+	 * missing required fields or cannot be parsed. 
+	 */
+	TOO_MANY_BAD_RECORDS(30104),	
 	
 	
 	// native process errors
@@ -182,7 +187,7 @@ public enum ErrorCodes
 	private long m_ErrorCode;
 	private String m_ValueString;
 	
-	private ErrorCodes(long code)
+	private ErrorCode(long code)
 	{
 		m_ErrorCode = code;
 		m_ValueString = Long.toString(code);

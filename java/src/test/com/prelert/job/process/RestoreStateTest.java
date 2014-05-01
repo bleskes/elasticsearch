@@ -49,7 +49,7 @@ import com.prelert.job.JobInUseException;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.JobDetails;
 import com.prelert.job.manager.JobManager;
-import com.prelert.job.warnings.HighProportionOfBadRecordsException;
+import com.prelert.job.warnings.HighProportionOfBadTimestampsException;
 import com.prelert.rs.data.Pagination;
 
 
@@ -69,11 +69,11 @@ public class RestoreStateTest
 	 * @throws InterruptedException 
 	 * @throws UnknownJobException 
 	 * @throws MissingFieldException
-	 * @throws HighProportionOfBadRecordsException 
+	 * @throws HighProportionOfBadTimestampsException 
 	 */
 	public static void main(String[] args) 
 	throws IOException, NativeProcessRunException, UnknownJobException,
-		InterruptedException, JobInUseException, MissingFieldException, HighProportionOfBadRecordsException
+		InterruptedException, JobInUseException, MissingFieldException, HighProportionOfBadTimestampsException
 	{
 		final String prelertSrcHome = System.getProperty("prelert.src.home");
 		if (prelertSrcHome == null)

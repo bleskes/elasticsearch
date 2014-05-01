@@ -34,7 +34,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.prelert.rs.data.ErrorCodes;
+import com.prelert.rs.data.ErrorCode;
 
 /**
  * Describes the format of the data used in the job and how it should 
@@ -358,7 +358,7 @@ public class DataDescription
 			{
 				throw new JobConfigurationException(
 						"Invalid Time format string '" + m_TimeFormat + "'", 
-						ErrorCodes.INVALID_DATE_FORMAT, e);
+						ErrorCode.INVALID_DATE_FORMAT, e);
 			}
 		}
 		

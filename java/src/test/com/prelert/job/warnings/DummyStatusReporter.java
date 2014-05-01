@@ -41,7 +41,7 @@ public class DummyStatusReporter implements StatusReporter
 		
 	@Override
 	public void reportRecordsWritten(int recordsWritten, int recordsDiscarded)
-	throws HighProportionOfBadRecordsException 
+	throws HighProportionOfBadTimestampsException 
 	{
 		m_RecordsWritten = recordsWritten;
 		m_RecordsDiscarded = recordsDiscarded;
@@ -49,7 +49,7 @@ public class DummyStatusReporter implements StatusReporter
 
 	@Override
 	public void reportDateParseError(String date)
-	throws HighProportionOfBadRecordsException 
+	throws HighProportionOfBadTimestampsException 
 	{
 		m_DateParseErrorsCount++;
 	}

@@ -30,10 +30,10 @@ package com.prelert.job.warnings;
 public interface StatusReporter 
 {
 	public void reportRecordsWritten(int recordsWritten, int recordsDiscarded) 
-			throws HighProportionOfBadRecordsException;
+			throws HighProportionOfBadTimestampsException;
 	
 	public void reportDateParseError(String date) 
-			throws HighProportionOfBadRecordsException;
+			throws HighProportionOfBadTimestampsException;
 	
 	public void reportMissingField(String field);
 	

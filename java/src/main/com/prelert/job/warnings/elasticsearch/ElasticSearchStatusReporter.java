@@ -2,10 +2,10 @@ package com.prelert.job.warnings.elasticsearch;
 
 
 import com.prelert.job.JobDetails;
-import com.prelert.job.warnings.HighProportionOfBadRecordsException;
+import com.prelert.job.warnings.HighProportionOfBadTimestampsException;
 import com.prelert.job.warnings.OutOfOrderRecordsException;
 import com.prelert.job.warnings.StatusReporter;
-import com.prelert.rs.data.ErrorCodes;
+import com.prelert.rs.data.ErrorCode;
 
 import org.apache.log4j.Logger;
 import org.elasticsearch.action.get.GetResponse;
@@ -63,7 +63,7 @@ public class ElasticSearchStatusReporter implements StatusReporter
 		
 	@Override
 	public void reportRecordsWritten(int recordsWritten, int recordsDiscarded)
-	throws HighProportionOfBadRecordsException 
+	throws HighProportionOfBadTimestampsException 
 	{
 		m_RecordsWritten = recordsWritten;
 		m_RecordsDiscarded = recordsDiscarded;
@@ -79,7 +79,7 @@ public class ElasticSearchStatusReporter implements StatusReporter
 
 	@Override
 	public void reportDateParseError(String date)
-	throws HighProportionOfBadRecordsException 
+	throws HighProportionOfBadTimestampsException 
 	{
 		m_DateParseErrorsCount++;
 	}
@@ -154,7 +154,7 @@ public class ElasticSearchStatusReporter implements StatusReporter
 	
 	
 	private void reportStatus(int totalRecords)
-	throws HighProportionOfBadRecordsException
+	throws HighProportionOfBadTimestampsException
 	{
 		String status = String.format("%d records written to autodetect %d had "
 				+ "missing fields, %d were discarded because the date could not be "
@@ -170,8 +170,8 @@ public class ElasticSearchStatusReporter implements StatusReporter
 		int percentBadDate = (m_DateParseErrorsCount * 100) / totalRecords;
 		if (percentBadDate > m_AcceptablePercentDateParseErrors)
 		{
-			throw new HighProportionOfBadRecordsException(m_DateParseErrorsCount,
-					totalRecords, ErrorCodes.TOO_MANY_BAD_DATES);
+			throw new HighProportionOfBadTimestampsException(m_DateParseErrorsCount,
+					totalRecords, ErrorCode.TOO_MANY_BAD_DATES);
 		}
 		
 		

@@ -30,7 +30,7 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
 import com.prelert.rs.data.ApiError;
-import com.prelert.rs.data.ErrorCodes;
+import com.prelert.rs.data.ErrorCode;
 
 /**
  * Represents an error in parsing the configuration for a new job.
@@ -40,17 +40,17 @@ public class JobConfigurationParseException extends WebApplicationException
 {
 	private static final long serialVersionUID = -7189040309467301076L;
 	
-	private ErrorCodes m_ErrorCode;
+	private ErrorCode m_ErrorCode;
 	
 	public JobConfigurationParseException(String message, Throwable cause)
 	{
 		super(message, cause);
-		m_ErrorCode = ErrorCodes.JOB_CONFIG_PARSE_ERROR;
+		m_ErrorCode = ErrorCode.JOB_CONFIG_PARSE_ERROR;
 	}
 	
 	
 	public JobConfigurationParseException(String message, Throwable cause, 
-			ErrorCodes errorCode)
+			ErrorCode errorCode)
 	{
 		super(message, cause);
 		m_ErrorCode = errorCode;

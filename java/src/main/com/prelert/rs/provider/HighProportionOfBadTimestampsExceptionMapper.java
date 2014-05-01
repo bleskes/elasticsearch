@@ -24,37 +24,28 @@
  *                                                          *
  *                                                          *
  ************************************************************/
+package com.prelert.rs.provider;
 
-package com.prelert.job.process;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.ext.ExceptionMapper;
 
-import com.prelert.rs.data.ErrorCode;
+import com.prelert.job.warnings.HighProportionOfBadTimestampsException;
+import com.prelert.rs.data.ApiError;
+
 
 /**
- * Exception thrown when there is an error running 
- * a native process (autodetect).
+ * Exception to Response mapper for {@linkplain HighProportionOfBadTimestampsException}.
  */
-public class NativeProcessRunException extends Exception
+public class HighProportionOfBadTimestampsExceptionMapper 
+		implements ExceptionMapper<HighProportionOfBadTimestampsException>
 {
-	private static final long serialVersionUID = 5722287151589093943L;		
-	
-	private ErrorCode m_ErrorCode;
-	
-	public NativeProcessRunException(String message, ErrorCode errorCode)
+	@Override
+	public Response toResponse(HighProportionOfBadTimestampsException e) 
 	{
-		super(message);
-		m_ErrorCode = errorCode;
+		ApiError error = new ApiError(/*e.getErrorCode()*/);
+		error.setMessage(e.getMessage());
+		error.setCause(e.getCause());
+		
+		return Response.status(Response.Status.BAD_REQUEST).entity(error.toJson()).build();
 	}
-	
-	public NativeProcessRunException(String message, ErrorCode errorCode, Throwable cause)
-	{
-		super(message, cause);
-		m_ErrorCode = errorCode;
-	}
-	
-	public ErrorCode getErrorCode()
-	{
-		return m_ErrorCode;
-	}
-	
-	
 }

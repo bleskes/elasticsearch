@@ -35,7 +35,7 @@ import junit.framework.Assert;
 import org.junit.Test;
 
 /**
- * This test ensures that all the error values in {@linkplain ErrorCodes}
+ * This test ensures that all the error values in {@linkplain ErrorCode}
  * are unique so no 2 conditions can return the same error code.
  * This tests is designed to catch copy/paste errors.  
  */
@@ -45,11 +45,11 @@ public class ErrorCodesTest
 	public void errorCodesUnique() 
 	throws IllegalArgumentException, IllegalAccessException
 	{
-		ErrorCodes[] values = ErrorCodes.class.getEnumConstants();
+		ErrorCode[] values = ErrorCode.class.getEnumConstants();
 		
 		Set<Long> errorValueSet = new HashSet<>();
 
-		for (ErrorCodes value : values) 
+		for (ErrorCode value : values) 
 		{
 			errorValueSet.add(value.getValue());
 		}

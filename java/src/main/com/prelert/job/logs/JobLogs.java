@@ -46,7 +46,7 @@ import org.apache.log4j.Logger;
 
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.process.ProcessCtrl;
-import com.prelert.rs.data.ErrorCodes;
+import com.prelert.rs.data.ErrorCode;
 
 /**
  * Read/Tail the logs 
@@ -283,7 +283,7 @@ public class JobLogs
 		{
 			s_Logger.warn("Cannot find log file " + file);
 			throw new UnknownJobException(jobId, "Cannot open log file",
-					 ErrorCodes.MISSING_LOG_FILE);
+					 ErrorCode.MISSING_LOG_FILE);
 		}
 		catch (IOException e)
 		{
@@ -328,7 +328,7 @@ public class JobLogs
 		{
 			String msg = "Cannot open log file directory " + logDirectory;
 			s_Logger.error(msg);
-			throw new UnknownJobException(jobId, msg, ErrorCodes.CANNOT_OPEN_DIRECTORY);
+			throw new UnknownJobException(jobId, msg, ErrorCode.CANNOT_OPEN_DIRECTORY);
 		}
 		
 		ByteArrayOutputStream byteos = new ByteArrayOutputStream();

@@ -49,10 +49,10 @@ import com.prelert.job.JobInUseException;
 import com.prelert.job.JobStatus;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.warnings.DummyStatusReporter;
-import com.prelert.job.warnings.HighProportionOfBadRecordsException;
+import com.prelert.job.warnings.HighProportionOfBadTimestampsException;
 import com.prelert.job.warnings.StatusReporter;
 import com.prelert.job.warnings.StatusReporterFactory;
-import com.prelert.rs.data.ErrorCodes;
+import com.prelert.rs.data.ErrorCode;
 
 /**
  * Launch processes with various bad configuration/inputs that
@@ -99,7 +99,7 @@ public class ProcessErrorLoggingTest
 			{
 				throw new UnknownJobException(jobId, 
 						"SingleJobDetailsProvider cannot find job",
-						ErrorCodes.MISSING_JOB_ERROR);
+						ErrorCode.MISSING_JOB_ERROR);
 			}
 		}
 		@Override
@@ -152,11 +152,11 @@ public class ProcessErrorLoggingTest
 	 * @throws NativeProcessRunException
 	 * @throws UnknownJobException
 	 * @throws IOException 
-	 * @throws HighProportionOfBadRecordsException 
+	 * @throws HighProportionOfBadTimestampsException 
 	 */
 	public static void main(String[] args) 
 	throws NativeProcessRunException, UnknownJobException, IOException, 
-	MissingFieldException, JobInUseException, HighProportionOfBadRecordsException
+	MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException
 	{
 		Detector detector = new Detector();
 		detector.setFieldName("airline");

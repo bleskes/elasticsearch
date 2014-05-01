@@ -36,11 +36,11 @@ import com.fasterxml.jackson.core.io.JsonStringEncoder;
  * a Java Exception {@linkplain #getCause()} will return that
  * Exception else it returns <code>null</code>. 
  * 
- * @see ErrorCodes
+ * @see ErrorCode
  */
 public class ApiError 
 {
-	private ErrorCodes m_ErrorCode;
+	private ErrorCode m_ErrorCode;
 	private String m_Message;
 	private Throwable m_Cause;
 	
@@ -56,29 +56,29 @@ public class ApiError
 	 * Create a new ApiError from one of the list of error codes.
 	 * 
 	 * @param errorCode
-	 * @see ErrorCodes 
+	 * @see ErrorCode 
 	 */
-	public ApiError(ErrorCodes errorCode)
+	public ApiError(ErrorCode errorCode)
 	{
 		m_ErrorCode = errorCode;		
 	}
 	
 	/**
 	 * The error code
-	 * @see ErrorCodes
-	 * @return one of {@linkplain ErrorCodes}
+	 * @see ErrorCode
+	 * @return one of {@linkplain ErrorCode}
 	 */
-	public ErrorCodes getErrorCode()
+	public ErrorCode getErrorCode()
 	{
 		return m_ErrorCode;
 	}
 	
 	/**
 	 * Set the error code.
-	 * @see ErrorCodes
+	 * @see ErrorCode
 	 * @param value
 	 */
-	public void setErrorCode(ErrorCodes value)
+	public void setErrorCode(ErrorCode value)
 	{
 		m_ErrorCode = value;
 	}

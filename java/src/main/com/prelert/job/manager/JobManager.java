@@ -72,7 +72,7 @@ import com.prelert.job.process.JobDetailsProvider;
 import com.prelert.job.process.MissingFieldException;
 import com.prelert.job.process.NativeProcessRunException;
 import com.prelert.job.process.ProcessManager;
-import com.prelert.job.warnings.HighProportionOfBadRecordsException;
+import com.prelert.job.warnings.HighProportionOfBadTimestampsException;
 import com.prelert.job.warnings.elasticsearch.ElasticSearchStatusReporterFactory;
 import com.prelert.job.DetectorState;
 import com.prelert.job.JobConfiguration;
@@ -83,7 +83,7 @@ import com.prelert.job.UnknownJobException;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.Detector;
-import com.prelert.rs.data.ErrorCodes;
+import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
 
@@ -215,7 +215,7 @@ public class JobManager implements JobDetailsProvider
 				String msg = "No details for job with id " + jobId;
 				s_Logger.warn(msg);
 				throw new UnknownJobException(jobId, msg,
-						ErrorCodes.MISSING_JOB_ERROR);
+						ErrorCode.MISSING_JOB_ERROR);
 			}
 		}
 		catch (IndexMissingException e)
@@ -224,7 +224,7 @@ public class JobManager implements JobDetailsProvider
 			String msg = "Missing Index no job with id " + jobId;
 			s_Logger.warn(msg);
 			throw new UnknownJobException(jobId, msg, 
-					ErrorCodes.MISSING_JOB_ERROR);
+					ErrorCode.MISSING_JOB_ERROR);
 		}
 	}
 	
@@ -678,7 +678,7 @@ public class JobManager implements JobDetailsProvider
 			String msg = String.format("Error writing the job '%s' finish time.", 
 					jobId);
 			s_Logger.error(msg);
-			throw new UnknownJobException(jobId, msg, ErrorCodes.MISSING_JOB_ERROR);
+			throw new UnknownJobException(jobId, msg, ErrorCode.MISSING_JOB_ERROR);
 		}
 		
 		return true;	
@@ -717,14 +717,14 @@ public class JobManager implements JobDetailsProvider
 				String msg = String.format("No index with id '%s' in the database", jobId);
 				s_Logger.warn(msg);
 				throw new UnknownJobException(jobId, msg, 
-						ErrorCodes.MISSING_JOB_ERROR);
+						ErrorCode.MISSING_JOB_ERROR);
 			}
 			else
 			{
 				String msg = "Error deleting index " + jobId;
 				s_Logger.error(msg);
 				throw new UnknownJobException(jobId, msg, 
-						ErrorCodes.DATA_STORE_ERROR, e.getCause());
+						ErrorCode.DATA_STORE_ERROR, e.getCause());
 			}
 		}
 	}
@@ -747,11 +747,11 @@ public class JobManager implements JobDetailsProvider
 	 * @throws JsonParseException 
 	 * @throws JobInUseException if the job cannot be written to because 
 	 * it is already handling data
-	 * @throws HighProportionOfBadRecordsException 
+	 * @throws HighProportionOfBadTimestampsException 
 	 */
 	public boolean dataToJob(String jobId, InputStream input) 
 	throws UnknownJobException, NativeProcessRunException, MissingFieldException, 
-		JsonParseException, JobInUseException, HighProportionOfBadRecordsException 
+		JsonParseException, JobInUseException, HighProportionOfBadTimestampsException 
 	{
 		try
 		{
@@ -839,7 +839,7 @@ public class JobManager implements JobDetailsProvider
 		catch (IndexMissingException e)
 		{
 			String msg = String.format("Error writing the job '%s' last data time.", jobId);
-			throw new UnknownJobException(jobId, msg, ErrorCodes.MISSING_JOB_ERROR);
+			throw new UnknownJobException(jobId, msg, ErrorCode.MISSING_JOB_ERROR);
 		}
 	}
 	
@@ -900,13 +900,13 @@ public class JobManager implements JobDetailsProvider
 			else
 			{
 				throw new UnknownJobException(refId, "Cannot find "
-					+ "referenced job with id '" + refId + "'", ErrorCodes.UNKNOWN_JOB_REFERENCE);
+					+ "referenced job with id '" + refId + "'", ErrorCode.UNKNOWN_JOB_REFERENCE);
 			}
 		}
 		catch (IndexMissingException e)
 		{
 			throw new UnknownJobException(refId, "Missing index: Cannot find "
-					+ "referenced job with id '" + refId + "'", ErrorCodes.UNKNOWN_JOB_REFERENCE);
+					+ "referenced job with id '" + refId + "'", ErrorCode.UNKNOWN_JOB_REFERENCE);
 	
 		}
 	}

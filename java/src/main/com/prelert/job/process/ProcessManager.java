@@ -52,7 +52,7 @@ import org.apache.log4j.RollingFileAppender;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
-import com.prelert.job.warnings.HighProportionOfBadRecordsException;
+import com.prelert.job.warnings.HighProportionOfBadTimestampsException;
 import com.prelert.job.warnings.StatusReporter;
 import com.prelert.job.warnings.StatusReporterFactory;
 import com.prelert.job.DetectorState;
@@ -60,7 +60,7 @@ import com.prelert.job.JobDetails;
 import com.prelert.job.JobInUseException;
 import com.prelert.job.JobStatus;
 import com.prelert.job.UnknownJobException;
-import com.prelert.rs.data.ErrorCodes;
+import com.prelert.rs.data.ErrorCode;
 
 /**
  * Manages the native processes channelling data to them and parsing the 
@@ -169,11 +169,11 @@ public class ProcessManager
 	 * @throws JsonParseException 
 	 * @throws JobInUseException if the data cannot be written to because 
 	 * the job is already handling data
-	 * @throws HighProportionOfBadRecordsException 
+	 * @throws HighProportionOfBadTimestampsException 
 	 */
 	public boolean dataToJob(String jobId, InputStream input)
 	throws UnknownJobException, NativeProcessRunException, MissingFieldException,
-		JsonParseException, JobInUseException, HighProportionOfBadRecordsException
+		JsonParseException, JobInUseException, HighProportionOfBadTimestampsException
 	{
 		// stop the timeout 
 		ScheduledFuture<?> future = m_JobIdToTimeoutFuture.remove(jobId);
@@ -204,7 +204,7 @@ public class ProcessManager
 		{
 			String msg = "Cannot write to process whilst it is in use";
 			s_Logger.error(msg);
-			throw new JobInUseException(jobId, msg, ErrorCodes.NATIVE_PROCESS_RUNNING_ERROR);
+			throw new JobInUseException(jobId, msg, ErrorCode.NATIVE_PROCESS_RUNNING_ERROR);
 		}
 				
 		// check the process is running, throws if not
@@ -234,7 +234,7 @@ public class ProcessManager
 			readProcessErrorOutput(process, sb);
 			
 			throw new NativeProcessRunException(sb.toString(), 
-					ErrorCodes.NATIVE_PROCESS_WRITE_ERROR);
+					ErrorCode.NATIVE_PROCESS_WRITE_ERROR);
 		}
 		finally
 		{
@@ -305,7 +305,7 @@ public class ProcessManager
 			s_Logger.error(msg);
 			logger.error(msg, e);
 			throw new NativeProcessRunException(msg, 
-					ErrorCodes.NATIVE_PROCESS_START_ERROR, e);
+					ErrorCode.NATIVE_PROCESS_START_ERROR, e);
 		}				
 
 		List<String> analysisFields = job.getAnalysisConfig().analysisFields();
@@ -366,7 +366,7 @@ public class ProcessManager
 			
 			String msg = "Cannot close job as the process is reading data";
 			s_Logger.error(msg);
-			throw new JobInUseException(jobId, msg, ErrorCodes.NATIVE_PROCESS_RUNNING_ERROR);
+			throw new JobInUseException(jobId, msg, ErrorCode.NATIVE_PROCESS_RUNNING_ERROR);
 		}
 		
 		
@@ -411,7 +411,7 @@ public class ProcessManager
 						process.getLogger().error(sb);
 						
 						throw new NativeProcessRunException(sb.toString(), 
-								ErrorCodes.NATIVE_PROCESS_ERROR);		
+								ErrorCode.NATIVE_PROCESS_ERROR);		
 					}
 					
 					// wait for the results parsing and write to to the datastore
@@ -488,7 +488,7 @@ public class ProcessManager
 			process.getLogger().warn(sb);
 						
 			throw new NativeProcessRunException(sb.toString(), 
-					ErrorCodes.NATIVE_PROCESS_ERROR);
+					ErrorCode.NATIVE_PROCESS_ERROR);
 		}
 		catch (IllegalThreadStateException e)
 		{
@@ -518,14 +518,14 @@ public class ProcessManager
 	 * @throws JsonParseException 
 	 * @throws MissingFieldException If any fields are missing from the CSV header
 	 * @throws IOException 
-	 * @throws HighProportionOfBadRecordsException 
+	 * @throws HighProportionOfBadTimestampsException 
 	 */
 	public void writeToJob(DataDescription dataDescription, 
 			List<String> analysisFields,
 			InputStream input, OutputStream output, 
 			StatusReporter reporter, Logger jobLogger) 
 	throws JsonParseException, MissingFieldException, IOException,
-		HighProportionOfBadRecordsException
+		HighProportionOfBadTimestampsException
 	{
 		// Oracle's documentation recommends buffering process streams
 		BufferedOutputStream bufferedStream = new BufferedOutputStream(output);

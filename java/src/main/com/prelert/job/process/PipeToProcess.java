@@ -50,9 +50,9 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.prelert.job.DataDescription;
 import com.prelert.job.input.LengthEncodedWriter;
-import com.prelert.job.warnings.HighProportionOfBadRecordsException;
+import com.prelert.job.warnings.HighProportionOfBadTimestampsException;
 import com.prelert.job.warnings.StatusReporter;
-import com.prelert.rs.data.ErrorCodes;
+import com.prelert.rs.data.ErrorCode;
 
 
 /**
@@ -83,12 +83,12 @@ public class PipeToProcess
 	 * @return The number of records written to the outputstream
 	 * @throws IOException
 	 * @throws MissingFieldException If any fields are missing from the CSV header
-	 * @throws HighProportionOfBadRecordsException If a large proportion 
+	 * @throws HighProportionOfBadTimestampsException If a large proportion 
 	 * of the records read have missing fields
 	 */
 	static public long pipeCsv(DataDescription dd, List<String> analysisFields,
 		InputStream is, OutputStream os, StatusReporter reporter, Logger logger)
-	throws IOException, MissingFieldException, HighProportionOfBadRecordsException
+	throws IOException, MissingFieldException, HighProportionOfBadTimestampsException
 	{	
 		CsvPreference csvPref = new CsvPreference.Builder(
 				dd.getQuoteCharacter(),
@@ -126,7 +126,7 @@ public class PipeToProcess
 					reporter.reportMissingField(p.First);
 
 					throw new MissingFieldException(p.First, msg, 
-							ErrorCodes.MISSING_FIELD);
+							ErrorCode.MISSING_FIELD);
 				}
 			}
 			
@@ -192,12 +192,12 @@ public class PipeToProcess
 	 * @return The number of records written to the outputstream
 	 * @throws IOException 
 	 * @throws MissingFieldException If any fields are missing from the CSV header
-	 * @throws HighProportionOfBadRecordsException If a large proportion 
+	 * @throws HighProportionOfBadTimestampsException If a large proportion 
 	 * of the records read have missing fields or unparseable date formats
 	 */
 	static public void transformAndPipeCsv(DataDescription dd, List<String> analysisFields,
 			InputStream is, OutputStream os, StatusReporter reporter, Logger logger)
-	throws IOException, MissingFieldException, HighProportionOfBadRecordsException
+	throws IOException, MissingFieldException, HighProportionOfBadTimestampsException
 	{
 		String timeField = dd.getTimeField();
 		
@@ -235,7 +235,7 @@ public class PipeToProcess
 					
 					reporter.reportMissingField(timeField);
 			
-					throw new MissingFieldException(p.First, msg, ErrorCodes.MISSING_FIELD);
+					throw new MissingFieldException(p.First, msg, ErrorCode.MISSING_FIELD);
 				}
 			}			
 			
@@ -255,7 +255,7 @@ public class PipeToProcess
 				logger.error(message);
 				
 				reporter.reportMissingField(timeField);
-				throw new MissingFieldException(timeField, message, ErrorCodes.MISSING_FIELD);
+				throw new MissingFieldException(timeField, message, ErrorCode.MISSING_FIELD);
 			}	
 			
 
@@ -416,13 +416,13 @@ public class PipeToProcess
 	 * @param logger Errors are logged to this logger 
 	 * @throws JsonParseException 
 	 * @throws IOException
-	 * @throws HighProportionOfBadRecordsException If a large proportion 
+	 * @throws HighProportionOfBadTimestampsException If a large proportion 
 	 * of the records read have missing fields or unparsable date formats
 	 */
 	static public void transformAndPipeJson(DataDescription dd, 
 			List<String> analysisFields, InputStream is, OutputStream os,
 			StatusReporter reporter, Logger logger) 
-	throws JsonParseException, IOException, HighProportionOfBadRecordsException
+	throws JsonParseException, IOException, HighProportionOfBadTimestampsException
 	{
 		JsonParser parser = new JsonFactory().createParser(is);
 		
@@ -452,13 +452,13 @@ public class PipeToProcess
 	 * @param logger Errors are logged to this logger
 	 * @throws IOException
 	 * @throws JsonParseException
-	 * @throws HighProportionOfBadRecordsException If a large proportion 
+	 * @throws HighProportionOfBadTimestampsException If a large proportion 
 	 * of the records read have missing fields or unparsable date formats
 	 */
 	static private void pipeJson(JsonParser parser, String timeField,
 			List<String> analysisFields, OutputStream os,
 			StatusReporter reporter, Logger logger)
-	throws JsonParseException, IOException, HighProportionOfBadRecordsException
+	throws JsonParseException, IOException, HighProportionOfBadTimestampsException
 	{
 		LengthEncodedWriter lengthEncodedWriter = new LengthEncodedWriter(os);
 
@@ -566,13 +566,13 @@ public class PipeToProcess
 	 * @param logger Errors are logged to this logger
 	 * @throws IOException
 	 * @throws JsonParseException
-	 * @throws HighProportionOfBadRecordsException If a large proportion 
+	 * @throws HighProportionOfBadTimestampsException If a large proportion 
 	 * of the records read have missing fields or unparsable date formats
 	 */
 	static private void pipeJsonAndTransformTime(JsonParser parser, 
 			List<String> analysisFields, OutputStream os,
 			DataDescription dd, StatusReporter reporter, Logger logger)
-	throws JsonParseException, IOException, HighProportionOfBadRecordsException
+	throws JsonParseException, IOException, HighProportionOfBadTimestampsException
 	{
 		String timeField = dd.getTimeField();
 		List<String> allFields = new ArrayList<String>(analysisFields);

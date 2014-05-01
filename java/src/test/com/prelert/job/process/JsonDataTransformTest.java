@@ -42,7 +42,7 @@ import org.junit.Test;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.warnings.DummyStatusReporter;
-import com.prelert.job.warnings.HighProportionOfBadRecordsException;
+import com.prelert.job.warnings.HighProportionOfBadTimestampsException;
 
 public class JsonDataTransformTest 
 {
@@ -54,11 +54,11 @@ public class JsonDataTransformTest
 	 * with the extra fields not used in the analysis filtered out
 	 *  
 	 * @throws IOException
-	 * @throws HighProportionOfBadRecordsException 
+	 * @throws HighProportionOfBadTimestampsException 
 	 */
 	@Test
 	public void plainJsonToLengthEncoded() 
-	throws IOException, MissingFieldException, HighProportionOfBadRecordsException
+	throws IOException, MissingFieldException, HighProportionOfBadTimestampsException
 	{
 		String data = "{\"timestamp\": \"1350824400\", \"airline\": \"DJA\", \"junk_field\": \"nonsense\", \"responsetime\": \"622\", \"sourcetype\": \"flightcentre\"}" +
 					"{\"timestamp\": \"1350824401\", \"airline\": \"JQA\", \"junk_field\": \"nonsense\", \"responsetime\": \"1742\", \"sourcetype\": \"flightcentre\"}" +
@@ -155,11 +155,11 @@ public class JsonDataTransformTest
 	 * Test transforming JSON with a time format to length encoded.
 	 *  
 	 * @throws IOException
-	 * @throws HighProportionOfBadRecordsException 
+	 * @throws HighProportionOfBadTimestampsException 
 	 */
 	@Test
 	public void jsonWithDateFormatToLengthEncoded() 
-	throws IOException, MissingFieldException, HighProportionOfBadRecordsException
+	throws IOException, MissingFieldException, HighProportionOfBadTimestampsException
 	{
 		// The json docs are have different field orders
 		String data = "{\"airline\": \"DJA\", \"timestamp\": \"2012-10-21T14:00:00\", \"responsetime\": \"622\", \"sourcetype\": \"flightcentre\"}" +
@@ -259,11 +259,11 @@ public class JsonDataTransformTest
 	 * and extra fields to length encoded.
 	 *  
 	 * @throws IOException
-	 * @throws HighProportionOfBadRecordsException 
+	 * @throws HighProportionOfBadTimestampsException 
 	 */
 	@Test
 	public void jsonWithDateFormatAndExtraFieldsToLengthEncoded() 
-	throws IOException, MissingFieldException, HighProportionOfBadRecordsException
+	throws IOException, MissingFieldException, HighProportionOfBadTimestampsException
 	{
 		// Document fields are not in the same order
 		String data = "{\"extra_field\": \"extra\", \"timestamp\": \"2012-10-21T14:00:00\", \"airline\": \"DJA\", \"responsetime\": \"622\", \"sourcetype\": \"flightcentre\", \"junk_field\": \"nonsense\"}" +
@@ -364,11 +364,11 @@ public class JsonDataTransformTest
 	 * 
 	 * @throws IOException
 	 * @throws MissingFieldException
-	 * @throws HighProportionOfBadRecordsException 
+	 * @throws HighProportionOfBadTimestampsException 
 	 */
 	@Test
 	public void differentFieldsOrderJsonToLengthEncoded() 
-	throws IOException, MissingFieldException, HighProportionOfBadRecordsException
+	throws IOException, MissingFieldException, HighProportionOfBadTimestampsException
 	{
 		String data = "{\"timestamp\": \"1350824400\", \"airline\": \"DJA\", \"junk_field\": \"nonsense\", \"responsetime\": \"622\", \"sourcetype\": \"flightcentre\"}" +
 					"{\"junk_field\": \"nonsense\", \"airline\": \"JQA\", \"timestamp\": \"1350824401\", \"responsetime\": \"1742\", \"sourcetype\": \"flightcentre\"}" +
@@ -466,11 +466,11 @@ public class JsonDataTransformTest
 	 * passes records with empty strings for the missing fields.
 	 *  
 	 * @throws IOException
-	 * @throws HighProportionOfBadRecordsException 
+	 * @throws HighProportionOfBadTimestampsException 
 	 */
 	@Test
 	public void jsonWithDateFormatMissingFieldsToLengthEncoded() 
-	throws IOException, MissingFieldException, HighProportionOfBadRecordsException
+	throws IOException, MissingFieldException, HighProportionOfBadTimestampsException
 	{
 		
 		String dateFormatData = "{\"timestamp\": \"2012-10-21T14:00:00\", \"airline\": \"DJA\", \"responsetime\": \"622\", \"sourcetype\": \"flightcentre\"}" +
