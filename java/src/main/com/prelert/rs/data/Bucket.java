@@ -46,7 +46,7 @@ import org.apache.log4j.Logger;
 /**
  * Bucket Result POJO 
  */
-@JsonIgnoreProperties({"epoch", "epochString"})
+@JsonIgnoreProperties({"epoch", "epochString", "id"})
 @JsonInclude(Include.NON_NULL)
 public class Bucket 
 {
