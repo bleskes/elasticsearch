@@ -242,7 +242,7 @@ public class JobManager implements JobDetailsProvider
 			// the job does not exist
 			String msg = "Missing Index no job with id " + jobId;
 			s_Logger.warn(msg);
-			throw new UnknownJobException(jobId, msg, 
+			throw new UnknownJobException(jobId, "No known job with id '" + jobId + "'", 
 					ErrorCode.MISSING_JOB_ERROR);
 		}
 	}

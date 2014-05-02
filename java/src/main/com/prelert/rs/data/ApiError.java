@@ -142,7 +142,7 @@ public class ApiError
 		
 		if (m_ErrorCode != null)
 		{
-			builder.append("\n  \"errorCode\" : ").append(m_ErrorCode);
+			builder.append("\n  \"errorCode\" : ").append(m_ErrorCode.getValueString());
 			needComma = true;
 		}
 		
