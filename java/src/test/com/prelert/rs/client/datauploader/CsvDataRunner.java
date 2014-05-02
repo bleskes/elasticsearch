@@ -76,7 +76,7 @@ public class CsvDataRunner implements Runnable
 	// members are final as read by multiple threads
 	final private long m_NumTimeSeries;
 	final private long m_NumIterations;
-	final private long m_PointInterval;
+	final private long m_PointIntervalSecs;
 	final private long m_BucketSpan;
 	
 	volatile private boolean m_Stop;
@@ -109,7 +109,7 @@ public class CsvDataRunner implements Runnable
 	{
 		m_NumTimeSeries = numberTimeSeries;
 		m_NumIterations = numIterations;
-		m_PointInterval = pointIntervalSecs;
+		m_PointIntervalSecs = pointIntervalSecs;
 		m_BucketSpan = bucketSpanSecs;
 		
 		m_ApiClient = new EngineApiClient();
@@ -221,8 +221,8 @@ public class CsvDataRunner implements Runnable
 						break;
 					}
 					
-					long iterStart = System.currentTimeMillis();
-					long epoch = iterStart / 1000;
+					long iterStartMs = System.currentTimeMillis();
+					long epoch = iterStartMs / 1000;
 
 
 					long timeSeriesCount = 0;
@@ -232,9 +232,9 @@ public class CsvDataRunner implements Runnable
 					}
 
 
-					long iterEnd = System.currentTimeMillis();
+					long iterEndMs = System.currentTimeMillis();
 					s_Logger.info(String.format("%d metrics uploaded in  %d ms", 
-							m_NumTimeSeries, iterEnd - iterStart));
+							m_NumTimeSeries, iterEndMs - iterStartMs));
 
 
 					if (iterationCount >= m_NumIterations && m_NumIterations != 0)
@@ -243,7 +243,7 @@ public class CsvDataRunner implements Runnable
 						break;
 					}
 
-					long sleepTime = (iterStart + m_PointInterval) - iterEnd;
+					long sleepTime = (iterStartMs + (m_PointIntervalSecs * 1000)) - iterEndMs;
 					s_Logger.info(String.format("Sleeping for %d ms", sleepTime));
 					if (sleepTime > 0)
 					{

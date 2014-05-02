@@ -135,7 +135,16 @@ public class Jobs extends ResourceWithJobManager
     	s_Logger.debug("Creating new job");
     	
     	// throws if a bad config
-    	config.verify();
+    	try
+    	{
+    		config.verify();
+    	}
+    	catch (JobConfigurationException e)
+    	{
+    		// log error and rethrow
+    		s_Logger.error("Bad job configuration ", e);
+    		throw e;
+    	}
     	
     	JobManager manager = jobManager();
     	JobDetails job = manager.createJob(config);
