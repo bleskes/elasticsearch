@@ -44,7 +44,6 @@ import javax.ws.rs.core.Response;
 
 import org.apache.log4j.Logger;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobConfigurationException;
 import com.prelert.job.JobInUseException;
@@ -95,7 +94,7 @@ public class Jobs extends ResourceWithJobManager
     	s_Logger.debug(String.format("Get all jobs, skip=%d, take=%d", skip, take));
     	
     	JobManager manager = jobManager();
-    	Pagination<JobDetails> results = manager.getAllJobs(skip, take);
+    	Pagination<JobDetails> results = manager.getJobs(skip, take);
     	
     	setPagingUrls(ENDPOINT, results);
     	

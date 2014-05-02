@@ -25,36 +25,21 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.process;
+package com.prelert.job.warnings;
 
-import com.prelert.rs.data.ErrorCode;
+import org.apache.log4j.Logger;
 
 /**
- * Exception thrown when there is an error running 
- * a native process (autodetect).
+ * Abstract Factory method for creating new {@link StatusReporter} 
+ * instances. 
  */
-public class NativeProcessRunException extends Exception
+public interface StatusReporterFactory 
 {
-	private static final long serialVersionUID = 5722287151589093943L;		
-	
-	private ErrorCode m_ErrorCode;
-	
-	public NativeProcessRunException(String message, ErrorCode errorCode)
-	{
-		super(message);
-		m_ErrorCode = errorCode;
-	}
-	
-	public NativeProcessRunException(String message, ErrorCode errorCode, Throwable cause)
-	{
-		super(message, cause);
-		m_ErrorCode = errorCode;
-	}
-	
-	public ErrorCode getErrorCode()
-	{
-		return m_ErrorCode;
-	}
-	
-	
+	/**
+	 * Return a new StatusReporter for the given job id. 
+	 * @param jobId
+	 * @param logger The job logger
+	 * @return
+	 */
+	public StatusReporter newStatusReporter(String jobId, Logger logger);
 }

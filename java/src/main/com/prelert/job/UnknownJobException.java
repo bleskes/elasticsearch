@@ -26,6 +26,8 @@
  ************************************************************/
 package com.prelert.job;
 
+import com.prelert.rs.data.ErrorCode;
+
 /**
  * This type of exception represents an error where
  * an operation uses a <i>JobId</i> that does not exist. 
@@ -35,7 +37,7 @@ public class UnknownJobException extends Exception
 	private static final long serialVersionUID = 8603362038035845948L;
 
 	private String m_JobId;
-	private int m_ErrorCode;
+	private ErrorCode m_ErrorCode;
 	
 	/**
 	 * Create a new UnknownJobException with an error code
@@ -44,14 +46,14 @@ public class UnknownJobException extends Exception
 	 * @param message Details of error explaining the context 
 	 * @param errorCode
 	 */
-	public UnknownJobException(String jobId, String message, int errorCode)
+	public UnknownJobException(String jobId, String message, ErrorCode errorCode)
 	{
 		super(message);
 		m_JobId = jobId;
 		m_ErrorCode = errorCode;
 	}
 	
-	public UnknownJobException(String jobId, String message, int errorCode,
+	public UnknownJobException(String jobId, String message, ErrorCode errorCode,
 			Throwable cause)
 	{
 		super(message, cause);
@@ -73,7 +75,7 @@ public class UnknownJobException extends Exception
 	 * 
 	 * @return
 	 */
-	public int getErrorCode()
+	public ErrorCode getErrorCode()
 	{
 		return m_ErrorCode;
 	}

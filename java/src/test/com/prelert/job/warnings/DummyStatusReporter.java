@@ -24,37 +24,72 @@
  *                                                          *
  *                                                          *
  ************************************************************/
+package com.prelert.job.warnings;
 
-package com.prelert.job.process;
-
-import com.prelert.rs.data.ErrorCode;
-
-/**
- * Exception thrown when there is an error running 
- * a native process (autodetect).
- */
-public class NativeProcessRunException extends Exception
+public class DummyStatusReporter implements StatusReporter 
 {
-	private static final long serialVersionUID = 5722287151589093943L;		
+	private int m_RecordsWritten = 0;
+	private int m_RecordsDiscarded = 0;
+	private int m_DateParseErrorsCount = 0;
+	private int m_MissingFieldErrorCount = 0;
+	private int m_OutOfOrderRecordCount = 0;
 	
-	private ErrorCode m_ErrorCode;
-	
-	public NativeProcessRunException(String message, ErrorCode errorCode)
+	public DummyStatusReporter()
 	{
-		super(message);
-		m_ErrorCode = errorCode;
+		
 	}
-	
-	public NativeProcessRunException(String message, ErrorCode errorCode, Throwable cause)
+		
+	@Override
+	public void reportRecordsWritten(int recordsWritten, int recordsDiscarded)
+	throws HighProportionOfBadTimestampsException 
 	{
-		super(message, cause);
-		m_ErrorCode = errorCode;
+		m_RecordsWritten = recordsWritten;
+		m_RecordsDiscarded = recordsDiscarded;
 	}
-	
-	public ErrorCode getErrorCode()
+
+	@Override
+	public void reportDateParseError(String date)
+	throws HighProportionOfBadTimestampsException 
 	{
-		return m_ErrorCode;
+		m_DateParseErrorsCount++;
 	}
-	
-	
+
+	@Override
+	public void reportMissingField(String field) 
+	{
+		m_MissingFieldErrorCount++;
+	}
+
+
+	@Override
+	public void reportOutOfOrderRecord(long date, long previousDate)
+	throws OutOfOrderRecordsException 
+	{
+		m_OutOfOrderRecordCount++;
+	}
+
+	public int getRecordsWritten() 
+	{
+		return m_RecordsWritten;
+	}
+
+	public int getRecordsDiscarded() 
+	{
+		return m_RecordsDiscarded;
+	}
+
+	public int getDateParseErrorsCount() 
+	{
+		return m_DateParseErrorsCount;
+	}
+
+	public int getMissingFieldErrorCount() 
+	{
+		return m_MissingFieldErrorCount;
+	}
+
+	public int getOutOfOrderRecordCount() 
+	{
+		return m_OutOfOrderRecordCount;
+	}
 }

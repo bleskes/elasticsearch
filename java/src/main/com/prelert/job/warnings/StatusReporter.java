@@ -24,37 +24,22 @@
  *                                                          *
  *                                                          *
  ************************************************************/
+package com.prelert.job.warnings;
 
-package com.prelert.job.process;
 
-import com.prelert.rs.data.ErrorCode;
-
-/**
- * Exception thrown when there is an error running 
- * a native process (autodetect).
- */
-public class NativeProcessRunException extends Exception
+public interface StatusReporter 
 {
-	private static final long serialVersionUID = 5722287151589093943L;		
+	public void reportRecordsWritten(int recordsWritten, int recordsDiscarded) 
+			throws HighProportionOfBadTimestampsException;
 	
-	private ErrorCode m_ErrorCode;
+	public void reportDateParseError(String date) 
+			throws HighProportionOfBadTimestampsException;
 	
-	public NativeProcessRunException(String message, ErrorCode errorCode)
-	{
-		super(message);
-		m_ErrorCode = errorCode;
-	}
+	public void reportMissingField(String field);
 	
-	public NativeProcessRunException(String message, ErrorCode errorCode, Throwable cause)
-	{
-		super(message, cause);
-		m_ErrorCode = errorCode;
-	}
+	//public void reportInvalidRecord(String record);
 	
-	public ErrorCode getErrorCode()
-	{
-		return m_ErrorCode;
-	}
-	
-	
+	public void reportOutOfOrderRecord(long date, long previousDate) 
+			throws OutOfOrderRecordsException;
+
 }

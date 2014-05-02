@@ -42,6 +42,8 @@ import junit.framework.Assert;
 
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
+import com.prelert.job.warnings.DummyStatusReporter;
+import com.prelert.job.warnings.HighProportionOfBadTimestampsException;
 
 public class CsvDataTransfromTest 
 {
@@ -49,10 +51,11 @@ public class CsvDataTransfromTest
 	
 	/**
 	 * Test transforming csv data with time in epoch format 
+	 * @throws HighProportionOfBadTimestampsException 
 	 */
 	@Test
 	public void plainCSVToLengthEncoded() 
-	throws IOException, MissingFieldException
+	throws IOException, MissingFieldException,HighProportionOfBadTimestampsException
 	{
 		String data = "airline,responsetime,sourcetype,_time\n" +
 					"DJA,622,flightcentre,1350824400\n" +
@@ -77,14 +80,22 @@ public class CsvDataTransfromTest
 		dd.setFieldDelimiter(',');
 		
 		// can create with null
-		ProcessManager pm = new ProcessManager(null, null);
+		ProcessManager pm = new ProcessManager(null, null, null);
 		
 		ByteArrayInputStream bis = 
 				new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
 		ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
 		
-		pm.writeToJob(dd, analysisFields, bis, bos, s_Logger);
+		DummyStatusReporter reporter = new DummyStatusReporter();
+		
+		pm.writeToJob(dd, analysisFields, bis, bos, reporter, s_Logger);
 		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
+		
+		Assert.assertEquals(8, reporter.getRecordsWritten());
+		Assert.assertEquals(0, reporter.getRecordsDiscarded());
+		Assert.assertEquals(0, reporter.getMissingFieldErrorCount());
+		Assert.assertEquals(0, reporter.getDateParseErrorsCount());
+		Assert.assertEquals(0, reporter.getOutOfOrderRecordCount());
 		
 		String [] lines = data.split("\\n");
 		
@@ -114,9 +125,11 @@ public class CsvDataTransfromTest
 	/**
 	 * Test transforming csv data with time in epoch format 
 	 * and a non-standard quote character
+	 * @throws HighProportionOfBadTimestampsException 
 	 */
 	@Test
-	public void quotedCSVToLengthEncoded() throws IOException, MissingFieldException
+	public void quotedCSVToLengthEncoded() 
+	throws IOException, MissingFieldException, HighProportionOfBadTimestampsException
 	{
 		// ? is the quote char
 		String data = "airline,responsetime,sourcetype,_time\n" +
@@ -146,13 +159,22 @@ public class CsvDataTransfromTest
 		dd.setQuoteCharacter('?');
 		
 		// can create with null
-		ProcessManager pm = new ProcessManager(null, null);
+		ProcessManager pm = new ProcessManager(null, null, null);
 		
 		ByteArrayInputStream bis = 
 				new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
 		ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
 		
-		pm.writeToJob(dd, analysisFields, bis, bos, s_Logger);
+		DummyStatusReporter reporter = new DummyStatusReporter();
+		
+		pm.writeToJob(dd, analysisFields, bis, bos, reporter, s_Logger);
+		
+		Assert.assertEquals(4, reporter.getRecordsWritten());
+		Assert.assertEquals(0, reporter.getRecordsDiscarded());
+		Assert.assertEquals(0, reporter.getMissingFieldErrorCount());
+		Assert.assertEquals(0, reporter.getDateParseErrorsCount());
+		Assert.assertEquals(0, reporter.getOutOfOrderRecordCount());		
+		
 		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 		
 		for (int l=0; l<lines.length; l++)
@@ -179,9 +201,11 @@ public class CsvDataTransfromTest
 	
 	/**
 	 * Test transforming csv data with a time format
+	 * @throws HighProportionOfBadTimestampsException 
 	 */
 	@Test
-	public void csvWithDateFormat() throws IOException, MissingFieldException
+	public void csvWithDateFormat() 
+	throws IOException, MissingFieldException, HighProportionOfBadTimestampsException
 	{
 		// ? is the quote char
 		String data = "date,airline,responsetime,sourcetype\n" +
@@ -214,15 +238,22 @@ public class CsvDataTransfromTest
 
 		
 		// can create with null
-		ProcessManager pm = new ProcessManager(null, null);
+		ProcessManager pm = new ProcessManager(null, null, null);
 		
 		ByteArrayInputStream bis = 
 				new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
 		ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
 		
-		pm.writeToJob(dd, analysisFields, bis, bos, s_Logger);
+		DummyStatusReporter reporter = new DummyStatusReporter();
+		pm.writeToJob(dd, analysisFields, bis, bos, reporter, s_Logger);
 		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 		
+		Assert.assertEquals(8, reporter.getRecordsWritten());
+		Assert.assertEquals(0, reporter.getRecordsDiscarded());
+		Assert.assertEquals(0, reporter.getMissingFieldErrorCount());
+		Assert.assertEquals(0, reporter.getDateParseErrorsCount());
+		Assert.assertEquals(0, reporter.getOutOfOrderRecordCount());
+		   
 		String [] lines = data.split("\\n");
 		
 		boolean isHeader = true;
@@ -274,9 +305,10 @@ public class CsvDataTransfromTest
 	 * 
 	 * @throws IOException
 	 * @throws MissingFieldException
+	 * @throws HighProportionOfBadTimestampsException 
 	 */
 	@Test
-	public void plainCsvWithExtraFields() throws IOException, MissingFieldException
+	public void plainCsvWithExtraFields() throws IOException, MissingFieldException, HighProportionOfBadTimestampsException
 	{
 		String data = "airline,responsetime,airport,sourcetype,_time,baggage\n" +
 					"DJA,622,flightcentre,MAN,1350824400,none\n" +
@@ -302,14 +334,22 @@ public class CsvDataTransfromTest
 		dd.setFieldDelimiter(',');
 		
 		// can create with null
-		ProcessManager pm = new ProcessManager(null, null);
+		ProcessManager pm = new ProcessManager(null, null, null);
 		
 		ByteArrayInputStream bis = 
 				new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
 		ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
 		
-		pm.writeToJob(dd, analysisFields, bis, bos, s_Logger);
+		DummyStatusReporter reporter = new DummyStatusReporter();
+		
+		pm.writeToJob(dd, analysisFields, bis, bos, reporter, s_Logger);
 		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
+		
+		Assert.assertEquals(8, reporter.getRecordsWritten());
+		Assert.assertEquals(0, reporter.getRecordsDiscarded());
+		Assert.assertEquals(0, reporter.getMissingFieldErrorCount());
+		Assert.assertEquals(0, reporter.getDateParseErrorsCount());
+		Assert.assertEquals(0, reporter.getOutOfOrderRecordCount());
 		
 		String [] lines = data.split("\\n");
 		
@@ -340,10 +380,11 @@ public class CsvDataTransfromTest
 	 * a MissingFieldException 
 	 * 
 	 * @throws IOException
+	 * @throws HighProportionOfBadTimestampsException 
 	 */
 	@Test 
 	public void plainCsvWithMissingTimeField()
-	throws IOException
+	throws IOException, HighProportionOfBadTimestampsException
 	{
 		// no time field
 		String data = "airline,responsetime,airport,sourcetype,baggage\n" +
@@ -364,7 +405,7 @@ public class CsvDataTransfromTest
 		dd.setFieldDelimiter(',');
 		
 		// can create with null
-		ProcessManager pm = new ProcessManager(null, null);
+		ProcessManager pm = new ProcessManager(null, null, null);
 		
 		ByteArrayInputStream bis = 
 				new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
@@ -372,7 +413,8 @@ public class CsvDataTransfromTest
 		
 		try 
 		{
-			pm.writeToJob(dd, analysisFields, bis, bos, s_Logger);
+			DummyStatusReporter reporter = new DummyStatusReporter();		
+			pm.writeToJob(dd, analysisFields, bis, bos, reporter, s_Logger);
 			Assert.assertTrue(false); // should throw
 		} 
 		catch (MissingFieldException e)
@@ -393,7 +435,8 @@ public class CsvDataTransfromTest
 		
 		try 
 		{
-			pm.writeToJob(dd, analysisFields, bis, bos, s_Logger);
+			DummyStatusReporter reporter = new DummyStatusReporter();
+			pm.writeToJob(dd, analysisFields, bis, bos, reporter, s_Logger);
 			Assert.assertTrue(false); // should throw
 		} 
 		catch (MissingFieldException e)
@@ -409,10 +452,11 @@ public class CsvDataTransfromTest
 	 * a MissingFieldException 
 	 * 
 	 * @throws IOException
+	 * @throws HighProportionOfBadTimestampsException 
 	 */
 	@Test 
 	public void plainCsvWithMissingField()
-	throws IOException
+	throws IOException, HighProportionOfBadTimestampsException
 	{
 		String data = "airline,responsetime,airport,sourcetype,_time,baggage\n" +
 				"DJA,622,flightcentre,MAN,1350824400,none\n" +
@@ -432,7 +476,7 @@ public class CsvDataTransfromTest
 		dd.setFieldDelimiter(',');
 		
 		// can create with null
-		ProcessManager pm = new ProcessManager(null, null);
+		ProcessManager pm = new ProcessManager(null, null, null);
 		
 		ByteArrayInputStream bis = 
 				new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
@@ -440,7 +484,8 @@ public class CsvDataTransfromTest
 		
 		try 
 		{
-			pm.writeToJob(dd, analysisFields, bis, bos, s_Logger);
+			DummyStatusReporter reporter = new DummyStatusReporter();
+			pm.writeToJob(dd, analysisFields, bis, bos, reporter, s_Logger);
 			Assert.assertTrue(false); // should throw
 		} 
 		catch (MissingFieldException e)
@@ -458,7 +503,8 @@ public class CsvDataTransfromTest
 		
 		try 
 		{
-			pm.writeToJob(dd, analysisFields, bis, bos, s_Logger);
+			DummyStatusReporter reporter = new DummyStatusReporter();
+			pm.writeToJob(dd, analysisFields, bis, bos, reporter, s_Logger);
 			Assert.assertTrue(false); // should throw
 		} 
 		catch (MissingFieldException e)
@@ -474,10 +520,11 @@ public class CsvDataTransfromTest
 	 * 
 	 * @throws IOException
 	 * @throws MissingFieldException 
+	 * @throws HighProportionOfBadTimestampsException 
 	 */
 	@Test 
 	public void plainCsvWithIncompleteRecords()
-	throws IOException, MissingFieldException
+	throws IOException, MissingFieldException, HighProportionOfBadTimestampsException
 	{
 		String epoch_data = "_time,airline,responsetime,sourcetype,airport,baggage\n" +
 				"1350824400,DJA,622,flightcentre,MAN,none\n" +
@@ -530,13 +577,22 @@ public class CsvDataTransfromTest
 			}
 			
 			// can create with null
-			ProcessManager pm = new ProcessManager(null, null);
+			ProcessManager pm = new ProcessManager(null, null, null);
 
 			ByteArrayInputStream bis = 
 					new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
 			ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
 
-			pm.writeToJob(dd, analysisFields, bis, bos, s_Logger);
+			DummyStatusReporter reporter = new DummyStatusReporter();
+			
+			pm.writeToJob(dd, analysisFields, bis, bos, reporter, s_Logger);
+			
+			Assert.assertEquals(4, reporter.getRecordsWritten());
+			Assert.assertEquals(2, reporter.getRecordsDiscarded());
+			Assert.assertEquals(2, reporter.getMissingFieldErrorCount());
+			Assert.assertEquals(0, reporter.getDateParseErrorsCount());
+			Assert.assertEquals(0, reporter.getOutOfOrderRecordCount());
+			
 			ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 
 			for (String [] fields : lines)

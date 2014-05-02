@@ -27,6 +27,8 @@
  ************************************************************/
 package com.prelert.job;
 
+import com.prelert.rs.data.ErrorCode;
+
 /**
  * Represents the invalid configuration of a job.
  */
@@ -35,28 +37,27 @@ public class JobConfigurationException extends Exception
 	private static final long serialVersionUID = -563428978300447381L;
 
 	
-	private int m_ErrorCode;
+	private ErrorCode m_ErrorCode;
 	
 	/**
 	 * Create a new JobConfigurationException.
 	 * 
 	 * @param message Details of error explaining the context 
-	 * @param errorCode See {@linkplain com.prelert.rs.data.ErrorCodes}
+	 * @param errorCode See {@linkplain com.prelert.rs.data.ErrorCode}
 	 */
-	public JobConfigurationException(String message, int errorCode)
+	public JobConfigurationException(String message, ErrorCode errorCode)
 	{
 		super(message);
 		m_ErrorCode = errorCode;
 	}
 	
-	public JobConfigurationException(String message, int errorCode, Throwable cause)
+	public JobConfigurationException(String message, ErrorCode errorCode, Throwable cause)
 	{
 		super(message, cause);
 		m_ErrorCode = errorCode;
 	}
 	
-	
-	public int getErrorCode()
+	public ErrorCode getErrorCode()
 	{
 		return m_ErrorCode;
 	}

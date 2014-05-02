@@ -34,7 +34,7 @@ import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.prelert.rs.data.ErrorCodes;
+import com.prelert.rs.data.ErrorCode;
 
 
 /**
@@ -353,21 +353,21 @@ public class Detector
 			{
 				throw new JobConfigurationException("One of FieldName, "
 						+ "ByFieldName, OverFieldName or Function must be set",
-						ErrorCodes.INVALID_FIELD_SELECTION);
+						ErrorCode.INVALID_FIELD_SELECTION);
 			}
 			
 			if (!COUNT.equals(m_Function))
 			{
 				throw new JobConfigurationException("Unless the function is 'count'"
 						+ " one of FieldName, ByFieldName or OverFieldName must be set",
-						ErrorCodes.INVALID_FIELD_SELECTION);
+						ErrorCode.INVALID_FIELD_SELECTION);
 			}
 		}
 		
 		if (!emptyFunction && ANALYSIS_FUNCTIONS.contains(m_Function) == false)
 		{
 			throw new JobConfigurationException("Unknown function '" + m_Function + "'",
-					ErrorCodes.UNKNOWN_FUNCTION);
+					ErrorCode.UNKNOWN_FUNCTION);
 		}
 		
 		// If function is not set but the fieldname happens 
@@ -389,7 +389,7 @@ public class Detector
 				throw new JobConfigurationException(
 						"byFieldName must be used in "
 						+ "conjunction with fieldName or function",
-						ErrorCodes.INVALID_FIELD_SELECTION);
+						ErrorCode.INVALID_FIELD_SELECTION);
 			}
 		}
 		
@@ -400,7 +400,7 @@ public class Detector
 				throw new JobConfigurationException(
 						"overFieldName must be used in "
 						+ "conjunction with fieldName or function",
-						ErrorCodes.INVALID_FIELD_SELECTION);
+						ErrorCode.INVALID_FIELD_SELECTION);
 			}
 		}
 		
@@ -414,7 +414,7 @@ public class Detector
 					throw new JobConfigurationException(
 							String.format("The fieldName must be set when the "
 									+ " '%s' function is used", m_Function),
-							ErrorCodes.INVALID_FIELD_SELECTION);
+							ErrorCode.INVALID_FIELD_SELECTION);
 				}
 			}
 			
@@ -423,7 +423,7 @@ public class Detector
 				throw new JobConfigurationException(
 						String.format("fieldName cannot be used with function '%s'",
 								m_Function),
-						ErrorCodes.INVALID_FIELD_SELECTION);
+						ErrorCode.INVALID_FIELD_SELECTION);
 			}
 			
 			if (BY_FIELD_NAME_FUNCTIONS.contains(m_Function))
@@ -433,7 +433,7 @@ public class Detector
 					throw new JobConfigurationException(
 							String.format("The byFieldName must be set when the "
 									+ " '%s' function is used", m_Function),
-							ErrorCodes.INVALID_FIELD_SELECTION);
+							ErrorCode.INVALID_FIELD_SELECTION);
 				}
 			}
 			
@@ -442,7 +442,7 @@ public class Detector
 				throw new JobConfigurationException(
 						String.format("byFieldName cannot be used with function '%s'",
 								m_Function),
-						ErrorCodes.INVALID_FIELD_SELECTION);
+						ErrorCode.INVALID_FIELD_SELECTION);
 			}
 			
 			if (OVER_FIELD_NAME_FUNCTIONS.contains(m_Function))
@@ -452,7 +452,7 @@ public class Detector
 					throw new JobConfigurationException(
 							String.format("The overFieldName must be set when the "
 									+ " '%s' function is used", m_Function),
-							ErrorCodes.INVALID_FIELD_SELECTION);
+							ErrorCode.INVALID_FIELD_SELECTION);
 				}
 			}		
 			
@@ -461,7 +461,7 @@ public class Detector
 				throw new JobConfigurationException(
 						String.format("overFieldName cannot be used with function '%s'",
 								m_Function),
-						ErrorCodes.INVALID_FIELD_SELECTION);
+						ErrorCode.INVALID_FIELD_SELECTION);
 			}
 			
 			if (COUNT_BY_OVER_FUNCTIONS.contains(m_Function))
@@ -472,7 +472,7 @@ public class Detector
 							String.format("Either byFieldName or overFieldName "
 									+ "must be specified for function '%s'",
 									m_Function),
-							ErrorCodes.INVALID_FIELD_SELECTION);
+							ErrorCode.INVALID_FIELD_SELECTION);
 				}
 			}
 		}

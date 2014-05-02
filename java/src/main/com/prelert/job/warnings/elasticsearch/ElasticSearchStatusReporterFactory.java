@@ -24,37 +24,32 @@
  *                                                          *
  *                                                          *
  ************************************************************/
+package com.prelert.job.warnings.elasticsearch;
 
-package com.prelert.job.process;
+import org.apache.log4j.Logger;
+import org.elasticsearch.node.Node;
 
-import com.prelert.rs.data.ErrorCode;
+import com.prelert.job.warnings.StatusReporter;
+import com.prelert.job.warnings.StatusReporterFactory;
 
-/**
- * Exception thrown when there is an error running 
- * a native process (autodetect).
- */
-public class NativeProcessRunException extends Exception
+public class ElasticSearchStatusReporterFactory implements StatusReporterFactory 
 {
-	private static final long serialVersionUID = 5722287151589093943L;		
+	private Node m_Node;
 	
-	private ErrorCode m_ErrorCode;
-	
-	public NativeProcessRunException(String message, ErrorCode errorCode)
+	/**
+	 * Construct the factory
+	 * 
+	 * @param node The ElasticSearch node
+	 */
+	public ElasticSearchStatusReporterFactory(Node node)
 	{
-		super(message);
-		m_ErrorCode = errorCode;
+		m_Node = node;
 	}
-	
-	public NativeProcessRunException(String message, ErrorCode errorCode, Throwable cause)
+
+	@Override
+	public StatusReporter newStatusReporter(String jobId, Logger logger) 
 	{
-		super(message, cause);
-		m_ErrorCode = errorCode;
+		return new ElasticSearchStatusReporter(m_Node.client(), jobId, logger);
 	}
-	
-	public ErrorCode getErrorCode()
-	{
-		return m_ErrorCode;
-	}
-	
-	
+
 }

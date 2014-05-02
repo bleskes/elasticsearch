@@ -48,7 +48,11 @@ import com.prelert.job.JobDetails;
 import com.prelert.job.JobInUseException;
 import com.prelert.job.JobStatus;
 import com.prelert.job.UnknownJobException;
-import com.prelert.rs.data.ErrorCodes;
+import com.prelert.job.warnings.DummyStatusReporter;
+import com.prelert.job.warnings.HighProportionOfBadTimestampsException;
+import com.prelert.job.warnings.StatusReporter;
+import com.prelert.job.warnings.StatusReporterFactory;
+import com.prelert.rs.data.ErrorCode;
 
 /**
  * Launch processes with various bad configuration/inputs that
@@ -95,7 +99,7 @@ public class ProcessErrorLoggingTest
 			{
 				throw new UnknownJobException(jobId, 
 						"SingleJobDetailsProvider cannot find job",
-						ErrorCodes.MISSING_JOB_ERROR);
+						ErrorCode.MISSING_JOB_ERROR);
 			}
 		}
 		@Override
@@ -129,6 +133,17 @@ public class ProcessErrorLoggingTest
 		}
 	}
 	
+	static class SimpleStatusReporterFactory implements StatusReporterFactory 
+	{
+
+		@Override
+		public StatusReporter newStatusReporter(String jobId, Logger logger) 
+		{
+			return new DummyStatusReporter();
+		}
+
+	}
+	
 	
 	/**
 	 * No arguments but -Dprelert.home must be set.
@@ -137,10 +152,11 @@ public class ProcessErrorLoggingTest
 	 * @throws NativeProcessRunException
 	 * @throws UnknownJobException
 	 * @throws IOException 
+	 * @throws HighProportionOfBadTimestampsException 
 	 */
 	public static void main(String[] args) 
 	throws NativeProcessRunException, UnknownJobException, IOException, 
-	MissingFieldException, JobInUseException
+	MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException
 	{
 		Detector detector = new Detector();
 		detector.setFieldName("airline");
@@ -173,7 +189,8 @@ public class ProcessErrorLoggingTest
 		
 		
 		ProcessManager manager = new ProcessManager(jobDetailsProvider,
-										new DoNothingResultsPersister());
+										new DoNothingResultsPersister(),
+										new SimpleStatusReporterFactory());
 		try
 		{
 

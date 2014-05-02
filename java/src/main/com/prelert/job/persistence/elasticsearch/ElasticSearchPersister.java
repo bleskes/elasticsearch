@@ -40,7 +40,6 @@ import java.util.concurrent.ExecutionException;
 
 import org.apache.log4j.Logger;
 import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
-import org.elasticsearch.action.admin.indices.refresh.RefreshResponse;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
@@ -59,7 +58,7 @@ import com.prelert.job.persistence.JobDataPersister;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.Detector;
-import com.prelert.rs.data.ErrorCodes;
+import com.prelert.rs.data.ErrorCode;
 
 /**
  * Saves result Buckets and DetectorState to ElasticSearch<br/>
@@ -123,7 +122,7 @@ public class ElasticSearchPersister implements JobDataPersister
 		{
 			XContentBuilder content = serialiseBucket(bucket);
 			
-			m_Client.prepareIndex(m_JobId, Bucket.TYPE, bucket.getId())
+			m_Client.prepareIndex(m_JobId, Bucket.TYPE, bucket.getEpochString())
 					.setSource(content)
 					.execute().actionGet();
 			
@@ -161,10 +160,10 @@ public class ElasticSearchPersister implements JobDataPersister
 				{
 					content = serialiseRecord(record, detector.getName(), bucket.getTimestamp());
 					
-					String recordId = bucket.getId() + detector.getName() + count;					
+					String recordId = bucket.getEpoch() + detector.getName() + count;					
 					bulkRequest.add(m_Client.prepareIndex(m_JobId, AnomalyRecord.TYPE, recordId)
 							.setSource(content)
-							.setParent(bucket.getId()));					
+							.setParent(bucket.getEpochString()));					
 					++count;
 				}
 				
@@ -353,7 +352,7 @@ public class ElasticSearchPersister implements JobDataPersister
 		{
 			s_Logger.error("Unknown job '" + m_JobId + "'. Cannot read persisted state");
 			throw new UnknownJobException(m_JobId, 
-					"Cannot read persisted state", ErrorCodes.MISSING_DETECTOR_STATE);
+					"Cannot read persisted state", ErrorCode.MISSING_DETECTOR_STATE);
 		}
 		return detectorState;
 	}

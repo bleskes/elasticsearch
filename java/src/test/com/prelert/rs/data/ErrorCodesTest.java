@@ -27,10 +27,7 @@
 
 package com.prelert.rs.data;
 
-import java.lang.reflect.Field;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import junit.framework.Assert;
@@ -38,7 +35,7 @@ import junit.framework.Assert;
 import org.junit.Test;
 
 /**
- * This test ensures that all the error values in {@linkplain ErrorCodes}
+ * This test ensures that all the error values in {@linkplain ErrorCode}
  * are unique so no 2 conditions can return the same error code.
  * This tests is designed to catch copy/paste errors.  
  */
@@ -48,23 +45,17 @@ public class ErrorCodesTest
 	public void errorCodesUnique() 
 	throws IllegalArgumentException, IllegalAccessException
 	{
-		Field[] declaredFields = ErrorCodes.class.getDeclaredFields();
+		ErrorCode[] values = ErrorCode.class.getEnumConstants();
 		
-		List<Field> staticFields = new ArrayList<Field>();
-		Set<Integer> errorValueSet = new HashSet<>();
+		Set<Long> errorValueSet = new HashSet<>();
 
-		for (Field field : declaredFields) 
+		for (ErrorCode value : values) 
 		{
-		    if (java.lang.reflect.Modifier.isStatic(field.getModifiers())) 
-		    {
-		        staticFields.add(field);
-		        errorValueSet.add(field.getInt(null));
-		    }
+			errorValueSet.add(value.getValue());
 		}
 		
-		int numStaticFields = staticFields.size();
 		
-		Assert.assertEquals(numStaticFields, errorValueSet.size());
+		Assert.assertEquals(values.length, errorValueSet.size());
 	}
 
 }

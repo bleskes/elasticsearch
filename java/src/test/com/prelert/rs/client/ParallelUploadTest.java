@@ -37,7 +37,7 @@ import org.apache.log4j.Logger;
 
 import com.prelert.rs.client.datauploader.CsvDataRunner;
 import com.prelert.rs.data.ApiError;
-import com.prelert.rs.data.ErrorCodes;
+import com.prelert.rs.data.ErrorCode;
 
 /**
  * This program tests the case where multiple processes try to write
@@ -98,7 +98,7 @@ public class ParallelUploadTest
 			}
 			
 			ApiError apiError = client.getLastError();
-			if (apiError.getErrorCode() != ErrorCodes.NATIVE_PROCESS_RUNNING_ERROR)
+			if (apiError.getErrorCode() != ErrorCode.NATIVE_PROCESS_RUNNING_ERROR)
 			{
 				throw new IllegalStateException("Closing Job: Error code should be job in use error");
 			}
@@ -114,7 +114,7 @@ public class ParallelUploadTest
 			}
 			
 			apiError = client.getLastError();
-			if (apiError.getErrorCode() != ErrorCodes.NATIVE_PROCESS_RUNNING_ERROR)
+			if (apiError.getErrorCode() != ErrorCode.NATIVE_PROCESS_RUNNING_ERROR)
 			{
 				throw new IllegalStateException("Writing data: Error code should be job in use error");
 			}

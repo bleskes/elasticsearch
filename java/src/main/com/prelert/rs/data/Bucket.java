@@ -30,7 +30,6 @@ package com.prelert.rs.data;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -47,7 +46,7 @@ import org.apache.log4j.Logger;
 /**
  * Bucket Result POJO 
  */
-@JsonIgnoreProperties({"id"})
+@JsonIgnoreProperties({"epoch", "epochString", "id"})
 @JsonInclude(Include.NON_NULL)
 public class Bucket 
 {
@@ -70,7 +69,7 @@ public class Bucket
 	private double m_AnomalyScore;	
 	private int m_RecordCount;
 	private List<Detector> m_Detectors;
-	private String m_Id;
+	private long m_Epoch;
 	private List<AnomalyRecord> m_Records; 
 	
 	public Bucket()
@@ -86,9 +85,26 @@ public class Bucket
 	 *  
 	 * @return The bucket id
 	 */
+	public long getEpoch()
+	{
+		return m_Epoch;
+	}
+	
+	/**
+	 * Get the epoch as a string
+	 */
+	public String getEpochString()
+	{
+		return Long.toString(m_Epoch);
+	}
+	
+	/**
+	 * Same as getEpochString but serialised as the 'id' field. 
+	 * @return
+	 */
 	public String getId()
 	{
-		return m_Id;
+		return Long.toString(m_Epoch);
 	}
 	
 	public Date getTimestamp() 
@@ -100,8 +116,8 @@ public class Bucket
 	{
 		this.m_Timestamp = timestamp;
 		
-		Long epoch = m_Timestamp.getTime() / 1000;
-		m_Id = epoch.toString();
+		// epoch in seconds
+		m_Epoch = m_Timestamp.getTime() / 1000;
 	}
 	
 	public double getAnomalyScore() 

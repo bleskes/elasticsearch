@@ -49,6 +49,8 @@ import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.common.settings.ImmutableSettings;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.index.query.FilterBuilder;
 import org.elasticsearch.index.query.FilterBuilders;
@@ -72,6 +74,8 @@ import com.prelert.job.process.JobDetailsProvider;
 import com.prelert.job.process.MissingFieldException;
 import com.prelert.job.process.NativeProcessRunException;
 import com.prelert.job.process.ProcessManager;
+import com.prelert.job.warnings.HighProportionOfBadTimestampsException;
+import com.prelert.job.warnings.elasticsearch.ElasticSearchStatusReporterFactory;
 import com.prelert.job.DetectorState;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
@@ -81,7 +85,7 @@ import com.prelert.job.UnknownJobException;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.Detector;
-import com.prelert.rs.data.ErrorCodes;
+import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
 
@@ -120,7 +124,21 @@ public class JobManager implements JobDetailsProvider
 		DEFAULT_PAGE_SIZE = Integer.parseInt(DEFAULT_PAGE_SIZE_STR);
 	}
 
-	
+	/**
+	 * ElasticSearch settings that instruct the node not to accept HTTP, not to
+	 * attempt multicast discovery and to only look for another node to connect
+	 * to on the local machine.
+	 */
+    static public final Settings LOCAL_SETTINGS;
+	static
+	{
+		LOCAL_SETTINGS = ImmutableSettings.settingsBuilder()
+				.put("http.enabled", "false")
+				.put("discovery.zen.ping.multicast.enabled", "false")
+				.put("discovery.zen.ping.unicast.hosts", "localhost")
+				.build();
+	}
+
 	private Node m_Node;
 	private Client m_Client;
 	
@@ -139,9 +157,12 @@ public class JobManager implements JobDetailsProvider
 	 */
 	public JobManager(String elasticSearchClusterName)
 	{
-		this(nodeBuilder().client(true).clusterName(elasticSearchClusterName).node());
+		// Multicast discovery is expected to be disabled on the ElasticSearch
+		// data node, so disable it for this embedded node too and tell it to
+		// expect the data node to be on the same machine
+		this(nodeBuilder().settings(LOCAL_SETTINGS).client(true).clusterName(elasticSearchClusterName).node());
 
-		s_Logger.info("Connecting to ElasticSearch cluster '" 
+		s_Logger.info("Connecting to ElasticSearch cluster '"
 				+ elasticSearchClusterName + "'");
 	}	
 		
@@ -157,7 +178,8 @@ public class JobManager implements JobDetailsProvider
 		m_Client = m_Node.client();
 		
 		m_ProcessManager = new ProcessManager(this, 
-				new ElasticSearchResultsReaderFactory(m_Node));
+				new ElasticSearchResultsReaderFactory(m_Node),
+				new ElasticSearchStatusReporterFactory(m_Node));
 		
 		m_IdSequence = new AtomicLong();		
 		m_DateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
@@ -212,7 +234,7 @@ public class JobManager implements JobDetailsProvider
 				String msg = "No details for job with id " + jobId;
 				s_Logger.warn(msg);
 				throw new UnknownJobException(jobId, msg,
-						ErrorCodes.MISSING_JOB_ERROR);
+						ErrorCode.MISSING_JOB_ERROR);
 			}
 		}
 		catch (IndexMissingException e)
@@ -220,8 +242,8 @@ public class JobManager implements JobDetailsProvider
 			// the job does not exist
 			String msg = "Missing Index no job with id " + jobId;
 			s_Logger.warn(msg);
-			throw new UnknownJobException(jobId, msg, 
-					ErrorCodes.MISSING_JOB_ERROR);
+			throw new UnknownJobException(jobId, "No known job with id '" + jobId + "'", 
+					ErrorCode.MISSING_JOB_ERROR);
 		}
 	}
 	
@@ -235,7 +257,7 @@ public class JobManager implements JobDetailsProvider
 	 * @param take Take only this number of Jobs
 	 * @return
 	 */
-	public Pagination<JobDetails> getAllJobs(int skip, int take)
+	public Pagination<JobDetails> getJobs(int skip, int take)
 	{
 		FilterBuilder fb = FilterBuilders.matchAllFilter();
 		SortBuilder sb = new FieldSortBuilder(JobDetails.ID)
@@ -387,7 +409,6 @@ public class JobManager implements JobDetailsProvider
 				
 		SortBuilder sb = new FieldSortBuilder(Bucket.ID)
 								.ignoreUnmapped(true)
-								.missing("_last")
 								.order(SortOrder.ASC);
 		
 		SearchResponse searchResponse = m_Client.prepareSearch(jobId)
@@ -439,6 +460,7 @@ public class JobManager implements JobDetailsProvider
 		GetResponse response = m_Client.prepareGet(jobId, Bucket.TYPE, bucketId).get();
 				
 		Map<String, Object> bucket = response.getSource();
+		
 		if (response.isExists() && expand)
 		{
 			Pagination<Map<String, Object>> page = this.records(jobId, 
@@ -675,7 +697,7 @@ public class JobManager implements JobDetailsProvider
 			String msg = String.format("Error writing the job '%s' finish time.", 
 					jobId);
 			s_Logger.error(msg);
-			throw new UnknownJobException(jobId, msg, ErrorCodes.MISSING_JOB_ERROR);
+			throw new UnknownJobException(jobId, msg, ErrorCode.MISSING_JOB_ERROR);
 		}
 		
 		return true;	
@@ -714,14 +736,14 @@ public class JobManager implements JobDetailsProvider
 				String msg = String.format("No index with id '%s' in the database", jobId);
 				s_Logger.warn(msg);
 				throw new UnknownJobException(jobId, msg, 
-						ErrorCodes.MISSING_JOB_ERROR);
+						ErrorCode.MISSING_JOB_ERROR);
 			}
 			else
 			{
 				String msg = "Error deleting index " + jobId;
 				s_Logger.error(msg);
 				throw new UnknownJobException(jobId, msg, 
-						ErrorCodes.DATA_STORE_ERROR, e.getCause());
+						ErrorCode.DATA_STORE_ERROR, e.getCause());
 			}
 		}
 	}
@@ -744,10 +766,11 @@ public class JobManager implements JobDetailsProvider
 	 * @throws JsonParseException 
 	 * @throws JobInUseException if the job cannot be written to because 
 	 * it is already handling data
+	 * @throws HighProportionOfBadTimestampsException 
 	 */
 	public boolean dataToJob(String jobId, InputStream input) 
 	throws UnknownJobException, NativeProcessRunException, MissingFieldException, 
-		JsonParseException, JobInUseException 
+		JsonParseException, JobInUseException, HighProportionOfBadTimestampsException 
 	{
 		try
 		{
@@ -835,7 +858,7 @@ public class JobManager implements JobDetailsProvider
 		catch (IndexMissingException e)
 		{
 			String msg = String.format("Error writing the job '%s' last data time.", jobId);
-			throw new UnknownJobException(jobId, msg, ErrorCodes.MISSING_JOB_ERROR);
+			throw new UnknownJobException(jobId, msg, ErrorCode.MISSING_JOB_ERROR);
 		}
 	}
 	
@@ -896,13 +919,13 @@ public class JobManager implements JobDetailsProvider
 			else
 			{
 				throw new UnknownJobException(refId, "Cannot find "
-					+ "referenced job with id '" + refId + "'", ErrorCodes.UNKNOWN_JOB_REFERENCE);
+					+ "referenced job with id '" + refId + "'", ErrorCode.UNKNOWN_JOB_REFERENCE);
 			}
 		}
 		catch (IndexMissingException e)
 		{
 			throw new UnknownJobException(refId, "Missing index: Cannot find "
-					+ "referenced job with id '" + refId + "'", ErrorCodes.UNKNOWN_JOB_REFERENCE);
+					+ "referenced job with id '" + refId + "'", ErrorCode.UNKNOWN_JOB_REFERENCE);
 	
 		}
 	}

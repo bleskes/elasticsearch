@@ -26,6 +26,8 @@
  ************************************************************/
 package com.prelert.job;
 
+import com.prelert.rs.data.ErrorCode;
+
 /**
  * This exception is thrown is an operation is attempted on a job 
  * that can't be executed as the job is already being used.  
@@ -35,15 +37,17 @@ public class JobInUseException extends Exception
 	private static final long serialVersionUID = -2759814168552580059L;
 		
 	private String m_JobId;
-	private int m_ErrorCode;
+	private ErrorCode m_ErrorCode;
 	
 	/**
 	 * Create a new JobInUseException.
 	 * 
 	 * @param jobId The Id of the job some operation was attempted on. 
 	 * @param message Details of error explaining the context 
+	 * @param The error code
+	 * @see ErrorCode
 	 */
-	public JobInUseException(String jobId, String message, int errorCode)
+	public JobInUseException(String jobId, String message, ErrorCode errorCode)
 	{
 		super(message);
 		m_JobId = jobId;
@@ -59,7 +63,7 @@ public class JobInUseException extends Exception
 		return m_JobId;
 	}
 	
-	public int getErrorCode()
+	public ErrorCode getErrorCode()
 	{
 		return m_ErrorCode;
 	}

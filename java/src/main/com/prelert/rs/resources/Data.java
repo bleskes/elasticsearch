@@ -27,7 +27,8 @@ import com.prelert.job.UnknownJobException;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.process.MissingFieldException;
 import com.prelert.job.process.NativeProcessRunException;
-import com.prelert.rs.data.ErrorCodes;
+import com.prelert.job.warnings.HighProportionOfBadTimestampsException;
+import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.provider.RestApiException;
 import com.prelert.rs.streaminginterceptor.StreamingInterceptor;
 
@@ -78,6 +79,7 @@ public class Data extends ResourceWithJobManager
 	 * @throws MissingFieldException
      * @throws JobInUseException if the data cannot be written to because 
 	 * the job is already handling data
+	 * @throws HighProportionOfBadTimestampsException 
 	 */
     @POST
     @Path("/{jobId}")
@@ -86,7 +88,7 @@ public class Data extends ResourceWithJobManager
     public Response streamData(@Context HttpHeaders headers,
     		@PathParam("jobId") String jobId, InputStream input)  
     throws IOException, UnknownJobException, NativeProcessRunException,
-    	MissingFieldException, JobInUseException
+    	MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException
     {   	   	
     	s_Logger.debug("Handle Post data to job = " + jobId);
     	
@@ -102,7 +104,7 @@ public class Data extends ResourceWithJobManager
     		{
     			throw new RestApiException("Content-Encoding = gzip "
     					+ "but the data is not in gzip format",
-    					ErrorCodes.UNCOMPRESSED_DATA,
+    					ErrorCode.UNCOMPRESSED_DATA,
     					Response.Status.BAD_REQUEST);
     		}
     	}
@@ -194,10 +196,11 @@ public class Data extends ResourceWithJobManager
      * @throws JsonParseException 
      * @throws JobInUseException if the data cannot be written to because 
 	 * the job is already handling data
+     * @throws HighProportionOfBadTimestampsException 
 	 */
     private boolean handleStream(String jobId, InputStream input)
     throws NativeProcessRunException, UnknownJobException, MissingFieldException, 
-    JsonParseException, JobInUseException
+    JsonParseException, JobInUseException, HighProportionOfBadTimestampsException
     {
     	JobManager manager = jobManager();
 		return manager.dataToJob(jobId, input);

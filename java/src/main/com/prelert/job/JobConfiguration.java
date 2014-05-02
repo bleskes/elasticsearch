@@ -27,7 +27,7 @@
 
 package com.prelert.job;
 
-import com.prelert.rs.data.ErrorCodes;
+import com.prelert.rs.data.ErrorCode;
 
 /**
  * This class encapsulates all the data required to create a new job it
@@ -207,7 +207,7 @@ public class JobConfiguration
 		{
 			throw new JobConfigurationException("Either an an AnalysisConfig or "
 					+ " job reference id must be set",
-					ErrorCodes.INCOMPLETE_CONFIGURATION);
+					ErrorCode.INCOMPLETE_CONFIGURATION);
 		}
 		
 		if (m_AnalysisConfig != null)
@@ -228,7 +228,7 @@ public class JobConfiguration
 		{
 			throw new JobConfigurationException("Timeout can not be a negative "
 					+ "number. Value = " + m_Timeout,
-					ErrorCodes.INVALID_VALUE);
+					ErrorCode.INVALID_VALUE);
 		}
 		
 		return true;

@@ -57,7 +57,7 @@ import com.prelert.job.JobDetails;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.ApiError;
 import com.prelert.rs.data.Bucket;
-import com.prelert.rs.data.ErrorCodes;
+import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
 
@@ -181,6 +181,18 @@ public class JobsTest implements Closeable
 			}
 			test((nextPageUrl == null && jobs.getNextPage() == null) ||
 					nextPageUrl.equals(jobs.getNextPage().toString()));
+		}
+		
+		// jobs should be sorted by Id
+		if (jobs.getDocuments().size() > 1)
+		{
+			String lastId = jobs.getDocuments().get(0).getId();
+			for (int i=1; i<jobs.getDocuments().size(); i++)
+			{
+				test(lastId.compareTo(jobs.getDocuments().get(i).getId()) > 0);
+				
+				lastId = jobs.getDocuments().get(i).getId();
+			}
 		}
 		
 			
@@ -819,8 +831,8 @@ public class JobsTest implements Closeable
 			test(b.getAnomalyScore() >= 0.0);
 			test(b.getRecordCount() > 0);			
 			test(b.getDetectors().size() == 0);
-			test(b.getId() != null && b.getId().isEmpty() == false);			
-			long epoch = Long.parseLong(b.getId()); // will throw if not a number
+			test(b.getId() != null && b.getId().isEmpty() == false);
+			long epoch = b.getEpoch();
 			Date date = new Date(epoch * 1000);
 
 			// sanity check, the data may be old but it should be newer than 2010
@@ -1042,7 +1054,7 @@ public class JobsTest implements Closeable
 			test(doc.isExists() == false);
 			
 			ApiError error = m_WebServiceClient.getLastError();
-			test(error.getErrorCode() == ErrorCodes.MISSING_JOB_ERROR);
+			test(error.getErrorCode() == ErrorCode.MISSING_JOB_ERROR);
 		}
 	}
 	
@@ -1196,7 +1208,8 @@ public class JobsTest implements Closeable
 		
 		//==========================
 		// Clean up test jobs
-		test.deleteJobsTest(baseUrl, jobUrls);
+		//test.deleteJobsTest(baseUrl, jobUrls);
+
 
 		test.close();
 		

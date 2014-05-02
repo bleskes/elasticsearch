@@ -53,7 +53,7 @@ public class JobDetails
 	static final public long DEFAULT_BUCKETSPAN = 300;
 	static final public boolean DEFAULT_PERSIST_MODEL = true;
 	
-	/**
+	/*
 	 * Field names used in serialisation
 	 */
 	static final public String ID = "id";
@@ -61,9 +61,15 @@ public class JobDetails
 	static final public String CREATE_TIME = "createTime";
 	static final public String FINISHED_TIME = "finishedTime";
 	static final public String LAST_DATA_TIME = "lastDataTime";
+	
 	static final public String PROCESSED_RECORD_COUNT = "processedRecordCount";
+	static final public String INVALID_DATE_COUNT = "invalidDateCount";
+	static final public String MISSING_FIELD_COUNT = "MissingFieldCount";
+	static final public String OUT_OF_ORDER_TIME_COUNT = "outOfOrderTimeStampCount";
+	
 	static final public String TIMEOUT = "timeout";
 	static final public String PERSIST_MODEL = "persistModel";
+	
 	static final public String ANALYSIS_CONFIG = "analysisConfig";
 	static final public String ANALYSIS_OPTIONS = "analysisOptions";
 	static final public String DATA_DESCRIPTION = "dataDescription";
@@ -72,15 +78,22 @@ public class JobDetails
 	
 	private String m_JobId;
 	private JobStatus m_Status;
+	
 	private Date m_CreateTime;
 	private Date m_FinishedTime; 
 	private Date m_LastDataTime;
-	private long m_ProcessedRecordCount;	
+	
 	private long m_Timeout;
 	private boolean m_PersistModel;
+	
 	private AnalysisConfig m_AnalysisConfig;
 	private AnalysisOptions m_AnalysisOptions;
 	private DataDescription m_DataDescription;
+	
+	private long m_ProcessedRecordCount;
+	private long m_InvalidDateCount;
+	private long m_MissingFieldCount;
+	private long m_OutOfOrderTimeStampCount;
 	
 	/* These URIs are transient they don't need to be persisted */
 	private URI m_Location;
@@ -350,9 +363,7 @@ public class JobDetails
 	}
 
 	/**
-	 * The number of records processed by the job. 
-	 * This value is only updated every time a complete bucket is processed
-	 * by the running job.  
+	 * 
 	 * @return Number of records processed by this job
 	 */
 	public long getProcessedRecordCount() 
@@ -363,6 +374,52 @@ public class JobDetails
 	public void setProcessedRecordCount(long count) 
 	{
 		m_ProcessedRecordCount = count;
+	}
+	
+	/**
+	 * The number of records with an invalid date field that could
+	 * not be parsed or converted to epoch time.
+	 * @return
+	 */
+	public long getInvalidDateCount() 
+	{
+		return m_InvalidDateCount;
+	}
+	
+	public void setInvalidDateCount(long count) 
+	{
+		m_InvalidDateCount = count;
+	}
+	
+	/**
+	 * The number of records missing a field that had been 
+	 * configured for analysis.
+	 * @return
+	 */
+	public long getMissingFieldCount() 
+	{
+		return m_MissingFieldCount;
+	}
+	
+	public void setMissingFieldCount(long count) 
+	{
+		m_MissingFieldCount = count;
+	}
+	
+	/**
+	 * The number of records with a timestamp that is
+	 * before the time of the latest record. Records should 
+	 * be in ascending chronological order
+	 * @return
+	 */
+	public long getOutOfOrderTimeStampCount() 
+	{
+		return m_OutOfOrderTimeStampCount;
+	}
+	
+	public void setOutOfOrderTimeStampCount(long count) 
+	{
+		m_OutOfOrderTimeStampCount = count;
 	}
 
 	/**
