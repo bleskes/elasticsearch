@@ -34,12 +34,15 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import org.apache.http.client.ClientProtocolException;
 import org.apache.log4j.ConsoleAppender;
@@ -61,8 +64,6 @@ import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
 
-// TODO Get whole log file
-// TODO Get zipped log files
 /**
  * Test the Engine REST API endpoints.
  * Creates jobs, uploads data closes the jobs then gets the results.
@@ -193,8 +194,7 @@ public class JobsTest implements Closeable
 				
 				lastId = jobs.getDocuments().get(i).getId();
 			}
-		}
-		
+		}		
 			
 		return true;
 	}
@@ -993,7 +993,7 @@ public class JobsTest implements Closeable
 	/**
 	 * Tails the log files with requesting different numbers of lines
 	 * and checks that some content is present. 
-	 * Downloads the zipped log files and... TODO
+	 * Downloads the zipped log files and checks for at least 2 files.
 	 * 
 	 * @param baseUrl The URL of the REST API i.e. an URL like
 	 * 	<code>http://prelert-host:8080/engine/version/</code>
@@ -1005,23 +1005,90 @@ public class JobsTest implements Closeable
 	public void testReadLogFiles(String baseUrl, String jobId) 
 	throws ClientProtocolException, IOException
 	{
+		//tail
 		String tail = m_WebServiceClient.tailLog(baseUrl, jobId, 2);
-		String [] tailLines = tail.split("\n");
-		test(tailLines.length > 0);
-		test(tailLines.length <= 2);
+		String [] logLines = tail.split("\n");
+		test(logLines.length > 0);
+		test(logLines.length <= 2);
 		
 		tail = m_WebServiceClient.tailLog(baseUrl, jobId);
-		tailLines = tail.split("\n");
-		test(tailLines.length > 0);
-		test(tailLines.length <= 10);
+		logLines = tail.split("\n");
+		test(logLines.length > 0);
+		test(logLines.length <= 10);
 		
 		tail = m_WebServiceClient.tailLog(baseUrl, jobId, 50);
-		tailLines = tail.split("\n");
-		test(tailLines.length > 0);
-		test(tailLines.length <= 50);
+		logLines = tail.split("\n");
+		test(logLines.length > 0);
+		test(logLines.length <= 50);
 		
-		// TODO Download whole file, zip files and verify content
+		// whole file 
+		String file = m_WebServiceClient.downloadLog(baseUrl, jobId, "engine_api");		
+		logLines = file.split("\n");
+		test(logLines.length > 0);
 		
+		file = m_WebServiceClient.downloadLog(baseUrl, jobId, jobId);		
+		logLines = file.split("\n");
+		test(logLines.length > 0);
+							
+		// tail a named file
+		tail = m_WebServiceClient.tailLog(baseUrl, jobId, "engine_api", 10);		
+		logLines = tail.split("\n");
+		test(logLines.length > 0);
+		test(logLines.length <= 10);
+		
+		tail = m_WebServiceClient.tailLog(baseUrl, jobId, jobId, 10);
+		logLines = tail.split("\n");
+		test(logLines.length > 0);
+		test(logLines.length <= 10);
+			
+		// zip of log files
+		ZipInputStream zip = m_WebServiceClient.downloadAllLogs(baseUrl, jobId);
+		ZipEntry entry = zip.getNextEntry();
+		
+		// expect at least 3 entries the directory and 2 log files
+		test(entry != null);
+		test(entry.getName().equals(jobId + File.separator));
+		zip.closeEntry();
+		entry = zip.getNextEntry();
+		
+		byte buff[] = new byte[2048];
+		
+		// log file
+		test(entry.getName().startsWith(jobId + File.separator));
+		int len = zip.read(buff);
+		test(len > 0);
+		String content = new String(buff, StandardCharsets.UTF_8);
+		logLines = content.split("\n");
+		test(logLines.length > 0);
+		zip.closeEntry();
+		entry = zip.getNextEntry();
+		
+		// 2nd log file
+		test(entry.getName().startsWith(jobId + File.separator));
+		len = zip.read(buff);
+		test(len > 0);
+		content = new String(buff, StandardCharsets.UTF_8);
+		logLines = content.split("\n");
+		test(logLines.length > 0);
+		zip.closeEntry();
+		entry = zip.getNextEntry();
+
+		zip.close();
+		
+		
+		// check errors by ask for a file that doesn't exist
+		file = m_WebServiceClient.downloadLog(baseUrl, jobId, "not_a_file");	
+		test(file.isEmpty());
+		ApiError error = m_WebServiceClient.getLastError();
+		test(error != null);
+		test(error.getErrorCode() == ErrorCode.MISSING_LOG_FILE);
+		
+		// get a file in a job that doesn't exist
+		file = m_WebServiceClient.downloadLog(baseUrl, "not_a_job", "not_a_file");
+		test(file.isEmpty());
+		error = m_WebServiceClient.getLastError();
+		test(error != null);
+		test(error.getErrorCode() == ErrorCode.MISSING_LOG_FILE);
 	}
 	
 

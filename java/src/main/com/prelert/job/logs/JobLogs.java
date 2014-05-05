@@ -36,6 +36,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -73,8 +74,9 @@ public class JobLogs
 	 * @param jobId
 	 * @param filename 
 	 * @return
+	 * @throws UnknownJobException 
 	 */
-	public String file(String jobId, String filename) 
+	public String file(String jobId, String filename) throws UnknownJobException 
 	{	
 		if (filename.endsWith(LOG_FILE_EXTENSION) == false)
 		{
@@ -84,7 +86,24 @@ public class JobLogs
 		Path filePath = FileSystems.getDefault().getPath(ProcessCtrl.LOG_DIR, 
 				jobId, filename);	
 		
-		return file(filePath);
+		try
+		{
+			return file(filePath);
+		}
+		catch (NoSuchFileException e)
+		{
+			String msg = "Cannot find log file " + filePath;
+			s_Logger.warn(msg);
+			throw new UnknownJobException(jobId, msg, 
+					ErrorCode.MISSING_LOG_FILE);				
+		}
+		catch (IOException e)
+		{
+			String msg = "Cannot read log file " + filePath;
+			s_Logger.warn(msg, e);
+			throw new UnknownJobException(jobId, msg,
+					ErrorCode.MISSING_LOG_FILE);
+		}
 	}
 	
 	
@@ -94,20 +113,12 @@ public class JobLogs
 	 * 
 	 * @param filePath
 	 * @return
+	 * @throws IOException 
 	 */
-	public String file(Path filePath) 
+	public String file(Path filePath) throws IOException 
 	{
-		try
-		{
-			byte[] encoded = Files.readAllBytes(filePath);
-			return new String(encoded, StandardCharsets.UTF_8);
-		}
-		catch (IOException e)
-		{
-			s_Logger.error("Cannot read log file " + filePath.toString(), e);
-			return "";
-		}
-		
+		byte[] encoded = Files.readAllBytes(filePath);
+		return new String(encoded, StandardCharsets.UTF_8);
 	}
 	
 	
@@ -281,8 +292,9 @@ public class JobLogs
 		}
 		catch (FileNotFoundException e)
 		{
-			s_Logger.warn("Cannot find log file " + file);
-			throw new UnknownJobException(jobId, "Cannot open log file",
+			String msg = "Cannot find log file " + file;
+			s_Logger.warn(msg);
+			throw new UnknownJobException(jobId, msg,
 					 ErrorCode.MISSING_LOG_FILE);
 		}
 		catch (IOException e)

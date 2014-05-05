@@ -27,6 +27,9 @@
 
 package com.prelert.rs.data;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  * Static error codes returned in response to internal errors in the API.
  * The codes are grouped in the following way:
@@ -201,5 +204,20 @@ public enum ErrorCode
 	public String getValueString()
 	{
 		return m_ValueString;
+	}
+	
+	@JsonCreator
+	static public ErrorCode fromCode(@JsonProperty("errorCode") long errorCode)
+	{
+		for (ErrorCode e : ErrorCode.values())
+		{
+			if (errorCode == e.getValue())
+			{
+				return e;
+			}
+		}
+		
+		throw new IllegalArgumentException("The code " + errorCode + 
+				" is not a valid error code");
 	}
 }
