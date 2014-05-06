@@ -1075,7 +1075,6 @@ public class JobsTest implements Closeable
 
 		zip.close();
 		
-		
 		// check errors by ask for a file that doesn't exist
 		file = m_WebServiceClient.downloadLog(baseUrl, jobId, "not_a_file");	
 		test(file.isEmpty());
