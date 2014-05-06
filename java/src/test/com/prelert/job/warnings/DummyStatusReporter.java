@@ -19,6 +19,7 @@
  * may be reproduced, adapted or transmitted in any form or *
  * by any means, electronic, mechanical, photocopying,      *
  * recording or otherwise.                                  *
+ *                                                  
  *                                                          *
  *----------------------------------------------------------*
  *                                                          *
@@ -26,70 +27,21 @@
  ************************************************************/
 package com.prelert.job.warnings;
 
-public class DummyStatusReporter implements StatusReporter 
+/**
+ * Dummy StatusReporter with an 
+ *
+ */
+public class DummyStatusReporter extends StatusReporter 
 {
-	private int m_RecordsWritten = 0;
-	private int m_RecordsDiscarded = 0;
-	private int m_DateParseErrorsCount = 0;
-	private int m_MissingFieldErrorCount = 0;
-	private int m_OutOfOrderRecordCount = 0;
-	
-	public DummyStatusReporter()
+	public DummyStatusReporter() 
 	{
-		
-	}
-		
-	@Override
-	public void reportRecordsWritten(int recordsWritten, int recordsDiscarded)
-	throws HighProportionOfBadTimestampsException 
-	{
-		m_RecordsWritten = recordsWritten;
-		m_RecordsDiscarded = recordsDiscarded;
+		super("DummyJobId", null);
 	}
 
 	@Override
-	public void reportDateParseError(String date)
-	throws HighProportionOfBadTimestampsException 
+	protected void reportStatus(int totalRecords)
 	{
-		m_DateParseErrorsCount++;
+		// do nothing
 	}
 
-	@Override
-	public void reportMissingField(String field) 
-	{
-		m_MissingFieldErrorCount++;
-	}
-
-
-	@Override
-	public void reportOutOfOrderRecord(long date, long previousDate)
-	throws OutOfOrderRecordsException 
-	{
-		m_OutOfOrderRecordCount++;
-	}
-
-	public int getRecordsWritten() 
-	{
-		return m_RecordsWritten;
-	}
-
-	public int getRecordsDiscarded() 
-	{
-		return m_RecordsDiscarded;
-	}
-
-	public int getDateParseErrorsCount() 
-	{
-		return m_DateParseErrorsCount;
-	}
-
-	public int getMissingFieldErrorCount() 
-	{
-		return m_MissingFieldErrorCount;
-	}
-
-	public int getOutOfOrderRecordCount() 
-	{
-		return m_OutOfOrderRecordCount;
-	}
 }

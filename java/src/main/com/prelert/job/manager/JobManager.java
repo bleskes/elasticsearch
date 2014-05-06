@@ -75,6 +75,7 @@ import com.prelert.job.process.MissingFieldException;
 import com.prelert.job.process.NativeProcessRunException;
 import com.prelert.job.process.ProcessManager;
 import com.prelert.job.warnings.HighProportionOfBadTimestampsException;
+import com.prelert.job.warnings.OutOfOrderRecordsException;
 import com.prelert.job.warnings.elasticsearch.ElasticSearchStatusReporterFactory;
 import com.prelert.job.DetectorState;
 import com.prelert.job.JobConfiguration;
@@ -767,10 +768,12 @@ public class JobManager implements JobDetailsProvider
 	 * @throws JobInUseException if the job cannot be written to because 
 	 * it is already handling data
 	 * @throws HighProportionOfBadTimestampsException 
+	 * @throws OutOfOrderRecordsException 
 	 */
 	public boolean dataToJob(String jobId, InputStream input) 
 	throws UnknownJobException, NativeProcessRunException, MissingFieldException, 
-		JsonParseException, JobInUseException, HighProportionOfBadTimestampsException 
+		JsonParseException, JobInUseException, HighProportionOfBadTimestampsException,
+		OutOfOrderRecordsException 
 	{
 		try
 		{

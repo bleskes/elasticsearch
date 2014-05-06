@@ -43,6 +43,7 @@ import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.warnings.DummyStatusReporter;
 import com.prelert.job.warnings.HighProportionOfBadTimestampsException;
+import com.prelert.job.warnings.OutOfOrderRecordsException;
 
 public class JsonDataTransformTest 
 {
@@ -55,10 +56,12 @@ public class JsonDataTransformTest
 	 *  
 	 * @throws IOException
 	 * @throws HighProportionOfBadTimestampsException 
+	 * @throws OutOfOrderRecordsException 
 	 */
 	@Test
 	public void plainJsonToLengthEncoded() 
-	throws IOException, MissingFieldException, HighProportionOfBadTimestampsException
+	throws IOException, MissingFieldException, HighProportionOfBadTimestampsException,
+		OutOfOrderRecordsException
 	{
 		String data = "{\"timestamp\": \"1350824400\", \"airline\": \"DJA\", \"junk_field\": \"nonsense\", \"responsetime\": \"622\", \"sourcetype\": \"flightcentre\"}" +
 					"{\"timestamp\": \"1350824401\", \"airline\": \"JQA\", \"junk_field\": \"nonsense\", \"responsetime\": \"1742\", \"sourcetype\": \"flightcentre\"}" +
@@ -103,8 +106,8 @@ public class JsonDataTransformTest
 		pm.writeToJob(dd, analysisFields, bis, bos, reporter, s_Logger);
 		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 		
-		Assert.assertEquals(8, reporter.getRecordsWritten());
-		Assert.assertEquals(0, reporter.getRecordsDiscarded());
+		Assert.assertEquals(8, reporter.getRecordsWrittenCount());
+		Assert.assertEquals(0, reporter.getRecordsDiscardedCount());
 		Assert.assertEquals(0, reporter.getMissingFieldErrorCount());
 		Assert.assertEquals(0, reporter.getDateParseErrorsCount());
 		Assert.assertEquals(0, reporter.getOutOfOrderRecordCount());
@@ -156,10 +159,12 @@ public class JsonDataTransformTest
 	 *  
 	 * @throws IOException
 	 * @throws HighProportionOfBadTimestampsException 
+	 * @throws OutOfOrderRecordsException 
 	 */
 	@Test
 	public void jsonWithDateFormatToLengthEncoded() 
-	throws IOException, MissingFieldException, HighProportionOfBadTimestampsException
+	throws IOException, MissingFieldException, HighProportionOfBadTimestampsException,
+		OutOfOrderRecordsException
 	{
 		// The json docs are have different field orders
 		String data = "{\"airline\": \"DJA\", \"timestamp\": \"2012-10-21T14:00:00\", \"responsetime\": \"622\", \"sourcetype\": \"flightcentre\"}" +
@@ -206,8 +211,8 @@ public class JsonDataTransformTest
 		pm.writeToJob(dd, analysisFields, bis, bos, reporter, s_Logger);
 		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 		
-		Assert.assertEquals(8, reporter.getRecordsWritten());
-		Assert.assertEquals(0, reporter.getRecordsDiscarded());
+		Assert.assertEquals(8, reporter.getRecordsWrittenCount());
+		Assert.assertEquals(0, reporter.getRecordsDiscardedCount());
 		Assert.assertEquals(0, reporter.getMissingFieldErrorCount());
 		Assert.assertEquals(0, reporter.getDateParseErrorsCount());
 		Assert.assertEquals(0, reporter.getOutOfOrderRecordCount());
@@ -260,10 +265,12 @@ public class JsonDataTransformTest
 	 *  
 	 * @throws IOException
 	 * @throws HighProportionOfBadTimestampsException 
+	 * @throws OutOfOrderRecordsException 
 	 */
 	@Test
 	public void jsonWithDateFormatAndExtraFieldsToLengthEncoded() 
-	throws IOException, MissingFieldException, HighProportionOfBadTimestampsException
+	throws IOException, MissingFieldException, HighProportionOfBadTimestampsException,
+		OutOfOrderRecordsException
 	{
 		// Document fields are not in the same order
 		String data = "{\"extra_field\": \"extra\", \"timestamp\": \"2012-10-21T14:00:00\", \"airline\": \"DJA\", \"responsetime\": \"622\", \"sourcetype\": \"flightcentre\", \"junk_field\": \"nonsense\"}" +
@@ -310,8 +317,8 @@ public class JsonDataTransformTest
 		pm.writeToJob(dd, analysisFields, bis, bos, reporter, s_Logger);
 		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 		
-		Assert.assertEquals(8, reporter.getRecordsWritten());
-		Assert.assertEquals(0, reporter.getRecordsDiscarded());
+		Assert.assertEquals(8, reporter.getRecordsWrittenCount());
+		Assert.assertEquals(0, reporter.getRecordsDiscardedCount());
 		Assert.assertEquals(0, reporter.getMissingFieldErrorCount());
 		Assert.assertEquals(0, reporter.getDateParseErrorsCount());
 		Assert.assertEquals(0, reporter.getOutOfOrderRecordCount());
@@ -365,10 +372,11 @@ public class JsonDataTransformTest
 	 * @throws IOException
 	 * @throws MissingFieldException
 	 * @throws HighProportionOfBadTimestampsException 
+	 * @throws OutOfOrderRecordsException 
 	 */
 	@Test
 	public void differentFieldsOrderJsonToLengthEncoded() 
-	throws IOException, MissingFieldException, HighProportionOfBadTimestampsException
+	throws IOException, MissingFieldException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException
 	{
 		String data = "{\"timestamp\": \"1350824400\", \"airline\": \"DJA\", \"junk_field\": \"nonsense\", \"responsetime\": \"622\", \"sourcetype\": \"flightcentre\"}" +
 					"{\"junk_field\": \"nonsense\", \"airline\": \"JQA\", \"timestamp\": \"1350824401\", \"responsetime\": \"1742\", \"sourcetype\": \"flightcentre\"}" +
@@ -413,8 +421,8 @@ public class JsonDataTransformTest
 		pm.writeToJob(dd, analysisFields, bis, bos, reporter, s_Logger);
 		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 		
-		Assert.assertEquals(8, reporter.getRecordsWritten());
-		Assert.assertEquals(0, reporter.getRecordsDiscarded());
+		Assert.assertEquals(8, reporter.getRecordsWrittenCount());
+		Assert.assertEquals(0, reporter.getRecordsDiscardedCount());
 		Assert.assertEquals(0, reporter.getMissingFieldErrorCount());
 		Assert.assertEquals(0, reporter.getDateParseErrorsCount());
 		Assert.assertEquals(0, reporter.getOutOfOrderRecordCount());
@@ -467,10 +475,12 @@ public class JsonDataTransformTest
 	 *  
 	 * @throws IOException
 	 * @throws HighProportionOfBadTimestampsException 
+	 * @throws OutOfOrderRecordsException 
 	 */
 	@Test
 	public void jsonWithDateFormatMissingFieldsToLengthEncoded() 
-	throws IOException, MissingFieldException, HighProportionOfBadTimestampsException
+	throws IOException, MissingFieldException, HighProportionOfBadTimestampsException,
+		OutOfOrderRecordsException
 	{
 		
 		String dateFormatData = "{\"timestamp\": \"2012-10-21T14:00:00\", \"airline\": \"DJA\", \"responsetime\": \"622\", \"sourcetype\": \"flightcentre\"}" +
@@ -552,8 +562,8 @@ public class JsonDataTransformTest
 			pm.writeToJob(dd, analysisFields, bis, bos, reporter, s_Logger);
 			ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 
-			Assert.assertEquals(8, reporter.getRecordsWritten());
-			Assert.assertEquals(0, reporter.getRecordsDiscarded());
+			Assert.assertEquals(8, reporter.getRecordsWrittenCount());
+			Assert.assertEquals(0, reporter.getRecordsDiscardedCount());
 			Assert.assertEquals(2, reporter.getMissingFieldErrorCount());
 			Assert.assertEquals(0, reporter.getDateParseErrorsCount());
 			Assert.assertEquals(0, reporter.getOutOfOrderRecordCount());

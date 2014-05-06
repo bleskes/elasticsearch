@@ -50,6 +50,7 @@ import com.prelert.job.JobStatus;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.warnings.DummyStatusReporter;
 import com.prelert.job.warnings.HighProportionOfBadTimestampsException;
+import com.prelert.job.warnings.OutOfOrderRecordsException;
 import com.prelert.job.warnings.StatusReporter;
 import com.prelert.job.warnings.StatusReporterFactory;
 import com.prelert.rs.data.ErrorCode;
@@ -153,10 +154,12 @@ public class ProcessErrorLoggingTest
 	 * @throws UnknownJobException
 	 * @throws IOException 
 	 * @throws HighProportionOfBadTimestampsException 
+	 * @throws OutOfOrderRecordsException 
 	 */
 	public static void main(String[] args) 
 	throws NativeProcessRunException, UnknownJobException, IOException, 
-	MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException
+	MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException,
+	OutOfOrderRecordsException
 	{
 		Detector detector = new Detector();
 		detector.setFieldName("airline");

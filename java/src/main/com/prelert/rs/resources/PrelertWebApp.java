@@ -34,6 +34,7 @@ import javax.ws.rs.core.Application;
 
 import com.prelert.job.manager.JobManager;
 import com.prelert.rs.provider.ElasticSearchExceptionMapper;
+import com.prelert.rs.provider.HighProportionOfBadTimestampsExceptionMapper;
 import com.prelert.rs.provider.JobConfigurationExceptionMapper;
 import com.prelert.rs.provider.JobInUseExceptionMapper;
 import com.prelert.rs.provider.MissingFieldExceptionMapper;
@@ -79,6 +80,7 @@ public class PrelertWebApp extends Application
 		
 		// Exception mappers
 		m_ResourceClasses.add(ElasticSearchExceptionMapper.class);
+		m_ResourceClasses.add(HighProportionOfBadTimestampsExceptionMapper.class);
 		m_ResourceClasses.add(JobConfigurationExceptionMapper.class);
 		m_ResourceClasses.add(JobInUseExceptionMapper.class);
 		m_ResourceClasses.add(MissingFieldExceptionMapper.class);

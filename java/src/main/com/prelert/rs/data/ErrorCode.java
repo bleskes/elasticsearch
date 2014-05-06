@@ -142,8 +142,14 @@ public enum ErrorCode
 	 * As a proportion of all the records sent a high number are
 	 * missing required fields or cannot be parsed. 
 	 */
-	TOO_MANY_BAD_RECORDS(30104),	
+	TOO_MANY_BAD_RECORDS(30104),
 	
+	/**
+	 * As a proportion of all the records sent a high number are not
+	 * in chronological order. 
+	 */
+	TOO_MANY_OUT_OF_ORDER_RECORDS(30105),
+
 	
 	// native process errors
 	/**

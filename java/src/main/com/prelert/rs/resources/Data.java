@@ -28,6 +28,7 @@ import com.prelert.job.manager.JobManager;
 import com.prelert.job.process.MissingFieldException;
 import com.prelert.job.process.NativeProcessRunException;
 import com.prelert.job.warnings.HighProportionOfBadTimestampsException;
+import com.prelert.job.warnings.OutOfOrderRecordsException;
 import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.provider.RestApiException;
 import com.prelert.rs.streaminginterceptor.StreamingInterceptor;
@@ -80,6 +81,7 @@ public class Data extends ResourceWithJobManager
      * @throws JobInUseException if the data cannot be written to because 
 	 * the job is already handling data
 	 * @throws HighProportionOfBadTimestampsException 
+	 * @throws OutOfOrderRecordsException 
 	 */
     @POST
     @Path("/{jobId}")
@@ -88,7 +90,8 @@ public class Data extends ResourceWithJobManager
     public Response streamData(@Context HttpHeaders headers,
     		@PathParam("jobId") String jobId, InputStream input)  
     throws IOException, UnknownJobException, NativeProcessRunException,
-    	MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException
+    	MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException,
+    	OutOfOrderRecordsException
     {   	   	
     	s_Logger.debug("Handle Post data to job = " + jobId);
     	
@@ -197,10 +200,12 @@ public class Data extends ResourceWithJobManager
      * @throws JobInUseException if the data cannot be written to because 
 	 * the job is already handling data
      * @throws HighProportionOfBadTimestampsException 
+     * @throws OutOfOrderRecordsException 
 	 */
     private boolean handleStream(String jobId, InputStream input)
     throws NativeProcessRunException, UnknownJobException, MissingFieldException, 
-    JsonParseException, JobInUseException, HighProportionOfBadTimestampsException
+    JsonParseException, JobInUseException, HighProportionOfBadTimestampsException,
+    OutOfOrderRecordsException
     {
     	JobManager manager = jobManager();
 		return manager.dataToJob(jobId, input);

@@ -53,6 +53,7 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.warnings.HighProportionOfBadTimestampsException;
+import com.prelert.job.warnings.OutOfOrderRecordsException;
 import com.prelert.job.warnings.StatusReporter;
 import com.prelert.job.warnings.StatusReporterFactory;
 import com.prelert.job.DetectorState;
@@ -170,10 +171,12 @@ public class ProcessManager
 	 * @throws JobInUseException if the data cannot be written to because 
 	 * the job is already handling data
 	 * @throws HighProportionOfBadTimestampsException 
+	 * @throws OutOfOrderRecordsException 
 	 */
 	public boolean dataToJob(String jobId, InputStream input)
 	throws UnknownJobException, NativeProcessRunException, MissingFieldException,
-		JsonParseException, JobInUseException, HighProportionOfBadTimestampsException
+		JsonParseException, JobInUseException, HighProportionOfBadTimestampsException,
+		OutOfOrderRecordsException
 	{
 		// stop the timeout 
 		ScheduledFuture<?> future = m_JobIdToTimeoutFuture.remove(jobId);
@@ -519,13 +522,14 @@ public class ProcessManager
 	 * @throws MissingFieldException If any fields are missing from the CSV header
 	 * @throws IOException 
 	 * @throws HighProportionOfBadTimestampsException 
+	 * @throws OutOfOrderRecordsException 
 	 */
 	public void writeToJob(DataDescription dataDescription, 
 			List<String> analysisFields,
 			InputStream input, OutputStream output, 
 			StatusReporter reporter, Logger jobLogger) 
 	throws JsonParseException, MissingFieldException, IOException,
-		HighProportionOfBadTimestampsException
+		HighProportionOfBadTimestampsException, OutOfOrderRecordsException
 	{
 		// Oracle's documentation recommends buffering process streams
 		BufferedOutputStream bufferedStream = new BufferedOutputStream(output);
