@@ -65,6 +65,22 @@ public class JobLogs
 	public static final int EXPECTED_LINE_LENGTH = 132;
 	
 	/**
+	 * If this system property is set the log files aren't deleted when 
+	 * the job is.
+	 */
+	public static final String DONT_DELETE_LOGS_PROP = "preserve.logs";
+	private boolean m_DontDelete;
+	
+	/**
+	 * If -D{@value #DONT_DELETE_LOGS_PROP} is set to anything 
+	 * (not null) the log files aren't deleted 
+	 */
+	public JobLogs()
+	{
+		m_DontDelete = System.getProperty(DONT_DELETE_LOGS_PROP) != null;
+	}
+	
+	/**
 	 * Read the entire contents of the file and return
 	 * as a string. The file should be UTF-8 encoded.
 	 * If <code>filename</code> does not end with {@value #LOG_FILE_EXTENSION}
@@ -411,6 +427,11 @@ public class JobLogs
 	 */
 	public boolean deleteLogs(String logDir, String jobId)
 	{
+		if (m_DontDelete)
+		{
+			return true;
+		}
+		
 		s_Logger.info(String.format("Deleting log files %s/%s", logDir, jobId));
 		Path logPath = FileSystems.getDefault().getPath(logDir, jobId);
 		 
@@ -447,6 +468,7 @@ public class JobLogs
 			String msg = "Error deleting log directory " + logDir + ". ";
 			msg += (e.getCause() != null) ? e.getCause().getMessage() : e.getMessage();
 			s_Logger.warn(msg);
+			return false;
 		}
 		
 		return true;
