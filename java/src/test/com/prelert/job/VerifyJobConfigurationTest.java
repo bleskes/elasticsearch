@@ -145,10 +145,10 @@ public class VerifyJobConfigurationTest
 	}
 	
 	@Test 
-	public void analysisOptionsTest()
+	public void analysisLimitsTest()
 	throws JobConfigurationException
 	{
-		AnalysisOptions ao = new AnalysisOptions(-1, 10000);
+		AnalysisLimits ao = new AnalysisLimits(-1, 10000);
 		try
 		{
 			ao.verify();
@@ -158,7 +158,7 @@ public class VerifyJobConfigurationTest
 		{
 		}
 		
-		ao = new AnalysisOptions(300, -5000);
+		ao = new AnalysisLimits(300, -5000);
 		try
 		{
 			ao.verify();
@@ -207,7 +207,7 @@ public class VerifyJobConfigurationTest
 		jc.setAnalysisConfig(ac);
 		jc.verify(); // ok
 		
-		jc.setAnalysisOptions(new AnalysisOptions(-1, 0));
+		jc.setAnalysisLimits(new AnalysisLimits(-1, 0));
 		try
 		{
 			jc.verify();
@@ -217,7 +217,7 @@ public class VerifyJobConfigurationTest
 		{
 		}
 		
-		jc.setAnalysisOptions(new AnalysisOptions(1000, 50000));
+		jc.setAnalysisLimits(new AnalysisLimits(1000, 50000));
 		jc.verify();
 		
 		DataDescription dc = new DataDescription();

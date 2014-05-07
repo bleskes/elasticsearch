@@ -32,12 +32,12 @@ import java.util.Map;
 import com.prelert.rs.data.ErrorCode;
 
 /**
- * Analysis options for autodetect (max field values, max time buckets). 
+ * Analysis limits for autodetect (max field values, max time buckets). 
  * 
  * If an option has not been set it's value will be 0 in which case it
  * shouldn't be used so the default value is picked up instead.
  */
-public class AnalysisOptions 
+public class AnalysisLimits 
 {
 	/**
 	 * Serialisation field names
@@ -52,13 +52,13 @@ public class AnalysisOptions
 	 * Initialise values to 0.
 	 * If the values are 0 they haven't been set 
 	 */	
-	public AnalysisOptions()
+	public AnalysisLimits()
 	{
 		m_MaxFieldValues = 0;
 		m_MaxTimeBuckets = 0;
 	}
 	
-	public AnalysisOptions(long maxFieldValues, long maxTimeBuckets)
+	public AnalysisLimits(long maxFieldValues, long maxTimeBuckets)
 	{
 		m_MaxFieldValues = maxFieldValues;
 		m_MaxTimeBuckets = maxTimeBuckets;
@@ -68,7 +68,7 @@ public class AnalysisOptions
 	 * Create and set field values from the Map.
 	 * @param values
 	 */
-	public AnalysisOptions(Map<String, Object> values)
+	public AnalysisLimits(Map<String, Object> values)
 	{
 		this();
 		
@@ -135,12 +135,12 @@ public class AnalysisOptions
 			return true;
 		}
 		
-		if (other instanceof AnalysisOptions == false)
+		if (other instanceof AnalysisLimits == false)
 		{
 			return false;
 		}
 		
-		AnalysisOptions that = (AnalysisOptions)other;
+		AnalysisLimits that = (AnalysisLimits)other;
 		return (this.m_MaxFieldValues == that.m_MaxFieldValues) &&
 				(this.m_MaxTimeBuckets == that.m_MaxTimeBuckets);
 	}
@@ -158,13 +158,13 @@ public class AnalysisOptions
 		if (m_MaxFieldValues < 2)
 		{
 			throw new JobConfigurationException(
-					"Invalid AnalysisOption MaxFieldValues must be >= 2",
+					"Invalid Analysis limit MaxFieldValues must be >= 2",
 					ErrorCode.INVALID_VALUE);
 		}
 		if (m_MaxTimeBuckets < 2)
 		{
 			throw new JobConfigurationException(
-					"Invalid AnalysisOption MaxTimeBuckets must be >= 2",
+					"Invalid Analysis limit MaxTimeBuckets must be >= 2",
 					ErrorCode.INVALID_VALUE);		
 		}
 		

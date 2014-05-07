@@ -241,7 +241,7 @@ public class JobsTest implements Closeable
 
 		test(ac.equals(job.getAnalysisConfig()));
 		test(dd.equals(job.getDataDescription()));
-		test(job.getAnalysisOptions() == null);
+		test(job.getAnalysisLimits() == null);
 				
 		test(job.getLocation().toString().equals(baseUrl + "/jobs/" + jobId));
 		test(job.getResultsEndpoint().toString().equals(baseUrl + "/results/" + jobId));
@@ -304,7 +304,7 @@ public class JobsTest implements Closeable
 
 		test(ac.equals(job.getAnalysisConfig()));
 		test(dd.equals(job.getDataDescription()));
-		test(job.getAnalysisOptions() == null);
+		test(job.getAnalysisLimits() == null);
 				
 		test(job.getLocation().toString().equals(baseUrl + "/jobs/" + jobId));
 		test(job.getResultsEndpoint().toString().equals(baseUrl + "/results/" + jobId));
@@ -409,7 +409,7 @@ public class JobsTest implements Closeable
 		
 		test(ac.equals(job.getAnalysisConfig()));
 		test(dd.equals(job.getDataDescription()));
-		test(job.getAnalysisOptions() == null);
+		test(job.getAnalysisLimits() == null);
 				
 		test(job.getLocation().toString().equals(baseUrl + "/jobs/" + jobId));
 		test(job.getResultsEndpoint().toString().equals(baseUrl + "/results/" + jobId));
@@ -480,7 +480,7 @@ public class JobsTest implements Closeable
 		
 		test(ac.equals(job.getAnalysisConfig()));
 		test(dd.equals(job.getDataDescription()));
-		test(job.getAnalysisOptions() == null);
+		test(job.getAnalysisLimits() == null);
 				
 		test(job.getLocation().toString().equals(baseUrl + "/jobs/" + jobId));
 		test(job.getResultsEndpoint().toString().equals(baseUrl + "/results/" + jobId));
@@ -557,7 +557,7 @@ public class JobsTest implements Closeable
 
 		test(ac.equals(job.getAnalysisConfig()));
 		test(dd.equals(job.getDataDescription()));
-		test(job.getAnalysisOptions() == null);
+		test(job.getAnalysisLimits() == null);
 				
 		test(job.getLocation().toString().equals(baseUrl + "/jobs/" + jobId));
 		test(job.getResultsEndpoint().toString().equals(baseUrl + "/results/" + jobId));
@@ -620,7 +620,7 @@ public class JobsTest implements Closeable
 				
 		test(ac.equals(job.getAnalysisConfig()));
 		test(dd.equals(job.getDataDescription()));
-		test(job.getAnalysisOptions() == null);
+		test(job.getAnalysisLimits() == null);
 				
 		test(job.getLocation().toString().equals(baseUrl + "/jobs/" + jobId));
 		test(job.getResultsEndpoint().toString().equals(baseUrl + "/results/" + jobId));
