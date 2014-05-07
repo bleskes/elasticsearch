@@ -286,7 +286,7 @@ public class AnalysisConfig
 		if (m_Detectors.size() == 0)
 		{
 			throw new JobConfigurationException("No detectors configured",
-					ErrorCode.INVALID_VALUE);
+					ErrorCode.INCOMPLETE_CONFIGURATION);
 		}
 		
 		for (Detector d : m_Detectors)

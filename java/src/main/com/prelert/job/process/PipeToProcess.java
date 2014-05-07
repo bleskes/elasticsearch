@@ -102,6 +102,7 @@ public class PipeToProcess
 		
 		int recordsWritten = 0;
 		int recordsDiscarded = 0;
+		int lineCount = 0;
 		
 		try (CsvListReader csvReader = new CsvListReader(new InputStreamReader(is), csvPref))
 		{
@@ -151,6 +152,8 @@ public class PipeToProcess
 			List<String> line;
 			while ((line = csvReader.read()) != null)
 			{
+				lineCount++;
+				
 				if (line.size() <= maxIndex)
 				{
 					// if the record is incomplete don't write it
@@ -175,6 +178,9 @@ public class PipeToProcess
 			lengthEncodedWriter.flush();
 		}
 
+		
+		logger.debug(String.format("Transferred %d of %d CSV records to autodetect.", 
+				recordsWritten, lineCount));
 		
 		return recordsWritten;
 	}
@@ -214,6 +220,7 @@ public class PipeToProcess
 		
 		int recordsWritten = 0;
 		int recordsDiscarded = 0;
+		int lineCount = 0;
 		
 		try (CsvListReader csvReader = new CsvListReader(new InputStreamReader(is), csvPref))
 		{
@@ -276,7 +283,9 @@ public class PipeToProcess
 			if (dd.isEpochMs())
 			{
 				while ((line = csvReader.read()) != null)
-				{					
+				{			
+					lineCount++;
+					
 					if (maxIndex >= line.size())
 					{
 						logger.error("Not enough fields in csv record " + line);
@@ -326,6 +335,8 @@ public class PipeToProcess
 
 				while ((line = csvReader.read()) != null)
 				{
+					lineCount++;
+					
 					if (maxIndex >= line.size())
 					{
 						logger.error("Not enough fields in csv record " + line);
@@ -371,7 +382,8 @@ public class PipeToProcess
 				}
 			}
 			
-			logger.info(recordsWritten + " csv records written");
+			logger.debug(String.format("Transferred %d of %d CSV records to autodetect.", 
+					recordsWritten, lineCount));
 			
 			// flush the output
 			os.flush();
@@ -639,7 +651,7 @@ public class PipeToProcess
 
 			token = parser.nextToken();
 		}
-
+		
 		return readRecord;
 	}
 
