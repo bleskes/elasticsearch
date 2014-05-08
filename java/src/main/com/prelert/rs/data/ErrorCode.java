@@ -68,7 +68,7 @@ public enum ErrorCode
 	 * is not allowed for example some fields cannot be a number < 0.
 	 */
 	INVALID_VALUE(10104),
-	
+
 	/**
 	 * The function argument is not recognised as one of
 	 * the valid list of functions.
@@ -93,8 +93,13 @@ public enum ErrorCode
 	 * @see java.text.SimpleDateFormat
 	 */
 	INVALID_DATE_FORMAT(10108),
-	
-	
+
+	/**
+	 * The job will not be created because it violates one or
+	 * more license constraints.
+	 */
+	LICENSE_VIOLATION(10109),
+
 	// Data store errors
 	/**
 	 * A generic exception from the data store

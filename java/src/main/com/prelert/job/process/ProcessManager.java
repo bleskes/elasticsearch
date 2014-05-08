@@ -704,13 +704,13 @@ public class ProcessManager
 
 
 	/**
-	 * Get a JSON document containing some of the usage info.
+	 * Get a JSON document containing some of the usage and license info.
 	 * 
 	 * @return The JSON document in string form
 	 */
-	public String getUsageInfo()
+	public String getInfo()
 	{
-		return m_ProcessCtrl.getUsageInfo();
+		return m_ProcessCtrl.getInfo();
 	}
 
 

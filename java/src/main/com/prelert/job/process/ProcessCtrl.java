@@ -322,9 +322,9 @@ public class ProcessCtrl
 
 	/**
 	 * Get the C++ process to print a JSON document containing some of the usage
-	 * info
+	 * and license info
 	 */
-	synchronized public String getUsageInfo()
+	synchronized public String getInfo()
 	{
 		List<String> command = new ArrayList<>();
 		command.add(AUTODETECT_PATH);
