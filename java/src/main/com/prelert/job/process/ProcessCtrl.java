@@ -46,7 +46,7 @@ import org.apache.log4j.Logger;
 
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.Detector;
-import com.prelert.job.AnalysisOptions;
+import com.prelert.job.AnalysisLimits;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DetectorState;
 import com.prelert.job.JobDetails;
@@ -429,10 +429,10 @@ public class ProcessCtrl
 			}		
 		}
 		
-		if (job.getAnalysisOptions() != null)
+		if (job.getAnalysisLimits() != null)
 		{			
 			File limitConfigFile = File.createTempFile("limitconfig", ".conf");
-			writeModelOptions(job.getAnalysisOptions(), limitConfigFile);		
+			writeModelOptions(job.getAnalysisLimits(), limitConfigFile);		
 			String limitConfig = LIMIT_CONFIG_ARG + limitConfigFile.toString();
 			command.add(limitConfig);
 		}
@@ -446,6 +446,9 @@ public class ProcessCtrl
 		// Input is always length encoded
 		command.add(LENGTH_ENCODED_INPUT_ARG);
 		
+		
+		String timeField = DataDescription.DEFAULT_TIME_FIELD;
+
 		DataDescription dataDescription = job.getDataDescription();
 		if (dataDescription != null)
 		{
@@ -455,14 +458,17 @@ public class ProcessCtrl
 						+  dataDescription.getFieldDelimiter();
 				command.add(delimiterArg);
 			}
-			if (DataDescription.DEFAULT_TIME_FIELD.equals(dataDescription.getTimeField())
-					== false)
+			
+			if (dataDescription.getTimeField() != null &&
+					dataDescription.getTimeField().isEmpty() == false)
 			{
-				String timeFieldArg = TIME_FIELD_ARG
-						+  dataDescription.getTimeField();
-				command.add(timeFieldArg);
+				timeField = dataDescription.getTimeField();
 			}
+
 		}
+		// always set the time field
+		String timeFieldArg = TIME_FIELD_ARG + timeField;
+		command.add(timeFieldArg);
 				
 		// Restoring the model state
 		if (detectorState != null && detectorState.getDetectorKeys().size() > 0)
@@ -538,18 +544,18 @@ public class ProcessCtrl
 	 * @param emptyConfFile
 	 * @throws IOException
 	 */
-	private void writeModelOptions(AnalysisOptions options, File emptyConfFile) 
+	private void writeModelOptions(AnalysisLimits options, File emptyConfFile) 
 	throws IOException	
 	{
 		StringBuilder contents = new StringBuilder("[anomaly]").append(NEW_LINE);
 		if (options.getMaxFieldValues() > 0)
 		{
-			contents.append(AnalysisOptions.MAX_FIELD_VALUES + " = ")
+			contents.append(AnalysisLimits.MAX_FIELD_VALUES + " = ")
 					.append(options.getMaxFieldValues()).append(NEW_LINE);
 		}
 		if (options.getMaxTimeBuckets() > 0)
 		{
-			contents.append(AnalysisOptions.MAX_TIME_BUCKETS + " = ")
+			contents.append(AnalysisLimits.MAX_TIME_BUCKETS + " = ")
 					.append(options.getMaxTimeBuckets()).append(NEW_LINE);
 		}
 

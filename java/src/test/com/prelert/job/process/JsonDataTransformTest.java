@@ -141,7 +141,6 @@ public class JsonDataTransformTest
 			for (int i=0; i<numFields; i++)
 			{
 				int recordSize = bb.getInt();
-				Assert.assertEquals(fields[fieldMap[i]].length(), recordSize);
 				byte [] charBuff = new byte[recordSize];
 				for (int j=0; j<recordSize; j++)
 				{
@@ -149,6 +148,8 @@ public class JsonDataTransformTest
  				}
 				
 				String value = new String(charBuff, StandardCharsets.UTF_8);
+
+				Assert.assertEquals(fields[fieldMap[i]].length(), recordSize);
 				Assert.assertEquals(fields[fieldMap[i]], value);
 			}
 		}
@@ -822,6 +823,120 @@ public class JsonDataTransformTest
 				String value = new String(charBuff, StandardCharsets.UTF_8);				
 				Assert.assertEquals(fields[fieldMap[i]], value);			
 			}
-		}				
+		}
+	}
+	
+
+	/**
+	 * Test converting epoch times with a fraction of a second component.
+	 * 
+	 * @throws JsonParseException
+	 * @throws MissingFieldException
+	 * @throws IOException
+	 * @throws OutOfOrderRecordsException 
+	 * @throws HighProportionOfBadTimestampsException 
+	 */
+	@Test
+	public void epochWithFractionTest() throws JsonParseException,
+		MissingFieldException, IOException,
+		HighProportionOfBadTimestampsException, OutOfOrderRecordsException
+	{
+		String epochData = "{\"name\":\"my.test.metric1\",\"tags\":{\"tag1\":\"blah\",\"tag2\":\"boo\"},\"time\":1350824400.4543154,\"value\":12345.678}"
+				+ "{\"name\":\"my.test.metric2\",\"tags\":{\"tag1\":\"blaah\",\"tag2\":\"booo\"},\"time\":1350824401.834431,\"value\":12345.678}"
+				+ "{\"name\":\"my.test.metric3\",\"tags\":{\"tag1\":\"blaaah\",\"tag2\":\"boooo\"},\"time\":1350824402.4864133,\"value\":12345.678}"
+				+ "{\"name\":\"my.test.metric4\",\"time\":1350824402.4846513,\"value\":12345.678}";
+	
+		String epochMsData = "{\"name\":\"my.test.metric1\",\"tags\":{\"tag1\":\"blah\",\"tag2\":\"boo\"},\"time\":1350824400000.484313,\"value\":12345.678}"
+				+ "{\"name\":\"my.test.metric2\",\"tags\":{\"tag1\":\"blaah\",\"tag2\":\"booo\"},\"time\":1350824401000.486138,\"value\":12345.678}"
+				+ "{\"name\":\"my.test.metric3\",\"tags\":{\"tag1\":\"blaaah\",\"tag2\":\"boooo\"},\"time\":1350824402000.4831844,\"value\":12345.678}"
+				+ "{\"name\":\"my.test.metric4\",\"time\":1350824402000.45633447,\"value\":12345.678}";
+		
+		String header [] = new String [] {"time", "name", "value", "tags.tag2"};
+		String records [][] = new String [][] {{"1350824400", "my.test.metric1", "12345.678", "boo"},
+												{"1350824401", "my.test.metric2", "12345.678", "booo"},
+												{"1350824402", "my.test.metric3", "12345.678", "boooo"},
+												{"1350824402", "my.test.metric4", "12345.678", ""}};
+		
+		// data is written in the order of the required fields
+		// then the time field
+		int [] fieldMap = new int [] {1, 2, 3, 0};
+		
+		DataDescription dd = new DataDescription();
+		dd.setFormat(DataFormat.JSON);
+		dd.setTimeField("time");
+		dd.setTimeFormat("epoch");
+		
+		List<String> analysisFields = Arrays.asList(new String [] {"name", "value", "tags.tag2"});	
+		
+		int loop = 0;
+		for (String data : new String [] {epochData,  epochMsData})
+		{
+			if (loop == 0)
+			{
+				dd.setTimeFormat("epoch");
+			}
+			else if (loop == 1)
+			{
+				dd.setTimeFormat("epoch_ms");
+			}
+			loop++;						
+
+			// can create with null
+			ProcessManager pm = new ProcessManager(null, null, null);
+
+			ByteArrayInputStream bis = 
+					new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
+			ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
+
+			DummyStatusReporter reporter = new DummyStatusReporter();
+			
+			pm.writeToJob(dd, analysisFields, bis, bos, reporter, s_Logger);
+			ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
+			
+			Assert.assertEquals(4, reporter.getRecordsWrittenCount());
+			Assert.assertEquals(0, reporter.getRecordsDiscardedCount());
+			Assert.assertEquals(1, reporter.getMissingFieldErrorCount());
+			Assert.assertEquals(0, reporter.getDateParseErrorsCount());
+			Assert.assertEquals(0, reporter.getOutOfOrderRecordCount());
+
+			// check header
+			int numFields = bb.getInt();		
+			Assert.assertEquals(header.length, numFields);
+
+			for (int i=0; i<numFields; i++)
+			{
+				int recordSize = bb.getInt();
+				Assert.assertEquals(header[fieldMap[i]].length(), recordSize);
+				byte [] charBuff = new byte[recordSize];
+				for (int j=0; j<recordSize; j++)
+				{
+					charBuff[j] = bb.get();
+				}
+
+				String value = new String(charBuff, StandardCharsets.UTF_8);				
+				Assert.assertEquals(header[fieldMap[i]], value);			
+			}
+
+			// check records
+			for (String [] fields : records)
+			{
+				numFields = bb.getInt();
+				Assert.assertEquals(fields.length, numFields);
+
+				for (int i=0; i<numFields; i++)
+				{
+					int recordSize = bb.getInt();
+					byte [] charBuff = new byte[recordSize];
+					for (int j=0; j<recordSize; j++)
+					{
+						charBuff[j] = bb.get();
+					}
+
+					String value = new String(charBuff, StandardCharsets.UTF_8);
+					//Assert.assertEquals(fields[fieldMap[i]].length(), recordSize);
+					Assert.assertEquals(fields[fieldMap[i]], value);
+				}
+			}		
+		}
 	}
 }

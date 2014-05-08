@@ -84,13 +84,13 @@ public class JobsTest implements Closeable
 			+ "\"bucketSpan\":86400,"  
 			+ "\"detectors\" :" 
 			+ "[{\"fieldName\":\"hitcount\",\"byFieldName\":\"url\"}] },"
-			+ "\"dataDescription\":{\"fieldDelimiter\":\"\\t\"} }}";
+			+ "\"dataDescription\":{\"fieldDelimiter\":\"\\t\", \"timeField\":\"_time\"} }}";
 
 	final String FLIGHT_CENTRE_JOB_CONFIG = "{\"analysisConfig\" : {"
 			+ "\"bucketSpan\":3600,"  
 			+ "\"detectors\":[{\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}] "
 			+ "},"
-			+ "\"dataDescription\":{\"fieldDelimiter\":\",\", \"timeFormat\" : \"epoch\"} }}";		
+			+ "\"dataDescription\":{\"fieldDelimiter\":\",\", \"timeField\":\"_time\", \"timeFormat\" : \"epoch\"} }}";		
 	
 	final String FLIGHT_CENTRE_JSON_JOB_CONFIG = "{\"analysisConfig\" : {"
 			+ "\"bucketSpan\":3600,"  
@@ -241,7 +241,7 @@ public class JobsTest implements Closeable
 
 		test(ac.equals(job.getAnalysisConfig()));
 		test(dd.equals(job.getDataDescription()));
-		test(job.getAnalysisOptions() == null);
+		test(job.getAnalysisLimits() == null);
 				
 		test(job.getLocation().toString().equals(baseUrl + "/jobs/" + jobId));
 		test(job.getResultsEndpoint().toString().equals(baseUrl + "/results/" + jobId));
@@ -293,18 +293,19 @@ public class JobsTest implements Closeable
 		
 		Detector d = new Detector();
 		d.setFieldName("responsetime");
-		d.setByFieldName("airline");
+		d.setByFieldName("airline");		
 		AnalysisConfig ac = new AnalysisConfig();
 		ac.setBucketSpan(3600L);
 		ac.setDetectors(Arrays.asList(d));
 		
 		DataDescription dd = new DataDescription();
 		dd.setFieldDelimiter(',');
+		dd.setTimeField("_time");
 		
 
 		test(ac.equals(job.getAnalysisConfig()));
 		test(dd.equals(job.getDataDescription()));
-		test(job.getAnalysisOptions() == null);
+		test(job.getAnalysisLimits() == null);
 				
 		test(job.getLocation().toString().equals(baseUrl + "/jobs/" + jobId));
 		test(job.getResultsEndpoint().toString().equals(baseUrl + "/results/" + jobId));
@@ -409,7 +410,7 @@ public class JobsTest implements Closeable
 		
 		test(ac.equals(job.getAnalysisConfig()));
 		test(dd.equals(job.getDataDescription()));
-		test(job.getAnalysisOptions() == null);
+		test(job.getAnalysisLimits() == null);
 				
 		test(job.getLocation().toString().equals(baseUrl + "/jobs/" + jobId));
 		test(job.getResultsEndpoint().toString().equals(baseUrl + "/results/" + jobId));
@@ -480,7 +481,7 @@ public class JobsTest implements Closeable
 		
 		test(ac.equals(job.getAnalysisConfig()));
 		test(dd.equals(job.getDataDescription()));
-		test(job.getAnalysisOptions() == null);
+		test(job.getAnalysisLimits() == null);
 				
 		test(job.getLocation().toString().equals(baseUrl + "/jobs/" + jobId));
 		test(job.getResultsEndpoint().toString().equals(baseUrl + "/results/" + jobId));
@@ -557,7 +558,7 @@ public class JobsTest implements Closeable
 
 		test(ac.equals(job.getAnalysisConfig()));
 		test(dd.equals(job.getDataDescription()));
-		test(job.getAnalysisOptions() == null);
+		test(job.getAnalysisLimits() == null);
 				
 		test(job.getLocation().toString().equals(baseUrl + "/jobs/" + jobId));
 		test(job.getResultsEndpoint().toString().equals(baseUrl + "/results/" + jobId));
@@ -620,7 +621,7 @@ public class JobsTest implements Closeable
 				
 		test(ac.equals(job.getAnalysisConfig()));
 		test(dd.equals(job.getDataDescription()));
-		test(job.getAnalysisOptions() == null);
+		test(job.getAnalysisLimits() == null);
 				
 		test(job.getLocation().toString().equals(baseUrl + "/jobs/" + jobId));
 		test(job.getResultsEndpoint().toString().equals(baseUrl + "/results/" + jobId));
@@ -771,18 +772,26 @@ public class JobsTest implements Closeable
 			test(buckets.getHitCount() == expectedNumBuckets);
 			test(buckets.getDocumentCount() <= take);
 			validateBuckets(buckets.getDocuments(), bucketSpan, lastBucketTime, false);
-						
+									
+			// time in seconds
+			lastBucketTime = buckets.getDocuments().get(
+					buckets.getDocuments().size() -1).getTimestamp().getTime() / 1000;
+			
+			SingleDocument<Bucket> bucket = m_WebServiceClient.getBucket(
+					baseUrl, jobId, Long.toString(lastBucketTime), false);
+			validateBuckets(Arrays.asList(new Bucket[]{bucket.getDocument()}), 
+					bucketSpan, 0, false);
+			
+
 			if (buckets.getNextPage() == null)
 			{
 				test(expectedNumBuckets == (skip + buckets.getDocumentCount()));		
 				break;
 			}
 			
-			// time in seconds
-			lastBucketTime = buckets.getDocuments().get(
-					buckets.getDocuments().size() -1).getTimestamp().getTime() / 1000;
 			skip += take;
 		}
+		
 		
 		// the same with expanded buckets
 		skip = 0;		
@@ -796,15 +805,23 @@ public class JobsTest implements Closeable
 			test(buckets.getDocumentCount() <= take);
 			validateBuckets(buckets.getDocuments(), bucketSpan, lastBucketTime, true);
 			
+			
+			// time in seconds
+			lastBucketTime = buckets.getDocuments().get(
+					buckets.getDocuments().size() -1).getTimestamp().getTime() / 1000;			
+			
+			SingleDocument<Bucket> bucket = m_WebServiceClient.getBucket(baseUrl, jobId, 
+					Long.toString(lastBucketTime), true);
+			validateBuckets(Arrays.asList(new Bucket[]{bucket.getDocument()}), 
+					bucketSpan, 0, true);
+			
+			
 			if (buckets.getNextPage() == null)
 			{
 				test(expectedNumBuckets == (skip + buckets.getDocumentCount()));		
 				break;
 			}
 			
-			// time in seconds
-			lastBucketTime = buckets.getDocuments().get(
-					buckets.getDocuments().size() -1).getTimestamp().getTime() / 1000;			
 			skip += take;
 		}		
 	}

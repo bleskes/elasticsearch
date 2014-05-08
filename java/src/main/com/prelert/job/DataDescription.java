@@ -95,7 +95,7 @@ public class DataDescription
 	/**
 	 * By default autodetect expects the timestamp in a field with this name
 	 */
-	static final public String DEFAULT_TIME_FIELD = "_time";
+	static final public String DEFAULT_TIME_FIELD = "time";
 	
 	/**
 	 * The timeFormat field name

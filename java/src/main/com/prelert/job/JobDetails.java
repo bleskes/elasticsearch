@@ -71,7 +71,7 @@ public class JobDetails
 	static final public String PERSIST_MODEL = "persistModel";
 	
 	static final public String ANALYSIS_CONFIG = "analysisConfig";
-	static final public String ANALYSIS_OPTIONS = "analysisOptions";
+	static final public String ANALYSIS_LIMITS = "analysisLimits";
 	static final public String DATA_DESCRIPTION = "dataDescription";
 	
 	static final public String TYPE = "job";
@@ -87,7 +87,7 @@ public class JobDetails
 	private boolean m_PersistModel;
 	
 	private AnalysisConfig m_AnalysisConfig;
-	private AnalysisOptions m_AnalysisOptions;
+	private AnalysisLimits m_AnalysisLimits;
 	private DataDescription m_DataDescription;
 	
 	private long m_ProcessedRecordCount;
@@ -126,7 +126,7 @@ public class JobDetails
 		m_PersistModel = true;  
 						
 		m_AnalysisConfig = jobConfig.getAnalysisConfig();
-		m_AnalysisOptions = jobConfig.getAnalysisOptions();
+		m_AnalysisLimits = jobConfig.getAnalysisLimits();
 		m_DataDescription = jobConfig.getDataDescription();
 	}
 	
@@ -149,7 +149,7 @@ public class JobDetails
 		m_PersistModel = details.isPersistModel();
 									
 		m_AnalysisConfig = details.getAnalysisConfig();
-		m_AnalysisOptions = details.getAnalysisOptions();
+		m_AnalysisLimits = details.getAnalysisLimits();
 		m_DataDescription = details.getDataDescription();
 		
 		// only override these if explicitly set
@@ -165,9 +165,9 @@ public class JobDetails
 			m_AnalysisConfig = jobConfig.getAnalysisConfig();
 		}
 		
-		if (jobConfig.getAnalysisOptions() != null)
+		if (jobConfig.getAnalysisLimits() != null)
 		{
-			m_AnalysisOptions = jobConfig.getAnalysisOptions();
+			m_AnalysisLimits = jobConfig.getAnalysisLimits();
 		}
 		
 		if (jobConfig.getDataDescription() != null)
@@ -263,12 +263,12 @@ public class JobDetails
 				m_AnalysisConfig = new AnalysisConfig((Map<String, Object>)obj);
 			}
 		}
-		if (values.containsKey(ANALYSIS_OPTIONS))
+		if (values.containsKey(ANALYSIS_LIMITS))
 		{
-			Object obj = values.get(ANALYSIS_OPTIONS);
+			Object obj = values.get(ANALYSIS_LIMITS);
 			if (obj != null && obj instanceof Map)
 			{
-				m_AnalysisOptions = new AnalysisOptions((Map<String, Object>)obj); 
+				m_AnalysisLimits = new AnalysisLimits((Map<String, Object>)obj); 
 			}
 		}
 		
@@ -468,16 +468,16 @@ public class JobDetails
 	
 	/**
 	 * The analysis options object
-	 * @return The AnalysisOptions
+	 * @return The AnalysisLimits
 	 */
-	public AnalysisOptions getAnalysisOptions() 
+	public AnalysisLimits getAnalysisLimits() 
 	{
-		return m_AnalysisOptions;
+		return m_AnalysisLimits;
 	}
 	
-	public void setAnalysisOptions(AnalysisOptions options) 
+	public void setAnalysisLimits(AnalysisLimits options) 
 	{
-		m_AnalysisOptions = options;
+		m_AnalysisLimits = options;
 	}
 	
 	/**
@@ -636,7 +636,7 @@ public class JobDetails
 				(this.m_Timeout == that.m_Timeout) &&
 				(this.m_PersistModel == that.m_PersistModel) &&
 				bothNullOrEqual(this.m_AnalysisConfig, that.m_AnalysisConfig) &&
-				bothNullOrEqual(this.m_AnalysisOptions, that.m_AnalysisOptions) &&
+				bothNullOrEqual(this.m_AnalysisLimits, that.m_AnalysisLimits) &&
 				bothNullOrEqual(this.m_DataDescription, that.m_DataDescription) &&
 				bothNullOrEqual(this.m_Location, that.m_Location) &&
 				bothNullOrEqual(this.m_DataEndpoint, that.m_DataEndpoint) &&

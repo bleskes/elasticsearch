@@ -34,7 +34,7 @@ import java.io.IOException;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 
 import com.prelert.job.AnalysisConfig;
-import com.prelert.job.AnalysisOptions;
+import com.prelert.job.AnalysisLimits;
 import com.prelert.job.DataDescription;
 import com.prelert.job.Detector;
 import com.prelert.job.DetectorState;
@@ -139,13 +139,13 @@ public class ElasticSearchMappings
 								.endObject()
 							.endObject()
 						.endObject()						
-						.startObject(JobDetails.ANALYSIS_OPTIONS)
+						.startObject(JobDetails.ANALYSIS_LIMITS)
 							.field("type", "object")
 							.startObject("properties")
-								.startObject(AnalysisOptions.MAX_FIELD_VALUES)
+								.startObject(AnalysisLimits.MAX_FIELD_VALUES)
 										.field("type", "long").field(INDEX, NO)
 								.endObject()
-								.startObject(AnalysisOptions.MAX_TIME_BUCKETS)
+								.startObject(AnalysisLimits.MAX_TIME_BUCKETS)
 										.field("type", "long").field(INDEX, NO)
 								.endObject()		
 							.endObject()	
