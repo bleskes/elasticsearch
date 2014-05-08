@@ -446,6 +446,9 @@ public class ProcessCtrl
 		// Input is always length encoded
 		command.add(LENGTH_ENCODED_INPUT_ARG);
 		
+		
+		String timeField = DataDescription.DEFAULT_TIME_FIELD;
+
 		DataDescription dataDescription = job.getDataDescription();
 		if (dataDescription != null)
 		{
@@ -455,14 +458,17 @@ public class ProcessCtrl
 						+  dataDescription.getFieldDelimiter();
 				command.add(delimiterArg);
 			}
-			if (DataDescription.DEFAULT_TIME_FIELD.equals(dataDescription.getTimeField())
-					== false)
+			
+			if (dataDescription.getTimeField() != null &&
+					dataDescription.getTimeField().isEmpty() == false)
 			{
-				String timeFieldArg = TIME_FIELD_ARG
-						+  dataDescription.getTimeField();
-				command.add(timeFieldArg);
+				timeField = dataDescription.getTimeField();
 			}
+
 		}
+		// always set the time field
+		String timeFieldArg = TIME_FIELD_ARG + timeField;
+		command.add(timeFieldArg);
 				
 		// Restoring the model state
 		if (detectorState != null && detectorState.getDetectorKeys().size() > 0)

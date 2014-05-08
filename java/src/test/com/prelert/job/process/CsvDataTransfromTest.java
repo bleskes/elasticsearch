@@ -59,7 +59,7 @@ public class CsvDataTransfromTest
 	public void plainCSVToLengthEncoded() 
 	throws IOException, MissingFieldException,HighProportionOfBadTimestampsException, OutOfOrderRecordsException
 	{
-		String data = "airline,responsetime,sourcetype,_time\n" +
+		String data = "airline,responsetime,sourcetype,time\n" +
 					"DJA,622,flightcentre,1350824400\n" +
 					"JQA,1742,flightcentre,1350824401\n" +
 					"GAL,5339,flightcentre,1350824402\n" +
@@ -75,12 +75,7 @@ public class CsvDataTransfromTest
 		// data is written in the order of the required fields
 		// with time the first element not the same as it is input
 		int [] fieldMap = new int [] {3, 1, 2, 0};
-		
-		
-		DataDescription dd = new DataDescription();
-		dd.setFormat(DataFormat.DELINEATED);
-		dd.setFieldDelimiter(',');
-		
+
 		// can create with null
 		ProcessManager pm = new ProcessManager(null, null, null);
 		
@@ -88,9 +83,12 @@ public class CsvDataTransfromTest
 				new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
 		ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
 		
+		DataDescription dd = new DataDescription();
+		dd.setFieldDelimiter(',');
 		DummyStatusReporter reporter = new DummyStatusReporter();
 		
 		pm.writeToJob(dd, analysisFields, bis, bos, reporter, s_Logger);
+
 		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 		
 		Assert.assertEquals(8, reporter.getRecordsWrittenCount());
@@ -135,7 +133,7 @@ public class CsvDataTransfromTest
 	throws IOException, MissingFieldException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException
 	{
 		// ? is the quote char
-		String data = "airline,responsetime,sourcetype,_time\n" +
+		String data = "airline,responsetime,sourcetype,time\n" +
 					"DJA,622,?flight,centre?,1350824400\n" +
 					"JQA,1742,?flightcentre?,1350824401\n" +
 					"GAL,5339,?flight\ncentre?,1350824402\n" +
@@ -143,7 +141,7 @@ public class CsvDataTransfromTest
 		
 		// same as the data above but split into fields
 		// this is to test escaping the newline char in the quoted field
-		String [][] lines = new String [] [] {{"airline","responsetime","sourcetype","_time"},
+		String [][] lines = new String [] [] {{"airline","responsetime","sourcetype","time"},
 				{"DJA","622","flight,centre","1350824400"}, 
 				{"JQA","1742","flightcentre","1350824401"},
 				{"GAL","5339","flight\ncentre","1350824402"}, 
@@ -316,7 +314,7 @@ public class CsvDataTransfromTest
 	public void plainCsvWithExtraFields() throws IOException, MissingFieldException, 
 		HighProportionOfBadTimestampsException, OutOfOrderRecordsException
 	{
-		String data = "airline,responsetime,airport,sourcetype,_time,baggage\n" +
+		String data = "airline,responsetime,airport,sourcetype,time,baggage\n" +
 					"DJA,622,flightcentre,MAN,1350824400,none\n" +
 					"JQA,1742,flightcentre,GAT,1350824401,none\n" +
 					"GAL,5339,flightcentre,SYN,1350824402,some\n" +
@@ -426,7 +424,7 @@ public class CsvDataTransfromTest
 		} 
 		catch (MissingFieldException e)
 		{
-			Assert.assertEquals(e.getMissingFieldName(), "_time");
+			Assert.assertEquals(e.getMissingFieldName(), "time");
 		}
 		
 		// Do the same again but with a time format configured
@@ -466,7 +464,7 @@ public class CsvDataTransfromTest
 	public void plainCsvWithMissingField()
 	throws IOException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException
 	{
-		String data = "airline,responsetime,airport,sourcetype,_time,baggage\n" +
+		String data = "airline,responsetime,airport,sourcetype,time,baggage\n" +
 				"DJA,622,flightcentre,MAN,1350824400,none\n" +
 				"JQA,1742,flightcentre,GAT,1350824401,none\n" +
 				"GAL,5339,flightcentre,SYN,1350824402,some\n" +
@@ -536,7 +534,7 @@ public class CsvDataTransfromTest
 	throws IOException, MissingFieldException, HighProportionOfBadTimestampsException,
 		OutOfOrderRecordsException
 	{
-		String epoch_data = "_time,airline,responsetime,sourcetype,airport,baggage\n" +
+		String epoch_data = "time,airline,responsetime,sourcetype,airport,baggage\n" +
 				"1350824400,DJA,622,flightcentre,MAN,none\n" +
 				"1350824401,JQA,1742,,\n" +  // this field is't written
 				"1350824402,GAL,,flightcentre,SYN,some\n" +
@@ -544,7 +542,7 @@ public class CsvDataTransfromTest
 				"1350824403,\n" +   // this field is't written
 				"1350824404,DJA,189,flightcentre,GAT,lost\n";
 		
-		String epoch_ms_data = "_time,airline,responsetime,sourcetype,airport,baggage\n" +
+		String epoch_ms_data = "time,airline,responsetime,sourcetype,airport,baggage\n" +
 				"1350824400000,DJA,622,flightcentre,MAN,none\n" +
 				"1350824401000,JQA,1742,,\n" + // this field is't written
 				"1350824402000,GAL,,flightcentre,SYN,some\n" +
@@ -552,7 +550,7 @@ public class CsvDataTransfromTest
 				"1350824403000,\n" +   // this field is't written
 				"1350824404000,DJA,189,flightcentre,GAT,lost\n";
 		
-		String epoch_timeformat_data = "_time,airline,responsetime,sourcetype,airport,baggage\n" +
+		String epoch_timeformat_data = "time,airline,responsetime,sourcetype,airport,baggage\n" +
 				"2012-10-21 13:00:00 Z,DJA,622,flightcentre,MAN,none\n" +
 				"2012-10-21 13:00:01 Z,JQA,1742,,\n" + // this field is't written
 				"2012-10-21 13:00:02 Z,GAL,,flightcentre,SYN,some\n" +
@@ -562,7 +560,7 @@ public class CsvDataTransfromTest
 		
 		List<String> analysisFields = Arrays.asList(new String [] {"airline", "responsetime", "baggage"});
 		
-		String [][] lines = new String [] [] {{"_time","airline", "responsetime","baggage"},
+		String [][] lines = new String [] [] {{"time","airline", "responsetime","baggage"},
 				{"1350824400", "DJA", "622", "none"},
 				{"1350824402", "GAL", "", "some"},
 				{"1350824403", "GAL", "3893", "some"},
@@ -628,6 +626,80 @@ public class CsvDataTransfromTest
 	}
 	
 	
-	
-	
+	@Test 
+	public void epochWithFractionTest()
+	{
+		/*
+		String epochData = "airline,responsetime,airport,sourcetype,_time,baggage\n" +
+				"DJA,622,flightcentre,MAN,1350824400.115846484,none\n" +
+				"JQA,1742,flightcentre,GAT,1350824401.45843543,none\n" +
+				"GAL,5339,flightcentre,SYN,1350824402.154835435,some\n" +
+				"GAL,3893,flightcentre,CHM,1350824403.0,some\n" +
+				"JQA,9,flightcentre,CHM,1350824403.879,none\n" +
+				"DJA,189,flightcentre,GAT,1350824404.8676458,lost\n" +
+				"JQA,8,flightcentre,GAT,-1350824404.86764,none\n" +
+				"DJA,1200,flightcentre,MAN,-135082440.4688,none";	
+		
+		String epochMsData = "airline,responsetime,airport,sourcetype,_time,baggage\n" +
+				"DJA,622,flightcentre,MAN,1350824400.115846484,none\n" +
+				"JQA,1742,flightcentre,GAT,1350824401.45843543,none\n" +
+				"GAL,5339,flightcentre,SYN,1350824402.154835435,some\n" +
+				"GAL,3893,flightcentre,CHM,1350824403.0,some\n" +
+				"JQA,9,flightcentre,CHM,1350824403.879,none\n" +
+				"DJA,189,flightcentre,GAT,1350824404.8676458,lost\n" +
+				"JQA,8,flightcentre,GAT,-1350824404.86764,none\n" +
+				"DJA,1200,flightcentre,MAN,-135082440.4688,none";	
+		
+		
+		List<String> analysisFields = Arrays.asList(new String [] {"airline", "responsetime"});
+		
+		int loop = 0;
+		for (String data : new String[] {epochData, epochMsData})
+		{
+			loop++;
+			
+			DataDescription dd = new DataDescription();
+			dd.setFormat(DataFormat.DELINEATED);
+			dd.setFieldDelimiter(',');
+			if (loop == 0)
+			{
+				dd.setTimeFormat("epoch");
+			}
+			else if (loop == 1)
+			{
+				dd.setTimeFormat("epoch_ms");
+			}
+			
+			// can create with null
+			ProcessManager pm = new ProcessManager(null, null);
+
+			ByteArrayInputStream bis = 
+					new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
+			ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
+
+			pm.writeToJob(dd, analysisFields, bis, bos, s_Logger);
+			ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
+
+			for (String [] fields : lines)
+			{
+				int numFields = bb.getInt();
+				Assert.assertEquals(analysisFields.size() +1, numFields);
+
+				for (int i=0; i<numFields; i++)
+				{
+					int recordSize = bb.getInt();
+					Assert.assertEquals(fields[i].length(), recordSize);
+					byte [] charBuff = new byte[recordSize];
+					for (int j=0; j<recordSize; j++)
+					{
+						charBuff[j] = bb.get();
+					}
+
+					String value = new String(charBuff, StandardCharsets.UTF_8);				
+					Assert.assertEquals(fields[i], value);
+				}
+			}	
+		}
+		*/
+	}
 }

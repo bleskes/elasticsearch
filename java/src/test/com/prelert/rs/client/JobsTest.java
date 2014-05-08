@@ -84,13 +84,13 @@ public class JobsTest implements Closeable
 			+ "\"bucketSpan\":86400,"  
 			+ "\"detectors\" :" 
 			+ "[{\"fieldName\":\"hitcount\",\"byFieldName\":\"url\"}] },"
-			+ "\"dataDescription\":{\"fieldDelimiter\":\"\\t\"} }}";
+			+ "\"dataDescription\":{\"fieldDelimiter\":\"\\t\", \"timeField\":\"_time\"} }}";
 
 	final String FLIGHT_CENTRE_JOB_CONFIG = "{\"analysisConfig\" : {"
 			+ "\"bucketSpan\":3600,"  
 			+ "\"detectors\":[{\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}] "
 			+ "},"
-			+ "\"dataDescription\":{\"fieldDelimiter\":\",\", \"timeFormat\" : \"epoch\"} }}";		
+			+ "\"dataDescription\":{\"fieldDelimiter\":\",\", \"timeField\":\"_time\", \"timeFormat\" : \"epoch\"} }}";		
 	
 	final String FLIGHT_CENTRE_JSON_JOB_CONFIG = "{\"analysisConfig\" : {"
 			+ "\"bucketSpan\":3600,"  
@@ -293,13 +293,14 @@ public class JobsTest implements Closeable
 		
 		Detector d = new Detector();
 		d.setFieldName("responsetime");
-		d.setByFieldName("airline");
+		d.setByFieldName("airline");		
 		AnalysisConfig ac = new AnalysisConfig();
 		ac.setBucketSpan(3600L);
 		ac.setDetectors(Arrays.asList(d));
 		
 		DataDescription dd = new DataDescription();
 		dd.setFieldDelimiter(',');
+		dd.setTimeField("_time");
 		
 
 		test(ac.equals(job.getAnalysisConfig()));
