@@ -611,7 +611,6 @@ public class CsvDataTransfromTest
 				for (int i=0; i<numFields; i++)
 				{
 					int recordSize = bb.getInt();
-					Assert.assertEquals(fields[i].length(), recordSize);
 					byte [] charBuff = new byte[recordSize];
 					for (int j=0; j<recordSize; j++)
 					{
@@ -619,6 +618,8 @@ public class CsvDataTransfromTest
 					}
 
 					String value = new String(charBuff, StandardCharsets.UTF_8);				
+
+					//Assert.assertEquals(fields[i].length(), recordSize);
 					Assert.assertEquals(fields[i], value);
 				}
 			}	
@@ -627,12 +628,15 @@ public class CsvDataTransfromTest
 	
 	/**
 	 * Test converting timestamps with fractional components
+	 * @throws OutOfOrderRecordsException 
+	 * @throws HighProportionOfBadTimestampsException 
 	 */
 	@Test 
 	public void epochWithFractionTest()
-	throws IOException, MissingFieldException
+	throws IOException, MissingFieldException,
+	HighProportionOfBadTimestampsException, OutOfOrderRecordsException
 	{
-		String epochData = "airline,responsetime,airport,sourcetype,_time,baggage\n" +
+		String epochData = "airline,responsetime,sourcetype,airport,_time,baggage\n" +
 				"DJA,622,flightcentre,MAN,1350824400.115846484,none\n" +
 				"JQA,1742,flightcentre,GAT,1350824401.45843543,none\n" +
 				"GAL,5339,flightcentre,SYN,1350824402.154835435,some\n" +
@@ -640,9 +644,9 @@ public class CsvDataTransfromTest
 				"JQA,9,flightcentre,CHM,1350824403.879,none\n" +
 				"DJA,189,flightcentre,GAT,1350824404.8676458,lost\n" +
 				"JQA,8,flightcentre,GAT,1350824404.86764,none\n" +
-				"DJA,1200,flightcentre,MAN,1350824404.4688,none";	
+				"DJA,,flightcentre,MAN,1350824404.4688,none";	
 		
-		String epochMsData = "airline,responsetime,airport,sourcetype,_time,baggage\n" +
+		String epochMsData = "airline,responsetime,sourcetype,airport,_time,baggage\n" +
 				"DJA,622,flightcentre,MAN,1350824400000.115846484,none\n" +
 				"JQA,1742,flightcentre,GAT,1350824401000.45843543,none\n" +
 				"GAL,5339,flightcentre,SYN,1350824402000.154835435,some\n" +
@@ -650,7 +654,7 @@ public class CsvDataTransfromTest
 				"JQA,9,flightcentre,CHM,1350824403000.879,none\n" +
 				"DJA,189,flightcentre,GAT,1350824404000.8676458,lost\n" +
 				"JQA,8,flightcentre,GAT,1350824404000.86764,none\n" +
-				"DJA,1200,flightcentre,MAN,1350824404000.4688,none";	
+				"DJA,,flightcentre,MAN,1350824404000.4688,none";	
 		
 		String [] epochTimes = new String [] {"_time", "1350824400", "1350824401", 
 				"1350824402", "1350824403", "1350824403", "1350824404", 
@@ -680,17 +684,24 @@ public class CsvDataTransfromTest
 			loop++;
 			
 			// can create with null
-			ProcessManager pm = new ProcessManager(null, null);
+			ProcessManager pm = new ProcessManager(null, null, null);
 
 			ByteArrayInputStream bis = 
 					new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
 			ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
 
-			pm.writeToJob(dd, analysisFields, bis, bos, s_Logger);
+			DummyStatusReporter reporter = new DummyStatusReporter();
+
+			pm.writeToJob(dd, analysisFields, bis, bos, reporter, s_Logger);
 			ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 
-			String [] lines = data.split("\\n");
+			Assert.assertEquals(8, reporter.getRecordsWrittenCount());
+			Assert.assertEquals(0, reporter.getRecordsDiscardedCount());
+			Assert.assertEquals(0, reporter.getMissingFieldErrorCount());
+			Assert.assertEquals(0, reporter.getDateParseErrorsCount());
+			Assert.assertEquals(0, reporter.getOutOfOrderRecordCount());
 			
+			String [] lines = data.split("\\n");
 			
 			final int TIME_FIELD = 0;
 			int lineCount = 0;

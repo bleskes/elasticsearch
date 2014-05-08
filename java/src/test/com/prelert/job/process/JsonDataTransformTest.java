@@ -895,7 +895,7 @@ public class JsonDataTransformTest
 			
 			Assert.assertEquals(4, reporter.getRecordsWrittenCount());
 			Assert.assertEquals(0, reporter.getRecordsDiscardedCount());
-			Assert.assertEquals(0, reporter.getMissingFieldErrorCount());
+			Assert.assertEquals(1, reporter.getMissingFieldErrorCount());
 			Assert.assertEquals(0, reporter.getDateParseErrorsCount());
 			Assert.assertEquals(0, reporter.getOutOfOrderRecordCount());
 
@@ -926,7 +926,6 @@ public class JsonDataTransformTest
 				for (int i=0; i<numFields; i++)
 				{
 					int recordSize = bb.getInt();
-					Assert.assertEquals(fields[fieldMap[i]].length(), recordSize);
 					byte [] charBuff = new byte[recordSize];
 					for (int j=0; j<recordSize; j++)
 					{
@@ -934,6 +933,7 @@ public class JsonDataTransformTest
 					}
 
 					String value = new String(charBuff, StandardCharsets.UTF_8);
+					//Assert.assertEquals(fields[fieldMap[i]].length(), recordSize);
 					Assert.assertEquals(fields[fieldMap[i]], value);
 				}
 			}		

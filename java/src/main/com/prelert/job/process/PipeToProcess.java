@@ -165,8 +165,18 @@ public class PipeToProcess
 			while ((line = csvReader.read()) != null)
 			{
 				lineCount++;
+								
+				if (maxIndex >= line.size())
+				{
+					logger.error("Not enough fields in csv record " + line);
+					reporter.reportMissingField(Arrays.toString(line.toArray()));
+					recordsDiscarded++;
 					
-				lengthEncodedWriter.writeNumFields(numFields);		
+					reporter.reportRecordsWritten(recordsWritten, recordsDiscarded);
+					continue;
+				}
+				
+				lengthEncodedWriter.writeNumFields(numFields);	
 				
 				int recordIndex = 0;
 				for (Pair<String, Integer> p : fieldIndexes)
@@ -187,9 +197,10 @@ public class PipeToProcess
 									"Cannot parse timestamp '%s' as epoch value",								
 									record);
 							recordsDiscarded++;
+							
+							recordsWritten--;
 							logger.error(message);						
 							
-							break;
 						}	
 					}
 
@@ -198,6 +209,7 @@ public class PipeToProcess
 					recordIndex++;
 				}
 					
+				recordsWritten++;
 				reporter.reportRecordsWritten(recordsWritten, recordsDiscarded);
 			}
 			
@@ -546,9 +558,27 @@ public class PipeToProcess
 				reporter.reportMissingField(missing);
 			}
 			
-			logger.info(Arrays.asList(record));
-			lengthEncodedWriter.writeRecord(record);
-			recordsWritten++;
+			try
+			{
+				// parse as a double and throw away the fractional 
+				// component
+				long epoch = Double.valueOf(record[timeFieldIndex]).longValue();
+				record[timeFieldIndex] = new Long(epoch).toString();
+				
+				lengthEncodedWriter.writeRecord(record);
+				recordsWritten++;
+			}
+			catch (NumberFormatException e)
+			{
+				String message = String.format(
+						"Cannot parse timestamp '%s' as epoch value",								
+						record[timeFieldIndex]);
+				recordsDiscarded++;
+				
+				reporter.reportDateParseError(record[timeFieldIndex]);
+				logger.error(message);						
+			}
+			
 		}
 		else
 		{
@@ -571,9 +601,26 @@ public class PipeToProcess
 					reporter.reportMissingField(missing);
 				}
 				
-				recordsWritten++;
-				logger.info(Arrays.asList(record));
-				lengthEncodedWriter.writeRecord(record);
+				try
+				{
+					// parse as a double and throw away the fractional 
+					// component
+					long epoch = Double.valueOf(record[timeFieldIndex]).longValue();
+					record[timeFieldIndex] = new Long(epoch).toString();
+					
+					lengthEncodedWriter.writeRecord(record);
+					recordsWritten++;
+				}
+				catch (NumberFormatException e)
+				{
+					String message = String.format(
+							"Cannot parse timestamp '%s' as epoch value",								
+							record[timeFieldIndex]);
+					recordsDiscarded++;
+					
+					reporter.reportDateParseError(record[timeFieldIndex]);
+					logger.error(message);						
+				}
 			}
 			else
 			{
