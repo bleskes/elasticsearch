@@ -625,11 +625,13 @@ public class CsvDataTransfromTest
 		}
 	}
 	
-	
+	/**
+	 * Test converting timestamps with fractional components
+	 */
 	@Test 
 	public void epochWithFractionTest()
+	throws IOException, MissingFieldException
 	{
-		/*
 		String epochData = "airline,responsetime,airport,sourcetype,_time,baggage\n" +
 				"DJA,622,flightcentre,MAN,1350824400.115846484,none\n" +
 				"JQA,1742,flightcentre,GAT,1350824401.45843543,none\n" +
@@ -637,29 +639,35 @@ public class CsvDataTransfromTest
 				"GAL,3893,flightcentre,CHM,1350824403.0,some\n" +
 				"JQA,9,flightcentre,CHM,1350824403.879,none\n" +
 				"DJA,189,flightcentre,GAT,1350824404.8676458,lost\n" +
-				"JQA,8,flightcentre,GAT,-1350824404.86764,none\n" +
-				"DJA,1200,flightcentre,MAN,-135082440.4688,none";	
+				"JQA,8,flightcentre,GAT,1350824404.86764,none\n" +
+				"DJA,1200,flightcentre,MAN,1350824404.4688,none";	
 		
 		String epochMsData = "airline,responsetime,airport,sourcetype,_time,baggage\n" +
-				"DJA,622,flightcentre,MAN,1350824400.115846484,none\n" +
-				"JQA,1742,flightcentre,GAT,1350824401.45843543,none\n" +
-				"GAL,5339,flightcentre,SYN,1350824402.154835435,some\n" +
-				"GAL,3893,flightcentre,CHM,1350824403.0,some\n" +
-				"JQA,9,flightcentre,CHM,1350824403.879,none\n" +
-				"DJA,189,flightcentre,GAT,1350824404.8676458,lost\n" +
-				"JQA,8,flightcentre,GAT,-1350824404.86764,none\n" +
-				"DJA,1200,flightcentre,MAN,-135082440.4688,none";	
+				"DJA,622,flightcentre,MAN,1350824400000.115846484,none\n" +
+				"JQA,1742,flightcentre,GAT,1350824401000.45843543,none\n" +
+				"GAL,5339,flightcentre,SYN,1350824402000.154835435,some\n" +
+				"GAL,3893,flightcentre,CHM,1350824403000.0,some\n" +
+				"JQA,9,flightcentre,CHM,1350824403000.879,none\n" +
+				"DJA,189,flightcentre,GAT,1350824404000.8676458,lost\n" +
+				"JQA,8,flightcentre,GAT,1350824404000.86764,none\n" +
+				"DJA,1200,flightcentre,MAN,1350824404000.4688,none";	
 		
+		String [] epochTimes = new String [] {"_time", "1350824400", "1350824401", 
+				"1350824402", "1350824403", "1350824403", "1350824404", 
+				"1350824404", "1350824404"};
+
+		// data is written in the order of the required fields
+		// with time the first element
+		int [] fieldMap = new int [] {2, 0, 1};
 		
 		List<String> analysisFields = Arrays.asList(new String [] {"airline", "responsetime"});
 		
 		int loop = 0;
 		for (String data : new String[] {epochData, epochMsData})
-		{
-			loop++;
-			
+		{		
 			DataDescription dd = new DataDescription();
 			dd.setFormat(DataFormat.DELINEATED);
+			dd.setTimeField("_time");
 			dd.setFieldDelimiter(',');
 			if (loop == 0)
 			{
@@ -669,6 +677,7 @@ public class CsvDataTransfromTest
 			{
 				dd.setTimeFormat("epoch_ms");
 			}
+			loop++;
 			
 			// can create with null
 			ProcessManager pm = new ProcessManager(null, null);
@@ -680,15 +689,21 @@ public class CsvDataTransfromTest
 			pm.writeToJob(dd, analysisFields, bis, bos, s_Logger);
 			ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 
-			for (String [] fields : lines)
+			String [] lines = data.split("\\n");
+			
+			
+			final int TIME_FIELD = 0;
+			int lineCount = 0;
+			for (String line : lines)
 			{
 				int numFields = bb.getInt();
-				Assert.assertEquals(analysisFields.size() +1, numFields);
+				String [] fields = line.split(",");
+				Assert.assertEquals(analysisFields.size() + 1, numFields);
 
 				for (int i=0; i<numFields; i++)
 				{
 					int recordSize = bb.getInt();
-					Assert.assertEquals(fields[i].length(), recordSize);
+					
 					byte [] charBuff = new byte[recordSize];
 					for (int j=0; j<recordSize; j++)
 					{
@@ -696,10 +711,21 @@ public class CsvDataTransfromTest
 					}
 
 					String value = new String(charBuff, StandardCharsets.UTF_8);				
-					Assert.assertEquals(fields[i], value);
+
+					if (i == TIME_FIELD)
+					{
+						Assert.assertEquals(epochTimes[lineCount].length(), recordSize);
+						Assert.assertEquals(epochTimes[lineCount], value);			
+					}
+					else
+					{
+						Assert.assertEquals(fields[fieldMap[i]].length(), recordSize);
+						Assert.assertEquals(fields[fieldMap[i]], value);
+					}
 				}
+				
+				lineCount++;
 			}	
 		}
-		*/
 	}
 }
