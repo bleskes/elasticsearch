@@ -80,9 +80,11 @@ import com.prelert.job.warnings.OutOfOrderRecordsException;
 import com.prelert.job.warnings.elasticsearch.ElasticSearchStatusReporterFactory;
 import com.prelert.job.DetectorState;
 import com.prelert.job.JobConfiguration;
+import com.prelert.job.JobConfigurationException;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobInUseException;
 import com.prelert.job.JobStatus;
+import com.prelert.job.TooManyJobsException;
 import com.prelert.job.UnknownJobException;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
@@ -341,10 +343,56 @@ public class JobManager implements JobDetailsProvider
 	 * @return The new job or <code>null</code> if an exception occurs.
 	 * @throws UnknownJobException
 	 * @throws IOException 
+	 * @throws TooManyJobsException If the license is violated
+	 * @throws JobConfigurationException If the license is violated
 	 */
 	public JobDetails createJob(JobConfiguration jobConfig)
-	throws UnknownJobException , IOException
+	throws UnknownJobException, IOException, TooManyJobsException, JobConfigurationException
 	{
+		// Negative m_MaxActiveJobs means unlimited
+		if (m_MaxActiveJobs >= 0 &&
+			getRunningJobCount() >= m_MaxActiveJobs)
+		{
+			throw new TooManyJobsException(m_MaxActiveJobs,
+					"Cannot create new job - your license limits you to " +
+					m_MaxActiveJobs + " concurrently running " +
+					(m_MaxActiveJobs == 1 ? "job" : "jobs") +
+					".  You must close a job before you can create a new one.",
+					ErrorCode.LICENSE_VIOLATION);
+		}
+
+		// Negative m_MaxDetectorsPerJob means unlimited
+		if (m_MaxDetectorsPerJob >= 0 &&
+			jobConfig.getAnalysisConfig().getDetectors().size() > m_MaxDetectorsPerJob)
+		{
+			throw new JobConfigurationException(
+					"Cannot create new job - your license limits you to " +
+					m_MaxDetectorsPerJob +
+					(m_MaxDetectorsPerJob == 1 ? " detector" : " detectors") +
+					" per job, but you have configured " +
+					jobConfig.getAnalysisConfig().getDetectors().size(),
+					ErrorCode.LICENSE_VIOLATION);
+		}
+
+		// We can only validate the case of m_MaxPartitionsPerJob being zero in
+		// the Java code - anything more subtle has to be left to the C++
+		if (m_MaxPartitionsPerJob == 0)
+		{
+			for (com.prelert.job.Detector detector :
+						jobConfig.getAnalysisConfig().getDetectors())
+			{
+				String partitionFieldName = detector.getPartitionFieldName();
+				if (partitionFieldName != null &&
+					partitionFieldName.length() > 0)
+				{
+					throw new JobConfigurationException(
+							"Cannot create new job - your license disallows" +
+							" partition fields, but you have configured one.",
+							ErrorCode.LICENSE_VIOLATION);
+				}
+			}
+		}
+
 		String jobId = generateJobId();
 		JobDetails jobDetails;
 		
@@ -817,12 +865,26 @@ public class JobManager implements JobDetailsProvider
 	 * it is already handling data
 	 * @throws HighProportionOfBadTimestampsException 
 	 * @throws OutOfOrderRecordsException 
+	 * @throws TooManyJobsException If the license is violated
 	 */
 	public boolean dataToJob(String jobId, InputStream input) 
 	throws UnknownJobException, NativeProcessRunException, MissingFieldException, 
 		JsonParseException, JobInUseException, HighProportionOfBadTimestampsException,
-		OutOfOrderRecordsException 
+		OutOfOrderRecordsException, TooManyJobsException
 	{
+		// Negative m_MaxActiveJobs means unlimited
+		if (m_MaxActiveJobs >= 0 &&
+			getJobDetails(jobId).getStatus().isRunning() == false &&
+			getRunningJobCount() >= m_MaxActiveJobs)
+		{
+			throw new TooManyJobsException(m_MaxActiveJobs,
+					"Cannot reactivate job with id '" + jobId +
+					"' - your license limits you to " + m_MaxActiveJobs +
+					" concurrently running jobs.  You must close a job before" +
+					" you can reactivate a closed one.",
+					ErrorCode.LICENSE_VIOLATION);
+		}
+
 		try
 		{
 			if (m_ProcessManager.dataToJob(jobId, input) == false)
