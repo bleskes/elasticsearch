@@ -52,6 +52,7 @@ import org.apache.log4j.PatternLayout;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.prelert.job.AnalysisConfig;
+import com.prelert.job.AnalysisLimits;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.Detector;
@@ -90,7 +91,9 @@ public class JobsTest implements Closeable
 			+ "\"bucketSpan\":3600,"  
 			+ "\"detectors\":[{\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}] "
 			+ "},"
-			+ "\"dataDescription\":{\"fieldDelimiter\":\",\", \"timeField\":\"_time\", \"timeFormat\" : \"epoch\"} }}";		
+			+ "\"dataDescription\":{\"fieldDelimiter\":\",\", \"timeField\":\"_time\", \"timeFormat\" : \"epoch\"},"
+			+ "\"analysisLimits\": {\"maxFieldValues\":2000, \"maxTimeBuckets\":5000}"
+			+ "}";		
 	
 	final String FLIGHT_CENTRE_JSON_JOB_CONFIG = "{\"analysisConfig\" : {"
 			+ "\"bucketSpan\":3600,"  
@@ -305,7 +308,9 @@ public class JobsTest implements Closeable
 
 		test(ac.equals(job.getAnalysisConfig()));
 		test(dd.equals(job.getDataDescription()));
-		test(job.getAnalysisLimits() == null);
+		
+		AnalysisLimits al = new AnalysisLimits(2000, 5000);
+		test(job.getAnalysisLimits().equals(al));
 				
 		test(job.getLocation().toString().equals(baseUrl + "/jobs/" + jobId));
 		test(job.getResultsEndpoint().toString().equals(baseUrl + "/results/" + jobId));
@@ -1204,7 +1209,7 @@ public class JobsTest implements Closeable
 				"/engine_api_integration_test/flightcentre.json");
 		File flightCentreMsData = new File(prelertTestDataHome + 
 				"/engine_api_integration_test/flightcentre_ms.csv");
-		File flightCentreMsJsonData = new File(prelertTestDataHome + 
+		File flightCentreMsJsonData = new File(prelertTestDataHome +  
 				"/engine_api_integration_test/flightcentre_ms.json");
 		
 		final long FLIGHT_CENTRE_NUM_BUCKETS = 24;
@@ -1223,6 +1228,7 @@ public class JobsTest implements Closeable
 		test.verifyJobResults(baseUrl, flightCentreJobId, 100, FLIGHT_CENTRE_NUM_BUCKETS, 3600);
 		jobUrls.add(flightCentreJobId);		
 
+		
 		//=================
 		// JSON test
 		//
@@ -1291,11 +1297,9 @@ public class JobsTest implements Closeable
 		
 		//==========================
 		// Clean up test jobs
-		//test.deleteJobsTest(baseUrl, jobUrls);
-
-
+		test.deleteJobsTest(baseUrl, jobUrls);
+	
 		test.close();
-		
 	}
 
 }

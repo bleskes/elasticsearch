@@ -184,6 +184,13 @@ public class ProcessCtrl
 	
 	
 	/**
+	 * The configuration fields used in limits.conf
+	 */
+	static final public String MAX_FIELD_VALUES_CONFIG_STR = "maxfieldvalues";
+	static final public String MAX_TIME_BUCKETS_CONFIG_STR = "maxtimebuckets";	
+	
+	
+	/**
 	 * Static initialisation finds Prelert home and the path to the binaries,
 	 * sets lib path to PRELERT_HOME/lib + PRELERT_HOME/cots/(lib|bin)
 	 */
@@ -432,7 +439,7 @@ public class ProcessCtrl
 		if (job.getAnalysisLimits() != null)
 		{			
 			File limitConfigFile = File.createTempFile("limitconfig", ".conf");
-			writeModelOptions(job.getAnalysisLimits(), limitConfigFile);		
+			writeLimits(job.getAnalysisLimits(), limitConfigFile);		
 			String limitConfig = LIMIT_CONFIG_ARG + limitConfigFile.toString();
 			command.add(limitConfig);
 		}
@@ -544,18 +551,18 @@ public class ProcessCtrl
 	 * @param emptyConfFile
 	 * @throws IOException
 	 */
-	private void writeModelOptions(AnalysisLimits options, File emptyConfFile) 
+	private void writeLimits(AnalysisLimits options, File emptyConfFile) 
 	throws IOException	
 	{
 		StringBuilder contents = new StringBuilder("[anomaly]").append(NEW_LINE);
 		if (options.getMaxFieldValues() > 0)
 		{
-			contents.append(AnalysisLimits.MAX_FIELD_VALUES + " = ")
+			contents.append(MAX_FIELD_VALUES_CONFIG_STR + " = ")
 					.append(options.getMaxFieldValues()).append(NEW_LINE);
 		}
 		if (options.getMaxTimeBuckets() > 0)
 		{
-			contents.append(AnalysisLimits.MAX_TIME_BUCKETS + " = ")
+			contents.append(MAX_TIME_BUCKETS_CONFIG_STR + " = ")
 					.append(options.getMaxTimeBuckets()).append(NEW_LINE);
 		}
 
