@@ -168,10 +168,13 @@ public enum ErrorCode
 	NATIVE_PROCESS_WRITE_ERROR(40102),
 	
 	/**
-	 * Certain operations e.g. delete cannot be applied 
-	 * to running jobs.
+	 * The native autodetect process will only accept a single stream 
+	 * of data at a time. It is an error to try to upload data to the same
+	 * job through multiple connections. Additionally certain operations such 
+	 * as delete cannot be applied to a job that is actively processing data
+	 * and will result in this error condition.
 	 */
-	NATIVE_PROCESS_RUNNING_ERROR(40103),
+	NATIVE_PROCESS_CONCURRENT_USE_ERROR(40103),
 	
 	
 	// Log file reading errors

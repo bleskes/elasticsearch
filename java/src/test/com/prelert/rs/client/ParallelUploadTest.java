@@ -98,7 +98,8 @@ public class ParallelUploadTest
 			}
 			
 			ApiError apiError = client.getLastError();
-			if (apiError.getErrorCode() != ErrorCode.NATIVE_PROCESS_RUNNING_ERROR)
+
+			if (apiError.getErrorCode() != ErrorCode.NATIVE_PROCESS_CONCURRENT_USE_ERROR)
 			{
 				throw new IllegalStateException("Closing Job: Error code should be job in use error");
 			}
@@ -114,7 +115,7 @@ public class ParallelUploadTest
 			}
 			
 			apiError = client.getLastError();
-			if (apiError.getErrorCode() != ErrorCode.NATIVE_PROCESS_RUNNING_ERROR)
+			if (apiError.getErrorCode() != ErrorCode.NATIVE_PROCESS_CONCURRENT_USE_ERROR)
 			{
 				throw new IllegalStateException("Writing data: Error code should be job in use error");
 			}

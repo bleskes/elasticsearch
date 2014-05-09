@@ -686,6 +686,8 @@ public class JobManager implements JobDetailsProvider
 			IndexResponse jobIndexResponse = m_Client.prepareIndex(
 					jobId, JobDetails.TYPE, jobId)
 					.setSource(content).get();
+			
+			
 
 			if (jobIndexResponse.getVersion() <= lastVersion)
 			{

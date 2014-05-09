@@ -196,7 +196,7 @@ public class ProcessManager
 		
 		if (process == null)
 		{
-			// create the new process an restore its state 
+			// create the new process and restore its state 
 			// if it has been saved
 			process = createProcess(jobId);
 			m_JobIdToProcessMap.put(jobId, process);
@@ -205,9 +205,11 @@ public class ProcessManager
 		// We can't write data if someone is already writing to the process.
 		if (process.isInUse())
 		{
-			String msg = "Cannot write to process whilst it is in use";
+			String msg = String.format("Another connection is writing to job "
+					+ "%s. Jobs will only accept data from one connection at a time",
+					jobId);
 			s_Logger.error(msg);
-			throw new JobInUseException(jobId, msg, ErrorCode.NATIVE_PROCESS_RUNNING_ERROR);
+			throw new JobInUseException(jobId, msg, ErrorCode.NATIVE_PROCESS_CONCURRENT_USE_ERROR);
 		}
 				
 		// check the process is running, throws if not
@@ -367,9 +369,10 @@ public class ProcessManager
 			s_Logger.error("Cannot finish job while it is reading data");
 			process.getLogger().error("Cannot finish job while it is reading data");
 			
-			String msg = "Cannot close job as the process is reading data";
+			String msg = String.format("Cannot close job %s while the job is actively "
+					+ "processing data", jobId);
 			s_Logger.error(msg);
-			throw new JobInUseException(jobId, msg, ErrorCode.NATIVE_PROCESS_RUNNING_ERROR);
+			throw new JobInUseException(jobId, msg, ErrorCode.NATIVE_PROCESS_CONCURRENT_USE_ERROR);
 		}
 		
 		

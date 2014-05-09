@@ -556,7 +556,7 @@ public class EngineApiClient implements Closeable
 	 * @param baseUrl The base URL for the REST API 
 	 * e.g <code>http://localhost:8080/engine/version/</code>
 	 * @param jobId The Job's unique Id
-	 * @param expand If true return the anomaly records for the bucket
+	 * @param expand If true include the anomaly records for the bucket
 	 * 
 	 * @return A {@link Pagination} object containing a list of {@link Bucket buckets}
 	 * @throws IOException 
@@ -574,7 +574,7 @@ public class EngineApiClient implements Closeable
 	 * @param baseUrl The base URL for the REST API 
 	 * e.g <code>http://localhost:8080/engine/version/</code>
 	 * @param jobId The Job's unique Id
-	 * @param expand If true return the anomaly records for the bucket
+	 * @param expand If true include the anomaly records for the bucket
 	 * @param skip The number of buckets to skip 
 	 * @param take The max number of buckets to request. 
 	 * 
@@ -595,7 +595,7 @@ public class EngineApiClient implements Closeable
 	 * @param baseUrl The base URL for the REST API 
 	 * e.g <code>http://localhost:8080/engine/version/</code>
 	 * @param jobId The Job's unique Id
-	 * @param expand If true return the anomaly records for the bucket
+	 * @param expand If true include the anomaly records for the bucket
 	 * @param skip The number of buckets to skip. If <code>null</code> then ignored 
 	 * @param take The max number of buckets to request. If <code>null</code> then ignored 
 	 * @param start The start date filter as either a Long (seconds from epoch)
@@ -686,7 +686,7 @@ public class EngineApiClient implements Closeable
 	 * e.g <code>http://localhost:8080/engine/version/</code>
 	 * @param jobId The Job's unique Id
 	 * @param bucketId The bucket to get
-	 * @param expand If true return the anomaly records for the bucket
+	 * @param expand If true include the anomaly records for the bucket
 	 * @return A {@link SingleDocument} object containing the requested 
 	 * {@link Bucket} or an empty {@link SingleDocument} if it does not exist 
 	 * @throws IOException 
