@@ -60,7 +60,7 @@ public class CsvDataRunner implements Runnable
 			+ "\"dataDescription\":{\"fieldDelimiter\":\",\"} }}";
 	
 	
-	public static final String HEADER = "_time,metric_field,metric_value";
+	public static final String HEADER = "time,metric_field,metric_value";
 	
 	public static final long DEFAULT_NUMBER_TIME_SERIES = 100000;
 	public static final long DEFAULT_TIME_SERIES_POINT_INTERVAL_SECS = 15;
