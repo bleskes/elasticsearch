@@ -917,8 +917,8 @@ public class JobsTest implements Closeable
 	public void testDateFilters(String baseUrl, String jobId, Date start, Date end) 
 	throws IOException
 	{
-		final String ISO_8601_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ssZ";
-		final String ISO_8601_DATE_FORMAT_WITH_MS = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
+		final String ISO_8601_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ssX";
+		final String ISO_8601_DATE_FORMAT_WITH_MS = "yyyy-MM-dd'T'HH:mm:ss.SSSX";
 		
 		// test 3 date formats
 		Long epochStart = start.getTime() / 1000;
