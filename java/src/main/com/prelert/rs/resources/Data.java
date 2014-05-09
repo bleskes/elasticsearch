@@ -23,6 +23,7 @@ import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.JobInUseException;
+import com.prelert.job.TooManyJobsException;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.process.MissingFieldException;
@@ -82,6 +83,7 @@ public class Data extends ResourceWithJobManager
 	 * the job is already handling data
 	 * @throws HighProportionOfBadTimestampsException 
 	 * @throws OutOfOrderRecordsException 
+	 * @throws TooManyJobsException If the license is violated
 	 */
     @POST
     @Path("/{jobId}")
@@ -91,7 +93,7 @@ public class Data extends ResourceWithJobManager
     		@PathParam("jobId") String jobId, InputStream input)  
     throws IOException, UnknownJobException, NativeProcessRunException,
     	MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException,
-    	OutOfOrderRecordsException
+    	OutOfOrderRecordsException, TooManyJobsException
     {   	   	
     	s_Logger.debug("Handle Post data to job = " + jobId);
     	
@@ -201,11 +203,12 @@ public class Data extends ResourceWithJobManager
 	 * the job is already handling data
      * @throws HighProportionOfBadTimestampsException 
      * @throws OutOfOrderRecordsException 
+	 * @throws TooManyJobsException If the license is violated
 	 */
     private boolean handleStream(String jobId, InputStream input)
     throws NativeProcessRunException, UnknownJobException, MissingFieldException, 
     JsonParseException, JobInUseException, HighProportionOfBadTimestampsException,
-    OutOfOrderRecordsException
+    OutOfOrderRecordsException, TooManyJobsException
     {
     	JobManager manager = jobManager();
 		return manager.dataToJob(jobId, input);
