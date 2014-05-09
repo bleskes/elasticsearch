@@ -45,6 +45,7 @@ import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
 import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
+import com.prelert.job.JobConfigurationException;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobInUseException;
 import com.prelert.job.TooManyJobsException;
@@ -73,13 +74,14 @@ public class RestoreStateTest
 	 * @throws MissingFieldException
 	 * @throws HighProportionOfBadTimestampsException 
 	 * @throws OutOfOrderRecordsException 
+	 * @throws JobConfigurationException If the license is violated
 	 * @throws TooManyJobsException If the license is violated
 	 */
-	public static void main(String[] args) 
+	public static void main(String[] args)
 	throws IOException, NativeProcessRunException, UnknownJobException,
-		InterruptedException, JobInUseException, MissingFieldException, 
+		InterruptedException, JobInUseException, MissingFieldException,
 		HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
-		TooManyJobsException
+		JobConfigurationException, TooManyJobsException
 	{
 		final String prelertSrcHome = System.getProperty("prelert.src.home");
 		if (prelertSrcHome == null)
