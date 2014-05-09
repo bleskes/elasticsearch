@@ -440,8 +440,6 @@ public class JobManager implements JobDetailsProvider
 			s_Logger.error("Error writing ElasticSearch mappings", e);
 			throw e;
 		}
-
-		//return null;
 	}
 	
 	/**

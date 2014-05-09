@@ -82,11 +82,11 @@ public class Results extends ResourceWithJobManager
 	/**
 	 * Date query param format
 	 */
-	static private final String ISO_8601_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ssZ";
+	static private final String ISO_8601_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ssX";
 	/**
 	 * Date query param format
 	 */
-	static private final String ISO_8601_DATE_FORMAT_WITH_MS = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
+	static private final String ISO_8601_DATE_FORMAT_WITH_MS = "yyyy-MM-dd'T'HH:mm:ss.SSSX";
 	
 	static private final DateFormat s_DateFormat = new SimpleDateFormat(ISO_8601_DATE_FORMAT); 
 	static private final DateFormat s_DateFormatWithMs = new SimpleDateFormat(ISO_8601_DATE_FORMAT_WITH_MS); 
