@@ -44,7 +44,7 @@ public class TooManyJobsExceptionMapper implements ExceptionMapper<TooManyJobsEx
 		error.setCause(e.getCause());
 		error.setMessage(e.getMessage());
 
-		return Response.status(Response.Status.NOT_FOUND).
+		return Response.status(Response.Status.BAD_REQUEST).
 				entity(error.toJson()).build();
 	}
 }
