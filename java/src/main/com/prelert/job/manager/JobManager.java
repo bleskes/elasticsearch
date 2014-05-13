@@ -484,11 +484,11 @@ public class JobManager implements JobDetailsProvider
 		RangeFilterBuilder fb = FilterBuilders.rangeFilter(Bucket.ID);
 		if (startBucket > 0)
 		{
-			fb = fb.gte(startBucket);
+			fb = fb.gt(startBucket);
 		}
 		if (endBucket > 0)
 		{
-			fb = fb.lt(endBucket);
+			fb = fb.lte(endBucket);
 		}
 
 		return buckets(jobId, expand, skip, take, fb);
