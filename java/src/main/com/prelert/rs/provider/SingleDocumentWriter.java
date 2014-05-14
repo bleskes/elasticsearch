@@ -30,7 +30,6 @@ package com.prelert.rs.provider;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.annotation.Annotation;
-import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.text.SimpleDateFormat;
 
@@ -67,13 +66,7 @@ public class SingleDocumentWriter<T> implements MessageBodyWriter<SingleDocument
 			Annotation[] annotations, MediaType mediaType) 
 	{
 		// no need to check the media type because of the @Produces annotation
-		if (type == SingleDocument.class &&
-				genericType instanceof ParameterizedType)
-		{
-			return true;
-		}
-
-		return false;
+		return (type == SingleDocument.class);
 	}
 
 	@Override

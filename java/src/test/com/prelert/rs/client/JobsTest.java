@@ -784,14 +784,33 @@ public class JobsTest implements Closeable
 			
 			SingleDocument<Bucket> bucket = m_WebServiceClient.getBucket(
 					baseUrl, jobId, Long.toString(lastBucketTime), false);
+			
+			test(bucket.isExists() == true);
+			test(bucket.getDocument() != null);
+			test(bucket.getDocumentId().equals(Long.toString(lastBucketTime)));
+			test(bucket.getType().equals(Bucket.TYPE));
+			
 			validateBuckets(Arrays.asList(new Bucket[]{bucket.getDocument()}), 
 					bucketSpan, 0, false);
+			
+			SingleDocument<Bucket> nonExistentBucket = m_WebServiceClient.getBucket(
+					baseUrl, jobId, "missing_bucket", false);
+			test(nonExistentBucket.isExists() == false);
+			test(nonExistentBucket.getDocument() == null);
+			test(nonExistentBucket.getDocumentId().equals("missing_bucket"));
+			test(nonExistentBucket.getType().equals(Bucket.TYPE));
+			
 			
 
 			if (buckets.getNextPage() == null)
 			{
 				test(expectedNumBuckets == (skip + buckets.getDocumentCount()));		
 				break;
+			}
+			if (skip > 0)
+			{
+				// should be a previous page
+				test(buckets.getPreviousPage() != null);
 			}
 			
 			skip += take;
@@ -817,8 +836,21 @@ public class JobsTest implements Closeable
 			
 			SingleDocument<Bucket> bucket = m_WebServiceClient.getBucket(baseUrl, jobId, 
 					Long.toString(lastBucketTime), true);
+			
+			test(bucket.isExists() == true);
+			test(bucket.getDocument() != null);
+			test(bucket.getDocumentId().equals(Long.toString(lastBucketTime)));
+			test(bucket.getType().equals(Bucket.TYPE));
+			
 			validateBuckets(Arrays.asList(new Bucket[]{bucket.getDocument()}), 
 					bucketSpan, 0, true);
+			
+			SingleDocument<Bucket> nonExistentBucket = m_WebServiceClient.getBucket(
+					baseUrl, jobId, "missing_bucket", false);
+			test(nonExistentBucket.isExists() == false);
+			test(nonExistentBucket.getDocument() == null);
+			test(nonExistentBucket.getDocumentId().equals("missing_bucket"));
+			test(nonExistentBucket.getType().equals(Bucket.TYPE));
 			
 			
 			if (buckets.getNextPage() == null)
@@ -826,7 +858,11 @@ public class JobsTest implements Closeable
 				test(expectedNumBuckets == (skip + buckets.getDocumentCount()));		
 				break;
 			}
-			
+			if (skip > 0)
+			{
+				// should be a previous page
+				test(buckets.getPreviousPage() != null);
+			}
 			skip += take;
 		}		
 	}
@@ -1070,7 +1106,7 @@ public class JobsTest implements Closeable
 		// expect at least 3 entries the directory and 2 log files
 		test(entry != null);
 		test(entry.getName().equals(jobId + File.separator));
-		zip.closeEntry();
+		//zip.closeEntry();
 		entry = zip.getNextEntry();
 		
 		byte buff[] = new byte[2048];
@@ -1082,7 +1118,7 @@ public class JobsTest implements Closeable
 		String content = new String(buff, StandardCharsets.UTF_8);
 		logLines = content.split("\n");
 		test(logLines.length > 0);
-		zip.closeEntry();
+		//zip.closeEntry();
 		entry = zip.getNextEntry();
 		
 		// 2nd log file
@@ -1092,7 +1128,7 @@ public class JobsTest implements Closeable
 		content = new String(buff, StandardCharsets.UTF_8);
 		logLines = content.split("\n");
 		test(logLines.length > 0);
-		zip.closeEntry();
+		//zip.closeEntry();
 		entry = zip.getNextEntry();
 
 		zip.close();

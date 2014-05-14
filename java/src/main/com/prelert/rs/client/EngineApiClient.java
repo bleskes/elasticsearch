@@ -710,11 +710,11 @@ public class EngineApiClient implements Closeable
 		try
 		{
 			String content = EntityUtils.toString(response.getEntity());
-			
-			if (response.getStatusLine().getStatusCode() == 200)
+
+			// 404 means an empty doc not necessarily an error
+			if (response.getStatusLine().getStatusCode() == 200 ||
+					response.getStatusLine().getStatusCode() == 404)
 			{
-				
-				
 				SingleDocument<Bucket> docs = m_JsonMapper.readValue(content, 
 						new TypeReference<SingleDocument<Bucket>>() {} );
 				return docs;

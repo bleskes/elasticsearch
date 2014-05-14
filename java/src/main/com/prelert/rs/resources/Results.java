@@ -41,7 +41,6 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -203,7 +202,7 @@ public class Results extends ResourceWithJobManager
 	@GET
 	@Path("/{jobId}/{bucketId}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public SingleDocument<Map<String, Object>> bucket(@PathParam("jobId") String jobId,
+	public Response bucket(@PathParam("jobId") String jobId,
 			@PathParam("bucketId") String bucketId,
 			@DefaultValue("false") @QueryParam("expand") boolean expand)
 	{
@@ -222,11 +221,13 @@ public class Results extends ResourceWithJobManager
 		{
 			s_Logger.debug(String.format("Cannot find bucket %s for job %s", 
 					bucketId, jobId));
-			throw new WebApplicationException(Response.Status.NOT_FOUND);
+			
+			return Response.status(Response.Status.NOT_FOUND).entity(bucket).build();
 		}
 					
-		return bucket;
+		return Response.ok(bucket).build();
 	}
+	
 	
 	/**
 	 * Get the anomaly records for the bucket.
