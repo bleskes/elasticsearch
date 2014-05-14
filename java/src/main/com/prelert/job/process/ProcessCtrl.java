@@ -576,7 +576,7 @@ public class ProcessCtrl
 	
 	
 	/**
-	 * Return true if there is a file PRELERT_HOME/config/model.conf
+	 * Return true if there is a file PRELERT_HOME/config/prelertmodel.conf
 	 * @return
 	 */
 	private boolean modelConfigFilePresent()
