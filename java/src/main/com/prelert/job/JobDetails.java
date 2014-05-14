@@ -50,7 +50,6 @@ public class JobDetails
 
 	static final public long DEFAULT_TIMEOUT = 600;
 	static final public long DEFAULT_BUCKETSPAN = 300;
-	static final public boolean DEFAULT_PERSIST_MODEL = true;
 	
 	/*
 	 * Field names used in serialisation
@@ -67,9 +66,8 @@ public class JobDetails
 	static final public String OUT_OF_ORDER_TIME_COUNT = "outOfOrderTimeStampCount";
 	
 	static final public String TIMEOUT = "timeout";
-	static final public String PERSIST_MODEL = "persistModel";
 	
-	static final public String ANALYSIS_CONFIG = "analysisConfig";
+        static final public String ANALYSIS_CONFIG = "analysisConfig";
 	static final public String ANALYSIS_LIMITS = "analysisLimits";
 	static final public String DATA_DESCRIPTION = "dataDescription";
 	
