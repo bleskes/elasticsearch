@@ -758,7 +758,7 @@ public class JobManager implements JobDetailsProvider
 		}
 		catch (IndexMissingException e)
 		{
-			String msg = String.format("Error writing the job '%s' finish time.", 
+			String msg = String.format("Unknown job '%s'. Error setting the job's status.", 
 					jobId);
 			s_Logger.error(msg);
 			throw new UnknownJobException(jobId, msg, ErrorCodes.MISSING_JOB_ERROR);
@@ -816,8 +816,8 @@ public class JobManager implements JobDetailsProvider
 		}
 		catch (IndexMissingException e)
 		{
-			String msg = String.format("Error writing the job '%s' finish time.", 
-					jobId);
+			String msg = String.format("Unknown job '%s'. Error writing the job's "
+					+ "finish time and status.", jobId);
 			s_Logger.error(msg);
 			throw new UnknownJobException(jobId, msg, ErrorCode.MISSING_JOB_ERROR);
 		}
@@ -932,10 +932,8 @@ public class JobManager implements JobDetailsProvider
 			// rethrow
 			throw ne;
 		}
-		finally 
-		{
-			updateLastDataTime(jobId, new Date()); 
-		}
+
+		updateLastDataTime(jobId, new Date()); 
 		
 		return true;
 	}
@@ -995,8 +993,8 @@ public class JobManager implements JobDetailsProvider
 		}
 		catch (IndexMissingException e)
 		{
-			String msg = String.format("Error writing the job '%s' last data time.", jobId);
-			throw new UnknownJobException(jobId, msg, ErrorCode.MISSING_JOB_ERROR);
+			String msg = String.format("Unknown job '%s'. Error writing the job's last data time.", jobId);
+			throw new UnknownJobException(jobId, msg, ErrorCodes.MISSING_JOB_ERROR);
 		}
 	}
 	
