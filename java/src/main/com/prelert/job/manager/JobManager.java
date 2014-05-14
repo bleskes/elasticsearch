@@ -307,35 +307,6 @@ public class JobManager implements JobDetailsProvider
 
 
 	/**
-	 * Get the number of running jobs.
-	 * Searches across all job indexes for job documents
-	 * that have status "RUNNING".
-	 * @return Count of running jobs
-	 */
-	public int getRunningJobCount()
-	{
-		FilterBuilder fb = FilterBuilders.matchAllFilter();
-
-		SearchResponse response = m_Client.prepareSearch("_all")
-				.setTypes(JobDetails.TYPE)
-				.setPostFilter(fb)
-				.get();
-
-		int runningCount = 0;
-		for (SearchHit hit : response.getHits().getHits())
-		{
-			JobDetails details = new JobDetails(hit.getSource());
-			if (details.getStatus().isRunning())
-			{
-				++runningCount;
-			}
-		}
-
-		return runningCount;
-	}
-
-
-	/**
 	 * Create a new job from the configuration object and insert into the 
 	 * document store. The details of the newly created job are returned.
 	 *  
@@ -351,7 +322,7 @@ public class JobManager implements JobDetailsProvider
 	{
 		// Negative m_MaxActiveJobs means unlimited
 		if (m_MaxActiveJobs >= 0 &&
-			getRunningJobCount() >= m_MaxActiveJobs)
+			m_ProcessManager.numberOfRunningJobs() >= m_MaxActiveJobs)
 		{
 			throw new TooManyJobsException(m_MaxActiveJobs,
 					"Cannot create new job - your license limits you to " +
@@ -737,13 +708,11 @@ public class JobManager implements JobDetailsProvider
 			return false;
 		}	
 		
-		return setJobFinishedTimeandStatus(jobId, new Date(), JobStatus.FINISHED);
+		return setJobFinishedTimeandStatus(jobId, new Date(), JobStatus.CLOSED);
 	}
 	
-	
 	@Override
-	public boolean setJobFinishedTimeandStatus(String jobId, Date time, 
-			JobStatus status)
+	public boolean setJobStatus(String jobId, JobStatus status)
 	throws UnknownJobException
 	{
 		// update job status
@@ -754,14 +723,14 @@ public class JobManager implements JobDetailsProvider
 
 			if (response.isExists() == false)
 			{				
-				s_Logger.error("Cannot finish job. No job found with jobId = " + jobId);
+				s_Logger.error("Cannot set job status no job found with jobId = " 
+							+ jobId);
 				return false;
 			}
 
 			long lastVersion = response.getVersion();
 
 			JobDetails job = new JobDetails(response.getSource());
-			job.setFinishedTime(new Date());
 			job.setStatus(status);
 
 			String content;
@@ -779,11 +748,67 @@ public class JobManager implements JobDetailsProvider
 					jobId, JobDetails.TYPE, jobId)
 					.setSource(content).get();
 			
-			
+			if (jobIndexResponse.getVersion() <= lastVersion)
+			{
+				s_Logger.error("Error saving job- document not updated");
+				return false;
+			}
+
+			m_Client.admin().indices().refresh(new RefreshRequest(jobId)).actionGet();
+		}
+		catch (IndexMissingException e)
+		{
+			String msg = String.format("Error writing the job '%s' finish time.", 
+					jobId);
+			s_Logger.error(msg);
+			throw new UnknownJobException(jobId, msg, ErrorCodes.MISSING_JOB_ERROR);
+		}
+		
+		return true;		
+	}
+	
+	@Override
+	public boolean setJobFinishedTimeandStatus(String jobId, Date time, 
+			JobStatus status)
+	throws UnknownJobException
+	{
+		// update job status
+		try
+		{
+			GetResponse response = m_Client.prepareGet(jobId, JobDetails.TYPE, 
+					jobId).get();
+
+			if (response.isExists() == false)
+			{				
+				s_Logger.error("Cannot set job finish time and status no job "
+						+ "found with jobId = " + jobId);
+				return false;
+			}
+
+			long lastVersion = response.getVersion();
+
+			JobDetails job = new JobDetails(response.getSource());
+			job.setFinishedTime(new Date());
+			job.setStatus(status);
+
+			String content;
+			try
+			{
+				content = jobToContent(job);
+			}
+			catch (IOException ioe)
+			{
+				s_Logger.error("Error serialising job details");
+				return false;
+			}
+
+			IndexResponse jobIndexResponse = m_Client.prepareIndex(
+					jobId, JobDetails.TYPE, jobId)
+					.setSource(content).get();
 
 			if (jobIndexResponse.getVersion() <= lastVersion)
 			{
-				s_Logger.error("Error setting job to finished document not updated");
+				s_Logger.error("Error saving job- document not updated");
 				return false;
 			}
 
@@ -875,7 +900,7 @@ public class JobManager implements JobDetailsProvider
 		// Negative m_MaxActiveJobs means unlimited
 		if (m_MaxActiveJobs >= 0 &&
 			getJobDetails(jobId).getStatus().isRunning() == false &&
-			getRunningJobCount() >= m_MaxActiveJobs)
+			m_ProcessManager.numberOfRunningJobs() >= m_MaxActiveJobs)
 		{
 			throw new TooManyJobsException(m_MaxActiveJobs,
 					"Cannot reactivate job with id '" + jobId +

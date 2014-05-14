@@ -58,6 +58,7 @@ import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
+import com.prelert.job.JobStatus;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.ApiError;
 import com.prelert.rs.data.Bucket;
@@ -253,6 +254,8 @@ public class JobsTest implements Closeable
 		test(job.getLastDataTime() == null);
 		test(job.getFinishedTime() == null);
 		
+		test(job.getStatus() == JobStatus.CLOSED);
+		
 		Calendar cal = Calendar.getInstance();
 		cal.setTime(new Date());
 		cal.add(Calendar.MINUTE, -2);
@@ -318,6 +321,8 @@ public class JobsTest implements Closeable
 		
 		test(job.getLastDataTime() == null);
 		test(job.getFinishedTime() == null);
+		
+		test(job.getStatus() == JobStatus.CLOSED);
 		
 		Calendar cal = Calendar.getInstance();
 		cal.setTime(new Date());
@@ -424,6 +429,8 @@ public class JobsTest implements Closeable
 		test(job.getLastDataTime() == null);
 		test(job.getFinishedTime() == null);
 		
+		test(job.getStatus() == JobStatus.CLOSED);
+		
 		Calendar cal = Calendar.getInstance();
 		cal.setTime(new Date());
 		cal.add(Calendar.MINUTE, -2);
@@ -432,7 +439,6 @@ public class JobsTest implements Closeable
 		Date twoMinsInFuture = cal.getTime();
 		
 		test(job.getCreateTime().after(twoMinsAgo) && job.getCreateTime().before(twoMinsInFuture));
-		
 		
 		return jobId;
 	}
@@ -494,6 +500,8 @@ public class JobsTest implements Closeable
 		
 		test(job.getLastDataTime() == null);
 		test(job.getFinishedTime() == null);
+		
+		test(job.getStatus() == JobStatus.CLOSED);
 		
 		Calendar cal = Calendar.getInstance();
 		cal.setTime(new Date());
@@ -572,6 +580,8 @@ public class JobsTest implements Closeable
 		test(job.getLastDataTime() == null);
 		test(job.getFinishedTime() == null);
 		
+		test(job.getStatus() == JobStatus.CLOSED);
+		
 		Calendar cal = Calendar.getInstance();
 		cal.setTime(new Date());
 		cal.add(Calendar.MINUTE, -2);
@@ -634,6 +644,8 @@ public class JobsTest implements Closeable
 		
 		test(job.getLastDataTime() == null);
 		test(job.getFinishedTime() == null);
+		
+		test(job.getStatus() == JobStatus.CLOSED);
 		
 		Calendar cal = Calendar.getInstance();
 		cal.setTime(new Date());
@@ -727,6 +739,10 @@ public class JobsTest implements Closeable
 		FileInputStream stream = new FileInputStream(dataFile);
 		boolean success = m_WebServiceClient.streamingUpload(baseUrl, jobId, stream, compressed);		
 		test(success);
+				
+		SingleDocument<JobDetails> job = m_WebServiceClient.getJob(baseUrl, jobId);
+		test(job.isExists());
+		test(job.getDocument().getStatus() == JobStatus.RUNNING);		
 	}
 	
 	
@@ -744,6 +760,11 @@ public class JobsTest implements Closeable
 	{
 		boolean closed = m_WebServiceClient.closeJob(baseUrl, jobId);
 		test(closed);
+		
+		SingleDocument<JobDetails> job = m_WebServiceClient.getJob(baseUrl, jobId);
+		test(job.isExists());
+		test(job.getDocument().getStatus() == JobStatus.CLOSED);
+				
 		return closed;
 	}
 	

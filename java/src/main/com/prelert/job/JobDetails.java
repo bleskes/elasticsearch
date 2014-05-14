@@ -119,7 +119,7 @@ public class JobDetails
 	public JobDetails(String jobId, JobConfiguration jobConfig)
 	{
 		m_JobId = jobId;
-		m_Status = JobStatus.RUNNING;
+		m_Status = JobStatus.CLOSED;
 		m_CreateTime = new Date();		
 		m_Timeout = (jobConfig.getTimeout() != null) ? jobConfig.getTimeout() : DEFAULT_TIMEOUT; 		
 		m_PersistModel = true;  
@@ -141,7 +141,7 @@ public class JobDetails
 	public JobDetails(String jobId, JobDetails details, JobConfiguration jobConfig)
 	{
 		m_JobId = jobId;
-		m_Status = JobStatus.RUNNING;
+		m_Status = JobStatus.CLOSED;
 		m_CreateTime = new Date();		
 		
 		m_Timeout = details.getTimeout();		
@@ -304,8 +304,11 @@ public class JobDetails
 	}
 	
 	/**
-	 * Return the Job Status. Jobs are initialised to {@link JobStatus#RUNNING}
-	 * when created.
+	 * Return the Job Status. Jobs are initialised to {@link JobStatus#CLOSED}
+	 * when created and move into the @link JobStatus#RUNNING} state when
+	 * processing data. Once data has been processed the status will be 
+	 * either {@link JobStatus#CLOSED} or {@link JobStatus#FAILED}
+	 * 
 	 * @return The job's status
 	 */
 	public JobStatus getStatus() 

@@ -116,6 +116,12 @@ public class ProcessErrorLoggingTest
 		{
 			return false;
 		}
+		@Override
+		public boolean setJobStatus(String jobId, JobStatus status) 
+		throws UnknownJobException 
+		{
+			return false;
+		}
 	}
 	
 	

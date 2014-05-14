@@ -254,6 +254,18 @@ public class ProcessManager
 	}
 	
 	/**
+	 * Get the number of running active job.
+	 * A job is considered to be running if it has an active 
+	 * native autodetect process running.
+	 * @return Count of running jobs
+	 */
+	public int numberOfRunningJobs()
+	{
+		return m_JobIdToProcessMap.size();
+	}
+	
+	
+	/**
 	 * Create a new autodetect process restoring its state if persisted
 	 *   
 	 * @param jobId
@@ -268,7 +280,6 @@ public class ProcessManager
 		
 		return createProcess(job, true);
 	}
-	
 	
 	/**
 	 * Create a new autodetect process from the JobDetails restoring 
@@ -322,7 +333,9 @@ public class ProcessManager
 				m_StatusReporterFactory.newStatusReporter(jobId, logger),
 				m_ResultsReaderFactory.newResultsParser(jobId, 
 						nativeProcess.getInputStream(),
-						logger));		
+						logger));
+		
+		m_JobDetailsProvider.setJobStatus(jobId, JobStatus.RUNNING);
 		
 		logger.debug("Created process for job " + jobId);
 		
@@ -616,7 +629,7 @@ public class ProcessManager
 						try 
 						{
 							m_JobDetailsProvider.setJobFinishedTimeandStatus(jobId, 
-									new Date(), JobStatus.FINISHED);
+									new Date(), JobStatus.CLOSED);
 						}
 						catch (UnknownJobException e) 
 						{
