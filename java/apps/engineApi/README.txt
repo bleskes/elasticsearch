@@ -152,7 +152,6 @@ latest job. For example:
     "analysisConfig" : {
       "bucketSpan" : 3600,
       "batchSpan" : null,
-      "partitionField" : null,
       "detectors" : [ {
         "fieldName" : "responsetime",
         "function" : null,
