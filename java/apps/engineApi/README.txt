@@ -255,14 +255,14 @@ curl 'http://localhost:8080/engine/v0.3/results/20140319133023-00005/1359561600?
     "recordCount" : 2,
     "timestamp" : "2013-01-30T16:00:00.000Z",
     "Id" : "1359561600",
-    "anomalyScore" : 8.73585,
+    "anomalyScore" : 10.276,
     "records" : [ {
       "byFieldName" : "airline",
       "typical" : 101.844,
       "byFieldValue" : "AAL",
       "actual" : 242.75,
       "probability" : 4.78331E-34,
-      "anomalyScore" : 8.73585,
+      "anomalyScore" : 10.276,
       "fieldName" : "responsetime",
       "detectorName" : "individual metric/responsetime/airline",
       "function" : "mean"
