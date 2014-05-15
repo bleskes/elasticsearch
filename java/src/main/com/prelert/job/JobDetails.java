@@ -81,7 +81,6 @@ public class JobDetails
 	private Date m_LastDataTime;
 	
 	private long m_Timeout;
-	private boolean m_PersistModel;
 	
 	private AnalysisConfig m_AnalysisConfig;
 	private AnalysisLimits m_AnalysisLimits;
@@ -120,7 +119,6 @@ public class JobDetails
 		m_Status = JobStatus.CLOSED;
 		m_CreateTime = new Date();		
 		m_Timeout = (jobConfig.getTimeout() != null) ? jobConfig.getTimeout() : DEFAULT_TIMEOUT; 		
-		m_PersistModel = true;  
 						
 		m_AnalysisConfig = jobConfig.getAnalysisConfig();
 		m_AnalysisLimits = jobConfig.getAnalysisLimits();
@@ -143,7 +141,6 @@ public class JobDetails
 		m_CreateTime = new Date();		
 		
 		m_Timeout = details.getTimeout();		
-		m_PersistModel = details.isPersistModel();
 									
 		m_AnalysisConfig = details.getAnalysisConfig();
 		m_AnalysisLimits = details.getAnalysisLimits();
@@ -154,8 +151,6 @@ public class JobDetails
 		{
 			m_Timeout = jobConfig.getTimeout();		
 		}
-		
-		m_PersistModel = true;
 		
 		if (jobConfig.getAnalysisConfig() != null)
 		{
@@ -247,10 +242,6 @@ public class JobDetails
 		if (values.containsKey(TIMEOUT))
 		{
 			m_Timeout = (Integer)values.get(TIMEOUT);
-		}
-		if (values.containsKey(PERSIST_MODEL))
-		{
-			m_PersistModel = (Boolean)values.get(PERSIST_MODEL);
 		}
 		if (values.containsKey(ANALYSIS_CONFIG))
 		{
@@ -438,20 +429,7 @@ public class JobDetails
 		m_Timeout = timeout;
 	}
 
-	/**
-	 * Is the job persisted
-	 * @return true if the job's internal models have been persisted
-	 */
-	public boolean isPersistModel() 
-	{
-		return m_PersistModel;
-	}
-	
-	public void setPersistModel(boolean persist) 
-	{
-		m_PersistModel = persist;
-	}
-	
+
 	/**
 	 * The analysis configuration object
 	 * @return The AnalysisConfig
@@ -632,9 +610,7 @@ public class JobDetails
 				bothNullOrEqual(this.m_FinishedTime, that.m_FinishedTime) &&
 				bothNullOrEqual(this.m_LastDataTime, that.m_LastDataTime) &&
 				(this.m_ProcessedRecordCount == that.m_ProcessedRecordCount) &&
-				/* TODO file urls */
 				(this.m_Timeout == that.m_Timeout) &&
-				(this.m_PersistModel == that.m_PersistModel) &&
 				bothNullOrEqual(this.m_AnalysisConfig, that.m_AnalysisConfig) &&
 				bothNullOrEqual(this.m_AnalysisLimits, that.m_AnalysisLimits) &&
 				bothNullOrEqual(this.m_DataDescription, that.m_DataDescription) &&
