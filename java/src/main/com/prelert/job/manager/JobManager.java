@@ -703,12 +703,7 @@ public class JobManager implements JobDetailsProvider
 		getJobDetails(jobId);
 		
 		ProcessManager.ProcessStatus processStatus = m_ProcessManager.finishJob(jobId);	
-		if (processStatus != ProcessManager.ProcessStatus.COMPLETED)
-		{
-			return false;
-		}	
-		
-		return setJobFinishedTimeandStatus(jobId, new Date(), JobStatus.CLOSED);
+		return (processStatus == ProcessManager.ProcessStatus.COMPLETED);
 	}
 	
 	@Override
@@ -927,8 +922,7 @@ public class JobManager implements JobDetailsProvider
 			{
 				s_Logger.warn("Error finished job after dataToJob failed", e);
 			}
-			
-			setJobFinishedTimeandStatus(jobId, new Date(), JobStatus.FAILED);
+
 			// rethrow
 			throw ne;
 		}

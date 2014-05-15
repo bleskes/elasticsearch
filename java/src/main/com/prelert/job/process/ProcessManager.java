@@ -422,6 +422,11 @@ public class ProcessManager
 					String msg = String.format("Process returned with value %d.", exitValue);	
 					process.getLogger().info(msg);
 
+					setJobToClosedStatus(jobId, process.getLogger(), JobStatus.CLOSED);
+					
+					// wait for the results parsing and write to to the datastore
+					process.joinParserThread();
+					
 					if (exitValue != 0)
 					{
 						// Read any error output from the process
@@ -432,27 +437,22 @@ public class ProcessManager
 						throw new NativeProcessRunException(sb.toString(), 
 								ErrorCode.NATIVE_PROCESS_ERROR);		
 					}
-					
-					// wait for the results parsing and write to to the datastore
-					process.joinParserThread();
 				}
-				catch (IOException ioe)
+				catch (IOException | InterruptedException e)
 				{
-					String msg = "Exception closing running process input stream";
+					String msg = "Exception closing the running native process";
 					s_Logger.warn(msg);
-					process.getLogger().warn(msg);
+					process.getLogger().warn(msg, e);
+
+					setJobToClosedStatus(jobId, process.getLogger(), JobStatus.FAILED);
 				}
-				catch (InterruptedException e) 
-				{
-					String msg = "Interupted waiting for process to exit";
-					s_Logger.debug(msg, e);
-					process.getLogger().debug(msg, e);
-				}
+				
 			}
 		}
 		catch (NativeProcessRunException e) 
 		{
-			String msg = "Native process has already exited";
+			String msg = String.format("Native process for job '%s' has already exited",
+					jobId);
 			s_Logger.error(msg);
 			process.getLogger().error(msg);
 			
@@ -467,9 +467,11 @@ public class ProcessManager
 				s_Logger.debug("Exception closing stopped process input stream");
 			}
 			
+			setJobToClosedStatus(jobId, process.getLogger(), JobStatus.FAILED);
+			
 			throw e;
 		}
-
+		
 		return ProcessStatus.COMPLETED;
 	}
 
@@ -516,6 +518,23 @@ public class ProcessManager
 		}
 	}
 	
+	
+	private void setJobToClosedStatus(String jobId, Logger processLogger, 
+			JobStatus status)
+	{
+		try 
+		{
+			m_JobDetailsProvider.setJobFinishedTimeandStatus(jobId, 
+					new Date(), status);
+		}
+		catch (UnknownJobException e) 
+		{
+			String msg = String.format("Error cannot set finish job '%s' "
+					+ "to CLOSED status", jobId);
+			processLogger.warn(msg, e);
+			s_Logger.warn(msg, e);
+		}
+	}
 	
 	/**
 	 * Transform the data according to the data description and
@@ -624,16 +643,6 @@ public class ProcessManager
 						catch (NativeProcessRunException e)
 						{
 							s_Logger.error(String.format("Error in job %s finish timeout", jobId), e);
-						}
-						
-						try 
-						{
-							m_JobDetailsProvider.setJobFinishedTimeandStatus(jobId, 
-									new Date(), JobStatus.CLOSED);
-						}
-						catch (UnknownJobException e) 
-						{
-							s_Logger.warn(String.format("Error in job %s finish timeout", jobId), e);
 						}
 					
 					}
