@@ -176,7 +176,7 @@ public class JobDetails
 	@SuppressWarnings("unchecked")
 	public JobDetails(Map<String, Object> values)
 	{
-		final DateFormat isoDateParser = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+		final DateFormat isoDateParser = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSX");
 		isoDateParser.setTimeZone(TimeZone.getTimeZone("UTC"));
 		
 		if (values.containsKey(ID))

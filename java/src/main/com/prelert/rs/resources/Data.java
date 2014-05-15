@@ -49,7 +49,11 @@ public class Data extends ResourceWithJobManager
 {   
 	static final private Logger s_Logger = Logger.getLogger(Data.class);
 	
-	static final private SimpleDateFormat s_DateFormat = 
+	/**
+	 * Persisted data files are named with this date format
+	 * e.g. Tue_22_Apr_2014_091033
+	 */
+	static final private SimpleDateFormat s_PersistedFileNameDateFormat = 
 			new SimpleDateFormat("EEE_d_MMM_yyyy_HHmmss");
 	
 	/**
@@ -128,7 +132,7 @@ public class Data extends ResourceWithJobManager
     		}
     		
     		java.nio.file.Path filePath = FileSystems.getDefault().getPath(
-    				m_BaseDirectory, jobId, s_DateFormat.format(new Date()) + ".gz"); 
+    				m_BaseDirectory, jobId, s_PersistedFileNameDateFormat.format(new Date()) + ".gz"); 
     		
     		s_Logger.info("Data will be persisted to: " + filePath);
     		

@@ -31,7 +31,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
-import java.text.SimpleDateFormat;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
@@ -40,6 +39,7 @@ import javax.ws.rs.ext.MessageBodyWriter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.prelert.rs.data.SingleDocument;
 
 /**
@@ -54,10 +54,11 @@ public class SingleDocumentWriter<T> implements MessageBodyWriter<SingleDocument
 {
 	/**
 	 * The Object to JSON mapper.
+	 * Writes dates in ISO 8601 format
 	 */
 	static final private ObjectWriter s_ObjectWriter = 
 			new ObjectMapper()
-			.setDateFormat(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ"))
+			.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
 			.writer().withDefaultPrettyPrinter();
 	
 

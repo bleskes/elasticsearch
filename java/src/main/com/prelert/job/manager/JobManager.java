@@ -149,7 +149,7 @@ public class JobManager implements JobDetailsProvider
 	private ProcessManager m_ProcessManager;
 	
 	private AtomicLong m_IdSequence;	
-	private DateFormat m_DateFormat;
+	private DateFormat m_JobIdDateFormat;
 	
 	private ObjectMapper m_ObjectMapper;
 
@@ -201,7 +201,7 @@ public class JobManager implements JobDetailsProvider
 				new ElasticSearchStatusReporterFactory(m_Node));
 		
 		m_IdSequence = new AtomicLong();		
-		m_DateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+		m_JobIdDateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
 				 
 		m_ObjectMapper = new ObjectMapper();
 		m_ObjectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
@@ -1019,7 +1019,7 @@ public class JobManager implements JobDetailsProvider
 	 */
 	private String generateJobId()
 	{
-		String id = String.format("%s-%05d", m_DateFormat.format(new Date()),
+		String id = String.format("%s-%05d", m_JobIdDateFormat.format(new Date()),
 						m_IdSequence.incrementAndGet());		
 		return id;
 	}		
