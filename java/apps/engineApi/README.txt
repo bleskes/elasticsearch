@@ -114,7 +114,7 @@ character delimits the fields, and what is the format of the timestamp.
 This will return a unique job number that will be used to in the remainder of
 the tutorial. For example:
 
-{"id":"20140319133023-00005"}
+{"id":"20140516091341-00001"}
 
 2. Check Job Status
 -------------------
@@ -135,34 +135,32 @@ latest job. For example:
   "previousPage" : null,
   "documents" : [ {
     "timeout" : 600,
+    "analysisLimits" : null,
     "status" : "CLOSED",
-    "location" : "http://localhost:8080/engine/v0.3/jobs/20140319133023-00005",
-    "dataEndpoint" : "http://localhost:8080/engine/v0.3/data/20140319133023-00005",
-    "resultsEndpoint" : "http://localhost:8080/engine/v0.3/results/20140319133023-00005",
-    "logsEndpoint" : "http://localhost:8080/engine/v0.3/logs/20140319133023-00005",
-    "id" : "20140319133023-00005",
-    "finishedTime" : null,
-    "lastDataTime" : null,
-    "dataDescription" : {
-      "format" : "DELINEATED",
-      "timeField" : "time",
-      "timeFormat" : "yyyy-MM-dd HH:mm:ss",
-      "fieldDelimiter" : ","
-    },
+    "location" : "http://localhost:8080/engine/v0.3/jobs/20140516091341-00001",
+    "dataEndpoint" : "http://localhost:8080/engine/v0.3/data/20140516091341-00001",
+    "resultsEndpoint" : "http://localhost:8080/engine/v0.3/results/20140516091341-00001",
+    "logsEndpoint" : "http://localhost:8080/engine/v0.3/logs/20140516091341-00001",
     "analysisConfig" : {
       "bucketSpan" : 3600,
       "batchSpan" : null,
       "detectors" : [ {
         "fieldName" : "responsetime",
-        "function" : null,
-        "byFieldName" : "airline",
-        "overFieldName" : null,
-        "useNull" : null
+        "byFieldName" : "airline"
       } ],
       "period" : null
     },
-    "analysisOptions" : null,
-    "createTime" : "2014-03-19T13:30:23.152+0000"
+    "finishedTime" : null,
+    "lastDataTime" : null,
+    "id" : "20140516091341-00001",
+    "dataDescription" : {
+      "timeField" : "time",
+      "timeFormat" : "yyyy-MM-dd HH:mm:ss",
+      "fieldDelimiter" : ",",
+      "quoteCharacter" : "\"",
+      "format" : "DELINEATED"
+    },
+    "createTime" : "2014-05-16T08:13:41.240+0000"
   } ]
 }
 
@@ -171,7 +169,7 @@ in the reference documentation. For now, note that the key piece of information
 is the jobId, which uniquely identifies this job and will be used in the
 remainder of this tutorial. For example:
 
-{"id":"20140319133023-00005"}
+{"id":"20140516091341-00001"}
 
 3. Upload Data
 --------------
@@ -181,7 +179,7 @@ engine. Using cURL, we will use the -T option to upload the file. You will need
 to edit the URL to contain the jobId and specify the path to the
 farequote_ISO_8601.csv file:
 
-curl -X POST -T example_data/farequote_ISO_8601.csv 'http://localhost:8080/engine/v0.3/data/20140319133023-00005'
+curl -X POST -T example_data/farequote_ISO_8601.csv 'http://localhost:8080/engine/v0.3/data/20140516091341-00001'
 
 This will stream the file examples/farequote_ISO_8601.csv to the REST API for
 analysis. This should take less than a minute on modern commodity hardware.
@@ -196,7 +194,7 @@ practice to close the job before requesting results.  Closing the job tells
 the API to flush through any data that's being buffered and store all results.
 Once again, you will need to edit the URL to contain the correct jobId:
 
-curl -X POST 'http://localhost:8080/engine/v0.3/data/20140319133023-00005/close'
+curl -X POST 'http://localhost:8080/engine/v0.3/data/20140516091341-00001/close'
 
 Note: in the case of the farequote_ISO_8601.csv example data you'll have enough
 results to see the anomaly by the time the upload has completed even if you
@@ -208,7 +206,7 @@ don't close the job.
 We can request the /results endpoint for our jobId to see what kind of results
 are available:
 
-curl 'http://localhost:8080/engine/v0.3/results/20140319133023-00005?take=100'
+curl 'http://localhost:8080/engine/v0.3/results/20140516091341-00001?take=100'
 
 This returns a summary of the anomalousness of the data, for each time interval.
 By default the first 100 results are returned.
@@ -217,7 +215,7 @@ By default the first 100 results are returned.
   "hitCount" : 118,
   "skip" : 0,
   "take" : 100,
-  "nextPage" : "http://localhost:8080/engine/v0.3/results/20140319133023-00005?skip=100&take=100",
+  "nextPage" : "http://localhost:8080/engine/v0.3/results/20140516091341-00001?skip=100&take=100",
   "previousPage" : null,
   "documents" : [ {
     "recordCount" : 1,
@@ -244,7 +242,7 @@ following id: 1359561600.
 
 We can request the details of just this one bucket interval as follows:
 
-curl 'http://localhost:8080/engine/v0.3/results/20140319133023-00005/1359561600?expand=true'
+curl 'http://localhost:8080/engine/v0.3/results/20140516091341-00001/1359561600?expand=true'
 
 {
   "id" : "1359561600",
@@ -290,7 +288,7 @@ metric and is thus an outlier.
 Finally, the job can be deleted which shuts down all resources associated with
 the job, and deletes the results:
 
-curl -X DELETE 'http://localhost:8080/engine/v0.3/jobs/20140319133023-00005'
+curl -X DELETE 'http://localhost:8080/engine/v0.3/jobs/20140516091341-00001'
 
 7. Using JSON data
 ------------------
@@ -320,7 +318,7 @@ curl -X POST -H 'Content-Type: application/json' 'http://localhost:8080/engine/v
 
 And the upload data step would need to point to the JSON file:
 
-curl -X POST -T example_data/farequote.json 'http://localhost:8080/engine/v0.3/data/20140319133023-00005'
+curl -X POST -T example_data/farequote.json 'http://localhost:8080/engine/v0.3/data/20140516091341-00001'
 
 
 Further information
