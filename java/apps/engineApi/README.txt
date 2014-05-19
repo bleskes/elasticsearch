@@ -65,17 +65,17 @@ http://curl.haxx.se) which allows the easy transfer of data using a URL syntax
 over HTTP.
 
 Before we start, please download the example CSV file from
-http://s3.amazonaws.com/prelert_demo/farequote_ISO_8601.csv.
+http://s3.amazonaws.com/prelert_demo/farequote.csv.
 Time series data must be ordered by date. The raw csv data looks like this:
 
 examples/farequote_ISO_8601.csv
 
 time,airline,responsetime,sourcetype
-2013-01-28 00:00:00,AAL,132.2046,farequote
-2013-01-28 00:00:00,JZA,990.4628,farequote
-2013-01-28 00:00:00,JBU,877.5927,farequote
-2013-01-28 00:00:00,KLM,1355.4812,farequote
-2013-01-28 00:00:00,NKS,9991.3981,farequote
+2013-01-28 00:00:00Z,AAL,132.2046,farequote
+2013-01-28 00:00:00Z,JZA,990.4628,farequote
+2013-01-28 00:00:00Z,JBU,877.5927,farequote
+2013-01-28 00:00:00Z,KLM,1355.4812,farequote
+2013-01-28 00:00:00Z,NKS,9991.3981,farequote
 ...
 
 1. Create New Job
@@ -96,7 +96,7 @@ curl -X POST -H 'Content-Type: application/json' 'http://localhost:8080/engine/v
     "dataDescription" : {
         "fieldDelimiter":",",
         "timeField":"time",
-        "timeFormat":"yyyy-MM-dd HH:mm:ss"
+        "timeFormat":"yyyy-MM-dd HH:mm:ssX"
     }
 }'
 
@@ -155,7 +155,7 @@ latest job. For example:
     "id" : "20140516091341-00001",
     "dataDescription" : {
       "timeField" : "time",
-      "timeFormat" : "yyyy-MM-dd HH:mm:ss",
+      "timeFormat" : "yyyy-MM-dd HH:mm:ssX",
       "fieldDelimiter" : ",",
       "quoteCharacter" : "\"",
       "format" : "DELINEATED"
@@ -274,7 +274,7 @@ curl 'http://localhost:8080/engine/v0.3/results/20140516091341-00001/1359561600?
   }
 }
 
-This shows that between 2013-01-30T16:00:00.000 and 2013-01-30T17:00:00.000 the
+This shows that between 2013-01-30T16:00:00-0000 and 2013-01-30T17:00:00-0000 the
 responsetime for airline 'AAL' increased from a normal mean value of 101.844 to
 242.75. The probability of seeing 242.75 is 4.78331E-34 (which is very
 unlikely).
