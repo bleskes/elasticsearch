@@ -19,29 +19,68 @@
  * may be reproduced, adapted or transmitted in any form or *
  * by any means, electronic, mechanical, photocopying,      *
  * recording or otherwise.                                  *
- *                                                  
  *                                                          *
  *----------------------------------------------------------*
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.warnings;
+package com.prelert.job;
+
+import com.prelert.rs.data.ErrorCode;
 
 /**
- * Dummy StatusReporter with an 
- *
+ * This type of exception represents an error where an operation
+ * would result in too many jobs running at the same time.
  */
-public class DummyStatusReporter extends StatusReporter 
+public class TooManyJobsException extends Exception
 {
-	public DummyStatusReporter() 
+	private static final long serialVersionUID = 8503362038035845948L;
+
+	private int m_Limit;
+	private ErrorCode m_ErrorCode;
+
+
+	/**
+	 * Create a new TooManyJobsException with an error code
+	 *
+	 * @param limit The limit on the number of jobs
+	 * @param message Details of error explaining the context
+	 * @param errorCode
+	 */
+	public TooManyJobsException(int limit, String message, ErrorCode errorCode)
 	{
-		super("DummyJobId", null);
+		super(message);
+		m_Limit = limit;
+		m_ErrorCode = errorCode;
 	}
 
-	@Override
-	protected void reportStatus(int totalRecords)
+
+	public TooManyJobsException(int limit, String message, ErrorCode errorCode,
+			Throwable cause)
 	{
-		// do nothing
+		super(message, cause);
+		m_Limit = limit;
+		m_ErrorCode = errorCode;
 	}
 
+
+	/**
+	 * Get the limit on the number of concurrently running jobs.
+	 * @return
+	 */
+	public int getLimit()
+	{
+		return m_Limit;
+	}
+
+
+	/**
+	 * Get the error code or 0 if not set.
+	 *
+	 * @return
+	 */
+	public ErrorCode getErrorCode()
+	{
+		return m_ErrorCode;
+	}
 }

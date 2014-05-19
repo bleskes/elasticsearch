@@ -41,7 +41,6 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -82,11 +81,11 @@ public class Results extends ResourceWithJobManager
 	/**
 	 * Date query param format
 	 */
-	static private final String ISO_8601_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ssZ";
+	static private final String ISO_8601_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ssX";
 	/**
 	 * Date query param format
 	 */
-	static private final String ISO_8601_DATE_FORMAT_WITH_MS = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
+	static private final String ISO_8601_DATE_FORMAT_WITH_MS = "yyyy-MM-dd'T'HH:mm:ss.SSSX";
 	
 	static private final DateFormat s_DateFormat = new SimpleDateFormat(ISO_8601_DATE_FORMAT); 
 	static private final DateFormat s_DateFormatWithMs = new SimpleDateFormat(ISO_8601_DATE_FORMAT_WITH_MS); 
@@ -203,7 +202,7 @@ public class Results extends ResourceWithJobManager
 	@GET
 	@Path("/{jobId}/{bucketId}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public SingleDocument<Map<String, Object>> bucket(@PathParam("jobId") String jobId,
+	public Response bucket(@PathParam("jobId") String jobId,
 			@PathParam("bucketId") String bucketId,
 			@DefaultValue("false") @QueryParam("expand") boolean expand)
 	{
@@ -222,11 +221,13 @@ public class Results extends ResourceWithJobManager
 		{
 			s_Logger.debug(String.format("Cannot find bucket %s for job %s", 
 					bucketId, jobId));
-			throw new WebApplicationException(Response.Status.NOT_FOUND);
+			
+			return Response.status(Response.Status.NOT_FOUND).entity(bucket).build();
 		}
 					
-		return bucket;
+		return Response.ok(bucket).build();
 	}
+	
 	
 	/**
 	 * Get the anomaly records for the bucket.

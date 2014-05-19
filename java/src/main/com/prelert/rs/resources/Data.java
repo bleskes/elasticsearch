@@ -23,11 +23,13 @@ import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.JobInUseException;
+import com.prelert.job.TooManyJobsException;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.process.MissingFieldException;
 import com.prelert.job.process.NativeProcessRunException;
 import com.prelert.job.warnings.HighProportionOfBadTimestampsException;
+import com.prelert.job.warnings.OutOfOrderRecordsException;
 import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.provider.RestApiException;
 import com.prelert.rs.streaminginterceptor.StreamingInterceptor;
@@ -47,7 +49,11 @@ public class Data extends ResourceWithJobManager
 {   
 	static final private Logger s_Logger = Logger.getLogger(Data.class);
 	
-	static final private SimpleDateFormat s_DateFormat = 
+	/**
+	 * Persisted data files are named with this date format
+	 * e.g. Tue_22_Apr_2014_091033
+	 */
+	static final private SimpleDateFormat s_PersistedFileNameDateFormat = 
 			new SimpleDateFormat("EEE_d_MMM_yyyy_HHmmss");
 	
 	/**
@@ -80,6 +86,8 @@ public class Data extends ResourceWithJobManager
      * @throws JobInUseException if the data cannot be written to because 
 	 * the job is already handling data
 	 * @throws HighProportionOfBadTimestampsException 
+	 * @throws OutOfOrderRecordsException 
+	 * @throws TooManyJobsException If the license is violated
 	 */
     @POST
     @Path("/{jobId}")
@@ -88,7 +96,8 @@ public class Data extends ResourceWithJobManager
     public Response streamData(@Context HttpHeaders headers,
     		@PathParam("jobId") String jobId, InputStream input)  
     throws IOException, UnknownJobException, NativeProcessRunException,
-    	MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException
+    	MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException,
+    	OutOfOrderRecordsException, TooManyJobsException
     {   	   	
     	s_Logger.debug("Handle Post data to job = " + jobId);
     	
@@ -123,7 +132,7 @@ public class Data extends ResourceWithJobManager
     		}
     		
     		java.nio.file.Path filePath = FileSystems.getDefault().getPath(
-    				m_BaseDirectory, jobId, s_DateFormat.format(new Date()) + ".gz"); 
+    				m_BaseDirectory, jobId, s_PersistedFileNameDateFormat.format(new Date()) + ".gz"); 
     		
     		s_Logger.info("Data will be persisted to: " + filePath);
     		
@@ -197,10 +206,13 @@ public class Data extends ResourceWithJobManager
      * @throws JobInUseException if the data cannot be written to because 
 	 * the job is already handling data
      * @throws HighProportionOfBadTimestampsException 
+     * @throws OutOfOrderRecordsException 
+	 * @throws TooManyJobsException If the license is violated
 	 */
     private boolean handleStream(String jobId, InputStream input)
     throws NativeProcessRunException, UnknownJobException, MissingFieldException, 
-    JsonParseException, JobInUseException, HighProportionOfBadTimestampsException
+    JsonParseException, JobInUseException, HighProportionOfBadTimestampsException,
+    OutOfOrderRecordsException, TooManyJobsException
     {
     	JobManager manager = jobManager();
 		return manager.dataToJob(jobId, input);

@@ -95,7 +95,7 @@ public class DataDescription
 	/**
 	 * By default autodetect expects the timestamp in a field with this name
 	 */
-	static final public String DEFAULT_TIME_FIELD = "_time";
+	static final public String DEFAULT_TIME_FIELD = "time";
 	
 	/**
 	 * The timeFormat field name
@@ -222,7 +222,7 @@ public class DataDescription
 	}
 	
 	/**
-	 * Either {@value #EPOCH}, {@value #EPOCH} or a SimpleDateTime format string.
+	 * Either {@value #EPOCH}, {@value #EPOCH_MS} or a SimpleDateTime format string.
 	 * If not set (is <code>null</code> or an empty string) or set to 
 	 * {@value #EPOCH} (the default) then the date is assumed to be in 
 	 * seconds from the epoch.

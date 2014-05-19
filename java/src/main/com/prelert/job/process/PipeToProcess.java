@@ -33,8 +33,10 @@ import java.io.OutputStream;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -51,6 +53,7 @@ import com.fasterxml.jackson.core.JsonToken;
 import com.prelert.job.DataDescription;
 import com.prelert.job.input.LengthEncodedWriter;
 import com.prelert.job.warnings.HighProportionOfBadTimestampsException;
+import com.prelert.job.warnings.OutOfOrderRecordsException;
 import com.prelert.job.warnings.StatusReporter;
 import com.prelert.rs.data.ErrorCode;
 
@@ -85,10 +88,12 @@ public class PipeToProcess
 	 * @throws MissingFieldException If any fields are missing from the CSV header
 	 * @throws HighProportionOfBadTimestampsException If a large proportion 
 	 * of the records read have missing fields
+	 * @throws OutOfOrderRecordsException 
 	 */
 	static public long pipeCsv(DataDescription dd, List<String> analysisFields,
 		InputStream is, OutputStream os, StatusReporter reporter, Logger logger)
-	throws IOException, MissingFieldException, HighProportionOfBadTimestampsException
+	throws IOException, MissingFieldException, HighProportionOfBadTimestampsException,
+		OutOfOrderRecordsException
 	{	
 		CsvPreference csvPref = new CsvPreference.Builder(
 				dd.getQuoteCharacter(),
@@ -97,6 +102,7 @@ public class PipeToProcess
 		
 		int recordsWritten = 0;
 		int recordsDiscarded = 0;
+		int lineCount = 0;
 		
 		try (CsvListReader csvReader = new CsvListReader(new InputStreamReader(is), csvPref))
 		{
@@ -141,35 +147,78 @@ public class PipeToProcess
 			// process to quit
 			LengthEncodedWriter lengthEncodedWriter = new LengthEncodedWriter(os);
 			lengthEncodedWriter.writeRecord(filteredHeader);
+			
+			
+			int timeFieldIndex = Arrays.asList(filteredHeader).indexOf(dd.getTimeField());
+			if (timeFieldIndex < 0)
+			{
+				String message = String.format("Cannot find timestamp field '%s'"
+						+ " in CSV header '%s'", dd.getTimeField(), Arrays.toString(filteredHeader));
+				logger.error(message);
+				throw new MissingFieldException(dd.getTimeField(), message, 
+						ErrorCode.MISSING_FIELD);
+			}	
+			
 
 			int numFields = fieldIndexes.size();
 			List<String> line;
 			while ((line = csvReader.read()) != null)
 			{
-				if (line.size() <= maxIndex)
+				lineCount++;
+								
+				if (maxIndex >= line.size())
 				{
-					// if the record is incomplete don't write it
-					logger.warn("Incomplete CSV record: " + line);
+					logger.error("Not enough fields in csv record " + line);
 					reporter.reportMissingField(Arrays.toString(line.toArray()));
 					recordsDiscarded++;
+					
+					reporter.reportRecordsWritten(recordsWritten, recordsDiscarded);
+					continue;
 				}
-				else
+				
+				lengthEncodedWriter.writeNumFields(numFields);	
+				
+				int recordIndex = 0;
+				for (Pair<String, Integer> p : fieldIndexes)
 				{
-					lengthEncodedWriter.writeNumFields(numFields);				
-					for (Pair<String, Integer> p : fieldIndexes)
+					String record = line.get(p.Second);
+					if (recordIndex == timeFieldIndex)
 					{
-						String record = line.get(p.Second);
-						lengthEncodedWriter.writeField((record == null) ? "" : record);
+						try
+						{
+							// parse as a double and throw away the fractional 
+							// component
+							long epoch = Double.valueOf(record).longValue();
+							record = new Long(epoch).toString();
+						}
+						catch (NumberFormatException e)
+						{
+							String message = String.format(
+									"Cannot parse timestamp '%s' as epoch value",								
+									record);
+							recordsDiscarded++;
+							
+							recordsWritten--;
+							logger.error(message);						
+							
+						}	
 					}
-					recordsWritten++;
+
+					lengthEncodedWriter.writeField((record == null) ? "" : record);
+					
+					recordIndex++;
 				}
 					
+				recordsWritten++;
 				reporter.reportRecordsWritten(recordsWritten, recordsDiscarded);
 			}
 			
 			lengthEncodedWriter.flush();
 		}
 
+		
+		logger.debug(String.format("Transferred %d of %d CSV records to autodetect.", 
+				recordsWritten, lineCount));
 		
 		return recordsWritten;
 	}
@@ -194,10 +243,11 @@ public class PipeToProcess
 	 * @throws MissingFieldException If any fields are missing from the CSV header
 	 * @throws HighProportionOfBadTimestampsException If a large proportion 
 	 * of the records read have missing fields or unparseable date formats
+	 * @throws OutOfOrderRecordsException 
 	 */
 	static public void transformAndPipeCsv(DataDescription dd, List<String> analysisFields,
 			InputStream is, OutputStream os, StatusReporter reporter, Logger logger)
-	throws IOException, MissingFieldException, HighProportionOfBadTimestampsException
+	throws IOException, MissingFieldException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException
 	{
 		String timeField = dd.getTimeField();
 		
@@ -208,6 +258,7 @@ public class PipeToProcess
 		
 		int recordsWritten = 0;
 		int recordsDiscarded = 0;
+		int lineCount = 0;
 		
 		try (CsvListReader csvReader = new CsvListReader(new InputStreamReader(is), csvPref))
 		{
@@ -270,7 +321,9 @@ public class PipeToProcess
 			if (dd.isEpochMs())
 			{
 				while ((line = csvReader.read()) != null)
-				{					
+				{			
+					lineCount++;
+					
 					if (maxIndex >= line.size())
 					{
 						logger.error("Not enough fields in csv record " + line);
@@ -291,16 +344,17 @@ public class PipeToProcess
 
 					try
 					{
-						long epoch = Long.parseLong(record[timeFieldIndex]) / 1000; 
+						// parse as a double and throw away the fractional 
+						// component
+						long epoch = Double.valueOf(record[timeFieldIndex]).longValue() / 1000;
 						record[timeFieldIndex] = new Long(epoch).toString();
 					}
 					catch (NumberFormatException e)
 					{
-						String date = line.get(timeFieldIndex);
 						String message = String.format(
-								"Cannot parse epoch ms timestamp '%s'", date);
+								"Cannot parse epoch ms timestamp '%s'",	record[timeFieldIndex]);							
 
-						reporter.reportDateParseError(date);
+						reporter.reportDateParseError(record[timeFieldIndex]);
 						logger.error(message);
 						
 						recordsDiscarded++;
@@ -320,6 +374,8 @@ public class PipeToProcess
 
 				while ((line = csvReader.read()) != null)
 				{
+					lineCount++;
+					
 					if (maxIndex >= line.size())
 					{
 						logger.error("Not enough fields in csv record " + line);
@@ -344,7 +400,7 @@ public class PipeToProcess
 					}
 					catch (ParseException pe)
 					{
-						String date = line.get(timeFieldIndex);
+						String date = record[timeFieldIndex];
 						String message = String.format("Cannot parse date '%s' with format string '%s'",
 								date, dd.getTimeFormat());
 						
@@ -353,6 +409,7 @@ public class PipeToProcess
 						
 						recordsDiscarded++;
 						reporter.reportRecordsWritten(recordsWritten, recordsDiscarded);
+
 
 						logger.error(message);
 						continue;
@@ -365,7 +422,8 @@ public class PipeToProcess
 				}
 			}
 			
-			logger.info(recordsWritten + " csv records written");
+			logger.debug(String.format("Transferred %d of %d CSV records to autodetect.", 
+					recordsWritten, lineCount));
 			
 			// flush the output
 			os.flush();
@@ -418,11 +476,13 @@ public class PipeToProcess
 	 * @throws IOException
 	 * @throws HighProportionOfBadTimestampsException If a large proportion 
 	 * of the records read have missing fields or unparsable date formats
+	 * @throws OutOfOrderRecordsException 
 	 */
 	static public void transformAndPipeJson(DataDescription dd, 
 			List<String> analysisFields, InputStream is, OutputStream os,
 			StatusReporter reporter, Logger logger) 
-	throws JsonParseException, IOException, HighProportionOfBadTimestampsException
+	throws JsonParseException, IOException, HighProportionOfBadTimestampsException,
+		OutOfOrderRecordsException
 	{
 		JsonParser parser = new JsonFactory().createParser(is);
 		
@@ -454,21 +514,24 @@ public class PipeToProcess
 	 * @throws JsonParseException
 	 * @throws HighProportionOfBadTimestampsException If a large proportion 
 	 * of the records read have missing fields or unparsable date formats
+	 * @throws OutOfOrderRecordsException 
 	 */
 	static private void pipeJson(JsonParser parser, String timeField,
 			List<String> analysisFields, OutputStream os,
 			StatusReporter reporter, Logger logger)
-	throws JsonParseException, IOException, HighProportionOfBadTimestampsException
+	throws JsonParseException, IOException, HighProportionOfBadTimestampsException, 
+		OutOfOrderRecordsException
 	{
 		LengthEncodedWriter lengthEncodedWriter = new LengthEncodedWriter(os);
 
 		// record is all the analysis fields + the time field
 		List<String> allFields = new ArrayList<String>(analysisFields);
 		allFields.add(timeField);
+		// time field is the last item 
+		int timeFieldIndex = allFields.size() -1;
 
 		String [] record = new String[allFields.size()];
 		boolean [] gotFields = new boolean[record.length];
-		Arrays.fill(gotFields, false);
 
 		Map<String, Integer> fieldMap = new HashMap<>();
 		for (Integer i = new Integer(0); i < allFields.size(); i++)
@@ -476,81 +539,103 @@ public class PipeToProcess
 			fieldMap.put(allFields.get(i), i);
 		}
 		
-		Integer timeFieldIndex = fieldMap.get(timeField);
-				
-
-		int recordsWritten = 0;
-		int recordsDiscarded = 0;
 		
-		JsonToken token = parser.nextToken();
-		
-		// if the first toke is the start of an array ignore it
-		if (token == JsonToken.START_ARRAY)
-		{
-			token = parser.nextToken();
-			logger.debug("JSON starts with an array");
-		}
-
-		if (token != JsonToken.START_OBJECT)
-		{
-			logger.error("Expecting Json Start Object token");
-			throw new IOException(
-					"Invalid JSON should start with an array of objects or an object."
-					+ "Bad token = " + token);
-		}
-
-		// write header first
+		// write header and first record
 		lengthEncodedWriter.writeRecord(allFields);
-	
-		while (token == JsonToken.START_OBJECT)
+		logger.info(allFields);
+				
+		int recordsDiscarded = 0;
+		int recordsWritten = 0;
+		int recordCount = 
+				readJsonRecord(parser, record, fieldMap, allFields, gotFields,
+						logger) ? 1 : 0;
+				
+		if (gotFields[timeFieldIndex])
 		{
-			Arrays.fill(record, "");
-			Arrays.fill(gotFields, false);
-			
-			while (token != JsonToken.END_OBJECT)
+			String missing = firstMissingField(allFields, gotFields); 
+			if (missing != null)
 			{
-				if (token == JsonToken.FIELD_NAME)
-				{
-					String fieldName = parser.getCurrentName();		
-					token = parser.nextToken();
-					String fieldValue = parser.getText();
-
-					Integer index = fieldMap.get(fieldName);
-					if (index != null)
-					{
-						record[index] = fieldValue;
-						gotFields[index] = true;
-					}
-				}
-				token = parser.nextToken();
+				reporter.reportMissingField(missing);
 			}
+			
+			try
+			{
+				// parse as a double and throw away the fractional 
+				// component
+				long epoch = Double.valueOf(record[timeFieldIndex]).longValue();
+				record[timeFieldIndex] = new Long(epoch).toString();
+				
+				lengthEncodedWriter.writeRecord(record);
+				recordsWritten++;
+			}
+			catch (NumberFormatException e)
+			{
+				String message = String.format(
+						"Cannot parse timestamp '%s' as epoch value",								
+						record[timeFieldIndex]);
+				recordsDiscarded++;
+				
+				reporter.reportDateParseError(record[timeFieldIndex]);
+				logger.error(message);						
+			}
+			
+		}
+		else
+		{
+			logger.warn("Missing time field from JSON document");
+			recordsDiscarded++;
+			reporter.reportMissingField(timeField);							
+		}		
+		
+		reporter.reportRecordsWritten(recordsWritten, recordsDiscarded);
+		
 
+		while (readJsonRecord(parser, record, fieldMap, allFields, gotFields,
+				logger))
+		{		
 			if (gotFields[timeFieldIndex])
-			{		
+			{
 				String missing = firstMissingField(allFields, gotFields); 
 				if (missing != null)
 				{
 					reporter.reportMissingField(missing);
 				}
 				
-				lengthEncodedWriter.writeRecord(record);
-				recordsWritten++;				
+				try
+				{
+					// parse as a double and throw away the fractional 
+					// component
+					long epoch = Double.valueOf(record[timeFieldIndex]).longValue();
+					record[timeFieldIndex] = new Long(epoch).toString();
+					
+					lengthEncodedWriter.writeRecord(record);
+					recordsWritten++;
+				}
+				catch (NumberFormatException e)
+				{
+					String message = String.format(
+							"Cannot parse timestamp '%s' as epoch value",								
+							record[timeFieldIndex]);
+					recordsDiscarded++;
+					
+					reporter.reportDateParseError(record[timeFieldIndex]);
+					logger.error(message);						
+				}
 			}
 			else
 			{
-				logger.info("Missing time field from JSON document");
-				reporter.reportMissingField(timeField);				
+				logger.warn("Missing time field from JSON document");
+				reporter.reportMissingField(timeField);							
 				recordsDiscarded++;
 			}
 			
-			reporter.reportRecordsWritten(recordsWritten, recordsDiscarded);
-
-			token = parser.nextToken();
+			++recordCount;
+			reporter.reportRecordsWritten(recordsWritten, recordsDiscarded);			
 		}
 
-		logger.debug("Transferred " + recordsWritten + " Json records to autodetect.");
+		logger.debug(String.format("Transferred %d of %d Json records to autodetect.", 
+				recordsWritten, recordCount));
 	}
-
 
 	/**
 	 * Parse the Json objects convert the timestamp to epoch time
@@ -568,11 +653,13 @@ public class PipeToProcess
 	 * @throws JsonParseException
 	 * @throws HighProportionOfBadTimestampsException If a large proportion 
 	 * of the records read have missing fields or unparsable date formats
+	 * @throws OutOfOrderRecordsException 
 	 */
 	static private void pipeJsonAndTransformTime(JsonParser parser, 
 			List<String> analysisFields, OutputStream os,
 			DataDescription dd, StatusReporter reporter, Logger logger)
-	throws JsonParseException, IOException, HighProportionOfBadTimestampsException
+	throws JsonParseException, IOException, HighProportionOfBadTimestampsException, 
+		OutOfOrderRecordsException
 	{
 		String timeField = dd.getTimeField();
 		List<String> allFields = new ArrayList<String>(analysisFields);
@@ -583,89 +670,103 @@ public class PipeToProcess
 		// record is the size of the analysis fields + the time field
 		String [] record = new String[allFields.size()];		
 		boolean [] gotFields = new boolean[record.length];
-		Arrays.fill(gotFields, false);
 
 		Map<String, Integer> fieldMap = new HashMap<>();
 		for (Integer i = new Integer(0); i < allFields.size(); i++)
 		{
 			fieldMap.put(allFields.get(i), i);
-		}			
-		Integer timeFieldIndex = fieldMap.get(timeField);
+		}
+		// time field is the last item always
+		int timeFieldIndex = record.length -1;
+			
+			
+		int recordsDiscarded = 0;
+		int recordsWritten = 0;
+		int recordCount = 
+				readJsonRecord(parser, record, fieldMap, allFields, gotFields, 
+						logger) ? 1 : 0;
+		
+		if (dd.isEpochMs())
+		{
+			try
+			{
+				long epoch = Double.valueOf(record[timeFieldIndex]).longValue() / 1000;
+				record[timeFieldIndex] = Long.toString(epoch);
+			}
+			catch (NumberFormatException e)
+			{
+				String message = String.format(
+						"Cannot parse epoch ms timestamp '%s'",								
+						record[timeFieldIndex]);
+				logger.error(message);
+				
+				recordsDiscarded++;
+			}
+		}
+		else
+		{
+			try
+			{
+				DateFormat dateFormat = new SimpleDateFormat(dd.getTimeFormat());
+				record[timeFieldIndex] = Long.toString(dateFormat.parse(record[timeFieldIndex]).getTime() / 1000);
+			}
+			catch (ParseException e)
+			{
+				logger.error("Cannot parse '" + record[timeFieldIndex] +
+						"' as a date using format string '" +
+						dd.getTimeFormat() + "'");
+				
+				recordsDiscarded++;
+			}
+		}
 		
 		// write header
 		lengthEncodedWriter.writeRecord(allFields);
-			
-		int recordsWritten = 0;
-		int recordsDiscarded = 0;
 		
-		// if the first toke is the start of an array ignore it
-		JsonToken token = parser.nextToken();
-		if (token == JsonToken.START_ARRAY)
-		{
-			token = parser.nextToken();
-			logger.debug("JSON starts with an array");
+		//write record
+		if (gotFields[timeFieldIndex])
+		{				
+			String missing = firstMissingField(allFields, gotFields); 
+			if (missing != null)
+			{
+				reporter.reportMissingField(missing);
+			}
+			
+			lengthEncodedWriter.writeRecord(record);
+			recordsWritten++;				
 		}
-
-		if (token != JsonToken.START_OBJECT)
+		else
 		{
-			logger.error("Expecting Json Start Object token");
-			throw new IOException(
-					"Invalid JSON should start with an array of objects or an object."
-					+ "Bad token = " + token);
+			logger.info("Missing time field from JSON document");
+			reporter.reportMissingField(timeField);							
+			recordsDiscarded++;
 		}
+		reporter.reportRecordsWritten(recordsWritten, recordsDiscarded);
+		
+		
 		
 
 		// is the timestamp a format string or epoch ms.
 		if (dd.isEpochMs())
 		{
-			while (token == JsonToken.START_OBJECT)
+			while (readJsonRecord(parser, record, fieldMap, allFields, gotFields, logger))
 			{
-				Arrays.fill(record, "");
-				Arrays.fill(gotFields, false);
-
-				while (token != JsonToken.END_OBJECT)
-				{					
-					if (token == JsonToken.FIELD_NAME)
-					{
-						String fieldName = parser.getCurrentName();
-						token = parser.nextToken();
-						String fieldValue = parser.getText();
-
-						if (fieldName.equals(timeField))
-						{
-							try
-							{
-								fieldValue = Long.toString(Long.parseLong(fieldValue) / 1000); 
-								
-								record[timeFieldIndex] = fieldValue;
-								gotFields[timeFieldIndex] = true;
-							}
-							catch (NumberFormatException e)
-							{
-								String message = String.format(
-										"Cannot parse epoch ms timestamp '%s'",								
-										fieldValue);
-								logger.error(message);
-								reporter.reportDateParseError(fieldValue);
-								
-								gotFields[timeFieldIndex] = false;
-							}
-						}
-						else
-						{
-							Integer index = fieldMap.get(fieldName);
-							if (index != null)
-							{
-								record[index] = fieldValue;
-								gotFields[index] = true;
-							}
-						}
-					}
-					token = parser.nextToken();
-				}
 
 				if (gotFields[timeFieldIndex])
 				{
+					try
+					{
+						long epoch = Double.valueOf(record[timeFieldIndex]).longValue() / 1000;
+						record[timeFieldIndex] = Long.toString(epoch);
+					}
+					catch (NumberFormatException e)
+					{
+						String message = String.format(
+								"Cannot parse epoch ms timestamp '%s'",								
+								record[timeFieldIndex]);
+						logger.error(message);
+					}					
+					
 					String missing = firstMissingField(allFields, gotFields); 
 					if (missing != null)
 					{
@@ -682,60 +783,16 @@ public class PipeToProcess
 					recordsDiscarded++;
 				}
 				
+				recordCount++;
 				reporter.reportRecordsWritten(recordsWritten, recordsDiscarded);
-				
-				token = parser.nextToken();
 			}
 		}
 		else
 		{
 			DateFormat dateFormat = new SimpleDateFormat(dd.getTimeFormat());
 			
-			while (token == JsonToken.START_OBJECT)
+			while (readJsonRecord(parser, record, fieldMap, allFields, gotFields, logger))
 			{
-				Arrays.fill(record, "");
-				Arrays.fill(gotFields, false);
-
-				while (token != JsonToken.END_OBJECT)
-				{
-					if (token == JsonToken.FIELD_NAME)
-					{
-						String fieldName = parser.getCurrentName();
-						token = parser.nextToken();
-						String fieldValue = parser.getText();
-
-						if (fieldName.equals(timeField))
-						{
-							try
-							{
-								fieldValue = Long.toString(dateFormat.parse(fieldValue).getTime() / 1000);
-								
-								record[timeFieldIndex] = fieldValue;
-								gotFields[timeFieldIndex] = true;
-							}
-							catch (ParseException e)
-							{
-								logger.error("Cannot parse '" + fieldValue +
-										"' as a date using format string '" +
-										dd.getTimeFormat() + "'");
-																
-								gotFields[timeFieldIndex] = false;
-								reporter.reportDateParseError(fieldValue);
-							}
-						}
-						else
-						{
-							Integer index = fieldMap.get(fieldName);
-							if (index != null)
-							{
-								record[index] = fieldValue;
-								gotFields[index] = true;
-							}
-						}
-					}
-					token = parser.nextToken();
-				}
-
 				if (gotFields[timeFieldIndex])
 				{
 					String missing = firstMissingField(allFields, gotFields); 
@@ -743,9 +800,23 @@ public class PipeToProcess
 					{
 						reporter.reportMissingField(missing);
 					}
-					
-					lengthEncodedWriter.writeRecord(record);
-					recordsWritten++;				
+
+					try
+					{
+						record[timeFieldIndex] = Long.toString(
+							dateFormat.parse(record[timeFieldIndex]).getTime() / 1000);
+						
+						lengthEncodedWriter.writeRecord(record);
+						recordsWritten++;
+					}
+					catch (ParseException e)
+					{
+						logger.error("Cannot parse '" + record[timeFieldIndex] +
+								"' as a date using format string '" +
+								dd.getTimeFormat() + "'");
+						
+						recordsDiscarded++;
+					}
 				}
 				else
 				{
@@ -753,15 +824,109 @@ public class PipeToProcess
 					reporter.reportMissingField(timeField);							
 					recordsDiscarded++;
 				}
-				
+	
+				recordCount++;
 				reporter.reportRecordsWritten(recordsWritten, recordsDiscarded);
-
-				token = parser.nextToken();
 			}
 		}
 		
-		logger.debug("Transferred " + recordsWritten + " Json records to autodetect." );
+		logger.debug(String.format("Transferred %d of %d Json records to autodetect.", 
+				recordsWritten, recordCount));
 	}
+	
+	
+	/**
+	 * Read the JSON object and write to the record array.
+	 * Nested objects are flattened with the field names separated by
+	 * a '.'. 
+	 * e.g. for a record with a nested 'tags' object:
+	 *  "{"name":"my.test.metric1","tags":{"tag1":"blah","tag2":"boo"},"time":1350824400,"value":12345.678}"
+	 * use 'tags.tag1' to reference the tag1 field in the nested object
+	 * 
+	 * Array fields in the JSON are ignored
+	 *
+	 * @param parser
+	 * @param record Read fields are written to this array
+	 * @param fieldMap Map to field name to record array index position
+	 * @param allFields All the required fields
+	 * @param gotFields boolean array each element is true if that field
+	 * was read
+	 * @param logger Errors are logged to this logger
+	 * @throws IOException
+	 * @throws JsonParseException
+	 */
+	static private boolean readJsonRecord(JsonParser parser, String [] record,
+			Map<String, Integer> fieldMap,  List<String> allFields,
+			boolean [] gotFields, Logger logger) 
+	throws JsonParseException, IOException
+	{
+		Arrays.fill(gotFields, false);
+		Arrays.fill(record, "");
+		
+		int nestedLevel = 0;		
+		Deque<String> stack = new ArrayDeque<String>();
+
+		boolean readRecord = false;
+		String nestedSuffix = "";
+
+		JsonToken token = parser.nextToken();
+		while (!(token == JsonToken.END_OBJECT && nestedLevel == 0))
+		{
+			if (token == null)
+			{
+				break;
+			}
+			if (token == JsonToken.END_OBJECT)
+			{
+				nestedLevel--;
+				String objectFieldName = stack.pop();
+				
+				int lastIndex = nestedSuffix.length() - objectFieldName.length() -1;
+				nestedSuffix = nestedSuffix.substring(0, lastIndex);
+			}
+			else if (token == JsonToken.FIELD_NAME)
+			{
+				String fieldName = parser.getCurrentName();				
+				token = parser.nextToken();
+				
+				readRecord = true; // got a field so consider this a proper record
+
+				if (token == JsonToken.START_OBJECT)
+				{
+					nestedLevel++;
+					stack.push(fieldName);
+					
+					nestedSuffix = nestedSuffix + fieldName + ".";
+				}
+				else if (token == JsonToken.START_ARRAY)
+				{
+					// consume the whole array but do nothing with it
+					while (token != JsonToken.END_ARRAY)
+					{
+						token = parser.nextToken();
+					}
+					logger.warn("Ignoring array field");
+				}
+				else
+				{
+					String fieldValue = parser.getText();
+					
+					Integer index = fieldMap.get(nestedSuffix + fieldName);
+					if (index != null)
+					{
+						record[index] = fieldValue;
+						gotFields[index] = true;
+					}
+				}
+			}
+
+			token = parser.nextToken();
+		}
+
+		
+		return readRecord;
+	}
+	
 	
 	/**
 	 * Return the first missing field name or null if there are 

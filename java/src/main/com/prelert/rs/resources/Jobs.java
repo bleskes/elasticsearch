@@ -46,9 +46,10 @@ import org.apache.log4j.Logger;
 
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobConfigurationException;
-import com.prelert.job.JobInUseException;
-import com.prelert.job.UnknownJobException;
 import com.prelert.job.JobDetails;
+import com.prelert.job.JobInUseException;
+import com.prelert.job.TooManyJobsException;
+import com.prelert.job.UnknownJobException;
 import com.prelert.job.logs.JobLogs;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.process.NativeProcessRunException;
@@ -130,12 +131,22 @@ public class Jobs extends ResourceWithJobManager
     @Consumes(MediaType.APPLICATION_JSON)  
     @Produces(MediaType.APPLICATION_JSON)
     public Response createJob(JobConfiguration config) 
-    throws UnknownJobException, JobConfigurationException, IOException 
+    throws UnknownJobException, JobConfigurationException, IOException,
+			TooManyJobsException
     {   		
     	s_Logger.debug("Creating new job");
     	
     	// throws if a bad config
-    	config.verify();
+    	try
+    	{
+    		config.verify();
+    	}
+    	catch (JobConfigurationException e)
+    	{
+    		// log error and rethrow
+    		s_Logger.error("Bad job configuration ", e);
+    		throw e;
+    	}
     	
     	JobManager manager = jobManager();
     	JobDetails job = manager.createJob(config);

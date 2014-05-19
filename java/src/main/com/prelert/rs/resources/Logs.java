@@ -129,7 +129,7 @@ public class Logs extends ResourceWithJobManager
     @GET
 	@Path("/{jobId}/tail")
     @Produces(MediaType.TEXT_PLAIN)
-    public String tailDefauldLogFile(@PathParam("jobId") String jobId,
+    public String tailDefaultLogFile(@PathParam("jobId") String jobId,
     		@DefaultValue("10") @QueryParam("lines") int lines)
     throws UnknownJobException
     {   	
