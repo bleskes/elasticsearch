@@ -27,6 +27,9 @@
 
 package com.prelert.rs.data;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  * Static error codes returned in response to internal errors in the API.
  * The codes are grouped in the following way:
@@ -65,7 +68,7 @@ public enum ErrorCode
 	 * is not allowed for example some fields cannot be a number < 0.
 	 */
 	INVALID_VALUE(10104),
-	
+
 	/**
 	 * The function argument is not recognised as one of
 	 * the valid list of functions.
@@ -90,8 +93,13 @@ public enum ErrorCode
 	 * @see java.text.SimpleDateFormat
 	 */
 	INVALID_DATE_FORMAT(10108),
-	
-	
+
+	/**
+	 * The job will not be created because it violates one or
+	 * more license constraints.
+	 */
+	LICENSE_VIOLATION(10109),
+
 	// Data store errors
 	/**
 	 * A generic exception from the data store
@@ -139,8 +147,14 @@ public enum ErrorCode
 	 * As a proportion of all the records sent a high number are
 	 * missing required fields or cannot be parsed. 
 	 */
-	TOO_MANY_BAD_RECORDS(30104),	
+	TOO_MANY_BAD_RECORDS(30104),
 	
+	/**
+	 * As a proportion of all the records sent a high number are not
+	 * in chronological order. 
+	 */
+	TOO_MANY_OUT_OF_ORDER_RECORDS(30105),
+
 	
 	// native process errors
 	/**
@@ -159,10 +173,13 @@ public enum ErrorCode
 	NATIVE_PROCESS_WRITE_ERROR(40102),
 	
 	/**
-	 * Certain operations e.g. delete cannot be applied 
-	 * to running jobs.
+	 * The native autodetect process will only accept a single stream 
+	 * of data at a time. It is an error to try to upload data to the same
+	 * job through multiple connections. Additionally certain operations such 
+	 * as delete cannot be applied to a job that is actively processing data
+	 * and will result in this error condition.
 	 */
-	NATIVE_PROCESS_RUNNING_ERROR(40103),
+	NATIVE_PROCESS_CONCURRENT_USE_ERROR(40103),
 	
 	
 	// Log file reading errors
@@ -201,5 +218,20 @@ public enum ErrorCode
 	public String getValueString()
 	{
 		return m_ValueString;
+	}
+	
+	@JsonCreator
+	static public ErrorCode fromCode(@JsonProperty("errorCode") long errorCode)
+	{
+		for (ErrorCode e : ErrorCode.values())
+		{
+			if (errorCode == e.getValue())
+			{
+				return e;
+			}
+		}
+		
+		throw new IllegalArgumentException("The code " + errorCode + 
+				" is not a valid error code");
 	}
 }

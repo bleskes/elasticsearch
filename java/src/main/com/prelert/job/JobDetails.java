@@ -24,7 +24,6 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-
 package com.prelert.job;
 
 import java.net.URI;
@@ -51,7 +50,6 @@ public class JobDetails
 
 	static final public long DEFAULT_TIMEOUT = 600;
 	static final public long DEFAULT_BUCKETSPAN = 300;
-	static final public boolean DEFAULT_PERSIST_MODEL = true;
 	
 	/*
 	 * Field names used in serialisation
@@ -68,10 +66,9 @@ public class JobDetails
 	static final public String OUT_OF_ORDER_TIME_COUNT = "outOfOrderTimeStampCount";
 	
 	static final public String TIMEOUT = "timeout";
-	static final public String PERSIST_MODEL = "persistModel";
 	
-	static final public String ANALYSIS_CONFIG = "analysisConfig";
-	static final public String ANALYSIS_OPTIONS = "analysisOptions";
+        static final public String ANALYSIS_CONFIG = "analysisConfig";
+	static final public String ANALYSIS_LIMITS = "analysisLimits";
 	static final public String DATA_DESCRIPTION = "dataDescription";
 	
 	static final public String TYPE = "job";
@@ -84,10 +81,9 @@ public class JobDetails
 	private Date m_LastDataTime;
 	
 	private long m_Timeout;
-	private boolean m_PersistModel;
 	
 	private AnalysisConfig m_AnalysisConfig;
-	private AnalysisOptions m_AnalysisOptions;
+	private AnalysisLimits m_AnalysisLimits;
 	private DataDescription m_DataDescription;
 	
 	private long m_ProcessedRecordCount;
@@ -120,13 +116,12 @@ public class JobDetails
 	public JobDetails(String jobId, JobConfiguration jobConfig)
 	{
 		m_JobId = jobId;
-		m_Status = JobStatus.RUNNING;
+		m_Status = JobStatus.CLOSED;
 		m_CreateTime = new Date();		
 		m_Timeout = (jobConfig.getTimeout() != null) ? jobConfig.getTimeout() : DEFAULT_TIMEOUT; 		
-		m_PersistModel = true;  
 						
 		m_AnalysisConfig = jobConfig.getAnalysisConfig();
-		m_AnalysisOptions = jobConfig.getAnalysisOptions();
+		m_AnalysisLimits = jobConfig.getAnalysisLimits();
 		m_DataDescription = jobConfig.getDataDescription();
 	}
 	
@@ -142,14 +137,13 @@ public class JobDetails
 	public JobDetails(String jobId, JobDetails details, JobConfiguration jobConfig)
 	{
 		m_JobId = jobId;
-		m_Status = JobStatus.RUNNING;
+		m_Status = JobStatus.CLOSED;
 		m_CreateTime = new Date();		
 		
 		m_Timeout = details.getTimeout();		
-		m_PersistModel = details.isPersistModel();
 									
 		m_AnalysisConfig = details.getAnalysisConfig();
-		m_AnalysisOptions = details.getAnalysisOptions();
+		m_AnalysisLimits = details.getAnalysisLimits();
 		m_DataDescription = details.getDataDescription();
 		
 		// only override these if explicitly set
@@ -158,16 +152,14 @@ public class JobDetails
 			m_Timeout = jobConfig.getTimeout();		
 		}
 		
-		m_PersistModel = true;
-		
 		if (jobConfig.getAnalysisConfig() != null)
 		{
 			m_AnalysisConfig = jobConfig.getAnalysisConfig();
 		}
 		
-		if (jobConfig.getAnalysisOptions() != null)
+		if (jobConfig.getAnalysisLimits() != null)
 		{
-			m_AnalysisOptions = jobConfig.getAnalysisOptions();
+			m_AnalysisLimits = jobConfig.getAnalysisLimits();
 		}
 		
 		if (jobConfig.getDataDescription() != null)
@@ -184,7 +176,7 @@ public class JobDetails
 	@SuppressWarnings("unchecked")
 	public JobDetails(Map<String, Object> values)
 	{
-		final DateFormat isoDateParser = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+		final DateFormat isoDateParser = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSX");
 		isoDateParser.setTimeZone(TimeZone.getTimeZone("UTC"));
 		
 		if (values.containsKey(ID))
@@ -251,10 +243,6 @@ public class JobDetails
 		{
 			m_Timeout = (Integer)values.get(TIMEOUT);
 		}
-		if (values.containsKey(PERSIST_MODEL))
-		{
-			m_PersistModel = (Boolean)values.get(PERSIST_MODEL);
-		}
 		if (values.containsKey(ANALYSIS_CONFIG))
 		{
 			Object obj = values.get(ANALYSIS_CONFIG);
@@ -263,12 +251,12 @@ public class JobDetails
 				m_AnalysisConfig = new AnalysisConfig((Map<String, Object>)obj);
 			}
 		}
-		if (values.containsKey(ANALYSIS_OPTIONS))
+		if (values.containsKey(ANALYSIS_LIMITS))
 		{
-			Object obj = values.get(ANALYSIS_OPTIONS);
+			Object obj = values.get(ANALYSIS_LIMITS);
 			if (obj != null && obj instanceof Map)
 			{
-				m_AnalysisOptions = new AnalysisOptions((Map<String, Object>)obj); 
+				m_AnalysisLimits = new AnalysisLimits((Map<String, Object>)obj); 
 			}
 		}
 		
@@ -305,8 +293,11 @@ public class JobDetails
 	}
 	
 	/**
-	 * Return the Job Status. Jobs are initialised to {@link JobStatus#RUNNING}
-	 * when created.
+	 * Return the Job Status. Jobs are initialised to {@link JobStatus#CLOSED}
+	 * when created and move into the @link JobStatus#RUNNING} state when
+	 * processing data. Once data has been processed the status will be 
+	 * either {@link JobStatus#CLOSED} or {@link JobStatus#FAILED}
+	 * 
 	 * @return The job's status
 	 */
 	public JobStatus getStatus() 
@@ -438,20 +429,7 @@ public class JobDetails
 		m_Timeout = timeout;
 	}
 
-	/**
-	 * Is the job persisted
-	 * @return true if the job's internal models have been persisted
-	 */
-	public boolean isPersistModel() 
-	{
-		return m_PersistModel;
-	}
-	
-	public void setPersistModel(boolean persist) 
-	{
-		m_PersistModel = persist;
-	}
-	
+
 	/**
 	 * The analysis configuration object
 	 * @return The AnalysisConfig
@@ -468,16 +446,16 @@ public class JobDetails
 	
 	/**
 	 * The analysis options object
-	 * @return The AnalysisOptions
+	 * @return The AnalysisLimits
 	 */
-	public AnalysisOptions getAnalysisOptions() 
+	public AnalysisLimits getAnalysisLimits() 
 	{
-		return m_AnalysisOptions;
+		return m_AnalysisLimits;
 	}
 	
-	public void setAnalysisOptions(AnalysisOptions options) 
+	public void setAnalysisLimits(AnalysisLimits options) 
 	{
-		m_AnalysisOptions = options;
+		m_AnalysisLimits = options;
 	}
 	
 	/**
@@ -632,11 +610,9 @@ public class JobDetails
 				bothNullOrEqual(this.m_FinishedTime, that.m_FinishedTime) &&
 				bothNullOrEqual(this.m_LastDataTime, that.m_LastDataTime) &&
 				(this.m_ProcessedRecordCount == that.m_ProcessedRecordCount) &&
-				/* TODO file urls */
 				(this.m_Timeout == that.m_Timeout) &&
-				(this.m_PersistModel == that.m_PersistModel) &&
 				bothNullOrEqual(this.m_AnalysisConfig, that.m_AnalysisConfig) &&
-				bothNullOrEqual(this.m_AnalysisOptions, that.m_AnalysisOptions) &&
+				bothNullOrEqual(this.m_AnalysisLimits, that.m_AnalysisLimits) &&
 				bothNullOrEqual(this.m_DataDescription, that.m_DataDescription) &&
 				bothNullOrEqual(this.m_Location, that.m_Location) &&
 				bothNullOrEqual(this.m_DataEndpoint, that.m_DataEndpoint) &&

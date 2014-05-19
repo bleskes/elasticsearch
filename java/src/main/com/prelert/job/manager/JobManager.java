@@ -64,6 +64,7 @@ import org.elasticsearch.search.sort.SortOrder;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -75,12 +76,15 @@ import com.prelert.job.process.MissingFieldException;
 import com.prelert.job.process.NativeProcessRunException;
 import com.prelert.job.process.ProcessManager;
 import com.prelert.job.warnings.HighProportionOfBadTimestampsException;
+import com.prelert.job.warnings.OutOfOrderRecordsException;
 import com.prelert.job.warnings.elasticsearch.ElasticSearchStatusReporterFactory;
 import com.prelert.job.DetectorState;
 import com.prelert.job.JobConfiguration;
+import com.prelert.job.JobConfigurationException;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobInUseException;
 import com.prelert.job.JobStatus;
+import com.prelert.job.TooManyJobsException;
 import com.prelert.job.UnknownJobException;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
@@ -129,7 +133,7 @@ public class JobManager implements JobDetailsProvider
 	 * attempt multicast discovery and to only look for another node to connect
 	 * to on the local machine.
 	 */
-    static public final Settings LOCAL_SETTINGS;
+	static public final Settings LOCAL_SETTINGS;
 	static
 	{
 		LOCAL_SETTINGS = ImmutableSettings.settingsBuilder()
@@ -145,10 +149,25 @@ public class JobManager implements JobDetailsProvider
 	private ProcessManager m_ProcessManager;
 	
 	private AtomicLong m_IdSequence;	
-	private DateFormat m_DateFormat;
+	private DateFormat m_JobIdDateFormat;
 	
 	private ObjectMapper m_ObjectMapper;
-	
+
+	/**
+	 * These default to unlimited (indicated by negative limits), but may be
+	 * overridden by constraints in the license key.
+	 */
+	private int m_MaxActiveJobs = -1;
+	private int m_MaxDetectorsPerJob = -1;
+	private int m_MaxPartitionsPerJob = -1;
+
+	/**
+	 * constraints in the license key.
+	 */
+	static public final String JOBS_LICENSE_CONSTRAINT = "jobs";
+	static public final String DETECTORS_LICENSE_CONSTRAINT = "detectors";
+	static public final String PARTITIONS_LICENSE_CONSTRAINT = "partitions";
+
 	/**
 	 * Create a JobManager and a default Elasticsearch node
 	 * on localhost with the default port.
@@ -182,14 +201,14 @@ public class JobManager implements JobDetailsProvider
 				new ElasticSearchStatusReporterFactory(m_Node));
 		
 		m_IdSequence = new AtomicLong();		
-		m_DateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+		m_JobIdDateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
 				 
 		m_ObjectMapper = new ObjectMapper();
 		m_ObjectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
 
 		// This requires the process manager and ElasticSearch connection in
 		// order to work, but failure is considered non-fatal
-		saveUsageInfo();
+		saveInfo();
 	}	
 	
 	/**
@@ -285,7 +304,8 @@ public class JobManager implements JobDetailsProvider
 		
 		return page;
 	}
-	
+
+
 	/**
 	 * Create a new job from the configuration object and insert into the 
 	 * document store. The details of the newly created job are returned.
@@ -294,10 +314,56 @@ public class JobManager implements JobDetailsProvider
 	 * @return The new job or <code>null</code> if an exception occurs.
 	 * @throws UnknownJobException
 	 * @throws IOException 
+	 * @throws TooManyJobsException If the license is violated
+	 * @throws JobConfigurationException If the license is violated
 	 */
 	public JobDetails createJob(JobConfiguration jobConfig)
-	throws UnknownJobException , IOException
+	throws UnknownJobException, IOException, TooManyJobsException, JobConfigurationException
 	{
+		// Negative m_MaxActiveJobs means unlimited
+		if (m_MaxActiveJobs >= 0 &&
+			m_ProcessManager.numberOfRunningJobs() >= m_MaxActiveJobs)
+		{
+			throw new TooManyJobsException(m_MaxActiveJobs,
+					"Cannot create new job - your license limits you to " +
+					m_MaxActiveJobs + " concurrently running " +
+					(m_MaxActiveJobs == 1 ? "job" : "jobs") +
+					".  You must close a job before you can create a new one.",
+					ErrorCode.LICENSE_VIOLATION);
+		}
+
+		// Negative m_MaxDetectorsPerJob means unlimited
+		if (m_MaxDetectorsPerJob >= 0 &&
+			jobConfig.getAnalysisConfig().getDetectors().size() > m_MaxDetectorsPerJob)
+		{
+			throw new JobConfigurationException(
+					"Cannot create new job - your license limits you to " +
+					m_MaxDetectorsPerJob +
+					(m_MaxDetectorsPerJob == 1 ? " detector" : " detectors") +
+					" per job, but you have configured " +
+					jobConfig.getAnalysisConfig().getDetectors().size(),
+					ErrorCode.LICENSE_VIOLATION);
+		}
+
+		// We can only validate the case of m_MaxPartitionsPerJob being zero in
+		// the Java code - anything more subtle has to be left to the C++
+		if (m_MaxPartitionsPerJob == 0)
+		{
+			for (com.prelert.job.Detector detector :
+						jobConfig.getAnalysisConfig().getDetectors())
+			{
+				String partitionFieldName = detector.getPartitionFieldName();
+				if (partitionFieldName != null &&
+					partitionFieldName.length() > 0)
+				{
+					throw new JobConfigurationException(
+							"Cannot create new job - your license disallows" +
+							" partition fields, but you have configured one.",
+							ErrorCode.LICENSE_VIOLATION);
+				}
+			}
+		}
+
 		String jobId = generateJobId();
 		JobDetails jobDetails;
 		
@@ -345,8 +411,6 @@ public class JobManager implements JobDetailsProvider
 			s_Logger.error("Error writing ElasticSearch mappings", e);
 			throw e;
 		}
-
-		//return null;
 	}
 	
 	/**
@@ -639,18 +703,11 @@ public class JobManager implements JobDetailsProvider
 		getJobDetails(jobId);
 		
 		ProcessManager.ProcessStatus processStatus = m_ProcessManager.finishJob(jobId);	
-		if (processStatus != ProcessManager.ProcessStatus.COMPLETED)
-		{
-			return false;
-		}	
-		
-		return setJobFinishedTimeandStatus(jobId, new Date(), JobStatus.FINISHED);
+		return (processStatus == ProcessManager.ProcessStatus.COMPLETED);
 	}
 	
-	
 	@Override
-	public boolean setJobFinishedTimeandStatus(String jobId, Date time, 
-			JobStatus status)
+	public boolean setJobStatus(String jobId, JobStatus status)
 	throws UnknownJobException
 	{
 		// update job status
@@ -661,14 +718,14 @@ public class JobManager implements JobDetailsProvider
 
 			if (response.isExists() == false)
 			{				
-				s_Logger.error("Cannot finish job. No job found with jobId = " + jobId);
+				s_Logger.error("Cannot set job status no job found with jobId = " 
+							+ jobId);
 				return false;
 			}
 
 			long lastVersion = response.getVersion();
 
 			JobDetails job = new JobDetails(response.getSource());
-			job.setFinishedTime(new Date());
 			job.setStatus(status);
 
 			String content;
@@ -685,17 +742,77 @@ public class JobManager implements JobDetailsProvider
 			IndexResponse jobIndexResponse = m_Client.prepareIndex(
 					jobId, JobDetails.TYPE, jobId)
 					.setSource(content).get();
-
+			
 			if (jobIndexResponse.getVersion() <= lastVersion)
 			{
-				s_Logger.error("Error setting job to finished document not updated");
+				s_Logger.error("Error saving job- document not updated");
 				return false;
 			}
+
+			m_Client.admin().indices().refresh(new RefreshRequest(jobId)).actionGet();
 		}
 		catch (IndexMissingException e)
 		{
-			String msg = String.format("Error writing the job '%s' finish time.", 
+			String msg = String.format("Unknown job '%s'. Error setting the job's status.", 
 					jobId);
+			s_Logger.error(msg);
+			throw new UnknownJobException(jobId, msg, ErrorCode.MISSING_JOB_ERROR);
+		}
+		
+		return true;		
+	}
+	
+	@Override
+	public boolean setJobFinishedTimeandStatus(String jobId, Date time, 
+			JobStatus status)
+	throws UnknownJobException
+	{
+		// update job status
+		try
+		{
+			GetResponse response = m_Client.prepareGet(jobId, JobDetails.TYPE, 
+					jobId).get();
+
+			if (response.isExists() == false)
+			{				
+				s_Logger.error("Cannot set job finish time and status no job "
+						+ "found with jobId = " + jobId);
+				return false;
+			}
+
+			long lastVersion = response.getVersion();
+
+			JobDetails job = new JobDetails(response.getSource());
+			job.setFinishedTime(new Date());
+			job.setStatus(status);
+
+			String content;
+			try
+			{
+				content = jobToContent(job);
+			}
+			catch (IOException ioe)
+			{
+				s_Logger.error("Error serialising job details");
+				return false;
+			}
+
+			IndexResponse jobIndexResponse = m_Client.prepareIndex(
+					jobId, JobDetails.TYPE, jobId)
+					.setSource(content).get();
+
+			if (jobIndexResponse.getVersion() <= lastVersion)
+			{
+				s_Logger.error("Error saving job- document not updated");
+				return false;
+			}
+
+			m_Client.admin().indices().refresh(new RefreshRequest(jobId)).actionGet();
+		}
+		catch (IndexMissingException e)
+		{
+			String msg = String.format("Unknown job '%s'. Error writing the job's "
+					+ "finish time and status.", jobId);
 			s_Logger.error(msg);
 			throw new UnknownJobException(jobId, msg, ErrorCode.MISSING_JOB_ERROR);
 		}
@@ -767,11 +884,27 @@ public class JobManager implements JobDetailsProvider
 	 * @throws JobInUseException if the job cannot be written to because 
 	 * it is already handling data
 	 * @throws HighProportionOfBadTimestampsException 
+	 * @throws OutOfOrderRecordsException 
+	 * @throws TooManyJobsException If the license is violated
 	 */
 	public boolean dataToJob(String jobId, InputStream input) 
 	throws UnknownJobException, NativeProcessRunException, MissingFieldException, 
-		JsonParseException, JobInUseException, HighProportionOfBadTimestampsException 
+		JsonParseException, JobInUseException, HighProportionOfBadTimestampsException,
+		OutOfOrderRecordsException, TooManyJobsException
 	{
+		// Negative m_MaxActiveJobs means unlimited
+		if (m_MaxActiveJobs >= 0 &&
+			getJobDetails(jobId).getStatus().isRunning() == false &&
+			m_ProcessManager.numberOfRunningJobs() >= m_MaxActiveJobs)
+		{
+			throw new TooManyJobsException(m_MaxActiveJobs,
+					"Cannot reactivate job with id '" + jobId +
+					"' - your license limits you to " + m_MaxActiveJobs +
+					" concurrently running jobs.  You must close a job before" +
+					" you can reactivate a closed one.",
+					ErrorCode.LICENSE_VIOLATION);
+		}
+
 		try
 		{
 			if (m_ProcessManager.dataToJob(jobId, input) == false)
@@ -789,15 +922,12 @@ public class JobManager implements JobDetailsProvider
 			{
 				s_Logger.warn("Error finished job after dataToJob failed", e);
 			}
-			
-			setJobFinishedTimeandStatus(jobId, new Date(), JobStatus.FAILED);
+
 			// rethrow
 			throw ne;
 		}
-		finally 
-		{
-			updateLastDataTime(jobId, new Date()); 
-		}
+
+		updateLastDataTime(jobId, new Date()); 
 		
 		return true;
 	}
@@ -857,7 +987,7 @@ public class JobManager implements JobDetailsProvider
 		}
 		catch (IndexMissingException e)
 		{
-			String msg = String.format("Error writing the job '%s' last data time.", jobId);
+			String msg = String.format("Unknown job '%s'. Error writing the job's last data time.", jobId);
 			throw new UnknownJobException(jobId, msg, ErrorCode.MISSING_JOB_ERROR);
 		}
 	}
@@ -883,7 +1013,7 @@ public class JobManager implements JobDetailsProvider
 	 */
 	private String generateJobId()
 	{
-		String id = String.format("%s-%05d", m_DateFormat.format(new Date()),
+		String id = String.format("%s-%05d", m_JobIdDateFormat.format(new Date()),
 						m_IdSequence.incrementAndGet());		
 		return id;
 	}		
@@ -950,30 +1080,97 @@ public class JobManager implements JobDetailsProvider
 
 
 	/**
-	 * Attempt to get usage info from the C++ process, add extra fields and
-	 * persist to ElasticSearch.  Any failures are logged but do not otherwise
-	 * impact operation of this process.
+	 * Get the limit on number of active jobs.
+	 * A negative limit means unlimited.
 	 */
-	private void saveUsageInfo()
+	public int getMaxActiveJobs()
+	{
+		return m_MaxActiveJobs;
+	}
+
+
+	/**
+	 * Get the limit on number of detectors per job.
+	 * A negative limit means unlimited.
+	 */
+	public int getMaxDetectorsPerJob()
+	{
+		return m_MaxDetectorsPerJob;
+	}
+
+
+	/**
+	 * Get the limit on number of partitions per job.
+	 * A negative limit means unlimited.
+	 * Note that the Java code can really only do anything with this if it's
+	 * zero, as it doesn't count the number of distinct values of the partition
+	 * field.  However, if the limit is zero it can reject any configured
+	 * partition field settings.
+	 */
+	public int getMaxPartitionsPerJob()
+	{
+		return m_MaxPartitionsPerJob;
+	}
+
+
+	/**
+	 * Attempt to get usage and license info from the C++ process, add extra
+	 * fields and persist to ElasticSearch.  Any failures are logged but do not
+	 * otherwise impact operation of this process.  Additionally, any license
+	 * constraints are extracted from the same info document.
+	 */
+	private void saveInfo()
 	{
 		// This will be a JSON document in string form
-		String backendUsageInfo = m_ProcessManager.getUsageInfo();
+		String backendInfo = m_ProcessManager.getInfo();
 
-		// Try to parse the string returned from the C++ process and add the
-		// extra fields
+		// Try to parse the string returned from the C++ process and extract
+		// any license constraints
 		ObjectNode doc;
 		try
 		{
-			doc = (ObjectNode)m_ObjectMapper.readTree(backendUsageInfo);
+			doc = (ObjectNode)m_ObjectMapper.readTree(backendInfo);
+
+			// Negative numbers indicate no constraint, i.e. unlimited maximums
+			JsonNode constraint = doc.get(JOBS_LICENSE_CONSTRAINT);
+			if (constraint != null)
+			{
+				m_MaxActiveJobs = constraint.asInt(-1);
+			}
+			else
+			{
+				m_MaxActiveJobs = -1;
+			}
+			s_Logger.info("Max active jobs = " + m_MaxActiveJobs);
+			constraint = doc.get(DETECTORS_LICENSE_CONSTRAINT);
+			if (constraint != null)
+			{
+				m_MaxDetectorsPerJob = constraint.asInt(-1);
+			}
+			else
+			{
+				m_MaxDetectorsPerJob = -1;
+			}
+			s_Logger.info("Max detectors per job = " + m_MaxDetectorsPerJob);
+			constraint = doc.get(PARTITIONS_LICENSE_CONSTRAINT);
+			if (constraint != null)
+			{
+				m_MaxPartitionsPerJob = constraint.asInt(-1);
+			}
+			else
+			{
+				m_MaxPartitionsPerJob = -1;
+			}
+			s_Logger.info("Max partitions per job = " + m_MaxPartitionsPerJob);
 		}
 		catch (IOException e)
 		{
-			s_Logger.warn("Failed to parse JSON document " + backendUsageInfo, e);
+			s_Logger.warn("Failed to parse JSON document " + backendInfo, e);
 			return;
 		}
 		catch (ClassCastException e)
 		{
-			s_Logger.warn("Parsed non-object JSON document " + backendUsageInfo, e);
+			s_Logger.warn("Parsed non-object JSON document " + backendInfo, e);
 			return;
 		}
 

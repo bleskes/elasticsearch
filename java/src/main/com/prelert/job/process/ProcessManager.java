@@ -53,6 +53,7 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.warnings.HighProportionOfBadTimestampsException;
+import com.prelert.job.warnings.OutOfOrderRecordsException;
 import com.prelert.job.warnings.StatusReporter;
 import com.prelert.job.warnings.StatusReporterFactory;
 import com.prelert.job.DetectorState;
@@ -170,10 +171,12 @@ public class ProcessManager
 	 * @throws JobInUseException if the data cannot be written to because 
 	 * the job is already handling data
 	 * @throws HighProportionOfBadTimestampsException 
+	 * @throws OutOfOrderRecordsException 
 	 */
 	public boolean dataToJob(String jobId, InputStream input)
 	throws UnknownJobException, NativeProcessRunException, MissingFieldException,
-		JsonParseException, JobInUseException, HighProportionOfBadTimestampsException
+		JsonParseException, JobInUseException, HighProportionOfBadTimestampsException,
+		OutOfOrderRecordsException
 	{
 		// stop the timeout 
 		ScheduledFuture<?> future = m_JobIdToTimeoutFuture.remove(jobId);
@@ -193,7 +196,7 @@ public class ProcessManager
 		
 		if (process == null)
 		{
-			// create the new process an restore its state 
+			// create the new process and restore its state 
 			// if it has been saved
 			process = createProcess(jobId);
 			m_JobIdToProcessMap.put(jobId, process);
@@ -202,9 +205,11 @@ public class ProcessManager
 		// We can't write data if someone is already writing to the process.
 		if (process.isInUse())
 		{
-			String msg = "Cannot write to process whilst it is in use";
+			String msg = String.format("Another connection is writing to job "
+					+ "%s. Jobs will only accept data from one connection at a time",
+					jobId);
 			s_Logger.error(msg);
-			throw new JobInUseException(jobId, msg, ErrorCode.NATIVE_PROCESS_RUNNING_ERROR);
+			throw new JobInUseException(jobId, msg, ErrorCode.NATIVE_PROCESS_CONCURRENT_USE_ERROR);
 		}
 				
 		// check the process is running, throws if not
@@ -249,6 +254,18 @@ public class ProcessManager
 	}
 	
 	/**
+	 * Get the number of running active job.
+	 * A job is considered to be running if it has an active 
+	 * native autodetect process running.
+	 * @return Count of running jobs
+	 */
+	public int numberOfRunningJobs()
+	{
+		return m_JobIdToProcessMap.size();
+	}
+	
+	
+	/**
 	 * Create a new autodetect process restoring its state if persisted
 	 *   
 	 * @param jobId
@@ -263,7 +280,6 @@ public class ProcessManager
 		
 		return createProcess(job, true);
 	}
-	
 	
 	/**
 	 * Create a new autodetect process from the JobDetails restoring 
@@ -317,7 +333,9 @@ public class ProcessManager
 				m_StatusReporterFactory.newStatusReporter(jobId, logger),
 				m_ResultsReaderFactory.newResultsParser(jobId, 
 						nativeProcess.getInputStream(),
-						logger));		
+						logger));
+		
+		m_JobDetailsProvider.setJobStatus(jobId, JobStatus.RUNNING);
 		
 		logger.debug("Created process for job " + jobId);
 		
@@ -364,9 +382,10 @@ public class ProcessManager
 			s_Logger.error("Cannot finish job while it is reading data");
 			process.getLogger().error("Cannot finish job while it is reading data");
 			
-			String msg = "Cannot close job as the process is reading data";
+			String msg = String.format("Cannot close job %s while the job is actively "
+					+ "processing data", jobId);
 			s_Logger.error(msg);
-			throw new JobInUseException(jobId, msg, ErrorCode.NATIVE_PROCESS_RUNNING_ERROR);
+			throw new JobInUseException(jobId, msg, ErrorCode.NATIVE_PROCESS_CONCURRENT_USE_ERROR);
 		}
 		
 		
@@ -403,6 +422,11 @@ public class ProcessManager
 					String msg = String.format("Process returned with value %d.", exitValue);	
 					process.getLogger().info(msg);
 
+					setJobToClosedStatus(jobId, process.getLogger(), JobStatus.CLOSED);
+					
+					// wait for the results parsing and write to to the datastore
+					process.joinParserThread();
+					
 					if (exitValue != 0)
 					{
 						// Read any error output from the process
@@ -413,27 +437,22 @@ public class ProcessManager
 						throw new NativeProcessRunException(sb.toString(), 
 								ErrorCode.NATIVE_PROCESS_ERROR);		
 					}
-					
-					// wait for the results parsing and write to to the datastore
-					process.joinParserThread();
 				}
-				catch (IOException ioe)
+				catch (IOException | InterruptedException e)
 				{
-					String msg = "Exception closing running process input stream";
+					String msg = "Exception closing the running native process";
 					s_Logger.warn(msg);
-					process.getLogger().warn(msg);
+					process.getLogger().warn(msg, e);
+
+					setJobToClosedStatus(jobId, process.getLogger(), JobStatus.FAILED);
 				}
-				catch (InterruptedException e) 
-				{
-					String msg = "Interupted waiting for process to exit";
-					s_Logger.debug(msg, e);
-					process.getLogger().debug(msg, e);
-				}
+				
 			}
 		}
 		catch (NativeProcessRunException e) 
 		{
-			String msg = "Native process has already exited";
+			String msg = String.format("Native process for job '%s' has already exited",
+					jobId);
 			s_Logger.error(msg);
 			process.getLogger().error(msg);
 			
@@ -448,9 +467,11 @@ public class ProcessManager
 				s_Logger.debug("Exception closing stopped process input stream");
 			}
 			
+			setJobToClosedStatus(jobId, process.getLogger(), JobStatus.FAILED);
+			
 			throw e;
 		}
-
+		
 		return ProcessStatus.COMPLETED;
 	}
 
@@ -498,6 +519,23 @@ public class ProcessManager
 	}
 	
 	
+	private void setJobToClosedStatus(String jobId, Logger processLogger, 
+			JobStatus status)
+	{
+		try 
+		{
+			m_JobDetailsProvider.setJobFinishedTimeandStatus(jobId, 
+					new Date(), status);
+		}
+		catch (UnknownJobException e) 
+		{
+			String msg = String.format("Error cannot set finish job '%s' "
+					+ "to CLOSED status", jobId);
+			processLogger.warn(msg, e);
+			s_Logger.warn(msg, e);
+		}
+	}
+	
 	/**
 	 * Transform the data according to the data description and
 	 * pipe to the output. 
@@ -519,13 +557,14 @@ public class ProcessManager
 	 * @throws MissingFieldException If any fields are missing from the CSV header
 	 * @throws IOException 
 	 * @throws HighProportionOfBadTimestampsException 
+	 * @throws OutOfOrderRecordsException 
 	 */
 	public void writeToJob(DataDescription dataDescription, 
 			List<String> analysisFields,
 			InputStream input, OutputStream output, 
 			StatusReporter reporter, Logger jobLogger) 
 	throws JsonParseException, MissingFieldException, IOException,
-		HighProportionOfBadTimestampsException
+		HighProportionOfBadTimestampsException, OutOfOrderRecordsException
 	{
 		// Oracle's documentation recommends buffering process streams
 		BufferedOutputStream bufferedStream = new BufferedOutputStream(output);
@@ -604,16 +643,6 @@ public class ProcessManager
 						catch (NativeProcessRunException e)
 						{
 							s_Logger.error(String.format("Error in job %s finish timeout", jobId), e);
-						}
-						
-						try 
-						{
-							m_JobDetailsProvider.setJobFinishedTimeandStatus(jobId, 
-									new Date(), JobStatus.FINISHED);
-						}
-						catch (UnknownJobException e) 
-						{
-							s_Logger.warn(String.format("Error in job %s finish timeout", jobId), e);
 						}
 					
 					}
@@ -700,13 +729,13 @@ public class ProcessManager
 
 
 	/**
-	 * Get a JSON document containing some of the usage info.
+	 * Get a JSON document containing some of the usage and license info.
 	 * 
 	 * @return The JSON document in string form
 	 */
-	public String getUsageInfo()
+	public String getInfo()
 	{
-		return m_ProcessCtrl.getUsageInfo();
+		return m_ProcessCtrl.getInfo();
 	}
 
 

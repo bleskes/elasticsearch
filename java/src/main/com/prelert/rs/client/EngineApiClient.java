@@ -27,12 +27,14 @@
 
 package com.prelert.rs.client;
 
+import java.io.ByteArrayInputStream;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URLEncoder;
 import java.util.Collections;
 import java.util.Map;
+import java.util.zip.ZipInputStream;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.client.ClientProtocolException;
@@ -554,7 +556,7 @@ public class EngineApiClient implements Closeable
 	 * @param baseUrl The base URL for the REST API 
 	 * e.g <code>http://localhost:8080/engine/version/</code>
 	 * @param jobId The Job's unique Id
-	 * @param expand If true return the anomaly records for the bucket
+	 * @param expand If true include the anomaly records for the bucket
 	 * 
 	 * @return A {@link Pagination} object containing a list of {@link Bucket buckets}
 	 * @throws IOException 
@@ -572,7 +574,7 @@ public class EngineApiClient implements Closeable
 	 * @param baseUrl The base URL for the REST API 
 	 * e.g <code>http://localhost:8080/engine/version/</code>
 	 * @param jobId The Job's unique Id
-	 * @param expand If true return the anomaly records for the bucket
+	 * @param expand If true include the anomaly records for the bucket
 	 * @param skip The number of buckets to skip 
 	 * @param take The max number of buckets to request. 
 	 * 
@@ -593,7 +595,7 @@ public class EngineApiClient implements Closeable
 	 * @param baseUrl The base URL for the REST API 
 	 * e.g <code>http://localhost:8080/engine/version/</code>
 	 * @param jobId The Job's unique Id
-	 * @param expand If true return the anomaly records for the bucket
+	 * @param expand If true include the anomaly records for the bucket
 	 * @param skip The number of buckets to skip. If <code>null</code> then ignored 
 	 * @param take The max number of buckets to request. If <code>null</code> then ignored 
 	 * @param start The start date filter as either a Long (seconds from epoch)
@@ -684,7 +686,7 @@ public class EngineApiClient implements Closeable
 	 * e.g <code>http://localhost:8080/engine/version/</code>
 	 * @param jobId The Job's unique Id
 	 * @param bucketId The bucket to get
-	 * @param expand If true return the anomaly records for the bucket
+	 * @param expand If true include the anomaly records for the bucket
 	 * @return A {@link SingleDocument} object containing the requested 
 	 * {@link Bucket} or an empty {@link SingleDocument} if it does not exist 
 	 * @throws IOException 
@@ -708,11 +710,11 @@ public class EngineApiClient implements Closeable
 		try
 		{
 			String content = EntityUtils.toString(response.getEntity());
-			
-			if (response.getStatusLine().getStatusCode() == 200)
+
+			// 404 means an empty doc not necessarily an error
+			if (response.getStatusLine().getStatusCode() == 200 ||
+					response.getStatusLine().getStatusCode() == 404)
 			{
-				
-				
 				SingleDocument<Bucket> docs = m_JsonMapper.readValue(content, 
 						new TypeReference<SingleDocument<Bucket>>() {} );
 				return docs;
@@ -883,7 +885,7 @@ public class EngineApiClient implements Closeable
 	
 	/**
 	 * Tails the last <code>lineCount</code> lines from the job's
-	 * last log file
+	 * last log file. This tails the autodetect process log file. 
 	 * 
 	 * @param baseUrl The base URL for the REST API 
 	 * e.g <code>http://localhost:8080/engine/version/</code>
@@ -933,10 +935,162 @@ public class EngineApiClient implements Closeable
 	
 	
 	/**
+	 * Tails the last <code>lineCount</code> lines from the named log file.
+	 * 
+	 * @param baseUrl The base URL for the REST API 
+	 * e.g <code>http://localhost:8080/engine/version/</code>
+	 * @param jobId The Job's unique Id
+	 * @param logfileName the name of the log file without the '.log' suffix. 
+	 * @param lineCount The number of lines to return 
+	 * @return The last <code>lineCount</code> lines of the log file
+	 * @throws ClientProtocolException
+	 * @throws IOException
+	 */
+	public String tailLog(String baseUrl, String jobId, String filename,
+			int lineCount) 
+	throws ClientProtocolException, IOException
+	{
+		String url = String.format("%s/logs/%s/%s/tail?lines=%d", 
+				baseUrl, jobId, filename, lineCount);
+		
+		s_Logger.debug("GET tail log " + url);
+		
+		HttpGet get = new HttpGet(url);
+		get.addHeader("Content-Type", "application/json");
+		
+		try (CloseableHttpResponse response = m_HttpClient.execute(get))
+		{
+			String content = EntityUtils.toString(response.getEntity());
+
+			if (response.getStatusLine().getStatusCode() == 200)
+			{
+				return content;
+			}
+			else
+			{
+				String msg = String.format(
+						"Error tailing logs for job %s, status code = %d. "
+								+ "Returned content: %s",
+								jobId,
+								response.getStatusLine().getStatusCode(),
+								content);
+
+				s_Logger.error(msg);
+				
+				m_LastError = m_JsonMapper.readValue(content, 
+						new TypeReference<ApiError>() {} );
+				
+				return "";
+			}			
+		}		
+	}
+	
+	
+	/**
+	 * Download the specified log file for the job.
+	 * The autodetect process writes a log file named after with the job id
+	 * <job_id>.log while the Java component logs to engine_api.log.
+	 * 
+	 * @param baseUrl The base URL for the REST API 
+	 * e.g <code>http://localhost:8080/engine/version/</code>
+	 * @param jobId The Job's unique Id
+	 * @param logfileName the name of the log file without the '.log' suffix. 
+	 * @return
+	 * @throws ClientProtocolException
+	 * @throws IOException
+	 */
+	public String downloadLog(String baseUrl, String jobId, String logfileName) 
+	throws ClientProtocolException, IOException
+	{
+		String url = String.format("%s/logs/%s/%s", 
+				baseUrl, jobId, logfileName);
+		
+		s_Logger.debug("GET log file " + url);
+		
+		HttpGet get = new HttpGet(url);
+		get.addHeader("Content-Type", "application/json");
+		
+		try (CloseableHttpResponse response = m_HttpClient.execute(get))
+		{
+			String content = EntityUtils.toString(response.getEntity());
+
+			if (response.getStatusLine().getStatusCode() == 200)
+			{
+				return content;
+			}
+			else
+			{
+				String msg = String.format(
+						"Error downloading log file for job %s, status code = %d. "
+								+ "Returned content: %s",
+								jobId,
+								response.getStatusLine().getStatusCode(),
+								content);
+
+				s_Logger.error(msg);
+				m_LastError = m_JsonMapper.readValue(content, 
+						new TypeReference<ApiError>() {} );
+				
+				return "";
+			}			
+		}		
+	}
+	
+	
+	/**
+	 * Download all the log files for the given job.
+	 * 
+	 * @param baseUrl The base URL for the REST API 
+	 * e.g <code>http://localhost:8080/engine/version/</code>
+	 * @param jobId The Job's unique Id
+	 * @return A ZipInputStream for the log files. If the inputstream is
+	 * empty an error may have occurred
+	 * @throws ClientProtocolException
+	 * @throws IOException
+	 */
+	public ZipInputStream downloadAllLogs(String baseUrl, String jobId) 
+	throws ClientProtocolException, IOException
+	{
+		String url = String.format("%s/logs/%s", baseUrl, jobId);
+		
+		s_Logger.debug("GET download logs " + url);
+		
+		HttpGet get = new HttpGet(url);
+		get.addHeader("Content-Type", "application/json");
+		
+		try (CloseableHttpResponse response = m_HttpClient.execute(get))
+		{
+			if (response.getStatusLine().getStatusCode() == 200)
+			{
+				 return new ZipInputStream(response.getEntity().getContent());
+			}
+			else
+			{
+				String content = EntityUtils.toString(response.getEntity());
+				String msg = String.format(
+						"Error downloading log files for job %s, status code = %d. "
+								+ "Returned content: %s",
+								jobId,
+								response.getStatusLine().getStatusCode(),
+								content);
+
+				s_Logger.error(msg);
+				
+				m_LastError = m_JsonMapper.readValue(content, 
+						new TypeReference<ApiError>() {} );
+				
+				// return an empty stream
+				return new ZipInputStream(new ByteArrayInputStream(new byte[0]));
+			}			
+		}		
+	}	
+	
+	
+	/**
 	 * A generic HTTP GET to any Url. The result is converted from Json to 
 	 * the type referenced in <code>typeRef</code>. A <code>TypeReference</code> 
-	 * has to be used to preserve the generic that is usually lost in
-	 * erasure.<br/>
+	 * has to be used to preserve the generic type information that is usually 
+	 * lost in due to erasure.<br/>
 	 * This method is useful for paging through a set of results in a 
 	 * {@link Pagination} object.
 	 *  

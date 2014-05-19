@@ -42,7 +42,7 @@ public class JobConfiguration
 {
 	
 	private AnalysisConfig m_AnalysisConfig;
-	private AnalysisOptions m_AnalysisOptions;
+	private AnalysisLimits m_AnalysisLimits;
 	private DataDescription m_DataDescription;
 	private String m_ReferenceJobId;
 	private Long m_Timeout;
@@ -80,18 +80,18 @@ public class JobConfiguration
 	}
 	
 	/**
-	 * The analysis options 
+	 * The analysis limits 
 	 * 
-	 * @return AnalysisOptions or null if not set.
+	 * @return Analysis limits or null if not set.
 	 */
-	public AnalysisOptions getAnalysisOptions() 
+	public AnalysisLimits getAnalysisLimits() 
 	{
-		return m_AnalysisOptions;
+		return m_AnalysisLimits;
 	}
 
-	public void setAnalysisOptions(AnalysisOptions options) 
+	public void setAnalysisLimits(AnalysisLimits options) 
 	{
-		m_AnalysisOptions = options;
+		m_AnalysisLimits = options;
 	}
 	
 	/**
@@ -160,9 +160,9 @@ public class JobConfiguration
 			m_JobConfig = new JobConfiguration(analysisConfig);
 		}
 				
-		public JobConfigurationBuilder analysisOptions(AnalysisOptions analysisOptions)
+		public JobConfigurationBuilder analysisLimits(AnalysisLimits analysisLimits)
 		{		
-			m_JobConfig.m_AnalysisOptions = analysisOptions;
+			m_JobConfig.m_AnalysisLimits = analysisLimits;
 			return this;
 		}
 		
@@ -191,7 +191,7 @@ public class JobConfiguration
 	 * <ol>
 	 * <li>Either an AnalysisConfig or Job reference must be set</li>
 	 * <li>Verify {@link AnalysisConfig#verify() AnalysisConfig}</li>
-	 * <li>Verify {@link AnalysisOptions#verify() AnalysisOptions}</li>
+	 * <li>Verify {@link AnalysisLimits#verify() AnalysisLimits}</li>
 	 * <li>Verify {@link DataDescription#verify() DataDescription}</li>
 	 * <li>Check timeout is a +ve number</li>
 	 * <li></li>
@@ -214,9 +214,9 @@ public class JobConfiguration
 		{
 			m_AnalysisConfig.verify();
 		}
-		if (m_AnalysisOptions != null)
+		if (m_AnalysisLimits != null)
 		{
-			m_AnalysisOptions.verify();
+			m_AnalysisLimits.verify();
 		}
 		
 		if (m_DataDescription != null)

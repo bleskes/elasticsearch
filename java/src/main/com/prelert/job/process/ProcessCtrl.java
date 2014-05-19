@@ -46,7 +46,7 @@ import org.apache.log4j.Logger;
 
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.Detector;
-import com.prelert.job.AnalysisOptions;
+import com.prelert.job.AnalysisLimits;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DetectorState;
 import com.prelert.job.JobDetails;
@@ -181,6 +181,13 @@ public class ProcessCtrl
 	static final public String DOT_OVER = ".over";
 	static final public String DOT_PARTITION = ".partition";
 	static final public char NEW_LINE = '\n';
+	
+	
+	/**
+	 * The configuration fields used in limits.conf
+	 */
+	static final public String MAX_FIELD_VALUES_CONFIG_STR = "maxfieldvalues";
+	static final public String MAX_TIME_BUCKETS_CONFIG_STR = "maxtimebuckets";	
 	
 	
 	/**
@@ -322,9 +329,9 @@ public class ProcessCtrl
 
 	/**
 	 * Get the C++ process to print a JSON document containing some of the usage
-	 * info
+	 * and license info
 	 */
-	synchronized public String getUsageInfo()
+	synchronized public String getInfo()
 	{
 		List<String> command = new ArrayList<>();
 		command.add(AUTODETECT_PATH);
@@ -429,10 +436,10 @@ public class ProcessCtrl
 			}		
 		}
 		
-		if (job.getAnalysisOptions() != null)
+		if (job.getAnalysisLimits() != null)
 		{			
 			File limitConfigFile = File.createTempFile("limitconfig", ".conf");
-			writeModelOptions(job.getAnalysisOptions(), limitConfigFile);		
+			writeLimits(job.getAnalysisLimits(), limitConfigFile);		
 			String limitConfig = LIMIT_CONFIG_ARG + limitConfigFile.toString();
 			command.add(limitConfig);
 		}
@@ -446,6 +453,9 @@ public class ProcessCtrl
 		// Input is always length encoded
 		command.add(LENGTH_ENCODED_INPUT_ARG);
 		
+		
+		String timeField = DataDescription.DEFAULT_TIME_FIELD;
+
 		DataDescription dataDescription = job.getDataDescription();
 		if (dataDescription != null)
 		{
@@ -455,14 +465,17 @@ public class ProcessCtrl
 						+  dataDescription.getFieldDelimiter();
 				command.add(delimiterArg);
 			}
-			if (DataDescription.DEFAULT_TIME_FIELD.equals(dataDescription.getTimeField())
-					== false)
+			
+			if (dataDescription.getTimeField() != null &&
+					dataDescription.getTimeField().isEmpty() == false)
 			{
-				String timeFieldArg = TIME_FIELD_ARG
-						+  dataDescription.getTimeField();
-				command.add(timeFieldArg);
+				timeField = dataDescription.getTimeField();
 			}
+
 		}
+		// always set the time field
+		String timeFieldArg = TIME_FIELD_ARG + timeField;
+		command.add(timeFieldArg);
 				
 		// Restoring the model state
 		if (detectorState != null && detectorState.getDetectorKeys().size() > 0)
@@ -538,18 +551,18 @@ public class ProcessCtrl
 	 * @param emptyConfFile
 	 * @throws IOException
 	 */
-	private void writeModelOptions(AnalysisOptions options, File emptyConfFile) 
+	private void writeLimits(AnalysisLimits options, File emptyConfFile) 
 	throws IOException	
 	{
 		StringBuilder contents = new StringBuilder("[anomaly]").append(NEW_LINE);
 		if (options.getMaxFieldValues() > 0)
 		{
-			contents.append(AnalysisOptions.MAX_FIELD_VALUES + " = ")
+			contents.append(MAX_FIELD_VALUES_CONFIG_STR + " = ")
 					.append(options.getMaxFieldValues()).append(NEW_LINE);
 		}
 		if (options.getMaxTimeBuckets() > 0)
 		{
-			contents.append(AnalysisOptions.MAX_TIME_BUCKETS + " = ")
+			contents.append(MAX_TIME_BUCKETS_CONFIG_STR + " = ")
 					.append(options.getMaxTimeBuckets()).append(NEW_LINE);
 		}
 
@@ -563,7 +576,7 @@ public class ProcessCtrl
 	
 	
 	/**
-	 * Return true if there is a file PRELERT_HOME/config/model.conf
+	 * Return true if there is a file PRELERT_HOME/config/prelertmodel.conf
 	 * @return
 	 */
 	private boolean modelConfigFilePresent()

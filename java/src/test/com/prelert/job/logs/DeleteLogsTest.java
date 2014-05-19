@@ -7,7 +7,6 @@
  * WARNING:                                                 *
  * THIS FILE CONTAINS UNPUBLISHED PROPRIETARY               *
  * SOURCE CODE WHICH IS THE PROPERTY OF PRELERT LTD AND     *
- * PARENT OR SUBSIDIARY COMPANIES.                          *
  * PLEASE READ THE FOLLOWING AND TAKE CAREFUL NOTE:         *
  *                                                          *
  * This source code is confidential and any person who      *
@@ -19,29 +18,37 @@
  * may be reproduced, adapted or transmitted in any form or *
  * by any means, electronic, mechanical, photocopying,      *
  * recording or otherwise.                                  *
- *                                                  
  *                                                          *
  *----------------------------------------------------------*
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.warnings;
 
-/**
- * Dummy StatusReporter with an 
- *
- */
-public class DummyStatusReporter extends StatusReporter 
+package com.prelert.job.logs;
+
+import junit.framework.Assert;
+
+import org.junit.Test;
+
+public class DeleteLogsTest 
 {
-	public DummyStatusReporter() 
+	/**
+	 * Tests that the if the don't delete log files system property is 
+	 * set then the logs aren't deleted.
+	 */
+	@Test
+	public void dontDeleteTest()
 	{
-		super("DummyJobId", null);
+		System.setProperty(JobLogs.DONT_DELETE_LOGS_PROP, "true");
+		JobLogs jobLogs = new JobLogs();
+		Assert.assertTrue(jobLogs.deleteLogs("somedir", "somejob"));
+		
+		System.setProperty(JobLogs.DONT_DELETE_LOGS_PROP, "1");
+		jobLogs = new JobLogs();
+		Assert.assertTrue(jobLogs.deleteLogs("somedir", "somejob"));
+		
+		System.clearProperty(JobLogs.DONT_DELETE_LOGS_PROP);
+		jobLogs = new JobLogs();
+		Assert.assertFalse(jobLogs.deleteLogs("somedir", "somejob"));
 	}
-
-	@Override
-	protected void reportStatus(int totalRecords)
-	{
-		// do nothing
-	}
-
 }

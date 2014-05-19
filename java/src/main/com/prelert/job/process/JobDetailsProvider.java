@@ -52,6 +52,17 @@ public interface JobDetailsProvider
 	 */
 	public DetectorState getPersistedState(String jobId) throws UnknownJobException;
 	
+	
+	/**
+	 * Set the status of the specified job
+	 * @param jobId
+	 * @param status
+	 * @return true if the status was updated
+	 * @throws UnknownJobException
+	 */
+	public boolean setJobStatus(String jobId, JobStatus status) 
+		throws UnknownJobException;
+	
 	/**
 	 * Set the job status and finish time for the job.
 	 * 

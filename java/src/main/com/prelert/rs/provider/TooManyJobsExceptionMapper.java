@@ -19,29 +19,32 @@
  * may be reproduced, adapted or transmitted in any form or *
  * by any means, electronic, mechanical, photocopying,      *
  * recording or otherwise.                                  *
- *                                                  
  *                                                          *
  *----------------------------------------------------------*
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.warnings;
+package com.prelert.rs.provider;
+
+import javax.ws.rs.core.Response;
+import javax.ws.rs.ext.ExceptionMapper;
+
+import com.prelert.job.TooManyJobsException;
+import com.prelert.rs.data.ApiError;
 
 /**
- * Dummy StatusReporter with an 
- *
+ * Exception -> Response mapper for {@linkplain TooManyJobsException}.
  */
-public class DummyStatusReporter extends StatusReporter 
+public class TooManyJobsExceptionMapper implements ExceptionMapper<TooManyJobsException>
 {
-	public DummyStatusReporter() 
-	{
-		super("DummyJobId", null);
-	}
-
 	@Override
-	protected void reportStatus(int totalRecords)
+	public Response toResponse(TooManyJobsException e)
 	{
-		// do nothing
-	}
+		ApiError error = new ApiError(e.getErrorCode());
+		error.setCause(e.getCause());
+		error.setMessage(e.getMessage());
 
+		return Response.status(Response.Status.BAD_REQUEST).
+				entity(error.toJson()).build();
+	}
 }
