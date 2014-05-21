@@ -106,7 +106,7 @@ public class JobsTest implements Closeable
 			+ "\"detectors\":[{\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}] "
 			+ "},"
 			+ "\"dataDescription\":{\"fieldDelimiter\":\",\", \"timeField\":\"time\", " 
-			+ "\"timeFormat\":\"yyyy-MM-dd HH:mm:ss\"} }}";	
+			+ "\"timeFormat\":\"yyyy-MM-dd HH:mm:ssX\"} }}";	
 	
 	/**
 	 * This is a format string insert a reference job id.
@@ -567,7 +567,7 @@ public class JobsTest implements Closeable
 		DataDescription dd = new DataDescription();
 		dd.setFieldDelimiter(',');
 		dd.setTimeField("time");
-		dd.setTimeFormat("yyyy-MM-dd HH:mm:ss");
+		dd.setTimeFormat("yyyy-MM-dd HH:mm:ssX");
 
 		test(ac.equals(job.getAnalysisConfig()));
 		test(dd.equals(job.getDataDescription()));
@@ -1261,7 +1261,7 @@ public class JobsTest implements Closeable
 		File flightCentreData = new File(prelertTestDataHome + 
 				"/engine_api_integration_test/flightcentre.csv.gz");
 		File fareQuoteData = new File(prelertTestDataHome + 
-				"/engine_api_integration_test/farequote_ISO_8601.csv");		
+				"/engine_api_integration_test/farequote.csv");		
 		File flightCentreJsonData = new File(prelertTestDataHome + 
 				"/engine_api_integration_test/flightcentre.json");
 		File flightCentreMsData = new File(prelertTestDataHome + 
@@ -1272,7 +1272,6 @@ public class JobsTest implements Closeable
 		final long FLIGHT_CENTRE_NUM_BUCKETS = 24;
 		final long FARE_QUOTE_NUM_BUCKETS = 1439;
 	
-		
 		//=================
 		// CSV & Gzip test 
 		//
@@ -1351,6 +1350,24 @@ public class JobsTest implements Closeable
 		test.testDateFilters(baseUrl, jobId, new Date(1350824400000L), 
 				new Date(1350913371000L));		
 		test.testReadLogFiles(baseUrl, jobId);
+
+
+		//=================
+		// double upload test (upload same file twice)
+		//
+		String doubleUploadTest = test.createFareQuoteTimeFormatJobTest(baseUrl);
+		jobUrls.add(doubleUploadTest);		
+
+		test.uploadData(baseUrl, doubleUploadTest, fareQuoteData, false);
+		test.uploadData(baseUrl, doubleUploadTest, fareQuoteData, false);
+		
+		test.closeJob(baseUrl, doubleUploadTest);	
+		test.verifyJobResults(baseUrl, doubleUploadTest, 150, FARE_QUOTE_NUM_BUCKETS, 300);
+					
+		// known dates for the farequote data
+		start = new Date(1359406800000L);
+		end = new Date(1359662400000L);
+		test.testDateFilters(baseUrl, doubleUploadTest, start, end);
 		
 		//==========================
 		// Clean up test jobs

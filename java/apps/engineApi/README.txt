@@ -65,17 +65,15 @@ http://curl.haxx.se) which allows the easy transfer of data using a URL syntax
 over HTTP.
 
 Before we start, please download the example CSV file from
-http://s3.amazonaws.com/prelert_demo/farequote_ISO_8601.csv.
+http://s3.amazonaws.com/prelert_demo/farequote.csv.
 Time series data must be ordered by date. The raw csv data looks like this:
 
-examples/farequote_ISO_8601.csv
-
 time,airline,responsetime,sourcetype
-2013-01-28 00:00:00,AAL,132.2046,farequote
-2013-01-28 00:00:00,JZA,990.4628,farequote
-2013-01-28 00:00:00,JBU,877.5927,farequote
-2013-01-28 00:00:00,KLM,1355.4812,farequote
-2013-01-28 00:00:00,NKS,9991.3981,farequote
+2013-01-28 00:00:00Z,AAL,132.2046,farequote
+2013-01-28 00:00:00Z,JZA,990.4628,farequote
+2013-01-28 00:00:00Z,JBU,877.5927,farequote
+2013-01-28 00:00:00Z,KLM,1355.4812,farequote
+2013-01-28 00:00:00Z,NKS,9991.3981,farequote
 ...
 
 1. Create New Job
@@ -96,7 +94,7 @@ curl -X POST -H 'Content-Type: application/json' 'http://localhost:8080/engine/v
     "dataDescription" : {
         "fieldDelimiter":",",
         "timeField":"time",
-        "timeFormat":"yyyy-MM-dd HH:mm:ss"
+        "timeFormat":"yyyy-MM-dd HH:mm:ssX"
     }
 }'
 
@@ -114,7 +112,7 @@ character delimits the fields, and what is the format of the timestamp.
 This will return a unique job number that will be used to in the remainder of
 the tutorial. For example:
 
-{"id":"20140516091341-00001"}
+{"id":"20140519113920-00001"}
 
 2. Check Job Status
 -------------------
@@ -134,13 +132,13 @@ latest job. For example:
   "nextPage" : null,
   "previousPage" : null,
   "documents" : [ {
-    "timeout" : 600,
     "analysisLimits" : null,
     "status" : "CLOSED",
-    "location" : "http://localhost:8080/engine/v0.3/jobs/20140516091341-00001",
-    "dataEndpoint" : "http://localhost:8080/engine/v0.3/data/20140516091341-00001",
-    "resultsEndpoint" : "http://localhost:8080/engine/v0.3/results/20140516091341-00001",
-    "logsEndpoint" : "http://localhost:8080/engine/v0.3/logs/20140516091341-00001",
+    "timeout" : 600,
+    "location" : "http://localhost:8080/engine/v0.3/jobs/20140519113920-00001",
+    "dataEndpoint" : "http://localhost:8080/engine/v0.3/data/20140519113920-00001",
+    "resultsEndpoint" : "http://localhost:8080/engine/v0.3/results/20140519113920-00001",
+    "logsEndpoint" : "http://localhost:8080/engine/v0.3/logs/20140519113920-00001",
     "analysisConfig" : {
       "bucketSpan" : 3600,
       "batchSpan" : null,
@@ -152,15 +150,15 @@ latest job. For example:
     },
     "finishedTime" : null,
     "lastDataTime" : null,
-    "id" : "20140516091341-00001",
+    "id" : "20140519113920-00001",
     "dataDescription" : {
       "timeField" : "time",
-      "timeFormat" : "yyyy-MM-dd HH:mm:ss",
+      "timeFormat" : "yyyy-MM-dd HH:mm:ssX",
       "fieldDelimiter" : ",",
       "quoteCharacter" : "\"",
       "format" : "DELINEATED"
     },
-    "createTime" : "2014-05-16T08:13:41.240+0000"
+    "createTime" : "2014-05-19T10:39:20.499+0000"
   } ]
 }
 
@@ -169,7 +167,7 @@ in the reference documentation. For now, note that the key piece of information
 is the jobId, which uniquely identifies this job and will be used in the
 remainder of this tutorial. For example:
 
-{"id":"20140516091341-00001"}
+{"id":"20140519113920-00001"}
 
 3. Upload Data
 --------------
@@ -177,11 +175,11 @@ remainder of this tutorial. For example:
 Now we can send the CSV data to the /data endpoint to be processed by the
 engine. Using cURL, we will use the -T option to upload the file. You will need
 to edit the URL to contain the jobId and specify the path to the
-farequote_ISO_8601.csv file:
+farequote.csv file:
 
-curl -X POST -T example_data/farequote_ISO_8601.csv 'http://localhost:8080/engine/v0.3/data/20140516091341-00001'
+curl -X POST -T farequote.csv 'http://localhost:8080/engine/v0.3/data/20140519113920-00001'
 
-This will stream the file examples/farequote_ISO_8601.csv to the REST API for
+This will stream the file farequote.csv to the REST API for
 analysis. This should take less than a minute on modern commodity hardware.
 Once the command prompt returns, the data upload has completed. Next, we can
 start looking at the analysis results.
@@ -194,9 +192,9 @@ practice to close the job before requesting results.  Closing the job tells
 the API to flush through any data that's being buffered and store all results.
 Once again, you will need to edit the URL to contain the correct jobId:
 
-curl -X POST 'http://localhost:8080/engine/v0.3/data/20140516091341-00001/close'
+curl -X POST 'http://localhost:8080/engine/v0.3/data/20140519113920-00001/close'
 
-Note: in the case of the farequote_ISO_8601.csv example data you'll have enough
+Note: in the case of the farequote.csv example data you'll have enough
 results to see the anomaly by the time the upload has completed even if you
 don't close the job.
 
@@ -206,16 +204,16 @@ don't close the job.
 We can request the /results endpoint for our jobId to see what kind of results
 are available:
 
-curl 'http://localhost:8080/engine/v0.3/results/20140516091341-00001?take=100'
+curl 'http://localhost:8080/engine/v0.3/results/20140519113920-00001?skip=0&take=100'
 
 This returns a summary of the anomalousness of the data, for each time interval.
-By default the first 100 results are returned.
+If not set 'skip' and 'take' default to 0 and 100 meaning the first 100 results are returned
 
 {
   "hitCount" : 118,
   "skip" : 0,
   "take" : 100,
-  "nextPage" : "http://localhost:8080/engine/v0.3/results/20140516091341-00001?skip=100&take=100",
+  "nextPage" : "http://localhost:8080/engine/v0.3/results/20140519113920-00001?skip=100&take=100",
   "previousPage" : null,
   "documents" : [ {
     "recordCount" : 1,
@@ -242,42 +240,39 @@ following id: 1359561600.
 
 We can request the details of just this one bucket interval as follows:
 
-curl 'http://localhost:8080/engine/v0.3/results/20140516091341-00001/1359561600?expand=true'
+curl 'http://localhost:8080/engine/v0.3/results/20140519113920-00001/1359561600?expand=true'
 
 {
-  "id" : "1359561600",
+  "documentId" : "1359561600",
   "exists" : true,
   "type" : "bucket",
   "document" : {
     "recordCount" : 2,
     "timestamp" : "2013-01-30T16:00:00.000Z",
-    "Id" : "1359561600",
+    "id" : "1359561600",
     "anomalyScore" : 10.276,
     "records" : [ {
       "byFieldName" : "airline",
-      "typical" : 101.844,
+      "typical" : 101.651,
       "byFieldValue" : "AAL",
       "actual" : 242.75,
-      "probability" : 4.78331E-34,
+      "probability" : 5.24776E-39,
       "anomalyScore" : 10.276,
       "fieldName" : "responsetime",
-      "detectorName" : "individual metric/responsetime/airline",
       "function" : "mean"
     }, {
       "isSimpleCount" : true,
       "actual" : 909.0,
       "probability" : 1.0,
       "anomalyScore" : 0.0,
-      "detectorName" : "individual count//count",
       "function" : "count"
     } ]
   }
 }
 
-This shows that between 2013-01-30T16:00:00.000 and 2013-01-30T17:00:00.000 the
-responsetime for airline 'AAL' increased from a normal mean value of 101.844 to
-242.75. The probability of seeing 242.75 is 4.78331E-34 (which is very
-unlikely).
+This shows that between 2013-01-30T16:00:00-0000 and 2013-01-30T17:00:00-0000 the 
+responsetime for airline AAL increased from a normal mean value of 101.651 to 242.75. 
+The probability of seeing 242.75 is 5.24776E-39 (which is very unlikely).
 
 This increased value is highly unexpected based upon the past behavior of this
 metric and is thus an outlier.
@@ -318,7 +313,7 @@ curl -X POST -H 'Content-Type: application/json' 'http://localhost:8080/engine/v
 
 And the upload data step would need to point to the JSON file:
 
-curl -X POST -T example_data/farequote.json 'http://localhost:8080/engine/v0.3/data/20140516091341-00001'
+curl -X POST -T farequote.json 'http://localhost:8080/engine/v0.3/data/20140516091341-00001'
 
 
 Further information
