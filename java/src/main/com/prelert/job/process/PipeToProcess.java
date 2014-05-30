@@ -162,6 +162,10 @@ public class PipeToProcess
 
 			int numFields = fieldIndexes.size();
 			List<String> line;
+			
+			String [] record = new String [numFields]; 
+			
+			long lastEpoch = 0;
 			while ((line = csvReader.read()) != null)
 			{
 				lineCount++;
@@ -176,47 +180,57 @@ public class PipeToProcess
 					continue;
 				}
 				
-				lengthEncodedWriter.writeNumFields(numFields);	
-				
-				int recordIndex = 0;
+				i = 0;
 				for (Pair<String, Integer> p : fieldIndexes)
 				{
-					String record = line.get(p.Second);
-					if (recordIndex == timeFieldIndex)
+					String field = line.get(p.Second);
+					record[i] = (field == null) ? "" : field;	
+					i++;
+				}
+				
+				try
+				{
+					// parse as a double and throw away the fractional 
+					// component
+					long epoch = Double.valueOf(record[timeFieldIndex]).longValue();
+					
+					if (epoch < lastEpoch)
 					{
-						try
-						{
-							// parse as a double and throw away the fractional 
-							// component
-							long epoch = Double.valueOf(record).longValue();
-							record = new Long(epoch).toString();
-						}
-						catch (NumberFormatException e)
-						{
-							String message = String.format(
-									"Cannot parse timestamp '%s' as epoch value",								
-									record);
-							recordsDiscarded++;
-							
-							recordsWritten--;
-							logger.error(message);						
-							
-						}	
+						// out of order 
+						recordsDiscarded++;
+						reporter.reportOutOfOrderRecord(epoch, lastEpoch);
+					}
+					else
+					{	// write record
+						record[timeFieldIndex] = Long.toString(epoch);	
+						lengthEncodedWriter.writeRecord(record);
+						
+						recordsWritten++;
+						lastEpoch = epoch;
 					}
 
-					lengthEncodedWriter.writeField((record == null) ? "" : record);
-					
-					recordIndex++;
+					reporter.reportRecordsWritten(recordsWritten, recordsDiscarded);
 				}
-					
-				recordsWritten++;
-				reporter.reportRecordsWritten(recordsWritten, recordsDiscarded);
+				catch (NumberFormatException e)
+				{
+					String message = String.format(
+							"Cannot parse timestamp '%s' as epoch value",								
+							record[timeFieldIndex]);
+
+					reporter.reportDateParseError(record[timeFieldIndex]);
+					logger.error(message);
+
+					recordsDiscarded++;
+					reporter.reportRecordsWritten(recordsWritten, recordsDiscarded);		
+
+				}	
 			}
 			
 			lengthEncodedWriter.flush();
 		}
 
 		
+		reporter.finishReporting();
 		logger.debug(String.format("Transferred %d of %d CSV records to autodetect.", 
 				recordsWritten, lineCount));
 		
@@ -262,7 +276,8 @@ public class PipeToProcess
 		
 		try (CsvListReader csvReader = new CsvListReader(new InputStreamReader(is), csvPref))
 		{
-			String[] header = csvReader.getHeader(true);			
+			String[] header = csvReader.getHeader(true);	
+			
 			List<Pair<String, Integer>> fieldIndexes = 
 					findFieldIndexes(header, timeField, analysisFields);
 							
@@ -318,6 +333,8 @@ public class PipeToProcess
 			List<String> line;
 			int numFields = fieldIndexes.size();
 			String [] record = new String [numFields];
+			long lastEpoch = 0;
+			
 			if (dd.isEpochMs())
 			{
 				while ((line = csvReader.read()) != null)
@@ -347,7 +364,22 @@ public class PipeToProcess
 						// parse as a double and throw away the fractional 
 						// component
 						long epoch = Double.valueOf(record[timeFieldIndex]).longValue() / 1000;
-						record[timeFieldIndex] = new Long(epoch).toString();
+						if (epoch < lastEpoch)
+						{
+							// out of order 
+							recordsDiscarded++;
+							reporter.reportOutOfOrderRecord(epoch, lastEpoch);
+						}
+						else
+						{	// write record
+							record[timeFieldIndex] = Long.toString(epoch);	
+							lengthEncodedWriter.writeRecord(record);
+							
+							recordsWritten++;
+							lastEpoch = epoch;
+						}
+						
+						reporter.reportRecordsWritten(recordsWritten, recordsDiscarded);
 					}
 					catch (NumberFormatException e)
 					{
@@ -359,13 +391,7 @@ public class PipeToProcess
 						
 						recordsDiscarded++;
 						reporter.reportRecordsWritten(recordsWritten, recordsDiscarded);
-						continue;
-					}		
-					
-					lengthEncodedWriter.writeRecord(record);
-					
-					recordsWritten++;
-					reporter.reportRecordsWritten(recordsWritten, recordsDiscarded);
+					}						
 				}
 			}
 			else
@@ -396,7 +422,23 @@ public class PipeToProcess
 					
 					try
 					{
-						record[timeFieldIndex] =  new Long(dateFormat.parse(record[timeFieldIndex]).getTime() / 1000).toString();
+						long epoch = dateFormat.parse(record[timeFieldIndex]).getTime() / 1000;
+						if (epoch < lastEpoch)
+						{
+							// out of order 
+							recordsDiscarded++;
+							reporter.reportOutOfOrderRecord(epoch, lastEpoch);
+						}
+						else
+						{	// write record
+							record[timeFieldIndex] = Long.toString(epoch);	
+							lengthEncodedWriter.writeRecord(record);
+							
+							recordsWritten++;
+							lastEpoch = epoch;
+						}
+						
+						reporter.reportRecordsWritten(recordsWritten, recordsDiscarded);
 					}
 					catch (ParseException pe)
 					{
@@ -409,18 +451,11 @@ public class PipeToProcess
 						
 						recordsDiscarded++;
 						reporter.reportRecordsWritten(recordsWritten, recordsDiscarded);
-
-
-						logger.error(message);
-						continue;
 					}		
-
-					lengthEncodedWriter.writeRecord(record);
-					
-					recordsWritten++;
-					reporter.reportRecordsWritten(recordsWritten, recordsDiscarded);
 				}
 			}
+			
+			reporter.finishReporting();
 			
 			logger.debug(String.format("Transferred %d of %d CSV records to autodetect.", 
 					recordsWritten, lineCount));
@@ -538,11 +573,9 @@ public class PipeToProcess
 		{
 			fieldMap.put(allFields.get(i), i);
 		}
-		
-		
+				
 		// write header and first record
 		lengthEncodedWriter.writeRecord(allFields);
-		logger.info(allFields);
 				
 		int recordsDiscarded = 0;
 		int recordsWritten = 0;
@@ -590,6 +623,7 @@ public class PipeToProcess
 		reporter.reportRecordsWritten(recordsWritten, recordsDiscarded);
 		
 
+		long lastEpoch = 0;
 		while (readJsonRecord(parser, record, fieldMap, allFields, gotFields,
 				logger))
 		{		
@@ -606,10 +640,20 @@ public class PipeToProcess
 					// parse as a double and throw away the fractional 
 					// component
 					long epoch = Double.valueOf(record[timeFieldIndex]).longValue();
-					record[timeFieldIndex] = new Long(epoch).toString();
-					
-					lengthEncodedWriter.writeRecord(record);
-					recordsWritten++;
+					if (epoch < lastEpoch)
+					{
+						// out of order 
+						recordsDiscarded++;
+						reporter.reportOutOfOrderRecord(epoch, lastEpoch);
+					}
+					else
+					{	// write record
+						record[timeFieldIndex] = Long.toString(epoch);	
+						lengthEncodedWriter.writeRecord(record);
+						
+						recordsWritten++;
+						lastEpoch = epoch;
+					}
 				}
 				catch (NumberFormatException e)
 				{
@@ -633,6 +677,7 @@ public class PipeToProcess
 			reporter.reportRecordsWritten(recordsWritten, recordsDiscarded);			
 		}
 
+		reporter.finishReporting();
 		logger.debug(String.format("Transferred %d of %d Json records to autodetect.", 
 				recordsWritten, recordCount));
 	}
@@ -744,7 +789,7 @@ public class PipeToProcess
 		reporter.reportRecordsWritten(recordsWritten, recordsDiscarded);
 		
 		
-		
+		long lastEpoch = 0;
 
 		// is the timestamp a format string or epoch ms.
 		if (dd.isEpochMs())
@@ -754,10 +799,29 @@ public class PipeToProcess
 
 				if (gotFields[timeFieldIndex])
 				{
+					String missing = firstMissingField(allFields, gotFields); 
+					if (missing != null)
+					{
+						reporter.reportMissingField(missing);
+					}
+
 					try
 					{
 						long epoch = Double.valueOf(record[timeFieldIndex]).longValue() / 1000;
-						record[timeFieldIndex] = Long.toString(epoch);
+						if (epoch < lastEpoch)
+						{
+							// out of order 
+							recordsDiscarded++;
+							reporter.reportOutOfOrderRecord(epoch, lastEpoch);
+						}
+						else
+						{	// write record
+							record[timeFieldIndex] = Long.toString(epoch);	
+							lengthEncodedWriter.writeRecord(record);
+							
+							recordsWritten++;
+							lastEpoch = epoch;
+						}
 					}
 					catch (NumberFormatException e)
 					{
@@ -765,16 +829,10 @@ public class PipeToProcess
 								"Cannot parse epoch ms timestamp '%s'",								
 								record[timeFieldIndex]);
 						logger.error(message);
+						
+						recordsDiscarded++;
+						reporter.reportDateParseError(record[timeFieldIndex]);
 					}					
-					
-					String missing = firstMissingField(allFields, gotFields); 
-					if (missing != null)
-					{
-						reporter.reportMissingField(missing);
-					}
-					
-					lengthEncodedWriter.writeRecord(record);
-					recordsWritten++;				
 				}
 				else
 				{
@@ -803,11 +861,21 @@ public class PipeToProcess
 
 					try
 					{
-						record[timeFieldIndex] = Long.toString(
-							dateFormat.parse(record[timeFieldIndex]).getTime() / 1000);
-						
-						lengthEncodedWriter.writeRecord(record);
-						recordsWritten++;
+						long epoch = dateFormat.parse(record[timeFieldIndex]).getTime() / 1000;
+						if (epoch < lastEpoch)
+						{
+							// out of order 
+							recordsDiscarded++;
+							reporter.reportOutOfOrderRecord(epoch, lastEpoch);
+						}
+						else
+						{	// write record
+							record[timeFieldIndex] = Long.toString(epoch);	
+							lengthEncodedWriter.writeRecord(record);
+							
+							recordsWritten++;
+							lastEpoch = epoch;
+						}
 					}
 					catch (ParseException e)
 					{
@@ -815,8 +883,10 @@ public class PipeToProcess
 								"' as a date using format string '" +
 								dd.getTimeFormat() + "'");
 						
+						reporter.reportDateParseError(record[timeFieldIndex]);
 						recordsDiscarded++;
 					}
+
 				}
 				else
 				{
@@ -825,10 +895,12 @@ public class PipeToProcess
 					recordsDiscarded++;
 				}
 	
-				recordCount++;
 				reporter.reportRecordsWritten(recordsWritten, recordsDiscarded);
+				recordCount++;
 			}
 		}
+		
+		reporter.finishReporting();
 		
 		logger.debug(String.format("Transferred %d of %d Json records to autodetect.", 
 				recordsWritten, recordCount));

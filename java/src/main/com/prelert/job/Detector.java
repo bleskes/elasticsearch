@@ -477,10 +477,7 @@ public class Detector
 			}
 		}
 		
-		
 		return true;
 	}
-	
-	
 	
 }
