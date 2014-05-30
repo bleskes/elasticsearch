@@ -1060,6 +1060,13 @@ public class JobManager implements JobDetailsProvider
 		}
 	}
 	
+	/**
+	 * Convert job to a JSON string using the object mapper.
+	 * 
+	 * @param job
+	 * @return
+	 * @throws JsonProcessingException
+	 */
 	private String jobToContent(JobDetails job)
 	throws JsonProcessingException
 	{

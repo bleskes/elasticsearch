@@ -1,12 +1,15 @@
 package com.prelert.job.warnings.elasticsearch;
 
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+
 import com.prelert.job.JobDetails;
 import com.prelert.job.warnings.StatusReporter;
 
 import org.apache.log4j.Logger;
-import org.elasticsearch.action.get.GetResponse;
-import org.elasticsearch.action.index.IndexResponse;
+import org.elasticsearch.action.update.UpdateRequestBuilder;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.indices.IndexMissingException;
 
@@ -43,53 +46,37 @@ public class ElasticSearchStatusReporter extends StatusReporter
 		
 		m_Logger.info(status);
 		
-		persistStatus();
+		persistStats();
 	}
 	
-	
-	private boolean persistStatus()
+	/**
+	 * Write the status counts to the datastore
+	 * @return
+	 */
+	private boolean persistStats()
 	{
 		try
 		{
-			GetResponse response = m_Client.prepareGet(m_JobId, JobDetails.TYPE, 
-					m_JobId).get();
-
-			if (response.isExists() == false)
-			{				
-				m_Logger.error("Cannot write status stats " + m_JobId);
-				return false;
-			}
-
-			long lastVersion = response.getVersion();
+			UpdateRequestBuilder updateBuilder = m_Client.prepareUpdate(m_JobId, JobDetails.TYPE, m_JobId);
+			updateBuilder.setRetryOnConflict(1);
 			
-			JobDetails job = new JobDetails(response.getSource());
-
-			// update record stats
-			job.setProcessedRecordCount(getRecordsWrittenCount());
-			job.setInvalidDateCount(getDateParseErrorsCount());
-			job.setMissingFieldCount(getMissingFieldErrorCount());
-			job.setOutOfOrderTimeStampCount(getOutOfOrderRecordCount());
+			Map<String, Object> updates = new HashMap<>();
+			updates.put(JobDetails.PROCESSED_RECORD_COUNT, getRecordsWrittenCount());
+			updates.put(JobDetails.INVALID_DATE_COUNT, getDateParseErrorsCount());
+			updates.put(JobDetails.MISSING_FIELD_COUNT, getMissingFieldErrorCount());
+			updates.put(JobDetails.OUT_OF_ORDER_TIME_COUNT, getOutOfOrderRecordCount());
+			updateBuilder.setDoc(updates);
 			
-
-			IndexResponse jobIndexResponse = m_Client.prepareIndex(
-					m_JobId, JobDetails.TYPE, m_JobId)
-					.setSource(job).get();
-
-			if (jobIndexResponse.getVersion() <= lastVersion)
-			{
-				String msg = String.format("Error writing job '%s' status "
-						+ "stats. Document was not updated", m_JobId);
-				m_Logger.error(msg);
-				return false;
-			}
+			m_Client.update(updateBuilder.request()).get();
 			
 			return true;
 		}
-		catch (IndexMissingException e)
+		catch (IndexMissingException | InterruptedException | ExecutionException e)
 		{
-			String msg = String.format("Error writing the job '%s' status stats."
-					+ "Missing index error.", m_JobId);
-			m_Logger.error(msg);
+			String msg = String.format("Error writing the job '%s' status stats.",
+					m_JobId);
+			
+			m_Logger.warn(msg, e);
 			
 			return false;
 		}
