@@ -214,6 +214,7 @@ abstract public class StatusReporter
 		checkStatus(totalRecords);
 	}
 	
+	
 	/**
 	 * Don't update status for every update instead update on these
 	 * boundaries

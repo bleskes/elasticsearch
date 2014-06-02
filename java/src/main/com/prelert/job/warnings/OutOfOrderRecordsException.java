@@ -29,6 +29,24 @@ public class OutOfOrderRecordsException extends Exception
 		return m_ErrorCode;
 	}
 	
+	/**
+	 * The number of out of order records
+	 * @return
+	 */
+	public long getNumberOutOfOrder()
+	{
+		return m_NumberBad;
+	}
+	
+	/**
+	 * Total number of records (good + bad)
+	 * @return
+	 */
+	public long getTotalNumber()
+	{
+		return m_TotalNumber;
+	}
+	
 	@Override
 	public String getMessage()
 	{

@@ -27,6 +27,24 @@ public class HighProportionOfBadTimestampsException extends Exception
 		return ErrorCode.TOO_MANY_BAD_DATES;
 	}
 	
+	/**
+	 * The number of bad records
+	 * @return
+	 */
+	public long getNumberBad()
+	{
+		return m_NumberBad;
+	}
+	
+	/**
+	 * Total number of records (good + bad)
+	 * @return
+	 */
+	public long getTotalNumber()
+	{
+		return m_TotalNumber;
+	}
+	
 	@Override
 	public String getMessage()
 	{
