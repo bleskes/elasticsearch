@@ -487,6 +487,11 @@ public class JobManager implements JobDetailsProvider
 		{
 			Map<String, Object> bucket  = hit.getSource();
 			
+			// Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch, 
+			// and replace using the API 'timestamp' key.
+			Object timestamp = bucket.remove(ElasticSearchMappings.ES_TIMESTAMP);
+			bucket.put(Bucket.TIMESTAMP, timestamp);
+			
 			// TODO this is probably not the most efficient way to 
 			// run the search. Try OR filters?
 			if (expand)
@@ -524,6 +529,11 @@ public class JobManager implements JobDetailsProvider
 		GetResponse response = m_Client.prepareGet(jobId, Bucket.TYPE, bucketId).get();
 				
 		Map<String, Object> bucket = response.getSource();
+
+		// Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch, 
+		// and replace using the API 'timestamp' key.
+		Object timestamp = bucket.remove(ElasticSearchMappings.ES_TIMESTAMP);
+		bucket.put(Bucket.TIMESTAMP, timestamp);
 		
 		if (response.isExists() && expand)
 		{
@@ -617,6 +627,16 @@ public class JobManager implements JobDetailsProvider
 		for (SearchHit hit : searchResponse.getHits().getHits())
 		{
 			Map<String, Object> m  = hit.getSource();
+			
+			// TODO
+			// This a hack to work round the deficiency in the 
+			// Java API where source filtering hasn't been implemented.			
+			m.remove(AnomalyRecord.DETECTOR_NAME);
+			// TODO
+			// remove the timestamp field that was added so the 
+			// records can be sorted in Kibanna
+			m.remove(ElasticSearchMappings.ES_TIMESTAMP);
+			
 			results.add(m);
 		}
 		
@@ -669,7 +689,7 @@ public class JobManager implements JobDetailsProvider
 			// TODO
 			// remove the timestamp field that was added so the 
 			// records can be sorted in Kibanna
-			m.remove(Bucket.TIMESTAMP);
+			m.remove(ElasticSearchMappings.ES_TIMESTAMP);
 			
 			results.add(m);
 		}
