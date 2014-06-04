@@ -369,7 +369,7 @@ public class ElasticSearchPersister implements JobDataPersister
 	{
 		XContentBuilder builder = jsonBuilder().startObject()
 				.field(Bucket.ID, bucket.getId())
-				.field(Bucket.TIMESTAMP, bucket.getTimestamp())
+				.field(ElasticSearchMappings.ES_TIMESTAMP, bucket.getTimestamp())
 				.field(Bucket.ANOMALY_SCORE, bucket.getAnomalyScore())
 				.field(Bucket.RECORD_COUNT, bucket.getRecordCount())
 				.endObject();
@@ -409,7 +409,7 @@ public class ElasticSearchPersister implements JobDataPersister
 				.field(AnomalyRecord.ANOMALY_SCORE, record.getAnomalyScore())
 				.field(AnomalyRecord.PROBABILITY, record.getProbability())
 				.field(AnomalyRecord.DETECTOR_NAME, detectorKey)
-				.field(Bucket.TIMESTAMP, bucketTime);
+				.field(ElasticSearchMappings.ES_TIMESTAMP, bucketTime);
 
 		if (record.getByFieldName() != null)
 		{

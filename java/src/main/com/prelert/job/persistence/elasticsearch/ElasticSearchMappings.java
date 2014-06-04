@@ -55,6 +55,14 @@ public class ElasticSearchMappings
 	static final public String INDEX = "index";
 	static final public String NO = "no";
 	
+	/** 
+	 * Name of the field used to store the timestamp in Elasticsearch. 
+	 * Note the field name is different to {@link com.prelert.rs.data.Bucket#TIMESTAMP} used by the 
+	 * API Bucket Resource, and is chosen for consistency with the default field name used by
+	 * Logstash and Kibana.
+	 */
+	static final public String ES_TIMESTAMP = "@timestamp";
+	
 	
 	/**
 	 * Create the ElasticSearch mapping for {@linkplain com.prelert.job.JobDetails}.
@@ -198,7 +206,7 @@ public class ElasticSearchMappings
 						.startObject(Bucket.ID)
 							.field("type", "string")
 						.endObject()
-						.startObject(Bucket.TIMESTAMP)
+						.startObject(ES_TIMESTAMP)
 							.field("type", "date")
 						.endObject()						
 						.startObject(Bucket.ANOMALY_SCORE)
@@ -270,7 +278,7 @@ public class ElasticSearchMappings
 						.startObject(AnomalyRecord.ANOMALY_SCORE)
 							.field("type", "double")
 						.endObject()
-						.startObject(Bucket.TIMESTAMP)
+						.startObject(ES_TIMESTAMP)
 							.field("type", "date")
 						.endObject()
 						.startObject(AnomalyRecord.ACTUAL)
