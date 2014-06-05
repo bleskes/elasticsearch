@@ -44,7 +44,9 @@ public class JobConfigurationExceptionMapper implements ExceptionMapper<JobConfi
 		error.setMessage(configException.getMessage());
 		error.setCause(configException.getCause());
 		
-		return Response.status(Response.Status.BAD_REQUEST).entity(error.toJson()).build();
+		return Response.status(Response.Status.BAD_REQUEST)
+				.header("Access-Control-Allow-Origin", "*")
+				.entity(error.toJson()).build();
 	}
 }
 

@@ -63,6 +63,8 @@ public class JobConfigurationParseException extends WebApplicationException
 		err.setMessage(this.getMessage());
 		err.setCause(this.getCause());
 		
-		return Response.status(Response.Status.BAD_REQUEST).entity(err.toJson()).build();
+		return Response.status(Response.Status.BAD_REQUEST)
+				.header("Access-Control-Allow-Origin", "*")
+				.entity(err.toJson()).build();
 	}
 }
