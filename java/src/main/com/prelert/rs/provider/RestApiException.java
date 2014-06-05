@@ -53,9 +53,11 @@ public class RestApiException extends WebApplicationException
 	@Override
 	public Response getResponse()
 	{
-		ApiError err = new ApiError(m_ErrorCode);
-		err.setMessage(this.getMessage());
+		ApiError error = new ApiError(m_ErrorCode);
+		error.setMessage(this.getMessage());
 		
-		return Response.status(m_Status).entity(err.toJson()).build();		
+		return Response.status(m_Status)
+				.header("Access-Control-Allow-Origin", "*")
+				.entity(error.toJson()).build();
 	}
 }
