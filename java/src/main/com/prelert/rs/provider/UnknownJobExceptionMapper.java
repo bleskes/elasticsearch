@@ -44,7 +44,8 @@ public class UnknownJobExceptionMapper implements ExceptionMapper<UnknownJobExce
 		error.setCause(e.getCause());
 		error.setMessage(e.getMessage());
 		
-		return Response.status(Response.Status.NOT_FOUND).
-				entity(error.toJson()).build();
+		return Response.status(Response.Status.NOT_FOUND)
+				.header("Access-Control-Allow-Origin", "*")
+				.entity(error.toJson()).build();
 	}
 }

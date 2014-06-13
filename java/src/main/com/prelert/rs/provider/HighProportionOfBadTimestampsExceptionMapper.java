@@ -42,10 +42,12 @@ public class HighProportionOfBadTimestampsExceptionMapper
 	@Override
 	public Response toResponse(HighProportionOfBadTimestampsException e) 
 	{
-		ApiError error = new ApiError(/*e.getErrorCode()*/);
+		ApiError error = new ApiError(e.getErrorCode());
 		error.setMessage(e.getMessage());
 		error.setCause(e.getCause());
 		
-		return Response.status(Response.Status.BAD_REQUEST).entity(error.toJson()).build();
+		return Response.status(Response.Status.BAD_REQUEST)
+				.header("Access-Control-Allow-Origin", "*")
+				.entity(error.toJson()).build();
 	}
 }

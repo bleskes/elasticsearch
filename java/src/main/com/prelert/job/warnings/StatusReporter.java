@@ -30,13 +30,29 @@ import org.apache.log4j.Logger;
 
 import com.prelert.rs.data.ErrorCode;
 
-
+/**
+ * Abstract status reporter for tracking all the good/bad
+ * records written to the API. Call one of the reportXXX() methods
+ * to update the records counts if {@linkplain #isReportingBoundary(int)}
+ * returns true then the count will be reported via the abstract 
+ * {@linkplain #reportStatus(int)} method. If there is a high proportion
+ * of errors the {@linkplain StatusReporter#checkStatus(int)} method 
+ * throws an error.
+ */
 abstract public class StatusReporter 
 {
+	/**
+	 * The max percentage of date parse errors allowed before 
+	 * an exception is thrown.
+	 */
 	public static final int ACCEPTABLE_PERCENTAGE_DATE_PARSE_ERRORS = 25;
 	public static final String ACCEPTABLE_PERCENTAGE_DATE_PARSE_ERRORS_PROP = 
 			"max.percent.date.errors";
 	
+	/**
+	 * The max percentage of out of order records allowed before 
+	 * an exception is thrown.
+	 */
 	public static final int ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS = 25;
 	public static final String ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS_PROP = 
 			"max.percent.outoforder.errors";	
@@ -86,6 +102,14 @@ abstract public class StatusReporter
 		}		
 	}
 	
+	/**
+	 * Update the number of records written and the number thrown away
+	 * 
+	 * @param recordsWritten
+	 * @param recordsDiscarded
+	 * @throws HighProportionOfBadTimestampsException
+	 * @throws OutOfOrderRecordsException
+	 */
 	public void reportRecordsWritten(int recordsWritten, int recordsDiscarded)
 	throws HighProportionOfBadTimestampsException, OutOfOrderRecordsException 
 	{
@@ -99,23 +123,28 @@ abstract public class StatusReporter
 			reportStatus(totalRecords);
 			checkStatus(totalRecords);
 		}
-		
 	}
 
+	/**
+	 * Increments the date parse error count
+	 */
 	public void reportDateParseError(String date)
-	throws HighProportionOfBadTimestampsException 
 	{
 		m_DateParseErrorsCount++;
 	}
 
+	/**
+	 * Increments the missing field count
+	 */
 	public void reportMissingField(String field) 
 	{
 		m_MissingFieldErrorCount++;
 	}
 
-
+	/**
+	 * Increments the out of order record count
+	 */
 	public void reportOutOfOrderRecord(long date, long previousDate)
-	throws OutOfOrderRecordsException 
 	{
 		m_OutOfOrderRecordCount++;
 	}
@@ -146,6 +175,7 @@ abstract public class StatusReporter
 	}
 	
 	
+	
 	public int getAcceptablePercentDateParseErrors()
 	{
 		return m_AcceptablePercentDateParseErrors;
@@ -169,6 +199,23 @@ abstract public class StatusReporter
 	
 	
 	/**
+	 * Report the the status now regardless of whether or 
+	 * not we are at a reporting boundary.
+	 * 
+	 * @throws HighProportionOfBadTimestampsException
+	 * @throws OutOfOrderRecordsException
+	 */
+	public void finishReporting() 
+	throws HighProportionOfBadTimestampsException, OutOfOrderRecordsException
+	{
+		int totalRecords = m_RecordsWritten + m_RecordsDiscarded;
+
+		reportStatus(totalRecords);
+		checkStatus(totalRecords);
+	}
+	
+	
+	/**
 	 * Don't update status for every update instead update on these
 	 * boundaries
 	 * <ol>
@@ -182,23 +229,30 @@ abstract public class StatusReporter
 	 */
 	private boolean isReportingBoundary(int totalRecords)
 	{
-		if (totalRecords > 20000)
-		{
-			// after 20000 records update every 10000
-			m_RecordCountDivisor = 10000;
-		}
-		else if (totalRecords > 1000)
-		{
-			// after 1000 records update every 1000
-			m_RecordCountDivisor = 1000;
-		}
-		else 
+		// after 20,000 records update every 10,000
+		int divisor = 10000;
+
+		if (totalRecords <= 1000)
 		{
 			// for the first 1000 records update every 100
-			m_RecordCountDivisor = 100;
+			divisor = 100;
+		}
+		else if (totalRecords <= 20000)
+		{
+			// before 20,000 records update every 1000
+			divisor = 1000;
 		}
 		
-		int quotient = totalRecords / m_RecordCountDivisor;
+		if (divisor != m_RecordCountDivisor)
+		{
+			// have crossed one of the reporting bands
+			m_RecordCountDivisor = divisor; 
+			m_LastRecordCountQuotient = 1;
+			
+			return true;
+		}
+		
+		int quotient = totalRecords / divisor;
 		if (quotient > m_LastRecordCountQuotient)
 		{
 			m_LastRecordCountQuotient = quotient;
@@ -208,6 +262,17 @@ abstract public class StatusReporter
 		return false;
 	}
 	
+	/**
+	 * Throws an exception if too high a proportion of the records
+	 * contains errors (bad dates, out of order). See 
+	 * {@linkplain #ACCEPTABLE_PERCENTAGE_DATE_PARSE_ERRORS} and
+	 * {@linkplain #ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS}
+	 * 
+	 * @param totalRecords
+	 * @throws HighProportionOfBadTimestampsException
+	 * @throws OutOfOrderRecordsException
+	 * 
+	 */
 	private void checkStatus(int totalRecords)
 	throws HighProportionOfBadTimestampsException, OutOfOrderRecordsException
 	{
@@ -228,5 +293,11 @@ abstract public class StatusReporter
 		}
 	}
 	
+	/**
+	 * Report the counts and stats for the records.
+	 * How the stats are reported is decided by the implementing class.
+	 * 
+	 * @param totalRecords
+	 */
 	abstract protected void reportStatus(int totalRecords);
 }
