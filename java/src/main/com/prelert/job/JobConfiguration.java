@@ -40,6 +40,8 @@ import com.prelert.rs.data.ErrorCode;
  */
 public class JobConfiguration 
 {
+	private String m_Name;
+	private String m_Description;
 	
 	private AnalysisConfig m_AnalysisConfig;
 	private AnalysisLimits m_AnalysisLimits;
@@ -63,6 +65,43 @@ public class JobConfiguration
 		this();
 		m_AnalysisConfig = analysisConfig;
 	}
+	
+	/**
+	 * The jobs human readable name 
+	 * @return The provided name or null if not set
+	 */
+	public String getName()
+	{
+		return m_Name;
+	}
+	
+	/**
+	 * Set the job's name
+	 * @param name
+	 */
+	public void setName(String name)
+	{
+		m_Name = name;
+	}
+
+	/**
+	 * The job's human readable description
+	 * @return
+	 */
+	public String getDescription()
+	{
+		return m_Description;
+	}
+	
+	/**
+	 * Set the human readable description
+	 * @return
+	 */
+	public void setDescription(String description)
+	{
+		m_Description = description;
+	}
+	
 	
 	/**
 	 * The analysis configuration. A properly configured job must have 
@@ -124,8 +163,7 @@ public class JobConfiguration
 	{
 		m_Timeout = timeout;
 	}
-	
-	
+		
 	/**
 	 * If not set the input data is assumed to be csv with a '_time' field 
 	 * in epoch format. 

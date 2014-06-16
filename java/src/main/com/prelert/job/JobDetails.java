@@ -67,13 +67,16 @@ public class JobDetails
 	
 	static final public String TIMEOUT = "timeout";
 	
-        static final public String ANALYSIS_CONFIG = "analysisConfig";
+    static final public String ANALYSIS_CONFIG = "analysisConfig";
 	static final public String ANALYSIS_LIMITS = "analysisLimits";
 	static final public String DATA_DESCRIPTION = "dataDescription";
+	
+	static final public String DESCRIPTION = "description";
 	
 	static final public String TYPE = "job";
 	
 	private String m_JobId;
+	private String m_Description;
 	private JobStatus m_Status;
 	
 	private Date m_CreateTime;
@@ -116,6 +119,7 @@ public class JobDetails
 	public JobDetails(String jobId, JobConfiguration jobConfig)
 	{
 		m_JobId = jobId;
+		m_Description = jobConfig.getDescription();
 		m_Status = JobStatus.CLOSED;
 		m_CreateTime = new Date();		
 		m_Timeout = (jobConfig.getTimeout() != null) ? jobConfig.getTimeout() : DEFAULT_TIMEOUT; 		
@@ -182,6 +186,10 @@ public class JobDetails
 		if (values.containsKey(ID))
 		{
 			m_JobId = values.get(ID).toString();
+		}
+		if (values.containsKey(DESCRIPTION))
+		{
+			m_Description = (String)values.get(DESCRIPTION);
 		}
 		if (values.containsKey(STATUS))
 		{
@@ -290,6 +298,20 @@ public class JobDetails
 	public void setId(String id)
 	{
 		m_JobId = id;
+	}
+	
+	/**
+	 * The job description
+	 * @return
+	 */
+	public String getDescription()
+	{
+		return m_Description;
+	}
+	
+	public void setDescription(String description)
+	{
+		m_Description = description;
 	}
 	
 	/**
@@ -605,6 +627,7 @@ public class JobDetails
 		JobDetails that = (JobDetails)other;
 		
 		return bothNullOrEqual(this.m_JobId, that.m_JobId) &&
+				bothNullOrEqual(this.m_Description, that.m_Description) &&
 				(this.m_Status == that.m_Status) &&			
 				bothNullOrEqual(this.m_CreateTime, that.m_CreateTime) &&
 				bothNullOrEqual(this.m_FinishedTime, that.m_FinishedTime) &&

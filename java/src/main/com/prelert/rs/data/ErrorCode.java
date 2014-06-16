@@ -99,6 +99,12 @@ public enum ErrorCode
 	 * more license constraints.
 	 */
 	LICENSE_VIOLATION(10109),
+	
+	/**
+	 * The job could not be created because the supplied Job Id
+	 * is not unique or is already used by another job.
+	 */
+	JOB_ID_TAKEN(10110),
 
 	// Data store errors
 	/**

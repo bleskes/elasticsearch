@@ -44,6 +44,7 @@ import javax.ws.rs.core.Response;
 
 import org.apache.log4j.Logger;
 
+import com.prelert.job.JobIdAlreadyExistsException;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobConfigurationException;
 import com.prelert.job.JobDetails;
@@ -132,7 +133,7 @@ public class Jobs extends ResourceWithJobManager
     @Produces(MediaType.APPLICATION_JSON)
     public Response createJob(JobConfiguration config) 
     throws UnknownJobException, JobConfigurationException, IOException,
-			TooManyJobsException
+			TooManyJobsException, JobIdAlreadyExistsException
     {   		
     	s_Logger.debug("Creating new job");
     	
@@ -190,14 +191,16 @@ public class Jobs extends ResourceWithJobManager
 			new JobLogs().deleteLogs(jobId);
 			
 			s_Logger.debug("Job '" + jobId + "' deleted");
-			return Response.ok().build();
+			return Response.ok()
+					.build();
 		}
 		else
 		{
 			String msg = "Error deleting job '" + jobId + "'";
 			s_Logger.warn(msg);
 			
-			return Response.status(Response.Status.NOT_FOUND).build();
+			return Response.status(Response.Status.NOT_FOUND)
+					.build();
 		}
     }
     

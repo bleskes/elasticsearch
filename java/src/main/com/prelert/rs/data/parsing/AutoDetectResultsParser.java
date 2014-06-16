@@ -150,14 +150,7 @@ public class AutoDetectResultsParser
 		if (token == JsonToken.END_ARRAY)
 		{
 			logger.info("Empty results array, 0 buckets parsed");
-			
-			// Parse the serialised detector state and persist
-			DetectorState state = parseState(parser, logger);
-			persister.persistDetectorState(state);		
-			BucketsAndState parsedData = new BucketsAndState();
-			parsedData.m_State = state;
-			
-			return parsedData;
+			return new BucketsAndState();
 		}
 		else if (token != JsonToken.START_OBJECT)
 		{
