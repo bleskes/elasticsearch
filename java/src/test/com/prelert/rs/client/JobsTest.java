@@ -82,13 +82,15 @@ import com.prelert.rs.data.SingleDocument;
  */
 public class JobsTest implements Closeable
 {
-	final String WIKI_TRAFFIC_JOB_CONFIG = "{\"analysisConfig\" : {"
+	final String WIKI_TRAFFIC_JOB_CONFIG = "{\"description\":\"Wiki Traffic Job\","
+			+ "\"analysisConfig\" : {"
 			+ "\"bucketSpan\":86400,"  
 			+ "\"detectors\" :" 
 			+ "[{\"fieldName\":\"hitcount\",\"byFieldName\":\"url\"}] },"
 			+ "\"dataDescription\":{\"fieldDelimiter\":\"\\t\", \"timeField\":\"_time\"} }}";
 
-	final String FLIGHT_CENTRE_JOB_CONFIG = "{\"analysisConfig\" : {"
+	final String FLIGHT_CENTRE_JOB_CONFIG = "{\"description\":\"Flight Centre Job\","
+			+ "\"analysisConfig\" : {"
 			+ "\"bucketSpan\":3600,"  
 			+ "\"detectors\":[{\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}] "
 			+ "},"
@@ -96,13 +98,8 @@ public class JobsTest implements Closeable
 			+ "\"analysisLimits\": {\"maxFieldValues\":2000, \"maxTimeBuckets\":5000}"
 			+ "}";		
 	
-	final String FLIGHT_CENTRE_JSON_JOB_CONFIG = "{\"analysisConfig\" : {"
-			+ "\"bucketSpan\":3600,"  
-			+ "\"detectors\":[{\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}] "
-			+ "},"
-			+ "\"dataDescription\":{\"format\":\"json\",\"timeField\":\"timestamp\"} }}";
-	
-	final String FARE_QUOTE_TIME_FORMAT_CONFIG = "{\"analysisConfig\" : {"
+	final String FARE_QUOTE_TIME_FORMAT_CONFIG = "{\"description\":\"Farequote Time Format Job\","
+			+ "\"analysisConfig\" : {"
 			+ "\"detectors\":[{\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}] "
 			+ "},"
 			+ "\"dataDescription\":{\"fieldDelimiter\":\",\", \"timeField\":\"time\", " 
@@ -246,6 +243,8 @@ public class JobsTest implements Closeable
 		test(ac.equals(job.getAnalysisConfig()));
 		test(dd.equals(job.getDataDescription()));
 		test(job.getAnalysisLimits() == null);
+		
+		test(job.getDescription().equals("Wiki Traffic Job"));
 				
 		test(job.getLocation().toString().equals(baseUrl + "/jobs/" + jobId));
 		test(job.getResultsEndpoint().toString().equals(baseUrl + "/results/" + jobId));
@@ -314,6 +313,8 @@ public class JobsTest implements Closeable
 		
 		AnalysisLimits al = new AnalysisLimits(2000, 5000);
 		test(job.getAnalysisLimits().equals(al));
+		
+		test(job.getDescription().equals("Flight Centre Job"));
 				
 		test(job.getLocation().toString().equals(baseUrl + "/jobs/" + jobId));
 		test(job.getResultsEndpoint().toString().equals(baseUrl + "/results/" + jobId));
@@ -421,6 +422,8 @@ public class JobsTest implements Closeable
 		test(ac.equals(job.getAnalysisConfig()));
 		test(dd.equals(job.getDataDescription()));
 		test(job.getAnalysisLimits() == null);
+		
+		test(job.getDescription() == null);
 				
 		test(job.getLocation().toString().equals(baseUrl + "/jobs/" + jobId));
 		test(job.getResultsEndpoint().toString().equals(baseUrl + "/results/" + jobId));
@@ -501,6 +504,8 @@ public class JobsTest implements Closeable
 		test(job.getLastDataTime() == null);
 		test(job.getFinishedTime() == null);
 		
+		test(job.getDescription() == null);
+		
 		test(job.getStatus() == JobStatus.CLOSED);
 		
 		Calendar cal = Calendar.getInstance();
@@ -572,6 +577,8 @@ public class JobsTest implements Closeable
 		test(ac.equals(job.getAnalysisConfig()));
 		test(dd.equals(job.getDataDescription()));
 		test(job.getAnalysisLimits() == null);
+		
+		test(job.getDescription().equals("Farequote Time Format Job"));
 				
 		test(job.getLocation().toString().equals(baseUrl + "/jobs/" + jobId));
 		test(job.getResultsEndpoint().toString().equals(baseUrl + "/results/" + jobId));
@@ -619,6 +626,8 @@ public class JobsTest implements Closeable
 		
 		JobConfiguration jobConfig = new JobConfiguration(ac);
 		jobConfig.setDataDescription(dd);
+		jobConfig.setDescription("Flight Centre JSON");
+		
 		String jobId = m_WebServiceClient.createJob(baseUrl, jobConfig);
 		if (jobId == null)
 		{
@@ -646,6 +655,8 @@ public class JobsTest implements Closeable
 		test(job.getFinishedTime() == null);
 		
 		test(job.getStatus() == JobStatus.CLOSED);
+		
+		test(job.getDescription().equals("Flight Centre JSON"));
 		
 		Calendar cal = Calendar.getInstance();
 		cal.setTime(new Date());
@@ -1271,7 +1282,7 @@ public class JobsTest implements Closeable
 		
 		final long FLIGHT_CENTRE_NUM_BUCKETS = 24;
 		final long FARE_QUOTE_NUM_BUCKETS = 1439;
-	
+
 		//=================
 		// CSV & Gzip test 
 		//
@@ -1314,8 +1325,8 @@ public class JobsTest implements Closeable
 		test.testDateFilters(baseUrl, farequoteTimeFormatJobId, start, end);
 			
 		//============================
-		// Create another test based on
-		// the job config used above
+		// Create another job based on
+		// the config used above
 		//
 		JobDetails job = test.getJob(baseUrl, farequoteTimeFormatJobId);
 		test(job.getId().equals(farequoteTimeFormatJobId));
@@ -1355,6 +1366,7 @@ public class JobsTest implements Closeable
 		//=================
 		// double upload test (upload same file twice)
 		//
+		
 		String doubleUploadTest = test.createFareQuoteTimeFormatJobTest(baseUrl);
 		jobUrls.add(doubleUploadTest);		
 
@@ -1368,6 +1380,7 @@ public class JobsTest implements Closeable
 		start = new Date(1359406800000L);
 		end = new Date(1359662400000L);
 		test.testDateFilters(baseUrl, doubleUploadTest, start, end);
+		
 		
 		//==========================
 		// Clean up test jobs

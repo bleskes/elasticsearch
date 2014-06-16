@@ -146,6 +146,7 @@ public class JobDetails
 		
 		m_Timeout = details.getTimeout();		
 									
+		m_Description = details.getDescription();
 		m_AnalysisConfig = details.getAnalysisConfig();
 		m_AnalysisLimits = details.getAnalysisLimits();
 		m_DataDescription = details.getDataDescription();
@@ -169,7 +170,12 @@ public class JobDetails
 		if (jobConfig.getDataDescription() != null)
 		{
 			m_DataDescription = jobConfig.getDataDescription();
-		}		
+		}	
+		
+		if (jobConfig.getDescription() != null)
+		{
+			m_Description = jobConfig.getDescription();
+		}	
 	}
 	
 	/**
