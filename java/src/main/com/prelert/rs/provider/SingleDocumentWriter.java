@@ -88,7 +88,6 @@ public class SingleDocumentWriter<T> implements MessageBodyWriter<SingleDocument
 			OutputStream entityStream)
 	throws IOException, WebApplicationException 
 	{
-		httpHeaders.add("Access-Control-Allow-Origin", "*");
 		s_ObjectWriter.writeValue(entityStream, bean);
 	}
 }

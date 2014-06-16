@@ -95,7 +95,6 @@ public class PaginationWriter<T> implements MessageBodyWriter<Pagination<T>>
 			OutputStream entityStream)
 	throws IOException, WebApplicationException 
 	{		
-		httpHeaders.add("Access-Control-Allow-Origin", "*");
 		s_ObjectWriter.writeValue(entityStream, bean);
 	}
 
