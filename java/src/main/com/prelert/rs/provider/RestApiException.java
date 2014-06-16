@@ -57,7 +57,6 @@ public class RestApiException extends WebApplicationException
 		error.setMessage(this.getMessage());
 		
 		return Response.status(m_Status)
-				.header("Access-Control-Allow-Origin", "*")
 				.entity(error.toJson()).build();
 	}
 }

@@ -117,14 +117,11 @@ public class ServerMain
 		contextHandler.setContextPath("/");
 		contextHandler.setErrorHandler(new ApiErrorHandler());
 		
+		// Add cross origin accept filter
 		CrossOriginFilter crossOrigin = new CrossOriginFilter();
-		FilterHolder filterHolder = new FilterHolder(crossOrigin);
-//		filterHolder.setInitParameter("allowedOrigins", "*");
-//		filterHolder.setInitParameter("allowedMethods", "*");
-//		filterHolder.setInitParameter("allowedHeaders", "*");
-		
+		FilterHolder filterHolder = new FilterHolder(crossOrigin);	
 		contextHandler.addFilter(filterHolder, "/*", 
-				EnumSet.of(DispatcherType.REQUEST, DispatcherType.ASYNC, DispatcherType.ERROR, DispatcherType.FORWARD, DispatcherType.INCLUDE));
+				EnumSet.of(DispatcherType.REQUEST));
 		
         ServletHolder jerseyServlet = contextHandler.addServlet(
         		org.glassfish.jersey.servlet.ServletContainer.class, 
