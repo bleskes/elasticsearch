@@ -27,7 +27,6 @@
 package com.prelert.job;
 
 import java.net.URI;
-
 import java.util.Date;
 
 import org.apache.log4j.Logger;

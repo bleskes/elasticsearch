@@ -42,7 +42,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.log4j.Logger;
-import org.elasticsearch.action.admin.indices.alias.get.GetAliasesRequest;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequestBuilder;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse;
@@ -443,26 +442,26 @@ public class JobManager implements JobDetailsProvider
 			throw e;
 		}
 	}
+
 	
-	
-	private void renameJob(String name)
-	throws JobIdAlreadyExistsException
+	/**
+	 * Set the job's description.
+	 * If the description cannot be set an exception is thrown.
+	 * 
+	 * @param jobId
+	 * @param description
+	 * @throws UnknownJobException
+	 * @throws JsonProcessingException 
+	 */
+	public void setDescription(String jobId, String description)
+	throws UnknownJobException, JsonProcessingException
 	{
+		JobDetails job = getJobDetails(jobId); 
+		job.setDescription(description);
 		
-		if (name != null && name.isEmpty() == false)
-		{
-			// check if the alias already exists
-			if (m_Client.admin().indices().aliasesExist(new GetAliasesRequest(name)).actionGet().exists())
-			{
-				throw new JobIdAlreadyExistsException(name);
-			}
-		}
-		
-//		// add an alias
-//		if (alias != null && alias.isEmpty() == false)
-//		{
-//			indexBuilder.addAlias(new Alias(alias));
-//		}
+		String content = jobToContent(job);
+		m_Client.prepareIndex(jobId, JobDetails.TYPE, jobId)
+				.setSource(content).get();
 	}
 	
 	/**
