@@ -123,7 +123,6 @@ public enum ErrorCode
 	MISSING_DETECTOR_STATE(20102),	
 	
 	
-	
 	// data upload errors
 	/**
 	 * Generic data error

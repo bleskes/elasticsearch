@@ -251,7 +251,7 @@ public class JobManager implements JobDetailsProvider
 			GetResponse response = m_Client.prepareGet(jobId, JobDetails.TYPE, jobId).get();
 			if (response.isExists())
 			{
-				return new JobDetails(response.getSource()); 			
+				return m_ObjectMapper.convertValue(response.getSource(), JobDetails.class);
 			}		
 			else 
 			{
@@ -298,7 +298,7 @@ public class JobManager implements JobDetailsProvider
 		List<JobDetails> jobs = new ArrayList<>();
 		for (SearchHit hit : response.getHits().getHits())
 		{
-			jobs.add(new JobDetails(hit.getSource())); 
+			jobs.add(m_ObjectMapper.convertValue(hit.getSource(), JobDetails.class)); 
 		}
 		
 		Pagination<JobDetails> page = new Pagination<>();
@@ -579,26 +579,26 @@ public class JobManager implements JobDetailsProvider
 										boolean expand)
 	{
 		GetResponse response = m_Client.prepareGet(jobId, Bucket.TYPE, bucketId).get();
-				
-		Map<String, Object> bucket = response.getSource();
-
-		// Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch, 
-		// and replace using the API 'timestamp' key.
-		Object timestamp = bucket.remove(ElasticSearchMappings.ES_TIMESTAMP);
-		bucket.put(Bucket.TIMESTAMP, timestamp);
-		
-		if (response.isExists() && expand)
-		{
-			Pagination<Map<String, Object>> page = this.records(jobId, 
-					bucketId, 0, DEFAULT_PAGE_SIZE);
-			bucket.put(Bucket.RECORDS, page.getDocuments());
-		}
-		
+					
 		SingleDocument<Map<String, Object>> doc = new SingleDocument<>();
 		doc.setType(Bucket.TYPE);
 		doc.setDocumentId(bucketId);
 		if (response.isExists())
 		{
+			Map<String, Object> bucket = response.getSource();
+
+			// Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch, 
+			// and replace using the API 'timestamp' key.
+			Object timestamp = bucket.remove(ElasticSearchMappings.ES_TIMESTAMP);
+			bucket.put(Bucket.TIMESTAMP, timestamp);
+			
+			if (response.isExists() && expand)
+			{
+				Pagination<Map<String, Object>> page = this.records(jobId, 
+						bucketId, 0, DEFAULT_PAGE_SIZE);
+				bucket.put(Bucket.RECORDS, page.getDocuments());
+			}
+			
 			doc.setDocument(bucket);
 		}
 		
@@ -802,7 +802,8 @@ public class JobManager implements JobDetailsProvider
 
 			long lastVersion = response.getVersion();
 
-			JobDetails job = new JobDetails(response.getSource());
+			JobDetails job = m_ObjectMapper.convertValue(response.getSource(), 
+					JobDetails.class);
 			job.setStatus(status);
 
 			String content;
@@ -859,7 +860,8 @@ public class JobManager implements JobDetailsProvider
 
 			long lastVersion = response.getVersion();
 
-			JobDetails job = new JobDetails(response.getSource());
+			JobDetails job = m_ObjectMapper.convertValue(response.getSource(), 
+					JobDetails.class);
 			job.setFinishedTime(new Date());
 			job.setStatus(status);
 
@@ -1034,7 +1036,8 @@ public class JobManager implements JobDetailsProvider
 
 			long lastVersion = response.getVersion();
 
-			JobDetails job = new JobDetails(response.getSource());
+			JobDetails job = m_ObjectMapper.convertValue(response.getSource(), 
+					JobDetails.class);
 			job.setLastDataTime(new Date());
 			job.setStatus(JobStatus.RUNNING);
 
@@ -1118,10 +1121,10 @@ public class JobManager implements JobDetailsProvider
 	{
 		try
 		{
-			GetResponse res = m_Client.prepareGet(refId, JobDetails.TYPE, refId).get();
-			if (res.isExists())
+			GetResponse response = m_Client.prepareGet(refId, JobDetails.TYPE, refId).get();
+			if (response.isExists())
 			{
-				return new JobDetails(res.getSourceAsMap());
+				return m_ObjectMapper.convertValue(response.getSource(), JobDetails.class);
 			}
 			else
 			{

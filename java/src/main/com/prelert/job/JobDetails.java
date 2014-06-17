@@ -27,12 +27,8 @@
 package com.prelert.job;
 
 import java.net.URI;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
+
 import java.util.Date;
-import java.util.Map;
-import java.util.TimeZone;
 
 import org.apache.log4j.Logger;
 
@@ -60,9 +56,10 @@ public class JobDetails
 	static final public String FINISHED_TIME = "finishedTime";
 	static final public String LAST_DATA_TIME = "lastDataTime";
 	
+	static final public String COUNTS = "counts";
 	static final public String PROCESSED_RECORD_COUNT = "processedRecordCount";
 	static final public String INVALID_DATE_COUNT = "invalidDateCount";
-	static final public String MISSING_FIELD_COUNT = "MissingFieldCount";
+	static final public String MISSING_FIELD_COUNT = "missingFieldCount";
 	static final public String OUT_OF_ORDER_TIME_COUNT = "outOfOrderTimeStampCount";
 	
 	static final public String TIMEOUT = "timeout";
@@ -89,23 +86,24 @@ public class JobDetails
 	private AnalysisLimits m_AnalysisLimits;
 	private DataDescription m_DataDescription;
 	
-	private long m_ProcessedRecordCount;
-	private long m_InvalidDateCount;
-	private long m_MissingFieldCount;
-	private long m_OutOfOrderTimeStampCount;
-	
 	/* These URIs are transient they don't need to be persisted */
 	private URI m_Location;
 	private URI m_DataEndpoint;
 	private URI m_ResultsEndpoint;
 	private URI m_LogsEndpoint;
+	
+	
+	private Counts m_Counts;
+	
 		
 	/**
 	 * Default constructor required for serialisation
 	 */
 	public JobDetails()
 	{
-		
+		m_Counts = new Counts();
+		m_Status = JobStatus.CLOSED;
+		m_CreateTime = new Date();		
 	}
 	
 	/**
@@ -118,10 +116,10 @@ public class JobDetails
 	 */
 	public JobDetails(String jobId, JobConfiguration jobConfig)
 	{
+		this();
+		
 		m_JobId = jobId;
 		m_Description = jobConfig.getDescription();
-		m_Status = JobStatus.CLOSED;
-		m_CreateTime = new Date();		
 		m_Timeout = (jobConfig.getTimeout() != null) ? jobConfig.getTimeout() : DEFAULT_TIMEOUT; 		
 						
 		m_AnalysisConfig = jobConfig.getAnalysisConfig();
@@ -138,8 +136,11 @@ public class JobDetails
 	 * @param details
 	 * @param jobConfig
 	 */
+	
 	public JobDetails(String jobId, JobDetails details, JobConfiguration jobConfig)
 	{
+		this();
+		
 		m_JobId = jobId;
 		m_Status = JobStatus.CLOSED;
 		m_CreateTime = new Date();		
@@ -178,112 +179,7 @@ public class JobDetails
 		}	
 	}
 	
-	/**
-	 * Create a JobDetails from a map of values.
-	 * WARNING THE OBJECT MAY BE IN AN INCONSITENT STATE AFTER THIS CONSTRUCTOR
-	 * @param values
-	 */
-	@SuppressWarnings("unchecked")
-	public JobDetails(Map<String, Object> values)
-	{
-		final DateFormat isoDateParser = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSX");
-		isoDateParser.setTimeZone(TimeZone.getTimeZone("UTC"));
-		
-		if (values.containsKey(ID))
-		{
-			m_JobId = values.get(ID).toString();
-		}
-		if (values.containsKey(DESCRIPTION))
-		{
-			m_Description = (String)values.get(DESCRIPTION);
-		}
-		if (values.containsKey(STATUS))
-		{
-			m_Status = JobStatus.valueOf(values.get(STATUS).toString());
-		}
-		if (values.containsKey(CREATE_TIME))
-		{
-			Object obj = values.get(CREATE_TIME);
-			if (obj != null)
-			{
-				try 
-				{
-					m_CreateTime = isoDateParser.parse(obj.toString());
-				}
-				catch (ParseException e) 
-				{
-					s_Logger.error("Cannot parse create date from '" + 
-								obj.toString() + "'");
-				}
-			}
-		}
-		if (values.containsKey(FINISHED_TIME))
-		{
-			Object obj = values.get(FINISHED_TIME);
-			if (obj != null)
-			{
-				try 
-				{
-					m_FinishedTime = isoDateParser.parse(obj.toString());
-				}
-				catch (ParseException e) 
-				{
-					s_Logger.error("Cannot parse finish date from '" + 
-								obj.toString() + "'");
-				}
-			}
-		}
-		if (values.containsKey(LAST_DATA_TIME))
-		{
-			Object obj = values.get(LAST_DATA_TIME);
-			if (obj != null)
-			{
-				try 
-				{
-					m_LastDataTime = isoDateParser.parse(obj.toString());
-				}
-				catch (ParseException e) 
-				{
-					s_Logger.error("Cannot parse last data date from '" + 
-								obj.toString() + "'");
-				}
-			}			
-		}
-		if (values.containsKey(PROCESSED_RECORD_COUNT))
-		{
-			m_ProcessedRecordCount = (Integer)values.get(PROCESSED_RECORD_COUNT);
-		}
-		if (values.containsKey(TIMEOUT))
-		{
-			m_Timeout = (Integer)values.get(TIMEOUT);
-		}
-		if (values.containsKey(ANALYSIS_CONFIG))
-		{
-			Object obj = values.get(ANALYSIS_CONFIG);
-			if (obj != null && obj instanceof Map)
-			{
-				m_AnalysisConfig = new AnalysisConfig((Map<String, Object>)obj);
-			}
-		}
-		if (values.containsKey(ANALYSIS_LIMITS))
-		{
-			Object obj = values.get(ANALYSIS_LIMITS);
-			if (obj != null && obj instanceof Map)
-			{
-				m_AnalysisLimits = new AnalysisLimits((Map<String, Object>)obj); 
-			}
-		}
-		
-		if (values.containsKey(DATA_DESCRIPTION))
-		{
-			Object obj = values.get(DATA_DESCRIPTION);
-			if (obj != null && obj instanceof Map)
-			{
-				m_DataDescription = new DataDescription((Map<String, Object>)obj);
-			}
-		}
-	}
-
+	
 	/**
 	 * Return the Job Id
 	 * @return The job Id string
@@ -381,65 +277,6 @@ public class JobDetails
 		m_LastDataTime = lastTime;
 	}
 
-	/**
-	 * 
-	 * @return Number of records processed by this job
-	 */
-	public long getProcessedRecordCount() 
-	{
-		return m_ProcessedRecordCount;
-	}
-	
-	public void setProcessedRecordCount(long count) 
-	{
-		m_ProcessedRecordCount = count;
-	}
-	
-	/**
-	 * The number of records with an invalid date field that could
-	 * not be parsed or converted to epoch time.
-	 * @return
-	 */
-	public long getInvalidDateCount() 
-	{
-		return m_InvalidDateCount;
-	}
-	
-	public void setInvalidDateCount(long count) 
-	{
-		m_InvalidDateCount = count;
-	}
-	
-	/**
-	 * The number of records missing a field that had been 
-	 * configured for analysis.
-	 * @return
-	 */
-	public long getMissingFieldCount() 
-	{
-		return m_MissingFieldCount;
-	}
-	
-	public void setMissingFieldCount(long count) 
-	{
-		m_MissingFieldCount = count;
-	}
-	
-	/**
-	 * The number of records with a timestamp that is
-	 * before the time of the latest record. Records should 
-	 * be in ascending chronological order
-	 * @return
-	 */
-	public long getOutOfOrderTimeStampCount() 
-	{
-		return m_OutOfOrderTimeStampCount;
-	}
-	
-	public void setOutOfOrderTimeStampCount(long count) 
-	{
-		m_OutOfOrderTimeStampCount = count;
-	}
 
 	/**
 	 * The job timeout setting in seconds. Jobs are retired if they do not 
@@ -575,6 +412,25 @@ public class JobDetails
 	}	
 	
 	/**
+	 * Processed records count
+	 * @return
+	 */
+	public Counts getCounts()
+	{
+		return m_Counts;
+	}
+	
+	/**
+	 * Processed records count
+	 * @return
+	 */
+	public void setCounts(Counts counts)
+	{
+		m_Counts = counts;
+	}
+	
+	
+	/**
 	 * Prints the more salient fields in a JSON-like format suitable for logging.
 	 * If every field was written it woul spam the log file.
 	 */
@@ -583,6 +439,7 @@ public class JobDetails
 	{
 		StringBuilder sb = new StringBuilder("{");
 		sb.append("id:").append(getId())
+			.append(" description:").append(getDescription())
 			.append(" status:").append(getStatus())
 			.append(" createTime:").append(getCreateTime())
 			.append(" lastDataTime:").append(getLastDataTime())		
@@ -638,7 +495,7 @@ public class JobDetails
 				bothNullOrEqual(this.m_CreateTime, that.m_CreateTime) &&
 				bothNullOrEqual(this.m_FinishedTime, that.m_FinishedTime) &&
 				bothNullOrEqual(this.m_LastDataTime, that.m_LastDataTime) &&
-				(this.m_ProcessedRecordCount == that.m_ProcessedRecordCount) &&
+				this.m_Counts.equals(that.m_Counts) &&
 				(this.m_Timeout == that.m_Timeout) &&
 				bothNullOrEqual(this.m_AnalysisConfig, that.m_AnalysisConfig) &&
 				bothNullOrEqual(this.m_AnalysisLimits, that.m_AnalysisLimits) &&
@@ -647,4 +504,99 @@ public class JobDetails
 				bothNullOrEqual(this.m_DataEndpoint, that.m_DataEndpoint) &&
 				bothNullOrEqual(this.m_ResultsEndpoint, that.m_ResultsEndpoint);				
 	}
+	
+	
+	/**
+	 * Job processed record counts
+	 */
+	public class Counts
+	{
+		private long m_ProcessedRecordCount;
+		private long m_InvalidDateCount;
+		private long m_MissingFieldCount;
+		private long m_OutOfOrderTimeStampCount;
+
+		/**
+		 * 
+		 * @return Number of records processed by this job
+		 */
+		public long getProcessedRecordCount() 
+		{
+			return m_ProcessedRecordCount;
+		}
+		
+		public void setProcessedRecordCount(long count) 
+		{
+			m_ProcessedRecordCount = count;
+		}
+		
+		/**
+		 * The number of records with an invalid date field that could
+		 * not be parsed or converted to epoch time.
+		 * @return
+		 */
+		public long getInvalidDateCount() 
+		{
+			return m_InvalidDateCount;
+		}
+		
+		public void setInvalidDateCount(long count) 
+		{
+			m_InvalidDateCount = count;
+		}
+		
+		/**
+		 * The number of records missing a field that had been 
+		 * configured for analysis.
+		 * @return
+		 */
+		public long getMissingFieldCount() 
+		{
+			return m_MissingFieldCount;
+		}
+		
+		public void setMissingFieldCount(long count) 
+		{
+			m_MissingFieldCount = count;
+		}
+		
+		/**
+		 * The number of records with a timestamp that is
+		 * before the time of the latest record. Records should 
+		 * be in ascending chronological order
+		 * @return
+		 */
+		public long getOutOfOrderTimeStampCount() 
+		{
+			return m_OutOfOrderTimeStampCount;
+		}
+		
+		public void setOutOfOrderTimeStampCount(long count) 
+		{
+			m_OutOfOrderTimeStampCount = count;
+		}
+		
+		/**
+		 * Equality test
+		 */
+		public boolean equals(Object other)
+		{
+			if (this == other)
+			{
+				return true;
+			}
+			
+			if (other instanceof Counts == false)
+			{
+				return false;
+			}
+			
+			Counts that = (Counts)other;
+
+			return this.m_ProcessedRecordCount == that.m_ProcessedRecordCount &&
+					this.m_InvalidDateCount == that.m_InvalidDateCount &&
+					this.m_MissingFieldCount == that.m_MissingFieldCount &&
+					this.m_OutOfOrderTimeStampCount == that.m_OutOfOrderTimeStampCount;
+		}
+	}	
 }
