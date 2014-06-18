@@ -27,6 +27,10 @@
 
 package com.prelert.job;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 import com.prelert.rs.data.ErrorCode;
 
 /**
@@ -40,7 +44,10 @@ import com.prelert.rs.data.ErrorCode;
  */
 public class JobConfiguration 
 {
-	private String m_Name;
+	static private Set<Character> PROHIBITED_JOB_ID_CHARACTERS = 
+			new HashSet<>(Arrays.asList('\\', '/', '*', '?', '"', '<', '>', '|', ' ', ',' ));
+	
+	private String m_ID;
 	private String m_Description;
 	
 	private AnalysisConfig m_AnalysisConfig;
@@ -67,21 +74,21 @@ public class JobConfiguration
 	}
 	
 	/**
-	 * The jobs human readable name 
+	 * The human readable job Id 
 	 * @return The provided name or null if not set
 	 */
-	public String getName()
+	public String getId()
 	{
-		return m_Name;
+		return m_ID;
 	}
 	
 	/**
-	 * Set the job's name
+	 * Set the job's ID
 	 * @param name
 	 */
-	public void setName(String name)
+	public void setId(String id)
 	{
-		m_Name = name;
+		m_ID = id;
 	}
 
 	/**
@@ -267,6 +274,19 @@ public class JobConfiguration
 			throw new JobConfigurationException("Timeout can not be a negative "
 					+ "number. Value = " + m_Timeout,
 					ErrorCode.INVALID_VALUE);
+		}
+		
+		
+		for (Character ch : PROHIBITED_JOB_ID_CHARACTERS)
+		{
+			if (m_ID.indexOf(ch) >= 0)
+			{
+				throw new JobConfigurationException(
+						"The job id contains the prohibited character '" + ch + "'. "
+						+ "The id cannot contain any of the following characters: "
+						+ "[\\, /, *, ?, \", <, >, |,  , ,]",
+						ErrorCode.PROHIBITIED_CHARACTER_IN_JOB_ID);
+			}
 		}
 		
 		return true;

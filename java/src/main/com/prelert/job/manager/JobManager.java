@@ -370,7 +370,7 @@ public class JobManager implements JobDetailsProvider
 			}
 		}
 
-		String jobId = jobConfig.getName();
+		String jobId = jobConfig.getId();
 		if (jobId == null || jobId.isEmpty())
 		{
 			jobId = generateJobId();

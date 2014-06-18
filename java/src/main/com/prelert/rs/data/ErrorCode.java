@@ -105,6 +105,12 @@ public enum ErrorCode
 	 * is not unique or is already used by another job.
 	 */
 	JOB_ID_TAKEN(10110),
+	
+	/**
+	 * The job id contains one of the invalid characters:
+	 * [\\, /, *, ?, \", <, >, |,  , ,]
+	 */
+	PROHIBITIED_CHARACTER_IN_JOB_ID(10111),
 
 	// Data store errors
 	/**
