@@ -42,6 +42,7 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.InputStreamEntity;
@@ -284,6 +285,56 @@ public class EngineApiClient implements Closeable
 			return "";
 		}
 	}
+	
+	
+	/**
+	 * PUTS the description parameter to the job and sets it as 
+	 * the job's new description field
+	 * 
+	 * @param baseUrl The base URL for the REST API 
+	 * e.g <code>http://localhost:8080/engine/version/</code>
+	 * @param jobId The job's unique ID
+	 * @param description New description field
+	 * 
+	 * @return True
+	 * @throws IOException
+	 */
+	public boolean setJobDescription(String baseUrl, String jobId, 
+			String description) 
+	throws IOException
+	{
+		String url = baseUrl + "/jobs/" + jobId + "/description";
+		s_Logger.debug("PUT job description: " + url);
+		
+		HttpPut put = new HttpPut(url);
+		StringEntity entity = new StringEntity(description);
+		put.setEntity(entity);
+		
+		try (CloseableHttpResponse response = m_HttpClient.execute(put))
+		{
+			if (response.getStatusLine().getStatusCode() == 200)
+			{
+				return true;
+			}
+			else 
+			{
+				String content = EntityUtils.toString(response.getEntity());
+				String msg = String.format(
+						"Error putting job descriptio. Status code = %d, "
+						+ "Returned content: %s", 
+						response.getStatusLine().getStatusCode(),
+						content);
+				
+				s_Logger.error(msg);
+				
+				m_LastError = m_JsonMapper.readValue(content, 
+						new TypeReference<ApiError>() {} );
+				
+				return false;
+			}
+		}
+	}
+	
 	
 	/**
 	 * Delete an individual job 
