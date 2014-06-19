@@ -276,16 +276,18 @@ public class JobConfiguration
 					ErrorCode.INVALID_VALUE);
 		}
 		
-		
-		for (Character ch : PROHIBITED_JOB_ID_CHARACTERS)
+		if (m_ID != null && m_ID.isEmpty() == false)
 		{
-			if (m_ID.indexOf(ch) >= 0)
+			for (Character ch : PROHIBITED_JOB_ID_CHARACTERS)
 			{
-				throw new JobConfigurationException(
-						"The job id contains the prohibited character '" + ch + "'. "
-						+ "The id cannot contain any of the following characters: "
-						+ "[\\, /, *, ?, \", <, >, |,  , ,]",
-						ErrorCode.PROHIBITIED_CHARACTER_IN_JOB_ID);
+				if (m_ID.indexOf(ch) >= 0)
+				{
+					throw new JobConfigurationException(
+							"The job id contains the prohibited character '" + ch + "'. "
+							+ "The id cannot contain any of the following characters: "
+							+ "[\\, /, *, ?, \", <, >, |,  , ,]",
+							ErrorCode.PROHIBITIED_CHARACTER_IN_JOB_ID);
+				}
 			}
 		}
 		
