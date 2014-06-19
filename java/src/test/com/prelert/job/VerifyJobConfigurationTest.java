@@ -34,6 +34,8 @@ import junit.framework.Assert;
 
 import org.junit.Test;
 
+import com.prelert.rs.data.ErrorCode;
+
 /**
  * Test the {@link JobConfiguration#verify()} function for 
  * basic errors in the configuration   
@@ -181,11 +183,48 @@ public class VerifyJobConfigurationTest
 		}
 		catch (JobConfigurationException e)
 		{
+			Assert.assertTrue(e.getErrorCode() == ErrorCode.INCOMPLETE_CONFIGURATION);
 		}
 		
 		jc.setReferenceJobId("ref_id");
 		jc.verify();
+			
+		jc.setId("bad id with spaces");
+		try
+		{
+			jc.verify();
+			Assert.assertTrue(false); // shouldn't get here
+		}
+		catch (JobConfigurationException e)
+		{
+			Assert.assertTrue(e.getErrorCode() == ErrorCode.PROHIBITIED_CHARACTER_IN_JOB_ID);
+		}
 		
+		
+		jc.setId("bad id with UPPERCASE chars");
+		try
+		{
+			jc.verify();
+			Assert.assertTrue(false); // shouldn't get here
+		}
+		catch (JobConfigurationException e)
+		{
+			Assert.assertTrue(e.getErrorCode() == ErrorCode.PROHIBITIED_CHARACTER_IN_JOB_ID);
+		}
+		
+		jc.setId("a very  very very very very very very very very very very very very very very very very very very very long id");
+		try
+		{
+			jc.verify();
+			Assert.assertTrue(false); // shouldn't get here
+		}
+		catch (JobConfigurationException e)
+		{
+			Assert.assertTrue(e.getErrorCode() == ErrorCode.JOB_ID_TOO_LONG);
+		}
+		
+		
+		jc.setId(null);
 		jc.setReferenceJobId(null);
 		jc.setAnalysisConfig(new AnalysisConfig());
 		try
@@ -195,7 +234,10 @@ public class VerifyJobConfigurationTest
 		}
 		catch (JobConfigurationException e)
 		{
+			Assert.assertTrue(e.getErrorCode() == ErrorCode.INCOMPLETE_CONFIGURATION);
 		}
+		
+		
 		
 		AnalysisConfig ac = new AnalysisConfig();
 		Detector d = new Detector();

@@ -107,10 +107,18 @@ public enum ErrorCode
 	JOB_ID_TAKEN(10110),
 	
 	/**
-	 * The job id contains one of the invalid characters:
+	 * The job id contains an upper case character or one of the
+	 * following invalid characters:
 	 * [\\, /, *, ?, \", <, >, |,  , ,]
 	 */
 	PROHIBITIED_CHARACTER_IN_JOB_ID(10111),
+	
+	/**
+	 * The submitted job id contains too many characters. 
+	 */
+	JOB_ID_TOO_LONG(10112),
+	
+	
 
 	// Data store errors
 	/**
