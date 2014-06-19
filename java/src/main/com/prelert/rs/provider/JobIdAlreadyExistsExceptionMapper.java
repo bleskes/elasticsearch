@@ -24,27 +24,30 @@
  *                                                          *
  *                                                          *
  ************************************************************/
+
 package com.prelert.rs.provider;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 
-import com.prelert.job.UnknownJobException;
+import com.prelert.job.JobIdAlreadyExistsException;
 import com.prelert.rs.data.ApiError;
 
 /**
- * Exception -> Response mapper for {@linkplain UnknownJobException}.
+ * Exception -> Response mapper for {@linkplain JobIdAlreadyExistsException}.
  */
-public class UnknownJobExceptionMapper implements ExceptionMapper<UnknownJobException>
+public class JobIdAlreadyExistsExceptionMapper 
+implements ExceptionMapper<JobIdAlreadyExistsException>
 {
 	@Override
-	public Response toResponse(UnknownJobException e) 
+	public Response toResponse(JobIdAlreadyExistsException e) 
 	{
 		ApiError error = new ApiError(e.getErrorCode());
-		error.setCause(e.getCause());
-		error.setMessage(e.getMessage());
+		error.setMessage("The job cannot be created with the Id '" + e.getAlias()
+				+ "'. The Id is already used.");
 		
-		return Response.status(Response.Status.NOT_FOUND)
+		return Response.status(Response.Status.BAD_REQUEST)
 				.entity(error.toJson()).build();
 	}
+
 }

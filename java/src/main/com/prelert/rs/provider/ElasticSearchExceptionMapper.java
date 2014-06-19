@@ -51,7 +51,6 @@ public class ElasticSearchExceptionMapper implements ExceptionMapper<Elasticsear
 		error.setMessage("Error in ElasticSearch: = " + e.getDetailedMessage());
 		error.setCause(e);
 			
-		return Response.serverError().header("Access-Control-Allow-Origin", "*")
-				.entity(error.toJson()).build();
+		return Response.serverError().entity(error.toJson()).build();
 	}
 }

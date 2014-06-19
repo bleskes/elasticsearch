@@ -53,9 +53,7 @@ public class ErrorCodesTest
 		{
 			errorValueSet.add(value.getValue());
 		}
-		
-		
+				
 		Assert.assertEquals(values.length, errorValueSet.size());
 	}
-
 }

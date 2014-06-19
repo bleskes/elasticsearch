@@ -42,8 +42,11 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.log4j.Logger;
+import org.elasticsearch.action.admin.indices.create.CreateIndexRequestBuilder;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse;
+import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest;
+import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
 import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexResponse;
@@ -79,6 +82,7 @@ import com.prelert.job.warnings.HighProportionOfBadTimestampsException;
 import com.prelert.job.warnings.OutOfOrderRecordsException;
 import com.prelert.job.warnings.elasticsearch.ElasticSearchStatusReporterFactory;
 import com.prelert.job.DetectorState;
+import com.prelert.job.JobIdAlreadyExistsException;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobConfigurationException;
 import com.prelert.job.JobDetails;
@@ -246,7 +250,7 @@ public class JobManager implements JobDetailsProvider
 			GetResponse response = m_Client.prepareGet(jobId, JobDetails.TYPE, jobId).get();
 			if (response.isExists())
 			{
-				return new JobDetails(response.getSource()); 			
+				return m_ObjectMapper.convertValue(response.getSource(), JobDetails.class);
 			}		
 			else 
 			{
@@ -293,7 +297,7 @@ public class JobManager implements JobDetailsProvider
 		List<JobDetails> jobs = new ArrayList<>();
 		for (SearchHit hit : response.getHits().getHits())
 		{
-			jobs.add(new JobDetails(hit.getSource())); 
+			jobs.add(m_ObjectMapper.convertValue(hit.getSource(), JobDetails.class)); 
 		}
 		
 		Pagination<JobDetails> page = new Pagination<>();
@@ -316,9 +320,11 @@ public class JobManager implements JobDetailsProvider
 	 * @throws IOException 
 	 * @throws TooManyJobsException If the license is violated
 	 * @throws JobConfigurationException If the license is violated
+	 * @throws JobIdAlreadyExistsException If the alias is already taken
 	 */
 	public JobDetails createJob(JobConfiguration jobConfig)
-	throws UnknownJobException, IOException, TooManyJobsException, JobConfigurationException
+	throws UnknownJobException, IOException, TooManyJobsException, 
+		JobConfigurationException, JobIdAlreadyExistsException
 	{
 		// Negative m_MaxActiveJobs means unlimited
 		if (m_MaxActiveJobs >= 0 &&
@@ -364,7 +370,16 @@ public class JobManager implements JobDetailsProvider
 			}
 		}
 
-		String jobId = generateJobId();
+		String jobId = jobConfig.getId();
+		if (jobId == null || jobId.isEmpty())
+		{
+			jobId = generateJobId();
+		}
+		else
+		{
+			jobIdIsUnigue(jobId);
+		}
+		
 		JobDetails jobDetails;
 		
 		if (jobConfig.getReferenceJobId() != null && 
@@ -377,7 +392,7 @@ public class JobManager implements JobDetailsProvider
 		{
 			jobDetails = new JobDetails(jobId, jobConfig);
 		}
-	
+					
 		try		
 		{
 			XContentBuilder jobMapping = ElasticSearchMappings.jobMapping();
@@ -387,22 +402,37 @@ public class JobManager implements JobDetailsProvider
 			XContentBuilder detectorStateMapping = ElasticSearchMappings.detectorStateMapping();
 			
 			
-			m_Client.admin().indices()
-					.prepareCreate(jobId)					
-					.addMapping(JobDetails.TYPE, jobMapping)
-					.addMapping(Bucket.TYPE, bucketMapping)
-					.addMapping(Detector.TYPE, detectorMapping)
-					.addMapping(AnomalyRecord.TYPE, recordMapping)
-					.addMapping(DetectorState.TYPE, detectorStateMapping)
-					.get();
+			CreateIndexRequestBuilder indexBuilder = m_Client.admin().indices()
+								.prepareCreate(jobId)					
+								.addMapping(JobDetails.TYPE, jobMapping)
+								.addMapping(Bucket.TYPE, bucketMapping)
+								.addMapping(Detector.TYPE, detectorMapping)
+								.addMapping(AnomalyRecord.TYPE, recordMapping)
+								.addMapping(DetectorState.TYPE, detectorStateMapping);
+			
+			long lasttime = System.currentTimeMillis();
+			indexBuilder.get();
+			long now = System.currentTimeMillis();
 			
 			String json = m_ObjectMapper.writeValueAsString(jobDetails);
+			
+			System.out.println("Index create = " + (now - lasttime) + "ms");
+			lasttime = now;
+			
 			m_Client.prepareIndex(jobId, JobDetails.TYPE, jobId)
 					.setSource(json)
 					.get();
 					
+			now = System.currentTimeMillis();
+			System.out.println("Index put = " + (now - lasttime) + "ms");
+			lasttime = now;
+			
 			// wait for the job to be indexed in ElasticSearch			
 			m_Client.admin().indices().refresh(new RefreshRequest(jobId)).actionGet();
+			
+			now = System.currentTimeMillis();
+			System.out.println("Refresh = " + (now - lasttime) + "ms");
+			lasttime = now;
 			
 			return jobDetails;
 		}
@@ -411,6 +441,27 @@ public class JobManager implements JobDetailsProvider
 			s_Logger.error("Error writing ElasticSearch mappings", e);
 			throw e;
 		}
+	}
+
+	
+	/**
+	 * Set the job's description.
+	 * If the description cannot be set an exception is thrown.
+	 * 
+	 * @param jobId
+	 * @param description
+	 * @throws UnknownJobException
+	 * @throws JsonProcessingException 
+	 */
+	public void setDescription(String jobId, String description)
+	throws UnknownJobException, JsonProcessingException
+	{
+		JobDetails job = getJobDetails(jobId); 
+		job.setDescription(description);
+		
+		String content = jobToContent(job);
+		m_Client.prepareIndex(jobId, JobDetails.TYPE, jobId)
+				.setSource(content).get();
 	}
 	
 	/**
@@ -527,26 +578,26 @@ public class JobManager implements JobDetailsProvider
 										boolean expand)
 	{
 		GetResponse response = m_Client.prepareGet(jobId, Bucket.TYPE, bucketId).get();
-				
-		Map<String, Object> bucket = response.getSource();
-
-		// Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch, 
-		// and replace using the API 'timestamp' key.
-		Object timestamp = bucket.remove(ElasticSearchMappings.ES_TIMESTAMP);
-		bucket.put(Bucket.TIMESTAMP, timestamp);
-		
-		if (response.isExists() && expand)
-		{
-			Pagination<Map<String, Object>> page = this.records(jobId, 
-					bucketId, 0, DEFAULT_PAGE_SIZE);
-			bucket.put(Bucket.RECORDS, page.getDocuments());
-		}
-		
+					
 		SingleDocument<Map<String, Object>> doc = new SingleDocument<>();
 		doc.setType(Bucket.TYPE);
 		doc.setDocumentId(bucketId);
 		if (response.isExists())
 		{
+			Map<String, Object> bucket = response.getSource();
+
+			// Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch, 
+			// and replace using the API 'timestamp' key.
+			Object timestamp = bucket.remove(ElasticSearchMappings.ES_TIMESTAMP);
+			bucket.put(Bucket.TIMESTAMP, timestamp);
+			
+			if (response.isExists() && expand)
+			{
+				Pagination<Map<String, Object>> page = this.records(jobId, 
+						bucketId, 0, DEFAULT_PAGE_SIZE);
+				bucket.put(Bucket.RECORDS, page.getDocuments());
+			}
+			
 			doc.setDocument(bucket);
 		}
 		
@@ -638,6 +689,11 @@ public class JobManager implements JobDetailsProvider
 			m.remove(ElasticSearchMappings.ES_TIMESTAMP);
 			
 			results.add(m);
+			
+			// TODO
+			// remove the timestamp field that was added so the 
+			// records can be sorted in Kibanna
+			m.remove(Bucket.TIMESTAMP);
 		}
 		
 		Pagination<Map<String, Object>> page = new Pagination<>();
@@ -745,7 +801,8 @@ public class JobManager implements JobDetailsProvider
 
 			long lastVersion = response.getVersion();
 
-			JobDetails job = new JobDetails(response.getSource());
+			JobDetails job = m_ObjectMapper.convertValue(response.getSource(), 
+					JobDetails.class);
 			job.setStatus(status);
 
 			String content;
@@ -802,7 +859,8 @@ public class JobManager implements JobDetailsProvider
 
 			long lastVersion = response.getVersion();
 
-			JobDetails job = new JobDetails(response.getSource());
+			JobDetails job = m_ObjectMapper.convertValue(response.getSource(), 
+					JobDetails.class);
 			job.setFinishedTime(new Date());
 			job.setStatus(status);
 
@@ -977,7 +1035,8 @@ public class JobManager implements JobDetailsProvider
 
 			long lastVersion = response.getVersion();
 
-			JobDetails job = new JobDetails(response.getSource());
+			JobDetails job = m_ObjectMapper.convertValue(response.getSource(), 
+					JobDetails.class);
 			job.setLastDataTime(new Date());
 			job.setStatus(JobStatus.RUNNING);
 
@@ -1061,10 +1120,10 @@ public class JobManager implements JobDetailsProvider
 	{
 		try
 		{
-			GetResponse res = m_Client.prepareGet(refId, JobDetails.TYPE, refId).get();
-			if (res.isExists())
+			GetResponse response = m_Client.prepareGet(refId, JobDetails.TYPE, refId).get();
+			if (response.isExists())
 			{
-				return new JobDetails(res.getSourceAsMap());
+				return m_ObjectMapper.convertValue(response.getSource(), JobDetails.class);
 			}
 			else
 			{
@@ -1078,6 +1137,28 @@ public class JobManager implements JobDetailsProvider
 					+ "referenced job with id '" + refId + "'", ErrorCode.UNKNOWN_JOB_REFERENCE);
 	
 		}
+	}
+	
+	
+	/**
+	 * Return true if the job id is unique else if it is already used
+	 * throw JobAliasAlreadyExistsException
+	 * @param jobId 
+	 * @return
+	 * @throws JobIdAlreadyExistsException
+	 */
+	private boolean jobIdIsUnigue(String jobId)
+	throws JobIdAlreadyExistsException
+	{
+		IndicesExistsResponse res = 
+				m_Client.admin().indices().exists(new IndicesExistsRequest(jobId)).actionGet();
+		
+		if (res.isExists())
+		{
+			throw new JobIdAlreadyExistsException(jobId);
+		}
+		
+		return true;
 	}
 	
 	/**

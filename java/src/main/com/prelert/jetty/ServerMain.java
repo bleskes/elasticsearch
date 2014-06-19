@@ -28,14 +28,19 @@ package com.prelert.jetty;
 
 
 import java.io.File;
+import java.util.EnumSet;
+
+import javax.servlet.DispatcherType;
 
 import org.apache.log4j.Logger;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.HandlerCollection;
 import org.eclipse.jetty.server.handler.ResourceHandler;
+import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.glassfish.jersey.servlet.ServletProperties;
 
 /**
@@ -58,7 +63,7 @@ public class ServerMain
 	/**
 	 * Base URI, all web service endpoints should match this path
 	 */
-	public static final String BASE_PATH = "/engine/v0.3/*";
+	public static final String BASE_PATH = "/engine/v0.4/*";
 	
 	/**
 	 * The default port the server will run on.
@@ -105,13 +110,20 @@ public class ServerMain
 		}
 
 		Server server = new Server(jettyPort);
+			
 
 		// This serves the Engine API
-		ServletContextHandler servletHandler = new ServletContextHandler();
-		servletHandler.setContextPath("/");
-		servletHandler.setErrorHandler(new ApiErrorHandler());
-
-        ServletHolder jerseyServlet = servletHandler.addServlet(
+		ServletContextHandler contextHandler = new ServletContextHandler();
+		contextHandler.setContextPath("/");
+		contextHandler.setErrorHandler(new ApiErrorHandler());
+		
+		// Add cross origin accept filter
+		CrossOriginFilter crossOrigin = new CrossOriginFilter();
+		FilterHolder filterHolder = new FilterHolder(crossOrigin);	
+		contextHandler.addFilter(filterHolder, "/*", 
+				EnumSet.of(DispatcherType.REQUEST));
+		
+        ServletHolder jerseyServlet = contextHandler.addServlet(
         		org.glassfish.jersey.servlet.ServletContainer.class, 
         		BASE_PATH);
         jerseyServlet.setInitOrder(1);
@@ -129,7 +141,7 @@ public class ServerMain
 		dashboardHandler.setResourceBase(jettyHome + File.separator + "webapps");
 
 		HandlerCollection handlerCollection = new HandlerCollection();
-		handlerCollection.setHandlers(new Handler[] { dashboardHandler, servletHandler });
+		handlerCollection.setHandlers(new Handler[] { dashboardHandler, contextHandler });
 
 		server.setHandler(handlerCollection);
 		server.start();

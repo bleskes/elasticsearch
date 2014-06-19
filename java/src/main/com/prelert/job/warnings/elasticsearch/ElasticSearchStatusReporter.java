@@ -65,8 +65,11 @@ public class ElasticSearchStatusReporter extends StatusReporter
 			updates.put(JobDetails.INVALID_DATE_COUNT, getDateParseErrorsCount());
 			updates.put(JobDetails.MISSING_FIELD_COUNT, getMissingFieldErrorCount());
 			updates.put(JobDetails.OUT_OF_ORDER_TIME_COUNT, getOutOfOrderRecordCount());
-			updateBuilder.setDoc(updates);
 			
+			Map<String, Object> counts = new HashMap<>();
+			counts.put(JobDetails.COUNTS, updates);
+			
+			updateBuilder.setDoc(counts);
 			m_Client.update(updateBuilder.request()).get();
 			
 			return true;
@@ -80,6 +83,5 @@ public class ElasticSearchStatusReporter extends StatusReporter
 			
 			return false;
 		}
-		
 	}
 }

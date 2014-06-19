@@ -445,7 +445,7 @@ public class JobLogs
 				}
 				catch (IOException e) 
 				{
-					String msg = "Error deleting log file " + logDir + ". ";
+					String msg = "Cannot delete log file " + logDir + ". ";
 					msg += (e.getCause() != null) ? e.getCause().getMessage() : e.getMessage();
 					s_Logger.warn(msg);							
 				}
@@ -453,7 +453,7 @@ public class JobLogs
 		} 
 		catch (IOException e) 
 		{
-			String msg = "Error opening the log directory " + logDir + ". ";
+			String msg = "Cannot open the log directory " + logDir + ". ";
 			msg += (e.getCause() != null) ? e.getCause().getMessage() : e.getMessage();
 			s_Logger.warn(msg);			
 		}
@@ -465,7 +465,7 @@ public class JobLogs
 		}
 		catch (IOException e) 
 		{
-			String msg = "Error deleting log directory " + logDir + ". ";
+			String msg = "Cannot delete log directory " + logDir + ". ";
 			msg += (e.getCause() != null) ? e.getCause().getMessage() : e.getMessage();
 			s_Logger.warn(msg);
 			return false;

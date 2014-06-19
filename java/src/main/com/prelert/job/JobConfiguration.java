@@ -27,6 +27,10 @@
 
 package com.prelert.job;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 import com.prelert.rs.data.ErrorCode;
 
 /**
@@ -40,6 +44,11 @@ import com.prelert.rs.data.ErrorCode;
  */
 public class JobConfiguration 
 {
+	static private Set<Character> PROHIBITED_JOB_ID_CHARACTERS = 
+			new HashSet<>(Arrays.asList('\\', '/', '*', '?', '"', '<', '>', '|', ' ', ',' ));
+	
+	private String m_ID;
+	private String m_Description;
 	
 	private AnalysisConfig m_AnalysisConfig;
 	private AnalysisLimits m_AnalysisLimits;
@@ -63,6 +72,43 @@ public class JobConfiguration
 		this();
 		m_AnalysisConfig = analysisConfig;
 	}
+	
+	/**
+	 * The human readable job Id 
+	 * @return The provided name or null if not set
+	 */
+	public String getId()
+	{
+		return m_ID;
+	}
+	
+	/**
+	 * Set the job's ID
+	 * @param name
+	 */
+	public void setId(String id)
+	{
+		m_ID = id;
+	}
+
+	/**
+	 * The job's human readable description
+	 * @return
+	 */
+	public String getDescription()
+	{
+		return m_Description;
+	}
+	
+	/**
+	 * Set the human readable description
+	 * @return
+	 */
+	public void setDescription(String description)
+	{
+		m_Description = description;
+	}
+	
 	
 	/**
 	 * The analysis configuration. A properly configured job must have 
@@ -124,8 +170,7 @@ public class JobConfiguration
 	{
 		m_Timeout = timeout;
 	}
-	
-	
+		
 	/**
 	 * If not set the input data is assumed to be csv with a '_time' field 
 	 * in epoch format. 
@@ -229,6 +274,21 @@ public class JobConfiguration
 			throw new JobConfigurationException("Timeout can not be a negative "
 					+ "number. Value = " + m_Timeout,
 					ErrorCode.INVALID_VALUE);
+		}
+		
+		if (m_ID != null && m_ID.isEmpty() == false)
+		{
+			for (Character ch : PROHIBITED_JOB_ID_CHARACTERS)
+			{
+				if (m_ID.indexOf(ch) >= 0)
+				{
+					throw new JobConfigurationException(
+							"The job id contains the prohibited character '" + ch + "'. "
+							+ "The id cannot contain any of the following characters: "
+							+ "[\\, /, *, ?, \", <, >, |,  , ,]",
+							ErrorCode.PROHIBITIED_CHARACTER_IN_JOB_ID);
+				}
+			}
 		}
 		
 		return true;

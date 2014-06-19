@@ -24,27 +24,44 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.rs.provider;
 
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
+package com.prelert.job;
 
-import com.prelert.job.UnknownJobException;
-import com.prelert.rs.data.ApiError;
+import com.prelert.rs.data.ErrorCode;
+
 
 /**
- * Exception -> Response mapper for {@linkplain UnknownJobException}.
+ * Job ids (names) must be unique no 2 jobs can have the same id.
  */
-public class UnknownJobExceptionMapper implements ExceptionMapper<UnknownJobException>
+public class JobIdAlreadyExistsException extends Exception 
 {
-	@Override
-	public Response toResponse(UnknownJobException e) 
+	private static final long serialVersionUID = 8656604180755905746L;
+
+	private String m_JobId;
+	
+	/**
+	 * Create a new JobIdAlreadyExistsException with the error code
+	 * and Id (job name)
+	 * 
+	 * @param jobId The Job Id that could not be found
+	 */
+	public JobIdAlreadyExistsException(String jobId)
 	{
-		ApiError error = new ApiError(e.getErrorCode());
-		error.setCause(e.getCause());
-		error.setMessage(e.getMessage());
-		
-		return Response.status(Response.Status.NOT_FOUND)
-				.entity(error.toJson()).build();
+		m_JobId = jobId;
+	}	
+	
+	public String getAlias()
+	{
+		return m_JobId;
+	}
+	
+	/**
+	 * Returns {@link ErrorCode#ALIAS_TAKEN}
+	 * 
+	 * @return
+	 */
+	public ErrorCode getErrorCode()
+	{
+		return ErrorCode.JOB_ID_TAKEN;
 	}
 }

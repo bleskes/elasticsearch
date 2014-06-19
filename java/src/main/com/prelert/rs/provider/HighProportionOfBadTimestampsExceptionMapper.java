@@ -47,7 +47,6 @@ public class HighProportionOfBadTimestampsExceptionMapper
 		error.setCause(e.getCause());
 		
 		return Response.status(Response.Status.BAD_REQUEST)
-				.header("Access-Control-Allow-Origin", "*")
 				.entity(error.toJson()).build();
 	}
 }

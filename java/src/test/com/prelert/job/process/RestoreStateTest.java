@@ -44,6 +44,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
 import com.prelert.job.Detector;
+import com.prelert.job.JobIdAlreadyExistsException;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobConfigurationException;
 import com.prelert.job.JobDetails;
@@ -76,12 +77,13 @@ public class RestoreStateTest
 	 * @throws OutOfOrderRecordsException 
 	 * @throws JobConfigurationException If the license is violated
 	 * @throws TooManyJobsException If the license is violated
+	 * @throws JobIdAlreadyExistsException 
 	 */
 	public static void main(String[] args)
 	throws IOException, NativeProcessRunException, UnknownJobException,
 		InterruptedException, JobInUseException, MissingFieldException,
 		HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
-		JobConfigurationException, TooManyJobsException
+		JobConfigurationException, TooManyJobsException, JobIdAlreadyExistsException
 	{
 		final String prelertSrcHome = System.getProperty("prelert.src.home");
 		if (prelertSrcHome == null)
