@@ -58,7 +58,6 @@ abstract public class StatusReporter
 			"max.percent.outoforder.errors";	
 	
 	private int m_RecordsWritten = 0;
-	private int m_RecordsDiscarded = 0;
 	private int m_DateParseErrorsCount = 0;
 	private int m_MissingFieldErrorCount = 0;
 	private int m_OutOfOrderRecordCount = 0;
@@ -103,28 +102,40 @@ abstract public class StatusReporter
 	}
 	
 	/**
-	 * Update the number of records written and the number thrown away
+	 * Add <code>recordsWritten</code> to the running total
+	 * and report status if at a status reporting boundary.
 	 * 
 	 * @param recordsWritten
-	 * @param recordsDiscarded
 	 * @throws HighProportionOfBadTimestampsException
 	 * @throws OutOfOrderRecordsException
 	 */
-	public void reportRecordsWritten(int recordsWritten, int recordsDiscarded)
+	public void reportRecordsWritten(int recordsWritten)
 	throws HighProportionOfBadTimestampsException, OutOfOrderRecordsException 
 	{
-		m_RecordsWritten = recordsWritten;
-		m_RecordsDiscarded = recordsDiscarded;
+		m_RecordsWritten += recordsWritten;
 		
 		// report at various boundaries
-		int totalRecords = m_RecordsWritten + m_RecordsDiscarded;
+		int totalRecords = sumTotalRecords();
 		if (isReportingBoundary(totalRecords))
 		{
 			reportStatus(totalRecords);
 			checkStatus(totalRecords);
 		}
 	}
-
+	
+	/**
+	 * Increment the number of records written by 1.
+	 * 
+	 * @throws HighProportionOfBadTimestampsException
+	 * @throws OutOfOrderRecordsException
+	 */
+	public void reportRecordWritten()
+	throws HighProportionOfBadTimestampsException, OutOfOrderRecordsException 
+	{
+		reportRecordsWritten(1);
+	}
+	
+	
 	/**
 	 * Increments the date parse error count
 	 */
@@ -154,11 +165,6 @@ abstract public class StatusReporter
 		return m_RecordsWritten;
 	}
 
-	public int getRecordsDiscardedCount() 
-	{
-		return m_RecordsDiscarded;
-	}
-
 	public int getDateParseErrorsCount() 
 	{
 		return m_DateParseErrorsCount;
@@ -174,8 +180,20 @@ abstract public class StatusReporter
 		return m_OutOfOrderRecordCount;
 	}
 	
-	
-	
+	/**
+	 * Total records seen = records written + date parse error records count 
+	 * + out of order record count.
+	 * 
+	 * Missing field records aren't counted as they are still written.
+	 * 
+	 * @return
+	 */
+	public int sumTotalRecords()
+	{
+		return m_RecordsWritten + m_DateParseErrorsCount + 
+				+ m_OutOfOrderRecordCount;
+	}
+
 	public int getAcceptablePercentDateParseErrors()
 	{
 		return m_AcceptablePercentDateParseErrors;
@@ -208,8 +226,7 @@ abstract public class StatusReporter
 	public void finishReporting() 
 	throws HighProportionOfBadTimestampsException, OutOfOrderRecordsException
 	{
-		int totalRecords = m_RecordsWritten + m_RecordsDiscarded;
-
+		int totalRecords = sumTotalRecords();
 		reportStatus(totalRecords);
 		checkStatus(totalRecords);
 	}
@@ -247,9 +264,9 @@ abstract public class StatusReporter
 		{
 			// have crossed one of the reporting bands
 			m_RecordCountDivisor = divisor; 
-			m_LastRecordCountQuotient = 1;
+			m_LastRecordCountQuotient = totalRecords / divisor;
 			
-			return true;
+			return false;
 		}
 		
 		int quotient = totalRecords / divisor;

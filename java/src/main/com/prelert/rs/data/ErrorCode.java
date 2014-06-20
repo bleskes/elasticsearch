@@ -118,7 +118,6 @@ public enum ErrorCode
 	 */
 	JOB_ID_TOO_LONG(10112),
 	
-	
 
 	// Data store errors
 	/**
