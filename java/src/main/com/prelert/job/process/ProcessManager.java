@@ -569,7 +569,7 @@ public class ProcessManager
 		// Oracle's documentation recommends buffering process streams
 		BufferedOutputStream bufferedStream = new BufferedOutputStream(output);
 		
-		if (dataDescription != null && dataDescription.transform())
+		if (dataDescription.transform())
 		{
 			if (dataDescription.getFormat() == DataFormat.JSON)
 			{

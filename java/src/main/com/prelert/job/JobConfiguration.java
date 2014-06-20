@@ -64,9 +64,12 @@ public class JobConfiguration
 	private String m_ReferenceJobId;
 	private Long m_Timeout;
 	
-	
+	/**
+	 * Set the default dataDescription
+	 */
 	public JobConfiguration()
 	{
+		m_DataDescription = new DataDescription();
 	}
 	
 	public JobConfiguration(String jobReferenceId)
@@ -80,6 +83,7 @@ public class JobConfiguration
 		this();
 		m_AnalysisConfig = analysisConfig;
 	}
+	
 	
 	/**
 	 * The human readable job Id 
