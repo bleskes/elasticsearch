@@ -41,6 +41,12 @@ import com.prelert.job.JobConfiguration;
 import com.prelert.rs.data.ApiError;
 import com.prelert.rs.data.ErrorCode;
 
+
+/**
+ * Upload data that has a high proportion of records that have
+ * unparseable dates or are not in ascending time order. 
+ * Check the appropriate error code is returned.  
+ */
 public class BadRecordsTest implements Closeable
 {
 	static final private Logger s_Logger = Logger.getLogger(BadRecordsTest.class);
@@ -72,7 +78,7 @@ public class BadRecordsTest implements Closeable
 	
 	/**
 	 * Generate records with unparsable dates the streaming client
-	 * should return an error {@link ErrorCode#TOO_MANY_BAD_DATES} error.
+	 * should return {@link ErrorCode#TOO_MANY_BAD_DATES} error.
 	 * 
 	 * @throws ClientProtocolException
 	 * @throws IOException
@@ -82,13 +88,13 @@ public class BadRecordsTest implements Closeable
 	{
 		PipedInputStream inputStream = new PipedInputStream();
 
-		BadRecordProducer producer = new BadRecordProducer(inputStream);
+		BadRecordProducer producer = new BadRecordProducer(
+				BadRecordProducer.TestType.BAD_TIMESTAMP, inputStream);
 		Thread producerThread = new Thread(producer, "Producer-Thread");
 
 		JobConfiguration jc = producer.getJobConfiguration();
 		jc.setDescription("Bad dates test");
 		String jobId = m_EngineApiClient.createJob(m_BaseUrl, jc);
-		
 		
 		producerThread.start();
 
@@ -113,18 +119,27 @@ public class BadRecordsTest implements Closeable
 	}
 	
 	
+	/**
+	 * Generate records with that are not in ascending time order.
+	 * 
+	 * The client should return with 
+	 * {@link ErrorCode#TOO_MANY_OUT_OF_ORDER_RECORDS} error.
+	 * 
+	 * @throws ClientProtocolException
+	 * @throws IOException
+	 */
 	public void testOutOfOrderDates() 
 	throws ClientProtocolException, IOException
 	{
 		PipedInputStream inputStream = new PipedInputStream();
 
-		BadRecordProducer producer = new BadRecordProducer(inputStream);
+		BadRecordProducer producer = new BadRecordProducer(
+				BadRecordProducer.TestType.OUT_OF_ORDER_RECORDS, inputStream);
 		Thread producerThread = new Thread(producer, "Producer-Thread");
 
 		JobConfiguration jc = producer.getJobConfiguration();
 		jc.setDescription("Out of order records test");
 		String jobId = m_EngineApiClient.createJob(m_BaseUrl, jc);
-		
 		
 		producerThread.start();
 
@@ -132,7 +147,7 @@ public class BadRecordsTest implements Closeable
 		test(success == false);
 		ApiError error = m_EngineApiClient.getLastError();
 		test(error != null);
-		test(error.getErrorCode() == ErrorCode.TOO_MANY_BAD_DATES);
+		test(error.getErrorCode() == ErrorCode.TOO_MANY_OUT_OF_ORDER_RECORDS);
 		s_Logger.info(error);
 
 		
@@ -192,6 +207,7 @@ public class BadRecordsTest implements Closeable
 		
 		BadRecordsTest test = new BadRecordsTest(baseUrl);
 		test.testUnparseableDates();
+		test.testOutOfOrderDates();
 		
 		test.close();		
 	}

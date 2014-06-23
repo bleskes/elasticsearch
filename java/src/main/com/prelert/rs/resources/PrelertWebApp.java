@@ -41,6 +41,7 @@ import com.prelert.rs.provider.JobConfigurationMessageBodyReader;
 import com.prelert.rs.provider.JobInUseExceptionMapper;
 import com.prelert.rs.provider.MissingFieldExceptionMapper;
 import com.prelert.rs.provider.NativeProcessRunExceptionMapper;
+import com.prelert.rs.provider.OutOfOrderRecordsExceptionMapper;
 import com.prelert.rs.provider.PaginationWriter;
 import com.prelert.rs.provider.SingleDocumentWriter;
 import com.prelert.rs.provider.TooManyJobsExceptionMapper;
@@ -88,6 +89,7 @@ public class PrelertWebApp extends Application
 		m_ResourceClasses.add(JobInUseExceptionMapper.class);
 		m_ResourceClasses.add(MissingFieldExceptionMapper.class);
 		m_ResourceClasses.add(NativeProcessRunExceptionMapper.class);
+		m_ResourceClasses.add(OutOfOrderRecordsExceptionMapper.class);
 		m_ResourceClasses.add(TooManyJobsExceptionMapper.class);
 		m_ResourceClasses.add(UnknownJobExceptionMapper.class);
 		

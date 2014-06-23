@@ -170,20 +170,33 @@ public class PipeToProcess
 			{
 				lineCount++;
 								
+				i = 0;
 				if (maxIndex >= line.size())
 				{
-					logger.error("Not enough fields in csv record " + line);
+					logger.warn("Not enough fields in csv record " + line);
 					reporter.reportMissingField(Arrays.toString(line.toArray()));
 					
-					continue;
+					Arrays.fill(record, "");
+					for (Pair<String, Integer> p : fieldIndexes)
+					{
+						if (p.Second >= line.size())
+						{
+							continue;
+						}
+						
+						String field = line.get(p.Second);
+						record[i] = (field == null) ? "" : field;	
+						i++;
+					}
 				}
-				
-				i = 0;
-				for (Pair<String, Integer> p : fieldIndexes)
+				else
 				{
-					String field = line.get(p.Second);
-					record[i] = (field == null) ? "" : field;	
-					i++;
+					for (Pair<String, Integer> p : fieldIndexes)
+					{
+						String field = line.get(p.Second);
+						record[i] = (field == null) ? "" : field;	
+						i++;
+					}
 				}
 				
 				try
@@ -337,19 +350,33 @@ public class PipeToProcess
 				{			
 					lineCount++;
 					
+					i = 0;
 					if (maxIndex >= line.size())
 					{
-						logger.error("Not enough fields in csv record " + line);
+						logger.warn("Not enough fields in csv record " + line);
 						reporter.reportMissingField(Arrays.toString(line.toArray()));
-						continue;
+						
+						Arrays.fill(record, "");
+						for (Pair<String, Integer> p : fieldIndexes)
+						{
+							if (p.Second >= line.size())
+							{
+								continue;
+							}
+							
+							String field = line.get(p.Second);
+							record[i] = (field == null) ? "" : field;	
+							i++;
+						}
 					}
-					
-					i = 0;
-					for (Pair<String, Integer> p : fieldIndexes)
+					else
 					{
-						String field = line.get(p.Second);
-						record[i] = (field == null) ? "" : field;	
-						i++;
+						for (Pair<String, Integer> p : fieldIndexes)
+						{
+							String field = line.get(p.Second);
+							record[i] = (field == null) ? "" : field;	
+							i++;
+						}
 					}
 
 					try
@@ -390,20 +417,32 @@ public class PipeToProcess
 				{
 					lineCount++;
 					
+					i = 0;
 					if (maxIndex >= line.size())
 					{
 						logger.error("Not enough fields in csv record " + line);
-						
 						reporter.reportMissingField(Arrays.toString(line.toArray()));
-						continue;
+						
+						Arrays.fill(record, "");
+						for (Pair<String, Integer> p : fieldIndexes)
+						{
+							if (p.Second >= line.size())
+							{
+								continue;
+							}
+							String field = line.get(p.Second);
+							record[i] = (field == null) ? "" : field;	
+							i++;
+						}
 					}
-					
-					i = 0;
-					for (Pair<String, Integer> p : fieldIndexes)
+					else
 					{
-						String field = line.get(p.Second);
-						record[i] = (field == null) ? "" : field;	
-						i++;
+						for (Pair<String, Integer> p : fieldIndexes)
+						{
+							String field = line.get(p.Second);
+							record[i] = (field == null) ? "" : field;	
+							i++;
+						}
 					}
 					
 					try

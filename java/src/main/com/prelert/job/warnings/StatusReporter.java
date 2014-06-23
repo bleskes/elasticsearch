@@ -28,8 +28,6 @@ package com.prelert.job.warnings;
 
 import org.apache.log4j.Logger;
 
-import com.prelert.rs.data.ErrorCode;
-
 /**
  * Abstract status reporter for tracking all the good/bad
  * records written to the API. Call one of the reportXXX() methods
@@ -297,16 +295,14 @@ abstract public class StatusReporter
 		if (percentBadDate > getAcceptablePercentDateParseErrors())
 		{
 			throw new HighProportionOfBadTimestampsException(
-					getDateParseErrorsCount(),
-					totalRecords, ErrorCode.TOO_MANY_BAD_DATES);
+					getDateParseErrorsCount(), totalRecords);
 		}
 		
 		int percentOutOfOrder = (getOutOfOrderRecordCount() * 100) / totalRecords;
 		if (percentOutOfOrder > getAcceptablePercentOutOfOrderErrors())
 		{
 			throw new OutOfOrderRecordsException(
-					getOutOfOrderRecordCount(),
-					totalRecords, ErrorCode.TOO_MANY_OUT_OF_ORDER_RECORDS);			
+					getOutOfOrderRecordCount(), totalRecords);			
 		}
 	}
 	

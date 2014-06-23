@@ -31,8 +31,7 @@ import java.util.ArrayList;
 import java.util.Date;
 
 import org.apache.log4j.Logger;
-//import com.fasterxml.jackson.annotation.*;
-import org.codehaus.jackson.annotate.*;
+import com.fasterxml.jackson.annotation.*;
 
 
 /**

@@ -42,21 +42,35 @@ import com.prelert.job.DataDescription;
 import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
 
+/**
+ *  Class to create bad records for testing error conditions in the API
+ */
 public class BadRecordProducer implements Runnable
 {	
 	static private final Logger s_Logger = Logger.getLogger(BadRecordProducer.class);
 	
 	static public final String HEADER = "time,metric,value";
 	
+	public enum TestType {OUT_OF_ORDER_RECORDS, BAD_TIMESTAMP};
+
 	private PipedOutputStream m_OutputStream;
-	
-	
+	private TestType m_TestType;
 	private long m_NumIterations;
 	
-	public BadRecordProducer(PipedInputStream sink) 
+	
+	/**
+	 * Create the bad record producer for the test type.
+	 * 
+	 * @param testType The type of test to run
+	 * @param sink Data is written to this stream by connecting it
+	 * to a piped input stream.
+	 * @throws IOException
+	 */
+	public BadRecordProducer(TestType testType, PipedInputStream sink) 
 	throws IOException
 	{
-		m_NumIterations = 100000;
+		m_TestType = testType;
+		m_NumIterations = 1000;
 		m_OutputStream = new PipedOutputStream(sink);
 	}
 	
@@ -106,31 +120,39 @@ public class BadRecordProducer implements Runnable
 
 		try
 		{
-			writeHeader();
-			long epoch = new Date().getTime();
-
 			int iterationCount = 0;
-			while (++iterationCount <= m_NumIterations)
-			{
-				writeTimeSeriesRow(1, epoch);
-				writeTimeSeriesBadTimestamp(1);
+			long epoch = new Date().getTime();
+			writeHeader();
 
-				synchronized (this) 
+			if (m_TestType == TestType.BAD_TIMESTAMP)
+			{
+				while (++iterationCount <= m_NumIterations)
 				{
-					this.notify();
+					writeTimeSeriesRow(1, epoch);
+					writeTimeSeriesBadTimestamp(1);
+
+					epoch++;
+				}
+			}
+			else if (m_TestType == TestType.OUT_OF_ORDER_RECORDS)
+			{
+				// create a hundred records that are ok
+				while (++iterationCount <= 100)
+				{
+					writeTimeSeriesRow(1, epoch);
+					epoch++;
 				}
 				
-				epoch++;
+				// write a 
+				epoch -= 60;
+				while (++iterationCount <= 300)
+				{
+					writeTimeSeriesRow(1, epoch);
+				}
+				
 			}
-			
-			System.out.println("done " + m_NumIterations );
-			
-			Thread.sleep(5000);
-			
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+					
+		} 
 		finally 
 		{				
 			try 
@@ -141,7 +163,6 @@ public class BadRecordProducer implements Runnable
 				s_Logger.error("Error closing pipedoutputstream", e);
 			}
 		}
-
 	}
 
 
@@ -158,6 +179,7 @@ public class BadRecordProducer implements Runnable
 		}
 	}
 
+	
 	/**
 	 * Generate a random value for the time series using ThreadLocalRandom
 	 * @param timeSeriesId
@@ -179,6 +201,7 @@ public class BadRecordProducer implements Runnable
 			s_Logger.error("Error writing csv row", e);
 		}			
 	}
+	
 	
 	/**
 	 * Write a time series record with an unreadable timestamp

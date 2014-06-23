@@ -24,58 +24,31 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.warnings;
+package com.prelert.rs.provider;
 
-import com.prelert.rs.data.ErrorCode;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.ext.ExceptionMapper;
+
+import com.prelert.job.warnings.OutOfOrderRecordsException;
+import com.prelert.rs.data.ApiError;
+
 
 /**
- *  Records sent to autodetect should be in ascending chronological 
- *  order else they are ignored and a error logged. This exception
- *  represents the case where a high proportion of messages are not
- *  in temporal order. 
+ * Exception to Response mapper for {@linkplain OutOfOrderRecordsException}.
  */
-public class OutOfOrderRecordsException extends Exception 
+public class OutOfOrderRecordsExceptionMapper 
+		implements ExceptionMapper<OutOfOrderRecordsException>
 {
-	private static final long serialVersionUID = -7088347813900268191L;
-	
-	private long m_NumberBad;
-	private long m_TotalNumber;
-	
-	public OutOfOrderRecordsException(long numberBadRecords, 
-			long totalNumberRecords)
-	{
-		m_NumberBad = numberBadRecords;
-		m_TotalNumber = totalNumberRecords;
-	}
-	
-	public ErrorCode getErrorCode()
-	{
-		return ErrorCode.TOO_MANY_OUT_OF_ORDER_RECORDS;
-	}
-	
-	/**
-	 * The number of out of order records
-	 * @return
-	 */
-	public long getNumberOutOfOrder()
-	{
-		return m_NumberBad;
-	}
-	
-	/**
-	 * Total number of records (good + bad)
-	 * @return
-	 */
-	public long getTotalNumber()
-	{
-		return m_TotalNumber;
-	}
-	
+
 	@Override
-	public String getMessage()
+	public Response toResponse(OutOfOrderRecordsException e) 
 	{
-		return String.format("A high proportion of records are not in ascending "
-				+ "chronological  order (%d of %d).",
-				m_NumberBad, m_TotalNumber);
+		ApiError error = new ApiError(e.getErrorCode());
+		error.setMessage(e.getMessage());
+		error.setCause(e.getCause());
+		
+		return Response.status(Response.Status.BAD_REQUEST)
+				.entity(error.toJson()).build();
 	}
+
 }

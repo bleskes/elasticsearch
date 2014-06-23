@@ -562,8 +562,10 @@ public class CsvDataTransfromTest
 		
 		String [][] lines = new String [] [] {{"time","airline", "responsetime","baggage"},
 				{"1350824400", "DJA", "622", "none"},
+				{"1350824401", "JQA", "1742", ""},
 				{"1350824402", "GAL", "", "some"},
 				{"1350824403", "GAL", "3893", "some"},
+				{"1350824403", "", "", ""},
 				{"1350824404", "DJA", "189", "lost"}};
 		
 		
@@ -595,8 +597,9 @@ public class CsvDataTransfromTest
 			
 			pm.writeToJob(dd, analysisFields, bis, bos, reporter, s_Logger);
 			
-			Assert.assertEquals(4, reporter.sumTotalRecords());
-			Assert.assertEquals(4, reporter.getRecordsWrittenCount());
+			// TODO should write records with missing fields - do it for java.
+			Assert.assertEquals(6, reporter.sumTotalRecords());
+			Assert.assertEquals(6, reporter.getRecordsWrittenCount());
 			Assert.assertEquals(2, reporter.getMissingFieldErrorCount());
 			Assert.assertEquals(0, reporter.getDateParseErrorsCount());
 			Assert.assertEquals(0, reporter.getOutOfOrderRecordCount());
@@ -619,7 +622,7 @@ public class CsvDataTransfromTest
 
 					String value = new String(charBuff, StandardCharsets.UTF_8);				
 
-					//Assert.assertEquals(fields[i].length(), recordSize);
+					Assert.assertEquals(fields[i].length(), recordSize);
 					Assert.assertEquals(fields[i], value);
 				}
 			}	
