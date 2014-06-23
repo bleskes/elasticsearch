@@ -149,19 +149,21 @@ public class AnalysisLimits
 	 * Checks the analysis options and throws an exception if 
 	 * any fields are invalid.
 	 * 
+	 * A value of 0 means use the default in autodetect.
+	 * 
 	 * @return true
 	 * @throws JobConfigurationException
 	 */
 	public boolean verify()
 	throws JobConfigurationException
 	{
-		if (m_MaxFieldValues < 2)
+		if (m_MaxFieldValues > 0 && m_MaxFieldValues < 2)
 		{
 			throw new JobConfigurationException(
 					"Invalid Analysis limit MaxFieldValues must be >= 2",
 					ErrorCode.INVALID_VALUE);
 		}
-		if (m_MaxTimeBuckets < 2)
+		if (m_MaxTimeBuckets > 0 && m_MaxTimeBuckets < 2)
 		{
 			throw new JobConfigurationException(
 					"Invalid Analysis limit MaxTimeBuckets must be >= 2",
