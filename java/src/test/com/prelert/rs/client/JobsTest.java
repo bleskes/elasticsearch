@@ -82,32 +82,6 @@ import com.prelert.rs.data.SingleDocument;
  */
 public class JobsTest implements Closeable
 {
-	final String WIKI_TRAFFIC_JOB_CONFIG = "{\"analysisConfig\" : {"
-			+ "\"bucketSpan\":86400,"  
-			+ "\"detectors\" :" 
-			+ "[{\"fieldName\":\"hitcount\",\"byFieldName\":\"url\"}] },"
-			+ "\"dataDescription\":{\"fieldDelimiter\":\"\\t\", \"timeField\":\"_time\"} }}";
-
-	final String FLIGHT_CENTRE_JOB_CONFIG = "{\"analysisConfig\" : {"
-			+ "\"bucketSpan\":3600,"  
-			+ "\"detectors\":[{\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}] "
-			+ "},"
-			+ "\"dataDescription\":{\"fieldDelimiter\":\",\", \"timeField\":\"_time\", \"timeFormat\" : \"epoch\"},"
-			+ "\"analysisLimits\": {\"maxFieldValues\":2000, \"maxTimeBuckets\":5000}"
-			+ "}";		
-	
-	final String FLIGHT_CENTRE_JSON_JOB_CONFIG = "{\"analysisConfig\" : {"
-			+ "\"bucketSpan\":3600,"  
-			+ "\"detectors\":[{\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}] "
-			+ "},"
-			+ "\"dataDescription\":{\"format\":\"json\",\"timeField\":\"timestamp\"} }}";
-	
-	final String FARE_QUOTE_TIME_FORMAT_CONFIG = "{\"analysisConfig\" : {"
-			+ "\"detectors\":[{\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}] "
-			+ "},"
-			+ "\"dataDescription\":{\"fieldDelimiter\":\",\", \"timeField\":\"time\", " 
-			+ "\"timeFormat\":\"yyyy-MM-dd HH:mm:ssX\"} }}";	
-	
 	/**
 	 * This is a format string insert a reference job id.
 	 */
@@ -119,7 +93,7 @@ public class JobsTest implements Closeable
 	/**
 	 * The default base Url used in the test
 	 */
-	static final public String API_BASE_URL = "http://localhost:8080/engine/v0.3";
+	static final public String API_BASE_URL = "http://localhost:8080/engine/v0.4";
 	
 	private EngineApiClient m_WebServiceClient;
 	
@@ -217,6 +191,14 @@ public class JobsTest implements Closeable
 	public String createWikiTrafficJobTest(String baseUrl) 
 	throws ClientProtocolException, IOException
 	{	
+		final String WIKI_TRAFFIC_JOB_CONFIG = "{\"name\":\"wiki_traffic\"," 
+				+ "\"description\":\"Wiki Traffic Job\","
+				+ "\"analysisConfig\" : {"
+				+ "\"bucketSpan\":86400,"  
+				+ "\"detectors\" :" 
+				+ "[{\"fieldName\":\"hitcount\",\"byFieldName\":\"url\"}] },"
+				+ "\"dataDescription\":{\"fieldDelimiter\":\"\\t\", \"timeField\":\"_time\"} }}";
+		
 		String jobId = m_WebServiceClient.createJob(baseUrl, WIKI_TRAFFIC_JOB_CONFIG);
 		if (jobId == null)
 		{
@@ -246,6 +228,8 @@ public class JobsTest implements Closeable
 		test(ac.equals(job.getAnalysisConfig()));
 		test(dd.equals(job.getDataDescription()));
 		test(job.getAnalysisLimits() == null);
+		
+		test(job.getDescription().equals("Wiki Traffic Job"));
 				
 		test(job.getLocation().toString().equals(baseUrl + "/jobs/" + jobId));
 		test(job.getResultsEndpoint().toString().equals(baseUrl + "/results/" + jobId));
@@ -267,6 +251,7 @@ public class JobsTest implements Closeable
 		
 		return jobId;
 	}	
+
 	
 	/**
 	 * Creates a job using the FlightCentre configuration then 
@@ -282,12 +267,24 @@ public class JobsTest implements Closeable
 	public String createFlightCentreJobTest(String baseUrl) 
 	throws ClientProtocolException, IOException
 	{	
+		final String FLIGHT_CENTRE_JOB_CONFIG = "{\"name\":\"flight centre\"," 
+				+ "\"description\":\"Flight Centre Job\","
+				+ "\"analysisConfig\" : {"
+				+ "\"bucketSpan\":3600,"  
+				+ "\"detectors\":[{\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}] "
+				+ "},"
+				+ "\"dataDescription\":{\"fieldDelimiter\":\",\", \"timeField\":\"_time\", \"timeFormat\" : \"epoch\"},"
+				+ "\"analysisLimits\": {\"maxFieldValues\":2000, \"maxTimeBuckets\":5000}"
+				+ "}";		
+		
+		
 		String jobId = m_WebServiceClient.createJob(baseUrl, FLIGHT_CENTRE_JOB_CONFIG);
 		if (jobId == null)
 		{
 			s_Logger.error("No Job Id returned by create job");
 			test(jobId != null);
 		}
+		test(jobId.equals("flight centre"));
 		
 		// get job by location, verify
 		SingleDocument<JobDetails> doc = m_WebServiceClient.getJob(baseUrl, jobId);
@@ -314,6 +311,8 @@ public class JobsTest implements Closeable
 		
 		AnalysisLimits al = new AnalysisLimits(2000, 5000);
 		test(job.getAnalysisLimits().equals(al));
+		
+		test(job.getDescription().equals("Flight Centre Job"));
 				
 		test(job.getLocation().toString().equals(baseUrl + "/jobs/" + jobId));
 		test(job.getResultsEndpoint().toString().equals(baseUrl + "/results/" + jobId));
@@ -350,6 +349,14 @@ public class JobsTest implements Closeable
 	public String createFareQuoteTimeFormatJobTest(String baseUrl) 
 	throws ClientProtocolException, IOException
 	{	
+		final String FARE_QUOTE_TIME_FORMAT_CONFIG = "{" 
+				+ "\"description\":\"Farequote Time Format Job\","
+				+ "\"analysisConfig\" : {"
+				+ "\"detectors\":[{\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}] "
+				+ "},"
+				+ "\"dataDescription\":{\"fieldDelimiter\":\",\", \"timeField\":\"time\", " 
+				+ "\"timeFormat\":\"yyyy-MM-dd HH:mm:ssX\"} }}";	
+		
 		String jobId = m_WebServiceClient.createJob(baseUrl, FARE_QUOTE_TIME_FORMAT_CONFIG);
 		if (jobId == null)
 		{
@@ -377,12 +384,13 @@ public class JobsTest implements Closeable
 	 * 
 	 * @param baseUrl The URL of the REST API i.e. an URL like
 	 * 	<code>http://prelert-host:8080/engine/version/</code>
+	 * @param name The name for the job
 	 * 
 	 * @return The Id of the created job
 	 * @throws ClientProtocolException
 	 * @throws IOException
 	 */
-	public String createFlightCentreMsCsvFormatJobTest(String baseUrl) 
+	public String createFlightCentreMsCsvFormatJobTest(String baseUrl, String name) 
 	throws ClientProtocolException, IOException
 	{	
 		Detector d = new Detector();
@@ -399,6 +407,7 @@ public class JobsTest implements Closeable
 		dd.setTimeFormat("epoch_ms");
 		
 		JobConfiguration config = new JobConfiguration(ac);
+		config.setId(name);
 		config.setDataDescription(dd);
 		
 				
@@ -408,6 +417,7 @@ public class JobsTest implements Closeable
 			s_Logger.error("No Job Id returned by create job");
 			test(jobId != null);
 		}
+		test(jobId.equals(name));
 		
 		// get job by location, verify
 		SingleDocument<JobDetails> doc = m_WebServiceClient.getJob(baseUrl, jobId);
@@ -421,6 +431,9 @@ public class JobsTest implements Closeable
 		test(ac.equals(job.getAnalysisConfig()));
 		test(dd.equals(job.getDataDescription()));
 		test(job.getAnalysisLimits() == null);
+		
+		test(job.getId().equals(name));
+		test(job.getDescription() == null);
 				
 		test(job.getLocation().toString().equals(baseUrl + "/jobs/" + jobId));
 		test(job.getResultsEndpoint().toString().equals(baseUrl + "/results/" + jobId));
@@ -501,6 +514,8 @@ public class JobsTest implements Closeable
 		test(job.getLastDataTime() == null);
 		test(job.getFinishedTime() == null);
 		
+		test(job.getDescription() == null);
+		
 		test(job.getStatus() == JobStatus.CLOSED);
 		
 		Calendar cal = Calendar.getInstance();
@@ -572,6 +587,8 @@ public class JobsTest implements Closeable
 		test(ac.equals(job.getAnalysisConfig()));
 		test(dd.equals(job.getDataDescription()));
 		test(job.getAnalysisLimits() == null);
+		
+		test(job.getDescription().equals("Farequote Time Format Job"));
 				
 		test(job.getLocation().toString().equals(baseUrl + "/jobs/" + jobId));
 		test(job.getResultsEndpoint().toString().equals(baseUrl + "/results/" + jobId));
@@ -619,6 +636,8 @@ public class JobsTest implements Closeable
 		
 		JobConfiguration jobConfig = new JobConfiguration(ac);
 		jobConfig.setDataDescription(dd);
+		jobConfig.setDescription("Flight Centre JSON");
+		
 		String jobId = m_WebServiceClient.createJob(baseUrl, jobConfig);
 		if (jobId == null)
 		{
@@ -646,6 +665,8 @@ public class JobsTest implements Closeable
 		test(job.getFinishedTime() == null);
 		
 		test(job.getStatus() == JobStatus.CLOSED);
+		
+		test(job.getDescription().equals("Flight Centre JSON"));
 		
 		Calendar cal = Calendar.getInstance();
 		cal.setTime(new Date());
@@ -1070,6 +1091,37 @@ public class JobsTest implements Closeable
 	}
 	
 	/**
+	 * Test setting the description field of the job
+	 * 
+	 * @param baseUrl The URL of the REST API i.e. an URL like
+	 * 	<code>http://prelert-host:8080/engine/version/</code>
+	 * @param jobId The job id
+	 * @throws IOException
+	 */
+	public void testSetDescription(String baseUrl, String jobId) 
+	throws IOException
+	{
+		String desc1 = "a simple job";
+		m_WebServiceClient.setJobDescription(baseUrl, jobId, desc1);
+		JobDetails job = m_WebServiceClient.getJob(baseUrl, jobId).getDocument();
+		test(job != null);
+		test(job.getDescription().equals(desc1));
+		
+		String emptyDesc = "";
+		m_WebServiceClient.setJobDescription(baseUrl, jobId, emptyDesc);
+		job = m_WebServiceClient.getJob(baseUrl, jobId).getDocument();
+		test(job != null);
+		test(job.getDescription().equals(emptyDesc));
+		
+		String longerDesc = "a little big longer\nwWith newline characters";
+		m_WebServiceClient.setJobDescription(baseUrl, jobId, longerDesc);
+		job = m_WebServiceClient.getJob(baseUrl, jobId).getDocument();
+		test(job != null);
+		test(job.getDescription().equals(longerDesc));
+	}
+	
+	
+	/**
 	 * Tails the log files with requesting different numbers of lines
 	 * and checks that some content is present. 
 	 * Downloads the zipped log files and checks for at least 2 files.
@@ -1271,13 +1323,14 @@ public class JobsTest implements Closeable
 		
 		final long FLIGHT_CENTRE_NUM_BUCKETS = 24;
 		final long FARE_QUOTE_NUM_BUCKETS = 1439;
-	
+
 		//=================
 		// CSV & Gzip test 
 		//
 		String flightCentreJobId = test.createFlightCentreJobTest(baseUrl);
 		test.getJobsTest(baseUrl);
 		
+		test.testSetDescription(baseUrl, flightCentreJobId);
 		test.uploadData(baseUrl, flightCentreJobId, flightCentreData, true);
 		test.closeJob(baseUrl, flightCentreJobId);
 		test.testReadLogFiles(baseUrl, flightCentreJobId);
@@ -1293,6 +1346,7 @@ public class JobsTest implements Closeable
 		test.uploadData(baseUrl, flightCentreJsonJobId, flightCentreJsonData, false);
 		test.closeJob(baseUrl, flightCentreJsonJobId);		
 		test.testReadLogFiles(baseUrl, flightCentreJsonJobId);
+		test.testSetDescription(baseUrl, flightCentreJsonJobId);
 		test.verifyJobResults(baseUrl, flightCentreJsonJobId, 100, FLIGHT_CENTRE_NUM_BUCKETS, 3600);
 		jobUrls.add(flightCentreJsonJobId);	
 			
@@ -1307,6 +1361,7 @@ public class JobsTest implements Closeable
 		test.closeJob(baseUrl, farequoteTimeFormatJobId);
 		test.verifyJobResults(baseUrl, farequoteTimeFormatJobId, 150, FARE_QUOTE_NUM_BUCKETS, 300);
 		test.testReadLogFiles(baseUrl, farequoteTimeFormatJobId);
+		test.testSetDescription(baseUrl, farequoteTimeFormatJobId);
 					
 		// known dates for the farequote data
 		Date start = new Date(1359406800000L);
@@ -1314,8 +1369,8 @@ public class JobsTest implements Closeable
 		test.testDateFilters(baseUrl, farequoteTimeFormatJobId, start, end);
 			
 		//============================
-		// Create another test based on
-		// the job config used above
+		// Create another job based on
+		// the config used above
 		//
 		JobDetails job = test.getJob(baseUrl, farequoteTimeFormatJobId);
 		test(job.getId().equals(farequoteTimeFormatJobId));
@@ -1331,7 +1386,7 @@ public class JobsTest implements Closeable
 		//=====================================================
 		// timestamp in ms from the epoch for both csv and json
 		//
-		String jobId = test.createFlightCentreMsCsvFormatJobTest(baseUrl);
+		String jobId = test.createFlightCentreMsCsvFormatJobTest(baseUrl, "flight-centre");
 	 	jobUrls.add(jobId);	
 	 	test.getJobsTest(baseUrl);
 	 	test.uploadData(baseUrl, jobId, flightCentreMsData, false);
@@ -1355,6 +1410,7 @@ public class JobsTest implements Closeable
 		//=================
 		// double upload test (upload same file twice)
 		//
+		
 		String doubleUploadTest = test.createFareQuoteTimeFormatJobTest(baseUrl);
 		jobUrls.add(doubleUploadTest);		
 
@@ -1368,6 +1424,7 @@ public class JobsTest implements Closeable
 		start = new Date(1359406800000L);
 		end = new Date(1359662400000L);
 		test.testDateFilters(baseUrl, doubleUploadTest, start, end);
+		
 		
 		//==========================
 		// Clean up test jobs

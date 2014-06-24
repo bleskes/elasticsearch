@@ -37,6 +37,7 @@ import java.util.Properties;
 import org.apache.log4j.Logger;
 
 import com.prelert.rs.client.datauploader.CsvDataRunner;
+import com.prelert.rs.client.datauploader.JsonDataRunner;
 
 /**
  * Creates a number of producer threads to write data to the Engine REST API
@@ -50,7 +51,7 @@ public class SoakTest
 	/**
 	 * The default base Url used in the test
 	 */
-	static final public String API_BASE_URL = "http://localhost:8080/engine/v0.3/";
+	static final public String API_BASE_URL = "http://localhost:8080/engine/v0.4/";
 	
 		
 	
@@ -78,7 +79,7 @@ public class SoakTest
 		List<Thread> threads = new ArrayList<>();
 		for (int i=0; i<numProducers; i++)
 		{
-			CsvDataRunner test = new CsvDataRunner(serviceUrl, numTimeSeries,
+			JsonDataRunner test = new JsonDataRunner(serviceUrl, numTimeSeries,
 					numInteration, pointInterval, bucketSpan);  
 			
 			test.createJob();
@@ -87,8 +88,6 @@ public class SoakTest
 			testThread.start();
 			threads.add(testThread);
 		}
-		
-		
 		
 		for (Thread th : threads)
 		{

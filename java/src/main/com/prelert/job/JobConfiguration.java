@@ -27,6 +27,10 @@
 
 package com.prelert.job;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 import com.prelert.rs.data.ErrorCode;
 
 /**
@@ -40,6 +44,19 @@ import com.prelert.rs.data.ErrorCode;
  */
 public class JobConfiguration 
 {
+	/**
+	 * Characters that cannot be in a job id: '\\', '/', '*', '?', '"', '<', '>', '|', ' ', ','
+	 */
+	static private Set<Character> PROHIBITED_JOB_ID_CHARACTERS = 
+			new HashSet<>(Arrays.asList('\\', '/', '*', '?', '"', '<', '>', '|', ' ', ',' ));
+			
+	/**
+	 * Max number of chars in a job id
+	 */
+	static private int MAX_JOB_ID_LENGTH = 64;
+	
+	private String m_ID;
+	private String m_Description;
 	
 	private AnalysisConfig m_AnalysisConfig;
 	private AnalysisLimits m_AnalysisLimits;
@@ -47,9 +64,12 @@ public class JobConfiguration
 	private String m_ReferenceJobId;
 	private Long m_Timeout;
 	
-	
+	/**
+	 * Set the default dataDescription
+	 */
 	public JobConfiguration()
 	{
+		m_DataDescription = new DataDescription();
 	}
 	
 	public JobConfiguration(String jobReferenceId)
@@ -63,6 +83,44 @@ public class JobConfiguration
 		this();
 		m_AnalysisConfig = analysisConfig;
 	}
+	
+	
+	/**
+	 * The human readable job Id 
+	 * @return The provided name or null if not set
+	 */
+	public String getId()
+	{
+		return m_ID;
+	}
+	
+	/**
+	 * Set the job's ID
+	 * @param name
+	 */
+	public void setId(String id)
+	{
+		m_ID = id;
+	}
+
+	/**
+	 * The job's human readable description
+	 * @return
+	 */
+	public String getDescription()
+	{
+		return m_Description;
+	}
+	
+	/**
+	 * Set the human readable description
+	 * @return
+	 */
+	public void setDescription(String description)
+	{
+		m_Description = description;
+	}
+	
 	
 	/**
 	 * The analysis configuration. A properly configured job must have 
@@ -124,8 +182,7 @@ public class JobConfiguration
 	{
 		m_Timeout = timeout;
 	}
-	
-	
+		
 	/**
 	 * If not set the input data is assumed to be csv with a '_time' field 
 	 * in epoch format. 
@@ -194,6 +251,9 @@ public class JobConfiguration
 	 * <li>Verify {@link AnalysisLimits#verify() AnalysisLimits}</li>
 	 * <li>Verify {@link DataDescription#verify() DataDescription}</li>
 	 * <li>Check timeout is a +ve number</li>
+	 * <li>The job ID cannot contain any upper case characters or any 
+	 * characters in {@link #PROHIBITED_JOB_ID_CHARACTERS}</li>
+	 * <li>The job is cannot be longer than {@link MAX_JOB_ID_LENGTH }</li>
 	 * <li></li>
 	 * </ol>
 	 *  
@@ -229,6 +289,39 @@ public class JobConfiguration
 			throw new JobConfigurationException("Timeout can not be a negative "
 					+ "number. Value = " + m_Timeout,
 					ErrorCode.INVALID_VALUE);
+		}
+		
+		if (m_ID != null && m_ID.isEmpty() == false)
+		{
+			if (m_ID.length() > MAX_JOB_ID_LENGTH)
+			{
+				throw new JobConfigurationException(
+						"The job id cannot contain more than " + MAX_JOB_ID_LENGTH +
+						" characters.",						
+						ErrorCode.JOB_ID_TOO_LONG);
+			}
+			
+			for (Character ch : PROHIBITED_JOB_ID_CHARACTERS)
+			{
+				if (m_ID.indexOf(ch) >= 0)
+				{
+					throw new JobConfigurationException(
+							"The job id contains the prohibited character '" + ch + "'. "
+							+ "The id cannot contain any of the following characters: "
+							+ "[\\, /, *, ?, \", <, >, |,  , ,]",
+							ErrorCode.PROHIBITIED_CHARACTER_IN_JOB_ID);
+				}
+			}
+			
+			for (char c : m_ID.toCharArray()) 
+			{
+			    if (Character.isUpperCase(c)) 
+			    {
+					throw new JobConfigurationException(
+							"The job id cannot contain any uppercase characters",
+							ErrorCode.PROHIBITIED_CHARACTER_IN_JOB_ID);
+			    }
+			}
 		}
 		
 		return true;

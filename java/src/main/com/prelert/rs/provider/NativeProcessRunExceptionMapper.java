@@ -47,7 +47,6 @@ public class NativeProcessRunExceptionMapper implements ExceptionMapper<NativePr
 		error.setMessage(e.getMessage());
 		
 		return Response.serverError()
-				.header("Access-Control-Allow-Origin", "*")
 				.entity(error.toJson()).build();		
 	}
 }

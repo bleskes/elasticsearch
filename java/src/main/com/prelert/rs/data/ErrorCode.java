@@ -99,6 +99,25 @@ public enum ErrorCode
 	 * more license constraints.
 	 */
 	LICENSE_VIOLATION(10109),
+	
+	/**
+	 * The job could not be created because the supplied Job Id
+	 * is not unique or is already used by another job.
+	 */
+	JOB_ID_TAKEN(10110),
+	
+	/**
+	 * The job id contains an upper case character or one of the
+	 * following invalid characters:
+	 * [\\, /, *, ?, \", <, >, |,  , ,]
+	 */
+	PROHIBITIED_CHARACTER_IN_JOB_ID(10111),
+	
+	/**
+	 * The submitted job id contains too many characters. 
+	 */
+	JOB_ID_TOO_LONG(10112),
+	
 
 	// Data store errors
 	/**
@@ -115,7 +134,6 @@ public enum ErrorCode
 	 * The persisted detector state cannot be recovered
 	 */
 	MISSING_DETECTOR_STATE(20102),	
-	
 	
 	
 	// data upload errors

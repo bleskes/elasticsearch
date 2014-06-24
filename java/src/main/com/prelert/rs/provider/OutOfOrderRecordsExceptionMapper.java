@@ -29,22 +29,26 @@ package com.prelert.rs.provider;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 
-import com.prelert.job.UnknownJobException;
+import com.prelert.job.warnings.OutOfOrderRecordsException;
 import com.prelert.rs.data.ApiError;
 
+
 /**
- * Exception -> Response mapper for {@linkplain UnknownJobException}.
+ * Exception to Response mapper for {@linkplain OutOfOrderRecordsException}.
  */
-public class UnknownJobExceptionMapper implements ExceptionMapper<UnknownJobException>
+public class OutOfOrderRecordsExceptionMapper 
+		implements ExceptionMapper<OutOfOrderRecordsException>
 {
+
 	@Override
-	public Response toResponse(UnknownJobException e) 
+	public Response toResponse(OutOfOrderRecordsException e) 
 	{
 		ApiError error = new ApiError(e.getErrorCode());
-		error.setCause(e.getCause());
 		error.setMessage(e.getMessage());
+		error.setCause(e.getCause());
 		
-		return Response.status(Response.Status.NOT_FOUND)
+		return Response.status(Response.Status.BAD_REQUEST)
 				.entity(error.toJson()).build();
 	}
+
 }
