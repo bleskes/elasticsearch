@@ -543,7 +543,6 @@ public class PipeToProcess
 	throws JsonParseException, IOException, HighProportionOfBadTimestampsException,
 		OutOfOrderRecordsException
 	{
-		
 		try (JsonParser parser = new JsonFactory().createParser(is))
 		{
 			if (dd.isTransformTime())
