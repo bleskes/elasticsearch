@@ -48,7 +48,7 @@ import com.prelert.rs.client.EngineApiClient;
  */
 public class JsonDataRunner implements Runnable
 {
-	static final private Logger s_Logger = Logger.getLogger(CsvDataRunner.class);
+	static final private Logger s_Logger = Logger.getLogger(JsonDataRunner.class);
 	
 	/**
 	 * Job configuration as a format string.
@@ -307,7 +307,7 @@ public class JsonDataRunner implements Runnable
 			} 
 			catch (IOException e) 
 			{
-				s_Logger.error("Error writing csv row", e);
+				s_Logger.error("Error writing JSON document", e);
 			}			
 		}
 		
@@ -331,7 +331,7 @@ public class JsonDataRunner implements Runnable
 			} 
 			catch (IOException e) 
 			{
-				s_Logger.error("Error writing csv row", e);
+				s_Logger.error("Error writing JSON document", e);
 			}			
 		}
 

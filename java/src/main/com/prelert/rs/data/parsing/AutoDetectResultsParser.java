@@ -29,7 +29,6 @@ package com.prelert.rs.data.parsing;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -78,47 +77,7 @@ public class AutoDetectResultsParser
 			return m_State;
 		}
 	}
-	
-	/**
-	 * Parse the JSON from the input stream returning a list of simple POJO 
-	 * {@linkplain com.prelert.rs.data.Bucket}s objects.
-	 * 
-	 * @param inputStream Source of the JSON input
-	 * @param logger
-	 * @return
-	 * @throws JsonParseException
-	 * @throws IOException
-	 * @throws AutoDetectParseException
-	 */
-	static public BucketsAndState parseResults(InputStream inputStream, 
-			Logger logger) 
-	throws JsonParseException, IOException, AutoDetectParseException
-	{
-		return AutoDetectResultsParser.parseResults(inputStream, 
-				new JobDataPersister() {					
-					// empty methods
-					@Override
-					public void persistBucket(Bucket bucket) 
-					{			
-					}
-					@Override
-					public void persistDetectorState(DetectorState state)
-					{						
-					}
-					@Override
-					public boolean isDetectorStatePersisted() 
-					{
-						return false;
-					}
-					@Override
-					public boolean commitWrites() 
-					{
-						return true;
-					}
-				},
-				logger);
-	}
-	
+
 	
 	/**
 	 * Parse the bucket results from inputstream and perist
@@ -132,7 +91,7 @@ public class AutoDetectResultsParser
 	 * @throws IOException
 	 * @throws AutoDetectParseException
 	 */
-	static public BucketsAndState parseResults(InputStream inputStream,
+	static public void parseResults(InputStream inputStream,
 			JobDataPersister persister, Logger logger) 
 	throws JsonParseException, IOException, AutoDetectParseException
 	{
@@ -150,7 +109,11 @@ public class AutoDetectResultsParser
 		if (token == JsonToken.END_ARRAY)
 		{
 			logger.info("Empty results array, 0 buckets parsed");
-			return new BucketsAndState();
+
+			// Parse the serialised detector state and persist
+			DetectorState state = parseState(parser, logger);
+			persister.persistDetectorState(state);		
+			return;
 		}
 		else if (token != JsonToken.START_OBJECT)
 		{
@@ -160,7 +123,7 @@ public class AutoDetectResultsParser
 		}
 		
 		// Parse the buckets from the stream
-		List<Bucket> buckets = new ArrayList<>();
+		int bucketCount = 0;
 		while (token != JsonToken.END_ARRAY)
 		{			
 			if (token == null) // end of input
@@ -171,28 +134,21 @@ public class AutoDetectResultsParser
 			Bucket bucket = Bucket.parseJson(parser);
 			persister.persistBucket(bucket);
 			
-			buckets.add(bucket);
-			logger.debug("Bucket number " + buckets.size() + " parsed from output");
+			logger.debug("Bucket number " + ++bucketCount + " parsed from output");
 
 			token = parser.nextToken();
 		}
 
-		BucketsAndState parsedData = new BucketsAndState();
-		parsedData.m_Buckets = buckets;
-		
-		logger.info(buckets.size() + " buckets parsed from autodetect output");
+		logger.info(bucketCount + " buckets parsed from autodetect output");
 
 		
 		// All the results have been read now read the serialised state
 		logger.debug("Persisting detector state");
 		DetectorState state = parseState(parser, logger);
 		persister.persistDetectorState(state);		
-		parsedData.m_State = state;
 		
 		// commit data to the datastore
 		persister.commitWrites();
-		
-		return parsedData;
 	}
 	
 	
