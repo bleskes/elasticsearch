@@ -44,8 +44,16 @@ import com.prelert.rs.data.ErrorCode;
  */
 public class JobConfiguration 
 {
+	/**
+	 * Characters that cannot be in a job id: '\\', '/', '*', '?', '"', '<', '>', '|', ' ', ','
+	 */
 	static private Set<Character> PROHIBITED_JOB_ID_CHARACTERS = 
 			new HashSet<>(Arrays.asList('\\', '/', '*', '?', '"', '<', '>', '|', ' ', ',' ));
+			
+	/**
+	 * Max number of chars in a job id
+	 */
+	static private int MAX_JOB_ID_LENGTH = 64;
 	
 	private String m_ID;
 	private String m_Description;
@@ -56,9 +64,12 @@ public class JobConfiguration
 	private String m_ReferenceJobId;
 	private Long m_Timeout;
 	
-	
+	/**
+	 * Set the default dataDescription
+	 */
 	public JobConfiguration()
 	{
+		m_DataDescription = new DataDescription();
 	}
 	
 	public JobConfiguration(String jobReferenceId)
@@ -72,6 +83,7 @@ public class JobConfiguration
 		this();
 		m_AnalysisConfig = analysisConfig;
 	}
+	
 	
 	/**
 	 * The human readable job Id 
@@ -239,6 +251,9 @@ public class JobConfiguration
 	 * <li>Verify {@link AnalysisLimits#verify() AnalysisLimits}</li>
 	 * <li>Verify {@link DataDescription#verify() DataDescription}</li>
 	 * <li>Check timeout is a +ve number</li>
+	 * <li>The job ID cannot contain any upper case characters or any 
+	 * characters in {@link #PROHIBITED_JOB_ID_CHARACTERS}</li>
+	 * <li>The job is cannot be longer than {@link MAX_JOB_ID_LENGTH }</li>
 	 * <li></li>
 	 * </ol>
 	 *  
@@ -278,6 +293,14 @@ public class JobConfiguration
 		
 		if (m_ID != null && m_ID.isEmpty() == false)
 		{
+			if (m_ID.length() > MAX_JOB_ID_LENGTH)
+			{
+				throw new JobConfigurationException(
+						"The job id cannot contain more than " + MAX_JOB_ID_LENGTH +
+						" characters.",						
+						ErrorCode.JOB_ID_TOO_LONG);
+			}
+			
 			for (Character ch : PROHIBITED_JOB_ID_CHARACTERS)
 			{
 				if (m_ID.indexOf(ch) >= 0)
@@ -288,6 +311,16 @@ public class JobConfiguration
 							+ "[\\, /, *, ?, \", <, >, |,  , ,]",
 							ErrorCode.PROHIBITIED_CHARACTER_IN_JOB_ID);
 				}
+			}
+			
+			for (char c : m_ID.toCharArray()) 
+			{
+			    if (Character.isUpperCase(c)) 
+			    {
+					throw new JobConfigurationException(
+							"The job id cannot contain any uppercase characters",
+							ErrorCode.PROHIBITIED_CHARACTER_IN_JOB_ID);
+			    }
 			}
 		}
 		

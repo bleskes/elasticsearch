@@ -41,7 +41,7 @@ public class ElasticSearchStatusReporter extends StatusReporter
 				+ "missing fields, %d were discarded because the date could not be "
 				+ "read and %d were ignored as because they weren't in ascending "
 				+ "chronological order.", getRecordsWrittenCount(), 
-				getDateParseErrorsCount(), getMissingFieldErrorCount(),
+				getMissingFieldErrorCount(), getDateParseErrorsCount(), 
 				getOutOfOrderRecordCount()); 
 		
 		m_Logger.info(status);

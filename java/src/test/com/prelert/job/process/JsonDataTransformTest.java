@@ -107,8 +107,8 @@ public class JsonDataTransformTest
 		pm.writeToJob(dd, analysisFields, bis, bos, reporter, s_Logger);
 		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 		
+		Assert.assertEquals(8, reporter.sumTotalRecords());
 		Assert.assertEquals(8, reporter.getRecordsWrittenCount());
-		Assert.assertEquals(0, reporter.getRecordsDiscardedCount());
 		Assert.assertEquals(0, reporter.getMissingFieldErrorCount());
 		Assert.assertEquals(0, reporter.getDateParseErrorsCount());
 		Assert.assertEquals(0, reporter.getOutOfOrderRecordCount());
@@ -213,8 +213,8 @@ public class JsonDataTransformTest
 		pm.writeToJob(dd, analysisFields, bis, bos, reporter, s_Logger);
 		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 		
+		Assert.assertEquals(8, reporter.sumTotalRecords());
 		Assert.assertEquals(8, reporter.getRecordsWrittenCount());
-		Assert.assertEquals(0, reporter.getRecordsDiscardedCount());
 		Assert.assertEquals(0, reporter.getMissingFieldErrorCount());
 		Assert.assertEquals(0, reporter.getDateParseErrorsCount());
 		Assert.assertEquals(0, reporter.getOutOfOrderRecordCount());
@@ -319,8 +319,8 @@ public class JsonDataTransformTest
 		pm.writeToJob(dd, analysisFields, bis, bos, reporter, s_Logger);
 		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 		
+		Assert.assertEquals(8, reporter.sumTotalRecords());
 		Assert.assertEquals(8, reporter.getRecordsWrittenCount());
-		Assert.assertEquals(0, reporter.getRecordsDiscardedCount());
 		Assert.assertEquals(0, reporter.getMissingFieldErrorCount());
 		Assert.assertEquals(0, reporter.getDateParseErrorsCount());
 		Assert.assertEquals(0, reporter.getOutOfOrderRecordCount());
@@ -423,8 +423,8 @@ public class JsonDataTransformTest
 		pm.writeToJob(dd, analysisFields, bis, bos, reporter, s_Logger);
 		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 		
+		Assert.assertEquals(8, reporter.sumTotalRecords());
 		Assert.assertEquals(8, reporter.getRecordsWrittenCount());
-		Assert.assertEquals(0, reporter.getRecordsDiscardedCount());
 		Assert.assertEquals(0, reporter.getMissingFieldErrorCount());
 		Assert.assertEquals(0, reporter.getDateParseErrorsCount());
 		Assert.assertEquals(0, reporter.getOutOfOrderRecordCount());
@@ -566,8 +566,8 @@ public class JsonDataTransformTest
 			pm.writeToJob(dd, analysisFields, bis, bos, reporter, s_Logger);
 			ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 
+			Assert.assertEquals(8, reporter.sumTotalRecords());
 			Assert.assertEquals(8, reporter.getRecordsWrittenCount());
-			Assert.assertEquals(0, reporter.getRecordsDiscardedCount());
 			Assert.assertEquals(3, reporter.getMissingFieldErrorCount());
 			Assert.assertEquals(0, reporter.getDateParseErrorsCount());
 			Assert.assertEquals(0, reporter.getOutOfOrderRecordCount());
@@ -687,8 +687,9 @@ public class JsonDataTransformTest
 			pm.writeToJob(dd, analysisFields, bis, bos, reporter, s_Logger);
 			ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 			
+			
+			Assert.assertEquals(4, reporter.sumTotalRecords());
 			Assert.assertEquals(4, reporter.getRecordsWrittenCount());
-			Assert.assertEquals(0, reporter.getRecordsDiscardedCount());
 			Assert.assertEquals(1, reporter.getMissingFieldErrorCount());
 			Assert.assertEquals(0, reporter.getDateParseErrorsCount());
 			Assert.assertEquals(0, reporter.getOutOfOrderRecordCount());
@@ -779,8 +780,8 @@ public class JsonDataTransformTest
 		pm.writeToJob(dd, analysisFields, bis, bos, reporter, s_Logger);
 		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 		
+		Assert.assertEquals(4, reporter.sumTotalRecords());
 		Assert.assertEquals(4, reporter.getRecordsWrittenCount());
-		Assert.assertEquals(0, reporter.getRecordsDiscardedCount());
 		Assert.assertEquals(1, reporter.getMissingFieldErrorCount());
 		Assert.assertEquals(0, reporter.getDateParseErrorsCount());
 		Assert.assertEquals(0, reporter.getOutOfOrderRecordCount());
@@ -893,8 +894,9 @@ public class JsonDataTransformTest
 			pm.writeToJob(dd, analysisFields, bis, bos, reporter, s_Logger);
 			ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 			
+			
+			Assert.assertEquals(4, reporter.sumTotalRecords());
 			Assert.assertEquals(4, reporter.getRecordsWrittenCount());
-			Assert.assertEquals(0, reporter.getRecordsDiscardedCount());
 			Assert.assertEquals(1, reporter.getMissingFieldErrorCount());
 			Assert.assertEquals(0, reporter.getDateParseErrorsCount());
 			Assert.assertEquals(0, reporter.getOutOfOrderRecordCount());

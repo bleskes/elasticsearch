@@ -514,7 +514,7 @@ public class JobDetails
 		private long m_InvalidDateCount;
 		private long m_MissingFieldCount;
 		private long m_OutOfOrderTimeStampCount;
-
+		
 		/**
 		 * 
 		 * @return Number of records processed by this job

@@ -178,7 +178,7 @@ public class Jobs extends ResourceWithJobManager
      */
     @PUT
 	@Path("/{jobId}/description")
-    @Consumes(MediaType.TEXT_PLAIN)  
+    @Consumes({MediaType.TEXT_PLAIN, MediaType.APPLICATION_FORM_URLENCODED})
     public Response setDescription(@PathParam("jobId") String jobId,
     		String description) 
     throws UnknownJobException, JsonProcessingException    
