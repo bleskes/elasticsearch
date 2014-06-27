@@ -231,12 +231,11 @@ public class ProcessManager
 		catch (IOException e)
 		{
 			String msg = String.format("Exception writing to process for job %s", jobId);
-			s_Logger.error(msg);
-			process.getLogger().error(msg);
-						
+					
 			StringBuilder sb = new StringBuilder(msg)
 					.append('\n').append(e.getMessage()).append('\n');
 			readProcessErrorOutput(process, sb);
+			process.getLogger().error(sb);
 			
 			throw new NativeProcessRunException(sb.toString(), 
 					ErrorCode.NATIVE_PROCESS_WRITE_ERROR);
@@ -422,7 +421,7 @@ public class ProcessManager
 					String msg = String.format("Process returned with value %d.", exitValue);	
 					process.getLogger().info(msg);
 
-					setJobToClosedStatus(jobId, process.getLogger(), JobStatus.CLOSED);
+					setJobFinishedTimeAndStatus(jobId, process.getLogger(), JobStatus.CLOSED);
 					
 					// wait for the results parsing and write to to the datastore
 					process.joinParserThread();
@@ -444,7 +443,7 @@ public class ProcessManager
 					s_Logger.warn(msg);
 					process.getLogger().warn(msg, e);
 
-					setJobToClosedStatus(jobId, process.getLogger(), JobStatus.FAILED);
+					setJobFinishedTimeAndStatus(jobId, process.getLogger(), JobStatus.FAILED);
 				}
 				
 			}
@@ -467,7 +466,7 @@ public class ProcessManager
 				s_Logger.debug("Exception closing stopped process input stream");
 			}
 			
-			setJobToClosedStatus(jobId, process.getLogger(), JobStatus.FAILED);
+			setJobFinishedTimeAndStatus(jobId, process.getLogger(), JobStatus.FAILED);
 			
 			throw e;
 		}
@@ -519,7 +518,7 @@ public class ProcessManager
 	}
 	
 	
-	private void setJobToClosedStatus(String jobId, Logger processLogger, 
+	private void setJobFinishedTimeAndStatus(String jobId, Logger processLogger, 
 			JobStatus status)
 	{
 		try 
