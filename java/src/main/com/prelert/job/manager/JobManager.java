@@ -115,9 +115,9 @@ public class JobManager implements JobDetailsProvider
 	 * Where to store the usage info in ElasticSearch - must match what's
 	 * expected by kibana/engineAPI/app/directives/prelertLogUsage.js
 	 */
-	static public final String USAGE_INFO_INDEX = "prelert-int";
-	static public final String USAGE_INFO_TYPE = "usage";
-	static public final String USAGE_INFO_ID = "usageStats";
+	static public final String PRELERT_INFO_INDEX = "prelert-int";
+	static public final String PRELERT_INFO_TYPE = "info";
+	static public final String PRELERT_INFO_ID = "infoStats";
 
 	/**
 	 * The default number of documents returned in queries as a string.
@@ -1308,7 +1308,7 @@ public class JobManager implements JobDetailsProvider
 		// Try to persist the modified document to ElasticSearch
 		try
 		{
-			m_Client.prepareIndex(USAGE_INFO_INDEX, USAGE_INFO_TYPE, USAGE_INFO_ID)
+			m_Client.prepareIndex(PRELERT_INFO_INDEX, PRELERT_INFO_TYPE, PRELERT_INFO_ID)
 					.setSource(doc.toString())
 					.execute().actionGet();
 		}
