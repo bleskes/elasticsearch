@@ -389,7 +389,7 @@ public class ElasticSearchMappings
 							.field("type", "date")
 						.endObject()	
 						.startObject(Usage.VOLUME)
-							.field("type", "long").field(INDEX, NO)
+							.field("type", "long")
 						.endObject()					
 					.endObject()
 				.endObject()
