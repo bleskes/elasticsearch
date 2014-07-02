@@ -34,7 +34,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.apache.log4j.PatternLayout;
 
 import com.prelert.rs.client.datauploader.CsvDataRunner;
 import com.prelert.rs.client.datauploader.JsonDataRunner;
@@ -58,6 +61,14 @@ public class SoakTest
 	public static void main(String[] args) 
 	throws FileNotFoundException, IOException
 	{		
+		// configure log4j
+		ConsoleAppender console = new ConsoleAppender(); 		
+		console.setLayout(new PatternLayout("%d [%p|%c|%C{1}] %m%n")); 
+		console.setThreshold(Level.INFO);
+		console.activateOptions();
+		Logger.getRootLogger().addAppender(console);
+		
+		
 		if (args.length == 0)
 		{
 			s_Logger.error("This program has one argument the path to the properties file " 
