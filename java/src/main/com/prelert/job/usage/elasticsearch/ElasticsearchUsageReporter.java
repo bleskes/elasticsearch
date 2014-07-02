@@ -39,7 +39,7 @@ import org.elasticsearch.client.Client;
 import com.prelert.job.usage.Usage;
 import com.prelert.job.usage.UsageReporter;
 
-import static com.prelert.job.manager.JobManager.PRELERT_METERING_INDEX;
+import static com.prelert.job.manager.JobManager.PRELERT_USAGE_INDEX;
 
 /**
  * Persist Usage (metering) data to elasticsearch.
@@ -74,7 +74,7 @@ public class ElasticsearchUsageReporter extends UsageReporter
 		}
 		
 		// update global count
-		updateDocument(PRELERT_METERING_INDEX, m_DateStr, getBytesReadSinceLastReport());
+		updateDocument(PRELERT_USAGE_INDEX, m_DateStr, getBytesReadSinceLastReport());
 		updateDocument(getJobId(), m_DateStr, getBytesReadSinceLastReport());
 			
 		return true;

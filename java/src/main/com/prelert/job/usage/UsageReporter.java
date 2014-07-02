@@ -94,7 +94,7 @@ abstract public class UsageReporter
 	{
 		m_TotalByteCount += m_BytesReadSinceLastReport;
 
-		m_Logger.info(String.format("%dkB written to job %s",
+		m_Logger.info(String.format("%dKiB written to job %s",
 				m_TotalByteCount >> 10, m_JobId));
 		
 		persistUsageCounts();

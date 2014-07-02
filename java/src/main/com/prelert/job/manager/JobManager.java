@@ -123,7 +123,7 @@ public class JobManager implements JobDetailsProvider
 	/**
 	 * The index to store total usage/metering information
 	 */
-	static public final String PRELERT_METERING_INDEX = "prelert-metering";
+	static public final String PRELERT_USAGE_INDEX = "prelert-usage";
 
 	/**
 	 * The default number of documents returned in queries as a string.
@@ -1320,7 +1320,7 @@ public class JobManager implements JobDetailsProvider
 	}
 	
 	/**
-	 * If the {@value JobManager#PRELERT_METERING_INDEX} index does not exist
+	 * If the {@value JobManager#PRELERT_USAGE_INDEX} index does not exist
 	 * create it here with the usage document mapping.
 	 */
 	private void createUsageMeteringIndex()
@@ -1328,16 +1328,16 @@ public class JobManager implements JobDetailsProvider
 		try 
 		{
 			boolean indexExists = m_Client.admin().indices()
-					.exists(new IndicesExistsRequest(PRELERT_METERING_INDEX))
+					.exists(new IndicesExistsRequest(PRELERT_USAGE_INDEX))
 					.get().isExists();
 
 			if (indexExists == false)
 			{
-				s_Logger.info("Creating the internal '" + PRELERT_METERING_INDEX + "' index");
+				s_Logger.info("Creating the internal '" + PRELERT_USAGE_INDEX + "' index");
 
 				XContentBuilder usageMapping = ElasticSearchMappings.usageMapping();
 
-				m_Client.admin().indices().prepareCreate(PRELERT_METERING_INDEX)					
+				m_Client.admin().indices().prepareCreate(PRELERT_USAGE_INDEX)					
 								.addMapping(Usage.TYPE, usageMapping)
 								.get();
 			}
