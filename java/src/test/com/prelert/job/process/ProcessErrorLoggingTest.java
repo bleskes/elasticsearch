@@ -43,11 +43,14 @@ import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
 import com.prelert.job.Detector;
 import com.prelert.job.DetectorState;
+import com.prelert.job.DummyUsageReporter;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobInUseException;
 import com.prelert.job.JobStatus;
 import com.prelert.job.UnknownJobException;
+import com.prelert.job.usage.UsageReporter;
+import com.prelert.job.usage.UsageReporterFactory;
 import com.prelert.job.warnings.DummyStatusReporter;
 import com.prelert.job.warnings.HighProportionOfBadTimestampsException;
 import com.prelert.job.warnings.OutOfOrderRecordsException;
@@ -142,15 +145,22 @@ public class ProcessErrorLoggingTest
 	
 	static class SimpleStatusReporterFactory implements StatusReporterFactory 
 	{
-
 		@Override
 		public StatusReporter newStatusReporter(String jobId, Logger logger) 
 		{
 			return new DummyStatusReporter();
 		}
-
 	}
-	
+
+
+	static class SimpleUsageReporterFactory implements UsageReporterFactory 
+	{
+		@Override
+		public UsageReporter newUsageReporter(String jobId, Logger logger) 
+		{
+			return new DummyUsageReporter(jobId, logger);
+		}
+	}
 	
 	/**
 	 * No arguments but -Dprelert.home must be set.
@@ -199,7 +209,8 @@ public class ProcessErrorLoggingTest
 		
 		ProcessManager manager = new ProcessManager(jobDetailsProvider,
 										new DoNothingResultsPersister(),
-										new SimpleStatusReporterFactory());
+										new SimpleStatusReporterFactory(),
+										new SimpleUsageReporterFactory());
 		try
 		{
 

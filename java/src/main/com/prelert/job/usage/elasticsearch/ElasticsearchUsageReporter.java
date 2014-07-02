@@ -74,8 +74,8 @@ public class ElasticsearchUsageReporter extends UsageReporter
 		}
 		
 		// update global count
-		updateDocument(PRELERT_METERING_INDEX, m_DateStr, getBytesRead());
-		updateDocument(getJobId(), m_DateStr, getBytesRead());
+		updateDocument(PRELERT_METERING_INDEX, m_DateStr, getBytesReadSinceLastReport());
+		updateDocument(getJobId(), m_DateStr, getBytesReadSinceLastReport());
 			
 		return true;
 	}

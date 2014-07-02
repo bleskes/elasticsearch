@@ -42,7 +42,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.log4j.Logger;
-import org.elasticsearch.action.admin.indices.create.CreateIndexRequestBuilder;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest;
@@ -81,6 +80,8 @@ import com.prelert.job.process.ProcessManager;
 import com.prelert.job.warnings.HighProportionOfBadTimestampsException;
 import com.prelert.job.warnings.OutOfOrderRecordsException;
 import com.prelert.job.warnings.elasticsearch.ElasticSearchStatusReporterFactory;
+import com.prelert.job.usage.Usage;
+import com.prelert.job.usage.elasticsearch.ElasticsearchUsageReporterFactory;
 import com.prelert.job.DetectorState;
 import com.prelert.job.JobIdAlreadyExistsException;
 import com.prelert.job.JobConfiguration;
@@ -118,11 +119,17 @@ public class JobManager implements JobDetailsProvider
 	static public final String PRELERT_INFO_INDEX = "prelert-int";
 	static public final String PRELERT_INFO_TYPE = "info";
 	static public final String PRELERT_INFO_ID = "infoStats";
+	
+	/**
+	 * The index to store total usage/metering information
+	 */
+	static public final String PRELERT_METERING_INDEX = "prelert-metering";
 
 	/**
 	 * The default number of documents returned in queries as a string.
 	 */
 	static public final String DEFAULT_PAGE_SIZE_STR = "100";
+	
 	/**
 	 * The default number of documents returned in queries. 
 	 */
@@ -202,7 +209,8 @@ public class JobManager implements JobDetailsProvider
 		
 		m_ProcessManager = new ProcessManager(this, 
 				new ElasticSearchResultsReaderFactory(m_Node),
-				new ElasticSearchStatusReporterFactory(m_Node));
+				new ElasticSearchStatusReporterFactory(m_Node),
+				new ElasticsearchUsageReporterFactory(m_Node));
 		
 		m_IdSequence = new AtomicLong();		
 		m_JobIdDateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
@@ -213,6 +221,7 @@ public class JobManager implements JobDetailsProvider
 		// This requires the process manager and ElasticSearch connection in
 		// order to work, but failure is considered non-fatal
 		saveInfo();
+		createUsageMeteringIndex();
 	}	
 	
 	/**
@@ -400,40 +409,29 @@ public class JobManager implements JobDetailsProvider
 			XContentBuilder detectorMapping = ElasticSearchMappings.detectorMapping();
 			XContentBuilder recordMapping = ElasticSearchMappings.recordMapping();
 			XContentBuilder detectorStateMapping = ElasticSearchMappings.detectorStateMapping();
+			XContentBuilder usageMapping = ElasticSearchMappings.usageMapping();
 			
 			
-			CreateIndexRequestBuilder indexBuilder = m_Client.admin().indices()
-								.prepareCreate(jobId)					
-								.addMapping(JobDetails.TYPE, jobMapping)
-								.addMapping(Bucket.TYPE, bucketMapping)
-								.addMapping(Detector.TYPE, detectorMapping)
-								.addMapping(AnomalyRecord.TYPE, recordMapping)
-								.addMapping(DetectorState.TYPE, detectorStateMapping);
-			
-			long lasttime = System.currentTimeMillis();
-			indexBuilder.get();
-			long now = System.currentTimeMillis();
+			m_Client.admin().indices()
+					.prepareCreate(jobId)					
+					.addMapping(JobDetails.TYPE, jobMapping)
+					.addMapping(Bucket.TYPE, bucketMapping)
+					.addMapping(Detector.TYPE, detectorMapping)
+					.addMapping(AnomalyRecord.TYPE, recordMapping)
+					.addMapping(DetectorState.TYPE, detectorStateMapping)
+					.addMapping(Usage.TYPE, usageMapping)
+					.get();
+
 			
 			String json = m_ObjectMapper.writeValueAsString(jobDetails);
-			
-			System.out.println("Index create = " + (now - lasttime) + "ms");
-			lasttime = now;
-			
+						
 			m_Client.prepareIndex(jobId, JobDetails.TYPE, jobId)
 					.setSource(json)
 					.get();
-					
-			now = System.currentTimeMillis();
-			System.out.println("Index put = " + (now - lasttime) + "ms");
-			lasttime = now;
 			
 			// wait for the job to be indexed in ElasticSearch			
 			m_Client.admin().indices().refresh(new RefreshRequest(jobId)).actionGet();
-			
-			now = System.currentTimeMillis();
-			System.out.println("Refresh = " + (now - lasttime) + "ms");
-			lasttime = now;
-			
+						
 			return jobDetails;
 		}
 		catch (IOException e)
@@ -1319,5 +1317,39 @@ public class JobManager implements JobDetailsProvider
 		}
 
 		s_Logger.info("Wrote Prelert info " + doc.toString() + " to ElasticSearch");
+	}
+	
+	/**
+	 * If the {@value JobManager#PRELERT_METERING_INDEX} index does not exist
+	 * create it here with the usage document mapping.
+	 */
+	private void createUsageMeteringIndex()
+	{
+		try 
+		{
+			boolean indexExists = m_Client.admin().indices()
+					.exists(new IndicesExistsRequest(PRELERT_METERING_INDEX))
+					.get().isExists();
+
+			if (indexExists == false)
+			{
+				s_Logger.info("Creating the internal '" + PRELERT_METERING_INDEX + "' index");
+
+				XContentBuilder usageMapping = ElasticSearchMappings.usageMapping();
+
+				m_Client.admin().indices().prepareCreate(PRELERT_METERING_INDEX)					
+								.addMapping(Usage.TYPE, usageMapping)
+								.get();
+			}
+		} 
+		catch (InterruptedException | ExecutionException e) 
+		{
+			s_Logger.warn("Error checking the usage metering index", e);
+		}
+		catch (IOException e) 
+		{
+			s_Logger.warn("Error creating the usage metering index", e);
+		}
+		
 	}
 }

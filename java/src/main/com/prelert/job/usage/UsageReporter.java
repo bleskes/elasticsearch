@@ -64,11 +64,15 @@ abstract public class UsageReporter
 		}
 	}
 	
-	public long getBytesRead()
+	public long getBytesReadSinceLastReport()
 	{
 		return m_BytesReadSinceLastReport;
 	}
 	
+	public long getTotalBytesRead()
+	{
+		return m_TotalByteCount;
+	}
 	
 	public String getJobId()
 	{

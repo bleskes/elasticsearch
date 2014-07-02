@@ -57,7 +57,7 @@ public class CountingInputStreamTest
 			// an extra byte is read because we don't check the return 
 			// value of the read() method
 			Assert.assertTrue(counting.getTotalBytesRead() == 4);
-			Assert.assertTrue(usageRepoter.getBytesRead() == 4);
+			Assert.assertTrue(usageRepoter.getBytesReadSinceLastReport() == 4);
 		}
 		
 		source = new ByteArrayInputStream(("To the man who only has a hammer,"
@@ -73,7 +73,7 @@ public class CountingInputStreamTest
 			// an extra byte is read because we don't check the return 
 			// value of the read() method
 			Assert.assertTrue(counting.getTotalBytesRead() == 85);
-			Assert.assertTrue(usageRepoter.getBytesRead() == 85);
+			Assert.assertTrue(usageRepoter.getBytesReadSinceLastReport() == 85);
 		}
 		
 		source = new ByteArrayInputStream(("To the man who only has a hammer,"
@@ -89,7 +89,7 @@ public class CountingInputStreamTest
 			// an extra byte is read because we don't check the return 
 			// value of the read() method
 			Assert.assertTrue(counting.getTotalBytesRead() == 85);
-			Assert.assertTrue(usageRepoter.getBytesRead() == 85);
+			Assert.assertTrue(usageRepoter.getBytesReadSinceLastReport() == 85);
 		}
 		
 		

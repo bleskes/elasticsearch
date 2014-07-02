@@ -39,6 +39,7 @@ import com.prelert.job.DataDescription;
 import com.prelert.job.Detector;
 import com.prelert.job.DetectorState;
 import com.prelert.job.JobDetails;
+import com.prelert.job.usage.Usage;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
 
@@ -360,6 +361,35 @@ public class ElasticSearchMappings
 						.endObject()	
 						.startObject(DetectorState.SERIALISED_MODEL)
 							.field("type", "string").field(INDEX, NO)
+						.endObject()					
+					.endObject()
+				.endObject()
+			.endObject();
+			
+		return mapping;
+	}
+	
+	/**
+	 * The Elasticsearch mappings for the usage documents
+	 * 
+	 * @return
+	 * @throws IOException
+	 */
+	static public XContentBuilder usageMapping() 
+	throws IOException
+	{
+		XContentBuilder mapping = jsonBuilder()
+			.startObject()
+				.startObject(Usage.TYPE)
+					.startObject("_all")
+						.field("enabled", false)
+					.endObject()
+					.startObject("properties")
+						.startObject(Usage.TIMESTAMP)
+							.field("type", "date")
+						.endObject()	
+						.startObject(Usage.VOLUME)
+							.field("type", "long").field(INDEX, NO)
 						.endObject()					
 					.endObject()
 				.endObject()
