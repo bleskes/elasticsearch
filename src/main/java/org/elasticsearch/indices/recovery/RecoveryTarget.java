@@ -103,7 +103,7 @@ public class RecoveryTarget extends AbstractComponent {
             @Override
             public void beforeIndexShardClosed(ShardId shardId, @Nullable IndexShard indexShard) {
                 if (indexShard != null) {
-                    removeAndCleanOnGoingRecovery(findRecoveryByShard(indexShard));
+                    cancelRecovery(indexShard);
                 }
             }
         });
