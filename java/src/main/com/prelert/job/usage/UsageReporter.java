@@ -36,11 +36,16 @@ import org.apache.log4j.Logger;
  */
 abstract public class UsageReporter 
 {
-	static private long UPDATE_AFTER_COUNT_BYTES = 2097152; // 2MB
+	static public String UPDATE_INTERVAL_PROP = "usage.update.interval";
+	static private long UPDATE_AFTER_COUNT_SECS = 300;
+	
 	private long m_BytesReadSinceLastReport;
 	private String m_JobId;
 	private Logger m_Logger;
 	private long m_TotalByteCount;
+	
+	private long m_LastUpdateTimeMs;
+	private long m_UpdateIntervalMs = UPDATE_AFTER_COUNT_SECS * 1000;
 	
 	public UsageReporter(String jobId, Logger logger)
 	{
@@ -48,6 +53,23 @@ abstract public class UsageReporter
 		m_JobId = jobId;
 		m_Logger = logger;
 		m_TotalByteCount = 0;
+		
+		m_LastUpdateTimeMs = System.currentTimeMillis();
+		
+		String interval = System.getProperty(UPDATE_INTERVAL_PROP);
+		if (interval != null)
+		{
+			try
+			{
+				m_UpdateIntervalMs = Long.parseLong(interval) * 1000;
+				m_Logger.info("Setting usage update interval to " + interval + " seconds");				
+			}
+			catch (NumberFormatException e)
+			{
+				m_Logger.warn("Cannot parse '" + UPDATE_INTERVAL_PROP + 
+						"' property = " + interval, e);
+			}
+		}
 	}
 	
 	/**
@@ -58,9 +80,11 @@ abstract public class UsageReporter
 	{
 		m_BytesReadSinceLastReport += bytesRead;
 		
-		if (m_BytesReadSinceLastReport > UPDATE_AFTER_COUNT_BYTES)
+		long now = System.currentTimeMillis();
+		
+		if (now - m_LastUpdateTimeMs > m_UpdateIntervalMs)
 		{
-			reportUsage();
+			reportUsage(now);
 		}
 	}
 	
@@ -84,24 +108,33 @@ abstract public class UsageReporter
 		return m_Logger;
 	}
 	
-	
 	/**
 	 * Logs total bytes written and calls {@linkplain persistUsageCounts()}
 	 * m_BytesReadSinceLastReport is reset to 0 after this has been called.
-	 * 
 	 */
 	public void reportUsage()
+	{	
+		reportUsage(System.currentTimeMillis());
+	}
+		
+	/**
+	 * See {@linkplain #reportUsage()}
+	 * 
+	 * @param epoch_ms The time now - saved as the last update time
+	 */
+	private void reportUsage(long epoch_ms)
 	{
 		m_TotalByteCount += m_BytesReadSinceLastReport;
 
 		m_Logger.info(String.format("%dKiB written to job %s",
 				m_TotalByteCount >> 10, m_JobId));
-		
+
 		persistUsageCounts();
-		
+
+		m_LastUpdateTimeMs = epoch_ms;
 		m_BytesReadSinceLastReport = 0;
 	}
-		
+	
 	/**
 	 * Persist the usage counts
 	 * @return
