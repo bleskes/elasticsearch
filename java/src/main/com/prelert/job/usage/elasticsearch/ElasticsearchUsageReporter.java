@@ -54,12 +54,18 @@ public class ElasticsearchUsageReporter extends UsageReporter
 	private String m_DateStr;
 	private long m_CurrentHour;
 	
+	private Map<String, Object> m_UpsertMap;
+	
 	public ElasticsearchUsageReporter(Client client, String jobId, Logger logger) 
 	{
 		super(jobId, logger);
 		m_Client = client;
 		m_CurrentHour = 0;		
 		m_SimpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXX");
+		m_UpsertMap = new HashMap<>();
+		
+		m_UpsertMap.put(Usage.TIMESTAMP, "");
+		m_UpsertMap.put(Usage.VOLUME, null);
 	}
 
 	@Override
@@ -71,6 +77,7 @@ public class ElasticsearchUsageReporter extends UsageReporter
 		{
 			Date date = new Date(hour * 3600000);
 			m_DateStr = m_SimpleDateFormat.format(date);
+			m_UpsertMap.put(Usage.TIMESTAMP, date);
 		}
 		
 		// update global count
@@ -79,9 +86,12 @@ public class ElasticsearchUsageReporter extends UsageReporter
 			
 		return true;
 	}
+
 	
 	/**
-	 * Update the metering document in the given index/id
+	 * Update the metering document in the given index/id.
+	 * Uses a script to update the volume field and 'upsert'
+	 * to create the doc if it doesn't exist.
 	 * 
 	 * @param index
 	 * @param id Doc id is also its timestamp
@@ -89,47 +99,14 @@ public class ElasticsearchUsageReporter extends UsageReporter
 	 */
 	private void updateDocument(String index, String id, long additionalVolume)
 	{
-		Map<String, Object> source;
-		GetResponse response = m_Client.prepareGet(index, Usage.TYPE, id)
-				.setPreference("_primary") // get primary version as about to update
-				.get();
+		Long val = new Long(additionalVolume);
 		
-		long lastVersion = response.getVersion();
-		if (response.isExists())
-		{
-			source = response.getSource();
-			
-			// Volume is returned as an Integer not Long is 
-			// this a bug in Elasticsearch - the mapping is set to long.
-			Number volume = (Number)source.get(Usage.VOLUME);
-			if (volume == null)
-			{
-				source.put(Usage.VOLUME, additionalVolume);
-			}
-			else
-			{
-				source.put(Usage.VOLUME, (volume.longValue() + additionalVolume));
-			}
-			
-			IndexResponse indexResponse = m_Client.prepareIndex(index, Usage.TYPE, id)
-					.setSource(source)
-					.setVersion(lastVersion)
-					.get();
-			if (indexResponse.getVersion() <= lastVersion)
-			{
-				getLogger().error("Conflict saving metering doc " + id);
-			}
-		}		
-		else 
-		{
-			getLogger().debug("Creating new metering doc " +  id);
-			
-			source = new HashMap<>();
-			source.put(Usage.TIMESTAMP, id); //
-			source.put(Usage.VOLUME, additionalVolume);
-			
-			m_Client.prepareIndex(index, Usage.TYPE, id)
-					.setSource(source).get();
-		}
+		m_UpsertMap.put(Usage.VOLUME, val);
+		
+		m_Client.prepareUpdate(index, Usage.TYPE, id)
+				.setScript("update-volume")
+				.addScriptParam("new_vol", val)
+				.setUpsert(m_UpsertMap)
+				.setRetryOnConflict(3).get();
 	}
 }
