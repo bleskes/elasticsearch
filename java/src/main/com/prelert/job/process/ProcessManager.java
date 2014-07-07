@@ -56,6 +56,8 @@ import com.prelert.job.warnings.HighProportionOfBadTimestampsException;
 import com.prelert.job.warnings.OutOfOrderRecordsException;
 import com.prelert.job.warnings.StatusReporter;
 import com.prelert.job.warnings.StatusReporterFactory;
+import com.prelert.job.usage.UsageReporter;
+import com.prelert.job.usage.UsageReporterFactory;
 import com.prelert.job.DetectorState;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobInUseException;
@@ -111,11 +113,12 @@ public class ProcessManager
 	
 	private ResultsReaderFactory m_ResultsReaderFactory;
 	private StatusReporterFactory m_StatusReporterFactory;
-	
+	private UsageReporterFactory m_UsageReporterFactory;
 	
 	public ProcessManager(JobDetailsProvider jobDetails, 
 							ResultsReaderFactory readerFactory,
-							StatusReporterFactory statusReporterFactory)
+							StatusReporterFactory statusReporterFactory,
+							UsageReporterFactory usageFactory)
 	{
 		m_ProcessCtrl = new ProcessCtrl();
 						
@@ -126,6 +129,7 @@ public class ProcessManager
 		
 		m_JobDetailsProvider = jobDetails;
 		m_ResultsReaderFactory = readerFactory;
+		m_UsageReporterFactory = usageFactory;
 		
 		m_StatusReporterFactory = statusReporterFactory;
 		
@@ -222,7 +226,8 @@ public class ProcessManager
 			
 			writeToJob(process.getDataDescription(), process.getInterestingFields(),
 					input, process.getProcess().getOutputStream(), 
-					process.getStatusReporter(), process.getLogger());
+					process.getStatusReporter(), process.getUsageReporter(), 
+					process.getLogger());
 						
 			// check there wasn't an error in the input. 
 			// throws if there was. 
@@ -330,10 +335,12 @@ public class ProcessManager
 				nativeProcess, jobId,
 				job.getDataDescription(), job.getTimeout(), analysisFields, logger,
 				m_StatusReporterFactory.newStatusReporter(jobId, logger),
+				m_UsageReporterFactory.newUsageReporter(jobId, logger),
 				m_ResultsReaderFactory.newResultsParser(jobId, 
-						nativeProcess.getInputStream(),
-						logger));
-		
+						nativeProcess.getInputStream(),						
+						logger)
+				);	
+
 		m_JobDetailsProvider.setJobStatus(jobId, JobStatus.RUNNING);
 		
 		logger.debug("Created process for job " + jobId);
@@ -561,7 +568,8 @@ public class ProcessManager
 	public void writeToJob(DataDescription dataDescription, 
 			List<String> analysisFields,
 			InputStream input, OutputStream output, 
-			StatusReporter reporter, Logger jobLogger) 
+			StatusReporter statusReporter, UsageReporter usageReporter, 
+			Logger jobLogger) 
 	throws JsonParseException, MissingFieldException, IOException,
 		HighProportionOfBadTimestampsException, OutOfOrderRecordsException
 	{
@@ -573,18 +581,20 @@ public class ProcessManager
 			if (dataDescription.getFormat() == DataFormat.JSON)
 			{
 				PipeToProcess.transformAndPipeJson(dataDescription, analysisFields, input, 
-						bufferedStream, reporter, jobLogger);
+						bufferedStream, statusReporter, 
+						usageReporter, jobLogger);
 			}
 			else
 			{
 				PipeToProcess.transformAndPipeCsv(dataDescription, analysisFields, input, 
-						bufferedStream, reporter, jobLogger);
+						bufferedStream, statusReporter,
+						usageReporter, jobLogger);
 			}
 		}
 		else
 		{			
 			PipeToProcess.pipeCsv(dataDescription, analysisFields, input, 
-					bufferedStream, reporter, jobLogger);
+					bufferedStream, statusReporter, usageReporter, jobLogger);
 		}
 	}
 	

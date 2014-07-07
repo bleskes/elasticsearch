@@ -46,7 +46,6 @@
             </configuration>      
           </execution>
 
-
           <execution>
             <id>copy-resources-readme</id>
             <phase>install</phase>
@@ -62,9 +61,8 @@
                   <filtering>true</filtering>
                 </resource>
               </resources>
-            </configuration>          
+            </configuration>
           </execution>
-
 
         </executions>
       </plugin>

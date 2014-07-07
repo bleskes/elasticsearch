@@ -40,14 +40,7 @@
       <version>0.5.2</version>
       <scope>test</scope>
     </dependency>     
-    <!-- enunciate 
 
-    <dependency>
-      <groupId>org.codehaus.enunciate</groupId>
-      <artifactId>enunciate-rt</artifactId>
-      <version>1.28</version>
-    </dependency>  
-    -->  
     <!-- provided jars -->
     <dependency>     
       <groupId>org.elasticsearch</groupId>
@@ -198,33 +191,6 @@
 
         </executions>
       </plugin>
-
-      <!-- Enunciate API documentation 
-      <plugin>
-        <groupId>org.codehaus.enunciate</groupId>
-        <artifactId>maven-enunciate-plugin</artifactId>
-        <version>1.28</version>
-
-        <configuration>
-        
-        </configuration>
-        <executions>
-          <execution>
-            <phase>prepare-package</phase>
-            <goals>
-              <goal>assemble</goal>
-            </goals>
-          </execution>
-        </executions>
-        <dependencies>
-          <dependency>
-            <groupId>org.codehaus.enunciate</groupId>
-            <artifactId>enunciate-amf</artifactId>
-            <version>1.28</version>
-          </dependency>
-        </dependencies>
-      </plugin>
-    -->
 
     </plugins>
   </build>
