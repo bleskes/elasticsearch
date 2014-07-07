@@ -32,6 +32,7 @@ import java.util.Set;
 
 import javax.ws.rs.core.Application;
 
+import com.prelert.job.alert.manager.AlertManager;
 import com.prelert.job.manager.JobManager;
 import com.prelert.rs.provider.ElasticSearchExceptionMapper;
 import com.prelert.rs.provider.HighProportionOfBadTimestampsExceptionMapper;
@@ -65,6 +66,7 @@ public class PrelertWebApp extends Application
 	private Set<Object> m_Singletons;
 	
 	private JobManager m_JobManager;
+	private AlertManager m_AlertManager;
 	
 	public PrelertWebApp()
 	{
@@ -99,9 +101,12 @@ public class PrelertWebApp extends Application
 			elasticSearchClusterName = DEFAULT_CLUSTER_NAME;
 		}
 		m_JobManager = new JobManager(elasticSearchClusterName);
+		
+		m_AlertManager = new AlertManager();
 				
 		m_Singletons = new HashSet<>();
 		m_Singletons.add(m_JobManager);	
+		m_Singletons.add(m_AlertManager);
 	}
 	
 	@Override

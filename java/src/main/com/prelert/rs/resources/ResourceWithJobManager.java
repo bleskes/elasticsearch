@@ -28,7 +28,10 @@
 package com.prelert.rs.resources;
 
 import java.net.URI;
+import java.text.DateFormat;
+import java.text.ParseException;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -39,6 +42,7 @@ import javax.ws.rs.core.UriInfo;
 
 import org.apache.log4j.Logger;
 
+import com.prelert.job.alert.manager.AlertManager;
 import com.prelert.job.manager.JobManager;
 import com.prelert.rs.data.Pagination;
 
@@ -52,11 +56,38 @@ abstract public class ResourceWithJobManager
 	static private final Logger s_Logger = Logger.getLogger(ResourceWithJobManager.class);
 	
 	/**
+	 * Date query param format
+	 */
+	static public final String ISO_8601_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ssX";
+	/**
+	 * Date query param format with ms
+	 */
+	static public final String ISO_8601_DATE_FORMAT_WITH_MS = "yyyy-MM-dd'T'HH:mm:ss.SSSX";
+	
+	/**
+	 * The filter 'start' query parameter
+	 */
+	static public final String START_QUERY_PARAM = "start";
+	
+	/**
+	 * The filter 'end' query parameter
+	 */
+	static public final String END_QUERY_PARAM = "end";
+	
+	/**
+	 * Format string for the un-parseable date error message
+	 */
+	static public final String BAD_DATE_FROMAT_MSG = "Error: Query param '%s' with value" 
+			+ " '%s' cannot be parsed as a date or converted to a number (epoch)";
+	
+	
+	/**
 	 * Application context injected by the framework
 	 */
 	@Context 
 	private Application m_RestApplication;
 	private JobManager m_JobManager;
+	private AlertManager m_AlertManager;
 	
 	/**
 	 * 
@@ -106,6 +137,49 @@ abstract public class ResourceWithJobManager
 		}    	 
 		
 		return m_JobManager;
+    }
+    
+    /**
+     * Get the Alert manager object from the application's set of singletons
+     * 
+     * @return
+     */
+    protected AlertManager alertManager()
+    {   	
+    	if (m_AlertManager != null)
+    	{
+    		return m_AlertManager;
+    	}
+    	    	
+		if (m_RestApplication == null)
+		{
+			s_Logger.error("Application context has not been set in "
+					+ "the jobs resource");
+			
+			throw new IllegalStateException("Application context has not been"
+					+ " set in the jobs resource");
+		}
+		
+		Set<Object> singletons = m_RestApplication.getSingletons();
+		for (Object obj : singletons)
+		{
+			if (obj instanceof AlertManager)
+			{
+				m_AlertManager = (AlertManager)obj;
+				break;
+			}
+		}
+		
+		if (m_AlertManager == null)
+		{
+			String msg = "Application singleton set doesn't contain an " +
+					"instance of AlertManager";
+			
+			s_Logger.error(msg);
+			throw new IllegalStateException(msg);
+		}    	 
+		
+		return m_AlertManager;
     }
     
     /**
@@ -179,6 +253,52 @@ abstract public class ResourceWithJobManager
 			}
 		}
 	}
+	
+	
+	/**
+	 * First tries to parse the date first as a Long and convert that 
+	 * to an epoch time, if that fails it tries to parse the string 
+	 * using one of the DateForamts passed in the array.
+	 * 
+	 * If the date string cannot be parsed 0 is returned. 
+	 * 
+	 * @param dateFormats Try to parse the date string with these date formats.
+	 * The array should be ordered the most likely to work first.
+	 * @param date
+	 * @return The epoch time in seconds or 0 if the date cannot be parsed.
+	 */
+	protected long paramToEpoch(String date, DateFormat dateFormats [])
+	{
+		try 
+		{
+			long epoch = Long.parseLong(date);
+			Date d = new Date(epoch * 1000);
+			return d.getTime() / 1000;
+		}
+		catch (NumberFormatException nfe)
+		{
+			// not a number
+		}
+		
+		for (DateFormat dateFormat : dateFormats)
+		{
+			// try parsing as a date string
+			try 
+			{
+				Date d = dateFormat.parse(date);
+				// TODO validate date
+				return d.getTime() / 1000;
+			}
+			catch (ParseException pe)
+			{
+				// not a date 
+			}
+		}
+		
+		// Could not do the conversion
+		return 0;
+	}
+	
 	
 	/**
 	 * Simple class to pair key, value strings 

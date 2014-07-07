@@ -28,10 +28,8 @@
 package com.prelert.rs.resources;
 
 import java.text.DateFormat;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -68,32 +66,13 @@ public class Results extends ResourceWithJobManager
 	 */
 	static public final String ENDPOINT = "results";
 	
-	/**
-	 * The bucket filter 'start' query parameter
-	 */
-	static public final String START_QUERY_PARAM = "start";
-	
-	/**
-	 * The bucket filter 'end' query parameter
-	 */
-	static public final String END_QUERY_PARAM = "end";
-	
-	/**
-	 * Date query param format
-	 */
-	static private final String ISO_8601_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ssX";
-	/**
-	 * Date query param format
-	 */
-	static private final String ISO_8601_DATE_FORMAT_WITH_MS = "yyyy-MM-dd'T'HH:mm:ss.SSSX";
-	
+
 	static private final DateFormat s_DateFormat = new SimpleDateFormat(ISO_8601_DATE_FORMAT); 
 	static private final DateFormat s_DateFormatWithMs = new SimpleDateFormat(ISO_8601_DATE_FORMAT_WITH_MS); 
 	
+	static private final DateFormat [] s_DateFormats = new DateFormat [] {
+		s_DateFormat, s_DateFormatWithMs};
 	
-	
-	static private final String BAD_DATE_FROMAT_MSG = "Error: Query param '%s' with value" 
-						+ " '%s' cannot be parsed as a date or converted to a number (epoch)";
 	
 	/**
 	 * Get all the bucket results (in pages) for the job optionally filtered 
@@ -121,14 +100,14 @@ public class Results extends ResourceWithJobManager
 			@DefaultValue("") @QueryParam(START_QUERY_PARAM) String start,
 			@DefaultValue("") @QueryParam(END_QUERY_PARAM) String end)
 	{	
-		s_Logger.debug(String.format("Get %sbuckets for job %s. skip = %d, take = %d"
+		s_Logger.debug(String.format("Get %s buckets for job %s. skip = %d, take = %d"
 				+ " start = '%s', end='%s'", 
 				expand?"expanded ":"", jobId, skip, take, start, end));
 		
 		long epochStart = 0;
 		if (start.isEmpty() == false)
 		{
-			epochStart = paramToEpoch(start);	
+			epochStart = paramToEpoch(start, s_DateFormats);	
 			if (epochStart == 0) // could not be parsed
 			{
 				String msg = String.format(BAD_DATE_FROMAT_MSG, START_QUERY_PARAM, start);
@@ -141,7 +120,7 @@ public class Results extends ResourceWithJobManager
 		long epochEnd = 0;
 		if (end.isEmpty() == false)
 		{
-			epochEnd = paramToEpoch(end);	
+			epochEnd = paramToEpoch(end, s_DateFormats);	
 			if (epochEnd == 0) // could not be parsed
 			{
 				String msg = String.format(BAD_DATE_FROMAT_MSG, START_QUERY_PARAM, end);
@@ -311,58 +290,5 @@ public class Results extends ResourceWithJobManager
 					
 		return records;
 	}
-	
-	
-	/**
-	 * First tries to parse the date first as a Long and convert that 
-	 * to an epoch time, if that fails it tries to parse the string 
-	 * in ISO 8601 format {@value #ISO_8601_DATE_FORMAT} then in ISO 8601 
-	 * format with milliseconds {@value #ISO_8601_DATE_FORMAT_WITH_MS}
-	 * 
-	 * If the date string cannot be parsed 0 is returned. 
-	 * 
-	 * @param date
-	 * @return The epoch time in seconds or 0 if the date cannot be parsed.
-	 */
-	private long paramToEpoch(String date)
-	{
-		try 
-		{
-			long epoch = Long.parseLong(date);
-			Date d = new Date(epoch * 1000);
-			// TODO validate date
-			return d.getTime() / 1000;
-		}
-		catch (NumberFormatException nfe)
-		{
-			// not a number
-		}
 		
-		// try parsing as a date string
-		try 
-		{
-			Date d = s_DateFormat.parse(date);
-			// TODO validate date
-			return d.getTime() / 1000;
-		}
-		catch (ParseException pe)
-		{
-			// not a date
-		}
-		
-		// try parsing as a date string with milliseconds
-		try 
-		{
-			Date d = s_DateFormatWithMs.parse(date);
-			// TODO validate date
-			return d.getTime() / 1000;
-		}
-		catch (ParseException pe)
-		{
-			// not a date
-		}
-
-		// Could not do the conversion
-		return 0;
-	}
 }
