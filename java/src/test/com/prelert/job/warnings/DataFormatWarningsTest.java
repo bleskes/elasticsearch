@@ -172,6 +172,8 @@ public class DataFormatWarningsTest
 			{
 				long percentBad = (e.getNumberBad() * 100 )/ e.getTotalNumber();
 				
+				Assert.assertEquals(statusReporter.getVolume(), 
+						usageReporter.getTotalBytesRead());
 				Assert.assertTrue(percentBad >= MAX_PERCENT_DATE_PARSE_ERRORS);
 			}
 		}
@@ -284,6 +286,8 @@ public class DataFormatWarningsTest
 			{
 				long percentBad = (e.getNumberBad() * 100 )/ e.getTotalNumber();
 				
+				Assert.assertEquals(statusReporter.getVolume(), 
+						usageReporter.getTotalBytesRead());
 				Assert.assertTrue(percentBad >= MAX_PERCENT_DATE_PARSE_ERRORS);
 			}
 		}
@@ -396,6 +400,8 @@ public class DataFormatWarningsTest
 			{
 				long percentBad = (e.getNumberOutOfOrder() * 100 )/ e.getTotalNumber();
 				
+				Assert.assertEquals(statusReporter.getVolume(), 
+						usageReporter.getTotalBytesRead());
 				Assert.assertTrue(percentBad >= MAX_PERCENT_OUT_OF_ORDER_ERRORS);
 			}
 		}
@@ -411,7 +417,7 @@ public class DataFormatWarningsTest
 	 * @throws OutOfOrderRecordsException
 	 */
 	@Test
-	public void OutOfOrderRecondsJsonTest()
+	public void outOfOrderRecordsJsonTest()
 	throws JsonParseException, MissingFieldException, IOException, 
 		HighProportionOfBadTimestampsException
 	{
@@ -509,6 +515,8 @@ public class DataFormatWarningsTest
 			{
 				long percentBad = (e.getNumberOutOfOrder() * 100 )/ e.getTotalNumber();
 				
+				Assert.assertEquals(statusReporter.getVolume(), 
+						usageReporter.getTotalBytesRead());
 				Assert.assertTrue(percentBad >= MAX_PERCENT_OUT_OF_ORDER_ERRORS);
 			}
 		}

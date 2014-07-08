@@ -97,6 +97,9 @@ public class CsvDataTransfromTest
 		Assert.assertEquals(usageReporter.getTotalBytesRead(), 
 				data.getBytes(StandardCharsets.UTF_8).length - 2);
 		
+		Assert.assertEquals(usageReporter.getTotalBytesRead(),
+				statusReporter.getVolume());
+		
 		Assert.assertEquals(8, statusReporter.sumTotalRecords());
 		Assert.assertEquals(8, statusReporter.getRecordsWrittenCount());
 		Assert.assertEquals(0, statusReporter.getMissingFieldErrorCount());
@@ -172,19 +175,21 @@ public class CsvDataTransfromTest
 				new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
 		ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
 		
-		DummyStatusReporter reporter = new DummyStatusReporter();
+		DummyStatusReporter statusReporter = new DummyStatusReporter();
 		DummyUsageReporter usageReporter = new DummyUsageReporter("job_id", s_Logger);
-		pm.writeToJob(dd, analysisFields, bis, bos, reporter,
+		pm.writeToJob(dd, analysisFields, bis, bos, statusReporter,
 				usageReporter, s_Logger);
 		
 		Assert.assertEquals(usageReporter.getTotalBytesRead(), 
 				data.getBytes(StandardCharsets.UTF_8).length - 2); 
+		Assert.assertEquals(usageReporter.getTotalBytesRead(),
+				statusReporter.getVolume());
 		
-		Assert.assertEquals(4, reporter.sumTotalRecords());
-		Assert.assertEquals(4, reporter.getRecordsWrittenCount());
-		Assert.assertEquals(0, reporter.getMissingFieldErrorCount());
-		Assert.assertEquals(0, reporter.getDateParseErrorsCount());
-		Assert.assertEquals(0, reporter.getOutOfOrderRecordCount());		
+		Assert.assertEquals(4, statusReporter.sumTotalRecords());
+		Assert.assertEquals(4, statusReporter.getRecordsWrittenCount());
+		Assert.assertEquals(0, statusReporter.getMissingFieldErrorCount());
+		Assert.assertEquals(0, statusReporter.getDateParseErrorsCount());
+		Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());		
 		
 		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 		
@@ -257,20 +262,22 @@ public class CsvDataTransfromTest
 				new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
 		ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
 		
-		DummyStatusReporter reporter = new DummyStatusReporter();
+		DummyStatusReporter statusReporter = new DummyStatusReporter();
 		DummyUsageReporter usageReporter = new DummyUsageReporter("job_id", s_Logger);
-		pm.writeToJob(dd, analysisFields, bis, bos, reporter,
+		pm.writeToJob(dd, analysisFields, bis, bos, statusReporter,
 				usageReporter, s_Logger);
 		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 
 		Assert.assertEquals(usageReporter.getTotalBytesRead(), 
 				data.getBytes(StandardCharsets.UTF_8).length - 2);
+		Assert.assertEquals(usageReporter.getTotalBytesRead(),
+				statusReporter.getVolume());
 		
-		Assert.assertEquals(8, reporter.sumTotalRecords());
-		Assert.assertEquals(8, reporter.getRecordsWrittenCount());
-		Assert.assertEquals(0, reporter.getMissingFieldErrorCount());
-		Assert.assertEquals(0, reporter.getDateParseErrorsCount());
-		Assert.assertEquals(0, reporter.getOutOfOrderRecordCount());
+		Assert.assertEquals(8, statusReporter.sumTotalRecords());
+		Assert.assertEquals(8, statusReporter.getRecordsWrittenCount());
+		Assert.assertEquals(0, statusReporter.getMissingFieldErrorCount());
+		Assert.assertEquals(0, statusReporter.getDateParseErrorsCount());
+		Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());
 
 		String [] lines = data.split("\\n");
 		
@@ -375,6 +382,8 @@ public class CsvDataTransfromTest
 
 		Assert.assertEquals(usageReporter.getTotalBytesRead(), 
 				data.getBytes(StandardCharsets.UTF_8).length - 2);
+		Assert.assertEquals(usageReporter.getTotalBytesRead(),
+				statusReporter.getVolume());		
 		
 		String [] lines = data.split("\\n");
 		
@@ -437,17 +446,19 @@ public class CsvDataTransfromTest
 				new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
 		ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
 		
+		DummyUsageReporter usageReporter = new DummyUsageReporter("job_id", s_Logger);
+		DummyStatusReporter statusReporter = new DummyStatusReporter();		
 		try 
 		{
-			DummyUsageReporter usageReporter = new DummyUsageReporter("job_id", s_Logger);
-			DummyStatusReporter reporter = new DummyStatusReporter();		
-			pm.writeToJob(dd, analysisFields, bis, bos, reporter, 
+			pm.writeToJob(dd, analysisFields, bis, bos, statusReporter, 
 					usageReporter, s_Logger);
 			Assert.assertTrue(false); // should throw
 		} 
 		catch (MissingFieldException e)
 		{
 			Assert.assertEquals(e.getMissingFieldName(), "time");
+			Assert.assertEquals(usageReporter.getTotalBytesRead(),
+					statusReporter.getVolume());		
 		}
 		
 		// Do the same again but with a time format configured
@@ -461,10 +472,10 @@ public class CsvDataTransfromTest
 		bis = new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
 		bos = new ByteArrayOutputStream(1024);
 		
+		usageReporter = new DummyUsageReporter("job_id", s_Logger);
+		statusReporter = new DummyStatusReporter();
 		try 
 		{
-			DummyUsageReporter usageReporter = new DummyUsageReporter("job_id", s_Logger);
-			DummyStatusReporter statusReporter = new DummyStatusReporter();
 			pm.writeToJob(dd, analysisFields, bis, bos, statusReporter,
 					usageReporter, s_Logger);
 			Assert.assertTrue(false); // should throw
@@ -472,6 +483,8 @@ public class CsvDataTransfromTest
 		catch (MissingFieldException e)
 		{
 			Assert.assertEquals(e.getMissingFieldName(), "timestamp");
+			Assert.assertEquals(usageReporter.getTotalBytesRead(),
+					statusReporter.getVolume());	
 		}		
 	}
 	
@@ -513,16 +526,18 @@ public class CsvDataTransfromTest
 				new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
 		ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
 		
+		DummyUsageReporter usageReporter = new DummyUsageReporter("job_id", s_Logger);
+		DummyStatusReporter statusReporter = new DummyStatusReporter();
 		try 
 		{
-			DummyUsageReporter usageReporter = new DummyUsageReporter("job_id", s_Logger);
-			DummyStatusReporter reporter = new DummyStatusReporter();
-			pm.writeToJob(dd, analysisFields, bis, bos, reporter,
+			pm.writeToJob(dd, analysisFields, bis, bos, statusReporter,
 					usageReporter, s_Logger);
 			Assert.assertTrue(false); // should throw
 		} 
 		catch (MissingFieldException e)
 		{
+			Assert.assertEquals(usageReporter.getTotalBytesRead(),
+					statusReporter.getVolume());			
 			Assert.assertEquals(e.getMissingFieldName(), "missing_field");
 		}
 		
@@ -534,17 +549,19 @@ public class CsvDataTransfromTest
 		bis = new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
 		bos = new ByteArrayOutputStream(1024);
 		
+		usageReporter = new DummyUsageReporter("job_id", s_Logger);
+		statusReporter = new DummyStatusReporter();
 		try 
 		{
-			DummyUsageReporter usageReporter = new DummyUsageReporter("job_id", s_Logger);
-			DummyStatusReporter reporter = new DummyStatusReporter();
-			pm.writeToJob(dd, analysisFields, bis, bos, reporter,
+			pm.writeToJob(dd, analysisFields, bis, bos, statusReporter,
 					usageReporter, s_Logger);
 			Assert.assertTrue(false); // should throw
 		} 
 		catch (MissingFieldException e)
 		{
 			Assert.assertEquals(e.getMissingFieldName(), "missing_field");
+			Assert.assertEquals(usageReporter.getTotalBytesRead(),
+					statusReporter.getVolume());	
 		}
 	}
 	
@@ -635,6 +652,8 @@ public class CsvDataTransfromTest
 			Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());
 			Assert.assertEquals(usageReporter.getTotalBytesRead(), 
 					data.getBytes(StandardCharsets.UTF_8).length - 2);
+			Assert.assertEquals(usageReporter.getTotalBytesRead(),
+					statusReporter.getVolume());				
 			
 			ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 			
@@ -725,19 +744,21 @@ public class CsvDataTransfromTest
 					new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
 			ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
 
-			DummyStatusReporter reporter = new DummyStatusReporter();
+			DummyStatusReporter statusReporter = new DummyStatusReporter();
 			DummyUsageReporter usageReporter = new DummyUsageReporter("job_id", s_Logger);
-			pm.writeToJob(dd, analysisFields, bis, bos, reporter, 
+			pm.writeToJob(dd, analysisFields, bis, bos, statusReporter, 
 					usageReporter, s_Logger);
 			ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 
-			Assert.assertEquals(8, reporter.sumTotalRecords());
-			Assert.assertEquals(8, reporter.getRecordsWrittenCount());
-			Assert.assertEquals(0, reporter.getMissingFieldErrorCount());
-			Assert.assertEquals(0, reporter.getDateParseErrorsCount());
-			Assert.assertEquals(0, reporter.getOutOfOrderRecordCount());
+			Assert.assertEquals(8, statusReporter.sumTotalRecords());
+			Assert.assertEquals(8, statusReporter.getRecordsWrittenCount());
+			Assert.assertEquals(0, statusReporter.getMissingFieldErrorCount());
+			Assert.assertEquals(0, statusReporter.getDateParseErrorsCount());
+			Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());
 			Assert.assertEquals(usageReporter.getTotalBytesRead(), 
 					data.getBytes(StandardCharsets.UTF_8).length - 2);
+			Assert.assertEquals(usageReporter.getTotalBytesRead(),
+					statusReporter.getVolume());				
 			
 			String [] lines = data.split("\\n");
 			

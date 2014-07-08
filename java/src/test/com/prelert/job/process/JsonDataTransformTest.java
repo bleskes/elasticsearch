@@ -104,19 +104,21 @@ public class JsonDataTransformTest
 		ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
 		
 		DummyUsageReporter usageReporter = new DummyUsageReporter("job_id", s_Logger);
-		DummyStatusReporter reporter = new DummyStatusReporter();
+		DummyStatusReporter statusReporter = new DummyStatusReporter();
 		
-		pm.writeToJob(dd, analysisFields, bis, bos, reporter, 
+		pm.writeToJob(dd, analysisFields, bis, bos, statusReporter, 
 				usageReporter, s_Logger);
 		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 		
-		Assert.assertEquals(8, reporter.sumTotalRecords());
-		Assert.assertEquals(8, reporter.getRecordsWrittenCount());
-		Assert.assertEquals(0, reporter.getMissingFieldErrorCount());
-		Assert.assertEquals(0, reporter.getDateParseErrorsCount());
-		Assert.assertEquals(0, reporter.getOutOfOrderRecordCount());
+		Assert.assertEquals(8, statusReporter.sumTotalRecords());
+		Assert.assertEquals(8, statusReporter.getRecordsWrittenCount());
+		Assert.assertEquals(0, statusReporter.getMissingFieldErrorCount());
+		Assert.assertEquals(0, statusReporter.getDateParseErrorsCount());
+		Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());
 		Assert.assertEquals(usageReporter.getTotalBytesRead(), 
 				data.getBytes(StandardCharsets.UTF_8).length -1);
+		Assert.assertEquals(usageReporter.getTotalBytesRead(),
+				statusReporter.getVolume());
 		
 		// check header
 		int numFields = bb.getInt();		
@@ -213,20 +215,22 @@ public class JsonDataTransformTest
 				new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
 		ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
 		
-		DummyStatusReporter reporter = new DummyStatusReporter();
+		DummyStatusReporter statusReporter = new DummyStatusReporter();
 		DummyUsageReporter usageReporter = new DummyUsageReporter("job_id", s_Logger);
 		
-		pm.writeToJob(dd, analysisFields, bis, bos, reporter,
+		pm.writeToJob(dd, analysisFields, bis, bos, statusReporter,
 				usageReporter, s_Logger);
 		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 		
-		Assert.assertEquals(8, reporter.sumTotalRecords());
-		Assert.assertEquals(8, reporter.getRecordsWrittenCount());
-		Assert.assertEquals(0, reporter.getMissingFieldErrorCount());
-		Assert.assertEquals(0, reporter.getDateParseErrorsCount());
-		Assert.assertEquals(0, reporter.getOutOfOrderRecordCount());
+		Assert.assertEquals(8, statusReporter.sumTotalRecords());
+		Assert.assertEquals(8, statusReporter.getRecordsWrittenCount());
+		Assert.assertEquals(0, statusReporter.getMissingFieldErrorCount());
+		Assert.assertEquals(0, statusReporter.getDateParseErrorsCount());
+		Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());
 		Assert.assertEquals(usageReporter.getTotalBytesRead(), 
-				data.getBytes(StandardCharsets.UTF_8).length -1);		
+				data.getBytes(StandardCharsets.UTF_8).length -1);
+		Assert.assertEquals(usageReporter.getTotalBytesRead(),
+				statusReporter.getVolume());
 		
 		// check header
 		int numFields = bb.getInt();		
@@ -323,20 +327,22 @@ public class JsonDataTransformTest
 				new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
 		ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
 		
-		DummyStatusReporter reporter = new DummyStatusReporter();
+		DummyStatusReporter statusReporter = new DummyStatusReporter();
 		DummyUsageReporter usageReporter = new DummyUsageReporter("job_id", s_Logger);
 		
-		pm.writeToJob(dd, analysisFields, bis, bos, reporter, 
+		pm.writeToJob(dd, analysisFields, bis, bos, statusReporter, 
 				usageReporter, s_Logger);
 		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 		
-		Assert.assertEquals(8, reporter.sumTotalRecords());
-		Assert.assertEquals(8, reporter.getRecordsWrittenCount());
-		Assert.assertEquals(0, reporter.getMissingFieldErrorCount());
-		Assert.assertEquals(0, reporter.getDateParseErrorsCount());
-		Assert.assertEquals(0, reporter.getOutOfOrderRecordCount());
+		Assert.assertEquals(8, statusReporter.sumTotalRecords());
+		Assert.assertEquals(8, statusReporter.getRecordsWrittenCount());
+		Assert.assertEquals(0, statusReporter.getMissingFieldErrorCount());
+		Assert.assertEquals(0, statusReporter.getDateParseErrorsCount());
+		Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());
 		Assert.assertEquals(usageReporter.getTotalBytesRead(), 
 				data.getBytes(StandardCharsets.UTF_8).length -1);
+		Assert.assertEquals(usageReporter.getTotalBytesRead(),
+				statusReporter.getVolume());
 		
 		// check header
 		int numFields = bb.getInt();		
@@ -431,20 +437,22 @@ public class JsonDataTransformTest
 				new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
 		ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
 		
-		DummyStatusReporter reporter = new DummyStatusReporter();
+		DummyStatusReporter statusReporter = new DummyStatusReporter();
 		DummyUsageReporter usageReporter = new DummyUsageReporter("job_id", s_Logger);
 		
-		pm.writeToJob(dd, analysisFields, bis, bos, reporter,
+		pm.writeToJob(dd, analysisFields, bis, bos, statusReporter,
 				usageReporter, s_Logger);
 		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 		
-		Assert.assertEquals(8, reporter.sumTotalRecords());
-		Assert.assertEquals(8, reporter.getRecordsWrittenCount());
-		Assert.assertEquals(0, reporter.getMissingFieldErrorCount());
-		Assert.assertEquals(0, reporter.getDateParseErrorsCount());
-		Assert.assertEquals(0, reporter.getOutOfOrderRecordCount());
+		Assert.assertEquals(8, statusReporter.sumTotalRecords());
+		Assert.assertEquals(8, statusReporter.getRecordsWrittenCount());
+		Assert.assertEquals(0, statusReporter.getMissingFieldErrorCount());
+		Assert.assertEquals(0, statusReporter.getDateParseErrorsCount());
+		Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());
 		Assert.assertEquals(usageReporter.getTotalBytesRead(), 
 				data.getBytes(StandardCharsets.UTF_8).length -1);		
+		Assert.assertEquals(usageReporter.getTotalBytesRead(),
+				statusReporter.getVolume());
 		
 		// check header
 		int numFields = bb.getInt();		
@@ -574,22 +582,24 @@ public class JsonDataTransformTest
 					new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
 			ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
 
-			DummyStatusReporter reporter = new DummyStatusReporter();
+			DummyStatusReporter statusReporter = new DummyStatusReporter();
 			DummyUsageReporter usageReporter = new DummyUsageReporter("job_id", s_Logger);
 
 			DataDescription dd = dds[count++];
 
-			pm.writeToJob(dd, analysisFields, bis, bos, reporter,
+			pm.writeToJob(dd, analysisFields, bis, bos, statusReporter,
 					usageReporter, s_Logger);
 			ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 
-			Assert.assertEquals(8, reporter.sumTotalRecords());
-			Assert.assertEquals(8, reporter.getRecordsWrittenCount());
-			Assert.assertEquals(3, reporter.getMissingFieldErrorCount());
-			Assert.assertEquals(0, reporter.getDateParseErrorsCount());
-			Assert.assertEquals(0, reporter.getOutOfOrderRecordCount());
+			Assert.assertEquals(8, statusReporter.sumTotalRecords());
+			Assert.assertEquals(8, statusReporter.getRecordsWrittenCount());
+			Assert.assertEquals(3, statusReporter.getMissingFieldErrorCount());
+			Assert.assertEquals(0, statusReporter.getDateParseErrorsCount());
+			Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());
 			Assert.assertEquals(usageReporter.getTotalBytesRead(), 
 					data.getBytes(StandardCharsets.UTF_8).length -1);
+			Assert.assertEquals(usageReporter.getTotalBytesRead(),
+					statusReporter.getVolume());			
 
 			// check header
 			int numFields = bb.getInt();		
@@ -700,20 +710,22 @@ public class JsonDataTransformTest
 					new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
 			ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
 
-			DummyStatusReporter reporter = new DummyStatusReporter();
+			DummyStatusReporter statusReporter = new DummyStatusReporter();
 			DummyUsageReporter usageReporter = new DummyUsageReporter("job_id", s_Logger);
 			
-			pm.writeToJob(dd, analysisFields, bis, bos, reporter, 
+			pm.writeToJob(dd, analysisFields, bis, bos, statusReporter, 
 						usageReporter, s_Logger);
 			ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 			
-			Assert.assertEquals(4, reporter.sumTotalRecords());
-			Assert.assertEquals(4, reporter.getRecordsWrittenCount());
-			Assert.assertEquals(1, reporter.getMissingFieldErrorCount());
-			Assert.assertEquals(0, reporter.getDateParseErrorsCount());
-			Assert.assertEquals(0, reporter.getOutOfOrderRecordCount());
+			Assert.assertEquals(4, statusReporter.sumTotalRecords());
+			Assert.assertEquals(4, statusReporter.getRecordsWrittenCount());
+			Assert.assertEquals(1, statusReporter.getMissingFieldErrorCount());
+			Assert.assertEquals(0, statusReporter.getDateParseErrorsCount());
+			Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());
 			Assert.assertEquals(usageReporter.getTotalBytesRead(), 
-					data.getBytes(StandardCharsets.UTF_8).length -1);	
+					data.getBytes(StandardCharsets.UTF_8).length -1);
+			Assert.assertEquals(usageReporter.getTotalBytesRead(),
+					statusReporter.getVolume());	
 
 			// check header
 			int numFields = bb.getInt();		
@@ -796,20 +808,22 @@ public class JsonDataTransformTest
 				new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
 		ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
 
-		DummyStatusReporter reporter = new DummyStatusReporter();
+		DummyStatusReporter statusReporter = new DummyStatusReporter();
 		DummyUsageReporter usageReporter = new DummyUsageReporter("job_id", s_Logger);
 		
-		pm.writeToJob(dd, analysisFields, bis, bos, reporter, 
+		pm.writeToJob(dd, analysisFields, bis, bos, statusReporter, 
 				usageReporter, s_Logger);
 		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 		
-		Assert.assertEquals(4, reporter.sumTotalRecords());
-		Assert.assertEquals(4, reporter.getRecordsWrittenCount());
-		Assert.assertEquals(1, reporter.getMissingFieldErrorCount());
-		Assert.assertEquals(0, reporter.getDateParseErrorsCount());
-		Assert.assertEquals(0, reporter.getOutOfOrderRecordCount());
+		Assert.assertEquals(4, statusReporter.sumTotalRecords());
+		Assert.assertEquals(4, statusReporter.getRecordsWrittenCount());
+		Assert.assertEquals(1, statusReporter.getMissingFieldErrorCount());
+		Assert.assertEquals(0, statusReporter.getDateParseErrorsCount());
+		Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());
 		Assert.assertEquals(usageReporter.getTotalBytesRead(), 
-				data.getBytes(StandardCharsets.UTF_8).length -1);		
+				data.getBytes(StandardCharsets.UTF_8).length -1);
+		Assert.assertEquals(usageReporter.getTotalBytesRead(),
+				statusReporter.getVolume());				
 
 		// check header
 		int numFields = bb.getInt();		
@@ -914,21 +928,23 @@ public class JsonDataTransformTest
 					new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
 			ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
 
-			DummyStatusReporter reporter = new DummyStatusReporter();
+			DummyStatusReporter statusReporter = new DummyStatusReporter();
 			DummyUsageReporter usageReporter = new DummyUsageReporter("job_id", s_Logger);
 			
-			pm.writeToJob(dd, analysisFields, bis, bos, reporter, 
+			pm.writeToJob(dd, analysisFields, bis, bos, statusReporter, 
 					usageReporter, s_Logger);
 			ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 			
-			Assert.assertEquals(4, reporter.sumTotalRecords());
-			Assert.assertEquals(4, reporter.getRecordsWrittenCount());
-			Assert.assertEquals(1, reporter.getMissingFieldErrorCount());
-			Assert.assertEquals(0, reporter.getDateParseErrorsCount());
-			Assert.assertEquals(0, reporter.getOutOfOrderRecordCount());
+			Assert.assertEquals(4, statusReporter.sumTotalRecords());
+			Assert.assertEquals(4, statusReporter.getRecordsWrittenCount());
+			Assert.assertEquals(1, statusReporter.getMissingFieldErrorCount());
+			Assert.assertEquals(0, statusReporter.getDateParseErrorsCount());
+			Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());
 
 			Assert.assertEquals(usageReporter.getTotalBytesRead(), 
 					data.getBytes(StandardCharsets.UTF_8).length -1);
+			Assert.assertEquals(usageReporter.getTotalBytesRead(),
+					statusReporter.getVolume());	
 			
 			// check header
 			int numFields = bb.getInt();		

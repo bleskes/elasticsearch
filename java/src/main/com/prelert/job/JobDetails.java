@@ -57,6 +57,7 @@ public class JobDetails
 	
 	static final public String COUNTS = "counts";
 	static final public String PROCESSED_RECORD_COUNT = "processedRecordCount";
+	static final public String PROCESSED_VOLUME = "processedVolume";
 	static final public String INVALID_DATE_COUNT = "invalidDateCount";
 	static final public String MISSING_FIELD_COUNT = "missingFieldCount";
 	static final public String OUT_OF_ORDER_TIME_COUNT = "outOfOrderTimeStampCount";
@@ -90,8 +91,7 @@ public class JobDetails
 	private URI m_DataEndpoint;
 	private URI m_ResultsEndpoint;
 	private URI m_LogsEndpoint;
-	
-	
+
 	private Counts m_Counts;
 	
 		
@@ -427,8 +427,7 @@ public class JobDetails
 	{
 		m_Counts = counts;
 	}
-	
-	
+		
 	/**
 	 * Prints the more salient fields in a JSON-like format suitable for logging.
 	 * If every field was written it woul spam the log file.
@@ -514,10 +513,14 @@ public class JobDetails
 		private long m_InvalidDateCount;
 		private long m_MissingFieldCount;
 		private long m_OutOfOrderTimeStampCount;
+		private long m_ProcessedVolume;
 		
 		/**
-		 * 
-		 * @return Number of records processed by this job
+		 * Number of records processed by this job.
+		 * This value is the number of records sent to the job
+		 * including any records that my be discarded for any 
+		 * reason e.g. because the date cannot be read
+		 * @return 
 		 */
 		public long getProcessedRecordCount() 
 		{
@@ -528,6 +531,24 @@ public class JobDetails
 		{
 			m_ProcessedRecordCount = count;
 		}
+		
+		/**
+		 * The total number of bytes sent to this job.
+		 * This value includes the bytes from any  records 
+		 * that have been discarded for any  reason 
+		 * e.g. because the date cannot be read
+		 * @return Volume in bytes
+		 */
+		public long getProcessedVolume()
+		{
+			return m_ProcessedVolume;
+		}
+		
+		public void setProcessedVolume(long volume)
+		{
+			m_ProcessedVolume = volume;
+		}
+		
 		
 		/**
 		 * The number of records with an invalid date field that could
@@ -573,7 +594,7 @@ public class JobDetails
 		public void setOutOfOrderTimeStampCount(long count) 
 		{
 			m_OutOfOrderTimeStampCount = count;
-		}
+		}	
 		
 		/**
 		 * Equality test
@@ -593,6 +614,7 @@ public class JobDetails
 			Counts that = (Counts)other;
 
 			return this.m_ProcessedRecordCount == that.m_ProcessedRecordCount &&
+					this.m_ProcessedVolume == that.m_ProcessedVolume &&
 					this.m_InvalidDateCount == that.m_InvalidDateCount &&
 					this.m_MissingFieldCount == that.m_MissingFieldCount &&
 					this.m_OutOfOrderTimeStampCount == that.m_OutOfOrderTimeStampCount;

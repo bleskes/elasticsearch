@@ -23,10 +23,11 @@ import org.elasticsearch.indices.IndexMissingException;
 public class ElasticSearchStatusReporter extends StatusReporter
 {
 	private Client m_Client;
-	
-	public ElasticSearchStatusReporter(Client client, String jobId, Logger logger)
+		
+	public ElasticSearchStatusReporter(Client client, String jobId, 
+			JobDetails.Counts counts, Logger logger)
 	{
-		super(jobId, logger);
+		super(jobId, counts, logger);
 		m_Client = client;
 	}
 		
@@ -35,7 +36,7 @@ public class ElasticSearchStatusReporter extends StatusReporter
 	 * Log a message then write to elastic search.
 	 */
 	@Override
-	protected void reportStatus(int totalRecords)
+	protected void reportStatus(long totalRecords)
 	{
 		String status = String.format("%d records written to autodetect %d had "
 				+ "missing fields, %d were discarded because the date could not be "
@@ -62,6 +63,7 @@ public class ElasticSearchStatusReporter extends StatusReporter
 			
 			Map<String, Object> updates = new HashMap<>();
 			updates.put(JobDetails.PROCESSED_RECORD_COUNT, getRecordsWrittenCount());
+			updates.put(JobDetails.PROCESSED_VOLUME, getVolume());
 			updates.put(JobDetails.INVALID_DATE_COUNT, getDateParseErrorsCount());
 			updates.put(JobDetails.MISSING_FIELD_COUNT, getMissingFieldErrorCount());
 			updates.put(JobDetails.OUT_OF_ORDER_TIME_COUNT, getOutOfOrderRecordCount());
