@@ -33,6 +33,7 @@ import java.util.List;
 import org.apache.log4j.Logger;
 
 import com.prelert.job.DataDescription;
+import com.prelert.job.usage.UsageReporter;
 import com.prelert.job.warnings.StatusReporter;
 
 /**
@@ -50,14 +51,16 @@ public class ProcessAndDataDescription
 	volatile private boolean m_IsInUse;
 	final private long m_TimeoutSeconds;
 	final private BufferedReader m_ErrorReader;	
-	private List<String> m_InterestingFields;
+	final private List<String> m_InterestingFields;
 	
-	final private Runnable m_OutputParser;
+	
+	private Runnable m_OutputParser;
 	private Thread m_OutputParserThread;
 
 	private Logger m_JobLogger;
 	
 	private StatusReporter m_StatusReporter;
+	private UsageReporter m_UsageReporter;
 
 	/**
 	 * Object for grouping the native process, its data description
@@ -69,11 +72,15 @@ public class ProcessAndDataDescription
 	 * @param timeout
 	 * @param interestingFields The list of fields used in the analysis
 	 * @param logger The job's logger
+	 * @param outputParser
+	 * @param usageReporter 
+	 * 	 
 	 */
 	public ProcessAndDataDescription(Process process, String jobId, 
 			DataDescription dd,
 			long timeout, List<String> interestingFields,
-			Logger logger, StatusReporter reporter, Runnable outputParser)
+			Logger logger, StatusReporter reporter, 
+			UsageReporter usageReporter, Runnable outputParser)
 	{
 		m_Process = process;
 		m_DataDescription = dd;
@@ -89,6 +96,7 @@ public class ProcessAndDataDescription
 		m_JobLogger = logger;
 		
 		m_OutputParser = outputParser;
+		m_UsageReporter = usageReporter;
 		
 		m_OutputParserThread = new Thread(m_OutputParser, jobId + "-Bucket-Parser");
 		m_OutputParserThread.start();
@@ -165,6 +173,12 @@ public class ProcessAndDataDescription
 		return m_StatusReporter;
 	}
 	
+	
+	
+	public UsageReporter getUsageReporter()
+	{
+		return m_UsageReporter;
+	}
 	
 	
 	/**

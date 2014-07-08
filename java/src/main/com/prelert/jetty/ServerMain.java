@@ -117,9 +117,12 @@ public class ServerMain
 		contextHandler.setContextPath("/");
 		contextHandler.setErrorHandler(new ApiErrorHandler());
 		
-		// Add cross origin accept filter
+		// Add cross origin accept filter, using wildcard '*' for origins
+		// and explicitly allowing GET,POST,DELETE,PUT and HEAD http methods.
 		CrossOriginFilter crossOrigin = new CrossOriginFilter();
 		FilterHolder filterHolder = new FilterHolder(crossOrigin);	
+		filterHolder.setInitParameter("allowedMethods", "GET,POST,DELETE,PUT,HEAD");
+		filterHolder.setInitParameter("allowedOrigins", "*");
 		contextHandler.addFilter(filterHolder, "/*", 
 				EnumSet.of(DispatcherType.REQUEST));
 		

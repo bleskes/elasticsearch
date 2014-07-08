@@ -51,11 +51,13 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.prelert.job.DataDescription;
+import com.prelert.job.input.CountingInputStream;
 import com.prelert.job.input.LengthEncodedWriter;
 import com.prelert.job.warnings.HighProportionOfBadTimestampsException;
 import com.prelert.job.warnings.OutOfOrderRecordsException;
 import com.prelert.job.warnings.StatusReporter;
 import com.prelert.rs.data.ErrorCode;
+import com.prelert.job.usage.UsageReporter;
 
 
 /**
@@ -82,6 +84,7 @@ public class PipeToProcess
 	 * @param is
 	 * @param os
 	 * @param reporter
+	 * @param usageReporter
 	 * @param logger Errors are logged to this logger
 	 * @return The number of records written to the outputstream
 	 * @throws IOException
@@ -90,10 +93,11 @@ public class PipeToProcess
 	 * of the records read have missing fields
 	 * @throws OutOfOrderRecordsException 
 	 */
-	static public long pipeCsv(DataDescription dd, List<String> analysisFields,
-		InputStream is, OutputStream os, StatusReporter reporter, Logger logger)
-	throws IOException, MissingFieldException, HighProportionOfBadTimestampsException,
-		OutOfOrderRecordsException
+	static public void pipeCsv(DataDescription dd, List<String> analysisFields,
+		InputStream is, OutputStream os, StatusReporter reporter,
+		UsageReporter usageReporter, Logger logger)
+				throws IOException, MissingFieldException, HighProportionOfBadTimestampsException,
+				OutOfOrderRecordsException
 	{	
 		CsvPreference csvPref = new CsvPreference.Builder(
 				dd.getQuoteCharacter(),
@@ -103,10 +107,11 @@ public class PipeToProcess
 		int recordsWritten = 0;
 		int lineCount = 0;
 		
-		CsvListReader csvReader = new CsvListReader(new InputStreamReader(is), csvPref);
+		CountingInputStream countingStream = new CountingInputStream(is, usageReporter);
+		CsvListReader csvReader = new CsvListReader(new InputStreamReader(countingStream), csvPref);
 		try 
 		{
-			String[] header = csvReader.getHeader(true);
+			String[] header = csvReader.getHeader(true);		
 			
 			List<Pair<String, Integer>> fieldIndexes = 
 					findFieldIndexes(header, dd.getTimeField(), analysisFields);
@@ -158,8 +163,7 @@ public class PipeToProcess
 				throw new MissingFieldException(dd.getTimeField(), message, 
 						ErrorCode.MISSING_FIELD);
 			}	
-			
-
+					
 			int numFields = fieldIndexes.size();
 			List<String> line;
 			
@@ -231,6 +235,7 @@ public class PipeToProcess
 				}	
 			}
 			
+			usageReporter.reportUsage();
 			lengthEncodedWriter.flush();
 		}
 		finally
@@ -238,12 +243,9 @@ public class PipeToProcess
 			csvReader.close();
 		}
 
-		
 		reporter.finishReporting();
 		logger.debug(String.format("Transferred %d of %d CSV records to autodetect.", 
 				recordsWritten, lineCount));
-		
-		return recordsWritten;
 	}
 	
 
@@ -260,6 +262,7 @@ public class PipeToProcess
 	 * @param is
 	 * @param os
 	 * @param reporter
+	 * @param usageReporter
 	 * @param logger Errors are logged to this logger
 	 * @return The number of records written to the outputstream
 	 * @throws IOException 
@@ -269,7 +272,8 @@ public class PipeToProcess
 	 * @throws OutOfOrderRecordsException 
 	 */
 	static public void transformAndPipeCsv(DataDescription dd, List<String> analysisFields,
-			InputStream is, OutputStream os, StatusReporter reporter, Logger logger)
+			InputStream is, OutputStream os, StatusReporter reporter,
+			UsageReporter usageReporter, Logger logger)
 	throws IOException, MissingFieldException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException
 	{
 		String timeField = dd.getTimeField();
@@ -282,11 +286,11 @@ public class PipeToProcess
 		int recordsWritten = 0;
 		int lineCount = 0;
 		
-		CsvListReader csvReader = new CsvListReader(new InputStreamReader(is), csvPref);
+		CountingInputStream countingStream = new CountingInputStream(is, usageReporter);		
+		CsvListReader csvReader = new CsvListReader(new InputStreamReader(countingStream), csvPref);
 		try
 		{
 			String[] header = csvReader.getHeader(true);	
-			
 			List<Pair<String, Integer>> fieldIndexes = 
 					findFieldIndexes(header, timeField, analysisFields);
 							
@@ -476,6 +480,7 @@ public class PipeToProcess
 			}
 		
 			reporter.finishReporting();
+			usageReporter.reportUsage();
 			
 			logger.debug(String.format("Transferred %d of %d CSV records to autodetect.", 
 					recordsWritten, lineCount));
@@ -530,6 +535,7 @@ public class PipeToProcess
 	 * @param is Closed at the end of this function
 	 * @param os
 	 * @param reporter
+	 * @param usageReporter
 	 * @param logger Errors are logged to this logger 
 	 * @throws JsonParseException 
 	 * @throws IOException
@@ -539,19 +545,22 @@ public class PipeToProcess
 	 */
 	static public void transformAndPipeJson(DataDescription dd, 
 			List<String> analysisFields, InputStream is, OutputStream os,
-			StatusReporter reporter, Logger logger) 
+			StatusReporter statusReporter, UsageReporter usageReporter,Logger logger) 
 	throws JsonParseException, IOException, HighProportionOfBadTimestampsException,
 		OutOfOrderRecordsException
 	{
-		try (JsonParser parser = new JsonFactory().createParser(is))
+		CountingInputStream countingStream = new CountingInputStream(is, usageReporter);
+		try (JsonParser parser = new JsonFactory().createParser(countingStream))
 		{
 			if (dd.isTransformTime())
 			{
-				pipeJsonAndTransformTime(parser, analysisFields, os, dd, reporter, logger);
+				pipeJsonAndTransformTime(parser, analysisFields, os, dd, 
+						statusReporter, usageReporter, countingStream, logger);
 			}
 			else
 			{
-				pipeJson(parser, dd.getTimeField(), analysisFields, os, reporter, logger);
+				pipeJson(parser, dd.getTimeField(), analysisFields, os, 
+						statusReporter, usageReporter, countingStream, logger);
 			}
 
 			os.flush();
@@ -567,6 +576,8 @@ public class PipeToProcess
 	 * @param analysisFields
 	 * @param os
 	 * @param reporter
+	 * @param usageReporter
+	 * @param countingStream
 	 * @param logger Errors are logged to this logger
 	 * @throws IOException
 	 * @throws JsonParseException
@@ -576,7 +587,8 @@ public class PipeToProcess
 	 */
 	static private void pipeJson(JsonParser parser, String timeField,
 			List<String> analysisFields, OutputStream os,
-			StatusReporter reporter, Logger logger)
+			StatusReporter reporter, UsageReporter usageReporter, 
+			CountingInputStream countingStream,	Logger logger)
 	throws JsonParseException, IOException, HighProportionOfBadTimestampsException, 
 		OutOfOrderRecordsException
 	{
@@ -691,6 +703,8 @@ public class PipeToProcess
 			
 			++recordCount;			
 		}
+		
+		usageReporter.reportUsage();
 
 		reporter.finishReporting();
 		logger.debug(String.format("Transferred %d of %d Json records to autodetect.", 
@@ -708,6 +722,8 @@ public class PipeToProcess
 	 * @param os
 	 * @param dd
 	 * @param reporter
+	 * @param usageReporter
+	 * @param countingStream
 	 * @param logger Errors are logged to this logger
 	 * @throws IOException
 	 * @throws JsonParseException
@@ -717,7 +733,9 @@ public class PipeToProcess
 	 */
 	static private void pipeJsonAndTransformTime(JsonParser parser, 
 			List<String> analysisFields, OutputStream os,
-			DataDescription dd, StatusReporter reporter, Logger logger)
+			DataDescription dd, StatusReporter reporter,
+			UsageReporter usageReporter, CountingInputStream countingStream, 
+			Logger logger)
 	throws JsonParseException, IOException, HighProportionOfBadTimestampsException, 
 		OutOfOrderRecordsException
 	{
@@ -907,9 +925,12 @@ public class PipeToProcess
 		}
 		
 		reporter.finishReporting();
+		usageReporter.reportUsage();
 		
 		logger.debug(String.format("Transferred %d of %d Json records to autodetect.", 
 				recordsWritten, recordCount));
+		
+		logger.debug("Transferred " + recordCount + " Json records to autodetect." );
 	}
 	
 	
