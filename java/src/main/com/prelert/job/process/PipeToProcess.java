@@ -236,7 +236,6 @@ public class PipeToProcess
 			}
 			
 			usageReporter.reportUsage();
-			
 			lengthEncodedWriter.flush();
 		}
 		finally
@@ -481,6 +480,7 @@ public class PipeToProcess
 			}
 		
 			reporter.finishReporting();
+			usageReporter.reportUsage();
 			
 			logger.debug(String.format("Transferred %d of %d CSV records to autodetect.", 
 					recordsWritten, lineCount));
