@@ -280,7 +280,7 @@ public class JobManager implements JobDetailsProvider
 		}
 	}
 	
-		
+	
 	/**
 	 * Get details of all Jobs.
 	 * Searches across all job indexes for job documents
@@ -450,16 +450,19 @@ public class JobManager implements JobDetailsProvider
 	 * @param jobId
 	 * @param description
 	 * @throws UnknownJobException
-	 * @throws JsonProcessingException 
 	 */
 	public void setDescription(String jobId, String description)
-	throws UnknownJobException, JsonProcessingException
+	throws UnknownJobException
 	{
-		Map<String, Object> update = new HashMap<>();
-		update.put(JobDetails.DESCRIPTION, description);
-		m_Client.prepareUpdate(jobId, JobDetails.TYPE, jobId)
-				.setDoc(update)
-				.get();
+		if (jobExists(jobId))
+		{
+			Map<String, Object> update = new HashMap<>();
+			update.put(JobDetails.DESCRIPTION, description);
+			m_Client.prepareUpdate(jobId, JobDetails.TYPE, jobId)
+									.setDoc(update)
+									.setRefresh(true)
+									.get();
+		}
 	}
 	
 	/**
@@ -784,56 +787,26 @@ public class JobManager implements JobDetailsProvider
 	public boolean setJobStatus(String jobId, JobStatus status)
 	throws UnknownJobException
 	{
-		// update job status
 		try
 		{
-			GetResponse response = m_Client.prepareGet(jobId, JobDetails.TYPE, 
-					jobId).get();
-
-			if (response.isExists() == false)
-			{				
-				s_Logger.error("Cannot set job status no job found with jobId = " 
-							+ jobId);
-				return false;
-			}
-
-			long lastVersion = response.getVersion();
-
-			JobDetails job = m_ObjectMapper.convertValue(response.getSource(), 
-					JobDetails.class);
-			job.setStatus(status);
-
-			String content;
-			try
+			if (jobExists(jobId))
 			{
-				content = jobToContent(job);
+				Map<String, Object> update = new HashMap<>();
+				update.put(JobDetails.STATUS, status);
+				m_Client.prepareUpdate(jobId, JobDetails.TYPE, jobId)
+					.setDoc(update)
+					.setRefresh(true)
+					.get();
 			}
-			catch (IOException ioe)
-			{
-				s_Logger.error("Error serialising job");
-				return false;
-			}
-
-			IndexResponse jobIndexResponse = m_Client.prepareIndex(
-					jobId, JobDetails.TYPE, jobId)
-					.setSource(content).get();
-			
-			if (jobIndexResponse.getVersion() <= lastVersion)
-			{
-				s_Logger.error("Error saving job- document not updated");
-				return false;
-			}
-
-			m_Client.admin().indices().refresh(new RefreshRequest(jobId)).actionGet();
 		}
-		catch (IndexMissingException e)
+		catch (UnknownJobException e)
 		{
-			String msg = String.format("Unknown job '%s'. Error setting the job's status.", 
-					jobId);
+			String msg = String.format("Unknown job '%s'. Error setting the job's "
+					+ " status.", jobId);
 			s_Logger.error(msg);
 			throw new UnknownJobException(jobId, msg, ErrorCode.MISSING_JOB_ERROR);
-		}
-		
+		}		
+			
 		return true;		
 	}
 	
@@ -842,57 +815,27 @@ public class JobManager implements JobDetailsProvider
 			JobStatus status)
 	throws UnknownJobException
 	{
-		// update job status
 		try
 		{
-			GetResponse response = m_Client.prepareGet(jobId, JobDetails.TYPE, 
-					jobId).get();
-
-			if (response.isExists() == false)
-			{				
-				s_Logger.error("Cannot set job finish time and status no job "
-						+ "found with jobId = " + jobId);
-				return false;
-			}
-
-			long lastVersion = response.getVersion();
-
-			JobDetails job = m_ObjectMapper.convertValue(response.getSource(), 
-					JobDetails.class);
-			job.setFinishedTime(new Date());
-			job.setStatus(status);
-
-			String content;
-			try
+			if (jobExists(jobId))
 			{
-				content = jobToContent(job);
+				Map<String, Object> update = new HashMap<>();
+				update.put(JobDetails.FINISHED_TIME, time);
+				update.put(JobDetails.STATUS, status);
+				m_Client.prepareUpdate(jobId, JobDetails.TYPE, jobId)
+					.setDoc(update)
+					.setRefresh(true)
+					.get();
 			}
-			catch (IOException ioe)
-			{
-				s_Logger.error("Error serialising job details");
-				return false;
-			}
-
-			IndexResponse jobIndexResponse = m_Client.prepareIndex(
-					jobId, JobDetails.TYPE, jobId)
-					.setSource(content).get();
-
-			if (jobIndexResponse.getVersion() <= lastVersion)
-			{
-				s_Logger.error("Error saving job- document not updated");
-				return false;
-			}
-
-			m_Client.admin().indices().refresh(new RefreshRequest(jobId)).actionGet();
 		}
-		catch (IndexMissingException e)
+		catch (UnknownJobException e)
 		{
 			String msg = String.format("Unknown job '%s'. Error writing the job's "
 					+ "finish time and status.", jobId);
 			s_Logger.error(msg);
 			throw new UnknownJobException(jobId, msg, ErrorCode.MISSING_JOB_ERROR);
-		}
-		
+		}		
+			
 		return true;	
 	}
 	
@@ -1139,6 +1082,46 @@ public class JobManager implements JobDetailsProvider
 	
 	
 	/**
+	 * Returns true if the job exists else an 
+	 * <code>UnknownJobException</code> is thrown.
+	 * 
+	 * @param jobId
+	 * @return
+	 * @throws UnknownJobException
+	 */
+	private boolean jobExists(String jobId) 
+	throws UnknownJobException
+	{
+		try
+		{
+			GetResponse response = m_Client.prepareGet(jobId, JobDetails.TYPE, jobId)
+							.setFetchSource(false)
+							.setFields()				
+							.get();
+			
+			if (response.isExists() == false)
+			{
+				String msg = "No job document with id " + jobId;
+				s_Logger.warn(msg);
+				throw new UnknownJobException(jobId, msg,
+						ErrorCode.MISSING_JOB_ERROR);
+			}
+		}
+		catch (IndexMissingException e)
+		{
+			// the job does not exist
+			String msg = "Missing Index no job with id " + jobId;
+			s_Logger.warn(msg);
+			throw new UnknownJobException(jobId, "No known job with id '" + jobId + "'", 
+					ErrorCode.MISSING_JOB_ERROR);
+		}
+		
+		return true;
+	}
+	
+	
+	
+	/**
 	 * Return true if the job id is unique else if it is already used
 	 * throw JobAliasAlreadyExistsException
 	 * @param jobId 
@@ -1158,6 +1141,7 @@ public class JobManager implements JobDetailsProvider
 		
 		return true;
 	}
+	
 	
 	/**
 	 * Convert job to a JSON string using the object mapper.
