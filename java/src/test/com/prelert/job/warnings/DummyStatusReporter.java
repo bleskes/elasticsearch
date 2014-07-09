@@ -39,7 +39,7 @@ public class DummyStatusReporter extends StatusReporter
 	}
 
 	@Override
-	protected void reportStatus(int totalRecords)
+	protected void reportStatus(long totalRecords)
 	{
 		// do nothing
 	}

@@ -28,6 +28,8 @@ package com.prelert.job.warnings;
 
 import org.apache.log4j.Logger;
 
+import com.prelert.job.JobDetails;
+
 /**
  * Abstract status reporter for tracking all the good/bad
  * records written to the API. Call one of the reportXXX() methods
@@ -55,13 +57,14 @@ abstract public class StatusReporter
 	public static final String ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS_PROP = 
 			"max.percent.outoforder.errors";	
 	
-	private int m_RecordsWritten = 0;
-	private int m_DateParseErrorsCount = 0;
-	private int m_MissingFieldErrorCount = 0;
-	private int m_OutOfOrderRecordCount = 0;
+	private long m_RecordsWritten = 0;
+	private long m_Volume = 0;
+	private long m_DateParseErrorsCount = 0;
+	private long m_MissingFieldErrorCount = 0;
+	private long m_OutOfOrderRecordCount = 0;
 	
-	private int m_RecordCountDivisor = 100;
-	private int m_LastRecordCountQuotient = 0;
+	private long m_RecordCountDivisor = 100;
+	private long m_LastRecordCountQuotient = 0;
 	
 	private int m_AcceptablePercentDateParseErrors;
 	private int m_AcceptablePercentOutOfOrderErrors;
@@ -69,11 +72,12 @@ abstract public class StatusReporter
 	protected String m_JobId;
 	protected Logger m_Logger;
 	
+	
 	public StatusReporter(String jobId, Logger logger)
 	{
 		m_JobId = jobId;
 		m_Logger = logger;
-		
+			
 		m_AcceptablePercentDateParseErrors = ACCEPTABLE_PERCENTAGE_DATE_PARSE_ERRORS;
 		
 		String prop = System.getProperty(ACCEPTABLE_PERCENTAGE_DATE_PARSE_ERRORS_PROP);
@@ -99,6 +103,17 @@ abstract public class StatusReporter
 		}		
 	}
 	
+	public StatusReporter(String jobId, JobDetails.Counts counts, Logger logger)
+	{
+		this(jobId, logger);
+		
+		m_RecordsWritten = counts.getProcessedRecordCount();
+		m_Volume = counts.getProcessedVolume();
+		m_DateParseErrorsCount = counts.getInvalidDateCount();
+		m_MissingFieldErrorCount = counts.getMissingFieldCount();
+		m_OutOfOrderRecordCount = counts.getOutOfOrderTimeStampCount();	
+	}
+	
 	/**
 	 * Add <code>recordsWritten</code> to the running total
 	 * and report status if at a status reporting boundary.
@@ -113,7 +128,7 @@ abstract public class StatusReporter
 		m_RecordsWritten += recordsWritten;
 		
 		// report at various boundaries
-		int totalRecords = sumTotalRecords();
+		long totalRecords = sumTotalRecords();
 		if (isReportingBoundary(totalRecords))
 		{
 			reportStatus(totalRecords);
@@ -137,7 +152,7 @@ abstract public class StatusReporter
 	/**
 	 * Increments the date parse error count
 	 */
-	public void reportDateParseError(String date)
+	public void reportDateParseError()
 	{
 		m_DateParseErrorsCount++;
 	}
@@ -145,51 +160,67 @@ abstract public class StatusReporter
 	/**
 	 * Increments the missing field count
 	 */
-	public void reportMissingField(String field) 
+	public void reportMissingField() 
 	{
 		m_MissingFieldErrorCount++;
+	}
+	
+	/**
+	 * Add <code>newBytes</code> to the total volume processed
+	 * @param newBytes
+	 */
+	public void reportBytesRead(long newBytes)
+	{
+		m_Volume += newBytes;
 	}
 
 	/**
 	 * Increments the out of order record count
 	 */
-	public void reportOutOfOrderRecord(long date, long previousDate)
+	public void reportOutOfOrderRecord()
 	{
 		m_OutOfOrderRecordCount++;
 	}
 	
-	public int getRecordsWrittenCount() 
+	public long getRecordsWrittenCount() 
 	{
 		return m_RecordsWritten;
 	}
 
-	public int getDateParseErrorsCount() 
+	public long getDateParseErrorsCount() 
 	{
 		return m_DateParseErrorsCount;
 	}
 
-	public int getMissingFieldErrorCount() 
+	public long getMissingFieldErrorCount() 
 	{
 		return m_MissingFieldErrorCount;
 	}
 
-	public int getOutOfOrderRecordCount() 
+	public long getOutOfOrderRecordCount() 
 	{
 		return m_OutOfOrderRecordCount;
 	}
 	
+	public long getVolume()
+	{
+		return m_Volume;
+	}
+		
 	/**
 	 * Total records seen = records written + date parse error records count 
 	 * + out of order record count.
 	 * 
 	 * Missing field records aren't counted as they are still written.
 	 * 
-	 * @return
+	 * @return At least 1 even is the actual sum is 0
 	 */
-	public int sumTotalRecords()
+	public long sumTotalRecords()
 	{
-		return m_RecordsWritten + m_DateParseErrorsCount + 
+		long sum = m_RecordsWritten + m_DateParseErrorsCount + 
 				+ m_OutOfOrderRecordCount;
+		
+		return (sum > 0) ? sum : 1;
 	}
 
 	public int getAcceptablePercentDateParseErrors()
@@ -224,7 +255,7 @@ abstract public class StatusReporter
 	public void finishReporting() 
 	throws HighProportionOfBadTimestampsException, OutOfOrderRecordsException
 	{
-		int totalRecords = sumTotalRecords();
+		long totalRecords = sumTotalRecords();
 		reportStatus(totalRecords);
 		checkStatus(totalRecords);
 	}
@@ -242,7 +273,7 @@ abstract public class StatusReporter
 	 * @param totalRecords
 	 * @return
 	 */
-	private boolean isReportingBoundary(int totalRecords)
+	private boolean isReportingBoundary(long totalRecords)
 	{
 		// after 20,000 records update every 10,000
 		int divisor = 10000;
@@ -267,7 +298,7 @@ abstract public class StatusReporter
 			return false;
 		}
 		
-		int quotient = totalRecords / divisor;
+		long quotient = totalRecords / divisor;
 		if (quotient > m_LastRecordCountQuotient)
 		{
 			m_LastRecordCountQuotient = quotient;
@@ -288,17 +319,17 @@ abstract public class StatusReporter
 	 * @throws OutOfOrderRecordsException
 	 * 
 	 */
-	private void checkStatus(int totalRecords)
+	private void checkStatus(long totalRecords)
 	throws HighProportionOfBadTimestampsException, OutOfOrderRecordsException
 	{
-		int percentBadDate = (getDateParseErrorsCount() * 100) / totalRecords;
+		long percentBadDate = (getDateParseErrorsCount() * 100) / totalRecords;
 		if (percentBadDate > getAcceptablePercentDateParseErrors())
 		{
 			throw new HighProportionOfBadTimestampsException(
 					getDateParseErrorsCount(), totalRecords);
 		}
 		
-		int percentOutOfOrder = (getOutOfOrderRecordCount() * 100) / totalRecords;
+		long percentOutOfOrder = (getOutOfOrderRecordCount() * 100) / totalRecords;
 		if (percentOutOfOrder > getAcceptablePercentOutOfOrderErrors())
 		{
 			throw new OutOfOrderRecordsException(
@@ -312,5 +343,5 @@ abstract public class StatusReporter
 	 * 
 	 * @param totalRecords
 	 */
-	abstract protected void reportStatus(int totalRecords);
+	abstract protected void reportStatus(long totalRecords);
 }

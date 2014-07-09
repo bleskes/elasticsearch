@@ -83,7 +83,7 @@ public class PipeToProcess
 	 * @param analysisFields
 	 * @param is
 	 * @param os
-	 * @param reporter
+	 * @param statusReporter
 	 * @param usageReporter
 	 * @param logger Errors are logged to this logger
 	 * @return The number of records written to the outputstream
@@ -94,7 +94,7 @@ public class PipeToProcess
 	 * @throws OutOfOrderRecordsException 
 	 */
 	static public void pipeCsv(DataDescription dd, List<String> analysisFields,
-		InputStream is, OutputStream os, StatusReporter reporter,
+		InputStream is, OutputStream os, StatusReporter statusReporter,
 		UsageReporter usageReporter, Logger logger)
 				throws IOException, MissingFieldException, HighProportionOfBadTimestampsException,
 				OutOfOrderRecordsException
@@ -107,7 +107,8 @@ public class PipeToProcess
 		int recordsWritten = 0;
 		int lineCount = 0;
 		
-		CountingInputStream countingStream = new CountingInputStream(is, usageReporter);
+		CountingInputStream countingStream = new CountingInputStream(is, 
+				usageReporter, statusReporter);
 		CsvListReader csvReader = new CsvListReader(new InputStreamReader(countingStream), csvPref);
 		try 
 		{
@@ -134,7 +135,7 @@ public class PipeToProcess
 							p.First, Arrays.toString(header));
 					logger.error(msg);
 					
-					reporter.reportMissingField(p.First);
+					statusReporter.reportMissingField();
 
 					throw new MissingFieldException(p.First, msg, 
 							ErrorCode.MISSING_FIELD);
@@ -178,7 +179,7 @@ public class PipeToProcess
 				if (maxIndex >= line.size())
 				{
 					logger.warn("Not enough fields in csv record " + line);
-					reporter.reportMissingField(Arrays.toString(line.toArray()));
+					statusReporter.reportMissingField();
 					
 					Arrays.fill(record, "");
 					for (Pair<String, Integer> p : fieldIndexes)
@@ -212,14 +213,14 @@ public class PipeToProcess
 					if (epoch < lastEpoch)
 					{
 						// out of order 
-						reporter.reportOutOfOrderRecord(epoch, lastEpoch);
+						statusReporter.reportOutOfOrderRecord();
 					}
 					else
 					{	// write record
 						record[timeFieldIndex] = Long.toString(epoch);	
 						lengthEncodedWriter.writeRecord(record);
 						
-						reporter.reportRecordWritten();
+						statusReporter.reportRecordWritten();
 						recordsWritten++;
 						lastEpoch = epoch;
 					}
@@ -230,20 +231,22 @@ public class PipeToProcess
 							"Cannot parse timestamp '%s' as epoch value",								
 							record[timeFieldIndex]);
 
-					reporter.reportDateParseError(record[timeFieldIndex]);
+					statusReporter.reportDateParseError();
 					logger.error(message);
 				}	
 			}
 			
-			usageReporter.reportUsage();
 			lengthEncodedWriter.flush();
+
+			statusReporter.finishReporting();
 		}
 		finally
 		{
 			csvReader.close();
+
+			usageReporter.reportUsage();
 		}
 
-		reporter.finishReporting();
 		logger.debug(String.format("Transferred %d of %d CSV records to autodetect.", 
 				recordsWritten, lineCount));
 	}
@@ -261,7 +264,7 @@ public class PipeToProcess
 	 * @param analysisFields
 	 * @param is
 	 * @param os
-	 * @param reporter
+	 * @param statusReporter
 	 * @param usageReporter
 	 * @param logger Errors are logged to this logger
 	 * @return The number of records written to the outputstream
@@ -272,7 +275,7 @@ public class PipeToProcess
 	 * @throws OutOfOrderRecordsException 
 	 */
 	static public void transformAndPipeCsv(DataDescription dd, List<String> analysisFields,
-			InputStream is, OutputStream os, StatusReporter reporter,
+			InputStream is, OutputStream os, StatusReporter statusReporter,
 			UsageReporter usageReporter, Logger logger)
 	throws IOException, MissingFieldException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException
 	{
@@ -286,7 +289,8 @@ public class PipeToProcess
 		int recordsWritten = 0;
 		int lineCount = 0;
 		
-		CountingInputStream countingStream = new CountingInputStream(is, usageReporter);		
+		CountingInputStream countingStream = new CountingInputStream(is, 
+				usageReporter, statusReporter);		
 		CsvListReader csvReader = new CsvListReader(new InputStreamReader(countingStream), csvPref);
 		try
 		{
@@ -312,7 +316,7 @@ public class PipeToProcess
 								p.First, Arrays.toString(header));
 					logger.error(msg);
 					
-					reporter.reportMissingField(timeField);
+					statusReporter.reportMissingField();
 			
 					throw new MissingFieldException(p.First, msg, ErrorCode.MISSING_FIELD);
 				}
@@ -333,7 +337,7 @@ public class PipeToProcess
 						+ " in CSV header '%s'", timeField, Arrays.toString(header));
 				logger.error(message);
 				
-				reporter.reportMissingField(timeField);
+				statusReporter.reportMissingField();
 				throw new MissingFieldException(timeField, message, ErrorCode.MISSING_FIELD);
 			}	
 			
@@ -358,7 +362,7 @@ public class PipeToProcess
 					if (maxIndex >= line.size())
 					{
 						logger.warn("Not enough fields in csv record " + line);
-						reporter.reportMissingField(Arrays.toString(line.toArray()));
+						statusReporter.reportMissingField();
 						
 						Arrays.fill(record, "");
 						for (Pair<String, Integer> p : fieldIndexes)
@@ -391,7 +395,7 @@ public class PipeToProcess
 						if (epoch < lastEpoch)
 						{
 							// out of order 
-							reporter.reportOutOfOrderRecord(epoch, lastEpoch);
+							statusReporter.reportOutOfOrderRecord();
 						}
 						else
 						{	// write record
@@ -399,7 +403,7 @@ public class PipeToProcess
 							lengthEncodedWriter.writeRecord(record);
 							
 							recordsWritten++;
-							reporter.reportRecordWritten();
+							statusReporter.reportRecordWritten();
 							lastEpoch = epoch;
 						}
 					}
@@ -408,7 +412,7 @@ public class PipeToProcess
 						String message = String.format(
 								"Cannot parse epoch ms timestamp '%s'",	record[timeFieldIndex]);							
 
-						reporter.reportDateParseError(record[timeFieldIndex]);
+						statusReporter.reportDateParseError();
 						logger.error(message);
 					}						
 				}
@@ -425,7 +429,7 @@ public class PipeToProcess
 					if (maxIndex >= line.size())
 					{
 						logger.error("Not enough fields in csv record " + line);
-						reporter.reportMissingField(Arrays.toString(line.toArray()));
+						statusReporter.reportMissingField();
 						
 						Arrays.fill(record, "");
 						for (Pair<String, Integer> p : fieldIndexes)
@@ -455,7 +459,7 @@ public class PipeToProcess
 						if (epoch < lastEpoch)
 						{
 							// out of order 
-							reporter.reportOutOfOrderRecord(epoch, lastEpoch);
+							statusReporter.reportOutOfOrderRecord();
 						}
 						else
 						{	// write record
@@ -463,7 +467,7 @@ public class PipeToProcess
 							lengthEncodedWriter.writeRecord(record);
 							
 							recordsWritten++;
-							reporter.reportRecordWritten();
+							statusReporter.reportRecordWritten();
 							lastEpoch = epoch;
 						}
 					}
@@ -473,24 +477,26 @@ public class PipeToProcess
 						String message = String.format("Cannot parse date '%s' with format string '%s'",
 								date, dd.getTimeFormat());
 						
-						reporter.reportDateParseError(date);
+						statusReporter.reportDateParseError();
 						logger.error(message);
 					}		
 				}
 			}
 		
-			reporter.finishReporting();
-			usageReporter.reportUsage();
 			
 			logger.debug(String.format("Transferred %d of %d CSV records to autodetect.", 
 					recordsWritten, lineCount));
 			
 			// flush the output
 			os.flush();
+
+			statusReporter.finishReporting();
 		}
 		finally
 		{
 			csvReader.close();
+
+			usageReporter.reportUsage();
 		}		
 	}
 	
@@ -549,7 +555,9 @@ public class PipeToProcess
 	throws JsonParseException, IOException, HighProportionOfBadTimestampsException,
 		OutOfOrderRecordsException
 	{
-		CountingInputStream countingStream = new CountingInputStream(is, usageReporter);
+		CountingInputStream countingStream = new CountingInputStream(is, 
+				usageReporter, statusReporter);
+
 		try (JsonParser parser = new JsonFactory().createParser(countingStream))
 		{
 			if (dd.isTransformTime())
@@ -563,7 +571,11 @@ public class PipeToProcess
 						statusReporter, usageReporter, countingStream, logger);
 			}
 
+		}
+		finally
+		{
 			os.flush();
+			usageReporter.reportUsage();			
 		}
 	}
 
@@ -622,7 +634,7 @@ public class PipeToProcess
 			String missing = firstMissingField(allFields, gotFields); 
 			if (missing != null)
 			{
-				reporter.reportMissingField(missing);
+				reporter.reportMissingField();
 			}
 			
 			try
@@ -642,7 +654,7 @@ public class PipeToProcess
 						"Cannot parse timestamp '%s' as epoch value",								
 						record[timeFieldIndex]);
 
-				reporter.reportDateParseError(record[timeFieldIndex]);
+				reporter.reportDateParseError();
 				logger.error(message);						
 			}
 			
@@ -650,7 +662,7 @@ public class PipeToProcess
 		else
 		{
 			logger.warn("Missing time field from JSON document");
-			reporter.reportMissingField(timeField);							
+			reporter.reportMissingField();							
 		}		
 		
 		long lastEpoch = 0;
@@ -662,7 +674,7 @@ public class PipeToProcess
 				String missing = firstMissingField(allFields, gotFields); 
 				if (missing != null)
 				{
-					reporter.reportMissingField(missing);
+					reporter.reportMissingField();
 				}
 				
 				try
@@ -673,7 +685,7 @@ public class PipeToProcess
 					if (epoch < lastEpoch)
 					{
 						// out of order 
-						reporter.reportOutOfOrderRecord(epoch, lastEpoch);
+						reporter.reportOutOfOrderRecord();
 					}
 					else
 					{	// write record
@@ -691,21 +703,19 @@ public class PipeToProcess
 							"Cannot parse timestamp '%s' as epoch value",								
 							record[timeFieldIndex]);
 					
-					reporter.reportDateParseError(record[timeFieldIndex]);
+					reporter.reportDateParseError();
 					logger.error(message);						
 				}
 			}
 			else
 			{
 				logger.warn("Missing time field from JSON document");
-				reporter.reportMissingField(timeField);							
+				reporter.reportMissingField();							
 			}
 			
 			++recordCount;			
 		}
 		
-		usageReporter.reportUsage();
-
 		reporter.finishReporting();
 		logger.debug(String.format("Transferred %d of %d Json records to autodetect.", 
 				recordsWritten, recordCount));
@@ -777,7 +787,7 @@ public class PipeToProcess
 						record[timeFieldIndex]);
 				logger.error(message);
 				
-				reporter.reportDateParseError(record[timeFieldIndex]);
+				reporter.reportDateParseError();
 			}
 		}
 		else
@@ -793,7 +803,7 @@ public class PipeToProcess
 						"' as a date using format string '" +
 						dd.getTimeFormat() + "'");
 				
-				reporter.reportDateParseError(record[timeFieldIndex]);
+				reporter.reportDateParseError();
 			}
 		}
 		
@@ -806,7 +816,7 @@ public class PipeToProcess
 			String missing = firstMissingField(allFields, gotFields); 
 			if (missing != null)
 			{
-				reporter.reportMissingField(missing);
+				reporter.reportMissingField();
 			}
 			
 			lengthEncodedWriter.writeRecord(record);
@@ -816,7 +826,7 @@ public class PipeToProcess
 		else
 		{
 			logger.info("Missing time field from JSON document");
-			reporter.reportMissingField(timeField);							
+			reporter.reportMissingField();							
 		}
 		
 		long lastEpoch = 0;
@@ -832,7 +842,7 @@ public class PipeToProcess
 					String missing = firstMissingField(allFields, gotFields); 
 					if (missing != null)
 					{
-						reporter.reportMissingField(missing);
+						reporter.reportMissingField();
 					}
 
 					try
@@ -841,7 +851,7 @@ public class PipeToProcess
 						if (epoch < lastEpoch)
 						{
 							// out of order 
-							reporter.reportOutOfOrderRecord(epoch, lastEpoch);
+							reporter.reportOutOfOrderRecord();
 						}
 						else
 						{	// write record
@@ -860,13 +870,13 @@ public class PipeToProcess
 								record[timeFieldIndex]);
 						logger.error(message);
 						
-						reporter.reportDateParseError(record[timeFieldIndex]);
+						reporter.reportDateParseError();
 					}					
 				}
 				else
 				{
 					logger.info("Missing time field from JSON document");
-					reporter.reportMissingField(timeField);							
+					reporter.reportMissingField();							
 				}
 				
 				recordCount++;
@@ -883,7 +893,7 @@ public class PipeToProcess
 					String missing = firstMissingField(allFields, gotFields); 
 					if (missing != null)
 					{
-						reporter.reportMissingField(missing);
+						reporter.reportMissingField();
 					}
 
 					try
@@ -892,7 +902,7 @@ public class PipeToProcess
 						if (epoch < lastEpoch)
 						{
 							// out of order 
-							reporter.reportOutOfOrderRecord(epoch, lastEpoch);
+							reporter.reportOutOfOrderRecord();
 						}
 						else
 						{	// write record
@@ -910,14 +920,14 @@ public class PipeToProcess
 								"' as a date using format string '" +
 								dd.getTimeFormat() + "'");
 						
-						reporter.reportDateParseError(record[timeFieldIndex]);
+						reporter.reportDateParseError();
 					}
 
 				}
 				else
 				{
 					logger.info("Missing time field from JSON document");
-					reporter.reportMissingField(timeField);							
+					reporter.reportMissingField();							
 				}
 	
 				recordCount++;
@@ -925,12 +935,9 @@ public class PipeToProcess
 		}
 		
 		reporter.finishReporting();
-		usageReporter.reportUsage();
 		
 		logger.debug(String.format("Transferred %d of %d Json records to autodetect.", 
 				recordsWritten, recordCount));
-		
-		logger.debug("Transferred " + recordCount + " Json records to autodetect." );
 	}
 	
 	
@@ -1022,7 +1029,6 @@ public class PipeToProcess
 			token = parser.nextToken();
 		}
 
-		
 		return readRecord;
 	}
 	

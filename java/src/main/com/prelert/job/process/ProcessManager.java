@@ -334,7 +334,7 @@ public class ProcessManager
 		ProcessAndDataDescription procAndDD = new ProcessAndDataDescription(
 				nativeProcess, jobId,
 				job.getDataDescription(), job.getTimeout(), analysisFields, logger,
-				m_StatusReporterFactory.newStatusReporter(jobId, logger),
+				m_StatusReporterFactory.newStatusReporter(jobId, job.getCounts(), logger),
 				m_UsageReporterFactory.newUsageReporter(jobId, logger),
 				m_ResultsReaderFactory.newResultsParser(jobId, 
 						nativeProcess.getInputStream(),						

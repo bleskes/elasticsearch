@@ -146,7 +146,8 @@ public class ProcessErrorLoggingTest
 	static class SimpleStatusReporterFactory implements StatusReporterFactory 
 	{
 		@Override
-		public StatusReporter newStatusReporter(String jobId, Logger logger) 
+		public StatusReporter newStatusReporter(String jobId, JobDetails.Counts counts,
+				Logger logger) 
 		{
 			return new DummyStatusReporter();
 		}

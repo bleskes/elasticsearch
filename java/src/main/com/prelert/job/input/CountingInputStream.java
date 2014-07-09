@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import com.prelert.job.usage.UsageReporter;
+import com.prelert.job.warnings.StatusReporter;
 
 /**
  * Simple wrapper around an inputstream instance that counts
@@ -41,11 +42,20 @@ import com.prelert.job.usage.UsageReporter;
 public class CountingInputStream extends FilterInputStream 
 {
 	private UsageReporter m_UsageReporter;
+	private StatusReporter m_StatusReporter;
 	
-	public CountingInputStream(InputStream in, UsageReporter usageReporter) 
+	/**
+	 * 
+	 * @param in
+	 * @param usageReporter Writes the number of raw bytes processed over time
+	 * @param statusReporter Write number of records etc.
+	 */
+	public CountingInputStream(InputStream in, UsageReporter usageReporter,
+			StatusReporter statusReporter) 
 	{
 		super(in);
 		m_UsageReporter = usageReporter;
+		m_StatusReporter = statusReporter;
 	}
 
 	private int m_CountBytesRead;
@@ -63,6 +73,8 @@ public class CountingInputStream extends FilterInputStream
 	{
 		m_CountBytesRead++;
 		m_UsageReporter.addBytesRead(1);
+		m_StatusReporter.reportBytesRead(1);
+		
 		return in.read();
 	}
 	
@@ -78,6 +90,8 @@ public class CountingInputStream extends FilterInputStream
 		m_CountBytesRead += read;
 		
 		m_UsageReporter.addBytesRead(read);
+		m_StatusReporter.reportBytesRead(read);
+		
 		
 		return read;
 	}
@@ -94,6 +108,7 @@ public class CountingInputStream extends FilterInputStream
 		m_CountBytesRead += read;
 		
 		m_UsageReporter.addBytesRead(read);
+		m_StatusReporter.reportBytesRead(read);
 		return read;
 	}
 	
