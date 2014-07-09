@@ -103,7 +103,7 @@ public class ElasticSearchMappings
 								.startObject(JobDetails.PROCESSED_RECORD_COUNT)
 									.field("type", "long")
 								.endObject()
-								.startObject(JobDetails.PROCESSED_VOLUME)
+								.startObject(JobDetails.PROCESSED_BYTES)
 								.field("type", "long")
 								.endObject()								
 								.startObject(JobDetails.INVALID_DATE_COUNT)
