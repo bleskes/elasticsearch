@@ -386,7 +386,7 @@ public class JobManager implements JobDetailsProvider
 		}
 		else
 		{
-			jobIdIsUnigue(jobId);
+			jobIdIsUnique(jobId);
 		}
 		
 		JobDetails jobDetails;
@@ -1145,7 +1145,7 @@ public class JobManager implements JobDetailsProvider
 	 * @return
 	 * @throws JobIdAlreadyExistsException
 	 */
-	private boolean jobIdIsUnigue(String jobId)
+	private boolean jobIdIsUnique(String jobId)
 	throws JobIdAlreadyExistsException
 	{
 		IndicesExistsResponse res = 

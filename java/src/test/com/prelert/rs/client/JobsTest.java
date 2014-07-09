@@ -267,7 +267,7 @@ public class JobsTest implements Closeable
 	public String createFlightCentreJobTest(String baseUrl) 
 	throws ClientProtocolException, IOException
 	{	
-		final String FLIGHT_CENTRE_JOB_CONFIG = "{\"name\":\"flight centre\"," 
+		final String FLIGHT_CENTRE_JOB_CONFIG = "{\"id\":\"flightcentre\"," 
 				+ "\"description\":\"Flight Centre Job\","
 				+ "\"analysisConfig\" : {"
 				+ "\"bucketSpan\":3600,"  
@@ -284,7 +284,7 @@ public class JobsTest implements Closeable
 			s_Logger.error("No Job Id returned by create job");
 			test(jobId != null);
 		}
-		test(jobId.equals("flight centre"));
+		test(jobId.equals("flightcentre"));
 		
 		// get job by location, verify
 		SingleDocument<JobDetails> doc = m_WebServiceClient.getJob(baseUrl, jobId);
@@ -1101,9 +1101,12 @@ public class JobsTest implements Closeable
 	public void testSetDescription(String baseUrl, String jobId) 
 	throws IOException
 	{
+		JobDetails job = m_WebServiceClient.getJob(baseUrl, jobId).getDocument();
+		String orignalDescription = job.getDescription();
+		
 		String desc1 = "a simple job";
 		m_WebServiceClient.setJobDescription(baseUrl, jobId, desc1);
-		JobDetails job = m_WebServiceClient.getJob(baseUrl, jobId).getDocument();
+		job = m_WebServiceClient.getJob(baseUrl, jobId).getDocument();
 		test(job != null);
 		test(job.getDescription().equals(desc1));
 		
@@ -1118,6 +1121,12 @@ public class JobsTest implements Closeable
 		job = m_WebServiceClient.getJob(baseUrl, jobId).getDocument();
 		test(job != null);
 		test(job.getDescription().equals(longerDesc));
+		
+		// Set the description back to what it was
+		m_WebServiceClient.setJobDescription(baseUrl, jobId, orignalDescription);
+		job = m_WebServiceClient.getJob(baseUrl, jobId).getDocument();
+		test(job != null);
+		test(job.getDescription().equals(orignalDescription));
 	}
 	
 	
