@@ -35,6 +35,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -386,7 +387,7 @@ public class JobManager implements JobDetailsProvider
 		}
 		else
 		{
-			jobIdIsUnigue(jobId);
+			jobIdIsUnique(jobId);
 		}
 		
 		JobDetails jobDetails;
@@ -454,12 +455,11 @@ public class JobManager implements JobDetailsProvider
 	public void setDescription(String jobId, String description)
 	throws UnknownJobException, JsonProcessingException
 	{
-		JobDetails job = getJobDetails(jobId); 
-		job.setDescription(description);
-		
-		String content = jobToContent(job);
-		m_Client.prepareIndex(jobId, JobDetails.TYPE, jobId)
-				.setSource(content).get();
+		Map<String, Object> update = new HashMap<>();
+		update.put(JobDetails.DESCRIPTION, description);
+		m_Client.prepareUpdate(jobId, JobDetails.TYPE, jobId)
+				.setDoc(update)
+				.get();
 	}
 	
 	/**
@@ -1145,7 +1145,7 @@ public class JobManager implements JobDetailsProvider
 	 * @return
 	 * @throws JobIdAlreadyExistsException
 	 */
-	private boolean jobIdIsUnigue(String jobId)
+	private boolean jobIdIsUnique(String jobId)
 	throws JobIdAlreadyExistsException
 	{
 		IndicesExistsResponse res = 
