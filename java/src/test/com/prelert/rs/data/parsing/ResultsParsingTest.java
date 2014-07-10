@@ -42,6 +42,7 @@ import org.junit.Test;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.DetectorState;
+import com.prelert.job.UnknownJobException;
 import com.prelert.job.persistence.JobDataPersister;
 import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.parsing.AutoDetectParseException;
@@ -107,7 +108,8 @@ public class ResultsParsingTest
 			return m_Buckets;
 		}
 		
-		public DetectorState getDetectorState()
+		@Override
+		public DetectorState retrieveDetectorState() throws UnknownJobException 
 		{
 			return m_State;
 		}
@@ -116,7 +118,8 @@ public class ResultsParsingTest
 	
 	
 	@Test
-	public void testParser() throws JsonParseException, IOException, AutoDetectParseException
+	public void testParser() throws JsonParseException, IOException, 
+	AutoDetectParseException, UnknownJobException
 	{
 		BasicConfigurator.configure();
 		Logger logger = Logger.getLogger(ResultsParsingTest.class);
@@ -125,7 +128,7 @@ public class ResultsParsingTest
 		ResultsPersister persister = new ResultsPersister();
 		
 		AutoDetectResultsParser.parseResults(inputStream, persister, logger);
-		assertNull(persister.getDetectorState());
+		assertNull(persister.retrieveDetectorState());
 		
 		List<Bucket> buckets = persister.getBuckets();
 		
@@ -198,7 +201,8 @@ public class ResultsParsingTest
 	
 	
 	@Test
-	public void testDetectorStateParser() throws JsonParseException, IOException, AutoDetectParseException
+	public void testDetectorStateParser() throws JsonParseException, IOException,
+	AutoDetectParseException, UnknownJobException
 	{
 		StringBuilder builder = new StringBuilder();
 		builder.append(RESULTS_WITH_STATE_1);
@@ -234,7 +238,7 @@ public class ResultsParsingTest
 		}
 		
 		
-		DetectorState state = persister.getDetectorState(); 
+		DetectorState state = persister.retrieveDetectorState(); 
 		assertNotNull(state);
 		assertEquals(state.getDocumentType(), DetectorState.MODEL_STATE);
 		String modelState = state.getDetectorState("detector1");

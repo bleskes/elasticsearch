@@ -279,8 +279,9 @@ public class JobsTest implements Closeable
 		
 		
 		String jobId = m_WebServiceClient.createJob(baseUrl, FLIGHT_CENTRE_JOB_CONFIG);
-		if (jobId == null)
+		if (jobId == null || jobId.isEmpty())
 		{
+			s_Logger.error(m_WebServiceClient.getLastError().toJson());
 			s_Logger.error("No Job Id returned by create job");
 			test(jobId != null);
 		}
@@ -1440,6 +1441,8 @@ public class JobsTest implements Closeable
 		test.deleteJobsTest(baseUrl, jobUrls);
 	
 		test.close();
+		
+		s_Logger.info("All tests passed Ok");
 	}
 
 }

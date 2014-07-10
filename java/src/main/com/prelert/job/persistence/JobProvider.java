@@ -24,34 +24,17 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.warnings.elasticsearch;
 
-import org.apache.log4j.Logger;
-import org.elasticsearch.client.Client;
+package com.prelert.job.persistence;
 
-import com.prelert.job.JobDetails;
-import com.prelert.job.warnings.StatusReporter;
-import com.prelert.job.warnings.StatusReporterFactory;
+import com.prelert.job.DetectorState;
+import com.prelert.job.UnknownJobException;
 
-public class ElasticSearchStatusReporterFactory implements StatusReporterFactory 
+public interface JobProvider extends JobDetailsProvider, JobResultsProvider
 {
-	private Client m_Client;
-	
 	/**
-	 * Construct the factory
-	 * 
-	 * @param node The ElasticSearch node
+	 * Get the persisted detectors state for the job
 	 */
-	public ElasticSearchStatusReporterFactory(Client client)
-	{
-		m_Client = client;
-	}
-
-	@Override
-	public StatusReporter newStatusReporter(String jobId, JobDetails.Counts counts,
-			Logger logger) 
-	{
-		return new ElasticSearchStatusReporter(m_Client, jobId, counts, logger);
-	}
-
+	public DetectorState getDetectorState(String jobId) 
+	throws UnknownJobException;
 }

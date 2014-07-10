@@ -45,6 +45,7 @@ import javax.ws.rs.core.Response;
 import org.apache.log4j.Logger;
 
 import com.prelert.job.manager.JobManager;
+import com.prelert.job.normalisation.Normaliser;
 import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
@@ -130,6 +131,7 @@ public class Results extends ResourceWithJobManager
 			}			
 		}		
 		
+		//Normaliser normaliser = normaliser();
 		JobManager manager = jobManager();
 		Pagination<Map<String, Object>> buckets;
 		
@@ -249,44 +251,6 @@ public class Results extends ResourceWithJobManager
 		
 		s_Logger.debug(String.format("Returning %d records for job %s, bucket %s", 
 				records.getDocuments().size(), jobId, bucketId));
-					
-		return records;
-	}
-	
-	@Path("/{jobId}/{bucketId}/{detectorId}/records")
-	@GET
-	@Produces(MediaType.APPLICATION_JSON)
-	public Pagination<Map<String, Object>> bucketDetectorRecords(@PathParam("jobId") String jobId,
-			@PathParam("bucketId") String bucketId,
-			@PathParam("detectorId") String detectorId,
-			@DefaultValue("0") @QueryParam("skip") int skip,
-			@DefaultValue(JobManager.DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take)
-	{
-		s_Logger.debug(String.format("Get records for job %s detector %s" +
-				" and bucket %s", jobId, detectorId, bucketId));
-		
-		JobManager manager = jobManager();
-		Pagination<Map<String, Object>> records = manager.records(jobId, 
-				bucketId, detectorId, skip, take);
-		
-		// paging
-    	if (records.isAllResults() == false)
-    	{
-    		String path = new StringBuilder()
-    							.append("/results/")
-								.append(jobId)
-								.append('/')
-								.append(bucketId)
-								.append("/")
-								.append(detectorId)
-								.append("/records")
-								.toString();
-    		
-    		setPagingUrls(path, records);
-    	}		
-		
-		s_Logger.debug(String.format("Returning records for job %s, bucket %s"
-				+ " and detector %s", jobId, bucketId, detectorId));
 					
 		return records;
 	}

@@ -1,0 +1,100 @@
+/************************************************************
+ *                                                          *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ *                                                          *
+ *----------------------------------------------------------*
+ *----------------------------------------------------------*
+ * WARNING:                                                 *
+ * THIS FILE CONTAINS UNPUBLISHED PROPRIETARY               *
+ * SOURCE CODE WHICH IS THE PROPERTY OF PRELERT LTD AND     *
+ * PARENT OR SUBSIDIARY COMPANIES.                          *
+ * PLEASE READ THE FOLLOWING AND TAKE CAREFUL NOTE:         *
+ *                                                          *
+ * This source code is confidential and any person who      *
+ * receives a copy of it, or believes that they are viewing *
+ * it without permission is asked to notify Prelert Ltd     *
+ * on +44 (0)20 7953 7243 or email to legal@prelert.com.    *
+ * All intellectual property rights in this source code     *
+ * are owned by Prelert Ltd.  No part of this source code   *
+ * may be reproduced, adapted or transmitted in any form or *
+ * by any means, electronic, mechanical, photocopying,      *
+ * recording or otherwise.                                  *
+ *                                                          *
+ *----------------------------------------------------------*
+ *                                                          *
+ *                                                          *
+ ************************************************************/
+
+package com.prelert.job.persistence;
+
+import java.io.Closeable;
+import java.util.Map;
+
+import com.prelert.rs.data.Pagination;
+import com.prelert.rs.data.SingleDocument;
+
+public interface JobResultsProvider extends Closeable
+{
+	/**
+	 * Get a page of result buckets for the job id
+	 * 
+	 * @param jobId
+	 * @param expand Include anomaly records
+	 * @param skip Skip the first N Buckets. This parameter is for paging
+	 * if not required set to 0.
+	 * @param take Take only this number of Buckets
+	 * @return
+	 */
+	public Pagination<Map<String, Object>> buckets(String jobId, 
+			boolean expand, int skip, int take);
+			
+	
+	/**
+	 * Get the result buckets for the job id starting with bucket id = 
+	 * <code>startBucket</code> up to <code>endBucket</code>. One of either
+	 * <code>startBucket</code> or <code>endBucket</code> should be non-zero else
+	 * it is more efficient to use {@linkplain #buckets(String, boolean, int, int)}
+	 * 
+	 * @param jobId
+	 * @param expand Include anomaly records
+	 * @param skip Skip the first N Buckets. This parameter is for paging
+	 * if not required set to 0.
+	 * @param take Take only this number of Buckets
+	 * @param startBucket The start bucket id. A bucket with this Id will be 
+	 * included in the results. If 0 all buckets up to <code>endBucket</code>
+	 * are returned
+	 * @param endBucket The end bucket id buckets up to but NOT including this
+	 * are returned. If 0 all buckets from <code>startBucket</code>
+	 * are returned
+	 * @return
+	 */
+	public Pagination<Map<String, Object>> buckets(String jobId, 
+			boolean expand, int skip, int take,
+			long startBucket, long endBucket);
+	
+	
+	/**
+	 * Get the bucket by Id from the job. 
+	 * 
+	 * @param jobId
+	 * @param bucketId
+	 * @param expand Include anomaly records
+	 * @return
+	 */
+	public SingleDocument<Map<String, Object>> bucket(String jobId, 
+			String bucketId, boolean expand);
+	
+	
+	/**
+	 * Get all the anomaly records for the bucket and every detector 
+	 * 
+	 * @param jobId
+	 * @param bucketId 
+	 * @param skip Skip the first N Jobs. This parameter is for paging
+	 * results if not required set to 0.
+	 * @param take Take only this number of Jobs
+	 * @return
+	 */
+	public Pagination<Map<String, Object>> records(String jobId, 
+			String bucketId, int skip, int take);
+}

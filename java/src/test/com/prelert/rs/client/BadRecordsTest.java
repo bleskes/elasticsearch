@@ -209,6 +209,8 @@ public class BadRecordsTest implements Closeable
 		test.testUnparseableDates();
 		test.testOutOfOrderDates();
 		
-		test.close();		
+		test.close();	
+		
+		s_Logger.info("All tests passed Ok");
 	}
 }

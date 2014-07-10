@@ -27,7 +27,7 @@
 package com.prelert.job.usage.elasticsearch;
 
 import org.apache.log4j.Logger;
-import org.elasticsearch.node.Node;
+import org.elasticsearch.client.Client;
 
 import com.prelert.job.usage.UsageReporter;
 import com.prelert.job.usage.UsageReporterFactory;
@@ -35,21 +35,21 @@ import com.prelert.job.usage.UsageReporterFactory;
 
 public class ElasticsearchUsageReporterFactory implements UsageReporterFactory 
 {
-	private Node m_Node;
+	private Client m_Client;
 	
 	/**
 	 * Construct the factory
 	 * 
 	 * @param node The ElasticSearch node
 	 */
-	public ElasticsearchUsageReporterFactory(Node node)
+	public ElasticsearchUsageReporterFactory(Client client)
 	{
-		m_Node = node;
+		m_Client = client;
 	}
 
 	@Override
 	public UsageReporter newUsageReporter(String jobId, Logger logger) 
 	{
-		return new ElasticsearchUsageReporter(m_Node.client(), jobId, logger);
+		return new ElasticsearchUsageReporter(m_Client, jobId, logger);
 	}
 }

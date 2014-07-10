@@ -302,15 +302,9 @@ public class ElasticSearchPersister implements JobDataPersister
 		return names;
 	}
 	
-	/**
-	 * Reads all the detector state documents from 
-	 * the database and returns a {@linkplain DetectorState} object.
-	 * 
-	 * @return
-	 * @throws UnknownJobException if the job id is not recognised
-	 */
-	public DetectorState retrieveDetectorState()
-	throws UnknownJobException
+
+	@Override
+	public DetectorState retrieveDetectorState() throws UnknownJobException
 	{
 		DetectorState detectorState = new DetectorState();
 		

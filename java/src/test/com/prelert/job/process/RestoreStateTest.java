@@ -52,6 +52,7 @@ import com.prelert.job.JobInUseException;
 import com.prelert.job.TooManyJobsException;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.manager.JobManager;
+import com.prelert.job.persistence.elasticsearch.ElasticSearchJobProvider;
 import com.prelert.job.warnings.HighProportionOfBadTimestampsException;
 import com.prelert.job.warnings.OutOfOrderRecordsException;
 import com.prelert.rs.data.Pagination;
@@ -121,7 +122,9 @@ public class RestoreStateTest
 			clusterName = args[0];
 		}
 		s_Logger.info("Using ElasticSearch cluster " + clusterName);
-		JobManager jobManager = new JobManager(clusterName);
+		
+		ElasticSearchJobProvider esJob = new ElasticSearchJobProvider(clusterName);
+		JobManager jobManager = new JobManager(esJob, null, null, null);
 		JobDetails job = jobManager.createJob(jobConfig);
 		
 		s_Logger.info("Created job " + job.getId());

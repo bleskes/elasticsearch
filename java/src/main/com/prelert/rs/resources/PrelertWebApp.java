@@ -34,6 +34,11 @@ import javax.ws.rs.core.Application;
 
 import com.prelert.job.alert.manager.AlertManager;
 import com.prelert.job.manager.JobManager;
+import com.prelert.job.normalisation.Normaliser;
+import com.prelert.job.persistence.elasticsearch.ElasticSearchJobProvider;
+import com.prelert.job.persistence.elasticsearch.ElasticSearchResultsReaderFactory;
+import com.prelert.job.usage.elasticsearch.ElasticsearchUsageReporterFactory;
+import com.prelert.job.warnings.elasticsearch.ElasticSearchStatusReporterFactory;
 import com.prelert.rs.provider.ElasticSearchExceptionMapper;
 import com.prelert.rs.provider.HighProportionOfBadTimestampsExceptionMapper;
 import com.prelert.rs.provider.JobIdAlreadyExistsExceptionMapper;
@@ -67,15 +72,16 @@ public class PrelertWebApp extends Application
 	
 	private JobManager m_JobManager;
 	private AlertManager m_AlertManager;
+	private Normaliser m_Normaliser;
 	
 	public PrelertWebApp()
 	{
 		m_ResourceClasses = new HashSet<>();	    
 		m_ResourceClasses.add(ApiBase.class);
+		m_ResourceClasses.add(Alerts.class);
 		m_ResourceClasses.add(Jobs.class);
 		m_ResourceClasses.add(Data.class);
 		m_ResourceClasses.add(Results.class);	   
-		m_ResourceClasses.add(Detectors.class);
 		m_ResourceClasses.add(Logs.class);
 		
 		// Message body writers
@@ -100,13 +106,21 @@ public class PrelertWebApp extends Application
 		{
 			elasticSearchClusterName = DEFAULT_CLUSTER_NAME;
 		}
-		m_JobManager = new JobManager(elasticSearchClusterName);
 		
+		ElasticSearchJobProvider esJob = new ElasticSearchJobProvider(
+				elasticSearchClusterName);
+		m_JobManager = new JobManager(esJob, 
+				new ElasticSearchResultsReaderFactory(esJob.getClient()),
+				new ElasticSearchStatusReporterFactory(esJob.getClient()),
+				new ElasticsearchUsageReporterFactory(esJob.getClient())
+			);
+		m_Normaliser = new Normaliser(esJob);
 		m_AlertManager = new AlertManager();
 				
 		m_Singletons = new HashSet<>();
 		m_Singletons.add(m_JobManager);	
 		m_Singletons.add(m_AlertManager);
+		m_Singletons.add(m_Normaliser);
 	}
 	
 	@Override
