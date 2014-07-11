@@ -90,7 +90,7 @@ public class Alerts extends ResourceWithJobManager
 			@DefaultValue("") @QueryParam(START_QUERY_PARAM) String start,
 			@DefaultValue("") @QueryParam(END_QUERY_PARAM) String end,
 			@DefaultValue("") @QueryParam(SEVERITY_QUERY_PARAM) String severity,
-			@DefaultValue("") @QueryParam(END_QUERY_PARAM) float anomalyScore)
+			@DefaultValue("0f") @QueryParam(END_QUERY_PARAM) float anomalyScore)
     {      
     	boolean expand = true;
     	
@@ -170,7 +170,7 @@ public class Alerts extends ResourceWithJobManager
 			@DefaultValue("") @QueryParam(START_QUERY_PARAM) String start,
 			@DefaultValue("") @QueryParam(END_QUERY_PARAM) String end,
 			@DefaultValue("") @QueryParam(SEVERITY_QUERY_PARAM) String severity,
-			@DefaultValue("") @QueryParam(END_QUERY_PARAM) float anomalyScore)
+			@DefaultValue("0f") @QueryParam(END_QUERY_PARAM) float anomalyScore)
     {      
     	boolean expand = true;
     	
@@ -238,7 +238,7 @@ public class Alerts extends ResourceWithJobManager
     		setPagingUrls(path, alerts, queryParams);
     	}		
 			
-		s_Logger.debug(String.format("Return %d alerts", alerts.getDocuments().size()));
+		s_Logger.debug(String.format("Return %d alerts", alerts.getDocumentCount()));
 		
 		return alerts;
     }

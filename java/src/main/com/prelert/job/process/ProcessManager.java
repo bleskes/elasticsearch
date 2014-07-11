@@ -328,7 +328,7 @@ public class ProcessManager
 		{
 			// if state is null or empty it will be ignored
 			// else it is used to restore the models			
-			nativeProcess = m_ProcessCtrl.buildAutoDetect(
+			nativeProcess = ProcessCtrl.buildAutoDetect(
 					ProcessCtrl.AUTODETECT_API, job, state, logger);	
 		} 
 		catch (IOException e) 

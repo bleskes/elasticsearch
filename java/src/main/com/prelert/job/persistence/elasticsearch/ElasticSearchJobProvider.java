@@ -143,6 +143,16 @@ public class ElasticSearchJobProvider implements JobProvider
 		m_PageSize = DEFAULT_PAGE_SIZE;
 	}
 	
+	/**
+	 * Close the Elasticsearch node
+	 */
+	@Override
+	public void close() throws IOException 
+	{
+		m_Node.close();
+	}
+
+	
 	public Client getClient()
 	{
 		return m_Client;
@@ -571,14 +581,34 @@ public class ElasticSearchJobProvider implements JobProvider
 		
 		return page;	
 	}
-
-	/**
-	 * Close the Elasticsearch node
-	 */
-	@Override
-	public void close() throws IOException 
+	
+	
+	public List<TimeScore> getRawScores(String jobId)
 	{
-		m_Node.close();
+		FilterBuilder fb = FilterBuilders.matchAllFilter();
+		
+		SortBuilder sb = new FieldSortBuilder(Bucket.ID)
+								.order(SortOrder.DESC);	
+		
+		SearchResponse searchResponse = m_Client.prepareSearch(jobId)
+				.setTypes(Bucket.TYPE)
+				.setFetchSource(false)
+				.addField(Bucket.ID)
+				.addField(Bucket.ANOMALY_SCORE)
+				.setPostFilter(fb)
+				.setFrom(0).setSize(500)
+				.addSort(sb)
+				.get();
+		
+		List<TimeScore> result = new ArrayList<>();
+		for (SearchHit hit : searchResponse.getHits().getHits())
+		{
+			TimeScore ts = new TimeScore(hit.field(Bucket.ID).<String>value(), 
+								hit.field(Bucket.ANOMALY_SCORE).value().toString());
+			result.add(ts);
+		}
+		
+		return result;
 	}
 
 	/**

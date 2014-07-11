@@ -34,7 +34,10 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -45,6 +48,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.prelert.job.normalisation.NormalisedResult;
+import com.prelert.job.normalisation.Normaliser;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.process.MissingFieldException;
 import com.prelert.job.process.NativeProcessRunException;
@@ -62,6 +67,7 @@ import com.prelert.job.JobInUseException;
 import com.prelert.job.JobStatus;
 import com.prelert.job.TooManyJobsException;
 import com.prelert.job.UnknownJobException;
+import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
@@ -95,6 +101,7 @@ public class JobManager
 	}
 	
 	private ProcessManager m_ProcessManager;
+	 
 	
 	private AtomicLong m_IdSequence;	
 	private DateFormat m_JobIdDateFormat;
@@ -295,8 +302,12 @@ public class JobManager
 	 */
 	public Pagination<Map<String, Object>> buckets(String jobId, 
 			boolean expand, int skip, int take)
+	throws NativeProcessRunException
 	{
-		return m_JobProvider.buckets(jobId, expand, skip, take);
+		Pagination<Map<String, Object>> buckets = m_JobProvider.buckets(jobId, expand, skip, take);
+		
+		
+		return normalise(jobId, buckets);
 	}
 	
 	
@@ -311,11 +322,40 @@ public class JobManager
 	 * @return
 	 */
 	public Pagination<Map<String, Object>> buckets(String jobId, 
-			boolean expand, int skip, int take,
-			long startBucket, long endBucket)
+			boolean expand, int skip, int take, long startBucket, long endBucket)
+	throws NativeProcessRunException
 	{
-		return m_JobProvider.buckets(jobId, expand, skip, take, 
+		Pagination<Map<String, Object>> buckets =  m_JobProvider.buckets(jobId, 
+				expand, skip, take, 
 				startBucket, endBucket);
+		
+		return normalise(jobId, buckets);
+	}
+	
+	
+	private Pagination<Map<String, Object>> normalise(String jobId,
+			Pagination<Map<String, Object>> buckets) 
+	throws NativeProcessRunException
+	{
+		Normaliser normaliser = new Normaliser(jobId, m_JobProvider, s_Logger);
+		List<NormalisedResult> normalised = normaliser.normalise();
+		
+		Iterator<NormalisedResult> iter = normalised.iterator();
+		try
+		{
+			for (Map<String, Object> bucket : buckets.getDocuments())
+			{
+				double score = iter.next().getNormalizedSysChangeScore();
+				System.out.println(score);
+				bucket.put(Bucket.ANOMALY_SCORE, new Double(score));
+			}
+		}
+		catch (NoSuchElementException e)
+		{
+			
+		}
+		
+		return buckets;
 	}
 	
 	/**
@@ -327,13 +367,14 @@ public class JobManager
 	 * results if not required set to 0.
 	 * @param take Take only this number of Jobs
 	 * @return
+	 * @throws NativeProcessRunException 
 	 */
 	public Pagination<Map<String, Object>> records(String jobId, 
-			String bucketId, int skip, int take)
+			String bucketId, int skip, int take) 
 	{
 		return m_JobProvider.records(jobId, bucketId, skip, take);
+
 	}
-	
 	
 	/**
 	 * Set the job's description.

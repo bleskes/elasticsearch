@@ -35,6 +35,7 @@ import com.prelert.rs.data.AnomalyRecord;
  * Encapsulate an Engine API alert. Alerts have:
  * <ol>
  *  <li>Job Id - The source of the alert</li>
+ *  <li>Filter - The normalisation filter</li>
  *  <li>Severity - See {@linkplain Severity}</li>
  *  <li>Normalised Score - The normalised anomaly score</li>
  *  <li>Bucket Time - The time of the alert </li>
@@ -45,8 +46,10 @@ import com.prelert.rs.data.AnomalyRecord;
 public class Alert 
 {
 	private String m_JobId;
-	private Severity m_Severity;
 	
+	private String m_FilterName;
+	
+	private Severity m_Severity;	
 	private double m_NormalisedScore;
 	private long m_BucketTime;
 	
@@ -60,10 +63,10 @@ public class Alert
 		m_AnomalyRecords = Collections.emptyList();
 	}
 	
-	public Alert(String jobId, Severity severity, double score)
+	public Alert(String jobId, String filterName, double score)
 	{
 		m_JobId = jobId;
-		m_Severity = severity;
+		m_FilterName = filterName;
 		m_NormalisedScore = score;
 		m_AnomalyRecords = Collections.emptyList();
 	}
@@ -78,8 +81,19 @@ public class Alert
 		this.m_JobId = jobId;
 	}
 
+	public String getFilterName()
+	{
+		return m_FilterName;
+	}
+	
+	public void setFilterName(String filterName)
+	{
+		m_FilterName = filterName;
+	}	
+	
 	public Severity getSeverity() 
 	{
+		// TODO severity is a funtion of normalised score?
 		return m_Severity;
 	}
 

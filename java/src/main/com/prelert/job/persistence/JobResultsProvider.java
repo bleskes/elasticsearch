@@ -28,6 +28,7 @@
 package com.prelert.job.persistence;
 
 import java.io.Closeable;
+import java.util.List;
 import java.util.Map;
 
 import com.prelert.rs.data.Pagination;
@@ -97,4 +98,30 @@ public interface JobResultsProvider extends Closeable
 	 */
 	public Pagination<Map<String, Object>> records(String jobId, 
 			String bucketId, int skip, int take);
+	
+	
+	
+	static public class TimeScore
+	{
+		private String m_Epoch;
+		private String m_Score;
+		
+		public TimeScore(String epoch, String score)
+		{
+			m_Epoch = epoch;
+			m_Score = score;
+		}
+		
+		public String getTime()
+		{
+			return m_Epoch;
+		}
+		
+		public String getScore()
+		{
+			return m_Score;
+		}
+	}
+	
+	public List<TimeScore> getRawScores(String jobId);
 }

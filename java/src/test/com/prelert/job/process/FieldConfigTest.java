@@ -65,15 +65,13 @@ public class FieldConfigTest
 	@Test	
 	public void testSingleDetectorToCommandLineArgs() throws JobConfigurationException
 	{
-		ProcessCtrl processCtl = new ProcessCtrl();
-			
 		// simple case of a by b
 		Detector d = new Detector();
 		d.setFieldName("Integer_Value");
 		d.setByFieldName("ts_hash");
 		d.verify();
 		
-		List<String> args = processCtl.detectorConfigToCommandLinArgs(d);
+		List<String> args = ProcessCtrl.detectorConfigToCommandLinArgs(d);
 		assertEquals(args.size(), 3);
 		assertEquals(args.get(0), d.getFieldName());
 		assertEquals(args.get(1), "by");
@@ -85,7 +83,7 @@ public class FieldConfigTest
 		d.setByFieldName("ts_hash");
 		d.verify();
 		
-		args = processCtl.detectorConfigToCommandLinArgs(d);
+		args = ProcessCtrl.detectorConfigToCommandLinArgs(d);
 		assertEquals(args.size(), 3);
 		assertEquals(args.get(0), "rare");
 		assertEquals(args.get(1), "by");
@@ -97,7 +95,7 @@ public class FieldConfigTest
 		d.setFieldName("responseTime");
 		d.verify();
 		
-		args = processCtl.detectorConfigToCommandLinArgs(d);
+		args = ProcessCtrl.detectorConfigToCommandLinArgs(d);
 		assertEquals(args.size(), 1);
 		assertEquals(args.get(0), "max(responseTime)");
 		
@@ -109,7 +107,7 @@ public class FieldConfigTest
 		d.setByFieldName("airline");
 		d.verify();
 		
-		args = processCtl.detectorConfigToCommandLinArgs(d);
+		args = ProcessCtrl.detectorConfigToCommandLinArgs(d);
 		assertEquals(args.size(), 3);
 		assertEquals(args.get(0), "max(responseTime)");		
 		assertEquals(args.get(1), "by");
@@ -123,7 +121,7 @@ public class FieldConfigTest
 		d.setOverFieldName("region");
 		d.verify();
 		
-		args = processCtl.detectorConfigToCommandLinArgs(d);
+		args = ProcessCtrl.detectorConfigToCommandLinArgs(d);
 		assertEquals(args.size(), 3);
 		assertEquals(args.get(0), "min(responseTime)");		
 		assertEquals(args.get(1), "over");
@@ -137,7 +135,7 @@ public class FieldConfigTest
 		d.setOverFieldName("region");
 		d.verify();
 		
-		args = processCtl.detectorConfigToCommandLinArgs(d);
+		args = ProcessCtrl.detectorConfigToCommandLinArgs(d);
 		assertEquals(args.size(), 5);
 		assertEquals(args.get(0), "max(responseTime)");		
 		assertEquals(args.get(1), "by");
@@ -155,7 +153,7 @@ public class FieldConfigTest
 		d.verify();
 		
 		// function and field, by field and over field		
-		args = processCtl.detectorConfigToCommandLinArgs(d);
+		args = ProcessCtrl.detectorConfigToCommandLinArgs(d);
 		assertEquals(args.size(), 6);
 		assertEquals(args.get(0), "max(responseTime)");		
 		assertEquals(args.get(1), ProcessCtrl.BY_ARG);
@@ -174,7 +172,7 @@ public class FieldConfigTest
 		d.verify();
 		
 		// function and field, by field and over field		
-		args = processCtl.detectorConfigToCommandLinArgs(d);
+		args = ProcessCtrl.detectorConfigToCommandLinArgs(d);
 		assertEquals(args.size(), 4);
 		assertEquals(args.get(0), "min(responseTime)");		
 		assertEquals(args.get(1), ProcessCtrl.BY_ARG);
@@ -187,8 +185,6 @@ public class FieldConfigTest
 	public void testSingleDetectorToConfFile()
 	throws IOException
 	{
-		ProcessCtrl processCtl = new ProcessCtrl();
-		
 		List<Detector> detectors = new ArrayList<>();
 		
 		Detector d = new Detector();
@@ -219,7 +215,7 @@ public class FieldConfigTest
 			BasicConfigurator.configure();
 			Logger logger = Logger.getLogger(FieldConfigTest.class);
 			
-			processCtl.writeFieldConfig(config, osw, logger);
+			ProcessCtrl.writeFieldConfig(config, osw, logger);
 		}
 		
 		// read the ini file - all the settings are in the global section

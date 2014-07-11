@@ -45,7 +45,7 @@ import javax.ws.rs.core.Response;
 import org.apache.log4j.Logger;
 
 import com.prelert.job.manager.JobManager;
-import com.prelert.job.normalisation.Normaliser;
+import com.prelert.job.process.NativeProcessRunException;
 import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
@@ -100,6 +100,7 @@ public class Results extends ResourceWithJobManager
 			@DefaultValue(JobManager.DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take,
 			@DefaultValue("") @QueryParam(START_QUERY_PARAM) String start,
 			@DefaultValue("") @QueryParam(END_QUERY_PARAM) String end)
+	throws NativeProcessRunException
 	{	
 		s_Logger.debug(String.format("Get %s buckets for job %s. skip = %d, take = %d"
 				+ " start = '%s', end='%s'", 
@@ -227,6 +228,7 @@ public class Results extends ResourceWithJobManager
 			@PathParam("bucketId") String bucketId,
 			@DefaultValue("0") @QueryParam("skip") int skip,
 			@DefaultValue(JobManager.DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take)
+	throws NativeProcessRunException
 	{
 		s_Logger.debug(String.format("Get records for job %s, bucket %s", 
 				jobId, bucketId));

@@ -71,8 +71,8 @@ public class PrelertWebApp extends Application
 	private Set<Object> m_Singletons;
 	
 	private JobManager m_JobManager;
-	private AlertManager m_AlertManager;
-	private Normaliser m_Normaliser;
+	//private AlertManager m_AlertManager;
+	//private Normaliser m_Normaliser;
 	
 	public PrelertWebApp()
 	{
@@ -114,13 +114,12 @@ public class PrelertWebApp extends Application
 				new ElasticSearchStatusReporterFactory(esJob.getClient()),
 				new ElasticsearchUsageReporterFactory(esJob.getClient())
 			);
-		m_Normaliser = new Normaliser(esJob);
-		m_AlertManager = new AlertManager();
+		//m_AlertManager = new AlertManager();
 				
 		m_Singletons = new HashSet<>();
 		m_Singletons.add(m_JobManager);	
-		m_Singletons.add(m_AlertManager);
-		m_Singletons.add(m_Normaliser);
+		//m_Singletons.add(m_AlertManager);
+		//m_Singletons.add(m_Normaliser);
 	}
 	
 	@Override
