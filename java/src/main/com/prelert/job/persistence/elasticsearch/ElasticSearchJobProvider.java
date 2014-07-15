@@ -541,7 +541,17 @@ public class ElasticSearchJobProvider implements JobProvider
 	public Pagination<Map<String, Object>> records(String jobId, 
 			String bucketId, int skip, int take)
 	{
-		FilterBuilder bucketFilter= FilterBuilders.termFilter("_id", bucketId);
+		FilterBuilder bucketFilter;
+		
+		if (bucketId.equals("_all"))
+		{
+			bucketFilter = FilterBuilders.matchAllFilter();
+		}
+		else
+		{
+			bucketFilter = FilterBuilders.termFilter("_id", bucketId);
+		}
+		
 		FilterBuilder parentFilter = FilterBuilders.hasParentFilter(Bucket.TYPE, bucketFilter);
 				
 		SortBuilder sb = new FieldSortBuilder(AnomalyRecord.ANOMALY_SCORE)
