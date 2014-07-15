@@ -167,7 +167,7 @@ public class Results extends ResourceWithJobManager
     	}		
 			
 		s_Logger.debug(String.format("Return %d buckets for job %s", 
-				buckets.getDocuments().size(), jobId));
+				buckets.getDocumentCount(), jobId));
 		
 		return buckets;
 	}

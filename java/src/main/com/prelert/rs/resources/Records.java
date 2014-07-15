@@ -94,16 +94,15 @@ public class Records extends ResourceWithJobManager
 	@Produces(MediaType.APPLICATION_JSON)
 	public Pagination<Map<String, Object>> buckets(
 			@PathParam("jobId") String jobId,
-			@DefaultValue("false") @QueryParam("expand") boolean expand,
 			@DefaultValue("0") @QueryParam("skip") int skip,
 			@DefaultValue(JobManager.DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take,
 			@DefaultValue("") @QueryParam(START_QUERY_PARAM) String start,
 			@DefaultValue("") @QueryParam(END_QUERY_PARAM) String end)
 	throws NativeProcessRunException
 	{	
-		s_Logger.debug(String.format("Get %s records for job %s. skip = %d, take = %d"
+		s_Logger.debug(String.format("Get records for job %s. skip = %d, take = %d"
 				+ " start = '%s', end='%s'", 
-				expand?"expanded ":"", jobId, skip, take, start, end));
+				jobId, skip, take, start, end));
 		
 		long epochStart = 0;
 		if (start.isEmpty() == false)

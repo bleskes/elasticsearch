@@ -46,11 +46,28 @@ public class NormalisedResult
 	static public final String ANOMALY_SCORE = "anomalyScore";
 	static public final String UNUSUAL_SCORE = "normalizedUnusualScore";
 	static public final String SYS_CHANGE_SCORE = "normalizedSysChangeScore";
+	static public final String SYS_CHANGE_MULTIPLIER = "sysChangeScoreMultiplier";
+	static public final String TAG = "tag";
 	
 	
 	private double m_AnomalyScore;
 	private double m_NormalizedUnusualScore;
 	private double m_NormalizedSysChangeScore;
+	private double m_SysChangeScoreMultiplier;
+	private String m_Tag;
+	
+	public NormalisedResult()
+	{
+		
+	}
+	
+	public NormalisedResult(NormalisedResult other)
+	{
+		m_AnomalyScore = other.m_AnomalyScore;
+		m_NormalizedSysChangeScore = other.m_NormalizedSysChangeScore;
+		m_NormalizedUnusualScore = other.m_NormalizedUnusualScore;
+		m_Tag = other.m_Tag;				
+	}
 	
 	public double getAnomalyScore() 
 	{
@@ -82,6 +99,26 @@ public class NormalisedResult
 		this.m_NormalizedSysChangeScore = normalizedSysChangeScore;
 	}
 	
+	public double getSysChangeScoreMultiplier()
+	{
+		return m_SysChangeScoreMultiplier;
+	}
+	
+	public void setSysChangeScoreMultiplier(double multiplier)
+	{
+		m_SysChangeScoreMultiplier = multiplier;
+	}
+	
+	public String getTag()
+	{
+		return m_Tag;
+	}
+	
+	public void setTag(String tag)
+	{
+		m_Tag = tag;
+	}
+
 	
 	static public NormalisedResult parseJson(JsonParser parser, Logger logger)
 	throws JsonParseException, IOException
@@ -175,6 +212,30 @@ public class NormalisedResult
 						logger.warn("Cannot parse " + UNUSUAL_SCORE + " : " + parser.getText() 
 										+ " as a double");
 					}	
+					break;
+				
+				case SYS_CHANGE_MULTIPLIER:
+					if (token == JsonToken.VALUE_STRING)
+					{
+						try
+						{
+							result.setSysChangeScoreMultiplier(Double.parseDouble(parser.getValueAsString()));
+						}
+						catch (NumberFormatException nfe)
+						{
+							logger.warn("Cannot parse " + SYS_CHANGE_MULTIPLIER + " : " + parser.getText() 
+								+ " as a double");
+						}
+					}
+					else
+					{
+						logger.warn("Cannot parse " + SYS_CHANGE_MULTIPLIER + " : " + parser.getText() 
+										+ " as a double");
+					}	
+					break;
+					
+				case TAG:
+					result.setTag(parser.getValueAsString());
 					break;
 				default:
 					logger.warn(String.format("Parsed unknown field in NormalisedResult %s:%s", 

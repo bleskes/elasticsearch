@@ -120,6 +120,15 @@ public interface JobDetailsProvider extends Closeable
 	public boolean updateJob(String jobId, Map<String, Object> updates)
 	throws UnknownJobException;
 	
+	/**
+	 * Get the specified field from the jobs document
+	 * 
+	 * @param jobId
+	 * @param fields
+	 * @return
+	 */
+	public <V> V getField(String jobId, String field);
+	
 	
 	/**
 	 * Delete all the job related documents from the database.

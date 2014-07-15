@@ -27,47 +27,89 @@
 
 package com.prelert.job.normalisation;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
 /**
  * The initialisation state for the normalisation process. 
  */
-public class InitialState 
+public class InitialState implements Iterable<InitialState.InitialStateRecord>
 {
-	private double m_AnomalyScore;
-	private double m_Probabilty;
-	private long m_Epoch;
-	private String m_Distinguisher;
+	private List<InitialStateRecord> m_StateRecords;
 	
-	public InitialState(long epoch, double anomalyScore)
+	public InitialState()
 	{
-		m_Epoch = epoch;
-		m_AnomalyScore = anomalyScore;
+		m_StateRecords = new ArrayList<>();		
 	}
 	
-	public InitialState(long epoch, double probability, String distinguisher)
+	public void addStateRecord(String epoch, String anomalyScore)
 	{
-		m_Epoch = epoch;
-		m_Probabilty = probability;
-		m_Distinguisher = distinguisher;
+		m_StateRecords.add(this.new InitialStateRecord(epoch, anomalyScore));
+	}
+	
+	public void addStateRecord(String epoch, String probability, String distinguisher)
+	{
+		m_StateRecords.add(this.new InitialStateRecord(epoch, probability, distinguisher));
+	}
+	
+	/**
+	 * Individual state record
+	 */
+	public class InitialStateRecord 
+	{
+		private String m_AnomalyScore;
+		private String m_Probabilty;
+		private String m_Epoch;
+		private String m_Distinguisher;
+
+		public InitialStateRecord(String epoch, String anomalyScore)
+		{
+			m_Epoch = epoch;
+			m_AnomalyScore = anomalyScore;
+		}
+
+		public InitialStateRecord(String epoch, String probability, String distinguisher)
+		{
+			m_Epoch = epoch;
+			m_Probabilty = probability;
+			m_Distinguisher = distinguisher;
+		}
+
+		public String getEpoch()
+		{
+			return m_Epoch;
+		}
+
+		public String getAnomalyScore()
+		{
+			return m_AnomalyScore;
+		}
+
+		public String getProbabilty()
+		{
+			return m_Probabilty;
+		}
+
+		public String getDistinguisher()
+		{
+			return m_Distinguisher;
+		}
+		
+		public String toSysChangeCsv()
+		{
+			return String.format("%s,%s\n", m_Epoch, m_AnomalyScore);
+		}
+		
+		public String toUnusualCsv()
+		{
+			return String.format("%s,%s,%s\n", m_Epoch, m_Probabilty, m_Distinguisher);
+		}
 	}
 
-	public long getEpoch()
+	@Override
+	public Iterator<InitialState.InitialStateRecord> iterator() 
 	{
-		return m_Epoch;
+		return m_StateRecords.iterator();
 	}
-	
-	public double getAnomalyScore()
-	{
-		return m_AnomalyScore;
-	}
-	
-	public double getProbabilty()
-	{
-		return m_Probabilty;
-	}
-	
-	public String getDistinguisher()
-	{
-		return m_Distinguisher;
-	}
-	
 }
