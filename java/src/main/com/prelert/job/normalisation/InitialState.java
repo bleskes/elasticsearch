@@ -33,6 +33,17 @@ import java.util.List;
 
 /**
  * The initialisation state for the normalisation process. 
+ * 
+ * The distinguisher string should be the concatenation of 
+ * <ul>
+ * <li>By Field Value</li>
+ * <li>By Field Name</li>
+ * <li>Over Field Value</li>
+ * <li>Over Field Name</li>
+ * <li>Partition Field Value</li>
+ * <li>Partition Field Name</li>
+ * </ul>
+ * Not the value fields come before the name fields
  */
 public class InitialState implements Iterable<InitialState.InitialStateRecord>
 {

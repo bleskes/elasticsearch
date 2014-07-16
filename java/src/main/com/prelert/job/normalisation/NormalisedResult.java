@@ -55,6 +55,7 @@ public class NormalisedResult
 	private double m_NormalizedSysChangeScore;
 	private double m_SysChangeScoreMultiplier;
 	private String m_Tag;
+	private String m_Distingusher;
 	
 	public NormalisedResult()
 	{
@@ -117,6 +118,11 @@ public class NormalisedResult
 	public void setTag(String tag)
 	{
 		m_Tag = tag;
+	}
+	
+	public String getDistingusher()
+	{
+		return m_Distingusher;
 	}
 
 	
@@ -239,7 +245,7 @@ public class NormalisedResult
 					break;
 				default:
 					logger.warn(String.format("Parsed unknown field in NormalisedResult %s:%s", 
-							fieldName, parser.nextTextValue()));
+							fieldName, parser.getValueAsString()));
 					break;
 				}
 				break;
