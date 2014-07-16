@@ -32,9 +32,7 @@ import java.util.Set;
 
 import javax.ws.rs.core.Application;
 
-import com.prelert.job.alert.manager.AlertManager;
 import com.prelert.job.manager.JobManager;
-import com.prelert.job.normalisation.Normaliser;
 import com.prelert.job.persistence.elasticsearch.ElasticSearchJobProvider;
 import com.prelert.job.persistence.elasticsearch.ElasticSearchResultsReaderFactory;
 import com.prelert.job.usage.elasticsearch.ElasticsearchUsageReporterFactory;
@@ -71,8 +69,6 @@ public class PrelertWebApp extends Application
 	private Set<Object> m_Singletons;
 	
 	private JobManager m_JobManager;
-	//private AlertManager m_AlertManager;
-	//private Normaliser m_Normaliser;
 	
 	public PrelertWebApp()
 	{
@@ -82,6 +78,7 @@ public class PrelertWebApp extends Application
 		m_ResourceClasses.add(Jobs.class);
 		m_ResourceClasses.add(Data.class);
 		m_ResourceClasses.add(Results.class);	   
+		m_ResourceClasses.add(Records.class);	   
 		m_ResourceClasses.add(Logs.class);
 		
 		// Message body writers
@@ -118,8 +115,6 @@ public class PrelertWebApp extends Application
 				
 		m_Singletons = new HashSet<>();
 		m_Singletons.add(m_JobManager);	
-		//m_Singletons.add(m_AlertManager);
-		//m_Singletons.add(m_Normaliser);
 	}
 	
 	@Override

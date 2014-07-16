@@ -74,7 +74,13 @@ public class ServerMain
 	
 	private static final String JETTY_PORT_PROPERTY = "jetty.port";
 	private static final String JETTY_HOME_PROPERTY = "jetty.home";
-	
+
+	/**
+	 * The server - held as a static member variable to allow close() to
+	 * access it
+	 */
+	private static Server ms_Server;
+
 	public static void main(String[] args) 
 	throws Exception 
 	{
@@ -109,8 +115,7 @@ public class ServerMain
 			jettyHome = ".";
 		}
 
-		Server server = new Server(jettyPort);
-			
+		ms_Server = new Server(jettyPort);
 
 		// This serves the Engine API
 		ServletContextHandler contextHandler = new ServletContextHandler();
@@ -146,8 +151,22 @@ public class ServerMain
 		HandlerCollection handlerCollection = new HandlerCollection();
 		handlerCollection.setHandlers(new Handler[] { dashboardHandler, contextHandler });
 
-		server.setHandler(handlerCollection);
-		server.start();
-		server.join();
+		ms_Server.setHandler(handlerCollection);
+		ms_Server.start();
+		ms_Server.join();
+	}
+
+
+	/**
+	 * Used to stop the Windows service.  (On Unix we just kill the
+	 * process.)
+	 */
+	public static void close(String[] args)
+	throws Exception
+	{
+		if (ms_Server != null)
+		{
+			ms_Server.stop();
+		}
 	}
 }

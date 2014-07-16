@@ -27,6 +27,8 @@
 
 package com.prelert.job.usage;
 
+import com.prelert.job.persistence.elasticsearch.ElasticSearchMappings;
+
 /**
  * Defines the field names/mappings for the stored 
  * usage documents.
@@ -34,6 +36,6 @@ package com.prelert.job.usage;
 public class Usage 
 {
 	public static final String TYPE = "usage";
-	public static final String TIMESTAMP = "@timestamp";
+	public static final String TIMESTAMP = ElasticSearchMappings.ES_TIMESTAMP;
 	public static final String VOLUME = "volume";
 }

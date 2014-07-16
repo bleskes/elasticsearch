@@ -34,10 +34,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -48,7 +45,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.prelert.job.normalisation.NormalisedResult;
 import com.prelert.job.normalisation.Normaliser;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.process.MissingFieldException;
@@ -59,6 +55,7 @@ import com.prelert.job.usage.UsageReporterFactory;
 import com.prelert.job.warnings.HighProportionOfBadTimestampsException;
 import com.prelert.job.warnings.OutOfOrderRecordsException;
 import com.prelert.job.warnings.StatusReporterFactory;
+import com.prelert.job.AnalysisConfig;
 import com.prelert.job.JobIdAlreadyExistsException;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobConfigurationException;
@@ -67,7 +64,6 @@ import com.prelert.job.JobInUseException;
 import com.prelert.job.JobStatus;
 import com.prelert.job.TooManyJobsException;
 import com.prelert.job.UnknownJobException;
-import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
@@ -109,6 +105,9 @@ public class JobManager
 	private ObjectMapper m_ObjectMapper;
 	
 	private JobProvider m_JobProvider;
+	
+	
+	private Map<String, Integer> m_JobIdBucketspan;
 
 	/**
 	 * These default to unlimited (indicated by negative limits), but may be
@@ -135,6 +134,8 @@ public class JobManager
 			StatusReporterFactory statusReporterFactory,
 			UsageReporterFactory usageReporterFactory)
 	{
+		m_JobIdBucketspan = new HashMap<>();
+		
 		m_JobProvider = jobProvider;
 		
 		m_ProcessManager = new ProcessManager(jobProvider, 
@@ -332,29 +333,30 @@ public class JobManager
 		return normalise(jobId, buckets);
 	}
 	
+	private Integer getJobBucketSpan(String jobId)
+	{
+		Integer span = m_JobIdBucketspan.get(jobId);
+		if (span == null)
+		{
+			// use dot notation to get fields from nested docs.
+			span = m_JobProvider.<Number>getField(jobId,
+					JobDetails.ANALYSIS_CONFIG + "." + AnalysisConfig.BUCKET_SPAN).intValue();
+			
+			m_JobIdBucketspan.put(jobId, span);
+		}
+		
+		return span;
+	}
 	
+		
 	private Pagination<Map<String, Object>> normalise(String jobId,
 			Pagination<Map<String, Object>> buckets) 
 	throws NativeProcessRunException
 	{
-		Normaliser normaliser = new Normaliser(jobId, m_JobProvider, s_Logger);
-		List<NormalisedResult> normalised = normaliser.normalise();
+		Normaliser normaliser = new Normaliser(jobId, m_JobProvider);
 		
-		Iterator<NormalisedResult> iter = normalised.iterator();
-		try
-		{
-			for (Map<String, Object> bucket : buckets.getDocuments())
-			{
-				double score = iter.next().getNormalizedSysChangeScore();
-				System.out.println(score);
-				bucket.put(Bucket.ANOMALY_SCORE, new Double(score));
-			}
-		}
-		catch (NoSuchElementException e)
-		{
+		normaliser.normaliseForSystemChange(getJobBucketSpan(jobId), buckets.getDocuments());
 			
-		}
-		
 		return buckets;
 	}
 	

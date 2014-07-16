@@ -76,15 +76,18 @@ public class NormalisedResultsParser implements Runnable
 	
 	}
 	
+	
 	public List<NormalisedResult> getNormalisedResults()
 	{
 		return m_Results;
 	}
 	
+	
 	/**
 	 * Debugging print normalise output
 	 * @throws IOException 
 	 */
+	@SuppressWarnings("unused")
 	private void printResults() throws IOException	
 	{
 		BufferedReader in = new BufferedReader(new InputStreamReader(m_InputStream));

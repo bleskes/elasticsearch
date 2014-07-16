@@ -48,7 +48,6 @@ import com.prelert.job.manager.JobManager;
 import com.prelert.job.process.NativeProcessRunException;
 import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.Pagination;
-import com.prelert.rs.data.SingleDocument;
 import com.prelert.rs.provider.RestApiException;
 
 /**
@@ -57,15 +56,15 @@ import com.prelert.rs.provider.RestApiException;
  * to get buckets and anomaly records in one query. 
  * Buckets can be filtered by date. 
  */
-@Path("/results")
-public class Results extends ResourceWithJobManager
+@Path("/records")
+public class Records extends ResourceWithJobManager
 {
-	static private final Logger s_Logger = Logger.getLogger(Results.class);
+	static private final Logger s_Logger = Logger.getLogger(Records.class);
 	
 	/**
-	 * The name of the results endpoint
+	 * The name of the records endpoint
 	 */
-	static public final String ENDPOINT = "results";
+	static public final String ENDPOINT = "records";
 	
 
 	static private final DateFormat s_DateFormat = new SimpleDateFormat(ISO_8601_DATE_FORMAT); 
@@ -76,7 +75,7 @@ public class Results extends ResourceWithJobManager
 	
 	
 	/**
-	 * Get all the bucket results (in pages) for the job optionally filtered 
+	 * Get all the records (in pages) for the job optionally filtered 
 	 * by date.
 	 * 
 	 * @param jobId
@@ -95,16 +94,15 @@ public class Results extends ResourceWithJobManager
 	@Produces(MediaType.APPLICATION_JSON)
 	public Pagination<Map<String, Object>> buckets(
 			@PathParam("jobId") String jobId,
-			@DefaultValue("false") @QueryParam("expand") boolean expand,
 			@DefaultValue("0") @QueryParam("skip") int skip,
 			@DefaultValue(JobManager.DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take,
 			@DefaultValue("") @QueryParam(START_QUERY_PARAM) String start,
 			@DefaultValue("") @QueryParam(END_QUERY_PARAM) String end)
 	throws NativeProcessRunException
 	{	
-		s_Logger.debug(String.format("Get %s buckets for job %s. skip = %d, take = %d"
+		s_Logger.debug(String.format("Get records for job %s. skip = %d, take = %d"
 				+ " start = '%s', end='%s'", 
-				expand?"expanded ":"", jobId, skip, take, start, end));
+				jobId, skip, take, start, end));
 		
 		long epochStart = 0;
 		if (start.isEmpty() == false)
@@ -132,21 +130,14 @@ public class Results extends ResourceWithJobManager
 			}			
 		}		
 		
-		//Normaliser normaliser = normaliser();
-		JobManager manager = jobManager();
-		Pagination<Map<String, Object>> buckets;
 		
-		if (epochStart > 0 || epochEnd > 0)
-		{
-			buckets = manager.buckets(jobId, expand, skip, take, epochStart, epochEnd);
-		}
-		else
-		{
-			buckets = manager.buckets(jobId, expand, skip, take);
-		}
+		JobManager manager = jobManager();
+		Pagination<Map<String, Object>> records = manager.records(
+				jobId, "_all", skip, take);
+
 		
 		// paging
-    	if (buckets.isAllResults() == false)
+    	if (records.isAllResults() == false)
     	{
     		String path = new StringBuilder()
 								.append("/results/")
@@ -163,98 +154,15 @@ public class Results extends ResourceWithJobManager
     			queryParams.add(this.new KeyValue(END_QUERY_PARAM, end));
     		}
     		
-    		setPagingUrls(path, buckets, queryParams);
+    		setPagingUrls(path, records, queryParams);
     	}		
 			
 		s_Logger.debug(String.format("Return %d buckets for job %s", 
-				buckets.getDocumentCount(), jobId));
+				records.getDocumentCount(), jobId));
 		
-		return buckets;
-	}
-	
-	
-	/**
-	 * Get an individual bucket results
-	 * @param jobId
-	 * @param bucketId
-	 * @param expand Return anomaly records in-line with the bucket,
-	 * default is false
-	 * @return
-	 */
-	@GET
-	@Path("/{jobId}/{bucketId}")
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response bucket(@PathParam("jobId") String jobId,
-			@PathParam("bucketId") String bucketId,
-			@DefaultValue("false") @QueryParam("expand") boolean expand)
-	{
-		s_Logger.debug(String.format("Get %sbucket %s for job %s", 
-				expand?"expanded ":"", bucketId, jobId));
-		
-		JobManager manager = jobManager();
-		SingleDocument<Map<String, Object>> bucket = manager.bucket(jobId, bucketId, expand);
-		
-		if (bucket.isExists())
-		{
-			s_Logger.debug(String.format("Returning bucket %s for job %s", 
-					bucketId, jobId));
-		}
-		else
-		{
-			s_Logger.debug(String.format("Cannot find bucket %s for job %s", 
-					bucketId, jobId));
-			
-			return Response.status(Response.Status.NOT_FOUND).entity(bucket).build();
-		}
-					
-		return Response.ok(bucket).build();
-	}
-	
-	
-	/**
-	 * Get the anomaly records for the bucket.
-	 * 
-	 * @param jobId
-	 * @param bucketId
-	 * @param skip
-	 * @param take
-	 * @return
-	 */
-	@Path("/{jobId}/{bucketId}/records")
-	@GET
-	@Produces(MediaType.APPLICATION_JSON)
-	public Pagination<Map<String, Object>> bucketRecords(
-			@PathParam("jobId") String jobId,
-			@PathParam("bucketId") String bucketId,
-			@DefaultValue("0") @QueryParam("skip") int skip,
-			@DefaultValue(JobManager.DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take)
-	throws NativeProcessRunException
-	{
-		s_Logger.debug(String.format("Get records for job %s, bucket %s", 
-				jobId, bucketId));
-		
-		JobManager manager = jobManager();
-		Pagination<Map<String, Object>> records = manager.records(
-				jobId, bucketId, skip, take);
-		
-		// paging
-    	if (records.isAllResults() == false)
-    	{
-    		String path = new StringBuilder()
-    							.append("/results/")
-    							.append(jobId)
-    							.append("/")
-								.append(bucketId)
-								.append("/records")
-								.toString();
-    		
-    		setPagingUrls(path, records);
-    	}
-		
-		s_Logger.debug(String.format("Returning %d records for job %s, bucket %s", 
-				records.getDocuments().size(), jobId, bucketId));
-					
 		return records;
 	}
+	
+
 		
 }

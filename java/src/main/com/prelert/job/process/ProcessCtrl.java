@@ -154,6 +154,7 @@ public class ProcessCtrl
 	static final public String PERSIST_STATE_ARG = "--persistState";
 	static final public String VERSION_ARG = "--version";
 	static final public String INFO_ARG = "--info";
+	static final public String MAX_ANOMALY_RECORDS = "--maxAnomalyRecords=";
 	
 	/*
 	 * Normalize_api args
@@ -492,6 +493,10 @@ public class ProcessCtrl
 		// Input is always length encoded
 		command.add(LENGTH_ENCODED_INPUT_ARG);
 		
+		
+		// TODO limit on the number of anomaly records?
+		String recordCountArg = MAX_ANOMALY_RECORDS + "0";
+		command.add(recordCountArg);
 		
 		String timeField = DataDescription.DEFAULT_TIME_FIELD;
 
@@ -858,20 +863,21 @@ public class ProcessCtrl
 				new FileOutputStream(stateFile.toString()),
 				Charset.forName("UTF-8")))
 		{
-			String s;
 			switch (type)
 			{
 			case SYS_STATE_CHANGE:
 				osw.write(SYS_CHANGE_STATE_HEADER);
-				s = String.format("%d,%f\n", state.getEpoch(),
-						state.getAnomalyScore());
-				osw.write(s);
+				for (InitialState.InitialStateRecord record : state)
+				{
+					osw.write(record.toSysChangeCsv());
+				}
 				break;
 			case UNUSUAL_STATE:
 				osw.write(UNUSUAL_STATE_HEADER);
-				s = String.format("%d,%f,%s\n", state.getEpoch(),
-						state.getProbabilty(), state.getDistinguisher());
-				osw.write(s);
+				for (InitialState.InitialStateRecord record : state)
+				{
+					osw.write(record.toUnusualCsv());
+				} 				
 				break;
 			}
 		}

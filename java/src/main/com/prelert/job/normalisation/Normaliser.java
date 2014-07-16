@@ -28,7 +28,9 @@
 package com.prelert.job.normalisation;
 
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.log4j.Logger;
 
@@ -36,8 +38,12 @@ import com.prelert.job.input.LengthEncodedWriter;
 import com.prelert.job.persistence.JobResultsProvider;
 import com.prelert.job.process.NativeProcessRunException;
 import com.prelert.job.process.ProcessCtrl;
+import com.prelert.job.process.ProcessCtrl.NormalisationType;
 import com.prelert.job.process.output.NormalisedResultsParser;
+import com.prelert.rs.data.AnomalyRecord;
+import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.ErrorCode;
+
 
 public class Normaliser 
 {
@@ -45,46 +51,55 @@ public class Normaliser
 	
 	private JobResultsProvider m_JobDetailsProvider;
 	
-	private Logger m_Logger;
 	private String m_JobId;
 	
-	public Normaliser(String jobId, JobResultsProvider jobResultsProvider, Logger logger)
+	public Normaliser(String jobId, JobResultsProvider jobResultsProvider)
 	{
 		m_JobDetailsProvider = jobResultsProvider;
 		m_JobId = jobId;
-		m_Logger = logger;
 	}
 			
-	public List<NormalisedResult> normalise() throws NativeProcessRunException
+	/**	 
+	 *  
+	 * @param bucketSpan
+	 * @return
+	 * @throws NativeProcessRunException
+	 */
+	public List<Map<String, Object>> normaliseForSystemChange(int bucketSpan, 
+			List<Map<String, Object>> buckets) 
+	throws NativeProcessRunException
 	{
-		NormaliserProcess process = createNormaliserProcess();
+		ProcessCtrl.NormalisationType type = NormalisationType.SYS_STATE_CHANGE;
+		InitialState state = m_JobDetailsProvider.getSystemChangeInitialiser(m_JobId);
+		
+		NormaliserProcess process = createNormaliserProcess(type, state, bucketSpan);
 		
 		NormalisedResultsParser resultsParser = new NormalisedResultsParser(
 							process.getProcess().getInputStream(),
-							m_Logger);
+							s_Logger);
 		
 		Thread parserThread = new Thread(resultsParser, m_JobId + "-Results-Parser");
 		parserThread.start();
-		
-		List<JobResultsProvider.TimeScore> scores = m_JobDetailsProvider.getRawScores(m_JobId);
-		
+						
 		LengthEncodedWriter writer = new LengthEncodedWriter(
 				process.getProcess().getOutputStream());
 		
 		try 
 		{
-			writer.writeNumFields(1);
+			writer.writeNumFields(2);
 			writer.writeField("anomalyScore");
+			writer.writeField("tag");
 			
-			for (JobResultsProvider.TimeScore score : scores)
+			for (Map<String, Object> bucket : buckets)
 			{
-				writer.writeNumFields(1);
-				writer.writeField(score.getScore());
+				writer.writeNumFields(2);
+				writer.writeField(bucket.get(Bucket.ANOMALY_SCORE).toString());
+				writer.writeField(bucket.get(Bucket.ID).toString());
 			}
 		}
 		catch (IOException e) 
 		{
-			m_Logger.warn("Error writing to the normalizer", e);
+			s_Logger.warn("Error writing to the normalizer", e);
 		}
 		finally
 		{
@@ -96,8 +111,8 @@ public class Normaliser
 			{
 			}
 		}
-
 		
+		// Wait for the output parser
 		try
 		{
 			parserThread.join();
@@ -107,28 +122,74 @@ public class Normaliser
 			
 		}
 		
-		
-		return resultsParser.getNormalisedResults();
+		return normaliseBuckets(resultsParser.getNormalisedResults(), buckets);
 	}
 	
 	
+	private List<Map<String, Object>> normaliseBuckets(List<NormalisedResult> results,
+			List<Map<String, Object>> buckets)
+	{
+		Iterator<Map<String, Object>> bucketIter = buckets.iterator();
+		
+		for (NormalisedResult result : results)
+		{
+			Map<String, Object> bucket = bucketIter.next();
+			bucket.put(Bucket.ANOMALY_SCORE, new Double(result.getNormalizedSysChangeScore()));
+			
+			if (bucket.containsKey(Bucket.RECORDS))
+			{
+				List<Map<String, Object>> records = (List<Map<String, Object>>) 
+						bucket.get(Bucket.RECORDS);
+				
+				for (Map<String, Object> record : records)
+				{
+					try
+					{
+						double score = Double.parseDouble(
+								record.get(AnomalyRecord.ANOMALY_SCORE).toString());
+						
+						record.put(AnomalyRecord.ANOMALY_SCORE, 
+								new Double(score * result.getSysChangeScoreMultiplier()));
+								
+					}
+					catch (NumberFormatException nfe)
+					{
+						s_Logger.warn("Cannot parse record anomaly score", nfe);
+					}
+				}
+			}
+			
+		}
+		
+		return buckets;
+	}
 	
-	private NormaliserProcess createNormaliserProcess()
+	/***
+	 * Create and start the normalization process
+	 * 
+	 * @param type
+	 * @param state
+	 * @param bucketSpan
+	 * @return
+	 * @throws NativeProcessRunException
+	 */
+	private NormaliserProcess createNormaliserProcess(
+			ProcessCtrl.NormalisationType type,
+			InitialState state, 
+			int bucketSpan)
 	throws NativeProcessRunException
 	{
-		InitialState state = new InitialState(1405074157l, 0.0001f); // TODO state hardcoded
 		try
 		{
 			Process proc = ProcessCtrl.buildNormaliser(m_JobId, 
-					ProcessCtrl.NormalisationType.SYS_STATE_CHANGE,
-					state, 300,  m_Logger);
+					type, state, bucketSpan,  s_Logger);
 			
 			return new NormaliserProcess(proc);
 		}
 		catch (IOException e)
 		{
 			String msg = "Failed to start normalisation process for job " + m_JobId;
-			m_Logger.error(msg, e);
+			s_Logger.error(msg, e);
 			throw new NativeProcessRunException(msg, 
 					ErrorCode.NATIVE_PROCESS_START_ERROR, e);
 		}

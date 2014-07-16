@@ -67,6 +67,7 @@ import com.prelert.job.JobDetails;
 import com.prelert.job.JobIdAlreadyExistsException;
 import com.prelert.job.JobStatus;
 import com.prelert.job.UnknownJobException;
+import com.prelert.job.normalisation.InitialState;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.usage.Usage;
 import com.prelert.rs.data.AnomalyRecord;
@@ -355,6 +356,40 @@ public class ElasticSearchJobProvider implements JobProvider
 		
 		return false;
 	}
+	
+	/**
+	 * Returns null if the field cannot be found or converted to 
+	 * type V
+	 */
+	@Override
+	public <V> V getField(String jobId, String field) 
+	{
+		try
+		{
+			GetResponse response = m_Client
+					.prepareGet(jobId, JobDetails.TYPE, jobId)
+					.setFields(field)
+					.get();
+			try 
+			{
+				return (V)response.getField(field).getValue();
+			}
+			catch (ClassCastException e)
+			{
+				return null;
+			}
+					
+		}
+		catch (IndexMissingException e)
+		{
+			// the job does not exist
+			String msg = "Missing Index no job with id " + jobId;
+			s_Logger.error(msg);
+		}
+		
+		return null;
+	}
+
 
 	@Override
 	public boolean updateJob(String jobId, Map<String, Object> updates)
@@ -441,11 +476,11 @@ public class ElasticSearchJobProvider implements JobProvider
 		RangeFilterBuilder fb = FilterBuilders.rangeFilter(Bucket.ID);
 		if (startBucket > 0)
 		{
-			fb = fb.gte(startBucket);
+			fb.gte(startBucket);
 		}
 		if (endBucket > 0)
 		{
-			fb = fb.lt(endBucket);
+			fb.lt(endBucket);
 		}
 
 		return buckets(jobId, expand, skip, take, fb);
@@ -455,10 +490,9 @@ public class ElasticSearchJobProvider implements JobProvider
 			boolean expand, int skip, int take,
 			FilterBuilder fb)
 	{	
-
 		SortBuilder sb = new FieldSortBuilder(Bucket.ID)
-		.ignoreUnmapped(true)
-		.order(SortOrder.ASC);
+					.ignoreUnmapped(true)
+					.order(SortOrder.ASC);
 
 		SearchResponse searchResponse = m_Client.prepareSearch(jobId)
 				.setTypes(Bucket.TYPE)		
@@ -541,9 +575,19 @@ public class ElasticSearchJobProvider implements JobProvider
 	public Pagination<Map<String, Object>> records(String jobId, 
 			String bucketId, int skip, int take)
 	{
-		FilterBuilder bucketFilter= FilterBuilders.termFilter("_id", bucketId);
+		FilterBuilder bucketFilter;
+		if (bucketId.equals("_all"))
+		{
+			bucketFilter = FilterBuilders.matchAllFilter();
+		}
+		else
+		{
+			bucketFilter = FilterBuilders.termFilter("_id", bucketId);
+		}
+		
 		FilterBuilder parentFilter = FilterBuilders.hasParentFilter(Bucket.TYPE, bucketFilter);
-				
+		
+			
 		SortBuilder sb = new FieldSortBuilder(AnomalyRecord.ANOMALY_SCORE)
 											.ignoreUnmapped(true)
 											.missing("_last")
@@ -583,34 +627,48 @@ public class ElasticSearchJobProvider implements JobProvider
 	}
 	
 	
-	public List<TimeScore> getRawScores(String jobId)
+	public InitialState getSystemChangeInitialiser(String jobId)
 	{
 		FilterBuilder fb = FilterBuilders.matchAllFilter();
 		
-		SortBuilder sb = new FieldSortBuilder(Bucket.ID)
-								.order(SortOrder.DESC);	
+		SortBuilder sb = new FieldSortBuilder(ElasticSearchMappings.ES_TIMESTAMP)
+								.order(SortOrder.ASC);	
 		
-		SearchResponse searchResponse = m_Client.prepareSearch(jobId)
-				.setTypes(Bucket.TYPE)
+		SearchRequestBuilder searchBuilder = m_Client.prepareSearch(jobId)
+				.setTypes(AnomalyRecord.TYPE)
 				.setFetchSource(false)
-				.addField(Bucket.ID)
-				.addField(Bucket.ANOMALY_SCORE)
+				.addField(ElasticSearchMappings.ES_TIMESTAMP)
+				.addField(AnomalyRecord.ANOMALY_SCORE)
 				.setPostFilter(fb)
-				.setFrom(0).setSize(500)
-				.addSort(sb)
-				.get();
+				.addSort(sb);
+
 		
-		List<TimeScore> result = new ArrayList<>();
-		for (SearchHit hit : searchResponse.getHits().getHits())
+		InitialState state = new InitialState();
+
+		final int size = 1000;
+		int from = 0;
+		boolean getNext = true;
+		while (getNext)
 		{
-			TimeScore ts = new TimeScore(hit.field(Bucket.ID).<String>value(), 
-								hit.field(Bucket.ANOMALY_SCORE).value().toString());
-			result.add(ts);
+			searchBuilder.setFrom(from);
+			searchBuilder.setSize(size);
+			
+			SearchResponse searchResponse = searchBuilder.get();
+			
+			for (SearchHit hit : searchResponse.getHits().getHits())
+			{
+				state.addStateRecord(hit.field(ElasticSearchMappings.ES_TIMESTAMP).value().toString(), 
+									hit.field(AnomalyRecord.ANOMALY_SCORE).value().toString());
+			}
+			
+			from += size;
+			getNext = searchResponse.getHits().getTotalHits() > from;
 		}
 		
-		return result;
+		return state;
 	}
-
+	
+	
 	/**
 	 * Always returns true
 	 */
@@ -672,9 +730,5 @@ public class ElasticSearchJobProvider implements JobProvider
 		}
 		return detectorState;
 	}
-
-
-
-
 
 }
