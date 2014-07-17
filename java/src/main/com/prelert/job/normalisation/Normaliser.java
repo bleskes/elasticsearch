@@ -30,7 +30,6 @@ package com.prelert.job.normalisation;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.log4j.Logger;
 
@@ -53,6 +52,8 @@ public class Normaliser
 	
 	private String m_JobId;
 	
+	private int m_Written;
+	
 	public Normaliser(String jobId, JobResultsProvider jobResultsProvider)
 	{
 		m_JobDetailsProvider = jobResultsProvider;
@@ -65,20 +66,20 @@ public class Normaliser
 	 * @return
 	 * @throws NativeProcessRunException
 	 */
-	public List<Map<String, Object>> normaliseForSystemChange(int bucketSpan, 
-			List<Map<String, Object>> buckets) 
+	public List<Bucket> normaliseForSystemChange(int bucketSpan, 
+			List<Bucket> buckets) 
 	throws NativeProcessRunException
 	{
-		ProcessCtrl.NormalisationType type = NormalisationType.SYS_STATE_CHANGE;
 		InitialState state = m_JobDetailsProvider.getSystemChangeInitialiser(m_JobId);
 		
-		NormaliserProcess process = createNormaliserProcess(type, state, bucketSpan);
+		NormaliserProcess process = createNormaliserProcess(
+				NormalisationType.SYS_STATE_CHANGE, state, bucketSpan);
 		
 		NormalisedResultsParser resultsParser = new NormalisedResultsParser(
 							process.getProcess().getInputStream(),
 							s_Logger);
 		
-		Thread parserThread = new Thread(resultsParser, m_JobId + "-Results-Parser");
+		Thread parserThread = new Thread(resultsParser, m_JobId + "-Normalizer-Parser");
 		parserThread.start();
 						
 		LengthEncodedWriter writer = new LengthEncodedWriter(
@@ -90,11 +91,11 @@ public class Normaliser
 			writer.writeField("anomalyScore");
 			writer.writeField("tag");
 			
-			for (Map<String, Object> bucket : buckets)
+			for (Bucket bucket : buckets)
 			{
 				writer.writeNumFields(2);
-				writer.writeField(bucket.get(Bucket.ANOMALY_SCORE).toString());
-				writer.writeField(bucket.get(Bucket.ID).toString());
+				writer.writeField(Double.toString(bucket.getAnomalyScore()));
+				writer.writeField(bucket.getId());
 			}
 		}
 		catch (IOException e) 
@@ -122,44 +123,160 @@ public class Normaliser
 			
 		}
 		
-		return normaliseBuckets(resultsParser.getNormalisedResults(), buckets);
+		return mergeNormalisedSystemChangeScoresIntoBuckets(
+				resultsParser.getNormalisedResults(), buckets);
 	}
 	
 	
-	private List<Map<String, Object>> normaliseBuckets(List<NormalisedResult> results,
-			List<Map<String, Object>> buckets)
+	public List<Bucket> normaliseForUnusualBehaviour(int bucketSpan, 
+			List<Bucket> expandedBuckets) throws NativeProcessRunException 
 	{
-		Iterator<Map<String, Object>> bucketIter = buckets.iterator();
+		InitialState state = m_JobDetailsProvider.getUnusualBehaviourInitialiser(m_JobId);
 		
-		for (NormalisedResult result : results)
-		{
-			Map<String, Object> bucket = bucketIter.next();
-			bucket.put(Bucket.ANOMALY_SCORE, new Double(result.getNormalizedSysChangeScore()));
-			
-			if (bucket.containsKey(Bucket.RECORDS))
-			{
-				List<Map<String, Object>> records = (List<Map<String, Object>>) 
-						bucket.get(Bucket.RECORDS);
-				
-				for (Map<String, Object> record : records)
-				{
-					try
-					{
-						double score = Double.parseDouble(
-								record.get(AnomalyRecord.ANOMALY_SCORE).toString());
+		NormaliserProcess process = createNormaliserProcess(
+				NormalisationType.UNUSUAL_STATE, state, bucketSpan);
+		
+		NormalisedResultsParser resultsParser = new NormalisedResultsParser(
+							process.getProcess().getInputStream(),
+							s_Logger);
+		
+		Thread parserThread = new Thread(resultsParser, m_JobId + "-Normalizer-Parser");
+		parserThread.start();
 						
-						record.put(AnomalyRecord.ANOMALY_SCORE, 
-								new Double(score * result.getSysChangeScoreMultiplier()));
-								
-					}
-					catch (NumberFormatException nfe)
+		LengthEncodedWriter writer = new LengthEncodedWriter(
+				process.getProcess().getOutputStream());
+		
+		
+		try 
+		{
+			writer.writeNumFields(2);
+			writer.writeField("probability");
+			writer.writeField("tag");
+			
+			System.out.println("probability,tag");
+			
+			
+			m_Written = 0;
+			for (Bucket bucket : expandedBuckets)
+			{
+				for (AnomalyRecord record : bucket.getRecords())
+				{
+					if (record.isSimpleCount() != null && record.isSimpleCount())
 					{
-						s_Logger.warn("Cannot parse record anomaly score", nfe);
+						continue;
 					}
+					
+					System.out.println(String.format("%s,%s", 
+							Double.toString(record.getProbability()),
+							distingusherString(record)));	
+					
+					writer.writeNumFields(2);
+					writer.writeField(Double.toString(record.getProbability()));
+					writer.writeField(distingusherString(record));
+					
+					m_Written++;
 				}
 			}
 			
+			System.out.println(m_Written);
 		}
+		catch (IOException e) 
+		{
+			s_Logger.warn("Error writing to the normalizer", e);
+		}
+		finally
+		{
+			try 
+			{
+				process.getProcess().getOutputStream().close();
+			} 
+			catch (IOException e) 
+			{
+			}
+		}
+		
+		// Wait for the output parser
+		try
+		{
+			parserThread.join();
+		}
+		catch (InterruptedException e)
+		{
+			
+		}
+		
+		return mergeNormalisedUnusualIntoBuckets(
+				resultsParser.getNormalisedResults(), expandedBuckets);	
+	}
+	
+	
+	/**
+	 * Replace bucket anomaly scores and scale the individual
+	 * record's scores by the normalisation factor
+	 * 
+	 * @param normalisedScores
+	 * @param buckets
+	 * @return
+	 */
+	private List<Bucket> mergeNormalisedSystemChangeScoresIntoBuckets(
+			List<NormalisedResult> normalisedScores,
+			List<Bucket> buckets)
+	{
+		Iterator<Bucket> bucketIter = buckets.iterator();
+		
+		for (NormalisedResult result : normalisedScores)
+		{
+			Bucket bucket = bucketIter.next();
+			bucket.setAnomalyScore(result.getNormalizedSysChangeScore());
+						
+			for (AnomalyRecord record : bucket.getRecords())
+			{
+				double score = record.getAnomalyScore();
+
+				record.setAnomalyScore(score * result.getSysChangeScoreMultiplier());
+			}		
+		}
+		
+		return buckets;
+	}
+	
+	
+	/**
+	 * Set the bucket's anomaly score equal to the sum of the 
+	 * normalised records
+	 * 
+	 * @param normalisedScores
+	 * @param buckets
+	 * @return
+	 */
+	private List<Bucket> mergeNormalisedUnusualIntoBuckets(
+			List<NormalisedResult> normalisedScores,
+			List<Bucket> buckets)
+	{
+		Iterator<NormalisedResult> scoresIter = normalisedScores.iterator();
+		
+		for (Bucket bucket : buckets)
+		{
+			double bucketAnomalyScore = 0.0;
+			for (AnomalyRecord record : bucket.getRecords())
+			{
+				if (record.isSimpleCount() != null && record.isSimpleCount())
+				{
+					continue;
+				}
+				m_Written--;
+				NormalisedResult normalised = scoresIter.next();
+
+				record.setAnomalyScore(normalised.getNormalizedUnusualScore());
+				bucketAnomalyScore += normalised.getNormalizedUnusualScore();
+			}
+
+			bucket.setAnomalyScore(bucketAnomalyScore);
+			
+		}
+		
+		
+		System.out.println(m_Written);
 		
 		return buckets;
 	}
@@ -193,6 +310,25 @@ public class Normaliser
 			throw new NativeProcessRunException(msg, 
 					ErrorCode.NATIVE_PROCESS_START_ERROR, e);
 		}
-	}
+	}	
 	
+	
+	private String distingusherString(AnomalyRecord record)
+	{
+		StringBuilder distinguisher = new StringBuilder();
+		String field = record.getByFieldValue();
+		distinguisher.append(field == null ? "" : field );
+		field = record.getByFieldName();
+		distinguisher.append(field == null ? "" : field );
+		field = record.getOverFieldValue();
+		distinguisher.append(field == null ? "" : field );
+		field = record.getOverFieldName();
+		distinguisher.append(field == null ? "" : field );
+		field = record.getPartitionFieldValue();
+		distinguisher.append(field == null ? "" : field );
+		field = record.getPartitionFieldName();
+		distinguisher.append(field == null ? "" : field );
+		
+		return distinguisher.toString();
+	}
 }

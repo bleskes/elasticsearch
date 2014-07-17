@@ -30,6 +30,9 @@ package com.prelert.job.persistence.elasticsearch;
 import static org.elasticsearch.node.NodeBuilder.nodeBuilder;
 
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -56,6 +59,7 @@ import org.elasticsearch.index.query.RangeFilterBuilder;
 import org.elasticsearch.indices.IndexMissingException;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.SearchHitField;
 import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
@@ -461,7 +465,7 @@ public class ElasticSearchJobProvider implements JobProvider
 
 	/* Results */
 	@Override
-	public Pagination<Map<String, Object>> buckets(String jobId,
+	public Pagination<Bucket> buckets(String jobId,
 			boolean expand, int skip, int take) 
 	{
 		FilterBuilder fb = FilterBuilders.matchAllFilter();
@@ -470,7 +474,7 @@ public class ElasticSearchJobProvider implements JobProvider
 	}
 
 	@Override
-	public Pagination<Map<String, Object>> buckets(String jobId,
+	public Pagination<Bucket> buckets(String jobId,
 			boolean expand, int skip, int take, long startBucket, long endBucket) 
 	{
 		RangeFilterBuilder fb = FilterBuilders.rangeFilter(Bucket.ID);
@@ -486,7 +490,7 @@ public class ElasticSearchJobProvider implements JobProvider
 		return buckets(jobId, expand, skip, take, fb);
 	}
 	
-	private Pagination<Map<String, Object>> buckets(String jobId, 
+	private Pagination<Bucket> buckets(String jobId, 
 			boolean expand, int skip, int take,
 			FilterBuilder fb)
 	{	
@@ -501,29 +505,30 @@ public class ElasticSearchJobProvider implements JobProvider
 				.setFrom(skip).setSize(take)
 				.get();
 
-		List<Map<String, Object>> results = new ArrayList<>();
+		List<Bucket> results = new ArrayList<>();
+		
 		for (SearchHit hit : searchResponse.getHits().getHits())
 		{
-			Map<String, Object> bucket  = hit.getSource();
-
 			// Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch, 
 			// and replace using the API 'timestamp' key.
-			Object timestamp = bucket.remove(ElasticSearchMappings.ES_TIMESTAMP);
-			bucket.put(Bucket.TIMESTAMP, timestamp);
+			Object timestamp = hit.getSource().remove(ElasticSearchMappings.ES_TIMESTAMP);
+			hit.getSource().put(Bucket.TIMESTAMP, timestamp);
+
+			Bucket bucket = m_ObjectMapper.convertValue(hit.getSource(), Bucket.class);
 
 			// TODO this is probably not the most efficient way to 
 			// run the search. Try OR filters?
 			if (expand)
 			{
-				Pagination<Map<String, Object>> page = this.records(
+				Pagination<AnomalyRecord> page = this.records(
 						jobId, hit.getId(), 0, m_PageSize);				
-				bucket.put(Bucket.RECORDS, page.getDocuments());
+				bucket.setRecords(page.getDocuments());
 			}
 
 			results.add(bucket);
 		}
 
-		Pagination<Map<String, Object>> page = new Pagination<>();
+		Pagination<Bucket> page = new Pagination<>();
 		page.setDocuments(results);
 		page.setHitCount(searchResponse.getHits().getTotalHits());
 		page.setSkip(skip);
@@ -532,28 +537,29 @@ public class ElasticSearchJobProvider implements JobProvider
 		return page;
 	}
 	
-	public SingleDocument<Map<String, Object>> bucket(String jobId, 
+	@Override
+	public SingleDocument<Bucket> bucket(String jobId, 
 			String bucketId, boolean expand)
 	{
 		GetResponse response = m_Client.prepareGet(jobId, Bucket.TYPE, bucketId).get();
 		
-		SingleDocument<Map<String, Object>> doc = new SingleDocument<>();
+		SingleDocument<Bucket> doc = new SingleDocument<>();
 		doc.setType(Bucket.TYPE);
 		doc.setDocumentId(bucketId);
 		if (response.isExists())
 		{
-			Map<String, Object> bucket = response.getSource();
-
 			// Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch, 
 			// and replace using the API 'timestamp' key.
-			Object timestamp = bucket.remove(ElasticSearchMappings.ES_TIMESTAMP);
-			bucket.put(Bucket.TIMESTAMP, timestamp);
+			Object timestamp = response.getSource().remove(ElasticSearchMappings.ES_TIMESTAMP);
+			response.getSource().put(Bucket.TIMESTAMP, timestamp);
+
+			Bucket bucket = m_ObjectMapper.convertValue(response.getSource(), Bucket.class);
 			
 			if (response.isExists() && expand)
 			{
-				Pagination<Map<String, Object>> page = this.records(jobId, 
+				Pagination<AnomalyRecord> page = this.records(jobId, 
 						bucketId, 0, m_PageSize);
-				bucket.put(Bucket.RECORDS, page.getDocuments());
+				bucket.setRecords(page.getDocuments());
 			}
 			
 			doc.setDocument(bucket);
@@ -572,7 +578,8 @@ public class ElasticSearchJobProvider implements JobProvider
 	 * @param take Take only this number of Jobs
 	 * @return
 	 */
-	public Pagination<Map<String, Object>> records(String jobId, 
+	@Override
+	public Pagination<AnomalyRecord> records(String jobId, 
 			String bucketId, int skip, int take)
 	{
 		FilterBuilder bucketFilter;
@@ -600,7 +607,7 @@ public class ElasticSearchJobProvider implements JobProvider
 				.addSort(sb)
 				.get();
 
-		List<Map<String, Object>> results = new ArrayList<>();
+		List<AnomalyRecord> results = new ArrayList<>();
 		for (SearchHit hit : searchResponse.getHits().getHits())
 		{
 			Map<String, Object> m  = hit.getSource();
@@ -614,10 +621,13 @@ public class ElasticSearchJobProvider implements JobProvider
 			// records can be sorted in Kibanna
 			m.remove(ElasticSearchMappings.ES_TIMESTAMP);
 			
-			results.add(m);
+			
+			AnomalyRecord record = m_ObjectMapper.convertValue(
+					m, AnomalyRecord.class);
+			results.add(record);
 		}
 		
-		Pagination<Map<String, Object>> page = new Pagination<>();
+		Pagination<AnomalyRecord> page = new Pagination<>();
 		page.setDocuments(results);
 		page.setHitCount(searchResponse.getHits().getTotalHits());
 		page.setSkip(skip);
@@ -626,7 +636,7 @@ public class ElasticSearchJobProvider implements JobProvider
 		return page;	
 	}
 	
-	
+	@Override
 	public InitialState getSystemChangeInitialiser(String jobId)
 	{
 		FilterBuilder fb = FilterBuilders.matchAllFilter();
@@ -659,6 +669,114 @@ public class ElasticSearchJobProvider implements JobProvider
 			{
 				state.addStateRecord(hit.field(ElasticSearchMappings.ES_TIMESTAMP).value().toString(), 
 									hit.field(AnomalyRecord.ANOMALY_SCORE).value().toString());
+			}
+			
+			from += size;
+			getNext = searchResponse.getHits().getTotalHits() > from;
+		}
+		
+		return state;
+	}
+	
+	
+	/**
+	 * Get all the records excluding simple counts
+	 */
+	@Override
+	public InitialState getUnusualBehaviourInitialiser(String jobId)
+	{
+		
+		FilterBuilder simpleCountFilter = FilterBuilders.termFilter("isSimpleCount", true);
+		FilterBuilder fb = FilterBuilders.notFilter(simpleCountFilter);
+		
+		SortBuilder sb = new FieldSortBuilder(ElasticSearchMappings.ES_TIMESTAMP)
+								.order(SortOrder.ASC);	
+		
+		SearchRequestBuilder searchBuilder = m_Client.prepareSearch(jobId)
+				.setTypes(AnomalyRecord.TYPE)
+				.setFetchSource(false)
+				.addField(ElasticSearchMappings.ES_TIMESTAMP)
+				.addField(AnomalyRecord.PROBABILITY)
+				.addField(AnomalyRecord.BY_FIELD_NAME)
+				.addField(AnomalyRecord.BY_FIELD_VALUE)
+				.addField(AnomalyRecord.OVER_FIELD_NAME)
+				.addField(AnomalyRecord.OVER_FIELD_VALUE)
+				.addField(AnomalyRecord.PARTITION_FIELD_NAME)
+				.addField(AnomalyRecord.PARTITION_FIELD_VALUE)
+				.setPostFilter(fb)
+				.addSort(sb);
+		
+		
+		DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSX");
+		String lastTimestamp = "";
+		String epoch = "";
+		
+		InitialState state = new InitialState();
+
+		final int size = 1000;
+		int from = 0;
+		boolean getNext = true;
+		while (getNext)
+		{
+			searchBuilder.setFrom(from);
+			searchBuilder.setSize(size);
+			
+			SearchResponse searchResponse = searchBuilder.get();
+			
+			for (SearchHit hit : searchResponse.getHits().getHits())
+			{
+				StringBuilder distinguisher = new StringBuilder();
+				
+				// put the value first in the string rather than
+				// fieldname this should make it quicker to compare 
+				SearchHitField field = hit.field(AnomalyRecord.BY_FIELD_VALUE);
+				if (field != null)
+				{
+					distinguisher.append(field.value().toString());
+				}
+				field = hit.field(AnomalyRecord.BY_FIELD_NAME);
+				if (field != null)
+				{
+					distinguisher.append(field.value().toString());
+				}
+				field = hit.field(AnomalyRecord.OVER_FIELD_VALUE);
+				if (field != null)
+				{
+					distinguisher.append(field.value().toString());
+				}
+				field = hit.field(AnomalyRecord.OVER_FIELD_NAME);
+				if (field != null)
+				{
+					distinguisher.append(field.value().toString());
+				}
+				field = hit.field(AnomalyRecord.PARTITION_FIELD_VALUE);
+				if (field != null)
+				{
+					distinguisher.append(field.value().toString());
+				}
+				field = hit.field(AnomalyRecord.PARTITION_FIELD_NAME);
+				if (field != null)
+				{
+					distinguisher.append(field.value().toString());
+				}
+				
+				String timestamp = hit.field(ElasticSearchMappings.ES_TIMESTAMP).value().toString();
+				if (timestamp.equals(lastTimestamp) == false)
+				{
+					try 
+					{
+						epoch = Long.toString(df.parse(timestamp).getTime());
+						lastTimestamp = timestamp;
+					} 
+					catch (ParseException e) 
+					{
+						continue;
+					}
+				}
+				
+				state.addStateRecord(epoch,
+									hit.field(AnomalyRecord.PROBABILITY).value().toString(),
+									distinguisher.toString());
 			}
 			
 			from += size;

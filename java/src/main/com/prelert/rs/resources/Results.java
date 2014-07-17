@@ -31,7 +31,6 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -46,6 +45,8 @@ import org.apache.log4j.Logger;
 
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.process.NativeProcessRunException;
+import com.prelert.rs.data.AnomalyRecord;
+import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
@@ -93,7 +94,7 @@ public class Results extends ResourceWithJobManager
 	@GET
 	@Path("/{jobId}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Pagination<Map<String, Object>> buckets(
+	public Pagination<Bucket> buckets(
 			@PathParam("jobId") String jobId,
 			@DefaultValue("false") @QueryParam("expand") boolean expand,
 			@DefaultValue("0") @QueryParam("skip") int skip,
@@ -134,7 +135,7 @@ public class Results extends ResourceWithJobManager
 		
 		//Normaliser normaliser = normaliser();
 		JobManager manager = jobManager();
-		Pagination<Map<String, Object>> buckets;
+		Pagination<Bucket> buckets;
 		
 		if (epochStart > 0 || epochEnd > 0)
 		{
@@ -187,12 +188,13 @@ public class Results extends ResourceWithJobManager
 	public Response bucket(@PathParam("jobId") String jobId,
 			@PathParam("bucketId") String bucketId,
 			@DefaultValue("false") @QueryParam("expand") boolean expand)
+	throws NativeProcessRunException
 	{
 		s_Logger.debug(String.format("Get %sbucket %s for job %s", 
 				expand?"expanded ":"", bucketId, jobId));
 		
 		JobManager manager = jobManager();
-		SingleDocument<Map<String, Object>> bucket = manager.bucket(jobId, bucketId, expand);
+		SingleDocument<Bucket> bucket = manager.bucket(jobId, bucketId, expand);
 		
 		if (bucket.isExists())
 		{
@@ -223,7 +225,7 @@ public class Results extends ResourceWithJobManager
 	@Path("/{jobId}/{bucketId}/records")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	public Pagination<Map<String, Object>> bucketRecords(
+	public Pagination<AnomalyRecord> bucketRecords(
 			@PathParam("jobId") String jobId,
 			@PathParam("bucketId") String bucketId,
 			@DefaultValue("0") @QueryParam("skip") int skip,
@@ -234,7 +236,7 @@ public class Results extends ResourceWithJobManager
 				jobId, bucketId));
 		
 		JobManager manager = jobManager();
-		Pagination<Map<String, Object>> records = manager.records(
+		Pagination<AnomalyRecord> records = manager.records(
 				jobId, bucketId, skip, take);
 		
 		// paging
