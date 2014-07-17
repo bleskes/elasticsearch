@@ -41,6 +41,9 @@
                 <resource>
                   <directory>${basedir}/config</directory>
                   <filtering>true</filtering>
+                  <excludes>
+                    <exclude>elasticsearch_scripts/**</exclude>
+                  </excludes>
                 </resource>
               </resources>
             </configuration>      
