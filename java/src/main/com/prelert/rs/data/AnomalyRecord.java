@@ -55,7 +55,6 @@ public class AnomalyRecord
 	/**
 	 * Result fields (all detector types)
 	 */
-	static final public String ANOMALY_SCORE =  "anomalyScore";
 	static final public String PROBABILITY = "probability";
 	static final public String BY_FIELD_NAME = "byFieldName";
 	static final public String BY_FIELD_VALUE = "byFieldValue";
@@ -64,7 +63,7 @@ public class AnomalyRecord
 	static final public String FUNCTION = "function";
 	static final public String TYPICAL = "typical";
 	static final public String ACTUAL = "actual";
-
+	
 	/**
 	 * Metric Results (including population metrics)
 	 */
@@ -75,18 +74,17 @@ public class AnomalyRecord
 	 */
 	static final public String OVER_FIELD_NAME = "overFieldName";
 	static final public String OVER_FIELD_VALUE = "overFieldValue";
-	static final public String IS_OVERALL_RESULT = "isOverallResult";
+	static final public String IS_OVERALL_RESULT = "overallResult";
 
 	/**
 	 * Simple count detector
 	 */
-	static final public String IS_SIMPLE_COUNT = "isSimpleCount";
+	static final public String IS_SIMPLE_COUNT = "simpleCount";
 
 	private static final Logger s_Logger = Logger.getLogger(AnomalyRecord.class);
 	
 	private String m_DetectorName;
 
-	private Double m_AnomalyScore;
 	private Double m_Probability;
 	private String m_ByFieldName;
 	private String m_ByFieldValue;
@@ -104,16 +102,6 @@ public class AnomalyRecord
 
 	private Boolean m_IsSimpleCount;
 
-
-	public Double getAnomalyScore()
-	{
-		return m_AnomalyScore;
-	}
-
-	public void setAnomalyScore(Double anomalyScore)
-	{
-		m_AnomalyScore = anomalyScore;
-	}
 
 	public Double getProbability()
 	{
@@ -254,7 +242,7 @@ public class AnomalyRecord
 		return m_IsSimpleCount;
 	}
 
-	public void setIsSimpleCount(boolean value)
+	public void setSimpleCount(boolean value)
 	{
 		m_IsSimpleCount = value;
 	}
@@ -305,18 +293,6 @@ public class AnomalyRecord
 				String fieldName = parser.getCurrentName();
 				switch (fieldName)
 				{
-				case ANOMALY_SCORE:
-					token = parser.nextToken();
-					if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)
-					{
-						record.setAnomalyScore(parser.getDoubleValue());
-					}
-					else
-					{
-						s_Logger.warn("Cannot parse " + fieldName + " : " + parser.getText()
-										+ " as a double");
-					}
-					break;
 				case PROBABILITY:
 					token = parser.nextToken();
 					if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)
@@ -465,7 +441,7 @@ public class AnomalyRecord
 					token = parser.nextToken();
 					if (token == JsonToken.VALUE_FALSE || token == JsonToken.VALUE_TRUE)
 					{
-						record.setIsSimpleCount(parser.getBooleanValue());
+						record.setSimpleCount(parser.getBooleanValue());
 					}
 					else
 					{

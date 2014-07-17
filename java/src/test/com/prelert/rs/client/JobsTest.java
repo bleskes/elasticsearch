@@ -968,7 +968,6 @@ public class JobsTest implements Closeable
 				{
 					// at a minimum all records should have these fields
 					test(r.getProbability() != null);
-					test(r.getAnomalyScore() != null);
 					test(r.getFunction() != null);
 				}
 			}

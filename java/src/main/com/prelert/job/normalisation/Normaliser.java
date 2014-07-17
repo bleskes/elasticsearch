@@ -228,13 +228,6 @@ public class Normaliser
 		{
 			Bucket bucket = bucketIter.next();
 			bucket.setAnomalyScore(result.getNormalizedSysChangeScore());
-						
-			for (AnomalyRecord record : bucket.getRecords())
-			{
-				double score = record.getAnomalyScore();
-
-				record.setAnomalyScore(score * result.getSysChangeScoreMultiplier());
-			}		
 		}
 		
 		return buckets;
@@ -267,14 +260,11 @@ public class Normaliser
 				m_Written--;
 				NormalisedResult normalised = scoresIter.next();
 
-				record.setAnomalyScore(normalised.getNormalizedUnusualScore());
 				bucketAnomalyScore += normalised.getNormalizedUnusualScore();
 			}
 
 			bucket.setAnomalyScore(bucketAnomalyScore);
-			
 		}
-		
 		
 		System.out.println(m_Written);
 		

@@ -102,14 +102,14 @@ public interface JobResultsProvider extends Closeable
 	
 	/**
 	 * Return the initial state for normalisation by system change.
-	 * This state contains anomaly score, epoch pairs.
+	 * This state contains bucket anomaly score and epoch pairs.
 	 * @param jobId
 	 * @return
 	 */
 	public InitialState getSystemChangeInitialiser(String jobId);
 	
 	/**
-	 * Return the 
+	 * Get the initial state for unusual behaviour normalisation
 	 * 
 	 * @param jobId
 	 * @return

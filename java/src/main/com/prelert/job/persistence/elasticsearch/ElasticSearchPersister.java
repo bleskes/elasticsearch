@@ -400,7 +400,6 @@ public class ElasticSearchPersister implements JobDataPersister
 	throws IOException
 	{		
 		XContentBuilder builder = jsonBuilder().startObject()
-				.field(AnomalyRecord.ANOMALY_SCORE, record.getAnomalyScore())
 				.field(AnomalyRecord.PROBABILITY, record.getProbability())
 				.field(AnomalyRecord.DETECTOR_NAME, detectorKey)
 				.field(ElasticSearchMappings.ES_TIMESTAMP, bucketTime);

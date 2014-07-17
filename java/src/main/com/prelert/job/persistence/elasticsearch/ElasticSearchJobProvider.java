@@ -595,7 +595,7 @@ public class ElasticSearchJobProvider implements JobProvider
 		FilterBuilder parentFilter = FilterBuilders.hasParentFilter(Bucket.TYPE, bucketFilter);
 		
 			
-		SortBuilder sb = new FieldSortBuilder(AnomalyRecord.ANOMALY_SCORE)
+		SortBuilder sb = new FieldSortBuilder(AnomalyRecord.PROBABILITY)
 											.ignoreUnmapped(true)
 											.missing("_last")
 											.order(SortOrder.DESC);		
@@ -641,14 +641,14 @@ public class ElasticSearchJobProvider implements JobProvider
 	{
 		FilterBuilder fb = FilterBuilders.matchAllFilter();
 		
-		SortBuilder sb = new FieldSortBuilder(ElasticSearchMappings.ES_TIMESTAMP)
+		SortBuilder sb = new FieldSortBuilder(Bucket.ID)
 								.order(SortOrder.ASC);	
 		
 		SearchRequestBuilder searchBuilder = m_Client.prepareSearch(jobId)
-				.setTypes(AnomalyRecord.TYPE)
+				.setTypes(Bucket.TYPE)
 				.setFetchSource(false)
-				.addField(ElasticSearchMappings.ES_TIMESTAMP)
-				.addField(AnomalyRecord.ANOMALY_SCORE)
+				.addField(Bucket.ID)
+				.addField(Bucket.ANOMALY_SCORE)
 				.setPostFilter(fb)
 				.addSort(sb);
 
@@ -667,8 +667,8 @@ public class ElasticSearchJobProvider implements JobProvider
 			
 			for (SearchHit hit : searchResponse.getHits().getHits())
 			{
-				state.addStateRecord(hit.field(ElasticSearchMappings.ES_TIMESTAMP).value().toString(), 
-									hit.field(AnomalyRecord.ANOMALY_SCORE).value().toString());
+				state.addStateRecord(hit.field(Bucket.ID).value().toString(), 
+									hit.field(Bucket.ANOMALY_SCORE).value().toString());
 			}
 			
 			from += size;

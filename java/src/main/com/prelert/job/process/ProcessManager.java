@@ -44,6 +44,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.log4j.Appender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
@@ -815,7 +816,7 @@ public class ProcessManager
 			Logger logger = Logger.getLogger(jobId);
 			logger.setAdditivity(false);
 			logger.setLevel(Level.DEBUG);
-
+			
 			if (logger.getAppender("engine_api_file_appender") == null)
 			{
 				Path logFile = FileSystems.getDefault().getPath(ProcessCtrl.LOG_DIR,
@@ -830,6 +831,7 @@ public class ProcessManager
 
 				logger.addAppender(fileAppender);
 			}
+
 
 			return logger;
 		}

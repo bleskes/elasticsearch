@@ -112,6 +112,8 @@ public class Bucket
 		
 		// epoch in seconds
 		m_Epoch = m_Timestamp.getTime() / 1000;
+		
+		m_Id = Long.toString(m_Epoch); 
 	}
 	
 	public double getAnomalyScore() 

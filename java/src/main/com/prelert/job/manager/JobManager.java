@@ -362,8 +362,11 @@ public class JobManager
 	{
 		Normaliser normaliser = new Normaliser(jobId, m_JobProvider);
 		
-		normaliser.normaliseForSystemChange(getJobBucketSpan(jobId), buckets.getDocuments());
-//		normaliser.normaliseForUnusualBehaviour(getJobBucketSpan(jobId), buckets.getDocuments());
+		normaliser.normaliseForSystemChange(getJobBucketSpan(jobId), 
+				buckets.getDocuments());
+		
+//		normaliser.normaliseForUnusualBehaviour(getJobBucketSpan(jobId), 
+//				buckets.getDocuments());
 			
 		return buckets;
 	}
