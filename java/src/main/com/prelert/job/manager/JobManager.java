@@ -291,12 +291,12 @@ public class JobManager
 	 * @throws NativeProcessRunException 
 	 */
 	public SingleDocument<Bucket> bucket(String jobId, 
-			String bucketId, boolean expand) 
+			String bucketId, boolean expand, String normalisationType) 
 	throws NativeProcessRunException
 	{
 		SingleDocument<Bucket> bucket = m_JobProvider.bucket(jobId, bucketId, expand);
 		
-		return normalise(jobId, bucket);
+		return normalise(jobId, bucket, normalisationType);
 	}
 	
 	/**
@@ -309,13 +309,13 @@ public class JobManager
 	 * @return
 	 */
 	public Pagination<Bucket> buckets(String jobId, 
-			boolean expand, int skip, int take)
+			boolean expand, int skip, int take, String normalisationType)
 	throws NativeProcessRunException
 	{
 		Pagination<Bucket> buckets = m_JobProvider.buckets(jobId, expand, skip, take);
 		
 		
-		return normalise(jobId, buckets);
+		return normalise(jobId, buckets, normalisationType);
 	}
 	
 	
@@ -330,14 +330,15 @@ public class JobManager
 	 * @return
 	 */
 	public Pagination<Bucket> buckets(String jobId, 
-			boolean expand, int skip, int take, long startBucket, long endBucket)
+			boolean expand, int skip, int take, long startBucket, long endBucket,
+			String normalisationType)
 	throws NativeProcessRunException
 	{
 		Pagination<Bucket> buckets =  m_JobProvider.buckets(jobId, 
 				expand, skip, take, 
 				startBucket, endBucket);
 		
-		return normalise(jobId, buckets);
+		return normalise(jobId, buckets, normalisationType);
 	}
 	
 	private Integer getJobBucketSpan(String jobId)
@@ -357,32 +358,42 @@ public class JobManager
 	
 		
 	private Pagination<Bucket> normalise(String jobId,
-			Pagination<Bucket> buckets) 
+			Pagination<Bucket> buckets, String normalisationType) 
 	throws NativeProcessRunException
 	{
 		Normaliser normaliser = new Normaliser(jobId, m_JobProvider);
 		
-		normaliser.normaliseForSystemChange(getJobBucketSpan(jobId), 
+		if (normalisationType != null && normalisationType.equals("u"))
+		{
+			normaliser.normaliseForUnusualBehaviour(getJobBucketSpan(jobId), 
+					buckets.getDocuments());
+		}
+		else
+		{
+			normaliser.normaliseForSystemChange(getJobBucketSpan(jobId), 
 				buckets.getDocuments());
-		
-//		normaliser.normaliseForUnusualBehaviour(getJobBucketSpan(jobId), 
-//				buckets.getDocuments());
+		}
 			
 		return buckets;
 	}
 	
 	
 	private SingleDocument<Bucket> normalise(String jobId,
-			SingleDocument<Bucket> bucket) 
+			SingleDocument<Bucket> bucket, String normalisationType) 
 	throws NativeProcessRunException
 	{
 		Normaliser normaliser = new Normaliser(jobId, m_JobProvider);
 		
-		normaliser.normaliseForSystemChange(getJobBucketSpan(jobId), 
-				Arrays.asList(new Bucket [] {bucket.getDocument()}));
-		
-//		normaliser.normaliseForUnusualBehaviour(getJobBucketSpan(jobId), 
-//				Arrays.asList(new Bucket [] {bucket.getDocument()}));
+		if (normalisationType != null && normalisationType.equals("u"))
+		{
+			normaliser.normaliseForUnusualBehaviour(getJobBucketSpan(jobId), 
+					Arrays.asList(new Bucket [] {bucket.getDocument()}));
+		}
+		else
+		{
+			normaliser.normaliseForSystemChange(getJobBucketSpan(jobId), 
+					Arrays.asList(new Bucket [] {bucket.getDocument()}));
+		}
 			
 		return bucket;
 	}

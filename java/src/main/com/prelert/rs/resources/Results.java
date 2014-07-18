@@ -68,6 +68,9 @@ public class Results extends ResourceWithJobManager
 	 */
 	static public final String ENDPOINT = "results";
 	
+	
+	static public final String NORMALISATION_QUERY_PARAM = "norm";
+	
 
 	static private final DateFormat s_DateFormat = new SimpleDateFormat(ISO_8601_DATE_FORMAT); 
 	static private final DateFormat s_DateFormatWithMs = new SimpleDateFormat(ISO_8601_DATE_FORMAT_WITH_MS); 
@@ -100,7 +103,8 @@ public class Results extends ResourceWithJobManager
 			@DefaultValue("0") @QueryParam("skip") int skip,
 			@DefaultValue(JobManager.DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take,
 			@DefaultValue("") @QueryParam(START_QUERY_PARAM) String start,
-			@DefaultValue("") @QueryParam(END_QUERY_PARAM) String end)
+			@DefaultValue("") @QueryParam(END_QUERY_PARAM) String end,
+			@DefaultValue("s") @QueryParam(NORMALISATION_QUERY_PARAM) String norm)
 	throws NativeProcessRunException
 	{	
 		s_Logger.debug(String.format("Get %s buckets for job %s. skip = %d, take = %d"
@@ -139,11 +143,11 @@ public class Results extends ResourceWithJobManager
 		
 		if (epochStart > 0 || epochEnd > 0)
 		{
-			buckets = manager.buckets(jobId, expand, skip, take, epochStart, epochEnd);
+			buckets = manager.buckets(jobId, expand, skip, take, epochStart, epochEnd, norm);
 		}
 		else
 		{
-			buckets = manager.buckets(jobId, expand, skip, take);
+			buckets = manager.buckets(jobId, expand, skip, take, norm);
 		}
 		
 		// paging
@@ -187,14 +191,15 @@ public class Results extends ResourceWithJobManager
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response bucket(@PathParam("jobId") String jobId,
 			@PathParam("bucketId") String bucketId,
-			@DefaultValue("false") @QueryParam("expand") boolean expand)
+			@DefaultValue("false") @QueryParam("expand") boolean expand,
+			@DefaultValue("s") @QueryParam(NORMALISATION_QUERY_PARAM) String norm)
 	throws NativeProcessRunException
 	{
 		s_Logger.debug(String.format("Get %sbucket %s for job %s", 
 				expand?"expanded ":"", bucketId, jobId));
 		
 		JobManager manager = jobManager();
-		SingleDocument<Bucket> bucket = manager.bucket(jobId, bucketId, expand);
+		SingleDocument<Bucket> bucket = manager.bucket(jobId, bucketId, expand, norm);
 		
 		if (bucket.isExists())
 		{
