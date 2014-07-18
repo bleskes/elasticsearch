@@ -33,6 +33,7 @@ import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
@@ -74,12 +75,12 @@ public class AnomalyRecord
 	 */
 	static final public String OVER_FIELD_NAME = "overFieldName";
 	static final public String OVER_FIELD_VALUE = "overFieldValue";
-	static final public String IS_OVERALL_RESULT = "overallResult";
+	static final public String IS_OVERALL_RESULT = "isOverallResult";
 
 	/**
 	 * Simple count detector
 	 */
-	static final public String IS_SIMPLE_COUNT = "simpleCount";
+	static final public String IS_SIMPLE_COUNT = "isSimpleCount";
 
 	private static final Logger s_Logger = Logger.getLogger(AnomalyRecord.class);
 	
@@ -214,12 +215,13 @@ public class AnomalyRecord
 		m_OverFieldValue = value;
 	}
 
-
+	@JsonProperty(IS_OVERALL_RESULT)
 	public Boolean isOverallResult()
 	{
 		return m_IsOverallResult;
 	}
 
+	@JsonProperty(IS_OVERALL_RESULT)
 	public void setOverallResult(boolean value)
 	{
 		m_IsOverallResult = value;
@@ -236,12 +238,13 @@ public class AnomalyRecord
 		m_DetectorName = name;
 	}
 	
-
+	@JsonProperty(IS_SIMPLE_COUNT)
 	public Boolean isSimpleCount()
 	{
 		return m_IsSimpleCount;
 	}
 
+	@JsonProperty(IS_SIMPLE_COUNT)
 	public void setSimpleCount(boolean value)
 	{
 		m_IsSimpleCount = value;
