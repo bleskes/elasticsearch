@@ -30,6 +30,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -90,7 +91,10 @@ public class NormalisedResultsParser implements Runnable
 	@SuppressWarnings("unused")
 	private void printResults() throws IOException	
 	{
-		BufferedReader in = new BufferedReader(new InputStreamReader(m_InputStream));
+		BufferedReader in = new BufferedReader(
+				new InputStreamReader(m_InputStream,
+				StandardCharsets.UTF_8));
+		
 		String line = null;
 		while((line = in.readLine()) != null) 
 		{

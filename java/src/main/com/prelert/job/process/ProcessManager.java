@@ -44,7 +44,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.log4j.Appender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
@@ -537,7 +536,6 @@ public class ProcessManager
 		}
 	}
 	
-	
 	private void setJobFinishedTimeAndStatus(String jobId, Logger processLogger, 
 			JobStatus status)
 	{
@@ -548,8 +546,7 @@ public class ProcessManager
 		}
 		catch (UnknownJobException e) 
 		{
-			String msg = String.format("Error cannot set finished job status and time",
-					jobId);
+			String msg = String.format("Error cannot set finished job status and time");
 			processLogger.warn(msg, e);
 			s_Logger.warn(msg, e);
 		}
