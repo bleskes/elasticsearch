@@ -32,6 +32,7 @@ import java.util.Date;
 
 import org.apache.log4j.Logger;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -46,6 +47,7 @@ import com.prelert.rs.data.parsing.AutoDetectParseException;
  * can be returned if the members have not been set.
  */
 @JsonInclude(Include.NON_NULL)
+@JsonIgnoreProperties({"parent"})
 public class AnomalyRecord
 {
 	/**
@@ -109,6 +111,8 @@ public class AnomalyRecord
 	private Double m_UnusualScore;
 	private Date   m_Timestamp;
 
+	
+	private String m_Parent;
 
 	public Double getAnomalyScore()
 	{
@@ -302,6 +306,16 @@ public class AnomalyRecord
 	{
 		m_IsSimpleCount = value;
 	}
+	
+	public String getParent()
+	{
+		return m_Parent;
+	}
+	
+	public void setParent(String parent)
+	{
+		m_Parent = parent;
+	}	
 
 
 	/**

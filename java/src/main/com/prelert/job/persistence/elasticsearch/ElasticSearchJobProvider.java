@@ -115,6 +115,8 @@ public class ElasticSearchJobProvider implements JobProvider
 	
 	static public final int DEFAULT_PAGE_SIZE = 100;
 	
+	static public final String _PARENT = "_parent";
+	
 	
 	private Node m_Node;
 	private Client m_Client;
@@ -568,42 +570,66 @@ public class ElasticSearchJobProvider implements JobProvider
 		return doc;
 	}
 	
-	/**
-	 * Get all the anomaly records for the bucket for every detector 
-	 * 
-	 * @param jobId
-	 * @param bucketId 
-	 * @param skip Skip the first N Jobs. This parameter is for paging
-	 * results if not required set to 0.
-	 * @param take Take only this number of Jobs
-	 * @return
-	 */
+
 	@Override
 	public Pagination<AnomalyRecord> records(String jobId, 
 			String bucketId, int skip, int take)
 	{
-		FilterBuilder bucketFilter;
-		FilterBuilder filter;
+		 FilterBuilder bucketFilter = FilterBuilders.hasParentFilter(Bucket.TYPE, 
+								FilterBuilders.termFilter(Bucket.ID, bucketId));
 		
-		if (bucketId.equals("_all"))
+		return records(jobId, skip, take, bucketFilter);
+	}
+	
+	
+	@Override
+	public Pagination<AnomalyRecord> records(String jobId, 
+			int skip, int take)
+	{
+		 FilterBuilder fb = FilterBuilders.matchAllFilter();
+		 
+		return records(jobId, skip, take, fb);
+	}
+	
+	@Override
+	public Pagination<AnomalyRecord> records(String jobId, 
+			int skip, int take,
+			long startBucket, long endBucket)
+	{
+		RangeFilterBuilder fb = FilterBuilders.rangeFilter(Bucket.ID);
+		if (startBucket > 0)
 		{
-			// TODO - this is filtering out the simple count records.
-			// TODO - for 'records' endpoint I guess we DO want to filter out the simple count records.
-			bucketFilter = FilterBuilders.hasParentFilter(Bucket.TYPE, FilterBuilders.matchAllFilter());
-			FilterBuilder recordFilter =  FilterBuilders.notFilter(
-					FilterBuilders.termFilter("isSimpleCount", true));
-			
-			filter = FilterBuilders.andFilter(bucketFilter, recordFilter);
+			fb.gte(startBucket);
 		}
-		else
+		if (endBucket > 0)
 		{
-			// TODO - this is NOT filtering out the simple count records.
-			// TODO - do we want to filter out the simple count records here, or not?
-			bucketFilter = FilterBuilders.termFilter("_id", bucketId);
-			filter = FilterBuilders.hasParentFilter(Bucket.TYPE, bucketFilter);
+			fb.lt(endBucket);
 		}
+
+		return records(jobId, skip, take, fb);
+	}
+	
+	
+	/**
+	 * The return records have the parent bucket id set.
+	 * 
+	 * @param jobId
+	 * @param skip
+	 * @param take
+	 * @param bucketFilter
+	 * @return
+	 */
+	private Pagination<AnomalyRecord> records(String jobId, 
+			int skip, int take,
+			FilterBuilder bucketFilter)
+	{
+		// Filter out all simple count records
+		FilterBuilder notSimpleCountFilter = FilterBuilders.notFilter(
+				FilterBuilders.termFilter(AnomalyRecord.IS_SIMPLE_COUNT, true));
+	
+		FilterBuilder filter = FilterBuilders.andFilter(bucketFilter, 
+				notSimpleCountFilter);
 		
-			
 		SortBuilder sb = new FieldSortBuilder(AnomalyRecord.PROBABILITY)
 											.ignoreUnmapped(true)
 											.missing("_last")
@@ -613,6 +639,8 @@ public class ElasticSearchJobProvider implements JobProvider
 				.setTypes(AnomalyRecord.TYPE)
 				.setPostFilter(filter)
 				.setFrom(skip).setSize(take)
+				.addField(_PARENT)   // include the parent id
+				.setFetchSource(true)  // the field option turns off source so request it explicitly 
 				.addSort(sb)
 				.get();
 
@@ -625,30 +653,14 @@ public class ElasticSearchJobProvider implements JobProvider
 			// This a hack to work round the deficiency in the 
 			// Java API where source filtering hasn't been implemented.			
 			m.remove(AnomalyRecord.DETECTOR_NAME);
-			// TODO
-			// remove the timestamp field that was added so the 
-			// records can be sorted in Kibanna
-			//m.remove(ElasticSearchMappings.ES_TIMESTAMP);
-			
+
+			// TODO replace logstash timestamp name with timestamp
 			m.put(Bucket.TIMESTAMP, m.remove(ElasticSearchMappings.ES_TIMESTAMP));
-			
-			// Add in dummy normalized anomaly score and unusual behaviour score.
-			try
-			{
-				SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSX");
-				Date timestamp = df.parse(m.get(Bucket.TIMESTAMP).toString());				
-				m.put("bucketScore", (timestamp.getTime()/100000 % 100l));
-				//m.put("unusualScore", (((timestamp.getTime()/100000)+44) % 100l));
-				m.put("unusualScore", (int)(100d*Math.random()));
-			}
-			catch (ParseException e)
-			{
-				s_Logger.error("Error parsing bucket timestamp to Date", e);
-			}
-			
 			
 			AnomalyRecord record = m_ObjectMapper.convertValue(
 					m, AnomalyRecord.class);
+			record.setParent(hit.field(_PARENT).getValue().toString());
+			
 			results.add(record);
 		}
 		

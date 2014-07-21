@@ -101,6 +101,37 @@ public interface JobResultsProvider extends Closeable
 			String bucketId, int skip, int take);
 	
 	/**
+	 * Get the anomaly records for all buckets 
+	 * 
+	 * @param jobId
+	 * @param skip Skip the first N records. This parameter is for paging
+	 * if not required set to 0.
+	 * @param take Take only this number of records
+	 * @return
+	 */
+	public Pagination<AnomalyRecord> records(String jobId, 
+			int skip, int take);
+	
+	/**
+	 * Get the anomaly records for all buckets in the given 
+	 * date range
+	 * 
+	 * @param jobId
+	 * @param skip Skip the first N records. This parameter is for paging
+	 * if not required set to 0.
+	 * @param take Take only this number of records
+	 * @param startBucket The start bucket id. A bucket with this Id will be 
+	 * included in the results. If 0 all buckets up to <code>endBucket</code>
+	 * are returned
+	 * @param endBucket The end bucket id buckets up to but NOT including this
+	 * are returned. If 0 all buckets from <code>startBucket</code> are returned
+	 * @return
+	 */
+	public Pagination<AnomalyRecord> records(String jobId, 
+			int skip, int take,
+			long startBucket, long endBucket);
+			
+	/**
 	 * Return the initial state for normalisation by system change.
 	 * This state contains bucket anomaly score and epoch pairs.
 	 * @param jobId

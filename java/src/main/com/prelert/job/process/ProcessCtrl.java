@@ -38,7 +38,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -166,16 +165,7 @@ public class ProcessCtrl
 	/**
 	 * The types of normalisation the the normaliser will do. 
 	 */
-	public enum NormalisationType {	SYS_STATE_CHANGE, UNUSUAL_STATE };
-	
-	static final private EnumMap<NormalisationType, String> NORMALIZE_TYPE_TO_ARG;
-	static
-	{
-		NORMALIZE_TYPE_TO_ARG = new EnumMap<>(NormalisationType.class);
-		NORMALIZE_TYPE_TO_ARG.put(NormalisationType.SYS_STATE_CHANGE, SYS_STATE_CHANGE_ARG);
-		NORMALIZE_TYPE_TO_ARG.put(NormalisationType.UNUSUAL_STATE, UNUSUAL_STATE_ARG);
-	}
-	
+	public enum NormalisationType {	SYS_STATE_CHANGE, UNUSUAL_STATE};
 	
 	/**
 	 * Name of the model config file
@@ -224,8 +214,18 @@ public class ProcessCtrl
 	static final public String MAX_FIELD_VALUES_CONFIG_STR = "maxfieldvalues";
 	static final public String MAX_TIME_BUCKETS_CONFIG_STR = "maxtimebuckets";	
 	
+	/*
+	 * Normalisation init state csv headers
+	 */
 	static final public String SYS_CHANGE_STATE_HEADER = "t,a\n";
 	static final public String UNUSUAL_STATE_HEADER = "t,p,d\n";
+	
+	/*
+	 * Normalisation input fields
+	 */
+	static final public String PROBABILITY = "probability";
+	static final public String RAW_ANOMALY_SCORE = "anomalyScore";
+	
 	
 	
 	/**
@@ -798,19 +798,24 @@ public class ProcessCtrl
 		}
 	}
 	
+
 	/**
+	 * The process can be initialised with both sysChangeState and 
+	 * unusualBehaviourState if either is <code>null</code> then is 
+	 * is not used. 
 	 * 
 	 * 
 	 * @param jobId
-	 * @param type
-	 * @param stateFilePath
+	 * @param sysChangeState Set to <code>null</code> to be ignored
+	 * @param unusualBehaviourState Set to <code>null</code> to be ignored
 	 * @param bucketSpan
 	 * @param logger
 	 * @return
 	 * @throws IOException
 	 */
-	static public Process buildNormaliser(String jobId, NormalisationType type,
-			InitialState initState, int bucketSpan, Logger logger)
+	static public Process buildNormaliser(String jobId, 
+			InitialState sysChangeState, InitialState unusualBehaviourState,
+			int bucketSpan, Logger logger)
 	throws IOException
 	{
 		logger.info("PRELERT_HOME is set to " + PRELERT_HOME);
@@ -818,15 +823,29 @@ public class ProcessCtrl
 		List<String> command = new ArrayList<>();
 		command.add(NORMALIZE_PATH);
 		
-		Path stateFilePath = writeNormaliserInitState(jobId, type, initState);
+		if (sysChangeState != null)
+		{
+			Path sysChangeStateFilePath = writeNormaliserInitState(jobId, 
+					NormalisationType.SYS_STATE_CHANGE, sysChangeState);
+
+			String stateFileArg = SYS_STATE_CHANGE_ARG + sysChangeStateFilePath;
+			command.add(stateFileArg);
+		}
+
+		if (unusualBehaviourState != null)
+		{
+			Path unusualStateFilePath = writeNormaliserInitState(jobId, 
+					NormalisationType.UNUSUAL_STATE, unusualBehaviourState);
+			
+			String stateFileArg = UNUSUAL_STATE_ARG + unusualStateFilePath;
+			command.add(stateFileArg);
+		}
 		
-		String stateFileArg = NORMALIZE_TYPE_TO_ARG.get(type) + stateFilePath;
-		command.add(stateFileArg);
 		
 		String bucketSpanArg = BUCKET_SPAN_ARG + Integer.toString(bucketSpan);
 		command.add(bucketSpanArg);
 		
-		// Log everything to the default normalize_api dir
+		// TODO Log everything to the default normalize_api dir
 //		String logId = LOG_ID_ARG + jobId;
 //		command.add(logId);
 		
