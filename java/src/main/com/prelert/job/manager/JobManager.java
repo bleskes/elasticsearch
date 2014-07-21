@@ -403,18 +403,88 @@ public class JobManager
 	 * 
 	 * @param jobId
 	 * @param bucketId 
-	 * @param skip Skip the first N Jobs. This parameter is for paging
+	 * @param skip Skip the first N records. This parameter is for paging
 	 * results if not required set to 0.
-	 * @param take Take only this number of Jobs
+	 * @param take Take only this number of records
 	 * @return
 	 * @throws NativeProcessRunException 
 	 */
 	public Pagination<AnomalyRecord> records(String jobId, 
 			String bucketId, int skip, int take) 
+	throws NativeProcessRunException 
 	{
-		return m_JobProvider.records(jobId, bucketId, skip, take);
-
+		Pagination<AnomalyRecord> records = m_JobProvider.records(jobId, 
+				bucketId, skip, take);
+		
+		Pagination<Bucket> buckets = m_JobProvider.buckets(jobId, 
+				false, skip, take);
+		
+		Normaliser normaliser = new Normaliser(jobId, m_JobProvider);	
+		
+		normaliser.normaliseForBoth(getJobBucketSpan(jobId), 
+				buckets.getDocuments(), records.getDocuments());
+		
+		return records; 
 	}
+	
+	/**
+	 * Get a page of anomaly records from all buckets
+	 * 
+	 * @param jobId
+	 * @param skip Skip the first N records. This parameter is for paging
+	 * results if not required set to 0.
+	 * @param take Take only this number of records
+	 * @return
+	 * @throws NativeProcessRunException
+	 */
+	public Pagination<AnomalyRecord> records(String jobId, 
+			int skip, int take) 
+	throws NativeProcessRunException 
+	{
+		Pagination<AnomalyRecord> records = m_JobProvider.records(jobId, 
+				skip, take);
+		
+		Pagination<Bucket> buckets = m_JobProvider.buckets(jobId, 
+				false, skip, take);
+		
+		Normaliser normaliser = new Normaliser(jobId, m_JobProvider);	
+		
+		normaliser.normaliseForBoth(getJobBucketSpan(jobId), 
+				buckets.getDocuments(), records.getDocuments());
+		
+		return records; 
+	}
+	
+	/**
+	 * Get a page of anomaly records from the buckets between
+	 * epochStart and epochEnd
+	 * 
+	 * @param jobId
+	 * @param skip
+	 * @param take
+	 * @param epochStart
+	 * @param epochEnd
+	 * @return
+	 * @throws NativeProcessRunException
+	 */
+	public Pagination<AnomalyRecord> records(String jobId, 
+			int skip, int take, long epochStart, long epochEnd) 
+	throws NativeProcessRunException 
+	{
+		Pagination<AnomalyRecord> records = m_JobProvider.records(jobId, 
+				skip, take, epochEnd, epochStart);
+		
+		Pagination<Bucket> buckets = m_JobProvider.buckets(jobId, 
+				false, skip, take, epochStart, epochEnd);
+		
+		Normaliser normaliser = new Normaliser(jobId, m_JobProvider);	
+		
+		normaliser.normaliseForBoth(getJobBucketSpan(jobId), 
+				buckets.getDocuments(), records.getDocuments());
+		
+		return records; 
+	}
+	
 	
 	/**
 	 * Set the job's description.

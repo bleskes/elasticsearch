@@ -132,8 +132,16 @@ public class Records extends ResourceWithJobManager
 		
 		
 		JobManager manager = jobManager();
-		Pagination<AnomalyRecord> records = manager.records(
-				jobId, "_all", skip, take);
+		Pagination<AnomalyRecord> records;
+
+		if (epochStart > 0 || epochEnd > 0)
+		{
+			records = manager.records(jobId, skip, take, epochStart, epochEnd);
+		}
+		else
+		{
+			records = manager.records(jobId, skip, take);
+		}
 
 		
 		// paging
