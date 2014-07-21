@@ -583,16 +583,25 @@ public class ElasticSearchJobProvider implements JobProvider
 			String bucketId, int skip, int take)
 	{
 		FilterBuilder bucketFilter;
+		FilterBuilder filter;
+		
 		if (bucketId.equals("_all"))
 		{
-			bucketFilter = FilterBuilders.matchAllFilter();
+			// TODO - this is filtering out the simple count records.
+			// TODO - for 'records' endpoint I guess we DO want to filter out the simple count records.
+			bucketFilter = FilterBuilders.hasParentFilter(Bucket.TYPE, FilterBuilders.matchAllFilter());
+			FilterBuilder recordFilter =  FilterBuilders.notFilter(
+					FilterBuilders.termFilter("isSimpleCount", true));
+			
+			filter = FilterBuilders.andFilter(bucketFilter, recordFilter);
 		}
 		else
 		{
+			// TODO - this is NOT filtering out the simple count records.
+			// TODO - do we want to filter out the simple count records here, or not?
 			bucketFilter = FilterBuilders.termFilter("_id", bucketId);
+			filter = FilterBuilders.hasParentFilter(Bucket.TYPE, bucketFilter);
 		}
-		
-		FilterBuilder parentFilter = FilterBuilders.hasParentFilter(Bucket.TYPE, bucketFilter);
 		
 			
 		SortBuilder sb = new FieldSortBuilder(AnomalyRecord.PROBABILITY)
@@ -602,7 +611,7 @@ public class ElasticSearchJobProvider implements JobProvider
 		
 		SearchResponse searchResponse = m_Client.prepareSearch(jobId)
 				.setTypes(AnomalyRecord.TYPE)
-				.setPostFilter(parentFilter)
+				.setPostFilter(filter)
 				.setFrom(skip).setSize(take)
 				.addSort(sb)
 				.get();
@@ -619,7 +628,23 @@ public class ElasticSearchJobProvider implements JobProvider
 			// TODO
 			// remove the timestamp field that was added so the 
 			// records can be sorted in Kibanna
-			m.remove(ElasticSearchMappings.ES_TIMESTAMP);
+			//m.remove(ElasticSearchMappings.ES_TIMESTAMP);
+			
+			m.put(Bucket.TIMESTAMP, m.remove(ElasticSearchMappings.ES_TIMESTAMP));
+			
+			// Add in dummy normalized anomaly score and unusual behaviour score.
+			try
+			{
+				SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSX");
+				Date timestamp = df.parse(m.get(Bucket.TIMESTAMP).toString());				
+				m.put("bucketScore", (timestamp.getTime()/100000 % 100l));
+				//m.put("unusualScore", (((timestamp.getTime()/100000)+44) % 100l));
+				m.put("unusualScore", (int)(100d*Math.random()));
+			}
+			catch (ParseException e)
+			{
+				s_Logger.error("Error parsing bucket timestamp to Date", e);
+			}
 			
 			
 			AnomalyRecord record = m_ObjectMapper.convertValue(

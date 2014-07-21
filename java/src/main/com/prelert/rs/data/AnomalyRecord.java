@@ -28,6 +28,7 @@
 package com.prelert.rs.data;
 
 import java.io.IOException;
+import java.util.Date;
 
 import org.apache.log4j.Logger;
 
@@ -102,8 +103,60 @@ public class AnomalyRecord
 	private Boolean m_IsOverallResult;
 
 	private Boolean m_IsSimpleCount;
+	
+	private Double m_AnomalyScore;
+	private Double m_BucketScore;
+	private Double m_UnusualScore;
+	private Date   m_Timestamp;
 
 
+	public Double getAnomalyScore()
+	{
+		return m_AnomalyScore;
+	}
+	
+	
+	public void setAnomalyScore(Double anomalyScore)
+	{
+		m_AnomalyScore = anomalyScore;
+	}
+	
+	
+	public Double getBucketScore()
+	{
+		return m_BucketScore;
+	}
+	
+	
+	public void setBucketScore(Double anomalyScore)
+	{
+		m_BucketScore = anomalyScore;
+	}
+	
+	
+	public Double getUnusualScore()
+	{
+		return m_UnusualScore;
+	}
+	
+	
+	public Date getTimestamp() 
+	{
+		return m_Timestamp;
+	}
+	
+	public void setTimestamp(Date timestamp) 
+	{
+		this.m_Timestamp = timestamp;
+	}
+	
+	
+	public void setUnusualScore(Double anomalyScore)
+	{
+		m_UnusualScore = anomalyScore;
+	}
+	
+	
 	public Double getProbability()
 	{
 		return m_Probability;
