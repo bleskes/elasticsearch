@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -331,7 +332,8 @@ public class ProcessCtrl
 			{
 				int exitValue = proc.waitFor();
 				BufferedReader reader = new BufferedReader(
-						new InputStreamReader(proc.getErrorStream()));
+						new InputStreamReader(proc.getErrorStream(), 
+								StandardCharsets.UTF_8));
 				
 				String output = reader.readLine();
 				s_Logger.debug("autodetect version output = " + output);
@@ -390,7 +392,8 @@ public class ProcessCtrl
 			{
 				int exitValue = proc.waitFor();
 				BufferedReader reader = new BufferedReader(
-						new InputStreamReader(proc.getInputStream()));
+						new InputStreamReader(proc.getInputStream(),
+								StandardCharsets.UTF_8));
 
 				String output = reader.readLine();
 				s_Logger.debug("autodetect info output = " + output);
@@ -428,7 +431,7 @@ public class ProcessCtrl
 	static public Process buildAutoDetect(String processName, JobDetails job, Logger logger)
 	throws IOException	
 	{
-		return buildAutoDetect(processName, job, null);
+		return buildAutoDetect(processName, job, null, logger);
 	}
 	
 	/**

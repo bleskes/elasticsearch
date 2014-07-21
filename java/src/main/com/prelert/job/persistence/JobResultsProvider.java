@@ -28,9 +28,10 @@
 package com.prelert.job.persistence;
 
 import java.io.Closeable;
-import java.util.Map;
 
 import com.prelert.job.normalisation.InitialState;
+import com.prelert.rs.data.AnomalyRecord;
+import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
 
@@ -46,7 +47,7 @@ public interface JobResultsProvider extends Closeable
 	 * @param take Take only this number of Buckets
 	 * @return
 	 */
-	public Pagination<Map<String, Object>> buckets(String jobId, 
+	public Pagination<Bucket> buckets(String jobId, 
 			boolean expand, int skip, int take);
 			
 	
@@ -69,7 +70,7 @@ public interface JobResultsProvider extends Closeable
 	 * are returned
 	 * @return
 	 */
-	public Pagination<Map<String, Object>> buckets(String jobId, 
+	public Pagination<Bucket> buckets(String jobId, 
 			boolean expand, int skip, int take,
 			long startBucket, long endBucket);
 	
@@ -82,7 +83,7 @@ public interface JobResultsProvider extends Closeable
 	 * @param expand Include anomaly records
 	 * @return
 	 */
-	public SingleDocument<Map<String, Object>> bucket(String jobId, 
+	public SingleDocument<Bucket> bucket(String jobId, 
 			String bucketId, boolean expand);
 	
 	
@@ -96,14 +97,22 @@ public interface JobResultsProvider extends Closeable
 	 * @param take Take only this number of Jobs
 	 * @return
 	 */
-	public Pagination<Map<String, Object>> records(String jobId, 
+	public Pagination<AnomalyRecord> records(String jobId, 
 			String bucketId, int skip, int take);
 	
 	/**
 	 * Return the initial state for normalisation by system change.
-	 * This state contains anomaly score, epoch pairs.
+	 * This state contains bucket anomaly score and epoch pairs.
 	 * @param jobId
 	 * @return
 	 */
 	public InitialState getSystemChangeInitialiser(String jobId);
+	
+	/**
+	 * Get the initial state for unusual behaviour normalisation
+	 * 
+	 * @param jobId
+	 * @return
+	 */
+	public InitialState getUnusualBehaviourInitialiser(String jobId);
 }

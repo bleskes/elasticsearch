@@ -536,7 +536,6 @@ public class ProcessManager
 		}
 	}
 	
-	
 	private void setJobFinishedTimeAndStatus(String jobId, Logger processLogger, 
 			JobStatus status)
 	{
@@ -547,8 +546,7 @@ public class ProcessManager
 		}
 		catch (UnknownJobException e) 
 		{
-			String msg = String.format("Error cannot set finished job status and time",
-					jobId);
+			String msg = String.format("Error cannot set finished job status and time");
 			processLogger.warn(msg, e);
 			s_Logger.warn(msg, e);
 		}
@@ -815,7 +813,7 @@ public class ProcessManager
 			Logger logger = Logger.getLogger(jobId);
 			logger.setAdditivity(false);
 			logger.setLevel(Level.DEBUG);
-
+			
 			if (logger.getAppender("engine_api_file_appender") == null)
 			{
 				Path logFile = FileSystems.getDefault().getPath(ProcessCtrl.LOG_DIR,
@@ -830,6 +828,7 @@ public class ProcessManager
 
 				logger.addAppender(fileAppender);
 			}
+
 
 			return logger;
 		}

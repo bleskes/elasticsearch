@@ -28,6 +28,7 @@ package com.prelert.job.process;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import org.apache.log4j.Logger;
@@ -88,7 +89,8 @@ public class ProcessAndDataDescription
 		m_TimeoutSeconds = timeout;
 		
 		m_ErrorReader = new BufferedReader(
-				new InputStreamReader(m_Process.getErrorStream()));		
+				new InputStreamReader(m_Process.getErrorStream(),
+						StandardCharsets.UTF_8));		
 		
 		m_InterestingFields = interestingFields;
 		

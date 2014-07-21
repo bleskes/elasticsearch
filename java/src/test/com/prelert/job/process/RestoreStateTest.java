@@ -55,6 +55,7 @@ import com.prelert.job.manager.JobManager;
 import com.prelert.job.persistence.elasticsearch.ElasticSearchJobProvider;
 import com.prelert.job.warnings.HighProportionOfBadTimestampsException;
 import com.prelert.job.warnings.OutOfOrderRecordsException;
+import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.Pagination;
 
 
@@ -147,13 +148,13 @@ public class RestoreStateTest
 			
 			Thread.sleep(1000);
 
-			Pagination<Map<String, Object>> buckets = 
-					jobManager.buckets(job.getId(), false, 0, 100);
+			Pagination<Bucket> buckets = 
+					jobManager.buckets(job.getId(), false, 0, 100, "s");
 
 			List<Double> anomalyScores = new ArrayList<>();
-			for (Map<String, Object> bucket : buckets.getDocuments())
+			for (Bucket bucket : buckets.getDocuments())
 			{
-				anomalyScores.add((Double)bucket.get("anomalyScore"));			
+				anomalyScores.add(bucket.getAnomalyScore());			
 			}
 
 			String testResults = prelertSrcHome + "/gui/apps/autodetectAPI/test_data/engine_api_integration_test/flightcentre_split_results.json";

@@ -46,7 +46,7 @@ import org.apache.log4j.Logger;
 /**
  * Bucket Result POJO 
  */
-@JsonIgnoreProperties({"epoch", "epochString", "id"})
+@JsonIgnoreProperties({"epoch", "epochString", "detectors"})
 @JsonInclude(Include.NON_NULL)
 public class Bucket 
 {
@@ -65,12 +65,13 @@ public class Bucket
 	
 	private static final Logger s_Logger = Logger.getLogger(Bucket.class);
 	
+	private String m_Id;
 	private Date m_Timestamp;
 	private double m_AnomalyScore;	
 	private int m_RecordCount;
 	private List<Detector> m_Detectors;
 	private long m_Epoch;
-	private List<AnomalyRecord> m_Records; 
+	private List<AnomalyRecord> m_Records;
 	
 	public Bucket()
 	{
@@ -89,22 +90,15 @@ public class Bucket
 	{
 		return m_Epoch;
 	}
-	
-	/**
-	 * Get the epoch as a string
-	 */
-	public String getEpochString()
-	{
-		return Long.toString(m_Epoch);
-	}
-	
-	/**
-	 * Same as getEpochString but serialised as the 'id' field. 
-	 * @return
-	 */
+
 	public String getId()
 	{
-		return Long.toString(m_Epoch);
+		return m_Id;
+	}
+	
+	public void setId(String id)
+	{
+		m_Id = id;
 	}
 	
 	public Date getTimestamp() 
@@ -118,6 +112,8 @@ public class Bucket
 		
 		// epoch in seconds
 		m_Epoch = m_Timestamp.getTime() / 1000;
+		
+		m_Id = Long.toString(m_Epoch); 
 	}
 	
 	public double getAnomalyScore() 

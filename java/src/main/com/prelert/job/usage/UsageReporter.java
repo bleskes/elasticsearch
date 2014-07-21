@@ -36,8 +36,8 @@ import org.apache.log4j.Logger;
  */
 abstract public class UsageReporter 
 {
-	static public String UPDATE_INTERVAL_PROP = "usage.update.interval";
-	static private long UPDATE_AFTER_COUNT_SECS = 300;
+	static final public String UPDATE_INTERVAL_PROP = "usage.update.interval";
+	static final private long UPDATE_AFTER_COUNT_SECS = 300;
 	
 	private long m_BytesReadSinceLastReport;
 	private String m_JobId;

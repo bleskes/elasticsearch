@@ -31,7 +31,6 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -46,6 +45,7 @@ import org.apache.log4j.Logger;
 
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.process.NativeProcessRunException;
+import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.provider.RestApiException;
@@ -92,7 +92,7 @@ public class Records extends ResourceWithJobManager
 	@GET
 	@Path("/{jobId}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Pagination<Map<String, Object>> buckets(
+	public Pagination<AnomalyRecord> buckets(
 			@PathParam("jobId") String jobId,
 			@DefaultValue("0") @QueryParam("skip") int skip,
 			@DefaultValue(JobManager.DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take,
@@ -132,7 +132,7 @@ public class Records extends ResourceWithJobManager
 		
 		
 		JobManager manager = jobManager();
-		Pagination<Map<String, Object>> records = manager.records(
+		Pagination<AnomalyRecord> records = manager.records(
 				jobId, "_all", skip, take);
 
 		

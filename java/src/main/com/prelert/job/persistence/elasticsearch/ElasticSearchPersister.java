@@ -122,7 +122,7 @@ public class ElasticSearchPersister implements JobDataPersister
 		{
 			XContentBuilder content = serialiseBucket(bucket);
 			
-			m_Client.prepareIndex(m_JobId, Bucket.TYPE, bucket.getEpochString())
+			m_Client.prepareIndex(m_JobId, Bucket.TYPE, bucket.getId())
 					.setSource(content)
 					.execute().actionGet();
 			
@@ -163,7 +163,7 @@ public class ElasticSearchPersister implements JobDataPersister
 					String recordId = bucket.getEpoch() + detector.getName() + count;					
 					bulkRequest.add(m_Client.prepareIndex(m_JobId, AnomalyRecord.TYPE, recordId)
 							.setSource(content)
-							.setParent(bucket.getEpochString()));					
+							.setParent(bucket.getId()));					
 					++count;
 				}
 				
@@ -400,7 +400,6 @@ public class ElasticSearchPersister implements JobDataPersister
 	throws IOException
 	{		
 		XContentBuilder builder = jsonBuilder().startObject()
-				.field(AnomalyRecord.ANOMALY_SCORE, record.getAnomalyScore())
 				.field(AnomalyRecord.PROBABILITY, record.getProbability())
 				.field(AnomalyRecord.DETECTOR_NAME, detectorKey)
 				.field(ElasticSearchMappings.ES_TIMESTAMP, bucketTime);

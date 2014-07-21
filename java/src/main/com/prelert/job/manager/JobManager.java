@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -64,6 +65,8 @@ import com.prelert.job.JobInUseException;
 import com.prelert.job.JobStatus;
 import com.prelert.job.TooManyJobsException;
 import com.prelert.job.UnknownJobException;
+import com.prelert.rs.data.AnomalyRecord;
+import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
@@ -285,11 +288,15 @@ public class JobManager
 	 * @param bucketId
 	 * @param expand Include anomaly records
 	 * @return
+	 * @throws NativeProcessRunException 
 	 */
-	public SingleDocument<Map<String, Object>> bucket(String jobId, 
-			String bucketId, boolean expand)
+	public SingleDocument<Bucket> bucket(String jobId, 
+			String bucketId, boolean expand, String normalisationType) 
+	throws NativeProcessRunException
 	{
-		return m_JobProvider.bucket(jobId, bucketId, expand);
+		SingleDocument<Bucket> bucket = m_JobProvider.bucket(jobId, bucketId, expand);
+		
+		return normalise(jobId, bucket, normalisationType);
 	}
 	
 	/**
@@ -301,14 +308,14 @@ public class JobManager
 	 * @param take
 	 * @return
 	 */
-	public Pagination<Map<String, Object>> buckets(String jobId, 
-			boolean expand, int skip, int take)
+	public Pagination<Bucket> buckets(String jobId, 
+			boolean expand, int skip, int take, String normalisationType)
 	throws NativeProcessRunException
 	{
-		Pagination<Map<String, Object>> buckets = m_JobProvider.buckets(jobId, expand, skip, take);
+		Pagination<Bucket> buckets = m_JobProvider.buckets(jobId, expand, skip, take);
 		
 		
-		return normalise(jobId, buckets);
+		return normalise(jobId, buckets, normalisationType);
 	}
 	
 	
@@ -322,15 +329,16 @@ public class JobManager
 	 * @param endBucket Include buckets up to this one
 	 * @return
 	 */
-	public Pagination<Map<String, Object>> buckets(String jobId, 
-			boolean expand, int skip, int take, long startBucket, long endBucket)
+	public Pagination<Bucket> buckets(String jobId, 
+			boolean expand, int skip, int take, long startBucket, long endBucket,
+			String normalisationType)
 	throws NativeProcessRunException
 	{
-		Pagination<Map<String, Object>> buckets =  m_JobProvider.buckets(jobId, 
+		Pagination<Bucket> buckets =  m_JobProvider.buckets(jobId, 
 				expand, skip, take, 
 				startBucket, endBucket);
 		
-		return normalise(jobId, buckets);
+		return normalise(jobId, buckets, normalisationType);
 	}
 	
 	private Integer getJobBucketSpan(String jobId)
@@ -349,15 +357,45 @@ public class JobManager
 	}
 	
 		
-	private Pagination<Map<String, Object>> normalise(String jobId,
-			Pagination<Map<String, Object>> buckets) 
+	private Pagination<Bucket> normalise(String jobId,
+			Pagination<Bucket> buckets, String normalisationType) 
 	throws NativeProcessRunException
 	{
 		Normaliser normaliser = new Normaliser(jobId, m_JobProvider);
 		
-		normaliser.normaliseForSystemChange(getJobBucketSpan(jobId), buckets.getDocuments());
+		if (normalisationType != null && normalisationType.equals("u"))
+		{
+			normaliser.normaliseForUnusualBehaviour(getJobBucketSpan(jobId), 
+					buckets.getDocuments());
+		}
+		else
+		{
+			normaliser.normaliseForSystemChange(getJobBucketSpan(jobId), 
+				buckets.getDocuments());
+		}
 			
 		return buckets;
+	}
+	
+	
+	private SingleDocument<Bucket> normalise(String jobId,
+			SingleDocument<Bucket> bucket, String normalisationType) 
+	throws NativeProcessRunException
+	{
+		Normaliser normaliser = new Normaliser(jobId, m_JobProvider);
+		
+		if (normalisationType != null && normalisationType.equals("u"))
+		{
+			normaliser.normaliseForUnusualBehaviour(getJobBucketSpan(jobId), 
+					Arrays.asList(new Bucket [] {bucket.getDocument()}));
+		}
+		else
+		{
+			normaliser.normaliseForSystemChange(getJobBucketSpan(jobId), 
+					Arrays.asList(new Bucket [] {bucket.getDocument()}));
+		}
+			
+		return bucket;
 	}
 	
 	/**
@@ -371,7 +409,7 @@ public class JobManager
 	 * @return
 	 * @throws NativeProcessRunException 
 	 */
-	public Pagination<Map<String, Object>> records(String jobId, 
+	public Pagination<AnomalyRecord> records(String jobId, 
 			String bucketId, int skip, int take) 
 	{
 		return m_JobProvider.records(jobId, bucketId, skip, take);
