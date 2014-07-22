@@ -234,18 +234,16 @@ public class Normaliser
 				process.getProcess().getOutputStream());
 		try 
 		{
-			writer.writeNumFields(3);
+			writer.writeNumFields(2);
 			writer.writeField(ProcessCtrl.PROBABILITY);
 			writer.writeField(ProcessCtrl.RAW_ANOMALY_SCORE);
-			writer.writeField("tag");
 			
 			// normalise the buckets first
 			for (Bucket bucket : buckets)
 			{
-				writer.writeNumFields(3);
+				writer.writeNumFields(2);
 				writer.writeField("");
 				writer.writeField(Double.toString(bucket.getAnomalyScore()));
-				writer.writeField(bucket.getId());
 			}
 			
 			
@@ -260,7 +258,6 @@ public class Normaliser
 				writer.writeNumFields(2);
 				writer.writeField(Double.toString(record.getProbability()));
 				writer.writeField("");
-				//writer.writeField(bucket.getId());
 
 				m_Written++;
 			}

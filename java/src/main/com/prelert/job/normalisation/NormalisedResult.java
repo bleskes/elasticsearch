@@ -152,15 +152,19 @@ public class NormalisedResult
 					
 					if (token == JsonToken.VALUE_STRING)
 					{
-						try
+						String val = parser.getValueAsString();
+						if (val.isEmpty() == false)
 						{
-							result.setAnomalyScore(Double.parseDouble(parser.getValueAsString()));
+							try						
+							{
+								result.setAnomalyScore(Double.parseDouble(val));
+							}
+							catch (NumberFormatException nfe)
+							{
+								logger.warn("Cannot parse " + ANOMALY_SCORE + " : " + parser.getText() 
+										+ " as a double");
+							}	
 						}
-						catch (NumberFormatException nfe)
-						{
-							logger.warn("Cannot parse " + ANOMALY_SCORE + " : " + parser.getText() 
-								+ " as a double");
-						}							
 					}	
 					else
 					{
@@ -177,15 +181,19 @@ public class NormalisedResult
 					
 					if (token == JsonToken.VALUE_STRING)
 					{
-						try
+						String val = parser.getValueAsString();
+						if (val.isEmpty() == false)
 						{
-							result.setNormalizedSysChangeScore(Double.parseDouble(parser.getValueAsString()));
+							try
+							{
+								result.setNormalizedSysChangeScore(Double.parseDouble(val));
+							}
+							catch (NumberFormatException nfe)
+							{
+								logger.warn("Cannot parse " + SYS_CHANGE_SCORE + " : " + parser.getText() 
+										+ " as a double");
+							}		
 						}
-						catch (NumberFormatException nfe)
-						{
-							logger.warn("Cannot parse " + SYS_CHANGE_SCORE + " : " + parser.getText() 
-								+ " as a double");
-						}							
 					}					
 					else
 					{
@@ -203,14 +211,18 @@ public class NormalisedResult
 					
 					if (token == JsonToken.VALUE_STRING)
 					{
-						try
+						String val = parser.getValueAsString();
+						if (val.isEmpty() == false)
 						{
-							result.setNormalizedUnusualScore(Double.parseDouble(parser.getValueAsString()));
-						}
-						catch (NumberFormatException nfe)
-						{
-							logger.warn("Cannot parse " + UNUSUAL_SCORE + " : " + parser.getText() 
-								+ " as a double");
+							try
+							{
+								result.setNormalizedUnusualScore(Double.parseDouble(val));
+							}
+							catch (NumberFormatException nfe)
+							{
+								logger.warn("Cannot parse " + UNUSUAL_SCORE + " : " + parser.getText() 
+										+ " as a double");
+							}
 						}
 					}
 					else
@@ -223,14 +235,18 @@ public class NormalisedResult
 				case SYS_CHANGE_MULTIPLIER:
 					if (token == JsonToken.VALUE_STRING)
 					{
-						try
+						String val = parser.getValueAsString();
+						if (val.isEmpty() == false)
 						{
-							result.setSysChangeScoreMultiplier(Double.parseDouble(parser.getValueAsString()));
-						}
-						catch (NumberFormatException nfe)
-						{
-							logger.warn("Cannot parse " + SYS_CHANGE_MULTIPLIER + " : " + parser.getText() 
-								+ " as a double");
+							try
+							{
+								result.setSysChangeScoreMultiplier(Double.parseDouble(val));
+							}
+							catch (NumberFormatException nfe)
+							{
+								logger.warn("Cannot parse " + SYS_CHANGE_MULTIPLIER + " : " + parser.getText() 
+										+ " as a double");
+							}
 						}
 					}
 					else
@@ -244,7 +260,7 @@ public class NormalisedResult
 					result.setTag(parser.getValueAsString());
 					break;
 				default:
-					logger.warn(String.format("Parsed unknown field in NormalisedResult %s:%s", 
+					logger.trace(String.format("Parsed unknown field in NormalisedResult %s:%s", 
 							fieldName, parser.getValueAsString()));
 					break;
 				}

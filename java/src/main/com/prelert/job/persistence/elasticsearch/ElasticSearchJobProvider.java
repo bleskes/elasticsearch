@@ -611,7 +611,7 @@ public class ElasticSearchJobProvider implements JobProvider
 	
 	
 	/**
-	 * The return records have the parent bucket id set.
+	 * The returned records have the parent bucket id set.
 	 * 
 	 * @param jobId
 	 * @param skip
@@ -659,6 +659,8 @@ public class ElasticSearchJobProvider implements JobProvider
 			
 			AnomalyRecord record = m_ObjectMapper.convertValue(
 					m, AnomalyRecord.class);
+			
+			// set the parent id
 			record.setParent(hit.field(_PARENT).getValue().toString());
 			
 			results.add(record);
