@@ -563,9 +563,10 @@ public class JobManager
 	throws UnknownJobException, NativeProcessRunException, JobInUseException
 	{		
 		s_Logger.debug("Deleting job '" + jobId + "'");
-
-		m_ProcessManager.finishJob(jobId);
 		
+		m_JobProvider.jobExists(jobId);
+		
+		m_ProcessManager.finishJob(jobId);
 		m_JobProvider.deleteJob(jobId);
 		
 		return true;
