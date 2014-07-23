@@ -32,9 +32,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicLong;
@@ -296,7 +300,14 @@ public class JobManager
 	{
 		SingleDocument<Bucket> bucket = m_JobProvider.bucket(jobId, bucketId, expand);
 		
-		return normalise(jobId, bucket, normalisationType);
+		if (bucket.isExists())
+		{
+			return normalise(jobId, bucket, normalisationType);
+		}
+		else 
+		{
+			return bucket;
+		}
 	}
 	
 	/**
@@ -347,10 +358,14 @@ public class JobManager
 		if (span == null)
 		{
 			// use dot notation to get fields from nested docs.
-			span = m_JobProvider.<Number>getField(jobId,
-					JobDetails.ANALYSIS_CONFIG + "." + AnalysisConfig.BUCKET_SPAN).intValue();
+			Number num = m_JobProvider.<Number>getField(jobId,
+					JobDetails.ANALYSIS_CONFIG + "." + AnalysisConfig.BUCKET_SPAN);
 			
-			m_JobIdBucketspan.put(jobId, span);
+			if (num != null)
+			{
+				span = num.intValue();
+				m_JobIdBucketspan.put(jobId, span);
+			}			
 		}
 		
 		return span;
@@ -399,7 +414,8 @@ public class JobManager
 	}
 	
 	/**
-	 * Get all the anomaly records for the bucket for every detector 
+	 * Get the anomaly records for the bucket. 
+	 * Does not include simple count records.
 	 * 
 	 * @param jobId
 	 * @param bucketId 
@@ -414,7 +430,7 @@ public class JobManager
 	throws NativeProcessRunException 
 	{
 		Pagination<AnomalyRecord> records = m_JobProvider.records(jobId, 
-				bucketId, skip, take);
+				bucketId, false, skip, take);
 		
 		Pagination<Bucket> buckets = m_JobProvider.buckets(jobId, 
 				false, skip, take);
@@ -428,7 +444,8 @@ public class JobManager
 	}
 	
 	/**
-	 * Get a page of anomaly records from all buckets
+	 * Get a page of anomaly records from all buckets.
+	 * Does not include simple count records.
 	 * 
 	 * @param jobId
 	 * @param skip Skip the first N records. This parameter is for paging
@@ -442,22 +459,58 @@ public class JobManager
 	throws NativeProcessRunException 
 	{
 		Pagination<AnomalyRecord> records = m_JobProvider.records(jobId, 
-				skip, take);
-		
-		Pagination<Bucket> buckets = m_JobProvider.buckets(jobId, 
 				false, skip, take);
 		
-		Normaliser normaliser = new Normaliser(jobId, m_JobProvider);	
+		if (records.getHitCount() == 0)
+		{
+			return records;
+		}
 		
-		normaliser.normaliseForBoth(getJobBucketSpan(jobId), 
-				buckets.getDocuments(), records.getDocuments());
+		// get the parent bucket ids and sort
+		List<String> bucketIds = new ArrayList<>();
+		for (AnomalyRecord r : records.getDocuments())
+		{
+			bucketIds.add(r.getParent());
+		}
+		Collections.sort(bucketIds);
+		
+		// get all the buckets over the same time period
+		// as the records
+		try
+		{			
+			long start = Long.parseLong(bucketIds.get(0));
+			// we want the last bucket inclusive so +1 to the value
+			long end = Long.parseLong(bucketIds.get(bucketIds.size() -1)) + 1;
+
+			Pagination<Bucket> buckets = m_JobProvider.buckets(jobId, 
+					false, skip, take, start, end);
+			skip += take;
+			while (skip < buckets.getHitCount())
+			{
+				Pagination<Bucket> extraBuckets = m_JobProvider.buckets(
+						jobId, false, skip, take, start, end);
+				
+				skip += take;
+				buckets.getDocuments().addAll(extraBuckets.getDocuments());
+			}
+			buckets.setSkip(skip - take);
+
+			Normaliser normaliser = new Normaliser(jobId, m_JobProvider);	
+
+			normaliser.normaliseForBoth(getJobBucketSpan(jobId), 
+					buckets.getDocuments(), records.getDocuments());
+		}
+		catch (NumberFormatException nfe)
+		{
+			s_Logger.error("Error parsing record parent id", nfe);
+		}
 		
 		return records; 
 	}
 	
 	/**
 	 * Get a page of anomaly records from the buckets between
-	 * epochStart and epochEnd
+	 * epochStart and epochEnd. Does not include simple count records.
 	 * 
 	 * @param jobId
 	 * @param skip
@@ -472,7 +525,7 @@ public class JobManager
 	throws NativeProcessRunException 
 	{
 		Pagination<AnomalyRecord> records = m_JobProvider.records(jobId, 
-				skip, take, epochEnd, epochStart);
+				false, skip, take, epochEnd, epochStart);
 		
 		Pagination<Bucket> buckets = m_JobProvider.buckets(jobId, 
 				false, skip, take, epochStart, epochEnd);
