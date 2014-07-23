@@ -29,6 +29,8 @@ package com.prelert.rs.client;
 
 import java.io.ByteArrayInputStream;
 import java.io.Closeable;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URLEncoder;
@@ -59,6 +61,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
+import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.ApiError;
 import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.Detector;
@@ -314,6 +317,7 @@ public class EngineApiClient implements Closeable
 		{
 			if (response.getStatusLine().getStatusCode() == 200)
 			{
+				m_LastError = null;
 				return true;
 			}
 			else 
@@ -498,6 +502,27 @@ public class EngineApiClient implements Closeable
         } 
 	}
 	
+	
+	/**
+	 * Upload the contents of <code>dataFile</code> to the server.
+	 * 
+	 * @param baseUrl The URL of the REST API i.e. an URL like
+	 * 	<code>http://prelert-host:8080/engine/version/</code>
+	 * @param jobId The Job's Id
+	 * @param dataFile Should match the data configuration format of the job
+	 * @param compressed Is the data gzipped compressed?
+	 * @return True if successful
+	 * @throws IOException
+	 */
+	public boolean fileUpload(String baseUrl, String jobId, File dataFile, boolean compressed) 
+	throws IOException
+	{
+		FileInputStream stream = new FileInputStream(dataFile);
+		
+		return streamingUpload(baseUrl, jobId, stream, compressed);
+	}
+	
+	
 	/**
 	 * Finish the job after all the data has been uploaded
 	 * 
@@ -607,16 +632,18 @@ public class EngineApiClient implements Closeable
 	 * @param baseUrl The base URL for the REST API 
 	 * e.g <code>http://localhost:8080/engine/version/</code>
 	 * @param jobId The Job's unique Id
+	 * @param normalisation The normalisation type, if <code>null</code> the 
+	 * default is used
 	 * @param expand If true include the anomaly records for the bucket
 	 * 
 	 * @return A {@link Pagination} object containing a list of {@link Bucket buckets}
 	 * @throws IOException 
 	 */
 	public Pagination<Bucket> getBuckets(String baseUrl, String jobId, 
-			boolean expand) 
+			String normalisation, boolean expand) 
 	throws IOException 
 	{
-		return getBuckets(baseUrl, jobId, expand, null, null);
+		return getBuckets(baseUrl, jobId, normalisation, expand, null, null);
 	}
 			
 	/**
@@ -625,6 +652,8 @@ public class EngineApiClient implements Closeable
 	 * @param baseUrl The base URL for the REST API 
 	 * e.g <code>http://localhost:8080/engine/version/</code>
 	 * @param jobId The Job's unique Id
+	 * @param normalisation The normalisation type, if <code>null</code> the 
+	 * default is used 
 	 * @param expand If true include the anomaly records for the bucket
 	 * @param skip The number of buckets to skip 
 	 * @param take The max number of buckets to request. 
@@ -633,10 +662,10 @@ public class EngineApiClient implements Closeable
 	 * @throws IOException 
 	 */
 	public Pagination<Bucket> getBuckets(String baseUrl, String jobId,
-			boolean expand, Long skip, Long take) 
+			String normalisation, boolean expand, Long skip, Long take) 
 	throws IOException
 	{
-		return this.<String>getBuckets(baseUrl, jobId, expand, skip, take, null, null);
+		return this.<String>getBuckets(baseUrl, jobId, normalisation, expand, skip, take, null, null);
 	}
 	
 	/**
@@ -646,6 +675,8 @@ public class EngineApiClient implements Closeable
 	 * @param baseUrl The base URL for the REST API 
 	 * e.g <code>http://localhost:8080/engine/version/</code>
 	 * @param jobId The Job's unique Id
+	 * @param normalisation The normalisation type, if <code>null</code> the 
+	 * default is used 
 	 * @param expand If true include the anomaly records for the bucket
 	 * @param skip The number of buckets to skip. If <code>null</code> then ignored 
 	 * @param take The max number of buckets to request. If <code>null</code> then ignored 
@@ -657,11 +688,17 @@ public class EngineApiClient implements Closeable
 	 * @throws IOException
 	 */
 	public <T> Pagination<Bucket> getBuckets(String baseUrl, String jobId, 
-			boolean expand, Long skip, Long take, T start, T end) 
+			String normalisation, boolean expand, 
+			Long skip, Long take, T start, T end) 
 	throws IOException
 	{
 		String url = baseUrl + "/results/" + jobId ;
 		char queryChar = '?';
+		if (normalisation != null)
+		{
+			url += queryChar + "norm=" + normalisation;
+			queryChar = '&';
+		}
 		if (expand)
 		{
 			url += queryChar + "expand=true";
@@ -744,7 +781,7 @@ public class EngineApiClient implements Closeable
 	 */
 	public SingleDocument<Bucket> getBucket(String baseUrl, String jobId, 
 			String bucketId, boolean expand) 
-	throws IOException
+	throws JsonMappingException, IOException
 	{
 		String url = baseUrl + "/results/" + jobId + "/" + bucketId;
 		if (expand)
@@ -795,21 +832,153 @@ public class EngineApiClient implements Closeable
 		return doc;
 	}
 	
+	
 	/**
-	 * Get the anomaly records for the bucket. Records from all detectors are
-	 * returned.
-	 * This is similar to calling {@linkplain #getBucket(String, String, String, boolean)}
-	 * with <code>expand=true</code> except the bucket isn't returned only the
-	 * anomaly records.
+	 * Get the anomaly records for the job. The records aren't organised 
+	 * by bucket 
+	 * 
+	 * Calls {@link #getRecords(String, String, Long, Long)} with the 
+	 * skip and take parameters set to <code>null</code>
 	 * 
 	 * @param baseUrl The base URL for the REST API 
 	 * e.g <code>http://localhost:8080/engine/version/</code>
 	 * @param jobId The Job's unique Id
-	 * @param bucketId The bucket to get the anomaly records from
-	 * @return A {@link Pagination} object containing a Map<String,Object>
+	 * @param normalisation The normalisation type, if <code>null</code> the 
+	 * default is used
+	 * 
+	 * @return A {@link Pagination} object containing a list of 
+	 * {@link AnomalyRecord anomaly records}
 	 * @throws IOException 
 	 */
-	public Pagination<Map<String,Object>> getRecords(String baseUrl, 
+	public Pagination<AnomalyRecord> getRecords(String baseUrl, String jobId,
+								String normalisation)
+	throws IOException
+	{
+		return this.<String>getRecords(baseUrl, jobId, normalisation, null, null, null, null);
+	}
+	
+	
+	/**
+	 * Get the anomaly records for the job with skip and take parameters.
+	 * The records aren't organised by bucket 
+	 * 
+	 * Calls {@link #getRecords(String, String, Long, Long)} with the 
+	 * skip and take parameters set to <code>null</code>
+	 * 
+	 * @param baseUrl The base URL for the REST API 
+	 * e.g <code>http://localhost:8080/engine/version/</code>
+	 * @param jobId The Job's unique Id
+	 * @param normalisation The normalisation type, if <code>null</code> the 
+	 * default is used
+	 * @param skip The number of records to skip 
+	 * @param take The max number of records to request. 
+	 * @return A {@link Pagination} object containing a list of 
+	 * {@link AnomalyRecord anomaly records}
+	 * @throws IOException  
+	 */
+	public Pagination<AnomalyRecord> getRecords(String baseUrl, String jobId, 
+					String normalisation, Long skip, Long take)
+	throws IOException
+	{
+		return this.<String>getRecords(baseUrl, jobId, normalisation, skip, take, null, null);
+	}
+	
+	
+	/**
+	 * Get the anomaly records for the job with skip and take parameters.
+	 * The records aren't organised by bucket 
+	 * 
+	 * Calls {@link #getRecords(String, String, Long, Long)} with the 
+	 * skip and take parameters set to <code>null</code>
+	 * 
+	 * @param baseUrl The base URL for the REST API 
+	 * e.g <code>http://localhost:8080/engine/version/</code>
+	 * @param jobId The Job's unique Id
+	 * @param normalisation The normalisation type, if <code>null</code> the 
+	 * default is used
+	 * @param skip The number of records to skip 
+	 * @param take The max number of records to request.
+	 * @param start The start date filter as either a Long (seconds from epoch)
+	 * or an ISO 8601 date String. If <code>null</code> then ignored
+	 * @param end The end date filter as either a Long (seconds from epoch)
+	 * or an ISO 8601 date String. If <code>null</code> then ignored
+	 * @return A {@link Pagination} object containing a list of 
+	 * {@link AnomalyRecord anomaly records}
+	 * @throws IOException 
+	 */			
+	public <T> Pagination<AnomalyRecord> getRecords(String baseUrl, String jobId, 
+			String normalisation, Long skip, Long take, T start, T end) 			
+	throws IOException
+	{
+		String url = baseUrl + "/records/" + jobId ;
+		char queryChar = '?';
+		
+		if (normalisation != null)
+		{
+			url += queryChar + "norm=" + normalisation;
+			queryChar = '&';
+		}
+		if (skip != null)
+		{
+			url += queryChar + "skip=" + skip;
+			queryChar = '&';
+		}
+		if (take != null)
+		{
+			url += queryChar + "take=" + take;
+			queryChar = '&';
+		}
+		if (start != null)
+		{
+			url += queryChar + "start=" + URLEncoder.encode(start.toString(), "UTF-8");
+			queryChar = '&';
+		}
+		if (end != null)
+		{
+			url += queryChar + "end=" + URLEncoder.encode(end.toString(), "UTF-8");
+			queryChar = '&';
+		}
+		
+		s_Logger.debug("GET records " + url);
+		
+		HttpGet get = new HttpGet(url);
+		
+		
+		try (CloseableHttpResponse response = m_HttpClient.execute(get))
+		{
+			String content = EntityUtils.toString(response.getEntity());
+
+			if (response.getStatusLine().getStatusCode() == 200)
+			{
+				Pagination<AnomalyRecord> docs = m_JsonMapper.readValue(content, 
+						new TypeReference<Pagination<AnomalyRecord>>() {} );
+				m_LastError = null;
+				return docs;
+			}
+			else
+			{
+				String msg = String.format(
+						"Error getting records for job %s status code = %d. "
+						+ "Returned content: %s",
+						jobId, 
+						response.getStatusLine().getStatusCode(),
+						content);
+
+				s_Logger.error(msg);
+				
+				m_LastError = m_JsonMapper.readValue(content, 
+						new TypeReference<ApiError>() {} );
+			}			
+		}	
+		
+		// else return empty page
+		Pagination<AnomalyRecord> page = new Pagination<>();
+		return page;
+	}
+	
+	
+	
+	public Pagination<AnomalyRecord> getBucketRecords(String baseUrl, 
 			String jobId, String bucketId)
 	throws IOException
 	{
@@ -826,7 +995,7 @@ public class EngineApiClient implements Closeable
 
 			if (response.getStatusLine().getStatusCode() == 200)
 			{
-				Pagination<Map<String,Object>> docs = m_JsonMapper.readValue(content, 
+				Pagination<AnomalyRecord> docs = m_JsonMapper.readValue(content, 
 						new TypeReference<Pagination<Map<String,Object>>>() {} );
 				return docs;
 			}
@@ -851,14 +1020,16 @@ public class EngineApiClient implements Closeable
 		}	
 		
 		// else return empty page
-		Pagination<Map<String,Object>> page = new Pagination<>();
+		Pagination<AnomalyRecord> page = new Pagination<>();
 		return page;
 	}
+	
+	
 	
 	/**
 	 * Get the anomaly records from a particular anomaly detector 
 	 * in the given bucket.
-	 * This is similar to {@linkplain #getRecords(String, String, String)}  
+	 * This is similar to {@linkplain #getBucketRecords(String, String, String)}  
 	 * but only the records produced by the detetor <code>detectorId</code> 
 	 * are returned.
 	 * 
