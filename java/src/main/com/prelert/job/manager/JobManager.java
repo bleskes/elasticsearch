@@ -524,7 +524,7 @@ public class JobManager
 	throws NativeProcessRunException 
 	{
 		Pagination<AnomalyRecord> records = m_JobProvider.records(jobId, 
-				false, skip, take, epochEnd, epochStart);
+				false, skip, take, epochStart, epochEnd);
 		
 		Pagination<Bucket> buckets = m_JobProvider.buckets(jobId, 
 				false, skip, take, epochStart, epochEnd);
