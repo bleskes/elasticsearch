@@ -137,7 +137,6 @@ public class Results extends ResourceWithJobManager
 			}			
 		}		
 		
-		//Normaliser normaliser = normaliser();
 		JobManager manager = jobManager();
 		Pagination<Bucket> buckets;
 		

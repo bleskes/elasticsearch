@@ -62,12 +62,13 @@ public class Normaliser
 	}
 			
 	/**	 
-	 *  
-	 * @param bucketSpan
+	 * Normalise buckets anomaly score for system state change.
+	 * 
+	 * @param bucketSpan If <code>null</code> the default is used
 	 * @return
 	 * @throws NativeProcessRunException
 	 */
-	public List<Bucket> normaliseForSystemChange(int bucketSpan, 
+	public List<Bucket> normaliseForSystemChange(Integer bucketSpan, 
 			List<Bucket> buckets) 
 	throws NativeProcessRunException
 	{
@@ -129,7 +130,17 @@ public class Normaliser
 	}
 	
 	
-	public List<Bucket> normaliseForUnusualBehaviour(int bucketSpan, 
+	/**
+	 * Normalise the bucket and it's nested records for unusual 
+	 * behaviour.
+	 * The bucket's anomaly score is set to the max record score.
+	 * 
+	 * @param bucketSpan If <code>null</code> the default is used
+	 * @param expandedBuckets
+	 * @return
+	 * @throws NativeProcessRunException
+	 */
+	public List<Bucket> normaliseForUnusualBehaviour(Integer bucketSpan, 
 			List<Bucket> expandedBuckets) throws NativeProcessRunException 
 	{
 		InitialState state = m_JobDetailsProvider.getUnusualBehaviourInitialiser(m_JobId);
@@ -204,15 +215,17 @@ public class Normaliser
 	
 	
 	/**
-	 * For each record set the normalised value by system change
-	 * and unusual behaviour 
+	 * For each record set the normalised value by unusual behaviour
+	 * and the system change anomaly score to the buckets system
+	 * change score 
 	 * 
-	 * @param bucketSpan
+	 * @param bucketSpan If <code>null</code> the default is used
+	 * @param buckets
 	 * @param records
 	 * @return
 	 * @throws NativeProcessRunException
 	 */
-	public List<AnomalyRecord> normaliseForBoth(int bucketSpan, 
+	public List<AnomalyRecord> normaliseForBoth(Integer bucketSpan, 
 			List<Bucket> buckets, List<AnomalyRecord> records) 
 	throws NativeProcessRunException
 	{
@@ -269,7 +282,8 @@ public class Normaliser
 		finally
 		{
 			try 
-			{
+			{   
+				// closing the input to the job terminates it 
 				process.getProcess().getOutputStream().close();
 			} 
 			catch (IOException e) 
@@ -284,14 +298,11 @@ public class Normaliser
 		}
 		catch (InterruptedException e)
 		{
-
 		}
 
 		return mergeBothScoresIntoBuckets(
 				resultsParser.getNormalisedResults(), buckets, records);	
 	}
-	
-	
 	
 	
 	/**
@@ -368,14 +379,25 @@ public class Normaliser
 		for (Bucket bucket : buckets)
 		{
 			NormalisedResult normalised = scoresIter.next();
-			bucketIdToScore.put(bucket.getId(), normalised.getNormalizedSysChangeScore());
+			String id = bucket.getId();
+			if (id == null)
+			{
+				System.out.println("null");
+			}
+			bucketIdToScore.put(id, normalised.getNormalizedSysChangeScore());
 		}
 		
 		for (AnomalyRecord record : records)
 		{
 			NormalisedResult normalised = scoresIter.next();
 
-			record.setAnomalyScore(bucketIdToScore.get(record.getParent()));
+			Double anomalyScore = bucketIdToScore.get(record.getParent());
+			if (anomalyScore == null)
+			{
+				System.out.println("===== " + record.getParent());
+			}
+			
+			record.setAnomalyScore(anomalyScore);
 			record.setUnusualScore(normalised.getNormalizedUnusualScore());
 		}
 				
@@ -388,14 +410,14 @@ public class Normaliser
 	 * 
 	 * @param type
 	 * @param state
-	 * @param bucketSpan
+	 * @param bucketSpan If <code>null</code> the default is used
 	 * @return
 	 * @throws NativeProcessRunException
 	 */
 	private NormaliserProcess createNormaliserProcess(
 			InitialState sysChangeState, 
 			InitialState unusualBehaviourState, 
-			int bucketSpan)
+			Integer bucketSpan)
 	throws NativeProcessRunException
 	{
 		try

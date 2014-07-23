@@ -35,7 +35,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -482,18 +481,18 @@ public class JobManager
 			// we want the last bucket inclusive so +1 to the value
 			long end = Long.parseLong(bucketIds.get(bucketIds.size() -1)) + 1;
 
+			int bucketSkip = 0;
 			Pagination<Bucket> buckets = m_JobProvider.buckets(jobId, 
-					false, skip, take, start, end);
-			skip += take;
-			while (skip < buckets.getHitCount())
+					false, bucketSkip, take, start, end);
+			bucketSkip += take;
+			while (bucketSkip < buckets.getHitCount())
 			{
 				Pagination<Bucket> extraBuckets = m_JobProvider.buckets(
-						jobId, false, skip, take, start, end);
+						jobId, false, bucketSkip, take, start, end);
 				
-				skip += take;
+				bucketSkip += take;
 				buckets.getDocuments().addAll(extraBuckets.getDocuments());
 			}
-			buckets.setSkip(skip - take);
 
 			Normaliser normaliser = new Normaliser(jobId, m_JobProvider);	
 

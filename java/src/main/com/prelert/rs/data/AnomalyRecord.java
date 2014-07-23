@@ -107,7 +107,6 @@ public class AnomalyRecord
 	private Boolean m_IsSimpleCount;
 	
 	private Double m_AnomalyScore;
-	private Double m_BucketScore;
 	private Double m_UnusualScore;
 	private Date   m_Timestamp;
 
@@ -119,28 +118,19 @@ public class AnomalyRecord
 		return m_AnomalyScore;
 	}
 	
-	
 	public void setAnomalyScore(Double anomalyScore)
 	{
 		m_AnomalyScore = anomalyScore;
 	}
 	
-	
-	public Double getBucketScore()
-	{
-		return m_BucketScore;
-	}
-	
-	
-	public void setBucketScore(Double anomalyScore)
-	{
-		m_BucketScore = anomalyScore;
-	}
-	
-	
 	public Double getUnusualScore()
 	{
 		return m_UnusualScore;
+	}
+	
+	public void setUnusualScore(Double anomalyScore)
+	{
+		m_UnusualScore = anomalyScore;
 	}
 	
 	
@@ -153,13 +143,6 @@ public class AnomalyRecord
 	{
 		this.m_Timestamp = timestamp;
 	}
-	
-	
-	public void setUnusualScore(Double anomalyScore)
-	{
-		m_UnusualScore = anomalyScore;
-	}
-	
 	
 	public Double getProbability()
 	{
@@ -354,10 +337,10 @@ public class AnomalyRecord
 			switch(token)
 			{
 			case START_OBJECT:
-				s_Logger.error("Start object parsed in bucket");
+				s_Logger.error("Start object parsed in anomaly record");
 				break;
 			case END_OBJECT:
-				s_Logger.error("End object parsed in bucket");
+				s_Logger.error("End object parsed in anomaly record");
 				break;
 			case FIELD_NAME:
 				String fieldName = parser.getCurrentName();

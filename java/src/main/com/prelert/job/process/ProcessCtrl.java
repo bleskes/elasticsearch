@@ -808,14 +808,14 @@ public class ProcessCtrl
 	 * @param jobId
 	 * @param sysChangeState Set to <code>null</code> to be ignored
 	 * @param unusualBehaviourState Set to <code>null</code> to be ignored
-	 * @param bucketSpan
+	 * @param bucketSpan If <code>null</code> then use the program default
 	 * @param logger
 	 * @return
 	 * @throws IOException
 	 */
 	static public Process buildNormaliser(String jobId, 
 			InitialState sysChangeState, InitialState unusualBehaviourState,
-			int bucketSpan, Logger logger)
+			Integer bucketSpan, Logger logger)
 	throws IOException
 	{
 		logger.info("PRELERT_HOME is set to " + PRELERT_HOME);
@@ -841,9 +841,11 @@ public class ProcessCtrl
 			command.add(stateFileArg);
 		}
 		
-		
-		String bucketSpanArg = BUCKET_SPAN_ARG + Integer.toString(bucketSpan);
-		command.add(bucketSpanArg);
+		if (bucketSpan != null)
+		{
+			String bucketSpanArg = BUCKET_SPAN_ARG + bucketSpan.toString();
+			command.add(bucketSpanArg);
+		}
 		
 		// TODO Log everything to the default normalize_api dir
 //		String logId = LOG_ID_ARG + jobId;
