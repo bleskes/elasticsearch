@@ -165,7 +165,7 @@ public class Records extends ResourceWithJobManager
     		setPagingUrls(path, records, queryParams);
     	}		
 			
-		s_Logger.debug(String.format("Return %d buckets for job %s", 
+		s_Logger.debug(String.format("Return %d records for job %s", 
 				records.getDocumentCount(), jobId));
 		
 		return records;
