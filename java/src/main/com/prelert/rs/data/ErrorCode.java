@@ -215,7 +215,13 @@ public enum ErrorCode
 	/**
 	 * The date query parameter is un-parsable as a date
 	 */
-	UNPARSEABLE_DATE_ARGUMENT(60101); 
+	UNPARSEABLE_DATE_ARGUMENT(60101),
+	
+	/**
+	 * The argument to the sort query parameter is not a 
+	 * recognised sort field
+	 */
+	INVALID_SORT_FIELD(60102);
 	
 	
 	

@@ -102,6 +102,8 @@ public class JobManager
 		DEFAULT_PAGE_SIZE = Integer.parseInt(DEFAULT_PAGE_SIZE_STR);
 	}
 	
+	static public final String DEFAULT_RECORD_SORT_FIELD = AnomalyRecord.PROBABILITY;
+	
 	private ProcessManager m_ProcessManager;
 	 
 	
@@ -412,9 +414,11 @@ public class JobManager
 		return bucket;
 	}
 	
+
 	/**
 	 * Get the anomaly records for the bucket. 
 	 * Does not include simple count records.
+	 * Records are sorted by probability  
 	 * 
 	 * @param jobId
 	 * @param bucketId 
@@ -428,11 +432,82 @@ public class JobManager
 			String bucketId, int skip, int take) 
 	throws NativeProcessRunException 
 	{
+		return this.records(jobId, bucketId, skip, take, DEFAULT_RECORD_SORT_FIELD);
+	}
+	
+	/**
+	 * Get the anomaly records for the bucket. 
+	 * Does not include simple count records.
+	 * 
+	 * @param jobId
+	 * @param bucketId 
+	 * @param skip Skip the first N records. This parameter is for paging
+	 * results if not required set to 0.
+	 * @param take Take only this number of records
+	 * @param sortField The field to sort the anomaly records by
+	 * @return
+	 * @throws NativeProcessRunException 
+	 */
+	public Pagination<AnomalyRecord> records(String jobId, 
+			String bucketId, int skip, int take, String sortField) 
+	throws NativeProcessRunException 
+	{
 		Pagination<AnomalyRecord> records = m_JobProvider.records(jobId, 
-				bucketId, false, skip, take);
+				bucketId, false, skip, take, sortField);
+		
+		SingleDocument<Bucket> bucket = m_JobProvider.bucket(jobId, bucketId, false); 
+		
+		Normaliser normaliser = new Normaliser(jobId, m_JobProvider);	
+		
+		normaliser.normaliseForBoth(getJobBucketSpan(jobId), 
+				Arrays.asList(new Bucket[] {bucket.getDocument()}),
+						records.getDocuments());
+		
+		return records; 
+	}
+	
+	/**
+	 * Get a page of anomaly records from the buckets between
+	 * epochStart and epochEnd. Does not include simple count records.
+	 * Records are sorted by probability  
+	 * 
+	 * @param jobId
+	 * @param skip
+	 * @param take
+	 * @param epochStart
+	 * @param epochEnd
+	 * @return
+	 * @throws NativeProcessRunException
+	 */
+	public Pagination<AnomalyRecord> records(String jobId, 
+			int skip, int take, long epochStart, long epochEnd) 
+	throws NativeProcessRunException 
+	{
+		return records(jobId, skip, take, epochStart, epochEnd, DEFAULT_RECORD_SORT_FIELD);
+	}
+	
+	/**
+	 * Get a page of anomaly records from the buckets between
+	 * epochStart and epochEnd. Does not include simple count records.
+	 * 
+	 * @param jobId
+	 * @param skip
+	 * @param take
+	 * @param epochStart
+	 * @param epochEnd
+	 * @param sortField
+	 * @return
+	 * @throws NativeProcessRunException
+	 */
+	public Pagination<AnomalyRecord> records(String jobId, 
+			int skip, int take, long epochStart, long epochEnd, String sortField) 
+	throws NativeProcessRunException 
+	{
+		Pagination<AnomalyRecord> records = m_JobProvider.records(jobId, 
+				false, skip, take, epochStart, epochEnd, sortField);
 		
 		Pagination<Bucket> buckets = m_JobProvider.buckets(jobId, 
-				false, skip, take);
+				false, skip, take, epochStart, epochEnd);
 		
 		Normaliser normaliser = new Normaliser(jobId, m_JobProvider);	
 		
@@ -457,8 +532,28 @@ public class JobManager
 			int skip, int take) 
 	throws NativeProcessRunException 
 	{
+		return records(jobId, skip, take, DEFAULT_RECORD_SORT_FIELD);
+	}
+	
+	
+	/**
+	 * Get a page of anomaly records from all buckets.
+	 * Does not include simple count records.
+	 * 
+	 * @param jobId
+	 * @param skip Skip the first N records. This parameter is for paging
+	 * results if not required set to 0.
+	 * @param take Take only this number of records
+	 * @param sortField The field to sort by
+	 * @return
+	 * @throws NativeProcessRunException
+	 */
+	public Pagination<AnomalyRecord> records(String jobId, 
+			int skip, int take, String sortField) 
+	throws NativeProcessRunException 
+	{
 		Pagination<AnomalyRecord> records = m_JobProvider.records(jobId, 
-				false, skip, take);
+				false, skip, take, sortField);
 		
 		if (records.getHitCount() == 0)
 		{
@@ -503,36 +598,6 @@ public class JobManager
 		{
 			s_Logger.error("Error parsing record parent id", nfe);
 		}
-		
-		return records; 
-	}
-	
-	/**
-	 * Get a page of anomaly records from the buckets between
-	 * epochStart and epochEnd. Does not include simple count records.
-	 * 
-	 * @param jobId
-	 * @param skip
-	 * @param take
-	 * @param epochStart
-	 * @param epochEnd
-	 * @return
-	 * @throws NativeProcessRunException
-	 */
-	public Pagination<AnomalyRecord> records(String jobId, 
-			int skip, int take, long epochStart, long epochEnd) 
-	throws NativeProcessRunException 
-	{
-		Pagination<AnomalyRecord> records = m_JobProvider.records(jobId, 
-				false, skip, take, epochStart, epochEnd);
-		
-		Pagination<Bucket> buckets = m_JobProvider.buckets(jobId, 
-				false, skip, take, epochStart, epochEnd);
-		
-		Normaliser normaliser = new Normaliser(jobId, m_JobProvider);	
-		
-		normaliser.normaliseForBoth(getJobBucketSpan(jobId), 
-				buckets.getDocuments(), records.getDocuments());
 		
 		return records; 
 	}

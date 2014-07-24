@@ -100,10 +100,13 @@ public interface JobResultsProvider extends Closeable
 	 * @param skip Skip the first N Jobs. This parameter is for paging
 	 * results if not required set to 0.
 	 * @param take Take only this number of Jobs
+	 * @param sortField The field to sort results by if <code>null</code> no
+	 * sort is applied
 	 * @return
 	 */
 	public Pagination<AnomalyRecord> records(String jobId, 
-			String bucketId, boolean includeSimpleCount, int skip, int take);
+			String bucketId, boolean includeSimpleCount, int skip, int take,
+			String sortField);
 	
 	/**
 	 * Get the anomaly records for all buckets.
@@ -116,10 +119,12 @@ public interface JobResultsProvider extends Closeable
 	 * @param skip Skip the first N records. This parameter is for paging
 	 * if not required set to 0.
 	 * @param take Take only this number of records
+	 * @param sortField The field to sort results by if <code>null</code> no
+	 * sort is applied
 	 * @return
 	 */
 	public Pagination<AnomalyRecord> records(String jobId, 
-			boolean includeSimpleCount, int skip, int take);
+			boolean includeSimpleCount, int skip, int take, String sortField);
 	
 	/**
 	 * Get the anomaly records for all buckets in the given 
@@ -137,11 +142,13 @@ public interface JobResultsProvider extends Closeable
 	 * are returned
 	 * @param endBucket The end bucket id buckets up to but NOT including this
 	 * are returned. If 0 all buckets from <code>startBucket</code> are returned
+	 * @param sortField The field to sort results by if <code>null</code> no
+	 * sort is applied 
 	 * @return
 	 */
 	public Pagination<AnomalyRecord> records(String jobId, 
 			boolean includeSimpleCount, int skip, int take,
-			long startBucket, long endBucket);
+			long startBucket, long endBucket, String sortField);
 			
 	
 	/**
@@ -156,10 +163,13 @@ public interface JobResultsProvider extends Closeable
 	 * @param skip Skip the first N records. This parameter is for paging
 	 * if not required set to 0.
 	 * @param take Take only this number of records
+	 * @param sortField The field to sort results by if <code>null</code> no
+	 * sort is applied 
 	 * @return
 	 */
 	public Pagination<AnomalyRecord> records(String jobId,
-			List<String> bucketIds, boolean includeSimpleCount, int skip, int take);
+			List<String> bucketIds, boolean includeSimpleCount, int skip, int take,
+			String sortField);
 			
 	/**
 	 * Return the initial state for normalisation by system change.

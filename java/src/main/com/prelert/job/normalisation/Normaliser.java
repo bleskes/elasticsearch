@@ -53,8 +53,6 @@ public class Normaliser
 	
 	private String m_JobId;
 	
-	private int m_Written;
-	
 	public Normaliser(String jobId, JobResultsProvider jobResultsProvider)
 	{
 		m_JobDetailsProvider = jobResultsProvider;
@@ -165,7 +163,6 @@ public class Normaliser
 			writer.writeField("probability");
 			writer.writeField("tag");
 			
-			m_Written = 0;
 			for (Bucket bucket : expandedBuckets)
 			{
 				for (AnomalyRecord record : bucket.getRecords())
@@ -178,8 +175,6 @@ public class Normaliser
 					writer.writeNumFields(2);
 					writer.writeField(Double.toString(record.getProbability()));
 					writer.writeField(distingusherString(record));
-					
-					m_Written++;
 				}
 			}
 		}
@@ -259,8 +254,6 @@ public class Normaliser
 				writer.writeField(Double.toString(bucket.getAnomalyScore()));
 			}
 			
-			
-			m_Written = 0;
 			for (AnomalyRecord record : records)
 			{
 				if (record.isSimpleCount() != null && record.isSimpleCount())
@@ -271,8 +264,6 @@ public class Normaliser
 				writer.writeNumFields(2);
 				writer.writeField(Double.toString(record.getProbability()));
 				writer.writeField("");
-
-				m_Written++;
 			}
 		}
 		catch (IOException e) 
@@ -352,7 +343,7 @@ public class Normaliser
 				{
 					continue;
 				}
-				m_Written--;
+
 				NormalisedResult normalised = scoresIter.next();
 
 				record.setUnusualScore(normalised.getNormalizedUnusualScore());
