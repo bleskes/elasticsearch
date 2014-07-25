@@ -1,10 +1,10 @@
 package org.elasticsearch.shield.authz;
 
-import com.google.common.base.Predicate;
 import org.apache.lucene.util.automaton.Automaton;
 import org.apache.lucene.util.automaton.BasicAutomata;
 import org.apache.lucene.util.automaton.MinimizationOperations;
 import org.apache.lucene.util.automaton.RegExp;
+import org.elasticsearch.common.base.Predicate;
 import org.elasticsearch.shield.support.AutomatonPredicate;
 
 /**

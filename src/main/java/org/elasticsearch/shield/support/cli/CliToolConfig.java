@@ -1,8 +1,8 @@
 package org.elasticsearch.shield.support.cli;
 
-import com.google.common.collect.ImmutableMap;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
+import org.elasticsearch.common.collect.ImmutableMap;
 
 import java.util.Collection;
 
