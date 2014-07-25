@@ -665,7 +665,7 @@ public class ElasticSearchJobProvider implements JobProvider
 		SortBuilder sb = new FieldSortBuilder(AnomalyRecord.PROBABILITY)
 											.ignoreUnmapped(true)
 											.missing("_last")
-											.order(SortOrder.DESC);		
+											.order(SortOrder.ASC);		
 		
 		SearchResponse searchResponse = m_Client.prepareSearch(jobId)
 				.setTypes(AnomalyRecord.TYPE)
