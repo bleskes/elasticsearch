@@ -299,6 +299,11 @@ public class JobManager
 			String bucketId, boolean expand, String normalisationType) 
 	throws NativeProcessRunException
 	{
+		if (normalisationType.equals("u"))
+		{
+			expand = true;
+		}
+		
 		SingleDocument<Bucket> bucket = m_JobProvider.bucket(jobId, bucketId, expand);
 		
 		if (bucket.isExists())
@@ -324,6 +329,11 @@ public class JobManager
 			boolean expand, int skip, int take, String normalisationType)
 	throws NativeProcessRunException
 	{
+		if (normalisationType.equals("u"))
+		{
+			expand = true;
+		}
+		
 		Pagination<Bucket> buckets = m_JobProvider.buckets(jobId, expand, skip, take);
 		
 		
@@ -346,6 +356,11 @@ public class JobManager
 			String normalisationType)
 	throws NativeProcessRunException
 	{
+		if (normalisationType.equals("u"))
+		{
+			expand = true;
+		}
+		
 		Pagination<Bucket> buckets =  m_JobProvider.buckets(jobId, 
 				expand, skip, take, 
 				startBucket, endBucket);
