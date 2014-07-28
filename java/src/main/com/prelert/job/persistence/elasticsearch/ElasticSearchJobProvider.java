@@ -664,8 +664,7 @@ public class ElasticSearchJobProvider implements JobProvider
 			filter = FilterBuilders.andFilter(recordFilter, 
 					notSimpleCountFilter);			
 		}
-		
-	
+			
 		SearchRequestBuilder searchBuilder = m_Client.prepareSearch(jobId)
 				.setTypes(AnomalyRecord.TYPE)
 				.setPostFilter(filter)
