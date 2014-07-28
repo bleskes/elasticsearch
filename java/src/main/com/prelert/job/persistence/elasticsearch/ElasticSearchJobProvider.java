@@ -527,7 +527,8 @@ public class ElasticSearchJobProvider implements JobProvider
 			if (expand)
 			{
 				Pagination<AnomalyRecord> page = this.records(
-						jobId, hit.getId(), true, 0, m_PageSize);				
+						jobId, hit.getId(), true, 0, m_PageSize, 
+						AnomalyRecord.PROBABILITY);				
 				bucket.setRecords(page.getDocuments());
 			}
 
@@ -564,7 +565,7 @@ public class ElasticSearchJobProvider implements JobProvider
 			if (response.isExists() && expand)
 			{
 				Pagination<AnomalyRecord> page = this.records(jobId, 
-						bucketId, true, 0, m_PageSize);
+						bucketId, true, 0, m_PageSize, AnomalyRecord.PROBABILITY);
 				bucket.setRecords(page.getDocuments());
 			}
 			
@@ -577,18 +578,19 @@ public class ElasticSearchJobProvider implements JobProvider
 
 	@Override
 	public Pagination<AnomalyRecord> records(String jobId,
-			String bucketId, boolean includeSimpleCount, int skip, int take)
+			String bucketId, boolean includeSimpleCount, int skip, int take,
+			String sortField)
 	{
 		 FilterBuilder bucketFilter = FilterBuilders.hasParentFilter(Bucket.TYPE, 
 								FilterBuilders.termFilter(Bucket.ID, bucketId));
 		
-		return records(jobId, includeSimpleCount, skip, take, bucketFilter);
+		return records(jobId, includeSimpleCount, skip, take, bucketFilter, sortField);
 	}
 	
 	@Override
 	public Pagination<AnomalyRecord> records(String jobId,
 			boolean includeSimpleCount, int skip, int take,
-			long startBucket, long endBucket)
+			long startBucket, long endBucket, String sortField)
 	{
 		RangeFilterBuilder rangeFilter = FilterBuilders.rangeFilter(Bucket.ID);
 		if (startBucket > 0)
@@ -603,12 +605,13 @@ public class ElasticSearchJobProvider implements JobProvider
 		FilterBuilder bucketFilter = FilterBuilders.hasParentFilter(
 				Bucket.TYPE, rangeFilter);
 		
-		return records(jobId, includeSimpleCount, skip, take, bucketFilter);
+		return records(jobId, includeSimpleCount, skip, take, bucketFilter, sortField);
 	}
 	
 	@Override
 	public Pagination<AnomalyRecord> records(String jobId,
-			List<String> bucketIds, boolean includeSimpleCount, int skip, int take)
+			List<String> bucketIds, boolean includeSimpleCount, int skip, 
+			int take, String sortField)
 	{
 		IdsFilterBuilder idFilter = FilterBuilders.idsFilter(Bucket.TYPE);
 		for (String id : bucketIds)
@@ -619,16 +622,16 @@ public class ElasticSearchJobProvider implements JobProvider
 		FilterBuilder bucketFilter = FilterBuilders.hasParentFilter(
 						Bucket.TYPE, idFilter);
 
-		return records(jobId, includeSimpleCount, skip, take, bucketFilter);
+		return records(jobId, includeSimpleCount, skip, take, bucketFilter, sortField);
 	}
 	
 	@Override
 	public Pagination<AnomalyRecord> records(String jobId,
-			boolean includeSimpleCount, int skip, int take)
+			boolean includeSimpleCount, int skip, int take, String sortField)
 	{
 		 FilterBuilder fb = FilterBuilders.matchAllFilter();
 		 
-		return records(jobId, includeSimpleCount, skip, take, fb);
+		return records(jobId, includeSimpleCount, skip, take, fb, sortField);
 	}
 	
 	
@@ -645,7 +648,7 @@ public class ElasticSearchJobProvider implements JobProvider
 	 */
 	private Pagination<AnomalyRecord> records(String jobId, 
 			boolean includeSimpleCount, int skip, int take,
-			FilterBuilder recordFilter)
+			FilterBuilder recordFilter, String sortField)
 	{
 		FilterBuilder filter;
 		if (includeSimpleCount)
@@ -661,20 +664,25 @@ public class ElasticSearchJobProvider implements JobProvider
 			filter = FilterBuilders.andFilter(recordFilter, 
 					notSimpleCountFilter);			
 		}
-		
-		SortBuilder sb = new FieldSortBuilder(AnomalyRecord.PROBABILITY)
-											.ignoreUnmapped(true)
-											.missing("_last")
-											.order(SortOrder.ASC);		
-		
-		SearchResponse searchResponse = m_Client.prepareSearch(jobId)
+			
+		SearchRequestBuilder searchBuilder = m_Client.prepareSearch(jobId)
 				.setTypes(AnomalyRecord.TYPE)
 				.setPostFilter(filter)
 				.setFrom(skip).setSize(take)
 				.addField(_PARENT)   // include the parent id
-				.setFetchSource(true)  // the field option turns off source so request it explicitly 
-				.addSort(sb)
-				.get();
+				.setFetchSource(true);  // the field option turns off source so request it explicitly
+		
+		if (sortField != null)
+		{
+			SortBuilder sb = new FieldSortBuilder(sortField)
+									.ignoreUnmapped(true)
+									.missing("_last")
+									.order(SortOrder.DESC);		
+			
+			searchBuilder.addSort(sb);
+		}
+		
+		SearchResponse searchResponse = searchBuilder.get();
 
 		List<AnomalyRecord> results = new ArrayList<>();
 		for (SearchHit hit : searchResponse.getHits().getHits())

@@ -84,7 +84,7 @@ public class AnomalyRecord
 	 * Simple count detector
 	 */
 	static final public String IS_SIMPLE_COUNT = "isSimpleCount";
-
+	
 	private static final Logger s_Logger = Logger.getLogger(AnomalyRecord.class);
 	
 	private String m_DetectorName;
