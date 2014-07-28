@@ -46,12 +46,12 @@ import org.glassfish.jersey.servlet.ServletProperties;
 /**
  * Instantiate and configure an embedded Jetty Server in Java.
  * Useful for running & debugging Jetty applications in an IDE
- * 
- * The String RESOURCE_PACKAGE is the Java package containing the 
+ *
+ * The String RESOURCE_PACKAGE is the Java package containing the
  * web resources or set APPLICATION_CLASS to a class extending
  * javax.ws.rs.core.Application and set the servlet to use that.
  */
-public class ServerMain 
+public class ServerMain
 {
 	private static final Logger s_Logger = Logger.getLogger(ServerMain.class);
 	/**
@@ -63,20 +63,26 @@ public class ServerMain
 	/**
 	 * Base URI, all web service endpoints should match this path
 	 */
-	public static final String BASE_PATH = "/engine/v0.4/*";
-	
+	public static final String BASE_PATH = "/engine/v1/*";
+
 	/**
 	 * The default port the server will run on.
-	 * Override the default value by setting the {@value #JETTY_PORT_PROPERTY} 
+	 * Override the default value by setting the {@value #JETTY_PORT_PROPERTY}
 	 * system property.
 	 */
 	public static final int JETTY_PORT = 8080;
-	
+
 	private static final String JETTY_PORT_PROPERTY = "jetty.port";
 	private static final String JETTY_HOME_PROPERTY = "jetty.home";
-	
-	public static void main(String[] args) 
-	throws Exception 
+
+	/**
+	 * The server - held as a static member variable to allow close() to
+	 * access it
+	 */
+	private static Server ms_Server;
+
+	public static void main(String[] args)
+	throws Exception
 	{
 		int jettyPort = JETTY_PORT;
 		try
@@ -95,9 +101,9 @@ public class ServerMain
 		catch (NumberFormatException e)
 		{
 			s_Logger.warn(String.format("Error parsing %s property value '%s' "
-					+ "cannot not be parsed as an integer", 
+					+ "cannot not be parsed as an integer",
 					JETTY_PORT_PROPERTY, System.getProperty(JETTY_PORT_PROPERTY)));
-			
+
 			s_Logger.info("Using default port " + JETTY_PORT);
 		}
 
@@ -109,45 +115,67 @@ public class ServerMain
 			jettyHome = ".";
 		}
 
-		Server server = new Server(jettyPort);
-			
+		ms_Server = new Server(jettyPort);
+
+		// This serves the Kibana-based dashboard.
+		ResourceHandler dashboardHandler = new ResourceHandler();
+		dashboardHandler.setResourceBase(jettyHome + File.separator + "webapps");
+
+		// The true argument here lets us add more handlers to the running
+		// server
+		HandlerCollection handlerCollection = new HandlerCollection(true);
+		handlerCollection.setHandlers(new Handler[] { dashboardHandler });
+
+		ms_Server.setHandler(handlerCollection);
+
+		// We start the server before adding the API handler so that the static
+		// content is available immediately
+		ms_Server.start();
 
 		// This serves the Engine API
 		ServletContextHandler contextHandler = new ServletContextHandler();
 		contextHandler.setContextPath("/");
 		contextHandler.setErrorHandler(new ApiErrorHandler());
-		
+
 		// Add cross origin accept filter, using wildcard '*' for origins
 		// and explicitly allowing GET,POST,DELETE,PUT and HEAD http methods.
 		CrossOriginFilter crossOrigin = new CrossOriginFilter();
-		FilterHolder filterHolder = new FilterHolder(crossOrigin);	
+		FilterHolder filterHolder = new FilterHolder(crossOrigin);
 		filterHolder.setInitParameter("allowedMethods", "GET,POST,DELETE,PUT,HEAD");
 		filterHolder.setInitParameter("allowedOrigins", "*");
-		contextHandler.addFilter(filterHolder, "/*", 
+		contextHandler.addFilter(filterHolder, "/*",
 				EnumSet.of(DispatcherType.REQUEST));
-		
-        ServletHolder jerseyServlet = contextHandler.addServlet(
-        		org.glassfish.jersey.servlet.ServletContainer.class, 
-        		BASE_PATH);
-        jerseyServlet.setInitOrder(1);
 
-        /*  Either set the application class or the resource package */        
-        // Application class
-        jerseyServlet.setInitParameter(ServletProperties.JAXRS_APPLICATION_CLASS,
-        		APPLICATION_CLASS);        
-        // Resources
-//        jerseyServlet.setInitParameter(ServerProperties.PROVIDER_PACKAGES, 
-//        		RESOURCE_PACKAGE);
+		ServletHolder jerseyServlet = contextHandler.addServlet(
+				org.glassfish.jersey.servlet.ServletContainer.class,
+				BASE_PATH);
+		jerseyServlet.setInitOrder(1);
 
-		// This serves the Kibana-based dashboard
-		ResourceHandler dashboardHandler = new ResourceHandler();
-		dashboardHandler.setResourceBase(jettyHome + File.separator + "webapps");
+		// Set the application class
+		jerseyServlet.setInitParameter(ServletProperties.JAXRS_APPLICATION_CLASS,
+				APPLICATION_CLASS);
 
-		HandlerCollection handlerCollection = new HandlerCollection();
-		handlerCollection.setHandlers(new Handler[] { dashboardHandler, contextHandler });
+		// Add the context handler to the collection already being served by the
+		// running server
+		handlerCollection.addHandler(contextHandler);
 
-		server.setHandler(handlerCollection);
-		server.start();
-		server.join();
+		// Block until the server stops (otherwise the whole JVM would shut down
+		// prematurely when main() exited)
+		ms_Server.join();
+	}
+
+
+	/**
+	 * Used to stop the Windows service.  (On Unix we just kill the
+	 * process.)
+	 */
+	public static void close(String[] args)
+	throws Exception
+	{
+		if (ms_Server != null)
+		{
+			ms_Server.stop();
+			ms_Server = null;
+		}
 	}
 }

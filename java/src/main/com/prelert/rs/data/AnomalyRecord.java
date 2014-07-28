@@ -28,11 +28,14 @@
 package com.prelert.rs.data;
 
 import java.io.IOException;
+import java.util.Date;
 
 import org.apache.log4j.Logger;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
@@ -44,6 +47,7 @@ import com.prelert.rs.data.parsing.AutoDetectParseException;
  * can be returned if the members have not been set.
  */
 @JsonInclude(Include.NON_NULL)
+@JsonIgnoreProperties({"parent"})
 public class AnomalyRecord
 {
 	/**
@@ -55,7 +59,6 @@ public class AnomalyRecord
 	/**
 	 * Result fields (all detector types)
 	 */
-	static final public String ANOMALY_SCORE =  "anomalyScore";
 	static final public String PROBABILITY = "probability";
 	static final public String BY_FIELD_NAME = "byFieldName";
 	static final public String BY_FIELD_VALUE = "byFieldValue";
@@ -64,7 +67,7 @@ public class AnomalyRecord
 	static final public String FUNCTION = "function";
 	static final public String TYPICAL = "typical";
 	static final public String ACTUAL = "actual";
-
+	
 	/**
 	 * Metric Results (including population metrics)
 	 */
@@ -86,7 +89,6 @@ public class AnomalyRecord
 	
 	private String m_DetectorName;
 
-	private Double m_AnomalyScore;
 	private Double m_Probability;
 	private String m_ByFieldName;
 	private String m_ByFieldValue;
@@ -103,18 +105,45 @@ public class AnomalyRecord
 	private Boolean m_IsOverallResult;
 
 	private Boolean m_IsSimpleCount;
+	
+	private Double m_AnomalyScore;
+	private Double m_UnusualScore;
+	private Date   m_Timestamp;
 
+	
+	private String m_Parent;
 
 	public Double getAnomalyScore()
 	{
 		return m_AnomalyScore;
 	}
-
+	
 	public void setAnomalyScore(Double anomalyScore)
 	{
 		m_AnomalyScore = anomalyScore;
 	}
-
+	
+	public Double getUnusualScore()
+	{
+		return m_UnusualScore;
+	}
+	
+	public void setUnusualScore(Double anomalyScore)
+	{
+		m_UnusualScore = anomalyScore;
+	}
+	
+	
+	public Date getTimestamp() 
+	{
+		return m_Timestamp;
+	}
+	
+	public void setTimestamp(Date timestamp) 
+	{
+		this.m_Timestamp = timestamp;
+	}
+	
 	public Double getProbability()
 	{
 		return m_Probability;
@@ -226,12 +255,13 @@ public class AnomalyRecord
 		m_OverFieldValue = value;
 	}
 
-
+	@JsonProperty(IS_OVERALL_RESULT)
 	public Boolean isOverallResult()
 	{
 		return m_IsOverallResult;
 	}
 
+	@JsonProperty(IS_OVERALL_RESULT)
 	public void setOverallResult(boolean value)
 	{
 		m_IsOverallResult = value;
@@ -248,16 +278,27 @@ public class AnomalyRecord
 		m_DetectorName = name;
 	}
 	
-
+	@JsonProperty(IS_SIMPLE_COUNT)
 	public Boolean isSimpleCount()
 	{
 		return m_IsSimpleCount;
 	}
 
-	public void setIsSimpleCount(boolean value)
+	@JsonProperty(IS_SIMPLE_COUNT)
+	public void setSimpleCount(boolean value)
 	{
 		m_IsSimpleCount = value;
 	}
+	
+	public String getParent()
+	{
+		return m_Parent;
+	}
+	
+	public void setParent(String parent)
+	{
+		m_Parent = parent;
+	}	
 
 
 	/**
@@ -296,27 +337,15 @@ public class AnomalyRecord
 			switch(token)
 			{
 			case START_OBJECT:
-				s_Logger.error("Start object parsed in bucket");
+				s_Logger.error("Start object parsed in anomaly record");
 				break;
 			case END_OBJECT:
-				s_Logger.error("End object parsed in bucket");
+				s_Logger.error("End object parsed in anomaly record");
 				break;
 			case FIELD_NAME:
 				String fieldName = parser.getCurrentName();
 				switch (fieldName)
 				{
-				case ANOMALY_SCORE:
-					token = parser.nextToken();
-					if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)
-					{
-						record.setAnomalyScore(parser.getDoubleValue());
-					}
-					else
-					{
-						s_Logger.warn("Cannot parse " + fieldName + " : " + parser.getText()
-										+ " as a double");
-					}
-					break;
 				case PROBABILITY:
 					token = parser.nextToken();
 					if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)
@@ -465,7 +494,7 @@ public class AnomalyRecord
 					token = parser.nextToken();
 					if (token == JsonToken.VALUE_FALSE || token == JsonToken.VALUE_TRUE)
 					{
-						record.setIsSimpleCount(parser.getBooleanValue());
+						record.setSimpleCount(parser.getBooleanValue());
 					}
 					else
 					{

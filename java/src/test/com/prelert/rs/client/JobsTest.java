@@ -93,7 +93,7 @@ public class JobsTest implements Closeable
 	/**
 	 * The default base Url used in the test
 	 */
-	static final public String API_BASE_URL = "http://localhost:8080/engine/v0.4";
+	static final public String API_BASE_URL = "http://localhost:8080/engine/v1";
 	
 	private EngineApiClient m_WebServiceClient;
 	
@@ -279,8 +279,9 @@ public class JobsTest implements Closeable
 		
 		
 		String jobId = m_WebServiceClient.createJob(baseUrl, FLIGHT_CENTRE_JOB_CONFIG);
-		if (jobId == null)
+		if (jobId == null || jobId.isEmpty())
 		{
+			s_Logger.error(m_WebServiceClient.getLastError().toJson());
 			s_Logger.error("No Job Id returned by create job");
 			test(jobId != null);
 		}
@@ -814,7 +815,7 @@ public class JobsTest implements Closeable
 		while (true) // break when getNextUrl() == false
 		{
 			Pagination<Bucket> buckets = m_WebServiceClient.getBuckets(baseUrl, 
-					jobId, false, skip, take);
+					jobId, null, false, skip, take);
 			
 			test(buckets.getHitCount() == expectedNumBuckets);
 			test(buckets.getDocumentCount() <= take);
@@ -865,7 +866,7 @@ public class JobsTest implements Closeable
 		while (true) // break when getNextUrl() == false
 		{
 			Pagination<Bucket> buckets = m_WebServiceClient.getBuckets(baseUrl, 
-					jobId, true, skip, take);
+					jobId, null, true, skip, take);
 
 			test(buckets.getHitCount() == expectedNumBuckets);
 			test(buckets.getDocumentCount() <= take);
@@ -967,7 +968,6 @@ public class JobsTest implements Closeable
 				{
 					// at a minimum all records should have these fields
 					test(r.getProbability() != null);
-					test(r.getAnomalyScore() != null);
 					test(r.getFunction() != null);
 				}
 			}
@@ -1007,19 +1007,20 @@ public class JobsTest implements Closeable
 		String dateEndMs = new SimpleDateFormat(ISO_8601_DATE_FORMAT_WITH_MS).format(end);
 		
 		// query with the 3 date formats
-		Pagination<Bucket> buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, false, 
+		Pagination<Bucket> buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, 
+				null, false, 
 				null, null, epochStart, epochEnd);		
 		test(buckets.getDocuments().get(0).getTimestamp().compareTo(start) >= 0);
 		test(buckets.getDocuments().get(buckets.getDocumentCount() -1)
 				.getTimestamp().compareTo(end) <= 0);
 		
-		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, false, 
+		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, null, false, 
 				null, null, dateStart, dateEnd);		
 		test(buckets.getDocuments().get(0).getTimestamp().compareTo(start) >= 0);
 		test(buckets.getDocuments().get(buckets.getDocumentCount() -1)
 				.getTimestamp().compareTo(end) <= 0);
 		
-		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, false, 
+		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, null, false, 
 				null, null, dateStartMs, dateEndMs);		
 		test(buckets.getDocuments().get(0).getTimestamp().compareTo(start) >= 0);
 		test(buckets.getDocuments().get(buckets.getDocumentCount() -1)
@@ -1027,29 +1028,29 @@ public class JobsTest implements Closeable
 		
 		
 		// just a start date
-		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, false, 
+		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, null, false, 
 				0L, 100L, dateStart, null);		
 		test(buckets.getDocuments().get(0).getTimestamp().compareTo(start) >= 0);
 
-		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, false, 
+		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, null, false, 
 				0L, 100L, epochStart, null);		
 		test(buckets.getDocuments().get(0).getTimestamp().compareTo(start) >= 0);
 		
 		
 		// just an end date
-		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, false, 
+		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, null, false, 
 				null, null, null, dateEndMs);		
 		test(buckets.getDocuments().get(buckets.getDocumentCount() -1)
 				.getTimestamp().compareTo(end) <= 0);
 		
-		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, false, 
+		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, null, false, 
 				null, null, null, dateEnd);		
 		test(buckets.getDocuments().get(buckets.getDocumentCount() -1)
 				.getTimestamp().compareTo(end) <= 0);
 		
 		
 		// Test paging from the start date
-		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, false,  0L, 5L, dateStart, null);
+		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, null, false,  0L, 5L, dateStart, null);
 		test(buckets.getDocuments().get(0).getTimestamp().compareTo(start) >= 0);	
 		
 		Date lastDate = buckets.getDocuments().get(buckets.getDocumentCount() -1)
@@ -1202,7 +1203,7 @@ public class JobsTest implements Closeable
 		test(logLines.length > 0);
 		//zip.closeEntry();
 		entry = zip.getNextEntry();
-		
+		/*
 		// 2nd log file
 		test(entry.getName().startsWith(jobId + File.separator));
 		len = zip.read(buff);
@@ -1228,6 +1229,7 @@ public class JobsTest implements Closeable
 		error = m_WebServiceClient.getLastError();
 		test(error != null);
 		test(error.getErrorCode() == ErrorCode.MISSING_LOG_FILE);
+		*/
 	}
 	
 
@@ -1440,6 +1442,8 @@ public class JobsTest implements Closeable
 		test.deleteJobsTest(baseUrl, jobUrls);
 	
 		test.close();
+		
+		s_Logger.info("All tests passed Ok");
 	}
 
 }

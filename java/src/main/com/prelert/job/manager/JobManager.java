@@ -27,63 +27,39 @@
 
 package com.prelert.job.manager;
 
-import static org.elasticsearch.node.NodeBuilder.nodeBuilder;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.log4j.Logger;
-import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
-import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse;
-import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest;
-import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
-import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
-import org.elasticsearch.action.get.GetResponse;
-import org.elasticsearch.action.index.IndexResponse;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.client.Client;
-import org.elasticsearch.common.settings.ImmutableSettings;
-import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.index.query.FilterBuilder;
-import org.elasticsearch.index.query.FilterBuilders;
-import org.elasticsearch.index.query.RangeFilterBuilder;
-import org.elasticsearch.indices.IndexMissingException;
-import org.elasticsearch.node.Node;
-import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.sort.FieldSortBuilder;
-import org.elasticsearch.search.sort.SortBuilder;
-import org.elasticsearch.search.sort.SortOrder;
 
 import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.prelert.job.persistence.elasticsearch.ElasticSearchMappings;
-import com.prelert.job.persistence.elasticsearch.ElasticSearchPersister;
-import com.prelert.job.persistence.elasticsearch.ElasticSearchResultsReaderFactory;
-import com.prelert.job.process.JobDetailsProvider;
+import com.prelert.job.normalisation.Normaliser;
+import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.process.MissingFieldException;
 import com.prelert.job.process.NativeProcessRunException;
 import com.prelert.job.process.ProcessManager;
+import com.prelert.job.process.ResultsReaderFactory;
+import com.prelert.job.usage.UsageReporterFactory;
 import com.prelert.job.warnings.HighProportionOfBadTimestampsException;
 import com.prelert.job.warnings.OutOfOrderRecordsException;
-import com.prelert.job.warnings.elasticsearch.ElasticSearchStatusReporterFactory;
-import com.prelert.job.usage.Usage;
-import com.prelert.job.usage.elasticsearch.ElasticsearchUsageReporterFactory;
-import com.prelert.job.DetectorState;
+import com.prelert.job.warnings.StatusReporterFactory;
+import com.prelert.job.AnalysisConfig;
 import com.prelert.job.JobIdAlreadyExistsException;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobConfigurationException;
@@ -94,7 +70,6 @@ import com.prelert.job.TooManyJobsException;
 import com.prelert.job.UnknownJobException;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
-import com.prelert.rs.data.Detector;
 import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
@@ -104,7 +79,7 @@ import com.prelert.rs.data.SingleDocument;
  * Creates jobs and handles retrieving job configuration details from
  * the data store. New jobs have a unique job id see {@linkplain #generateJobId()}
  */
-public class JobManager implements JobDetailsProvider
+public class JobManager 
 {
 	static public final Logger s_Logger = Logger.getLogger(JobManager.class);
 
@@ -112,20 +87,7 @@ public class JobManager implements JobDetailsProvider
 	 * Field name in which to store the API version in the usage info
 	 */
 	static public final String APP_VER_FIELDNAME = "appVer";
-
-	/**
-	 * Where to store the usage info in ElasticSearch - must match what's
-	 * expected by kibana/engineAPI/app/directives/prelertLogUsage.js
-	 */
-	static public final String PRELERT_INFO_INDEX = "prelert-int";
-	static public final String PRELERT_INFO_TYPE = "info";
-	static public final String PRELERT_INFO_ID = "infoStats";
 	
-	/**
-	 * The index to store total usage/metering information
-	 */
-	static public final String PRELERT_USAGE_INDEX = "prelert-usage";
-
 	/**
 	 * The default number of documents returned in queries as a string.
 	 */
@@ -139,31 +101,19 @@ public class JobManager implements JobDetailsProvider
 	{
 		DEFAULT_PAGE_SIZE = Integer.parseInt(DEFAULT_PAGE_SIZE_STR);
 	}
-
-	/**
-	 * ElasticSearch settings that instruct the node not to accept HTTP, not to
-	 * attempt multicast discovery and to only look for another node to connect
-	 * to on the local machine.
-	 */
-	static public final Settings LOCAL_SETTINGS;
-	static
-	{
-		LOCAL_SETTINGS = ImmutableSettings.settingsBuilder()
-				.put("http.enabled", "false")
-				.put("discovery.zen.ping.multicast.enabled", "false")
-				.put("discovery.zen.ping.unicast.hosts", "localhost")
-				.build();
-	}
-
-	private Node m_Node;
-	private Client m_Client;
 	
 	private ProcessManager m_ProcessManager;
+	 
 	
 	private AtomicLong m_IdSequence;	
 	private DateFormat m_JobIdDateFormat;
 	
 	private ObjectMapper m_ObjectMapper;
+	
+	private JobProvider m_JobProvider;
+	
+	
+	private Map<String, Integer> m_JobIdBucketspan;
 
 	/**
 	 * These default to unlimited (indicated by negative limits), but may be
@@ -181,37 +131,22 @@ public class JobManager implements JobDetailsProvider
 	static public final String PARTITIONS_LICENSE_CONSTRAINT = "partitions";
 
 	/**
-	 * Create a JobManager and a default Elasticsearch node
-	 * on localhost with the default port.
+	 * Create a JobManager
 	 * 
-	 * @param elasticSearchClusterName The name of the ElasticSearch cluster
+	 * @param jobDetailsProvider 
 	 */
-	public JobManager(String elasticSearchClusterName)
+	public JobManager(JobProvider jobProvider,
+			ResultsReaderFactory resultsReaderFactory,
+			StatusReporterFactory statusReporterFactory,
+			UsageReporterFactory usageReporterFactory)
 	{
-		// Multicast discovery is expected to be disabled on the ElasticSearch
-		// data node, so disable it for this embedded node too and tell it to
-		// expect the data node to be on the same machine
-		this(nodeBuilder().settings(LOCAL_SETTINGS).client(true).clusterName(elasticSearchClusterName).node());
-
-		s_Logger.info("Connecting to ElasticSearch cluster '"
-				+ elasticSearchClusterName + "'");
-	}	
+		m_JobIdBucketspan = new HashMap<>();
 		
-	/**
-	 * Create a JobManager with the given ElasticSearch node, clients
-	 * will be created on that node.
-	 *  
-	 * @param node The ElasticSearch node
-	 */
-	public JobManager(Node node)
-	{
-		m_Node = node;
-		m_Client = m_Node.client();
+		m_JobProvider = jobProvider;
 		
-		m_ProcessManager = new ProcessManager(this, 
-				new ElasticSearchResultsReaderFactory(m_Node),
-				new ElasticSearchStatusReporterFactory(m_Node),
-				new ElasticsearchUsageReporterFactory(m_Node));
+		m_ProcessManager = new ProcessManager(jobProvider, 
+				resultsReaderFactory, statusReporterFactory,
+				usageReporterFactory);
 		
 		m_IdSequence = new AtomicLong();		
 		m_JobIdDateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
@@ -221,9 +156,9 @@ public class JobManager implements JobDetailsProvider
 
 		// This requires the process manager and ElasticSearch connection in
 		// order to work, but failure is considered non-fatal
-		saveInfo();
-		createUsageMeteringIndex();
+		saveInfo();		
 	}	
+		
 	
 	/**
 	 * Get the details of the specific job wrapped in a <code>SingleDocument</code>
@@ -238,87 +173,27 @@ public class JobManager implements JobDetailsProvider
 		doc.setType(JobDetails.TYPE);
 		doc.setDocumentId(jobId);
 
-		doc.setDocument(this.getJobDetails(jobId));
+		doc.setDocument(m_JobProvider.getJobDetails(jobId));
 		doc.setExists(doc.getDocument() != null);
 		
 		return doc;
 	}
-	
-	/**
-	 * Get the details of the specific job 
-	 * 
-	 * @param jobId
-	 * @return The JobDetails or throws UnknownJobException
-	 * @throws UnknownJobException if the job details document cannot be read
-	 */
-	@Override
-	public JobDetails getJobDetails(String jobId) 
-	throws UnknownJobException 
-	{
-		try
-		{
-			GetResponse response = m_Client.prepareGet(jobId, JobDetails.TYPE, jobId).get();
-			if (response.isExists())
-			{
-				return m_ObjectMapper.convertValue(response.getSource(), JobDetails.class);
-			}		
-			else 
-			{
-				String msg = "No details for job with id " + jobId;
-				s_Logger.warn(msg);
-				throw new UnknownJobException(jobId, msg,
-						ErrorCode.MISSING_JOB_ERROR);
-			}
-		}
-		catch (IndexMissingException e)
-		{
-			// the job does not exist
-			String msg = "Missing Index no job with id " + jobId;
-			s_Logger.warn(msg);
-			throw new UnknownJobException(jobId, "No known job with id '" + jobId + "'", 
-					ErrorCode.MISSING_JOB_ERROR);
-		}
-	}
-	
-		
+
 	/**
 	 * Get details of all Jobs.
-	 * Searches across all job indexes for job documents
 	 * 
 	 * @param skip Skip the first N Jobs. This parameter is for paging
 	 * results if not required set to 0.
 	 * @param take Take only this number of Jobs
-	 * @return
+	 * @return A pagination object with hitCount set to the total number  
+	 * of jobs not the only the number returned here as determined by the 
+	 * <code>take</code>
+	 * parameter.
 	 */
 	public Pagination<JobDetails> getJobs(int skip, int take)
 	{
-		FilterBuilder fb = FilterBuilders.matchAllFilter();
-		SortBuilder sb = new FieldSortBuilder(JobDetails.ID)
-							.ignoreUnmapped(true)
-							.order(SortOrder.DESC);
-
-		SearchResponse response = m_Client.prepareSearch("_all") 
-				.setTypes(JobDetails.TYPE)
-				.setPostFilter(fb)
-				.setFrom(skip).setSize(take)
-				.addSort(sb)
-				.get();
-
-		List<JobDetails> jobs = new ArrayList<>();
-		for (SearchHit hit : response.getHits().getHits())
-		{
-			jobs.add(m_ObjectMapper.convertValue(hit.getSource(), JobDetails.class)); 
-		}
-		
-		Pagination<JobDetails> page = new Pagination<>();
-		page.setDocuments(jobs);
-		page.setHitCount(response.getHits().getTotalHits());
-		page.setSkip(skip);
-		page.setTake(take);
-		
-		return page;
+		return m_JobProvider.getJobs(skip, take);
 	}
-
 
 	/**
 	 * Create a new job from the configuration object and insert into the 
@@ -387,7 +262,7 @@ public class JobManager implements JobDetailsProvider
 		}
 		else
 		{
-			jobIdIsUnique(jobId);
+			m_JobProvider.jobIdIsUnique(jobId);
 		}
 		
 		JobDetails jobDetails;
@@ -402,46 +277,266 @@ public class JobManager implements JobDetailsProvider
 		{
 			jobDetails = new JobDetails(jobId, jobConfig);
 		}
-					
-		try		
-		{
-			XContentBuilder jobMapping = ElasticSearchMappings.jobMapping();
-			XContentBuilder bucketMapping = ElasticSearchMappings.bucketMapping();
-			XContentBuilder detectorMapping = ElasticSearchMappings.detectorMapping();
-			XContentBuilder recordMapping = ElasticSearchMappings.recordMapping();
-			XContentBuilder detectorStateMapping = ElasticSearchMappings.detectorStateMapping();
-			XContentBuilder usageMapping = ElasticSearchMappings.usageMapping();
 			
-			
-			m_Client.admin().indices()
-					.prepareCreate(jobId)					
-					.addMapping(JobDetails.TYPE, jobMapping)
-					.addMapping(Bucket.TYPE, bucketMapping)
-					.addMapping(Detector.TYPE, detectorMapping)
-					.addMapping(AnomalyRecord.TYPE, recordMapping)
-					.addMapping(DetectorState.TYPE, detectorStateMapping)
-					.addMapping(Usage.TYPE, usageMapping)
-					.get();
-
-			
-			String json = m_ObjectMapper.writeValueAsString(jobDetails);
-						
-			m_Client.prepareIndex(jobId, JobDetails.TYPE, jobId)
-					.setSource(json)
-					.get();
-			
-			// wait for the job to be indexed in ElasticSearch			
-			m_Client.admin().indices().refresh(new RefreshRequest(jobId)).actionGet();
-						
-			return jobDetails;
-		}
-		catch (IOException e)
-		{
-			s_Logger.error("Error writing ElasticSearch mappings", e);
-			throw e;
-		}
+		m_JobProvider.createJob(jobDetails);
+		
+		return jobDetails;
+		
 	}
 
+	/**
+	 * Get a single result bucket
+	 * 
+	 * @param jobId
+	 * @param bucketId
+	 * @param expand Include anomaly records
+	 * @return
+	 * @throws NativeProcessRunException 
+	 */
+	public SingleDocument<Bucket> bucket(String jobId, 
+			String bucketId, boolean expand, String normalisationType) 
+	throws NativeProcessRunException
+	{
+		SingleDocument<Bucket> bucket = m_JobProvider.bucket(jobId, bucketId, expand);
+		
+		if (bucket.isExists())
+		{
+			return normalise(jobId, bucket, normalisationType);
+		}
+		else 
+		{
+			return bucket;
+		}
+	}
+	
+	/**
+	 * Get result buckets
+	 * 
+	 * @param jobId
+	 * @param expand Include anomaly records
+	 * @param skip
+	 * @param take
+	 * @return
+	 */
+	public Pagination<Bucket> buckets(String jobId, 
+			boolean expand, int skip, int take, String normalisationType)
+	throws NativeProcessRunException
+	{
+		Pagination<Bucket> buckets = m_JobProvider.buckets(jobId, expand, skip, take);
+		
+		
+		return normalise(jobId, buckets, normalisationType);
+	}
+	
+	
+	/**
+	 * Get result buckets between 2 dates 
+	 * @param jobId
+	 * @param expand
+	 * @param skip
+	 * @param take
+	 * @param startBucket The bucket with this id is included in the results
+	 * @param endBucket Include buckets up to this one
+	 * @return
+	 */
+	public Pagination<Bucket> buckets(String jobId, 
+			boolean expand, int skip, int take, long startBucket, long endBucket,
+			String normalisationType)
+	throws NativeProcessRunException
+	{
+		Pagination<Bucket> buckets =  m_JobProvider.buckets(jobId, 
+				expand, skip, take, 
+				startBucket, endBucket);
+		
+		return normalise(jobId, buckets, normalisationType);
+	}
+	
+	private Integer getJobBucketSpan(String jobId)
+	{
+		Integer span = m_JobIdBucketspan.get(jobId);
+		if (span == null)
+		{
+			// use dot notation to get fields from nested docs.
+			Number num = m_JobProvider.<Number>getField(jobId,
+					JobDetails.ANALYSIS_CONFIG + "." + AnalysisConfig.BUCKET_SPAN);
+			
+			if (num != null)
+			{
+				span = num.intValue();
+				m_JobIdBucketspan.put(jobId, span);
+			}			
+		}
+		
+		return span;
+	}
+	
+		
+	private Pagination<Bucket> normalise(String jobId,
+			Pagination<Bucket> buckets, String normalisationType) 
+	throws NativeProcessRunException
+	{
+		Normaliser normaliser = new Normaliser(jobId, m_JobProvider);
+		
+		if (normalisationType != null && normalisationType.equals("u"))
+		{
+			normaliser.normaliseForUnusualBehaviour(getJobBucketSpan(jobId), 
+					buckets.getDocuments());
+		}
+		else
+		{
+			normaliser.normaliseForSystemChange(getJobBucketSpan(jobId), 
+				buckets.getDocuments());
+		}
+			
+		return buckets;
+	}
+	
+	
+	private SingleDocument<Bucket> normalise(String jobId,
+			SingleDocument<Bucket> bucket, String normalisationType) 
+	throws NativeProcessRunException
+	{
+		Normaliser normaliser = new Normaliser(jobId, m_JobProvider);
+		
+		if (normalisationType != null && normalisationType.equals("u"))
+		{
+			normaliser.normaliseForUnusualBehaviour(getJobBucketSpan(jobId), 
+					Arrays.asList(new Bucket [] {bucket.getDocument()}));
+		}
+		else
+		{
+			normaliser.normaliseForSystemChange(getJobBucketSpan(jobId), 
+					Arrays.asList(new Bucket [] {bucket.getDocument()}));
+		}
+			
+		return bucket;
+	}
+	
+	/**
+	 * Get the anomaly records for the bucket. 
+	 * Does not include simple count records.
+	 * 
+	 * @param jobId
+	 * @param bucketId 
+	 * @param skip Skip the first N records. This parameter is for paging
+	 * results if not required set to 0.
+	 * @param take Take only this number of records
+	 * @return
+	 * @throws NativeProcessRunException 
+	 */
+	public Pagination<AnomalyRecord> records(String jobId, 
+			String bucketId, int skip, int take) 
+	throws NativeProcessRunException 
+	{
+		Pagination<AnomalyRecord> records = m_JobProvider.records(jobId, 
+				bucketId, false, skip, take);
+		
+		Pagination<Bucket> buckets = m_JobProvider.buckets(jobId, 
+				false, skip, take);
+		
+		Normaliser normaliser = new Normaliser(jobId, m_JobProvider);	
+		
+		normaliser.normaliseForBoth(getJobBucketSpan(jobId), 
+				buckets.getDocuments(), records.getDocuments());
+		
+		return records; 
+	}
+	
+	/**
+	 * Get a page of anomaly records from all buckets.
+	 * Does not include simple count records.
+	 * 
+	 * @param jobId
+	 * @param skip Skip the first N records. This parameter is for paging
+	 * results if not required set to 0.
+	 * @param take Take only this number of records
+	 * @return
+	 * @throws NativeProcessRunException
+	 */
+	public Pagination<AnomalyRecord> records(String jobId, 
+			int skip, int take) 
+	throws NativeProcessRunException 
+	{
+		Pagination<AnomalyRecord> records = m_JobProvider.records(jobId, 
+				false, skip, take);
+		
+		if (records.getHitCount() == 0)
+		{
+			return records;
+		}
+		
+		// get the parent bucket ids and sort
+		List<String> bucketIds = new ArrayList<>();
+		for (AnomalyRecord r : records.getDocuments())
+		{
+			bucketIds.add(r.getParent());
+		}
+		Collections.sort(bucketIds);
+		
+		// get all the buckets over the same time period
+		// as the records
+		try
+		{			
+			long start = Long.parseLong(bucketIds.get(0));
+			// we want the last bucket inclusive so +1 to the value
+			long end = Long.parseLong(bucketIds.get(bucketIds.size() -1)) + 1;
+
+			int bucketSkip = 0;
+			Pagination<Bucket> buckets = m_JobProvider.buckets(jobId, 
+					false, bucketSkip, take, start, end);
+			bucketSkip += take;
+			while (bucketSkip < buckets.getHitCount())
+			{
+				Pagination<Bucket> extraBuckets = m_JobProvider.buckets(
+						jobId, false, bucketSkip, take, start, end);
+				
+				bucketSkip += take;
+				buckets.getDocuments().addAll(extraBuckets.getDocuments());
+			}
+
+			Normaliser normaliser = new Normaliser(jobId, m_JobProvider);	
+
+			normaliser.normaliseForBoth(getJobBucketSpan(jobId), 
+					buckets.getDocuments(), records.getDocuments());
+		}
+		catch (NumberFormatException nfe)
+		{
+			s_Logger.error("Error parsing record parent id", nfe);
+		}
+		
+		return records; 
+	}
+	
+	/**
+	 * Get a page of anomaly records from the buckets between
+	 * epochStart and epochEnd. Does not include simple count records.
+	 * 
+	 * @param jobId
+	 * @param skip
+	 * @param take
+	 * @param epochStart
+	 * @param epochEnd
+	 * @return
+	 * @throws NativeProcessRunException
+	 */
+	public Pagination<AnomalyRecord> records(String jobId, 
+			int skip, int take, long epochStart, long epochEnd) 
+	throws NativeProcessRunException 
+	{
+		Pagination<AnomalyRecord> records = m_JobProvider.records(jobId, 
+				false, skip, take, epochStart, epochEnd);
+		
+		Pagination<Bucket> buckets = m_JobProvider.buckets(jobId, 
+				false, skip, take, epochStart, epochEnd);
+		
+		Normaliser normaliser = new Normaliser(jobId, m_JobProvider);	
+		
+		normaliser.normaliseForBoth(getJobBucketSpan(jobId), 
+				buckets.getDocuments(), records.getDocuments());
+		
+		return records; 
+	}
+	
 	
 	/**
 	 * Set the job's description.
@@ -450,311 +545,13 @@ public class JobManager implements JobDetailsProvider
 	 * @param jobId
 	 * @param description
 	 * @throws UnknownJobException
-	 * @throws JsonProcessingException 
 	 */
 	public void setDescription(String jobId, String description)
-	throws UnknownJobException, JsonProcessingException
+	throws UnknownJobException
 	{
 		Map<String, Object> update = new HashMap<>();
 		update.put(JobDetails.DESCRIPTION, description);
-		m_Client.prepareUpdate(jobId, JobDetails.TYPE, jobId)
-				.setDoc(update)
-				.get();
-	}
-	
-	/**
-	 * Get all the result buckets for the job id
-	 * 
-	 * @param jobId
-	 * @param expand Include anomaly records
-	 * @param skip Skip the first N Buckets. This parameter is for paging
-	 * if not required set to 0.
-	 * @param take Take only this number of Buckets
-	 * @return
-	 */
-	public Pagination<Map<String, Object>> buckets(String jobId, 
-			boolean expand, int skip, int take)
-	{
-		FilterBuilder fb = FilterBuilders.matchAllFilter();
-		
-		return buckets(jobId, expand, skip, take, fb);
-	}
-	
-	/**
-	 * Get the result buckets for the job id starting with bucket id = 
-	 * <code>startBucket</code> up to <code>endBucket</code>. One of either
-	 * <code>startBucket</code> or <code>endBucket</code> should be non-zero else
-	 * it is more efficient to use {@linkplain #buckets(String, boolean, int, int)}
-	 * 
-	 * @param jobId
-	 * @param expand Include anomaly records
-	 * @param skip Skip the first N Buckets. This parameter is for paging
-	 * if not required set to 0.
-	 * @param take Take only this number of Buckets
-	 * @param startBucket The start bucket id. If 0 all buckets up to <code>endBucket</code>
-	 * are returned
-	 * @param endBucket The end bucket id. If 0 all buckets from <code>startBucket</code>
-	 * are returned
-	 * @return
-	 */
-	public Pagination<Map<String, Object>> buckets(String jobId, 
-			boolean expand, int skip, int take,
-			long startBucket, long endBucket)
-	{
-		RangeFilterBuilder fb = FilterBuilders.rangeFilter(Bucket.ID);
-		if (startBucket > 0)
-		{
-			fb = fb.gte(startBucket);
-		}
-		if (endBucket > 0)
-		{
-			fb = fb.lt(endBucket);
-		}
-
-		return buckets(jobId, expand, skip, take, fb);
-	}
-	
-
-	private Pagination<Map<String, Object>> buckets(String jobId, 
-				boolean expand, int skip, int take,
-				FilterBuilder fb)
-	{	
-				
-		SortBuilder sb = new FieldSortBuilder(Bucket.ID)
-								.ignoreUnmapped(true)
-								.order(SortOrder.ASC);
-		
-		SearchResponse searchResponse = m_Client.prepareSearch(jobId)
-				.setTypes(Bucket.TYPE)		
-				.addSort(sb)
-				.setPostFilter(fb)
-				.setFrom(skip).setSize(take)
-				.get();
-		
-		List<Map<String, Object>> results = new ArrayList<>();
-		for (SearchHit hit : searchResponse.getHits().getHits())
-		{
-			Map<String, Object> bucket  = hit.getSource();
-			
-			// Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch, 
-			// and replace using the API 'timestamp' key.
-			Object timestamp = bucket.remove(ElasticSearchMappings.ES_TIMESTAMP);
-			bucket.put(Bucket.TIMESTAMP, timestamp);
-			
-			// TODO this is probably not the most efficient way to 
-			// run the search. Try OR filters?
-			if (expand)
-			{
-				Pagination<Map<String, Object>> page = this.records(
-						jobId, hit.getId(), 0, DEFAULT_PAGE_SIZE);				
-				bucket.put(Bucket.RECORDS, page.getDocuments());
-			}
-
-			results.add(bucket);
-		}
-		
-		Pagination<Map<String, Object>> page = new Pagination<>();
-		page.setDocuments(results);
-		page.setHitCount(searchResponse.getHits().getTotalHits());
-		page.setSkip(skip);
-		page.setTake(take);
-		
-		return page;
-	}
-	
-	
-	/**
-	 * Get the bucket by Id from the job. 
-	 * Throws an ElasticSearchException if not found
-	 * 
-	 * @param jobId
-	 * @param bucketId
-	 * @param expand Include anomaly records
-	 * @return
-	 */
-	public SingleDocument<Map<String, Object>> bucket(String jobId, String bucketId, 
-										boolean expand)
-	{
-		GetResponse response = m_Client.prepareGet(jobId, Bucket.TYPE, bucketId).get();
-					
-		SingleDocument<Map<String, Object>> doc = new SingleDocument<>();
-		doc.setType(Bucket.TYPE);
-		doc.setDocumentId(bucketId);
-		if (response.isExists())
-		{
-			Map<String, Object> bucket = response.getSource();
-
-			// Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch, 
-			// and replace using the API 'timestamp' key.
-			Object timestamp = bucket.remove(ElasticSearchMappings.ES_TIMESTAMP);
-			bucket.put(Bucket.TIMESTAMP, timestamp);
-			
-			if (response.isExists() && expand)
-			{
-				Pagination<Map<String, Object>> page = this.records(jobId, 
-						bucketId, 0, DEFAULT_PAGE_SIZE);
-				bucket.put(Bucket.RECORDS, page.getDocuments());
-			}
-			
-			doc.setDocument(bucket);
-		}
-		
-		return doc;
-	}
-	
-	/**
-	 * Get the detectors used in the job
-	 * 
-	 * @param jobId 
-	 * @param bucketId
-	 * @param skip Skip the first N Detectors. This parameter is for paging
-	 * if not required set to 0.
-	 * @param take Take only this number of Detectors
-	 * @return
-	 */
-	public Pagination<Detector> detectors(String jobId, int skip,
-			int take)
-	{
-		// get all detectors in job
-		FilterBuilder fb = FilterBuilders.matchAllFilter();
-
-		SearchResponse searchResponse = m_Client.prepareSearch(jobId)
-				.setTypes(Detector.TYPE)		
-				.setPostFilter(fb)
-				.setFrom(skip).setSize(take)
-				.get();
-
-		List<Detector> results = new ArrayList<>();
-		for (SearchHit hit : searchResponse.getHits().getHits())
-		{
-			Map<String, Object> m  = hit.getSource();
-			results.add(new Detector(m));
-		}
-		
-		Pagination<Detector> page = new Pagination<>();
-		page.setDocuments(results);
-		page.setHitCount(searchResponse.getHits().getTotalHits());
-		page.setSkip(skip);
-		page.setTake(take);
-		
-		return page;		
-	}
-	
-	
-	/**
-	 * Get the anomaly records for the bucket generated by detector 
-	 * 
-	 * @param jobId
-	 * @param bucketId 
-	 * @param detectorName
-	 * @param skip Skip the first N anomaly records. This parameter is for paging
-	 * if not required set to 0.
-	 * @param take Take only this number of anomaly records
-	 * @return
-	 */
-	public Pagination<Map<String, Object>> records(String jobId, String bucketId,
-			String detectorName, int skip, int take)
-	{
-		FilterBuilder bucketFilter= FilterBuilders.termFilter("_id", bucketId);
-		FilterBuilder parentFilter = FilterBuilders.hasParentFilter(Bucket.TYPE, bucketFilter);
-		FilterBuilder fb = FilterBuilders.termFilter(AnomalyRecord.DETECTOR_NAME, detectorName);
-		FilterBuilder andFilter = FilterBuilders.andFilter(parentFilter, fb); 
-		
-		SortBuilder sb = new FieldSortBuilder(AnomalyRecord.ANOMALY_SCORE)
-									.ignoreUnmapped(true)
-									.missing("_last")
-									.order(SortOrder.DESC);
-
-		SearchResponse searchResponse = m_Client.prepareSearch(jobId)
-				.setTypes(AnomalyRecord.TYPE)
-				.setPostFilter(andFilter)
-				.setFrom(skip).setSize(take)
-				.addSort(sb)
-				.get();
-
-		List<Map<String, Object>> results = new ArrayList<>();
-		for (SearchHit hit : searchResponse.getHits().getHits())
-		{
-			Map<String, Object> m  = hit.getSource();
-			
-			// TODO
-			// This a hack to work round the deficiency in the 
-			// Java API where source filtering hasn't been implemented.			
-			m.remove(AnomalyRecord.DETECTOR_NAME);
-			// TODO
-			// remove the timestamp field that was added so the 
-			// records can be sorted in Kibanna
-			m.remove(ElasticSearchMappings.ES_TIMESTAMP);
-			
-			results.add(m);
-			
-			// TODO
-			// remove the timestamp field that was added so the 
-			// records can be sorted in Kibanna
-			m.remove(Bucket.TIMESTAMP);
-		}
-		
-		Pagination<Map<String, Object>> page = new Pagination<>();
-		page.setDocuments(results);
-		page.setHitCount(searchResponse.getHits().getTotalHits());
-		page.setSkip(skip);
-		page.setTake(take);
-		
-		return page;	
-	}
-	
-	/**
-	 * Get all the anomaly records for the bucket for every detector 
-	 * 
-	 * @param jobId
-	 * @param bucketId 
-	 * @param skip Skip the first N Jobs. This parameter is for paging
-	 * results if not required set to 0.
-	 * @param take Take only this number of Jobs
-	 * @return
-	 */
-	public Pagination<Map<String, Object>> records(String jobId, 
-			String bucketId, int skip, int take)
-	{
-		FilterBuilder bucketFilter= FilterBuilders.termFilter("_id", bucketId);
-		FilterBuilder parentFilter = FilterBuilders.hasParentFilter(Bucket.TYPE, bucketFilter);
-				
-		SortBuilder sb = new FieldSortBuilder(AnomalyRecord.ANOMALY_SCORE)
-											.ignoreUnmapped(true)
-											.missing("_last")
-											.order(SortOrder.DESC);		
-		
-		SearchResponse searchResponse = m_Client.prepareSearch(jobId)
-				.setTypes(AnomalyRecord.TYPE)
-				.setPostFilter(parentFilter)
-				.setFrom(skip).setSize(take)
-				.addSort(sb)
-				.get();
-
-		List<Map<String, Object>> results = new ArrayList<>();
-		for (SearchHit hit : searchResponse.getHits().getHits())
-		{
-			Map<String, Object> m  = hit.getSource();
-			
-			// TODO
-			// This a hack to work round the deficiency in the 
-			// Java API where source filtering hasn't been implemented.			
-			m.remove(AnomalyRecord.DETECTOR_NAME);
-			// TODO
-			// remove the timestamp field that was added so the 
-			// records can be sorted in Kibanna
-			m.remove(ElasticSearchMappings.ES_TIMESTAMP);
-			
-			results.add(m);
-		}
-		
-		Pagination<Map<String, Object>> page = new Pagination<>();
-		page.setDocuments(results);
-		page.setHitCount(searchResponse.getHits().getTotalHits());
-		page.setSkip(skip);
-		page.setTake(take);
-		
-		return page;	
+		m_JobProvider.updateJob(jobId, update);
 	}
 	
 	/**
@@ -774,131 +571,37 @@ public class JobManager implements JobDetailsProvider
 		
 		// First check the job is in the database.
 		// this method throws if it isn't
-		getJobDetails(jobId);
+		if (m_JobProvider.jobExists(jobId))
+		{
+			ProcessManager.ProcessStatus processStatus = m_ProcessManager.finishJob(jobId);	
+			return (processStatus == ProcessManager.ProcessStatus.COMPLETED);
+		}
 		
-		ProcessManager.ProcessStatus processStatus = m_ProcessManager.finishJob(jobId);	
-		return (processStatus == ProcessManager.ProcessStatus.COMPLETED);
+		return false;
 	}
-	
-	@Override
-	public boolean setJobStatus(String jobId, JobStatus status)
+		
+	/**
+	 * Set time the job last received data.
+	 * Updates the database document
+	 * 
+	 * @param jobId
+	 * @param time
+	 * @return
+	 * @throws UnknownJobException 
+	 */
+	private boolean updateLastDataTime(String jobId, Date time) 
 	throws UnknownJobException
 	{
-		// update job status
-		try
-		{
-			GetResponse response = m_Client.prepareGet(jobId, JobDetails.TYPE, 
-					jobId).get();
-
-			if (response.isExists() == false)
-			{				
-				s_Logger.error("Cannot set job status no job found with jobId = " 
-							+ jobId);
-				return false;
-			}
-
-			long lastVersion = response.getVersion();
-
-			JobDetails job = m_ObjectMapper.convertValue(response.getSource(), 
-					JobDetails.class);
-			job.setStatus(status);
-
-			String content;
-			try
-			{
-				content = jobToContent(job);
-			}
-			catch (IOException ioe)
-			{
-				s_Logger.error("Error serialising job");
-				return false;
-			}
-
-			IndexResponse jobIndexResponse = m_Client.prepareIndex(
-					jobId, JobDetails.TYPE, jobId)
-					.setSource(content).get();
-			
-			if (jobIndexResponse.getVersion() <= lastVersion)
-			{
-				s_Logger.error("Error saving job- document not updated");
-				return false;
-			}
-
-			m_Client.admin().indices().refresh(new RefreshRequest(jobId)).actionGet();
-		}
-		catch (IndexMissingException e)
-		{
-			String msg = String.format("Unknown job '%s'. Error setting the job's status.", 
-					jobId);
-			s_Logger.error(msg);
-			throw new UnknownJobException(jobId, msg, ErrorCode.MISSING_JOB_ERROR);
-		}
 		
-		return true;		
-	}
-	
-	@Override
-	public boolean setJobFinishedTimeandStatus(String jobId, Date time, 
-			JobStatus status)
-	throws UnknownJobException
-	{
-		// update job status
-		try
-		{
-			GetResponse response = m_Client.prepareGet(jobId, JobDetails.TYPE, 
-					jobId).get();
-
-			if (response.isExists() == false)
-			{				
-				s_Logger.error("Cannot set job finish time and status no job "
-						+ "found with jobId = " + jobId);
-				return false;
-			}
-
-			long lastVersion = response.getVersion();
-
-			JobDetails job = m_ObjectMapper.convertValue(response.getSource(), 
-					JobDetails.class);
-			job.setFinishedTime(new Date());
-			job.setStatus(status);
-
-			String content;
-			try
-			{
-				content = jobToContent(job);
-			}
-			catch (IOException ioe)
-			{
-				s_Logger.error("Error serialising job details");
-				return false;
-			}
-
-			IndexResponse jobIndexResponse = m_Client.prepareIndex(
-					jobId, JobDetails.TYPE, jobId)
-					.setSource(content).get();
-
-			if (jobIndexResponse.getVersion() <= lastVersion)
-			{
-				s_Logger.error("Error saving job- document not updated");
-				return false;
-			}
-
-			m_Client.admin().indices().refresh(new RefreshRequest(jobId)).actionGet();
-		}
-		catch (IndexMissingException e)
-		{
-			String msg = String.format("Unknown job '%s'. Error writing the job's "
-					+ "finish time and status.", jobId);
-			s_Logger.error(msg);
-			throw new UnknownJobException(jobId, msg, ErrorCode.MISSING_JOB_ERROR);
-		}
-		
-		return true;	
+		Map<String, Object> update = new HashMap<>();
+		update.put(JobDetails.LAST_DATA_TIME, new Date());
+		update.put(JobDetails.STATUS, JobStatus.RUNNING);
+		return m_JobProvider.updateJob(jobId, update);	
 	}
 	
 	/**
 	 * Stop the associated process and remove it from the Process
-	 * Manager then delete all the job related documents from the 
+	 * Manager then delete the job related documents from the 
 	 * database.
 	 * 
 	 * @param jobId
@@ -912,33 +615,13 @@ public class JobManager implements JobDetailsProvider
 	throws UnknownJobException, NativeProcessRunException, JobInUseException
 	{		
 		s_Logger.debug("Deleting job '" + jobId + "'");
-
-		m_ProcessManager.finishJob(jobId);
 		
-		try 
-		{
-			DeleteIndexResponse response = m_Client.admin()
-					.indices().delete(new DeleteIndexRequest(jobId)).get();
-			
-			return response.isAcknowledged();
-		} 
-		catch (InterruptedException|ExecutionException e) 
-		{
-			if (e.getCause() instanceof IndexMissingException)
-			{
-				String msg = String.format("No index with id '%s' in the database", jobId);
-				s_Logger.warn(msg);
-				throw new UnknownJobException(jobId, msg, 
-						ErrorCode.MISSING_JOB_ERROR);
-			}
-			else
-			{
-				String msg = "Error deleting index " + jobId;
-				s_Logger.error(msg);
-				throw new UnknownJobException(jobId, msg, 
-						ErrorCode.DATA_STORE_ERROR, e.getCause());
-			}
-		}
+		m_JobProvider.jobExists(jobId);
+		
+		m_ProcessManager.finishJob(jobId);
+		m_JobProvider.deleteJob(jobId);
+		
+		return true;
 	}
 	
 	/**
@@ -970,7 +653,7 @@ public class JobManager implements JobDetailsProvider
 	{
 		// Negative m_MaxActiveJobs means unlimited
 		if (m_MaxActiveJobs >= 0 &&
-			getJobDetails(jobId).getStatus().isRunning() == false &&
+			m_ProcessManager.jobIsRunning(jobId) &&
 			m_ProcessManager.numberOfRunningJobs() >= m_MaxActiveJobs)
 		{
 			throw new TooManyJobsException(m_MaxActiveJobs,
@@ -1008,76 +691,6 @@ public class JobManager implements JobDetailsProvider
 		return true;
 	}
 	
-	/**
-	 * Set time the job last received data.
-	 * Updates the database document
-	 * 
-	 * @param jobId
-	 * @param time
-	 * @return
-	 * @throws UnknownJobException 
-	 */
-	private boolean updateLastDataTime(String jobId, Date time) 
-	throws UnknownJobException
-	{
-		try
-		{
-			GetResponse response = m_Client.prepareGet(jobId, JobDetails.TYPE, 
-					jobId).get();
-			
-			if (response.isExists() == false)
-			{				
-				s_Logger.error("Cannot update last data time- no job found with jobId = " + jobId);
-				return false;
-			}
-
-			long lastVersion = response.getVersion();
-
-			JobDetails job = m_ObjectMapper.convertValue(response.getSource(), 
-					JobDetails.class);
-			job.setLastDataTime(new Date());
-			job.setStatus(JobStatus.RUNNING);
-
-			String content;
-			try
-			{
-				content = jobToContent(job);
-			}
-			catch (JsonProcessingException e)
-			{
-				s_Logger.error("Error serialising job cannot update time of "
-						+ "last data", e);
-				return false;
-			}
-
-			IndexResponse jobIndexResponse = m_Client.prepareIndex(
-					jobId, JobDetails.TYPE, jobId)
-					.setSource(content).get();
-
-			if (jobIndexResponse.getVersion() <= lastVersion)
-			{
-				s_Logger.error("Error setting job last data time document not updated");
-				return false;
-			}
-			
-			return true;
-		}
-		catch (IndexMissingException e)
-		{
-			String msg = String.format("Unknown job '%s'. Error writing the job's last data time.", jobId);
-			throw new UnknownJobException(jobId, msg, ErrorCode.MISSING_JOB_ERROR);
-		}
-	}
-	
-	
-	@Override
-	public DetectorState getPersistedState(String jobId)
-	throws UnknownJobException 
-	{
-		ElasticSearchPersister es = new ElasticSearchPersister(jobId, m_Node.client());
-		return es.retrieveDetectorState();
-	}
-	
 	
 	/**
 	 * The job id is a concatenation of the date in 'yyyyMMddHHmmss' format 
@@ -1101,7 +714,14 @@ public class JobManager implements JobDetailsProvider
 	public void stop()
 	{
 		m_ProcessManager.stop();
-		m_Node.close();
+		try 
+		{
+			m_JobProvider.close();
+		}
+		catch (IOException e) 
+		{
+			s_Logger.error("Exception closing job details provider", e);
+		}
 	}
 	
 	/**
@@ -1118,62 +738,17 @@ public class JobManager implements JobDetailsProvider
 	{
 		try
 		{
-			GetResponse response = m_Client.prepareGet(refId, JobDetails.TYPE, refId).get();
-			if (response.isExists())
-			{
-				return m_ObjectMapper.convertValue(response.getSource(), JobDetails.class);
-			}
-			else
-			{
-				throw new UnknownJobException(refId, "Cannot find "
-					+ "referenced job with id '" + refId + "'", ErrorCode.UNKNOWN_JOB_REFERENCE);
-			}
+			return m_JobProvider.getJobDetails(refId);
 		}
-		catch (IndexMissingException e)
+		catch (UnknownJobException e)
 		{
-			throw new UnknownJobException(refId, "Missing index: Cannot find "
-					+ "referenced job with id '" + refId + "'", ErrorCode.UNKNOWN_JOB_REFERENCE);
+			throw new UnknownJobException(refId, "Missing Job: Cannot find "
+					+ "referenced job with id '" + refId + "'",
+					ErrorCode.UNKNOWN_JOB_REFERENCE);
 	
 		}
 	}
 	
-	
-	/**
-	 * Return true if the job id is unique else if it is already used
-	 * throw JobAliasAlreadyExistsException
-	 * @param jobId 
-	 * @return
-	 * @throws JobIdAlreadyExistsException
-	 */
-	private boolean jobIdIsUnique(String jobId)
-	throws JobIdAlreadyExistsException
-	{
-		IndicesExistsResponse res = 
-				m_Client.admin().indices().exists(new IndicesExistsRequest(jobId)).actionGet();
-		
-		if (res.isExists())
-		{
-			throw new JobIdAlreadyExistsException(jobId);
-		}
-		
-		return true;
-	}
-	
-	/**
-	 * Convert job to a JSON string using the object mapper.
-	 * 
-	 * @param job
-	 * @return
-	 * @throws JsonProcessingException
-	 */
-	private String jobToContent(JobDetails job)
-	throws JsonProcessingException
-	{
-		String json = m_ObjectMapper.writeValueAsString(job);
-		return json;
-	}
-
-
 	/**
 	 * Get the analytics version string.
 	 * 
@@ -1184,7 +759,6 @@ public class JobManager implements JobDetailsProvider
 		return  m_ProcessManager.getAnalyticsVersion();
 	}
 
-
 	/**
 	 * Get the limit on number of active jobs.
 	 * A negative limit means unlimited.
@@ -1194,7 +768,6 @@ public class JobManager implements JobDetailsProvider
 		return m_MaxActiveJobs;
 	}
 
-
 	/**
 	 * Get the limit on number of detectors per job.
 	 * A negative limit means unlimited.
@@ -1203,7 +776,6 @@ public class JobManager implements JobDetailsProvider
 	{
 		return m_MaxDetectorsPerJob;
 	}
-
 
 	/**
 	 * Get the limit on number of partitions per job.
@@ -1303,12 +875,10 @@ public class JobManager implements JobDetailsProvider
 			return;
 		}
 
-		// Try to persist the modified document to ElasticSearch
+		// Try to persist the modified document
 		try
 		{
-			m_Client.prepareIndex(PRELERT_INFO_INDEX, PRELERT_INFO_TYPE, PRELERT_INFO_ID)
-					.setSource(doc.toString())
-					.execute().actionGet();
+			m_JobProvider.savePrelertInfo(doc.toString());
 		}
 		catch (Exception e)
 		{
@@ -1319,37 +889,5 @@ public class JobManager implements JobDetailsProvider
 		s_Logger.info("Wrote Prelert info " + doc.toString() + " to ElasticSearch");
 	}
 	
-	/**
-	 * If the {@value JobManager#PRELERT_USAGE_INDEX} index does not exist
-	 * create it here with the usage document mapping.
-	 */
-	private void createUsageMeteringIndex()
-	{
-		try 
-		{
-			boolean indexExists = m_Client.admin().indices()
-					.exists(new IndicesExistsRequest(PRELERT_USAGE_INDEX))
-					.get().isExists();
 
-			if (indexExists == false)
-			{
-				s_Logger.info("Creating the internal '" + PRELERT_USAGE_INDEX + "' index");
-
-				XContentBuilder usageMapping = ElasticSearchMappings.usageMapping();
-
-				m_Client.admin().indices().prepareCreate(PRELERT_USAGE_INDEX)					
-								.addMapping(Usage.TYPE, usageMapping)
-								.get();
-			}
-		} 
-		catch (InterruptedException | ExecutionException e) 
-		{
-			s_Logger.warn("Error checking the usage metering index", e);
-		}
-		catch (IOException e) 
-		{
-			s_Logger.warn("Error creating the usage metering index", e);
-		}
-		
-	}
 }

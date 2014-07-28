@@ -5,7 +5,6 @@ import java.io.InputStream;
 
 import org.apache.log4j.Logger;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.node.Node;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.process.ResultsReaderFactory;
@@ -18,24 +17,23 @@ import com.prelert.rs.data.parsing.AutoDetectResultsParser;
  */
 public class ElasticSearchResultsReaderFactory implements ResultsReaderFactory
 {
-	private Node m_Node;
+	private Client m_Client;
 	
 	/**
 	 * Construct the factory
 	 * 
 	 * @param node The ElasticSearch node
 	 */
-	public ElasticSearchResultsReaderFactory(Node node)
+	public ElasticSearchResultsReaderFactory(Client client)
 	{
-		m_Node = node;
+		m_Client = client;
 	}
 	
 	@Override
 	public Runnable newResultsParser(String jobId, InputStream autoDetectOutput,
 			Logger logger) 
 	{
-		return new ReadAutoDetectOutput(jobId, autoDetectOutput, m_Node.client(),
-				logger);
+		return new ReadAutoDetectOutput(jobId, autoDetectOutput, m_Client, logger);
 	}
 
 	

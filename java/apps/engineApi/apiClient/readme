@@ -7,7 +7,7 @@ compressed and the job should be closed after the data is uploaded.
 
 Example Usage
 --------------
-java -cp '.:./*' com.prelert.rs.client.StreamFile 'http://localhost:8080/engine/v0.4/data/<job_id>' /path/to/data.csv.gz --compressed --close
+java -cp '.:./*' com.prelert.rs.client.StreamFile 'http://localhost:8080/engine/v1/data/<job_id>' /path/to/data.csv.gz --compressed --close
 or 
 java -cp '.:./*' com.prelert.rs.client.StreamFile --help
 

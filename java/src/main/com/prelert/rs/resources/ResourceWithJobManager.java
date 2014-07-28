@@ -44,6 +44,7 @@ import org.apache.log4j.Logger;
 
 import com.prelert.job.alert.manager.AlertManager;
 import com.prelert.job.manager.JobManager;
+import com.prelert.job.normalisation.Normaliser;
 import com.prelert.rs.data.Pagination;
 
 /**
@@ -86,8 +87,10 @@ abstract public class ResourceWithJobManager
 	 */
 	@Context 
 	private Application m_RestApplication;
+	
 	private JobManager m_JobManager;
 	private AlertManager m_AlertManager;
+	private Normaliser m_Normaliser;
 	
 	/**
 	 * 
@@ -181,6 +184,49 @@ abstract public class ResourceWithJobManager
 		
 		return m_AlertManager;
     }
+    
+    /**
+     * Get the results normaliser object from the application's set of singletons
+     * @return
+     */
+    protected Normaliser normaliser()
+    {   	
+    	if (m_Normaliser != null)
+    	{
+    		return m_Normaliser;
+    	}
+    	    	
+		if (m_RestApplication == null)
+		{
+			s_Logger.error("Application context has not been set in "
+					+ "the jobs resource");
+			
+			throw new IllegalStateException("Application context has not been"
+					+ " set in the jobs resource");
+		}
+		
+		Set<Object> singletons = m_RestApplication.getSingletons();
+		for (Object obj : singletons)
+		{
+			if (obj instanceof Normaliser)
+			{
+				m_Normaliser = (Normaliser)obj;
+				break;
+			}
+		}
+		
+		if (m_Normaliser == null)
+		{
+			String msg = "Application singleton set doesn't contain an " +
+					"instance of Normaliser";
+			
+			s_Logger.error(msg);
+			throw new IllegalStateException(msg);
+		}    	 
+		
+		return m_Normaliser;
+    }
+    
     
     /**
      * Set the previous and next page URLs if appropriate.

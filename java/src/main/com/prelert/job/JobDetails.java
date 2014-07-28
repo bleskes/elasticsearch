@@ -57,7 +57,7 @@ public class JobDetails
 	
 	static final public String COUNTS = "counts";
 	static final public String PROCESSED_RECORD_COUNT = "processedRecordCount";
-	static final public String PROCESSED_VOLUME = "processedVolume";
+	static final public String PROCESSED_BYTES = "processedBytes";
 	static final public String INVALID_DATE_COUNT = "invalidDateCount";
 	static final public String MISSING_FIELD_COUNT = "missingFieldCount";
 	static final public String OUT_OF_ORDER_TIME_COUNT = "outOfOrderTimeStampCount";
@@ -510,10 +510,10 @@ public class JobDetails
 	public class Counts
 	{
 		private long m_ProcessedRecordCount;
+		private long m_ProcessedBytes;
 		private long m_InvalidDateCount;
 		private long m_MissingFieldCount;
 		private long m_OutOfOrderTimeStampCount;
-		private long m_ProcessedVolume;
 		
 		/**
 		 * Number of records processed by this job.
@@ -539,14 +539,14 @@ public class JobDetails
 		 * e.g. because the date cannot be read
 		 * @return Volume in bytes
 		 */
-		public long getProcessedVolume()
+		public long getProcessedBytes()
 		{
-			return m_ProcessedVolume;
+			return m_ProcessedBytes;
 		}
 		
-		public void setProcessedVolume(long volume)
+		public void setProcessedBytes(long volume)
 		{
-			m_ProcessedVolume = volume;
+			m_ProcessedBytes = volume;
 		}
 		
 		
@@ -614,7 +614,7 @@ public class JobDetails
 			Counts that = (Counts)other;
 
 			return this.m_ProcessedRecordCount == that.m_ProcessedRecordCount &&
-					this.m_ProcessedVolume == that.m_ProcessedVolume &&
+					this.m_ProcessedBytes == that.m_ProcessedBytes &&
 					this.m_InvalidDateCount == that.m_InvalidDateCount &&
 					this.m_MissingFieldCount == that.m_MissingFieldCount &&
 					this.m_OutOfOrderTimeStampCount == that.m_OutOfOrderTimeStampCount;

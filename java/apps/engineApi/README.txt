@@ -26,7 +26,7 @@ substitute "localhost:8080" with your remote "ipaddress:port" details.
 
 First check the installation is running:
 
-curl 'http://localhost:8080/engine/v0.3'
+curl 'http://localhost:8080/engine/v1'
 
 This will return the version number of the Engine API. Don't worry if the
 version or build number is not exactly the same as the example below. If the
@@ -86,7 +86,7 @@ significantly from its baseline.
 Creating a new job requires both a declaration of how the data is formatted
 (dataDescription), and how the data is expected to be analyzed (analysisConfig).
 
-curl -X POST -H 'Content-Type: application/json' 'http://localhost:8080/engine/v0.3/jobs' -d '{
+curl -X POST -H 'Content-Type: application/json' 'http://localhost:8080/engine/v1/jobs' -d '{
     "analysisConfig" : {
         "bucketSpan":3600,
         "detectors" :[{"fieldName":"responsetime","byFieldName":"airline"}]
@@ -119,7 +119,7 @@ the tutorial. For example:
 
 Now the the analysis job is created, you can check out the details of the job:
 
-curl 'http://localhost:8080/engine/v0.3/jobs'
+curl 'http://localhost:8080/engine/v1/jobs'
 
 The response will give detailed information about job statuses and their
 configuration. If you have multiple jobs running, check createTime for the
@@ -135,10 +135,10 @@ latest job. For example:
     "analysisLimits" : null,
     "status" : "CLOSED",
     "timeout" : 600,
-    "location" : "http://localhost:8080/engine/v0.3/jobs/20140519113920-00001",
-    "dataEndpoint" : "http://localhost:8080/engine/v0.3/data/20140519113920-00001",
-    "resultsEndpoint" : "http://localhost:8080/engine/v0.3/results/20140519113920-00001",
-    "logsEndpoint" : "http://localhost:8080/engine/v0.3/logs/20140519113920-00001",
+    "location" : "http://localhost:8080/engine/v1/jobs/20140519113920-00001",
+    "dataEndpoint" : "http://localhost:8080/engine/v1/data/20140519113920-00001",
+    "resultsEndpoint" : "http://localhost:8080/engine/v1/results/20140519113920-00001",
+    "logsEndpoint" : "http://localhost:8080/engine/v1/logs/20140519113920-00001",
     "analysisConfig" : {
       "bucketSpan" : 3600,
       "batchSpan" : null,
@@ -177,7 +177,7 @@ engine. Using cURL, we will use the -T option to upload the file. You will need
 to edit the URL to contain the jobId and specify the path to the
 farequote.csv file:
 
-curl -X POST -T farequote.csv 'http://localhost:8080/engine/v0.3/data/20140519113920-00001'
+curl -X POST -T farequote.csv 'http://localhost:8080/engine/v1/data/20140519113920-00001'
 
 This will stream the file farequote.csv to the REST API for
 analysis. This should take less than a minute on modern commodity hardware.
@@ -192,7 +192,7 @@ practice to close the job before requesting results.  Closing the job tells
 the API to flush through any data that's being buffered and store all results.
 Once again, you will need to edit the URL to contain the correct jobId:
 
-curl -X POST 'http://localhost:8080/engine/v0.3/data/20140519113920-00001/close'
+curl -X POST 'http://localhost:8080/engine/v1/data/20140519113920-00001/close'
 
 Note: in the case of the farequote.csv example data you'll have enough
 results to see the anomaly by the time the upload has completed even if you
@@ -204,7 +204,7 @@ don't close the job.
 We can request the /results endpoint for our jobId to see what kind of results
 are available:
 
-curl 'http://localhost:8080/engine/v0.3/results/20140519113920-00001?skip=0&take=100'
+curl 'http://localhost:8080/engine/v1/results/20140519113920-00001?skip=0&take=100'
 
 This returns a summary of the anomalousness of the data, for each time interval.
 If not set 'skip' and 'take' default to 0 and 100 meaning the first 100 results are returned
@@ -213,7 +213,7 @@ If not set 'skip' and 'take' default to 0 and 100 meaning the first 100 results 
   "hitCount" : 118,
   "skip" : 0,
   "take" : 100,
-  "nextPage" : "http://localhost:8080/engine/v0.3/results/20140519113920-00001?skip=100&take=100",
+  "nextPage" : "http://localhost:8080/engine/v1/results/20140519113920-00001?skip=100&take=100",
   "previousPage" : null,
   "documents" : [ {
     "recordCount" : 1,
@@ -240,7 +240,7 @@ following id: 1359561600.
 
 We can request the details of just this one bucket interval as follows:
 
-curl 'http://localhost:8080/engine/v0.3/results/20140519113920-00001/1359561600?expand=true'
+curl 'http://localhost:8080/engine/v1/results/20140519113920-00001/1359561600?expand=true'
 
 {
   "documentId" : "1359561600",
@@ -283,7 +283,7 @@ metric and is thus an outlier.
 Finally, the job can be deleted which shuts down all resources associated with
 the job, and deletes the results:
 
-curl -X DELETE 'http://localhost:8080/engine/v0.3/jobs/20140516091341-00001'
+curl -X DELETE 'http://localhost:8080/engine/v1/jobs/20140516091341-00001'
 
 7. Using JSON data
 ------------------
@@ -300,7 +300,7 @@ as follows:
 The same steps as above can be followed, except that the dataDescription would
 need to be altered during the job creation:
 
-curl -X POST -H 'Content-Type: application/json' 'http://localhost:8080/engine/v0.3/jobs' -d '{
+curl -X POST -H 'Content-Type: application/json' 'http://localhost:8080/engine/v1/jobs' -d '{
     "analysisConfig" : {
         "bucketSpan":3600,
         "detectors" :[{"fieldName":"responsetime","byFieldName":"airline"}]
@@ -313,7 +313,7 @@ curl -X POST -H 'Content-Type: application/json' 'http://localhost:8080/engine/v
 
 And the upload data step would need to point to the JSON file:
 
-curl -X POST -T farequote.json 'http://localhost:8080/engine/v0.3/data/20140516091341-00001'
+curl -X POST -T farequote.json 'http://localhost:8080/engine/v1/data/20140516091341-00001'
 
 
 Further information

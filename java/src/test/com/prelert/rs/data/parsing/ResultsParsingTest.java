@@ -42,6 +42,7 @@ import org.junit.Test;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.DetectorState;
+import com.prelert.job.UnknownJobException;
 import com.prelert.job.persistence.JobDataPersister;
 import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.parsing.AutoDetectParseException;
@@ -107,7 +108,8 @@ public class ResultsParsingTest
 			return m_Buckets;
 		}
 		
-		public DetectorState getDetectorState()
+		@Override
+		public DetectorState retrieveDetectorState() throws UnknownJobException 
 		{
 			return m_State;
 		}
@@ -116,7 +118,8 @@ public class ResultsParsingTest
 	
 	
 	@Test
-	public void testParser() throws JsonParseException, IOException, AutoDetectParseException
+	public void testParser() throws JsonParseException, IOException, 
+	AutoDetectParseException, UnknownJobException
 	{
 		BasicConfigurator.configure();
 		Logger logger = Logger.getLogger(ResultsParsingTest.class);
@@ -125,7 +128,7 @@ public class ResultsParsingTest
 		ResultsPersister persister = new ResultsPersister();
 		
 		AutoDetectResultsParser.parseResults(inputStream, persister, logger);
-		assertNull(persister.getDetectorState());
+		assertNull(persister.retrieveDetectorState());
 		
 		List<Bucket> buckets = persister.getBuckets();
 		
@@ -146,12 +149,10 @@ public class ResultsParsingTest
 		assertEquals("individual count//count", buckets.get(1).getDetectors().get(0).getName());
 		assertEquals(1, buckets.get(1).getDetectors().get(0).getRecords().size());
 		assertEquals("count", buckets.get(1).getDetectors().get(0).getRecords().get(0).getFieldName());
-		assertEquals(0.0, buckets.get(1).getDetectors().get(0).getRecords().get(0).getAnomalyScore(), 0.000001);
 		
 		assertEquals("individual metric/responsetime/airline", buckets.get(1).getDetectors().get(1).getName());
 		assertEquals(4, buckets.get(1).getDetectors().get(1).getRecords().size());
 		
-		assertEquals(0.00540641, buckets.get(1).getDetectors().get(1).getRecords().get(0).getAnomalyScore(), 0.000001);		
 		assertEquals(0.0637541, buckets.get(1).getDetectors().get(1).getRecords().get(0).getProbability(), 0.000001);		
 		assertEquals("airline", buckets.get(1).getDetectors().get(1).getRecords().get(0).getByFieldName());
 		assertEquals("JZA", buckets.get(1).getDetectors().get(1).getRecords().get(0).getByFieldValue());
@@ -162,7 +163,6 @@ public class ResultsParsingTest
 		assertEquals("", buckets.get(1).getDetectors().get(1).getRecords().get(0).getPartitionFieldName());
 		assertEquals("", buckets.get(1).getDetectors().get(1).getRecords().get(0).getPartitionFieldValue());
 		
-		assertEquals(0.00359683, buckets.get(1).getDetectors().get(1).getRecords().get(1).getAnomalyScore(), 0.000001);		
 		assertEquals(0.00748292, buckets.get(1).getDetectors().get(1).getRecords().get(1).getProbability(), 0.000001);		
 		assertEquals("airline", buckets.get(1).getDetectors().get(1).getRecords().get(1).getByFieldName());
 		assertEquals("AMX", buckets.get(1).getDetectors().get(1).getRecords().get(1).getByFieldValue());
@@ -173,7 +173,6 @@ public class ResultsParsingTest
 		assertEquals("", buckets.get(1).getDetectors().get(1).getRecords().get(1).getPartitionFieldName());
 		assertEquals("", buckets.get(1).getDetectors().get(1).getRecords().get(1).getPartitionFieldValue());		
 		
-		assertEquals(0.00275615, buckets.get(1).getDetectors().get(1).getRecords().get(2).getAnomalyScore(), 0.000001);		
 		assertEquals(0.023494, buckets.get(1).getDetectors().get(1).getRecords().get(2).getProbability(), 0.000001);		
 		assertEquals("airline", buckets.get(1).getDetectors().get(1).getRecords().get(2).getByFieldName());
 		assertEquals("DAL", buckets.get(1).getDetectors().get(1).getRecords().get(2).getByFieldValue());
@@ -184,7 +183,6 @@ public class ResultsParsingTest
 		assertEquals("", buckets.get(1).getDetectors().get(1).getRecords().get(2).getPartitionFieldName());
 		assertEquals("", buckets.get(1).getDetectors().get(1).getRecords().get(2).getPartitionFieldValue());	
 		
-		assertEquals(0.00224113, buckets.get(1).getDetectors().get(1).getRecords().get(3).getAnomalyScore(), 0.000001);		
 		assertEquals(0.0473552, buckets.get(1).getDetectors().get(1).getRecords().get(3).getProbability(), 0.000001);		
 		assertEquals("airline", buckets.get(1).getDetectors().get(1).getRecords().get(3).getByFieldName());
 		assertEquals("SWA", buckets.get(1).getDetectors().get(1).getRecords().get(3).getByFieldValue());
@@ -198,7 +196,8 @@ public class ResultsParsingTest
 	
 	
 	@Test
-	public void testDetectorStateParser() throws JsonParseException, IOException, AutoDetectParseException
+	public void testDetectorStateParser() throws JsonParseException, IOException,
+	AutoDetectParseException, UnknownJobException
 	{
 		StringBuilder builder = new StringBuilder();
 		builder.append(RESULTS_WITH_STATE_1);
@@ -229,12 +228,11 @@ public class ResultsParsingTest
 			assertEquals("individual count//count", buckets.get(0).getDetectors().get(0).getName()); 
 			assertEquals(1, buckets.get(0).getDetectors().get(0).getRecords().size());
 			assertEquals("count", buckets.get(0).getDetectors().get(0).getRecords().get(0).getFieldName());
-			assertEquals(0.0, buckets.get(0).getDetectors().get(0).getRecords().get(0).getAnomalyScore(), 0.000001);
 			assertEquals(1.0, buckets.get(0).getDetectors().get(0).getRecords().get(0).getProbability(), 0.000001);
 		}
 		
 		
-		DetectorState state = persister.getDetectorState(); 
+		DetectorState state = persister.retrieveDetectorState(); 
 		assertNotNull(state);
 		assertEquals(state.getDocumentType(), DetectorState.MODEL_STATE);
 		String modelState = state.getDetectorState("detector1");

@@ -108,7 +108,7 @@ abstract public class StatusReporter
 		this(jobId, logger);
 		
 		m_RecordsWritten = counts.getProcessedRecordCount();
-		m_Volume = counts.getProcessedVolume();
+		m_Volume = counts.getProcessedBytes();
 		m_DateParseErrorsCount = counts.getInvalidDateCount();
 		m_MissingFieldErrorCount = counts.getMissingFieldCount();
 		m_OutOfOrderRecordCount = counts.getOutOfOrderTimeStampCount();	

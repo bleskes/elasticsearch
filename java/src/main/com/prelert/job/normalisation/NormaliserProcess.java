@@ -25,17 +25,21 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.usage;
+package com.prelert.job.normalisation;
 
-import com.prelert.job.persistence.elasticsearch.ElasticSearchMappings;
 
-/**
- * Defines the field names/mappings for the stored 
- * usage documents.
- */
-public class Usage 
+public class NormaliserProcess 
 {
-	public static final String TYPE = "usage";
-	public static final String TIMESTAMP = ElasticSearchMappings.ES_TIMESTAMP;
-	public static final String VOLUME = "volume";
+	final private Process m_Process;
+	
+	public NormaliserProcess(Process process)
+	{
+		m_Process = process;
+	}
+	
+	
+	public Process getProcess()
+	{
+		return m_Process;
+	}
 }

@@ -56,6 +56,7 @@ import com.prelert.job.warnings.HighProportionOfBadTimestampsException;
 import com.prelert.job.warnings.OutOfOrderRecordsException;
 import com.prelert.job.warnings.StatusReporter;
 import com.prelert.job.warnings.StatusReporterFactory;
+import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.usage.UsageReporter;
 import com.prelert.job.usage.UsageReporterFactory;
 import com.prelert.job.DetectorState;
@@ -109,13 +110,13 @@ public class ProcessManager
 	
 	private ScheduledExecutorService m_ProcessTimeouts;
 	
-	private JobDetailsProvider m_JobDetailsProvider;
+	private JobProvider m_JobProvider;
 	
 	private ResultsReaderFactory m_ResultsReaderFactory;
 	private StatusReporterFactory m_StatusReporterFactory;
 	private UsageReporterFactory m_UsageReporterFactory;
 	
-	public ProcessManager(JobDetailsProvider jobDetails, 
+	public ProcessManager(JobProvider jobProvider, 
 							ResultsReaderFactory readerFactory,
 							StatusReporterFactory statusReporterFactory,
 							UsageReporterFactory usageFactory)
@@ -127,7 +128,7 @@ public class ProcessManager
 		m_ProcessTimeouts = Executors.newScheduledThreadPool(1);	
 		m_JobIdToTimeoutFuture = new ConcurrentHashMap<String, ScheduledFuture<?>>();
 		
-		m_JobDetailsProvider = jobDetails;
+		m_JobProvider = jobProvider;
 		m_ResultsReaderFactory = readerFactory;
 		m_UsageReporterFactory = usageFactory;
 		
@@ -268,6 +269,17 @@ public class ProcessManager
 		return m_JobIdToProcessMap.size();
 	}
 	
+	/**
+	 * Return true if the job's autodetect process is running.
+	 * 
+	 * @param jobId
+	 * @return
+	 */
+	public boolean jobIsRunning(String jobId)
+	{
+		return m_JobIdToProcessMap.get(jobId) != null;
+	}
+	
 	
 	/**
 	 * Create a new autodetect process restoring its state if persisted
@@ -280,7 +292,7 @@ public class ProcessManager
 	public ProcessAndDataDescription createProcess(String jobId)
 	throws UnknownJobException, NativeProcessRunException
 	{
-		JobDetails job = m_JobDetailsProvider.getJobDetails(jobId);
+		JobDetails job = m_JobProvider.getJobDetails(jobId);
 		
 		return createProcess(job, true);
 	}
@@ -308,7 +320,7 @@ public class ProcessManager
 		DetectorState state = null;
 		if (restoreState)
 		{
-			state = m_JobDetailsProvider.getPersistedState(jobId);			
+			state = m_JobProvider.getDetectorState(jobId);			
 		}
 
 		Process nativeProcess = null;
@@ -316,7 +328,7 @@ public class ProcessManager
 		{
 			// if state is null or empty it will be ignored
 			// else it is used to restore the models			
-			nativeProcess = m_ProcessCtrl.buildProcess(
+			nativeProcess = ProcessCtrl.buildAutoDetect(
 					ProcessCtrl.AUTODETECT_API, job, state, logger);	
 		} 
 		catch (IOException e) 
@@ -341,7 +353,7 @@ public class ProcessManager
 						logger)
 				);	
 
-		m_JobDetailsProvider.setJobStatus(jobId, JobStatus.RUNNING);
+		m_JobProvider.setJobStatus(jobId, JobStatus.RUNNING);
 		
 		logger.debug("Created process for job " + jobId);
 		
@@ -524,19 +536,17 @@ public class ProcessManager
 		}
 	}
 	
-	
 	private void setJobFinishedTimeAndStatus(String jobId, Logger processLogger, 
 			JobStatus status)
 	{
 		try 
 		{
-			m_JobDetailsProvider.setJobFinishedTimeandStatus(jobId, 
+			m_JobProvider.setJobFinishedTimeandStatus(jobId, 
 					new Date(), status);
 		}
 		catch (UnknownJobException e) 
 		{
-			String msg = String.format("Error cannot set finish job '%s' "
-					+ "to CLOSED status", jobId);
+			String msg = String.format("Error cannot set finished job status and time");
 			processLogger.warn(msg, e);
 			s_Logger.warn(msg, e);
 		}
@@ -678,7 +688,7 @@ public class ProcessManager
 	 */
 	private void stopAllJobs()
 	{		
-		s_Logger.info("Shutting down the Engine API");
+		s_Logger.info("Stopping all Engine API Jobs");
 		
 		// Stop new being scheduled
 		m_ProcessTimeouts.shutdownNow();
@@ -803,7 +813,7 @@ public class ProcessManager
 			Logger logger = Logger.getLogger(jobId);
 			logger.setAdditivity(false);
 			logger.setLevel(Level.DEBUG);
-
+			
 			if (logger.getAppender("engine_api_file_appender") == null)
 			{
 				Path logFile = FileSystems.getDefault().getPath(ProcessCtrl.LOG_DIR,
@@ -817,12 +827,8 @@ public class ProcessManager
 				fileAppender.setMaxBackupIndex(9);
 
 				logger.addAppender(fileAppender);
-
-				//			ConsoleAppender consoleAppender = new ConsoleAppender(
-				//					new PatternLayout("%d{dd MMM yyyy HH:mm:ss zz} [%t] %-5p %c{3} - %m%n"));
-				//			
-				//			logger.addAppender(consoleAppender);
 			}
+
 
 			return logger;
 		}

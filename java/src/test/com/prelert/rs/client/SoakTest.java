@@ -54,7 +54,7 @@ public class SoakTest
 	/**
 	 * The default base Url used in the test
 	 */
-	static final public String API_BASE_URL = "http://localhost:8080/engine/v0.4/";
+	static final public String API_BASE_URL = "http://localhost:8080/engine/v1/";
 	
 		
 	

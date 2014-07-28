@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -109,7 +110,9 @@ public class PipeToProcess
 		
 		CountingInputStream countingStream = new CountingInputStream(is, 
 				usageReporter, statusReporter);
-		CsvListReader csvReader = new CsvListReader(new InputStreamReader(countingStream), csvPref);
+		CsvListReader csvReader = new CsvListReader(
+				new InputStreamReader(countingStream, StandardCharsets.UTF_8), 
+				csvPref);
 		try 
 		{
 			String[] header = csvReader.getHeader(true);		
@@ -291,7 +294,9 @@ public class PipeToProcess
 		
 		CountingInputStream countingStream = new CountingInputStream(is, 
 				usageReporter, statusReporter);		
-		CsvListReader csvReader = new CsvListReader(new InputStreamReader(countingStream), csvPref);
+		CsvListReader csvReader = new CsvListReader(
+				new InputStreamReader(countingStream, StandardCharsets.UTF_8), 
+				csvPref);
 		try
 		{
 			String[] header = csvReader.getHeader(true);	

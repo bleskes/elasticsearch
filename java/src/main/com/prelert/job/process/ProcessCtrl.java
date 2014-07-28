@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -50,6 +51,7 @@ import com.prelert.job.AnalysisLimits;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DetectorState;
 import com.prelert.job.JobDetails;
+import com.prelert.job.normalisation.InitialState;
 
 /**
  * Utility class for running a Prelert process<br/>
@@ -68,6 +70,10 @@ public class ProcessCtrl
 	 */
 	static final public String AUTODETECT_API = "prelert_autodetect_api";
 	/**
+	 * The normalisation native program name
+	 */
+	static final public String NORMALIZE_API = "prelert_normalize_api";	
+	/**
 	 * The location of Prelert Home. Equivalent to $PRELERT_HOME
 	 */
 	static final public String PRELERT_HOME;
@@ -83,6 +89,10 @@ public class ProcessCtrl
 	 * The full to the autodetect program 
 	 */
 	static final public String AUTODETECT_PATH;
+	/**
+	 *  The full to the normalisation program
+	 */
+	static final public String NORMALIZE_PATH; 
 	/**
 	 * Equivalent to $PRELERT_HOME/lib + $PRELERT_HOME/cots/lib
 	 * (or $PRELERT_HOME/cots/bin on Windows)
@@ -119,20 +129,24 @@ public class ProcessCtrl
 	 */	
 	static final public String SOLARIS_LIB_PATH_ENV = "LD_LIBRARY_PATH_64"; 
 	
-	/**
-	 * Program arguments 
+	/*
+	 * General arguments
 	 */
-	static final public String BUCKET_SPAN_ARG = "--bucketspan=";
 	static final public String FIELD_CONFIG_ARG = "--fieldconfig=";
 	static final public String MODEL_CONFIG_ARG = "--modelconfig=";
 	static final public String LIMIT_CONFIG_ARG = "--limitconfig=";
+	static final public String BUCKET_SPAN_ARG = "--bucketspan=";
+	static final public String LOG_ID_ARG = "--logid=";
+	static final public String LENGTH_ENCODED_INPUT_ARG = "--lengthEncodedInput";
+
+	/*
+	 * Autodetect arguments 
+	 */
 	static final public String BATCH_SPAN_ARG = "--batchspan=";
 	static final public String PERIOD_ARG = "--period=";
 	static final public String PARTITION_FIELD_ARG = "--partitionfield=";
 	static final public String USE_NULL_ARG = "--usenull=";
-	static final public String LOG_ID_ARG = "--logid=";
 	static final public String DELIMITER_ARG = "--delimiter=";
-	static final public String LENGTH_ENCODED_INPUT_ARG = "--lengthEncodedInput";
 	static final public String TIME_FIELD_ARG = "--timefield=";
 	static final public String TIME_FORMAT_ARG = "--timeformat=";
 	static final public String RESTORE_STATE_ARG = "--restoreState=";
@@ -140,6 +154,18 @@ public class ProcessCtrl
 	static final public String PERSIST_STATE_ARG = "--persistState";
 	static final public String VERSION_ARG = "--version";
 	static final public String INFO_ARG = "--info";
+	static final public String MAX_ANOMALY_RECORDS = "--maxAnomalyRecords=";
+	
+	/*
+	 * Normalize_api args
+	 */
+	static final public String SYS_STATE_CHANGE_ARG = "--sysChangeState=";
+	static final public String UNUSUAL_STATE_ARG = "--unusualState=";
+	
+	/**
+	 * The types of normalisation the the normaliser will do. 
+	 */
+	public enum NormalisationType {	SYS_STATE_CHANGE, UNUSUAL_STATE};
 	
 	/**
 	 * Name of the model config file
@@ -160,19 +186,19 @@ public class ProcessCtrl
 	 */
 	static final public String BASE_STATE_FILE_NAME = "model_state";
 	
-	/**
+	/*
 	 * The standard file extension for the temporary  
 	 * model state files. 
 	 */
 	static final public String BASE_STATE_FILE_EXTENSION = ".xml";
 			
-	/**
+	/*
 	 * command line args
 	 */
 	static final public String BY_ARG = "by";
 	static final public String OVER_ARG = "over";
 	
-	/**
+	/*
 	 * Field config file strings
 	 */
 	static final public String DOT_IS_ENABLED = ".isEnabled";
@@ -182,12 +208,24 @@ public class ProcessCtrl
 	static final public String DOT_PARTITION = ".partition";
 	static final public char NEW_LINE = '\n';
 	
-	
-	/**
+	/*
 	 * The configuration fields used in limits.conf
 	 */
 	static final public String MAX_FIELD_VALUES_CONFIG_STR = "maxfieldvalues";
 	static final public String MAX_TIME_BUCKETS_CONFIG_STR = "maxtimebuckets";	
+	
+	/*
+	 * Normalisation init state csv headers
+	 */
+	static final public String SYS_CHANGE_STATE_HEADER = "t,a\n";
+	static final public String UNUSUAL_STATE_HEADER = "t,p,d\n";
+	
+	/*
+	 * Normalisation input fields
+	 */
+	static final public String PROBABILITY = "probability";
+	static final public String RAW_ANOMALY_SCORE = "anomalyScore";
+	
 	
 	
 	/**
@@ -210,6 +248,9 @@ public class ProcessCtrl
 		PRELERT_HOME = prelertHome; 
 		File executable = new File(new File(PRELERT_HOME, "bin"), AUTODETECT_API);		
 		AUTODETECT_PATH = executable.getPath();
+		
+		executable = new File(new File(PRELERT_HOME, "bin"), NORMALIZE_API);	
+		NORMALIZE_PATH = executable.getPath();
 		
 		File logDir = new File(PRELERT_HOME, "logs");	
 		LOG_DIR = logDir.toString();
@@ -254,7 +295,7 @@ public class ProcessCtrl
 	 * Set up an environment containing the PRELERT_HOME and LD_LIBRARY_PATH
 	 * (or equivalent) environment variables.
 	 */
-	private void buildEnvironment(ProcessBuilder pb)
+	static private void buildEnvironment(ProcessBuilder pb)
 	{
 		// Always clear inherited environment variables
 		pb.environment().clear();
@@ -291,7 +332,8 @@ public class ProcessCtrl
 			{
 				int exitValue = proc.waitFor();
 				BufferedReader reader = new BufferedReader(
-						new InputStreamReader(proc.getErrorStream()));
+						new InputStreamReader(proc.getErrorStream(), 
+								StandardCharsets.UTF_8));
 				
 				String output = reader.readLine();
 				s_Logger.debug("autodetect version output = " + output);
@@ -350,7 +392,8 @@ public class ProcessCtrl
 			{
 				int exitValue = proc.waitFor();
 				BufferedReader reader = new BufferedReader(
-						new InputStreamReader(proc.getInputStream()));
+						new InputStreamReader(proc.getInputStream(),
+								StandardCharsets.UTF_8));
 
 				String output = reader.readLine();
 				s_Logger.debug("autodetect info output = " + output);
@@ -385,10 +428,10 @@ public class ProcessCtrl
 	 * @return A Java Process object
 	 * @throws IOException
 	 */
-	public Process buildProcess(String processName, JobDetails job, Logger logger)
+	static public Process buildAutoDetect(String processName, JobDetails job, Logger logger)
 	throws IOException	
 	{
-		return buildProcess(processName, job, null);
+		return buildAutoDetect(processName, job, null, logger);
 	}
 	
 	/**
@@ -408,7 +451,7 @@ public class ProcessCtrl
 	 * @return A Java Process object
 	 * @throws IOException 
 	 */
-	public Process buildProcess(String processName, JobDetails job,
+	static public Process buildAutoDetect(String processName, JobDetails job,
 			DetectorState detectorState, Logger logger)
 	throws IOException
 	{
@@ -453,6 +496,10 @@ public class ProcessCtrl
 		// Input is always length encoded
 		command.add(LENGTH_ENCODED_INPUT_ARG);
 		
+		
+		// TODO limit on the number of anomaly records?
+		String recordCountArg = MAX_ANOMALY_RECORDS + "0";
+		command.add(recordCountArg);
 		
 		String timeField = DataDescription.DEFAULT_TIME_FIELD;
 
@@ -537,7 +584,7 @@ public class ProcessCtrl
 		}
 		
 		// Build the process
-		logger.info("Starting native process with command: " +  command);
+		logger.info("Starting autodetect process with command: " +  command);
 		ProcessBuilder pb = new ProcessBuilder(command);
 		buildEnvironment(pb);
 
@@ -551,7 +598,7 @@ public class ProcessCtrl
 	 * @param emptyConfFile
 	 * @throws IOException
 	 */
-	private void writeLimits(AnalysisLimits options, File emptyConfFile) 
+	static private void writeLimits(AnalysisLimits options, File emptyConfFile) 
 	throws IOException	
 	{
 		StringBuilder contents = new StringBuilder("[anomaly]").append(NEW_LINE);
@@ -579,7 +626,7 @@ public class ProcessCtrl
 	 * Return true if there is a file PRELERT_HOME/config/prelertmodel.conf
 	 * @return
 	 */
-	private boolean modelConfigFilePresent()
+	static private boolean modelConfigFilePresent()
 	{
 		File f = new File(CONFIG_DIR, PRELERT_MODEL_CONF);
 		
@@ -594,7 +641,7 @@ public class ProcessCtrl
 	 * @param detector
 	 * @return
 	 */
-	public List<String> detectorConfigToCommandLinArgs(Detector detector)
+	static public List<String> detectorConfigToCommandLinArgs(Detector detector)
 	{
 		List<String> commandLineArgs = new ArrayList<>();
 		
@@ -648,7 +695,7 @@ public class ProcessCtrl
 	 * @param logger
 	 * @throws IOException
 	 */
-	public void writeFieldConfig(AnalysisConfig config, OutputStreamWriter osw,
+	static public void writeFieldConfig(AnalysisConfig config, OutputStreamWriter osw,
 			Logger logger)
 	throws IOException
 	{
@@ -739,7 +786,7 @@ public class ProcessCtrl
 	 * @param file
 	 * @throws IOException
 	 */
-	private void writeModelState(String state, File file)
+	static private void writeModelState(String state, File file)
 	throws IOException
 	{
 		try (OutputStreamWriter osw = new OutputStreamWriter(
@@ -749,6 +796,117 @@ public class ProcessCtrl
 			osw.write(state);
 			osw.write('\n');
 		}
+	}
+	
+
+	/**
+	 * The process can be initialised with both sysChangeState and 
+	 * unusualBehaviourState if either is <code>null</code> then is 
+	 * is not used. 
+	 * 
+	 * 
+	 * @param jobId
+	 * @param sysChangeState Set to <code>null</code> to be ignored
+	 * @param unusualBehaviourState Set to <code>null</code> to be ignored
+	 * @param bucketSpan If <code>null</code> then use the program default
+	 * @param logger
+	 * @return
+	 * @throws IOException
+	 */
+	static public Process buildNormaliser(String jobId, 
+			InitialState sysChangeState, InitialState unusualBehaviourState,
+			Integer bucketSpan, Logger logger)
+	throws IOException
+	{
+		logger.info("PRELERT_HOME is set to " + PRELERT_HOME);
+		
+		List<String> command = new ArrayList<>();
+		command.add(NORMALIZE_PATH);
+		
+		if (sysChangeState != null)
+		{
+			Path sysChangeStateFilePath = writeNormaliserInitState(jobId, 
+					NormalisationType.SYS_STATE_CHANGE, sysChangeState);
+
+			String stateFileArg = SYS_STATE_CHANGE_ARG + sysChangeStateFilePath;
+			command.add(stateFileArg);
+		}
+
+		if (unusualBehaviourState != null)
+		{
+			Path unusualStateFilePath = writeNormaliserInitState(jobId, 
+					NormalisationType.UNUSUAL_STATE, unusualBehaviourState);
+			
+			String stateFileArg = UNUSUAL_STATE_ARG + unusualStateFilePath;
+			command.add(stateFileArg);
+		}
+		
+		if (bucketSpan != null)
+		{
+			String bucketSpanArg = BUCKET_SPAN_ARG + bucketSpan.toString();
+			command.add(bucketSpanArg);
+		}
+		
+		// TODO Log everything to the default normalize_api dir
+//		String logId = LOG_ID_ARG + jobId;
+//		command.add(logId);
+		
+		command.add(LENGTH_ENCODED_INPUT_ARG);
+		
+		if (modelConfigFilePresent())
+		{
+			String modelConfigFile = new File(CONFIG_DIR, PRELERT_MODEL_CONF).toString();
+			command.add(MODEL_CONFIG_ARG + modelConfigFile);
+		}
+		
+		// Build the process
+		logger.info("Starting normaliser process with command: " +  command);
+		ProcessBuilder pb = new ProcessBuilder(command);
+		buildEnvironment(pb);
+
+		return pb.start();		
+	}
+	
+	
+	/**
+	 * Write the normaliser init state to file.
+	 * 
+	 * @param jobId
+	 * @param type
+	 * @param state
+	 * @return The state file path
+	 * @throws IOException
+	 */
+	static private Path writeNormaliserInitState(String jobId, NormalisationType type,
+			InitialState state)
+	throws IOException
+	{
+		Path stateFile = Files.createTempFile(jobId + "_state", "csv");
+		
+		try (OutputStreamWriter osw = new OutputStreamWriter(
+				new FileOutputStream(stateFile.toString()),
+				Charset.forName("UTF-8")))
+		{
+			switch (type)
+			{
+			case SYS_STATE_CHANGE:
+				osw.write(SYS_CHANGE_STATE_HEADER);
+				for (InitialState.InitialStateRecord record : state)
+				{
+					osw.write(record.toSysChangeCsv());
+				}
+				break;
+			case UNUSUAL_STATE:
+				osw.write(UNUSUAL_STATE_HEADER);
+				for (InitialState.InitialStateRecord record : state)
+				{
+					osw.write(record.toUnusualCsv());
+				} 				
+				break;
+			}
+		}
+		
+		return stateFile;
 	}
 	
 	/**

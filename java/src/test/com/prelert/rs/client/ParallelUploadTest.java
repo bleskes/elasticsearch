@@ -141,7 +141,10 @@ public class ParallelUploadTest
 		catch (InterruptedException e) 
 		{
 			s_Logger.error("Interupted joining test thread", e);
-		}		
+		}
+		
+		
+		s_Logger.info("All tests passed Ok");
 
 	}
 }

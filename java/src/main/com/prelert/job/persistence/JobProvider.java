@@ -24,54 +24,17 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.process;
 
-import java.util.Date;
+package com.prelert.job.persistence;
 
 import com.prelert.job.DetectorState;
-import com.prelert.job.JobDetails;
-import com.prelert.job.JobStatus;
 import com.prelert.job.UnknownJobException;
 
-public interface JobDetailsProvider 
+public interface JobProvider extends JobDetailsProvider, JobResultsProvider
 {
 	/**
-	 * Get the <code>JobDetail</code>s for the given job id. 
-	 * 
-	 * @param jobId The job to look up
-	 * @return
-	 * @throws UnknownJobException If the jobId is not recognised
+	 * Get the persisted detectors state for the job
 	 */
-	public JobDetails getJobDetails(String jobId) throws UnknownJobException;
-	
-	/**
-	 * Get the persisted detector state for the job or <code>null</code>
-	 * @param jobId
-	 * @return <code>null</code> or the DetectorState if it has been peristed
-	 * @throws UnknownJobException If the jobId is not recognised
-	 */
-	public DetectorState getPersistedState(String jobId) throws UnknownJobException;
-	
-	
-	/**
-	 * Set the status of the specified job
-	 * @param jobId
-	 * @param status
-	 * @return true if the status was updated
-	 * @throws UnknownJobException
-	 */
-	public boolean setJobStatus(String jobId, JobStatus status) 
-		throws UnknownJobException;
-	
-	/**
-	 * Set the job status and finish time for the job.
-	 * 
-	 * @param jobId
-	 * @param time
-	 * @param status
-	 * @return
-	 * @throws UnknownJobException
-	 */
-	public boolean setJobFinishedTimeandStatus(String jobId, Date time, 
-			JobStatus status) throws UnknownJobException;
+	public DetectorState getDetectorState(String jobId) 
+	throws UnknownJobException;
 }

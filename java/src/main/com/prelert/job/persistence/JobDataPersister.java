@@ -28,6 +28,7 @@
 package com.prelert.job.persistence;
 
 import com.prelert.job.DetectorState;
+import com.prelert.job.UnknownJobException;
 import com.prelert.rs.data.Bucket;
 
 /**
@@ -47,6 +48,14 @@ public interface JobDataPersister
 	 * @param state
 	 */
 	public void persistDetectorState(DetectorState state);
+	
+	/**
+	 * Reads all the detector state documents from 
+	 * the database and returns a {@linkplain DetectorState} object.
+	 * 
+	 * @return
+	 */
+	public DetectorState retrieveDetectorState() throws UnknownJobException;
 	
 	/**
 	 * If the job has persisted model state then this function 
