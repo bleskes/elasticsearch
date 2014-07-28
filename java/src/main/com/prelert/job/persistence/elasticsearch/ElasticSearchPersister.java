@@ -158,7 +158,7 @@ public class ElasticSearchPersister implements JobDataPersister
 				int count = 1;
 				for (AnomalyRecord record : detector.getRecords())
 				{
-					content = serialiseRecord(record, detector.getName(), bucket.getTimestamp());
+					content = serialiseRecord(record, bucket.getTimestamp());
 					
 					String recordId = bucket.getEpoch() + detector.getName() + count;					
 					bulkRequest.add(m_Client.prepareIndex(m_JobId, AnomalyRecord.TYPE, recordId)
@@ -391,17 +391,15 @@ public class ElasticSearchPersister implements JobDataPersister
 	 * Return the anomaly record as serialisable content
 	 * 
 	 * @param record Record to serialise
-	 * @param detectorKey The detector's name
 	 * @param bucketTime The timestamp of the anomaly record parent bucket
 	 * @return
 	 * @throws IOException
 	 */
-	private XContentBuilder serialiseRecord(AnomalyRecord record, String detectorKey, Date bucketTime) 
+	private XContentBuilder serialiseRecord(AnomalyRecord record, Date bucketTime) 
 	throws IOException
 	{		
 		XContentBuilder builder = jsonBuilder().startObject()
 				.field(AnomalyRecord.PROBABILITY, record.getProbability())
-				.field(AnomalyRecord.DETECTOR_NAME, detectorKey)
 				.field(ElasticSearchMappings.ES_TIMESTAMP, bucketTime);
 
 		if (record.getByFieldName() != null)

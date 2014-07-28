@@ -53,7 +53,6 @@ public class AnomalyRecord
 	/**
 	 * Serialisation fields
 	 */
-	static final public String DETECTOR_NAME = "detectorName";
 	static final public String TYPE = "record";
 
 	/**
@@ -87,8 +86,6 @@ public class AnomalyRecord
 	
 	private static final Logger s_Logger = Logger.getLogger(AnomalyRecord.class);
 	
-	private String m_DetectorName;
-
 	private Double m_Probability;
 	private String m_ByFieldName;
 	private String m_ByFieldValue;
@@ -267,17 +264,6 @@ public class AnomalyRecord
 		m_IsOverallResult = value;
 	}
 
-	
-	public String getDetectorName()
-	{
-		return m_DetectorName;
-	}
-
-	public void setDetectorName(String name)
-	{
-		m_DetectorName = name;
-	}
-	
 	@JsonProperty(IS_SIMPLE_COUNT)
 	public Boolean isSimpleCount()
 	{
