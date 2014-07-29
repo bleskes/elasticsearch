@@ -48,7 +48,6 @@ import com.prelert.job.DataDescription;
 import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.DataDescription.DataFormat;
-import com.prelert.job.normalisation.NormalizationType;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.ApiError;
 import com.prelert.rs.data.Bucket;
@@ -72,12 +71,9 @@ public class NormalizationTest implements Closeable
 {
 	static final private Logger s_Logger = Logger.getLogger(JobsTest.class);
 	
-	static final public String SYS_CHANGE_NORMALIZATION = 
-			NormalizationType.SYS_CHANGE_NORMALIZATION;
-	static final public String UNUSUAL_BEHAVIOUR_NORMALIZATION = 
-			NormalizationType.UNUSUAL_BEHAVIOUR_NORMALIZATION;
-	static final public String BOTH_NORMALIZATIONS = 
-			NormalizationType.BOTH_NORMALIZATIONS;
+	static final public String SYS_CHANGE_NORMALIZATION = "s";
+	static final public String UNUSUAL_BEHAVIOUR_NORMALIZATION = "u";
+	static final public String BOTH_NORMALIZATIONS = "both"; 
 	
 	static final long FAREQUOTE_NUM_BUCKETS = 1439;
 	

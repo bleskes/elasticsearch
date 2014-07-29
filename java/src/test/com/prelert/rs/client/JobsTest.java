@@ -59,7 +59,6 @@ import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobStatus;
-import com.prelert.job.normalisation.NormalizationType;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.ApiError;
 import com.prelert.rs.data.Bucket;
@@ -811,10 +810,8 @@ public class JobsTest implements Closeable
 	{
 		s_Logger.debug("Verifying results for job " + jobId);
 		
-		String [] normalizations = {NormalizationType.SYS_CHANGE_NORMALIZATION,
-				NormalizationType.UNUSUAL_BEHAVIOUR_NORMALIZATION,
-				NormalizationType.BOTH_NORMALIZATIONS,
-				null};
+		String [] normalizations = {"s", "u", null};
+		
 		for (String normalizationType : normalizations)
 		{
 			long skip = 0;		
