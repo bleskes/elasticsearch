@@ -71,6 +71,8 @@ public class Records extends ResourceWithJobManager
 	 */
 	static public final String SORT_QUERY_PARAM = "sort";
 	
+	static public final String NORMALISATION_QUERY_PARAM = "norm";
+	
 	/**
 	 * Possible arguments to the sort parameter
 	 */
@@ -109,7 +111,8 @@ public class Records extends ResourceWithJobManager
 			@DefaultValue(JobManager.DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take,
 			@DefaultValue("") @QueryParam(START_QUERY_PARAM) String start,
 			@DefaultValue("") @QueryParam(END_QUERY_PARAM) String end,
-			@DefaultValue(PROB_SORT_VALUE) @QueryParam(SORT_QUERY_PARAM) String sort)
+			@DefaultValue(PROB_SORT_VALUE) @QueryParam(SORT_QUERY_PARAM) String sort,
+			@DefaultValue("both") @QueryParam(NORMALISATION_QUERY_PARAM) String norm)
 	throws NativeProcessRunException
 	{	
 		s_Logger.debug(String.format("Get records for job %s. skip = %d, take = %d"
@@ -164,11 +167,11 @@ public class Records extends ResourceWithJobManager
 
 		if (epochStart > 0 || epochEnd > 0)
 		{
-			records = manager.records(jobId, skip, take, epochStart, epochEnd, sort);
+			records = manager.records(jobId, skip, take, epochStart, epochEnd, sort, norm);
 		}
 		else
 		{
-			records = manager.records(jobId, skip, take, sort);
+			records = manager.records(jobId, skip, take, sort, norm);
 		}
 
 		

@@ -677,7 +677,7 @@ public class ElasticSearchJobProvider implements JobProvider
 			SortBuilder sb = new FieldSortBuilder(sortField)
 									.ignoreUnmapped(true)
 									.missing("_last")
-									.order(SortOrder.DESC);		
+									.order(SortOrder.ASC);		
 			
 			searchBuilder.addSort(sb);
 		}
@@ -688,11 +688,6 @@ public class ElasticSearchJobProvider implements JobProvider
 		for (SearchHit hit : searchResponse.getHits().getHits())
 		{
 			Map<String, Object> m  = hit.getSource();
-			
-			// TODO
-			// This a hack to work round the deficiency in the 
-			// Java API where source filtering hasn't been implemented.			
-			m.remove(AnomalyRecord.DETECTOR_NAME);
 
 			// TODO replace logstash timestamp name with timestamp
 			m.put(Bucket.TIMESTAMP, m.remove(ElasticSearchMappings.ES_TIMESTAMP));

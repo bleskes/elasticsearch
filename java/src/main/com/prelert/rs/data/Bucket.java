@@ -46,7 +46,7 @@ import org.apache.log4j.Logger;
 /**
  * Bucket Result POJO 
  */
-@JsonIgnoreProperties({"epoch", "epochString", "detectors"})
+@JsonIgnoreProperties({"epoch", "detectors"})
 @JsonInclude(Include.NON_NULL)
 public class Bucket 
 {
@@ -285,6 +285,61 @@ public class Bucket
 		
 		return bucket;
 	}
-	
 
+	@Override
+	public int hashCode() 
+	{
+		final int prime = 31;
+		int result = 1;
+		long temp;
+		temp = Double.doubleToLongBits(m_AnomalyScore);
+		result = prime * result + (int) (temp ^ (temp >>> 32));
+		result = prime * result
+				+ ((m_Detectors == null) ? 0 : m_Detectors.hashCode());
+		result = prime * result + (int) (m_Epoch ^ (m_Epoch >>> 32));
+		result = prime * result + ((m_Id == null) ? 0 : m_Id.hashCode());
+		result = prime * result + m_RecordCount;
+		result = prime * result
+				+ ((m_Records == null) ? 0 : m_Records.hashCode());
+		result = prime * result
+				+ ((m_Timestamp == null) ? 0 : m_Timestamp.hashCode());
+		return result;
+	}
+
+	/**
+	 * Compare all the fields and embedded anomaly records
+	 * (if any), does not compare detectors as they are not
+	 * serialized anyway.
+	 */
+	@Override
+	public boolean equals(Object other)
+	{
+		if (this == other)
+		{
+			return true;
+		}
+		
+		if (other instanceof Bucket == false)
+		{
+			return false;
+		}
+		
+		Bucket that = (Bucket)other;
+		
+		
+		boolean equals = (this.m_Id.equals(that.m_Id)) &&
+				(this.m_Timestamp.equals(that.m_Timestamp)) &&
+				(this.m_AnomalyScore == that.m_AnomalyScore) &&
+				(this.m_RecordCount == that.m_RecordCount) &&
+				(this.m_Epoch == that.m_Epoch);
+		
+		// don't bother testing detectors
+		equals = this.m_Records.size() == that.m_Records.size();
+		for (int i=0; i<this.m_Records.size(); i++)
+		{
+			equals = this.m_Records.get(i).equals(that.m_Records.get(i));
+		}
+		
+		return equals;
+	}
 }

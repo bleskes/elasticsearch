@@ -44,7 +44,14 @@ import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.ErrorCode;
 
-
+/**
+ * Normalises bucket scores and anomaly records for either 
+ * System Change, Unusual behaviour or both.
+ * <br/>
+ * Creates and initialises the normaliser process, pipes the probabilities/
+ * anomaly scores through them and adds the normalised values to 
+ * the records/buckets.
+ */
 public class Normaliser 
 {
 	static public final Logger s_Logger = Logger.getLogger(Normaliser.class);
@@ -63,6 +70,7 @@ public class Normaliser
 	 * Normalise buckets anomaly score for system state change.
 	 * 
 	 * @param bucketSpan If <code>null</code> the default is used
+	 * @param buckets Will be modified to have the normalised result
 	 * @return
 	 * @throws NativeProcessRunException
 	 */
@@ -134,7 +142,7 @@ public class Normaliser
 	 * The bucket's anomaly score is set to the max record score.
 	 * 
 	 * @param bucketSpan If <code>null</code> the default is used
-	 * @param expandedBuckets
+	 * @param expandedBuckets Will be modified to have the normalised result
 	 * @return
 	 * @throws NativeProcessRunException
 	 */
@@ -215,13 +223,14 @@ public class Normaliser
 	 * change score 
 	 * 
 	 * @param bucketSpan If <code>null</code> the default is used
-	 * @param buckets
-	 * @param records
+	 * @param buckets Required for normalising by system state
+	 * change
+	 * @param records 
 	 * @return
 	 * @throws NativeProcessRunException
 	 */
 	public List<AnomalyRecord> normaliseForBoth(Integer bucketSpan, 
-			List<Bucket> buckets, List<AnomalyRecord> records) 
+			List<Bucket> buckets, List<AnomalyRecord> records, boolean includeUnusual) 
 	throws NativeProcessRunException
 	{
 		InitialState sysChangeState = m_JobDetailsProvider.getSystemChangeInitialiser(m_JobId);
@@ -254,16 +263,19 @@ public class Normaliser
 				writer.writeField(Double.toString(bucket.getAnomalyScore()));
 			}
 			
-			for (AnomalyRecord record : records)
+			if (includeUnusual)
 			{
-				if (record.isSimpleCount() != null && record.isSimpleCount())
+				for (AnomalyRecord record : records)
 				{
-					continue;
+					if (record.isSimpleCount() != null && record.isSimpleCount())
+					{
+						continue;
+					}
+	
+					writer.writeNumFields(2);
+					writer.writeField(Double.toString(record.getProbability()));
+					writer.writeField("");
 				}
-
-				writer.writeNumFields(2);
-				writer.writeField(Double.toString(record.getProbability()));
-				writer.writeField("");
 			}
 		}
 		catch (IOException e) 
@@ -292,7 +304,8 @@ public class Normaliser
 		}
 
 		return mergeBothScoresIntoBuckets(
-				resultsParser.getNormalisedResults(), buckets, records);	
+				resultsParser.getNormalisedResults(), buckets, records,
+				includeUnusual);	
 	}
 	
 	
@@ -362,7 +375,7 @@ public class Normaliser
 	private List<AnomalyRecord> mergeBothScoresIntoBuckets(
 			List<NormalisedResult> normalisedScores,
 			List<Bucket> buckets,
-			List<AnomalyRecord> records)
+			List<AnomalyRecord> records, boolean includeUnusual)
 	{
 		Iterator<NormalisedResult> scoresIter = normalisedScores.iterator();
 		
@@ -370,26 +383,21 @@ public class Normaliser
 		for (Bucket bucket : buckets)
 		{
 			NormalisedResult normalised = scoresIter.next();
-			String id = bucket.getId();
-			if (id == null)
-			{
-				System.out.println("null");
-			}
-			bucketIdToScore.put(id, normalised.getNormalizedSysChangeScore());
+			bucketIdToScore.put(bucket.getId(), normalised.getNormalizedSysChangeScore());
 		}
 		
 		for (AnomalyRecord record : records)
 		{
-			NormalisedResult normalised = scoresIter.next();
 
 			Double anomalyScore = bucketIdToScore.get(record.getParent());
-			if (anomalyScore == null)
-			{
-				System.out.println("===== " + record.getParent());
-			}
 			
 			record.setAnomalyScore(anomalyScore);
-			record.setUnusualScore(normalised.getNormalizedUnusualScore());
+			
+			if (includeUnusual)
+			{
+				NormalisedResult normalised = scoresIter.next();
+				record.setUnusualScore(normalised.getNormalizedUnusualScore());
+			}
 		}
 				
 		return records;

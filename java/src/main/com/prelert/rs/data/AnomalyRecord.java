@@ -47,13 +47,12 @@ import com.prelert.rs.data.parsing.AutoDetectParseException;
  * can be returned if the members have not been set.
  */
 @JsonInclude(Include.NON_NULL)
-@JsonIgnoreProperties({"parent"})
+@JsonIgnoreProperties({"parent", "detectorName"})
 public class AnomalyRecord
 {
 	/**
 	 * Serialisation fields
 	 */
-	static final public String DETECTOR_NAME = "detectorName";
 	static final public String TYPE = "record";
 
 	/**
@@ -87,8 +86,6 @@ public class AnomalyRecord
 	
 	private static final Logger s_Logger = Logger.getLogger(AnomalyRecord.class);
 	
-	private String m_DetectorName;
-
 	private Double m_Probability;
 	private String m_ByFieldName;
 	private String m_ByFieldValue;
@@ -258,7 +255,7 @@ public class AnomalyRecord
 	@JsonProperty(IS_OVERALL_RESULT)
 	public Boolean isOverallResult()
 	{
-		return m_IsOverallResult;
+		return m_IsOverallResult != null && m_IsOverallResult;
 	}
 
 	@JsonProperty(IS_OVERALL_RESULT)
@@ -267,21 +264,10 @@ public class AnomalyRecord
 		m_IsOverallResult = value;
 	}
 
-	
-	public String getDetectorName()
-	{
-		return m_DetectorName;
-	}
-
-	public void setDetectorName(String name)
-	{
-		m_DetectorName = name;
-	}
-	
 	@JsonProperty(IS_SIMPLE_COUNT)
 	public Boolean isSimpleCount()
 	{
-		return m_IsSimpleCount;
+		return m_IsSimpleCount != null && m_IsSimpleCount;
 	}
 
 	@JsonProperty(IS_SIMPLE_COUNT)
@@ -519,4 +505,107 @@ public class AnomalyRecord
 
 		return record;
 	}
+	
+	
+	private boolean bothNullOrEqual(Object o1, Object o2)
+	{
+		if (o1 == null && o2 == null)
+		{
+			return true;
+		}
+		
+		if (o1 == null || o2 == null)
+		{
+			return false;
+		}
+		
+		return o1.equals(o2);	
+	}
+
+	@Override
+	public int hashCode() 
+	{
+		final int prime = 31;
+		int result = 1;
+		result = prime * result
+				+ ((m_Actual == null) ? 0 : m_Actual.hashCode());
+		result = prime * result
+				+ ((m_AnomalyScore == null) ? 0 : m_AnomalyScore.hashCode());
+		result = prime * result
+				+ ((m_ByFieldName == null) ? 0 : m_ByFieldName.hashCode());
+		result = prime * result
+				+ ((m_ByFieldValue == null) ? 0 : m_ByFieldValue.hashCode());
+		result = prime * result
+				+ ((m_FieldName == null) ? 0 : m_FieldName.hashCode());
+		result = prime * result
+				+ ((m_Function == null) ? 0 : m_Function.hashCode());
+		result = prime
+				* result
+				+ ((m_IsOverallResult == null) ? 0 : m_IsOverallResult
+						.hashCode());
+		result = prime * result
+				+ ((m_IsSimpleCount == null) ? 0 : m_IsSimpleCount.hashCode());
+		result = prime * result
+				+ ((m_OverFieldName == null) ? 0 : m_OverFieldName.hashCode());
+		result = prime
+				* result
+				+ ((m_OverFieldValue == null) ? 0 : m_OverFieldValue.hashCode());
+		result = prime * result
+				+ ((m_Parent == null) ? 0 : m_Parent.hashCode());
+		result = prime
+				* result
+				+ ((m_PartitionFieldName == null) ? 0 : m_PartitionFieldName
+						.hashCode());
+		result = prime
+				* result
+				+ ((m_PartitionFieldValue == null) ? 0 : m_PartitionFieldValue
+						.hashCode());
+		result = prime * result
+				+ ((m_Probability == null) ? 0 : m_Probability.hashCode());
+		result = prime * result
+				+ ((m_Timestamp == null) ? 0 : m_Timestamp.hashCode());
+		result = prime * result
+				+ ((m_Typical == null) ? 0 : m_Typical.hashCode());
+		result = prime * result
+				+ ((m_UnusualScore == null) ? 0 : m_UnusualScore.hashCode());
+		return result;
+	}
+
+	
+	@Override 
+	public boolean equals(Object other)
+	{
+		if (this == other)
+		{
+			return true;
+		}
+		
+		if (other instanceof AnomalyRecord == false)
+		{
+			return false;
+		}
+		
+		AnomalyRecord that = (AnomalyRecord)other;
+		
+		boolean equal = bothNullOrEqual(this.m_Probability, that.m_Probability) &&
+				bothNullOrEqual(this.m_Typical, that.m_Typical) &&
+				bothNullOrEqual(this.m_Actual, that.m_Actual) &&
+				bothNullOrEqual(this.m_AnomalyScore, that.m_AnomalyScore) &&
+				bothNullOrEqual(this.m_UnusualScore, that.m_UnusualScore) &&
+				bothNullOrEqual(this.m_Function, that.m_Function) &&
+				bothNullOrEqual(this.m_FieldName, that.m_FieldName) &&
+				bothNullOrEqual(this.m_ByFieldName, that.m_ByFieldName) &&
+				bothNullOrEqual(this.m_ByFieldValue, that.m_ByFieldValue) &&
+				bothNullOrEqual(this.m_PartitionFieldName, that.m_PartitionFieldName) &&
+				bothNullOrEqual(this.m_PartitionFieldValue, that.m_PartitionFieldValue) &&
+				bothNullOrEqual(this.m_OverFieldName, that.m_OverFieldName) &&
+				bothNullOrEqual(this.m_OverFieldValue, that.m_OverFieldValue) &&
+				bothNullOrEqual(this.m_IsSimpleCount, that.m_IsSimpleCount) &&
+				bothNullOrEqual(this.m_IsOverallResult, that.m_IsOverallResult) &&
+				bothNullOrEqual(this.m_Timestamp, that.m_Timestamp) &&
+				bothNullOrEqual(this.m_Parent, that.m_Parent);
+		
+		return equal;
+	}
+
 }

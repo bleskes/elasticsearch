@@ -885,11 +885,10 @@ public class EngineApiClient implements Closeable
 	
 	
 	/**
-	 * Get the anomaly records for the job with skip and take parameters.
-	 * The records aren't organised by bucket 
+	 * Get the anomaly records for the job between the start and 
+	 * end dates with skip and take parameters.
+	 * The records aren't grouped by bucket 
 	 * 
-	 * Calls {@link #getRecords(String, String, Long, Long)} with the 
-	 * skip and take parameters set to <code>null</code>
 	 * 
 	 * @param baseUrl The base URL for the REST API 
 	 * e.g <code>http://localhost:8080/engine/version/</code>
@@ -1021,70 +1020,6 @@ public class EngineApiClient implements Closeable
 		
 		// else return empty page
 		Pagination<AnomalyRecord> page = new Pagination<>();
-		return page;
-	}
-	
-	
-	
-	/**
-	 * Get the anomaly records from a particular anomaly detector 
-	 * in the given bucket.
-	 * This is similar to {@linkplain #getBucketRecords(String, String, String)}  
-	 * but only the records produced by the detetor <code>detectorId</code> 
-	 * are returned.
-	 * 
-	 * @param baseUrl The base URL for the REST API 
-	 * e.g <code>http://localhost:8080/engine/version/</code>
-	 * @param jobId The Job's unique Id
-	 * @param bucketId The bucket to get the anomaly records from
-	 * @param detectorId Only get anomaly records from this detector
-	 * @return A {@link Pagination} object containing a Map<String,Object>
-	 * @throws IOException 
-	 */
-	public Pagination<Map<String,Object>> getRecordByDetector(String baseUrl, 
-			String jobId, String bucketId, String detectorId)
-	throws IOException
-	{
-		String url = baseUrl + "/results/" + jobId + "/" + bucketId + "/records/"
-				+ detectorId;
-		s_Logger.debug("GET records by detectors " + url);
-		
-		HttpGet get = new HttpGet(url);
-		get.addHeader("Content-Type", "application/json");
-		
-		CloseableHttpResponse response = m_HttpClient.execute(get);
-		try
-		{
-			String content = EntityUtils.toString(response.getEntity());
-
-			if (response.getStatusLine().getStatusCode() == 200)
-			{
-				Pagination<Map<String,Object>> docs = m_JsonMapper.readValue(content, 
-						new TypeReference<Pagination<Map<String,Object>>>() {} );
-				return docs;
-			}
-			else
-			{
-				String msg = String.format(
-						"Error getting records for detector %s, job %s and bucket %s, "
-						+ "status code = %d. Returned content: %s",
-						detectorId, jobId, bucketId,
-						response.getStatusLine().getStatusCode(),
-						content);
-
-				s_Logger.error(msg);
-				
-				m_LastError = m_JsonMapper.readValue(content, 
-						new TypeReference<ApiError>() {} );
-			}			
-		}
-		finally 
-		{
-			response.close();
-		}	
-		
-		// else return empty page
-		Pagination<Map<String,Object>> page = new Pagination<>();
 		return page;
 	}
 
