@@ -677,7 +677,7 @@ public class ElasticSearchJobProvider implements JobProvider
 			SortBuilder sb = new FieldSortBuilder(sortField)
 									.ignoreUnmapped(true)
 									.missing("_last")
-									.order(SortOrder.DESC);		
+									.order(SortOrder.ASC);		
 			
 			searchBuilder.addSort(sb);
 		}

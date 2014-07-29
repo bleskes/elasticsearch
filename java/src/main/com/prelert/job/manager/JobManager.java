@@ -283,90 +283,8 @@ public class JobManager
 		m_JobProvider.createJob(jobDetails);
 		
 		return jobDetails;
-		
 	}
 
-	/**
-	 * Get a single result bucket
-	 * 
-	 * @param jobId
-	 * @param bucketId
-	 * @param expand Include anomaly records
-	 * @return
-	 * @throws NativeProcessRunException 
-	 */
-	public SingleDocument<Bucket> bucket(String jobId, 
-			String bucketId, boolean expand, String normalisationType) 
-	throws NativeProcessRunException
-	{
-		if (normalisationType.equals("u"))
-		{
-			expand = true;
-		}
-		
-		SingleDocument<Bucket> bucket = m_JobProvider.bucket(jobId, bucketId, expand);
-		
-		if (bucket.isExists())
-		{
-			return normalise(jobId, bucket, normalisationType);
-		}
-		else 
-		{
-			return bucket;
-		}
-	}
-	
-	/**
-	 * Get result buckets
-	 * 
-	 * @param jobId
-	 * @param expand Include anomaly records
-	 * @param skip
-	 * @param take
-	 * @return
-	 */
-	public Pagination<Bucket> buckets(String jobId, 
-			boolean expand, int skip, int take, String normalisationType)
-	throws NativeProcessRunException
-	{
-		if (normalisationType.equals("u"))
-		{
-			expand = true;
-		}
-		
-		Pagination<Bucket> buckets = m_JobProvider.buckets(jobId, expand, skip, take);
-		
-		
-		return normalise(jobId, buckets, normalisationType);
-	}
-	
-	
-	/**
-	 * Get result buckets between 2 dates 
-	 * @param jobId
-	 * @param expand
-	 * @param skip
-	 * @param take
-	 * @param startBucket The bucket with this id is included in the results
-	 * @param endBucket Include buckets up to this one
-	 * @return
-	 */
-	public Pagination<Bucket> buckets(String jobId, 
-			boolean expand, int skip, int take, long startBucket, long endBucket,
-			String normalisationType)
-	throws NativeProcessRunException
-	{
-		if (normalisationType.equals("u"))
-		{
-			expand = true;
-		}
-		
-		Pagination<Bucket> buckets =  m_JobProvider.buckets(jobId, 
-				expand, skip, take, 
-				startBucket, endBucket);
-		
-		return normalise(jobId, buckets, normalisationType);
-	}
 	
 	private Integer getJobBucketSpan(String jobId)
 	{
@@ -385,6 +303,106 @@ public class JobManager
 		}
 		
 		return span;
+	}
+	
+	
+	
+	/**
+	 * Get a single result bucket
+	 * 
+	 * @param jobId
+	 * @param bucketId
+	 * @param expand Include anomaly records
+	 * @return
+	 * @throws NativeProcessRunException 
+	 */
+	public SingleDocument<Bucket> bucket(String jobId, 
+			String bucketId, boolean expand, String normalisationType) 
+	throws NativeProcessRunException
+	{
+		boolean expandForNormalisation = expand || normalisationType.equals("u");
+		
+		SingleDocument<Bucket> bucket = m_JobProvider.bucket(jobId, bucketId, 
+				expandForNormalisation);
+		
+		if (bucket.isExists())
+		{
+			bucket = normalise(jobId, bucket, normalisationType);
+			
+			if (expand == false)
+			{
+				// remove records from bucket
+				bucket.getDocument().setRecords(Collections.<AnomalyRecord>emptyList());
+			}
+		}
+
+		return bucket;
+	}
+	
+	/**
+	 * Get result buckets
+	 * 
+	 * @param jobId
+	 * @param expand Include anomaly records
+	 * @param skip
+	 * @param take
+	 * @return
+	 */
+	public Pagination<Bucket> buckets(String jobId, 
+			boolean expand, int skip, int take, String normalisationType)
+	throws NativeProcessRunException
+	{
+		boolean expandForNormalisation = expand || normalisationType.equals("u");
+		
+		Pagination<Bucket> buckets = m_JobProvider.buckets(jobId, 
+				expandForNormalisation, skip, take);
+		buckets = normalise(jobId, buckets, normalisationType);
+		
+		if (expand == false)
+		{
+			// remove records from buckets
+			for (Bucket b : buckets.getDocuments())
+			{
+				b.setRecords(Collections.<AnomalyRecord>emptyList());
+			}
+		}
+		
+		return buckets;
+	}
+	
+	
+	/**
+	 * Get result buckets between 2 dates 
+	 * @param jobId
+	 * @param expand
+	 * @param skip
+	 * @param take
+	 * @param startBucket The bucket with this id is included in the results
+	 * @param endBucket Include buckets up to this one
+	 * @return
+	 */
+	public Pagination<Bucket> buckets(String jobId, 
+			boolean expand, int skip, int take, long startBucket, long endBucket,
+			String normalisationType)
+	throws NativeProcessRunException
+	{
+		boolean expandForNormalisation = expand || normalisationType.equals("u");
+		
+		Pagination<Bucket> buckets =  m_JobProvider.buckets(jobId, 
+				expandForNormalisation, skip, take, 
+				startBucket, endBucket);
+		
+		buckets = normalise(jobId, buckets, normalisationType);
+		if (expand == false)
+		{
+			// remove records from buckets
+			for (Bucket b : buckets.getDocuments())
+			{
+				b.setRecords(Collections.<AnomalyRecord>emptyList());
+			}
+		}
+		
+		return buckets;
 	}
 	
 		
@@ -447,7 +465,8 @@ public class JobManager
 			String bucketId, int skip, int take) 
 	throws NativeProcessRunException 
 	{
-		return this.records(jobId, bucketId, skip, take, DEFAULT_RECORD_SORT_FIELD);
+		return this.records(jobId, bucketId, skip, take, 
+				DEFAULT_RECORD_SORT_FIELD, "both");
 	}
 	
 	/**
@@ -460,11 +479,12 @@ public class JobManager
 	 * results if not required set to 0.
 	 * @param take Take only this number of records
 	 * @param sortField The field to sort the anomaly records by
+	 * @param norm Normalisation type
 	 * @return
 	 * @throws NativeProcessRunException 
 	 */
 	public Pagination<AnomalyRecord> records(String jobId, 
-			String bucketId, int skip, int take, String sortField) 
+			String bucketId, int skip, int take, String sortField, String norm) 
 	throws NativeProcessRunException 
 	{
 		Pagination<AnomalyRecord> records = m_JobProvider.records(jobId, 
@@ -473,10 +493,11 @@ public class JobManager
 		SingleDocument<Bucket> bucket = m_JobProvider.bucket(jobId, bucketId, false); 
 		
 		Normaliser normaliser = new Normaliser(jobId, m_JobProvider);	
-		
+
+		boolean normaliseBoth = "both".equals(norm);
 		normaliser.normaliseForBoth(getJobBucketSpan(jobId), 
-				Arrays.asList(new Bucket[] {bucket.getDocument()}),
-						records.getDocuments());
+					Arrays.asList(new Bucket[] {bucket.getDocument()}),
+					records.getDocuments(), normaliseBoth);		
 		
 		return records; 
 	}
@@ -498,7 +519,8 @@ public class JobManager
 			int skip, int take, long epochStart, long epochEnd) 
 	throws NativeProcessRunException 
 	{
-		return records(jobId, skip, take, epochStart, epochEnd, DEFAULT_RECORD_SORT_FIELD);
+		return records(jobId, skip, take, epochStart, epochEnd, 
+				DEFAULT_RECORD_SORT_FIELD, "both");
 	}
 	
 	/**
@@ -511,11 +533,13 @@ public class JobManager
 	 * @param epochStart
 	 * @param epochEnd
 	 * @param sortField
+	 * @param norm
 	 * @return
 	 * @throws NativeProcessRunException
 	 */
 	public Pagination<AnomalyRecord> records(String jobId, 
-			int skip, int take, long epochStart, long epochEnd, String sortField) 
+			int skip, int take, long epochStart, long epochEnd, String sortField,
+			String norm) 
 	throws NativeProcessRunException 
 	{
 		Pagination<AnomalyRecord> records = m_JobProvider.records(jobId, 
@@ -526,8 +550,9 @@ public class JobManager
 		
 		Normaliser normaliser = new Normaliser(jobId, m_JobProvider);	
 		
+		boolean normaliseBoth = "both".equals(norm);
 		normaliser.normaliseForBoth(getJobBucketSpan(jobId), 
-				buckets.getDocuments(), records.getDocuments());
+					buckets.getDocuments(), records.getDocuments(), normaliseBoth);
 		
 		return records; 
 	}
@@ -547,7 +572,7 @@ public class JobManager
 			int skip, int take) 
 	throws NativeProcessRunException 
 	{
-		return records(jobId, skip, take, DEFAULT_RECORD_SORT_FIELD);
+		return records(jobId, skip, take, DEFAULT_RECORD_SORT_FIELD, "both");
 	}
 	
 	
@@ -560,11 +585,12 @@ public class JobManager
 	 * results if not required set to 0.
 	 * @param take Take only this number of records
 	 * @param sortField The field to sort by
+	 * @param norm The normalisation type
 	 * @return
 	 * @throws NativeProcessRunException
 	 */
 	public Pagination<AnomalyRecord> records(String jobId, 
-			int skip, int take, String sortField) 
+			int skip, int take, String sortField, String norm) 
 	throws NativeProcessRunException 
 	{
 		Pagination<AnomalyRecord> records = m_JobProvider.records(jobId, 
@@ -606,8 +632,9 @@ public class JobManager
 
 			Normaliser normaliser = new Normaliser(jobId, m_JobProvider);	
 
+			boolean normaliseBoth = "both".equals(norm);
 			normaliser.normaliseForBoth(getJobBucketSpan(jobId), 
-					buckets.getDocuments(), records.getDocuments());
+					buckets.getDocuments(), records.getDocuments(), normaliseBoth);
 		}
 		catch (NumberFormatException nfe)
 		{

@@ -70,6 +70,7 @@ public class Results extends ResourceWithJobManager
 	
 	
 	static public final String NORMALISATION_QUERY_PARAM = "norm";
+	static public final String EXPAND_QUERY_PARAM = "expand";
 	
 
 	static private final DateFormat s_DateFormat = new SimpleDateFormat(ISO_8601_DATE_FORMAT); 
@@ -99,7 +100,7 @@ public class Results extends ResourceWithJobManager
 	@Produces(MediaType.APPLICATION_JSON)
 	public Pagination<Bucket> buckets(
 			@PathParam("jobId") String jobId,
-			@DefaultValue("false") @QueryParam("expand") boolean expand,
+			@DefaultValue("false") @QueryParam(EXPAND_QUERY_PARAM) boolean expand,
 			@DefaultValue("0") @QueryParam("skip") int skip,
 			@DefaultValue(JobManager.DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take,
 			@DefaultValue("") @QueryParam(START_QUERY_PARAM) String start,
@@ -108,8 +109,8 @@ public class Results extends ResourceWithJobManager
 	throws NativeProcessRunException
 	{	
 		s_Logger.debug(String.format("Get %s buckets for job %s. skip = %d, take = %d"
-				+ " start = '%s', end='%s'", 
-				expand?"expanded ":"", jobId, skip, take, start, end));
+				+ " start = '%s', end='%s' norm='%s'", 
+				expand?"expanded ":"", jobId, skip, take, start, end, norm));
 		
 		long epochStart = 0;
 		if (start.isEmpty() == false)
@@ -166,6 +167,8 @@ public class Results extends ResourceWithJobManager
     		{
     			queryParams.add(this.new KeyValue(END_QUERY_PARAM, end));
     		}
+    		queryParams.add(this.new KeyValue(EXPAND_QUERY_PARAM, Boolean.toString(expand)));
+    		queryParams.add(this.new KeyValue(NORMALISATION_QUERY_PARAM, norm));
     		
     		setPagingUrls(path, buckets, queryParams);
     	}		
@@ -194,8 +197,8 @@ public class Results extends ResourceWithJobManager
 			@DefaultValue("s") @QueryParam(NORMALISATION_QUERY_PARAM) String norm)
 	throws NativeProcessRunException
 	{
-		s_Logger.debug(String.format("Get %sbucket %s for job %s", 
-				expand?"expanded ":"", bucketId, jobId));
+		s_Logger.debug(String.format("Get %sbucket %s for job %s, norm ='%s'", 
+				expand?"expanded ":"", bucketId, jobId, norm));
 		
 		JobManager manager = jobManager();
 		SingleDocument<Bucket> bucket = manager.bucket(jobId, bucketId, expand, norm);
