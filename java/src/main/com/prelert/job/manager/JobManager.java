@@ -458,15 +458,16 @@ public class JobManager
 	 * @param skip Skip the first N records. This parameter is for paging
 	 * results if not required set to 0.
 	 * @param take Take only this number of records
+	 * @param norm Normalization type
 	 * @return
 	 * @throws NativeProcessRunException 
 	 */
 	public Pagination<AnomalyRecord> records(String jobId, 
-			String bucketId, int skip, int take) 
+			String bucketId, int skip, int take, String norm) 
 	throws NativeProcessRunException 
 	{
 		return this.records(jobId, bucketId, skip, take, 
-				DEFAULT_RECORD_SORT_FIELD, "both");
+				DEFAULT_RECORD_SORT_FIELD, norm);
 	}
 	
 	/**

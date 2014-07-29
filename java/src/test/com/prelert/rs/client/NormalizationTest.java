@@ -326,6 +326,34 @@ public class NormalizationTest implements Closeable
 		}
 		test(maxAnomalyScoreCount >= 1);
 		
+		/*
+		 * Check the bucket score matches the records score
+		 */
+		// the test takes ages to go through every bucket, don't do all for now
+		int count = 30;
+		for (Bucket bucket: allBuckets.getDocuments())
+		{
+			Pagination<AnomalyRecord> records = m_WebServiceClient.getBucketRecords(
+					baseUrl, jobId, bucket.getId(), "both");			
+			
+			double bucketMax = 0.0;
+			for (AnomalyRecord r : records.getDocuments())
+			{
+				if (r.isSimpleCount())
+				{
+					continue;
+				}
+				bucketMax = Math.max(r.getUnusualScore(), bucketMax);
+			}
+			
+			test(bucketMax == bucket.getAnomalyScore());
+			
+			if (count-- < 0)
+			{
+				break;
+			}
+		}
+		
 		
 		/*
 		 * Test get buckets by date range with a time string
@@ -336,7 +364,7 @@ public class NormalizationTest implements Closeable
 		for (int i=0; i<startDateFormats.length; i++)
 		{
 			Pagination<Bucket> byDate = m_WebServiceClient.getBuckets(
-					baseUrl, jobId, UNUSUAL_BEHAVIOUR_NORMALIZATION, false, 0l, 1000l, 
+					baseUrl, jobId, UNUSUAL_BEHAVIOUR_NORMALIZATION, true, 0l, 1000l, 
 					startDateFormats[i], endDateFormats[i]);
 
 			test(byDate.getDocuments().get(0).getEpoch() == 1359558600l);

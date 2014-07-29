@@ -976,12 +976,28 @@ public class EngineApiClient implements Closeable
 	}
 	
 	
-	
+	/**
+	 * Get all the normalised records for the bucket
+	 * 
+	 * @param baseUrl The base URL for the REST API 
+	 * e.g <code>http://localhost:8080/engine/version/</code>
+	 * @param jobId The Job's unique Id
+	 * @param bucketId 
+	 * @param normalization The normalization type, if <code>null</code> the 
+	 * default is used
+	 * @return
+	 * @throws IOException
+	 */
 	public Pagination<AnomalyRecord> getBucketRecords(String baseUrl, 
-			String jobId, String bucketId)
+			String jobId, String bucketId, String normalization)
 	throws IOException
 	{
 		String url = baseUrl + "/results/" + jobId + "/" + bucketId + "/records";
+		if (normalization != null)
+		{
+			url += "?norm=" + normalization;
+		}
+		
 		s_Logger.debug("GET records " + url);
 		
 		HttpGet get = new HttpGet(url);
@@ -995,7 +1011,7 @@ public class EngineApiClient implements Closeable
 			if (response.getStatusLine().getStatusCode() == 200)
 			{
 				Pagination<AnomalyRecord> docs = m_JsonMapper.readValue(content, 
-						new TypeReference<Pagination<Map<String,Object>>>() {} );
+						new TypeReference<Pagination<AnomalyRecord>>() {} );
 				return docs;
 			}
 			else
