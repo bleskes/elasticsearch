@@ -44,6 +44,7 @@ import javax.ws.rs.core.Response;
 import org.apache.log4j.Logger;
 
 import com.prelert.job.manager.JobManager;
+import com.prelert.job.normalisation.NormalizationType;
 import com.prelert.job.process.NativeProcessRunException;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.ErrorCode;
@@ -66,7 +67,20 @@ public class Records extends ResourceWithJobManager
 	 */
 	static public final String ENDPOINT = "records";
 	
-
+	/**
+	 * Sort order query parameter
+	 */
+	static public final String SORT_QUERY_PARAM = "sort";
+	
+	static public final String NORMALISATION_QUERY_PARAM = "norm";
+	
+	/**
+	 * Possible arguments to the sort parameter
+	 */
+	static public final String PROB_SORT_VALUE = "prob";
+	//static public final String DATE_SORT_VALUE = "date";
+	
+	
 	static private final DateFormat s_DateFormat = new SimpleDateFormat(ISO_8601_DATE_FORMAT); 
 	static private final DateFormat s_DateFormatWithMs = new SimpleDateFormat(ISO_8601_DATE_FORMAT_WITH_MS); 
 	
@@ -92,17 +106,19 @@ public class Records extends ResourceWithJobManager
 	@GET
 	@Path("/{jobId}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Pagination<AnomalyRecord> buckets(
+	public Pagination<AnomalyRecord> records(
 			@PathParam("jobId") String jobId,
 			@DefaultValue("0") @QueryParam("skip") int skip,
 			@DefaultValue(JobManager.DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take,
 			@DefaultValue("") @QueryParam(START_QUERY_PARAM) String start,
-			@DefaultValue("") @QueryParam(END_QUERY_PARAM) String end)
+			@DefaultValue("") @QueryParam(END_QUERY_PARAM) String end,
+			@DefaultValue(PROB_SORT_VALUE) @QueryParam(SORT_QUERY_PARAM) String sort,
+			@DefaultValue("both") @QueryParam(NORMALISATION_QUERY_PARAM) String norm)
 	throws NativeProcessRunException
 	{	
 		s_Logger.debug(String.format("Get records for job %s. skip = %d, take = %d"
-				+ " start = '%s', end='%s'", 
-				jobId, skip, take, start, end));
+				+ " start = '%s', end='%s', sort='%s', norm='%s'", 
+				jobId, skip, take, start, end, sort, norm));
 		
 		long epochStart = 0;
 		if (start.isEmpty() == false)
@@ -128,19 +144,42 @@ public class Records extends ResourceWithJobManager
 				throw new RestApiException(msg, ErrorCode.UNPARSEABLE_DATE_ARGUMENT,
 						Response.Status.BAD_REQUEST);
 			}			
-		}		
+		}
 		
+		// only sort by probability for now
+		if (!sort.equals(PROB_SORT_VALUE))
+		{
+			String msg = String.format(String.format("'%s is not a valid value "
+					+ "for the sort query parameter", sort));
+			s_Logger.warn(msg);
+			throw new RestApiException(msg, ErrorCode.INVALID_SORT_FIELD,
+					Response.Status.BAD_REQUEST);
+		}
+		
+		NormalizationType normType;
+		try
+		{
+			normType = NormalizationType.fromString(norm);
+		}
+		catch (IllegalArgumentException e)
+		{
+			String msg = String.format(String.format("'%s is not a valid value "
+					+ "for the normalisation query parameter", norm));
+			s_Logger.warn(msg);
+			throw new RestApiException(msg, ErrorCode.INVALID_NORMALIZATION_ARG,
+					Response.Status.BAD_REQUEST);
+		}
 		
 		JobManager manager = jobManager();
 		Pagination<AnomalyRecord> records;
 
 		if (epochStart > 0 || epochEnd > 0)
 		{
-			records = manager.records(jobId, skip, take, epochStart, epochEnd);
+			records = manager.records(jobId, skip, take, epochStart, epochEnd, sort, normType);
 		}
 		else
 		{
-			records = manager.records(jobId, skip, take);
+			records = manager.records(jobId, skip, take, sort, normType);
 		}
 
 		
@@ -165,12 +204,10 @@ public class Records extends ResourceWithJobManager
     		setPagingUrls(path, records, queryParams);
     	}		
 			
-		s_Logger.debug(String.format("Return %d buckets for job %s", 
+		s_Logger.debug(String.format("Return %d records for job %s", 
 				records.getDocumentCount(), jobId));
 		
 		return records;
 	}
-	
-
 		
 }

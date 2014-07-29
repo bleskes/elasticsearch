@@ -33,7 +33,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -45,6 +44,9 @@ import java.util.Set;
 import org.apache.commons.lang.SystemUtils;
 import org.apache.log4j.Logger;
 
+import org.supercsv.io.CsvListWriter;
+import org.supercsv.prefs.CsvPreference;
+
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.Detector;
 import com.prelert.job.AnalysisLimits;
@@ -52,6 +54,7 @@ import com.prelert.job.DataDescription;
 import com.prelert.job.DetectorState;
 import com.prelert.job.JobDetails;
 import com.prelert.job.normalisation.InitialState;
+
 
 /**
  * Utility class for running a Prelert process<br/>
@@ -165,7 +168,7 @@ public class ProcessCtrl
 	/**
 	 * The types of normalisation the the normaliser will do. 
 	 */
-	public enum NormalisationType {	SYS_STATE_CHANGE, UNUSUAL_STATE};
+	private enum NormalisationType {SYS_STATE_CHANGE, UNUSUAL_STATE};
 	
 	/**
 	 * Name of the model config file
@@ -217,8 +220,8 @@ public class ProcessCtrl
 	/*
 	 * Normalisation init state csv headers
 	 */
-	static final public String SYS_CHANGE_STATE_HEADER = "t,a\n";
-	static final public String UNUSUAL_STATE_HEADER = "t,p,d\n";
+	static final public String SYS_CHANGE_STATE_HEADER[] = { "t", "a" };
+	static final public String UNUSUAL_STATE_HEADER[] = { "t", "p", "d" };
 	
 	/*
 	 * Normalisation input fields
@@ -573,7 +576,7 @@ public class ProcessCtrl
 				File fieldConfigFile = File.createTempFile("fieldconfig", ".conf");
 				try (OutputStreamWriter osw = new OutputStreamWriter(
 						new FileOutputStream(fieldConfigFile),
-						Charset.forName("UTF-8")))
+						StandardCharsets.UTF_8))
 				{
 					writeFieldConfig(job.getAnalysisConfig(), osw, logger);
 				}
@@ -615,7 +618,7 @@ public class ProcessCtrl
 
 		try (OutputStreamWriter osw = new OutputStreamWriter(
 				new FileOutputStream(emptyConfFile),
-				Charset.forName("UTF-8")))
+				StandardCharsets.UTF_8))
 		{
 			osw.write(contents.toString());
 		}		
@@ -791,7 +794,7 @@ public class ProcessCtrl
 	{
 		try (OutputStreamWriter osw = new OutputStreamWriter(
 				new FileOutputStream(file),
-				Charset.forName("UTF-8")))
+				StandardCharsets.UTF_8))
 		{
 			osw.write(state);
 			osw.write('\n');
@@ -808,14 +811,14 @@ public class ProcessCtrl
 	 * @param jobId
 	 * @param sysChangeState Set to <code>null</code> to be ignored
 	 * @param unusualBehaviourState Set to <code>null</code> to be ignored
-	 * @param bucketSpan
+	 * @param bucketSpan If <code>null</code> then use the program default
 	 * @param logger
 	 * @return
 	 * @throws IOException
 	 */
 	static public Process buildNormaliser(String jobId, 
 			InitialState sysChangeState, InitialState unusualBehaviourState,
-			int bucketSpan, Logger logger)
+			Integer bucketSpan, Logger logger)
 	throws IOException
 	{
 		logger.info("PRELERT_HOME is set to " + PRELERT_HOME);
@@ -841,9 +844,11 @@ public class ProcessCtrl
 			command.add(stateFileArg);
 		}
 		
-		
-		String bucketSpanArg = BUCKET_SPAN_ARG + Integer.toString(bucketSpan);
-		command.add(bucketSpanArg);
+		if (bucketSpan != null)
+		{
+			String bucketSpanArg = BUCKET_SPAN_ARG + bucketSpan.toString();
+			command.add(bucketSpanArg);
+		}
 		
 		// TODO Log everything to the default normalize_api dir
 //		String logId = LOG_ID_ARG + jobId;
@@ -881,24 +886,24 @@ public class ProcessCtrl
 	{
 		Path stateFile = Files.createTempFile(jobId + "_state", "csv");
 		
-		try (OutputStreamWriter osw = new OutputStreamWriter(
+		try (CsvListWriter csvWriter = new CsvListWriter(new OutputStreamWriter(
 				new FileOutputStream(stateFile.toString()),
-				Charset.forName("UTF-8")))
+				StandardCharsets.UTF_8), CsvPreference.EXCEL_PREFERENCE))
 		{
 			switch (type)
 			{
 			case SYS_STATE_CHANGE:
-				osw.write(SYS_CHANGE_STATE_HEADER);
+				csvWriter.writeHeader(SYS_CHANGE_STATE_HEADER);
 				for (InitialState.InitialStateRecord record : state)
 				{
-					osw.write(record.toSysChangeCsv());
+					csvWriter.write(record.toSysChangeArray());
 				}
 				break;
 			case UNUSUAL_STATE:
-				osw.write(UNUSUAL_STATE_HEADER);
+				csvWriter.writeHeader(UNUSUAL_STATE_HEADER);
 				for (InitialState.InitialStateRecord record : state)
 				{
-					osw.write(record.toUnusualCsv());
+					csvWriter.write(record.toUnusualArray());
 				} 				
 				break;
 			}

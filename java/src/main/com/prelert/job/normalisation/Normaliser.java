@@ -44,7 +44,14 @@ import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.ErrorCode;
 
-
+/**
+ * Normalises bucket scores and anomaly records for either 
+ * System Change, Unusual behaviour or both.
+ * <br/>
+ * Creates and initialises the normaliser process, pipes the probabilities/
+ * anomaly scores through them and adds the normalised values to 
+ * the records/buckets.
+ */
 public class Normaliser 
 {
 	static public final Logger s_Logger = Logger.getLogger(Normaliser.class);
@@ -53,8 +60,6 @@ public class Normaliser
 	
 	private String m_JobId;
 	
-	private int m_Written;
-	
 	public Normaliser(String jobId, JobResultsProvider jobResultsProvider)
 	{
 		m_JobDetailsProvider = jobResultsProvider;
@@ -62,12 +67,14 @@ public class Normaliser
 	}
 			
 	/**	 
-	 *  
-	 * @param bucketSpan
+	 * Normalise buckets anomaly score for system state change.
+	 * 
+	 * @param bucketSpan If <code>null</code> the default is used
+	 * @param buckets Will be modified to have the normalised result
 	 * @return
 	 * @throws NativeProcessRunException
 	 */
-	public List<Bucket> normaliseForSystemChange(int bucketSpan, 
+	public List<Bucket> normaliseForSystemChange(Integer bucketSpan, 
 			List<Bucket> buckets) 
 	throws NativeProcessRunException
 	{
@@ -129,7 +136,17 @@ public class Normaliser
 	}
 	
 	
-	public List<Bucket> normaliseForUnusualBehaviour(int bucketSpan, 
+	/**
+	 * Normalise the bucket and it's nested records for unusual 
+	 * behaviour.
+	 * The bucket's anomaly score is set to the max record score.
+	 * 
+	 * @param bucketSpan If <code>null</code> the default is used
+	 * @param expandedBuckets Will be modified to have the normalised result
+	 * @return
+	 * @throws NativeProcessRunException
+	 */
+	public List<Bucket> normaliseForUnusualBehaviour(Integer bucketSpan, 
 			List<Bucket> expandedBuckets) throws NativeProcessRunException 
 	{
 		InitialState state = m_JobDetailsProvider.getUnusualBehaviourInitialiser(m_JobId);
@@ -154,7 +171,6 @@ public class Normaliser
 			writer.writeField("probability");
 			writer.writeField("tag");
 			
-			m_Written = 0;
 			for (Bucket bucket : expandedBuckets)
 			{
 				for (AnomalyRecord record : bucket.getRecords())
@@ -167,8 +183,6 @@ public class Normaliser
 					writer.writeNumFields(2);
 					writer.writeField(Double.toString(record.getProbability()));
 					writer.writeField(distingusherString(record));
-					
-					m_Written++;
 				}
 			}
 		}
@@ -204,16 +218,21 @@ public class Normaliser
 	
 	
 	/**
-	 * For each record set the normalised value by system change
-	 * and unusual behaviour 
+	 * For each record set the normalised value by unusual behaviour
+	 * and the system change anomaly score to the buckets system
+	 * change score 
 	 * 
-	 * @param bucketSpan
-	 * @param records
+	 * @param bucketSpan If <code>null</code> the default is used
+	 * @param buckets Required for normalising by system state
+	 * change
+	 * @param records 
+	 * @param normType
 	 * @return
 	 * @throws NativeProcessRunException
 	 */
-	public List<AnomalyRecord> normaliseForBoth(int bucketSpan, 
-			List<Bucket> buckets, List<AnomalyRecord> records) 
+	public List<AnomalyRecord> normaliseForBoth(Integer bucketSpan, 
+			List<Bucket> buckets, List<AnomalyRecord> records, 
+			NormalizationType normType) 
 	throws NativeProcessRunException
 	{
 		InitialState sysChangeState = m_JobDetailsProvider.getSystemChangeInitialiser(m_JobId);
@@ -234,35 +253,36 @@ public class Normaliser
 				process.getProcess().getOutputStream());
 		try 
 		{
-			writer.writeNumFields(3);
+			writer.writeNumFields(2);
 			writer.writeField(ProcessCtrl.PROBABILITY);
 			writer.writeField(ProcessCtrl.RAW_ANOMALY_SCORE);
-			writer.writeField("tag");
 			
 			// normalise the buckets first
-			for (Bucket bucket : buckets)
+			if (normType == NormalizationType.STATE_CHANGE || 
+					normType == NormalizationType.BOTH)
 			{
-				writer.writeNumFields(3);
-				writer.writeField("");
-				writer.writeField(Double.toString(bucket.getAnomalyScore()));
-				writer.writeField(bucket.getId());
+				for (Bucket bucket : buckets)
+				{
+					writer.writeNumFields(2);
+					writer.writeField("");
+					writer.writeField(Double.toString(bucket.getAnomalyScore()));
+				}
 			}
 			
-			
-			m_Written = 0;
-			for (AnomalyRecord record : records)
+			if (normType == NormalizationType.UNUSUAL_BEHAVIOUR || 
+					normType == NormalizationType.BOTH)
 			{
-				if (record.isSimpleCount() != null && record.isSimpleCount())
+				for (AnomalyRecord record : records)
 				{
-					continue;
+					if (record.isSimpleCount() != null && record.isSimpleCount())
+					{
+						continue;
+					}
+	
+					writer.writeNumFields(2);
+					writer.writeField(Double.toString(record.getProbability()));
+					writer.writeField("");
 				}
-
-				writer.writeNumFields(2);
-				writer.writeField(Double.toString(record.getProbability()));
-				writer.writeField("");
-				//writer.writeField(bucket.getId());
-
-				m_Written++;
 			}
 		}
 		catch (IOException e) 
@@ -272,7 +292,8 @@ public class Normaliser
 		finally
 		{
 			try 
-			{
+			{   
+				// closing the input to the job terminates it 
 				process.getProcess().getOutputStream().close();
 			} 
 			catch (IOException e) 
@@ -287,14 +308,12 @@ public class Normaliser
 		}
 		catch (InterruptedException e)
 		{
-
 		}
 
 		return mergeBothScoresIntoBuckets(
-				resultsParser.getNormalisedResults(), buckets, records);	
+				resultsParser.getNormalisedResults(), buckets, records,
+				normType);	
 	}
-	
-	
 	
 	
 	/**
@@ -344,7 +363,7 @@ public class Normaliser
 				{
 					continue;
 				}
-				m_Written--;
+
 				NormalisedResult normalised = scoresIter.next();
 
 				record.setUnusualScore(normalised.getNormalizedUnusualScore());
@@ -363,23 +382,50 @@ public class Normaliser
 	private List<AnomalyRecord> mergeBothScoresIntoBuckets(
 			List<NormalisedResult> normalisedScores,
 			List<Bucket> buckets,
-			List<AnomalyRecord> records)
+			List<AnomalyRecord> records, NormalizationType normType)
 	{
 		Iterator<NormalisedResult> scoresIter = normalisedScores.iterator();
 		
 		Map<String, Double> bucketIdToScore = new HashMap<>();
-		for (Bucket bucket : buckets)
+
+		// bucket sys change score first
+		if (normType == NormalizationType.STATE_CHANGE || 
+				normType == NormalizationType.BOTH)
 		{
-			NormalisedResult normalised = scoresIter.next();
-			bucketIdToScore.put(bucket.getId(), normalised.getNormalizedSysChangeScore());
+			for (Bucket bucket : buckets)
+			{
+				NormalisedResult normalised = scoresIter.next();
+				bucketIdToScore.put(bucket.getId(), normalised.getNormalizedSysChangeScore());
+			}
 		}
 		
-		for (AnomalyRecord record : records)
+		// set scores for records
+		if (normType == NormalizationType.UNUSUAL_BEHAVIOUR) 
 		{
-			NormalisedResult normalised = scoresIter.next();
+			for (AnomalyRecord record : records)
+			{
+				NormalisedResult normalised = scoresIter.next();
+				record.setUnusualScore(normalised.getNormalizedUnusualScore());
+			}
+		}
+		else if (normType == NormalizationType.STATE_CHANGE)
+		{
+			for (AnomalyRecord record : records)
+			{
+				Double anomalyScore = bucketIdToScore.get(record.getParent());
+				record.setAnomalyScore(anomalyScore);
+			}
+		}
+		else 
+		{
+			for (AnomalyRecord record : records)
+			{
+				Double anomalyScore = bucketIdToScore.get(record.getParent());
+				record.setAnomalyScore(anomalyScore);
 
-			record.setAnomalyScore(bucketIdToScore.get(record.getParent()));
-			record.setUnusualScore(normalised.getNormalizedUnusualScore());
+				NormalisedResult normalised = scoresIter.next();
+				record.setUnusualScore(normalised.getNormalizedUnusualScore());
+			}
 		}
 				
 		return records;
@@ -391,14 +437,14 @@ public class Normaliser
 	 * 
 	 * @param type
 	 * @param state
-	 * @param bucketSpan
+	 * @param bucketSpan If <code>null</code> the default is used
 	 * @return
 	 * @throws NativeProcessRunException
 	 */
 	private NormaliserProcess createNormaliserProcess(
 			InitialState sysChangeState, 
 			InitialState unusualBehaviourState, 
-			int bucketSpan)
+			Integer bucketSpan)
 	throws NativeProcessRunException
 	{
 		try

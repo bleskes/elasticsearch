@@ -810,104 +810,151 @@ public class JobsTest implements Closeable
 	{
 		s_Logger.debug("Verifying results for job " + jobId);
 		
-		long skip = 0;		
-		long lastBucketTime = 0;
-		while (true) // break when getNextUrl() == false
+		String [] normalizations = {"s", "u", null};
+		
+		for (String normalizationType : normalizations)
 		{
-			Pagination<Bucket> buckets = m_WebServiceClient.getBuckets(baseUrl, 
-					jobId, false, skip, take);
-			
-			test(buckets.getHitCount() == expectedNumBuckets);
-			test(buckets.getDocumentCount() <= take);
-			validateBuckets(buckets.getDocuments(), bucketSpan, lastBucketTime, false);
-									
-			// time in seconds
-			lastBucketTime = buckets.getDocuments().get(
-					buckets.getDocuments().size() -1).getTimestamp().getTime() / 1000;
-			
-			SingleDocument<Bucket> bucket = m_WebServiceClient.getBucket(
-					baseUrl, jobId, Long.toString(lastBucketTime), false);
-			
-			test(bucket.isExists() == true);
-			test(bucket.getDocument() != null);
-			test(bucket.getDocumentId().equals(Long.toString(lastBucketTime)));
-			test(bucket.getType().equals(Bucket.TYPE));
-			
-			validateBuckets(Arrays.asList(new Bucket[]{bucket.getDocument()}), 
-					bucketSpan, 0, false);
-			
-			SingleDocument<Bucket> nonExistentBucket = m_WebServiceClient.getBucket(
-					baseUrl, jobId, "missing_bucket", false);
-			test(nonExistentBucket.isExists() == false);
-			test(nonExistentBucket.getDocument() == null);
-			test(nonExistentBucket.getDocumentId().equals("missing_bucket"));
-			test(nonExistentBucket.getType().equals(Bucket.TYPE));
-			
-			
+			long skip = 0;		
+			long lastBucketTime = 0;
+			while (true) // break when getNextUrl() == false
+			{
+				Pagination<Bucket> buckets = m_WebServiceClient.getBuckets(baseUrl, 
+						jobId, normalizationType, false, skip, take);
 
-			if (buckets.getNextPage() == null)
-			{
-				test(expectedNumBuckets == (skip + buckets.getDocumentCount()));		
-				break;
+				test(buckets.getHitCount() == expectedNumBuckets);
+				test(buckets.getDocumentCount() <= take);
+				validateBuckets(buckets.getDocuments(), bucketSpan, lastBucketTime, false);
+
+				// time in seconds
+				lastBucketTime = buckets.getDocuments().get(
+						buckets.getDocuments().size() -1).getTimestamp().getTime() / 1000;
+
+				SingleDocument<Bucket> bucket = m_WebServiceClient.getBucket(
+						baseUrl, jobId, Long.toString(lastBucketTime), false, 
+						normalizationType);
+
+				test(bucket.isExists() == true);
+				test(bucket.getDocument() != null);
+				test(bucket.getDocumentId().equals(Long.toString(lastBucketTime)));
+				test(bucket.getType().equals(Bucket.TYPE));
+
+				validateBuckets(Arrays.asList(new Bucket[]{bucket.getDocument()}), 
+						bucketSpan, 0, false);
+
+				SingleDocument<Bucket> nonExistentBucket = m_WebServiceClient.getBucket(
+						baseUrl, jobId, "missing_bucket", false,
+						normalizationType);
+				test(nonExistentBucket.isExists() == false);
+				test(nonExistentBucket.getDocument() == null);
+				test(nonExistentBucket.getDocumentId().equals("missing_bucket"));
+				test(nonExistentBucket.getType().equals(Bucket.TYPE));
+
+
+				if (skip > 0)
+				{
+					// should be a previous page
+					test(buckets.getPreviousPage() != null);
+					
+					int start = Math.max(0,  buckets.getSkip() - buckets.getTake());
+					String prevPageUrl = String.format("%s/results/%s?skip=%d&take=%d&expand=%b&norm=%s", 
+							baseUrl, jobId,  start, buckets.getTake(), false, 
+							normalizationType ==  null ? "s" : normalizationType);	
+					
+					test(prevPageUrl.equals(buckets.getPreviousPage().toString()));
+				}
+				
+
+				if (buckets.getNextPage() == null)
+				{
+					test(expectedNumBuckets == (skip + buckets.getDocumentCount()));		
+					break;
+				}
+				else
+				{
+					int start = Math.max(0,  buckets.getSkip() + buckets.getTake());
+					String nextPageUrl = String.format("%s/results/%s?skip=%d&take=%d&expand=%b&norm=%s", 
+							baseUrl, jobId, start, buckets.getTake(), false, 
+							normalizationType ==  null ? "s" : normalizationType);	
+					
+					test(nextPageUrl.equals(buckets.getNextPage().toString()));
+				}
+
+
+				skip += take;
 			}
-			if (skip > 0)
-			{
-				// should be a previous page
-				test(buckets.getPreviousPage() != null);
+
+
+			// the same with expanded buckets
+			for (String normalizationType1 : normalizations)
+			{			
+				skip = 0;		
+				lastBucketTime = 0;
+				while (true) // break when getNextUrl() == false
+				{
+					Pagination<Bucket> buckets = m_WebServiceClient.getBuckets(baseUrl, 
+							jobId, normalizationType1, true, skip, take);
+
+					test(buckets.getHitCount() == expectedNumBuckets);
+					test(buckets.getDocumentCount() <= take);
+					validateBuckets(buckets.getDocuments(), bucketSpan, lastBucketTime, true);
+
+
+					// time in seconds
+					lastBucketTime = buckets.getDocuments().get(
+							buckets.getDocuments().size() -1).getTimestamp().getTime() / 1000;			
+
+					SingleDocument<Bucket> bucket = m_WebServiceClient.getBucket(baseUrl, jobId, 
+							Long.toString(lastBucketTime), true, normalizationType);
+
+					test(bucket.isExists() == true);
+					test(bucket.getDocument() != null);
+					test(bucket.getDocumentId().equals(Long.toString(lastBucketTime)));
+					test(bucket.getType().equals(Bucket.TYPE));
+
+					validateBuckets(Arrays.asList(new Bucket[]{bucket.getDocument()}), 
+							bucketSpan, 0, true);
+
+					SingleDocument<Bucket> nonExistentBucket = m_WebServiceClient.getBucket(
+							baseUrl, jobId, "missing_bucket", false, normalizationType);
+					test(nonExistentBucket.isExists() == false);
+					test(nonExistentBucket.getDocument() == null);
+					test(nonExistentBucket.getDocumentId().equals("missing_bucket"));
+					test(nonExistentBucket.getType().equals(Bucket.TYPE));
+
+
+					if (skip > 0)
+					{
+						// should be a previous page
+						test(buckets.getPreviousPage() != null);
+						
+						int start = Math.max(0,  buckets.getSkip() - buckets.getTake());
+						String prevPageUrl = String.format("%s/results/%s?skip=%d&take=%d&expand=%b&norm=%s", 
+								baseUrl, jobId, start, buckets.getTake(), true,
+								normalizationType1 ==  null ? "s" : normalizationType1);	
+						
+						test(prevPageUrl.equals(buckets.getPreviousPage().toString()));						
+					}
+					
+					if (buckets.getNextPage() == null)
+					{
+						test(expectedNumBuckets == (skip + buckets.getDocumentCount()));		
+						break;
+					}
+					else
+					{
+						int start = Math.max(0,  buckets.getSkip() + buckets.getTake());
+						String nextPageUrl = String.format("%s/results/%s?skip=%d&take=%d&expand=%b&norm=%s", 
+								baseUrl, jobId, start, buckets.getTake(), true, 
+								normalizationType1 ==  null ? "s" : normalizationType1);	
+						
+						test(nextPageUrl.equals(buckets.getNextPage().toString()));
+					}
+					
+
+					skip += take;
+				}
 			}
-			
-			skip += take;
 		}
-		
-		
-		// the same with expanded buckets
-		skip = 0;		
-		lastBucketTime = 0;
-		while (true) // break when getNextUrl() == false
-		{
-			Pagination<Bucket> buckets = m_WebServiceClient.getBuckets(baseUrl, 
-					jobId, true, skip, take);
-
-			test(buckets.getHitCount() == expectedNumBuckets);
-			test(buckets.getDocumentCount() <= take);
-			validateBuckets(buckets.getDocuments(), bucketSpan, lastBucketTime, true);
-			
-			
-			// time in seconds
-			lastBucketTime = buckets.getDocuments().get(
-					buckets.getDocuments().size() -1).getTimestamp().getTime() / 1000;			
-			
-			SingleDocument<Bucket> bucket = m_WebServiceClient.getBucket(baseUrl, jobId, 
-					Long.toString(lastBucketTime), true);
-			
-			test(bucket.isExists() == true);
-			test(bucket.getDocument() != null);
-			test(bucket.getDocumentId().equals(Long.toString(lastBucketTime)));
-			test(bucket.getType().equals(Bucket.TYPE));
-			
-			validateBuckets(Arrays.asList(new Bucket[]{bucket.getDocument()}), 
-					bucketSpan, 0, true);
-			
-			SingleDocument<Bucket> nonExistentBucket = m_WebServiceClient.getBucket(
-					baseUrl, jobId, "missing_bucket", false);
-			test(nonExistentBucket.isExists() == false);
-			test(nonExistentBucket.getDocument() == null);
-			test(nonExistentBucket.getDocumentId().equals("missing_bucket"));
-			test(nonExistentBucket.getType().equals(Bucket.TYPE));
-			
-			
-			if (buckets.getNextPage() == null)
-			{
-				test(expectedNumBuckets == (skip + buckets.getDocumentCount()));		
-				break;
-			}
-			if (skip > 0)
-			{
-				// should be a previous page
-				test(buckets.getPreviousPage() != null);
-			}
-			skip += take;
-		}		
 	}
 	
 	
@@ -1007,19 +1054,20 @@ public class JobsTest implements Closeable
 		String dateEndMs = new SimpleDateFormat(ISO_8601_DATE_FORMAT_WITH_MS).format(end);
 		
 		// query with the 3 date formats
-		Pagination<Bucket> buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, false, 
+		Pagination<Bucket> buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, 
+				null, false, 
 				null, null, epochStart, epochEnd);		
 		test(buckets.getDocuments().get(0).getTimestamp().compareTo(start) >= 0);
 		test(buckets.getDocuments().get(buckets.getDocumentCount() -1)
 				.getTimestamp().compareTo(end) <= 0);
 		
-		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, false, 
+		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, null, false, 
 				null, null, dateStart, dateEnd);		
 		test(buckets.getDocuments().get(0).getTimestamp().compareTo(start) >= 0);
 		test(buckets.getDocuments().get(buckets.getDocumentCount() -1)
 				.getTimestamp().compareTo(end) <= 0);
 		
-		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, false, 
+		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, null, false, 
 				null, null, dateStartMs, dateEndMs);		
 		test(buckets.getDocuments().get(0).getTimestamp().compareTo(start) >= 0);
 		test(buckets.getDocuments().get(buckets.getDocumentCount() -1)
@@ -1027,29 +1075,29 @@ public class JobsTest implements Closeable
 		
 		
 		// just a start date
-		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, false, 
+		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, null, false, 
 				0L, 100L, dateStart, null);		
 		test(buckets.getDocuments().get(0).getTimestamp().compareTo(start) >= 0);
 
-		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, false, 
+		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, null, false, 
 				0L, 100L, epochStart, null);		
 		test(buckets.getDocuments().get(0).getTimestamp().compareTo(start) >= 0);
 		
 		
 		// just an end date
-		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, false, 
+		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, null, false, 
 				null, null, null, dateEndMs);		
 		test(buckets.getDocuments().get(buckets.getDocumentCount() -1)
 				.getTimestamp().compareTo(end) <= 0);
 		
-		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, false, 
+		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, null, false, 
 				null, null, null, dateEnd);		
 		test(buckets.getDocuments().get(buckets.getDocumentCount() -1)
 				.getTimestamp().compareTo(end) <= 0);
 		
 		
 		// Test paging from the start date
-		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, false,  0L, 5L, dateStart, null);
+		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, null, false,  0L, 5L, dateStart, null);
 		test(buckets.getDocuments().get(0).getTimestamp().compareTo(start) >= 0);	
 		
 		Date lastDate = buckets.getDocuments().get(buckets.getDocumentCount() -1)
@@ -1202,7 +1250,7 @@ public class JobsTest implements Closeable
 		test(logLines.length > 0);
 		//zip.closeEntry();
 		entry = zip.getNextEntry();
-		
+		/*
 		// 2nd log file
 		test(entry.getName().startsWith(jobId + File.separator));
 		len = zip.read(buff);
@@ -1228,6 +1276,7 @@ public class JobsTest implements Closeable
 		error = m_WebServiceClient.getLastError();
 		test(error != null);
 		test(error.getErrorCode() == ErrorCode.MISSING_LOG_FILE);
+		*/
 	}
 	
 

@@ -44,6 +44,7 @@ import javax.ws.rs.core.Response;
 import org.apache.log4j.Logger;
 
 import com.prelert.job.manager.JobManager;
+import com.prelert.job.normalisation.NormalizationType;
 import com.prelert.job.process.NativeProcessRunException;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
@@ -70,6 +71,7 @@ public class Results extends ResourceWithJobManager
 	
 	
 	static public final String NORMALISATION_QUERY_PARAM = "norm";
+	static public final String EXPAND_QUERY_PARAM = "expand";
 	
 
 	static private final DateFormat s_DateFormat = new SimpleDateFormat(ISO_8601_DATE_FORMAT); 
@@ -99,7 +101,7 @@ public class Results extends ResourceWithJobManager
 	@Produces(MediaType.APPLICATION_JSON)
 	public Pagination<Bucket> buckets(
 			@PathParam("jobId") String jobId,
-			@DefaultValue("false") @QueryParam("expand") boolean expand,
+			@DefaultValue("false") @QueryParam(EXPAND_QUERY_PARAM) boolean expand,
 			@DefaultValue("0") @QueryParam("skip") int skip,
 			@DefaultValue(JobManager.DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take,
 			@DefaultValue("") @QueryParam(START_QUERY_PARAM) String start,
@@ -108,8 +110,8 @@ public class Results extends ResourceWithJobManager
 	throws NativeProcessRunException
 	{	
 		s_Logger.debug(String.format("Get %s buckets for job %s. skip = %d, take = %d"
-				+ " start = '%s', end='%s'", 
-				expand?"expanded ":"", jobId, skip, take, start, end));
+				+ " start = '%s', end='%s' norm='%s'", 
+				expand?"expanded ":"", jobId, skip, take, start, end, norm));
 		
 		long epochStart = 0;
 		if (start.isEmpty() == false)
@@ -135,19 +137,42 @@ public class Results extends ResourceWithJobManager
 				throw new RestApiException(msg, ErrorCode.UNPARSEABLE_DATE_ARGUMENT,
 						Response.Status.BAD_REQUEST);
 			}			
-		}		
+		}
 		
-		//Normaliser normaliser = normaliser();
+		NormalizationType normType;
+		try
+		{
+			normType = NormalizationType.fromString(norm);
+		}
+		catch (IllegalArgumentException e)
+		{
+			String msg = String.format(String.format("'%s is not a valid value "
+					+ "for the normalisation query parameter", norm));
+			s_Logger.info(msg);
+			throw new RestApiException(msg, ErrorCode.INVALID_NORMALIZATION_ARG,
+					Response.Status.BAD_REQUEST);
+		}
+		
+		if (normType == NormalizationType.BOTH)
+		{
+			String msg = String.format(String.format(
+					"Normalization type %s is not valid for buckets", norm));
+			s_Logger.info(msg);
+			throw new RestApiException(msg, ErrorCode.INVALID_NORMALIZATION_ARG,
+					Response.Status.BAD_REQUEST);
+		}
+		
+		
 		JobManager manager = jobManager();
 		Pagination<Bucket> buckets;
 		
 		if (epochStart > 0 || epochEnd > 0)
 		{
-			buckets = manager.buckets(jobId, expand, skip, take, epochStart, epochEnd, norm);
+			buckets = manager.buckets(jobId, expand, skip, take, epochStart, epochEnd, normType);
 		}
 		else
 		{
-			buckets = manager.buckets(jobId, expand, skip, take, norm);
+			buckets = manager.buckets(jobId, expand, skip, take, normType);
 		}
 		
 		// paging
@@ -167,6 +192,8 @@ public class Results extends ResourceWithJobManager
     		{
     			queryParams.add(this.new KeyValue(END_QUERY_PARAM, end));
     		}
+    		queryParams.add(this.new KeyValue(EXPAND_QUERY_PARAM, Boolean.toString(expand)));
+    		queryParams.add(this.new KeyValue(NORMALISATION_QUERY_PARAM, norm));
     		
     		setPagingUrls(path, buckets, queryParams);
     	}		
@@ -195,11 +222,35 @@ public class Results extends ResourceWithJobManager
 			@DefaultValue("s") @QueryParam(NORMALISATION_QUERY_PARAM) String norm)
 	throws NativeProcessRunException
 	{
-		s_Logger.debug(String.format("Get %sbucket %s for job %s", 
-				expand?"expanded ":"", bucketId, jobId));
+		s_Logger.debug(String.format("Get %sbucket %s for job %s, norm ='%s'", 
+				expand?"expanded ":"", bucketId, jobId, norm));
+		
+		NormalizationType normType;
+		try
+		{
+			normType = NormalizationType.fromString(norm);
+		}
+		catch (IllegalArgumentException e)
+		{
+			String msg = String.format(String.format("'%s is not a valid value "
+					+ "for the normalisation query parameter", norm));
+			s_Logger.info(msg);
+			throw new RestApiException(msg, ErrorCode.INVALID_NORMALIZATION_ARG,
+					Response.Status.BAD_REQUEST);
+		}
+		
+		
+		if (normType == NormalizationType.BOTH)
+		{
+			String msg = String.format(String.format(
+					"Normalization type %s is not a valid for a single bucket", norm));
+			s_Logger.info(msg);
+			throw new RestApiException(msg, ErrorCode.INVALID_NORMALIZATION_ARG,
+					Response.Status.BAD_REQUEST);
+		}
 		
 		JobManager manager = jobManager();
-		SingleDocument<Bucket> bucket = manager.bucket(jobId, bucketId, expand, norm);
+		SingleDocument<Bucket> bucket = manager.bucket(jobId, bucketId, expand, normType);
 		
 		if (bucket.isExists())
 		{
@@ -234,15 +285,30 @@ public class Results extends ResourceWithJobManager
 			@PathParam("jobId") String jobId,
 			@PathParam("bucketId") String bucketId,
 			@DefaultValue("0") @QueryParam("skip") int skip,
-			@DefaultValue(JobManager.DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take)
+			@DefaultValue(JobManager.DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take,
+			@DefaultValue("s") @QueryParam(NORMALISATION_QUERY_PARAM) String norm)
 	throws NativeProcessRunException
 	{
-		s_Logger.debug(String.format("Get records for job %s, bucket %s", 
-				jobId, bucketId));
+		s_Logger.debug(String.format("Get records for job %s, bucket %s, norm = '%s'", 
+				jobId, bucketId, norm));
 		
+		NormalizationType normType;
+		try
+		{
+			normType = NormalizationType.fromString(norm);
+		}
+		catch (IllegalArgumentException e)
+		{
+			String msg = String.format(String.format("'%s is not a valid value "
+					+ "for the normalisation query parameter", norm));
+			s_Logger.info(msg);
+			throw new RestApiException(msg, ErrorCode.INVALID_NORMALIZATION_ARG,
+					Response.Status.BAD_REQUEST);
+		}
+				
 		JobManager manager = jobManager();
 		Pagination<AnomalyRecord> records = manager.records(
-				jobId, bucketId, skip, take);
+				jobId, bucketId, skip, take, normType);
 		
 		// paging
     	if (records.isAllResults() == false)

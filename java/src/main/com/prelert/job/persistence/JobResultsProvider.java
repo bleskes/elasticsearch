@@ -28,6 +28,7 @@
 package com.prelert.job.persistence;
 
 import java.io.Closeable;
+import java.util.List;
 
 import com.prelert.job.normalisation.InitialState;
 import com.prelert.rs.data.AnomalyRecord;
@@ -88,35 +89,51 @@ public interface JobResultsProvider extends Closeable
 	
 	
 	/**
-	 * Get all the anomaly records for the bucket and every detector 
+	 * Get the anomaly records for the bucket.
+	 * The returned records will have the <code>parent</code> member 
+	 * set to the parent bucket's id.
 	 * 
 	 * @param jobId
 	 * @param bucketId 
+	 * @param includeSimpleCount If true include the simple count records
+	 * in the results 
 	 * @param skip Skip the first N Jobs. This parameter is for paging
 	 * results if not required set to 0.
 	 * @param take Take only this number of Jobs
+	 * @param sortField The field to sort results by if <code>null</code> no
+	 * sort is applied
 	 * @return
 	 */
 	public Pagination<AnomalyRecord> records(String jobId, 
-			String bucketId, int skip, int take);
+			String bucketId, boolean includeSimpleCount, int skip, int take,
+			String sortField);
 	
 	/**
-	 * Get the anomaly records for all buckets 
+	 * Get the anomaly records for all buckets.
+	 * The returned records will have the <code>parent</code> member 
+	 * set to the parent bucket's id.
 	 * 
 	 * @param jobId
+	 * @param includeSimpleCount If true include the simple count records
+	 * in the results 
 	 * @param skip Skip the first N records. This parameter is for paging
 	 * if not required set to 0.
 	 * @param take Take only this number of records
+	 * @param sortField The field to sort results by if <code>null</code> no
+	 * sort is applied
 	 * @return
 	 */
 	public Pagination<AnomalyRecord> records(String jobId, 
-			int skip, int take);
+			boolean includeSimpleCount, int skip, int take, String sortField);
 	
 	/**
 	 * Get the anomaly records for all buckets in the given 
-	 * date range
+	 * date (epoch time) range. The returned records will have the
+	 * <code>parent</code> member set to the parent bucket's id.
 	 * 
 	 * @param jobId
+	 * @param includeSimpleCount If true include the simple count records
+	 * in the results 
 	 * @param skip Skip the first N records. This parameter is for paging
 	 * if not required set to 0.
 	 * @param take Take only this number of records
@@ -125,11 +142,34 @@ public interface JobResultsProvider extends Closeable
 	 * are returned
 	 * @param endBucket The end bucket id buckets up to but NOT including this
 	 * are returned. If 0 all buckets from <code>startBucket</code> are returned
+	 * @param sortField The field to sort results by if <code>null</code> no
+	 * sort is applied 
 	 * @return
 	 */
 	public Pagination<AnomalyRecord> records(String jobId, 
-			int skip, int take,
-			long startBucket, long endBucket);
+			boolean includeSimpleCount, int skip, int take,
+			long startBucket, long endBucket, String sortField);
+			
+	
+	/**
+	 * Get the anomaly records in the list of buckets.	  
+	 * The returned records will have the
+	 * <code>parent</code> member set to the parent bucket's id.
+	 * 
+	 * @param jobId
+	 * @param bucketIds The list of parent buckets
+	 * @param includeSimpleCount If true include the simple count records
+	 * in the results 
+	 * @param skip Skip the first N records. This parameter is for paging
+	 * if not required set to 0.
+	 * @param take Take only this number of records
+	 * @param sortField The field to sort results by if <code>null</code> no
+	 * sort is applied 
+	 * @return
+	 */
+	public Pagination<AnomalyRecord> records(String jobId,
+			List<String> bucketIds, boolean includeSimpleCount, int skip, int take,
+			String sortField);
 			
 	/**
 	 * Return the initial state for normalisation by system change.

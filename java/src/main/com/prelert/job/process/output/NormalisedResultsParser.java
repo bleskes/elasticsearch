@@ -122,10 +122,12 @@ public class NormalisedResultsParser implements Runnable
 		{			
 			NormalisedResult result = NormalisedResult.parseJson(parser, m_Logger);
 			m_Results.add(result);
+			resultCount++;
 			
-			m_Logger.debug("Result number " + ++resultCount + " parsed from output");
 			token = parser.nextToken();
 		}
+		
+		m_Logger.info(resultCount + " records parsed from output");
 	}
 
 }
