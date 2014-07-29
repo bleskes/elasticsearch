@@ -236,15 +236,16 @@ public class Results extends ResourceWithJobManager
 			@PathParam("jobId") String jobId,
 			@PathParam("bucketId") String bucketId,
 			@DefaultValue("0") @QueryParam("skip") int skip,
-			@DefaultValue(JobManager.DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take)
+			@DefaultValue(JobManager.DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take,
+			@DefaultValue("s") @QueryParam(NORMALISATION_QUERY_PARAM) String norm)
 	throws NativeProcessRunException
 	{
-		s_Logger.debug(String.format("Get records for job %s, bucket %s", 
-				jobId, bucketId));
+		s_Logger.debug(String.format("Get records for job %s, bucket %s, norm = '%s'", 
+				jobId, bucketId, norm));
 		
 		JobManager manager = jobManager();
 		Pagination<AnomalyRecord> records = manager.records(
-				jobId, bucketId, skip, take);
+				jobId, bucketId, skip, take, norm);
 		
 		// paging
     	if (records.isAllResults() == false)
