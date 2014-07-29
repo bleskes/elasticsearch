@@ -44,6 +44,7 @@ import javax.ws.rs.core.Response;
 import org.apache.log4j.Logger;
 
 import com.prelert.job.manager.JobManager;
+import com.prelert.job.normalisation.NormalizationType;
 import com.prelert.job.process.NativeProcessRunException;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.ErrorCode;
@@ -116,8 +117,8 @@ public class Records extends ResourceWithJobManager
 	throws NativeProcessRunException
 	{	
 		s_Logger.debug(String.format("Get records for job %s. skip = %d, take = %d"
-				+ " start = '%s', end='%s'", 
-				jobId, skip, take, start, end));
+				+ " start = '%s', end='%s', sort='%s', norm='%s'", 
+				jobId, skip, take, start, end, sort, norm));
 		
 		long epochStart = 0;
 		if (start.isEmpty() == false)
@@ -145,21 +146,28 @@ public class Records extends ResourceWithJobManager
 			}			
 		}
 		
-		
+		// only sort by probability for now
 		if (!sort.equals(PROB_SORT_VALUE))
 		{
 			String msg = String.format(String.format("'%s is not a valid value "
 					+ "for the sort query parameter", sort));
-			s_Logger.info(msg);
+			s_Logger.warn(msg);
 			throw new RestApiException(msg, ErrorCode.INVALID_SORT_FIELD,
 					Response.Status.BAD_REQUEST);
 		}
 		
-		// only sort by probability for now
-		switch (sort)
+		NormalizationType normType;
+		try
 		{
-		default :
-			sort = AnomalyRecord.PROBABILITY;
+			normType = NormalizationType.fromString(norm);
+		}
+		catch (IllegalArgumentException e)
+		{
+			String msg = String.format(String.format("'%s is not a valid value "
+					+ "for the normalisation query parameter", norm));
+			s_Logger.warn(msg);
+			throw new RestApiException(msg, ErrorCode.INVALID_NORMALIZATION_ARG,
+					Response.Status.BAD_REQUEST);
 		}
 		
 		JobManager manager = jobManager();
@@ -167,11 +175,11 @@ public class Records extends ResourceWithJobManager
 
 		if (epochStart > 0 || epochEnd > 0)
 		{
-			records = manager.records(jobId, skip, take, epochStart, epochEnd, sort, norm);
+			records = manager.records(jobId, skip, take, epochStart, epochEnd, sort, normType);
 		}
 		else
 		{
-			records = manager.records(jobId, skip, take, sort, norm);
+			records = manager.records(jobId, skip, take, sort, normType);
 		}
 
 		

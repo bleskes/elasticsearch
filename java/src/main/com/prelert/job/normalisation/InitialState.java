@@ -43,7 +43,7 @@ import java.util.List;
  * <li>Partition Field Value</li>
  * <li>Partition Field Name</li>
  * </ul>
- * Not the value fields come before the name fields
+ * Note that the value fields come before the name fields
  */
 public class InitialState implements Iterable<InitialState.InitialStateRecord>
 {

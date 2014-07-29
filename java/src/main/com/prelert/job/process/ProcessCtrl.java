@@ -168,7 +168,7 @@ public class ProcessCtrl
 	/**
 	 * The types of normalisation the the normaliser will do. 
 	 */
-	public enum NormalisationType {	SYS_STATE_CHANGE, UNUSUAL_STATE};
+	private enum NormalisationType {SYS_STATE_CHANGE, UNUSUAL_STATE};
 	
 	/**
 	 * Name of the model config file

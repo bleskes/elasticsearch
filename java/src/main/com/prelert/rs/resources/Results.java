@@ -44,6 +44,7 @@ import javax.ws.rs.core.Response;
 import org.apache.log4j.Logger;
 
 import com.prelert.job.manager.JobManager;
+import com.prelert.job.normalisation.NormalizationType;
 import com.prelert.job.process.NativeProcessRunException;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
@@ -136,18 +137,42 @@ public class Results extends ResourceWithJobManager
 				throw new RestApiException(msg, ErrorCode.UNPARSEABLE_DATE_ARGUMENT,
 						Response.Status.BAD_REQUEST);
 			}			
-		}		
+		}
+		
+		NormalizationType normType;
+		try
+		{
+			normType = NormalizationType.fromString(norm);
+		}
+		catch (IllegalArgumentException e)
+		{
+			String msg = String.format(String.format("'%s is not a valid value "
+					+ "for the normalisation query parameter", norm));
+			s_Logger.info(msg);
+			throw new RestApiException(msg, ErrorCode.INVALID_NORMALIZATION_ARG,
+					Response.Status.BAD_REQUEST);
+		}
+		
+		if (normType == NormalizationType.BOTH)
+		{
+			String msg = String.format(String.format(
+					"Normalization type %s is not valid for buckets", norm));
+			s_Logger.info(msg);
+			throw new RestApiException(msg, ErrorCode.INVALID_NORMALIZATION_ARG,
+					Response.Status.BAD_REQUEST);
+		}
+		
 		
 		JobManager manager = jobManager();
 		Pagination<Bucket> buckets;
 		
 		if (epochStart > 0 || epochEnd > 0)
 		{
-			buckets = manager.buckets(jobId, expand, skip, take, epochStart, epochEnd, norm);
+			buckets = manager.buckets(jobId, expand, skip, take, epochStart, epochEnd, normType);
 		}
 		else
 		{
-			buckets = manager.buckets(jobId, expand, skip, take, norm);
+			buckets = manager.buckets(jobId, expand, skip, take, normType);
 		}
 		
 		// paging
@@ -200,8 +225,32 @@ public class Results extends ResourceWithJobManager
 		s_Logger.debug(String.format("Get %sbucket %s for job %s, norm ='%s'", 
 				expand?"expanded ":"", bucketId, jobId, norm));
 		
+		NormalizationType normType;
+		try
+		{
+			normType = NormalizationType.fromString(norm);
+		}
+		catch (IllegalArgumentException e)
+		{
+			String msg = String.format(String.format("'%s is not a valid value "
+					+ "for the normalisation query parameter", norm));
+			s_Logger.info(msg);
+			throw new RestApiException(msg, ErrorCode.INVALID_NORMALIZATION_ARG,
+					Response.Status.BAD_REQUEST);
+		}
+		
+		
+		if (normType == NormalizationType.BOTH)
+		{
+			String msg = String.format(String.format(
+					"Normalization type %s is not a valid for a single bucket", norm));
+			s_Logger.info(msg);
+			throw new RestApiException(msg, ErrorCode.INVALID_NORMALIZATION_ARG,
+					Response.Status.BAD_REQUEST);
+		}
+		
 		JobManager manager = jobManager();
-		SingleDocument<Bucket> bucket = manager.bucket(jobId, bucketId, expand, norm);
+		SingleDocument<Bucket> bucket = manager.bucket(jobId, bucketId, expand, normType);
 		
 		if (bucket.isExists())
 		{
@@ -243,9 +292,23 @@ public class Results extends ResourceWithJobManager
 		s_Logger.debug(String.format("Get records for job %s, bucket %s, norm = '%s'", 
 				jobId, bucketId, norm));
 		
+		NormalizationType normType;
+		try
+		{
+			normType = NormalizationType.fromString(norm);
+		}
+		catch (IllegalArgumentException e)
+		{
+			String msg = String.format(String.format("'%s is not a valid value "
+					+ "for the normalisation query parameter", norm));
+			s_Logger.info(msg);
+			throw new RestApiException(msg, ErrorCode.INVALID_NORMALIZATION_ARG,
+					Response.Status.BAD_REQUEST);
+		}
+				
 		JobManager manager = jobManager();
 		Pagination<AnomalyRecord> records = manager.records(
-				jobId, bucketId, skip, take, norm);
+				jobId, bucketId, skip, take, normType);
 		
 		// paging
     	if (records.isAllResults() == false)

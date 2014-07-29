@@ -775,19 +775,29 @@ public class EngineApiClient implements Closeable
 	 * @param jobId The Job's unique Id
 	 * @param bucketId The bucket to get
 	 * @param expand If true include the anomaly records for the bucket
+	 * @param normalisation The normalisation type
+	 * 
 	 * @return A {@link SingleDocument} object containing the requested 
 	 * {@link Bucket} or an empty {@link SingleDocument} if it does not exist 
 	 * @throws IOException 
 	 */
 	public SingleDocument<Bucket> getBucket(String baseUrl, String jobId, 
-			String bucketId, boolean expand) 
+			String bucketId, boolean expand, String normalisation) 
 	throws JsonMappingException, IOException
 	{
 		String url = baseUrl + "/results/" + jobId + "/" + bucketId;
+		char queryChar = '?';
 		if (expand)
 		{
 			url += "?expand=true";
+			queryChar = '&';
 		}
+		
+		if (normalisation != null)
+		{
+			url += queryChar + "norm=" + normalisation;
+		}
+		
 		
 		s_Logger.debug("GET bucket " + url);
 		
