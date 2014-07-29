@@ -283,90 +283,8 @@ public class JobManager
 		m_JobProvider.createJob(jobDetails);
 		
 		return jobDetails;
-		
 	}
 
-	/**
-	 * Get a single result bucket
-	 * 
-	 * @param jobId
-	 * @param bucketId
-	 * @param expand Include anomaly records
-	 * @return
-	 * @throws NativeProcessRunException 
-	 */
-	public SingleDocument<Bucket> bucket(String jobId, 
-			String bucketId, boolean expand, String normalisationType) 
-	throws NativeProcessRunException
-	{
-		if (normalisationType.equals("u"))
-		{
-			expand = true;
-		}
-		
-		SingleDocument<Bucket> bucket = m_JobProvider.bucket(jobId, bucketId, expand);
-		
-		if (bucket.isExists())
-		{
-			return normalise(jobId, bucket, normalisationType);
-		}
-		else 
-		{
-			return bucket;
-		}
-	}
-	
-	/**
-	 * Get result buckets
-	 * 
-	 * @param jobId
-	 * @param expand Include anomaly records
-	 * @param skip
-	 * @param take
-	 * @return
-	 */
-	public Pagination<Bucket> buckets(String jobId, 
-			boolean expand, int skip, int take, String normalisationType)
-	throws NativeProcessRunException
-	{
-		if (normalisationType.equals("u"))
-		{
-			expand = true;
-		}
-		
-		Pagination<Bucket> buckets = m_JobProvider.buckets(jobId, expand, skip, take);
-		
-		
-		return normalise(jobId, buckets, normalisationType);
-	}
-	
-	
-	/**
-	 * Get result buckets between 2 dates 
-	 * @param jobId
-	 * @param expand
-	 * @param skip
-	 * @param take
-	 * @param startBucket The bucket with this id is included in the results
-	 * @param endBucket Include buckets up to this one
-	 * @return
-	 */
-	public Pagination<Bucket> buckets(String jobId, 
-			boolean expand, int skip, int take, long startBucket, long endBucket,
-			String normalisationType)
-	throws NativeProcessRunException
-	{
-		if (normalisationType.equals("u"))
-		{
-			expand = true;
-		}
-		
-		Pagination<Bucket> buckets =  m_JobProvider.buckets(jobId, 
-				expand, skip, take, 
-				startBucket, endBucket);
-		
-		return normalise(jobId, buckets, normalisationType);
-	}
 	
 	private Integer getJobBucketSpan(String jobId)
 	{
@@ -385,6 +303,106 @@ public class JobManager
 		}
 		
 		return span;
+	}
+	
+	
+	
+	/**
+	 * Get a single result bucket
+	 * 
+	 * @param jobId
+	 * @param bucketId
+	 * @param expand Include anomaly records
+	 * @return
+	 * @throws NativeProcessRunException 
+	 */
+	public SingleDocument<Bucket> bucket(String jobId, 
+			String bucketId, boolean expand, String normalisationType) 
+	throws NativeProcessRunException
+	{
+		boolean expandForNormalisation = expand || normalisationType.equals("u");
+		
+		SingleDocument<Bucket> bucket = m_JobProvider.bucket(jobId, bucketId, 
+				expandForNormalisation);
+		
+		if (bucket.isExists())
+		{
+			bucket = normalise(jobId, bucket, normalisationType);
+			
+			if (expand == false)
+			{
+				// remove records from bucket
+				bucket.getDocument().setRecords(Collections.<AnomalyRecord>emptyList());
+			}
+		}
+
+		return bucket;
+	}
+	
+	/**
+	 * Get result buckets
+	 * 
+	 * @param jobId
+	 * @param expand Include anomaly records
+	 * @param skip
+	 * @param take
+	 * @return
+	 */
+	public Pagination<Bucket> buckets(String jobId, 
+			boolean expand, int skip, int take, String normalisationType)
+	throws NativeProcessRunException
+	{
+		boolean expandForNormalisation = expand || normalisationType.equals("u");
+		
+		Pagination<Bucket> buckets = m_JobProvider.buckets(jobId, 
+				expandForNormalisation, skip, take);
+		buckets = normalise(jobId, buckets, normalisationType);
+		
+		if (expand == false)
+		{
+			// remove records from buckets
+			for (Bucket b : buckets.getDocuments())
+			{
+				b.setRecords(Collections.<AnomalyRecord>emptyList());
+			}
+		}
+		
+		return buckets;
+	}
+	
+	
+	/**
+	 * Get result buckets between 2 dates 
+	 * @param jobId
+	 * @param expand
+	 * @param skip
+	 * @param take
+	 * @param startBucket The bucket with this id is included in the results
+	 * @param endBucket Include buckets up to this one
+	 * @return
+	 */
+	public Pagination<Bucket> buckets(String jobId, 
+			boolean expand, int skip, int take, long startBucket, long endBucket,
+			String normalisationType)
+	throws NativeProcessRunException
+	{
+		boolean expandForNormalisation = expand || normalisationType.equals("u");
+		
+		Pagination<Bucket> buckets =  m_JobProvider.buckets(jobId, 
+				expandForNormalisation, skip, take, 
+				startBucket, endBucket);
+		
+		buckets = normalise(jobId, buckets, normalisationType);
+		if (expand == false)
+		{
+			// remove records from buckets
+			for (Bucket b : buckets.getDocuments())
+			{
+				b.setRecords(Collections.<AnomalyRecord>emptyList());
+			}
+		}
+		
+		return buckets;
 	}
 	
 		
