@@ -230,7 +230,7 @@ public class Normaliser
 	 * @throws NativeProcessRunException
 	 */
 	public List<AnomalyRecord> normaliseForBoth(Integer bucketSpan, 
-			List<Bucket> buckets, List<AnomalyRecord> records) 
+			List<Bucket> buckets, List<AnomalyRecord> records, boolean includeUnusual) 
 	throws NativeProcessRunException
 	{
 		InitialState sysChangeState = m_JobDetailsProvider.getSystemChangeInitialiser(m_JobId);
@@ -263,16 +263,19 @@ public class Normaliser
 				writer.writeField(Double.toString(bucket.getAnomalyScore()));
 			}
 			
-			for (AnomalyRecord record : records)
+			if (includeUnusual)
 			{
-				if (record.isSimpleCount() != null && record.isSimpleCount())
+				for (AnomalyRecord record : records)
 				{
-					continue;
+					if (record.isSimpleCount() != null && record.isSimpleCount())
+					{
+						continue;
+					}
+	
+					writer.writeNumFields(2);
+					writer.writeField(Double.toString(record.getProbability()));
+					writer.writeField("");
 				}
-
-				writer.writeNumFields(2);
-				writer.writeField(Double.toString(record.getProbability()));
-				writer.writeField("");
 			}
 		}
 		catch (IOException e) 
@@ -301,7 +304,8 @@ public class Normaliser
 		}
 
 		return mergeBothScoresIntoBuckets(
-				resultsParser.getNormalisedResults(), buckets, records);	
+				resultsParser.getNormalisedResults(), buckets, records,
+				includeUnusual);	
 	}
 	
 	
@@ -371,7 +375,7 @@ public class Normaliser
 	private List<AnomalyRecord> mergeBothScoresIntoBuckets(
 			List<NormalisedResult> normalisedScores,
 			List<Bucket> buckets,
-			List<AnomalyRecord> records)
+			List<AnomalyRecord> records, boolean includeUnusual)
 	{
 		Iterator<NormalisedResult> scoresIter = normalisedScores.iterator();
 		
@@ -384,12 +388,16 @@ public class Normaliser
 		
 		for (AnomalyRecord record : records)
 		{
-			NormalisedResult normalised = scoresIter.next();
 
 			Double anomalyScore = bucketIdToScore.get(record.getParent());
 			
 			record.setAnomalyScore(anomalyScore);
-			record.setUnusualScore(normalised.getNormalizedUnusualScore());
+			
+			if (includeUnusual)
+			{
+				NormalisedResult normalised = scoresIter.next();
+				record.setUnusualScore(normalised.getNormalizedUnusualScore());
+			}
 		}
 				
 		return records;

@@ -447,7 +447,8 @@ public class JobManager
 			String bucketId, int skip, int take) 
 	throws NativeProcessRunException 
 	{
-		return this.records(jobId, bucketId, skip, take, DEFAULT_RECORD_SORT_FIELD);
+		return this.records(jobId, bucketId, skip, take, 
+				DEFAULT_RECORD_SORT_FIELD, "both");
 	}
 	
 	/**
@@ -460,11 +461,12 @@ public class JobManager
 	 * results if not required set to 0.
 	 * @param take Take only this number of records
 	 * @param sortField The field to sort the anomaly records by
+	 * @param norm Normalisation type
 	 * @return
 	 * @throws NativeProcessRunException 
 	 */
 	public Pagination<AnomalyRecord> records(String jobId, 
-			String bucketId, int skip, int take, String sortField) 
+			String bucketId, int skip, int take, String sortField, String norm) 
 	throws NativeProcessRunException 
 	{
 		Pagination<AnomalyRecord> records = m_JobProvider.records(jobId, 
@@ -473,10 +475,11 @@ public class JobManager
 		SingleDocument<Bucket> bucket = m_JobProvider.bucket(jobId, bucketId, false); 
 		
 		Normaliser normaliser = new Normaliser(jobId, m_JobProvider);	
-		
+
+		boolean normaliseBoth = "both".equals(norm);
 		normaliser.normaliseForBoth(getJobBucketSpan(jobId), 
-				Arrays.asList(new Bucket[] {bucket.getDocument()}),
-						records.getDocuments());
+					Arrays.asList(new Bucket[] {bucket.getDocument()}),
+					records.getDocuments(), normaliseBoth);		
 		
 		return records; 
 	}
@@ -498,7 +501,8 @@ public class JobManager
 			int skip, int take, long epochStart, long epochEnd) 
 	throws NativeProcessRunException 
 	{
-		return records(jobId, skip, take, epochStart, epochEnd, DEFAULT_RECORD_SORT_FIELD);
+		return records(jobId, skip, take, epochStart, epochEnd, 
+				DEFAULT_RECORD_SORT_FIELD, "both");
 	}
 	
 	/**
@@ -511,11 +515,13 @@ public class JobManager
 	 * @param epochStart
 	 * @param epochEnd
 	 * @param sortField
+	 * @param norm
 	 * @return
 	 * @throws NativeProcessRunException
 	 */
 	public Pagination<AnomalyRecord> records(String jobId, 
-			int skip, int take, long epochStart, long epochEnd, String sortField) 
+			int skip, int take, long epochStart, long epochEnd, String sortField,
+			String norm) 
 	throws NativeProcessRunException 
 	{
 		Pagination<AnomalyRecord> records = m_JobProvider.records(jobId, 
@@ -526,8 +532,9 @@ public class JobManager
 		
 		Normaliser normaliser = new Normaliser(jobId, m_JobProvider);	
 		
+		boolean normaliseBoth = "both".equals(norm);
 		normaliser.normaliseForBoth(getJobBucketSpan(jobId), 
-				buckets.getDocuments(), records.getDocuments());
+					buckets.getDocuments(), records.getDocuments(), normaliseBoth);
 		
 		return records; 
 	}
@@ -547,7 +554,7 @@ public class JobManager
 			int skip, int take) 
 	throws NativeProcessRunException 
 	{
-		return records(jobId, skip, take, DEFAULT_RECORD_SORT_FIELD);
+		return records(jobId, skip, take, DEFAULT_RECORD_SORT_FIELD, "both");
 	}
 	
 	
@@ -560,11 +567,12 @@ public class JobManager
 	 * results if not required set to 0.
 	 * @param take Take only this number of records
 	 * @param sortField The field to sort by
+	 * @param norm The normalisation type
 	 * @return
 	 * @throws NativeProcessRunException
 	 */
 	public Pagination<AnomalyRecord> records(String jobId, 
-			int skip, int take, String sortField) 
+			int skip, int take, String sortField, String norm) 
 	throws NativeProcessRunException 
 	{
 		Pagination<AnomalyRecord> records = m_JobProvider.records(jobId, 
@@ -606,8 +614,9 @@ public class JobManager
 
 			Normaliser normaliser = new Normaliser(jobId, m_JobProvider);	
 
+			boolean normaliseBoth = "both".equals(norm);
 			normaliser.normaliseForBoth(getJobBucketSpan(jobId), 
-					buckets.getDocuments(), records.getDocuments());
+					buckets.getDocuments(), records.getDocuments(), normaliseBoth);
 		}
 		catch (NumberFormatException nfe)
 		{
