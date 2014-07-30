@@ -32,6 +32,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 import org.apache.log4j.Logger;
 
@@ -106,6 +107,7 @@ public class Normaliser
 				writer.writeNumFields(2);
 				writer.writeField(Double.toString(bucket.getAnomalyScore()));
 				writer.writeField(bucket.getId());
+				
 			}
 		}
 		catch (IOException e) 
@@ -325,17 +327,33 @@ public class Normaliser
 	 * @param normalisedScores
 	 * @param buckets
 	 * @return
+	 * @throws NativeProcessRunException 
 	 */
 	private List<Bucket> mergeNormalisedSystemChangeScoresIntoBuckets(
 			List<NormalisedResult> normalisedScores,
-			List<Bucket> buckets)
+			List<Bucket> buckets) 
+	throws NativeProcessRunException
 	{
-		Iterator<Bucket> bucketIter = buckets.iterator();
+		Iterator<NormalisedResult> resultIter = normalisedScores.iterator();
 		
-		for (NormalisedResult result : normalisedScores)
+		try
 		{
-			Bucket bucket = bucketIter.next();
-			bucket.setAnomalyScore(result.getNormalizedSysChangeScore());
+			for (Bucket bucket : buckets)
+			{
+				double anomalyScore = resultIter.next().getNormalizedSysChangeScore();
+				bucket.setAnomalyScore(anomalyScore);
+				
+				for (AnomalyRecord record : bucket.getRecords())
+				{
+					record.setAnomalyScore(anomalyScore);
+				}
+			}
+		}
+		catch (NoSuchElementException e)
+		{
+			String msg = "Error iterating normalised results";
+			m_Logger.error(msg, e);
+			throw new NativeProcessRunException(msg, ErrorCode.NATIVE_PROCESS_ERROR);
 		}
 		
 		return buckets;
@@ -349,32 +367,42 @@ public class Normaliser
 	 * @param normalisedScores
 	 * @param buckets
 	 * @return
+	 * @throws NativeProcessRunException 
 	 */
 	private List<Bucket> mergeNormalisedUnusualIntoBuckets(
 			List<NormalisedResult> normalisedScores,
-			List<Bucket> buckets)
+			List<Bucket> buckets) throws NativeProcessRunException
 	{
 		Iterator<NormalisedResult> scoresIter = normalisedScores.iterator();
-		
-		for (Bucket bucket : buckets)
+
+		try
 		{
-			double bucketAnomalyScore = 0.0;
-			for (AnomalyRecord record : bucket.getRecords())
+			for (Bucket bucket : buckets)
 			{
-				if (record.isSimpleCount() != null && record.isSimpleCount())
+				double bucketAnomalyScore = 0.0;
+				for (AnomalyRecord record : bucket.getRecords())
 				{
-					continue;
+					if (record.isSimpleCount() != null && record.isSimpleCount())
+					{
+						continue;
+					}
+
+					NormalisedResult normalised = scoresIter.next();
+
+					record.setUnusualScore(normalised.getNormalizedUnusualScore());
+
+					bucketAnomalyScore = Math.max(bucketAnomalyScore,
+							normalised.getNormalizedUnusualScore());
 				}
 
-				NormalisedResult normalised = scoresIter.next();
-
-				record.setUnusualScore(normalised.getNormalizedUnusualScore());
-				
-				bucketAnomalyScore = Math.max(bucketAnomalyScore,
-						normalised.getNormalizedUnusualScore());
+				bucket.setAnomalyScore(bucketAnomalyScore);
 			}
-
-			bucket.setAnomalyScore(bucketAnomalyScore);
+		}
+		catch (NoSuchElementException e)
+		{
+			String msg = "Error iterating normalised results";
+			m_Logger.error(msg, e);
+			throw new NativeProcessRunException(msg, ErrorCode.NATIVE_PROCESS_ERROR);
 		}
 				
 		return buckets;
@@ -384,50 +412,61 @@ public class Normaliser
 	private List<AnomalyRecord> mergeBothScoresIntoBuckets(
 			List<NormalisedResult> normalisedScores,
 			List<Bucket> buckets,
-			List<AnomalyRecord> records, NormalizationType normType)
+			List<AnomalyRecord> records, NormalizationType normType) 
+	throws NativeProcessRunException
 	{
 		Iterator<NormalisedResult> scoresIter = normalisedScores.iterator();
 		
 		Map<String, Double> bucketIdToScore = new HashMap<>();
-
-		// bucket sys change score first
-		if (normType == NormalizationType.STATE_CHANGE || 
-				normType == NormalizationType.BOTH)
-		{
-			for (Bucket bucket : buckets)
-			{
-				NormalisedResult normalised = scoresIter.next();
-				bucketIdToScore.put(bucket.getId(), normalised.getNormalizedSysChangeScore());
-			}
-		}
 		
-		// set scores for records
-		if (normType == NormalizationType.UNUSUAL_BEHAVIOUR) 
+		try
 		{
-			for (AnomalyRecord record : records)
-			{
-				NormalisedResult normalised = scoresIter.next();
-				record.setUnusualScore(normalised.getNormalizedUnusualScore());
-			}
-		}
-		else if (normType == NormalizationType.STATE_CHANGE)
-		{
-			for (AnomalyRecord record : records)
-			{
-				Double anomalyScore = bucketIdToScore.get(record.getParent());
-				record.setAnomalyScore(anomalyScore);
-			}
-		}
-		else 
-		{
-			for (AnomalyRecord record : records)
-			{
-				Double anomalyScore = bucketIdToScore.get(record.getParent());
-				record.setAnomalyScore(anomalyScore);
 
-				NormalisedResult normalised = scoresIter.next();
-				record.setUnusualScore(normalised.getNormalizedUnusualScore());
+			// bucket sys change score first
+			if (normType == NormalizationType.STATE_CHANGE || 
+					normType == NormalizationType.BOTH)
+			{
+				for (Bucket bucket : buckets)
+				{
+					NormalisedResult normalised = scoresIter.next();
+					bucketIdToScore.put(bucket.getId(), normalised.getNormalizedSysChangeScore());
+				}
 			}
+
+			// set scores for records
+			if (normType == NormalizationType.UNUSUAL_BEHAVIOUR) 
+			{
+				for (AnomalyRecord record : records)
+				{
+					NormalisedResult normalised = scoresIter.next();
+					record.setUnusualScore(normalised.getNormalizedUnusualScore());
+				}
+			}
+			else if (normType == NormalizationType.STATE_CHANGE)
+			{
+				for (AnomalyRecord record : records)
+				{
+					Double anomalyScore = bucketIdToScore.get(record.getParent());
+					record.setAnomalyScore(anomalyScore);
+				}
+			}
+			else 
+			{
+				for (AnomalyRecord record : records)
+				{
+					Double anomalyScore = bucketIdToScore.get(record.getParent());
+					record.setAnomalyScore(anomalyScore);
+
+					NormalisedResult normalised = scoresIter.next();
+					record.setUnusualScore(normalised.getNormalizedUnusualScore());
+				}
+			}
+		}
+		catch (NoSuchElementException e)
+		{
+			String msg = "Error iterating normalised results";
+			m_Logger.error(msg, e);
+			throw new NativeProcessRunException(msg, ErrorCode.NATIVE_PROCESS_ERROR);
 		}
 				
 		return records;

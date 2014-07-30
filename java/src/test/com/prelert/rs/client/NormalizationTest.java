@@ -632,6 +632,8 @@ public class NormalizationTest implements Closeable
 				
 		NormalizationTest test = new NormalizationTest();
 		List<String> jobUrls = new ArrayList<>();
+
+		String farequoteJob = "farequote";
 		
 		File fareQuoteData = new File(prelertTestDataHome + 
 				"/engine_api_integration_test/farequote.csv");		
@@ -642,7 +644,6 @@ public class NormalizationTest implements Closeable
 		test.m_WebServiceClient.closeJob(baseUrl, farequoteJob);
 		
 		
-		String farequoteJob = "farequote";
 		test.verifyFarequoteSysChangeNormalisedBuckets(baseUrl, farequoteJob);
 		test.verifyFarequoteUnusualNormalisedBuckets(baseUrl, farequoteJob);
 		test.verifyFarequoteNormalisedRecords(baseUrl, farequoteJob);
