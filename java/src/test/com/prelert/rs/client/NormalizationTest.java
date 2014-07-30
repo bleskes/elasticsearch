@@ -153,7 +153,7 @@ public class NormalizationTest implements Closeable
 	 * @return
 	 * @throws IOException
 	 */
-	public boolean verifyFarequoteSysChangeNormalisation(String baseUrl, String jobId) 
+	public boolean verifyFarequoteSysChangeNormalisedBuckets(String baseUrl, String jobId) 
 	throws IOException
 	{	
 		/*
@@ -261,7 +261,7 @@ public class NormalizationTest implements Closeable
 	 * @return
 	 * @throws IOException
 	 */
-	public boolean verifyFarequoteUnusualNormalisedRecords(String baseUrl, String jobId) 
+	public boolean verifyFarequoteUnusualNormalisedBuckets(String baseUrl, String jobId) 
 	throws IOException
 	{
 		/*
@@ -632,17 +632,19 @@ public class NormalizationTest implements Closeable
 				
 		NormalizationTest test = new NormalizationTest();
 		List<String> jobUrls = new ArrayList<>();
-	
+		
 		File fareQuoteData = new File(prelertTestDataHome + 
 				"/engine_api_integration_test/farequote.csv");		
 		// Farequote test
-		String farequoteJob = test.createFarequoteJob(baseUrl);
+		test.createFarequoteJob(baseUrl);
 		test.m_WebServiceClient.fileUpload(baseUrl, farequoteJob, 
 				fareQuoteData, false);
 		test.m_WebServiceClient.closeJob(baseUrl, farequoteJob);
 		
-		test.verifyFarequoteSysChangeNormalisation(baseUrl, farequoteJob);
-		test.verifyFarequoteUnusualNormalisedRecords(baseUrl, farequoteJob);
+		
+		String farequoteJob = "farequote";
+		test.verifyFarequoteSysChangeNormalisedBuckets(baseUrl, farequoteJob);
+		test.verifyFarequoteUnusualNormalisedBuckets(baseUrl, farequoteJob);
 		test.verifyFarequoteNormalisedRecords(baseUrl, farequoteJob);
 		test.testInvalidNormalisationArgument(baseUrl, farequoteJob);
 		

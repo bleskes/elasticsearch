@@ -54,16 +54,18 @@ import com.prelert.rs.data.ErrorCode;
  */
 public class Normaliser 
 {
-	static public final Logger s_Logger = Logger.getLogger(Normaliser.class);
-	
 	private JobResultsProvider m_JobDetailsProvider;
 	
 	private String m_JobId;
+
+	private Logger m_Logger; 
 	
-	public Normaliser(String jobId, JobResultsProvider jobResultsProvider)
+	public Normaliser(String jobId, JobResultsProvider jobResultsProvider, 
+			Logger logger)
 	{
 		m_JobDetailsProvider = jobResultsProvider;
 		m_JobId = jobId;
+		m_Logger = logger;
 	}
 			
 	/**	 
@@ -85,7 +87,7 @@ public class Normaliser
 		
 		NormalisedResultsParser resultsParser = new NormalisedResultsParser(
 							process.getProcess().getInputStream(),
-							s_Logger);
+							m_Logger);
 		
 		Thread parserThread = new Thread(resultsParser, m_JobId + "-Normalizer-Parser");
 		parserThread.start();
@@ -108,7 +110,7 @@ public class Normaliser
 		}
 		catch (IOException e) 
 		{
-			s_Logger.warn("Error writing to the normalizer", e);
+			m_Logger.warn("Error writing to the normalizer", e);
 		}
 		finally
 		{
@@ -156,7 +158,7 @@ public class Normaliser
 		
 		NormalisedResultsParser resultsParser = new NormalisedResultsParser(
 							process.getProcess().getInputStream(),
-							s_Logger);
+							m_Logger);
 		
 		Thread parserThread = new Thread(resultsParser, m_JobId + "-Normalizer-Parser");
 		parserThread.start();
@@ -175,7 +177,7 @@ public class Normaliser
 			{
 				for (AnomalyRecord record : bucket.getRecords())
 				{
-					if (record.isSimpleCount() != null && record.isSimpleCount())
+					if (record.isSimpleCount())
 					{
 						continue;
 					}
@@ -188,7 +190,7 @@ public class Normaliser
 		}
 		catch (IOException e) 
 		{
-			s_Logger.warn("Error writing to the normalizer", e);
+			m_Logger.warn("Error writing to the normalizer", e);
 		}
 		finally
 		{
@@ -244,7 +246,7 @@ public class Normaliser
 		
 		NormalisedResultsParser resultsParser = new NormalisedResultsParser(
 							process.getProcess().getInputStream(),
-							s_Logger);
+							m_Logger);
 
 		Thread parserThread = new Thread(resultsParser, m_JobId + "-Normalizer-Parser");
 		parserThread.start();
@@ -287,7 +289,7 @@ public class Normaliser
 		}
 		catch (IOException e) 
 		{
-			s_Logger.warn("Error writing to the normalizer", e);
+			m_Logger.warn("Error writing to the normalizer", e);
 		}
 		finally
 		{
@@ -451,14 +453,14 @@ public class Normaliser
 		{
 			Process proc = ProcessCtrl.buildNormaliser(m_JobId, 
 					sysChangeState, unusualBehaviourState,
-					bucketSpan,  s_Logger);
+					bucketSpan,  m_Logger);
 			
 			return new NormaliserProcess(proc);
 		}
 		catch (IOException e)
 		{
 			String msg = "Failed to start normalisation process for job " + m_JobId;
-			s_Logger.error(msg, e);
+			m_Logger.error(msg, e);
 			throw new NativeProcessRunException(msg, 
 					ErrorCode.NATIVE_PROCESS_START_ERROR, e);
 		}
