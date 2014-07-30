@@ -49,7 +49,9 @@ import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.rs.data.AnomalyRecord;
+import com.prelert.rs.data.ApiError;
 import com.prelert.rs.data.Bucket;
+import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.Pagination;
 
 
@@ -71,7 +73,7 @@ public class NormalizationTest implements Closeable
 	
 	static final public String SYS_CHANGE_NORMALIZATION = "s";
 	static final public String UNUSUAL_BEHAVIOUR_NORMALIZATION = "u";
-	static final public String BOTH_NORMALIZATIONS = "both";
+	static final public String BOTH_NORMALIZATIONS = "both"; 
 	
 	static final long FAREQUOTE_NUM_BUCKETS = 1439;
 	
@@ -263,7 +265,8 @@ public class NormalizationTest implements Closeable
 	throws IOException
 	{
 		/*
-		 * Get the unusual behaviour normalised buckets through the standard endpoint
+		 * Get the unusual behaviour normalised buckets through the 
+		 * standard results endpoint
 		 */ 
 		Pagination<Bucket> allBuckets = m_WebServiceClient.getBuckets(baseUrl, 
 				jobId, UNUSUAL_BEHAVIOUR_NORMALIZATION, true, 0l, 1500l);
@@ -326,6 +329,34 @@ public class NormalizationTest implements Closeable
 		}
 		test(maxAnomalyScoreCount >= 1);
 		
+		/*
+		 * Check the bucket score matches the records score
+		 */
+		// the test takes ages to go through every bucket, don't do all for now
+		int count = 30;
+		for (Bucket bucket: allBuckets.getDocuments())
+		{
+			Pagination<AnomalyRecord> records = m_WebServiceClient.getBucketRecords(
+					baseUrl, jobId, bucket.getId(), "both");			
+			
+			double bucketMax = 0.0;
+			for (AnomalyRecord r : records.getDocuments())
+			{
+				if (r.isSimpleCount())
+				{
+					continue;
+				}
+				bucketMax = Math.max(r.getUnusualScore(), bucketMax);
+			}
+			
+			test(bucketMax == bucket.getAnomalyScore());
+			
+			if (count-- < 0)
+			{
+				break;
+			}
+		}
+		
 		
 		/*
 		 * Test get buckets by date range with a time string
@@ -336,7 +367,7 @@ public class NormalizationTest implements Closeable
 		for (int i=0; i<startDateFormats.length; i++)
 		{
 			Pagination<Bucket> byDate = m_WebServiceClient.getBuckets(
-					baseUrl, jobId, UNUSUAL_BEHAVIOUR_NORMALIZATION, false, 0l, 1000l, 
+					baseUrl, jobId, UNUSUAL_BEHAVIOUR_NORMALIZATION, true, 0l, 1000l, 
 					startDateFormats[i], endDateFormats[i]);
 
 			test(byDate.getDocuments().get(0).getEpoch() == 1359558600l);
@@ -372,12 +403,12 @@ public class NormalizationTest implements Closeable
 	 * @return
 	 * @throws IOException
 	 */
-	public boolean verifyFarequoteRecordsNormalisedForBoth(String baseUrl, String jobId) 
+	public boolean verifyFarequoteNormalisedRecords(String baseUrl, String jobId) 
 	throws IOException
 	{		
-		// Test hack for turning off unusual behaviour norm
-		//String [] normTypes = new String[] {BOTH_NORMALIZATIONS, "s"};
-		String [] normTypes = new String[] {BOTH_NORMALIZATIONS};
+		// Test for different normalisation arguments
+		String [] normTypes = new String[] {BOTH_NORMALIZATIONS, 
+				SYS_CHANGE_NORMALIZATION, UNUSUAL_BEHAVIOUR_NORMALIZATION};
 		
 		for (String normType : normTypes)
 		{
@@ -420,29 +451,49 @@ public class NormalizationTest implements Closeable
 			int maxUnusualScoreCount = 0;
 			for (AnomalyRecord record : pagedRecords)
 			{
-				if (record.getAnomalyScore() >= 100.0)
+				switch (normType)
 				{
-					maxAnomalyScoreCount++;
-				}
-				
-				if ("both".equals(normType))
-				{
+				case SYS_CHANGE_NORMALIZATION:
+					if (record.getAnomalyScore() >= 100.0)
+					{
+						maxAnomalyScoreCount++;
+					}
+					test(record.getUnusualScore() == null);
+					break;
+								
+				case UNUSUAL_BEHAVIOUR_NORMALIZATION:
 					if (record.getUnusualScore() >= 100.0)
 					{
 						maxUnusualScoreCount++;
 					}
-				}
-				else
-				{
-					test(record.getUnusualScore() == null);
+					test(record.getAnomalyScore() == null);
+					break;
+					
+				default:
+					if (record.getUnusualScore() >= 100.0)
+					{
+						maxUnusualScoreCount++;
+					}
+					if (record.getAnomalyScore() >= 100.0)
+					{
+						maxAnomalyScoreCount++;
+					}
 				}
 			}
-			test(maxAnomalyScoreCount >= 1);
-			if ("both".equals(normType))
+			
+			if (SYS_CHANGE_NORMALIZATION.equals(normType))
+			{
+				test(maxAnomalyScoreCount >= 1);
+			}
+			else if (UNUSUAL_BEHAVIOUR_NORMALIZATION.equals(normType))
 			{
 				test(maxUnusualScoreCount >= 1);
 			}
-
+			else
+			{
+				test(maxAnomalyScoreCount >= 1);
+				test(maxUnusualScoreCount >= 1);
+			}
 
 			/*
 			 * Test get records by date range with a time string
@@ -474,6 +525,35 @@ public class NormalizationTest implements Closeable
 		return true;
 	}
 
+	
+	/**
+	 * Checks the error response is correct when using an 
+	 * unknown normalisation type or the wrong type for buckets.
+	 *  
+	 * @param baseUrl
+	 * @param jobId
+	 * @throws IOException
+	 */
+	public void testInvalidNormalisationArgument(String baseUrl, String jobId) 
+	throws IOException
+	{
+		m_WebServiceClient.getRecords(baseUrl, jobId, "made_up_norm_type", 0l, 1400l);
+		ApiError error =  m_WebServiceClient.getLastError();
+		test(error != null);
+		test(error.getErrorCode() == ErrorCode.INVALID_NORMALIZATION_ARG);
+		
+		// cannot have 'both' normalization on buckets
+		m_WebServiceClient.getBuckets(baseUrl, jobId, BOTH_NORMALIZATIONS, false);
+		error =  m_WebServiceClient.getLastError();
+		test(error != null);
+		test(error.getErrorCode() == ErrorCode.INVALID_NORMALIZATION_ARG);
+		
+		m_WebServiceClient.getBucket(baseUrl, jobId, "bucket_id", true, BOTH_NORMALIZATIONS);
+		error =  m_WebServiceClient.getLastError();
+		test(error != null);
+		test(error.getErrorCode() == ErrorCode.INVALID_NORMALIZATION_ARG);
+	}
+	
 	
 	/**
 	 * Delete all the jobs in the list of job ids
@@ -563,7 +643,8 @@ public class NormalizationTest implements Closeable
 		
 		test.verifyFarequoteSysChangeNormalisation(baseUrl, farequoteJob);
 		test.verifyFarequoteUnusualNormalisedRecords(baseUrl, farequoteJob);
-		test.verifyFarequoteRecordsNormalisedForBoth(baseUrl, farequoteJob);
+		test.verifyFarequoteNormalisedRecords(baseUrl, farequoteJob);
+		test.testInvalidNormalisationArgument(baseUrl, farequoteJob);
 		
 		
 		//==========================

@@ -43,7 +43,7 @@ import java.util.List;
  * <li>Partition Field Value</li>
  * <li>Partition Field Name</li>
  * </ul>
- * Not the value fields come before the name fields
+ * Note that the value fields come before the name fields
  */
 public class InitialState implements Iterable<InitialState.InitialStateRecord>
 {
@@ -70,7 +70,7 @@ public class InitialState implements Iterable<InitialState.InitialStateRecord>
 	public class InitialStateRecord 
 	{
 		private String m_AnomalyScore;
-		private String m_Probabilty;
+		private String m_Probability;
 		private String m_Epoch;
 		private String m_Distinguisher;
 
@@ -83,7 +83,7 @@ public class InitialState implements Iterable<InitialState.InitialStateRecord>
 		public InitialStateRecord(String epoch, String probability, String distinguisher)
 		{
 			m_Epoch = epoch;
-			m_Probabilty = probability;
+			m_Probability = probability;
 			m_Distinguisher = distinguisher;
 		}
 
@@ -97,9 +97,9 @@ public class InitialState implements Iterable<InitialState.InitialStateRecord>
 			return m_AnomalyScore;
 		}
 
-		public String getProbabilty()
+		public String getProbability()
 		{
-			return m_Probabilty;
+			return m_Probability;
 		}
 
 		public String getDistinguisher()
@@ -107,14 +107,16 @@ public class InitialState implements Iterable<InitialState.InitialStateRecord>
 			return m_Distinguisher;
 		}
 		
-		public String toSysChangeCsv()
+		public String[] toSysChangeArray()
 		{
-			return String.format("%s,%s\n", m_Epoch, m_AnomalyScore);
+			String sysChangeArray[] = { m_Epoch, m_AnomalyScore };
+			return sysChangeArray;
 		}
 		
-		public String toUnusualCsv()
+		public String[] toUnusualArray()
 		{
-			return String.format("%s,%s,%s\n", m_Epoch, m_Probabilty, m_Distinguisher);
+			String unusualArray[] = { m_Epoch, m_Probability, m_Distinguisher };
+			return unusualArray;
 		}
 	}
 

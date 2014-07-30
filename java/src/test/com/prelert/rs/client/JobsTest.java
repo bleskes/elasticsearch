@@ -810,7 +810,8 @@ public class JobsTest implements Closeable
 	{
 		s_Logger.debug("Verifying results for job " + jobId);
 		
-		String [] normalizations = new String [] {"s", "u", null};
+		String [] normalizations = {"s", "u", null};
+		
 		for (String normalizationType : normalizations)
 		{
 			long skip = 0;		
@@ -829,7 +830,8 @@ public class JobsTest implements Closeable
 						buckets.getDocuments().size() -1).getTimestamp().getTime() / 1000;
 
 				SingleDocument<Bucket> bucket = m_WebServiceClient.getBucket(
-						baseUrl, jobId, Long.toString(lastBucketTime), false);
+						baseUrl, jobId, Long.toString(lastBucketTime), false, 
+						normalizationType);
 
 				test(bucket.isExists() == true);
 				test(bucket.getDocument() != null);
@@ -840,7 +842,8 @@ public class JobsTest implements Closeable
 						bucketSpan, 0, false);
 
 				SingleDocument<Bucket> nonExistentBucket = m_WebServiceClient.getBucket(
-						baseUrl, jobId, "missing_bucket", false);
+						baseUrl, jobId, "missing_bucket", false,
+						normalizationType);
 				test(nonExistentBucket.isExists() == false);
 				test(nonExistentBucket.getDocument() == null);
 				test(nonExistentBucket.getDocumentId().equals("missing_bucket"));
@@ -901,7 +904,7 @@ public class JobsTest implements Closeable
 							buckets.getDocuments().size() -1).getTimestamp().getTime() / 1000;			
 
 					SingleDocument<Bucket> bucket = m_WebServiceClient.getBucket(baseUrl, jobId, 
-							Long.toString(lastBucketTime), true);
+							Long.toString(lastBucketTime), true, normalizationType);
 
 					test(bucket.isExists() == true);
 					test(bucket.getDocument() != null);
@@ -912,7 +915,7 @@ public class JobsTest implements Closeable
 							bucketSpan, 0, true);
 
 					SingleDocument<Bucket> nonExistentBucket = m_WebServiceClient.getBucket(
-							baseUrl, jobId, "missing_bucket", false);
+							baseUrl, jobId, "missing_bucket", false, normalizationType);
 					test(nonExistentBucket.isExists() == false);
 					test(nonExistentBucket.getDocument() == null);
 					test(nonExistentBucket.getDocumentId().equals("missing_bucket"));

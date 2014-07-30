@@ -226,11 +226,13 @@ public class Normaliser
 	 * @param buckets Required for normalising by system state
 	 * change
 	 * @param records 
+	 * @param normType
 	 * @return
 	 * @throws NativeProcessRunException
 	 */
 	public List<AnomalyRecord> normaliseForBoth(Integer bucketSpan, 
-			List<Bucket> buckets, List<AnomalyRecord> records, boolean includeUnusual) 
+			List<Bucket> buckets, List<AnomalyRecord> records, 
+			NormalizationType normType) 
 	throws NativeProcessRunException
 	{
 		InitialState sysChangeState = m_JobDetailsProvider.getSystemChangeInitialiser(m_JobId);
@@ -256,14 +258,19 @@ public class Normaliser
 			writer.writeField(ProcessCtrl.RAW_ANOMALY_SCORE);
 			
 			// normalise the buckets first
-			for (Bucket bucket : buckets)
+			if (normType == NormalizationType.STATE_CHANGE || 
+					normType == NormalizationType.BOTH)
 			{
-				writer.writeNumFields(2);
-				writer.writeField("");
-				writer.writeField(Double.toString(bucket.getAnomalyScore()));
+				for (Bucket bucket : buckets)
+				{
+					writer.writeNumFields(2);
+					writer.writeField("");
+					writer.writeField(Double.toString(bucket.getAnomalyScore()));
+				}
 			}
 			
-			if (includeUnusual)
+			if (normType == NormalizationType.UNUSUAL_BEHAVIOUR || 
+					normType == NormalizationType.BOTH)
 			{
 				for (AnomalyRecord record : records)
 				{
@@ -305,7 +312,7 @@ public class Normaliser
 
 		return mergeBothScoresIntoBuckets(
 				resultsParser.getNormalisedResults(), buckets, records,
-				includeUnusual);	
+				normType);	
 	}
 	
 	
@@ -375,26 +382,47 @@ public class Normaliser
 	private List<AnomalyRecord> mergeBothScoresIntoBuckets(
 			List<NormalisedResult> normalisedScores,
 			List<Bucket> buckets,
-			List<AnomalyRecord> records, boolean includeUnusual)
+			List<AnomalyRecord> records, NormalizationType normType)
 	{
 		Iterator<NormalisedResult> scoresIter = normalisedScores.iterator();
 		
 		Map<String, Double> bucketIdToScore = new HashMap<>();
-		for (Bucket bucket : buckets)
+
+		// bucket sys change score first
+		if (normType == NormalizationType.STATE_CHANGE || 
+				normType == NormalizationType.BOTH)
 		{
-			NormalisedResult normalised = scoresIter.next();
-			bucketIdToScore.put(bucket.getId(), normalised.getNormalizedSysChangeScore());
+			for (Bucket bucket : buckets)
+			{
+				NormalisedResult normalised = scoresIter.next();
+				bucketIdToScore.put(bucket.getId(), normalised.getNormalizedSysChangeScore());
+			}
 		}
 		
-		for (AnomalyRecord record : records)
+		// set scores for records
+		if (normType == NormalizationType.UNUSUAL_BEHAVIOUR) 
 		{
-
-			Double anomalyScore = bucketIdToScore.get(record.getParent());
-			
-			record.setAnomalyScore(anomalyScore);
-			
-			if (includeUnusual)
+			for (AnomalyRecord record : records)
 			{
+				NormalisedResult normalised = scoresIter.next();
+				record.setUnusualScore(normalised.getNormalizedUnusualScore());
+			}
+		}
+		else if (normType == NormalizationType.STATE_CHANGE)
+		{
+			for (AnomalyRecord record : records)
+			{
+				Double anomalyScore = bucketIdToScore.get(record.getParent());
+				record.setAnomalyScore(anomalyScore);
+			}
+		}
+		else 
+		{
+			for (AnomalyRecord record : records)
+			{
+				Double anomalyScore = bucketIdToScore.get(record.getParent());
+				record.setAnomalyScore(anomalyScore);
+
 				NormalisedResult normalised = scoresIter.next();
 				record.setUnusualScore(normalised.getNormalizedUnusualScore());
 			}
