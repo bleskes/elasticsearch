@@ -306,7 +306,7 @@ public class NormalizationTest implements Closeable
 			double bucketMax = 0.0;
 			for (AnomalyRecord r : bucket.getRecords())
 			{
-				if (r.isSimpleCount())
+				if (r.isSimpleCount() != null && r.isSimpleCount())
 				{
 					continue;
 				}
@@ -342,7 +342,7 @@ public class NormalizationTest implements Closeable
 			double bucketMax = 0.0;
 			for (AnomalyRecord r : records.getDocuments())
 			{
-				if (r.isSimpleCount())
+				if (r.isSimpleCount() != null && r.isSimpleCount())
 				{
 					continue;
 				}
