@@ -44,6 +44,7 @@ import java.util.Set;
 import org.apache.commons.lang.SystemUtils;
 import org.apache.log4j.Logger;
 
+import org.supercsv.encoder.DefaultCsvEncoder;
 import org.supercsv.io.CsvListWriter;
 import org.supercsv.prefs.CsvPreference;
 
@@ -884,11 +885,23 @@ public class ProcessCtrl
 			InitialState state)
 	throws IOException
 	{
-		Path stateFile = Files.createTempFile(jobId + "_state", "csv");
-		
+		// createTempFile has a race condition where it may return the same
+		// temporary file name to different threads if called simultaneously
+		// from multiple threads, hence add the thread ID to avoid this
+		Path stateFile = Files.createTempFile(jobId + "_state_" + Thread.currentThread().getId(), ".csv");
+
+		// SuperCSV preferences aren't thread safe in versions up to 2.2:
+		// see http://sourceforge.net/p/supercsv/bugs/43/
+		// It might be possible to remove this and just use EXCEL_PREFERENCE
+		// directly if we upgrade to a later version of SuperCSV
+		CsvPreference preference =
+				new CsvPreference.Builder(CsvPreference.EXCEL_PREFERENCE)
+				.useEncoder(new DefaultCsvEncoder())
+				.build();
+
 		try (CsvListWriter csvWriter = new CsvListWriter(new OutputStreamWriter(
 				new FileOutputStream(stateFile.toString()),
-				StandardCharsets.UTF_8), CsvPreference.EXCEL_PREFERENCE))
+				StandardCharsets.UTF_8), preference))
 		{
 			switch (type)
 			{
