@@ -168,8 +168,8 @@ public class ElasticSearchJobProvider implements JobProvider
 	}
 		
 	/**
-	 * If the {@value ElasticSearchJobProvider#PRELERT_USAGE_INDEX} index does not exist
-	 * create it here with the usage document mapping.
+	 * If the {@value ElasticSearchJobProvider#PRELERT_USAGE_INDEX} index does 
+	 * not exist create it here with the usage document mapping.
 	 */
 	private void createUsageMeteringIndex()
 	{

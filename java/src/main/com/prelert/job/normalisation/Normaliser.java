@@ -179,7 +179,7 @@ public class Normaliser
 			{
 				for (AnomalyRecord record : bucket.getRecords())
 				{
-					if (record.isSimpleCount())
+					if (record.isSimpleCount() != null && record.isSimpleCount())
 					{
 						continue;
 					}
