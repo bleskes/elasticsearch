@@ -236,8 +236,7 @@ public class Normaliser
 		
 		return buckets;
 	}
-	
-	
+		
 	
 	/**
 	 * For each record set the normalised value by unusual behaviour
@@ -272,9 +271,12 @@ public class Normaliser
 			unusualBehaviourState = m_JobDetailsProvider.getUnusualBehaviourInitialiser(m_JobId);
 		}
 		
-		
+		long startProc = System.currentTimeMillis();
 		NormaliserProcess process = createNormaliserProcess(
 				sysChangeState, unusualBehaviourState, bucketSpan);
+		
+		System.out.println("Proc created in : " +
+				(System.currentTimeMillis() - startProc));
 		
 		
 		long start = System.currentTimeMillis();
@@ -458,7 +460,6 @@ public class Normaliser
 		
 		try
 		{
-
 			// bucket sys change score first
 			if (normType.isNormalizeStateChange())
 			{

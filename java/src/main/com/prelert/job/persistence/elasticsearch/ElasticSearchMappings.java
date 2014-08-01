@@ -39,6 +39,7 @@ import com.prelert.job.DataDescription;
 import com.prelert.job.Detector;
 import com.prelert.job.DetectorState;
 import com.prelert.job.JobDetails;
+import com.prelert.job.alert.Alert;
 import com.prelert.job.usage.Usage;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
@@ -388,6 +389,42 @@ public class ElasticSearchMappings
 						.startObject(Usage.VOLUME)
 							.field("type", "long")
 						.endObject()					
+					.endObject()
+				.endObject()
+			.endObject();
+			
+		return mapping;
+	}
+	
+	
+	/**
+	 * The Elasticsearch mappings for {@link Alert}s 
+	 * 
+	 * @return
+	 * @throws IOException
+	 */
+	static public XContentBuilder alertMapping() 
+	throws IOException
+	{
+		XContentBuilder mapping = jsonBuilder()
+			.startObject()
+				.startObject(Usage.TYPE)
+					.startObject("_all")
+						.field("enabled", false)
+					.endObject()
+					.startObject("properties")						
+						.startObject(Alert.JOB_ID)
+						 	.field("type", "string")
+						.endObject()
+						.startObject(Alert.SEVERTIY)
+							.field("type", "string")
+						.endObject()					
+						.startObject(Alert.TIMESTAMP)
+						.field("type", "date")
+						.endObject()					
+						.startObject(Alert.REASON)
+						.field("type", "string")
+						.endObject()									
 					.endObject()
 				.endObject()
 			.endObject();
