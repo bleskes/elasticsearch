@@ -156,6 +156,8 @@ public class Records extends ResourceWithJobManager
 					Response.Status.BAD_REQUEST);
 		}
 		
+		sort = AnomalyRecord.PROBABILITY;
+		
 		NormalizationType normType;
 		try
 		{

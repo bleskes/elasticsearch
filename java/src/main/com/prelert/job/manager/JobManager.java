@@ -324,12 +324,22 @@ public class JobManager
 		boolean expandForNormalisation = expand || 
 				normalisationType == NormalizationType.UNUSUAL_BEHAVIOUR;
 		
+		long start_ms = System.currentTimeMillis();
+		
 		SingleDocument<Bucket> bucket = m_JobProvider.bucket(jobId, bucketId, 
 				expandForNormalisation);
+		
+		long read_time = System.currentTimeMillis();
+		System.out.println(String.format("Got bucket for norm = %s in %d ms", 
+				normalisationType, read_time  - start_ms));
 		
 		if (bucket.isExists())
 		{
 			bucket = normalise(jobId, bucket, normalisationType);
+			
+			System.out.println(String.format("Normalised bucket for = %s in %d ms", 
+					normalisationType, System.currentTimeMillis() - read_time));
+			
 			
 			if (expand == false)
 			{
@@ -358,9 +368,21 @@ public class JobManager
 		boolean expandForNormalisation = expand || 
 				normalisationType == NormalizationType.UNUSUAL_BEHAVIOUR;
 		
+		long start_ms = System.currentTimeMillis();
+		
 		Pagination<Bucket> buckets = m_JobProvider.buckets(jobId, 
 				expandForNormalisation, skip, take);
+
+		long read_time = System.currentTimeMillis();
+		System.out.println(String.format("Got buckets for norm = %s in %d ms", 
+				normalisationType, read_time  - start_ms));
+		
+		
 		buckets = normalise(jobId, buckets, normalisationType);
+		
+		
+		System.out.println(String.format("Normalised buckets for = %s in %d ms", 
+				normalisationType, System.currentTimeMillis() - read_time));
 		
 		if (expand == false)
 		{
@@ -394,11 +416,23 @@ public class JobManager
 		boolean expandForNormalisation = expand || 
 				normalisationType == NormalizationType.UNUSUAL_BEHAVIOUR;
 		
+		long start_ms = System.currentTimeMillis();
+		
 		Pagination<Bucket> buckets =  m_JobProvider.buckets(jobId, 
 				expandForNormalisation, skip, take, 
 				startBucket, endBucket);
 		
+		long read_time = System.currentTimeMillis();
+		System.out.println(String.format("Got buckets for norm = %s in %d ms", 
+				normalisationType, read_time  - start_ms));
+		
 		buckets = normalise(jobId, buckets, normalisationType);
+		
+		
+		System.out.println(String.format("Normalised buckets for = %s in %d ms", 
+				normalisationType, System.currentTimeMillis() - read_time));
+		
+		
 		if (expand == false)
 		{
 			// remove records from buckets
@@ -505,7 +539,7 @@ public class JobManager
 		Normaliser normaliser = new Normaliser(jobId, m_JobProvider,
 				m_ProcessManager.getJobLogger(jobId));	
 
-		normaliser.normaliseForBoth(getJobBucketSpan(jobId), 
+		normaliser.normalise(getJobBucketSpan(jobId), 
 					Arrays.asList(new Bucket[] {bucket.getDocument()}),
 					records.getDocuments(), norm);		
 		
@@ -588,8 +622,7 @@ public class JobManager
 		
 		List<Bucket> bucketList = Collections.emptyList();
 		
-		if (norm == NormalizationType.STATE_CHANGE || 
-				norm == NormalizationType.BOTH)
+		if (norm.isNormalizeStateChange())
 		{
 			Pagination<Bucket> buckets = m_JobProvider.buckets(jobId, 
 					false, skip, take, epochStart, epochEnd);
@@ -603,7 +636,7 @@ public class JobManager
 		
 		Normaliser normaliser = new Normaliser(jobId, m_JobProvider,
 				m_ProcessManager.getJobLogger(jobId));	
-		normaliser.normaliseForBoth(getJobBucketSpan(jobId), 
+		normaliser.normalise(getJobBucketSpan(jobId), 
 					bucketList, records.getDocuments(), norm);
 		
 		System.out.println(String.format("Normalised for = %s in %d ms", 
@@ -661,8 +694,7 @@ public class JobManager
 			long end = Long.parseLong(bucketIds.get(bucketIds.size() -1)) + 1;
 
 			List<Bucket> bucketList;
-			if (norm == NormalizationType.STATE_CHANGE || 
-					norm == NormalizationType.BOTH)
+			if (norm.isNormalizeStateChange())
 			{
 				int bucketSkip = 0;
 				Pagination<Bucket> buckets = m_JobProvider.buckets(jobId, 
@@ -694,7 +726,7 @@ public class JobManager
 			Normaliser normaliser = new Normaliser(jobId, m_JobProvider,
 					m_ProcessManager.getJobLogger(jobId));	
 
-			normaliser.normaliseForBoth(getJobBucketSpan(jobId), 
+			normaliser.normalise(getJobBucketSpan(jobId), 
 					bucketList, records.getDocuments(), norm);
 			
 			System.out.println(String.format("Normalised for = %s in %d ms", 

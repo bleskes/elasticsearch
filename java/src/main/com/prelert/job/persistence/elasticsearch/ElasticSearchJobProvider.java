@@ -539,11 +539,13 @@ public class ElasticSearchJobProvider implements JobProvider
 			results.add(bucket);
 		}
 		
+		if (expand)
+		{
+			System.out.println("Query expanded buckets in " + 
+					(System.currentTimeMillis() - startExpand));
+			System.out.println("Record Count = " + recordCount);
+		}
 		
-		System.out.println("Query expanded buckets in " + 
-						(System.currentTimeMillis() - startExpand));
-		
-		System.out.println("Record Count = " + recordCount);
 
 		Pagination<Bucket> page = new Pagination<>();
 		page.setDocuments(results);
@@ -740,6 +742,8 @@ public class ElasticSearchJobProvider implements JobProvider
 	@Override
 	public InitialState getSystemChangeInitialiser(String jobId)
 	{
+		long start = System.currentTimeMillis();
+		
 		FilterBuilder fb = FilterBuilders.matchAllFilter();
 		
 		SortBuilder sb = new FieldSortBuilder(Bucket.ID)
@@ -776,6 +780,9 @@ public class ElasticSearchJobProvider implements JobProvider
 			getNext = searchResponse.getHits().getTotalHits() > from;
 		}
 		
+		System.out.println("Sys Change intial state in : " +
+				(System.currentTimeMillis() - start));
+		
 		return state;
 	}
 	
@@ -786,6 +793,7 @@ public class ElasticSearchJobProvider implements JobProvider
 	@Override
 	public InitialState getUnusualBehaviourInitialiser(String jobId)
 	{
+		long start = System.currentTimeMillis();
 		
 		FilterBuilder simpleCountFilter = FilterBuilders.termFilter("isSimpleCount", true);
 		FilterBuilder fb = FilterBuilders.notFilter(simpleCountFilter);
@@ -883,6 +891,10 @@ public class ElasticSearchJobProvider implements JobProvider
 			from += size;
 			getNext = searchResponse.getHits().getTotalHits() > from;
 		}
+		
+		System.out.println(from);
+		System.out.println("Unusual behaviour intial state in : " +
+				(System.currentTimeMillis() - start));
 		
 		return state;
 	}
