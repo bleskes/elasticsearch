@@ -32,11 +32,15 @@ import java.util.Set;
 
 import javax.ws.rs.core.Application;
 
+import com.prelert.job.alert.manager.AlertManager;
+import com.prelert.job.alert.persistence.elasticsearch.ElasticsearchAlertPersister;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.persistence.elasticsearch.ElasticSearchJobProvider;
+import com.prelert.job.persistence.elasticsearch.ElasticSearchPersister;
 import com.prelert.job.persistence.elasticsearch.ElasticSearchResultsReaderFactory;
 import com.prelert.job.usage.elasticsearch.ElasticsearchUsageReporterFactory;
 import com.prelert.job.warnings.elasticsearch.ElasticSearchStatusReporterFactory;
+import com.prelert.rs.provider.AlertMessageBodyWriter;
 import com.prelert.rs.provider.ElasticSearchExceptionMapper;
 import com.prelert.rs.provider.HighProportionOfBadTimestampsExceptionMapper;
 import com.prelert.rs.provider.JobIdAlreadyExistsExceptionMapper;
@@ -69,6 +73,7 @@ public class PrelertWebApp extends Application
 	private Set<Object> m_Singletons;
 	
 	private JobManager m_JobManager;
+	private AlertManager m_AlertManager;
 	
 	public PrelertWebApp()
 	{
@@ -82,7 +87,8 @@ public class PrelertWebApp extends Application
 		m_ResourceClasses.add(Logs.class);
 		
 		// Message body writers
-		m_ResourceClasses.add(PaginationWriter.class);	   
+		m_ResourceClasses.add(AlertMessageBodyWriter.class);
+		m_ResourceClasses.add(PaginationWriter.class);
 		m_ResourceClasses.add(SingleDocumentWriter.class);	   
 		m_ResourceClasses.add(JobConfigurationMessageBodyReader.class);	  
 		
@@ -111,10 +117,13 @@ public class PrelertWebApp extends Application
 				new ElasticSearchStatusReporterFactory(esJob.getClient()),
 				new ElasticsearchUsageReporterFactory(esJob.getClient())
 			);
-		//m_AlertManager = new AlertManager();
+		
+		m_AlertManager = new AlertManager(
+				new ElasticsearchAlertPersister(esJob.getClient()));
 				
 		m_Singletons = new HashSet<>();
 		m_Singletons.add(m_JobManager);	
+		m_Singletons.add(m_AlertManager);	
 	}
 	
 	@Override
