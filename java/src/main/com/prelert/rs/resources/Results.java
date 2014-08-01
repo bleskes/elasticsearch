@@ -162,6 +162,7 @@ public class Results extends ResourceWithJobManager
 					Response.Status.BAD_REQUEST);
 		}
 		
+		long start_ms = System.currentTimeMillis();
 		
 		JobManager manager = jobManager();
 		Pagination<Bucket> buckets;
@@ -174,6 +175,9 @@ public class Results extends ResourceWithJobManager
 		{
 			buckets = manager.buckets(jobId, expand, skip, take, normType);
 		}
+		
+		System.out.println(String.format("Normalised results in %d ms",
+				System.currentTimeMillis() - start_ms));
 		
 		// paging
     	if (buckets.isAllResults() == false)
