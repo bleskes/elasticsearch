@@ -32,6 +32,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 import org.apache.log4j.Logger;
 
@@ -54,16 +55,18 @@ import com.prelert.rs.data.ErrorCode;
  */
 public class Normaliser 
 {
-	static public final Logger s_Logger = Logger.getLogger(Normaliser.class);
-	
 	private JobResultsProvider m_JobDetailsProvider;
 	
 	private String m_JobId;
+
+	private Logger m_Logger; 
 	
-	public Normaliser(String jobId, JobResultsProvider jobResultsProvider)
+	public Normaliser(String jobId, JobResultsProvider jobResultsProvider, 
+			Logger logger)
 	{
 		m_JobDetailsProvider = jobResultsProvider;
 		m_JobId = jobId;
+		m_Logger = logger;
 	}
 			
 	/**	 
@@ -83,9 +86,12 @@ public class Normaliser
 		NormaliserProcess process = createNormaliserProcess(
 				state, null, bucketSpan);
 		
+		
+		long start = System.currentTimeMillis();
+		
 		NormalisedResultsParser resultsParser = new NormalisedResultsParser(
 							process.getProcess().getInputStream(),
-							s_Logger);
+							m_Logger);
 		
 		Thread parserThread = new Thread(resultsParser, m_JobId + "-Normalizer-Parser");
 		parserThread.start();
@@ -108,7 +114,7 @@ public class Normaliser
 		}
 		catch (IOException e) 
 		{
-			s_Logger.warn("Error writing to the normalizer", e);
+			m_Logger.warn("Error writing to the normalizer", e);
 		}
 		finally
 		{
@@ -131,8 +137,15 @@ public class Normaliser
 			
 		}
 		
-		return mergeNormalisedSystemChangeScoresIntoBuckets(
+		List<Bucket> result = mergeNormalisedSystemChangeScoresIntoBuckets(
 				resultsParser.getNormalisedResults(), buckets);
+		
+		
+		System.out.println("Normalise for Sys Change in : " +
+				(System.currentTimeMillis() - start));
+		
+		
+		return result;
 	}
 	
 	
@@ -154,9 +167,13 @@ public class Normaliser
 		NormaliserProcess process = createNormaliserProcess(
 				null, state, bucketSpan);
 		
+		
+		long start = System.currentTimeMillis();
+		
+		
 		NormalisedResultsParser resultsParser = new NormalisedResultsParser(
 							process.getProcess().getInputStream(),
-							s_Logger);
+							m_Logger);
 		
 		Thread parserThread = new Thread(resultsParser, m_JobId + "-Normalizer-Parser");
 		parserThread.start();
@@ -188,7 +205,7 @@ public class Normaliser
 		}
 		catch (IOException e) 
 		{
-			s_Logger.warn("Error writing to the normalizer", e);
+			m_Logger.warn("Error writing to the normalizer", e);
 		}
 		finally
 		{
@@ -211,8 +228,13 @@ public class Normaliser
 			
 		}
 		
-		return mergeNormalisedUnusualIntoBuckets(
+		List<Bucket> buckets = mergeNormalisedUnusualIntoBuckets(
 				resultsParser.getNormalisedResults(), expandedBuckets);	
+		
+		System.out.println("Normalise for unusual in : " +
+				(System.currentTimeMillis() - start));
+		
+		return buckets;
 	}
 	
 	
@@ -224,27 +246,42 @@ public class Normaliser
 	 * 
 	 * @param bucketSpan If <code>null</code> the default is used
 	 * @param buckets Required for normalising by system state
-	 * change
-	 * @param records 
+	 * change. If normType == NormalizationType.UNUSUAL_BEHAVIOUR
+	 * then this list can be empty
+	 * @param records If normType == NormalizationType.STATE_CHANGE
+	 * then this list can be empty
 	 * @param normType
 	 * @return
 	 * @throws NativeProcessRunException
 	 */
-	public List<AnomalyRecord> normaliseForBoth(Integer bucketSpan, 
+	public List<AnomalyRecord> normalise(Integer bucketSpan, 
 			List<Bucket> buckets, List<AnomalyRecord> records, 
 			NormalizationType normType) 
 	throws NativeProcessRunException
 	{
-		InitialState sysChangeState = m_JobDetailsProvider.getSystemChangeInitialiser(m_JobId);
-		InitialState unusualBehaviourState = m_JobDetailsProvider.getUnusualBehaviourInitialiser(m_JobId);
+		
+		InitialState sysChangeState = null;
+		InitialState unusualBehaviourState = null;
+		
+		if (normType.isNormalizeStateChange())
+		{
+			sysChangeState = m_JobDetailsProvider.getSystemChangeInitialiser(m_JobId);
+		}
+		if (normType.isNormalizeUnusual())
+		{
+			unusualBehaviourState = m_JobDetailsProvider.getUnusualBehaviourInitialiser(m_JobId);
+		}
 		
 		
 		NormaliserProcess process = createNormaliserProcess(
 				sysChangeState, unusualBehaviourState, bucketSpan);
 		
+		
+		long start = System.currentTimeMillis();
+		
 		NormalisedResultsParser resultsParser = new NormalisedResultsParser(
 							process.getProcess().getInputStream(),
-							s_Logger);
+							m_Logger);
 
 		Thread parserThread = new Thread(resultsParser, m_JobId + "-Normalizer-Parser");
 		parserThread.start();
@@ -258,8 +295,7 @@ public class Normaliser
 			writer.writeField(ProcessCtrl.RAW_ANOMALY_SCORE);
 			
 			// normalise the buckets first
-			if (normType == NormalizationType.STATE_CHANGE || 
-					normType == NormalizationType.BOTH)
+			if (normType.isNormalizeStateChange())
 			{
 				for (Bucket bucket : buckets)
 				{
@@ -269,8 +305,7 @@ public class Normaliser
 				}
 			}
 			
-			if (normType == NormalizationType.UNUSUAL_BEHAVIOUR || 
-					normType == NormalizationType.BOTH)
+			if (normType.isNormalizeUnusual())
 			{
 				for (AnomalyRecord record : records)
 				{
@@ -287,7 +322,7 @@ public class Normaliser
 		}
 		catch (IOException e) 
 		{
-			s_Logger.warn("Error writing to the normalizer", e);
+			m_Logger.warn("Error writing to the normalizer", e);
 		}
 		finally
 		{
@@ -310,9 +345,15 @@ public class Normaliser
 		{
 		}
 
-		return mergeBothScoresIntoBuckets(
+		List<AnomalyRecord> result = mergeBothScoresIntoRecords(
 				resultsParser.getNormalisedResults(), buckets, records,
-				normType);	
+				normType);
+		
+		System.out.println("Normalise for both in : " +
+				(System.currentTimeMillis() - start));
+		
+		return result;
+		
 	}
 	
 	
@@ -323,17 +364,33 @@ public class Normaliser
 	 * @param normalisedScores
 	 * @param buckets
 	 * @return
+	 * @throws NativeProcessRunException 
 	 */
 	private List<Bucket> mergeNormalisedSystemChangeScoresIntoBuckets(
 			List<NormalisedResult> normalisedScores,
-			List<Bucket> buckets)
+			List<Bucket> buckets) 
+	throws NativeProcessRunException
 	{
-		Iterator<Bucket> bucketIter = buckets.iterator();
+		Iterator<NormalisedResult> resultIter = normalisedScores.iterator();
 		
-		for (NormalisedResult result : normalisedScores)
+		try
 		{
-			Bucket bucket = bucketIter.next();
-			bucket.setAnomalyScore(result.getNormalizedSysChangeScore());
+			for (Bucket bucket : buckets)
+			{
+				double anomalyScore = resultIter.next().getNormalizedSysChangeScore();
+				bucket.setAnomalyScore(anomalyScore);
+				
+				for (AnomalyRecord record : bucket.getRecords())
+				{
+					record.setAnomalyScore(anomalyScore);
+				}
+			}
+		}
+		catch (NoSuchElementException e)
+		{
+			String msg = "Error iterating normalised results";
+			m_Logger.error(msg, e);
+			throw new NativeProcessRunException(msg, ErrorCode.NATIVE_PROCESS_ERROR);
 		}
 		
 		return buckets;
@@ -347,85 +404,105 @@ public class Normaliser
 	 * @param normalisedScores
 	 * @param buckets
 	 * @return
+	 * @throws NativeProcessRunException 
 	 */
 	private List<Bucket> mergeNormalisedUnusualIntoBuckets(
 			List<NormalisedResult> normalisedScores,
-			List<Bucket> buckets)
+			List<Bucket> buckets) throws NativeProcessRunException
 	{
 		Iterator<NormalisedResult> scoresIter = normalisedScores.iterator();
-		
-		for (Bucket bucket : buckets)
+
+		try
 		{
-			double bucketAnomalyScore = 0.0;
-			for (AnomalyRecord record : bucket.getRecords())
+			for (Bucket bucket : buckets)
 			{
-				if (record.isSimpleCount() != null && record.isSimpleCount())
+				double bucketAnomalyScore = 0.0;
+				for (AnomalyRecord record : bucket.getRecords())
 				{
-					continue;
+					if (record.isSimpleCount() != null && record.isSimpleCount())
+					{
+						continue;
+					}
+
+					NormalisedResult normalised = scoresIter.next();
+
+					record.setUnusualScore(normalised.getNormalizedUnusualScore());
+
+					bucketAnomalyScore = Math.max(bucketAnomalyScore,
+							normalised.getNormalizedUnusualScore());
 				}
 
-				NormalisedResult normalised = scoresIter.next();
-
-				record.setUnusualScore(normalised.getNormalizedUnusualScore());
-				
-				bucketAnomalyScore = Math.max(bucketAnomalyScore,
-						normalised.getNormalizedUnusualScore());
+				bucket.setAnomalyScore(bucketAnomalyScore);
 			}
-
-			bucket.setAnomalyScore(bucketAnomalyScore);
+		}
+		catch (NoSuchElementException e)
+		{
+			String msg = "Error iterating normalised results";
+			m_Logger.error(msg, e);
+			throw new NativeProcessRunException(msg, ErrorCode.NATIVE_PROCESS_ERROR);
 		}
 				
 		return buckets;
 	}
 	
 	
-	private List<AnomalyRecord> mergeBothScoresIntoBuckets(
+	private List<AnomalyRecord> mergeBothScoresIntoRecords(
 			List<NormalisedResult> normalisedScores,
 			List<Bucket> buckets,
-			List<AnomalyRecord> records, NormalizationType normType)
+			List<AnomalyRecord> records, NormalizationType normType) 
+	throws NativeProcessRunException
 	{
 		Iterator<NormalisedResult> scoresIter = normalisedScores.iterator();
 		
 		Map<String, Double> bucketIdToScore = new HashMap<>();
-
-		// bucket sys change score first
-		if (normType == NormalizationType.STATE_CHANGE || 
-				normType == NormalizationType.BOTH)
-		{
-			for (Bucket bucket : buckets)
-			{
-				NormalisedResult normalised = scoresIter.next();
-				bucketIdToScore.put(bucket.getId(), normalised.getNormalizedSysChangeScore());
-			}
-		}
 		
-		// set scores for records
-		if (normType == NormalizationType.UNUSUAL_BEHAVIOUR) 
+		try
 		{
-			for (AnomalyRecord record : records)
-			{
-				NormalisedResult normalised = scoresIter.next();
-				record.setUnusualScore(normalised.getNormalizedUnusualScore());
-			}
-		}
-		else if (normType == NormalizationType.STATE_CHANGE)
-		{
-			for (AnomalyRecord record : records)
-			{
-				Double anomalyScore = bucketIdToScore.get(record.getParent());
-				record.setAnomalyScore(anomalyScore);
-			}
-		}
-		else 
-		{
-			for (AnomalyRecord record : records)
-			{
-				Double anomalyScore = bucketIdToScore.get(record.getParent());
-				record.setAnomalyScore(anomalyScore);
 
-				NormalisedResult normalised = scoresIter.next();
-				record.setUnusualScore(normalised.getNormalizedUnusualScore());
+			// bucket sys change score first
+			if (normType.isNormalizeStateChange())
+			{
+				for (Bucket bucket : buckets)
+				{
+					NormalisedResult normalised = scoresIter.next();
+					bucketIdToScore.put(bucket.getId(), normalised.getNormalizedSysChangeScore());
+				}
 			}
+
+			// set scores for records
+			if (normType == NormalizationType.UNUSUAL_BEHAVIOUR) 
+			{
+				for (AnomalyRecord record : records)
+				{
+					NormalisedResult normalised = scoresIter.next();
+					record.setUnusualScore(normalised.getNormalizedUnusualScore());
+				}
+			}
+			else if (normType == NormalizationType.STATE_CHANGE)
+			{
+				for (AnomalyRecord record : records)
+				{
+					Double anomalyScore = bucketIdToScore.get(record.getParent());
+					record.setAnomalyScore(anomalyScore);
+				}
+			}
+			else 
+			{
+				for (AnomalyRecord record : records)
+				{
+					Double anomalyScore = bucketIdToScore.get(record.getParent());
+					record.setAnomalyScore(anomalyScore);
+
+					NormalisedResult normalised = scoresIter.next();
+					record.setUnusualScore(normalised.getNormalizedUnusualScore());
+				}
+			}
+		}
+		catch (NoSuchElementException e)
+		{
+			String msg = "Error iterating normalised results";
+			m_Logger.error(msg, e);
+			throw new NativeProcessRunException(msg, ErrorCode.NATIVE_PROCESS_ERROR);
 		}
 				
 		return records;
@@ -435,8 +512,8 @@ public class Normaliser
 	/***
 	 * Create and start the normalization process
 	 * 
-	 * @param type
-	 * @param state
+	 * @param sysChangeState 
+	 * @param unusualBehaviourState  
 	 * @param bucketSpan If <code>null</code> the default is used
 	 * @return
 	 * @throws NativeProcessRunException
@@ -447,21 +524,26 @@ public class Normaliser
 			Integer bucketSpan)
 	throws NativeProcessRunException
 	{
+		long startMs = System.currentTimeMillis();
 		try
 		{
 			Process proc = ProcessCtrl.buildNormaliser(m_JobId, 
 					sysChangeState, unusualBehaviourState,
-					bucketSpan,  s_Logger);
+					bucketSpan,  m_Logger);
+
+			System.out.println("Initial state written and proc created in " + 
+					(System.currentTimeMillis() - startMs));
 			
 			return new NormaliserProcess(proc);
 		}
 		catch (IOException e)
 		{
 			String msg = "Failed to start normalisation process for job " + m_JobId;
-			s_Logger.error(msg, e);
+			m_Logger.error(msg, e);
 			throw new NativeProcessRunException(msg, 
 					ErrorCode.NATIVE_PROCESS_START_ERROR, e);
 		}
+		
 	}	
 	
 	

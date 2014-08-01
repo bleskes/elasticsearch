@@ -255,7 +255,7 @@ public class AnomalyRecord
 	@JsonProperty(IS_OVERALL_RESULT)
 	public Boolean isOverallResult()
 	{
-		return m_IsOverallResult != null && m_IsOverallResult;
+		return m_IsOverallResult;
 	}
 
 	@JsonProperty(IS_OVERALL_RESULT)
@@ -267,7 +267,7 @@ public class AnomalyRecord
 	@JsonProperty(IS_SIMPLE_COUNT)
 	public Boolean isSimpleCount()
 	{
-		return m_IsSimpleCount != null && m_IsSimpleCount;
+		return m_IsSimpleCount;
 	}
 
 	@JsonProperty(IS_SIMPLE_COUNT)

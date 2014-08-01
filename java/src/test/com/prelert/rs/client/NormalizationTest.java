@@ -153,7 +153,7 @@ public class NormalizationTest implements Closeable
 	 * @return
 	 * @throws IOException
 	 */
-	public boolean verifyFarequoteSysChangeNormalisation(String baseUrl, String jobId) 
+	public boolean verifyFarequoteSysChangeNormalisedBuckets(String baseUrl, String jobId) 
 	throws IOException
 	{	
 		/*
@@ -261,7 +261,7 @@ public class NormalizationTest implements Closeable
 	 * @return
 	 * @throws IOException
 	 */
-	public boolean verifyFarequoteUnusualNormalisedRecords(String baseUrl, String jobId) 
+	public boolean verifyFarequoteUnusualNormalisedBuckets(String baseUrl, String jobId) 
 	throws IOException
 	{
 		/*
@@ -306,7 +306,7 @@ public class NormalizationTest implements Closeable
 			double bucketMax = 0.0;
 			for (AnomalyRecord r : bucket.getRecords())
 			{
-				if (r.isSimpleCount())
+				if (r.isSimpleCount() != null && r.isSimpleCount())
 				{
 					continue;
 				}
@@ -342,7 +342,7 @@ public class NormalizationTest implements Closeable
 			double bucketMax = 0.0;
 			for (AnomalyRecord r : records.getDocuments())
 			{
-				if (r.isSimpleCount())
+				if (r.isSimpleCount() != null && r.isSimpleCount())
 				{
 					continue;
 				}
@@ -632,17 +632,20 @@ public class NormalizationTest implements Closeable
 				
 		NormalizationTest test = new NormalizationTest();
 		List<String> jobUrls = new ArrayList<>();
-	
+
+		String farequoteJob = "farequote";
+		
 		File fareQuoteData = new File(prelertTestDataHome + 
 				"/engine_api_integration_test/farequote.csv");		
 		// Farequote test
-		String farequoteJob = test.createFarequoteJob(baseUrl);
+		test.createFarequoteJob(baseUrl);
 		test.m_WebServiceClient.fileUpload(baseUrl, farequoteJob, 
 				fareQuoteData, false);
 		test.m_WebServiceClient.closeJob(baseUrl, farequoteJob);
 		
-		test.verifyFarequoteSysChangeNormalisation(baseUrl, farequoteJob);
-		test.verifyFarequoteUnusualNormalisedRecords(baseUrl, farequoteJob);
+		
+		test.verifyFarequoteSysChangeNormalisedBuckets(baseUrl, farequoteJob);
+		test.verifyFarequoteUnusualNormalisedBuckets(baseUrl, farequoteJob);
 		test.verifyFarequoteNormalisedRecords(baseUrl, farequoteJob);
 		test.testInvalidNormalisationArgument(baseUrl, farequoteJob);
 		

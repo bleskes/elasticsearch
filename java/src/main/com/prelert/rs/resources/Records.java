@@ -156,6 +156,8 @@ public class Records extends ResourceWithJobManager
 					Response.Status.BAD_REQUEST);
 		}
 		
+		sort = AnomalyRecord.PROBABILITY;
+		
 		NormalizationType normType;
 		try
 		{
@@ -170,6 +172,8 @@ public class Records extends ResourceWithJobManager
 					Response.Status.BAD_REQUEST);
 		}
 		
+		long start_ms = System.currentTimeMillis();
+		
 		JobManager manager = jobManager();
 		Pagination<AnomalyRecord> records;
 
@@ -181,6 +185,9 @@ public class Records extends ResourceWithJobManager
 		{
 			records = manager.records(jobId, skip, take, sort, normType);
 		}
+		
+		System.out.println(String.format("Normalised records in %d ms",
+				System.currentTimeMillis() - start_ms));
 
 		
 		// paging

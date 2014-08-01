@@ -44,6 +44,7 @@ import java.util.Set;
 import org.apache.commons.lang.SystemUtils;
 import org.apache.log4j.Logger;
 
+import org.supercsv.encoder.DefaultCsvEncoder;
 import org.supercsv.io.CsvListWriter;
 import org.supercsv.prefs.CsvPreference;
 
@@ -110,11 +111,19 @@ public class ProcessCtrl
 	/**
 	 * Name of the System property containing the value of Prelert Home
 	 */
-	static final public String PRELERT_HOME_PROPERTY = "prelert.home";	
+	static final public String PRELERT_HOME_PROPERTY = "prelert.home";
 	/**
 	 * Name of the environment variable PRELERT_HOME 
 	 */
-	static final public String PRELERT_HOME_ENV = "PRELERT_HOME";		
+	static final public String PRELERT_HOME_ENV = "PRELERT_HOME";
+	/**
+	 * Name of the System property path to the logs directory
+	 */
+	static final public String PRELERT_LOGS_PROPERTY = "prelert.logs";
+	/**
+	 * Name of the environment variable PRELERT_LOGS 
+	 */
+	static final public String PRELERT_LOGS_ENV = "PRELERT_LOGS";
 	/**
 	 * OSX library path variable
 	 */
@@ -247,6 +256,16 @@ public class ProcessCtrl
 			prelertHome = System.getenv().get(PRELERT_HOME_ENV);
 		}
 		
+		String logPath = null;
+		if (System.getProperty(PRELERT_LOGS_PROPERTY) != null)
+		{
+			logPath = System.getProperty(PRELERT_LOGS_PROPERTY);
+		}
+		else if (System.getenv().containsKey(PRELERT_LOGS_ENV))
+		{
+			logPath = System.getenv().get(PRELERT_LOGS_ENV);
+		}
+		
 				
 		PRELERT_HOME = prelertHome; 
 		File executable = new File(new File(PRELERT_HOME, "bin"), AUTODETECT_API);		
@@ -255,8 +274,15 @@ public class ProcessCtrl
 		executable = new File(new File(PRELERT_HOME, "bin"), NORMALIZE_API);	
 		NORMALIZE_PATH = executable.getPath();
 		
-		File logDir = new File(PRELERT_HOME, "logs");	
-		LOG_DIR = logDir.toString();
+		if (logPath != null)
+		{
+			LOG_DIR = logPath;
+		}
+		else
+		{
+			File logDir = new File(PRELERT_HOME, "logs");	
+			LOG_DIR = logDir.toString();
+		}
 		
 		File configDir = new File(PRELERT_HOME, "config");	
 		CONFIG_DIR = configDir.toString();
@@ -884,11 +910,23 @@ public class ProcessCtrl
 			InitialState state)
 	throws IOException
 	{
-		Path stateFile = Files.createTempFile(jobId + "_state", "csv");
-		
+		// createTempFile has a race condition where it may return the same
+		// temporary file name to different threads if called simultaneously
+		// from multiple threads, hence add the thread ID to avoid this
+		Path stateFile = Files.createTempFile(jobId + "_state_" + Thread.currentThread().getId(), ".csv");
+
+		// SuperCSV preferences aren't thread safe in versions up to 2.2:
+		// see http://sourceforge.net/p/supercsv/bugs/43/
+		// It might be possible to remove this and just use EXCEL_PREFERENCE
+		// directly if we upgrade to a later version of SuperCSV
+		CsvPreference preference =
+				new CsvPreference.Builder(CsvPreference.EXCEL_PREFERENCE)
+				.useEncoder(new DefaultCsvEncoder())
+				.build();
+
 		try (CsvListWriter csvWriter = new CsvListWriter(new OutputStreamWriter(
 				new FileOutputStream(stateFile.toString()),
-				StandardCharsets.UTF_8), CsvPreference.EXCEL_PREFERENCE))
+				StandardCharsets.UTF_8), preference))
 		{
 			switch (type)
 			{

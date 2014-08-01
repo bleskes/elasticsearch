@@ -115,8 +115,6 @@ public class ElasticSearchJobProvider implements JobProvider
 	static public final String PRELERT_INFO_TYPE = "info";
 	static public final String PRELERT_INFO_ID = "infoStats";
 	
-	static public final int DEFAULT_PAGE_SIZE = 100;
-	
 	static public final String _PARENT = "_parent";
 	
 	
@@ -125,8 +123,7 @@ public class ElasticSearchJobProvider implements JobProvider
 	
 	private ObjectMapper m_ObjectMapper;
 	
-	private int m_PageSize;
-	
+
 	public ElasticSearchJobProvider(String elasticSearchClusterName)
 	{
 		// Multicast discovery is expected to be disabled on the ElasticSearch
@@ -148,8 +145,6 @@ public class ElasticSearchJobProvider implements JobProvider
 		m_ObjectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
 		
 		createUsageMeteringIndex();
-		
-		m_PageSize = DEFAULT_PAGE_SIZE;
 	}
 	
 	/**
@@ -171,15 +166,10 @@ public class ElasticSearchJobProvider implements JobProvider
 	{
 		return m_Node;
 	}
-	
-	public void setPageSize(int pageSize)
-	{
-		m_PageSize = pageSize;
-	}
-	
+		
 	/**
-	 * If the {@value ElasticSearchJobProvider#PRELERT_USAGE_INDEX} index does not exist
-	 * create it here with the usage document mapping.
+	 * If the {@value ElasticSearchJobProvider#PRELERT_USAGE_INDEX} index does 
+	 * not exist create it here with the usage document mapping.
 	 */
 	private void createUsageMeteringIndex()
 	{
@@ -513,6 +503,9 @@ public class ElasticSearchJobProvider implements JobProvider
 
 		List<Bucket> results = new ArrayList<>();
 		
+		long startExpand = System.currentTimeMillis();		
+		
+		int recordCount = 0;
 		for (SearchHit hit : searchResponse.getHits().getHits())
 		{
 			// Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch, 
@@ -522,18 +515,37 @@ public class ElasticSearchJobProvider implements JobProvider
 
 			Bucket bucket = m_ObjectMapper.convertValue(hit.getSource(), Bucket.class);
 
-			// TODO this is probably not the most efficient way to 
-			// run the search. Try OR filters?
 			if (expand)
 			{
+				int rskip = 0;
+				int rtake = 500;
 				Pagination<AnomalyRecord> page = this.records(
-						jobId, hit.getId(), true, 0, m_PageSize, 
+						jobId, hit.getId(), true, rskip, rtake, 
 						AnomalyRecord.PROBABILITY);				
 				bucket.setRecords(page.getDocuments());
+				
+				while (page.getHitCount() > rskip + rtake)
+				{
+					rskip += rtake;
+					page = this.records(
+							jobId, hit.getId(), true, rskip, rtake, 
+							AnomalyRecord.PROBABILITY);				
+					bucket.getRecords().addAll(page.getDocuments());
+				}
+
+				recordCount += bucket.getRecords().size();
 			}
 
 			results.add(bucket);
 		}
+		
+		if (expand)
+		{
+			System.out.println("Query expanded buckets in " + 
+					(System.currentTimeMillis() - startExpand));
+			System.out.println("Record Count = " + recordCount);
+		}
+		
 
 		Pagination<Bucket> page = new Pagination<>();
 		page.setDocuments(results);
@@ -564,9 +576,21 @@ public class ElasticSearchJobProvider implements JobProvider
 			
 			if (response.isExists() && expand)
 			{
-				Pagination<AnomalyRecord> page = this.records(jobId, 
-						bucketId, true, 0, m_PageSize, AnomalyRecord.PROBABILITY);
+				int rskip = 0;
+				int rtake = 500;
+				Pagination<AnomalyRecord> page = this.records(
+						jobId, bucketId, true, rskip, rtake, 
+						AnomalyRecord.PROBABILITY);				
 				bucket.setRecords(page.getDocuments());
+				
+				while (page.getHitCount() > rskip + rtake)
+				{
+					rskip += rtake;
+					page = this.records(
+							jobId, bucketId, true, rskip, rtake, 
+							AnomalyRecord.PROBABILITY);				
+					bucket.getRecords().addAll(page.getDocuments());
+				}
 			}
 			
 			doc.setDocument(bucket);
@@ -608,6 +632,11 @@ public class ElasticSearchJobProvider implements JobProvider
 		return records(jobId, includeSimpleCount, skip, take, bucketFilter, sortField);
 	}
 	
+	/**
+	 * Light testing suggests that this method is actually 
+	 * slower than querying each bucket individually.
+	 * Best to query records by bucket id in a loop
+	 */
 	@Override
 	public Pagination<AnomalyRecord> records(String jobId,
 			List<String> bucketIds, boolean includeSimpleCount, int skip, 
@@ -713,6 +742,8 @@ public class ElasticSearchJobProvider implements JobProvider
 	@Override
 	public InitialState getSystemChangeInitialiser(String jobId)
 	{
+		long start = System.currentTimeMillis();
+		
 		FilterBuilder fb = FilterBuilders.matchAllFilter();
 		
 		SortBuilder sb = new FieldSortBuilder(Bucket.ID)
@@ -749,6 +780,9 @@ public class ElasticSearchJobProvider implements JobProvider
 			getNext = searchResponse.getHits().getTotalHits() > from;
 		}
 		
+		System.out.println("Sys Change intial state in : " +
+				(System.currentTimeMillis() - start));
+		
 		return state;
 	}
 	
@@ -759,6 +793,7 @@ public class ElasticSearchJobProvider implements JobProvider
 	@Override
 	public InitialState getUnusualBehaviourInitialiser(String jobId)
 	{
+		long start = System.currentTimeMillis();
 		
 		FilterBuilder simpleCountFilter = FilterBuilders.termFilter("isSimpleCount", true);
 		FilterBuilder fb = FilterBuilders.notFilter(simpleCountFilter);
@@ -856,6 +891,10 @@ public class ElasticSearchJobProvider implements JobProvider
 			from += size;
 			getNext = searchResponse.getHits().getTotalHits() > from;
 		}
+		
+		System.out.println(from);
+		System.out.println("Unusual behaviour intial state in : " +
+				(System.currentTimeMillis() - start));
 		
 		return state;
 	}

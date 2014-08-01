@@ -35,6 +35,12 @@ public enum NormalizationType
 {
 	STATE_CHANGE 
 	{	
+		@Override
+		public boolean isNormalizeStateChange()
+		{
+			return true;
+		}
+		
 		@Override 
 		public String toString()
 		{
@@ -43,6 +49,12 @@ public enum NormalizationType
 	},
 	UNUSUAL_BEHAVIOUR 
 	{		
+		@Override
+		public boolean isNormalizeUnusual()
+		{
+			return true;
+		}
+		
 		@Override 
 		public String toString()
 		{
@@ -51,12 +63,33 @@ public enum NormalizationType
 	},
 	BOTH
 	{
+		@Override
+		public boolean isNormalizeStateChange()
+		{
+			return true;
+		}
+		@Override
+		public boolean isNormalizeUnusual()
+		{
+			return true;
+		}
+		
 		@Override 
 		public String toString()
 		{
 			return BOTH_NORMALIZATIONS;
 		}
 	};
+	
+	public boolean isNormalizeStateChange()
+	{
+		return false;
+	}
+	
+	public boolean isNormalizeUnusual()
+	{
+		return false;
+	}
 	
 	static final public String SYS_CHANGE_NORMALIZATION = "s";
 	static final public String UNUSUAL_BEHAVIOUR_NORMALIZATION = "u";

@@ -324,12 +324,22 @@ public class JobManager
 		boolean expandForNormalisation = expand || 
 				normalisationType == NormalizationType.UNUSUAL_BEHAVIOUR;
 		
+		long start_ms = System.currentTimeMillis();
+		
 		SingleDocument<Bucket> bucket = m_JobProvider.bucket(jobId, bucketId, 
 				expandForNormalisation);
+		
+		long read_time = System.currentTimeMillis();
+		System.out.println(String.format("Got bucket for norm = %s in %d ms", 
+				normalisationType, read_time  - start_ms));
 		
 		if (bucket.isExists())
 		{
 			bucket = normalise(jobId, bucket, normalisationType);
+			
+			System.out.println(String.format("Normalised bucket for = %s in %d ms", 
+					normalisationType, System.currentTimeMillis() - read_time));
+			
 			
 			if (expand == false)
 			{
@@ -355,11 +365,24 @@ public class JobManager
 			boolean expand, int skip, int take, NormalizationType normalisationType)
 	throws NativeProcessRunException
 	{
-		boolean expandForNormalisation = expand || normalisationType.equals("u");
+		boolean expandForNormalisation = expand || 
+				normalisationType == NormalizationType.UNUSUAL_BEHAVIOUR;
+		
+		long start_ms = System.currentTimeMillis();
 		
 		Pagination<Bucket> buckets = m_JobProvider.buckets(jobId, 
 				expandForNormalisation, skip, take);
+
+		long read_time = System.currentTimeMillis();
+		System.out.println(String.format("Got buckets for norm = %s in %d ms", 
+				normalisationType, read_time  - start_ms));
+		
+		
 		buckets = normalise(jobId, buckets, normalisationType);
+		
+		
+		System.out.println(String.format("Normalised buckets for = %s in %d ms", 
+				normalisationType, System.currentTimeMillis() - read_time));
 		
 		if (expand == false)
 		{
@@ -390,13 +413,26 @@ public class JobManager
 			NormalizationType normalisationType)
 	throws NativeProcessRunException
 	{
-		boolean expandForNormalisation = expand || normalisationType.equals("u");
+		boolean expandForNormalisation = expand || 
+				normalisationType == NormalizationType.UNUSUAL_BEHAVIOUR;
+		
+		long start_ms = System.currentTimeMillis();
 		
 		Pagination<Bucket> buckets =  m_JobProvider.buckets(jobId, 
 				expandForNormalisation, skip, take, 
 				startBucket, endBucket);
 		
+		long read_time = System.currentTimeMillis();
+		System.out.println(String.format("Got buckets for norm = %s in %d ms", 
+				normalisationType, read_time  - start_ms));
+		
 		buckets = normalise(jobId, buckets, normalisationType);
+		
+		
+		System.out.println(String.format("Normalised buckets for = %s in %d ms", 
+				normalisationType, System.currentTimeMillis() - read_time));
+		
+		
 		if (expand == false)
 		{
 			// remove records from buckets
@@ -414,7 +450,8 @@ public class JobManager
 			Pagination<Bucket> buckets, NormalizationType normalisationType) 
 	throws NativeProcessRunException
 	{
-		Normaliser normaliser = new Normaliser(jobId, m_JobProvider);
+		Normaliser normaliser = new Normaliser(jobId, m_JobProvider,
+				m_ProcessManager.getJobLogger(jobId));
 		
 		if (normalisationType == NormalizationType.UNUSUAL_BEHAVIOUR)
 		{
@@ -435,7 +472,8 @@ public class JobManager
 			SingleDocument<Bucket> bucket, NormalizationType normalisationType) 
 	throws NativeProcessRunException
 	{
-		Normaliser normaliser = new Normaliser(jobId, m_JobProvider);
+		Normaliser normaliser = new Normaliser(jobId, m_JobProvider,
+				m_ProcessManager.getJobLogger(jobId));
 		
 		if (normalisationType == NormalizationType.UNUSUAL_BEHAVIOUR)
 		{
@@ -498,9 +536,10 @@ public class JobManager
 		
 		SingleDocument<Bucket> bucket = m_JobProvider.bucket(jobId, bucketId, false); 
 		
-		Normaliser normaliser = new Normaliser(jobId, m_JobProvider);	
+		Normaliser normaliser = new Normaliser(jobId, m_JobProvider,
+				m_ProcessManager.getJobLogger(jobId));	
 
-		normaliser.normaliseForBoth(getJobBucketSpan(jobId), 
+		normaliser.normalise(getJobBucketSpan(jobId), 
 					Arrays.asList(new Bucket[] {bucket.getDocument()}),
 					records.getDocuments(), norm);		
 		
@@ -509,7 +548,8 @@ public class JobManager
 	
 	/**
 	 * Get a page of anomaly records from the buckets between
-	 * epochStart and epochEnd. Does not include simple count records.
+	 * epochStart and epochEnd. 
+	 * Does not include simple count records.
 	 * Records are sorted by probability  
 	 * 
 	 * @param jobId
@@ -528,38 +568,6 @@ public class JobManager
 				DEFAULT_RECORD_SORT_FIELD, NormalizationType.BOTH);
 	}
 	
-	/**
-	 * Get a page of anomaly records from the buckets between
-	 * epochStart and epochEnd. Does not include simple count records.
-	 * 
-	 * @param jobId
-	 * @param skip
-	 * @param take
-	 * @param epochStart
-	 * @param epochEnd
-	 * @param sortField
-	 * @param norm
-	 * @return
-	 * @throws NativeProcessRunException
-	 */
-	public Pagination<AnomalyRecord> records(String jobId, 
-			int skip, int take, long epochStart, long epochEnd, String sortField,
-			NormalizationType norm) 
-	throws NativeProcessRunException 
-	{
-		Pagination<AnomalyRecord> records = m_JobProvider.records(jobId, 
-				false, skip, take, epochStart, epochEnd, sortField);
-		
-		Pagination<Bucket> buckets = m_JobProvider.buckets(jobId, 
-				false, skip, take, epochStart, epochEnd);
-		
-		Normaliser normaliser = new Normaliser(jobId, m_JobProvider);	
-		
-		normaliser.normaliseForBoth(getJobBucketSpan(jobId), 
-					buckets.getDocuments(), records.getDocuments(), norm);
-		
-		return records; 
-	}
 	
 	/**
 	 * Get a page of anomaly records from all buckets.
@@ -582,8 +590,68 @@ public class JobManager
 	
 	
 	/**
+	 * Get a page of anomaly records from the buckets between
+	 * epochStart and epochEnd. Does not include simple count records.
+	 * If norm == NormalizationType.STATE_CHANGE or norm == NormalizationType.BOTH
+	 * then get the parent buckets and set the state change anomaly score
+	 * 
+	 * @param jobId
+	 * @param skip
+	 * @param take
+	 * @param epochStart
+	 * @param epochEnd
+	 * @param sortField
+	 * @param norm
+	 * @return
+	 * @throws NativeProcessRunException
+	 */
+	public Pagination<AnomalyRecord> records(String jobId, 
+			int skip, int take, long epochStart, long epochEnd, String sortField,
+			NormalizationType norm) 
+	throws NativeProcessRunException 
+	{
+		long start_ms = System.currentTimeMillis();
+		
+		Pagination<AnomalyRecord> records = m_JobProvider.records(jobId, 
+				false, skip, take, epochStart, epochEnd, sortField);
+		
+		if (records.getHitCount() == 0)
+		{
+			return records;
+		}
+		
+		List<Bucket> bucketList = Collections.emptyList();
+		
+		if (norm.isNormalizeStateChange())
+		{
+			Pagination<Bucket> buckets = m_JobProvider.buckets(jobId, 
+					false, skip, take, epochStart, epochEnd);
+			
+			bucketList = buckets.getDocuments();
+		}
+		
+		long read_time = System.currentTimeMillis();
+		System.out.println(String.format("Got records for norm = %s in %d ms", 
+				norm, read_time  - start_ms));
+		
+		Normaliser normaliser = new Normaliser(jobId, m_JobProvider,
+				m_ProcessManager.getJobLogger(jobId));	
+		normaliser.normalise(getJobBucketSpan(jobId), 
+					bucketList, records.getDocuments(), norm);
+		
+		System.out.println(String.format("Normalised for = %s in %d ms", 
+				norm, System.currentTimeMillis() - read_time));
+		
+		return records; 
+	}
+	
+
+	/**
 	 * Get a page of anomaly records from all buckets.
 	 * Does not include simple count records.
+	 * 
+ 	 * If norm == NormalizationType.STATE_CHANGE or norm == NormalizationType.BOTH
+	 * then get the parent buckets and set the state change anomaly score
 	 * 
 	 * @param jobId
 	 * @param skip Skip the first N records. This parameter is for paging
@@ -598,6 +666,9 @@ public class JobManager
 			int skip, int take, String sortField, NormalizationType norm) 
 	throws NativeProcessRunException 
 	{
+		long start_ms = System.currentTimeMillis();
+		
+		
 		Pagination<AnomalyRecord> records = m_JobProvider.records(jobId, 
 				false, skip, take, sortField);
 		
@@ -622,23 +693,44 @@ public class JobManager
 			// we want the last bucket inclusive so +1 to the value
 			long end = Long.parseLong(bucketIds.get(bucketIds.size() -1)) + 1;
 
-			int bucketSkip = 0;
-			Pagination<Bucket> buckets = m_JobProvider.buckets(jobId, 
-					false, bucketSkip, take, start, end);
-			bucketSkip += take;
-			while (bucketSkip < buckets.getHitCount())
+			List<Bucket> bucketList;
+			if (norm.isNormalizeStateChange())
 			{
-				Pagination<Bucket> extraBuckets = m_JobProvider.buckets(
-						jobId, false, bucketSkip, take, start, end);
-				
+				int bucketSkip = 0;
+				Pagination<Bucket> buckets = m_JobProvider.buckets(jobId, 
+						false, bucketSkip, take, start, end);
 				bucketSkip += take;
-				buckets.getDocuments().addAll(extraBuckets.getDocuments());
+				while (bucketSkip < buckets.getHitCount())
+				{
+					Pagination<Bucket> extraBuckets = m_JobProvider.buckets(
+							jobId, false, bucketSkip, take, start, end);
+
+					bucketSkip += take;
+					buckets.getDocuments().addAll(extraBuckets.getDocuments());
+				}
+				
+				bucketList = buckets.getDocuments();
 			}
+			else
+			{
+				bucketList = Collections.emptyList();
+			}
+			
+			
+			long read_time = System.currentTimeMillis();
+			System.out.println(String.format("Got records for norm = %s in %d ms", 
+					norm, read_time - start_ms));
+			
+			
+			
+			Normaliser normaliser = new Normaliser(jobId, m_JobProvider,
+					m_ProcessManager.getJobLogger(jobId));	
 
-			Normaliser normaliser = new Normaliser(jobId, m_JobProvider);	
-
-			normaliser.normaliseForBoth(getJobBucketSpan(jobId), 
-					buckets.getDocuments(), records.getDocuments(), norm);
+			normaliser.normalise(getJobBucketSpan(jobId), 
+					bucketList, records.getDocuments(), norm);
+			
+			System.out.println(String.format("Normalised for = %s in %d ms", 
+					norm, System.currentTimeMillis() - read_time));
 		}
 		catch (NumberFormatException nfe)
 		{
@@ -999,6 +1091,5 @@ public class JobManager
 
 		s_Logger.info("Wrote Prelert info " + doc.toString() + " to ElasticSearch");
 	}
-	
 
 }
