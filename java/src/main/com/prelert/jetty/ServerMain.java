@@ -150,6 +150,7 @@ public class ServerMain
 				org.glassfish.jersey.servlet.ServletContainer.class,
 				BASE_PATH);
 		jerseyServlet.setInitOrder(1);
+		jerseyServlet.setAsyncSupported(true);
 
 		// Set the application class
 		jerseyServlet.setInitParameter(ServletProperties.JAXRS_APPLICATION_CLASS,

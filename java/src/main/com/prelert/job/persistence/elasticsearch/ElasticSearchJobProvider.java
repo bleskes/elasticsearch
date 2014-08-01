@@ -73,6 +73,7 @@ import com.prelert.job.JobDetails;
 import com.prelert.job.JobIdAlreadyExistsException;
 import com.prelert.job.JobStatus;
 import com.prelert.job.UnknownJobException;
+import com.prelert.job.alert.Alert;
 import com.prelert.job.normalisation.InitialState;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.usage.Usage;
@@ -321,6 +322,7 @@ public class ElasticSearchJobProvider implements JobProvider
 			XContentBuilder recordMapping = ElasticSearchMappings.recordMapping();
 			XContentBuilder detectorStateMapping = ElasticSearchMappings.detectorStateMapping();
 			XContentBuilder usageMapping = ElasticSearchMappings.usageMapping();
+			XContentBuilder alertMapping = ElasticSearchMappings.alertMapping();
 			
 			m_Client.admin().indices()
 					.prepareCreate(job.getId())					
@@ -330,6 +332,7 @@ public class ElasticSearchJobProvider implements JobProvider
 					.addMapping(AnomalyRecord.TYPE, recordMapping)
 					.addMapping(DetectorState.TYPE, detectorStateMapping)
 					.addMapping(Usage.TYPE, usageMapping)
+					.addMapping(Alert.TYPE, alertMapping)
 					.get();
 
 			
