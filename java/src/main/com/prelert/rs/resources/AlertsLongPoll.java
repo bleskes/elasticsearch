@@ -27,7 +27,6 @@
 
 package com.prelert.rs.resources;
 
-
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -77,7 +76,15 @@ public class AlertsLongPoll extends ResourceWithJobManager
 		s_Logger.debug("long poll alerts");
 		
 		AlertManager alertManager = alertManager();
-		alertManager.registerRequest(asyncResponse, timeout);
+		
+		if (cursor.isEmpty() == false)
+		{
+			alertManager.registerRequestWithCursor(asyncResponse, cursor, timeout); 
+		}
+		else
+		{
+			alertManager.registerRequest(asyncResponse, timeout);
+		}
 	}
 
 	
@@ -94,7 +101,16 @@ public class AlertsLongPoll extends ResourceWithJobManager
 		s_Logger.debug("long poll alerts for job " + jobId);
 		
 		AlertManager alertManager = alertManager();
-		alertManager.registerRequest(asyncResponse, jobId, timeout);
+		
+		if (cursor.isEmpty() == false)
+		{
+			alertManager.registerRequestWithCursor(asyncResponse, jobId, 
+					cursor, timeout); 
+		}
+		else
+		{
+			alertManager.registerRequest(asyncResponse, jobId, timeout);
+		}
 	}
 		
 }

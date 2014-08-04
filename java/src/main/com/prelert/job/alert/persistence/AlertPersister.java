@@ -28,6 +28,7 @@
 package com.prelert.job.alert.persistence;
 
 import java.io.IOException;
+import java.util.List;
 
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.alert.Alert;
@@ -87,4 +88,29 @@ public interface AlertPersister
 	 * alert Ids in the datastore
 	 */
 	public String lastAlertId();
+	
+	
+	/**
+	 * Return all alerts in the datastore occurring after 
+	 * <code>alertId</code> but not including <code>alertId</code>.
+	 * Alert Ids are sequence numbers.
+	 * 
+	 * @param alertId.
+	 * @return
+	 */
+	public List<Alert> alertsAfter(String alertId);
+	
+	
+	/**
+	 * Return all alerts for the given job in the datastore 
+	 * occurring after <code>alertId</code> but not including 
+	 * <code>alertId</code>.
+	 *
+	 * Alert Ids are sequence numbers.
+	 * 
+	 * @param alertId
+	 * @param jobId
+	 * @return
+	 */
+	public List<Alert> alertsAfter(String alertId, String jobId);
 }
