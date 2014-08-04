@@ -30,6 +30,7 @@ package com.prelert.job.alert.manager;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -56,7 +57,8 @@ import com.prelert.rs.data.Pagination;
  * Handles Asynchronous HTTP requests
  * 
  * Alert Ids are a sequence shared between all jobs starting at 1
- * each alert has a unique id. 
+ * each alert has a unique id. The function {@linkplain #alertsAfterCursor(String)}
+ * returns a list of alerts in the sequence after the alert Id (cursor) parameter
  */
 public class AlertManager implements TimeoutHandler
 {
@@ -117,6 +119,7 @@ public class AlertManager implements TimeoutHandler
 	}
 	
 	/**
+	 * Non blocking asynchronous request for alerts
 	 * 
 	 * @param response
 	 * @param timeout_secs
@@ -130,7 +133,34 @@ public class AlertManager implements TimeoutHandler
 		registerListener(listener);
 	}
 	
-	
+	/**
+	 * If any alerts after <code>alertCursor</code> then return 
+	 * them straight away else continue with the async request
+	 *  
+	 * @param response
+	 * @param alertCursor
+	 * @param timeout_secs
+	 */
+	public void registerRequestWithCursor(AsyncResponse response, String alertCursor, 
+			long timeout_secs)
+	{
+		List<Alert> alerts = m_AlertPersister.alertsAfter(alertCursor);
+		if (alerts.size() > 0)
+		{
+			response.resume(alerts);
+			return;
+		}
+		
+		registerRequest(response, timeout_secs);
+	}
+
+	/**
+	 * Non blocking asynchronous request for alerts by job
+	 * 
+	 * @param response
+	 * @param jobId
+	 * @param timeout_secs
+	 */
 	public void registerRequest(AsyncResponse response, String jobId, 
 			long timeout_secs)
 	{
@@ -141,6 +171,27 @@ public class AlertManager implements TimeoutHandler
 		registerListener(listener);
 	}
 
+	/***
+	 * If any alerts after <code>alertCursor</code> for <code>jobId</code> 
+	 * then return them straight away else continue with the async request
+	 * 
+	 * @param response
+	 * @param jobId
+	 * @param alertCursor
+	 * @param timeout_secs
+	 */
+	public void registerRequestWithCursor(AsyncResponse response, String jobId,
+			String alertCursor, long timeout_secs)
+	{
+		List<Alert> alerts = m_AlertPersister.alertsAfter(alertCursor, jobId);
+		if (alerts.size() > 0)
+		{
+			response.resume(alerts);
+			return;
+		}
+		
+		registerRequest(response, jobId, timeout_secs);
+	}
 	
 	/**
 	 * AysncResponse timeout handler
@@ -250,7 +301,6 @@ public class AlertManager implements TimeoutHandler
 		return m_AlertPersister.alertsForJob(jobId, skip, take, epochStart,
 				epochEnd);
 	}
-	
 	
 	
 	private String generateAlertId()

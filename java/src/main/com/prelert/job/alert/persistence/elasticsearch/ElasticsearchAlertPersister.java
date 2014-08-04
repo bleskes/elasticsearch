@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.xcontent.XContentBuilder;
@@ -181,5 +182,61 @@ public class ElasticsearchAlertPersister implements AlertPersister
 		}
 		
 		return searchResponse.getHits().getHits()[0].getId();
+	}
+	
+
+	@Override
+	public List<Alert> alertsAfter(String alertId) 
+	{
+		return getAlertsAfter(alertId, "_all");
+	}
+	
+	
+	@Override
+	public List<Alert> alertsAfter(String alertId, String jobId) 
+	{
+		return getAlertsAfter(alertId, jobId);
+	}
+	
+	private List<Alert> getAlertsAfter(String alertId, String index) 
+	{
+		RangeFilterBuilder fb = FilterBuilders.rangeFilter(Alert.ID);
+		fb.gt(alertId);
+
+		SortBuilder sb = new FieldSortBuilder(Alert.ID)
+							.ignoreUnmapped(true)
+							.order(SortOrder.ASC);
+
+		int from = 0;
+		int size = 1000;
+		List<Alert> results = new ArrayList<>();
+
+		SearchRequestBuilder searchBuilder =  m_Client.prepareSearch(index)
+											.setTypes(Alert.TYPE)		
+											.addSort(sb)
+											.setPostFilter(fb);
+		while (true)
+		{
+			SearchResponse searchResponse = searchBuilder
+												.setFrom(from)
+												.setSize(size)
+												.get();
+
+			for (SearchHit hit : searchResponse.getHits().getHits())
+			{
+				Alert alert = m_ObjectMapper.convertValue(hit.getSource(), 
+						Alert.class);
+				results.add(alert);
+			}
+
+			if (searchResponse.getHits().getTotalHits() > from + size)
+			{
+				break;
+			}
+			
+			from += size;
+		}
+
+		return results;
 	}
 }
