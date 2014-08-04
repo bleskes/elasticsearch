@@ -131,10 +131,39 @@ public class AutoDetectResultsParser
 				logger.error("Unexpected end of Json input");
 				break;
 			}
-			Bucket bucket = Bucket.parseJson(parser);
-			persister.persistBucket(bucket);
+			if (token == JsonToken.START_OBJECT)
+			{
+				token = parser.nextToken();
+				if (token == JsonToken.FIELD_NAME)
+				{
+					String fieldName = parser.getCurrentName();
+					switch (fieldName)
+					{
+					case Bucket.FIRST_FIELD:
+						Bucket bucket = Bucket.parseJsonAfterStartObject(parser);
+						persister.persistBucket(bucket);
 			
-			logger.debug("Bucket number " + ++bucketCount + " parsed from output");
+						logger.debug("Bucket number " + ++bucketCount + " parsed from output");
+						break;
+					case Quantiles.FIRST_FIELD:
+						Quantiles quantiles = Quantiles.parseJsonAfterStartObject(parser);
+						persister.persistQuantiles(quantiles);
+			
+						logger.debug("Quantiles parsed from output");
+						break;
+					default:
+						logger.error("Unexpected object parsed from output - first field " + fieldName);
+						throw new AutoDetectParseException(
+								"Invalid JSON  - unexpected object parsed from output - first field " + fieldName);
+					}
+				}
+			}
+			else
+			{
+				logger.error("Expecting Json Field name token after the Start Object token");
+				throw new AutoDetectParseException(
+						"Invalid JSON  - object should start with a field name, not " + parser.getText());
+			}
 
 			token = parser.nextToken();
 		}

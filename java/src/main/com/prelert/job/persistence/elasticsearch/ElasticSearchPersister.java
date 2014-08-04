@@ -60,9 +60,10 @@ import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.Detector;
 import com.prelert.rs.data.ErrorCode;
+import com.prelert.rs.data.Quantiles;
 
 /**
- * Saves result Buckets and DetectorState to ElasticSearch<br/>
+ * Saves result Buckets, Quantiles and DetectorState to ElasticSearch<br/>
  * 
  * <b>Buckets</b> are written with the following structure:
  * <h2>Bucket</h2>
@@ -79,6 +80,9 @@ import com.prelert.rs.data.ErrorCode;
  * for every detector in each bucket. The detector has a name/key every
  * record has a detector name field so you can search for records by
  * detector<br/>
+ * <br/>
+ * <b>Quantiles</b> may contain model quantiles used in normalisation
+ * and are stored in documents of type {@link Quantiles.TYPE} 
  * <br/>
  * <b>DetectorState</b> may contain model state for multiple detectors each of 
  * which is stored in a separate document of type {@link DetectorState.TYPE} 
@@ -185,7 +189,49 @@ public class ElasticSearchPersister implements JobDataPersister
 			s_Logger.error("Error writing bucket state", e);
 		}
 	}
-	
+
+
+	/**
+	 * The quantiles objects are written with one of two keys, such that
+	 * the latest quantiles will overwrite the previous ones.  For each ES index, 
+	 * which corresponds to a job, there can only be 2 quantiles documents,
+	 * one for system change quantiles and the other for unusual behaviour
+	 * quantiles.
+	 * @param quantiles If <code>null</code> then returns straight away.
+	 * @throws IOException
+	 */
+	@Override
+	public void persistQuantiles(Quantiles quantiles)
+	{
+		if (quantiles == null)
+		{
+			s_Logger.warn("No quantiles to persist for job " + m_JobId);
+			return;
+		}
+		
+		try
+		{
+			XContentBuilder content = serialiseQuantiles(quantiles);
+
+			m_Client.prepareIndex(m_JobId, Quantiles.TYPE, quantiles.getId())
+					.setSource(content)
+					.execute().actionGet();
+
+			/* TODO this method is only in version ElasticSearch 1.0
+			if (response.isCreated() == false)
+			{
+				s_Logger.error(String.format("Bucket %s document not created",
+						bucket.getId()));
+			}
+			*/
+		}
+		catch (IOException e)
+		{
+			s_Logger.error("Error writing quantiles", e);
+		}
+	}
+
+
 	/**
 	 * The state object can contain multiple detector states each of which 
 	 * will be written to an separate document. For each ES index, 
@@ -371,7 +417,26 @@ public class ElasticSearchPersister implements JobDataPersister
 		
 		return builder;
 	}
-	
+
+
+	/**
+	 * Return the quantiles as serialisable content
+	 * @param quantiles
+	 * @return
+	 * @throws IOException
+	 */
+	private XContentBuilder serialiseQuantiles(Quantiles quantiles)
+	throws IOException
+	{
+		XContentBuilder builder = jsonBuilder().startObject()
+				.field(Quantiles.ID, quantiles.getId())
+				.field(Quantiles.QUANTILE_STATE, quantiles.getState())
+				.endObject();
+
+		return builder;
+	}
+
+
 	/**
 	 * Return the detector as serialisable content
 	 * @param detector

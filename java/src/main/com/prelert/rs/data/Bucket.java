@@ -59,10 +59,17 @@ public class Bucket
 	public static final String RECORD_COUNT = "recordCount";
 	public static final String DETECTORS = "detectors";
 	public static final String RECORDS = "records";
-	
-	
-	static public final String TYPE = "bucket";
-	
+
+	/**
+	 * Elasticsearch type
+	 */
+	public static final String TYPE = "bucket";
+
+	/**
+	 * Used as a hint that a given JSON object represents a bucket
+	 */
+	public static final String FIRST_FIELD = TIMESTAMP;
+
 	private static final Logger s_Logger = Logger.getLogger(Bucket.class);
 	
 	private String m_Id;
@@ -186,8 +193,6 @@ public class Bucket
 	static public Bucket parseJson(JsonParser parser) 
 	throws JsonParseException, IOException, AutoDetectParseException
 	{
-		Bucket bucket = new Bucket();
-		
 		JsonToken token = parser.getCurrentToken();
 		if (JsonToken.START_OBJECT != token)
 		{
@@ -197,8 +202,35 @@ public class Bucket
 			
 			throw new AutoDetectParseException(msg);
 		}
-		
+
 		token = parser.nextToken();
+		return parseJsonAfterStartObject(parser);
+	}
+
+
+	/**
+	 * Create a new <code>Bucket</code> and populate it from the JSON parser.
+	 * The parser must be pointing at the first token inside the object.  It
+	 * is assumed that prior code has validated that the previous token was
+	 * the start of an object.  Then all the object's fields are read and if
+	 * they match the property names the appropriate members are set.
+	 * 
+	 * Does not validate that all the properties (or any) have been set but if
+	 * parsing fails an exception will be thrown.
+	 * 
+	 * @param parser The JSON Parser should be pointing to the start of the object,
+	 * when the function returns it will be pointing to the end.
+	 * @return The new bucket
+	 * @throws JsonParseException
+	 * @throws IOException
+	 * @throws AutoDetectParseException
+	 */
+	static public Bucket parseJsonAfterStartObject(JsonParser parser) 
+	throws JsonParseException, IOException, AutoDetectParseException
+	{
+		Bucket bucket = new Bucket();
+
+		JsonToken token = parser.getCurrentToken();
 		while (token != JsonToken.END_OBJECT)
 		{						
 			switch(token)

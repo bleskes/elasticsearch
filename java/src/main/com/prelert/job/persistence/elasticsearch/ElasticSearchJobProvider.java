@@ -82,6 +82,7 @@ import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.Detector;
 import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.Pagination;
+import com.prelert.rs.data.Quantiles;
 import com.prelert.rs.data.SingleDocument;
 
 public class ElasticSearchJobProvider implements JobProvider
@@ -320,6 +321,7 @@ public class ElasticSearchJobProvider implements JobProvider
 			XContentBuilder bucketMapping = ElasticSearchMappings.bucketMapping();
 			XContentBuilder detectorMapping = ElasticSearchMappings.detectorMapping();
 			XContentBuilder recordMapping = ElasticSearchMappings.recordMapping();
+			XContentBuilder quantilesMapping = ElasticSearchMappings.quantilesMapping();
 			XContentBuilder detectorStateMapping = ElasticSearchMappings.detectorStateMapping();
 			XContentBuilder usageMapping = ElasticSearchMappings.usageMapping();
 			XContentBuilder alertMapping = ElasticSearchMappings.alertMapping();
@@ -330,6 +332,7 @@ public class ElasticSearchJobProvider implements JobProvider
 					.addMapping(Bucket.TYPE, bucketMapping)
 					.addMapping(Detector.TYPE, detectorMapping)
 					.addMapping(AnomalyRecord.TYPE, recordMapping)
+					.addMapping(Quantiles.TYPE, quantilesMapping)
 					.addMapping(DetectorState.TYPE, detectorStateMapping)
 					.addMapping(Usage.TYPE, usageMapping)
 					.addMapping(Alert.TYPE, alertMapping)

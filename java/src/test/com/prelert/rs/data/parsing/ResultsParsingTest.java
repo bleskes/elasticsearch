@@ -46,6 +46,7 @@ import com.prelert.job.UnknownJobException;
 import com.prelert.job.alert.Alert;
 import com.prelert.job.persistence.JobDataPersister;
 import com.prelert.rs.data.Bucket;
+import com.prelert.rs.data.Quantiles;
 import com.prelert.rs.data.parsing.AutoDetectParseException;
 import com.prelert.rs.data.parsing.AutoDetectResultsParser;
 
@@ -85,7 +86,13 @@ public class ResultsParsingTest
 		{
 			m_Buckets.add(bucket);
 		}
-		
+
+		@Override
+		public void persistQuantiles(Quantiles quantiles)
+		{
+			// TODO
+		}
+
 		@Override
 		public void persistDetectorState(DetectorState state)
 		{

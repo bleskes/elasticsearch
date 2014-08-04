@@ -30,10 +30,11 @@ package com.prelert.job.persistence;
 import com.prelert.job.DetectorState;
 import com.prelert.job.UnknownJobException;
 import com.prelert.rs.data.Bucket;
+import com.prelert.rs.data.Quantiles;
 
 /**
- * Interface for classes that persist {@linkplain Bucket Buckets} and
- * {@link DetectorState DetectorStates}  
+ * Interface for classes that persist {@linkplain Bucket Buckets},
+ * {@linkplain Quantiles Quantiles} and {@link DetectorState DetectorStates}  
  */
 public interface JobDataPersister 
 {
@@ -42,7 +43,15 @@ public interface JobDataPersister
 	 * @param bucket
 	 */
 	public void persistBucket(Bucket bucket);
-	
+
+
+	/**
+	 * Persist the quantiles
+	 * @param quantiles
+	 */
+	public void persistQuantiles(Quantiles quantiles);
+
+
 	/**
 	 * Persist the serialised detector state
 	 * @param state
