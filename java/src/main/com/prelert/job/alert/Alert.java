@@ -48,12 +48,14 @@ public class Alert
 {
 	static final public String TYPE = "alert";
 	
+	static final public String ID = "id";
 	static final public String JOB_ID = "JobId";
 	static final public String SEVERTIY = "severity";
 	static final public String TIMESTAMP = "timestamp";
 	static final public String REASON = "reason";
 	
-	
+
+	private String m_AlertId;
 	
 	private String m_JobId;
 	private Severity m_Severity;	
@@ -62,7 +64,7 @@ public class Alert
 	
 //	private String m_FilterName;
 //	private double m_NormalisedScore;
-//	private long m_BucketTime;
+//	private long m_Epoch;
 	
 //	private List<AnomalyRecord> m_AnomalyRecords;
 	
@@ -128,5 +130,14 @@ public class Alert
 		this.m_Reason = reason;
 	}
 	
+	public String getId()
+	{
+		return m_AlertId;
+	}
+	
+	public void setId(String value)
+	{
+		m_AlertId = value;
+	}
 	
 }

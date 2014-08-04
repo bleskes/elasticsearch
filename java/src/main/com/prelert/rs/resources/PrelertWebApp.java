@@ -36,7 +36,6 @@ import com.prelert.job.alert.manager.AlertManager;
 import com.prelert.job.alert.persistence.elasticsearch.ElasticsearchAlertPersister;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.persistence.elasticsearch.ElasticSearchJobProvider;
-import com.prelert.job.persistence.elasticsearch.ElasticSearchPersister;
 import com.prelert.job.persistence.elasticsearch.ElasticSearchResultsReaderFactory;
 import com.prelert.job.usage.elasticsearch.ElasticsearchUsageReporterFactory;
 import com.prelert.job.warnings.elasticsearch.ElasticSearchStatusReporterFactory;
@@ -80,6 +79,7 @@ public class PrelertWebApp extends Application
 		m_ResourceClasses = new HashSet<>();	    
 		m_ResourceClasses.add(ApiBase.class);
 		m_ResourceClasses.add(Alerts.class);
+		m_ResourceClasses.add(AlertsLongPoll.class);
 		m_ResourceClasses.add(Jobs.class);
 		m_ResourceClasses.add(Data.class);
 		m_ResourceClasses.add(Results.class);	   

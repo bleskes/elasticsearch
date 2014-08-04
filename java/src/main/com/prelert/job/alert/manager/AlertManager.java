@@ -34,17 +34,30 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.TimeoutHandler;
 
 import org.apache.log4j.Logger;
 
+import com.prelert.job.UnknownJobException;
 import com.prelert.job.alert.Alert;
 import com.prelert.job.alert.Severity;
 import com.prelert.job.alert.persistence.AlertPersister;
+import com.prelert.rs.data.Pagination;
 
 
+/**
+ * Alerts are channelled through this object interested 
+ * parties register for alert notification using the 
+ * observer pattern.
+ * 
+ * Handles Asynchronous HTTP requests
+ * 
+ * Alert Ids are a sequence shared between all jobs starting at 1
+ * each alert has a unique id. 
+ */
 public class AlertManager implements TimeoutHandler
 {
 	static public final Logger s_Logger = Logger.getLogger(AlertManager.class);
@@ -53,6 +66,7 @@ public class AlertManager implements TimeoutHandler
 	private Map<AsyncResponse, AlertListener> m_AsyncRepsonses; 
 	private AlertPersister m_AlertPersister;
 	
+	private AtomicLong m_IdSequence;
 	
 	public class AlertListener
 	{
@@ -77,15 +91,48 @@ public class AlertManager implements TimeoutHandler
 		}
 	}
 	
-	
+	/**
+	 * 
+	 * @param alertPersister Knows how to save alerts
+	 */
 	public AlertManager(AlertPersister alertPersister)
 	{
 		m_AlertPersister = alertPersister;
 		m_AsyncRepsonses = new HashMap<>();
+		
+		String lastAlertId = m_AlertPersister.lastAlertId();
+		try
+		{
+			long seq = Long.parseLong(lastAlertId);
+			m_IdSequence = new AtomicLong(seq);
+
+			s_Logger.info("Starting Alert Id sequence with value " + lastAlertId);
+		}
+		catch (NumberFormatException nfe)
+		{
+			s_Logger.info("New alert id sequence");
+			m_IdSequence = new AtomicLong();
+		}
+		
+	}
+	
+	/**
+	 * 
+	 * @param response
+	 * @param timeout_secs
+	 */
+	public void registerRequest(AsyncResponse response, long timeout_secs)
+	{
+		response.setTimeout(timeout_secs, TimeUnit.SECONDS);
+		response.setTimeoutHandler(this);
+		
+		AlertListener listener = this.new AlertListener(response, this);
+		registerListener(listener);
 	}
 	
 	
-	public void registerRequest(AsyncResponse response, long timeout_secs)
+	public void registerRequest(AsyncResponse response, String jobId, 
+			long timeout_secs)
 	{
 		response.setTimeout(timeout_secs, TimeUnit.SECONDS);
 		response.setTimeoutHandler(this);
@@ -129,7 +176,7 @@ public class AlertManager implements TimeoutHandler
 	{
 		try 
 		{
-			m_AlertPersister.persistAlert(alert.getJobId(), alert);
+			m_AlertPersister.persistAlert(alert.getId(), alert.getJobId(), alert);
 		}
 		catch (IOException e) 
 		{
@@ -143,8 +190,7 @@ public class AlertManager implements TimeoutHandler
 			m_AsyncRepsonses.put(listener.getResponse(), listener);
 		}
 					
-		// add to whatever
-		
+		// fire a tests alert
 		TimerTask task = new TimerTask() 
 		{
 			@Override
@@ -157,9 +203,10 @@ public class AlertManager implements TimeoutHandler
 		t.schedule(task, 10000);
 	}
 	
-	public Alert createDummyAlert()
+	private Alert createDummyAlert()
 	{
 		Alert alert = new Alert();
+		alert.setId(generateAlertId());
 		alert.setJobId("farequte");
 		alert.setReason("cos i said so");
 		alert.setSeverity(Severity.WARNING);
@@ -167,4 +214,48 @@ public class AlertManager implements TimeoutHandler
 		return alert;
 	}
 	
+	
+	/**
+	 * Get a page of alerts optionally filtered by date.
+	 * 
+	 * @param skip Skip the first N alerts
+	 * @param take Get at most this many alerts
+	 * @param epochStart If <=0 this parameter is ignored 
+	 * @param epochEnd If <=0 this parameter is ignored
+	 * @return
+	 */
+	public Pagination<Alert> alerts(int skip, int take, long epochStart, 
+	                       long epochEnd)
+    {
+		return m_AlertPersister.alerts(skip, take, epochStart, epochEnd);
+    }
+	
+	
+	/**
+	 * Get a page of alerts for the given <code>jobId</code> 
+	 * optionally filtered by date.
+	 * 
+	 * @param jobId The job id
+	 * @param skip Skip the first N alerts
+	 * @param take Get at most this many alerts
+	 * @param epochStart If <=0 this parameter is ignored 
+	 * @param epochEnd If <=0 this parameter is ignored
+	 * @return
+	 * @throws UnknownJobException
+	 */
+	public Pagination<Alert> jobAlerts(String jobId, int skip, int take,
+							long epochStart, long epochEnd)
+	throws UnknownJobException
+	{
+		return m_AlertPersister.alertsForJob(jobId, skip, take, epochStart,
+				epochEnd);
+	}
+	
+	
+	
+	private String generateAlertId()
+	{
+		return Long.toString(m_IdSequence.incrementAndGet());		
+	}		
+
 }
