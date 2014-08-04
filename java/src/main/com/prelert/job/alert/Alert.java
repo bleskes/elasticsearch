@@ -26,10 +26,10 @@
  ************************************************************/
 package com.prelert.job.alert;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.Date;
 
-import com.prelert.rs.data.AnomalyRecord;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 /**
  * Encapsulate an Engine API alert. Alerts have:
@@ -43,33 +43,35 @@ import com.prelert.rs.data.AnomalyRecord;
  *  <li>Reason - </li>
  * </ol> 
  */
+@JsonInclude(Include.NON_NULL)
 public class Alert 
 {
+	static final public String TYPE = "alert";
+	
+	static final public String JOB_ID = "JobId";
+	static final public String SEVERTIY = "severity";
+	static final public String TIMESTAMP = "timestamp";
+	static final public String REASON = "reason";
+	
+	
+	
 	private String m_JobId;
-	
-	private String m_FilterName;
-	
 	private Severity m_Severity;	
-	private double m_NormalisedScore;
-	private long m_BucketTime;
-	
-	private List<AnomalyRecord> m_AnomalyRecords;
-	
+	private Date m_Timestamp;
 	private String m_Reason; 
 	
+//	private String m_FilterName;
+//	private double m_NormalisedScore;
+//	private long m_BucketTime;
 	
+//	private List<AnomalyRecord> m_AnomalyRecords;
+	
+
+
 	public Alert()
 	{
-		m_AnomalyRecords = Collections.emptyList();
 	}
 	
-	public Alert(String jobId, String filterName, double score)
-	{
-		m_JobId = jobId;
-		m_FilterName = filterName;
-		m_NormalisedScore = score;
-		m_AnomalyRecords = Collections.emptyList();
-	}
 	
 	public String getJobId()
 	{
@@ -81,15 +83,7 @@ public class Alert
 		this.m_JobId = jobId;
 	}
 
-	public String getFilterName()
-	{
-		return m_FilterName;
-	}
-	
-	public void setFilterName(String filterName)
-	{
-		m_FilterName = filterName;
-	}	
+
 	
 	public Severity getSeverity() 
 	{
@@ -102,42 +96,27 @@ public class Alert
 		this.m_Severity = severity;
 	}
 
-	public double getNormalisedScore() 
+	
+	public Date getTimestamp()
 	{
-		return m_NormalisedScore;
+		return m_Timestamp;
 	}
+	
+	public void setTimestamp(Date timestamp)
+	{
+		m_Timestamp = timestamp;
+	}
+	
 
-	public void setNormalisedScore(double normalisedScore) 
-	{
-		this.m_NormalisedScore = normalisedScore;
-	}
-
-	/**
-	 * The start time of the bucket this alert originated from. 
-	 * The alert must have occured between this time and bucketTime + 
-	 * bucketSpan.
-	 * 
-	 * @return
-	 */
-	public long getBucketTime() 
-	{
-		return m_BucketTime;
-	}
-
-	public void setBucketTime(long bucketTime) 
-	{
-		this.m_BucketTime = bucketTime;
-	}
-
-	public List<AnomalyRecord> getAnomalyRecords() 
-	{
-		return m_AnomalyRecords;
-	}
-
-	public void setAnomalyRecords(List<AnomalyRecord> anomalyRecords) 
-	{
-		this.m_AnomalyRecords = anomalyRecords;
-	}
+//	public List<AnomalyRecord> getAnomalyRecords() 
+//	{
+//		return m_AnomalyRecords;
+//	}
+//
+//	public void setAnomalyRecords(List<AnomalyRecord> anomalyRecords) 
+//	{
+//		this.m_AnomalyRecords = anomalyRecords;
+//	}
 
 	public String getReason() 
 	{

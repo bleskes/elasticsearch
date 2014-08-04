@@ -29,8 +29,6 @@ package com.prelert.rs.resources;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.List;
 
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -38,6 +36,8 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.container.AsyncResponse;
+import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -82,6 +82,21 @@ public class Alerts extends ResourceWithJobManager
 		s_DateFormat, s_DateFormatWithMs};
 	
 	
+	@GET
+	@Path("/poll")	
+	@Produces(MediaType.APPLICATION_JSON)
+	public void poll(
+			@DefaultValue("90") @QueryParam("timeout") int timeout,
+			@DefaultValue("") @QueryParam("cursor") String cursor,
+			@Suspended final AsyncResponse asyncResponse)
+    throws InterruptedException 
+	{
+		AlertManager alertManager = alertManager();
+		alertManager.registerRequest(asyncResponse, timeout);
+	}
+
+	
+	
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Pagination<Alert> alerts(
@@ -124,7 +139,7 @@ public class Alerts extends ResourceWithJobManager
 			}			
 		}
 		
-		
+		/*
 		AlertManager manager = alertManager();
 		Pagination<Alert> alerts;
 		
@@ -158,6 +173,10 @@ public class Alerts extends ResourceWithJobManager
 		s_Logger.debug(String.format("Return %d alerts", alerts.getDocuments().size()));
 		
 		return alerts;
+		*/
+		
+		
+		return new Pagination<Alert>();
     }
     
     @GET
@@ -204,6 +223,7 @@ public class Alerts extends ResourceWithJobManager
 			}			
 		}
 		
+		/***
 		
 		AlertManager manager = alertManager();
 		Pagination<Alert> alerts;
@@ -241,6 +261,9 @@ public class Alerts extends ResourceWithJobManager
 		s_Logger.debug(String.format("Return %d alerts", alerts.getDocumentCount()));
 		
 		return alerts;
+		***/
+		
+		return new Pagination<Alert>();
     }
 	
 }
