@@ -54,7 +54,6 @@ import org.elasticsearch.search.SearchHit;
 
 import com.prelert.job.DetectorState;
 import com.prelert.job.UnknownJobException;
-import com.prelert.job.alert.Alert;
 import com.prelert.job.persistence.JobDataPersister;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;

@@ -56,6 +56,7 @@ import com.prelert.rs.data.Pagination;
  * Handles Asynchronous HTTP requests
  * 
  * Alert Ids are a sequence shared between all jobs starting at 1
+ * each alert has a unique id. 
  */
 public class AlertManager implements TimeoutHandler
 {
