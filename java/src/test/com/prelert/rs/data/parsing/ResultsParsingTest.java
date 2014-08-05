@@ -43,7 +43,6 @@ import org.junit.Test;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.DetectorState;
 import com.prelert.job.UnknownJobException;
-import com.prelert.job.alert.Alert;
 import com.prelert.job.persistence.JobDataPersister;
 import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.parsing.AutoDetectParseException;

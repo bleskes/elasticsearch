@@ -108,7 +108,7 @@ public class JobManager
 	private ProcessManager m_ProcessManager;
 	 
 	
-	private AtomicLong m_IdSequence;	
+	private AtomicLong m_IdSequence;
 	private DateFormat m_JobIdDateFormat;
 	
 	private ObjectMapper m_ObjectMapper;
