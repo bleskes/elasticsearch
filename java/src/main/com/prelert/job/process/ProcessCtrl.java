@@ -44,10 +44,6 @@ import java.util.Set;
 import org.apache.commons.lang.SystemUtils;
 import org.apache.log4j.Logger;
 
-import org.supercsv.encoder.DefaultCsvEncoder;
-import org.supercsv.io.CsvListWriter;
-import org.supercsv.prefs.CsvPreference;
-
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.Detector;
 import com.prelert.job.AnalysisLimits;
@@ -55,7 +51,6 @@ import com.prelert.job.DataDescription;
 import com.prelert.job.DetectorState;
 import com.prelert.job.JobDetails;
 import com.prelert.job.QuantilesState;
-import com.prelert.job.normalisation.InitialState;
 
 
 /**
@@ -874,7 +869,7 @@ public class ProcessCtrl
 	 * @throws IOException
 	 */
 	static public Process buildNormaliser(String jobId, 
-			InitialState sysChangeState, InitialState unusualBehaviourState,
+			String sysChangeState, String unusualBehaviourState,
 			Integer bucketSpan, Logger logger)
 	throws IOException
 	{
@@ -885,8 +880,8 @@ public class ProcessCtrl
 		
 		if (sysChangeState != null)
 		{
-			Path sysChangeStateFilePath = writeNormaliserInitState(jobId, 
-					NormalisationType.SYS_STATE_CHANGE, sysChangeState);
+			Path sysChangeStateFilePath = writeNormaliserInitState(jobId,
+					sysChangeState);
 
 			String stateFileArg = SYS_STATE_CHANGE_ARG + sysChangeStateFilePath;
 			command.add(stateFileArg);
@@ -894,13 +889,18 @@ public class ProcessCtrl
 
 		if (unusualBehaviourState != null)
 		{
-			Path unusualStateFilePath = writeNormaliserInitState(jobId, 
-					NormalisationType.UNUSUAL_STATE, unusualBehaviourState);
+			Path unusualStateFilePath = writeNormaliserInitState(jobId,
+					unusualBehaviourState);
 			
 			String stateFileArg = UNUSUAL_STATE_ARG + unusualStateFilePath;
 			command.add(stateFileArg);
 		}
-		
+
+		if (sysChangeState != null || unusualBehaviourState != null)
+		{
+			command.add(DELETE_STATE_FILES_ARG);
+		}
+
 		if (bucketSpan != null)
 		{
 			String bucketSpanArg = BUCKET_SPAN_ARG + bucketSpan.toString();
@@ -930,57 +930,31 @@ public class ProcessCtrl
 	
 	/**
 	 * Write the normaliser init state to file.
-	 * 
+	 *
 	 * @param jobId
-	 * @param type
 	 * @param state
 	 * @return The state file path
 	 * @throws IOException
 	 */
-	static private Path writeNormaliserInitState(String jobId, NormalisationType type,
-			InitialState state)
+	static private Path writeNormaliserInitState(String jobId, String state)
 	throws IOException
 	{
 		// createTempFile has a race condition where it may return the same
 		// temporary file name to different threads if called simultaneously
 		// from multiple threads, hence add the thread ID to avoid this
-		Path stateFile = Files.createTempFile(jobId + "_state_" + Thread.currentThread().getId(), ".csv");
+		Path stateFile = Files.createTempFile(jobId + "_state_" + Thread.currentThread().getId(), ".xml");
 
-		// SuperCSV preferences aren't thread safe in versions up to 2.2:
-		// see http://sourceforge.net/p/supercsv/bugs/43/
-		// It might be possible to remove this and just use EXCEL_PREFERENCE
-		// directly if we upgrade to a later version of SuperCSV
-		CsvPreference preference =
-				new CsvPreference.Builder(CsvPreference.EXCEL_PREFERENCE)
-				.useEncoder(new DefaultCsvEncoder())
-				.build();
-
-		try (CsvListWriter csvWriter = new CsvListWriter(new OutputStreamWriter(
+		try (OutputStreamWriter osw = new OutputStreamWriter(
 				new FileOutputStream(stateFile.toString()),
-				StandardCharsets.UTF_8), preference))
+				StandardCharsets.UTF_8))
 		{
-			switch (type)
-			{
-			case SYS_STATE_CHANGE:
-				csvWriter.writeHeader(SYS_CHANGE_STATE_HEADER);
-				for (InitialState.InitialStateRecord record : state)
-				{
-					csvWriter.write(record.toSysChangeArray());
-				}
-				break;
-			case UNUSUAL_STATE:
-				csvWriter.writeHeader(UNUSUAL_STATE_HEADER);
-				for (InitialState.InitialStateRecord record : state)
-				{
-					csvWriter.write(record.toUnusualArray());
-				} 				
-				break;
-			}
+			osw.write(state);
 		}
-		
+
 		return stateFile;
 	}
-	
+
+
 	/**
 	 * Returns true if the string arg is not null and not empty
 	 * i.e. it is a valid string

@@ -30,7 +30,6 @@ package com.prelert.job.persistence;
 import java.io.Closeable;
 import java.util.List;
 
-import com.prelert.job.normalisation.InitialState;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.Pagination;
@@ -170,20 +169,4 @@ public interface JobResultsProvider extends Closeable
 	public Pagination<AnomalyRecord> records(String jobId,
 			List<String> bucketIds, boolean includeSimpleCount, int skip, int take,
 			String sortField);
-			
-	/**
-	 * Return the initial state for normalisation by system change.
-	 * This state contains bucket anomaly score and epoch pairs.
-	 * @param jobId
-	 * @return
-	 */
-	public InitialState getSystemChangeInitialiser(String jobId);
-	
-	/**
-	 * Get the initial state for unusual behaviour normalisation
-	 * 
-	 * @param jobId
-	 * @return
-	 */
-	public InitialState getUnusualBehaviourInitialiser(String jobId);
 }
