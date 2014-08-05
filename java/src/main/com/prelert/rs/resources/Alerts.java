@@ -29,6 +29,8 @@ package com.prelert.rs.resources;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -36,13 +38,12 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.container.AsyncResponse;
-import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import org.apache.log4j.Logger;
 
+import com.prelert.job.UnknownJobException;
 import com.prelert.job.alert.Alert;
 import com.prelert.job.alert.manager.AlertManager;
 import com.prelert.job.manager.JobManager;
@@ -52,9 +53,9 @@ import com.prelert.rs.provider.RestApiException;
 
 /**
  * The alerts endpoint. 
- * Either query for all alerts or alerts by job id. 
+ * Query for all alerts, alerts by job id and between 2 dates
+ * or subscribe to the long_poll endpoint. 
  */
-
 @Path("/alerts")
 public class Alerts extends ResourceWithJobManager
 {
@@ -82,20 +83,6 @@ public class Alerts extends ResourceWithJobManager
 		s_DateFormat, s_DateFormatWithMs};
 	
 	
-	@GET
-	@Path("/poll")	
-	@Produces(MediaType.APPLICATION_JSON)
-	public void poll(
-			@DefaultValue("90") @QueryParam("timeout") int timeout,
-			@DefaultValue("") @QueryParam("cursor") String cursor,
-			@Suspended final AsyncResponse asyncResponse)
-    throws InterruptedException 
-	{
-		AlertManager alertManager = alertManager();
-		alertManager.registerRequest(asyncResponse, timeout);
-	}
-
-	
 	
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -105,7 +92,7 @@ public class Alerts extends ResourceWithJobManager
 			@DefaultValue("") @QueryParam(START_QUERY_PARAM) String start,
 			@DefaultValue("") @QueryParam(END_QUERY_PARAM) String end,
 			@DefaultValue("") @QueryParam(SEVERITY_QUERY_PARAM) String severity,
-			@DefaultValue("0f") @QueryParam(END_QUERY_PARAM) float anomalyScore)
+			@DefaultValue("0f") @QueryParam(ANOMALY_SCORE_QUERY_PARAM) float anomalyScore)
     {      
     	boolean expand = true;
     	
@@ -139,24 +126,13 @@ public class Alerts extends ResourceWithJobManager
 			}			
 		}
 		
-		/*
+		
 		AlertManager manager = alertManager();
-		Pagination<Alert> alerts;
-		
-		if (epochStart > 0 || epochEnd > 0)
-		{
-			alerts = manager.alerts(skip, take, epochStart, epochEnd, expand);
-		}
-		else
-		{
-			alerts = manager.alerts(skip, take, expand);
-		}
-		
+		Pagination<Alert> alerts = manager.alerts(skip, take, epochStart, epochEnd);
+	
 		// paging
     	if (alerts.isAllResults() == false)
     	{
-    		String path = "alerts/";
-    		
     		List<ResourceWithJobManager.KeyValue> queryParams = new ArrayList<>();
     		if (epochStart > 0)
     		{
@@ -166,17 +142,15 @@ public class Alerts extends ResourceWithJobManager
     		{
     			queryParams.add(this.new KeyValue(END_QUERY_PARAM, end));
     		}
+
+    		queryParams.add(this.new KeyValue(SEVERITY_QUERY_PARAM, severity));    	
     		
-    		setPagingUrls(path, alerts, queryParams);
+    		setPagingUrls(ENDPOINT, alerts, queryParams);
     	}		
 			
 		s_Logger.debug(String.format("Return %d alerts", alerts.getDocuments().size()));
 		
 		return alerts;
-		*/
-		
-		
-		return new Pagination<Alert>();
     }
     
     @GET
@@ -189,7 +163,8 @@ public class Alerts extends ResourceWithJobManager
 			@DefaultValue("") @QueryParam(START_QUERY_PARAM) String start,
 			@DefaultValue("") @QueryParam(END_QUERY_PARAM) String end,
 			@DefaultValue("") @QueryParam(SEVERITY_QUERY_PARAM) String severity,
-			@DefaultValue("0f") @QueryParam(END_QUERY_PARAM) float anomalyScore)
+			@DefaultValue("0f") @QueryParam(ANOMALY_SCORE_QUERY_PARAM) float anomalyScore)
+	throws UnknownJobException		
     {      
     	boolean expand = true;
     	
@@ -223,26 +198,17 @@ public class Alerts extends ResourceWithJobManager
 			}			
 		}
 		
-		/***
-		
 		AlertManager manager = alertManager();
-		Pagination<Alert> alerts;
-		
-		if (epochStart > 0 || epochEnd > 0)
-		{
-			alerts = manager.jobAlerts(jobId, skip, take, epochStart, epochEnd, expand);
-		}
-		else
-		{
-			alerts = manager.jobAlerts(jobId, skip, take, expand);
-		}
+		Pagination<Alert>  alerts = manager.jobAlerts(jobId, skip, take, 
+				epochStart, epochEnd);
 		
 		// paging
     	if (alerts.isAllResults() == false)
     	{
     		String path = new StringBuilder()
+    							.append(ENDPOINT)
+    							.append("/")
     							.append(jobId)
-								.append("/alerts/")
 								.toString();
     		
     		List<ResourceWithJobManager.KeyValue> queryParams = new ArrayList<>();
@@ -255,15 +221,15 @@ public class Alerts extends ResourceWithJobManager
     			queryParams.add(this.new KeyValue(END_QUERY_PARAM, end));
     		}
     		
+    		queryParams.add(this.new KeyValue(SEVERITY_QUERY_PARAM, severity));  
+    		
     		setPagingUrls(path, alerts, queryParams);
     	}		
 			
-		s_Logger.debug(String.format("Return %d alerts", alerts.getDocumentCount()));
+		s_Logger.debug(String.format("Return %d alerts for job %s", 
+				alerts.getDocumentCount(), jobId));
 		
 		return alerts;
-		***/
-		
-		return new Pagination<Alert>();
     }
 	
 }
