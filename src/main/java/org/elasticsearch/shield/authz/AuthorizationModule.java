@@ -1,6 +1,8 @@
 package org.elasticsearch.shield.authz;
 
 import org.elasticsearch.common.inject.AbstractModule;
+import org.elasticsearch.shield.authz.store.FileRolesStore;
+import org.elasticsearch.shield.authz.store.RolesStore;
 
 /**
  *
