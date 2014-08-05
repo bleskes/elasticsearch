@@ -24,25 +24,75 @@
  *                                                          *
  *                                                          *
  ************************************************************/
+package com.prelert.job;
 
-package com.prelert.job.persistence;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
-import com.prelert.job.DetectorState;
-import com.prelert.job.QuantilesState;
-import com.prelert.job.UnknownJobException;
+import org.apache.log4j.Logger;
 
-public interface JobProvider extends JobDetailsProvider, JobResultsProvider
+import com.prelert.rs.data.parsing.AutoDetectParseException;
+
+/**
+ * This stores the serialised quantiles from autodetect. The serialised form
+ * is a long XML string.  There are two kinds of quantiles, each with its
+ * own XML string.
+ */
+public class QuantilesState
 {
-	/**
-	 * Get the persisted detectors state for the job
-	 */
-	public DetectorState getDetectorState(String jobId) 
-	throws UnknownJobException;
+	private static final Logger s_Logger = Logger.getLogger(QuantilesState.class);
+
+	private Map<String, String> m_QuantilesKindToState;
+
+	public QuantilesState()
+	{
+		m_QuantilesKindToState = new HashMap<>();
+	}
 
 
 	/**
-	 * Get the persisted quantiles state for the job
+	 * Expose the map of quantiles kind -> state
+	 * @return Quantiles kind -> state map
 	 */
-	public QuantilesState getQuantilesState(String jobId) 
-	throws UnknownJobException;
+	public Map<String, String> getMap()
+	{
+		return m_QuantilesKindToState;
+	}
+
+
+	/**
+	 * Get the set of all kinds of quantiles
+	 * @return The set of kinds of quantiles
+	 */
+	public Set<String> getQuantilesKinds()
+	{
+		return m_QuantilesKindToState.keySet();
+	}
+
+
+	/**
+	 * Return the serialised quantiles of the specified <code>kind</code>
+	 * or <code>null</code> if the <code>kind</code> is not
+	 * recognised.
+	 *
+	 * @param kind
+	 * @return <code>null</code> or the serialised state
+	 */
+	public String getQuantilesState(String kind)
+	{
+		return m_QuantilesKindToState.get(kind);
+	}
+
+	/**
+	 * Set the state of the detector where state is the serialised model.
+	 *
+	 * @param kind
+	 * @param state
+	 */
+	public void setQuantilesState(String kind, String state)
+	{
+		m_QuantilesKindToState.put(kind, state);
+	}
 }
+

@@ -72,6 +72,7 @@ import com.prelert.job.DetectorState;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobIdAlreadyExistsException;
 import com.prelert.job.JobStatus;
+import com.prelert.job.QuantilesState;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.alert.Alert;
 import com.prelert.job.normalisation.InitialState;
@@ -968,4 +969,41 @@ public class ElasticSearchJobProvider implements JobProvider
 		return detectorState;
 	}
 
+
+	@Override
+	public QuantilesState getQuantilesState(String jobId)
+	throws UnknownJobException
+	{
+		QuantilesState quantilesState = new QuantilesState();
+
+		FilterBuilder fb = FilterBuilders.matchAllFilter();
+
+		SearchRequestBuilder searchBuilder = m_Client.prepareSearch(jobId)
+				.setTypes(Quantiles.TYPE)
+				.setPostFilter(fb);
+
+		try
+		{
+			// We should never get more than 2 sets of quantiles, however, for
+			// an old job we could get less
+			final int PAGE_SIZE = 2;
+			searchBuilder.setFrom(0).setSize(PAGE_SIZE);
+			SearchResponse searchResponse = searchBuilder.get();
+
+			for (SearchHit hit : searchResponse.getHits().getHits())
+			{
+				String kind = hit.getSource().get(Quantiles.ID).toString();
+				String state = hit.getSource().get(Quantiles.QUANTILE_STATE).toString();
+				quantilesState.setQuantilesState(kind, state);
+			}
+		}
+		catch (IndexMissingException e)
+		{
+			s_Logger.error("Unknown job '" + jobId + "'. Cannot read persisted state");
+			throw new UnknownJobException(jobId,
+					"Cannot read persisted state", ErrorCode.MISSING_DETECTOR_STATE);
+		}
+		return quantilesState;
+	}
 }
+

@@ -54,6 +54,7 @@ import com.prelert.job.AnalysisLimits;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DetectorState;
 import com.prelert.job.JobDetails;
+import com.prelert.job.QuantilesState;
 import com.prelert.job.normalisation.InitialState;
 
 
@@ -191,12 +192,12 @@ public class ProcessCtrl
 	static final public String UNKNOWN_VERSION = "Unknown version of the analytics";
 	
 	/**
-	 * Persisted model state is written to disk so it can be read 
-	 * by the autodetect program. All model state files have this 
+	 * Persisted model state and quantiles are written to disk so they can
+	 * be read by the autodetect program.  All state files have this 
 	 * base name followed by a unique number and 
 	 * {@linkplain #BASE_STATE_FILE_EXTENSION}
 	 */
-	static final public String BASE_STATE_FILE_NAME = "model_state";
+	static final public String BASE_STATE_FILE_NAME = "job_state";
 	
 	/*
 	 * The standard file extension for the temporary  
@@ -460,7 +461,7 @@ public class ProcessCtrl
 	static public Process buildAutoDetect(String processName, JobDetails job, Logger logger)
 	throws IOException	
 	{
-		return buildAutoDetect(processName, job, null, logger);
+		return buildAutoDetect(processName, job, null, null, logger);
 	}
 	
 	/**
@@ -473,15 +474,17 @@ public class ProcessCtrl
 	 * @param processName The name of program to execute this should exist in the 
 	 * directory PRELERT_HOME/bin/ 
 	 * @param job The job configuration
-	 * @param detectorState if <code>null</code> this parameter is 
-	 * ignored else the models' state is restored from this object 
+	 * @param detectorState if <code>null</code> this parameter is
+	 * ignored else the models' state is restored from this object
+	 * @param quantilesState if <code>null</code> this parameter is
+	 * ignored else the quantiles' state is restored from this object
 	 * @param logger The job's logger
 	 * 
 	 * @return A Java Process object
 	 * @throws IOException 
 	 */
 	static public Process buildAutoDetect(String processName, JobDetails job,
-			DetectorState detectorState, Logger logger)
+			DetectorState detectorState, QuantilesState quantilesState, Logger logger)
 	throws IOException
 	{
 		logger.info("PRELERT_HOME is set to " + PRELERT_HOME);
@@ -552,34 +555,61 @@ public class ProcessCtrl
 		// always set the time field
 		String timeFieldArg = TIME_FIELD_ARG + timeField;
 		command.add(timeFieldArg);
-				
+
+		int fileNumber = 1;
+		String tempDirStr = null;
+
 		// Restoring the model state
 		if (detectorState != null && detectorState.getDetectorKeys().size() > 0)
 		{
 			logger.info("Restoring models for job '" + job.getId() +"'");
 
 			Path tempDir = Files.createTempDirectory(null);
-			String tempDirStr = tempDir.toString();
-			
-			int fileNumber = 1;
+			tempDirStr = tempDir.toString();
+
 			for (String key : detectorState.getDetectorKeys())
 			{
 				File modelStateFile = new File(tempDirStr, BASE_STATE_FILE_NAME +
 						fileNumber + BASE_STATE_FILE_EXTENSION);
-				
-				fileNumber++;
-				
-				writeModelState(detectorState.getDetectorState(key), modelStateFile);
+
+				++fileNumber;
+
+				writeState(detectorState.getDetectorState(key), modelStateFile);
 			}
-						
+		}
+
+		// Restoring the quantiles
+		if (quantilesState != null && quantilesState.getQuantilesKinds().size() > 0)
+		{
+			logger.info("Restoring quantiles for job '" + job.getId() +"'");
+
+			if (tempDirStr == null)
+			{
+				Path tempDir = Files.createTempDirectory(null);
+				tempDirStr = tempDir.toString();
+			}
+
+			for (String kind : quantilesState.getQuantilesKinds())
+			{
+				File quantilesStateFile = new File(tempDirStr, BASE_STATE_FILE_NAME +
+						fileNumber + BASE_STATE_FILE_EXTENSION);
+
+				++fileNumber;
+
+				writeState(quantilesState.getQuantilesState(kind), quantilesStateFile);
+			}
+		}
+
+		if (fileNumber > 1)
+		{
 			String restoreArg = RESTORE_STATE_ARG + tempDirStr +
 					File.separator + BASE_STATE_FILE_NAME;
 			command.add(restoreArg);
-			
+
 			// tell autodetect to delete the temporary state files
 			command.add(DELETE_STATE_FILES_ARG);				
-		}		
-		
+		}
+
 		// Always persist the models when finished. 
 		command.add(PERSIST_STATE_ARG);
 		
@@ -806,7 +836,8 @@ public class ProcessCtrl
 
 		osw.write(contents.toString());
 	}
-	
+
+
 	/**
 	 * Write the string <code>state</code> to <code>file</code>
 	 * followed by a newline character.
@@ -815,7 +846,7 @@ public class ProcessCtrl
 	 * @param file
 	 * @throws IOException
 	 */
-	static private void writeModelState(String state, File file)
+	static private void writeState(String state, File file)
 	throws IOException
 	{
 		try (OutputStreamWriter osw = new OutputStreamWriter(

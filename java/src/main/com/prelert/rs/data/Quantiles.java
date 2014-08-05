@@ -59,11 +59,6 @@ public class Quantiles
 	 */
 	public static final String TYPE = "quantiles";
 
-	/**
-	 * Used as a hint that a given JSON object represents quantiles
-	 */
-	public static final String FIRST_FIELD = QUANTILE_KIND;
-
 	private static final Logger s_Logger = Logger.getLogger(Quantiles.class);
 
 	/**

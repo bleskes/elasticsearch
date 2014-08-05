@@ -65,11 +65,6 @@ public class Bucket
 	 */
 	public static final String TYPE = "bucket";
 
-	/**
-	 * Used as a hint that a given JSON object represents a bucket
-	 */
-	public static final String FIRST_FIELD = TIMESTAMP;
-
 	private static final Logger s_Logger = Logger.getLogger(Bucket.class);
 	
 	private String m_Id;

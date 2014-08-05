@@ -139,13 +139,14 @@ public class AutoDetectResultsParser
 					String fieldName = parser.getCurrentName();
 					switch (fieldName)
 					{
-					case Bucket.FIRST_FIELD:
+					case Bucket.TIMESTAMP:
 						Bucket bucket = Bucket.parseJsonAfterStartObject(parser);
 						persister.persistBucket(bucket);
 			
 						logger.debug("Bucket number " + ++bucketCount + " parsed from output");
 						break;
-					case Quantiles.FIRST_FIELD:
+					case Quantiles.QUANTILE_KIND:
+					case Quantiles.QUANTILE_STATE:
 						Quantiles quantiles = Quantiles.parseJsonAfterStartObject(parser);
 						persister.persistQuantiles(quantiles);
 			
