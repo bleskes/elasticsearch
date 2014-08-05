@@ -1001,26 +1001,6 @@ public class EngineApiClient implements Closeable
 	}
 	
 	
-	public List<Alert> pollJobAlerts(String baseUrl, String jobId, Integer timeout) 
-	throws JsonParseException, JsonMappingException, IOException
-	{
-		String url = baseUrl + "/alerts_longpoll/" + jobId;
-		if (timeout != null)
-		{
-			url += "?timeout=" + timeout;
-		}
-		
-		List<Alert> alerts = this.get(url,
-				new TypeReference<List<Alert>>() {});
-		
-		if (alerts == null)
-		{
-			alerts = Collections.<Alert>emptyList();
-		}
-
-		return alerts;
-	}
-	
 	/**
 	 * Long poll for alerts from all jobs blocks until an alert occurs or the 
 	 * timeout period expires. 
@@ -1068,7 +1048,7 @@ public class EngineApiClient implements Closeable
 	 * @throws JsonMappingException
 	 * @throws IOException
 	 */
-	public List<Alert> polJobAlerts(String baseUrl, String jobId, Integer timeout) 
+	public List<Alert> pollJobAlerts(String baseUrl, String jobId, Integer timeout) 
 	throws JsonParseException, JsonMappingException, IOException
 	{
 		String url = baseUrl + "/alerts_longpoll/" + jobId;

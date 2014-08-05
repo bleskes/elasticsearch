@@ -621,6 +621,7 @@ public class JobManager
 		}
 		
 		List<Bucket> bucketList;
+		
 		if (norm.isNormalizeStateChange())
 		{
 			// get the parent bucket ids and sort
@@ -706,7 +707,6 @@ public class JobManager
 	{
 		long start_ms = System.currentTimeMillis();
 		
-		
 		Pagination<AnomalyRecord> records = m_JobProvider.records(jobId, 
 				false, skip, take, sortField);
 		
@@ -715,25 +715,26 @@ public class JobManager
 			return records;
 		}
 		
-		// get the parent bucket ids and sort
-		List<String> bucketIds = new ArrayList<>();
-		for (AnomalyRecord r : records.getDocuments())
-		{
-			bucketIds.add(r.getParent());
-		}
-		Collections.sort(bucketIds);
 		
 		// get all the buckets over the same time period
 		// as the records
 		try
 		{			
-			long start = Long.parseLong(bucketIds.get(0));
-			// we want the last bucket inclusive so +1 to the value
-			long end = Long.parseLong(bucketIds.get(bucketIds.size() -1)) + 1;
-
 			List<Bucket> bucketList;
 			if (norm.isNormalizeStateChange())
 			{
+				// get the parent bucket ids and sort
+				List<String> bucketIds = new ArrayList<>();
+				for (AnomalyRecord r : records.getDocuments())
+				{
+					bucketIds.add(r.getParent());
+				}
+				Collections.sort(bucketIds);
+				
+				long start = Long.parseLong(bucketIds.get(0));
+				// we want the last bucket inclusive so +1 to the value
+				long end = Long.parseLong(bucketIds.get(bucketIds.size() -1)) + 1;				
+				
 				int bucketSkip = 0;
 				Pagination<Bucket> buckets = m_JobProvider.buckets(jobId, 
 						false, bucketSkip, take, start, end);
@@ -758,8 +759,6 @@ public class JobManager
 			long read_time = System.currentTimeMillis();
 			System.out.println(String.format("Got records for norm = %s in %d ms", 
 					norm, read_time - start_ms));
-			
-			
 			
 			Normaliser normaliser = new Normaliser(jobId, m_JobProvider,
 					m_ProcessManager.getJobLogger(jobId));	
