@@ -641,15 +641,52 @@ public class JobManager
 			return records;
 		}
 		
-		List<Bucket> bucketList = Collections.emptyList();
-		
+		List<Bucket> bucketList;
 		if (norm.isNormalizeStateChange())
 		{
-			Pagination<Bucket> buckets = m_JobProvider.buckets(jobId, 
-					false, skip, take, epochStart, epochEnd);
-			
-			bucketList = buckets.getDocuments();
+			// get the parent bucket ids and sort
+			List<String> bucketIds = new ArrayList<>();
+			for (AnomalyRecord r : records.getDocuments())
+			{
+				bucketIds.add(r.getParent());
+			}
+			Collections.sort(bucketIds);
+
+			// get all the buckets over the same time period
+			// as the records
+			try
+			{			
+				long start = Long.parseLong(bucketIds.get(0));
+				// we want the last bucket inclusive so +1 to the value
+				long end = Long.parseLong(bucketIds.get(bucketIds.size() -1)) + 1;
+
+				int bucketSkip = 0;
+				Pagination<Bucket> buckets = m_JobProvider.buckets(jobId, 
+						false, bucketSkip, take, start, end);
+				bucketSkip += take;
+				while (bucketSkip < buckets.getHitCount())
+				{
+					Pagination<Bucket> extraBuckets = m_JobProvider.buckets(
+							jobId, false, bucketSkip, take, start, end);
+
+					bucketSkip += take;
+					buckets.getDocuments().addAll(extraBuckets.getDocuments());
+				}
+				
+				bucketList = buckets.getDocuments();
+
+			}
+			catch (NumberFormatException nfe)
+			{
+				s_Logger.error("Error parsing record parent id", nfe);
+				bucketList = Collections.emptyList();
+			}	
+
 		}
+		else
+		{
+			bucketList = Collections.emptyList();
+		}		
 		
 		long read_time = System.currentTimeMillis();
 		System.out.println(String.format("Got records for norm = %s in %d ms", 
