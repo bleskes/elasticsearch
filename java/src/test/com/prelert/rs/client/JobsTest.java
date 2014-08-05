@@ -1306,8 +1306,13 @@ public class JobsTest implements Closeable
 		for (String jobId : jobIds)
 		{
 			SingleDocument<JobDetails> doc = m_WebServiceClient.getJob(baseUrl, jobId);
-			test(doc.isExists() == false);
-			
+			test(doc.isExists() == false);		
+		}
+		
+		for (String jobId : jobIds)
+		{
+			boolean success = m_WebServiceClient.deleteJob(baseUrl, jobId); 
+			test(success == false);
 			ApiError error = m_WebServiceClient.getLastError();
 			test(error.getErrorCode() == ErrorCode.MISSING_JOB_ERROR);
 		}
@@ -1382,6 +1387,8 @@ public class JobsTest implements Closeable
 		final long FLIGHT_CENTRE_NUM_BUCKETS = 24;
 		final long FARE_QUOTE_NUM_BUCKETS = 1439;
 
+		test.getJobsTest(baseUrl);
+		
 		//=================
 		// CSV & Gzip test 
 		//
@@ -1487,7 +1494,6 @@ public class JobsTest implements Closeable
 		//==========================
 		// Clean up test jobs
 		test.deleteJobsTest(baseUrl, jobUrls);
-	
 		test.close();
 		
 		s_Logger.info("All tests passed Ok");
