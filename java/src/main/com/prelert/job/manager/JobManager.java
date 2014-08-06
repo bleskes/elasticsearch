@@ -455,20 +455,27 @@ public class JobManager
 			Pagination<Bucket> buckets, NormalizationType normalisationType) 
 	throws NativeProcessRunException
 	{
-		Normaliser normaliser = new Normaliser(jobId, m_JobProvider,
-				m_ProcessManager.getJobLogger(jobId));
-		
-		if (normalisationType == NormalizationType.UNUSUAL_BEHAVIOUR)
+		try
 		{
-			normaliser.normaliseForUnusualBehaviour(getJobBucketSpan(jobId), 
+			Normaliser normaliser = new Normaliser(jobId, m_JobProvider,
+					m_ProcessManager.getJobLogger(jobId));
+
+			if (normalisationType == NormalizationType.UNUSUAL_BEHAVIOUR)
+			{
+				normaliser.normaliseForUnusualBehaviour(getJobBucketSpan(jobId),
+						buckets.getDocuments());
+			}
+			else
+			{
+				normaliser.normaliseForSystemChange(getJobBucketSpan(jobId),
 					buckets.getDocuments());
+			}
 		}
-		else
+		catch (UnknownJobException uje)
 		{
-			normaliser.normaliseForSystemChange(getJobBucketSpan(jobId), 
-				buckets.getDocuments());
+			s_Logger.error("Unknown job whilst normalising", uje);
 		}
-			
+
 		return buckets;
 	}
 	
@@ -477,20 +484,27 @@ public class JobManager
 			SingleDocument<Bucket> bucket, NormalizationType normalisationType) 
 	throws NativeProcessRunException
 	{
-		Normaliser normaliser = new Normaliser(jobId, m_JobProvider,
-				m_ProcessManager.getJobLogger(jobId));
-		
-		if (normalisationType == NormalizationType.UNUSUAL_BEHAVIOUR)
+		try
 		{
-			normaliser.normaliseForUnusualBehaviour(getJobBucketSpan(jobId), 
-					Arrays.asList(new Bucket [] {bucket.getDocument()}));
+			Normaliser normaliser = new Normaliser(jobId, m_JobProvider,
+					m_ProcessManager.getJobLogger(jobId));
+
+			if (normalisationType == NormalizationType.UNUSUAL_BEHAVIOUR)
+			{
+				normaliser.normaliseForUnusualBehaviour(getJobBucketSpan(jobId),
+						Arrays.asList(new Bucket [] {bucket.getDocument()}));
+			}
+			else
+			{
+				normaliser.normaliseForSystemChange(getJobBucketSpan(jobId),
+						Arrays.asList(new Bucket [] {bucket.getDocument()}));
+			}
 		}
-		else
+		catch (UnknownJobException uje)
 		{
-			normaliser.normaliseForSystemChange(getJobBucketSpan(jobId), 
-					Arrays.asList(new Bucket [] {bucket.getDocument()}));
+			s_Logger.error("Unknown job whilst normalising", uje);
 		}
-			
+
 		return bucket;
 	}
 	
@@ -543,13 +557,20 @@ public class JobManager
 		
 		SingleDocument<Bucket> bucket = m_JobProvider.bucket(jobId, bucketId, false); 
 		
-		Normaliser normaliser = new Normaliser(jobId, m_JobProvider,
-				m_ProcessManager.getJobLogger(jobId));	
+		try
+		{
+			Normaliser normaliser = new Normaliser(jobId, m_JobProvider,
+					m_ProcessManager.getJobLogger(jobId));
 
-		normaliser.normalise(getJobBucketSpan(jobId), 
+			normaliser.normalise(getJobBucketSpan(jobId),
 					Arrays.asList(new Bucket[] {bucket.getDocument()}),
-					records.getDocuments(), norm);		
-		
+					records.getDocuments(), norm);
+		}
+		catch (UnknownJobException uje)
+		{
+			s_Logger.error("Unknown job whilst normalising", uje);
+		}
+
 		return records; 
 	}
 	
@@ -681,12 +702,18 @@ public class JobManager
 		long read_time = System.currentTimeMillis();
 		System.out.println(String.format("Got records for norm = %s in %d ms", 
 				norm, read_time  - start_ms));
-		
-		Normaliser normaliser = new Normaliser(jobId, m_JobProvider,
-				m_ProcessManager.getJobLogger(jobId));	
-		
-		normaliser.normalise(getJobBucketSpan(jobId), 
-					bucketList, records.getDocuments(), norm);
+
+		try
+		{
+			Normaliser normaliser = new Normaliser(jobId, m_JobProvider,
+					m_ProcessManager.getJobLogger(jobId));	
+			normaliser.normalise(getJobBucketSpan(jobId), 
+						bucketList, records.getDocuments(), norm);
+		}
+		catch (UnknownJobException uje)
+		{
+			s_Logger.error("Unknown job whilst normalising", uje);
+		}
 		
 		System.out.println(String.format("Normalised for = %s in %d ms", 
 				norm, System.currentTimeMillis() - read_time));
@@ -770,7 +797,7 @@ public class JobManager
 			long read_time = System.currentTimeMillis();
 			System.out.println(String.format("Got records for norm = %s in %d ms", 
 					norm, read_time - start_ms));
-			
+
 			Normaliser normaliser = new Normaliser(jobId, m_JobProvider,
 					m_ProcessManager.getJobLogger(jobId));	
 
@@ -783,6 +810,10 @@ public class JobManager
 		catch (NumberFormatException nfe)
 		{
 			s_Logger.error("Error parsing record parent id", nfe);
+		}
+		catch (UnknownJobException uje)
+		{
+			s_Logger.error("Unknown job whilst getting records", uje);
 		}
 		
 		return records; 

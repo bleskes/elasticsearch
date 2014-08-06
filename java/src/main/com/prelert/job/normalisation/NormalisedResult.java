@@ -38,22 +38,20 @@ import com.fasterxml.jackson.core.JsonToken;
 /**
  * Store the output of the normaliser process
  * 
- * {"anomalyScore":"0.0","normalizedUnusualScore":"","normalizedSysChangeScore":"0"}
+ * {"rawAnomalyScore":"0.0","unusualScore":"","anomalyScore":"0"}
  *
  */
 public class NormalisedResult 
 {
-	static public final String ANOMALY_SCORE = "anomalyScore";
-	static public final String UNUSUAL_SCORE = "normalizedUnusualScore";
-	static public final String SYS_CHANGE_SCORE = "normalizedSysChangeScore";
-	static public final String SYS_CHANGE_MULTIPLIER = "sysChangeScoreMultiplier";
+	static public final String RAW_ANOMALY_SCORE = "rawAnomalyScore";
+	static public final String UNUSUAL_SCORE = "unusualScore";
+	static public final String SYS_CHANGE_SCORE = "anomalyScore";
 	static public final String TAG = "tag";
 	
 	
-	private double m_AnomalyScore;
+	private double m_RawAnomalyScore;
 	private double m_NormalizedUnusualScore;
 	private double m_NormalizedSysChangeScore;
-	private double m_SysChangeScoreMultiplier;
 	private String m_Tag;
 	private String m_Distingusher;
 	
@@ -64,20 +62,20 @@ public class NormalisedResult
 	
 	public NormalisedResult(NormalisedResult other)
 	{
-		m_AnomalyScore = other.m_AnomalyScore;
+		m_RawAnomalyScore = other.m_RawAnomalyScore;
 		m_NormalizedSysChangeScore = other.m_NormalizedSysChangeScore;
 		m_NormalizedUnusualScore = other.m_NormalizedUnusualScore;
 		m_Tag = other.m_Tag;				
 	}
 	
-	public double getAnomalyScore() 
+	public double getRawAnomalyScore() 
 	{
-		return m_AnomalyScore;
+		return m_RawAnomalyScore;
 	}
 	
-	public void setAnomalyScore(double anomalyScore) 
+	public void setRawAnomalyScore(double rawAnomalyScore) 
 	{
-		this.m_AnomalyScore = anomalyScore;
+		this.m_RawAnomalyScore = rawAnomalyScore;
 	}
 	
 	public double getNormalizedUnusualScore() 
@@ -99,17 +97,8 @@ public class NormalisedResult
 	{
 		this.m_NormalizedSysChangeScore = normalizedSysChangeScore;
 	}
-	
-	public double getSysChangeScoreMultiplier()
-	{
-		return m_SysChangeScoreMultiplier;
-	}
-	
-	public void setSysChangeScoreMultiplier(double multiplier)
-	{
-		m_SysChangeScoreMultiplier = multiplier;
-	}
-	
+
+
 	public String getTag()
 	{
 		return m_Tag;
@@ -143,11 +132,11 @@ public class NormalisedResult
 				token = parser.nextToken();
 				switch (fieldName)
 				{
-				case ANOMALY_SCORE:
+				case RAW_ANOMALY_SCORE:
 					// TODO this is string should be output as a double
 //					if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)	
 //					{
-//						result.setAnomalyScore(parser.getDoubleValue());
+//						result.setRawAnomalyScore(parser.getDoubleValue());
 //					}
 					
 					if (token == JsonToken.VALUE_STRING)
@@ -157,18 +146,18 @@ public class NormalisedResult
 						{
 							try						
 							{
-								result.setAnomalyScore(Double.parseDouble(val));
+								result.setRawAnomalyScore(Double.parseDouble(val));
 							}
 							catch (NumberFormatException nfe)
 							{
-								logger.warn("Cannot parse " + ANOMALY_SCORE + " : " + parser.getText() 
+								logger.warn("Cannot parse " + RAW_ANOMALY_SCORE + " : " + parser.getText() 
 										+ " as a double");
 							}	
 						}
 					}	
 					else
 					{
-						logger.warn("Cannot parse " + ANOMALY_SCORE + " : " + parser.getText() 
+						logger.warn("Cannot parse " + RAW_ANOMALY_SCORE + " : " + parser.getText() 
 										+ " as a double");
 					}
 					break;
@@ -201,7 +190,6 @@ public class NormalisedResult
 										+ " as a double");
 					}					
 					break;
-				
 				case UNUSUAL_SCORE:
 					// TODO this is string should be output as a double
 //					if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)	
@@ -231,31 +219,6 @@ public class NormalisedResult
 										+ " as a double");
 					}	
 					break;
-				
-				case SYS_CHANGE_MULTIPLIER:
-					if (token == JsonToken.VALUE_STRING)
-					{
-						String val = parser.getValueAsString();
-						if (val.isEmpty() == false)
-						{
-							try
-							{
-								result.setSysChangeScoreMultiplier(Double.parseDouble(val));
-							}
-							catch (NumberFormatException nfe)
-							{
-								logger.warn("Cannot parse " + SYS_CHANGE_MULTIPLIER + " : " + parser.getText() 
-										+ " as a double");
-							}
-						}
-					}
-					else
-					{
-						logger.warn("Cannot parse " + SYS_CHANGE_MULTIPLIER + " : " + parser.getText() 
-										+ " as a double");
-					}	
-					break;
-					
 				case TAG:
 					result.setTag(parser.getValueAsString());
 					break;

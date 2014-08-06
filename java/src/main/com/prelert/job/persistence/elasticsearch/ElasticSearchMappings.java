@@ -43,6 +43,7 @@ import com.prelert.job.alert.Alert;
 import com.prelert.job.usage.Usage;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
+import com.prelert.rs.data.Quantiles;
 
 /**
  * Static methods to create ElasticSearch mappings for the autodetect 
@@ -222,7 +223,13 @@ public class ElasticSearchMappings
 						.startObject(ES_TIMESTAMP)
 							.field("type", "date")
 						.endObject()						
+						.startObject(Bucket.RAW_ANOMALY_SCORE)
+							.field("type", "double")
+						.endObject()
 						.startObject(Bucket.ANOMALY_SCORE)
+							.field("type", "double")
+						.endObject()
+						.startObject(Bucket.UNUSUAL_SCORE)
 							.field("type", "double")
 						.endObject()
 						.startObject(Bucket.RECORD_COUNT)
@@ -327,13 +334,53 @@ public class ElasticSearchMappings
 						.startObject(AnomalyRecord.IS_SIMPLE_COUNT)
 							.field("type", "boolean")
 						.endObject()
+						/* Enable this when we start writing scores to Elasticsearch
+						.startObject(Bucket.ANOMALY_SCORE)
+							.field("type", "double")
+						.endObject()
+						.startObject(Bucket.UNUSUAL_SCORE)
+							.field("type", "double")
+						.endObject()
+						*/
 					.endObject()
 				.endObject()
 			.endObject();
-			
+
 		return mapping;
 	}
-	
+
+
+	/**
+	 * Create the ElasticSearch mapping for {@linkplain Quantiles}.
+	 * The '_all' field is disabled as the document isn't meant to be searched.
+	 *
+	 * The quantile state string is not searchable (index = 'no') as it could be
+	 * very large.
+	 *
+	 * @return
+	 * @throws IOException
+	 */
+	static public XContentBuilder quantilesMapping()
+	throws IOException
+	{
+		XContentBuilder mapping = jsonBuilder()
+			.startObject()
+				.startObject(Quantiles.TYPE)
+					.startObject("_all")
+						.field("enabled", false)
+					.endObject()
+					.startObject("properties")
+						.startObject(Quantiles.QUANTILE_STATE)
+							.field("type", "string").field(INDEX, NO)
+						.endObject()
+					.endObject()
+				.endObject()
+			.endObject();
+
+		return mapping;
+	}
+
+
 	/**
 	 * Create the ElasticSearch mapping for {@linkplain DetectorState}.
 	 * The '_all' field is disabled as the document isn't meant to be searched.
