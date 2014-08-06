@@ -221,18 +221,13 @@ public class ProcessCtrl
 	 */
 	static final public String MAX_FIELD_VALUES_CONFIG_STR = "maxfieldvalues";
 	static final public String MAX_TIME_BUCKETS_CONFIG_STR = "maxtimebuckets";	
-	
-	/*
-	 * Normalisation init state csv headers
-	 */
-	static final public String SYS_CHANGE_STATE_HEADER[] = { "t", "a" };
-	static final public String UNUSUAL_STATE_HEADER[] = { "t", "p", "d" };
-	
+
+
 	/*
 	 * Normalisation input fields
 	 */
 	static final public String PROBABILITY = "probability";
-	static final public String RAW_ANOMALY_SCORE = "anomalyScore";
+	static final public String RAW_ANOMALY_SCORE = "rawAnomalyScore";
 	
 	
 	

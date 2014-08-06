@@ -111,13 +111,13 @@ public class Normaliser
 		try 
 		{
 			writer.writeNumFields(2);
-			writer.writeField("anomalyScore");
+			writer.writeField("rawAnomalyScore");
 			writer.writeField("tag");
 			
 			for (Bucket bucket : buckets)
 			{
 				writer.writeNumFields(2);
-				writer.writeField(Double.toString(bucket.getAnomalyScore()));
+				writer.writeField(Double.toString(bucket.getRawAnomalyScore()));
 				writer.writeField(bucket.getId());
 			}
 		}
@@ -307,7 +307,7 @@ public class Normaliser
 				{
 					writer.writeNumFields(2);
 					writer.writeField("");
-					writer.writeField(Double.toString(bucket.getAnomalyScore()));
+					writer.writeField(Double.toString(bucket.getRawAnomalyScore()));
 				}
 			}
 			
@@ -417,18 +417,18 @@ public class Normaliser
 		{
 			for (Bucket bucket : buckets)
 			{
-				double bucketAnomalyScore = 0.0;
+				double bucketUnusualScore = 0.0;
 				for (AnomalyRecord record : bucket.getRecords())
 				{
 					NormalisedResult normalised = scoresIter.next();
 
 					record.setUnusualScore(normalised.getNormalizedUnusualScore());
 
-					bucketAnomalyScore = Math.max(bucketAnomalyScore,
+					bucketUnusualScore = Math.max(bucketUnusualScore,
 							normalised.getNormalizedUnusualScore());
 				}
 
-				bucket.setAnomalyScore(bucketAnomalyScore);
+				bucket.setUnusualScore(bucketUnusualScore);
 			}
 		}
 		catch (NoSuchElementException e)

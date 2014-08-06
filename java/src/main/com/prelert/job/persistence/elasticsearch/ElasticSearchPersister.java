@@ -410,7 +410,7 @@ public class ElasticSearchPersister implements JobDataPersister
 		XContentBuilder builder = jsonBuilder().startObject()
 				.field(Bucket.ID, bucket.getId())
 				.field(ElasticSearchMappings.ES_TIMESTAMP, bucket.getTimestamp())
-				.field(Bucket.ANOMALY_SCORE, bucket.getAnomalyScore())
+				.field(Bucket.RAW_ANOMALY_SCORE, bucket.getRawAnomalyScore())
 				.field(Bucket.RECORD_COUNT, bucket.getRecordCount())
 				.endObject();
 		

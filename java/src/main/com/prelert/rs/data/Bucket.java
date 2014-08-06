@@ -55,7 +55,9 @@ public class Bucket
 	 */
 	public static final String ID = "id";
 	public static final String TIMESTAMP = "timestamp";
+	public static final String RAW_ANOMALY_SCORE =  "rawAnomalyScore";
 	public static final String ANOMALY_SCORE =  "anomalyScore";
+	public static final String UNUSUAL_SCORE =  "unusualScore";
 	public static final String RECORD_COUNT = "recordCount";
 	public static final String DETECTORS = "detectors";
 	public static final String RECORDS = "records";
@@ -69,7 +71,9 @@ public class Bucket
 	
 	private String m_Id;
 	private Date m_Timestamp;
+	private double m_RawAnomalyScore;	
 	private double m_AnomalyScore;	
+	private double m_UnusualScore;	
 	private int m_RecordCount;
 	private List<Detector> m_Detectors;
 	private long m_Epoch;
@@ -117,7 +121,19 @@ public class Bucket
 		
 		m_Id = Long.toString(m_Epoch); 
 	}
-	
+
+
+	public double getRawAnomalyScore() 
+	{
+		return m_RawAnomalyScore;
+	}	
+
+	public void setRawAnomalyScore(double rawAnomalyScore) 
+	{
+		this.m_RawAnomalyScore = rawAnomalyScore;
+	}
+
+
 	public double getAnomalyScore() 
 	{
 		return m_AnomalyScore;
@@ -127,7 +143,19 @@ public class Bucket
 	{
 		this.m_AnomalyScore = anomalyScore;
 	}
-	
+
+
+	public double getUnusualScore() 
+	{
+		return m_UnusualScore;
+	}	
+
+	public void setUnusualScore(double unusualScore) 
+	{
+		this.m_UnusualScore = unusualScore;
+	}
+
+
 	public int getRecordCount() 
 	{
 		return m_RecordCount;
@@ -254,15 +282,15 @@ public class Bucket
 										+ " as a long");
 					}
 					break;
-				case ANOMALY_SCORE:
+				case RAW_ANOMALY_SCORE:
 					token = parser.nextToken();
 					if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)	
 					{
-						bucket.setAnomalyScore(parser.getDoubleValue());
+						bucket.setRawAnomalyScore(parser.getDoubleValue());
 					}
 					else
 					{
-						s_Logger.warn("Cannot parse " + ANOMALY_SCORE + " : " + parser.getText() 
+						s_Logger.warn("Cannot parse " + RAW_ANOMALY_SCORE + " : " + parser.getText() 
 										+ " as a double");
 					}
 					break;	
@@ -319,7 +347,11 @@ public class Bucket
 		final int prime = 31;
 		int result = 1;
 		long temp;
+		temp = Double.doubleToLongBits(m_RawAnomalyScore);
+		result = prime * result + (int) (temp ^ (temp >>> 32));
 		temp = Double.doubleToLongBits(m_AnomalyScore);
+		result = prime * result + (int) (temp ^ (temp >>> 32));
+		temp = Double.doubleToLongBits(m_UnusualScore);
 		result = prime * result + (int) (temp ^ (temp >>> 32));
 		result = prime * result
 				+ ((m_Detectors == null) ? 0 : m_Detectors.hashCode());
@@ -353,10 +385,11 @@ public class Bucket
 		
 		Bucket that = (Bucket)other;
 		
-		
 		boolean equals = (this.m_Id.equals(that.m_Id)) &&
 				(this.m_Timestamp.equals(that.m_Timestamp)) &&
+				(this.m_RawAnomalyScore == that.m_RawAnomalyScore) &&
 				(this.m_AnomalyScore == that.m_AnomalyScore) &&
+				(this.m_UnusualScore == that.m_UnusualScore) &&
 				(this.m_RecordCount == that.m_RecordCount) &&
 				(this.m_Epoch == that.m_Epoch);
 		
