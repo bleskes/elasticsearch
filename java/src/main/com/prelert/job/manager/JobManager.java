@@ -316,10 +316,11 @@ public class JobManager
 	 * @param expand Include anomaly records
 	 * @return
 	 * @throws NativeProcessRunException 
+	 * @throws UnknownJobException 
 	 */
 	public SingleDocument<Bucket> bucket(String jobId, 
 			String bucketId, boolean expand, NormalizationType normalisationType) 
-	throws NativeProcessRunException
+	throws NativeProcessRunException, UnknownJobException
 	{
 		boolean expandForNormalisation = expand || 
 				normalisationType == NormalizationType.UNUSUAL_BEHAVIOUR;
@@ -360,10 +361,12 @@ public class JobManager
 	 * @param take
 	 * @param normalisationType Normalisation type
 	 * @return
+	 * @throws UnknownJobException 
+	 * @throws NativeProcessRunException 
 	 */
 	public Pagination<Bucket> buckets(String jobId, 
-			boolean expand, int skip, int take, NormalizationType normalisationType)
-	throws NativeProcessRunException
+			boolean expand, int skip, int take, NormalizationType normalisationType) 
+	throws UnknownJobException, NativeProcessRunException
 	{
 		boolean expandForNormalisation = expand || 
 				normalisationType == NormalizationType.UNUSUAL_BEHAVIOUR;
@@ -407,11 +410,13 @@ public class JobManager
 	 * @param endBucket Include buckets up to this one
 	 * @param normalisationType Normalisation type
 	 * @return
+	 * @throws UnknownJobException 
+	 * @throws NativeProcessRunException 
 	 */
 	public Pagination<Bucket> buckets(String jobId, 
 			boolean expand, int skip, int take, long startBucket, long endBucket,
-			NormalizationType normalisationType)
-	throws NativeProcessRunException
+			NormalizationType normalisationType) 
+	throws UnknownJobException, NativeProcessRunException
 	{
 		boolean expandForNormalisation = expand || 
 				normalisationType == NormalizationType.UNUSUAL_BEHAVIOUR;
@@ -502,11 +507,12 @@ public class JobManager
 	 * @param take Take only this number of records
 	 * @param norm Normalization type
 	 * @return
+	 * @throws UnknownJobException 
 	 * @throws NativeProcessRunException 
 	 */
 	public Pagination<AnomalyRecord> records(String jobId, 
 			String bucketId, int skip, int take, NormalizationType norm) 
-	throws NativeProcessRunException 
+	throws UnknownJobException, NativeProcessRunException 
 	{
 		return this.records(jobId, bucketId, skip, take, 
 				DEFAULT_RECORD_SORT_FIELD, norm);
@@ -524,12 +530,13 @@ public class JobManager
 	 * @param sortField The field to sort the anomaly records by
 	 * @param norm Normalisation type
 	 * @return
+	 * @throws UnknownJobException 
 	 * @throws NativeProcessRunException 
 	 */
 	public Pagination<AnomalyRecord> records(String jobId, 
 			String bucketId, int skip, int take, String sortField, 
 			NormalizationType norm) 
-	throws NativeProcessRunException 
+	throws UnknownJobException, NativeProcessRunException 
 	{
 		Pagination<AnomalyRecord> records = m_JobProvider.records(jobId, 
 				bucketId, false, skip, take, sortField);
@@ -558,11 +565,12 @@ public class JobManager
 	 * @param epochStart
 	 * @param epochEnd
 	 * @return
-	 * @throws NativeProcessRunException
+	 * @throws UnknownJobException 
+	 * @throws NativeProcessRunException 
 	 */
 	public Pagination<AnomalyRecord> records(String jobId, 
 			int skip, int take, long epochStart, long epochEnd) 
-	throws NativeProcessRunException 
+	throws NativeProcessRunException, UnknownJobException 
 	{
 		return records(jobId, skip, take, epochStart, epochEnd, 
 				DEFAULT_RECORD_SORT_FIELD, NormalizationType.BOTH);
@@ -579,10 +587,11 @@ public class JobManager
 	 * @param take Take only this number of records
 	 * @return
 	 * @throws NativeProcessRunException
+	 * @throws UnknownJobException 
 	 */
 	public Pagination<AnomalyRecord> records(String jobId, 
 			int skip, int take) 
-	throws NativeProcessRunException 
+	throws NativeProcessRunException, UnknownJobException 
 	{
 		return records(jobId, skip, take, DEFAULT_RECORD_SORT_FIELD, 
 				NormalizationType.BOTH);
@@ -604,11 +613,12 @@ public class JobManager
 	 * @param norm
 	 * @return
 	 * @throws NativeProcessRunException
+	 * @throws UnknownJobException
 	 */
 	public Pagination<AnomalyRecord> records(String jobId, 
 			int skip, int take, long epochStart, long epochEnd, String sortField,
 			NormalizationType norm) 
-	throws NativeProcessRunException 
+	throws NativeProcessRunException, UnknownJobException
 	{
 		long start_ms = System.currentTimeMillis();
 		
@@ -700,10 +710,11 @@ public class JobManager
 	 * @param norm The normalisation type
 	 * @return
 	 * @throws NativeProcessRunException
+	 * @throws UnknownJobException 
 	 */
 	public Pagination<AnomalyRecord> records(String jobId, 
 			int skip, int take, String sortField, NormalizationType norm) 
-	throws NativeProcessRunException 
+	throws NativeProcessRunException, UnknownJobException 
 	{
 		long start_ms = System.currentTimeMillis();
 		

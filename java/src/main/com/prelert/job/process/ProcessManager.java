@@ -556,7 +556,6 @@ public class ProcessManager
 		}
 		catch (IllegalThreadStateException e)
 		{
-			s_Logger.debug("Process is running");
 			return true;
 		}
 	}
