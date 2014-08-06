@@ -43,6 +43,7 @@ import javax.ws.rs.core.Response;
 
 import org.apache.log4j.Logger;
 
+import com.prelert.job.UnknownJobException;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.normalisation.NormalizationType;
 import com.prelert.job.process.NativeProcessRunException;
@@ -95,6 +96,8 @@ public class Results extends ResourceWithJobManager
 	 * @param end The filter end date see {@linkplain #paramToEpoch(String)}
 	 * for the format the date string should take
 	 * @return
+	 * @throws NativeProcessRunException 
+	 * @throws UnknownJobException 
 	 */
 	@GET
 	@Path("/{jobId}")
@@ -106,8 +109,8 @@ public class Results extends ResourceWithJobManager
 			@DefaultValue(JobManager.DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take,
 			@DefaultValue("") @QueryParam(START_QUERY_PARAM) String start,
 			@DefaultValue("") @QueryParam(END_QUERY_PARAM) String end,
-			@DefaultValue("s") @QueryParam(NORMALISATION_QUERY_PARAM) String norm)
-	throws NativeProcessRunException
+			@DefaultValue("s") @QueryParam(NORMALISATION_QUERY_PARAM) String norm) 
+	throws UnknownJobException, NativeProcessRunException
 	{	
 		s_Logger.debug(String.format("Get %s buckets for job %s. skip = %d, take = %d"
 				+ " start = '%s', end='%s' norm='%s'", 
@@ -216,6 +219,8 @@ public class Results extends ResourceWithJobManager
 	 * @param expand Return anomaly records in-line with the bucket,
 	 * default is false
 	 * @return
+	 * @throws UnknownJobException 
+	 * @throws NativeProcessRunException 
 	 */
 	@GET
 	@Path("/{jobId}/{bucketId}")
@@ -223,8 +228,8 @@ public class Results extends ResourceWithJobManager
 	public Response bucket(@PathParam("jobId") String jobId,
 			@PathParam("bucketId") String bucketId,
 			@DefaultValue("false") @QueryParam("expand") boolean expand,
-			@DefaultValue("s") @QueryParam(NORMALISATION_QUERY_PARAM) String norm)
-	throws NativeProcessRunException
+			@DefaultValue("s") @QueryParam(NORMALISATION_QUERY_PARAM) String norm) 
+	throws NativeProcessRunException, UnknownJobException
 	{
 		s_Logger.debug(String.format("Get %sbucket %s for job %s, norm ='%s'", 
 				expand?"expanded ":"", bucketId, jobId, norm));
@@ -281,6 +286,8 @@ public class Results extends ResourceWithJobManager
 	 * @param skip
 	 * @param take
 	 * @return
+	 * @throws NativeProcessRunException 
+	 * @throws UnknownJobException 
 	 */
 	@Path("/{jobId}/{bucketId}/records")
 	@GET
@@ -290,8 +297,8 @@ public class Results extends ResourceWithJobManager
 			@PathParam("bucketId") String bucketId,
 			@DefaultValue("0") @QueryParam("skip") int skip,
 			@DefaultValue(JobManager.DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take,
-			@DefaultValue("s") @QueryParam(NORMALISATION_QUERY_PARAM) String norm)
-	throws NativeProcessRunException
+			@DefaultValue("s") @QueryParam(NORMALISATION_QUERY_PARAM) String norm) 
+	throws UnknownJobException, NativeProcessRunException
 	{
 		s_Logger.debug(String.format("Get records for job %s, bucket %s, norm = '%s'", 
 				jobId, bucketId, norm));

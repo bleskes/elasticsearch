@@ -468,7 +468,8 @@ public class ElasticSearchJobProvider implements JobProvider
 	/* Results */
 	@Override
 	public Pagination<Bucket> buckets(String jobId,
-			boolean expand, int skip, int take) 
+			boolean expand, int skip, int take)
+	throws UnknownJobException
 	{
 		FilterBuilder fb = FilterBuilders.matchAllFilter();
 		
@@ -477,7 +478,8 @@ public class ElasticSearchJobProvider implements JobProvider
 
 	@Override
 	public Pagination<Bucket> buckets(String jobId,
-			boolean expand, int skip, int take, long startBucket, long endBucket) 
+			boolean expand, int skip, int take, long startBucket, long endBucket)
+	throws UnknownJobException
 	{
 		RangeFilterBuilder fb = FilterBuilders.rangeFilter(Bucket.ID);
 		if (startBucket > 0)
@@ -494,18 +496,27 @@ public class ElasticSearchJobProvider implements JobProvider
 	
 	private Pagination<Bucket> buckets(String jobId, 
 			boolean expand, int skip, int take,
-			FilterBuilder fb)
+			FilterBuilder fb) 
+	throws UnknownJobException
 	{	
 		SortBuilder sb = new FieldSortBuilder(Bucket.ID)
 					.ignoreUnmapped(true)
 					.order(SortOrder.ASC);
 
-		SearchResponse searchResponse = m_Client.prepareSearch(jobId)
-				.setTypes(Bucket.TYPE)		
-				.addSort(sb)
-				.setPostFilter(fb)
-				.setFrom(skip).setSize(take)
-				.get();
+		SearchResponse searchResponse;
+		try
+		{
+			searchResponse = m_Client.prepareSearch(jobId)
+										.setTypes(Bucket.TYPE)		
+										.addSort(sb)
+										.setPostFilter(fb)
+										.setFrom(skip).setSize(take)
+										.get();
+		}
+		catch (IndexMissingException e)
+		{
+			throw new UnknownJobException(jobId);
+		}
 
 		List<Bucket> results = new ArrayList<>();
 		
@@ -565,8 +576,17 @@ public class ElasticSearchJobProvider implements JobProvider
 	@Override
 	public SingleDocument<Bucket> bucket(String jobId, 
 			String bucketId, boolean expand)
+	throws UnknownJobException
 	{
-		GetResponse response = m_Client.prepareGet(jobId, Bucket.TYPE, bucketId).get();
+		GetResponse response;
+		try
+		{
+			response = m_Client.prepareGet(jobId, Bucket.TYPE, bucketId).get();
+		}
+		catch (IndexMissingException e)
+		{
+			throw new UnknownJobException(jobId);
+		}
 		
 		SingleDocument<Bucket> doc = new SingleDocument<>();
 		doc.setType(Bucket.TYPE);
@@ -610,6 +630,7 @@ public class ElasticSearchJobProvider implements JobProvider
 	public Pagination<AnomalyRecord> records(String jobId,
 			String bucketId, boolean includeSimpleCount, int skip, int take,
 			String sortField)
+	throws UnknownJobException
 	{
 		 FilterBuilder bucketFilter = FilterBuilders.hasParentFilter(Bucket.TYPE, 
 								FilterBuilders.termFilter(Bucket.ID, bucketId));
@@ -621,6 +642,7 @@ public class ElasticSearchJobProvider implements JobProvider
 	public Pagination<AnomalyRecord> records(String jobId,
 			boolean includeSimpleCount, int skip, int take,
 			long startBucket, long endBucket, String sortField)
+	throws UnknownJobException
 	{
 		RangeFilterBuilder rangeFilter = FilterBuilders.rangeFilter(Bucket.ID);
 		if (startBucket > 0)
@@ -647,6 +669,7 @@ public class ElasticSearchJobProvider implements JobProvider
 	public Pagination<AnomalyRecord> records(String jobId,
 			List<String> bucketIds, boolean includeSimpleCount, int skip, 
 			int take, String sortField)
+	throws UnknownJobException
 	{
 		IdsFilterBuilder idFilter = FilterBuilders.idsFilter(Bucket.TYPE);
 		for (String id : bucketIds)
@@ -663,6 +686,7 @@ public class ElasticSearchJobProvider implements JobProvider
 	@Override
 	public Pagination<AnomalyRecord> records(String jobId,
 			boolean includeSimpleCount, int skip, int take, String sortField)
+	throws UnknownJobException
 	{
 		 FilterBuilder fb = FilterBuilders.matchAllFilter();
 		 
@@ -680,10 +704,12 @@ public class ElasticSearchJobProvider implements JobProvider
 	 * @param recordFilter The record filter sensible options are
 	 * the match all filter or a parent bucket filter
 	 * @return
+	 * @throws UnknownJobException 
 	 */
 	private Pagination<AnomalyRecord> records(String jobId, 
 			boolean includeSimpleCount, int skip, int take,
-			FilterBuilder recordFilter, String sortField)
+			FilterBuilder recordFilter, String sortField) 
+	throws UnknownJobException
 	{
 		FilterBuilder filter;
 		if (includeSimpleCount)
@@ -717,7 +743,15 @@ public class ElasticSearchJobProvider implements JobProvider
 			searchBuilder.addSort(sb);
 		}
 		
-		SearchResponse searchResponse = searchBuilder.get();
+		SearchResponse searchResponse;
+		try
+		{
+			searchResponse = searchBuilder.get();
+		}
+		catch (IndexMissingException e)
+		{
+			throw new UnknownJobException(jobId);
+		}
 
 		List<AnomalyRecord> results = new ArrayList<>();
 		for (SearchHit hit : searchResponse.getHits().getHits())

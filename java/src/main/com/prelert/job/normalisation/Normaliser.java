@@ -201,11 +201,6 @@ public class Normaliser
 			{
 				for (AnomalyRecord record : bucket.getRecords())
 				{
-					if (record.isSimpleCount() != null && record.isSimpleCount())
-					{
-						continue;
-					}
-									
 					writer.writeNumFields(2);
 					writer.writeField(Double.toString(record.getProbability()));
 					writer.writeField(distingusherString(record));
@@ -320,11 +315,6 @@ public class Normaliser
 			{
 				for (AnomalyRecord record : records)
 				{
-					if (record.isSimpleCount() != null && record.isSimpleCount())
-					{
-						continue;
-					}
-	
 					writer.writeNumFields(2);
 					writer.writeField(Double.toString(record.getProbability()));
 					writer.writeField("");
@@ -430,11 +420,6 @@ public class Normaliser
 				double bucketAnomalyScore = 0.0;
 				for (AnomalyRecord record : bucket.getRecords())
 				{
-					if (record.isSimpleCount() != null && record.isSimpleCount())
-					{
-						continue;
-					}
-
 					NormalisedResult normalised = scoresIter.next();
 
 					record.setUnusualScore(normalised.getNormalizedUnusualScore());

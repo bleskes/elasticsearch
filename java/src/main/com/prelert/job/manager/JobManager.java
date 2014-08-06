@@ -316,10 +316,11 @@ public class JobManager
 	 * @param expand Include anomaly records
 	 * @return
 	 * @throws NativeProcessRunException 
+	 * @throws UnknownJobException 
 	 */
 	public SingleDocument<Bucket> bucket(String jobId, 
 			String bucketId, boolean expand, NormalizationType normalisationType) 
-	throws NativeProcessRunException
+	throws NativeProcessRunException, UnknownJobException
 	{
 		boolean expandForNormalisation = expand || 
 				normalisationType == NormalizationType.UNUSUAL_BEHAVIOUR;
@@ -360,10 +361,12 @@ public class JobManager
 	 * @param take
 	 * @param normalisationType Normalisation type
 	 * @return
+	 * @throws UnknownJobException 
+	 * @throws NativeProcessRunException 
 	 */
 	public Pagination<Bucket> buckets(String jobId, 
-			boolean expand, int skip, int take, NormalizationType normalisationType)
-	throws NativeProcessRunException
+			boolean expand, int skip, int take, NormalizationType normalisationType) 
+	throws UnknownJobException, NativeProcessRunException
 	{
 		boolean expandForNormalisation = expand || 
 				normalisationType == NormalizationType.UNUSUAL_BEHAVIOUR;
@@ -407,11 +410,13 @@ public class JobManager
 	 * @param endBucket Include buckets up to this one
 	 * @param normalisationType Normalisation type
 	 * @return
+	 * @throws UnknownJobException 
+	 * @throws NativeProcessRunException 
 	 */
 	public Pagination<Bucket> buckets(String jobId, 
 			boolean expand, int skip, int take, long startBucket, long endBucket,
-			NormalizationType normalisationType)
-	throws NativeProcessRunException
+			NormalizationType normalisationType) 
+	throws UnknownJobException, NativeProcessRunException
 	{
 		boolean expandForNormalisation = expand || 
 				normalisationType == NormalizationType.UNUSUAL_BEHAVIOUR;
@@ -516,11 +521,12 @@ public class JobManager
 	 * @param take Take only this number of records
 	 * @param norm Normalization type
 	 * @return
+	 * @throws UnknownJobException 
 	 * @throws NativeProcessRunException 
 	 */
 	public Pagination<AnomalyRecord> records(String jobId, 
 			String bucketId, int skip, int take, NormalizationType norm) 
-	throws NativeProcessRunException 
+	throws UnknownJobException, NativeProcessRunException 
 	{
 		return this.records(jobId, bucketId, skip, take, 
 				DEFAULT_RECORD_SORT_FIELD, norm);
@@ -538,12 +544,13 @@ public class JobManager
 	 * @param sortField The field to sort the anomaly records by
 	 * @param norm Normalisation type
 	 * @return
+	 * @throws UnknownJobException 
 	 * @throws NativeProcessRunException 
 	 */
 	public Pagination<AnomalyRecord> records(String jobId, 
 			String bucketId, int skip, int take, String sortField, 
 			NormalizationType norm) 
-	throws NativeProcessRunException 
+	throws UnknownJobException, NativeProcessRunException 
 	{
 		Pagination<AnomalyRecord> records = m_JobProvider.records(jobId, 
 				bucketId, false, skip, take, sortField);
@@ -579,11 +586,12 @@ public class JobManager
 	 * @param epochStart
 	 * @param epochEnd
 	 * @return
-	 * @throws NativeProcessRunException
+	 * @throws UnknownJobException 
+	 * @throws NativeProcessRunException 
 	 */
 	public Pagination<AnomalyRecord> records(String jobId, 
 			int skip, int take, long epochStart, long epochEnd) 
-	throws NativeProcessRunException 
+	throws NativeProcessRunException, UnknownJobException 
 	{
 		return records(jobId, skip, take, epochStart, epochEnd, 
 				DEFAULT_RECORD_SORT_FIELD, NormalizationType.BOTH);
@@ -600,10 +608,11 @@ public class JobManager
 	 * @param take Take only this number of records
 	 * @return
 	 * @throws NativeProcessRunException
+	 * @throws UnknownJobException 
 	 */
 	public Pagination<AnomalyRecord> records(String jobId, 
 			int skip, int take) 
-	throws NativeProcessRunException 
+	throws NativeProcessRunException, UnknownJobException 
 	{
 		return records(jobId, skip, take, DEFAULT_RECORD_SORT_FIELD, 
 				NormalizationType.BOTH);
@@ -625,11 +634,12 @@ public class JobManager
 	 * @param norm
 	 * @return
 	 * @throws NativeProcessRunException
+	 * @throws UnknownJobException
 	 */
 	public Pagination<AnomalyRecord> records(String jobId, 
 			int skip, int take, long epochStart, long epochEnd, String sortField,
 			NormalizationType norm) 
-	throws NativeProcessRunException 
+	throws NativeProcessRunException, UnknownJobException
 	{
 		long start_ms = System.currentTimeMillis();
 		
@@ -642,6 +652,7 @@ public class JobManager
 		}
 		
 		List<Bucket> bucketList;
+		
 		if (norm.isNormalizeStateChange())
 		{
 			// get the parent bucket ids and sort
@@ -726,13 +737,13 @@ public class JobManager
 	 * @param norm The normalisation type
 	 * @return
 	 * @throws NativeProcessRunException
+	 * @throws UnknownJobException 
 	 */
 	public Pagination<AnomalyRecord> records(String jobId, 
 			int skip, int take, String sortField, NormalizationType norm) 
-	throws NativeProcessRunException 
+	throws NativeProcessRunException, UnknownJobException 
 	{
 		long start_ms = System.currentTimeMillis();
-		
 		
 		Pagination<AnomalyRecord> records = m_JobProvider.records(jobId, 
 				false, skip, take, sortField);
@@ -742,25 +753,26 @@ public class JobManager
 			return records;
 		}
 		
-		// get the parent bucket ids and sort
-		List<String> bucketIds = new ArrayList<>();
-		for (AnomalyRecord r : records.getDocuments())
-		{
-			bucketIds.add(r.getParent());
-		}
-		Collections.sort(bucketIds);
 		
 		// get all the buckets over the same time period
 		// as the records
 		try
 		{			
-			long start = Long.parseLong(bucketIds.get(0));
-			// we want the last bucket inclusive so +1 to the value
-			long end = Long.parseLong(bucketIds.get(bucketIds.size() -1)) + 1;
-
 			List<Bucket> bucketList;
 			if (norm.isNormalizeStateChange())
 			{
+				// get the parent bucket ids and sort
+				List<String> bucketIds = new ArrayList<>();
+				for (AnomalyRecord r : records.getDocuments())
+				{
+					bucketIds.add(r.getParent());
+				}
+				Collections.sort(bucketIds);
+				
+				long start = Long.parseLong(bucketIds.get(0));
+				// we want the last bucket inclusive so +1 to the value
+				long end = Long.parseLong(bucketIds.get(bucketIds.size() -1)) + 1;				
+				
 				int bucketSkip = 0;
 				Pagination<Bucket> buckets = m_JobProvider.buckets(jobId, 
 						false, bucketSkip, take, start, end);

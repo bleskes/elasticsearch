@@ -30,6 +30,7 @@ package com.prelert.job.persistence;
 import java.io.Closeable;
 import java.util.List;
 
+import com.prelert.job.UnknownJobException;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.Pagination;
@@ -46,9 +47,11 @@ public interface JobResultsProvider extends Closeable
 	 * if not required set to 0.
 	 * @param take Take only this number of Buckets
 	 * @return
+	 * @throws UnknownJobException If the job id is no recognised
 	 */
 	public Pagination<Bucket> buckets(String jobId, 
-			boolean expand, int skip, int take);
+			boolean expand, int skip, int take)
+	throws UnknownJobException;
 			
 	
 	/**
@@ -69,10 +72,12 @@ public interface JobResultsProvider extends Closeable
 	 * are returned. If 0 all buckets from <code>startBucket</code>
 	 * are returned
 	 * @return
+	 * @throws UnknownJobException If the job id is no recognised
 	 */
 	public Pagination<Bucket> buckets(String jobId, 
 			boolean expand, int skip, int take,
-			long startBucket, long endBucket);
+			long startBucket, long endBucket)
+	throws UnknownJobException;
 	
 	
 	/**
@@ -82,9 +87,11 @@ public interface JobResultsProvider extends Closeable
 	 * @param bucketId
 	 * @param expand Include anomaly records
 	 * @return
+	 * @throws UnknownJobException If the job id is no recognised
 	 */
 	public SingleDocument<Bucket> bucket(String jobId, 
-			String bucketId, boolean expand);
+			String bucketId, boolean expand)
+	throws UnknownJobException;			
 	
 	
 	/**
@@ -102,10 +109,12 @@ public interface JobResultsProvider extends Closeable
 	 * @param sortField The field to sort results by if <code>null</code> no
 	 * sort is applied
 	 * @return
+	 * @throws UnknownJobException If the job id is no recognised
 	 */
 	public Pagination<AnomalyRecord> records(String jobId, 
 			String bucketId, boolean includeSimpleCount, int skip, int take,
-			String sortField);
+			String sortField)
+	throws UnknownJobException;
 	
 	/**
 	 * Get the anomaly records for all buckets.
@@ -121,9 +130,11 @@ public interface JobResultsProvider extends Closeable
 	 * @param sortField The field to sort results by if <code>null</code> no
 	 * sort is applied
 	 * @return
+	 * @throws UnknownJobException If the job id is no recognised
 	 */
 	public Pagination<AnomalyRecord> records(String jobId, 
-			boolean includeSimpleCount, int skip, int take, String sortField);
+			boolean includeSimpleCount, int skip, int take, String sortField)
+	throws UnknownJobException;
 	
 	/**
 	 * Get the anomaly records for all buckets in the given 
@@ -144,10 +155,12 @@ public interface JobResultsProvider extends Closeable
 	 * @param sortField The field to sort results by if <code>null</code> no
 	 * sort is applied 
 	 * @return
+	 * throws UnknownJobException If the job id is no recognised
 	 */
 	public Pagination<AnomalyRecord> records(String jobId, 
 			boolean includeSimpleCount, int skip, int take,
-			long startBucket, long endBucket, String sortField);
+			long startBucket, long endBucket, String sortField)
+	throws UnknownJobException;
 			
 	
 	/**
@@ -165,8 +178,10 @@ public interface JobResultsProvider extends Closeable
 	 * @param sortField The field to sort results by if <code>null</code> no
 	 * sort is applied 
 	 * @return
+	 * @throws UnknownJobException If the job id is no recognised
 	 */
 	public Pagination<AnomalyRecord> records(String jobId,
 			List<String> bucketIds, boolean includeSimpleCount, int skip, int take,
-			String sortField);
+			String sortField)
+	throws UnknownJobException;
 }
