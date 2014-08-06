@@ -43,6 +43,7 @@ import javax.ws.rs.core.Response;
 
 import org.apache.log4j.Logger;
 
+import com.prelert.job.UnknownJobException;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.normalisation.NormalizationType;
 import com.prelert.job.process.NativeProcessRunException;
@@ -114,7 +115,7 @@ public class Records extends ResourceWithJobManager
 			@DefaultValue("") @QueryParam(END_QUERY_PARAM) String end,
 			@DefaultValue(PROB_SORT_VALUE) @QueryParam(SORT_QUERY_PARAM) String sort,
 			@DefaultValue("both") @QueryParam(NORMALISATION_QUERY_PARAM) String norm)
-	throws NativeProcessRunException
+	throws NativeProcessRunException, UnknownJobException
 	{	
 		s_Logger.debug(String.format("Get records for job %s. skip = %d, take = %d"
 				+ " start = '%s', end='%s', sort='%s', norm='%s'", 

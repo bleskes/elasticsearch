@@ -44,17 +44,13 @@ import java.util.Set;
 import org.apache.commons.lang.SystemUtils;
 import org.apache.log4j.Logger;
 
-import org.supercsv.encoder.DefaultCsvEncoder;
-import org.supercsv.io.CsvListWriter;
-import org.supercsv.prefs.CsvPreference;
-
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.Detector;
 import com.prelert.job.AnalysisLimits;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DetectorState;
 import com.prelert.job.JobDetails;
-import com.prelert.job.normalisation.InitialState;
+import com.prelert.job.QuantilesState;
 
 
 /**
@@ -191,12 +187,12 @@ public class ProcessCtrl
 	static final public String UNKNOWN_VERSION = "Unknown version of the analytics";
 	
 	/**
-	 * Persisted model state is written to disk so it can be read 
-	 * by the autodetect program. All model state files have this 
+	 * Persisted model state and quantiles are written to disk so they can
+	 * be read by the autodetect program.  All state files have this 
 	 * base name followed by a unique number and 
 	 * {@linkplain #BASE_STATE_FILE_EXTENSION}
 	 */
-	static final public String BASE_STATE_FILE_NAME = "model_state";
+	static final public String BASE_STATE_FILE_NAME = "job_state";
 	
 	/*
 	 * The standard file extension for the temporary  
@@ -225,18 +221,13 @@ public class ProcessCtrl
 	 */
 	static final public String MAX_FIELD_VALUES_CONFIG_STR = "maxfieldvalues";
 	static final public String MAX_TIME_BUCKETS_CONFIG_STR = "maxtimebuckets";	
-	
-	/*
-	 * Normalisation init state csv headers
-	 */
-	static final public String SYS_CHANGE_STATE_HEADER[] = { "t", "a" };
-	static final public String UNUSUAL_STATE_HEADER[] = { "t", "p", "d" };
-	
+
+
 	/*
 	 * Normalisation input fields
 	 */
 	static final public String PROBABILITY = "probability";
-	static final public String RAW_ANOMALY_SCORE = "anomalyScore";
+	static final public String RAW_ANOMALY_SCORE = "rawAnomalyScore";
 	
 	
 	
@@ -460,7 +451,7 @@ public class ProcessCtrl
 	static public Process buildAutoDetect(String processName, JobDetails job, Logger logger)
 	throws IOException	
 	{
-		return buildAutoDetect(processName, job, null, logger);
+		return buildAutoDetect(processName, job, null, null, logger);
 	}
 	
 	/**
@@ -473,15 +464,17 @@ public class ProcessCtrl
 	 * @param processName The name of program to execute this should exist in the 
 	 * directory PRELERT_HOME/bin/ 
 	 * @param job The job configuration
-	 * @param detectorState if <code>null</code> this parameter is 
-	 * ignored else the models' state is restored from this object 
+	 * @param detectorState if <code>null</code> this parameter is
+	 * ignored else the models' state is restored from this object
+	 * @param quantilesState if <code>null</code> this parameter is
+	 * ignored else the quantiles' state is restored from this object
 	 * @param logger The job's logger
 	 * 
 	 * @return A Java Process object
 	 * @throws IOException 
 	 */
 	static public Process buildAutoDetect(String processName, JobDetails job,
-			DetectorState detectorState, Logger logger)
+			DetectorState detectorState, QuantilesState quantilesState, Logger logger)
 	throws IOException
 	{
 		logger.info("PRELERT_HOME is set to " + PRELERT_HOME);
@@ -552,34 +545,61 @@ public class ProcessCtrl
 		// always set the time field
 		String timeFieldArg = TIME_FIELD_ARG + timeField;
 		command.add(timeFieldArg);
-				
+
+		int fileNumber = 1;
+		String tempDirStr = null;
+
 		// Restoring the model state
 		if (detectorState != null && detectorState.getDetectorKeys().size() > 0)
 		{
 			logger.info("Restoring models for job '" + job.getId() +"'");
 
 			Path tempDir = Files.createTempDirectory(null);
-			String tempDirStr = tempDir.toString();
-			
-			int fileNumber = 1;
+			tempDirStr = tempDir.toString();
+
 			for (String key : detectorState.getDetectorKeys())
 			{
 				File modelStateFile = new File(tempDirStr, BASE_STATE_FILE_NAME +
 						fileNumber + BASE_STATE_FILE_EXTENSION);
-				
-				fileNumber++;
-				
-				writeModelState(detectorState.getDetectorState(key), modelStateFile);
+
+				++fileNumber;
+
+				writeState(detectorState.getDetectorState(key), modelStateFile);
 			}
-						
+		}
+
+		// Restoring the quantiles
+		if (quantilesState != null && quantilesState.getQuantilesKinds().size() > 0)
+		{
+			logger.info("Restoring quantiles for job '" + job.getId() +"'");
+
+			if (tempDirStr == null)
+			{
+				Path tempDir = Files.createTempDirectory(null);
+				tempDirStr = tempDir.toString();
+			}
+
+			for (String kind : quantilesState.getQuantilesKinds())
+			{
+				File quantilesStateFile = new File(tempDirStr, BASE_STATE_FILE_NAME +
+						fileNumber + BASE_STATE_FILE_EXTENSION);
+
+				++fileNumber;
+
+				writeState(quantilesState.getQuantilesState(kind), quantilesStateFile);
+			}
+		}
+
+		if (fileNumber > 1)
+		{
 			String restoreArg = RESTORE_STATE_ARG + tempDirStr +
 					File.separator + BASE_STATE_FILE_NAME;
 			command.add(restoreArg);
-			
+
 			// tell autodetect to delete the temporary state files
 			command.add(DELETE_STATE_FILES_ARG);				
-		}		
-		
+		}
+
 		// Always persist the models when finished. 
 		command.add(PERSIST_STATE_ARG);
 		
@@ -806,7 +826,8 @@ public class ProcessCtrl
 
 		osw.write(contents.toString());
 	}
-	
+
+
 	/**
 	 * Write the string <code>state</code> to <code>file</code>
 	 * followed by a newline character.
@@ -815,7 +836,7 @@ public class ProcessCtrl
 	 * @param file
 	 * @throws IOException
 	 */
-	static private void writeModelState(String state, File file)
+	static private void writeState(String state, File file)
 	throws IOException
 	{
 		try (OutputStreamWriter osw = new OutputStreamWriter(
@@ -843,7 +864,7 @@ public class ProcessCtrl
 	 * @throws IOException
 	 */
 	static public Process buildNormaliser(String jobId, 
-			InitialState sysChangeState, InitialState unusualBehaviourState,
+			String sysChangeState, String unusualBehaviourState,
 			Integer bucketSpan, Logger logger)
 	throws IOException
 	{
@@ -854,8 +875,8 @@ public class ProcessCtrl
 		
 		if (sysChangeState != null)
 		{
-			Path sysChangeStateFilePath = writeNormaliserInitState(jobId, 
-					NormalisationType.SYS_STATE_CHANGE, sysChangeState);
+			Path sysChangeStateFilePath = writeNormaliserInitState(jobId,
+					sysChangeState);
 
 			String stateFileArg = SYS_STATE_CHANGE_ARG + sysChangeStateFilePath;
 			command.add(stateFileArg);
@@ -863,13 +884,18 @@ public class ProcessCtrl
 
 		if (unusualBehaviourState != null)
 		{
-			Path unusualStateFilePath = writeNormaliserInitState(jobId, 
-					NormalisationType.UNUSUAL_STATE, unusualBehaviourState);
+			Path unusualStateFilePath = writeNormaliserInitState(jobId,
+					unusualBehaviourState);
 			
 			String stateFileArg = UNUSUAL_STATE_ARG + unusualStateFilePath;
 			command.add(stateFileArg);
 		}
-		
+
+		if (sysChangeState != null || unusualBehaviourState != null)
+		{
+			command.add(DELETE_STATE_FILES_ARG);
+		}
+
 		if (bucketSpan != null)
 		{
 			String bucketSpanArg = BUCKET_SPAN_ARG + bucketSpan.toString();
@@ -899,57 +925,31 @@ public class ProcessCtrl
 	
 	/**
 	 * Write the normaliser init state to file.
-	 * 
+	 *
 	 * @param jobId
-	 * @param type
 	 * @param state
 	 * @return The state file path
 	 * @throws IOException
 	 */
-	static private Path writeNormaliserInitState(String jobId, NormalisationType type,
-			InitialState state)
+	static private Path writeNormaliserInitState(String jobId, String state)
 	throws IOException
 	{
 		// createTempFile has a race condition where it may return the same
 		// temporary file name to different threads if called simultaneously
 		// from multiple threads, hence add the thread ID to avoid this
-		Path stateFile = Files.createTempFile(jobId + "_state_" + Thread.currentThread().getId(), ".csv");
+		Path stateFile = Files.createTempFile(jobId + "_state_" + Thread.currentThread().getId(), ".xml");
 
-		// SuperCSV preferences aren't thread safe in versions up to 2.2:
-		// see http://sourceforge.net/p/supercsv/bugs/43/
-		// It might be possible to remove this and just use EXCEL_PREFERENCE
-		// directly if we upgrade to a later version of SuperCSV
-		CsvPreference preference =
-				new CsvPreference.Builder(CsvPreference.EXCEL_PREFERENCE)
-				.useEncoder(new DefaultCsvEncoder())
-				.build();
-
-		try (CsvListWriter csvWriter = new CsvListWriter(new OutputStreamWriter(
+		try (OutputStreamWriter osw = new OutputStreamWriter(
 				new FileOutputStream(stateFile.toString()),
-				StandardCharsets.UTF_8), preference))
+				StandardCharsets.UTF_8))
 		{
-			switch (type)
-			{
-			case SYS_STATE_CHANGE:
-				csvWriter.writeHeader(SYS_CHANGE_STATE_HEADER);
-				for (InitialState.InitialStateRecord record : state)
-				{
-					csvWriter.write(record.toSysChangeArray());
-				}
-				break;
-			case UNUSUAL_STATE:
-				csvWriter.writeHeader(UNUSUAL_STATE_HEADER);
-				for (InitialState.InitialStateRecord record : state)
-				{
-					csvWriter.write(record.toUnusualArray());
-				} 				
-				break;
-			}
+			osw.write(state);
 		}
-		
+
 		return stateFile;
 	}
-	
+
+
 	/**
 	 * Returns true if the string arg is not null and not empty
 	 * i.e. it is a valid string

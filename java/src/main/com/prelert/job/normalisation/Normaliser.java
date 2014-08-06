@@ -36,8 +36,10 @@ import java.util.NoSuchElementException;
 
 import org.apache.log4j.Logger;
 
+import com.prelert.job.QuantilesState;
+import com.prelert.job.UnknownJobException;
 import com.prelert.job.input.LengthEncodedWriter;
-import com.prelert.job.persistence.JobResultsProvider;
+import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.process.NativeProcessRunException;
 import com.prelert.job.process.ProcessCtrl;
 import com.prelert.job.process.output.NormalisedResultsParser;
@@ -55,17 +57,24 @@ import com.prelert.rs.data.ErrorCode;
  */
 public class Normaliser 
 {
-	private JobResultsProvider m_JobDetailsProvider;
-	
+	/**
+	 * These MUST match the constants used in the C++ code
+	 * in lib/model/CAnomalyScore.cc
+	 */
+	public static final String SYS_CHANGE_QUANTILES_KIND = "sysChange";
+	public static final String UNUSUAL_QUANTILES_KIND = "unusual";
+
 	private String m_JobId;
+
+	private JobProvider m_JobProvider;
 
 	private Logger m_Logger; 
 	
-	public Normaliser(String jobId, JobResultsProvider jobResultsProvider, 
+	public Normaliser(String jobId, JobProvider jobProvider,
 			Logger logger)
 	{
-		m_JobDetailsProvider = jobResultsProvider;
 		m_JobId = jobId;
+		m_JobProvider = jobProvider;
 		m_Logger = logger;
 	}
 			
@@ -76,16 +85,16 @@ public class Normaliser
 	 * @param buckets Will be modified to have the normalised result
 	 * @return
 	 * @throws NativeProcessRunException
+	 * @throws UnknownJobException
 	 */
 	public List<Bucket> normaliseForSystemChange(Integer bucketSpan, 
 			List<Bucket> buckets) 
-	throws NativeProcessRunException
+	throws NativeProcessRunException, UnknownJobException
 	{
-		InitialState state = m_JobDetailsProvider.getSystemChangeInitialiser(m_JobId);
+		QuantilesState state = m_JobProvider.getQuantilesState(m_JobId);
 		
 		NormaliserProcess process = createNormaliserProcess(
-				state, null, bucketSpan);
-		
+				state.getQuantilesState(SYS_CHANGE_QUANTILES_KIND), null, bucketSpan);
 		
 		long start = System.currentTimeMillis();
 		
@@ -102,13 +111,13 @@ public class Normaliser
 		try 
 		{
 			writer.writeNumFields(2);
-			writer.writeField("anomalyScore");
+			writer.writeField("rawAnomalyScore");
 			writer.writeField("tag");
 			
 			for (Bucket bucket : buckets)
 			{
 				writer.writeNumFields(2);
-				writer.writeField(Double.toString(bucket.getAnomalyScore()));
+				writer.writeField(Double.toString(bucket.getRawAnomalyScore()));
 				writer.writeField(bucket.getId());
 			}
 		}
@@ -158,18 +167,18 @@ public class Normaliser
 	 * @param expandedBuckets Will be modified to have the normalised result
 	 * @return
 	 * @throws NativeProcessRunException
+	 * @throws UnknownJobException
 	 */
 	public List<Bucket> normaliseForUnusualBehaviour(Integer bucketSpan, 
-			List<Bucket> expandedBuckets) throws NativeProcessRunException 
+			List<Bucket> expandedBuckets)
+	throws NativeProcessRunException, UnknownJobException
 	{
-		InitialState state = m_JobDetailsProvider.getUnusualBehaviourInitialiser(m_JobId);
+		QuantilesState state = m_JobProvider.getQuantilesState(m_JobId);
 		
 		NormaliserProcess process = createNormaliserProcess(
-				null, state, bucketSpan);
-		
+				null, state.getQuantilesState(UNUSUAL_QUANTILES_KIND), bucketSpan);
 		
 		long start = System.currentTimeMillis();
-		
 		
 		NormalisedResultsParser resultsParser = new NormalisedResultsParser(
 							process.getProcess().getInputStream(),
@@ -192,11 +201,6 @@ public class Normaliser
 			{
 				for (AnomalyRecord record : bucket.getRecords())
 				{
-					if (record.isSimpleCount() != null && record.isSimpleCount())
-					{
-						continue;
-					}
-									
 					writer.writeNumFields(2);
 					writer.writeField(Double.toString(record.getProbability()));
 					writer.writeField(distingusherString(record));
@@ -252,23 +256,24 @@ public class Normaliser
 	 * @param normType
 	 * @return
 	 * @throws NativeProcessRunException
+	 * @throws UnknownJobException
 	 */
 	public List<AnomalyRecord> normalise(Integer bucketSpan, 
 			List<Bucket> buckets, List<AnomalyRecord> records, 
 			NormalizationType normType) 
-	throws NativeProcessRunException
+	throws NativeProcessRunException, UnknownJobException
 	{
-		
-		InitialState sysChangeState = null;
-		InitialState unusualBehaviourState = null;
-		
+		String sysChangeState = null;
+		String unusualBehaviourState = null;
+		QuantilesState state = m_JobProvider.getQuantilesState(m_JobId);
+
 		if (normType.isNormalizeStateChange())
 		{
-			sysChangeState = m_JobDetailsProvider.getSystemChangeInitialiser(m_JobId);
+			sysChangeState = state.getQuantilesState(SYS_CHANGE_QUANTILES_KIND);
 		}
 		if (normType.isNormalizeUnusual())
 		{
-			unusualBehaviourState = m_JobDetailsProvider.getUnusualBehaviourInitialiser(m_JobId);
+			unusualBehaviourState = state.getQuantilesState(UNUSUAL_QUANTILES_KIND);
 		}
 		
 		long startProc = System.currentTimeMillis();
@@ -277,7 +282,6 @@ public class Normaliser
 		
 		System.out.println("Proc created in : " +
 				(System.currentTimeMillis() - startProc));
-		
 		
 		long start = System.currentTimeMillis();
 		
@@ -303,7 +307,7 @@ public class Normaliser
 				{
 					writer.writeNumFields(2);
 					writer.writeField("");
-					writer.writeField(Double.toString(bucket.getAnomalyScore()));
+					writer.writeField(Double.toString(bucket.getRawAnomalyScore()));
 				}
 			}
 			
@@ -311,11 +315,6 @@ public class Normaliser
 			{
 				for (AnomalyRecord record : records)
 				{
-					if (record.isSimpleCount() != null && record.isSimpleCount())
-					{
-						continue;
-					}
-	
 					writer.writeNumFields(2);
 					writer.writeField(Double.toString(record.getProbability()));
 					writer.writeField("");
@@ -418,23 +417,18 @@ public class Normaliser
 		{
 			for (Bucket bucket : buckets)
 			{
-				double bucketAnomalyScore = 0.0;
+				double bucketUnusualScore = 0.0;
 				for (AnomalyRecord record : bucket.getRecords())
 				{
-					if (record.isSimpleCount() != null && record.isSimpleCount())
-					{
-						continue;
-					}
-
 					NormalisedResult normalised = scoresIter.next();
 
 					record.setUnusualScore(normalised.getNormalizedUnusualScore());
 
-					bucketAnomalyScore = Math.max(bucketAnomalyScore,
+					bucketUnusualScore = Math.max(bucketUnusualScore,
 							normalised.getNormalizedUnusualScore());
 				}
 
-				bucket.setAnomalyScore(bucketAnomalyScore);
+				bucket.setUnusualScore(bucketUnusualScore);
 			}
 		}
 		catch (NoSuchElementException e)
@@ -520,8 +514,8 @@ public class Normaliser
 	 * @throws NativeProcessRunException
 	 */
 	private NormaliserProcess createNormaliserProcess(
-			InitialState sysChangeState, 
-			InitialState unusualBehaviourState, 
+			String sysChangeState, 
+			String unusualBehaviourState, 
 			Integer bucketSpan)
 	throws NativeProcessRunException
 	{
@@ -544,7 +538,6 @@ public class Normaliser
 			throw new NativeProcessRunException(msg, 
 					ErrorCode.NATIVE_PROCESS_START_ERROR, e);
 		}
-		
 	}	
 	
 	

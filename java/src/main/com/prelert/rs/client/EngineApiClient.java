@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URLEncoder;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.zip.ZipInputStream;
 
@@ -61,10 +62,10 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
+import com.prelert.job.alert.Alert;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.ApiError;
 import com.prelert.rs.data.Bucket;
-import com.prelert.rs.data.Detector;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
 
@@ -109,8 +110,8 @@ public class EngineApiClient implements Closeable
 	/**
 	 * Get details of all the jobs in database
 	 * 
-	 * @param baseUrl The base URL for the REST API 
-	 * e.g <code>http://localhost:8080/engine/version/</code>
+	 * @param baseUrl The base URL for the REST API including version number
+	 * e.g <code>http://localhost:8080/engine/v1/</code>
 	 * @return The {@link Pagination} object containing a list of {@link JobDetails jobs}
 	 * @throws IOException
 	 */
@@ -120,42 +121,23 @@ public class EngineApiClient implements Closeable
 		String url = baseUrl + "/jobs";
 		s_Logger.debug("GET jobs: " + url);
 		
-		HttpGet get = new HttpGet(url);
-		get.addHeader("Content-Type", "application/json");
+		Pagination<JobDetails> page = this.get(url, 
+				new TypeReference<Pagination<JobDetails>>() {});
 		
-		CloseableHttpResponse response = m_HttpClient.execute(get);
-		try
+		if (page == null)
 		{
-			HttpEntity entity = response.getEntity();				
-			String content = EntityUtils.toString(entity);
-
-			if (response.getStatusLine().getStatusCode() == 200)
-			{
-				Pagination<JobDetails> docs = m_JsonMapper.readValue(content, 
-						new TypeReference<Pagination<JobDetails>>() {} );
-				return docs;
-			}
-			else
-			{
-				m_LastError = m_JsonMapper.readValue(content, 
-						new TypeReference<ApiError>() {} );
-			}
+			page = new Pagination<>();
+			page.setDocuments(Collections.<JobDetails>emptyList());
 		}
-		finally 
-		{
-			response.close();
-		}		
-		
-		Pagination<JobDetails> page = new Pagination<>();
-		page.setDocuments(Collections.<JobDetails>emptyList());
+	
 		return page;
 	}
 	
 	/**
 	 * Get the individual job on the provided URL
 	 *  
-	 * @param baseUrl The base URL for the REST API 
-	 * e.g <code>http://localhost:8080/engine/version/</code>
+	 * @param baseUrl The base URL for the REST API including version number
+	 * e.g <code>http://localhost:8080/engine/v1/</code>
 	 * @param jobId The Job's unique Id
 	 * 
 	 * @return If the job exists a {@link com.prelert.rs.data.SingleDocument SingleDocument}
@@ -168,40 +150,14 @@ public class EngineApiClient implements Closeable
 		String url = baseUrl + "/jobs/" + jobId;
 		s_Logger.debug("GET job: " + url);
 		
-		HttpGet get = new HttpGet(url);
-		get.addHeader("Content-Type", "application/json");
+		SingleDocument<JobDetails> doc = this.get(url,
+				new TypeReference<SingleDocument<JobDetails>>() {});
 		
-		CloseableHttpResponse response = m_HttpClient.execute(get);
-		try
+		if (doc == null)
 		{
-			String content = EntityUtils.toString(response.getEntity());
-
-			if (response.getStatusLine().getStatusCode() == 200)
-			{
-				SingleDocument<JobDetails> doc = m_JsonMapper.readValue(content, 
-						new TypeReference<SingleDocument<JobDetails>>() {} );
-				return doc;
-			}
-			else
-			{
-				String msg = String.format(
-						"Failed to get job %s, status code = %d. "
-						+ "Returned content: %s", 
-						jobId, response.getStatusLine().getStatusCode(),
-						content);
-				
-				s_Logger.error(msg);
-				
-				m_LastError = m_JsonMapper.readValue(content, 
-							new TypeReference<ApiError>() {} );
-				
-				return new SingleDocument<>();
-			}
+			doc = new SingleDocument<>();
 		}
-		finally 
-		{
-			response.close();
-		}
+		return doc;
 	}
 	
 	
@@ -211,8 +167,8 @@ public class EngineApiClient implements Closeable
 	 * Internally this function converts <code>jobConfig</code> to a JSON
 	 * string and calls {@link #createJob(String, String)}
 	 * 
-	 * @param baseUrl he base URL for the REST API 
-	 * e.g <code>http://localhost:8080/engine/version/</code>
+	 * @param baseUrl The base URL for the REST API including version number
+	 * e.g <code>http://localhost:8080/engine/v1/</code>
 	 * @param jobConfig 
 	 * @return The new job's Id or an empty string if there was an error
 	 * @throws ClientProtocolException
@@ -230,8 +186,8 @@ public class EngineApiClient implements Closeable
 	 * Create a new job with the configuration in <code>createJobPayload</code>
 	 * and return the newly created job's Id
 	 * 
-	 * @param baseUrl The base URL for the REST API 
-	 * e.g <code>http://localhost:8080/engine/version/</code>
+	 * @param baseUrl The base URL for the REST API including version number
+	 * e.g <code>http://localhost:8080/engine/v1/</code>
 	 * @param createJobPayload The Json configuration for the new job
 	 * @return The new job's Id or an empty string if there was an error
 	 * 
@@ -294,8 +250,8 @@ public class EngineApiClient implements Closeable
 	 * PUTS the description parameter to the job and sets it as 
 	 * the job's new description field
 	 * 
-	 * @param baseUrl The base URL for the REST API 
-	 * e.g <code>http://localhost:8080/engine/version/</code>
+	 * @param baseUrl The base URL for the REST API including version number
+	 * e.g <code>http://localhost:8080/engine/v1/</code>
 	 * @param jobId The job's unique ID
 	 * @param description New description field
 	 * 
@@ -343,8 +299,8 @@ public class EngineApiClient implements Closeable
 	/**
 	 * Delete an individual job 
 	 *  
-	 * @param baseUrl The base URL for the REST API 
-	 * e.g <code>http://localhost:8080/engine/version/</code>
+	 * @param baseUrl The base URL for the REST API including version number
+	 * e.g <code>http://localhost:8080/engine/v1/</code>
 	 * @param jobId The Job's unique Id
 	 * @return If the job existed and was deleted return true else false
 	 * @throws IOException, ClientProtocolException
@@ -389,8 +345,8 @@ public class EngineApiClient implements Closeable
 	 * boundaries it is send in fixed size blocks. The API will manage 
 	 * reconstructing the records from the chunks.
 	 * 
-	 * @param baseUrl The base URL for the REST API 
-	 * e.g <code>http://localhost:8080/engine/version/</code>
+	 * @param baseUrl The base URL for the REST API including version number
+	 * e.g <code>http://localhost:8080/engine/v1/</code>>
 	 * @param jobId The Job's unique Id
 	 * @param inputStream The data to write to the web service
 	 * @return True
@@ -447,8 +403,8 @@ public class EngineApiClient implements Closeable
 	 * in that the entire stream is read and uploading at once without breaking
 	 * the connection.
 	 * 
-	 * @param baseUrl The base URL for the REST API 
-	 * e.g <code>http://localhost:8080/engine/version/</code>
+	 * @param baseUrl The base URL for the REST API including version number
+	 * e.g <code>http://localhost:8080/engine/v1/</code>
 	 * @param jobId The Job's unique Id
 	 * @param inputStream The data to write to the web service
 	 * @param compressed Is the data gzipped compressed?
@@ -506,8 +462,8 @@ public class EngineApiClient implements Closeable
 	/**
 	 * Upload the contents of <code>dataFile</code> to the server.
 	 * 
-	 * @param baseUrl The URL of the REST API i.e. an URL like
-	 * 	<code>http://prelert-host:8080/engine/version/</code>
+	 * @param baseUrl The base URL for the REST API including version number
+	 * e.g <code>http://localhost:8080/engine/v1/</code>
 	 * @param jobId The Job's Id
 	 * @param dataFile Should match the data configuration format of the job
 	 * @param compressed Is the data gzipped compressed?
@@ -526,8 +482,8 @@ public class EngineApiClient implements Closeable
 	/**
 	 * Finish the job after all the data has been uploaded
 	 * 
-	 * @param baseUrl The base URL for the REST API 
-	 * e.g <code>http://localhost:8080/engine/version/</code>
+	 * @param baseUrl The base URL for the REST API including version number
+	 * e.g <code>http://localhost:8080/engine/v1/</code>
 	 * @param jobId The Job's unique Id
 	 * @return True if successful 
 	 * @throws IOException
@@ -567,70 +523,12 @@ public class EngineApiClient implements Closeable
 	
 	
 	/**
-	 * Get the list of detectors used a in particular job.
-	 * 
-	 * @param baseUrl The base URL for the REST API 
-	 * e.g <code>http://localhost:8080/engine/version/</code>
-	 * @param jobId The Job's unique Id
-	 * 
-	 * @return A {@link Pagination} object containing a list of 
-	 * {@link Detector detectors}
-	 * @throws IOException 
-	 */
-	public Pagination<Detector> getDetectors(String baseUrl, String jobId) 
-	throws IOException 
-	{
-		String url = baseUrl + "/detectors/" + jobId;
-		s_Logger.debug("GET detectors " + url);
-		
-		HttpGet get = new HttpGet(url);
-		get.addHeader("Content-Type", "application/json");
-		
-		CloseableHttpResponse response = m_HttpClient.execute(get);
-		try
-		{
-			String content = EntityUtils.toString(response.getEntity());
-			
-			if (response.getStatusLine().getStatusCode() == 200)
-			{
-				Pagination<Detector> docs = m_JsonMapper.readValue(content, 
-						new TypeReference<Pagination<Detector>>() {} );
-				return docs;
-			}
-			else
-			{
-				String msg = String.format(
-						"Error getting detectors for job %s, status code = %d. "
-						+ "Returned content: %s",
-						jobId,
-						response.getStatusLine().getStatusCode(),
-						content);
-				
-				s_Logger.error(msg);
-				
-				m_LastError = m_JsonMapper.readValue(content, 
-						new TypeReference<ApiError>() {} );
-			}
-		}
-		finally 
-		{
-			response.close();
-		}	
-		
-		// else return empty page
-		Pagination<Detector> page = new Pagination<>();
-		page.setDocuments(Collections.<Detector>emptyList());
-		return page;
-	}
-	
-	
-	/**
 	 * Get the bucket results for a particular job.
 	 * Calls {@link #getBuckets(String, String, boolean, Long, Long)} with the 
 	 * skip and take parameters set to <code>null</code>
 	 * 
-	 * @param baseUrl The base URL for the REST API 
-	 * e.g <code>http://localhost:8080/engine/version/</code>
+	 * @param baseUrl The base URL for the REST API including version number
+	 * e.g <code>http://localhost:8080/engine/v1/</code>
 	 * @param jobId The Job's unique Id
 	 * @param normalisation The normalisation type, if <code>null</code> the 
 	 * default is used
@@ -649,8 +547,8 @@ public class EngineApiClient implements Closeable
 	/**
 	 * Get the bucket results for a particular job with paging parameters.
 	 * 
-	 * @param baseUrl The base URL for the REST API 
-	 * e.g <code>http://localhost:8080/engine/version/</code>
+	 * @param baseUrl The base URL for the REST API including version number
+	 * e.g <code>http://localhost:8080/engine/v1/</code>
 	 * @param jobId The Job's unique Id
 	 * @param normalisation The normalisation type, if <code>null</code> the 
 	 * default is used 
@@ -672,8 +570,8 @@ public class EngineApiClient implements Closeable
 	 * Get the bucket results filtered between the start and end dates.
 	 * The arguments are optional only one of start/end needs be set
 	 * 
-	 * @param baseUrl The base URL for the REST API 
-	 * e.g <code>http://localhost:8080/engine/version/</code>
+	 * @param baseUrl The base URL for the REST API including version number
+	 * e.g <code>http://localhost:8080/engine/v1/</code>
 	 * @param jobId The Job's unique Id
 	 * @param normalisation The normalisation type, if <code>null</code> the 
 	 * default is used 
@@ -727,51 +625,24 @@ public class EngineApiClient implements Closeable
 		
 		s_Logger.debug("GET buckets " + url);
 		
-		HttpGet get = new HttpGet(url);
-		get.addHeader("Content-Type", "application/json");
-		
-		CloseableHttpResponse response = m_HttpClient.execute(get);
-		try
-		{
-			String content = EntityUtils.toString(response.getEntity());
-
-			if (response.getStatusLine().getStatusCode() == 200)
-			{
-				Pagination<Bucket> docs = m_JsonMapper.readValue(content, 
-						new TypeReference<Pagination<Bucket>>() {} );
-				return docs;
-			}
-			else
-			{
-				String msg = String.format(
-						"Error getting buckets for job %s, status code = %d. "
-						+ "Returned content: %s",
-						jobId,
-						response.getStatusLine().getStatusCode(),
-						content);
-				
-				s_Logger.error(msg);
-				
-				m_LastError = m_JsonMapper.readValue(content, 
-						new TypeReference<ApiError>() {} );
-			}
-		}
-		finally 
-		{
-			response.close();
-		}	
+		Pagination<Bucket> page = this.get(url, 
+				new TypeReference<Pagination<Bucket>>() {});
 		
 		// else return empty page
-		Pagination<Bucket> page = new Pagination<>();
-		page.setDocuments(Collections.<Bucket>emptyList());
+		if (page == null)
+		{
+			page = new Pagination<>();
+			page.setDocuments(Collections.<Bucket>emptyList());
+		}
+		
 		return page;
 	}
 		
 	/**
 	 * Get a single bucket for a particular job and bucket Id
 	 * 
-	 * @param baseUrl The base URL for the REST API 
-	 * e.g <code>http://localhost:8080/engine/version/</code>
+	 * @param baseUrl The base URL for the REST API including version number
+	 * e.g <code>http://localhost:8080/engine/v1/</code>
 	 * @param jobId The Job's unique Id
 	 * @param bucketId The bucket to get
 	 * @param expand If true include the anomaly records for the bucket
@@ -801,44 +672,14 @@ public class EngineApiClient implements Closeable
 		
 		s_Logger.debug("GET bucket " + url);
 		
-		HttpGet get = new HttpGet(url);
-		get.addHeader("Content-Type", "application/json");
-		
-		CloseableHttpResponse response = m_HttpClient.execute(get);
-		try
-		{
-			String content = EntityUtils.toString(response.getEntity());
-
-			// 404 means an empty doc not necessarily an error
-			if (response.getStatusLine().getStatusCode() == 200 ||
-					response.getStatusLine().getStatusCode() == 404)
-			{
-				SingleDocument<Bucket> docs = m_JsonMapper.readValue(content, 
-						new TypeReference<SingleDocument<Bucket>>() {} );
-				return docs;
-			}
-			else
-			{
-				String msg = String.format(
-						"Error getting single bucket for job %s and bucket %s, "
-						+ "status code = %d. Returned content: %s",
-						jobId, bucketId,
-						response.getStatusLine().getStatusCode(),
-						content);
-
-				s_Logger.error(msg);
-				
-				m_LastError = m_JsonMapper.readValue(content, 
-						new TypeReference<ApiError>() {} );
-			}
-		}
-		finally 
-		{
-			response.close();
-		}	
+		SingleDocument<Bucket> doc = this.get(url, 
+				new TypeReference<SingleDocument<Bucket>>() {});
 		
 		// else return empty doc
-		SingleDocument<Bucket> doc = new SingleDocument<>();
+		if (doc == null)
+		{
+			doc = new SingleDocument<>();
+		}
 		return doc;
 	}
 	
@@ -850,8 +691,8 @@ public class EngineApiClient implements Closeable
 	 * Calls {@link #getRecords(String, String, Long, Long)} with the 
 	 * skip and take parameters set to <code>null</code>
 	 * 
-	 * @param baseUrl The base URL for the REST API 
-	 * e.g <code>http://localhost:8080/engine/version/</code>
+	 * @param baseUrl The base URL for the REST API including version number
+	 * e.g <code>http://localhost:8080/engine/v1/</code>
 	 * @param jobId The Job's unique Id
 	 * @param normalisation The normalisation type, if <code>null</code> the 
 	 * default is used
@@ -875,8 +716,8 @@ public class EngineApiClient implements Closeable
 	 * Calls {@link #getRecords(String, String, Long, Long)} with the 
 	 * skip and take parameters set to <code>null</code>
 	 * 
-	 * @param baseUrl The base URL for the REST API 
-	 * e.g <code>http://localhost:8080/engine/version/</code>
+	 * @param baseUrl The base URL for the REST API including version number
+	 * e.g <code>http://localhost:8080/engine/v1/</code>
 	 * @param jobId The Job's unique Id
 	 * @param normalisation The normalisation type, if <code>null</code> the 
 	 * default is used
@@ -900,8 +741,8 @@ public class EngineApiClient implements Closeable
 	 * The records aren't grouped by bucket 
 	 * 
 	 * 
-	 * @param baseUrl The base URL for the REST API 
-	 * e.g <code>http://localhost:8080/engine/version/</code>
+	 * @param baseUrl The base URL for the REST API including version number
+	 * e.g <code>http://localhost:8080/engine/v1/</code>
 	 * @param jobId The Job's unique Id
 	 * @param normalisation The normalisation type, if <code>null</code> the 
 	 * default is used
@@ -950,38 +791,14 @@ public class EngineApiClient implements Closeable
 		
 		s_Logger.debug("GET records " + url);
 		
-		HttpGet get = new HttpGet(url);
+		Pagination<AnomalyRecord> page = this.get(url, 
+				new TypeReference<Pagination<AnomalyRecord>>() {});
 		
-		
-		try (CloseableHttpResponse response = m_HttpClient.execute(get))
+		if (page == null)
 		{
-			String content = EntityUtils.toString(response.getEntity());
-
-			if (response.getStatusLine().getStatusCode() == 200)
-			{
-				Pagination<AnomalyRecord> docs = m_JsonMapper.readValue(content, 
-						new TypeReference<Pagination<AnomalyRecord>>() {} );
-				m_LastError = null;
-				return docs;
-			}
-			else
-			{
-				String msg = String.format(
-						"Error getting records for job %s status code = %d. "
-						+ "Returned content: %s",
-						jobId, 
-						response.getStatusLine().getStatusCode(),
-						content);
-
-				s_Logger.error(msg);
-				
-				m_LastError = m_JsonMapper.readValue(content, 
-						new TypeReference<ApiError>() {} );
-			}			
-		}	
-		
-		// else return empty page
-		Pagination<AnomalyRecord> page = new Pagination<>();
+			page = new Pagination<>();
+			page.setDocuments(Collections.<AnomalyRecord>emptyList());
+		}
 		return page;
 	}
 	
@@ -989,8 +806,8 @@ public class EngineApiClient implements Closeable
 	/**
 	 * Get all the normalised records for the bucket
 	 * 
-	 * @param baseUrl The base URL for the REST API 
-	 * e.g <code>http://localhost:8080/engine/version/</code>
+	 * @param baseUrl The base URL for the REST API including version number
+	 * e.g <code>http://localhost:8080/engine/v1/</code>
 	 * @param jobId The Job's unique Id
 	 * @param bucketId 
 	 * @param normalization The normalization type, if <code>null</code> the 
@@ -1009,52 +826,253 @@ public class EngineApiClient implements Closeable
 		}
 		
 		s_Logger.debug("GET records " + url);
+
+		Pagination<AnomalyRecord> page = this.get(url, 
+				new TypeReference<Pagination<AnomalyRecord>>() {});
 		
-		HttpGet get = new HttpGet(url);
-		get.addHeader("Content-Type", "application/json");
-		
-		CloseableHttpResponse response = m_HttpClient.execute(get);
-		try
+		if (page == null)
 		{
-			String content = EntityUtils.toString(response.getEntity());
-
-			if (response.getStatusLine().getStatusCode() == 200)
-			{
-				Pagination<AnomalyRecord> docs = m_JsonMapper.readValue(content, 
-						new TypeReference<Pagination<AnomalyRecord>>() {} );
-				return docs;
-			}
-			else
-			{
-				String msg = String.format(
-						"Error getting records for job %s and bucket %s, "
-						+ "status code = %d. Returned content: %s",
-						jobId, bucketId,
-						response.getStatusLine().getStatusCode(),
-						content);
-
-				s_Logger.error(msg);
-				
-				m_LastError = m_JsonMapper.readValue(content, 
-						new TypeReference<ApiError>() {} );
-			}			
+			page = new Pagination<>();
+			page.setDocuments(Collections.<AnomalyRecord>emptyList());
 		}
-		finally 
-		{
-			response.close();
-		}	
 		
-		// else return empty page
-		Pagination<AnomalyRecord> page = new Pagination<>();
 		return page;
 	}
 
+	
+	/**
+	 * Get job alerts with the default skip and take parameters
+	 * 
+	 * @param baseUrl The base URL for the REST API including version number
+	 * e.g <code>http://localhost:8080/engine/v1/</code>
+	 * @param jobId The Job's unique Id
+	 * @return
+	 * @throws IOException
+	 */
+	public Pagination<Alert> getAlerts(String baseUrl, String jobId)
+	throws IOException
+	{
+		return this.<String>getAlerts(baseUrl, jobId, null, null, null, null);
+	}
+	
+	/**
+	 * Get the job's alerts with skip and take parameters
+	 * 
+	 * @param baseUrl The base URL for the REST API including version number
+	 * e.g <code>http://localhost:8080/engine/v1/</code>
+	 * @param jobId The Job's unique Id
+	 * @param normalisation The normalisation type, if <code>null</code> the 
+	 * default is used 
+	 * @param skip The number of alerts to skip. If <code>null</code> then ignored 
+	 * @param take The max number of alerts to return. If <code>null</code> then ignored 
+	 * @return A {@link Pagination} object containing a list of {@link Bucket buckets}
+	 * @throws IOException
+	 */
+	public Pagination<Alert> getAlerts(String baseUrl, 
+			String jobId, Long skip, Long take)
+	throws IOException
+	{
+		return this.<String>getAlerts(baseUrl, jobId, skip, take, null, null);
+	}
+	
+	
+	/**
+	 * Get a page of alerts for the job filtered by start and end
+	 * date.
+	 * 
+	 * @param baseUrl The base URL for the REST API including version number
+	 * e.g <code>http://localhost:8080/engine/v1/</code>
+	 * @param jobId The Job's unique Id
+	 * @param normalisation The normalisation type, if <code>null</code> the 
+	 * default is used 
+	 * @param skip The number of alerts to skip. If <code>null</code> then ignored 
+	 * @param take The max number of alerts to request. If <code>null</code> then ignored 
+	 * @param start The start date filter as either a Long (seconds from epoch)
+	 * or an ISO 8601 date String. If <code>null</code> then ignored
+	 * @param end The end date filter as either a Long (seconds from epoch)
+	 * or an ISO 8601 date String. If <code>null</code> then ignored
+	 * @return A {@link Pagination} object containing a list of {@link Alert alerts}
+	 * @throws IOException
+	 */
+	public <T> Pagination<Alert> getAlerts(String baseUrl, String jobId, 
+			Long skip, Long take, T start, T end) 
+	throws JsonParseException, JsonMappingException, IOException 
+	{
+		String url = baseUrl + "/alerts/" + jobId ;
+		char queryChar = '?';
+		
+		if (skip != null)
+		{
+			url += queryChar + "skip=" + skip;
+			queryChar = '&';
+		}
+		if (take != null)
+		{
+			url += queryChar + "take=" + take;
+			queryChar = '&';
+		}
+		if (start != null)
+		{
+			url += queryChar + "start=" + URLEncoder.encode(start.toString(), "UTF-8");
+			queryChar = '&';
+		}
+		if (end != null)
+		{
+			url += queryChar + "end=" + URLEncoder.encode(end.toString(), "UTF-8");
+			queryChar = '&';
+		}
+		
+		s_Logger.debug("GET alerts " + url);
+		
+		Pagination<Alert> alerts = this.get(baseUrl,
+				new TypeReference<Pagination<Alert>>() {});
+		
+		if (alerts == null)
+		{
+			alerts = new Pagination<Alert>();
+			alerts.setDocuments(Collections.<Alert>emptyList());
+		}
+
+		return alerts;
+	}
+	
+	
+	/**
+	 * Get the alerts from all jobs optionally filtered by start and
+	 * end dates
+	 * 
+	 * @param baseUrl The base URL for the REST API including version number
+	 * e.g <code>http://localhost:8080/engine/v1/</code>
+	 * @param normalisation The normalisation type, if <code>null</code> the 
+	 * default is used 
+	 * @param skip The number of alerts to skip. If <code>null</code> then ignored 
+	 * @param take The max number of alerts to request. If <code>null</code> then ignored 
+	 * @param start The start date filter as either a Long (seconds from epoch)
+	 * or an ISO 8601 date String. If <code>null</code> then ignored
+	 * @param end The end date filter as either a Long (seconds from epoch)
+	 * or an ISO 8601 date String. If <code>null</code> then ignored
+	 * @return A {@link Pagination} object containing a list of {@link Alert alerts}
+	 * @throws IOException
+	 * @return
+	 * @throws JsonParseException
+	 * @throws JsonMappingException
+	 * @throws IOException
+	 */
+	public <T> Pagination<Alert> getAllJobsAlerts(String baseUrl,
+			Long skip, Long take, T start, T end) 
+	throws JsonParseException, JsonMappingException, IOException 
+	{
+		String url = baseUrl + "/alerts/";
+		char queryChar = '?';
+		
+		if (skip != null)
+		{
+			url += queryChar + "skip=" + skip;
+			queryChar = '&';
+		}
+		if (take != null)
+		{
+			url += queryChar + "take=" + take;
+			queryChar = '&';
+		}
+		if (start != null)
+		{
+			url += queryChar + "start=" + URLEncoder.encode(start.toString(), "UTF-8");
+			queryChar = '&';
+		}
+		if (end != null)
+		{
+			url += queryChar + "end=" + URLEncoder.encode(end.toString(), "UTF-8");
+			queryChar = '&';
+		}
+		
+		s_Logger.debug("GET alerts " + url);
+		
+		Pagination<Alert> alerts = this.get(baseUrl,
+				new TypeReference<Pagination<Alert>>() {});
+		
+		if (alerts == null)
+		{
+			alerts = new Pagination<Alert>();
+			alerts.setDocuments(Collections.<Alert>emptyList());
+		}
+
+		return alerts;
+	}
+	
+	
+	/**
+	 * Long poll for alerts from all jobs blocks until an alert occurs or the 
+	 * timeout period expires. 
+	 * If <code>timeout</code> is not null then wait <code>timeout</code> seconds 
+	 * 
+	 * @param baseUrl The base URL for the REST API including version number
+	 * e.g <code>http://localhost:8080/engine/v1/</code>
+	 * @param timeout Timeout the request after this many seconds. 
+	 * If <code>null</code> then use the default.
+	 * @return
+	 * @throws JsonParseException
+	 * @throws JsonMappingException
+	 * @throws IOException
+	 */
+	public List<Alert> pollAllJobsAlerts(String baseUrl, Integer timeout) 
+	throws JsonParseException, JsonMappingException, IOException
+	{
+		String url = baseUrl + "/alerts_longpoll/";
+		if (timeout != null)
+		{
+			url += "?timeout=" + timeout;
+		}
+		
+		List<Alert> alerts = this.get(url, new TypeReference<List<Alert>>() {});
+		
+		if (alerts == null)
+		{
+			alerts = Collections.<Alert>emptyList();
+		}
+
+		return alerts;
+	}
+	
+	/**
+	 * Long poll for alerts from the job. Blocks until an alert occurs or the 
+	 * timeout period expires. 
+	 * If <code>timeout</code> is not null then wait <code>timeout</code> seconds 
+	 * 
+	 * @param baseUrl The base URL for the REST API including version number
+	 * e.g <code>http://localhost:8080/engine/v1/</code>
+	 * @param timeout Timeout the request after this many seconds. 
+	 * If <code>null</code> then use the default.
+	 * @return
+	 * @throws JsonParseException
+	 * @throws JsonMappingException
+	 * @throws IOException
+	 */
+	public List<Alert> pollJobAlerts(String baseUrl, String jobId, Integer timeout) 
+	throws JsonParseException, JsonMappingException, IOException
+	{
+		String url = baseUrl + "/alerts_longpoll/" + jobId;
+		if (timeout != null)
+		{
+			url += "?timeout=" + timeout;
+		}
+		
+		List<Alert> alerts = this.get(url, new TypeReference<List<Alert>>() {});
+		
+		if (alerts == null)
+		{
+			alerts = Collections.<Alert>emptyList();
+		}
+
+		return alerts;
+	}
+	
 
 	/**
 	 * Get the last 10 lines of the job's latest log file
 	 * 
-	 * @param baseUrl The base URL for the REST API 
-	 * e.g <code>http://localhost:8080/engine/version/</code>
+	 * @param baseUrl The base URL for the REST API including version number
+	 * e.g <code>http://localhost:8080/engine/v1/</code>
 	 * @param jobId The Job's unique Id
 	 * @return The last 10 lines of the last log file
 	 * @throws ClientProtocolException
@@ -1070,8 +1088,8 @@ public class EngineApiClient implements Closeable
 	 * Tails the last <code>lineCount</code> lines from the job's
 	 * last log file. This tails the autodetect process log file. 
 	 * 
-	 * @param baseUrl The base URL for the REST API 
-	 * e.g <code>http://localhost:8080/engine/version/</code>
+	 * @param baseUrl The base URL for the REST API including version number
+	 * e.g <code>http://localhost:8080/engine/v1/</code>
 	 * @param jobId The Job's unique Id
 	 * @param lineCount The number of lines to return 
 	 * @return The last <code>lineCount</code> lines of the log file
@@ -1086,42 +1104,15 @@ public class EngineApiClient implements Closeable
 		
 		s_Logger.debug("GET tail log " + url);
 		
-		HttpGet get = new HttpGet(url);
-		get.addHeader("Content-Type", "application/json");
-		
-		try (CloseableHttpResponse response = m_HttpClient.execute(get))
-		{
-			String content = EntityUtils.toString(response.getEntity());
-
-			if (response.getStatusLine().getStatusCode() == 200)
-			{
-				return content;
-			}
-			else
-			{
-				String msg = String.format(
-						"Error tailing logs for job %s, status code = %d. "
-								+ "Returned content: %s",
-								jobId,
-								response.getStatusLine().getStatusCode(),
-								content);
-
-				s_Logger.error(msg);
-				
-				m_LastError = m_JsonMapper.readValue(content, 
-						new TypeReference<ApiError>() {} );
-				
-				return "";
-			}			
-		}		
+		return this.getStringContent(url);
 	}
 	
 	
 	/**
 	 * Tails the last <code>lineCount</code> lines from the named log file.
 	 * 
-	 * @param baseUrl The base URL for the REST API 
-	 * e.g <code>http://localhost:8080/engine/version/</code>
+	 * @param baseUrl The base URL for the REST API including version number
+	 * e.g <code>http://localhost:8080/engine/v1/</code>
 	 * @param jobId The Job's unique Id
 	 * @param logfileName the name of the log file without the '.log' suffix. 
 	 * @param lineCount The number of lines to return 
@@ -1138,8 +1129,22 @@ public class EngineApiClient implements Closeable
 		
 		s_Logger.debug("GET tail log " + url);
 		
+		return this.getStringContent(url);	
+	}
+	
+	/**
+	 * Get content from Url and return as a string 
+	 * 
+	 * @param url
+	 * @return If status code == 200 return the HTTP response content
+	 * else return an empty string.
+	 * @throws IOException 
+	 * @throws ClientProtocolException 
+	 */
+	private String getStringContent(String url) 
+	throws ClientProtocolException, IOException
+	{
 		HttpGet get = new HttpGet(url);
-		get.addHeader("Content-Type", "application/json");
 		
 		try (CloseableHttpResponse response = m_HttpClient.execute(get))
 		{
@@ -1152,9 +1157,8 @@ public class EngineApiClient implements Closeable
 			else
 			{
 				String msg = String.format(
-						"Error tailing logs for job %s, status code = %d. "
+						"Error reading string content. Status code = %d. "
 								+ "Returned content: %s",
-								jobId,
 								response.getStatusLine().getStatusCode(),
 								content);
 
@@ -1165,7 +1169,7 @@ public class EngineApiClient implements Closeable
 				
 				return "";
 			}			
-		}		
+		}
 	}
 	
 	
@@ -1174,8 +1178,8 @@ public class EngineApiClient implements Closeable
 	 * The autodetect process writes a log file named after with the job id
 	 * <job_id>.log while the Java component logs to engine_api.log.
 	 * 
-	 * @param baseUrl The base URL for the REST API 
-	 * e.g <code>http://localhost:8080/engine/version/</code>
+	 * @param baseUrl The base URL for the REST API including version number
+	 * e.g <code>http://localhost:8080/engine/v1/</code>
 	 * @param jobId The Job's unique Id
 	 * @param logfileName the name of the log file without the '.log' suffix. 
 	 * @return
@@ -1190,41 +1194,15 @@ public class EngineApiClient implements Closeable
 		
 		s_Logger.debug("GET log file " + url);
 		
-		HttpGet get = new HttpGet(url);
-		get.addHeader("Content-Type", "application/json");
-		
-		try (CloseableHttpResponse response = m_HttpClient.execute(get))
-		{
-			String content = EntityUtils.toString(response.getEntity());
-
-			if (response.getStatusLine().getStatusCode() == 200)
-			{
-				return content;
-			}
-			else
-			{
-				String msg = String.format(
-						"Error downloading log file for job %s, status code = %d. "
-								+ "Returned content: %s",
-								jobId,
-								response.getStatusLine().getStatusCode(),
-								content);
-
-				s_Logger.error(msg);
-				m_LastError = m_JsonMapper.readValue(content, 
-						new TypeReference<ApiError>() {} );
-				
-				return "";
-			}			
-		}		
+		return this.getStringContent(url);		
 	}
 	
 	
 	/**
 	 * Download all the log files for the given job.
 	 * 
-	 * @param baseUrl The base URL for the REST API 
-	 * e.g <code>http://localhost:8080/engine/version/</code>
+	 * @param baseUrl The base URL for the REST API including version number
+	 * e.g <code>http://localhost:8080/engine/v1/</code>
 	 * @param jobId The Job's unique Id
 	 * @return A ZipInputStream for the log files. If the inputstream is
 	 * empty an error may have occurred
@@ -1239,7 +1217,6 @@ public class EngineApiClient implements Closeable
 		s_Logger.debug("GET download logs " + url);
 		
 		HttpGet get = new HttpGet(url);
-		get.addHeader("Content-Type", "application/json");
 		
 		try (CloseableHttpResponse response = m_HttpClient.execute(get))
 		{
@@ -1273,9 +1250,15 @@ public class EngineApiClient implements Closeable
 	 * A generic HTTP GET to any Url. The result is converted from Json to 
 	 * the type referenced in <code>typeRef</code>. A <code>TypeReference</code> 
 	 * has to be used to preserve the generic type information that is usually 
-	 * lost in due to erasure.<br/>
-	 * This method is useful for paging through a set of results in a 
-	 * {@link Pagination} object.
+	 * lost in due to erasure.
+	 * <br/>
+	 * If the response code is 200 or 404 try to parse the returned content
+	 * into an object of the generic parameter type <code>T</code>. 
+	 * The 404 status code is not considered an error it simply means an
+	 * empty document was returned by the API. 
+	 * <br/>
+	 * This method is useful for paging through a set of results via the
+	 * next or previous page links in a {@link Pagination} object.
 	 *  
 	 * @param fullUrl
 	 * @param typeRef
@@ -1287,20 +1270,16 @@ public class EngineApiClient implements Closeable
 	public <T> T get(String fullUrl, TypeReference<T> typeRef) 
 	throws JsonParseException, JsonMappingException, IOException
 	{
-		s_Logger.debug("GET " + fullUrl + ". Return type = " 
-					+ typeRef.getType().toString());
-		
-		
 		HttpGet get = new HttpGet(fullUrl);
-		get.addHeader("Content-Type", "application/json");
-		
 		CloseableHttpResponse response = m_HttpClient.execute(get);
+
 		try
 		{
 			HttpEntity entity = response.getEntity();				
 			String content = EntityUtils.toString(entity);
 
-			if (response.getStatusLine().getStatusCode() == 200)
+			if (response.getStatusLine().getStatusCode() == 200 ||
+					response.getStatusLine().getStatusCode() == 404)
 			{
 				T docs = m_JsonMapper.readValue(content, typeRef);
 				return docs;

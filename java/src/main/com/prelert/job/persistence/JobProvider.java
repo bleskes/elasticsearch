@@ -28,6 +28,7 @@
 package com.prelert.job.persistence;
 
 import com.prelert.job.DetectorState;
+import com.prelert.job.QuantilesState;
 import com.prelert.job.UnknownJobException;
 
 public interface JobProvider extends JobDetailsProvider, JobResultsProvider
@@ -36,5 +37,12 @@ public interface JobProvider extends JobDetailsProvider, JobResultsProvider
 	 * Get the persisted detectors state for the job
 	 */
 	public DetectorState getDetectorState(String jobId) 
+	throws UnknownJobException;
+
+
+	/**
+	 * Get the persisted quantiles state for the job
+	 */
+	public QuantilesState getQuantilesState(String jobId) 
 	throws UnknownJobException;
 }
