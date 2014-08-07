@@ -57,6 +57,7 @@ public class JobDetails
 	
 	static final public String COUNTS = "counts";
 	static final public String PROCESSED_RECORD_COUNT = "processedRecordCount";
+	static final public String PROCESSED_DATAPOINT_COUNT = "processedDataPointCount";
 	static final public String PROCESSED_BYTES = "processedBytes";
 	static final public String INVALID_DATE_COUNT = "invalidDateCount";
 	static final public String MISSING_FIELD_COUNT = "missingFieldCount";
@@ -510,6 +511,7 @@ public class JobDetails
 	public class Counts
 	{
 		private long m_ProcessedRecordCount;
+		private long m_ProcessedDataPointCount;
 		private long m_ProcessedBytes;
 		private long m_InvalidDateCount;
 		private long m_MissingFieldCount;
@@ -531,6 +533,22 @@ public class JobDetails
 		{
 			m_ProcessedRecordCount = count;
 		}
+		
+		/**
+		 * Number of data points (processed record count * the number 
+		 * of analysed fields) processed by this job. This count does
+		 * not include the time field.
+		 * @return 
+		 */
+		public long getProcessedDataPointCount() 
+		{
+			return m_ProcessedDataPointCount;
+		}
+		
+		public void setProcessedDataPointCount(long count) 
+		{
+			m_ProcessedDataPointCount = count;
+		}		
 		
 		/**
 		 * The total number of bytes sent to this job.

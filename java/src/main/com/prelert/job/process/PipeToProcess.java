@@ -138,8 +138,6 @@ public class PipeToProcess
 							p.First, Arrays.toString(header));
 					logger.error(msg);
 					
-					statusReporter.reportMissingField();
-
 					throw new MissingFieldException(p.First, msg, 
 							ErrorCode.MISSING_FIELD);
 				}
@@ -182,13 +180,13 @@ public class PipeToProcess
 				if (maxIndex >= line.size())
 				{
 					logger.warn("Not enough fields in csv record " + line);
-					statusReporter.reportMissingField();
 					
 					Arrays.fill(record, "");
 					for (Pair<String, Integer> p : fieldIndexes)
 					{
 						if (p.Second >= line.size())
 						{
+							statusReporter.reportMissingField();
 							continue;
 						}
 						
@@ -321,8 +319,6 @@ public class PipeToProcess
 								p.First, Arrays.toString(header));
 					logger.error(msg);
 					
-					statusReporter.reportMissingField();
-			
 					throw new MissingFieldException(p.First, msg, ErrorCode.MISSING_FIELD);
 				}
 			}			
@@ -342,7 +338,6 @@ public class PipeToProcess
 						+ " in CSV header '%s'", timeField, Arrays.toString(header));
 				logger.error(message);
 				
-				statusReporter.reportMissingField();
 				throw new MissingFieldException(timeField, message, ErrorCode.MISSING_FIELD);
 			}	
 			
@@ -367,13 +362,13 @@ public class PipeToProcess
 					if (maxIndex >= line.size())
 					{
 						logger.warn("Not enough fields in csv record " + line);
-						statusReporter.reportMissingField();
 						
 						Arrays.fill(record, "");
 						for (Pair<String, Integer> p : fieldIndexes)
 						{
 							if (p.Second >= line.size())
 							{
+								statusReporter.reportMissingField();
 								continue;
 							}
 							
@@ -434,13 +429,13 @@ public class PipeToProcess
 					if (maxIndex >= line.size())
 					{
 						logger.error("Not enough fields in csv record " + line);
-						statusReporter.reportMissingField();
 						
 						Arrays.fill(record, "");
 						for (Pair<String, Integer> p : fieldIndexes)
 						{
 							if (p.Second >= line.size())
 							{
+								statusReporter.reportMissingField();
 								continue;
 							}
 							String field = line.get(p.Second);

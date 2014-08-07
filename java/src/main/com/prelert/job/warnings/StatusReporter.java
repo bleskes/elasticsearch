@@ -63,6 +63,8 @@ abstract public class StatusReporter
 	private long m_MissingFieldErrorCount = 0;
 	private long m_OutOfOrderRecordCount = 0;
 	
+	private long m_FieldsPerRecord = 0;
+	
 	private long m_RecordCountDivisor = 100;
 	private long m_LastRecordCountQuotient = 0;
 	
@@ -73,7 +75,7 @@ abstract public class StatusReporter
 	protected Logger m_Logger;
 	
 	
-	public StatusReporter(String jobId, Logger logger)
+	protected StatusReporter(String jobId, Logger logger)
 	{
 		m_JobId = jobId;
 		m_Logger = logger;
@@ -244,6 +246,16 @@ abstract public class StatusReporter
 		m_AcceptablePercentOutOfOrderErrors = value;
 	}
 	
+	
+	public void setAnalysedFieldsPerRecord(long value)
+	{
+		m_FieldsPerRecord = value;
+	}
+	
+	public long getAnalysedFieldsPerRecord()
+	{
+		return m_FieldsPerRecord;
+	}
 	
 	/**
 	 * Report the the status now regardless of whether or 
