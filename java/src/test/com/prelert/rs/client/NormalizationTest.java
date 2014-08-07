@@ -735,6 +735,10 @@ public class NormalizationTest implements Closeable
 				
 		NormalizationTest test = new NormalizationTest();
 		List<String> jobUrls = new ArrayList<>();
+		
+		// Always delete the test job first in case it is hanging around
+		// from a previous run
+		test.m_WebServiceClient.deleteJob(baseUrl, TEST_JOB_ID);
 
 		String farequoteJob = TEST_JOB_ID;
 		jobUrls.add(farequoteJob);

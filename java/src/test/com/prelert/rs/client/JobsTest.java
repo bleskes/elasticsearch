@@ -1389,6 +1389,12 @@ public class JobsTest implements Closeable
 
 		test.getJobsTest(baseUrl);
 		
+		// Always delete the test named jobs first in case they
+		// are hanging around from a previous run
+		
+		test.m_WebServiceClient.deleteJob(baseUrl, "flightcentre");
+		test.m_WebServiceClient.deleteJob(baseUrl, "flight-centre");
+		
 		//=================
 		// CSV & Gzip test 
 		//

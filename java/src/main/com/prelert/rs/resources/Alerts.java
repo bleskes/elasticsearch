@@ -92,7 +92,7 @@ public class Alerts extends ResourceWithJobManager
 			@DefaultValue("") @QueryParam(START_QUERY_PARAM) String start,
 			@DefaultValue("") @QueryParam(END_QUERY_PARAM) String end,
 			@DefaultValue("") @QueryParam(SEVERITY_QUERY_PARAM) String severity,
-			@DefaultValue("0f") @QueryParam(ANOMALY_SCORE_QUERY_PARAM) float anomalyScore)
+			@DefaultValue("0.0") @QueryParam(ANOMALY_SCORE_QUERY_PARAM) double anomalyScore)
     {      
     	boolean expand = true;
     	
@@ -163,7 +163,7 @@ public class Alerts extends ResourceWithJobManager
 			@DefaultValue("") @QueryParam(START_QUERY_PARAM) String start,
 			@DefaultValue("") @QueryParam(END_QUERY_PARAM) String end,
 			@DefaultValue("") @QueryParam(SEVERITY_QUERY_PARAM) String severity,
-			@DefaultValue("0f") @QueryParam(ANOMALY_SCORE_QUERY_PARAM) float anomalyScore)
+			@DefaultValue("0.0") @QueryParam(ANOMALY_SCORE_QUERY_PARAM) double anomalyScore)
 	throws UnknownJobException		
     {      
     	boolean expand = true;
