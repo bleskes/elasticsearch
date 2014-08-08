@@ -40,6 +40,18 @@ public class UnknownJobException extends Exception
 	private ErrorCode m_ErrorCode;
 	
 	/**
+	 * Create with the default message and error code 
+	 * set to ErrorCode.MISSING_JOB_ERROR
+	 * @param jobId
+	 */
+	public UnknownJobException(String jobId)
+	{
+		super("No job with id '" + jobId + "'");
+		m_JobId = jobId;
+		m_ErrorCode = ErrorCode.MISSING_JOB_ERROR;
+	}
+	
+	/**
 	 * Create a new UnknownJobException with an error code
 	 * 
 	 * @param jobId The Job Id that could not be found

@@ -72,9 +72,9 @@ import com.prelert.job.DetectorState;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobIdAlreadyExistsException;
 import com.prelert.job.JobStatus;
+import com.prelert.job.QuantilesState;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.alert.Alert;
-import com.prelert.job.normalisation.InitialState;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.usage.Usage;
 import com.prelert.rs.data.AnomalyRecord;
@@ -82,6 +82,7 @@ import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.Detector;
 import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.Pagination;
+import com.prelert.rs.data.Quantiles;
 import com.prelert.rs.data.SingleDocument;
 
 public class ElasticSearchJobProvider implements JobProvider
@@ -320,6 +321,7 @@ public class ElasticSearchJobProvider implements JobProvider
 			XContentBuilder bucketMapping = ElasticSearchMappings.bucketMapping();
 			XContentBuilder detectorMapping = ElasticSearchMappings.detectorMapping();
 			XContentBuilder recordMapping = ElasticSearchMappings.recordMapping();
+			XContentBuilder quantilesMapping = ElasticSearchMappings.quantilesMapping();
 			XContentBuilder detectorStateMapping = ElasticSearchMappings.detectorStateMapping();
 			XContentBuilder usageMapping = ElasticSearchMappings.usageMapping();
 			XContentBuilder alertMapping = ElasticSearchMappings.alertMapping();
@@ -330,6 +332,7 @@ public class ElasticSearchJobProvider implements JobProvider
 					.addMapping(Bucket.TYPE, bucketMapping)
 					.addMapping(Detector.TYPE, detectorMapping)
 					.addMapping(AnomalyRecord.TYPE, recordMapping)
+					.addMapping(Quantiles.TYPE, quantilesMapping)
 					.addMapping(DetectorState.TYPE, detectorStateMapping)
 					.addMapping(Usage.TYPE, usageMapping)
 					.addMapping(Alert.TYPE, alertMapping)
@@ -465,7 +468,8 @@ public class ElasticSearchJobProvider implements JobProvider
 	/* Results */
 	@Override
 	public Pagination<Bucket> buckets(String jobId,
-			boolean expand, int skip, int take) 
+			boolean expand, int skip, int take)
+	throws UnknownJobException
 	{
 		FilterBuilder fb = FilterBuilders.matchAllFilter();
 		
@@ -474,7 +478,8 @@ public class ElasticSearchJobProvider implements JobProvider
 
 	@Override
 	public Pagination<Bucket> buckets(String jobId,
-			boolean expand, int skip, int take, long startBucket, long endBucket) 
+			boolean expand, int skip, int take, long startBucket, long endBucket)
+	throws UnknownJobException
 	{
 		RangeFilterBuilder fb = FilterBuilders.rangeFilter(Bucket.ID);
 		if (startBucket > 0)
@@ -491,18 +496,27 @@ public class ElasticSearchJobProvider implements JobProvider
 	
 	private Pagination<Bucket> buckets(String jobId, 
 			boolean expand, int skip, int take,
-			FilterBuilder fb)
+			FilterBuilder fb) 
+	throws UnknownJobException
 	{	
 		SortBuilder sb = new FieldSortBuilder(Bucket.ID)
 					.ignoreUnmapped(true)
 					.order(SortOrder.ASC);
 
-		SearchResponse searchResponse = m_Client.prepareSearch(jobId)
-				.setTypes(Bucket.TYPE)		
-				.addSort(sb)
-				.setPostFilter(fb)
-				.setFrom(skip).setSize(take)
-				.get();
+		SearchResponse searchResponse;
+		try
+		{
+			searchResponse = m_Client.prepareSearch(jobId)
+										.setTypes(Bucket.TYPE)		
+										.addSort(sb)
+										.setPostFilter(fb)
+										.setFrom(skip).setSize(take)
+										.get();
+		}
+		catch (IndexMissingException e)
+		{
+			throw new UnknownJobException(jobId);
+		}
 
 		List<Bucket> results = new ArrayList<>();
 		
@@ -562,8 +576,17 @@ public class ElasticSearchJobProvider implements JobProvider
 	@Override
 	public SingleDocument<Bucket> bucket(String jobId, 
 			String bucketId, boolean expand)
+	throws UnknownJobException
 	{
-		GetResponse response = m_Client.prepareGet(jobId, Bucket.TYPE, bucketId).get();
+		GetResponse response;
+		try
+		{
+			response = m_Client.prepareGet(jobId, Bucket.TYPE, bucketId).get();
+		}
+		catch (IndexMissingException e)
+		{
+			throw new UnknownJobException(jobId);
+		}
 		
 		SingleDocument<Bucket> doc = new SingleDocument<>();
 		doc.setType(Bucket.TYPE);
@@ -607,6 +630,7 @@ public class ElasticSearchJobProvider implements JobProvider
 	public Pagination<AnomalyRecord> records(String jobId,
 			String bucketId, boolean includeSimpleCount, int skip, int take,
 			String sortField)
+	throws UnknownJobException
 	{
 		 FilterBuilder bucketFilter = FilterBuilders.hasParentFilter(Bucket.TYPE, 
 								FilterBuilders.termFilter(Bucket.ID, bucketId));
@@ -618,6 +642,7 @@ public class ElasticSearchJobProvider implements JobProvider
 	public Pagination<AnomalyRecord> records(String jobId,
 			boolean includeSimpleCount, int skip, int take,
 			long startBucket, long endBucket, String sortField)
+	throws UnknownJobException
 	{
 		RangeFilterBuilder rangeFilter = FilterBuilders.rangeFilter(Bucket.ID);
 		if (startBucket > 0)
@@ -644,6 +669,7 @@ public class ElasticSearchJobProvider implements JobProvider
 	public Pagination<AnomalyRecord> records(String jobId,
 			List<String> bucketIds, boolean includeSimpleCount, int skip, 
 			int take, String sortField)
+	throws UnknownJobException
 	{
 		IdsFilterBuilder idFilter = FilterBuilders.idsFilter(Bucket.TYPE);
 		for (String id : bucketIds)
@@ -660,6 +686,7 @@ public class ElasticSearchJobProvider implements JobProvider
 	@Override
 	public Pagination<AnomalyRecord> records(String jobId,
 			boolean includeSimpleCount, int skip, int take, String sortField)
+	throws UnknownJobException
 	{
 		 FilterBuilder fb = FilterBuilders.matchAllFilter();
 		 
@@ -677,10 +704,12 @@ public class ElasticSearchJobProvider implements JobProvider
 	 * @param recordFilter The record filter sensible options are
 	 * the match all filter or a parent bucket filter
 	 * @return
+	 * @throws UnknownJobException 
 	 */
 	private Pagination<AnomalyRecord> records(String jobId, 
 			boolean includeSimpleCount, int skip, int take,
-			FilterBuilder recordFilter, String sortField)
+			FilterBuilder recordFilter, String sortField) 
+	throws UnknownJobException
 	{
 		FilterBuilder filter;
 		if (includeSimpleCount)
@@ -714,7 +743,15 @@ public class ElasticSearchJobProvider implements JobProvider
 			searchBuilder.addSort(sb);
 		}
 		
-		SearchResponse searchResponse = searchBuilder.get();
+		SearchResponse searchResponse;
+		try
+		{
+			searchResponse = searchBuilder.get();
+		}
+		catch (IndexMissingException e)
+		{
+			throw new UnknownJobException(jobId);
+		}
 
 		List<AnomalyRecord> results = new ArrayList<>();
 		for (SearchHit hit : searchResponse.getHits().getHits())
@@ -741,168 +778,8 @@ public class ElasticSearchJobProvider implements JobProvider
 		
 		return page;	
 	}
-	
-	@Override
-	public InitialState getSystemChangeInitialiser(String jobId)
-	{
-		long start = System.currentTimeMillis();
-		
-		FilterBuilder fb = FilterBuilders.matchAllFilter();
-		
-		SortBuilder sb = new FieldSortBuilder(Bucket.ID)
-								.order(SortOrder.ASC);	
-		
-		SearchRequestBuilder searchBuilder = m_Client.prepareSearch(jobId)
-				.setTypes(Bucket.TYPE)
-				.setFetchSource(false)
-				.addField(Bucket.ID)
-				.addField(Bucket.ANOMALY_SCORE)
-				.setPostFilter(fb)
-				.addSort(sb);
 
-		
-		InitialState state = new InitialState();
 
-		final int size = 1000;
-		int from = 0;
-		boolean getNext = true;
-		while (getNext)
-		{
-			searchBuilder.setFrom(from);
-			searchBuilder.setSize(size);
-			
-			SearchResponse searchResponse = searchBuilder.get();
-			
-			for (SearchHit hit : searchResponse.getHits().getHits())
-			{
-				state.addStateRecord(hit.field(Bucket.ID).value().toString(), 
-									hit.field(Bucket.ANOMALY_SCORE).value().toString());
-			}
-			
-			from += size;
-			getNext = searchResponse.getHits().getTotalHits() > from;
-		}
-		
-		System.out.println("Sys Change intial state in : " +
-				(System.currentTimeMillis() - start));
-		
-		return state;
-	}
-	
-	
-	/**
-	 * Get all the records excluding simple counts
-	 */
-	@Override
-	public InitialState getUnusualBehaviourInitialiser(String jobId)
-	{
-		long start = System.currentTimeMillis();
-		
-		FilterBuilder simpleCountFilter = FilterBuilders.termFilter("isSimpleCount", true);
-		FilterBuilder fb = FilterBuilders.notFilter(simpleCountFilter);
-		
-		SortBuilder sb = new FieldSortBuilder(ElasticSearchMappings.ES_TIMESTAMP)
-								.order(SortOrder.ASC);	
-		
-		SearchRequestBuilder searchBuilder = m_Client.prepareSearch(jobId)
-				.setTypes(AnomalyRecord.TYPE)
-				.setFetchSource(false)
-				.addField(ElasticSearchMappings.ES_TIMESTAMP)
-				.addField(AnomalyRecord.PROBABILITY)
-				.addField(AnomalyRecord.BY_FIELD_NAME)
-				.addField(AnomalyRecord.BY_FIELD_VALUE)
-				.addField(AnomalyRecord.OVER_FIELD_NAME)
-				.addField(AnomalyRecord.OVER_FIELD_VALUE)
-				.addField(AnomalyRecord.PARTITION_FIELD_NAME)
-				.addField(AnomalyRecord.PARTITION_FIELD_VALUE)
-				.setPostFilter(fb)
-				.addSort(sb);
-		
-		
-		DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSX");
-		String lastTimestamp = "";
-		String epoch = "";
-		
-		InitialState state = new InitialState();
-
-		final int size = 1000;
-		int from = 0;
-		boolean getNext = true;
-		while (getNext)
-		{
-			searchBuilder.setFrom(from);
-			searchBuilder.setSize(size);
-			
-			SearchResponse searchResponse = searchBuilder.get();
-			
-			for (SearchHit hit : searchResponse.getHits().getHits())
-			{
-				StringBuilder distinguisher = new StringBuilder();
-				
-				// put the value first in the string rather than
-				// fieldname this should make it quicker to compare 
-				SearchHitField field = hit.field(AnomalyRecord.BY_FIELD_VALUE);
-				if (field != null)
-				{
-					distinguisher.append(field.value().toString());
-				}
-				field = hit.field(AnomalyRecord.BY_FIELD_NAME);
-				if (field != null)
-				{
-					distinguisher.append(field.value().toString());
-				}
-				field = hit.field(AnomalyRecord.OVER_FIELD_VALUE);
-				if (field != null)
-				{
-					distinguisher.append(field.value().toString());
-				}
-				field = hit.field(AnomalyRecord.OVER_FIELD_NAME);
-				if (field != null)
-				{
-					distinguisher.append(field.value().toString());
-				}
-				field = hit.field(AnomalyRecord.PARTITION_FIELD_VALUE);
-				if (field != null)
-				{
-					distinguisher.append(field.value().toString());
-				}
-				field = hit.field(AnomalyRecord.PARTITION_FIELD_NAME);
-				if (field != null)
-				{
-					distinguisher.append(field.value().toString());
-				}
-				
-				String timestamp = hit.field(ElasticSearchMappings.ES_TIMESTAMP).value().toString();
-				if (timestamp.equals(lastTimestamp) == false)
-				{
-					try 
-					{
-						epoch = Long.toString(df.parse(timestamp).getTime());
-						lastTimestamp = timestamp;
-					} 
-					catch (ParseException e) 
-					{
-						continue;
-					}
-				}
-				
-				state.addStateRecord(epoch,
-									hit.field(AnomalyRecord.PROBABILITY).value().toString(),
-									distinguisher.toString());
-			}
-			
-			from += size;
-			getNext = searchResponse.getHits().getTotalHits() > from;
-		}
-		
-		System.out.println(from);
-		System.out.println("Unusual behaviour intial state in : " +
-				(System.currentTimeMillis() - start));
-		
-		return state;
-	}
-	
-	
 	/**
 	 * Always returns true
 	 */
@@ -965,4 +842,41 @@ public class ElasticSearchJobProvider implements JobProvider
 		return detectorState;
 	}
 
+
+	@Override
+	public QuantilesState getQuantilesState(String jobId)
+	throws UnknownJobException
+	{
+		QuantilesState quantilesState = new QuantilesState();
+
+		FilterBuilder fb = FilterBuilders.matchAllFilter();
+
+		SearchRequestBuilder searchBuilder = m_Client.prepareSearch(jobId)
+				.setTypes(Quantiles.TYPE)
+				.setPostFilter(fb);
+
+		try
+		{
+			// We should never get more than 2 sets of quantiles, however, for
+			// an old job we could get less
+			final int PAGE_SIZE = 2;
+			searchBuilder.setFrom(0).setSize(PAGE_SIZE);
+			SearchResponse searchResponse = searchBuilder.get();
+
+			for (SearchHit hit : searchResponse.getHits().getHits())
+			{
+				String kind = hit.getSource().get(Quantiles.ID).toString();
+				String state = hit.getSource().get(Quantiles.QUANTILE_STATE).toString();
+				quantilesState.setQuantilesState(kind, state);
+			}
+		}
+		catch (IndexMissingException e)
+		{
+			s_Logger.error("Unknown job '" + jobId + "'. Cannot read persisted state");
+			throw new UnknownJobException(jobId,
+					"Cannot read persisted state", ErrorCode.MISSING_DETECTOR_STATE);
+		}
+		return quantilesState;
+	}
 }
+

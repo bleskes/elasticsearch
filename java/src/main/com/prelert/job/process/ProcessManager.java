@@ -63,6 +63,7 @@ import com.prelert.job.DetectorState;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobInUseException;
 import com.prelert.job.JobStatus;
+import com.prelert.job.QuantilesState;
 import com.prelert.job.UnknownJobException;
 import com.prelert.rs.data.ErrorCode;
 
@@ -342,10 +343,16 @@ public class ProcessManager
 		
 		Logger logger = createLogger(job.getId());
 
-		DetectorState state = null;
+		DetectorState detectorState = null;
 		if (restoreState)
 		{
-			state = m_JobProvider.getDetectorState(jobId);			
+			detectorState = m_JobProvider.getDetectorState(jobId);			
+		}
+
+		QuantilesState quantilesState = null;
+		if (restoreState)
+		{
+			quantilesState = m_JobProvider.getQuantilesState(jobId);			
 		}
 
 		Process nativeProcess = null;
@@ -354,7 +361,7 @@ public class ProcessManager
 			// if state is null or empty it will be ignored
 			// else it is used to restore the models			
 			nativeProcess = ProcessCtrl.buildAutoDetect(
-					ProcessCtrl.AUTODETECT_API, job, state, logger);	
+					ProcessCtrl.AUTODETECT_API, job, detectorState, quantilesState, logger);	
 		} 
 		catch (IOException e) 
 		{
@@ -371,7 +378,8 @@ public class ProcessManager
 		ProcessAndDataDescription procAndDD = new ProcessAndDataDescription(
 				nativeProcess, jobId,
 				job.getDataDescription(), job.getTimeout(), analysisFields, logger,
-				m_StatusReporterFactory.newStatusReporter(jobId, job.getCounts(), logger),
+				m_StatusReporterFactory.newStatusReporter(jobId, job.getCounts(), 
+						analysisFields.size(), logger),
 				m_UsageReporterFactory.newUsageReporter(jobId, logger),
 				m_ResultsReaderFactory.newResultsParser(jobId, 
 						nativeProcess.getInputStream(),						
@@ -556,7 +564,6 @@ public class ProcessManager
 		}
 		catch (IllegalThreadStateException e)
 		{
-			s_Logger.debug("Process is running");
 			return true;
 		}
 	}

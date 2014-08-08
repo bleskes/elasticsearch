@@ -24,62 +24,75 @@
  *                                                          *
  *                                                          *
  ************************************************************/
+package com.prelert.job;
 
-package com.prelert.job.persistence;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
-import com.prelert.job.DetectorState;
-import com.prelert.job.UnknownJobException;
-import com.prelert.rs.data.Bucket;
-import com.prelert.rs.data.Quantiles;
+import org.apache.log4j.Logger;
+
+import com.prelert.rs.data.parsing.AutoDetectParseException;
 
 /**
- * Interface for classes that persist {@linkplain Bucket Buckets},
- * {@linkplain Quantiles Quantiles} and {@link DetectorState DetectorStates}  
+ * This stores the serialised quantiles from autodetect. The serialised form
+ * is a long XML string.  There are two kinds of quantiles, each with its
+ * own XML string.
  */
-public interface JobDataPersister 
+public class QuantilesState
 {
+	private static final Logger s_Logger = Logger.getLogger(QuantilesState.class);
+
+	private Map<String, String> m_QuantilesKindToState;
+
+	public QuantilesState()
+	{
+		m_QuantilesKindToState = new HashMap<>();
+	}
+
+
 	/**
-	 * Persist the result bucket
-	 * @param bucket
+	 * Expose the map of quantiles kind -> state
+	 * @return Quantiles kind -> state map
 	 */
-	public void persistBucket(Bucket bucket);
+	public Map<String, String> getMap()
+	{
+		return m_QuantilesKindToState;
+	}
 
 
 	/**
-	 * Persist the quantiles
-	 * @param quantiles
+	 * Get the set of all kinds of quantiles
+	 * @return The set of kinds of quantiles
 	 */
-	public void persistQuantiles(Quantiles quantiles);
+	public Set<String> getQuantilesKinds()
+	{
+		return m_QuantilesKindToState.keySet();
+	}
 
 
 	/**
-	 * Persist the serialised detector state
+	 * Return the serialised quantiles of the specified <code>kind</code>
+	 * or <code>null</code> if the <code>kind</code> is not
+	 * recognised.
+	 *
+	 * @param kind
+	 * @return <code>null</code> or the serialised state
+	 */
+	public String getQuantilesState(String kind)
+	{
+		return m_QuantilesKindToState.get(kind);
+	}
+
+	/**
+	 * Set the state of the detector where state is the serialised model.
+	 *
+	 * @param kind
 	 * @param state
 	 */
-	public void persistDetectorState(DetectorState state);
-	
-	/**
-	 * Reads all the detector state documents from 
-	 * the database and returns a {@linkplain DetectorState} object.
-	 * 
-	 * @return
-	 */
-	public DetectorState retrieveDetectorState() throws UnknownJobException;
-	
-	/**
-	 * If the job has persisted model state then this function 
-	 * returns true 
-	 * 
-	 * @return
-	 */
-	public boolean isDetectorStatePersisted();
-	
-	/**
-	 * Once all the job data has been written this function will be 
-	 * called to commit the data if the implementing persister requries
-	 * it. 
-	 * 
-	 * @return True if successful
-	 */
-	public boolean commitWrites();
+	public void setQuantilesState(String kind, String state)
+	{
+		m_QuantilesKindToState.put(kind, state);
+	}
 }
+

@@ -116,18 +116,36 @@ public class Jobs extends ResourceWithJobManager
     @GET
 	@Path("/{jobId}")
     @Produces(MediaType.APPLICATION_JSON)
-    public SingleDocument<JobDetails> job(@PathParam("jobId") String jobId)
-    throws UnknownJobException
+    public Response job(@PathParam("jobId") String jobId)
     {   	
     	s_Logger.debug("Get job '" + jobId + "'");
     	
 		JobManager manager = jobManager();
-		SingleDocument<JobDetails> job = manager.getJob(jobId);
+		SingleDocument<JobDetails> job;
+		try 
+		{
+			job = manager.getJob(jobId);
+			setEndPointLinks(job.getDocument());
+		}
+		catch (UnknownJobException e) 
+		{
+			job = new SingleDocument<>();
+			job.setType(JobDetails.TYPE);
+			job.setDocumentId(jobId);
+		}
 				
-		setEndPointLinks(job.getDocument());
-		
-		s_Logger.debug("Returning job '" + job + "'");
-		return job;
+		if (job.isExists())
+		{
+			s_Logger.debug("Returning job '" + job + "'");
+			
+			return Response.ok(job).build();
+		}
+		else
+		{
+			s_Logger.debug(String.format("Cannot find job '%s'", jobId));
+			
+			return Response.status(Response.Status.NOT_FOUND).entity(job).build();
+		}
     }
 		
     @POST

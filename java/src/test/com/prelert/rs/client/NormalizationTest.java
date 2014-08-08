@@ -77,6 +77,7 @@ public class NormalizationTest implements Closeable
 	
 	static final long FAREQUOTE_NUM_BUCKETS = 1439;
 	
+	static final String TEST_JOB_ID = "farequote-norm-test";
 	
 	/**
 	 * The default base Url used in the test
@@ -84,6 +85,7 @@ public class NormalizationTest implements Closeable
 	static final public String API_BASE_URL = "http://localhost:8080/engine/v1";
 	
 	private EngineApiClient m_WebServiceClient;
+	
 	
 	
 	/**
@@ -120,7 +122,7 @@ public class NormalizationTest implements Closeable
 		
 		JobConfiguration config = new JobConfiguration(ac);
 		config.setDescription("Farequote normalisation test");
-		config.setId("farequote");
+		config.setId(TEST_JOB_ID);
 		config.setDataDescription(dd);
 		
 		String jobId = m_WebServiceClient.createJob(apiUrl, config);
@@ -129,7 +131,7 @@ public class NormalizationTest implements Closeable
 			s_Logger.error("No Job Id returned by create job");
 			test(jobId != null && jobId.isEmpty() == false);
 		}
-		test(jobId.equals("farequote"));
+		test(jobId.equals(TEST_JOB_ID));
 		
 		return jobId;
 	}
@@ -156,16 +158,16 @@ public class NormalizationTest implements Closeable
 	public boolean verifyFarequoteSysChangeNormalisedBuckets(String baseUrl, String jobId) 
 	throws IOException
 	{	
-		/*
-		 * Test that getting all the results at once is the same as 
-		 * paging them.
-		 */
 		Pagination<Bucket> allBuckets = m_WebServiceClient.getBuckets(baseUrl, 
 				jobId, SYS_CHANGE_NORMALIZATION, false, 0l, 1500l);
 		test(allBuckets.getDocumentCount() == FAREQUOTE_NUM_BUCKETS);
 		test(allBuckets.getHitCount() == FAREQUOTE_NUM_BUCKETS);
 		
 		
+		/*
+		 * Test that getting all the results at once is the same as 
+		 * paging them.
+		 */
 		List<Bucket> pagedBuckets = new ArrayList<>();
 		long skip = 0, take = 100;
 		while (skip < FAREQUOTE_NUM_BUCKETS)
@@ -179,6 +181,33 @@ public class NormalizationTest implements Closeable
 		test(pagedBuckets.size() == FAREQUOTE_NUM_BUCKETS);
 		
 		for (int i=0; i<FAREQUOTE_NUM_BUCKETS; i++)
+		{
+			test(Double.compare(pagedBuckets.get(i).getAnomalyScore(),
+								allBuckets.getDocuments().get(i).getAnomalyScore()) == 0);
+			
+			test(pagedBuckets.get(i).equals(allBuckets.getDocuments().get(i)));
+		}
+		
+		
+		/*
+		 * Test that paging buckets by date is the same
+		 */		
+		pagedBuckets = new ArrayList<>();
+		skip = 0; take = 140;
+		while (skip < allBuckets.getHitCount())
+		{
+			Pagination<Bucket> buckets = m_WebServiceClient.getBuckets(baseUrl, 
+					jobId, SYS_CHANGE_NORMALIZATION, false, skip, take,
+			allBuckets.getDocuments().get(0).getEpoch(),
+			allBuckets.getDocuments().get((int)allBuckets.getHitCount()-1).getEpoch() +1); 
+			
+			pagedBuckets.addAll(buckets.getDocuments());
+			
+			skip += take;
+		}
+		test(pagedBuckets.size() == allBuckets.getDocumentCount());
+		
+		for (int i=0; i<pagedBuckets.size(); i++)
 		{
 			test(Double.compare(pagedBuckets.get(i).getAnomalyScore(),
 								allBuckets.getDocuments().get(i).getAnomalyScore()) == 0);
@@ -296,6 +325,32 @@ public class NormalizationTest implements Closeable
 			
 			test(pagedBuckets.get(i).equals(allBuckets.getDocuments().get(i)));
 		}
+				
+		/*
+		 * Test that paging buckets by date is the same
+		 */		
+		pagedBuckets = new ArrayList<>();
+		skip = 0; take = 140;
+		while (skip < allBuckets.getHitCount())
+		{
+			Pagination<Bucket> buckets = m_WebServiceClient.<Long>getBuckets(baseUrl, 
+					jobId, UNUSUAL_BEHAVIOUR_NORMALIZATION, true, skip, take,
+					allBuckets.getDocuments().get(0).getEpoch(),
+					allBuckets.getDocuments().get((int)allBuckets.getHitCount()-1).getEpoch() +1); 
+					
+			pagedBuckets.addAll(buckets.getDocuments());
+			
+			skip += take;
+		}
+		test(pagedBuckets.size() == allBuckets.getDocumentCount());
+		
+		for (int i=0; i<pagedBuckets.size(); i++)
+		{
+			test(Double.compare(pagedBuckets.get(i).getAnomalyScore(),
+								allBuckets.getDocuments().get(i).getAnomalyScore()) == 0);
+			
+			test(pagedBuckets.get(i).equals(allBuckets.getDocuments().get(i)));
+		}
 		
 		
 		/*
@@ -330,7 +385,8 @@ public class NormalizationTest implements Closeable
 		test(maxAnomalyScoreCount >= 1);
 		
 		/*
-		 * Check the bucket score matches the records score
+		 * Check the bucket score is equal to the max anomaly
+		 * record score in the bucket
 		 */
 		// the test takes ages to go through every bucket, don't do all for now
 		int count = 30;
@@ -360,6 +416,8 @@ public class NormalizationTest implements Closeable
 		
 		/*
 		 * Test get buckets by date range with a time string
+		 * and check the anomaly score is equal to getting all
+		 * buckets at once
 		 */	
 		String [] startDateFormats = new String[] {"2013-01-30T15:10:00Z", "1359558600"};
 		String [] endDateFormats = new String[] {"2013-01-31T22:10:00.000+0000", "1359670200"};
@@ -442,7 +500,52 @@ public class NormalizationTest implements Closeable
 				recordIndex++;
 			}
 			test(recordIndex == pagedRecords.size());
+			
+			/*
+			 * Test paging by date is the same as getting them all 
+			 * at once
+			 */
+			
+			// need start and end dates first
+			Pagination<Bucket> allBuckets = m_WebServiceClient.getBuckets(baseUrl, 
+					jobId, UNUSUAL_BEHAVIOUR_NORMALIZATION, true, 0l, 1500l);
+			long startDate = allBuckets.getDocuments().get(0).getEpoch();
+			long endDate = allBuckets.getDocuments().get(allBuckets.getDocumentCount()-1).getEpoch() + 1;
+			
+			pagedRecords = new ArrayList<>();
+			skip = 0; take = 200;
 
+			page = m_WebServiceClient.getRecords(
+					baseUrl, jobId, normType, skip, take,
+					startDate, endDate);
+			skip += take;
+			pagedRecords.addAll(page.getDocuments());
+
+			while (skip < page.getHitCount())
+			{
+				page = m_WebServiceClient.getRecords(
+						baseUrl, jobId, normType, skip, take,
+						startDate, endDate);
+				
+				skip += take;
+				pagedRecords.addAll(page.getDocuments());
+			}
+
+			recordIndex = 0;
+			test(allRecords.getHitCount() == pagedRecords.size());	
+			
+			for (AnomalyRecord record : allRecords.getDocuments())
+			{
+				test(record.equals(pagedRecords.get(recordIndex)));
+				recordIndex++;
+			}
+			test(recordIndex == pagedRecords.size());			
+
+			
+			
+			
+			
+			
 			/*
 			 * There should be at least one anomaly with score = 100
 			 * for each type
@@ -632,8 +735,13 @@ public class NormalizationTest implements Closeable
 				
 		NormalizationTest test = new NormalizationTest();
 		List<String> jobUrls = new ArrayList<>();
+		
+		// Always delete the test job first in case it is hanging around
+		// from a previous run
+		test.m_WebServiceClient.deleteJob(baseUrl, TEST_JOB_ID);
 
-		String farequoteJob = "farequote";
+		String farequoteJob = TEST_JOB_ID;
+		jobUrls.add(farequoteJob);
 		
 		File fareQuoteData = new File(prelertTestDataHome + 
 				"/engine_api_integration_test/farequote.csv");		
