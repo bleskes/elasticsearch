@@ -58,11 +58,19 @@ public class ElasticSearchStatusReporter extends StatusReporter
 	{
 		try
 		{
-			UpdateRequestBuilder updateBuilder = m_Client.prepareUpdate(m_JobId, JobDetails.TYPE, m_JobId);
+			UpdateRequestBuilder updateBuilder = m_Client.prepareUpdate(m_JobId,
+					JobDetails.TYPE, m_JobId);
+			
 			updateBuilder.setRetryOnConflict(1);
+			
+			long processedDataPointCount = 
+					(getRecordsWrittenCount() * getAnalysedFieldsPerRecord())
+					- getMissingFieldErrorCount();
+					
 			
 			Map<String, Object> updates = new HashMap<>();
 			updates.put(JobDetails.PROCESSED_RECORD_COUNT, getRecordsWrittenCount());
+			updates.put(JobDetails.PROCESSED_DATAPOINT_COUNT, processedDataPointCount);
 			updates.put(JobDetails.PROCESSED_BYTES, getVolume());
 			updates.put(JobDetails.INVALID_DATE_COUNT, getDateParseErrorsCount());
 			updates.put(JobDetails.MISSING_FIELD_COUNT, getMissingFieldErrorCount());

@@ -49,9 +49,10 @@ public class ElasticSearchStatusReporterFactory implements StatusReporterFactory
 
 	@Override
 	public StatusReporter newStatusReporter(String jobId, JobDetails.Counts counts,
-			Logger logger) 
+			long analysisFieldCount, Logger logger) 
 	{
-		return new ElasticSearchStatusReporter(m_Client, jobId, counts, logger);
+		StatusReporter reporter =  new ElasticSearchStatusReporter(m_Client, jobId, counts, logger);
+		reporter.setAnalysedFieldsPerRecord(analysisFieldCount);
+		return reporter;
 	}
-
 }

@@ -49,7 +49,7 @@ public class ElasticsearchUsageReporter extends UsageReporter
 {
 	private Client m_Client;
 	private SimpleDateFormat m_SimpleDateFormat;
-	private String m_DateStr;
+	private String m_DocId;
 	private long m_CurrentHour;
 	
 	private Map<String, Object> m_UpsertMap;
@@ -74,13 +74,13 @@ public class ElasticsearchUsageReporter extends UsageReporter
 		if (m_CurrentHour != hour)
 		{
 			Date date = new Date(hour * 3600000);
-			m_DateStr = m_SimpleDateFormat.format(date);
+			m_DocId = "usage-" + m_SimpleDateFormat.format(date);
 			m_UpsertMap.put(Usage.TIMESTAMP, date);
 		}
 		
-		// update global count
-		updateDocument(PRELERT_USAGE_INDEX, m_DateStr, getBytesReadSinceLastReport());
-		updateDocument(getJobId(), m_DateStr, getBytesReadSinceLastReport());
+		// update global count		
+		updateDocument(PRELERT_USAGE_INDEX,  m_DocId, getBytesReadSinceLastReport());
+		updateDocument(getJobId(), m_DocId, getBytesReadSinceLastReport());
 			
 		return true;
 	}

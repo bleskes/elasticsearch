@@ -41,9 +41,12 @@ public interface StatusReporterFactory
 	 * Return a new StatusReporter for the given job id. 
 	 * @param jobId
 	 * @param counts The persisted counts for the job
+	 * @param analysisFieldCount The number of fields that are configured
+	 * to be analysed in each record. This count does not include the 
+	 * time field
 	 * @param logger The job logger
 	 * @return
 	 */
 	public StatusReporter newStatusReporter(String jobId, JobDetails.Counts 
-			counts, Logger logger);
+			counts, long analysisFieldCount, Logger logger);
 }
