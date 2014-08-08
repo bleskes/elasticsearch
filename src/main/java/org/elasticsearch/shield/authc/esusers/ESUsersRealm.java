@@ -10,6 +10,7 @@ import org.elasticsearch.shield.authc.Realm;
 import org.elasticsearch.shield.authc.support.UserPasswdStore;
 import org.elasticsearch.shield.authc.support.UserRolesStore;
 import org.elasticsearch.shield.authc.support.UsernamePasswordToken;
+import org.elasticsearch.transport.TransportMessage;
 import org.elasticsearch.transport.TransportRequest;
 
 /**
@@ -35,8 +36,8 @@ public class ESUsersRealm extends AbstractComponent implements Realm<UsernamePas
     }
 
     @Override
-    public UsernamePasswordToken token(TransportRequest request) {
-        return UsernamePasswordToken.extractToken(request, null);
+    public UsernamePasswordToken token(TransportMessage<?> message) {
+        return UsernamePasswordToken.extractToken(message, null);
     }
 
     @Override

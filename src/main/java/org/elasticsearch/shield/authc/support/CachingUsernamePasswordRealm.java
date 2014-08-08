@@ -8,7 +8,7 @@ import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.shield.User;
 import org.elasticsearch.shield.authc.AuthenticationException;
 import org.elasticsearch.shield.authc.Realm;
-import org.elasticsearch.transport.TransportRequest;
+import org.elasticsearch.transport.TransportMessage;
 
 import java.util.Arrays;
 import java.util.concurrent.Callable;
@@ -35,8 +35,8 @@ public abstract class CachingUsernamePasswordRealm extends AbstractComponent imp
     }
 
     @Override
-    public UsernamePasswordToken token(TransportRequest request) {
-        return UsernamePasswordToken.extractToken(request, null);
+    public UsernamePasswordToken token(TransportMessage<?> message) {
+        return UsernamePasswordToken.extractToken(message, null);
     }
 
     protected final void expire(String username) {
