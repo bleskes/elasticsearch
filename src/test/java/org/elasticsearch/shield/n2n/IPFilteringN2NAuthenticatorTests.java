@@ -1,8 +1,8 @@
 package org.elasticsearch.shield.n2n;
 
-import com.google.common.base.Charsets;
 import com.google.common.io.Files;
-import com.google.common.net.InetAddresses;
+import org.elasticsearch.common.base.Charsets;
+import org.elasticsearch.common.net.InetAddresses;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.env.Environment;
@@ -10,7 +10,6 @@ import org.elasticsearch.test.ElasticsearchTestCase;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.watcher.ResourceWatcherService;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
