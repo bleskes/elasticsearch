@@ -334,14 +334,12 @@ public class ElasticSearchMappings
 						.startObject(AnomalyRecord.IS_SIMPLE_COUNT)
 							.field("type", "boolean")
 						.endObject()
-						/* Enable this when we start writing scores to Elasticsearch
 						.startObject(Bucket.ANOMALY_SCORE)
 							.field("type", "double")
 						.endObject()
 						.startObject(Bucket.UNUSUAL_SCORE)
 							.field("type", "double")
 						.endObject()
-						*/
 					.endObject()
 				.endObject()
 			.endObject();

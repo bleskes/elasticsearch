@@ -83,10 +83,16 @@ public class AnomalyRecord
 	 * Simple count detector
 	 */
 	static final public String IS_SIMPLE_COUNT = "isSimpleCount";
+
+	/**
+	 * Normalisation
+	 */
+	static final public String ANOMALY_SCORE = "anomalyScore";
+	static final public String UNUSUAL_SCORE = "unusualScore";
 	
 	private static final Logger s_Logger = Logger.getLogger(AnomalyRecord.class);
 	
-	private Double m_Probability;
+	private double m_Probability;
 	private String m_ByFieldName;
 	private String m_ByFieldValue;
 	private String m_PartitionFieldName;
@@ -103,29 +109,29 @@ public class AnomalyRecord
 
 	private Boolean m_IsSimpleCount;
 	
-	private Double m_AnomalyScore;
-	private Double m_UnusualScore;
+	private double m_AnomalyScore;
+	private double m_UnusualScore;
 	private Date   m_Timestamp;
 
 	
 	private String m_Parent;
 
-	public Double getAnomalyScore()
+	public double getAnomalyScore()
 	{
 		return m_AnomalyScore;
 	}
 	
-	public void setAnomalyScore(Double anomalyScore)
+	public void setAnomalyScore(double anomalyScore)
 	{
 		m_AnomalyScore = anomalyScore;
 	}
 	
-	public Double getUnusualScore()
+	public double getUnusualScore()
 	{
 		return m_UnusualScore;
 	}
 	
-	public void setUnusualScore(Double anomalyScore)
+	public void setUnusualScore(double anomalyScore)
 	{
 		m_UnusualScore = anomalyScore;
 	}
@@ -138,15 +144,15 @@ public class AnomalyRecord
 	
 	public void setTimestamp(Date timestamp) 
 	{
-		this.m_Timestamp = timestamp;
+		m_Timestamp = timestamp;
 	}
 	
-	public Double getProbability()
+	public double getProbability()
 	{
 		return m_Probability;
 	}
 
-	public void setProbability(Double value)
+	public void setProbability(double value)
 	{
 		m_Probability = value;
 	}
@@ -523,14 +529,19 @@ public class AnomalyRecord
 	}
 
 	@Override
-	public int hashCode() 
+	public int hashCode()
 	{
 		final int prime = 31;
 		int result = 1;
+		long temp;
+		temp = Double.doubleToLongBits(m_Probability);
+		result = prime * result + (int) (temp ^ (temp >>> 32));
+		temp = Double.doubleToLongBits(m_AnomalyScore);
+		result = prime * result + (int) (temp ^ (temp >>> 32));
+		temp = Double.doubleToLongBits(m_UnusualScore);
+		result = prime * result + (int) (temp ^ (temp >>> 32));
 		result = prime * result
 				+ ((m_Actual == null) ? 0 : m_Actual.hashCode());
-		result = prime * result
-				+ ((m_AnomalyScore == null) ? 0 : m_AnomalyScore.hashCode());
 		result = prime * result
 				+ ((m_ByFieldName == null) ? 0 : m_ByFieldName.hashCode());
 		result = prime * result
@@ -561,13 +572,10 @@ public class AnomalyRecord
 				+ ((m_PartitionFieldValue == null) ? 0 : m_PartitionFieldValue
 						.hashCode());
 		result = prime * result
-				+ ((m_Probability == null) ? 0 : m_Probability.hashCode());
-		result = prime * result
 				+ ((m_Timestamp == null) ? 0 : m_Timestamp.hashCode());
 		result = prime * result
 				+ ((m_Typical == null) ? 0 : m_Typical.hashCode());
-		result = prime * result
-				+ ((m_UnusualScore == null) ? 0 : m_UnusualScore.hashCode());
+
 		return result;
 	}
 
@@ -587,11 +595,11 @@ public class AnomalyRecord
 		
 		AnomalyRecord that = (AnomalyRecord)other;
 		
-		boolean equal = bothNullOrEqual(this.m_Probability, that.m_Probability) &&
+		boolean equal = this.m_Probability == that.m_Probability &&
+				this.m_AnomalyScore == that.m_AnomalyScore &&
+				this.m_UnusualScore == that.m_UnusualScore &&
 				bothNullOrEqual(this.m_Typical, that.m_Typical) &&
 				bothNullOrEqual(this.m_Actual, that.m_Actual) &&
-				bothNullOrEqual(this.m_AnomalyScore, that.m_AnomalyScore) &&
-				bothNullOrEqual(this.m_UnusualScore, that.m_UnusualScore) &&
 				bothNullOrEqual(this.m_Function, that.m_Function) &&
 				bothNullOrEqual(this.m_FieldName, that.m_FieldName) &&
 				bothNullOrEqual(this.m_ByFieldName, that.m_ByFieldName) &&
