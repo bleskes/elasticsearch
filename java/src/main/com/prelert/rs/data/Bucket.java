@@ -294,6 +294,30 @@ public class Bucket
 										+ " as a double");
 					}
 					break;	
+				case ANOMALY_SCORE:
+					token = parser.nextToken();
+					if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)	
+					{
+						bucket.setAnomalyScore(parser.getDoubleValue());
+					}
+					else
+					{
+						s_Logger.warn("Cannot parse " + ANOMALY_SCORE + " : " + parser.getText() 
+										+ " as a double");
+					}
+					break;	
+				case UNUSUAL_SCORE:
+					token = parser.nextToken();
+					if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)	
+					{
+						bucket.setUnusualScore(parser.getDoubleValue());
+					}
+					else
+					{
+						s_Logger.warn("Cannot parse " + UNUSUAL_SCORE + " : " + parser.getText() 
+										+ " as a double");
+					}
+					break;	
 				case RECORD_COUNT:
 					token = parser.nextToken();
 					if (token == JsonToken.VALUE_NUMBER_INT)

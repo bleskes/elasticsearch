@@ -156,7 +156,7 @@ public class ElasticSearchJobProvider implements JobProvider
 	 * Close the Elasticsearch node
 	 */
 	@Override
-	public void close() throws IOException 
+	public void close() throws IOException
 	{
 		m_Node.close();
 	}
@@ -862,9 +862,26 @@ public class ElasticSearchJobProvider implements JobProvider
 
 			for (MultiGetItemResponse response : multiGetResponse.getResponses())
 			{
-				String kind = response.getResponse().getId();
-				String state = response.getResponse().getSource().get(Quantiles.QUANTILE_STATE).toString();
-				quantilesState.setQuantilesState(kind, state);
+				String kind = response.getId();
+				if (response.isFailed() || !response.getResponse().isExists())
+				{
+					s_Logger.info("There are currently no " + kind +
+									" quantiles for job " + jobId);
+				}
+				else
+				{
+					Object state = response.getResponse().getSource().get(Quantiles.QUANTILE_STATE);
+					if (state == null)
+					{
+						s_Logger.error("Inconsistency - no " + Quantiles.QUANTILE_STATE +
+										" field in " + kind +
+										" quantiles for job " + jobId);
+					}
+					else
+					{
+						quantilesState.setQuantilesState(kind, state.toString());
+					}
+				}
 			}
 		}
 		catch (IndexMissingException e)

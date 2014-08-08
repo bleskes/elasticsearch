@@ -350,6 +350,30 @@ public class AnomalyRecord
 								+ " as a double");
 					}
 					break;
+				case ANOMALY_SCORE:
+					token = parser.nextToken();
+					if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)
+					{
+						record.setAnomalyScore(parser.getDoubleValue());
+					}
+					else
+					{
+						s_Logger.warn("Cannot parse " + fieldName + " : " + parser.getText()
+								+ " as a double");
+					}
+					break;
+				case UNUSUAL_SCORE:
+					token = parser.nextToken();
+					if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)
+					{
+						record.setUnusualScore(parser.getDoubleValue());
+					}
+					else
+					{
+						s_Logger.warn("Cannot parse " + fieldName + " : " + parser.getText()
+								+ " as a double");
+					}
+					break;
 				case BY_FIELD_NAME:
 					token = parser.nextToken();
 					if (token == JsonToken.VALUE_STRING)
