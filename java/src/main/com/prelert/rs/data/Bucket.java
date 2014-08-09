@@ -163,7 +163,8 @@ public class Bucket
 	{
 		this.m_RecordCount = recordCount;
 	}
-	
+
+
 	/**
 	 * Get the list of detectors that produced output in this bucket
 	 * 
@@ -178,8 +179,22 @@ public class Bucket
 	{
 		m_Detectors = detectors;
 	}
-	
-	
+
+
+	/**
+	 * Add a detector that produced output in this bucket
+	 * 
+	 */	
+	synchronized protected void addDetector(Detector detector)
+	{
+		if (m_Detectors == null)
+		{
+			m_Detectors = new ArrayList<>();
+		}
+		m_Detectors.add(detector);
+	}
+
+
 	/**
 	 * Get all the anomaly records associated with this bucket
 	 * @return All the anomaly records
@@ -317,7 +332,7 @@ public class Bucket
 					while (token != JsonToken.END_ARRAY)
 					{
 						Detector detector = Detector.parseJson(parser);
-						bucket.getDetectors().add(detector);
+						bucket.addDetector(detector);
 						token = parser.nextToken();
 					}
 					break;
