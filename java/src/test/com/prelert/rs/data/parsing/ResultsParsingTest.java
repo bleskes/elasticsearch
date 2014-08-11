@@ -163,58 +163,63 @@ public class ResultsParsingTest
 		assertEquals(5, buckets.get(1).getRecordCount());
 		assertEquals(buckets.get(1).getEventCount(), 820);
 		assertEquals(0.0140005, buckets.get(1).getRawAnomalyScore(), 0.000001);
-		
+
 		assertEquals("individual count//count", buckets.get(0).getDetectors().get(0).getName()); 
 		assertEquals(1, buckets.get(0).getDetectors().get(0).getRecords().size());
 		assertEquals("count", buckets.get(0).getDetectors().get(0).getRecords().get(0).getFunction());
-		assertEquals(806.0, buckets.get(0).getDetectors().get(0).getRecords().get(0).getActual(), 0.000001);
-				
-		assertEquals("individual count//count", buckets.get(1).getDetectors().get(0).getName());
+		assertEquals(1.0, buckets.get(0).getDetectors().get(0).getRecords().get(0).getProbability(), 0.000001);
+		
+		
+		assertEquals("individual count//count", buckets.get(1).getDetectors().get(0).getName()); 
 		assertEquals(1, buckets.get(1).getDetectors().get(0).getRecords().size());
 		assertEquals("count", buckets.get(1).getDetectors().get(0).getRecords().get(0).getFunction());
+		assertEquals(1.0, buckets.get(1).getDetectors().get(0).getRecords().get(0).getProbability(), 0.000001);
 		
-		assertEquals("individual metric/responsetime/airline", buckets.get(1).getDetectors().get(1).getName());
-		assertEquals(4, buckets.get(1).getDetectors().get(1).getRecords().size());
+						
+		com.prelert.rs.data.Detector detector = buckets.get(1).getDetectors().get(1);
+
+		assertEquals("individual metric/responsetime/airline", detector.getName());
+		assertEquals(4, detector.getRecords().size());
 		
-		assertEquals(0.0637541, buckets.get(1).getDetectors().get(1).getRecords().get(0).getProbability(), 0.000001);		
-		assertEquals("airline", buckets.get(1).getDetectors().get(1).getRecords().get(0).getByFieldName());
-		assertEquals("JZA", buckets.get(1).getDetectors().get(1).getRecords().get(0).getByFieldValue());
-		assertEquals(1020.08, 0.001, buckets.get(1).getDetectors().get(1).getRecords().get(0).getTypical());
-		assertEquals(1042.14, 0.001, buckets.get(1).getDetectors().get(1).getRecords().get(0).getActual());	
-		assertEquals("responsetime", buckets.get(1).getDetectors().get(1).getRecords().get(0).getFieldName());
-		assertEquals("max", buckets.get(1).getDetectors().get(1).getRecords().get(0).getFunction());
-		assertEquals("", buckets.get(1).getDetectors().get(1).getRecords().get(0).getPartitionFieldName());
-		assertEquals("", buckets.get(1).getDetectors().get(1).getRecords().get(0).getPartitionFieldValue());
+		assertEquals(0.0637541, detector.getRecords().get(0).getProbability(), 0.000001);		
+		assertEquals("airline", detector.getRecords().get(0).getByFieldName());
+		assertEquals("JZA", detector.getRecords().get(0).getByFieldValue());
+		assertEquals(1020.08, 0.001, detector.getRecords().get(0).getTypical());
+		assertEquals(1042.14, 0.001, detector.getRecords().get(0).getActual());	
+		assertEquals("responsetime", detector.getRecords().get(0).getFieldName());
+		assertEquals("max", detector.getRecords().get(0).getFunction());
+		assertEquals("", detector.getRecords().get(0).getPartitionFieldName());
+		assertEquals("", detector.getRecords().get(0).getPartitionFieldValue());
 		
-		assertEquals(0.00748292, buckets.get(1).getDetectors().get(1).getRecords().get(1).getProbability(), 0.000001);		
-		assertEquals("airline", buckets.get(1).getDetectors().get(1).getRecords().get(1).getByFieldName());
-		assertEquals("AMX", buckets.get(1).getDetectors().get(1).getRecords().get(1).getByFieldValue());
-		assertEquals(20.2137, 0.001, buckets.get(1).getDetectors().get(1).getRecords().get(1).getTypical());
-		assertEquals(22.8855, 0.001, buckets.get(1).getDetectors().get(1).getRecords().get(1).getActual());	
-		assertEquals("responsetime", buckets.get(1).getDetectors().get(1).getRecords().get(1).getFieldName());
-		assertEquals("max", buckets.get(1).getDetectors().get(1).getRecords().get(1).getFunction());
-		assertEquals("", buckets.get(1).getDetectors().get(1).getRecords().get(1).getPartitionFieldName());
-		assertEquals("", buckets.get(1).getDetectors().get(1).getRecords().get(1).getPartitionFieldValue());		
+		assertEquals(0.00748292, detector.getRecords().get(1).getProbability(), 0.000001);		
+		assertEquals("airline", detector.getRecords().get(1).getByFieldName());
+		assertEquals("AMX", detector.getRecords().get(1).getByFieldValue());
+		assertEquals(20.2137, 0.001, detector.getRecords().get(1).getTypical());
+		assertEquals(22.8855, 0.001, detector.getRecords().get(1).getActual());	
+		assertEquals("responsetime", detector.getRecords().get(1).getFieldName());
+		assertEquals("max", detector.getRecords().get(1).getFunction());
+		assertEquals("", detector.getRecords().get(1).getPartitionFieldName());
+		assertEquals("", detector.getRecords().get(1).getPartitionFieldValue());		
 		
-		assertEquals(0.023494, buckets.get(1).getDetectors().get(1).getRecords().get(2).getProbability(), 0.000001);		
-		assertEquals("airline", buckets.get(1).getDetectors().get(1).getRecords().get(2).getByFieldName());
-		assertEquals("DAL", buckets.get(1).getDetectors().get(1).getRecords().get(2).getByFieldValue());
-		assertEquals(382.177, 0.001, buckets.get(1).getDetectors().get(1).getRecords().get(2).getTypical());
-		assertEquals(358.934, 0.001, buckets.get(1).getDetectors().get(1).getRecords().get(2).getActual());	
-		assertEquals("responsetime", buckets.get(1).getDetectors().get(1).getRecords().get(2).getFieldName());
-		assertEquals("min", buckets.get(1).getDetectors().get(1).getRecords().get(2).getFunction());
-		assertEquals("", buckets.get(1).getDetectors().get(1).getRecords().get(2).getPartitionFieldName());
-		assertEquals("", buckets.get(1).getDetectors().get(1).getRecords().get(2).getPartitionFieldValue());	
+		assertEquals(0.023494, detector.getRecords().get(2).getProbability(), 0.000001);		
+		assertEquals("airline", detector.getRecords().get(2).getByFieldName());
+		assertEquals("DAL", detector.getRecords().get(2).getByFieldValue());
+		assertEquals(382.177, 0.001, detector.getRecords().get(2).getTypical());
+		assertEquals(358.934, 0.001, detector.getRecords().get(2).getActual());	
+		assertEquals("responsetime", detector.getRecords().get(2).getFieldName());
+		assertEquals("min", detector.getRecords().get(2).getFunction());
+		assertEquals("", detector.getRecords().get(2).getPartitionFieldName());
+		assertEquals("", detector.getRecords().get(2).getPartitionFieldValue());	
 		
-		assertEquals(0.0473552, buckets.get(1).getDetectors().get(1).getRecords().get(3).getProbability(), 0.000001);		
-		assertEquals("airline", buckets.get(1).getDetectors().get(1).getRecords().get(3).getByFieldName());
-		assertEquals("SWA", buckets.get(1).getDetectors().get(1).getRecords().get(3).getByFieldValue());
-		assertEquals(152.148, 0.001, buckets.get(1).getDetectors().get(1).getRecords().get(3).getTypical());
-		assertEquals(96.6425, 0.001, buckets.get(1).getDetectors().get(1).getRecords().get(3).getActual());	
-		assertEquals("responsetime", buckets.get(1).getDetectors().get(1).getRecords().get(3).getFieldName());
-		assertEquals("min", buckets.get(1).getDetectors().get(1).getRecords().get(3).getFunction());
-		assertEquals("", buckets.get(1).getDetectors().get(1).getRecords().get(3).getPartitionFieldName());
-		assertEquals("", buckets.get(1).getDetectors().get(1).getRecords().get(3).getPartitionFieldValue());	
+		assertEquals(0.0473552, detector.getRecords().get(3).getProbability(), 0.000001);		
+		assertEquals("airline", detector.getRecords().get(3).getByFieldName());
+		assertEquals("SWA", detector.getRecords().get(3).getByFieldValue());
+		assertEquals(152.148, 0.001, detector.getRecords().get(3).getTypical());
+		assertEquals(96.6425, 0.001, detector.getRecords().get(3).getActual());	
+		assertEquals("responsetime", detector.getRecords().get(3).getFieldName());
+		assertEquals("min", detector.getRecords().get(3).getFunction());
+		assertEquals("", detector.getRecords().get(3).getPartitionFieldName());
+		assertEquals("", detector.getRecords().get(3).getPartitionFieldValue());	
 
 		SortedMap<String, Quantiles> quantiles = persister.getQuantiles();
 
