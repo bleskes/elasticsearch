@@ -53,6 +53,8 @@ import com.prelert.rs.data.parsing.AutoDetectResultsParser;
 
 /**
  * Tests for parsing the JSON output of autodetect_api
+ * 
+ * Simple count records are parsed but not persisted
  */
 public class ResultsParsingTest 
 {
@@ -155,28 +157,16 @@ public class ResultsParsingTest
 		
 		assertEquals(2, buckets.size());		
 		assertEquals(new Date(1359450000000L), buckets.get(0).getTimestamp());
-		assertEquals(1, buckets.get(0).getRecordCount());
+		assertEquals(0, buckets.get(0).getRecordCount());
 		assertEquals(buckets.get(0).getEventCount(), 806);
 		assertEquals(0.0, buckets.get(0).getRawAnomalyScore(), 0.000001);
 
 		assertEquals(new Date(1359453600000L), buckets.get(1).getTimestamp());
-		assertEquals(5, buckets.get(1).getRecordCount());
+		assertEquals(4, buckets.get(1).getRecordCount());
 		assertEquals(buckets.get(1).getEventCount(), 820);
 		assertEquals(0.0140005, buckets.get(1).getRawAnomalyScore(), 0.000001);
-
-		assertEquals("individual count//count", buckets.get(0).getDetectors().get(0).getName()); 
-		assertEquals(1, buckets.get(0).getDetectors().get(0).getRecords().size());
-		assertEquals("count", buckets.get(0).getDetectors().get(0).getRecords().get(0).getFunction());
-		assertEquals(1.0, buckets.get(0).getDetectors().get(0).getRecords().get(0).getProbability(), 0.000001);
-		
-		
-		assertEquals("individual count//count", buckets.get(1).getDetectors().get(0).getName()); 
-		assertEquals(1, buckets.get(1).getDetectors().get(0).getRecords().size());
-		assertEquals("count", buckets.get(1).getDetectors().get(0).getRecords().get(0).getFunction());
-		assertEquals(1.0, buckets.get(1).getDetectors().get(0).getRecords().get(0).getProbability(), 0.000001);
-		
 						
-		com.prelert.rs.data.Detector detector = buckets.get(1).getDetectors().get(1);
+		com.prelert.rs.data.Detector detector = buckets.get(1).getDetectors().get(0);
 
 		assertEquals("individual metric/responsetime/airline", detector.getName());
 		assertEquals(4, detector.getRecords().size());
@@ -249,21 +239,17 @@ public class ResultsParsingTest
 		List<Bucket> buckets = persister.getBuckets();		
 		assertEquals(4, buckets.size());	
 		assertEquals(new Date(1359331200000L), buckets.get(0).getTimestamp());
-		assertEquals(1, buckets.get(0).getRecordCount()); 
+		assertEquals(0, buckets.get(0).getRecordCount()); 
 		assertEquals(new Date(1359417600000L), buckets.get(1).getTimestamp());
-		assertEquals(1, buckets.get(1).getRecordCount()); 
+		assertEquals(0, buckets.get(1).getRecordCount()); 
 		assertEquals(new Date(1359504000000L), buckets.get(2).getTimestamp());
-		assertEquals(1, buckets.get(2).getRecordCount()); 
+		assertEquals(0, buckets.get(2).getRecordCount()); 
 		assertEquals(new Date(1359590400000L), buckets.get(3).getTimestamp());
-		assertEquals(1, buckets.get(3).getRecordCount()); 
+		assertEquals(0, buckets.get(3).getRecordCount()); 
 		
 		long eventCounts [] = {17211, 17219, 17443, 17183};
 		for (int i=0; i<4; ++i)
 		{
-			assertEquals("individual count//count", buckets.get(i).getDetectors().get(0).getName()); 
-			assertEquals(1, buckets.get(i).getDetectors().get(0).getRecords().size());
-			assertEquals("count", buckets.get(i).getDetectors().get(0).getRecords().get(0).getFunction());
-			assertEquals(1.0, buckets.get(i).getDetectors().get(0).getRecords().get(0).getProbability(), 0.000001);
 			assertEquals(eventCounts[i], buckets.get(i).getEventCount());
 		}
 		
