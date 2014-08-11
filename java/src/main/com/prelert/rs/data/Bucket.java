@@ -61,6 +61,8 @@ public class Bucket
 	public static final String RECORD_COUNT = "recordCount";
 	public static final String DETECTORS = "detectors";
 	public static final String RECORDS = "records";
+	public static final String EVENT_COUNT = "eventCount";
+	
 
 	/**
 	 * Elasticsearch type
@@ -78,6 +80,7 @@ public class Bucket
 	private List<Detector> m_Detectors;
 	private long m_Epoch;
 	private List<AnomalyRecord> m_Records;
+	private long m_EventCount;
 	
 	public Bucket()
 	{
@@ -208,6 +211,16 @@ public class Bucket
 	}
 	
 	
+	public long getEventCount()
+	{
+		return m_EventCount;
+	}
+	
+	public void setEventCount(long value)
+	{
+		m_EventCount = value;
+	}
+	
 	/**
 	 * Create a new <code>Bucket</code> and populate it from the JSON parser.
 	 * The parser must be pointing at the start of the object then all the object's 
@@ -238,7 +251,14 @@ public class Bucket
 		}
 
 		token = parser.nextToken();
-		return parseJsonAfterStartObject(parser);
+		Bucket bucket = parseJsonAfterStartObject(parser);
+		
+		if (bucket.getEventCount() == 0)
+		{
+			System.out.print("event count error");
+		}
+		
+		return bucket;
 	}
 
 
@@ -331,6 +351,12 @@ public class Bucket
 					{
 						Detector detector = Detector.parseJson(parser);
 						bucket.addDetector(detector);
+						
+						if (detector.isSimpleCount())
+						{
+							bucket.setEventCount(detector.getEventCount());
+						}
+						
 						token = parser.nextToken();
 					}
 					break;
@@ -398,6 +424,7 @@ public class Bucket
 		
 		boolean equals = (this.m_Id.equals(that.m_Id)) &&
 				(this.m_Timestamp.equals(that.m_Timestamp)) &&
+				(this.m_EventCount == that.m_EventCount) &&
 				(this.m_RawAnomalyScore == that.m_RawAnomalyScore) &&
 				(this.m_AnomalyScore == that.m_AnomalyScore) &&
 				(this.m_UnusualScore == that.m_UnusualScore) &&

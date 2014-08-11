@@ -417,6 +417,7 @@ public class ElasticSearchPersister implements JobDataPersister
 				.field(ElasticSearchMappings.ES_TIMESTAMP, bucket.getTimestamp())
 				.field(Bucket.RAW_ANOMALY_SCORE, bucket.getRawAnomalyScore())
 				.field(Bucket.RECORD_COUNT, bucket.getRecordCount())
+				.field(Bucket.EVENT_COUNT, bucket.getEventCount())
 				.endObject();
 		
 		return builder;
