@@ -165,7 +165,8 @@ public class Bucket
 	{
 		this.m_RecordCount = recordCount;
 	}
-	
+
+
 	/**
 	 * Get the list of detectors that produced output in this bucket
 	 * 
@@ -180,8 +181,18 @@ public class Bucket
 	{
 		m_Detectors = detectors;
 	}
-	
-	
+
+
+	/**
+	 * Add a detector that produced output in this bucket
+	 * 
+	 */	
+	private void addDetector(Detector detector)
+	{
+		m_Detectors.add(detector);
+	}
+
+
 	/**
 	 * Get all the anomaly records associated with this bucket
 	 * @return All the anomaly records
@@ -319,7 +330,7 @@ public class Bucket
 					while (token != JsonToken.END_ARRAY)
 					{
 						Detector detector = Detector.parseJson(parser);
-						bucket.getDetectors().add(detector);
+						bucket.addDetector(detector);
 						token = parser.nextToken();
 					}
 					break;
@@ -394,10 +405,22 @@ public class Bucket
 				(this.m_Epoch == that.m_Epoch);
 		
 		// don't bother testing detectors
-		equals = this.m_Records.size() == that.m_Records.size();
-		for (int i=0; i<this.m_Records.size(); i++)
+		if (this.m_Records == null && that.m_Records == null)
 		{
-			equals = this.m_Records.get(i).equals(that.m_Records.get(i));
+			equals &= true;
+		}
+		else if (this.m_Records != null && that.m_Records != null)
+		{
+			equals &= this.m_Records.size() == that.m_Records.size();
+			for (int i=0; i<this.m_Records.size(); i++)
+			{
+				equals &= this.m_Records.get(i).equals(that.m_Records.get(i));
+			}			
+		}
+		else
+		{
+			// one null the other not
+			equals = false;
 		}
 		
 		return equals;
