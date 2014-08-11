@@ -122,6 +122,11 @@ public class ElasticSearchPersister implements JobDataPersister
 	@Override
 	public void persistBucket(Bucket bucket) 
 	{
+		if (bucket.getDetectors() == null)
+		{
+			return;
+		}
+
 		try 
 		{
 			XContentBuilder content = serialiseBucket(bucket);
@@ -139,7 +144,7 @@ public class ElasticSearchPersister implements JobDataPersister
 			*/
 			
 			for (Detector detector : bucket.getDetectors())
-			{								
+			{
 				if (m_DetectorNames.contains(detector.getName()) == false)
 				{
 					m_DetectorNames.add(detector.getName());
