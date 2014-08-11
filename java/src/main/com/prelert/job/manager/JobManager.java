@@ -113,8 +113,6 @@ public class JobManager
 	
 	private JobProvider m_JobProvider;
 	
-	
-	private Map<String, Integer> m_JobIdBucketspan;
 
 	/**
 	 * These default to unlimited (indicated by negative limits), but may be
@@ -141,8 +139,6 @@ public class JobManager
 			StatusReporterFactory statusReporterFactory,
 			UsageReporterFactory usageReporterFactory)
 	{
-		m_JobIdBucketspan = new HashMap<>();
-		
 		m_JobProvider = jobProvider;
 		
 		m_ProcessManager = new ProcessManager(jobProvider, 
@@ -284,28 +280,7 @@ public class JobManager
 		return jobDetails;
 	}
 
-	
-	private Integer getJobBucketSpan(String jobId)
-	{
-		Integer span = m_JobIdBucketspan.get(jobId);
-		if (span == null)
-		{
-			// use dot notation to get fields from nested docs.
-			Number num = m_JobProvider.<Number>getField(jobId,
-					JobDetails.ANALYSIS_CONFIG + "." + AnalysisConfig.BUCKET_SPAN);
-			
-			if (num != null)
-			{
-				span = num.intValue();
-				m_JobIdBucketspan.put(jobId, span);
-			}			
-		}
-		
-		return span;
-	}
-	
-	
-	
+
 	/**
 	 * Get a single result bucket
 	 * 

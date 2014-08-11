@@ -46,6 +46,7 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.DetectorState;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.persistence.JobDataPersister;
+import com.prelert.job.persistence.JobRenormaliser;
 import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.Quantiles;
 import com.prelert.rs.data.parsing.AutoDetectParseException;
@@ -135,9 +136,29 @@ public class ResultsParsingTest
 			return m_State;
 		}
 	}
-	
-	
-	
+
+
+	/**
+	 * Simple renormaliser just logs when it's called
+	 */
+	public class Renormaliser implements JobRenormaliser 
+	{
+		public void updateBucketSysChange(String sysChangeState,
+											Logger logger)
+		{
+			logger.info("Renormalising for system changes using quantiles: " +
+						sysChangeState);
+		}
+
+		public void updateBucketUnusualBehaviour(String unusualBehaviourState,
+												Logger logger)
+		{
+			logger.info("Renormalising for unusual behaviour using quantiles: " +
+						unusualBehaviourState);
+		}
+	}
+
+
 	@Test
 	public void testParser() throws JsonParseException, IOException, 
 	AutoDetectParseException, UnknownJobException
@@ -147,8 +168,9 @@ public class ResultsParsingTest
 		
 		InputStream inputStream = new ByteArrayInputStream(METRIC_OUTPUT_SAMPLE.getBytes("UTF-8"));
 		ResultsPersister persister = new ResultsPersister();
+		Renormaliser renormaliser = new Renormaliser();
 		
-		AutoDetectResultsParser.parseResults(inputStream, persister, logger);
+		AutoDetectResultsParser.parseResults(inputStream, persister, renormaliser, logger);
 		assertNull(persister.retrieveDetectorState());
 		
 		List<Bucket> buckets = persister.getBuckets();
@@ -237,7 +259,8 @@ public class ResultsParsingTest
 		
 		InputStream inputStream = new ByteArrayInputStream(builder.toString().getBytes("UTF-8"));
 		ResultsPersister persister = new ResultsPersister();
-		AutoDetectResultsParser.parseResults(inputStream, persister, logger);
+		Renormaliser renormaliser = new Renormaliser();
+		AutoDetectResultsParser.parseResults(inputStream, persister, renormaliser, logger);
 		
 		List<Bucket> buckets = persister.getBuckets();		
 		assertEquals(4, buckets.size());	

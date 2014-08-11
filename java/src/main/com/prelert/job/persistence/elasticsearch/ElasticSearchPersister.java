@@ -98,7 +98,7 @@ public class ElasticSearchPersister implements JobDataPersister
 	private Set<String> m_DetectorNames;
 		
 	/**
-	 * Create the with the ElasticSearch client. Data will be written
+	 * Create with the ElasticSearch client. Data will be written to
 	 * the index <code>jobId</code>
 	 * 
 	 * @param jobId The job Id/ElasticSearch index

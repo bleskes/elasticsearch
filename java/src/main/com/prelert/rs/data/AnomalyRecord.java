@@ -47,13 +47,18 @@ import com.prelert.rs.data.parsing.AutoDetectParseException;
  * can be returned if the members have not been set.
  */
 @JsonInclude(Include.NON_NULL)
-@JsonIgnoreProperties({"parent", "detectorName"})
+@JsonIgnoreProperties({"parent", "id", "detectorName"})
 public class AnomalyRecord
 {
 	/**
 	 * Serialisation fields
 	 */
 	static final public String TYPE = "record";
+
+	/**
+	 * Data store ID field
+	 */
+	static final public String ID = "id";
 
 	/**
 	 * Result fields (all detector types)
@@ -92,6 +97,7 @@ public class AnomalyRecord
 	
 	private static final Logger s_Logger = Logger.getLogger(AnomalyRecord.class);
 	
+	private String m_Id;
 	private double m_Probability;
 	private String m_ByFieldName;
 	private String m_ByFieldValue;
@@ -115,6 +121,26 @@ public class AnomalyRecord
 
 	
 	private String m_Parent;
+
+	/**
+	 * Data store ID of this record.  May be null for records that have not been
+	 * read from the data store.
+	 */
+	public String getId()
+	{
+		return m_Id;
+	}
+
+	/**
+	 * This should only be called by code that's reading records from the data
+	 * store.  The ID must be set to the data stores's unique key to this
+	 * anomaly record.
+	 */
+	public void setId(String id)
+	{
+		m_Id = id;
+	}
+
 
 	public double getAnomalyScore()
 	{
@@ -555,6 +581,10 @@ public class AnomalyRecord
 	@Override
 	public int hashCode()
 	{
+		// ID is NOT included in the hash, so that a record from the data store
+		// will hash the same as a record representing the same anomaly that did
+		// not come from the data store
+
 		final int prime = 31;
 		int result = 1;
 		long temp;
@@ -618,7 +648,11 @@ public class AnomalyRecord
 		}
 		
 		AnomalyRecord that = (AnomalyRecord)other;
-		
+
+		// ID is NOT compared, so that a record from the data store will compare
+		// equal to a record representing the same anomaly that did not come
+		// from the data store
+
 		boolean equal = this.m_Probability == that.m_Probability &&
 				this.m_AnomalyScore == that.m_AnomalyScore &&
 				this.m_UnusualScore == that.m_UnusualScore &&

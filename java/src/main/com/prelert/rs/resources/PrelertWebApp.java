@@ -113,7 +113,7 @@ public class PrelertWebApp extends Application
 		ElasticSearchJobProvider esJob = new ElasticSearchJobProvider(
 				elasticSearchClusterName);
 		m_JobManager = new JobManager(esJob, 
-				new ElasticSearchResultsReaderFactory(esJob.getClient()),
+				new ElasticSearchResultsReaderFactory(esJob),
 				new ElasticSearchStatusReporterFactory(esJob.getClient()),
 				new ElasticsearchUsageReporterFactory(esJob.getClient())
 			);

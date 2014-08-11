@@ -766,8 +766,9 @@ public class ElasticSearchJobProvider implements JobProvider
 			
 			AnomalyRecord record = m_ObjectMapper.convertValue(
 					m, AnomalyRecord.class);
-			
-			// set the parent id
+
+			// set the ID and parent ID
+			record.setId(hit.getId());
 			record.setParent(hit.field(_PARENT).getValue().toString());
 			
 			results.add(record);

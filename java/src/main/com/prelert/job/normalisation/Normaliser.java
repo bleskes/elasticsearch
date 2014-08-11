@@ -54,6 +54,9 @@ import com.prelert.rs.data.ErrorCode;
  * Creates and initialises the normaliser process, pipes the probabilities/
  * anomaly scores through them and adds the normalised values to 
  * the records/buckets.
+ * <br/>
+ * Relies on the C++ normaliser process returning an answer for every input
+ * and in exactly the same order as the inputs.
  */
 public class Normaliser 
 {
@@ -70,10 +73,12 @@ public class Normaliser
 		m_JobProvider = jobProvider;
 		m_Logger = logger;
 	}
-			
+
+
 	/**	 
 	 * Normalise buckets anomaly score for system state change.
-	 * 
+	 * Seed the normaliser with state retrieved from the data store.
+	 *
 	 * @param bucketSpan If <code>null</code> the default is used
 	 * @param buckets Will be modified to have the normalised result
 	 * @return
@@ -85,10 +90,31 @@ public class Normaliser
 	throws NativeProcessRunException, UnknownJobException
 	{
 		QuantilesState state = m_JobProvider.getQuantilesState(m_JobId);
-		
+
+		return normaliseForSystemChange(bucketSpan, buckets,
+				state.getQuantilesState(QuantilesState.SYS_CHANGE_QUANTILES_KIND));
+	}
+
+
+	/**	 
+	 * Normalise buckets anomaly score for system state change.
+	 * Seed the normaliser with the state provided.
+	 * 
+	 * @param bucketSpan If <code>null</code> the default is used
+	 * @param buckets Will be modified to have the normalised result
+	 * @param sysChangeState The state to be used to seed the system change
+	 * normaliser
+	 * @return
+	 * @throws NativeProcessRunException
+	 * @throws UnknownJobException
+	 */
+	public List<Bucket> normaliseForSystemChange(Integer bucketSpan, 
+			List<Bucket> buckets, String sysChangeState)
+	throws NativeProcessRunException, UnknownJobException
+	{
 		NormaliserProcess process = createNormaliserProcess(
-				state.getQuantilesState(QuantilesState.SYS_CHANGE_QUANTILES_KIND), null, bucketSpan);
-		
+				sysChangeState, null, bucketSpan);
+
 		long start = System.currentTimeMillis();
 		
 		NormalisedResultsParser resultsParser = new NormalisedResultsParser(
@@ -103,15 +129,13 @@ public class Normaliser
 		
 		try 
 		{
-			writer.writeNumFields(2);
-			writer.writeField("rawAnomalyScore");
-			writer.writeField("id");
-			
+			writer.writeNumFields(1);
+			writer.writeField(ProcessCtrl.RAW_ANOMALY_SCORE);
+
 			for (Bucket bucket : buckets)
 			{
-				writer.writeNumFields(2);
+				writer.writeNumFields(1);
 				writer.writeField(Double.toString(bucket.getRawAnomalyScore()));
-				writer.writeField(bucket.getId());
 			}
 		}
 		catch (IOException e) 
@@ -136,7 +160,6 @@ public class Normaliser
 		}
 		catch (InterruptedException e)
 		{
-			
 		}
 		
 		List<Bucket> result = mergeNormalisedSystemChangeScoresIntoBuckets(
@@ -149,28 +172,52 @@ public class Normaliser
 		
 		return result;
 	}
-	
-	
+
+
 	/**
-	 * Normalise the bucket and it's nested records for unusual 
+	 * Normalise the bucket and its nested records for unusual
 	 * behaviour.
 	 * The bucket's anomaly score is set to the max record score.
-	 * 
+	 * Seed the normaliser with state retrieved from the data store.
+	 *
 	 * @param bucketSpan If <code>null</code> the default is used
 	 * @param expandedBuckets Will be modified to have the normalised result
 	 * @return
 	 * @throws NativeProcessRunException
 	 * @throws UnknownJobException
 	 */
-	public List<Bucket> normaliseForUnusualBehaviour(Integer bucketSpan, 
+	public List<Bucket> normaliseForUnusualBehaviour(Integer bucketSpan,
 			List<Bucket> expandedBuckets)
 	throws NativeProcessRunException, UnknownJobException
 	{
 		QuantilesState state = m_JobProvider.getQuantilesState(m_JobId);
-		
+
+		return normaliseForUnusualBehaviour(bucketSpan, expandedBuckets,
+			state.getQuantilesState(QuantilesState.UNUSUAL_QUANTILES_KIND));
+	}
+
+
+	/**
+	 * Normalise the bucket and its nested records for unusual
+	 * behaviour.
+	 * The bucket's anomaly score is set to the max record score.
+	 * Seed the normaliser with the state provided.
+	 *
+	 * @param bucketSpan If <code>null</code> the default is used
+	 * @param expandedBuckets Will be modified to have the normalised result
+	 * @param unusualBehaviourState The state to be used to seed the unusual behaviour
+	 * normaliser
+	 * @return
+	 * @throws NativeProcessRunException
+	 * @throws UnknownJobException
+	 */
+	public List<Bucket> normaliseForUnusualBehaviour(Integer bucketSpan,
+			List<Bucket> expandedBuckets, String unusualBehaviourState)
+	throws NativeProcessRunException, UnknownJobException
+	{
 		NormaliserProcess process = createNormaliserProcess(
-				null, state.getQuantilesState(QuantilesState.UNUSUAL_QUANTILES_KIND), bucketSpan);
-		
+				null, unusualBehaviourState, bucketSpan);
+
 		long start = System.currentTimeMillis();
 		
 		NormalisedResultsParser resultsParser = new NormalisedResultsParser(
@@ -182,21 +229,18 @@ public class Normaliser
 						
 		LengthEncodedWriter writer = new LengthEncodedWriter(
 				process.getProcess().getOutputStream());
-		
-		
+
 		try 
 		{
-			writer.writeNumFields(2);
-			writer.writeField("probability");
-			writer.writeField("id");
+			writer.writeNumFields(1);
+			writer.writeField(ProcessCtrl.PROBABILITY);
 			
 			for (Bucket bucket : expandedBuckets)
 			{
 				for (AnomalyRecord record : bucket.getRecords())
 				{
-					writer.writeNumFields(2);
+					writer.writeNumFields(1);
 					writer.writeField(Double.toString(record.getProbability()));
-					writer.writeField("TODO");
 				}
 			}
 		}
@@ -233,8 +277,8 @@ public class Normaliser
 		
 		return buckets;
 	}
-		
-	
+
+
 	/**
 	 * For each record set the normalised value by unusual behaviour
 	 * and the system change anomaly score to the buckets system
@@ -252,12 +296,10 @@ public class Normaliser
 			List<Bucket> buckets, List<AnomalyRecord> records)
 	throws NativeProcessRunException, UnknownJobException
 	{
-		String sysChangeState = null;
-		String unusualBehaviourState = null;
 		QuantilesState state = m_JobProvider.getQuantilesState(m_JobId);
 
-		sysChangeState = state.getQuantilesState(QuantilesState.SYS_CHANGE_QUANTILES_KIND);
-		unusualBehaviourState = state.getQuantilesState(QuantilesState.UNUSUAL_QUANTILES_KIND);
+		String sysChangeState = state.getQuantilesState(QuantilesState.SYS_CHANGE_QUANTILES_KIND);
+		String unusualBehaviourState = state.getQuantilesState(QuantilesState.UNUSUAL_QUANTILES_KIND);
 		
 		long startProc = System.currentTimeMillis();
 		NormaliserProcess process = createNormaliserProcess(
@@ -426,25 +468,38 @@ public class Normaliser
 	{
 		Iterator<NormalisedResult> scoresIter = normalisedScores.iterator();
 		
-		Map<String, Double> bucketIdToScore = new HashMap<>();
+		Map<String, Bucket> bucketIdToBucket = new HashMap<>();
 		
 		try
 		{
-			// bucket sys change score first
+			// Buckets first
 			for (Bucket bucket : buckets)
 			{
 				NormalisedResult normalised = scoresIter.next();
-				bucketIdToScore.put(bucket.getId(), normalised.getNormalizedSysChangeScore());
+				bucket.setAnomalyScore(normalised.getNormalizedSysChangeScore());
+				bucket.setUnusualScore(0.0);
+				bucketIdToBucket.put(bucket.getId(), bucket);
 			}
 
-			// set scores for records
+			// Set scores for records and
 			for (AnomalyRecord record : records)
 			{
-				Double anomalyScore = bucketIdToScore.get(record.getParent());
-				record.setAnomalyScore(anomalyScore);
+				Bucket parentBucket = bucketIdToBucket.get(record.getParent());
+
+				// Record anomaly scores are defined to be equal to those of
+				// their parent bucket
+				record.setAnomalyScore(parentBucket.getAnomalyScore());
 
 				NormalisedResult normalised = scoresIter.next();
-				record.setUnusualScore(normalised.getNormalizedUnusualScore());
+				double unusualScore = normalised.getNormalizedUnusualScore();
+				record.setUnusualScore(unusualScore);
+
+				// Bucket unusual scores are defined to be the highest of those
+				// on their contained records
+				if (unusualScore > parentBucket.getUnusualScore())
+				{
+					parentBucket.setUnusualScore(unusualScore);
+				}
 			}
 		}
 		catch (NoSuchElementException e)
@@ -458,7 +513,7 @@ public class Normaliser
 	}
 	
 	
-	/***
+	/**
 	 * Create and start the normalization process
 	 * 
 	 * @param sysChangeState 

@@ -1,3 +1,29 @@
+/************************************************************
+ *                                                          *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ *                                                          *
+ *----------------------------------------------------------*
+ *----------------------------------------------------------*
+ * WARNING:                                                 *
+ * THIS FILE CONTAINS UNPUBLISHED PROPRIETARY               *
+ * SOURCE CODE WHICH IS THE PROPERTY OF PRELERT LTD AND     *
+ * PARENT OR SUBSIDIARY COMPANIES.                          *
+ * PLEASE READ THE FOLLOWING AND TAKE CAREFUL NOTE:         *
+ *                                                          *
+ * This source code is confidential and any person who      *
+ * receives a copy of it, or believes that they are viewing *
+ * it without permission is asked to notify Prelert Ltd     *
+ * on +44 (0)20 7953 7243 or email to legal@prelert.com.    *
+ * All intellectual property rights in this source code     *
+ * are owned by Prelert Ltd.  No part of this source code   *
+ * may be reproduced, adapted or transmitted in any form or *
+ * by any means, electronic, mechanical, photocopying,      *
+ * recording or otherwise.                                  *
+ *                                                          *
+ *----------------------------------------------------------*
+ *                                                          *
+ *                                                          *
+ ************************************************************/
 package com.prelert.job.persistence.elasticsearch;
 
 import java.io.IOException;
@@ -17,23 +43,23 @@ import com.prelert.rs.data.parsing.AutoDetectResultsParser;
  */
 public class ElasticSearchResultsReaderFactory implements ResultsReaderFactory
 {
-	private Client m_Client;
+	private ElasticSearchJobProvider m_JobProvider;
 	
 	/**
 	 * Construct the factory
 	 * 
-	 * @param node The ElasticSearch node
+	 * @param jobProvider The ElasticSearch job provider
 	 */
-	public ElasticSearchResultsReaderFactory(Client client)
+	public ElasticSearchResultsReaderFactory(ElasticSearchJobProvider jobProvider)
 	{
-		m_Client = client;
+		m_JobProvider = jobProvider;
 	}
 	
 	@Override
 	public Runnable newResultsParser(String jobId, InputStream autoDetectOutput,
 			Logger logger) 
 	{
-		return new ReadAutoDetectOutput(jobId, autoDetectOutput, m_Client, logger);
+		return new ReadAutoDetectOutput(jobId, autoDetectOutput, m_JobProvider, logger);
 	}
 
 	
@@ -44,26 +70,28 @@ public class ElasticSearchResultsReaderFactory implements ResultsReaderFactory
 	private class ReadAutoDetectOutput implements Runnable 
 	{
 		private String m_JobId;
-		private Client m_Client;
+		private ElasticSearchJobProvider m_JobProvider;
 		private InputStream m_Stream;	
 		private Logger m_Logger;
 		
-		public ReadAutoDetectOutput(String jobId, InputStream stream, Client client, 
-				Logger logger)
+		public ReadAutoDetectOutput(String jobId, InputStream stream,
+				ElasticSearchJobProvider jobProvider, Logger logger)
 		{
 			m_JobId = jobId;
 			m_Stream = stream;
-			m_Client = client;
+			m_JobProvider = jobProvider;
 			m_Logger = logger;
 		}
 		
 		public void run() 
 		{			
-			ElasticSearchPersister persister = new ElasticSearchPersister(m_JobId, m_Client);
-			
-			try 
+			ElasticSearchPersister persister = new ElasticSearchPersister(m_JobId, m_JobProvider.getClient());
+			ElasticSearchJobRenormaliser renormaliser = new ElasticSearchJobRenormaliser(m_JobId, m_JobProvider);
+
+			try
 			{
-				AutoDetectResultsParser.parseResults(m_Stream, persister, m_Logger);				
+				AutoDetectResultsParser.parseResults(m_Stream,
+						persister, renormaliser, m_Logger);
 			}
 			catch (JsonParseException e) 
 			{
