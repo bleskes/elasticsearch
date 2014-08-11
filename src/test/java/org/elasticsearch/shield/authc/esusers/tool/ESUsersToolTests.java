@@ -1,8 +1,8 @@
 package org.elasticsearch.shield.authc.esusers.tool;
 
 import com.google.common.io.Files;
-import org.elasticsearch.common.base.Charsets;
 import org.elasticsearch.common.Strings;
+import org.elasticsearch.common.base.Charsets;
 import org.elasticsearch.common.cli.CliTool;
 import org.elasticsearch.common.cli.CliToolTestCase;
 import org.elasticsearch.common.cli.Terminal;
@@ -17,7 +17,6 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -55,7 +54,7 @@ public class ESUsersToolTests extends CliToolTestCase {
 
     @Test
     public void testUseradd_Parse_NoPassword() throws Exception {
-        ESUsersTool tool = new ESUsersTool(new TerminalMock() {
+        ESUsersTool tool = new ESUsersTool(new MockTerminal() {
             @Override
             public char[] readSecret(String text, Object... args) {
                 return "changeme".toCharArray();
@@ -80,7 +79,7 @@ public class ESUsersToolTests extends CliToolTestCase {
                 .put("shield.authc.esusers.files.users_roles", userRolesFile)
                 .build();
 
-        ESUsersTool.Useradd cmd = new ESUsersTool.Useradd(new TerminalMock(), "user1", "changeme".toCharArray(), "r1", "r2");
+        ESUsersTool.Useradd cmd = new ESUsersTool.Useradd(new MockTerminal(), "user1", "changeme".toCharArray(), "r1", "r2");
 
         CliTool.ExitStatus status = execute(cmd, settings);
         assertThat(status, is(CliTool.ExitStatus.OK));
@@ -111,7 +110,7 @@ public class ESUsersToolTests extends CliToolTestCase {
                 .put("shield.authc.esusers.files.users_roles", userRolesFile)
                 .build();
 
-        ESUsersTool.Useradd cmd = new ESUsersTool.Useradd(new TerminalMock(), "user1", "changeme".toCharArray(), "r1", "r2");
+        ESUsersTool.Useradd cmd = new ESUsersTool.Useradd(new MockTerminal(), "user1", "changeme".toCharArray(), "r1", "r2");
 
         CliTool.ExitStatus status = execute(cmd, settings);
         assertThat(status, is(CliTool.ExitStatus.OK));
@@ -144,7 +143,7 @@ public class ESUsersToolTests extends CliToolTestCase {
                 .put("shield.authc.esusers.files.users_roles", userRolesFile)
                 .build();
 
-        ESUsersTool.Useradd cmd = new ESUsersTool.Useradd(new TerminalMock(), "user1", "changeme".toCharArray(), "r1", "r2");
+        ESUsersTool.Useradd cmd = new ESUsersTool.Useradd(new MockTerminal(), "user1", "changeme".toCharArray(), "r1", "r2");
 
         CliTool.ExitStatus status = execute(cmd, settings);
         assertThat(status, is(CliTool.ExitStatus.CODE_ERROR));
@@ -177,7 +176,7 @@ public class ESUsersToolTests extends CliToolTestCase {
                 .put("shield.authc.esusers.files.users_roles", userRolesFile)
                 .build();
 
-        ESUsersTool.Userdel cmd = new ESUsersTool.Userdel(new TerminalMock(), "user1");
+        ESUsersTool.Userdel cmd = new ESUsersTool.Userdel(new MockTerminal(), "user1");
 
         CliTool.ExitStatus status = execute(cmd, settings);
         assertThat(status, is(CliTool.ExitStatus.OK));
@@ -200,7 +199,7 @@ public class ESUsersToolTests extends CliToolTestCase {
                 .put("shield.authc.esusers.files.users_roles", userRolesFile)
                 .build();
 
-        ESUsersTool.Userdel cmd = new ESUsersTool.Userdel(new TerminalMock(), "user2");
+        ESUsersTool.Userdel cmd = new ESUsersTool.Userdel(new MockTerminal(), "user2");
 
         CliTool.ExitStatus status = execute(cmd, settings);
         assertThat(status, is(CliTool.ExitStatus.OK));
@@ -224,7 +223,7 @@ public class ESUsersToolTests extends CliToolTestCase {
                 .put("shield.authc.esusers.files.users_roles", userRolesFile)
                 .build();
 
-        ESUsersTool.Userdel cmd = new ESUsersTool.Userdel(new TerminalMock(), "user2");
+        ESUsersTool.Userdel cmd = new ESUsersTool.Userdel(new MockTerminal(), "user2");
 
         CliTool.ExitStatus status = execute(cmd, settings);
         assertThat(status, is(CliTool.ExitStatus.OK));
@@ -255,7 +254,7 @@ public class ESUsersToolTests extends CliToolTestCase {
     @Test
     public void testPasswd_Parse_MissingPassword() throws Exception {
         final AtomicReference<Boolean> secretRequested = new AtomicReference<>(false);
-        Terminal terminal = new TerminalMock() {
+        Terminal terminal = new MockTerminal() {
             @Override
             public char[] readSecret(String text, Object... args) {
                 secretRequested.set(true);
@@ -278,7 +277,7 @@ public class ESUsersToolTests extends CliToolTestCase {
                 .put("shield.authc.esusers.files.users", userFile)
                 .build();
 
-        ESUsersTool.Passwd cmd = new ESUsersTool.Passwd(new TerminalMock(), "user1", "changeme".toCharArray());
+        ESUsersTool.Passwd cmd = new ESUsersTool.Passwd(new MockTerminal(), "user1", "changeme".toCharArray());
         CliTool.ExitStatus status = execute(cmd, settings);
         assertThat(status, is(CliTool.ExitStatus.OK));
 
@@ -299,7 +298,7 @@ public class ESUsersToolTests extends CliToolTestCase {
                 .put("shield.authc.esusers.files.users", userFile)
                 .build();
 
-        ESUsersTool.Passwd cmd = new ESUsersTool.Passwd(new TerminalMock(), "user2", "changeme".toCharArray());
+        ESUsersTool.Passwd cmd = new ESUsersTool.Passwd(new MockTerminal(), "user2", "changeme".toCharArray());
         CliTool.ExitStatus status = execute(cmd, settings);
         assertThat(status, is(CliTool.ExitStatus.NO_USER));
     }
@@ -311,7 +310,7 @@ public class ESUsersToolTests extends CliToolTestCase {
                 .put("shield.authc.esusers.files.users", userFile)
                 .build();
 
-        ESUsersTool.Passwd cmd = new ESUsersTool.Passwd(new TerminalMock(), "user2", "changeme".toCharArray());
+        ESUsersTool.Passwd cmd = new ESUsersTool.Passwd(new MockTerminal(), "user2", "changeme".toCharArray());
         CliTool.ExitStatus status = execute(cmd, settings);
         assertThat(status, is(CliTool.ExitStatus.NO_USER));
     }
@@ -359,7 +358,7 @@ public class ESUsersToolTests extends CliToolTestCase {
                 .put("shield.authc.esusers.files.users_roles", usersRoleFile)
                 .build();
 
-        ESUsersTool.Roles cmd = new ESUsersTool.Roles(new TerminalMock(), "user", new String[]{"foo"}, Strings.EMPTY_ARRAY);
+        ESUsersTool.Roles cmd = new ESUsersTool.Roles(new MockTerminal(), "user", new String[]{"foo"}, Strings.EMPTY_ARRAY);
         CliTool.ExitStatus status = execute(cmd, settings);
 
         assertThat(status, is(CliTool.ExitStatus.OK));
@@ -378,7 +377,7 @@ public class ESUsersToolTests extends CliToolTestCase {
                 .put("shield.authc.esusers.files.users_roles", usersRoleFile)
                 .build();
 
-        ESUsersTool.Roles cmd = new ESUsersTool.Roles(new TerminalMock(), "user", Strings.EMPTY_ARRAY, new String[]{"foo"});
+        ESUsersTool.Roles cmd = new ESUsersTool.Roles(new MockTerminal(), "user", Strings.EMPTY_ARRAY, new String[]{"foo"});
         CliTool.ExitStatus status = execute(cmd, settings);
 
         assertThat(status, is(CliTool.ExitStatus.OK));
@@ -397,7 +396,7 @@ public class ESUsersToolTests extends CliToolTestCase {
                 .put("shield.authc.esusers.files.users_roles", usersRoleFile)
                 .build();
 
-        ESUsersTool.Roles cmd = new ESUsersTool.Roles(new TerminalMock(), "user", new String[]{"newrole"}, new String[]{"foo"});
+        ESUsersTool.Roles cmd = new ESUsersTool.Roles(new MockTerminal(), "user", new String[]{"newrole"}, new String[]{"foo"});
         CliTool.ExitStatus status = execute(cmd, settings);
 
         assertThat(status, is(CliTool.ExitStatus.OK));
@@ -416,7 +415,7 @@ public class ESUsersToolTests extends CliToolTestCase {
                 .put("shield.authc.esusers.files.users_roles", usersRoleFile)
                 .build();
 
-        ESUsersTool.Roles cmd = new ESUsersTool.Roles(new TerminalMock(), "does-not-exist", Strings.EMPTY_ARRAY, Strings.EMPTY_ARRAY);
+        ESUsersTool.Roles cmd = new ESUsersTool.Roles(new MockTerminal(), "does-not-exist", Strings.EMPTY_ARRAY, Strings.EMPTY_ARRAY);
         CliTool.ExitStatus status = execute(cmd, settings);
 
         assertThat(status, is(CliTool.ExitStatus.NO_USER));
@@ -431,7 +430,7 @@ public class ESUsersToolTests extends CliToolTestCase {
                 .put("shield.authc.esusers.files.users_roles", usersRoleFile)
                 .build();
 
-        LoggingTerminal catchTerminalOutput = new LoggingTerminal();
+        CaptureOutputTerminal catchTerminalOutput = new CaptureOutputTerminal();
         ESUsersTool.Roles cmd = new ESUsersTool.Roles(catchTerminalOutput, "user", Strings.EMPTY_ARRAY, Strings.EMPTY_ARRAY);
         CliTool.ExitStatus status = execute(cmd, settings);
 
@@ -455,7 +454,7 @@ public class ESUsersToolTests extends CliToolTestCase {
                 .put("shield.authc.esusers.files.users_roles", usersRoleFile)
                 .build();
 
-        LoggingTerminal catchTerminalOutput = new LoggingTerminal();
+        CaptureOutputTerminal catchTerminalOutput = new CaptureOutputTerminal();
         ESUsersTool.ListUsersAndRoles cmd = new ESUsersTool.ListUsersAndRoles(catchTerminalOutput, null);
         CliTool.ExitStatus status = execute(cmd, settings);
 
@@ -474,7 +473,7 @@ public class ESUsersToolTests extends CliToolTestCase {
                 .put("shield.authc.esusers.files.users", usersFile)
                 .build();
 
-        LoggingTerminal catchTerminalOutput = new LoggingTerminal();
+        CaptureOutputTerminal catchTerminalOutput = new CaptureOutputTerminal();
         ESUsersTool.ListUsersAndRoles cmd = new ESUsersTool.ListUsersAndRoles(catchTerminalOutput, "admin");
         CliTool.ExitStatus status = execute(cmd, settings);
 
@@ -491,7 +490,7 @@ public class ESUsersToolTests extends CliToolTestCase {
                 .put("shield.authc.esusers.files.users_roles", usersRoleFile)
                 .build();
 
-        LoggingTerminal catchTerminalOutput = new LoggingTerminal();
+        CaptureOutputTerminal catchTerminalOutput = new CaptureOutputTerminal();
         ESUsersTool.ListUsersAndRoles cmd = new ESUsersTool.ListUsersAndRoles(catchTerminalOutput, "does-not-exist");
         CliTool.ExitStatus status = execute(cmd, settings);
 
@@ -507,7 +506,7 @@ public class ESUsersToolTests extends CliToolTestCase {
                 .put("shield.authc.esusers.files.users", usersFile)
                 .build();
 
-        LoggingTerminal catchTerminalOutput = new LoggingTerminal();
+        CaptureOutputTerminal catchTerminalOutput = new CaptureOutputTerminal();
         ESUsersTool.ListUsersAndRoles cmd = new ESUsersTool.ListUsersAndRoles(catchTerminalOutput, null);
         CliTool.ExitStatus status = execute(cmd, settings);
 
@@ -527,40 +526,13 @@ public class ESUsersToolTests extends CliToolTestCase {
                 .put("shield.authc.esusers.files.users", usersFile)
                 .build();
 
-        LoggingTerminal loggingTerminal = new LoggingTerminal();
+        CaptureOutputTerminal loggingTerminal = new CaptureOutputTerminal();
         ESUsersTool.ListUsersAndRoles cmd = new ESUsersTool.ListUsersAndRoles(loggingTerminal, "admin");
         CliTool.ExitStatus status = execute(cmd, settings);
 
         assertThat(status, is(CliTool.ExitStatus.OK));
         assertThat(loggingTerminal.getTerminalOutput(), hasSize(greaterThanOrEqualTo(1)));
         assertThat(loggingTerminal.getTerminalOutput(), hasItem(allOf(containsString("admin"), containsString("-"))));
-    }
-
-    public static class LoggingTerminal extends TerminalMock {
-
-        List<String> terminalOutput = new ArrayList();
-
-        public LoggingTerminal() {
-            super(Verbosity.NORMAL);
-        }
-
-        public LoggingTerminal(Verbosity verbosity) {
-            super(verbosity);
-        }
-
-        @Override
-        protected void doPrint(String msg, Object... args) {
-            terminalOutput.add(String.format(Locale.ROOT, msg, args));
-        }
-
-        @Override
-        public void print(String msg, Object... args) {
-            doPrint(msg, args);
-        }
-
-        public List<String> getTerminalOutput() {
-            return terminalOutput;
-        }
     }
 
     private CliTool.ExitStatus execute(CliTool.Command cmd, Settings settings) throws Exception {
