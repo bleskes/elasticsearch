@@ -81,6 +81,8 @@ public class Bucket
 	
 	public Bucket()
 	{
+		m_Records = new ArrayList<>();
+		m_Detectors = new ArrayList<>();
 	}
 	
 	/**
@@ -185,12 +187,8 @@ public class Bucket
 	 * Add a detector that produced output in this bucket
 	 * 
 	 */	
-	synchronized protected void addDetector(Detector detector)
+	private void addDetector(Detector detector)
 	{
-		if (m_Detectors == null)
-		{
-			m_Detectors = new ArrayList<>();
-		}
 		m_Detectors.add(detector);
 	}
 
