@@ -350,11 +350,15 @@ public class Bucket
 					while (token != JsonToken.END_ARRAY)
 					{
 						Detector detector = Detector.parseJson(parser);
-						bucket.addDetector(detector);
-						
+						// don't add the simple count detector and its
+						// records set the bucket event count instead
 						if (detector.isSimpleCount())
 						{
 							bucket.setEventCount(detector.getEventCount());
+						}
+						else
+						{
+							bucket.addDetector(detector);
 						}
 						
 						token = parser.nextToken();
@@ -373,6 +377,13 @@ public class Bucket
 			}
 			
 			token = parser.nextToken();
+		}
+		
+		// Set the record count to what was actually read
+		bucket.m_RecordCount = 0;
+		for (Detector d : bucket.getDetectors())
+		{
+			bucket.m_RecordCount += d.getRecords().size();
 		}
 		
 		return bucket;

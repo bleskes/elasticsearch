@@ -1009,7 +1009,7 @@ public class JobsTest implements Closeable
 		for (Bucket b : buckets)
 		{			
 			test(b.getAnomalyScore() >= 0.0);
-			test(b.getRecordCount() > 0);			
+			test(b.getRecordCount() >= 0);			
 			test(b.getDetectors().size() == 0);
 			test(b.getId() != null && b.getId().isEmpty() == false);
 			long epoch = b.getEpoch();
@@ -1042,8 +1042,8 @@ public class JobsTest implements Closeable
 			
 			if (expanded)
 			{
-				test(b.getRecords().size() > 0);
-				test(b.getRecordCount() > 0);
+				test(b.getRecords().size() >= 0);
+				test(b.getRecordCount() >= 0);
 				test(b.getRecordCount() == b.getRecords().size());
 				for (AnomalyRecord r: b.getRecords())
 				{
