@@ -1,6 +1,7 @@
 package org.elasticsearch.plugin.alerting;
 
 import org.elasticsearch.alerting.AlertManager;
+import org.elasticsearch.alerting.AlertScheduler;
 import org.elasticsearch.alerting.AlertingModule;
 import org.elasticsearch.common.collect.Lists;
 import org.elasticsearch.common.component.LifecycleComponent;
@@ -22,6 +23,7 @@ public class AlertingPlugin extends AbstractPlugin {
     public Collection<java.lang.Class<? extends LifecycleComponent>> services() {
         Collection<java.lang.Class<? extends LifecycleComponent>> services = Lists.newArrayList();
         services.add(AlertManager.class);
+        services.add(AlertScheduler.class);
         return services;
     }
 
