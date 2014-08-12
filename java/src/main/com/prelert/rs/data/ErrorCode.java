@@ -221,14 +221,8 @@ public enum ErrorCode
 	 * The argument to the sort query parameter is not a 
 	 * recognised sort field
 	 */
-	INVALID_SORT_FIELD(60102),
-	
-	/**
-	 * The argument to the normalization query parameter is 
-	 * not a recognised normalization type
-	 */
-	INVALID_NORMALIZATION_ARG(60103);
-	
+	INVALID_SORT_FIELD(60102);
+
 	
 	private long m_ErrorCode;
 	private String m_ValueString;

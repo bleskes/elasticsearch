@@ -826,8 +826,6 @@ public class JobsTest implements Closeable
 	{
 		s_Logger.debug("Verifying results for job " + jobId);
 		
-		String [] normalizations = {"s", "u", null};
-		
 		long skip = 0;		
 		long lastBucketTime = 0;
 		long eventCount = 0;
@@ -874,7 +872,7 @@ public class JobsTest implements Closeable
 				test(buckets.getPreviousPage() != null);
 				
 				int start = Math.max(0,  buckets.getSkip() - buckets.getTake());
-				String prevPageUrl = String.format("%s/results/%s?skip=%d&take=%d&expand=%b&norm=%s", 
+				String prevPageUrl = String.format("%s/results/%s?skip=%d&take=%d&expand=%b", 
 						baseUrl, jobId,  start, buckets.getTake(), false);
 				
 				test(prevPageUrl.equals(buckets.getPreviousPage().toString()));
@@ -889,7 +887,7 @@ public class JobsTest implements Closeable
 			else
 			{
 				int start = Math.max(0,  buckets.getSkip() + buckets.getTake());
-				String nextPageUrl = String.format("%s/results/%s?skip=%d&take=%d&expand=%b&norm=%s", 
+				String nextPageUrl = String.format("%s/results/%s?skip=%d&take=%d&expand=%b", 
 						baseUrl, jobId, start, buckets.getTake(), false);
 
 				test(nextPageUrl.equals(buckets.getNextPage().toString()));
@@ -948,7 +946,7 @@ public class JobsTest implements Closeable
 				test(buckets.getPreviousPage() != null);
 				
 				int start = Math.max(0,  buckets.getSkip() - buckets.getTake());
-				String prevPageUrl = String.format("%s/results/%s?skip=%d&take=%d&expand=%b&norm=%s", 
+				String prevPageUrl = String.format("%s/results/%s?skip=%d&take=%d&expand=%b", 
 						baseUrl, jobId, start, buckets.getTake(), true);
 
 				test(prevPageUrl.equals(buckets.getPreviousPage().toString()));						
@@ -962,7 +960,7 @@ public class JobsTest implements Closeable
 			else
 			{
 				int start = Math.max(0,  buckets.getSkip() + buckets.getTake());
-				String nextPageUrl = String.format("%s/results/%s?skip=%d&take=%d&expand=%b&norm=%s", 
+				String nextPageUrl = String.format("%s/results/%s?skip=%d&take=%d&expand=%b", 
 						baseUrl, jobId, start, buckets.getTake(), true);
 
 				test(nextPageUrl.equals(buckets.getNextPage().toString()));
