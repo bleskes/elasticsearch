@@ -63,6 +63,10 @@ public class ElasticSearchJobRenormaliser implements JobRenormaliser
 	 */
 	private int m_BucketSpan;
 
+	/**
+	 * Maximum number of buckets to renormalise at a time
+	 */
+	private static final int MAX_BUCKETS = 100000;
 
 	/**
 	 * Create with the ElasticSearch client. Data will be written to
@@ -92,15 +96,17 @@ public class ElasticSearchJobRenormaliser implements JobRenormaliser
 		try
 		{
 			List<Bucket> buckets = m_JobProvider.buckets(m_JobId,
-						true, 0, Integer.MAX_VALUE).getDocuments();
+						true, 0, MAX_BUCKETS).getDocuments();
 			if (buckets == null)
 			{
+				logger.warn("No existing buckets to renormalise for job " +
+							m_JobId);
 				return;
 			}
 
 			Normaliser normaliser = new Normaliser(m_JobId, m_JobProvider, logger);
 			List<Bucket> normalisedBuckets =
-					normaliser.normaliseForSystemChange(getJobBucketSpan(),
+					normaliser.normaliseForSystemChange(getJobBucketSpan(logger),
 													buckets, sysChangeState);
 
 			for (Bucket bucket : normalisedBuckets)
@@ -133,15 +139,17 @@ public class ElasticSearchJobRenormaliser implements JobRenormaliser
 		try
 		{
 			List<Bucket> buckets = m_JobProvider.buckets(m_JobId,
-						true, 0, Integer.MAX_VALUE).getDocuments();
+						true, 0, MAX_BUCKETS).getDocuments();
 			if (buckets == null)
 			{
+				logger.warn("No existing buckets to renormalise for job " +
+							m_JobId);
 				return;
 			}
 
 			Normaliser normaliser = new Normaliser(m_JobId, m_JobProvider, logger);
 			List<Bucket> normalisedBuckets =
-					normaliser.normaliseForUnusualBehaviour(getJobBucketSpan(),
+					normaliser.normaliseForUnusualBehaviour(getJobBucketSpan(logger),
 													buckets, unusualBehaviourState);
 
 			for (Bucket bucket : normalisedBuckets)
@@ -185,10 +193,10 @@ public class ElasticSearchJobRenormaliser implements JobRenormaliser
 		try
 		{
 			// First update the bucket
-			String id = bucket.getId();
-			if (id != null)
+			String bucketId = bucket.getId();
+			if (bucketId != null)
 			{
-				m_JobProvider.getClient().prepareUpdate(m_JobId, Bucket.TYPE, id)
+				m_JobProvider.getClient().prepareUpdate(m_JobId, Bucket.TYPE, bucketId)
 						// TODO add when we upgrade to ES 1.3
 						//.setDetectNoop(true)
 						.setDoc(map)
@@ -212,13 +220,15 @@ public class ElasticSearchJobRenormaliser implements JobRenormaliser
 					map.put(AnomalyRecord.UNUSUAL_SCORE, record.getUnusualScore());
 				}
 
-				id = record.getId();
-				if (id != null)
+				String recordId = record.getId();
+				if (recordId != null)
 				{
-					m_JobProvider.getClient().prepareUpdate(m_JobId, AnomalyRecord.TYPE, id)
+					m_JobProvider.getClient().prepareUpdate(m_JobId, AnomalyRecord.TYPE, recordId)
 							// TODO add when we upgrade to ES 1.3
 							//.setDetectNoop(true)
 							.setDoc(map)
+							// Need to specify the parent ID when updating a child
+							.setParent(bucketId)
 							.execute().actionGet();
 				}
 				else
@@ -234,7 +244,7 @@ public class ElasticSearchJobRenormaliser implements JobRenormaliser
 	}
 
 
-	synchronized private int getJobBucketSpan()
+	synchronized private int getJobBucketSpan(Logger logger)
 	{
 		if (m_BucketSpan == 0)
 		{
@@ -244,6 +254,8 @@ public class ElasticSearchJobRenormaliser implements JobRenormaliser
 			if (num != null)
 			{
 				m_BucketSpan = num.intValue();
+				logger.info("Caching bucket span " + m_BucketSpan +
+							" for job " + m_JobId);
 			}
 		}
 

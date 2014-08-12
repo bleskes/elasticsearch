@@ -129,9 +129,10 @@ public class AutoDetectResultsParser
 					case Quantiles.QUANTILE_STATE:
 						Quantiles quantiles = Quantiles.parseJsonAfterStartObject(parser);
 						persister.persistQuantiles(quantiles);
-			
-						logger.debug("Quantiles parsed from output - will trigger " +
-									quantiles.getKind() + " renormalisation");
+
+						logger.debug("Quantiles parsed from output - will " +
+									"trigger renormalisation of " +
+									quantiles.getKind() + " scores");
 						triggerRenormalisation(quantiles, renormaliser, logger);
 						break;
 					default:
@@ -190,13 +191,17 @@ public class AutoDetectResultsParser
 	static private void triggerRenormalisation(Quantiles quantiles,
 			JobRenormaliser renormaliser, Logger logger)
 	{
-		if (quantiles.getKind() == QuantilesState.SYS_CHANGE_QUANTILES_KIND)
+		if (QuantilesState.SYS_CHANGE_QUANTILES_KIND.equals(quantiles.getKind()))
 		{
 			renormaliser.updateBucketSysChange(quantiles.getState(), logger);
 		}
-		else if (quantiles.getKind() == QuantilesState.UNUSUAL_QUANTILES_KIND)
+		else if (QuantilesState.UNUSUAL_QUANTILES_KIND.equals(quantiles.getKind()))
 		{
 			renormaliser.updateBucketUnusualBehaviour(quantiles.getState(), logger);
+		}
+		else
+		{
+			logger.error("Unexpected kind of quantiles: " + quantiles.getKind());
 		}
 	}
 }

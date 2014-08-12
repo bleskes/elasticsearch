@@ -219,6 +219,10 @@ public class ElasticSearchPersister implements JobDataPersister
 
 			m_Client.prepareIndex(m_JobId, Quantiles.TYPE, quantiles.getId())
 					.setSource(content)
+					// Refresh the index when persisting quantiles so that
+					// previously persisted results will be available for
+					// searching
+					.setRefresh(true)
 					.execute().actionGet();
 
 			/* TODO this method is only in version ElasticSearch 1.0
