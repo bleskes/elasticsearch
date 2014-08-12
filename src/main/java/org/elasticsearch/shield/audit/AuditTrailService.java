@@ -14,7 +14,12 @@ import java.util.Set;
  */
 public class AuditTrailService extends AbstractComponent implements AuditTrail {
 
-    private final AuditTrail[] auditTrails;
+    final AuditTrail[] auditTrails;
+
+    @Override
+    public String name() {
+        return "service";
+    }
 
     @Inject
     public AuditTrailService(Settings settings, Set<AuditTrail> auditTrails) {
@@ -26,6 +31,13 @@ public class AuditTrailService extends AbstractComponent implements AuditTrail {
     public void anonymousAccess(String action, TransportMessage<?> message) {
         for (int i = 0; i < auditTrails.length; i++) {
             auditTrails[i].anonymousAccess(action, message);
+        }
+    }
+
+    @Override
+    public void authenticationFailed(AuthenticationToken token, String action, TransportMessage<?> message) {
+        for (int i = 0; i < auditTrails.length; i++) {
+            auditTrails[i].authenticationFailed(token, action, message);
         }
     }
 
