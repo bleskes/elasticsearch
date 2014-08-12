@@ -227,7 +227,7 @@ public class NormalizationTest implements Closeable
 		test(highAnomalyScoreCount == 1);
 		
 		// the big anomaly is in bucket 772
-		test(pagedBuckets.get(771).getAnomalyScore() >= 100.0);
+		test(pagedBuckets.get(771).getAnomalyScore() >= 90.0);
 		
 		/*
 		 * Test get buckets by date range with a time string
@@ -399,7 +399,7 @@ public class NormalizationTest implements Closeable
 				bucketMax = Math.max(r.getUnusualScore(), bucketMax);
 			}
 			
-			test(bucketMax == bucket.getAnomalyScore());
+			test(bucketMax == bucket.getUnusualScore());
 			
 			if (count-- < 0)
 			{
@@ -580,30 +580,7 @@ public class NormalizationTest implements Closeable
 		return true;
 	}
 
-	
-	/**
-	 * Checks the error response is correct when using the
-	 * wrong type for buckets.
-	 *  
-	 * @param baseUrl
-	 * @param jobId
-	 * @throws IOException
-	 */
-	public void testInvalidNormalisationArgument(String baseUrl, String jobId) 
-	throws IOException
-	{
-		m_WebServiceClient.getBuckets(baseUrl, jobId, false);
-		ApiError error =  m_WebServiceClient.getLastError();
-		test(error != null);
-		test(error.getErrorCode() == ErrorCode.INVALID_NORMALIZATION_ARG);
-		
-		m_WebServiceClient.getBucket(baseUrl, jobId, "bucket_id", true);
-		error =  m_WebServiceClient.getLastError();
-		test(error != null);
-		test(error.getErrorCode() == ErrorCode.INVALID_NORMALIZATION_ARG);
-	}
-	
-	
+
 	/**
 	 * Delete all the jobs in the list of job ids
 	 * 
@@ -701,7 +678,6 @@ public class NormalizationTest implements Closeable
 		test.verifyFarequoteSysChangeNormalisedBuckets(baseUrl, farequoteJob);
 		test.verifyFarequoteUnusualNormalisedBuckets(baseUrl, farequoteJob);
 		test.verifyFarequoteNormalisedRecords(baseUrl, farequoteJob);
-		test.testInvalidNormalisationArgument(baseUrl, farequoteJob);
 		
 		
 		//==========================
