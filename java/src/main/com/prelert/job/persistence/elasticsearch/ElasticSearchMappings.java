@@ -237,7 +237,10 @@ public class ElasticSearchMappings
 						.endObject()
 						.startObject(Bucket.RECORD_COUNT)
 							.field("type", "long")
-						.endObject()	
+						.endObject()
+						.startObject(Bucket.EVENT_COUNT)
+							.field("type", "long")
+						.endObject()						
 					.endObject()
 				.endObject()
 		.endObject();

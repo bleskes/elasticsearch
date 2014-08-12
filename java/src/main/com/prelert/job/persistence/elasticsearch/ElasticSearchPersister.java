@@ -423,6 +423,7 @@ public class ElasticSearchPersister implements JobDataPersister
 				.field(Bucket.ANOMALY_SCORE, bucket.getAnomalyScore())
 				.field(Bucket.UNUSUAL_SCORE, bucket.getUnusualScore())
 				.field(Bucket.RECORD_COUNT, bucket.getRecordCount())
+				.field(Bucket.EVENT_COUNT, bucket.getEventCount())
 				.endObject();
 		
 		return builder;
