@@ -39,7 +39,6 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 
-import com.prelert.rs.client.datauploader.CsvDataRunner;
 import com.prelert.rs.client.datauploader.JsonDataRunner;
 
 /**

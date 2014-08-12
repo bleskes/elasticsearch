@@ -170,11 +170,7 @@ public class ProcessCtrl
 	static final public String SYS_STATE_CHANGE_ARG = "--sysChangeState=";
 	static final public String UNUSUAL_STATE_ARG = "--unusualState=";
 	
-	/**
-	 * The types of normalisation the the normaliser will do. 
-	 */
-	private enum NormalisationType {SYS_STATE_CHANGE, UNUSUAL_STATE};
-	
+
 	/**
 	 * Name of the model config file
 	 */

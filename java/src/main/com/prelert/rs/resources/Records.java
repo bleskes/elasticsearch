@@ -73,13 +73,6 @@ public class Records extends ResourceWithJobManager
 	static public final String SORT_QUERY_PARAM = "sort";
 	
 
-	/**
-	 * Possible arguments to the sort parameter
-	 */
-	static public final String PROB_SORT_VALUE = "prob";
-	//static public final String DATE_SORT_VALUE = "date";
-	
-	
 	static private final DateFormat s_DateFormat = new SimpleDateFormat(ISO_8601_DATE_FORMAT); 
 	static private final DateFormat s_DateFormatWithMs = new SimpleDateFormat(ISO_8601_DATE_FORMAT_WITH_MS); 
 	
@@ -111,7 +104,7 @@ public class Records extends ResourceWithJobManager
 			@DefaultValue(JobManager.DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take,
 			@DefaultValue("") @QueryParam(START_QUERY_PARAM) String start,
 			@DefaultValue("") @QueryParam(END_QUERY_PARAM) String end,
-			@DefaultValue(PROB_SORT_VALUE) @QueryParam(SORT_QUERY_PARAM) String sort)
+			@DefaultValue(AnomalyRecord.PROBABILITY) @QueryParam(SORT_QUERY_PARAM) String sort)
 	throws NativeProcessRunException, UnknownJobException
 	{	
 		s_Logger.debug(String.format("Get records for job %s. skip = %d, take = %d"
@@ -145,17 +138,15 @@ public class Records extends ResourceWithJobManager
 		}
 		
 		// only sort by probability for now
-		if (!sort.equals(PROB_SORT_VALUE))
-		{
-			String msg = String.format(String.format("'%s is not a valid value "
-					+ "for the sort query parameter", sort));
-			s_Logger.warn(msg);
-			throw new RestApiException(msg, ErrorCode.INVALID_SORT_FIELD,
-					Response.Status.BAD_REQUEST);
-		}
+//		if (!sort.equals(PROB_SORT_VALUE))
+//		{
+//			String msg = String.format(String.format("'%s is not a valid value "
+//					+ "for the sort query parameter", sort));
+//			s_Logger.warn(msg);
+//			throw new RestApiException(msg, ErrorCode.INVALID_SORT_FIELD,
+//					Response.Status.BAD_REQUEST);
+//		}
 		
-		sort = AnomalyRecord.PROBABILITY;
-
 		JobManager manager = jobManager();
 		Pagination<AnomalyRecord> records;
 

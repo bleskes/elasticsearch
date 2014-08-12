@@ -101,8 +101,6 @@ public interface JobResultsProvider extends Closeable
 	 * 
 	 * @param jobId
 	 * @param bucketId 
-	 * @param includeSimpleCount If true include the simple count records
-	 * in the results 
 	 * @param skip Skip the first N Jobs. This parameter is for paging
 	 * results if not required set to 0.
 	 * @param take Take only this number of Jobs
@@ -112,8 +110,7 @@ public interface JobResultsProvider extends Closeable
 	 * @throws UnknownJobException If the job id is no recognised
 	 */
 	public Pagination<AnomalyRecord> records(String jobId, 
-			String bucketId, boolean includeSimpleCount, int skip, int take,
-			String sortField)
+			String bucketId, int skip, int take, String sortField)
 	throws UnknownJobException;
 	
 	/**
@@ -122,8 +119,6 @@ public interface JobResultsProvider extends Closeable
 	 * set to the parent bucket's id.
 	 * 
 	 * @param jobId
-	 * @param includeSimpleCount If true include the simple count records
-	 * in the results 
 	 * @param skip Skip the first N records. This parameter is for paging
 	 * if not required set to 0.
 	 * @param take Take only this number of records
@@ -133,7 +128,7 @@ public interface JobResultsProvider extends Closeable
 	 * @throws UnknownJobException If the job id is no recognised
 	 */
 	public Pagination<AnomalyRecord> records(String jobId, 
-			boolean includeSimpleCount, int skip, int take, String sortField)
+			 int skip, int take, String sortField)
 	throws UnknownJobException;
 	
 	/**
@@ -142,8 +137,6 @@ public interface JobResultsProvider extends Closeable
 	 * <code>parent</code> member set to the parent bucket's id.
 	 * 
 	 * @param jobId
-	 * @param includeSimpleCount If true include the simple count records
-	 * in the results 
 	 * @param skip Skip the first N records. This parameter is for paging
 	 * if not required set to 0.
 	 * @param take Take only this number of records
@@ -158,8 +151,7 @@ public interface JobResultsProvider extends Closeable
 	 * throws UnknownJobException If the job id is no recognised
 	 */
 	public Pagination<AnomalyRecord> records(String jobId, 
-			boolean includeSimpleCount, int skip, int take,
-			long startBucket, long endBucket, String sortField)
+			int skip, int take, long startBucket, long endBucket, String sortField)
 	throws UnknownJobException;
 			
 	
@@ -170,8 +162,6 @@ public interface JobResultsProvider extends Closeable
 	 * 
 	 * @param jobId
 	 * @param bucketIds The list of parent buckets
-	 * @param includeSimpleCount If true include the simple count records
-	 * in the results 
 	 * @param skip Skip the first N records. This parameter is for paging
 	 * if not required set to 0.
 	 * @param take Take only this number of records
@@ -181,7 +171,6 @@ public interface JobResultsProvider extends Closeable
 	 * @throws UnknownJobException If the job id is no recognised
 	 */
 	public Pagination<AnomalyRecord> records(String jobId,
-			List<String> bucketIds, boolean includeSimpleCount, int skip, int take,
-			String sortField)
+			List<String> bucketIds, int skip, int take, String sortField)
 	throws UnknownJobException;
 }

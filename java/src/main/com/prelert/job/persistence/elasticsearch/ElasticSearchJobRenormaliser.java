@@ -27,7 +27,6 @@
 
 package com.prelert.job.persistence.elasticsearch;
 
-import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
 import java.util.List;
 import java.util.Map;
@@ -35,8 +34,6 @@ import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 import org.elasticsearch.ElasticsearchException;
-import org.elasticsearch.action.update.UpdateRequestBuilder;
-import org.elasticsearch.client.Client;
 
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.JobDetails;

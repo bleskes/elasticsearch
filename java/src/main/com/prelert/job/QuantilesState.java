@@ -30,9 +30,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
-
-import com.prelert.rs.data.parsing.AutoDetectParseException;
 
 /**
  * This stores the serialised quantiles from autodetect. The serialised form
@@ -47,8 +44,6 @@ public class QuantilesState
 	 */
 	public static final String SYS_CHANGE_QUANTILES_KIND = "sysChange";
 	public static final String UNUSUAL_QUANTILES_KIND = "unusual";
-
-	private static final Logger s_Logger = Logger.getLogger(QuantilesState.class);
 
 	private Map<String, String> m_QuantilesKindToState;
 

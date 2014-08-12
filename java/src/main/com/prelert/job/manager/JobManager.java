@@ -32,12 +32,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicLong;
@@ -58,7 +55,6 @@ import com.prelert.job.usage.UsageReporterFactory;
 import com.prelert.job.warnings.HighProportionOfBadTimestampsException;
 import com.prelert.job.warnings.OutOfOrderRecordsException;
 import com.prelert.job.warnings.StatusReporterFactory;
-import com.prelert.job.AnalysisConfig;
 import com.prelert.job.JobIdAlreadyExistsException;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobConfigurationException;
@@ -412,7 +408,7 @@ public class JobManager
 	throws UnknownJobException, NativeProcessRunException 
 	{
 		Pagination<AnomalyRecord> records = m_JobProvider.records(jobId, 
-				bucketId, false, skip, take, sortField);
+				bucketId, skip, take, sortField);
 
 		return records; 
 	}
@@ -480,7 +476,7 @@ public class JobManager
 	throws NativeProcessRunException, UnknownJobException
 	{
 		Pagination<AnomalyRecord> records = m_JobProvider.records(jobId, 
-				false, skip, take, epochStart, epochEnd, sortField);
+				skip, take, epochStart, epochEnd, sortField);
 
 		return records; 
 	}
@@ -504,7 +500,7 @@ public class JobManager
 	throws NativeProcessRunException, UnknownJobException 
 	{
 		Pagination<AnomalyRecord> records = m_JobProvider.records(jobId, 
-				false, skip, take, sortField);
+				skip, take, sortField);
 
 		return records; 
 	}
