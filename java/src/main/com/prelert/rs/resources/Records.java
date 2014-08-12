@@ -68,9 +68,13 @@ public class Records extends ResourceWithJobManager
 	static public final String ENDPOINT = "records";
 	
 	/**
-	 * Sort order query parameter
+	 * Sort field query parameter
 	 */
 	static public final String SORT_QUERY_PARAM = "sort";
+	/**
+	 * Sort direction
+	 */
+	static public final String ASCENDING_ORDER = "asc";
 	
 
 	static private final DateFormat s_DateFormat = new SimpleDateFormat(ISO_8601_DATE_FORMAT); 
@@ -104,12 +108,13 @@ public class Records extends ResourceWithJobManager
 			@DefaultValue(JobManager.DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take,
 			@DefaultValue("") @QueryParam(START_QUERY_PARAM) String start,
 			@DefaultValue("") @QueryParam(END_QUERY_PARAM) String end,
-			@DefaultValue(AnomalyRecord.PROBABILITY) @QueryParam(SORT_QUERY_PARAM) String sort)
+			@DefaultValue(AnomalyRecord.PROBABILITY) @QueryParam(SORT_QUERY_PARAM) String sort,
+			@DefaultValue("true") @QueryParam(ASCENDING_ORDER) boolean ascending)
 	throws NativeProcessRunException, UnknownJobException
 	{	
 		s_Logger.debug(String.format("Get records for job %s. skip = %d, take = %d"
-				+ " start = '%s', end='%s', sort='%s'", 
-				jobId, skip, take, start, end, sort));
+				+ " start = '%s', end='%s', sort='%s' ascending=%b", 
+				jobId, skip, take, start, end, sort, ascending));
 		
 		long epochStart = 0;
 		if (start.isEmpty() == false)
@@ -136,27 +141,18 @@ public class Records extends ResourceWithJobManager
 						Response.Status.BAD_REQUEST);
 			}			
 		}
-		
-		// only sort by probability for now
-//		if (!sort.equals(PROB_SORT_VALUE))
-//		{
-//			String msg = String.format(String.format("'%s is not a valid value "
-//					+ "for the sort query parameter", sort));
-//			s_Logger.warn(msg);
-//			throw new RestApiException(msg, ErrorCode.INVALID_SORT_FIELD,
-//					Response.Status.BAD_REQUEST);
-//		}
-		
+			
 		JobManager manager = jobManager();
 		Pagination<AnomalyRecord> records;
 
 		if (epochStart > 0 || epochEnd > 0)
 		{
-			records = manager.records(jobId, skip, take, epochStart, epochEnd, sort);
+			records = manager.records(jobId, skip, take, epochStart, epochEnd, sort,
+					ascending);
 		}
 		else
 		{
-			records = manager.records(jobId, skip, take, sort);
+			records = manager.records(jobId, skip, take, sort, ascending);
 		}
 
 		// paging

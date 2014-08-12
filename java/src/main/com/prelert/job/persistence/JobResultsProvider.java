@@ -106,11 +106,13 @@ public interface JobResultsProvider extends Closeable
 	 * @param take Take only this number of Jobs
 	 * @param sortField The field to sort results by if <code>null</code> no
 	 * sort is applied
+	 * @param sortAscending Sort in ascending order
 	 * @return
 	 * @throws UnknownJobException If the job id is no recognised
 	 */
 	public Pagination<AnomalyRecord> records(String jobId, 
-			String bucketId, int skip, int take, String sortField)
+			String bucketId, int skip, int take, String sortField,
+			boolean sortAscending)
 	throws UnknownJobException;
 	
 	/**
@@ -124,11 +126,13 @@ public interface JobResultsProvider extends Closeable
 	 * @param take Take only this number of records
 	 * @param sortField The field to sort results by if <code>null</code> no
 	 * sort is applied
+	 * @param sortAscending Sort in ascending order
+	 * 
 	 * @return
 	 * @throws UnknownJobException If the job id is no recognised
 	 */
 	public Pagination<AnomalyRecord> records(String jobId, 
-			 int skip, int take, String sortField)
+			 int skip, int take, String sortField, boolean sortAscending)
 	throws UnknownJobException;
 	
 	/**
@@ -147,11 +151,14 @@ public interface JobResultsProvider extends Closeable
 	 * are returned. If 0 all buckets from <code>startBucket</code> are returned
 	 * @param sortField The field to sort results by if <code>null</code> no
 	 * sort is applied 
+	 * @param sortAscending Sort in ascending order
+	 *  
 	 * @return
 	 * throws UnknownJobException If the job id is no recognised
 	 */
 	public Pagination<AnomalyRecord> records(String jobId, 
-			int skip, int take, long startBucket, long endBucket, String sortField)
+			int skip, int take, long startBucket, long endBucket, 
+			String sortField, boolean sortAscending)
 	throws UnknownJobException;
 			
 	
@@ -167,10 +174,13 @@ public interface JobResultsProvider extends Closeable
 	 * @param take Take only this number of records
 	 * @param sortField The field to sort results by if <code>null</code> no
 	 * sort is applied 
+	 * @param sortAscending Sort in ascending order
+	 * 
 	 * @return
 	 * @throws UnknownJobException If the job id is no recognised
 	 */
 	public Pagination<AnomalyRecord> records(String jobId,
-			List<String> bucketIds, int skip, int take, String sortField)
+			List<String> bucketIds, int skip, int take, String sortField,
+			boolean sortAscending)
 	throws UnknownJobException;
 }
