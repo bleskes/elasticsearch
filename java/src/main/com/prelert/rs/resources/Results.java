@@ -46,7 +46,6 @@ import org.apache.log4j.Logger;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.process.NativeProcessRunException;
-import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.Pagination;
@@ -181,7 +180,9 @@ public class Results extends ResourceWithJobManager
 	
 	
 	/**
-	 * Get an individual bucket results
+	 * Get an individual bucket and optionally the expanded results. 
+	 * 
+	 * 
 	 * @param jobId
 	 * @param bucketId
 	 * @param expand Return anomaly records in-line with the bucket,
@@ -220,53 +221,4 @@ public class Results extends ResourceWithJobManager
 		return Response.ok(bucket).build();
 	}
 	
-	
-	/**
-	 * Get the anomaly records for the bucket.
-	 * 
-	 * @param jobId
-	 * @param bucketId
-	 * @param skip
-	 * @param take
-	 * @return
-	 * @throws NativeProcessRunException 
-	 * @throws UnknownJobException 
-	 */
-	@Path("/{jobId}/{bucketId}/records")
-	@GET
-	@Produces(MediaType.APPLICATION_JSON)
-	public Pagination<AnomalyRecord> bucketRecords(
-			@PathParam("jobId") String jobId,
-			@PathParam("bucketId") String bucketId,
-			@DefaultValue("0") @QueryParam("skip") int skip,
-			@DefaultValue(JobManager.DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take)
-	throws UnknownJobException, NativeProcessRunException
-	{
-		s_Logger.debug(String.format("Get records for job %s, bucket %s", 
-				jobId, bucketId));
-
-		JobManager manager = jobManager();
-		Pagination<AnomalyRecord> records = manager.records(
-				jobId, bucketId, skip, take);
-		
-		// paging
-    	if (records.isAllResults() == false)
-    	{
-    		String path = new StringBuilder()
-    							.append("/results/")
-    							.append(jobId)
-    							.append("/")
-								.append(bucketId)
-								.append("/records")
-								.toString();
-    		
-    		setPagingUrls(path, records);
-    	}
-		
-		s_Logger.debug(String.format("Returning %d records for job %s, bucket %s", 
-				records.getDocuments().size(), jobId, bucketId));
-					
-		return records;
-	}
-		
 }
