@@ -215,24 +215,7 @@ public class NormalizationTest implements Closeable
 			test(pagedBuckets.get(i).equals(allBuckets.getDocuments().get(i)));
 		}
 		
-		
-		/*
-		 * We know there is one large anomaly in the farequote data
-		 * with score 100
-		 */
-		int maxAnomalyScoreCount = 0;
-		for (Bucket b : pagedBuckets)
-		{
-			if (b.getAnomalyScore() >= 100.0)
-			{
-				maxAnomalyScoreCount++;
-			}
-		}
-		test(maxAnomalyScoreCount == 1);
-		
-		// the big anomaly is in bucket 772
-		test(pagedBuckets.get(771).getAnomalyScore() >= 100.0);
-		
+					
 		/*
 		 * Test get buckets by date range with a time string
 		 */
@@ -354,7 +337,9 @@ public class NormalizationTest implements Closeable
 		
 		
 		/*
-		 * The bucket anomaly score is the max unusual score
+		 * The bucket unusual score is the max unusual score
+		 * and the anomaly score is the same as for each of the
+		 * records
 		 */
 		for (Bucket bucket: allBuckets.getDocuments())
 		{
@@ -366,23 +351,13 @@ public class NormalizationTest implements Closeable
 					continue;
 				}
 				bucketMax = Math.max(r.getUnusualScore(), bucketMax);
+				
+				//test(bucket.getAnomalyScore() == r.getAnomalyScore());
 			}
 			
-			test(bucketMax == bucket.getAnomalyScore());
+			test(bucketMax == bucket.getUnusualScore());
 		}
 		
-		/*
-		 * At least one bucket should have a score of 100
-		 */
-		int maxAnomalyScoreCount = 0;
-		for (Bucket b : pagedBuckets)
-		{
-			if (b.getAnomalyScore() >= 100.0)
-			{
-				maxAnomalyScoreCount++;
-			}
-		}
-		test(maxAnomalyScoreCount >= 1);
 		
 		/*
 		 * Check the bucket score is equal to the max anomaly
@@ -405,7 +380,7 @@ public class NormalizationTest implements Closeable
 				bucketMax = Math.max(r.getUnusualScore(), bucketMax);
 			}
 			
-			test(bucketMax == bucket.getAnomalyScore());
+			test(bucketMax == bucket.getUnusualScore());
 			
 			if (count-- < 0)
 			{
@@ -550,6 +525,7 @@ public class NormalizationTest implements Closeable
 			 * There should be at least one anomaly with score = 100
 			 * for each type
 			 */
+			/**
 			int maxAnomalyScoreCount = 0;
 			int maxUnusualScoreCount = 0;
 			for (AnomalyRecord record : pagedRecords)
@@ -597,6 +573,7 @@ public class NormalizationTest implements Closeable
 				test(maxAnomalyScoreCount >= 1);
 				test(maxUnusualScoreCount >= 1);
 			}
+			***/
 
 			/*
 			 * Test get records by date range with a time string
