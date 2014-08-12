@@ -85,8 +85,22 @@ public class JobsTest implements Closeable
 	/**
 	 * This is a format string insert a reference job id.
 	 */
-	final String JOB_REFERENCE_CONFIG = "{\"referenceJobId\" : \"%s\"}";
-	
+	static final String JOB_REFERENCE_CONFIG = "{\"referenceJobId\" : \"%s\"}";
+
+	static final long FLIGHT_CENTRE_NUM_BUCKETS = 24;
+	/**
+	 *  The number of input records in the farequote input data set
+	 *  excluding those in the final bucket
+	 */
+	static final long FLIGHT_CENTRE_NUM_EVENTS = 167517;
+
+	static final long FARE_QUOTE_NUM_BUCKETS = 1439;
+	/**
+	 * The number of records in the farequote input data
+	 * excluding those in the final bucket
+	 */
+	static final long FARE_QUOTE_NUM_EVENTS = 86229;
+
 	
 	static final private Logger s_Logger = Logger.getLogger(JobsTest.class);
 	
@@ -801,11 +815,13 @@ public class JobsTest implements Closeable
 	 * @param take The max number of buckets to return
 	 * @param expectedNumBuckets The expected number of result buckets in the job
 	 * @param bucketSpan Bucket span in seconds
-	 * 
+	 * @param expectedTotalEvents The total number of input records (events)
+	 * expected for the job
+	 *
 	 * @throws IOException 
 	 */
 	public void verifyJobResults(String baseUrl, String jobId, long take, 
-			long expectedNumBuckets, long bucketSpan) 
+			long expectedNumBuckets, long bucketSpan, long expectedTotalEvents) 
 	throws IOException
 	{
 		s_Logger.debug("Verifying results for job " + jobId);
@@ -814,6 +830,7 @@ public class JobsTest implements Closeable
 		
 		long skip = 0;		
 		long lastBucketTime = 0;
+		long eventCount = 0;
 		while (true) // break when getNextUrl() == false
 		{
 			Pagination<Bucket> buckets = m_WebServiceClient.getBuckets(baseUrl, 
@@ -822,6 +839,11 @@ public class JobsTest implements Closeable
 			test(buckets.getHitCount() == expectedNumBuckets);
 			test(buckets.getDocumentCount() <= take);
 			validateBuckets(buckets.getDocuments(), bucketSpan, lastBucketTime, false);
+
+			for (Bucket b: buckets.getDocuments())
+			{
+				eventCount += b.getEventCount();
+			}
 
 			// time in seconds
 			lastBucketTime = buckets.getDocuments().get(
@@ -877,10 +899,12 @@ public class JobsTest implements Closeable
 			skip += take;
 		}
 
+		test(eventCount == expectedTotalEvents);
 
 		// the same with expanded buckets
 		skip = 0;		
 		lastBucketTime = 0;
+		eventCount = 0;
 		while (true) // break when getNextUrl() == false
 		{
 			Pagination<Bucket> buckets = m_WebServiceClient.getBuckets(baseUrl, 
@@ -890,6 +914,10 @@ public class JobsTest implements Closeable
 			test(buckets.getDocumentCount() <= take);
 			validateBuckets(buckets.getDocuments(), bucketSpan, lastBucketTime, true);
 
+			for (Bucket b: buckets.getDocuments())
+			{
+				eventCount += b.getEventCount();
+			}
 
 			// time in seconds
 			lastBucketTime = buckets.getDocuments().get(
@@ -942,6 +970,8 @@ public class JobsTest implements Closeable
 
 			skip += take;
 		}
+
+		test(eventCount == expectedTotalEvents);
 	}
 	
 	
@@ -964,7 +994,7 @@ public class JobsTest implements Closeable
 		for (Bucket b : buckets)
 		{			
 			test(b.getAnomalyScore() >= 0.0);
-			test(b.getRecordCount() > 0);			
+			test(b.getRecordCount() >= 0);			
 			test(b.getDetectors().size() == 0);
 			test(b.getId() != null && b.getId().isEmpty() == false);
 			long epoch = b.getEpoch();
@@ -979,8 +1009,10 @@ public class JobsTest implements Closeable
 
 			// epoch and timestamp should be the same
 			test(date.equals(b.getTimestamp()));	
-			
-			
+
+			// must be more than 0 events
+			test(b.getEventCount() > 0);
+
 			if (lastBucketTime > 0)
 			{
 				lastBucketTime += bucketSpan;
@@ -995,8 +1027,8 @@ public class JobsTest implements Closeable
 			
 			if (expanded)
 			{
-				test(b.getRecords().size() > 0);
-				test(b.getRecordCount() > 0);
+				test(b.getRecords().size() >= 0);
+				test(b.getRecordCount() >= 0);
 				test(b.getRecordCount() == b.getRecords().size());
 				for (AnomalyRecord r: b.getRecords())
 				{
@@ -1391,7 +1423,8 @@ public class JobsTest implements Closeable
 		test.uploadData(baseUrl, flightCentreJobId, flightCentreData, true);
 		test.closeJob(baseUrl, flightCentreJobId);
 		test.testReadLogFiles(baseUrl, flightCentreJobId);
-		test.verifyJobResults(baseUrl, flightCentreJobId, 100, FLIGHT_CENTRE_NUM_BUCKETS, 3600);
+		test.verifyJobResults(baseUrl, flightCentreJobId, 100, FLIGHT_CENTRE_NUM_BUCKETS,
+				3600, FLIGHT_CENTRE_NUM_EVENTS);
 		jobUrls.add(flightCentreJobId);		
 
 		
@@ -1404,7 +1437,8 @@ public class JobsTest implements Closeable
 		test.closeJob(baseUrl, flightCentreJsonJobId);		
 		test.testReadLogFiles(baseUrl, flightCentreJsonJobId);
 		test.testSetDescription(baseUrl, flightCentreJsonJobId);
-		test.verifyJobResults(baseUrl, flightCentreJsonJobId, 100, FLIGHT_CENTRE_NUM_BUCKETS, 3600);
+		test.verifyJobResults(baseUrl, flightCentreJsonJobId, 100, FLIGHT_CENTRE_NUM_BUCKETS,
+				3600, FLIGHT_CENTRE_NUM_EVENTS);
 		jobUrls.add(flightCentreJsonJobId);	
 			
 		//=================
@@ -1416,7 +1450,8 @@ public class JobsTest implements Closeable
 
 		test.slowUpload(baseUrl, farequoteTimeFormatJobId, fareQuoteData, 10);
 		test.closeJob(baseUrl, farequoteTimeFormatJobId);
-		test.verifyJobResults(baseUrl, farequoteTimeFormatJobId, 150, FARE_QUOTE_NUM_BUCKETS, 300);
+		test.verifyJobResults(baseUrl, farequoteTimeFormatJobId, 150, FARE_QUOTE_NUM_BUCKETS,
+				300, FARE_QUOTE_NUM_EVENTS);
 		test.testReadLogFiles(baseUrl, farequoteTimeFormatJobId);
 		test.testSetDescription(baseUrl, farequoteTimeFormatJobId);
 					
@@ -1435,7 +1470,8 @@ public class JobsTest implements Closeable
 		test.getJobsTest(baseUrl);
 		test.uploadData(baseUrl, refJobId, fareQuoteData, false);
 		test.closeJob(baseUrl, refJobId);
-		test.verifyJobResults(baseUrl, refJobId, 150, FARE_QUOTE_NUM_BUCKETS, 300);
+		test.verifyJobResults(baseUrl, refJobId, 150, FARE_QUOTE_NUM_BUCKETS,
+				300, FARE_QUOTE_NUM_EVENTS);
 		test.testReadLogFiles(baseUrl, refJobId);
 		jobUrls.add(refJobId);		
 
@@ -1448,7 +1484,8 @@ public class JobsTest implements Closeable
 	 	test.getJobsTest(baseUrl);
 	 	test.uploadData(baseUrl, jobId, flightCentreMsData, false);
 	 	test.closeJob(baseUrl, jobId);	
-	 	test.verifyJobResults(baseUrl, jobId, 150, FLIGHT_CENTRE_NUM_BUCKETS, 3600);
+	 	test.verifyJobResults(baseUrl, jobId, 150, FLIGHT_CENTRE_NUM_BUCKETS,
+				3600, FLIGHT_CENTRE_NUM_EVENTS);
 	 	test.testReadLogFiles(baseUrl, jobId);
 		test.testDateFilters(baseUrl, jobId, new Date(1350824400000L), 
 				new Date(1350913371000L));
@@ -1458,7 +1495,8 @@ public class JobsTest implements Closeable
 	 	test.getJobsTest(baseUrl);
 	 	test.uploadData(baseUrl, jobId, flightCentreMsJsonData, false);
 	 	test.closeJob(baseUrl, jobId);	
-		test.verifyJobResults(baseUrl, jobId, 150, FLIGHT_CENTRE_NUM_BUCKETS, 3600);
+		test.verifyJobResults(baseUrl, jobId, 150, FLIGHT_CENTRE_NUM_BUCKETS,
+				3600, FLIGHT_CENTRE_NUM_EVENTS);
 		test.testDateFilters(baseUrl, jobId, new Date(1350824400000L), 
 				new Date(1350913371000L));		
 		test.testReadLogFiles(baseUrl, jobId);
@@ -1475,7 +1513,8 @@ public class JobsTest implements Closeable
 		test.uploadData(baseUrl, doubleUploadTest, fareQuoteData, false);
 		
 		test.closeJob(baseUrl, doubleUploadTest);	
-		test.verifyJobResults(baseUrl, doubleUploadTest, 150, FARE_QUOTE_NUM_BUCKETS, 300);
+		test.verifyJobResults(baseUrl, doubleUploadTest, 150, FARE_QUOTE_NUM_BUCKETS,
+				300, FARE_QUOTE_NUM_EVENTS);
 					
 		// known dates for the farequote data
 		start = new Date(1359406800000L);

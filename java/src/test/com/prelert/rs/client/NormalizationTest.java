@@ -214,17 +214,17 @@ public class NormalizationTest implements Closeable
 		
 		/*
 		 * We know there is one large anomaly in the farequote data
-		 * with score 100
+		 * with score 90+
 		 */
-		int maxAnomalyScoreCount = 0;
+		int highAnomalyScoreCount = 0;
 		for (Bucket b : pagedBuckets)
 		{
-			if (b.getAnomalyScore() >= 100.0)
+			if (b.getAnomalyScore() >= 90.0)
 			{
-				maxAnomalyScoreCount++;
+				highAnomalyScoreCount++;
 			}
 		}
-		test(maxAnomalyScoreCount == 1);
+		test(highAnomalyScoreCount == 1);
 		
 		// the big anomaly is in bucket 772
 		test(pagedBuckets.get(771).getAnomalyScore() >= 100.0);
@@ -350,35 +350,33 @@ public class NormalizationTest implements Closeable
 		
 		
 		/*
-		 * The bucket anomaly score is the max unusual score
+		 * The bucket unusual score is the max unusual score
+		 * and the anomaly score is the same as for each of the
+		 * records
 		 */
 		for (Bucket bucket: allBuckets.getDocuments())
 		{
 			double bucketMax = 0.0;
 			for (AnomalyRecord r : bucket.getRecords())
 			{
-				if (r.isSimpleCount() != null && r.isSimpleCount())
-				{
-					continue;
-				}
 				bucketMax = Math.max(r.getUnusualScore(), bucketMax);
 			}
 			
-			test(bucketMax == bucket.getAnomalyScore());
+			test(bucketMax == bucket.getUnusualScore());
 		}
 		
 		/*
-		 * At least one bucket should have a score of 100
+		 * One bucket should have a score of 90+
 		 */
-		int maxAnomalyScoreCount = 0;
+		int highAnomalyScoreCount = 0;
 		for (Bucket b : pagedBuckets)
 		{
-			if (b.getAnomalyScore() >= 100.0)
+			if (b.getAnomalyScore() >= 90.0)
 			{
-				maxAnomalyScoreCount++;
+				highAnomalyScoreCount++;
 			}
 		}
-		test(maxAnomalyScoreCount >= 1);
+		test(highAnomalyScoreCount == 1);
 		
 		/*
 		 * Check the bucket score is equal to the max anomaly
@@ -533,25 +531,25 @@ public class NormalizationTest implements Closeable
 
 
 		/*
-		 * There should be at least one anomaly with score = 100
-		 * for each type
+		 * There should be one anomaly with unusual score of 90+
+		 * and at least one with anomaly score 90+
 		 */
-		int maxAnomalyScoreCount = 0;
-		int maxUnusualScoreCount = 0;
+		int highAnomalyScoreCount = 0;
+		int highUnusualScoreCount = 0;
 		for (AnomalyRecord record : pagedRecords)
 		{
-			if (record.getUnusualScore() >= 100.0)
+			if (record.getUnusualScore() >= 90.0)
 			{
-				maxUnusualScoreCount++;
+				highUnusualScoreCount++;
 			}
-			if (record.getAnomalyScore() >= 100.0)
+			if (record.getAnomalyScore() >= 90.0)
 			{
-				maxAnomalyScoreCount++;
+				highAnomalyScoreCount++;
 			}
 		}
 		
-		test(maxAnomalyScoreCount >= 1);
-		test(maxUnusualScoreCount >= 1);
+		test(highAnomalyScoreCount >= 1);
+		test(highUnusualScoreCount == 1);
 
 		/*
 		 * Test get records by date range with a time string
