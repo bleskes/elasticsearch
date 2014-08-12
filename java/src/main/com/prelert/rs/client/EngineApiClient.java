@@ -645,11 +645,9 @@ public class EngineApiClient implements Closeable
 	throws JsonMappingException, IOException
 	{
 		String url = baseUrl + "/results/" + jobId + "/" + bucketId;
-		char queryChar = '?';
 		if (expand)
 		{
 			url += "?expand=true";
-			queryChar = '&';
 		}
 
 		s_Logger.debug("GET bucket " + url);

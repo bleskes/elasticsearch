@@ -49,9 +49,7 @@ import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.rs.data.AnomalyRecord;
-import com.prelert.rs.data.ApiError;
 import com.prelert.rs.data.Bucket;
-import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.Pagination;
 
 
@@ -225,10 +223,10 @@ public class NormalizationTest implements Closeable
 			}
 		}
 		test(highAnomalyScoreCount == 1);
-		
+
 		// the big anomaly is in bucket 772
 		test(pagedBuckets.get(771).getAnomalyScore() >= 90.0);
-		
+
 		/*
 		 * Test get buckets by date range with a time string
 		 */
