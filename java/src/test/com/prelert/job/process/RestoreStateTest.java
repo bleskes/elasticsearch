@@ -52,7 +52,6 @@ import com.prelert.job.JobInUseException;
 import com.prelert.job.TooManyJobsException;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.manager.JobManager;
-import com.prelert.job.normalisation.NormalizationType;
 import com.prelert.job.persistence.elasticsearch.ElasticSearchJobProvider;
 import com.prelert.job.warnings.HighProportionOfBadTimestampsException;
 import com.prelert.job.warnings.OutOfOrderRecordsException;
@@ -150,7 +149,7 @@ public class RestoreStateTest
 			Thread.sleep(1000);
 
 			Pagination<Bucket> buckets = 
-					jobManager.buckets(job.getId(), false, 0, 100, NormalizationType.STATE_CHANGE);
+					jobManager.buckets(job.getId(), false, 0, 100);
 
 			List<Double> anomalyScores = new ArrayList<>();
 			for (Bucket bucket : buckets.getDocuments())

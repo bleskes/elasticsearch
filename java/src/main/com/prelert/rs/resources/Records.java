@@ -45,7 +45,6 @@ import org.apache.log4j.Logger;
 
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.manager.JobManager;
-import com.prelert.job.normalisation.NormalizationType;
 import com.prelert.job.process.NativeProcessRunException;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.ErrorCode;
@@ -73,8 +72,7 @@ public class Records extends ResourceWithJobManager
 	 */
 	static public final String SORT_QUERY_PARAM = "sort";
 	
-	static public final String NORMALISATION_QUERY_PARAM = "norm";
-	
+
 	/**
 	 * Possible arguments to the sort parameter
 	 */
@@ -113,13 +111,12 @@ public class Records extends ResourceWithJobManager
 			@DefaultValue(JobManager.DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take,
 			@DefaultValue("") @QueryParam(START_QUERY_PARAM) String start,
 			@DefaultValue("") @QueryParam(END_QUERY_PARAM) String end,
-			@DefaultValue(PROB_SORT_VALUE) @QueryParam(SORT_QUERY_PARAM) String sort,
-			@DefaultValue("both") @QueryParam(NORMALISATION_QUERY_PARAM) String norm)
+			@DefaultValue(PROB_SORT_VALUE) @QueryParam(SORT_QUERY_PARAM) String sort)
 	throws NativeProcessRunException, UnknownJobException
 	{	
 		s_Logger.debug(String.format("Get records for job %s. skip = %d, take = %d"
-				+ " start = '%s', end='%s', sort='%s', norm='%s'", 
-				jobId, skip, take, start, end, sort, norm));
+				+ " start = '%s', end='%s', sort='%s'", 
+				jobId, skip, take, start, end, sort));
 		
 		long epochStart = 0;
 		if (start.isEmpty() == false)
@@ -158,39 +155,19 @@ public class Records extends ResourceWithJobManager
 		}
 		
 		sort = AnomalyRecord.PROBABILITY;
-		
-		NormalizationType normType;
-		try
-		{
-			normType = NormalizationType.fromString(norm);
-		}
-		catch (IllegalArgumentException e)
-		{
-			String msg = String.format(String.format("'%s is not a valid value "
-					+ "for the normalisation query parameter", norm));
-			s_Logger.warn(msg);
-			throw new RestApiException(msg, ErrorCode.INVALID_NORMALIZATION_ARG,
-					Response.Status.BAD_REQUEST);
-		}
-		
-		long start_ms = System.currentTimeMillis();
-		
+
 		JobManager manager = jobManager();
 		Pagination<AnomalyRecord> records;
 
 		if (epochStart > 0 || epochEnd > 0)
 		{
-			records = manager.records(jobId, skip, take, epochStart, epochEnd, sort, normType);
+			records = manager.records(jobId, skip, take, epochStart, epochEnd, sort);
 		}
 		else
 		{
-			records = manager.records(jobId, skip, take, sort, normType);
+			records = manager.records(jobId, skip, take, sort);
 		}
-		
-		System.out.println(String.format("Normalised records in %d ms",
-				System.currentTimeMillis() - start_ms));
 
-		
 		// paging
     	if (records.isAllResults() == false)
     	{

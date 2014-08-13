@@ -41,6 +41,13 @@ import com.prelert.rs.data.parsing.AutoDetectParseException;
  */
 public class QuantilesState
 {
+	/**
+	 * These MUST match the constants used in the C++ code
+	 * in lib/model/CAnomalyScore.cc
+	 */
+	public static final String SYS_CHANGE_QUANTILES_KIND = "sysChange";
+	public static final String UNUSUAL_QUANTILES_KIND = "unusual";
+
 	private static final Logger s_Logger = Logger.getLogger(QuantilesState.class);
 
 	private Map<String, String> m_QuantilesKindToState;

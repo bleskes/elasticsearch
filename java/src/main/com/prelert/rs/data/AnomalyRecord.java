@@ -47,13 +47,18 @@ import com.prelert.rs.data.parsing.AutoDetectParseException;
  * can be returned if the members have not been set.
  */
 @JsonInclude(Include.NON_NULL)
-@JsonIgnoreProperties({"parent", "detectorName"})
+@JsonIgnoreProperties({"parent", "id", "detectorName"})
 public class AnomalyRecord
 {
 	/**
 	 * Serialisation fields
 	 */
 	static final public String TYPE = "record";
+
+	/**
+	 * Data store ID field
+	 */
+	static final public String ID = "id";
 
 	/**
 	 * Result fields (all detector types)
@@ -83,10 +88,17 @@ public class AnomalyRecord
 	 * Simple count detector
 	 */
 	static final public String IS_SIMPLE_COUNT = "isSimpleCount";
+
+	/**
+	 * Normalisation
+	 */
+	static final public String ANOMALY_SCORE = "anomalyScore";
+	static final public String UNUSUAL_SCORE = "unusualScore";
 	
 	private static final Logger s_Logger = Logger.getLogger(AnomalyRecord.class);
 	
-	private Double m_Probability;
+	private String m_Id;
+	private double m_Probability;
 	private String m_ByFieldName;
 	private String m_ByFieldValue;
 	private String m_PartitionFieldName;
@@ -103,29 +115,49 @@ public class AnomalyRecord
 
 	private Boolean m_IsSimpleCount;
 	
-	private Double m_AnomalyScore;
-	private Double m_UnusualScore;
+	private double m_AnomalyScore;
+	private double m_UnusualScore;
 	private Date   m_Timestamp;
 
 	
 	private String m_Parent;
 
-	public Double getAnomalyScore()
+	/**
+	 * Data store ID of this record.  May be null for records that have not been
+	 * read from the data store.
+	 */
+	public String getId()
+	{
+		return m_Id;
+	}
+
+	/**
+	 * This should only be called by code that's reading records from the data
+	 * store.  The ID must be set to the data stores's unique key to this
+	 * anomaly record.
+	 */
+	public void setId(String id)
+	{
+		m_Id = id;
+	}
+
+
+	public double getAnomalyScore()
 	{
 		return m_AnomalyScore;
 	}
 	
-	public void setAnomalyScore(Double anomalyScore)
+	public void setAnomalyScore(double anomalyScore)
 	{
 		m_AnomalyScore = anomalyScore;
 	}
 	
-	public Double getUnusualScore()
+	public double getUnusualScore()
 	{
 		return m_UnusualScore;
 	}
 	
-	public void setUnusualScore(Double anomalyScore)
+	public void setUnusualScore(double anomalyScore)
 	{
 		m_UnusualScore = anomalyScore;
 	}
@@ -138,15 +170,15 @@ public class AnomalyRecord
 	
 	public void setTimestamp(Date timestamp) 
 	{
-		this.m_Timestamp = timestamp;
+		m_Timestamp = timestamp;
 	}
 	
-	public Double getProbability()
+	public double getProbability()
 	{
 		return m_Probability;
 	}
 
-	public void setProbability(Double value)
+	public void setProbability(double value)
 	{
 		m_Probability = value;
 	}
@@ -344,6 +376,30 @@ public class AnomalyRecord
 								+ " as a double");
 					}
 					break;
+				case ANOMALY_SCORE:
+					token = parser.nextToken();
+					if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)
+					{
+						record.setAnomalyScore(parser.getDoubleValue());
+					}
+					else
+					{
+						s_Logger.warn("Cannot parse " + fieldName + " : " + parser.getText()
+								+ " as a double");
+					}
+					break;
+				case UNUSUAL_SCORE:
+					token = parser.nextToken();
+					if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)
+					{
+						record.setUnusualScore(parser.getDoubleValue());
+					}
+					else
+					{
+						s_Logger.warn("Cannot parse " + fieldName + " : " + parser.getText()
+								+ " as a double");
+					}
+					break;
 				case BY_FIELD_NAME:
 					token = parser.nextToken();
 					if (token == JsonToken.VALUE_STRING)
@@ -523,14 +579,23 @@ public class AnomalyRecord
 	}
 
 	@Override
-	public int hashCode() 
+	public int hashCode()
 	{
+		// ID is NOT included in the hash, so that a record from the data store
+		// will hash the same as a record representing the same anomaly that did
+		// not come from the data store
+
 		final int prime = 31;
 		int result = 1;
+		long temp;
+		temp = Double.doubleToLongBits(m_Probability);
+		result = prime * result + (int) (temp ^ (temp >>> 32));
+		temp = Double.doubleToLongBits(m_AnomalyScore);
+		result = prime * result + (int) (temp ^ (temp >>> 32));
+		temp = Double.doubleToLongBits(m_UnusualScore);
+		result = prime * result + (int) (temp ^ (temp >>> 32));
 		result = prime * result
 				+ ((m_Actual == null) ? 0 : m_Actual.hashCode());
-		result = prime * result
-				+ ((m_AnomalyScore == null) ? 0 : m_AnomalyScore.hashCode());
 		result = prime * result
 				+ ((m_ByFieldName == null) ? 0 : m_ByFieldName.hashCode());
 		result = prime * result
@@ -561,13 +626,10 @@ public class AnomalyRecord
 				+ ((m_PartitionFieldValue == null) ? 0 : m_PartitionFieldValue
 						.hashCode());
 		result = prime * result
-				+ ((m_Probability == null) ? 0 : m_Probability.hashCode());
-		result = prime * result
 				+ ((m_Timestamp == null) ? 0 : m_Timestamp.hashCode());
 		result = prime * result
 				+ ((m_Typical == null) ? 0 : m_Typical.hashCode());
-		result = prime * result
-				+ ((m_UnusualScore == null) ? 0 : m_UnusualScore.hashCode());
+
 		return result;
 	}
 
@@ -586,12 +648,16 @@ public class AnomalyRecord
 		}
 		
 		AnomalyRecord that = (AnomalyRecord)other;
-		
-		boolean equal = bothNullOrEqual(this.m_Probability, that.m_Probability) &&
+
+		// ID is NOT compared, so that a record from the data store will compare
+		// equal to a record representing the same anomaly that did not come
+		// from the data store
+
+		boolean equal = this.m_Probability == that.m_Probability &&
+				this.m_AnomalyScore == that.m_AnomalyScore &&
+				this.m_UnusualScore == that.m_UnusualScore &&
 				bothNullOrEqual(this.m_Typical, that.m_Typical) &&
 				bothNullOrEqual(this.m_Actual, that.m_Actual) &&
-				bothNullOrEqual(this.m_AnomalyScore, that.m_AnomalyScore) &&
-				bothNullOrEqual(this.m_UnusualScore, that.m_UnusualScore) &&
 				bothNullOrEqual(this.m_Function, that.m_Function) &&
 				bothNullOrEqual(this.m_FieldName, that.m_FieldName) &&
 				bothNullOrEqual(this.m_ByFieldName, that.m_ByFieldName) &&

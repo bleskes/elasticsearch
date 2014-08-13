@@ -25,89 +25,35 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.normalisation;
+package com.prelert.job.persistence;
+
+import org.apache.log4j.Logger;
+
 
 /**
- * Enum for the different normalization types with
- * toString and fromString methods
+ * Interface for classes that update {@linkplain Bucket Buckets}
+ * for a particular job with new normalised anomaly scores and
+ * unusual scores
  */
-public enum NormalizationType 
+public interface JobRenormaliser
 {
-	STATE_CHANGE 
-	{	
-		@Override
-		public boolean isNormalizeStateChange()
-		{
-			return true;
-		}
-		
-		@Override 
-		public String toString()
-		{
-			return SYS_CHANGE_NORMALIZATION;
-		}
-	},
-	UNUSUAL_BEHAVIOUR 
-	{		
-		@Override
-		public boolean isNormalizeUnusual()
-		{
-			return true;
-		}
-		
-		@Override 
-		public String toString()
-		{
-			return UNUSUAL_BEHAVIOUR_NORMALIZATION;
-		}
-	},
-	BOTH
-	{
-		@Override
-		public boolean isNormalizeStateChange()
-		{
-			return true;
-		}
-		@Override
-		public boolean isNormalizeUnusual()
-		{
-			return true;
-		}
-		
-		@Override 
-		public String toString()
-		{
-			return BOTH_NORMALIZATIONS;
-		}
-	};
-	
-	public boolean isNormalizeStateChange()
-	{
-		return false;
-	}
-	
-	public boolean isNormalizeUnusual()
-	{
-		return false;
-	}
-	
-	static final public String SYS_CHANGE_NORMALIZATION = "s";
-	static final public String UNUSUAL_BEHAVIOUR_NORMALIZATION = "u";
-	static final public String BOTH_NORMALIZATIONS = "both";
-	
-	static public NormalizationType fromString(String value)
-	{
-		switch (value)
-		{
-		case SYS_CHANGE_NORMALIZATION:
-			return STATE_CHANGE;
-		case UNUSUAL_BEHAVIOUR_NORMALIZATION:
-			return UNUSUAL_BEHAVIOUR;
-		case BOTH_NORMALIZATIONS:
-			return BOTH;
-		default:
-			throw new IllegalArgumentException("No enum value for '" + value + "'");
-			
-		}
-	}
-}
+	/**
+	 * Update the anomaly score field on all previously persisted buckets
+	 * and all contained records
+	 * @param sysChangeState
+	 * @param logger
+	 */
+	public void updateBucketSysChange(String sysChangeState,
+										Logger logger);
+
+
+	/**
+	 * Update the unsual score field on all previously persisted buckets
+	 * and all contained records
+	 * @param unusualBehaviourState
+	 * @param logger
+	 */
+	public void updateBucketUnusualBehaviour(String unusualBehaviourState,
+											Logger logger);
+};
+
