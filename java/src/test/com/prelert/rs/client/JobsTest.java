@@ -1246,39 +1246,32 @@ public class JobsTest implements Closeable
 		test(logLines.length <= 10);
 			
 		// zip of log files
-		ZipInputStream zip = m_WebServiceClient.downloadAllLogs(baseUrl, jobId);
-		ZipEntry entry = zip.getNextEntry();
-		
-		// expect at least 3 entries the directory and 2 log files
-		test(entry != null);
-		test(entry.getName().equals(jobId + File.separator));
-		//zip.closeEntry();
-		entry = zip.getNextEntry();
-		
-		byte buff[] = new byte[2048];
-		
-		// log file
-		test(entry.getName().startsWith(jobId + File.separator));
-		int len = zip.read(buff);
-		test(len > 0);
-		String content = new String(buff, StandardCharsets.UTF_8);
-		logLines = content.split("\n");
-		test(logLines.length > 0);
-		//zip.closeEntry();
-		entry = zip.getNextEntry();
-		/*
-		// 2nd log file
-		test(entry.getName().startsWith(jobId + File.separator));
-		len = zip.read(buff);
-		test(len > 0);
-		content = new String(buff, StandardCharsets.UTF_8);
-		logLines = content.split("\n");
-		test(logLines.length > 0);
-		//zip.closeEntry();
-		entry = zip.getNextEntry();
+		try (ZipInputStream zip = m_WebServiceClient.downloadAllLogs(baseUrl, jobId))
+		{
+			ZipEntry entry = zip.getNextEntry();
 
-		zip.close();
-		
+			// expect at least 2 entries: the directory and 1 or more log files
+			test(entry != null);
+			test(entry.getName().equals(jobId + File.separator));
+			entry = zip.getNextEntry();
+
+			byte buff[] = new byte[2048];
+
+			// log file(s)
+			do
+			{
+				test(entry.getName().startsWith(jobId + File.separator));
+				int len = zip.read(buff);
+				test(len > 0);
+				String content = new String(buff, StandardCharsets.UTF_8);
+				logLines = content.split("\n");
+				test(logLines.length > 0);
+				entry = zip.getNextEntry();
+			}
+			while (entry != null);
+		}
+
+		/*
 		// check errors by ask for a file that doesn't exist
 		file = m_WebServiceClient.downloadLog(baseUrl, jobId, "not_a_file");	
 		test(file.isEmpty());
