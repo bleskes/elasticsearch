@@ -2,6 +2,7 @@ package org.elasticsearch.alerting;
 
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.indexedscripts.get.GetIndexedScriptResponse;
+import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.bytes.BytesReference;
@@ -62,7 +63,11 @@ public class AlertScheduler extends AbstractLifecycleComponent {
                 ExecutableScript executable = scriptService.executable(compiledTemplate, new HashMap());
                 BytesReference processedQuery = (BytesReference) executable.run();
                 logger.warn("Compiled to [{}]", processedQuery);
-                SearchResponse sr = client.prepareSearch().setSource(processedQuery).execute().get();
+                SearchRequestBuilder srb = client.prepareSearch().setSource(processedQuery);
+                if (alert.indices() != null ){
+                    srb.setIndices(alert.indices().toArray(new String[0]));
+                }
+                SearchResponse sr = srb.execute().get();
                 logger.warn("Got search response");
                 AlertResult result = new AlertResult();
                 result.isTriggered = triggerManager.isTriggered(alertName,sr);
