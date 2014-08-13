@@ -1,4 +1,4 @@
-package org.elasticsearch.shield.ssl;
+package org.elasticsearch.shield.transport.ssl;
 
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.rest.RestStatus;

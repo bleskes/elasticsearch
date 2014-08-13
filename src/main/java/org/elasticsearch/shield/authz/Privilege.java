@@ -2,8 +2,6 @@ package org.elasticsearch.shield.authz;
 
 import org.apache.lucene.util.automaton.Automaton;
 import org.apache.lucene.util.automaton.BasicAutomata;
-import org.apache.lucene.util.automaton.MinimizationOperations;
-import org.apache.lucene.util.automaton.RegExp;
 import org.elasticsearch.action.get.GetAction;
 import org.elasticsearch.action.search.SearchAction;
 import org.elasticsearch.common.Strings;
@@ -45,19 +43,17 @@ public abstract class Privilege<P extends Privilege<P>> {
         return this.implies(other) && other.implies((P) this);
     }
 
-    static class Internal extends Privilege<Internal> {
+    public static class Internal extends Privilege<Internal> {
 
-        protected final Automaton automaton;
+        protected static final Predicate<String> PREDICATE = new AutomatonPredicate(Automatons.patterns("internal:.*"));
 
         private Internal() {
             super(new Name("internal"));
-            automaton = new RegExp("internal:.*", RegExp.ALL).toAutomaton();
-            MinimizationOperations.minimize(automaton);
         }
 
         @Override
         public Predicate<String> predicate() {
-            return new AutomatonPredicate(automaton);
+            return PREDICATE;
         }
 
         @Override
@@ -69,7 +65,7 @@ public abstract class Privilege<P extends Privilege<P>> {
     public static class Index extends AutomatonPrivilege<Index> {
 
         public static final Index NONE =        new Index(Name.NONE,    BasicAutomata.makeEmpty());
-        public static final Index ALL =         new Index("all",        "indices:.*");
+        public static final Index ALL =         new Index(Name.ALL,     "indices:.*");
         public static final Index MANAGE =      new Index("manage",     "indices:monitor/.*", "indices:admin/.*");
         public static final Index MONITOR =     new Index("monitor",    "indices:monitor/.*");
         public static final Index DATA_ACCESS = new Index("data_access","indices:data/.*");
@@ -103,6 +99,10 @@ public abstract class Privilege<P extends Privilege<P>> {
                 });
 
         private Index(String name, String... patterns) {
+            super(name, patterns);
+        }
+
+        private Index(Name name, String... patterns) {
             super(name, patterns);
         }
 
@@ -154,7 +154,7 @@ public abstract class Privilege<P extends Privilege<P>> {
     public static class Cluster extends AutomatonPrivilege<Cluster> {
 
         public static final Cluster NONE    = new Cluster(Name.NONE,    BasicAutomata.makeEmpty());
-        public static final Cluster ALL     = new Cluster("all",        "cluster:.*");
+        public static final Cluster ALL     = new Cluster(Name.ALL,     "cluster:.*", "indices:admin/template/.*");
         public static final Cluster MONITOR = new Cluster("monitor",    "cluster:monitor/.*");
 
         private static final Cluster[] values = new Cluster[] { NONE, ALL, MONITOR };
@@ -176,6 +176,10 @@ public abstract class Privilege<P extends Privilege<P>> {
                 });
 
         private Cluster(String name, String... patterns) {
+            super(name, patterns);
+        }
+
+        private Cluster(Name name, String... patterns) {
             super(name, patterns);
         }
 
@@ -218,6 +222,11 @@ public abstract class Privilege<P extends Privilege<P>> {
 
         private AutomatonPrivilege(String name, String... patterns) {
             super(new Name(name));
+            this.automaton = Automatons.patterns(patterns);
+        }
+
+        private AutomatonPrivilege(Name name, String... patterns) {
+            super(name);
             this.automaton = Automatons.patterns(patterns);
         }
 
@@ -268,6 +277,7 @@ public abstract class Privilege<P extends Privilege<P>> {
     public static class Name {
 
         public static final Name NONE = new Name("none");
+        public static final Name ALL = new Name("all");
 
         private final ImmutableSet<String> parts;
 

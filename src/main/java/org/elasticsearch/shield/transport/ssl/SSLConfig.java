@@ -1,9 +1,8 @@
-package org.elasticsearch.shield.ssl;
+package org.elasticsearch.shield.transport.ssl;
 
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
-import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 
 import javax.net.ssl.*;

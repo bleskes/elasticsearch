@@ -64,6 +64,17 @@ public class InternalAuthorizationService extends AbstractComponent implements A
 
     @Override
     public void authorize(User user, String action, TransportRequest request) throws AuthorizationException {
+
+        if (user.isSystem()) {
+            MetaData metaData = clusterService.state().metaData();
+            if (SystemRole.INSTANCE.check(action, request, metaData)) {
+                grant(user, action, request);
+            } else {
+                deny(user, action, request);
+            }
+            return;
+        }
+
         String[] roles = user.roles();
         if (roles.length == 0) {
             deny(user, action, request);
@@ -72,7 +83,7 @@ public class InternalAuthorizationService extends AbstractComponent implements A
         MetaData metaData = clusterService.state().metaData();
         for (String role : roles) {
             Permission permission = rolesStore.permission(role);
-            if (permission.check(action, request, metaData)) {
+            if (permission != null && permission.check(action, request, metaData)) {
                 grant(user, action, request);
                 return;
             }
@@ -85,7 +96,7 @@ public class InternalAuthorizationService extends AbstractComponent implements A
         if (auditTrail != null) {
             auditTrail.accessDenied(user, action, request);
         }
-        throw new AuthorizationException("Action [" + action + "] is unauthorized");
+        throw new AuthorizationException("Action [" + action + "] is unauthorized for user [" + user.principal() + "]");
     }
 
     private void grant(User user, String action, TransportRequest request) {

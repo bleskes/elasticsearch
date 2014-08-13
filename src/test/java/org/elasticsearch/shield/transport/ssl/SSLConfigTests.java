@@ -1,4 +1,4 @@
-package org.elasticsearch.shield.ssl;
+package org.elasticsearch.shield.transport.ssl;
 
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
@@ -20,7 +20,7 @@ public class SSLConfigTests extends ElasticsearchTestCase {
 
     @Before
     public void setup() throws Exception {
-        testnodeStore = new File(getClass().getResource("/certs/simple/testnode.jks").toURI());
+        testnodeStore = new File(getClass().getResource("/org/elasticsearch/shield/transport/ssl/certs/simple/testnode.jks").toURI());
     }
 
     @Test

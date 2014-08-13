@@ -1,17 +1,17 @@
-package org.elasticsearch.shield.ssl.netty;
+package org.elasticsearch.shield.transport.netty;
 
-import org.elasticsearch.shield.ssl.ElasticsearchSSLException;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.netty.channel.ChannelFuture;
 import org.elasticsearch.common.netty.channel.ChannelFutureListener;
 import org.elasticsearch.common.netty.channel.ChannelHandlerContext;
 import org.elasticsearch.common.netty.channel.ChannelStateEvent;
 import org.elasticsearch.common.netty.handler.ssl.SslHandler;
+import org.elasticsearch.shield.transport.ssl.ElasticsearchSSLException;
 import org.elasticsearch.transport.netty.MessageChannelHandler;
 
-public class SecureMessageChannelHandler extends MessageChannelHandler {
+public class SecuredMessageChannelHandler extends MessageChannelHandler {
 
-    public SecureMessageChannelHandler(org.elasticsearch.transport.netty.NettyTransport transport, ESLogger logger) {
+    public SecuredMessageChannelHandler(org.elasticsearch.transport.netty.NettyTransport transport, ESLogger logger) {
         super(transport, logger);
     }
 
