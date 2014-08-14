@@ -39,18 +39,18 @@ import com.prelert.rs.data.parsing.AutoDetectResultsParser;
 
 /**
  * Factory class to produce Runnable objects that will parse the 
- * autodetect results output and write them to ElasticSearch.
+ * autodetect results output and write them to Elasticsearch.
  */
-public class ElasticSearchResultsReaderFactory implements ResultsReaderFactory
+public class ElasticsearchResultsReaderFactory implements ResultsReaderFactory
 {
-	private ElasticSearchJobProvider m_JobProvider;
+	private ElasticsearchJobProvider m_JobProvider;
 	
 	/**
 	 * Construct the factory
 	 * 
-	 * @param jobProvider The ElasticSearch job provider
+	 * @param jobProvider The Elasticsearch job provider
 	 */
-	public ElasticSearchResultsReaderFactory(ElasticSearchJobProvider jobProvider)
+	public ElasticsearchResultsReaderFactory(ElasticsearchJobProvider jobProvider)
 	{
 		m_JobProvider = jobProvider;
 	}
@@ -65,17 +65,17 @@ public class ElasticSearchResultsReaderFactory implements ResultsReaderFactory
 	
 	/**
 	 * This private class parses the autodetect output stream and writes it
-	 * to ElasticSearch
+	 * to Elasticsearch
 	 */
 	private class ReadAutoDetectOutput implements Runnable 
 	{
 		private String m_JobId;
-		private ElasticSearchJobProvider m_JobProvider;
+		private ElasticsearchJobProvider m_JobProvider;
 		private InputStream m_Stream;	
 		private Logger m_Logger;
 		
 		public ReadAutoDetectOutput(String jobId, InputStream stream,
-				ElasticSearchJobProvider jobProvider, Logger logger)
+				ElasticsearchJobProvider jobProvider, Logger logger)
 		{
 			m_JobId = jobId;
 			m_Stream = stream;
@@ -85,8 +85,8 @@ public class ElasticSearchResultsReaderFactory implements ResultsReaderFactory
 		
 		public void run() 
 		{			
-			ElasticSearchPersister persister = new ElasticSearchPersister(m_JobId, m_JobProvider.getClient());
-			ElasticSearchJobRenormaliser renormaliser = new ElasticSearchJobRenormaliser(m_JobId, m_JobProvider);
+			ElasticsearchPersister persister = new ElasticsearchPersister(m_JobId, m_JobProvider.getClient());
+			ElasticsearchJobRenormaliser renormaliser = new ElasticsearchJobRenormaliser(m_JobId, m_JobProvider);
 
 			try
 			{

@@ -151,7 +151,7 @@ public class JobManager
 		m_ObjectMapper = new ObjectMapper();
 		m_ObjectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
 
-		// This requires the process manager and ElasticSearch connection in
+		// This requires the process manager and Elasticsearch connection in
 		// order to work, but failure is considered non-fatal
 		saveInfo();		
 	}	
@@ -681,7 +681,7 @@ public class JobManager
 	}		
 		
 	/**
-	 * Stops the ElasticSearch client and the Process Manager
+	 * Stops the Elasticsearch client and the Process Manager
 	 */
 	public void stop()
 	{
@@ -765,7 +765,7 @@ public class JobManager
 
 	/**
 	 * Attempt to get usage and license info from the C++ process, add extra
-	 * fields and persist to ElasticSearch.  Any failures are logged but do not
+	 * fields and persist to Elasticsearch.  Any failures are logged but do not
 	 * otherwise impact operation of this process.  Additionally, any license
 	 * constraints are extracted from the same info document.
 	 */
@@ -854,11 +854,11 @@ public class JobManager
 		}
 		catch (Exception e)
 		{
-			s_Logger.warn("Error writing Prelert info to ElasticSearch", e);
+			s_Logger.warn("Error writing Prelert info to Elasticsearch", e);
 			return;
 		}
 
-		s_Logger.info("Wrote Prelert info " + doc.toString() + " to ElasticSearch");
+		s_Logger.info("Wrote Prelert info " + doc.toString() + " to Elasticsearch");
 	}
 
 }

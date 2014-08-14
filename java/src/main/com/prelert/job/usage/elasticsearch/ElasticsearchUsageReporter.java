@@ -37,7 +37,7 @@ import org.elasticsearch.client.Client;
 import com.prelert.job.usage.Usage;
 import com.prelert.job.usage.UsageReporter;
 
-import static com.prelert.job.persistence.elasticsearch.ElasticSearchJobProvider.PRELERT_USAGE_INDEX;
+import static com.prelert.job.persistence.elasticsearch.ElasticsearchJobProvider.PRELERT_USAGE_INDEX;
 
 /**
  * Persist Usage (metering) data to elasticsearch.

@@ -71,7 +71,7 @@ public class NoSQLDBTestJSONWriter
 	 * @param numPoints number of data points to write.
 	 */
 	@SuppressWarnings("unchecked")
-	public void writeElasticSearchFormat(int numPoints)
+	public void writeElasticsearchFormat(int numPoints)
 	{
 		ArrayList<JSONObject> indexPoints = new ArrayList<JSONObject>(numPoints);
 		ArrayList<JSONObject> bucketPoints = new ArrayList<JSONObject>(numPoints);
@@ -117,7 +117,7 @@ public class NoSQLDBTestJSONWriter
 			detectorsList = new JSONArray();
 			detectorsObj = new JSONObject();
 			
-			recordsList = createElasticSearchRecords(2);
+			recordsList = createElasticsearchRecords(2);
 			
 			detectorsObj.put("name", "hitcount");
 			detectorsObj.put("records", recordsList);
@@ -175,7 +175,7 @@ public class NoSQLDBTestJSONWriter
 	
 	
 	@SuppressWarnings("unchecked")
-	private JSONArray createElasticSearchRecords(int numRecords)
+	private JSONArray createElasticsearchRecords(int numRecords)
 	{
 		JSONArray recordsList = new JSONArray();
 		
@@ -473,7 +473,7 @@ public class NoSQLDBTestJSONWriter
 	public static void main(String[] args)
 	{
     	NoSQLDBTestJSONWriter jsonWriter = new NoSQLDBTestJSONWriter();
-    	//jsonWriter.writeElasticSearchFormat(1700);
+    	//jsonWriter.writeElasticsearchFormat(1700);
     	//jsonWriter.writeCouchDBFormat(1700);
     	//jsonWriter.writePrelertAPIFormat(1700);
     	jsonWriter.convertWikiToPrelertAPIFormat("C:\\Work\\hadoop\\hitcountbyurl_day.json\\output_6hours.json",

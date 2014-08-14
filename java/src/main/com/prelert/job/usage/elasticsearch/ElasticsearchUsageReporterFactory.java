@@ -40,7 +40,7 @@ public class ElasticsearchUsageReporterFactory implements UsageReporterFactory
 	/**
 	 * Construct the factory
 	 * 
-	 * @param node The ElasticSearch node
+	 * @param node The Elasticsearch node
 	 */
 	public ElasticsearchUsageReporterFactory(Client client)
 	{
