@@ -18,13 +18,13 @@ import org.elasticsearch.indices.IndexMissingException;
  * The {@link #reportStatus(int)} function logs a status message 
  * and updates the jobs ProcessedRecordCount, InvalidDateCount,
  * MissingFieldCount and OutOfOrderTimeStampCount values in the
- * ElasticSearch document.
+ * Elasticsearch document.
  */
-public class ElasticSearchStatusReporter extends StatusReporter
+public class ElasticsearchStatusReporter extends StatusReporter
 {
 	private Client m_Client;
 		
-	public ElasticSearchStatusReporter(Client client, String jobId, 
+	public ElasticsearchStatusReporter(Client client, String jobId, 
 			JobDetails.Counts counts, Logger logger)
 	{
 		super(jobId, counts, logger);

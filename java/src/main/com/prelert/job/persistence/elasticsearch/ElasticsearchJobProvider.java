@@ -88,12 +88,12 @@ import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.Quantiles;
 import com.prelert.rs.data.SingleDocument;
 
-public class ElasticSearchJobProvider implements JobProvider
+public class ElasticsearchJobProvider implements JobProvider
 {
-	static public final Logger s_Logger = Logger.getLogger(ElasticSearchJobProvider.class);
+	static public final Logger s_Logger = Logger.getLogger(ElasticsearchJobProvider.class);
 			
 	/**
-	 * ElasticSearch settings that instruct the node not to accept HTTP, not to
+	 * Elasticsearch settings that instruct the node not to accept HTTP, not to
 	 * attempt multicast discovery and to only look for another node to connect
 	 * to on the local machine.
 	 */
@@ -113,7 +113,7 @@ public class ElasticSearchJobProvider implements JobProvider
 	static public final String PRELERT_USAGE_INDEX = "prelert-usage";
 
 	/**
-	 * Where to store the prelert info in ElasticSearch - must match what's
+	 * Where to store the prelert info in Elasticsearch - must match what's
 	 * expected by kibana/engineAPI/app/directives/prelertLogUsage.js
 	 */
 	static public final String PRELERT_INFO_INDEX = "prelert-int";
@@ -129,19 +129,19 @@ public class ElasticSearchJobProvider implements JobProvider
 	private ObjectMapper m_ObjectMapper;
 	
 
-	public ElasticSearchJobProvider(String elasticSearchClusterName)
+	public ElasticsearchJobProvider(String elasticSearchClusterName)
 	{
-		// Multicast discovery is expected to be disabled on the ElasticSearch
+		// Multicast discovery is expected to be disabled on the Elasticsearch
 		// data node, so disable it for this embedded node too and tell it to
 		// expect the data node to be on the same machine
 		this(nodeBuilder().settings(LOCAL_SETTINGS).client(true)
 				.clusterName(elasticSearchClusterName).node());
 
-		s_Logger.info("Connecting to ElasticSearch cluster '"
+		s_Logger.info("Connecting to Elasticsearch cluster '"
 				+ elasticSearchClusterName + "'");		
 	}
 	
-	public ElasticSearchJobProvider(Node node)
+	public ElasticsearchJobProvider(Node node)
 	{
 		m_Node = node;
 		m_Client = m_Node.client();
@@ -173,7 +173,7 @@ public class ElasticSearchJobProvider implements JobProvider
 	}
 		
 	/**
-	 * If the {@value ElasticSearchJobProvider#PRELERT_USAGE_INDEX} index does 
+	 * If the {@value ElasticsearchJobProvider#PRELERT_USAGE_INDEX} index does 
 	 * not exist create it here with the usage document mapping.
 	 */
 	private void createUsageMeteringIndex()
@@ -188,7 +188,7 @@ public class ElasticSearchJobProvider implements JobProvider
 			{
 				s_Logger.info("Creating the internal '" + PRELERT_USAGE_INDEX + "' index");
 
-				XContentBuilder usageMapping = ElasticSearchMappings.usageMapping();
+				XContentBuilder usageMapping = ElasticsearchMappings.usageMapping();
 
 				m_Client.admin().indices().prepareCreate(PRELERT_USAGE_INDEX)					
 								.addMapping(Usage.TYPE, usageMapping)
@@ -320,14 +320,14 @@ public class ElasticSearchJobProvider implements JobProvider
 	{
 		try		
 		{
-			XContentBuilder jobMapping = ElasticSearchMappings.jobMapping();
-			XContentBuilder bucketMapping = ElasticSearchMappings.bucketMapping();
-			XContentBuilder detectorMapping = ElasticSearchMappings.detectorMapping();
-			XContentBuilder recordMapping = ElasticSearchMappings.recordMapping();
-			XContentBuilder quantilesMapping = ElasticSearchMappings.quantilesMapping();
-			XContentBuilder detectorStateMapping = ElasticSearchMappings.detectorStateMapping();
-			XContentBuilder usageMapping = ElasticSearchMappings.usageMapping();
-			XContentBuilder alertMapping = ElasticSearchMappings.alertMapping();
+			XContentBuilder jobMapping = ElasticsearchMappings.jobMapping();
+			XContentBuilder bucketMapping = ElasticsearchMappings.bucketMapping();
+			XContentBuilder detectorMapping = ElasticsearchMappings.detectorMapping();
+			XContentBuilder recordMapping = ElasticsearchMappings.recordMapping();
+			XContentBuilder quantilesMapping = ElasticsearchMappings.quantilesMapping();
+			XContentBuilder detectorStateMapping = ElasticsearchMappings.detectorStateMapping();
+			XContentBuilder usageMapping = ElasticsearchMappings.usageMapping();
+			XContentBuilder alertMapping = ElasticsearchMappings.alertMapping();
 			
 			m_Client.admin().indices()
 					.prepareCreate(job.getId())					
@@ -353,12 +353,12 @@ public class ElasticSearchJobProvider implements JobProvider
 		}
 		catch (ElasticsearchException e)
 		{
-			s_Logger.error("Error writing ElasticSearch mappings", e);
+			s_Logger.error("Error writing Elasticsearch mappings", e);
 			throw e;
 		} 
 		catch (IOException e) 
 		{
-			s_Logger.error("Error writing ElasticSearch mappings", e);
+			s_Logger.error("Error writing Elasticsearch mappings", e);
 		}
 		
 		return false;
@@ -530,7 +530,7 @@ public class ElasticSearchJobProvider implements JobProvider
 		{
 			// Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch, 
 			// and replace using the API 'timestamp' key.
-			Object timestamp = hit.getSource().remove(ElasticSearchMappings.ES_TIMESTAMP);
+			Object timestamp = hit.getSource().remove(ElasticsearchMappings.ES_TIMESTAMP);
 			hit.getSource().put(Bucket.TIMESTAMP, timestamp);
 
 			Bucket bucket = m_ObjectMapper.convertValue(hit.getSource(), Bucket.class);
@@ -598,7 +598,7 @@ public class ElasticSearchJobProvider implements JobProvider
 		{
 			// Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch, 
 			// and replace using the API 'timestamp' key.
-			Object timestamp = response.getSource().remove(ElasticSearchMappings.ES_TIMESTAMP);
+			Object timestamp = response.getSource().remove(ElasticsearchMappings.ES_TIMESTAMP);
 			response.getSource().put(Bucket.TIMESTAMP, timestamp);
 
 			Bucket bucket = m_ObjectMapper.convertValue(response.getSource(), Bucket.class);
@@ -762,7 +762,7 @@ public class ElasticSearchJobProvider implements JobProvider
 			Map<String, Object> m  = hit.getSource();
 
 			// TODO replace logstash timestamp name with timestamp
-			m.put(Bucket.TIMESTAMP, m.remove(ElasticSearchMappings.ES_TIMESTAMP));
+			m.put(Bucket.TIMESTAMP, m.remove(ElasticsearchMappings.ES_TIMESTAMP));
 			
 			AnomalyRecord record = m_ObjectMapper.convertValue(
 					m, AnomalyRecord.class);
