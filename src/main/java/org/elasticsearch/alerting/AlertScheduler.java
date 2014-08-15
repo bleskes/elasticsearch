@@ -62,6 +62,7 @@ public class AlertScheduler extends AbstractLifecycleComponent {
     public void executeAlert(String alertName, JobExecutionContext jobExecutionContext){
         logger.warn("Running [{}]",alertName);
         Alert alert = alertManager.getAlertForName(alertName);
+
         //@TODO : claim alert
         try {
             XContentBuilder builder = createClampedQuery(jobExecutionContext, alert);
@@ -90,19 +91,22 @@ public class AlertScheduler extends AbstractLifecycleComponent {
             }else{
                 logger.warn("We didn't trigger");
             }
-            //@TODO write this back to the alert manager
+            alertManager.updateLastRan(alertName, new DateTime(jobExecutionContext.getFireTime()));
+            if (!alertManager.addHistory(alertName, result.isTriggered,
+                    new DateTime(jobExecutionContext.getScheduledFireTime()), result.query,
+                    result.trigger, result.searchResponse.getHits().getTotalHits(), alert.indices()))
+            {
+                logger.warn("Failed to store history for alert [{}]", alertName);
+            }
         } catch (Exception e) {
-            logger.error("Fail", e);
-            logger.error("Failed execute alert [{}]",alert.queryName(), e);
+            logger.error("Failed execute alert [{}]",e, alert.queryName());
         }
-
     }
 
     private XContentBuilder createClampedQuery(JobExecutionContext jobExecutionContext, Alert alert) throws IOException {
         Date scheduledFireTime = jobExecutionContext.getScheduledFireTime();
         DateTime clampEnd = new DateTime(scheduledFireTime);
         DateTime clampStart = clampEnd.minusSeconds((int)alert.timePeriod().seconds());
-
         XContentBuilder builder = XContentFactory.contentBuilder(XContentType.JSON);
         builder.startObject();
         builder.field("query");
