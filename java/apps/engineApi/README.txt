@@ -223,12 +223,16 @@ If not set 'skip' and 'take' default to 0 and 100 meaning the first 100 results 
     "recordCount" : 1,
     "timestamp" : "2013-01-28T00:00:00.000Z",
     "id" : "1359331200",
+    "rawAnomalyScore" : 0.0
     "anomalyScore" : 0.0
+    "unusualScore" : 0.0
   }, {
     "recordCount" : 1,
     "timestamp" : "2013-01-28T01:00:00.000Z",
     "id" : "1359334800",
+    "rawAnomalyScore" : 0.0
     "anomalyScore" : 0.0
+    "unusualScore" : 0.0
   }, {
   ...
   }
@@ -252,24 +256,22 @@ curl 'http://localhost:8080/engine/v1/results/20140519113920-00001/1359561600?ex
   "type" : "bucket",
   "document" : {
     "recordCount" : 2,
+    "eventCount" : 277,
     "timestamp" : "2013-01-30T16:00:00.000Z",
     "id" : "1359561600",
-    "anomalyScore" : 10.276,
+    "rawAnomalyScore" : 10.276,
+    "anomalyScore" : 94.39974,
+    "unusualScore" : 100,
     "records" : [ {
       "byFieldName" : "airline",
       "typical" : 101.651,
       "byFieldValue" : "AAL",
       "actual" : 242.75,
       "probability" : 5.24776E-39,
-      "anomalyScore" : 10.276,
+      "anomalyScore" : 94.39974,
+      "unusualScore" : 100,
       "fieldName" : "responsetime",
       "function" : "mean"
-    }, {
-      "isSimpleCount" : true,
-      "actual" : 909.0,
-      "probability" : 1.0,
-      "anomalyScore" : 0.0,
-      "function" : "count"
     } ]
   }
 }
