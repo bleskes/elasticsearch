@@ -390,10 +390,6 @@ public class NormalizationTest implements Closeable
 			double bucketMax = 0.0;
 			for (AnomalyRecord r : records.getDocuments())
 			{
-				if (r.isSimpleCount() != null && r.isSimpleCount())
-				{
-					continue;
-				}
 				bucketMax = Math.max(r.getUnusualScore(), bucketMax);
 			}
 			

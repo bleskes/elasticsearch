@@ -373,7 +373,6 @@ public class JobManager
 
 	/**
 	 * Get the anomaly records for the bucket. 
-	 * Does not include simple count records.
 	 * Records are sorted by probability  
 	 * 
 	 * @param jobId
@@ -395,7 +394,6 @@ public class JobManager
 	
 	/**
 	 * Get the anomaly records for the bucket. 
-	 * Does not include simple count records.
 	 * 
 	 * @param jobId
 	 * @param bucketId 
@@ -412,7 +410,7 @@ public class JobManager
 	throws UnknownJobException, NativeProcessRunException 
 	{
 		Pagination<AnomalyRecord> records = m_JobProvider.records(jobId, 
-				bucketId, false, skip, take, sortField);
+				bucketId, skip, take, sortField);
 
 		return records; 
 	}
@@ -420,7 +418,6 @@ public class JobManager
 	/**
 	 * Get a page of anomaly records from the buckets between
 	 * epochStart and epochEnd. 
-	 * Does not include simple count records.
 	 * Records are sorted by probability  
 	 * 
 	 * @param jobId
@@ -443,7 +440,6 @@ public class JobManager
 	
 	/**
 	 * Get a page of anomaly records from all buckets.
-	 * Does not include simple count records.
 	 * 
 	 * @param jobId
 	 * @param skip Skip the first N records. This parameter is for paging
@@ -463,7 +459,7 @@ public class JobManager
 	
 	/**
 	 * Get a page of anomaly records from the buckets between
-	 * epochStart and epochEnd. Does not include simple count records.
+	 * epochStart and epochEnd.
 	 * 
 	 * @param jobId
 	 * @param skip
@@ -480,7 +476,7 @@ public class JobManager
 	throws NativeProcessRunException, UnknownJobException
 	{
 		Pagination<AnomalyRecord> records = m_JobProvider.records(jobId, 
-				false, skip, take, epochStart, epochEnd, sortField);
+				skip, take, epochStart, epochEnd, sortField);
 
 		return records; 
 	}
@@ -488,7 +484,6 @@ public class JobManager
 
 	/**
 	 * Get a page of anomaly records from all buckets.
-	 * Does not include simple count records.
 	 *
 	 * @param jobId
 	 * @param skip Skip the first N records. This parameter is for paging
@@ -504,7 +499,7 @@ public class JobManager
 	throws NativeProcessRunException, UnknownJobException 
 	{
 		Pagination<AnomalyRecord> records = m_JobProvider.records(jobId, 
-				false, skip, take, sortField);
+				skip, take, sortField);
 
 		return records; 
 	}

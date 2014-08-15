@@ -85,11 +85,6 @@ public class AnomalyRecord
 	static final public String IS_OVERALL_RESULT = "isOverallResult";
 
 	/**
-	 * Simple count detector
-	 */
-	static final public String IS_SIMPLE_COUNT = "isSimpleCount";
-
-	/**
 	 * Normalisation
 	 */
 	static final public String ANOMALY_SCORE = "anomalyScore";
@@ -113,8 +108,6 @@ public class AnomalyRecord
 	private String m_OverFieldValue;
 	private Boolean m_IsOverallResult;
 
-	private Boolean m_IsSimpleCount;
-	
 	private double m_AnomalyScore;
 	private double m_UnusualScore;
 	private Date   m_Timestamp;
@@ -296,18 +289,6 @@ public class AnomalyRecord
 		m_IsOverallResult = value;
 	}
 
-	@JsonProperty(IS_SIMPLE_COUNT)
-	public Boolean isSimpleCount()
-	{
-		return m_IsSimpleCount;
-	}
-
-	@JsonProperty(IS_SIMPLE_COUNT)
-	public void setSimpleCount(boolean value)
-	{
-		m_IsSimpleCount = value;
-	}
-	
 	public String getParent()
 	{
 		return m_Parent;
@@ -532,18 +513,6 @@ public class AnomalyRecord
 								+ " as a bool");
 					}
 					break;
-				case IS_SIMPLE_COUNT:
-					token = parser.nextToken();
-					if (token == JsonToken.VALUE_FALSE || token == JsonToken.VALUE_TRUE)
-					{
-						record.setSimpleCount(parser.getBooleanValue());
-					}
-					else
-					{
-						s_Logger.warn("Cannot parse " + fieldName + " : " + parser.getText()
-								+ " as a bool");
-					}
-					break;
 				default:
 					s_Logger.warn(String.format("Parse error unknown field in Anomaly Record %s:%s",
 							fieldName, parser.nextTextValue()));
@@ -609,8 +578,6 @@ public class AnomalyRecord
 				+ ((m_IsOverallResult == null) ? 0 : m_IsOverallResult
 						.hashCode());
 		result = prime * result
-				+ ((m_IsSimpleCount == null) ? 0 : m_IsSimpleCount.hashCode());
-		result = prime * result
 				+ ((m_OverFieldName == null) ? 0 : m_OverFieldName.hashCode());
 		result = prime
 				* result
@@ -666,7 +633,6 @@ public class AnomalyRecord
 				bothNullOrEqual(this.m_PartitionFieldValue, that.m_PartitionFieldValue) &&
 				bothNullOrEqual(this.m_OverFieldName, that.m_OverFieldName) &&
 				bothNullOrEqual(this.m_OverFieldValue, that.m_OverFieldValue) &&
-				bothNullOrEqual(this.m_IsSimpleCount, that.m_IsSimpleCount) &&
 				bothNullOrEqual(this.m_IsOverallResult, that.m_IsOverallResult) &&
 				bothNullOrEqual(this.m_Timestamp, that.m_Timestamp) &&
 				bothNullOrEqual(this.m_Parent, that.m_Parent);

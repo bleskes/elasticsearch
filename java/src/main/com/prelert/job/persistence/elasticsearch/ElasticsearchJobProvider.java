@@ -540,7 +540,7 @@ public class ElasticsearchJobProvider implements JobProvider
 				int rskip = 0;
 				int rtake = 500;
 				Pagination<AnomalyRecord> page = this.records(
-						jobId, hit.getId(), true, rskip, rtake, 
+						jobId, hit.getId(), rskip, rtake, 
 						AnomalyRecord.PROBABILITY);				
 				bucket.setRecords(page.getDocuments());
 				
@@ -548,7 +548,7 @@ public class ElasticsearchJobProvider implements JobProvider
 				{
 					rskip += rtake;
 					page = this.records(
-							jobId, hit.getId(), true, rskip, rtake, 
+							jobId, hit.getId(), rskip, rtake, 
 							AnomalyRecord.PROBABILITY);				
 					bucket.getRecords().addAll(page.getDocuments());
 				}
@@ -608,7 +608,7 @@ public class ElasticsearchJobProvider implements JobProvider
 				int rskip = 0;
 				int rtake = 500;
 				Pagination<AnomalyRecord> page = this.records(
-						jobId, bucketId, true, rskip, rtake, 
+						jobId, bucketId, rskip, rtake, 
 						AnomalyRecord.PROBABILITY);				
 				bucket.setRecords(page.getDocuments());
 				
@@ -616,7 +616,7 @@ public class ElasticsearchJobProvider implements JobProvider
 				{
 					rskip += rtake;
 					page = this.records(
-							jobId, bucketId, true, rskip, rtake, 
+							jobId, bucketId, rskip, rtake, 
 							AnomalyRecord.PROBABILITY);				
 					bucket.getRecords().addAll(page.getDocuments());
 				}
@@ -631,19 +631,19 @@ public class ElasticsearchJobProvider implements JobProvider
 
 	@Override
 	public Pagination<AnomalyRecord> records(String jobId,
-			String bucketId, boolean includeSimpleCount, int skip, int take,
+			String bucketId, int skip, int take,
 			String sortField)
 	throws UnknownJobException
 	{
 		 FilterBuilder bucketFilter = FilterBuilders.hasParentFilter(Bucket.TYPE, 
 								FilterBuilders.termFilter(Bucket.ID, bucketId));
 		
-		return records(jobId, includeSimpleCount, skip, take, bucketFilter, sortField);
+		return records(jobId, skip, take, bucketFilter, sortField);
 	}
 	
 	@Override
 	public Pagination<AnomalyRecord> records(String jobId,
-			boolean includeSimpleCount, int skip, int take,
+			int skip, int take,
 			long startBucket, long endBucket, String sortField)
 	throws UnknownJobException
 	{
@@ -660,7 +660,7 @@ public class ElasticsearchJobProvider implements JobProvider
 		FilterBuilder bucketFilter = FilterBuilders.hasParentFilter(
 				Bucket.TYPE, rangeFilter);
 		
-		return records(jobId, includeSimpleCount, skip, take, bucketFilter, sortField);
+		return records(jobId, skip, take, bucketFilter, sortField);
 	}
 	
 	/**
@@ -670,7 +670,7 @@ public class ElasticsearchJobProvider implements JobProvider
 	 */
 	@Override
 	public Pagination<AnomalyRecord> records(String jobId,
-			List<String> bucketIds, boolean includeSimpleCount, int skip, 
+			List<String> bucketIds, int skip, 
 			int take, String sortField)
 	throws UnknownJobException
 	{
@@ -683,17 +683,17 @@ public class ElasticsearchJobProvider implements JobProvider
 		FilterBuilder bucketFilter = FilterBuilders.hasParentFilter(
 						Bucket.TYPE, idFilter);
 
-		return records(jobId, includeSimpleCount, skip, take, bucketFilter, sortField);
+		return records(jobId, skip, take, bucketFilter, sortField);
 	}
 	
 	@Override
 	public Pagination<AnomalyRecord> records(String jobId,
-			boolean includeSimpleCount, int skip, int take, String sortField)
+			int skip, int take, String sortField)
 	throws UnknownJobException
 	{
 		 FilterBuilder fb = FilterBuilders.matchAllFilter();
 		 
-		return records(jobId, includeSimpleCount, skip, take, fb, sortField);
+		return records(jobId, skip, take, fb, sortField);
 	}
 	
 	
@@ -701,7 +701,6 @@ public class ElasticsearchJobProvider implements JobProvider
 	 * The returned records have the parent bucket id set.
 	 * 
 	 * @param jobId
-	 * @param includeSimpleCount 
 	 * @param skip
 	 * @param take
 	 * @param recordFilter The record filter sensible options are
@@ -710,28 +709,13 @@ public class ElasticsearchJobProvider implements JobProvider
 	 * @throws UnknownJobException 
 	 */
 	private Pagination<AnomalyRecord> records(String jobId, 
-			boolean includeSimpleCount, int skip, int take,
+			int skip, int take,
 			FilterBuilder recordFilter, String sortField) 
 	throws UnknownJobException
 	{
-		FilterBuilder filter;
-		if (includeSimpleCount)
-		{
-			filter = recordFilter;
-		}
-		else
-		{
-			// Filter out all simple count records
-			FilterBuilder notSimpleCountFilter = FilterBuilders.notFilter(
-					FilterBuilders.termFilter(AnomalyRecord.IS_SIMPLE_COUNT, true));
-		
-			filter = FilterBuilders.andFilter(recordFilter, 
-					notSimpleCountFilter);			
-		}
-			
 		SearchRequestBuilder searchBuilder = m_Client.prepareSearch(jobId)
 				.setTypes(AnomalyRecord.TYPE)
-				.setPostFilter(filter)
+				.setPostFilter(recordFilter)
 				.setFrom(skip).setSize(take)
 				.addField(_PARENT)   // include the parent id
 				.setFetchSource(true);  // the field option turns off source so request it explicitly
