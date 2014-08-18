@@ -1,5 +1,6 @@
 package org.elasticsearch.alerting;
 
+import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.joda.time.DateTime;
 import org.elasticsearch.common.xcontent.XContentBuilder;
@@ -11,8 +12,11 @@ public class AlertResult {
     public AlertTrigger trigger;
     public String alertName;
     public DateTime fireTime;
+    public boolean isTriggered;
+    public SearchRequestBuilder query;
+    public String[] indices;
 
-    public AlertResult(String alertName, SearchResponse searchResponse, AlertTrigger trigger, boolean isTriggered, XContentBuilder query, String[] indices, DateTime fireTime) {
+    public AlertResult(String alertName, SearchResponse searchResponse, AlertTrigger trigger, boolean isTriggered, SearchRequestBuilder query, String[] indices, DateTime fireTime) {
         this.searchResponse = searchResponse;
         this.trigger = trigger;
         this.isTriggered = isTriggered;
@@ -21,10 +25,6 @@ public class AlertResult {
         this.alertName = alertName;
         this.fireTime = fireTime;
     }
-
-    public boolean isTriggered;
-    public XContentBuilder query;
-    public String[] indices;
 
     @Override
     public boolean equals(Object o) {

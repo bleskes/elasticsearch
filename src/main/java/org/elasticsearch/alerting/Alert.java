@@ -21,7 +21,26 @@ public class Alert implements ToXContent{
     private long version;
     private DateTime running;
     private boolean enabled;
+    private boolean simpleQuery;
+    private String timestampString = "@timestamp";
 
+    public String timestampString() {
+        return timestampString;
+    }
+
+    public void timestampString(String timestampString) {
+        this.timestampString = timestampString;
+    }
+
+
+
+    public boolean simpleQuery() {
+        return simpleQuery;
+    }
+
+    public void simpleQuery(boolean simpleQuery) {
+        this.simpleQuery = simpleQuery;
+    }
 
     public boolean enabled() {
         return enabled;
@@ -111,7 +130,7 @@ public class Alert implements ToXContent{
 
     public Alert(String alertName, String queryName, AlertTrigger trigger,
                  TimeValue timePeriod, List<AlertAction> actions, String schedule, DateTime lastRan,
-                 List<String> indices, DateTime running, long version, boolean enabled){
+                 List<String> indices, DateTime running, long version, boolean enabled, boolean simpleQuery){
         this.alertName = alertName;
         this.queryName = queryName;
         this.trigger = trigger;
@@ -123,6 +142,7 @@ public class Alert implements ToXContent{
         this.version = version;
         this.running = running;
         this.enabled = enabled;
+        this.simpleQuery = simpleQuery;
     }
 
     @Override
@@ -136,6 +156,7 @@ public class Alert implements ToXContent{
         builder.field(AlertManager.LASTRAN_FIELD.getPreferredName(), lastRan);
         builder.field(AlertManager.CURRENTLY_RUNNING.getPreferredName(), running);
         builder.field(AlertManager.ENABLED.getPreferredName(), enabled);
+        builder.field(AlertManager.SIMPLE_QUERY.getPreferredName(), simpleQuery);
 
         builder.field(AlertManager.TRIGGER_FIELD.getPreferredName());
         trigger.toXContent(builder, params);

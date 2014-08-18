@@ -81,7 +81,6 @@ public class AlertRestHandler implements RestHandler {
                 failed.endObject();
                 restChannel.sendResponse(new BytesRestResponse(BAD_REQUEST,failed));
             }
-
             return true;
         } else if (request.method() == DELETE) {
             String alertName = request.param("name");
@@ -107,6 +106,5 @@ public class AlertRestHandler implements RestHandler {
         builder.endObject();
         return builder;
     }
-
 
 }
