@@ -872,7 +872,7 @@ public class JobsTest implements Closeable
 				test(buckets.getPreviousPage() != null);
 				
 				int start = Math.max(0,  buckets.getSkip() - buckets.getTake());
-				String prevPageUrl = String.format("%s/results/%s?skip=%d&take=%d&expand=%b", 
+				String prevPageUrl = String.format("%s/results/%s/buckets?skip=%d&take=%d&expand=%b", 
 						baseUrl, jobId,  start, buckets.getTake(), false);
 				
 				test(prevPageUrl.equals(buckets.getPreviousPage().toString()));
@@ -887,7 +887,7 @@ public class JobsTest implements Closeable
 			else
 			{
 				int start = Math.max(0,  buckets.getSkip() + buckets.getTake());
-				String nextPageUrl = String.format("%s/results/%s?skip=%d&take=%d&expand=%b", 
+				String nextPageUrl = String.format("%s/results/%s/buckets?skip=%d&take=%d&expand=%b", 
 						baseUrl, jobId, start, buckets.getTake(), false);
 
 				test(nextPageUrl.equals(buckets.getNextPage().toString()));
@@ -946,7 +946,7 @@ public class JobsTest implements Closeable
 				test(buckets.getPreviousPage() != null);
 				
 				int start = Math.max(0,  buckets.getSkip() - buckets.getTake());
-				String prevPageUrl = String.format("%s/results/%s?skip=%d&take=%d&expand=%b", 
+				String prevPageUrl = String.format("%s/results/%s/buckets?skip=%d&take=%d&expand=%b", 
 						baseUrl, jobId, start, buckets.getTake(), true);
 
 				test(prevPageUrl.equals(buckets.getPreviousPage().toString()));						
@@ -960,7 +960,7 @@ public class JobsTest implements Closeable
 			else
 			{
 				int start = Math.max(0,  buckets.getSkip() + buckets.getTake());
-				String nextPageUrl = String.format("%s/results/%s?skip=%d&take=%d&expand=%b", 
+				String nextPageUrl = String.format("%s/results/%s/buckets?skip=%d&take=%d&expand=%b", 
 						baseUrl, jobId, start, buckets.getTake(), true);
 
 				test(nextPageUrl.equals(buckets.getNextPage().toString()));
@@ -1017,11 +1017,6 @@ public class JobsTest implements Closeable
 				test(epoch == lastBucketTime);
 			}
 			
-//			test(b.getDetectors().size() > 0);
-//			for (com.prelert.rs.data.Detector d : b.getDetectors())
-//			{
-//				test(d.getName().isEmpty() == false);
-//			}
 			
 			if (expanded)
 			{

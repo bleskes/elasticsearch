@@ -51,6 +51,7 @@ import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.Pagination;
+import com.prelert.rs.data.SingleDocument;
 
 
 /**
@@ -384,11 +385,13 @@ public class NormalizationTest implements Closeable
 		int count = 30;
 		for (Bucket bucket: allBuckets.getDocuments())
 		{
-			Pagination<AnomalyRecord> records = m_WebServiceClient.getBucketRecords(
-					baseUrl, jobId, bucket.getId());			
+			SingleDocument<Bucket> bucketDoc = m_WebServiceClient.getBucket(
+					baseUrl, jobId, bucket.getId(), true);		
+			
+			List<AnomalyRecord> records = bucketDoc.getDocument().getRecords();
 			
 			double bucketMax = 0.0;
-			for (AnomalyRecord r : records.getDocuments())
+			for (AnomalyRecord r : records)
 			{
 				if (r.isSimpleCount() != null && r.isSimpleCount())
 				{
