@@ -682,9 +682,9 @@ public class EngineApiClient implements Closeable
 	public Pagination<AnomalyRecord> getRecords(String baseUrl, String jobId)
 	throws IOException
 	{
-		return this.<String>getRecords(baseUrl, jobId, null, null, null, null);
+		return this.<String>getRecords(baseUrl, jobId, null, null, null, null,
+				null, null, null, null);
 	}
-	
 	
 	/**
 	 * Get the anomaly records for the job with skip and take parameters.
@@ -706,10 +706,41 @@ public class EngineApiClient implements Closeable
 					Long skip, Long take)
 	throws IOException
 	{
-		return this.<String>getRecords(baseUrl, jobId, skip, take, null, null);
+		return this.<String>getRecords(baseUrl, jobId, skip, take, null, null,
+				null, null, null, null);
+	}	
+	
+	
+	/**
+	 * Get the anomaly records for the job with skip and take parameters.
+	 * The records aren't organised by bucket 
+	 * 
+	 * Calls {@link #getRecords(String, String, Long, Long)} with the 
+	 * skip and take parameters set to <code>null</code>
+	 * 
+	 * @param baseUrl The base URL for the REST API including version number
+	 * e.g <code>http://localhost:8080/engine/v1/</code>
+	 * @param jobId The Job's unique Id
+	 * @param skip The number of records to skip 
+	 * @param take The max number of records to request. 
+	 * @param start The start date filter as either a Long (seconds from epoch)
+	 * or an ISO 8601 date String. If <code>null</code> then ignored
+	 * @param end The end date filter as either a Long (seconds from epoch)
+	 * or an ISO 8601 date String. If <code>null</code> then ignored
+	 * 
+	 * @return A {@link Pagination} object containing a list of 
+	 * {@link AnomalyRecord anomaly records}
+	 * @throws IOException  
+	 */
+	public <T> Pagination<AnomalyRecord> getRecords(String baseUrl, String jobId, 
+					Long skip, Long take, T start, T end)
+	throws IOException
+	{
+		return this.<T>getRecords(baseUrl, jobId, skip, take, start, end,
+				null, null, null, null);
 	}
-	
-	
+		
+
 	/**
 	 * Get the anomaly records for the job between the start and 
 	 * end dates with skip and take parameters.
@@ -725,12 +756,22 @@ public class EngineApiClient implements Closeable
 	 * or an ISO 8601 date String. If <code>null</code> then ignored
 	 * @param end The end date filter as either a Long (seconds from epoch)
 	 * or an ISO 8601 date String. If <code>null</code> then ignored
+	 * @param sortField The field to sort the results by, ignored if <code>null</code>
+	 * @param sort_descending If sort_field is not <code>null</code> then sort  
+	 * records in descending order if true else sort ascending
+	 * @param anomalyScoreFilterValue If not <code>null</code> return only the 
+	 * records with an anomalyScore >= anomalyScoreFilterValue
+	 * @param unusualScoreFilterValue If not <code>null</code> return only the 
+	 * records with an unusualScore >= unusualScoreFilterValue
+	 * 
 	 * @return A {@link Pagination} object containing a list of 
 	 * {@link AnomalyRecord anomaly records}
 	 * @throws IOException 
 	 */			
 	public <T> Pagination<AnomalyRecord> getRecords(String baseUrl, String jobId, 
-			Long skip, Long take, T start, T end) 			
+			Long skip, Long take, T start, T end, 
+			String sortField, Boolean sortDescending, 
+			Double anomalyScoreFilterValue, Double unusualScoreFilterValue) 			
 	throws IOException
 	{
 		String url = baseUrl + "/results/" + jobId + "/records/";
@@ -754,6 +795,11 @@ public class EngineApiClient implements Closeable
 		if (end != null)
 		{
 			url += queryChar + "end=" + URLEncoder.encode(end.toString(), "UTF-8");
+			queryChar = '&';
+		}
+		if (sortField != null)
+		{
+			url += queryChar + "sort=" + URLEncoder.encode(end.toString(), "UTF-8");
 			queryChar = '&';
 		}
 		

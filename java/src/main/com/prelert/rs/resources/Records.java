@@ -96,7 +96,7 @@ public class Records extends ResourceWithJobManager
 	 * @return
 	 */
 	@GET
-	@Path("/{jobId}")
+	@Path("/{jobId}/records")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Pagination<AnomalyRecord> records(
 			@PathParam("jobId") String jobId,
@@ -209,7 +209,7 @@ public class Records extends ResourceWithJobManager
     		setPagingUrls(path, records, queryParams);
     	}		
 			
-		s_Logger.debug(String.format("Return %f records for job %s", 
+		s_Logger.debug(String.format("Return %d records for job %s", 
 				records.getDocumentCount(), jobId));
 		
 		return records;

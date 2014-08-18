@@ -475,7 +475,6 @@ public class JobManager
 
 		return records; 
 	}
-
 	
 	/**
 	 * Set the job's description.
