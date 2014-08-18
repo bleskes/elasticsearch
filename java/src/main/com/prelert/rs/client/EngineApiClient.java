@@ -584,7 +584,7 @@ public class EngineApiClient implements Closeable
 			Long skip, Long take, T start, T end) 
 	throws IOException
 	{
-		String url = baseUrl + "/results/" + jobId ;
+		String url = baseUrl + "/results/" + jobId + "/buckets/";
 		char queryChar = '?';
 		if (expand)
 		{
@@ -644,7 +644,7 @@ public class EngineApiClient implements Closeable
 			String bucketId, boolean expand) 
 	throws JsonMappingException, IOException
 	{
-		String url = baseUrl + "/results/" + jobId + "/" + bucketId;
+		String url = baseUrl + "/results/" + jobId + "/buckets/" + bucketId;
 		if (expand)
 		{
 			url += "?expand=true";
@@ -733,7 +733,7 @@ public class EngineApiClient implements Closeable
 			Long skip, Long take, T start, T end) 			
 	throws IOException
 	{
-		String url = baseUrl + "/records/" + jobId ;
+		String url = baseUrl + "/results/" + jobId + "/records/";
 		char queryChar = '?';
 
 		if (skip != null)
@@ -770,37 +770,6 @@ public class EngineApiClient implements Closeable
 		return page;
 	}
 	
-	
-	/**
-	 * Get all the normalised records for the bucket
-	 * 
-	 * @param baseUrl The base URL for the REST API including version number
-	 * e.g <code>http://localhost:8080/engine/v1/</code>
-	 * @param jobId The Job's unique Id
-	 * @param bucketId 
-	 * @return
-	 * @throws IOException
-	 */
-	public Pagination<AnomalyRecord> getBucketRecords(String baseUrl, 
-			String jobId, String bucketId)
-	throws IOException
-	{
-		String url = baseUrl + "/results/" + jobId + "/" + bucketId + "/records";
-
-		s_Logger.debug("GET records " + url);
-
-		Pagination<AnomalyRecord> page = this.get(url, 
-				new TypeReference<Pagination<AnomalyRecord>>() {});
-		
-		if (page == null)
-		{
-			page = new Pagination<>();
-			page.setDocuments(Collections.<AnomalyRecord>emptyList());
-		}
-		
-		return page;
-	}
-
 	
 	/**
 	 * Get job alerts with the default skip and take parameters
