@@ -58,11 +58,8 @@ public class Detector
 	
 	private String m_Name;
 	private List<AnomalyRecord> m_Records;
-	
-	private boolean m_IsSimpleCount;
-	private long m_EventCount;
-	
-	
+
+
 	public Detector()
 	{
 		m_Records = new ArrayList<>();
@@ -109,27 +106,8 @@ public class Detector
 	{
 		return m_Records;
 	}
-	
-	/**
-	 * True if this is the simple count detector
-	 * @return
-	 */
-	public boolean isSimpleCount()
-	{
-		return m_IsSimpleCount;
-	}
-	
-	/**
-	 * If {@link Detector#isSimpleCount()} is true
-	 * this is the event count for the bucket
-	 * @return
-	 */
-	public long getEventCount()
-	{
-		return m_EventCount;
-	}
-	
-	
+
+
 	/**
 	 * Create a new <code>Detector</code> and populate it from the JSON parser.
 	 * The parser must be pointing at the start of the object then all the object's 
@@ -196,13 +174,7 @@ public class Detector
 						{
 							AnomalyRecord record = AnomalyRecord.parseJson(parser);
 							detector.addRecord(record);		
-							
-							if (record.isSimpleCount() != null && record.isSimpleCount() == true)
-							{
-								detector.m_IsSimpleCount = true;
-								detector.m_EventCount = record.getActual().longValue();
-							}
-							
+
 							token = parser.nextToken();
 						}						
 					}

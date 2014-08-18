@@ -525,10 +525,6 @@ public class ElasticsearchPersister implements JobDataPersister
 		{
 			builder.field(AnomalyRecord.IS_OVERALL_RESULT, record.isOverallResult());
 		}	
-		if (record.isSimpleCount() != null)
-		{
-			builder.field(AnomalyRecord.IS_SIMPLE_COUNT, record.isSimpleCount());
-		}
 
 		builder.endObject();
 		
