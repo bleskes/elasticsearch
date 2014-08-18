@@ -46,10 +46,10 @@ import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.Quantiles;
 
 /**
- * Static methods to create ElasticSearch mappings for the autodetect 
+ * Static methods to create Elasticsearch mappings for the autodetect 
  * persisted objects/documents 
   */
-public class ElasticSearchMappings 
+public class ElasticsearchMappings 
 {
 	/**
 	 * String constants used in mappings
@@ -68,7 +68,7 @@ public class ElasticSearchMappings
 	
 	
 	/**
-	 * Create the ElasticSearch mapping for {@linkplain com.prelert.job.JobDetails}.
+	 * Create the Elasticsearch mapping for {@linkplain com.prelert.job.JobDetails}.
 	 * The '_all' field is disabled as the document isn't meant to be searched.
 	 * 
 	 * @return
@@ -204,7 +204,7 @@ public class ElasticSearchMappings
 	
 	
 	/**
-	 * Create the ElasticSearch mapping for {@linkplain com.prelert.rs.data.Bucket}.
+	 * Create the Elasticsearch mapping for {@linkplain com.prelert.rs.data.Bucket}.
 	 * The '_all' field is disabled as the document isn't meant to be searched.
 	 * 
 	 * @return
@@ -250,7 +250,7 @@ public class ElasticSearchMappings
 	
 	
 	/**
-	 * Create the ElasticSearch mapping for {@linkplain com.prelert.rs.data.Detector}.
+	 * Create the Elasticsearch mapping for {@linkplain com.prelert.rs.data.Detector}.
 	 * The '_all' field is disabled as the document isn't meant to be searched.
 	 * 
 	 * @return
@@ -278,7 +278,7 @@ public class ElasticSearchMappings
 	
 	
 	/**
-	 * Create the ElasticSearch mapping for {@linkplain com.prelert.rs.data.Detector}.
+	 * Create the Elasticsearch mapping for {@linkplain com.prelert.rs.data.Detector}.
 	 * The '_all' field is disabled as the document isn't meant to be searched.
 	 * Records have a _parent mapping to a {@linkplain com.prelert.rs.data.Bucket}.
 	 * 
@@ -337,9 +337,6 @@ public class ElasticSearchMappings
 						.startObject(AnomalyRecord.IS_OVERALL_RESULT)
 							.field("type", "boolean")
 						.endObject()
-						.startObject(AnomalyRecord.IS_SIMPLE_COUNT)
-							.field("type", "boolean")
-						.endObject()
 						.startObject(Bucket.ANOMALY_SCORE)
 							.field("type", "double")
 						.endObject()
@@ -355,7 +352,7 @@ public class ElasticSearchMappings
 
 
 	/**
-	 * Create the ElasticSearch mapping for {@linkplain Quantiles}.
+	 * Create the Elasticsearch mapping for {@linkplain Quantiles}.
 	 * The '_all' field is disabled as the document isn't meant to be searched.
 	 *
 	 * The quantile state string is not searchable (index = 'no') as it could be
@@ -386,7 +383,7 @@ public class ElasticSearchMappings
 
 
 	/**
-	 * Create the ElasticSearch mapping for {@linkplain DetectorState}.
+	 * Create the Elasticsearch mapping for {@linkplain DetectorState}.
 	 * The '_all' field is disabled as the document isn't meant to be searched.
 	 * 
 	 * The model state string is not searchable (index = 'no') as it could be

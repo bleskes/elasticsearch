@@ -59,9 +59,9 @@ public class Bucket
 	public static final String ANOMALY_SCORE =  "anomalyScore";
 	public static final String UNUSUAL_SCORE =  "unusualScore";
 	public static final String RECORD_COUNT = "recordCount";
+	public static final String EVENT_COUNT = "eventCount";
 	public static final String DETECTORS = "detectors";
 	public static final String RECORDS = "records";
-	public static final String EVENT_COUNT = "eventCount";
 	
 
 	/**
@@ -252,12 +252,7 @@ public class Bucket
 
 		token = parser.nextToken();
 		Bucket bucket = parseJsonAfterStartObject(parser);
-		
-		if (bucket.getEventCount() == 0)
-		{
-			System.out.print("event count error");
-		}
-		
+
 		return bucket;
 	}
 
@@ -361,6 +356,18 @@ public class Bucket
 								+ " as an int");
 					}
 					break;						
+				case EVENT_COUNT:
+					token = parser.nextToken();
+					if (token == JsonToken.VALUE_NUMBER_INT)
+					{
+						bucket.setEventCount(parser.getLongValue());
+					}
+					else 
+					{
+						s_Logger.warn("Cannot parse " + EVENT_COUNT + " : " + parser.getText() 
+								+ " as an int");
+					}
+					break;						
 				case DETECTORS:
 					token = parser.nextToken();
 					if (token != JsonToken.START_ARRAY)
@@ -374,16 +381,7 @@ public class Bucket
 					while (token != JsonToken.END_ARRAY)
 					{
 						Detector detector = Detector.parseJson(parser);
-						// don't add the simple count detector and its
-						// records set the bucket event count instead
-						if (detector.isSimpleCount())
-						{
-							bucket.setEventCount(detector.getEventCount());
-						}
-						else
-						{
-							bucket.addDetector(detector);
-						}
+						bucket.addDetector(detector);
 						
 						token = parser.nextToken();
 					}

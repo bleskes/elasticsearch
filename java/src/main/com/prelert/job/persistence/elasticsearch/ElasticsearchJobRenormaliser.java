@@ -50,10 +50,10 @@ import com.prelert.rs.data.Bucket;
  * {@linkplain AnomalyRecord AnomalyRecords} with new normalised
  * anomaly scores and unusual scores
  */
-public class ElasticSearchJobRenormaliser implements JobRenormaliser
+public class ElasticsearchJobRenormaliser implements JobRenormaliser
 {
 	private String m_JobId;
-	private ElasticSearchJobProvider m_JobProvider;
+	private ElasticsearchJobProvider m_JobProvider;
 
 	/**
 	 * This read from the data store on first access
@@ -66,13 +66,13 @@ public class ElasticSearchJobRenormaliser implements JobRenormaliser
 	private static final int MAX_BUCKETS = 100000;
 
 	/**
-	 * Create with the ElasticSearch client. Data will be written to
+	 * Create with the Elasticsearch client. Data will be written to
 	 * the index <code>jobId</code>
 	 *
-	 * @param jobId The job Id/ElasticSearch index
-	 * @param jobProvider The ElasticSearch job provider
+	 * @param jobId The job Id/Elasticsearch index
+	 * @param jobProvider The Elasticsearch job provider
 	 */
-	public ElasticSearchJobRenormaliser(String jobId, ElasticSearchJobProvider jobProvider)
+	public ElasticsearchJobRenormaliser(String jobId, ElasticsearchJobProvider jobProvider)
 	{
 		m_JobId = jobId;
 		m_JobProvider = jobProvider;

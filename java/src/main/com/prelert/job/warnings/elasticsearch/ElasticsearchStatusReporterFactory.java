@@ -24,33 +24,35 @@
  *                                                          *
  *                                                          *
  ************************************************************/
+package com.prelert.job.warnings.elasticsearch;
 
-package com.prelert.rs.provider;
+import org.apache.log4j.Logger;
+import org.elasticsearch.client.Client;
 
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
+import com.prelert.job.JobDetails;
+import com.prelert.job.warnings.StatusReporter;
+import com.prelert.job.warnings.StatusReporterFactory;
 
-import org.elasticsearch.ElasticsearchException;
-
-import com.prelert.rs.data.ApiError;
-import com.prelert.rs.data.ErrorCode;
-
-
-/**
- * ElasticSearch exception mapper. 
- * Constructs an error message from the rest status code
- * and exception message and returns in a a server error
- * (500) response.
- */
-public class ElasticSearchExceptionMapper implements ExceptionMapper<ElasticsearchException>
+public class ElasticsearchStatusReporterFactory implements StatusReporterFactory 
 {
-	@Override
-	public Response toResponse(ElasticsearchException e)
+	private Client m_Client;
+	
+	/**
+	 * Construct the factory
+	 * 
+	 * @param node The Elasticsearch node
+	 */
+	public ElasticsearchStatusReporterFactory(Client client)
 	{
-		ApiError error = new ApiError(ErrorCode.DATA_STORE_ERROR);
-		error.setMessage("Error in ElasticSearch: = " + e.getDetailedMessage());
-		error.setCause(e);
-			
-		return Response.serverError().entity(error.toJson()).build();
+		m_Client = client;
+	}
+
+	@Override
+	public StatusReporter newStatusReporter(String jobId, JobDetails.Counts counts,
+			long analysisFieldCount, Logger logger) 
+	{
+		StatusReporter reporter =  new ElasticsearchStatusReporter(m_Client, jobId, counts, logger);
+		reporter.setAnalysedFieldsPerRecord(analysisFieldCount);
+		return reporter;
 	}
 }

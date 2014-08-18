@@ -1125,12 +1125,17 @@ public class EngineApiClient implements Closeable
 	
 	/**
 	 * Download all the log files for the given job.
-	 * 
+	 *
+	 * <b>Important: the caller MUST close the ZipInputStream returned by
+	 * this method, otherwise all subsequent client/server communications
+	 * will be blocked.</b>
+	 *
 	 * @param baseUrl The base URL for the REST API including version number
 	 * e.g <code>http://localhost:8080/engine/v1/</code>
 	 * @param jobId The Job's unique Id
 	 * @return A ZipInputStream for the log files. If the inputstream is
-	 * empty an error may have occurred
+	 * empty an error may have occurred.  The caller MUST close this
+	 * ZipInputStream when they have finished with it.
 	 * @throws ClientProtocolException
 	 * @throws IOException
 	 */
@@ -1143,11 +1148,17 @@ public class EngineApiClient implements Closeable
 		
 		HttpGet get = new HttpGet(url);
 		
-		try (CloseableHttpResponse response = m_HttpClient.execute(get))
+		CloseableHttpResponse response = m_HttpClient.execute(get);
+		try
 		{
 			if (response.getStatusLine().getStatusCode() == 200)
 			{
-				 return new ZipInputStream(response.getEntity().getContent());
+				ZipInputStream result = new ZipInputStream(response.getEntity().getContent());
+				// In this case we DON'T want the response to be automatically
+				// closed - the caller MUST close the ZipInputStream when they
+				// are finished with it
+				response = null;
+				return result;
 			}
 			else
 			{
@@ -1166,8 +1177,15 @@ public class EngineApiClient implements Closeable
 				
 				// return an empty stream
 				return new ZipInputStream(new ByteArrayInputStream(new byte[0]));
-			}			
-		}		
+			}
+		}
+		finally
+		{
+			if (response != null)
+			{
+				response.close();
+			}
+		}
 	}	
 	
 	

@@ -89,7 +89,7 @@ Creating a new job requires both a declaration of how the data is formatted
 curl -X POST -H 'Content-Type: application/json' 'http://localhost:8080/engine/v1/jobs' -d '{
     "analysisConfig" : {
         "bucketSpan":3600,
-        "detectors" :[{"fieldName":"responsetime","byFieldName":"airline"}]
+        "detectors" :[{"function":"metric","fieldName":"responsetime","byFieldName":"airline"}]
     },
     "dataDescription" : {
         "fieldDelimiter":",",
@@ -99,9 +99,12 @@ curl -X POST -H 'Content-Type: application/json' 'http://localhost:8080/engine/v
 }'
 
 In this example, we are specifying that we want the analysis to be executed on
-the 'responsetime' field. By declaring byFieldName as 'airline', the analysis
-will be performed across all airlines, instead of a unique analysis done for
-each of the 19 airlines.
+the 'responsetime' field. This field contains a numeric value, so we specify the
+metric function, which expands to all of min, mean, max, and sum. (Had we wanted
+to look at event rate or rare fields we'd have used one of the other available
+functions.) By declaring byFieldName as 'airline', the analysis will be
+performed across all airlines, instead of a unique analysis done for each of the
+19 airlines.
 
 bucketSpan defines that the analysis should be performed across hourly (3600
 second) windows.
@@ -143,6 +146,7 @@ latest job. For example:
       "bucketSpan" : 3600,
       "batchSpan" : null,
       "detectors" : [ {
+        "function" : "metric",
         "fieldName" : "responsetime",
         "byFieldName" : "airline"
       } ],
@@ -219,12 +223,16 @@ If not set 'skip' and 'take' default to 0 and 100 meaning the first 100 results 
     "recordCount" : 1,
     "timestamp" : "2013-01-28T00:00:00.000Z",
     "id" : "1359331200",
+    "rawAnomalyScore" : 0.0
     "anomalyScore" : 0.0
+    "unusualScore" : 0.0
   }, {
     "recordCount" : 1,
     "timestamp" : "2013-01-28T01:00:00.000Z",
     "id" : "1359334800",
+    "rawAnomalyScore" : 0.0
     "anomalyScore" : 0.0
+    "unusualScore" : 0.0
   }, {
   ...
   }
@@ -248,30 +256,28 @@ curl 'http://localhost:8080/engine/v1/results/20140519113920-00001/1359561600?ex
   "type" : "bucket",
   "document" : {
     "recordCount" : 2,
+    "eventCount" : 277,
     "timestamp" : "2013-01-30T16:00:00.000Z",
     "id" : "1359561600",
-    "anomalyScore" : 10.276,
+    "rawAnomalyScore" : 10.276,
+    "anomalyScore" : 94.39974,
+    "unusualScore" : 100,
     "records" : [ {
       "byFieldName" : "airline",
       "typical" : 101.651,
       "byFieldValue" : "AAL",
       "actual" : 242.75,
       "probability" : 5.24776E-39,
-      "anomalyScore" : 10.276,
+      "anomalyScore" : 94.39974,
+      "unusualScore" : 100,
       "fieldName" : "responsetime",
       "function" : "mean"
-    }, {
-      "isSimpleCount" : true,
-      "actual" : 909.0,
-      "probability" : 1.0,
-      "anomalyScore" : 0.0,
-      "function" : "count"
     } ]
   }
 }
 
-This shows that between 2013-01-30T16:00:00-0000 and 2013-01-30T17:00:00-0000 the 
-responsetime for airline AAL increased from a normal mean value of 101.651 to 242.75. 
+This shows that between 2013-01-30T16:00:00-0000 and 2013-01-30T17:00:00-0000 the
+responsetime for airline AAL increased from a normal mean value of 101.651 to 242.75.
 The probability of seeing 242.75 is 5.24776E-39 (which is very unlikely).
 
 This increased value is highly unexpected based upon the past behavior of this
