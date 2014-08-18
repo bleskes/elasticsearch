@@ -409,15 +409,43 @@ public class InternalClusterService extends AbstractLifecycleComponent<ClusterSe
                 }
 
                 // TODO, do this in parallel (and wait)
+                List<DiscoveryNode> nodesToConnectTo = new ArrayList<>();
                 for (DiscoveryNode node : nodesDelta.addedNodes()) {
                     if (!nodeRequiresConnection(node)) {
                         continue;
                     }
-                    try {
-                        transportService.connectToNode(node);
-                    } catch (Throwable e) {
-                        // the fault detection will detect it as failed as well
-                        logger.warn("failed to connect to node [" + node + "]", e);
+                    nodesToConnectTo.add(node);
+                }
+
+                if (!nodesToConnectTo.isEmpty()) {
+                    logger.trace("connecting to [{}] nodes", nodesToConnectTo.size());
+                    final CountDownLatch connectionLatch = new CountDownLatch(nodesToConnectTo.size());
+                    for (final DiscoveryNode node : nodesToConnectTo) {
+                        try {
+                            threadPool.generic().execute(new Runnable() {
+                                @Override
+                                public void run() {
+                                    try {
+                                        transportService.connectToNode(node);
+                                    } catch (Throwable e) {
+                                        // the fault detection will detect it as failed as well
+                                        logger.warn("failed to connect to node [" + node + "]", e);
+                                    } finally {
+                                        connectionLatch.countDown();
+                                    }
+                                }
+
+                            });
+                            transportService.connectToNode(node);
+                        } catch (Throwable e) {
+                            // the fault detection will detect it as failed as well
+                            logger.warn("failed to submit connection task to node [" + node + "]", e);
+                            connectionLatch.countDown();
+                        }
+                    }
+                    // TODO: configurable!
+                    if (!connectionLatch.await(30, TimeUnit.SECONDS)) {
+                        logger.warn("waited for connections for more than 30 seconds. moving on... ");
                     }
                 }
 
