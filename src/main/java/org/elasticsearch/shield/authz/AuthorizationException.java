@@ -1,5 +1,7 @@
 package org.elasticsearch.shield.authz;
 
+import org.elasticsearch.rest.RestStatus;
+
 /**
  *
  */
@@ -11,5 +13,10 @@ public class AuthorizationException extends org.elasticsearch.shield.SecurityExc
 
     public AuthorizationException(String msg, Throwable cause) {
         super(msg, cause);
+    }
+
+    @Override
+    public RestStatus status() {
+        return RestStatus.UNAUTHORIZED;
     }
 }
