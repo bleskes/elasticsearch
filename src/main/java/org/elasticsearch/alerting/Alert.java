@@ -10,9 +10,6 @@ import org.elasticsearch.common.xcontent.XContentType;
 import java.io.IOException;
 import java.util.List;
 
-/**
- * Created by brian on 8/12/14.
- */
 public class Alert implements ToXContent{
     private final String alertName;
     private String queryName;
@@ -23,6 +20,16 @@ public class Alert implements ToXContent{
     private DateTime lastRan;
     private long version;
     private DateTime running;
+    private boolean enabled;
+
+
+    public boolean enabled() {
+        return enabled;
+    }
+
+    public void enabled(boolean enabled) {
+        this.enabled = enabled;
+    }
 
     public DateTime running() {
         return running;
@@ -104,7 +111,7 @@ public class Alert implements ToXContent{
 
     public Alert(String alertName, String queryName, AlertTrigger trigger,
                  TimeValue timePeriod, List<AlertAction> actions, String schedule, DateTime lastRan,
-                 List<String> indices, DateTime running, long version){
+                 List<String> indices, DateTime running, long version, boolean enabled){
         this.alertName = alertName;
         this.queryName = queryName;
         this.trigger = trigger;
@@ -115,6 +122,7 @@ public class Alert implements ToXContent{
         this.indices = indices;
         this.version = version;
         this.running = running;
+        this.enabled = enabled;
     }
 
     @Override
@@ -127,6 +135,8 @@ public class Alert implements ToXContent{
         builder.field(AlertManager.TIMEPERIOD_FIELD.getPreferredName(), timePeriod);
         builder.field(AlertManager.LASTRAN_FIELD.getPreferredName(), lastRan);
         builder.field(AlertManager.CURRENTLY_RUNNING.getPreferredName(), running);
+        builder.field(AlertManager.ENABLED.getPreferredName(), enabled);
+
         builder.field(AlertManager.TRIGGER_FIELD.getPreferredName());
         trigger.toXContent(builder, params);
         builder.field(AlertManager.ACTION_FIELD.getPreferredName());
