@@ -18,7 +18,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static org.elasticsearch.shield.authc.support.UsernamePasswordToken.headerValue;
+import static org.elasticsearch.shield.authc.support.UsernamePasswordToken.basicAuthHeaderValue;
 import static org.elasticsearch.test.ElasticsearchIntegrationTest.ClusterScope;
 import static org.elasticsearch.test.ElasticsearchIntegrationTest.Scope;
 import static org.hamcrest.Matchers.hasSize;
@@ -39,6 +39,7 @@ public class ShieldPluginTests extends ElasticsearchIntegrationTest {
         File folder = newFolder();
         ImmutableSettings.Builder builder = ImmutableSettings.builder()
                 .put("plugin.types", SecurityPlugin.class.getName())
+                .put(super.nodeSettings(nodeOrdinal))
                 .put("shield.audit.enabled", true)
                 .put("shield.authc.esusers.files.users", copyFile(folder, "users"))
                 .put("shield.authc.esusers.files.users_roles", copyFile(folder, "users_roles"))
@@ -46,7 +47,7 @@ public class ShieldPluginTests extends ElasticsearchIntegrationTest {
                 .put("shield.n2n.file", copyFile(folder, "ip_filter.yml"))
                 .put(TransportModule.TRANSPORT_SERVICE_TYPE_KEY, SecuredTransportService.class.getName())
                         // for the test internal node clients
-                .put("request.headers.Authorization", headerValue("test_user", "changeme".toCharArray()));
+                .put("request.headers.Authorization", basicAuthHeaderValue("test_user", "changeme".toCharArray()));
 
         if (OsUtils.MAC) {
             builder.put("network.host", randomBoolean() ? "127.0.0.1" : "::1");
@@ -59,7 +60,7 @@ public class ShieldPluginTests extends ElasticsearchIntegrationTest {
     @Override
     protected Settings transportClientSettings() {
         return ImmutableSettings.builder()
-                .put("request.headers.Authorization", headerValue("test_user", "changeme".toCharArray()))
+                .put("request.headers.Authorization", basicAuthHeaderValue("test_user", "changeme".toCharArray()))
                 .build();
     }
 
