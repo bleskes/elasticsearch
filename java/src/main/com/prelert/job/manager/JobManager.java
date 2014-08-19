@@ -365,13 +365,9 @@ public class JobManager
 	}
 	
 	/**
-<<<<<<< HEAD
 	 * Get a page of anomaly records from all buckets.
-=======
-	 * Get the anomaly records for the bucket. 
->>>>>>> 9047631caecb8e4896f62ee439d04384c84b3742
-	 * Records are sorted by probability  
-	 * 
+	 * Records are sorted by probability
+	 *
 	 * @param jobId
 	 * @param skip Skip the first N records. This parameter is for paging
 	 * results if not required set to 0.
