@@ -106,12 +106,13 @@ public interface JobResultsProvider extends Closeable
 	 * @param take Take only this number of Jobs
 	 * @param sortField The field to sort results by if <code>null</code> no
 	 * sort is applied
+	 * @param sortDescending Sort in descending order
 	 * @return
 	 * @throws UnknownJobException If the job id is no recognised
 	 */
-	public Pagination<AnomalyRecord> records(String jobId, 
-			String bucketId, int skip, int take,
-			String sortField)
+	public Pagination<AnomalyRecord> bucketRecords(String jobId, 
+			String bucketId, int skip, int take, String sortField,
+			boolean sortDescending)
 	throws UnknownJobException;
 	
 	/**
@@ -125,11 +126,18 @@ public interface JobResultsProvider extends Closeable
 	 * @param take Take only this number of records
 	 * @param sortField The field to sort results by if <code>null</code> no
 	 * sort is applied
+	 * @param sortDescending Sort in descending order
+	 * @param scoreFilterField If not <code>null</code> then filter out all 
+	 * results where the value of this field is < <code>filterValue</code>
+	 * @paran filterValue Filter results where <code>scoreFilterField</code>
+	 * is less than this value. Ignored if <= 0.0
+	 * 
 	 * @return
 	 * @throws UnknownJobException If the job id is no recognised
 	 */
 	public Pagination<AnomalyRecord> records(String jobId, 
-			int skip, int take, String sortField)
+			 int skip, int take, String sortField, boolean sortDescending,
+			 String scoreFilterField, double filterValue)
 	throws UnknownJobException;
 	
 	/**
@@ -148,12 +156,19 @@ public interface JobResultsProvider extends Closeable
 	 * are returned. If 0 all buckets from <code>startBucket</code> are returned
 	 * @param sortField The field to sort results by if <code>null</code> no
 	 * sort is applied 
+	 * @param sortDescending Sort in descending order
+	 * @param scoreFilterField If not <code>null</code> then filter out all 
+	 * results where the value of this field is < <code>filterValue</code>
+	 * @paran filterValue Filter results where <code>scoreFilterField</code>
+	 * is less than this value. Ignored if <= 0.0
+	 *  
 	 * @return
 	 * throws UnknownJobException If the job id is no recognised
 	 */
 	public Pagination<AnomalyRecord> records(String jobId, 
-			int skip, int take,
-			long startBucket, long endBucket, String sortField)
+			int skip, int take, long startBucket, long endBucket, 
+			String sortField, boolean sortDescending,
+			String scoreFilterField, double filterValue)
 	throws UnknownJobException;
 			
 	
@@ -169,11 +184,13 @@ public interface JobResultsProvider extends Closeable
 	 * @param take Take only this number of records
 	 * @param sortField The field to sort results by if <code>null</code> no
 	 * sort is applied 
+	 * @param sortDescending Sort in descending order
+	 * 
 	 * @return
 	 * @throws UnknownJobException If the job id is no recognised
 	 */
 	public Pagination<AnomalyRecord> records(String jobId,
-			List<String> bucketIds, int skip, int take,
-			String sortField)
+			List<String> bucketIds, int skip, int take, String sortField,
+			boolean sortDescending)
 	throws UnknownJobException;
 }

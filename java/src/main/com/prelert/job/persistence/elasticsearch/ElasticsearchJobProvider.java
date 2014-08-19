@@ -30,9 +30,6 @@ package com.prelert.job.persistence.elasticsearch;
 import static org.elasticsearch.node.NodeBuilder.nodeBuilder;
 
 import java.io.IOException;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -64,7 +61,6 @@ import org.elasticsearch.index.query.RangeFilterBuilder;
 import org.elasticsearch.indices.IndexMissingException;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.SearchHitField;
 import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
@@ -539,17 +535,17 @@ public class ElasticsearchJobProvider implements JobProvider
 			{
 				int rskip = 0;
 				int rtake = 500;
-				Pagination<AnomalyRecord> page = this.records(
+				Pagination<AnomalyRecord> page = this.bucketRecords(
 						jobId, hit.getId(), rskip, rtake, 
-						AnomalyRecord.PROBABILITY);				
+						AnomalyRecord.PROBABILITY, true);				
 				bucket.setRecords(page.getDocuments());
 				
 				while (page.getHitCount() > rskip + rtake)
 				{
 					rskip += rtake;
-					page = this.records(
+					page = this.bucketRecords(
 							jobId, hit.getId(), rskip, rtake, 
-							AnomalyRecord.PROBABILITY);				
+							AnomalyRecord.PROBABILITY, true);				
 					bucket.getRecords().addAll(page.getDocuments());
 				}
 
@@ -607,17 +603,17 @@ public class ElasticsearchJobProvider implements JobProvider
 			{
 				int rskip = 0;
 				int rtake = 500;
-				Pagination<AnomalyRecord> page = this.records(
+				Pagination<AnomalyRecord> page = this.bucketRecords(
 						jobId, bucketId, rskip, rtake, 
-						AnomalyRecord.PROBABILITY);				
+						AnomalyRecord.PROBABILITY, true);				
 				bucket.setRecords(page.getDocuments());
 				
 				while (page.getHitCount() > rskip + rtake)
 				{
 					rskip += rtake;
-					page = this.records(
+					page = this.bucketRecords(
 							jobId, bucketId, rskip, rtake, 
-							AnomalyRecord.PROBABILITY);				
+							AnomalyRecord.PROBABILITY, true);				
 					bucket.getRecords().addAll(page.getDocuments());
 				}
 			}
@@ -630,21 +626,22 @@ public class ElasticsearchJobProvider implements JobProvider
 	
 
 	@Override
-	public Pagination<AnomalyRecord> records(String jobId,
-			String bucketId, int skip, int take,
-			String sortField)
+	public Pagination<AnomalyRecord> bucketRecords(String jobId,
+			String bucketId, int skip, int take, String sortField, boolean descending)
 	throws UnknownJobException
 	{
 		 FilterBuilder bucketFilter = FilterBuilders.hasParentFilter(Bucket.TYPE, 
 								FilterBuilders.termFilter(Bucket.ID, bucketId));
 		
-		return records(jobId, skip, take, bucketFilter, sortField);
+		return records(jobId, skip, take, bucketFilter, sortField, descending);
 	}
+	
 	
 	@Override
 	public Pagination<AnomalyRecord> records(String jobId,
-			int skip, int take,
-			long startBucket, long endBucket, String sortField)
+			int skip, int take,	long startBucket, long endBucket, 
+			String sortField, boolean descending, 
+			String scoreFilterField, double filterValue)
 	throws UnknownJobException
 	{
 		RangeFilterBuilder rangeFilter = FilterBuilders.rangeFilter(Bucket.ID);
@@ -656,11 +653,21 @@ public class ElasticsearchJobProvider implements JobProvider
 		{
 			rangeFilter.lt(endBucket);
 		}
-
-		FilterBuilder bucketFilter = FilterBuilders.hasParentFilter(
+		
+		FilterBuilder bucketFilter = FilterBuilders.hasParentFilter(				
 				Bucket.TYPE, rangeFilter);
 		
-		return records(jobId, skip, take, bucketFilter, sortField);
+		
+		FilterBuilder filter = bucketFilter;
+		if (scoreFilterField != null && filterValue > 0.0)
+		{
+			RangeFilterBuilder scoreFilter = FilterBuilders.rangeFilter(scoreFilterField);
+			scoreFilter.gte(filterValue);
+			
+			filter = FilterBuilders.andFilter(bucketFilter, scoreFilter);
+		}			
+		
+		return records(jobId, skip, take, filter, sortField, descending);
 	}
 	
 	/**
@@ -670,8 +677,8 @@ public class ElasticsearchJobProvider implements JobProvider
 	 */
 	@Override
 	public Pagination<AnomalyRecord> records(String jobId,
-			List<String> bucketIds, int skip, 
-			int take, String sortField)
+			List<String> bucketIds,  int skip, 
+			int take, String sortField, boolean descending)
 	throws UnknownJobException
 	{
 		IdsFilterBuilder idFilter = FilterBuilders.idsFilter(Bucket.TYPE);
@@ -683,17 +690,29 @@ public class ElasticsearchJobProvider implements JobProvider
 		FilterBuilder bucketFilter = FilterBuilders.hasParentFilter(
 						Bucket.TYPE, idFilter);
 
-		return records(jobId, skip, take, bucketFilter, sortField);
+		return records(jobId, skip, take, bucketFilter, sortField, descending);
 	}
 	
 	@Override
 	public Pagination<AnomalyRecord> records(String jobId,
-			int skip, int take, String sortField)
+			int skip, int take, String sortField, boolean descending,
+			String scoreFilterField, double filterValue)
 	throws UnknownJobException
 	{
-		 FilterBuilder fb = FilterBuilders.matchAllFilter();
+		 FilterBuilder fb;
+		 if (scoreFilterField != null && filterValue > 0.0)
+		 {
+			 RangeFilterBuilder scoreFilter = FilterBuilders.rangeFilter(scoreFilterField);
+			 scoreFilter.gte(filterValue);
+
+			 fb = scoreFilter;
+		 }
+		 else
+		 {
+			 fb = FilterBuilders.matchAllFilter();
+		 }
 		 
-		return records(jobId, skip, take, fb, sortField);
+		return records(jobId, skip, take, fb, sortField, descending);
 	}
 	
 	
@@ -705,12 +724,13 @@ public class ElasticsearchJobProvider implements JobProvider
 	 * @param take
 	 * @param recordFilter The record filter sensible options are
 	 * the match all filter or a parent bucket filter
+	 * @param sortField If null then not sorted
+	 * @param descending If true sort in descending order
 	 * @return
 	 * @throws UnknownJobException 
 	 */
-	private Pagination<AnomalyRecord> records(String jobId, 
-			int skip, int take,
-			FilterBuilder recordFilter, String sortField) 
+	private Pagination<AnomalyRecord> records(String jobId, int skip, int take,
+			FilterBuilder recordFilter, String sortField, boolean descending) 
 	throws UnknownJobException
 	{
 		SearchRequestBuilder searchBuilder = m_Client.prepareSearch(jobId)
@@ -725,7 +745,7 @@ public class ElasticsearchJobProvider implements JobProvider
 			SortBuilder sb = new FieldSortBuilder(sortField)
 									.ignoreUnmapped(true)
 									.missing("_last")
-									.order(SortOrder.ASC);		
+									.order(descending ? SortOrder.DESC : SortOrder.ASC);		
 			
 			searchBuilder.addSort(sb);
 		}

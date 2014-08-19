@@ -616,7 +616,7 @@ public class CsvDataTransfromTest
 		
 		
 		int loop = 0;
-		for (String data : new String[] {epoch_data /*, epoch_ms_data, epoch_timeformat_data*/})
+		for (String data : new String[] {epoch_data , epoch_ms_data, epoch_timeformat_data})
 		{
 			loop++;
 			

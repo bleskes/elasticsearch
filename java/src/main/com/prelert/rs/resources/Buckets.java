@@ -46,7 +46,6 @@ import org.apache.log4j.Logger;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.process.NativeProcessRunException;
-import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.Pagination;
@@ -54,20 +53,20 @@ import com.prelert.rs.data.SingleDocument;
 import com.prelert.rs.provider.RestApiException;
 
 /**
- * API results end point.
+ * API bucket results end point.
  * Access buckets and anomaly records, use the <pre>expand</pre> query argument
  * to get buckets and anomaly records in one query. 
  * Buckets can be filtered by date. 
  */
 @Path("/results")
-public class Results extends ResourceWithJobManager
+public class Buckets extends ResourceWithJobManager
 {
-	static private final Logger s_Logger = Logger.getLogger(Results.class);
+	static private final Logger s_Logger = Logger.getLogger(Buckets.class);
 	
 	/**
-	 * The name of the results endpoint
+	 * The name of the endpoint
 	 */
-	static public final String ENDPOINT = "results";
+	static public final String ENDPOINT = "buckets";
 	
 	
 	static public final String EXPAND_QUERY_PARAM = "expand";
@@ -98,7 +97,7 @@ public class Results extends ResourceWithJobManager
 	 * @throws UnknownJobException 
 	 */
 	@GET
-	@Path("/{jobId}")
+	@Path("/{jobId}/buckets")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Pagination<Bucket> buckets(
 			@PathParam("jobId") String jobId,
@@ -157,6 +156,7 @@ public class Results extends ResourceWithJobManager
     		String path = new StringBuilder()
 								.append("/results/")
 								.append(jobId)
+								.append("/buckets")
 								.toString();
     		
     		List<ResourceWithJobManager.KeyValue> queryParams = new ArrayList<>();
@@ -181,7 +181,9 @@ public class Results extends ResourceWithJobManager
 	
 	
 	/**
-	 * Get an individual bucket results
+	 * Get an individual bucket and optionally the expanded results. 
+	 * 
+	 * 
 	 * @param jobId
 	 * @param bucketId
 	 * @param expand Return anomaly records in-line with the bucket,
@@ -191,14 +193,14 @@ public class Results extends ResourceWithJobManager
 	 * @throws NativeProcessRunException 
 	 */
 	@GET
-	@Path("/{jobId}/{bucketId}")
+	@Path("/{jobId}/buckets/{bucketId}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response bucket(@PathParam("jobId") String jobId,
 			@PathParam("bucketId") String bucketId,
 			@DefaultValue("false") @QueryParam("expand") boolean expand)
 	throws NativeProcessRunException, UnknownJobException
 	{
-		s_Logger.debug(String.format("Get %sbucket %s for job %s", 
+		s_Logger.debug(String.format("Get %s bucket %s for job %s", 
 				expand?"expanded ":"", bucketId, jobId));
 
 		JobManager manager = jobManager();
@@ -220,53 +222,4 @@ public class Results extends ResourceWithJobManager
 		return Response.ok(bucket).build();
 	}
 	
-	
-	/**
-	 * Get the anomaly records for the bucket.
-	 * 
-	 * @param jobId
-	 * @param bucketId
-	 * @param skip
-	 * @param take
-	 * @return
-	 * @throws NativeProcessRunException 
-	 * @throws UnknownJobException 
-	 */
-	@Path("/{jobId}/{bucketId}/records")
-	@GET
-	@Produces(MediaType.APPLICATION_JSON)
-	public Pagination<AnomalyRecord> bucketRecords(
-			@PathParam("jobId") String jobId,
-			@PathParam("bucketId") String bucketId,
-			@DefaultValue("0") @QueryParam("skip") int skip,
-			@DefaultValue(JobManager.DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take)
-	throws UnknownJobException, NativeProcessRunException
-	{
-		s_Logger.debug(String.format("Get records for job %s, bucket %s", 
-				jobId, bucketId));
-
-		JobManager manager = jobManager();
-		Pagination<AnomalyRecord> records = manager.records(
-				jobId, bucketId, skip, take);
-		
-		// paging
-    	if (records.isAllResults() == false)
-    	{
-    		String path = new StringBuilder()
-    							.append("/results/")
-    							.append(jobId)
-    							.append("/")
-								.append(bucketId)
-								.append("/records")
-								.toString();
-    		
-    		setPagingUrls(path, records);
-    	}
-		
-		s_Logger.debug(String.format("Returning %d records for job %s, bucket %s", 
-				records.getDocuments().size(), jobId, bucketId));
-					
-		return records;
-	}
-		
 }

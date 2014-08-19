@@ -52,12 +52,10 @@ import com.prelert.rs.data.Pagination;
 import com.prelert.rs.provider.RestApiException;
 
 /**
- * API results end point.
- * Access buckets and anomaly records, use the <pre>expand</pre> query argument
- * to get buckets and anomaly records in one query. 
- * Buckets can be filtered by date. 
+ * API record results end point.
+ * Access anomaly records filtered by date with various sort options
  */
-@Path("/records")
+@Path("/results")
 public class Records extends ResourceWithJobManager
 {
 	static private final Logger s_Logger = Logger.getLogger(Records.class);
@@ -68,18 +66,15 @@ public class Records extends ResourceWithJobManager
 	static public final String ENDPOINT = "records";
 	
 	/**
-	 * Sort order query parameter
+	 * Sort field query parameter
 	 */
 	static public final String SORT_QUERY_PARAM = "sort";
+	/**
+	 * Sort direction
+	 */
+	static public final String DESCENDING_ORDER = "desc";
 	
 
-	/**
-	 * Possible arguments to the sort parameter
-	 */
-	static public final String PROB_SORT_VALUE = "prob";
-	//static public final String DATE_SORT_VALUE = "date";
-	
-	
 	static private final DateFormat s_DateFormat = new SimpleDateFormat(ISO_8601_DATE_FORMAT); 
 	static private final DateFormat s_DateFormatWithMs = new SimpleDateFormat(ISO_8601_DATE_FORMAT_WITH_MS); 
 	
@@ -92,8 +87,6 @@ public class Records extends ResourceWithJobManager
 	 * by date.
 	 * 
 	 * @param jobId
-	 * @param expand Return anomaly records in-line with the results,
-	 *  default is false
 	 * @param skip
 	 * @param take
 	 * @param start The filter start date see {@linkplain #paramToEpoch(String)}
@@ -103,7 +96,7 @@ public class Records extends ResourceWithJobManager
 	 * @return
 	 */
 	@GET
-	@Path("/{jobId}")
+	@Path("/{jobId}/records")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Pagination<AnomalyRecord> records(
 			@PathParam("jobId") String jobId,
@@ -111,12 +104,15 @@ public class Records extends ResourceWithJobManager
 			@DefaultValue(JobManager.DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take,
 			@DefaultValue("") @QueryParam(START_QUERY_PARAM) String start,
 			@DefaultValue("") @QueryParam(END_QUERY_PARAM) String end,
-			@DefaultValue(PROB_SORT_VALUE) @QueryParam(SORT_QUERY_PARAM) String sort)
+			@DefaultValue(AnomalyRecord.UNUSUAL_SCORE) @QueryParam(SORT_QUERY_PARAM) String sort,
+			@DefaultValue("true") @QueryParam(DESCENDING_ORDER) boolean descending,
+			@DefaultValue("0.0") @QueryParam(AnomalyRecord.UNUSUAL_SCORE) double unusualScoreFilter,
+			@DefaultValue("0.0") @QueryParam(AnomalyRecord.ANOMALY_SCORE) double anomalySoreFilter)
 	throws NativeProcessRunException, UnknownJobException
 	{	
 		s_Logger.debug(String.format("Get records for job %s. skip = %d, take = %d"
-				+ " start = '%s', end='%s', sort='%s'", 
-				jobId, skip, take, start, end, sort));
+				+ " start = '%s', end='%s', sort='%s' descending=%b", 
+				jobId, skip, take, start, end, sort, descending));
 		
 		long epochStart = 0;
 		if (start.isEmpty() == false)
@@ -143,29 +139,44 @@ public class Records extends ResourceWithJobManager
 						Response.Status.BAD_REQUEST);
 			}			
 		}
-		
-		// only sort by probability for now
-		if (!sort.equals(PROB_SORT_VALUE))
-		{
-			String msg = String.format(String.format("'%s is not a valid value "
-					+ "for the sort query parameter", sort));
-			s_Logger.warn(msg);
-			throw new RestApiException(msg, ErrorCode.INVALID_SORT_FIELD,
-					Response.Status.BAD_REQUEST);
-		}
-		
-		sort = AnomalyRecord.PROBABILITY;
-
+			
 		JobManager manager = jobManager();
 		Pagination<AnomalyRecord> records;
 
+		if (unusualScoreFilter > 0.0 && anomalySoreFilter > 0.0)
+		{
+			String msg = String.format("A filter can only be applied to either %s or "
+							+ "%s but not both", 
+							AnomalyRecord.UNUSUAL_SCORE, AnomalyRecord.ANOMALY_SCORE);
+	 
+			s_Logger.info(msg);
+			throw new RestApiException(msg, ErrorCode.INVALID_FILTER_FIELD,
+					Response.Status.BAD_REQUEST);
+		}
+		
+		String filterField = null;
+		double filterValue = 0.0;
+		
+		if (unusualScoreFilter > 0.0)
+		{
+			filterField = AnomalyRecord.UNUSUAL_SCORE;
+			filterValue = unusualScoreFilter;
+		}
+		if (anomalySoreFilter > 0.0)
+		{
+			filterField = AnomalyRecord.ANOMALY_SCORE;
+			filterValue = anomalySoreFilter;
+		}
+		
 		if (epochStart > 0 || epochEnd > 0)
 		{
-			records = manager.records(jobId, skip, take, epochStart, epochEnd, sort);
+			records = manager.records(jobId, skip, take, epochStart, epochEnd, sort,
+					descending, filterField, filterValue);
 		}
 		else
 		{
-			records = manager.records(jobId, skip, take, sort);
+			records = manager.records(jobId, skip, take, sort, descending,
+					filterField, filterValue);
 		}
 
 		// paging
@@ -174,6 +185,7 @@ public class Records extends ResourceWithJobManager
     		String path = new StringBuilder()
 								.append("/results/")
 								.append(jobId)
+								.append("/records/")
 								.toString();
     		
     		List<ResourceWithJobManager.KeyValue> queryParams = new ArrayList<>();
@@ -184,6 +196,14 @@ public class Records extends ResourceWithJobManager
     		if (epochEnd > 0)
     		{
     			queryParams.add(this.new KeyValue(END_QUERY_PARAM, end));
+    		}
+    		queryParams.add(this.new KeyValue(SORT_QUERY_PARAM, sort));
+    		queryParams.add(this.new KeyValue(DESCENDING_ORDER, Boolean.toString(descending)));
+    		
+    		if (filterField != null)
+    		{
+    			queryParams.add(this.new KeyValue(filterField, 
+    					String.format("%d2.1", filterValue)));
     		}
     		
     		setPagingUrls(path, records, queryParams);

@@ -32,12 +32,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicLong;
@@ -58,7 +55,6 @@ import com.prelert.job.usage.UsageReporterFactory;
 import com.prelert.job.warnings.HighProportionOfBadTimestampsException;
 import com.prelert.job.warnings.OutOfOrderRecordsException;
 import com.prelert.job.warnings.StatusReporterFactory;
-import com.prelert.job.AnalysisConfig;
 import com.prelert.job.JobIdAlreadyExistsException;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobConfigurationException;
@@ -295,8 +291,6 @@ public class JobManager
 			String bucketId, boolean expand) 
 	throws NativeProcessRunException, UnknownJobException
 	{
-		long start_ms = System.currentTimeMillis();
-		
 		SingleDocument<Bucket> bucket = m_JobProvider.bucket(jobId, bucketId, expand);
 
 		if (bucket.isExists() && !expand)
@@ -369,78 +363,11 @@ public class JobManager
 
 		return buckets;
 	}
-
-
-	/**
-	 * Get the anomaly records for the bucket. 
-	 * Records are sorted by probability  
-	 * 
-	 * @param jobId
-	 * @param bucketId 
-	 * @param skip Skip the first N records. This parameter is for paging
-	 * results if not required set to 0.
-	 * @param take Take only this number of records
-	 * @return
-	 * @throws UnknownJobException 
-	 * @throws NativeProcessRunException 
-	 */
-	public Pagination<AnomalyRecord> records(String jobId, 
-			String bucketId, int skip, int take) 
-	throws UnknownJobException, NativeProcessRunException 
-	{
-		return this.records(jobId, bucketId, skip, take, 
-				DEFAULT_RECORD_SORT_FIELD);
-	}
-	
-	/**
-	 * Get the anomaly records for the bucket. 
-	 * 
-	 * @param jobId
-	 * @param bucketId 
-	 * @param skip Skip the first N records. This parameter is for paging
-	 * results if not required set to 0.
-	 * @param take Take only this number of records
-	 * @param sortField The field to sort the anomaly records by
-	 * @return
-	 * @throws UnknownJobException 
-	 * @throws NativeProcessRunException 
-	 */
-	public Pagination<AnomalyRecord> records(String jobId, 
-			String bucketId, int skip, int take, String sortField)
-	throws UnknownJobException, NativeProcessRunException 
-	{
-		Pagination<AnomalyRecord> records = m_JobProvider.records(jobId, 
-				bucketId, skip, take, sortField);
-
-		return records; 
-	}
-	
-	/**
-	 * Get a page of anomaly records from the buckets between
-	 * epochStart and epochEnd. 
-	 * Records are sorted by probability  
-	 * 
-	 * @param jobId
-	 * @param skip
-	 * @param take
-	 * @param epochStart
-	 * @param epochEnd
-	 * @return
-	 * @throws UnknownJobException 
-	 * @throws NativeProcessRunException 
-	 */
-	public Pagination<AnomalyRecord> records(String jobId, 
-			int skip, int take, long epochStart, long epochEnd) 
-	throws NativeProcessRunException, UnknownJobException 
-	{
-		return records(jobId, skip, take, epochStart, epochEnd, 
-				DEFAULT_RECORD_SORT_FIELD);
-	}
-	
 	
 	/**
 	 * Get a page of anomaly records from all buckets.
-	 * 
+	 * Records are sorted by probability
+	 *
 	 * @param jobId
 	 * @param skip Skip the first N records. This parameter is for paging
 	 * results if not required set to 0.
@@ -453,13 +380,69 @@ public class JobManager
 			int skip, int take) 
 	throws NativeProcessRunException, UnknownJobException 
 	{
-		return records(jobId, skip, take, DEFAULT_RECORD_SORT_FIELD);
+		return records(jobId, skip, take, DEFAULT_RECORD_SORT_FIELD, true,
+				null, 0.0);
+	}
+	
+
+	/**
+	 * Get a page of anomaly records from the buckets between
+	 * epochStart and epochEnd. 
+	 * Records are sorted by probability  
+	 * 
+	 * @param jobId
+	 * @param skip
+	 * @param take
+	 * @param epochStart
+	 * @param epochEnd
+	 * @param 
+	 * @return
+	 * @throws UnknownJobException 
+	 * @throws NativeProcessRunException 
+	 */
+	public Pagination<AnomalyRecord> records(String jobId, 
+			int skip, int take, long epochStart, long epochEnd,
+			String scoreFilterField, double filterValue) 
+	throws NativeProcessRunException, UnknownJobException 
+	{
+		return records(jobId, skip, take, epochStart, epochEnd, 
+				DEFAULT_RECORD_SORT_FIELD, true, null, 0.0);
+	}
+	
+	
+	/**
+	 * Get a page of anomaly records from all buckets.
+	 * 
+	 * @param jobId
+	 * @param skip Skip the first N records. This parameter is for paging
+	 * results if not required set to 0.
+	 * @param take Take only this number of records
+	 * @param sortField The field to sort by
+	 * @param sortDescending
+	 * @param scoreFilterField If not <code>null</code> then filter out all 
+	 * results where the value of this field is < <code>filterValue</code>
+	 * @paran filterValue Filter results where <code>scoreFilterField</code>
+	 * is less than this value. Ignored if <= 0.0
+	 * 
+	 * @return
+	 * @throws NativeProcessRunException
+	 * @throws UnknownJobException 
+	 */
+	public Pagination<AnomalyRecord> records(String jobId, 
+			int skip, int take, String sortField, boolean sortDescending, 
+			String scoreFilterField, double filterValue) 
+	throws NativeProcessRunException, UnknownJobException 
+	{
+		Pagination<AnomalyRecord> records = m_JobProvider.records(jobId, 
+				skip, take, sortField, sortDescending, scoreFilterField, filterValue);
+
+		return records; 
 	}
 	
 	
 	/**
 	 * Get a page of anomaly records from the buckets between
-	 * epochStart and epochEnd.
+	 * epochStart and epochEnd. 
 	 * 
 	 * @param jobId
 	 * @param skip
@@ -467,43 +450,27 @@ public class JobManager
 	 * @param epochStart
 	 * @param epochEnd
 	 * @param sortField
+	 * @param sortDescending
+	 * @param scoreFilterField If not <code>null</code> then filter out all 
+	 * results where the value of this field is < <code>filterValue</code>
+	 * @paran filterValue Filter results where <code>scoreFilterField</code>
+	 * is less than this value. Ignored if <= 0.0
+	 * 
 	 * @return
 	 * @throws NativeProcessRunException
 	 * @throws UnknownJobException
 	 */
 	public Pagination<AnomalyRecord> records(String jobId, 
-			int skip, int take, long epochStart, long epochEnd, String sortField) 
+			int skip, int take, long epochStart, long epochEnd, String sortField,
+			boolean sortDescending, String scoreFilterField, double filterValue) 
 	throws NativeProcessRunException, UnknownJobException
 	{
 		Pagination<AnomalyRecord> records = m_JobProvider.records(jobId, 
-				skip, take, epochStart, epochEnd, sortField);
+				skip, take, epochStart, epochEnd, sortField, sortDescending,
+				scoreFilterField, filterValue);
 
 		return records; 
 	}
-	
-
-	/**
-	 * Get a page of anomaly records from all buckets.
-	 *
-	 * @param jobId
-	 * @param skip Skip the first N records. This parameter is for paging
-	 * results if not required set to 0.
-	 * @param take Take only this number of records
-	 * @param sortField The field to sort by
-	 * @return
-	 * @throws NativeProcessRunException
-	 * @throws UnknownJobException 
-	 */
-	public Pagination<AnomalyRecord> records(String jobId, 
-			int skip, int take, String sortField) 
-	throws NativeProcessRunException, UnknownJobException 
-	{
-		Pagination<AnomalyRecord> records = m_JobProvider.records(jobId, 
-				skip, take, sortField);
-
-		return records; 
-	}
-	
 	
 	/**
 	 * Set the job's description.

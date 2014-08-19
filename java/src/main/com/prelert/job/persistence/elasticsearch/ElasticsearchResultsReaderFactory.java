@@ -30,7 +30,6 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import org.apache.log4j.Logger;
-import org.elasticsearch.client.Client;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.process.ResultsReaderFactory;
