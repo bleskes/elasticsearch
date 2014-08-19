@@ -89,16 +89,17 @@ public class Detector
 			}));
 	
 	/**
-	 * The set of count functions requiring a by or over field
+	 * The set of functions that do no require a field, by field or over field
 	 */
-	static public final Set<String> COUNT_BY_OVER_FUNCTIONS = 
+	static public final Set<String> COUNT_WITHOUT_FIELD_FUNCTIONS = 
 			new HashSet<String>(Arrays.<String>asList(new String [] {
+				COUNT,
 				HIGH_COUNT, 
 				LOW_COUNT,
-				NON_ZERO_COUNT, NZC,
+				NON_ZERO_COUNT,
+				NZC
 			}));
 	
-
 	/**
 	 * The set of functions that require a fieldname
 	 */
@@ -331,7 +332,7 @@ public class Detector
 	 * functions</li> 
 	 * <li>Check the metric/by/over fields that cannot be set with certain 
 	 * functions are not set</li> 
-	 * <li>If the function is HIGH_COUNT, LOW_COUNT, NON_ZERO_COUNT or NZC
+	 * <li>If the function is NON_ZERO_COUNT or NZC
 	 * then either byFieldName or overFieldName must be set</li>
 	 * </ol>
 	 * 
@@ -356,7 +357,7 @@ public class Detector
 						ErrorCode.INVALID_FIELD_SELECTION);
 			}
 			
-			if (!COUNT.equals(m_Function))
+			if (!COUNT_WITHOUT_FIELD_FUNCTIONS.contains(m_Function))
 			{
 				throw new JobConfigurationException("Unless the function is 'count'"
 						+ " one of fieldName, byFieldName or overFieldName must be set",
@@ -464,17 +465,6 @@ public class Detector
 						ErrorCode.INVALID_FIELD_SELECTION);
 			}
 			
-			if (COUNT_BY_OVER_FUNCTIONS.contains(m_Function))
-			{
-				if (emptyByField && emptyOverField)
-				{
-					throw new JobConfigurationException(
-							String.format("Either byFieldName or overFieldName "
-									+ "must be specified for function '%s'",
-									m_Function),
-							ErrorCode.INVALID_FIELD_SELECTION);
-				}
-			}
 		}
 		
 		return true;
