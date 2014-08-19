@@ -111,8 +111,10 @@ public class Records extends ResourceWithJobManager
 	throws NativeProcessRunException, UnknownJobException
 	{	
 		s_Logger.debug(String.format("Get records for job %s. skip = %d, take = %d"
-				+ " start = '%s', end='%s', sort='%s' descending=%b", 
-				jobId, skip, take, start, end, sort, descending));
+				+ " start = '%s', end='%s', sort='%s' descending=%b"  
+				+ ", anomaly score filter=%f, unsual score filter= %f", 
+				jobId, skip, take, start, end, sort, descending,
+				unusualScoreFilter, anomalySoreFilter));
 		
 		long epochStart = 0;
 		if (start.isEmpty() == false)

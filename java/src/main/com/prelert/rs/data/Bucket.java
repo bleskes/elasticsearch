@@ -84,7 +84,6 @@ public class Bucket
 	
 	public Bucket()
 	{
-		m_Records = new ArrayList<>();
 		m_Detectors = new ArrayList<>();
 	}
 	
