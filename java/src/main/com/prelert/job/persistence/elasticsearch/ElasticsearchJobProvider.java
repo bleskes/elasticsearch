@@ -537,7 +537,7 @@ public class ElasticsearchJobProvider implements JobProvider
 				int rtake = 500;
 				Pagination<AnomalyRecord> page = this.bucketRecords(
 						jobId, hit.getId(), rskip, rtake, 
-						AnomalyRecord.PROBABILITY, true);				
+						AnomalyRecord.PROBABILITY, false);
 				bucket.setRecords(page.getDocuments());
 				
 				while (page.getHitCount() > rskip + rtake)
@@ -545,7 +545,7 @@ public class ElasticsearchJobProvider implements JobProvider
 					rskip += rtake;
 					page = this.bucketRecords(
 							jobId, hit.getId(), rskip, rtake, 
-							AnomalyRecord.PROBABILITY, true);				
+							AnomalyRecord.PROBABILITY, false);
 					bucket.getRecords().addAll(page.getDocuments());
 				}
 
@@ -605,7 +605,7 @@ public class ElasticsearchJobProvider implements JobProvider
 				int rtake = 500;
 				Pagination<AnomalyRecord> page = this.bucketRecords(
 						jobId, bucketId, rskip, rtake, 
-						AnomalyRecord.PROBABILITY, true);				
+						AnomalyRecord.PROBABILITY, false);
 				bucket.setRecords(page.getDocuments());
 				
 				while (page.getHitCount() > rskip + rtake)
@@ -613,7 +613,7 @@ public class ElasticsearchJobProvider implements JobProvider
 					rskip += rtake;
 					page = this.bucketRecords(
 							jobId, bucketId, rskip, rtake, 
-							AnomalyRecord.PROBABILITY, true);				
+							AnomalyRecord.PROBABILITY, false);
 					bucket.getRecords().addAll(page.getDocuments());
 				}
 			}
