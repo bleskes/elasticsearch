@@ -436,7 +436,6 @@ public class InternalClusterService extends AbstractLifecycleComponent<ClusterSe
                                 }
 
                             });
-                            transportService.connectToNode(node);
                         } catch (Throwable e) {
                             // the fault detection will detect it as failed as well
                             logger.warn("failed to submit connection task to node [" + node + "]", e);
