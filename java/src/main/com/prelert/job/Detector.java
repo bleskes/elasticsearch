@@ -89,15 +89,14 @@ public class Detector
 			}));
 	
 	/**
-	 * The set of functions that do no require a field, by field or over field
+	 * The set of functions that do not require a field, by field or over field
 	 */
 	static public final Set<String> COUNT_WITHOUT_FIELD_FUNCTIONS = 
 			new HashSet<String>(Arrays.<String>asList(new String [] {
 				COUNT,
 				HIGH_COUNT, 
 				LOW_COUNT,
-				NON_ZERO_COUNT,
-				NZC
+				NON_ZERO_COUNT, NZC
 			}));
 	
 	/**
@@ -333,7 +332,7 @@ public class Detector
 	 * <li>Check the metric/by/over fields that cannot be set with certain 
 	 * functions are not set</li> 
 	 * <li>If the function is NON_ZERO_COUNT or NZC
-	 * then either byFieldName or overFieldName must be set</li>
+	 * then overFieldName must not be set</li>
 	 * </ol>
 	 * 
 	 * @return true
