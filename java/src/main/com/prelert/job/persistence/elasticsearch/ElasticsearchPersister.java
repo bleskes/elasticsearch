@@ -197,7 +197,7 @@ public class ElasticsearchPersister implements JobDataPersister
 
 	/**
 	 * The quantiles objects are written with one of two keys, such that
-	 * the latest quantiles will overwrite the previous ones.  For each ES index, 
+	 * the latest quantiles will overwrite the previous ones.  For each ES index,
 	 * which corresponds to a job, there can only be 2 quantiles documents,
 	 * one for system change quantiles and the other for unusual behaviour
 	 * quantiles.
@@ -212,17 +212,13 @@ public class ElasticsearchPersister implements JobDataPersister
 			s_Logger.warn("No quantiles to persist for job " + m_JobId);
 			return;
 		}
-		
+
 		try
 		{
 			XContentBuilder content = serialiseQuantiles(quantiles);
 
 			m_Client.prepareIndex(m_JobId, Quantiles.TYPE, quantiles.getId())
 					.setSource(content)
-					// Refresh the index when persisting quantiles so that
-					// previously persisted results will be available for
-					// searching
-					.setRefresh(true)
 					.execute().actionGet();
 
 			/* TODO this method is only in version Elasticsearch 1.0
@@ -236,7 +232,15 @@ public class ElasticsearchPersister implements JobDataPersister
 		catch (IOException e)
 		{
 			s_Logger.error("Error writing quantiles", e);
+			return;
 		}
+
+		// Refresh the index when persisting quantiles so that previously
+		// persisted results will be available for searching.  Do this using the
+		// indices API rather than the index API (used to write the quantiles
+		// above), because this will refresh all shards rather than just the
+		// shard that the quantiles document itself was written to.
+		commitWrites();
 	}
 
 
@@ -297,21 +301,21 @@ public class ElasticsearchPersister implements JobDataPersister
 		SearchResponse searchResponse = searchBuilder.get();		
 		return searchResponse.getHits().totalHits() > 0;
 	}
-	
+
+
 	/**
 	 * Refreshes the elastic search index
 	 * @return
-	 * @throws ExecutionException 
-	 * @throws InterruptedException 
 	 */
-	@Override 
-	public boolean commitWrites() 
+	@Override
+	public boolean commitWrites()
 	{
 		// refresh the index so the buckets are immediately searchable
-		m_Client.admin().indices().refresh(new RefreshRequest(m_JobId)).actionGet();	
-		return true;		
+		m_Client.admin().indices().refresh(new RefreshRequest(m_JobId)).actionGet();
+		return true;
 	}
-	
+
+
 	/**
 	 * Get the names of the detectors that have had their state 
 	 * persisted to the database.
