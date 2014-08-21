@@ -519,9 +519,7 @@ public class ElasticsearchJobProvider implements JobProvider
 
 		List<Bucket> results = new ArrayList<>();
 		
-		long startExpand = System.currentTimeMillis();		
 		
-		int recordCount = 0;
 		for (SearchHit hit : searchResponse.getHits().getHits())
 		{
 			// Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch, 
@@ -548,18 +546,9 @@ public class ElasticsearchJobProvider implements JobProvider
 							AnomalyRecord.PROBABILITY, false);
 					bucket.getRecords().addAll(page.getDocuments());
 				}
-
-				recordCount += bucket.getRecords().size();
 			}
 
 			results.add(bucket);
-		}
-		
-		if (expand)
-		{
-			System.out.println("Query expanded buckets in " + 
-					(System.currentTimeMillis() - startExpand));
-			System.out.println("Record Count = " + recordCount);
 		}
 		
 

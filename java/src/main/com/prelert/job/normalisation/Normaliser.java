@@ -115,8 +115,6 @@ public class Normaliser
 		NormaliserProcess process = createNormaliserProcess(
 				sysChangeState, null, bucketSpan);
 
-		long start = System.currentTimeMillis();
-		
 		NormalisedResultsParser resultsParser = new NormalisedResultsParser(
 							process.getProcess().getInputStream(),
 							m_Logger);
@@ -164,11 +162,6 @@ public class Normaliser
 		
 		List<Bucket> result = mergeNormalisedSystemChangeScoresIntoBuckets(
 				resultsParser.getNormalisedResults(), buckets);
-		
-		
-		System.out.println("Normalise for Sys Change in : " +
-				(System.currentTimeMillis() - start));
-		
 		
 		return result;
 	}
@@ -218,8 +211,6 @@ public class Normaliser
 		NormaliserProcess process = createNormaliserProcess(
 				null, unusualBehaviourState, bucketSpan);
 
-		long start = System.currentTimeMillis();
-		
 		NormalisedResultsParser resultsParser = new NormalisedResultsParser(
 							process.getProcess().getInputStream(),
 							m_Logger);
@@ -272,9 +263,6 @@ public class Normaliser
 		List<Bucket> buckets = mergeNormalisedUnusualIntoBuckets(
 				resultsParser.getNormalisedResults(), expandedBuckets);	
 		
-		System.out.println("Normalise for unusual in : " +
-				(System.currentTimeMillis() - start));
-		
 		return buckets;
 	}
 
@@ -301,14 +289,8 @@ public class Normaliser
 		String sysChangeState = state.getQuantilesState(QuantilesState.SYS_CHANGE_QUANTILES_KIND);
 		String unusualBehaviourState = state.getQuantilesState(QuantilesState.UNUSUAL_QUANTILES_KIND);
 		
-		long startProc = System.currentTimeMillis();
 		NormaliserProcess process = createNormaliserProcess(
 				sysChangeState, unusualBehaviourState, bucketSpan);
-		
-		System.out.println("Proc created in : " +
-				(System.currentTimeMillis() - startProc));
-		
-		long start = System.currentTimeMillis();
 		
 		NormalisedResultsParser resultsParser = new NormalisedResultsParser(
 							process.getProcess().getInputStream(),
@@ -367,9 +349,6 @@ public class Normaliser
 
 		List<AnomalyRecord> result = mergeBothScoresIntoRecords(
 				resultsParser.getNormalisedResults(), buckets, records);
-		
-		System.out.println("Normalise for both in : " +
-				(System.currentTimeMillis() - start));
 		
 		return result;
 		
@@ -528,16 +507,12 @@ public class Normaliser
 			Integer bucketSpan)
 	throws NativeProcessRunException
 	{
-		long startMs = System.currentTimeMillis();
 		try
 		{
 			Process proc = ProcessCtrl.buildNormaliser(m_JobId, 
 					sysChangeState, unusualBehaviourState,
 					bucketSpan,  m_Logger);
 
-			System.out.println("Initial state written and proc created in " + 
-					(System.currentTimeMillis() - startMs));
-			
 			return new NormaliserProcess(proc);
 		}
 		catch (IOException e)
