@@ -1178,7 +1178,7 @@ public class JobsTest implements Closeable
 		
 		// order by time oldest first
 		records = m_WebServiceClient.getRecords(baseUrl, jobId, 
-				0l, 500l, epochStart, epochEnd, "@timestamp", false, null, null);
+				0l, 500l, epochStart, epochEnd, "timestamp", false, null, null);
 		
 		test(records.getDocumentCount() > 0);
 		test(records.getDocumentCount() == records.getDocuments().size());
@@ -1192,7 +1192,7 @@ public class JobsTest implements Closeable
 		
 		// order by time newest first
 		records = m_WebServiceClient.getRecords(baseUrl, jobId, 
-				0l, 500l, dateStartMs, dateEnd, "@timestamp", true, null, null);
+				0l, 500l, dateStartMs, dateEnd, "timestamp", true, null, null);
 		
 		test(records.getDocumentCount() > 0);
 		test(records.getDocumentCount() == records.getDocuments().size());
