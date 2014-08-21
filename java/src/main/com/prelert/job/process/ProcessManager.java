@@ -109,8 +109,6 @@ public class ProcessManager
 	private ConcurrentMap<String, ProcessAndDataDescription> m_JobIdToProcessMap;
 	private ConcurrentMap<String, ScheduledFuture<?>> m_JobIdToTimeoutFuture;
 
-	private ConcurrentMap<String, Logger> m_JobIdToLogger;
-	
 	private ScheduledExecutorService m_ProcessTimeouts;
 	
 	private JobProvider m_JobProvider;
@@ -130,8 +128,6 @@ public class ProcessManager
 		
 		m_ProcessTimeouts = Executors.newScheduledThreadPool(1);	
 		m_JobIdToTimeoutFuture = new ConcurrentHashMap<String, ScheduledFuture<?>>();
-		
-		m_JobIdToLogger = new ConcurrentHashMap<String, Logger>();
 		
 		m_JobProvider = jobProvider;
 		m_ResultsReaderFactory = readerFactory;
@@ -285,28 +281,7 @@ public class ProcessManager
 		return m_JobIdToProcessMap.get(jobId) != null;
 	}
 	
-	/**
-	 * Return the job logger
-	 * @param jobId
-	 * @return
-	 */
-	public Logger getJobLogger(String jobId)
-	{
-		ProcessAndDataDescription proc = m_JobIdToProcessMap.get(jobId);
-		if (proc != null)
-		{
-			return proc.getLogger();
-		}
-		
-		Logger logger = m_JobIdToLogger.get(jobId);
-		if (logger == null)
-		{
-			logger = createLogger(jobId);
-		}
-		
-		return logger;
-	}
-	
+
 	/**
 	 * Create a new autodetect process restoring its state if persisted
 	 *   
@@ -392,6 +367,7 @@ public class ProcessManager
 		
 		return procAndDD;
 	}
+	
 		
 	/**
 	 * Stop the running process.
