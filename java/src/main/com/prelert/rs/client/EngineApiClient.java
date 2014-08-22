@@ -743,7 +743,11 @@ public class EngineApiClient implements Closeable
 
 	/**
 	 * Get the anomaly records for the job between the start and 
-	 * end dates with skip and take parameters.
+	 * end dates with skip and take parameters sorted by field
+	 * and optionally filtered by score. Only one of 
+	 * <code>anomalyScoreFilterValue</code> and <code>unusualScoreFilterValue</code> 
+	 * should be specified it is an error if both are set
+	 * 
 	 * The records aren't grouped by bucket 
 	 * 
 	 * 
@@ -799,9 +803,25 @@ public class EngineApiClient implements Closeable
 		}
 		if (sortField != null)
 		{
-			url += queryChar + "sort=" + URLEncoder.encode(end.toString(), "UTF-8");
+			url += queryChar + "sort=" + URLEncoder.encode(sortField, "UTF-8");
 			queryChar = '&';
 		}
+		if (sortDescending != null && sortDescending == false)
+		{
+			url += queryChar + "desc=false";
+			queryChar = '&';
+		}
+		if (anomalyScoreFilterValue != null)
+		{
+			url += queryChar + "anomalyScore=" + URLEncoder.encode(anomalyScoreFilterValue.toString(), "UTF-8");
+			queryChar = '&';
+		}
+		if (unusualScoreFilterValue != null)
+		{
+			url += queryChar + "unusualScore=" + URLEncoder.encode(unusualScoreFilterValue.toString(), "UTF-8");
+			queryChar = '&';
+		}		
+		
 		
 		s_Logger.debug("GET records " + url);
 		

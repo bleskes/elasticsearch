@@ -45,8 +45,10 @@ import org.apache.log4j.Logger;
 
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.manager.JobManager;
+import com.prelert.job.persistence.elasticsearch.ElasticsearchMappings;
 import com.prelert.job.process.NativeProcessRunException;
 import com.prelert.rs.data.AnomalyRecord;
+import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.provider.RestApiException;
@@ -111,8 +113,10 @@ public class Records extends ResourceWithJobManager
 	throws NativeProcessRunException, UnknownJobException
 	{	
 		s_Logger.debug(String.format("Get records for job %s. skip = %d, take = %d"
-				+ " start = '%s', end='%s', sort='%s' descending=%b", 
-				jobId, skip, take, start, end, sort, descending));
+				+ " start = '%s', end='%s', sort='%s' descending=%b"  
+				+ ", anomaly score filter=%f, unsual score filter= %f", 
+				jobId, skip, take, start, end, sort, descending,
+				unusualScoreFilter, anomalySoreFilter));
 		
 		long epochStart = 0;
 		if (start.isEmpty() == false)
@@ -166,6 +170,13 @@ public class Records extends ResourceWithJobManager
 		{
 			filterField = AnomalyRecord.ANOMALY_SCORE;
 			filterValue = anomalySoreFilter;
+		}
+		
+		// HACK - the API renames @timestamp to timestamp
+		// but it is @timestamp in the database for Kibana
+		if (Bucket.TIMESTAMP.equals(sort))
+		{
+			sort = ElasticsearchMappings.ES_TIMESTAMP;
 		}
 		
 		if (epochStart > 0 || epochEnd > 0)

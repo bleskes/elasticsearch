@@ -519,9 +519,7 @@ public class ElasticsearchJobProvider implements JobProvider
 
 		List<Bucket> results = new ArrayList<>();
 		
-		long startExpand = System.currentTimeMillis();		
 		
-		int recordCount = 0;
 		for (SearchHit hit : searchResponse.getHits().getHits())
 		{
 			// Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch, 
@@ -537,7 +535,7 @@ public class ElasticsearchJobProvider implements JobProvider
 				int rtake = 500;
 				Pagination<AnomalyRecord> page = this.bucketRecords(
 						jobId, hit.getId(), rskip, rtake, 
-						AnomalyRecord.PROBABILITY, true);				
+						AnomalyRecord.PROBABILITY, false);
 				bucket.setRecords(page.getDocuments());
 				
 				while (page.getHitCount() > rskip + rtake)
@@ -545,21 +543,12 @@ public class ElasticsearchJobProvider implements JobProvider
 					rskip += rtake;
 					page = this.bucketRecords(
 							jobId, hit.getId(), rskip, rtake, 
-							AnomalyRecord.PROBABILITY, true);				
+							AnomalyRecord.PROBABILITY, false);
 					bucket.getRecords().addAll(page.getDocuments());
 				}
-
-				recordCount += bucket.getRecords().size();
 			}
 
 			results.add(bucket);
-		}
-		
-		if (expand)
-		{
-			System.out.println("Query expanded buckets in " + 
-					(System.currentTimeMillis() - startExpand));
-			System.out.println("Record Count = " + recordCount);
 		}
 		
 
@@ -605,7 +594,7 @@ public class ElasticsearchJobProvider implements JobProvider
 				int rtake = 500;
 				Pagination<AnomalyRecord> page = this.bucketRecords(
 						jobId, bucketId, rskip, rtake, 
-						AnomalyRecord.PROBABILITY, true);				
+						AnomalyRecord.PROBABILITY, false);
 				bucket.setRecords(page.getDocuments());
 				
 				while (page.getHitCount() > rskip + rtake)
@@ -613,7 +602,7 @@ public class ElasticsearchJobProvider implements JobProvider
 					rskip += rtake;
 					page = this.bucketRecords(
 							jobId, bucketId, rskip, rtake, 
-							AnomalyRecord.PROBABILITY, true);				
+							AnomalyRecord.PROBABILITY, false);
 					bucket.getRecords().addAll(page.getDocuments());
 				}
 			}

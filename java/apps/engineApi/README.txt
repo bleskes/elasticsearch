@@ -14,7 +14,7 @@ data and querying results.
 
 Full documentation is available on the Prelert website:
 
-http://www.prelert.com/docs/engine_api/latest/
+http://www.prelert.com/docs/engine_api/1.0/
 
 
 Getting Started
@@ -208,7 +208,7 @@ don't close the job.
 We can request the /results endpoint for our jobId to see what kind of results
 are available:
 
-curl 'http://localhost:8080/engine/v1/results/20140519113920-00001?skip=0&take=100'
+curl 'http://localhost:8080/engine/v1/results/20140519113920-00001/buckets?skip=0&take=100'
 
 This returns a summary of the anomalousness of the data, for each time interval.
 If not set 'skip' and 'take' default to 0 and 100 meaning the first 100 results are returned
@@ -217,7 +217,7 @@ If not set 'skip' and 'take' default to 0 and 100 meaning the first 100 results 
   "hitCount" : 118,
   "skip" : 0,
   "take" : 100,
-  "nextPage" : "http://localhost:8080/engine/v1/results/20140519113920-00001?skip=100&take=100",
+  "nextPage" : "http://localhost:8080/engine/v1/results/20140519113920-00001/buckets?skip=100&take=100&expand=false",
   "previousPage" : null,
   "documents" : [ {
     "recordCount" : 1,
@@ -248,7 +248,7 @@ following id: 1359561600.
 
 We can request the details of just this one bucket interval as follows:
 
-curl 'http://localhost:8080/engine/v1/results/20140519113920-00001/1359561600?expand=true'
+curl 'http://localhost:8080/engine/v1/results/20140519113920-00001/buckets/1359561600?expand=true'
 
 {
   "documentId" : "1359561600",
@@ -327,7 +327,7 @@ Further information
 
 To view the full documentation, please visit:
 
-http://www.prelert.com/docs/engine_api/latest/
+http://www.prelert.com/docs/engine_api/1.0/
 
 Code examples are also available from:
 
