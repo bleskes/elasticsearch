@@ -38,7 +38,7 @@ version number is lower we recommend upgrading to a newer version.
 <body>
 <h1>Prelert Engine REST API</h1>
 <h2>Analytics Version:</h2>
-<p>prelert_autodetect_api (64 bit): Version 4.2.6 (Build 20140321084208) Copyright (c) Prelert Ltd 2006-2014</p>
+<p>prelert_autodetect_api (64 bit): Version 5.0.0 (Build 20140821010110) Copyright (c) Prelert Ltd 2006-2014</p>
 </body>
 
 If it's not already running then start it using:
@@ -69,11 +69,11 @@ http://s3.amazonaws.com/prelert_demo/farequote.csv.
 Time series data must be ordered by date. The raw csv data looks like this:
 
 time,airline,responsetime,sourcetype
-2013-01-28 00:00:00Z,AAL,132.2046,farequote
-2013-01-28 00:00:00Z,JZA,990.4628,farequote
-2013-01-28 00:00:00Z,JBU,877.5927,farequote
-2013-01-28 00:00:00Z,KLM,1355.4812,farequote
-2013-01-28 00:00:00Z,NKS,9991.3981,farequote
+2014-06-23 00:00:00Z,AAL,132.2046,farequote
+2014-06-23 00:00:00Z,JZA,990.4628,farequote
+2014-06-23 00:00:00Z,JBU,877.5927,farequote
+2014-06-23 00:00:00Z,KLM,1355.4812,farequote
+2014-06-23 00:00:00Z,NKS,9991.3981,farequote
 ...
 
 1. Create New Job
@@ -87,6 +87,7 @@ Creating a new job requires both a declaration of how the data is formatted
 (dataDescription), and how the data is expected to be analyzed (analysisConfig).
 
 curl -X POST -H 'Content-Type: application/json' 'http://localhost:8080/engine/v1/jobs' -d '{
+    "id":"farequote",
     "analysisConfig" : {
         "bucketSpan":3600,
         "detectors" :[{"function":"metric","fieldName":"responsetime","byFieldName":"airline"}]
@@ -98,13 +99,13 @@ curl -X POST -H 'Content-Type: application/json' 'http://localhost:8080/engine/v
     }
 }'
 
-In this example, we are specifying that we want the analysis to be executed on
-the 'responsetime' field. This field contains a numeric value, so we specify the
-metric function, which expands to all of min, mean, max, and sum. (Had we wanted
-to look at event rate or rare fields we'd have used one of the other available
-functions.) By declaring byFieldName as 'airline', the analysis will be
-performed across all airlines, instead of a unique analysis done for each of the
-19 airlines.
+In this example, we are creating a new job with the ID 'farequote' and specifying
+that we want the analysis to be executed on the 'responsetime' field. This field 
+contains a numeric value, so we specify the metric function, which expands to all
+of min, mean, max, and sum. (Had we wanted to look at event rate or rare fields 
+we'd have used one of the other available functions.) By declaring byFieldName as
+'airline', the analysis will be performed across all airlines, instead of a 
+unique analysis done for each of the 19 airlines.
 
 bucketSpan defines that the analysis should be performed across hourly (3600
 second) windows.
@@ -112,10 +113,9 @@ second) windows.
 The dataDescription section gives clues as to how the data is formatted, what
 character delimits the fields, and what is the format of the timestamp.
 
-This will return a unique job number that will be used to in the remainder of
-the tutorial. For example:
+The cURL command will return the job ID specified in the configuration
 
-{"id":"20140519113920-00001"}
+{"id":"farequote"}
 
 2. Check Job Status
 -------------------
@@ -135,43 +135,50 @@ latest job. For example:
   "nextPage" : null,
   "previousPage" : null,
   "documents" : [ {
-    "analysisLimits" : null,
-    "status" : "CLOSED",
-    "timeout" : 600,
-    "location" : "http://localhost:8080/engine/v1/jobs/20140519113920-00001",
-    "dataEndpoint" : "http://localhost:8080/engine/v1/data/20140519113920-00001",
-    "resultsEndpoint" : "http://localhost:8080/engine/v1/results/20140519113920-00001",
-    "logsEndpoint" : "http://localhost:8080/engine/v1/logs/20140519113920-00001",
+    "location" : "http://localhost:8080/engine/v1/jobs/farequote",
+    "id" : "farequote",
+    "description" : null,
     "analysisConfig" : {
-      "bucketSpan" : 3600,
-      "batchSpan" : null,
       "detectors" : [ {
-        "function" : "metric",
         "fieldName" : "responsetime",
+        "function" : "metric",
         "byFieldName" : "airline"
       } ],
-      "period" : null
+      "period" : null,
+      "bucketSpan" : 3600,
+      "batchSpan" : null
     },
-    "finishedTime" : null,
-    "lastDataTime" : null,
-    "id" : "20140519113920-00001",
+    "analysisLimits" : null,
     "dataDescription" : {
-      "timeField" : "time",
-      "timeFormat" : "yyyy-MM-dd HH:mm:ssX",
+      "format" : "DELINEATED",
       "fieldDelimiter" : ",",
+      "timeField" : "time",
       "quoteCharacter" : "\"",
-      "format" : "DELINEATED"
+      "timeFormat" : "yyyy-MM-dd HH:mm:ssX"
     },
-    "createTime" : "2014-05-19T10:39:20.499+0000"
+    "status" : "CLOSED",
+    "timeout" : 600,
+    "dataEndpoint" : "http://localhost:8080/engine/v1/data/farequote",
+    "resultsEndpoint" : "http://localhost:8080/engine/v1/results/farequote",
+    "logsEndpoint" : "http://localhost:8080/engine/v1/logs/farequote",
+    "counts" : {
+      "processedRecordCount" : 0,
+      "processedBytes" : 0,
+      "invalidDateCount" : 0,
+      "missingFieldCount" : 0,
+      "outOfOrderTimeStampCount" : 0,
+      "processedDataPointCount" : 0
+    },
+    "createTime" : "2014-08-22T12:49:52.287+0000",
+    "finishedTime" : null,
+    "lastDataTime" : null
   } ]
 }
 
 For detailed explanation of the output, please refer to the jobResource object
 in the reference documentation. For now, note that the key piece of information
 is the jobId, which uniquely identifies this job and will be used in the
-remainder of this tutorial. For example:
-
-{"id":"20140519113920-00001"}
+remainder of this tutorial. 
 
 3. Upload Data
 --------------
@@ -181,7 +188,7 @@ engine. Using cURL, we will use the -T option to upload the file. You will need
 to edit the URL to contain the jobId and specify the path to the
 farequote.csv file:
 
-curl -X POST -T farequote.csv 'http://localhost:8080/engine/v1/data/20140519113920-00001'
+curl -X POST -T farequote.csv 'http://localhost:8080/engine/v1/data/farequote'
 
 This will stream the file farequote.csv to the REST API for
 analysis. This should take less than a minute on modern commodity hardware.
@@ -196,7 +203,7 @@ practice to close the job before requesting results.  Closing the job tells
 the API to flush through any data that's being buffered and store all results.
 Once again, you will need to edit the URL to contain the correct jobId:
 
-curl -X POST 'http://localhost:8080/engine/v1/data/20140519113920-00001/close'
+curl -X POST 'http://localhost:8080/engine/v1/data/farequote/close'
 
 Note: in the case of the farequote.csv example data you'll have enough
 results to see the anomaly by the time the upload has completed even if you
@@ -208,30 +215,34 @@ don't close the job.
 We can request the /results endpoint for our jobId to see what kind of results
 are available:
 
-curl 'http://localhost:8080/engine/v1/results/20140519113920-00001/buckets?skip=0&take=100'
+curl 'http://localhost:8080/engine/v1/results/farequote/buckets?skip=0&take=100'
 
 This returns a summary of the anomalousness of the data, for each time interval.
 If not set 'skip' and 'take' default to 0 and 100 meaning the first 100 results are returned
 
 {
-  "hitCount" : 118,
+  "hitCount" : 119,
   "skip" : 0,
   "take" : 100,
-  "nextPage" : "http://localhost:8080/engine/v1/results/20140519113920-00001/buckets?skip=100&take=100&expand=false",
+  "nextPage" : "http://localhost:8080/engine/v1/results/farequote/buckets?skip=100&take=100&expand=false",
   "previousPage" : null,
   "documents" : [ {
-    "recordCount" : 1,
-    "timestamp" : "2013-01-28T00:00:00.000Z",
-    "id" : "1359331200",
-    "rawAnomalyScore" : 0.0
-    "anomalyScore" : 0.0
+    "id" : "1403481600",
+    "timestamp" : "2014-06-23T00:00:00.000+0000",
+    "rawAnomalyScore" : 0.0,
+    "recordCount" : 0,
+    "eventCount" : 649,
+    "records" : [ ],
+    "anomalyScore" : 0.0,
     "unusualScore" : 0.0
   }, {
-    "recordCount" : 1,
-    "timestamp" : "2013-01-28T01:00:00.000Z",
-    "id" : "1359334800",
-    "rawAnomalyScore" : 0.0
-    "anomalyScore" : 0.0
+    "id" : "1403485200",
+    "timestamp" : "2014-06-23T01:00:00.000+0000",
+    "rawAnomalyScore" : 0.0,
+    "recordCount" : 0,
+    "eventCount" : 627,
+    "records" : [ ],
+    "anomalyScore" : 0.0,
     "unusualScore" : 0.0
   }, {
   ...
@@ -244,41 +255,43 @@ here: http://localhost:8080/dashboard.
 In practice, most implementations will process the results programatically.
 For the purpose of this tutorial, we will continue using the cURL command line
 and jump straight to the bucket with the maximum anomalyScore. This has the
-following id: 1359561600.
+following id: 1403712000.
 
 We can request the details of just this one bucket interval as follows:
 
-curl 'http://localhost:8080/engine/v1/results/20140519113920-00001/buckets/1359561600?expand=true'
+curl 'http://localhost:8080/engine/v1/results/farequote/buckets/1403712000?expand=true'
 
 {
-  "documentId" : "1359561600",
+  "documentId" : "1403712000",
   "exists" : true,
   "type" : "bucket",
   "document" : {
-    "recordCount" : 2,
-    "eventCount" : 277,
-    "timestamp" : "2013-01-30T16:00:00.000Z",
-    "id" : "1359561600",
-    "rawAnomalyScore" : 10.276,
-    "anomalyScore" : 94.39974,
-    "unusualScore" : 100,
+    "id" : "1403712000",
+    "timestamp" : "2014-06-25T16:00:00.000+0000",
+    "rawAnomalyScore" : 26.0817,
+    "recordCount" : 1,
+    "eventCount" : 909,
     "records" : [ {
-      "byFieldName" : "airline",
-      "typical" : 101.651,
-      "byFieldValue" : "AAL",
-      "actual" : 242.75,
-      "probability" : 5.24776E-39,
-      "anomalyScore" : 94.39974,
-      "unusualScore" : 100,
+      "timestamp" : "2014-06-25T16:00:00.000+0000",
       "fieldName" : "responsetime",
-      "function" : "mean"
-    } ]
+      "function" : "mean",
+      "byFieldName" : "airline",
+      "probability" : 2.36652E-89,
+      "anomalyScore" : 94.35376,
+      "unusualScore" : 100.0,
+      "byFieldValue" : "AAL",
+      "typical" : 99.8279,
+      "actual" : 242.75
+    } ],
+    "anomalyScore" : 94.35376,
+    "unusualScore" : 100.0
   }
 }
 
-This shows that between 2013-01-30T16:00:00-0000 and 2013-01-30T17:00:00-0000 the
-responsetime for airline AAL increased from a normal mean value of 101.651 to 242.75.
-The probability of seeing 242.75 is 5.24776E-39 (which is very unlikely).
+This shows that between 2014-06-25T16:00:00-0000 and 2014-06-25T17:00:00-0000 
+(the bucket start time and bucketSpan) the responsetime for airline AAL increased 
+from a normal mean value of 99.8279 to 242.75. The probability of seeing 242.75 
+is 2.36652E-89 (which is very unlikely).
 
 This increased value is highly unexpected based upon the past behavior of this
 metric and is thus an outlier.
@@ -289,7 +302,7 @@ metric and is thus an outlier.
 Finally, the job can be deleted which shuts down all resources associated with
 the job, and deletes the results:
 
-curl -X DELETE 'http://localhost:8080/engine/v1/jobs/20140516091341-00001'
+curl -X DELETE 'http://localhost:8080/engine/v1/jobs/farequote'
 
 7. Using JSON data
 ------------------
@@ -307,6 +320,7 @@ The same steps as above can be followed, except that the dataDescription would
 need to be altered during the job creation:
 
 curl -X POST -H 'Content-Type: application/json' 'http://localhost:8080/engine/v1/jobs' -d '{
+    "id" : "farequote-json",
     "analysisConfig" : {
         "bucketSpan":3600,
         "detectors" :[{"fieldName":"responsetime","byFieldName":"airline"}]
@@ -319,8 +333,12 @@ curl -X POST -H 'Content-Type: application/json' 'http://localhost:8080/engine/v
 
 And the upload data step would need to point to the JSON file:
 
-curl -X POST -T farequote.json 'http://localhost:8080/engine/v1/data/20140516091341-00001'
+curl -X POST -T farequote.json 'http://localhost:8080/engine/v1/data/farequote-json'
 
+After closing the job review the bucket results as before
+
+curl -X POST 'http://localhost:8080/engine/v1/data/farequote-json/close'
+curl 'http://localhost:8080/engine/v1/results/farequote-json/buckets'
 
 Further information
 ===================
