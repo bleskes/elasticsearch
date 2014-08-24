@@ -53,6 +53,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.*;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static org.elasticsearch.common.util.concurrent.EsExecutors.daemonThreadFactory;
 
@@ -82,7 +84,9 @@ public class InternalClusterService extends AbstractLifecycleComponent<ClusterSe
 
     private final Queue<NotifyTimeout> onGoingTimeouts = ConcurrentCollections.newQueue();
 
-    private volatile ClusterState clusterState;
+    // this lock protects the clusterState while it's being applied
+    private final Lock clusterStateUpdateLock = new ReentrantLock();
+    private ClusterState clusterState;
 
     private final ClusterBlocks.Builder initialBlocks = ClusterBlocks.builder().addGlobalBlock(Discovery.NO_MASTER_BLOCK);
 
@@ -182,7 +186,13 @@ public class InternalClusterService extends AbstractLifecycleComponent<ClusterSe
     }
 
     public ClusterState state() {
-        return this.clusterState;
+        // lock to make sure we never return a BEING_APPLIED state
+        clusterStateUpdateLock.lock();
+        try {
+            return this.clusterState;
+        } finally {
+            clusterStateUpdateLock.unlock();
+        }
     }
 
     public void addFirst(ClusterStateListener listener) {
@@ -437,31 +447,36 @@ public class InternalClusterService extends AbstractLifecycleComponent<ClusterSe
                 }
 
                 // update the current cluster state
-                clusterState = newClusterState;
-                logger.debug("set local cluster state to version {}", newClusterState.version());
+                clusterStateUpdateLock.lock();
+                try {
+                    clusterState = newClusterState;
+                    logger.debug("set local cluster state to version {}", newClusterState.version());
 
-                for (ClusterStateListener listener : priorityClusterStateListeners) {
-                    listener.clusterChanged(clusterChangedEvent);
-                }
-                for (ClusterStateListener listener : clusterStateListeners) {
-                    listener.clusterChanged(clusterChangedEvent);
-                }
-                for (ClusterStateListener listener : lastClusterStateListeners) {
-                    listener.clusterChanged(clusterChangedEvent);
-                }
+                    for (ClusterStateListener listener : priorityClusterStateListeners) {
+                        listener.clusterChanged(clusterChangedEvent);
+                    }
+                    for (ClusterStateListener listener : clusterStateListeners) {
+                        listener.clusterChanged(clusterChangedEvent);
+                    }
+                    for (ClusterStateListener listener : lastClusterStateListeners) {
+                        listener.clusterChanged(clusterChangedEvent);
+                    }
 
-                if (!nodesDelta.removedNodes().isEmpty()) {
-                    threadPool.generic().execute(new Runnable() {
-                        @Override
-                        public void run() {
-                            for (DiscoveryNode node : nodesDelta.removedNodes()) {
-                                transportService.disconnectFromNode(node);
+                    if (!nodesDelta.removedNodes().isEmpty()) {
+                        threadPool.generic().execute(new Runnable() {
+                            @Override
+                            public void run() {
+                                for (DiscoveryNode node : nodesDelta.removedNodes()) {
+                                    transportService.disconnectFromNode(node);
+                                }
                             }
-                        }
-                    });
-                }
+                        });
+                    }
 
-                newClusterState.status(ClusterState.ClusterStateStatus.APPLIED);
+                    newClusterState.status(ClusterState.ClusterStateStatus.APPLIED);
+                } finally {
+                    clusterStateUpdateLock.unlock();
+                }
 
                 //manual ack only from the master at the end of the publish
                 if (newClusterState.nodes().localNodeMaster()) {
