@@ -1,4 +1,4 @@
-# roleA   this is an elastic search role
+# roleA   this is an elasticsearch role
 #  - groupA-DN  this is any group, ldap DN, or unix group
 #  - groupB-DN
 #  - user1-DN
