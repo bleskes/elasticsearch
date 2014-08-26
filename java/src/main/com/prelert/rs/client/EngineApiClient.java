@@ -531,15 +531,20 @@ public class EngineApiClient implements Closeable
 	 * e.g <code>http://localhost:8080/engine/v1/</code>
 	 * @param jobId The Job's unique Id
 	 * @param expand If true include the anomaly records for the bucket
+	 * @param anomalyScoreThreshold Return only buckets with an anomalyScore >=
+	 * this value. If <code>null</code> then ignored
+	 * @param unusualScoreThreshold Return only buckets with an unusualScore >=
+	 * this value. If <code>null</code> then ignored
 	 * 
 	 * @return A {@link Pagination} object containing a list of {@link Bucket buckets}
 	 * @throws IOException 
 	 */
 	public Pagination<Bucket> getBuckets(String baseUrl, String jobId, 
-			boolean expand) 
+			boolean expand, Double anomalyScoreThreshold, Double unusualScoreThreshold) 
 	throws IOException 
 	{
-		return getBuckets(baseUrl, jobId, expand, null, null);
+		return getBuckets(baseUrl, jobId, expand, null, null,
+				anomalyScoreThreshold, unusualScoreThreshold);
 	}
 			
 	/**
@@ -551,15 +556,21 @@ public class EngineApiClient implements Closeable
 	 * @param expand If true include the anomaly records for the bucket
 	 * @param skip The number of buckets to skip 
 	 * @param take The max number of buckets to request. 
+	 * @param anomalyScoreThreshold Return only buckets with an anomalyScore >=
+	 * this value. If <code>null</code> then ignored
+	 * @param unusualScoreThreshold Return only buckets with an unusualScore >=
+	 * this value. If <code>null</code> then ignored
 	 * 
 	 * @return A {@link Pagination} object containing a list of {@link Bucket buckets}
 	 * @throws IOException 
 	 */
 	public Pagination<Bucket> getBuckets(String baseUrl, String jobId,
-			boolean expand, Long skip, Long take) 
+			boolean expand, Long skip, Long take,
+			Double anomalyScoreThreshold, Double unusualScoreThreshold) 
 	throws IOException
 	{
-		return this.<String>getBuckets(baseUrl, jobId, expand, skip, take, null, null);
+		return this.<String>getBuckets(baseUrl, jobId, expand, skip, take, 
+				null, null, anomalyScoreThreshold, unusualScoreThreshold);
 	}
 	
 	/**
@@ -576,12 +587,18 @@ public class EngineApiClient implements Closeable
 	 * or an ISO 8601 date String. If <code>null</code> then ignored
 	 * @param end The end date filter as either a Long (seconds from epoch)
 	 * or an ISO 8601 date String. If <code>null</code> then ignored
+	 * @param anomalyScoreThreshold Return only buckets with an anomalyScore >=
+	 * this value. If <code>null</code> then ignored
+	 * @param unusualScoreThreshold Return only buckets with an unusualScore >=
+	 * this value. If <code>null</code> then ignored
+	 * 
 	 * @return A {@link Pagination} object containing a list of {@link Bucket buckets}
 	 * @throws IOException
 	 */
 	public <T> Pagination<Bucket> getBuckets(String baseUrl, String jobId, 
 			boolean expand, 
-			Long skip, Long take, T start, T end) 
+			Long skip, Long take, T start, T end,
+			Double anomalyScoreThreshold, Double unusualScoreThreshold) 
 	throws IOException
 	{
 		String url = baseUrl + "/results/" + jobId + "/buckets/";
@@ -609,6 +626,16 @@ public class EngineApiClient implements Closeable
 		if (end != null)
 		{
 			url += queryChar + "end=" + URLEncoder.encode(end.toString(), "UTF-8");
+			queryChar = '&';
+		}
+		if (anomalyScoreThreshold != null)
+		{
+			url += queryChar + "anomalyScore=" + anomalyScoreThreshold;
+			queryChar = '&';
+		}
+		if (unusualScoreThreshold != null)
+		{
+			url += queryChar + "unusualScore=" + unusualScoreThreshold;
 			queryChar = '&';
 		}
 		

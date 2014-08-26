@@ -221,15 +221,9 @@ public enum ErrorCode
 	 * The argument to the sort query parameter is not a 
 	 * recognised sort field
 	 */
-	INVALID_SORT_FIELD(60102),
+	INVALID_SORT_FIELD(60102);
 	
-	/**
-	 * A filter can only be applied to either anomalyScore or
-	 * unusualScore but not both
-	 */
-	INVALID_FILTER_FIELD(60103);
 
-	
 	private long m_ErrorCode;
 	private String m_ValueString;
 	

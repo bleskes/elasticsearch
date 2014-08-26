@@ -207,7 +207,7 @@ public class VerifyDetectorConfigurationTest
 		d.setByFieldName("by");
 		for (String f : new String [] {Detector.DISTINCT_COUNT, Detector.DC})
 		{
-			d.setFunction(Detector.DISTINCT_COUNT);
+			d.setFunction(f);
 			try
 			{
 				d.verify();

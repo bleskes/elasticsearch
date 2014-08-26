@@ -302,6 +302,7 @@ public class JobManager
 		return bucket;
 	}
 	
+
 	/**
 	 * Get result buckets
 	 * 
@@ -309,25 +310,19 @@ public class JobManager
 	 * @param expand Include anomaly records
 	 * @param skip
 	 * @param take
+	 * @param anomalyScoreThreshold
+	 * @param unusualScoreThreshold
 	 * @return
-	 * @throws UnknownJobException 
-	 * @throws NativeProcessRunException 
+	 * @throws UnknownJobException
+	 * @throws NativeProcessRunException
 	 */
 	public Pagination<Bucket> buckets(String jobId, 
-			boolean expand, int skip, int take) 
+			boolean expand, int skip, int take,
+			double anomalyScoreThreshold, double unusualScoreThreshold) 
 	throws UnknownJobException, NativeProcessRunException
 	{
 		Pagination<Bucket> buckets = m_JobProvider.buckets(jobId, 
-				expand, skip, take);
-
-		if (expand == false)
-		{
-			// remove records from buckets
-			for (Bucket b : buckets.getDocuments())
-			{
-				b.setRecords(Collections.<AnomalyRecord>emptyList());
-			}
-		}
+				expand, skip, take, anomalyScoreThreshold, unusualScoreThreshold);
 
 		return buckets;
 	}
@@ -341,25 +336,20 @@ public class JobManager
 	 * @param take
 	 * @param startBucket The bucket with this id is included in the results
 	 * @param endBucket Include buckets up to this one
+	 * @param anomalyScoreThreshold
+	 * @param unusualScoreThreshold 
 	 * @return
 	 * @throws UnknownJobException 
 	 * @throws NativeProcessRunException 
 	 */
 	public Pagination<Bucket> buckets(String jobId, 
-			boolean expand, int skip, int take, long startBucket, long endBucket)
+			boolean expand, int skip, int take, long startBucket, long endBucket,
+			double anomalyScoreThreshold, double unusualScoreThreshold)
 	throws UnknownJobException, NativeProcessRunException
 	{
 		Pagination<Bucket> buckets =  m_JobProvider.buckets(jobId, expand,
-				skip, take, startBucket, endBucket);
-
-		if (expand == false)
-		{
-			// remove records from buckets
-			for (Bucket b : buckets.getDocuments())
-			{
-				b.setRecords(Collections.<AnomalyRecord>emptyList());
-			}
-		}
+				skip, take, startBucket, endBucket, 
+				anomalyScoreThreshold, unusualScoreThreshold);
 
 		return buckets;
 	}
@@ -380,8 +370,7 @@ public class JobManager
 			int skip, int take) 
 	throws NativeProcessRunException, UnknownJobException 
 	{
-		return records(jobId, skip, take, DEFAULT_RECORD_SORT_FIELD, true,
-				null, 0.0);
+		return records(jobId, skip, take, DEFAULT_RECORD_SORT_FIELD, true, 0.0, 0.0);
 	}
 	
 
@@ -406,7 +395,7 @@ public class JobManager
 	throws NativeProcessRunException, UnknownJobException 
 	{
 		return records(jobId, skip, take, epochStart, epochEnd, 
-				DEFAULT_RECORD_SORT_FIELD, true, null, 0.0);
+				DEFAULT_RECORD_SORT_FIELD, true, 0.0, 0.0);
 	}
 	
 	
@@ -419,10 +408,10 @@ public class JobManager
 	 * @param take Take only this number of records
 	 * @param sortField The field to sort by
 	 * @param sortDescending
-	 * @param scoreFilterField If not <code>null</code> then filter out all 
-	 * results where the value of this field is < <code>filterValue</code>
-	 * @paran filterValue Filter results where <code>scoreFilterField</code>
-	 * is less than this value. Ignored if <= 0.0
+	 * @param anomalyScoreThreshold Return only buckets with an anomalyScore >=
+	 * this value
+	 * @param unusualScoreThreshold Return only buckets with an unusualScore >=
+	 * this value
 	 * 
 	 * @return
 	 * @throws NativeProcessRunException
@@ -430,11 +419,12 @@ public class JobManager
 	 */
 	public Pagination<AnomalyRecord> records(String jobId, 
 			int skip, int take, String sortField, boolean sortDescending, 
-			String scoreFilterField, double filterValue) 
+			double anomalyScoreThreshold, double unusualScoreThreshold) 
 	throws NativeProcessRunException, UnknownJobException 
 	{
 		Pagination<AnomalyRecord> records = m_JobProvider.records(jobId, 
-				skip, take, sortField, sortDescending, scoreFilterField, filterValue);
+				skip, take, sortField, sortDescending, 
+				anomalyScoreThreshold, unusualScoreThreshold);
 
 		return records; 
 	}
@@ -451,23 +441,24 @@ public class JobManager
 	 * @param epochEnd
 	 * @param sortField
 	 * @param sortDescending
-	 * @param scoreFilterField If not <code>null</code> then filter out all 
-	 * results where the value of this field is < <code>filterValue</code>
-	 * @paran filterValue Filter results where <code>scoreFilterField</code>
-	 * is less than this value. Ignored if <= 0.0
+	 * @param anomalyScoreThreshold Return only buckets with an anomalyScore >=
+	 * this value
+	 * @param unusualScoreThreshold Return only buckets with an unusualScore >=
+	 * this value
 	 * 
 	 * @return
 	 * @throws NativeProcessRunException
 	 * @throws UnknownJobException
 	 */
 	public Pagination<AnomalyRecord> records(String jobId, 
-			int skip, int take, long epochStart, long epochEnd, String sortField,
-			boolean sortDescending, String scoreFilterField, double filterValue) 
+			int skip, int take, long epochStart, long epochEnd, 
+			String sortField, boolean sortDescending, 
+			double anomalyScoreThreshold, double unusualScoreThreshold) 
 	throws NativeProcessRunException, UnknownJobException
 	{
 		Pagination<AnomalyRecord> records = m_JobProvider.records(jobId, 
 				skip, take, epochStart, epochEnd, sortField, sortDescending,
-				scoreFilterField, filterValue);
+				anomalyScoreThreshold, unusualScoreThreshold);
 
 		return records; 
 	}

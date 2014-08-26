@@ -467,27 +467,95 @@ public class ElasticsearchJobProvider implements JobProvider
 	/* Results */
 	@Override
 	public Pagination<Bucket> buckets(String jobId,
-			boolean expand, int skip, int take)
+			boolean expand, int skip, int take,
+			double anomalyScoreThreshold, double unusualScoreThreshold)
 	throws UnknownJobException
 	{
-		FilterBuilder fb = FilterBuilders.matchAllFilter();
+		FilterBuilder fb = null;
+		
+		if (anomalyScoreThreshold > 0.0)
+		{
+			RangeFilterBuilder scoreFilter = FilterBuilders.rangeFilter(Bucket.ANOMALY_SCORE);
+			scoreFilter.gte(anomalyScoreThreshold);
+			fb = scoreFilter;
+		}
+		if (unusualScoreThreshold > 0.0)
+		{
+			RangeFilterBuilder scoreFilter = FilterBuilders.rangeFilter(Bucket.UNUSUAL_SCORE);
+			scoreFilter.gte(unusualScoreThreshold);
+			
+			if (fb == null)
+			{
+				fb = scoreFilter;
+			}
+			else 
+			{
+				fb = FilterBuilders.andFilter(scoreFilter, fb);
+			}
+			
+		}
+		
+		if (fb == null)
+		{
+			fb = FilterBuilders.matchAllFilter();
+		}
 		
 		return buckets(jobId, expand, skip, take, fb);
 	}
 
 	@Override
 	public Pagination<Bucket> buckets(String jobId,
-			boolean expand, int skip, int take, long startBucket, long endBucket)
+			boolean expand, int skip, int take, long startBucket, long endBucket,
+			double anomalyScoreThreshold, double unusualScoreThreshold)
 	throws UnknownJobException
 	{
-		RangeFilterBuilder fb = FilterBuilders.rangeFilter(Bucket.ID);
-		if (startBucket > 0)
+		FilterBuilder fb = null;
+		
+		if (startBucket > 0 || endBucket > 0)
 		{
-			fb.gte(startBucket);
+			RangeFilterBuilder timeRange = FilterBuilders.rangeFilter(Bucket.ID);
+
+			if (startBucket > 0)
+			{
+				timeRange.gte(startBucket);
+			}
+			if (endBucket > 0)
+			{
+				timeRange.lt(endBucket);
+			}
+			
+			fb = timeRange;
 		}
-		if (endBucket > 0)
+		
+		
+		if (anomalyScoreThreshold > 0.0)
 		{
-			fb.lt(endBucket);
+			RangeFilterBuilder scoreFilter = FilterBuilders.rangeFilter(Bucket.ANOMALY_SCORE);
+			scoreFilter.gte(anomalyScoreThreshold);
+			
+			if (fb == null)
+			{
+				fb = scoreFilter;
+			}
+			else 
+			{
+				fb = FilterBuilders.andFilter(scoreFilter, fb);
+			}
+		}
+		
+		if (unusualScoreThreshold > 0.0)
+		{
+			RangeFilterBuilder scoreFilter = FilterBuilders.rangeFilter(Bucket.UNUSUAL_SCORE);
+			scoreFilter.gte(unusualScoreThreshold);
+			
+			if (fb == null)
+			{
+				fb = scoreFilter;
+			}
+			else 
+			{
+				fb = FilterBuilders.andFilter(scoreFilter, fb);
+			}
 		}
 
 		return buckets(jobId, expand, skip, take, fb);
@@ -630,33 +698,59 @@ public class ElasticsearchJobProvider implements JobProvider
 	public Pagination<AnomalyRecord> records(String jobId,
 			int skip, int take,	long startBucket, long endBucket, 
 			String sortField, boolean descending, 
-			String scoreFilterField, double filterValue)
+			double anomalyScoreThreshold, double unusualScoreThreshold)
 	throws UnknownJobException
 	{
-		RangeFilterBuilder rangeFilter = FilterBuilders.rangeFilter(Bucket.ID);
-		if (startBucket > 0)
-		{
-			rangeFilter.gte(startBucket);
-		}
-		if (endBucket > 0)
-		{
-			rangeFilter.lt(endBucket);
-		}
+		FilterBuilder fb = null;
 		
-		FilterBuilder bucketFilter = FilterBuilders.hasParentFilter(				
-				Bucket.TYPE, rangeFilter);
-		
-		
-		FilterBuilder filter = bucketFilter;
-		if (scoreFilterField != null && filterValue > 0.0)
+		if (startBucket > 0 || endBucket > 0)
 		{
-			RangeFilterBuilder scoreFilter = FilterBuilders.rangeFilter(scoreFilterField);
-			scoreFilter.gte(filterValue);
+			RangeFilterBuilder rangeFilter = FilterBuilders.rangeFilter(Bucket.ID);
+
+			if (startBucket > 0)
+			{
+				rangeFilter.gte(startBucket);
+			}
+			if (endBucket > 0)
+			{
+				rangeFilter.lt(endBucket);
+			}
 			
-			filter = FilterBuilders.andFilter(bucketFilter, scoreFilter);
-		}			
+			fb = FilterBuilders.hasParentFilter(Bucket.TYPE, rangeFilter);
+		}
 		
-		return records(jobId, skip, take, filter, sortField, descending);
+		if (anomalyScoreThreshold > 0.0)
+		{
+			RangeFilterBuilder scoreFilter = FilterBuilders.rangeFilter(AnomalyRecord.ANOMALY_SCORE);
+			scoreFilter.gte(anomalyScoreThreshold);
+			
+			if (fb == null)
+			{
+				fb = scoreFilter;
+			}
+			else 
+			{
+				fb = FilterBuilders.andFilter(scoreFilter, fb);
+			}
+		}
+		
+		if (unusualScoreThreshold > 0.0)
+		{
+			RangeFilterBuilder scoreFilter = FilterBuilders.rangeFilter(AnomalyRecord.UNUSUAL_SCORE);
+			scoreFilter.gte(unusualScoreThreshold);
+			
+			if (fb == null)
+			{
+				fb = scoreFilter;
+			}
+			else 
+			{
+				fb = FilterBuilders.andFilter(scoreFilter, fb);
+			}
+		}
+		
+
+		return records(jobId, skip, take, fb, sortField, descending);
 	}
 	
 	/**
@@ -685,18 +779,34 @@ public class ElasticsearchJobProvider implements JobProvider
 	@Override
 	public Pagination<AnomalyRecord> records(String jobId,
 			int skip, int take, String sortField, boolean descending,
-			String scoreFilterField, double filterValue)
+			double anomalyScoreThreshold, double unusualScoreThreshold)
 	throws UnknownJobException
 	{
-		 FilterBuilder fb;
-		 if (scoreFilterField != null && filterValue > 0.0)
+		 FilterBuilder fb = null;
+		 
+		 if (anomalyScoreThreshold > 0.0)
 		 {
-			 RangeFilterBuilder scoreFilter = FilterBuilders.rangeFilter(scoreFilterField);
-			 scoreFilter.gte(filterValue);
-
+			 RangeFilterBuilder scoreFilter = FilterBuilders.rangeFilter(AnomalyRecord.ANOMALY_SCORE);
+			 scoreFilter.gte(anomalyScoreThreshold);
 			 fb = scoreFilter;
 		 }
-		 else
+		 if (unusualScoreThreshold > 0.0)
+		 {
+			 RangeFilterBuilder scoreFilter = FilterBuilders.rangeFilter(AnomalyRecord.UNUSUAL_SCORE);
+			 scoreFilter.gte(unusualScoreThreshold);
+
+			 if (fb == null)
+			 {
+				 fb = scoreFilter;
+			 }
+			 else 
+			 {
+				 fb = FilterBuilders.andFilter(scoreFilter, fb);
+			 }
+
+		 }
+
+		 if (fb == null)
 		 {
 			 fb = FilterBuilders.matchAllFilter();
 		 }

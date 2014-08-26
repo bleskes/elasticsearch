@@ -93,7 +93,7 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
 		try
 		{
 			List<Bucket> buckets = m_JobProvider.buckets(m_JobId,
-						true, 0, MAX_BUCKETS).getDocuments();
+						true, 0, MAX_BUCKETS, 0.0, 0.0).getDocuments();
 			if (buckets == null)
 			{
 				logger.warn("No existing buckets to renormalise for job " +
@@ -136,7 +136,7 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
 		try
 		{
 			List<Bucket> buckets = m_JobProvider.buckets(m_JobId,
-						true, 0, MAX_BUCKETS).getDocuments();
+						true, 0, MAX_BUCKETS, 0.0, 0.0).getDocuments();
 			if (buckets == null)
 			{
 				logger.warn("No existing buckets to renormalise for job " +
