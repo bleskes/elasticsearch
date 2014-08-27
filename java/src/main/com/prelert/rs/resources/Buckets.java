@@ -46,6 +46,7 @@ import org.apache.log4j.Logger;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.process.NativeProcessRunException;
+import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.Pagination;
@@ -105,12 +106,15 @@ public class Buckets extends ResourceWithJobManager
 			@DefaultValue("0") @QueryParam("skip") int skip,
 			@DefaultValue(JobManager.DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take,
 			@DefaultValue("") @QueryParam(START_QUERY_PARAM) String start,
-			@DefaultValue("") @QueryParam(END_QUERY_PARAM) String end)
+			@DefaultValue("") @QueryParam(END_QUERY_PARAM) String end,
+			@DefaultValue("0.0") @QueryParam(AnomalyRecord.ANOMALY_SCORE) double anomalySoreFilter,			
+			@DefaultValue("0.0") @QueryParam(AnomalyRecord.UNUSUAL_SCORE) double unusualScoreFilter)
 	throws UnknownJobException, NativeProcessRunException
 	{	
 		s_Logger.debug(String.format("Get %s buckets for job %s. skip = %d, take = %d"
-				+ " start = '%s', end='%s'", 
-				expand?"expanded ":"", jobId, skip, take, start, end));
+				+ " start = '%s', end='%s', anomaly score filter=%f, unsual score filter= %f", 
+				expand?"expanded ":"", jobId, skip, take, start, end,
+						anomalySoreFilter, unusualScoreFilter));
 		
 		long epochStart = 0;
 		if (start.isEmpty() == false)
@@ -143,11 +147,13 @@ public class Buckets extends ResourceWithJobManager
 		
 		if (epochStart > 0 || epochEnd > 0)
 		{
-			buckets = manager.buckets(jobId, expand, skip, take, epochStart, epochEnd);
+			buckets = manager.buckets(jobId, expand, skip, take, epochStart, epochEnd,
+					anomalySoreFilter, unusualScoreFilter);
 		}
 		else
 		{
-			buckets = manager.buckets(jobId, expand, skip, take);
+			buckets = manager.buckets(jobId, expand, skip, take,
+					anomalySoreFilter, unusualScoreFilter);
 		}
 
 		// paging
@@ -169,6 +175,8 @@ public class Buckets extends ResourceWithJobManager
     			queryParams.add(this.new KeyValue(END_QUERY_PARAM, end));
     		}
     		queryParams.add(this.new KeyValue(EXPAND_QUERY_PARAM, Boolean.toString(expand)));
+    		queryParams.add(this.new KeyValue(AnomalyRecord.ANOMALY_SCORE, String.format("%2.1f", anomalySoreFilter)));
+    		queryParams.add(this.new KeyValue(AnomalyRecord.UNUSUAL_SCORE, String.format("%2.1f", unusualScoreFilter)));
 
     		setPagingUrls(path, buckets, queryParams);
     	}		

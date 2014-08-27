@@ -154,7 +154,7 @@ public class NormalizationTest implements Closeable
 	throws IOException
 	{	
 		Pagination<Bucket> allBuckets = m_WebServiceClient.getBuckets(baseUrl, 
-				jobId, false, 0l, 1500l);
+				jobId, false, 0l, 1500l, 0.0, 0.0);
 		test(allBuckets.getDocumentCount() == FAREQUOTE_NUM_BUCKETS);
 		test(allBuckets.getHitCount() == FAREQUOTE_NUM_BUCKETS);
 		
@@ -168,7 +168,7 @@ public class NormalizationTest implements Closeable
 		while (skip < FAREQUOTE_NUM_BUCKETS)
 		{
 			Pagination<Bucket> buckets = m_WebServiceClient.getBuckets(baseUrl, 
-					jobId, false, skip, take);
+					jobId, false, skip, take, 0.0, 0.0);
 			pagedBuckets.addAll(buckets.getDocuments());
 			
 			skip += take;
@@ -196,8 +196,9 @@ public class NormalizationTest implements Closeable
 		{
 			Pagination<Bucket> buckets = m_WebServiceClient.getBuckets(baseUrl, 
 					jobId, false, skip, take,
-			allBuckets.getDocuments().get(0).getEpoch(),
-			allBuckets.getDocuments().get((int)allBuckets.getHitCount()-1).getEpoch() +1); 
+					allBuckets.getDocuments().get(0).getEpoch(),
+					allBuckets.getDocuments().get((int)allBuckets.getHitCount()-1).getEpoch() +1,
+					0.0, 0.0); 
 			
 			pagedBuckets.addAll(buckets.getDocuments());
 			
@@ -226,7 +227,8 @@ public class NormalizationTest implements Closeable
 		{
 			Pagination<Bucket> byDate = m_WebServiceClient.getBuckets(
 					baseUrl, jobId, false, 0l, 1000l, 
-					startDateFormats[i], endDateFormats[i]);
+					startDateFormats[i], endDateFormats[i],
+					0.0, 0.0);
 
 			test(byDate.getDocuments().get(0).getEpoch() == 1359558600l);
 			test(byDate.getDocuments().get(byDate.getDocumentCount() -1).getEpoch() == 1359669900l);
@@ -274,7 +276,7 @@ public class NormalizationTest implements Closeable
 		
 		
 		Pagination<Bucket> allBucketsExpanded = m_WebServiceClient.getBuckets(baseUrl, 
-				jobId, true, 0l, 1500l);
+				jobId, true, 0l, 1500l, 0.0, 0.0);
 		
 		
 		/*
@@ -381,7 +383,7 @@ public class NormalizationTest implements Closeable
 		
 		// need start and end dates first
 		Pagination<Bucket> allBuckets = m_WebServiceClient.getBuckets(baseUrl, 
-				jobId, true, 0l, 3000l);
+				jobId, true, 0l, 3000l, 0.0, 0.0);
 		long startDate = allBuckets.getDocuments().get(0).getEpoch();
 		long endDate = allBuckets.getDocuments().get(allBuckets.getDocumentCount()-1).getEpoch() + 1;
 		

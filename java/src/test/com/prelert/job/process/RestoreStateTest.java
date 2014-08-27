@@ -149,7 +149,7 @@ public class RestoreStateTest
 			Thread.sleep(1000);
 
 			Pagination<Bucket> buckets = 
-					jobManager.buckets(job.getId(), false, 0, 100);
+					jobManager.buckets(job.getId(), false, 0, 100, 0.0, 0.0);
 
 			List<Double> anomalyScores = new ArrayList<>();
 			for (Bucket bucket : buckets.getDocuments())

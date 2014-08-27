@@ -108,8 +108,8 @@ public class Records extends ResourceWithJobManager
 			@DefaultValue("") @QueryParam(END_QUERY_PARAM) String end,
 			@DefaultValue(AnomalyRecord.UNUSUAL_SCORE) @QueryParam(SORT_QUERY_PARAM) String sort,
 			@DefaultValue("true") @QueryParam(DESCENDING_ORDER) boolean descending,
-			@DefaultValue("0.0") @QueryParam(AnomalyRecord.UNUSUAL_SCORE) double unusualScoreFilter,
-			@DefaultValue("0.0") @QueryParam(AnomalyRecord.ANOMALY_SCORE) double anomalySoreFilter)
+			@DefaultValue("0.0") @QueryParam(AnomalyRecord.ANOMALY_SCORE) double anomalySoreFilter,
+			@DefaultValue("0.0") @QueryParam(AnomalyRecord.UNUSUAL_SCORE) double unusualScoreFilter)
 	throws NativeProcessRunException, UnknownJobException
 	{	
 		s_Logger.debug(String.format("Get records for job %s. skip = %d, take = %d"
@@ -147,31 +147,7 @@ public class Records extends ResourceWithJobManager
 		JobManager manager = jobManager();
 		Pagination<AnomalyRecord> records;
 
-		if (unusualScoreFilter > 0.0 && anomalySoreFilter > 0.0)
-		{
-			String msg = String.format("A filter can only be applied to either %s or "
-							+ "%s but not both", 
-							AnomalyRecord.UNUSUAL_SCORE, AnomalyRecord.ANOMALY_SCORE);
-	 
-			s_Logger.info(msg);
-			throw new RestApiException(msg, ErrorCode.INVALID_FILTER_FIELD,
-					Response.Status.BAD_REQUEST);
-		}
-		
-		String filterField = null;
-		double filterValue = 0.0;
-		
-		if (unusualScoreFilter > 0.0)
-		{
-			filterField = AnomalyRecord.UNUSUAL_SCORE;
-			filterValue = unusualScoreFilter;
-		}
-		if (anomalySoreFilter > 0.0)
-		{
-			filterField = AnomalyRecord.ANOMALY_SCORE;
-			filterValue = anomalySoreFilter;
-		}
-		
+
 		// HACK - the API renames @timestamp to timestamp
 		// but it is @timestamp in the database for Kibana
 		if (Bucket.TIMESTAMP.equals(sort))
@@ -182,12 +158,12 @@ public class Records extends ResourceWithJobManager
 		if (epochStart > 0 || epochEnd > 0)
 		{
 			records = manager.records(jobId, skip, take, epochStart, epochEnd, sort,
-					descending, filterField, filterValue);
+					descending, anomalySoreFilter, unusualScoreFilter);
 		}
 		else
 		{
 			records = manager.records(jobId, skip, take, sort, descending,
-					filterField, filterValue);
+					anomalySoreFilter, unusualScoreFilter);
 		}
 
 		// paging
@@ -210,12 +186,8 @@ public class Records extends ResourceWithJobManager
     		}
     		queryParams.add(this.new KeyValue(SORT_QUERY_PARAM, sort));
     		queryParams.add(this.new KeyValue(DESCENDING_ORDER, Boolean.toString(descending)));
-    		
-    		if (filterField != null)
-    		{
-    			queryParams.add(this.new KeyValue(filterField, 
-    					String.format("%d2.1", filterValue)));
-    		}
+    		queryParams.add(this.new KeyValue(AnomalyRecord.ANOMALY_SCORE, String.format("%2.1f", anomalySoreFilter)));
+    		queryParams.add(this.new KeyValue(AnomalyRecord.UNUSUAL_SCORE, String.format("%2.1f", unusualScoreFilter)));
     		
     		setPagingUrls(path, records, queryParams);
     	}		
