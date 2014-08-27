@@ -133,7 +133,7 @@ public abstract class ElasticsearchBackwardsCompatIntegrationTest extends Elasti
     @Before
     public final void beforeTest() {
         // 1.0.3 is too flaky - lets get stable first.
-        assumeTrue("BWC tests are disabled currently for version [< 1.1.0]", compatibilityVersion().onOrAfter(Version.V_1_1_0));
+        assumeTrue("BWC tests are disabled currently for version [< 1.0.0]", compatibilityVersion().onOrAfter(Version.V_1_0_0));
     }
 
     protected Settings nodeSettings(int nodeOrdinal) {
