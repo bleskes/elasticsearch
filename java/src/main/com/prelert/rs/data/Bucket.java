@@ -94,11 +94,6 @@ public class Bucket
 	 *  
 	 * @return The bucket id
 	 */
-	public long getEpoch()
-	{
-		return m_Epoch;
-	}
-
 	public String getId()
 	{
 		return m_Id;
@@ -107,6 +102,11 @@ public class Bucket
 	public void setId(String id)
 	{
 		m_Id = id;
+	}
+	
+	public long getEpoch()
+	{
+		return m_Epoch;
 	}
 	
 	public Date getTimestamp() 
@@ -209,7 +209,11 @@ public class Bucket
 		m_Records = records;
 	}
 	
-	
+	/**
+	 * The number of records (events) actually processed 
+	 * in this bucket.
+	 * @return
+	 */
 	public long getEventCount()
 	{
 		return m_EventCount;

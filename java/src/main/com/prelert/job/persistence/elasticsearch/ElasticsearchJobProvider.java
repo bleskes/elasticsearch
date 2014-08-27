@@ -31,6 +31,8 @@ import static org.elasticsearch.node.NodeBuilder.nodeBuilder;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -604,7 +606,11 @@ public class ElasticsearchJobProvider implements JobProvider
 				Pagination<AnomalyRecord> page = this.bucketRecords(
 						jobId, hit.getId(), rskip, rtake, 
 						AnomalyRecord.PROBABILITY, false);
-				bucket.setRecords(page.getDocuments());
+				
+				if (page.getHitCount() > 0)
+				{
+					bucket.setRecords(page.getDocuments());
+				}
 				
 				while (page.getHitCount() > rskip + rtake)
 				{
@@ -689,8 +695,25 @@ public class ElasticsearchJobProvider implements JobProvider
 	{
 		 FilterBuilder bucketFilter = FilterBuilders.hasParentFilter(Bucket.TYPE, 
 								FilterBuilders.termFilter(Bucket.ID, bucketId));
+		 
+		 SortBuilder sb = null;
+		 if (sortField != null)
+		 {
+			 sb = new FieldSortBuilder(sortField)
+						 .ignoreUnmapped(true)
+						 .missing("_last")
+						 .order(descending ? SortOrder.DESC : SortOrder.ASC);		
+		 }
+		 
+		 List<String> secondarySort = Arrays.asList(new String[] {
+			 AnomalyRecord.OVER_FIELD_VALUE,
+			 AnomalyRecord.PARTITION_FIELD_VALUE,
+			 AnomalyRecord.BY_FIELD_VALUE,
+			 AnomalyRecord.FIELD_NAME,
+			 AnomalyRecord.FUNCTION}
+		 );
 		
-		return records(jobId, skip, take, bucketFilter, sortField, descending);
+		return records(jobId, skip, take, bucketFilter, sb, secondarySort);
 	}
 	
 	
@@ -773,7 +796,8 @@ public class ElasticsearchJobProvider implements JobProvider
 		FilterBuilder bucketFilter = FilterBuilders.hasParentFilter(
 						Bucket.TYPE, idFilter);
 
-		return records(jobId, skip, take, bucketFilter, sortField, descending);
+	 
+		 return records(jobId, skip, take, bucketFilter, sortField, descending);
 	}
 	
 	@Override
@@ -815,21 +839,29 @@ public class ElasticsearchJobProvider implements JobProvider
 	}
 	
 	
+	private Pagination<AnomalyRecord> records(String jobId,
+			int skip, int take, FilterBuilder recordFilter,
+			String sortField, boolean descending) 
+    throws UnknownJobException
+	{
+		 SortBuilder sb = null;
+		 if (sortField != null)
+		 {
+			 sb = new FieldSortBuilder(sortField)
+						 .ignoreUnmapped(true)
+						 .missing("_last")
+						 .order(descending ? SortOrder.DESC : SortOrder.ASC);		
+		 }
+		 
+		return records(jobId, skip, take, recordFilter, sb, Collections.<String>emptyList());
+	}
+	
+	
 	/**
 	 * The returned records have the parent bucket id set.
-	 * 
-	 * @param jobId
-	 * @param skip
-	 * @param take
-	 * @param recordFilter The record filter sensible options are
-	 * the match all filter or a parent bucket filter
-	 * @param sortField If null then not sorted
-	 * @param descending If true sort in descending order
-	 * @return
-	 * @throws UnknownJobException 
 	 */
 	private Pagination<AnomalyRecord> records(String jobId, int skip, int take,
-			FilterBuilder recordFilter, String sortField, boolean descending) 
+			FilterBuilder recordFilter, SortBuilder sb, List<String> secondarySort) 
 	throws UnknownJobException
 	{
 		SearchRequestBuilder searchBuilder = m_Client.prepareSearch(jobId)
@@ -839,15 +871,17 @@ public class ElasticsearchJobProvider implements JobProvider
 				.addField(_PARENT)   // include the parent id
 				.setFetchSource(true);  // the field option turns off source so request it explicitly
 		
-		if (sortField != null)
+		
+		if (sb != null)
 		{
-			SortBuilder sb = new FieldSortBuilder(sortField)
-									.ignoreUnmapped(true)
-									.missing("_last")
-									.order(descending ? SortOrder.DESC : SortOrder.ASC);		
-			
 			searchBuilder.addSort(sb);
 		}
+		
+		for (String sortField : secondarySort)
+		{
+			searchBuilder.addSort(sortField, SortOrder.DESC);
+		}
+
 		
 		SearchResponse searchResponse;
 		try

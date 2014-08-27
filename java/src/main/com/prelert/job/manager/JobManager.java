@@ -293,12 +293,6 @@ public class JobManager
 	{
 		SingleDocument<Bucket> bucket = m_JobProvider.bucket(jobId, bucketId, expand);
 
-		if (bucket.isExists() && !expand)
-		{
-			// remove records from bucket
-			bucket.getDocument().setRecords(Collections.<AnomalyRecord>emptyList());
-		}
-
 		return bucket;
 	}
 	

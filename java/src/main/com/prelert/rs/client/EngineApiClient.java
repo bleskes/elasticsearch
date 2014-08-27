@@ -521,11 +521,31 @@ public class EngineApiClient implements Closeable
 		return true;
 	}
 	
-	
 	/**
 	 * Get the bucket results for a particular job.
-	 * Calls {@link #getBuckets(String, String, boolean, Long, Long)} with the 
-	 * skip and take parameters set to <code>null</code>
+	 * Calls {@link #getBuckets(String, String, boolean, Long, Long, Double, Double)}
+	 * with the skip and take parameters set to <code>null</code>
+	 * 
+	 * @param baseUrl The base URL for the REST API including version number
+	 * e.g <code>http://localhost:8080/engine/v1/</code>
+	 * @param jobId The Job's unique Id
+	 * @param expand If true include the anomaly records for the bucket
+	 * 
+	 * @return A {@link Pagination} object containing a list of {@link Bucket buckets}
+	 * @throws IOException 
+	 */
+	public Pagination<Bucket> getBuckets(String baseUrl, String jobId, boolean expand) 
+	throws IOException 
+	{
+		return getBuckets(baseUrl, jobId, expand, null, null, null, null);
+	}
+	
+	/**
+	 * Get the bucket results for a particular job and optionally filter by
+	 * anomaly or unusual score. 
+	 * 
+	 * Calls {@link #getBuckets(String, String, boolean, Long, Long, , Double, Double)} 
+	 * with the skip and take parameters set to <code>null</code>
 	 * 
 	 * @param baseUrl The base URL for the REST API including version number
 	 * e.g <code>http://localhost:8080/engine/v1/</code>
@@ -840,12 +860,12 @@ public class EngineApiClient implements Closeable
 		}
 		if (anomalyScoreFilterValue != null)
 		{
-			url += queryChar + "anomalyScore=" + URLEncoder.encode(anomalyScoreFilterValue.toString(), "UTF-8");
+			url += queryChar + "anomalyScore=" + anomalyScoreFilterValue.toString();
 			queryChar = '&';
 		}
 		if (unusualScoreFilterValue != null)
 		{
-			url += queryChar + "unusualScore=" + URLEncoder.encode(unusualScoreFilterValue.toString(), "UTF-8");
+			url += queryChar + "unusualScore=" + unusualScoreFilterValue.toString();
 			queryChar = '&';
 		}		
 		

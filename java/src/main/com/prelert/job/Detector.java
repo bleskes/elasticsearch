@@ -39,7 +39,7 @@ import com.prelert.rs.data.ErrorCode;
 
 /**
  * Defines the fields to be used in the analysis. 
- * <code>Fieldname</code> must be set and only one of <code>byFieldName</code> 
+ * <code>fieldname</code> must be set and only one of <code>byFieldName</code> 
  * and <code>overFieldName</code> should be set.
  */
 @JsonInclude(Include.NON_NULL)
