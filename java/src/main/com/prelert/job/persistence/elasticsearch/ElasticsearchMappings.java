@@ -482,4 +482,48 @@ public class ElasticsearchMappings
 			
 		return mapping;
 	}
+	
+	
+	
+	
+	static public XContentBuilder inputDataMapping() 
+	throws IOException
+	{
+		XContentBuilder mapping = jsonBuilder()
+			.startObject()
+				.startObject(ElasticsearchJobDataPersister.TYPE)
+					.startObject("_all")
+						.field("enabled", false)
+					.endObject()
+					.startObject("properties")	
+						.startObject("epoch")
+							.field("type", "long")
+						.endObject()					
+						.startObject(ElasticsearchJobDataPersister.FIELDS)
+							.field("type", "string")
+							.field("index_name", "field")
+							.field(INDEX, NOT_ANALYZED)
+						.endObject()
+						.startObject(ElasticsearchJobDataPersister.BY_FIELDS)
+							.field("type", "string")
+							.field("index_name", "byField")
+							.field(INDEX, NOT_ANALYZED)
+						.endObject()
+						.startObject(ElasticsearchJobDataPersister.OVER_FIELDS)
+							.field("type", "string")
+							.field("index_name", "overField")
+							.field(INDEX, NOT_ANALYZED)
+						.endObject()
+						.startObject(ElasticsearchJobDataPersister.PARTITION_FIELDS)
+							.field("type", "string")
+							.field("index_name", "partitionField")
+							.field(INDEX, NOT_ANALYZED)
+						.endObject()							
+					.endObject()
+				.endObject()
+			.endObject();
+			
+		return mapping;
+	}
+	
 }

@@ -45,6 +45,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.prelert.job.persistence.DataPersisterFactory;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.process.MissingFieldException;
 import com.prelert.job.process.NativeProcessRunException;
@@ -132,13 +133,14 @@ public class JobManager
 	public JobManager(JobProvider jobProvider,
 			ResultsReaderFactory resultsReaderFactory,
 			StatusReporterFactory statusReporterFactory,
-			UsageReporterFactory usageReporterFactory)
+			UsageReporterFactory usageReporterFactory,
+			DataPersisterFactory dataPersisterFactory)
 	{
 		m_JobProvider = jobProvider;
 		
 		m_ProcessManager = new ProcessManager(jobProvider, 
 				resultsReaderFactory, statusReporterFactory,
-				usageReporterFactory);
+				usageReporterFactory, dataPersisterFactory);
 		
 		m_IdSequence = new AtomicLong();		
 		m_JobIdDateFormat = new SimpleDateFormat("yyyyMMddHHmmss");

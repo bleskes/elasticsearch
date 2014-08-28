@@ -45,7 +45,7 @@ import org.junit.Test;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.DetectorState;
 import com.prelert.job.UnknownJobException;
-import com.prelert.job.persistence.JobDataPersister;
+import com.prelert.job.persistence.JobResultsPersister;
 import com.prelert.job.persistence.JobRenormaliser;
 import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.Quantiles;
@@ -82,7 +82,7 @@ public class ResultsParsingTest
 	/**
 	 * Simple results persister stores buckets and state in a local array. 
 	 */
-	public class ResultsPersister implements JobDataPersister 
+	public class ResultsPersister implements JobResultsPersister 
 	{
 		List<Bucket> m_Buckets = new ArrayList<>();
 		SortedMap<String, Quantiles> m_Quantiles = new TreeMap<>();
