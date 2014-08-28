@@ -353,8 +353,10 @@ public class ESUsersToolTests extends CliToolTestCase {
 
     @Test
     public void testRoles_Cmd_addingRoleWorks() throws Exception {
-        File usersRoleFile = writeFile("admin: admin\nuser:user\n");
+        File usersFile = writeFile("admin:hash\nuser:hash");
+        File usersRoleFile = writeFile("admin: admin\nuser: user\n");
         Settings settings = ImmutableSettings.builder()
+                .put("shield.authc.esusers.files.users", usersFile)
                 .put("shield.authc.esusers.files.users_roles", usersRoleFile)
                 .build();
 
@@ -372,8 +374,10 @@ public class ESUsersToolTests extends CliToolTestCase {
 
     @Test
     public void testRoles_Cmd_removingRoleWorks() throws Exception {
-        File usersRoleFile = writeFile("admin: admin\nuser:user,foo,bar\n");
+        File usersFile = writeFile("admin:hash\nuser:hash");
+        File usersRoleFile = writeFile("admin: admin\nuser: user,foo,bar\n");
         Settings settings = ImmutableSettings.builder()
+                .put("shield.authc.esusers.files.users", usersFile)
                 .put("shield.authc.esusers.files.users_roles", usersRoleFile)
                 .build();
 
@@ -391,8 +395,10 @@ public class ESUsersToolTests extends CliToolTestCase {
 
     @Test
     public void testRoles_Cmd_addingAndRemovingRoleWorks() throws Exception {
+        File usersFile = writeFile("admin:hash\nuser:hash");
         File usersRoleFile = writeFile("admin: admin\nuser:user,foo,bar\n");
         Settings settings = ImmutableSettings.builder()
+                .put("shield.authc.esusers.files.users", usersFile)
                 .put("shield.authc.esusers.files.users_roles", usersRoleFile)
                 .build();
 
@@ -410,8 +416,10 @@ public class ESUsersToolTests extends CliToolTestCase {
 
     @Test
     public void testRoles_Cmd_userNotFound() throws Exception {
-        File usersRoleFile = writeFile("admin: admin\nuser:user,foo,bar\n");
+        File usersFile = writeFile("admin:hash\nuser:hash");
+        File usersRoleFile = writeFile("admin: admin\nuser: user,foo,bar\n");
         Settings settings = ImmutableSettings.builder()
+                .put("shield.authc.esusers.files.users", usersFile)
                 .put("shield.authc.esusers.files.users_roles", usersRoleFile)
                 .build();
 
@@ -436,6 +444,26 @@ public class ESUsersToolTests extends CliToolTestCase {
 
         assertThat(status, is(CliTool.ExitStatus.OK));
         assertThat(catchTerminalOutput.getTerminalOutput(), hasItem(allOf(containsString("user"), containsString("user,foo,bar"))));
+    }
+
+    @Test
+    public void testRoles_cmd_testRoleCanBeAddedWhenUserIsNotInRolesFile() throws Exception {
+        File usersFile = writeFile("admin:hash\nuser:hash");
+        File usersRoleFile = writeFile("admin: admin\n");
+        Settings settings = ImmutableSettings.builder()
+                .put("shield.authc.esusers.files.users", usersFile)
+                .put("shield.authc.esusers.files.users_roles", usersRoleFile)
+                .build();
+
+        CaptureOutputTerminal catchTerminalOutput = new CaptureOutputTerminal();
+        ESUsersTool.Roles cmd = new ESUsersTool.Roles(catchTerminalOutput, "user", new String[]{"myrole"}, Strings.EMPTY_ARRAY);
+        CliTool.ExitStatus status = execute(cmd, settings);
+
+        assertThat(status, is(CliTool.ExitStatus.OK));
+        Map<String, String[]> userRoles = FileUserRolesStore.parseFile(usersRoleFile.toPath(), logger);
+        assertThat(userRoles.keySet(), hasSize(2));
+        assertThat(userRoles.keySet(), hasItems("admin", "user"));
+        assertThat(userRoles.get("user"), arrayContaining("myrole"));
     }
 
     @Test
