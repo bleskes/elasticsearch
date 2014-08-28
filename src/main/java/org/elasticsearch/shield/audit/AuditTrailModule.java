@@ -1,5 +1,6 @@
 package org.elasticsearch.shield.audit;
 
+import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.collect.Sets;
 import org.elasticsearch.common.inject.AbstractModule;
 import org.elasticsearch.common.inject.multibindings.Multibinder;
@@ -39,6 +40,8 @@ public class AuditTrailModule extends AbstractModule {
                 case LoggingAuditTrail.NAME:
                     binder.addBinding().to(LoggingAuditTrail.class);
                     break;
+                default:
+                    throw new ElasticsearchException("Unknown audit trail output [" + output + "]");
             }
         }
     }
