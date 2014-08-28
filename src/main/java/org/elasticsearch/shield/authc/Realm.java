@@ -1,5 +1,6 @@
 package org.elasticsearch.shield.authc;
 
+import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.shield.User;
 import org.elasticsearch.transport.TransportMessage;
 
@@ -14,6 +15,8 @@ public interface Realm<T extends AuthenticationToken> {
      * @return The type of this realm
      */
     String type();
+
+    boolean hasToken(RestRequest request);
 
     /**
      * Attempts to extract a authentication token from the request. If an appropriate token is found

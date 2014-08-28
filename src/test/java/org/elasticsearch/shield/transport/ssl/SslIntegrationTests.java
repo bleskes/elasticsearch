@@ -15,6 +15,7 @@ import org.elasticsearch.http.HttpServerTransport;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.node.NodeBuilder;
 import org.elasticsearch.plugins.PluginsService;
+import org.elasticsearch.shield.authc.support.UsernamePasswordToken;
 import org.elasticsearch.shield.test.ShieldIntegrationTest;
 import org.elasticsearch.shield.transport.netty.NettySecuredTransport;
 import org.elasticsearch.transport.Transport;
@@ -159,6 +160,7 @@ public class SslIntegrationTests extends ShieldIntegrationTest {
         String url = String.format(Locale.ROOT, "https://%s:%s/", InetAddresses.toUriString(inetSocketTransportAddress.address().getAddress()), inetSocketTransportAddress.address().getPort());
 
         HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+        connection.setRequestProperty("Authorization", UsernamePasswordToken.basicAuthHeaderValue(DEFAULT_USER_NAME, DEFAULT_PASSWORD.toCharArray()));
         connection.connect();
 
         assertThat(connection.getResponseCode(), is(200));
