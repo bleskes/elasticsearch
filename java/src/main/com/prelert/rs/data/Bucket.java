@@ -30,6 +30,7 @@ package com.prelert.rs.data;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -85,6 +86,7 @@ public class Bucket
 	public Bucket()
 	{
 		m_Detectors = new ArrayList<>();
+		m_Records = Collections.emptyList();
 	}
 	
 	/**

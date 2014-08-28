@@ -32,7 +32,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -282,7 +281,8 @@ public class JobManager
 	 * 
 	 * @param jobId
 	 * @param bucketId
-	 * @param expand Include anomaly records
+	 * @param expand Include anomaly records. If false the bucket's records
+	 *  are set to <code>null</code> so they aren't serialised
 	 * @return
 	 * @throws NativeProcessRunException 
 	 * @throws UnknownJobException 
@@ -292,7 +292,12 @@ public class JobManager
 	throws NativeProcessRunException, UnknownJobException
 	{
 		SingleDocument<Bucket> bucket = m_JobProvider.bucket(jobId, bucketId, expand);
-
+		
+		if (bucket.isExists() && !expand)
+		{
+			bucket.getDocument().setRecords(null);
+		}
+		
 		return bucket;
 	}
 	
@@ -301,7 +306,8 @@ public class JobManager
 	 * Get result buckets
 	 * 
 	 * @param jobId
-	 * @param expand Include anomaly records
+	 * @param expand Include anomaly records. If false the bucket's records
+	 *  are set to <code>null</code> so they aren't serialised
 	 * @param skip
 	 * @param take
 	 * @param anomalyScoreThreshold
@@ -317,6 +323,14 @@ public class JobManager
 	{
 		Pagination<Bucket> buckets = m_JobProvider.buckets(jobId, 
 				expand, skip, take, anomalyScoreThreshold, unusualScoreThreshold);
+		
+		if (!expand)
+		{
+			for (Bucket bucket : buckets.getDocuments())
+			{
+				bucket.setRecords(null);
+			}
+		}
 
 		return buckets;
 	}
@@ -325,7 +339,8 @@ public class JobManager
 	/**
 	 * Get result buckets between 2 dates 
 	 * @param jobId
-	 * @param expand
+	 * @param expand Include anomaly records. If false the bucket's records
+	 *  are set to <code>null</code> so they aren't serialised
 	 * @param skip
 	 * @param take
 	 * @param startBucket The bucket with this id is included in the results
@@ -344,6 +359,14 @@ public class JobManager
 		Pagination<Bucket> buckets =  m_JobProvider.buckets(jobId, expand,
 				skip, take, startBucket, endBucket, 
 				anomalyScoreThreshold, unusualScoreThreshold);
+		
+		if (!expand)
+		{
+			for (Bucket bucket : buckets.getDocuments())
+			{
+				bucket.setRecords(null);
+			}
+		}		
 
 		return buckets;
 	}
