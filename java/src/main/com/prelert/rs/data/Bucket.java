@@ -477,10 +477,13 @@ public class Bucket
 		else if (this.m_Records != null && that.m_Records != null)
 		{
 			equals &= this.m_Records.size() == that.m_Records.size();
-			for (int i=0; i<this.m_Records.size(); i++)
+			if (equals)
 			{
-				equals &= this.m_Records.get(i).equals(that.m_Records.get(i));
-			}			
+				for (int i=0; i<this.m_Records.size(); i++)
+				{
+					equals &= this.m_Records.get(i).equals(that.m_Records.get(i));
+				}
+			}
 		}
 		else
 		{

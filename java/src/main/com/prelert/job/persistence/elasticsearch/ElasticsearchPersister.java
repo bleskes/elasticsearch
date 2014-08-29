@@ -55,6 +55,7 @@ import org.elasticsearch.search.SearchHit;
 import com.prelert.job.DetectorState;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.persistence.JobDataPersister;
+import com.prelert.rs.data.AnomalyCause;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.Detector;
@@ -467,7 +468,8 @@ public class ElasticsearchPersister implements JobDataPersister
 				
 		return builder;
 	}
-	
+
+
 	/**
 	 * Return the anomaly record as serialisable content
 	 * 
@@ -525,16 +527,74 @@ public class ElasticsearchPersister implements JobDataPersister
 		{
 			builder.field(AnomalyRecord.OVER_FIELD_VALUE, record.getOverFieldValue());
 		}	
-		if (record.isOverallResult() != null)
+		if (record.getCauses() != null)
 		{
-			builder.field(AnomalyRecord.IS_OVERALL_RESULT, record.isOverallResult());
-		}	
+			builder.startArray(AnomalyRecord.CAUSES);
+			for (AnomalyCause cause : record.getCauses())
+			{
+				serialiseCause(cause, builder);
+			}
+			builder.endArray();
+		}
 
 		builder.endObject();
 		
 		return builder;
 	}
-	
+
+
+	/**
+	 * Augment the anomaly record serialisable content with a cause
+	 *
+	 * @param cause Cause to serialise
+	 * @param builder JSON builder to be augmented
+	 * @throws IOException
+	 */
+	private void serialiseCause(AnomalyCause cause, XContentBuilder builder)
+	throws IOException
+	{
+		builder.startObject()
+				.field(AnomalyCause.PROBABILITY, cause.getProbability())
+				.field(AnomalyCause.ACTUAL, cause.getActual())
+				.field(AnomalyCause.TYPICAL, cause.getTypical());
+
+		if (cause.getByFieldName() != null)
+		{
+			builder.field(AnomalyCause.BY_FIELD_NAME, cause.getByFieldName());
+		}
+		if (cause.getByFieldValue() != null)
+		{
+			builder.field(AnomalyCause.BY_FIELD_VALUE, cause.getByFieldValue());
+		}
+		if (cause.getFieldName() != null)
+		{
+			builder.field(AnomalyCause.FIELD_NAME, cause.getFieldName());
+		}
+		if (cause.getFunction() != null)
+		{
+			builder.field(AnomalyCause.FUNCTION, cause.getFunction());
+		}
+		if (cause.getPartitionFieldName() != null)
+		{
+			builder.field(AnomalyCause.PARTITION_FIELD_NAME, cause.getPartitionFieldName());
+		}
+		if (cause.getPartitionFieldValue() != null)
+		{
+			builder.field(AnomalyCause.PARTITION_FIELD_VALUE, cause.getPartitionFieldValue());
+		}
+		if (cause.getOverFieldName() != null)
+		{
+			builder.field(AnomalyCause.OVER_FIELD_NAME, cause.getOverFieldName());
+		}
+		if (cause.getOverFieldValue() != null)
+		{
+			builder.field(AnomalyCause.OVER_FIELD_VALUE, cause.getOverFieldValue());
+		}
+
+		builder.endObject();
+	}
+
+
 	/**
 	 * Return the detector model state as content that can be written to
 	 * Elasticsearch
