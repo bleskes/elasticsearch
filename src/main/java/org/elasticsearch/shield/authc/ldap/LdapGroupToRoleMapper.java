@@ -135,9 +135,9 @@ public class LdapGroupToRoleMapper extends AbstractComponent {
         }
     }
 
-    public static interface Listener {
+    static interface Listener {
 
-        static final Listener NOOP = new Listener() {
+        final Listener NOOP = new Listener() {
             @Override
             public void onRefresh() {
             }

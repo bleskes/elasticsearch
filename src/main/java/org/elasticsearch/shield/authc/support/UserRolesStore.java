@@ -7,7 +7,7 @@ public interface UserRolesStore {
 
     String[] roles(String username);
 
-    public static interface Writable extends UserRolesStore {
+    static interface Writable extends UserRolesStore {
 
         void setRoles(String username, String... roles);
 

@@ -33,7 +33,7 @@ public interface Permission {
 
     boolean check(String action, TransportRequest request, MetaData metaData);
 
-    public static class Global implements Permission {
+    static class Global implements Permission {
 
         private final Cluster cluster;
         private final Indices indices;
@@ -97,7 +97,7 @@ public interface Permission {
         }
     }
 
-    public static class Cluster implements Permission {
+    static class Cluster implements Permission {
 
         public static final Cluster NONE = new Cluster(Privilege.Cluster.NONE) {
             @Override
@@ -124,7 +124,7 @@ public interface Permission {
         }
     }
 
-    public static class Indices implements Permission {
+    static class Indices implements Permission {
 
         public static final Indices NONE = new Indices() {
             @Override
@@ -133,7 +133,7 @@ public interface Permission {
             }
         };
 
-        public static IndicesResolver[] indicesResolvers = new IndicesResolver[] {
+        static final IndicesResolver[] indicesResolvers = new IndicesResolver[] {
                 // add special resolvers here
                 new DefaultIndicesResolver()
         };
