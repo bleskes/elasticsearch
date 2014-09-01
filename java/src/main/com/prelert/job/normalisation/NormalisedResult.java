@@ -38,23 +38,23 @@ import com.fasterxml.jackson.core.JsonToken;
 /**
  * Store the output of the normaliser process
  * 
- * {"rawAnomalyScore":"0.0","unusualScore":"","anomalyScore":"0"}
+ * {"rawAnomalyScore":"0.0","recordUnusualness":"","anomalyScore":"0"}
  *
  */
 public class NormalisedResult 
 {
 	static public final String RAW_ANOMALY_SCORE = "rawAnomalyScore";
-	static public final String UNUSUAL_SCORE = "unusualScore";
+	static public final String RECORD_UNUSUALNESS = "recordUnusualness";
 	static public final String SYS_CHANGE_SCORE = "anomalyScore";
-	static public final String TAG = "tag";
+	static public final String ID = "id";
 	
 	
 	private double m_RawAnomalyScore;
 	private double m_NormalizedUnusualScore;
 	private double m_NormalizedSysChangeScore;
-	private String m_Tag;
-	private String m_Distingusher;
-	
+	private String m_Id;
+
+
 	public NormalisedResult()
 	{
 		
@@ -65,7 +65,7 @@ public class NormalisedResult
 		m_RawAnomalyScore = other.m_RawAnomalyScore;
 		m_NormalizedSysChangeScore = other.m_NormalizedSysChangeScore;
 		m_NormalizedUnusualScore = other.m_NormalizedUnusualScore;
-		m_Tag = other.m_Tag;				
+		m_Id = other.m_Id;				
 	}
 	
 	public double getRawAnomalyScore() 
@@ -99,21 +99,16 @@ public class NormalisedResult
 	}
 
 
-	public String getTag()
+	public String getId()
 	{
-		return m_Tag;
+		return m_Id;
 	}
 	
-	public void setTag(String tag)
+	public void setId(String id)
 	{
-		m_Tag = tag;
+		m_Id = id;
 	}
 	
-	public String getDistingusher()
-	{
-		return m_Distingusher;
-	}
-
 	
 	static public NormalisedResult parseJson(JsonParser parser, Logger logger)
 	throws JsonParseException, IOException
@@ -190,7 +185,7 @@ public class NormalisedResult
 										+ " as a double");
 					}					
 					break;
-				case UNUSUAL_SCORE:
+				case RECORD_UNUSUALNESS:
 					// TODO this is string should be output as a double
 //					if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)	
 //					{
@@ -208,19 +203,19 @@ public class NormalisedResult
 							}
 							catch (NumberFormatException nfe)
 							{
-								logger.warn("Cannot parse " + UNUSUAL_SCORE + " : " + parser.getText() 
+								logger.warn("Cannot parse " + RECORD_UNUSUALNESS + " : " + parser.getText() 
 										+ " as a double");
 							}
 						}
 					}
 					else
 					{
-						logger.warn("Cannot parse " + UNUSUAL_SCORE + " : " + parser.getText() 
+						logger.warn("Cannot parse " + RECORD_UNUSUALNESS + " : " + parser.getText() 
 										+ " as a double");
 					}	
 					break;
-				case TAG:
-					result.setTag(parser.getValueAsString());
+				case ID:
+					result.setId(parser.getValueAsString());
 					break;
 				default:
 					logger.trace(String.format("Parsed unknown field in NormalisedResult %s:%s", 

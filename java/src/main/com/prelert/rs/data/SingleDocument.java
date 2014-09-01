@@ -27,7 +27,9 @@
 
 package com.prelert.rs.data;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 /**
  * Generic wrapper class for returning a single document requested through
@@ -37,6 +39,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
  * @param <T>
  */
 @JsonPropertyOrder({"documentId", "exists", "type", "document"})
+@JsonInclude(Include.NON_NULL)
 public class SingleDocument<T> 
 {
 	private boolean m_Exists;

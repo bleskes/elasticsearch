@@ -43,7 +43,7 @@ public enum JobStatus
 	}, 
 	CLOSED, FAILED;
 	
-        public boolean isRunning()
+    public boolean isRunning()
 	{
 		return false;
 	}		

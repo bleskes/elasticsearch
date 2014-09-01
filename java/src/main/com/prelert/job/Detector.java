@@ -39,8 +39,8 @@ import com.prelert.rs.data.ErrorCode;
 
 /**
  * Defines the fields to be used in the analysis. 
- * <code>Fieldname</code> must be set and only one of <code>ByFieldName</code> 
- * and <code>OverFieldName</code> should be set.
+ * <code>fieldname</code> must be set and only one of <code>byFieldName</code> 
+ * and <code>overFieldName</code> should be set.
  */
 @JsonInclude(Include.NON_NULL)
 public class Detector
@@ -89,16 +89,16 @@ public class Detector
 			}));
 	
 	/**
-	 * The set of count functions requiring a by or over field
+	 * The set of functions that do not require a field, by field or over field
 	 */
-	static public final Set<String> COUNT_BY_OVER_FUNCTIONS = 
+	static public final Set<String> COUNT_WITHOUT_FIELD_FUNCTIONS = 
 			new HashSet<String>(Arrays.<String>asList(new String [] {
+				COUNT,
 				HIGH_COUNT, 
 				LOW_COUNT,
-				NON_ZERO_COUNT, NZC,
+				NON_ZERO_COUNT, NZC
 			}));
 	
-
 	/**
 	 * The set of functions that require a fieldname
 	 */
@@ -318,12 +318,12 @@ public class Detector
 	/**
 	 * Checks the configuration is valid
 	 * <ol>
-	 * <li>One of FieldName, ByFieldName, OverFieldName or Function must be set</li>
-	 * <li>Unless the function is 'count' one of FieldName, ByFieldName 
-	 * or OverFieldName must be set</li>
+	 * <li>One of fieldName, byFieldName, overFieldName or function must be set</li>
+	 * <li>Unless the function is 'count' one of fieldName, byFieldName 
+	 * or overFieldName must be set</li>
 	 * <li>If byFieldName is set function or fieldName must bet set</li>
 	 * <li>If overFieldName is set function or fieldName must bet set</li>
-	 * <li>Function is one of the strings in the set {@link #ANALYSIS_FUNCTIONS}</li>
+	 * <li>function is one of the strings in the set {@link #ANALYSIS_FUNCTIONS}</li>
 	 * <li>If function is not set but the fieldname happens to be the same 
 	 * as one of the function names (e.g.a field called 'count')
 	 * set function to 'metric'</li>
@@ -331,8 +331,8 @@ public class Detector
 	 * functions</li> 
 	 * <li>Check the metric/by/over fields that cannot be set with certain 
 	 * functions are not set</li> 
-	 * <li>If the function is HIGH_COUNT, LOW_COUNT, NON_ZERO_COUNT or NZC
-	 * then either byFieldName or overFieldName must be set</li>
+	 * <li>If the function is NON_ZERO_COUNT or NZC
+	 * then overFieldName must not be set</li>
 	 * </ol>
 	 * 
 	 * @return true
@@ -351,15 +351,15 @@ public class Detector
 		{
 			if (emptyFunction)
 			{
-				throw new JobConfigurationException("One of FieldName, "
-						+ "ByFieldName, OverFieldName or Function must be set",
+				throw new JobConfigurationException("One of fieldName, "
+						+ "byFieldName, overFieldName or function must be set",
 						ErrorCode.INVALID_FIELD_SELECTION);
 			}
 			
-			if (!COUNT.equals(m_Function))
+			if (!COUNT_WITHOUT_FIELD_FUNCTIONS.contains(m_Function))
 			{
 				throw new JobConfigurationException("Unless the function is 'count'"
-						+ " one of FieldName, ByFieldName or OverFieldName must be set",
+						+ " one of fieldName, byFieldName or overFieldName must be set",
 						ErrorCode.INVALID_FIELD_SELECTION);
 			}
 		}
@@ -464,17 +464,6 @@ public class Detector
 						ErrorCode.INVALID_FIELD_SELECTION);
 			}
 			
-			if (COUNT_BY_OVER_FUNCTIONS.contains(m_Function))
-			{
-				if (emptyByField && emptyOverField)
-				{
-					throw new JobConfigurationException(
-							String.format("Either byFieldName or overFieldName "
-									+ "must be specified for function '%s'",
-									m_Function),
-							ErrorCode.INVALID_FIELD_SELECTION);
-				}
-			}
 		}
 		
 		return true;

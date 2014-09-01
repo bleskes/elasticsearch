@@ -521,27 +521,50 @@ public class EngineApiClient implements Closeable
 		return true;
 	}
 	
-	
 	/**
 	 * Get the bucket results for a particular job.
-	 * Calls {@link #getBuckets(String, String, boolean, Long, Long)} with the 
-	 * skip and take parameters set to <code>null</code>
+	 * Calls {@link #getBuckets(String, String, boolean, Long, Long, Double, Double)}
+	 * with the skip and take parameters set to <code>null</code>
 	 * 
 	 * @param baseUrl The base URL for the REST API including version number
 	 * e.g <code>http://localhost:8080/engine/v1/</code>
 	 * @param jobId The Job's unique Id
-	 * @param normalisation The normalisation type, if <code>null</code> the 
-	 * default is used
 	 * @param expand If true include the anomaly records for the bucket
 	 * 
 	 * @return A {@link Pagination} object containing a list of {@link Bucket buckets}
 	 * @throws IOException 
 	 */
-	public Pagination<Bucket> getBuckets(String baseUrl, String jobId, 
-			String normalisation, boolean expand) 
+	public Pagination<Bucket> getBuckets(String baseUrl, String jobId, boolean expand) 
 	throws IOException 
 	{
-		return getBuckets(baseUrl, jobId, normalisation, expand, null, null);
+		return getBuckets(baseUrl, jobId, expand, null, null, null, null);
+	}
+	
+	/**
+	 * Get the bucket results for a particular job and optionally filter by
+	 * anomaly or unusual score. 
+	 * 
+	 * Calls {@link #getBuckets(String, String, boolean, Long, Long, , Double, Double)} 
+	 * with the skip and take parameters set to <code>null</code>
+	 * 
+	 * @param baseUrl The base URL for the REST API including version number
+	 * e.g <code>http://localhost:8080/engine/v1/</code>
+	 * @param jobId The Job's unique Id
+	 * @param expand If true include the anomaly records for the bucket
+	 * @param anomalyScoreThreshold Return only buckets with an anomalyScore >=
+	 * this value. If <code>null</code> then ignored
+	 * @param unusualScoreThreshold Return only buckets with a maxRecordUnusualness >=
+	 * this value. If <code>null</code> then ignored
+	 * 
+	 * @return A {@link Pagination} object containing a list of {@link Bucket buckets}
+	 * @throws IOException 
+	 */
+	public Pagination<Bucket> getBuckets(String baseUrl, String jobId, 
+			boolean expand, Double anomalyScoreThreshold, Double unusualScoreThreshold) 
+	throws IOException 
+	{
+		return getBuckets(baseUrl, jobId, expand, null, null,
+				anomalyScoreThreshold, unusualScoreThreshold);
 	}
 			
 	/**
@@ -550,20 +573,24 @@ public class EngineApiClient implements Closeable
 	 * @param baseUrl The base URL for the REST API including version number
 	 * e.g <code>http://localhost:8080/engine/v1/</code>
 	 * @param jobId The Job's unique Id
-	 * @param normalisation The normalisation type, if <code>null</code> the 
-	 * default is used 
 	 * @param expand If true include the anomaly records for the bucket
 	 * @param skip The number of buckets to skip 
 	 * @param take The max number of buckets to request. 
+	 * @param anomalyScoreThreshold Return only buckets with an anomalyScore >=
+	 * this value. If <code>null</code> then ignored
+	 * @param unusualScoreThreshold Return only buckets with a maxRecordUnusualness >=
+	 * this value. If <code>null</code> then ignored
 	 * 
 	 * @return A {@link Pagination} object containing a list of {@link Bucket buckets}
 	 * @throws IOException 
 	 */
 	public Pagination<Bucket> getBuckets(String baseUrl, String jobId,
-			String normalisation, boolean expand, Long skip, Long take) 
+			boolean expand, Long skip, Long take,
+			Double anomalyScoreThreshold, Double unusualScoreThreshold) 
 	throws IOException
 	{
-		return this.<String>getBuckets(baseUrl, jobId, normalisation, expand, skip, take, null, null);
+		return this.<String>getBuckets(baseUrl, jobId, expand, skip, take, 
+				null, null, anomalyScoreThreshold, unusualScoreThreshold);
 	}
 	
 	/**
@@ -573,8 +600,6 @@ public class EngineApiClient implements Closeable
 	 * @param baseUrl The base URL for the REST API including version number
 	 * e.g <code>http://localhost:8080/engine/v1/</code>
 	 * @param jobId The Job's unique Id
-	 * @param normalisation The normalisation type, if <code>null</code> the 
-	 * default is used 
 	 * @param expand If true include the anomaly records for the bucket
 	 * @param skip The number of buckets to skip. If <code>null</code> then ignored 
 	 * @param take The max number of buckets to request. If <code>null</code> then ignored 
@@ -582,21 +607,22 @@ public class EngineApiClient implements Closeable
 	 * or an ISO 8601 date String. If <code>null</code> then ignored
 	 * @param end The end date filter as either a Long (seconds from epoch)
 	 * or an ISO 8601 date String. If <code>null</code> then ignored
+	 * @param anomalyScoreThreshold Return only buckets with an anomalyScore >=
+	 * this value. If <code>null</code> then ignored
+	 * @param unusualScoreThreshold Return only buckets with a maxRecordUnusualness >=
+	 * this value. If <code>null</code> then ignored
+	 * 
 	 * @return A {@link Pagination} object containing a list of {@link Bucket buckets}
 	 * @throws IOException
 	 */
 	public <T> Pagination<Bucket> getBuckets(String baseUrl, String jobId, 
-			String normalisation, boolean expand, 
-			Long skip, Long take, T start, T end) 
+			boolean expand, 
+			Long skip, Long take, T start, T end,
+			Double anomalyScoreThreshold, Double unusualScoreThreshold) 
 	throws IOException
 	{
-		String url = baseUrl + "/results/" + jobId ;
+		String url = baseUrl + "/results/" + jobId + "/buckets/";
 		char queryChar = '?';
-		if (normalisation != null)
-		{
-			url += queryChar + "norm=" + normalisation;
-			queryChar = '&';
-		}
 		if (expand)
 		{
 			url += queryChar + "expand=true";
@@ -620,6 +646,16 @@ public class EngineApiClient implements Closeable
 		if (end != null)
 		{
 			url += queryChar + "end=" + URLEncoder.encode(end.toString(), "UTF-8");
+			queryChar = '&';
+		}
+		if (anomalyScoreThreshold != null)
+		{
+			url += queryChar + "anomalyScore=" + anomalyScoreThreshold;
+			queryChar = '&';
+		}
+		if (unusualScoreThreshold != null)
+		{
+			url += queryChar + "maxRecordUnusualness=" + unusualScoreThreshold;
 			queryChar = '&';
 		}
 		
@@ -646,30 +682,21 @@ public class EngineApiClient implements Closeable
 	 * @param jobId The Job's unique Id
 	 * @param bucketId The bucket to get
 	 * @param expand If true include the anomaly records for the bucket
-	 * @param normalisation The normalisation type
 	 * 
 	 * @return A {@link SingleDocument} object containing the requested 
 	 * {@link Bucket} or an empty {@link SingleDocument} if it does not exist 
 	 * @throws IOException 
 	 */
 	public SingleDocument<Bucket> getBucket(String baseUrl, String jobId, 
-			String bucketId, boolean expand, String normalisation) 
+			String bucketId, boolean expand) 
 	throws JsonMappingException, IOException
 	{
-		String url = baseUrl + "/results/" + jobId + "/" + bucketId;
-		char queryChar = '?';
+		String url = baseUrl + "/results/" + jobId + "/buckets/" + bucketId;
 		if (expand)
 		{
 			url += "?expand=true";
-			queryChar = '&';
 		}
-		
-		if (normalisation != null)
-		{
-			url += queryChar + "norm=" + normalisation;
-		}
-		
-		
+
 		s_Logger.debug("GET bucket " + url);
 		
 		SingleDocument<Bucket> doc = this.get(url, 
@@ -694,19 +721,41 @@ public class EngineApiClient implements Closeable
 	 * @param baseUrl The base URL for the REST API including version number
 	 * e.g <code>http://localhost:8080/engine/v1/</code>
 	 * @param jobId The Job's unique Id
-	 * @param normalisation The normalisation type, if <code>null</code> the 
-	 * default is used
 	 * 
 	 * @return A {@link Pagination} object containing a list of 
 	 * {@link AnomalyRecord anomaly records}
 	 * @throws IOException 
 	 */
-	public Pagination<AnomalyRecord> getRecords(String baseUrl, String jobId,
-								String normalisation)
+	public Pagination<AnomalyRecord> getRecords(String baseUrl, String jobId)
 	throws IOException
 	{
-		return this.<String>getRecords(baseUrl, jobId, normalisation, null, null, null, null);
+		return this.<String>getRecords(baseUrl, jobId, null, null, null, null,
+				null, null, null, null);
 	}
+	
+	/**
+	 * Get the anomaly records for the job with skip and take parameters.
+	 * The records aren't organised by bucket 
+	 * 
+	 * Calls {@link #getRecords(String, String, Long, Long)} with the 
+	 * skip and take parameters set to <code>null</code>
+	 * 
+	 * @param baseUrl The base URL for the REST API including version number
+	 * e.g <code>http://localhost:8080/engine/v1/</code>
+	 * @param jobId The Job's unique Id
+	 * @param skip The number of records to skip 
+	 * @param take The max number of records to request. 
+	 * @return A {@link Pagination} object containing a list of 
+	 * {@link AnomalyRecord anomaly records}
+	 * @throws IOException  
+	 */
+	public Pagination<AnomalyRecord> getRecords(String baseUrl, String jobId, 
+					Long skip, Long take)
+	throws IOException
+	{
+		return this.<String>getRecords(baseUrl, jobId, skip, take, null, null,
+				null, null, null, null);
+	}	
 	
 	
 	/**
@@ -719,55 +768,66 @@ public class EngineApiClient implements Closeable
 	 * @param baseUrl The base URL for the REST API including version number
 	 * e.g <code>http://localhost:8080/engine/v1/</code>
 	 * @param jobId The Job's unique Id
-	 * @param normalisation The normalisation type, if <code>null</code> the 
-	 * default is used
 	 * @param skip The number of records to skip 
 	 * @param take The max number of records to request. 
+	 * @param start The start date filter as either a Long (seconds from epoch)
+	 * or an ISO 8601 date String. If <code>null</code> then ignored
+	 * @param end The end date filter as either a Long (seconds from epoch)
+	 * or an ISO 8601 date String. If <code>null</code> then ignored
+	 * 
 	 * @return A {@link Pagination} object containing a list of 
 	 * {@link AnomalyRecord anomaly records}
 	 * @throws IOException  
 	 */
-	public Pagination<AnomalyRecord> getRecords(String baseUrl, String jobId, 
-					String normalisation, Long skip, Long take)
+	public <T> Pagination<AnomalyRecord> getRecords(String baseUrl, String jobId, 
+					Long skip, Long take, T start, T end)
 	throws IOException
 	{
-		return this.<String>getRecords(baseUrl, jobId, normalisation, skip, take, null, null);
+		return this.<T>getRecords(baseUrl, jobId, skip, take, start, end,
+				null, null, null, null);
 	}
-	
-	
+		
+
 	/**
 	 * Get the anomaly records for the job between the start and 
-	 * end dates with skip and take parameters.
+	 * end dates with skip and take parameters sorted by field
+	 * and optionally filtered by score. Only one of 
+	 * <code>anomalyScoreFilterValue</code> and <code>unusualScoreFilterValue</code> 
+	 * should be specified it is an error if both are set
+	 * 
 	 * The records aren't grouped by bucket 
 	 * 
 	 * 
 	 * @param baseUrl The base URL for the REST API including version number
 	 * e.g <code>http://localhost:8080/engine/v1/</code>
 	 * @param jobId The Job's unique Id
-	 * @param normalisation The normalisation type, if <code>null</code> the 
-	 * default is used
 	 * @param skip The number of records to skip 
 	 * @param take The max number of records to request.
 	 * @param start The start date filter as either a Long (seconds from epoch)
 	 * or an ISO 8601 date String. If <code>null</code> then ignored
 	 * @param end The end date filter as either a Long (seconds from epoch)
 	 * or an ISO 8601 date String. If <code>null</code> then ignored
+	 * @param sortField The field to sort the results by, ignored if <code>null</code>
+	 * @param sort_descending If sort_field is not <code>null</code> then sort  
+	 * records in descending order if true else sort ascending
+	 * @param anomalyScoreFilterValue If not <code>null</code> return only the 
+	 * records with an anomalyScore >= anomalyScoreFilterValue
+	 * @param unusualScoreFilterValue If not <code>null</code> return only the 
+	 * records with a recordUnusualness >= unusualScoreFilterValue
+	 * 
 	 * @return A {@link Pagination} object containing a list of 
 	 * {@link AnomalyRecord anomaly records}
 	 * @throws IOException 
 	 */			
 	public <T> Pagination<AnomalyRecord> getRecords(String baseUrl, String jobId, 
-			String normalisation, Long skip, Long take, T start, T end) 			
+			Long skip, Long take, T start, T end, 
+			String sortField, Boolean sortDescending, 
+			Double anomalyScoreFilterValue, Double unusualScoreFilterValue) 			
 	throws IOException
 	{
-		String url = baseUrl + "/records/" + jobId ;
+		String url = baseUrl + "/results/" + jobId + "/records/";
 		char queryChar = '?';
-		
-		if (normalisation != null)
-		{
-			url += queryChar + "norm=" + normalisation;
-			queryChar = '&';
-		}
+
 		if (skip != null)
 		{
 			url += queryChar + "skip=" + skip;
@@ -788,6 +848,27 @@ public class EngineApiClient implements Closeable
 			url += queryChar + "end=" + URLEncoder.encode(end.toString(), "UTF-8");
 			queryChar = '&';
 		}
+		if (sortField != null)
+		{
+			url += queryChar + "sort=" + URLEncoder.encode(sortField, "UTF-8");
+			queryChar = '&';
+		}
+		if (sortDescending != null && sortDescending == false)
+		{
+			url += queryChar + "desc=false";
+			queryChar = '&';
+		}
+		if (anomalyScoreFilterValue != null)
+		{
+			url += queryChar + "anomalyScore=" + anomalyScoreFilterValue.toString();
+			queryChar = '&';
+		}
+		if (unusualScoreFilterValue != null)
+		{
+			url += queryChar + "recordUnusualness=" + unusualScoreFilterValue.toString();
+			queryChar = '&';
+		}		
+		
 		
 		s_Logger.debug("GET records " + url);
 		
@@ -802,43 +883,6 @@ public class EngineApiClient implements Closeable
 		return page;
 	}
 	
-	
-	/**
-	 * Get all the normalised records for the bucket
-	 * 
-	 * @param baseUrl The base URL for the REST API including version number
-	 * e.g <code>http://localhost:8080/engine/v1/</code>
-	 * @param jobId The Job's unique Id
-	 * @param bucketId 
-	 * @param normalization The normalization type, if <code>null</code> the 
-	 * default is used
-	 * @return
-	 * @throws IOException
-	 */
-	public Pagination<AnomalyRecord> getBucketRecords(String baseUrl, 
-			String jobId, String bucketId, String normalization)
-	throws IOException
-	{
-		String url = baseUrl + "/results/" + jobId + "/" + bucketId + "/records";
-		if (normalization != null)
-		{
-			url += "?norm=" + normalization;
-		}
-		
-		s_Logger.debug("GET records " + url);
-
-		Pagination<AnomalyRecord> page = this.get(url, 
-				new TypeReference<Pagination<AnomalyRecord>>() {});
-		
-		if (page == null)
-		{
-			page = new Pagination<>();
-			page.setDocuments(Collections.<AnomalyRecord>emptyList());
-		}
-		
-		return page;
-	}
-
 	
 	/**
 	 * Get job alerts with the default skip and take parameters
@@ -861,8 +905,6 @@ public class EngineApiClient implements Closeable
 	 * @param baseUrl The base URL for the REST API including version number
 	 * e.g <code>http://localhost:8080/engine/v1/</code>
 	 * @param jobId The Job's unique Id
-	 * @param normalisation The normalisation type, if <code>null</code> the 
-	 * default is used 
 	 * @param skip The number of alerts to skip. If <code>null</code> then ignored 
 	 * @param take The max number of alerts to return. If <code>null</code> then ignored 
 	 * @return A {@link Pagination} object containing a list of {@link Bucket buckets}
@@ -883,8 +925,6 @@ public class EngineApiClient implements Closeable
 	 * @param baseUrl The base URL for the REST API including version number
 	 * e.g <code>http://localhost:8080/engine/v1/</code>
 	 * @param jobId The Job's unique Id
-	 * @param normalisation The normalisation type, if <code>null</code> the 
-	 * default is used 
 	 * @param skip The number of alerts to skip. If <code>null</code> then ignored 
 	 * @param take The max number of alerts to request. If <code>null</code> then ignored 
 	 * @param start The start date filter as either a Long (seconds from epoch)
@@ -943,8 +983,6 @@ public class EngineApiClient implements Closeable
 	 * 
 	 * @param baseUrl The base URL for the REST API including version number
 	 * e.g <code>http://localhost:8080/engine/v1/</code>
-	 * @param normalisation The normalisation type, if <code>null</code> the 
-	 * default is used 
 	 * @param skip The number of alerts to skip. If <code>null</code> then ignored 
 	 * @param take The max number of alerts to request. If <code>null</code> then ignored 
 	 * @param start The start date filter as either a Long (seconds from epoch)
@@ -1200,12 +1238,17 @@ public class EngineApiClient implements Closeable
 	
 	/**
 	 * Download all the log files for the given job.
-	 * 
+	 *
+	 * <b>Important: the caller MUST close the ZipInputStream returned by
+	 * this method, otherwise all subsequent client/server communications
+	 * will be blocked.</b>
+	 *
 	 * @param baseUrl The base URL for the REST API including version number
 	 * e.g <code>http://localhost:8080/engine/v1/</code>
 	 * @param jobId The Job's unique Id
 	 * @return A ZipInputStream for the log files. If the inputstream is
-	 * empty an error may have occurred
+	 * empty an error may have occurred.  The caller MUST close this
+	 * ZipInputStream when they have finished with it.
 	 * @throws ClientProtocolException
 	 * @throws IOException
 	 */
@@ -1218,11 +1261,17 @@ public class EngineApiClient implements Closeable
 		
 		HttpGet get = new HttpGet(url);
 		
-		try (CloseableHttpResponse response = m_HttpClient.execute(get))
+		CloseableHttpResponse response = m_HttpClient.execute(get);
+		try
 		{
 			if (response.getStatusLine().getStatusCode() == 200)
 			{
-				 return new ZipInputStream(response.getEntity().getContent());
+				ZipInputStream result = new ZipInputStream(response.getEntity().getContent());
+				// In this case we DON'T want the response to be automatically
+				// closed - the caller MUST close the ZipInputStream when they
+				// are finished with it
+				response = null;
+				return result;
 			}
 			else
 			{
@@ -1241,8 +1290,15 @@ public class EngineApiClient implements Closeable
 				
 				// return an empty stream
 				return new ZipInputStream(new ByteArrayInputStream(new byte[0]));
-			}			
-		}		
+			}
+		}
+		finally
+		{
+			if (response != null)
+			{
+				response.close();
+			}
+		}
 	}	
 	
 	

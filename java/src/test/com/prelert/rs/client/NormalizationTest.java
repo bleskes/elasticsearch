@@ -49,14 +49,13 @@ import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.rs.data.AnomalyRecord;
-import com.prelert.rs.data.ApiError;
 import com.prelert.rs.data.Bucket;
-import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.Pagination;
+import com.prelert.rs.data.SingleDocument;
 
 
 /**
- * Tests the normalisation of the API results and records endpoints.
+ * Tests the normalisation of the API buckets and records endpoints.
  * Does not validate the actual normalised values other than to say 
  * that for a given batch job at least 1 anomaly should be 100%.
  * <br/>
@@ -70,10 +69,6 @@ import com.prelert.rs.data.Pagination;
 public class NormalizationTest implements Closeable
 {
 	static final private Logger s_Logger = Logger.getLogger(JobsTest.class);
-	
-	static final public String SYS_CHANGE_NORMALIZATION = "s";
-	static final public String UNUSUAL_BEHAVIOUR_NORMALIZATION = "u";
-	static final public String BOTH_NORMALIZATIONS = "both"; 
 	
 	static final long FAREQUOTE_NUM_BUCKETS = 1439;
 	
@@ -155,11 +150,11 @@ public class NormalizationTest implements Closeable
 	 * @return
 	 * @throws IOException
 	 */
-	public boolean verifyFarequoteSysChangeNormalisedBuckets(String baseUrl, String jobId) 
+	public boolean verifyFarequoteNormalisedBuckets(String baseUrl, String jobId) 
 	throws IOException
 	{	
 		Pagination<Bucket> allBuckets = m_WebServiceClient.getBuckets(baseUrl, 
-				jobId, SYS_CHANGE_NORMALIZATION, false, 0l, 1500l);
+				jobId, false, 0l, 1500l, 0.0, 0.0);
 		test(allBuckets.getDocumentCount() == FAREQUOTE_NUM_BUCKETS);
 		test(allBuckets.getHitCount() == FAREQUOTE_NUM_BUCKETS);
 		
@@ -173,7 +168,7 @@ public class NormalizationTest implements Closeable
 		while (skip < FAREQUOTE_NUM_BUCKETS)
 		{
 			Pagination<Bucket> buckets = m_WebServiceClient.getBuckets(baseUrl, 
-					jobId, SYS_CHANGE_NORMALIZATION, false, skip, take);
+					jobId, false, skip, take, 0.0, 0.0);
 			pagedBuckets.addAll(buckets.getDocuments());
 			
 			skip += take;
@@ -184,6 +179,9 @@ public class NormalizationTest implements Closeable
 		{
 			test(Double.compare(pagedBuckets.get(i).getAnomalyScore(),
 								allBuckets.getDocuments().get(i).getAnomalyScore()) == 0);
+			
+			test(Double.compare(pagedBuckets.get(i).getUnusualScore(),
+					allBuckets.getDocuments().get(i).getUnusualScore()) == 0);
 			
 			test(pagedBuckets.get(i).equals(allBuckets.getDocuments().get(i)));
 		}
@@ -197,9 +195,10 @@ public class NormalizationTest implements Closeable
 		while (skip < allBuckets.getHitCount())
 		{
 			Pagination<Bucket> buckets = m_WebServiceClient.getBuckets(baseUrl, 
-					jobId, SYS_CHANGE_NORMALIZATION, false, skip, take,
-			allBuckets.getDocuments().get(0).getEpoch(),
-			allBuckets.getDocuments().get((int)allBuckets.getHitCount()-1).getEpoch() +1); 
+					jobId, false, skip, take,
+					allBuckets.getDocuments().get(0).getEpoch(),
+					allBuckets.getDocuments().get((int)allBuckets.getHitCount()-1).getEpoch() +1,
+					0.0, 0.0); 
 			
 			pagedBuckets.addAll(buckets.getDocuments());
 			
@@ -212,26 +211,11 @@ public class NormalizationTest implements Closeable
 			test(Double.compare(pagedBuckets.get(i).getAnomalyScore(),
 								allBuckets.getDocuments().get(i).getAnomalyScore()) == 0);
 			
+			test(Double.compare(pagedBuckets.get(i).getUnusualScore(),
+					allBuckets.getDocuments().get(i).getUnusualScore()) == 0);			
+			
 			test(pagedBuckets.get(i).equals(allBuckets.getDocuments().get(i)));
 		}
-		
-		
-		/*
-		 * We know there is one large anomaly in the farequote data
-		 * with score 100
-		 */
-		int maxAnomalyScoreCount = 0;
-		for (Bucket b : pagedBuckets)
-		{
-			if (b.getAnomalyScore() >= 100.0)
-			{
-				maxAnomalyScoreCount++;
-			}
-		}
-		test(maxAnomalyScoreCount == 1);
-		
-		// the big anomaly is in bucket 772
-		test(pagedBuckets.get(771).getAnomalyScore() >= 100.0);
 		
 		/*
 		 * Test get buckets by date range with a time string
@@ -242,8 +226,9 @@ public class NormalizationTest implements Closeable
 		for (int i=0; i<startDateFormats.length; i++)
 		{
 			Pagination<Bucket> byDate = m_WebServiceClient.getBuckets(
-					baseUrl, jobId, SYS_CHANGE_NORMALIZATION, false, 0l, 1000l, 
-					startDateFormats[i], endDateFormats[i]);
+					baseUrl, jobId, false, 0l, 1000l, 
+					startDateFormats[i], endDateFormats[i],
+					0.0, 0.0);
 
 			test(byDate.getDocuments().get(0).getEpoch() == 1359558600l);
 			test(byDate.getDocuments().get(byDate.getDocumentCount() -1).getEpoch() == 1359669900l);
@@ -264,148 +249,77 @@ public class NormalizationTest implements Closeable
 				test(Double.compare(byDate.getDocuments().get(j).getAnomalyScore(),
 						allBuckets.getDocuments().get(j + startIndex).getAnomalyScore()) == 0);
 				
+				test(Double.compare(pagedBuckets.get(i).getUnusualScore(),
+						allBuckets.getDocuments().get(i).getUnusualScore()) == 0);	
+				
 				test(byDate.getDocuments().get(j).equals(allBuckets.getDocuments().get(j + startIndex)));
 			}
-		}
-		
-		
-		return true;
-	}
-	
-	
-	/**
-	 * Test the unusual behaviour normalisation for the farequote
-	 * data set.  
-	 * <ol>
-	 * <li>Test that getting all the results at once is the same as 
-	 * paging them</li>
-	 * <li>Check the bucket score is the max anomaly score</li>
-	 * <li>At least one bucket has the score = 100</li>
-	 * <li>Get buckets by date range and check the values match the same
-	 * buckets from get all results.</li>
-	 * </ol>
-	 * 
-	 * @param baseUrl
-	 * @param jobId
-	 * @return
-	 * @throws IOException
-	 */
-	public boolean verifyFarequoteUnusualNormalisedBuckets(String baseUrl, String jobId) 
-	throws IOException
-	{
-		/*
-		 * Get the unusual behaviour normalised buckets through the 
-		 * standard results endpoint
-		 */ 
-		Pagination<Bucket> allBuckets = m_WebServiceClient.getBuckets(baseUrl, 
-				jobId, UNUSUAL_BEHAVIOUR_NORMALIZATION, true, 0l, 1500l);
-		test(allBuckets.getDocumentCount() == allBuckets.getHitCount());
+		}		
 		
 		
 		/*
-		 * Test that getting all the results at once is the same as 
-		 * paging them.
-		 */		
-		List<Bucket> pagedBuckets = new ArrayList<>();
-		long skip = 0, take = 98;
-		while (skip < allBuckets.getHitCount())
-		{
-			Pagination<Bucket> buckets = m_WebServiceClient.getBuckets(baseUrl, 
-					jobId, UNUSUAL_BEHAVIOUR_NORMALIZATION, true, skip, take);
-			pagedBuckets.addAll(buckets.getDocuments());
-			
-			skip += take;
-		}
-		test(pagedBuckets.size() == allBuckets.getDocumentCount());
-		
-		for (int i=0; i<pagedBuckets.size(); i++)
-		{
-			test(Double.compare(pagedBuckets.get(i).getAnomalyScore(),
-								allBuckets.getDocuments().get(i).getAnomalyScore()) == 0);
-			
-			test(pagedBuckets.get(i).equals(allBuckets.getDocuments().get(i)));
-		}
-				
-		/*
-		 * Test that paging buckets by date is the same
-		 */		
-		pagedBuckets = new ArrayList<>();
-		skip = 0; take = 140;
-		while (skip < allBuckets.getHitCount())
-		{
-			Pagination<Bucket> buckets = m_WebServiceClient.<Long>getBuckets(baseUrl, 
-					jobId, UNUSUAL_BEHAVIOUR_NORMALIZATION, true, skip, take,
-					allBuckets.getDocuments().get(0).getEpoch(),
-					allBuckets.getDocuments().get((int)allBuckets.getHitCount()-1).getEpoch() +1); 
-					
-			pagedBuckets.addAll(buckets.getDocuments());
-			
-			skip += take;
-		}
-		test(pagedBuckets.size() == allBuckets.getDocumentCount());
-		
-		for (int i=0; i<pagedBuckets.size(); i++)
-		{
-			test(Double.compare(pagedBuckets.get(i).getAnomalyScore(),
-								allBuckets.getDocuments().get(i).getAnomalyScore()) == 0);
-			
-			test(pagedBuckets.get(i).equals(allBuckets.getDocuments().get(i)));
-		}
-		
-		
-		/*
-		 * The bucket anomaly score is the max unusual score
+		 * We know there is one large anomaly in the farequote data
+		 * with score 90+
 		 */
-		for (Bucket bucket: allBuckets.getDocuments())
+		int highAnomalyScoreCount = 0;
+		for (Bucket b : pagedBuckets)
+		{
+			if (b.getAnomalyScore() >= 90.0)
+			{
+				highAnomalyScoreCount++;
+			}
+		}
+		test(highAnomalyScoreCount == 1);
+
+		// the big anomaly is in bucket 772
+		test(pagedBuckets.get(771).getAnomalyScore() >= 90.0);
+		
+		
+		Pagination<Bucket> allBucketsExpanded = m_WebServiceClient.getBuckets(baseUrl, 
+				jobId, true, 0l, 1500l, 0.0, 0.0);
+		
+		
+		/*
+		 * The bucket unusual score is the max unusual score
+		 * and the anomaly score is the same as for each of the
+		 * records
+		 */
+		for (Bucket bucket: allBucketsExpanded.getDocuments())
 		{
 			double bucketMax = 0.0;
 			for (AnomalyRecord r : bucket.getRecords())
 			{
-				if (r.isSimpleCount() != null && r.isSimpleCount())
-				{
-					continue;
-				}
 				bucketMax = Math.max(r.getUnusualScore(), bucketMax);
 			}
 			
-			test(bucketMax == bucket.getAnomalyScore());
+			test(bucketMax == bucket.getUnusualScore());
 		}
-		
+	
+
+			
 		/*
-		 * At least one bucket should have a score of 100
-		 */
-		int maxAnomalyScoreCount = 0;
-		for (Bucket b : pagedBuckets)
-		{
-			if (b.getAnomalyScore() >= 100.0)
-			{
-				maxAnomalyScoreCount++;
-			}
-		}
-		test(maxAnomalyScoreCount >= 1);
-		
-		/*
-		 * Check the bucket score is equal to the max anomaly
-		 * record score in the bucket
+		 * Check the bucket unusual score is equal to the max unusual
+		 * record score in the bucket and every record in the bucket has
+		 * the same anomaly score as the bucket.
 		 */
 		// the test takes ages to go through every bucket, don't do all for now
 		int count = 30;
-		for (Bucket bucket: allBuckets.getDocuments())
+		for (Bucket bucket: allBucketsExpanded.getDocuments())
 		{
-			Pagination<AnomalyRecord> records = m_WebServiceClient.getBucketRecords(
-					baseUrl, jobId, bucket.getId(), "both");			
+			SingleDocument<Bucket> bucketDoc = m_WebServiceClient.getBucket(
+					baseUrl, jobId, bucket.getId(), true);		
+			
+			List<AnomalyRecord> records = bucketDoc.getDocument().getRecords();
 			
 			double bucketMax = 0.0;
-			for (AnomalyRecord r : records.getDocuments())
+			for (AnomalyRecord r : records)
 			{
-				if (r.isSimpleCount() != null && r.isSimpleCount())
-				{
-					continue;
-				}
 				bucketMax = Math.max(r.getUnusualScore(), bucketMax);
+				
+				test(r.getAnomalyScore() == bucket.getAnomalyScore());
 			}
 			
-			test(bucketMax == bucket.getAnomalyScore());
+			test(bucketMax == bucket.getUnusualScore());
 			
 			if (count-- < 0)
 			{
@@ -414,42 +328,10 @@ public class NormalizationTest implements Closeable
 		}
 		
 		
-		/*
-		 * Test get buckets by date range with a time string
-		 * and check the anomaly score is equal to getting all
-		 * buckets at once
-		 */	
-		String [] startDateFormats = new String[] {"2013-01-30T15:10:00Z", "1359558600"};
-		String [] endDateFormats = new String[] {"2013-01-31T22:10:00.000+0000", "1359670200"};
-		
-		for (int i=0; i<startDateFormats.length; i++)
-		{
-			Pagination<Bucket> byDate = m_WebServiceClient.getBuckets(
-					baseUrl, jobId, UNUSUAL_BEHAVIOUR_NORMALIZATION, true, 0l, 1000l, 
-					startDateFormats[i], endDateFormats[i]);
-
-			test(byDate.getDocuments().get(0).getEpoch() == 1359558600l);
-			test(byDate.getDocuments().get(byDate.getDocumentCount() -1).getEpoch() == 1359669900l);
-
-			int startIndex = Collections.binarySearch(allBuckets.getDocuments(),
-					byDate.getDocuments().get(0), 
-					new Comparator<Bucket>() {
-				@Override
-				public int compare(Bucket o1, Bucket o2) 
-				{
-					return Long.compare(o1.getEpoch(), o2.getEpoch());
-				}
-			});
-
-			test(startIndex >= 0);
-			for (int j=0; j<byDate.getDocumentCount(); j++)
-			{
-				test(byDate.getDocuments().get(j).equals(allBuckets.getDocuments().get(j + startIndex)));
-			}
-		}
-		
 		return true;
 	}
+	
+	
 	
 		
 	/**
@@ -463,201 +345,129 @@ public class NormalizationTest implements Closeable
 	 */
 	public boolean verifyFarequoteNormalisedRecords(String baseUrl, String jobId) 
 	throws IOException
-	{		
-		// Test for different normalisation arguments
-		String [] normTypes = new String[] {BOTH_NORMALIZATIONS, 
-				SYS_CHANGE_NORMALIZATION, UNUSUAL_BEHAVIOUR_NORMALIZATION};
-		
-		for (String normType : normTypes)
+	{
+		Pagination<AnomalyRecord> allRecords = m_WebServiceClient.getRecords(
+				baseUrl, jobId, 0l, 3000l);
+
+		/*
+		 * Test that getting all the results at once is the same as 
+		 * paging them.
+		 */
+		List<AnomalyRecord> pagedRecords = new ArrayList<>();
+		long skip = 0, take = 1000;
+
+		Pagination<AnomalyRecord> page = m_WebServiceClient.getRecords(
+				baseUrl, jobId, skip, take);
+		skip += take;
+		pagedRecords.addAll(page.getDocuments());
+
+		while (skip < page.getHitCount())
 		{
-			// there are 1332 records in the farequote results
-			Pagination<AnomalyRecord> allRecords = m_WebServiceClient.getRecords(
-					baseUrl, jobId, normType, 0l, 1400l);
-
-			/*
-			 * Test that getting all the results at once is the same as 
-			 * paging them.
-			 */
-			List<AnomalyRecord> pagedRecords = new ArrayList<>();
-			long skip = 0, take = 1000;
-
-			Pagination<AnomalyRecord> page = m_WebServiceClient.getRecords(
-					baseUrl, jobId, normType, skip, take);
+			page = m_WebServiceClient.getRecords(baseUrl, jobId, skip, take);
 			skip += take;
 			pagedRecords.addAll(page.getDocuments());
-
-			while (skip < page.getHitCount())
-			{
-				page = m_WebServiceClient.getRecords(baseUrl, jobId, normType, skip, take);
-				skip += take;
-				pagedRecords.addAll(page.getDocuments());
-			}
-
-			int recordIndex = 0;
-			for (AnomalyRecord record : allRecords.getDocuments())
-			{
-				test(record.equals(pagedRecords.get(recordIndex)));
-				recordIndex++;
-			}
-			test(recordIndex == pagedRecords.size());
-			
-			/*
-			 * Test paging by date is the same as getting them all 
-			 * at once
-			 */
-			
-			// need start and end dates first
-			Pagination<Bucket> allBuckets = m_WebServiceClient.getBuckets(baseUrl, 
-					jobId, UNUSUAL_BEHAVIOUR_NORMALIZATION, true, 0l, 1500l);
-			long startDate = allBuckets.getDocuments().get(0).getEpoch();
-			long endDate = allBuckets.getDocuments().get(allBuckets.getDocumentCount()-1).getEpoch() + 1;
-			
-			pagedRecords = new ArrayList<>();
-			skip = 0; take = 200;
-
-			page = m_WebServiceClient.getRecords(
-					baseUrl, jobId, normType, skip, take,
-					startDate, endDate);
-			skip += take;
-			pagedRecords.addAll(page.getDocuments());
-
-			while (skip < page.getHitCount())
-			{
-				page = m_WebServiceClient.getRecords(
-						baseUrl, jobId, normType, skip, take,
-						startDate, endDate);
-				
-				skip += take;
-				pagedRecords.addAll(page.getDocuments());
-			}
-
-			recordIndex = 0;
-			test(allRecords.getHitCount() == pagedRecords.size());	
-			
-			for (AnomalyRecord record : allRecords.getDocuments())
-			{
-				test(record.equals(pagedRecords.get(recordIndex)));
-				recordIndex++;
-			}
-			test(recordIndex == pagedRecords.size());			
-
-			
-			
-			
-			
-			
-			/*
-			 * There should be at least one anomaly with score = 100
-			 * for each type
-			 */
-			int maxAnomalyScoreCount = 0;
-			int maxUnusualScoreCount = 0;
-			for (AnomalyRecord record : pagedRecords)
-			{
-				switch (normType)
-				{
-				case SYS_CHANGE_NORMALIZATION:
-					if (record.getAnomalyScore() >= 100.0)
-					{
-						maxAnomalyScoreCount++;
-					}
-					test(record.getUnusualScore() == null);
-					break;
-								
-				case UNUSUAL_BEHAVIOUR_NORMALIZATION:
-					if (record.getUnusualScore() >= 100.0)
-					{
-						maxUnusualScoreCount++;
-					}
-					test(record.getAnomalyScore() == null);
-					break;
-					
-				default:
-					if (record.getUnusualScore() >= 100.0)
-					{
-						maxUnusualScoreCount++;
-					}
-					if (record.getAnomalyScore() >= 100.0)
-					{
-						maxAnomalyScoreCount++;
-					}
-				}
-			}
-			
-			if (SYS_CHANGE_NORMALIZATION.equals(normType))
-			{
-				test(maxAnomalyScoreCount >= 1);
-			}
-			else if (UNUSUAL_BEHAVIOUR_NORMALIZATION.equals(normType))
-			{
-				test(maxUnusualScoreCount >= 1);
-			}
-			else
-			{
-				test(maxAnomalyScoreCount >= 1);
-				test(maxUnusualScoreCount >= 1);
-			}
-
-			/*
-			 * Test get records by date range with a time string
-			 */
-			String [] startDateFormats = new String[] {"2013-01-30T15:10:00Z", "1359558600"};
-			String [] endDateFormats = new String[] {"2013-01-31T22:10:00.000+0000", "1359670200"};
-			for (int i=0; i<startDateFormats.length; i++)
-			{
-				Pagination<AnomalyRecord> byDate = m_WebServiceClient.getRecords(
-						baseUrl, jobId, BOTH_NORMALIZATIONS, 0l, 2000l, 
-						startDateFormats[i], endDateFormats[i]);
-				
-				Collections.sort(byDate.getDocuments(), new Comparator<AnomalyRecord>() {
-
-					@Override
-					public int compare(AnomalyRecord o1, AnomalyRecord o2) 
-					{
-						return o1.getTimestamp().compareTo(o2.getTimestamp());
-					}
-				});
-
-				// must be equal or after start date and before the end date
-				test(byDate.getDocuments().get(0).getTimestamp().compareTo(new Date(1359558600000l)) >= 0);
-				test(byDate.getDocuments().get(byDate.getDocumentCount() -1)
-						.getTimestamp().compareTo(new Date(1359669900000l)) < 0);
-			}
-
 		}
+
+		int recordIndex = 0;
+		for (AnomalyRecord record : allRecords.getDocuments())
+		{
+			test(record.equals(pagedRecords.get(recordIndex)));
+			recordIndex++;
+		}
+		test(recordIndex == pagedRecords.size());
+		
+		/*
+		 * Test paging by date is the same as getting them all 
+		 * at once
+		 */
+		
+		// need start and end dates first
+		Pagination<Bucket> allBuckets = m_WebServiceClient.getBuckets(baseUrl, 
+				jobId, true, 0l, 3000l, 0.0, 0.0);
+		long startDate = allBuckets.getDocuments().get(0).getEpoch();
+		long endDate = allBuckets.getDocuments().get(allBuckets.getDocumentCount()-1).getEpoch() + 1;
+		
+		pagedRecords = new ArrayList<>();
+		skip = 0; take = 200;
+
+		page = m_WebServiceClient.getRecords(
+				baseUrl, jobId, skip, take,
+				startDate, endDate);
+		skip += take;
+		pagedRecords.addAll(page.getDocuments());
+
+		while (skip < page.getHitCount())
+		{
+			page = m_WebServiceClient.getRecords(
+					baseUrl, jobId, skip, take,
+					startDate, endDate);
+			
+			skip += take;
+			pagedRecords.addAll(page.getDocuments());
+		}
+
+		recordIndex = 0;
+		test(allRecords.getHitCount() == pagedRecords.size());	
+		
+		for (AnomalyRecord record : allRecords.getDocuments())
+		{
+			test(record.equals(pagedRecords.get(recordIndex)));
+			recordIndex++;
+		}
+		test(recordIndex == pagedRecords.size());			
+
+
+		/*
+		 * There should be one anomaly with unusual score of 90+
+		 * and at least one with anomaly score 90+
+		 */
+		int highAnomalyScoreCount = 0;
+		int highUnusualScoreCount = 0;
+		for (AnomalyRecord record : pagedRecords)
+		{
+			if (record.getUnusualScore() >= 90.0)
+			{
+				highUnusualScoreCount++;
+			}
+			if (record.getAnomalyScore() >= 90.0)
+			{
+				highAnomalyScoreCount++;
+			}
+		}
+		
+		test(highAnomalyScoreCount >= 1);
+		test(highUnusualScoreCount == 1);
+
+		/*
+		 * Test get records by date range with a time string
+		 */
+		String [] startDateFormats = new String[] {"2013-01-30T15:10:00Z", "1359558600"};
+		String [] endDateFormats = new String[] {"2013-01-31T22:10:00.000+0000", "1359670200"};
+		for (int i=0; i<startDateFormats.length; i++)
+		{
+			Pagination<AnomalyRecord> byDate = m_WebServiceClient.getRecords(
+					baseUrl, jobId, 0l, 2000l, 
+					startDateFormats[i], endDateFormats[i]);
+			
+			Collections.sort(byDate.getDocuments(), new Comparator<AnomalyRecord>() {
+
+				@Override
+				public int compare(AnomalyRecord o1, AnomalyRecord o2) 
+				{
+					return o1.getTimestamp().compareTo(o2.getTimestamp());
+				}
+			});
+
+			// must be equal or after start date and before the end date
+			test(byDate.getDocuments().get(0).getTimestamp().compareTo(new Date(1359558600000l)) >= 0);
+			test(byDate.getDocuments().get(byDate.getDocumentCount() -1)
+					.getTimestamp().compareTo(new Date(1359670200000l)) < 0);
+		}
+
 		return true;
 	}
 
-	
-	/**
-	 * Checks the error response is correct when using an 
-	 * unknown normalisation type or the wrong type for buckets.
-	 *  
-	 * @param baseUrl
-	 * @param jobId
-	 * @throws IOException
-	 */
-	public void testInvalidNormalisationArgument(String baseUrl, String jobId) 
-	throws IOException
-	{
-		m_WebServiceClient.getRecords(baseUrl, jobId, "made_up_norm_type", 0l, 1400l);
-		ApiError error =  m_WebServiceClient.getLastError();
-		test(error != null);
-		test(error.getErrorCode() == ErrorCode.INVALID_NORMALIZATION_ARG);
-		
-		// cannot have 'both' normalization on buckets
-		m_WebServiceClient.getBuckets(baseUrl, jobId, BOTH_NORMALIZATIONS, false);
-		error =  m_WebServiceClient.getLastError();
-		test(error != null);
-		test(error.getErrorCode() == ErrorCode.INVALID_NORMALIZATION_ARG);
-		
-		m_WebServiceClient.getBucket(baseUrl, jobId, "bucket_id", true, BOTH_NORMALIZATIONS);
-		error =  m_WebServiceClient.getLastError();
-		test(error != null);
-		test(error.getErrorCode() == ErrorCode.INVALID_NORMALIZATION_ARG);
-	}
-	
-	
+
 	/**
 	 * Delete all the jobs in the list of job ids
 	 * 
@@ -733,14 +543,14 @@ public class NormalizationTest implements Closeable
 		}
 		
 				
+		String farequoteJob = TEST_JOB_ID;
+
 		NormalizationTest test = new NormalizationTest();
 		List<String> jobUrls = new ArrayList<>();
 		
 		// Always delete the test job first in case it is hanging around
 		// from a previous run
-		test.m_WebServiceClient.deleteJob(baseUrl, TEST_JOB_ID);
-
-		String farequoteJob = TEST_JOB_ID;
+		test.m_WebServiceClient.deleteJob(baseUrl, farequoteJob);
 		jobUrls.add(farequoteJob);
 		
 		File fareQuoteData = new File(prelertTestDataHome + 
@@ -752,10 +562,8 @@ public class NormalizationTest implements Closeable
 		test.m_WebServiceClient.closeJob(baseUrl, farequoteJob);
 		
 		
-		test.verifyFarequoteSysChangeNormalisedBuckets(baseUrl, farequoteJob);
-		test.verifyFarequoteUnusualNormalisedBuckets(baseUrl, farequoteJob);
+		test.verifyFarequoteNormalisedBuckets(baseUrl, farequoteJob);
 		test.verifyFarequoteNormalisedRecords(baseUrl, farequoteJob);
-		test.testInvalidNormalisationArgument(baseUrl, farequoteJob);
 		
 		
 		//==========================

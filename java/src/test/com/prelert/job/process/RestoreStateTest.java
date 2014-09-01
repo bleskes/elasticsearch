@@ -52,8 +52,7 @@ import com.prelert.job.JobInUseException;
 import com.prelert.job.TooManyJobsException;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.manager.JobManager;
-import com.prelert.job.normalisation.NormalizationType;
-import com.prelert.job.persistence.elasticsearch.ElasticSearchJobProvider;
+import com.prelert.job.persistence.elasticsearch.ElasticsearchJobProvider;
 import com.prelert.job.warnings.HighProportionOfBadTimestampsException;
 import com.prelert.job.warnings.OutOfOrderRecordsException;
 import com.prelert.rs.data.Bucket;
@@ -67,7 +66,7 @@ public class RestoreStateTest
 	public static final String DEFAULT_CLUSTER_NAME = "prelert";
 	
 	/**
-	 * ElasticSearch must be running for this test.
+	 * Elasticsearch must be running for this test.
 	 * 
 	 * @param args
 	 * @throws IOException
@@ -123,9 +122,9 @@ public class RestoreStateTest
 		{
 			clusterName = args[0];
 		}
-		s_Logger.info("Using ElasticSearch cluster " + clusterName);
+		s_Logger.info("Using Elasticsearch cluster " + clusterName);
 		
-		ElasticSearchJobProvider esJob = new ElasticSearchJobProvider(clusterName);
+		ElasticsearchJobProvider esJob = new ElasticsearchJobProvider(clusterName);
 		JobManager jobManager = new JobManager(esJob, null, null, null);
 		JobDetails job = jobManager.createJob(jobConfig);
 		
@@ -150,7 +149,7 @@ public class RestoreStateTest
 			Thread.sleep(1000);
 
 			Pagination<Bucket> buckets = 
-					jobManager.buckets(job.getId(), false, 0, 100, NormalizationType.STATE_CHANGE);
+					jobManager.buckets(job.getId(), false, 0, 100, 0.0, 0.0);
 
 			List<Double> anomalyScores = new ArrayList<>();
 			for (Bucket bucket : buckets.getDocuments())

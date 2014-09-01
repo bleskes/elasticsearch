@@ -25,61 +25,28 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.persistence;
+package com.prelert.job.persistence.elasticsearch;
 
-import com.prelert.job.DetectorState;
-import com.prelert.job.UnknownJobException;
-import com.prelert.rs.data.Bucket;
-import com.prelert.rs.data.Quantiles;
+import org.apache.log4j.Logger;
+import org.elasticsearch.client.Client;
 
-/**
- * Interface for classes that persist {@linkplain Bucket Buckets},
- * {@linkplain Quantiles Quantiles} and {@link DetectorState DetectorStates}  
- */
-public interface JobDataPersister 
+import com.prelert.job.persistence.DataPersisterFactory;
+
+public class ElasticsearchDataPersisterFactory implements DataPersisterFactory 
 {
-	/**
-	 * Persist the result bucket
-	 * @param bucket
-	 */
-	public void persistBucket(Bucket bucket);
-
-
-	/**
-	 * Persist the quantiles
-	 * @param quantiles
-	 */
-	public void persistQuantiles(Quantiles quantiles);
-
-
-	/**
-	 * Persist the serialised detector state
-	 * @param state
-	 */
-	public void persistDetectorState(DetectorState state);
 	
-	/**
-	 * Reads all the detector state documents from 
-	 * the database and returns a {@linkplain DetectorState} object.
-	 * 
-	 * @return
-	 */
-	public DetectorState retrieveDetectorState() throws UnknownJobException;
+	private Client m_Client;
 	
-	/**
-	 * If the job has persisted model state then this function 
-	 * returns true 
-	 * 
-	 * @return
-	 */
-	public boolean isDetectorStatePersisted();
-	
-	/**
-	 * Once all the job data has been written this function will be 
-	 * called to commit the data if the implementing persister requries
-	 * it. 
-	 * 
-	 * @return True if successful
-	 */
-	public boolean commitWrites();
+	public ElasticsearchDataPersisterFactory(Client client)
+	{
+		m_Client = client;
+	}
+
+	@Override
+	public ElasticsearchJobDataPersister newDataPersister(String jobId,
+			Logger logger) 
+	{
+		return new ElasticsearchJobDataPersister(jobId, m_Client);
+	}
+
 }

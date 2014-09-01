@@ -33,6 +33,30 @@ import junit.framework.Assert;
 
 import org.junit.Test;
 
+/**
+ * Test the valid detector/functions/field combinations i.e. the 
+ * logic encoded in the table below
+ * 
+<table cellpadding="4px" border="1" width="90%"><colgroup><col class="col_1" /><col class="col_2" /><col class="col_3" /><col class="col_4" /><col class="col_5" /></colgroup>
+    <thead>
+        <tr><th align="left" valign="top">name</th><th align="left" valign="top">description</th><th align="left" valign="top">fieldName</th><th align="left" valign="top">byFieldName</th><th align="left" valign="top">overFieldName</th></tr></thead><tbody>
+        <tr><td align="left" valign="top"><p><a class="link" href="functions-count.html" title="count">count</a></p></td><td align="left" valign="top"><p>individual count</p></td><td align="left" valign="top"><p>N/A</p></td><td align="left" valign="top"><p>optional</p></td><td align="left" valign="top"><p>optional</p></td></tr>
+        <tr><td align="left" valign="top"><p><a class="link" href="functions-high_count.html" title="high_count">high_count</a></p></td><td align="left" valign="top"><p>individual count (high only)</p></td><td align="left" valign="top"><p>N/A</p></td><td align="left" valign="top"><p>optional</p></td><td align="left" valign="top"><p>optional</p></td></tr>
+        <tr><td align="left" valign="top"><p><a class="link" href="functions-low_count.html" title="low_count">low_count</a></p></td><td align="left" valign="top"><p>individual count (low only)</p></td><td align="left" valign="top"><p>N/A</p></td><td align="left" valign="top"><p>optional</p></td><td align="left" valign="top"><p>optional</p></td></tr>
+        <tr><td align="left" valign="top"><p><a class="link" href="functions-non_zero_count.html" title="non_zero_count or nzc">non_zero_count or nzc</a></p></td><td align="left" valign="top"><p>"count, but zeros are null, not zero"</p></td><td align="left" valign="top"><p>N/A</p></td><td align="left" valign="top"><p>optional</p></td><td align="left" valign="top"><p>N/A</p></td></tr>
+        <tr><td align="left" valign="top"><p><a class="link" href="functions-distinct_count.html" title="distinct_count or dc">distinct_count or dc</a></p></td><td align="left" valign="top"><p>distinct count</p></td><td align="left" valign="top"><p>required</p></td><td align="left" valign="top"><p>N/A</p></td><td align="left" valign="top"><p>required</p></td></tr>
+        <tr><td align="left" valign="top"><p><a class="link" href="functions-rare.html" title="rare">rare</a></p></td><td align="left" valign="top"><p>rare items</p></td><td align="left" valign="top"><p>N/A</p></td><td align="left" valign="top"><p>required</p></td><td align="left" valign="top"><p>optional</p></td></tr>
+        <tr><td align="left" valign="top"><p><a class="link" href="functions-freq_rare.html" title="freq_rare">freq_rare</a></p></td><td align="left" valign="top"><p>frequently rare items</p></td><td align="left" valign="top"><p>N/A</p></td><td align="left" valign="top"><p>required</p></td><td align="left" valign="top"><p>required</p></td></tr>
+        <tr><td align="left" valign="top"><p><a class="link" href="functions-metric.html" title="metric">metric</a></p></td><td align="left" valign="top"><p>all of mean, min, max and sum</p></td><td align="left" valign="top"><p>required</p></td><td align="left" valign="top"><p>optional</p></td><td align="left" valign="top"><p>optional</p></td></tr>
+        <tr><td align="left" valign="top"><p><a class="link" href="functions-mean.html" title="mean or avg">mean or avg</a></p></td><td align="left" valign="top"><p>arithmetic mean</p></td><td align="left" valign="top"><p>required</p></td><td align="left" valign="top"><p>optional</p></td><td align="left" valign="top"><p>optional</p></td></tr>
+        <tr><td align="left" valign="top"><p><a class="link" href="functions-min.html" title="min">min</a></p></td><td align="left" valign="top"><p>arithmetic minimum</p></td><td align="left" valign="top"><p>required</p></td><td align="left" valign="top"><p>optional</p></td><td align="left" valign="top"><p>optional</p></td></tr>
+        <tr><td align="left" valign="top"><p><a class="link" href="functions-max.html" title="max">max</a></p></td><td align="left" valign="top"><p>arithmetic maximum</p></td><td align="left" valign="top"><p>required</p></td><td align="left" valign="top"><p>optional</p></td><td align="left" valign="top"><p>optional</p></td></tr>
+        <tr><td align="left" valign="top"><p><a class="link" href="functions-sum.html" title="sum">sum</a></p></td><td align="left" valign="top"><p>arithmetic sum</p></td><td align="left" valign="top"><p>required</p></td><td align="left" valign="top"><p>optional</p></td><td align="left" valign="top"><p>optional</p></td></tr>
+    </tbody>
+</table>
+ *
+ */
+
 public class VerifyDetectorConfigurationTest
 {
 	/**
@@ -42,19 +66,25 @@ public class VerifyDetectorConfigurationTest
 	@Test
 	public void detectorsTest() throws JobConfigurationException
 	{
-		// if nothing else is set count is the only allowable function
+		// if nothing else is set the count functions (excluding distinct count)
+		// are the only allowable functions
 		Detector d = new Detector();
 		d.setFunction(Detector.COUNT);
 		d.verify();
 		
 		Set<String> difference = new HashSet<String>(Detector.ANALYSIS_FUNCTIONS);
 		difference.remove(Detector.COUNT);
+		difference.remove(Detector.HIGH_COUNT);
+		difference.remove(Detector.LOW_COUNT);
+		difference.remove(Detector.NON_ZERO_COUNT);
+		difference.remove(Detector.NZC);
 		for (String f : difference)
 		{
 			try
 			{
 				d.setFunction(f);
 				d.verify();
+				System.out.println(f);
 				Assert.assertTrue(false); // should throw
 			}
 			catch (JobConfigurationException e)
@@ -90,26 +120,38 @@ public class VerifyDetectorConfigurationTest
 		// first do the over field
 		d = new Detector();
 		d.setOverFieldName("over");
-		d.setFunction(Detector.NON_ZERO_COUNT);
-		try
+		for (String f : new String [] {Detector.NON_ZERO_COUNT, Detector.NZC})
 		{
-			d.verify();
-			Assert.assertTrue(false); // should throw
-		}
-		catch (JobConfigurationException e)
-		{
-		}
-		
-		d.setFunction(Detector.NZC);
-		try
-		{
-			d.verify();
-			Assert.assertTrue(false); // should throw
-		}
-		catch (JobConfigurationException e)
-		{
+			d.setFunction(f);
+			try
+			{
+				d.verify();
+				Assert.assertTrue(false); // should throw
+			}
+			catch (JobConfigurationException e)
+			{
+			}
 		}
 				
+		// these functions cannot have just an over field
+		difference = new HashSet<String>(Detector.ANALYSIS_FUNCTIONS);
+		difference.remove(Detector.COUNT);
+		difference.remove(Detector.HIGH_COUNT);
+		difference.remove(Detector.LOW_COUNT);
+		for (String f : difference)
+		{
+			d.setFunction(f);
+			try
+			{
+				d.verify();
+				Assert.assertTrue(false); // should throw
+			}
+			catch (JobConfigurationException e)
+			{
+			}
+		}
+		
+		// these functions can have just an over field
 		for (String f : new String [] {Detector.COUNT, Detector.HIGH_COUNT, 
 				Detector.LOW_COUNT})
 		{
@@ -136,31 +178,47 @@ public class VerifyDetectorConfigurationTest
 			d.verify();
 		}
 		
+		// these functions cannot have a field name
+		difference = new HashSet<String>(Detector.ANALYSIS_FUNCTIONS);
+		difference.remove(Detector.DISTINCT_COUNT);
+		difference.remove(Detector.DC);
+		difference.remove(Detector.METRIC);
+		difference.remove(Detector.MEAN);
+		difference.remove(Detector.AVG);
+		difference.remove(Detector.MIN);
+		difference.remove(Detector.MAX);
+		difference.remove(Detector.SUM);
+		for (String f : difference)
+		{
+			d.setFunction(f);
+			try
+			{
+				d.verify();
+				Assert.assertTrue(false); // should throw
+			}
+			catch (JobConfigurationException e)
+			{
+			}
+		}
 		
 
-		// do the by field
+		// these functions cannot have a by field
 		d = new Detector();
 		d.setByFieldName("by");
-		d.setFunction(Detector.DISTINCT_COUNT);
-		try
+		for (String f : new String [] {Detector.DISTINCT_COUNT, Detector.DC})
 		{
-			d.verify();
-			Assert.assertTrue(false); // should throw
-		}
-		catch (JobConfigurationException e)
-		{
-		}
-		
-		d.setFunction(Detector.DC);
-		try
-		{
-			d.verify();
-			Assert.assertTrue(false); // should throw
-		}
-		catch (JobConfigurationException e)
-		{
+			d.setFunction(f);
+			try
+			{
+				d.verify();
+				Assert.assertTrue(false); // should throw
+			}
+			catch (JobConfigurationException e)
+			{
+			}
 		}
 				
+		// these can have an by field
 		for (String f : new String [] {Detector.COUNT, Detector.HIGH_COUNT, 
 				Detector.LOW_COUNT, Detector.RARE, 
 				Detector.NON_ZERO_COUNT, Detector.NZC})
@@ -188,7 +246,27 @@ public class VerifyDetectorConfigurationTest
 		// test field name
 		d = new Detector();
 		d.setFieldName("field");
+		
+		// these functions don't work with fieldname
 		for (String f : new String [] {Detector.COUNT, Detector.HIGH_COUNT, 
+				Detector.LOW_COUNT, Detector.NON_ZERO_COUNT, Detector.NZC,
+				Detector.RARE, Detector.FREQ_RARE})
+		{
+			try
+			{
+				d.setFunction(f);
+				d.verify();
+				Assert.assertTrue(false); // should throw
+			}
+			catch (JobConfigurationException e)
+			{
+			}
+		}
+		
+			
+		// these functions cant have a field
+		d.setOverFieldName(null);
+		for (String f : new String [] {Detector.HIGH_COUNT, 
 				Detector.LOW_COUNT, Detector.NON_ZERO_COUNT, Detector.NZC,
 				Detector.RARE, Detector.FREQ_RARE})
 		{
@@ -214,30 +292,7 @@ public class VerifyDetectorConfigurationTest
 		{
 		}
 		
-		for (String f : new String [] {Detector.DISTINCT_COUNT, Detector.METRIC, 
-				Detector.MEAN, Detector.AVG, Detector.MIN,
-				Detector.MAX, Detector.SUM})
-		{
-			d.setFunction(f);
-			d.verify();
-		}
 		
-		
-		// count functions should have a by or over field 
-		d = new Detector();
-		for (String f : new String [] {Detector.HIGH_COUNT, 
-				Detector.LOW_COUNT, Detector.NON_ZERO_COUNT, Detector.NZC})
-		{
-			try
-			{
-				d.setFunction(f);
-				d.verify();
-				Assert.assertTrue(false); // should throw
-			}
-			catch (JobConfigurationException e)
-			{
-			}
-		}
 		
 		d = new Detector();
 		d.setByFieldName("by");
@@ -250,7 +305,7 @@ public class VerifyDetectorConfigurationTest
 		
 		d = new Detector();
 		d.setOverFieldName("over");
-		for (String f : new String [] {Detector.HIGH_COUNT, 
+		for (String f : new String [] {Detector.COUNT, Detector.HIGH_COUNT, 
 				Detector.LOW_COUNT})
 		{
 			d.setFunction(f);

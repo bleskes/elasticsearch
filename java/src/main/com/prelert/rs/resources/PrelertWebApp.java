@@ -35,12 +35,13 @@ import javax.ws.rs.core.Application;
 import com.prelert.job.alert.manager.AlertManager;
 import com.prelert.job.alert.persistence.elasticsearch.ElasticsearchAlertPersister;
 import com.prelert.job.manager.JobManager;
-import com.prelert.job.persistence.elasticsearch.ElasticSearchJobProvider;
-import com.prelert.job.persistence.elasticsearch.ElasticSearchResultsReaderFactory;
+import com.prelert.job.persistence.elasticsearch.ElasticsearchDataPersisterFactory;
+import com.prelert.job.persistence.elasticsearch.ElasticsearchJobProvider;
+import com.prelert.job.persistence.elasticsearch.ElasticsearchResultsReaderFactory;
 import com.prelert.job.usage.elasticsearch.ElasticsearchUsageReporterFactory;
-import com.prelert.job.warnings.elasticsearch.ElasticSearchStatusReporterFactory;
+import com.prelert.job.warnings.elasticsearch.ElasticsearchStatusReporterFactory;
 import com.prelert.rs.provider.AlertMessageBodyWriter;
-import com.prelert.rs.provider.ElasticSearchExceptionMapper;
+import com.prelert.rs.provider.ElasticsearchExceptionMapper;
 import com.prelert.rs.provider.HighProportionOfBadTimestampsExceptionMapper;
 import com.prelert.rs.provider.JobIdAlreadyExistsExceptionMapper;
 import com.prelert.rs.provider.JobConfigurationExceptionMapper;
@@ -62,7 +63,7 @@ import com.prelert.rs.provider.UnknownJobExceptionMapper;
 public class PrelertWebApp extends Application
 {
 	/**
-	 * The default ElasticSearch Cluster name
+	 * The default Elasticsearch Cluster name
 	 */
 	public static final String DEFAULT_CLUSTER_NAME = "prelert";
 	
@@ -82,7 +83,7 @@ public class PrelertWebApp extends Application
 		m_ResourceClasses.add(AlertsLongPoll.class);
 		m_ResourceClasses.add(Jobs.class);
 		m_ResourceClasses.add(Data.class);
-		m_ResourceClasses.add(Results.class);	   
+		m_ResourceClasses.add(Buckets.class);	   
 		m_ResourceClasses.add(Records.class);	   
 		m_ResourceClasses.add(Logs.class);
 		
@@ -93,7 +94,7 @@ public class PrelertWebApp extends Application
 		m_ResourceClasses.add(JobConfigurationMessageBodyReader.class);	  
 		
 		// Exception mappers
-		m_ResourceClasses.add(ElasticSearchExceptionMapper.class);
+		m_ResourceClasses.add(ElasticsearchExceptionMapper.class);
 		m_ResourceClasses.add(HighProportionOfBadTimestampsExceptionMapper.class);
 		m_ResourceClasses.add(JobIdAlreadyExistsExceptionMapper.class);
 		m_ResourceClasses.add(JobConfigurationExceptionMapper.class);
@@ -110,12 +111,13 @@ public class PrelertWebApp extends Application
 			elasticSearchClusterName = DEFAULT_CLUSTER_NAME;
 		}
 		
-		ElasticSearchJobProvider esJob = new ElasticSearchJobProvider(
+		ElasticsearchJobProvider esJob = new ElasticsearchJobProvider(
 				elasticSearchClusterName);
 		m_JobManager = new JobManager(esJob, 
-				new ElasticSearchResultsReaderFactory(esJob.getClient()),
-				new ElasticSearchStatusReporterFactory(esJob.getClient()),
-				new ElasticsearchUsageReporterFactory(esJob.getClient())
+				new ElasticsearchResultsReaderFactory(esJob),
+				new ElasticsearchStatusReporterFactory(esJob.getClient()),
+				new ElasticsearchUsageReporterFactory(esJob.getClient()),
+				new ElasticsearchDataPersisterFactory(esJob.getClient())
 			);
 		
 		m_AlertManager = new AlertManager(

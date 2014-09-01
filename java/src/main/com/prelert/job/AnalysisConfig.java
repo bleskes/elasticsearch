@@ -207,6 +207,75 @@ public class AnalysisConfig
 		return new ArrayList<String>(fields);
 	}
 	
+	
+	
+	public List<String> fields()
+	{
+		Set<String> fields = new HashSet<>();
+		
+		for (Detector d : getDetectors())
+		{
+			fields.add(d.getFieldName());
+		}
+		
+		// remove the null and empty strings
+		fields.remove("");
+		fields.remove(null);
+		
+		return new ArrayList<String>(fields);
+	}
+	
+	
+	
+	public List<String> byFields()
+	{
+		Set<String> fields = new HashSet<>();
+		
+		for (Detector d : getDetectors())
+		{
+			fields.add(d.getByFieldName());
+		}
+		
+		// remove the null and empty strings
+		fields.remove("");
+		fields.remove(null);
+		
+		return new ArrayList<String>(fields);
+	}
+	
+	public List<String> overFields()
+	{
+		Set<String> fields = new HashSet<>();
+		
+		for (Detector d : getDetectors())
+		{
+			fields.add(d.getOverFieldName());
+		}
+		
+		// remove the null and empty strings
+		fields.remove("");
+		fields.remove(null);
+		
+		return new ArrayList<String>(fields);
+	}
+	
+	
+	public List<String> partitionFields()
+	{
+		Set<String> fields = new HashSet<>();
+		
+		for (Detector d : getDetectors())
+		{
+			fields.add(d.getPartitionFieldName());
+		}
+		
+		// remove the null and empty strings
+		fields.remove("");
+		fields.remove(null);
+		
+		return new ArrayList<String>(fields);
+	}
+	
 	/**
 	 * The array of detectors are compared for equality but they are not sorted 
 	 * first so this test could fail simply because the detector arrays are in

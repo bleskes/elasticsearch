@@ -45,20 +45,19 @@ import org.apache.log4j.Logger;
 
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.manager.JobManager;
-import com.prelert.job.normalisation.NormalizationType;
+import com.prelert.job.persistence.elasticsearch.ElasticsearchMappings;
 import com.prelert.job.process.NativeProcessRunException;
 import com.prelert.rs.data.AnomalyRecord;
+import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.provider.RestApiException;
 
 /**
- * API results end point.
- * Access buckets and anomaly records, use the <pre>expand</pre> query argument
- * to get buckets and anomaly records in one query. 
- * Buckets can be filtered by date. 
+ * API record results end point.
+ * Access anomaly records filtered by date with various sort options
  */
-@Path("/records")
+@Path("/results")
 public class Records extends ResourceWithJobManager
 {
 	static private final Logger s_Logger = Logger.getLogger(Records.class);
@@ -69,19 +68,15 @@ public class Records extends ResourceWithJobManager
 	static public final String ENDPOINT = "records";
 	
 	/**
-	 * Sort order query parameter
+	 * Sort field query parameter
 	 */
 	static public final String SORT_QUERY_PARAM = "sort";
-	
-	static public final String NORMALISATION_QUERY_PARAM = "norm";
-	
 	/**
-	 * Possible arguments to the sort parameter
+	 * Sort direction
 	 */
-	static public final String PROB_SORT_VALUE = "prob";
-	//static public final String DATE_SORT_VALUE = "date";
+	static public final String DESCENDING_ORDER = "desc";
 	
-	
+
 	static private final DateFormat s_DateFormat = new SimpleDateFormat(ISO_8601_DATE_FORMAT); 
 	static private final DateFormat s_DateFormatWithMs = new SimpleDateFormat(ISO_8601_DATE_FORMAT_WITH_MS); 
 	
@@ -94,8 +89,6 @@ public class Records extends ResourceWithJobManager
 	 * by date.
 	 * 
 	 * @param jobId
-	 * @param expand Return anomaly records in-line with the results,
-	 *  default is false
 	 * @param skip
 	 * @param take
 	 * @param start The filter start date see {@linkplain #paramToEpoch(String)}
@@ -105,7 +98,7 @@ public class Records extends ResourceWithJobManager
 	 * @return
 	 */
 	@GET
-	@Path("/{jobId}")
+	@Path("/{jobId}/records")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Pagination<AnomalyRecord> records(
 			@PathParam("jobId") String jobId,
@@ -113,13 +106,17 @@ public class Records extends ResourceWithJobManager
 			@DefaultValue(JobManager.DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take,
 			@DefaultValue("") @QueryParam(START_QUERY_PARAM) String start,
 			@DefaultValue("") @QueryParam(END_QUERY_PARAM) String end,
-			@DefaultValue(PROB_SORT_VALUE) @QueryParam(SORT_QUERY_PARAM) String sort,
-			@DefaultValue("both") @QueryParam(NORMALISATION_QUERY_PARAM) String norm)
+			@DefaultValue(AnomalyRecord.RECORD_UNUSUALNESS) @QueryParam(SORT_QUERY_PARAM) String sort,
+			@DefaultValue("true") @QueryParam(DESCENDING_ORDER) boolean descending,
+			@DefaultValue("0.0") @QueryParam(AnomalyRecord.ANOMALY_SCORE) double anomalySoreFilter,
+			@DefaultValue("0.0") @QueryParam(AnomalyRecord.RECORD_UNUSUALNESS) double unusualScoreFilter)
 	throws NativeProcessRunException, UnknownJobException
 	{	
 		s_Logger.debug(String.format("Get records for job %s. skip = %d, take = %d"
-				+ " start = '%s', end='%s', sort='%s', norm='%s'", 
-				jobId, skip, take, start, end, sort, norm));
+				+ " start = '%s', end='%s', sort='%s' descending=%b"  
+				+ ", anomaly score filter=%f, unsual score filter= %f", 
+				jobId, skip, take, start, end, sort, descending,
+				unusualScoreFilter, anomalySoreFilter));
 		
 		long epochStart = 0;
 		if (start.isEmpty() == false)
@@ -146,57 +143,36 @@ public class Records extends ResourceWithJobManager
 						Response.Status.BAD_REQUEST);
 			}			
 		}
-		
-		// only sort by probability for now
-		if (!sort.equals(PROB_SORT_VALUE))
-		{
-			String msg = String.format(String.format("'%s is not a valid value "
-					+ "for the sort query parameter", sort));
-			s_Logger.warn(msg);
-			throw new RestApiException(msg, ErrorCode.INVALID_SORT_FIELD,
-					Response.Status.BAD_REQUEST);
-		}
-		
-		sort = AnomalyRecord.PROBABILITY;
-		
-		NormalizationType normType;
-		try
-		{
-			normType = NormalizationType.fromString(norm);
-		}
-		catch (IllegalArgumentException e)
-		{
-			String msg = String.format(String.format("'%s is not a valid value "
-					+ "for the normalisation query parameter", norm));
-			s_Logger.warn(msg);
-			throw new RestApiException(msg, ErrorCode.INVALID_NORMALIZATION_ARG,
-					Response.Status.BAD_REQUEST);
-		}
-		
-		long start_ms = System.currentTimeMillis();
-		
+			
 		JobManager manager = jobManager();
 		Pagination<AnomalyRecord> records;
 
+
+		// HACK - the API renames @timestamp to timestamp
+		// but it is @timestamp in the database for Kibana
+		if (Bucket.TIMESTAMP.equals(sort))
+		{
+			sort = ElasticsearchMappings.ES_TIMESTAMP;
+		}
+		
 		if (epochStart > 0 || epochEnd > 0)
 		{
-			records = manager.records(jobId, skip, take, epochStart, epochEnd, sort, normType);
+			records = manager.records(jobId, skip, take, epochStart, epochEnd, sort,
+					descending, anomalySoreFilter, unusualScoreFilter);
 		}
 		else
 		{
-			records = manager.records(jobId, skip, take, sort, normType);
+			records = manager.records(jobId, skip, take, sort, descending,
+					anomalySoreFilter, unusualScoreFilter);
 		}
-		
-		System.out.println(String.format("Normalised records in %d ms",
-				System.currentTimeMillis() - start_ms));
 
-		
 		// paging
     	if (records.isAllResults() == false)
     	{
     		String path = new StringBuilder()
 								.append("/results/")
 								.append(jobId)
+								.append("/records/")
 								.toString();
     		
     		List<ResourceWithJobManager.KeyValue> queryParams = new ArrayList<>();
@@ -208,6 +184,10 @@ public class Records extends ResourceWithJobManager
     		{
     			queryParams.add(this.new KeyValue(END_QUERY_PARAM, end));
     		}
+    		queryParams.add(this.new KeyValue(SORT_QUERY_PARAM, sort));
+    		queryParams.add(this.new KeyValue(DESCENDING_ORDER, Boolean.toString(descending)));
+    		queryParams.add(this.new KeyValue(AnomalyRecord.ANOMALY_SCORE, String.format("%2.1f", anomalySoreFilter)));
+    		queryParams.add(this.new KeyValue(AnomalyRecord.RECORD_UNUSUALNESS, String.format("%2.1f", unusualScoreFilter)));
     		
     		setPagingUrls(path, records, queryParams);
     	}		

@@ -32,12 +32,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicLong;
@@ -49,8 +45,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.prelert.job.normalisation.Normaliser;
-import com.prelert.job.normalisation.NormalizationType;
+import com.prelert.job.persistence.DataPersisterFactory;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.process.MissingFieldException;
 import com.prelert.job.process.NativeProcessRunException;
@@ -60,7 +55,6 @@ import com.prelert.job.usage.UsageReporterFactory;
 import com.prelert.job.warnings.HighProportionOfBadTimestampsException;
 import com.prelert.job.warnings.OutOfOrderRecordsException;
 import com.prelert.job.warnings.StatusReporterFactory;
-import com.prelert.job.AnalysisConfig;
 import com.prelert.job.JobIdAlreadyExistsException;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobConfigurationException;
@@ -115,8 +109,6 @@ public class JobManager
 	
 	private JobProvider m_JobProvider;
 	
-	
-	private Map<String, Integer> m_JobIdBucketspan;
 
 	/**
 	 * These default to unlimited (indicated by negative limits), but may be
@@ -141,15 +133,14 @@ public class JobManager
 	public JobManager(JobProvider jobProvider,
 			ResultsReaderFactory resultsReaderFactory,
 			StatusReporterFactory statusReporterFactory,
-			UsageReporterFactory usageReporterFactory)
+			UsageReporterFactory usageReporterFactory,
+			DataPersisterFactory dataPersisterFactory)
 	{
-		m_JobIdBucketspan = new HashMap<>();
-		
 		m_JobProvider = jobProvider;
 		
 		m_ProcessManager = new ProcessManager(jobProvider, 
 				resultsReaderFactory, statusReporterFactory,
-				usageReporterFactory);
+				usageReporterFactory, dataPersisterFactory);
 		
 		m_IdSequence = new AtomicLong();		
 		m_JobIdDateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
@@ -157,7 +148,7 @@ public class JobManager
 		m_ObjectMapper = new ObjectMapper();
 		m_ObjectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
 
-		// This requires the process manager and ElasticSearch connection in
+		// This requires the process manager and Elasticsearch connection in
 		// order to work, but failure is considered non-fatal
 		saveInfo();		
 	}	
@@ -286,116 +277,63 @@ public class JobManager
 		return jobDetails;
 	}
 
-	
-	private Integer getJobBucketSpan(String jobId)
-	{
-		Integer span = m_JobIdBucketspan.get(jobId);
-		if (span == null)
-		{
-			// use dot notation to get fields from nested docs.
-			Number num = m_JobProvider.<Number>getField(jobId,
-					JobDetails.ANALYSIS_CONFIG + "." + AnalysisConfig.BUCKET_SPAN);
-			
-			if (num != null)
-			{
-				span = num.intValue();
-				m_JobIdBucketspan.put(jobId, span);
-			}			
-		}
-		
-		return span;
-	}
-	
-	
-	
+
 	/**
 	 * Get a single result bucket
 	 * 
 	 * @param jobId
 	 * @param bucketId
-	 * @param expand Include anomaly records
+	 * @param expand Include anomaly records. If false the bucket's records
+	 *  are set to <code>null</code> so they aren't serialised
 	 * @return
 	 * @throws NativeProcessRunException 
 	 * @throws UnknownJobException 
 	 */
 	public SingleDocument<Bucket> bucket(String jobId, 
-			String bucketId, boolean expand, NormalizationType normalisationType) 
+			String bucketId, boolean expand) 
 	throws NativeProcessRunException, UnknownJobException
 	{
-		boolean expandForNormalisation = expand || 
-				normalisationType == NormalizationType.UNUSUAL_BEHAVIOUR;
+		SingleDocument<Bucket> bucket = m_JobProvider.bucket(jobId, bucketId, expand);
 		
-		long start_ms = System.currentTimeMillis();
-		
-		SingleDocument<Bucket> bucket = m_JobProvider.bucket(jobId, bucketId, 
-				expandForNormalisation);
-		
-		long read_time = System.currentTimeMillis();
-		System.out.println(String.format("Got bucket for norm = %s in %d ms", 
-				normalisationType, read_time  - start_ms));
-		
-		if (bucket.isExists())
+		if (bucket.isExists() && !expand)
 		{
-			bucket = normalise(jobId, bucket, normalisationType);
-			
-			System.out.println(String.format("Normalised bucket for = %s in %d ms", 
-					normalisationType, System.currentTimeMillis() - read_time));
-			
-			
-			if (expand == false)
-			{
-				// remove records from bucket
-				bucket.getDocument().setRecords(Collections.<AnomalyRecord>emptyList());
-			}
+			bucket.getDocument().setRecords(null);
 		}
-
+		
 		return bucket;
 	}
 	
+
 	/**
 	 * Get result buckets
 	 * 
 	 * @param jobId
-	 * @param expand Include anomaly records
+	 * @param expand Include anomaly records. If false the bucket's records
+	 *  are set to <code>null</code> so they aren't serialised
 	 * @param skip
 	 * @param take
-	 * @param normalisationType Normalisation type
+	 * @param anomalyScoreThreshold
+	 * @param unusualScoreThreshold
 	 * @return
-	 * @throws UnknownJobException 
-	 * @throws NativeProcessRunException 
+	 * @throws UnknownJobException
+	 * @throws NativeProcessRunException
 	 */
 	public Pagination<Bucket> buckets(String jobId, 
-			boolean expand, int skip, int take, NormalizationType normalisationType) 
+			boolean expand, int skip, int take,
+			double anomalyScoreThreshold, double unusualScoreThreshold) 
 	throws UnknownJobException, NativeProcessRunException
 	{
-		boolean expandForNormalisation = expand || 
-				normalisationType == NormalizationType.UNUSUAL_BEHAVIOUR;
-		
-		long start_ms = System.currentTimeMillis();
-		
 		Pagination<Bucket> buckets = m_JobProvider.buckets(jobId, 
-				expandForNormalisation, skip, take);
-
-		long read_time = System.currentTimeMillis();
-		System.out.println(String.format("Got buckets for norm = %s in %d ms", 
-				normalisationType, read_time  - start_ms));
+				expand, skip, take, anomalyScoreThreshold, unusualScoreThreshold);
 		
-		
-		buckets = normalise(jobId, buckets, normalisationType);
-		
-		
-		System.out.println(String.format("Normalised buckets for = %s in %d ms", 
-				normalisationType, System.currentTimeMillis() - read_time));
-		
-		if (expand == false)
+		if (!expand)
 		{
-			// remove records from buckets
-			for (Bucket b : buckets.getDocuments())
+			for (Bucket bucket : buckets.getDocuments())
 			{
-				b.setRecords(Collections.<AnomalyRecord>emptyList());
+				bucket.setRecords(null);
 			}
 		}
-		
+
 		return buckets;
 	}
 	
@@ -403,205 +341,42 @@ public class JobManager
 	/**
 	 * Get result buckets between 2 dates 
 	 * @param jobId
-	 * @param expand
+	 * @param expand Include anomaly records. If false the bucket's records
+	 *  are set to <code>null</code> so they aren't serialised
 	 * @param skip
 	 * @param take
 	 * @param startBucket The bucket with this id is included in the results
 	 * @param endBucket Include buckets up to this one
-	 * @param normalisationType Normalisation type
+	 * @param anomalyScoreThreshold
+	 * @param unusualScoreThreshold 
 	 * @return
 	 * @throws UnknownJobException 
 	 * @throws NativeProcessRunException 
 	 */
 	public Pagination<Bucket> buckets(String jobId, 
 			boolean expand, int skip, int take, long startBucket, long endBucket,
-			NormalizationType normalisationType) 
+			double anomalyScoreThreshold, double unusualScoreThreshold)
 	throws UnknownJobException, NativeProcessRunException
 	{
-		boolean expandForNormalisation = expand || 
-				normalisationType == NormalizationType.UNUSUAL_BEHAVIOUR;
+		Pagination<Bucket> buckets =  m_JobProvider.buckets(jobId, expand,
+				skip, take, startBucket, endBucket, 
+				anomalyScoreThreshold, unusualScoreThreshold);
 		
-		long start_ms = System.currentTimeMillis();
-		
-		Pagination<Bucket> buckets =  m_JobProvider.buckets(jobId, 
-				expandForNormalisation, skip, take, 
-				startBucket, endBucket);
-		
-		long read_time = System.currentTimeMillis();
-		System.out.println(String.format("Got buckets for norm = %s in %d ms", 
-				normalisationType, read_time  - start_ms));
-		
-		buckets = normalise(jobId, buckets, normalisationType);
-		
-		
-		System.out.println(String.format("Normalised buckets for = %s in %d ms", 
-				normalisationType, System.currentTimeMillis() - read_time));
-		
-		
-		if (expand == false)
+		if (!expand)
 		{
-			// remove records from buckets
-			for (Bucket b : buckets.getDocuments())
+			for (Bucket bucket : buckets.getDocuments())
 			{
-				b.setRecords(Collections.<AnomalyRecord>emptyList());
+				bucket.setRecords(null);
 			}
-		}
-		
-		return buckets;
-	}
-	
-		
-	private Pagination<Bucket> normalise(String jobId,
-			Pagination<Bucket> buckets, NormalizationType normalisationType) 
-	throws NativeProcessRunException
-	{
-		try
-		{
-			Normaliser normaliser = new Normaliser(jobId, m_JobProvider,
-					m_ProcessManager.getJobLogger(jobId));
-
-			if (normalisationType == NormalizationType.UNUSUAL_BEHAVIOUR)
-			{
-				normaliser.normaliseForUnusualBehaviour(getJobBucketSpan(jobId),
-						buckets.getDocuments());
-			}
-			else
-			{
-				normaliser.normaliseForSystemChange(getJobBucketSpan(jobId),
-					buckets.getDocuments());
-			}
-		}
-		catch (UnknownJobException uje)
-		{
-			s_Logger.error("Unknown job whilst normalising", uje);
-		}
+		}		
 
 		return buckets;
 	}
-	
-	
-	private SingleDocument<Bucket> normalise(String jobId,
-			SingleDocument<Bucket> bucket, NormalizationType normalisationType) 
-	throws NativeProcessRunException
-	{
-		try
-		{
-			Normaliser normaliser = new Normaliser(jobId, m_JobProvider,
-					m_ProcessManager.getJobLogger(jobId));
-
-			if (normalisationType == NormalizationType.UNUSUAL_BEHAVIOUR)
-			{
-				normaliser.normaliseForUnusualBehaviour(getJobBucketSpan(jobId),
-						Arrays.asList(new Bucket [] {bucket.getDocument()}));
-			}
-			else
-			{
-				normaliser.normaliseForSystemChange(getJobBucketSpan(jobId),
-						Arrays.asList(new Bucket [] {bucket.getDocument()}));
-			}
-		}
-		catch (UnknownJobException uje)
-		{
-			s_Logger.error("Unknown job whilst normalising", uje);
-		}
-
-		return bucket;
-	}
-	
-
-	/**
-	 * Get the anomaly records for the bucket. 
-	 * Does not include simple count records.
-	 * Records are sorted by probability  
-	 * 
-	 * @param jobId
-	 * @param bucketId 
-	 * @param skip Skip the first N records. This parameter is for paging
-	 * results if not required set to 0.
-	 * @param take Take only this number of records
-	 * @param norm Normalization type
-	 * @return
-	 * @throws UnknownJobException 
-	 * @throws NativeProcessRunException 
-	 */
-	public Pagination<AnomalyRecord> records(String jobId, 
-			String bucketId, int skip, int take, NormalizationType norm) 
-	throws UnknownJobException, NativeProcessRunException 
-	{
-		return this.records(jobId, bucketId, skip, take, 
-				DEFAULT_RECORD_SORT_FIELD, norm);
-	}
-	
-	/**
-	 * Get the anomaly records for the bucket. 
-	 * Does not include simple count records.
-	 * 
-	 * @param jobId
-	 * @param bucketId 
-	 * @param skip Skip the first N records. This parameter is for paging
-	 * results if not required set to 0.
-	 * @param take Take only this number of records
-	 * @param sortField The field to sort the anomaly records by
-	 * @param norm Normalisation type
-	 * @return
-	 * @throws UnknownJobException 
-	 * @throws NativeProcessRunException 
-	 */
-	public Pagination<AnomalyRecord> records(String jobId, 
-			String bucketId, int skip, int take, String sortField, 
-			NormalizationType norm) 
-	throws UnknownJobException, NativeProcessRunException 
-	{
-		Pagination<AnomalyRecord> records = m_JobProvider.records(jobId, 
-				bucketId, false, skip, take, sortField);
-		
-		SingleDocument<Bucket> bucket = m_JobProvider.bucket(jobId, bucketId, false); 
-		
-		try
-		{
-			Normaliser normaliser = new Normaliser(jobId, m_JobProvider,
-					m_ProcessManager.getJobLogger(jobId));
-
-			normaliser.normalise(getJobBucketSpan(jobId),
-					Arrays.asList(new Bucket[] {bucket.getDocument()}),
-					records.getDocuments(), norm);
-		}
-		catch (UnknownJobException uje)
-		{
-			s_Logger.error("Unknown job whilst normalising", uje);
-		}
-
-		return records; 
-	}
-	
-	/**
-	 * Get a page of anomaly records from the buckets between
-	 * epochStart and epochEnd. 
-	 * Does not include simple count records.
-	 * Records are sorted by probability  
-	 * 
-	 * @param jobId
-	 * @param skip
-	 * @param take
-	 * @param epochStart
-	 * @param epochEnd
-	 * @return
-	 * @throws UnknownJobException 
-	 * @throws NativeProcessRunException 
-	 */
-	public Pagination<AnomalyRecord> records(String jobId, 
-			int skip, int take, long epochStart, long epochEnd) 
-	throws NativeProcessRunException, UnknownJobException 
-	{
-		return records(jobId, skip, take, epochStart, epochEnd, 
-				DEFAULT_RECORD_SORT_FIELD, NormalizationType.BOTH);
-	}
-	
 	
 	/**
 	 * Get a page of anomaly records from all buckets.
-	 * Does not include simple count records.
-	 * 
+	 * Records are sorted by probability
+	 *
 	 * @param jobId
 	 * @param skip Skip the first N records. This parameter is for paging
 	 * results if not required set to 0.
@@ -614,16 +389,69 @@ public class JobManager
 			int skip, int take) 
 	throws NativeProcessRunException, UnknownJobException 
 	{
-		return records(jobId, skip, take, DEFAULT_RECORD_SORT_FIELD, 
-				NormalizationType.BOTH);
+		return records(jobId, skip, take, DEFAULT_RECORD_SORT_FIELD, true, 0.0, 0.0);
+	}
+	
+
+	/**
+	 * Get a page of anomaly records from the buckets between
+	 * epochStart and epochEnd. 
+	 * Records are sorted by probability  
+	 * 
+	 * @param jobId
+	 * @param skip
+	 * @param take
+	 * @param epochStart
+	 * @param epochEnd
+	 * @param 
+	 * @return
+	 * @throws UnknownJobException 
+	 * @throws NativeProcessRunException 
+	 */
+	public Pagination<AnomalyRecord> records(String jobId, 
+			int skip, int take, long epochStart, long epochEnd,
+			String scoreFilterField, double filterValue) 
+	throws NativeProcessRunException, UnknownJobException 
+	{
+		return records(jobId, skip, take, epochStart, epochEnd, 
+				DEFAULT_RECORD_SORT_FIELD, true, 0.0, 0.0);
+	}
+	
+	
+	/**
+	 * Get a page of anomaly records from all buckets.
+	 * 
+	 * @param jobId
+	 * @param skip Skip the first N records. This parameter is for paging
+	 * results if not required set to 0.
+	 * @param take Take only this number of records
+	 * @param sortField The field to sort by
+	 * @param sortDescending
+	 * @param anomalyScoreThreshold Return only buckets with an anomalyScore >=
+	 * this value
+	 * @param unusualScoreThreshold Return only buckets with an maxRecordUnusualness >=
+	 * this value
+	 * 
+	 * @return
+	 * @throws NativeProcessRunException
+	 * @throws UnknownJobException 
+	 */
+	public Pagination<AnomalyRecord> records(String jobId, 
+			int skip, int take, String sortField, boolean sortDescending, 
+			double anomalyScoreThreshold, double unusualScoreThreshold) 
+	throws NativeProcessRunException, UnknownJobException 
+	{
+		Pagination<AnomalyRecord> records = m_JobProvider.records(jobId, 
+				skip, take, sortField, sortDescending, 
+				anomalyScoreThreshold, unusualScoreThreshold);
+
+		return records; 
 	}
 	
 	
 	/**
 	 * Get a page of anomaly records from the buckets between
-	 * epochStart and epochEnd. Does not include simple count records.
-	 * If norm == NormalizationType.STATE_CHANGE or norm == NormalizationType.BOTH
-	 * then get the parent buckets and set the state change anomaly score
+	 * epochStart and epochEnd. 
 	 * 
 	 * @param jobId
 	 * @param skip
@@ -631,194 +459,28 @@ public class JobManager
 	 * @param epochStart
 	 * @param epochEnd
 	 * @param sortField
-	 * @param norm
+	 * @param sortDescending
+	 * @param anomalyScoreThreshold Return only buckets with an anomalyScore >=
+	 * this value
+	 * @param unusualScoreThreshold Return only buckets with an maxRecordUnusualness >=
+	 * this value
+	 * 
 	 * @return
 	 * @throws NativeProcessRunException
 	 * @throws UnknownJobException
 	 */
 	public Pagination<AnomalyRecord> records(String jobId, 
-			int skip, int take, long epochStart, long epochEnd, String sortField,
-			NormalizationType norm) 
+			int skip, int take, long epochStart, long epochEnd, 
+			String sortField, boolean sortDescending, 
+			double anomalyScoreThreshold, double unusualScoreThreshold) 
 	throws NativeProcessRunException, UnknownJobException
 	{
-		long start_ms = System.currentTimeMillis();
-		
 		Pagination<AnomalyRecord> records = m_JobProvider.records(jobId, 
-				false, skip, take, epochStart, epochEnd, sortField);
-		
-		if (records.getHitCount() == 0)
-		{
-			return records;
-		}
-		
-		List<Bucket> bucketList;
-		
-		if (norm.isNormalizeStateChange())
-		{
-			// get the parent bucket ids and sort
-			List<String> bucketIds = new ArrayList<>();
-			for (AnomalyRecord r : records.getDocuments())
-			{
-				bucketIds.add(r.getParent());
-			}
-			Collections.sort(bucketIds);
+				skip, take, epochStart, epochEnd, sortField, sortDescending,
+				anomalyScoreThreshold, unusualScoreThreshold);
 
-			// get all the buckets over the same time period
-			// as the records
-			try
-			{			
-				long start = Long.parseLong(bucketIds.get(0));
-				// we want the last bucket inclusive so +1 to the value
-				long end = Long.parseLong(bucketIds.get(bucketIds.size() -1)) + 1;
-
-				int bucketSkip = 0;
-				Pagination<Bucket> buckets = m_JobProvider.buckets(jobId, 
-						false, bucketSkip, take, start, end);
-				bucketSkip += take;
-				while (bucketSkip < buckets.getHitCount())
-				{
-					Pagination<Bucket> extraBuckets = m_JobProvider.buckets(
-							jobId, false, bucketSkip, take, start, end);
-
-					bucketSkip += take;
-					buckets.getDocuments().addAll(extraBuckets.getDocuments());
-				}
-				
-				bucketList = buckets.getDocuments();
-
-			}
-			catch (NumberFormatException nfe)
-			{
-				s_Logger.error("Error parsing record parent id", nfe);
-				bucketList = Collections.emptyList();
-			}	
-
-		}
-		else
-		{
-			bucketList = Collections.emptyList();
-		}		
-		
-		long read_time = System.currentTimeMillis();
-		System.out.println(String.format("Got records for norm = %s in %d ms", 
-				norm, read_time  - start_ms));
-
-		try
-		{
-			Normaliser normaliser = new Normaliser(jobId, m_JobProvider,
-					m_ProcessManager.getJobLogger(jobId));	
-			normaliser.normalise(getJobBucketSpan(jobId), 
-						bucketList, records.getDocuments(), norm);
-		}
-		catch (UnknownJobException uje)
-		{
-			s_Logger.error("Unknown job whilst normalising", uje);
-		}
-		
-		System.out.println(String.format("Normalised for = %s in %d ms", 
-				norm, System.currentTimeMillis() - read_time));
-		
 		return records; 
 	}
-	
-
-	/**
-	 * Get a page of anomaly records from all buckets.
-	 * Does not include simple count records.
-	 * 
- 	 * If norm == NormalizationType.STATE_CHANGE or norm == NormalizationType.BOTH
-	 * then get the parent buckets and set the state change anomaly score
-	 * 
-	 * @param jobId
-	 * @param skip Skip the first N records. This parameter is for paging
-	 * results if not required set to 0.
-	 * @param take Take only this number of records
-	 * @param sortField The field to sort by
-	 * @param norm The normalisation type
-	 * @return
-	 * @throws NativeProcessRunException
-	 * @throws UnknownJobException 
-	 */
-	public Pagination<AnomalyRecord> records(String jobId, 
-			int skip, int take, String sortField, NormalizationType norm) 
-	throws NativeProcessRunException, UnknownJobException 
-	{
-		long start_ms = System.currentTimeMillis();
-		
-		Pagination<AnomalyRecord> records = m_JobProvider.records(jobId, 
-				false, skip, take, sortField);
-		
-		if (records.getHitCount() == 0)
-		{
-			return records;
-		}
-		
-		
-		// get all the buckets over the same time period
-		// as the records
-		try
-		{			
-			List<Bucket> bucketList;
-			if (norm.isNormalizeStateChange())
-			{
-				// get the parent bucket ids and sort
-				List<String> bucketIds = new ArrayList<>();
-				for (AnomalyRecord r : records.getDocuments())
-				{
-					bucketIds.add(r.getParent());
-				}
-				Collections.sort(bucketIds);
-				
-				long start = Long.parseLong(bucketIds.get(0));
-				// we want the last bucket inclusive so +1 to the value
-				long end = Long.parseLong(bucketIds.get(bucketIds.size() -1)) + 1;				
-				
-				int bucketSkip = 0;
-				Pagination<Bucket> buckets = m_JobProvider.buckets(jobId, 
-						false, bucketSkip, take, start, end);
-				bucketSkip += take;
-				while (bucketSkip < buckets.getHitCount())
-				{
-					Pagination<Bucket> extraBuckets = m_JobProvider.buckets(
-							jobId, false, bucketSkip, take, start, end);
-
-					bucketSkip += take;
-					buckets.getDocuments().addAll(extraBuckets.getDocuments());
-				}
-				
-				bucketList = buckets.getDocuments();
-			}
-			else
-			{
-				bucketList = Collections.emptyList();
-			}
-			
-			
-			long read_time = System.currentTimeMillis();
-			System.out.println(String.format("Got records for norm = %s in %d ms", 
-					norm, read_time - start_ms));
-
-			Normaliser normaliser = new Normaliser(jobId, m_JobProvider,
-					m_ProcessManager.getJobLogger(jobId));	
-
-			normaliser.normalise(getJobBucketSpan(jobId), 
-					bucketList, records.getDocuments(), norm);
-			
-			System.out.println(String.format("Normalised for = %s in %d ms", 
-					norm, System.currentTimeMillis() - read_time));
-		}
-		catch (NumberFormatException nfe)
-		{
-			s_Logger.error("Error parsing record parent id", nfe);
-		}
-		catch (UnknownJobException uje)
-		{
-			s_Logger.error("Unknown job whilst getting records", uje);
-		}
-		
-		return records; 
-	}
-	
 	
 	/**
 	 * Set the job's description.
@@ -991,7 +653,7 @@ public class JobManager
 	}		
 		
 	/**
-	 * Stops the ElasticSearch client and the Process Manager
+	 * Stops the Elasticsearch client and the Process Manager
 	 */
 	public void stop()
 	{
@@ -1075,7 +737,7 @@ public class JobManager
 
 	/**
 	 * Attempt to get usage and license info from the C++ process, add extra
-	 * fields and persist to ElasticSearch.  Any failures are logged but do not
+	 * fields and persist to Elasticsearch.  Any failures are logged but do not
 	 * otherwise impact operation of this process.  Additionally, any license
 	 * constraints are extracted from the same info document.
 	 */
@@ -1164,11 +826,11 @@ public class JobManager
 		}
 		catch (Exception e)
 		{
-			s_Logger.warn("Error writing Prelert info to ElasticSearch", e);
+			s_Logger.warn("Error writing Prelert info to Elasticsearch", e);
 			return;
 		}
 
-		s_Logger.info("Wrote Prelert info " + doc.toString() + " to ElasticSearch");
+		s_Logger.info("Wrote Prelert info " + doc.toString() + " to Elasticsearch");
 	}
 
 }

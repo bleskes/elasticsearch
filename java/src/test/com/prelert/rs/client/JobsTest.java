@@ -82,11 +82,29 @@ import com.prelert.rs.data.SingleDocument;
  */
 public class JobsTest implements Closeable
 {
+	static final String ISO_8601_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ssX";
+	static final String ISO_8601_DATE_FORMAT_WITH_MS = "yyyy-MM-dd'T'HH:mm:ss.SSSX";
+	
+	
 	/**
 	 * This is a format string insert a reference job id.
 	 */
-	final String JOB_REFERENCE_CONFIG = "{\"referenceJobId\" : \"%s\"}";
-	
+	static final String JOB_REFERENCE_CONFIG = "{\"referenceJobId\" : \"%s\"}";
+
+	static final long FLIGHT_CENTRE_NUM_BUCKETS = 24;
+	/**
+	 *  The number of input records in the farequote input data set
+	 *  excluding those in the final bucket
+	 */
+	static final long FLIGHT_CENTRE_NUM_EVENTS = 167517;
+
+	static final long FARE_QUOTE_NUM_BUCKETS = 1439;
+	/**
+	 * The number of records in the farequote input data
+	 * excluding those in the final bucket
+	 */
+	static final long FARE_QUOTE_NUM_EVENTS = 86229;
+
 	
 	static final private Logger s_Logger = Logger.getLogger(JobsTest.class);
 	
@@ -177,82 +195,7 @@ public class JobsTest implements Closeable
 		return true;
 	}
 	
-	/**
-	 * Creates a job using the Wiki Traffic stats configuration then 
-	 * reads it back verifying all the correct properties are set. 
-	 * 
-	 * @param baseUrl The URL of the REST API i.e. an URL like
-	 * 	<code>http://prelert-host:8080/engine/version/</code>
-	 * 
-	 * @return The Id of the created job
-	 * @throws ClientProtocolException
-	 * @throws IOException
-	 */
-	public String createWikiTrafficJobTest(String baseUrl) 
-	throws ClientProtocolException, IOException
-	{	
-		final String WIKI_TRAFFIC_JOB_CONFIG = "{\"name\":\"wiki_traffic\"," 
-				+ "\"description\":\"Wiki Traffic Job\","
-				+ "\"analysisConfig\" : {"
-				+ "\"bucketSpan\":86400,"  
-				+ "\"detectors\" :" 
-				+ "[{\"fieldName\":\"hitcount\",\"byFieldName\":\"url\"}] },"
-				+ "\"dataDescription\":{\"fieldDelimiter\":\"\\t\", \"timeField\":\"_time\"} }}";
-		
-		String jobId = m_WebServiceClient.createJob(baseUrl, WIKI_TRAFFIC_JOB_CONFIG);
-		if (jobId == null)
-		{
-			s_Logger.error("No Location returned in by create job");
-			test(jobId != null);
-		}
-		
-		// get job by location, verify
-		SingleDocument<JobDetails> doc = m_WebServiceClient.getJob(baseUrl, jobId);
-		if (doc.isExists() == false)
-		{
-			s_Logger.error("No job on Url " + baseUrl + " with id " + jobId);
-		}
-		JobDetails job = doc.getDocument();
-		
-		Detector d = new Detector();
-		d.setFieldName("hitcount");
-		d.setByFieldName("url");
-		AnalysisConfig ac = new AnalysisConfig();
-		ac.setBucketSpan(86400L);
-		ac.setDetectors(Arrays.asList(d));
-		
-		DataDescription dd = new DataDescription();
-		dd.setFieldDelimiter('\t');
-		
 
-		test(ac.equals(job.getAnalysisConfig()));
-		test(dd.equals(job.getDataDescription()));
-		test(job.getAnalysisLimits() == null);
-		
-		test(job.getDescription().equals("Wiki Traffic Job"));
-				
-		test(job.getLocation().toString().equals(baseUrl + "/jobs/" + jobId));
-		test(job.getResultsEndpoint().toString().equals(baseUrl + "/results/" + jobId));
-		test(job.getDataEndpoint().toString().equals(baseUrl + "/data/" + jobId));
-		
-		test(job.getLastDataTime() == null);
-		test(job.getFinishedTime() == null);
-		
-		test(job.getStatus() == JobStatus.CLOSED);
-		
-		Calendar cal = Calendar.getInstance();
-		cal.setTime(new Date());
-		cal.add(Calendar.MINUTE, -2);
-		Date twoMinsAgo = cal.getTime();
-		cal.add(Calendar.MINUTE, 4);
-		Date twoMinsInFuture = cal.getTime();
-		
-		test(job.getCreateTime().after(twoMinsAgo) && job.getCreateTime().before(twoMinsInFuture));
-		
-		return jobId;
-	}	
-
-	
 	/**
 	 * Creates a job using the FlightCentre configuration then 
 	 * reads it back verifying all the correct properties are set. 
@@ -264,10 +207,10 @@ public class JobsTest implements Closeable
 	 * @throws ClientProtocolException
 	 * @throws IOException
 	 */
-	public String createFlightCentreJobTest(String baseUrl) 
+	public String createFlightCentreCsvJobTest(String baseUrl) 
 	throws ClientProtocolException, IOException
 	{	
-		final String FLIGHT_CENTRE_JOB_CONFIG = "{\"id\":\"flightcentre\"," 
+		final String FLIGHT_CENTRE_JOB_CONFIG = "{\"id\":\"flightcentre-csv\"," 
 				+ "\"description\":\"Flight Centre Job\","
 				+ "\"analysisConfig\" : {"
 				+ "\"bucketSpan\":3600,"  
@@ -285,7 +228,7 @@ public class JobsTest implements Closeable
 			s_Logger.error("No Job Id returned by create job");
 			test(jobId != null);
 		}
-		test(jobId.equals("flightcentre"));
+		test(jobId.equals("flightcentre-csv"));
 		
 		// get job by location, verify
 		SingleDocument<JobDetails> doc = m_WebServiceClient.getJob(baseUrl, jobId);
@@ -801,160 +744,165 @@ public class JobsTest implements Closeable
 	 * @param take The max number of buckets to return
 	 * @param expectedNumBuckets The expected number of result buckets in the job
 	 * @param bucketSpan Bucket span in seconds
-	 * 
+	 * @param expectedTotalEvents The total number of input records (events)
+	 * expected for the job
+	 *
 	 * @throws IOException 
 	 */
 	public void verifyJobResults(String baseUrl, String jobId, long take, 
-			long expectedNumBuckets, long bucketSpan) 
+			long expectedNumBuckets, long bucketSpan, long expectedTotalEvents) 
 	throws IOException
 	{
 		s_Logger.debug("Verifying results for job " + jobId);
 		
-		String [] normalizations = {"s", "u", null};
-		
-		for (String normalizationType : normalizations)
+		long skip = 0;		
+		long lastBucketTime = 0;
+		long eventCount = 0;
+		while (true) // break when getNextUrl() == false
 		{
-			long skip = 0;		
-			long lastBucketTime = 0;
-			while (true) // break when getNextUrl() == false
+			Pagination<Bucket> buckets = m_WebServiceClient.getBuckets(baseUrl, 
+					jobId, false, skip, take, 0.0, 0.0);
+
+			test(buckets.getHitCount() == expectedNumBuckets);
+			test(buckets.getDocumentCount() <= take);
+			validateBuckets(buckets.getDocuments(), bucketSpan, lastBucketTime, false);
+
+			for (Bucket b: buckets.getDocuments())
 			{
-				Pagination<Bucket> buckets = m_WebServiceClient.getBuckets(baseUrl, 
-						jobId, normalizationType, false, skip, take);
+				eventCount += b.getEventCount();
+			}
 
-				test(buckets.getHitCount() == expectedNumBuckets);
-				test(buckets.getDocumentCount() <= take);
-				validateBuckets(buckets.getDocuments(), bucketSpan, lastBucketTime, false);
+			// time in seconds
+			lastBucketTime = buckets.getDocuments().get(
+					buckets.getDocuments().size() -1).getTimestamp().getTime() / 1000;
 
-				// time in seconds
-				lastBucketTime = buckets.getDocuments().get(
-						buckets.getDocuments().size() -1).getTimestamp().getTime() / 1000;
+			SingleDocument<Bucket> bucket = m_WebServiceClient.getBucket(
+					baseUrl, jobId, Long.toString(lastBucketTime), false);
 
-				SingleDocument<Bucket> bucket = m_WebServiceClient.getBucket(
-						baseUrl, jobId, Long.toString(lastBucketTime), false, 
-						normalizationType);
+			test(bucket.isExists() == true);
+			test(bucket.getDocument() != null);
+			test(bucket.getDocumentId().equals(Long.toString(lastBucketTime)));
+			test(bucket.getType().equals(Bucket.TYPE));
 
-				test(bucket.isExists() == true);
-				test(bucket.getDocument() != null);
-				test(bucket.getDocumentId().equals(Long.toString(lastBucketTime)));
-				test(bucket.getType().equals(Bucket.TYPE));
+			validateBuckets(Arrays.asList(new Bucket[]{bucket.getDocument()}), 
+					bucketSpan, 0, false);
 
-				validateBuckets(Arrays.asList(new Bucket[]{bucket.getDocument()}), 
-						bucketSpan, 0, false);
-
-				SingleDocument<Bucket> nonExistentBucket = m_WebServiceClient.getBucket(
-						baseUrl, jobId, "missing_bucket", false,
-						normalizationType);
-				test(nonExistentBucket.isExists() == false);
-				test(nonExistentBucket.getDocument() == null);
-				test(nonExistentBucket.getDocumentId().equals("missing_bucket"));
-				test(nonExistentBucket.getType().equals(Bucket.TYPE));
+			SingleDocument<Bucket> nonExistentBucket = m_WebServiceClient.getBucket(
+					baseUrl, jobId, "missing_bucket", false);
+			test(nonExistentBucket.isExists() == false);
+			test(nonExistentBucket.getDocument() == null);
+			test(nonExistentBucket.getDocumentId().equals("missing_bucket"));
+			test(nonExistentBucket.getType().equals(Bucket.TYPE));
 
 
-				if (skip > 0)
-				{
-					// should be a previous page
-					test(buckets.getPreviousPage() != null);
-					
-					int start = Math.max(0,  buckets.getSkip() - buckets.getTake());
-					String prevPageUrl = String.format("%s/results/%s?skip=%d&take=%d&expand=%b&norm=%s", 
-							baseUrl, jobId,  start, buckets.getTake(), false, 
-							normalizationType ==  null ? "s" : normalizationType);	
-					
-					test(prevPageUrl.equals(buckets.getPreviousPage().toString()));
-				}
+			if (skip > 0)
+			{
+				// should be a previous page
+				test(buckets.getPreviousPage() != null);
 				
+				int start = Math.max(0,  buckets.getSkip() - buckets.getTake());
+				String prevPageUrl = String.format(
+						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&anomalyScore=0.0&maxRecordUnusualness=0.0", 
+						baseUrl, jobId,  start, buckets.getTake(), false);
+				
+				test(prevPageUrl.equals(buckets.getPreviousPage().toString()));
+			}
+			
 
-				if (buckets.getNextPage() == null)
-				{
-					test(expectedNumBuckets == (skip + buckets.getDocumentCount()));		
-					break;
-				}
-				else
-				{
-					int start = Math.max(0,  buckets.getSkip() + buckets.getTake());
-					String nextPageUrl = String.format("%s/results/%s?skip=%d&take=%d&expand=%b&norm=%s", 
-							baseUrl, jobId, start, buckets.getTake(), false, 
-							normalizationType ==  null ? "s" : normalizationType);	
-					
-					test(nextPageUrl.equals(buckets.getNextPage().toString()));
-				}
+			if (buckets.getNextPage() == null)
+			{
+				test(expectedNumBuckets == (skip + buckets.getDocumentCount()));		
+				break;
+			}
+			else
+			{
+				int start = Math.max(0,  buckets.getSkip() + buckets.getTake());
+				String nextPageUrl = String.format(
+						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&anomalyScore=0.0&maxRecordUnusualness=0.0", 
+						baseUrl, jobId, start, buckets.getTake(), false);
 
-
-				skip += take;
+				test(nextPageUrl.equals(buckets.getNextPage().toString()));
 			}
 
 
-			// the same with expanded buckets
-			for (String normalizationType1 : normalizations)
-			{			
-				skip = 0;		
-				lastBucketTime = 0;
-				while (true) // break when getNextUrl() == false
-				{
-					Pagination<Bucket> buckets = m_WebServiceClient.getBuckets(baseUrl, 
-							jobId, normalizationType1, true, skip, take);
-
-					test(buckets.getHitCount() == expectedNumBuckets);
-					test(buckets.getDocumentCount() <= take);
-					validateBuckets(buckets.getDocuments(), bucketSpan, lastBucketTime, true);
-
-
-					// time in seconds
-					lastBucketTime = buckets.getDocuments().get(
-							buckets.getDocuments().size() -1).getTimestamp().getTime() / 1000;			
-
-					SingleDocument<Bucket> bucket = m_WebServiceClient.getBucket(baseUrl, jobId, 
-							Long.toString(lastBucketTime), true, normalizationType);
-
-					test(bucket.isExists() == true);
-					test(bucket.getDocument() != null);
-					test(bucket.getDocumentId().equals(Long.toString(lastBucketTime)));
-					test(bucket.getType().equals(Bucket.TYPE));
-
-					validateBuckets(Arrays.asList(new Bucket[]{bucket.getDocument()}), 
-							bucketSpan, 0, true);
-
-					SingleDocument<Bucket> nonExistentBucket = m_WebServiceClient.getBucket(
-							baseUrl, jobId, "missing_bucket", false, normalizationType);
-					test(nonExistentBucket.isExists() == false);
-					test(nonExistentBucket.getDocument() == null);
-					test(nonExistentBucket.getDocumentId().equals("missing_bucket"));
-					test(nonExistentBucket.getType().equals(Bucket.TYPE));
-
-
-					if (skip > 0)
-					{
-						// should be a previous page
-						test(buckets.getPreviousPage() != null);
-						
-						int start = Math.max(0,  buckets.getSkip() - buckets.getTake());
-						String prevPageUrl = String.format("%s/results/%s?skip=%d&take=%d&expand=%b&norm=%s", 
-								baseUrl, jobId, start, buckets.getTake(), true,
-								normalizationType1 ==  null ? "s" : normalizationType1);	
-						
-						test(prevPageUrl.equals(buckets.getPreviousPage().toString()));						
-					}
-					
-					if (buckets.getNextPage() == null)
-					{
-						test(expectedNumBuckets == (skip + buckets.getDocumentCount()));		
-						break;
-					}
-					else
-					{
-						int start = Math.max(0,  buckets.getSkip() + buckets.getTake());
-						String nextPageUrl = String.format("%s/results/%s?skip=%d&take=%d&expand=%b&norm=%s", 
-								baseUrl, jobId, start, buckets.getTake(), true, 
-								normalizationType1 ==  null ? "s" : normalizationType1);	
-						
-						test(nextPageUrl.equals(buckets.getNextPage().toString()));
-					}
-					
-
-					skip += take;
-				}
-			}
+			skip += take;
 		}
+
+		test(eventCount == expectedTotalEvents);
+
+		// the same with expanded buckets
+		skip = 0;		
+		lastBucketTime = 0;
+		eventCount = 0;
+		while (true) // break when getNextUrl() == false
+		{
+			Pagination<Bucket> buckets = m_WebServiceClient.getBuckets(baseUrl, 
+					jobId, true, skip, take, 0.0, 0.0);
+
+			test(buckets.getHitCount() == expectedNumBuckets);
+			test(buckets.getDocumentCount() <= take);
+			validateBuckets(buckets.getDocuments(), bucketSpan, lastBucketTime, true);
+
+			for (Bucket b: buckets.getDocuments())
+			{
+				eventCount += b.getEventCount();
+			}
+
+			// time in seconds
+			lastBucketTime = buckets.getDocuments().get(
+					buckets.getDocuments().size() -1).getTimestamp().getTime() / 1000;			
+
+			SingleDocument<Bucket> bucket = m_WebServiceClient.getBucket(baseUrl, jobId, 
+					Long.toString(lastBucketTime), true);
+
+			test(bucket.isExists() == true);
+			test(bucket.getDocument() != null);
+			test(bucket.getDocumentId().equals(Long.toString(lastBucketTime)));
+			test(bucket.getType().equals(Bucket.TYPE));
+
+			validateBuckets(Arrays.asList(new Bucket[]{bucket.getDocument()}), 
+					bucketSpan, 0, true);
+
+			SingleDocument<Bucket> nonExistentBucket = m_WebServiceClient.getBucket(
+					baseUrl, jobId, "missing_bucket", false);
+			test(nonExistentBucket.isExists() == false);
+			test(nonExistentBucket.getDocument() == null);
+			test(nonExistentBucket.getDocumentId().equals("missing_bucket"));
+			test(nonExistentBucket.getType().equals(Bucket.TYPE));
+
+
+			if (skip > 0)
+			{
+				// should be a previous page
+				test(buckets.getPreviousPage() != null);
+				
+				int start = Math.max(0,  buckets.getSkip() - buckets.getTake());
+				String prevPageUrl = String.format(
+						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&anomalyScore=0.0&maxRecordUnusualness=0.0", 
+						baseUrl, jobId, start, buckets.getTake(), true);
+
+				test(prevPageUrl.equals(buckets.getPreviousPage().toString()));						
+			}
+			
+			if (buckets.getNextPage() == null)
+			{
+				test(expectedNumBuckets == (skip + buckets.getDocumentCount()));		
+				break;
+			}
+			else
+			{
+				int start = Math.max(0,  buckets.getSkip() + buckets.getTake());
+				String nextPageUrl = String.format(
+						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&anomalyScore=0.0&maxRecordUnusualness=0.0", 
+						baseUrl, jobId, start, buckets.getTake(), true);
+
+				test(nextPageUrl.equals(buckets.getNextPage().toString()));
+			}
+
+			skip += take;
+		}
+
+		test(eventCount == expectedTotalEvents);
 	}
 	
 	
@@ -977,7 +925,7 @@ public class JobsTest implements Closeable
 		for (Bucket b : buckets)
 		{			
 			test(b.getAnomalyScore() >= 0.0);
-			test(b.getRecordCount() > 0);			
+			test(b.getRecordCount() >= 0);			
 			test(b.getDetectors().size() == 0);
 			test(b.getId() != null && b.getId().isEmpty() == false);
 			long epoch = b.getEpoch();
@@ -992,35 +940,37 @@ public class JobsTest implements Closeable
 
 			// epoch and timestamp should be the same
 			test(date.equals(b.getTimestamp()));	
-			
-			
+
+			// must be more than 0 events
+			test(b.getEventCount() > 0);
+
 			if (lastBucketTime > 0)
 			{
 				lastBucketTime += bucketSpan;
 				test(epoch == lastBucketTime);
 			}
 			
-//			test(b.getDetectors().size() > 0);
-//			for (com.prelert.rs.data.Detector d : b.getDetectors())
-//			{
-//				test(d.getName().isEmpty() == false);
-//			}
 			
 			if (expanded)
 			{
-				test(b.getRecords().size() > 0);
-				test(b.getRecordCount() > 0);
+				test(b.getRecords().size() >= 0);
+				test(b.getRecordCount() >= 0);
 				test(b.getRecordCount() == b.getRecords().size());
+				
+				// records are sorted by probability ascending
+				double probability = 0.0;
 				for (AnomalyRecord r: b.getRecords())
 				{
-					// at a minimum all records should have these fields
-					test(r.getProbability() != null);
+					test(r.getProbability() >= probability);
+					probability = r.getProbability();
+					
+					// at a minimum all records should have this field
 					test(r.getFunction() != null);
 				}
 			}
 			else
 			{
-				test(b.getRecords().size() == 0);
+				test(b.getRecords() == null || b.getRecords().size() == 0);
 			}
 		}
 		
@@ -1039,7 +989,7 @@ public class JobsTest implements Closeable
 	 * 
 	 * @throws IOException
 	 */
-	public void testDateFilters(String baseUrl, String jobId, Date start, Date end) 
+	public void testBucketDateFilters(String baseUrl, String jobId, Date start, Date end) 
 	throws IOException
 	{
 		final String ISO_8601_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ssX";
@@ -1055,49 +1005,49 @@ public class JobsTest implements Closeable
 		
 		// query with the 3 date formats
 		Pagination<Bucket> buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, 
-				null, false, 
-				null, null, epochStart, epochEnd);		
+				false, null, null, epochStart, epochEnd, 0.0, 0.0);		
 		test(buckets.getDocuments().get(0).getTimestamp().compareTo(start) >= 0);
 		test(buckets.getDocuments().get(buckets.getDocumentCount() -1)
-				.getTimestamp().compareTo(end) <= 0);
+				.getTimestamp().compareTo(end) < 0);
 		
-		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, null, false, 
-				null, null, dateStart, dateEnd);		
+		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, false, 
+				null, null, dateStart, dateEnd, 0.0, 0.0);		
 		test(buckets.getDocuments().get(0).getTimestamp().compareTo(start) >= 0);
 		test(buckets.getDocuments().get(buckets.getDocumentCount() -1)
-				.getTimestamp().compareTo(end) <= 0);
+				.getTimestamp().compareTo(end) < 0);
 		
-		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, null, false, 
-				null, null, dateStartMs, dateEndMs);		
+		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, false, 
+				null, null, dateStartMs, dateEndMs, 0.0, 0.0);		
 		test(buckets.getDocuments().get(0).getTimestamp().compareTo(start) >= 0);
 		test(buckets.getDocuments().get(buckets.getDocumentCount() -1)
-				.getTimestamp().compareTo(end) <= 0);		
+				.getTimestamp().compareTo(end) < 0);		
 		
 		
 		// just a start date
-		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, null, false, 
-				0L, 100L, dateStart, null);		
+		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, false, 
+				0L, 100L, dateStart, null, 0.0, 0.0);		
 		test(buckets.getDocuments().get(0).getTimestamp().compareTo(start) >= 0);
 
-		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, null, false, 
-				0L, 100L, epochStart, null);		
+		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, false, 
+				0L, 100L, epochStart, null, 0.0, 0.0);		
 		test(buckets.getDocuments().get(0).getTimestamp().compareTo(start) >= 0);
 		
 		
 		// just an end date
-		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, null, false, 
-				null, null, null, dateEndMs);		
+		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, false, 
+				null, null, null, dateEndMs, 0.0, 0.0);		
 		test(buckets.getDocuments().get(buckets.getDocumentCount() -1)
-				.getTimestamp().compareTo(end) <= 0);
+				.getTimestamp().compareTo(end) < 0);
 		
-		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, null, false, 
-				null, null, null, dateEnd);		
+		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, false, 
+				null, null, null, dateEnd, 0.0, 0.0);		
 		test(buckets.getDocuments().get(buckets.getDocumentCount() -1)
-				.getTimestamp().compareTo(end) <= 0);
+				.getTimestamp().compareTo(end) < 0);
 		
 		
 		// Test paging from the start date
-		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, null, false,  0L, 5L, dateStart, null);
+		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, false,  0L, 5L,
+				dateStart, null, 0.0, 0.0);
 		test(buckets.getDocuments().get(0).getTimestamp().compareTo(start) >= 0);	
 		
 		Date lastDate = buckets.getDocuments().get(buckets.getDocumentCount() -1)
@@ -1137,6 +1087,323 @@ public class JobsTest implements Closeable
 		
 		test(bucketCount == 0);
 	}
+	
+	/**
+	 * Get buckets filtered by anomaly & unusual scores.
+	 * 
+	 * @param baseUrl
+	 * @param jobId
+	 * @throws IOException
+	 */
+	public void testBucketScoreFilters(String baseUrl, String jobId) 
+	throws IOException
+	{
+		
+		Pagination<Bucket> buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, 
+				false, 0l, 4000l, null, null, 50.0, 40.0);
+		test(buckets.getDocumentCount() > 0);
+		
+		for (Bucket b : buckets.getDocuments())
+		{
+			test(b.getAnomalyScore() >= 50.0);
+			test(b.getUnusualScore()  >= 40.0);
+		}
+
+		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, 
+				false, 0l, 4000l, null, null, 20.0, 0.0);
+		test(buckets.getDocumentCount() > 0);
+		
+		for (Bucket b : buckets.getDocuments())
+		{
+			test(b.getAnomalyScore() >= 20.0);
+		}
+		
+		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, 
+				false, 0l, 4000l, null, null, 20.0, 15.0);
+		test(buckets.getDocumentCount() > 0);
+		
+		for (Bucket b : buckets.getDocuments())
+		{
+			test(b.getUnusualScore() >= 15.0);
+		}
+	}
+	
+	
+	/**
+	 * Test the sort options for the records endpoint.
+	 * Sort by anomaly score, unsual score, time, etc
+	 * 
+	 * @param baseUrl The URL of the REST API i.e. an URL like
+	 * 	<code>http://prelert-host:8080/engine/version/</code>
+	 * @param jobId The job id
+	 * @param start Filter start date
+	 * @param end Filter end date
+	 * @throws IOException
+	 */
+	public void testSortingRecords(String baseUrl, String jobId, Date start, Date end) 
+	throws IOException
+	{	
+		// test 3 date formats
+		Long epochStart = start.getTime() / 1000;
+		Long epochEnd = end.getTime() / 1000;
+		String dateStartMs = new SimpleDateFormat(ISO_8601_DATE_FORMAT_WITH_MS).format(start);
+		String dateEnd = new SimpleDateFormat(ISO_8601_DATE_FORMAT).format(end);
+		
+		// most unusual first
+		Pagination<AnomalyRecord> records = m_WebServiceClient.getRecords(baseUrl, jobId, 
+				0l, 500l, epochStart, epochEnd, AnomalyRecord.RECORD_UNUSUALNESS, true, null, null);
+		
+		test(records.getDocumentCount() > 0);
+		test(records.getDocumentCount() == records.getDocuments().size());
+		
+		double score = 100.0; // max score		
+		for (AnomalyRecord r : records.getDocuments())
+		{
+			test(r.getUnusualScore() <= score);
+			score = r.getUnusualScore();
+		}
+		
+		// least unusual first
+		records = m_WebServiceClient.getRecords(baseUrl, jobId, 
+				0l, 500l, epochStart, epochEnd, AnomalyRecord.RECORD_UNUSUALNESS, false, null, null);
+		
+		test(records.getDocumentCount() > 0);
+		test(records.getDocumentCount() == records.getDocuments().size());
+		
+		score = 0.0; 		
+		for (AnomalyRecord r : records.getDocuments())
+		{
+			test(r.getUnusualScore() >= score);
+			score = r.getUnusualScore();
+		}
+		
+		// most anomalous first
+		records = m_WebServiceClient.getRecords(baseUrl, jobId, 
+				0l, 100l, null, null, AnomalyRecord.ANOMALY_SCORE, true, null, null);
+		
+		test(records.getDocumentCount() > 0);
+		test(records.getDocumentCount() == records.getDocuments().size());
+		
+		score = 100.0; 		
+		for (AnomalyRecord r : records.getDocuments())
+		{
+			test(r.getAnomalyScore() <= score);
+			score = r.getAnomalyScore();
+		}
+		
+		// lease anomalous first
+		records = m_WebServiceClient.getRecords(baseUrl, jobId, 
+				0l, 100l, null, null, AnomalyRecord.ANOMALY_SCORE, false, null, null);
+		
+		test(records.getDocumentCount() > 0);
+		test(records.getDocumentCount() == records.getDocuments().size());
+		
+		score = 0.0; 		
+		for (AnomalyRecord r : records.getDocuments())
+		{
+			test(r.getAnomalyScore() >= score);
+			score = r.getAnomalyScore();
+		}
+		
+			
+		// order by by-field value
+		records = m_WebServiceClient.getRecords(baseUrl, jobId, 
+				0l, 500l, dateStartMs, dateEnd, "byFieldValue", true, null, null);
+		
+		test(records.getDocumentCount() > 0);
+		test(records.getDocumentCount() == records.getDocuments().size());
+		
+		String fieldValue = "ZZZZZZZZZZZZZZZZ";		
+		for (AnomalyRecord r : records.getDocuments())
+		{
+			test(r.getByFieldValue().compareTo(fieldValue) <= 0);
+			fieldValue = r.getByFieldValue();
+		}
+		
+		
+		// order by time oldest first
+		records = m_WebServiceClient.getRecords(baseUrl, jobId, 
+				0l, 500l, epochStart, epochEnd, "timestamp", false, null, null);
+		
+		test(records.getDocumentCount() > 0);
+		test(records.getDocumentCount() == records.getDocuments().size());
+		
+		long startTime = 0l; 	
+		for (AnomalyRecord r : records.getDocuments())
+		{
+			test(r.getTimestamp().getTime() >= startTime);
+			startTime = r.getTimestamp().getTime();
+		}
+		
+		// order by time newest first
+		records = m_WebServiceClient.getRecords(baseUrl, jobId, 
+				0l, 500l, dateStartMs, dateEnd, "timestamp", true, null, null);
+		
+		test(records.getDocumentCount() > 0);
+		test(records.getDocumentCount() == records.getDocuments().size());
+		
+		startTime = new Date().getTime();		
+		for (AnomalyRecord r : records.getDocuments())
+		{
+			test(r.getTimestamp().getTime() <= startTime);
+			startTime = r.getTimestamp().getTime();
+		}
+	}
+	
+	/**
+	 * Filter records by anomaly score or unusual score. 
+	 * Checks that the returned records all have a score >= the filter value
+	 *  
+	 * @param baseUrl
+	 * @param jobId
+	 * @throws IOException
+	 */
+	public void testRecordScoreFilters(String baseUrl, String jobId) 
+	throws IOException
+	{
+		Pagination<AnomalyRecord> records = m_WebServiceClient.getRecords(baseUrl, jobId, 
+				0l, 4000l, null, null, AnomalyRecord.ANOMALY_SCORE, true, 8.0, 20.0);
+		
+		test(records.getDocumentCount() > 0);
+		double score = 100.0;
+		for (AnomalyRecord r : records.getDocuments())
+		{			
+			test(r.getAnomalyScore() >= 8.0);
+			test(r.getUnusualScore() >= 20.0);
+			
+			test(r.getAnomalyScore() <= score);
+			score = r.getAnomalyScore();
+		}
+		
+		records = m_WebServiceClient.getRecords(baseUrl, jobId, 
+				0l, 4000l, null, null, AnomalyRecord.BY_FIELD_VALUE, false, null, 12.5);
+		
+		test(records.getDocumentCount() > 0);
+		
+		String fieldValue = "";
+		for (AnomalyRecord r : records.getDocuments())
+		{
+			test(r.getAnomalyScore() >= 12.5);
+			
+			test(r.getByFieldValue().compareTo(fieldValue) >= 0);
+			fieldValue = r.getByFieldValue();
+		}
+		
+		records = m_WebServiceClient.getRecords(baseUrl, jobId, 
+				0l, 4000l, null, null, AnomalyRecord.ANOMALY_SCORE, true, 40.0, 0.0);
+		
+		test(records.getDocumentCount() > 0);
+		
+		score = 100.0;
+		for (AnomalyRecord r : records.getDocuments())
+		{
+			test(r.getAnomalyScore() >= 40.0);
+			
+			test(r.getAnomalyScore() <= score);
+			score = r.getAnomalyScore();
+		}		
+	}
+	
+	
+	/**
+	 * Test filtering bucket results by date.
+	 * Tests each of the 3 acceptable date formats and paging the results.
+	 * 
+	 * @param baseUrl The URL of the REST API i.e. an URL like
+	 * 	<code>http://prelert-host:8080/engine/version/</code>
+	 * @param jobId The job id
+	 * @param start Filter start date
+	 * @param end Filter end date
+	 * 
+	 * @throws IOException
+	 */
+	public void testRecordDateFilters(String baseUrl, String jobId, Date start, Date end) 
+	throws IOException
+	{
+	
+		// test 3 date formats
+		Long epochStart = start.getTime() / 1000;
+		Long epochEnd = end.getTime() / 1000;
+		String dateStart = new SimpleDateFormat(ISO_8601_DATE_FORMAT).format(start);
+		String dateEnd = new SimpleDateFormat(ISO_8601_DATE_FORMAT).format(end);
+		String dateStartMs = new SimpleDateFormat(ISO_8601_DATE_FORMAT_WITH_MS).format(start);
+		String dateEndMs = new SimpleDateFormat(ISO_8601_DATE_FORMAT_WITH_MS).format(end);
+		
+		// query with the 3 date formats
+		Pagination<AnomalyRecord> records = m_WebServiceClient.getRecords(baseUrl, jobId, 
+				null, null, epochStart, epochEnd);		
+		testBetweeen2Dates(records.getDocuments(), start, end);
+		
+		records = m_WebServiceClient.getRecords(baseUrl, jobId, 
+				null, null, dateStart, dateEnd);		
+		testBetweeen2Dates(records.getDocuments(), start, end);
+		
+		records = m_WebServiceClient.getRecords(baseUrl, jobId,
+				null, null, dateStartMs, dateEndMs);		
+		testBetweeen2Dates(records.getDocuments(), start, end);	
+		
+		
+		// just a start date
+		records = m_WebServiceClient.getRecords(baseUrl, jobId, 
+				0L, 100L, dateStart, null);
+		testBetweeen2Dates(records.getDocuments(), start, new Date());
+
+		records = m_WebServiceClient.getRecords(baseUrl, jobId, 
+				0L, 100L, epochStart, null);		
+		testBetweeen2Dates(records.getDocuments(), start, new Date());
+		
+		
+		// just an end date
+		records = m_WebServiceClient.getRecords(baseUrl, jobId, 
+				null, null, null, dateEndMs);		
+		testBetweeen2Dates(records.getDocuments(), new Date(0), end);
+		
+		records = m_WebServiceClient.getRecords(baseUrl, jobId, 
+				null, null, null, dateEnd);		
+		testBetweeen2Dates(records.getDocuments(), new Date(0), end);
+		
+		
+		// Test paging from the start date
+		records = m_WebServiceClient.getRecords(baseUrl, jobId,  0L, 5L, dateStart, null);
+		testBetweeen2Dates(records.getDocuments(), start, new Date());
+		
+
+		int bucketCount = 0;
+		while (records.getNextPage() != null)
+		{
+			String url = records.getNextPage().toString();
+			records = m_WebServiceClient.<Pagination<AnomalyRecord>>get(url,
+						new TypeReference<Pagination<AnomalyRecord>>() {});
+			
+			testBetweeen2Dates(records.getDocuments(), start, new Date());
+			bucketCount++;
+		}
+		
+		// and page backwards
+		while (records.getPreviousPage() != null)
+		{
+			String url = records.getPreviousPage().toString();
+			records = m_WebServiceClient.<Pagination<AnomalyRecord>>get(url,
+						new TypeReference<Pagination<AnomalyRecord>>() {});
+			
+			testBetweeen2Dates(records.getDocuments(), start, new Date());
+			bucketCount--;
+		}
+		
+		test(bucketCount == 0);
+	}
+	
+	
+	private void testBetweeen2Dates(List<AnomalyRecord> records, Date start, Date end)
+	{
+		test(records.size() > 0);
+		for (AnomalyRecord r : records)
+		{
+			test(r.getTimestamp().compareTo(start) >= 0);
+			test(r.getTimestamp().compareTo(end) < 0);
+		}
+	}
+	
 	
 	/**
 	 * Test setting the description field of the job
@@ -1230,39 +1497,32 @@ public class JobsTest implements Closeable
 		test(logLines.length <= 10);
 			
 		// zip of log files
-		ZipInputStream zip = m_WebServiceClient.downloadAllLogs(baseUrl, jobId);
-		ZipEntry entry = zip.getNextEntry();
-		
-		// expect at least 3 entries the directory and 2 log files
-		test(entry != null);
-		test(entry.getName().equals(jobId + File.separator));
-		//zip.closeEntry();
-		entry = zip.getNextEntry();
-		
-		byte buff[] = new byte[2048];
-		
-		// log file
-		test(entry.getName().startsWith(jobId + File.separator));
-		int len = zip.read(buff);
-		test(len > 0);
-		String content = new String(buff, StandardCharsets.UTF_8);
-		logLines = content.split("\n");
-		test(logLines.length > 0);
-		//zip.closeEntry();
-		entry = zip.getNextEntry();
-		/*
-		// 2nd log file
-		test(entry.getName().startsWith(jobId + File.separator));
-		len = zip.read(buff);
-		test(len > 0);
-		content = new String(buff, StandardCharsets.UTF_8);
-		logLines = content.split("\n");
-		test(logLines.length > 0);
-		//zip.closeEntry();
-		entry = zip.getNextEntry();
+		try (ZipInputStream zip = m_WebServiceClient.downloadAllLogs(baseUrl, jobId))
+		{
+			ZipEntry entry = zip.getNextEntry();
 
-		zip.close();
-		
+			// expect at least 2 entries: the directory and 1 or more log files
+			test(entry != null);
+			test(entry.getName().equals(jobId + File.separator));
+			entry = zip.getNextEntry();
+
+			byte buff[] = new byte[2048];
+
+			// log file(s)
+			do
+			{
+				test(entry.getName().startsWith(jobId + File.separator));
+				int len = zip.read(buff);
+				test(len > 0);
+				String content = new String(buff, StandardCharsets.UTF_8);
+				logLines = content.split("\n");
+				test(logLines.length > 0);
+				entry = zip.getNextEntry();
+			}
+			while (entry != null);
+		}
+
+		/*
 		// check errors by ask for a file that doesn't exist
 		file = m_WebServiceClient.downloadLog(baseUrl, jobId, "not_a_file");	
 		test(file.isEmpty());
@@ -1333,8 +1593,7 @@ public class JobsTest implements Closeable
 			throw new IllegalStateException();
 		}
 	}
-	
-	
+
 	
 	/**
 	 * The program takes one argument which is the base Url of the RESTful API.
@@ -1391,34 +1650,37 @@ public class JobsTest implements Closeable
 		
 		// Always delete the test named jobs first in case they
 		// are hanging around from a previous run
-		
-		test.m_WebServiceClient.deleteJob(baseUrl, "flightcentre");
-		test.m_WebServiceClient.deleteJob(baseUrl, "flight-centre");
-		
+		test.m_WebServiceClient.deleteJob(baseUrl, "flightcentre-csv");
+		test.m_WebServiceClient.deleteJob(baseUrl, "flightcentre-epoch-ms");
+
 		//=================
 		// CSV & Gzip test 
 		//
-		String flightCentreJobId = test.createFlightCentreJobTest(baseUrl);
+		String flightCentreJobId = test.createFlightCentreCsvJobTest(baseUrl);
 		test.getJobsTest(baseUrl);
 		
 		test.testSetDescription(baseUrl, flightCentreJobId);
 		test.uploadData(baseUrl, flightCentreJobId, flightCentreData, true);
 		test.closeJob(baseUrl, flightCentreJobId);
 		test.testReadLogFiles(baseUrl, flightCentreJobId);
-		test.verifyJobResults(baseUrl, flightCentreJobId, 100, FLIGHT_CENTRE_NUM_BUCKETS, 3600);
+		test.verifyJobResults(baseUrl, flightCentreJobId, 100, FLIGHT_CENTRE_NUM_BUCKETS,
+				3600, FLIGHT_CENTRE_NUM_EVENTS);
+		test.testBucketScoreFilters(baseUrl, flightCentreJobId);
 		jobUrls.add(flightCentreJobId);		
 
 		
 		//=================
 		// JSON test
 		//
+		
 		String flightCentreJsonJobId = test.createFlightCentreJsonJobTest(baseUrl);
 		test.getJobsTest(baseUrl);
 		test.uploadData(baseUrl, flightCentreJsonJobId, flightCentreJsonData, false);
 		test.closeJob(baseUrl, flightCentreJsonJobId);		
 		test.testReadLogFiles(baseUrl, flightCentreJsonJobId);
 		test.testSetDescription(baseUrl, flightCentreJsonJobId);
-		test.verifyJobResults(baseUrl, flightCentreJsonJobId, 100, FLIGHT_CENTRE_NUM_BUCKETS, 3600);
+		test.verifyJobResults(baseUrl, flightCentreJsonJobId, 100, FLIGHT_CENTRE_NUM_BUCKETS,
+				3600, FLIGHT_CENTRE_NUM_EVENTS);
 		jobUrls.add(flightCentreJsonJobId);	
 			
 		//=================
@@ -1430,15 +1692,21 @@ public class JobsTest implements Closeable
 
 		test.slowUpload(baseUrl, farequoteTimeFormatJobId, fareQuoteData, 10);
 		test.closeJob(baseUrl, farequoteTimeFormatJobId);
-		test.verifyJobResults(baseUrl, farequoteTimeFormatJobId, 150, FARE_QUOTE_NUM_BUCKETS, 300);
+		test.verifyJobResults(baseUrl, farequoteTimeFormatJobId, 150, FARE_QUOTE_NUM_BUCKETS,
+				300, FARE_QUOTE_NUM_EVENTS);
+		test.testBucketScoreFilters(baseUrl, farequoteTimeFormatJobId);
 		test.testReadLogFiles(baseUrl, farequoteTimeFormatJobId);
 		test.testSetDescription(baseUrl, farequoteTimeFormatJobId);
 					
 		// known dates for the farequote data
 		Date start = new Date(1359406800000L);
 		Date end = new Date(1359662400000L);
-		test.testDateFilters(baseUrl, farequoteTimeFormatJobId, start, end);
-			
+		test.testBucketDateFilters(baseUrl, farequoteTimeFormatJobId, start, end);
+		test.testRecordDateFilters(baseUrl, farequoteTimeFormatJobId, start, end);
+		
+		test.testSortingRecords(baseUrl, farequoteTimeFormatJobId, start, end);
+		test.testRecordScoreFilters(baseUrl, farequoteTimeFormatJobId);
+		
 		//============================
 		// Create another job based on
 		// the config used above
@@ -1449,32 +1717,44 @@ public class JobsTest implements Closeable
 		test.getJobsTest(baseUrl);
 		test.uploadData(baseUrl, refJobId, fareQuoteData, false);
 		test.closeJob(baseUrl, refJobId);
-		test.verifyJobResults(baseUrl, refJobId, 150, FARE_QUOTE_NUM_BUCKETS, 300);
+		test.verifyJobResults(baseUrl, refJobId, 150, FARE_QUOTE_NUM_BUCKETS,
+				300, FARE_QUOTE_NUM_EVENTS);
+		test.testRecordScoreFilters(baseUrl, farequoteTimeFormatJobId);
+		test.testBucketScoreFilters(baseUrl, refJobId);
 		test.testReadLogFiles(baseUrl, refJobId);
+		
+		
 		jobUrls.add(refJobId);		
 
 		
 		//=====================================================
 		// timestamp in ms from the epoch for both csv and json
 		//
-		String jobId = test.createFlightCentreMsCsvFormatJobTest(baseUrl, "flight-centre");
+		String jobId = test.createFlightCentreMsCsvFormatJobTest(baseUrl, "flightcentre-epoch-ms");
 	 	jobUrls.add(jobId);	
 	 	test.getJobsTest(baseUrl);
 	 	test.uploadData(baseUrl, jobId, flightCentreMsData, false);
 	 	test.closeJob(baseUrl, jobId);	
-	 	test.verifyJobResults(baseUrl, jobId, 150, FLIGHT_CENTRE_NUM_BUCKETS, 3600);
+	 	test.verifyJobResults(baseUrl, jobId, 150, FLIGHT_CENTRE_NUM_BUCKETS,
+				3600, FLIGHT_CENTRE_NUM_EVENTS);
 	 	test.testReadLogFiles(baseUrl, jobId);
-		test.testDateFilters(baseUrl, jobId, new Date(1350824400000L), 
+		test.testBucketDateFilters(baseUrl, jobId, new Date(1350824400000L), 
 				new Date(1350913371000L));
-		
+
 	 	jobId = test.createFlightCentreMsJsonFormatJobTest(baseUrl);
 	 	jobUrls.add(jobId);	
 	 	test.getJobsTest(baseUrl);
 	 	test.uploadData(baseUrl, jobId, flightCentreMsJsonData, false);
 	 	test.closeJob(baseUrl, jobId);	
-		test.verifyJobResults(baseUrl, jobId, 150, FLIGHT_CENTRE_NUM_BUCKETS, 3600);
-		test.testDateFilters(baseUrl, jobId, new Date(1350824400000L), 
-				new Date(1350913371000L));		
+		test.verifyJobResults(baseUrl, jobId, 150, FLIGHT_CENTRE_NUM_BUCKETS,
+				3600, FLIGHT_CENTRE_NUM_EVENTS);
+		
+		start = new Date(1350824400000L);
+		end = new Date(1350913371000L);
+		test.testBucketDateFilters(baseUrl, jobId, start, end); 
+		test.testRecordDateFilters(baseUrl, jobId, start, end);
+		test.testSortingRecords(baseUrl, jobId, start, end);
+		
 		test.testReadLogFiles(baseUrl, jobId);
 
 
@@ -1489,19 +1769,20 @@ public class JobsTest implements Closeable
 		test.uploadData(baseUrl, doubleUploadTest, fareQuoteData, false);
 		
 		test.closeJob(baseUrl, doubleUploadTest);	
-		test.verifyJobResults(baseUrl, doubleUploadTest, 150, FARE_QUOTE_NUM_BUCKETS, 300);
+		test.verifyJobResults(baseUrl, doubleUploadTest, 150, FARE_QUOTE_NUM_BUCKETS,
+				300, FARE_QUOTE_NUM_EVENTS);
 					
 		// known dates for the farequote data
 		start = new Date(1359406800000L);
 		end = new Date(1359662400000L);
-		test.testDateFilters(baseUrl, doubleUploadTest, start, end);
+		test.testBucketDateFilters(baseUrl, doubleUploadTest, start, end);
 		
 		
 		//==========================
 		// Clean up test jobs
 		test.deleteJobsTest(baseUrl, jobUrls);
 		test.close();
-		
+				
 		s_Logger.info("All tests passed Ok");
 	}
 

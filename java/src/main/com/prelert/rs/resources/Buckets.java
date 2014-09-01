@@ -45,7 +45,6 @@ import org.apache.log4j.Logger;
 
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.manager.JobManager;
-import com.prelert.job.normalisation.NormalizationType;
 import com.prelert.job.process.NativeProcessRunException;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
@@ -55,23 +54,22 @@ import com.prelert.rs.data.SingleDocument;
 import com.prelert.rs.provider.RestApiException;
 
 /**
- * API results end point.
+ * API bucket results end point.
  * Access buckets and anomaly records, use the <pre>expand</pre> query argument
  * to get buckets and anomaly records in one query. 
  * Buckets can be filtered by date. 
  */
 @Path("/results")
-public class Results extends ResourceWithJobManager
+public class Buckets extends ResourceWithJobManager
 {
-	static private final Logger s_Logger = Logger.getLogger(Results.class);
+	static private final Logger s_Logger = Logger.getLogger(Buckets.class);
 	
 	/**
-	 * The name of the results endpoint
+	 * The name of the endpoint
 	 */
-	static public final String ENDPOINT = "results";
+	static public final String ENDPOINT = "buckets";
 	
 	
-	static public final String NORMALISATION_QUERY_PARAM = "norm";
 	static public final String EXPAND_QUERY_PARAM = "expand";
 	
 
@@ -100,7 +98,7 @@ public class Results extends ResourceWithJobManager
 	 * @throws UnknownJobException 
 	 */
 	@GET
-	@Path("/{jobId}")
+	@Path("/{jobId}/buckets")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Pagination<Bucket> buckets(
 			@PathParam("jobId") String jobId,
@@ -109,12 +107,14 @@ public class Results extends ResourceWithJobManager
 			@DefaultValue(JobManager.DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take,
 			@DefaultValue("") @QueryParam(START_QUERY_PARAM) String start,
 			@DefaultValue("") @QueryParam(END_QUERY_PARAM) String end,
-			@DefaultValue("s") @QueryParam(NORMALISATION_QUERY_PARAM) String norm) 
+			@DefaultValue("0.0") @QueryParam(AnomalyRecord.ANOMALY_SCORE) double anomalySoreFilter,			
+			@DefaultValue("0.0") @QueryParam(AnomalyRecord.RECORD_UNUSUALNESS) double unusualScoreFilter)
 	throws UnknownJobException, NativeProcessRunException
 	{	
 		s_Logger.debug(String.format("Get %s buckets for job %s. skip = %d, take = %d"
-				+ " start = '%s', end='%s' norm='%s'", 
-				expand?"expanded ":"", jobId, skip, take, start, end, norm));
+				+ " start = '%s', end='%s', anomaly score filter=%f, unsual score filter= %f", 
+				expand?"expanded ":"", jobId, skip, take, start, end,
+						anomalySoreFilter, unusualScoreFilter));
 		
 		long epochStart = 0;
 		if (start.isEmpty() == false)
@@ -141,53 +141,28 @@ public class Results extends ResourceWithJobManager
 						Response.Status.BAD_REQUEST);
 			}			
 		}
-		
-		NormalizationType normType;
-		try
-		{
-			normType = NormalizationType.fromString(norm);
-		}
-		catch (IllegalArgumentException e)
-		{
-			String msg = String.format(String.format("'%s is not a valid value "
-					+ "for the normalisation query parameter", norm));
-			s_Logger.info(msg);
-			throw new RestApiException(msg, ErrorCode.INVALID_NORMALIZATION_ARG,
-					Response.Status.BAD_REQUEST);
-		}
-		
-		if (normType == NormalizationType.BOTH)
-		{
-			String msg = String.format(String.format(
-					"Normalization type %s is not valid for buckets", norm));
-			s_Logger.info(msg);
-			throw new RestApiException(msg, ErrorCode.INVALID_NORMALIZATION_ARG,
-					Response.Status.BAD_REQUEST);
-		}
-		
-		long start_ms = System.currentTimeMillis();
-		
+
 		JobManager manager = jobManager();
 		Pagination<Bucket> buckets;
 		
 		if (epochStart > 0 || epochEnd > 0)
 		{
-			buckets = manager.buckets(jobId, expand, skip, take, epochStart, epochEnd, normType);
+			buckets = manager.buckets(jobId, expand, skip, take, epochStart, epochEnd,
+					anomalySoreFilter, unusualScoreFilter);
 		}
 		else
 		{
-			buckets = manager.buckets(jobId, expand, skip, take, normType);
+			buckets = manager.buckets(jobId, expand, skip, take,
+					anomalySoreFilter, unusualScoreFilter);
 		}
-		
-		System.out.println(String.format("Normalised results in %d ms",
-				System.currentTimeMillis() - start_ms));
-		
+
 		// paging
     	if (buckets.isAllResults() == false)
     	{
     		String path = new StringBuilder()
 								.append("/results/")
 								.append(jobId)
+								.append("/buckets")
 								.toString();
     		
     		List<ResourceWithJobManager.KeyValue> queryParams = new ArrayList<>();
@@ -200,8 +175,9 @@ public class Results extends ResourceWithJobManager
     			queryParams.add(this.new KeyValue(END_QUERY_PARAM, end));
     		}
     		queryParams.add(this.new KeyValue(EXPAND_QUERY_PARAM, Boolean.toString(expand)));
-    		queryParams.add(this.new KeyValue(NORMALISATION_QUERY_PARAM, norm));
-    		
+    		queryParams.add(this.new KeyValue(AnomalyRecord.ANOMALY_SCORE, String.format("%2.1f", anomalySoreFilter)));
+    		queryParams.add(this.new KeyValue(AnomalyRecord.RECORD_UNUSUALNESS, String.format("%2.1f", unusualScoreFilter)));
+
     		setPagingUrls(path, buckets, queryParams);
     	}		
 			
@@ -213,7 +189,9 @@ public class Results extends ResourceWithJobManager
 	
 	
 	/**
-	 * Get an individual bucket results
+	 * Get an individual bucket and optionally the expanded results. 
+	 * 
+	 * 
 	 * @param jobId
 	 * @param bucketId
 	 * @param expand Return anomaly records in-line with the bucket,
@@ -223,43 +201,18 @@ public class Results extends ResourceWithJobManager
 	 * @throws NativeProcessRunException 
 	 */
 	@GET
-	@Path("/{jobId}/{bucketId}")
+	@Path("/{jobId}/buckets/{bucketId}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response bucket(@PathParam("jobId") String jobId,
 			@PathParam("bucketId") String bucketId,
-			@DefaultValue("false") @QueryParam("expand") boolean expand,
-			@DefaultValue("s") @QueryParam(NORMALISATION_QUERY_PARAM) String norm) 
+			@DefaultValue("false") @QueryParam("expand") boolean expand)
 	throws NativeProcessRunException, UnknownJobException
 	{
-		s_Logger.debug(String.format("Get %sbucket %s for job %s, norm ='%s'", 
-				expand?"expanded ":"", bucketId, jobId, norm));
-		
-		NormalizationType normType;
-		try
-		{
-			normType = NormalizationType.fromString(norm);
-		}
-		catch (IllegalArgumentException e)
-		{
-			String msg = String.format(String.format("'%s is not a valid value "
-					+ "for the normalisation query parameter", norm));
-			s_Logger.info(msg);
-			throw new RestApiException(msg, ErrorCode.INVALID_NORMALIZATION_ARG,
-					Response.Status.BAD_REQUEST);
-		}
-		
-		
-		if (normType == NormalizationType.BOTH)
-		{
-			String msg = String.format(String.format(
-					"Normalization type %s is not a valid for a single bucket", norm));
-			s_Logger.info(msg);
-			throw new RestApiException(msg, ErrorCode.INVALID_NORMALIZATION_ARG,
-					Response.Status.BAD_REQUEST);
-		}
-		
+		s_Logger.debug(String.format("Get %s bucket %s for job %s", 
+				expand?"expanded ":"", bucketId, jobId));
+
 		JobManager manager = jobManager();
-		SingleDocument<Bucket> bucket = manager.bucket(jobId, bucketId, expand, normType);
+		SingleDocument<Bucket> bucket = manager.bucket(jobId, bucketId, expand);
 		
 		if (bucket.isExists())
 		{
@@ -277,68 +230,4 @@ public class Results extends ResourceWithJobManager
 		return Response.ok(bucket).build();
 	}
 	
-	
-	/**
-	 * Get the anomaly records for the bucket.
-	 * 
-	 * @param jobId
-	 * @param bucketId
-	 * @param skip
-	 * @param take
-	 * @return
-	 * @throws NativeProcessRunException 
-	 * @throws UnknownJobException 
-	 */
-	@Path("/{jobId}/{bucketId}/records")
-	@GET
-	@Produces(MediaType.APPLICATION_JSON)
-	public Pagination<AnomalyRecord> bucketRecords(
-			@PathParam("jobId") String jobId,
-			@PathParam("bucketId") String bucketId,
-			@DefaultValue("0") @QueryParam("skip") int skip,
-			@DefaultValue(JobManager.DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take,
-			@DefaultValue("s") @QueryParam(NORMALISATION_QUERY_PARAM) String norm) 
-	throws UnknownJobException, NativeProcessRunException
-	{
-		s_Logger.debug(String.format("Get records for job %s, bucket %s, norm = '%s'", 
-				jobId, bucketId, norm));
-		
-		NormalizationType normType;
-		try
-		{
-			normType = NormalizationType.fromString(norm);
-		}
-		catch (IllegalArgumentException e)
-		{
-			String msg = String.format(String.format("'%s is not a valid value "
-					+ "for the normalisation query parameter", norm));
-			s_Logger.info(msg);
-			throw new RestApiException(msg, ErrorCode.INVALID_NORMALIZATION_ARG,
-					Response.Status.BAD_REQUEST);
-		}
-				
-		JobManager manager = jobManager();
-		Pagination<AnomalyRecord> records = manager.records(
-				jobId, bucketId, skip, take, normType);
-		
-		// paging
-    	if (records.isAllResults() == false)
-    	{
-    		String path = new StringBuilder()
-    							.append("/results/")
-    							.append(jobId)
-    							.append("/")
-								.append(bucketId)
-								.append("/records")
-								.toString();
-    		
-    		setPagingUrls(path, records);
-    	}
-		
-		s_Logger.debug(String.format("Returning %d records for job %s, bucket %s", 
-				records.getDocuments().size(), jobId, bucketId));
-					
-		return records;
-	}
-		
 }

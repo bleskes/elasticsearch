@@ -58,7 +58,8 @@ public class Detector
 	
 	private String m_Name;
 	private List<AnomalyRecord> m_Records;
-	
+
+
 	public Detector()
 	{
 		m_Records = new ArrayList<>();
@@ -105,8 +106,8 @@ public class Detector
 	{
 		return m_Records;
 	}
-	
-	
+
+
 	/**
 	 * Create a new <code>Detector</code> and populate it from the JSON parser.
 	 * The parser must be pointing at the start of the object then all the object's 
@@ -173,6 +174,7 @@ public class Detector
 						{
 							AnomalyRecord record = AnomalyRecord.parseJson(parser);
 							detector.addRecord(record);		
+
 							token = parser.nextToken();
 						}						
 					}

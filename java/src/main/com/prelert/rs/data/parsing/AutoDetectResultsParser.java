@@ -29,8 +29,6 @@ package com.prelert.rs.data.parsing;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collections;
-import java.util.List;
 
 import org.apache.log4j.Logger;
 
@@ -39,7 +37,9 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.prelert.job.DetectorState;
-import com.prelert.job.persistence.JobDataPersister;
+import com.prelert.job.QuantilesState;
+import com.prelert.job.persistence.JobResultsPersister;
+import com.prelert.job.persistence.JobRenormaliser;
 import com.prelert.rs.data.*;
 
 /**
@@ -51,40 +51,15 @@ import com.prelert.rs.data.*;
 public class AutoDetectResultsParser 
 {
 	/**
-	 * Utility class for grouping the parsed buckets and detector state.
-	 * If the state isn't saved then it will be <code>null</code>
-	 */
-	static public class BucketsAndState
-	{
-		List<Bucket> m_Buckets = Collections.emptyList();
-		DetectorState m_State;
-		
-		/**
-		 * Return (possibly empty) list of buckets.
-		 * @return
-		 */
-		public List<Bucket> getBuckets()
-		{
-			return m_Buckets;
-		}
-		
-		/**
-		 * Get the (possibly <code>null</code>) detector state.
-		 * @return The detector state or <code>null</code>
-		 */
-		public DetectorState getDetectorState()
-		{
-			return m_State;
-		}
-	}
-
-	
-	/**
 	 * Parse the bucket results from inputstream and perist
 	 * via the JobDataPersister.
-	 * 
+	 *
+	 * Trigger renormalisation of past results when new quantiles
+	 * are seen.
+	 *
 	 * @param inputStream
 	 * @param persister
+	 * @param renormaliser
 	 * @param logger 
 	 * @return
 	 * @throws JsonParseException
@@ -92,7 +67,8 @@ public class AutoDetectResultsParser
 	 * @throws AutoDetectParseException
 	 */
 	static public void parseResults(InputStream inputStream,
-			JobDataPersister persister, Logger logger) 
+			JobResultsPersister persister, JobRenormaliser renormaliser,
+			Logger logger)
 	throws JsonParseException, IOException, AutoDetectParseException
 	{
 		JsonParser parser = new JsonFactory().createParser(inputStream);
@@ -149,8 +125,11 @@ public class AutoDetectResultsParser
 					case Quantiles.QUANTILE_STATE:
 						Quantiles quantiles = Quantiles.parseJsonAfterStartObject(parser);
 						persister.persistQuantiles(quantiles);
-			
-						logger.debug("Quantiles parsed from output");
+
+						logger.debug("Quantiles parsed from output - will " +
+									"trigger renormalisation of " +
+									quantiles.getKind() + " scores");
+						triggerRenormalisation(quantiles, renormaliser, logger);
 						break;
 					default:
 						logger.error("Unexpected object parsed from output - first field " + fieldName);
@@ -203,5 +182,23 @@ public class AutoDetectResultsParser
 		DetectorState state = DetectorState.parseJson(parser);
 		return state;
 	}
-}		
+
+
+	static private void triggerRenormalisation(Quantiles quantiles,
+			JobRenormaliser renormaliser, Logger logger)
+	{
+		if (QuantilesState.SYS_CHANGE_QUANTILES_KIND.equals(quantiles.getKind()))
+		{
+			renormaliser.updateBucketSysChange(quantiles.getState(), logger);
+		}
+		else if (QuantilesState.UNUSUAL_QUANTILES_KIND.equals(quantiles.getKind()))
+		{
+			renormaliser.updateBucketUnusualBehaviour(quantiles.getState(), logger);
+		}
+		else
+		{
+			logger.error("Unexpected kind of quantiles: " + quantiles.getKind());
+		}
+	}
+}
 

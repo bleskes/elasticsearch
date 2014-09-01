@@ -24,77 +24,33 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+package com.prelert.rs.provider;
+
+import javax.ws.rs.core.Response;
+import javax.ws.rs.ext.ExceptionMapper;
+
+import org.elasticsearch.ElasticsearchException;
+
+import com.prelert.rs.data.ApiError;
+import com.prelert.rs.data.ErrorCode;
 
 
 /**
- * This stores the serialised quantiles from autodetect. The serialised form
- * is a long XML string.  There are two kinds of quantiles, each with its
- * own XML string.
+ * Elasticsearch exception mapper. 
+ * Constructs an error message from the rest status code
+ * and exception message and returns in a a server error
+ * (500) response.
  */
-public class QuantilesState
+public class ElasticsearchExceptionMapper implements ExceptionMapper<ElasticsearchException>
 {
-	/**
-	 * These MUST match the constants used in the C++ code
-	 * in lib/model/CAnomalyScore.cc
-	 */
-	public static final String SYS_CHANGE_QUANTILES_KIND = "sysChange";
-	public static final String UNUSUAL_QUANTILES_KIND = "unusual";
-
-	private Map<String, String> m_QuantilesKindToState;
-
-	public QuantilesState()
+	@Override
+	public Response toResponse(ElasticsearchException e)
 	{
-		m_QuantilesKindToState = new HashMap<>();
-	}
-
-
-	/**
-	 * Expose the map of quantiles kind -> state
-	 * @return Quantiles kind -> state map
-	 */
-	public Map<String, String> getMap()
-	{
-		return m_QuantilesKindToState;
-	}
-
-
-	/**
-	 * Get the set of all kinds of quantiles
-	 * @return The set of kinds of quantiles
-	 */
-	public Set<String> getQuantilesKinds()
-	{
-		return m_QuantilesKindToState.keySet();
-	}
-
-
-	/**
-	 * Return the serialised quantiles of the specified <code>kind</code>
-	 * or <code>null</code> if the <code>kind</code> is not
-	 * recognised.
-	 *
-	 * @param kind
-	 * @return <code>null</code> or the serialised state
-	 */
-	public String getQuantilesState(String kind)
-	{
-		return m_QuantilesKindToState.get(kind);
-	}
-
-	/**
-	 * Set the state of the detector where state is the serialised model.
-	 *
-	 * @param kind
-	 * @param state
-	 */
-	public void setQuantilesState(String kind, String state)
-	{
-		m_QuantilesKindToState.put(kind, state);
+		ApiError error = new ApiError(ErrorCode.DATA_STORE_ERROR);
+		error.setMessage("Error in Elasticsearch: = " + e.getDetailedMessage());
+		error.setCause(e);
+			
+		return Response.serverError().entity(error.toJson()).build();
 	}
 }
-

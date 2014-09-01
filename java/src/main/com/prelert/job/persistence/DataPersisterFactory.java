@@ -24,35 +24,19 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.warnings.elasticsearch;
+
+package com.prelert.job.persistence;
 
 import org.apache.log4j.Logger;
-import org.elasticsearch.client.Client;
 
-import com.prelert.job.JobDetails;
-import com.prelert.job.warnings.StatusReporter;
-import com.prelert.job.warnings.StatusReporterFactory;
+import com.prelert.job.persistence.elasticsearch.ElasticsearchJobDataPersister;
 
-public class ElasticSearchStatusReporterFactory implements StatusReporterFactory 
+/**
+ * Abstract Factory method for creating new {@link UsageReporter} 
+ * instances. 
+ */
+public interface DataPersisterFactory 
 {
-	private Client m_Client;
-	
-	/**
-	 * Construct the factory
-	 * 
-	 * @param node The ElasticSearch node
-	 */
-	public ElasticSearchStatusReporterFactory(Client client)
-	{
-		m_Client = client;
-	}
-
-	@Override
-	public StatusReporter newStatusReporter(String jobId, JobDetails.Counts counts,
-			long analysisFieldCount, Logger logger) 
-	{
-		StatusReporter reporter =  new ElasticSearchStatusReporter(m_Client, jobId, counts, logger);
-		reporter.setAnalysedFieldsPerRecord(analysisFieldCount);
-		return reporter;
-	}
+	public ElasticsearchJobDataPersister newDataPersister(String jobId, Logger logger);
 }
+

@@ -25,89 +25,61 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.normalisation;
+package com.prelert.job.persistence;
+
+import com.prelert.job.DetectorState;
+import com.prelert.job.UnknownJobException;
+import com.prelert.rs.data.Bucket;
+import com.prelert.rs.data.Quantiles;
 
 /**
- * Enum for the different normalization types with
- * toString and fromString methods
+ * Interface for classes that persist {@linkplain Bucket Buckets},
+ * {@linkplain Quantiles Quantiles} and {@link DetectorState DetectorStates}  
  */
-public enum NormalizationType 
+public interface JobResultsPersister 
 {
-	STATE_CHANGE 
-	{	
-		@Override
-		public boolean isNormalizeStateChange()
-		{
-			return true;
-		}
-		
-		@Override 
-		public String toString()
-		{
-			return SYS_CHANGE_NORMALIZATION;
-		}
-	},
-	UNUSUAL_BEHAVIOUR 
-	{		
-		@Override
-		public boolean isNormalizeUnusual()
-		{
-			return true;
-		}
-		
-		@Override 
-		public String toString()
-		{
-			return UNUSUAL_BEHAVIOUR_NORMALIZATION;
-		}
-	},
-	BOTH
-	{
-		@Override
-		public boolean isNormalizeStateChange()
-		{
-			return true;
-		}
-		@Override
-		public boolean isNormalizeUnusual()
-		{
-			return true;
-		}
-		
-		@Override 
-		public String toString()
-		{
-			return BOTH_NORMALIZATIONS;
-		}
-	};
+	/**
+	 * Persist the result bucket
+	 * @param bucket
+	 */
+	public void persistBucket(Bucket bucket);
+
+
+	/**
+	 * Persist the quantiles
+	 * @param quantiles
+	 */
+	public void persistQuantiles(Quantiles quantiles);
+
+
+	/**
+	 * Persist the serialised detector state
+	 * @param state
+	 */
+	public void persistDetectorState(DetectorState state);
 	
-	public boolean isNormalizeStateChange()
-	{
-		return false;
-	}
+	/**
+	 * Reads all the detector state documents from 
+	 * the database and returns a {@linkplain DetectorState} object.
+	 * 
+	 * @return
+	 */
+	public DetectorState retrieveDetectorState() throws UnknownJobException;
 	
-	public boolean isNormalizeUnusual()
-	{
-		return false;
-	}
+	/**
+	 * If the job has persisted model state then this function 
+	 * returns true 
+	 * 
+	 * @return
+	 */
+	public boolean isDetectorStatePersisted();
 	
-	static final public String SYS_CHANGE_NORMALIZATION = "s";
-	static final public String UNUSUAL_BEHAVIOUR_NORMALIZATION = "u";
-	static final public String BOTH_NORMALIZATIONS = "both";
-	
-	static public NormalizationType fromString(String value)
-	{
-		switch (value)
-		{
-		case SYS_CHANGE_NORMALIZATION:
-			return STATE_CHANGE;
-		case UNUSUAL_BEHAVIOUR_NORMALIZATION:
-			return UNUSUAL_BEHAVIOUR;
-		case BOTH_NORMALIZATIONS:
-			return BOTH;
-		default:
-			throw new IllegalArgumentException("No enum value for '" + value + "'");
-			
-		}
-	}
+	/**
+	 * Once all the job data has been written this function will be 
+	 * called to commit the data if the implementing persister requries
+	 * it. 
+	 * 
+	 * @return True if successful
+	 */
+	public boolean commitWrites();
 }

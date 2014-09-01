@@ -56,9 +56,12 @@ import com.prelert.job.warnings.HighProportionOfBadTimestampsException;
 import com.prelert.job.warnings.OutOfOrderRecordsException;
 import com.prelert.job.warnings.StatusReporter;
 import com.prelert.job.warnings.StatusReporterFactory;
+import com.prelert.job.persistence.DataPersisterFactory;
 import com.prelert.job.persistence.JobProvider;
+import com.prelert.job.persistence.elasticsearch.ElasticsearchJobDataPersister;
 import com.prelert.job.usage.UsageReporter;
 import com.prelert.job.usage.UsageReporterFactory;
+import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DetectorState;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobInUseException;
@@ -109,8 +112,6 @@ public class ProcessManager
 	private ConcurrentMap<String, ProcessAndDataDescription> m_JobIdToProcessMap;
 	private ConcurrentMap<String, ScheduledFuture<?>> m_JobIdToTimeoutFuture;
 
-	private ConcurrentMap<String, Logger> m_JobIdToLogger;
-	
 	private ScheduledExecutorService m_ProcessTimeouts;
 	
 	private JobProvider m_JobProvider;
@@ -118,11 +119,13 @@ public class ProcessManager
 	private ResultsReaderFactory m_ResultsReaderFactory;
 	private StatusReporterFactory m_StatusReporterFactory;
 	private UsageReporterFactory m_UsageReporterFactory;
+	private DataPersisterFactory m_DataPersisterFactory;
 	
 	public ProcessManager(JobProvider jobProvider, 
 							ResultsReaderFactory readerFactory,
 							StatusReporterFactory statusReporterFactory,
-							UsageReporterFactory usageFactory)
+							UsageReporterFactory usageFactory,
+							DataPersisterFactory dataPersisterFactory)
 	{
 		m_ProcessCtrl = new ProcessCtrl();
 						
@@ -131,13 +134,13 @@ public class ProcessManager
 		m_ProcessTimeouts = Executors.newScheduledThreadPool(1);	
 		m_JobIdToTimeoutFuture = new ConcurrentHashMap<String, ScheduledFuture<?>>();
 		
-		m_JobIdToLogger = new ConcurrentHashMap<String, Logger>();
-		
 		m_JobProvider = jobProvider;
 		m_ResultsReaderFactory = readerFactory;
 		m_UsageReporterFactory = usageFactory;
 		
 		m_StatusReporterFactory = statusReporterFactory;
+		
+		m_DataPersisterFactory = dataPersisterFactory;
 		
 		addShutdownHook();
 	}	
@@ -230,10 +233,10 @@ public class ProcessManager
 		{
 			process.setInUse(true);
 			
-			writeToJob(process.getDataDescription(), process.getInterestingFields(),
+			writeToJob(process.getDataDescription(), process.getAnalysisConfig(),
 					input, process.getProcess().getOutputStream(), 
 					process.getStatusReporter(), process.getUsageReporter(), 
-					process.getLogger());
+					process.getDataPerister(), process.getLogger());
 						
 			// check there wasn't an error in the input. 
 			// throws if there was. 
@@ -285,28 +288,7 @@ public class ProcessManager
 		return m_JobIdToProcessMap.get(jobId) != null;
 	}
 	
-	/**
-	 * Return the job logger
-	 * @param jobId
-	 * @return
-	 */
-	public Logger getJobLogger(String jobId)
-	{
-		ProcessAndDataDescription proc = m_JobIdToProcessMap.get(jobId);
-		if (proc != null)
-		{
-			return proc.getLogger();
-		}
-		
-		Logger logger = m_JobIdToLogger.get(jobId);
-		if (logger == null)
-		{
-			logger = createLogger(jobId);
-		}
-		
-		return logger;
-	}
-	
+
 	/**
 	 * Create a new autodetect process restoring its state if persisted
 	 *   
@@ -372,18 +354,17 @@ public class ProcessManager
 					ErrorCode.NATIVE_PROCESS_START_ERROR, e);
 		}				
 
-		List<String> analysisFields = job.getAnalysisConfig().analysisFields();
-
 		
 		ProcessAndDataDescription procAndDD = new ProcessAndDataDescription(
 				nativeProcess, jobId,
-				job.getDataDescription(), job.getTimeout(), analysisFields, logger,
+				job.getDataDescription(), job.getTimeout(), job.getAnalysisConfig(), logger,
 				m_StatusReporterFactory.newStatusReporter(jobId, job.getCounts(), 
-						analysisFields.size(), logger),
+						job.getAnalysisConfig().analysisFields().size(), logger),
 				m_UsageReporterFactory.newUsageReporter(jobId, logger),
 				m_ResultsReaderFactory.newResultsParser(jobId, 
 						nativeProcess.getInputStream(),						
-						logger)
+						logger),
+				m_DataPersisterFactory.newDataPersister(jobId, logger)
 				);	
 
 		m_JobProvider.setJobStatus(jobId, JobStatus.RUNNING);
@@ -392,6 +373,7 @@ public class ProcessManager
 		
 		return procAndDD;
 	}
+	
 		
 	/**
 	 * Stop the running process.
@@ -608,9 +590,10 @@ public class ProcessManager
 	 * @throws OutOfOrderRecordsException 
 	 */
 	public void writeToJob(DataDescription dataDescription, 
-			List<String> analysisFields,
+			AnalysisConfig analysisConfig,
 			InputStream input, OutputStream output, 
-			StatusReporter statusReporter, UsageReporter usageReporter, 
+			StatusReporter statusReporter, UsageReporter usageReporter,
+			ElasticsearchJobDataPersister dataPersister, 
 			Logger jobLogger) 
 	throws JsonParseException, MissingFieldException, IOException,
 		HighProportionOfBadTimestampsException, OutOfOrderRecordsException
@@ -622,21 +605,21 @@ public class ProcessManager
 		{
 			if (dataDescription.getFormat() == DataFormat.JSON)
 			{
-				PipeToProcess.transformAndPipeJson(dataDescription, analysisFields, input, 
+				PipeToProcess.transformAndPipeJson(dataDescription, analysisConfig.analysisFields(), input, 
 						bufferedStream, statusReporter, 
 						usageReporter, jobLogger);
 			}
 			else
 			{
-				PipeToProcess.transformAndPipeCsv(dataDescription, analysisFields, input, 
+				PipeToProcess.transformAndPipeCsv(dataDescription, analysisConfig, input, 
 						bufferedStream, statusReporter,
-						usageReporter, jobLogger);
+						usageReporter, dataPersister, jobLogger);
 			}
 		}
 		else
 		{			
-			PipeToProcess.pipeCsv(dataDescription, analysisFields, input, 
-					bufferedStream, statusReporter, usageReporter, jobLogger);
+			PipeToProcess.pipeCsv(dataDescription, analysisConfig, input, 
+					bufferedStream, statusReporter, usageReporter, dataPersister,jobLogger);
 		}
 	}
 	
