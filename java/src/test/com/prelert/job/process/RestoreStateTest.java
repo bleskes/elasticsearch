@@ -125,7 +125,7 @@ public class RestoreStateTest
 		s_Logger.info("Using Elasticsearch cluster " + clusterName);
 		
 		ElasticsearchJobProvider esJob = new ElasticsearchJobProvider(clusterName);
-		JobManager jobManager = new JobManager(esJob, null, null, null);
+		JobManager jobManager = new JobManager(esJob, null, null, null, null);
 		JobDetails job = jobManager.createJob(jobConfig);
 		
 		s_Logger.info("Created job " + job.getId());

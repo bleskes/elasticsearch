@@ -36,7 +36,9 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 
-public class ElasticsearchJobDataPersister
+import com.prelert.job.persistence.JobDataPersister;
+
+public class ElasticsearchJobDataPersister implements JobDataPersister
 {
 	static public String PERSISTED_RECORD_TYPE = "saved-data";
 	
@@ -50,6 +52,7 @@ public class ElasticsearchJobDataPersister
 	private Client m_Client;
 	private String m_JobId;
 	
+	private String [] m_FieldNames;
 	private int [] m_FieldMappings;
 	private int [] m_ByFieldMappings;
 	private int [] m_OverFieldMappings;
@@ -61,13 +64,16 @@ public class ElasticsearchJobDataPersister
 		m_Client = client;
 	}
 
-	
+
+	@Override
 	public void setFieldMappings(List<String> fields, 
 			List<String> byFields, List<String> overFields,
 			List<String> partitionFields, String [] header)
 	{
 		List<String> headerList = Arrays.asList(header);
 		
+		m_FieldNames = new String [fields.size()];
+		m_FieldNames = fields.<String>toArray(m_FieldNames);
 		m_FieldMappings = new int [fields.size()];
 		m_ByFieldMappings = new int [byFields.size()];
 		m_OverFieldMappings = new int [overFields.size()];
@@ -106,8 +112,8 @@ public class ElasticsearchJobDataPersister
 		}
 		
 	}
-	
-	
+		
+	@Override
 	public void persistRecord(long epoch, String [] record)
 	{
 		try
@@ -115,14 +121,20 @@ public class ElasticsearchJobDataPersister
 			XContentBuilder jsonBuilder = XContentFactory.jsonBuilder();
 			try 
 			{
-				jsonBuilder.startObject().field("epoch", epoch);
+				// epoch in ms
+				jsonBuilder.startObject().field("epoch", epoch * 1000);
 
-				jsonBuilder.startArray(FIELDS);
-				for (int i=0; i<m_FieldMappings.length; i++)
+				for (int i=0; i<m_FieldNames.length; i++)
 				{
-					jsonBuilder.value(record[m_FieldMappings[i]]);
+					try
+					{
+						jsonBuilder.field(m_FieldNames[i], Double.parseDouble(record[m_FieldMappings[i]]));
+					}
+					catch (NumberFormatException e)
+					{
+						jsonBuilder.field(m_FieldNames[i], record[m_FieldMappings[i]]);
+					}
 				}
-				jsonBuilder.endArray();
 
 				jsonBuilder.startArray(BY_FIELDS);
 				for (int i=0; i<m_ByFieldMappings.length; i++)

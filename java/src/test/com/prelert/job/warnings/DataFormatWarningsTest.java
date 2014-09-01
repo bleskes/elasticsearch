@@ -44,9 +44,13 @@ import org.apache.log4j.Logger;
 import org.junit.Test;
 
 import com.fasterxml.jackson.core.JsonParseException;
+import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
+import com.prelert.job.Detector;
 import com.prelert.job.DummyUsageReporter;
 import com.prelert.job.DataDescription.DataFormat;
+import com.prelert.job.persistence.JobDataPersister;
+import com.prelert.job.persistence.none.NoneJobDataPersister;
 import com.prelert.job.process.MissingFieldException;
 import com.prelert.job.process.ProcessManager;
 
@@ -93,6 +97,13 @@ public class DataFormatWarningsTest
 		List<String> analysisFields = Arrays.asList(new String [] {
 				"responsetime", "sourcetype", "airline"});
 		
+		AnalysisConfig ac = new AnalysisConfig();
+		Detector det = new Detector();
+		det.setFieldName("responsetime");
+		det.setByFieldName("airline");
+		det.setPartitionFieldName("sourcetype");
+		ac.setDetectors(Arrays.asList(det));
+		
 		DateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
 		
 		String [] apiDateFormats = new String [] {DATE_FORMAT, "epoch", "epoch_ms"};
@@ -138,7 +149,7 @@ public class DataFormatWarningsTest
 
 
 			// can create with null
-			ProcessManager pm = new ProcessManager(null, null, null, null);
+			ProcessManager pm = new ProcessManager(null, null, null, null, null);
 
 			ByteArrayInputStream bis = 
 					new ByteArrayInputStream(sb.toString().getBytes(StandardCharsets.UTF_8));
@@ -157,6 +168,8 @@ public class DataFormatWarningsTest
 
 			DummyStatusReporter statusReporter = new DummyStatusReporter();
 			DummyUsageReporter usageReporter = new DummyUsageReporter("test-job", s_Logger);
+			JobDataPersister dp = new NoneJobDataPersister();
+			
 			Assert.assertEquals(MAX_PERCENT_DATE_PARSE_ERRORS, 
 					statusReporter.getAcceptablePercentDateParseErrors());
 			Assert.assertEquals(MAX_PERCENT_OUT_OF_ORDER_ERRORS,
@@ -164,8 +177,8 @@ public class DataFormatWarningsTest
 
 			try
 			{
-				pm.writeToJob(dd, analysisFields, bis, new NullOutputStream(), 
-						statusReporter, usageReporter, s_Logger);
+				pm.writeToJob(dd, ac, bis, new NullOutputStream(), 
+						statusReporter, usageReporter, dp, s_Logger);
 				Assert.assertTrue(false); // should throw
 			}
 			catch (HighProportionOfBadTimestampsException e)
@@ -209,6 +222,13 @@ public class DataFormatWarningsTest
 		List<String> analysisFields = Arrays.asList(new String [] {
 				"responsetime", "sourcetype", "airline"});
 		
+		AnalysisConfig ac = new AnalysisConfig();
+		Detector det = new Detector();
+		det.setFieldName("responsetime");
+		det.setByFieldName("airline");
+		det.setPartitionFieldName("sourcetype");
+		ac.setDetectors(Arrays.asList(det));
+		
 		DateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
 		
 		String [] apiDateFormats = new String [] {DATE_FORMAT, "epoch", "epoch_ms"};
@@ -254,7 +274,7 @@ public class DataFormatWarningsTest
 
 
 			// can create with null
-			ProcessManager pm = new ProcessManager(null, null, null, null);
+			ProcessManager pm = new ProcessManager(null, null, null, null, null);
 
 			ByteArrayInputStream bis = 
 					new ByteArrayInputStream(sb.toString().getBytes(StandardCharsets.UTF_8));
@@ -271,6 +291,8 @@ public class DataFormatWarningsTest
 
 			DummyUsageReporter usageReporter = new DummyUsageReporter("test-job", s_Logger);
 			DummyStatusReporter statusReporter = new DummyStatusReporter();
+			JobDataPersister dp = new NoneJobDataPersister();
+			
 			Assert.assertEquals(MAX_PERCENT_DATE_PARSE_ERRORS, 
 					statusReporter.getAcceptablePercentDateParseErrors());
 			Assert.assertEquals(MAX_PERCENT_OUT_OF_ORDER_ERRORS,
@@ -278,8 +300,8 @@ public class DataFormatWarningsTest
 
 			try
 			{
-				pm.writeToJob(dd, analysisFields, bis, new NullOutputStream(),
-						statusReporter, usageReporter, s_Logger);
+				pm.writeToJob(dd, ac, bis, new NullOutputStream(),
+						statusReporter, usageReporter, dp, s_Logger);
 				Assert.assertTrue(false); // should throw
 			}
 			catch (HighProportionOfBadTimestampsException e)
@@ -319,6 +341,14 @@ public class DataFormatWarningsTest
 		
 		List<String> analysisFields = Arrays.asList(new String [] {
 				"responsetime", "sourcetype", "airline"});
+		
+		AnalysisConfig ac = new AnalysisConfig();
+		Detector det = new Detector();
+		det.setFieldName("responsetime");
+		det.setByFieldName("airline");
+		det.setPartitionFieldName("sourcetype");
+		ac.setDetectors(Arrays.asList(det));
+		
 		
 		DateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
 		
@@ -367,7 +397,7 @@ public class DataFormatWarningsTest
 			}
 
 			// can create with null
-			ProcessManager pm = new ProcessManager(null, null, null, null);
+			ProcessManager pm = new ProcessManager(null, null, null, null, null);
 
 			ByteArrayInputStream bis = 
 					new ByteArrayInputStream(sb.toString().getBytes(StandardCharsets.UTF_8));
@@ -385,6 +415,8 @@ public class DataFormatWarningsTest
 
 			DummyStatusReporter statusReporter = new DummyStatusReporter();
 			DummyUsageReporter usageReporter = new DummyUsageReporter("test-job", s_Logger);
+			JobDataPersister dp = new NoneJobDataPersister();
+			
 			Assert.assertEquals(MAX_PERCENT_DATE_PARSE_ERRORS, 
 					statusReporter.getAcceptablePercentDateParseErrors());
 			Assert.assertEquals(MAX_PERCENT_OUT_OF_ORDER_ERRORS,
@@ -392,8 +424,8 @@ public class DataFormatWarningsTest
 
 			try
 			{
-				pm.writeToJob(dd, analysisFields, bis, new NullOutputStream(), 
-						statusReporter, usageReporter, s_Logger);
+				pm.writeToJob(dd, ac, bis, new NullOutputStream(), 
+						statusReporter, usageReporter, dp, s_Logger);
 				Assert.assertTrue(false); // should throw
 			}
 			catch (OutOfOrderRecordsException e)
@@ -435,6 +467,13 @@ public class DataFormatWarningsTest
 		
 		List<String> analysisFields = Arrays.asList(new String [] {
 				"responsetime", "sourcetype", "airline"});
+		
+		AnalysisConfig ac = new AnalysisConfig();
+		Detector det = new Detector();
+		det.setFieldName("responsetime");
+		det.setByFieldName("airline");
+		det.setPartitionFieldName("sourcetype");
+		ac.setDetectors(Arrays.asList(det));		
 		
 		DateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
 		
@@ -483,7 +522,7 @@ public class DataFormatWarningsTest
 			}
 
 			// can create with null
-			ProcessManager pm = new ProcessManager(null, null, null, null);
+			ProcessManager pm = new ProcessManager(null, null, null, null, null);
 
 			ByteArrayInputStream bis = 
 					new ByteArrayInputStream(sb.toString().getBytes(StandardCharsets.UTF_8));
@@ -500,6 +539,8 @@ public class DataFormatWarningsTest
 
 			DummyStatusReporter statusReporter = new DummyStatusReporter();
 			DummyUsageReporter usageReporter = new DummyUsageReporter("test-job", s_Logger);
+			JobDataPersister dp = new NoneJobDataPersister();
+			
 			Assert.assertEquals(MAX_PERCENT_DATE_PARSE_ERRORS, 
 					statusReporter.getAcceptablePercentDateParseErrors());
 			Assert.assertEquals(MAX_PERCENT_OUT_OF_ORDER_ERRORS,
@@ -507,8 +548,8 @@ public class DataFormatWarningsTest
 
 			try
 			{
-				pm.writeToJob(dd, analysisFields, bis, new NullOutputStream(), 
-						statusReporter, usageReporter, s_Logger);
+				pm.writeToJob(dd, ac, bis, new NullOutputStream(), 
+						statusReporter, usageReporter, dp, s_Logger);
 				Assert.assertTrue(false); // should throw
 			}
 			catch (OutOfOrderRecordsException e)

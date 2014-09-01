@@ -59,7 +59,7 @@ import com.prelert.job.warnings.HighProportionOfBadTimestampsException;
 import com.prelert.job.warnings.OutOfOrderRecordsException;
 import com.prelert.job.warnings.StatusReporter;
 import com.prelert.rs.data.ErrorCode;
-import com.prelert.job.persistence.elasticsearch.ElasticsearchJobDataPersister;
+import com.prelert.job.persistence.JobDataPersister;
 import com.prelert.job.usage.UsageReporter;
 
 
@@ -98,9 +98,9 @@ public class PipeToProcess
 	 */
 	static public void pipeCsv(DataDescription dd, AnalysisConfig analysisConfig,
 		InputStream is, OutputStream os, StatusReporter statusReporter,
-		UsageReporter usageReporter, ElasticsearchJobDataPersister dataPersister,
+		UsageReporter usageReporter, JobDataPersister dataPersister,
 		Logger logger)
-				throws IOException, MissingFieldException, HighProportionOfBadTimestampsException,
+	throws IOException, MissingFieldException, HighProportionOfBadTimestampsException,
 				OutOfOrderRecordsException
 	{	
 		CsvPreference csvPref = new CsvPreference.Builder(
@@ -232,13 +232,14 @@ public class PipeToProcess
 					{	// write record
 						record[timeFieldIndex] = Long.toString(epoch);	
 						lengthEncodedWriter.writeRecord(record);
+						dataPersister.persistRecord(epoch, record);
 						
 						statusReporter.reportRecordWritten();
+
 						recordsWritten++;
 						lastEpoch = epoch;
 					}
 					
-					dataPersister.persistRecord(epoch, record);
 				}
 				catch (NumberFormatException e)
 				{
@@ -293,7 +294,7 @@ public class PipeToProcess
 	 */
 	static public void transformAndPipeCsv(DataDescription dd, AnalysisConfig analysisConfig,
 			InputStream is, OutputStream os, StatusReporter statusReporter,
-			UsageReporter usageReporter, ElasticsearchJobDataPersister dataPersister,
+			UsageReporter usageReporter, JobDataPersister dataPersister,
 			Logger logger)
 	throws IOException, MissingFieldException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException
 	{
@@ -415,9 +416,7 @@ public class PipeToProcess
 						// parse as a double and throw away the fractional 
 						// component
 						long epoch = Double.valueOf(record[timeFieldIndex]).longValue() / 1000;
-						
-						dataPersister.persistRecord(epoch, record);
-						
+											
 						if (epoch < lastEpoch)
 						{
 							// out of order 
@@ -427,6 +426,7 @@ public class PipeToProcess
 						{	// write record
 							record[timeFieldIndex] = Long.toString(epoch);	
 							lengthEncodedWriter.writeRecord(record);
+							dataPersister.persistRecord(epoch, record);
 							
 							recordsWritten++;
 							statusReporter.reportRecordWritten();
@@ -483,7 +483,6 @@ public class PipeToProcess
 					{
 						long epoch = dateFormat.parse(record[timeFieldIndex]).getTime() / 1000;
 						
-						dataPersister.persistRecord(epoch, record);
 						
 						if (epoch < lastEpoch)
 						{
@@ -491,9 +490,12 @@ public class PipeToProcess
 							statusReporter.reportOutOfOrderRecord();
 						}
 						else
-						{	// write record
+						{
+							// write record
 							record[timeFieldIndex] = Long.toString(epoch);	
 							lengthEncodedWriter.writeRecord(record);
+							dataPersister.persistRecord(epoch, record);
+							
 							
 							recordsWritten++;
 							statusReporter.reportRecordWritten();
@@ -579,8 +581,9 @@ public class PipeToProcess
 	 * @throws OutOfOrderRecordsException 
 	 */
 	static public void transformAndPipeJson(DataDescription dd, 
-			List<String> analysisFields, InputStream is, OutputStream os,
-			StatusReporter statusReporter, UsageReporter usageReporter,Logger logger) 
+			AnalysisConfig analysisConfig, InputStream is, OutputStream os,
+			StatusReporter statusReporter, UsageReporter usageReporter, 
+			JobDataPersister dataPersister, Logger logger) 
 	throws JsonParseException, IOException, HighProportionOfBadTimestampsException,
 		OutOfOrderRecordsException
 	{
@@ -591,13 +594,15 @@ public class PipeToProcess
 		{
 			if (dd.isTransformTime())
 			{
-				pipeJsonAndTransformTime(parser, analysisFields, os, dd, 
-						statusReporter, usageReporter, countingStream, logger);
+				pipeJsonAndTransformTime(parser, analysisConfig, os, dd, 
+						statusReporter, usageReporter, countingStream, dataPersister,
+						logger);
 			}
 			else
 			{
-				pipeJson(parser, dd.getTimeField(), analysisFields, os, 
-						statusReporter, usageReporter, countingStream, logger);
+				pipeJson(parser, dd.getTimeField(), analysisConfig, os, 
+						statusReporter, usageReporter, countingStream, 
+						dataPersister, logger);
 			}
 
 		}
@@ -627,36 +632,51 @@ public class PipeToProcess
 	 * @throws OutOfOrderRecordsException 
 	 */
 	static private void pipeJson(JsonParser parser, String timeField,
-			List<String> analysisFields, OutputStream os,
+			AnalysisConfig analysisConfig, OutputStream os,
 			StatusReporter reporter, UsageReporter usageReporter, 
-			CountingInputStream countingStream,	Logger logger)
+			CountingInputStream countingStream, 
+			JobDataPersister dataPersister, Logger logger)
 	throws JsonParseException, IOException, HighProportionOfBadTimestampsException, 
 		OutOfOrderRecordsException
 	{
 		LengthEncodedWriter lengthEncodedWriter = new LengthEncodedWriter(os);
 
+		List<String> analysisFields = analysisConfig.analysisFields();
+		
 		// record is all the analysis fields + the time field
-		List<String> allFields = new ArrayList<String>(analysisFields);
-		allFields.add(timeField);
+		String [] allFields = new String [analysisFields.size() +1];
+		
+		int i=0;
+		for (String s : analysisFields)
+		{
+			allFields[i] = s;
+			i++;
+		}
+				
+		int timeFieldIndex = allFields.length -1;
+		allFields[timeFieldIndex] = timeField;
 		// time field is the last item 
-		int timeFieldIndex = allFields.size() -1;
 
-		String [] record = new String[allFields.size()];
+		String [] record = new String[allFields.length];
 		boolean [] gotFields = new boolean[record.length];
 
 		Map<String, Integer> fieldMap = new HashMap<>();
-		for (Integer i = new Integer(0); i < allFields.size(); i++)
+		for (i = 0; i < allFields.length; i++)
 		{
-			fieldMap.put(allFields.get(i), i);
+			fieldMap.put(allFields[i], new Integer(i));
 		}
+		
+		dataPersister.setFieldMappings(analysisConfig.fields(), 
+				analysisConfig.byFields(), analysisConfig.overFields(), 
+				analysisConfig.partitionFields(), allFields);
+		
 				
 		// write header and first record
 		lengthEncodedWriter.writeRecord(allFields);
 				
 		int recordsWritten = 0;
 		int recordCount = 
-				readJsonRecord(parser, record, fieldMap, allFields, gotFields,
-						logger) ? 1 : 0;
+				readJsonRecord(parser, record, fieldMap, gotFields, logger) ? 1 : 0;
 				
 		if (gotFields[timeFieldIndex])
 		{
@@ -674,6 +694,7 @@ public class PipeToProcess
 				record[timeFieldIndex] = new Long(epoch).toString();
 				
 				lengthEncodedWriter.writeRecord(record);
+				dataPersister.persistRecord(epoch, record);
 				recordsWritten++;
 				reporter.reportRecordWritten();
 			}
@@ -695,8 +716,7 @@ public class PipeToProcess
 		}		
 		
 		long lastEpoch = 0;
-		while (readJsonRecord(parser, record, fieldMap, allFields, gotFields,
-				logger))
+		while (readJsonRecord(parser, record, fieldMap, gotFields, logger))
 		{		
 			if (gotFields[timeFieldIndex])
 			{
@@ -720,6 +740,7 @@ public class PipeToProcess
 					{	// write record
 						record[timeFieldIndex] = Long.toString(epoch);	
 						lengthEncodedWriter.writeRecord(record);
+						dataPersister.persistRecord(epoch, record);
 						
 						recordsWritten++;
 						reporter.reportRecordWritten();
@@ -771,73 +792,48 @@ public class PipeToProcess
 	 * @throws OutOfOrderRecordsException 
 	 */
 	static private void pipeJsonAndTransformTime(JsonParser parser, 
-			List<String> analysisFields, OutputStream os,
+			AnalysisConfig ac, OutputStream os,
 			DataDescription dd, StatusReporter reporter,
 			UsageReporter usageReporter, CountingInputStream countingStream, 
-			Logger logger)
+			JobDataPersister dataPersister, Logger logger)
 	throws JsonParseException, IOException, HighProportionOfBadTimestampsException, 
 		OutOfOrderRecordsException
 	{
-		String timeField = dd.getTimeField();
-		List<String> allFields = new ArrayList<String>(analysisFields);
-		allFields.add(timeField);
-
-		LengthEncodedWriter lengthEncodedWriter = new LengthEncodedWriter(os);
+		List<String> analysisFields = ac.analysisFields();
 		
-		// record is the size of the analysis fields + the time field
-		String [] record = new String[allFields.size()];		
-		boolean [] gotFields = new boolean[record.length];
-
-		Map<String, Integer> fieldMap = new HashMap<>();
-		for (Integer i = new Integer(0); i < allFields.size(); i++)
+		String timeField = dd.getTimeField();
+		String [] allFields = new String [analysisFields.size() +1];
+		
+		int i=0;
+		for (String s : analysisFields)
 		{
-			fieldMap.put(allFields.get(i), i);
+			allFields[i] = s;
+			i++;
 		}
 		// time field is the last item always
-		int timeFieldIndex = record.length -1;
-			
-			
-		int recordsWritten = 0;
-		int recordCount = 
-				readJsonRecord(parser, record, fieldMap, allFields, gotFields, 
-						logger) ? 1 : 0;
+		int timeFieldIndex = allFields.length -1;
+		allFields[timeFieldIndex] = timeField;
 		
-		if (dd.isEpochMs())
-		{
-			try
-			{
-				long epoch = Double.valueOf(record[timeFieldIndex]).longValue() / 1000;
-				record[timeFieldIndex] = Long.toString(epoch);
-			}
-			catch (NumberFormatException e)
-			{
-				String message = String.format(
-						"Cannot parse epoch ms timestamp '%s'",								
-						record[timeFieldIndex]);
-				logger.error(message);
-				
-				reporter.reportDateParseError();
-			}
-		}
-		else
-		{
-			try
-			{
-				DateFormat dateFormat = new SimpleDateFormat(dd.getTimeFormat());
-				record[timeFieldIndex] = Long.toString(dateFormat.parse(record[timeFieldIndex]).getTime() / 1000);
-			}
-			catch (ParseException e)
-			{
-				logger.error("Cannot parse '" + record[timeFieldIndex] +
-						"' as a date using format string '" +
-						dd.getTimeFormat() + "'");
-				
-				reporter.reportDateParseError();
-			}
-		}
+		LengthEncodedWriter lengthEncodedWriter = new LengthEncodedWriter(os);
 		
 		// write header
 		lengthEncodedWriter.writeRecord(allFields);
+		
+		// record is the size of the analysis fields + the time field
+		String [] record = new String[allFields.length];		
+		boolean [] gotFields = new boolean[record.length];
+
+		Map<String, Integer> fieldMap = new HashMap<>();
+		for (i = 0; i < allFields.length; i++)
+		{
+			fieldMap.put(allFields[i], new Integer(i));
+		}
+			
+		int recordsWritten = 0;
+		int recordCount = 
+				readJsonRecord(parser, record, fieldMap, gotFields, logger) ? 1 : 0;
+			
+
 		
 		//write record
 		if (gotFields[timeFieldIndex])
@@ -848,9 +844,51 @@ public class PipeToProcess
 				reporter.reportMissingField();
 			}
 			
-			lengthEncodedWriter.writeRecord(record);
-			reporter.reportRecordWritten();
-			recordsWritten++;				
+			
+			if (dd.isEpochMs())
+			{
+				try
+				{
+					long epoch = Double.valueOf(record[timeFieldIndex]).longValue() / 1000;
+					record[timeFieldIndex] = Long.toString(epoch);
+					
+					lengthEncodedWriter.writeRecord(record);
+					dataPersister.persistRecord(epoch, record);
+					reporter.reportRecordWritten();
+					recordsWritten++;	
+				}
+				catch (NumberFormatException e)
+				{
+					String message = String.format(
+							"Cannot parse epoch ms timestamp '%s'",								
+							record[timeFieldIndex]);
+					logger.error(message);
+					
+					reporter.reportDateParseError();
+				}
+			}
+			else
+			{
+				try
+				{
+					DateFormat dateFormat = new SimpleDateFormat(dd.getTimeFormat());
+					long epoch = dateFormat.parse(record[timeFieldIndex]).getTime() / 1000;
+					record[timeFieldIndex] = Long.toString(epoch);
+					
+					lengthEncodedWriter.writeRecord(record);
+					dataPersister.persistRecord(epoch, record);
+					reporter.reportRecordWritten();
+					recordsWritten++;	
+				}
+				catch (ParseException e)
+				{
+					logger.error("Cannot parse '" + record[timeFieldIndex] +
+							"' as a date using format string '" +
+							dd.getTimeFormat() + "'");
+					
+					reporter.reportDateParseError();
+				}
+			}							
 		}
 		else
 		{
@@ -863,7 +901,7 @@ public class PipeToProcess
 		// is the timestamp a format string or epoch ms.
 		if (dd.isEpochMs())
 		{
-			while (readJsonRecord(parser, record, fieldMap, allFields, gotFields, logger))
+			while (readJsonRecord(parser, record, fieldMap, gotFields, logger))
 			{
 
 				if (gotFields[timeFieldIndex])
@@ -886,6 +924,7 @@ public class PipeToProcess
 						{	// write record
 							record[timeFieldIndex] = Long.toString(epoch);	
 							lengthEncodedWriter.writeRecord(record);
+							dataPersister.persistRecord(epoch, record);
 							
 							recordsWritten++;
 							reporter.reportRecordWritten();
@@ -915,7 +954,7 @@ public class PipeToProcess
 		{
 			DateFormat dateFormat = new SimpleDateFormat(dd.getTimeFormat());
 			
-			while (readJsonRecord(parser, record, fieldMap, allFields, gotFields, logger))
+			while (readJsonRecord(parser, record, fieldMap, gotFields, logger))
 			{
 				if (gotFields[timeFieldIndex])
 				{
@@ -937,6 +976,7 @@ public class PipeToProcess
 						{	// write record
 							record[timeFieldIndex] = Long.toString(epoch);	
 							lengthEncodedWriter.writeRecord(record);
+							dataPersister.persistRecord(epoch, record);
 							
 							recordsWritten++;
 							reporter.reportRecordWritten();
@@ -983,7 +1023,6 @@ public class PipeToProcess
 	 * @param parser
 	 * @param record Read fields are written to this array
 	 * @param fieldMap Map to field name to record array index position
-	 * @param allFields All the required fields
 	 * @param gotFields boolean array each element is true if that field
 	 * was read
 	 * @param logger Errors are logged to this logger
@@ -991,7 +1030,7 @@ public class PipeToProcess
 	 * @throws JsonParseException
 	 */
 	static private boolean readJsonRecord(JsonParser parser, String [] record,
-			Map<String, Integer> fieldMap,  List<String> allFields,
+			Map<String, Integer> fieldMap,  
 			boolean [] gotFields, Logger logger) 
 	throws JsonParseException, IOException
 	{
@@ -1070,7 +1109,7 @@ public class PipeToProcess
 	 * @param gotFieldFlags
 	 * @return null if all fields are present or the first missing field name
 	 */
-	static private String firstMissingField(List<String> requiredFields, 
+	static private String firstMissingField(String [] requiredFields, 
 			boolean [] gotFieldFlags)
 	{		
 		String result = null;
@@ -1079,7 +1118,7 @@ public class PipeToProcess
 		{
 			if (gotFieldFlags[i] == false)
 			{
-				result = requiredFields.get(i);
+				result = requiredFields[i];
 			}
 		}
 		

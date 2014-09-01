@@ -497,7 +497,7 @@ public class ElasticsearchMappings
 					.endObject()
 					.startObject("properties")	
 						.startObject("epoch")
-							.field("type", "long")
+							.field("type", "date")
 						.endObject()					
 						.startObject(ElasticsearchJobDataPersister.FIELDS)
 							.field("type", "string")

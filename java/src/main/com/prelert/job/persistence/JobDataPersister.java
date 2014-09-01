@@ -25,29 +25,36 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.persistence.elasticsearch;
+package com.prelert.job.persistence;
 
-import org.apache.log4j.Logger;
-import org.elasticsearch.client.Client;
+import java.util.List;
 
-import com.prelert.job.persistence.DataPersisterFactory;
-import com.prelert.job.persistence.JobDataPersister;
-
-public class ElasticsearchDataPersisterFactory implements DataPersisterFactory 
+/**
+ * Persist the records sent the the API.
+ * Records are mapped by the by, over, partition and metric fields. 
+ */
+public interface JobDataPersister 
 {
-	
-	private Client m_Client;
-	
-	public ElasticsearchDataPersisterFactory(Client client)
-	{
-		m_Client = client;
-	}
+	/**
+	 * Find each of the lists of requried fields (by, over, etc)
+	 * in the header and save the indexes so the field mappings can
+	 * be used in calls to {@linkplain #persistRecord(long, String[])}
+	 * @param fields
+	 * @param byFields
+	 * @param overFields
+	 * @param partitionFields
+	 * @param header
+	 */
+	public abstract void setFieldMappings(List<String> fields,
+			List<String> byFields, List<String> overFields,
+			List<String> partitionFields, String[] header);
 
-	@Override
-	public JobDataPersister newDataPersister(String jobId,
-			Logger logger) 
-	{
-		return new ElasticsearchJobDataPersister(jobId, m_Client);
-	}
-
+	/**
+	 * Save the record as per the field mappings 
+	 * set up in {@linkplain #setFieldMappings(List, List, List, List, String[])}
+	 * 
+	 * @param epoch 
+	 * @param record
+	 */
+	public abstract void persistRecord(long epoch, String[] record);
 }

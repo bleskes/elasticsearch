@@ -25,29 +25,23 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.persistence.elasticsearch;
+package com.prelert.job.persistence.none;
 
 import org.apache.log4j.Logger;
-import org.elasticsearch.client.Client;
 
 import com.prelert.job.persistence.DataPersisterFactory;
 import com.prelert.job.persistence.JobDataPersister;
 
-public class ElasticsearchDataPersisterFactory implements DataPersisterFactory 
+/**
+ * Factory class for the don't persist anything data persister
+ */
+public class NoneJobDataPersisterFactory implements DataPersisterFactory
 {
-	
-	private Client m_Client;
-	
-	public ElasticsearchDataPersisterFactory(Client client)
-	{
-		m_Client = client;
-	}
 
 	@Override
-	public JobDataPersister newDataPersister(String jobId,
-			Logger logger) 
+	public JobDataPersister newDataPersister(String jobId, Logger logger) 
 	{
-		return new ElasticsearchJobDataPersister(jobId, m_Client);
+		return new NoneJobDataPersister();
 	}
 
 }

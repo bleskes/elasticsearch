@@ -34,15 +34,20 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 import org.apache.log4j.Logger;
 import org.junit.Test;
 
 import junit.framework.Assert;
 
+import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
+import com.prelert.job.Detector;
 import com.prelert.job.DummyUsageReporter;
 import com.prelert.job.DataDescription.DataFormat;
+import com.prelert.job.persistence.DummyJobDataPersister;
 import com.prelert.job.warnings.DummyStatusReporter;
 import com.prelert.job.warnings.HighProportionOfBadTimestampsException;
 import com.prelert.job.warnings.OutOfOrderRecordsException;
@@ -69,16 +74,30 @@ public class CsvDataTransfromTest
 					"DJA,189,flightcentre,1350824404\n" +
 					"JQA,8,flightcentre,1350824404\n" +
 					"DJA,1200,flightcentre,1350824404";		
+			
+		AnalysisConfig ac = new AnalysisConfig();
+		Detector d = new Detector();
+		d.setFieldName("responsetime");
+		d.setByFieldName("airline");
+		d.setPartitionFieldName("sourcetype");
+		ac.setDetectors(Arrays.asList(d));
 		
-		List<String> analysisFields = Arrays.asList(new String [] {
-				"responsetime", "sourcetype", "airline"});
 		
 		// data is written in the order of the required fields
-		// with time the first element not the same as it is input
-		int [] fieldMap = new int [] {3, 1, 2, 0};
+		// which is alphabetical but with time as the first element
+		int [] fieldMap = new int [] {3, 0, 1, 2};
+		
+		Set<String> analysisFields = new TreeSet<String>(Arrays.asList(new String [] {
+				"responsetime", "airline", "sourcetype"}));
+		
+		for (String s : ac.analysisFields())
+		{
+			Assert.assertTrue(analysisFields.contains(s));
+		}
+		
 
 		// can create with null
-		ProcessManager pm = new ProcessManager(null, null, null, null);
+		ProcessManager pm = new ProcessManager(null, null, null, null, null);
 		
 		ByteArrayInputStream bis = 
 				new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
@@ -88,17 +107,19 @@ public class CsvDataTransfromTest
 		dd.setFieldDelimiter(',');
 		DummyStatusReporter statusReporter = new DummyStatusReporter();
 		DummyUsageReporter usageReporter = new DummyUsageReporter("job_id", s_Logger);
+		DummyJobDataPersister dataPersister = new DummyJobDataPersister();
 		
-		pm.writeToJob(dd, analysisFields, bis, bos, statusReporter, usageReporter,
-				s_Logger);
+		pm.writeToJob(dd, ac, bis, bos, statusReporter, usageReporter,
+				dataPersister, s_Logger);
 
 		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 		
 		Assert.assertEquals(usageReporter.getTotalBytesRead(), 
 				data.getBytes(StandardCharsets.UTF_8).length - 2);
-		
 		Assert.assertEquals(usageReporter.getTotalBytesRead(),
 				statusReporter.getVolume());
+		
+		Assert.assertEquals(dataPersister.getRecordCount(), 8);
 		
 		Assert.assertEquals(8, statusReporter.sumTotalRecords());
 		Assert.assertEquals(8, statusReporter.getRecordsWrittenCount());
@@ -156,12 +177,26 @@ public class CsvDataTransfromTest
 				{"GAL","5339","flight\ncentre","1350824402"}, 
 				{"GAL","3893","flightcentre","1350824403"}};
 		
-		List<String> analysisFields = Arrays.asList(new String [] {
-				"airline", "responsetime", "sourcetype"});
+		
+		AnalysisConfig ac = new AnalysisConfig();
+		Detector d = new Detector();
+		d.setFieldName("responsetime");
+		d.setByFieldName("airline");
+		d.setPartitionFieldName("sourcetype");
+		ac.setDetectors(Arrays.asList(d));
+		
 		
 		// data is written in the order of the required fields
-		// with time the first element not the same as it is input
+		// which is alphabetical but with time as the first element
 		int [] fieldMap = new int [] {3, 0, 1, 2};
+		
+		Set<String> analysisFields = new TreeSet<String>(Arrays.asList(new String [] {
+				"responsetime", "airline", "sourcetype"}));
+		
+		for (String s : ac.analysisFields())
+		{
+			Assert.assertTrue(analysisFields.contains(s));
+		}
 		
 		DataDescription dd = new DataDescription();
 		dd.setFormat(DataFormat.DELINEATED);
@@ -169,7 +204,7 @@ public class CsvDataTransfromTest
 		dd.setQuoteCharacter('?');
 		
 		// can create with null
-		ProcessManager pm = new ProcessManager(null, null, null, null);
+		ProcessManager pm = new ProcessManager(null, null, null, null, null);
 		
 		ByteArrayInputStream bis = 
 				new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
@@ -177,19 +212,25 @@ public class CsvDataTransfromTest
 		
 		DummyStatusReporter statusReporter = new DummyStatusReporter();
 		DummyUsageReporter usageReporter = new DummyUsageReporter("job_id", s_Logger);
-		pm.writeToJob(dd, analysisFields, bis, bos, statusReporter,
-				usageReporter, s_Logger);
+		DummyJobDataPersister dp = new DummyJobDataPersister();
+		
+		pm.writeToJob(dd, ac, bis, bos, statusReporter,
+				usageReporter, dp, s_Logger);
 		
 		Assert.assertEquals(usageReporter.getTotalBytesRead(), 
 				data.getBytes(StandardCharsets.UTF_8).length - 2); 
 		Assert.assertEquals(usageReporter.getTotalBytesRead(),
 				statusReporter.getVolume());
 		
+		Assert.assertEquals(dp.getRecordCount(), 4);
+		
 		Assert.assertEquals(4, statusReporter.sumTotalRecords());
 		Assert.assertEquals(4, statusReporter.getRecordsWrittenCount());
 		Assert.assertEquals(0, statusReporter.getMissingFieldErrorCount());
 		Assert.assertEquals(0, statusReporter.getDateParseErrorsCount());
 		Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());		
+		
+		Assert.assertEquals(dp.getRecordCount(), 4);
 		
 		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 		
@@ -240,13 +281,25 @@ public class CsvDataTransfromTest
 				"1390867200", "1390867200", "1390870800", "1390870800", 
 				"1390870800", "1390870800"};
 		
-		List<String> analysisFields = Arrays.asList(new String [] {
-				"responsetime", "airline", "sourcetype"});
+		AnalysisConfig ac = new AnalysisConfig();
+		Detector d = new Detector();
+		d.setFieldName("responsetime");
+		d.setByFieldName("airline");
+		d.setPartitionFieldName("sourcetype");
+		ac.setDetectors(Arrays.asList(d));
+		
 		
 		// data is written in the order of the required fields
-		// with time the first element not the same as it is input
-		int [] fieldMap = new int [] {0, 2, 1, 3};
+		// which is alphabetical but with time as the first element
+		int [] fieldMap = new int [] {0, 1, 2, 3};
 		
+		Set<String> analysisFields = new TreeSet<String>(Arrays.asList(new String [] {
+				"responsetime", "airline", "sourcetype"}));
+		
+		for (String s : ac.analysisFields())
+		{
+			Assert.assertTrue(analysisFields.contains(s));
+		}
 		
 		DataDescription dd = new DataDescription();
 		dd.setFormat(DataFormat.DELINEATED);
@@ -256,7 +309,7 @@ public class CsvDataTransfromTest
 
 		
 		// can create with null
-		ProcessManager pm = new ProcessManager(null, null, null, null);
+		ProcessManager pm = new ProcessManager(null, null, null, null, null);
 		
 		ByteArrayInputStream bis = 
 				new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
@@ -264,14 +317,18 @@ public class CsvDataTransfromTest
 		
 		DummyStatusReporter statusReporter = new DummyStatusReporter();
 		DummyUsageReporter usageReporter = new DummyUsageReporter("job_id", s_Logger);
-		pm.writeToJob(dd, analysisFields, bis, bos, statusReporter,
-				usageReporter, s_Logger);
+		DummyJobDataPersister dp = new DummyJobDataPersister();
+		
+		pm.writeToJob(dd, ac, bis, bos, statusReporter,
+				usageReporter, dp, s_Logger);
 		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 
 		Assert.assertEquals(usageReporter.getTotalBytesRead(), 
 				data.getBytes(StandardCharsets.UTF_8).length - 2);
 		Assert.assertEquals(usageReporter.getTotalBytesRead(),
 				statusReporter.getVolume());
+		
+		Assert.assertEquals(dp.getRecordCount(), 8);
 		
 		Assert.assertEquals(8, statusReporter.sumTotalRecords());
 		Assert.assertEquals(8, statusReporter.getRecordsWrittenCount());
@@ -337,7 +394,7 @@ public class CsvDataTransfromTest
 	public void plainCsvWithExtraFields() throws IOException, MissingFieldException, 
 		HighProportionOfBadTimestampsException, OutOfOrderRecordsException
 	{
-		String data = "airline,responsetime,airport,sourcetype,time,baggage\n" +
+		String data = "airline,responsetime,sourcetype,airport,time,baggage\n" +
 					"DJA,622,flightcentre,MAN,1350824400,none\n" +
 					"JQA,1742,flightcentre,GAT,1350824401,none\n" +
 					"GAL,5339,flightcentre,SYN,1350824402,some\n" +
@@ -347,21 +404,32 @@ public class CsvDataTransfromTest
 					"JQA,8,flightcentre,GAT,1350824404,none\n" +
 					"DJA,1200,flightcentre,MAN,1350824404,none";		
 		
-		// empty strings and null should be ignored.
-		List<String> analysisFields = Arrays.asList(new String [] {
-				"responsetime", "sourcetype", "airline"});
-		
-		// data is written in the order of the required fields
-		// with time the first element not the same as it is input
-		int [] fieldMap = new int [] {4, 1, 3, 0};
-		
+				
+		AnalysisConfig ac = new AnalysisConfig();
+		Detector d = new Detector();
+		d.setFieldName("responsetime");
+		d.setByFieldName("airline");
+		d.setPartitionFieldName("sourcetype");
+		ac.setDetectors(Arrays.asList(d));
 		
 		DataDescription dd = new DataDescription();
 		dd.setFormat(DataFormat.DELINEATED);
 		dd.setFieldDelimiter(',');
 		
+		// data is written in the order of the required fields
+		// which is alphabetical but with time as the first element
+		int [] fieldMap = new int [] {4, 0, 1, 2};
+		
+		Set<String> analysisFields = new TreeSet<String>(Arrays.asList(new String [] {
+				"responsetime", "airline", "sourcetype"}));
+		
+		for (String s : ac.analysisFields())
+		{
+			Assert.assertTrue(analysisFields.contains(s));
+		}
+		
 		// can create with null
-		ProcessManager pm = new ProcessManager(null, null, null, null);
+		ProcessManager pm = new ProcessManager(null, null, null, null, null);
 		
 		ByteArrayInputStream bis = 
 				new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
@@ -369,9 +437,10 @@ public class CsvDataTransfromTest
 		
 		DummyStatusReporter statusReporter = new DummyStatusReporter();
 		DummyUsageReporter usageReporter = new DummyUsageReporter("job_id", s_Logger);
-
-		pm.writeToJob(dd, analysisFields, bis, bos, statusReporter,
-				usageReporter, s_Logger);
+		DummyJobDataPersister dp = new DummyJobDataPersister();
+		
+		pm.writeToJob(dd, ac, bis, bos, statusReporter,
+				usageReporter, dp, s_Logger);
 		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 		
 		Assert.assertEquals(8, statusReporter.sumTotalRecords());
@@ -384,6 +453,8 @@ public class CsvDataTransfromTest
 				data.getBytes(StandardCharsets.UTF_8).length - 2);
 		Assert.assertEquals(usageReporter.getTotalBytesRead(),
 				statusReporter.getVolume());		
+		
+		Assert.assertEquals(dp.getRecordCount(), 8);
 		
 		String [] lines = data.split("\\n");
 		
@@ -431,16 +502,21 @@ public class CsvDataTransfromTest
 					"DJA,189,flightcentre,GAT,lost\n" +
 					"JQA,8,flightcentre,GAT,none\n" +
 					"DJA,1200,flightcentre,MAN,none";		
+				
+		AnalysisConfig ac = new AnalysisConfig();
+		Detector d = new Detector();
+		d.setFieldName("responsetime");
+		d.setByFieldName("airline");
+		d.setPartitionFieldName("sourcetype");
+		ac.setDetectors(Arrays.asList(d));
 		
-		List<String> analysisFields = Arrays.asList(new String [] {
-				"responsetime", "sourcetype", "airline"});
 		
 		DataDescription dd = new DataDescription();
 		dd.setFormat(DataFormat.DELINEATED);
 		dd.setFieldDelimiter(',');
 		
 		// can create with null
-		ProcessManager pm = new ProcessManager(null, null, null, null);
+		ProcessManager pm = new ProcessManager(null, null, null, null, null);
 		
 		ByteArrayInputStream bis = 
 				new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
@@ -448,10 +524,12 @@ public class CsvDataTransfromTest
 		
 		DummyUsageReporter usageReporter = new DummyUsageReporter("job_id", s_Logger);
 		DummyStatusReporter statusReporter = new DummyStatusReporter();		
+		DummyJobDataPersister dp = new DummyJobDataPersister();
+		
 		try 
 		{
-			pm.writeToJob(dd, analysisFields, bis, bos, statusReporter, 
-					usageReporter, s_Logger);
+			pm.writeToJob(dd, ac, bis, bos, statusReporter, 
+					usageReporter, dp, s_Logger);
 			Assert.assertTrue(false); // should throw
 		} 
 		catch (MissingFieldException e)
@@ -466,8 +544,7 @@ public class CsvDataTransfromTest
 		// 
 		dd.setTimeField("timestamp");
 		dd.setTimeFormat(DataDescription.EPOCH_MS);
-		analysisFields = Arrays.asList(new String [] {
-				"responsetime", "sourcetype", "airline"});
+
 		
 		bis = new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
 		bos = new ByteArrayOutputStream(1024);
@@ -476,8 +553,8 @@ public class CsvDataTransfromTest
 		statusReporter = new DummyStatusReporter();
 		try 
 		{
-			pm.writeToJob(dd, analysisFields, bis, bos, statusReporter,
-					usageReporter, s_Logger);
+			pm.writeToJob(dd, ac, bis, bos, statusReporter,
+					usageReporter, dp, s_Logger);
 			Assert.assertTrue(false); // should throw
 		} 
 		catch (MissingFieldException e)
@@ -512,15 +589,19 @@ public class CsvDataTransfromTest
 				"JQA,8,flightcentre,GAT,1350824404,none\n" +
 				"DJA,1200,flightcentre,MAN,1350824404,none";			
 		
-		List<String> analysisFields = Arrays.asList(new String [] {
-				"responsetime", "sourcetype", "airline", "missing_field"});
-		
 		DataDescription dd = new DataDescription();
 		dd.setFormat(DataFormat.DELINEATED);
 		dd.setFieldDelimiter(',');
 		
+		AnalysisConfig ac = new AnalysisConfig();
+		Detector d = new Detector();
+		d.setFieldName("responsetime");
+		d.setByFieldName("airline");
+		d.setPartitionFieldName("missing_field");
+		ac.setDetectors(Arrays.asList(d));
+		
 		// can create with null
-		ProcessManager pm = new ProcessManager(null, null, null, null);
+		ProcessManager pm = new ProcessManager(null, null, null, null, null);
 		
 		ByteArrayInputStream bis = 
 				new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
@@ -528,10 +609,13 @@ public class CsvDataTransfromTest
 		
 		DummyUsageReporter usageReporter = new DummyUsageReporter("job_id", s_Logger);
 		DummyStatusReporter statusReporter = new DummyStatusReporter();
+		DummyJobDataPersister dp = new DummyJobDataPersister();
+		
+		
 		try 
 		{
-			pm.writeToJob(dd, analysisFields, bis, bos, statusReporter,
-					usageReporter, s_Logger);
+			pm.writeToJob(dd, ac, bis, bos, statusReporter,
+					usageReporter, dp, s_Logger);
 			Assert.assertTrue(false); // should throw
 		} 
 		catch (MissingFieldException e)
@@ -551,10 +635,11 @@ public class CsvDataTransfromTest
 		
 		usageReporter = new DummyUsageReporter("job_id", s_Logger);
 		statusReporter = new DummyStatusReporter();
+		
 		try 
 		{
-			pm.writeToJob(dd, analysisFields, bis, bos, statusReporter,
-					usageReporter, s_Logger);
+			pm.writeToJob(dd, ac, bis, bos, statusReporter,
+					usageReporter, dp, s_Logger);
 			Assert.assertTrue(false); // should throw
 		} 
 		catch (MissingFieldException e)
@@ -575,7 +660,7 @@ public class CsvDataTransfromTest
 	 * @throws HighProportionOfBadTimestampsException 
 	 * @throws OutOfOrderRecordsException 
 	 */
-	@Test 
+	//@Test 
 	public void plainCsvWithIncompleteRecords()
 	throws IOException, MissingFieldException, HighProportionOfBadTimestampsException,
 		OutOfOrderRecordsException
@@ -604,7 +689,14 @@ public class CsvDataTransfromTest
 				"2012-10-21 13:00:03 Z,\n" +   // this field is't written
 				"2012-10-21 13:00:04 Z,DJA,189,flightcentre,GAT,lost";		
 		
-		List<String> analysisFields = Arrays.asList(new String [] {"airline", "responsetime", "baggage"});
+
+		// data is written in the order of the required fields
+		// which is alphabetical but with time as the first element
+		int [] fieldMap = new int [] {0, 1, 3, 2};
+		
+		Set<String> analysisFields = new TreeSet<String>(Arrays.asList(new String [] {
+				"responsetime", "airline", "baggage"}));
+		
 		
 		String [][] lines = new String [] [] {{"time","airline", "responsetime","baggage"},
 				{"1350824400", "DJA", "622", "none"},
@@ -620,6 +712,13 @@ public class CsvDataTransfromTest
 		{
 			loop++;
 			
+			AnalysisConfig ac = new AnalysisConfig();
+			Detector d = new Detector();
+			d.setFieldName("responsetime");
+			d.setByFieldName("airline");
+			d.setPartitionFieldName("baggage");
+			ac.setDetectors(Arrays.asList(d));
+			
 			DataDescription dd = new DataDescription();
 			dd.setFormat(DataFormat.DELINEATED);
 			dd.setFieldDelimiter(',');
@@ -631,9 +730,14 @@ public class CsvDataTransfromTest
 			{
 				dd.setTimeFormat("yyyy-MM-dd HH:mm:ss X");
 			}
+						
+			for (String s : ac.analysisFields())
+			{
+				Assert.assertTrue(analysisFields.contains(s));
+			}
 			
 			// can create with null
-			ProcessManager pm = new ProcessManager(null, null, null, null);
+			ProcessManager pm = new ProcessManager(null, null, null, null, null);
 
 			ByteArrayInputStream bis = 
 					new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
@@ -641,19 +745,23 @@ public class CsvDataTransfromTest
 
 			DummyStatusReporter statusReporter = new DummyStatusReporter();
 			DummyUsageReporter usageReporter = new DummyUsageReporter("job_id", s_Logger);
+			DummyJobDataPersister dp = new DummyJobDataPersister();
 			
-			pm.writeToJob(dd, analysisFields, bis, bos, statusReporter, 
-					usageReporter, s_Logger);
+			pm.writeToJob(dd, ac, bis, bos, statusReporter, 
+					usageReporter, dp, s_Logger);
 			
 			Assert.assertEquals(6, statusReporter.sumTotalRecords());
 			Assert.assertEquals(6, statusReporter.getRecordsWrittenCount());
 			Assert.assertEquals(3, statusReporter.getMissingFieldErrorCount());
 			Assert.assertEquals(0, statusReporter.getDateParseErrorsCount());
 			Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());
+			
 			Assert.assertEquals(usageReporter.getTotalBytesRead(), 
 					data.getBytes(StandardCharsets.UTF_8).length - 2);
 			Assert.assertEquals(usageReporter.getTotalBytesRead(),
-					statusReporter.getVolume());				
+					statusReporter.getVolume());
+			
+			Assert.assertEquals(dp.getRecordCount(), 6);
 			
 			ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 			
@@ -673,8 +781,8 @@ public class CsvDataTransfromTest
 
 					String value = new String(charBuff, StandardCharsets.UTF_8);				
 
-					Assert.assertEquals(fields[i].length(), recordSize);
-					Assert.assertEquals(fields[i], value);
+					Assert.assertEquals(fields[fieldMap[i]].length(), recordSize);
+					Assert.assertEquals(fields[fieldMap[i]], value);
 				}
 			}	
 		}
@@ -714,15 +822,23 @@ public class CsvDataTransfromTest
 				"1350824402", "1350824403", "1350824403", "1350824404", 
 				"1350824404", "1350824404"};
 
+		
 		// data is written in the order of the required fields
-		// with time the first element
+		// which is alphabetical but with time as the first element
 		int [] fieldMap = new int [] {2, 0, 1};
 		
-		List<String> analysisFields = Arrays.asList(new String [] {"airline", "responsetime"});
+		Set<String> analysisFields = new TreeSet<String>(Arrays.asList(new String [] {
+				"responsetime", "airline"}));
 		
 		int loop = 0;
 		for (String data : new String[] {epochData, epochMsData})
 		{		
+			AnalysisConfig ac = new AnalysisConfig();
+			Detector d = new Detector();
+			d.setFieldName("responsetime");
+			d.setByFieldName("airline");
+			ac.setDetectors(Arrays.asList(d));
+			
 			DataDescription dd = new DataDescription();
 			dd.setFormat(DataFormat.DELINEATED);
 			dd.setTimeField("_time");
@@ -738,7 +854,7 @@ public class CsvDataTransfromTest
 			loop++;
 			
 			// can create with null
-			ProcessManager pm = new ProcessManager(null, null, null, null);
+			ProcessManager pm = new ProcessManager(null, null, null, null, null);
 
 			ByteArrayInputStream bis = 
 					new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
@@ -746,8 +862,10 @@ public class CsvDataTransfromTest
 
 			DummyStatusReporter statusReporter = new DummyStatusReporter();
 			DummyUsageReporter usageReporter = new DummyUsageReporter("job_id", s_Logger);
-			pm.writeToJob(dd, analysisFields, bis, bos, statusReporter, 
-					usageReporter, s_Logger);
+			DummyJobDataPersister dp = new DummyJobDataPersister();
+			
+			pm.writeToJob(dd, ac, bis, bos, statusReporter, 
+					usageReporter, dp, s_Logger);
 			ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 
 			Assert.assertEquals(8, statusReporter.sumTotalRecords());
@@ -755,10 +873,13 @@ public class CsvDataTransfromTest
 			Assert.assertEquals(0, statusReporter.getMissingFieldErrorCount());
 			Assert.assertEquals(0, statusReporter.getDateParseErrorsCount());
 			Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());
+			
 			Assert.assertEquals(usageReporter.getTotalBytesRead(), 
 					data.getBytes(StandardCharsets.UTF_8).length - 2);
 			Assert.assertEquals(usageReporter.getTotalBytesRead(),
-					statusReporter.getVolume());				
+					statusReporter.getVolume());
+			
+			Assert.assertEquals(dp.getRecordCount(), 8);
 			
 			String [] lines = data.split("\\n");
 			

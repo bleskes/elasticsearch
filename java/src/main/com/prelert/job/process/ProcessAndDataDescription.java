@@ -35,7 +35,7 @@ import org.apache.log4j.Logger;
 
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
-import com.prelert.job.persistence.elasticsearch.ElasticsearchJobDataPersister;
+import com.prelert.job.persistence.JobDataPersister;
 import com.prelert.job.usage.UsageReporter;
 import com.prelert.job.warnings.StatusReporter;
 
@@ -64,7 +64,7 @@ public class ProcessAndDataDescription
 	
 	private StatusReporter m_StatusReporter;
 	private UsageReporter m_UsageReporter;
-	private ElasticsearchJobDataPersister m_DataPersiter;
+	private JobDataPersister m_DataPersiter;
 	
 	private AnalysisConfig m_AnalysisConfig;
 
@@ -87,7 +87,7 @@ public class ProcessAndDataDescription
 			long timeout, AnalysisConfig analysisConfig,
 			Logger logger, StatusReporter reporter, 
 			UsageReporter usageReporter, Runnable outputParser,
-			ElasticsearchJobDataPersister dataPersister)
+			JobDataPersister dataPersister)
 	{
 		m_Process = process;
 		m_DataDescription = dd;
@@ -214,7 +214,7 @@ public class ProcessAndDataDescription
 	}
 	
 	
-	public ElasticsearchJobDataPersister getDataPerister()
+	public JobDataPersister getDataPerister()
 	{
 		return m_DataPersiter;
 	}

@@ -25,29 +25,32 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.persistence.elasticsearch;
+package com.prelert.job.persistence;
 
-import org.apache.log4j.Logger;
-import org.elasticsearch.client.Client;
+import java.util.List;
 
-import com.prelert.job.persistence.DataPersisterFactory;
-import com.prelert.job.persistence.JobDataPersister;
-
-public class ElasticsearchDataPersisterFactory implements DataPersisterFactory 
+public class DummyJobDataPersister implements JobDataPersister 
 {
+	private int m_RecordCount = 0;
 	
-	private Client m_Client;
-	
-	public ElasticsearchDataPersisterFactory(Client client)
+
+	@Override
+	public void setFieldMappings(List<String> fields, List<String> byFields,
+			List<String> overFields, List<String> partitionFields,
+			String[] header) 
 	{
-		m_Client = client;
+
 	}
 
 	@Override
-	public JobDataPersister newDataPersister(String jobId,
-			Logger logger) 
+	public void persistRecord(long epoch, String[] record) 
 	{
-		return new ElasticsearchJobDataPersister(jobId, m_Client);
+		m_RecordCount++;
+	}
+	
+	public int getRecordCount()
+	{
+		return m_RecordCount;
 	}
 
 }

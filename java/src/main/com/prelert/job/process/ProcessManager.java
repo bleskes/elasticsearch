@@ -36,7 +36,6 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Date;
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
@@ -57,8 +56,8 @@ import com.prelert.job.warnings.OutOfOrderRecordsException;
 import com.prelert.job.warnings.StatusReporter;
 import com.prelert.job.warnings.StatusReporterFactory;
 import com.prelert.job.persistence.DataPersisterFactory;
+import com.prelert.job.persistence.JobDataPersister;
 import com.prelert.job.persistence.JobProvider;
-import com.prelert.job.persistence.elasticsearch.ElasticsearchJobDataPersister;
 import com.prelert.job.usage.UsageReporter;
 import com.prelert.job.usage.UsageReporterFactory;
 import com.prelert.job.AnalysisConfig;
@@ -593,7 +592,7 @@ public class ProcessManager
 			AnalysisConfig analysisConfig,
 			InputStream input, OutputStream output, 
 			StatusReporter statusReporter, UsageReporter usageReporter,
-			ElasticsearchJobDataPersister dataPersister, 
+			JobDataPersister dataPersister, 
 			Logger jobLogger) 
 	throws JsonParseException, MissingFieldException, IOException,
 		HighProportionOfBadTimestampsException, OutOfOrderRecordsException
@@ -605,9 +604,9 @@ public class ProcessManager
 		{
 			if (dataDescription.getFormat() == DataFormat.JSON)
 			{
-				PipeToProcess.transformAndPipeJson(dataDescription, analysisConfig.analysisFields(), input, 
+				PipeToProcess.transformAndPipeJson(dataDescription, analysisConfig, input, 
 						bufferedStream, statusReporter, 
-						usageReporter, jobLogger);
+						usageReporter, dataPersister, jobLogger);
 			}
 			else
 			{
