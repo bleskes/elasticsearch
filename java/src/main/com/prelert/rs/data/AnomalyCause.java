@@ -28,45 +28,30 @@
 package com.prelert.rs.data;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 import org.apache.log4j.Logger;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
-import com.prelert.rs.data.AnomalyCause;
 import com.prelert.rs.data.parsing.AutoDetectParseException;
 
 /**
- * Anomaly Record POJO.
- * Uses the object wrappers Boolean and Double so <code>null</code> values
- * can be returned if the members have not been set.
+ * Anomaly Cause POJO.
+ * Used as a nested level inside population anomaly records.
  */
 @JsonInclude(Include.NON_NULL)
-@JsonIgnoreProperties({"parent", "id", "detectorName"})
-public class AnomalyRecord
+public class AnomalyCause
 {
 	/**
-	 * Serialisation fields
-	 */
-	static final public String TYPE = "record";
-
-	/**
-	 * Data store ID field
-	 */
-	static final public String ID = "id";
-
-	/**
-	 * Result fields (all detector types)
+	 * Result fields
 	 */
 	static final public String PROBABILITY = "probability";
+	static final public String OVER_FIELD_NAME = "overFieldName";
+	static final public String OVER_FIELD_VALUE = "overFieldValue";
 	static final public String BY_FIELD_NAME = "byFieldName";
 	static final public String BY_FIELD_VALUE = "byFieldValue";
 	static final public String PARTITION_FIELD_NAME = "partitionFieldName";
@@ -74,101 +59,29 @@ public class AnomalyRecord
 	static final public String FUNCTION = "function";
 	static final public String TYPICAL = "typical";
 	static final public String ACTUAL = "actual";
-	
+
 	/**
-	 * Metric Results (including population metrics)
+	 * Metric Results
 	 */
 	static final public String FIELD_NAME = "fieldName";
 
-	/**
-	 * Population results
-	 */
-	static final public String OVER_FIELD_NAME = "overFieldName";
-	static final public String OVER_FIELD_VALUE = "overFieldValue";
-	static final public String CAUSES = "causes";
+	private static final Logger s_Logger = Logger.getLogger(AnomalyCause.class);
 
-	/**
-	 * Normalisation
-	 */
-	static final public String ANOMALY_SCORE = "anomalyScore";
-	static final public String RECORD_UNUSUALNESS = "recordUnusualness";
-	
-	private static final Logger s_Logger = Logger.getLogger(AnomalyRecord.class);
-	
-	private String m_Id;
 	private double m_Probability;
 	private String m_ByFieldName;
 	private String m_ByFieldValue;
 	private String m_PartitionFieldName;
 	private String m_PartitionFieldValue;
 	private String m_Function;
-	private Double m_Typical;
-	private Double m_Actual;
+	private double m_Typical;
+	private double m_Actual;
 
 	private String m_FieldName;
 
 	private String m_OverFieldName;
 	private String m_OverFieldValue;
-	private List<AnomalyCause> m_Causes;
-
-	private double m_AnomalyScore;
-	private double m_RecordUnusualness;
-	private Date   m_Timestamp;
-
-	
-	private String m_Parent;
-
-	/**
-	 * Data store ID of this record.  May be null for records that have not been
-	 * read from the data store.
-	 */
-	public String getId()
-	{
-		return m_Id;
-	}
-
-	/**
-	 * This should only be called by code that's reading records from the data
-	 * store.  The ID must be set to the data stores's unique key to this
-	 * anomaly record.
-	 */
-	public void setId(String id)
-	{
-		m_Id = id;
-	}
 
 
-	public double getAnomalyScore()
-	{
-		return m_AnomalyScore;
-	}
-	
-	public void setAnomalyScore(double anomalyScore)
-	{
-		m_AnomalyScore = anomalyScore;
-	}
-	
-	public double getRecordUnusualness()
-	{
-		return m_RecordUnusualness;
-	}
-	
-	public void setRecordUnusualness(double recordUnusualness)
-	{
-		m_RecordUnusualness = recordUnusualness;
-	}
-	
-	
-	public Date getTimestamp() 
-	{
-		return m_Timestamp;
-	}
-	
-	public void setTimestamp(Date timestamp) 
-	{
-		m_Timestamp = timestamp;
-	}
-	
 	public double getProbability()
 	{
 		return m_Probability;
@@ -230,22 +143,22 @@ public class AnomalyRecord
 		m_Function = name;
 	}
 
-	public Double getTypical()
+	public double getTypical()
 	{
 		return m_Typical;
 	}
 
-	public void setTypical(Double typical)
+	public void setTypical(double typical)
 	{
 		m_Typical = typical;
 	}
 
-	public Double getActual()
+	public double getActual()
 	{
 		return m_Actual;
 	}
 
-	public void setActual(Double actual)
+	public void setActual(double actual)
 	{
 		m_Actual = actual;
 	}
@@ -280,38 +193,9 @@ public class AnomalyRecord
 		m_OverFieldValue = value;
 	}
 
-	public List<AnomalyCause> getCauses()
-	{
-		return m_Causes;
-	}
-
-	public void setCauses(List<AnomalyCause> causes)
-	{
-		m_Causes = causes;
-	}
-
-	private void addCause(AnomalyCause cause)
-	{
-		if (m_Causes == null)
-		{
-			m_Causes = new ArrayList<>();
-		}
-		m_Causes.add(cause);
-	}
-
-	public String getParent()
-	{
-		return m_Parent;
-	}
-	
-	public void setParent(String parent)
-	{
-		m_Parent = parent;
-	}	
-
 
 	/**
-	 * Create a new <code>AnomalyRecord</code> and populate it from the JSON parser.
+	 * Create a new <code>AnomalyCause</code> and populate it from the JSON parser.
 	 * The parser must be pointing at the start of the object then all the object's
 	 * fields are read and if they match the property names then the appropriate
 	 * members are set.
@@ -321,20 +205,20 @@ public class AnomalyRecord
 	 *
 	 * @param parser The JSON Parser should be pointing to the start of the object,
 	 * when the function returns it will be pointing to the end.
-	 * @return The new AnomalyRecord
+	 * @return The new AnomalyCause
 	 * @throws JsonParseException
 	 * @throws IOException
 	 * @throws AutoDetectParseException
 	 */
-	static public AnomalyRecord parseJson(JsonParser parser)
+	static public AnomalyCause parseJson(JsonParser parser)
 	throws JsonParseException, IOException, AutoDetectParseException
 	{
-		AnomalyRecord record = new AnomalyRecord();
+		AnomalyCause cause = new AnomalyCause();
 
 		JsonToken token = parser.getCurrentToken();
 		if (JsonToken.START_OBJECT != token)
 		{
-			String msg = "Cannot parse anomaly record. First token '" +
+			String msg = "Cannot parse anomaly cause. First token '" +
 					parser.getText() + ", is not the start object token";
 			s_Logger.error(msg);
 			throw new AutoDetectParseException(msg);
@@ -346,10 +230,10 @@ public class AnomalyRecord
 			switch(token)
 			{
 			case START_OBJECT:
-				s_Logger.error("Start object parsed in anomaly record");
+				s_Logger.error("Start object parsed in anomaly cause");
 				break;
 			case END_OBJECT:
-				s_Logger.error("End object parsed in anomaly record");
+				s_Logger.error("End object parsed in anomaly cause");
 				break;
 			case FIELD_NAME:
 				String fieldName = parser.getCurrentName();
@@ -359,31 +243,7 @@ public class AnomalyRecord
 					token = parser.nextToken();
 					if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)
 					{
-						record.setProbability(parser.getDoubleValue());
-					}
-					else
-					{
-						s_Logger.warn("Cannot parse " + fieldName + " : " + parser.getText()
-								+ " as a double");
-					}
-					break;
-				case ANOMALY_SCORE:
-					token = parser.nextToken();
-					if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)
-					{
-						record.setAnomalyScore(parser.getDoubleValue());
-					}
-					else
-					{
-						s_Logger.warn("Cannot parse " + fieldName + " : " + parser.getText()
-								+ " as a double");
-					}
-					break;
-				case RECORD_UNUSUALNESS:
-					token = parser.nextToken();
-					if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)
-					{
-						record.setRecordUnusualness(parser.getDoubleValue());
+						cause.setProbability(parser.getDoubleValue());
 					}
 					else
 					{
@@ -395,7 +255,7 @@ public class AnomalyRecord
 					token = parser.nextToken();
 					if (token == JsonToken.VALUE_STRING)
 					{
-						record.setByFieldName(parser.getText());
+						cause.setByFieldName(parser.getText());
 					}
 					else
 					{
@@ -407,7 +267,7 @@ public class AnomalyRecord
 					token = parser.nextToken();
 					if (token == JsonToken.VALUE_STRING)
 					{
-						record.setByFieldValue(parser.getText());
+						cause.setByFieldValue(parser.getText());
 					}
 					else
 					{
@@ -419,7 +279,7 @@ public class AnomalyRecord
 					token = parser.nextToken();
 					if (token == JsonToken.VALUE_STRING)
 					{
-						record.setPartitionFieldName(parser.getText());
+						cause.setPartitionFieldName(parser.getText());
 					}
 					else
 					{
@@ -431,7 +291,7 @@ public class AnomalyRecord
 					token = parser.nextToken();
 					if (token == JsonToken.VALUE_STRING)
 					{
-						record.setPartitionFieldValue(parser.getText());
+						cause.setPartitionFieldValue(parser.getText());
 					}
 					else
 					{
@@ -443,7 +303,7 @@ public class AnomalyRecord
 					token = parser.nextToken();
 					if (token == JsonToken.VALUE_STRING)
 					{
-						record.setFunction(parser.getText());
+						cause.setFunction(parser.getText());
 					}
 					else
 					{
@@ -455,7 +315,7 @@ public class AnomalyRecord
 					token = parser.nextToken();
 					if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)
 					{
-						record.setTypical(parser.getDoubleValue());
+						cause.setTypical(parser.getDoubleValue());
 					}
 					else
 					{
@@ -467,7 +327,7 @@ public class AnomalyRecord
 					token = parser.nextToken();
 					if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)
 					{
-						record.setActual(parser.getDoubleValue());
+						cause.setActual(parser.getDoubleValue());
 					}
 					else
 					{
@@ -479,7 +339,7 @@ public class AnomalyRecord
 					token = parser.nextToken();
 					if (token == JsonToken.VALUE_STRING)
 					{
-						record.setFieldName(parser.getText());
+						cause.setFieldName(parser.getText());
 					}
 					else
 					{
@@ -491,7 +351,7 @@ public class AnomalyRecord
 					token = parser.nextToken();
 					if (token == JsonToken.VALUE_STRING)
 					{
-						record.setOverFieldName(parser.getText());
+						cause.setOverFieldName(parser.getText());
 					}
 					else
 					{
@@ -503,7 +363,7 @@ public class AnomalyRecord
 					token = parser.nextToken();
 					if (token == JsonToken.VALUE_STRING)
 					{
-						record.setOverFieldValue(parser.getText());
+						cause.setOverFieldValue(parser.getText());
 					}
 					else
 					{
@@ -511,32 +371,14 @@ public class AnomalyRecord
 								+ " as a string");
 					}
 					break;
-				case CAUSES:
-					token = parser.nextToken();
-					if (token != JsonToken.START_ARRAY)
-					{
-						String msg = "Invalid value Expecting an array of causes";
-						s_Logger.warn(msg);
-						throw new AutoDetectParseException(msg);
-					}
-					
-					token = parser.nextToken();
-					while (token != JsonToken.END_ARRAY)
-					{
-						AnomalyCause cause = AnomalyCause.parseJson(parser);
-						record.addCause(cause);
-						
-						token = parser.nextToken();
-					}
-					break;
 				default:
-					s_Logger.warn(String.format("Parse error unknown field in Anomaly Record %s:%s",
+					s_Logger.warn(String.format("Parse error unknown field in Anomaly Cause %s:%s",
 							fieldName, parser.nextTextValue()));
 					break;
 				}
 				break;
 			default:
-				s_Logger.warn("Parsing error: Only simple fields expected in Anomaly Record not "
+				s_Logger.warn("Parsing error: Only simple fields expected in Anomaly Cause not "
 								+ token);
 				break;
 			}
@@ -544,43 +386,37 @@ public class AnomalyRecord
 			token = parser.nextToken();
 		}
 
-		return record;
+		return cause;
 	}
-	
-	
+
+
 	private boolean bothNullOrEqual(Object o1, Object o2)
 	{
 		if (o1 == null && o2 == null)
 		{
 			return true;
 		}
-		
+
 		if (o1 == null || o2 == null)
 		{
 			return false;
 		}
-		
-		return o1.equals(o2);	
+
+		return o1.equals(o2);
 	}
 
 	@Override
 	public int hashCode()
 	{
-		// ID is NOT included in the hash, so that a record from the data store
-		// will hash the same as a record representing the same anomaly that did
-		// not come from the data store
-
 		final int prime = 31;
 		int result = 1;
 		long temp;
 		temp = Double.doubleToLongBits(m_Probability);
 		result = prime * result + (int) (temp ^ (temp >>> 32));
-		temp = Double.doubleToLongBits(m_AnomalyScore);
+		temp = Double.doubleToLongBits(m_Actual);
 		result = prime * result + (int) (temp ^ (temp >>> 32));
-		temp = Double.doubleToLongBits(m_RecordUnusualness);
+		temp = Double.doubleToLongBits(m_Typical);
 		result = prime * result + (int) (temp ^ (temp >>> 32));
-		result = prime * result
-				+ ((m_Actual == null) ? 0 : m_Actual.hashCode());
 		result = prime * result
 				+ ((m_ByFieldName == null) ? 0 : m_ByFieldName.hashCode());
 		result = prime * result
@@ -594,10 +430,6 @@ public class AnomalyRecord
 		result = prime
 				* result
 				+ ((m_OverFieldValue == null) ? 0 : m_OverFieldValue.hashCode());
-		result = prime * result
-				+ ((m_Causes == null) ? 0 : m_Causes.hashCode());
-		result = prime * result
-				+ ((m_Parent == null) ? 0 : m_Parent.hashCode());
 		result = prime
 				* result
 				+ ((m_PartitionFieldName == null) ? 0 : m_PartitionFieldName
@@ -606,37 +438,27 @@ public class AnomalyRecord
 				* result
 				+ ((m_PartitionFieldValue == null) ? 0 : m_PartitionFieldValue
 						.hashCode());
-		result = prime * result
-				+ ((m_Timestamp == null) ? 0 : m_Timestamp.hashCode());
-		result = prime * result
-				+ ((m_Typical == null) ? 0 : m_Typical.hashCode());
 
 		return result;
 	}
 
-	
-	@Override 
+
+	@Override
 	public boolean equals(Object other)
 	{
 		if (this == other)
 		{
 			return true;
 		}
-		
-		if (other instanceof AnomalyRecord == false)
+
+		if (other instanceof AnomalyCause == false)
 		{
 			return false;
 		}
-		
-		AnomalyRecord that = (AnomalyRecord)other;
 
-		// ID is NOT compared, so that a record from the data store will compare
-		// equal to a record representing the same anomaly that did not come
-		// from the data store
+		AnomalyCause that = (AnomalyCause)other;
 
 		boolean equal = this.m_Probability == that.m_Probability &&
-				this.m_AnomalyScore == that.m_AnomalyScore &&
-				this.m_RecordUnusualness == that.m_RecordUnusualness &&
 				bothNullOrEqual(this.m_Typical, that.m_Typical) &&
 				bothNullOrEqual(this.m_Actual, that.m_Actual) &&
 				bothNullOrEqual(this.m_Function, that.m_Function) &&
@@ -646,30 +468,7 @@ public class AnomalyRecord
 				bothNullOrEqual(this.m_PartitionFieldName, that.m_PartitionFieldName) &&
 				bothNullOrEqual(this.m_PartitionFieldValue, that.m_PartitionFieldValue) &&
 				bothNullOrEqual(this.m_OverFieldName, that.m_OverFieldName) &&
-				bothNullOrEqual(this.m_OverFieldValue, that.m_OverFieldValue) &&
-				bothNullOrEqual(this.m_Timestamp, that.m_Timestamp) &&
-				bothNullOrEqual(this.m_Parent, that.m_Parent);
-
-		if (this.m_Causes == null && that.m_Causes == null)
-		{
-			equal &= true;
-		}
-		else if (this.m_Causes != null && that.m_Causes != null)
-		{
-			equal &= this.m_Causes.size() == that.m_Causes.size();
-			if (equal)
-			{
-				for (int i=0; i<this.m_Causes.size(); i++)
-				{
-					equal &= this.m_Causes.get(i).equals(that.m_Causes.get(i));
-				}
-			}
-		}
-		else
-		{
-			// one null the other not
-			equal = false;
-		}
+				bothNullOrEqual(this.m_OverFieldValue, that.m_OverFieldValue);
 
 		return equal;
 	}
