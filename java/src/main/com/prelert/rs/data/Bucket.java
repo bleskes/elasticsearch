@@ -76,7 +76,7 @@ public class Bucket
 	private Date m_Timestamp;
 	private double m_RawAnomalyScore;	
 	private double m_AnomalyScore;	
-	private double m_UnusualScore;	
+	private double m_MaxRecordUnusualness;	
 	private int m_RecordCount;
 	private List<Detector> m_Detectors;
 	private long m_Epoch;
@@ -149,14 +149,14 @@ public class Bucket
 	}
 
 
-	public double getUnusualScore() 
+	public double getMaxRecordUnusualness() 
 	{
-		return m_UnusualScore;
+		return m_MaxRecordUnusualness;
 	}	
 
-	public void setUnusualScore(double unusualScore) 
+	public void setMaxRecordUnusualness(double maxRecordUnusualness) 
 	{
-		this.m_UnusualScore = unusualScore;
+		this.m_MaxRecordUnusualness = maxRecordUnusualness;
 	}
 
 
@@ -341,7 +341,7 @@ public class Bucket
 					token = parser.nextToken();
 					if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)	
 					{
-						bucket.setUnusualScore(parser.getDoubleValue());
+						bucket.setMaxRecordUnusualness(parser.getDoubleValue());
 					}
 					else
 					{
@@ -426,7 +426,7 @@ public class Bucket
 		result = prime * result + (int) (temp ^ (temp >>> 32));
 		temp = Double.doubleToLongBits(m_AnomalyScore);
 		result = prime * result + (int) (temp ^ (temp >>> 32));
-		temp = Double.doubleToLongBits(m_UnusualScore);
+		temp = Double.doubleToLongBits(m_MaxRecordUnusualness);
 		result = prime * result + (int) (temp ^ (temp >>> 32));
 		result = prime * result
 				+ ((m_Detectors == null) ? 0 : m_Detectors.hashCode());
@@ -465,7 +465,7 @@ public class Bucket
 				(this.m_EventCount == that.m_EventCount) &&
 				(this.m_RawAnomalyScore == that.m_RawAnomalyScore) &&
 				(this.m_AnomalyScore == that.m_AnomalyScore) &&
-				(this.m_UnusualScore == that.m_UnusualScore) &&
+				(this.m_MaxRecordUnusualness == that.m_MaxRecordUnusualness) &&
 				(this.m_RecordCount == that.m_RecordCount) &&
 				(this.m_Epoch == that.m_Epoch);
 		

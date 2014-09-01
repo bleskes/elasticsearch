@@ -184,7 +184,7 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
 		}
 		if (updateUnusual)
 		{
-			map.put(Bucket.MAX_RECORD_UNUSUALNESS, bucket.getUnusualScore());
+			map.put(Bucket.MAX_RECORD_UNUSUALNESS, bucket.getMaxRecordUnusualness());
 		}
 
 		try
@@ -214,7 +214,7 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
 				}
 				if (updateUnusual)
 				{
-					map.put(AnomalyRecord.RECORD_UNUSUALNESS, record.getUnusualScore());
+					map.put(AnomalyRecord.RECORD_UNUSUALNESS, record.getRecordUnusualness());
 				}
 
 				String recordId = record.getId();

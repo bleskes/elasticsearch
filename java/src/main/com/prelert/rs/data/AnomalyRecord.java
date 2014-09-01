@@ -112,7 +112,7 @@ public class AnomalyRecord
 	private List<AnomalyCause> m_Causes;
 
 	private double m_AnomalyScore;
-	private double m_UnusualScore;
+	private double m_RecordUnusualness;
 	private Date   m_Timestamp;
 
 	
@@ -148,14 +148,14 @@ public class AnomalyRecord
 		m_AnomalyScore = anomalyScore;
 	}
 	
-	public double getUnusualScore()
+	public double getRecordUnusualness()
 	{
-		return m_UnusualScore;
+		return m_RecordUnusualness;
 	}
 	
-	public void setUnusualScore(double anomalyScore)
+	public void setRecordUnusualness(double recordUnusualness)
 	{
-		m_UnusualScore = anomalyScore;
+		m_RecordUnusualness = recordUnusualness;
 	}
 	
 	
@@ -383,7 +383,7 @@ public class AnomalyRecord
 					token = parser.nextToken();
 					if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)
 					{
-						record.setUnusualScore(parser.getDoubleValue());
+						record.setRecordUnusualness(parser.getDoubleValue());
 					}
 					else
 					{
@@ -577,7 +577,7 @@ public class AnomalyRecord
 		result = prime * result + (int) (temp ^ (temp >>> 32));
 		temp = Double.doubleToLongBits(m_AnomalyScore);
 		result = prime * result + (int) (temp ^ (temp >>> 32));
-		temp = Double.doubleToLongBits(m_UnusualScore);
+		temp = Double.doubleToLongBits(m_RecordUnusualness);
 		result = prime * result + (int) (temp ^ (temp >>> 32));
 		result = prime * result
 				+ ((m_Actual == null) ? 0 : m_Actual.hashCode());
@@ -636,7 +636,7 @@ public class AnomalyRecord
 
 		boolean equal = this.m_Probability == that.m_Probability &&
 				this.m_AnomalyScore == that.m_AnomalyScore &&
-				this.m_UnusualScore == that.m_UnusualScore &&
+				this.m_RecordUnusualness == that.m_RecordUnusualness &&
 				bothNullOrEqual(this.m_Typical, that.m_Typical) &&
 				bothNullOrEqual(this.m_Actual, that.m_Actual) &&
 				bothNullOrEqual(this.m_Function, that.m_Function) &&

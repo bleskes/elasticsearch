@@ -414,18 +414,18 @@ public class Normaliser
 		{
 			for (Bucket bucket : buckets)
 			{
-				double bucketUnusualScore = 0.0;
+				double maxRecordUnusualness = 0.0;
 				for (AnomalyRecord record : bucket.getRecords())
 				{
 					NormalisedResult normalised = scoresIter.next();
 
-					record.setUnusualScore(normalised.getNormalizedUnusualScore());
+					record.setRecordUnusualness(normalised.getNormalizedUnusualScore());
 
-					bucketUnusualScore = Math.max(bucketUnusualScore,
+					maxRecordUnusualness = Math.max(maxRecordUnusualness,
 							normalised.getNormalizedUnusualScore());
 				}
 
-				bucket.setUnusualScore(bucketUnusualScore);
+				bucket.setMaxRecordUnusualness(maxRecordUnusualness);
 			}
 		}
 		catch (NoSuchElementException e)
@@ -456,7 +456,7 @@ public class Normaliser
 			{
 				NormalisedResult normalised = scoresIter.next();
 				bucket.setAnomalyScore(normalised.getNormalizedSysChangeScore());
-				bucket.setUnusualScore(0.0);
+				bucket.setMaxRecordUnusualness(0.0);
 				bucketIdToBucket.put(bucket.getId(), bucket);
 			}
 
@@ -471,13 +471,13 @@ public class Normaliser
 
 				NormalisedResult normalised = scoresIter.next();
 				double unusualScore = normalised.getNormalizedUnusualScore();
-				record.setUnusualScore(unusualScore);
+				record.setRecordUnusualness(unusualScore);
 
 				// Bucket unusual scores are defined to be the highest of those
 				// on their contained records
-				if (unusualScore > parentBucket.getUnusualScore())
+				if (unusualScore > parentBucket.getMaxRecordUnusualness())
 				{
-					parentBucket.setUnusualScore(unusualScore);
+					parentBucket.setMaxRecordUnusualness(unusualScore);
 				}
 			}
 		}
