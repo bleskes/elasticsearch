@@ -36,7 +36,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 
 import org.apache.log4j.Logger;
 import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
@@ -54,7 +53,7 @@ import org.elasticsearch.search.SearchHit;
 
 import com.prelert.job.DetectorState;
 import com.prelert.job.UnknownJobException;
-import com.prelert.job.persistence.JobDataPersister;
+import com.prelert.job.persistence.JobResultsPersister;
 import com.prelert.rs.data.AnomalyCause;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
@@ -89,7 +88,7 @@ import com.prelert.rs.data.Quantiles;
  * <br/>
  * @see com.prelert.job.persistence.elasticsearch.ElasticsearchMappings
  */
-public class ElasticsearchPersister implements JobDataPersister
+public class ElasticsearchPersister implements JobResultsPersister
 {
 	static public final Logger s_Logger = Logger.getLogger(ElasticsearchPersister.class);
 	

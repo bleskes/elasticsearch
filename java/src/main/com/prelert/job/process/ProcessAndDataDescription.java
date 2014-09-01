@@ -33,7 +33,9 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
+import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
+import com.prelert.job.persistence.elasticsearch.ElasticsearchJobDataPersister;
 import com.prelert.job.usage.UsageReporter;
 import com.prelert.job.warnings.StatusReporter;
 
@@ -62,6 +64,9 @@ public class ProcessAndDataDescription
 	
 	private StatusReporter m_StatusReporter;
 	private UsageReporter m_UsageReporter;
+	private ElasticsearchJobDataPersister m_DataPersiter;
+	
+	private AnalysisConfig m_AnalysisConfig;
 
 	/**
 	 * Object for grouping the native process, its data description
@@ -79,9 +84,10 @@ public class ProcessAndDataDescription
 	 */
 	public ProcessAndDataDescription(Process process, String jobId, 
 			DataDescription dd,
-			long timeout, List<String> interestingFields,
+			long timeout, AnalysisConfig analysisConfig,
 			Logger logger, StatusReporter reporter, 
-			UsageReporter usageReporter, Runnable outputParser)
+			UsageReporter usageReporter, Runnable outputParser,
+			ElasticsearchJobDataPersister dataPersister)
 	{
 		m_Process = process;
 		m_DataDescription = dd;
@@ -92,13 +98,16 @@ public class ProcessAndDataDescription
 				new InputStreamReader(m_Process.getErrorStream(),
 						StandardCharsets.UTF_8));		
 		
-		m_InterestingFields = interestingFields;
+		m_AnalysisConfig = analysisConfig;
+		m_InterestingFields = analysisConfig.analysisFields();
 		
 		m_StatusReporter = reporter;
 		m_JobLogger = logger;
 		
 		m_OutputParser = outputParser;
 		m_UsageReporter = usageReporter;
+		
+		m_DataPersiter = dataPersister;
 		
 		m_OutputParserThread = new Thread(m_OutputParser, jobId + "-Bucket-Parser");
 		m_OutputParserThread.start();
@@ -154,6 +163,16 @@ public class ProcessAndDataDescription
 		return m_ErrorReader;
 	}
 	
+	
+	
+	
+	public AnalysisConfig getAnalysisConfig()
+	{
+		return m_AnalysisConfig;
+	}
+	
+	
+	
 	/**
 	 * The list of fields required for the analysis. 
 	 * The remaining fields can be filtered out.
@@ -194,4 +213,9 @@ public class ProcessAndDataDescription
 		m_OutputParserThread.join();
 	}
 	
+	
+	public ElasticsearchJobDataPersister getDataPerister()
+	{
+		return m_DataPersiter;
+	}
 }

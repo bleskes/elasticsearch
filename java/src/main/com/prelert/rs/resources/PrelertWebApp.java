@@ -35,6 +35,7 @@ import javax.ws.rs.core.Application;
 import com.prelert.job.alert.manager.AlertManager;
 import com.prelert.job.alert.persistence.elasticsearch.ElasticsearchAlertPersister;
 import com.prelert.job.manager.JobManager;
+import com.prelert.job.persistence.elasticsearch.ElasticsearchDataPersisterFactory;
 import com.prelert.job.persistence.elasticsearch.ElasticsearchJobProvider;
 import com.prelert.job.persistence.elasticsearch.ElasticsearchResultsReaderFactory;
 import com.prelert.job.usage.elasticsearch.ElasticsearchUsageReporterFactory;
@@ -115,7 +116,8 @@ public class PrelertWebApp extends Application
 		m_JobManager = new JobManager(esJob, 
 				new ElasticsearchResultsReaderFactory(esJob),
 				new ElasticsearchStatusReporterFactory(esJob.getClient()),
-				new ElasticsearchUsageReporterFactory(esJob.getClient())
+				new ElasticsearchUsageReporterFactory(esJob.getClient()),
+				new ElasticsearchDataPersisterFactory(esJob.getClient())
 			);
 		
 		m_AlertManager = new AlertManager(

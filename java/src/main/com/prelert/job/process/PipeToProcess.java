@@ -51,6 +51,7 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
+import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
 import com.prelert.job.input.CountingInputStream;
 import com.prelert.job.input.LengthEncodedWriter;
@@ -58,6 +59,7 @@ import com.prelert.job.warnings.HighProportionOfBadTimestampsException;
 import com.prelert.job.warnings.OutOfOrderRecordsException;
 import com.prelert.job.warnings.StatusReporter;
 import com.prelert.rs.data.ErrorCode;
+import com.prelert.job.persistence.elasticsearch.ElasticsearchJobDataPersister;
 import com.prelert.job.usage.UsageReporter;
 
 
@@ -94,9 +96,10 @@ public class PipeToProcess
 	 * of the records read have missing fields
 	 * @throws OutOfOrderRecordsException 
 	 */
-	static public void pipeCsv(DataDescription dd, List<String> analysisFields,
+	static public void pipeCsv(DataDescription dd, AnalysisConfig analysisConfig,
 		InputStream is, OutputStream os, StatusReporter statusReporter,
-		UsageReporter usageReporter, Logger logger)
+		UsageReporter usageReporter, ElasticsearchJobDataPersister dataPersister,
+		Logger logger)
 				throws IOException, MissingFieldException, HighProportionOfBadTimestampsException,
 				OutOfOrderRecordsException
 	{	
@@ -108,6 +111,9 @@ public class PipeToProcess
 		int recordsWritten = 0;
 		int lineCount = 0;
 		
+		List<String> analysisFields = analysisConfig.analysisFields();
+		
+	
 		CountingInputStream countingStream = new CountingInputStream(is, 
 				usageReporter, statusReporter);
 		CsvListReader csvReader = new CsvListReader(
@@ -116,7 +122,7 @@ public class PipeToProcess
 		try 
 		{
 			String[] header = csvReader.getHeader(true);		
-			
+				
 			List<Pair<String, Integer>> fieldIndexes = 
 					findFieldIndexes(header, dd.getTimeField(), analysisFields);
 			
@@ -149,12 +155,7 @@ public class PipeToProcess
 			{
 				filteredHeader[i++] = p.First;
 			}
-			
-			// Don't close the output stream as it causes the autodetect 
-			// process to quit
-			LengthEncodedWriter lengthEncodedWriter = new LengthEncodedWriter(os);
-			lengthEncodedWriter.writeRecord(filteredHeader);
-			
+		
 			
 			int timeFieldIndex = Arrays.asList(filteredHeader).indexOf(dd.getTimeField());
 			if (timeFieldIndex < 0)
@@ -165,7 +166,18 @@ public class PipeToProcess
 				throw new MissingFieldException(dd.getTimeField(), message, 
 						ErrorCode.MISSING_FIELD);
 			}	
-					
+			
+			dataPersister.setFieldMappings(analysisConfig.fields(), 
+					analysisConfig.byFields(), analysisConfig.overFields(), 
+					analysisConfig.partitionFields(), filteredHeader);
+			
+			
+			// Don't close the output stream as it causes the autodetect 
+			// process to quit
+			LengthEncodedWriter lengthEncodedWriter = new LengthEncodedWriter(os);
+			lengthEncodedWriter.writeRecord(filteredHeader);
+			
+
 			int numFields = fieldIndexes.size();
 			List<String> line;
 			
@@ -225,6 +237,8 @@ public class PipeToProcess
 						recordsWritten++;
 						lastEpoch = epoch;
 					}
+					
+					dataPersister.persistRecord(epoch, record);
 				}
 				catch (NumberFormatException e)
 				{
@@ -234,7 +248,9 @@ public class PipeToProcess
 
 					statusReporter.reportDateParseError();
 					logger.error(message);
-				}	
+				}
+				
+				
 			}
 			
 			lengthEncodedWriter.flush();
@@ -275,9 +291,10 @@ public class PipeToProcess
 	 * of the records read have missing fields or unparseable date formats
 	 * @throws OutOfOrderRecordsException 
 	 */
-	static public void transformAndPipeCsv(DataDescription dd, List<String> analysisFields,
+	static public void transformAndPipeCsv(DataDescription dd, AnalysisConfig analysisConfig,
 			InputStream is, OutputStream os, StatusReporter statusReporter,
-			UsageReporter usageReporter, Logger logger)
+			UsageReporter usageReporter, ElasticsearchJobDataPersister dataPersister,
+			Logger logger)
 	throws IOException, MissingFieldException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException
 	{
 		String timeField = dd.getTimeField();
@@ -297,9 +314,10 @@ public class PipeToProcess
 				csvPref);
 		try
 		{
-			String[] header = csvReader.getHeader(true);	
+			String[] header = csvReader.getHeader(true);
+				
 			List<Pair<String, Integer>> fieldIndexes = 
-					findFieldIndexes(header, timeField, analysisFields);
+					findFieldIndexes(header, timeField, analysisConfig.analysisFields());
 							
 			int maxIndex = 0;
 			Iterator<Pair<String, Integer>> iter = fieldIndexes.iterator();
@@ -340,6 +358,11 @@ public class PipeToProcess
 				
 				throw new MissingFieldException(timeField, message, ErrorCode.MISSING_FIELD);
 			}	
+			
+			
+			dataPersister.setFieldMappings(analysisConfig.fields(), 
+					analysisConfig.byFields(), analysisConfig.overFields(), 
+					analysisConfig.partitionFields(), header);
 			
 
 			// Don't close the output stream as it causes the autodetect 
@@ -392,6 +415,9 @@ public class PipeToProcess
 						// parse as a double and throw away the fractional 
 						// component
 						long epoch = Double.valueOf(record[timeFieldIndex]).longValue() / 1000;
+						
+						dataPersister.persistRecord(epoch, record);
+						
 						if (epoch < lastEpoch)
 						{
 							// out of order 
@@ -456,6 +482,9 @@ public class PipeToProcess
 					try
 					{
 						long epoch = dateFormat.parse(record[timeFieldIndex]).getTime() / 1000;
+						
+						dataPersister.persistRecord(epoch, record);
+						
 						if (epoch < lastEpoch)
 						{
 							// out of order 

@@ -38,7 +38,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.prelert.job.DetectorState;
 import com.prelert.job.QuantilesState;
-import com.prelert.job.persistence.JobDataPersister;
+import com.prelert.job.persistence.JobResultsPersister;
 import com.prelert.job.persistence.JobRenormaliser;
 import com.prelert.rs.data.*;
 
@@ -67,7 +67,7 @@ public class AutoDetectResultsParser
 	 * @throws AutoDetectParseException
 	 */
 	static public void parseResults(InputStream inputStream,
-			JobDataPersister persister, JobRenormaliser renormaliser,
+			JobResultsPersister persister, JobRenormaliser renormaliser,
 			Logger logger)
 	throws JsonParseException, IOException, AutoDetectParseException
 	{
