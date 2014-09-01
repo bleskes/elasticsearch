@@ -802,7 +802,7 @@ public class JobsTest implements Closeable
 				
 				int start = Math.max(0,  buckets.getSkip() - buckets.getTake());
 				String prevPageUrl = String.format(
-						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&anomalyScore=0.0&unusualScore=0.0", 
+						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&anomalyScore=0.0&maxRecordUnusualness=0.0", 
 						baseUrl, jobId,  start, buckets.getTake(), false);
 				
 				test(prevPageUrl.equals(buckets.getPreviousPage().toString()));
@@ -818,7 +818,7 @@ public class JobsTest implements Closeable
 			{
 				int start = Math.max(0,  buckets.getSkip() + buckets.getTake());
 				String nextPageUrl = String.format(
-						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&anomalyScore=0.0&unusualScore=0.0", 
+						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&anomalyScore=0.0&maxRecordUnusualness=0.0", 
 						baseUrl, jobId, start, buckets.getTake(), false);
 
 				test(nextPageUrl.equals(buckets.getNextPage().toString()));
@@ -878,7 +878,7 @@ public class JobsTest implements Closeable
 				
 				int start = Math.max(0,  buckets.getSkip() - buckets.getTake());
 				String prevPageUrl = String.format(
-						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&anomalyScore=0.0&unusualScore=0.0", 
+						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&anomalyScore=0.0&maxRecordUnusualness=0.0", 
 						baseUrl, jobId, start, buckets.getTake(), true);
 
 				test(prevPageUrl.equals(buckets.getPreviousPage().toString()));						
@@ -893,7 +893,7 @@ public class JobsTest implements Closeable
 			{
 				int start = Math.max(0,  buckets.getSkip() + buckets.getTake());
 				String nextPageUrl = String.format(
-						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&anomalyScore=0.0&unusualScore=0.0", 
+						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&anomalyScore=0.0&maxRecordUnusualness=0.0", 
 						baseUrl, jobId, start, buckets.getTake(), true);
 
 				test(nextPageUrl.equals(buckets.getNextPage().toString()));
@@ -1151,7 +1151,7 @@ public class JobsTest implements Closeable
 		
 		// most unusual first
 		Pagination<AnomalyRecord> records = m_WebServiceClient.getRecords(baseUrl, jobId, 
-				0l, 500l, epochStart, epochEnd, AnomalyRecord.UNUSUAL_SCORE, true, null, null);
+				0l, 500l, epochStart, epochEnd, AnomalyRecord.RECORD_UNUSUALNESS, true, null, null);
 		
 		test(records.getDocumentCount() > 0);
 		test(records.getDocumentCount() == records.getDocuments().size());
@@ -1165,7 +1165,7 @@ public class JobsTest implements Closeable
 		
 		// least unusual first
 		records = m_WebServiceClient.getRecords(baseUrl, jobId, 
-				0l, 500l, epochStart, epochEnd, AnomalyRecord.UNUSUAL_SCORE, false, null, null);
+				0l, 500l, epochStart, epochEnd, AnomalyRecord.RECORD_UNUSUALNESS, false, null, null);
 		
 		test(records.getDocumentCount() > 0);
 		test(records.getDocumentCount() == records.getDocuments().size());

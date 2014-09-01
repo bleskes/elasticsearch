@@ -58,7 +58,7 @@ public class Bucket
 	public static final String TIMESTAMP = "timestamp";
 	public static final String RAW_ANOMALY_SCORE =  "rawAnomalyScore";
 	public static final String ANOMALY_SCORE =  "anomalyScore";
-	public static final String UNUSUAL_SCORE =  "unusualScore";
+	public static final String MAX_RECORD_UNUSUALNESS =  "maxRecordUnusualness";
 	public static final String RECORD_COUNT = "recordCount";
 	public static final String EVENT_COUNT = "eventCount";
 	public static final String DETECTORS = "detectors";
@@ -337,7 +337,7 @@ public class Bucket
 										+ " as a double");
 					}
 					break;	
-				case UNUSUAL_SCORE:
+				case MAX_RECORD_UNUSUALNESS:
 					token = parser.nextToken();
 					if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)	
 					{
@@ -345,7 +345,7 @@ public class Bucket
 					}
 					else
 					{
-						s_Logger.warn("Cannot parse " + UNUSUAL_SCORE + " : " + parser.getText() 
+						s_Logger.warn("Cannot parse " + MAX_RECORD_UNUSUALNESS + " : " + parser.getText() 
 										+ " as a double");
 					}
 					break;	

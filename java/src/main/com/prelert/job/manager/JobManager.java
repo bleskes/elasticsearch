@@ -427,7 +427,7 @@ public class JobManager
 	 * @param sortDescending
 	 * @param anomalyScoreThreshold Return only buckets with an anomalyScore >=
 	 * this value
-	 * @param unusualScoreThreshold Return only buckets with an unusualScore >=
+	 * @param unusualScoreThreshold Return only buckets with an maxRecordUnusualness >=
 	 * this value
 	 * 
 	 * @return
@@ -460,7 +460,7 @@ public class JobManager
 	 * @param sortDescending
 	 * @param anomalyScoreThreshold Return only buckets with an anomalyScore >=
 	 * this value
-	 * @param unusualScoreThreshold Return only buckets with an unusualScore >=
+	 * @param unusualScoreThreshold Return only buckets with an maxRecordUnusualness >=
 	 * this value
 	 * 
 	 * @return

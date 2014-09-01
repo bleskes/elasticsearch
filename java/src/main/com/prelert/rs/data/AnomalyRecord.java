@@ -91,7 +91,7 @@ public class AnomalyRecord
 	 * Normalisation
 	 */
 	static final public String ANOMALY_SCORE = "anomalyScore";
-	static final public String UNUSUAL_SCORE = "unusualScore";
+	static final public String RECORD_UNUSUALNESS = "recordUnusualness";
 	
 	private static final Logger s_Logger = Logger.getLogger(AnomalyRecord.class);
 	
@@ -379,7 +379,7 @@ public class AnomalyRecord
 								+ " as a double");
 					}
 					break;
-				case UNUSUAL_SCORE:
+				case RECORD_UNUSUALNESS:
 					token = parser.nextToken();
 					if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)
 					{

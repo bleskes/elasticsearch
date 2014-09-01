@@ -483,7 +483,7 @@ public class ElasticsearchJobProvider implements JobProvider
 		}
 		if (unusualScoreThreshold > 0.0)
 		{
-			RangeFilterBuilder scoreFilter = FilterBuilders.rangeFilter(Bucket.UNUSUAL_SCORE);
+			RangeFilterBuilder scoreFilter = FilterBuilders.rangeFilter(Bucket.MAX_RECORD_UNUSUALNESS);
 			scoreFilter.gte(unusualScoreThreshold);
 			
 			if (fb == null)
@@ -547,7 +547,7 @@ public class ElasticsearchJobProvider implements JobProvider
 		
 		if (unusualScoreThreshold > 0.0)
 		{
-			RangeFilterBuilder scoreFilter = FilterBuilders.rangeFilter(Bucket.UNUSUAL_SCORE);
+			RangeFilterBuilder scoreFilter = FilterBuilders.rangeFilter(Bucket.MAX_RECORD_UNUSUALNESS);
 			scoreFilter.gte(unusualScoreThreshold);
 			
 			if (fb == null)
@@ -759,7 +759,7 @@ public class ElasticsearchJobProvider implements JobProvider
 		
 		if (unusualScoreThreshold > 0.0)
 		{
-			RangeFilterBuilder scoreFilter = FilterBuilders.rangeFilter(AnomalyRecord.UNUSUAL_SCORE);
+			RangeFilterBuilder scoreFilter = FilterBuilders.rangeFilter(AnomalyRecord.RECORD_UNUSUALNESS);
 			scoreFilter.gte(unusualScoreThreshold);
 			
 			if (fb == null)
@@ -816,7 +816,7 @@ public class ElasticsearchJobProvider implements JobProvider
 		 }
 		 if (unusualScoreThreshold > 0.0)
 		 {
-			 RangeFilterBuilder scoreFilter = FilterBuilders.rangeFilter(AnomalyRecord.UNUSUAL_SCORE);
+			 RangeFilterBuilder scoreFilter = FilterBuilders.rangeFilter(AnomalyRecord.RECORD_UNUSUALNESS);
 			 scoreFilter.gte(unusualScoreThreshold);
 
 			 if (fb == null)
