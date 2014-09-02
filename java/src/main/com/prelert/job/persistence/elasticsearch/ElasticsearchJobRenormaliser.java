@@ -34,6 +34,9 @@ import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 import org.elasticsearch.ElasticsearchException;
+import org.elasticsearch.action.bulk.BulkItemResponse;
+import org.elasticsearch.action.bulk.BulkRequestBuilder;
+import org.elasticsearch.action.bulk.BulkResponse;
 
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.JobDetails;
@@ -177,22 +180,22 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
 			boolean updateSysChange, boolean updateUnusual,
 			Logger logger)
 	{
-		Map<String, Object> map = new TreeMap<>();
-		if (updateSysChange)
-		{
-			map.put(Bucket.ANOMALY_SCORE, bucket.getAnomalyScore());
-		}
-		if (updateUnusual)
-		{
-			map.put(Bucket.MAX_RECORD_UNUSUALNESS, bucket.getMaxRecordUnusualness());
-		}
-
 		try
 		{
 			// First update the bucket
 			String bucketId = bucket.getId();
 			if (bucketId != null)
 			{
+				Map<String, Object> map = new TreeMap<>();
+				if (updateSysChange)
+				{
+					map.put(Bucket.ANOMALY_SCORE, bucket.getAnomalyScore());
+				}
+				if (updateUnusual)
+				{
+					map.put(Bucket.MAX_RECORD_UNUSUALNESS, bucket.getMaxRecordUnusualness());
+				}
+
 				m_JobProvider.getClient().prepareUpdate(m_JobId, Bucket.TYPE, bucketId)
 						// TODO add when we upgrade to ES 1.3
 						//.setDetectNoop(true)
@@ -204,33 +207,50 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
 				logger.warn("Failed to renormalise bucket - no ID");
 			}
 
-			// Now update the records within the bucket
-			map.clear();
+			// Now bulk update the records within the bucket
+			BulkRequestBuilder bulkRequest = m_JobProvider.getClient().prepareBulk();
+			boolean addedAny = false;
 			for (AnomalyRecord record : bucket.getRecords())
 			{
-				if (updateSysChange)
-				{
-					map.put(AnomalyRecord.ANOMALY_SCORE, record.getAnomalyScore());
-				}
-				if (updateUnusual)
-				{
-					map.put(AnomalyRecord.RECORD_UNUSUALNESS, record.getRecordUnusualness());
-				}
-
 				String recordId = record.getId();
 				if (recordId != null)
 				{
-					m_JobProvider.getClient().prepareUpdate(m_JobId, AnomalyRecord.TYPE, recordId)
+					Map<String, Object> map = new TreeMap<>();
+					if (updateSysChange)
+					{
+						map.put(AnomalyRecord.ANOMALY_SCORE, record.getAnomalyScore());
+					}
+					if (updateUnusual)
+					{
+						map.put(AnomalyRecord.RECORD_UNUSUALNESS, record.getRecordUnusualness());
+					}
+
+					bulkRequest.add(m_JobProvider.getClient()
+							.prepareUpdate(m_JobId, AnomalyRecord.TYPE, recordId)
 							// TODO add when we upgrade to ES 1.3
 							//.setDetectNoop(true)
 							.setDoc(map)
 							// Need to specify the parent ID when updating a child
-							.setParent(bucketId)
-							.execute().actionGet();
+							.setParent(bucketId));
+
+					addedAny = true;
 				}
 				else
 				{
 					logger.warn("Failed to renormalise record - no ID");
+				}
+			}
+
+			if (addedAny)
+			{
+				BulkResponse bulkResponse = bulkRequest.execute().actionGet();
+				if (bulkResponse.hasFailures())
+				{
+					logger.error("BulkResponse has errors");
+					for (BulkItemResponse item : bulkResponse.getItems())
+					{
+						logger.error(item.getFailureMessage());
+					}
 				}
 			}
 		}
