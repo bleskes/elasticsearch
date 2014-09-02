@@ -32,11 +32,13 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.log4j.Logger;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 
 import com.prelert.job.persistence.JobDataPersister;
+
 
 public class ElasticsearchJobDataPersister implements JobDataPersister
 {
@@ -50,7 +52,7 @@ public class ElasticsearchJobDataPersister implements JobDataPersister
 	public static String TYPE = "saved-data";
 	
 	private Client m_Client;
-	private String m_JobId;
+	private String m_IndexName;
 	
 	private String [] m_FieldNames;
 	private int [] m_FieldMappings;
@@ -58,12 +60,35 @@ public class ElasticsearchJobDataPersister implements JobDataPersister
 	private int [] m_OverFieldMappings;
 	private int [] m_PartitionFieldMappings;
 	
-	public ElasticsearchJobDataPersister(String jobId, Client client)
+	
+	private Logger m_Logger;
+	
+	public ElasticsearchJobDataPersister(String jobId, Client client, Logger logger)
 	{
-		m_JobId = jobId;
+		m_IndexName = jobId + "_raw";
 		m_Client = client;
+		m_Logger = logger;
+		
+		createIndex();
 	}
 
+	private void createIndex() 
+	{
+		try
+		{
+			XContentBuilder inputDataMapping = ElasticsearchMappings.inputDataMapping();
+
+			m_Client.admin().indices()
+				.prepareCreate(m_IndexName)					
+				.addMapping(ElasticsearchJobDataPersister.TYPE, inputDataMapping)
+				.get();
+		}
+		catch (IOException e)
+		{
+			m_Logger.error("Error creating the raw data index " + m_IndexName, e);
+		}
+	}
+	
 
 	@Override
 	public void setFieldMappings(List<String> fields, 
@@ -158,7 +183,7 @@ public class ElasticsearchJobDataPersister implements JobDataPersister
 				jsonBuilder.endArray();	
 
 
-				m_Client.prepareIndex(m_JobId, PERSISTED_RECORD_TYPE)
+				m_Client.prepareIndex(m_IndexName, PERSISTED_RECORD_TYPE)
 								.setSource(jsonBuilder)
 								.get();
 
@@ -170,7 +195,7 @@ public class ElasticsearchJobDataPersister implements JobDataPersister
 		}
 		catch (IOException e)
 		{
-			System.out.print(e);
+			m_Logger.error("Error persisted raw record", e);
 		}
 
 	}

@@ -519,8 +519,12 @@ public class ElasticsearchMappings
 	}
 	
 	
-	
-	
+	/**
+	 * Mapping for the saved data records
+	 *  
+	 * @return
+	 * @throws IOException
+	 */
 	static public XContentBuilder inputDataMapping() 
 	throws IOException
 	{
