@@ -36,6 +36,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Date;
+import java.util.Enumeration;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
@@ -840,9 +841,28 @@ public class ProcessManager
 				fileAppender.setMaxFileSize("1MB");
 				fileAppender.setMaxBackupIndex(9);
 
+				// Try to copy the maximum file size and maximum index from the
+				// first rolling file appender of the root logger (there will
+				// be one unless the user has meddled with the default config).
+				// If we fail the defaults set above will remain in force.
+				Enumeration rootAppenders = Logger.getRootLogger().getAllAppenders();
+				while (rootAppenders.hasMoreElements())
+				{
+					try
+					{
+						RollingFileAppender defaultFileAppender = (RollingFileAppender)rootAppenders.nextElement();
+						fileAppender.setMaximumFileSize(defaultFileAppender.getMaximumFileSize());
+						fileAppender.setMaxBackupIndex(defaultFileAppender.getMaxBackupIndex());
+						break;
+					}
+					catch (ClassCastException e)
+					{
+						// Ignore it
+					}
+				}
+
 				logger.addAppender(fileAppender);
 			}
-
 
 			return logger;
 		}
