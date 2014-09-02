@@ -47,7 +47,7 @@ public class ElasticsearchDataPersisterFactory implements DataPersisterFactory
 	public JobDataPersister newDataPersister(String jobId,
 			Logger logger) 
 	{
-		return new ElasticsearchJobDataPersister(jobId, m_Client);
+		return new ElasticsearchJobDataPersister(jobId, m_Client, logger);
 	}
 
 }

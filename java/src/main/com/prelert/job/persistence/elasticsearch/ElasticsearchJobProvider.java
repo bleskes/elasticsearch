@@ -326,8 +326,7 @@ public class ElasticsearchJobProvider implements JobProvider
 			XContentBuilder detectorStateMapping = ElasticsearchMappings.detectorStateMapping();
 			XContentBuilder usageMapping = ElasticsearchMappings.usageMapping();
 			XContentBuilder alertMapping = ElasticsearchMappings.alertMapping();
-			XContentBuilder inputDataMapping = ElasticsearchMappings.inputDataMapping();
-			
+						
 			m_Client.admin().indices()
 					.prepareCreate(job.getId())					
 					.addMapping(JobDetails.TYPE, jobMapping)
@@ -338,7 +337,6 @@ public class ElasticsearchJobProvider implements JobProvider
 					.addMapping(DetectorState.TYPE, detectorStateMapping)
 					.addMapping(Usage.TYPE, usageMapping)
 					.addMapping(Alert.TYPE, alertMapping)
-					.addMapping(ElasticsearchJobDataPersister.TYPE, inputDataMapping)
 					.get();
 
 			
