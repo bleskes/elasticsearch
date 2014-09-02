@@ -1106,7 +1106,7 @@ public class JobsTest implements Closeable
 		for (Bucket b : buckets.getDocuments())
 		{
 			test(b.getAnomalyScore() >= 50.0);
-			test(b.getUnusualScore()  >= 40.0);
+			test(b.getMaxRecordUnusualness()  >= 40.0);
 		}
 
 		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, 
@@ -1124,7 +1124,7 @@ public class JobsTest implements Closeable
 		
 		for (Bucket b : buckets.getDocuments())
 		{
-			test(b.getUnusualScore() >= 15.0);
+			test(b.getMaxRecordUnusualness() >= 15.0);
 		}
 	}
 	
@@ -1159,8 +1159,8 @@ public class JobsTest implements Closeable
 		double score = 100.0; // max score		
 		for (AnomalyRecord r : records.getDocuments())
 		{
-			test(r.getUnusualScore() <= score);
-			score = r.getUnusualScore();
+			test(r.getRecordUnusualness() <= score);
+			score = r.getRecordUnusualness();
 		}
 		
 		// least unusual first
@@ -1173,8 +1173,8 @@ public class JobsTest implements Closeable
 		score = 0.0; 		
 		for (AnomalyRecord r : records.getDocuments())
 		{
-			test(r.getUnusualScore() >= score);
-			score = r.getUnusualScore();
+			test(r.getRecordUnusualness() >= score);
+			score = r.getRecordUnusualness();
 		}
 		
 		// most anomalous first
@@ -1269,7 +1269,7 @@ public class JobsTest implements Closeable
 		for (AnomalyRecord r : records.getDocuments())
 		{			
 			test(r.getAnomalyScore() >= 8.0);
-			test(r.getUnusualScore() >= 20.0);
+			test(r.getRecordUnusualness() >= 20.0);
 			
 			test(r.getAnomalyScore() <= score);
 			score = r.getAnomalyScore();

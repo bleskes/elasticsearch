@@ -180,8 +180,8 @@ public class NormalizationTest implements Closeable
 			test(Double.compare(pagedBuckets.get(i).getAnomalyScore(),
 								allBuckets.getDocuments().get(i).getAnomalyScore()) == 0);
 			
-			test(Double.compare(pagedBuckets.get(i).getUnusualScore(),
-					allBuckets.getDocuments().get(i).getUnusualScore()) == 0);
+			test(Double.compare(pagedBuckets.get(i).getMaxRecordUnusualness(),
+					allBuckets.getDocuments().get(i).getMaxRecordUnusualness()) == 0);
 			
 			test(pagedBuckets.get(i).equals(allBuckets.getDocuments().get(i)));
 		}
@@ -211,8 +211,8 @@ public class NormalizationTest implements Closeable
 			test(Double.compare(pagedBuckets.get(i).getAnomalyScore(),
 								allBuckets.getDocuments().get(i).getAnomalyScore()) == 0);
 			
-			test(Double.compare(pagedBuckets.get(i).getUnusualScore(),
-					allBuckets.getDocuments().get(i).getUnusualScore()) == 0);			
+			test(Double.compare(pagedBuckets.get(i).getMaxRecordUnusualness(),
+					allBuckets.getDocuments().get(i).getMaxRecordUnusualness()) == 0);			
 			
 			test(pagedBuckets.get(i).equals(allBuckets.getDocuments().get(i)));
 		}
@@ -249,8 +249,8 @@ public class NormalizationTest implements Closeable
 				test(Double.compare(byDate.getDocuments().get(j).getAnomalyScore(),
 						allBuckets.getDocuments().get(j + startIndex).getAnomalyScore()) == 0);
 				
-				test(Double.compare(pagedBuckets.get(i).getUnusualScore(),
-						allBuckets.getDocuments().get(i).getUnusualScore()) == 0);	
+				test(Double.compare(pagedBuckets.get(i).getMaxRecordUnusualness(),
+						allBuckets.getDocuments().get(i).getMaxRecordUnusualness()) == 0);	
 				
 				test(byDate.getDocuments().get(j).equals(allBuckets.getDocuments().get(j + startIndex)));
 			}
@@ -289,10 +289,10 @@ public class NormalizationTest implements Closeable
 			double bucketMax = 0.0;
 			for (AnomalyRecord r : bucket.getRecords())
 			{
-				bucketMax = Math.max(r.getUnusualScore(), bucketMax);
+				bucketMax = Math.max(r.getRecordUnusualness(), bucketMax);
 			}
 			
-			test(bucketMax == bucket.getUnusualScore());
+			test(bucketMax == bucket.getMaxRecordUnusualness());
 		}
 	
 
@@ -314,12 +314,12 @@ public class NormalizationTest implements Closeable
 			double bucketMax = 0.0;
 			for (AnomalyRecord r : records)
 			{
-				bucketMax = Math.max(r.getUnusualScore(), bucketMax);
+				bucketMax = Math.max(r.getRecordUnusualness(), bucketMax);
 				
 				test(r.getAnomalyScore() == bucket.getAnomalyScore());
 			}
 			
-			test(bucketMax == bucket.getUnusualScore());
+			test(bucketMax == bucket.getMaxRecordUnusualness());
 			
 			if (count-- < 0)
 			{
@@ -425,7 +425,7 @@ public class NormalizationTest implements Closeable
 		int highUnusualScoreCount = 0;
 		for (AnomalyRecord record : pagedRecords)
 		{
-			if (record.getUnusualScore() >= 90.0)
+			if (record.getRecordUnusualness() >= 90.0)
 			{
 				highUnusualScoreCount++;
 			}
