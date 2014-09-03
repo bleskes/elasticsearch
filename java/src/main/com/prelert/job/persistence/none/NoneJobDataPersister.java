@@ -46,5 +46,10 @@ public class NoneJobDataPersister implements JobDataPersister
 	public void persistRecord(long epoch, String[] record) 
 	{
 	}
-
+	
+	@Override
+	public boolean deleteData() 
+	{
+		return false;
+	}
 }
