@@ -109,10 +109,14 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
 					normaliser.normaliseForSystemChange(getJobBucketSpan(logger),
 													buckets, sysChangeState);
 
+			int[] counts = { 0, 0 };
 			for (Bucket bucket : normalisedBuckets)
 			{
-				updateSingleBucket(bucket, true, false, logger);
+				updateSingleBucket(bucket, true, false, logger, counts);
 			}
+			logger.info("System changes normalisation resulted in: " +
+						counts[0] + " updates, " +
+						counts[1] + " no-ops");
 		}
 		catch (UnknownJobException uje)
 		{
@@ -152,10 +156,14 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
 					normaliser.normaliseForUnusualBehaviour(getJobBucketSpan(logger),
 													buckets, unusualBehaviourState);
 
+			int[] counts = { 0, 0 };
 			for (Bucket bucket : normalisedBuckets)
 			{
-				updateSingleBucket(bucket, false, true, logger);
+				updateSingleBucket(bucket, false, true, logger, counts);
 			}
+			logger.info("Unusual behaviour normalisation resulted in: " +
+						counts[0] + " updates, " +
+						counts[1] + " no-ops");
 		}
 		catch (UnknownJobException uje)
 		{
@@ -175,36 +183,47 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
 	 * @param bucket
 	 * @param updateSysChange
 	 * @param updateUnusual
+	 * @param logger
+	 * @param counts Element 0 will be incremented if we update a document and
+	 * element 1 if we don't
 	 */
 	private void updateSingleBucket(Bucket bucket,
 			boolean updateSysChange, boolean updateUnusual,
-			Logger logger)
+			Logger logger, int[] counts)
 	{
 		try
 		{
-			// First update the bucket
+			// First update the bucket if worthwhile
 			String bucketId = bucket.getId();
 			if (bucketId != null)
 			{
-				Map<String, Object> map = new TreeMap<>();
-				if (updateSysChange)
+				if (bucket.hadBigNormalisedUpdate())
 				{
-					map.put(Bucket.ANOMALY_SCORE, bucket.getAnomalyScore());
-				}
-				if (updateUnusual)
-				{
-					map.put(Bucket.MAX_RECORD_UNUSUALNESS, bucket.getMaxRecordUnusualness());
-				}
+					Map<String, Object> map = new TreeMap<>();
+					if (updateSysChange)
+					{
+						map.put(Bucket.ANOMALY_SCORE, bucket.getAnomalyScore());
+					}
+					if (updateUnusual)
+					{
+						map.put(Bucket.MAX_RECORD_UNUSUALNESS, bucket.getMaxRecordUnusualness());
+					}
 
-				m_JobProvider.getClient().prepareUpdate(m_JobId, Bucket.TYPE, bucketId)
-						// TODO add when we upgrade to ES 1.3
-						//.setDetectNoop(true)
-						.setDoc(map)
-						.execute().actionGet();
+					m_JobProvider.getClient().prepareUpdate(m_JobId, Bucket.TYPE, bucketId)
+							.setDoc(map)
+							.execute().actionGet();
+
+					++counts[0];
+				}
+				else
+				{
+					++counts[1];
+				}
 			}
 			else
 			{
 				logger.warn("Failed to renormalise bucket - no ID");
+				++counts[1];
 			}
 
 			// Now bulk update the records within the bucket
@@ -215,29 +234,38 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
 				String recordId = record.getId();
 				if (recordId != null)
 				{
-					Map<String, Object> map = new TreeMap<>();
-					if (updateSysChange)
+					if (record.hadBigNormalisedUpdate())
 					{
-						map.put(AnomalyRecord.ANOMALY_SCORE, record.getAnomalyScore());
-					}
-					if (updateUnusual)
-					{
-						map.put(AnomalyRecord.RECORD_UNUSUALNESS, record.getRecordUnusualness());
-					}
+						Map<String, Object> map = new TreeMap<>();
+						if (updateSysChange)
+						{
+							map.put(AnomalyRecord.ANOMALY_SCORE, record.getAnomalyScore());
+						}
+						if (updateUnusual)
+						{
+							map.put(AnomalyRecord.RECORD_UNUSUALNESS, record.getRecordUnusualness());
+						}
 
-					bulkRequest.add(m_JobProvider.getClient()
-							.prepareUpdate(m_JobId, AnomalyRecord.TYPE, recordId)
+						bulkRequest.add(m_JobProvider.getClient()
+								.prepareUpdate(m_JobId, AnomalyRecord.TYPE, recordId)
 							// TODO add when we upgrade to ES 1.3
 							//.setDetectNoop(true)
-							.setDoc(map)
-							// Need to specify the parent ID when updating a child
-							.setParent(bucketId));
+								.setDoc(map)
+								// Need to specify the parent ID when updating a child
+								.setParent(bucketId));
 
-					addedAny = true;
+						addedAny = true;
+						++counts[0];
+					}
+					else
+					{
+						++counts[1];
+					}
 				}
 				else
 				{
 					logger.warn("Failed to renormalise record - no ID");
+					++counts[1];
 				}
 			}
 

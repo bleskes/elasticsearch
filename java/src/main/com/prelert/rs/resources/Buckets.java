@@ -107,7 +107,7 @@ public class Buckets extends ResourceWithJobManager
 			@DefaultValue(JobManager.DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take,
 			@DefaultValue("") @QueryParam(START_QUERY_PARAM) String start,
 			@DefaultValue("") @QueryParam(END_QUERY_PARAM) String end,
-			@DefaultValue("0.0") @QueryParam(AnomalyRecord.ANOMALY_SCORE) double anomalySoreFilter,			
+			@DefaultValue("0.0") @QueryParam(Bucket.ANOMALY_SCORE) double anomalySoreFilter,			
 			@DefaultValue("0.0") @QueryParam(Bucket.MAX_RECORD_UNUSUALNESS) double unusualScoreFilter)
 	throws UnknownJobException, NativeProcessRunException
 	{	
@@ -175,7 +175,7 @@ public class Buckets extends ResourceWithJobManager
     			queryParams.add(this.new KeyValue(END_QUERY_PARAM, end));
     		}
     		queryParams.add(this.new KeyValue(EXPAND_QUERY_PARAM, Boolean.toString(expand)));
-    		queryParams.add(this.new KeyValue(AnomalyRecord.ANOMALY_SCORE, String.format("%2.1f", anomalySoreFilter)));
+    		queryParams.add(this.new KeyValue(Bucket.ANOMALY_SCORE, String.format("%2.1f", anomalySoreFilter)));
     		queryParams.add(this.new KeyValue(Bucket.MAX_RECORD_UNUSUALNESS, String.format("%2.1f", unusualScoreFilter)));
 
     		setPagingUrls(path, buckets, queryParams);

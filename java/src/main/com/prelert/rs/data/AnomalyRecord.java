@@ -40,7 +40,6 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
-import com.prelert.rs.data.AnomalyCause;
 import com.prelert.rs.data.parsing.AutoDetectParseException;
 
 /**
@@ -114,7 +113,8 @@ public class AnomalyRecord
 	private double m_RecordUnusualness;
 	private Date   m_Timestamp;
 
-	
+	private boolean m_HadBigNormalisedUpdate;
+
 	private String m_Parent;
 
 	/**
@@ -144,6 +144,7 @@ public class AnomalyRecord
 	
 	public void setAnomalyScore(double anomalyScore)
 	{
+		m_HadBigNormalisedUpdate |= isBigUpdate(m_AnomalyScore, anomalyScore);
 		m_AnomalyScore = anomalyScore;
 	}
 	
@@ -154,6 +155,7 @@ public class AnomalyRecord
 	
 	public void setRecordUnusualness(double recordUnusualness)
 	{
+		m_HadBigNormalisedUpdate |= isBigUpdate(m_RecordUnusualness, recordUnusualness);
 		m_RecordUnusualness = recordUnusualness;
 	}
 	
@@ -569,6 +571,7 @@ public class AnomalyRecord
 		// will hash the same as a record representing the same anomaly that did
 		// not come from the data store
 
+		// m_HadBigNormalisedUpdate is also deliberately excluded from the hash
 		final int prime = 31;
 		int result = 1;
 		long temp;
@@ -633,6 +636,7 @@ public class AnomalyRecord
 		// equal to a record representing the same anomaly that did not come
 		// from the data store
 
+		// m_HadBigNormalisedUpdate is also deliberately excluded from the test
 		boolean equal = this.m_Probability == that.m_Probability &&
 				this.m_AnomalyScore == that.m_AnomalyScore &&
 				this.m_RecordUnusualness == that.m_RecordUnusualness &&
@@ -673,4 +677,52 @@ public class AnomalyRecord
 		return equal;
 	}
 
+
+	public boolean hadBigNormalisedUpdate()
+	{
+		return m_HadBigNormalisedUpdate;
+	}
+
+
+	public void resetBigNormalisedUpdateFlag()
+	{
+		m_HadBigNormalisedUpdate = false;
+	}
+
+
+	/**
+	 * Encapsulate the logic for deciding whether a change to a normalised score
+	 * is "big".
+	 *
+	 * Current logic is that a big change is a change of at least 1 or more than
+	 * than 50% of the higher of the two values.
+	 *
+	 * @param oldVal The old value of the normalised score
+	 * @param newVal The new value of the normalised score
+	 * @return true if the update is considered "big"
+	 */
+	static boolean isBigUpdate(double oldVal, double newVal)
+	{
+		if (Math.abs(oldVal - newVal) >= 1.0)
+		{
+			return true;
+		}
+
+		if (oldVal > newVal)
+		{
+			if (oldVal * 0.5 > newVal)
+			{
+				return true;
+			}
+		}
+		else
+		{
+			if (newVal * 0.5 > oldVal)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
 }
