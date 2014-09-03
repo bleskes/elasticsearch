@@ -90,7 +90,8 @@ public class JobDetails
 	/* These URIs are transient they don't need to be persisted */
 	private URI m_Location;
 	private URI m_DataEndpoint;
-	private URI m_ResultsEndpoint;
+	private URI m_BucketsEndpoint;
+	private URI m_RecordsEndpoint;
 	private URI m_LogsEndpoint;
 
 	private Counts m_Counts;
@@ -373,23 +374,42 @@ public class JobDetails
 	{
 		m_DataEndpoint = value;
 	}
+	
+	/**
+	 * This Job's buckets endpoint as the full URL path
+	 * 
+	 * @return The Job's buckets URI
+	 */
+	public URI getBucketsEndpoint() 
+	{
+		return m_BucketsEndpoint;
+	}	
+	
+	/**
+	 * Set this Job's buckets endpoint
+	 */
+	public void setBucketsEndpoint(URI results) 
+	{
+		m_BucketsEndpoint = results;
+	}	
+		
 
 	/**
 	 * This Job's results endpoint as the full URL path
 	 * 
 	 * @return The Job's results URI
 	 */
-	public URI getResultsEndpoint() 
+	public URI getRecordsEndpoint() 
 	{
-		return m_ResultsEndpoint;
+		return m_RecordsEndpoint;
 	}	
 	
 	/**
-	 * Set this Job's results endpoint
+	 * Set this Job's records endpoint
 	 */
-	public void setResultsEndpoint(URI results) 
+	public void setRecordsEndpoint(URI results) 
 	{
-		m_ResultsEndpoint = results;
+		m_RecordsEndpoint = results;
 	}	
 	
 
@@ -501,7 +521,8 @@ public class JobDetails
 				bothNullOrEqual(this.m_DataDescription, that.m_DataDescription) &&
 				bothNullOrEqual(this.m_Location, that.m_Location) &&
 				bothNullOrEqual(this.m_DataEndpoint, that.m_DataEndpoint) &&
-				bothNullOrEqual(this.m_ResultsEndpoint, that.m_ResultsEndpoint);				
+				bothNullOrEqual(this.m_BucketsEndpoint, that.m_BucketsEndpoint) &&				
+				bothNullOrEqual(this.m_RecordsEndpoint, that.m_RecordsEndpoint);				
 	}
 	
 	
