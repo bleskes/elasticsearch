@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.shield.n2n;
+package org.elasticsearch.shield.transport.n2n;
 
 import com.google.common.base.Charsets;
 import org.elasticsearch.common.settings.ImmutableSettings;
@@ -52,9 +52,9 @@ public class IpFilteringIntegrationTests extends ShieldIntegrationTest {
         // either deny all or do not have a configuration file, as this denies by default
         if (getRandom().nextBoolean()) {
             File folder = newFolder();
-            builder.put("shield.n2n.file", writeFile(folder, "ip_filter.yml", CONFIG_IPFILTER_DENY_ALL));
+            builder.put("shield.transport.n2n.ip_filter.file", writeFile(folder, "ip_filter.yml", CONFIG_IPFILTER_DENY_ALL));
         } else {
-            builder.remove("shield.n2n.file");
+            builder.remove("shield.transport.n2n.ip_filter.file");
         }
 
         return builder.build();

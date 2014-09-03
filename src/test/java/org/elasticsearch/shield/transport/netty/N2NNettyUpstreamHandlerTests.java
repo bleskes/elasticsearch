@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.shield.n2n;
+package org.elasticsearch.shield.transport.netty;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
@@ -24,6 +24,7 @@ import org.elasticsearch.common.netty.channel.*;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
+import org.elasticsearch.shield.transport.n2n.IPFilteringN2NAuthenticator;
 import org.elasticsearch.test.ElasticsearchTestCase;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.watcher.ResourceWatcherService;
@@ -57,7 +58,7 @@ public class N2NNettyUpstreamHandlerTests extends ElasticsearchTestCase {
         String testData = "allow: 127.0.0.1\ndeny: 10.0.0.0/8";
         Files.write(testData.getBytes(Charsets.UTF_8), configFile);
 
-        Settings settings = settingsBuilder().put("shield.n2n.file", configFile.getPath()).build();
+        Settings settings = settingsBuilder().put("shield.transport.n2n.ip_filter.file", configFile.getPath()).build();
         IPFilteringN2NAuthenticator ipFilteringN2NAuthenticator = new IPFilteringN2NAuthenticator(settings, new Environment(), resourceWatcherService);
 
         nettyUpstreamHandler = new N2NNettyUpstreamHandler(ipFilteringN2NAuthenticator);

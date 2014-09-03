@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.shield.n2n;
+package org.elasticsearch.shield.transport.n2n;
 
 import org.elasticsearch.common.Nullable;
 

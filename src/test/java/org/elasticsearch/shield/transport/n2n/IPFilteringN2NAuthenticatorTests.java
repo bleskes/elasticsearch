@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.shield.n2n;
+package org.elasticsearch.shield.transport.n2n;
 
 import com.google.common.io.Files;
 import org.elasticsearch.ElasticsearchParseException;
@@ -157,7 +157,7 @@ public class IPFilteringN2NAuthenticatorTests extends ElasticsearchTestCase {
     private void writeConfigFile(String data) throws IOException {
         Files.write(data.getBytes(Charsets.UTF_8), configFile);
         resourceWatcherService = new ResourceWatcherService(resourceWatcherServiceSettings, new ThreadPool("resourceWatcher")).start();
-        settings = settingsBuilder().put("shield.n2n.file", configFile.getPath()).build();
+        settings = settingsBuilder().put("shield.transport.n2n.ip_filter.file", configFile.getPath()).build();
         ipFilteringN2NAuthenticator = new IPFilteringN2NAuthenticator(settings, new Environment(), resourceWatcherService);
     }
 
