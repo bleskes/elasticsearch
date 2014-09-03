@@ -66,6 +66,10 @@ public class ElasticsearchStatusReporter extends StatusReporter
 			long processedDataPointCount = 
 					(getRecordsWrittenCount() * getAnalysedFieldsPerRecord())
 					- getMissingFieldErrorCount();
+			
+			// processedDataPointCount could be a -ve value if no
+			// records have been written in which case it should be 0
+			processedDataPointCount = (processedDataPointCount < 0) ? 0 : processedDataPointCount;
 					
 			
 			Map<String, Object> updates = new HashMap<>();
