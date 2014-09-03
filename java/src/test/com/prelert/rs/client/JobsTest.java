@@ -1653,6 +1653,7 @@ public class JobsTest implements Closeable
 		test.m_WebServiceClient.deleteJob(baseUrl, "flightcentre-csv");
 		test.m_WebServiceClient.deleteJob(baseUrl, "flightcentre-epoch-ms");
 
+		
 		//=================
 		// CSV & Gzip test 
 		//
@@ -1672,7 +1673,6 @@ public class JobsTest implements Closeable
 		//=================
 		// JSON test
 		//
-		
 		String flightCentreJsonJobId = test.createFlightCentreJsonJobTest(baseUrl);
 		test.getJobsTest(baseUrl);
 		test.uploadData(baseUrl, flightCentreJsonJobId, flightCentreJsonData, false);
@@ -1761,7 +1761,6 @@ public class JobsTest implements Closeable
 		//=================
 		// double upload test (upload same file twice)
 		//
-		
 		String doubleUploadTest = test.createFareQuoteTimeFormatJobTest(baseUrl);
 		jobUrls.add(doubleUploadTest);		
 

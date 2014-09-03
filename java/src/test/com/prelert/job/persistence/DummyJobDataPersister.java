@@ -48,9 +48,14 @@ public class DummyJobDataPersister implements JobDataPersister
 		m_RecordCount++;
 	}
 	
+	@Override
+	public boolean deleteData() 
+	{
+		return false;
+	}
+	
 	public int getRecordCount()
 	{
 		return m_RecordCount;
 	}
-
 }

@@ -45,7 +45,7 @@ public interface JobDataPersister
 	 * @param partitionFields
 	 * @param header
 	 */
-	public abstract void setFieldMappings(List<String> fields,
+	public void setFieldMappings(List<String> fields,
 			List<String> byFields, List<String> overFields,
 			List<String> partitionFields, String[] header);
 
@@ -56,5 +56,12 @@ public interface JobDataPersister
 	 * @param epoch 
 	 * @param record
 	 */
-	public abstract void persistRecord(long epoch, String[] record);
+	public void persistRecord(long epoch, String[] record);
+	
+	/**
+	 * Delete all the persisted records
+	 * 
+	 * @return
+	 */
+	public boolean deleteData();
 }

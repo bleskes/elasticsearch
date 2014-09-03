@@ -109,6 +109,8 @@ public class JobManager
 	
 	private JobProvider m_JobProvider;
 	
+	private DataPersisterFactory m_DataPersisterFactory;
+	
 
 	/**
 	 * These default to unlimited (indicated by negative limits), but may be
@@ -137,6 +139,8 @@ public class JobManager
 			DataPersisterFactory dataPersisterFactory)
 	{
 		m_JobProvider = jobProvider;
+		
+		m_DataPersisterFactory = dataPersisterFactory;
 		
 		m_ProcessManager = new ProcessManager(jobProvider, 
 				resultsReaderFactory, statusReporterFactory,
@@ -564,6 +568,8 @@ public class JobManager
 		
 		m_ProcessManager.finishJob(jobId);
 		m_JobProvider.deleteJob(jobId);
+		
+		m_DataPersisterFactory.newDataPersister(jobId, s_Logger).deleteData();
 		
 		return true;
 	}

@@ -31,8 +31,11 @@ package com.prelert.job.persistence.elasticsearch;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import org.apache.log4j.Logger;
+import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
+import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
@@ -74,18 +77,22 @@ public class ElasticsearchJobDataPersister implements JobDataPersister
 
 	private void createIndex() 
 	{
-		try
+		if (m_Client.admin().indices().prepareExists(m_IndexName).get().isExists()
+				== false)
 		{
-			XContentBuilder inputDataMapping = ElasticsearchMappings.inputDataMapping();
+			try
+			{
+				XContentBuilder inputDataMapping = ElasticsearchMappings.inputDataMapping();
 
-			m_Client.admin().indices()
-				.prepareCreate(m_IndexName)					
-				.addMapping(ElasticsearchJobDataPersister.TYPE, inputDataMapping)
-				.get();
-		}
-		catch (IOException e)
-		{
-			m_Logger.error("Error creating the raw data index " + m_IndexName, e);
+				m_Client.admin().indices()
+						.prepareCreate(m_IndexName)					
+						.addMapping(ElasticsearchJobDataPersister.TYPE, inputDataMapping)
+						.get();
+			}
+			catch (IOException e)
+			{
+				m_Logger.error("Error creating the raw data index " + m_IndexName, e);
+			}
 		}
 	}
 	
@@ -98,12 +105,11 @@ public class ElasticsearchJobDataPersister implements JobDataPersister
 		List<String> headerList = Arrays.asList(header);
 		
 		m_FieldNames = new String [fields.size()];
-		m_FieldNames = fields.<String>toArray(m_FieldNames);
+		m_FieldNames = fields.<String>toArray(m_FieldNames);	
 		m_FieldMappings = new int [fields.size()];
 		m_ByFieldMappings = new int [byFields.size()];
 		m_OverFieldMappings = new int [overFields.size()];
 		m_PartitionFieldMappings = new int [partitionFields.size()];
-		
 		
 		List<List<String>> allFieldTypes = Arrays.asList(fields, byFields,
 				overFields, partitionFields);
@@ -148,6 +154,7 @@ public class ElasticsearchJobDataPersister implements JobDataPersister
 			{
 				// epoch in ms
 				jsonBuilder.startObject().field("epoch", epoch * 1000);
+				
 
 				for (int i=0; i<m_FieldNames.length; i++)
 				{
@@ -182,7 +189,6 @@ public class ElasticsearchJobDataPersister implements JobDataPersister
 				}
 				jsonBuilder.endArray();	
 
-
 				m_Client.prepareIndex(m_IndexName, PERSISTED_RECORD_TYPE)
 								.setSource(jsonBuilder)
 								.get();
@@ -197,7 +203,27 @@ public class ElasticsearchJobDataPersister implements JobDataPersister
 		{
 			m_Logger.error("Error persisted raw record", e);
 		}
-
 	}
 	
+	@Override
+	public boolean deleteData()
+	{
+		m_Logger.debug("Deleting the raw data index " + m_IndexName);
+
+		// we don't care about errors here as the 
+		// the index may not exist anyway
+		try
+		{
+			DeleteIndexResponse response = m_Client.admin()
+					.indices().delete(new DeleteIndexRequest(m_IndexName)).get();
+
+			return response.isAcknowledged();
+		}
+		catch (InterruptedException|ExecutionException e) 
+		{
+			m_Logger.warn("Error deleting the raw data index", e);
+			return false;
+		}
+	}
+
 }

@@ -816,6 +816,10 @@ public class PipeToProcess
 		
 		LengthEncodedWriter lengthEncodedWriter = new LengthEncodedWriter(os);
 		
+		dataPersister.setFieldMappings(ac.fields(), 
+				ac.byFields(), ac.overFields(), 
+				ac.partitionFields(), allFields);
+		
 		// write header
 		lengthEncodedWriter.writeRecord(allFields);
 		
