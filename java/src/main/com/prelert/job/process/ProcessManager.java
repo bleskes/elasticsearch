@@ -813,22 +813,32 @@ public class ProcessManager
 	 * @return
 	 */
 	private Logger createLogger(String jobId) 
-	{		
+	{
 		try
 		{
+			Logger logger = Logger.getLogger(jobId);
+			logger.setAdditivity(false);
+			logger.setLevel(Level.DEBUG);
+
 			try
 			{
 				Path logDir = FileSystems.getDefault().getPath(ProcessCtrl.LOG_DIR, jobId);		
 				Files.createDirectory(logDir);
+
+				// If we get here then we had to create the directory.  In this
+				// case we always want to create the appender because any
+				// pre-existing appender will be pointing to a directory of the
+				// same name that must have been previously removed.  (See bug
+				// 697 in Bugzilla.)
+				if (logger.getAppender("engine_api_file_appender") != null)
+				{
+					logger.removeAppender("engine_api_file_appender");
+				}
 			}
 			catch (FileAlreadyExistsException e)
 			{
 			}
 
-			Logger logger = Logger.getLogger(jobId);
-			logger.setAdditivity(false);
-			logger.setLevel(Level.DEBUG);
-			
 			if (logger.getAppender("engine_api_file_appender") == null)
 			{
 				Path logFile = FileSystems.getDefault().getPath(ProcessCtrl.LOG_DIR,
