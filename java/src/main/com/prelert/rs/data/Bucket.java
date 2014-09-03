@@ -82,6 +82,7 @@ public class Bucket
 	private long m_Epoch;
 	private List<AnomalyRecord> m_Records;
 	private long m_EventCount;
+	private boolean m_HadBigNormalisedUpdate;
 	
 	public Bucket()
 	{
@@ -118,7 +119,7 @@ public class Bucket
 	
 	public void setTimestamp(Date timestamp) 
 	{
-		this.m_Timestamp = timestamp;
+		m_Timestamp = timestamp;
 		
 		// epoch in seconds
 		m_Epoch = m_Timestamp.getTime() / 1000;
@@ -134,7 +135,7 @@ public class Bucket
 
 	public void setRawAnomalyScore(double rawAnomalyScore) 
 	{
-		this.m_RawAnomalyScore = rawAnomalyScore;
+		m_RawAnomalyScore = rawAnomalyScore;
 	}
 
 
@@ -145,9 +146,9 @@ public class Bucket
 
 	public void setAnomalyScore(double anomalyScore) 
 	{
-		this.m_AnomalyScore = anomalyScore;
+		m_HadBigNormalisedUpdate |= AnomalyRecord.isBigUpdate(m_AnomalyScore, anomalyScore);
+		m_AnomalyScore = anomalyScore;
 	}
-
 
 	public double getMaxRecordUnusualness() 
 	{
@@ -156,7 +157,8 @@ public class Bucket
 
 	public void setMaxRecordUnusualness(double maxRecordUnusualness) 
 	{
-		this.m_MaxRecordUnusualness = maxRecordUnusualness;
+		m_HadBigNormalisedUpdate |= AnomalyRecord.isBigUpdate(m_MaxRecordUnusualness, maxRecordUnusualness);
+		m_MaxRecordUnusualness = maxRecordUnusualness;
 	}
 
 
@@ -167,7 +169,7 @@ public class Bucket
 			
 	public void setRecordCount(int recordCount) 
 	{
-		this.m_RecordCount = recordCount;
+		m_RecordCount = recordCount;
 	}
 
 
@@ -419,6 +421,7 @@ public class Bucket
 	@Override
 	public int hashCode() 
 	{
+		// m_HadBigNormalisedUpdate is deliberately excluded from the hash
 		final int prime = 31;
 		int result = 1;
 		long temp;
@@ -459,7 +462,8 @@ public class Bucket
 		}
 		
 		Bucket that = (Bucket)other;
-		
+
+		// m_HadBigNormalisedUpdate is deliberately excluded from the test
 		boolean equals = (this.m_Id.equals(that.m_Id)) &&
 				(this.m_Timestamp.equals(that.m_Timestamp)) &&
 				(this.m_EventCount == that.m_EventCount) &&
@@ -492,5 +496,17 @@ public class Bucket
 		}
 		
 		return equals;
+	}
+
+
+	public boolean hadBigNormalisedUpdate()
+	{
+		return m_HadBigNormalisedUpdate;
+	}
+
+
+	public void resetBigNormalisedUpdateFlag()
+	{
+		m_HadBigNormalisedUpdate = false;
 	}
 }
