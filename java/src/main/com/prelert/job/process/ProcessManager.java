@@ -845,6 +845,7 @@ public class ProcessManager
 				// first rolling file appender of the root logger (there will
 				// be one unless the user has meddled with the default config).
 				// If we fail the defaults set above will remain in force.
+				@SuppressWarnings("rawtypes")
 				Enumeration rootAppenders = Logger.getRootLogger().getAllAppenders();
 				while (rootAppenders.hasMoreElements())
 				{

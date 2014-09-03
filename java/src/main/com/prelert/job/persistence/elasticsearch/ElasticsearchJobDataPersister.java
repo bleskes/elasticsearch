@@ -105,12 +105,11 @@ public class ElasticsearchJobDataPersister implements JobDataPersister
 		List<String> headerList = Arrays.asList(header);
 		
 		m_FieldNames = new String [fields.size()];
-		m_FieldNames = fields.<String>toArray(m_FieldNames);
+		m_FieldNames = fields.<String>toArray(m_FieldNames);	
 		m_FieldMappings = new int [fields.size()];
 		m_ByFieldMappings = new int [byFields.size()];
 		m_OverFieldMappings = new int [overFields.size()];
 		m_PartitionFieldMappings = new int [partitionFields.size()];
-		
 		
 		List<List<String>> allFieldTypes = Arrays.asList(fields, byFields,
 				overFields, partitionFields);
@@ -155,6 +154,7 @@ public class ElasticsearchJobDataPersister implements JobDataPersister
 			{
 				// epoch in ms
 				jsonBuilder.startObject().field("epoch", epoch * 1000);
+				
 
 				for (int i=0; i<m_FieldNames.length; i++)
 				{
@@ -188,7 +188,6 @@ public class ElasticsearchJobDataPersister implements JobDataPersister
 					jsonBuilder.value(record[m_PartitionFieldMappings[i]]);
 				}
 				jsonBuilder.endArray();	
-
 
 				m_Client.prepareIndex(m_IndexName, PERSISTED_RECORD_TYPE)
 								.setSource(jsonBuilder)
