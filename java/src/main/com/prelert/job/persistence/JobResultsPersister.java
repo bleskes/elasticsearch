@@ -74,6 +74,13 @@ public interface JobResultsPersister
 	 */
 	public boolean isDetectorStatePersisted();
 	
+	
+	/**
+	 * Increment the jobs bucket result count by <code>count</code>
+	 * @param count
+	 */
+	public void incrementBucketCount(long count);
+	
 	/**
 	 * Once all the job data has been written this function will be 
 	 * called to commit the data if the implementing persister requries

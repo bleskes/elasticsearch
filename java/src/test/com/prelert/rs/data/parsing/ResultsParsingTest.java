@@ -90,6 +90,7 @@ public class ResultsParsingTest
 		List<Bucket> m_Buckets = new ArrayList<>();
 		SortedMap<String, Quantiles> m_Quantiles = new TreeMap<>();
 		DetectorState m_State;
+		int m_BucketCount;
 		
 		@Override
 		public void persistBucket(Bucket bucket)
@@ -137,6 +138,12 @@ public class ResultsParsingTest
 		public DetectorState retrieveDetectorState() throws UnknownJobException 
 		{
 			return m_State;
+		}
+
+		@Override
+		public void incrementBucketCount(long count) 
+		{
+			m_BucketCount += count;
 		}
 	}
 

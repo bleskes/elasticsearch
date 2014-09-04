@@ -71,7 +71,8 @@ public class ElasticsearchJobDataPersister implements JobDataPersister
 		m_IndexName = jobId + "_raw";
 		m_Client = client;
 		m_Logger = logger;
-		
+
+		m_Logger.info("Data will be persisted in the index " + m_IndexName);
 		createIndex();
 	}
 

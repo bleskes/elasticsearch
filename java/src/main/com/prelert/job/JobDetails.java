@@ -56,6 +56,7 @@ public class JobDetails
 	static final public String LAST_DATA_TIME = "lastDataTime";
 	
 	static final public String COUNTS = "counts";
+	static final public String BUCKET_COUNT = "bucketCount";
 	static final public String PROCESSED_RECORD_COUNT = "processedRecordCount";
 	static final public String PROCESSED_DATAPOINT_COUNT = "processedDataPointCount";
 	static final public String PROCESSED_BYTES = "processedBytes";
@@ -531,12 +532,28 @@ public class JobDetails
 	 */
 	public class Counts
 	{
+		private long m_BucketCount;
 		private long m_ProcessedRecordCount;
 		private long m_ProcessedDataPointCount;
 		private long m_ProcessedBytes;
 		private long m_InvalidDateCount;
 		private long m_MissingFieldCount;
 		private long m_OutOfOrderTimeStampCount;
+		
+		
+		/**
+		 * The number of bucket results
+		 * @return
+		 */
+		public long getBucketCount()
+		{
+			return m_BucketCount;			
+		}
+		
+		public void setBucketCount(long count)
+		{
+			m_BucketCount = count;
+		}
 		
 		/**
 		 * Number of records processed by this job.

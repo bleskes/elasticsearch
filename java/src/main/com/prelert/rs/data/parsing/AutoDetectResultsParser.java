@@ -118,6 +118,7 @@ public class AutoDetectResultsParser
 					case Bucket.TIMESTAMP:
 						Bucket bucket = Bucket.parseJsonAfterStartObject(parser);
 						persister.persistBucket(bucket);
+						persister.incrementBucketCount(1);
 			
 						logger.debug("Bucket number " + ++bucketCount + " parsed from output");
 						break;
