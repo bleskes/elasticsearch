@@ -35,7 +35,6 @@ public class ClusterDiscoveryConfiguration extends SettingsSource {
 
     public static Settings DEFAULT_SETTINGS = ImmutableSettings.settingsBuilder()
             .put("gateway.type", "local")
-            .put("discovery.type", "zen")
             .build();
 
     final int numOfNodes;
@@ -48,7 +47,11 @@ public class ClusterDiscoveryConfiguration extends SettingsSource {
 
     public ClusterDiscoveryConfiguration(int numOfNodes, Settings extraSettings) {
         this.numOfNodes = numOfNodes;
-        this.baseSettings = ImmutableSettings.builder().put(DEFAULT_SETTINGS).put(extraSettings).build();
+        this.baseSettings = ImmutableSettings.builder().put(DEFAULT_SETTINGS).put("discovery.type", discoveryType()).put(extraSettings).build();
+    }
+
+    protected String discoveryType() {
+        return "zen";
     }
 
     @Override
@@ -136,6 +139,58 @@ public class ClusterDiscoveryConfiguration extends SettingsSource {
                 }
             }
             builder.putArray("discovery.zen.ping.unicast.hosts", unicastHosts);
+            return builder.put(super.node(nodeOrdinal)).build();
+        }
+    }
+
+    public static class Raft extends ClusterDiscoveryConfiguration {
+
+        private final static AtomicInteger portRangeCounter = new AtomicInteger();
+
+        private final int basePort;
+
+        public Raft(int numOfNodes) {
+            this(numOfNodes, ImmutableSettings.EMPTY);
+        }
+
+        public Raft(int numOfNodes, Settings extraSettings) {
+            super(numOfNodes, extraSettings);
+            this.basePort = calcBasePort();
+        }
+
+        private final static int calcBasePort() {
+            // note that this has properly co-exist with the port logic at InternalTestCluster's constructor
+            return 40000 +
+                    1000 * (ElasticsearchIntegrationTest.CHILD_JVM_ID % 60) + // up to 60 jvms
+                    100 * portRangeCounter.incrementAndGet(); // up to 100 nodes
+        }
+
+        @Override
+        protected String discoveryType() {
+            return "raft";
+        }
+
+        @Override
+        public Settings node(int nodeOrdinal) {
+            ImmutableSettings.Builder builder = ImmutableSettings.builder()
+                    .put("discovery.zen.ping.multicast.enabled", false);
+
+            String[] raftHosts = new String[numOfNodes];
+            String mode = baseSettings.get("node.mode", InternalTestCluster.NODE_MODE);
+            if (mode.equals("local")) {
+                builder.put(LocalTransport.TRANSPORT_LOCAL_ADDRESS, "node_" + nodeOrdinal);
+                for (int i = 0; i < raftHosts.length; i++) {
+                    raftHosts[i] = "node_" + i;
+                }
+            } else {
+                // we need to pin the node port & host so we'd know where to point things
+                builder.put("transport.tcp.port", basePort + nodeOrdinal);
+                builder.put("transport.host", "localhost");
+                for (int i = 0; i < raftHosts.length; i++) {
+                    raftHosts[i] = "localhost:" + (basePort + i);
+                }
+            }
+            builder.putArray("discovery.raft.hosts", raftHosts);
             return builder.put(super.node(nodeOrdinal)).build();
         }
     }

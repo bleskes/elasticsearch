@@ -259,8 +259,8 @@ public final class InternalTestCluster extends TestCluster {
                 builder.put("path.data", dataPath.toString());
             }
         }
-        final int basePort = 9300 + (100 * (jvmOrdinal+1));
-        builder.put("transport.tcp.port", basePort + "-" + (basePort+199));
+        final int basePort = 9300 + (100 * (jvmOrdinal + 1));
+        builder.put("transport.tcp.port", basePort + "-" + (basePort + 199));
         builder.put("config.ignore_system_properties", true);
         builder.put("node.mode", NODE_MODE);
         builder.put("script.disable_dynamic", false);
@@ -531,6 +531,7 @@ public final class InternalTestCluster extends TestCluster {
                 .put(settings)
                 .put("name", name)
                 .put("discovery.id.seed", seed)
+                .put("discovery.raft.seed", seed)
                 .put("tests.mock.version", version)
                 .build();
         Node node = nodeBuilder().settings(finalSettings).build();
@@ -788,6 +789,7 @@ public final class InternalTestCluster extends TestCluster {
     }
 
     public static final String TRANSPORT_CLIENT_PREFIX = "transport_client_";
+
     static class TransportClientFactory {
         private static TransportClientFactory NO_SNIFF_CLIENT_FACTORY = new TransportClientFactory(false, ImmutableSettings.EMPTY);
         private static TransportClientFactory SNIFF_CLIENT_FACTORY = new TransportClientFactory(true, ImmutableSettings.EMPTY);
