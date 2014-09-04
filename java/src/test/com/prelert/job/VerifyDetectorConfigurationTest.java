@@ -33,6 +33,8 @@ import junit.framework.Assert;
 
 import org.junit.Test;
 
+import com.prelert.rs.data.ErrorCode;
+
 /**
  * Test the valid detector/functions/field combinations i.e. the 
  * logic encoded in the table below
@@ -336,8 +338,62 @@ public class VerifyDetectorConfigurationTest
 			catch (JobConfigurationException e)
 			{
 			}
+		}			
+	}
+	
+	@Test
+	public void invalidFieldnamesTest()
+	{
+		Detector d = new Detector();
+		d.setFieldName("(invalid+chars");
+		d.setByFieldName("by");
+		d.setOverFieldName("over");
+		try
+		{
+			d.verify();
+			Assert.assertTrue(false); // should throw
+		}
+		catch (JobConfigurationException e)
+		{
+			Assert.assertTrue(e.getErrorCode() == ErrorCode.PROHIBITIED_CHARACTER_IN_FIELD_NAME);
 		}
 		
+		d = new Detector();
+		d.setFieldName("f");
+		d.setByFieldName("(invalid+chars");
+		try
+		{
+			d.verify();
+			Assert.assertTrue(false); // should throw
+		}
+		catch (JobConfigurationException e)
+		{
+			Assert.assertTrue(e.getErrorCode() == ErrorCode.PROHIBITIED_CHARACTER_IN_FIELD_NAME);
+		}
 		
+		d = new Detector();
+		d.setFieldName("f");
+		d.setOverFieldName("+bad|name");
+		try
+		{
+			d.verify();
+			Assert.assertTrue(false); // should throw
+		}
+		catch (JobConfigurationException e)
+		{
+			Assert.assertTrue(e.getErrorCode() == ErrorCode.PROHIBITIED_CHARACTER_IN_FIELD_NAME);
+		}		
+		
+		d.setOverFieldName("over");
+		d.setPartitionFieldName("+bad|name");
+		try
+		{
+			d.verify();
+			Assert.assertTrue(false); // should throw
+		}
+		catch (JobConfigurationException e)
+		{
+			Assert.assertTrue(e.getErrorCode() == ErrorCode.PROHIBITIED_CHARACTER_IN_FIELD_NAME);
+		}		
 	}
 }

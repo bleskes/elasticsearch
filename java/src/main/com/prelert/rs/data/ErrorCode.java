@@ -118,6 +118,13 @@ public enum ErrorCode
 	 */
 	JOB_ID_TOO_LONG(10112),
 	
+	/**
+	 * fieldnames including over, by and partition fields cannot
+	 * contain any of these characters:
+	 * [, ], (, ), =, ", |, + or any whitespace
+	 */
+	PROHIBITIED_CHARACTER_IN_FIELD_NAME(10113),
+	
 
 	// Data store errors
 	/**
