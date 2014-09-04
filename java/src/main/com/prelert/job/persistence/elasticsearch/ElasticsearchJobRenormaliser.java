@@ -155,7 +155,7 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
 	 * @param sysChangeState
 	 * @param logger
 	 */
-	public void doSysChangeUpdate(String sysChangeState,
+	private void doSysChangeUpdate(String sysChangeState,
 									Logger logger)
 	{
 		try
@@ -374,7 +374,7 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
 	}
 
 
-	synchronized private int getJobBucketSpan(Logger logger)
+	private int getJobBucketSpan(Logger logger)
 	{
 		if (m_BucketSpan == 0)
 		{
