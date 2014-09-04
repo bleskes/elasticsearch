@@ -375,11 +375,15 @@ public class Normaliser
 		{
 			for (Bucket bucket : buckets)
 			{
+				bucket.resetBigNormalisedUpdateFlag();
+
 				double anomalyScore = resultIter.next().getNormalizedSysChangeScore();
 				bucket.setAnomalyScore(anomalyScore);
 				
 				for (AnomalyRecord record : bucket.getRecords())
 				{
+					record.resetBigNormalisedUpdateFlag();
+
 					record.setAnomalyScore(anomalyScore);
 				}
 			}
@@ -414,9 +418,13 @@ public class Normaliser
 		{
 			for (Bucket bucket : buckets)
 			{
+				bucket.resetBigNormalisedUpdateFlag();
+
 				double maxRecordUnusualness = 0.0;
 				for (AnomalyRecord record : bucket.getRecords())
 				{
+					record.resetBigNormalisedUpdateFlag();
+
 					NormalisedResult normalised = scoresIter.next();
 
 					record.setRecordUnusualness(normalised.getNormalizedUnusualScore());
@@ -454,6 +462,8 @@ public class Normaliser
 			// Buckets first
 			for (Bucket bucket : buckets)
 			{
+				bucket.resetBigNormalisedUpdateFlag();
+
 				NormalisedResult normalised = scoresIter.next();
 				bucket.setAnomalyScore(normalised.getNormalizedSysChangeScore());
 				bucket.setMaxRecordUnusualness(0.0);
@@ -463,6 +473,8 @@ public class Normaliser
 			// Set scores for records and
 			for (AnomalyRecord record : records)
 			{
+				record.resetBigNormalisedUpdateFlag();
+
 				Bucket parentBucket = bucketIdToBucket.get(record.getParent());
 
 				// Record anomaly scores are defined to be equal to those of
