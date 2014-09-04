@@ -31,6 +31,8 @@ package com.prelert.job.persistence.elasticsearch;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 
 import org.apache.log4j.Logger;
 import org.elasticsearch.ElasticsearchException;
@@ -51,7 +53,10 @@ import com.prelert.rs.data.Bucket;
 /**
  * Updates {@linkplain Bucket Buckets} and their contained
  * {@linkplain AnomalyRecord AnomalyRecords} with new normalised
- * anomaly scores and unusual scores
+ * anomaly scores and unusual scores.
+ *
+ * This is done in a separate thread to avoid blocking the main
+ * data processing during renormalisations.
  */
 public class ElasticsearchJobRenormaliser implements JobRenormaliser
 {
@@ -62,6 +67,17 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
 	 * This read from the data store on first access
 	 */
 	private int m_BucketSpan;
+
+	/**
+	 * Queue of updated quantiles to be used for renormalisation
+	 */
+	private BlockingQueue<QuantileInfo> m_UpdatedQuantileQueue;
+
+	/**
+	 * Thread to use so that quantile updates can run in parallel to the main
+	 * data processing of the job
+	 */
+	private Thread m_QuantileUpdateThread;
 
 	/**
 	 * Maximum number of buckets to renormalise at a time
@@ -80,6 +96,33 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
 		m_JobId = jobId;
 		m_JobProvider = jobProvider;
 		m_BucketSpan = 0;
+		// Queue limit of 50 means that renormalisation will eventually block
+		// the main data processing of the job if it gets too far ahead
+		m_UpdatedQuantileQueue = new ArrayBlockingQueue<>(50);
+		m_QuantileUpdateThread = new Thread(this.new QueueDrainer(),
+			m_JobId + "-Renormalizer");
+		m_QuantileUpdateThread.start();
+	}
+
+
+	/**
+	 * Shut down the worker thread
+	 */
+	synchronized public boolean shutdown(Logger logger)
+	{
+		try
+		{
+			m_UpdatedQuantileQueue.add(new QuantileInfo(QuantileInfo.InfoType.END,
+					"", logger));
+			m_QuantileUpdateThread.join();
+			m_UpdatedQuantileQueue.clear();
+		}
+		catch (InterruptedException e)
+		{
+			return false;
+		}
+
+		return true;
 	}
 
 
@@ -90,8 +133,30 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
 	 * @param logger
 	 */
 	@Override
-	public void updateBucketSysChange(String sysChangeState,
+	synchronized public void updateBucketSysChange(String sysChangeState,
 										Logger logger)
+	{
+		if (m_QuantileUpdateThread.isAlive())
+		{
+			m_UpdatedQuantileQueue.add(new QuantileInfo(QuantileInfo.InfoType.SYS_CHANGE,
+					sysChangeState, logger));
+		}
+		else
+		{
+			logger.error("Cannot renormalise for system changes " +
+						"- update thread no longer running");
+		}
+	}
+
+
+	/**
+	 * Update the anomaly score field on all previously persisted buckets
+	 * and all contained records
+	 * @param sysChangeState
+	 * @param logger
+	 */
+	public void doSysChangeUpdate(String sysChangeState,
+									Logger logger)
 	{
 		try
 		{
@@ -137,7 +202,29 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
 	 * @param logger
 	 */
 	@Override
-	public void updateBucketUnusualBehaviour(String unusualBehaviourState,
+	synchronized public void updateBucketUnusualBehaviour(String unusualBehaviourState,
+											Logger logger)
+	{
+		if (m_QuantileUpdateThread.isAlive())
+		{
+			m_UpdatedQuantileQueue.add(new QuantileInfo(QuantileInfo.InfoType.UNUSUAL,
+					unusualBehaviourState, logger));
+		}
+		else
+		{
+			logger.error("Cannot renormalise for unusual behaviour " +
+						"- update thread no longer running");
+		}
+	}
+
+
+	/**
+	 * Update the unsual score field on all previously persisted buckets
+	 * and all contained records
+	 * @param unusualBehaviourState
+	 * @param logger
+	 */
+	private void doUnusualBehaviourUpdate(String unusualBehaviourState,
 											Logger logger)
 	{
 		try
@@ -248,8 +335,6 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
 
 						bulkRequest.add(m_JobProvider.getClient()
 								.prepareUpdate(m_JobId, AnomalyRecord.TYPE, recordId)
-							// TODO add when we upgrade to ES 1.3
-							//.setDetectNoop(true)
 								.setDoc(map)
 								// Need to specify the parent ID when updating a child
 								.setParent(bucketId));
@@ -306,5 +391,99 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
 
 		return m_BucketSpan;
 	}
+
+
+	/**
+	 * Simple class to group information in the blocking queue
+	 */
+	static private class QuantileInfo
+	{
+		public enum InfoType { END, SYS_CHANGE, UNUSUAL };
+
+		public InfoType m_Type;
+		public String m_State;
+		public Logger m_Logger;
+
+		public QuantileInfo(InfoType type,
+				String state, Logger logger)
+		{
+			m_Type = type;
+			m_State = state;
+			m_Logger = logger;
+		}
+	};
+
+
+	/**
+	 * Thread handler to drain updated quantiles from the blocking queue and
+	 * trigger renormalisations in response
+	 *
+	 * The logic is to drain as many info objects from the queue as possible
+	 * until an end marker is reached.  Any info objects after the first end
+	 * marker are discarded.  The benefit in draining as many objects as
+	 * possible each time the loop runs is that if normalisation is taking
+	 * much longer than the main processing and multiple sets of quantiles
+	 * of the same type are in the queue we can ignore all but the most
+	 * recent (i.e. those nearest the back of the queue).
+	 */
+	private class QueueDrainer implements Runnable
+	{
+		public void run()
+		{
+			try
+			{
+				boolean keepGoing = true;
+				while (keepGoing)
+				{
+					QuantileInfo latestSysChangeInfo = null;
+					QuantileInfo latestUnusualInfo = null;
+
+					// take() will block if the queue is empty
+					QuantileInfo info = ElasticsearchJobRenormaliser.this.m_UpdatedQuantileQueue.take();
+					while (keepGoing && info != null)
+					{
+						switch (info.m_Type)
+						{
+							case END:
+								keepGoing = false;
+								info.m_Logger.info("Normaliser thread received end instruction");
+								break;
+							case SYS_CHANGE:
+								if (latestSysChangeInfo != null)
+								{
+									latestSysChangeInfo.m_Logger.info("System change quantiles superseded before processing");
+								}
+								latestSysChangeInfo = info;
+								break;
+							case UNUSUAL:
+								if (latestUnusualInfo != null)
+								{
+									latestUnusualInfo.m_Logger.info("Unusual behaviour quantiles superseded before processing");
+								}
+								latestUnusualInfo = info;
+								break;
+						}
+						// poll() will return null if the queue is empty
+						info = ElasticsearchJobRenormaliser.this.m_UpdatedQuantileQueue.poll();
+					}
+
+					if (latestSysChangeInfo != null)
+					{
+						ElasticsearchJobRenormaliser.this.doSysChangeUpdate(latestSysChangeInfo.m_State,
+								latestSysChangeInfo.m_Logger);
+					}
+					if (latestUnusualInfo != null)
+					{
+						ElasticsearchJobRenormaliser.this.doUnusualBehaviourUpdate(latestUnusualInfo.m_State,
+								latestUnusualInfo.m_Logger);
+					}
+				}
+			}
+			catch (InterruptedException e)
+			{
+				// Thread will exit now
+			}
+		}
+	};
 };
 

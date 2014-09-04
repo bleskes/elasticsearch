@@ -106,7 +106,7 @@ public class ElasticsearchResultsReaderFactory implements ResultsReaderFactory
 			}
 			finally
 			{
-				try 
+				try
 				{
 					// read anything left in the stream before
 					// closing the stream otherwise it the proccess 
@@ -123,9 +123,13 @@ public class ElasticsearchResultsReaderFactory implements ResultsReaderFactory
 				{
 					m_Logger.warn("Error closing result parser input stream", e);
 				}
+
+				// The renormaliser may have started another thread,
+				// so give it a chance to shut this down
+				renormaliser.shutdown(m_Logger);
 			}
 
 			m_Logger.info("Parse results Complete");
-		}		
+		}
 	}
 }
