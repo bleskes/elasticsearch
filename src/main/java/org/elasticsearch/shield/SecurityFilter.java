@@ -26,6 +26,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.rest.*;
 import org.elasticsearch.shield.authc.AuthenticationService;
 import org.elasticsearch.shield.authc.AuthenticationToken;
+import org.elasticsearch.shield.authc.support.UsernamePasswordToken;
 import org.elasticsearch.shield.authc.system.SystemRealm;
 import org.elasticsearch.shield.authz.AuthorizationService;
 import org.elasticsearch.shield.transport.TransportFilter;
@@ -54,6 +55,10 @@ public class SecurityFilter extends AbstractComponent {
     }
 
     public static class Rest extends RestFilter {
+
+        static {
+            BaseRestHandler.addUsefulHeaders(UsernamePasswordToken.BASIC_AUTH_HEADER);
+        }
 
         private final SecurityFilter filter;
 
