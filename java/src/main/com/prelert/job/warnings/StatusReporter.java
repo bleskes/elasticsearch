@@ -189,7 +189,7 @@ abstract public class StatusReporter
 		return m_RecordsWritten + m_OutOfOrderRecordCount + m_DateParseErrorsCount;
 	}
 	
-	public long getRecordsWrittenCount() 
+	public long getProcessedRecordCount() 
 	{
 		return m_RecordsWritten;
 	}
@@ -217,7 +217,7 @@ abstract public class StatusReporter
 	public long getProcessedFieldCount()
 	{
 		long processedFieldCount = 
-				(getRecordsWrittenCount() * getAnalysedFieldsPerRecord())
+				(getProcessedRecordCount() * getAnalysedFieldsPerRecord())
 				- getMissingFieldErrorCount();
 
 		// processedFieldCount could be a -ve value if no
@@ -229,7 +229,7 @@ abstract public class StatusReporter
 	
 	public long getInputFieldCount()
 	{
-		return getRecordsWrittenCount() * getAnalysedFieldsPerRecord();
+		return getProcessedRecordCount() * getAnalysedFieldsPerRecord();
 	}
 	
 		

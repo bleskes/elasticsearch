@@ -185,7 +185,8 @@ public class ResultsParsingTest
 		
 		List<Bucket> buckets = persister.getBuckets();
 		
-		assertEquals(2, buckets.size());		
+		assertEquals(2, buckets.size());
+		assertEquals(buckets.size(), persister.m_BucketCount);
 		assertEquals(new Date(1359450000000L), buckets.get(0).getTimestamp());
 		assertEquals(0, buckets.get(0).getRecordCount());
 		assertEquals(buckets.get(0).getEventCount(), 806);
@@ -266,6 +267,7 @@ public class ResultsParsingTest
 		List<Bucket> buckets = persister.getBuckets();
 
 		assertEquals(2, buckets.size());
+		assertEquals(buckets.size(), persister.m_BucketCount);
 		assertEquals(new Date(1379590200000L), buckets.get(0).getTimestamp());
 		assertEquals(4, buckets.get(0).getRecordCount());
 		assertEquals(buckets.get(0).getEventCount(), 1235);
@@ -315,6 +317,7 @@ public class ResultsParsingTest
 		
 		List<Bucket> buckets = persister.getBuckets();		
 		assertEquals(4, buckets.size());	
+		assertEquals(buckets.size(), persister.m_BucketCount);
 		assertEquals(new Date(1359331200000L), buckets.get(0).getTimestamp());
 		assertEquals(0, buckets.get(0).getRecordCount()); 
 		assertEquals(new Date(1359417600000L), buckets.get(1).getTimestamp());

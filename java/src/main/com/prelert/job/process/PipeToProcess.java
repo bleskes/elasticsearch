@@ -113,6 +113,8 @@ public class PipeToProcess
 		
 		List<String> analysisFields = analysisConfig.analysisFields();
 		
+		statusReporter.setAnalysedFieldsPerRecord(analysisFields.size());
+		
 	
 		CountingInputStream countingStream = new CountingInputStream(is, 
 				usageReporter, statusReporter);
@@ -307,6 +309,8 @@ public class PipeToProcess
 		
 		int recordsWritten = 0;
 		int lineCount = 0;
+		
+		statusReporter.setAnalysedFieldsPerRecord(analysisConfig.analysisFields().size());
 		
 		CountingInputStream countingStream = new CountingInputStream(is, 
 				usageReporter, statusReporter);		
@@ -589,6 +593,9 @@ public class PipeToProcess
 	{
 		CountingInputStream countingStream = new CountingInputStream(is, 
 				usageReporter, statusReporter);
+		
+		
+		statusReporter.setAnalysedFieldsPerRecord(analysisConfig.analysisFields().size());
 
 		try (JsonParser parser = new JsonFactory().createParser(countingStream))
 		{
