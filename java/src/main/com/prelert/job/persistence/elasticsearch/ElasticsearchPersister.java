@@ -55,7 +55,6 @@ import com.prelert.job.DetectorState;
 import com.prelert.job.JobDetails;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.persistence.JobResultsPersister;
-import com.prelert.job.usage.Usage;
 import com.prelert.rs.data.AnomalyCause;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;

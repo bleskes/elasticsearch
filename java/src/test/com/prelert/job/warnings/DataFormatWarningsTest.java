@@ -36,7 +36,6 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.List;
 
 import junit.framework.Assert;
 
@@ -93,10 +92,7 @@ public class DataFormatWarningsTest
 		final int MAX_PERCENT_OUT_OF_ORDER_ERRORS = 30;
 		
 		// do for epoch, epochms, date format
-		
-		List<String> analysisFields = Arrays.asList(new String [] {
-				"responsetime", "sourcetype", "airline"});
-		
+				
 		AnalysisConfig ac = new AnalysisConfig();
 		Detector det = new Detector();
 		det.setFieldName("responsetime");
@@ -185,7 +181,7 @@ public class DataFormatWarningsTest
 			{
 				long percentBad = (e.getNumberBad() * 100 )/ e.getTotalNumber();
 				
-				Assert.assertEquals(statusReporter.getVolume(), 
+				Assert.assertEquals(statusReporter.getBytesRead(), 
 						usageReporter.getTotalBytesRead());
 				Assert.assertTrue(percentBad >= MAX_PERCENT_DATE_PARSE_ERRORS);
 			}
@@ -218,9 +214,7 @@ public class DataFormatWarningsTest
 		final int MAX_PERCENT_OUT_OF_ORDER_ERRORS = 30;
 		
 		// do for epoch, epochms, date format
-		
-		List<String> analysisFields = Arrays.asList(new String [] {
-				"responsetime", "sourcetype", "airline"});
+
 		
 		AnalysisConfig ac = new AnalysisConfig();
 		Detector det = new Detector();
@@ -308,7 +302,7 @@ public class DataFormatWarningsTest
 			{
 				long percentBad = (e.getNumberBad() * 100 )/ e.getTotalNumber();
 				
-				Assert.assertEquals(statusReporter.getVolume(), 
+				Assert.assertEquals(statusReporter.getBytesRead(), 
 						usageReporter.getTotalBytesRead());
 				Assert.assertTrue(percentBad >= MAX_PERCENT_DATE_PARSE_ERRORS);
 			}
@@ -339,8 +333,6 @@ public class DataFormatWarningsTest
 		
 		// do for epoch, epochms, date format
 		
-		List<String> analysisFields = Arrays.asList(new String [] {
-				"responsetime", "sourcetype", "airline"});
 		
 		AnalysisConfig ac = new AnalysisConfig();
 		Detector det = new Detector();
@@ -432,7 +424,7 @@ public class DataFormatWarningsTest
 			{
 				long percentBad = (e.getNumberOutOfOrder() * 100 )/ e.getTotalNumber();
 				
-				Assert.assertEquals(statusReporter.getVolume(), 
+				Assert.assertEquals(statusReporter.getBytesRead(), 
 						usageReporter.getTotalBytesRead());
 				Assert.assertTrue(percentBad >= MAX_PERCENT_OUT_OF_ORDER_ERRORS);
 			}
@@ -464,10 +456,7 @@ public class DataFormatWarningsTest
 		final int MAX_PERCENT_OUT_OF_ORDER_ERRORS = 8;
 		
 		// do for epoch, epochms, date format
-		
-		List<String> analysisFields = Arrays.asList(new String [] {
-				"responsetime", "sourcetype", "airline"});
-		
+				
 		AnalysisConfig ac = new AnalysisConfig();
 		Detector det = new Detector();
 		det.setFieldName("responsetime");
@@ -556,7 +545,7 @@ public class DataFormatWarningsTest
 			{
 				long percentBad = (e.getNumberOutOfOrder() * 100 )/ e.getTotalNumber();
 				
-				Assert.assertEquals(statusReporter.getVolume(), 
+				Assert.assertEquals(statusReporter.getBytesRead(), 
 						usageReporter.getTotalBytesRead());
 				Assert.assertTrue(percentBad >= MAX_PERCENT_OUT_OF_ORDER_ERRORS);
 			}

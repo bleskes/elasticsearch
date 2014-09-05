@@ -127,7 +127,7 @@ public class JsonDataTransformTest
 		Assert.assertEquals(usageReporter.getTotalBytesRead(), 
 				data.getBytes(StandardCharsets.UTF_8).length -1);
 		Assert.assertEquals(usageReporter.getTotalBytesRead(),
-				statusReporter.getVolume());
+				statusReporter.getBytesRead());
 		
 		Assert.assertEquals(dataPersister.getRecordCount(), 8);
 		
@@ -255,7 +255,7 @@ public class JsonDataTransformTest
 		Assert.assertEquals(usageReporter.getTotalBytesRead(), 
 				data.getBytes(StandardCharsets.UTF_8).length -1);
 		Assert.assertEquals(usageReporter.getTotalBytesRead(),
-				statusReporter.getVolume());
+				statusReporter.getBytesRead());
 		
 		Assert.assertEquals(dp.getRecordCount(), 8);		
 		
@@ -384,7 +384,7 @@ public class JsonDataTransformTest
 		Assert.assertEquals(usageReporter.getTotalBytesRead(), 
 				data.getBytes(StandardCharsets.UTF_8).length -1);
 		Assert.assertEquals(usageReporter.getTotalBytesRead(),
-				statusReporter.getVolume());
+				statusReporter.getBytesRead());
 		
 		Assert.assertEquals(dp.getRecordCount(), 8);
 		
@@ -509,7 +509,7 @@ public class JsonDataTransformTest
 		Assert.assertEquals(usageReporter.getTotalBytesRead(), 
 				data.getBytes(StandardCharsets.UTF_8).length -1);		
 		Assert.assertEquals(usageReporter.getTotalBytesRead(),
-				statusReporter.getVolume());
+				statusReporter.getBytesRead());
 		
 		Assert.assertEquals(dp.getRecordCount(), 8);
 		
@@ -674,7 +674,7 @@ public class JsonDataTransformTest
 			Assert.assertEquals(usageReporter.getTotalBytesRead(), 
 					data.getBytes(StandardCharsets.UTF_8).length -1);
 			Assert.assertEquals(usageReporter.getTotalBytesRead(),
-					statusReporter.getVolume());
+					statusReporter.getBytesRead());
 			
 			Assert.assertEquals(dp.getRecordCount(), 8);
 
@@ -818,7 +818,7 @@ public class JsonDataTransformTest
 			Assert.assertEquals(usageReporter.getTotalBytesRead(), 
 					data.getBytes(StandardCharsets.UTF_8).length -1);
 			Assert.assertEquals(usageReporter.getTotalBytesRead(),
-					statusReporter.getVolume());
+					statusReporter.getBytesRead());
 			
 			Assert.assertEquals(dp.getRecordCount(), 4);
 
@@ -940,7 +940,7 @@ public class JsonDataTransformTest
 		Assert.assertEquals(usageReporter.getTotalBytesRead(), 
 				data.getBytes(StandardCharsets.UTF_8).length -1);
 		Assert.assertEquals(usageReporter.getTotalBytesRead(),
-				statusReporter.getVolume());
+				statusReporter.getBytesRead());
 		
 		Assert.assertEquals(dp.getRecordCount(), 4);
 
@@ -1077,7 +1077,7 @@ public class JsonDataTransformTest
 			Assert.assertEquals(usageReporter.getTotalBytesRead(), 
 					data.getBytes(StandardCharsets.UTF_8).length -1);
 			Assert.assertEquals(usageReporter.getTotalBytesRead(),
-					statusReporter.getVolume());
+					statusReporter.getBytesRead());
 			
 			Assert.assertEquals(dp.getRecordCount(), 4);			
 			

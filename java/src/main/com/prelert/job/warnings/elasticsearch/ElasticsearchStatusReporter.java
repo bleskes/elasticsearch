@@ -62,20 +62,14 @@ public class ElasticsearchStatusReporter extends StatusReporter
 					JobDetails.TYPE, m_JobId);
 			
 			updateBuilder.setRetryOnConflict(1);
-			
-			long processedDataPointCount = 
-					(getRecordsWrittenCount() * getAnalysedFieldsPerRecord())
-					- getMissingFieldErrorCount();
-			
-			// processedDataPointCount could be a -ve value if no
-			// records have been written in which case it should be 0
-			processedDataPointCount = (processedDataPointCount < 0) ? 0 : processedDataPointCount;
-					
+						
 			
 			Map<String, Object> updates = new HashMap<>();
 			updates.put(JobDetails.PROCESSED_RECORD_COUNT, getRecordsWrittenCount());
-			updates.put(JobDetails.PROCESSED_DATAPOINT_COUNT, processedDataPointCount);
-			updates.put(JobDetails.PROCESSED_BYTES, getVolume());
+			updates.put(JobDetails.PROCESSED_FIELD_COUNT, getProcessedFieldCount());
+			updates.put(JobDetails.INPUT_RECORD_COUNT, getInputRecordCount());
+			updates.put(JobDetails.INPUT_BYTES, getBytesRead());
+			updates.put(JobDetails.INPUT_FIELD_COUNT, getInputFieldCount());
 			updates.put(JobDetails.INVALID_DATE_COUNT, getDateParseErrorsCount());
 			updates.put(JobDetails.MISSING_FIELD_COUNT, getMissingFieldErrorCount());
 			updates.put(JobDetails.OUT_OF_ORDER_TIME_COUNT, getOutOfOrderRecordCount());

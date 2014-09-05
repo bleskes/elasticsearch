@@ -58,7 +58,7 @@ abstract public class StatusReporter
 			"max.percent.outoforder.errors";	
 	
 	private long m_RecordsWritten = 0;
-	private long m_Volume = 0;
+	private long m_BytesRead = 0;
 	private long m_DateParseErrorsCount = 0;
 	private long m_MissingFieldErrorCount = 0;
 	private long m_OutOfOrderRecordCount = 0;
@@ -110,7 +110,7 @@ abstract public class StatusReporter
 		this(jobId, logger);
 		
 		m_RecordsWritten = counts.getProcessedRecordCount();
-		m_Volume = counts.getProcessedBytes();
+		m_BytesRead = counts.getInputBytes();
 		m_DateParseErrorsCount = counts.getInvalidDateCount();
 		m_MissingFieldErrorCount = counts.getMissingFieldCount();
 		m_OutOfOrderRecordCount = counts.getOutOfOrderTimeStampCount();	
@@ -173,7 +173,7 @@ abstract public class StatusReporter
 	 */
 	public void reportBytesRead(long newBytes)
 	{
-		m_Volume += newBytes;
+		m_BytesRead += newBytes;
 	}
 
 	/**
@@ -182,6 +182,11 @@ abstract public class StatusReporter
 	public void reportOutOfOrderRecord()
 	{
 		m_OutOfOrderRecordCount++;
+	}
+	
+	public long getInputRecordCount()
+	{
+		return m_RecordsWritten + m_OutOfOrderRecordCount + m_DateParseErrorsCount;
 	}
 	
 	public long getRecordsWrittenCount() 
@@ -204,10 +209,29 @@ abstract public class StatusReporter
 		return m_OutOfOrderRecordCount;
 	}
 	
-	public long getVolume()
+	public long getBytesRead()
 	{
-		return m_Volume;
+		return m_BytesRead;
 	}
+	
+	public long getProcessedFieldCount()
+	{
+		long processedFieldCount = 
+				(getRecordsWrittenCount() * getAnalysedFieldsPerRecord())
+				- getMissingFieldErrorCount();
+
+		// processedFieldCount could be a -ve value if no
+		// records have been written in which case it should be 0
+		processedFieldCount = (processedFieldCount < 0) ? 0 : processedFieldCount;
+		
+		return processedFieldCount;
+	}
+	
+	public long getInputFieldCount()
+	{
+		return getRecordsWrittenCount() * getAnalysedFieldsPerRecord();
+	}
+	
 		
 	/**
 	 * Total records seen = records written + date parse error records count 

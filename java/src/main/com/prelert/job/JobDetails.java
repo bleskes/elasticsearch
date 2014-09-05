@@ -58,8 +58,10 @@ public class JobDetails
 	static final public String COUNTS = "counts";
 	static final public String BUCKET_COUNT = "bucketCount";
 	static final public String PROCESSED_RECORD_COUNT = "processedRecordCount";
-	static final public String PROCESSED_DATAPOINT_COUNT = "processedDataPointCount";
-	static final public String PROCESSED_BYTES = "processedBytes";
+	static final public String PROCESSED_FIELD_COUNT = "processedFieldCount";
+	static final public String INPUT_BYTES = "inputBytes";
+	static final public String INPUT_RECORD_COUNT = "inputRecordCount";
+	static final public String INPUT_FIELD_COUNT = "inputFieldCount";
 	static final public String INVALID_DATE_COUNT = "invalidDateCount";
 	static final public String MISSING_FIELD_COUNT = "missingFieldCount";
 	static final public String OUT_OF_ORDER_TIME_COUNT = "outOfOrderTimeStampCount";
@@ -534,8 +536,10 @@ public class JobDetails
 	{
 		private long m_BucketCount;
 		private long m_ProcessedRecordCount;
-		private long m_ProcessedDataPointCount;
-		private long m_ProcessedBytes;
+		private long m_ProcessedFieldCount;
+		private long m_InputRecordCount;
+		private long m_InputBytes;
+		private long m_InputFieldCount;
 		private long m_InvalidDateCount;
 		private long m_MissingFieldCount;
 		private long m_OutOfOrderTimeStampCount;
@@ -578,15 +582,29 @@ public class JobDetails
 		 * not include the time field.
 		 * @return 
 		 */
-		public long getProcessedDataPointCount() 
+		public long getProcessedFieldCount() 
 		{
-			return m_ProcessedDataPointCount;
+			return m_ProcessedFieldCount;
 		}
 		
-		public void setProcessedDataPointCount(long count) 
+		public void setProcessedFieldCount(long count) 
 		{
-			m_ProcessedDataPointCount = count;
+			m_ProcessedFieldCount = count;
 		}		
+		
+		/**
+		 * Total number of input records
+		 * @return
+		 */
+		public long getInputRecordCount()
+		{
+			return m_InputRecordCount;
+		}
+		
+		public void setInputRecordCount(long count)
+		{
+			m_InputRecordCount = count;
+		}
 		
 		/**
 		 * The total number of bytes sent to this job.
@@ -595,14 +613,29 @@ public class JobDetails
 		 * e.g. because the date cannot be read
 		 * @return Volume in bytes
 		 */
-		public long getProcessedBytes()
+		public long getInputBytes()
 		{
-			return m_ProcessedBytes;
+			return m_InputBytes;
 		}
 		
-		public void setProcessedBytes(long volume)
+		public void setInputBytes(long volume)
 		{
-			m_ProcessedBytes = volume;
+			m_InputBytes = volume;
+		}
+		
+		/**
+		 * The total number of fields sent to the job
+		 * including fields that aren't analysed.
+		 * @return
+		 */
+		public long getInputFieldCount()
+		{
+			return m_InputFieldCount;
+		}
+		
+		public void setInputFieldCount(long volume)
+		{
+			m_InputFieldCount = volume;
 		}
 		
 		
@@ -670,7 +703,7 @@ public class JobDetails
 			Counts that = (Counts)other;
 
 			return this.m_ProcessedRecordCount == that.m_ProcessedRecordCount &&
-					this.m_ProcessedBytes == that.m_ProcessedBytes &&
+					this.m_InputBytes == that.m_InputBytes &&
 					this.m_InvalidDateCount == that.m_InvalidDateCount &&
 					this.m_MissingFieldCount == that.m_MissingFieldCount &&
 					this.m_OutOfOrderTimeStampCount == that.m_OutOfOrderTimeStampCount;

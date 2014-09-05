@@ -46,7 +46,6 @@ import org.apache.log4j.Logger;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.process.NativeProcessRunException;
-import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.Pagination;

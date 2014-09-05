@@ -116,7 +116,7 @@ public class CsvDataTransfromTest
 		Assert.assertEquals(usageReporter.getTotalBytesRead(), 
 				data.getBytes(StandardCharsets.UTF_8).length - 2);
 		Assert.assertEquals(usageReporter.getTotalBytesRead(),
-				statusReporter.getVolume());
+				statusReporter.getBytesRead());
 		
 		Assert.assertEquals(dataPersister.getRecordCount(), 8);
 		
@@ -219,7 +219,7 @@ public class CsvDataTransfromTest
 		Assert.assertEquals(usageReporter.getTotalBytesRead(), 
 				data.getBytes(StandardCharsets.UTF_8).length - 2); 
 		Assert.assertEquals(usageReporter.getTotalBytesRead(),
-				statusReporter.getVolume());
+				statusReporter.getBytesRead());
 		
 		Assert.assertEquals(dp.getRecordCount(), 4);
 		
@@ -325,7 +325,7 @@ public class CsvDataTransfromTest
 		Assert.assertEquals(usageReporter.getTotalBytesRead(), 
 				data.getBytes(StandardCharsets.UTF_8).length - 2);
 		Assert.assertEquals(usageReporter.getTotalBytesRead(),
-				statusReporter.getVolume());
+				statusReporter.getBytesRead());
 		
 		Assert.assertEquals(dp.getRecordCount(), 8);
 		
@@ -451,7 +451,7 @@ public class CsvDataTransfromTest
 		Assert.assertEquals(usageReporter.getTotalBytesRead(), 
 				data.getBytes(StandardCharsets.UTF_8).length - 2);
 		Assert.assertEquals(usageReporter.getTotalBytesRead(),
-				statusReporter.getVolume());		
+				statusReporter.getBytesRead());		
 		
 		Assert.assertEquals(dp.getRecordCount(), 8);
 		
@@ -535,7 +535,7 @@ public class CsvDataTransfromTest
 		{
 			Assert.assertEquals(e.getMissingFieldName(), "time");
 			Assert.assertEquals(usageReporter.getTotalBytesRead(),
-					statusReporter.getVolume());		
+					statusReporter.getBytesRead());		
 		}
 		
 		// Do the same again but with a time format configured
@@ -560,7 +560,7 @@ public class CsvDataTransfromTest
 		{
 			Assert.assertEquals(e.getMissingFieldName(), "timestamp");
 			Assert.assertEquals(usageReporter.getTotalBytesRead(),
-					statusReporter.getVolume());	
+					statusReporter.getBytesRead());	
 		}		
 	}
 	
@@ -620,7 +620,7 @@ public class CsvDataTransfromTest
 		catch (MissingFieldException e)
 		{
 			Assert.assertEquals(usageReporter.getTotalBytesRead(),
-					statusReporter.getVolume());			
+					statusReporter.getBytesRead());			
 			Assert.assertEquals(e.getMissingFieldName(), "missing_field");
 		}
 		
@@ -645,7 +645,7 @@ public class CsvDataTransfromTest
 		{
 			Assert.assertEquals(e.getMissingFieldName(), "missing_field");
 			Assert.assertEquals(usageReporter.getTotalBytesRead(),
-					statusReporter.getVolume());	
+					statusReporter.getBytesRead());	
 		}
 	}
 	
@@ -758,7 +758,7 @@ public class CsvDataTransfromTest
 			Assert.assertEquals(usageReporter.getTotalBytesRead(), 
 					data.getBytes(StandardCharsets.UTF_8).length - 2);
 			Assert.assertEquals(usageReporter.getTotalBytesRead(),
-					statusReporter.getVolume());
+					statusReporter.getBytesRead());
 			
 			Assert.assertEquals(dp.getRecordCount(), 6);
 			
@@ -876,7 +876,7 @@ public class CsvDataTransfromTest
 			Assert.assertEquals(usageReporter.getTotalBytesRead(), 
 					data.getBytes(StandardCharsets.UTF_8).length - 2);
 			Assert.assertEquals(usageReporter.getTotalBytesRead(),
-					statusReporter.getVolume());
+					statusReporter.getBytesRead());
 			
 			Assert.assertEquals(dp.getRecordCount(), 8);
 			

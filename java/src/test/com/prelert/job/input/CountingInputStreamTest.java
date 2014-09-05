@@ -63,7 +63,7 @@ public class CountingInputStreamTest
 			Assert.assertTrue(usageReporter.getBytesReadSinceLastReport() == 4);
 			
 			Assert.assertEquals(usageReporter.getBytesReadSinceLastReport(),
-					statusReporter.getVolume());
+					statusReporter.getBytesRead());
 		}
 		
 		source = new ByteArrayInputStream(("To the man who only has a hammer,"
@@ -86,7 +86,7 @@ public class CountingInputStreamTest
 			Assert.assertTrue(usageReporter.getBytesReadSinceLastReport() == 85);
 			
 			Assert.assertEquals(usageReporter.getBytesReadSinceLastReport(),
-					statusReporter.getVolume());
+					statusReporter.getBytesRead());
 		}
 		
 		source = new ByteArrayInputStream(("To the man who only has a hammer,"
@@ -109,7 +109,7 @@ public class CountingInputStreamTest
 			Assert.assertTrue(usageReporter.getBytesReadSinceLastReport() == 85);
 			
 			Assert.assertEquals(usageReporter.getBytesReadSinceLastReport(),
-					statusReporter.getVolume());
+					statusReporter.getBytesRead());
 		}
 		
 		
