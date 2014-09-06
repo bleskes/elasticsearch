@@ -17,7 +17,7 @@
 
 package org.elasticsearch.shield.authz;
 
-import org.apache.lucene.util.LuceneTestCase;
+import com.carrotsearch.randomizedtesting.annotations.Repeat;
 import org.elasticsearch.ElasticsearchIllegalArgumentException;
 import org.elasticsearch.shield.support.AutomatonPredicate;
 import org.elasticsearch.shield.support.Automatons;

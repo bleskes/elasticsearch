@@ -71,7 +71,7 @@ public class SecuredTransportService extends TransportService {
             return handler.newInstance();
         }
 
-        @Override
+        @Override @SuppressWarnings("unchecked")
         public void messageReceived(TransportRequest request, TransportChannel channel) throws Exception {
             try {
                 filter.inboundRequest(action, request);
@@ -108,7 +108,7 @@ public class SecuredTransportService extends TransportService {
             return handler.newInstance();
         }
 
-        @Override
+        @Override @SuppressWarnings("unchecked")
         public void handleResponse(TransportResponse response) {
             try {
                 filter.inboundResponse(response);
