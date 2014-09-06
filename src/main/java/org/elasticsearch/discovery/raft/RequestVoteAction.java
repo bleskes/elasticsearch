@@ -41,7 +41,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  *
  */
-public class RequestVoteRPC extends AbstractComponent {
+public class RequestVoteAction extends AbstractComponent {
 
     public static final String ACTION_NAME = "internal:discovery/raft/requestVote";
 
@@ -50,15 +50,15 @@ public class RequestVoteRPC extends AbstractComponent {
     private final TransportService transportService;
     private final ClusterName clusterName;
     private final RaftDiscovery raftDiscovery;
+    private final RaftState raftState;
     private final TimeValue electionTimeout;
 
-    private Vote currentVote = new Vote(-1, null);
-
-    public RequestVoteRPC(Settings settings, TransportService transportService, ClusterName clusterName, RaftDiscovery raftDiscovery) {
+    public RequestVoteAction(Settings settings, TransportService transportService, ClusterName clusterName, RaftDiscovery raftDiscovery, RaftState raftState) {
         super(settings);
         this.transportService = transportService;
         this.clusterName = clusterName;
         this.raftDiscovery = raftDiscovery;
+        this.raftState = raftState;
         this.electionTimeout = settings.getAsTime(SETTING_RAFT_ELECTION_TIMEOUT, TimeValue.timeValueSeconds(3));
         transportService.registerHandler(ACTION_NAME, new VoteRequestHandler());
     }
@@ -67,24 +67,24 @@ public class RequestVoteRPC extends AbstractComponent {
         transportService.removeHandler(ACTION_NAME);
     }
 
-    public void requestVotes(long forTerm, DiscoveryNode[] fromNodes) {
+    public void performElection(long forTerm, DiscoveryNode[] fromNodes) {
         boolean selfVoteSucceeded = false;
-        synchronized (this) {
-            if (currentVote == null || currentVote.term <= forTerm) {
-                this.currentVote = new Vote(forTerm, raftDiscovery.localNode());
+        synchronized (raftState) {
+            if (raftState.votedFor() == null || raftState.term() < forTerm) {
+                raftState.term(forTerm);
+                raftState.votedFor(raftDiscovery.localNode());
                 selfVoteSucceeded = true;
             }
         }
         if (!selfVoteSucceeded) {
-            // shouldn't really happen, but just to safe
-            logger.debug("failing election: election started for term [{}] but we already voted for a higher term", forTerm, currentVote.term);
+            logger.debug("failing election: election started for term [{}] but we have already voted or term has been changed", forTerm);
             raftDiscovery.handleElectionLoss(forTerm);
         }
         logger.debug("starting election for term [{}]", forTerm);
         Election election = new Election(forTerm, fromNodes.length, fromNodes.length / 2 + 1);
         for (DiscoveryNode node : fromNodes) {
             try {
-                // TODO: disconnect/ lookup in alread connected nodes etc.
+                // TODO: disconnect/ lookup in already connected nodes etc.
                 transportService.connectToNode(node);
                 transportService.sendRequest(node, ACTION_NAME, new VoteRequest(forTerm, raftDiscovery.localNode(), clusterName),
                         TransportRequestOptions.options().withTimeout(electionTimeout), election);
@@ -94,19 +94,27 @@ public class RequestVoteRPC extends AbstractComponent {
         }
     }
 
-    private synchronized VoteResponse maybeVote(VoteRequest request) {
+    private VoteResponse maybeVote(VoteRequest request) {
         DiscoveryNode votedFor = null;
-        if (request.forTerm > currentVote.term) {
-            logger.debug("election term [{}] - voting for {}", request.forTerm, request.candidateNode);
-            currentVote = new Vote(request.forTerm, request.candidateNode);
-            votedFor = currentVote.votedFor;
-        } else if (request.forTerm == currentVote.term) {
-            logger.trace("received request for term [{}] from {}, responding with previous vote for {}",
-                    request.forTerm, request.candidateNode, currentVote.votedFor);
-            votedFor = currentVote.votedFor;
-        } else {
-            logger.trace("received request for term [{}] from {}, but our term is newer: [{}]",
-                    request.forTerm, request.candidateNode, currentVote.term);
+        synchronized (raftState) {
+            if (request.forTerm > raftState.term()) {
+                logger.debug("election term [{}] - voting for {} and advancing local term", request.forTerm, request.candidateNode);
+                raftState.term(request.forTerm);
+                raftState.votedFor(request.candidateNode);
+                votedFor = raftState.votedFor();
+            } else if (request.forTerm == raftState.term()) {
+                if (raftState.votedFor() == null) {
+                    logger.debug("election term [{}] - voting for {}. already on the same term", request.forTerm, request.candidateNode);
+                    raftState.votedFor(request.candidateNode);
+                } else {
+                    logger.trace("received request for term [{}] from {}, responding with previous vote for {}",
+                            request.forTerm, request.candidateNode, raftState.votedFor());
+                }
+                votedFor = raftState.votedFor();
+            } else {
+                logger.trace("received request for term [{}] from {}, but our term is newer: [{}]",
+                        request.forTerm, request.candidateNode, raftState.term());
+            }
         }
 
         return new VoteResponse(request.forTerm, raftDiscovery.localNode(), votedFor);

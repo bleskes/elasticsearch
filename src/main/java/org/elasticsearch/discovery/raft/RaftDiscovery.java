@@ -59,7 +59,6 @@ import java.util.Random;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 
 public class RaftDiscovery extends AbstractLifecycleComponent<Discovery> implements Discovery {
 
@@ -73,7 +72,7 @@ public class RaftDiscovery extends AbstractLifecycleComponent<Discovery> impleme
     private final Version version;
     private final ThreadPool threadPool;
     private AllocationService allocationService;
-    private final RequestVoteRPC requestVoteRPC;
+    private final RequestVoteAction requestVoteAction;
     private final PublishClusterStateAction publishClusterState;
     private final Random random;
 
@@ -88,14 +87,16 @@ public class RaftDiscovery extends AbstractLifecycleComponent<Discovery> impleme
     private final TimeValue reElectionDelayTime = TimeValue.timeValueMillis(300);
     private final TimeValue initialElectionDelay = TimeValue.timeValueSeconds(3);
 
-    public static enum RAFT_STATE {
-        FOLLOWER,
-        CANDIDATE,
-        MASTER
-    }
+    private RaftState raftState = new RaftState();
 
-    private volatile RAFT_STATE raftState = RAFT_STATE.FOLLOWER;
-    private AtomicLong term = new AtomicLong(0);
+//    public static enum RAFT_STATE {
+//        FOLLOWER,
+//        CANDIDATE,
+//        MASTER
+//    }
+//
+//    private volatile RAFT_STATE raftState = RAFT_STATE.FOLLOWER;
+//    private AtomicLong term = new AtomicLong(0);
 
     private DiscoveryNode[] configuredTargetNodes;
 
@@ -137,23 +138,25 @@ public class RaftDiscovery extends AbstractLifecycleComponent<Discovery> impleme
         }
         this.configuredTargetNodes = configuredTargetNodes.toArray(new DiscoveryNode[configuredTargetNodes.size()]);
 
-        this.requestVoteRPC = new RequestVoteRPC(settings, transportService, clusterName, this);
-        this.publishClusterState = new PublishClusterStateAction(settings, transportService, this, new NewClusterStateListener(), discoverySettings, clusterName);
+        this.requestVoteAction = new RequestVoteAction(settings, transportService, clusterName, this, raftState);
+        this.publishClusterState = new PublishClusterStateAction(settings, transportService, this, new NewClusterStateListener(), discoverySettings, clusterName, raftState);
 
     }
 
     public void handleElectionVictory(final long electionsTerm, final List<DiscoveryNode> activeNodes) {
-        if (this.term.get() != electionsTerm) {
-            logger.trace("won the election for term [{}] but my term is [{}], ignoring", electionsTerm, this.term.get());
-            return;
+        synchronized (raftState) {
+            if (raftState.term() != electionsTerm) {
+                logger.trace("won the election for term [{}] but my term is [{}], ignoring", electionsTerm, raftState.term());
+                return;
+            }
+            raftState.role(RaftState.RaftRole.MASTER);
         }
-        raftState = RAFT_STATE.MASTER;
 
         clusterService.submitStateUpdateTask("elected_as_master (term [" + electionsTerm + "])", Priority.URGENT, new ProcessedClusterStateNonMasterUpdateTask() {
             @Override
             public ClusterState execute(ClusterState currentState) {
-                if (term.get() != electionsTerm) {
-                    logger.debug("term changed while processing election results - ignore election (election term: [{}], current [{}])", electionsTerm, term.get());
+                if (raftState.term() != electionsTerm) {
+                    logger.debug("term changed while processing election results - ignore election (election term: [{}], current [{}])", electionsTerm, raftState.term());
                     return currentState;
                 }
                 DiscoveryNodes.Builder nodesBuilder = new DiscoveryNodes.Builder()
@@ -191,24 +194,30 @@ public class RaftDiscovery extends AbstractLifecycleComponent<Discovery> impleme
     }
 
     public void handleElectionLoss(final long electionTerm) {
-        if (term.get() != electionTerm) {
-            logger.trace("lost the election for term [{}] but my term is [{}], ignoring", term, this.term.get());
-            return;
-        }
-        // check if we didn't become a follower in the mean time
-        if (raftState == RAFT_STATE.CANDIDATE) {
-            threadPool.schedule(TimeValue.timeValueMillis(random.nextInt((int) reElectionDelayTime.millis())), ThreadPool.Names.GENERIC, new Runnable() {
-                @Override
-                public void run() {
-                    // check again if we didn't become a follower in the mean time
-                    if (raftState == RAFT_STATE.CANDIDATE) {
-                        if (term.compareAndSet(electionTerm, electionTerm + 1)) {
-                            raftState = RAFT_STATE.CANDIDATE;
-                            requestVoteRPC.requestVotes(electionTerm + 1, configuredTargetNodes);
+        synchronized (raftState) {
+            if (raftState.term() != electionTerm) {
+                logger.trace("lost the election for term [{}] but my term is [{}], ignoring", electionTerm, raftState.term());
+                return;
+            }
+            // check if we didn't become a follower in the mean time
+            if (raftState.role() == RaftState.RaftRole.CANDIDATE) {
+                threadPool.schedule(TimeValue.timeValueMillis(random.nextInt((int) reElectionDelayTime.millis())), ThreadPool.Names.GENERIC, new Runnable() {
+                    @Override
+                    public void run() {
+                        // check again if we didn't become a follower in the mean time
+                        boolean startElection = false;
+                        synchronized (raftState) {
+                            if (raftState.term() == electionTerm && raftState.role() == RaftState.RaftRole.CANDIDATE) {
+                                raftState.term(raftState.term() + 1);
+                                startElection = true;
+                            }
+                        }
+                        if (startElection) {
+                            requestVoteAction.performElection(electionTerm + 1, configuredTargetNodes);
                         }
                     }
-                }
-            });
+                });
+            }
         }
     }
 
@@ -235,156 +244,158 @@ public class RaftDiscovery extends AbstractLifecycleComponent<Discovery> impleme
             newStateProcessed.onNewClusterStateFailed(new ElasticsearchIllegalStateException("received state from a node that is not part of the cluster"));
             return;
         }
-        if (termForNewState < term.get()) {
+
+        if (newClusterState.nodes().localNode() == null) {
+            logger.warn("received a cluster state from [{}] and not part of the cluster, should not happen", newClusterState.nodes().masterNode());
+            newStateProcessed.onNewClusterStateFailed(new ElasticsearchIllegalStateException("received state from a node that is not part of the cluster"));
+            return;
+        }
+
+        if (termForNewState < raftState.term()) {
             logger.debug("received cluster state from [{}] of a lower term (expected >= [{}])",
-                    newClusterState.nodes().masterNode(), term.get());
+                    newClusterState.nodes().masterNode(), raftState.term());
             // TODO: signal other master to step down?
-        } else {
-            if (newClusterState.nodes().localNode() == null) {
-                logger.warn("received a cluster state from [{}] and not part of the cluster, should not happen", newClusterState.nodes().masterNode());
-                newStateProcessed.onNewClusterStateFailed(new ElasticsearchIllegalStateException("received state from a node that is not part of the cluster"));
-            } else {
-                if (raftState != RAFT_STATE.FOLLOWER) {
-                    logger.trace("got a new state from master node not being a [{}], converting to a follower", raftState);
-                    raftState = RAFT_STATE.FOLLOWER;
+            newStateProcessed.onNewClusterStateProcessed();
+            return;
+        }
+        final ProcessClusterState processClusterState = new ProcessClusterState(termForNewState, newClusterState, newStateProcessed);
+        processNewClusterStates.add(processClusterState);
+
+
+        assert newClusterState.nodes().masterNode() != null : "received a cluster state without a master";
+        assert !newClusterState.blocks().hasGlobalBlock(discoverySettings.getNoMasterBlock()) : "received a cluster state with a master block";
+
+        clusterService.submitStateUpdateTask("raft-receive(from master [" + newClusterState.nodes().masterNode() + "] term [" + termForNewState + "])", Priority.URGENT, new ProcessedClusterStateNonMasterUpdateTask() {
+            @Override
+            public ClusterState execute(ClusterState currentState) {
+                // we already processed it in a previous event
+                if (processClusterState.processed) {
+                    return currentState;
                 }
 
-                final ProcessClusterState processClusterState = new ProcessClusterState(termForNewState, newClusterState, newStateProcessed);
-                processNewClusterStates.add(processClusterState);
+                // TODO: once improvement that we can do is change the message structure to include version and masterNodeId
+                // at the start, this will allow us to keep the "compressed bytes" around, and only parse the first page
+                // to figure out if we need to use it or not, and only once we picked the latest one, parse the whole state
 
 
-                assert newClusterState.nodes().masterNode() != null : "received a cluster state without a master";
-                assert !newClusterState.blocks().hasGlobalBlock(discoverySettings.getNoMasterBlock()) : "received a cluster state with a master block";
+                // try and get the state with the highest version out of all the ones with the same master node id
+                ProcessClusterState stateToProcess = processNewClusterStates.poll();
+                if (stateToProcess == null) {
+                    return currentState;
+                }
+                stateToProcess.processed = true;
+                while (true) {
+                    ProcessClusterState potentialState = processNewClusterStates.peek();
+                    // nothing else in the queue, bail
+                    if (potentialState == null) {
+                        break;
+                    }
+                    // if its not from the same master, then bail
+                    if (!Objects.equal(stateToProcess.clusterState.nodes().masterNodeId(), potentialState.clusterState.nodes().masterNodeId())) {
+                        break;
+                    }
 
-                clusterService.submitStateUpdateTask("raft-receive(from master [" + newClusterState.nodes().masterNode() + "] term [" + termForNewState + "])", Priority.URGENT, new ProcessedClusterStateNonMasterUpdateTask() {
-                    @Override
-                    public ClusterState execute(ClusterState currentState) {
-                        // we already processed it in a previous event
-                        if (processClusterState.processed) {
-                            return currentState;
+                    // we are going to use it for sure, poll (remove) it
+                    potentialState = processNewClusterStates.poll();
+                    if (potentialState == null) {
+                        // might happen if the queue is drained
+                        break;
+                    }
+
+                    potentialState.processed = true;
+
+                    if (potentialState.term > stateToProcess.term ||
+                            (potentialState.term == stateToProcess.term && potentialState.clusterState.version() > stateToProcess.clusterState.version())
+                            ) {
+                        // we found a new one
+                        stateToProcess = potentialState;
+                    }
+                }
+
+                ClusterState updatedState = stateToProcess.clusterState;
+
+                if (raftState.term() < stateToProcess.term) {
+                    return currentState;
+                }
+
+                boolean termUpdated = false;
+                synchronized (raftState) {
+                    // double check the term didn't increase in the meantime
+                    if (stateToProcess.term < raftState.term()) {
+                        logger.trace("term was increased to [{}] during processing of cluster state from term [{}]. ignoring",
+                                raftState.term(), stateToProcess.term);
+                        return currentState;
+                    } else if (stateToProcess.term > raftState.term()) {
+                        // update term
+                        raftState.term(stateToProcess.term);
+                        termUpdated = true;
+                    }
+                    if (raftState.role() != RaftState.RaftRole.FOLLOWER) {
+                        logger.trace("got a new state from master node not being a [{}], converting to a follower", raftState);
+                        raftState.role(RaftState.RaftRole.FOLLOWER);
                         }
+                }
 
-                        // TODO: once improvement that we can do is change the message structure to include version and masterNodeId
-                        // at the start, this will allow us to keep the "compressed bytes" around, and only parse the first page
-                        // to figure out if we need to use it or not, and only once we picked the latest one, parse the whole state
-
-
-                        // try and get the state with the highest version out of all the ones with the same master node id
-                        ProcessClusterState stateToProcess = processNewClusterStates.poll();
-                        if (stateToProcess == null) {
-                            return currentState;
-                        }
-                        stateToProcess.processed = true;
-                        while (true) {
-                            ProcessClusterState potentialState = processNewClusterStates.peek();
-                            // nothing else in the queue, bail
-                            if (potentialState == null) {
-                                break;
-                            }
-                            // if its not from the same master, then bail
-                            if (!Objects.equal(stateToProcess.clusterState.nodes().masterNodeId(), potentialState.clusterState.nodes().masterNodeId())) {
-                                break;
-                            }
-
-                            // we are going to use it for sure, poll (remove) it
-                            potentialState = processNewClusterStates.poll();
-                            if (potentialState == null) {
-                                // might happen if the queue is drained
-                                break;
-                            }
-
-                            potentialState.processed = true;
-
-                            if (potentialState.term > stateToProcess.term ||
-                                    (potentialState.term == stateToProcess.term && potentialState.clusterState.version() > stateToProcess.clusterState.version())
-                                    ) {
-                                // we found a new one
-                                stateToProcess = potentialState;
-                            }
-                        }
-
-                        ClusterState updatedState = stateToProcess.clusterState;
+                // if the new state has the same master node but an older version and the term didn't change, then no need to process it
+                if (!termUpdated &&
+                        updatedState.version() < currentState.version() &&
+                        Objects.equal(updatedState.nodes().masterNodeId(), currentState.nodes().masterNodeId())) {
+                    return currentState;
+                }
 
 
-                        // if the new state is of an older term or a smaller version
-                        // o.w. we update our term, but make sure it didn't change
-                        long sampledTerm = term.get();
-                        while (true) {
-
-                            if (stateToProcess.term < sampledTerm) {
-                                return currentState;
-                            }
-                            if (term.compareAndSet(sampledTerm, stateToProcess.term)) {
-                                // convert to follower if needed
-                                raftState = RAFT_STATE.FOLLOWER;
-                                break;
-                            }
-                            // something changed, resample:
-                            sampledTerm = term.get();
-                        }
-
-                        // if the new state the same master node && the same term, then no need to process it
-                        if (sampledTerm == stateToProcess.term &&
-                                updatedState.version() < currentState.version() &&
-                                Objects.equal(updatedState.nodes().masterNodeId(), currentState.nodes().masterNodeId())) {
-                            return currentState;
-                        }
-
-
-                        // check to see that we monitor the correct master of the cluster
-                        // TODO: renable
+                // check to see that we monitor the correct master of the cluster
+                // TODO: renable
 //                        if (masterFD.masterNode() == null || !masterFD.masterNode().equals(latestDiscoNodes.masterNode())) {
 //                            masterFD.restart(latestDiscoNodes.masterNode(), "new cluster state received and we are monitoring the wrong master [" + masterFD.masterNode() + "]");
 //                        }
 
-                        if (currentState.blocks().hasGlobalBlock(discoverySettings.getNoMasterBlock())) {
-                            // its a fresh update from the master as we transition from a start of not having a master to having one
-                            logger.debug("got first state from fresh master [{}]", updatedState.nodes().masterNodeId());
-                            return updatedState;
-                        }
+                if (currentState.blocks().hasGlobalBlock(discoverySettings.getNoMasterBlock())) {
+                    // its a fresh update from the master as we transition from a start of not having a master to having one
+                    logger.debug("got first state from fresh master [{}]", updatedState.nodes().masterNodeId());
+                    return updatedState;
+                }
 
 
-                        // some optimizations to make sure we keep old objects where possible
-                        ClusterState.Builder builder = ClusterState.builder(updatedState);
+                // some optimizations to make sure we keep old objects where possible
+                ClusterState.Builder builder = ClusterState.builder(updatedState);
 
-                        // if the routing table did not change, use the original one
-                        if (updatedState.routingTable().version() == currentState.routingTable().version()) {
-                            builder.routingTable(currentState.routingTable());
-                        }
-                        // same for metadata
-                        if (updatedState.metaData().version() == currentState.metaData().version()) {
-                            builder.metaData(currentState.metaData());
+                // if the routing table did not change, use the original one
+                if (updatedState.routingTable().version() == currentState.routingTable().version()) {
+                    builder.routingTable(currentState.routingTable());
+                }
+                // same for metadata
+                if (updatedState.metaData().version() == currentState.metaData().version()) {
+                    builder.metaData(currentState.metaData());
+                } else {
+                    // if its not the same version, only copy over new indices or ones that changed the version
+                    MetaData.Builder metaDataBuilder = MetaData.builder(updatedState.metaData()).removeAllIndices();
+                    for (IndexMetaData indexMetaData : updatedState.metaData()) {
+                        IndexMetaData currentIndexMetaData = currentState.metaData().index(indexMetaData.index());
+                        if (currentIndexMetaData == null || currentIndexMetaData.version() != indexMetaData.version()) {
+                            metaDataBuilder.put(indexMetaData, false);
                         } else {
-                            // if its not the same version, only copy over new indices or ones that changed the version
-                            MetaData.Builder metaDataBuilder = MetaData.builder(updatedState.metaData()).removeAllIndices();
-                            for (IndexMetaData indexMetaData : updatedState.metaData()) {
-                                IndexMetaData currentIndexMetaData = currentState.metaData().index(indexMetaData.index());
-                                if (currentIndexMetaData == null || currentIndexMetaData.version() != indexMetaData.version()) {
-                                    metaDataBuilder.put(indexMetaData, false);
-                                } else {
-                                    metaDataBuilder.put(currentIndexMetaData, false);
-                                }
-                            }
-                            builder.metaData(metaDataBuilder);
+                            metaDataBuilder.put(currentIndexMetaData, false);
                         }
-
-                        return builder.build();
                     }
+                    builder.metaData(metaDataBuilder);
+                }
 
-                    @Override
-                    public void onFailure(String source, Throwable t) {
-                        logger.error("unexpected failure during [{}]", t, source);
-                        newStateProcessed.onNewClusterStateFailed(t);
-                    }
-
-                    @Override
-                    public void clusterStateProcessed(String source, ClusterState oldState, ClusterState newState) {
-                        sendInitialStateEventIfNeeded();
-                        newStateProcessed.onNewClusterStateProcessed();
-                    }
-                });
+                return builder.build();
             }
-        }
+
+            @Override
+            public void onFailure(String source, Throwable t) {
+                logger.error("unexpected failure during [{}]", t, source);
+                newStateProcessed.onNewClusterStateFailed(t);
+            }
+
+            @Override
+            public void clusterStateProcessed(String source, ClusterState oldState, ClusterState newState) {
+                sendInitialStateEventIfNeeded();
+                newStateProcessed.onNewClusterStateProcessed();
+            }
+        });
     }
 
 
@@ -397,9 +408,17 @@ public class RaftDiscovery extends AbstractLifecycleComponent<Discovery> impleme
         threadPool.schedule(initialElectionDelay, ThreadPool.Names.GENERIC, new Runnable() {
             @Override
             public void run() {
-                if (term.compareAndSet(0, 1)) {
-                    raftState = RAFT_STATE.CANDIDATE;
-                    requestVoteRPC.requestVotes(1, configuredTargetNodes);
+                boolean startElection = false;
+                synchronized (raftState) {
+                    // TODO: not sure if the term should be 1 - what happens if we voted for someone who never became master?
+                    if (raftState.term() == 0) {
+                        raftState.term(1);
+                        raftState.role(RaftState.RaftRole.CANDIDATE);
+                        startElection = true;
+                    }
+                }
+                if (startElection) {
+                    requestVoteAction.performElection(1, configuredTargetNodes);
                 }
             }
         });
@@ -447,11 +466,7 @@ public class RaftDiscovery extends AbstractLifecycleComponent<Discovery> impleme
 
     @Override
     public void publish(ClusterState clusterState, AckListener ackListener) {
-        if (raftState != RAFT_STATE.MASTER) {
-            throw new ElasticsearchIllegalStateException("Shouldn't publish state when not master");
-        }
-
-        publishClusterState.publish(term.get(), clusterState, ackListener);
+        publishClusterState.publish(clusterState, ackListener);
     }
 
     protected static Random createRandom(Settings settings) {
@@ -475,7 +490,7 @@ public class RaftDiscovery extends AbstractLifecycleComponent<Discovery> impleme
         @Override
         public void onNewClusterState(long term, ClusterState clusterState, NewStateProcessed newStateProcessed) {
             handleNewClusterStateFromMaster(term, clusterState, newStateProcessed);
-        }
+    }
     }
 
 }

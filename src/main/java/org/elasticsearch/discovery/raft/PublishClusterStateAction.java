@@ -20,6 +20,7 @@
 package org.elasticsearch.discovery.raft;
 
 import com.google.common.collect.Maps;
+import org.elasticsearch.ElasticsearchIllegalStateException;
 import org.elasticsearch.Version;
 import org.elasticsearch.cluster.ClusterName;
 import org.elasticsearch.cluster.ClusterState;
@@ -65,15 +66,17 @@ public class PublishClusterStateAction extends AbstractComponent {
     private final NewClusterStateListener listener;
     private final DiscoverySettings discoverySettings;
     private final ClusterName clusterName;
+    private final RaftState raftState;
 
     public PublishClusterStateAction(Settings settings, TransportService transportService, RaftDiscovery raftDiscovery,
-                                     NewClusterStateListener listener, DiscoverySettings discoverySettings, ClusterName clusterName) {
+                                     NewClusterStateListener listener, DiscoverySettings discoverySettings, ClusterName clusterName, RaftState raftState) {
         super(settings);
         this.transportService = transportService;
         this.raftDiscovery = raftDiscovery;
         this.listener = listener;
         this.discoverySettings = discoverySettings;
         this.clusterName = clusterName;
+        this.raftState = raftState;
         transportService.registerHandler(ACTION_NAME, new PublishClusterStateRequestHandler());
     }
 
@@ -81,7 +84,15 @@ public class PublishClusterStateAction extends AbstractComponent {
         transportService.removeHandler(ACTION_NAME);
     }
 
-    public void publish(final long term, ClusterState clusterState, final Discovery.AckListener ackListener) {
+    public void publish(ClusterState clusterState, final Discovery.AckListener ackListener) {
+        long term;
+        synchronized (raftState) {
+            if (raftState.role() != RaftState.RaftRole.MASTER) {
+                throw new ElasticsearchIllegalStateException("Shouldn't publish state when not master");
+            }
+            term = raftState.term();
+        }
+
         publish(term, clusterState, new AckClusterStatePublishResponseHandler(clusterState.nodes().size() - 1, ackListener));
     }
 
