@@ -19,6 +19,8 @@ package org.elasticsearch.shield;
 
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.ActionRequest;
+import org.elasticsearch.action.ActionResponse;
+import org.elasticsearch.action.support.ActionFilter;
 import org.elasticsearch.action.support.ActionFilterChain;
 import org.elasticsearch.common.component.AbstractComponent;
 import org.elasticsearch.common.inject.Inject;
@@ -93,7 +95,7 @@ public class SecurityFilter extends AbstractComponent {
         }
     }
 
-    public static class Action implements org.elasticsearch.action.support.ActionFilter {
+    public static class Action implements ActionFilter {
 
         private final SecurityFilter filter;
 
@@ -103,14 +105,18 @@ public class SecurityFilter extends AbstractComponent {
         }
 
         @Override
-        public void process(String action, ActionRequest request, ActionListener listener, ActionFilterChain chain) {
+        public void apply(String action, ActionRequest request, ActionListener listener, ActionFilterChain chain) {
             try {
                 filter.process(action, request);
+                chain.proceed(action, request, listener);
             } catch (Throwable t) {
                 listener.onFailure(t);
-                return;
             }
-            chain.continueProcessing(action, request, listener);
+        }
+
+        @Override
+        public void apply(String action, ActionResponse response, ActionListener listener, ActionFilterChain chain) {
+            chain.proceed(action, response, listener);
         }
 
         @Override
