@@ -15,20 +15,17 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.shield.authz;
+package org.elasticsearch.shield;
 
 import org.elasticsearch.common.inject.AbstractModule;
-import org.elasticsearch.shield.authz.store.FileRolesStore;
-import org.elasticsearch.shield.authz.store.RolesStore;
 
 /**
  *
  */
-public class AuthorizationModule extends AbstractModule {
+public class SecurityFilterModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(RolesStore.class).to(FileRolesStore.class);
-        bind(AuthorizationService.class).to(InternalAuthorizationService.class).asEagerSingleton();
+        bind(SecurityFilter.class).asEagerSingleton();
     }
 }

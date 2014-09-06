@@ -38,6 +38,8 @@ import org.elasticsearch.shield.support.Automatons;
 import java.util.Locale;
 import java.util.Set;
 
+import static org.elasticsearch.shield.support.Automatons.patterns;
+
 /**
  *
  */
@@ -45,7 +47,7 @@ public abstract class Privilege<P extends Privilege<P>> {
 
     static final String SUB_ACTION_SUFFIX_PATTERN = ".*";
 
-    public static final Internal INTERNAL = new Internal();
+    public static final System SYSTEM = new System();
 
     protected final Name name;
 
@@ -66,11 +68,13 @@ public abstract class Privilege<P extends Privilege<P>> {
         return this.implies(other) && other.implies((P) this);
     }
 
-    public static class Internal extends Privilege<Internal> {
+    public static class System extends Privilege<System> {
 
-        protected static final Predicate<String> PREDICATE = new AutomatonPredicate(Automatons.patterns("internal:.*"));
+        protected static final Predicate<String> PREDICATE = new AutomatonPredicate(patterns(
+                "internal:.*"
+        ));
 
-        private Internal() {
+        private System() {
             super(new Name("internal"));
         }
 
@@ -80,7 +84,7 @@ public abstract class Privilege<P extends Privilege<P>> {
         }
 
         @Override
-        public boolean implies(Internal other) {
+        public boolean implies(System other) {
             return true;
         }
     }
@@ -273,12 +277,12 @@ public abstract class Privilege<P extends Privilege<P>> {
 
         private AutomatonPrivilege(String name, String... patterns) {
             super(new Name(name));
-            this.automaton = Automatons.patterns(patterns);
+            this.automaton = patterns(patterns);
         }
 
         private AutomatonPrivilege(Name name, String... patterns) {
             super(name);
-            this.automaton = Automatons.patterns(patterns);
+            this.automaton = patterns(patterns);
         }
 
         private AutomatonPrivilege(Name name, Automaton automaton) {

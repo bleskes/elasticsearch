@@ -19,7 +19,6 @@ package org.elasticsearch.shield.authc;
 
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.rest.RestRequest;
-import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.shield.User;
 import org.elasticsearch.shield.audit.AuditTrail;
 import org.elasticsearch.test.ElasticsearchTestCase;
@@ -174,19 +173,21 @@ public class InternalAuthenticationServiceTests extends ElasticsearchTestCase {
     }
 
     @Test
-    public void testVerifyToken_Exists() throws Exception {
-        when(firstRealm.hasToken(restRequest)).thenReturn(false);
-        when(secondRealm.hasToken(restRequest)).thenReturn(true);
-        service.verifyToken(restRequest);
+    public void testExtractAndRegisterToken_Exists() throws Exception {
+        AuthenticationToken token = mock(AuthenticationToken.class);
+        when(firstRealm.token(restRequest)).thenReturn(null);
+        when(secondRealm.token(restRequest)).thenReturn(token);
+        service.extractAndRegisterToken(restRequest);
+        assertThat(restRequest.getFromContext(InternalAuthenticationService.TOKEN_CTX_KEY), equalTo((Object) token));
     }
 
     @Test
     public void testVerifyToken_Missing() throws Exception {
         thrown.expect(AuthenticationException.class);
         thrown.expectMessage("Missing authentication token");
-        when(firstRealm.hasToken(restRequest)).thenReturn(false);
-        when(secondRealm.hasToken(restRequest)).thenReturn(false);
-        service.verifyToken(restRequest);
+        when(firstRealm.token(restRequest)).thenReturn(null);
+        when(secondRealm.token(restRequest)).thenReturn(null);
+        service.extractAndRegisterToken(restRequest);
     }
 
     private static class InternalMessage extends TransportMessage<InternalMessage> {
