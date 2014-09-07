@@ -74,6 +74,7 @@ public class RaftDiscovery extends AbstractLifecycleComponent<Discovery> impleme
     private AllocationService allocationService;
     private final RequestVoteAction requestVoteAction;
     private final PublishClusterStateAction publishClusterState;
+    private final RaftPing raftPing;
     private final Random random;
 
     private final AtomicBoolean initialStateSent = new AtomicBoolean();
@@ -88,15 +89,6 @@ public class RaftDiscovery extends AbstractLifecycleComponent<Discovery> impleme
     private final TimeValue initialElectionDelay = TimeValue.timeValueSeconds(3);
 
     private RaftState raftState = new RaftState();
-
-//    public static enum RAFT_STATE {
-//        FOLLOWER,
-//        CANDIDATE,
-//        MASTER
-//    }
-//
-//    private volatile RAFT_STATE raftState = RAFT_STATE.FOLLOWER;
-//    private AtomicLong term = new AtomicLong(0);
 
     private DiscoveryNode[] configuredTargetNodes;
 
@@ -140,6 +132,8 @@ public class RaftDiscovery extends AbstractLifecycleComponent<Discovery> impleme
 
         this.requestVoteAction = new RequestVoteAction(settings, transportService, clusterName, this, raftState);
         this.publishClusterState = new PublishClusterStateAction(settings, transportService, this, new NewClusterStateListener(), discoverySettings, clusterName, raftState);
+        this.raftPing = new RaftPing(settings, transportService, this, clusterName, raftState, clusterService);
+
 
     }
 
@@ -410,7 +404,7 @@ public class RaftDiscovery extends AbstractLifecycleComponent<Discovery> impleme
             public void run() {
                 boolean startElection = false;
                 synchronized (raftState) {
-                    // TODO: not sure if the term should be 1 - what happens if we voted for someone who never became master?
+                    // TODO: not sure if the term should be 0 - what happens if we voted for someone who never became master?
                     if (raftState.term() == 0) {
                         raftState.term(1);
                         raftState.role(RaftState.RaftRole.CANDIDATE);
@@ -431,7 +425,7 @@ public class RaftDiscovery extends AbstractLifecycleComponent<Discovery> impleme
 
     @Override
     protected void doClose() throws ElasticsearchException {
-
+        publishClusterState.close();
     }
 
     @Override
