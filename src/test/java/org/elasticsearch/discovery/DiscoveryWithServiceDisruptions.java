@@ -107,7 +107,7 @@ public class DiscoveryWithServiceDisruptions extends ElasticsearchIntegrationTes
     }
 
     private List<String> startCluster(int numberOfNodes, int minimumMasterNode) throws ExecutionException, InterruptedException {
-        switch (2) {//randomInt(2)) {
+        switch (randomInt(2)) {
             case 0:
                 return startMulticastCluster(numberOfNodes, minimumMasterNode);
             case 1:

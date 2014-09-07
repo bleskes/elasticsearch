@@ -283,8 +283,8 @@ public class RaftDiscovery extends AbstractLifecycleComponent<Discovery> impleme
         }
 
         if (termForNewState < raftState.term()) {
-            logger.debug("received cluster state from [{}] of a lower term (expected >= [{}])",
-                    newClusterState.nodes().masterNode(), raftState.term());
+            logger.debug("received cluster state from [{}] of a lower term [{}] (expected >= [{}])",
+                    newClusterState.nodes().masterNode(), termForNewState, raftState.term());
             // TODO: signal other master to step down?
             newStateProcessed.onNewClusterStateProcessed();
             return;
@@ -297,6 +297,10 @@ public class RaftDiscovery extends AbstractLifecycleComponent<Discovery> impleme
         assert !newClusterState.blocks().hasGlobalBlock(discoverySettings.getNoMasterBlock()) : "received a cluster state with a master block";
 
         clusterService.submitStateUpdateTask("raft-receive(from master [" + newClusterState.nodes().masterNode() + "] term [" + termForNewState + "])", Priority.URGENT, new ProcessedClusterStateNonMasterUpdateTask() {
+
+            // TODO: hack - replace
+            long termUsed = -1;
+
             @Override
             public ClusterState execute(ClusterState currentState) {
                 // we already processed it in a previous event
@@ -370,6 +374,7 @@ public class RaftDiscovery extends AbstractLifecycleComponent<Discovery> impleme
                     return currentState;
                 }
 
+                termUsed = stateToProcess.term;
 
                 // check to see that we monitor the correct master of the cluster
                 if (masterFD.masterNode() == null || !masterFD.masterNode().equals(newClusterState.nodes().masterNode())) {
@@ -419,6 +424,12 @@ public class RaftDiscovery extends AbstractLifecycleComponent<Discovery> impleme
             @Override
             public void clusterStateProcessed(String source, ClusterState oldState, ClusterState newState) {
                 sendInitialStateEventIfNeeded();
+                if (termUsed > 0) {
+                    synchronized (raftState) {
+                        raftState.lastClusterStateTerm(termUsed);
+                        raftState.lastClusterStateVersion(newState.version());
+                    }
+                }
                 newStateProcessed.onNewClusterStateProcessed();
             }
         });

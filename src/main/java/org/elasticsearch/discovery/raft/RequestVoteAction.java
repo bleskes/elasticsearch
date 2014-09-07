@@ -69,10 +69,14 @@ public class RequestVoteAction extends AbstractComponent {
 
     public void performElection(long forTerm, DiscoveryNode[] fromNodes, int neededVotes) {
         boolean selfVoteSucceeded = false;
+        long lastClusterStateTerm = -1;
+        long lastClusterStateVersion = -1;
         synchronized (raftState) {
             if (raftState.votedFor() == null || raftState.term() < forTerm) {
                 raftState.term(forTerm);
                 raftState.votedFor(raftDiscovery.localNode());
+                lastClusterStateTerm = raftState.lastClusterStateTerm();
+                lastClusterStateVersion = raftState.lastClusterStateVersion();
                 selfVoteSucceeded = true;
             }
         }
@@ -86,7 +90,8 @@ public class RequestVoteAction extends AbstractComponent {
             try {
                 // TODO: disconnect/ lookup in already connected nodes etc.
                 transportService.connectToNode(node);
-                transportService.sendRequest(node, ACTION_NAME, new VoteRequest(forTerm, raftDiscovery.localNode(), clusterName),
+                transportService.sendRequest(node, ACTION_NAME,
+                        new VoteRequest(forTerm, lastClusterStateTerm, lastClusterStateVersion, raftDiscovery.localNode(), clusterName),
                         TransportRequestOptions.options().withTimeout(electionTimeout), election);
             } catch (Exception e) {
                 election.handleSendingException(e);
@@ -97,23 +102,34 @@ public class RequestVoteAction extends AbstractComponent {
     private VoteResponse maybeVote(VoteRequest request) {
         DiscoveryNode votedFor = null;
         synchronized (raftState) {
-            if (request.forTerm > raftState.term()) {
-                logger.debug("election term [{}] - voting for {} and advancing local term", request.forTerm, request.candidateNode);
+            if (request.forTerm < raftState.term()) {
+                logger.trace("received request for term [{}] from {}, but our term is newer: [{}]",
+                        request.forTerm, request.candidateNode, raftState.term());
+            } else if (raftState.lastClusterStateTerm() > request.lastClusterStateTerm ||
+                    (raftState.lastClusterStateTerm() == request.lastClusterStateTerm &&
+                            raftState.lastClusterStateVersion() > request.lastClusterStateVersion)) {
+                logger.trace("received request for term [{}] from {}, but candidate CS is too old. got term [{}]/version [{}]. our term [{}]/version [{}]",
+                        request.forTerm, request.candidateNode,
+                        request.lastClusterStateTerm, request.lastClusterStateVersion,
+                        raftState.lastClusterStateTerm(), raftState.lastClusterStateVersion()
+                );
+
+                // we do have to update the term (its equal or higher)
                 raftState.term(request.forTerm);
-                raftState.votedFor(request.candidateNode);
-                votedFor = raftState.votedFor();
-            } else if (request.forTerm == raftState.term()) {
+
+            } else {
                 if (raftState.votedFor() == null) {
-                    logger.debug("election term [{}] - voting for {}. already on the same term", request.forTerm, request.candidateNode);
+                    logger.debug("election term [{}] - voting for {}. got CS term [{}]/version [{}]. our CS term [{}]/version [{}].",
+                            request.forTerm, request.candidateNode,
+                            request.lastClusterStateTerm, request.lastClusterStateVersion,
+                            raftState.lastClusterStateTerm(), raftState.lastClusterStateVersion());
+
                     raftState.votedFor(request.candidateNode);
                 } else {
                     logger.trace("received request for term [{}] from {}, responding with previous vote for {}",
                             request.forTerm, request.candidateNode, raftState.votedFor());
                 }
                 votedFor = raftState.votedFor();
-            } else {
-                logger.trace("received request for term [{}] from {}, but our term is newer: [{}]",
-                        request.forTerm, request.candidateNode, raftState.term());
             }
         }
 
@@ -234,12 +250,17 @@ public class RequestVoteAction extends AbstractComponent {
         private DiscoveryNode candidateNode;
         private ClusterName clusterName;
 
+        private long lastClusterStateTerm;
+        private long lastClusterStateVersion;
+
         // TODO: add cluster state version
 
-        public VoteRequest(long forTerm, DiscoveryNode candidateNode, ClusterName clusterName) {
+        public VoteRequest(long forTerm, long lastClusterStateTerm, long lastClusterStateVersion, DiscoveryNode candidateNode, ClusterName clusterName) {
             this.forTerm = forTerm;
             this.candidateNode = candidateNode;
             this.clusterName = clusterName;
+            this.lastClusterStateTerm = lastClusterStateTerm;
+            this.lastClusterStateVersion = lastClusterStateVersion;
         }
 
         private VoteRequest() {
@@ -256,6 +277,8 @@ public class RequestVoteAction extends AbstractComponent {
         public void readFrom(StreamInput in) throws IOException {
             super.readFrom(in);
             forTerm = in.readLong();
+            lastClusterStateTerm = in.readLong();
+            lastClusterStateVersion = in.readLong();
             candidateNode = DiscoveryNode.readNode(in);
             clusterName = ClusterName.readClusterName(in);
         }
@@ -264,6 +287,8 @@ public class RequestVoteAction extends AbstractComponent {
         public void writeTo(StreamOutput out) throws IOException {
             super.writeTo(out);
             out.writeLong(forTerm);
+            out.writeLong(lastClusterStateTerm);
+            out.writeLong(lastClusterStateVersion);
             candidateNode.writeTo(out);
             clusterName.writeTo(out);
         }

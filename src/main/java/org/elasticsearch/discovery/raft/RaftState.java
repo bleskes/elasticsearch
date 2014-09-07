@@ -37,10 +37,15 @@ public class RaftState {
     @Nullable
     private DiscoveryNode votedFor;
 
+    private long lastClusterStateTerm;
+    private long lastClusterStateVersion;
+
     public RaftState() {
         term = 0;
         role = RaftRole.FOLLOWER;
         votedFor = null;
+        lastClusterStateTerm = -1;
+        lastClusterStateVersion = -1;
     }
 
     public synchronized long term() {
@@ -71,5 +76,22 @@ public class RaftState {
     public synchronized void role(RaftRole role) {
         this.role = role;
     }
+
+    public synchronized long lastClusterStateTerm() {
+        return lastClusterStateTerm;
+    }
+
+    public synchronized void lastClusterStateTerm(long lastClusterStateTerm) {
+        this.lastClusterStateTerm = lastClusterStateTerm;
+    }
+
+    public synchronized long lastClusterStateVersion() {
+        return lastClusterStateVersion;
+    }
+
+    public synchronized void lastClusterStateVersion(long lastClusterStateVersion) {
+        this.lastClusterStateVersion = lastClusterStateVersion;
+    }
+
 
 }
