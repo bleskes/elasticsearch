@@ -67,7 +67,7 @@ public class RequestVoteAction extends AbstractComponent {
         transportService.removeHandler(ACTION_NAME);
     }
 
-    public void performElection(long forTerm, DiscoveryNode[] fromNodes) {
+    public void performElection(long forTerm, DiscoveryNode[] fromNodes, int neededVotes) {
         boolean selfVoteSucceeded = false;
         synchronized (raftState) {
             if (raftState.votedFor() == null || raftState.term() < forTerm) {
@@ -81,7 +81,7 @@ public class RequestVoteAction extends AbstractComponent {
             raftDiscovery.handleElectionLoss(forTerm);
         }
         logger.debug("starting election for term [{}]", forTerm);
-        Election election = new Election(forTerm, fromNodes.length, fromNodes.length / 2 + 1);
+        Election election = new Election(forTerm, fromNodes.length, neededVotes);
         for (DiscoveryNode node : fromNodes) {
             try {
                 // TODO: disconnect/ lookup in already connected nodes etc.

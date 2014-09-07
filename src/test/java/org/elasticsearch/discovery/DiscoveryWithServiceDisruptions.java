@@ -107,10 +107,15 @@ public class DiscoveryWithServiceDisruptions extends ElasticsearchIntegrationTes
     }
 
     private List<String> startCluster(int numberOfNodes, int minimumMasterNode) throws ExecutionException, InterruptedException {
-        if (randomBoolean()) {
-            return startMulticastCluster(numberOfNodes, minimumMasterNode);
-        } else {
-            return startUnicastCluster(numberOfNodes, null, minimumMasterNode);
+        switch (2) {//randomInt(2)) {
+            case 0:
+                return startMulticastCluster(numberOfNodes, minimumMasterNode);
+            case 1:
+                return startUnicastCluster(numberOfNodes, null, minimumMasterNode);
+            case 2:
+                return startRaftCluster(numberOfNodes);
+            default:
+                throw new ElasticsearchException("unknown cluster configuration");
         }
     }
 
@@ -142,6 +147,22 @@ public class DiscoveryWithServiceDisruptions extends ElasticsearchIntegrationTes
 
         return nodes;
     }
+
+    private List<String> startRaftCluster(int numberOfNodes) throws ExecutionException, InterruptedException {
+        // TODO: Rarely use default settings form some of these
+        Settings settings = ImmutableSettings.builder()
+                .put(DEFAULT_SETTINGS)
+                .build();
+
+        if (discoveryConfig == null) {
+            discoveryConfig = new ClusterDiscoveryConfiguration.Raft(numberOfNodes, settings);
+        }
+        List<String> nodes = internalCluster().startNodesAsync(numberOfNodes).get();
+        ensureStableCluster(numberOfNodes);
+
+        return nodes;
+    }
+
 
     private List<String> startUnicastCluster(int numberOfNodes, @Nullable int[] unicastHostsOrdinals, int minimumMasterNode) throws ExecutionException, InterruptedException {
         if (minimumMasterNode < 0) {
@@ -255,7 +276,7 @@ public class DiscoveryWithServiceDisruptions extends ElasticsearchIntegrationTes
         assertNoMaster(isolatedNode, DiscoverySettings.NO_MASTER_BLOCK_WRITES, TimeValue.timeValueSeconds(10));
 
 
-        logger.info("wait until elected master has been removed and a new 2 node cluster was from (via [{}])", isolatedNode);
+        logger.info("wait until elected master has been removed and a new 2 node cluster was from (via [{}])", nonIsolatedNode);
         ensureStableCluster(2, nonIsolatedNode);
 
         for (String node : networkPartition.getMajoritySide()) {

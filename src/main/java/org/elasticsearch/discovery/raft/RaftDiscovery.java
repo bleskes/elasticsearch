@@ -25,10 +25,7 @@ import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.ElasticsearchIllegalArgumentException;
 import org.elasticsearch.ElasticsearchIllegalStateException;
 import org.elasticsearch.Version;
-import org.elasticsearch.cluster.ClusterName;
-import org.elasticsearch.cluster.ClusterService;
-import org.elasticsearch.cluster.ClusterState;
-import org.elasticsearch.cluster.ProcessedClusterStateNonMasterUpdateTask;
+import org.elasticsearch.cluster.*;
 import org.elasticsearch.cluster.block.ClusterBlocks;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.cluster.metadata.MetaData;
@@ -39,20 +36,28 @@ import org.elasticsearch.cluster.routing.allocation.AllocationService;
 import org.elasticsearch.cluster.routing.allocation.RoutingAllocation;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.Priority;
+import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.component.AbstractLifecycleComponent;
+import org.elasticsearch.common.component.Lifecycle;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.common.util.concurrent.AtomicArray;
 import org.elasticsearch.common.util.concurrent.ConcurrentCollections;
+import org.elasticsearch.common.util.concurrent.EsRejectedExecutionException;
 import org.elasticsearch.discovery.Discovery;
 import org.elasticsearch.discovery.DiscoveryService;
 import org.elasticsearch.discovery.DiscoverySettings;
 import org.elasticsearch.discovery.InitialStateDiscoveryListener;
+import org.elasticsearch.discovery.zen.DiscoveryNodesProvider;
+import org.elasticsearch.discovery.zen.fd.MasterFaultDetection;
+import org.elasticsearch.discovery.zen.fd.NodesFaultDetection;
 import org.elasticsearch.node.service.NodeService;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -60,7 +65,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class RaftDiscovery extends AbstractLifecycleComponent<Discovery> implements Discovery {
+public class RaftDiscovery extends AbstractLifecycleComponent<Discovery> implements Discovery, DiscoveryNodesProvider {
 
     public static final int LIMIT_PORTS_COUNT = 1;
 
@@ -74,8 +79,13 @@ public class RaftDiscovery extends AbstractLifecycleComponent<Discovery> impleme
     private AllocationService allocationService;
     private final RequestVoteAction requestVoteAction;
     private final PublishClusterStateAction publishClusterState;
+    private final MembershipAction membershipAction;
     private final RaftPing raftPing;
     private final Random random;
+    private final MasterFaultDetection masterFD;
+    private final NodesFaultDetection nodesFD;
+    private NodeService nodeService;
+
 
     private final AtomicBoolean initialStateSent = new AtomicBoolean();
 
@@ -83,14 +93,12 @@ public class RaftDiscovery extends AbstractLifecycleComponent<Discovery> impleme
 
     private final CopyOnWriteArrayList<InitialStateDiscoveryListener> initialStateListeners = new CopyOnWriteArrayList<>();
 
-    // TODO: make configurable
-    private final TimeValue masterLossDelayTime = TimeValue.timeValueMillis(300);
-    private final TimeValue reElectionDelayTime = TimeValue.timeValueMillis(300);
-    private final TimeValue initialElectionDelay = TimeValue.timeValueSeconds(3);
-
     private RaftState raftState = new RaftState();
 
-    private DiscoveryNode[] configuredTargetNodes;
+    private final DiscoveryNode[] configuredTargetNodes;
+    private final AtomicArray<DiscoveryNode> resolvedTargetNodes;
+    private final BlockingQueue<Tuple<DiscoveryNode, MembershipAction.JoinCallback>> processJoinRequests = ConcurrentCollections.newBlockingQueue();
+
 
     @Inject
     public RaftDiscovery(Settings settings, ClusterName clusterName,
@@ -129,12 +137,42 @@ public class RaftDiscovery extends AbstractLifecycleComponent<Discovery> impleme
             }
         }
         this.configuredTargetNodes = configuredTargetNodes.toArray(new DiscoveryNode[configuredTargetNodes.size()]);
+        this.resolvedTargetNodes = new AtomicArray<>(configuredTargetNodes.size());
 
         this.requestVoteAction = new RequestVoteAction(settings, transportService, clusterName, this, raftState);
         this.publishClusterState = new PublishClusterStateAction(settings, transportService, this, new NewClusterStateListener(), discoverySettings, clusterName, raftState);
         this.raftPing = new RaftPing(settings, transportService, this, clusterName, raftState, clusterService);
 
+        this.masterFD = new MasterFaultDetection(settings, threadPool, transportService, this, clusterName);
+        this.masterFD.addListener(new MasterNodeFailureListener());
 
+        this.nodesFD = new NodesFaultDetection(settings, threadPool, transportService, clusterName);
+        this.nodesFD.addListener(new NodeFaultDetectionListener());
+
+        this.membershipAction = new MembershipAction(settings, transportService, new MembershipListener(), this);
+    }
+
+
+    private void startAnElection(long expectedTerm) {
+        boolean startElection = false;
+        synchronized (raftState) {
+            if (raftState.term() == expectedTerm) {
+                raftState.term(raftState.term() + 1);
+                raftState.role(RaftState.RaftRole.CANDIDATE);
+                startElection = true;
+            }
+        }
+        if (startElection) {
+            ArrayList<DiscoveryNode> resolvedNodes = new ArrayList<>();
+            for (int i = 0; i < resolvedTargetNodes.length(); i++) {
+                if (resolvedTargetNodes.get(i) != null) {
+                    resolvedNodes.add(resolvedTargetNodes.get(i));
+                }
+            }
+            requestVoteAction.performElection(expectedTerm + 1,
+                    resolvedNodes.toArray(new DiscoveryNode[resolvedNodes.size()]),
+                    resolvedTargetNodes.length() / 2 + 1); // we still need majority, even if we didn't resolve all
+        }
     }
 
     public void handleElectionVictory(final long electionsTerm, final List<DiscoveryNode> activeNodes) {
@@ -170,6 +208,9 @@ public class RaftDiscovery extends AbstractLifecycleComponent<Discovery> impleme
                 ClusterBlocks clusterBlocks = ClusterBlocks.builder().blocks(currentState.blocks()).removeGlobalBlock(discoverySettings.getNoMasterBlock()).build();
                 currentState = ClusterState.builder(currentState).nodes(nodesBuilder.build()).blocks(clusterBlocks).build();
 
+                masterFD.stop("elected_as_master");
+                nodesFD.start();
+
                 // eagerly run reroute to remove dead nodes from routing table
                 RoutingAllocation.Result result = allocationService.reroute(currentState);
                 return ClusterState.builder(currentState).routingResult(result).build();
@@ -195,24 +236,20 @@ public class RaftDiscovery extends AbstractLifecycleComponent<Discovery> impleme
             }
             // check if we didn't become a follower in the mean time
             if (raftState.role() == RaftState.RaftRole.CANDIDATE) {
-                threadPool.schedule(TimeValue.timeValueMillis(random.nextInt((int) reElectionDelayTime.millis())), ThreadPool.Names.GENERIC, new Runnable() {
-                    @Override
-                    public void run() {
-                        // check again if we didn't become a follower in the mean time
-                        boolean startElection = false;
-                        synchronized (raftState) {
-                            if (raftState.term() == electionTerm && raftState.role() == RaftState.RaftRole.CANDIDATE) {
-                                raftState.term(raftState.term() + 1);
-                                startElection = true;
-                            }
-                        }
-                        if (startElection) {
-                            requestVoteAction.performElection(electionTerm + 1, configuredTargetNodes);
-                        }
-                    }
-                });
+                // give things some time and try to join what ever is there..
+                scheduleClusterJoin(0, false);
             }
         }
+    }
+
+    @Override
+    public DiscoveryNodes nodes() {
+        return clusterService.state().nodes();
+    }
+
+    @Override
+    public NodeService nodeService() {
+        return nodeService;
     }
 
     static class ProcessClusterState {
@@ -230,7 +267,7 @@ public class RaftDiscovery extends AbstractLifecycleComponent<Discovery> impleme
 
     private final BlockingQueue<ProcessClusterState> processNewClusterStates = ConcurrentCollections.newBlockingQueue();
 
-    void handleNewClusterStateFromMaster(long termForNewState, ClusterState newClusterState, final NewClusterStateListener.NewStateProcessed newStateProcessed) {
+    void handleNewClusterStateFromMaster(long termForNewState, final ClusterState newClusterState, final NewClusterStateListener.NewStateProcessed newStateProcessed) {
         final ClusterName incomingClusterName = newClusterState.getClusterName();
         /* The cluster name can still be null if the state comes from a node that is prev 1.1.1*/
         if (incomingClusterName != null && !incomingClusterName.equals(this.clusterName)) {
@@ -308,10 +345,6 @@ public class RaftDiscovery extends AbstractLifecycleComponent<Discovery> impleme
 
                 ClusterState updatedState = stateToProcess.clusterState;
 
-                if (raftState.term() < stateToProcess.term) {
-                    return currentState;
-                }
-
                 boolean termUpdated = false;
                 synchronized (raftState) {
                     // double check the term didn't increase in the meantime
@@ -327,7 +360,7 @@ public class RaftDiscovery extends AbstractLifecycleComponent<Discovery> impleme
                     if (raftState.role() != RaftState.RaftRole.FOLLOWER) {
                         logger.trace("got a new state from master node not being a [{}], converting to a follower", raftState);
                         raftState.role(RaftState.RaftRole.FOLLOWER);
-                        }
+                    }
                 }
 
                 // if the new state has the same master node but an older version and the term didn't change, then no need to process it
@@ -339,10 +372,9 @@ public class RaftDiscovery extends AbstractLifecycleComponent<Discovery> impleme
 
 
                 // check to see that we monitor the correct master of the cluster
-                // TODO: renable
-//                        if (masterFD.masterNode() == null || !masterFD.masterNode().equals(latestDiscoNodes.masterNode())) {
-//                            masterFD.restart(latestDiscoNodes.masterNode(), "new cluster state received and we are monitoring the wrong master [" + masterFD.masterNode() + "]");
-//                        }
+                if (masterFD.masterNode() == null || !masterFD.masterNode().equals(newClusterState.nodes().masterNode())) {
+                    masterFD.restart(newClusterState.nodes().masterNode(), "new cluster state received and we are monitoring the wrong master [" + masterFD.masterNode() + "]");
+                }
 
                 if (currentState.blocks().hasGlobalBlock(discoverySettings.getNoMasterBlock())) {
                     // its a fresh update from the master as we transition from a start of not having a master to having one
@@ -392,6 +424,208 @@ public class RaftDiscovery extends AbstractLifecycleComponent<Discovery> impleme
         });
     }
 
+    private void handleMasterGone(final DiscoveryNode masterNode, final String reason) {
+        if (lifecycleState() != Lifecycle.State.STARTED) {
+            // not started, ignore a master failure
+            return;
+        }
+
+        logger.info("master_left [{}], reason [{}]", masterNode, reason);
+
+        clusterService.submitStateUpdateTask("raft-disco-master_failed (" + masterNode + ")", Priority.IMMEDIATE, new ProcessedClusterStateNonMasterUpdateTask() {
+            @Override
+            public ClusterState execute(ClusterState currentState) {
+                if (!masterNode.id().equals(currentState.nodes().masterNodeId())) {
+                    // master got switched on us, no need to send anything
+                    return currentState;
+                }
+
+                DiscoveryNodes discoveryNodes = DiscoveryNodes.builder(currentState.nodes())
+                        // make sure the old master node, which has failed, is not part of the nodes we publish
+                        .remove(masterNode.id())
+                        .masterNodeId(null).build();
+
+                // flush any pending cluster states from old master, so it will not be set as master again
+                ArrayList<ProcessClusterState> pendingNewClusterStates = new ArrayList<>();
+                processNewClusterStates.drainTo(pendingNewClusterStates);
+                logger.trace("removed [{}] pending cluster states", pendingNewClusterStates.size());
+
+                return rejoin(ClusterState.builder(currentState).nodes(discoveryNodes).build(), "master left (reason = " + reason + ")");
+            }
+
+            @Override
+            public void onFailure(String source, Throwable t) {
+                logger.error("unexpected failure during [{}]", t, source);
+            }
+
+            @Override
+            public void clusterStateProcessed(String source, ClusterState oldState, ClusterState newState) {
+                sendInitialStateEventIfNeeded();
+            }
+
+        });
+    }
+
+    private ClusterState rejoin(ClusterState clusterState, String reason) {
+        logger.warn(reason + ", current nodes: {}", clusterState.nodes());
+        nodesFD.stop();
+        masterFD.stop(reason);
+
+        ClusterBlocks clusterBlocks = ClusterBlocks.builder().blocks(clusterState.blocks())
+                .addGlobalBlock(discoverySettings.getNoMasterBlock())
+                .build();
+
+        // clean the nodes, we are now not connected to anybody, since we try and reform the cluster
+        DiscoveryNodes nodes = new DiscoveryNodes.Builder(clusterState.nodes()).masterNodeId(null).build();
+
+        scheduleClusterJoin(0, false);
+
+        return ClusterState.builder(clusterState)
+                .blocks(clusterBlocks)
+                .nodes(nodes)
+                .build();
+    }
+
+    private void scheduleClusterJoin(final int attemptCount, boolean immediate) {
+        final long term;
+        synchronized (raftState) {
+            term = raftState.term();
+            // clear vote for this term
+            raftState.votedFor(null);
+        }
+        // TODO: settings
+        TimeValue waitTime = TimeValue.timeValueMillis(immediate ? 0 : 100 + random.nextInt(300));
+        threadPool.schedule(waitTime, ThreadPool.Names.GENERIC,
+                new Runnable() {
+                    public void run() {
+                        if (raftState.term() > term || raftState.votedFor() != null) {
+                            // something have changed - relinquish control to the process
+                            logger.trace("skipping cluster rejoin as term has changed or vote is not null. Expected term [{}], found [{}]",
+                                    raftState.term(), term);
+                            return;
+                        }
+                        RaftPing.PingResult result;
+                        try {
+                            result = doPing();
+                        } catch (Exception e) {
+                            // TODO:
+                            logger.error("error while pinging before cluster join, scheduling a retry", e);
+                            // do not increment attempt count - this should have no influence on the term
+                            scheduleClusterJoin(attemptCount, false);
+                            return;
+                        }
+
+                        if (result.masterAdvice() == null) {
+                            logger.debug("pinging didn't discover any master candidate, starting an election");
+                            startAnElection(term);
+                            return;
+                        }
+
+                        if (result.masterAdvice().equals(localNode)) {
+                            // TODO: what to do here?
+                            logger.debug("pinging pointed local node as potential master, starting an election ");
+                            startAnElection(term);
+                            return;
+                        }
+
+                        logger.trace("joining advised master {}", result.masterAdvice());
+                        try {
+                            transportService.connectToNode(result.masterAdvice());
+                            membershipAction.sendJoinRequestBlocking(result.masterAdvice(), localNode(), TimeValue.timeValueSeconds(60));
+                            return;
+                        } catch (Exception e) {
+                            // TODO: differentiate between errors
+                            logger.debug("error while joining master {}", e, result.masterAdvice());
+                        }
+
+                        // if we got here it's not good...
+                        // TODO: configure
+                        if (attemptCount > 3) {
+                            startAnElection(term);
+                            return;
+                        }
+
+                        scheduleClusterJoin(attemptCount + 1, false);
+
+                    }
+                });
+    }
+
+    private void handleNodeRemoval(final DiscoveryNode node, String reason) {
+        if (lifecycleState() != Lifecycle.State.STARTED) {
+            // not started, ignore a node failure
+            return;
+        }
+
+        clusterService.submitStateUpdateTask("raft_removing_node(" + node + "), reason " + reason, Priority.IMMEDIATE, new ProcessedClusterStateUpdateTask() {
+            @Override
+            public ClusterState execute(ClusterState currentState) {
+                DiscoveryNodes nodes = DiscoveryNodes.builder(currentState.nodes())
+                        .remove(node.id()).build();
+                currentState = ClusterState.builder(currentState).nodes(nodes).build();
+                // check if we have enough master nodes, if not, we need to move into joining the cluster again
+
+                int memberTargets = 0;
+                for (int i = 0; i < resolvedTargetNodes.length(); i++) {
+                    DiscoveryNode target = resolvedTargetNodes.get(i);
+                    if (target != null && nodes.nodeExists(target.id())) {
+                        memberTargets++;
+                    }
+                }
+
+                if (memberTargets < resolvedTargetNodes.length() / 2 + 1) {
+                    return rejoin(currentState, "not enough master nodes");
+                }
+                // eagerly run reroute to remove dead nodes from routing table
+                RoutingAllocation.Result routingResult = allocationService.reroute(ClusterState.builder(currentState).build());
+                return ClusterState.builder(currentState).routingResult(routingResult).build();
+            }
+
+            @Override
+            public void onNoLongerMaster(String source) {
+                // already logged
+            }
+
+            @Override
+            public void onFailure(String source, Throwable t) {
+                logger.error("unexpected failure during [{}]", t, source);
+            }
+
+            @Override
+            public void clusterStateProcessed(String source, ClusterState oldState, ClusterState newState) {
+                sendInitialStateEventIfNeeded();
+            }
+        });
+    }
+
+
+    private class NodeFaultDetectionListener extends NodesFaultDetection.Listener {
+
+        @Override
+        public void onNodeFailure(DiscoveryNode node, String reason) {
+            handleNodeRemoval(node, reason);
+        }
+
+        @Override
+        public void onPingReceived(final NodesFaultDetection.PingRequest pingRequest) {
+
+        }
+    }
+
+    private class MasterNodeFailureListener implements MasterFaultDetection.Listener {
+
+        @Override
+        public void onMasterFailure(DiscoveryNode masterNode, String reason) {
+            handleMasterGone(masterNode, reason);
+        }
+
+        @Override
+        public void onDisconnectedFromMaster() {
+            // got disconnected from the master, send a join request
+            // TODO: think whether we want to copy this behavior
+            scheduleClusterJoin(0, true);
+        }
+    }
 
     @Override
     protected void doStart() throws ElasticsearchException {
@@ -399,23 +633,9 @@ public class RaftDiscovery extends AbstractLifecycleComponent<Discovery> impleme
         // note, we rely on the fact that its a new id each time we start, see FD and "kill -9" handling
         final String nodeId = DiscoveryService.generateNodeId(settings);
         localNode = new DiscoveryNode(settings.get("name"), nodeId, transportService.boundAddress().publishAddress(), nodeAttributes, version);
-        threadPool.schedule(initialElectionDelay, ThreadPool.Names.GENERIC, new Runnable() {
-            @Override
-            public void run() {
-                boolean startElection = false;
-                synchronized (raftState) {
-                    // TODO: not sure if the term should be 0 - what happens if we voted for someone who never became master?
-                    if (raftState.term() == 0) {
-                        raftState.term(1);
-                        raftState.role(RaftState.RaftRole.CANDIDATE);
-                        startElection = true;
-                    }
-                }
-                if (startElection) {
-                    requestVoteAction.performElection(1, configuredTargetNodes);
-                }
-            }
-        });
+        nodesFD.updateNodes(new DiscoveryNodes.Builder().put(localNode).localNodeId(localNode.id()).build(), ClusterState.UNKNOWN_VERSION);
+
+        scheduleClusterJoin(0, false);
     }
 
     @Override
@@ -450,6 +670,7 @@ public class RaftDiscovery extends AbstractLifecycleComponent<Discovery> impleme
 
     @Override
     public void setNodeService(@Nullable NodeService nodeService) {
+        this.nodeService = nodeService;
 
     }
 
@@ -460,6 +681,7 @@ public class RaftDiscovery extends AbstractLifecycleComponent<Discovery> impleme
 
     @Override
     public void publish(ClusterState clusterState, AckListener ackListener) {
+        nodesFD.updateNodes(clusterState.nodes(), clusterState.version());
         publishClusterState.publish(clusterState, ackListener);
     }
 
@@ -484,7 +706,143 @@ public class RaftDiscovery extends AbstractLifecycleComponent<Discovery> impleme
         @Override
         public void onNewClusterState(long term, ClusterState clusterState, NewStateProcessed newStateProcessed) {
             handleNewClusterStateFromMaster(term, clusterState, newStateProcessed);
+        }
     }
+
+    private class MembershipListener implements MembershipAction.MembershipListener {
+        @Override
+        public void onJoin(DiscoveryNode node, MembershipAction.JoinCallback callback) {
+            handleJoinRequest(node, callback);
+        }
+
+        @Override
+        public void onLeave(DiscoveryNode node) {
+            if (node.equals(clusterService.state().nodes().masterNode())) {
+                handleMasterGone(node, "node_leave");
+            } else {
+                handleNodeRemoval(node, "node_leave");
+            }
+        }
     }
+
+    public void handleValidateJoin(long term) {
+        synchronized (raftState) {
+            if (raftState.term() < term) {
+                return;
+            }
+            raftState.term(term);
+            if (raftState.role() != RaftState.RaftRole.FOLLOWER) {
+                logger.trace("switching to a follower role due to join validation (term [{}], role was [{}])", term, raftState.role());
+                raftState.role(RaftState.RaftRole.FOLLOWER);
+            }
+        }
+    }
+
+    private void handleJoinRequest(final DiscoveryNode node, final MembershipAction.JoinCallback callback) {
+        if (!clusterService.state().nodes().localNodeMaster()) {
+            throw new ElasticsearchIllegalStateException("Node [" + localNode + "] not master for join request from [" + node + "]");
+        }
+
+        if (!transportService.addressSupported(node.address().getClass())) {
+            // TODO, what should we do now? Maybe inform that node that its crap?
+            logger.warn("received a wrong address type from [{}], ignoring...", node);
+        } else {
+            // try and connect to the node, if it fails, we can raise an exception back to the client...
+            transportService.connectToNode(node);
+
+            // validate the join request, will throw a failure if it fails, which will get back to the
+            // node calling the join request
+            // TODO: configure timeout
+            membershipAction.sendValidateJoinRequestBlocking(raftState.term(), node, TimeValue.timeValueSeconds(30));
+
+            // TODO: this is a bit hacky for keeping the resolved target hosts up to date, replace
+            doPing();
+
+            processJoinRequests.add(new Tuple<>(node, callback));
+            clusterService.submitStateUpdateTask("join_from_node[" + node + "]", Priority.IMMEDIATE, new ProcessedClusterStateUpdateTask() {
+
+                private final List<Tuple<DiscoveryNode, MembershipAction.JoinCallback>> drainedTasks = new ArrayList<>();
+
+                @Override
+                public ClusterState execute(ClusterState currentState) {
+                    processJoinRequests.drainTo(drainedTasks);
+                    if (drainedTasks.isEmpty()) {
+                        return currentState;
+                    }
+
+                    boolean modified = false;
+                    DiscoveryNodes.Builder nodesBuilder = DiscoveryNodes.builder(currentState.nodes());
+                    for (Tuple<DiscoveryNode, MembershipAction.JoinCallback> task : drainedTasks) {
+                        DiscoveryNode node = task.v1();
+                        if (currentState.nodes().nodeExists(node.id())) {
+                            logger.debug("received a join request for an existing node [{}]", node);
+                        } else {
+                            modified = true;
+                            nodesBuilder.put(node);
+                            for (DiscoveryNode existingNode : currentState.nodes()) {
+                                if (node.address().equals(existingNode.address())) {
+                                    nodesBuilder.remove(existingNode.id());
+                                    logger.warn("received join request from node [{}], but found existing node {} with same address, removing existing node", node, existingNode);
+                                }
+                            }
+                        }
+                    }
+
+                    ClusterState.Builder stateBuilder = ClusterState.builder(currentState);
+                    if (modified) {
+                        stateBuilder.nodes(nodesBuilder);
+                    }
+                    return stateBuilder.build();
+                }
+
+                @Override
+                public void onNoLongerMaster(String source) {
+                    Exception e = new EsRejectedExecutionException("no longer master. source: [" + source + "]");
+                    innerOnFailure(e);
+                }
+
+                void innerOnFailure(Throwable t) {
+                    for (Tuple<DiscoveryNode, MembershipAction.JoinCallback> drainedTask : drainedTasks) {
+                        try {
+                            drainedTask.v2().onFailure(t);
+                        } catch (Exception e) {
+                            logger.error("error during task failure", e);
+                        }
+                    }
+                }
+
+                @Override
+                public void onFailure(String source, Throwable t) {
+                    logger.error("unexpected failure during [{}]", t, source);
+                    innerOnFailure(t);
+                }
+
+                @Override
+                public void clusterStateProcessed(String source, ClusterState oldState, ClusterState newState) {
+                    for (Tuple<DiscoveryNode, MembershipAction.JoinCallback> drainedTask : drainedTasks) {
+                        try {
+                            drainedTask.v2().onSuccess();
+                        } catch (Exception e) {
+                            logger.error("unexpected error during [{}]", e, source);
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    private RaftPing.PingResult doPing() {
+        RaftPing.PingResult result = raftPing.ping(raftState.term(), configuredTargetNodes);
+
+        assert resolvedTargetNodes.length() == result.discoveredNodes().length;
+        // resolve arbitrary nodes to their true id etc.
+        for (int i = 0; i < result.discoveredNodes().length; i++) {
+            if (result.discoveredNodes()[i] != null) {
+                resolvedTargetNodes.set(i, result.discoveredNodes()[i]);
+            }
+        }
+        return result;
+    }
+
 
 }

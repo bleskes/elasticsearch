@@ -66,6 +66,20 @@ public class RaftPing extends AbstractComponent {
         for (int i = 0; i < targets.length; i++) {
             // TODO: configurable timeout
             final int id = i;
+
+            // TODO: figure out if we need to disconnect
+            try {
+                transportService.connectToNode(targets[id]);
+            } catch (Exception e) {
+                if (e instanceof ConnectTransportException) {
+                    // ok, not connected...
+                    logger.trace("failed to connect to {}", e, targets[id]);
+                    latch.countDown();
+                    continue;
+                } else {
+                    throw e;
+                }
+            }
             transportService.sendRequest(targets[id], ACTION_NAME, new PingRequest(clusterName, raftDiscovery.localNode()),
                     new TransportRequestOptions().withTimeout(300), new BaseTransportResponseHandler<PingResponse>() {
 
@@ -95,12 +109,12 @@ public class RaftPing extends AbstractComponent {
 
                         @Override
                         public String executor() {
-                            return null;
+                            return ThreadPool.Names.SAME;
                         }
                     });
         }
         try {
-            latch.wait();
+            latch.await();
         } catch (InterruptedException e) {
             // meh..
         }
@@ -121,6 +135,7 @@ public class RaftPing extends AbstractComponent {
             long bestTermSeen = term; // ignore everything bellow this
             for (PingResponse ping : pingResponses) {
                 if (ping == null) {
+                    nodes.add(null);
                     continue;
                 }
                 nodes.add(ping.node);
