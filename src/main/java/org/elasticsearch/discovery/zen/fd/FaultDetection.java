@@ -79,7 +79,7 @@ public abstract class FaultDetection extends AbstractComponent {
     /**
      * This method will be called when the {@link org.elasticsearch.transport.TransportService} raised a node disconnected event
      */
-    abstract void handleTransportDisconnect(DiscoveryNode node);
+    abstract protected void handleTransportDisconnect(DiscoveryNode node);
 
     private class FDConnectionListener implements TransportConnectionListener {
         @Override

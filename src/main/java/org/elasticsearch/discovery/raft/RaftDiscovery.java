@@ -52,7 +52,6 @@ import org.elasticsearch.discovery.DiscoverySettings;
 import org.elasticsearch.discovery.InitialStateDiscoveryListener;
 import org.elasticsearch.discovery.zen.DiscoveryNodesProvider;
 import org.elasticsearch.discovery.zen.fd.MasterFaultDetection;
-import org.elasticsearch.discovery.zen.fd.NodesFaultDetection;
 import org.elasticsearch.node.service.NodeService;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
@@ -146,7 +145,7 @@ public class RaftDiscovery extends AbstractLifecycleComponent<Discovery> impleme
         this.masterFD = new MasterFaultDetection(settings, threadPool, transportService, this, clusterName);
         this.masterFD.addListener(new MasterNodeFailureListener());
 
-        this.nodesFD = new NodesFaultDetection(settings, threadPool, transportService, clusterName);
+        this.nodesFD = new NodesFaultDetection(settings, threadPool, transportService, clusterName, raftState, this);
         this.nodesFD.addListener(new NodeFaultDetectionListener());
 
         this.membershipAction = new MembershipAction(settings, transportService, new MembershipListener(), this);
@@ -432,6 +431,47 @@ public class RaftDiscovery extends AbstractLifecycleComponent<Discovery> impleme
                 }
                 newStateProcessed.onNewClusterStateProcessed();
             }
+        });
+    }
+
+    public void handleHigherTermFromFollower(long term, DiscoveryNode node) {
+        synchronized (raftState) {
+            if (raftState.term() >= term || raftState.role() != RaftState.RaftRole.MASTER) {
+                return;
+            }
+
+            logger.debug("stepping down as master, found a follower {}] with a higher term [{}] (ours is [{}])", node, term, raftState.term());
+            raftState.term(term);
+            raftState.role(RaftState.RaftRole.FOLLOWER);
+        }
+        clusterService.submitStateUpdateTask("follower_with_higher_term(" + node + ")", Priority.IMMEDIATE, new ProcessedClusterStateNonMasterUpdateTask() {
+            @Override
+            public ClusterState execute(ClusterState currentState) {
+                if (!currentState.nodes().localNodeMaster()) {
+                    // master got switched on us, no need to send anything
+                    return currentState;
+                }
+
+                DiscoveryNodes discoveryNodes = DiscoveryNodes.builder(currentState.nodes()).masterNodeId(null).build();
+
+                // flush any pending cluster states from old master, so it will not be set as master again
+                ArrayList<ProcessClusterState> pendingNewClusterStates = new ArrayList<>();
+                processNewClusterStates.drainTo(pendingNewClusterStates);
+                logger.trace("removed [{}] pending cluster states", pendingNewClusterStates.size());
+
+                return rejoin(ClusterState.builder(currentState).nodes(discoveryNodes).build(), "stepped down(follower with a higher temr)");
+            }
+
+            @Override
+            public void onFailure(String source, Throwable t) {
+                logger.error("unexpected failure during [{}]", t, source);
+
+            }
+
+            @Override
+            public void clusterStateProcessed(String source, ClusterState oldState, ClusterState newState) {
+            }
+
         });
     }
 

@@ -39,6 +39,7 @@ import org.elasticsearch.discovery.DiscoverySettings;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.*;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -137,20 +138,33 @@ public class PublishClusterStateAction extends AbstractComponent {
                         new BytesTransportRequest(bytes, node.version()),
                         options, // no need to compress, we already compressed the bytes
 
-                        new EmptyTransportResponseHandler(ThreadPool.Names.SAME) {
+                        new BaseTransportResponseHandler<PublishResponse>() {
 
                             @Override
-                            public void handleResponse(TransportResponse.Empty response) {
+                            public PublishResponse newInstance() {
+                                return new PublishResponse();
+                            }
+
+                            @Override
+                            public void handleResponse(PublishResponse response) {
                                 if (timedOutWaitingForNodes.get()) {
                                     logger.debug("node {} responded for cluster state [{}] (took longer than [{}])", node, clusterState.version(), publishTimeout);
                                 }
                                 publishResponseHandler.onResponse(node);
+                                if (response.term > raftState.term()) {
+                                    raftDiscovery.handleHigherTermFromFollower(term, node);
+                                }
                             }
 
                             @Override
                             public void handleException(TransportException exp) {
                                 logger.debug("failed to send cluster state to {}", exp, node);
                                 publishResponseHandler.onFailure(node, exp);
+                            }
+
+                            @Override
+                            public String executor() {
+                                return ThreadPool.Names.SAME;
                             }
                         });
             } catch (Throwable t) {
@@ -198,7 +212,7 @@ public class PublishClusterStateAction extends AbstractComponent {
                 @Override
                 public void onNewClusterStateProcessed() {
                     try {
-                        channel.sendResponse(TransportResponse.Empty.INSTANCE);
+                        channel.sendResponse(new PublishResponse(raftState.term()));
                     } catch (Throwable e) {
                         logger.debug("failed to send response on cluster state processed", e);
                     }
@@ -218,6 +232,29 @@ public class PublishClusterStateAction extends AbstractComponent {
         @Override
         public String executor() {
             return ThreadPool.Names.SAME;
+        }
+    }
+
+    private static class PublishResponse extends TransportResponse {
+        private long term;
+
+        private PublishResponse(long term) {
+            this.term = term;
+        }
+
+        public PublishResponse() {
+        }
+
+        @Override
+        public void readFrom(StreamInput in) throws IOException {
+            super.readFrom(in);
+            term = in.readLong();
+        }
+
+        @Override
+        public void writeTo(StreamOutput out) throws IOException {
+            super.writeTo(out);
+            out.writeLong(term);
         }
     }
 }
