@@ -451,10 +451,7 @@ public class RaftDiscovery extends AbstractLifecycleComponent<Discovery> impleme
                     return currentState;
                 }
 
-                DiscoveryNodes discoveryNodes = DiscoveryNodes.builder(currentState.nodes())
-                        // make sure the old master node, which has failed, is not part of the nodes we publish
-                        .remove(masterNode.id())
-                        .masterNodeId(null).build();
+                DiscoveryNodes discoveryNodes = DiscoveryNodes.builder(currentState.nodes()).masterNodeId(null).build();
 
                 // flush any pending cluster states from old master, so it will not be set as master again
                 ArrayList<ProcessClusterState> pendingNewClusterStates = new ArrayList<>();
