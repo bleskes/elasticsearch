@@ -17,6 +17,11 @@
  * under the License.
  */
 
+
+/********** DISCLAIMER ******
+ * THIS IS A PROOF OF CONCEPT, IT'S BROKEN IN MANY KNOWN WAYS AND EVEN MORE UNKONW
+ */
+
 package org.elasticsearch.discovery.raft;
 
 import com.google.common.base.Objects;
