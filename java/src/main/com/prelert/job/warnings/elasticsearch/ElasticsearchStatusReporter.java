@@ -9,8 +9,10 @@ import com.prelert.job.JobDetails;
 import com.prelert.job.warnings.StatusReporter;
 
 import org.apache.log4j.Logger;
+import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.update.UpdateRequestBuilder;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.index.engine.VersionConflictEngineException;
 import org.elasticsearch.indices.IndexMissingException;
 
 
@@ -77,9 +79,28 @@ public class ElasticsearchStatusReporter extends StatusReporter
 			Map<String, Object> counts = new HashMap<>();
 			counts.put(JobDetails.COUNTS, updates);
 			
-			updateBuilder.setDoc(counts);
-			m_Client.update(updateBuilder.request()).get();
+			updateBuilder.setDoc(counts).setRefresh(true);
 			
+			int retryCount = 3;
+			while (--retryCount > 0)
+			{
+				try
+				{
+					m_Client.update(updateBuilder.request()).get();
+					break;
+				}
+				catch (VersionConflictEngineException e)
+				{
+					m_Logger.debug("Conflict updating job status counts");
+				}
+			}
+			
+			if (retryCount <= 0)
+			{
+				m_Logger.warn("Unable to update conflicted job status counts");
+				return false;
+			}
+
 			return true;
 		}
 		catch (IndexMissingException | InterruptedException | ExecutionException e)

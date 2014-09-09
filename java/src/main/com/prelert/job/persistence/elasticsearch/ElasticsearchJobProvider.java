@@ -55,6 +55,7 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.index.engine.VersionConflictEngineException;
 import org.elasticsearch.index.get.GetField;
 import org.elasticsearch.index.query.FilterBuilder;
 import org.elasticsearch.index.query.FilterBuilders;
@@ -406,10 +407,28 @@ public class ElasticsearchJobProvider implements JobProvider
 	{
 		if (jobExists(jobId))
 		{
-			m_Client.prepareUpdate(jobId, JobDetails.TYPE, jobId)
-									.setDoc(updates)
-									.setRefresh(true)
-									.get();
+			int retryCount = 3;
+			while (--retryCount > 0)
+			{
+				try
+				{
+					m_Client.prepareUpdate(jobId, JobDetails.TYPE, jobId)
+										.setDoc(updates)
+										.get();
+					
+					break;
+				}
+				catch (VersionConflictEngineException e)
+				{
+					s_Logger.debug("Conflict updating job document");
+				}
+			}
+			
+			if (retryCount <= 0)
+			{
+				s_Logger.warn("Unable to update conflicted job document");
+				return false;
+			}
 			
 			return true;
 		}
