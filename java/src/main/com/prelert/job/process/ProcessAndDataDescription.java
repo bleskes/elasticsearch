@@ -64,7 +64,7 @@ public class ProcessAndDataDescription
 	
 	private StatusReporter m_StatusReporter;
 	private UsageReporter m_UsageReporter;
-	private JobDataPersister m_DataPersiter;
+	private JobDataPersister m_DataPersister;
 	
 	private AnalysisConfig m_AnalysisConfig;
 
@@ -107,7 +107,7 @@ public class ProcessAndDataDescription
 		m_OutputParser = outputParser;
 		m_UsageReporter = usageReporter;
 		
-		m_DataPersiter = dataPersister;
+		m_DataPersister = dataPersister;
 		
 		m_OutputParserThread = new Thread(m_OutputParser, jobId + "-Bucket-Parser");
 		m_OutputParserThread.start();
@@ -214,8 +214,8 @@ public class ProcessAndDataDescription
 	}
 	
 	
-	public JobDataPersister getDataPerister()
+	public JobDataPersister getDataPersister()
 	{
-		return m_DataPersiter;
+		return m_DataPersister;
 	}
 }

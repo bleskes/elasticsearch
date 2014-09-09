@@ -36,6 +36,7 @@ import java.util.concurrent.BlockingQueue;
 
 import org.apache.log4j.Logger;
 import org.elasticsearch.ElasticsearchException;
+import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
@@ -116,6 +117,9 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
 					"", logger));
 			m_QuantileUpdateThread.join();
 			m_UpdatedQuantileQueue.clear();
+			// Refresh the indexes so that normalised results are available to search
+			logger.info("Renormaliser thread joined - about to refresh indexes");
+			m_JobProvider.getClient().admin().indices().refresh(new RefreshRequest(m_JobId)).actionGet();
 		}
 		catch (InterruptedException e)
 		{
