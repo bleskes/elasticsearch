@@ -16,7 +16,12 @@
  */
 
 package org.elasticsearch.shield.authc.ldap;
-
+import org.elasticsearch.common.settings.ImmutableSettings;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.shield.authc.support.SecuredString;
+import org.elasticsearch.shield.authc.support.SecuredStringTests;
+import org.elasticsearch.test.ElasticsearchTestCase;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.List;
@@ -40,7 +45,7 @@ public class LdapConnectionTests extends LdapTest {
                 buildLdapSettings(ldapUrls, userTemplates, groupSearchBase, isSubTreeSearch));
 
         String user = "Horatio Hornblower";
-        char[] userPass = "pass".toCharArray();
+        SecuredString userPass = SecuredStringTests.build("pass");
 
         LdapConnection ldap = connectionFactory.bind(user, userPass);
         Map<String, String[]> attrs = ldap.getUserAttrs(ldap.getAuthenticatedUserDn());
@@ -63,8 +68,8 @@ public class LdapConnectionTests extends LdapTest {
                 buildLdapSettings(ldapUrl, userTemplates, groupSearchBase, isSubTreeSearch));
 
         String user = "Horatio Hornblower";
-        char[] userPass = "pass".toCharArray();
-        ldapFac.bind(user, userPass);
+        SecuredString userPass = SecuredStringTests.build("pass");
+        LdapConnection ldap = ldapFac.bind(user, userPass);
     }
 
     @Test
@@ -77,7 +82,7 @@ public class LdapConnectionTests extends LdapTest {
                 buildLdapSettings(apacheDsRule.getUrl(), userTemplate, groupSearchBase, isSubTreeSearch));
 
         String user = "Horatio Hornblower";
-        char[] userPass = "pass".toCharArray();
+        SecuredString userPass = SecuredStringTests.build("pass");
 
         LdapConnection ldap = ldapFac.bind(user, userPass);
         List<String> groups = ldap.getGroupsFromSearch(ldap.getAuthenticatedUserDn());
@@ -94,7 +99,7 @@ public class LdapConnectionTests extends LdapTest {
                 buildLdapSettings(apacheDsRule.getUrl(), userTemplate, groupSearchBase, isSubTreeSearch));
 
         String user = "Horatio Hornblower";
-        LdapConnection ldap = ldapFac.bind(user, "pass".toCharArray());
+        LdapConnection ldap = ldapFac.bind(user, SecuredStringTests.build("pass"));
 
         List<String> groups = ldap.getGroupsFromSearch(ldap.getAuthenticatedUserDn());
         System.out.println("groups:"+groups);

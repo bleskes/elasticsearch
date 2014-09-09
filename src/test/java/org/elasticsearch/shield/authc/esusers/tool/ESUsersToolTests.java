@@ -28,6 +28,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.shield.authc.esusers.FileUserRolesStore;
 import org.elasticsearch.shield.authc.support.Hasher;
+import org.elasticsearch.shield.authc.support.SecuredStringTests;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -56,7 +57,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(command, instanceOf(ESUsersTool.Useradd.class));
         ESUsersTool.Useradd cmd = (ESUsersTool.Useradd) command;
         assertThat(cmd.username, equalTo("username"));
-        assertThat(new String(cmd.passwd), equalTo("changeme"));
+        assertThat(new String(cmd.passwd.internalChars()), equalTo("changeme"));
         assertThat(cmd.roles, notNullValue());
         assertThat(cmd.roles, arrayContaining("r1", "r2", "r3"));
     }
@@ -81,7 +82,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(command, instanceOf(ESUsersTool.Useradd.class));
         ESUsersTool.Useradd cmd = (ESUsersTool.Useradd) command;
         assertThat(cmd.username, equalTo("username"));
-        assertThat(new String(cmd.passwd), equalTo("changeme"));
+        assertThat(new String(cmd.passwd.internalChars()), equalTo("changeme"));
         assertThat(cmd.roles, notNullValue());
         assertThat(cmd.roles.length, is(0));
     }
@@ -96,7 +97,7 @@ public class ESUsersToolTests extends CliToolTestCase {
                 .put("shield.authc.esusers.files.users_roles", userRolesFile)
                 .build();
 
-        ESUsersTool.Useradd cmd = new ESUsersTool.Useradd(new MockTerminal(), "user1", "changeme".toCharArray(), "r1", "r2");
+        ESUsersTool.Useradd cmd = new ESUsersTool.Useradd(new MockTerminal(), "user1", SecuredStringTests.build("changeme"), "r1", "r2");
 
         CliTool.ExitStatus status = execute(cmd, settings);
         assertThat(status, is(CliTool.ExitStatus.OK));
@@ -109,7 +110,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         String line = lines.get(0);
         assertThat(line, startsWith("user1:"));
         String hash = line.substring("user1:".length());
-        assertThat(Hasher.HTPASSWD.verify("changeme".toCharArray(), hash.toCharArray()), is(true));
+        assertThat(Hasher.HTPASSWD.verify(SecuredStringTests.build("changeme"), hash.toCharArray()), is(true));
 
         assertFileExists(userRolesFile);
         lines = Files.readLines(userRolesFile, Charsets.UTF_8);
@@ -127,7 +128,7 @@ public class ESUsersToolTests extends CliToolTestCase {
                 .put("shield.authc.esusers.files.users_roles", userRolesFile)
                 .build();
 
-        ESUsersTool.Useradd cmd = new ESUsersTool.Useradd(new MockTerminal(), "user1", "changeme".toCharArray(), "r1", "r2");
+        ESUsersTool.Useradd cmd = new ESUsersTool.Useradd(new MockTerminal(), "user1", SecuredStringTests.build("changeme"), "r1", "r2");
 
         CliTool.ExitStatus status = execute(cmd, settings);
         assertThat(status, is(CliTool.ExitStatus.OK));
@@ -143,7 +144,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         for (String line : lines) {
             if (line.startsWith("user1")) {
                 String hash = line.substring("user1:".length());
-                assertThat(Hasher.HTPASSWD.verify("changeme".toCharArray(), hash.toCharArray()), is(true));
+                assertThat(Hasher.HTPASSWD.verify(SecuredStringTests.build("changeme"), hash.toCharArray()), is(true));
             }
         }
 
@@ -162,7 +163,7 @@ public class ESUsersToolTests extends CliToolTestCase {
                 .put("shield.authc.esusers.files.users_roles", userRolesFile)
                 .build();
 
-        ESUsersTool.Useradd cmd = new ESUsersTool.Useradd(new MockTerminal(), "user1", "changeme".toCharArray(), "r1", "r2");
+        ESUsersTool.Useradd cmd = new ESUsersTool.Useradd(new MockTerminal(), "user1", SecuredStringTests.build("changeme"), "r1", "r2");
 
         CliTool.ExitStatus status = execute(cmd, settings);
         assertThat(status, is(CliTool.ExitStatus.CODE_ERROR));
@@ -258,7 +259,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(command, instanceOf(ESUsersTool.Passwd.class));
         ESUsersTool.Passwd cmd = (ESUsersTool.Passwd) command;
         assertThat(cmd.username, equalTo("user1"));
-        assertThat(new String(cmd.passwd), equalTo("changeme"));
+        assertThat(new String(cmd.passwd.internalChars()), equalTo("changeme"));
     }
 
     @Test
@@ -285,7 +286,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(command, instanceOf(ESUsersTool.Passwd.class));
         ESUsersTool.Passwd cmd = (ESUsersTool.Passwd) command;
         assertThat(cmd.username, equalTo("user1"));
-        assertThat(new String(cmd.passwd), equalTo("changeme"));
+        assertThat(new String(cmd.passwd.internalChars()), equalTo("changeme"));
         assertThat(secretRequested.get(), is(true));
     }
 
@@ -307,7 +308,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         String line = lines.get(0);
         assertThat(line, startsWith("user1:"));
         String hash = line.substring("user1:".length());
-        assertThat(Hasher.HTPASSWD.verify("changeme".toCharArray(), hash.toCharArray()), is(true));
+        assertThat(Hasher.HTPASSWD.verify(SecuredStringTests.build("changeme"), hash.toCharArray()), is(true));
     }
 
     @Test

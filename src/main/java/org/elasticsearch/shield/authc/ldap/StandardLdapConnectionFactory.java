@@ -23,6 +23,7 @@ import org.elasticsearch.common.component.AbstractComponent;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.shield.ShieldException;
+import org.elasticsearch.shield.authc.support.SecuredString;
 
 import javax.naming.Context;
 import javax.naming.NamingException;
@@ -80,11 +81,11 @@ public class StandardLdapConnectionFactory extends AbstractComponent implements 
      * @return authenticated exception
      */
     @Override
-    public LdapConnection bind(String username, char[] password) {
+    public LdapConnection bind(String username, SecuredString password) {
         //SASL, MD5, etc. all options here stink, we really need to go over ssl + simple authentication
         Hashtable<String, Serializable> ldapEnv = new Hashtable<>(this.sharedLdapEnv);
         ldapEnv.put(Context.SECURITY_AUTHENTICATION, "simple");
-        ldapEnv.put(Context.SECURITY_CREDENTIALS, password);
+        ldapEnv.put(Context.SECURITY_CREDENTIALS, password.internalChars());
 
         for (String template : userDnTemplates) {
             String dn = buildDnFromTemplate(username, template);
@@ -99,6 +100,7 @@ public class StandardLdapConnectionFactory extends AbstractComponent implements 
                 logger.warn("Failed ldap authentication with user template [{}], dn [{}]", template, dn);
             }
         }
+
         throw new LdapException("Failed ldap authentication");
     }
 

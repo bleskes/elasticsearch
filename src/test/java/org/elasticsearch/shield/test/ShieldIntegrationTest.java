@@ -28,6 +28,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.plugins.PluginsService;
+import org.elasticsearch.shield.authc.support.SecuredString;
 import org.elasticsearch.shield.plugin.ShieldPlugin;
 import org.elasticsearch.shield.transport.netty.NettySecuredTransport;
 import org.elasticsearch.test.ElasticsearchIntegrationTest;
@@ -74,7 +75,7 @@ public abstract class ShieldIntegrationTest extends ElasticsearchIntegrationTest
         File folder = newFolder();
 
         ImmutableSettings.Builder builder = ImmutableSettings.builder()
-                .put("request.headers.Authorization", basicAuthHeaderValue(getClientUsername(), getClientPassword().toCharArray()))
+                .put("request.headers.Authorization", basicAuthHeaderValue(getClientUsername(), getClientPassword()))
                 .put("discovery.zen.ping.multicast.enabled", false)
                 .put("discovery.type", "zen")
                 .put("node.mode", "network")
@@ -97,7 +98,7 @@ public abstract class ShieldIntegrationTest extends ElasticsearchIntegrationTest
     @Override
     protected Settings transportClientSettings() {
         return ImmutableSettings.builder()
-                .put("request.headers.Authorization", basicAuthHeaderValue(getClientUsername(), getClientPassword().toCharArray()))
+                .put("request.headers.Authorization", basicAuthHeaderValue(getClientUsername(), getClientPassword()))
                 .put(TransportModule.TRANSPORT_TYPE_KEY, NettySecuredTransport.class.getName())
                 .put("plugins." + PluginsService.LOAD_PLUGIN_FROM_CLASSPATH, false)
                 .put("node.mode", "network")
@@ -130,8 +131,8 @@ public abstract class ShieldIntegrationTest extends ElasticsearchIntegrationTest
         return DEFAULT_USER_NAME;
     }
 
-    protected String getClientPassword() {
-        return DEFAULT_PASSWORD;
+    protected SecuredString getClientPassword() {
+        return new SecuredString(DEFAULT_PASSWORD.toCharArray());
     }
 
     protected Settings getSSLSettingsForStore(String resourcePathToStore, String password) {

@@ -27,6 +27,7 @@ import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.shield.authc.support.Hasher;
+import org.elasticsearch.shield.authc.support.SecuredString;
 import org.elasticsearch.shield.authc.support.UserPasswdStore;
 import org.elasticsearch.shield.plugin.ShieldPlugin;
 import org.elasticsearch.watcher.FileChangesListener;
@@ -73,7 +74,7 @@ public class FileUserPasswdStore extends AbstractComponent implements UserPasswd
     }
 
     @Override
-    public boolean verifyPassword(String username, char[] password) {
+    public boolean verifyPassword(String username, SecuredString password) {
         if (esUsers == null) {
             return false;
         }

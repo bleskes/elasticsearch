@@ -167,5 +167,10 @@ public class LoggingAuditTrailTests extends ElasticsearchTestCase {
             fail("it's not allowed to print the credentials of the auth token");
             return null;
         }
+
+        @Override
+        public void clearCredentials() {
+
+        }
     }
 }
