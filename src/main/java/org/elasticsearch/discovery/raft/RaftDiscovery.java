@@ -571,6 +571,7 @@ public class RaftDiscovery extends AbstractLifecycleComponent<Discovery> impleme
                         logger.trace("joining advised master {}", result.masterAdvice());
                         try {
                             transportService.connectToNode(result.masterAdvice());
+                            // TODO: settings of timeout
                             membershipAction.sendJoinRequestBlocking(result.masterAdvice(), localNode(), TimeValue.timeValueSeconds(60));
                             return;
                         } catch (Exception e) {

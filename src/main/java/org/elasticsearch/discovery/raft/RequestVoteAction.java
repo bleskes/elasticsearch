@@ -186,6 +186,7 @@ public class RequestVoteAction extends AbstractComponent {
                         response.voter, term, response.votedFor);
             }
 
+            /// TODO: do we want to wait for just enough votes?
             if (requestsCompleted.incrementAndGet() == nodeCount) {
                 finishElection();
             }
@@ -209,16 +210,6 @@ public class RequestVoteAction extends AbstractComponent {
         @Override
         public String executor() {
             return ThreadPool.Names.SAME;
-        }
-    }
-
-    private static class Vote {
-        public final long term;
-        public final DiscoveryNode votedFor;
-
-        private Vote(long term, DiscoveryNode votedFor) {
-            this.term = term;
-            this.votedFor = votedFor;
         }
     }
 
