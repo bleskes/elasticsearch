@@ -245,7 +245,7 @@ public class DiscoveryWithServiceDisruptions extends ElasticsearchIntegrationTes
      * Verify that the proper block is applied when nodes loose their master
      */
     @Test
-    @TestLogging(value = "cluster.service:TRACE,indices.recovery:TRACE")
+    @TestLogging(value = "cluster.service:TRACE,indices.recovery:TRACE,discovery:TRACE")
     public void testVerifyApiBlocksDuringPartition() throws Exception {
         startCluster(3);
 
@@ -579,7 +579,7 @@ public class DiscoveryWithServiceDisruptions extends ElasticsearchIntegrationTes
      * @throws Exception
      */
     @Test
-    @TestLogging("discovery.zen:TRACE,action:TRACE,cluster.service:TRACE,indices.recovery:TRACE,indices.cluster:TRACE")
+    @TestLogging("discovery:TRACE,action:TRACE,cluster.service:TRACE,indices.recovery:TRACE,indices.cluster:TRACE")
     public void testRejoinDocumentExistsInAllShardCopies() throws Exception {
         List<String> nodes = startCluster(3);
 
@@ -711,6 +711,7 @@ public class DiscoveryWithServiceDisruptions extends ElasticsearchIntegrationTes
     /** Test cluster join with issues in cluster state publishing * */
     @Test
     @TestLogging("discovery.zen:TRACE,action:TRACE")
+    @LuceneTestCase.AwaitsFix(bugUrl = "this test assumes zen discovery behavior")
     public void testClusterJoinDespiteOfPublishingIssues() throws Exception {
         List<String> nodes = startCluster(2, 1);
 

@@ -139,7 +139,7 @@ public class RaftDiscovery extends AbstractLifecycleComponent<Discovery> impleme
         this.resolvedTargetNodes = new AtomicArray<>(configuredTargetNodes.size());
 
         this.requestVoteAction = new RequestVoteAction(settings, transportService, clusterName, this, raftState);
-        this.publishClusterState = new PublishClusterStateAction(settings, transportService, this, new NewClusterStateListener(), discoverySettings, clusterName, raftState);
+        this.publishClusterState = new PublishClusterStateAction(settings, transportService, this, new NewClusterStateFromMasterListener(), discoverySettings, clusterName, raftState);
         this.raftPing = new RaftPing(settings, transportService, this, clusterName, raftState, clusterService);
 
         this.masterFD = new MasterFaultDetection(settings, threadPool, transportService, this, clusterName);
@@ -149,6 +149,8 @@ public class RaftDiscovery extends AbstractLifecycleComponent<Discovery> impleme
         this.nodesFD.addListener(new NodeFaultDetectionListener());
 
         this.membershipAction = new MembershipAction(settings, transportService, new MembershipListener(), this);
+
+        this.clusterService.addLast(new LocalClusterStateChangeListener());
     }
 
 
@@ -254,10 +256,10 @@ public class RaftDiscovery extends AbstractLifecycleComponent<Discovery> impleme
     static class ProcessClusterState {
         final long term;
         final ClusterState clusterState;
-        final NewClusterStateListener.NewStateProcessed newStateProcessed;
+        final NewClusterStateFromMasterListener.NewStateProcessed newStateProcessed;
         volatile boolean processed;
 
-        ProcessClusterState(long term, ClusterState clusterState, NewClusterStateListener.NewStateProcessed newStateProcessed) {
+        ProcessClusterState(long term, ClusterState clusterState, NewClusterStateFromMasterListener.NewStateProcessed newStateProcessed) {
             this.term = term;
             this.clusterState = clusterState;
             this.newStateProcessed = newStateProcessed;
@@ -266,7 +268,7 @@ public class RaftDiscovery extends AbstractLifecycleComponent<Discovery> impleme
 
     private final BlockingQueue<ProcessClusterState> processNewClusterStates = ConcurrentCollections.newBlockingQueue();
 
-    void handleNewClusterStateFromMaster(long termForNewState, final ClusterState newClusterState, final NewClusterStateListener.NewStateProcessed newStateProcessed) {
+    void handleNewClusterStateFromMaster(long termForNewState, final ClusterState newClusterState, final NewClusterStateFromMasterListener.NewStateProcessed newStateProcessed) {
         final ClusterName incomingClusterName = newClusterState.getClusterName();
         /* The cluster name can still be null if the state comes from a node that is prev 1.1.1*/
         if (incomingClusterName != null && !incomingClusterName.equals(this.clusterName)) {
@@ -296,9 +298,6 @@ public class RaftDiscovery extends AbstractLifecycleComponent<Discovery> impleme
         assert !newClusterState.blocks().hasGlobalBlock(discoverySettings.getNoMasterBlock()) : "received a cluster state with a master block";
 
         clusterService.submitStateUpdateTask("raft-receive(from master [" + newClusterState.nodes().masterNode() + "] term [" + termForNewState + "])", Priority.URGENT, new ProcessedClusterStateNonMasterUpdateTask() {
-
-            // TODO: hack - replace
-            long termUsed = -1;
 
             @Override
             public ClusterState execute(ClusterState currentState) {
@@ -373,8 +372,6 @@ public class RaftDiscovery extends AbstractLifecycleComponent<Discovery> impleme
                     return currentState;
                 }
 
-                termUsed = stateToProcess.term;
-
                 // check to see that we monitor the correct master of the cluster
                 if (masterFD.masterNode() == null || !masterFD.masterNode().equals(newClusterState.nodes().masterNode())) {
                     masterFD.restart(newClusterState.nodes().masterNode(), "new cluster state received and we are monitoring the wrong master [" + masterFD.masterNode() + "]");
@@ -423,12 +420,6 @@ public class RaftDiscovery extends AbstractLifecycleComponent<Discovery> impleme
             @Override
             public void clusterStateProcessed(String source, ClusterState oldState, ClusterState newState) {
                 sendInitialStateEventIfNeeded();
-                if (termUsed > 0) {
-                    synchronized (raftState) {
-                        raftState.lastClusterStateTerm(termUsed);
-                        raftState.lastClusterStateVersion(newState.version());
-                    }
-                }
                 newStateProcessed.onNewClusterStateProcessed();
             }
         });
@@ -546,10 +537,11 @@ public class RaftDiscovery extends AbstractLifecycleComponent<Discovery> impleme
         threadPool.schedule(waitTime, ThreadPool.Names.GENERIC,
                 new Runnable() {
                     public void run() {
+                        // TODO - this may result in a node waiting for ever, we should just go into "wait mode"
                         if (raftState.term() > term || raftState.votedFor() != null) {
                             // something have changed - relinquish control to the process
                             logger.trace("skipping cluster rejoin as term has changed or vote is not null. Expected term [{}], found [{}]",
-                                    raftState.term(), term);
+                                    term, raftState.term());
                             return;
                         }
                         RaftPing.PingResult result;
@@ -749,11 +741,23 @@ public class RaftDiscovery extends AbstractLifecycleComponent<Discovery> impleme
         }
     }
 
-    private class NewClusterStateListener implements PublishClusterStateAction.NewClusterStateListener {
+    private class NewClusterStateFromMasterListener implements PublishClusterStateAction.NewClusterStateListener {
 
         @Override
         public void onNewClusterState(long term, ClusterState clusterState, NewStateProcessed newStateProcessed) {
             handleNewClusterStateFromMaster(term, clusterState, newStateProcessed);
+        }
+    }
+
+    private class LocalClusterStateChangeListener implements ClusterStateListener {
+
+        @Override
+        public void clusterChanged(ClusterChangedEvent event) {
+            synchronized (raftState) {
+                // TODO: this is a problem as the term may have changed and do not belong to the cluster state anymore
+                raftState.lastClusterStateTerm(raftState.term());
+                raftState.lastClusterStateVersion(event.state().version());
+            }
         }
     }
 
