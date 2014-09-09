@@ -158,6 +158,7 @@ public class AutoDetectResultsParser
 		persister.persistDetectorState(state);		
 		
 		// commit data to the datastore
+		logger.info("Detector state persisted - about to refresh indexes");
 		persister.commitWrites();
 	}
 	

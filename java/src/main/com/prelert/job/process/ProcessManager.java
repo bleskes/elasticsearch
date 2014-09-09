@@ -236,7 +236,7 @@ public class ProcessManager
 			writeToJob(process.getDataDescription(), process.getAnalysisConfig(),
 					input, process.getProcess().getOutputStream(), 
 					process.getStatusReporter(), process.getUsageReporter(), 
-					process.getDataPerister(), process.getLogger());
+					process.getDataPersister(), process.getLogger());
 						
 			// check there wasn't an error in the input. 
 			// throws if there was. 
@@ -503,7 +503,7 @@ public class ProcessManager
 			
 			throw e;
 		}
-		
+
 		return ProcessStatus.COMPLETED;
 	}
 
