@@ -807,7 +807,7 @@ public class JobsTest implements Closeable
 				
 				int start = Math.max(0,  buckets.getSkip() - buckets.getTake());
 				String prevPageUrl = String.format(
-						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&anomalyScore=0.0&maxRecordUnusualness=0.0", 
+						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&anomalyScore=0.0&maxNormalizedProbability=0.0", 
 						baseUrl, jobId,  start, buckets.getTake(), false);
 				
 				test(prevPageUrl.equals(buckets.getPreviousPage().toString()));
@@ -823,7 +823,7 @@ public class JobsTest implements Closeable
 			{
 				int start = Math.max(0,  buckets.getSkip() + buckets.getTake());
 				String nextPageUrl = String.format(
-						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&anomalyScore=0.0&maxRecordUnusualness=0.0", 
+						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&anomalyScore=0.0&maxNormalizedProbability=0.0", 
 						baseUrl, jobId, start, buckets.getTake(), false);
 
 				test(nextPageUrl.equals(buckets.getNextPage().toString()));
@@ -883,7 +883,7 @@ public class JobsTest implements Closeable
 				
 				int start = Math.max(0,  buckets.getSkip() - buckets.getTake());
 				String prevPageUrl = String.format(
-						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&anomalyScore=0.0&maxRecordUnusualness=0.0", 
+						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&anomalyScore=0.0&maxNormalizedProbability=0.0", 
 						baseUrl, jobId, start, buckets.getTake(), true);
 
 				test(prevPageUrl.equals(buckets.getPreviousPage().toString()));						
@@ -898,7 +898,7 @@ public class JobsTest implements Closeable
 			{
 				int start = Math.max(0,  buckets.getSkip() + buckets.getTake());
 				String nextPageUrl = String.format(
-						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&anomalyScore=0.0&maxRecordUnusualness=0.0", 
+						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&anomalyScore=0.0&maxNormalizedProbability=0.0", 
 						baseUrl, jobId, start, buckets.getTake(), true);
 
 				test(nextPageUrl.equals(buckets.getNextPage().toString()));
@@ -1111,7 +1111,7 @@ public class JobsTest implements Closeable
 		for (Bucket b : buckets.getDocuments())
 		{
 			test(b.getAnomalyScore() >= 50.0);
-			test(b.getMaxRecordUnusualness()  >= 40.0);
+			test(b.getMaxNormalizedProbability()  >= 40.0);
 		}
 
 		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, 
@@ -1129,7 +1129,7 @@ public class JobsTest implements Closeable
 		
 		for (Bucket b : buckets.getDocuments())
 		{
-			test(b.getMaxRecordUnusualness() >= 15.0);
+			test(b.getMaxNormalizedProbability() >= 15.0);
 		}
 	}
 	
@@ -1156,7 +1156,7 @@ public class JobsTest implements Closeable
 		
 		// most unusual first
 		Pagination<AnomalyRecord> records = m_WebServiceClient.getRecords(baseUrl, jobId, 
-				0l, 500l, epochStart, epochEnd, AnomalyRecord.RECORD_UNUSUALNESS, true, null, null);
+				0l, 500l, epochStart, epochEnd, AnomalyRecord.NORMALIZED_PROBABILITY, true, null, null);
 		
 		test(records.getDocumentCount() > 0);
 		test(records.getDocumentCount() == records.getDocuments().size());
@@ -1164,13 +1164,13 @@ public class JobsTest implements Closeable
 		double score = 100.0; // max score		
 		for (AnomalyRecord r : records.getDocuments())
 		{
-			test(r.getRecordUnusualness() <= score);
-			score = r.getRecordUnusualness();
+			test(r.getNormalizedProbability() <= score);
+			score = r.getNormalizedProbability();
 		}
 		
 		// least unusual first
 		records = m_WebServiceClient.getRecords(baseUrl, jobId, 
-				0l, 500l, epochStart, epochEnd, AnomalyRecord.RECORD_UNUSUALNESS, false, null, null);
+				0l, 500l, epochStart, epochEnd, AnomalyRecord.NORMALIZED_PROBABILITY, false, null, null);
 		
 		test(records.getDocumentCount() > 0);
 		test(records.getDocumentCount() == records.getDocuments().size());
@@ -1178,8 +1178,8 @@ public class JobsTest implements Closeable
 		score = 0.0; 		
 		for (AnomalyRecord r : records.getDocuments())
 		{
-			test(r.getRecordUnusualness() >= score);
-			score = r.getRecordUnusualness();
+			test(r.getNormalizedProbability() >= score);
+			score = r.getNormalizedProbability();
 		}
 		
 		// most anomalous first
@@ -1274,7 +1274,7 @@ public class JobsTest implements Closeable
 		for (AnomalyRecord r : records.getDocuments())
 		{			
 			test(r.getAnomalyScore() >= 8.0);
-			test(r.getRecordUnusualness() >= 20.0);
+			test(r.getNormalizedProbability() >= 20.0);
 			
 			test(r.getAnomalyScore() <= score);
 			score = r.getAnomalyScore();

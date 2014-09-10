@@ -58,7 +58,7 @@ public class Bucket
 	public static final String TIMESTAMP = "timestamp";
 	public static final String RAW_ANOMALY_SCORE =  "rawAnomalyScore";
 	public static final String ANOMALY_SCORE =  "anomalyScore";
-	public static final String MAX_RECORD_UNUSUALNESS =  "maxRecordUnusualness";
+	public static final String MAX_NORMALIZED_PROBABILITY =  "maxNormalizedProbability";
 	public static final String RECORD_COUNT = "recordCount";
 	public static final String EVENT_COUNT = "eventCount";
 	public static final String DETECTORS = "detectors";
@@ -76,7 +76,7 @@ public class Bucket
 	private Date m_Timestamp;
 	private double m_RawAnomalyScore;	
 	private double m_AnomalyScore;	
-	private double m_MaxRecordUnusualness;	
+	private double m_MaxNormalizedProbability;	
 	private int m_RecordCount;
 	private List<Detector> m_Detectors;
 	private long m_Epoch;
@@ -150,15 +150,15 @@ public class Bucket
 		m_AnomalyScore = anomalyScore;
 	}
 
-	public double getMaxRecordUnusualness() 
+	public double getMaxNormalizedProbability() 
 	{
-		return m_MaxRecordUnusualness;
+		return m_MaxNormalizedProbability;
 	}	
 
-	public void setMaxRecordUnusualness(double maxRecordUnusualness) 
+	public void setMaxNormalizedProbability(double maxNormalizedProbability) 
 	{
-		m_HadBigNormalisedUpdate |= AnomalyRecord.isBigUpdate(m_MaxRecordUnusualness, maxRecordUnusualness);
-		m_MaxRecordUnusualness = maxRecordUnusualness;
+		m_HadBigNormalisedUpdate |= AnomalyRecord.isBigUpdate(m_MaxNormalizedProbability, maxNormalizedProbability);
+		m_MaxNormalizedProbability = maxNormalizedProbability;
 	}
 
 
@@ -339,15 +339,15 @@ public class Bucket
 										+ " as a double");
 					}
 					break;	
-				case MAX_RECORD_UNUSUALNESS:
+				case MAX_NORMALIZED_PROBABILITY:
 					token = parser.nextToken();
 					if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)	
 					{
-						bucket.setMaxRecordUnusualness(parser.getDoubleValue());
+						bucket.setMaxNormalizedProbability(parser.getDoubleValue());
 					}
 					else
 					{
-						s_Logger.warn("Cannot parse " + MAX_RECORD_UNUSUALNESS + " : " + parser.getText() 
+						s_Logger.warn("Cannot parse " + MAX_NORMALIZED_PROBABILITY + " : " + parser.getText() 
 										+ " as a double");
 					}
 					break;	
@@ -429,7 +429,7 @@ public class Bucket
 		result = prime * result + (int) (temp ^ (temp >>> 32));
 		temp = Double.doubleToLongBits(m_AnomalyScore);
 		result = prime * result + (int) (temp ^ (temp >>> 32));
-		temp = Double.doubleToLongBits(m_MaxRecordUnusualness);
+		temp = Double.doubleToLongBits(m_MaxNormalizedProbability);
 		result = prime * result + (int) (temp ^ (temp >>> 32));
 		result = prime * result
 				+ ((m_Detectors == null) ? 0 : m_Detectors.hashCode());
@@ -469,7 +469,7 @@ public class Bucket
 				(this.m_EventCount == that.m_EventCount) &&
 				(this.m_RawAnomalyScore == that.m_RawAnomalyScore) &&
 				(this.m_AnomalyScore == that.m_AnomalyScore) &&
-				(this.m_MaxRecordUnusualness == that.m_MaxRecordUnusualness) &&
+				(this.m_MaxNormalizedProbability == that.m_MaxNormalizedProbability) &&
 				(this.m_RecordCount == that.m_RecordCount) &&
 				(this.m_Epoch == that.m_Epoch);
 		

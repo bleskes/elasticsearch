@@ -48,7 +48,7 @@ public interface JobResultsProvider extends Closeable
 	 * @param take Take only this number of Buckets
 	 * @param anomalyScoreThreshold Return only buckets with an anomalyScore >=
 	 * this value
-	 * @param unusualScoreThreshold Return only buckets with an maxRecordUnusualness >=
+	 * @param unusualScoreThreshold Return only buckets with a maxNormalizedProbability >=
 	 * this value
 	 * 
 	 * @return
@@ -79,7 +79,7 @@ public interface JobResultsProvider extends Closeable
 	 * are returned
 	 * @param anomalyScoreThreshold Return only buckets with an anomalyScore >=
 	 * this value
-	 * @param unusualScoreThreshold Return only buckets with an maxRecordUnusualness >=
+	 * @param unusualScoreThreshold Return only buckets with a maxNormalizedProbability >=
 	 * this value
 	 * 
 	 * @return
@@ -141,7 +141,7 @@ public interface JobResultsProvider extends Closeable
 	 * @param sortDescending Sort in descending order
 	 * @param anomalyScoreThreshold Return only buckets with an anomalyScore >=
 	 * this value
-	 * @param unusualScoreThreshold Return only buckets with an maxRecordUnusualness >=
+	 * @param unusualScoreThreshold Return only buckets with a maxNormalizedProbability >=
 	 * this value
 	 * 
 	 * @return
@@ -171,7 +171,7 @@ public interface JobResultsProvider extends Closeable
 	 * @param sortDescending Sort in descending order
 	 * @param anomalyScoreThreshold Return only buckets with an anomalyScore >=
 	 * this value
-	 * @param unusualScoreThreshold Return only buckets with an maxRecordUnusualness >=
+	 * @param unusualScoreThreshold Return only buckets with a maxNormalizedProbability >=
 	 * this value
 	 *  
 	 * @return

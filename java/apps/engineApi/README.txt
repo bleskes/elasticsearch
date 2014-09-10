@@ -235,7 +235,7 @@ If not set 'skip' and 'take' default to 0 and 100 meaning the first 100 results 
     "eventCount" : 649,
     "records" : [ ],
     "anomalyScore" : 0.0,
-    "maxRecordUnusualness" : 0.0
+    "maxNormalizedProbability" : 0.0
   }, {
     "id" : "1403485200",
     "timestamp" : "2014-06-23T01:00:00.000+0000",
@@ -244,7 +244,7 @@ If not set 'skip' and 'take' default to 0 and 100 meaning the first 100 results 
     "eventCount" : 627,
     "records" : [ ],
     "anomalyScore" : 0.0,
-    "maxRecordUnusualness" : 0.0
+    "maxNormalizedProbability" : 0.0
   }, {
   ...
   }
@@ -279,13 +279,13 @@ curl 'http://localhost:8080/engine/v1/results/farequote/buckets/1403712000?expan
       "byFieldName" : "airline",
       "probability" : 2.36652E-89,
       "anomalyScore" : 94.35376,
-      "recordUnusualness" : 100.0,
+      "normalizedProbability" : 100.0,
       "byFieldValue" : "AAL",
       "typical" : 99.8279,
       "actual" : 242.75
     } ],
     "anomalyScore" : 94.35376,
-    "maxRecordUnusualness" : 100.0
+    "maxNormalizedProbability" : 100.0
   }
 }
 

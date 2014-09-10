@@ -553,7 +553,7 @@ public class EngineApiClient implements Closeable
 	 * @param expand If true include the anomaly records for the bucket
 	 * @param anomalyScoreThreshold Return only buckets with an anomalyScore >=
 	 * this value. If <code>null</code> then ignored
-	 * @param unusualScoreThreshold Return only buckets with a maxRecordUnusualness >=
+	 * @param unusualScoreThreshold Return only buckets with a maxNormalizedProbability >=
 	 * this value. If <code>null</code> then ignored
 	 * 
 	 * @return A {@link Pagination} object containing a list of {@link Bucket buckets}
@@ -578,7 +578,7 @@ public class EngineApiClient implements Closeable
 	 * @param take The max number of buckets to request. 
 	 * @param anomalyScoreThreshold Return only buckets with an anomalyScore >=
 	 * this value. If <code>null</code> then ignored
-	 * @param unusualScoreThreshold Return only buckets with a maxRecordUnusualness >=
+	 * @param unusualScoreThreshold Return only buckets with a maxNormalizedProbability >=
 	 * this value. If <code>null</code> then ignored
 	 * 
 	 * @return A {@link Pagination} object containing a list of {@link Bucket buckets}
@@ -609,7 +609,7 @@ public class EngineApiClient implements Closeable
 	 * or an ISO 8601 date String. If <code>null</code> then ignored
 	 * @param anomalyScoreThreshold Return only buckets with an anomalyScore >=
 	 * this value. If <code>null</code> then ignored
-	 * @param unusualScoreThreshold Return only buckets with a maxRecordUnusualness >=
+	 * @param unusualScoreThreshold Return only buckets with a maxNormalizedProbability >=
 	 * this value. If <code>null</code> then ignored
 	 * 
 	 * @return A {@link Pagination} object containing a list of {@link Bucket buckets}
@@ -655,7 +655,7 @@ public class EngineApiClient implements Closeable
 		}
 		if (unusualScoreThreshold != null)
 		{
-			url += queryChar + "maxRecordUnusualness=" + unusualScoreThreshold;
+			url += queryChar + "maxNormalizedProbability=" + unusualScoreThreshold;
 			queryChar = '&';
 		}
 		
@@ -813,7 +813,7 @@ public class EngineApiClient implements Closeable
 	 * @param anomalyScoreFilterValue If not <code>null</code> return only the 
 	 * records with an anomalyScore >= anomalyScoreFilterValue
 	 * @param unusualScoreFilterValue If not <code>null</code> return only the 
-	 * records with a recordUnusualness >= unusualScoreFilterValue
+	 * records with a normalizedProbability >= unusualScoreFilterValue
 	 * 
 	 * @return A {@link Pagination} object containing a list of 
 	 * {@link AnomalyRecord anomaly records}
@@ -865,7 +865,7 @@ public class EngineApiClient implements Closeable
 		}
 		if (unusualScoreFilterValue != null)
 		{
-			url += queryChar + "recordUnusualness=" + unusualScoreFilterValue.toString();
+			url += queryChar + "normalizedProbability=" + unusualScoreFilterValue.toString();
 			queryChar = '&';
 		}		
 		

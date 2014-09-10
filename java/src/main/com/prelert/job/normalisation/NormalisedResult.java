@@ -38,13 +38,13 @@ import com.fasterxml.jackson.core.JsonToken;
 /**
  * Store the output of the normaliser process
  * 
- * {"rawAnomalyScore":"0.0","recordUnusualness":"","anomalyScore":"0"}
+ * {"rawAnomalyScore":"0.0","normalizedProbability":"","anomalyScore":"0"}
  *
  */
 public class NormalisedResult 
 {
 	static public final String RAW_ANOMALY_SCORE = "rawAnomalyScore";
-	static public final String RECORD_UNUSUALNESS = "recordUnusualness";
+	static public final String NORMALIZED_PROBABILITY = "normalizedProbability";
 	static public final String SYS_CHANGE_SCORE = "anomalyScore";
 	static public final String ID = "id";
 	
@@ -185,7 +185,7 @@ public class NormalisedResult
 										+ " as a double");
 					}					
 					break;
-				case RECORD_UNUSUALNESS:
+				case NORMALIZED_PROBABILITY:
 					// TODO this is string should be output as a double
 //					if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)	
 //					{
@@ -203,14 +203,14 @@ public class NormalisedResult
 							}
 							catch (NumberFormatException nfe)
 							{
-								logger.warn("Cannot parse " + RECORD_UNUSUALNESS + " : " + parser.getText() 
+								logger.warn("Cannot parse " + NORMALIZED_PROBABILITY + " : " + parser.getText() 
 										+ " as a double");
 							}
 						}
 					}
 					else
 					{
-						logger.warn("Cannot parse " + RECORD_UNUSUALNESS + " : " + parser.getText() 
+						logger.warn("Cannot parse " + NORMALIZED_PROBABILITY + " : " + parser.getText() 
 										+ " as a double");
 					}	
 					break;

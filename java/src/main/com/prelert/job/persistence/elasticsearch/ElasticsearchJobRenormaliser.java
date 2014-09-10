@@ -297,7 +297,7 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
 					}
 					if (updateUnusual)
 					{
-						map.put(Bucket.MAX_RECORD_UNUSUALNESS, bucket.getMaxRecordUnusualness());
+						map.put(Bucket.MAX_NORMALIZED_PROBABILITY, bucket.getMaxNormalizedProbability());
 					}
 
 					m_JobProvider.getClient().prepareUpdate(m_JobId, Bucket.TYPE, bucketId)
@@ -334,7 +334,7 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
 						}
 						if (updateUnusual)
 						{
-							map.put(AnomalyRecord.RECORD_UNUSUALNESS, record.getRecordUnusualness());
+							map.put(AnomalyRecord.NORMALIZED_PROBABILITY, record.getNormalizedProbability());
 						}
 
 						bulkRequest.add(m_JobProvider.getClient()
