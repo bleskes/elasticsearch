@@ -48,7 +48,7 @@ public interface JobResultsProvider extends Closeable
 	 * @param take Take only this number of Buckets
 	 * @param anomalyScoreThreshold Return only buckets with an anomalyScore >=
 	 * this value
-	 * @param unusualScoreThreshold Return only buckets with a maxNormalizedProbability >=
+	 * @param normalizedProbabilityThreshold Return only buckets with a maxNormalizedProbability >=
 	 * this value
 	 * 
 	 * @return
@@ -56,7 +56,7 @@ public interface JobResultsProvider extends Closeable
 	 */
 	public Pagination<Bucket> buckets(String jobId, 
 			boolean expand, int skip, int take,
-			double anomalyScoreThreshold, double unusualScoreThreshold)
+			double anomalyScoreThreshold, double normalizedProbabilityThreshold)
 	throws UnknownJobException;
 			
 	
@@ -79,7 +79,7 @@ public interface JobResultsProvider extends Closeable
 	 * are returned
 	 * @param anomalyScoreThreshold Return only buckets with an anomalyScore >=
 	 * this value
-	 * @param unusualScoreThreshold Return only buckets with a maxNormalizedProbability >=
+	 * @param normalizedProbabilityThreshold Return only buckets with a maxNormalizedProbability >=
 	 * this value
 	 * 
 	 * @return
@@ -88,7 +88,7 @@ public interface JobResultsProvider extends Closeable
 	public Pagination<Bucket> buckets(String jobId, 
 			boolean expand, int skip, int take,
 			long startBucket, long endBucket,
-			double anomalyScoreThreshold, double unusualScoreThreshold)
+			double anomalyScoreThreshold, double normalizedProbabilityThreshold)
 	throws UnknownJobException;
 	
 	
@@ -141,7 +141,7 @@ public interface JobResultsProvider extends Closeable
 	 * @param sortDescending Sort in descending order
 	 * @param anomalyScoreThreshold Return only buckets with an anomalyScore >=
 	 * this value
-	 * @param unusualScoreThreshold Return only buckets with a maxNormalizedProbability >=
+	 * @param normalizedProbabilityThreshold Return only buckets with a maxNormalizedProbability >=
 	 * this value
 	 * 
 	 * @return
@@ -149,7 +149,7 @@ public interface JobResultsProvider extends Closeable
 	 */
 	public Pagination<AnomalyRecord> records(String jobId, 
 			 int skip, int take, String sortField, boolean sortDescending,
-			 double anomalyScoreThreshold, double unusualScoreThreshold)
+			 double anomalyScoreThreshold, double normalizedProbabilityThreshold)
 	throws UnknownJobException;
 	
 	/**
@@ -171,7 +171,7 @@ public interface JobResultsProvider extends Closeable
 	 * @param sortDescending Sort in descending order
 	 * @param anomalyScoreThreshold Return only buckets with an anomalyScore >=
 	 * this value
-	 * @param unusualScoreThreshold Return only buckets with a maxNormalizedProbability >=
+	 * @param normalizedProbabilityThreshold Return only buckets with a maxNormalizedProbability >=
 	 * this value
 	 *  
 	 * @return
@@ -180,7 +180,7 @@ public interface JobResultsProvider extends Closeable
 	public Pagination<AnomalyRecord> records(String jobId, 
 			int skip, int take, long startBucket, long endBucket, 
 			String sortField, boolean sortDescending,
-			double anomalyScoreThreshold, double unusualScoreThreshold)
+			double anomalyScoreThreshold, double normalizedProbabilityThreshold)
 	throws UnknownJobException;
 			
 	

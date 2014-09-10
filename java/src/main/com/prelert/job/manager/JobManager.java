@@ -317,18 +317,18 @@ public class JobManager
 	 * @param skip
 	 * @param take
 	 * @param anomalyScoreThreshold
-	 * @param unusualScoreThreshold
+	 * @param normalizedProbabilityThreshold
 	 * @return
 	 * @throws UnknownJobException
 	 * @throws NativeProcessRunException
 	 */
 	public Pagination<Bucket> buckets(String jobId, 
 			boolean expand, int skip, int take,
-			double anomalyScoreThreshold, double unusualScoreThreshold) 
+			double anomalyScoreThreshold, double normalizedProbabilityThreshold) 
 	throws UnknownJobException, NativeProcessRunException
 	{
 		Pagination<Bucket> buckets = m_JobProvider.buckets(jobId, 
-				expand, skip, take, anomalyScoreThreshold, unusualScoreThreshold);
+				expand, skip, take, anomalyScoreThreshold, normalizedProbabilityThreshold);
 		
 		if (!expand)
 		{
@@ -352,19 +352,19 @@ public class JobManager
 	 * @param startBucket The bucket with this id is included in the results
 	 * @param endBucket Include buckets up to this one
 	 * @param anomalyScoreThreshold
-	 * @param unusualScoreThreshold 
+	 * @param normalizedProbabilityThreshold 
 	 * @return
 	 * @throws UnknownJobException 
 	 * @throws NativeProcessRunException 
 	 */
 	public Pagination<Bucket> buckets(String jobId, 
 			boolean expand, int skip, int take, long startBucket, long endBucket,
-			double anomalyScoreThreshold, double unusualScoreThreshold)
+			double anomalyScoreThreshold, double normalizedProbabilityThreshold)
 	throws UnknownJobException, NativeProcessRunException
 	{
 		Pagination<Bucket> buckets =  m_JobProvider.buckets(jobId, expand,
 				skip, take, startBucket, endBucket, 
-				anomalyScoreThreshold, unusualScoreThreshold);
+				anomalyScoreThreshold, normalizedProbabilityThreshold);
 		
 		if (!expand)
 		{
@@ -433,7 +433,7 @@ public class JobManager
 	 * @param sortDescending
 	 * @param anomalyScoreThreshold Return only buckets with an anomalyScore >=
 	 * this value
-	 * @param unusualScoreThreshold Return only buckets with a maxNormalizedProbability >=
+	 * @param normalizedProbabilityThreshold Return only buckets with a maxNormalizedProbability >=
 	 * this value
 	 * 
 	 * @return
@@ -442,12 +442,12 @@ public class JobManager
 	 */
 	public Pagination<AnomalyRecord> records(String jobId, 
 			int skip, int take, String sortField, boolean sortDescending, 
-			double anomalyScoreThreshold, double unusualScoreThreshold) 
+			double anomalyScoreThreshold, double normalizedProbabilityThreshold) 
 	throws NativeProcessRunException, UnknownJobException 
 	{
 		Pagination<AnomalyRecord> records = m_JobProvider.records(jobId, 
 				skip, take, sortField, sortDescending, 
-				anomalyScoreThreshold, unusualScoreThreshold);
+				anomalyScoreThreshold, normalizedProbabilityThreshold);
 
 		return records; 
 	}
@@ -466,7 +466,7 @@ public class JobManager
 	 * @param sortDescending
 	 * @param anomalyScoreThreshold Return only buckets with an anomalyScore >=
 	 * this value
-	 * @param unusualScoreThreshold Return only buckets with a maxNormalizedProbability >=
+	 * @param normalizedProbabilityThreshold Return only buckets with a maxNormalizedProbability >=
 	 * this value
 	 * 
 	 * @return
@@ -476,12 +476,12 @@ public class JobManager
 	public Pagination<AnomalyRecord> records(String jobId, 
 			int skip, int take, long epochStart, long epochEnd, 
 			String sortField, boolean sortDescending, 
-			double anomalyScoreThreshold, double unusualScoreThreshold) 
+			double anomalyScoreThreshold, double normalizedProbabilityThreshold) 
 	throws NativeProcessRunException, UnknownJobException
 	{
 		Pagination<AnomalyRecord> records = m_JobProvider.records(jobId, 
 				skip, take, epochStart, epochEnd, sortField, sortDescending,
-				anomalyScoreThreshold, unusualScoreThreshold);
+				anomalyScoreThreshold, normalizedProbabilityThreshold);
 
 		return records; 
 	}
