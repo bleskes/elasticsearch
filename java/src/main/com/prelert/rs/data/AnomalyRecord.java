@@ -89,7 +89,7 @@ public class AnomalyRecord
 	 * Normalisation
 	 */
 	static final public String ANOMALY_SCORE = "anomalyScore";
-	static final public String RECORD_UNUSUALNESS = "recordUnusualness";
+	static final public String NORMALIZED_PROBABILITY = "normalizedProbability";
 	
 	private static final Logger s_Logger = Logger.getLogger(AnomalyRecord.class);
 	
@@ -110,7 +110,7 @@ public class AnomalyRecord
 	private List<AnomalyCause> m_Causes;
 
 	private double m_AnomalyScore;
-	private double m_RecordUnusualness;
+	private double m_NormalizedProbability;
 	private Date   m_Timestamp;
 
 	private boolean m_HadBigNormalisedUpdate;
@@ -148,15 +148,15 @@ public class AnomalyRecord
 		m_AnomalyScore = anomalyScore;
 	}
 	
-	public double getRecordUnusualness()
+	public double getNormalizedProbability()
 	{
-		return m_RecordUnusualness;
+		return m_NormalizedProbability;
 	}
 	
-	public void setRecordUnusualness(double recordUnusualness)
+	public void setNormalizedProbability(double normalizedProbability)
 	{
-		m_HadBigNormalisedUpdate |= isBigUpdate(m_RecordUnusualness, recordUnusualness);
-		m_RecordUnusualness = recordUnusualness;
+		m_HadBigNormalisedUpdate |= isBigUpdate(m_NormalizedProbability, normalizedProbability);
+		m_NormalizedProbability = normalizedProbability;
 	}
 	
 	
@@ -380,11 +380,11 @@ public class AnomalyRecord
 								+ " as a double");
 					}
 					break;
-				case RECORD_UNUSUALNESS:
+				case NORMALIZED_PROBABILITY:
 					token = parser.nextToken();
 					if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)
 					{
-						record.setRecordUnusualness(parser.getDoubleValue());
+						record.setNormalizedProbability(parser.getDoubleValue());
 					}
 					else
 					{
@@ -579,7 +579,7 @@ public class AnomalyRecord
 		result = prime * result + (int) (temp ^ (temp >>> 32));
 		temp = Double.doubleToLongBits(m_AnomalyScore);
 		result = prime * result + (int) (temp ^ (temp >>> 32));
-		temp = Double.doubleToLongBits(m_RecordUnusualness);
+		temp = Double.doubleToLongBits(m_NormalizedProbability);
 		result = prime * result + (int) (temp ^ (temp >>> 32));
 		result = prime * result
 				+ ((m_Actual == null) ? 0 : m_Actual.hashCode());
@@ -639,7 +639,7 @@ public class AnomalyRecord
 		// m_HadBigNormalisedUpdate is also deliberately excluded from the test
 		boolean equal = this.m_Probability == that.m_Probability &&
 				this.m_AnomalyScore == that.m_AnomalyScore &&
-				this.m_RecordUnusualness == that.m_RecordUnusualness &&
+				this.m_NormalizedProbability == that.m_NormalizedProbability &&
 				bothNullOrEqual(this.m_Typical, that.m_Typical) &&
 				bothNullOrEqual(this.m_Actual, that.m_Actual) &&
 				bothNullOrEqual(this.m_Function, that.m_Function) &&

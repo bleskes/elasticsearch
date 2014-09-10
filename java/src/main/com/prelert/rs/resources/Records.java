@@ -106,10 +106,10 @@ public class Records extends ResourceWithJobManager
 			@DefaultValue(JobManager.DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take,
 			@DefaultValue("") @QueryParam(START_QUERY_PARAM) String start,
 			@DefaultValue("") @QueryParam(END_QUERY_PARAM) String end,
-			@DefaultValue(AnomalyRecord.RECORD_UNUSUALNESS) @QueryParam(SORT_QUERY_PARAM) String sort,
+			@DefaultValue(AnomalyRecord.NORMALIZED_PROBABILITY) @QueryParam(SORT_QUERY_PARAM) String sort,
 			@DefaultValue("true") @QueryParam(DESCENDING_ORDER) boolean descending,
 			@DefaultValue("0.0") @QueryParam(AnomalyRecord.ANOMALY_SCORE) double anomalySoreFilter,
-			@DefaultValue("0.0") @QueryParam(AnomalyRecord.RECORD_UNUSUALNESS) double unusualScoreFilter)
+			@DefaultValue("0.0") @QueryParam(AnomalyRecord.NORMALIZED_PROBABILITY) double unusualScoreFilter)
 	throws NativeProcessRunException, UnknownJobException
 	{	
 		s_Logger.debug(String.format("Get records for job %s. skip = %d, take = %d"
@@ -187,7 +187,7 @@ public class Records extends ResourceWithJobManager
     		queryParams.add(this.new KeyValue(SORT_QUERY_PARAM, sort));
     		queryParams.add(this.new KeyValue(DESCENDING_ORDER, Boolean.toString(descending)));
     		queryParams.add(this.new KeyValue(AnomalyRecord.ANOMALY_SCORE, String.format("%2.1f", anomalySoreFilter)));
-    		queryParams.add(this.new KeyValue(AnomalyRecord.RECORD_UNUSUALNESS, String.format("%2.1f", unusualScoreFilter)));
+    		queryParams.add(this.new KeyValue(AnomalyRecord.NORMALIZED_PROBABILITY, String.format("%2.1f", unusualScoreFilter)));
     		
     		setPagingUrls(path, records, queryParams);
     	}		

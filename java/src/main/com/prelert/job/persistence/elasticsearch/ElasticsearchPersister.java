@@ -435,7 +435,7 @@ public class ElasticsearchPersister implements JobResultsPersister
 				.field(ElasticsearchMappings.ES_TIMESTAMP, bucket.getTimestamp())
 				.field(Bucket.RAW_ANOMALY_SCORE, bucket.getRawAnomalyScore())
 				.field(Bucket.ANOMALY_SCORE, bucket.getAnomalyScore())
-				.field(Bucket.MAX_RECORD_UNUSUALNESS, bucket.getMaxRecordUnusualness())
+				.field(Bucket.MAX_NORMALIZED_PROBABILITY, bucket.getMaxNormalizedProbability())
 				.field(Bucket.RECORD_COUNT, bucket.getRecordCount())
 				.field(Bucket.EVENT_COUNT, bucket.getEventCount())
 				.endObject();
@@ -493,7 +493,7 @@ public class ElasticsearchPersister implements JobResultsPersister
 		XContentBuilder builder = jsonBuilder().startObject()
 				.field(AnomalyRecord.PROBABILITY, record.getProbability())
 				.field(AnomalyRecord.ANOMALY_SCORE, record.getAnomalyScore())
-				.field(AnomalyRecord.RECORD_UNUSUALNESS, record.getRecordUnusualness())
+				.field(AnomalyRecord.NORMALIZED_PROBABILITY, record.getNormalizedProbability())
 				.field(ElasticsearchMappings.ES_TIMESTAMP, bucketTime);
 
 		if (record.getByFieldName() != null)
