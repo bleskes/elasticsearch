@@ -191,11 +191,11 @@ public class AutoDetectResultsParser
 	{
 		if (QuantilesState.SYS_CHANGE_QUANTILES_KIND.equals(quantiles.getKind()))
 		{
-			renormaliser.updateBucketSysChange(quantiles.getState(), logger);
+			renormaliser.updateBucketSysChange(quantiles.getState(), quantiles.getTimestamp(), logger);
 		}
 		else if (QuantilesState.UNUSUAL_QUANTILES_KIND.equals(quantiles.getKind()))
 		{
-			renormaliser.updateBucketUnusualBehaviour(quantiles.getState(), logger);
+			renormaliser.updateBucketUnusualBehaviour(quantiles.getState(), quantiles.getTimestamp(), logger);
 		}
 		else
 		{

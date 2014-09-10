@@ -306,7 +306,7 @@ public class Bucket
 					if (token == JsonToken.VALUE_NUMBER_INT)	
 					{
 						// convert seconds to ms
-						long val = parser.getLongValue()  * 1000;
+						long val = parser.getLongValue() * 1000;
 						bucket.setTimestamp(new Date(val));
 					}
 					else
