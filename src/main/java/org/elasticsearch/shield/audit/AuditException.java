@@ -17,10 +17,12 @@
 
 package org.elasticsearch.shield.audit;
 
+import org.elasticsearch.shield.ShieldException;
+
 /**
  *
  */
-public class AuditException extends org.elasticsearch.shield.SecurityException {
+public class AuditException extends ShieldException {
 
     public AuditException(String msg) {
         super(msg);

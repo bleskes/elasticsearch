@@ -23,6 +23,7 @@ import org.elasticsearch.common.inject.Injector;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
+import org.elasticsearch.rest.RestController;
 import org.elasticsearch.test.ElasticsearchTestCase;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.watcher.ResourceWatcherService;
@@ -33,6 +34,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import static org.hamcrest.Matchers.*;
+import static org.mockito.Mockito.mock;
 
 /**
  *
@@ -50,7 +52,8 @@ public class ESUsersModuleTests extends ElasticsearchTestCase {
 
     @Test
     public void test() throws Exception {
-        Injector injector = Guice.createInjector(new TestModule(users, usersRoles), new ESUsersModule());
+        Settings settings = ImmutableSettings.builder().put("client.type", "node").build();
+        Injector injector = Guice.createInjector(new TestModule(users, usersRoles), new ESUsersModule(settings));
         ESUsersRealm realm = injector.getInstance(ESUsersRealm.class);
         assertThat(realm, notNullValue());
         assertThat(realm.userPasswdStore, notNullValue());
@@ -93,6 +96,7 @@ public class ESUsersModuleTests extends ElasticsearchTestCase {
             bind(Environment.class).toInstance(env);
             bind(ThreadPool.class).toInstance(new ThreadPool("test"));
             bind(ResourceWatcherService.class).asEagerSingleton();
+            bind(RestController.class).toInstance(mock(RestController.class));
         }
     }
 

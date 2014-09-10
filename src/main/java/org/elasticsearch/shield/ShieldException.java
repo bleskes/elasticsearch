@@ -17,17 +17,28 @@
 
 package org.elasticsearch.shield;
 
+import org.elasticsearch.ElasticsearchException;
+
+import org.elasticsearch.common.collect.ImmutableMap;
+import org.elasticsearch.common.collect.Lists;
+import org.elasticsearch.shield.plugin.ShieldPlugin;
+
+import java.util.List;
+
 /**
  *
  */
-public class SecuritySettingsException extends SecurityException {
+public class ShieldException extends ElasticsearchException.WithRestHeaders {
 
-    public SecuritySettingsException(String msg) {
-        super(msg);
+    public static final ImmutableMap<String, List<String>> HEADERS = ImmutableMap.<String, List<String>>builder()
+            .put("WWW-Authenticate", Lists.newArrayList("Basic realm=\""+ ShieldPlugin.NAME +"\""))
+            .build();
+
+    public ShieldException(String msg) {
+        super(msg, HEADERS);
     }
 
-    public SecuritySettingsException(String msg, Throwable cause) {
-        super(msg, cause);
+    public ShieldException(String msg, Throwable cause) {
+        super(msg, cause, HEADERS);
     }
-
 }

@@ -20,11 +20,13 @@ package org.elasticsearch.shield.authc.ldap;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
+import org.elasticsearch.rest.RestController;
 import org.elasticsearch.shield.User;
 import org.elasticsearch.shield.authc.support.UsernamePasswordToken;
 import org.elasticsearch.test.ElasticsearchTestCase;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.watcher.ResourceWatcherService;
+import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
@@ -43,8 +45,21 @@ public class LdapRealmTest extends ElasticsearchTestCase {
     public static final String VALID_USERNAME = "Thomas Masterman Hardy";
     public static final String PASSWORD = "pass";
 
+    private RestController restController;
+
+    @Before
+    public void init() throws Exception {
+        restController = mock(RestController.class);
+    }
+
     @Rule
     public static ApacheDsRule apacheDsRule = new ApacheDsRule();
+
+    @Test
+    public void testRestHeaderRegistration() {
+        new LdapRealm(ImmutableSettings.EMPTY, mock(LdapConnectionFactory.class), mock(LdapGroupToRoleMapper.class), restController);
+        verify(restController).registerRelevantHeaders(UsernamePasswordToken.BASIC_AUTH_HEADER);
+    }
 
     @Test
     public void testAuthenticate_subTreeGroupSearch(){
@@ -53,7 +68,7 @@ public class LdapRealmTest extends ElasticsearchTestCase {
         String userTemplate = VALID_USER_TEMPLATE;
         Settings settings = LdapConnectionTests.buildLdapSettings(apacheDsRule.getUrl(), userTemplate, groupSearchBase, isSubTreeSearch);
         StandardLdapConnectionFactory ldapFactory = new StandardLdapConnectionFactory(settings);
-        LdapRealm ldap = new LdapRealm(buildNonCachingSettings(), ldapFactory, buildGroupAsRoleMapper());
+        LdapRealm ldap = new LdapRealm(buildNonCachingSettings(), ldapFactory, buildGroupAsRoleMapper(), restController);
 
         User user = ldap.authenticate(new UsernamePasswordToken(VALID_USERNAME, PASSWORD.toCharArray()));
         assertThat( user, notNullValue());
@@ -68,7 +83,7 @@ public class LdapRealmTest extends ElasticsearchTestCase {
         StandardLdapConnectionFactory ldapFactory = new StandardLdapConnectionFactory(
                 LdapConnectionTests.buildLdapSettings(apacheDsRule.getUrl(), userTemplate, groupSearchBase, isSubTreeSearch));
 
-        LdapRealm ldap = new LdapRealm(buildNonCachingSettings(), ldapFactory, buildGroupAsRoleMapper());
+        LdapRealm ldap = new LdapRealm(buildNonCachingSettings(), ldapFactory, buildGroupAsRoleMapper(), restController);
 
         User user = ldap.authenticate(new UsernamePasswordToken(VALID_USERNAME, PASSWORD.toCharArray()));
         assertThat( user, notNullValue());
@@ -85,7 +100,7 @@ public class LdapRealmTest extends ElasticsearchTestCase {
                 LdapConnectionTests.buildLdapSettings( apacheDsRule.getUrl(), userTemplate, groupSearchBase, isSubTreeSearch) );
 
         ldapFactory = spy(ldapFactory);
-        LdapRealm ldap = new LdapRealm( buildCachingSettings(), ldapFactory, buildGroupAsRoleMapper());
+        LdapRealm ldap = new LdapRealm( buildCachingSettings(), ldapFactory, buildGroupAsRoleMapper(), restController);
         User user = ldap.authenticate( new UsernamePasswordToken(VALID_USERNAME, PASSWORD.toCharArray()));
         user = ldap.authenticate( new UsernamePasswordToken(VALID_USERNAME, PASSWORD.toCharArray()));
 
@@ -102,7 +117,7 @@ public class LdapRealmTest extends ElasticsearchTestCase {
                 LdapConnectionTests.buildLdapSettings(apacheDsRule.getUrl(), userTemplate, groupSearchBase, isSubTreeSearch) );
 
         ldapFactory = spy(ldapFactory);
-        LdapRealm ldap = new LdapRealm( buildNonCachingSettings(), ldapFactory, buildGroupAsRoleMapper());
+        LdapRealm ldap = new LdapRealm( buildNonCachingSettings(), ldapFactory, buildGroupAsRoleMapper(), restController);
         User user = ldap.authenticate( new UsernamePasswordToken(VALID_USERNAME, PASSWORD.toCharArray()));
         user = ldap.authenticate( new UsernamePasswordToken(VALID_USERNAME, PASSWORD.toCharArray()));
 
@@ -119,7 +134,7 @@ public class LdapRealmTest extends ElasticsearchTestCase {
         ActiveDirectoryConnectionFactory ldapFactory = new ActiveDirectoryConnectionFactory(
                 ActiveDirectoryFactoryTests.buildAdSettings(AD_URL, adDomain));
 
-        LdapRealm ldap = new LdapRealm( buildNonCachingSettings(), ldapFactory, buildGroupAsRoleMapper());
+        LdapRealm ldap = new LdapRealm( buildNonCachingSettings(), ldapFactory, buildGroupAsRoleMapper(), restController);
 
         User user = ldap.authenticate( new UsernamePasswordToken("george", "R))Tr0x".toCharArray()));
 
@@ -137,7 +152,7 @@ public class LdapRealmTest extends ElasticsearchTestCase {
                 .build();
 
         ActiveDirectoryConnectionFactory ldapFactory = new ActiveDirectoryConnectionFactory( settings );
-        LdapRealm ldap = new LdapRealm( buildNonCachingSettings(), ldapFactory, buildGroupAsRoleMapper());
+        LdapRealm ldap = new LdapRealm( buildNonCachingSettings(), ldapFactory, buildGroupAsRoleMapper(), restController);
         User user = ldap.authenticate( new UsernamePasswordToken("george", "R))Tr0x".toCharArray()));
 
         assertThat( user, notNullValue());
