@@ -136,7 +136,7 @@ public class Jobs extends ResourceWithJobManager
 				
 		if (job.isExists())
 		{
-			s_Logger.debug("Returning job '" + job + "'");
+			s_Logger.debug("Returning job '" + jobId + "'");
 			
 			return Response.ok(job).build();
 		}

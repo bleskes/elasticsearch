@@ -36,6 +36,8 @@ import java.util.concurrent.ExecutionException;
 import org.apache.log4j.Logger;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse;
+import org.elasticsearch.action.bulk.BulkRequestBuilder;
+import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
@@ -47,12 +49,14 @@ public class ElasticsearchJobDataPersister implements JobDataPersister
 {
 	static public String PERSISTED_RECORD_TYPE = "saved-data";
 	
-	public static String FIELDS = "fields";
-	public static String BY_FIELDS = "byFields";
-	public static String OVER_FIELDS = "overFields";
-	public static String PARTITION_FIELDS = "partitionFields";
+	public static final String FIELDS = "fields";
+	public static final String BY_FIELDS = "byFields";
+	public static final String OVER_FIELDS = "overFields";
+	public static final String PARTITION_FIELDS = "partitionFields";
 	
-	public static String TYPE = "saved-data";
+	public static final String TYPE = "saved-data";
+	
+	private static final int DOC_BUFFER_SIZE = 1000;
 	
 	private Client m_Client;
 	private String m_IndexName;
@@ -63,6 +67,10 @@ public class ElasticsearchJobDataPersister implements JobDataPersister
 	private int [] m_OverFieldMappings;
 	private int [] m_PartitionFieldMappings;
 	
+	private String [][] m_BufferedRecords;
+	private long [] m_Epochs;
+	private int m_BufferedRecordCount;
+	
 	
 	private Logger m_Logger;
 	
@@ -71,6 +79,9 @@ public class ElasticsearchJobDataPersister implements JobDataPersister
 		m_IndexName = jobId + "_raw";
 		m_Client = client;
 		m_Logger = logger;
+		
+		m_BufferedRecords = new String [DOC_BUFFER_SIZE][];
+		m_Epochs = new long [DOC_BUFFER_SIZE];
 
 		m_Logger.info("Data will be persisted in the index " + m_IndexName);
 		createIndex();
@@ -139,70 +150,109 @@ public class ElasticsearchJobDataPersister implements JobDataPersister
 
 				j++;
 			}
-			
 			i++;
 		}
-		
 	}
 		
+	/**
+	 * The contents of <code>record</code> needs to be copied as it is 
+	 * reused by other code
+	 */
 	@Override
 	public void persistRecord(long epoch, String [] record)
-	{
-		try
-		{
-			XContentBuilder jsonBuilder = XContentFactory.jsonBuilder();
-			try 
-			{
-				// epoch in ms
-				jsonBuilder.startObject().field("epoch", epoch * 1000);
+	{		
+		String [] copy = new String[record.length];
+		System.arraycopy(record, 0, copy, 0, record.length);
+		m_BufferedRecords[m_BufferedRecordCount] = copy;
+		m_Epochs[m_BufferedRecordCount] = epoch;
+		
+		m_BufferedRecordCount++;
 				
 
-				for (int i=0; i<m_FieldNames.length; i++)
-				{
-					try
-					{
-						jsonBuilder.field(m_FieldNames[i], Double.parseDouble(record[m_FieldMappings[i]]));
-					}
-					catch (NumberFormatException e)
-					{
-						jsonBuilder.field(m_FieldNames[i], record[m_FieldMappings[i]]);
-					}
-				}
+		if (m_BufferedRecordCount == DOC_BUFFER_SIZE)
+		{
+			writeDocs();
+		}
+	}
+	
+	private void writeDocs()
+	{
+		// write docs
 
-				jsonBuilder.startArray(BY_FIELDS);
-				for (int i=0; i<m_ByFieldMappings.length; i++)
-				{
-					jsonBuilder.value(record[m_ByFieldMappings[i]]);
-				}
-				jsonBuilder.endArray();
+		BulkRequestBuilder bulkRequest = m_Client.prepareBulk();
 
-				jsonBuilder.startArray(OVER_FIELDS);
-				for (int i=0; i<m_OverFieldMappings.length; i++)
-				{
-					jsonBuilder.value(record[m_OverFieldMappings[i]]);
-				}
-				jsonBuilder.endArray();			
-
-				jsonBuilder.startArray(PARTITION_FIELDS);
-				for (int i=0; i<m_PartitionFieldMappings.length; i++)
-				{
-					jsonBuilder.value(record[m_PartitionFieldMappings[i]]);
-				}
-				jsonBuilder.endArray();	
-
-				m_Client.prepareIndex(m_IndexName, PERSISTED_RECORD_TYPE)
-								.setSource(jsonBuilder)
-								.get();
-
-			}
-			finally
+		try
+		{
+			for (int count=0; count<m_BufferedRecordCount; count++)
 			{
-				jsonBuilder.close();
+				try
+				{
+					XContentBuilder jsonBuilder = XContentFactory.jsonBuilder();
+
+					String [] bufferedRecord = m_BufferedRecords[count];
+					// epoch in ms
+					jsonBuilder.startObject().field("epoch", m_Epochs[count] * 1000);
+
+
+					for (int i=0; i<m_FieldNames.length; i++)
+					{
+						try
+						{
+							jsonBuilder.field(m_FieldNames[i], Double.parseDouble(bufferedRecord[m_FieldMappings[i]]));
+						}
+						catch (NumberFormatException e)
+						{
+							jsonBuilder.field(m_FieldNames[i], bufferedRecord[m_FieldMappings[i]]);
+						}
+					}
+
+					jsonBuilder.startArray(BY_FIELDS);
+					for (int i=0; i<m_ByFieldMappings.length; i++)
+					{
+						jsonBuilder.value(bufferedRecord[m_ByFieldMappings[i]]);
+					}
+					jsonBuilder.endArray();
+
+					jsonBuilder.startArray(OVER_FIELDS);
+					for (int i=0; i<m_OverFieldMappings.length; i++)
+					{
+						jsonBuilder.value(bufferedRecord[m_OverFieldMappings[i]]);
+					}
+					jsonBuilder.endArray();			
+
+					jsonBuilder.startArray(PARTITION_FIELDS);
+					for (int i=0; i<m_PartitionFieldMappings.length; i++)
+					{
+						jsonBuilder.value(bufferedRecord[m_PartitionFieldMappings[i]]);
+					}
+					jsonBuilder.endArray();	
+
+					jsonBuilder.endObject();
+
+
+					bulkRequest.add(m_Client.prepareIndex(m_IndexName, PERSISTED_RECORD_TYPE)
+							.setSource(jsonBuilder));
+
+					m_BufferedRecords[count] = null; // free mem
+
+				}
+				catch (IOException e)
+				{
+					m_Logger.error("Error creating json builder", e);
+				}
 			}
 		}
-		catch (IOException e)
+		finally 
 		{
-			m_Logger.error("Error persisted raw record", e);
+			m_BufferedRecordCount = 0;
+		}
+
+
+		BulkResponse bulkResponse = bulkRequest.execute().actionGet();
+		if (bulkResponse.hasFailures()) 
+		{
+			m_Logger.error("Errors writing raw job data: " + 
+					bulkResponse.buildFailureMessage());			
 		}
 	}
 	

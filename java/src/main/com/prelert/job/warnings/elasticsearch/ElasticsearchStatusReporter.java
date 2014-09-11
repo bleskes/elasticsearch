@@ -9,7 +9,6 @@ import com.prelert.job.JobDetails;
 import com.prelert.job.warnings.StatusReporter;
 
 import org.apache.log4j.Logger;
-import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.update.UpdateRequestBuilder;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.index.engine.VersionConflictEngineException;

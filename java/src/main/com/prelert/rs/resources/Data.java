@@ -176,18 +176,10 @@ public class Data extends ResourceWithJobManager
     	s_Logger.debug("Post to close data upload for job " + jobId);
 
     	JobManager manager = jobManager();
-    	boolean fin = manager.finishJob(jobId);
+    	manager.finishJob(jobId);
     	
-    	if (fin)
-    	{
-    		s_Logger.debug("Process finished successfully, Job Id = '" + jobId + "'");    		
-    		return Response.accepted().build();
-    	}
-    	else
-    	{
-    		s_Logger.error("Error closing job '" + jobId + "'");
-    		return Response.serverError().build();
-    	}
+   		s_Logger.debug("Process finished successfully, Job Id = '" + jobId + "'");    		
+   		return Response.accepted().build();
     }
     
     /**

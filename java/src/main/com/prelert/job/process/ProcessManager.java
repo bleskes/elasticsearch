@@ -481,7 +481,7 @@ public class ProcessManager
 				
 			}
 		}
-		catch (NativeProcessRunException e) 
+		catch (NativeProcessRunException npre) 
 		{
 			String msg = String.format("Native process for job '%s' has already exited",
 					jobId);
@@ -501,7 +501,7 @@ public class ProcessManager
 			
 			setJobFinishedTimeAndStatus(jobId, process.getLogger(), JobStatus.FAILED);
 			
-			throw e;
+			throw npre;
 		}
 
 		return ProcessStatus.COMPLETED;

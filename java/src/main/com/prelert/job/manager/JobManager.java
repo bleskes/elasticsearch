@@ -506,13 +506,12 @@ public class JobManager
 	 * Stop the running job and mark it as finished.<br/>
 	 * 
 	 * @param jobId The job to stop
-	 * @return true if the job stopped successfully
 	 * @throws UnknownJobException 
 	 * @throws NativeProcessRunException 
 	 * @throws JobInUseException if the job cannot be closed because data is
 	 * being streamed to it
 	 */
-	public boolean finishJob(String jobId) 
+	public void finishJob(String jobId) 
 	throws UnknownJobException, NativeProcessRunException, JobInUseException
 	{
 		s_Logger.debug("Finish job " + jobId);
@@ -521,11 +520,8 @@ public class JobManager
 		// this method throws if it isn't
 		if (m_JobProvider.jobExists(jobId))
 		{
-			ProcessManager.ProcessStatus processStatus = m_ProcessManager.finishJob(jobId);	
-			return (processStatus == ProcessManager.ProcessStatus.COMPLETED);
+			m_ProcessManager.finishJob(jobId);	
 		}
-		
-		return false;
 	}
 		
 	/**
