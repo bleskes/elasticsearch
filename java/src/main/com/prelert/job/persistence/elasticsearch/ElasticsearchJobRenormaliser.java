@@ -118,13 +118,14 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
 			m_UpdatedQuantileQueue.add(new QuantileInfo(QuantileInfo.InfoType.END,
 					"", 0, logger));
 			m_QuantileUpdateThread.join();
+			logger.info("After shutting down renormaliser thread " +
+						m_UpdatedQuantileQueue.size() +
+						" renormalisation requests remain unprocessed");
 			m_UpdatedQuantileQueue.clear();
-			// Refresh the indexes so that normalised results are available to search
-			logger.info("Renormaliser thread joined - about to refresh indexes");
-			m_JobProvider.getClient().admin().indices().refresh(new RefreshRequest(m_JobId)).actionGet();
 		}
 		catch (InterruptedException e)
 		{
+			logger.info("Interrupted whilst shutting down renormaliser thread");
 			return false;
 		}
 
@@ -473,6 +474,7 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
 	{
 		public void run()
 		{
+			Logger lastLogger = null;
 			try
 			{
 				boolean keepGoing = true;
@@ -485,23 +487,24 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
 					QuantileInfo info = ElasticsearchJobRenormaliser.this.m_UpdatedQuantileQueue.take();
 					while (keepGoing && info != null)
 					{
+						lastLogger = info.m_Logger;
 						switch (info.m_Type)
 						{
 							case END:
 								keepGoing = false;
-								info.m_Logger.info("Normaliser thread received end instruction");
+								lastLogger.info("Normaliser thread received end instruction");
 								break;
 							case SYS_CHANGE:
 								if (latestSysChangeInfo != null)
 								{
-									latestSysChangeInfo.m_Logger.info("System change quantiles superseded before processing");
+									lastLogger.info("System change quantiles superseded before processing");
 								}
 								latestSysChangeInfo = info;
 								break;
 							case UNUSUAL:
 								if (latestUnusualInfo != null)
 								{
-									latestUnusualInfo.m_Logger.info("Unusual behaviour quantiles superseded before processing");
+									lastLogger.info("Unusual behaviour quantiles superseded before processing");
 								}
 								latestUnusualInfo = info;
 								break;
@@ -520,11 +523,23 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
 						ElasticsearchJobRenormaliser.this.doUnusualBehaviourUpdate(latestUnusualInfo.m_State,
 								latestUnusualInfo.m_EndBucket, latestUnusualInfo.m_Logger);
 					}
+
+					// Refresh the indexes so that normalised results are
+					// available to search before either:
+					// a) The next normalisation starting
+					// b) A request to close the job returning
+					lastLogger.info("Renormaliser thread about to refresh indexes");
+					ElasticsearchJobRenormaliser.this.m_JobProvider.getClient().admin().indices().refresh(
+							new RefreshRequest(ElasticsearchJobRenormaliser.this.m_JobId)).actionGet();
 				}
 			}
 			catch (InterruptedException e)
 			{
 				// Thread will exit now
+				if (lastLogger != null)
+				{
+					lastLogger.info("Renormaliser thread interrupted - will not refresh indexes");
+				}
 			}
 		}
 	};
