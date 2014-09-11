@@ -64,4 +64,9 @@ public interface JobDataPersister
 	 * @return
 	 */
 	public boolean deleteData();
+	
+	/**
+	 * Flush any records that may not have been persisted yet
+	 */
+	public void flushRecords();
 }

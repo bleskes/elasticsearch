@@ -175,6 +175,12 @@ public class ElasticsearchJobDataPersister implements JobDataPersister
 		}
 	}
 	
+	@Override
+	public void flushRecords()
+	{
+		writeDocs();
+	}
+	
 	private void writeDocs()
 	{
 		// write docs

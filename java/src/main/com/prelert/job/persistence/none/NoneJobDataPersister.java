@@ -48,6 +48,11 @@ public class NoneJobDataPersister implements JobDataPersister
 	}
 	
 	@Override
+	public void flushRecords() 
+	{
+	}
+	
+	@Override
 	public boolean deleteData() 
 	{
 		return false;

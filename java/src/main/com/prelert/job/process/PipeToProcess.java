@@ -121,6 +121,11 @@ public class PipeToProcess
 		CsvListReader csvReader = new CsvListReader(
 				new InputStreamReader(countingStream, StandardCharsets.UTF_8), 
 				csvPref);
+		
+		// Don't close the output stream as it causes the autodetect 
+		// process to quit
+		LengthEncodedWriter lengthEncodedWriter = new LengthEncodedWriter(os);
+		
 		try 
 		{
 			String[] header = csvReader.getHeader(true);		
@@ -172,11 +177,7 @@ public class PipeToProcess
 			dataPersister.setFieldMappings(analysisConfig.fields(), 
 					analysisConfig.byFields(), analysisConfig.overFields(), 
 					analysisConfig.partitionFields(), filteredHeader);
-			
-			
-			// Don't close the output stream as it causes the autodetect 
-			// process to quit
-			LengthEncodedWriter lengthEncodedWriter = new LengthEncodedWriter(os);
+
 			lengthEncodedWriter.writeRecord(filteredHeader);
 			
 
@@ -252,19 +253,17 @@ public class PipeToProcess
 					statusReporter.reportDateParseError();
 					logger.error(message);
 				}
-				
-				
-			}
-			
-			lengthEncodedWriter.flush();
+			}		
 
-			statusReporter.finishReporting();
 		}
 		finally
 		{
 			csvReader.close();
-
+			
+			lengthEncodedWriter.flush();
 			usageReporter.reportUsage();
+			statusReporter.finishReporting();
+			dataPersister.flushRecords();
 		}
 
 		logger.debug(String.format("Transferred %d of %d CSV records to autodetect.", 
@@ -317,6 +316,10 @@ public class PipeToProcess
 		CsvListReader csvReader = new CsvListReader(
 				new InputStreamReader(countingStream, StandardCharsets.UTF_8), 
 				csvPref);
+		
+		// Don't close the output stream as it causes the autodetect 
+		// process to quit
+		LengthEncodedWriter lengthEncodedWriter = new LengthEncodedWriter(os);		
 		try
 		{
 			String[] header = csvReader.getHeader(true);
@@ -368,11 +371,7 @@ public class PipeToProcess
 			dataPersister.setFieldMappings(analysisConfig.fields(), 
 					analysisConfig.byFields(), analysisConfig.overFields(), 
 					analysisConfig.partitionFields(), header);
-			
-
-			// Don't close the output stream as it causes the autodetect 
-			// process to quit
-			LengthEncodedWriter lengthEncodedWriter = new LengthEncodedWriter(os);
+		
 			lengthEncodedWriter.writeRecord(header);
 
 			List<String> line;
@@ -525,13 +524,15 @@ public class PipeToProcess
 			// flush the output
 			os.flush();
 
-			statusReporter.finishReporting();
 		}
 		finally
 		{
 			csvReader.close();
-
+			
+			lengthEncodedWriter.flush();
+			statusReporter.finishReporting();
 			usageReporter.reportUsage();
+			dataPersister.flushRecords();
 		}		
 	}
 	
@@ -611,12 +612,13 @@ public class PipeToProcess
 						statusReporter, usageReporter, countingStream, 
 						dataPersister, logger);
 			}
-
 		}
 		finally
 		{
 			os.flush();
-			usageReporter.reportUsage();			
+			usageReporter.reportUsage();	
+			statusReporter.finishReporting();
+			dataPersister.flushRecords();
 		}
 	}
 
@@ -773,7 +775,6 @@ public class PipeToProcess
 			++recordCount;			
 		}
 		
-		reporter.finishReporting();
 		logger.debug(String.format("Transferred %d of %d Json records to autodetect.", 
 				recordsWritten, recordCount));
 	}
@@ -1014,7 +1015,6 @@ public class PipeToProcess
 			}
 		}
 		
-		reporter.finishReporting();
 		
 		logger.debug(String.format("Transferred %d of %d Json records to autodetect.", 
 				recordsWritten, recordCount));
