@@ -1288,7 +1288,7 @@ public class JobsTest implements Closeable
 		String fieldValue = "";
 		for (AnomalyRecord r : records.getDocuments())
 		{
-			test(r.getAnomalyScore() >= 12.5);
+			test(r.getNormalizedProbability() >= 12.5);
 			
 			test(r.getByFieldValue().compareTo(fieldValue) >= 0);
 			fieldValue = r.getByFieldValue();
