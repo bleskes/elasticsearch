@@ -27,6 +27,8 @@
 
 package com.prelert.job.persistence;
 
+import java.util.Date;
+
 import org.apache.log4j.Logger;
 
 
@@ -41,19 +43,21 @@ public interface JobRenormaliser
 	 * Update the anomaly score field on all previously persisted buckets
 	 * and all contained records
 	 * @param sysChangeState
+	 * @param endTime
 	 * @param logger
 	 */
 	public void updateBucketSysChange(String sysChangeState,
-										Logger logger);
+										Date endTime, Logger logger);
 
 
 	/**
 	 * Update the unsual score field on all previously persisted buckets
 	 * and all contained records
 	 * @param unusualBehaviourState
+	 * @param endTime
 	 * @param logger
 	 */
 	public void updateBucketUnusualBehaviour(String unusualBehaviourState,
-											Logger logger);
+											Date endTime, Logger logger);
 };
 
