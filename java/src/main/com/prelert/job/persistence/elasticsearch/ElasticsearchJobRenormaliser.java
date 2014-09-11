@@ -273,7 +273,7 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
 				}
 
 				List<Bucket> normalisedBuckets =
-						normaliser.normaliseForSystemChange(getJobBucketSpan(logger),
+						normaliser.normaliseForUnusualBehaviour(getJobBucketSpan(logger),
 														buckets, unusualBehaviourState);
 
 				for (Bucket bucket : normalisedBuckets)
