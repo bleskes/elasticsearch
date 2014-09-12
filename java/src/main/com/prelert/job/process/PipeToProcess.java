@@ -131,7 +131,8 @@ public class PipeToProcess
 			String[] header = csvReader.getHeader(true);		
 				
 			List<Pair<String, Integer>> fieldIndexes = 
-					findFieldIndexes(header, dd.getTimeField(), analysisFields);
+					findFieldIndexes(header, dd.getTimeField(), analysisFields,
+					logger);
 			
 			int maxIndex = 0;
 			Iterator<Pair<String, Integer>> iter = fieldIndexes.iterator();
@@ -139,19 +140,19 @@ public class PipeToProcess
 			{
 				Pair<String, Integer> p = iter.next();
 				
-				if (p.Second > maxIndex)
+				if (p.m_Second > maxIndex)
 				{
-					maxIndex = p.Second;
+					maxIndex = p.m_Second;
 				}
 				
-				if (p.Second < 0)
+				if (p.m_Second < 0)
 				{
 					String msg = String.format("Field configured for analysis " 
 							+ "'%s' is not in the CSV header '%s'", 
-							p.First, Arrays.toString(header));
+							p.m_First, Arrays.toString(header));
 					logger.error(msg);
 					
-					throw new MissingFieldException(p.First, msg, 
+					throw new MissingFieldException(p.m_First, msg, 
 							ErrorCode.MISSING_FIELD);
 				}
 			}
@@ -160,7 +161,7 @@ public class PipeToProcess
 			int i=0;
 			for (Pair<String, Integer> p : fieldIndexes)
 			{
-				filteredHeader[i++] = p.First;
+				filteredHeader[i++] = p.m_First;
 			}
 		
 			
@@ -199,13 +200,13 @@ public class PipeToProcess
 					Arrays.fill(record, "");
 					for (Pair<String, Integer> p : fieldIndexes)
 					{
-						if (p.Second >= line.size())
+						if (p.m_Second >= line.size())
 						{
 							statusReporter.reportMissingField();
 							continue;
 						}
 						
-						String field = line.get(p.Second);
+						String field = line.get(p.m_Second);
 						record[i] = (field == null) ? "" : field;	
 						i++;
 					}
@@ -214,7 +215,7 @@ public class PipeToProcess
 				{
 					for (Pair<String, Integer> p : fieldIndexes)
 					{
-						String field = line.get(p.Second);
+						String field = line.get(p.m_Second);
 						record[i] = (field == null) ? "" : field;	
 						i++;
 					}
@@ -262,8 +263,12 @@ public class PipeToProcess
 			
 			lengthEncodedWriter.flush();
 			usageReporter.reportUsage();
-			statusReporter.finishReporting();
 			dataPersister.flushRecords();
+			// TODO: This next line can throw a different exception - which one should propagate?
+			statusReporter.finishReporting();
+
+			// flush the output
+			os.flush();
 		}
 
 		logger.debug(String.format("Transferred %d of %d CSV records to autodetect.", 
@@ -325,7 +330,8 @@ public class PipeToProcess
 			String[] header = csvReader.getHeader(true);
 				
 			List<Pair<String, Integer>> fieldIndexes = 
-					findFieldIndexes(header, timeField, analysisConfig.analysisFields());
+					findFieldIndexes(header, timeField, analysisConfig.analysisFields(),
+					logger);
 							
 			int maxIndex = 0;
 			Iterator<Pair<String, Integer>> iter = fieldIndexes.iterator();
@@ -333,19 +339,19 @@ public class PipeToProcess
 			{
 				Pair<String, Integer> p = iter.next();
 				
-				if (p.Second > maxIndex)
+				if (p.m_Second > maxIndex)
 				{
-					maxIndex = p.Second;
+					maxIndex = p.m_Second;
 				}
 				
-				if (p.Second < 0)
+				if (p.m_Second < 0)
 				{				
 					String msg = String.format("Field configured for analysis " 
 							+ "'%s' is not in the CSV header '%s'", 
-								p.First, Arrays.toString(header));
+								p.m_First, Arrays.toString(header));
 					logger.error(msg);
 					
-					throw new MissingFieldException(p.First, msg, ErrorCode.MISSING_FIELD);
+					throw new MissingFieldException(p.m_First, msg, ErrorCode.MISSING_FIELD);
 				}
 			}			
 			
@@ -354,7 +360,7 @@ public class PipeToProcess
 			int i=0;
 			for (Pair<String, Integer> p : fieldIndexes)
 			{
-				header[i++] = p.First;
+				header[i++] = p.m_First;
 			}
 			
 			int timeFieldIndex = Arrays.asList(header).indexOf(timeField);
@@ -393,13 +399,13 @@ public class PipeToProcess
 						Arrays.fill(record, "");
 						for (Pair<String, Integer> p : fieldIndexes)
 						{
-							if (p.Second >= line.size())
+							if (p.m_Second >= line.size())
 							{
 								statusReporter.reportMissingField();
 								continue;
 							}
 							
-							String field = line.get(p.Second);
+							String field = line.get(p.m_Second);
 							record[i] = (field == null) ? "" : field;	
 							i++;
 						}
@@ -408,7 +414,7 @@ public class PipeToProcess
 					{
 						for (Pair<String, Integer> p : fieldIndexes)
 						{
-							String field = line.get(p.Second);
+							String field = line.get(p.m_Second);
 							record[i] = (field == null) ? "" : field;	
 							i++;
 						}
@@ -462,12 +468,12 @@ public class PipeToProcess
 						Arrays.fill(record, "");
 						for (Pair<String, Integer> p : fieldIndexes)
 						{
-							if (p.Second >= line.size())
+							if (p.m_Second >= line.size())
 							{
 								statusReporter.reportMissingField();
 								continue;
 							}
-							String field = line.get(p.Second);
+							String field = line.get(p.m_Second);
 							record[i] = (field == null) ? "" : field;	
 							i++;
 						}
@@ -476,7 +482,7 @@ public class PipeToProcess
 					{
 						for (Pair<String, Integer> p : fieldIndexes)
 						{
-							String field = line.get(p.Second);
+							String field = line.get(p.m_Second);
 							record[i] = (field == null) ? "" : field;	
 							i++;
 						}
@@ -516,23 +522,22 @@ public class PipeToProcess
 					}		
 				}
 			}
-		
-			
+
 			logger.debug(String.format("Transferred %d of %d CSV records to autodetect.", 
 					recordsWritten, lineCount));
-			
-			// flush the output
-			os.flush();
-
 		}
 		finally
 		{
 			csvReader.close();
 			
 			lengthEncodedWriter.flush();
-			statusReporter.finishReporting();
 			usageReporter.reportUsage();
 			dataPersister.flushRecords();
+			// TODO: This next line can throw a different exception - which one should propagate?
+			statusReporter.finishReporting();
+
+			// flush the output
+			os.flush();
 		}		
 	}
 	
@@ -547,7 +552,8 @@ public class PipeToProcess
 	 * @return
 	 */
 	static private List<Pair<String, Integer>> findFieldIndexes(
-			String [] header, String timeField, List<String> analysisFields)
+			String [] header, String timeField, List<String> analysisFields,
+			Logger logger)
 	{
 		List<String> headerList = Arrays.asList(header);  // TODO header could be empty
 		
@@ -557,11 +563,13 @@ public class PipeToProcess
 		Pair<String, Integer> p = new Pair<>(timeField, 
 				headerList.indexOf(timeField));	
 		fieldIndexes.add(p);
+		logger.info("Index of field " + p.m_First + " is " + p.m_Second);
 		
 		for (String field : analysisFields)
 		{
 			p = new Pair<>(field, headerList.indexOf(field));			
 			fieldIndexes.add(p);
+			logger.info("Index of field " + p.m_First + " is " + p.m_Second);
 		}
 
 		return fieldIndexes;		
@@ -617,8 +625,9 @@ public class PipeToProcess
 		{
 			os.flush();
 			usageReporter.reportUsage();	
-			statusReporter.finishReporting();
 			dataPersister.flushRecords();
+			// TODO: This next line can throw a different exception - which one should propagate?
+			statusReporter.finishReporting();
 		}
 	}
 
@@ -1144,12 +1153,12 @@ public class PipeToProcess
 	 */
 	static private class Pair<T,U>
 	{
-	    public final T First;
-	    public final U Second;
+	    public final T m_First;
+	    public final U m_Second;
 	    public Pair(T first, U second)
 	    {
-	    	this.First = first;
-	    	this.Second = second;
+	    	this.m_First = first;
+	    	this.m_Second = second;
 	    }
 	}
 	
