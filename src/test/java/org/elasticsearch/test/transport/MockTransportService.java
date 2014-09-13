@@ -362,6 +362,11 @@ public class MockTransportService extends TransportService {
         }
 
         @Override
+        public void disconnectFromNodeLight(DiscoveryNode node) {
+            transport.disconnectFromNodeLight(node);
+        }
+
+        @Override
         public void sendRequest(DiscoveryNode node, long requestId, String action, TransportRequest request, TransportRequestOptions options) throws IOException, TransportException {
             transport.sendRequest(node, requestId, action, request, options);
         }

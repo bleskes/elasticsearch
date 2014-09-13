@@ -172,6 +172,12 @@ public class LocalTransport extends AbstractLifecycleComponent<Transport> implem
     }
 
     @Override
+    public void disconnectFromNodeLight(DiscoveryNode node) {
+        // nocommit
+        throw new UnsupportedOperationException("bla");
+    }
+
+    @Override
     public long serverOpen() {
         return 0;
     }

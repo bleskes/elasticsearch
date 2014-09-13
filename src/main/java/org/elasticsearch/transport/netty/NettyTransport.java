@@ -19,7 +19,6 @@
 
 package org.elasticsearch.transport.netty;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import org.elasticsearch.*;
 import org.elasticsearch.cluster.node.DiscoveryNode;
@@ -33,7 +32,6 @@ import org.elasticsearch.common.io.stream.HandlesStreamOutput;
 import org.elasticsearch.common.io.stream.ReleasableBytesStreamOutput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.lease.Releasables;
-import org.elasticsearch.common.math.MathUtils;
 import org.elasticsearch.common.netty.NettyUtils;
 import org.elasticsearch.common.netty.OpenChannelsHandler;
 import org.elasticsearch.common.netty.ReleaseChannelFutureListener;
@@ -69,7 +67,6 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.channels.CancelledKeyException;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -77,7 +74,6 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -599,22 +595,29 @@ public class NettyTransport extends AbstractLifecycleComponent<Transport> implem
                     throw new ElasticsearchIllegalStateException("can't add nodes to a stopped transport");
                 }
                 NodeChannels nodeChannels = connectedNodes.get(node);
+                throw new ElasticsearchException("Implement light check + upgrade");
                 if (nodeChannels != null) {
                     return;
                 }
                 try {
                     if (light) {
-                        nodeChannels = connectToChannelsLight(node);
+                        nodeChannels = new NodeChannels.Light(clientBootstrap, connectTimeout);
                     } else {
-                        nodeChannels = new NodeChannels(new Channel[connectionsPerNodeRecovery], new Channel[connectionsPerNodeBulk], new Channel[connectionsPerNodeReg], new Channel[connectionsPerNodeState], new Channel[connectionsPerNodePing]);
-                        try {
-                            connectToChannels(nodeChannels, node);
-                        } catch (Throwable e) {
-                            logger.trace("failed to connect to [{}], cleaning dangling connections", e, node);
-                            nodeChannels.close();
-                            throw e;
-                        }
+                        nodeChannels = new NodeChannels.Full(clientBootstrap, connectTimeout, connectionsPerNodeRecovery, connectionsPerNodeBulk, connectionsPerNodeReg, connectionsPerNodeState, connectionsPerNodePing);
                     }
+                    try {
+                        nodeChannels.connectToNode(node, new NodeChannels.ChannelCloseListener() {
+                            @Override
+                            public void onChannelClose(Channel channel, DiscoveryNode node) {
+                                disconnectFromNode(node, channel, "channel closed event");
+                            }
+                        });
+                    } catch (Throwable e) {
+                        logger.trace("failed to connect to [{}], cleaning dangling connections", e, node);
+                        nodeChannels.close();
+                        throw e;
+                    }
+
                     // we acquire a connection lock, so no way there is an existing connection
                     connectedNodes.put(node, nodeChannels);
                     if (logger.isDebugEnabled()) {
@@ -634,114 +637,6 @@ public class NettyTransport extends AbstractLifecycleComponent<Transport> implem
         }
     }
 
-    private NodeChannels connectToChannelsLight(DiscoveryNode node) {
-        InetSocketAddress address = ((InetSocketTransportAddress) node.address()).address();
-        ChannelFuture connect = clientBootstrap.connect(address);
-        connect.awaitUninterruptibly((long) (connectTimeout.millis() * 1.5));
-        if (!connect.isSuccess()) {
-            throw new ConnectTransportException(node, "connect_timeout[" + connectTimeout + "]", connect.getCause());
-        }
-        Channel[] channels = new Channel[1];
-        channels[0] = connect.getChannel();
-        channels[0].getCloseFuture().addListener(new ChannelCloseListener(node));
-        return new NodeChannels(channels, channels, channels, channels, channels);
-    }
-
-    private void connectToChannels(NodeChannels nodeChannels, DiscoveryNode node) {
-        ChannelFuture[] connectRecovery = new ChannelFuture[nodeChannels.recovery.length];
-        ChannelFuture[] connectBulk = new ChannelFuture[nodeChannels.bulk.length];
-        ChannelFuture[] connectReg = new ChannelFuture[nodeChannels.reg.length];
-        ChannelFuture[] connectState = new ChannelFuture[nodeChannels.state.length];
-        ChannelFuture[] connectPing = new ChannelFuture[nodeChannels.ping.length];
-        InetSocketAddress address = ((InetSocketTransportAddress) node.address()).address();
-        for (int i = 0; i < connectRecovery.length; i++) {
-            connectRecovery[i] = clientBootstrap.connect(address);
-        }
-        for (int i = 0; i < connectBulk.length; i++) {
-            connectBulk[i] = clientBootstrap.connect(address);
-        }
-        for (int i = 0; i < connectReg.length; i++) {
-            connectReg[i] = clientBootstrap.connect(address);
-        }
-        for (int i = 0; i < connectState.length; i++) {
-            connectState[i] = clientBootstrap.connect(address);
-        }
-        for (int i = 0; i < connectPing.length; i++) {
-            connectPing[i] = clientBootstrap.connect(address);
-        }
-
-        try {
-            for (int i = 0; i < connectRecovery.length; i++) {
-                connectRecovery[i].awaitUninterruptibly((long) (connectTimeout.millis() * 1.5));
-                if (!connectRecovery[i].isSuccess()) {
-                    throw new ConnectTransportException(node, "connect_timeout[" + connectTimeout + "]", connectRecovery[i].getCause());
-                }
-                nodeChannels.recovery[i] = connectRecovery[i].getChannel();
-                nodeChannels.recovery[i].getCloseFuture().addListener(new ChannelCloseListener(node));
-            }
-
-            for (int i = 0; i < connectBulk.length; i++) {
-                connectBulk[i].awaitUninterruptibly((long) (connectTimeout.millis() * 1.5));
-                if (!connectBulk[i].isSuccess()) {
-                    throw new ConnectTransportException(node, "connect_timeout[" + connectTimeout + "]", connectBulk[i].getCause());
-                }
-                nodeChannels.bulk[i] = connectBulk[i].getChannel();
-                nodeChannels.bulk[i].getCloseFuture().addListener(new ChannelCloseListener(node));
-            }
-
-            for (int i = 0; i < connectReg.length; i++) {
-                connectReg[i].awaitUninterruptibly((long) (connectTimeout.millis() * 1.5));
-                if (!connectReg[i].isSuccess()) {
-                    throw new ConnectTransportException(node, "connect_timeout[" + connectTimeout + "]", connectReg[i].getCause());
-                }
-                nodeChannels.reg[i] = connectReg[i].getChannel();
-                nodeChannels.reg[i].getCloseFuture().addListener(new ChannelCloseListener(node));
-            }
-
-            for (int i = 0; i < connectState.length; i++) {
-                connectState[i].awaitUninterruptibly((long) (connectTimeout.millis() * 1.5));
-                if (!connectState[i].isSuccess()) {
-                    throw new ConnectTransportException(node, "connect_timeout[" + connectTimeout + "]", connectState[i].getCause());
-                }
-                nodeChannels.state[i] = connectState[i].getChannel();
-                nodeChannels.state[i].getCloseFuture().addListener(new ChannelCloseListener(node));
-            }
-
-            for (int i = 0; i < connectPing.length; i++) {
-                connectPing[i].awaitUninterruptibly((long) (connectTimeout.millis() * 1.5));
-                if (!connectPing[i].isSuccess()) {
-                    throw new ConnectTransportException(node, "connect_timeout[" + connectTimeout + "]", connectPing[i].getCause());
-                }
-                nodeChannels.ping[i] = connectPing[i].getChannel();
-                nodeChannels.ping[i].getCloseFuture().addListener(new ChannelCloseListener(node));
-            }
-
-            if (nodeChannels.recovery.length == 0) {
-                if (nodeChannels.bulk.length > 0) {
-                    nodeChannels.recovery = nodeChannels.bulk;
-                } else {
-                    nodeChannels.recovery = nodeChannels.reg;
-                }
-            }
-            if (nodeChannels.bulk.length == 0) {
-                nodeChannels.bulk = nodeChannels.reg;
-            }
-        } catch (RuntimeException e) {
-            // clean the futures
-            for (ChannelFuture future : ImmutableList.<ChannelFuture>builder().add(connectRecovery).add(connectBulk).add(connectReg).add(connectState).add(connectPing).build()) {
-                future.cancel();
-                if (future.getChannel() != null && future.getChannel().isOpen()) {
-                    try {
-                        future.getChannel().close();
-                    } catch (Exception e1) {
-                        // ignore
-                    }
-                }
-            }
-            throw e;
-        }
-    }
-
     @Override
     public void disconnectFromNode(DiscoveryNode node) {
         connectionLock.acquire(node.id());
@@ -753,6 +648,25 @@ public class NettyTransport extends AbstractLifecycleComponent<Transport> implem
                     nodeChannels.close();
                 } finally {
                     logger.trace("disconnected from [{}] due to explicit disconnect call", node);
+                    transportServiceAdapter.raiseNodeDisconnected(node);
+                }
+            }
+        } finally {
+            connectionLock.release(node.id());
+        }
+    }
+
+    @Override
+    public void disconnectFromNodeLight(DiscoveryNode node) {
+        connectionLock.acquire(node.id());
+        try {
+            NodeChannels nodeChannels = connectedNodes.remove(node);
+            if (nodeChannels != null && nodeChannels instanceof NodeChannels.Light) {
+                try {
+                    logger.debug("disconnecting light from [{}] due to explicit disconnect call", node);
+                    nodeChannels.close();
+                } finally {
+                    logger.trace("disconnected light from [{}] due to explicit disconnect call", node);
                     transportServiceAdapter.raiseNodeDisconnected(node);
                 }
             }
@@ -876,92 +790,5 @@ public class NettyTransport extends AbstractLifecycleComponent<Transport> implem
         }
     }
 
-    private class ChannelCloseListener implements ChannelFutureListener {
 
-        private final DiscoveryNode node;
-
-        private ChannelCloseListener(DiscoveryNode node) {
-            this.node = node;
-        }
-
-        @Override
-        public void operationComplete(ChannelFuture future) throws Exception {
-            disconnectFromNode(node, future.getChannel(), "channel closed event");
-        }
-    }
-
-    public static class NodeChannels {
-
-        private Channel[] recovery;
-        private final AtomicInteger recoveryCounter = new AtomicInteger();
-        private Channel[] bulk;
-        private final AtomicInteger bulkCounter = new AtomicInteger();
-        private Channel[] reg;
-        private final AtomicInteger regCounter = new AtomicInteger();
-        private Channel[] state;
-        private final AtomicInteger stateCounter = new AtomicInteger();
-        private Channel[] ping;
-        private final AtomicInteger pingCounter = new AtomicInteger();
-
-        public NodeChannels(Channel[] recovery, Channel[] bulk, Channel[] reg, Channel[] state, Channel[] ping) {
-            this.recovery = recovery;
-            this.bulk = bulk;
-            this.reg = reg;
-            this.state = state;
-            this.ping = ping;
-        }
-
-        public boolean hasChannel(Channel channel) {
-            return hasChannel(channel, recovery) || hasChannel(channel, bulk) || hasChannel(channel, reg) || hasChannel(channel, state) || hasChannel(channel, ping);
-        }
-
-        private boolean hasChannel(Channel channel, Channel[] channels) {
-            for (Channel channel1 : channels) {
-                if (channel.equals(channel1)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        public Channel channel(TransportRequestOptions.Type type) {
-            if (type == TransportRequestOptions.Type.REG) {
-                return reg[MathUtils.mod(regCounter.incrementAndGet(), reg.length)];
-            } else if (type == TransportRequestOptions.Type.STATE) {
-                return state[MathUtils.mod(stateCounter.incrementAndGet(), state.length)];
-            } else if (type == TransportRequestOptions.Type.PING) {
-                return ping[MathUtils.mod(pingCounter.incrementAndGet(), ping.length)];
-            } else if (type == TransportRequestOptions.Type.BULK) {
-                return bulk[MathUtils.mod(bulkCounter.incrementAndGet(), bulk.length)];
-            } else if (type == TransportRequestOptions.Type.RECOVERY) {
-                return recovery[MathUtils.mod(recoveryCounter.incrementAndGet(), recovery.length)];
-            } else {
-                throw new ElasticsearchIllegalArgumentException("no type channel for [" + type + "]");
-            }
-        }
-
-        public synchronized void close() {
-            List<ChannelFuture> futures = new ArrayList<>();
-            closeChannelsAndWait(recovery, futures);
-            closeChannelsAndWait(bulk, futures);
-            closeChannelsAndWait(reg, futures);
-            closeChannelsAndWait(state, futures);
-            closeChannelsAndWait(ping, futures);
-            for (ChannelFuture future : futures) {
-                future.awaitUninterruptibly();
-            }
-        }
-
-        private void closeChannelsAndWait(Channel[] channels, List<ChannelFuture> futures) {
-            for (Channel channel : channels) {
-                try {
-                    if (channel != null && channel.isOpen()) {
-                        futures.add(channel.close());
-                    }
-                } catch (Exception e) {
-                    //ignore
-                }
-            }
-        }
-    }
 }

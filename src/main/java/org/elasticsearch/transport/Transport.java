@@ -53,25 +53,32 @@ public interface Transport extends LifecycleComponent<Transport> {
     boolean addressSupported(Class<? extends TransportAddress> address);
 
     /**
-     * Returns <tt>true</tt> if the node is connected.
+     * Returns <tt>true</tt> if the node is fully connected.
      */
     boolean nodeConnected(DiscoveryNode node);
 
     /**
-     * Connects to the given node, if already connected, does nothing.
+     * Connects to the given node. If already light connected, connection will be upgraded.
+     * If already fully connected, does nothing.
      */
     void connectToNode(DiscoveryNode node) throws ConnectTransportException;
 
     /**
      * Connects to a node in a light manner. Used when just connecting for ping and then
-     * disconnecting.
+     * disconnecting. If already connected (light or full), does nothing.
      */
     void connectToNodeLight(DiscoveryNode node) throws ConnectTransportException;
 
     /**
-     * Disconnected from the given node, if not connected, will do nothing.
+     * Disconnect from the given node (both full or light connection will be closed), if not connected, will do nothing.
      */
     void disconnectFromNode(DiscoveryNode node);
+
+    /**
+     * Disconnect from the given node, if light connected. If fully connected or not at all, will do nothing.
+     */
+    void disconnectFromNodeLight(DiscoveryNode node);
+
 
     /**
      * Sends the request to the node.

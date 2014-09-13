@@ -156,6 +156,11 @@ abstract class FailAndRetryMockTransport<Response extends TransportResponse> imp
     }
 
     @Override
+    public void disconnectFromNodeLight(DiscoveryNode node) {
+
+    }
+
+    @Override
     public long serverOpen() {
         return 0;
     }

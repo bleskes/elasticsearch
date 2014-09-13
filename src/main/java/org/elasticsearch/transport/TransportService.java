@@ -142,20 +142,37 @@ public class TransportService extends AbstractLifecycleComponent<TransportServic
         return transport.boundAddress();
     }
 
+    /** returns node if a node is fully connected. Light connected nodes return false */
     public boolean nodeConnected(DiscoveryNode node) {
         return transport.nodeConnected(node);
     }
 
+    /**
+     * Connects to the given node. If already light connected, connection will be upgraded.
+     * If already fully connected, does nothing.
+     */
     public void connectToNode(DiscoveryNode node) throws ConnectTransportException {
         transport.connectToNode(node);
     }
 
+    /**
+     * Connects to a node in a light manner. Used when just connecting for ping and then
+     * disconnecting. If already connected (light or full), does nothing.
+     */
     public void connectToNodeLight(DiscoveryNode node) throws ConnectTransportException {
         transport.connectToNodeLight(node);
     }
 
+    /** close all connection to node (light or full) */
     public void disconnectFromNode(DiscoveryNode node) {
         transport.disconnectFromNode(node);
+    }
+
+    /**
+     * Disconnected from the given node, if light connected. If fully connected or not at all, will do nothing.
+     */
+    public void disconnectFromNodeLight(DiscoveryNode node) {
+        transport.disconnectFromNodeLight(node);
     }
 
     public void addConnectionListener(TransportConnectionListener listener) {
