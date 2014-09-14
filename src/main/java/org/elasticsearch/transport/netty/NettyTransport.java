@@ -567,7 +567,8 @@ public class NettyTransport extends AbstractLifecycleComponent<Transport> implem
 
     @Override
     public boolean nodeConnected(DiscoveryNode node) {
-        return connectedNodes.containsKey(node);
+        NodeChannels nodeChannels = connectedNodes.get(node);
+        return nodeChannels != null && !nodeChannels.isLight();
     }
 
     @Override
@@ -595,27 +596,44 @@ public class NettyTransport extends AbstractLifecycleComponent<Transport> implem
                     throw new ElasticsearchIllegalStateException("can't add nodes to a stopped transport");
                 }
                 NodeChannels nodeChannels = connectedNodes.get(node);
-                throw new ElasticsearchException("Implement light check + upgrade");
-                if (nodeChannels != null) {
-                    return;
-                }
                 try {
                     if (light) {
-                        nodeChannels = new NodeChannels.Light(clientBootstrap, connectTimeout);
-                    } else {
-                        nodeChannels = new NodeChannels.Full(clientBootstrap, connectTimeout, connectionsPerNodeRecovery, connectionsPerNodeBulk, connectionsPerNodeReg, connectionsPerNodeState, connectionsPerNodePing);
-                    }
-                    try {
-                        nodeChannels.connectToNode(node, new NodeChannels.ChannelCloseListener() {
+                        if (nodeChannels != null) {
+                            // any connection is good enough
+                            return;
+                        }
+                        NodeChannels.Light lightChannels = new NodeChannels.Light(clientBootstrap, connectTimeout);
+                        lightChannels.connectToNode(node, new NodeChannels.ChannelCloseListener() {
                             @Override
                             public void onChannelClose(Channel channel, DiscoveryNode node) {
                                 disconnectFromNode(node, channel, "channel closed event");
                             }
                         });
-                    } catch (Throwable e) {
-                        logger.trace("failed to connect to [{}], cleaning dangling connections", e, node);
-                        nodeChannels.close();
-                        throw e;
+                        nodeChannels = lightChannels;
+                    } else {
+                        NodeChannels.Light existingLightChannel = null;
+                        if (nodeChannels != null) {
+                            if (!nodeChannels.isLight()) {
+                                // already connected
+                                return;
+                            } else if (nodeChannels instanceof NodeChannels.Light) {
+                                // we do have connect but is light and a full connection is requested.
+                                // remove the channels from connectedNodes as they will be used for upgrade to full
+                                connectedNodes.remove(node);
+                                existingLightChannel = (NodeChannels.Light) nodeChannels;
+                            } else {
+                                // just to be safe
+                                throw new ElasticsearchException("Unsupported NodeChannels class " + nodeChannels.getClass());
+                            }
+                        }
+                        NodeChannels.Full fullChannels = new NodeChannels.Full(clientBootstrap, connectTimeout, connectionsPerNodeRecovery, connectionsPerNodeBulk, connectionsPerNodeReg, connectionsPerNodeState, connectionsPerNodePing);
+                        fullChannels.connectToNode(node, existingLightChannel, new NodeChannels.ChannelCloseListener() {
+                            @Override
+                            public void onChannelClose(Channel channel, DiscoveryNode node) {
+                                disconnectFromNode(node, channel, "channel closed event");
+                            }
+                        });
+                        nodeChannels = fullChannels;
                     }
 
                     // we acquire a connection lock, so no way there is an existing connection
@@ -660,10 +678,11 @@ public class NettyTransport extends AbstractLifecycleComponent<Transport> implem
     public void disconnectFromNodeLight(DiscoveryNode node) {
         connectionLock.acquire(node.id());
         try {
-            NodeChannels nodeChannels = connectedNodes.remove(node);
-            if (nodeChannels != null && nodeChannels instanceof NodeChannels.Light) {
+            NodeChannels nodeChannels = connectedNodes.get(node);
+            if (nodeChannels != null && nodeChannels.isLight()) {
                 try {
                     logger.debug("disconnecting light from [{}] due to explicit disconnect call", node);
+                    connectedNodes.remove(node);
                     nodeChannels.close();
                 } finally {
                     logger.trace("disconnected light from [{}] due to explicit disconnect call", node);

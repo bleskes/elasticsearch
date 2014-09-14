@@ -20,6 +20,7 @@ package org.elasticsearch.transport.netty;/*
 import com.google.common.collect.ImmutableList;
 import org.elasticsearch.ElasticsearchIllegalArgumentException;
 import org.elasticsearch.cluster.node.DiscoveryNode;
+import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.math.MathUtils;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.unit.TimeValue;
@@ -29,6 +30,7 @@ import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.ChannelFutureListener;
+import org.jboss.netty.channel.DefaultChannelFuture;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -44,10 +46,9 @@ public interface NodeChannels {
     /** get the channel for the requested operation type */
     Channel channel(TransportRequestOptions.Type type);
 
-    /** connect to node, with a listener for channel disconnects */
-    void connectToNode(DiscoveryNode node, ChannelCloseListener channelCloseListener);
-
     void close();
+
+    boolean isLight();
 
     public interface ChannelCloseListener {
 
@@ -120,6 +121,11 @@ public interface NodeChannels {
             }
         }
 
+        @Override
+        public boolean isLight() {
+            return false;
+        }
+
         private void closeChannelsAndWait(Channel[] channels, List<ChannelFuture> futures) {
             for (Channel channel : channels) {
                 try {
@@ -132,13 +138,33 @@ public interface NodeChannels {
             }
         }
 
-        public void connectToNode(final DiscoveryNode node, final ChannelCloseListener channelCloseListener) {
+        /**
+         * connect to node, with a listener for channel disconnects
+         *
+         * @param node                  node to connect to
+         * @param existingLightChannels exiting {@Light} to the node for channels to be reused. Null if none.
+         * @param channelCloseListener  listener to hook up to the channel close future
+         */
+        public void connectToNode(final DiscoveryNode node, @Nullable Light existingLightChannels, final ChannelCloseListener channelCloseListener) {
             ChannelFuture[] connectRecovery = new ChannelFuture[recovery.length];
             ChannelFuture[] connectBulk = new ChannelFuture[bulk.length];
             ChannelFuture[] connectReg = new ChannelFuture[reg.length];
             ChannelFuture[] connectState = new ChannelFuture[state.length];
             ChannelFuture[] connectPing = new ChannelFuture[ping.length];
             InetSocketAddress address = ((InetSocketTransportAddress) node.address()).address();
+
+            // we try to reuse the light channel, if there. Note that ping.length is guaranteed to be >= 1
+            if (existingLightChannels == null) {
+                connectPing[0] = clientBootstrap.connect(address);
+            } else {
+                // we construct a future and mark it as success as the channel is open..
+                connectPing[0] = new DefaultChannelFuture(existingLightChannels.getChannel(), false);
+                connectPing[0].setSuccess();
+            }
+            for (int i = 1; i < connectPing.length; i++) {
+                connectPing[i] = clientBootstrap.connect(address);
+            }
+
             for (int i = 0; i < connectRecovery.length; i++) {
                 connectRecovery[i] = clientBootstrap.connect(address);
             }
@@ -150,9 +176,6 @@ public interface NodeChannels {
             }
             for (int i = 0; i < connectState.length; i++) {
                 connectState[i] = clientBootstrap.connect(address);
-            }
-            for (int i = 0; i < connectPing.length; i++) {
-                connectPing[i] = clientBootstrap.connect(address);
             }
 
             ChannelFutureListener closeListenerWrapper = new ChannelFutureListener() {
@@ -205,7 +228,10 @@ public interface NodeChannels {
                         throw new ConnectTransportException(node, "connect_timeout[" + connectTimeout + "]", connectPing[i].getCause());
                     }
                     ping[i] = connectPing[i].getChannel();
-                    ping[i].getCloseFuture().addListener(closeListenerWrapper);
+                    if (existingLightChannels == null || i > 0) {
+                        // if we reused an existing channel, no need to add another listener
+                        ping[i].getCloseFuture().addListener(closeListenerWrapper);
+                    }
                 }
 
                 if (recovery.length == 0) {
@@ -262,7 +288,7 @@ public interface NodeChannels {
             return channel;
         }
 
-        @Override
+        /** connect to node, with a listener for channel disconnects */
         public void connectToNode(final DiscoveryNode node, final ChannelCloseListener channelCloseListener) {
             InetSocketAddress address = ((InetSocketTransportAddress) node.address()).address();
             ChannelFuture connect = clientBootstrap.connect(address);
@@ -288,6 +314,11 @@ public interface NodeChannels {
             } catch (Exception e) {
                 //ignore
             }
+        }
+
+        @Override
+        public boolean isLight() {
+            return true;
         }
     }
 }

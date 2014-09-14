@@ -142,7 +142,7 @@ public class TransportService extends AbstractLifecycleComponent<TransportServic
         return transport.boundAddress();
     }
 
-    /** returns node if a node is fully connected. Light connected nodes return false */
+    /** returns true if a node is fully connected. Light connected nodes return false */
     public boolean nodeConnected(DiscoveryNode node) {
         return transport.nodeConnected(node);
     }

@@ -61,6 +61,7 @@ public class LocalTransport extends AbstractLifecycleComponent<Transport> implem
     private final static ConcurrentMap<TransportAddress, LocalTransport> transports = newConcurrentMap();
     private static final AtomicLong transportAddressIdGenerator = new AtomicLong();
     private final ConcurrentMap<DiscoveryNode, LocalTransport> connectedNodes = newConcurrentMap();
+    private final ConcurrentMap<DiscoveryNode, LocalTransport> connectedNodesLight = newConcurrentMap();
 
     public static final String TRANSPORT_LOCAL_ADDRESS = "transport.local.address";
     public static final String TRANSPORT_LOCAL_WORKERS = "transport.local.workers";
@@ -142,39 +143,46 @@ public class LocalTransport extends AbstractLifecycleComponent<Transport> implem
     }
 
     @Override
-    public void connectToNodeLight(DiscoveryNode node) throws ConnectTransportException {
-        connectToNode(node);
+    public synchronized void connectToNodeLight(DiscoveryNode node) throws ConnectTransportException {
+        if (connectedNodes.containsKey(node) || connectedNodesLight.containsKey(node)) {
+            return;
+        }
+        final LocalTransport targetTransport = transports.get(node.address());
+        if (targetTransport == null) {
+            throw new ConnectTransportException(node, "Failed to connect");
+        }
+        connectedNodesLight.put(node, targetTransport);
+        transportServiceAdapter.raiseNodeConnected(node);
     }
 
     @Override
-    public void connectToNode(DiscoveryNode node) throws ConnectTransportException {
-        synchronized (this) {
-            if (connectedNodes.containsKey(node)) {
-                return;
-            }
-            final LocalTransport targetTransport = transports.get(node.address());
-            if (targetTransport == null) {
-                throw new ConnectTransportException(node, "Failed to connect");
-            }
-            connectedNodes.put(node, targetTransport);
-            transportServiceAdapter.raiseNodeConnected(node);
+    public synchronized void connectToNode(DiscoveryNode node) throws ConnectTransportException {
+        if (connectedNodes.containsKey(node)) {
+            return;
+        }
+        final LocalTransport targetTransport = transports.get(node.address());
+        if (targetTransport == null) {
+            throw new ConnectTransportException(node, "Failed to connect");
+        }
+        connectedNodesLight.remove(node); // remove any light connection
+        connectedNodes.put(node, targetTransport);
+        transportServiceAdapter.raiseNodeConnected(node);
+    }
+
+    @Override
+    public synchronized void disconnectFromNode(DiscoveryNode node) {
+        LocalTransport removedLight = connectedNodesLight.remove(node);
+        LocalTransport removed = connectedNodes.remove(node);
+        if (removed != null || removedLight != null) {
+            transportServiceAdapter.raiseNodeDisconnected(node);
         }
     }
 
     @Override
-    public void disconnectFromNode(DiscoveryNode node) {
-        synchronized (this) {
-            LocalTransport removed = connectedNodes.remove(node);
-            if (removed != null) {
-                transportServiceAdapter.raiseNodeDisconnected(node);
-            }
+    public synchronized void disconnectFromNodeLight(DiscoveryNode node) {
+        if (connectedNodesLight.remove(node) != null) {
+            transportServiceAdapter.raiseNodeDisconnected(node);
         }
-    }
-
-    @Override
-    public void disconnectFromNodeLight(DiscoveryNode node) {
-        // nocommit
-        throw new UnsupportedOperationException("bla");
     }
 
     @Override

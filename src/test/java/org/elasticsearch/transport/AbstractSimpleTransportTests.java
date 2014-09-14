@@ -1111,6 +1111,39 @@ public abstract class AbstractSimpleTransportTests extends ElasticsearchTestCase
         assertTrue(nodeB.address().sameHost(addressB.get()));
     }
 
+
+    @Test
+    public void testFullLightConnections() throws InterruptedException {
+        MockTransportService serviceC = build(ImmutableSettings.builder().put("name", "TS_A").build(), version1);
+        try {
+
+            assertFalse(serviceC.nodeConnected(nodeB));
+
+            // sometimes start with a light connection.
+            if (randomBoolean()) {
+                // light connect to B
+                serviceC.connectToNodeLight(nodeB);
+                // not fully connection yet
+                assertFalse(serviceC.nodeConnected(nodeB));
+            }
+
+            // now do a full connection, and see we get the events
+            serviceC.connectToNode(nodeB);
+            assertTrue(serviceC.nodeConnected(nodeB));
+
+            // light disconnect do not break full connections
+            serviceC.disconnectFromNodeLight(nodeB);
+            assertTrue(serviceC.nodeConnected(nodeB));
+
+            // but full disconnect does
+            serviceC.disconnectFromNode(nodeB);
+            assertFalse(serviceC.nodeConnected(nodeB));
+
+        } finally {
+            serviceC.close();
+        }
+    }
+
     private static class TestRequest extends TransportRequest {
     }
 
