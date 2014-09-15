@@ -25,6 +25,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.shield.audit.AuditTrailModule;
 import org.elasticsearch.shield.authc.AuthenticationModule;
 import org.elasticsearch.shield.authz.AuthorizationModule;
+import org.elasticsearch.shield.key.KeyModule;
 import org.elasticsearch.shield.support.AbstractShieldModule;
 import org.elasticsearch.shield.transport.SecuredRestModule;
 import org.elasticsearch.shield.transport.SecuredTransportModule;
@@ -57,9 +58,7 @@ public class ShieldModule extends AbstractShieldModule.Spawn implements PreProce
 
         // spawn needed parts in client mode
         if (clientMode) {
-            return ImmutableList.of(
-                    new SecuredTransportModule(settings),
-                    new SecurityFilterModule(settings));
+            return ImmutableList.of(new SecuredTransportModule(settings));
         }
 
         return ImmutableList.of(
@@ -68,7 +67,8 @@ public class ShieldModule extends AbstractShieldModule.Spawn implements PreProce
                 new AuditTrailModule(settings),
                 new SecuredTransportModule(settings),
                 new SecuredRestModule(settings),
-                new SecurityFilterModule(settings));
+                new SecurityFilterModule(settings),
+                new KeyModule(settings));
     }
 
 
