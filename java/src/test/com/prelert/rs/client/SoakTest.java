@@ -91,8 +91,8 @@ public class SoakTest
 		{
 			JsonDataRunner test = new JsonDataRunner(serviceUrl, numTimeSeries,
 					numInteration, pointInterval, bucketSpan);  
-			
-			test.createJob();
+						
+			test.createJob("soaktest-" + i);
 			
 			Thread testThread = new Thread(test);
 			testThread.start();
