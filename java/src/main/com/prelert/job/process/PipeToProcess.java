@@ -118,15 +118,15 @@ public class PipeToProcess
 	
 		CountingInputStream countingStream = new CountingInputStream(is, 
 				usageReporter, statusReporter);
-		CsvListReader csvReader = new CsvListReader(
-				new InputStreamReader(countingStream, StandardCharsets.UTF_8), 
-				csvPref);
+		
 		
 		// Don't close the output stream as it causes the autodetect 
 		// process to quit
 		LengthEncodedWriter lengthEncodedWriter = new LengthEncodedWriter(os);
 		
-		try 
+		try (CsvListReader csvReader = new CsvListReader(
+				new InputStreamReader(countingStream, StandardCharsets.UTF_8), 
+				csvPref))
 		{
 			String[] header = csvReader.getHeader(true);		
 				
@@ -254,21 +254,19 @@ public class PipeToProcess
 					statusReporter.reportDateParseError();
 					logger.error(message);
 				}
-			}		
-
+			}
+			
+			// This function can throw and the exceptions thrown
+			statusReporter.finishReporting();
+			
+			lengthEncodedWriter.flush();
 		}
 		finally
 		{
-			csvReader.close();
-			
-			lengthEncodedWriter.flush();
+			// nothing in this finally block should throw
+			// as it would suppress any exceptions from the try block
 			usageReporter.reportUsage();
 			dataPersister.flushRecords();
-			// TODO: This next line can throw a different exception - which one should propagate?
-			statusReporter.finishReporting();
-
-			// flush the output
-			os.flush();
 		}
 
 		logger.debug(String.format("Transferred %d of %d CSV records to autodetect.", 
@@ -318,14 +316,14 @@ public class PipeToProcess
 		
 		CountingInputStream countingStream = new CountingInputStream(is, 
 				usageReporter, statusReporter);		
-		CsvListReader csvReader = new CsvListReader(
-				new InputStreamReader(countingStream, StandardCharsets.UTF_8), 
-				csvPref);
+		
 		
 		// Don't close the output stream as it causes the autodetect 
 		// process to quit
 		LengthEncodedWriter lengthEncodedWriter = new LengthEncodedWriter(os);		
-		try
+		try (CsvListReader csvReader = new CsvListReader(
+				new InputStreamReader(countingStream, StandardCharsets.UTF_8), 
+				csvPref))
 		{
 			String[] header = csvReader.getHeader(true);
 				
@@ -523,21 +521,19 @@ public class PipeToProcess
 				}
 			}
 
+			
+			lengthEncodedWriter.flush();
+			statusReporter.finishReporting();
+
 			logger.debug(String.format("Transferred %d of %d CSV records to autodetect.", 
 					recordsWritten, lineCount));
 		}
 		finally
 		{
-			csvReader.close();
-			
-			lengthEncodedWriter.flush();
+			// nothing in this finally block should throw
+			// as it would suppress any exceptions from the try block
 			usageReporter.reportUsage();
 			dataPersister.flushRecords();
-			// TODO: This next line can throw a different exception - which one should propagate?
-			statusReporter.finishReporting();
-
-			// flush the output
-			os.flush();
 		}		
 	}
 	
@@ -620,14 +616,17 @@ public class PipeToProcess
 						statusReporter, usageReporter, countingStream, 
 						dataPersister, logger);
 			}
+
+			os.flush();
+			// this line can throw and will be propagated  
+			statusReporter.finishReporting();
 		}
 		finally
 		{
-			os.flush();
+			// nothing in this finally block should throw
+			// as it would suppress any exceptions from the try block
 			usageReporter.reportUsage();	
 			dataPersister.flushRecords();
-			// TODO: This next line can throw a different exception - which one should propagate?
-			statusReporter.finishReporting();
 		}
 	}
 
