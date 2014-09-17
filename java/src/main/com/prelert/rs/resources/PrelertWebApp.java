@@ -35,8 +35,11 @@ import javax.ws.rs.core.Application;
 import com.prelert.job.alert.manager.AlertManager;
 import com.prelert.job.alert.persistence.elasticsearch.ElasticsearchAlertPersister;
 import com.prelert.job.manager.JobManager;
+import com.prelert.job.persistence.DataPersisterFactory;
+import com.prelert.job.persistence.elasticsearch.ElasticsearchDataPersisterFactory;
 import com.prelert.job.persistence.elasticsearch.ElasticsearchJobProvider;
 import com.prelert.job.persistence.elasticsearch.ElasticsearchResultsReaderFactory;
+import com.prelert.job.persistence.none.NoneJobDataPersisterFactory;
 import com.prelert.job.usage.elasticsearch.ElasticsearchUsageReporterFactory;
 import com.prelert.job.warnings.elasticsearch.ElasticsearchStatusReporterFactory;
 import com.prelert.rs.provider.AlertMessageBodyWriter;
@@ -67,6 +70,8 @@ public class PrelertWebApp extends Application
 	public static final String DEFAULT_CLUSTER_NAME = "prelert";
 	
 	public static final String ES_CLUSTER_NAME_PROP = "es.cluster.name";
+	
+	public static final String PERSIST_RECORDS = "persist.records";
 	
 	private Set<Class<?>> m_ResourceClasses;
 	private Set<Object> m_Singletons;
@@ -112,11 +117,20 @@ public class PrelertWebApp extends Application
 		
 		ElasticsearchJobProvider esJob = new ElasticsearchJobProvider(
 				elasticSearchClusterName);
+		
+		DataPersisterFactory dataPersisterFactory = new NoneJobDataPersisterFactory();
+		if (System.getProperty(PERSIST_RECORDS) != null)
+		{
+			dataPersisterFactory = new ElasticsearchDataPersisterFactory(esJob.getClient());
+		}
+		
 		m_JobManager = new JobManager(esJob, 
 				new ElasticsearchResultsReaderFactory(esJob),
 				new ElasticsearchStatusReporterFactory(esJob.getClient()),
-				new ElasticsearchUsageReporterFactory(esJob.getClient())
+				new ElasticsearchUsageReporterFactory(esJob.getClient()),
+				dataPersisterFactory
 			);
+
 		
 		m_AlertManager = new AlertManager(
 				new ElasticsearchAlertPersister(esJob.getClient()));

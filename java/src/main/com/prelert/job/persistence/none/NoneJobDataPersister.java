@@ -24,40 +24,37 @@
  *                                                          *
  *                                                          *
  ************************************************************/
+package com.prelert.job.persistence.none;
 
-package com.prelert.job.persistence;
+import java.util.List;
 
-import java.util.Date;
-
-import org.apache.log4j.Logger;
-
+import com.prelert.job.persistence.JobDataPersister;
 
 /**
- * Interface for classes that update {@linkplain Bucket Buckets}
- * for a particular job with new normalised anomaly scores and
- * unusual scores
+ * A 'do nothing' job data persister
  */
-public interface JobRenormaliser
+public class NoneJobDataPersister implements JobDataPersister 
 {
-	/**
-	 * Update the anomaly score field on all previously persisted buckets
-	 * and all contained records
-	 * @param sysChangeState
-	 * @param endTime
-	 * @param logger
-	 */
-	public void updateBucketSysChange(String sysChangeState,
-										Date endTime, Logger logger);
+	@Override
+	public void setFieldMappings(List<String> fields, List<String> byFields,
+			List<String> overFields, List<String> partitionFields,
+			String[] header) 
+	{
+	}
 
-
-	/**
-	 * Update the unsual score field on all previously persisted buckets
-	 * and all contained records
-	 * @param unusualBehaviourState
-	 * @param endTime
-	 * @param logger
-	 */
-	public void updateBucketUnusualBehaviour(String unusualBehaviourState,
-											Date endTime, Logger logger);
-};
-
+	@Override
+	public void persistRecord(long epoch, String[] record) 
+	{
+	}
+	
+	@Override
+	public void flushRecords() 
+	{
+	}
+	
+	@Override
+	public boolean deleteData() 
+	{
+		return false;
+	}
+}

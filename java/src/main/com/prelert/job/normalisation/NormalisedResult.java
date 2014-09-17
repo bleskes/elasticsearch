@@ -38,19 +38,19 @@ import com.fasterxml.jackson.core.JsonToken;
 /**
  * Store the output of the normaliser process
  * 
- * {"rawAnomalyScore":"0.0","unusualScore":"","anomalyScore":"0"}
+ * {"rawAnomalyScore":"0.0","normalizedProbability":"","anomalyScore":"0"}
  *
  */
 public class NormalisedResult 
 {
 	static public final String RAW_ANOMALY_SCORE = "rawAnomalyScore";
-	static public final String UNUSUAL_SCORE = "unusualScore";
+	static public final String NORMALIZED_PROBABILITY = "normalizedProbability";
 	static public final String SYS_CHANGE_SCORE = "anomalyScore";
 	static public final String ID = "id";
 	
 	
 	private double m_RawAnomalyScore;
-	private double m_NormalizedUnusualScore;
+	private double m_NormalizedProbability;
 	private double m_NormalizedSysChangeScore;
 	private String m_Id;
 
@@ -64,7 +64,7 @@ public class NormalisedResult
 	{
 		m_RawAnomalyScore = other.m_RawAnomalyScore;
 		m_NormalizedSysChangeScore = other.m_NormalizedSysChangeScore;
-		m_NormalizedUnusualScore = other.m_NormalizedUnusualScore;
+		m_NormalizedProbability = other.m_NormalizedProbability;
 		m_Id = other.m_Id;				
 	}
 	
@@ -78,14 +78,14 @@ public class NormalisedResult
 		this.m_RawAnomalyScore = rawAnomalyScore;
 	}
 	
-	public double getNormalizedUnusualScore() 
+	public double getNormalizedProbability() 
 	{
-		return m_NormalizedUnusualScore;
+		return m_NormalizedProbability;
 	}
 	
-	public void setNormalizedUnusualScore(double normalizedUnusualScore) 
+	public void setNormalizedProbability(double normalizedProbability) 
 	{
-		this.m_NormalizedUnusualScore = normalizedUnusualScore;
+		this.m_NormalizedProbability = normalizedProbability;
 	}
 	
 	public double getNormalizedSysChangeScore() 
@@ -185,11 +185,11 @@ public class NormalisedResult
 										+ " as a double");
 					}					
 					break;
-				case UNUSUAL_SCORE:
+				case NORMALIZED_PROBABILITY:
 					// TODO this is string should be output as a double
 //					if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)	
 //					{
-//						result.setNormalizedUnusualScore(parser.getDoubleValue());
+//						result.setNormalizedProbability(parser.getDoubleValue());
 //					}
 					
 					if (token == JsonToken.VALUE_STRING)
@@ -199,18 +199,18 @@ public class NormalisedResult
 						{
 							try
 							{
-								result.setNormalizedUnusualScore(Double.parseDouble(val));
+								result.setNormalizedProbability(Double.parseDouble(val));
 							}
 							catch (NumberFormatException nfe)
 							{
-								logger.warn("Cannot parse " + UNUSUAL_SCORE + " : " + parser.getText() 
+								logger.warn("Cannot parse " + NORMALIZED_PROBABILITY + " : " + parser.getText() 
 										+ " as a double");
 							}
 						}
 					}
 					else
 					{
-						logger.warn("Cannot parse " + UNUSUAL_SCORE + " : " + parser.getText() 
+						logger.warn("Cannot parse " + NORMALIZED_PROBABILITY + " : " + parser.getText() 
 										+ " as a double");
 					}	
 					break;

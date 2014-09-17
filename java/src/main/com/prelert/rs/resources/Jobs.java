@@ -136,7 +136,7 @@ public class Jobs extends ResourceWithJobManager
 				
 		if (job.isExists())
 		{
-			s_Logger.debug("Returning job '" + job + "'");
+			s_Logger.debug("Returning job '" + jobId + "'");
 			
 			return Response.ok(job).build();
 		}
@@ -268,11 +268,19 @@ public class Jobs extends ResourceWithJobManager
 				.build();
     	job.setDataEndpoint(data);
     	
-    	URI results = m_UriInfo.getBaseUriBuilder()
+    	URI buckets = m_UriInfo.getBaseUriBuilder()
 				.path("results")
 				.path(job.getId())
+				.path(Buckets.ENDPOINT)
 				.build();
-    	job.setResultsEndpoint(results);
+    	job.setBucketsEndpoint(buckets);
+    	
+    	URI records = m_UriInfo.getBaseUriBuilder()
+				.path("results")
+				.path(job.getId())
+				.path(Records.ENDPOINT)
+				.build();
+    	job.setRecordsEndpoint(records);
     	
     	URI logs = m_UriInfo.getBaseUriBuilder()
 				.path(Logs.ENDPOINT)

@@ -25,39 +25,29 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.persistence;
-
-import java.util.Date;
+package com.prelert.job.persistence.elasticsearch;
 
 import org.apache.log4j.Logger;
+import org.elasticsearch.client.Client;
 
+import com.prelert.job.persistence.DataPersisterFactory;
+import com.prelert.job.persistence.JobDataPersister;
 
-/**
- * Interface for classes that update {@linkplain Bucket Buckets}
- * for a particular job with new normalised anomaly scores and
- * unusual scores
- */
-public interface JobRenormaliser
+public class ElasticsearchDataPersisterFactory implements DataPersisterFactory 
 {
-	/**
-	 * Update the anomaly score field on all previously persisted buckets
-	 * and all contained records
-	 * @param sysChangeState
-	 * @param endTime
-	 * @param logger
-	 */
-	public void updateBucketSysChange(String sysChangeState,
-										Date endTime, Logger logger);
+	
+	private Client m_Client;
+	
+	public ElasticsearchDataPersisterFactory(Client client)
+	{
+		m_Client = client;
+	}
 
+	@Override
+	public JobDataPersister newDataPersister(String jobId,
+			Logger logger) 
+	{
+		return new ElasticsearchJobDataPersister(jobId, m_Client, logger);
+	}
 
-	/**
-	 * Update the unsual score field on all previously persisted buckets
-	 * and all contained records
-	 * @param unusualBehaviourState
-	 * @param endTime
-	 * @param logger
-	 */
-	public void updateBucketUnusualBehaviour(String unusualBehaviourState,
-											Date endTime, Logger logger);
-};
-
+}

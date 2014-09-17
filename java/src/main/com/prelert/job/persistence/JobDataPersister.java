@@ -27,59 +27,46 @@
 
 package com.prelert.job.persistence;
 
-import com.prelert.job.DetectorState;
-import com.prelert.job.UnknownJobException;
-import com.prelert.rs.data.Bucket;
-import com.prelert.rs.data.Quantiles;
+import java.util.List;
 
 /**
- * Interface for classes that persist {@linkplain Bucket Buckets},
- * {@linkplain Quantiles Quantiles} and {@link DetectorState DetectorStates}  
+ * Persist the records sent the the API.
+ * Records are mapped by the by, over, partition and metric fields. 
  */
 public interface JobDataPersister 
 {
 	/**
-	 * Persist the result bucket
-	 * @param bucket
+	 * Find each of the lists of requried fields (by, over, etc)
+	 * in the header and save the indexes so the field mappings can
+	 * be used in calls to {@linkplain #persistRecord(long, String[])}
+	 * @param fields
+	 * @param byFields
+	 * @param overFields
+	 * @param partitionFields
+	 * @param header
 	 */
-	public void persistBucket(Bucket bucket);
-
+	public void setFieldMappings(List<String> fields,
+			List<String> byFields, List<String> overFields,
+			List<String> partitionFields, String[] header);
 
 	/**
-	 * Persist the quantiles
-	 * @param quantiles
+	 * Save the record as per the field mappings 
+	 * set up in {@linkplain #setFieldMappings(List, List, List, List, String[])}
+	 * 
+	 * @param epoch 
+	 * @param record
 	 */
-	public void persistQuantiles(Quantiles quantiles);
-
-
-	/**
-	 * Persist the serialised detector state
-	 * @param state
-	 */
-	public void persistDetectorState(DetectorState state);
+	public void persistRecord(long epoch, String[] record);
 	
 	/**
-	 * Reads all the detector state documents from 
-	 * the database and returns a {@linkplain DetectorState} object.
+	 * Delete all the persisted records
 	 * 
 	 * @return
 	 */
-	public DetectorState retrieveDetectorState() throws UnknownJobException;
+	public boolean deleteData();
 	
 	/**
-	 * If the job has persisted model state then this function 
-	 * returns true 
-	 * 
-	 * @return
+	 * Flush any records that may not have been persisted yet
 	 */
-	public boolean isDetectorStatePersisted();
-	
-	/**
-	 * Once all the job data has been written this function will be 
-	 * called to commit the data if the implementing persister requries
-	 * it. 
-	 * 
-	 * @return True if successful
-	 */
-	public boolean commitWrites();
+	public void flushRecords();
 }

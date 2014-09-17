@@ -118,6 +118,13 @@ public enum ErrorCode
 	 */
 	JOB_ID_TOO_LONG(10112),
 	
+	/**
+	 * fieldnames including over, by and partition fields cannot
+	 * contain any of these characters:
+	 * [, ], (, ), =, ", |, + or any whitespace
+	 */
+	PROHIBITIED_CHARACTER_IN_FIELD_NAME(10113),
+	
 
 	// Data store errors
 	/**
@@ -221,15 +228,9 @@ public enum ErrorCode
 	 * The argument to the sort query parameter is not a 
 	 * recognised sort field
 	 */
-	INVALID_SORT_FIELD(60102),
+	INVALID_SORT_FIELD(60102);
 	
-	/**
-	 * A filter can only be applied to either anomalyScore or
-	 * unusualScore but not both
-	 */
-	INVALID_FILTER_FIELD(60103);
 
-	
 	private long m_ErrorCode;
 	private String m_ValueString;
 	

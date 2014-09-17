@@ -36,7 +36,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Date;
-import java.util.List;
+import java.util.Enumeration;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
@@ -56,9 +56,12 @@ import com.prelert.job.warnings.HighProportionOfBadTimestampsException;
 import com.prelert.job.warnings.OutOfOrderRecordsException;
 import com.prelert.job.warnings.StatusReporter;
 import com.prelert.job.warnings.StatusReporterFactory;
+import com.prelert.job.persistence.DataPersisterFactory;
+import com.prelert.job.persistence.JobDataPersister;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.usage.UsageReporter;
 import com.prelert.job.usage.UsageReporterFactory;
+import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DetectorState;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobInUseException;
@@ -116,11 +119,13 @@ public class ProcessManager
 	private ResultsReaderFactory m_ResultsReaderFactory;
 	private StatusReporterFactory m_StatusReporterFactory;
 	private UsageReporterFactory m_UsageReporterFactory;
+	private DataPersisterFactory m_DataPersisterFactory;
 	
 	public ProcessManager(JobProvider jobProvider, 
 							ResultsReaderFactory readerFactory,
 							StatusReporterFactory statusReporterFactory,
-							UsageReporterFactory usageFactory)
+							UsageReporterFactory usageFactory,
+							DataPersisterFactory dataPersisterFactory)
 	{
 		m_ProcessCtrl = new ProcessCtrl();
 						
@@ -134,6 +139,8 @@ public class ProcessManager
 		m_UsageReporterFactory = usageFactory;
 		
 		m_StatusReporterFactory = statusReporterFactory;
+		
+		m_DataPersisterFactory = dataPersisterFactory;
 		
 		addShutdownHook();
 	}	
@@ -226,10 +233,10 @@ public class ProcessManager
 		{
 			process.setInUse(true);
 			
-			writeToJob(process.getDataDescription(), process.getInterestingFields(),
+			writeToJob(process.getDataDescription(), process.getAnalysisConfig(),
 					input, process.getProcess().getOutputStream(), 
 					process.getStatusReporter(), process.getUsageReporter(), 
-					process.getLogger());
+					process.getDataPersister(), process.getLogger());
 						
 			// check there wasn't an error in the input. 
 			// throws if there was. 
@@ -347,18 +354,16 @@ public class ProcessManager
 					ErrorCode.NATIVE_PROCESS_START_ERROR, e);
 		}				
 
-		List<String> analysisFields = job.getAnalysisConfig().analysisFields();
-
 		
 		ProcessAndDataDescription procAndDD = new ProcessAndDataDescription(
 				nativeProcess, jobId,
-				job.getDataDescription(), job.getTimeout(), analysisFields, logger,
-				m_StatusReporterFactory.newStatusReporter(jobId, job.getCounts(), 
-						analysisFields.size(), logger),
+				job.getDataDescription(), job.getTimeout(), job.getAnalysisConfig(), logger,
+				m_StatusReporterFactory.newStatusReporter(jobId, job.getCounts(), logger),
 				m_UsageReporterFactory.newUsageReporter(jobId, logger),
 				m_ResultsReaderFactory.newResultsParser(jobId, 
 						nativeProcess.getInputStream(),						
-						logger)
+						logger),
+				m_DataPersisterFactory.newDataPersister(jobId, logger)
 				);	
 
 		m_JobProvider.setJobStatus(jobId, JobStatus.RUNNING);
@@ -476,7 +481,7 @@ public class ProcessManager
 				
 			}
 		}
-		catch (NativeProcessRunException e) 
+		catch (NativeProcessRunException npre) 
 		{
 			String msg = String.format("Native process for job '%s' has already exited",
 					jobId);
@@ -496,9 +501,9 @@ public class ProcessManager
 			
 			setJobFinishedTimeAndStatus(jobId, process.getLogger(), JobStatus.FAILED);
 			
-			throw e;
+			throw npre;
 		}
-		
+
 		return ProcessStatus.COMPLETED;
 	}
 
@@ -584,9 +589,10 @@ public class ProcessManager
 	 * @throws OutOfOrderRecordsException 
 	 */
 	public void writeToJob(DataDescription dataDescription, 
-			List<String> analysisFields,
+			AnalysisConfig analysisConfig,
 			InputStream input, OutputStream output, 
-			StatusReporter statusReporter, UsageReporter usageReporter, 
+			StatusReporter statusReporter, UsageReporter usageReporter,
+			JobDataPersister dataPersister, 
 			Logger jobLogger) 
 	throws JsonParseException, MissingFieldException, IOException,
 		HighProportionOfBadTimestampsException, OutOfOrderRecordsException
@@ -598,21 +604,21 @@ public class ProcessManager
 		{
 			if (dataDescription.getFormat() == DataFormat.JSON)
 			{
-				PipeToProcess.transformAndPipeJson(dataDescription, analysisFields, input, 
+				PipeToProcess.transformAndPipeJson(dataDescription, analysisConfig, input, 
 						bufferedStream, statusReporter, 
-						usageReporter, jobLogger);
+						usageReporter, dataPersister, jobLogger);
 			}
 			else
 			{
-				PipeToProcess.transformAndPipeCsv(dataDescription, analysisFields, input, 
+				PipeToProcess.transformAndPipeCsv(dataDescription, analysisConfig, input, 
 						bufferedStream, statusReporter,
-						usageReporter, jobLogger);
+						usageReporter, dataPersister, jobLogger);
 			}
 		}
 		else
 		{			
-			PipeToProcess.pipeCsv(dataDescription, analysisFields, input, 
-					bufferedStream, statusReporter, usageReporter, jobLogger);
+			PipeToProcess.pipeCsv(dataDescription, analysisConfig, input, 
+					bufferedStream, statusReporter, usageReporter, dataPersister,jobLogger);
 		}
 	}
 	
@@ -806,22 +812,32 @@ public class ProcessManager
 	 * @return
 	 */
 	private Logger createLogger(String jobId) 
-	{		
+	{
 		try
 		{
+			Logger logger = Logger.getLogger(jobId);
+			logger.setAdditivity(false);
+			logger.setLevel(Level.DEBUG);
+
 			try
 			{
 				Path logDir = FileSystems.getDefault().getPath(ProcessCtrl.LOG_DIR, jobId);		
 				Files.createDirectory(logDir);
+
+				// If we get here then we had to create the directory.  In this
+				// case we always want to create the appender because any
+				// pre-existing appender will be pointing to a directory of the
+				// same name that must have been previously removed.  (See bug
+				// 697 in Bugzilla.)
+				if (logger.getAppender("engine_api_file_appender") != null)
+				{
+					logger.removeAppender("engine_api_file_appender");
+				}
 			}
 			catch (FileAlreadyExistsException e)
 			{
 			}
 
-			Logger logger = Logger.getLogger(jobId);
-			logger.setAdditivity(false);
-			logger.setLevel(Level.DEBUG);
-			
 			if (logger.getAppender("engine_api_file_appender") == null)
 			{
 				Path logFile = FileSystems.getDefault().getPath(ProcessCtrl.LOG_DIR,
@@ -834,9 +850,29 @@ public class ProcessManager
 				fileAppender.setMaxFileSize("1MB");
 				fileAppender.setMaxBackupIndex(9);
 
+				// Try to copy the maximum file size and maximum index from the
+				// first rolling file appender of the root logger (there will
+				// be one unless the user has meddled with the default config).
+				// If we fail the defaults set above will remain in force.
+				@SuppressWarnings("rawtypes")
+				Enumeration rootAppenders = Logger.getRootLogger().getAllAppenders();
+				while (rootAppenders.hasMoreElements())
+				{
+					try
+					{
+						RollingFileAppender defaultFileAppender = (RollingFileAppender)rootAppenders.nextElement();
+						fileAppender.setMaximumFileSize(defaultFileAppender.getMaximumFileSize());
+						fileAppender.setMaxBackupIndex(defaultFileAppender.getMaxBackupIndex());
+						break;
+					}
+					catch (ClassCastException e)
+					{
+						// Ignore it
+					}
+				}
+
 				logger.addAppender(fileAppender);
 			}
-
 
 			return logger;
 		}

@@ -105,12 +105,15 @@ public class Buckets extends ResourceWithJobManager
 			@DefaultValue("0") @QueryParam("skip") int skip,
 			@DefaultValue(JobManager.DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take,
 			@DefaultValue("") @QueryParam(START_QUERY_PARAM) String start,
-			@DefaultValue("") @QueryParam(END_QUERY_PARAM) String end)
+			@DefaultValue("") @QueryParam(END_QUERY_PARAM) String end,
+			@DefaultValue("0.0") @QueryParam(Bucket.ANOMALY_SCORE) double anomalySoreFilter,			
+			@DefaultValue("0.0") @QueryParam(Bucket.MAX_NORMALIZED_PROBABILITY) double normalizedProbabilityFilter)
 	throws UnknownJobException, NativeProcessRunException
 	{	
 		s_Logger.debug(String.format("Get %s buckets for job %s. skip = %d, take = %d"
-				+ " start = '%s', end='%s'", 
-				expand?"expanded ":"", jobId, skip, take, start, end));
+				+ " start = '%s', end='%s', anomaly score filter=%f, unsual score filter= %f", 
+				expand?"expanded ":"", jobId, skip, take, start, end,
+						anomalySoreFilter, normalizedProbabilityFilter));
 		
 		long epochStart = 0;
 		if (start.isEmpty() == false)
@@ -143,11 +146,13 @@ public class Buckets extends ResourceWithJobManager
 		
 		if (epochStart > 0 || epochEnd > 0)
 		{
-			buckets = manager.buckets(jobId, expand, skip, take, epochStart, epochEnd);
+			buckets = manager.buckets(jobId, expand, skip, take, epochStart, epochEnd,
+					anomalySoreFilter, normalizedProbabilityFilter);
 		}
 		else
 		{
-			buckets = manager.buckets(jobId, expand, skip, take);
+			buckets = manager.buckets(jobId, expand, skip, take,
+					anomalySoreFilter, normalizedProbabilityFilter);
 		}
 
 		// paging
@@ -169,6 +174,8 @@ public class Buckets extends ResourceWithJobManager
     			queryParams.add(this.new KeyValue(END_QUERY_PARAM, end));
     		}
     		queryParams.add(this.new KeyValue(EXPAND_QUERY_PARAM, Boolean.toString(expand)));
+    		queryParams.add(this.new KeyValue(Bucket.ANOMALY_SCORE, String.format("%2.1f", anomalySoreFilter)));
+    		queryParams.add(this.new KeyValue(Bucket.MAX_NORMALIZED_PROBABILITY, String.format("%2.1f", normalizedProbabilityFilter)));
 
     		setPagingUrls(path, buckets, queryParams);
     	}		

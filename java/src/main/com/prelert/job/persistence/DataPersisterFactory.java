@@ -27,37 +27,14 @@
 
 package com.prelert.job.persistence;
 
-import java.util.Date;
-
 import org.apache.log4j.Logger;
 
-
 /**
- * Interface for classes that update {@linkplain Bucket Buckets}
- * for a particular job with new normalised anomaly scores and
- * unusual scores
+ * Abstract Factory method for creating new {@link UsageReporter} 
+ * instances. 
  */
-public interface JobRenormaliser
+public interface DataPersisterFactory 
 {
-	/**
-	 * Update the anomaly score field on all previously persisted buckets
-	 * and all contained records
-	 * @param sysChangeState
-	 * @param endTime
-	 * @param logger
-	 */
-	public void updateBucketSysChange(String sysChangeState,
-										Date endTime, Logger logger);
-
-
-	/**
-	 * Update the unsual score field on all previously persisted buckets
-	 * and all contained records
-	 * @param unusualBehaviourState
-	 * @param endTime
-	 * @param logger
-	 */
-	public void updateBucketUnusualBehaviour(String unusualBehaviourState,
-											Date endTime, Logger logger);
-};
+	public JobDataPersister newDataPersister(String jobId, Logger logger);
+}
 

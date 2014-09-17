@@ -30,6 +30,7 @@ package com.prelert.rs.data;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -57,7 +58,7 @@ public class Bucket
 	public static final String TIMESTAMP = "timestamp";
 	public static final String RAW_ANOMALY_SCORE =  "rawAnomalyScore";
 	public static final String ANOMALY_SCORE =  "anomalyScore";
-	public static final String UNUSUAL_SCORE =  "unusualScore";
+	public static final String MAX_NORMALIZED_PROBABILITY =  "maxNormalizedProbability";
 	public static final String RECORD_COUNT = "recordCount";
 	public static final String EVENT_COUNT = "eventCount";
 	public static final String DETECTORS = "detectors";
@@ -75,16 +76,18 @@ public class Bucket
 	private Date m_Timestamp;
 	private double m_RawAnomalyScore;	
 	private double m_AnomalyScore;	
-	private double m_UnusualScore;	
+	private double m_MaxNormalizedProbability;	
 	private int m_RecordCount;
 	private List<Detector> m_Detectors;
 	private long m_Epoch;
 	private List<AnomalyRecord> m_Records;
 	private long m_EventCount;
+	private boolean m_HadBigNormalisedUpdate;
 	
 	public Bucket()
 	{
 		m_Detectors = new ArrayList<>();
+		m_Records = Collections.emptyList();
 	}
 	
 	/**
@@ -94,11 +97,6 @@ public class Bucket
 	 *  
 	 * @return The bucket id
 	 */
-	public long getEpoch()
-	{
-		return m_Epoch;
-	}
-
 	public String getId()
 	{
 		return m_Id;
@@ -109,6 +107,11 @@ public class Bucket
 		m_Id = id;
 	}
 	
+	public long getEpoch()
+	{
+		return m_Epoch;
+	}
+	
 	public Date getTimestamp() 
 	{
 		return m_Timestamp;
@@ -116,7 +119,7 @@ public class Bucket
 	
 	public void setTimestamp(Date timestamp) 
 	{
-		this.m_Timestamp = timestamp;
+		m_Timestamp = timestamp;
 		
 		// epoch in seconds
 		m_Epoch = m_Timestamp.getTime() / 1000;
@@ -132,7 +135,7 @@ public class Bucket
 
 	public void setRawAnomalyScore(double rawAnomalyScore) 
 	{
-		this.m_RawAnomalyScore = rawAnomalyScore;
+		m_RawAnomalyScore = rawAnomalyScore;
 	}
 
 
@@ -143,18 +146,19 @@ public class Bucket
 
 	public void setAnomalyScore(double anomalyScore) 
 	{
-		this.m_AnomalyScore = anomalyScore;
+		m_HadBigNormalisedUpdate |= AnomalyRecord.isBigUpdate(m_AnomalyScore, anomalyScore);
+		m_AnomalyScore = anomalyScore;
 	}
 
-
-	public double getUnusualScore() 
+	public double getMaxNormalizedProbability() 
 	{
-		return m_UnusualScore;
+		return m_MaxNormalizedProbability;
 	}	
 
-	public void setUnusualScore(double unusualScore) 
+	public void setMaxNormalizedProbability(double maxNormalizedProbability) 
 	{
-		this.m_UnusualScore = unusualScore;
+		m_HadBigNormalisedUpdate |= AnomalyRecord.isBigUpdate(m_MaxNormalizedProbability, maxNormalizedProbability);
+		m_MaxNormalizedProbability = maxNormalizedProbability;
 	}
 
 
@@ -165,7 +169,7 @@ public class Bucket
 			
 	public void setRecordCount(int recordCount) 
 	{
-		this.m_RecordCount = recordCount;
+		m_RecordCount = recordCount;
 	}
 
 
@@ -209,7 +213,11 @@ public class Bucket
 		m_Records = records;
 	}
 	
-	
+	/**
+	 * The number of records (events) actually processed 
+	 * in this bucket.
+	 * @return
+	 */
 	public long getEventCount()
 	{
 		return m_EventCount;
@@ -298,7 +306,7 @@ public class Bucket
 					if (token == JsonToken.VALUE_NUMBER_INT)	
 					{
 						// convert seconds to ms
-						long val = parser.getLongValue()  * 1000;
+						long val = parser.getLongValue() * 1000;
 						bucket.setTimestamp(new Date(val));
 					}
 					else
@@ -331,15 +339,15 @@ public class Bucket
 										+ " as a double");
 					}
 					break;	
-				case UNUSUAL_SCORE:
+				case MAX_NORMALIZED_PROBABILITY:
 					token = parser.nextToken();
 					if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)	
 					{
-						bucket.setUnusualScore(parser.getDoubleValue());
+						bucket.setMaxNormalizedProbability(parser.getDoubleValue());
 					}
 					else
 					{
-						s_Logger.warn("Cannot parse " + UNUSUAL_SCORE + " : " + parser.getText() 
+						s_Logger.warn("Cannot parse " + MAX_NORMALIZED_PROBABILITY + " : " + parser.getText() 
 										+ " as a double");
 					}
 					break;	
@@ -413,6 +421,7 @@ public class Bucket
 	@Override
 	public int hashCode() 
 	{
+		// m_HadBigNormalisedUpdate is deliberately excluded from the hash
 		final int prime = 31;
 		int result = 1;
 		long temp;
@@ -420,7 +429,7 @@ public class Bucket
 		result = prime * result + (int) (temp ^ (temp >>> 32));
 		temp = Double.doubleToLongBits(m_AnomalyScore);
 		result = prime * result + (int) (temp ^ (temp >>> 32));
-		temp = Double.doubleToLongBits(m_UnusualScore);
+		temp = Double.doubleToLongBits(m_MaxNormalizedProbability);
 		result = prime * result + (int) (temp ^ (temp >>> 32));
 		result = prime * result
 				+ ((m_Detectors == null) ? 0 : m_Detectors.hashCode());
@@ -453,13 +462,14 @@ public class Bucket
 		}
 		
 		Bucket that = (Bucket)other;
-		
+
+		// m_HadBigNormalisedUpdate is deliberately excluded from the test
 		boolean equals = (this.m_Id.equals(that.m_Id)) &&
 				(this.m_Timestamp.equals(that.m_Timestamp)) &&
 				(this.m_EventCount == that.m_EventCount) &&
 				(this.m_RawAnomalyScore == that.m_RawAnomalyScore) &&
 				(this.m_AnomalyScore == that.m_AnomalyScore) &&
-				(this.m_UnusualScore == that.m_UnusualScore) &&
+				(this.m_MaxNormalizedProbability == that.m_MaxNormalizedProbability) &&
 				(this.m_RecordCount == that.m_RecordCount) &&
 				(this.m_Epoch == that.m_Epoch);
 		
@@ -471,10 +481,13 @@ public class Bucket
 		else if (this.m_Records != null && that.m_Records != null)
 		{
 			equals &= this.m_Records.size() == that.m_Records.size();
-			for (int i=0; i<this.m_Records.size(); i++)
+			if (equals)
 			{
-				equals &= this.m_Records.get(i).equals(that.m_Records.get(i));
-			}			
+				for (int i=0; i<this.m_Records.size(); i++)
+				{
+					equals &= this.m_Records.get(i).equals(that.m_Records.get(i));
+				}
+			}
 		}
 		else
 		{
@@ -483,5 +496,17 @@ public class Bucket
 		}
 		
 		return equals;
+	}
+
+
+	public boolean hadBigNormalisedUpdate()
+	{
+		return m_HadBigNormalisedUpdate;
+	}
+
+
+	public void resetBigNormalisedUpdateFlag()
+	{
+		m_HadBigNormalisedUpdate = false;
 	}
 }

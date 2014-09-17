@@ -375,11 +375,15 @@ public class Normaliser
 		{
 			for (Bucket bucket : buckets)
 			{
+				bucket.resetBigNormalisedUpdateFlag();
+
 				double anomalyScore = resultIter.next().getNormalizedSysChangeScore();
 				bucket.setAnomalyScore(anomalyScore);
 				
 				for (AnomalyRecord record : bucket.getRecords())
 				{
+					record.resetBigNormalisedUpdateFlag();
+
 					record.setAnomalyScore(anomalyScore);
 				}
 			}
@@ -414,18 +418,22 @@ public class Normaliser
 		{
 			for (Bucket bucket : buckets)
 			{
-				double bucketUnusualScore = 0.0;
+				bucket.resetBigNormalisedUpdateFlag();
+
+				double maxNormalizedProbability = 0.0;
 				for (AnomalyRecord record : bucket.getRecords())
 				{
+					record.resetBigNormalisedUpdateFlag();
+
 					NormalisedResult normalised = scoresIter.next();
 
-					record.setUnusualScore(normalised.getNormalizedUnusualScore());
+					record.setNormalizedProbability(normalised.getNormalizedProbability());
 
-					bucketUnusualScore = Math.max(bucketUnusualScore,
-							normalised.getNormalizedUnusualScore());
+					maxNormalizedProbability = Math.max(maxNormalizedProbability,
+							normalised.getNormalizedProbability());
 				}
 
-				bucket.setUnusualScore(bucketUnusualScore);
+				bucket.setMaxNormalizedProbability(maxNormalizedProbability);
 			}
 		}
 		catch (NoSuchElementException e)
@@ -454,15 +462,19 @@ public class Normaliser
 			// Buckets first
 			for (Bucket bucket : buckets)
 			{
+				bucket.resetBigNormalisedUpdateFlag();
+
 				NormalisedResult normalised = scoresIter.next();
 				bucket.setAnomalyScore(normalised.getNormalizedSysChangeScore());
-				bucket.setUnusualScore(0.0);
+				bucket.setMaxNormalizedProbability(0.0);
 				bucketIdToBucket.put(bucket.getId(), bucket);
 			}
 
 			// Set scores for records and
 			for (AnomalyRecord record : records)
 			{
+				record.resetBigNormalisedUpdateFlag();
+
 				Bucket parentBucket = bucketIdToBucket.get(record.getParent());
 
 				// Record anomaly scores are defined to be equal to those of
@@ -470,14 +482,14 @@ public class Normaliser
 				record.setAnomalyScore(parentBucket.getAnomalyScore());
 
 				NormalisedResult normalised = scoresIter.next();
-				double unusualScore = normalised.getNormalizedUnusualScore();
-				record.setUnusualScore(unusualScore);
+				double normalizedProbability = normalised.getNormalizedProbability();
+				record.setNormalizedProbability(normalizedProbability);
 
 				// Bucket unusual scores are defined to be the highest of those
 				// on their contained records
-				if (unusualScore > parentBucket.getUnusualScore())
+				if (normalizedProbability > parentBucket.getMaxNormalizedProbability())
 				{
-					parentBucket.setUnusualScore(unusualScore);
+					parentBucket.setMaxNormalizedProbability(normalizedProbability);
 				}
 			}
 		}

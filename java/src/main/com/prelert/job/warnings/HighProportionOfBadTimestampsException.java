@@ -74,7 +74,7 @@ public class HighProportionOfBadTimestampsException extends Exception
 	@Override
 	public String getMessage()
 	{
-		return String.format("A high proportion of records are have a timestamp "
+		return String.format("A high proportion of records have a timestamp "
 				+ "that cannot be interpreted (%d of %d).",
 				m_NumberBad, m_TotalNumber);
 	}

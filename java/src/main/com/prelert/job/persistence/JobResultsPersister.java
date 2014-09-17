@@ -27,37 +27,66 @@
 
 package com.prelert.job.persistence;
 
-import java.util.Date;
-
-import org.apache.log4j.Logger;
-
+import com.prelert.job.DetectorState;
+import com.prelert.job.UnknownJobException;
+import com.prelert.rs.data.Bucket;
+import com.prelert.rs.data.Quantiles;
 
 /**
- * Interface for classes that update {@linkplain Bucket Buckets}
- * for a particular job with new normalised anomaly scores and
- * unusual scores
+ * Interface for classes that persist {@linkplain Bucket Buckets},
+ * {@linkplain Quantiles Quantiles} and {@link DetectorState DetectorStates}  
  */
-public interface JobRenormaliser
+public interface JobResultsPersister 
 {
 	/**
-	 * Update the anomaly score field on all previously persisted buckets
-	 * and all contained records
-	 * @param sysChangeState
-	 * @param endTime
-	 * @param logger
+	 * Persist the result bucket
+	 * @param bucket
 	 */
-	public void updateBucketSysChange(String sysChangeState,
-										Date endTime, Logger logger);
+	public void persistBucket(Bucket bucket);
 
 
 	/**
-	 * Update the unsual score field on all previously persisted buckets
-	 * and all contained records
-	 * @param unusualBehaviourState
-	 * @param endTime
-	 * @param logger
+	 * Persist the quantiles
+	 * @param quantiles
 	 */
-	public void updateBucketUnusualBehaviour(String unusualBehaviourState,
-											Date endTime, Logger logger);
-};
+	public void persistQuantiles(Quantiles quantiles);
 
+
+	/**
+	 * Persist the serialised detector state
+	 * @param state
+	 */
+	public void persistDetectorState(DetectorState state);
+	
+	/**
+	 * Reads all the detector state documents from 
+	 * the database and returns a {@linkplain DetectorState} object.
+	 * 
+	 * @return
+	 */
+	public DetectorState retrieveDetectorState() throws UnknownJobException;
+	
+	/**
+	 * If the job has persisted model state then this function 
+	 * returns true 
+	 * 
+	 * @return
+	 */
+	public boolean isDetectorStatePersisted();
+	
+	
+	/**
+	 * Increment the jobs bucket result count by <code>count</code>
+	 * @param count
+	 */
+	public void incrementBucketCount(long count);
+	
+	/**
+	 * Once all the job data has been written this function will be 
+	 * called to commit the data if the implementing persister requries
+	 * it. 
+	 * 
+	 * @return True if successful
+	 */
+	public boolean commitWrites();
+}

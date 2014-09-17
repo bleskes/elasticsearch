@@ -41,6 +41,7 @@ import com.prelert.job.DetectorState;
 import com.prelert.job.JobDetails;
 import com.prelert.job.alert.Alert;
 import com.prelert.job.usage.Usage;
+import com.prelert.rs.data.AnomalyCause;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.Quantiles;
@@ -102,13 +103,22 @@ public class ElasticsearchMappings
 						.startObject(JobDetails.COUNTS)
 							.field("type", "object")
 							.startObject("properties")
+								.startObject(JobDetails.BUCKET_COUNT)
+									.field("type", "long")
+								.endObject()							
 								.startObject(JobDetails.PROCESSED_RECORD_COUNT)
 									.field("type", "long")
 								.endObject()
-								.startObject(JobDetails.PROCESSED_DATAPOINT_COUNT)
+								.startObject(JobDetails.PROCESSED_FIELD_COUNT)
 									.field("type", "long")
 								.endObject()								
-								.startObject(JobDetails.PROCESSED_BYTES)
+								.startObject(JobDetails.INPUT_BYTES)
+								.field("type", "long")
+								.endObject()
+								.startObject(JobDetails.INPUT_RECORD_COUNT)
+								.field("type", "long")
+								.endObject()
+								.startObject(JobDetails.INPUT_FIELD_COUNT)
 								.field("type", "long")
 								.endObject()								
 								.startObject(JobDetails.INVALID_DATE_COUNT)
@@ -232,7 +242,7 @@ public class ElasticsearchMappings
 						.startObject(Bucket.ANOMALY_SCORE)
 							.field("type", "double")
 						.endObject()
-						.startObject(Bucket.UNUSUAL_SCORE)
+						.startObject(Bucket.MAX_NORMALIZED_PROBABILITY)
 							.field("type", "double")
 						.endObject()
 						.startObject(Bucket.RECORD_COUNT)
@@ -334,13 +344,47 @@ public class ElasticsearchMappings
 						.startObject(AnomalyRecord.OVER_FIELD_VALUE)
 							.field("type", "string").field(INDEX, NOT_ANALYZED)
 						.endObject()
-						.startObject(AnomalyRecord.IS_OVERALL_RESULT)
-							.field("type", "boolean")
+						.startObject(AnomalyRecord.CAUSES)
+							.startObject("properties")
+								.startObject(AnomalyCause.ACTUAL)
+									.field("type", "double").field(INDEX, NOT_ANALYZED)
+								.endObject()
+								.startObject(AnomalyCause.TYPICAL)
+									.field("type", "double").field(INDEX, NOT_ANALYZED)
+								.endObject()
+								.startObject(AnomalyCause.PROBABILITY)
+									.field("type", "double")
+								.endObject()
+								.startObject(AnomalyCause.FUNCTION)
+									.field("type", "string").field(INDEX, NOT_ANALYZED)
+								.endObject()
+								.startObject(AnomalyCause.BY_FIELD_NAME)
+									.field("type", "string").field(INDEX, NOT_ANALYZED)
+								.endObject()
+								.startObject(AnomalyCause.BY_FIELD_VALUE)
+									.field("type", "string").field(INDEX, NOT_ANALYZED)
+								.endObject()
+								.startObject(AnomalyCause.FIELD_NAME)
+									.field("type", "string").field(INDEX, NOT_ANALYZED)
+								.endObject()
+								.startObject(AnomalyCause.PARTITION_FIELD_NAME)
+									.field("type", "string").field(INDEX, NOT_ANALYZED)
+								.endObject()
+								.startObject(AnomalyCause.PARTITION_FIELD_VALUE)
+									.field("type", "string").field(INDEX, NOT_ANALYZED)
+								.endObject()
+								.startObject(AnomalyCause.OVER_FIELD_NAME)
+									.field("type", "string").field(INDEX, NOT_ANALYZED)
+								.endObject()
+								.startObject(AnomalyCause.OVER_FIELD_VALUE)
+									.field("type", "string").field(INDEX, NOT_ANALYZED)
+								.endObject()
+							.endObject()
 						.endObject()
-						.startObject(Bucket.ANOMALY_SCORE)
+						.startObject(AnomalyRecord.ANOMALY_SCORE)
 							.field("type", "double")
 						.endObject()
-						.startObject(Bucket.UNUSUAL_SCORE)
+						.startObject(AnomalyRecord.NORMALIZED_PROBABILITY)
 							.field("type", "double")
 						.endObject()
 					.endObject()
@@ -482,4 +526,52 @@ public class ElasticsearchMappings
 			
 		return mapping;
 	}
+	
+	
+	/**
+	 * Mapping for the saved data records
+	 *  
+	 * @return
+	 * @throws IOException
+	 */
+	static public XContentBuilder inputDataMapping() 
+	throws IOException
+	{
+		XContentBuilder mapping = jsonBuilder()
+			.startObject()
+				.startObject(ElasticsearchJobDataPersister.TYPE)
+					.startObject("_all")
+						.field("enabled", false)
+					.endObject()
+					.startObject("properties")	
+						.startObject("epoch")
+							.field("type", "date")
+						.endObject()					
+						.startObject(ElasticsearchJobDataPersister.FIELDS)
+							.field("type", "string")
+							.field("index_name", "field")
+							.field(INDEX, NOT_ANALYZED)
+						.endObject()
+						.startObject(ElasticsearchJobDataPersister.BY_FIELDS)
+							.field("type", "string")
+							.field("index_name", "byField")
+							.field(INDEX, NOT_ANALYZED)
+						.endObject()
+						.startObject(ElasticsearchJobDataPersister.OVER_FIELDS)
+							.field("type", "string")
+							.field("index_name", "overField")
+							.field(INDEX, NOT_ANALYZED)
+						.endObject()
+						.startObject(ElasticsearchJobDataPersister.PARTITION_FIELDS)
+							.field("type", "string")
+							.field("index_name", "partitionField")
+							.field(INDEX, NOT_ANALYZED)
+						.endObject()							
+					.endObject()
+				.endObject()
+			.endObject();
+			
+		return mapping;
+	}
+	
 }

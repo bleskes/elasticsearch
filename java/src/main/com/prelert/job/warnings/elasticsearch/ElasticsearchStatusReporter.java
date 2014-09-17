@@ -11,6 +11,7 @@ import com.prelert.job.warnings.StatusReporter;
 import org.apache.log4j.Logger;
 import org.elasticsearch.action.update.UpdateRequestBuilder;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.index.engine.VersionConflictEngineException;
 import org.elasticsearch.indices.IndexMissingException;
 
 
@@ -41,7 +42,7 @@ public class ElasticsearchStatusReporter extends StatusReporter
 		String status = String.format("%d records written to autodetect %d had "
 				+ "missing fields, %d were discarded because the date could not be "
 				+ "read and %d were ignored as because they weren't in ascending "
-				+ "chronological order.", getRecordsWrittenCount(), 
+				+ "chronological order.", getProcessedRecordCount(), 
 				getMissingFieldErrorCount(), getDateParseErrorsCount(), 
 				getOutOfOrderRecordCount()); 
 		
@@ -62,16 +63,14 @@ public class ElasticsearchStatusReporter extends StatusReporter
 					JobDetails.TYPE, m_JobId);
 			
 			updateBuilder.setRetryOnConflict(1);
-			
-			long processedDataPointCount = 
-					(getRecordsWrittenCount() * getAnalysedFieldsPerRecord())
-					- getMissingFieldErrorCount();
-					
+						
 			
 			Map<String, Object> updates = new HashMap<>();
-			updates.put(JobDetails.PROCESSED_RECORD_COUNT, getRecordsWrittenCount());
-			updates.put(JobDetails.PROCESSED_DATAPOINT_COUNT, processedDataPointCount);
-			updates.put(JobDetails.PROCESSED_BYTES, getVolume());
+			updates.put(JobDetails.PROCESSED_RECORD_COUNT, getProcessedRecordCount());
+			updates.put(JobDetails.PROCESSED_FIELD_COUNT, getProcessedFieldCount());
+			updates.put(JobDetails.INPUT_RECORD_COUNT, getInputRecordCount());
+			updates.put(JobDetails.INPUT_BYTES, getBytesRead());
+			updates.put(JobDetails.INPUT_FIELD_COUNT, getInputFieldCount());
 			updates.put(JobDetails.INVALID_DATE_COUNT, getDateParseErrorsCount());
 			updates.put(JobDetails.MISSING_FIELD_COUNT, getMissingFieldErrorCount());
 			updates.put(JobDetails.OUT_OF_ORDER_TIME_COUNT, getOutOfOrderRecordCount());
@@ -79,9 +78,28 @@ public class ElasticsearchStatusReporter extends StatusReporter
 			Map<String, Object> counts = new HashMap<>();
 			counts.put(JobDetails.COUNTS, updates);
 			
-			updateBuilder.setDoc(counts);
-			m_Client.update(updateBuilder.request()).get();
+			updateBuilder.setDoc(counts).setRefresh(true);
 			
+			int retryCount = 3;
+			while (--retryCount > 0)
+			{
+				try
+				{
+					m_Client.update(updateBuilder.request()).get();
+					break;
+				}
+				catch (VersionConflictEngineException e)
+				{
+					m_Logger.debug("Conflict updating job status counts");
+				}
+			}
+			
+			if (retryCount <= 0)
+			{
+				m_Logger.warn("Unable to update conflicted job status counts");
+				return false;
+			}
+
 			return true;
 		}
 		catch (IndexMissingException | InterruptedException | ExecutionException e)

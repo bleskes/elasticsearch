@@ -521,11 +521,10 @@ public class EngineApiClient implements Closeable
 		return true;
 	}
 	
-	
 	/**
 	 * Get the bucket results for a particular job.
-	 * Calls {@link #getBuckets(String, String, boolean, Long, Long)} with the 
-	 * skip and take parameters set to <code>null</code>
+	 * Calls {@link #getBuckets(String, String, boolean, Long, Long, Double, Double)}
+	 * with the skip and take parameters set to <code>null</code>
 	 * 
 	 * @param baseUrl The base URL for the REST API including version number
 	 * e.g <code>http://localhost:8080/engine/v1/</code>
@@ -535,11 +534,37 @@ public class EngineApiClient implements Closeable
 	 * @return A {@link Pagination} object containing a list of {@link Bucket buckets}
 	 * @throws IOException 
 	 */
-	public Pagination<Bucket> getBuckets(String baseUrl, String jobId, 
-			boolean expand) 
+	public Pagination<Bucket> getBuckets(String baseUrl, String jobId, boolean expand) 
 	throws IOException 
 	{
-		return getBuckets(baseUrl, jobId, expand, null, null);
+		return getBuckets(baseUrl, jobId, expand, null, null, null, null);
+	}
+	
+	/**
+	 * Get the bucket results for a particular job and optionally filter by
+	 * anomaly or unusual score. 
+	 * 
+	 * Calls {@link #getBuckets(String, String, boolean, Long, Long, , Double, Double)} 
+	 * with the skip and take parameters set to <code>null</code>
+	 * 
+	 * @param baseUrl The base URL for the REST API including version number
+	 * e.g <code>http://localhost:8080/engine/v1/</code>
+	 * @param jobId The Job's unique Id
+	 * @param expand If true include the anomaly records for the bucket
+	 * @param anomalyScoreThreshold Return only buckets with an anomalyScore >=
+	 * this value. If <code>null</code> then ignored
+	 * @param normalizedProbabilityThreshold Return only buckets with a maxNormalizedProbability >=
+	 * this value. If <code>null</code> then ignored
+	 * 
+	 * @return A {@link Pagination} object containing a list of {@link Bucket buckets}
+	 * @throws IOException 
+	 */
+	public Pagination<Bucket> getBuckets(String baseUrl, String jobId, 
+			boolean expand, Double anomalyScoreThreshold, Double normalizedProbabilityThreshold) 
+	throws IOException 
+	{
+		return getBuckets(baseUrl, jobId, expand, null, null,
+				anomalyScoreThreshold, normalizedProbabilityThreshold);
 	}
 			
 	/**
@@ -551,15 +576,21 @@ public class EngineApiClient implements Closeable
 	 * @param expand If true include the anomaly records for the bucket
 	 * @param skip The number of buckets to skip 
 	 * @param take The max number of buckets to request. 
+	 * @param anomalyScoreThreshold Return only buckets with an anomalyScore >=
+	 * this value. If <code>null</code> then ignored
+	 * @param normalizedProbabilityThreshold Return only buckets with a maxNormalizedProbability >=
+	 * this value. If <code>null</code> then ignored
 	 * 
 	 * @return A {@link Pagination} object containing a list of {@link Bucket buckets}
 	 * @throws IOException 
 	 */
 	public Pagination<Bucket> getBuckets(String baseUrl, String jobId,
-			boolean expand, Long skip, Long take) 
+			boolean expand, Long skip, Long take,
+			Double anomalyScoreThreshold, Double normalizedProbabilityThreshold) 
 	throws IOException
 	{
-		return this.<String>getBuckets(baseUrl, jobId, expand, skip, take, null, null);
+		return this.<String>getBuckets(baseUrl, jobId, expand, skip, take, 
+				null, null, anomalyScoreThreshold, normalizedProbabilityThreshold);
 	}
 	
 	/**
@@ -576,12 +607,18 @@ public class EngineApiClient implements Closeable
 	 * or an ISO 8601 date String. If <code>null</code> then ignored
 	 * @param end The end date filter as either a Long (seconds from epoch)
 	 * or an ISO 8601 date String. If <code>null</code> then ignored
+	 * @param anomalyScoreThreshold Return only buckets with an anomalyScore >=
+	 * this value. If <code>null</code> then ignored
+	 * @param normalizedProbabilityThreshold Return only buckets with a maxNormalizedProbability >=
+	 * this value. If <code>null</code> then ignored
+	 * 
 	 * @return A {@link Pagination} object containing a list of {@link Bucket buckets}
 	 * @throws IOException
 	 */
 	public <T> Pagination<Bucket> getBuckets(String baseUrl, String jobId, 
 			boolean expand, 
-			Long skip, Long take, T start, T end) 
+			Long skip, Long take, T start, T end,
+			Double anomalyScoreThreshold, Double normalizedProbabilityThreshold) 
 	throws IOException
 	{
 		String url = baseUrl + "/results/" + jobId + "/buckets/";
@@ -609,6 +646,16 @@ public class EngineApiClient implements Closeable
 		if (end != null)
 		{
 			url += queryChar + "end=" + URLEncoder.encode(end.toString(), "UTF-8");
+			queryChar = '&';
+		}
+		if (anomalyScoreThreshold != null)
+		{
+			url += queryChar + "anomalyScore=" + anomalyScoreThreshold;
+			queryChar = '&';
+		}
+		if (normalizedProbabilityThreshold != null)
+		{
+			url += queryChar + "maxNormalizedProbability=" + normalizedProbabilityThreshold;
 			queryChar = '&';
 		}
 		
@@ -745,7 +792,7 @@ public class EngineApiClient implements Closeable
 	 * Get the anomaly records for the job between the start and 
 	 * end dates with skip and take parameters sorted by field
 	 * and optionally filtered by score. Only one of 
-	 * <code>anomalyScoreFilterValue</code> and <code>unusualScoreFilterValue</code> 
+	 * <code>anomalyScoreFilterValue</code> and <code>normalizedProbabilityFilterValue</code> 
 	 * should be specified it is an error if both are set
 	 * 
 	 * The records aren't grouped by bucket 
@@ -765,8 +812,8 @@ public class EngineApiClient implements Closeable
 	 * records in descending order if true else sort ascending
 	 * @param anomalyScoreFilterValue If not <code>null</code> return only the 
 	 * records with an anomalyScore >= anomalyScoreFilterValue
-	 * @param unusualScoreFilterValue If not <code>null</code> return only the 
-	 * records with an unusualScore >= unusualScoreFilterValue
+	 * @param normalizedProbabilityFilterValue If not <code>null</code> return only the 
+	 * records with a normalizedProbability >= normalizedProbabilityFilterValue
 	 * 
 	 * @return A {@link Pagination} object containing a list of 
 	 * {@link AnomalyRecord anomaly records}
@@ -775,7 +822,7 @@ public class EngineApiClient implements Closeable
 	public <T> Pagination<AnomalyRecord> getRecords(String baseUrl, String jobId, 
 			Long skip, Long take, T start, T end, 
 			String sortField, Boolean sortDescending, 
-			Double anomalyScoreFilterValue, Double unusualScoreFilterValue) 			
+			Double anomalyScoreFilterValue, Double normalizedProbabilityFilterValue) 			
 	throws IOException
 	{
 		String url = baseUrl + "/results/" + jobId + "/records/";
@@ -813,12 +860,12 @@ public class EngineApiClient implements Closeable
 		}
 		if (anomalyScoreFilterValue != null)
 		{
-			url += queryChar + "anomalyScore=" + URLEncoder.encode(anomalyScoreFilterValue.toString(), "UTF-8");
+			url += queryChar + "anomalyScore=" + anomalyScoreFilterValue.toString();
 			queryChar = '&';
 		}
-		if (unusualScoreFilterValue != null)
+		if (normalizedProbabilityFilterValue != null)
 		{
-			url += queryChar + "unusualScore=" + URLEncoder.encode(unusualScoreFilterValue.toString(), "UTF-8");
+			url += queryChar + "normalizedProbability=" + normalizedProbabilityFilterValue.toString();
 			queryChar = '&';
 		}		
 		

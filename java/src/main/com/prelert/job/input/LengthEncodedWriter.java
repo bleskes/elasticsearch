@@ -87,13 +87,15 @@ public class LengthEncodedWriter
 		}		
 	}
 	
+	
 	/**
-	 * Convert each String in the record list to a length/value encoded pair
-	 * and write to the outputstream. 
+	 * Convert each String in the record list to a length/value encoded 
+	 * pair and write to the outputstream. 
+	 * 
 	 * @param record
 	 * @throws IOException
 	 * @see {@link #writeRecord(String [])}
-	 */
+	 */	
 	public void writeRecord(List<String> record)
 	throws IOException
 	{		
@@ -113,6 +115,7 @@ public class LengthEncodedWriter
 			m_OutputStream.write(utf8Bytes);			
 		}		
 	}
+	
 		
 	/**
 	 * Lower level functions to write records individually.
@@ -130,6 +133,7 @@ public class LengthEncodedWriter
 		m_LengthBuffer.putInt(numFields);
 		m_OutputStream.write(m_LengthBuffer.array());
 	}
+	
 	
 	/**
 	 * Lower level functions to write record fields individually.

@@ -125,7 +125,7 @@ public class RestoreStateTest
 		s_Logger.info("Using Elasticsearch cluster " + clusterName);
 		
 		ElasticsearchJobProvider esJob = new ElasticsearchJobProvider(clusterName);
-		JobManager jobManager = new JobManager(esJob, null, null, null);
+		JobManager jobManager = new JobManager(esJob, null, null, null, null);
 		JobDetails job = jobManager.createJob(jobConfig);
 		
 		s_Logger.info("Created job " + job.getId());
@@ -149,7 +149,7 @@ public class RestoreStateTest
 			Thread.sleep(1000);
 
 			Pagination<Bucket> buckets = 
-					jobManager.buckets(job.getId(), false, 0, 100);
+					jobManager.buckets(job.getId(), false, 0, 100, 0.0, 0.0);
 
 			List<Double> anomalyScores = new ArrayList<>();
 			for (Bucket bucket : buckets.getDocuments())

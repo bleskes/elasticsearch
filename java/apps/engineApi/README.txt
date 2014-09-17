@@ -26,7 +26,7 @@ substitute "localhost:8080" with your remote "ipaddress:port" details.
 
 First check the installation is running:
 
-curl 'http://localhost:8080/engine/v1'
+curl 'http://localhost:8080/engine/v1/'
 
 This will return the version number of the Engine API. Don't worry if the
 version or build number is not exactly the same as the example below. If the
@@ -40,6 +40,7 @@ version number is lower we recommend upgrading to a newer version.
 <h2>Analytics Version:</h2>
 <p>prelert_autodetect_api (64 bit): Version 5.0.0 (Build 20140821010110) Copyright (c) Prelert Ltd 2006-2014</p>
 </body>
+</html>
 
 If it's not already running then start it using:
 
@@ -99,7 +100,7 @@ curl -X POST -H 'Content-Type: application/json' 'http://localhost:8080/engine/v
     }
 }'
 
-In this example, we are creating a new job with the ID 'farequote' and specifying
+In this example we are creating a new job with the ID 'farequote' and specifying
 that we want the analysis to be executed on the 'responsetime' field. This field 
 contains a numeric value, so we specify the metric function, which expands to all
 of min, mean, max, and sum. (Had we wanted to look at event rate or rare fields 
@@ -234,7 +235,7 @@ If not set 'skip' and 'take' default to 0 and 100 meaning the first 100 results 
     "eventCount" : 649,
     "records" : [ ],
     "anomalyScore" : 0.0,
-    "unusualScore" : 0.0
+    "maxNormalizedProbability" : 0.0
   }, {
     "id" : "1403485200",
     "timestamp" : "2014-06-23T01:00:00.000+0000",
@@ -243,7 +244,7 @@ If not set 'skip' and 'take' default to 0 and 100 meaning the first 100 results 
     "eventCount" : 627,
     "records" : [ ],
     "anomalyScore" : 0.0,
-    "unusualScore" : 0.0
+    "maxNormalizedProbability" : 0.0
   }, {
   ...
   }
@@ -278,13 +279,13 @@ curl 'http://localhost:8080/engine/v1/results/farequote/buckets/1403712000?expan
       "byFieldName" : "airline",
       "probability" : 2.36652E-89,
       "anomalyScore" : 94.35376,
-      "unusualScore" : 100.0,
+      "normalizedProbability" : 100.0,
       "byFieldValue" : "AAL",
       "typical" : 99.8279,
       "actual" : 242.75
     } ],
     "anomalyScore" : 94.35376,
-    "unusualScore" : 100.0
+    "maxNormalizedProbability" : 100.0
   }
 }
 
@@ -311,9 +312,9 @@ The same data can be processed in JSON format. Download the example data from
 http://s3.amazonaws.com/prelert_demo/farequote.json. The format of the file is
 as follows:
 
-{"timestamp": 1350824400, "airline": "DJA", "responsetime": 622, "sourcetype": "farequote"}
-{"timestamp": 1350824401, "airline": "JQA", "responsetime": 1742, "sourcetype": "farequote"}
-{"timestamp": 1350824402, "airline": "GAL", "responsetime": 5339, "sourcetype": "farequote"}
+{"airline": "AAL", "responsetime": "132.2046", "sourcetype": "farequote", "timestamp": "1447804800"}
+{"airline": "JZA", "responsetime": "990.4628", "sourcetype": "farequote", "timestamp": "1447804800"}
+{"airline": "JBU", "responsetime": "877.5927", "sourcetype": "farequote", "timestamp": "1447804800"}
 ...
 
 The same steps as above can be followed, except that the dataDescription would

@@ -32,7 +32,8 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 import junit.framework.Assert;
 
@@ -40,8 +41,11 @@ import org.apache.log4j.Logger;
 import org.junit.Test;
 
 import com.fasterxml.jackson.core.JsonParseException;
+import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
+import com.prelert.job.Detector;
 import com.prelert.job.DataDescription.DataFormat;
+import com.prelert.job.persistence.DummyJobDataPersister;
 import com.prelert.job.warnings.DummyStatusReporter;
 import com.prelert.job.warnings.HighProportionOfBadTimestampsException;
 import com.prelert.job.warnings.OutOfOrderRecordsException;
@@ -86,18 +90,21 @@ public class JsonDataTransformTest
 		
 		// data is written in the order of the required fields
 		// then the time field
-		int [] fieldMap = new int [] {3, 1, 2, 0};		
+		int [] fieldMap = new int [] {1, 2, 3, 0};		
 		
-		List<String> analysisFields = Arrays.asList(new String [] {
-				"sourcetype", "airline", "responsetime"});
-				
 		DataDescription dd = new DataDescription();
 		dd.setFormat(DataFormat.JSON);
 		dd.setTimeField("timestamp");
 		
+		AnalysisConfig ac = new AnalysisConfig();
+		Detector det = new Detector();
+		det.setFieldName("responsetime");
+		det.setByFieldName("airline");
+		det.setPartitionFieldName("sourcetype");
+		ac.setDetectors(Arrays.asList(det));
 		
 		// can create with null
-		ProcessManager pm = new ProcessManager(null, null, null, null);
+		ProcessManager pm = new ProcessManager(null, null, null, null, null);
 		
 		ByteArrayInputStream bis = 
 				new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
@@ -105,20 +112,27 @@ public class JsonDataTransformTest
 		
 		DummyUsageReporter usageReporter = new DummyUsageReporter("job_id", s_Logger);
 		DummyStatusReporter statusReporter = new DummyStatusReporter();
+		DummyJobDataPersister dataPersister = new DummyJobDataPersister();
 		
-		pm.writeToJob(dd, analysisFields, bis, bos, statusReporter, 
-				usageReporter, s_Logger);
+		pm.writeToJob(dd, ac, bis, bos, statusReporter, 
+				usageReporter, dataPersister, s_Logger);
 		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 		
-		Assert.assertEquals(8, statusReporter.sumTotalRecords());
-		Assert.assertEquals(8, statusReporter.getRecordsWrittenCount());
+		Assert.assertEquals(usageReporter.getTotalBytesRead(), statusReporter.getBytesRead());
+		Assert.assertEquals(8, statusReporter.getInputRecordCount() );
+		Assert.assertEquals(8 * 3, statusReporter.getInputFieldCount() );
+		Assert.assertEquals(8, statusReporter.getProcessedRecordCount() );
+		Assert.assertEquals(8 * 3, statusReporter.getProcessedFieldCount() );
 		Assert.assertEquals(0, statusReporter.getMissingFieldErrorCount());
 		Assert.assertEquals(0, statusReporter.getDateParseErrorsCount());
-		Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());
+		Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());	
+		
 		Assert.assertEquals(usageReporter.getTotalBytesRead(), 
 				data.getBytes(StandardCharsets.UTF_8).length -1);
 		Assert.assertEquals(usageReporter.getTotalBytesRead(),
-				statusReporter.getVolume());
+				statusReporter.getBytesRead());
+		
+		Assert.assertEquals(dataPersister.getRecordCount(), 8);
 		
 		// check header
 		int numFields = bb.getInt();		
@@ -195,11 +209,9 @@ public class JsonDataTransformTest
 												{"1350824404", "JQA", "8", "flightcentre"},
 												{"1350824404", "DJA", "1200", "flightcentre"}}; 
 		
-		List<String> analysisFields = Arrays.asList(new String [] {
-				"airline", "responsetime", "sourcetype"});		
 		
-		// data is written in the order of the required fields
-		// then the time field
+		// data fields are in alphabetical order followed by 		
+		// the time field
 		int [] fieldMap = new int [] {1, 2, 3, 0};		
 				
 		DataDescription dd = new DataDescription();
@@ -207,9 +219,23 @@ public class JsonDataTransformTest
 		dd.setTimeField("timestamp");
 		dd.setTimeFormat("yyyy-MM-dd'T'HH:mm:ss");
 		
+		AnalysisConfig ac = new AnalysisConfig();
+		Detector det = new Detector();
+		det.setFieldName("responsetime");
+		det.setByFieldName("airline");
+		det.setPartitionFieldName("sourcetype");
+		ac.setDetectors(Arrays.asList(det));
+		
+		Set<String> analysisFields = new TreeSet<String>(Arrays.asList(new String [] {
+				"responsetime", "airline", "sourcetype"}));
+		
+		for (String s : ac.analysisFields())
+		{
+			Assert.assertTrue(analysisFields.contains(s));
+		}			
 		
 		// can create with null
-		ProcessManager pm = new ProcessManager(null, null, null, null);
+		ProcessManager pm = new ProcessManager(null, null, null, null, null);
 		
 		ByteArrayInputStream bis = 
 				new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
@@ -217,20 +243,27 @@ public class JsonDataTransformTest
 		
 		DummyStatusReporter statusReporter = new DummyStatusReporter();
 		DummyUsageReporter usageReporter = new DummyUsageReporter("job_id", s_Logger);
+		DummyJobDataPersister dp = new DummyJobDataPersister();
 		
-		pm.writeToJob(dd, analysisFields, bis, bos, statusReporter,
-				usageReporter, s_Logger);
+		pm.writeToJob(dd, ac, bis, bos, statusReporter,
+				usageReporter, dp, s_Logger);
 		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 		
-		Assert.assertEquals(8, statusReporter.sumTotalRecords());
-		Assert.assertEquals(8, statusReporter.getRecordsWrittenCount());
+		Assert.assertEquals(usageReporter.getTotalBytesRead(), statusReporter.getBytesRead());
+		Assert.assertEquals(8, statusReporter.getInputRecordCount() );
+		Assert.assertEquals(8 * 3, statusReporter.getInputFieldCount() );
+		Assert.assertEquals(8, statusReporter.getProcessedRecordCount() );
+		Assert.assertEquals(8 * 3, statusReporter.getProcessedFieldCount() );
 		Assert.assertEquals(0, statusReporter.getMissingFieldErrorCount());
 		Assert.assertEquals(0, statusReporter.getDateParseErrorsCount());
-		Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());
+		Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());	
+		
 		Assert.assertEquals(usageReporter.getTotalBytesRead(), 
 				data.getBytes(StandardCharsets.UTF_8).length -1);
 		Assert.assertEquals(usageReporter.getTotalBytesRead(),
-				statusReporter.getVolume());
+				statusReporter.getBytesRead());
+		
+		Assert.assertEquals(dp.getRecordCount(), 8);		
 		
 		// check header
 		int numFields = bb.getInt();		
@@ -307,21 +340,34 @@ public class JsonDataTransformTest
 												{"1350824404", "JQA", "8", "flightcentre"},
 												{"1350824404", "DJA", "1200", "flightcentre"}}; 
 		
-		List<String> analysisFields = Arrays.asList(new String [] {
-				"responsetime", "sourcetype", "airline"});		
+
 		
-		// data is written in the order of the required fields
-		// then the time field
-		int [] fieldMap = new int [] {2, 3, 1, 0};		
+		// data fields are in alphabetical order followed by 		
+		// the time field
+		int [] fieldMap = new int [] {1, 2, 3, 0};			
 				
 		DataDescription dd = new DataDescription();
 		dd.setFormat(DataFormat.JSON);
 		dd.setTimeField("timestamp");
 		dd.setTimeFormat("yyyy-MM-dd'T'HH:mm:ss");
 		
+		AnalysisConfig ac = new AnalysisConfig();
+		Detector det = new Detector();
+		det.setFieldName("responsetime");
+		det.setByFieldName("airline");
+		det.setPartitionFieldName("sourcetype");
+		ac.setDetectors(Arrays.asList(det));		
+		
+		Set<String> analysisFields = new TreeSet<String>(Arrays.asList(new String [] {
+				"responsetime", "airline", "sourcetype"}));
+		
+		for (String s : ac.analysisFields())
+		{
+			Assert.assertTrue(analysisFields.contains(s));
+		}
 		
 		// can create with null
-		ProcessManager pm = new ProcessManager(null, null, null, null);
+		ProcessManager pm = new ProcessManager(null, null, null, null, null);
 		
 		ByteArrayInputStream bis = 
 				new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
@@ -329,20 +375,27 @@ public class JsonDataTransformTest
 		
 		DummyStatusReporter statusReporter = new DummyStatusReporter();
 		DummyUsageReporter usageReporter = new DummyUsageReporter("job_id", s_Logger);
+		DummyJobDataPersister dp = new DummyJobDataPersister();
 		
-		pm.writeToJob(dd, analysisFields, bis, bos, statusReporter, 
-				usageReporter, s_Logger);
+		pm.writeToJob(dd, ac, bis, bos, statusReporter, 
+				usageReporter, dp, s_Logger);
 		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 		
-		Assert.assertEquals(8, statusReporter.sumTotalRecords());
-		Assert.assertEquals(8, statusReporter.getRecordsWrittenCount());
+		Assert.assertEquals(usageReporter.getTotalBytesRead(), statusReporter.getBytesRead());
+		Assert.assertEquals(8, statusReporter.getInputRecordCount() );
+		Assert.assertEquals(8 * 3, statusReporter.getInputFieldCount() );
+		Assert.assertEquals(8, statusReporter.getProcessedRecordCount() );
+		Assert.assertEquals(8 * 3, statusReporter.getProcessedFieldCount() );
 		Assert.assertEquals(0, statusReporter.getMissingFieldErrorCount());
 		Assert.assertEquals(0, statusReporter.getDateParseErrorsCount());
-		Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());
+		Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());	
+		
 		Assert.assertEquals(usageReporter.getTotalBytesRead(), 
 				data.getBytes(StandardCharsets.UTF_8).length -1);
 		Assert.assertEquals(usageReporter.getTotalBytesRead(),
-				statusReporter.getVolume());
+				statusReporter.getBytesRead());
+		
+		Assert.assertEquals(dp.getRecordCount(), 8);
 		
 		// check header
 		int numFields = bb.getInt();		
@@ -418,20 +471,32 @@ public class JsonDataTransformTest
 												{"1350824404", "JQA", "8", "flightcentre"},
 												{"1350824404", "DJA", "1200", "flightcentre"}}; 
 		
-		// data is written in the order of the required fields
-		// then the time field
-		int [] fieldMap = new int [] {3, 1, 2, 0};		
+		// data fields are in alphabetical order followed by 		
+		// the time field
+		int [] fieldMap = new int [] {1, 2, 3, 0};			
 		
-		List<String> analysisFields = Arrays.asList(new String [] {
-				"sourcetype", "airline", "responsetime"});
-				
 		DataDescription dd = new DataDescription();
 		dd.setFormat(DataFormat.JSON);
 		dd.setTimeField("timestamp");
 		
+		AnalysisConfig ac = new AnalysisConfig();
+		Detector det = new Detector();
+		det.setFieldName("responsetime");
+		det.setByFieldName("airline");
+		det.setPartitionFieldName("sourcetype");
+		ac.setDetectors(Arrays.asList(det));		
+		
+		Set<String> analysisFields = new TreeSet<String>(Arrays.asList(new String [] {
+				"responsetime", "airline", "sourcetype"}));
+		
+		for (String s : ac.analysisFields())
+		{
+			Assert.assertTrue(analysisFields.contains(s));
+		}			
+		
 		
 		// can create with null
-		ProcessManager pm = new ProcessManager(null, null, null, null);
+		ProcessManager pm = new ProcessManager(null, null, null, null, null);
 		
 		ByteArrayInputStream bis = 
 				new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
@@ -439,20 +504,26 @@ public class JsonDataTransformTest
 		
 		DummyStatusReporter statusReporter = new DummyStatusReporter();
 		DummyUsageReporter usageReporter = new DummyUsageReporter("job_id", s_Logger);
+		DummyJobDataPersister dp = new DummyJobDataPersister();
 		
-		pm.writeToJob(dd, analysisFields, bis, bos, statusReporter,
-				usageReporter, s_Logger);
+		pm.writeToJob(dd, ac, bis, bos, statusReporter,
+				usageReporter, dp, s_Logger);
 		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 		
-		Assert.assertEquals(8, statusReporter.sumTotalRecords());
-		Assert.assertEquals(8, statusReporter.getRecordsWrittenCount());
-		Assert.assertEquals(0, statusReporter.getMissingFieldErrorCount());
-		Assert.assertEquals(0, statusReporter.getDateParseErrorsCount());
-		Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());
 		Assert.assertEquals(usageReporter.getTotalBytesRead(), 
 				data.getBytes(StandardCharsets.UTF_8).length -1);		
-		Assert.assertEquals(usageReporter.getTotalBytesRead(),
-				statusReporter.getVolume());
+
+		Assert.assertEquals(usageReporter.getTotalBytesRead(), statusReporter.getBytesRead());
+		Assert.assertEquals(8, statusReporter.getInputRecordCount() );
+		Assert.assertEquals(8 * 3, statusReporter.getInputFieldCount() );
+		Assert.assertEquals(8, statusReporter.getProcessedRecordCount() );
+		Assert.assertEquals(8 * 3, statusReporter.getProcessedFieldCount() );
+		Assert.assertEquals(0, statusReporter.getMissingFieldErrorCount());
+		Assert.assertEquals(0, statusReporter.getDateParseErrorsCount());
+		Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());	
+		
+		
+		Assert.assertEquals(dp.getRecordCount(), 8);
 		
 		// check header
 		int numFields = bb.getInt();		
@@ -548,12 +619,10 @@ public class JsonDataTransformTest
 				{"1350824404", "JQA", "8", "flightcentre"},
 				{"1350824404", "DJA", "1200", "flightcentre"}}; 
 
-		List<String> analysisFields = Arrays.asList(new String [] {
-				"responsetime", "sourcetype", "airline"});		
 
-		// data is written in the order of the required fields
-		// then the time field
-		int [] fieldMap = new int [] {2, 3, 1, 0};		
+		// data fields are in alphabetical order followed by 		
+		// the time field
+		int [] fieldMap = new int [] {1, 2, 3, 0};			
 
 		DataDescription dateFormatDD = new DataDescription();
 		dateFormatDD.setFormat(DataFormat.JSON);
@@ -568,12 +637,28 @@ public class JsonDataTransformTest
 		epochMsFormatDD.setFormat(DataFormat.JSON);
 		epochMsFormatDD.setTimeField("timestamp");
 		epochMsFormatDD.setTimeFormat("epoch_ms");
+		
+		AnalysisConfig ac = new AnalysisConfig();
+		Detector det = new Detector();
+		det.setFieldName("responsetime");
+		det.setByFieldName("airline");
+		det.setPartitionFieldName("sourcetype");
+		ac.setDetectors(Arrays.asList(det));
+		
+		
+		Set<String> analysisFields = new TreeSet<String>(Arrays.asList(new String [] {
+				"responsetime", "airline", "sourcetype"}));
+		
+		for (String s : ac.analysisFields())
+		{
+			Assert.assertTrue(analysisFields.contains(s));
+		}			
 
 		DataDescription [] dds = new DataDescription [] {dateFormatDD, epochFormatDD,
 				epochMsFormatDD};
 
 		// can create with null
-		ProcessManager pm = new ProcessManager(null, null, null, null);
+		ProcessManager pm = new ProcessManager(null, null, null, null, null);
 
 		int count = 0;
 		for (String data : new String [] {dateFormatData, epochFormatData, epochMsFormatData})
@@ -584,22 +669,28 @@ public class JsonDataTransformTest
 
 			DummyStatusReporter statusReporter = new DummyStatusReporter();
 			DummyUsageReporter usageReporter = new DummyUsageReporter("job_id", s_Logger);
-
+			DummyJobDataPersister dp = new DummyJobDataPersister();
+			
 			DataDescription dd = dds[count++];
 
-			pm.writeToJob(dd, analysisFields, bis, bos, statusReporter,
-					usageReporter, s_Logger);
+			pm.writeToJob(dd, ac, bis, bos, statusReporter,
+					usageReporter, dp, s_Logger);
 			ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 
-			Assert.assertEquals(8, statusReporter.sumTotalRecords());
-			Assert.assertEquals(8, statusReporter.getRecordsWrittenCount());
-			Assert.assertEquals(3, statusReporter.getMissingFieldErrorCount());
-			Assert.assertEquals(0, statusReporter.getDateParseErrorsCount());
-			Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());
 			Assert.assertEquals(usageReporter.getTotalBytesRead(), 
 					data.getBytes(StandardCharsets.UTF_8).length -1);
-			Assert.assertEquals(usageReporter.getTotalBytesRead(),
-					statusReporter.getVolume());			
+		
+			Assert.assertEquals(usageReporter.getTotalBytesRead(), statusReporter.getBytesRead());
+			Assert.assertEquals(8, statusReporter.getInputRecordCount() );
+			Assert.assertEquals(8 * 3, statusReporter.getInputFieldCount() );
+			Assert.assertEquals(8, statusReporter.getProcessedRecordCount() );
+			Assert.assertEquals(8 * 3 -3, statusReporter.getProcessedFieldCount() );
+			Assert.assertEquals(3, statusReporter.getMissingFieldErrorCount());
+			Assert.assertEquals(0, statusReporter.getDateParseErrorsCount());
+			Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());	
+			
+			
+			Assert.assertEquals(dp.getRecordCount(), 8);
 
 			// check header
 			int numFields = bb.getInt();		
@@ -679,16 +770,30 @@ public class JsonDataTransformTest
 												{"1350824402", "my.test.metric3", "12345.678", "boooo"},
 												{"1350824402", "my.test.metric4", "12345.678", ""}};
 		
-		// data is written in the order of the required fields
-		// then the time field
-		int [] fieldMap = new int [] {1, 2, 3, 0};
+		// data fields are in alphabetical order followed by 		
+		// the time field
+		int [] fieldMap = new int [] {1, 3, 2, 0};		
 		
 		DataDescription dd = new DataDescription();
 		dd.setFormat(DataFormat.JSON);
 		dd.setTimeField("time");
 		dd.setTimeFormat("epoch");
 		
-		List<String> analysisFields = Arrays.asList(new String [] {"name", "value", "tags.tag2"});	
+		AnalysisConfig ac = new AnalysisConfig();
+		Detector det = new Detector();
+		det.setFieldName("name");
+		det.setByFieldName("value");
+		det.setPartitionFieldName("tags.tag2");
+		ac.setDetectors(Arrays.asList(det));
+		
+		Set<String> analysisFields = new TreeSet<String>(Arrays.asList(new String [] {
+				"name", "value", "tags.tag2"}));
+		
+		for (String s : ac.analysisFields())
+		{
+			Assert.assertTrue(analysisFields.contains(s));
+		}			
+		
 		
 		int loop = 0;
 		for (String data : new String [] {epochData, timeFormatData, epochMsData})
@@ -704,7 +809,7 @@ public class JsonDataTransformTest
 			loop++;						
 
 			// can create with null
-			ProcessManager pm = new ProcessManager(null, null, null, null);
+			ProcessManager pm = new ProcessManager(null, null, null, null, null);
 
 			ByteArrayInputStream bis = 
 					new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
@@ -712,20 +817,26 @@ public class JsonDataTransformTest
 
 			DummyStatusReporter statusReporter = new DummyStatusReporter();
 			DummyUsageReporter usageReporter = new DummyUsageReporter("job_id", s_Logger);
+			DummyJobDataPersister dp = new DummyJobDataPersister();
 			
-			pm.writeToJob(dd, analysisFields, bis, bos, statusReporter, 
-						usageReporter, s_Logger);
+			pm.writeToJob(dd, ac, bis, bos, statusReporter, 
+						usageReporter, dp, s_Logger);
 			ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 			
-			Assert.assertEquals(4, statusReporter.sumTotalRecords());
-			Assert.assertEquals(4, statusReporter.getRecordsWrittenCount());
-			Assert.assertEquals(1, statusReporter.getMissingFieldErrorCount());
-			Assert.assertEquals(0, statusReporter.getDateParseErrorsCount());
-			Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());
 			Assert.assertEquals(usageReporter.getTotalBytesRead(), 
 					data.getBytes(StandardCharsets.UTF_8).length -1);
-			Assert.assertEquals(usageReporter.getTotalBytesRead(),
-					statusReporter.getVolume());	
+			
+			Assert.assertEquals(usageReporter.getTotalBytesRead(), statusReporter.getBytesRead());
+			Assert.assertEquals(4, statusReporter.getInputRecordCount() );
+			Assert.assertEquals(4 * 3, statusReporter.getInputFieldCount() );
+			Assert.assertEquals(4, statusReporter.getProcessedRecordCount() );
+			Assert.assertEquals(4 * 3 - 1, statusReporter.getProcessedFieldCount() );
+			Assert.assertEquals(1, statusReporter.getMissingFieldErrorCount());
+			Assert.assertEquals(0, statusReporter.getDateParseErrorsCount());
+			Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());	
+			
+			
+			Assert.assertEquals(dp.getRecordCount(), 4);
 
 			// check header
 			int numFields = bb.getInt();		
@@ -790,19 +901,39 @@ public class JsonDataTransformTest
 												{"1350824402", "my.test.metric3", "12345.678", "boooo",  "value1"},
 												{"1350824402", "my.test.metric4", "12345.678", "", ""}};
 		
-		List<String> analysisFields = Arrays.asList(new String [] {"name", "value", "tags.tag2", "tags.tag1.key1"});	
 		
-		// data is written in the order of the required fields
-		// then the time field
-		int [] fieldMap = new int [] {1, 2, 3, 4, 0};
+		// data fields are in alphabetical order followed by 		
+		// the time field
+		int [] fieldMap = new int [] {1, 4, 3, 2, 0};				
 		
 		DataDescription dd = new DataDescription();
 		dd.setFormat(DataFormat.JSON);
 		dd.setTimeField("time");
 		dd.setTimeFormat("epoch");
 		
+		AnalysisConfig ac = new AnalysisConfig();
+		Detector det = new Detector();
+		det.setFieldName("name");
+		det.setByFieldName("value");
+		det.setPartitionFieldName("tags.tag2");
+		
+		Detector det2 = new Detector();
+		det2.setFieldName("name");
+		det2.setByFieldName("value");
+		det2.setPartitionFieldName("tags.tag1.key1");
+		
+		ac.setDetectors(Arrays.asList(det, det2));
+		
+		Set<String> analysisFields = new TreeSet<String>(Arrays.asList(new String [] {
+				"name", "value", "tags.tag2", "tags.tag1.key1"}));
+		
+		for (String s : ac.analysisFields())
+		{
+			Assert.assertTrue(analysisFields.contains(s));
+		}	
+		
 		// can create with null
-		ProcessManager pm = new ProcessManager(null, null, null, null);
+		ProcessManager pm = new ProcessManager(null, null, null, null, null);
 
 		ByteArrayInputStream bis = 
 				new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
@@ -810,20 +941,25 @@ public class JsonDataTransformTest
 
 		DummyStatusReporter statusReporter = new DummyStatusReporter();
 		DummyUsageReporter usageReporter = new DummyUsageReporter("job_id", s_Logger);
+		DummyJobDataPersister dp = new DummyJobDataPersister();
 		
-		pm.writeToJob(dd, analysisFields, bis, bos, statusReporter, 
-				usageReporter, s_Logger);
+		pm.writeToJob(dd, ac, bis, bos, statusReporter, 
+				usageReporter, dp, s_Logger);
 		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
-		
-		Assert.assertEquals(4, statusReporter.sumTotalRecords());
-		Assert.assertEquals(4, statusReporter.getRecordsWrittenCount());
-		Assert.assertEquals(1, statusReporter.getMissingFieldErrorCount());
-		Assert.assertEquals(0, statusReporter.getDateParseErrorsCount());
-		Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());
+			
 		Assert.assertEquals(usageReporter.getTotalBytesRead(), 
 				data.getBytes(StandardCharsets.UTF_8).length -1);
-		Assert.assertEquals(usageReporter.getTotalBytesRead(),
-				statusReporter.getVolume());				
+
+		Assert.assertEquals(usageReporter.getTotalBytesRead(), statusReporter.getBytesRead());
+		Assert.assertEquals(4, statusReporter.getInputRecordCount() );
+		Assert.assertEquals(4 * 4, statusReporter.getInputFieldCount() );
+		Assert.assertEquals(4, statusReporter.getProcessedRecordCount() );
+		Assert.assertEquals(4 * 4 -1, statusReporter.getProcessedFieldCount() );
+		Assert.assertEquals(1, statusReporter.getMissingFieldErrorCount());
+		Assert.assertEquals(0, statusReporter.getDateParseErrorsCount());
+		Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());	
+		
+		Assert.assertEquals(dp.getRecordCount(), 4);
 
 		// check header
 		int numFields = bb.getInt();		
@@ -899,14 +1035,27 @@ public class JsonDataTransformTest
 		
 		// data is written in the order of the required fields
 		// then the time field
-		int [] fieldMap = new int [] {1, 2, 3, 0};
+		int [] fieldMap = new int [] {1, 3, 2, 0};
 		
 		DataDescription dd = new DataDescription();
 		dd.setFormat(DataFormat.JSON);
 		dd.setTimeField("time");
 		dd.setTimeFormat("epoch");
 		
-		List<String> analysisFields = Arrays.asList(new String [] {"name", "value", "tags.tag2"});	
+		AnalysisConfig ac = new AnalysisConfig();
+		Detector det = new Detector();
+		det.setFieldName("name");
+		det.setByFieldName("value");
+		det.setPartitionFieldName("tags.tag2");
+		ac.setDetectors(Arrays.asList(det));
+		
+		Set<String> analysisFields = new TreeSet<String>(Arrays.asList(new String [] {
+				"name", "value", "tags.tag2"}));
+		
+		for (String s : ac.analysisFields())
+		{
+			Assert.assertTrue(analysisFields.contains(s));
+		}	
 		
 		int loop = 0;
 		for (String data : new String [] {epochData,  epochMsData})
@@ -922,7 +1071,7 @@ public class JsonDataTransformTest
 			loop++;						
 
 			// can create with null
-			ProcessManager pm = new ProcessManager(null, null, null, null);
+			ProcessManager pm = new ProcessManager(null, null, null, null, null);
 
 			ByteArrayInputStream bis = 
 					new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
@@ -930,21 +1079,28 @@ public class JsonDataTransformTest
 
 			DummyStatusReporter statusReporter = new DummyStatusReporter();
 			DummyUsageReporter usageReporter = new DummyUsageReporter("job_id", s_Logger);
+			DummyJobDataPersister dp = new DummyJobDataPersister();
 			
-			pm.writeToJob(dd, analysisFields, bis, bos, statusReporter, 
-					usageReporter, s_Logger);
+			pm.writeToJob(dd, ac, bis, bos, statusReporter, 
+					usageReporter, dp, s_Logger);
 			ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 			
-			Assert.assertEquals(4, statusReporter.sumTotalRecords());
-			Assert.assertEquals(4, statusReporter.getRecordsWrittenCount());
-			Assert.assertEquals(1, statusReporter.getMissingFieldErrorCount());
-			Assert.assertEquals(0, statusReporter.getDateParseErrorsCount());
-			Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());
+		
 
 			Assert.assertEquals(usageReporter.getTotalBytesRead(), 
 					data.getBytes(StandardCharsets.UTF_8).length -1);
-			Assert.assertEquals(usageReporter.getTotalBytesRead(),
-					statusReporter.getVolume());	
+
+
+			Assert.assertEquals(usageReporter.getTotalBytesRead(), statusReporter.getBytesRead());
+			Assert.assertEquals(4, statusReporter.getInputRecordCount() );
+			Assert.assertEquals(4 * 3, statusReporter.getInputFieldCount() );
+			Assert.assertEquals(4, statusReporter.getProcessedRecordCount() );
+			Assert.assertEquals(4 * 3 -1, statusReporter.getProcessedFieldCount() );
+			Assert.assertEquals(1, statusReporter.getMissingFieldErrorCount());
+			Assert.assertEquals(0, statusReporter.getDateParseErrorsCount());
+			Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());	
+			
+			Assert.assertEquals(dp.getRecordCount(), 4);			
 			
 			// check header
 			int numFields = bb.getInt();		

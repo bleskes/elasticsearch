@@ -31,6 +31,8 @@ import static org.elasticsearch.node.NodeBuilder.nodeBuilder;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -53,6 +55,7 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.index.engine.VersionConflictEngineException;
 import org.elasticsearch.index.get.GetField;
 import org.elasticsearch.index.query.FilterBuilder;
 import org.elasticsearch.index.query.FilterBuilders;
@@ -65,6 +68,7 @@ import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.prelert.job.DetectorState;
@@ -144,6 +148,7 @@ public class ElasticsearchJobProvider implements JobProvider
 		
 		m_ObjectMapper = new ObjectMapper();
 		m_ObjectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+		m_ObjectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 		
 		createUsageMeteringIndex();
 	}
@@ -324,7 +329,7 @@ public class ElasticsearchJobProvider implements JobProvider
 			XContentBuilder detectorStateMapping = ElasticsearchMappings.detectorStateMapping();
 			XContentBuilder usageMapping = ElasticsearchMappings.usageMapping();
 			XContentBuilder alertMapping = ElasticsearchMappings.alertMapping();
-			
+						
 			m_Client.admin().indices()
 					.prepareCreate(job.getId())					
 					.addMapping(JobDetails.TYPE, jobMapping)
@@ -402,10 +407,28 @@ public class ElasticsearchJobProvider implements JobProvider
 	{
 		if (jobExists(jobId))
 		{
-			m_Client.prepareUpdate(jobId, JobDetails.TYPE, jobId)
-									.setDoc(updates)
-									.setRefresh(true)
-									.get();
+			int retryCount = 3;
+			while (--retryCount > 0)
+			{
+				try
+				{
+					m_Client.prepareUpdate(jobId, JobDetails.TYPE, jobId)
+										.setDoc(updates)
+										.get();
+					
+					break;
+				}
+				catch (VersionConflictEngineException e)
+				{
+					s_Logger.debug("Conflict updating job document");
+				}
+			}
+			
+			if (retryCount <= 0)
+			{
+				s_Logger.warn("Unable to update conflicted job document");
+				return false;
+			}
 			
 			return true;
 		}
@@ -467,27 +490,95 @@ public class ElasticsearchJobProvider implements JobProvider
 	/* Results */
 	@Override
 	public Pagination<Bucket> buckets(String jobId,
-			boolean expand, int skip, int take)
+			boolean expand, int skip, int take,
+			double anomalyScoreThreshold, double normalizedProbabilityThreshold)
 	throws UnknownJobException
 	{
-		FilterBuilder fb = FilterBuilders.matchAllFilter();
+		FilterBuilder fb = null;
+		
+		if (anomalyScoreThreshold > 0.0)
+		{
+			RangeFilterBuilder scoreFilter = FilterBuilders.rangeFilter(Bucket.ANOMALY_SCORE);
+			scoreFilter.gte(anomalyScoreThreshold);
+			fb = scoreFilter;
+		}
+		if (normalizedProbabilityThreshold > 0.0)
+		{
+			RangeFilterBuilder scoreFilter = FilterBuilders.rangeFilter(Bucket.MAX_NORMALIZED_PROBABILITY);
+			scoreFilter.gte(normalizedProbabilityThreshold);
+			
+			if (fb == null)
+			{
+				fb = scoreFilter;
+			}
+			else 
+			{
+				fb = FilterBuilders.andFilter(scoreFilter, fb);
+			}
+			
+		}
+		
+		if (fb == null)
+		{
+			fb = FilterBuilders.matchAllFilter();
+		}
 		
 		return buckets(jobId, expand, skip, take, fb);
 	}
 
 	@Override
 	public Pagination<Bucket> buckets(String jobId,
-			boolean expand, int skip, int take, long startBucket, long endBucket)
+			boolean expand, int skip, int take, long startBucket, long endBucket,
+			double anomalyScoreThreshold, double normalizedProbabilityThreshold)
 	throws UnknownJobException
 	{
-		RangeFilterBuilder fb = FilterBuilders.rangeFilter(Bucket.ID);
-		if (startBucket > 0)
+		FilterBuilder fb = null;
+		
+		if (startBucket > 0 || endBucket > 0)
 		{
-			fb.gte(startBucket);
+			RangeFilterBuilder timeRange = FilterBuilders.rangeFilter(Bucket.ID);
+
+			if (startBucket > 0)
+			{
+				timeRange.gte(startBucket);
+			}
+			if (endBucket > 0)
+			{
+				timeRange.lt(endBucket);
+			}
+			
+			fb = timeRange;
 		}
-		if (endBucket > 0)
+		
+		
+		if (anomalyScoreThreshold > 0.0)
 		{
-			fb.lt(endBucket);
+			RangeFilterBuilder scoreFilter = FilterBuilders.rangeFilter(Bucket.ANOMALY_SCORE);
+			scoreFilter.gte(anomalyScoreThreshold);
+			
+			if (fb == null)
+			{
+				fb = scoreFilter;
+			}
+			else 
+			{
+				fb = FilterBuilders.andFilter(scoreFilter, fb);
+			}
+		}
+		
+		if (normalizedProbabilityThreshold > 0.0)
+		{
+			RangeFilterBuilder scoreFilter = FilterBuilders.rangeFilter(Bucket.MAX_NORMALIZED_PROBABILITY);
+			scoreFilter.gte(normalizedProbabilityThreshold);
+			
+			if (fb == null)
+			{
+				fb = scoreFilter;
+			}
+			else 
+			{
+				fb = FilterBuilders.andFilter(scoreFilter, fb);
+			}
 		}
 
 		return buckets(jobId, expand, skip, take, fb);
@@ -536,7 +627,11 @@ public class ElasticsearchJobProvider implements JobProvider
 				Pagination<AnomalyRecord> page = this.bucketRecords(
 						jobId, hit.getId(), rskip, rtake, 
 						AnomalyRecord.PROBABILITY, false);
-				bucket.setRecords(page.getDocuments());
+				
+				if (page.getHitCount() > 0)
+				{
+					bucket.setRecords(page.getDocuments());
+				}
 				
 				while (page.getHitCount() > rskip + rtake)
 				{
@@ -588,7 +683,7 @@ public class ElasticsearchJobProvider implements JobProvider
 
 			Bucket bucket = m_ObjectMapper.convertValue(response.getSource(), Bucket.class);
 			
-			if (response.isExists() && expand)
+			if (expand)
 			{
 				int rskip = 0;
 				int rtake = 500;
@@ -621,8 +716,25 @@ public class ElasticsearchJobProvider implements JobProvider
 	{
 		 FilterBuilder bucketFilter = FilterBuilders.hasParentFilter(Bucket.TYPE, 
 								FilterBuilders.termFilter(Bucket.ID, bucketId));
+		 
+		 SortBuilder sb = null;
+		 if (sortField != null)
+		 {
+			 sb = new FieldSortBuilder(sortField)
+						 .ignoreUnmapped(true)
+						 .missing("_last")
+						 .order(descending ? SortOrder.DESC : SortOrder.ASC);		
+		 }
+		 
+		 List<String> secondarySort = Arrays.asList(new String[] {
+			 AnomalyRecord.OVER_FIELD_VALUE,
+			 AnomalyRecord.PARTITION_FIELD_VALUE,
+			 AnomalyRecord.BY_FIELD_VALUE,
+			 AnomalyRecord.FIELD_NAME,
+			 AnomalyRecord.FUNCTION}
+		 );
 		
-		return records(jobId, skip, take, bucketFilter, sortField, descending);
+		return records(jobId, skip, take, bucketFilter, sb, secondarySort);
 	}
 	
 	
@@ -630,33 +742,59 @@ public class ElasticsearchJobProvider implements JobProvider
 	public Pagination<AnomalyRecord> records(String jobId,
 			int skip, int take,	long startBucket, long endBucket, 
 			String sortField, boolean descending, 
-			String scoreFilterField, double filterValue)
+			double anomalyScoreThreshold, double normalizedProbabilityThreshold)
 	throws UnknownJobException
 	{
-		RangeFilterBuilder rangeFilter = FilterBuilders.rangeFilter(Bucket.ID);
-		if (startBucket > 0)
-		{
-			rangeFilter.gte(startBucket);
-		}
-		if (endBucket > 0)
-		{
-			rangeFilter.lt(endBucket);
-		}
+		FilterBuilder fb = null;
 		
-		FilterBuilder bucketFilter = FilterBuilders.hasParentFilter(				
-				Bucket.TYPE, rangeFilter);
-		
-		
-		FilterBuilder filter = bucketFilter;
-		if (scoreFilterField != null && filterValue > 0.0)
+		if (startBucket > 0 || endBucket > 0)
 		{
-			RangeFilterBuilder scoreFilter = FilterBuilders.rangeFilter(scoreFilterField);
-			scoreFilter.gte(filterValue);
+			RangeFilterBuilder rangeFilter = FilterBuilders.rangeFilter(Bucket.ID);
+
+			if (startBucket > 0)
+			{
+				rangeFilter.gte(startBucket);
+			}
+			if (endBucket > 0)
+			{
+				rangeFilter.lt(endBucket);
+			}
 			
-			filter = FilterBuilders.andFilter(bucketFilter, scoreFilter);
-		}			
+			fb = FilterBuilders.hasParentFilter(Bucket.TYPE, rangeFilter);
+		}
 		
-		return records(jobId, skip, take, filter, sortField, descending);
+		if (anomalyScoreThreshold > 0.0)
+		{
+			RangeFilterBuilder scoreFilter = FilterBuilders.rangeFilter(AnomalyRecord.ANOMALY_SCORE);
+			scoreFilter.gte(anomalyScoreThreshold);
+			
+			if (fb == null)
+			{
+				fb = scoreFilter;
+			}
+			else 
+			{
+				fb = FilterBuilders.andFilter(scoreFilter, fb);
+			}
+		}
+		
+		if (normalizedProbabilityThreshold > 0.0)
+		{
+			RangeFilterBuilder scoreFilter = FilterBuilders.rangeFilter(AnomalyRecord.NORMALIZED_PROBABILITY);
+			scoreFilter.gte(normalizedProbabilityThreshold);
+			
+			if (fb == null)
+			{
+				fb = scoreFilter;
+			}
+			else 
+			{
+				fb = FilterBuilders.andFilter(scoreFilter, fb);
+			}
+		}
+		
+
+		return records(jobId, skip, take, fb, sortField, descending);
 	}
 	
 	/**
@@ -679,24 +817,41 @@ public class ElasticsearchJobProvider implements JobProvider
 		FilterBuilder bucketFilter = FilterBuilders.hasParentFilter(
 						Bucket.TYPE, idFilter);
 
-		return records(jobId, skip, take, bucketFilter, sortField, descending);
+	 
+		 return records(jobId, skip, take, bucketFilter, sortField, descending);
 	}
 	
 	@Override
 	public Pagination<AnomalyRecord> records(String jobId,
 			int skip, int take, String sortField, boolean descending,
-			String scoreFilterField, double filterValue)
+			double anomalyScoreThreshold, double normalizedProbabilityThreshold)
 	throws UnknownJobException
 	{
-		 FilterBuilder fb;
-		 if (scoreFilterField != null && filterValue > 0.0)
+		 FilterBuilder fb = null;
+		 
+		 if (anomalyScoreThreshold > 0.0)
 		 {
-			 RangeFilterBuilder scoreFilter = FilterBuilders.rangeFilter(scoreFilterField);
-			 scoreFilter.gte(filterValue);
-
+			 RangeFilterBuilder scoreFilter = FilterBuilders.rangeFilter(AnomalyRecord.ANOMALY_SCORE);
+			 scoreFilter.gte(anomalyScoreThreshold);
 			 fb = scoreFilter;
 		 }
-		 else
+		 if (normalizedProbabilityThreshold > 0.0)
+		 {
+			 RangeFilterBuilder scoreFilter = FilterBuilders.rangeFilter(AnomalyRecord.NORMALIZED_PROBABILITY);
+			 scoreFilter.gte(normalizedProbabilityThreshold);
+
+			 if (fb == null)
+			 {
+				 fb = scoreFilter;
+			 }
+			 else 
+			 {
+				 fb = FilterBuilders.andFilter(scoreFilter, fb);
+			 }
+
+		 }
+
+		 if (fb == null)
 		 {
 			 fb = FilterBuilders.matchAllFilter();
 		 }
@@ -705,21 +860,29 @@ public class ElasticsearchJobProvider implements JobProvider
 	}
 	
 	
+	private Pagination<AnomalyRecord> records(String jobId,
+			int skip, int take, FilterBuilder recordFilter,
+			String sortField, boolean descending) 
+    throws UnknownJobException
+	{
+		 SortBuilder sb = null;
+		 if (sortField != null)
+		 {
+			 sb = new FieldSortBuilder(sortField)
+						 .ignoreUnmapped(true)
+						 .missing("_last")
+						 .order(descending ? SortOrder.DESC : SortOrder.ASC);		
+		 }
+		 
+		return records(jobId, skip, take, recordFilter, sb, Collections.<String>emptyList());
+	}
+	
+	
 	/**
 	 * The returned records have the parent bucket id set.
-	 * 
-	 * @param jobId
-	 * @param skip
-	 * @param take
-	 * @param recordFilter The record filter sensible options are
-	 * the match all filter or a parent bucket filter
-	 * @param sortField If null then not sorted
-	 * @param descending If true sort in descending order
-	 * @return
-	 * @throws UnknownJobException 
 	 */
 	private Pagination<AnomalyRecord> records(String jobId, int skip, int take,
-			FilterBuilder recordFilter, String sortField, boolean descending) 
+			FilterBuilder recordFilter, SortBuilder sb, List<String> secondarySort) 
 	throws UnknownJobException
 	{
 		SearchRequestBuilder searchBuilder = m_Client.prepareSearch(jobId)
@@ -729,15 +892,17 @@ public class ElasticsearchJobProvider implements JobProvider
 				.addField(_PARENT)   // include the parent id
 				.setFetchSource(true);  // the field option turns off source so request it explicitly
 		
-		if (sortField != null)
+		
+		if (sb != null)
 		{
-			SortBuilder sb = new FieldSortBuilder(sortField)
-									.ignoreUnmapped(true)
-									.missing("_last")
-									.order(descending ? SortOrder.DESC : SortOrder.ASC);		
-			
 			searchBuilder.addSort(sb);
 		}
+		
+		for (String sortField : secondarySort)
+		{
+			searchBuilder.addSort(sortField, SortOrder.DESC);
+		}
+
 		
 		SearchResponse searchResponse;
 		try

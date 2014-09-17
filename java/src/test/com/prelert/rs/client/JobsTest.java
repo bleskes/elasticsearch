@@ -259,7 +259,8 @@ public class JobsTest implements Closeable
 		test(job.getDescription().equals("Flight Centre Job"));
 				
 		test(job.getLocation().toString().equals(baseUrl + "/jobs/" + jobId));
-		test(job.getResultsEndpoint().toString().equals(baseUrl + "/results/" + jobId));
+		test(job.getRecordsEndpoint().toString().equals(baseUrl + "/results/" + jobId + "/records"));
+		test(job.getBucketsEndpoint().toString().equals(baseUrl + "/results/" + jobId + "/buckets"));
 		test(job.getDataEndpoint().toString().equals(baseUrl + "/data/" + jobId));
 		
 		test(job.getLastDataTime() == null);
@@ -380,7 +381,8 @@ public class JobsTest implements Closeable
 		test(job.getDescription() == null);
 				
 		test(job.getLocation().toString().equals(baseUrl + "/jobs/" + jobId));
-		test(job.getResultsEndpoint().toString().equals(baseUrl + "/results/" + jobId));
+		test(job.getRecordsEndpoint().toString().equals(baseUrl + "/results/" + jobId + "/records"));
+		test(job.getBucketsEndpoint().toString().equals(baseUrl + "/results/" + jobId + "/buckets"));
 		test(job.getDataEndpoint().toString().equals(baseUrl + "/data/" + jobId));
 		
 		test(job.getLastDataTime() == null);
@@ -452,7 +454,8 @@ public class JobsTest implements Closeable
 		test(job.getAnalysisLimits() == null);
 				
 		test(job.getLocation().toString().equals(baseUrl + "/jobs/" + jobId));
-		test(job.getResultsEndpoint().toString().equals(baseUrl + "/results/" + jobId));
+		test(job.getRecordsEndpoint().toString().equals(baseUrl + "/results/" + jobId + "/records"));
+		test(job.getBucketsEndpoint().toString().equals(baseUrl + "/results/" + jobId + "/buckets"));
 		test(job.getDataEndpoint().toString().equals(baseUrl + "/data/" + jobId));
 		
 		test(job.getLastDataTime() == null);
@@ -535,7 +538,8 @@ public class JobsTest implements Closeable
 		test(job.getDescription().equals("Farequote Time Format Job"));
 				
 		test(job.getLocation().toString().equals(baseUrl + "/jobs/" + jobId));
-		test(job.getResultsEndpoint().toString().equals(baseUrl + "/results/" + jobId));
+		test(job.getRecordsEndpoint().toString().equals(baseUrl + "/results/" + jobId + "/records"));
+		test(job.getBucketsEndpoint().toString().equals(baseUrl + "/results/" + jobId + "/buckets"));
 		test(job.getDataEndpoint().toString().equals(baseUrl + "/data/" + jobId));
 		
 		test(job.getLastDataTime() == null);
@@ -602,7 +606,8 @@ public class JobsTest implements Closeable
 		test(job.getAnalysisLimits() == null);
 				
 		test(job.getLocation().toString().equals(baseUrl + "/jobs/" + jobId));
-		test(job.getResultsEndpoint().toString().equals(baseUrl + "/results/" + jobId));
+		test(job.getRecordsEndpoint().toString().equals(baseUrl + "/results/" + jobId + "/records"));
+		test(job.getBucketsEndpoint().toString().equals(baseUrl + "/results/" + jobId + "/buckets"));
 		test(job.getDataEndpoint().toString().equals(baseUrl + "/data/" + jobId));
 		
 		test(job.getLastDataTime() == null);
@@ -761,7 +766,7 @@ public class JobsTest implements Closeable
 		while (true) // break when getNextUrl() == false
 		{
 			Pagination<Bucket> buckets = m_WebServiceClient.getBuckets(baseUrl, 
-					jobId, false, skip, take);
+					jobId, false, skip, take, 0.0, 0.0);
 
 			test(buckets.getHitCount() == expectedNumBuckets);
 			test(buckets.getDocumentCount() <= take);
@@ -801,7 +806,8 @@ public class JobsTest implements Closeable
 				test(buckets.getPreviousPage() != null);
 				
 				int start = Math.max(0,  buckets.getSkip() - buckets.getTake());
-				String prevPageUrl = String.format("%s/results/%s/buckets?skip=%d&take=%d&expand=%b", 
+				String prevPageUrl = String.format(
+						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&anomalyScore=0.0&maxNormalizedProbability=0.0", 
 						baseUrl, jobId,  start, buckets.getTake(), false);
 				
 				test(prevPageUrl.equals(buckets.getPreviousPage().toString()));
@@ -816,7 +822,8 @@ public class JobsTest implements Closeable
 			else
 			{
 				int start = Math.max(0,  buckets.getSkip() + buckets.getTake());
-				String nextPageUrl = String.format("%s/results/%s/buckets?skip=%d&take=%d&expand=%b", 
+				String nextPageUrl = String.format(
+						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&anomalyScore=0.0&maxNormalizedProbability=0.0", 
 						baseUrl, jobId, start, buckets.getTake(), false);
 
 				test(nextPageUrl.equals(buckets.getNextPage().toString()));
@@ -835,7 +842,7 @@ public class JobsTest implements Closeable
 		while (true) // break when getNextUrl() == false
 		{
 			Pagination<Bucket> buckets = m_WebServiceClient.getBuckets(baseUrl, 
-					jobId, true, skip, take);
+					jobId, true, skip, take, 0.0, 0.0);
 
 			test(buckets.getHitCount() == expectedNumBuckets);
 			test(buckets.getDocumentCount() <= take);
@@ -875,7 +882,8 @@ public class JobsTest implements Closeable
 				test(buckets.getPreviousPage() != null);
 				
 				int start = Math.max(0,  buckets.getSkip() - buckets.getTake());
-				String prevPageUrl = String.format("%s/results/%s/buckets?skip=%d&take=%d&expand=%b", 
+				String prevPageUrl = String.format(
+						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&anomalyScore=0.0&maxNormalizedProbability=0.0", 
 						baseUrl, jobId, start, buckets.getTake(), true);
 
 				test(prevPageUrl.equals(buckets.getPreviousPage().toString()));						
@@ -889,7 +897,8 @@ public class JobsTest implements Closeable
 			else
 			{
 				int start = Math.max(0,  buckets.getSkip() + buckets.getTake());
-				String nextPageUrl = String.format("%s/results/%s/buckets?skip=%d&take=%d&expand=%b", 
+				String nextPageUrl = String.format(
+						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&anomalyScore=0.0&maxNormalizedProbability=0.0", 
 						baseUrl, jobId, start, buckets.getTake(), true);
 
 				test(nextPageUrl.equals(buckets.getNextPage().toString()));
@@ -966,7 +975,7 @@ public class JobsTest implements Closeable
 			}
 			else
 			{
-				test(b.getRecords().size() == 0);
+				test(b.getRecords() == null || b.getRecords().size() == 0);
 			}
 		}
 		
@@ -1001,20 +1010,19 @@ public class JobsTest implements Closeable
 		
 		// query with the 3 date formats
 		Pagination<Bucket> buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, 
-				false, 
-				null, null, epochStart, epochEnd);		
+				false, null, null, epochStart, epochEnd, 0.0, 0.0);		
 		test(buckets.getDocuments().get(0).getTimestamp().compareTo(start) >= 0);
 		test(buckets.getDocuments().get(buckets.getDocumentCount() -1)
 				.getTimestamp().compareTo(end) < 0);
 		
 		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, false, 
-				null, null, dateStart, dateEnd);		
+				null, null, dateStart, dateEnd, 0.0, 0.0);		
 		test(buckets.getDocuments().get(0).getTimestamp().compareTo(start) >= 0);
 		test(buckets.getDocuments().get(buckets.getDocumentCount() -1)
 				.getTimestamp().compareTo(end) < 0);
 		
 		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, false, 
-				null, null, dateStartMs, dateEndMs);		
+				null, null, dateStartMs, dateEndMs, 0.0, 0.0);		
 		test(buckets.getDocuments().get(0).getTimestamp().compareTo(start) >= 0);
 		test(buckets.getDocuments().get(buckets.getDocumentCount() -1)
 				.getTimestamp().compareTo(end) < 0);		
@@ -1022,28 +1030,29 @@ public class JobsTest implements Closeable
 		
 		// just a start date
 		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, false, 
-				0L, 100L, dateStart, null);		
+				0L, 100L, dateStart, null, 0.0, 0.0);		
 		test(buckets.getDocuments().get(0).getTimestamp().compareTo(start) >= 0);
 
 		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, false, 
-				0L, 100L, epochStart, null);		
+				0L, 100L, epochStart, null, 0.0, 0.0);		
 		test(buckets.getDocuments().get(0).getTimestamp().compareTo(start) >= 0);
 		
 		
 		// just an end date
 		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, false, 
-				null, null, null, dateEndMs);		
+				null, null, null, dateEndMs, 0.0, 0.0);		
 		test(buckets.getDocuments().get(buckets.getDocumentCount() -1)
 				.getTimestamp().compareTo(end) < 0);
 		
 		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, false, 
-				null, null, null, dateEnd);		
+				null, null, null, dateEnd, 0.0, 0.0);		
 		test(buckets.getDocuments().get(buckets.getDocumentCount() -1)
 				.getTimestamp().compareTo(end) < 0);
 		
 		
 		// Test paging from the start date
-		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, false,  0L, 5L, dateStart, null);
+		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, false,  0L, 5L,
+				dateStart, null, 0.0, 0.0);
 		test(buckets.getDocuments().get(0).getTimestamp().compareTo(start) >= 0);	
 		
 		Date lastDate = buckets.getDocuments().get(buckets.getDocumentCount() -1)
@@ -1085,6 +1094,47 @@ public class JobsTest implements Closeable
 	}
 	
 	/**
+	 * Get buckets filtered by anomaly & unusual scores.
+	 * 
+	 * @param baseUrl
+	 * @param jobId
+	 * @throws IOException
+	 */
+	public void testBucketScoreFilters(String baseUrl, String jobId) 
+	throws IOException
+	{
+		
+		Pagination<Bucket> buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, 
+				false, 0l, 4000l, null, null, 50.0, 40.0);
+		test(buckets.getDocumentCount() > 0);
+		
+		for (Bucket b : buckets.getDocuments())
+		{
+			test(b.getAnomalyScore() >= 50.0);
+			test(b.getMaxNormalizedProbability()  >= 40.0);
+		}
+
+		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, 
+				false, 0l, 4000l, null, null, 20.0, 0.0);
+		test(buckets.getDocumentCount() > 0);
+		
+		for (Bucket b : buckets.getDocuments())
+		{
+			test(b.getAnomalyScore() >= 20.0);
+		}
+		
+		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, 
+				false, 0l, 4000l, null, null, 20.0, 15.0);
+		test(buckets.getDocumentCount() > 0);
+		
+		for (Bucket b : buckets.getDocuments())
+		{
+			test(b.getMaxNormalizedProbability() >= 15.0);
+		}
+	}
+	
+	
+	/**
 	 * Test the sort options for the records endpoint.
 	 * Sort by anomaly score, unsual score, time, etc
 	 * 
@@ -1106,7 +1156,7 @@ public class JobsTest implements Closeable
 		
 		// most unusual first
 		Pagination<AnomalyRecord> records = m_WebServiceClient.getRecords(baseUrl, jobId, 
-				0l, 500l, epochStart, epochEnd, AnomalyRecord.UNUSUAL_SCORE, true, null, null);
+				0l, 500l, epochStart, epochEnd, AnomalyRecord.NORMALIZED_PROBABILITY, true, null, null);
 		
 		test(records.getDocumentCount() > 0);
 		test(records.getDocumentCount() == records.getDocuments().size());
@@ -1114,13 +1164,13 @@ public class JobsTest implements Closeable
 		double score = 100.0; // max score		
 		for (AnomalyRecord r : records.getDocuments())
 		{
-			test(r.getUnusualScore() <= score);
-			score = r.getUnusualScore();
+			test(r.getNormalizedProbability() <= score);
+			score = r.getNormalizedProbability();
 		}
 		
 		// least unusual first
 		records = m_WebServiceClient.getRecords(baseUrl, jobId, 
-				0l, 500l, epochStart, epochEnd, AnomalyRecord.UNUSUAL_SCORE, false, null, null);
+				0l, 500l, epochStart, epochEnd, AnomalyRecord.NORMALIZED_PROBABILITY, false, null, null);
 		
 		test(records.getDocumentCount() > 0);
 		test(records.getDocumentCount() == records.getDocuments().size());
@@ -1128,8 +1178,8 @@ public class JobsTest implements Closeable
 		score = 0.0; 		
 		for (AnomalyRecord r : records.getDocuments())
 		{
-			test(r.getUnusualScore() >= score);
-			score = r.getUnusualScore();
+			test(r.getNormalizedProbability() >= score);
+			score = r.getNormalizedProbability();
 		}
 		
 		// most anomalous first
@@ -1213,25 +1263,18 @@ public class JobsTest implements Closeable
 	 * @param jobId
 	 * @throws IOException
 	 */
-	public void testScoreFilters(String baseUrl, String jobId) 
+	public void testRecordScoreFilters(String baseUrl, String jobId) 
 	throws IOException
 	{
-		// it's an error to filter on both scores
 		Pagination<AnomalyRecord> records = m_WebServiceClient.getRecords(baseUrl, jobId, 
-				0l, 4000l, null, null, AnomalyRecord.ANOMALY_SCORE, true, 90.0, 99.0);
-		test(records.getDocumentCount() == 0);
-		test(m_WebServiceClient.getLastError().getErrorCode() == ErrorCode.INVALID_FILTER_FIELD);
-		
-		
-		
-		records = m_WebServiceClient.getRecords(baseUrl, jobId, 
-				0l, 4000l, null, null, AnomalyRecord.ANOMALY_SCORE, true, 8.0, null);
+				0l, 4000l, null, null, AnomalyRecord.ANOMALY_SCORE, true, 8.0, 20.0);
 		
 		test(records.getDocumentCount() > 0);
 		double score = 100.0;
 		for (AnomalyRecord r : records.getDocuments())
 		{			
 			test(r.getAnomalyScore() >= 8.0);
+			test(r.getNormalizedProbability() >= 20.0);
 			
 			test(r.getAnomalyScore() <= score);
 			score = r.getAnomalyScore();
@@ -1245,11 +1288,25 @@ public class JobsTest implements Closeable
 		String fieldValue = "";
 		for (AnomalyRecord r : records.getDocuments())
 		{
-			test(r.getAnomalyScore() >= 12.5);
+			test(r.getNormalizedProbability() >= 12.5);
 			
 			test(r.getByFieldValue().compareTo(fieldValue) >= 0);
 			fieldValue = r.getByFieldValue();
 		}
+		
+		records = m_WebServiceClient.getRecords(baseUrl, jobId, 
+				0l, 4000l, null, null, AnomalyRecord.ANOMALY_SCORE, true, 40.0, 0.0);
+		
+		test(records.getDocumentCount() > 0);
+		
+		score = 100.0;
+		for (AnomalyRecord r : records.getDocuments())
+		{
+			test(r.getAnomalyScore() >= 40.0);
+			
+			test(r.getAnomalyScore() <= score);
+			score = r.getAnomalyScore();
+		}		
 	}
 	
 	
@@ -1601,6 +1658,7 @@ public class JobsTest implements Closeable
 		test.m_WebServiceClient.deleteJob(baseUrl, "flightcentre-csv");
 		test.m_WebServiceClient.deleteJob(baseUrl, "flightcentre-epoch-ms");
 
+		
 		//=================
 		// CSV & Gzip test 
 		//
@@ -1613,13 +1671,13 @@ public class JobsTest implements Closeable
 		test.testReadLogFiles(baseUrl, flightCentreJobId);
 		test.verifyJobResults(baseUrl, flightCentreJobId, 100, FLIGHT_CENTRE_NUM_BUCKETS,
 				3600, FLIGHT_CENTRE_NUM_EVENTS);
+		test.testBucketScoreFilters(baseUrl, flightCentreJobId);
 		jobUrls.add(flightCentreJobId);		
 
 		
 		//=================
 		// JSON test
 		//
-		
 		String flightCentreJsonJobId = test.createFlightCentreJsonJobTest(baseUrl);
 		test.getJobsTest(baseUrl);
 		test.uploadData(baseUrl, flightCentreJsonJobId, flightCentreJsonData, false);
@@ -1641,6 +1699,7 @@ public class JobsTest implements Closeable
 		test.closeJob(baseUrl, farequoteTimeFormatJobId);
 		test.verifyJobResults(baseUrl, farequoteTimeFormatJobId, 150, FARE_QUOTE_NUM_BUCKETS,
 				300, FARE_QUOTE_NUM_EVENTS);
+		test.testBucketScoreFilters(baseUrl, farequoteTimeFormatJobId);
 		test.testReadLogFiles(baseUrl, farequoteTimeFormatJobId);
 		test.testSetDescription(baseUrl, farequoteTimeFormatJobId);
 					
@@ -1651,7 +1710,7 @@ public class JobsTest implements Closeable
 		test.testRecordDateFilters(baseUrl, farequoteTimeFormatJobId, start, end);
 		
 		test.testSortingRecords(baseUrl, farequoteTimeFormatJobId, start, end);
-		test.testScoreFilters(baseUrl, farequoteTimeFormatJobId);
+		test.testRecordScoreFilters(baseUrl, farequoteTimeFormatJobId);
 		
 		//============================
 		// Create another job based on
@@ -1665,8 +1724,10 @@ public class JobsTest implements Closeable
 		test.closeJob(baseUrl, refJobId);
 		test.verifyJobResults(baseUrl, refJobId, 150, FARE_QUOTE_NUM_BUCKETS,
 				300, FARE_QUOTE_NUM_EVENTS);
-		test.testScoreFilters(baseUrl, farequoteTimeFormatJobId);
+		test.testRecordScoreFilters(baseUrl, farequoteTimeFormatJobId);
+		test.testBucketScoreFilters(baseUrl, refJobId);
 		test.testReadLogFiles(baseUrl, refJobId);
+		
 		
 		jobUrls.add(refJobId);		
 
@@ -1705,7 +1766,6 @@ public class JobsTest implements Closeable
 		//=================
 		// double upload test (upload same file twice)
 		//
-		
 		String doubleUploadTest = test.createFareQuoteTimeFormatJobTest(baseUrl);
 		jobUrls.add(doubleUploadTest);		
 

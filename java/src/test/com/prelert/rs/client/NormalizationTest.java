@@ -154,7 +154,7 @@ public class NormalizationTest implements Closeable
 	throws IOException
 	{	
 		Pagination<Bucket> allBuckets = m_WebServiceClient.getBuckets(baseUrl, 
-				jobId, false, 0l, 1500l);
+				jobId, false, 0l, 1500l, 0.0, 0.0);
 		test(allBuckets.getDocumentCount() == FAREQUOTE_NUM_BUCKETS);
 		test(allBuckets.getHitCount() == FAREQUOTE_NUM_BUCKETS);
 		
@@ -168,7 +168,7 @@ public class NormalizationTest implements Closeable
 		while (skip < FAREQUOTE_NUM_BUCKETS)
 		{
 			Pagination<Bucket> buckets = m_WebServiceClient.getBuckets(baseUrl, 
-					jobId, false, skip, take);
+					jobId, false, skip, take, 0.0, 0.0);
 			pagedBuckets.addAll(buckets.getDocuments());
 			
 			skip += take;
@@ -180,8 +180,8 @@ public class NormalizationTest implements Closeable
 			test(Double.compare(pagedBuckets.get(i).getAnomalyScore(),
 								allBuckets.getDocuments().get(i).getAnomalyScore()) == 0);
 			
-			test(Double.compare(pagedBuckets.get(i).getUnusualScore(),
-					allBuckets.getDocuments().get(i).getUnusualScore()) == 0);
+			test(Double.compare(pagedBuckets.get(i).getMaxNormalizedProbability(),
+					allBuckets.getDocuments().get(i).getMaxNormalizedProbability()) == 0);
 			
 			test(pagedBuckets.get(i).equals(allBuckets.getDocuments().get(i)));
 		}
@@ -196,8 +196,9 @@ public class NormalizationTest implements Closeable
 		{
 			Pagination<Bucket> buckets = m_WebServiceClient.getBuckets(baseUrl, 
 					jobId, false, skip, take,
-			allBuckets.getDocuments().get(0).getEpoch(),
-			allBuckets.getDocuments().get((int)allBuckets.getHitCount()-1).getEpoch() +1); 
+					allBuckets.getDocuments().get(0).getEpoch(),
+					allBuckets.getDocuments().get((int)allBuckets.getHitCount()-1).getEpoch() +1,
+					0.0, 0.0); 
 			
 			pagedBuckets.addAll(buckets.getDocuments());
 			
@@ -210,8 +211,8 @@ public class NormalizationTest implements Closeable
 			test(Double.compare(pagedBuckets.get(i).getAnomalyScore(),
 								allBuckets.getDocuments().get(i).getAnomalyScore()) == 0);
 			
-			test(Double.compare(pagedBuckets.get(i).getUnusualScore(),
-					allBuckets.getDocuments().get(i).getUnusualScore()) == 0);			
+			test(Double.compare(pagedBuckets.get(i).getMaxNormalizedProbability(),
+					allBuckets.getDocuments().get(i).getMaxNormalizedProbability()) == 0);			
 			
 			test(pagedBuckets.get(i).equals(allBuckets.getDocuments().get(i)));
 		}
@@ -226,7 +227,8 @@ public class NormalizationTest implements Closeable
 		{
 			Pagination<Bucket> byDate = m_WebServiceClient.getBuckets(
 					baseUrl, jobId, false, 0l, 1000l, 
-					startDateFormats[i], endDateFormats[i]);
+					startDateFormats[i], endDateFormats[i],
+					0.0, 0.0);
 
 			test(byDate.getDocuments().get(0).getEpoch() == 1359558600l);
 			test(byDate.getDocuments().get(byDate.getDocumentCount() -1).getEpoch() == 1359669900l);
@@ -247,8 +249,8 @@ public class NormalizationTest implements Closeable
 				test(Double.compare(byDate.getDocuments().get(j).getAnomalyScore(),
 						allBuckets.getDocuments().get(j + startIndex).getAnomalyScore()) == 0);
 				
-				test(Double.compare(pagedBuckets.get(i).getUnusualScore(),
-						allBuckets.getDocuments().get(i).getUnusualScore()) == 0);	
+				test(Double.compare(pagedBuckets.get(i).getMaxNormalizedProbability(),
+						allBuckets.getDocuments().get(i).getMaxNormalizedProbability()) == 0);	
 				
 				test(byDate.getDocuments().get(j).equals(allBuckets.getDocuments().get(j + startIndex)));
 			}
@@ -274,7 +276,7 @@ public class NormalizationTest implements Closeable
 		
 		
 		Pagination<Bucket> allBucketsExpanded = m_WebServiceClient.getBuckets(baseUrl, 
-				jobId, true, 0l, 1500l);
+				jobId, true, 0l, 1500l, 0.0, 0.0);
 		
 		
 		/*
@@ -287,10 +289,10 @@ public class NormalizationTest implements Closeable
 			double bucketMax = 0.0;
 			for (AnomalyRecord r : bucket.getRecords())
 			{
-				bucketMax = Math.max(r.getUnusualScore(), bucketMax);
+				bucketMax = Math.max(r.getNormalizedProbability(), bucketMax);
 			}
 			
-			test(bucketMax == bucket.getUnusualScore());
+			test(bucketMax == bucket.getMaxNormalizedProbability());
 		}
 	
 
@@ -312,12 +314,12 @@ public class NormalizationTest implements Closeable
 			double bucketMax = 0.0;
 			for (AnomalyRecord r : records)
 			{
-				bucketMax = Math.max(r.getUnusualScore(), bucketMax);
+				bucketMax = Math.max(r.getNormalizedProbability(), bucketMax);
 				
 				test(r.getAnomalyScore() == bucket.getAnomalyScore());
 			}
 			
-			test(bucketMax == bucket.getUnusualScore());
+			test(bucketMax == bucket.getMaxNormalizedProbability());
 			
 			if (count-- < 0)
 			{
@@ -381,7 +383,7 @@ public class NormalizationTest implements Closeable
 		
 		// need start and end dates first
 		Pagination<Bucket> allBuckets = m_WebServiceClient.getBuckets(baseUrl, 
-				jobId, true, 0l, 3000l);
+				jobId, true, 0l, 3000l, 0.0, 0.0);
 		long startDate = allBuckets.getDocuments().get(0).getEpoch();
 		long endDate = allBuckets.getDocuments().get(allBuckets.getDocumentCount()-1).getEpoch() + 1;
 		
@@ -423,7 +425,7 @@ public class NormalizationTest implements Closeable
 		int highUnusualScoreCount = 0;
 		for (AnomalyRecord record : pagedRecords)
 		{
-			if (record.getUnusualScore() >= 90.0)
+			if (record.getNormalizedProbability() >= 90.0)
 			{
 				highUnusualScoreCount++;
 			}

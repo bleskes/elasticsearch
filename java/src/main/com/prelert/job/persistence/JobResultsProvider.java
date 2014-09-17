@@ -46,11 +46,17 @@ public interface JobResultsProvider extends Closeable
 	 * @param skip Skip the first N Buckets. This parameter is for paging
 	 * if not required set to 0.
 	 * @param take Take only this number of Buckets
+	 * @param anomalyScoreThreshold Return only buckets with an anomalyScore >=
+	 * this value
+	 * @param normalizedProbabilityThreshold Return only buckets with a maxNormalizedProbability >=
+	 * this value
+	 * 
 	 * @return
 	 * @throws UnknownJobException If the job id is no recognised
 	 */
 	public Pagination<Bucket> buckets(String jobId, 
-			boolean expand, int skip, int take)
+			boolean expand, int skip, int take,
+			double anomalyScoreThreshold, double normalizedProbabilityThreshold)
 	throws UnknownJobException;
 			
 	
@@ -71,12 +77,18 @@ public interface JobResultsProvider extends Closeable
 	 * @param endBucket The end bucket id buckets up to but NOT including this
 	 * are returned. If 0 all buckets from <code>startBucket</code>
 	 * are returned
+	 * @param anomalyScoreThreshold Return only buckets with an anomalyScore >=
+	 * this value
+	 * @param normalizedProbabilityThreshold Return only buckets with a maxNormalizedProbability >=
+	 * this value
+	 * 
 	 * @return
 	 * @throws UnknownJobException If the job id is no recognised
 	 */
 	public Pagination<Bucket> buckets(String jobId, 
 			boolean expand, int skip, int take,
-			long startBucket, long endBucket)
+			long startBucket, long endBucket,
+			double anomalyScoreThreshold, double normalizedProbabilityThreshold)
 	throws UnknownJobException;
 	
 	
@@ -127,17 +139,17 @@ public interface JobResultsProvider extends Closeable
 	 * @param sortField The field to sort results by if <code>null</code> no
 	 * sort is applied
 	 * @param sortDescending Sort in descending order
-	 * @param scoreFilterField If not <code>null</code> then filter out all 
-	 * results where the value of this field is < <code>filterValue</code>
-	 * @paran filterValue Filter results where <code>scoreFilterField</code>
-	 * is less than this value. Ignored if <= 0.0
+	 * @param anomalyScoreThreshold Return only buckets with an anomalyScore >=
+	 * this value
+	 * @param normalizedProbabilityThreshold Return only buckets with a maxNormalizedProbability >=
+	 * this value
 	 * 
 	 * @return
 	 * @throws UnknownJobException If the job id is no recognised
 	 */
 	public Pagination<AnomalyRecord> records(String jobId, 
 			 int skip, int take, String sortField, boolean sortDescending,
-			 String scoreFilterField, double filterValue)
+			 double anomalyScoreThreshold, double normalizedProbabilityThreshold)
 	throws UnknownJobException;
 	
 	/**
@@ -157,10 +169,10 @@ public interface JobResultsProvider extends Closeable
 	 * @param sortField The field to sort results by if <code>null</code> no
 	 * sort is applied 
 	 * @param sortDescending Sort in descending order
-	 * @param scoreFilterField If not <code>null</code> then filter out all 
-	 * results where the value of this field is < <code>filterValue</code>
-	 * @paran filterValue Filter results where <code>scoreFilterField</code>
-	 * is less than this value. Ignored if <= 0.0
+	 * @param anomalyScoreThreshold Return only buckets with an anomalyScore >=
+	 * this value
+	 * @param normalizedProbabilityThreshold Return only buckets with a maxNormalizedProbability >=
+	 * this value
 	 *  
 	 * @return
 	 * throws UnknownJobException If the job id is no recognised
@@ -168,7 +180,7 @@ public interface JobResultsProvider extends Closeable
 	public Pagination<AnomalyRecord> records(String jobId, 
 			int skip, int take, long startBucket, long endBucket, 
 			String sortField, boolean sortDescending,
-			String scoreFilterField, double filterValue)
+			double anomalyScoreThreshold, double normalizedProbabilityThreshold)
 	throws UnknownJobException;
 			
 	
