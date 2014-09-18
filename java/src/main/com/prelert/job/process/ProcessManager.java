@@ -44,6 +44,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.log4j.Appender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
@@ -79,6 +80,7 @@ import com.prelert.rs.data.ErrorCode;
  */
 public class ProcessManager 
 {
+	public static final String LOG_FILE_APPENDER_NAME = "engine_api_file_appender";
 	/**
 	 * JVM shutdown hook stops all the running processes
 	 */
@@ -384,6 +386,7 @@ public class ProcessManager
 	 * else the process is stopped successfully and ProcessStatus.COMPLETED is 
 	 * returned.
 	 * 
+	 * 
 	 * @param jobId
 	 * @return The process finished status
 	 * @throws UnknownJobException If the job is already finished or cannot be 
@@ -395,6 +398,11 @@ public class ProcessManager
 	public ProcessStatus finishJob(String jobId) 
 	throws NativeProcessRunException, JobInUseException
 	{
+		/* 
+		 * Be careful modifying this function because is can throw exceptions in
+		 * different places there are quite a lot of code paths through it. 
+		 * Some code appears repeated but it is because of the multiple code paths
+		 */ 
 		s_Logger.info("Finishing job " + jobId);
 		
 		ProcessAndDataDescription process = m_JobIdToProcessMap.get(jobId);	
@@ -466,9 +474,15 @@ public class ProcessManager
 						readProcessErrorOutput(process, sb);
 						process.getLogger().error(sb);
 						
+						// free the logger resources
+						closeLogger(process.getLogger());
+						
 						throw new NativeProcessRunException(sb.toString(), 
 								ErrorCode.NATIVE_PROCESS_ERROR);		
 					}
+					
+					// free the logger resources
+					closeLogger(process.getLogger());
 				}
 				catch (IOException | InterruptedException e)
 				{
@@ -477,6 +491,9 @@ public class ProcessManager
 					process.getLogger().warn(msg, e);
 
 					setJobFinishedTimeAndStatus(jobId, process.getLogger(), JobStatus.FAILED);
+					
+					// free the logger resources
+					closeLogger(process.getLogger());
 				}
 				
 			}
@@ -500,6 +517,8 @@ public class ProcessManager
 			}
 			
 			setJobFinishedTimeAndStatus(jobId, process.getLogger(), JobStatus.FAILED);
+			// free the logger resources
+			closeLogger(process.getLogger());
 			
 			throw npre;
 		}
@@ -806,6 +825,24 @@ public class ProcessManager
 
 	
 	/**
+	 * Close the log appender to release the file descriptor and 
+	 * remove it from the logger.
+	 * 
+	 * @param logger
+	 */
+	private void closeLogger(Logger logger)
+	{
+		Appender appender = logger.getAppender(LOG_FILE_APPENDER_NAME);
+		
+		if (appender != null)
+		{
+			appender.close();
+			logger.removeAppender(LOG_FILE_APPENDER_NAME);
+		}
+	}
+	
+	
+	/**
 	 * Create the job's logger.
 	 * 
 	 * @param jobId
@@ -829,16 +866,13 @@ public class ProcessManager
 				// pre-existing appender will be pointing to a directory of the
 				// same name that must have been previously removed.  (See bug
 				// 697 in Bugzilla.)
-				if (logger.getAppender("engine_api_file_appender") != null)
-				{
-					logger.removeAppender("engine_api_file_appender");
-				}
+				closeLogger(logger);
 			}
 			catch (FileAlreadyExistsException e)
 			{
 			}
 
-			if (logger.getAppender("engine_api_file_appender") == null)
+			if (logger.getAppender(LOG_FILE_APPENDER_NAME) == null)
 			{
 				Path logFile = FileSystems.getDefault().getPath(ProcessCtrl.LOG_DIR,
 						jobId, "engine_api.log");
@@ -846,7 +880,7 @@ public class ProcessManager
 						new PatternLayout("%d{dd MMM yyyy HH:mm:ss zz} [%t] %-5p %c{3} - %m%n"),
 						logFile.toString());
 
-				fileAppender.setName("engine_api_file_appender");
+				fileAppender.setName(LOG_FILE_APPENDER_NAME);
 				fileAppender.setMaxFileSize("1MB");
 				fileAppender.setMaxBackupIndex(9);
 
