@@ -129,6 +129,21 @@ public class ParallelUploadTest
 			{
 				throw new IllegalStateException("Writing data: Error code should be job in use error");
 			}
+			
+			
+			// cannot delete a job when another process is writing to it
+			boolean deleted = client.deleteJob(url, jobId);
+			if (deleted)
+			{
+				throw new IllegalStateException("Error deleted job while writing to it");
+			}
+			
+			apiError = client.getLastError();
+
+			if (apiError.getErrorCode() != ErrorCode.NATIVE_PROCESS_CONCURRENT_USE_ERROR)
+			{
+				throw new IllegalStateException("Deleting Job: Error code should be job in use error");
+			}
 		}
 		
 		jobRunner.cancel();
