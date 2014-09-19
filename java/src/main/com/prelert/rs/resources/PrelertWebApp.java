@@ -40,8 +40,8 @@ import com.prelert.job.persistence.elasticsearch.ElasticsearchDataPersisterFacto
 import com.prelert.job.persistence.elasticsearch.ElasticsearchJobProvider;
 import com.prelert.job.persistence.elasticsearch.ElasticsearchResultsReaderFactory;
 import com.prelert.job.persistence.none.NoneJobDataPersisterFactory;
+import com.prelert.job.status.elasticsearch.ElasticsearchStatusReporterFactory;
 import com.prelert.job.usage.elasticsearch.ElasticsearchUsageReporterFactory;
-import com.prelert.job.warnings.elasticsearch.ElasticsearchStatusReporterFactory;
 import com.prelert.rs.provider.AlertMessageBodyWriter;
 import com.prelert.rs.provider.ElasticsearchExceptionMapper;
 import com.prelert.rs.provider.HighProportionOfBadTimestampsExceptionMapper;

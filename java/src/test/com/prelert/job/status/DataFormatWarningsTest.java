@@ -26,7 +26,7 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.warnings;
+package com.prelert.job.status;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -51,6 +51,9 @@ import com.prelert.job.persistence.JobDataPersister;
 import com.prelert.job.persistence.none.NoneJobDataPersister;
 import com.prelert.job.process.MissingFieldException;
 import com.prelert.job.process.ProcessManager;
+import com.prelert.job.status.HighProportionOfBadTimestampsException;
+import com.prelert.job.status.OutOfOrderRecordsException;
+import com.prelert.job.status.StatusReporter;
 import com.prelert.job.usage.DummyUsageReporter;
 
 public class DataFormatWarningsTest 

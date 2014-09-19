@@ -24,7 +24,7 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.warnings;
+package com.prelert.job.status;
 
 import com.prelert.rs.data.ErrorCode;
 

@@ -24,7 +24,7 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.warnings;
+package com.prelert.job.status;
 
 import org.apache.log4j.Logger;
 

@@ -55,11 +55,11 @@ import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
 import com.prelert.job.input.CountingInputStream;
 import com.prelert.job.input.LengthEncodedWriter;
-import com.prelert.job.warnings.HighProportionOfBadTimestampsException;
-import com.prelert.job.warnings.OutOfOrderRecordsException;
-import com.prelert.job.warnings.StatusReporter;
 import com.prelert.rs.data.ErrorCode;
 import com.prelert.job.persistence.JobDataPersister;
+import com.prelert.job.status.HighProportionOfBadTimestampsException;
+import com.prelert.job.status.OutOfOrderRecordsException;
+import com.prelert.job.status.StatusReporter;
 
 
 /**

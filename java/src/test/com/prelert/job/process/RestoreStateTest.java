@@ -53,8 +53,8 @@ import com.prelert.job.TooManyJobsException;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.persistence.elasticsearch.ElasticsearchJobProvider;
-import com.prelert.job.warnings.HighProportionOfBadTimestampsException;
-import com.prelert.job.warnings.OutOfOrderRecordsException;
+import com.prelert.job.status.HighProportionOfBadTimestampsException;
+import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.Pagination;
 
