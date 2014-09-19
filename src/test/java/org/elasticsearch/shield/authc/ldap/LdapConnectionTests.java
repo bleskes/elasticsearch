@@ -20,6 +20,7 @@ package org.elasticsearch.shield.authc.ldap;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.test.ElasticsearchTestCase;
+import org.junit.AfterClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -37,6 +38,12 @@ public class LdapConnectionTests extends ElasticsearchTestCase {
 
     @Rule
     public static ApacheDsRule apacheDsRule = new ApacheDsRule(temporaryFolder);
+
+    @AfterClass
+    public static void cleanup() {
+        temporaryFolder = null;
+        apacheDsRule = null;
+    }
 
     @Test
     public void testBindWithTemplates() {
@@ -57,7 +64,7 @@ public class LdapConnectionTests extends ElasticsearchTestCase {
         LdapConnection ldap = connectionFactory.bind(user, userPass);
         Map<String, String[]> attrs = ldap.getUserAttrs(ldap.getAuthenticatedUserDn());
 
-        assertThat( attrs, hasKey("uid"));
+        assertThat(attrs, hasKey("uid"));
         assertThat( attrs.get("uid"), arrayContaining("hhornblo"));
     }
     @Test
