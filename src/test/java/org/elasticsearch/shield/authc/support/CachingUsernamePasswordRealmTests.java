@@ -19,15 +19,16 @@ package org.elasticsearch.shield.authc.support;
 
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.shield.User;
+import org.elasticsearch.test.ElasticsearchTestCase;
 import org.junit.Test;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
 
-public class CachingUsernamePasswordRealmTests {
-    public static class AlwaysAuthenticateCachingRealm extends CachingUsernamePasswordRealm {
+public class CachingUsernamePasswordRealmTests extends ElasticsearchTestCase {
+
+    static class AlwaysAuthenticateCachingRealm extends CachingUsernamePasswordRealm {
         public AlwaysAuthenticateCachingRealm() {
             super(ImmutableSettings.EMPTY);
         }
@@ -39,7 +40,6 @@ public class CachingUsernamePasswordRealmTests {
 
         @Override public String type() { return "test"; }
     }
-
 
     @Test
     public void testCache(){

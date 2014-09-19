@@ -17,14 +17,13 @@
 
 package org.elasticsearch.shield.authc.support;
 
+import org.elasticsearch.test.ElasticsearchTestCase;
 import org.junit.Test;
-
-import static org.junit.Assert.assertTrue;
 
 /**
  *
  */
-public class HasherTests {
+public class HasherTests extends ElasticsearchTestCase {
 
     @Test
     public void testHtpasswdToolGenerated() throws Exception {
