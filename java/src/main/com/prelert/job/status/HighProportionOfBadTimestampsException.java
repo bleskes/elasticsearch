@@ -19,29 +19,64 @@
  * may be reproduced, adapted or transmitted in any form or *
  * by any means, electronic, mechanical, photocopying,      *
  * recording or otherwise.                                  *
- *                                                  
  *                                                          *
  *----------------------------------------------------------*
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.warnings;
+package com.prelert.job.status;
+
+import com.prelert.rs.data.ErrorCode;
 
 /**
- * Dummy StatusReporter with an 
- *
+ * If the timestamp field of a record cannot be read or the 
+ * date format is incorrect the record is ignored. This 
+ * exception is thrown when a high proportion of records
+ * have a bad timestamp.
  */
-public class DummyStatusReporter extends StatusReporter 
+public class HighProportionOfBadTimestampsException extends Exception 
 {
-	public DummyStatusReporter() 
-	{
-		super("DummyJobId", null);
-	}
+	private static final long serialVersionUID = -7776085998658495251L;
 
+	private long m_NumberBad;
+	private long m_TotalNumber;
+	
+	public HighProportionOfBadTimestampsException(long numberBadRecords, 
+			long totalNumberRecords)
+	{
+		m_NumberBad = numberBadRecords;
+		m_TotalNumber = totalNumberRecords;
+	}
+	
+	public ErrorCode getErrorCode()
+	{
+		return ErrorCode.TOO_MANY_BAD_DATES;
+	}
+	
+	/**
+	 * The number of bad records
+	 * @return
+	 */
+	public long getNumberBad()
+	{
+		return m_NumberBad;
+	}
+	
+	/**
+	 * Total number of records (good + bad)
+	 * @return
+	 */
+	public long getTotalNumber()
+	{
+		return m_TotalNumber;
+	}
+	
 	@Override
-	protected void reportStatus(long totalRecords)
+	public String getMessage()
 	{
-		// do nothing
+		return String.format("A high proportion of records have a timestamp "
+				+ "that cannot be interpreted (%d of %d).",
+				m_NumberBad, m_TotalNumber);
 	}
-
+	
 }

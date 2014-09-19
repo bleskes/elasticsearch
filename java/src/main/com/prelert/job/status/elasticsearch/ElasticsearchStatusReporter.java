@@ -1,4 +1,4 @@
-package com.prelert.job.warnings.elasticsearch;
+package com.prelert.job.status.elasticsearch;
 
 
 import java.util.HashMap;
@@ -6,7 +6,8 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import com.prelert.job.JobDetails;
-import com.prelert.job.warnings.StatusReporter;
+import com.prelert.job.status.StatusReporter;
+import com.prelert.job.usage.UsageReporter;
 
 import org.apache.log4j.Logger;
 import org.elasticsearch.action.update.UpdateRequestBuilder;
@@ -25,10 +26,10 @@ public class ElasticsearchStatusReporter extends StatusReporter
 {
 	private Client m_Client;
 		
-	public ElasticsearchStatusReporter(Client client, String jobId, 
-			JobDetails.Counts counts, Logger logger)
+	public ElasticsearchStatusReporter(Client client, UsageReporter usageReporter,
+			String jobId, JobDetails.Counts counts, Logger logger)
 	{
-		super(jobId, counts, logger);
+		super(jobId, counts, usageReporter, logger);
 		m_Client = client;
 	}
 		

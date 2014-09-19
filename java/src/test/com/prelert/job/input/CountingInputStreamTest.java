@@ -35,8 +35,8 @@ import java.nio.charset.StandardCharsets;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.prelert.job.DummyUsageReporter;
-import com.prelert.job.warnings.DummyStatusReporter;
+import com.prelert.job.status.DummyStatusReporter;
+import com.prelert.job.usage.DummyUsageReporter;
 
 
 public class CountingInputStreamTest 
@@ -45,13 +45,13 @@ public class CountingInputStreamTest
 	@Test	
 	public void testLengthEncodedWriter() throws IOException
 	{
-		DummyStatusReporter statusReporter = new DummyStatusReporter();
 		DummyUsageReporter usageReporter = new DummyUsageReporter("", null);
+		DummyStatusReporter statusReporter = new DummyStatusReporter(usageReporter);
 		
 		InputStream source = new ByteArrayInputStream("123".getBytes(StandardCharsets.UTF_8));
 		
 		try (CountingInputStream counting = new CountingInputStream(source, 
-				usageReporter, statusReporter))
+				statusReporter))
 		{
 			while (counting.read() >= 0)
 			{
@@ -59,7 +59,6 @@ public class CountingInputStreamTest
 			}
 			// an extra byte is read because we don't check the return 
 			// value of the read() method
-			Assert.assertTrue(counting.getTotalBytesRead() == 4);
 			Assert.assertTrue(usageReporter.getBytesReadSinceLastReport() == 4);
 			
 			Assert.assertEquals(usageReporter.getBytesReadSinceLastReport(),
@@ -70,10 +69,10 @@ public class CountingInputStreamTest
 				+ " everything he encounters begins to look like a nail.").getBytes(StandardCharsets.UTF_8));
 		
 		usageReporter = new DummyUsageReporter("", null);
-		statusReporter = new DummyStatusReporter();
+		statusReporter = new DummyStatusReporter(usageReporter);
 		
 		try (CountingInputStream counting = new CountingInputStream(source, 
-				usageReporter, statusReporter))
+				statusReporter))
 		{
 			byte buf [] = new byte[6];
 			while (counting.read(buf) >= 0)
@@ -82,7 +81,6 @@ public class CountingInputStreamTest
 			}
 			// an extra byte is read because we don't check the return 
 			// value of the read() method
-			Assert.assertTrue(counting.getTotalBytesRead() == 85);
 			Assert.assertTrue(usageReporter.getBytesReadSinceLastReport() == 85);
 			
 			Assert.assertEquals(usageReporter.getBytesReadSinceLastReport(),
@@ -93,10 +91,10 @@ public class CountingInputStreamTest
 				+ " everything he encounters begins to look like a nail.").getBytes(StandardCharsets.UTF_8));
 		
 		usageReporter = new DummyUsageReporter("", null);
-		statusReporter = new DummyStatusReporter();
+		statusReporter = new DummyStatusReporter(usageReporter);
 		
 		try (CountingInputStream counting = new CountingInputStream(source, 
-				usageReporter, statusReporter))
+				statusReporter))
 		{
 			byte buf [] = new byte[8];
 			while (counting.read(buf, 0, 8) >= 0)
@@ -105,7 +103,6 @@ public class CountingInputStreamTest
 			}
 			// an extra byte is read because we don't check the return 
 			// value of the read() method
-			Assert.assertTrue(counting.getTotalBytesRead() == 85);
 			Assert.assertTrue(usageReporter.getBytesReadSinceLastReport() == 85);
 			
 			Assert.assertEquals(usageReporter.getBytesReadSinceLastReport(),

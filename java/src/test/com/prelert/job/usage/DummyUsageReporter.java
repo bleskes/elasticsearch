@@ -24,58 +24,69 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.warnings;
 
-import com.prelert.rs.data.ErrorCode;
+package com.prelert.job.usage;
 
-/**
- *  Records sent to autodetect should be in ascending chronological 
- *  order else they are ignored and a error logged. This exception
- *  represents the case where a high proportion of messages are not
- *  in temporal order. 
- */
-public class OutOfOrderRecordsException extends Exception 
+import org.apache.log4j.Logger;
+
+import com.prelert.job.usage.UsageReporter;
+
+public class DummyUsageReporter extends UsageReporter 
 {
-	private static final long serialVersionUID = -7088347813900268191L;
+	long m_TotalByteCount;
+	long m_TotalFieldCount;
+	long m_TotalRecordCount;
 	
-	private long m_NumberBad;
-	private long m_TotalNumber;
+	boolean m_WasPersistUsageCalled;
 	
-	public OutOfOrderRecordsException(long numberBadRecords, 
-			long totalNumberRecords)
+	public DummyUsageReporter(String jobId, Logger logger) 
 	{
-		m_NumberBad = numberBadRecords;
-		m_TotalNumber = totalNumberRecords;
+		super(jobId, logger);
+		
+		m_TotalByteCount = 0;
+		m_TotalFieldCount = 0;
+		m_TotalRecordCount = 0;
+		
+		m_WasPersistUsageCalled = false;
 	}
 	
-	public ErrorCode getErrorCode()
-	{
-		return ErrorCode.TOO_MANY_OUT_OF_ORDER_RECORDS;
-	}
-	
-	/**
-	 * The number of out of order records
-	 * @return
-	 */
-	public long getNumberOutOfOrder()
-	{
-		return m_NumberBad;
-	}
-	
-	/**
-	 * Total number of records (good + bad)
-	 * @return
-	 */
-	public long getTotalNumber()
-	{
-		return m_TotalNumber;
-	}
-	
+
 	@Override
-	public String getMessage()
+	public boolean persistUsageCounts() 
 	{
-		return String.format("A high proportion of records are not in ascending "
-				+ "chronological  order (%d of %d).",
-				m_NumberBad, m_TotalNumber);
+		m_TotalByteCount += getBytesReadSinceLastReport();
+		m_TotalFieldCount += getFieldsReadSinceLastReport();
+		m_TotalRecordCount += getRecordsReadSinceLastReport();
+		
+		m_WasPersistUsageCalled = true;
+		
+		return true;
 	}
+	
+	public long getTotalBytesRead()
+	{
+		return m_TotalByteCount;
+	}
+	
+	public long getTotalFieldsRead()
+	{
+		return m_TotalFieldCount;
+	}	
+	
+	public long getTotalRecordsRead()
+	{
+		return m_TotalRecordCount;
+	}
+	
+	/**
+	 * calling this sets m_WasPersistUsageCalled to false
+	 * @return
+	 */
+	public boolean persistUsageWasCalled()
+	{
+		boolean tmp = m_WasPersistUsageCalled;
+		m_WasPersistUsageCalled = false;
+		return tmp;
+	}
+
 }

@@ -26,7 +26,7 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.warnings;
+package com.prelert.job.status;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -46,12 +46,15 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
 import com.prelert.job.Detector;
-import com.prelert.job.DummyUsageReporter;
 import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.persistence.JobDataPersister;
 import com.prelert.job.persistence.none.NoneJobDataPersister;
 import com.prelert.job.process.MissingFieldException;
 import com.prelert.job.process.ProcessManager;
+import com.prelert.job.status.HighProportionOfBadTimestampsException;
+import com.prelert.job.status.OutOfOrderRecordsException;
+import com.prelert.job.status.StatusReporter;
+import com.prelert.job.usage.DummyUsageReporter;
 
 public class DataFormatWarningsTest 
 {
@@ -162,8 +165,8 @@ public class DataFormatWarningsTest
 			System.setProperty(StatusReporter.ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS_PROP,
 					Integer.toString(MAX_PERCENT_OUT_OF_ORDER_ERRORS));
 
-			DummyStatusReporter statusReporter = new DummyStatusReporter();
 			DummyUsageReporter usageReporter = new DummyUsageReporter("test-job", s_Logger);
+			DummyStatusReporter statusReporter = new DummyStatusReporter(usageReporter);
 			JobDataPersister dp = new NoneJobDataPersister();
 			
 			Assert.assertEquals(MAX_PERCENT_DATE_PARSE_ERRORS, 
@@ -174,7 +177,7 @@ public class DataFormatWarningsTest
 			try
 			{
 				pm.writeToJob(dd, ac, bis, new NullOutputStream(), 
-						statusReporter, usageReporter, dp, s_Logger);
+						statusReporter, dp, s_Logger);
 				Assert.assertTrue(false); // should throw
 			}
 			catch (HighProportionOfBadTimestampsException e)
@@ -182,7 +185,7 @@ public class DataFormatWarningsTest
 				long percentBad = (e.getNumberBad() * 100 )/ e.getTotalNumber();
 				
 				Assert.assertEquals(statusReporter.getBytesRead(), 
-						usageReporter.getTotalBytesRead());
+						usageReporter.getBytesReadSinceLastReport() );
 				Assert.assertTrue(percentBad >= MAX_PERCENT_DATE_PARSE_ERRORS);
 			}
 		}
@@ -284,7 +287,7 @@ public class DataFormatWarningsTest
 					Integer.toString(MAX_PERCENT_OUT_OF_ORDER_ERRORS));
 
 			DummyUsageReporter usageReporter = new DummyUsageReporter("test-job", s_Logger);
-			DummyStatusReporter statusReporter = new DummyStatusReporter();
+			DummyStatusReporter statusReporter = new DummyStatusReporter(usageReporter);
 			JobDataPersister dp = new NoneJobDataPersister();
 			
 			Assert.assertEquals(MAX_PERCENT_DATE_PARSE_ERRORS, 
@@ -295,7 +298,7 @@ public class DataFormatWarningsTest
 			try
 			{
 				pm.writeToJob(dd, ac, bis, new NullOutputStream(),
-						statusReporter, usageReporter, dp, s_Logger);
+						statusReporter, dp, s_Logger);
 				Assert.assertTrue(false); // should throw
 			}
 			catch (HighProportionOfBadTimestampsException e)
@@ -303,7 +306,7 @@ public class DataFormatWarningsTest
 				long percentBad = (e.getNumberBad() * 100 )/ e.getTotalNumber();
 				
 				Assert.assertEquals(statusReporter.getBytesRead(), 
-						usageReporter.getTotalBytesRead());
+						usageReporter.getBytesReadSinceLastReport());
 				Assert.assertTrue(percentBad >= MAX_PERCENT_DATE_PARSE_ERRORS);
 			}
 		}
@@ -405,8 +408,8 @@ public class DataFormatWarningsTest
 			System.setProperty(StatusReporter.ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS_PROP,
 					Integer.toString(MAX_PERCENT_OUT_OF_ORDER_ERRORS));
 
-			DummyStatusReporter statusReporter = new DummyStatusReporter();
 			DummyUsageReporter usageReporter = new DummyUsageReporter("test-job", s_Logger);
+			DummyStatusReporter statusReporter = new DummyStatusReporter(usageReporter);
 			JobDataPersister dp = new NoneJobDataPersister();
 			
 			Assert.assertEquals(MAX_PERCENT_DATE_PARSE_ERRORS, 
@@ -417,7 +420,7 @@ public class DataFormatWarningsTest
 			try
 			{
 				pm.writeToJob(dd, ac, bis, new NullOutputStream(), 
-						statusReporter, usageReporter, dp, s_Logger);
+						statusReporter, dp, s_Logger);
 				Assert.assertTrue(false); // should throw
 			}
 			catch (OutOfOrderRecordsException e)
@@ -425,7 +428,7 @@ public class DataFormatWarningsTest
 				long percentBad = (e.getNumberOutOfOrder() * 100 )/ e.getTotalNumber();
 				
 				Assert.assertEquals(statusReporter.getBytesRead(), 
-						usageReporter.getTotalBytesRead());
+						usageReporter.getBytesReadSinceLastReport());
 				Assert.assertTrue(percentBad >= MAX_PERCENT_OUT_OF_ORDER_ERRORS);
 			}
 		}
@@ -526,8 +529,8 @@ public class DataFormatWarningsTest
 			System.setProperty(StatusReporter.ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS_PROP,
 					Integer.toString(MAX_PERCENT_OUT_OF_ORDER_ERRORS));
 
-			DummyStatusReporter statusReporter = new DummyStatusReporter();
 			DummyUsageReporter usageReporter = new DummyUsageReporter("test-job", s_Logger);
+			DummyStatusReporter statusReporter = new DummyStatusReporter(usageReporter);
 			JobDataPersister dp = new NoneJobDataPersister();
 			
 			Assert.assertEquals(MAX_PERCENT_DATE_PARSE_ERRORS, 
@@ -538,7 +541,7 @@ public class DataFormatWarningsTest
 			try
 			{
 				pm.writeToJob(dd, ac, bis, new NullOutputStream(), 
-						statusReporter, usageReporter, dp, s_Logger);
+						statusReporter, dp, s_Logger);
 				Assert.assertTrue(false); // should throw
 			}
 			catch (OutOfOrderRecordsException e)
@@ -546,7 +549,7 @@ public class DataFormatWarningsTest
 				long percentBad = (e.getNumberOutOfOrder() * 100 )/ e.getTotalNumber();
 				
 				Assert.assertEquals(statusReporter.getBytesRead(), 
-						usageReporter.getTotalBytesRead());
+						usageReporter.getBytesReadSinceLastReport());
 				Assert.assertTrue(percentBad >= MAX_PERCENT_OUT_OF_ORDER_ERRORS);
 			}
 		}

@@ -29,7 +29,7 @@ package com.prelert.rs.provider;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 
-import com.prelert.job.warnings.HighProportionOfBadTimestampsException;
+import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.rs.data.ApiError;
 
 

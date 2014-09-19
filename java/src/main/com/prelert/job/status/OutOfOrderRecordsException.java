@@ -24,28 +24,58 @@
  *                                                          *
  *                                                          *
  ************************************************************/
+package com.prelert.job.status;
 
-package com.prelert.job;
+import com.prelert.rs.data.ErrorCode;
 
-import org.apache.log4j.Logger;
-
-import com.prelert.job.usage.UsageReporter;
-
-public class DummyUsageReporter extends UsageReporter 
+/**
+ *  Records sent to autodetect should be in ascending chronological 
+ *  order else they are ignored and a error logged. This exception
+ *  represents the case where a high proportion of messages are not
+ *  in temporal order. 
+ */
+public class OutOfOrderRecordsException extends Exception 
 {
-
-	public DummyUsageReporter(String jobId, Logger logger) 
-	{
-		super(jobId, logger);
+	private static final long serialVersionUID = -7088347813900268191L;
 	
+	private long m_NumberBad;
+	private long m_TotalNumber;
+	
+	public OutOfOrderRecordsException(long numberBadRecords, 
+			long totalNumberRecords)
+	{
+		m_NumberBad = numberBadRecords;
+		m_TotalNumber = totalNumberRecords;
 	}
-
+	
+	public ErrorCode getErrorCode()
+	{
+		return ErrorCode.TOO_MANY_OUT_OF_ORDER_RECORDS;
+	}
+	
+	/**
+	 * The number of out of order records
+	 * @return
+	 */
+	public long getNumberOutOfOrder()
+	{
+		return m_NumberBad;
+	}
+	
+	/**
+	 * Total number of records (good + bad)
+	 * @return
+	 */
+	public long getTotalNumber()
+	{
+		return m_TotalNumber;
+	}
+	
 	@Override
-	public boolean persistUsageCounts() 
+	public String getMessage()
 	{
-		return true;
+		return String.format("A high proportion of records are not in ascending "
+				+ "chronological  order (%d of %d).",
+				m_NumberBad, m_TotalNumber);
 	}
-	
-	
-
 }

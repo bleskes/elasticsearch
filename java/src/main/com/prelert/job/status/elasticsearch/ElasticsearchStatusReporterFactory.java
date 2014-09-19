@@ -24,59 +24,36 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.warnings;
+package com.prelert.job.status.elasticsearch;
 
-import com.prelert.rs.data.ErrorCode;
+import org.apache.log4j.Logger;
+import org.elasticsearch.client.Client;
 
-/**
- * If the timestamp field of a record cannot be read or the 
- * date format is incorrect the record is ignored. This 
- * exception is thrown when a high proportion of records
- * have a bad timestamp.
- */
-public class HighProportionOfBadTimestampsException extends Exception 
+import com.prelert.job.JobDetails;
+import com.prelert.job.status.StatusReporter;
+import com.prelert.job.status.StatusReporterFactory;
+import com.prelert.job.usage.UsageReporter;
+
+public class ElasticsearchStatusReporterFactory implements StatusReporterFactory 
 {
-	private static final long serialVersionUID = -7776085998658495251L;
+	private Client m_Client;
+	
+	/**
+	 * Construct the factory
+	 * 
+	 * @param node The Elasticsearch node
+	 */
+	public ElasticsearchStatusReporterFactory(Client client)
+	{
+		m_Client = client;
+	}
 
-	private long m_NumberBad;
-	private long m_TotalNumber;
-	
-	public HighProportionOfBadTimestampsException(long numberBadRecords, 
-			long totalNumberRecords)
-	{
-		m_NumberBad = numberBadRecords;
-		m_TotalNumber = totalNumberRecords;
-	}
-	
-	public ErrorCode getErrorCode()
-	{
-		return ErrorCode.TOO_MANY_BAD_DATES;
-	}
-	
-	/**
-	 * The number of bad records
-	 * @return
-	 */
-	public long getNumberBad()
-	{
-		return m_NumberBad;
-	}
-	
-	/**
-	 * Total number of records (good + bad)
-	 * @return
-	 */
-	public long getTotalNumber()
-	{
-		return m_TotalNumber;
-	}
-	
 	@Override
-	public String getMessage()
+	public StatusReporter newStatusReporter(String jobId, JobDetails.Counts counts,
+			UsageReporter usageReporter, Logger logger) 
 	{
-		return String.format("A high proportion of records have a timestamp "
-				+ "that cannot be interpreted (%d of %d).",
-				m_NumberBad, m_TotalNumber);
+		StatusReporter reporter =  new ElasticsearchStatusReporter(m_Client, 
+				usageReporter, jobId, counts, logger);
+		return reporter;
 	}
-	
 }

@@ -53,14 +53,13 @@ import org.apache.log4j.RollingFileAppender;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
-import com.prelert.job.warnings.HighProportionOfBadTimestampsException;
-import com.prelert.job.warnings.OutOfOrderRecordsException;
-import com.prelert.job.warnings.StatusReporter;
-import com.prelert.job.warnings.StatusReporterFactory;
 import com.prelert.job.persistence.DataPersisterFactory;
 import com.prelert.job.persistence.JobDataPersister;
 import com.prelert.job.persistence.JobProvider;
-import com.prelert.job.usage.UsageReporter;
+import com.prelert.job.status.HighProportionOfBadTimestampsException;
+import com.prelert.job.status.OutOfOrderRecordsException;
+import com.prelert.job.status.StatusReporter;
+import com.prelert.job.status.StatusReporterFactory;
 import com.prelert.job.usage.UsageReporterFactory;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DetectorState;
@@ -237,7 +236,7 @@ public class ProcessManager
 			
 			writeToJob(process.getDataDescription(), process.getAnalysisConfig(),
 					input, process.getProcess().getOutputStream(), 
-					process.getStatusReporter(), process.getUsageReporter(), 
+					process.getStatusReporter(), 
 					process.getDataPersister(), process.getLogger());
 						
 			// check there wasn't an error in the input. 
@@ -360,8 +359,9 @@ public class ProcessManager
 		ProcessAndDataDescription procAndDD = new ProcessAndDataDescription(
 				nativeProcess, jobId,
 				job.getDataDescription(), job.getTimeout(), job.getAnalysisConfig(), logger,
-				m_StatusReporterFactory.newStatusReporter(jobId, job.getCounts(), logger),
-				m_UsageReporterFactory.newUsageReporter(jobId, logger),
+				m_StatusReporterFactory.newStatusReporter(jobId, job.getCounts(),
+						m_UsageReporterFactory.newUsageReporter(jobId, logger),
+						 logger),
 				m_ResultsReaderFactory.newResultsParser(jobId, 
 						nativeProcess.getInputStream(),						
 						logger),
@@ -599,7 +599,7 @@ public class ProcessManager
 	 * @param analysisFields
 	 * @param input
 	 * @param output
-	 * @param reporter
+	 * @param statusReporter
 	 * @param jobLogger
 	 * @throws JsonParseException 
 	 * @throws MissingFieldException If any fields are missing from the CSV header
@@ -610,7 +610,7 @@ public class ProcessManager
 	public void writeToJob(DataDescription dataDescription, 
 			AnalysisConfig analysisConfig,
 			InputStream input, OutputStream output, 
-			StatusReporter statusReporter, UsageReporter usageReporter,
+			StatusReporter statusReporter, 
 			JobDataPersister dataPersister, 
 			Logger jobLogger) 
 	throws JsonParseException, MissingFieldException, IOException,
@@ -625,19 +625,19 @@ public class ProcessManager
 			{
 				PipeToProcess.transformAndPipeJson(dataDescription, analysisConfig, input, 
 						bufferedStream, statusReporter, 
-						usageReporter, dataPersister, jobLogger);
+						dataPersister, jobLogger);
 			}
 			else
 			{
 				PipeToProcess.transformAndPipeCsv(dataDescription, analysisConfig, input, 
 						bufferedStream, statusReporter,
-						usageReporter, dataPersister, jobLogger);
+						dataPersister, jobLogger);
 			}
 		}
 		else
 		{			
 			PipeToProcess.pipeCsv(dataDescription, analysisConfig, input, 
-					bufferedStream, statusReporter, usageReporter, dataPersister,jobLogger);
+					bufferedStream, statusReporter, dataPersister,jobLogger);
 		}
 	}
 	

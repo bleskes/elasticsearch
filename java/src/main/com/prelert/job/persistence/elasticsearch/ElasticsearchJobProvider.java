@@ -32,7 +32,6 @@ import static org.elasticsearch.node.NodeBuilder.nodeBuilder;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -77,7 +76,6 @@ import com.prelert.job.JobIdAlreadyExistsException;
 import com.prelert.job.JobStatus;
 import com.prelert.job.QuantilesState;
 import com.prelert.job.UnknownJobException;
-import com.prelert.job.alert.Alert;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.usage.Usage;
 import com.prelert.rs.data.AnomalyRecord;
@@ -121,6 +119,12 @@ public class ElasticsearchJobProvider implements JobProvider
 	static public final String PRELERT_INFO_ID = "infoStats";
 	
 	static public final String _PARENT = "_parent";
+	
+	static private final List<String> SECONDARY_SORT = new ArrayList<>(); 
+//	static 
+//	{
+//		SECONDARY_SORT.add(AnomalyRecord.ANOMALY_SCORE);
+//	}
 	
 	
 	private Node m_Node;
@@ -328,7 +332,6 @@ public class ElasticsearchJobProvider implements JobProvider
 			XContentBuilder quantilesMapping = ElasticsearchMappings.quantilesMapping();
 			XContentBuilder detectorStateMapping = ElasticsearchMappings.detectorStateMapping();
 			XContentBuilder usageMapping = ElasticsearchMappings.usageMapping();
-			XContentBuilder alertMapping = ElasticsearchMappings.alertMapping();
 						
 			m_Client.admin().indices()
 					.prepareCreate(job.getId())					
@@ -339,7 +342,6 @@ public class ElasticsearchJobProvider implements JobProvider
 					.addMapping(Quantiles.TYPE, quantilesMapping)
 					.addMapping(DetectorState.TYPE, detectorStateMapping)
 					.addMapping(Usage.TYPE, usageMapping)
-					.addMapping(Alert.TYPE, alertMapping)
 					.get();
 
 			
@@ -727,6 +729,7 @@ public class ElasticsearchJobProvider implements JobProvider
 		 }
 		 
 		 List<String> secondarySort = Arrays.asList(new String[] {
+			 AnomalyRecord.ANOMALY_SCORE,
 			 AnomalyRecord.OVER_FIELD_VALUE,
 			 AnomalyRecord.PARTITION_FIELD_VALUE,
 			 AnomalyRecord.BY_FIELD_VALUE,
@@ -734,7 +737,8 @@ public class ElasticsearchJobProvider implements JobProvider
 			 AnomalyRecord.FUNCTION}
 		 );
 		
-		return records(jobId, skip, take, bucketFilter, sb, secondarySort);
+		return records(jobId, skip, take, bucketFilter, sb, secondarySort,
+				descending);
 	}
 	
 	
@@ -813,12 +817,12 @@ public class ElasticsearchJobProvider implements JobProvider
 		{
 			idFilter.addIds(id);
 		}
-		
-		FilterBuilder bucketFilter = FilterBuilders.hasParentFilter(
-						Bucket.TYPE, idFilter);
 
-	 
-		 return records(jobId, skip, take, bucketFilter, sortField, descending);
+		FilterBuilder bucketFilter = FilterBuilders.hasParentFilter(
+				Bucket.TYPE, idFilter);
+
+
+		return records(jobId, skip, take, bucketFilter, sortField, descending);
 	}
 	
 	@Override
@@ -848,7 +852,6 @@ public class ElasticsearchJobProvider implements JobProvider
 			 {
 				 fb = FilterBuilders.andFilter(scoreFilter, fb);
 			 }
-
 		 }
 
 		 if (fb == null)
@@ -874,7 +877,7 @@ public class ElasticsearchJobProvider implements JobProvider
 						 .order(descending ? SortOrder.DESC : SortOrder.ASC);		
 		 }
 		 
-		return records(jobId, skip, take, recordFilter, sb, Collections.<String>emptyList());
+		return records(jobId, skip, take, recordFilter, sb, SECONDARY_SORT, descending);
 	}
 	
 	
@@ -882,7 +885,8 @@ public class ElasticsearchJobProvider implements JobProvider
 	 * The returned records have the parent bucket id set.
 	 */
 	private Pagination<AnomalyRecord> records(String jobId, int skip, int take,
-			FilterBuilder recordFilter, SortBuilder sb, List<String> secondarySort) 
+			FilterBuilder recordFilter, SortBuilder sb, List<String> secondarySort,
+			boolean descending) 
 	throws UnknownJobException
 	{
 		SearchRequestBuilder searchBuilder = m_Client.prepareSearch(jobId)
@@ -900,7 +904,7 @@ public class ElasticsearchJobProvider implements JobProvider
 		
 		for (String sortField : secondarySort)
 		{
-			searchBuilder.addSort(sortField, SortOrder.DESC);
+			searchBuilder.addSort(sortField, descending ? SortOrder.DESC : SortOrder.ASC);
 		}
 
 		
@@ -919,7 +923,7 @@ public class ElasticsearchJobProvider implements JobProvider
 		{
 			Map<String, Object> m  = hit.getSource();
 
-			// TODO replace logstash timestamp name with timestamp
+			// replace logstash timestamp name with timestamp
 			m.put(Bucket.TIMESTAMP, m.remove(ElasticsearchMappings.ES_TIMESTAMP));
 			
 			AnomalyRecord record = m_ObjectMapper.convertValue(
