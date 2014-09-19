@@ -702,8 +702,12 @@ public class JobDetails
 			
 			Counts that = (Counts)other;
 
-			return this.m_ProcessedRecordCount == that.m_ProcessedRecordCount &&
+			return this.m_BucketCount == that.m_BucketCount &&
+					this.m_ProcessedRecordCount == that.m_ProcessedRecordCount &&
+					this.m_ProcessedFieldCount == that.m_ProcessedFieldCount &&
 					this.m_InputBytes == that.m_InputBytes &&
+					this.m_InputFieldCount == that.m_InputFieldCount &&
+					this.m_InputRecordCount == that.m_InputRecordCount &&
 					this.m_InvalidDateCount == that.m_InvalidDateCount &&
 					this.m_MissingFieldCount == that.m_MissingFieldCount &&
 					this.m_OutOfOrderTimeStampCount == that.m_OutOfOrderTimeStampCount;

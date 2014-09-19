@@ -46,10 +46,10 @@ import com.prelert.job.DataDescription;
 import com.prelert.job.Detector;
 import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.persistence.DummyJobDataPersister;
+import com.prelert.job.status.DummyStatusReporter;
+import com.prelert.job.status.HighProportionOfBadTimestampsException;
+import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.job.usage.DummyUsageReporter;
-import com.prelert.job.warnings.DummyStatusReporter;
-import com.prelert.job.warnings.HighProportionOfBadTimestampsException;
-import com.prelert.job.warnings.OutOfOrderRecordsException;
 
 public class CsvDataTransfromTest 
 {

@@ -19,31 +19,41 @@
  * may be reproduced, adapted or transmitted in any form or *
  * by any means, electronic, mechanical, photocopying,      *
  * recording or otherwise.                                  *
- *                                                  
  *                                                          *
  *----------------------------------------------------------*
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.warnings;
+package com.prelert.job.status.elasticsearch;
 
+import org.apache.log4j.Logger;
+import org.elasticsearch.client.Client;
+
+import com.prelert.job.JobDetails;
+import com.prelert.job.status.StatusReporter;
+import com.prelert.job.status.StatusReporterFactory;
 import com.prelert.job.usage.UsageReporter;
 
-/**
- * Dummy StatusReporter with an 
- *
- */
-public class DummyStatusReporter extends StatusReporter 
+public class ElasticsearchStatusReporterFactory implements StatusReporterFactory 
 {
-	public DummyStatusReporter(UsageReporter usageReporter) 
+	private Client m_Client;
+	
+	/**
+	 * Construct the factory
+	 * 
+	 * @param node The Elasticsearch node
+	 */
+	public ElasticsearchStatusReporterFactory(Client client)
 	{
-		super("DummyJobId", usageReporter, null);
+		m_Client = client;
 	}
 
 	@Override
-	protected void reportStatus(long totalRecords)
+	public StatusReporter newStatusReporter(String jobId, JobDetails.Counts counts,
+			UsageReporter usageReporter, Logger logger) 
 	{
-		// do nothing
+		StatusReporter reporter =  new ElasticsearchStatusReporter(m_Client, 
+				usageReporter, jobId, counts, logger);
+		return reporter;
 	}
-
 }

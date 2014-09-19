@@ -34,7 +34,7 @@ import org.apache.log4j.Logger;
  * This is an abstract class sub classes should implement
  * {@link UsageReporter#persistUsageCounts()} 
  * 
- * The main difference betweeen this and the {@linkplain com.prelert.job.warnings.StatusReporter}
+ * The main difference betweeen this and the {@linkplain com.prelert.job.status.StatusReporter}
  * is that this writes hourly reports i.e. how much data was read in an hour
  */
 abstract public class UsageReporter 

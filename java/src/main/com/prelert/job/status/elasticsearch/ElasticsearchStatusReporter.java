@@ -1,4 +1,4 @@
-package com.prelert.job.warnings.elasticsearch;
+package com.prelert.job.status.elasticsearch;
 
 
 import java.util.HashMap;
@@ -6,8 +6,8 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import com.prelert.job.JobDetails;
+import com.prelert.job.status.StatusReporter;
 import com.prelert.job.usage.UsageReporter;
-import com.prelert.job.warnings.StatusReporter;
 
 import org.apache.log4j.Logger;
 import org.elasticsearch.action.update.UpdateRequestBuilder;

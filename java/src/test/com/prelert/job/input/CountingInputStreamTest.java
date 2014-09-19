@@ -35,8 +35,8 @@ import java.nio.charset.StandardCharsets;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.prelert.job.status.DummyStatusReporter;
 import com.prelert.job.usage.DummyUsageReporter;
-import com.prelert.job.warnings.DummyStatusReporter;
 
 
 public class CountingInputStreamTest 
