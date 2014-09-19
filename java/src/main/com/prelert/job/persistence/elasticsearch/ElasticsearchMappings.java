@@ -39,7 +39,6 @@ import com.prelert.job.DataDescription;
 import com.prelert.job.Detector;
 import com.prelert.job.DetectorState;
 import com.prelert.job.JobDetails;
-import com.prelert.job.alert.Alert;
 import com.prelert.job.usage.Usage;
 import com.prelert.rs.data.AnomalyCause;
 import com.prelert.rs.data.AnomalyRecord;
@@ -478,48 +477,15 @@ public class ElasticsearchMappings
 						.startObject(Usage.TIMESTAMP)
 							.field("type", "date")
 						.endObject()	
-						.startObject(Usage.VOLUME)
+						.startObject(Usage.INPUT_BYTES)
 							.field("type", "long")
-						.endObject()					
-					.endObject()
-				.endObject()
-			.endObject();
-			
-		return mapping;
-	}
-	
-	
-	/**
-	 * The Elasticsearch mappings for {@link Alert}s 
-	 * 
-	 * @return
-	 * @throws IOException
-	 */
-	static public XContentBuilder alertMapping() 
-	throws IOException
-	{
-		XContentBuilder mapping = jsonBuilder()
-			.startObject()
-				.startObject(Alert.TYPE)
-					.startObject("_all")
-						.field("enabled", false)
-					.endObject()
-					.startObject("properties")	
-						.startObject(Alert.ID)
-							.field("type", "string").field(INDEX, NOT_ANALYZED)
-						.endObject()					
-						.startObject(Alert.JOB_ID)
-						 	.field("type", "string")
+						.endObject()	
+						.startObject(Usage.INPUT_FIELD_COUNT)
+							.field("type", "long")
 						.endObject()
-						.startObject(Alert.SEVERTIY)
-							.field("type", "string")
-						.endObject()					
-						.startObject(Alert.TIMESTAMP)
-						    .field("type", "date")
-						.endObject()					
-						.startObject(Alert.REASON)
-						    .field("type", "string")
-						.endObject()									
+						.startObject(Usage.INPUT_RECORD_COUNT)
+							.field("type", "long")
+						.endObject()						
 					.endObject()
 				.endObject()
 			.endObject();
@@ -527,7 +493,7 @@ public class ElasticsearchMappings
 		return mapping;
 	}
 	
-	
+		
 	/**
 	 * Mapping for the saved data records
 	 *  

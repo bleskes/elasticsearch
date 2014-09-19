@@ -33,26 +33,33 @@ import org.apache.log4j.Logger;
  * Reports the number of bytes read.
  * This is an abstract class sub classes should implement
  * {@link UsageReporter#persistUsageCounts()} 
+ * 
+ * The main difference betweeen this and the {@linkplain com.prelert.job.warnings.StatusReporter}
+ * is that this writes hourly reports i.e. how much data was read in an hour
  */
 abstract public class UsageReporter 
 {
 	static final public String UPDATE_INTERVAL_PROP = "usage.update.interval";
 	static final private long UPDATE_AFTER_COUNT_SECS = 300;
 	
-	private long m_BytesReadSinceLastReport;
 	private String m_JobId;
 	private Logger m_Logger;
-	private long m_TotalByteCount;
 	
+	private long m_BytesReadSinceLastReport;
+	private long m_FieldsReadSinceLastReport;
+	private long m_RecordsReadSinceLastReport;
+
 	private long m_LastUpdateTimeMs;
 	private long m_UpdateIntervalMs = UPDATE_AFTER_COUNT_SECS * 1000;
 	
 	public UsageReporter(String jobId, Logger logger)
 	{
 		m_BytesReadSinceLastReport = 0;
+		m_FieldsReadSinceLastReport = 0;
+		m_RecordsReadSinceLastReport = 0;
+		
 		m_JobId = jobId;
 		m_Logger = logger;
-		m_TotalByteCount = 0;
 		
 		m_LastUpdateTimeMs = System.currentTimeMillis();
 		
@@ -76,7 +83,7 @@ abstract public class UsageReporter
 	 * Add <code>bytesRead</code> to the running total
 	 * @param bytesRead
 	 */
-	public void addBytesRead(int bytesRead)
+	public void addBytesRead(long bytesRead)
 	{
 		m_BytesReadSinceLastReport += bytesRead;
 		
@@ -88,15 +95,33 @@ abstract public class UsageReporter
 		}
 	}
 	
+	public void addFieldsRecordsRead(long fieldsRead)
+	{
+		m_FieldsReadSinceLastReport += fieldsRead;
+		++m_RecordsReadSinceLastReport;
+	}
+	
+	public void addFieldsRecordsRead(long fieldsRead, long recordsRead)
+	{
+		m_FieldsReadSinceLastReport += fieldsRead;
+		m_RecordsReadSinceLastReport += recordsRead;
+	}
+	
 	public long getBytesReadSinceLastReport()
 	{
 		return m_BytesReadSinceLastReport;
 	}
 	
-	public long getTotalBytesRead()
+	public long getFieldsReadSinceLastReport()
 	{
-		return m_TotalByteCount;
+		return m_FieldsReadSinceLastReport;
 	}
+	
+	public long getRecordsReadSinceLastReport()
+	{
+		return m_RecordsReadSinceLastReport;
+	}
+	
 	
 	public String getJobId()
 	{
@@ -110,7 +135,8 @@ abstract public class UsageReporter
 	
 	/**
 	 * Logs total bytes written and calls {@linkplain persistUsageCounts()}
-	 * m_BytesReadSinceLastReport is reset to 0 after this has been called.
+	 * m_BytesReadSinceLastReport, m_FieldsReadSinceLastReport and
+	 * m_RecordsReadSinceLastReport are reset to 0 after this has been called.
 	 */
 	public void reportUsage()
 	{	
@@ -124,15 +150,17 @@ abstract public class UsageReporter
 	 */
 	private void reportUsage(long epoch_ms)
 	{
-		m_TotalByteCount += m_BytesReadSinceLastReport;
-
-		m_Logger.info(String.format("%dKiB written to job %s",
-				m_TotalByteCount >> 10, m_JobId));
+		m_Logger.info(String.format("An additional %dKiB, %d fields and %d records read by job %s",
+				m_BytesReadSinceLastReport >> 10, m_FieldsReadSinceLastReport, 
+				m_RecordsReadSinceLastReport, m_JobId));
 
 		persistUsageCounts();
 
 		m_LastUpdateTimeMs = epoch_ms;
+		
 		m_BytesReadSinceLastReport = 0;
+		m_FieldsReadSinceLastReport = 0;
+		m_RecordsReadSinceLastReport = 0;
 	}
 	
 	/**

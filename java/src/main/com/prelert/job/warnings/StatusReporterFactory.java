@@ -30,6 +30,7 @@ package com.prelert.job.warnings;
 import org.apache.log4j.Logger;
 
 import com.prelert.job.JobDetails;
+import com.prelert.job.usage.UsageReporter;
 
 /**
  * Abstract Factory method for creating new {@link StatusReporter} 
@@ -41,11 +42,12 @@ public interface StatusReporterFactory
 	 * Return a new StatusReporter for the given job id. 
 	 * @param jobId
 	 * @param counts The persisted counts for the job
+	 * @param usageReporter
 	 * to be analysed in each record. This count does not include the 
 	 * time field
 	 * @param logger The job logger
 	 * @return
 	 */
 	public StatusReporter newStatusReporter(String jobId, JobDetails.Counts 
-			counts, Logger logger);
+			counts, UsageReporter usageReporter, Logger logger);
 }

@@ -27,15 +27,17 @@
  ************************************************************/
 package com.prelert.job.warnings;
 
+import com.prelert.job.usage.UsageReporter;
+
 /**
  * Dummy StatusReporter with an 
  *
  */
 public class DummyStatusReporter extends StatusReporter 
 {
-	public DummyStatusReporter() 
+	public DummyStatusReporter(UsageReporter usageReporter) 
 	{
-		super("DummyJobId", null);
+		super("DummyJobId", usageReporter, null);
 	}
 
 	@Override
