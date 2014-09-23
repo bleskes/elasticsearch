@@ -561,9 +561,7 @@ public class NormalizationTest implements Closeable
 				fareQuoteData, false);
 		test.m_WebServiceClient.closeJob(baseUrl, farequoteJob);
 		
-		
 		test.verifyFarequoteNormalisedBuckets(baseUrl, farequoteJob);
-		test.verifyFarequoteNormalisedRecords(baseUrl, farequoteJob);
 		
 		
 		//==========================
