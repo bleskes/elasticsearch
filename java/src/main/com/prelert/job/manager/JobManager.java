@@ -223,6 +223,7 @@ public class JobManager
 
 		// Negative m_MaxDetectorsPerJob means unlimited
 		if (m_MaxDetectorsPerJob >= 0 &&
+			jobConfig.getAnalysisConfig() != null &&
 			jobConfig.getAnalysisConfig().getDetectors().size() > m_MaxDetectorsPerJob)
 		{
 			throw new JobConfigurationException(
@@ -236,7 +237,7 @@ public class JobManager
 
 		// We can only validate the case of m_MaxPartitionsPerJob being zero in
 		// the Java code - anything more subtle has to be left to the C++
-		if (m_MaxPartitionsPerJob == 0)
+		if (m_MaxPartitionsPerJob == 0 && jobConfig.getAnalysisConfig() != null)
 		{
 			for (com.prelert.job.Detector detector :
 						jobConfig.getAnalysisConfig().getDetectors())
@@ -599,7 +600,7 @@ public class JobManager
 	{
 		// Negative m_MaxActiveJobs means unlimited
 		if (m_MaxActiveJobs >= 0 &&
-			m_ProcessManager.jobIsRunning(jobId) &&
+			(m_ProcessManager.jobIsRunning(jobId) == false) &&
 			m_ProcessManager.numberOfRunningJobs() >= m_MaxActiveJobs)
 		{
 			throw new TooManyJobsException(m_MaxActiveJobs,
