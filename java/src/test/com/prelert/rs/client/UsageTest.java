@@ -70,9 +70,6 @@ public class UsageTest implements Closeable
 	 */
 	static final public String API_BASE_URL = "http://localhost:8080/engine/v1";
 	
-	static final public String ES_CLUSTER_NAME = "davekprelert";  // TODO
-	
-	
 	static final long FLIGHTCENTRE_NUM_BUCKETS = 296;
 	static final long FLIGHTCENTRE_NUM_RECORDS = 175910;
 	static final long FLIGHTCENTRE_NUM_FIELDS = FLIGHTCENTRE_NUM_RECORDS * 3;
