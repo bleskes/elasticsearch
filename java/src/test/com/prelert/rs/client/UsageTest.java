@@ -28,7 +28,6 @@
 
 package com.prelert.rs.client;
 
-import static org.elasticsearch.node.NodeBuilder.nodeBuilder;
 
 import java.io.Closeable;
 import java.io.File;
@@ -42,14 +41,6 @@ import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.client.Client;
-import org.elasticsearch.common.settings.ImmutableSettings;
-import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.index.query.FilterBuilder;
-import org.elasticsearch.index.query.FilterBuilders;
-import org.elasticsearch.node.Node;
-import org.elasticsearch.search.SearchHit;
 
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
@@ -58,7 +49,6 @@ import com.prelert.job.JobConfiguration;
 import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobDetails.Counts;
-import com.prelert.job.usage.Usage;
 import com.prelert.rs.data.SingleDocument;
 
 
@@ -90,31 +80,13 @@ public class UsageTest implements Closeable
 	static final long FLIGHTCENTRE_INPUT_BYTES_CSV = 5724086;
 			
 	static final long FLIGHTCENTRE_INPUT_BYTES_JSON = 17510020;
-
-	
-	static public final Settings LOCAL_SETTINGS;
-	static
-	{
-		LOCAL_SETTINGS = ImmutableSettings.settingsBuilder()
-				.put("http.enabled", "false")
-				.put("discovery.zen.ping.multicast.enabled", "false")
-				.put("discovery.zen.ping.unicast.hosts", "localhost")
-				.build();
-	}
 	
 	
 	private EngineApiClient m_WebServiceClient;
-	private Client m_EsClient;
 		
 	public UsageTest(String elasticSearchClusterName)
 	{
-		m_WebServiceClient = new EngineApiClient();
-		
-		Node node = nodeBuilder().settings(LOCAL_SETTINGS).client(true)
-				.clusterName(elasticSearchClusterName).node();
-		
-		m_EsClient = node.client();
-		
+		m_WebServiceClient = new EngineApiClient();		
 	}
 	
 	@Override
@@ -211,66 +183,6 @@ public class UsageTest implements Closeable
 	}
 	
 	
-	public void validateFlightCentreUsage(String jobId, boolean isJson)
-	{
-		String [] indexes = {"prelert-usage", jobId};
-		for (String index : indexes)
-		{
-			FilterBuilder fb = FilterBuilders.matchAllFilter();
-
-			SearchResponse response = m_EsClient.prepareSearch(index) 
-					.setTypes(Usage.TYPE)
-					.setPostFilter(fb)
-					.get();
-			
-			
-			long bytes = 0;
-			long fields = 0; 
-			long records = 0;
-			for (SearchHit hit : response.getHits().getHits())
-			{
-				bytes += ((Number)hit.getSource().get(Usage.INPUT_BYTES)).longValue();
-				fields += ((Number)hit.getSource().get(Usage.INPUT_FIELD_COUNT)).longValue();
-				records += ((Number)hit.getSource().get(Usage.INPUT_RECORD_COUNT)).longValue();
-			}
-			
-			
-			if (index.equals(jobId))
-			{
-				test(records == FLIGHTCENTRE_NUM_RECORDS);
-				test(fields == FLIGHTCENTRE_NUM_FIELDS);
-
-				if (isJson)
-				{
-					test(bytes == FLIGHTCENTRE_INPUT_BYTES_JSON);
-				}
-				else
-				{
-					// the gzipped data is 1 byte smaller (assuming this is a new line)
-					test(bytes == FLIGHTCENTRE_INPUT_BYTES_CSV || 
-							bytes == FLIGHTCENTRE_INPUT_BYTES_CSV -1);
-				}
-			}
-			else
-			{
-				// prelert usage index is the total so should have a
-				// a minimum of these values
-				test(records >= FLIGHTCENTRE_NUM_RECORDS);
-				test(fields >= FLIGHTCENTRE_NUM_FIELDS);
-
-				if (isJson)
-				{
-					test(bytes >= FLIGHTCENTRE_INPUT_BYTES_JSON);
-				}
-				else
-				{
-					// the gzipped data is 1 byte smaller (assuming this is a new line)
-					test(bytes >= FLIGHTCENTRE_INPUT_BYTES_CSV || 
-							bytes >= FLIGHTCENTRE_INPUT_BYTES_CSV -1);
-				}
-			}
-		}
-	}
 	
 	
 	
@@ -333,18 +245,15 @@ public class UsageTest implements Closeable
 			
 			jobId = test.runFarequoteJob(baseUrl, flightCentreDataCsv, isJson, isCompressed);
 			test.validateFlightCentreCounts(baseUrl, jobId, isJson);
-			test.validateFlightCentreUsage(jobId, isJson);
 			
 			isCompressed = true;
 			jobId = test.runFarequoteJob(baseUrl, flightCenterDataCsvGzip, isJson, isCompressed);
 			test.validateFlightCentreCounts(baseUrl, jobId, isJson);
-			test.validateFlightCentreUsage(jobId, isJson);
 						
 			isJson = true;
 			isCompressed = false;
 			jobId = test.runFarequoteJob(baseUrl, flightCentreDataJson, isJson, isCompressed);
 			test.validateFlightCentreCounts(baseUrl, jobId, isJson);
-			test.validateFlightCentreUsage(jobId, isJson);
 			
 			jobs.add(jobId);
 			
