@@ -81,7 +81,7 @@ public class UsageTest implements Closeable
 	
 	private EngineApiClient m_WebServiceClient;
 		
-	public UsageTest(String elasticSearchClusterName)
+	public UsageTest()
 	{
 		m_WebServiceClient = new EngineApiClient();		
 	}
@@ -232,7 +232,7 @@ public class UsageTest implements Closeable
 		File flightCentreDataJson = new File(prelertTestDataHome + 
 				"/engine_api_integration_test/flightcentre.json");		
 		
-		try (UsageTest test = new UsageTest(ES_CLUSTER_NAME))
+		try (UsageTest test = new UsageTest())
 		{
 			List<String> jobs = new ArrayList<>();
 			
