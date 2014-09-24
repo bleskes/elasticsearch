@@ -25,7 +25,7 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.rs.data;
+package com.prelert.job.quantiles;
 
 import java.io.IOException;
 import java.util.Date;

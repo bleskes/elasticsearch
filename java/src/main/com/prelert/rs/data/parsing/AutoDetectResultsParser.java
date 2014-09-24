@@ -37,9 +37,10 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.prelert.job.DetectorState;
-import com.prelert.job.QuantilesState;
 import com.prelert.job.persistence.JobResultsPersister;
 import com.prelert.job.persistence.JobRenormaliser;
+import com.prelert.job.quantiles.Quantiles;
+import com.prelert.job.quantiles.QuantilesState;
 import com.prelert.rs.data.*;
 
 /**

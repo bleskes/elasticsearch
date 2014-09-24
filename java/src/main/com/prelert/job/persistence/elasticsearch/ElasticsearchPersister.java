@@ -55,12 +55,12 @@ import com.prelert.job.DetectorState;
 import com.prelert.job.JobDetails;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.persistence.JobResultsPersister;
+import com.prelert.job.quantiles.Quantiles;
 import com.prelert.rs.data.AnomalyCause;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.Detector;
 import com.prelert.rs.data.ErrorCode;
-import com.prelert.rs.data.Quantiles;
 
 /**
  * Saves result Buckets, Quantiles and DetectorState to Elasticsearch<br/>

@@ -50,7 +50,7 @@ import com.prelert.job.AnalysisLimits;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DetectorState;
 import com.prelert.job.JobDetails;
-import com.prelert.job.QuantilesState;
+import com.prelert.job.quantiles.QuantilesState;
 
 
 /**
