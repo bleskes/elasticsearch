@@ -79,7 +79,6 @@
     <testOutputDirectory>${project.build.directory}/classes</testOutputDirectory>
 
 
-
     <plugins>
       <!-- Compile -->
       <plugin>
@@ -109,7 +108,10 @@
               <excludes>
                 <exclude>com/prelert/rs/resources/*.java</exclude>  
                 <exclude>com/prelert/job/JobManager*</exclude>   
-                <exclude>com/prelert/job/ProcessManager*</exclude>   
+                <exclude>com/prelert/job/ProcessManager*</exclude>  
+                <exclude>com/prelert/job/DetectorState.java</exclude>
+                <exclude>com/prelert/job/UnknownJobException.java</exclude>
+                <exclude>com/prelert/job/TooManyJobsException.java</exclude>
               </excludes>
             </configuration>
           </execution>
@@ -215,6 +217,7 @@
           <excludes>            
             <exclude>com/prelert/job/DetectorState.java</exclude>
             <exclude>com/prelert/job/UnknownJobException.java</exclude>
+            <exclude>com/prelert/job/TooManyJobsException.java</exclude>
           </excludes>
         </configuration>        
       </plugin>
@@ -247,6 +250,7 @@
           <sourceFileExcludes>            
             <exclude>com/prelert/job/DetectorState.java</exclude>
             <exclude>com/prelert/job/UnknownJobException.java</exclude>
+            <exclude>com/prelert/job/TooManyJobsException.java</exclude>            
           </sourceFileExcludes>
         </configuration>
       </plugin>
