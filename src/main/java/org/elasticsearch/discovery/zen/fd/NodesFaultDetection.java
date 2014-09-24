@@ -179,9 +179,13 @@ public class NodesFaultDetection extends FaultDetection {
             this.node = node;
         }
 
+        private boolean running() {
+            return NodeFD.this.equals(nodesFD.get(node));
+        }
+
         @Override
         public void run() {
-            if (!nodesFD.containsKey(node)) {
+            if (!running()) {
                 return;
             }
             final PingRequest pingRequest = new PingRequest(node.id(), clusterName, localNode, clusterStateVersion);
@@ -194,20 +198,16 @@ public class NodesFaultDetection extends FaultDetection {
 
                         @Override
                         public void handleResponse(PingResponse response) {
-                            NodeFD nodeFD = nodesFD.get(node);
-                            if (nodeFD == null || nodeFD != NodeFD.this) {
-                                // we were stopped or replaced...
+                            if (!running()) {
                                 return;
                             }
-                            nodeFD.retryCount = 0;
+                            retryCount = 0;
                             threadPool.schedule(pingInterval, ThreadPool.Names.SAME, NodeFD.this);
                         }
 
                         @Override
                         public void handleException(TransportException exp) {
-                            NodeFD nodeFD = nodesFD.get(node);
-                            if (nodeFD == null || nodeFD != NodeFD.this) {
-                                // we were stopped or replaced...
+                            if (!running()) {
                                 return;
                             }
                             if (exp instanceof ConnectTransportException || exp.getCause() instanceof ConnectTransportException) {
@@ -215,7 +215,7 @@ public class NodesFaultDetection extends FaultDetection {
                                 return;
                             }
 
-                            int retryCount = ++nodeFD.retryCount;
+                            retryCount++;
                             logger.trace("[node  ] failed to ping [{}], retry [{}] out of [{}]", exp, node, retryCount, pingRetryCount);
                             if (retryCount >= pingRetryCount) {
                                 logger.debug("[node  ] failed to ping [{}], tried [{}] times, each with  maximum [{}] timeout", node, pingRetryCount, pingRetryTimeout);
