@@ -19,7 +19,7 @@
 
 package org.elasticsearch.action.update;
 
-import org.elasticsearch.action.ActionResponse;
+import org.elasticsearch.action.ActionWriteResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.index.get.GetResult;
@@ -28,7 +28,7 @@ import java.io.IOException;
 
 /**
  */
-public class UpdateResponse extends ActionResponse {
+public class UpdateResponse extends ActionWriteResponse {
 
     private String index;
     private String id;

@@ -16,6 +16,10 @@ The result of the above delete operation is:
 [source,js]
 --------------------------------------------------
 {
+    "_shards" : {
+        "total" : 10,
+        "successful" : 10
+    },
     "found" : true,
     "_index" : "twitter",
     "_type" : "tweet",

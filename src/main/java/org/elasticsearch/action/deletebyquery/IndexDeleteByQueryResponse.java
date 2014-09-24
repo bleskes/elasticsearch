@@ -19,13 +19,16 @@
 
 package org.elasticsearch.action.deletebyquery;
 
+import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionResponse;
+import org.elasticsearch.action.ActionWriteResponse;
 import org.elasticsearch.action.ShardOperationFailedException;
-import org.elasticsearch.action.support.DefaultShardOperationFailedException;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -34,23 +37,26 @@ import java.util.List;
 public class IndexDeleteByQueryResponse extends ActionResponse {
 
     private String index;
-    private int successfulShards;
-    private int failedShards;
-    private ShardOperationFailedException[] failures;
+    private ActionWriteResponse.ShardInfo shardInfo;
 
-    IndexDeleteByQueryResponse(String index, int successfulShards, int failedShards, List<ShardOperationFailedException> failures) {
+    IndexDeleteByQueryResponse(String index, List<ShardDeleteByQueryResponse> shardResponses, List<ShardOperationFailedException> failures) {
         this.index = index;
-        this.successfulShards = successfulShards;
-        this.failedShards = failedShards;
-        if (failures == null || failures.isEmpty()) {
-            this.failures = new DefaultShardOperationFailedException[0];
-        } else {
-            this.failures = failures.toArray(new ShardOperationFailedException[failures.size()]);
+        this.shardInfo = new ActionWriteResponse.ShardInfo();
+        this.shardInfo.append(shardResponses);
+        // just append the primary failures:
+        if (!failures.isEmpty()) {
+            List<ActionWriteResponse.ShardInfo.Failure> k = new ArrayList<>();
+            for (ShardOperationFailedException failure : failures) {
+                // Set the status here, since it is a failure on primary shard
+                // The failure doesn't include the node id, maybe add it to ShardOperationFailedException...
+                k.add(new ActionWriteResponse.ShardInfo.Failure(failure.index(), failure.shardId(), null, failure.reason(), failure.status()));
+            }
+            k.addAll(Arrays.asList(this.shardInfo.getFailures()));
+            this.shardInfo.setFailures(k.toArray(new ActionWriteResponse.ShardInfo.Failure[k.size()]));
         }
     }
 
     IndexDeleteByQueryResponse() {
-
     }
 
     /**
@@ -60,41 +66,21 @@ public class IndexDeleteByQueryResponse extends ActionResponse {
         return this.index;
     }
 
-    /**
-     * The total number of shards the delete by query was executed on.
-     */
-    public int getTotalShards() {
-        return failedShards + successfulShards;
-    }
-
-    /**
-     * The successful number of shards the delete by query was executed on.
-     */
-    public int getSuccessfulShards() {
-        return successfulShards;
-    }
-
-    /**
-     * The failed number of shards the delete by query was executed on.
-     */
-    public int getFailedShards() {
-        return failedShards;
-    }
-
-    public ShardOperationFailedException[] getFailures() {
-        return failures;
+    public ActionWriteResponse.ShardInfo getShardInfo() {
+        return shardInfo;
     }
 
     @Override
     public void readFrom(StreamInput in) throws IOException {
         super.readFrom(in);
         index = in.readString();
-        successfulShards = in.readVInt();
-        failedShards = in.readVInt();
-        int size = in.readVInt();
-        failures = new ShardOperationFailedException[size];
-        for (int i = 0; i < size; i++) {
-            failures[i] = DefaultShardOperationFailedException.readShardOperationFailed(in);
+        if (in.getVersion().before(Version.V_1_5_0)) {
+            in.readVInt();
+            in.readVInt();
+            in.readVInt();
+        }
+        if (in.getVersion().onOrAfter(Version.V_1_5_0)) {
+            shardInfo = in.readOptionalStreamable(new ActionWriteResponse.ShardInfo());
         }
     }
 
@@ -102,11 +88,13 @@ public class IndexDeleteByQueryResponse extends ActionResponse {
     public void writeTo(StreamOutput out) throws IOException {
         super.writeTo(out);
         out.writeString(index);
-        out.writeVInt(successfulShards);
-        out.writeVInt(failedShards);
-        out.writeVInt(failures.length);
-        for (ShardOperationFailedException failure : failures) {
-            failure.writeTo(out);
+        if (out.getVersion().before(Version.V_1_5_0)) {
+            out.writeVInt(0);
+            out.writeVInt(0);
+            out.writeVInt(0);
+        }
+        if (out.getVersion().onOrAfter(Version.V_1_5_0)) {
+            out.writeOptionalStreamable(shardInfo);
         }
     }
 }

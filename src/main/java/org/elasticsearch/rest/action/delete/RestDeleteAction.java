@@ -74,8 +74,9 @@ public class RestDeleteAction extends BaseRestHandler {
         client.delete(deleteRequest, new RestBuilderListener<DeleteResponse>(channel) {
             @Override
             public RestResponse buildResponse(DeleteResponse result, XContentBuilder builder) throws Exception {
-                builder.startObject()
-                        .field(Fields.FOUND, result.isFound())
+                builder.startObject();
+                result.getShardInfo().toXContent(builder, request);
+                builder.field(Fields.FOUND, result.isFound())
                         .field(Fields._INDEX, result.getIndex())
                         .field(Fields._TYPE, result.getType())
                         .field(Fields._ID, result.getId())

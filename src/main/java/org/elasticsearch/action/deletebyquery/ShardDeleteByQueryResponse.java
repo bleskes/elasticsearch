@@ -19,24 +19,45 @@
 
 package org.elasticsearch.action.deletebyquery;
 
-import org.elasticsearch.action.ActionResponse;
+import org.elasticsearch.Version;
+import org.elasticsearch.action.ActionWriteResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.index.shard.ShardId;
 
 import java.io.IOException;
 
 /**
  * Delete by query response executed on a specific shard.
  */
-public class ShardDeleteByQueryResponse extends ActionResponse {
+public class ShardDeleteByQueryResponse extends ActionWriteResponse {
+
+    private ShardId shardId;
+
+    public ShardDeleteByQueryResponse() {
+    }
+
+    public ShardDeleteByQueryResponse(ShardId shardId) {
+        this.shardId = shardId;
+    }
+
+    public ShardId getShardId() {
+        return shardId;
+    }
 
     @Override
     public void readFrom(StreamInput in) throws IOException {
         super.readFrom(in);
+        if (in.getVersion().onOrAfter(Version.V_1_5_0)) {
+            shardId = ShardId.readShardId(in);
+        }
     }
 
     @Override
     public void writeTo(StreamOutput out) throws IOException {
         super.writeTo(out);
+        if (out.getVersion().onOrAfter(Version.V_1_5_0)) {
+            shardId.writeTo(out);
+        }
     }
 }

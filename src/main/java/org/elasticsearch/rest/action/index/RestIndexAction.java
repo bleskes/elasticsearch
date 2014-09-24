@@ -109,8 +109,9 @@ public class RestIndexAction extends BaseRestHandler {
         client.index(indexRequest, new RestBuilderListener<IndexResponse>(channel) {
             @Override
             public RestResponse buildResponse(IndexResponse response, XContentBuilder builder) throws Exception {
-                builder.startObject()
-                        .field(Fields._INDEX, response.getIndex())
+                builder.startObject();
+                response.getShardInfo().toXContent(builder, request);
+                builder.field(Fields._INDEX, response.getIndex())
                         .field(Fields._TYPE, response.getType())
                         .field(Fields._ID, response.getId())
                         .field(Fields._VERSION, response.getVersion())

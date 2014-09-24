@@ -127,8 +127,9 @@ public class RestUpdateAction extends BaseRestHandler {
         client.update(updateRequest, new RestBuilderListener<UpdateResponse>(channel) {
             @Override
             public RestResponse buildResponse(UpdateResponse response, XContentBuilder builder) throws Exception {
-                builder.startObject()
-                        .field(Fields._INDEX, response.getIndex())
+                builder.startObject();
+                response.getShardInfo().toXContent(builder, request);
+                builder.field(Fields._INDEX, response.getIndex())
                         .field(Fields._TYPE, response.getType())
                         .field(Fields._ID, response.getId())
                         .field(Fields._VERSION, response.getVersion());
@@ -154,7 +155,6 @@ public class RestUpdateAction extends BaseRestHandler {
         static final XContentBuilderString _TYPE = new XContentBuilderString("_type");
         static final XContentBuilderString _ID = new XContentBuilderString("_id");
         static final XContentBuilderString _VERSION = new XContentBuilderString("_version");
-        static final XContentBuilderString MATCHES = new XContentBuilderString("matches");
         static final XContentBuilderString GET = new XContentBuilderString("get");
     }
 }

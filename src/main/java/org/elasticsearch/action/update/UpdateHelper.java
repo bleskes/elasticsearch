@@ -20,6 +20,7 @@
 package org.elasticsearch.action.update;
 
 import org.elasticsearch.ElasticsearchIllegalArgumentException;
+import org.elasticsearch.action.ActionWriteResponse;
 import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.client.Requests;
@@ -115,6 +116,7 @@ public class UpdateHelper extends AbstractComponent {
                     }
                     UpdateResponse update = new UpdateResponse(getResult.getIndex(), getResult.getType(), getResult.getId(),
                             getResult.getVersion(), false);
+                    update.setShardInfo(new ActionWriteResponse.ShardInfo());
                     update.setGetResult(getResult);
                     return new Result(update, Operation.NONE, upsertDoc, XContentType.JSON);
                 }
@@ -242,11 +244,13 @@ public class UpdateHelper extends AbstractComponent {
             return new Result(deleteRequest, Operation.DELETE, updatedSourceAsMap, updateSourceContentType);
         } else if ("none".equals(operation)) {
             UpdateResponse update = new UpdateResponse(getResult.getIndex(), getResult.getType(), getResult.getId(), getResult.getVersion(), false);
+            update.setShardInfo(new ActionWriteResponse.ShardInfo());
             update.setGetResult(extractGetResult(request, indexShard.indexService().index().name(), getResult.getVersion(), updatedSourceAsMap, updateSourceContentType, getResult.internalSourceRef()));
             return new Result(update, Operation.NONE, updatedSourceAsMap, updateSourceContentType);
         } else {
             logger.warn("Used update operation [{}] for script [{}], doing nothing...", operation, request.script);
             UpdateResponse update = new UpdateResponse(getResult.getIndex(), getResult.getType(), getResult.getId(), getResult.getVersion(), false);
+            update.setShardInfo(new ActionWriteResponse.ShardInfo());
             return new Result(update, Operation.NONE, updatedSourceAsMap, updateSourceContentType);
         }
     }

@@ -97,6 +97,7 @@ public class RestBulkAction extends BaseRestHandler {
                 builder.startArray(Fields.ITEMS);
                 for (BulkItemResponse itemResponse : response) {
                     builder.startObject();
+                    itemResponse.getResponse().getShardInfo().toXContent(builder, request);
                     builder.startObject(itemResponse.getOpType());
                     builder.field(Fields._INDEX, itemResponse.getIndex());
                     builder.field(Fields._TYPE, itemResponse.getType());

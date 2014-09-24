@@ -48,7 +48,7 @@ public class TransportIndexDeleteByQueryAction extends TransportIndexReplication
 
     @Override
     protected IndexDeleteByQueryResponse newResponseInstance(IndexDeleteByQueryRequest request, List<ShardDeleteByQueryResponse> shardDeleteByQueryResponses, int failuresCount, List<ShardOperationFailedException> shardFailures) {
-        return new IndexDeleteByQueryResponse(request.index(), shardDeleteByQueryResponses.size(), failuresCount, shardFailures);
+        return new IndexDeleteByQueryResponse(request.index(), shardDeleteByQueryResponses, shardFailures);
     }
 
     @Override

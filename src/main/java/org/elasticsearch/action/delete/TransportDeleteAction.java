@@ -126,7 +126,9 @@ public class TransportDeleteAction extends TransportShardReplicationOperationAct
                                     break;
                                 }
                             }
-                            listener.onResponse(new DeleteResponse(request.concreteIndex(), request.request().type(), request.request().id(), version, found));
+                            DeleteResponse response = new DeleteResponse(request.concreteIndex(), request.request().type(), request.request().id(), version, found);
+                            response.setShardInfo(indexDeleteResponse.getShardInfo());
+                            listener.onResponse(response);
                         }
 
                         @Override
@@ -186,7 +188,7 @@ public class TransportDeleteAction extends TransportShardReplicationOperationAct
         }
 
         DeleteResponse response = new DeleteResponse(shardRequest.shardId.getIndex(), request.type(), request.id(), delete.version(), delete.found());
-        return new PrimaryResponse<>(shardRequest.request, response, null);
+        return new PrimaryResponse<>(shardRequest.shardId, shardRequest.request, response, null);
     }
 
     @Override

@@ -242,7 +242,6 @@ public class TransportShardBulkAction extends TransportShardReplicationOperation
                         updateResult = new UpdateResult(null, null, false, t, null);
                     }
                     if (updateResult.success()) {
-
                         switch (updateResult.result.operation()) {
                             case UPSERT:
                             case INDEX:
@@ -252,6 +251,7 @@ public class TransportShardBulkAction extends TransportShardReplicationOperation
                                 // add the response
                                 IndexResponse indexResponse = result.response();
                                 UpdateResponse updateResponse = new UpdateResponse(indexResponse.getIndex(), indexResponse.getType(), indexResponse.getId(), indexResponse.getVersion(), indexResponse.isCreated());
+                                updateResponse.setShardInfo(indexResponse.getShardInfo());
                                 if (updateRequest.fields() != null && updateRequest.fields().length > 0) {
                                     Tuple<XContentType, Map<String, Object>> sourceAndContent = XContentHelper.convertToMap(indexSourceAsBytes, true);
                                     updateResponse.setGetResult(updateHelper.extractGetResult(updateRequest, shardRequest.request.index(), indexResponse.getVersion(), sourceAndContent.v2(), sourceAndContent.v1(), indexSourceAsBytes));
@@ -273,6 +273,7 @@ public class TransportShardBulkAction extends TransportShardReplicationOperation
                                 DeleteResponse response = updateResult.writeResult.response();
                                 DeleteRequest deleteRequest = updateResult.request();
                                 updateResponse = new UpdateResponse(response.getIndex(), response.getType(), response.getId(), response.getVersion(), false);
+                                updateResponse.setShardInfo(response.getShardInfo());
                                 updateResponse.setGetResult(updateHelper.extractGetResult(updateRequest, shardRequest.request.index(), response.getVersion(), updateResult.result.updatedSourceAsMap(), updateResult.result.updateSourceContentType(), null));
                                 // Replace the update request to the translated delete request to execute on the replica.
                                 item = request.items()[requestIndex] = new BulkItemRequest(request.items()[requestIndex].id(), deleteRequest);
@@ -366,7 +367,7 @@ public class TransportShardBulkAction extends TransportShardReplicationOperation
             responses[i] = items[i].getPrimaryResponse();
         }
         BulkShardResponse response = new BulkShardResponse(shardRequest.shardId, responses);
-        return new PrimaryResponse<>(shardRequest.request, response, ops);
+        return new PrimaryResponse<>(shardRequest.shardId, shardRequest.request, response, ops);
     }
 
     private void setResponse(BulkItemRequest request, BulkItemResponse response) {
