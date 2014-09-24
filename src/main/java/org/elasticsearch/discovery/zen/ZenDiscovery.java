@@ -208,8 +208,7 @@ public class ZenDiscovery extends AbstractLifecycleComponent<Discovery> implemen
     @Override
     protected void doStart() throws ElasticsearchException {
 
-        // we update the nodes to know the local node, but not start it.
-        nodesFD.updateNodes(clusterService.state());
+        nodesFD.setLocalNode(clusterService.localNode());
         pingService.start();
 
         // start the join thread from a cluster state update. See {@link JoinThreadControl} for details.
@@ -316,7 +315,7 @@ public class ZenDiscovery extends AbstractLifecycleComponent<Discovery> implemen
         if (!clusterState.getNodes().localNodeMaster()) {
             throw new ElasticsearchIllegalStateException("Shouldn't publish state when not master");
         }
-        nodesFD.updateNodes(clusterState);
+        nodesFD.updateNodesAndPing(clusterState);
         publishClusterState.publish(clusterState, ackListener);
     }
 
@@ -378,7 +377,7 @@ public class ZenDiscovery extends AbstractLifecycleComponent<Discovery> implemen
                     if (newState.nodes().localNodeMaster()) {
                         // we only starts nodesFD if we are master (it may be that we received a cluster state while pinging)
                         joinThreadControl.markThreadAsDone(currentThread);
-                        nodesFD.start(newState); // start the nodes FD
+                        nodesFD.updateNodesAndPing(newState); // start the nodes FD
                     } else {
                         // if we're not a master it means another node published a cluster state while we were pinging
                         // make sure we go through another pinging round and actively join it
@@ -642,7 +641,7 @@ public class ZenDiscovery extends AbstractLifecycleComponent<Discovery> implemen
                     masterFD.stop("got elected as new master since master left (reason = " + reason + ")");
                     discoveryNodes = DiscoveryNodes.builder(discoveryNodes).masterNodeId(localNode.id()).build();
                     ClusterState newState = ClusterState.builder(currentState).nodes(discoveryNodes).build();
-                    nodesFD.start(newState);
+                    nodesFD.updateNodesAndPing(newState);
                     return newState;
 
                 } else {
