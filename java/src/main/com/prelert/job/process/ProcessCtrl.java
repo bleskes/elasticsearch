@@ -162,7 +162,7 @@ public class ProcessCtrl
 	static final public String PERSIST_STATE_ARG = "--persistState";
 	static final public String VERSION_ARG = "--version";
 	static final public String INFO_ARG = "--info";
-	static final public String MAX_ANOMALY_RECORDS = "--maxAnomalyRecords=";
+	static final public String MAX_ANOMALY_RECORDS = "--maxAnomalyRecords=500";
 	
 	/*
 	 * Normalize_api args
@@ -515,8 +515,7 @@ public class ProcessCtrl
 		command.add(LENGTH_ENCODED_INPUT_ARG);
 		
 		
-		// TODO limit on the number of anomaly records?
-		String recordCountArg = MAX_ANOMALY_RECORDS + "0";
+		String recordCountArg = MAX_ANOMALY_RECORDS;
 		command.add(recordCountArg);
 		
 		String timeField = DataDescription.DEFAULT_TIME_FIELD;
