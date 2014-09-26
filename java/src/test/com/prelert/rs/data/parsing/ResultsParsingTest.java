@@ -47,8 +47,8 @@ import com.prelert.job.DetectorState;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.persistence.JobResultsPersister;
 import com.prelert.job.persistence.JobRenormaliser;
+import com.prelert.job.quantiles.Quantiles;
 import com.prelert.rs.data.Bucket;
-import com.prelert.rs.data.Quantiles;
 import com.prelert.rs.data.parsing.AutoDetectParseException;
 import com.prelert.rs.data.parsing.AutoDetectResultsParser;
 

@@ -24,7 +24,7 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job;
+package com.prelert.job.quantiles;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -79,6 +79,9 @@ import com.prelert.rs.data.SingleDocument;
  * <li>/engine_api_integration_test/farequote_ISO_8601.csv</li>
  * </ol>
  * 
+ * These tests will only pass if the Engine has a full license.
+ * The developer license does not allow > 1 job
+ * 
  */
 public class JobsTest implements Closeable
 {
@@ -214,6 +217,7 @@ public class JobsTest implements Closeable
 				+ "\"description\":\"Flight Centre Job\","
 				+ "\"analysisConfig\" : {"
 				+ "\"bucketSpan\":3600,"  
+				//+ "\"detectors\":[{\"function\":\"count\"}, {\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}] "
 				+ "\"detectors\":[{\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}] "
 				+ "},"
 				+ "\"dataDescription\":{\"fieldDelimiter\":\",\", \"timeField\":\"_time\", \"timeFormat\" : \"epoch\"},"
@@ -303,9 +307,10 @@ public class JobsTest implements Closeable
 				+ "\"timeFormat\":\"yyyy-MM-dd HH:mm:ssX\"} }}";	
 		
 		String jobId = m_WebServiceClient.createJob(baseUrl, FARE_QUOTE_TIME_FORMAT_CONFIG);
-		if (jobId == null)
+		if (jobId == null || jobId.isEmpty())
 		{
 			s_Logger.error("No Job Id returned by create job");
+			s_Logger.error(m_WebServiceClient.getLastError().toJson());
 			test(jobId != null);
 		}
 		
@@ -341,6 +346,7 @@ public class JobsTest implements Closeable
 		Detector d = new Detector();
 		d.setFieldName("responsetime");
 		d.setByFieldName("airline");
+		d.setPartitionFieldName("sourcetype");
 		AnalysisConfig ac = new AnalysisConfig();
 		ac.setBucketSpan(3600L);
 		ac.setDetectors(Arrays.asList(d));
@@ -1681,7 +1687,6 @@ public class JobsTest implements Closeable
 		String flightCentreJsonJobId = test.createFlightCentreJsonJobTest(baseUrl);
 		test.getJobsTest(baseUrl);
 		test.uploadData(baseUrl, flightCentreJsonJobId, flightCentreJsonData, false);
-		test.closeJob(baseUrl, flightCentreJsonJobId);		
 		test.testReadLogFiles(baseUrl, flightCentreJsonJobId);
 		test.testSetDescription(baseUrl, flightCentreJsonJobId);
 		test.verifyJobResults(baseUrl, flightCentreJsonJobId, 100, FLIGHT_CENTRE_NUM_BUCKETS,

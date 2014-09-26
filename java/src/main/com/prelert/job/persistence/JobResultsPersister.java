@@ -29,8 +29,8 @@ package com.prelert.job.persistence;
 
 import com.prelert.job.DetectorState;
 import com.prelert.job.UnknownJobException;
+import com.prelert.job.quantiles.Quantiles;
 import com.prelert.rs.data.Bucket;
-import com.prelert.rs.data.Quantiles;
 
 /**
  * Interface for classes that persist {@linkplain Bucket Buckets},

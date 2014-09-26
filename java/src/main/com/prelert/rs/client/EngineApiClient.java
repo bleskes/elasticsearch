@@ -1334,8 +1334,10 @@ public class EngineApiClient implements Closeable
 			HttpEntity entity = response.getEntity();				
 			String content = EntityUtils.toString(entity);
 
+			// 404 errors return empty paging docs so still read them
 			if (response.getStatusLine().getStatusCode() == 200 ||
-					response.getStatusLine().getStatusCode() == 404)
+				response.getStatusLine().getStatusCode() == 404)
+				
 			{
 				T docs = m_JsonMapper.readValue(content, typeRef);
 				return docs;

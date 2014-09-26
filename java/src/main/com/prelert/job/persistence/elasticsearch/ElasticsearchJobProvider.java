@@ -74,16 +74,16 @@ import com.prelert.job.DetectorState;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobIdAlreadyExistsException;
 import com.prelert.job.JobStatus;
-import com.prelert.job.QuantilesState;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.persistence.JobProvider;
+import com.prelert.job.quantiles.Quantiles;
+import com.prelert.job.quantiles.QuantilesState;
 import com.prelert.job.usage.Usage;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.Detector;
 import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.Pagination;
-import com.prelert.rs.data.Quantiles;
 import com.prelert.rs.data.SingleDocument;
 
 public class ElasticsearchJobProvider implements JobProvider
