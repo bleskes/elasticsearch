@@ -291,7 +291,7 @@ public class ElasticsearchJobProvider implements JobProvider
 		FilterBuilder fb = FilterBuilders.matchAllFilter();
 		SortBuilder sb = new FieldSortBuilder(JobDetails.ID)
 								.ignoreUnmapped(true)
-								.order(SortOrder.DESC);
+								.order(SortOrder.ASC);
 
 		SearchResponse response = m_Client.prepareSearch("_all") 
 				.setTypes(JobDetails.TYPE)
