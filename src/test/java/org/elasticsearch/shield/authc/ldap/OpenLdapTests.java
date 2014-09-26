@@ -18,6 +18,7 @@
 package org.elasticsearch.shield.authc.ldap;
 
 import org.elasticsearch.common.settings.ImmutableSettings;
+import org.elasticsearch.shield.authc.support.SecuredStringTests;
 import org.elasticsearch.test.ElasticsearchTestCase;
 import org.elasticsearch.test.junit.annotations.Network;
 import org.junit.BeforeClass;
@@ -29,6 +30,7 @@ import java.net.URISyntaxException;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasItem;
 
+@Network
 public class OpenLdapTests extends ElasticsearchTestCase {
     public static final String OPEN_LDAP_URL = "ldaps://54.200.235.244:636";
     public static final String PASSWORD = "NickFuryHeartsES";
@@ -37,12 +39,12 @@ public class OpenLdapTests extends ElasticsearchTestCase {
     @BeforeClass
     public static void setTrustStore() throws URISyntaxException {
         //LdapModule will set this up as a singleton normally
-        new LdapSslSocketFactory(ImmutableSettings.builder()
+        LdapSslSocketFactory.init(ImmutableSettings.builder()
                 .put(SETTINGS_PREFIX + "truststore", new File(LdapConnectionTests.class.getResource("ldaptrust.jks").toURI()))
                 .build());
     }
 
-    @Test @Network
+    @Test
     public void test_standardLdapConnection_uid(){
         //openldap does not use cn as naming attributes by default
 
@@ -54,7 +56,7 @@ public class OpenLdapTests extends ElasticsearchTestCase {
 
         String[] users = new String[]{"blackwidow", "cap", "hawkeye", "hulk", "ironman", "thor"};
         for(String user: users) {
-            LdapConnection ldap = connectionFactory.bind(user, PASSWORD.toCharArray());
+            LdapConnection ldap = connectionFactory.bind(user, SecuredStringTests.build(PASSWORD));
             assertThat(ldap.getGroups(), hasItem(containsString("Avengers")));
             ldap.close();
         }
