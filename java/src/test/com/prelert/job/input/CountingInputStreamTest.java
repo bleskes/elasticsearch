@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
+import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -41,11 +42,12 @@ import com.prelert.job.usage.DummyUsageReporter;
 
 public class CountingInputStreamTest 
 {
+	static private Logger s_Logger = Logger.getLogger(CountingInputStreamTest.class);
 
 	@Test	
 	public void testLengthEncodedWriter() throws IOException
 	{
-		DummyUsageReporter usageReporter = new DummyUsageReporter("", null);
+		DummyUsageReporter usageReporter = new DummyUsageReporter("", s_Logger);
 		DummyStatusReporter statusReporter = new DummyStatusReporter(usageReporter);
 		
 		InputStream source = new ByteArrayInputStream("123".getBytes(StandardCharsets.UTF_8));
@@ -68,7 +70,7 @@ public class CountingInputStreamTest
 		source = new ByteArrayInputStream(("To the man who only has a hammer,"
 				+ " everything he encounters begins to look like a nail.").getBytes(StandardCharsets.UTF_8));
 		
-		usageReporter = new DummyUsageReporter("", null);
+		usageReporter = new DummyUsageReporter("", s_Logger);
 		statusReporter = new DummyStatusReporter(usageReporter);
 		
 		try (CountingInputStream counting = new CountingInputStream(source, 
@@ -90,7 +92,7 @@ public class CountingInputStreamTest
 		source = new ByteArrayInputStream(("To the man who only has a hammer,"
 				+ " everything he encounters begins to look like a nail.").getBytes(StandardCharsets.UTF_8));
 		
-		usageReporter = new DummyUsageReporter("", null);
+		usageReporter = new DummyUsageReporter("", s_Logger);
 		statusReporter = new DummyStatusReporter(usageReporter);
 		
 		try (CountingInputStream counting = new CountingInputStream(source, 
