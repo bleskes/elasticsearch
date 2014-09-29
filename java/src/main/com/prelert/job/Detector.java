@@ -137,7 +137,7 @@ public class Detector
 	 */
 	static private String PROHIBITED = "[, ], (, ), =, \", \\, -";
 	static final private Character [] PROHIBITED_FIELDNAME_CHARACTERS = 
-		{'[', ']', '(', ')', '=', '"', '\\'};	
+		{'[', ']', '(', ')', '=', '"', '\\', '-'};	
 			
 	
 	private String m_Function;

@@ -27,8 +27,6 @@
 
 package com.prelert.job.process;
 
-import static org.junit.Assert.*;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -47,7 +45,6 @@ import org.junit.Test;
 
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.Detector;
-import com.prelert.job.JobConfigurationException;
 
 /**
  * Test the functions in {@linkplain com.prelert.job.process.ProcessCtl} for
@@ -56,133 +53,10 @@ import com.prelert.job.JobConfigurationException;
  */
 public class FieldConfigTest 
 {
-	/**
-	 * Test writing a single detector as command line options.
-	 * {@linkplain Detector#verify()} is called on each config as a  
-	 * sanity check
-	 * @throws JobConfigurationException 
-	 */
-	@Test	
-	public void testSingleDetectorToCommandLineArgs() throws JobConfigurationException
-	{
-		// simple case of a by b
-		Detector d = new Detector();
-		d.setFieldName("Integer_Value");
-		d.setByFieldName("ts_hash");
-		d.verify();
-		
-		List<String> args = ProcessCtrl.detectorConfigToCommandLinArgs(d);
-		assertEquals(args.size(), 3);
-		assertEquals(args.get(0), d.getFieldName());
-		assertEquals(args.get(1), "by");
-		assertEquals(args.get(2), d.getByFieldName());
-		
-		// no function for by field should default to the count function
-		d = new Detector();
-		d.setFunction("rare");
-		d.setByFieldName("ts_hash");
-		d.verify();
-		
-		args = ProcessCtrl.detectorConfigToCommandLinArgs(d);
-		assertEquals(args.size(), 3);
-		assertEquals(args.get(0), "rare");
-		assertEquals(args.get(1), "by");
-		assertEquals(args.get(2), d.getByFieldName());
-				
-		// function and field
-		d = new Detector();
-		d.setFunction("max");
-		d.setFieldName("responseTime");
-		d.verify();
-		
-		args = ProcessCtrl.detectorConfigToCommandLinArgs(d);
-		assertEquals(args.size(), 1);
-		assertEquals(args.get(0), "max(responseTime)");
-		
-		
-		// function and field and by field
-		d = new Detector();
-		d.setFunction("max");
-		d.setFieldName("responseTime");
-		d.setByFieldName("airline");
-		d.verify();
-		
-		args = ProcessCtrl.detectorConfigToCommandLinArgs(d);
-		assertEquals(args.size(), 3);
-		assertEquals(args.get(0), "max(responseTime)");		
-		assertEquals(args.get(1), "by");
-		assertEquals(args.get(2), d.getByFieldName());
-		
-		
-		// function and field over field
-		d = new Detector();
-		d.setFunction("min");
-		d.setFieldName("responseTime");
-		d.setOverFieldName("region");
-		d.verify();
-		
-		args = ProcessCtrl.detectorConfigToCommandLinArgs(d);
-		assertEquals(args.size(), 3);
-		assertEquals(args.get(0), "min(responseTime)");		
-		assertEquals(args.get(1), "over");
-		assertEquals(args.get(2), d.getOverFieldName());
-		
-		// function and field, by field and over field
-		d = new Detector();
-		d.setFunction("max");
-		d.setFieldName("responseTime");
-		d.setByFieldName("airline");
-		d.setOverFieldName("region");
-		d.verify();
-		
-		args = ProcessCtrl.detectorConfigToCommandLinArgs(d);
-		assertEquals(args.size(), 5);
-		assertEquals(args.get(0), "max(responseTime)");		
-		assertEquals(args.get(1), "by");
-		assertEquals(args.get(2), d.getByFieldName());		
-		assertEquals(args.get(3), "over");
-		assertEquals(args.get(4), d.getOverFieldName());		
-		
-		// function and field, by field and over field and partition
-		d = new Detector();
-		d.setFunction("max");
-		d.setFieldName("responseTime");
-		d.setByFieldName("airline");
-		d.setOverFieldName("region");
-		d.setPartitionFieldName("airport");
-		d.verify();
-		
-		// function and field, by field and over field		
-		args = ProcessCtrl.detectorConfigToCommandLinArgs(d);
-		assertEquals(args.size(), 6);
-		assertEquals(args.get(0), "max(responseTime)");		
-		assertEquals(args.get(1), ProcessCtrl.BY_ARG);
-		assertEquals(args.get(2), d.getByFieldName());		
-		assertEquals(args.get(3), ProcessCtrl.OVER_ARG);
-		assertEquals(args.get(4), d.getOverFieldName());
-		assertEquals(args.get(5), ProcessCtrl.PARTITION_FIELD_ARG + d.getPartitionFieldName());
-		
-		
-		// function and field, by field and  partition
-		d = new Detector();
-		d.setFunction("min");
-		d.setFieldName("responseTime");
-		d.setByFieldName("airline");
-		d.setPartitionFieldName("airport");
-		d.verify();
-		
-		// function and field, by field and over field		
-		args = ProcessCtrl.detectorConfigToCommandLinArgs(d);
-		assertEquals(args.size(), 4);
-		assertEquals(args.get(0), "min(responseTime)");		
-		assertEquals(args.get(1), ProcessCtrl.BY_ARG);
-		assertEquals(args.get(2), d.getByFieldName());		
-		assertEquals(args.get(3), ProcessCtrl.PARTITION_FIELD_ARG + d.getPartitionFieldName());
-	}
 	
 	
 	@Test
-	public void testSingleDetectorToConfFile()
+	public void testMultipleDetectorsToConfFile()
 	throws IOException
 	{
 		List<Detector> detectors = new ArrayList<>();
