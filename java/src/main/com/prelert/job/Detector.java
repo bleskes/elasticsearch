@@ -133,10 +133,12 @@ public class Detector
 	
 	/**
 	 * field names cannot contain any of these characters
-	 * 	[, ], (, ), =, ", |, + or any whitespace
+	 * 	[, ], (, ), =, ", \, - 
 	 */
-	static private Set<Character> PROHIBITED_FIELDNAME_CHARACTERS = 
-			new HashSet<>(Arrays.asList('[', ']', '(', ')', '=', '"', '|', '+', ' '));	
+	static private String PROHIBITED = "[, ], (, ), =, \", \\, -";
+	static final private Character [] PROHIBITED_FIELDNAME_CHARACTERS = 
+		{'[', ']', '(', ')', '=', '"', '\\'};	
+			
 	
 	private String m_Function;
 	private String m_FieldName;
@@ -486,7 +488,7 @@ public class Detector
 						throw new JobConfigurationException(
 								"Invalid fieldname '" + field + "'. " + 
 								"Fieldnames including over, by and partition fields cannot " +
-								"contain any of these characters [, ], (, ), =, \", |, +, or any whitespace",
+								"contain any of these characters: " + PROHIBITED,
 								ErrorCode.PROHIBITIED_CHARACTER_IN_FIELD_NAME);
 					}
 				}
