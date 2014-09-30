@@ -183,13 +183,15 @@ public class JobsTest implements Closeable
 					nextPageUrl.equals(jobs.getNextPage().toString()));
 		}
 		
-		// jobs should be sorted by Id
+		// jobs should be sorted by ascending Id
 		if (jobs.getDocuments().size() > 1)
 		{
 			String lastId = jobs.getDocuments().get(0).getId();
 			for (int i=1; i<jobs.getDocuments().size(); i++)
 			{
-				test(lastId.compareTo(jobs.getDocuments().get(i).getId()) > 0);
+				String currentId = jobs.getDocuments().get(i).getId();
+
+				test(lastId.compareTo(currentId) < 0);
 				
 				lastId = jobs.getDocuments().get(i).getId();
 			}

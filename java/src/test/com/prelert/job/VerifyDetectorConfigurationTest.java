@@ -345,7 +345,7 @@ public class VerifyDetectorConfigurationTest
 	public void invalidFieldnamesTest()
 	{
 		Detector d = new Detector();
-		d.setFieldName("(invalid+chars");
+		d.setFieldName("(invalid\"chars");
 		d.setByFieldName("by");
 		d.setOverFieldName("over");
 		try
@@ -360,7 +360,7 @@ public class VerifyDetectorConfigurationTest
 		
 		d = new Detector();
 		d.setFieldName("f");
-		d.setByFieldName("(invalid+chars");
+		d.setByFieldName("(invalid-chars");
 		try
 		{
 			d.verify();
@@ -373,7 +373,7 @@ public class VerifyDetectorConfigurationTest
 		
 		d = new Detector();
 		d.setFieldName("f");
-		d.setOverFieldName("+bad|name");
+		d.setOverFieldName("bad=name");
 		try
 		{
 			d.verify();
@@ -385,7 +385,7 @@ public class VerifyDetectorConfigurationTest
 		}		
 		
 		d.setOverFieldName("over");
-		d.setPartitionFieldName("+bad|name");
+		d.setPartitionFieldName("bad\\name");
 		try
 		{
 			d.verify();
@@ -394,6 +394,56 @@ public class VerifyDetectorConfigurationTest
 		catch (JobConfigurationException e)
 		{
 			Assert.assertTrue(e.getErrorCode() == ErrorCode.PROHIBITIED_CHARACTER_IN_FIELD_NAME);
-		}		
+		}
+			
+		d = new Detector();
+		d.setFieldName("over(");
+		try
+		{
+			d.verify();
+			Assert.assertTrue(false); // should throw
+		}
+		catch (JobConfigurationException e)
+		{
+			Assert.assertTrue(e.getErrorCode() == ErrorCode.PROHIBITIED_CHARACTER_IN_FIELD_NAME);
+		}
+		
+		d = new Detector();
+		d.setFieldName("over)");
+		try
+		{
+			d.verify();
+			Assert.assertTrue(false); // should throw
+		}
+		catch (JobConfigurationException e)
+		{
+			Assert.assertTrue(e.getErrorCode() == ErrorCode.PROHIBITIED_CHARACTER_IN_FIELD_NAME);
+		}
+		
+		d = new Detector();
+		d.setFieldName("f");
+		d.setByFieldName("b[");
+		try
+		{
+			d.verify();
+			Assert.assertTrue(false); // should throw
+		}
+		catch (JobConfigurationException e)
+		{
+			Assert.assertTrue(e.getErrorCode() == ErrorCode.PROHIBITIED_CHARACTER_IN_FIELD_NAME);
+		}
+		
+		d = new Detector();
+		d.setFieldName("f");
+		d.setByFieldName("b]");
+		try
+		{
+			d.verify();
+			Assert.assertTrue(false); // should throw
+		}
+		catch (JobConfigurationException e)
+		{
+			Assert.assertTrue(e.getErrorCode() == ErrorCode.PROHIBITIED_CHARACTER_IN_FIELD_NAME);
+		}
 	}
 }

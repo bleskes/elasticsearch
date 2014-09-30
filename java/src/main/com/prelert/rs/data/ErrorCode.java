@@ -121,7 +121,7 @@ public enum ErrorCode
 	/**
 	 * fieldnames including over, by and partition fields cannot
 	 * contain any of these characters:
-	 * [, ], (, ), =, ", |, + or any whitespace
+	 * [, ], (, ), =, ", \, -
 	 */
 	PROHIBITIED_CHARACTER_IN_FIELD_NAME(10113),
 	
