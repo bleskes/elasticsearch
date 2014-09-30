@@ -22,6 +22,7 @@ import org.elasticsearch.common.base.Charsets;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
+import org.elasticsearch.shield.authz.AuthorizationService;
 import org.elasticsearch.shield.authz.Permission;
 import org.elasticsearch.shield.authz.Privilege;
 import org.elasticsearch.test.ElasticsearchTestCase;
@@ -42,6 +43,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.Matchers.*;
+import static org.mockito.Mockito.mock;
 
 /**
  *
@@ -54,7 +56,7 @@ public class FileRolesStoreTests extends ElasticsearchTestCase {
     @Test
     public void testParseFile() throws Exception {
         Path path = Paths.get(getClass().getResource("roles.yml").toURI());
-        Map<String, Permission.Global> roles = FileRolesStore.parseFile(path, logger);
+        Map<String, Permission.Global> roles = FileRolesStore.parseFile(path, logger, mock(AuthorizationService.class));
         assertThat(roles, notNullValue());
         assertThat(roles.size(), is(3));
 
@@ -122,7 +124,7 @@ public class FileRolesStoreTests extends ElasticsearchTestCase {
             threadPool = new ThreadPool("test");
             watcherService = new ResourceWatcherService(settings, threadPool);
             final CountDownLatch latch = new CountDownLatch(1);
-            FileRolesStore store = new FileRolesStore(settings, env, watcherService, new FileRolesStore.Listener() {
+            FileRolesStore store = new FileRolesStore(settings, env, watcherService, mock(AuthorizationService.class), new FileRolesStore.Listener() {
                 @Override
                 public void onRefresh() {
                     latch.countDown();
@@ -150,8 +152,8 @@ public class FileRolesStoreTests extends ElasticsearchTestCase {
 
             permission = store.permission("role4");
             assertThat(permission, notNullValue());
-            assertThat(permission.check("cluster:monitor/foo/bar", null, null), is(true));
-            assertThat(permission.check("cluster:admin/foo/bar", null, null), is(false));
+            assertThat(permission.check(null, "cluster:monitor/foo/bar", null, null), is(true));
+            assertThat(permission.check(null, "cluster:admin/foo/bar", null, null), is(false));
 
         } finally {
             if (watcherService != null) {
@@ -167,7 +169,7 @@ public class FileRolesStoreTests extends ElasticsearchTestCase {
     public void testThatEmptyFileDoesNotResultInLoop() throws Exception {
         File file = tempFolder.newFile();
         com.google.common.io.Files.write("#".getBytes(Charsets.UTF_8), file);
-        Map<String, Permission.Global> roles = FileRolesStore.parseFile(file.toPath(), logger);
+        Map<String, Permission.Global> roles = FileRolesStore.parseFile(file.toPath(), logger, mock(AuthorizationService.class));
         assertThat(roles.keySet(), is(empty()));
     }
 
@@ -175,6 +177,6 @@ public class FileRolesStoreTests extends ElasticsearchTestCase {
     public void testThatInvalidYAMLThrowsElasticsearchException() throws Exception {
         File file = tempFolder.newFile();
         com.google.common.io.Files.write("user: cluster: ALL indices: '.*': ALL".getBytes(Charsets.UTF_8), file);
-        FileRolesStore.parseFile(file.toPath(), logger);
+        FileRolesStore.parseFile(file.toPath(), logger, mock(AuthorizationService.class));
     }
 }
