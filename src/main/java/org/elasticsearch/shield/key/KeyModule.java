@@ -15,35 +15,22 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.shield.plugin;
+package org.elasticsearch.shield.key;
 
-import org.elasticsearch.common.collect.ImmutableList;
-import org.elasticsearch.common.inject.Module;
-import org.elasticsearch.plugins.AbstractPlugin;
-import org.elasticsearch.shield.SecurityModule;
-
-import java.util.Collection;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.shield.support.AbstractShieldModule;
 
 /**
  *
  */
-public class SecurityPlugin extends AbstractPlugin {
+public class KeyModule extends AbstractShieldModule.Node {
 
-    public static final String NAME = "shield";
-
-    @Override
-    public String name() {
-        return NAME;
+    public KeyModule(Settings settings) {
+        super(settings);
     }
 
     @Override
-    public String description() {
-        return "Elasticsearch Shield (security)";
+    protected void configureNode() {
+        bind(KeyService.class).to(InternalKeyService.class).asEagerSingleton();
     }
-
-    @Override
-    public Collection<Class<? extends Module>> modules() {
-        return ImmutableList.<Class<? extends Module>>of(SecurityModule.class);
-    }
-
 }

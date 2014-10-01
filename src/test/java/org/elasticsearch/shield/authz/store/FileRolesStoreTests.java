@@ -54,7 +54,7 @@ public class FileRolesStoreTests extends ElasticsearchTestCase {
     @Test
     public void testParseFile() throws Exception {
         Path path = Paths.get(getClass().getResource("roles.yml").toURI());
-        Map<String, Permission.Global> roles = FileRolesStore.parseFile(path);
+        Map<String, Permission.Global> roles = FileRolesStore.parseFile(path, logger);
         assertThat(roles, notNullValue());
         assertThat(roles.size(), is(3));
 
@@ -167,7 +167,7 @@ public class FileRolesStoreTests extends ElasticsearchTestCase {
     public void testThatEmptyFileDoesNotResultInLoop() throws Exception {
         File file = tempFolder.newFile();
         com.google.common.io.Files.write("#".getBytes(Charsets.UTF_8), file);
-        Map<String, Permission.Global> roles = FileRolesStore.parseFile(file.toPath());
+        Map<String, Permission.Global> roles = FileRolesStore.parseFile(file.toPath(), logger);
         assertThat(roles.keySet(), is(empty()));
     }
 
@@ -175,6 +175,6 @@ public class FileRolesStoreTests extends ElasticsearchTestCase {
     public void testThatInvalidYAMLThrowsElasticsearchException() throws Exception {
         File file = tempFolder.newFile();
         com.google.common.io.Files.write("user: cluster: ALL indices: '.*': ALL".getBytes(Charsets.UTF_8), file);
-        FileRolesStore.parseFile(file.toPath());
+        FileRolesStore.parseFile(file.toPath(), logger);
     }
 }

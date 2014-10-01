@@ -36,6 +36,7 @@ public class AuditTrailModuleTests extends ElasticsearchTestCase {
     @Test
     public void testEnabled() throws Exception {
         Settings settings = ImmutableSettings.builder()
+                .put("client.type", "node")
                 .put("shield.audit.enabled", false)
                 .build();
         Injector injector = Guice.createInjector(new SettingsModule(settings), new AuditTrailModule(settings));
@@ -45,7 +46,8 @@ public class AuditTrailModuleTests extends ElasticsearchTestCase {
 
     @Test
     public void testDisabledByDefault() throws Exception {
-        Settings settings = ImmutableSettings.EMPTY;
+        Settings settings = ImmutableSettings.builder()
+                .put("client.type", "node").build();
         Injector injector = Guice.createInjector(new SettingsModule(settings), new AuditTrailModule(settings));
         AuditTrail auditTrail = injector.getInstance(AuditTrail.class);
         assertThat(auditTrail, is(AuditTrail.NOOP));
@@ -55,6 +57,7 @@ public class AuditTrailModuleTests extends ElasticsearchTestCase {
     public void testLogfile() throws Exception {
         Settings settings = ImmutableSettings.builder()
                 .put("shield.audit.enabled", true)
+                .put("client.type", "node")
                 .build();
         Injector injector = Guice.createInjector(new SettingsModule(settings), new AuditTrailModule(settings));
         AuditTrail auditTrail = injector.getInstance(AuditTrail.class);
@@ -70,6 +73,7 @@ public class AuditTrailModuleTests extends ElasticsearchTestCase {
         Settings settings = ImmutableSettings.builder()
                 .put("shield.audit.enabled", true)
                 .put("shield.audit.outputs" , "foo")
+                .put("client.type", "node")
                 .build();
         try {
             Guice.createInjector(new SettingsModule(settings), new AuditTrailModule(settings));

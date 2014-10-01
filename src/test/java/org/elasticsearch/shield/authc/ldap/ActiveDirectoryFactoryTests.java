@@ -19,6 +19,7 @@ package org.elasticsearch.shield.authc.ldap;
 
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.shield.authc.support.SecuredStringTests;
 import org.elasticsearch.test.ElasticsearchTestCase;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -33,8 +34,6 @@ public class ActiveDirectoryFactoryTests extends ElasticsearchTestCase {
     public static final String AD_LDAP_URL = "ldap://54.213.145.20:389";
     public static final String PASSWORD = "4joD8LmWcrEfRa&p";
 
-    public static String SETTINGS_PREFIX = LdapRealm.class.getPackage().getName().substring("com.elasticsearch.".length()) + '.';
-
     @Ignore
     @Test
     public void testAdAuth() {
@@ -43,7 +42,7 @@ public class ActiveDirectoryFactoryTests extends ElasticsearchTestCase {
 
         String userName = "ironman";
 
-        LdapConnection ldap = connectionFactory.bind(userName, PASSWORD.toCharArray());
+        LdapConnection ldap = connectionFactory.bind(userName, SecuredStringTests.build(PASSWORD));
         String userDN = ldap.getAuthenticatedUserDn();
         //System.out.println("userPassword check:"+ldap.checkPassword(userDn, userPass));
 
@@ -59,10 +58,10 @@ public class ActiveDirectoryFactoryTests extends ElasticsearchTestCase {
         String userTemplate = "cn={0},cn=Users,dc=ad,dc=test,dc=elasticsearch,dc=com";
         boolean isSubTreeSearch = true;
         StandardLdapConnectionFactory connectionFactory = new StandardLdapConnectionFactory(
-                LdapConnectionTests.buildLdapSettings(AD_LDAP_URL, userTemplate, groupSearchBase, isSubTreeSearch));
+                LdapTest.buildLdapSettings(AD_LDAP_URL, userTemplate, groupSearchBase, isSubTreeSearch));
 
         String user = "Tony Stark";
-        LdapConnection ldap = connectionFactory.bind(user, PASSWORD.toCharArray());
+        LdapConnection ldap = connectionFactory.bind(user, SecuredStringTests.build(PASSWORD));
 
         List<String> groups = ldap.getGroupsFromUserAttrs(ldap.getAuthenticatedUserDn());
         List<String> groups2 = ldap.getGroupsFromSearch(ldap.getAuthenticatedUserDn());
@@ -74,8 +73,8 @@ public class ActiveDirectoryFactoryTests extends ElasticsearchTestCase {
 
     public static Settings buildAdSettings(String ldapUrl, String adDomainName) {
         return ImmutableSettings.builder()
-                .putArray(SETTINGS_PREFIX + ActiveDirectoryConnectionFactory.URLS_SETTING, ldapUrl)
-                .put(SETTINGS_PREFIX + ActiveDirectoryConnectionFactory.AD_DOMAIN_NAME_SETTING, adDomainName)
+                .putArray(LdapTest.SETTINGS_PREFIX + ActiveDirectoryConnectionFactory.URLS_SETTING, ldapUrl)
+                .put(LdapTest.SETTINGS_PREFIX + ActiveDirectoryConnectionFactory.AD_DOMAIN_NAME_SETTING, adDomainName)
                 .build();
     }
 }

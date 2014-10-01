@@ -23,6 +23,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.http.HttpServerTransport;
+import org.elasticsearch.node.internal.InternalNode;
 import org.elasticsearch.shield.test.ShieldIntegrationTest;
 import org.elasticsearch.transport.Transport;
 import org.junit.Test;
@@ -49,6 +50,7 @@ public class IpFilteringIntegrationTests extends ShieldIntegrationTest {
     @Override
     protected Settings nodeSettings(int nodeOrdinal) {
         ImmutableSettings.Builder builder = settingsBuilder().put(super.nodeSettings(nodeOrdinal));
+        builder.put(InternalNode.HTTP_ENABLED, true);
         // either deny all or do not have a configuration file, as this denies by default
         if (getRandom().nextBoolean()) {
             File folder = newFolder();
@@ -71,7 +73,7 @@ public class IpFilteringIntegrationTests extends ShieldIntegrationTest {
 
     @Test(expected = SocketException.class)
     public void testThatIpFilteringIsIntegratedIntoNettyPipelineViaTransportClient() throws Exception {
-        TransportAddress transportAddress = (InetSocketTransportAddress) internalCluster().getDataNodeInstance(Transport.class).boundAddress().boundAddress();
+        TransportAddress transportAddress = internalCluster().getDataNodeInstance(Transport.class).boundAddress().boundAddress();
         assertThat(transportAddress, is(instanceOf(InetSocketTransportAddress.class)));
         InetSocketTransportAddress inetSocketTransportAddress = (InetSocketTransportAddress) transportAddress;
         trySocketConnection(inetSocketTransportAddress.address());

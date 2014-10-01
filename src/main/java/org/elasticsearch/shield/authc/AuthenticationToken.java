@@ -25,4 +25,6 @@ public interface AuthenticationToken {
     String principal();
 
     Object credentials();
+
+    void clearCredentials();
 }

@@ -15,19 +15,20 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.shield;
+package org.elasticsearch.shield.key;
+
+import org.elasticsearch.shield.authz.AuthorizationException;
 
 /**
  *
  */
-public class SecuritySettingsException extends SecurityException {
+public class SignatureException extends AuthorizationException {
 
-    public SecuritySettingsException(String msg) {
+    public SignatureException(String msg) {
         super(msg);
     }
 
-    public SecuritySettingsException(String msg, Throwable cause) {
+    public SignatureException(String msg, Throwable cause) {
         super(msg, cause);
     }
-
 }

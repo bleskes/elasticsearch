@@ -28,7 +28,7 @@ import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.shield.authc.support.UserRolesStore;
-import org.elasticsearch.shield.plugin.SecurityPlugin;
+import org.elasticsearch.shield.plugin.ShieldPlugin;
 import org.elasticsearch.watcher.FileChangesListener;
 import org.elasticsearch.watcher.FileWatcher;
 import org.elasticsearch.watcher.ResourceWatcherService;
@@ -80,8 +80,7 @@ public class FileUserRolesStore extends AbstractComponent implements UserRolesSt
     public static Path resolveFile(Settings settings, Environment env) {
         String location = settings.get("shield.authc.esusers.files.users_roles");
         if (location == null) {
-            File shieldDirectory = new File(env.configFile(), SecurityPlugin.NAME);
-            return shieldDirectory.toPath().resolve(".users_roles");
+            return ShieldPlugin.resolveConfigFile(env, ".users_roles");
         }
         return Paths.get(location);
     }
@@ -91,6 +90,10 @@ public class FileUserRolesStore extends AbstractComponent implements UserRolesSt
      * an empty map is returned
      */
     public static ImmutableMap<String, String[]> parseFile(Path path, @Nullable ESLogger logger) {
+        if (logger != null) {
+            logger.trace("Reading users roles file located at [{}]", path);
+        }
+
         if (!Files.exists(path)) {
             return ImmutableMap.of();
         }
