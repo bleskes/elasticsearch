@@ -79,6 +79,9 @@ import com.prelert.rs.data.SingleDocument;
  * <li>/engine_api_integration_test/farequote_ISO_8601.csv</li>
  * </ol>
  * 
+ * These tests will only pass if the Engine has a full license.
+ * The developer license does not allow > 1 job
+ * 
  */
 public class JobsTest implements Closeable
 {
@@ -180,13 +183,15 @@ public class JobsTest implements Closeable
 					nextPageUrl.equals(jobs.getNextPage().toString()));
 		}
 		
-		// jobs should be sorted by Id
+		// jobs should be sorted by ascending Id
 		if (jobs.getDocuments().size() > 1)
 		{
 			String lastId = jobs.getDocuments().get(0).getId();
 			for (int i=1; i<jobs.getDocuments().size(); i++)
 			{
-				test(lastId.compareTo(jobs.getDocuments().get(i).getId()) > 0);
+				String currentId = jobs.getDocuments().get(i).getId();
+
+				test(lastId.compareTo(currentId) < 0);
 				
 				lastId = jobs.getDocuments().get(i).getId();
 			}
@@ -214,6 +219,7 @@ public class JobsTest implements Closeable
 				+ "\"description\":\"Flight Centre Job\","
 				+ "\"analysisConfig\" : {"
 				+ "\"bucketSpan\":3600,"  
+				//+ "\"detectors\":[{\"function\":\"count\"}, {\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}] "
 				+ "\"detectors\":[{\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}] "
 				+ "},"
 				+ "\"dataDescription\":{\"fieldDelimiter\":\",\", \"timeField\":\"_time\", \"timeFormat\" : \"epoch\"},"
@@ -259,7 +265,8 @@ public class JobsTest implements Closeable
 		test(job.getDescription().equals("Flight Centre Job"));
 				
 		test(job.getLocation().toString().equals(baseUrl + "/jobs/" + jobId));
-		test(job.getResultsEndpoint().toString().equals(baseUrl + "/results/" + jobId));
+		test(job.getRecordsEndpoint().toString().equals(baseUrl + "/results/" + jobId + "/records"));
+		test(job.getBucketsEndpoint().toString().equals(baseUrl + "/results/" + jobId + "/buckets"));
 		test(job.getDataEndpoint().toString().equals(baseUrl + "/data/" + jobId));
 		
 		test(job.getLastDataTime() == null);
@@ -302,9 +309,10 @@ public class JobsTest implements Closeable
 				+ "\"timeFormat\":\"yyyy-MM-dd HH:mm:ssX\"} }}";	
 		
 		String jobId = m_WebServiceClient.createJob(baseUrl, FARE_QUOTE_TIME_FORMAT_CONFIG);
-		if (jobId == null)
+		if (jobId == null || jobId.isEmpty())
 		{
 			s_Logger.error("No Job Id returned by create job");
+			s_Logger.error(m_WebServiceClient.getLastError().toJson());
 			test(jobId != null);
 		}
 		
@@ -340,6 +348,7 @@ public class JobsTest implements Closeable
 		Detector d = new Detector();
 		d.setFieldName("responsetime");
 		d.setByFieldName("airline");
+		d.setPartitionFieldName("sourcetype");
 		AnalysisConfig ac = new AnalysisConfig();
 		ac.setBucketSpan(3600L);
 		ac.setDetectors(Arrays.asList(d));
@@ -380,7 +389,8 @@ public class JobsTest implements Closeable
 		test(job.getDescription() == null);
 				
 		test(job.getLocation().toString().equals(baseUrl + "/jobs/" + jobId));
-		test(job.getResultsEndpoint().toString().equals(baseUrl + "/results/" + jobId));
+		test(job.getRecordsEndpoint().toString().equals(baseUrl + "/results/" + jobId + "/records"));
+		test(job.getBucketsEndpoint().toString().equals(baseUrl + "/results/" + jobId + "/buckets"));
 		test(job.getDataEndpoint().toString().equals(baseUrl + "/data/" + jobId));
 		
 		test(job.getLastDataTime() == null);
@@ -452,7 +462,8 @@ public class JobsTest implements Closeable
 		test(job.getAnalysisLimits() == null);
 				
 		test(job.getLocation().toString().equals(baseUrl + "/jobs/" + jobId));
-		test(job.getResultsEndpoint().toString().equals(baseUrl + "/results/" + jobId));
+		test(job.getRecordsEndpoint().toString().equals(baseUrl + "/results/" + jobId + "/records"));
+		test(job.getBucketsEndpoint().toString().equals(baseUrl + "/results/" + jobId + "/buckets"));
 		test(job.getDataEndpoint().toString().equals(baseUrl + "/data/" + jobId));
 		
 		test(job.getLastDataTime() == null);
@@ -535,7 +546,8 @@ public class JobsTest implements Closeable
 		test(job.getDescription().equals("Farequote Time Format Job"));
 				
 		test(job.getLocation().toString().equals(baseUrl + "/jobs/" + jobId));
-		test(job.getResultsEndpoint().toString().equals(baseUrl + "/results/" + jobId));
+		test(job.getRecordsEndpoint().toString().equals(baseUrl + "/results/" + jobId + "/records"));
+		test(job.getBucketsEndpoint().toString().equals(baseUrl + "/results/" + jobId + "/buckets"));
 		test(job.getDataEndpoint().toString().equals(baseUrl + "/data/" + jobId));
 		
 		test(job.getLastDataTime() == null);
@@ -602,7 +614,8 @@ public class JobsTest implements Closeable
 		test(job.getAnalysisLimits() == null);
 				
 		test(job.getLocation().toString().equals(baseUrl + "/jobs/" + jobId));
-		test(job.getResultsEndpoint().toString().equals(baseUrl + "/results/" + jobId));
+		test(job.getRecordsEndpoint().toString().equals(baseUrl + "/results/" + jobId + "/records"));
+		test(job.getBucketsEndpoint().toString().equals(baseUrl + "/results/" + jobId + "/buckets"));
 		test(job.getDataEndpoint().toString().equals(baseUrl + "/data/" + jobId));
 		
 		test(job.getLastDataTime() == null);
@@ -802,7 +815,7 @@ public class JobsTest implements Closeable
 				
 				int start = Math.max(0,  buckets.getSkip() - buckets.getTake());
 				String prevPageUrl = String.format(
-						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&anomalyScore=0.0&maxRecordUnusualness=0.0", 
+						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&anomalyScore=0.0&maxNormalizedProbability=0.0", 
 						baseUrl, jobId,  start, buckets.getTake(), false);
 				
 				test(prevPageUrl.equals(buckets.getPreviousPage().toString()));
@@ -818,7 +831,7 @@ public class JobsTest implements Closeable
 			{
 				int start = Math.max(0,  buckets.getSkip() + buckets.getTake());
 				String nextPageUrl = String.format(
-						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&anomalyScore=0.0&maxRecordUnusualness=0.0", 
+						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&anomalyScore=0.0&maxNormalizedProbability=0.0", 
 						baseUrl, jobId, start, buckets.getTake(), false);
 
 				test(nextPageUrl.equals(buckets.getNextPage().toString()));
@@ -878,7 +891,7 @@ public class JobsTest implements Closeable
 				
 				int start = Math.max(0,  buckets.getSkip() - buckets.getTake());
 				String prevPageUrl = String.format(
-						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&anomalyScore=0.0&maxRecordUnusualness=0.0", 
+						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&anomalyScore=0.0&maxNormalizedProbability=0.0", 
 						baseUrl, jobId, start, buckets.getTake(), true);
 
 				test(prevPageUrl.equals(buckets.getPreviousPage().toString()));						
@@ -893,7 +906,7 @@ public class JobsTest implements Closeable
 			{
 				int start = Math.max(0,  buckets.getSkip() + buckets.getTake());
 				String nextPageUrl = String.format(
-						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&anomalyScore=0.0&maxRecordUnusualness=0.0", 
+						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&anomalyScore=0.0&maxNormalizedProbability=0.0", 
 						baseUrl, jobId, start, buckets.getTake(), true);
 
 				test(nextPageUrl.equals(buckets.getNextPage().toString()));
@@ -1106,7 +1119,7 @@ public class JobsTest implements Closeable
 		for (Bucket b : buckets.getDocuments())
 		{
 			test(b.getAnomalyScore() >= 50.0);
-			test(b.getUnusualScore()  >= 40.0);
+			test(b.getMaxNormalizedProbability()  >= 40.0);
 		}
 
 		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, 
@@ -1124,7 +1137,7 @@ public class JobsTest implements Closeable
 		
 		for (Bucket b : buckets.getDocuments())
 		{
-			test(b.getUnusualScore() >= 15.0);
+			test(b.getMaxNormalizedProbability() >= 15.0);
 		}
 	}
 	
@@ -1151,7 +1164,7 @@ public class JobsTest implements Closeable
 		
 		// most unusual first
 		Pagination<AnomalyRecord> records = m_WebServiceClient.getRecords(baseUrl, jobId, 
-				0l, 500l, epochStart, epochEnd, AnomalyRecord.RECORD_UNUSUALNESS, true, null, null);
+				0l, 500l, epochStart, epochEnd, AnomalyRecord.NORMALIZED_PROBABILITY, true, null, null);
 		
 		test(records.getDocumentCount() > 0);
 		test(records.getDocumentCount() == records.getDocuments().size());
@@ -1159,13 +1172,13 @@ public class JobsTest implements Closeable
 		double score = 100.0; // max score		
 		for (AnomalyRecord r : records.getDocuments())
 		{
-			test(r.getUnusualScore() <= score);
-			score = r.getUnusualScore();
+			test(r.getNormalizedProbability() <= score);
+			score = r.getNormalizedProbability();
 		}
 		
 		// least unusual first
 		records = m_WebServiceClient.getRecords(baseUrl, jobId, 
-				0l, 500l, epochStart, epochEnd, AnomalyRecord.RECORD_UNUSUALNESS, false, null, null);
+				0l, 500l, epochStart, epochEnd, AnomalyRecord.NORMALIZED_PROBABILITY, false, null, null);
 		
 		test(records.getDocumentCount() > 0);
 		test(records.getDocumentCount() == records.getDocuments().size());
@@ -1173,8 +1186,8 @@ public class JobsTest implements Closeable
 		score = 0.0; 		
 		for (AnomalyRecord r : records.getDocuments())
 		{
-			test(r.getUnusualScore() >= score);
-			score = r.getUnusualScore();
+			test(r.getNormalizedProbability() >= score);
+			score = r.getNormalizedProbability();
 		}
 		
 		// most anomalous first
@@ -1269,7 +1282,7 @@ public class JobsTest implements Closeable
 		for (AnomalyRecord r : records.getDocuments())
 		{			
 			test(r.getAnomalyScore() >= 8.0);
-			test(r.getUnusualScore() >= 20.0);
+			test(r.getNormalizedProbability() >= 20.0);
 			
 			test(r.getAnomalyScore() <= score);
 			score = r.getAnomalyScore();
@@ -1283,7 +1296,7 @@ public class JobsTest implements Closeable
 		String fieldValue = "";
 		for (AnomalyRecord r : records.getDocuments())
 		{
-			test(r.getAnomalyScore() >= 12.5);
+			test(r.getNormalizedProbability() >= 12.5);
 			
 			test(r.getByFieldValue().compareTo(fieldValue) >= 0);
 			fieldValue = r.getByFieldValue();
@@ -1653,6 +1666,7 @@ public class JobsTest implements Closeable
 		test.m_WebServiceClient.deleteJob(baseUrl, "flightcentre-csv");
 		test.m_WebServiceClient.deleteJob(baseUrl, "flightcentre-epoch-ms");
 
+		
 		//=================
 		// CSV & Gzip test 
 		//
@@ -1672,11 +1686,9 @@ public class JobsTest implements Closeable
 		//=================
 		// JSON test
 		//
-		
 		String flightCentreJsonJobId = test.createFlightCentreJsonJobTest(baseUrl);
 		test.getJobsTest(baseUrl);
 		test.uploadData(baseUrl, flightCentreJsonJobId, flightCentreJsonData, false);
-		test.closeJob(baseUrl, flightCentreJsonJobId);		
 		test.testReadLogFiles(baseUrl, flightCentreJsonJobId);
 		test.testSetDescription(baseUrl, flightCentreJsonJobId);
 		test.verifyJobResults(baseUrl, flightCentreJsonJobId, 100, FLIGHT_CENTRE_NUM_BUCKETS,
@@ -1761,7 +1773,6 @@ public class JobsTest implements Closeable
 		//=================
 		// double upload test (upload same file twice)
 		//
-		
 		String doubleUploadTest = test.createFareQuoteTimeFormatJobTest(baseUrl);
 		jobUrls.add(doubleUploadTest);		
 

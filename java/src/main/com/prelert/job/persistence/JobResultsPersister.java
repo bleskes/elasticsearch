@@ -29,8 +29,8 @@ package com.prelert.job.persistence;
 
 import com.prelert.job.DetectorState;
 import com.prelert.job.UnknownJobException;
+import com.prelert.job.quantiles.Quantiles;
 import com.prelert.rs.data.Bucket;
-import com.prelert.rs.data.Quantiles;
 
 /**
  * Interface for classes that persist {@linkplain Bucket Buckets},
@@ -73,6 +73,13 @@ public interface JobResultsPersister
 	 * @return
 	 */
 	public boolean isDetectorStatePersisted();
+	
+	
+	/**
+	 * Increment the jobs bucket result count by <code>count</code>
+	 * @param count
+	 */
+	public void incrementBucketCount(long count);
 	
 	/**
 	 * Once all the job data has been written this function will be 

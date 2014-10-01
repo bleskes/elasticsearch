@@ -24,11 +24,12 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.warnings;
+package com.prelert.job.status;
 
 import org.apache.log4j.Logger;
 
 import com.prelert.job.JobDetails;
+import com.prelert.job.usage.UsageReporter;
 
 /**
  * Abstract status reporter for tracking all the good/bad
@@ -58,12 +59,13 @@ abstract public class StatusReporter
 			"max.percent.outoforder.errors";	
 	
 	private long m_RecordsWritten = 0;
-	private long m_Volume = 0;
+	private long m_InputFieldCount = 0;
+	private long m_BytesRead = 0;
 	private long m_DateParseErrorsCount = 0;
 	private long m_MissingFieldErrorCount = 0;
 	private long m_OutOfOrderRecordCount = 0;
 	
-	private long m_FieldsPerRecord = 0;
+	private long m_AnalyzedFieldsPerRecord = 1;
 	
 	private long m_RecordCountDivisor = 100;
 	private long m_LastRecordCountQuotient = 0;
@@ -71,13 +73,16 @@ abstract public class StatusReporter
 	private int m_AcceptablePercentDateParseErrors;
 	private int m_AcceptablePercentOutOfOrderErrors;
 	
+	private UsageReporter m_UsageReporter;
+	
 	protected String m_JobId;
 	protected Logger m_Logger;
 	
 	
-	protected StatusReporter(String jobId, Logger logger)
+	protected StatusReporter(String jobId, UsageReporter usageReporter, Logger logger)
 	{
 		m_JobId = jobId;
+		m_UsageReporter = usageReporter;
 		m_Logger = logger;
 			
 		m_AcceptablePercentDateParseErrors = ACCEPTABLE_PERCENTAGE_DATE_PARSE_ERRORS;
@@ -89,7 +94,6 @@ abstract public class StatusReporter
 		}
 		catch (NumberFormatException e)
 		{
-			
 		}
 		
 		m_AcceptablePercentOutOfOrderErrors = ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS;
@@ -105,32 +109,36 @@ abstract public class StatusReporter
 		}		
 	}
 	
-	public StatusReporter(String jobId, JobDetails.Counts counts, Logger logger)
+	public StatusReporter(String jobId, JobDetails.Counts counts,
+			UsageReporter usageReporter, Logger logger)
 	{
-		this(jobId, logger);
+		this(jobId, usageReporter, logger);
 		
 		m_RecordsWritten = counts.getProcessedRecordCount();
-		m_Volume = counts.getProcessedBytes();
+		m_BytesRead = counts.getInputBytes();
 		m_DateParseErrorsCount = counts.getInvalidDateCount();
 		m_MissingFieldErrorCount = counts.getMissingFieldCount();
 		m_OutOfOrderRecordCount = counts.getOutOfOrderTimeStampCount();	
 	}
 	
 	/**
-	 * Add <code>recordsWritten</code> to the running total
-	 * and report status if at a status reporting boundary.
+	 * Increment the number of records written by 1.
 	 * 
-	 * @param recordsWritten
+	 * @param inputFieldCount Number of fields in the record
+	 * 
 	 * @throws HighProportionOfBadTimestampsException
 	 * @throws OutOfOrderRecordsException
 	 */
-	public void reportRecordsWritten(int recordsWritten)
+	public void reportRecordWritten(long inputFieldCount)
 	throws HighProportionOfBadTimestampsException, OutOfOrderRecordsException 
 	{
-		m_RecordsWritten += recordsWritten;
+		m_UsageReporter.addFieldsRecordsRead(inputFieldCount);
+		
+		m_InputFieldCount += inputFieldCount;
+		m_RecordsWritten += 1;
 		
 		// report at various boundaries
-		long totalRecords = sumTotalRecords();
+		long totalRecords = getInputRecordCount() ;
 		if (isReportingBoundary(totalRecords))
 		{
 			reportStatus(totalRecords);
@@ -138,33 +146,30 @@ abstract public class StatusReporter
 		}
 	}
 	
-	/**
-	 * Increment the number of records written by 1.
-	 * 
-	 * @throws HighProportionOfBadTimestampsException
-	 * @throws OutOfOrderRecordsException
-	 */
-	public void reportRecordWritten()
-	throws HighProportionOfBadTimestampsException, OutOfOrderRecordsException 
-	{
-		reportRecordsWritten(1);
-	}
-	
 	
 	/**
 	 * Increments the date parse error count
 	 */
-	public void reportDateParseError()
+	public void reportDateParseError(long inputFieldCount)
 	{
 		m_DateParseErrorsCount++;
+		m_InputFieldCount += inputFieldCount;
+		m_UsageReporter.addFieldsRecordsRead(inputFieldCount);
 	}
 
 	/**
 	 * Increments the missing field count
+	 * Records with missing fields are still processed
 	 */
 	public void reportMissingField() 
 	{
 		m_MissingFieldErrorCount++;
+	}
+	
+	
+	public void reportMissingFields(long missingCount) 
+	{
+		m_MissingFieldErrorCount += missingCount;
 	}
 	
 	/**
@@ -173,18 +178,33 @@ abstract public class StatusReporter
 	 */
 	public void reportBytesRead(long newBytes)
 	{
-		m_Volume += newBytes;
+		m_BytesRead += newBytes;
+		m_UsageReporter.addBytesRead(newBytes);
 	}
 
 	/**
 	 * Increments the out of order record count
 	 */
-	public void reportOutOfOrderRecord()
-	{
+	public void reportOutOfOrderRecord(long inputFieldCount)
+	{		
 		m_OutOfOrderRecordCount++;
+		m_InputFieldCount += inputFieldCount;		
+		m_UsageReporter.addFieldsRecordsRead(inputFieldCount);
 	}
 	
-	public long getRecordsWrittenCount() 
+	/**
+	 * Total records seen = records written + date parse error records count 
+	 * + out of order record count.
+	 * 
+	 * Missing field records aren't counted as they are still written.
+	 * 
+	 */
+	public long getInputRecordCount()
+	{
+		return m_RecordsWritten + m_OutOfOrderRecordCount + m_DateParseErrorsCount;
+	}
+	
+	public long getProcessedRecordCount() 
 	{
 		return m_RecordsWritten;
 	}
@@ -204,27 +224,29 @@ abstract public class StatusReporter
 		return m_OutOfOrderRecordCount;
 	}
 	
-	public long getVolume()
+	public long getBytesRead()
 	{
-		return m_Volume;
+		return m_BytesRead;
 	}
-		
-	/**
-	 * Total records seen = records written + date parse error records count 
-	 * + out of order record count.
-	 * 
-	 * Missing field records aren't counted as they are still written.
-	 * 
-	 * @return At least 1 even is the actual sum is 0
-	 */
-	public long sumTotalRecords()
+	
+	public long getProcessedFieldCount()
 	{
-		long sum = m_RecordsWritten + m_DateParseErrorsCount + 
-				+ m_OutOfOrderRecordCount;
-		
-		return (sum > 0) ? sum : 1;
-	}
+		long processedFieldCount = 
+				(getProcessedRecordCount() * getAnalysedFieldsPerRecord())
+				- getMissingFieldErrorCount();
 
+		// processedFieldCount could be a -ve value if no
+		// records have been written in which case it should be 0
+		processedFieldCount = (processedFieldCount < 0) ? 0 : processedFieldCount;
+		
+		return processedFieldCount;
+	}
+	
+	public long getInputFieldCount()
+	{
+		return m_InputFieldCount;
+	}
+	
 	public int getAcceptablePercentDateParseErrors()
 	{
 		return m_AcceptablePercentDateParseErrors;
@@ -249,13 +271,15 @@ abstract public class StatusReporter
 	
 	public void setAnalysedFieldsPerRecord(long value)
 	{
-		m_FieldsPerRecord = value;
+		m_AnalyzedFieldsPerRecord = value;
 	}
 	
 	public long getAnalysedFieldsPerRecord()
 	{
-		return m_FieldsPerRecord;
+		return m_AnalyzedFieldsPerRecord;
 	}
+	
+	
 	
 	/**
 	 * Report the the status now regardless of whether or 
@@ -267,7 +291,9 @@ abstract public class StatusReporter
 	public void finishReporting() 
 	throws HighProportionOfBadTimestampsException, OutOfOrderRecordsException
 	{
-		long totalRecords = sumTotalRecords();
+		m_UsageReporter.reportUsage();
+
+		long totalRecords = getInputRecordCount();
 		reportStatus(totalRecords);
 		checkStatus(totalRecords);
 	}

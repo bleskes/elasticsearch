@@ -25,10 +25,10 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.rs.data;
-
+package com.prelert.job.quantiles;
 
 import java.io.IOException;
+import java.util.Date;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -51,6 +51,7 @@ public class Quantiles
 	 * Field Names
 	 */
 	public static final String ID = "id";
+	public static final String TIMESTAMP = "timestamp";
 	public static final String QUANTILE_KIND = "quantileKind";
 	public static final String QUANTILE_STATE = "quantileState";
 
@@ -61,12 +62,26 @@ public class Quantiles
 
 	private static final Logger s_Logger = Logger.getLogger(Quantiles.class);
 
+	private Date m_Timestamp;
+
 	/**
 	 * The kind of quantiles is also the Elasticsearch ID, so m_Kind is used for
 	 * both
 	 */
 	private String m_Kind;
 	private String m_State;
+
+
+	public Date getTimestamp()
+	{
+		return m_Timestamp;
+	}
+
+
+	public void setTimestamp(Date timestamp)
+	{
+		m_Timestamp = timestamp;
+	}
 
 
 	/**
@@ -182,6 +197,20 @@ public class Quantiles
 				String fieldName = parser.getCurrentName();
 				switch (fieldName)
 				{
+				case TIMESTAMP:
+					token = parser.nextToken();
+					if (token == JsonToken.VALUE_NUMBER_INT)
+					{
+						// convert seconds to ms
+						long val = parser.getLongValue() * 1000;
+						quantiles.setTimestamp(new Date(val));
+					}
+					else
+					{
+						s_Logger.warn("Cannot parse " + TIMESTAMP + " : " + parser.getText()
+										+ " as a long");
+					}
+					break;
 				case QUANTILE_KIND:
 					token = parser.nextToken();
 					if (token == JsonToken.VALUE_STRING)

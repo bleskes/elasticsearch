@@ -24,35 +24,37 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.warnings.elasticsearch;
+package com.prelert.job.persistence.none;
 
-import org.apache.log4j.Logger;
-import org.elasticsearch.client.Client;
+import java.util.List;
 
-import com.prelert.job.JobDetails;
-import com.prelert.job.warnings.StatusReporter;
-import com.prelert.job.warnings.StatusReporterFactory;
+import com.prelert.job.persistence.JobDataPersister;
 
-public class ElasticsearchStatusReporterFactory implements StatusReporterFactory 
+/**
+ * A 'do nothing' job data persister
+ */
+public class NoneJobDataPersister implements JobDataPersister 
 {
-	private Client m_Client;
-	
-	/**
-	 * Construct the factory
-	 * 
-	 * @param node The Elasticsearch node
-	 */
-	public ElasticsearchStatusReporterFactory(Client client)
+	@Override
+	public void setFieldMappings(List<String> fields, List<String> byFields,
+			List<String> overFields, List<String> partitionFields,
+			String[] header) 
 	{
-		m_Client = client;
 	}
 
 	@Override
-	public StatusReporter newStatusReporter(String jobId, JobDetails.Counts counts,
-			long analysisFieldCount, Logger logger) 
+	public void persistRecord(long epoch, String[] record) 
 	{
-		StatusReporter reporter =  new ElasticsearchStatusReporter(m_Client, jobId, counts, logger);
-		reporter.setAnalysedFieldsPerRecord(analysisFieldCount);
-		return reporter;
+	}
+	
+	@Override
+	public void flushRecords() 
+	{
+	}
+	
+	@Override
+	public boolean deleteData() 
+	{
+		return false;
 	}
 }

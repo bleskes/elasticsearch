@@ -42,6 +42,8 @@ public class LengthEncodedWriterTest
 	/**
 	 * Simple test push a list of records through the writer and
 	 * check the output
+	 * The writer accepts empty strings but not null strings
+	 *  
 	 * @throws IOException 
 	 */
 	@Test	
@@ -49,7 +51,7 @@ public class LengthEncodedWriterTest
 	{
 		{
 			String [] header = {"one", "two", "three", "four", "five"};
-			String [] record1 = {"r1", "r2", "rr3", "rrr4", "r5"};
+			String [] record1 = {"r1", "r2", "", "rrr4", "r5"};
 			String [] record2 = {"y1", "y2", "yy3", "yyy4", "y5"};
 		
 			ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);

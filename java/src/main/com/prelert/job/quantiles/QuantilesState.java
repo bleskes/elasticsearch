@@ -24,40 +24,77 @@
  *                                                          *
  *                                                          *
  ************************************************************/
+package com.prelert.job.quantiles;
 
-package com.prelert.job.persistence;
-
-import java.util.Date;
-
-import org.apache.log4j.Logger;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 
 /**
- * Interface for classes that update {@linkplain Bucket Buckets}
- * for a particular job with new normalised anomaly scores and
- * unusual scores
+ * This stores the serialised quantiles from autodetect. The serialised form
+ * is a long XML string.  There are two kinds of quantiles, each with its
+ * own XML string.
  */
-public interface JobRenormaliser
+public class QuantilesState
 {
 	/**
-	 * Update the anomaly score field on all previously persisted buckets
-	 * and all contained records
-	 * @param sysChangeState
-	 * @param endTime
-	 * @param logger
+	 * These MUST match the constants used in the C++ code
+	 * in lib/model/CAnomalyScore.cc
 	 */
-	public void updateBucketSysChange(String sysChangeState,
-										Date endTime, Logger logger);
+	public static final String SYS_CHANGE_QUANTILES_KIND = "sysChange";
+	public static final String UNUSUAL_QUANTILES_KIND = "unusual";
+
+	private Map<String, String> m_QuantilesKindToState;
+
+	public QuantilesState()
+	{
+		m_QuantilesKindToState = new HashMap<>();
+	}
 
 
 	/**
-	 * Update the unsual score field on all previously persisted buckets
-	 * and all contained records
-	 * @param unusualBehaviourState
-	 * @param endTime
-	 * @param logger
+	 * Expose the map of quantiles kind -> state
+	 * @return Quantiles kind -> state map
 	 */
-	public void updateBucketUnusualBehaviour(String unusualBehaviourState,
-											Date endTime, Logger logger);
-};
+	public Map<String, String> getMap()
+	{
+		return m_QuantilesKindToState;
+	}
+
+
+	/**
+	 * Get the set of all kinds of quantiles
+	 * @return The set of kinds of quantiles
+	 */
+	public Set<String> getQuantilesKinds()
+	{
+		return m_QuantilesKindToState.keySet();
+	}
+
+
+	/**
+	 * Return the serialised quantiles of the specified <code>kind</code>
+	 * or <code>null</code> if the <code>kind</code> is not
+	 * recognised.
+	 *
+	 * @param kind
+	 * @return <code>null</code> or the serialised state
+	 */
+	public String getQuantilesState(String kind)
+	{
+		return m_QuantilesKindToState.get(kind);
+	}
+
+	/**
+	 * Set the state of the detector where state is the serialised model.
+	 *
+	 * @param kind
+	 * @param state
+	 */
+	public void setQuantilesState(String kind, String state)
+	{
+		m_QuantilesKindToState.put(kind, state);
+	}
+}
 

@@ -37,9 +37,10 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.prelert.job.DetectorState;
-import com.prelert.job.QuantilesState;
 import com.prelert.job.persistence.JobResultsPersister;
 import com.prelert.job.persistence.JobRenormaliser;
+import com.prelert.job.quantiles.Quantiles;
+import com.prelert.job.quantiles.QuantilesState;
 import com.prelert.rs.data.*;
 
 /**
@@ -118,6 +119,7 @@ public class AutoDetectResultsParser
 					case Bucket.TIMESTAMP:
 						Bucket bucket = Bucket.parseJsonAfterStartObject(parser);
 						persister.persistBucket(bucket);
+						persister.incrementBucketCount(1);
 			
 						logger.debug("Bucket number " + ++bucketCount + " parsed from output");
 						break;
@@ -157,6 +159,7 @@ public class AutoDetectResultsParser
 		persister.persistDetectorState(state);		
 		
 		// commit data to the datastore
+		logger.info("Detector state persisted - about to refresh indexes");
 		persister.commitWrites();
 	}
 	
@@ -189,11 +192,11 @@ public class AutoDetectResultsParser
 	{
 		if (QuantilesState.SYS_CHANGE_QUANTILES_KIND.equals(quantiles.getKind()))
 		{
-			renormaliser.updateBucketSysChange(quantiles.getState(), logger);
+			renormaliser.updateBucketSysChange(quantiles.getState(), quantiles.getTimestamp(), logger);
 		}
 		else if (QuantilesState.UNUSUAL_QUANTILES_KIND.equals(quantiles.getKind()))
 		{
-			renormaliser.updateBucketUnusualBehaviour(quantiles.getState(), logger);
+			renormaliser.updateBucketUnusualBehaviour(quantiles.getState(), quantiles.getTimestamp(), logger);
 		}
 		else
 		{

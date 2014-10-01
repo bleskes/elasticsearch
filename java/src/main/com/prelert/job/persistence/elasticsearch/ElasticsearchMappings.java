@@ -39,12 +39,11 @@ import com.prelert.job.DataDescription;
 import com.prelert.job.Detector;
 import com.prelert.job.DetectorState;
 import com.prelert.job.JobDetails;
-import com.prelert.job.alert.Alert;
+import com.prelert.job.quantiles.Quantiles;
 import com.prelert.job.usage.Usage;
 import com.prelert.rs.data.AnomalyCause;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
-import com.prelert.rs.data.Quantiles;
 
 /**
  * Static methods to create Elasticsearch mappings for the autodetect 
@@ -103,13 +102,22 @@ public class ElasticsearchMappings
 						.startObject(JobDetails.COUNTS)
 							.field("type", "object")
 							.startObject("properties")
+								.startObject(JobDetails.BUCKET_COUNT)
+									.field("type", "long")
+								.endObject()							
 								.startObject(JobDetails.PROCESSED_RECORD_COUNT)
 									.field("type", "long")
 								.endObject()
-								.startObject(JobDetails.PROCESSED_DATAPOINT_COUNT)
+								.startObject(JobDetails.PROCESSED_FIELD_COUNT)
 									.field("type", "long")
 								.endObject()								
-								.startObject(JobDetails.PROCESSED_BYTES)
+								.startObject(JobDetails.INPUT_BYTES)
+								.field("type", "long")
+								.endObject()
+								.startObject(JobDetails.INPUT_RECORD_COUNT)
+								.field("type", "long")
+								.endObject()
+								.startObject(JobDetails.INPUT_FIELD_COUNT)
 								.field("type", "long")
 								.endObject()								
 								.startObject(JobDetails.INVALID_DATE_COUNT)
@@ -233,7 +241,7 @@ public class ElasticsearchMappings
 						.startObject(Bucket.ANOMALY_SCORE)
 							.field("type", "double")
 						.endObject()
-						.startObject(Bucket.MAX_RECORD_UNUSUALNESS)
+						.startObject(Bucket.MAX_NORMALIZED_PROBABILITY)
 							.field("type", "double")
 						.endObject()
 						.startObject(Bucket.RECORD_COUNT)
@@ -375,7 +383,7 @@ public class ElasticsearchMappings
 						.startObject(AnomalyRecord.ANOMALY_SCORE)
 							.field("type", "double")
 						.endObject()
-						.startObject(AnomalyRecord.RECORD_UNUSUALNESS)
+						.startObject(AnomalyRecord.NORMALIZED_PROBABILITY)
 							.field("type", "double")
 						.endObject()
 					.endObject()
@@ -469,9 +477,15 @@ public class ElasticsearchMappings
 						.startObject(Usage.TIMESTAMP)
 							.field("type", "date")
 						.endObject()	
-						.startObject(Usage.VOLUME)
+						.startObject(Usage.INPUT_BYTES)
 							.field("type", "long")
-						.endObject()					
+						.endObject()	
+						.startObject(Usage.INPUT_FIELD_COUNT)
+							.field("type", "long")
+						.endObject()
+						.startObject(Usage.INPUT_RECORD_COUNT)
+							.field("type", "long")
+						.endObject()						
 					.endObject()
 				.endObject()
 			.endObject();
@@ -479,48 +493,13 @@ public class ElasticsearchMappings
 		return mapping;
 	}
 	
-	
+		
 	/**
-	 * The Elasticsearch mappings for {@link Alert}s 
-	 * 
+	 * Mapping for the saved data records
+	 *  
 	 * @return
 	 * @throws IOException
 	 */
-	static public XContentBuilder alertMapping() 
-	throws IOException
-	{
-		XContentBuilder mapping = jsonBuilder()
-			.startObject()
-				.startObject(Alert.TYPE)
-					.startObject("_all")
-						.field("enabled", false)
-					.endObject()
-					.startObject("properties")	
-						.startObject(Alert.ID)
-							.field("type", "string").field(INDEX, NOT_ANALYZED)
-						.endObject()					
-						.startObject(Alert.JOB_ID)
-						 	.field("type", "string")
-						.endObject()
-						.startObject(Alert.SEVERTIY)
-							.field("type", "string")
-						.endObject()					
-						.startObject(Alert.TIMESTAMP)
-						    .field("type", "date")
-						.endObject()					
-						.startObject(Alert.REASON)
-						    .field("type", "string")
-						.endObject()									
-					.endObject()
-				.endObject()
-			.endObject();
-			
-		return mapping;
-	}
-	
-	
-	
-	
 	static public XContentBuilder inputDataMapping() 
 	throws IOException
 	{
@@ -532,7 +511,7 @@ public class ElasticsearchMappings
 					.endObject()
 					.startObject("properties")	
 						.startObject("epoch")
-							.field("type", "long")
+							.field("type", "date")
 						.endObject()					
 						.startObject(ElasticsearchJobDataPersister.FIELDS)
 							.field("type", "string")

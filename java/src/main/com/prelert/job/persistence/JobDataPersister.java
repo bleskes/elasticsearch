@@ -24,59 +24,49 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.warnings;
 
-import com.prelert.rs.data.ErrorCode;
+package com.prelert.job.persistence;
+
+import java.util.List;
 
 /**
- * If the timestamp field of a record cannot be read or the 
- * date format is incorrect the record is ignored. This 
- * exception is thrown when a high proportion of records
- * have a bad timestamp.
+ * Persist the records sent the the API.
+ * Records are mapped by the by, over, partition and metric fields. 
  */
-public class HighProportionOfBadTimestampsException extends Exception 
+public interface JobDataPersister 
 {
-	private static final long serialVersionUID = -7776085998658495251L;
+	/**
+	 * Find each of the lists of requried fields (by, over, etc)
+	 * in the header and save the indexes so the field mappings can
+	 * be used in calls to {@linkplain #persistRecord(long, String[])}
+	 * @param fields
+	 * @param byFields
+	 * @param overFields
+	 * @param partitionFields
+	 * @param header
+	 */
+	public void setFieldMappings(List<String> fields,
+			List<String> byFields, List<String> overFields,
+			List<String> partitionFields, String[] header);
 
-	private long m_NumberBad;
-	private long m_TotalNumber;
-	
-	public HighProportionOfBadTimestampsException(long numberBadRecords, 
-			long totalNumberRecords)
-	{
-		m_NumberBad = numberBadRecords;
-		m_TotalNumber = totalNumberRecords;
-	}
-	
-	public ErrorCode getErrorCode()
-	{
-		return ErrorCode.TOO_MANY_BAD_DATES;
-	}
+	/**
+	 * Save the record as per the field mappings 
+	 * set up in {@linkplain #setFieldMappings(List, List, List, List, String[])}
+	 * 
+	 * @param epoch 
+	 * @param record
+	 */
+	public void persistRecord(long epoch, String[] record);
 	
 	/**
-	 * The number of bad records
+	 * Delete all the persisted records
+	 * 
 	 * @return
 	 */
-	public long getNumberBad()
-	{
-		return m_NumberBad;
-	}
+	public boolean deleteData();
 	
 	/**
-	 * Total number of records (good + bad)
-	 * @return
+	 * Flush any records that may not have been persisted yet
 	 */
-	public long getTotalNumber()
-	{
-		return m_TotalNumber;
-	}
-	
-	@Override
-	public String getMessage()
-	{
-		return String.format("A high proportion of records are have a timestamp "
-				+ "that cannot be interpreted (%d of %d).",
-				m_NumberBad, m_TotalNumber);
-	}
-	
+	public void flushRecords();
 }

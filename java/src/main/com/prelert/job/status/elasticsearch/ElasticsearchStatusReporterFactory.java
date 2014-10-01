@@ -24,40 +24,36 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-
-package com.prelert.job.persistence;
-
-import java.util.Date;
+package com.prelert.job.status.elasticsearch;
 
 import org.apache.log4j.Logger;
+import org.elasticsearch.client.Client;
 
+import com.prelert.job.JobDetails;
+import com.prelert.job.status.StatusReporter;
+import com.prelert.job.status.StatusReporterFactory;
+import com.prelert.job.usage.UsageReporter;
 
-/**
- * Interface for classes that update {@linkplain Bucket Buckets}
- * for a particular job with new normalised anomaly scores and
- * unusual scores
- */
-public interface JobRenormaliser
+public class ElasticsearchStatusReporterFactory implements StatusReporterFactory 
 {
+	private Client m_Client;
+	
 	/**
-	 * Update the anomaly score field on all previously persisted buckets
-	 * and all contained records
-	 * @param sysChangeState
-	 * @param endTime
-	 * @param logger
+	 * Construct the factory
+	 * 
+	 * @param node The Elasticsearch node
 	 */
-	public void updateBucketSysChange(String sysChangeState,
-										Date endTime, Logger logger);
+	public ElasticsearchStatusReporterFactory(Client client)
+	{
+		m_Client = client;
+	}
 
-
-	/**
-	 * Update the unsual score field on all previously persisted buckets
-	 * and all contained records
-	 * @param unusualBehaviourState
-	 * @param endTime
-	 * @param logger
-	 */
-	public void updateBucketUnusualBehaviour(String unusualBehaviourState,
-											Date endTime, Logger logger);
-};
-
+	@Override
+	public StatusReporter newStatusReporter(String jobId, JobDetails.Counts counts,
+			UsageReporter usageReporter, Logger logger) 
+	{
+		StatusReporter reporter =  new ElasticsearchStatusReporter(m_Client, 
+				usageReporter, jobId, counts, logger);
+		return reporter;
+	}
+}

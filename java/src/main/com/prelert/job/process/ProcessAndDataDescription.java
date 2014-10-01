@@ -35,9 +35,8 @@ import org.apache.log4j.Logger;
 
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
-import com.prelert.job.persistence.elasticsearch.ElasticsearchJobDataPersister;
-import com.prelert.job.usage.UsageReporter;
-import com.prelert.job.warnings.StatusReporter;
+import com.prelert.job.persistence.JobDataPersister;
+import com.prelert.job.status.StatusReporter;
 
 /**
  * The native process and its data description object.
@@ -63,8 +62,7 @@ public class ProcessAndDataDescription
 	private Logger m_JobLogger;
 	
 	private StatusReporter m_StatusReporter;
-	private UsageReporter m_UsageReporter;
-	private ElasticsearchJobDataPersister m_DataPersiter;
+	private JobDataPersister m_DataPersister;
 	
 	private AnalysisConfig m_AnalysisConfig;
 
@@ -79,15 +77,14 @@ public class ProcessAndDataDescription
 	 * @param interestingFields The list of fields used in the analysis
 	 * @param logger The job's logger
 	 * @param outputParser
-	 * @param usageReporter 
 	 * 	 
 	 */
 	public ProcessAndDataDescription(Process process, String jobId, 
 			DataDescription dd,
 			long timeout, AnalysisConfig analysisConfig,
 			Logger logger, StatusReporter reporter, 
-			UsageReporter usageReporter, Runnable outputParser,
-			ElasticsearchJobDataPersister dataPersister)
+			Runnable outputParser,
+			JobDataPersister dataPersister)
 	{
 		m_Process = process;
 		m_DataDescription = dd;
@@ -105,9 +102,8 @@ public class ProcessAndDataDescription
 		m_JobLogger = logger;
 		
 		m_OutputParser = outputParser;
-		m_UsageReporter = usageReporter;
 		
-		m_DataPersiter = dataPersister;
+		m_DataPersister = dataPersister;
 		
 		m_OutputParserThread = new Thread(m_OutputParser, jobId + "-Bucket-Parser");
 		m_OutputParserThread.start();
@@ -195,13 +191,6 @@ public class ProcessAndDataDescription
 	}
 	
 	
-	
-	public UsageReporter getUsageReporter()
-	{
-		return m_UsageReporter;
-	}
-	
-	
 	/**
 	 * Wait for the output parser thread to finish
 	 * 
@@ -214,8 +203,8 @@ public class ProcessAndDataDescription
 	}
 	
 	
-	public ElasticsearchJobDataPersister getDataPerister()
+	public JobDataPersister getDataPersister()
 	{
-		return m_DataPersiter;
+		return m_DataPersister;
 	}
 }

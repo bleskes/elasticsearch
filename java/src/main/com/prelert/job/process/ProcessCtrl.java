@@ -50,7 +50,7 @@ import com.prelert.job.AnalysisLimits;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DetectorState;
 import com.prelert.job.JobDetails;
-import com.prelert.job.QuantilesState;
+import com.prelert.job.quantiles.QuantilesState;
 
 
 /**
@@ -162,7 +162,7 @@ public class ProcessCtrl
 	static final public String PERSIST_STATE_ARG = "--persistState";
 	static final public String VERSION_ARG = "--version";
 	static final public String INFO_ARG = "--info";
-	static final public String MAX_ANOMALY_RECORDS = "--maxAnomalyRecords=";
+	static final public String MAX_ANOMALY_RECORDS = "--maxAnomalyRecords=500";
 	
 	/*
 	 * Normalize_api args
@@ -515,8 +515,7 @@ public class ProcessCtrl
 		command.add(LENGTH_ENCODED_INPUT_ARG);
 		
 		
-		// TODO limit on the number of anomaly records?
-		String recordCountArg = MAX_ANOMALY_RECORDS + "0";
+		String recordCountArg = MAX_ANOMALY_RECORDS;
 		command.add(recordCountArg);
 		
 		String timeField = DataDescription.DEFAULT_TIME_FIELD;
@@ -606,26 +605,17 @@ public class ProcessCtrl
 		// now the actual field args
 		if (job.getAnalysisConfig() != null)
 		{
-			if (job.getAnalysisConfig().getDetectors().size() == 1)
-			{
-				// Only one set of field args so use the command line options
-				List<String> args = detectorConfigToCommandLinArgs(job.getAnalysisConfig().getDetectors().get(0));
-				command.addAll(args);			
-			}
-			else
-			{
-				// write to a temporary field config file
-				File fieldConfigFile = File.createTempFile("fieldconfig", ".conf");
-				try (OutputStreamWriter osw = new OutputStreamWriter(
-						new FileOutputStream(fieldConfigFile),
-						StandardCharsets.UTF_8))
-				{
-					writeFieldConfig(job.getAnalysisConfig(), osw, logger);
-				}
-				
-				String fieldConfig = FIELD_CONFIG_ARG + fieldConfigFile.toString();
-				command.add(fieldConfig);	
-			}
+			// write to a temporary field config file
+			File fieldConfigFile = File.createTempFile("fieldconfig", ".conf");
+			try (OutputStreamWriter osw = new OutputStreamWriter(
+					new FileOutputStream(fieldConfigFile),
+					StandardCharsets.UTF_8))
+					{
+				writeFieldConfig(job.getAnalysisConfig(), osw, logger);
+					}
+
+			String fieldConfig = FIELD_CONFIG_ARG + fieldConfigFile.toString();
+			command.add(fieldConfig);	
 		}
 		
 		// Build the process
@@ -676,59 +666,6 @@ public class ProcessCtrl
 		File f = new File(CONFIG_DIR, PRELERT_MODEL_CONF);
 		
 		return f.exists() && !f.isDirectory();
-	}
-	
-	
-	/**
-	 * Interpret the detector object as a list of strings in the format
-	 * expected by autodetect api to configure t 
-	 * 
-	 * @param detector
-	 * @return
-	 */
-	static public List<String> detectorConfigToCommandLinArgs(Detector detector)
-	{
-		List<String> commandLineArgs = new ArrayList<>();
-		
-		if (detector.isUseNull() != null)
-		{
-			String usenull = USE_NULL_ARG + detector.isUseNull();
-			commandLineArgs.add(usenull);
-		}
-
-		if (isNotNullOrEmpty(detector.getFunction()))
-		{
-			if (isNotNullOrEmpty(detector.getFieldName() ))
-			{
-				commandLineArgs.add(detector.getFunction() + "(" + detector.getFieldName() + ")");
-			}
-			else
-			{
-				commandLineArgs.add(detector.getFunction());
-			}
-		}
-		else if (isNotNullOrEmpty(detector.getFieldName()))
-		{
-			commandLineArgs.add(detector.getFieldName());
-		}
-
-		if (isNotNullOrEmpty(detector.getByFieldName()))
-		{
-			commandLineArgs.add(BY_ARG);
-			commandLineArgs.add(detector.getByFieldName());
-		}
-		if (isNotNullOrEmpty(detector.getOverFieldName()))
-		{
-			commandLineArgs.add(OVER_ARG);
-			commandLineArgs.add(detector.getOverFieldName());
-		}
-		if (isNotNullOrEmpty(detector.getPartitionFieldName()))
-		{
-			String partition = PARTITION_FIELD_ARG + detector.getPartitionFieldName();
-			commandLineArgs.add(partition);
-		}	
-		
-		return commandLineArgs;
 	}
 	
 	

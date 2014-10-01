@@ -19,29 +19,48 @@
  * may be reproduced, adapted or transmitted in any form or *
  * by any means, electronic, mechanical, photocopying,      *
  * recording or otherwise.                                  *
- *                                                  
  *                                                          *
  *----------------------------------------------------------*
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.warnings;
 
-/**
- * Dummy StatusReporter with an 
- *
- */
-public class DummyStatusReporter extends StatusReporter 
+package com.prelert.job.persistence;
+
+import java.util.List;
+
+public class DummyJobDataPersister implements JobDataPersister 
 {
-	public DummyStatusReporter() 
+	private int m_RecordCount = 0;
+	
+
+	@Override
+	public void setFieldMappings(List<String> fields, List<String> byFields,
+			List<String> overFields, List<String> partitionFields,
+			String[] header) 
 	{
-		super("DummyJobId", null);
+
 	}
 
 	@Override
-	protected void reportStatus(long totalRecords)
+	public void persistRecord(long epoch, String[] record) 
 	{
-		// do nothing
+		m_RecordCount++;
 	}
-
+	
+	@Override
+	public void flushRecords() 
+	{
+	}
+	
+	@Override
+	public boolean deleteData() 
+	{
+		return false;
+	}
+	
+	public int getRecordCount()
+	{
+		return m_RecordCount;
+	}
 }

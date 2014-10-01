@@ -51,10 +51,10 @@ import com.prelert.job.process.MissingFieldException;
 import com.prelert.job.process.NativeProcessRunException;
 import com.prelert.job.process.ProcessManager;
 import com.prelert.job.process.ResultsReaderFactory;
+import com.prelert.job.status.HighProportionOfBadTimestampsException;
+import com.prelert.job.status.OutOfOrderRecordsException;
+import com.prelert.job.status.StatusReporterFactory;
 import com.prelert.job.usage.UsageReporterFactory;
-import com.prelert.job.warnings.HighProportionOfBadTimestampsException;
-import com.prelert.job.warnings.OutOfOrderRecordsException;
-import com.prelert.job.warnings.StatusReporterFactory;
 import com.prelert.job.JobIdAlreadyExistsException;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobConfigurationException;
@@ -109,6 +109,8 @@ public class JobManager
 	
 	private JobProvider m_JobProvider;
 	
+	private DataPersisterFactory m_DataPersisterFactory;
+	
 
 	/**
 	 * These default to unlimited (indicated by negative limits), but may be
@@ -137,6 +139,8 @@ public class JobManager
 			DataPersisterFactory dataPersisterFactory)
 	{
 		m_JobProvider = jobProvider;
+		
+		m_DataPersisterFactory = dataPersisterFactory;
 		
 		m_ProcessManager = new ProcessManager(jobProvider, 
 				resultsReaderFactory, statusReporterFactory,
@@ -219,6 +223,7 @@ public class JobManager
 
 		// Negative m_MaxDetectorsPerJob means unlimited
 		if (m_MaxDetectorsPerJob >= 0 &&
+			jobConfig.getAnalysisConfig() != null &&
 			jobConfig.getAnalysisConfig().getDetectors().size() > m_MaxDetectorsPerJob)
 		{
 			throw new JobConfigurationException(
@@ -232,7 +237,7 @@ public class JobManager
 
 		// We can only validate the case of m_MaxPartitionsPerJob being zero in
 		// the Java code - anything more subtle has to be left to the C++
-		if (m_MaxPartitionsPerJob == 0)
+		if (m_MaxPartitionsPerJob == 0 && jobConfig.getAnalysisConfig() != null)
 		{
 			for (com.prelert.job.Detector detector :
 						jobConfig.getAnalysisConfig().getDetectors())
@@ -313,18 +318,18 @@ public class JobManager
 	 * @param skip
 	 * @param take
 	 * @param anomalyScoreThreshold
-	 * @param unusualScoreThreshold
+	 * @param normalizedProbabilityThreshold
 	 * @return
 	 * @throws UnknownJobException
 	 * @throws NativeProcessRunException
 	 */
 	public Pagination<Bucket> buckets(String jobId, 
 			boolean expand, int skip, int take,
-			double anomalyScoreThreshold, double unusualScoreThreshold) 
+			double anomalyScoreThreshold, double normalizedProbabilityThreshold) 
 	throws UnknownJobException, NativeProcessRunException
 	{
 		Pagination<Bucket> buckets = m_JobProvider.buckets(jobId, 
-				expand, skip, take, anomalyScoreThreshold, unusualScoreThreshold);
+				expand, skip, take, anomalyScoreThreshold, normalizedProbabilityThreshold);
 		
 		if (!expand)
 		{
@@ -348,19 +353,19 @@ public class JobManager
 	 * @param startBucket The bucket with this id is included in the results
 	 * @param endBucket Include buckets up to this one
 	 * @param anomalyScoreThreshold
-	 * @param unusualScoreThreshold 
+	 * @param normalizedProbabilityThreshold 
 	 * @return
 	 * @throws UnknownJobException 
 	 * @throws NativeProcessRunException 
 	 */
 	public Pagination<Bucket> buckets(String jobId, 
 			boolean expand, int skip, int take, long startBucket, long endBucket,
-			double anomalyScoreThreshold, double unusualScoreThreshold)
+			double anomalyScoreThreshold, double normalizedProbabilityThreshold)
 	throws UnknownJobException, NativeProcessRunException
 	{
 		Pagination<Bucket> buckets =  m_JobProvider.buckets(jobId, expand,
 				skip, take, startBucket, endBucket, 
-				anomalyScoreThreshold, unusualScoreThreshold);
+				anomalyScoreThreshold, normalizedProbabilityThreshold);
 		
 		if (!expand)
 		{
@@ -429,7 +434,7 @@ public class JobManager
 	 * @param sortDescending
 	 * @param anomalyScoreThreshold Return only buckets with an anomalyScore >=
 	 * this value
-	 * @param unusualScoreThreshold Return only buckets with an maxRecordUnusualness >=
+	 * @param normalizedProbabilityThreshold Return only buckets with a maxNormalizedProbability >=
 	 * this value
 	 * 
 	 * @return
@@ -438,12 +443,12 @@ public class JobManager
 	 */
 	public Pagination<AnomalyRecord> records(String jobId, 
 			int skip, int take, String sortField, boolean sortDescending, 
-			double anomalyScoreThreshold, double unusualScoreThreshold) 
+			double anomalyScoreThreshold, double normalizedProbabilityThreshold) 
 	throws NativeProcessRunException, UnknownJobException 
 	{
 		Pagination<AnomalyRecord> records = m_JobProvider.records(jobId, 
 				skip, take, sortField, sortDescending, 
-				anomalyScoreThreshold, unusualScoreThreshold);
+				anomalyScoreThreshold, normalizedProbabilityThreshold);
 
 		return records; 
 	}
@@ -462,7 +467,7 @@ public class JobManager
 	 * @param sortDescending
 	 * @param anomalyScoreThreshold Return only buckets with an anomalyScore >=
 	 * this value
-	 * @param unusualScoreThreshold Return only buckets with an maxRecordUnusualness >=
+	 * @param normalizedProbabilityThreshold Return only buckets with a maxNormalizedProbability >=
 	 * this value
 	 * 
 	 * @return
@@ -472,12 +477,12 @@ public class JobManager
 	public Pagination<AnomalyRecord> records(String jobId, 
 			int skip, int take, long epochStart, long epochEnd, 
 			String sortField, boolean sortDescending, 
-			double anomalyScoreThreshold, double unusualScoreThreshold) 
+			double anomalyScoreThreshold, double normalizedProbabilityThreshold) 
 	throws NativeProcessRunException, UnknownJobException
 	{
 		Pagination<AnomalyRecord> records = m_JobProvider.records(jobId, 
 				skip, take, epochStart, epochEnd, sortField, sortDescending,
-				anomalyScoreThreshold, unusualScoreThreshold);
+				anomalyScoreThreshold, normalizedProbabilityThreshold);
 
 		return records; 
 	}
@@ -502,13 +507,12 @@ public class JobManager
 	 * Stop the running job and mark it as finished.<br/>
 	 * 
 	 * @param jobId The job to stop
-	 * @return true if the job stopped successfully
 	 * @throws UnknownJobException 
 	 * @throws NativeProcessRunException 
 	 * @throws JobInUseException if the job cannot be closed because data is
 	 * being streamed to it
 	 */
-	public boolean finishJob(String jobId) 
+	public void finishJob(String jobId) 
 	throws UnknownJobException, NativeProcessRunException, JobInUseException
 	{
 		s_Logger.debug("Finish job " + jobId);
@@ -517,11 +521,8 @@ public class JobManager
 		// this method throws if it isn't
 		if (m_JobProvider.jobExists(jobId))
 		{
-			ProcessManager.ProcessStatus processStatus = m_ProcessManager.finishJob(jobId);	
-			return (processStatus == ProcessManager.ProcessStatus.COMPLETED);
+			m_ProcessManager.finishJob(jobId);	
 		}
-		
-		return false;
 	}
 		
 	/**
@@ -565,6 +566,8 @@ public class JobManager
 		m_ProcessManager.finishJob(jobId);
 		m_JobProvider.deleteJob(jobId);
 		
+		m_DataPersisterFactory.newDataPersister(jobId, s_Logger).deleteData();
+		
 		return true;
 	}
 	
@@ -597,7 +600,7 @@ public class JobManager
 	{
 		// Negative m_MaxActiveJobs means unlimited
 		if (m_MaxActiveJobs >= 0 &&
-			m_ProcessManager.jobIsRunning(jobId) &&
+			(m_ProcessManager.jobIsRunning(jobId) == false) &&
 			m_ProcessManager.numberOfRunningJobs() >= m_MaxActiveJobs)
 		{
 			throw new TooManyJobsException(m_MaxActiveJobs,

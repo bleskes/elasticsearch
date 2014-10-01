@@ -32,6 +32,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
+import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.Client;
 
 import com.prelert.job.usage.Usage;
@@ -63,7 +64,7 @@ public class ElasticsearchUsageReporter extends UsageReporter
 		m_UpsertMap = new HashMap<>();
 		
 		m_UpsertMap.put(Usage.TIMESTAMP, "");
-		m_UpsertMap.put(Usage.VOLUME, null);
+		m_UpsertMap.put(Usage.INPUT_BYTES, null);
 	}
 
 	@Override
@@ -79,8 +80,10 @@ public class ElasticsearchUsageReporter extends UsageReporter
 		}
 		
 		// update global count		
-		updateDocument(PRELERT_USAGE_INDEX,  m_DocId, getBytesReadSinceLastReport());
-		updateDocument(getJobId(), m_DocId, getBytesReadSinceLastReport());
+		updateDocument(PRELERT_USAGE_INDEX,  m_DocId, getBytesReadSinceLastReport(),
+				getFieldsReadSinceLastReport(), getRecordsReadSinceLastReport());
+		updateDocument(getJobId(), m_DocId, getBytesReadSinceLastReport(),
+				getFieldsReadSinceLastReport(), getRecordsReadSinceLastReport());
 			
 		return true;
 	}
@@ -93,18 +96,25 @@ public class ElasticsearchUsageReporter extends UsageReporter
 	 * 
 	 * @param index
 	 * @param id Doc id is also its timestamp
-	 * @param additionalVolume Add this value to the running total
+	 * @param additionalBytes Add this value to the running total
+	 * @param additionalFields Add this value to the running total
+	 * @param additionalRecords Add this value to the running total
 	 */
-	private void updateDocument(String index, String id, long additionalVolume)
+	private void updateDocument(String index, String id, 
+			long additionalBytes, long additionalFields, long additionalRecords)
 	{
-		Long val = new Long(additionalVolume);
+		m_UpsertMap.put(Usage.INPUT_BYTES, new Long(additionalBytes));
+		m_UpsertMap.put(Usage.INPUT_FIELD_COUNT, new Long(additionalFields));
+		m_UpsertMap.put(Usage.INPUT_RECORD_COUNT, new Long(additionalRecords));
 		
-		m_UpsertMap.put(Usage.VOLUME, val);
-		
-		m_Client.prepareUpdate(index, Usage.TYPE, id)
-				.setScript("update-volume")
-				.addScriptParam("new_vol", val)
+		UpdateResponse response = m_Client.prepareUpdate(index, Usage.TYPE, id)
+				.setScript("update-usage")
+				.addScriptParam("bytes", additionalBytes)
+				.addScriptParam("fieldCount", additionalFields)
+				.addScriptParam("recordCount", additionalRecords)
 				.setUpsert(m_UpsertMap)
 				.setRetryOnConflict(3).get();
+		
+		System.out.print(response);
 	}
 }

@@ -37,11 +37,9 @@ import org.apache.log4j.Logger;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
-import com.prelert.rs.data.AnomalyCause;
 import com.prelert.rs.data.parsing.AutoDetectParseException;
 
 /**
@@ -91,7 +89,7 @@ public class AnomalyRecord
 	 * Normalisation
 	 */
 	static final public String ANOMALY_SCORE = "anomalyScore";
-	static final public String RECORD_UNUSUALNESS = "recordUnusualness";
+	static final public String NORMALIZED_PROBABILITY = "normalizedProbability";
 	
 	private static final Logger s_Logger = Logger.getLogger(AnomalyRecord.class);
 	
@@ -112,10 +110,11 @@ public class AnomalyRecord
 	private List<AnomalyCause> m_Causes;
 
 	private double m_AnomalyScore;
-	private double m_RecordUnusualness;
+	private double m_NormalizedProbability;
 	private Date   m_Timestamp;
 
-	
+	private boolean m_HadBigNormalisedUpdate;
+
 	private String m_Parent;
 
 	/**
@@ -145,17 +144,19 @@ public class AnomalyRecord
 	
 	public void setAnomalyScore(double anomalyScore)
 	{
+		m_HadBigNormalisedUpdate |= isBigUpdate(m_AnomalyScore, anomalyScore);
 		m_AnomalyScore = anomalyScore;
 	}
 	
-	public double getRecordUnusualness()
+	public double getNormalizedProbability()
 	{
-		return m_RecordUnusualness;
+		return m_NormalizedProbability;
 	}
 	
-	public void setRecordUnusualness(double recordUnusualness)
+	public void setNormalizedProbability(double normalizedProbability)
 	{
-		m_RecordUnusualness = recordUnusualness;
+		m_HadBigNormalisedUpdate |= isBigUpdate(m_NormalizedProbability, normalizedProbability);
+		m_NormalizedProbability = normalizedProbability;
 	}
 	
 	
@@ -379,11 +380,11 @@ public class AnomalyRecord
 								+ " as a double");
 					}
 					break;
-				case RECORD_UNUSUALNESS:
+				case NORMALIZED_PROBABILITY:
 					token = parser.nextToken();
 					if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)
 					{
-						record.setRecordUnusualness(parser.getDoubleValue());
+						record.setNormalizedProbability(parser.getDoubleValue());
 					}
 					else
 					{
@@ -570,6 +571,7 @@ public class AnomalyRecord
 		// will hash the same as a record representing the same anomaly that did
 		// not come from the data store
 
+		// m_HadBigNormalisedUpdate is also deliberately excluded from the hash
 		final int prime = 31;
 		int result = 1;
 		long temp;
@@ -577,7 +579,7 @@ public class AnomalyRecord
 		result = prime * result + (int) (temp ^ (temp >>> 32));
 		temp = Double.doubleToLongBits(m_AnomalyScore);
 		result = prime * result + (int) (temp ^ (temp >>> 32));
-		temp = Double.doubleToLongBits(m_RecordUnusualness);
+		temp = Double.doubleToLongBits(m_NormalizedProbability);
 		result = prime * result + (int) (temp ^ (temp >>> 32));
 		result = prime * result
 				+ ((m_Actual == null) ? 0 : m_Actual.hashCode());
@@ -634,9 +636,10 @@ public class AnomalyRecord
 		// equal to a record representing the same anomaly that did not come
 		// from the data store
 
+		// m_HadBigNormalisedUpdate is also deliberately excluded from the test
 		boolean equal = this.m_Probability == that.m_Probability &&
 				this.m_AnomalyScore == that.m_AnomalyScore &&
-				this.m_RecordUnusualness == that.m_RecordUnusualness &&
+				this.m_NormalizedProbability == that.m_NormalizedProbability &&
 				bothNullOrEqual(this.m_Typical, that.m_Typical) &&
 				bothNullOrEqual(this.m_Actual, that.m_Actual) &&
 				bothNullOrEqual(this.m_Function, that.m_Function) &&
@@ -674,4 +677,52 @@ public class AnomalyRecord
 		return equal;
 	}
 
+
+	public boolean hadBigNormalisedUpdate()
+	{
+		return m_HadBigNormalisedUpdate;
+	}
+
+
+	public void resetBigNormalisedUpdateFlag()
+	{
+		m_HadBigNormalisedUpdate = false;
+	}
+
+
+	/**
+	 * Encapsulate the logic for deciding whether a change to a normalised score
+	 * is "big".
+	 *
+	 * Current logic is that a big change is a change of at least 1 or more than
+	 * than 50% of the higher of the two values.
+	 *
+	 * @param oldVal The old value of the normalised score
+	 * @param newVal The new value of the normalised score
+	 * @return true if the update is considered "big"
+	 */
+	static boolean isBigUpdate(double oldVal, double newVal)
+	{
+		if (Math.abs(oldVal - newVal) >= 1.0)
+		{
+			return true;
+		}
+
+		if (oldVal > newVal)
+		{
+			if (oldVal * 0.5 > newVal)
+			{
+				return true;
+			}
+		}
+		else
+		{
+			if (newVal * 0.5 > oldVal)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
 }

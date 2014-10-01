@@ -32,6 +32,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 import com.prelert.rs.data.ErrorCode;
 
@@ -190,19 +191,30 @@ public class AnalysisConfig
 	 */
 	public List<String> analysisFields()
 	{
-		Set<String> fields = new HashSet<>();
+		Set<String> fields = new TreeSet<>();
 		
 		for (Detector d : getDetectors())
 		{
-			fields.add(d.getFieldName());
-			fields.add(d.getByFieldName() );
-			fields.add(d.getOverFieldName());
-			fields.add(d.getPartitionFieldName());
+			if (d.getFieldName() != null)
+			{
+				fields.add(d.getFieldName());
+			}
+			if (d.getByFieldName() != null)
+			{
+				fields.add(d.getByFieldName() );
+			}
+			if (d.getOverFieldName() != null)
+			{
+				fields.add(d.getOverFieldName());
+			}
+			if (d.getPartitionFieldName() != null)
+			{
+				fields.add(d.getPartitionFieldName());
+			}
 		}
 		
 		// remove the null and empty strings
 		fields.remove("");
-		fields.remove(null);
 		
 		return new ArrayList<String>(fields);
 	}

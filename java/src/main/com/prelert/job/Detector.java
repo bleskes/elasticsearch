@@ -131,6 +131,14 @@ public class Detector
 			}));
 	
 	
+	/**
+	 * field names cannot contain any of these characters
+	 * 	[, ], (, ), =, ", \, - 
+	 */
+	static private String PROHIBITED = "[, ], (, ), =, \", \\, -";
+	static final private Character [] PROHIBITED_FIELDNAME_CHARACTERS = 
+		{'[', ']', '(', ')', '=', '"', '\\', '-'};	
+			
 	
 	private String m_Function;
 	private String m_FieldName;
@@ -465,6 +473,28 @@ public class Detector
 			}
 			
 		}
+		
+		
+		// field names cannot contain certain characters
+		String [] fields = {m_FieldName, m_ByFieldName, m_OverFieldName, m_PartitionFieldName};
+		for (String field : fields)
+		{
+			if (field != null)
+			{
+				for (Character ch : PROHIBITED_FIELDNAME_CHARACTERS)
+				{
+					if (field.indexOf(ch) >= 0)
+					{
+						throw new JobConfigurationException(
+								"Invalid fieldname '" + field + "'. " + 
+								"Fieldnames including over, by and partition fields cannot " +
+								"contain any of these characters: " + PROHIBITED,
+								ErrorCode.PROHIBITIED_CHARACTER_IN_FIELD_NAME);
+					}
+				}
+			}
+		}
+
 		
 		return true;
 	}

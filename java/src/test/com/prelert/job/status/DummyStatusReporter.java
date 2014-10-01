@@ -19,45 +19,32 @@
  * may be reproduced, adapted or transmitted in any form or *
  * by any means, electronic, mechanical, photocopying,      *
  * recording or otherwise.                                  *
+ *                                                  
  *                                                          *
  *----------------------------------------------------------*
  *                                                          *
  *                                                          *
  ************************************************************/
+package com.prelert.job.status;
 
-package com.prelert.job.persistence;
-
-import java.util.Date;
-
-import org.apache.log4j.Logger;
-
+import com.prelert.job.status.StatusReporter;
+import com.prelert.job.usage.UsageReporter;
 
 /**
- * Interface for classes that update {@linkplain Bucket Buckets}
- * for a particular job with new normalised anomaly scores and
- * unusual scores
+ * Dummy StatusReporter with an 
+ *
  */
-public interface JobRenormaliser
+public class DummyStatusReporter extends StatusReporter 
 {
-	/**
-	 * Update the anomaly score field on all previously persisted buckets
-	 * and all contained records
-	 * @param sysChangeState
-	 * @param endTime
-	 * @param logger
-	 */
-	public void updateBucketSysChange(String sysChangeState,
-										Date endTime, Logger logger);
+	public DummyStatusReporter(UsageReporter usageReporter) 
+	{
+		super("DummyJobId", usageReporter, null);
+	}
 
+	@Override
+	protected void reportStatus(long totalRecords)
+	{
+		// do nothing
+	}
 
-	/**
-	 * Update the unsual score field on all previously persisted buckets
-	 * and all contained records
-	 * @param unusualBehaviourState
-	 * @param endTime
-	 * @param logger
-	 */
-	public void updateBucketUnusualBehaviour(String unusualBehaviourState,
-											Date endTime, Logger logger);
-};
-
+}

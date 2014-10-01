@@ -31,6 +31,7 @@ import org.apache.log4j.Logger;
 import org.elasticsearch.client.Client;
 
 import com.prelert.job.persistence.DataPersisterFactory;
+import com.prelert.job.persistence.JobDataPersister;
 
 public class ElasticsearchDataPersisterFactory implements DataPersisterFactory 
 {
@@ -43,10 +44,10 @@ public class ElasticsearchDataPersisterFactory implements DataPersisterFactory
 	}
 
 	@Override
-	public ElasticsearchJobDataPersister newDataPersister(String jobId,
+	public JobDataPersister newDataPersister(String jobId,
 			Logger logger) 
 	{
-		return new ElasticsearchJobDataPersister(jobId, m_Client);
+		return new ElasticsearchJobDataPersister(jobId, m_Client, logger);
 	}
 
 }

@@ -28,8 +28,8 @@
 package com.prelert.job.persistence;
 
 import com.prelert.job.DetectorState;
-import com.prelert.job.QuantilesState;
 import com.prelert.job.UnknownJobException;
+import com.prelert.job.quantiles.QuantilesState;
 
 public interface JobProvider extends JobDetailsProvider, JobResultsProvider
 {

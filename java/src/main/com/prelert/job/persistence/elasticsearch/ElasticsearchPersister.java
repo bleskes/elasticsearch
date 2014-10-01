@@ -52,14 +52,15 @@ import org.elasticsearch.indices.IndexMissingException;
 import org.elasticsearch.search.SearchHit;
 
 import com.prelert.job.DetectorState;
+import com.prelert.job.JobDetails;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.persistence.JobResultsPersister;
+import com.prelert.job.quantiles.Quantiles;
 import com.prelert.rs.data.AnomalyCause;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.Detector;
 import com.prelert.rs.data.ErrorCode;
-import com.prelert.rs.data.Quantiles;
 
 /**
  * Saves result Buckets, Quantiles and DetectorState to Elasticsearch<br/>
@@ -301,6 +302,15 @@ public class ElasticsearchPersister implements JobResultsPersister
 		SearchResponse searchResponse = searchBuilder.get();		
 		return searchResponse.getHits().totalHits() > 0;
 	}
+	
+	@Override
+	public void incrementBucketCount(long count) 
+	{
+		m_Client.prepareUpdate(m_JobId, JobDetails.TYPE, m_JobId)
+						.setScript("update-bucket-count")
+						.addScriptParam("count", count)
+						.setRetryOnConflict(3).get();
+	}
 
 
 	/**
@@ -425,7 +435,7 @@ public class ElasticsearchPersister implements JobResultsPersister
 				.field(ElasticsearchMappings.ES_TIMESTAMP, bucket.getTimestamp())
 				.field(Bucket.RAW_ANOMALY_SCORE, bucket.getRawAnomalyScore())
 				.field(Bucket.ANOMALY_SCORE, bucket.getAnomalyScore())
-				.field(Bucket.MAX_RECORD_UNUSUALNESS, bucket.getMaxRecordUnusualness())
+				.field(Bucket.MAX_NORMALIZED_PROBABILITY, bucket.getMaxNormalizedProbability())
 				.field(Bucket.RECORD_COUNT, bucket.getRecordCount())
 				.field(Bucket.EVENT_COUNT, bucket.getEventCount())
 				.endObject();
@@ -483,7 +493,7 @@ public class ElasticsearchPersister implements JobResultsPersister
 		XContentBuilder builder = jsonBuilder().startObject()
 				.field(AnomalyRecord.PROBABILITY, record.getProbability())
 				.field(AnomalyRecord.ANOMALY_SCORE, record.getAnomalyScore())
-				.field(AnomalyRecord.RECORD_UNUSUALNESS, record.getRecordUnusualness())
+				.field(AnomalyRecord.NORMALIZED_PROBABILITY, record.getNormalizedProbability())
 				.field(ElasticsearchMappings.ES_TIMESTAMP, bucketTime);
 
 		if (record.getByFieldName() != null)

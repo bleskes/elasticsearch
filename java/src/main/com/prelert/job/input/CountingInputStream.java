@@ -30,8 +30,7 @@ import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-import com.prelert.job.usage.UsageReporter;
-import com.prelert.job.warnings.StatusReporter;
+import com.prelert.job.status.StatusReporter;
 
 /**
  * Simple wrapper around an inputstream instance that counts
@@ -41,25 +40,20 @@ import com.prelert.job.warnings.StatusReporter;
  */
 public class CountingInputStream extends FilterInputStream 
 {
-	private UsageReporter m_UsageReporter;
 	private StatusReporter m_StatusReporter;
 	
 	/**
 	 * 
 	 * @param in
 	 * @param usageReporter Writes the number of raw bytes processed over time
-	 * @param statusReporter Write number of records etc.
+	 * @param statusReporter Write number of records, bytes etc.
 	 */
-	public CountingInputStream(InputStream in, UsageReporter usageReporter,
-			StatusReporter statusReporter) 
+	public CountingInputStream(InputStream in, StatusReporter statusReporter) 
 	{
 		super(in);
-		m_UsageReporter = usageReporter;
 		m_StatusReporter = statusReporter;
 	}
 
-	private int m_CountBytesRead;
-	
 	/**
 	 * We don't care if the count is one byte out
 	 * because we don't check for the case where read 
@@ -71,8 +65,6 @@ public class CountingInputStream extends FilterInputStream
 	@Override
 	public int read() throws IOException 
 	{
-		m_CountBytesRead++;
-		m_UsageReporter.addBytesRead(1);
 		m_StatusReporter.reportBytesRead(1);
 		
 		return in.read();
@@ -87,11 +79,8 @@ public class CountingInputStream extends FilterInputStream
 	public int read(byte[] b) throws IOException
 	{		
 		int read = in.read(b);
-		m_CountBytesRead += read;
 		
-		m_UsageReporter.addBytesRead(read);
 		m_StatusReporter.reportBytesRead(read);
-		
 		
 		return read;
 	}
@@ -105,15 +94,9 @@ public class CountingInputStream extends FilterInputStream
 	public int read(byte[] b, int off, int len) throws IOException
 	{
 		int read = in.read(b, off, len);
-		m_CountBytesRead += read;
 		
-		m_UsageReporter.addBytesRead(read);
 		m_StatusReporter.reportBytesRead(read);
 		return read;
 	}
 	
-	public int getTotalBytesRead()
-	{
-		return m_CountBytesRead;
-	}
 }

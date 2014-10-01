@@ -39,6 +39,7 @@ import org.apache.http.client.ClientProtocolException;
 import org.apache.log4j.Logger;
 
 import com.prelert.rs.client.EngineApiClient;
+import com.prelert.rs.data.ApiError;
 
 
 
@@ -55,6 +56,21 @@ public class JsonDataRunner implements Runnable
 	 * The bucketSpan value should be replaced
 	 */
 	public static final String JOB_CONFIG_TEMPLATE = "{"
+			+ "\"analysisConfig\" : {"
+				+ "\"bucketSpan\":%d,"  
+				+ "\"detectors\" :[{\"function\":\"metric\",\"fieldName\":\"metric_value\",\"byFieldName\":\"metric_field\"}] "
+			+ "},"
+			+ "\"dataDescription\":{"
+				+ "\"format\":\"JSON\", \"timeField\":\"time\", \"timeFormat\":\"yyyy-MM-dd'T'HH:mm:ssX\"} "
+			+ "}"
+			+ "}";
+	
+	/**
+	 * Job configuration with an ID field as a format string.
+	 * id and bucketSpan should be replaced
+	 */
+	public static final String JOB_CONFIG_WITH_ID_TEMPLATE = "{"
+		    + "\"id\":\"%s\","
 			+ "\"analysisConfig\" : {"
 				+ "\"bucketSpan\":%d,"  
 				+ "\"detectors\" :[{\"function\":\"metric\",\"fieldName\":\"metric_value\",\"byFieldName\":\"metric_field\"}] "
@@ -135,6 +151,18 @@ public class JsonDataRunner implements Runnable
 		return m_JobId;
 	}
 	
+	
+	public String createJob(String jobName) 
+	throws ClientProtocolException, IOException
+	{
+		m_ApiClient.deleteJob(m_BaseUrl, jobName);
+		
+		String jobConfig = String.format(JOB_CONFIG_WITH_ID_TEMPLATE, jobName, m_BucketSpan);
+		m_JobId = m_ApiClient.createJob(m_BaseUrl, jobConfig);
+		
+		return m_JobId;
+	}
+	
 	/**
 	 * Stop the thread running (eventually)
 	 */
@@ -146,7 +174,7 @@ public class JsonDataRunner implements Runnable
 	@Override
 	public void run()
 	{		
-		if (m_JobId == null)
+		if (m_JobId == null || m_JobId.isEmpty())
 		{
 			String msg = "Job must be created before the thread is started " 
 					+ "call createJob() first";
@@ -162,9 +190,17 @@ public class JsonDataRunner implements Runnable
 		Thread producerThread = new Thread(producer, "Producer-Thread");
 		producerThread.start();
 
-		try {
-			m_ApiClient.streamingUpload(m_BaseUrl, m_JobId, inputStream, false);
-		} catch (IOException e) {
+		try 
+		{
+			boolean ok = m_ApiClient.streamingUpload(m_BaseUrl, m_JobId, inputStream, false);
+			if (!ok)
+			{
+				ApiError error = m_ApiClient.getLastError();
+				s_Logger.error(error.toJson());
+			}
+		}
+		catch (IOException e) 
+		{
 			s_Logger.error("Error streaming data", e);
 		}
 

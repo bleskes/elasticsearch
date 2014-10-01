@@ -29,14 +29,12 @@ package com.prelert.job.persistence;
 
 import org.apache.log4j.Logger;
 
-import com.prelert.job.persistence.elasticsearch.ElasticsearchJobDataPersister;
-
 /**
  * Abstract Factory method for creating new {@link UsageReporter} 
  * instances. 
  */
 public interface DataPersisterFactory 
 {
-	public ElasticsearchJobDataPersister newDataPersister(String jobId, Logger logger);
+	public JobDataPersister newDataPersister(String jobId, Logger logger);
 }
 

@@ -28,8 +28,8 @@ import com.prelert.job.UnknownJobException;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.process.MissingFieldException;
 import com.prelert.job.process.NativeProcessRunException;
-import com.prelert.job.warnings.HighProportionOfBadTimestampsException;
-import com.prelert.job.warnings.OutOfOrderRecordsException;
+import com.prelert.job.status.HighProportionOfBadTimestampsException;
+import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.provider.RestApiException;
 import com.prelert.rs.streaminginterceptor.StreamingInterceptor;
@@ -176,18 +176,10 @@ public class Data extends ResourceWithJobManager
     	s_Logger.debug("Post to close data upload for job " + jobId);
 
     	JobManager manager = jobManager();
-    	boolean fin = manager.finishJob(jobId);
+    	manager.finishJob(jobId);
     	
-    	if (fin)
-    	{
-    		s_Logger.debug("Process finished successfully, Job Id = '" + jobId + "'");    		
-    		return Response.accepted().build();
-    	}
-    	else
-    	{
-    		s_Logger.error("Error closing job '" + jobId + "'");
-    		return Response.serverError().build();
-    	}
+   		s_Logger.debug("Process finished successfully, Job Id = '" + jobId + "'");    		
+   		return Response.accepted().build();
     }
     
     /**

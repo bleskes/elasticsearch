@@ -25,7 +25,7 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job;
+package com.prelert.job.usage;
 
 import org.apache.log4j.Logger;
 
@@ -33,19 +33,60 @@ import com.prelert.job.usage.UsageReporter;
 
 public class DummyUsageReporter extends UsageReporter 
 {
-
+	long m_TotalByteCount;
+	long m_TotalFieldCount;
+	long m_TotalRecordCount;
+	
+	boolean m_WasPersistUsageCalled;
+	
 	public DummyUsageReporter(String jobId, Logger logger) 
 	{
 		super(jobId, logger);
-	
+		
+		m_TotalByteCount = 0;
+		m_TotalFieldCount = 0;
+		m_TotalRecordCount = 0;
+		
+		m_WasPersistUsageCalled = false;
 	}
+	
 
 	@Override
 	public boolean persistUsageCounts() 
 	{
+		m_TotalByteCount += getBytesReadSinceLastReport();
+		m_TotalFieldCount += getFieldsReadSinceLastReport();
+		m_TotalRecordCount += getRecordsReadSinceLastReport();
+		
+		m_WasPersistUsageCalled = true;
+		
 		return true;
 	}
 	
+	public long getTotalBytesRead()
+	{
+		return m_TotalByteCount;
+	}
 	
+	public long getTotalFieldsRead()
+	{
+		return m_TotalFieldCount;
+	}	
+	
+	public long getTotalRecordsRead()
+	{
+		return m_TotalRecordCount;
+	}
+	
+	/**
+	 * calling this sets m_WasPersistUsageCalled to false
+	 * @return
+	 */
+	public boolean persistUsageWasCalled()
+	{
+		boolean tmp = m_WasPersistUsageCalled;
+		m_WasPersistUsageCalled = false;
+		return tmp;
+	}
 
 }
