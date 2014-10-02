@@ -539,7 +539,7 @@ public class ElasticsearchJobProvider implements JobProvider
 		
 		if (startBucket > 0 || endBucket > 0)
 		{
-			RangeFilterBuilder timeRange = FilterBuilders.rangeFilter(Bucket.ID);
+			RangeFilterBuilder timeRange = FilterBuilders.rangeFilter(Bucket.TIMESTAMP);
 
 			if (startBucket > 0)
 			{
@@ -754,7 +754,7 @@ public class ElasticsearchJobProvider implements JobProvider
 		
 		if (startBucket > 0 || endBucket > 0)
 		{
-			RangeFilterBuilder rangeFilter = FilterBuilders.rangeFilter(Bucket.ID);
+			RangeFilterBuilder rangeFilter = FilterBuilders.rangeFilter(Bucket.TIMESTAMP);
 
 			if (startBucket > 0)
 			{
