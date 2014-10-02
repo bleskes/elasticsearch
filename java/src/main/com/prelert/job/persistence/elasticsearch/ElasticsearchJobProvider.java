@@ -422,13 +422,14 @@ public class ElasticsearchJobProvider implements JobProvider
 				}
 				catch (VersionConflictEngineException e)
 				{
-					s_Logger.debug("Conflict updating job document");
+					s_Logger.warn("Conflict updating job document", e);
 				}
 			}
 			
 			if (retryCount <= 0)
 			{
-				s_Logger.warn("Unable to update conflicted job document");
+				s_Logger.warn("Unable to update conflicted job document " + jobId +
+						". Updates = " + updates);
 				return false;
 			}
 			

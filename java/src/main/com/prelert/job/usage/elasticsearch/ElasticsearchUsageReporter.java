@@ -114,7 +114,5 @@ public class ElasticsearchUsageReporter extends UsageReporter
 				.addScriptParam("recordCount", additionalRecords)
 				.setUpsert(m_UpsertMap)
 				.setRetryOnConflict(3).get();
-		
-		System.out.print(response);
-	}
+	}		
 }
