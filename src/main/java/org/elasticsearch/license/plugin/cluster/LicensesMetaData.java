@@ -35,7 +35,7 @@ import java.util.*;
 import static org.elasticsearch.license.plugin.action.Utils.*;
 
 /**
- * Contains metadata about registered snapshot licenses
+ * Contains metadata about registered licenses
  */
 public class LicensesMetaData implements MetaData.Custom, ESLicenses {
 
@@ -46,7 +46,7 @@ public class LicensesMetaData implements MetaData.Custom, ESLicenses {
     private final ImmutableMap<FeatureType, ESLicense> licenses;
 
     /**
-     * Constructs new repository metadata
+     * Constructs new licenses metadata
      *
      * @param esLicenses list of esLicense
      */
@@ -65,15 +65,6 @@ public class LicensesMetaData implements MetaData.Custom, ESLicenses {
         }
         return builder.build();
     }
-
-    /**
-     * Returns list of currently registered licenses
-     *
-     * @return list of licenses
-     */
-    //public ImmutableList<String> signatures() {
-    //    return this.licenses;
-    //}
 
     @Override
     public Collection<ESLicense> licenses() {
@@ -96,7 +87,7 @@ public class LicensesMetaData implements MetaData.Custom, ESLicenses {
     }
 
     /**
-     * Repository metadata factory
+     * Licenses metadata factory
      */
     public static class Factory implements MetaData.Custom.Factory<LicensesMetaData> {
 
