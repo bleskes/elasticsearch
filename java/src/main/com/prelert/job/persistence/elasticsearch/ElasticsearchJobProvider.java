@@ -410,7 +410,7 @@ public class ElasticsearchJobProvider implements JobProvider
 		if (jobExists(jobId))
 		{
 			int retryCount = 3;
-			while (--retryCount > 0)
+			while (--retryCount >= 0)
 			{
 				try
 				{
@@ -422,7 +422,7 @@ public class ElasticsearchJobProvider implements JobProvider
 				}
 				catch (VersionConflictEngineException e)
 				{
-					s_Logger.warn("Conflict updating job document", e);
+					s_Logger.warn("Conflict updating job document");
 				}
 			}
 			
