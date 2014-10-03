@@ -20,10 +20,12 @@
 package org.elasticsearch.license.plugin;
 
 import org.elasticsearch.action.ActionModule;
+import org.elasticsearch.cluster.metadata.MetaData;
 import org.elasticsearch.license.plugin.action.get.GetLicenseAction;
 import org.elasticsearch.license.plugin.action.get.TransportGetLicenseAction;
 import org.elasticsearch.license.plugin.action.put.PutLicenseAction;
 import org.elasticsearch.license.plugin.action.put.TransportPutLicenseAction;
+import org.elasticsearch.license.plugin.cluster.LicensesMetaData;
 import org.elasticsearch.license.plugin.rest.RestGetLicenseAction;
 import org.elasticsearch.license.plugin.rest.RestPutLicenseAction;
 import org.elasticsearch.plugins.AbstractPlugin;
@@ -31,6 +33,10 @@ import org.elasticsearch.rest.RestModule;
 
 //TODO: plugin hooks
 public class LicensePlugin extends AbstractPlugin {
+
+    static {
+        MetaData.registerFactory(LicensesMetaData.TYPE, LicensesMetaData.FACTORY);
+    }
 
     @Override
     public String name() {
@@ -52,4 +58,6 @@ public class LicensePlugin extends AbstractPlugin {
         module.registerAction(PutLicenseAction.INSTANCE, TransportPutLicenseAction.class);
         module.registerAction(GetLicenseAction.INSTANCE, TransportGetLicenseAction.class);
     }
+
+    //TODO: module binding? (LicenseModule)
 }

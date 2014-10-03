@@ -26,7 +26,7 @@ import org.elasticsearch.client.ClusterAdminClient;
 public class GetLicenseRequestBuilder extends MasterNodeReadOperationRequestBuilder<GetLicenseRequest, GetLicenseResponse, GetLicenseRequestBuilder, ClusterAdminClient> {
 
     /**
-     * Creates new get repository request builder
+     * Creates new get licenses request builder
      *
      * @param clusterAdminClient cluster admin client
      */
