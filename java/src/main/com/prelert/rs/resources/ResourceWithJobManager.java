@@ -303,7 +303,9 @@ abstract public class ResourceWithJobManager
 	
 	/**
 	 * First tries to parse the date first as a Long and convert that 
-	 * to an epoch time, if that fails it tries to parse the string 
+	 * to an epoch time. If the long number has more than 10 digits 
+	 * it is considered a time in milliseconds else if 10 or less digits
+	 * it is in seconds. If that fails it tries to parse the string 
 	 * using one of the DateForamts passed in the array.
 	 * 
 	 * If the date string cannot be parsed 0 is returned. 
@@ -311,15 +313,21 @@ abstract public class ResourceWithJobManager
 	 * @param dateFormats Try to parse the date string with these date formats.
 	 * The array should be ordered the most likely to work first.
 	 * @param date
-	 * @return The epoch time in seconds or 0 if the date cannot be parsed.
+	 * @return The epoch time in milliseconds or 0 if the date cannot be parsed.
 	 */
 	protected long paramToEpoch(String date, DateFormat dateFormats [])
 	{
 		try 
 		{
 			long epoch = Long.parseLong(date);
-			Date d = new Date(epoch * 1000);
-			return d.getTime() / 1000;
+			if (date.trim().length() <= 10) // seconds
+			{
+				return epoch * 1000;
+			}
+			else
+			{
+				return epoch;
+			}
 		}
 		catch (NumberFormatException nfe)
 		{
@@ -333,7 +341,7 @@ abstract public class ResourceWithJobManager
 			{
 				Date d = dateFormat.parse(date);
 				// TODO validate date
-				return d.getTime() / 1000;
+				return d.getTime();
 			}
 			catch (ParseException pe)
 			{

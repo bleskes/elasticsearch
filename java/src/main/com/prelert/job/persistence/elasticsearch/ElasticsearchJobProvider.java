@@ -531,23 +531,24 @@ public class ElasticsearchJobProvider implements JobProvider
 
 	@Override
 	public Pagination<Bucket> buckets(String jobId,
-			boolean expand, int skip, int take, long startBucket, long endBucket,
+			boolean expand, int skip, int take, long startEpochMs, long endEpochMs,
 			double anomalyScoreThreshold, double normalizedProbabilityThreshold)
 	throws UnknownJobException
 	{
 		FilterBuilder fb = null;
 		
-		if (startBucket > 0 || endBucket > 0)
+		if (startEpochMs > 0 || endEpochMs > 0)
 		{
-			RangeFilterBuilder timeRange = FilterBuilders.rangeFilter(Bucket.TIMESTAMP);
+			// HACK for the timestamps being @timestamp in the database
+			RangeFilterBuilder timeRange = FilterBuilders.rangeFilter(ElasticsearchMappings.ES_TIMESTAMP);
 
-			if (startBucket > 0)
+			if (startEpochMs > 0)
 			{
-				timeRange.gte(startBucket);
+				timeRange.gte(startEpochMs);
 			}
-			if (endBucket > 0)
+			if (endEpochMs > 0)
 			{
-				timeRange.lt(endBucket);
+				timeRange.lt(endEpochMs);
 			}
 			
 			fb = timeRange;
@@ -745,24 +746,25 @@ public class ElasticsearchJobProvider implements JobProvider
 	
 	@Override
 	public Pagination<AnomalyRecord> records(String jobId,
-			int skip, int take,	long startBucket, long endBucket, 
+			int skip, int take,	long startEpochMs, long endEpochMs, 
 			String sortField, boolean descending, 
 			double anomalyScoreThreshold, double normalizedProbabilityThreshold)
 	throws UnknownJobException
 	{
 		FilterBuilder fb = null;
 		
-		if (startBucket > 0 || endBucket > 0)
+		if (startEpochMs > 0 || endEpochMs > 0)
 		{
-			RangeFilterBuilder rangeFilter = FilterBuilders.rangeFilter(Bucket.TIMESTAMP);
+			// HACK for the timestamps being @timestamp in the database
+			RangeFilterBuilder rangeFilter = FilterBuilders.rangeFilter(ElasticsearchMappings.ES_TIMESTAMP);
 
-			if (startBucket > 0)
+			if (startEpochMs > 0)
 			{
-				rangeFilter.gte(startBucket);
+				rangeFilter.gte(startEpochMs);
 			}
-			if (endBucket > 0)
+			if (endEpochMs > 0)
 			{
-				rangeFilter.lt(endBucket);
+				rangeFilter.lt(endEpochMs);
 			}
 			
 			fb = FilterBuilders.hasParentFilter(Bucket.TYPE, rangeFilter);

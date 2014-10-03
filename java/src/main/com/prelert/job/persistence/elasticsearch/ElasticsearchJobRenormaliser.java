@@ -146,9 +146,9 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
 	{
 		if (m_QuantileUpdateThread.isAlive())
 		{
-			long endBucket = (endTime == null ? new Date() : endTime).getTime() / 1000L;
+			long endBucketEpochMS = (endTime == null ? new Date() : endTime).getTime();
 			m_UpdatedQuantileQueue.add(new QuantileInfo(QuantileInfo.InfoType.SYS_CHANGE,
-					sysChangeState, endBucket, logger));
+					sysChangeState, endBucketEpochMS, logger));
 		}
 		else
 		{
@@ -162,11 +162,11 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
 	 * Update the anomaly score field on all previously persisted buckets
 	 * and all contained records
 	 * @param sysChangeState
-	 * @param endBucket
+	 * @param endBucketEpochMs
 	 * @param logger
 	 */
 	private void doSysChangeUpdate(String sysChangeState,
-									long endBucket, Logger logger)
+									long endBucketEpochMs, Logger logger)
 	{
 		try
 		{
@@ -174,7 +174,7 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
 			int[] counts = { 0, 0 };
 			int skip = 0;
 			Pagination<Bucket> page = m_JobProvider.buckets(m_JobId, true,
-						skip, MAX_BUCKETS_PER_PAGE, 0, endBucket, 0.0, 0.0);
+						skip, MAX_BUCKETS_PER_PAGE, 0, endBucketEpochMs, 0.0, 0.0);
 
 			while (page.getHitCount() > skip)
 			{
@@ -200,7 +200,7 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
 				if (page.getHitCount() > skip)
 				{
 					page = m_JobProvider.buckets(m_JobId, true,
-							skip, MAX_BUCKETS_PER_PAGE, 0, endBucket, 0.0, 0.0);
+							skip, MAX_BUCKETS_PER_PAGE, 0, endBucketEpochMs, 0.0, 0.0);
 				}
 			}
 
@@ -233,9 +233,9 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
 	{
 		if (m_QuantileUpdateThread.isAlive())
 		{
-			long endBucket = (endTime == null ? new Date() : endTime).getTime() / 1000L;
+			long endBucketEpochMs = (endTime == null ? new Date() : endTime).getTime();
 			m_UpdatedQuantileQueue.add(new QuantileInfo(QuantileInfo.InfoType.UNUSUAL,
-					unusualBehaviourState, endBucket, logger));
+					unusualBehaviourState, endBucketEpochMs, logger));
 		}
 		else
 		{
@@ -249,11 +249,11 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
 	 * Update the unsual score field on all previously persisted buckets
 	 * and all contained records
 	 * @param unusualBehaviourState
-	 * @param endBucket
+	 * @param endBucketEpochMs
 	 * @param logger
 	 */
 	private void doUnusualBehaviourUpdate(String unusualBehaviourState,
-											long endBucket, Logger logger)
+											long endBucketEpochMs, Logger logger)
 	{
 		try
 		{
@@ -261,7 +261,7 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
 			int[] counts = { 0, 0 };
 			int skip = 0;
 			Pagination<Bucket> page = m_JobProvider.buckets(m_JobId, true,
-						skip, MAX_BUCKETS_PER_PAGE, 0, endBucket, 0.0, 0.0);
+						skip, MAX_BUCKETS_PER_PAGE, 0, endBucketEpochMs, 0.0, 0.0);
 			while (page.getHitCount() > skip)
 			{
 				List<Bucket> buckets = page.getDocuments();
@@ -286,7 +286,7 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
 				if (page.getHitCount() > skip)
 				{
 					page = m_JobProvider.buckets(m_JobId, true,
-							skip, MAX_BUCKETS_PER_PAGE, 0, endBucket, 0.0, 0.0);
+							skip, MAX_BUCKETS_PER_PAGE, 0, endBucketEpochMs, 0.0, 0.0);
 				}
 			}
 
@@ -444,15 +444,15 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
 
 		public InfoType m_Type;
 		public String m_State;
-		public long m_EndBucket;
+		public long m_EndBucketEpochMs;
 		public Logger m_Logger;
 
 		public QuantileInfo(InfoType type, String state,
-							long endBucket, Logger logger)
+							long endBucketEpochMs, Logger logger)
 		{
 			m_Type = type;
 			m_State = state;
-			m_EndBucket = endBucket;
+			m_EndBucketEpochMs = endBucketEpochMs;
 			m_Logger = logger;
 		}
 	};
@@ -516,12 +516,12 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
 					if (latestSysChangeInfo != null)
 					{
 						ElasticsearchJobRenormaliser.this.doSysChangeUpdate(latestSysChangeInfo.m_State,
-								latestSysChangeInfo.m_EndBucket, latestSysChangeInfo.m_Logger);
+								latestSysChangeInfo.m_EndBucketEpochMs, latestSysChangeInfo.m_Logger);
 					}
 					if (latestUnusualInfo != null)
 					{
 						ElasticsearchJobRenormaliser.this.doUnusualBehaviourUpdate(latestUnusualInfo.m_State,
-								latestUnusualInfo.m_EndBucket, latestUnusualInfo.m_Logger);
+								latestUnusualInfo.m_EndBucketEpochMs, latestUnusualInfo.m_Logger);
 					}
 
 					// Refresh the indexes so that normalised results are

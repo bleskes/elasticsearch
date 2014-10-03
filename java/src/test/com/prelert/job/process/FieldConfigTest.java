@@ -52,9 +52,7 @@ import com.prelert.job.Detector;
  * arguments to autodetect 
  */
 public class FieldConfigTest 
-{
-	
-	
+{		
 	@Test
 	public void testMultipleDetectorsToConfFile()
 	throws IOException
