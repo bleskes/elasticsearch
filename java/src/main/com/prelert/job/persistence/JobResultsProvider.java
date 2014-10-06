@@ -71,11 +71,11 @@ public interface JobResultsProvider extends Closeable
 	 * @param skip Skip the first N Buckets. This parameter is for paging
 	 * if not required set to 0.
 	 * @param take Take only this number of Buckets
-	 * @param startBucket The start bucket id. A bucket with this Id will be 
-	 * included in the results. If 0 all buckets up to <code>endBucket</code>
+	 * @param startEpochMs The start bucket time. A bucket with this timestamp will be 
+	 * included in the results. If 0 all buckets up to <code>endEpochMs</code>
 	 * are returned
-	 * @param endBucket The end bucket id buckets up to but NOT including this
-	 * are returned. If 0 all buckets from <code>startBucket</code>
+	 * @param endEpochMs The end bucket timestamp buckets up to but NOT including this
+	 * timestamp are returned. If 0 all buckets from <code>startEpochMs</code>
 	 * are returned
 	 * @param anomalyScoreThreshold Return only buckets with an anomalyScore >=
 	 * this value
@@ -87,7 +87,7 @@ public interface JobResultsProvider extends Closeable
 	 */
 	public Pagination<Bucket> buckets(String jobId, 
 			boolean expand, int skip, int take,
-			long startBucket, long endBucket,
+			long startEpochMs, long endEpochMs,
 			double anomalyScoreThreshold, double normalizedProbabilityThreshold)
 	throws UnknownJobException;
 	
@@ -161,11 +161,12 @@ public interface JobResultsProvider extends Closeable
 	 * @param skip Skip the first N records. This parameter is for paging
 	 * if not required set to 0.
 	 * @param take Take only this number of records
-	 * @param startBucket The start bucket id. A bucket with this Id will be 
-	 * included in the results. If 0 all buckets up to <code>endBucket</code>
+	 * @param startEpochMs The start bucket time. A bucket with this timestamp will be 
+	 * included in the results. If 0 all buckets up to <code>endEpochMs</code>
 	 * are returned
-	 * @param endBucket The end bucket id buckets up to but NOT including this
-	 * are returned. If 0 all buckets from <code>startBucket</code> are returned
+	 * @param endEpochMs The end bucket timestamp buckets up to but NOT including this
+	 * timestamp are returned. If 0 all buckets from <code>startEpochMs</code>
+	 * are returned
 	 * @param sortField The field to sort results by if <code>null</code> no
 	 * sort is applied 
 	 * @param sortDescending Sort in descending order
@@ -178,7 +179,7 @@ public interface JobResultsProvider extends Closeable
 	 * throws UnknownJobException If the job id is no recognised
 	 */
 	public Pagination<AnomalyRecord> records(String jobId, 
-			int skip, int take, long startBucket, long endBucket, 
+			int skip, int take, long startEpochMs, long endEpochMs, 
 			String sortField, boolean sortDescending,
 			double anomalyScoreThreshold, double normalizedProbabilityThreshold)
 	throws UnknownJobException;

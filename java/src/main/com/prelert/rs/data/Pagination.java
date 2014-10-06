@@ -183,8 +183,4 @@ public class Pagination<T>
 		}
 	}
 	
-//	public void setAllResults(boolean value)
-//	{
-//		m_GotAllResults = value;
-//	}
 }

@@ -461,11 +461,11 @@ public class ProcessManager
 					
 					String msg = String.format("Process returned with value %d.", exitValue);	
 					process.getLogger().info(msg);
-
-					setJobFinishedTimeAndStatus(jobId, process.getLogger(), JobStatus.CLOSED);
 					
 					// wait for the results parsing and write to to the datastore
 					process.joinParserThread();
+
+					setJobFinishedTimeAndStatus(jobId, process.getLogger(), JobStatus.CLOSED);
 					
 					if (exitValue != 0)
 					{

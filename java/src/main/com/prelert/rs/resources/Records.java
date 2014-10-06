@@ -118,11 +118,11 @@ public class Records extends ResourceWithJobManager
 				jobId, skip, take, start, end, sort, descending,
 				normalizedProbabilityFilter, anomalySoreFilter));
 		
-		long epochStart = 0;
+		long epochStartMs = 0;
 		if (start.isEmpty() == false)
 		{
-			epochStart = paramToEpoch(start, s_DateFormats);	
-			if (epochStart == 0) // could not be parsed
+			epochStartMs = paramToEpoch(start, s_DateFormats);	
+			if (epochStartMs == 0) // could not be parsed
 			{
 				String msg = String.format(BAD_DATE_FROMAT_MSG, START_QUERY_PARAM, start);
 				s_Logger.info(msg);
@@ -131,11 +131,11 @@ public class Records extends ResourceWithJobManager
 			}
 		}
 		
-		long epochEnd = 0;
+		long epochEndMs = 0;
 		if (end.isEmpty() == false)
 		{
-			epochEnd = paramToEpoch(end, s_DateFormats);	
-			if (epochEnd == 0) // could not be parsed
+			epochEndMs = paramToEpoch(end, s_DateFormats);	
+			if (epochEndMs == 0) // could not be parsed
 			{
 				String msg = String.format(BAD_DATE_FROMAT_MSG, START_QUERY_PARAM, end);
 				s_Logger.info(msg);
@@ -155,9 +155,9 @@ public class Records extends ResourceWithJobManager
 			sort = ElasticsearchMappings.ES_TIMESTAMP;
 		}
 		
-		if (epochStart > 0 || epochEnd > 0)
+		if (epochStartMs > 0 || epochEndMs > 0)
 		{
-			records = manager.records(jobId, skip, take, epochStart, epochEnd, sort,
+			records = manager.records(jobId, skip, take, epochStartMs, epochEndMs, sort,
 					descending, anomalySoreFilter, normalizedProbabilityFilter);
 		}
 		else
@@ -176,11 +176,11 @@ public class Records extends ResourceWithJobManager
 								.toString();
     		
     		List<ResourceWithJobManager.KeyValue> queryParams = new ArrayList<>();
-    		if (epochStart > 0)
+    		if (epochStartMs > 0)
     		{
     			queryParams.add(this.new KeyValue(START_QUERY_PARAM, start));
     		}
-    		if (epochEnd > 0)
+    		if (epochEndMs > 0)
     		{
     			queryParams.add(this.new KeyValue(END_QUERY_PARAM, end));
     		}

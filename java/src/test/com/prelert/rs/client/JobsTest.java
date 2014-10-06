@@ -1018,7 +1018,7 @@ public class JobsTest implements Closeable
 		
 		// query with the 3 date formats
 		Pagination<Bucket> buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, 
-				false, null, null, epochStart, epochEnd, 0.0, 0.0);		
+				false, null, null, epochStart, epochEnd, 0.0, 0.0);	
 		test(buckets.getDocuments().get(0).getTimestamp().compareTo(start) >= 0);
 		test(buckets.getDocuments().get(buckets.getDocumentCount() -1)
 				.getTimestamp().compareTo(end) < 0);
