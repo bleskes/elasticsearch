@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package org.elasticsearch.license.plugin.cluster;
+package org.elasticsearch.license.plugin.core;
 
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.cluster.metadata.MetaData;

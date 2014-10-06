@@ -17,44 +17,57 @@
  * under the License.
  */
 
-package org.elasticsearch.license.plugin.action.get;
+package org.elasticsearch.license.plugin.action.delete;
 
-import org.elasticsearch.action.ActionResponse;
+import org.elasticsearch.Version;
+import org.elasticsearch.action.ActionRequestValidationException;
+import org.elasticsearch.action.support.master.AcknowledgedRequest;
+import org.elasticsearch.action.support.master.MasterNodeReadOperationRequest;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.license.core.ESLicenses;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
-import static org.elasticsearch.license.plugin.action.Utils.readLicensesFrom;
-import static org.elasticsearch.license.plugin.action.Utils.writeLicensesTo;
 
-public class GetLicenseResponse extends ActionResponse {
+public class DeleteLicenseRequest extends AcknowledgedRequest<DeleteLicenseRequest> {
 
-    private ESLicenses licenses = null;
+    private String[] features;
 
-    GetLicenseResponse() {
+    public DeleteLicenseRequest() {
     }
 
-    GetLicenseResponse(ESLicenses esLicenses) {
-        this.licenses = esLicenses;
+    public DeleteLicenseRequest(String... features) {
+        this.features = features;
     }
 
-    public ESLicenses licenses() {
-        return licenses;
+    public void features(Set<String> features) {
+        this.features = features.toArray(new String[features.size()]);
     }
 
+    public Set<String> features() {
+        return new HashSet<>(Arrays.asList(features));
+    }
+
+    @Override
+    public ActionRequestValidationException validate() {
+        return null;
+    }
 
     @Override
     public void readFrom(StreamInput in) throws IOException {
         super.readFrom(in);
-        licenses = readLicensesFrom(in);
+        features = in.readStringArray();
+        readTimeout(in);
     }
 
     @Override
     public void writeTo(StreamOutput out) throws IOException {
         super.writeTo(out);
-        writeLicensesTo(licenses, out);
+        out.writeStringArray(features);
+        writeTimeout(out);
     }
-
 }

@@ -17,44 +17,33 @@
  * under the License.
  */
 
-package org.elasticsearch.license.plugin.action.get;
+package org.elasticsearch.license.plugin.action.delete;
 
-import org.elasticsearch.action.ActionResponse;
+import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.license.core.ESLicenses;
 
 import java.io.IOException;
 
-import static org.elasticsearch.license.plugin.action.Utils.readLicensesFrom;
-import static org.elasticsearch.license.plugin.action.Utils.writeLicensesTo;
+public class DeleteLicenseResponse extends AcknowledgedResponse {
 
-public class GetLicenseResponse extends ActionResponse {
-
-    private ESLicenses licenses = null;
-
-    GetLicenseResponse() {
+    DeleteLicenseResponse() {
     }
 
-    GetLicenseResponse(ESLicenses esLicenses) {
-        this.licenses = esLicenses;
+    DeleteLicenseResponse(boolean acknowledged) {
+        super(acknowledged);
     }
-
-    public ESLicenses licenses() {
-        return licenses;
-    }
-
 
     @Override
     public void readFrom(StreamInput in) throws IOException {
         super.readFrom(in);
-        licenses = readLicensesFrom(in);
+        readAcknowledged(in);
     }
 
     @Override
     public void writeTo(StreamOutput out) throws IOException {
         super.writeTo(out);
-        writeLicensesTo(licenses, out);
+        writeAcknowledged(out);
     }
 
 }

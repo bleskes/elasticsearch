@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package org.elasticsearch.license.plugin.action.put;
+package org.elasticsearch.license.plugin.action.delete;
 
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.ActionListener;
@@ -28,51 +28,57 @@ import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.ack.ClusterStateUpdateResponse;
 import org.elasticsearch.cluster.block.ClusterBlockException;
 import org.elasticsearch.cluster.block.ClusterBlockLevel;
+import org.elasticsearch.cluster.metadata.MetaData;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.license.plugin.core.LicensesMetaData;
 import org.elasticsearch.license.plugin.core.LicensesService;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
 
-public class TransportPutLicenseAction extends TransportMasterNodeOperationAction<PutLicenseRequest, PutLicenseResponse> {
+public class TransportDeleteLicenseAction extends TransportMasterNodeOperationAction<DeleteLicenseRequest, DeleteLicenseResponse> {
 
     private final LicensesService licensesService;
 
     @Inject
-    public TransportPutLicenseAction(Settings settings, TransportService transportService, ClusterService clusterService,
-                                     LicensesService licensesService, ThreadPool threadPool, ActionFilters actionFilters) {
-        super(settings, PutLicenseAction.NAME, transportService, clusterService, threadPool, actionFilters);
+    public TransportDeleteLicenseAction(Settings settings, TransportService transportService, ClusterService clusterService, LicensesService licensesService,
+                                        ThreadPool threadPool, ActionFilters actionFilters) {
+        super(settings, DeleteLicenseAction.NAME, transportService, clusterService, threadPool, actionFilters);
         this.licensesService = licensesService;
     }
 
-
     @Override
     protected String executor() {
-        return ThreadPool.Names.SAME;
+        return ThreadPool.Names.MANAGEMENT;
     }
 
     @Override
-    protected PutLicenseRequest newRequest() {
-        return new PutLicenseRequest();
+    protected DeleteLicenseRequest newRequest() {
+        return new DeleteLicenseRequest();
     }
 
     @Override
-    protected PutLicenseResponse newResponse() {
-        return new PutLicenseResponse();
+    protected DeleteLicenseResponse newResponse() {
+        return new DeleteLicenseResponse();
     }
 
     @Override
-    protected ClusterBlockException checkBlock(PutLicenseRequest request, ClusterState state) {
+    protected ClusterBlockException checkBlock(DeleteLicenseRequest request, ClusterState state) {
+        //TODO: do the right checkBlock
         return state.blocks().indexBlockedException(ClusterBlockLevel.METADATA, "");
     }
 
     @Override
-    protected void masterOperation(final PutLicenseRequest request, ClusterState state, final ActionListener<PutLicenseResponse> listener) throws ElasticsearchException {
-        //TODO
-        licensesService.registerLicenses("put_licenses []",request, new ActionListener<ClusterStateUpdateResponse>() {
+    protected void masterOperation(final DeleteLicenseRequest request, ClusterState state, final ActionListener<DeleteLicenseResponse> listener) throws ElasticsearchException {
+        MetaData metaData = state.metaData();
+        LicensesMetaData licenses = metaData.custom(LicensesMetaData.TYPE);
+        //listener.onResponse(new DeleteLicenseResponse(licenses));
+
+        //TODO:: add features of the license to be deleted
+        licensesService.unregisteredLicenses("delete_licenses []", request, new ActionListener<ClusterStateUpdateResponse>() {
             @Override
             public void onResponse(ClusterStateUpdateResponse clusterStateUpdateResponse) {
-                listener.onResponse(new PutLicenseResponse(clusterStateUpdateResponse.isAcknowledged()));
+                listener.onResponse(new DeleteLicenseResponse(clusterStateUpdateResponse.isAcknowledged()));
             }
 
             @Override
@@ -81,5 +87,4 @@ public class TransportPutLicenseAction extends TransportMasterNodeOperationActio
             }
         });
     }
-
 }

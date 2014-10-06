@@ -30,6 +30,7 @@ import org.elasticsearch.license.core.ESLicenses;
 import org.elasticsearch.license.plugin.action.get.GetLicenseAction;
 import org.elasticsearch.license.plugin.action.get.GetLicenseRequest;
 import org.elasticsearch.license.plugin.action.get.GetLicenseResponse;
+import org.elasticsearch.license.plugin.action.get.TransportGetLicenseAction;
 import org.elasticsearch.rest.*;
 import org.elasticsearch.rest.action.support.AcknowledgedRestListener;
 import org.elasticsearch.rest.action.support.RestBuilderListener;
@@ -41,17 +42,18 @@ import static org.elasticsearch.rest.RestStatus.OK;
 
 public class RestGetLicenseAction extends BaseRestHandler {
 
+    private final TransportGetLicenseAction transportGetLicenseAction;
+
     @Inject
-    public RestGetLicenseAction(Settings settings, RestController controller, Client client) {
+    public RestGetLicenseAction(Settings settings, RestController controller, Client client, TransportGetLicenseAction transportGetLicenseAction) {
         super(settings, controller, client);
         controller.registerHandler(GET, "/_cluster/license", this);
+        this.transportGetLicenseAction = transportGetLicenseAction;
     }
 
     @Override
     public void handleRequest(final RestRequest request, final RestChannel channel, final Client client) {
-        GetLicenseRequest getLicenseRequest = new GetLicenseRequest();
-
-        client.admin().cluster().execute(GetLicenseAction.INSTANCE, getLicenseRequest, new RestBuilderListener<GetLicenseResponse>(channel) {
+        transportGetLicenseAction.execute(new GetLicenseRequest(), new RestBuilderListener<GetLicenseResponse>(channel) {
             @Override
             public RestResponse buildResponse(GetLicenseResponse getLicenseResponse, XContentBuilder builder) throws Exception {
                 builder.startObject();
@@ -64,5 +66,6 @@ public class RestGetLicenseAction extends BaseRestHandler {
                 return new BytesRestResponse(OK, builder);
             }
         });
+        //client.admin().cluster().execute(GetLicenseAction.INSTANCE, getLicenseRequest, )
     }
 }
