@@ -69,10 +69,11 @@ public class LicensePlugin extends AbstractPlugin {
     public Collection<Class<? extends LifecycleComponent>> services() {
         return ImmutableSet.<Class<? extends LifecycleComponent>>of(LicensesService.class);
     }
-/*
+
+    /*
     @Override
     public Collection<Class<? extends Module>> modules() {
         return ImmutableSet.<Class<? extends Module>>of(LicenseModule.class);
-    } */
+    }*/
     //TODO: module binding? (LicenseModule)
 }
