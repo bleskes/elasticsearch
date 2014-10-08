@@ -22,7 +22,10 @@ package org.elasticsearch.index.mapper;
 import com.carrotsearch.hppc.ObjectOpenHashSet;
 import com.google.common.base.Charsets;
 import com.google.common.base.Predicate;
-import com.google.common.collect.*;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterators;
+import com.google.common.collect.Lists;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.DelegatingAnalyzerWrapper;
 import org.apache.lucene.index.Term;
@@ -341,6 +344,7 @@ public class MapperService extends AbstractIndexComponent  {
                     // TODO: What should we do???
                     if (logger.isDebugEnabled()) {
                         logger.debug("merging mapping for type [{}] resulted in conflicts: [{}]", mapper.type(), Arrays.toString(result.conflicts()));
+                        return null;
                     }
                 }
                 fieldDataService.onMappingUpdate();

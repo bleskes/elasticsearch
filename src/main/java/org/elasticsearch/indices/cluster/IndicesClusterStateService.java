@@ -430,7 +430,12 @@ public class IndicesClusterStateService extends AbstractLifecycleComponent<Indic
                         logger.debug("[{}] updating mapping [{}] (source suppressed due to length, use TRACE level if needed)", index, mappingType);
                     }
                     // we don't apply default, since it has been applied when the mappings were parsed initially
-                    mapperService.merge(mappingType, mappingSource, false);
+                    if (mapperService.merge(mappingType, mappingSource, false) == null) {
+//                        // have to fail all local shards
+//                        for (IndexShard shardId: indicesService.indexService(index)) {
+//                            failedEngineHandler.onFailedEngine(shardId.shardId(), "failed to merge mapping", null);
+//                        }
+                    }
                     if (!mapperService.documentMapper(mappingType).mappingSource().equals(mappingSource)) {
                         requiresRefresh = true;
                         logger.debug("[{}] parsed mapping [{}], and got different sources\noriginal:\n{}\nparsed:\n{}", index, mappingType, mappingSource, mapperService.documentMapper(mappingType).mappingSource());
