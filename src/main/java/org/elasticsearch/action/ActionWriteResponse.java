@@ -106,6 +106,13 @@ public abstract class ActionWriteResponse extends ActionResponse {
         }
 
         /**
+         * @return The total number of replication failures.
+         */
+        public int getFailed() {
+            return failures.length;
+        }
+
+        /**
          * @return The replication failures that have been captured in the case writes have failed on replica shards.
          */
         public Failure[] getFailures() {
@@ -176,6 +183,7 @@ public abstract class ActionWriteResponse extends ActionResponse {
                 builder.field(Fields.PENDING, pending);
             }
 
+            builder.field(Fields.FAILED, getFailed());
             if (failures.length > 0) {
                 builder.startArray(Fields.FAILURES);
                 for (Failure failure : failures) {
@@ -280,6 +288,7 @@ public abstract class ActionWriteResponse extends ActionResponse {
             private static final XContentBuilderString TOTAL = new XContentBuilderString("total");
             private static final XContentBuilderString SUCCESSFUL = new XContentBuilderString("successful");
             private static final XContentBuilderString PENDING = new XContentBuilderString("pending");
+            private static final XContentBuilderString FAILED = new XContentBuilderString("failed");
             private static final XContentBuilderString FAILURES = new XContentBuilderString("failures");
 
         }
