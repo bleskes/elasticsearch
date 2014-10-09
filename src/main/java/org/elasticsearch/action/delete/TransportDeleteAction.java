@@ -47,7 +47,7 @@ import org.elasticsearch.transport.TransportService;
 /**
  * Performs the delete operation.
  */
-public class TransportDeleteAction extends TransportShardReplicationOperationAction<DeleteRequest, DeleteRequest, DeleteResponse> {
+public class TransportDeleteAction extends TransportShardReplicationOperationAction<DeleteRequest, DeleteResponse> {
 
     private final AutoCreateIndex autoCreateIndex;
 
@@ -158,17 +158,12 @@ public class TransportDeleteAction extends TransportShardReplicationOperationAct
     }
 
     @Override
-    protected DeleteRequest newReplicaRequestInstance() {
-        return new DeleteRequest();
-    }
-
-    @Override
     protected DeleteResponse newResponseInstance() {
         return new DeleteResponse();
     }
 
     @Override
-    protected PrimaryResponse<DeleteResponse, DeleteRequest> shardOperationOnPrimary(ClusterState clusterState, PrimaryOperationRequest shardRequest) {
+    protected DeleteResponse shardOperationOnPrimary(ClusterState clusterState, PrimaryOperationRequest shardRequest) {
         DeleteRequest request = shardRequest.request;
         IndexShard indexShard = indicesService.indexServiceSafe(shardRequest.shardId.getIndex()).shardSafe(shardRequest.shardId.id());
         Engine.Delete delete = indexShard.prepareDelete(request.type(), request.id(), request.version(), request.versionType(), Engine.Operation.Origin.PRIMARY);
@@ -187,8 +182,7 @@ public class TransportDeleteAction extends TransportShardReplicationOperationAct
             }
         }
 
-        DeleteResponse response = new DeleteResponse(shardRequest.shardId.getIndex(), request.type(), request.id(), delete.version(), delete.found());
-        return new PrimaryResponse<>(shardRequest.shardId, shardRequest.request, response, null);
+        return new DeleteResponse(shardRequest.shardId.getIndex(), request.type(), request.id(), delete.version(), delete.found());
     }
 
     @Override

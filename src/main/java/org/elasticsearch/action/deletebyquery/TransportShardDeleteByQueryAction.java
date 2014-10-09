@@ -48,7 +48,7 @@ import org.elasticsearch.transport.TransportService;
 /**
  *
  */
-public class TransportShardDeleteByQueryAction extends TransportShardReplicationOperationAction<ShardDeleteByQueryRequest, ShardDeleteByQueryRequest, ShardDeleteByQueryResponse> {
+public class TransportShardDeleteByQueryAction extends TransportShardReplicationOperationAction<ShardDeleteByQueryRequest, ShardDeleteByQueryResponse> {
 
     public final static String DELETE_BY_QUERY_API = "delete_by_query";
 
@@ -85,11 +85,6 @@ public class TransportShardDeleteByQueryAction extends TransportShardReplication
     }
 
     @Override
-    protected ShardDeleteByQueryRequest newReplicaRequestInstance() {
-        return new ShardDeleteByQueryRequest();
-    }
-
-    @Override
     protected ShardDeleteByQueryResponse newResponseInstance() {
         return new ShardDeleteByQueryResponse();
     }
@@ -100,7 +95,7 @@ public class TransportShardDeleteByQueryAction extends TransportShardReplication
     }
 
     @Override
-    protected PrimaryResponse<ShardDeleteByQueryResponse, ShardDeleteByQueryRequest> shardOperationOnPrimary(ClusterState clusterState, PrimaryOperationRequest shardRequest) {
+    protected ShardDeleteByQueryResponse shardOperationOnPrimary(ClusterState clusterState, PrimaryOperationRequest shardRequest) {
         ShardDeleteByQueryRequest request = shardRequest.request;
         IndexService indexService = indicesService.indexServiceSafe(shardRequest.shardId.getIndex());
         IndexShard indexShard = indexService.shardSafe(shardRequest.shardId.id());
@@ -117,7 +112,7 @@ public class TransportShardDeleteByQueryAction extends TransportShardReplication
                 SearchContext.removeCurrent();
             }
         }
-        return new PrimaryResponse<>(shardRequest.shardId, shardRequest.request, new ShardDeleteByQueryResponse(shardRequest.shardId), null);
+        return new ShardDeleteByQueryResponse(shardRequest.shardId);
     }
 
 

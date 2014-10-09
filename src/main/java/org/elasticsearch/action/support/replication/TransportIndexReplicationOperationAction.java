@@ -46,15 +46,15 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
  * It relies on a shard sub-action that gets sent over the transport and executed on each of the shard.
  * The index provided with the request is expected to be a concrete index, properly resolved by the callers (parent actions).
  */
-public abstract class TransportIndexReplicationOperationAction<Request extends IndexReplicationOperationRequest, Response extends ActionResponse, ShardRequest extends ShardReplicationOperationRequest, ShardReplicaRequest extends ShardReplicationOperationRequest, ShardResponse extends ActionWriteResponse>
+public abstract class TransportIndexReplicationOperationAction<Request extends IndexReplicationOperationRequest, Response extends ActionResponse, ShardRequest extends ShardReplicationOperationRequest, ShardResponse extends ActionWriteResponse>
         extends TransportAction<Request, Response> {
 
     protected final ClusterService clusterService;
 
-    protected final TransportShardReplicationOperationAction<ShardRequest, ShardReplicaRequest, ShardResponse> shardAction;
+    protected final TransportShardReplicationOperationAction<ShardRequest, ShardResponse> shardAction;
 
     protected TransportIndexReplicationOperationAction(Settings settings, String actionName, ClusterService clusterService,
-                                                       ThreadPool threadPool, TransportShardReplicationOperationAction<ShardRequest, ShardReplicaRequest, ShardResponse> shardAction, ActionFilters actionFilters) {
+                                                       ThreadPool threadPool, TransportShardReplicationOperationAction<ShardRequest, ShardResponse> shardAction, ActionFilters actionFilters) {
         super(settings, actionName, threadPool, actionFilters);
         this.clusterService = clusterService;
         this.shardAction = shardAction;

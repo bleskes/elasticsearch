@@ -36,7 +36,7 @@ import java.util.List;
 /**
  * Internal transport action that broadcasts a delete by query request to all of the shards that belong to an index.
  */
-public class TransportIndexDeleteByQueryAction extends TransportIndexReplicationOperationAction<IndexDeleteByQueryRequest, IndexDeleteByQueryResponse, ShardDeleteByQueryRequest, ShardDeleteByQueryRequest, ShardDeleteByQueryResponse> {
+public class TransportIndexDeleteByQueryAction extends TransportIndexReplicationOperationAction<IndexDeleteByQueryRequest, IndexDeleteByQueryResponse, ShardDeleteByQueryRequest, ShardDeleteByQueryResponse> {
 
     private static final String ACTION_NAME = DeleteByQueryAction.NAME + "[index]";
 

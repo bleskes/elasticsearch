@@ -39,7 +39,7 @@ import org.elasticsearch.transport.TransportService;
 /**
  *
  */
-public class TransportShardDeleteAction extends TransportShardReplicationOperationAction<ShardDeleteRequest, ShardDeleteRequest, ShardDeleteResponse> {
+public class TransportShardDeleteAction extends TransportShardReplicationOperationAction<ShardDeleteRequest, ShardDeleteResponse> {
 
     private static final String ACTION_NAME = DeleteAction.NAME + "[s]";
 
@@ -61,11 +61,6 @@ public class TransportShardDeleteAction extends TransportShardReplicationOperati
     }
 
     @Override
-    protected ShardDeleteRequest newReplicaRequestInstance() {
-        return new ShardDeleteRequest();
-    }
-
-    @Override
     protected ShardDeleteResponse newResponseInstance() {
         return new ShardDeleteResponse();
     }
@@ -81,7 +76,7 @@ public class TransportShardDeleteAction extends TransportShardReplicationOperati
     }
 
     @Override
-    protected PrimaryResponse<ShardDeleteResponse, ShardDeleteRequest> shardOperationOnPrimary(ClusterState clusterState, PrimaryOperationRequest shardRequest) {
+    protected ShardDeleteResponse shardOperationOnPrimary(ClusterState clusterState, PrimaryOperationRequest shardRequest) {
         ShardDeleteRequest request = shardRequest.request;
         IndexShard indexShard = indicesService.indexServiceSafe(shardRequest.shardId.getIndex()).shardSafe(shardRequest.shardId.id());
         Engine.Delete delete = indexShard.prepareDelete(request.type(), request.id(), request.version(), VersionType.INTERNAL, Engine.Operation.Origin.PRIMARY);
@@ -98,8 +93,7 @@ public class TransportShardDeleteAction extends TransportShardReplicationOperati
         }
 
 
-        ShardDeleteResponse response = new ShardDeleteResponse(delete.version(), delete.found());
-        return new PrimaryResponse<>(shardRequest.shardId, shardRequest.request, response, null);
+        return new ShardDeleteResponse(delete.version(), delete.found());
     }
 
     @Override

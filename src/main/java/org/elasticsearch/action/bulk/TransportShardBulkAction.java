@@ -68,7 +68,7 @@ import java.util.Set;
 /**
  * Performs the index operation.
  */
-public class TransportShardBulkAction extends TransportShardReplicationOperationAction<BulkShardRequest, BulkShardRequest, BulkShardResponse> {
+public class TransportShardBulkAction extends TransportShardReplicationOperationAction<BulkShardRequest, BulkShardResponse> {
 
     private final static String OP_TYPE_UPDATE = "update";
     private final static String OP_TYPE_DELETE = "delete";
@@ -110,11 +110,6 @@ public class TransportShardBulkAction extends TransportShardReplicationOperation
     }
 
     @Override
-    protected BulkShardRequest newReplicaRequestInstance() {
-        return new BulkShardRequest();
-    }
-
-    @Override
     protected BulkShardResponse newResponseInstance() {
         return new BulkShardResponse();
     }
@@ -130,7 +125,7 @@ public class TransportShardBulkAction extends TransportShardReplicationOperation
     }
 
     @Override
-    protected PrimaryResponse<BulkShardResponse, BulkShardRequest> shardOperationOnPrimary(ClusterState clusterState, PrimaryOperationRequest shardRequest) {
+    protected BulkShardResponse shardOperationOnPrimary(ClusterState clusterState, PrimaryOperationRequest shardRequest) {
         final BulkShardRequest request = shardRequest.request;
         IndexService indexService = indicesService.indexServiceSafe(request.index());
         IndexShard indexShard = indexService.shardSafe(shardRequest.shardId.id());
@@ -366,8 +361,7 @@ public class TransportShardBulkAction extends TransportShardReplicationOperation
         for (int i = 0; i < items.length; i++) {
             responses[i] = items[i].getPrimaryResponse();
         }
-        BulkShardResponse response = new BulkShardResponse(shardRequest.shardId, responses);
-        return new PrimaryResponse<>(shardRequest.shardId, shardRequest.request, response, ops);
+        return new BulkShardResponse(shardRequest.shardId, responses);
     }
 
     private void setResponse(BulkItemRequest request, BulkItemResponse response) {

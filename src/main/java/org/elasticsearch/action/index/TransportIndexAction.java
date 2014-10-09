@@ -57,7 +57,7 @@ import org.elasticsearch.transport.TransportService;
  * <li><b>allowIdGeneration</b>: If the id is set not, should it be generated. Defaults to <tt>true</tt>.
  * </ul>
  */
-public class TransportIndexAction extends TransportShardReplicationOperationAction<IndexRequest, IndexRequest, IndexResponse> {
+public class TransportIndexAction extends TransportShardReplicationOperationAction<IndexRequest, IndexResponse> {
 
     private final AutoCreateIndex autoCreateIndex;
 
@@ -145,11 +145,6 @@ public class TransportIndexAction extends TransportShardReplicationOperationActi
     }
 
     @Override
-    protected IndexRequest newReplicaRequestInstance() {
-        return new IndexRequest();
-    }
-
-    @Override
     protected IndexResponse newResponseInstance() {
         return new IndexResponse();
     }
@@ -166,7 +161,7 @@ public class TransportIndexAction extends TransportShardReplicationOperationActi
     }
 
     @Override
-    protected PrimaryResponse<IndexResponse, IndexRequest> shardOperationOnPrimary(ClusterState clusterState, PrimaryOperationRequest shardRequest) {
+    protected IndexResponse shardOperationOnPrimary(ClusterState clusterState, PrimaryOperationRequest shardRequest) {
         final IndexRequest request = shardRequest.request;
 
         // validate, if routing is required, that we got routing
@@ -184,7 +179,6 @@ public class TransportIndexAction extends TransportShardReplicationOperationActi
                 .routing(request.routing()).parent(request.parent()).timestamp(request.timestamp()).ttl(request.ttl());
         long version;
         boolean created;
-        Engine.IndexingOperation op;
         if (request.opType() == IndexRequest.OpType.INDEX) {
             Engine.Index index = indexShard.prepareIndex(sourceToParse, request.version(), request.versionType(), Engine.Operation.Origin.PRIMARY, request.canHaveDuplicates());
             if (index.parsedDoc().mappingsModified()) {
@@ -192,7 +186,6 @@ public class TransportIndexAction extends TransportShardReplicationOperationActi
             }
             indexShard.index(index);
             version = index.version();
-            op = index;
             created = index.created();
         } else {
             Engine.Create create = indexShard.prepareCreate(sourceToParse,
@@ -202,7 +195,6 @@ public class TransportIndexAction extends TransportShardReplicationOperationActi
             }
             indexShard.create(create);
             version = create.version();
-            op = create;
             created = true;
         }
         if (request.refresh()) {
@@ -219,8 +211,7 @@ public class TransportIndexAction extends TransportShardReplicationOperationActi
 
         assert request.versionType().validateVersionForWrites(request.version());
 
-        IndexResponse response = new IndexResponse(shardRequest.shardId.getIndex(), request.type(), request.id(), version, created);
-        return new PrimaryResponse<>(shardRequest.shardId, shardRequest.request, response, op);
+        return new IndexResponse(shardRequest.shardId.getIndex(), request.type(), request.id(), version, created);
     }
 
     @Override

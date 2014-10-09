@@ -35,7 +35,7 @@ import java.util.List;
  * Internal transport action that broadcasts a delete request to all of the shards that belongs to an index.
  * Used when routing is required but not specified within the delete request.
  */
-public class TransportIndexDeleteAction extends TransportIndexReplicationOperationAction<IndexDeleteRequest, IndexDeleteResponse, ShardDeleteRequest, ShardDeleteRequest, ShardDeleteResponse> {
+public class TransportIndexDeleteAction extends TransportIndexReplicationOperationAction<IndexDeleteRequest, IndexDeleteResponse, ShardDeleteRequest, ShardDeleteResponse> {
 
     private static final String ACTION_NAME = DeleteAction.NAME + "[index]";
 
