@@ -17,17 +17,12 @@
  * under the License.
  */
 
-package org.elasticsearch.license.plugin;
+package org.elasticsearch.license.plugin.core;
 
-import org.elasticsearch.common.inject.AbstractModule;
-import org.elasticsearch.license.plugin.core.LicensesManagerService;
-import org.elasticsearch.license.plugin.core.LicensesService;
+public interface LicensesValidatorService {
 
-public class LicenseModule extends AbstractModule {
-    @Override
-    protected void configure() {
-        //TODO: bind LicensesManagementService and LicensesValidationService to LicensesServices instead
-        bind(LicensesService.class).asEagerSingleton();
-        bind(LicensesManagerService.class).to(LicensesService.class).asEagerSingleton();
-    }
+    public boolean checkLicenseExpiry(String feature);
+
+    public boolean checkMaxNode(String feature);
+    
 }

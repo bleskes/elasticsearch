@@ -17,17 +17,24 @@
  * under the License.
  */
 
-package org.elasticsearch.license.plugin;
+package org.elasticsearch.license.plugin.core;
 
-import org.elasticsearch.common.inject.AbstractModule;
-import org.elasticsearch.license.plugin.core.LicensesManagerService;
-import org.elasticsearch.license.plugin.core.LicensesService;
+import java.util.Collection;
 
-public class LicenseModule extends AbstractModule {
-    @Override
-    protected void configure() {
-        //TODO: bind LicensesManagementService and LicensesValidationService to LicensesServices instead
-        bind(LicensesService.class).asEagerSingleton();
-        bind(LicensesManagerService.class).to(LicensesService.class).asEagerSingleton();
+import static org.elasticsearch.license.core.ESLicenses.FeatureType;
+
+public interface TrialLicenses {
+
+    public Collection<TrialLicense> trialLicenses();
+
+    public TrialLicense getTrialLicense(FeatureType featureType);
+
+    public interface TrialLicense {
+
+        public FeatureType feature();
+
+        public long issueDate();
+
+        public long expiryDate();
     }
 }

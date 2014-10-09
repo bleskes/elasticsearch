@@ -17,17 +17,17 @@
  * under the License.
  */
 
-package org.elasticsearch.license.plugin;
+package org.elasticsearch.license.plugin.core;
 
-import org.elasticsearch.common.inject.AbstractModule;
-import org.elasticsearch.license.plugin.core.LicensesManagerService;
-import org.elasticsearch.license.plugin.core.LicensesService;
+import org.elasticsearch.action.ActionListener;
+import org.elasticsearch.cluster.ack.ClusterStateUpdateResponse;
 
-public class LicenseModule extends AbstractModule {
-    @Override
-    protected void configure() {
-        //TODO: bind LicensesManagementService and LicensesValidationService to LicensesServices instead
-        bind(LicensesService.class).asEagerSingleton();
-        bind(LicensesManagerService.class).to(LicensesService.class).asEagerSingleton();
-    }
+import static org.elasticsearch.license.plugin.core.LicensesService.DeleteLicenseRequestHolder;
+import static org.elasticsearch.license.plugin.core.LicensesService.PutLicenseRequestHolder;
+
+public interface LicensesManagerService {
+
+    public void registerLicenses(final PutLicenseRequestHolder requestHolder, final ActionListener<ClusterStateUpdateResponse> listener);
+
+    public void unregisterLicenses(final DeleteLicenseRequestHolder requestHolder, final ActionListener<ClusterStateUpdateResponse> listener);
 }
