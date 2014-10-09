@@ -109,4 +109,5 @@ Some query builders have been removed or renamed:
 The meaning of the `_shards` headers in the delete by query response has changed. Before version 2.0 the `total`,
 `successful` and `failed` fields in the header are based on the number of primary shards. The failures on replica
 shards aren't being kept track of. From version 2.0 the stats in the `_shards` header are based on all shards
-in an index. The http result code is remains to be based on the failures that have occurred in the primary shards.
+of an index. The http status code is left unchanged and is only based on failures that occurred while executing on
+primary shards.

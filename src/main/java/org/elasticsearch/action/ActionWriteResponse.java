@@ -38,13 +38,13 @@ import java.util.List;
  */
 public abstract class ActionWriteResponse extends ActionResponse {
 
-    private ShardInfo shardInfo;
+    private ShardInfo shardInfo = new ShardInfo();
 
     @Override
     public void readFrom(StreamInput in) throws IOException {
         super.readFrom(in);
         if (in.getVersion().onOrAfter(Version.V_1_5_0)) {
-            shardInfo = in.readOptionalStreamable(new ShardInfo());
+            shardInfo.readFrom(in);
         }
     }
 
@@ -52,7 +52,7 @@ public abstract class ActionWriteResponse extends ActionResponse {
     public void writeTo(StreamOutput out) throws IOException {
         super.writeTo(out);
         if (out.getVersion().onOrAfter(Version.V_1_5_0)) {
-            out.writeOptionalStreamable(shardInfo);
+            shardInfo.writeTo(out);
         }
     }
 
@@ -83,7 +83,7 @@ public abstract class ActionWriteResponse extends ActionResponse {
         }
 
         /**
-         * @return the total number of shards the write actually succeeded on.
+         * @return the total number of shards the write succeeded on.
          */
         public int getSuccessful() {
             return successful;

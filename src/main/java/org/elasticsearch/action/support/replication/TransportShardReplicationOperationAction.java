@@ -801,7 +801,7 @@ public abstract class TransportShardReplicationOperationAction<Request extends S
 
         private void doFinish() {
             if (finished.compareAndSet(false, true)) {
-                ActionWriteResponse.ShardInfo shardInfo = new ActionWriteResponse.ShardInfo();
+                ActionWriteResponse.ShardInfo shardInfo = finalResponse.getShardInfo();
                 shardInfo.setPending(pending.get());
                 shardInfo.setTotal(shardIterator.size());
                 List<ActionWriteResponse.ShardInfo.Failure> failures = new ArrayList<>();
@@ -814,7 +814,6 @@ public abstract class TransportShardReplicationOperationAction<Request extends S
                     shardInfo.setFailures(failures.toArray(new ActionWriteResponse.ShardInfo.Failure[failures.size()]));
                 }
                 shardInfo.setSuccessful(success.get());
-                finalResponse.setShardInfo(shardInfo);
                 listener.onResponse(finalResponse);
             }
         }
