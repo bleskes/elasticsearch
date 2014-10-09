@@ -23,6 +23,7 @@ import org.elasticsearch.action.ActionResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.license.core.ESLicenses;
+import org.elasticsearch.license.core.LicenseBuilders;
 
 import java.io.IOException;
 
@@ -41,9 +42,8 @@ public class GetLicenseResponse extends ActionResponse {
     }
 
     public ESLicenses licenses() {
-        return licenses;
+        return (licenses != null) ? licenses : LicenseBuilders.licensesBuilder().build();
     }
-
 
     @Override
     public void readFrom(StreamInput in) throws IOException {

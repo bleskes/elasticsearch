@@ -22,19 +22,22 @@ package org.elasticsearch.license.plugin.core;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.cluster.*;
-import org.elasticsearch.cluster.ack.ClusterStateUpdateRequest;
 import org.elasticsearch.cluster.ack.ClusterStateUpdateResponse;
 import org.elasticsearch.cluster.metadata.MetaData;
 import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.common.component.AbstractLifecycleComponent;
 import org.elasticsearch.common.inject.Inject;
-import org.elasticsearch.common.inject.Injector;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.license.core.ESLicenses;
 import org.elasticsearch.license.core.LicenseBuilders;
+import org.elasticsearch.license.manager.ESLicenseManager;
 import org.elasticsearch.license.plugin.action.delete.DeleteLicenseRequest;
 import org.elasticsearch.license.plugin.action.put.PutLicenseRequest;
+import org.elasticsearch.node.Node;
+import org.elasticsearch.node.internal.InternalNode;
 
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Service responsible for maintaining and providing access to licenses on nodes.
@@ -45,11 +48,16 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class LicensesService extends AbstractLifecycleComponent<LicensesService> implements ClusterStateListener {
 
-    private AtomicBoolean registerClusterStateListener = new AtomicBoolean(false);
+    private ESLicenseManager esLicenseManager;
+
+    private InternalNode node;
+
+    private ClusterService clusterService;
 
     @Inject
-    public LicensesService(Settings settings) {
+    public LicensesService(Settings settings, Node node) {
         super(settings);
+        this.node = (InternalNode) node;
     }
 
     /**
@@ -58,14 +66,8 @@ public class LicensesService extends AbstractLifecycleComponent<LicensesService>
      * This method can be only called on the master node. It tries to create a new licenses on the master
      * and if it was successful it adds the license to cluster metadata.
      */
-    public void registerLicenses(ClusterService clusterService, String source, final PutLicenseRequest request, final ActionListener<ClusterStateUpdateResponse> listener) {
-        if (registerClusterStateListener.compareAndSet(false, true)) {
-            if (DiscoveryNode.dataNode(settings) || DiscoveryNode.masterNode(settings)) {
-                clusterService.add(this);
-            }
-        }
+    public void registerLicenses(String source, final PutLicenseRequest request, final ActionListener<ClusterStateUpdateResponse> listener) {
         final LicensesMetaData newLicenseMetaData = new LicensesMetaData(request.license());
-        //TODO: add a source field to request
         clusterService.submitStateUpdateTask(source, new AckedClusterStateUpdateTask<ClusterStateUpdateResponse>(request, listener) {
             @Override
             protected ClusterStateUpdateResponse newResponse(boolean acknowledged) {
@@ -74,10 +76,11 @@ public class LicensesService extends AbstractLifecycleComponent<LicensesService>
 
             @Override
             public ClusterState execute(ClusterState currentState) throws Exception {
-                // TODO check if newLicenseMetaData actually needs a cluster update
                 MetaData metaData = currentState.metaData();
                 MetaData.Builder mdBuilder = MetaData.builder(currentState.metaData());
                 LicensesMetaData currentLicenses = metaData.custom(LicensesMetaData.TYPE);
+
+                esLicenseManager.verifyLicenses(newLicenseMetaData);
 
                 if (currentLicenses == null) {
                     // no licenses were registered
@@ -86,6 +89,7 @@ public class LicensesService extends AbstractLifecycleComponent<LicensesService>
                     // merge previous license with new one
                     currentLicenses = new LicensesMetaData(LicenseBuilders.merge(currentLicenses, newLicenseMetaData));
                 }
+
                 mdBuilder.putCustom(LicensesMetaData.TYPE, currentLicenses);
                 return ClusterState.builder(currentState).metaData(mdBuilder).build();
             }
@@ -93,8 +97,8 @@ public class LicensesService extends AbstractLifecycleComponent<LicensesService>
 
     }
 
-    //TODO
-    public void unregisteredLicenses(ClusterService clusterService, String source, final DeleteLicenseRequest request, final ActionListener<ClusterStateUpdateResponse> listener) {
+    public void unregisteredLicenses(String source, final DeleteLicenseRequest request, final ActionListener<ClusterStateUpdateResponse> listener) {
+        final Set<ESLicenses.FeatureType> featuresToDelete = asFeatureTypes(request.features());
         clusterService.submitStateUpdateTask(source, new AckedClusterStateUpdateTask<ClusterStateUpdateResponse>(request, listener) {
             @Override
             protected ClusterStateUpdateResponse newResponse(boolean acknowledged) {
@@ -103,18 +107,12 @@ public class LicensesService extends AbstractLifecycleComponent<LicensesService>
 
             @Override
             public ClusterState execute(ClusterState currentState) throws Exception {
-                // TODO check if newLicenseMetaData actually needs a cluster update
                 MetaData metaData = currentState.metaData();
                 MetaData.Builder mdBuilder = MetaData.builder(currentState.metaData());
                 LicensesMetaData currentLicenses = metaData.custom(LicensesMetaData.TYPE);
 
-                //TODO: implement deletion
-                if (currentLicenses == null) {
-                    // no licenses were registered
-                    //currentLicenses = newLicenseMetaData;
-                } else {
-                    // merge previous license with new one
-                    //currentLicenses = new LicensesMetaData(LicenseBuilders.merge(currentLicenses, newLicenseMetaData));
+                if (currentLicenses != null) {
+                    currentLicenses = new LicensesMetaData(LicenseBuilders.removeFeatures(currentLicenses, featuresToDelete));
                 }
                 mdBuilder.putCustom(LicensesMetaData.TYPE, currentLicenses);
                 return ClusterState.builder(currentState).metaData(mdBuilder).build();
@@ -124,7 +122,12 @@ public class LicensesService extends AbstractLifecycleComponent<LicensesService>
 
     @Override
     protected void doStart() throws ElasticsearchException {
-        //TODO
+        clusterService = node.injector().getInstance(ClusterService.class);
+        esLicenseManager = ESLicenseManager.createClusterStateBasedInstance(clusterService);
+
+        if (DiscoveryNode.dataNode(settings) || DiscoveryNode.masterNode(settings)) {
+            clusterService.add(this);
+        }
     }
 
     @Override
@@ -140,5 +143,13 @@ public class LicensesService extends AbstractLifecycleComponent<LicensesService>
     @Override
     public void clusterChanged(ClusterChangedEvent event) {
         //TODO
+    }
+
+    private static Set<ESLicenses.FeatureType> asFeatureTypes(Set<String> featureTypeStrings) {
+        Set<ESLicenses.FeatureType> featureTypes = new HashSet<>(featureTypeStrings.size());
+        for (String featureString : featureTypeStrings) {
+            featureTypes.add(ESLicenses.FeatureType.fromString(featureString));
+        }
+        return featureTypes;
     }
 }
