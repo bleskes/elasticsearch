@@ -23,7 +23,7 @@ import java.util.Collection;
 
 import static org.elasticsearch.license.core.ESLicenses.FeatureType;
 
-public interface TrialLicenses {
+public interface TrialLicenses extends Iterable<TrialLicenses.TrialLicense> {
 
     public Collection<TrialLicense> trialLicenses();
 
@@ -36,5 +36,10 @@ public interface TrialLicenses {
         public long issueDate();
 
         public long expiryDate();
+
+        public int maxNodes();
+
+        public String uid();
+
     }
 }

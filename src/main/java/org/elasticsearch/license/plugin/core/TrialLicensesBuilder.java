@@ -35,14 +35,38 @@ public class TrialLicensesBuilder {
         return new TrialLicensesBuilder();
     }
 
-    private final ImmutableMap.Builder<ESLicenses.FeatureType, TrialLicense> licenseBuilder = ImmutableMap.builder();
+    public static TrialLicenseBuilder trialLicenseBuilder() {
+        return new TrialLicenseBuilder();
+    }
+
+    public static TrialLicenses merge(TrialLicenses trialLicenses, TrialLicenses mergeTrialLicenses) {
+        if (trialLicenses == null && mergeTrialLicenses == null) {
+            throw new IllegalArgumentException("both licenses can not be null");
+        } else if (trialLicenses == null) {
+            return mergeTrialLicenses;
+        } else if (mergeTrialLicenses == null) {
+            return trialLicenses;
+        } else {
+            return trialLicensesBuilder()
+                    .licenses(trialLicenses.trialLicenses())
+                    .licenses(mergeTrialLicenses.trialLicenses())
+                    .build();
+        }
+    }
+
+    private final ImmutableMap.Builder<ESLicenses.FeatureType, TrialLicense> licenseBuilder;
 
     public TrialLicensesBuilder() {
+        licenseBuilder = ImmutableMap.builder();
     }
 
     public TrialLicensesBuilder license(TrialLicense trialLicense) {
         licenseBuilder.put(trialLicense.feature(), trialLicense);
         return this;
+    }
+
+    public TrialLicensesBuilder licenses(TrialLicenses trialLicenses) {
+        return licenses(trialLicenses.trialLicenses());
     }
 
     public TrialLicensesBuilder licenses(Collection<TrialLicense> trialLicenses) {
@@ -66,6 +90,10 @@ public class TrialLicensesBuilder {
                 return licenseMap.get(featureType);
             }
 
+            @Override
+            public Iterator<TrialLicense> iterator() {
+                return licenseMap.values().iterator();
+            }
         };
     }
 
@@ -74,8 +102,20 @@ public class TrialLicensesBuilder {
         private long expiryDate = -1;
         private long issueDate = -1;
         private int durationInDays = -1;
+        private int maxNodes = -1;
+        private String uid = null;
 
         public TrialLicenseBuilder() {
+        }
+
+        public TrialLicenseBuilder uid(String uid) {
+            this.uid = uid;
+            return this;
+        }
+
+        public TrialLicenseBuilder maxNodes(int maxNodes) {
+            this.maxNodes = maxNodes;
+            return this;
         }
 
         public TrialLicenseBuilder feature(ESLicenses.FeatureType featureType) {
@@ -104,6 +144,9 @@ public class TrialLicensesBuilder {
                 assert durationInDays != -1;
                 expiryDate = DateUtils.expiryDateAfterDays(issueDate, durationInDays);
             }
+            if (uid == null) {
+                uid = UUID.randomUUID().toString();
+            }
             return new TrialLicense() {
                 @Override
                 public ESLicenses.FeatureType feature() {
@@ -119,6 +162,16 @@ public class TrialLicensesBuilder {
                 public long expiryDate() {
                     return expiryDate;
                 }
+
+                @Override
+                public int maxNodes() {
+                    return maxNodes;
+                }
+
+                @Override
+                public String uid() {
+                    return uid;
+                }
             };
         }
 
@@ -130,6 +183,8 @@ public class TrialLicensesBuilder {
                 msg = "issueDate has to be set";
             } else if (durationInDays == -1 && expiryDate == -1) {
                 msg = "durationInDays or expiryDate has to be set";
+            } else if (maxNodes == -1) {
+                msg = "maxNodes has to be set";
             }
             if (msg != null) {
                 throw new IllegalArgumentException(msg);
