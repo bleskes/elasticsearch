@@ -194,7 +194,7 @@ public class ProcessCtrl
 	 * The standard file extension for the temporary  
 	 * model state files. 
 	 */
-	static final public String BASE_STATE_FILE_EXTENSION = ".xml";
+	static final public String BASE_STATE_FILE_EXTENSION = ".json";
 			
 	/*
 	 * command line args
