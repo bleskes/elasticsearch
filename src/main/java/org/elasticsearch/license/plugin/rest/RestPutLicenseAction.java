@@ -25,7 +25,6 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.license.plugin.action.put.PutLicenseAction;
 import org.elasticsearch.license.plugin.action.put.PutLicenseRequest;
 import org.elasticsearch.license.plugin.action.put.PutLicenseResponse;
-import org.elasticsearch.license.plugin.action.put.TransportPutLicenseAction;
 import org.elasticsearch.rest.BaseRestHandler;
 import org.elasticsearch.rest.RestChannel;
 import org.elasticsearch.rest.RestController;
@@ -37,14 +36,11 @@ import static org.elasticsearch.rest.RestRequest.Method.PUT;
 
 public class RestPutLicenseAction extends BaseRestHandler {
 
-    private final TransportPutLicenseAction transportPutLicensesAction;
-
     @Inject
-    public RestPutLicenseAction(Settings settings, RestController controller, Client client, TransportPutLicenseAction transportPutLicenseAction) {
+    public RestPutLicenseAction(Settings settings, RestController controller, Client client) {
         super(settings, controller, client);
         controller.registerHandler(PUT, "/_cluster/license", this);
         controller.registerHandler(POST, "/_cluster/license", this);
-        this.transportPutLicensesAction = transportPutLicenseAction;
     }
 
 
@@ -53,6 +49,6 @@ public class RestPutLicenseAction extends BaseRestHandler {
         PutLicenseRequest putLicenseRequest = new PutLicenseRequest();
         putLicenseRequest.listenerThreaded(false);
         putLicenseRequest.license(request.content().toUtf8());
-        transportPutLicensesAction.execute(putLicenseRequest, new AcknowledgedRestListener<PutLicenseResponse>(channel));
+        client.admin().cluster().execute(PutLicenseAction.INSTANCE, putLicenseRequest, new AcknowledgedRestListener<PutLicenseResponse>(channel));
     }
 }
