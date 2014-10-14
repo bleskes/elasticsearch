@@ -28,7 +28,6 @@ import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.component.AbstractLifecycleComponent;
 import org.elasticsearch.common.inject.Inject;
-import org.elasticsearch.common.inject.Provides;
 import org.elasticsearch.common.inject.Singleton;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.license.core.ESLicenses;
@@ -52,7 +51,7 @@ import static org.elasticsearch.license.plugin.core.TrialLicensesBuilder.EMPTY;
  *  - interface with LicenseManager
  */
 @Singleton
-public class LicensesService extends AbstractLifecycleComponent<LicensesService> implements ClusterStateListener, LicensesManagerService, LicensesValidatorService {
+public class LicensesService extends AbstractLifecycleComponent<LicensesService> implements ClusterStateListener, LicensesManagerService, LicensesClientService {
 
     private ESLicenseManager esLicenseManager;
 
@@ -64,6 +63,7 @@ public class LicensesService extends AbstractLifecycleComponent<LicensesService>
     public LicensesService(Settings settings, ClusterService clusterService) {
         super(settings);
         this.clusterService = clusterService;
+        this.esLicenseManager = ESLicenseManager.createClusterStateBasedInstance(clusterService);
     }
 
     /**
@@ -123,7 +123,6 @@ public class LicensesService extends AbstractLifecycleComponent<LicensesService>
                 LicensesMetaData currentLicenses = metaData.custom(LicensesMetaData.TYPE);
 
                 if (currentLicenses != null) {
-                    //TODO: proper delete for trial licenses
                     final ESLicenses newLicenses = LicenseBuilders.removeFeatures(currentLicenses.getLicenses(), featuresToDelete);
                     currentLicenses = new LicensesMetaData(newLicenses, currentLicenses.getTrialLicenses());
                 }
@@ -146,19 +145,24 @@ public class LicensesService extends AbstractLifecycleComponent<LicensesService>
                 MetaData metaData = currentState.metaData();
                 MetaData.Builder mdBuilder = MetaData.builder(currentState.metaData());
                 LicensesMetaData currentLicenses = metaData.custom(LicensesMetaData.TYPE);
-                TrialLicensesBuilder newTrialLicenses = TrialLicensesBuilder.trialLicensesBuilder().license(trialLicense);
+                TrialLicensesBuilder trialLicensesBuilder = TrialLicensesBuilder.trialLicensesBuilder().license(trialLicense);
                 if (currentLicenses != null) {
                     if (currentLicenses.getTrialLicenses() != null) {
                         // had previous trial licenses
-                        newTrialLicenses = newTrialLicenses.licenses(currentLicenses.getTrialLicenses());
-                        currentLicenses = new LicensesMetaData(currentLicenses.getLicenses(), newTrialLicenses.build());
+                        if (trialLicenseCheck(trialLicense.feature().string())) {
+                            trialLicensesBuilder = trialLicensesBuilder.licenses(currentLicenses.getTrialLicenses());
+                            currentLicenses = new LicensesMetaData(currentLicenses.getLicenses(), trialLicensesBuilder.build());
+                        } else {
+                            // had previously generated trial license for the feature
+                            currentLicenses = new LicensesMetaData(currentLicenses.getLicenses(), currentLicenses.getTrialLicenses());
+                        }
                     } else {
                         // had no previous trial license
-                        currentLicenses = new LicensesMetaData(currentLicenses.getLicenses(), newTrialLicenses.build());
+                        currentLicenses = new LicensesMetaData(currentLicenses.getLicenses(), trialLicensesBuilder.build());
                     }
                 } else {
                     // had no license meta data
-                    currentLicenses = new LicensesMetaData(null, newTrialLicenses.build());
+                    currentLicenses = new LicensesMetaData(null, trialLicensesBuilder.build());
                 }
                 trialLicenses = currentLicenses.getTrialLicenses();
                 mdBuilder.putCustom(LicensesMetaData.TYPE, currentLicenses);
@@ -169,12 +173,16 @@ public class LicensesService extends AbstractLifecycleComponent<LicensesService>
             public void onFailure(String source, @Nullable Throwable t) {
 
             }
+
+            private boolean trialLicenseCheck(String feature) {
+                final TrialLicense license = trialLicenses.getTrialLicense(FeatureType.fromString(feature));
+                return license == null;
+            }
         });
     }
 
     @Override
     protected void doStart() throws ElasticsearchException {
-        esLicenseManager = ESLicenseManager.createClusterStateBasedInstance(clusterService);
         if ( DiscoveryNode.dataNode(settings) || DiscoveryNode.masterNode(settings)) {
             clusterService.add(this);
         }
@@ -203,6 +211,19 @@ public class LicensesService extends AbstractLifecycleComponent<LicensesService>
     }
 
     @Override
+    public void registerAndActivate(String feature, TrialLicenseOptions trialLicenseOptions, Listener listener) {
+        // check if one-time trial license has been generated for this feature
+
+        // if not call registerTrialLicense()
+
+        // if trial license generated, onEnabled should return
+
+        // else check actual licenses
+
+        TrialLicense trialLicense = generateTrialLicense(feature, trialLicenseOptions.durationInDays, trialLicenseOptions.maxNodes);
+        registerTrialLicense(trialLicense);
+    }
+
     public boolean checkLicenseExpiry(String feature) {
         //TODO make validation cluster state aware
         //check trial license existence
@@ -213,12 +234,6 @@ public class LicensesService extends AbstractLifecycleComponent<LicensesService>
             return trialLicense.expiryDate() > System.currentTimeMillis();
         }
         return esLicenseManager.hasLicenseForFeature(FeatureType.fromString(feature));
-    }
-
-    @Override
-    public boolean checkMaxNode(String feature) {
-        //TODO make validation cluster state aware
-        return false;
     }
 
     private static Set<FeatureType> asFeatureTypes(Set<String> featureTypeStrings) {
@@ -251,10 +266,22 @@ public class LicensesService extends AbstractLifecycleComponent<LicensesService>
 
     private TrialLicense generateTrialLicense(String feature, int durationInDays, int maxNodes) {
         return TrialLicensesBuilder.trialLicenseBuilder()
+                .issuedTo(clusterService.state().getClusterName().value())
                 .issueDate(System.currentTimeMillis())
                 .durationInDays(durationInDays)
                 .feature(FeatureType.fromString(feature))
                 .maxNodes(maxNodes)
                 .build();
+    }
+
+
+    public static class TrialLicenseOptions {
+        final int durationInDays;
+        final int maxNodes;
+
+        public TrialLicenseOptions(int durationInDays, int maxNodes) {
+            this.durationInDays = durationInDays;
+            this.maxNodes = maxNodes;
+        }
     }
 }

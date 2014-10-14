@@ -46,8 +46,7 @@ import static org.elasticsearch.license.manager.ESLicenseProvider.extractSignedL
  * and querying against licenses on a feature basis
  * <p/>
  * TODO:
- * - integration with cluster state
- * - use ESLicenseProvider to query license from cluster state
+ *  - make it into a guice singleton
  */
 public class ESLicenseManager {
 
@@ -75,7 +74,8 @@ public class ESLicenseManager {
     public static ESLicenseManager createClusterStateBasedInstance(ClusterService clusterService, String publicKeyPath) {
         if (ESLicenseManager.instance == null) {
             ESLicenseManager.publicKeyDataProvider = new FilePublicKeyDataProvider(publicKeyPath);
-            return new ESLicenseManager(ESLicenseProvider.createClusterBasedLicenseProvider(clusterService, publicKeyPath));
+            instance = new ESLicenseManager(ESLicenseProvider.createClusterBasedLicenseProvider(clusterService, publicKeyPath));
+            return instance;
         } else if (ESLicenseManager.instance.licenseProvider instanceof ClusterStateLicenseProvider) {
             return ESLicenseManager.instance;
         } else {

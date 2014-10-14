@@ -19,10 +19,17 @@
 
 package org.elasticsearch.license.plugin.core;
 
-public interface LicensesValidatorService {
+import org.elasticsearch.common.inject.ImplementedBy;
 
-    public boolean checkLicenseExpiry(String feature);
+@ImplementedBy(LicensesService.class)
+public interface LicensesClientService {
 
-    public boolean checkMaxNode(String feature);
-    
+    interface Listener {
+
+        void onEnabled();
+
+        void onDisabled();
+    }
+
+    void registerAndActivate(String feature, LicensesService.TrialLicenseOptions trialLicenseOptions, Listener listener);
 }
