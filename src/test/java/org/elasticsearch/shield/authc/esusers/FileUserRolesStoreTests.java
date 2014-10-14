@@ -129,7 +129,7 @@ public class FileUserRolesStoreTests extends ElasticsearchTestCase {
         ThreadPool threadPool = null;
         try {
             threadPool = new ThreadPool("test");
-            File usersRoles = writeUsersRoles("admin:role1");
+            File usersRoles = writeUsersRoles("role1:admin");
             Settings settings = ImmutableSettings.builder()
                     .put("watcher.enabled", "false")
                     .put("shield.authc.esusers.files.users_roles", usersRoles.toPath().toAbsolutePath())
@@ -152,7 +152,7 @@ public class FileUserRolesStoreTests extends ElasticsearchTestCase {
     }
 
     @Test
-    public void testThatEmptyUserNameDoesNotThrowException() throws Exception {
+    public void testThatEmptyRoleNameDoesNotThrowException() throws Exception {
         assertInvalidInputIsSilentlyIgnored(":user1,user2");
         assertInvalidInputIsSilentlyIgnored(" :user1,user2");
     }
