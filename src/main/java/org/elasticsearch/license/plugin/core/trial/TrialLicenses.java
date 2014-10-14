@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package org.elasticsearch.license.plugin.core;
+package org.elasticsearch.license.plugin.core.trial;
 
 import java.util.Collection;
 

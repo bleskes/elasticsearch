@@ -26,6 +26,8 @@ import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.license.core.ESLicenses;
+import org.elasticsearch.license.plugin.core.trial.TrialLicenseUtils;
+import org.elasticsearch.license.plugin.core.trial.TrialLicenses;
 
 import java.io.IOException;
 import java.util.*;
@@ -87,7 +89,7 @@ public class LicensesMetaData implements MetaData.Custom {
             TrialLicenses trialLicenses = null;
             if (in.readBoolean()) {
                 esLicenses = readGeneratedLicensesFromMetaData(in);
-                trialLicenses = readTrialLicensesFromMetaData(in);
+                trialLicenses = TrialLicenseUtils.readTrialLicensesFromMetaData(in);
             }
             return new LicensesMetaData(esLicenses, trialLicenses);
         }
@@ -102,7 +104,7 @@ public class LicensesMetaData implements MetaData.Custom {
             } else {
                 out.writeBoolean(true);
                 writeGeneratedLicensesToMetaData(licensesMetaData.getLicenses(), out);
-                writeTrialLicensesToMetaData(licensesMetaData.getTrialLicenses(), out);
+                TrialLicenseUtils.writeTrialLicensesToMetaData(licensesMetaData.getTrialLicenses(), out);
             }
         }
 
@@ -134,7 +136,7 @@ public class LicensesMetaData implements MetaData.Custom {
                 }
             }
 
-            return new LicensesMetaData(fromSignatures(signatures), fromEncodedTrialLicenses(encodedTrialLicenses));
+            return new LicensesMetaData(fromSignatures(signatures), TrialLicenseUtils.fromEncodedTrialLicenses(encodedTrialLicenses));
         }
 
         /**
@@ -144,7 +146,7 @@ public class LicensesMetaData implements MetaData.Custom {
         public void toXContent(LicensesMetaData licensesMetaData, XContentBuilder builder, ToXContent.Params params) throws IOException {
             builder.startObject();
             builder.array(Fields.LICENSES, toSignatures(licensesMetaData.getLicenses()));
-            builder.array(Fields.TRIAL_LICENSES, toEncodedTrialLicenses(licensesMetaData.getTrialLicenses()));
+            builder.array(Fields.TRIAL_LICENSES, TrialLicenseUtils.toEncodedTrialLicenses(licensesMetaData.getTrialLicenses()));
             builder.endObject();
         }
 
