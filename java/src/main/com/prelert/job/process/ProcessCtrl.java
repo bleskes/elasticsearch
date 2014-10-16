@@ -171,7 +171,7 @@ public class ProcessCtrl
 	static final public String DELIMITER_ARG = "--delimiter=";
 	static final public String TIME_FIELD_ARG = "--timefield=";
 	static final public String TIME_FORMAT_ARG = "--timeformat=";
-	static final public String PERSIST_URL_BASE_ARG = "--persistUrlBase";
+	static final public String PERSIST_URL_BASE_ARG = "--persistUrlBase=";
 	static final public String VERSION_ARG = "--version";
 	static final public String INFO_ARG = "--info";
 	static final public String MAX_ANOMALY_RECORDS_ARG = "--maxAnomalyRecords=500";
