@@ -70,10 +70,10 @@ import org.elasticsearch.search.sort.SortOrder;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.prelert.job.DetectorState;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobIdAlreadyExistsException;
 import com.prelert.job.JobStatus;
+import com.prelert.job.ModelState;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.quantiles.Quantiles;
@@ -330,7 +330,7 @@ public class ElasticsearchJobProvider implements JobProvider
 			XContentBuilder detectorMapping = ElasticsearchMappings.detectorMapping();
 			XContentBuilder recordMapping = ElasticsearchMappings.recordMapping();
 			XContentBuilder quantilesMapping = ElasticsearchMappings.quantilesMapping();
-			XContentBuilder detectorStateMapping = ElasticsearchMappings.detectorStateMapping();
+			XContentBuilder modelStateMapping = ElasticsearchMappings.modelStateMapping();
 			XContentBuilder usageMapping = ElasticsearchMappings.usageMapping();
 						
 			m_Client.admin().indices()
@@ -340,7 +340,7 @@ public class ElasticsearchJobProvider implements JobProvider
 					.addMapping(Detector.TYPE, detectorMapping)
 					.addMapping(AnomalyRecord.TYPE, recordMapping)
 					.addMapping(Quantiles.TYPE, quantilesMapping)
-					.addMapping(DetectorState.TYPE, detectorStateMapping)
+					.addMapping(ModelState.TYPE, modelStateMapping)
 					.addMapping(Usage.TYPE, usageMapping)
 					.get();
 
@@ -962,55 +962,6 @@ public class ElasticsearchJobProvider implements JobProvider
 		return true;
 	}
 
-	@Override
-	public DetectorState getDetectorState(String jobId) 
-	throws UnknownJobException
-	{
-		DetectorState detectorState = new DetectorState();
-		
-		FilterBuilder fb = FilterBuilders.matchAllFilter();
-		
-		SearchRequestBuilder searchBuilder = m_Client.prepareSearch(jobId)
-				.setTypes(DetectorState.TYPE)		
-				.setPostFilter(fb);
-			
-		try
-		{
-			final int PAGE_SIZE = 50;		
-			int from=0, size=PAGE_SIZE;
-			boolean getNextPage = true;
-			while (getNextPage)
-			{
-				searchBuilder.setFrom(from).setSize(size); 
-				SearchResponse searchResponse = searchBuilder.get();
-
-				for (SearchHit hit : searchResponse.getHits().getHits())
-				{
-					String detectorName = hit.getSource().get(DetectorState.DETECTOR_NAME).toString();
-					String state = hit.getSource().get(DetectorState.SERIALISED_MODEL).toString();
-					detectorState.setDetectorState(detectorName, state);
-				}		
-
-				if (searchResponse.getHits().getTotalHits() <= (from + size))
-				{
-					getNextPage = false;
-				}
-				else
-				{
-					from += size;
-					size += PAGE_SIZE;
-				}
-			}
-		}
-		catch (IndexMissingException e)
-		{
-			s_Logger.error("Unknown job '" + jobId + "'. Cannot read persisted state");
-			throw new UnknownJobException(jobId, 
-					"Cannot read persisted state", ErrorCode.MISSING_DETECTOR_STATE);
-		}
-		return detectorState;
-	}
-
 
 	@Override
 	public QuantilesState getQuantilesState(String jobId)
@@ -1054,7 +1005,7 @@ public class ElasticsearchJobProvider implements JobProvider
 		{
 			s_Logger.error("Unknown job '" + jobId + "'. Cannot read persisted state");
 			throw new UnknownJobException(jobId,
-					"Cannot read persisted state", ErrorCode.MISSING_DETECTOR_STATE);
+					"Cannot read persisted quantiles", ErrorCode.MISSING_JOB_ERROR);
 		}
 		return quantilesState;
 	}

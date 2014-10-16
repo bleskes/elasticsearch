@@ -63,7 +63,6 @@ import com.prelert.job.status.StatusReporter;
 import com.prelert.job.status.StatusReporterFactory;
 import com.prelert.job.usage.UsageReporterFactory;
 import com.prelert.job.AnalysisConfig;
-import com.prelert.job.DetectorState;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobInUseException;
 import com.prelert.job.JobStatus;
@@ -326,12 +325,6 @@ public class ProcessManager
 		
 		Logger logger = createLogger(job.getId());
 
-		DetectorState detectorState = null;
-		if (restoreState)
-		{
-			detectorState = m_JobProvider.getDetectorState(jobId);			
-		}
-
 		QuantilesState quantilesState = null;
 		if (restoreState)
 		{
@@ -344,7 +337,7 @@ public class ProcessManager
 			// if state is null or empty it will be ignored
 			// else it is used to restore the models			
 			nativeProcess = ProcessCtrl.buildAutoDetect(
-					ProcessCtrl.AUTODETECT_API, job, detectorState, quantilesState, logger);	
+					ProcessCtrl.AUTODETECT_API, job, quantilesState, logger);	
 		} 
 		catch (IOException e) 
 		{

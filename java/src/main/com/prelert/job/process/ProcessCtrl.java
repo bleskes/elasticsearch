@@ -48,23 +48,37 @@ import com.prelert.job.AnalysisConfig;
 import com.prelert.job.Detector;
 import com.prelert.job.AnalysisLimits;
 import com.prelert.job.DataDescription;
-import com.prelert.job.DetectorState;
 import com.prelert.job.JobDetails;
 import com.prelert.job.quantiles.QuantilesState;
 
 
 /**
  * Utility class for running a Prelert process<br/>
- * The environment variables PRELERT_HOME and LIB_PATH (or platform variants) 
- * are set for the environment of the launched process, any inherited values 
+ * The environment variables PRELERT_HOME and LIB_PATH (or platform variants)
+ * are set for the environment of the launched process, any inherited values
  * of LIB_PATH or PRELERT_HOME are overwritten.
- * 
- * This class first needs to know where PRELERT_HOME is so it checks for 
+ *
+ * This class first needs to know where PRELERT_HOME is so it checks for
  * the system property <b>prelert.home</b> and failing that looks for the 
  * PRELERT_HOME env var. If neither exist prelert home is set to an empty string.
  */
 public class ProcessCtrl 
 {
+	/**
+	 * System property storing the Elasticsearch HTTP port
+	 */
+	static final public String ES_HTTP_PORT_PROP = "es.http.port";
+
+	/**
+	 * Default Elasticsearch HTTP port
+	 */
+	static final public String DEFAULT_ES_HTTP_PORT = "9200";
+
+	/**
+	 * Elasticsearch HTTP port we'll pass on to the Autodetect API program
+	 */
+	static final public String ES_HTTP_PORT;
+
 	/**
 	 * Autodetect API native program name
 	 */
@@ -123,19 +137,19 @@ public class ProcessCtrl
 	/**
 	 * OSX library path variable
 	 */
-	static final public String OSX_LIB_PATH_ENV = "DYLD_LIBRARY_PATH"; 
+	static final public String OSX_LIB_PATH_ENV = "DYLD_LIBRARY_PATH";
 	/**
 	 * Linux library path variable
 	 */	
-	static final public String LINUX_LIB_PATH_ENV = "LD_LIBRARY_PATH"; 
+	static final public String LINUX_LIB_PATH_ENV = "LD_LIBRARY_PATH";
 	/**
 	 * Windows library path variable
 	 */	
-	static final public String WIN_LIB_PATH_ENV = "Path"; 
+	static final public String WIN_LIB_PATH_ENV = "Path";
 	/**
 	 * Solaris library path variable
 	 */	
-	static final public String SOLARIS_LIB_PATH_ENV = "LD_LIBRARY_PATH_64"; 
+	static final public String SOLARIS_LIB_PATH_ENV = "LD_LIBRARY_PATH_64";
 	
 	/*
 	 * General arguments
@@ -148,7 +162,7 @@ public class ProcessCtrl
 	static final public String LENGTH_ENCODED_INPUT_ARG = "--lengthEncodedInput";
 
 	/*
-	 * Autodetect arguments 
+	 * Arguments used by prelert_autodetect_api
 	 */
 	static final public String BATCH_SPAN_ARG = "--batchspan=";
 	static final public String PERIOD_ARG = "--period=";
@@ -157,18 +171,17 @@ public class ProcessCtrl
 	static final public String DELIMITER_ARG = "--delimiter=";
 	static final public String TIME_FIELD_ARG = "--timefield=";
 	static final public String TIME_FORMAT_ARG = "--timeformat=";
-	static final public String RESTORE_STATE_ARG = "--restoreState=";
-	static final public String DELETE_STATE_FILES_ARG = "--deleteStateFiles";
-	static final public String PERSIST_STATE_ARG = "--persistState";
+	static final public String PERSIST_URL_BASE_ARG = "--persistUrlBase";
 	static final public String VERSION_ARG = "--version";
 	static final public String INFO_ARG = "--info";
-	static final public String MAX_ANOMALY_RECORDS = "--maxAnomalyRecords=500";
+	static final public String MAX_ANOMALY_RECORDS_ARG = "--maxAnomalyRecords=500";
 	
 	/*
-	 * Normalize_api args
+	 * Arguments used by both prelert_autodetect_api and prelert_normalize_api
 	 */
 	static final public String SYS_STATE_CHANGE_ARG = "--sysChangeState=";
 	static final public String UNUSUAL_STATE_ARG = "--unusualState=";
+	static final public String DELETE_STATE_FILES_ARG = "--deleteStateFiles";
 	
 
 	/**
@@ -183,18 +196,10 @@ public class ProcessCtrl
 	static final public String UNKNOWN_VERSION = "Unknown version of the analytics";
 	
 	/**
-	 * Persisted model state and quantiles are written to disk so they can
-	 * be read by the autodetect program.  All state files have this 
-	 * base name followed by a unique number and 
-	 * {@linkplain #BASE_STATE_FILE_EXTENSION}
+	 * Persisted quantiles are written to disk so they can be read by
+	 * the autodetect program.  All quantiles files have this extension.
 	 */
-	static final public String BASE_STATE_FILE_NAME = "job_state";
-	
-	/*
-	 * The standard file extension for the temporary  
-	 * model state files. 
-	 */
-	static final public String BASE_STATE_FILE_EXTENSION = ".json";
+	static final public String QUANTILES_FILE_EXTENSION = ".xml";
 			
 	/*
 	 * command line args
@@ -228,11 +233,21 @@ public class ProcessCtrl
 	
 	
 	/**
-	 * Static initialisation finds Prelert home and the path to the binaries,
-	 * sets lib path to PRELERT_HOME/lib + PRELERT_HOME/cots/(lib|bin)
+	 * Static initialisation finds Elasticsearch HTTP port, Prelert home and the
+	 * path to the binaries.  It also sets the lib path to
+	 * PRELERT_HOME/(lib|bin) + PRELERT_HOME/cots/(lib|bin)
 	 */
-	static 
+	static
 	{	
+		if (System.getProperty(ES_HTTP_PORT_PROP) != null)
+		{
+			ES_HTTP_PORT = System.getProperty(ES_HTTP_PORT_PROP);
+		}
+		else
+		{
+			ES_HTTP_PORT = DEFAULT_ES_HTTP_PORT;
+		}
+
 		String prelertHome = "";
 		if (System.getProperty(PRELERT_HOME_PROPERTY) != null)
 		{
@@ -253,7 +268,6 @@ public class ProcessCtrl
 			logPath = System.getenv().get(PRELERT_LOGS_ENV);
 		}
 		
-				
 		PRELERT_HOME = prelertHome; 
 		File executable = new File(new File(PRELERT_HOME, "bin"), AUTODETECT_API);		
 		AUTODETECT_PATH = executable.getPath();
@@ -435,8 +449,8 @@ public class ProcessCtrl
 
 
 	/**
-	 * Calls {@link #buildProcess(String, JobDetails, DetectorState)} with 
-	 * detectorState set to <code>null</code>.
+	 * Calls {@link #buildProcess(String, JobDetails, QuantilesState, Logger)} with 
+	 * quantilesState set to <code>null</code>.
 	 * 
 	 * @param processName The name of program to execute this should exist in the 
 	 * directory PRELERT_HOME/bin/ 
@@ -447,7 +461,7 @@ public class ProcessCtrl
 	static public Process buildAutoDetect(String processName, JobDetails job, Logger logger)
 	throws IOException	
 	{
-		return buildAutoDetect(processName, job, null, null, logger);
+		return buildAutoDetect(processName, job, null, logger);
 	}
 	
 	/**
@@ -460,8 +474,6 @@ public class ProcessCtrl
 	 * @param processName The name of program to execute this should exist in the 
 	 * directory PRELERT_HOME/bin/ 
 	 * @param job The job configuration
-	 * @param detectorState if <code>null</code> this parameter is
-	 * ignored else the models' state is restored from this object
 	 * @param quantilesState if <code>null</code> this parameter is
 	 * ignored else the quantiles' state is restored from this object
 	 * @param logger The job's logger
@@ -470,7 +482,7 @@ public class ProcessCtrl
 	 * @throws IOException 
 	 */
 	static public Process buildAutoDetect(String processName, JobDetails job,
-			DetectorState detectorState, QuantilesState quantilesState, Logger logger)
+			QuantilesState quantilesState, Logger logger)
 	throws IOException
 	{
 		logger.info("PRELERT_HOME is set to " + PRELERT_HOME);
@@ -515,7 +527,7 @@ public class ProcessCtrl
 		command.add(LENGTH_ENCODED_INPUT_ARG);
 		
 		
-		String recordCountArg = MAX_ANOMALY_RECORDS;
+		String recordCountArg = MAX_ANOMALY_RECORDS_ARG;
 		command.add(recordCountArg);
 		
 		String timeField = DataDescription.DEFAULT_TIME_FIELD;
@@ -541,63 +553,42 @@ public class ProcessCtrl
 		String timeFieldArg = TIME_FIELD_ARG + timeField;
 		command.add(timeFieldArg);
 
-		int fileNumber = 1;
-		String tempDirStr = null;
-
-		// Restoring the model state
-		if (detectorState != null && detectorState.getDetectorKeys().size() > 0)
-		{
-			logger.info("Restoring models for job '" + job.getId() +"'");
-
-			Path tempDir = Files.createTempDirectory(null);
-			tempDirStr = tempDir.toString();
-
-			for (String key : detectorState.getDetectorKeys())
-			{
-				File modelStateFile = new File(tempDirStr, BASE_STATE_FILE_NAME +
-						fileNumber + BASE_STATE_FILE_EXTENSION);
-
-				++fileNumber;
-
-				writeState(detectorState.getDetectorState(key), modelStateFile);
-			}
-		}
-
 		// Restoring the quantiles
 		if (quantilesState != null && quantilesState.getQuantilesKinds().size() > 0)
 		{
-			logger.info("Restoring quantiles for job '" + job.getId() +"'");
+			logger.info("Restoring quantiles for job '" + job.getId() + "'");
 
-			if (tempDirStr == null)
+			String sysChangeState = quantilesState.getQuantilesState(QuantilesState.SYS_CHANGE_QUANTILES_KIND);
+			if (sysChangeState != null)
 			{
-				Path tempDir = Files.createTempDirectory(null);
-				tempDirStr = tempDir.toString();
+				Path sysChangeStateFilePath = writeNormaliserInitState(job.getId(),
+						sysChangeState);
+
+				String stateFileArg = SYS_STATE_CHANGE_ARG + sysChangeStateFilePath;
+				command.add(stateFileArg);
 			}
 
-			for (String kind : quantilesState.getQuantilesKinds())
+			String unusualBehaviourState = quantilesState.getQuantilesState(QuantilesState.UNUSUAL_QUANTILES_KIND);
+			if (unusualBehaviourState != null)
 			{
-				File quantilesStateFile = new File(tempDirStr, BASE_STATE_FILE_NAME +
-						fileNumber + BASE_STATE_FILE_EXTENSION);
+				Path unusualStateFilePath = writeNormaliserInitState(job.getId(),
+						unusualBehaviourState);
 
-				++fileNumber;
+				String stateFileArg = UNUSUAL_STATE_ARG + unusualStateFilePath;
+				command.add(stateFileArg);
+			}
 
-				writeState(quantilesState.getQuantilesState(kind), quantilesStateFile);
+			if (sysChangeState != null || unusualBehaviourState != null)
+			{
+				command.add(DELETE_STATE_FILES_ARG);
 			}
 		}
 
-		if (fileNumber > 1)
-		{
-			String restoreArg = RESTORE_STATE_ARG + tempDirStr +
-					File.separator + BASE_STATE_FILE_NAME;
-			command.add(restoreArg);
+		// Always supply a URI for persisting/restoring model state.
+		String persistUriBase = PERSIST_URL_BASE_ARG +
+				"http://localhost:" + ES_HTTP_PORT + '/' + job.getId();
+		command.add(persistUriBase);
 
-			// tell autodetect to delete the temporary state files
-			command.add(DELETE_STATE_FILES_ARG);				
-		}
-
-		// Always persist the models when finished. 
-		command.add(PERSIST_STATE_ARG);
-		
 		// the logging id is the job id
 		String logId = LOG_ID_ARG + job.getId();
 		command.add(logId);
@@ -610,9 +601,9 @@ public class ProcessCtrl
 			try (OutputStreamWriter osw = new OutputStreamWriter(
 					new FileOutputStream(fieldConfigFile),
 					StandardCharsets.UTF_8))
-					{
+			{
 				writeFieldConfig(job.getAnalysisConfig(), osw, logger);
-					}
+			}
 
 			String fieldConfig = FIELD_CONFIG_ARG + fieldConfigFile.toString();
 			command.add(fieldConfig);	
@@ -625,8 +616,8 @@ public class ProcessCtrl
 
 		return pb.start();		
 	}
-	
-	
+
+
 	/**
 	 * Write the Prelert autodetect model options to <code>emptyConfFile</code>.
 	 * 
@@ -762,32 +753,10 @@ public class ProcessCtrl
 
 
 	/**
-	 * Write the string <code>state</code> to <code>file</code>
-	 * followed by a newline character.
-	 * 
-	 * @param state
-	 * @param file
-	 * @throws IOException
-	 */
-	static private void writeState(String state, File file)
-	throws IOException
-	{
-		try (OutputStreamWriter osw = new OutputStreamWriter(
-				new FileOutputStream(file),
-				StandardCharsets.UTF_8))
-		{
-			osw.write(state);
-			osw.write('\n');
-		}
-	}
-	
-
-	/**
 	 * The process can be initialised with both sysChangeState and 
 	 * unusualBehaviourState if either is <code>null</code> then is 
 	 * is not used. 
-	 * 
-	 * 
+	 *
 	 * @param jobId
 	 * @param sysChangeState Set to <code>null</code> to be ignored
 	 * @param unusualBehaviourState Set to <code>null</code> to be ignored
@@ -854,7 +823,7 @@ public class ProcessCtrl
 
 		return pb.start();		
 	}
-	
+
 	
 	/**
 	 * Write the normaliser init state to file.
@@ -870,7 +839,8 @@ public class ProcessCtrl
 		// createTempFile has a race condition where it may return the same
 		// temporary file name to different threads if called simultaneously
 		// from multiple threads, hence add the thread ID to avoid this
-		Path stateFile = Files.createTempFile(jobId + "_state_" + Thread.currentThread().getId(), ".xml");
+		Path stateFile = Files.createTempFile(jobId + "_quantiles_" + Thread.currentThread().getId(),
+												QUANTILES_FILE_EXTENSION);
 
 		try (OutputStreamWriter osw = new OutputStreamWriter(
 				new FileOutputStream(stateFile.toString()),
