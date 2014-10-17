@@ -36,7 +36,6 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
-import com.prelert.job.DetectorState;
 import com.prelert.job.persistence.JobResultsPersister;
 import com.prelert.job.persistence.JobRenormaliser;
 import com.prelert.job.quantiles.Quantiles;
@@ -86,10 +85,6 @@ public class AutoDetectResultsParser
 		if (token == JsonToken.END_ARRAY)
 		{
 			logger.info("Empty results array, 0 buckets parsed");
-
-			// Parse the serialised detector state and persist
-			DetectorState state = parseState(parser, logger);
-			persister.persistDetectorState(state);		
 			return;
 		}
 		else if (token != JsonToken.START_OBJECT)
@@ -150,40 +145,10 @@ public class AutoDetectResultsParser
 			token = parser.nextToken();
 		}
 
-		logger.info(bucketCount + " buckets parsed from autodetect output");
+		logger.info(bucketCount + " buckets parsed from autodetect output - about to refresh indexes");
 
-		
-		// All the results have been read now read the serialised state
-		logger.debug("Persisting detector state");
-		DetectorState state = parseState(parser, logger);
-		persister.persistDetectorState(state);		
-		
 		// commit data to the datastore
-		logger.info("Detector state persisted - about to refresh indexes");
 		persister.commitWrites();
-	}
-	
-	
-	static private DetectorState parseState(JsonParser parser, Logger logger) 
-	throws JsonParseException, IOException, AutoDetectParseException
-	{
-		logger.debug("Parsing serialised detector state");
-		
-		JsonToken token = parser.nextToken();
-		if (token == null)
-		{
-			logger.info("End of input no detector state to parse");
-			return null;
-		}
-		else if (token != JsonToken.START_OBJECT)
-		{
-			throw new AutoDetectParseException(
-					"Invalid JSON should start with an array of objects or an object = " + token);
-		}
-		
-		// Parse the serialised detector state and persist
-		DetectorState state = DetectorState.parseJson(parser);
-		return state;
 	}
 
 

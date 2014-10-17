@@ -136,13 +136,7 @@ public enum ErrorCode
 	 * The job cannot be found in the data store
 	 */
 	MISSING_JOB_ERROR(20101),
-	
-	/**
-	 * The persisted detector state cannot be recovered
-	 */
-	MISSING_DETECTOR_STATE(20102),	
-	
-	
+
 	// data upload errors
 	/**
 	 * Generic data error

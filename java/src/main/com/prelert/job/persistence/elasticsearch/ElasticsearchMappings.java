@@ -37,8 +37,8 @@ import com.prelert.job.AnalysisConfig;
 import com.prelert.job.AnalysisLimits;
 import com.prelert.job.DataDescription;
 import com.prelert.job.Detector;
-import com.prelert.job.DetectorState;
 import com.prelert.job.JobDetails;
+import com.prelert.job.ModelState;
 import com.prelert.job.quantiles.Quantiles;
 import com.prelert.job.usage.Usage;
 import com.prelert.rs.data.AnomalyCause;
@@ -339,7 +339,7 @@ public class ElasticsearchMappings
 						.endObject()
 						.startObject(AnomalyRecord.OVER_FIELD_NAME)
 							.field("type", "string").field(INDEX, NOT_ANALYZED)
-						.endObject()		
+						.endObject()
 						.startObject(AnomalyRecord.OVER_FIELD_VALUE)
 							.field("type", "string").field(INDEX, NOT_ANALYZED)
 						.endObject()
@@ -426,38 +426,32 @@ public class ElasticsearchMappings
 
 
 	/**
-	 * Create the Elasticsearch mapping for {@linkplain DetectorState}.
-	 * The '_all' field is disabled as the document isn't meant to be searched.
-	 * 
-	 * The model state string is not searchable (index = 'no') as it could be
-	 * very large.  
-	 * 
+	 * Create the Elasticsearch mapping for {@linkplain ModelState}.
+	 * The model state could potentially be huge (over a gigabyte in size)
+	 * so all analysis by Elasticsearch is disabled.  The only way to
+	 * retrieve the model state is by knowing the ID of a particular
+	 * document or by searching for all documents of this type.
+	 *
 	 * @return
 	 * @throws IOException
 	 */
-	static public XContentBuilder detectorStateMapping() 
+	static public XContentBuilder modelStateMapping()
 	throws IOException
 	{
 		XContentBuilder mapping = jsonBuilder()
 			.startObject()
-				.startObject(DetectorState.TYPE)
+				.startObject(ModelState.TYPE)
+					.field("enabled", false)
 					.startObject("_all")
 						.field("enabled", false)
 					.endObject()
-					.startObject("properties")
-						.startObject(DetectorState.DETECTOR_NAME)
-							.field("type", "string").field(INDEX, NOT_ANALYZED)
-						.endObject()	
-						.startObject(DetectorState.SERIALISED_MODEL)
-							.field("type", "string").field(INDEX, NO)
-						.endObject()					
-					.endObject()
 				.endObject()
 			.endObject();
-			
+
 		return mapping;
 	}
-	
+
+
 	/**
 	 * The Elasticsearch mappings for the usage documents
 	 * 
