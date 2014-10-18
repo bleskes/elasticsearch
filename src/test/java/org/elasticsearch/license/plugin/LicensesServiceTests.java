@@ -32,7 +32,7 @@ import org.elasticsearch.license.TestUtils;
 import org.elasticsearch.license.core.ESLicenses;
 import org.elasticsearch.license.core.LicenseBuilders;
 import org.elasticsearch.license.core.LicenseUtils;
-import org.elasticsearch.license.manager.Utils;
+import org.elasticsearch.license.manager.ESLicenseManager;
 import org.elasticsearch.license.plugin.action.put.PutLicenseRequest;
 import org.elasticsearch.license.plugin.core.*;
 import org.elasticsearch.test.ElasticsearchIntegrationTest;
@@ -148,6 +148,7 @@ public class LicensesServiceTests extends ElasticsearchIntegrationTest {
         ESLicenses licenses = LicenseUtils.readLicensesFromString(licenseOutput);
 
         LicensesManagerService licensesManagerService = licensesManagerService();
+        ESLicenseManager esLicenseManager = ((LicensesService)licensesManagerService).getEsLicenseManager();
         final CountDownLatch latch1 = new CountDownLatch(1);
         licensesManagerService.registerLicenses(new LicensesService.PutLicenseRequestHolder(new PutLicenseRequest().license(licenses), "test"), new ActionListener<ClusterStateUpdateResponse>() {
             @Override
@@ -165,7 +166,7 @@ public class LicensesServiceTests extends ElasticsearchIntegrationTest {
 
         latch1.await();
         LicensesMetaData metaData = clusterService().state().metaData().custom(LicensesMetaData.TYPE);
-        ESLicenses metaDataLicense = Utils.fromSignatures(metaData.getSignatures());
+        ESLicenses metaDataLicense = esLicenseManager.fromSignatures(metaData.getSignatures());
         TestUtils.isSame(licenses, metaDataLicense);
 
 
@@ -192,7 +193,7 @@ public class LicensesServiceTests extends ElasticsearchIntegrationTest {
 
         latch2.await();
         metaData = clusterService().state().metaData().custom(LicensesMetaData.TYPE);
-        metaDataLicense = Utils.fromSignatures(metaData.getSignatures());
+        metaDataLicense = esLicenseManager.fromSignatures(metaData.getSignatures());
         TestUtils.isSame(licenses2, metaDataLicense);
     }
 

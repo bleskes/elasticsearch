@@ -22,6 +22,7 @@ package org.elasticsearch.license.licensor.tools;
 import org.elasticsearch.license.core.ESLicenses;
 import org.elasticsearch.license.core.LicenseUtils;
 import org.elasticsearch.license.manager.ESLicenseManager;
+import org.elasticsearch.license.manager.ESLicenseProvider;
 
 import java.io.File;
 import java.io.IOException;
@@ -109,7 +110,8 @@ public class LicenseVerificationTool {
         Options options = parse(args);
 
         // verify licenses
-        ESLicenseManager licenseManager = ESLicenseManager.createLocalBasedInstance(options.licenses, options.publicKeyFilePath);
+        ESLicenseProvider licenseProvider = new FileBasedESLicenseProvider(options.licenses);
+        ESLicenseManager licenseManager = new ESLicenseManager(licenseProvider);
         licenseManager.verifyLicenses();
 
         // dump effective licences
