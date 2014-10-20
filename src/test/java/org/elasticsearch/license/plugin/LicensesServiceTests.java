@@ -39,6 +39,7 @@ import org.elasticsearch.test.ElasticsearchIntegrationTest;
 import org.elasticsearch.test.InternalTestCluster;
 import org.junit.After;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -46,6 +47,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -103,6 +105,8 @@ public class LicensesServiceTests extends ElasticsearchIntegrationTest {
         });
         latch.await();
         clear();
+        masterClusterService().remove(licensesService());
+        masterClusterService().add(licensesService());
 
     }
 
@@ -116,10 +120,10 @@ public class LicensesServiceTests extends ElasticsearchIntegrationTest {
     public void testInvalidSignedLicenseCheck() throws Exception {
         LicensesManagerService licensesManagerService = licensesManagerService();
 
-        Map<ESLicenses.FeatureType, TestUtils.FeatureAttributes> map = new HashMap<>();
+        Map<String, TestUtils.FeatureAttributes> map = new HashMap<>();
         TestUtils.FeatureAttributes featureAttributes =
                 new TestUtils.FeatureAttributes("shield", "subscription", "platinum", "foo bar Inc.", "elasticsearch", 2, "2014-12-13", "2015-12-13");
-        map.put(ESLicenses.FeatureType.SHIELD, featureAttributes);
+        map.put(TestUtils.SHIELD, featureAttributes);
         String licenseString = TestUtils.generateESLicenses(map);
         String licenseOutput = TestUtils.runLicenseGenerationTool(licenseString, pubKeyPath, priKeyPath);
         ESLicenses licenses = LicenseUtils.readLicensesFromString(licenseOutput);
@@ -127,8 +131,8 @@ public class LicensesServiceTests extends ElasticsearchIntegrationTest {
         assertTrue(LicensesStatus.VALID == licensesManagerService.checkLicenses(licenses));
 
         ESLicenses.ESLicense tamperedLicense = LicenseBuilders.licenseBuilder(true)
-                .fromLicense(licenses.get(ESLicenses.FeatureType.SHIELD))
-                .expiryDate(licenses.get(ESLicenses.FeatureType.SHIELD).expiryDate() + 5 * 24 * 60 * 60 * 1000l)
+                .fromLicense(licenses.get(TestUtils.SHIELD))
+                .expiryDate(licenses.get(TestUtils.SHIELD).expiryDate() + 5 * 24 * 60 * 60 * 1000l)
                 .issuer("elasticsearch")
                 .build();
 
@@ -139,10 +143,10 @@ public class LicensesServiceTests extends ElasticsearchIntegrationTest {
 
     @Test
     public void testStoringLicenses() throws Exception {
-        Map<ESLicenses.FeatureType, TestUtils.FeatureAttributes> map = new HashMap<>();
+        Map<String, TestUtils.FeatureAttributes> map = new HashMap<>();
         TestUtils.FeatureAttributes featureAttributes1 =
                 new TestUtils.FeatureAttributes("shield", "subscription", "platinum", "foo bar Inc.", "elasticsearch", 2, "2014-12-13", "2015-12-13");
-        map.put(ESLicenses.FeatureType.SHIELD, featureAttributes1);
+        map.put(TestUtils.SHIELD, featureAttributes1);
         String licenseString = TestUtils.generateESLicenses(map);
         String licenseOutput = TestUtils.runLicenseGenerationTool(licenseString, pubKeyPath, priKeyPath);
         ESLicenses licenses = LicenseUtils.readLicensesFromString(licenseOutput);
@@ -172,7 +176,7 @@ public class LicensesServiceTests extends ElasticsearchIntegrationTest {
 
         TestUtils.FeatureAttributes featureAttributes2 =
                 new TestUtils.FeatureAttributes("shield", "subscription", "platinum", "foo bar Inc.", "elasticsearch", 2, "2014-12-13", "2016-12-13");
-        map.put(ESLicenses.FeatureType.SHIELD, featureAttributes2);
+        map.put(TestUtils.SHIELD, featureAttributes2);
         licenseString = TestUtils.generateESLicenses(map);
         licenseOutput = TestUtils.runLicenseGenerationTool(licenseString, pubKeyPath, priKeyPath);
         ESLicenses licenses2 = LicenseUtils.readLicensesFromString(licenseOutput);
@@ -223,18 +227,20 @@ public class LicensesServiceTests extends ElasticsearchIntegrationTest {
     private class TestLicenseClientListener implements LicensesClientService.Listener {
 
         AtomicBoolean shouldBeEnabled = new AtomicBoolean(false);
-        CountDownLatch latch = new CountDownLatch(2);
         AtomicBoolean processed = new AtomicBoolean(false);
 
         private TestLicenseClientListener(boolean shouldBeEnabled) {
             this.shouldBeEnabled.getAndSet(shouldBeEnabled);
         }
 
+        private void reset() {
+            processed.set(false);
+        }
+
         @Override
         public void onEnabled() {
             if (this.shouldBeEnabled.get()) {
-                latch.countDown();
-                processed.getAndSet(true);
+                processed.set(true);
             } else {
                 fail("onEnabled should not have been called");
             }
@@ -244,12 +250,10 @@ public class LicensesServiceTests extends ElasticsearchIntegrationTest {
         @Override
         public void onDisabled() {
             if (!this.shouldBeEnabled.get()) {
-                latch.countDown();
-                processed.getAndSet(true);
+                processed.set(true);
             } else {
                 fail("onDisabled should not have been called");
             }
-
         }
     }
 
@@ -261,18 +265,22 @@ public class LicensesServiceTests extends ElasticsearchIntegrationTest {
         // feature should be onEnabled
 
         LicensesClientService clientService = licensesClientService();
+        LicensesManagerService managerService = licensesManagerService();
         final TestLicenseClientListener testLicenseClientListener = new TestLicenseClientListener(false);
         clientService.register("shield", null, testLicenseClientListener);
 
-        while(!testLicenseClientListener.processed.get()) {}
+        for (String enabledFeature : managerService.enabledFeatures()) {
+            assertFalse(enabledFeature.equals("shield"));
+        }
+        logger.info("pass initial check");
 
-        testLicenseClientListener.shouldBeEnabled.getAndSet(true);
-        testLicenseClientListener.processed.getAndSet(false);
+        assertFalse(testLicenseClientListener.processed.get());
+        testLicenseClientListener.shouldBeEnabled.set(true);
 
-        Map<ESLicenses.FeatureType, TestUtils.FeatureAttributes> map = new HashMap<>();
+        Map<String, TestUtils.FeatureAttributes> map = new HashMap<>();
         TestUtils.FeatureAttributes featureAttributes1 =
                 new TestUtils.FeatureAttributes("shield", "subscription", "platinum", "foo bar Inc.", "elasticsearch", 2, "2014-12-13", "2015-12-13");
-        map.put(ESLicenses.FeatureType.SHIELD, featureAttributes1);
+        map.put(TestUtils.SHIELD, featureAttributes1);
         String licenseString = TestUtils.generateESLicenses(map);
         String licenseOutput = TestUtils.runLicenseGenerationTool(licenseString, pubKeyPath, priKeyPath);
         ESLicenses licenses = LicenseUtils.readLicensesFromString(licenseOutput);
@@ -295,13 +303,17 @@ public class LicensesServiceTests extends ElasticsearchIntegrationTest {
 
         latch1.await();
 
-        testLicenseClientListener.latch.await();
+        logger.info("waiting for onEnabled");
+        while(!testLicenseClientListener.processed.get()) {}
+
+        Set<String> enabledFeatures = licensesManagerService.enabledFeatures();
+        assertTrue(enabledFeatures.contains("shield"));
+
     }
 
     @Test
     public void testFeatureWithoutLicense() throws Exception {
         LicensesClientService clientService = licensesClientService();
-        final CountDownLatch latch = new CountDownLatch(1);
         clientService.register("marvel", null, new LicensesClientService.Listener() {
             @Override
             public void onEnabled() {
@@ -310,10 +322,16 @@ public class LicensesServiceTests extends ElasticsearchIntegrationTest {
 
             @Override
             public void onDisabled() {
-                latch.countDown();
             }
         });
-        latch.await();
+
+        LicensesManagerService managerService = licensesManagerService();
+        assertFalse("feature should not be enabled: no licenses registered", managerService.enabledFeatures().contains("marvel"));
+    }
+
+    @Test @Ignore
+    public void testLicenseExpiry() throws Exception {
+        //TODO, first figure out how to generate a license with a quick expiry in matter of seconds
     }
 
 
@@ -327,6 +345,11 @@ public class LicensesServiceTests extends ElasticsearchIntegrationTest {
         return clients.getInstance(LicensesClientService.class, clients.getMasterName());
     }
 
+    private LicensesService licensesService() {
+        final InternalTestCluster clients = internalCluster();
+        return clients.getInstance(LicensesService.class, clients.getMasterName());
+    }
+
     private ClusterService masterClusterService() {
         final InternalTestCluster clients = internalCluster();
         return clients.getInstance(ClusterService.class, clients.getMasterName());
@@ -337,5 +360,6 @@ public class LicensesServiceTests extends ElasticsearchIntegrationTest {
         LicensesService service = clients.getInstance(LicensesService.class, clients.getMasterName());
         service.clear();
     }
+
 
 }

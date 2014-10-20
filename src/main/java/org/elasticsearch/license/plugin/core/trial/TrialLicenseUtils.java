@@ -62,7 +62,7 @@ public class TrialLicenseUtils {
         return TrialLicensesBuilder.trialLicenseBuilder()
                 .uid(uid)
                 .issuedTo(issuedTo)
-                .feature(ESLicenses.FeatureType.fromString(feature))
+                .feature(feature)
                 .maxNodes(maxNodes)
                 .issueDate(issueDate)
                 .expiryDate(expiryDate)
@@ -71,8 +71,7 @@ public class TrialLicenseUtils {
 
     public static String toEncodedTrialLicense(TrialLicenses.TrialLicense trialLicense) {
         byte[] uidBytes = trialLicense.uid().getBytes(Charset.forName("UTF-8"));
-        String feature = trialLicense.feature().string();
-        byte[] featureBytes = feature.getBytes(Charset.forName("UTF-8"));
+        byte[] featureBytes = trialLicense.feature().getBytes(Charset.forName("UTF-8"));
         byte[] issuedToBytes = trialLicense.issuedTo().getBytes(Charset.forName("UTF-8"));
 
         // uid len + uid bytes + issuedTo len + issuedTo bytes + feature bytes length + feature bytes + maxNodes + issueDate + expiryDate
@@ -148,7 +147,7 @@ public class TrialLicenseUtils {
         builder.put(TrialLicenseFields.TYPE, ESLicenses.Type.TRIAL.string());
         builder.put(TrialLicenseFields.SUBSCRIPTION_TYPE, ESLicenses.SubscriptionType.NONE.string());
         builder.put(TrialLicenseFields.ISSUE_DATE, trialLicense.issueDate());
-        builder.put(TrialLicenseFields.FEATURE, trialLicense.feature().string());
+        builder.put(TrialLicenseFields.FEATURE, trialLicense.feature());
         builder.put(TrialLicenseFields.EXPIRY_DATE, trialLicense.expiryDate());
         builder.put(TrialLicenseFields.MAX_NODES, trialLicense.maxNodes());
         builder.put(TrialLicenseFields.ISSUED_TO, trialLicense.issuedTo());
@@ -160,7 +159,7 @@ public class TrialLicenseUtils {
                 .uid((String) map.get(TrialLicenseFields.UID))
                 .issuedTo((String) map.get(TrialLicenseFields.ISSUED_TO))
                 .maxNodes((int) map.get(TrialLicenseFields.MAX_NODES))
-                .feature(ESLicenses.FeatureType.fromString((String) map.get(TrialLicenseFields.FEATURE)))
+                .feature((String) map.get(TrialLicenseFields.FEATURE))
                 .issueDate((long) map.get(TrialLicenseFields.ISSUE_DATE))
                 .expiryDate((long) map.get(TrialLicenseFields.EXPIRY_DATE))
                 .build();

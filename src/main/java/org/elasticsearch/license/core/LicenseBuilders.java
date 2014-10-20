@@ -63,7 +63,7 @@ public class LicenseBuilders {
         }
     }
 
-    public static ESLicenses removeFeatures(ESLicenses licenses, Set<FeatureType> featureTypesToDelete) {
+    public static ESLicenses removeFeatures(ESLicenses licenses, Set<String> featureTypesToDelete) {
         final LicensesBuilder licensesBuilder = licensesBuilder();
         for (ESLicense license : licenses) {
             if (!featureTypesToDelete.contains(license.feature())) {
@@ -74,7 +74,7 @@ public class LicenseBuilders {
     }
 
     public static class LicensesBuilder {
-        private Map<FeatureType, ESLicense> licenseMap = new HashMap<>();
+        private Map<String, ESLicense> licenseMap = new HashMap<>();
 
         public LicensesBuilder() {
         }
@@ -112,13 +112,13 @@ public class LicenseBuilders {
                 }
 
                 @Override
-                public Set<FeatureType> features() {
+                public Set<String> features() {
                     return licenseMap.keySet();
                 }
 
                 @Override
-                public ESLicense get(FeatureType featureType) {
-                    return licenseMap.get(featureType);
+                public ESLicense get(String feature) {
+                    return licenseMap.get(feature);
                 }
 
                 @Override
@@ -138,7 +138,7 @@ public class LicenseBuilders {
          * @param license license in question
          */
         private void putIfAppropriate(ESLicense license) {
-            final FeatureType featureType = license.feature();
+            final String featureType = license.feature();
             if (licenseMap.containsKey(featureType)) {
                 final ESLicense previousLicense = licenseMap.get(featureType);
                 if (license.expiryDate() > previousLicense.expiryDate()) {
@@ -157,7 +157,7 @@ public class LicenseBuilders {
         private long issueDate = -1;
         private Type type;
         private SubscriptionType subscriptionType = SubscriptionType.DEFAULT;
-        private FeatureType feature;
+        private String feature;
         private String signature;
         private long expiryDate = -1;
         private int maxNodes;
@@ -199,7 +199,7 @@ public class LicenseBuilders {
             return this;
         }
 
-        public LicenseBuilder feature(FeatureType feature) {
+        public LicenseBuilder feature(String feature) {
             this.feature = feature;
             return this;
         }
@@ -265,7 +265,7 @@ public class LicenseBuilders {
                 }
 
                 @Override
-                public FeatureType feature() {
+                public String feature() {
                     return feature;
                 }
 
