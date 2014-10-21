@@ -17,8 +17,12 @@
 
 package org.elasticsearch.shield;
 
+import org.elasticsearch.common.Strings;
+import org.elasticsearch.common.io.stream.StreamInput;
+import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.shield.authz.SystemRole;
 
+import java.io.IOException;
 import java.util.Arrays;
 
 /**
@@ -43,6 +47,29 @@ public abstract class User {
         return this == SYSTEM;
     }
 
+    public static User readFrom(StreamInput input) throws IOException {
+        if (input.readBoolean()) {
+            String name = input.readString();
+            if (!System.NAME.equals(name)) {
+                throw new ShieldException("Invalid system user");
+            }
+            return SYSTEM;
+        }
+        return new Simple(input.readString(), input.readStringArray());
+    }
+
+    public static void writeTo(User user, StreamOutput output) throws IOException {
+        if (user.isSystem()) {
+            output.writeBoolean(true);
+            output.writeString(System.NAME);
+            return;
+        }
+        output.writeBoolean(false);
+        Simple simple = (Simple) user;
+        output.writeString(simple.username);
+        output.writeStringArray(simple.roles);
+    }
+
     public static class Simple extends User {
 
         private final String username;
@@ -50,7 +77,7 @@ public abstract class User {
 
         public Simple(String username, String... roles) {
             this.username = username;
-            this.roles = roles;
+            this.roles = roles == null ? Strings.EMPTY_ARRAY : roles;
         }
 
         @Override
@@ -103,5 +130,4 @@ public abstract class User {
         }
 
     }
-
 }

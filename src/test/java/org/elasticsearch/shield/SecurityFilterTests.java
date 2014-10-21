@@ -29,8 +29,6 @@ import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.shield.audit.AuditTrail;
 import org.elasticsearch.shield.authc.AuthenticationException;
 import org.elasticsearch.shield.authc.AuthenticationService;
-import org.elasticsearch.shield.authc.AuthenticationToken;
-import org.elasticsearch.shield.authc.system.SystemRealm;
 import org.elasticsearch.shield.authz.AuthorizationException;
 import org.elasticsearch.shield.authz.AuthorizationService;
 import org.elasticsearch.shield.key.KeyService;
@@ -71,36 +69,30 @@ public class SecurityFilterTests extends ElasticsearchTestCase {
     }
 
     @Test
-    public void testProcess() throws Exception {
+    public void testAuthenticateAndAuthorize() throws Exception {
         TransportRequest request = new InternalRequest();
-        AuthenticationToken token = mock(AuthenticationToken.class);
         User user = new User.Simple("_username", "r1");
-        when(authcService.token("_action", request, null)).thenReturn(token);
-        when(authcService.authenticate("_action", request, token)).thenReturn(user);
-        filter.authenticateAndAuthorize("_action", request);
+        when(authcService.authenticate("_action", request, null)).thenReturn(user);
+        filter.authenticateAndAuthorize("_action", request, null);
         verify(authzService).authorize(user, "_action", request);
     }
 
     @Test
-    public void testProcess_InternalAction() throws Exception {
+    public void testAuthenticateAndAuthorize_InternalAction() throws Exception {
         TransportRequest request = new InternalRequest();
-        AuthenticationToken token = mock(AuthenticationToken.class);
         User user = new User.Simple("_username", "r1");
-        when(authcService.token("internal:_action", request, SystemRealm.TOKEN)).thenReturn(token);
-        when(authcService.authenticate("internal:_action", request, token)).thenReturn(user);
-        filter.authenticateAndAuthorize("internal:_action", request);
+        when(authcService.authenticate("internal:_action", request, User.SYSTEM)).thenReturn(user);
+        filter.authenticateAndAuthorize("internal:_action", request, User.SYSTEM);
         verify(authzService).authorize(user, "internal:_action", request);
     }
 
     @Test
-    public void testProcess_AuthenticationFails_Authenticate() throws Exception {
+    public void testAuthenticateAndAuthorize_AuthenticationFails_Authenticate() throws Exception {
         thrown.expect(AuthenticationException.class);
         thrown.expectMessage("failed authc");
         TransportRequest request = new InternalRequest();
-        AuthenticationToken token = mock(AuthenticationToken.class);
-        when(authcService.token("_action", request, null)).thenReturn(token);
-        when(authcService.authenticate("_action", request, token)).thenThrow(new AuthenticationException("failed authc"));
-        filter.authenticateAndAuthorize("_action", request);
+        when(authcService.authenticate("_action", request, null)).thenThrow(new AuthenticationException("failed authc"));
+        filter.authenticateAndAuthorize("_action", request, null);
     }
 
     @Test
@@ -108,42 +100,38 @@ public class SecurityFilterTests extends ElasticsearchTestCase {
         thrown.expect(AuthenticationException.class);
         thrown.expectMessage("failed authc");
         RestRequest request = mock(RestRequest.class);
-        AuthenticationToken token = mock(AuthenticationToken.class);
-        when(authcService.token(request)).thenReturn(token);
-        when(authcService.authenticate(request, token)).thenThrow(new AuthenticationException("failed authc"));
+        when(authcService.authenticate(request)).thenThrow(new AuthenticationException("failed authc"));
         filter.authenticate(request);
     }
 
     @Test
-    public void testProcess_AuthenticationFails_NoToken() throws Exception {
+    public void testAuthenticateAndAuthorize_AuthenticationFails_NoToken() throws Exception {
         thrown.expect(AuthenticationException.class);
         thrown.expectMessage("failed authc");
         TransportRequest request = new InternalRequest();
-        when(authcService.token("_action", request, null)).thenThrow(new AuthenticationException("failed authc"));
-        filter.authenticateAndAuthorize("_action", request);
+        when(authcService.authenticate("_action", request, null)).thenThrow(new AuthenticationException("failed authc"));
+        filter.authenticateAndAuthorize("_action", request, null);
     }
 
     @Test
-    public void testProcess_Rest_AuthenticationFails_NoToken() throws Exception {
+    public void testAuthenticateAndAuthorize_Rest_AuthenticationFails_NoToken() throws Exception {
         thrown.expect(AuthenticationException.class);
         thrown.expectMessage("failed authc");
         RestRequest request = mock(RestRequest.class);
-        when(authcService.token(request)).thenThrow(new AuthenticationException("failed authc"));
+        when(authcService.authenticate(request)).thenThrow(new AuthenticationException("failed authc"));
         filter.authenticate(request);
     }
 
 
     @Test
-    public void testProcess_AuthorizationFails() throws Exception {
+    public void testAuthenticateAndAuthorize_AuthorizationFails() throws Exception {
         thrown.expect(AuthorizationException.class);
         thrown.expectMessage("failed authz");
         TransportRequest request = new InternalRequest();
-        AuthenticationToken token = mock(AuthenticationToken.class);
         User user = new User.Simple("_username", "r1");
-        when(authcService.token("_action", request, null)).thenReturn(token);
-        when(authcService.authenticate("_action", request, token)).thenReturn(user);
+        when(authcService.authenticate("_action", request, null)).thenReturn(user);
         doThrow(new AuthorizationException("failed authz")).when(authzService).authorize(user, "_action", request);
-        filter.authenticateAndAuthorize("_action", request);
+        filter.authenticateAndAuthorize("_action", request, null);
     }
 
     @Test
@@ -152,7 +140,7 @@ public class SecurityFilterTests extends ElasticsearchTestCase {
         SecurityFilter.ServerTransport transport = new SecurityFilter.ServerTransport(filter);
         InternalRequest request = new InternalRequest();
         transport.inbound("_action", request);
-        verify(filter).authenticateAndAuthorize("_action", request);
+        verify(filter).authenticateAndAuthorize("_action", request, null);
     }
 
     @Test
@@ -162,7 +150,7 @@ public class SecurityFilterTests extends ElasticsearchTestCase {
         filter = mock(SecurityFilter.class);
         SecurityFilter.ServerTransport transport = new SecurityFilter.ServerTransport(filter);
         InternalRequest request = new InternalRequest();
-        doThrow(new RuntimeException("process-error")).when(filter).authenticateAndAuthorize("_action", request);
+        doThrow(new RuntimeException("process-error")).when(filter).authenticateAndAuthorize("_action", request, null);
         transport.inbound("_action", request);
     }
 
@@ -175,7 +163,7 @@ public class SecurityFilterTests extends ElasticsearchTestCase {
         ActionFilterChain chain = mock(ActionFilterChain.class);
         when(filter.unsign(any(User.class), eq("_action"), eq(request))).thenReturn(request);
         action.apply("_action", request, listener, chain);
-        verify(filter).authenticateAndAuthorize("_action", request);
+        verify(filter).authenticateAndAuthorize("_action", request, User.SYSTEM);
         verify(chain).proceed(eq("_action"), eq(request), isA(SecurityFilter.SigningListener.class));
     }
 
@@ -187,7 +175,7 @@ public class SecurityFilterTests extends ElasticsearchTestCase {
         ActionListener listener = mock(ActionListener.class);
         ActionFilterChain chain = mock(ActionFilterChain.class);
         RuntimeException exception = new RuntimeException("process-error");
-        doThrow(exception).when(filter).authenticateAndAuthorize("_action", request);
+        doThrow(exception).when(filter).authenticateAndAuthorize("_action", request, User.SYSTEM);
         action.apply("_action", request, listener, chain);
         verify(listener).onFailure(exception);
         verifyNoMoreInteractions(chain);
@@ -201,9 +189,7 @@ public class SecurityFilterTests extends ElasticsearchTestCase {
         ActionFilterChain chain = mock(ActionFilterChain.class);
         SignatureException sigException = new SignatureException("bad bad boy");
         User user = mock(User.class);
-        AuthenticationToken token = mock(AuthenticationToken.class);
-        when(authcService.token("_action", request, null)).thenReturn(token);
-        when(authcService.authenticate("_action", request, token)).thenReturn(user);
+        when(authcService.authenticate("_action", request, User.SYSTEM)).thenReturn(user);
         when(keyService.signed("scroll_id")).thenReturn(true);
         doThrow(sigException).when(keyService).unsignAndVerify("scroll_id");
         action.apply("_action", request, listener, chain);
@@ -219,7 +205,6 @@ public class SecurityFilterTests extends ElasticsearchTestCase {
         RestChannel channel = mock(RestChannel.class);
         RestFilterChain chain = mock(RestFilterChain.class);
         rest.process(request, channel, chain);
-        verify(authcService).token(request);
         verify(restController).registerFilter(rest);
     }
 
@@ -232,7 +217,7 @@ public class SecurityFilterTests extends ElasticsearchTestCase {
         RestRequest request = mock(RestRequest.class);
         RestChannel channel = mock(RestChannel.class);
         RestFilterChain chain = mock(RestFilterChain.class);
-        doThrow(exception).when(authcService).token(request);
+        doThrow(exception).when(authcService).authenticate(request);
         rest.process(request, channel, chain);
         verify(restController).registerFilter(rest);
     }
