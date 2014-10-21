@@ -19,6 +19,7 @@ package org.elasticsearch.shield.authz;
 
 import com.carrotsearch.randomizedtesting.annotations.Repeat;
 import org.elasticsearch.ElasticsearchIllegalArgumentException;
+import org.elasticsearch.common.base.Predicate;
 import org.elasticsearch.shield.support.AutomatonPredicate;
 import org.elasticsearch.shield.support.Automatons;
 import org.elasticsearch.test.ElasticsearchTestCase;
@@ -159,4 +160,14 @@ public class PrivilegeTests extends ElasticsearchTestCase {
         }
     }
 
+    @Test
+    public void testSystem() throws Exception {
+        Predicate<String> predicate = Privilege.SYSTEM.predicate();
+        assertThat(predicate.apply("indices:monitor/whatever"), is(true));
+        assertThat(predicate.apply("cluster:monitor/whatever"), is(true));
+        assertThat(predicate.apply("internal:whatever"), is(true));
+        assertThat(predicate.apply("indices:whatever"), is(false));
+        assertThat(predicate.apply("cluster:whatever"), is(false));
+        assertThat(predicate.apply("whatever"), is(false));
+    }
 }
