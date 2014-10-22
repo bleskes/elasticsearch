@@ -93,7 +93,8 @@ public class AnomalyRecord
 	
 	private static final Logger s_Logger = Logger.getLogger(AnomalyRecord.class);
 	
-	private String m_Id;
+	private String m_DetectorName;
+	private int m_IdNum;
 	private double m_Probability;
 	private String m_ByFieldName;
 	private String m_ByFieldValue;
@@ -123,17 +124,63 @@ public class AnomalyRecord
 	 */
 	public String getId()
 	{
-		return m_Id;
+		if (m_IdNum == 0)
+		{
+			return null;
+		}
+		return m_Parent + m_DetectorName + m_IdNum;
 	}
 
 	/**
 	 * This should only be called by code that's reading records from the data
 	 * store.  The ID must be set to the data stores's unique key to this
 	 * anomaly record.
+	 *
+	 * TODO - this is a breach of encapsulation that should be rectified when
+	 * a big enough change is made to justify invalidating all previously
+	 * stored data.  Currently it makes an assumption about the format of the
+	 * detector name, which should be opaque to the Java code.
 	 */
 	public void setId(String id)
 	{
-		m_Id = id;
+		final int epochLen = 10;
+		int idStart = -1;
+		if (m_PartitionFieldValue == null || m_PartitionFieldValue.isEmpty())
+		{
+			idStart = id.lastIndexOf("/") + 1;
+		}
+		else
+		{
+			idStart = id.lastIndexOf("/" + m_PartitionFieldValue);
+			if (idStart >= epochLen)
+			{
+				idStart += 1 + m_PartitionFieldValue.length();
+			}
+		}
+		if (idStart <= epochLen)
+		{
+			return;
+		}
+		m_Parent = id.substring(0, epochLen).intern();
+		m_DetectorName = id.substring(epochLen, idStart).intern();
+		m_IdNum = Integer.parseInt(id.substring(idStart));
+	}
+
+
+	/**
+	 * Generate the data store ID for this record.
+	 *
+	 * TODO - the current format is hard to parse back into its constituent
+	 * parts, but cannot be changed without breaking backwards compatibility.
+	 * If backwards compatibility is ever broken for some other reason then the
+	 * opportunity should be taken to change this format.
+	 */
+	public String generateNewId(String parent, String detectorName, int count)
+	{
+		m_Parent = parent.intern();
+		m_DetectorName = detectorName.intern();
+		m_IdNum = count;
+		return getId();
 	}
 
 
@@ -188,7 +235,7 @@ public class AnomalyRecord
 
 	public void setByFieldName(String value)
 	{
-		m_ByFieldName = value;
+		m_ByFieldName = value.intern();
 	}
 
 	public String getByFieldValue()
@@ -198,7 +245,7 @@ public class AnomalyRecord
 
 	public void setByFieldValue(String value)
 	{
-		m_ByFieldValue = value;
+		m_ByFieldValue = value.intern();
 	}
 
 	public String getPartitionFieldName()
@@ -208,7 +255,7 @@ public class AnomalyRecord
 
 	public void setPartitionFieldName(String field)
 	{
-		m_PartitionFieldName = field;
+		m_PartitionFieldName = field.intern();
 	}
 
 	public String getPartitionFieldValue()
@@ -218,7 +265,7 @@ public class AnomalyRecord
 
 	public void setPartitionFieldValue(String value)
 	{
-		m_PartitionFieldValue = value;
+		m_PartitionFieldValue = value.intern();
 	}
 
 	public String getFunction()
@@ -228,7 +275,7 @@ public class AnomalyRecord
 
 	public void setFunction(String name)
 	{
-		m_Function = name;
+		m_Function = name.intern();
 	}
 
 	public Double getTypical()
@@ -258,7 +305,7 @@ public class AnomalyRecord
 
 	public void setFieldName(String field)
 	{
-		m_FieldName = field;
+		m_FieldName = field.intern();
 	}
 
 	public String getOverFieldName()
@@ -268,7 +315,7 @@ public class AnomalyRecord
 
 	public void setOverFieldName(String name)
 	{
-		m_OverFieldName = name;
+		m_OverFieldName = name.intern();
 	}
 
 	public String getOverFieldValue()
@@ -278,7 +325,7 @@ public class AnomalyRecord
 
 	public void setOverFieldValue(String value)
 	{
-		m_OverFieldValue = value;
+		m_OverFieldValue = value.intern();
 	}
 
 	public List<AnomalyCause> getCauses()
@@ -307,7 +354,7 @@ public class AnomalyRecord
 	
 	public void setParent(String parent)
 	{
-		m_Parent = parent;
+		m_Parent = parent.intern();
 	}	
 
 

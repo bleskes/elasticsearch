@@ -166,7 +166,7 @@ public class ElasticsearchPersister implements JobResultsPersister
 				{
 					content = serialiseRecord(record, bucket.getTimestamp());
 					
-					String recordId = bucket.getEpoch() + detector.getName() + count;					
+					String recordId = record.generateNewId(bucket.getId(), detector.getName(), count);
 					bulkRequest.add(m_Client.prepareIndex(m_JobId, AnomalyRecord.TYPE, recordId)
 							.setSource(content)
 							.setParent(bucket.getId()));					
