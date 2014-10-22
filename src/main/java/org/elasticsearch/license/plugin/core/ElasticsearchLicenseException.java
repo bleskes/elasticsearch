@@ -19,7 +19,6 @@
 
 package org.elasticsearch.license.plugin.core;
 
-import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.transport.RemoteTransportException;
 

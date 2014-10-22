@@ -22,7 +22,9 @@ package org.elasticsearch.license.plugin.action.put;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.support.master.AcknowledgedRequestBuilder;
 import org.elasticsearch.client.ClusterAdminClient;
-import org.elasticsearch.license.core.ESLicenses;
+import org.elasticsearch.license.core.ESLicense;
+
+import java.util.Set;
 
 /**
  * Register license request builder
@@ -41,11 +43,11 @@ public class PutLicenseRequestBuilder extends AcknowledgedRequestBuilder<PutLice
     /**
      * Sets the license
      *
-     * @param license license
+     * @param licenses license
      * @return this builder
      */
-    public PutLicenseRequestBuilder setLicense(ESLicenses license) {
-        request.license(license);
+    public PutLicenseRequestBuilder setLicense(Set<ESLicense> licenses) {
+        request.licenses(licenses);
         return this;
     }
 
