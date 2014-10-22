@@ -17,17 +17,15 @@
  * under the License.
  */
 
-package org.elasticsearch.license.plugin;
+package org.elasticsearch.license.core;
 
-import org.elasticsearch.common.inject.AbstractModule;
-import org.elasticsearch.common.inject.Scopes;
-import org.elasticsearch.license.plugin.core.LicensesService;
+import java.nio.charset.Charset;
 
-public class LicenseModule extends AbstractModule {
-    @Override
-    protected void configure() {
-        //TODO: bind LicensesManagementService and LicensesValidationService to LicensesServices instead
-        //bind(ESLicenseManager.class).asEagerSingleton();
-        bind(LicensesService.class).in(Scopes.SINGLETON);
-    }
+public class LicensesCharset {
+
+    /**
+     * All operations in should use the universal UTF-8 character set.
+     */
+    public static final Charset UTF_8 = Charset.forName("UTF-8");
+
 }
