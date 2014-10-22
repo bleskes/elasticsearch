@@ -513,8 +513,8 @@ public class ProcessCtrl
 		{			
 			File limitConfigFile = File.createTempFile("limitconfig", ".conf");
 			writeLimits(job.getAnalysisLimits(), limitConfigFile);		
-			String limitConfig = LIMIT_CONFIG_ARG + limitConfigFile.toString();
-			command.add(limitConfig);
+			String limits = LIMIT_CONFIG_ARG + limitConfigFile.toString();
+			command.add(limits);
 		}
 				
 		if (modelConfigFilePresent())
