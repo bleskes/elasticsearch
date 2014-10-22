@@ -65,6 +65,7 @@ public class SecuredTransportModule extends AbstractShieldModule.Spawn implement
         if (clientMode) {
             // no ip filtering on the client
             bind(N2NNettyUpstreamHandler.class).toProvider(Providers.<N2NNettyUpstreamHandler>of(null));
+            bind(TransportFilter.class).toInstance(TransportFilter.NOOP);
             return;
         }
 
