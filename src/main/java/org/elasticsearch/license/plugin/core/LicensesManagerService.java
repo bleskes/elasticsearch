@@ -24,6 +24,7 @@ import org.elasticsearch.cluster.ack.ClusterStateUpdateResponse;
 import org.elasticsearch.common.inject.ImplementedBy;
 import org.elasticsearch.license.core.ESLicense;
 
+import java.util.List;
 import java.util.Set;
 
 import static org.elasticsearch.license.plugin.core.LicensesService.DeleteLicenseRequestHolder;
@@ -42,5 +43,5 @@ public interface LicensesManagerService {
 
     public Set<String> enabledFeatures();
 
-    public Set<ESLicense> getLicenses();
+    public List<ESLicense> getLicenses();
 }

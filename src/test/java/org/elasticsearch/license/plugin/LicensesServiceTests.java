@@ -131,7 +131,7 @@ public class LicensesServiceTests extends ElasticsearchIntegrationTest {
         map.put(TestUtils.SHIELD, featureAttributes);
         String licenseString = TestUtils.generateESLicenses(map);
         String licenseOutput = TestUtils.runLicenseGenerationTool(licenseString, pubKeyPath, priKeyPath);
-        Set<ESLicense> licenses = ESLicenses.fromSource(licenseOutput);
+        Set<ESLicense> licenses = new HashSet<>(ESLicenses.fromSource(licenseOutput));
 
         assertTrue(LicensesStatus.VALID == licensesManagerService.checkLicenses(licenses));
 
@@ -155,7 +155,7 @@ public class LicensesServiceTests extends ElasticsearchIntegrationTest {
         map.put(TestUtils.SHIELD, featureAttributes1);
         String licenseString = TestUtils.generateESLicenses(map);
         String licenseOutput = TestUtils.runLicenseGenerationTool(licenseString, pubKeyPath, priKeyPath);
-        Set<ESLicense> licenses = ESLicenses.fromSource(licenseOutput);
+        List<ESLicense> licenses = ESLicenses.fromSource(licenseOutput);
 
         LicensesManagerService licensesManagerService = masterLicensesManagerService();
         ESLicenseManager esLicenseManager = ((LicensesService) licensesManagerService).getEsLicenseManager();
@@ -177,7 +177,7 @@ public class LicensesServiceTests extends ElasticsearchIntegrationTest {
         latch1.await();
         LicensesMetaData metaData = clusterService().state().metaData().custom(LicensesMetaData.TYPE);
         Set<ESLicense> metaDataLicense = esLicenseManager.fromSignatures(metaData.getSignatures());
-        TestUtils.isSame(licenses, metaDataLicense);
+        TestUtils.isSame(new HashSet<>(licenses), metaDataLicense);
 
 
         TestUtils.FeatureAttributes featureAttributes2 =
@@ -185,7 +185,7 @@ public class LicensesServiceTests extends ElasticsearchIntegrationTest {
         map.put(TestUtils.SHIELD, featureAttributes2);
         licenseString = TestUtils.generateESLicenses(map);
         licenseOutput = TestUtils.runLicenseGenerationTool(licenseString, pubKeyPath, priKeyPath);
-        Set<ESLicense> licenses2 = ESLicenses.fromSource(licenseOutput);
+        List<ESLicense> licenses2 = ESLicenses.fromSource(licenseOutput);
         final CountDownLatch latch2 = new CountDownLatch(1);
         licensesManagerService.registerLicenses(new LicensesService.PutLicenseRequestHolder(new PutLicenseRequest().licenses(licenses2), "test"), new ActionListener<ClusterStateUpdateResponse>() {
             @Override
@@ -204,7 +204,7 @@ public class LicensesServiceTests extends ElasticsearchIntegrationTest {
         latch2.await();
         metaData = clusterService().state().metaData().custom(LicensesMetaData.TYPE);
         metaDataLicense = esLicenseManager.fromSignatures(metaData.getSignatures());
-        TestUtils.isSame(licenses2, metaDataLicense);
+        TestUtils.isSame(new HashSet<>(licenses2), metaDataLicense);
     }
 
     @Test
@@ -295,7 +295,7 @@ public class LicensesServiceTests extends ElasticsearchIntegrationTest {
         map.put(TestUtils.SHIELD, featureAttributes1);
         String licenseString = TestUtils.generateESLicenses(map);
         String licenseOutput = TestUtils.runLicenseGenerationTool(licenseString, pubKeyPath, priKeyPath);
-        Set<ESLicense> licenses = ESLicenses.fromSource(licenseOutput);
+        List<ESLicense> licenses = ESLicenses.fromSource(licenseOutput);
 
         final CountDownLatch latch1 = new CountDownLatch(1);
         masterLicensesManagerService.registerLicenses(new LicensesService.PutLicenseRequestHolder(new PutLicenseRequest().licenses(licenses), "test"), new ActionListener<ClusterStateUpdateResponse>() {

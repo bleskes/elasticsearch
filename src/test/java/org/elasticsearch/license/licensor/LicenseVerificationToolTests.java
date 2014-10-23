@@ -32,6 +32,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -56,7 +57,7 @@ public class LicenseVerificationToolTests extends AbstractLicensingTestBase {
 
         String effectiveLicenseStr = runLicenseVerificationTool(new String[]{firstLicenseFile, secondLicenseFile});
 
-        Set<ESLicense> esLicensesOutput = ESLicenses.fromSource(effectiveLicenseStr);
+        Set<ESLicense> esLicensesOutput = new HashSet<>(ESLicenses.fromSource(effectiveLicenseStr));
         map.put(TestUtils.SHIELD, featureWithLongerExpiryDate);
 
         // verify that the effective license strips out license for the same feature with earlier expiry dates
@@ -81,7 +82,7 @@ public class LicenseVerificationToolTests extends AbstractLicensingTestBase {
         String secondLicenseFile = getAsFilePath(signedLicense);
 
         String effectiveLicenseStr = runLicenseVerificationTool(new String[]{firstLicenseFile, secondLicenseFile});
-        Set<ESLicense> esLicensesOutput = ESLicenses.fromSource(effectiveLicenseStr);
+        Set<ESLicense> esLicensesOutput = new HashSet<>(ESLicenses.fromSource(effectiveLicenseStr));
 
         // verify that the effective license contains both feature licenses
         TestUtils.verifyESLicenses(esLicensesOutput, map);
@@ -114,7 +115,7 @@ public class LicenseVerificationToolTests extends AbstractLicensingTestBase {
         String secondLicenseFile = getAsFilePath(signedLicense);
 
         String effectiveLicenseStr = runLicenseVerificationTool(new String[]{firstLicenseFile, secondLicenseFile});
-        Set<ESLicense> esLicensesOutput = ESLicenses.fromSource(effectiveLicenseStr);
+        Set<ESLicense> esLicensesOutput = new HashSet<>(ESLicenses.fromSource(effectiveLicenseStr));
 
         map.put(TestUtils.SHIELD, shieldFeatureWithLongerExpiryDate);
         map.put(TestUtils.MARVEL, marvelFeatureWithLongerExpiryDate);

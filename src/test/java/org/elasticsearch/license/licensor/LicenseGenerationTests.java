@@ -27,9 +27,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.text.ParseException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -45,7 +43,7 @@ public class LicenseGenerationTests extends AbstractLicensingTestBase {
 
         String licenseOutput = generateSignedLicenses(map);
 
-        Set<ESLicense> esLicensesOutput = ESLicenses.fromSource(licenseOutput);
+        Set<ESLicense> esLicensesOutput = new HashSet<>(ESLicenses.fromSource(licenseOutput));
 
         TestUtils.verifyESLicenses(esLicensesOutput, map);
     }
@@ -63,7 +61,7 @@ public class LicenseGenerationTests extends AbstractLicensingTestBase {
 
         String licenseOutput = generateSignedLicenses(map);
 
-        Set<ESLicense> esLicensesOutput = ESLicenses.fromSource(licenseOutput);
+        Set<ESLicense> esLicensesOutput = new HashSet<>(ESLicenses.fromSource(licenseOutput));
 
         TestUtils.verifyESLicenses(esLicensesOutput, map);
     }
