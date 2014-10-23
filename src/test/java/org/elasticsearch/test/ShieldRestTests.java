@@ -68,7 +68,7 @@ public class ShieldRestTests extends ElasticsearchRestTests {
     public static final String CONFIG_ROLE_ALLOW_ALL = DEFAULT_ROLE + ":\n" +
             "  cluster: ALL\n" +
             "  indices:\n" +
-            "    '.*': ALL\n";
+            "    '*': ALL\n";
 
     static {
 
