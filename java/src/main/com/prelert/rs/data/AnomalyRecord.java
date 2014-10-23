@@ -143,7 +143,11 @@ public class AnomalyRecord
 	 */
 	public void setId(String id)
 	{
-		final int epochLen = 10;
+		int epochLen = 0;
+		while (id.length() > epochLen && Character.isDigit(id.charAt(epochLen)))
+		{
+			++epochLen;
+		}
 		int idStart = -1;
 		if (m_PartitionFieldValue == null || m_PartitionFieldValue.isEmpty())
 		{
@@ -159,6 +163,7 @@ public class AnomalyRecord
 		}
 		if (idStart <= epochLen)
 		{
+			s_Logger.error("Anomaly record ID not in expected format: " + id);
 			return;
 		}
 		m_Parent = id.substring(0, epochLen).intern();
