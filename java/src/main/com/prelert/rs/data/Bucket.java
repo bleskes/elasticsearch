@@ -72,14 +72,12 @@ public class Bucket
 
 	private static final Logger s_Logger = Logger.getLogger(Bucket.class);
 	
-	private String m_Id;
 	private Date m_Timestamp;
 	private double m_RawAnomalyScore;	
 	private double m_AnomalyScore;	
 	private double m_MaxNormalizedProbability;	
 	private int m_RecordCount;
 	private List<Detector> m_Detectors;
-	private long m_Epoch;
 	private List<AnomalyRecord> m_Records;
 	private long m_EventCount;
 	private boolean m_HadBigNormalisedUpdate;
@@ -91,25 +89,45 @@ public class Bucket
 	}
 	
 	/**
-	 * The bucket Id is the bucket's timestamp in seconds 
-	 * from the epoch. As the id is derived from the timestamp 
-	 * field it doesn't need to be serialised.
-	 *  
+	 * The bucket Id is the bucket's timestamp in seconds
+	 * from the epoch. As the id is derived from the timestamp
+	 * field it doesn't need to be serialised, however, in the
+	 * past it was serialised accidentally, so it still is.
+	 *
 	 * @return The bucket id
 	 */
 	public String getId()
 	{
-		return m_Id;
+		return Long.toString(getEpoch()).intern();
 	}
-	
+
+
+	/**
+	 * Set the ID and derive the timestamp from it.  It MUST be
+	 * a number that corresponds to the bucket's timestamp in seconds
+	 * from the epoch.
+	 */
 	public void setId(String id)
 	{
-		m_Id = id;
+		try
+		{
+			long epoch = Long.parseLong(id);
+			m_Timestamp = new Date(epoch * 1000);
+		}
+		catch (NumberFormatException nfe)
+		{
+			s_Logger.error("Could not parse ID " + id + " as a long");
+		}
 	}
-	
+
+
+	/**
+	 * Timestamp expressed in seconds since the epoch (rather than Java's
+	 * convention of milliseconds).
+	 */
 	public long getEpoch()
 	{
-		return m_Epoch;
+		return m_Timestamp.getTime() / 1000;
 	}
 	
 	public Date getTimestamp() 
@@ -120,11 +138,6 @@ public class Bucket
 	public void setTimestamp(Date timestamp) 
 	{
 		m_Timestamp = timestamp;
-		
-		// epoch in seconds
-		m_Epoch = m_Timestamp.getTime() / 1000;
-		
-		m_Id = Long.toString(m_Epoch); 
 	}
 
 
@@ -433,8 +446,6 @@ public class Bucket
 		result = prime * result + (int) (temp ^ (temp >>> 32));
 		result = prime * result
 				+ ((m_Detectors == null) ? 0 : m_Detectors.hashCode());
-		result = prime * result + (int) (m_Epoch ^ (m_Epoch >>> 32));
-		result = prime * result + ((m_Id == null) ? 0 : m_Id.hashCode());
 		result = prime * result + m_RecordCount;
 		result = prime * result
 				+ ((m_Records == null) ? 0 : m_Records.hashCode());
@@ -464,14 +475,13 @@ public class Bucket
 		Bucket that = (Bucket)other;
 
 		// m_HadBigNormalisedUpdate is deliberately excluded from the test
-		boolean equals = (this.m_Id.equals(that.m_Id)) &&
+		boolean equals =
 				(this.m_Timestamp.equals(that.m_Timestamp)) &&
 				(this.m_EventCount == that.m_EventCount) &&
 				(this.m_RawAnomalyScore == that.m_RawAnomalyScore) &&
 				(this.m_AnomalyScore == that.m_AnomalyScore) &&
 				(this.m_MaxNormalizedProbability == that.m_MaxNormalizedProbability) &&
-				(this.m_RecordCount == that.m_RecordCount) &&
-				(this.m_Epoch == that.m_Epoch);
+				(this.m_RecordCount == that.m_RecordCount);
 		
 		// don't bother testing detectors
 		if (this.m_Records == null && that.m_Records == null)

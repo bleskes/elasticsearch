@@ -51,7 +51,6 @@ import org.elasticsearch.index.query.FilterBuilders;
 import org.elasticsearch.indices.IndexMissingException;
 import org.elasticsearch.search.SearchHit;
 
-import com.prelert.job.DetectorState;
 import com.prelert.job.JobDetails;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.persistence.JobResultsPersister;
@@ -63,7 +62,7 @@ import com.prelert.rs.data.Detector;
 import com.prelert.rs.data.ErrorCode;
 
 /**
- * Saves result Buckets, Quantiles and DetectorState to Elasticsearch<br/>
+ * Saves result Buckets and Quantiles to Elasticsearch<br/>
  * 
  * <b>Buckets</b> are written with the following structure:
  * <h2>Bucket</h2>
@@ -83,9 +82,6 @@ import com.prelert.rs.data.ErrorCode;
  * <br/>
  * <b>Quantiles</b> may contain model quantiles used in normalisation
  * and are stored in documents of type {@link Quantiles.TYPE} 
- * <br/>
- * <b>DetectorState</b> may contain model state for multiple detectors each of 
- * which is stored in a separate document of type {@link DetectorState.TYPE} 
  * <br/>
  * @see com.prelert.job.persistence.elasticsearch.ElasticsearchMappings
  */
@@ -170,7 +166,7 @@ public class ElasticsearchPersister implements JobResultsPersister
 				{
 					content = serialiseRecord(record, bucket.getTimestamp());
 					
-					String recordId = bucket.getEpoch() + detector.getName() + count;					
+					String recordId = record.generateNewId(bucket.getId(), detector.getName(), count);
 					bulkRequest.add(m_Client.prepareIndex(m_JobId, AnomalyRecord.TYPE, recordId)
 							.setSource(content)
 							.setParent(bucket.getId()));					
@@ -245,64 +241,6 @@ public class ElasticsearchPersister implements JobResultsPersister
 	}
 
 
-	/**
-	 * The state object can contain multiple detector states each of which 
-	 * will be written to an separate document. For each ES index, 
-	 * which corresponds to a job, there can  only be 1 serialised state for 
-	 * each detector. If the detectors state is updated the last state is 
-	 * simply overwritten.
-	 * @param state If <code>null</code> then returns straight away.
-	 * @throws IOException 
-	 */
-	@Override
-	public void persistDetectorState(DetectorState state) 
-	{
-		if (state == null)
-		{
-			s_Logger.warn("No detector state to persist for job " + m_JobId);
-			return;
-		}
-		
-		try
-		{
-			for (Map.Entry<String, String> entry : state.getMap().entrySet())
-			{
-				XContentBuilder content = serialiseDetectorState(entry.getKey(),
-						entry.getValue());
-
-				m_Client.prepareIndex(m_JobId, DetectorState.TYPE, entry.getKey())
-					.setSource(content)
-					.execute().actionGet();
-
-				/* TODO this method is only in version Elasticsearch 1.0
-				if (response.isCreated() == false)
-				{
-					s_Logger.error(String.format("Bucket %s document not created",
-							bucket.getId()));
-				}
-				*/
-			}
-		}
-		catch (IOException e) 
-		{
-			s_Logger.error("Error writing detector state", e);
-		}
-	}
-
-	@Override
-	public boolean isDetectorStatePersisted() 
-	{
-		FilterBuilder fb = FilterBuilders.matchAllFilter();
-		// don't return for any documents (size = 0), just get hit count
-		SearchRequestBuilder searchBuilder = m_Client.prepareSearch(m_JobId)
-				.setTypes(DetectorState.TYPE)		
-				.setPostFilter(fb)
-				.setFrom(0).setSize(0);
-		
-		SearchResponse searchResponse = searchBuilder.get();		
-		return searchResponse.getHits().totalHits() > 0;
-	}
-	
 	@Override
 	public void incrementBucketCount(long count) 
 	{
@@ -326,101 +264,6 @@ public class ElasticsearchPersister implements JobResultsPersister
 	}
 
 
-	/**
-	 * Get the names of the detectors that have had their state 
-	 * persisted to the database.
-	 * 
-	 * @return List of names or empty 
-	 */
-	public List<String> persistedDetectorNames() 
-	{
-		FilterBuilder fb = FilterBuilders.matchAllFilter();
-		
-		List<String> names = new ArrayList<>();
-		
-		SearchRequestBuilder searchBuilder = m_Client.prepareSearch(m_JobId)
-				.setTypes(DetectorState.TYPE)		
-				.setPostFilter(fb)
-				.addField(DetectorState.DETECTOR_NAME);
-		
-		
-		final int PAGE_SIZE = 50;		
-		int from=0, size=PAGE_SIZE;
-		boolean getNextPage = true;
-		while (getNextPage)
-		{
-			searchBuilder.setFrom(from).setSize(size); 
-			SearchResponse searchResponse = searchBuilder.get();
-						
-			for (SearchHit hit : searchResponse.getHits().getHits())
-			{
-				names.add(hit.field(DetectorState.DETECTOR_NAME).getValue().toString());
-			}		
-			
-			if (searchResponse.getHits().getTotalHits() <= (from + size))
-			{
-				getNextPage = false;
-			}
-			else
-			{
-				from += size;
-				size += PAGE_SIZE;
-			}
-		}
-		
-		return names;
-	}
-	
-
-	@Override
-	public DetectorState retrieveDetectorState() throws UnknownJobException
-	{
-		DetectorState detectorState = new DetectorState();
-		
-		FilterBuilder fb = FilterBuilders.matchAllFilter();
-		
-		SearchRequestBuilder searchBuilder = m_Client.prepareSearch(m_JobId)
-				.setTypes(DetectorState.TYPE)		
-				.setPostFilter(fb);
-			
-		try
-		{
-			final int PAGE_SIZE = 50;		
-			int from=0, size=PAGE_SIZE;
-			boolean getNextPage = true;
-			while (getNextPage)
-			{
-				searchBuilder.setFrom(from).setSize(size); 
-				SearchResponse searchResponse = searchBuilder.get();
-
-				for (SearchHit hit : searchResponse.getHits().getHits())
-				{
-					String detectorName = hit.getSource().get(DetectorState.DETECTOR_NAME).toString();
-					String state = hit.getSource().get(DetectorState.SERIALISED_MODEL).toString();
-					detectorState.setDetectorState(detectorName, state);
-				}		
-
-				if (searchResponse.getHits().getTotalHits() <= (from + size))
-				{
-					getNextPage = false;
-				}
-				else
-				{
-					from += size;
-					size += PAGE_SIZE;
-				}
-			}
-		}
-		catch (IndexMissingException e)
-		{
-			s_Logger.error("Unknown job '" + m_JobId + "'. Cannot read persisted state");
-			throw new UnknownJobException(m_JobId, 
-					"Cannot read persisted state", ErrorCode.MISSING_DETECTOR_STATE);
-		}
-		return detectorState;
-	}
-	
-	
 	/**
 	 * Return the bucket as serialisable content
 	 * @param bucket
@@ -603,25 +446,4 @@ public class ElasticsearchPersister implements JobResultsPersister
 		builder.endObject();
 	}
 
-
-	/**
-	 * Return the detector model state as content that can be written to
-	 * Elasticsearch
-	 * 
-	 * @param detectorName 
-	 * @param modelState The serialised model Xml
-	 * @return
-	 * @throws IOException
-	 */
-	private XContentBuilder serialiseDetectorState(String detectorName,
-			String modelState) 
-	throws IOException
-	{
-		XContentBuilder builder = jsonBuilder().startObject()
-					.field(DetectorState.DETECTOR_NAME, detectorName)
-					.field(DetectorState.SERIALISED_MODEL, modelState)
-				.endObject();
-				
-		return builder;
-	}
 }

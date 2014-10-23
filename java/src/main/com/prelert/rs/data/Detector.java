@@ -68,7 +68,7 @@ public class Detector
 	public Detector(String name)
 	{
 		this();
-		m_Name = name;		
+		m_Name = name.intern();
 	}
 	
 	/**
@@ -79,7 +79,7 @@ public class Detector
 	{
 		if (values.containsKey(NAME))
 		{
-			m_Name = values.get(NAME).toString();
+			m_Name = values.get(NAME).toString().intern();
 		}
 		else
 		{
@@ -94,7 +94,7 @@ public class Detector
 	
 	private void setName(String name)
 	{
-		m_Name = name;
+		m_Name = name.intern();
 	}
 	
 	public void addRecord(AnomalyRecord record)
