@@ -20,6 +20,7 @@
 package org.elasticsearch.license.plugin.core.trial;
 
 import org.elasticsearch.common.collect.ImmutableMap;
+import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.license.core.DateUtils;
 import org.elasticsearch.license.core.ESLicense;
 
@@ -110,7 +111,7 @@ public class TrialLicensesBuilder {
         private String featureType;
         private long expiryDate = -1;
         private long issueDate = -1;
-        private int durationInDays = -1;
+        private TimeValue duration;
         private int maxNodes = -1;
         private String uid = null;
         private String issuedTo;
@@ -143,8 +144,8 @@ public class TrialLicensesBuilder {
             return this;
         }
 
-        public TrialLicenseBuilder durationInDays(int days) {
-            this.durationInDays = days;
+        public TrialLicenseBuilder duration(TimeValue duration) {
+            this.duration = duration;
             return this;
         }
 
@@ -156,8 +157,7 @@ public class TrialLicensesBuilder {
         public TrialLicense build() {
             verify();
             if (expiryDate == -1) {
-                assert durationInDays != -1;
-                expiryDate = DateUtils.expiryDateAfterDays(issueDate, durationInDays);
+                expiryDate = issueDate + duration.millis();
             }
             if (uid == null) {
                 uid = UUID.randomUUID().toString();
@@ -204,8 +204,8 @@ public class TrialLicensesBuilder {
                 msg = "feature has to be set";
             } else if (issueDate == -1) {
                 msg = "issueDate has to be set";
-            } else if (durationInDays == -1 && expiryDate == -1) {
-                msg = "durationInDays or expiryDate has to be set";
+            } else if (duration == null && expiryDate == -1) {
+                msg = "duration or expiryDate has to be set";
             } else if (maxNodes == -1) {
                 msg = "maxNodes has to be set";
             }
