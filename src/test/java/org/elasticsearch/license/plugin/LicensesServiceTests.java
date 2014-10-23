@@ -25,6 +25,8 @@ import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.ProcessedClusterStateUpdateTask;
 import org.elasticsearch.cluster.ack.ClusterStateUpdateResponse;
 import org.elasticsearch.cluster.metadata.MetaData;
+import org.elasticsearch.cluster.node.DiscoveryNode;
+import org.elasticsearch.cluster.node.DiscoveryNodes;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
@@ -37,10 +39,7 @@ import org.elasticsearch.license.plugin.action.put.PutLicenseRequest;
 import org.elasticsearch.license.plugin.core.*;
 import org.elasticsearch.test.ElasticsearchIntegrationTest;
 import org.elasticsearch.test.InternalTestCluster;
-import org.junit.After;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.*;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -50,14 +49,15 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.elasticsearch.test.ElasticsearchIntegrationTest.ClusterScope;
-import static org.elasticsearch.test.ElasticsearchIntegrationTest.Scope.SUITE;
+import static org.elasticsearch.test.ElasticsearchIntegrationTest.Scope.TEST;
 
-@ClusterScope(scope = SUITE, numDataNodes = 3)
+@ClusterScope(scope = TEST, numDataNodes = 10)
 public class LicensesServiceTests extends ElasticsearchIntegrationTest {
 
 
     private static String pubKeyPath = null;
     private static String priKeyPath = null;
+    private static String node = null;
 
     @Override
     protected Settings nodeSettings(int nodeOrdinal) {
@@ -80,8 +80,8 @@ public class LicensesServiceTests extends ElasticsearchIntegrationTest {
     }
 
 
-    @After
-    public void afterTest() throws Exception {
+    @Before
+    public void beforeTest() throws Exception {
         final CountDownLatch latch = new CountDownLatch(1);
         masterClusterService().submitStateUpdateTask("delete licensing metadata", new ProcessedClusterStateUpdateTask() {
             @Override
@@ -103,17 +103,27 @@ public class LicensesServiceTests extends ElasticsearchIntegrationTest {
         });
         latch.await();
         clear();
+
+        DiscoveryNodes discoveryNodes = LicensesServiceTests.masterClusterService().state().getNodes();
+        Set<String> dataNodeSet = new HashSet<>();
+        for(DiscoveryNode discoveryNode : discoveryNodes) {
+            if (discoveryNode.dataNode()) {
+                dataNodeSet.add(discoveryNode.getName());
+            }
+        }
+        String[] dataNodes = dataNodeSet.toArray(new String[dataNodeSet.size()]);
+        node = dataNodes[randomIntBetween(0, dataNodes.length - 1)];
     }
 
     @Test
     public void testEmptySignedLicenseCheck() {
-        LicensesManagerService licensesManagerService = licensesManagerService();
+        LicensesManagerService licensesManagerService = masterLicensesManagerService();
         assertTrue(LicensesStatus.VALID == licensesManagerService.checkLicenses(new HashSet<ESLicense>()));
     }
 
     @Test
     public void testInvalidSignedLicenseCheck() throws Exception {
-        LicensesManagerService licensesManagerService = licensesManagerService();
+        LicensesManagerService licensesManagerService = masterLicensesManagerService();
 
         Map<String, TestUtils.FeatureAttributes> map = new HashMap<>();
         TestUtils.FeatureAttributes featureAttributes =
@@ -147,7 +157,7 @@ public class LicensesServiceTests extends ElasticsearchIntegrationTest {
         String licenseOutput = TestUtils.runLicenseGenerationTool(licenseString, pubKeyPath, priKeyPath);
         Set<ESLicense> licenses = ESLicenses.fromSource(licenseOutput);
 
-        LicensesManagerService licensesManagerService = licensesManagerService();
+        LicensesManagerService licensesManagerService = masterLicensesManagerService();
         ESLicenseManager esLicenseManager = ((LicensesService) licensesManagerService).getEsLicenseManager();
         final CountDownLatch latch1 = new CountDownLatch(1);
         licensesManagerService.registerLicenses(new LicensesService.PutLicenseRequestHolder(new PutLicenseRequest().licenses(licenses), "test"), new ActionListener<ClusterStateUpdateResponse>() {
@@ -197,7 +207,7 @@ public class LicensesServiceTests extends ElasticsearchIntegrationTest {
         TestUtils.isSame(licenses2, metaDataLicense);
     }
 
-    @Test @Ignore
+    @Test
     public void testTrialLicenseGeneration() throws Exception {
         LicensesClientService clientService = licensesClientService();
         final CountDownLatch latch = new CountDownLatch(1);
@@ -239,6 +249,7 @@ public class LicensesServiceTests extends ElasticsearchIntegrationTest {
         @Override
         public void onEnabled() {
             if (this.shouldBeEnabled.get()) {
+                logger.info("onEnabled called from LicensesClientService");
                 processed.set(true);
             } else {
                 fail("onEnabled should not have been called");
@@ -249,6 +260,7 @@ public class LicensesServiceTests extends ElasticsearchIntegrationTest {
         @Override
         public void onDisabled() {
             if (!this.shouldBeEnabled.get()) {
+                logger.info("onEnabled called from LicensesClientService");
                 processed.set(true);
             } else {
                 fail("onDisabled should not have been called");
@@ -256,7 +268,7 @@ public class LicensesServiceTests extends ElasticsearchIntegrationTest {
         }
     }
 
-    @Test @Ignore
+    @Test
     public void testClientValidation() throws Exception {
         // start with no trial license
         // feature should be onDisabled
@@ -265,6 +277,7 @@ public class LicensesServiceTests extends ElasticsearchIntegrationTest {
 
         LicensesClientService clientService = licensesClientService();
         LicensesManagerService managerService = licensesManagerService();
+        LicensesManagerService masterLicensesManagerService = masterLicensesManagerService();
         final TestLicenseClientListener testLicenseClientListener = new TestLicenseClientListener(false);
         clientService.register("shield", null, testLicenseClientListener);
 
@@ -274,8 +287,8 @@ public class LicensesServiceTests extends ElasticsearchIntegrationTest {
         logger.info("pass initial check");
 
         assertFalse(testLicenseClientListener.processed.get());
-        testLicenseClientListener.shouldBeEnabled.set(true);
 
+        testLicenseClientListener.shouldBeEnabled.set(true);
         Map<String, TestUtils.FeatureAttributes> map = new HashMap<>();
         TestUtils.FeatureAttributes featureAttributes1 =
                 new TestUtils.FeatureAttributes("shield", "subscription", "platinum", "foo bar Inc.", "elasticsearch", 2, "2014-12-13", "2015-12-13");
@@ -284,9 +297,8 @@ public class LicensesServiceTests extends ElasticsearchIntegrationTest {
         String licenseOutput = TestUtils.runLicenseGenerationTool(licenseString, pubKeyPath, priKeyPath);
         Set<ESLicense> licenses = ESLicenses.fromSource(licenseOutput);
 
-        LicensesManagerService licensesManagerService = licensesManagerService();
         final CountDownLatch latch1 = new CountDownLatch(1);
-        licensesManagerService.registerLicenses(new LicensesService.PutLicenseRequestHolder(new PutLicenseRequest().licenses(licenses), "test"), new ActionListener<ClusterStateUpdateResponse>() {
+        masterLicensesManagerService.registerLicenses(new LicensesService.PutLicenseRequestHolder(new PutLicenseRequest().licenses(licenses), "test"), new ActionListener<ClusterStateUpdateResponse>() {
             @Override
             public void onResponse(ClusterStateUpdateResponse clusterStateUpdateResponse) {
                 if (clusterStateUpdateResponse.isAcknowledged()) {
@@ -306,8 +318,7 @@ public class LicensesServiceTests extends ElasticsearchIntegrationTest {
         while (!testLicenseClientListener.processed.get()) {
         }
 
-        Set<String> enabledFeatures = licensesManagerService.enabledFeatures();
-        assertTrue(enabledFeatures.contains("shield"));
+        assertTrue(managerService.enabledFeatures().contains("shield"));
 
     }
 
@@ -330,20 +341,22 @@ public class LicensesServiceTests extends ElasticsearchIntegrationTest {
     }
 
     @Test
-    @Ignore
     public void testLicenseExpiry() throws Exception {
         //TODO, first figure out how to generate a license with a quick expiry in matter of seconds
     }
 
 
-    private LicensesManagerService licensesManagerService() {
+    private LicensesManagerService masterLicensesManagerService() {
         final InternalTestCluster clients = internalCluster();
         return clients.getInstance(LicensesManagerService.class, clients.getMasterName());
     }
 
+    private LicensesManagerService licensesManagerService() {
+        return internalCluster().getInstance(LicensesManagerService.class, node);
+    }
+
     private LicensesClientService licensesClientService() {
-        final InternalTestCluster clients = internalCluster();
-        return clients.getInstance(LicensesClientService.class);
+        return internalCluster().getInstance(LicensesClientService.class, node);
     }
 
     private LicensesService licensesService() {
@@ -351,15 +364,19 @@ public class LicensesServiceTests extends ElasticsearchIntegrationTest {
         return clients.getInstance(LicensesService.class, clients.getMasterName());
     }
 
-    private ClusterService masterClusterService() {
+    private static ClusterService masterClusterService() {
         final InternalTestCluster clients = internalCluster();
         return clients.getInstance(ClusterService.class, clients.getMasterName());
     }
 
     private void clear() {
         final InternalTestCluster clients = internalCluster();
-        LicensesService service = clients.getInstance(LicensesService.class, clients.getMasterName());
-        service.clear();
+        LicensesService masterService = clients.getInstance(LicensesService.class, clients.getMasterName());
+        masterService.clear();
+        if (node != null) {
+            LicensesService nodeService = clients.getInstance(LicensesService.class, node);
+            nodeService.clear();
+        }
     }
 
 
