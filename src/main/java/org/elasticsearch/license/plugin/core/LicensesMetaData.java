@@ -82,6 +82,8 @@ public class LicensesMetaData implements MetaData.Custom {
                 } else {
                     return false;
                 }
+            } else {
+                signaturesEqual = this.getSignatures() == null;
             }
 
             if (other.getEncodedTrialLicenses() != null) {
@@ -90,6 +92,8 @@ public class LicensesMetaData implements MetaData.Custom {
                 } else {
                     return false;
                 }
+            } else {
+                trialLicensesEqual = this.getEncodedTrialLicenses() == null;
             }
 
             return signaturesEqual && trialLicensesEqual;
