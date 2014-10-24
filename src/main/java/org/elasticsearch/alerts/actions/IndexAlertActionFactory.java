@@ -1,7 +1,6 @@
-package org.elasticsearch.alerting;
+package org.elasticsearch.alerts.actions;
 
 import org.elasticsearch.ElasticsearchIllegalArgumentException;
-import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.client.Client;
 
 import java.util.Locale;

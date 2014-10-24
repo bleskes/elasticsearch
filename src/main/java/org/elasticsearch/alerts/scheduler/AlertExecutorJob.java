@@ -1,4 +1,4 @@
-package org.elasticsearch.alerting;
+package org.elasticsearch.alerts.scheduler;
 
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;

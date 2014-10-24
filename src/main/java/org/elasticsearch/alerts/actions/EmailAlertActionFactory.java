@@ -1,4 +1,4 @@
-package org.elasticsearch.alerting;
+package org.elasticsearch.alerts.actions;
 
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.ElasticsearchIllegalArgumentException;
@@ -6,7 +6,7 @@ import org.elasticsearch.ElasticsearchIllegalArgumentException;
 import java.util.List;
 import java.util.Map;
 
-public class EmailAlertActionFactory implements AlertActionFactory{
+public class EmailAlertActionFactory implements AlertActionFactory {
 
     @Override
     public AlertAction createAction(Object parameters) {

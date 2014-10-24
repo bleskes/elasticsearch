@@ -1,4 +1,4 @@
-package org.elasticsearch.alerting;
+package org.elasticsearch.alerts.triggers;
 
 import org.elasticsearch.ElasticsearchIllegalArgumentException;
 import org.elasticsearch.common.xcontent.ToXContent;

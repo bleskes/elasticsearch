@@ -1,6 +1,8 @@
-package org.elasticsearch.alerting;
+package org.elasticsearch.alerts.rest;
 
 import org.elasticsearch.ElasticsearchIllegalArgumentException;
+import org.elasticsearch.alerts.Alert;
+import org.elasticsearch.alerts.AlertManager;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;

@@ -1,9 +1,9 @@
-package org.elasticsearch.alerting;
+package org.elasticsearch.alerts;
 
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.alerts.triggers.AlertTrigger;
 import org.elasticsearch.common.joda.time.DateTime;
-import org.elasticsearch.common.xcontent.XContentBuilder;
 
 import java.util.Arrays;
 
