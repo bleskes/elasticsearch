@@ -1,7 +1,7 @@
-package org.elasticsearch.alerting;
+package org.elasticsearch.alerts;
 
-import org.elasticsearch.alerting.actions.AlertAction;
-import org.elasticsearch.alerting.triggers.AlertTrigger;
+import org.elasticsearch.alerts.actions.AlertAction;
+import org.elasticsearch.alerts.triggers.AlertTrigger;
 import org.elasticsearch.common.joda.time.DateTime;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.ToXContent;

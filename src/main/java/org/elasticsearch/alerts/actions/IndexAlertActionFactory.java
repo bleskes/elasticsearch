@@ -1,4 +1,4 @@
-package org.elasticsearch.alerting.actions;
+package org.elasticsearch.alerts.actions;
 
 import org.elasticsearch.ElasticsearchIllegalArgumentException;
 import org.elasticsearch.client.Client;

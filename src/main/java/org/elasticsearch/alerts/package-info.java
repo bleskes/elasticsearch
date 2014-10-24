@@ -1,4 +1,4 @@
 /**
  * Created by brian on 8/12/14.
  */
-package org.elasticsearch.alerting;
+package org.elasticsearch.alerts;

@@ -1,6 +1,5 @@
-package org.elasticsearch.alerting.triggers;
+package org.elasticsearch.alerts.triggers;
 
-import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.script.ScriptService;
