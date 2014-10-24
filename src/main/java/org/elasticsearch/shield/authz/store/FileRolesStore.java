@@ -71,7 +71,7 @@ public class FileRolesStore extends AbstractComponent implements RolesStore {
 
     public FileRolesStore(Settings settings, Environment env, ResourceWatcherService watcherService, AuthorizationService authzService, Listener listener) {
         super(settings);
-        file = resolveFile(componentSettings, env);
+        file = resolveFile(settings, env);
         permissions = parseFile(file, logger, authzService);
         FileWatcher watcher = new FileWatcher(file.getParent().toFile());
         watcher.addListener(new FileListener(authzService));
@@ -85,7 +85,7 @@ public class FileRolesStore extends AbstractComponent implements RolesStore {
     }
 
     public static Path resolveFile(Settings settings, Environment env) {
-        String location = settings.get("files.roles");
+        String location = settings.get("shield.authz.store.files.roles");
         if (location == null) {
             return ShieldPlugin.resolveConfigFile(env, "roles.yml");
         }
