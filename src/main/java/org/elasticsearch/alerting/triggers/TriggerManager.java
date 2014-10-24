@@ -1,8 +1,10 @@
-package org.elasticsearch.alerting;
+package org.elasticsearch.alerting.triggers;
 
 import org.elasticsearch.ElasticsearchIllegalArgumentException;
 import org.elasticsearch.ElasticsearchIllegalStateException;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.alerting.Alert;
+import org.elasticsearch.alerting.AlertManager;
 import org.elasticsearch.common.component.AbstractComponent;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;

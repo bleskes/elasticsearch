@@ -1,5 +1,9 @@
 package org.elasticsearch.alerting;
 
+import org.elasticsearch.alerting.actions.AlertActionManager;
+import org.elasticsearch.alerting.rest.AlertRestHandler;
+import org.elasticsearch.alerting.scheduler.AlertScheduler;
+import org.elasticsearch.alerting.triggers.TriggerManager;
 import org.elasticsearch.common.inject.AbstractModule;
 
 public class AlertingModule extends AbstractModule {

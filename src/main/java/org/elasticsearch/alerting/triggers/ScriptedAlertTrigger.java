@@ -1,4 +1,4 @@
-package org.elasticsearch.alerting;
+package org.elasticsearch.alerting.triggers;
 
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.xcontent.ToXContent;

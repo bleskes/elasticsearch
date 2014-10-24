@@ -1,5 +1,6 @@
-package org.elasticsearch.alerting;
+package org.elasticsearch.alerting.scheduler;
 
+import org.elasticsearch.alerting.scheduler.AlertScheduler;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;

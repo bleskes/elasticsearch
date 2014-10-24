@@ -1,6 +1,7 @@
-package org.elasticsearch.alerting;
+package org.elasticsearch.alerting.triggers;
 
 import org.elasticsearch.ElasticsearchIllegalArgumentException;
+import org.elasticsearch.alerting.triggers.ScriptedAlertTrigger;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 

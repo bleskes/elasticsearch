@@ -1,5 +1,6 @@
-package org.elasticsearch.alerting;
+package org.elasticsearch.alerting.actions;
 
+import org.elasticsearch.alerting.AlertResult;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 
