@@ -25,7 +25,10 @@ import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.joda.time.DateTime;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
-import org.elasticsearch.common.xcontent.*;
+import org.elasticsearch.common.xcontent.ToXContent;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.XContentHelper;
 import org.elasticsearch.search.SearchHit;
 
 import java.io.IOException;
@@ -98,7 +101,6 @@ public class AlertManager extends AbstractLifecycleComponent {
         }
     }
 
-    @Inject
     public void setActionManager(AlertActionManager actionManager){
         this.actionManager = actionManager;
     }
@@ -112,6 +114,7 @@ public class AlertManager extends AbstractLifecycleComponent {
     @Override
     protected void doStop() throws ElasticsearchException {
         logger.warn("STOPPING");
+        starter.interrupt();
         /*
         try {
             starter.join();
@@ -137,7 +140,6 @@ public class AlertManager extends AbstractLifecycleComponent {
         //scheduleAlerts();
     }
 
-    @Inject
     public void setAlertScheduler(AlertScheduler scheduler){
         this.scheduler = scheduler;
     }
