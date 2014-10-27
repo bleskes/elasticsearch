@@ -71,10 +71,13 @@ public class LicensesMetaData implements MetaData.Custom {
 
     @Override
     public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
         if (obj instanceof LicensesMetaData) {
             LicensesMetaData other = (LicensesMetaData) obj;
-            boolean signaturesEqual = false;
-            boolean trialLicensesEqual = false;
+            boolean signaturesEqual;
+            boolean trialLicensesEqual;
 
             if (other.getSignatures() != null) {
                 if (this.getSignatures() != null) {
@@ -158,12 +161,12 @@ public class LicensesMetaData implements MetaData.Custom {
                 }
                 if (fieldName != null) {
                     if (fieldName.equals(Fields.LICENSES)) {
-                        while ((token = parser.nextToken()) != XContentParser.Token.END_ARRAY) {
+                        while (parser.nextToken() != XContentParser.Token.END_ARRAY) {
                             signatures.add(parser.text());
                         }
                     }
                     if (fieldName.equals(Fields.TRIAL_LICENSES)) {
-                        while ((token = parser.nextToken()) != XContentParser.Token.END_ARRAY) {
+                        while (parser.nextToken() != XContentParser.Token.END_ARRAY) {
                             encodedTrialLicenses.add(parser.text());
                         }
                     }

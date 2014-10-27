@@ -19,7 +19,7 @@ package org.elasticsearch.license.licensor.tools;
 
 import org.elasticsearch.common.collect.ImmutableMap;
 import org.elasticsearch.license.core.ESLicense;
-import org.elasticsearch.license.manager.Utils;
+import org.elasticsearch.license.core.ESLicenses;
 
 import java.util.Map;
 import java.util.Set;
@@ -30,7 +30,7 @@ public class FileBasedESLicenseProvider {
     private ImmutableMap<String, ESLicense> esLicenses;
 
     public FileBasedESLicenseProvider(Set<ESLicense> esLicenses) {
-        this.esLicenses = Utils.reduceAndMap(esLicenses);
+        this.esLicenses = ESLicenses.reduceAndMap(esLicenses);
     }
 
     public ESLicense getESLicense(String feature) {
@@ -43,6 +43,6 @@ public class FileBasedESLicenseProvider {
 
     // For testing
     public void setLicenses(Set<ESLicense> esLicenses) {
-        this.esLicenses = Utils.reduceAndMap(esLicenses);
+        this.esLicenses = ESLicenses.reduceAndMap(esLicenses);
     }
 }

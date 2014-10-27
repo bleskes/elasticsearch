@@ -141,7 +141,7 @@ public class ESLicenseSigner {
                 .expiryDate(licenseSpec.expiryDate)
                 .issuer(licenseSpec.issuer)
                 .signature(signature)
-                .build();
+                .verifyAndBuild();
     }
 
 }
