@@ -85,7 +85,7 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
 	/**
 	 * Maximum number of buckets to renormalise at a time
 	 */
-	private static final int MAX_BUCKETS_PER_PAGE = 10000;
+	private static final int MAX_BUCKETS_PER_PAGE = 100;
 
 	/**
 	 * Create with the Elasticsearch client. Data will be written to

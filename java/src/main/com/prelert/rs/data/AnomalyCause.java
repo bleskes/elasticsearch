@@ -99,7 +99,7 @@ public class AnomalyCause
 
 	public void setByFieldName(String value)
 	{
-		m_ByFieldName = value;
+		m_ByFieldName = value.intern();
 	}
 
 	public String getByFieldValue()
@@ -109,7 +109,7 @@ public class AnomalyCause
 
 	public void setByFieldValue(String value)
 	{
-		m_ByFieldValue = value;
+		m_ByFieldValue = value.intern();
 	}
 
 	public String getPartitionFieldName()
@@ -119,7 +119,7 @@ public class AnomalyCause
 
 	public void setPartitionFieldName(String field)
 	{
-		m_PartitionFieldName = field;
+		m_PartitionFieldName = field.intern();
 	}
 
 	public String getPartitionFieldValue()
@@ -129,7 +129,7 @@ public class AnomalyCause
 
 	public void setPartitionFieldValue(String value)
 	{
-		m_PartitionFieldValue = value;
+		m_PartitionFieldValue = value.intern();
 	}
 
 	public String getFunction()
@@ -139,7 +139,7 @@ public class AnomalyCause
 
 	public void setFunction(String name)
 	{
-		m_Function = name;
+		m_Function = name.intern();
 	}
 
 	public double getTypical()
@@ -169,7 +169,7 @@ public class AnomalyCause
 
 	public void setFieldName(String field)
 	{
-		m_FieldName = field;
+		m_FieldName = field.intern();
 	}
 
 	public String getOverFieldName()
@@ -179,7 +179,7 @@ public class AnomalyCause
 
 	public void setOverFieldName(String name)
 	{
-		m_OverFieldName = name;
+		m_OverFieldName = name.intern();
 	}
 
 	public String getOverFieldValue()
@@ -189,7 +189,7 @@ public class AnomalyCause
 
 	public void setOverFieldValue(String value)
 	{
-		m_OverFieldValue = value;
+		m_OverFieldValue = value.intern();
 	}
 
 
