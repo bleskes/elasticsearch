@@ -1,11 +1,7 @@
 package org.elasticsearch.alerts;
 
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
-import org.elasticsearch.alerts.actions.AlertAction;
-import org.elasticsearch.alerts.actions.AlertActionFactory;
-import org.elasticsearch.alerts.actions.AlertActionRegistry;
-import org.elasticsearch.alerts.actions.AlertActionEntry;
-import org.elasticsearch.alerts.actions.AlertActionManager;
+import org.elasticsearch.alerts.actions.*;
 import org.elasticsearch.alerts.plugin.AlertsPlugin;
 import org.elasticsearch.alerts.scheduler.AlertScheduler;
 import org.elasticsearch.alerts.triggers.AlertTrigger;
@@ -121,7 +117,7 @@ public class BasicAlertingTest extends ElasticsearchIntegrationTest {
                 true,
                 true
         );
-        alertManager.addAlert("my-first-alert", alert, true);
+        alertManager.addAlert("my-first-alert", jsonBuilder().value(alert).bytes());
         assertBusy(new Runnable() {
             @Override
             public void run() {
