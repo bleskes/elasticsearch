@@ -20,6 +20,7 @@
 package org.elasticsearch.license.licensor.tools;
 
 import org.elasticsearch.common.collect.ImmutableSet;
+import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentType;
@@ -107,7 +108,7 @@ public class LicenseGeneratorTool {
 
         XContentBuilder builder = XContentFactory.contentBuilder(XContentType.JSON, out);
 
-        ESLicenses.toXContent(signedLicences, builder);
+        ESLicenses.toXContent(signedLicences, builder, ToXContent.EMPTY_PARAMS);
 
         builder.flush();
     }
