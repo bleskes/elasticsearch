@@ -20,18 +20,14 @@ package org.elasticsearch.shield.authc.support;
 /**
  *
  */
-public interface UserRolesStore {
+public interface RefreshListener {
 
-    String[] roles(String username);
+    static final RefreshListener NOOP = new RefreshListener() {
+        @Override
+        public void onRefresh() {
+        }
+    };
 
-    static interface Writable extends UserRolesStore {
+    void onRefresh();
 
-        void setRoles(String username, String... roles);
-
-        void addRoles(String username, String... roles);
-
-        void removeRoles(String username, String... roles);
-
-        void removeUser(String username);
-    }
 }

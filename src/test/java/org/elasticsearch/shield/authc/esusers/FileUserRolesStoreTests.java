@@ -22,6 +22,7 @@ import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
+import org.elasticsearch.shield.authc.support.RefreshListener;
 import org.elasticsearch.test.ElasticsearchTestCase;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.watcher.ResourceWatcherService;
@@ -85,7 +86,7 @@ public class FileUserRolesStoreTests extends ElasticsearchTestCase {
             threadPool = new ThreadPool("test");
             watcherService = new ResourceWatcherService(settings, threadPool);
             final CountDownLatch latch = new CountDownLatch(1);
-            FileUserRolesStore store = new FileUserRolesStore(settings, env, watcherService, new FileUserRolesStore.Listener() {
+            FileUserRolesStore store = new FileUserRolesStore(settings, env, watcherService, new RefreshListener() {
                 @Override
                 public void onRefresh() {
                     latch.countDown();

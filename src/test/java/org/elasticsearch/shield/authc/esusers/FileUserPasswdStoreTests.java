@@ -24,6 +24,7 @@ import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.shield.authc.support.Hasher;
+import org.elasticsearch.shield.authc.support.RefreshListener;
 import org.elasticsearch.shield.authc.support.SecuredStringTests;
 import org.elasticsearch.test.ElasticsearchTestCase;
 import org.elasticsearch.threadpool.ThreadPool;
@@ -43,6 +44,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.Matchers.*;
+import static org.mockito.Mockito.contains;
 import static org.mockito.Mockito.*;
 
 /**
@@ -91,7 +93,7 @@ public class FileUserPasswdStoreTests extends ElasticsearchTestCase {
             threadPool = new ThreadPool("test");
             watcherService = new ResourceWatcherService(settings, threadPool);
             final CountDownLatch latch = new CountDownLatch(1);
-            FileUserPasswdStore store = new FileUserPasswdStore(settings, env, watcherService, new FileUserPasswdStore.Listener() {
+            FileUserPasswdStore store = new FileUserPasswdStore(settings, env, watcherService, new RefreshListener() {
                 @Override
                 public void onRefresh() {
                     latch.countDown();

@@ -53,7 +53,7 @@ public class LdapRealmTest extends LdapTest {
     }
 
     @Test
-    public void testAuthenticate_subTreeGroupSearch(){
+    public void testAuthenticate_SubTreeGroupSearch(){
         String groupSearchBase = "o=sevenSeas";
         boolean isSubTreeSearch = true;
         String userTemplate = VALID_USER_TEMPLATE;
@@ -67,7 +67,7 @@ public class LdapRealmTest extends LdapTest {
     }
 
     @Test
-    public void testAuthenticate_oneLevelGroupSearch(){
+    public void testAuthenticate_OneLevelGroupSearch(){
         String groupSearchBase = "ou=crews,ou=groups,o=sevenSeas";
         boolean isSubTreeSearch = false;
         String userTemplate = VALID_USER_TEMPLATE;
@@ -82,7 +82,7 @@ public class LdapRealmTest extends LdapTest {
     }
 
     @Test
-    public void testAuthenticate_caching(){
+    public void testAuthenticate_Caching(){
         String groupSearchBase = "o=sevenSeas";
         boolean isSubTreeSearch = true;
         String userTemplate = VALID_USER_TEMPLATE;
@@ -99,7 +99,33 @@ public class LdapRealmTest extends LdapTest {
     }
 
     @Test
-    public void testAuthenticate_noncaching(){
+    public void testAuthenticate_Caching_Refresh(){
+        String groupSearchBase = "o=sevenSeas";
+        boolean isSubTreeSearch = true;
+        String userTemplate = VALID_USER_TEMPLATE;
+        StandardLdapConnectionFactory ldapFactory = new StandardLdapConnectionFactory(
+                buildLdapSettings( apacheDsRule.getUrl(), userTemplate, groupSearchBase, isSubTreeSearch) );
+
+        LdapGroupToRoleMapper roleMapper = buildGroupAsRoleMapper();
+
+        ldapFactory = spy(ldapFactory);
+        LdapRealm ldap = new LdapRealm( buildCachingSettings(), ldapFactory, roleMapper, restController);
+        User user = ldap.authenticate( new UsernamePasswordToken(VALID_USERNAME, SecuredStringTests.build(PASSWORD)));
+        user = ldap.authenticate( new UsernamePasswordToken(VALID_USERNAME, SecuredStringTests.build(PASSWORD)));
+
+        //verify one and only one bind -> caching is working
+        verify(ldapFactory, times(1)).bind(anyString(), any(SecuredString.class));
+
+        roleMapper.notifyRefresh();
+
+        user = ldap.authenticate( new UsernamePasswordToken(VALID_USERNAME, SecuredStringTests.build(PASSWORD)));
+
+        //we need to bind again
+        verify(ldapFactory, times(2)).bind(anyString(), any(SecuredString.class));
+    }
+
+    @Test
+    public void testAuthenticate_Noncaching(){
         String groupSearchBase = "o=sevenSeas";
         boolean isSubTreeSearch = true;
         String userTemplate = VALID_USER_TEMPLATE;
@@ -114,4 +140,6 @@ public class LdapRealmTest extends LdapTest {
         //verify two and only two binds -> caching is disabled
         verify(ldapFactory, times(2)).bind(anyString(), any(SecuredString.class));
     }
+
+
 }
