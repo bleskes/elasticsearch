@@ -10,6 +10,7 @@ import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.script.ScriptService;
 import org.elasticsearch.test.ElasticsearchIntegrationTest;
 import org.junit.Test;
@@ -98,7 +99,8 @@ public class BasicAlertingTest extends ElasticsearchIntegrationTest {
         AlertActionRegistry alertActionRegistry = internalCluster().getInstance(AlertActionRegistry.class, internalCluster().getMasterName());
         alertActionRegistry.registerAction("test", new AlertActionFactory() {
             @Override
-            public AlertAction createAction(Object parameters) {
+            public AlertAction createAction(XContentParser parser) throws IOException {
+                parser.nextToken();
                 return alertAction;
             }
         });
