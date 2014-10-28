@@ -29,6 +29,8 @@ package com.prelert.job;
 import java.net.URI;
 import java.util.Date;
 
+import com.prelert.job.MemoryUsage;
+
 import org.apache.log4j.Logger;
 
 /**
@@ -68,7 +70,7 @@ public class JobDetails
 	
 	static final public String TIMEOUT = "timeout";
 	
-    static final public String ANALYSIS_CONFIG = "analysisConfig";
+	static final public String ANALYSIS_CONFIG = "analysisConfig";
 	static final public String ANALYSIS_LIMITS = "analysisLimits";
 	static final public String DATA_DESCRIPTION = "dataDescription";
 	
@@ -89,6 +91,7 @@ public class JobDetails
 	private AnalysisConfig m_AnalysisConfig;
 	private AnalysisLimits m_AnalysisLimits;
 	private DataDescription m_DataDescription;
+	private MemoryUsage m_MemoryUsage;
 	
 	/* These URIs are transient they don't need to be persisted */
 	private URI m_Location;
@@ -308,7 +311,7 @@ public class JobDetails
 		return m_AnalysisConfig;
 	}
 	
-	public void setAnalysisConfig(AnalysisConfig config) 
+	public void setAnalysisConfig(AnalysisConfig config)
 	{
 		m_AnalysisConfig = config;
 	}
@@ -322,11 +325,25 @@ public class JobDetails
 		return m_AnalysisLimits;
 	}
 	
-	public void setAnalysisLimits(AnalysisLimits options) 
+	public void setAnalysisLimits(AnalysisLimits options)
 	{
 		m_AnalysisLimits = options;
 	}
 	
+	/**
+	* The memory usage object
+	* @return The MemoryUsage
+	*/
+	public MemoryUsage getMemoryUsage()
+	{
+		return m_MemoryUsage;
+	}
+
+	public void setMemoryUsage(MemoryUsage memoryUsage)
+	{
+		m_MemoryUsage = memoryUsage;
+	}
+
 	/**
 	 * If not set the input data is assumed to be csv with a '_time' field 
 	 * in epoch format. 

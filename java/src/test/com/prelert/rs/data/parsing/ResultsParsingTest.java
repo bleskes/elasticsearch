@@ -43,6 +43,7 @@ import org.apache.log4j.Logger;
 import org.junit.Test;
 
 import com.fasterxml.jackson.core.JsonParseException;
+import com.prelert.job.MemoryUsage;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.persistence.JobResultsPersister;
 import com.prelert.job.persistence.JobRenormaliser;
@@ -88,6 +89,12 @@ public class ResultsParsingTest
 		public void persistQuantiles(Quantiles quantiles)
 		{
 			m_Quantiles.put(quantiles.getId(), quantiles);
+		}
+		
+		@Override
+		public void persistMemoryUsage(MemoryUsage memUsagae)
+		{
+			
 		}
 
 		@Override

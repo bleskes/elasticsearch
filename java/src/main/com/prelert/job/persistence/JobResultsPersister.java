@@ -27,6 +27,8 @@
 
 package com.prelert.job.persistence;
 
+import com.prelert.job.MemoryUsage;
+
 import com.prelert.job.quantiles.Quantiles;
 import com.prelert.rs.data.Bucket;
 
@@ -49,6 +51,11 @@ public interface JobResultsPersister
 	 */
 	public void persistQuantiles(Quantiles quantiles);
 
+	/**
+	 * Persist the memory usage data
+	 * @param memoryUsage
+	 */
+	public void persistMemoryUsage(MemoryUsage memoryUsage);
 
 	/**
 	 * Increment the jobs bucket result count by <code>count</code>

@@ -39,6 +39,7 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
+import com.prelert.job.MemoryUsage;
 import com.prelert.job.persistence.JobResultsPersister;
 import com.prelert.job.persistence.JobRenormaliser;
 import com.prelert.job.quantiles.Quantiles;
@@ -166,6 +167,15 @@ public class AutoDetectResultsParser
 									"trigger renormalisation of " +
 									quantiles.getKind() + " scores");
 						triggerRenormalisation(quantiles, renormaliser, logger);
+						break;
+					case MemoryUsage.TYPE:
+						MemoryUsage memoryUsage = MemoryUsage.parseJsonAfterStartObject(parser);
+						logger.debug(String.format("Parsed memory usage: %d / %d / %d", 
+							memoryUsage.getMemoryUsage(),
+							memoryUsage.getNumberByFields(),
+							memoryUsage.getNumberPartitionFields()));
+						
+						persister.persistMemoryUsage(memoryUsage);
 						break;
 					default:
 						logger.error("Unexpected object parsed from output - first field " + fieldName);

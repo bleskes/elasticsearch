@@ -43,6 +43,7 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 
 import com.prelert.job.JobDetails;
+import com.prelert.job.MemoryUsage;
 import com.prelert.job.persistence.JobResultsPersister;
 import com.prelert.job.quantiles.Quantiles;
 import com.prelert.rs.data.AnomalyCause;
@@ -71,6 +72,9 @@ import com.prelert.rs.data.Detector;
  * <br/>
  * <b>Quantiles</b> may contain model quantiles used in normalisation
  * and are stored in documents of type {@link Quantiles.TYPE}
+ * <br/>
+ * <h2>MemoryUsage</h2>
+ * This is stored in a flat structure
  * <br/>
  * @see com.prelert.job.persistence.elasticsearch.ElasticsearchMappings
  */
@@ -230,6 +234,51 @@ public class ElasticsearchPersister implements JobResultsPersister
 	}
 
 
+	/**
+	 * Persist the memory usage data
+	 * @param memoryUsage If <code>null</code> then returns straight away.
+	 * @throws IOException
+	 */
+	@Override
+	public void persistMemoryUsage(MemoryUsage memoryUsage)
+	{
+		if (memoryUsage == null)
+		{
+			s_Logger.warn("No memoryUsage to persist for job " + m_JobId);
+			return;
+		}
+
+		try
+		{
+			XContentBuilder content = serialiseMemoryUsage(memoryUsage);
+
+			m_Client.prepareIndex(m_JobId, MemoryUsage.TYPE, memoryUsage.getId())
+					.setSource(content)
+					.execute().actionGet();
+
+			/* TODO this method is only in version Elasticsearch 1.0
+			if (response.isCreated() == false)
+			{
+				s_Logger.error(String.format("Bucket %s document not created",
+						bucket.getId()));
+			}
+			*/
+		}
+		catch (IOException e)
+		{
+			s_Logger.error("Error writing memoryUsage", e);
+			return;
+		}
+
+		// Refresh the index when persisting quantiles so that previously
+		// persisted results will be available for searching.  Do this using the
+		// indices API rather than the index API (used to write the quantiles
+		// above), because this will refresh all shards rather than just the
+		// shard that the quantiles document itself was written to.
+		commitWrites();
+	}
+
+
 	@Override
 	public void incrementBucketCount(long count)
 	{
@@ -293,6 +342,25 @@ public class ElasticsearchPersister implements JobResultsPersister
 		return builder;
 	}
 
+	/**
+	 * Return the memoryUsage as serialisable content
+	 * @param memoryUsage
+	 * @return
+	 * @throws IOException
+	 */
+	private XContentBuilder serialiseMemoryUsage(MemoryUsage memoryUsage)
+	throws IOException
+	{
+		s_Logger.warn("---------------Doing serialisation of memory usage now");
+		
+		XContentBuilder builder = jsonBuilder().startObject()
+				.field(MemoryUsage.TYPE, memoryUsage.getMemoryUsage())
+				.field(MemoryUsage.NUMBER_BY_FIELDS, memoryUsage.getNumberByFields())
+				.field(MemoryUsage.NUMBER_PARTITION_FIELDS, memoryUsage.getNumberPartitionFields())	
+				.endObject();
+
+		return builder;
+	}
 
 	/**
 	 * Return the detector as serialisable content
