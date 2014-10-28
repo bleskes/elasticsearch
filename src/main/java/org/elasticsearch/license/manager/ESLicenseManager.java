@@ -101,7 +101,7 @@ public class ESLicenseManager {
             }
         } catch (ExpiredLicenseException e) {
             throw new InvalidLicenseException("Expired License");
-        } catch (InvalidLicenseException | IOException e) {
+        } catch (InvalidLicenseException e) {
             throw new InvalidLicenseException("Invalid License");
         }
     }
@@ -111,22 +111,16 @@ public class ESLicenseManager {
         License license = licenseManager.decryptAndVerifyLicense(signedLicense);
         ESLicense.Builder builder = ESLicense.builder();
 
-        for (License.Feature feature : license.getFeatures()) {
-            String featureName = feature.getName();
-            LicenseFeatures licenseFeatures;
+        if (license.getFeatures().size() == 1) {
             try {
-                licenseFeatures = licenseFeaturesFromSource(featureName);
-                if (licenseFeatures.maxNodes != -1
-                        && licenseFeatures.feature != null
-                        && licenseFeatures.type != null
-                        && licenseFeatures.subscriptionType != null) {
-                    builder.maxNodes(licenseFeatures.maxNodes)
-                            .feature(licenseFeatures.feature)
-                            .type(licenseFeatures.type)
-                            .subscriptionType(licenseFeatures.subscriptionType);
-                    break;
-                }
-            } catch (IOException ignored) {}
+                String featureName = license.getFeatures().get(0).getName();
+                LicenseFeatures licenseFeatures = licenseFeaturesFromSource(featureName);
+                builder.maxNodes(licenseFeatures.maxNodes)
+                        .feature(licenseFeatures.feature)
+                        .type(licenseFeatures.type)
+                        .subscriptionType(licenseFeatures.subscriptionType);
+            } catch (IOException ignored) {
+            }
         }
 
         return builder
@@ -139,7 +133,7 @@ public class ESLicenseManager {
                 .build();
     }
 
-    private static void verifyLicenseFields(License license, ESLicense eslicense) throws IOException {
+    private static void verifyLicenseFields(License license, ESLicense eslicense) {
         boolean licenseValid = license.getProductKey().equals(eslicense.uid())
                 && license.getHolder().equals(eslicense.issuedTo())
                 && license.getIssueDate() == eslicense.issueDate()
@@ -149,16 +143,15 @@ public class ESLicenseManager {
         boolean typeValid = false;
         boolean subscriptionTypeValid = false;
 
-        for (License.Feature feature : license.getFeatures()) {
-            String featureName = feature.getName();
-            LicenseFeatures licenseFeatures = licenseFeaturesFromSource(featureName);
-            maxNodesValid = eslicense.maxNodes() == licenseFeatures.maxNodes;
-            typeValid = eslicense.type().equals(licenseFeatures.type);
-            subscriptionTypeValid = eslicense.subscriptionType().equals(licenseFeatures.subscriptionType);
-            featureValid = eslicense.feature().equals(licenseFeatures.feature);
-
-            if (maxNodesValid && typeValid && subscriptionTypeValid && featureValid) {
-                break;
+        if (license.getFeatures().size() == 1) {
+            try {
+                String featureName = license.getFeatures().get(0).getName();
+                LicenseFeatures licenseFeatures = licenseFeaturesFromSource(featureName);
+                maxNodesValid = eslicense.maxNodes() == licenseFeatures.maxNodes;
+                typeValid = eslicense.type().equals(licenseFeatures.type);
+                subscriptionTypeValid = eslicense.subscriptionType().equals(licenseFeatures.subscriptionType);
+                featureValid = eslicense.feature().equals(licenseFeatures.feature);
+            } catch (IOException ignored) {
             }
         }
         if (!licenseValid || !featureValid || !maxNodesValid || !typeValid || !subscriptionTypeValid) {
@@ -187,35 +180,47 @@ public class ESLicenseManager {
 
     private static LicenseFeatures licenseFeaturesFromSource(String source) throws IOException {
         XContentParser parser = XContentFactory.xContent(source).createParser(source);
-        XContentParser.Token token;
 
         String feature = null;
         String type = null;
         String subscriptionType = null;
         int maxNodes = -1;
 
-        String currentName = null;
-        while ((token = parser.nextToken()) != XContentParser.Token.END_OBJECT) {
-            if (token == XContentParser.Token.FIELD_NAME) {
-                currentName = parser.currentName();
-            } else if (token == XContentParser.Token.VALUE_STRING) {
-                switch (currentName) {
-                    case FeatureFields.FEATURE:
-                        feature = parser.text();
-                        break;
-                    case FeatureFields.TYPE:
-                        type = parser.text();
-                        break;
-                    case FeatureFields.SUBSCRIPTION_TYPE:
-                        subscriptionType = parser.text();
-                        break;
-                }
-            } else if (token == XContentParser.Token.VALUE_NUMBER) {
-                if (FeatureFields.MAX_NODES.equals(currentName)) {
-                    maxNodes = parser.intValue();
+        XContentParser.Token token = parser.nextToken();
+        if (token == XContentParser.Token.START_OBJECT) {
+            while ((token = parser.nextToken()) != XContentParser.Token.END_OBJECT) {
+                if (token == XContentParser.Token.FIELD_NAME) {
+                    String currentFieldName = parser.currentName();
+                    token = parser.nextToken();
+                    if (token.isValue()) {
+                        if (token == XContentParser.Token.VALUE_STRING) {
+                            switch (currentFieldName) {
+                                case FeatureFields.FEATURE:
+                                    feature = parser.text();
+                                    break;
+                                case FeatureFields.TYPE:
+                                    type = parser.text();
+                                    break;
+                                case FeatureFields.SUBSCRIPTION_TYPE:
+                                    subscriptionType = parser.text();
+                                    break;
+                            }
+                        } else if (token == XContentParser.Token.VALUE_NUMBER) {
+                            if (FeatureFields.MAX_NODES.equals(currentFieldName)) {
+                                maxNodes = parser.intValue();
+                            }
+                        }
+                    } else if (token == XContentParser.Token.START_ARRAY) {
+                        // It was probably created by newer version - ignoring
+                        parser.skipChildren();
+                    } else if (token == XContentParser.Token.START_OBJECT) {
+                        // It was probably created by newer version - ignoring
+                        parser.skipChildren();
+                    }
                 }
             }
         }
+        // Should we throw a ElasticsearchParseException here?
         return new LicenseFeatures(feature, type, subscriptionType, maxNodes);
     }
 
