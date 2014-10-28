@@ -74,6 +74,9 @@ public class LicensesMetaData implements MetaData.Custom {
         if (obj == null) {
             return false;
         }
+        if (obj == this) {
+            return true;
+        }
         if (obj instanceof LicensesMetaData) {
             LicensesMetaData other = (LicensesMetaData) obj;
             boolean signaturesEqual;
@@ -150,7 +153,6 @@ public class LicensesMetaData implements MetaData.Custom {
          */
         @Override
         public LicensesMetaData fromXContent(XContentParser parser) throws IOException {
-
             XContentParser.Token token;
             String fieldName = null;
             Set<String> encodedTrialLicenses = new HashSet<>();
