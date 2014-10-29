@@ -102,7 +102,7 @@ public class LdapConnection implements Closeable {
                 groups.add(results.next().getNameInNamespace());
             }
         } catch (NamingException e) {
-            throw new SecurityException("Could not search for an LDAP group for user [" + userDn + "]", e);
+            throw new LdapException("Could not search for an LDAP group for user [" + userDn + "]", e);
         }
         return groups;
     }
@@ -128,7 +128,7 @@ public class LdapConnection implements Closeable {
                 }
             }
         } catch (NamingException e) {
-            throw new SecurityException("Could not look up group attributes for user [" + userDn + "]", e);
+            throw new LdapException("Could not look up group attributes for user [" + userDn + "]", e);
         }
         return groupDns;
     }
@@ -154,7 +154,7 @@ public class LdapConnection implements Closeable {
                 userAttrs.put(attr.getID(), attrArray);
             }
         } catch (NamingException e) {
-            throw new SecurityException("Could not look up attributes for user [" + userDn + "]", e);
+            throw new LdapException("Could not look up attributes for user [" + userDn + "]", e);
         }
         return userAttrs;
     }
