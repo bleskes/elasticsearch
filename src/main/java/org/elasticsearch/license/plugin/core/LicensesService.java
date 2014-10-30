@@ -106,7 +106,7 @@ public class LicensesService extends AbstractLifecycleComponent<LicensesService>
         this.threadPool = threadPool;
         this.transportService = transportService;
         this.lastObservedLicensesState = new AtomicReference<>(null);
-        if (DiscoveryNode.dataNode(settings) || DiscoveryNode.masterNode(settings)) {
+        if (DiscoveryNode.masterNode(settings)) {
             transportService.registerHandler(REGISTER_TRIAL_LICENSE_ACTION_NAME, new RegisterTrialLicenseRequestHandler());
         }
     }
@@ -119,36 +119,32 @@ public class LicensesService extends AbstractLifecycleComponent<LicensesService>
         final PutLicenseRequest request = requestHolder.request;
         final Set<ESLicense> newLicenses = Sets.newHashSet(request.licenses());
         LicensesStatus status = checkLicenses(newLicenses);
-        switch (status) {
-            case VALID:
-                clusterService.submitStateUpdateTask(requestHolder.source, new AckedClusterStateUpdateTask<LicensesUpdateResponse>(request, listener) {
-                    @Override
-                    protected LicensesUpdateResponse newResponse(boolean acknowledged) {
-                        return new LicensesUpdateResponse(acknowledged, LicensesStatus.VALID);
-                    }
+        if (status == LicensesStatus.VALID) {
+            clusterService.submitStateUpdateTask(requestHolder.source, new AckedClusterStateUpdateTask<LicensesUpdateResponse>(request, listener) {
+                @Override
+                protected LicensesUpdateResponse newResponse(boolean acknowledged) {
+                    return new LicensesUpdateResponse(acknowledged, LicensesStatus.VALID);
+                }
 
-                    @Override
-                    public ClusterState execute(ClusterState currentState) throws Exception {
-                        MetaData metaData = currentState.metaData();
-                        MetaData.Builder mdBuilder = MetaData.builder(currentState.metaData());
-                        LicensesMetaData currentLicenses = metaData.custom(LicensesMetaData.TYPE);
-                        final LicensesWrapper licensesWrapper = LicensesWrapper.wrap(currentLicenses);
-                        Set<String> newSignatures = licenseManager.toSignatures(newLicenses);
-                        Set<String> newLicenseSignatures = Sets.union(licensesWrapper.signatures, newSignatures);
-                        if (newLicenseSignatures.size() != licensesWrapper.signatures.size()) {
-                            LicensesMetaData newLicensesMetaData = new LicensesMetaData(newLicenseSignatures, licensesWrapper.encodedTrialLicenses);
-                            mdBuilder.putCustom(LicensesMetaData.TYPE, newLicensesMetaData);
-                        } else {
-                            mdBuilder.putCustom(LicensesMetaData.TYPE, currentLicenses);
-                        }
-                        return ClusterState.builder(currentState).metaData(mdBuilder).build();
+                @Override
+                public ClusterState execute(ClusterState currentState) throws Exception {
+                    MetaData metaData = currentState.metaData();
+                    MetaData.Builder mdBuilder = MetaData.builder(currentState.metaData());
+                    LicensesMetaData currentLicenses = metaData.custom(LicensesMetaData.TYPE);
+                    final LicensesWrapper licensesWrapper = LicensesWrapper.wrap(currentLicenses);
+                    Set<String> newSignatures = licenseManager.toSignatures(newLicenses);
+                    Set<String> newLicenseSignatures = Sets.union(licensesWrapper.signatures, newSignatures);
+                    if (newLicenseSignatures.size() != licensesWrapper.signatures.size()) {
+                        LicensesMetaData newLicensesMetaData = new LicensesMetaData(newLicenseSignatures, licensesWrapper.encodedTrialLicenses);
+                        mdBuilder.putCustom(LicensesMetaData.TYPE, newLicensesMetaData);
+                    } else {
+                        mdBuilder.putCustom(LicensesMetaData.TYPE, currentLicenses);
                     }
-                });
-                break;
-            case INVALID:
-            case EXPIRED:
-                listener.onResponse(new LicensesUpdateResponse(true, status));
-                break;
+                    return ClusterState.builder(currentState).metaData(mdBuilder).build();
+                }
+            });
+        } else {
+            listener.onResponse(new LicensesUpdateResponse(true, status));
         }
     }
 
@@ -180,7 +176,6 @@ public class LicensesService extends AbstractLifecycleComponent<LicensesService>
             @Override
             public ClusterState execute(ClusterState currentState) throws Exception {
                 MetaData metaData = currentState.metaData();
-                MetaData.Builder mdBuilder = MetaData.builder(currentState.metaData());
                 LicensesMetaData currentLicenses = metaData.custom(LicensesMetaData.TYPE);
                 final LicensesWrapper licensesWrapper = LicensesWrapper.wrap(currentLicenses);
 
@@ -191,15 +186,16 @@ public class LicensesService extends AbstractLifecycleComponent<LicensesService>
                         licensesToDelete.add(license);
                     }
                 }
-                Set<ESLicense> reducedLicenses = Sets.difference(currentSignedLicenses, licensesToDelete);
-                if (reducedLicenses.size() != currentSignedLicenses.size()) {
+                if (!licensesToDelete.isEmpty()) {
+                    Set<ESLicense> reducedLicenses = Sets.difference(currentSignedLicenses, licensesToDelete);
                     Set<String> newSignatures = licenseManager.toSignatures(reducedLicenses);
                     LicensesMetaData newLicensesMetaData = new LicensesMetaData(newSignatures, licensesWrapper.encodedTrialLicenses);
+                    MetaData.Builder mdBuilder = MetaData.builder(currentState.metaData());
                     mdBuilder.putCustom(LicensesMetaData.TYPE, newLicensesMetaData);
+                    return ClusterState.builder(currentState).metaData(mdBuilder).build();
                 } else {
-                    mdBuilder.putCustom(LicensesMetaData.TYPE, currentLicenses);
+                    return currentState;
                 }
-                return ClusterState.builder(currentState).metaData(mdBuilder).build();
             }
         });
     }
@@ -346,12 +342,6 @@ public class LicensesService extends AbstractLifecycleComponent<LicensesService>
 
     @Override
     protected void doStop() throws ElasticsearchException {
-        // Should scheduledNotifications be cancelled on stop as well?
-    }
-
-    @Override
-    protected void doClose() throws ElasticsearchException {
-        logger.info("Closing LicensesService");
         clusterService.remove(this);
 
         // cancel all notifications
@@ -370,6 +360,12 @@ public class LicensesService extends AbstractLifecycleComponent<LicensesService>
         scheduledNotifications.clear();
 
         lastObservedLicensesState.set(null);
+    }
+
+    @Override
+    protected void doClose() throws ElasticsearchException {
+        logger.info("Closing LicensesService");
+        transportService.removeHandler(REGISTER_TRIAL_LICENSE_ACTION_NAME);
     }
 
     /**
@@ -411,7 +407,6 @@ public class LicensesService extends AbstractLifecycleComponent<LicensesService>
                     }
                 }
             }
-
 
             // notify all interested plugins
             // Change to debug
