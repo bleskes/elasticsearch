@@ -42,7 +42,7 @@ public class LicensesServiceNodeTests extends AbstractLicensesIntegrationTests {
                 }
                 return true;
             }
-        }, 1, TimeUnit.MINUTES), equalTo(true));
+        }, 10, TimeUnit.SECONDS), equalTo(true));
 
     }
 
