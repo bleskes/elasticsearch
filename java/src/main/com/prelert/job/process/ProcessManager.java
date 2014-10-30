@@ -28,6 +28,7 @@
 package com.prelert.job.process;
 
 import java.io.BufferedOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -35,8 +36,10 @@ import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
@@ -332,12 +335,14 @@ public class ProcessManager
 		}
 
 		Process nativeProcess = null;
+		List<File> filesToDelete = new ArrayList<>();
 		try
 		{
 			// if state is null or empty it will be ignored
-			// else it is used to restore the models			
+			// else it is used to restore the quantiles			
 			nativeProcess = ProcessCtrl.buildAutoDetect(
-					ProcessCtrl.AUTODETECT_API, job, quantilesState, logger);	
+					ProcessCtrl.AUTODETECT_API, job, quantilesState, logger,
+					filesToDelete);
 		} 
 		catch (IOException e) 
 		{
@@ -358,7 +363,8 @@ public class ProcessManager
 				m_ResultsReaderFactory.newResultsParser(jobId, 
 						nativeProcess.getInputStream(),						
 						logger),
-				m_DataPersisterFactory.newDataPersister(jobId, logger)
+				m_DataPersisterFactory.newDataPersister(jobId, logger),
+				filesToDelete
 				);	
 
 		m_JobProvider.setJobStatus(jobId, JobStatus.RUNNING);
@@ -458,6 +464,8 @@ public class ProcessManager
 					// wait for the results parsing and write to to the datastore
 					process.joinParserThread();
 
+					process.deleteAssociatedFiles();
+
 					setJobFinishedTimeAndStatus(jobId, process.getLogger(), JobStatus.CLOSED);
 					
 					if (exitValue != 0)
@@ -499,6 +507,8 @@ public class ProcessManager
 			process.getLogger().error(msg);
 			
 			// clean up resources and re-throw
+			process.deleteAssociatedFiles();
+
 			m_JobIdToProcessMap.remove(jobId);				
 			try
 			{

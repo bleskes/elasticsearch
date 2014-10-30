@@ -455,13 +455,16 @@ public class ProcessCtrl
 	 * @param processName The name of program to execute this should exist in the 
 	 * directory PRELERT_HOME/bin/ 
 	 * @param logger The job's logger
+	 * @param filesToDelete This method will append File objects that need to be
+	 * deleted when the process completes
 	 * @return A Java Process object
 	 * @throws IOException
 	 */
-	static public Process buildAutoDetect(String processName, JobDetails job, Logger logger)
+	static public Process buildAutoDetect(String processName, JobDetails job,
+			Logger logger, List<File> filesToDelete)
 	throws IOException	
 	{
-		return buildAutoDetect(processName, job, null, logger);
+		return buildAutoDetect(processName, job, null, logger, filesToDelete);
 	}
 	
 	/**
@@ -477,12 +480,14 @@ public class ProcessCtrl
 	 * @param quantilesState if <code>null</code> this parameter is
 	 * ignored else the quantiles' state is restored from this object
 	 * @param logger The job's logger
-	 * 
+	 * @param filesToDelete This method will append File objects that need to be
+	 * deleted when the process completes
+	 *
 	 * @return A Java Process object
 	 * @throws IOException 
 	 */
 	static public Process buildAutoDetect(String processName, JobDetails job,
-			QuantilesState quantilesState, Logger logger)
+			QuantilesState quantilesState, Logger logger, List<File> filesToDelete)
 	throws IOException
 	{
 		logger.info("PRELERT_HOME is set to " + PRELERT_HOME);
@@ -512,6 +517,7 @@ public class ProcessCtrl
 		if (job.getAnalysisLimits() != null)
 		{			
 			File limitConfigFile = File.createTempFile("limitconfig", ".conf");
+			filesToDelete.add(limitConfigFile);
 			writeLimits(job.getAnalysisLimits(), limitConfigFile);		
 			String limits = LIMIT_CONFIG_ARG + limitConfigFile.toString();
 			command.add(limits);
@@ -598,6 +604,7 @@ public class ProcessCtrl
 		{
 			// write to a temporary field config file
 			File fieldConfigFile = File.createTempFile("fieldconfig", ".conf");
+			filesToDelete.add(fieldConfigFile);
 			try (OutputStreamWriter osw = new OutputStreamWriter(
 					new FileOutputStream(fieldConfigFile),
 					StandardCharsets.UTF_8))
