@@ -18,6 +18,7 @@
 package org.elasticsearch.license.plugin;
 
 import org.elasticsearch.action.ActionListener;
+import org.elasticsearch.cluster.ClusterChangedEvent;
 import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.node.DiscoveryNodes;
@@ -244,7 +245,7 @@ public class LicensesServiceTests extends AbstractLicensesIntegrationTests {
         for (int i = 0; i < randomIntBetween(3, 10); i++) {
             final TestTrackingClientListener clientListener = new TestTrackingClientListener();
             String feature = randomRealisticUnicodeOfCodepointLengthBetween(2, 10);
-            expiryDuration = TimeValue.timeValueMillis(randomIntBetween(1, 5) * 1000l + expiryDuration.millis());
+            expiryDuration = TimeValue.timeValueMillis(randomIntBetween(1, 5) * 100l + expiryDuration.millis());
             List<Action> actions = new ArrayList<>();
 
             if (randomBoolean()) {
@@ -321,6 +322,11 @@ public class LicensesServiceTests extends AbstractLicensesIntegrationTests {
             public void run() {
                 clientService.register(feature, new LicensesService.TrialLicenseOptions(expiryDuration, 10),
                         clientListener);
+
+                // invoke clusterChanged event to flush out pendingRegistration
+                LicensesService licensesService = (LicensesService) clientService;
+                ClusterChangedEvent event = new ClusterChangedEvent("", clusterService().state(), clusterService().state());
+                licensesService.clusterChanged(event);
             }
         }, 0, 1, "should trigger onEnable once [trial license]");
     }
