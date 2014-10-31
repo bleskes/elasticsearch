@@ -1,5 +1,6 @@
 package org.elasticsearch.alerts;
 
+import org.elasticsearch.alerts.actions.AlertActionManager;
 import org.elasticsearch.alerts.actions.AlertActionRegistry;
 import org.elasticsearch.alerts.rest.AlertRestHandler;
 import org.elasticsearch.alerts.scheduler.AlertScheduler;
@@ -12,6 +13,7 @@ public class AlertingModule extends AbstractModule {
     protected void configure() {
         bind(AlertsStore.class).asEagerSingleton();
         bind(AlertManager.class).asEagerSingleton();
+        bind(AlertActionManager.class).asEagerSingleton();
         bind(TriggerManager.class).asEagerSingleton();
         bind(AlertScheduler.class).asEagerSingleton();
         bind(AlertActionRegistry.class).asEagerSingleton();

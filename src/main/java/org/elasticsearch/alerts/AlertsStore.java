@@ -16,6 +16,8 @@ import org.elasticsearch.alerts.actions.AlertActionRegistry;
 import org.elasticsearch.alerts.triggers.TriggerManager;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.Requests;
+import org.elasticsearch.cluster.ClusterState;
+import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.Priority;
 import org.elasticsearch.common.bytes.BytesReference;
@@ -27,24 +29,27 @@ import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.util.concurrent.ConcurrentCollections;
 import org.elasticsearch.common.xcontent.*;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.threadpool.ThreadPool;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  */
 public class AlertsStore extends AbstractComponent {
+
+    public static final String ALERT_INDEX = ".alerts";
+    public static final String ALERT_TYPE = "alert";
 
     public static final ParseField QUERY_NAME_FIELD =  new ParseField("query");
     public static final ParseField SCHEDULE_FIELD =  new ParseField("schedule");
     public static final ParseField TRIGGER_FIELD = new ParseField("trigger");
     public static final ParseField TIMEPERIOD_FIELD = new ParseField("timeperiod");
     public static final ParseField ACTION_FIELD = new ParseField("action");
-    public static final ParseField LASTRAN_FIELD = new ParseField("lastRan");
     public static final ParseField INDICES = new ParseField("indices");
-    public static final ParseField CURRENTLY_RUNNING = new ParseField("running");
     public static final ParseField ENABLED = new ParseField("enabled");
     public static final ParseField SIMPLE_QUERY = new ParseField("simple");
     public static final ParseField TIMESTAMP_FIELD = new ParseField("timefield");
@@ -53,16 +58,19 @@ public class AlertsStore extends AbstractComponent {
     private final TimeValue defaultTimePeriod = new TimeValue(300*1000); //TODO : read from config
 
     private final Client client;
-    private final AlertActionRegistry alertActionRegistry;
+    private final ThreadPool threadPool;
     private final ConcurrentMap<String,Alert> alertMap;
+    private final AlertActionRegistry alertActionRegistry;
+    private final AtomicReference<State> state = new AtomicReference<>(State.STOPPED);
 
     private final int scrollSize;
     private final TimeValue scrollTimeout;
 
     @Inject
-    public AlertsStore(Settings settings, Client client, AlertActionRegistry alertActionRegistry) {
+    public AlertsStore(Settings settings, Client client, ThreadPool threadPool, AlertActionRegistry alertActionRegistry) {
         super(settings);
         this.client = client;
+        this.threadPool = threadPool;
         this.alertActionRegistry = alertActionRegistry;
         this.alertMap = ConcurrentCollections.newConcurrentMap();
         this.scrollSize = componentSettings.getAsInt("scroll.size", 100);
@@ -87,7 +95,7 @@ public class AlertsStore extends AbstractComponent {
      * Creates an alert with the specified and fails if an alert with the name already exists.
      */
     public Alert createAlert(String name, BytesReference alertSource) {
-        if (!client.admin().indices().prepareExists(AlertManager.ALERT_INDEX).execute().actionGet().isExists()) {
+        if (!client.admin().indices().prepareExists(ALERT_INDEX).execute().actionGet().isExists()) {
             createAlertsIndex();
         }
 
@@ -105,8 +113,8 @@ public class AlertsStore extends AbstractComponent {
      */
     public void updateAlert(Alert alert) {
         IndexRequest updateRequest = new IndexRequest();
-        updateRequest.index(AlertManager.ALERT_INDEX);
-        updateRequest.type(AlertManager.ALERT_TYPE);
+        updateRequest.index(ALERT_INDEX);
+        updateRequest.type(ALERT_TYPE);
         updateRequest.id(alert.alertName());
         updateRequest.version(alert.version());
         XContentBuilder alertBuilder;
@@ -133,8 +141,8 @@ public class AlertsStore extends AbstractComponent {
         if (alert != null) {
             DeleteRequest deleteRequest = new DeleteRequest();
             deleteRequest.id(name);
-            deleteRequest.index(AlertManager.ALERT_INDEX);
-            deleteRequest.type(AlertManager.ALERT_TYPE);
+            deleteRequest.index(ALERT_INDEX);
+            deleteRequest.type(ALERT_TYPE);
             deleteRequest.version(alert.version());
             DeleteResponse deleteResponse = client.delete(deleteRequest).actionGet();
             assert deleteResponse.isFound();
@@ -160,8 +168,53 @@ public class AlertsStore extends AbstractComponent {
         return alertMap;
     }
 
+    public void start(ClusterState state, final LoadingListener listener) {
+        IndexMetaData alertIndexMetaData = state.getMetaData().index(ALERT_INDEX);
+        if (alertIndexMetaData != null) {
+            if (state.routingTable().index(ALERT_INDEX).allPrimaryShardsActive()) {
+                if (this.state.compareAndSet(State.STOPPED, State.LOADING)) {
+                    threadPool.executor(ThreadPool.Names.GENERIC).execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            boolean success = false;
+                            try {
+                                loadAlerts();
+                                success = true;
+                            } catch (Exception e) {
+                                logger.warn("Failed to load alerts", e);
+                            } finally {
+                                if (success) {
+                                    if (AlertsStore.this.state.compareAndSet(State.LOADING, State.STARTED)) {
+                                        listener.onSuccess();
+                                    }
+                                } else {
+                                    if (AlertsStore.this.state.compareAndSet(State.LOADING, State.STOPPED)) {
+                                        listener.onFailure();
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+        } else {
+            if (AlertsStore.this.state.compareAndSet(State.STOPPED, State.STARTED)) {
+                listener.onSuccess();
+            }
+        }
+    }
+
+    public boolean started() {
+        return state.get() == State.STARTED;
+    }
+
+    public void stop() {
+        state.set(State.STOPPED);
+        clear();
+    }
+
     private void persistAlert(String alertName, BytesReference alertSource, IndexRequest.OpType opType) {
-        IndexRequest indexRequest = new IndexRequest(AlertManager.ALERT_INDEX, AlertManager.ALERT_TYPE, alertName);
+        IndexRequest indexRequest = new IndexRequest(ALERT_INDEX, ALERT_TYPE, alertName);
         indexRequest.listenerThreaded(false);
         indexRequest.source(alertSource, false);
         indexRequest.opType(opType);
@@ -169,7 +222,7 @@ public class AlertsStore extends AbstractComponent {
     }
 
     private void loadAlerts() {
-        if (!client.admin().indices().prepareExists(AlertManager.ALERT_INDEX).execute().actionGet().isExists()) {
+        if (!client.admin().indices().prepareExists(ALERT_INDEX).execute().actionGet().isExists()) {
             createAlertsIndex();
         }
 
@@ -177,8 +230,8 @@ public class AlertsStore extends AbstractComponent {
                 .setSearchType(SearchType.SCAN)
                 .setScroll(scrollTimeout)
                 .setSize(scrollSize)
-                .setTypes(AlertManager.ALERT_TYPE)
-                .setIndices(AlertManager.ALERT_INDEX).get();
+                .setTypes(ALERT_TYPE)
+                .setIndices(ALERT_INDEX).get();
         try {
             while (response.getHits().hits().length != 0) {
                 for (SearchHit sh : response.getHits()) {
@@ -235,10 +288,6 @@ public class AlertsStore extends AbstractComponent {
                         alert.schedule(parser.textOrNull());
                     } else if (TIMEPERIOD_FIELD.match(currentFieldName)) {
                         alert.timestampString(parser.textOrNull());
-                    } else if (LASTRAN_FIELD.match(currentFieldName)) {
-                        alert.lastRan(DateTime.parse(parser.textOrNull()));
-                    } else if (CURRENTLY_RUNNING.match(currentFieldName)) {
-                        alert.running(DateTime.parse(parser.textOrNull()));
                     } else if (ENABLED.match(currentFieldName)) {
                         alert.enabled(parser.booleanValue());
                     } else if (SIMPLE_QUERY.match(currentFieldName)) {
@@ -270,10 +319,18 @@ public class AlertsStore extends AbstractComponent {
     }
 
     private ClusterHealthStatus createAlertsIndex() {
-        CreateIndexResponse cir = client.admin().indices().prepareCreate(AlertManager.ALERT_INDEX).addMapping(AlertManager.ALERT_TYPE).execute().actionGet(); //TODO FIX MAPPINGS
+        CreateIndexResponse cir = client.admin().indices().prepareCreate(ALERT_INDEX).addMapping(ALERT_TYPE).execute().actionGet(); //TODO FIX MAPPINGS
         ClusterHealthResponse actionGet = client.admin().cluster()
-                .health(Requests.clusterHealthRequest(AlertManager.ALERT_INDEX).waitForGreenStatus().waitForEvents(Priority.LANGUID).waitForRelocatingShards(0)).actionGet();
+                .health(Requests.clusterHealthRequest(ALERT_INDEX).waitForGreenStatus().waitForEvents(Priority.LANGUID).waitForRelocatingShards(0)).actionGet();
         return actionGet.getStatus();
+    }
+
+    private enum State {
+
+        STOPPED,
+        LOADING,
+        STARTED
+
     }
 
 }
