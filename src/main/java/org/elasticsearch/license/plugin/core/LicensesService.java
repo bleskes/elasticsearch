@@ -626,7 +626,7 @@ public class LicensesService extends AbstractLifecycleComponent<LicensesService>
     private void clearFinishedNotifications() {
         while (!scheduledNotifications.isEmpty()) {
             ScheduledFuture notification = scheduledNotifications.peek();
-            if (notification.isDone()) {
+            if (notification != null && notification.isDone()) {
                 // remove the notifications that are done
                 scheduledNotifications.poll();
             } else {

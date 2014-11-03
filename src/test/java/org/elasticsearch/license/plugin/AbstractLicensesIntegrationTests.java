@@ -35,6 +35,7 @@ import org.elasticsearch.license.plugin.core.LicensesManagerService;
 import org.elasticsearch.license.plugin.core.LicensesMetaData;
 import org.elasticsearch.test.ElasticsearchIntegrationTest;
 import org.elasticsearch.test.InternalTestCluster;
+import org.hamcrest.Matchers;
 
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
@@ -43,6 +44,7 @@ import java.util.concurrent.TimeUnit;
 import static org.elasticsearch.license.AbstractLicensingTestBase.getTestPriKeyPath;
 import static org.elasticsearch.license.AbstractLicensingTestBase.getTestPubKeyPath;
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.Matchers.greaterThan;
 
 /**
  */
@@ -142,12 +144,14 @@ public abstract class AbstractLicensesIntegrationTests extends ElasticsearchInte
     }
 
     protected void assertConsumerPlugin2Notification(final boolean expectedEnabled, int timeoutInSec) throws InterruptedException {
-        final Iterable<TestPluginServiceBase> consumerPluginServices = consumerPlugin2Services();
+        final List<TestPluginServiceBase> consumerPluginServices = consumerPlugin2Services();
+        assertThat("At least one instance has to be present", consumerPluginServices.size(), greaterThan(0));
         assertConsumerPluginNotification(consumerPluginServices, expectedEnabled, timeoutInSec);
     }
 
     protected void assertConsumerPlugin1Notification(final boolean expectedEnabled, int timeoutInSec) throws InterruptedException {
-        final Iterable<TestPluginServiceBase> consumerPluginServices = consumerPlugin1Services();
+        final List<TestPluginServiceBase> consumerPluginServices = consumerPlugin1Services();
+        assertThat("At least one instance has to be present", consumerPluginServices.size(), greaterThan(0));
         assertConsumerPluginNotification(consumerPluginServices, expectedEnabled, timeoutInSec);
     }
 
@@ -166,7 +170,7 @@ public abstract class AbstractLicensesIntegrationTests extends ElasticsearchInte
 
     }
 
-    private Iterable<TestPluginServiceBase> consumerPlugin2Services() {
+    private List<TestPluginServiceBase> consumerPlugin2Services() {
         final InternalTestCluster clients = internalCluster();
         List<TestPluginServiceBase> consumerPluginServices = new ArrayList<>();
         for (TestPluginServiceBase service : clients.getDataNodeInstances(TestPluginService2.class)) {
@@ -175,7 +179,7 @@ public abstract class AbstractLicensesIntegrationTests extends ElasticsearchInte
         return consumerPluginServices;
     }
 
-    private Iterable<TestPluginServiceBase> consumerPlugin1Services() {
+    private List<TestPluginServiceBase> consumerPlugin1Services() {
         final InternalTestCluster clients = internalCluster();
         List<TestPluginServiceBase> consumerPluginServices = new ArrayList<>();
         for (TestPluginServiceBase service : clients.getDataNodeInstances(TestPluginService1.class)) {
