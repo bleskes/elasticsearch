@@ -1,6 +1,7 @@
 package org.elasticsearch.alerts.actions;
 
 
+import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.ShardSearchFailure;
@@ -13,6 +14,8 @@ import org.elasticsearch.alerts.client.AlertsClientInterface;
 import org.elasticsearch.alerts.plugin.AlertsPlugin;
 import org.elasticsearch.alerts.transport.actions.create.CreateAlertRequest;
 import org.elasticsearch.alerts.transport.actions.create.CreateAlertResponse;
+import org.elasticsearch.alerts.transport.actions.delete.DeleteAlertRequest;
+import org.elasticsearch.alerts.transport.actions.delete.DeleteAlertResponse;
 import org.elasticsearch.alerts.transport.actions.get.GetAlertRequest;
 import org.elasticsearch.alerts.transport.actions.get.GetAlertResponse;
 import org.elasticsearch.alerts.transport.actions.update.UpdateAlertRequest;
@@ -74,8 +77,8 @@ public class AlertActionsTest extends ElasticsearchIntegrationTest {
 
     @Test
     public void testAlertActionParser() throws Exception {
-            DateTime fireTime = new DateTime(DateTimeZone.UTC);
-            DateTime scheduledFireTime = new DateTime(DateTimeZone.UTC);
+        DateTime fireTime = new DateTime(DateTimeZone.UTC);
+        DateTime scheduledFireTime = new DateTime(DateTimeZone.UTC);
 
 
         Map<String, Object> triggerMap = new HashMap<>();
@@ -124,10 +127,11 @@ public class AlertActionsTest extends ElasticsearchIntegrationTest {
     }
 
     @Test
-    public void testCreateAlert() throws Exception {
+    public void testAlertActions() throws Exception {
         createIndex("my-index");
         createIndex(AlertsStore.ALERT_INDEX);
         createIndex(AlertActionManager.ALERT_HISTORY_INDEX);
+
         ensureGreen("my-index", AlertsStore.ALERT_INDEX, AlertActionManager.ALERT_HISTORY_INDEX);
 
         client().preparePutIndexedScript()
@@ -219,6 +223,15 @@ public class AlertActionsTest extends ElasticsearchIntegrationTest {
         UpdateAlertResponse updateAlertResponse = alertsClient.updateAlert(updateAlertRequest).actionGet();
         assertTrue(updateAlertResponse.success());
 
+        DeleteAlertRequest deleteAlertRequest = new DeleteAlertRequest(alert.alertName());
+        DeleteAlertResponse deleteAlertResponse = alertsClient.deleteAlert(deleteAlertRequest).actionGet();
+        assertTrue(deleteAlertResponse.success());
+
+        getAlertResponse = alertsClient.getAlert(getAlertRequest).actionGet();
+        assertFalse(getAlertResponse.found());
+
+        updateAlertResponse = alertsClient.updateAlert(updateAlertRequest).actionGet();
+        assertFalse(updateAlertResponse.success());
 
     }
 
