@@ -93,14 +93,7 @@ public class PrelertWebApp extends Application
 
 		// Exception mappers
 		m_ResourceClasses.add(ElasticsearchExceptionMapper.class);
-		//m_ResourceClasses.add(HighProportionOfBadTimestampsExceptionMapper.class);
-		//m_ResourceClasses.add(JobConfigurationExceptionMapper.class);
-		//m_ResourceClasses.add(JobIdAlreadyExistsExceptionMapper.class);
-		//m_ResourceClasses.add(JobInUseExceptionMapper.class);
-		//m_ResourceClasses.add(MissingFieldExceptionMapper.class);
 		m_ResourceClasses.add(NativeProcessRunExceptionMapper.class);
-		//m_ResourceClasses.add(OutOfOrderRecordsExceptionMapper.class);
-		//m_ResourceClasses.add(TooManyJobsExceptionMapper.class);
 		m_ResourceClasses.add(UnknownJobExceptionMapper.class);
 		m_ResourceClasses.add(JobExceptionMapper.class);
 
