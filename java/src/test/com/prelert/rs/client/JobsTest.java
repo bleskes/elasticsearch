@@ -1689,6 +1689,7 @@ public class JobsTest implements Closeable
 		String flightCentreJsonJobId = test.createFlightCentreJsonJobTest(baseUrl);
 		test.getJobsTest(baseUrl);
 		test.uploadData(baseUrl, flightCentreJsonJobId, flightCentreJsonData, false);
+		test.closeJob(baseUrl, flightCentreJsonJobId);
 		test.testReadLogFiles(baseUrl, flightCentreJsonJobId);
 		test.testSetDescription(baseUrl, flightCentreJsonJobId);
 		test.verifyJobResults(baseUrl, flightCentreJsonJobId, 100, FLIGHT_CENTRE_NUM_BUCKETS,
