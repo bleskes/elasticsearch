@@ -63,6 +63,11 @@ import static org.elasticsearch.license.core.ESLicenses.reduceAndMap;
  * - LicensesManagerService - responsible for managing signed and one-time-trial licenses
  * - LicensesClientService - responsible for feature registration and notification to consumer plugin(s)
  * <p/>
+ * Registration Scheme:
+ * A consumer plugin (feature) is registered with {@link LicensesClientService#register(String, TrialLicenseOptions, LicensesClientService.Listener)}
+ * This method can be called at any time during the life-cycle of the consumer plugin.
+ *
+ *
  * <p/>
  * Notification Scheme:
  * <p/>
@@ -442,6 +447,7 @@ public class LicensesService extends AbstractLifecycleComponent<LicensesService>
             return;
         }
         notifyFeaturesAndScheduleNotification(currentLicensesMetaData);
+        lastObservedLicensesState.set(currentLicensesMetaData);
     }
 
     /**
@@ -507,7 +513,6 @@ public class LicensesService extends AbstractLifecycleComponent<LicensesService>
             }
         }
 
-        lastObservedLicensesState.set(currentLicensesMetaData);
         return nextScheduleFrequency;
 
     }
