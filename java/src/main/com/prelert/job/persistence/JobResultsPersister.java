@@ -27,7 +27,6 @@
 
 package com.prelert.job.persistence;
 
-import com.prelert.job.UnknownJobException;
 import com.prelert.job.quantiles.Quantiles;
 import com.prelert.rs.data.Bucket;
 

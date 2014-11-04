@@ -33,35 +33,28 @@ import com.prelert.rs.data.ErrorCode;
 /**
  * Job ids (names) must be unique no 2 jobs can have the same id.
  */
-public class JobIdAlreadyExistsException extends Exception 
+public class JobIdAlreadyExistsException extends JobException
 {
 	private static final long serialVersionUID = 8656604180755905746L;
 
 	private String m_JobId;
-	
+
 	/**
 	 * Create a new JobIdAlreadyExistsException with the error code
 	 * and Id (job name)
-	 * 
+	 *
 	 * @param jobId The Job Id that could not be found
 	 */
 	public JobIdAlreadyExistsException(String jobId)
 	{
+		super("The job cannot be created with the Id '" + jobId
+				+ "'. The Id is already used.", ErrorCode.JOB_ID_TAKEN);
 		m_JobId = jobId;
-	}	
-	
+	}
+
 	public String getAlias()
 	{
 		return m_JobId;
 	}
-	
-	/**
-	 * Returns {@link ErrorCode#ALIAS_TAKEN}
-	 * 
-	 * @return
-	 */
-	public ErrorCode getErrorCode()
-	{
-		return ErrorCode.JOB_ID_TAKEN;
-	}
+
 }

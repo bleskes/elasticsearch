@@ -32,13 +32,11 @@ import com.prelert.rs.data.ErrorCode;
  * This type of exception represents an error where an operation
  * would result in too many jobs running at the same time.
  */
-public class TooManyJobsException extends Exception
+public class TooManyJobsException extends JobException
 {
 	private static final long serialVersionUID = 8503362038035845948L;
 
 	private int m_Limit;
-	private ErrorCode m_ErrorCode;
-
 
 	/**
 	 * Create a new TooManyJobsException with an error code
@@ -49,18 +47,16 @@ public class TooManyJobsException extends Exception
 	 */
 	public TooManyJobsException(int limit, String message, ErrorCode errorCode)
 	{
-		super(message);
+		super(message, errorCode);
 		m_Limit = limit;
-		m_ErrorCode = errorCode;
 	}
 
 
 	public TooManyJobsException(int limit, String message, ErrorCode errorCode,
 			Throwable cause)
 	{
-		super(message, cause);
+		super(message, errorCode, cause);
 		m_Limit = limit;
-		m_ErrorCode = errorCode;
 	}
 
 
@@ -71,16 +67,5 @@ public class TooManyJobsException extends Exception
 	public int getLimit()
 	{
 		return m_Limit;
-	}
-
-
-	/**
-	 * Get the error code or 0 if not set.
-	 *
-	 * @return
-	 */
-	public ErrorCode getErrorCode()
-	{
-		return m_ErrorCode;
 	}
 }

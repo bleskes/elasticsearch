@@ -24,51 +24,35 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.status;
 
-import com.prelert.job.JobException;
+package com.prelert.job;
+
 import com.prelert.rs.data.ErrorCode;
 
 /**
- *  Records sent to autodetect should be in ascending chronological
- *  order else they are ignored and a error logged. This exception
- *  represents the case where a high proportion of messages are not
- *  in temporal order.
+ * General job exception class with an specfic error code
+ * and message.
  */
-public class OutOfOrderRecordsException extends JobException
+public class JobException extends Exception
 {
-	private static final long serialVersionUID = -7088347813900268191L;
+	private static final long serialVersionUID = -5289885963015348819L;
 
-	private long m_NumberBad;
-	private long m_TotalNumber;
+	private ErrorCode m_ErrorCode;
 
-	public OutOfOrderRecordsException(long numberBadRecords,
-			long totalNumberRecords)
+	public JobException(String message, ErrorCode errorCode)
 	{
-		super(String.format("A high proportion of records are not in ascending "
-						+ "chronological order (%d of %d).",
-						numberBadRecords, totalNumberRecords),
-			ErrorCode.TOO_MANY_OUT_OF_ORDER_RECORDS);
-
-		m_NumberBad = numberBadRecords;
-		m_TotalNumber = totalNumberRecords;
+		super(message);
+		m_ErrorCode = errorCode;
 	}
 
-	/**
-	 * The number of out of order records
-	 * @return
-	 */
-	public long getNumberOutOfOrder()
+	public JobException(String message, ErrorCode errorCode, Throwable cause)
 	{
-		return m_NumberBad;
+		super(message, cause);
+		m_ErrorCode = errorCode;
 	}
 
-	/**
-	 * Total number of records (good + bad)
-	 * @return
-	 */
-	public long getTotalNumber()
+	public ErrorCode getErrorCode()
 	{
-		return m_TotalNumber;
+		return m_ErrorCode;
 	}
 }

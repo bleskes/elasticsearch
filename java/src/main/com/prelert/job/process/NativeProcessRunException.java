@@ -27,34 +27,33 @@
 
 package com.prelert.job.process;
 
+import com.prelert.job.JobException;
 import com.prelert.rs.data.ErrorCode;
 
 /**
- * Exception thrown when there is an error running 
+ * Exception thrown when there is an error running
  * a native process (autodetect).
  */
-public class NativeProcessRunException extends Exception
+public class NativeProcessRunException extends JobException
 {
-	private static final long serialVersionUID = 5722287151589093943L;		
-	
-	private ErrorCode m_ErrorCode;
-	
+	private static final long serialVersionUID = 5722287151589093943L;
+
+	/**
+	 * Create exception with error code ErrorCode.NATIVE_PROCESS_ERROR
+	 * @param message
+	 */
+	public NativeProcessRunException(String message)
+	{
+		super(message, ErrorCode.NATIVE_PROCESS_ERROR);
+	}
+
 	public NativeProcessRunException(String message, ErrorCode errorCode)
 	{
-		super(message);
-		m_ErrorCode = errorCode;
+		super(message, errorCode);
 	}
-	
+
 	public NativeProcessRunException(String message, ErrorCode errorCode, Throwable cause)
 	{
-		super(message, cause);
-		m_ErrorCode = errorCode;
+		super(message, errorCode, cause);
 	}
-	
-	public ErrorCode getErrorCode()
-	{
-		return m_ErrorCode;
-	}
-	
-	
 }

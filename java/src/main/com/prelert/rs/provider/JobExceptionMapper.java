@@ -24,51 +24,27 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.status;
+
+package com.prelert.rs.provider;
+
+import javax.ws.rs.core.Response;
+import javax.ws.rs.ext.ExceptionMapper;
 
 import com.prelert.job.JobException;
-import com.prelert.rs.data.ErrorCode;
+import com.prelert.rs.data.ApiError;
 
-/**
- *  Records sent to autodetect should be in ascending chronological
- *  order else they are ignored and a error logged. This exception
- *  represents the case where a high proportion of messages are not
- *  in temporal order.
- */
-public class OutOfOrderRecordsException extends JobException
+public class JobExceptionMapper
+implements ExceptionMapper<JobException>
 {
-	private static final long serialVersionUID = -7088347813900268191L;
 
-	private long m_NumberBad;
-	private long m_TotalNumber;
-
-	public OutOfOrderRecordsException(long numberBadRecords,
-			long totalNumberRecords)
+	@Override
+	public Response toResponse(JobException e)
 	{
-		super(String.format("A high proportion of records are not in ascending "
-						+ "chronological order (%d of %d).",
-						numberBadRecords, totalNumberRecords),
-			ErrorCode.TOO_MANY_OUT_OF_ORDER_RECORDS);
+		ApiError error = new ApiError(e.getErrorCode());
+		error.setCause(e.getCause());
+		error.setMessage(e.getMessage());
 
-		m_NumberBad = numberBadRecords;
-		m_TotalNumber = totalNumberRecords;
-	}
-
-	/**
-	 * The number of out of order records
-	 * @return
-	 */
-	public long getNumberOutOfOrder()
-	{
-		return m_NumberBad;
-	}
-
-	/**
-	 * Total number of records (good + bad)
-	 * @return
-	 */
-	public long getTotalNumber()
-	{
-		return m_TotalNumber;
+		return Response.status(Response.Status.BAD_REQUEST)
+				.entity(error.toJson()).build();
 	}
 }
