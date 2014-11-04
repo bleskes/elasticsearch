@@ -36,4 +36,5 @@ public class AlertsPlugin extends AbstractPlugin {
                 .build();
     }
 
+
 }
