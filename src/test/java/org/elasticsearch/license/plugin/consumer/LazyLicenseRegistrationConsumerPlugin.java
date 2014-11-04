@@ -21,18 +21,24 @@ import org.elasticsearch.common.component.LifecycleComponent;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 
-public class TestConsumerPlugin1 extends TestConsumerPluginBase {
+/**
+ * Registers licenses only after cluster has recovered
+ * see {@link org.elasticsearch.license.plugin.consumer.LazyLicenseRegistrationPluginService}
+ *
+ * License registration happens after clusterservice start()
+ */
+public class LazyLicenseRegistrationConsumerPlugin extends TestConsumerPluginBase {
 
-    public final static String NAME = "test_consumer_plugin_1";
+    public static String NAME = "test_consumer_plugin_2";
 
     @Inject
-    public TestConsumerPlugin1(Settings settings) {
+    public LazyLicenseRegistrationConsumerPlugin(Settings settings) {
         super(settings);
     }
 
     @Override
     protected Class<? extends LifecycleComponent> service() {
-        return TestPluginService1.class;
+        return LazyLicenseRegistrationPluginService.class;
     }
 
     @Override

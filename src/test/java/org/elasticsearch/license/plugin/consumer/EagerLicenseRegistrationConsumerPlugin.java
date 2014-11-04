@@ -17,28 +17,32 @@
 
 package org.elasticsearch.license.plugin.consumer;
 
+import org.elasticsearch.common.component.LifecycleComponent;
 import org.elasticsearch.common.inject.Inject;
-import org.elasticsearch.common.inject.Singleton;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.license.plugin.core.LicensesClientService;
 
-@Singleton
-public class TestPluginService1 extends TestPluginServiceBase {
+/**
+ * Registers licenses upon the start of the service lifecycle
+ * see {@link org.elasticsearch.license.plugin.consumer.EagerLicenseRegistrationPluginService}
+ *
+ * License registration might happen before clusterService start()
+ */
+public class EagerLicenseRegistrationConsumerPlugin extends TestConsumerPluginBase {
 
-    public static String FEATURE_NAME = "feature1";
+    public final static String NAME = "test_consumer_plugin_1";
 
     @Inject
-    public TestPluginService1(Settings settings, LicensesClientService licensesClientService) {
-        super(settings, licensesClientService);
+    public EagerLicenseRegistrationConsumerPlugin(Settings settings) {
+        super(settings);
     }
 
     @Override
-    public String featureName() {
-        return FEATURE_NAME;
+    protected Class<? extends LifecycleComponent> service() {
+        return EagerLicenseRegistrationPluginService.class;
     }
 
     @Override
-    public String settingPrefix() {
-        return TestConsumerPlugin1.NAME;
+    protected String pluginName() {
+        return NAME;
     }
 }

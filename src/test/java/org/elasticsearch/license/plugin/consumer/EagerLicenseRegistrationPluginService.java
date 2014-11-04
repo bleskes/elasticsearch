@@ -17,26 +17,28 @@
 
 package org.elasticsearch.license.plugin.consumer;
 
-import org.elasticsearch.common.component.LifecycleComponent;
 import org.elasticsearch.common.inject.Inject;
+import org.elasticsearch.common.inject.Singleton;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.license.plugin.core.LicensesClientService;
 
-public class TestConsumerPlugin2 extends TestConsumerPluginBase {
+@Singleton
+public class EagerLicenseRegistrationPluginService extends TestPluginServiceBase {
 
-    public static String NAME = "test_consumer_plugin_2";
+    public static String FEATURE_NAME = "feature1";
 
     @Inject
-    public TestConsumerPlugin2(Settings settings) {
-        super(settings);
+    public EagerLicenseRegistrationPluginService(Settings settings, LicensesClientService licensesClientService) {
+        super(true, settings, licensesClientService, null);
     }
 
     @Override
-    protected Class<? extends LifecycleComponent> service() {
-        return TestPluginService2.class;
+    public String featureName() {
+        return FEATURE_NAME;
     }
 
     @Override
-    protected String pluginName() {
-        return NAME;
+    public String settingPrefix() {
+        return EagerLicenseRegistrationConsumerPlugin.NAME;
     }
 }
