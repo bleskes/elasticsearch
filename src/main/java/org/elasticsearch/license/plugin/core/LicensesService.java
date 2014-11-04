@@ -113,8 +113,7 @@ public class LicensesService extends AbstractLifecycleComponent<LicensesService>
 
     /**
      * Currently active scheduledNotifications
-     * All finished notifications will be cleared in {@link #clusterChanged(org.elasticsearch.cluster.ClusterChangedEvent)}
-     * and {@link #scheduleNextNotification(long)}
+     * All finished notifications will be cleared by {@link #scheduleNextNotification(long)}
      */
     private final Queue<ScheduledFuture> scheduledNotifications = new ConcurrentLinkedQueue<>();
 
@@ -301,7 +300,6 @@ public class LicensesService extends AbstractLifecycleComponent<LicensesService>
         clusterService.submitStateUpdateTask("register trial license []", new ProcessedClusterStateUpdateTask() {
             @Override
             public void clusterStateProcessed(String source, ClusterState oldState, ClusterState newState) {
-                // Change to debug
                 logger.debug("Processed Trial License registration");
                 LicensesMetaData licensesMetaData = newState.metaData().custom(LicensesMetaData.TYPE);
                 logLicenseMetaDataStats("new", licensesMetaData);
@@ -356,7 +354,6 @@ public class LicensesService extends AbstractLifecycleComponent<LicensesService>
 
     @Override
     protected void doStart() throws ElasticsearchException {
-        //Change to debug
         logger.debug("Started LicensesService");
         clusterService.add(this);
     }
@@ -582,7 +579,6 @@ public class LicensesService extends AbstractLifecycleComponent<LicensesService>
             } else {
                 // notify feature as clusterChangedEvent may not happen
                 // as no trial or signed license has been found for feature
-                // Change to debug
                 logger.debug("Calling notifyFeaturesAndScheduleNotification [no trial license spec provided]");
                 registeredListeners.add(listenerHolder);
                 notifyFeaturesAndScheduleNotification(currentMetaData);
