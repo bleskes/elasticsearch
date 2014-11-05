@@ -1,5 +1,6 @@
 package org.elasticsearch.alerts.rest;
 
+import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.alerts.Alert;
 import org.elasticsearch.alerts.AlertManager;
 import org.elasticsearch.common.inject.Inject;
@@ -87,9 +88,9 @@ public class AlertRestHandler implements RestHandler {
         } else if (request.method() == DELETE) {
             String alertName = request.param("name");
             logger.warn("Deleting [{}]", alertName);
-            boolean successful = alertManager.deleteAlert(alertName);
+            DeleteResponse deleteResponse = alertManager.deleteAlert(alertName);
             XContentBuilder builder = XContentFactory.jsonBuilder().prettyPrint();
-            builder.field("Success", successful);
+            builder.field("Success", deleteResponse != null);
             builder.field("alertName", alertName);
             restChannel.sendResponse(new BytesRestResponse(OK));
             return true;
