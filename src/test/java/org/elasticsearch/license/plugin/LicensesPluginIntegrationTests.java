@@ -18,19 +18,14 @@
 package org.elasticsearch.license.plugin;
 
 import org.elasticsearch.common.base.Predicate;
-import org.elasticsearch.common.collect.Lists;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.gateway.GatewayService;
-import org.elasticsearch.license.core.ESLicense;
 import org.elasticsearch.license.plugin.consumer.EagerLicenseRegistrationConsumerPlugin;
 import org.elasticsearch.license.plugin.consumer.EagerLicenseRegistrationPluginService;
-import org.elasticsearch.license.plugin.action.put.PutLicenseRequestBuilder;
-import org.elasticsearch.license.plugin.action.put.PutLicenseResponse;
 import org.elasticsearch.license.plugin.consumer.LazyLicenseRegistrationConsumerPlugin;
 import org.elasticsearch.license.plugin.consumer.LazyLicenseRegistrationPluginService;
-import org.elasticsearch.license.plugin.core.LicensesStatus;
 import org.junit.After;
 import org.junit.Test;
 
@@ -43,7 +38,7 @@ public class LicensesPluginIntegrationTests extends AbstractLicensesIntegrationT
 
     private final boolean useEagerLicenseRegistrationPlugin = randomBoolean();
 
-    private final int trialLicenseDurationInSeconds = 2;
+    private final int trialLicenseDurationInSeconds = 5;
     
     protected Settings nodeSettings(int nodeOrdinal) {
         return ImmutableSettings.settingsBuilder()
@@ -81,10 +76,7 @@ public class LicensesPluginIntegrationTests extends AbstractLicensesIntegrationT
         assertLicenseManagerDisabledFeatureFor(getCurrentFeatureName());
 
         logger.info(" --> put signed license");
-        ESLicense license = generateSignedLicense(getCurrentFeatureName(), TimeValue.timeValueSeconds(trialLicenseDurationInSeconds));
-        final PutLicenseResponse putLicenseResponse = new PutLicenseRequestBuilder(client().admin().cluster()).setLicense(Lists.newArrayList(license)).get();
-        assertThat(putLicenseResponse.isAcknowledged(), equalTo(true));
-        assertThat(putLicenseResponse.status(), equalTo(LicensesStatus.VALID));
+        putLicense(getCurrentFeatureName(), TimeValue.timeValueSeconds(trialLicenseDurationInSeconds));
 
         logger.info(" --> check signed license enabled notification");
         // consumer plugin should notify onEnabled on all data nodes (signed license)
@@ -123,10 +115,7 @@ public class LicensesPluginIntegrationTests extends AbstractLicensesIntegrationT
         assertConsumerPluginEnabledNotification(1);
 
         logger.info(" --> put signed license while trial license is in effect");
-        ESLicense license = generateSignedLicense(getCurrentFeatureName(), TimeValue.timeValueSeconds(trialLicenseDurationInSeconds * 2));
-        final PutLicenseResponse putLicenseResponse = new PutLicenseRequestBuilder(client().admin().cluster()).setLicense(Lists.newArrayList(license)).get();
-        assertThat(putLicenseResponse.isAcknowledged(), equalTo(true));
-        assertThat(putLicenseResponse.status(), equalTo(LicensesStatus.VALID));
+        putLicense(getCurrentFeatureName(), TimeValue.timeValueSeconds(trialLicenseDurationInSeconds * 2));
 
         logger.info(" --> check signed license enabled notification");
         // consumer plugin should notify onEnabled on all data nodes (signed license)
