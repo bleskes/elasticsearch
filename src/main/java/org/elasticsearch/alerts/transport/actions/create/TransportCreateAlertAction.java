@@ -2,6 +2,7 @@ package org.elasticsearch.alerts.transport.actions.create;
 
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.ActionListener;
+import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.HandledTransportAction;
 import org.elasticsearch.action.support.master.TransportMasterNodeOperationAction;
@@ -55,8 +56,8 @@ public class TransportCreateAlertAction extends TransportMasterNodeOperationActi
     @Override
     protected void masterOperation(CreateAlertRequest request, ClusterState state, ActionListener<CreateAlertResponse> listener) throws ElasticsearchException {
         try {
-            alertManager.addAlert(request.alert());
-            listener.onResponse(new CreateAlertResponse(true));
+            IndexResponse indexResponse = alertManager.addAlert(request.alert());
+            listener.onResponse(new CreateAlertResponse(indexResponse));
         } catch (Exception e) {
             listener.onFailure(e);
         }

@@ -211,7 +211,8 @@ public class AlertActionsTest extends ElasticsearchIntegrationTest {
 
         CreateAlertRequest alertRequest = new CreateAlertRequest(alert);
         CreateAlertResponse alertsResponse = alertsClient.createAlert(alertRequest).actionGet();
-        assertTrue(alertsResponse.success());
+        assertNotNull(alertsResponse.indexResponse());
+        assertTrue(alertsResponse.indexResponse().isCreated());
 
         GetAlertRequest getAlertRequest = new GetAlertRequest(alert.alertName());
         GetAlertResponse getAlertResponse = alertsClient.getAlert(getAlertRequest).actionGet();
@@ -222,7 +223,8 @@ public class AlertActionsTest extends ElasticsearchIntegrationTest {
         alert.schedule(schedule);
         UpdateAlertRequest updateAlertRequest = new UpdateAlertRequest(alert);
         UpdateAlertResponse updateAlertResponse = alertsClient.updateAlert(updateAlertRequest).actionGet();
-        assertTrue(updateAlertResponse.success());
+        assertNotNull(updateAlertResponse.updateResponse());
+        assertFalse(updateAlertResponse.updateResponse().isCreated());
 
         DeleteAlertRequest deleteAlertRequest = new DeleteAlertRequest(alert.alertName());
         DeleteAlertResponse deleteAlertResponse = alertsClient.deleteAlert(deleteAlertRequest).actionGet();
@@ -233,7 +235,7 @@ public class AlertActionsTest extends ElasticsearchIntegrationTest {
         assertFalse(getAlertResponse.found());
 
         updateAlertResponse = alertsClient.updateAlert(updateAlertRequest).actionGet();
-        assertFalse(updateAlertResponse.success());
+        assertNull(updateAlertResponse.updateResponse());
     }
 
 }
