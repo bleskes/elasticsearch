@@ -116,8 +116,8 @@ public class LicenseVerificationToolTests extends AbstractLicensingTestBase {
         for (ESLicense license : output) {
             licensesOutput.add(
                     ESLicense.builder()
-                    .fromLicenseSpec(license, expectedLicenses.get(license.feature()).signature())
-                    .build()
+                            .fromLicenseSpec(license, expectedLicenses.get(license.feature()).signature())
+                            .build()
             );
         }
 

@@ -24,6 +24,7 @@ public enum LicensesStatus {
     EXPIRED((byte) 2);
 
     private byte id;
+
     LicensesStatus(byte id) {
         this.id = id;
     }

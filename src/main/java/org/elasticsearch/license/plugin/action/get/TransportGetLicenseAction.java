@@ -40,7 +40,7 @@ public class TransportGetLicenseAction extends TransportMasterNodeReadOperationA
 
     @Inject
     public TransportGetLicenseAction(Settings settings, TransportService transportService, ClusterService clusterService, LicensesManagerService licensesManagerService,
-                                          ThreadPool threadPool, ActionFilters actionFilters) {
+                                     ThreadPool threadPool, ActionFilters actionFilters) {
         super(settings, GetLicenseAction.NAME, transportService, clusterService, threadPool, actionFilters);
         this.licensesManagerService = licensesManagerService;
     }
