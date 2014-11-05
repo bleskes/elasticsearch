@@ -182,8 +182,7 @@ public class TransportUpdateAction extends TransportInstanceSingleOperationActio
                 indexAction.execute(upsertRequest, new ActionListener<IndexResponse>() {
                     @Override
                     public void onResponse(IndexResponse response) {
-                        UpdateResponse update = new UpdateResponse(response.getIndex(), response.getType(), response.getId(), response.getVersion(), response.isCreated());
-                        update.setShardInfo(response.getShardInfo());
+                        UpdateResponse update = new UpdateResponse(response.getShardInfo(), response.getIndex(), response.getType(), response.getId(), response.getVersion(), response.isCreated());
                         if (request.request().fields() != null && request.request().fields().length > 0) {
                             Tuple<XContentType, Map<String, Object>> sourceAndContent = XContentHelper.convertToMap(upsertSourceBytes, true);
                             update.setGetResult(updateHelper.extractGetResult(request.request(), request.concreteIndex(), response.getVersion(), sourceAndContent.v2(), sourceAndContent.v1(), upsertSourceBytes));
@@ -218,8 +217,7 @@ public class TransportUpdateAction extends TransportInstanceSingleOperationActio
                 indexAction.execute(indexRequest, new ActionListener<IndexResponse>() {
                     @Override
                     public void onResponse(IndexResponse response) {
-                        UpdateResponse update = new UpdateResponse(response.getIndex(), response.getType(), response.getId(), response.getVersion(), response.isCreated());
-                        update.setShardInfo(response.getShardInfo());
+                        UpdateResponse update = new UpdateResponse(response.getShardInfo(), response.getIndex(), response.getType(), response.getId(), response.getVersion(), response.isCreated());
                         update.setGetResult(updateHelper.extractGetResult(request.request(), request.concreteIndex(), response.getVersion(), result.updatedSourceAsMap(), result.updateSourceContentType(), indexSourceBytes));
                         listener.onResponse(update);
                     }
@@ -247,8 +245,7 @@ public class TransportUpdateAction extends TransportInstanceSingleOperationActio
                 deleteAction.execute(deleteRequest, new ActionListener<DeleteResponse>() {
                     @Override
                     public void onResponse(DeleteResponse response) {
-                        UpdateResponse update = new UpdateResponse(response.getIndex(), response.getType(), response.getId(), response.getVersion(), false);
-                        update.setShardInfo(response.getShardInfo());
+                        UpdateResponse update = new UpdateResponse(response.getShardInfo(), response.getIndex(), response.getType(), response.getId(), response.getVersion(), false);
                         update.setGetResult(updateHelper.extractGetResult(request.request(), request.concreteIndex(), response.getVersion(), result.updatedSourceAsMap(), result.updateSourceContentType(), null));
                         listener.onResponse(update);
                     }

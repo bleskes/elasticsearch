@@ -21,6 +21,7 @@ The result of the above index operation is:
 {
     "_shards" : {
         "total" : 10,
+        "failed" : 0,
         "successful" : 10
     },
     "_index" : "twitter",

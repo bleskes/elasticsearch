@@ -319,9 +319,7 @@ public class TransportBulkAction extends HandledTransportAction<BulkRequest, Bul
                 @Override
                 public void onResponse(BulkShardResponse bulkShardResponse) {
                     for (BulkItemResponse bulkItemResponse : bulkShardResponse.getResponses()) {
-                        if (!bulkItemResponse.isFailed()) {
-                            bulkItemResponse.getResponse().setShardInfo(bulkShardResponse.getShardInfo());
-                        }
+                        bulkItemResponse.getResponse().setShardInfo(bulkShardResponse.getShardInfo());
                         responses.set(bulkItemResponse.getItemId(), bulkItemResponse);
                     }
                     if (counter.decrementAndGet() == 0) {

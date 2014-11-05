@@ -18,6 +18,7 @@ The result of the above delete operation is:
 {
     "_shards" : {
         "total" : 10,
+        "failed" : 0,
         "successful" : 10
     },
     "found" : true,

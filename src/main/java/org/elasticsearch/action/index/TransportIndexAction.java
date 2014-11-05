@@ -36,6 +36,7 @@ import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.cluster.metadata.MappingMetaData;
 import org.elasticsearch.cluster.metadata.MetaData;
 import org.elasticsearch.cluster.routing.ShardIterator;
+import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.index.engine.Engine;
@@ -57,7 +58,7 @@ import org.elasticsearch.transport.TransportService;
  * <li><b>allowIdGeneration</b>: If the id is set not, should it be generated. Defaults to <tt>true</tt>.
  * </ul>
  */
-public class TransportIndexAction extends TransportShardReplicationOperationAction<IndexRequest, IndexResponse> {
+public class TransportIndexAction extends TransportShardReplicationOperationAction<IndexRequest, IndexRequest, IndexResponse> {
 
     private final AutoCreateIndex autoCreateIndex;
 
@@ -145,6 +146,11 @@ public class TransportIndexAction extends TransportShardReplicationOperationActi
     }
 
     @Override
+    protected IndexRequest newReplicaRequestInstance() {
+        return newRequestInstance();
+    }
+
+    @Override
     protected IndexResponse newResponseInstance() {
         return new IndexResponse();
     }
@@ -161,7 +167,7 @@ public class TransportIndexAction extends TransportShardReplicationOperationActi
     }
 
     @Override
-    protected IndexResponse shardOperationOnPrimary(ClusterState clusterState, PrimaryOperationRequest shardRequest) {
+    protected Tuple<IndexResponse, IndexRequest> shardOperationOnPrimary(ClusterState clusterState, PrimaryOperationRequest shardRequest) {
         final IndexRequest request = shardRequest.request;
 
         // validate, if routing is required, that we got routing
@@ -211,7 +217,7 @@ public class TransportIndexAction extends TransportShardReplicationOperationActi
 
         assert request.versionType().validateVersionForWrites(request.version());
 
-        return new IndexResponse(shardRequest.shardId.getIndex(), request.type(), request.id(), version, created);
+        return new Tuple<>(new IndexResponse(shardRequest.shardId.getIndex(), request.type(), request.id(), version, created), shardRequest.request);
     }
 
     @Override

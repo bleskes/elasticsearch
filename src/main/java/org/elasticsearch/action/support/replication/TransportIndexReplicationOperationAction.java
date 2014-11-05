@@ -51,10 +51,10 @@ public abstract class TransportIndexReplicationOperationAction<Request extends I
 
     protected final ClusterService clusterService;
 
-    protected final TransportShardReplicationOperationAction<ShardRequest, ShardResponse> shardAction;
+    protected final TransportShardReplicationOperationAction<ShardRequest, ShardRequest, ShardResponse> shardAction;
 
     protected TransportIndexReplicationOperationAction(Settings settings, String actionName, ClusterService clusterService,
-                                                       ThreadPool threadPool, TransportShardReplicationOperationAction<ShardRequest, ShardResponse> shardAction, ActionFilters actionFilters) {
+                                                       ThreadPool threadPool, TransportShardReplicationOperationAction<ShardRequest, ShardRequest, ShardResponse> shardAction, ActionFilters actionFilters) {
         super(settings, actionName, threadPool, actionFilters);
         this.clusterService = clusterService;
         this.shardAction = shardAction;

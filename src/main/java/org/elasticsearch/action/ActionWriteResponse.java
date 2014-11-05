@@ -38,13 +38,13 @@ import java.util.List;
  */
 public abstract class ActionWriteResponse extends ActionResponse {
 
-    private ShardInfo shardInfo = new ShardInfo();
+    private ShardInfo shardInfo;
 
     @Override
     public void readFrom(StreamInput in) throws IOException {
         super.readFrom(in);
         if (in.getVersion().onOrAfter(Version.V_1_5_0)) {
-            shardInfo.readFrom(in);
+            shardInfo = ActionWriteResponse.ShardInfo.readShardInfo(in);
         }
     }
 
@@ -71,15 +71,50 @@ public abstract class ActionWriteResponse extends ActionResponse {
         private int pending;
         private Failure[] failures = new Failure[0];
 
+        private ShardInfo() {
+        }
+
+        public ShardInfo(int total, int successful, int pending, Failure... failures) {
+            this.total = total;
+            this.successful = successful;
+            this.pending = pending;
+            this.failures = failures;
+        }
+
+        public <T extends ActionWriteResponse> ShardInfo(List<T> responses, List<ShardOperationFailedException> primaryFailures) {
+            List<Failure> failures = new ArrayList<>();
+            for (ShardOperationFailedException failure : primaryFailures) {
+                // Set the status here, since it is a failure on primary shard
+                // The failure doesn't include the node id, maybe add it to ShardOperationFailedException...
+                failures.add(new ActionWriteResponse.ShardInfo.Failure(failure.index(), failure.shardId(), null, failure.reason(), failure.status(), true));
+            }
+            for (ActionWriteResponse response : responses) {
+                if (response.getShardInfo() == null) {
+                    // A pre 1.5 write response, so the shard info header is unreliable
+                    total = -1;
+                    successful = -1;
+                    pending = -1;
+                    return;
+                }
+
+                total += response.getShardInfo().getTotal();
+                successful += response.getShardInfo().getSuccessful();
+                pending += response.getShardInfo().getPending();
+                if (response.getShardInfo().failures.length > 0) {
+                    failures.addAll(Arrays.asList(response.getShardInfo().failures));
+                }
+            }
+            if (!failures.isEmpty()) {
+                failures.addAll(Arrays.asList(this.failures));
+                this.failures = failures.toArray(new Failure[failures.size()]);
+            }
+        }
+
         /**
          * @return the total number of shards the write should go to.
          */
         public int getTotal() {
             return total;
-        }
-
-        public void setTotal(int total) {
-            this.total = total;
         }
 
         /**
@@ -89,20 +124,12 @@ public abstract class ActionWriteResponse extends ActionResponse {
             return successful;
         }
 
-        public void setSuccessful(int successful) {
-            this.successful = successful;
-        }
-
         /**
          * @return the total number of shards a write is still to be performed on at the time this response was
          * created. Typically this will only contain 0, but when async replication is used this number is higher than 0.
          */
         public int getPending() {
             return pending;
-        }
-
-        public void setPending(int pending) {
-            this.pending = pending;
         }
 
         /**
@@ -119,31 +146,11 @@ public abstract class ActionWriteResponse extends ActionResponse {
             return failures;
         }
 
-        public void setFailures(Failure[] failures) {
-            this.failures = failures;
-        }
-
-        public <T extends ActionWriteResponse> void append(List<T> responses) {
-            List<Failure> failures = new ArrayList<>();
-            for (ActionWriteResponse response : responses) {
-                total += response.getShardInfo().getTotal();
-                successful += response.getShardInfo().getSuccessful();
-                pending += response.getShardInfo().getPending();
-                if (response.getShardInfo().failures.length > 0) {
-                    failures.addAll(Arrays.asList(response.getShardInfo().failures));
-                }
-            }
-            if (!failures.isEmpty()) {
-                failures.addAll(Arrays.asList(this.failures));
-                this.failures = failures.toArray(new Failure[failures.size()]);
-            }
-        }
-
         public RestStatus status() {
             RestStatus status = RestStatus.OK;
             for (Failure failure : failures) {
-                if (failure.getStatus().getStatus() > status.getStatus()) {
-                    status = failure.getStatus();
+                if (failure.primary() && failure.status().getStatus() > status.getStatus()) {
+                    status = failure.status();
                 }
             }
             return status;
@@ -151,10 +158,10 @@ public abstract class ActionWriteResponse extends ActionResponse {
 
         @Override
         public void readFrom(StreamInput in) throws IOException {
-            total = in.readVInt();
-            successful = in.readVInt();
-            pending = in.readVInt();
-            int size = in.readVInt();
+            total = in.readInt();
+            successful = in.readInt();
+            pending = in.readInt();
+            int size = in.readInt();
             failures = new Failure[size];
             for (int i = 0; i < size; i++) {
                 Failure failure = new Failure();
@@ -165,10 +172,10 @@ public abstract class ActionWriteResponse extends ActionResponse {
 
         @Override
         public void writeTo(StreamOutput out) throws IOException {
-            out.writeVInt(total);
-            out.writeVInt(successful);
-            out.writeVInt(pending);
-            out.writeVInt(failures.length);
+            out.writeInt(total);
+            out.writeInt(successful);
+            out.writeInt(pending);
+            out.writeInt(failures.length);
             for (Failure failure : failures) {
                 failure.writeTo(out);
             }
@@ -176,69 +183,94 @@ public abstract class ActionWriteResponse extends ActionResponse {
 
         @Override
         public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
-            builder.startObject(Fields._SHARDS);
-            builder.field(Fields.TOTAL, total);
-            builder.field(Fields.SUCCESSFUL, successful);
-            if (pending > 0) {
-                builder.field(Fields.PENDING, pending);
-            }
-
-            builder.field(Fields.FAILED, getFailed());
-            if (failures.length > 0) {
-                builder.startArray(Fields.FAILURES);
-                for (Failure failure : failures) {
-                    failure.toXContent(builder, params);
+            if (total != -1 && successful != -1 && pending != -1) {
+                builder.startObject(Fields._SHARDS);
+                builder.field(Fields.TOTAL, total);
+                builder.field(Fields.SUCCESSFUL, successful);
+                if (pending > 0) {
+                    builder.field(Fields.PENDING, pending);
                 }
-                builder.endArray();
+                builder.field(Fields.FAILED, getFailed());
+                if (failures.length > 0) {
+                    builder.startArray(Fields.FAILURES);
+                    for (Failure failure : failures) {
+                        failure.toXContent(builder, params);
+                    }
+                    builder.endArray();
+                }
+                builder.endObject();
             }
-            return builder.endObject();
+            return builder;
         }
 
-        public static class Failure implements Streamable, ToXContent {
+        public static ShardInfo readShardInfo(StreamInput in) throws IOException {
+            ShardInfo shardInfo = new ShardInfo();
+            shardInfo.readFrom(in);
+            return shardInfo;
+        }
+
+        public static class Failure implements ShardOperationFailedException, ToXContent {
 
             private String index;
             private int shardId;
             private String nodeId;
             private String reason;
             private RestStatus status;
+            private boolean primary;
 
-            public Failure(String index, int shardId, String nodeId, String reason) {
-                this.index = index;
-                this.shardId = shardId;
-                this.nodeId = nodeId;
-                this.reason = reason;
-                this.status = RestStatus.OK; // <-- Replica failures are ok and can happen.
-            }
-
-            public Failure(String index, int shardId, String nodeId, String reason, RestStatus status) {
+            public Failure(String index, int shardId, String nodeId, String reason, RestStatus status, boolean primary) {
                 this.index = index;
                 this.shardId = shardId;
                 this.nodeId = nodeId;
                 this.reason = reason;
                 this.status = status;
+                this.primary = primary;
             }
 
             Failure() {
             }
 
-            public String getIndex() {
+            /**
+             * @return On what index the failure occurred.
+             */
+            public String index() {
                 return index;
             }
 
-            public int getShardId() {
+            /**
+             * @return On what shard id the failure occurred.
+             */
+            public int shardId() {
                 return shardId;
             }
 
-            public String getNodeId() {
+            /**
+             * @return On what node the failure occurred.
+             */
+            public String nodeId() {
                 return nodeId;
             }
 
-            public String getReason() {
+            /**
+             * @return A text description of the failure
+             */
+            public String reason() {
                 return reason;
             }
 
-            public RestStatus getStatus() {
+            /**
+             * @return The status to report if this failure was a primary failure.
+             */
+            public RestStatus status() {
                 return status;
+            }
+
+            /**
+             * @return Whether this failure occurred on a primary shard.
+             * (this only reports true for delete by query)
+             */
+            public boolean primary() {
+                return primary;
             }
 
             @Override
@@ -248,6 +280,7 @@ public abstract class ActionWriteResponse extends ActionResponse {
                 nodeId = in.readOptionalString();
                 reason = in.readString();
                 status = RestStatus.readFrom(in);
+                primary = in.readBoolean();
             }
 
             @Override
@@ -257,6 +290,7 @@ public abstract class ActionWriteResponse extends ActionResponse {
                 out.writeOptionalString(nodeId);
                 out.writeString(reason);
                 RestStatus.writeTo(out, status);
+                out.writeBoolean(primary);
             }
 
             @Override

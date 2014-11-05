@@ -27,8 +27,6 @@ import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -41,19 +39,7 @@ public class IndexDeleteByQueryResponse extends ActionResponse {
 
     IndexDeleteByQueryResponse(String index, List<ShardDeleteByQueryResponse> shardResponses, List<ShardOperationFailedException> failures) {
         this.index = index;
-        this.shardInfo = new ActionWriteResponse.ShardInfo();
-        this.shardInfo.append(shardResponses);
-        // just append the primary failures:
-        if (!failures.isEmpty()) {
-            List<ActionWriteResponse.ShardInfo.Failure> k = new ArrayList<>();
-            for (ShardOperationFailedException failure : failures) {
-                // Set the status here, since it is a failure on primary shard
-                // The failure doesn't include the node id, maybe add it to ShardOperationFailedException...
-                k.add(new ActionWriteResponse.ShardInfo.Failure(failure.index(), failure.shardId(), null, failure.reason(), failure.status()));
-            }
-            k.addAll(Arrays.asList(this.shardInfo.getFailures()));
-            this.shardInfo.setFailures(k.toArray(new ActionWriteResponse.ShardInfo.Failure[k.size()]));
-        }
+        this.shardInfo = new ActionWriteResponse.ShardInfo(shardResponses, failures);
     }
 
     IndexDeleteByQueryResponse() {
@@ -64,6 +50,46 @@ public class IndexDeleteByQueryResponse extends ActionResponse {
      */
     public String getIndex() {
         return this.index;
+    }
+
+    /**
+     * The total number of shards the delete by query was executed on.
+     *
+     * @deprecated use {@link #getShardInfo()}
+     */
+    @Deprecated
+    public int getTotalShards() {
+        return shardInfo.getTotal();
+    }
+
+    /**
+     * The successful number of shards the delete by query was executed on.
+     *
+     * @deprecated use {@link #getShardInfo()}
+     */
+    @Deprecated
+    public int getSuccessfulShards() {
+        return shardInfo.getSuccessful();
+    }
+
+    /**
+     * The failed number of shards the delete by query was executed on.
+     *
+     * @deprecated use {@link #getShardInfo()}
+     */
+    @Deprecated
+    public int getFailedShards() {
+        return shardInfo.getFailed();
+    }
+
+    /**
+     * The actual
+     *
+     * @deprecated use {@link #getShardInfo()}
+     */
+    @Deprecated
+    public ShardOperationFailedException[] getFailures() {
+        return shardInfo.getFailures();
     }
 
     public ActionWriteResponse.ShardInfo getShardInfo() {
@@ -80,7 +106,7 @@ public class IndexDeleteByQueryResponse extends ActionResponse {
             in.readVInt();
         }
         if (in.getVersion().onOrAfter(Version.V_1_5_0)) {
-            shardInfo = in.readOptionalStreamable(new ActionWriteResponse.ShardInfo());
+            shardInfo = ActionWriteResponse.ShardInfo.readShardInfo(in);
         }
     }
 
@@ -94,7 +120,7 @@ public class IndexDeleteByQueryResponse extends ActionResponse {
             out.writeVInt(0);
         }
         if (out.getVersion().onOrAfter(Version.V_1_5_0)) {
-            out.writeOptionalStreamable(shardInfo);
+            shardInfo.writeTo(out);
         }
     }
 }

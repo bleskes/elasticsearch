@@ -30,6 +30,7 @@ import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.action.shard.ShardStateAction;
 import org.elasticsearch.cluster.routing.GroupShardsIterator;
 import org.elasticsearch.cluster.routing.ShardIterator;
+import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.BigArrays;
@@ -48,7 +49,7 @@ import org.elasticsearch.transport.TransportService;
 /**
  *
  */
-public class TransportShardDeleteByQueryAction extends TransportShardReplicationOperationAction<ShardDeleteByQueryRequest, ShardDeleteByQueryResponse> {
+public class TransportShardDeleteByQueryAction extends TransportShardReplicationOperationAction<ShardDeleteByQueryRequest, ShardDeleteByQueryRequest, ShardDeleteByQueryResponse> {
 
     public final static String DELETE_BY_QUERY_API = "delete_by_query";
 
@@ -85,6 +86,11 @@ public class TransportShardDeleteByQueryAction extends TransportShardReplication
     }
 
     @Override
+    protected ShardDeleteByQueryRequest newReplicaRequestInstance() {
+        return newRequestInstance();
+    }
+
+    @Override
     protected ShardDeleteByQueryResponse newResponseInstance() {
         return new ShardDeleteByQueryResponse();
     }
@@ -95,7 +101,7 @@ public class TransportShardDeleteByQueryAction extends TransportShardReplication
     }
 
     @Override
-    protected ShardDeleteByQueryResponse shardOperationOnPrimary(ClusterState clusterState, PrimaryOperationRequest shardRequest) {
+    protected Tuple<ShardDeleteByQueryResponse, ShardDeleteByQueryRequest> shardOperationOnPrimary(ClusterState clusterState, PrimaryOperationRequest shardRequest) {
         ShardDeleteByQueryRequest request = shardRequest.request;
         IndexService indexService = indicesService.indexServiceSafe(shardRequest.shardId.getIndex());
         IndexShard indexShard = indexService.shardSafe(shardRequest.shardId.id());
@@ -112,7 +118,7 @@ public class TransportShardDeleteByQueryAction extends TransportShardReplication
                 SearchContext.removeCurrent();
             }
         }
-        return new ShardDeleteByQueryResponse(shardRequest.shardId);
+        return new Tuple<>(new ShardDeleteByQueryResponse(shardRequest.shardId), shardRequest.request);
     }
 
 

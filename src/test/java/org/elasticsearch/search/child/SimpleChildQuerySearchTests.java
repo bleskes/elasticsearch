@@ -1376,7 +1376,7 @@ public class SimpleChildQuerySearchTests extends ElasticsearchIntegrationTest {
         DeleteByQueryResponse deleteByQueryResponse = client().prepareDeleteByQuery("test").setQuery(randomHasChild("child", "c_field", "blue")).get();
         assertThat(deleteByQueryResponse.getIndex("test").getShardInfo().getSuccessful(), equalTo(0));
         assertThat(deleteByQueryResponse.getIndex("test").getShardInfo().getFailures().length, equalTo(getNumShards("test").numPrimaries));
-        assertThat(deleteByQueryResponse.getIndex("test").getShardInfo().getFailures()[0].getReason(), containsString("[has_child] unsupported in delete_by_query api"));
+        assertThat(deleteByQueryResponse.getIndex("test").getShardInfo().getFailures()[0].reason(), containsString("[has_child] unsupported in delete_by_query api"));
         client().admin().indices().prepareRefresh("test").get();
 
         searchResponse = client().prepareSearch("test")
@@ -1421,7 +1421,7 @@ public class SimpleChildQuerySearchTests extends ElasticsearchIntegrationTest {
         DeleteByQueryResponse deleteByQueryResponse = client().prepareDeleteByQuery("test").setQuery(randomHasChild("child", "c_field", "blue")).get();
         assertThat(deleteByQueryResponse.getIndex("test").getShardInfo().getSuccessful(), equalTo(0));
         assertThat(deleteByQueryResponse.getIndex("test").getShardInfo().getFailures().length, equalTo(getNumShards("test").numPrimaries));
-        assertThat(deleteByQueryResponse.getIndex("test").getShardInfo().getFailures()[0].getReason(), containsString("[has_child] unsupported in delete_by_query api"));
+        assertThat(deleteByQueryResponse.getIndex("test").getShardInfo().getFailures()[0].reason(), containsString("[has_child] unsupported in delete_by_query api"));
         client().admin().indices().prepareRefresh("test").get();
 
         searchResponse = client().prepareSearch("test")
@@ -1474,7 +1474,7 @@ public class SimpleChildQuerySearchTests extends ElasticsearchIntegrationTest {
                 .get();
         assertThat(deleteByQueryResponse.getIndex("test").getShardInfo().getSuccessful(), equalTo(0));
         assertThat(deleteByQueryResponse.getIndex("test").getShardInfo().getFailures().length, equalTo(getNumShards("test").numPrimaries));
-        assertThat(deleteByQueryResponse.getIndex("test").getShardInfo().getFailures()[0].getReason(), containsString("[has_parent] unsupported in delete_by_query api"));
+        assertThat(deleteByQueryResponse.getIndex("test").getShardInfo().getFailures()[0].reason(), containsString("[has_parent] unsupported in delete_by_query api"));
         client().admin().indices().prepareRefresh("test").get();
         client().admin().indices().prepareRefresh("test").get();
         client().admin().indices().prepareRefresh("test").get();

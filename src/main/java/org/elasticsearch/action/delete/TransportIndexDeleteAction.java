@@ -48,9 +48,7 @@ public class TransportIndexDeleteAction extends TransportIndexReplicationOperati
     @Override
     protected IndexDeleteResponse newResponseInstance(IndexDeleteRequest request, List<ShardDeleteResponse> shardDeleteResponses, int failuresCount, List<ShardOperationFailedException> shardFailures) {
         IndexDeleteResponse indexDeleteResponse = new IndexDeleteResponse(request.index(), shardDeleteResponses.toArray(new ShardDeleteResponse[shardDeleteResponses.size()]));
-        ActionWriteResponse.ShardInfo shardInfo = new ActionWriteResponse.ShardInfo();
-        shardInfo.append(shardDeleteResponses);
-        indexDeleteResponse.setShardInfo(shardInfo);
+        indexDeleteResponse.setShardInfo(new ActionWriteResponse.ShardInfo(shardDeleteResponses, shardFailures));
         return indexDeleteResponse;
     }
 

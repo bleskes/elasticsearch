@@ -25,6 +25,7 @@ import org.elasticsearch.ElasticsearchIllegalStateException;
 import org.elasticsearch.ElasticsearchWrapperException;
 import org.elasticsearch.ExceptionsHelper;
 import org.elasticsearch.action.ActionRequest;
+import org.elasticsearch.action.ActionWriteResponse;
 import org.elasticsearch.action.RoutingMissingException;
 import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.delete.DeleteResponse;
@@ -68,7 +69,7 @@ import java.util.Set;
 /**
  * Performs the index operation.
  */
-public class TransportShardBulkAction extends TransportShardReplicationOperationAction<BulkShardRequest, BulkShardResponse> {
+public class TransportShardBulkAction extends TransportShardReplicationOperationAction<BulkShardRequest, BulkShardRequest, BulkShardResponse> {
 
     private final static String OP_TYPE_UPDATE = "update";
     private final static String OP_TYPE_DELETE = "delete";
@@ -110,6 +111,11 @@ public class TransportShardBulkAction extends TransportShardReplicationOperation
     }
 
     @Override
+    protected BulkShardRequest newReplicaRequestInstance() {
+        return newRequestInstance();
+    }
+
+    @Override
     protected BulkShardResponse newResponseInstance() {
         return new BulkShardResponse();
     }
@@ -125,7 +131,7 @@ public class TransportShardBulkAction extends TransportShardReplicationOperation
     }
 
     @Override
-    protected BulkShardResponse shardOperationOnPrimary(ClusterState clusterState, PrimaryOperationRequest shardRequest) {
+    protected Tuple<BulkShardResponse, BulkShardRequest> shardOperationOnPrimary(ClusterState clusterState, PrimaryOperationRequest shardRequest) {
         final BulkShardRequest request = shardRequest.request;
         IndexService indexService = indicesService.indexServiceSafe(request.index());
         IndexShard indexShard = indexService.shardSafe(shardRequest.shardId.id());
@@ -245,8 +251,7 @@ public class TransportShardBulkAction extends TransportShardReplicationOperation
                                 BytesReference indexSourceAsBytes = indexRequest.source();
                                 // add the response
                                 IndexResponse indexResponse = result.response();
-                                UpdateResponse updateResponse = new UpdateResponse(indexResponse.getIndex(), indexResponse.getType(), indexResponse.getId(), indexResponse.getVersion(), indexResponse.isCreated());
-                                updateResponse.setShardInfo(indexResponse.getShardInfo());
+                                UpdateResponse updateResponse = new UpdateResponse(indexResponse.getShardInfo(), indexResponse.getIndex(), indexResponse.getType(), indexResponse.getId(), indexResponse.getVersion(), indexResponse.isCreated());
                                 if (updateRequest.fields() != null && updateRequest.fields().length > 0) {
                                     Tuple<XContentType, Map<String, Object>> sourceAndContent = XContentHelper.convertToMap(indexSourceAsBytes, true);
                                     updateResponse.setGetResult(updateHelper.extractGetResult(updateRequest, shardRequest.request.index(), indexResponse.getVersion(), sourceAndContent.v2(), sourceAndContent.v1(), indexSourceAsBytes));
@@ -267,8 +272,7 @@ public class TransportShardBulkAction extends TransportShardReplicationOperation
                             case DELETE:
                                 DeleteResponse response = updateResult.writeResult.response();
                                 DeleteRequest deleteRequest = updateResult.request();
-                                updateResponse = new UpdateResponse(response.getIndex(), response.getType(), response.getId(), response.getVersion(), false);
-                                updateResponse.setShardInfo(response.getShardInfo());
+                                updateResponse = new UpdateResponse(response.getShardInfo(), response.getIndex(), response.getType(), response.getId(), response.getVersion(), false);
                                 updateResponse.setGetResult(updateHelper.extractGetResult(updateRequest, shardRequest.request.index(), response.getVersion(), updateResult.result.updatedSourceAsMap(), updateResult.result.updateSourceContentType(), null));
                                 // Replace the update request to the translated delete request to execute on the replica.
                                 item = request.items()[requestIndex] = new BulkItemRequest(request.items()[requestIndex].id(), deleteRequest);
@@ -361,7 +365,7 @@ public class TransportShardBulkAction extends TransportShardReplicationOperation
         for (int i = 0; i < items.length; i++) {
             responses[i] = items[i].getPrimaryResponse();
         }
-        return new BulkShardResponse(shardRequest.shardId, responses);
+        return new Tuple<>(new BulkShardResponse(shardRequest.shardId, responses), shardRequest.request);
     }
 
     private void setResponse(BulkItemRequest request, BulkItemResponse response) {
@@ -373,18 +377,20 @@ public class TransportShardBulkAction extends TransportShardReplicationOperation
 
     static class WriteResult {
 
-        final Object response;
+        final ActionWriteResponse response;
         final String mappingTypeToUpdate;
         final Engine.IndexingOperation op;
 
-        WriteResult(Object response, String mappingTypeToUpdate, Engine.IndexingOperation op) {
+        WriteResult(ActionWriteResponse response, String mappingTypeToUpdate, Engine.IndexingOperation op) {
             this.response = response;
             this.mappingTypeToUpdate = mappingTypeToUpdate;
             this.op = op;
         }
 
         @SuppressWarnings("unchecked")
-        <T> T response() {
+        <T extends ActionWriteResponse> T response() {
+            // set all to -1, we will embed this into the replica request and not use it
+            response.setShardInfo(new ActionWriteResponse.ShardInfo(-1, -1, -1));
             return (T) response;
         }
 

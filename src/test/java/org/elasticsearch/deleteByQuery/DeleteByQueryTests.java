@@ -118,9 +118,9 @@ public class DeleteByQueryTests extends ElasticsearchIntegrationTest {
         assertThat(response.getIndices().size(), equalTo(1));
         assertThat(response.getIndices().get("test").getShardInfo().getFailures().length, equalTo(twitter.numPrimaries));
         for (ActionWriteResponse.ShardInfo.Failure failure : response.getIndices().get("test").getShardInfo().getFailures()) {
-            assertThat(failure.getReason(), containsString("[test] [has_child] unsupported in delete_by_query api"));
-            assertThat(failure.getStatus(), equalTo(RestStatus.BAD_REQUEST));
-            assertThat(failure.getShardId(), greaterThan(-1));
+            assertThat(failure.reason(), containsString("[test] [has_child] unsupported in delete_by_query api"));
+            assertThat(failure.status(), equalTo(RestStatus.BAD_REQUEST));
+            assertThat(failure.shardId(), greaterThan(-1));
         }
     }
 
@@ -196,7 +196,7 @@ public class DeleteByQueryTests extends ElasticsearchIntegrationTest {
         assertThat(shardInfo.getPending(), equalTo(0));
         assertThat(shardInfo.getFailures().length, equalTo(shardInfo.getTotal() - shardInfo.getSuccessful()));
         for (ActionWriteResponse.ShardInfo.Failure failure : shardInfo.getFailures()) {
-            assertThat(failure.getStatus(), equalTo(RestStatus.OK));
+            assertThat(failure.status(), equalTo(RestStatus.OK));
         }
     }
 }

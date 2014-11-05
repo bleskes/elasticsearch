@@ -38,10 +38,18 @@ public class UpdateResponse extends ActionWriteResponse {
     private GetResult getResult;
 
     public UpdateResponse() {
-
     }
 
+    /**
+     * Constructor to be used when a update didn't translate in a write.
+     * For example: update script with operation set to none
+     */
     public UpdateResponse(String index, String type, String id, long version, boolean created) {
+        this(new ShardInfo(-1, -1, -1), index, type, id, version, created);
+    }
+
+    public UpdateResponse(ShardInfo shardInfo, String index, String type, String id, long version, boolean created) {
+        setShardInfo(shardInfo);
         this.index = index;
         this.id = id;
         this.type = type;
