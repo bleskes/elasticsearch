@@ -137,9 +137,7 @@ public class AlertsClient implements AlertsClientInterface {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <Request extends ActionRequest, Response extends ActionResponse, RequestBuilder extends
-            ActionRequestBuilder<Request, Response, RequestBuilder, AlertsClientInterface>>
-    ActionFuture<Response> execute(Action<Request, Response, RequestBuilder, AlertsClientInterface> action, Request request) {
+    public <Request extends ActionRequest, Response extends ActionResponse, RequestBuilder extends ActionRequestBuilder<Request, Response, RequestBuilder, AlertsClientInterface>> ActionFuture<Response> execute(Action<Request, Response, RequestBuilder, AlertsClientInterface> action, Request request) {
         headers.applyTo(request);
         TransportAction<Request, Response> transportAction = internalActions.get((AlertsClientAction)action);
         return transportAction.execute(request);
@@ -147,9 +145,7 @@ public class AlertsClient implements AlertsClientInterface {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <Request extends ActionRequest, Response extends ActionResponse, RequestBuilder extends
-            ActionRequestBuilder<Request, Response, RequestBuilder, AlertsClientInterface>>
-    void execute(Action<Request, Response, RequestBuilder, AlertsClientInterface> action, Request request, ActionListener<Response> listener) {
+    public <Request extends ActionRequest, Response extends ActionResponse, RequestBuilder extends ActionRequestBuilder<Request, Response, RequestBuilder, AlertsClientInterface>> void execute(Action<Request, Response, RequestBuilder, AlertsClientInterface> action, Request request, ActionListener<Response> listener) {
         headers.applyTo(request);
         TransportAction<Request, Response> transportAction = internalActions.get((AlertsClientAction)action);
         transportAction.execute(request, listener);
