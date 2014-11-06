@@ -10,11 +10,13 @@ public class TriggerResult {
     private final boolean triggered;
     private final SearchRequest request;
     private final SearchResponse response;
+    private final AlertTrigger trigger;
 
-    public TriggerResult(boolean triggered, SearchRequest request, SearchResponse response) {
+    public TriggerResult(boolean triggered, SearchRequest request, SearchResponse response, AlertTrigger trigger) {
         this.triggered = triggered;
         this.request = request;
         this.response = response;
+        this.trigger = trigger;
     }
 
     public boolean isTriggered() {
@@ -28,4 +30,9 @@ public class TriggerResult {
     public SearchResponse getResponse() {
         return response;
     }
+
+    public AlertTrigger getTrigger() {
+        return trigger;
+    }
+
 }
