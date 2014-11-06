@@ -1,4 +1,4 @@
-package org.elasticsearch.alerts.transport.actions.create;
+package org.elasticsearch.alerts.transport.actions.index;
 
 import org.elasticsearch.action.ActionResponse;
 import org.elasticsearch.action.index.IndexResponse;
@@ -9,14 +9,14 @@ import java.io.IOException;
 
 /**
  */
-public class CreateAlertResponse extends ActionResponse {
+public class IndexAlertResponse extends ActionResponse {
     private IndexResponse indexResponse;
 
-    public CreateAlertResponse(IndexResponse indexResponse) {
+    public IndexAlertResponse(IndexResponse indexResponse) {
         this.indexResponse = indexResponse;
     }
 
-    public CreateAlertResponse() {
+    public IndexAlertResponse() {
         indexResponse = null;
     }
 

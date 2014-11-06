@@ -1,4 +1,4 @@
-package org.elasticsearch.alerts.transport.actions.update;
+package org.elasticsearch.alerts.transport.actions.index;
 
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.ActionListener;
@@ -12,19 +12,21 @@ import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.block.ClusterBlockException;
 import org.elasticsearch.cluster.block.ClusterBlockLevel;
+import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
 
 /**
  */
-public class TransportUpdateAlertAction extends TransportMasterNodeOperationAction<UpdateAlertRequest, UpdateAlertResponse> {
+public class TransportIndexAlertAction extends TransportMasterNodeOperationAction<IndexAlertRequest, IndexAlertResponse> {
 
     private final AlertManager alertManager;
 
-    public TransportUpdateAlertAction(Settings settings, String actionName, TransportService transportService,
-                                      ClusterService clusterService, ThreadPool threadPool, ActionFilters actionFilters,
-                                      AlertManager alertManager) {
+    @Inject
+    public TransportIndexAlertAction(Settings settings, String actionName, TransportService transportService,
+                                     ClusterService clusterService, ThreadPool threadPool, ActionFilters actionFilters,
+                                     AlertManager alertManager) {
         super(settings, actionName, transportService, clusterService, threadPool, actionFilters);
         this.alertManager = alertManager;
     }
@@ -35,31 +37,32 @@ public class TransportUpdateAlertAction extends TransportMasterNodeOperationActi
     }
 
     @Override
-    protected UpdateAlertRequest newRequest() {
-        return new UpdateAlertRequest();
+    protected IndexAlertRequest newRequest() {
+        return new IndexAlertRequest();
     }
 
     @Override
-    protected UpdateAlertResponse newResponse() {
-        return new UpdateAlertResponse();
+    protected IndexAlertResponse newResponse() {
+        return new IndexAlertResponse();
     }
 
     @Override
-    protected void masterOperation(UpdateAlertRequest request, ClusterState state, ActionListener<UpdateAlertResponse> listener) throws ElasticsearchException {
+    protected void masterOperation(IndexAlertRequest request, ClusterState state, ActionListener<IndexAlertResponse> listener) throws ElasticsearchException {
         try {
-            IndexResponse indexResponse = alertManager.updateAlert(request.alert(), true);
-            listener.onResponse(new UpdateAlertResponse(indexResponse));
+            IndexResponse indexResponse = alertManager.addAlert(request.alertName(), request.alertSource());
+            listener.onResponse(new IndexAlertResponse(indexResponse));
         } catch (Exception e) {
             listener.onFailure(e);
         }
     }
 
     @Override
-    protected ClusterBlockException checkBlock(UpdateAlertRequest request, ClusterState state) {
+    protected ClusterBlockException checkBlock(IndexAlertRequest request, ClusterState state) {
         if (!alertManager.isStarted()) {
             return new ClusterBlockException(null);
         }
         return state.blocks().indicesBlockedException(ClusterBlockLevel.WRITE, new String[]{AlertsStore.ALERT_INDEX, AlertActionManager.ALERT_HISTORY_INDEX});
+
     }
 
 }
