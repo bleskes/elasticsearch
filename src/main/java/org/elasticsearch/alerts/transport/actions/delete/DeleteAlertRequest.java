@@ -17,7 +17,7 @@ public class DeleteAlertRequest extends MasterNodeOperationRequest<DeleteAlertRe
     private String alertName;
     private long version = Versions.MATCH_ANY;
 
-    DeleteAlertRequest() {
+    public DeleteAlertRequest() {
     }
 
     public DeleteAlertRequest(String alertName) {

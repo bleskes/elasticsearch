@@ -16,8 +16,9 @@ public class IndexAlertRequest extends MasterNodeOperationRequest<IndexAlertRequ
 
     private String alertName;
     private BytesReference alertSource;
+    private boolean alertSourceUnsafe;
 
-    IndexAlertRequest() {
+    public IndexAlertRequest() {
     }
 
     public IndexAlertRequest(BytesReference alertSource) {
@@ -38,6 +39,19 @@ public class IndexAlertRequest extends MasterNodeOperationRequest<IndexAlertRequ
 
     public void setAlertSource(BytesReference alertSource) {
         this.alertSource = alertSource;
+        this.alertSourceUnsafe = false;
+    }
+
+    public void setAlertSource(BytesReference alertSource, boolean alertSourceUnsafe) {
+        this.alertSource = alertSource;
+        this.alertSourceUnsafe = alertSourceUnsafe;
+    }
+
+    public void beforeLocalFork() {
+        if (alertSourceUnsafe) {
+            alertSource = alertSource.copyBytesArray();
+            alertSourceUnsafe = false;
+        }
     }
 
     @Override
@@ -57,6 +71,7 @@ public class IndexAlertRequest extends MasterNodeOperationRequest<IndexAlertRequ
         super.readFrom(in);
         alertName = in.readString();
         alertSource = in.readBytesReference();
+        alertSourceUnsafe = false;
     }
 
     @Override
