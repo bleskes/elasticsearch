@@ -24,6 +24,7 @@ import org.elasticsearch.env.Environment;
 import org.elasticsearch.test.ElasticsearchTestCase;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.watcher.ResourceWatcherService;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -49,6 +50,7 @@ public class InternalKeyServiceTests extends ElasticsearchTestCase {
     private Settings settings;
     private Environment env;
     private File keyFile;
+    private ThreadPool threadPool;
 
     @Before
     public void init() throws Exception {
@@ -58,9 +60,14 @@ public class InternalKeyServiceTests extends ElasticsearchTestCase {
                 .put("watcher.interval.high", "2s")
                 .build();
         env = new Environment(settings);
-        ThreadPool threadPool = new ThreadPool("test");
+        threadPool = new ThreadPool("test");
         watcherService = new ResourceWatcherService(settings, threadPool);
         watcherService.start();
+    }
+
+    @After
+    public void shutdown() {
+        threadPool.shutdownNow();
     }
 
     @Test
