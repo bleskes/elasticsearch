@@ -17,7 +17,7 @@ import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentHelper;
 import org.elasticsearch.test.ElasticsearchIntegrationTest;
-import org.junit.Before;
+import org.junit.After;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -98,7 +98,7 @@ public class BasicAlertingTest extends ElasticsearchIntegrationTest {
         assertHitCount(client().prepareCount(AlertsStore.ALERT_INDEX).get(), 0l);
     }
 
-    @Before
+    @After
     public void clearAlerts() {
         // Clear all in-memory alerts on all nodes, perhaps there isn't an elected master at this point
         for (AlertManager manager : internalCluster().getInstances(AlertManager.class)) {
