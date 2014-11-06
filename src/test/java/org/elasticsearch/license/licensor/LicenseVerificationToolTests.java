@@ -64,7 +64,7 @@ public class LicenseVerificationToolTests extends CliToolTestCase {
 
     @Test
     public void testParsingSimple() throws Exception {
-        ESLicense inputLicense = generateSignedLicense(randomRealisticUnicodeOfCodepointLengthBetween(5, 15),
+        ESLicense inputLicense = generateSignedLicense("feature__1",
                 TimeValue.timeValueHours(1));
         LicenseVerificationTool licenseVerificationTool = new LicenseVerificationTool();
         Command command = licenseVerificationTool.parse(LicenseVerificationTool.NAME,
@@ -78,7 +78,7 @@ public class LicenseVerificationToolTests extends CliToolTestCase {
 
     @Test
     public void testParsingLicenseFile() throws Exception {
-        ESLicense inputLicense = generateSignedLicense(randomRealisticUnicodeOfCodepointLengthBetween(5, 15),
+        ESLicense inputLicense = generateSignedLicense("feature__1",
                 TimeValue.timeValueHours(1));
 
         LicenseVerificationTool licenseVerificationTool = new LicenseVerificationTool();
@@ -97,7 +97,7 @@ public class LicenseVerificationToolTests extends CliToolTestCase {
         int n = randomIntBetween(2, 5);
         Map<String, ESLicense> inputLicenses = new HashMap<>();
         for (int i = 0; i < n; i++) {
-            ESLicense esLicense = generateSignedLicense(randomRealisticUnicodeOfCodepointLengthBetween(5, 15),
+            ESLicense esLicense = generateSignedLicense("feature__" + i,
                     TimeValue.timeValueHours(1));
             inputLicenses.put(esLicense.feature(), esLicense);
         }
@@ -126,7 +126,7 @@ public class LicenseVerificationToolTests extends CliToolTestCase {
         int n = randomIntBetween(2, 5);
         Map<String, ESLicense> inputLicenses = new HashMap<>();
         for (int i = 0; i < n; i++) {
-            ESLicense esLicense = generateSignedLicense(randomRealisticUnicodeOfCodepointLengthBetween(5, 15),
+            ESLicense esLicense = generateSignedLicense("feature__" + i,
                     TimeValue.timeValueHours(1));
             inputLicenses.put(esLicense.feature(), esLicense);
         }
@@ -144,7 +144,7 @@ public class LicenseVerificationToolTests extends CliToolTestCase {
 
     @Test
     public void testToolInvalidLicense() throws Exception {
-        ESLicense signedLicense = generateSignedLicense(randomRealisticUnicodeOfCodepointLengthBetween(5, 15)
+        ESLicense signedLicense = generateSignedLicense("feature__1"
                 , TimeValue.timeValueHours(1));
 
         ESLicense tamperedLicense = ESLicense.builder()
