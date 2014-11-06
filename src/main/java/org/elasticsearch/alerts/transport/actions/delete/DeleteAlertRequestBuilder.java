@@ -1,12 +1,8 @@
 package org.elasticsearch.alerts.transport.actions.delete;
 
 import org.elasticsearch.action.ActionListener;
-import org.elasticsearch.action.ActionRequestBuilder;
 import org.elasticsearch.action.support.master.MasterNodeOperationRequestBuilder;
-import org.elasticsearch.alerts.client.AlertsClient;
 import org.elasticsearch.alerts.client.AlertsClientInterface;
-import org.elasticsearch.client.Client;
-import org.elasticsearch.index.VersionType;
 
 /**
  * A delete document action request builder.
@@ -23,7 +19,7 @@ public class DeleteAlertRequestBuilder
     }
 
     public DeleteAlertRequestBuilder setAlertName(String alertName) {
-        this.request().alertName(alertName);
+        this.request().setAlertName(alertName);
         return this;
     }
 
