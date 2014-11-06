@@ -26,6 +26,7 @@ import org.elasticsearch.ElasticsearchIllegalStateException;
 import org.elasticsearch.Version;
 import org.elasticsearch.cluster.ClusterChangedEvent;
 import org.elasticsearch.cluster.ClusterStateListener;
+import org.elasticsearch.cluster.ClusterStateProcessor;
 import org.elasticsearch.cluster.action.index.NodeIndexDeletedAction;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.cluster.metadata.MetaData;
@@ -58,7 +59,7 @@ import java.util.regex.Pattern;
 /**
  *
  */
-public class LocalGatewayMetaState extends AbstractComponent implements ClusterStateListener {
+public class LocalGatewayMetaState extends AbstractComponent implements ClusterStateProcessor {
 
     static final String GLOBAL_STATE_FILE_PREFIX = "global-";
     private static final String INDEX_STATE_FILE_PREFIX = "state-";
@@ -179,7 +180,7 @@ public class LocalGatewayMetaState extends AbstractComponent implements ClusterS
     }
 
     @Override
-    public void clusterChanged(ClusterChangedEvent event) {
+    public void applyStateChange(ClusterChangedEvent event) {
         if (event.state().blocks().disableStatePersistence()) {
             // reset the current metadata, we need to start fresh...
             this.currentMetaData = null;
@@ -362,7 +363,8 @@ public class LocalGatewayMetaState extends AbstractComponent implements ClusterS
 
             @Override
             public void toXContent(XContentBuilder builder, IndexMetaData state) throws IOException {
-                IndexMetaData.Builder.toXContent(state, builder, formatParams);            }
+                IndexMetaData.Builder.toXContent(state, builder, formatParams);
+            }
 
             @Override
             public IndexMetaData fromXContent(XContentParser parser) throws IOException {

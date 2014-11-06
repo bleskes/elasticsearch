@@ -62,14 +62,19 @@ public interface ClusterService extends LifecycleComponent<ClusterService> {
     OperationRouting operationRouting();
 
     /**
-     * Adds a priority listener for updated cluster states.
+     * Adds a priority processor updated cluster state changes.
      */
-    void addFirst(ClusterStateListener listener);
+    void addFirst(ClusterStateProcessor processor);
 
     /**
-     * Adds last listener.
+     * Adds last processor.
      */
-    void addLast(ClusterStateListener listener);
+    void addLast(ClusterStateProcessor processor);
+
+    /**
+     * Adds a processor for cluster state changes.
+     */
+    void add(ClusterStateProcessor processor);
 
     /**
      * Adds a listener for updated cluster states.
@@ -79,8 +84,12 @@ public interface ClusterService extends LifecycleComponent<ClusterService> {
     /**
      * Removes a listener for updated cluster states.
      */
-    void remove(ClusterStateListener listener);
+    void remove(ClusterStateProcessor listener);
 
+    /**
+     * Removes a processor of cluster state changes.
+     */
+    void remove(ClusterStateListener listener);
     /**
      * Add a listener for on/off local node master events
      */

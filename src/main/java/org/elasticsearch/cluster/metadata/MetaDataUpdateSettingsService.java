@@ -45,7 +45,7 @@ import java.util.*;
 /**
  * Service responsible for submitting update index settings requests
  */
-public class MetaDataUpdateSettingsService extends AbstractComponent implements ClusterStateListener {
+public class MetaDataUpdateSettingsService extends AbstractComponent implements ClusterStateProcessor {
 
     // the value we recognize in the "max" position to mean all the nodes
     private static final String ALL_NODES_VALUE = "all";
@@ -66,7 +66,7 @@ public class MetaDataUpdateSettingsService extends AbstractComponent implements 
     }
 
     @Override
-    public void clusterChanged(ClusterChangedEvent event) {
+    public void applyStateChange(ClusterChangedEvent event) {
         // update an index with number of replicas based on data nodes if possible
         if (!event.state().nodes().localNodeMaster()) {
             return;

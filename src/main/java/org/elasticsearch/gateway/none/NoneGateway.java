@@ -39,7 +39,7 @@ import org.elasticsearch.index.gateway.none.NoneIndexGatewayModule;
 /**
  *
  */
-public class NoneGateway extends AbstractLifecycleComponent<Gateway> implements Gateway, ClusterStateListener {
+public class NoneGateway extends AbstractLifecycleComponent<Gateway> implements Gateway, ClusterStateProcessor {
 
     public static final String TYPE = "none";
 
@@ -100,7 +100,7 @@ public class NoneGateway extends AbstractLifecycleComponent<Gateway> implements 
     }
 
     @Override
-    public void clusterChanged(ClusterChangedEvent event) {
+    public void applyStateChange(ClusterChangedEvent event) {
         if (event.state().blocks().disableStatePersistence()) {
             // reset the current metadata, we need to start fresh...
             this.currentMetaData = null;

@@ -47,7 +47,7 @@ import static org.elasticsearch.common.unit.TimeValue.timeValueSeconds;
  * actions.
  * </p>
  */
-public class RoutingService extends AbstractLifecycleComponent<RoutingService> implements ClusterStateListener {
+public class RoutingService extends AbstractLifecycleComponent<RoutingService> implements ClusterStateProcessor {
 
     private static final String CLUSTER_UPDATE_TASK_SOURCE = "routing-table-updater";
 
@@ -91,7 +91,7 @@ public class RoutingService extends AbstractLifecycleComponent<RoutingService> i
     }
 
     @Override
-    public void clusterChanged(ClusterChangedEvent event) {
+    public void applyStateChange(ClusterChangedEvent event) {
         if (event.source().equals(CLUSTER_UPDATE_TASK_SOURCE)) {
             // that's us, ignore this event
             return;
@@ -156,8 +156,8 @@ public class RoutingService extends AbstractLifecycleComponent<RoutingService> i
 
                 @Override
                 public void onFailure(String source, Throwable t) {
-                        ClusterState state = clusterService.state();
-                        logger.error("unexpected failure during [{}], current state:\n{}", t, source, state.prettyPrint());
+                    ClusterState state = clusterService.state();
+                    logger.error("unexpected failure during [{}], current state:\n{}", t, source, state.prettyPrint());
                 }
             });
             routingTableDirty = false;

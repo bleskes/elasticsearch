@@ -134,7 +134,7 @@ public class TransportClusterUpdateSettingsAction extends TransportMasterNodeOpe
 
                 // The reason the reroute needs to be send as separate update task, is that all the *cluster* settings are encapsulate
                 // in the components (e.g. FilterAllocationDecider), so the changes made by the first call aren't visible
-                // to the components until the ClusterStateListener instances have been invoked, but are visible after
+                // to the components until the ClusterStateProcessor instances have been invoked, but are visible after
                 // the first update task has been completed.
                 clusterService.submitStateUpdateTask("reroute_after_cluster_update_settings", Priority.URGENT, new AckedClusterStateUpdateTask<ClusterUpdateSettingsResponse>(request, listener) {
 

@@ -232,7 +232,7 @@ public class EnableAllocationTests extends ElasticsearchAllocationTestCase {
                     .build();
 
         }
-        nodeSettingsService.clusterChanged(new ClusterChangedEvent("foo", clusterState, prevState));
+        nodeSettingsService.applyStateChange(new ClusterChangedEvent("foo", clusterState, prevState));
         routingTable = strategy.reroute(clusterState).routingTable();
         clusterState = ClusterState.builder(clusterState).routingTable(routingTable).build();
         assertThat("expected 6 shards to be started 2 to relocate useClusterSettings: " + useClusterSetting, clusterState.routingNodes().shardsWithState(STARTED).size(), equalTo(6));
@@ -324,7 +324,7 @@ public class EnableAllocationTests extends ElasticsearchAllocationTestCase {
             clusterState = ClusterState.builder(clusterState).metaData(MetaData.builder(metaData).removeAllIndices()
                     .put(IndexMetaData.builder(meta).settings(settingsBuilder().put(meta.getSettings()).put(EnableAllocationDecider.INDEX_ROUTING_REBALANCE_ENABLE, randomBoolean() ? Rebalance.PRIMARIES : Rebalance.ALL).build()))).build();
         }
-        nodeSettingsService.clusterChanged(new ClusterChangedEvent("foo", clusterState, prevState));
+        nodeSettingsService.applyStateChange(new ClusterChangedEvent("foo", clusterState, prevState));
         routingTable = strategy.reroute(clusterState).routingTable();
         clusterState = ClusterState.builder(clusterState).routingTable(routingTable).build();
         assertThat("expected 4 primaries to be started and 2 to relocate useClusterSettings: " + useClusterSetting, clusterState.routingNodes().shardsWithState(STARTED).size(), equalTo(4));

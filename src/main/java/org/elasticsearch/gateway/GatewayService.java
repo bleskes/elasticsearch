@@ -114,7 +114,7 @@ public class GatewayService extends AbstractLifecycleComponent<GatewayService> i
         } else {
             logger.debug("can't wait on start for (possibly) reading state from gateway, will do it asynchronously");
         }
-        clusterService.addLast(this);
+        clusterService.add(this);
     }
 
     @Override

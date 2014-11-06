@@ -52,7 +52,7 @@ import static org.elasticsearch.common.settings.ImmutableSettings.Builder.EMPTY_
 /**
  * Service responsible for maintaining and providing access to snapshot repositories on nodes.
  */
-public class RepositoriesService extends AbstractComponent implements ClusterStateListener {
+public class RepositoriesService extends AbstractComponent implements ClusterStateProcessor {
 
     private final RepositoryTypesRegistry typesRegistry;
 
@@ -153,6 +153,7 @@ public class RepositoriesService extends AbstractComponent implements ClusterSta
             }
         });
     }
+
     /**
      * Unregisters repository in the cluster
      * <p/>
@@ -250,7 +251,7 @@ public class RepositoriesService extends AbstractComponent implements ClusterSta
      * @param event cluster changed event
      */
     @Override
-    public void clusterChanged(ClusterChangedEvent event) {
+    public void applyStateChange(ClusterChangedEvent event) {
         try {
             RepositoriesMetaData oldMetaData = event.previousState().getMetaData().custom(RepositoriesMetaData.TYPE);
             RepositoriesMetaData newMetaData = event.state().getMetaData().custom(RepositoriesMetaData.TYPE);
@@ -491,9 +492,9 @@ public class RepositoriesService extends AbstractComponent implements ClusterSta
         /**
          * Constructs new register repository request
          *
-         * @param cause repository registration cause
-         * @param name  repository name
-         * @param type  repository type
+         * @param cause  repository registration cause
+         * @param name   repository name
+         * @param type   repository type
          * @param verify verify repository after creation
          */
         public RegisterRepositoryRequest(String cause, String name, String type, boolean verify) {
@@ -560,7 +561,7 @@ public class RepositoriesService extends AbstractComponent implements ClusterSta
         }
 
         public boolean failed() {
-            return  failures.length > 0;
+            return failures.length > 0;
         }
 
         public String failureDescription() {

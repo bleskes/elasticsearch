@@ -21,7 +21,7 @@ package org.elasticsearch.gateway.local.state.shards;
 
 import com.google.common.collect.Maps;
 import org.elasticsearch.cluster.ClusterChangedEvent;
-import org.elasticsearch.cluster.ClusterStateListener;
+import org.elasticsearch.cluster.ClusterStateProcessor;
 import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.routing.*;
 import org.elasticsearch.common.Nullable;
@@ -44,7 +44,7 @@ import java.util.regex.Pattern;
 
 /**
  */
-public class LocalGatewayShardsState extends AbstractComponent implements ClusterStateListener {
+public class LocalGatewayShardsState extends AbstractComponent implements ClusterStateProcessor {
 
     private static final String SHARD_STATE_FILE_PREFIX = "state-";
     private static final Pattern SHARD_STATE_FILE_PATTERN = Pattern.compile(SHARD_STATE_FILE_PREFIX + "(\\d+)(" + MetaDataStateFormat.STATE_FILE_EXTENSION + ")?");
@@ -78,7 +78,7 @@ public class LocalGatewayShardsState extends AbstractComponent implements Cluste
     }
 
     @Override
-    public void clusterChanged(ClusterChangedEvent event) {
+    public void applyStateChange(ClusterChangedEvent event) {
         if (event.state().blocks().disableStatePersistence()) {
             return;
         }

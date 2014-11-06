@@ -95,6 +95,7 @@ public class IndexCache extends AbstractIndexComponent implements CloseableCompo
     @Override
     public void clusterChanged(ClusterChangedEvent event) {
         // clear the query parser cache if the metadata (mappings) changed...
+        // this have to be done after the new state is live (i.e., via a ClusterStateListener
         if (event.metaDataChanged()) {
             queryParserCache.clear();
         }

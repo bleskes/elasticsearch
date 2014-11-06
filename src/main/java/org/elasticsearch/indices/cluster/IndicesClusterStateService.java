@@ -29,6 +29,7 @@ import org.elasticsearch.ExceptionsHelper;
 import org.elasticsearch.cluster.ClusterChangedEvent;
 import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.cluster.ClusterStateListener;
+import org.elasticsearch.cluster.ClusterStateProcessor;
 import org.elasticsearch.cluster.action.index.NodeIndexDeletedAction;
 import org.elasticsearch.cluster.action.index.NodeMappingRefreshAction;
 import org.elasticsearch.cluster.action.shard.ShardStateAction;
@@ -77,7 +78,7 @@ import static org.elasticsearch.ExceptionsHelper.detailedMessage;
 /**
  *
  */
-public class IndicesClusterStateService extends AbstractLifecycleComponent<IndicesClusterStateService> implements ClusterStateListener {
+public class IndicesClusterStateService extends AbstractLifecycleComponent<IndicesClusterStateService> implements ClusterStateProcessor {
 
     private final IndicesService indicesService;
     private final ClusterService clusterService;
@@ -144,7 +145,7 @@ public class IndicesClusterStateService extends AbstractLifecycleComponent<Indic
     }
 
     @Override
-    public void clusterChanged(final ClusterChangedEvent event) {
+    public void applyStateChange(final ClusterChangedEvent event) {
         if (!indicesService.changesAllowed()) {
             return;
         }

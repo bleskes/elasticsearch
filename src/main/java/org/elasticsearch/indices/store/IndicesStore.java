@@ -122,7 +122,7 @@ public class IndicesStore extends AbstractComponent implements ClusterStateListe
         logger.debug("using indices.store.throttle.type [{}], with index.store.throttle.max_bytes_per_sec [{}]", rateLimitingType, rateLimitingThrottle);
 
         nodeSettingsService.addListener(applySettings);
-        clusterService.addLast(this);
+        clusterService.add(this);
     }
 
     IndicesStore() {

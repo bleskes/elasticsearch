@@ -82,17 +82,27 @@ public class NoopClusterService implements ClusterService {
     }
 
     @Override
-    public void addFirst(ClusterStateListener listener) {
+    public void addFirst(ClusterStateProcessor processor) {
 
     }
 
     @Override
-    public void addLast(ClusterStateListener listener) {
+    public void addLast(ClusterStateProcessor processor) {
+
+    }
+
+    @Override
+    public void add(ClusterStateProcessor processor) {
 
     }
 
     @Override
     public void add(ClusterStateListener listener) {
+
+    }
+
+    @Override
+    public void remove(ClusterStateProcessor listener) {
 
     }
 

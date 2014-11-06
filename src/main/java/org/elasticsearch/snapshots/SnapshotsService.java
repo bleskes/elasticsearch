@@ -85,7 +85,7 @@ import static com.google.common.collect.Sets.newHashSet;
  * notifies all {@link #snapshotCompletionListeners} that snapshot is completed, and finally calls {@link #removeSnapshotFromClusterState(SnapshotId, SnapshotInfo, Throwable)} to remove snapshot from cluster state</li>
  * </ul>
  */
-public class SnapshotsService extends AbstractLifecycleComponent<SnapshotsService> implements ClusterStateListener {
+public class SnapshotsService extends AbstractLifecycleComponent<SnapshotsService> implements ClusterStateProcessor {
 
     public static final String UPDATE_SNAPSHOT_ACTION_NAME = "internal:cluster/snapshot/update_snapshot";
 
@@ -486,7 +486,7 @@ public class SnapshotsService extends AbstractLifecycleComponent<SnapshotsServic
     }
 
     @Override
-    public void clusterChanged(ClusterChangedEvent event) {
+    public void applyStateChange(ClusterChangedEvent event) {
         try {
             if (event.localNodeMaster()) {
                 if (event.nodesRemoved()) {
@@ -1242,7 +1242,7 @@ public class SnapshotsService extends AbstractLifecycleComponent<SnapshotsServic
     protected void doStop() throws ElasticsearchException {
         shutdownLock.lock();
         try {
-            while(!shardSnapshots.isEmpty() && shutdownCondition.await(5, TimeUnit.SECONDS)) {
+            while (!shardSnapshots.isEmpty() && shutdownCondition.await(5, TimeUnit.SECONDS)) {
                 // Wait for at most 5 second for locally running snapshots to finish
             }
         } catch (InterruptedException ex) {

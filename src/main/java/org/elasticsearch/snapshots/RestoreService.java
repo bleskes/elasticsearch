@@ -76,7 +76,7 @@ import static org.elasticsearch.cluster.metadata.MetaDataIndexStateService.INDEX
  * which updates {@link RestoreMetaData} in cluster state or removes it when all shards are completed. In case of
  * restore failure a normal recovery fail-over process kicks in.
  */
-public class RestoreService extends AbstractComponent implements ClusterStateListener {
+public class RestoreService extends AbstractComponent implements ClusterStateProcessor {
 
     public static final String UPDATE_RESTORE_ACTION_NAME = "internal:cluster/snapshot/update_restore";
 
@@ -233,7 +233,7 @@ public class RestoreService extends AbstractComponent implements ClusterStateLis
                 }
 
                 private void checkAliasNameConflicts(Map<String, String> renamedIndices, Set<String> aliases) {
-                    for(Map.Entry<String, String> renamedIndex: renamedIndices.entrySet()) {
+                    for (Map.Entry<String, String> renamedIndex : renamedIndices.entrySet()) {
                         if (aliases.contains(renamedIndex.getKey())) {
                             throw new SnapshotRestoreException(snapshotId, "cannot rename index [" + renamedIndex.getValue() + "] into [" + renamedIndex.getKey() + "] because of conflict with an alias with the same name");
                         }
@@ -544,7 +544,7 @@ public class RestoreService extends AbstractComponent implements ClusterStateLis
     }
 
     @Override
-    public void clusterChanged(ClusterChangedEvent event) {
+    public void applyStateChange(ClusterChangedEvent event) {
         try {
             if (event.localNodeMaster()) {
                 processDeletedIndices(event);

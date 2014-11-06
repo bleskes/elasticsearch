@@ -43,7 +43,7 @@ import org.elasticsearch.index.gateway.local.LocalIndexGatewayModule;
 /**
  *
  */
-public class LocalGateway extends AbstractLifecycleComponent<Gateway> implements Gateway, ClusterStateListener {
+public class LocalGateway extends AbstractLifecycleComponent<Gateway> implements Gateway, ClusterStateProcessor {
 
     private final ClusterService clusterService;
 
@@ -201,10 +201,10 @@ public class LocalGateway extends AbstractLifecycleComponent<Gateway> implements
     }
 
     @Override
-    public void clusterChanged(final ClusterChangedEvent event) {
+    public void applyStateChange(final ClusterChangedEvent event) {
         // order is important, first metaState, and then shardsState
         // so dangling indices will be recorded
-        metaState.clusterChanged(event);
-        shardsState.clusterChanged(event);
+        metaState.applyStateChange(event);
+        shardsState.applyStateChange(event);
     }
 }

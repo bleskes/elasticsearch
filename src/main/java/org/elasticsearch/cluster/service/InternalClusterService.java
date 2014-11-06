@@ -76,9 +76,10 @@ public class InternalClusterService extends AbstractLifecycleComponent<ClusterSe
 
     private volatile PrioritizedEsThreadPoolExecutor updateTasksExecutor;
 
-    private final List<ClusterStateListener> priorityClusterStateListeners = new CopyOnWriteArrayList<>();
+    private final List<ClusterStateProcessor> priorityClusterStateProcessors = new CopyOnWriteArrayList<>();
+    private final List<ClusterStateProcessor> clusterStateProcessors = new CopyOnWriteArrayList<>();
+    private final List<ClusterStateProcessor> lastClusterStateProcessors = new CopyOnWriteArrayList<>();
     private final List<ClusterStateListener> clusterStateListeners = new CopyOnWriteArrayList<>();
-    private final List<ClusterStateListener> lastClusterStateListeners = new CopyOnWriteArrayList<>();
     private final LocalNodeMasterListeners localNodeMasterListeners;
 
     private final Queue<NotifyTimeout> onGoingTimeouts = ConcurrentCollections.newQueue();
@@ -181,22 +182,30 @@ public class InternalClusterService extends AbstractLifecycleComponent<ClusterSe
         return this.clusterState;
     }
 
-    public void addFirst(ClusterStateListener listener) {
-        priorityClusterStateListeners.add(listener);
+    public void addFirst(ClusterStateProcessor processor) {
+        priorityClusterStateProcessors.add(processor);
     }
 
-    public void addLast(ClusterStateListener listener) {
-        lastClusterStateListeners.add(listener);
+    public void addLast(ClusterStateProcessor processor) {
+        lastClusterStateProcessors.add(processor);
+    }
+
+    public void add(ClusterStateProcessor processor) {
+        clusterStateProcessors.add(processor);
     }
 
     public void add(ClusterStateListener listener) {
         clusterStateListeners.add(listener);
     }
 
+    public void remove(ClusterStateProcessor processor) {
+        clusterStateProcessors.remove(processor);
+        priorityClusterStateProcessors.remove(processor);
+        lastClusterStateProcessors.remove(processor);
+    }
+
     public void remove(ClusterStateListener listener) {
         clusterStateListeners.remove(listener);
-        priorityClusterStateListeners.remove(listener);
-        lastClusterStateListeners.remove(listener);
         for (Iterator<NotifyTimeout> it = onGoingTimeouts.iterator(); it.hasNext(); ) {
             NotifyTimeout timeout = it.next();
             if (timeout.listener.equals(listener)) {
@@ -205,6 +214,7 @@ public class InternalClusterService extends AbstractLifecycleComponent<ClusterSe
             }
         }
     }
+
 
     @Override
     public void add(LocalNodeMasterListener listener) {
@@ -427,14 +437,14 @@ public class InternalClusterService extends AbstractLifecycleComponent<ClusterSe
                 clusterState = newClusterState;
                 logger.debug("set local cluster state to version {}", newClusterState.version());
 
-                for (ClusterStateListener listener : priorityClusterStateListeners) {
-                    listener.clusterChanged(clusterChangedEvent);
+                for (ClusterStateProcessor processor : priorityClusterStateProcessors) {
+                    processor.applyStateChange(clusterChangedEvent);
                 }
-                for (ClusterStateListener listener : clusterStateListeners) {
-                    listener.clusterChanged(clusterChangedEvent);
+                for (ClusterStateProcessor processor : clusterStateProcessors) {
+                    processor.applyStateChange(clusterChangedEvent);
                 }
-                for (ClusterStateListener listener : lastClusterStateListeners) {
-                    listener.clusterChanged(clusterChangedEvent);
+                for (ClusterStateProcessor processor : lastClusterStateProcessors) {
+                    processor.applyStateChange(clusterChangedEvent);
                 }
 
                 for (DiscoveryNode node : nodesDelta.removedNodes()) {
@@ -446,6 +456,10 @@ public class InternalClusterService extends AbstractLifecycleComponent<ClusterSe
                 }
 
                 newClusterState.status(ClusterState.ClusterStateStatus.APPLIED);
+
+                for (ClusterStateListener listener : clusterStateListeners) {
+                    listener.clusterChanged(clusterChangedEvent);
+                }
 
                 //manual ack only from the master at the end of the publish
                 if (newClusterState.nodes().localNodeMaster()) {

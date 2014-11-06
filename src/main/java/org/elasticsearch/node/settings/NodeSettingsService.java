@@ -22,6 +22,7 @@ package org.elasticsearch.node.settings;
 import org.elasticsearch.cluster.ClusterChangedEvent;
 import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.cluster.ClusterStateListener;
+import org.elasticsearch.cluster.ClusterStateProcessor;
 import org.elasticsearch.common.component.AbstractComponent;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.logging.ESLoggerFactory;
@@ -35,7 +36,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * A service that allows to register for node settings change that can come from cluster
  * events holding new settings.
  */
-public class NodeSettingsService extends AbstractComponent implements ClusterStateListener {
+public class NodeSettingsService extends AbstractComponent implements ClusterStateProcessor {
 
     private static volatile Settings globalSettings = ImmutableSettings.Builder.EMPTY_SETTINGS;
 
@@ -63,7 +64,7 @@ public class NodeSettingsService extends AbstractComponent implements ClusterSta
     }
 
     @Override
-    public void clusterChanged(ClusterChangedEvent event) {
+    public void applyStateChange(ClusterChangedEvent event) {
         // nothing to do until we actually recover from the gateway or any other block indicates we need to disable persistency
         if (event.state().blocks().disableStatePersistence()) {
             return;
