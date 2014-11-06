@@ -88,9 +88,9 @@ public class LicenseGeneratorTool extends CliTool {
             String[] licenseSpecSources = commandLine.getOptionValues("license");
             String[] licenseSpecSourceFiles = commandLine.getOptionValues("licenseFile");
 
-            if (!exists(privateKeyPath)) {
+            if (doesNotExist(privateKeyPath)) {
                 return exitCmd(ExitStatus.USAGE, terminal, privateKeyPath + " does not exist");
-            } else if (!exists(publicKeyPath)) {
+            } else if (doesNotExist(publicKeyPath)) {
                 return exitCmd(ExitStatus.USAGE, terminal, publicKeyPath + " does not exist");
             }
 
@@ -104,7 +104,7 @@ public class LicenseGeneratorTool extends CliTool {
             if (licenseSpecSourceFiles != null) {
                 for (String licenseSpecFilePath : licenseSpecSourceFiles) {
                     Path licenseSpecPath = Paths.get(licenseSpecFilePath);
-                    if (!exists(licenseSpecFilePath)) {
+                    if (doesNotExist(licenseSpecFilePath)) {
                         return exitCmd(ExitStatus.USAGE, terminal, licenseSpecFilePath + " does not exist");
                     }
                     licenseSpecs.addAll(ESLicenses.fromSource(Files.readAllBytes(licenseSpecPath), false));
@@ -134,8 +134,8 @@ public class LicenseGeneratorTool extends CliTool {
         }
 
 
-        private static boolean exists(String filePath) {
-            return new File(filePath).exists();
+        private static boolean doesNotExist(String filePath) {
+            return !new File(filePath).exists();
         }
     }
 
