@@ -26,6 +26,7 @@ import org.elasticsearch.alerts.actions.AlertActionState;
 import org.elasticsearch.alerts.client.AlertsClient;
 import org.elasticsearch.alerts.plugin.AlertsPlugin;
 import org.elasticsearch.cluster.ClusterState;
+import org.elasticsearch.cluster.routing.IndexRoutingTable;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
@@ -41,6 +42,7 @@ import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 import static org.elasticsearch.index.query.QueryBuilders.boolQuery;
 import static org.elasticsearch.index.query.QueryBuilders.matchQuery;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.core.Is.is;
 
 /**
@@ -110,7 +112,9 @@ public abstract class AbstractAlertingTests extends ElasticsearchIntegrationTest
                 IndicesExistsResponse indicesExistsResponse = client().admin().indices().prepareExists(AlertActionManager.ALERT_HISTORY_INDEX).get();
                 assertThat(indicesExistsResponse.isExists(), is(true));
                 ClusterState state = client().admin().cluster().prepareState().get().getState();
-                assertThat(state.getRoutingTable().index(AlertActionManager.ALERT_HISTORY_INDEX).allPrimaryShardsActive(), is(true));
+                IndexRoutingTable routingTable = state.getRoutingTable().index(AlertActionManager.ALERT_HISTORY_INDEX);
+                assertThat(routingTable, notNullValue());
+                assertThat(routingTable.allPrimaryShardsActive(), is(true));
 
                 SearchResponse searchResponse = client().prepareSearch(AlertActionManager.ALERT_HISTORY_INDEX)
                         .setIndicesOptions(IndicesOptions.lenientExpandOpen())
