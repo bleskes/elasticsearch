@@ -69,6 +69,7 @@ public class BasicAlertingTest extends AbstractAlertingTests {
         assertNotNull(deleteAlertResponse.deleteResponse());
         assertTrue(deleteAlertResponse.deleteResponse().isFound());
 
+        refresh();
         assertHitCount(client().prepareCount(AlertsStore.ALERT_INDEX).get(), 0l);
     }
 
