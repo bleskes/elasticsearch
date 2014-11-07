@@ -44,20 +44,20 @@ import com.prelert.job.JobConfiguration;
 import com.prelert.rs.data.ApiError;
 
 /**
- * This tests creates a new job then lists all the jobs straight 
+ * This tests creates a new job then lists all the jobs straight
  * afterwards. The aim flush out any errors creating new jobs and
- * doing the sorted search straight after. 
- * See Bug 562. 
+ * doing the sorted search straight after.
+ * See Bug 562.
  */
-public class JobCreateTest 
+public class JobCreateTest
 {
-	private final static Logger s_Logger = Logger.getLogger(ParallelUploadTest.class);
-	
+	private final static Logger s_Logger = Logger.getLogger(JobCreateTest.class);
+
 	/**
 	 * The Engine API base Url
 	 */
 	private static String s_ApiBaseUrl;
-	
+
 	/**
 	 * Runnable class to create the new jobs
 	 */
@@ -66,39 +66,39 @@ public class JobCreateTest
 		private int m_NumJobs;
 		private JobConfiguration m_JobConfig;
 		private List<String> m_JobIds;
-		
+
 		/**
-		 * 
+		 *
 		 * @param numJobs The number of jobs to create
 		 */
 		public JobCreator(int numJobs)
 		{
 			m_NumJobs = numJobs;
-			
+
 			Detector d = new Detector();
 			d.setFieldName("hitcount");
 			d.setByFieldName("url");
 			AnalysisConfig ac = new AnalysisConfig();
 			ac.setBucketSpan(86400L);
 			ac.setDetectors(Arrays.asList(d));
-			
+
 			DataDescription dd = new DataDescription();
 			dd.setFieldDelimiter('\t');
-			
+
 			m_JobConfig = new JobConfiguration(ac);
-			
+
 			m_JobIds = new ArrayList<>();
 		}
-		
-		
+
+
 		/**
-		 * Create <code>m_NumJobs</code> in quick succession and get 
+		 * Create <code>m_NumJobs</code> in quick succession and get
 		 * the list of all jobs after each new job is created
-		 * 
+		 *
 		 * If there is an error an  IllegalStateException is thrown.
 		 */
 		@Override
-		public void run() 
+		public void run()
 		{
 			try (EngineApiClient client = new EngineApiClient())
 			{
@@ -111,7 +111,7 @@ public class JobCreateTest
 						throw new IllegalStateException("Error creating job\n" + error.toJson());
 					}
 					m_JobIds.add(jobId);
-					
+
 					//if (i % 5 == 0)
 					{
 						client.getJobs(s_ApiBaseUrl);
@@ -122,67 +122,67 @@ public class JobCreateTest
 						}
 					}
 				}
-			} 
-			catch (IOException e) 
+			}
+			catch (IOException e)
 			{
 				throw new IllegalStateException(e);
 			}
 		}
 	}
 
-	
-	public static void main(String[] args) 
+
+	public static void main(String[] args)
 	throws FileNotFoundException, IOException
-	{		
+	{
 		// configure log4j
-		ConsoleAppender console = new ConsoleAppender(); 		
-		console.setLayout(new PatternLayout("%d [%p|%c|%C{1}] %m%n")); 
+		ConsoleAppender console = new ConsoleAppender();
+		console.setLayout(new PatternLayout("%d [%p|%c|%C{1}] %m%n"));
 		console.setThreshold(Level.INFO);
 		console.activateOptions();
 		Logger.getRootLogger().addAppender(console);
-		
+
 		if (args.length == 0)
 		{
 			s_Logger.error("This program has one argument the base Url of the"
 					+ " REST API");
 			return;
 		}
-		
+
 		s_ApiBaseUrl = args[0];
-		
-		
+
+
 		final int NUM_CLIENTS = 1;
 		final int NUM_JOBS = 50;
-		
+
 		List<Thread> threads = new ArrayList<>();
 		List<JobCreator> jobCreators = new ArrayList<>();
 		for (int i=0; i<NUM_CLIENTS; i++)
 		{
-			JobCreator test = new JobCreator(NUM_JOBS);		
+			JobCreator test = new JobCreator(NUM_JOBS);
 			jobCreators.add(test);
-			
-			Thread testThread = new Thread(test);			
+
+			Thread testThread = new Thread(test);
 			threads.add(testThread);
 		}
-		
+
 		for (Thread th : threads)
 		{
 			th.start();
 		}
-		
-		
+
+
 		for (Thread th : threads)
 		{
 			try
 			{
 				th.join();
 			}
-			catch (InterruptedException e) 
+			catch (InterruptedException e)
 			{
 				s_Logger.error("Interupted joining test thread", e);
 			}
 		}
-		
+
 		// now clean up the jobs
 		try (EngineApiClient client = new EngineApiClient())
 		{
@@ -197,8 +197,8 @@ public class JobCreateTest
 						s_Logger.error(error.toJson());
 					}
 				}
-			}			
+			}
 		}
-				
-	}		
+
+	}
 }

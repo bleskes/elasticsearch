@@ -24,25 +24,29 @@
  *                                                          *
  *                                                          *
  ************************************************************/
+
 package com.prelert.job.process;
 
-import java.io.InputStream;
-
-import org.apache.log4j.Logger;
+import com.prelert.job.JobException;
+import com.prelert.rs.data.ErrorCode;
 
 /**
- * Factory method for creating new Runnable objects to parse the 
- * autodetect output.
+ * Exception thrown when a job is expected to be running
+ * but is closed
  */
-public interface ResultsReaderFactory 
+public class ClosedJobException extends JobException
 {
-	/**
-	 * 
-	 * @param jobId
-	 * @param autoDetectOutput
-	 * @param logger Job specific logger
-	 * @return
-	 */
-	public ResultsReader newResultsParser(String jobId, InputStream autoDetectOutput,
-			Logger logger);
+	private static final long serialVersionUID = 5491387807381215423L;
+
+	private String m_JobId;
+
+	public ClosedJobException(String message, String jobId)
+	{
+		super(message, ErrorCode.JOB_NOT_RUNNING);
+	}
+
+	public String getJobId()
+	{
+		return m_JobId;
+	}
 }

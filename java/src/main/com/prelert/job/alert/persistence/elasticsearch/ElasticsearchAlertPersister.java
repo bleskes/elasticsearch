@@ -53,48 +53,47 @@ import com.prelert.job.alert.Alert;
 import com.prelert.job.alert.persistence.AlertPersister;
 import com.prelert.rs.data.Pagination;
 
-public class ElasticsearchAlertPersister implements AlertPersister 
+public class ElasticsearchAlertPersister implements AlertPersister
 {
 	private Client m_Client;
 	private ObjectMapper m_ObjectMapper;
-	
+
 	public ElasticsearchAlertPersister(Client client)
 	{
 		m_Client = client;
-		
+
 		m_ObjectMapper = new ObjectMapper();
 		m_ObjectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
-			
+
 	}
 
 	@Override
-	public void persistAlert(String alertId, String jobId, Alert alert) 
+	public void persistAlert(String alertId, String jobId, Alert alert)
 	throws IOException
 	{
 		XContentBuilder content = serialiseAlert(alert);
 
+		// TODO add mapping
 		m_Client.prepareIndex(jobId, Alert.TYPE, alertId)
 							.setSource(content)
 							.execute().actionGet();
 	}
-	
 
-	private XContentBuilder serialiseAlert(Alert alert) 
+
+	private XContentBuilder serialiseAlert(Alert alert)
 	throws IOException
 	{
 		XContentBuilder builder = jsonBuilder().startObject()
 				.field(Alert.JOB_ID, alert.getTimestamp())
 				.field(Alert.TIMESTAMP, alert.getTimestamp())
-				.field(Alert.SEVERTIY, alert.getSeverity())
-				.field(Alert.REASON, alert.getReason())
-				.endObject();
+				.endObject(); // TODO missing fields
 
 		return builder;
 	}
 
 	@Override
 	public Pagination<Alert> alerts(int skip, int take, long startEpoch,
-			long endEpoch) 
+			long endEpoch)
 	{
 		return queryAlerts("_all", skip, take, startEpoch, endEpoch);
 	}
@@ -106,12 +105,12 @@ public class ElasticsearchAlertPersister implements AlertPersister
 	{
 		return queryAlerts(jobId, skip, take, startEpoch, endEpoch);
 	}
-	
-	
+
+
 	private Pagination<Alert> queryAlerts(String index, int skip, int take,
-			long startEpoch, long endEpoch) 
+			long startEpoch, long endEpoch)
 	{
-		FilterBuilder fb;		
+		FilterBuilder fb;
 		if (startEpoch > 0 || endEpoch > 0)
 		{
 			RangeFilterBuilder rfb = FilterBuilders.rangeFilter(Alert.TIMESTAMP);
@@ -123,82 +122,82 @@ public class ElasticsearchAlertPersister implements AlertPersister
 			{
 				rfb.lt(new Date(endEpoch * 1000));
 			}
-			
+
 			fb = rfb;
 		}
 		else
 		{
 			fb = FilterBuilders.matchAllFilter();
 		}
-		
-		
-		SortBuilder sb = new FieldSortBuilder(Alert.ID) 
+
+
+		SortBuilder sb = new FieldSortBuilder(Alert.ID)
 							.order(SortOrder.ASC);
-		
+
 		SearchResponse searchResponse = m_Client.prepareSearch(index)
-				.setTypes(Alert.TYPE)		
+				.setTypes(Alert.TYPE)
 				.addSort(sb)
 				.setPostFilter(fb)
 				.setFrom(skip).setSize(take)
 				.get();
-		
+
 		List<Alert> results = new ArrayList<>();
-		
+
 		for (SearchHit hit : searchResponse.getHits().getHits())
 		{
 			Alert alert = m_ObjectMapper.convertValue(hit.getSource(), Alert.class);
 			results.add(alert);
 		}
-		
-		
+
+
 		Pagination<Alert> page = new Pagination<>();
 		page.setDocuments(results);
 		page.setHitCount(searchResponse.getHits().getTotalHits());
 		page.setSkip(skip);
 		page.setTake(take);
-		
+
 		return page;
-	}	
+	}
 
 	@Override
 	public String lastAlertId()
 	{
 		FilterBuilder fb = FilterBuilders.matchAllFilter();
-		
+
 		SortBuilder sb = new FieldSortBuilder(Alert.ID)
 							.ignoreUnmapped(true)
 							.order(SortOrder.DESC);
-		
+
 		SearchResponse searchResponse = m_Client.prepareSearch("_all")
-				.setTypes(Alert.TYPE)		
+				.setTypes(Alert.TYPE)
 				.addSort(sb)
 				.setPostFilter(fb)
 				.setSize(1)
 				.get();
-		
+
 		if (searchResponse.getHits().getTotalHits() == 0)
 		{
 			return null;
 		}
-		
+
 		return searchResponse.getHits().getHits()[0].getId();
 	}
-	
+
 
 	@Override
-	public List<Alert> alertsAfter(String alertId) 
+	public List<Alert> alertsAfter(String alertId)
 	{
 		return getAlertsAfter(alertId, "_all");
 	}
-	
-	
+
+
 	@Override
-	public List<Alert> alertsAfter(String alertId, String jobId) 
+	public List<Alert> alertsAfter(String alertId, String jobId)
 	{
 		return getAlertsAfter(alertId, jobId);
 	}
-	
-	private List<Alert> getAlertsAfter(String alertId, String index) 
+
+	private List<Alert> getAlertsAfter(String alertId, String index)
 	{
 		RangeFilterBuilder fb = FilterBuilders.rangeFilter(Alert.ID);
 		fb.gt(alertId);
@@ -212,7 +211,7 @@ public class ElasticsearchAlertPersister implements AlertPersister
 		List<Alert> results = new ArrayList<>();
 
 		SearchRequestBuilder searchBuilder =  m_Client.prepareSearch(index)
-											.setTypes(Alert.TYPE)		
+											.setTypes(Alert.TYPE)
 											.addSort(sb)
 											.setPostFilter(fb);
 		while (true)
@@ -224,7 +223,7 @@ public class ElasticsearchAlertPersister implements AlertPersister
 
 			for (SearchHit hit : searchResponse.getHits().getHits())
 			{
-				Alert alert = m_ObjectMapper.convertValue(hit.getSource(), 
+				Alert alert = m_ObjectMapper.convertValue(hit.getSource(),
 						Alert.class);
 				results.add(alert);
 			}
@@ -233,7 +232,7 @@ public class ElasticsearchAlertPersister implements AlertPersister
 			{
 				break;
 			}
-			
+
 			from += size;
 		}
 

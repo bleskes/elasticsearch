@@ -26,6 +26,7 @@
  ************************************************************/
 package com.prelert.job.alert;
 
+import java.net.URI;
 import java.util.Date;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -41,103 +42,95 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
  *  <li>Bucket Time - The time of the alert </li>
  *  <li>Anomaly Records - The anomalies that caused the alert</li>
  *  <li>Reason - </li>
- * </ol> 
+ * </ol>
  */
 @JsonInclude(Include.NON_NULL)
-public class Alert 
+public class Alert
 {
 	static final public String TYPE = "alert";
-	
+
 	static final public String ID = "id";
 	static final public String JOB_ID = "JobId";
-	static final public String SEVERTIY = "severity";
 	static final public String TIMESTAMP = "timestamp";
-	static final public String REASON = "reason";
-	
+	static final public String URI = "uri";
+
 
 	private String m_AlertId;
-	
 	private String m_JobId;
-	private Severity m_Severity;	
 	private Date m_Timestamp;
-	private String m_Reason; 
-	
-//	private String m_FilterName;
-//	private double m_NormalisedScore;
-//	private long m_Epoch;
-	
-//	private List<AnomalyRecord> m_AnomalyRecords;
-	
+	private URI m_Uri;
+	private double m_AnomalyScore;
+	private double m_NormalizedProb;
+	private boolean m_IsTimeout;
 
 
-	public Alert()
-	{
-	}
-	
-	
 	public String getJobId()
 	{
 		return m_JobId;
 	}
 
-	public void setJobId(String jobId) 
+	public void setJobId(String jobId)
 	{
 		this.m_JobId = jobId;
 	}
 
-
-	
-	public Severity getSeverity() 
-	{
-		// TODO severity is a funtion of normalised score?
-		return m_Severity;
-	}
-
-	public void setSeverity(Severity severity) 
-	{
-		this.m_Severity = severity;
-	}
-
-	
 	public Date getTimestamp()
 	{
 		return m_Timestamp;
 	}
-	
+
 	public void setTimestamp(Date timestamp)
 	{
 		m_Timestamp = timestamp;
 	}
-	
 
-//	public List<AnomalyRecord> getAnomalyRecords() 
-//	{
-//		return m_AnomalyRecords;
-//	}
-//
-//	public void setAnomalyRecords(List<AnomalyRecord> anomalyRecords) 
-//	{
-//		this.m_AnomalyRecords = anomalyRecords;
-//	}
-
-	public String getReason() 
-	{
-		return m_Reason;
-	}
-
-	public void setReason(String reason) 
-	{
-		this.m_Reason = reason;
-	}
-	
 	public String getId()
 	{
 		return m_AlertId;
 	}
-	
+
 	public void setId(String value)
 	{
 		m_AlertId = value;
 	}
-	
+
+	public double getAnomalyScore()
+	{
+		return m_AnomalyScore;
+	}
+
+	public void setAnomalyScore(double anomalyScore)
+	{
+		m_AnomalyScore = anomalyScore;
+	}
+
+	public double getNormalizedProbability()
+	{
+		return m_NormalizedProb;
+	}
+
+	public void setNormalizedProbability(double prob)
+	{
+		m_NormalizedProb = prob;
+	}
+
+	public URI getUri()
+	{
+		return m_Uri;
+	}
+
+	public void setUri(URI uri)
+	{
+		m_Uri = uri;
+	}
+
+	public boolean isTimeout()
+	{
+		return m_IsTimeout;
+	}
+
+	public void setTimeout(boolean timeout)
+	{
+		m_IsTimeout = timeout;
+	}
 }

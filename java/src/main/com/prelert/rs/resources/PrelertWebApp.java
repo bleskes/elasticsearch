@@ -49,6 +49,7 @@ import com.prelert.rs.provider.JobConfigurationMessageBodyReader;
 import com.prelert.rs.provider.NativeProcessRunExceptionMapper;
 import com.prelert.rs.provider.PaginationWriter;
 import com.prelert.rs.provider.SingleDocumentWriter;
+import com.prelert.rs.provider.TimeoutBodyWriter;
 import com.prelert.rs.provider.UnknownJobExceptionMapper;
 
 /**
@@ -87,15 +88,18 @@ public class PrelertWebApp extends Application
 
 		// Message body writers
 		m_ResourceClasses.add(AlertMessageBodyWriter.class);
+		m_ResourceClasses.add(JobConfigurationMessageBodyReader.class);
 		m_ResourceClasses.add(PaginationWriter.class);
 		m_ResourceClasses.add(SingleDocumentWriter.class);
-		m_ResourceClasses.add(JobConfigurationMessageBodyReader.class);
+		m_ResourceClasses.add(TimeoutBodyWriter.class);
+
 
 		// Exception mappers
 		m_ResourceClasses.add(ElasticsearchExceptionMapper.class);
 		m_ResourceClasses.add(NativeProcessRunExceptionMapper.class);
 		m_ResourceClasses.add(UnknownJobExceptionMapper.class);
 		m_ResourceClasses.add(JobExceptionMapper.class);
+
 
 		String elasticSearchClusterName = System.getProperty(ES_CLUSTER_NAME_PROP);
 		if (elasticSearchClusterName == null)
@@ -120,7 +124,9 @@ public class PrelertWebApp extends Application
 			);
 
 		m_AlertManager = new AlertManager(
-				new ElasticsearchAlertPersister(esJob.getClient()));
+				new ElasticsearchAlertPersister(esJob.getClient()),
+				m_JobManager);
+
 
 		m_Singletons = new HashSet<>();
 		m_Singletons.add(m_JobManager);

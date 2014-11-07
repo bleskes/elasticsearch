@@ -47,6 +47,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.prelert.job.persistence.DataPersisterFactory;
 import com.prelert.job.persistence.JobProvider;
+import com.prelert.job.process.ClosedJobException;
 import com.prelert.job.process.MissingFieldException;
 import com.prelert.job.process.NativeProcessRunException;
 import com.prelert.job.process.ProcessManager;
@@ -68,13 +69,14 @@ import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
+import com.prelert.rs.data.parsing.AlertObserver;
 
 
 /**
  * Creates jobs and handles retrieving job configuration details from
  * the data store. New jobs have a unique job id see {@linkplain #generateJobId()}
  */
-public class JobManager 
+public class JobManager
 {
 	static public final Logger s_Logger = Logger.getLogger(JobManager.class);
 
@@ -82,35 +84,35 @@ public class JobManager
 	 * Field name in which to store the API version in the usage info
 	 */
 	static public final String APP_VER_FIELDNAME = "appVer";
-	
+
 	/**
 	 * The default number of documents returned in queries as a string.
 	 */
 	static public final String DEFAULT_PAGE_SIZE_STR = "100";
-	
+
 	/**
-	 * The default number of documents returned in queries. 
+	 * The default number of documents returned in queries.
 	 */
 	static public final int DEFAULT_PAGE_SIZE;
 	static
 	{
 		DEFAULT_PAGE_SIZE = Integer.parseInt(DEFAULT_PAGE_SIZE_STR);
 	}
-	
+
 	static public final String DEFAULT_RECORD_SORT_FIELD = AnomalyRecord.PROBABILITY;
-	
+
 	private ProcessManager m_ProcessManager;
-	 
-	
+
+
 	private AtomicLong m_IdSequence;
 	private DateFormat m_JobIdDateFormat;
-	
+
 	private ObjectMapper m_ObjectMapper;
-	
+
 	private JobProvider m_JobProvider;
-	
+
 	private DataPersisterFactory m_DataPersisterFactory;
-	
+
 
 	/**
 	 * These default to unlimited (indicated by negative limits), but may be
@@ -129,8 +131,8 @@ public class JobManager
 
 	/**
 	 * Create a JobManager
-	 * 
-	 * @param jobDetailsProvider 
+	 *
+	 * @param jobDetailsProvider
 	 */
 	public JobManager(JobProvider jobProvider,
 			ResultsReaderFactory resultsReaderFactory,
@@ -139,28 +141,28 @@ public class JobManager
 			DataPersisterFactory dataPersisterFactory)
 	{
 		m_JobProvider = jobProvider;
-		
+
 		m_DataPersisterFactory = dataPersisterFactory;
-		
-		m_ProcessManager = new ProcessManager(jobProvider, 
+
+		m_ProcessManager = new ProcessManager(jobProvider,
 				resultsReaderFactory, statusReporterFactory,
 				usageReporterFactory, dataPersisterFactory);
-		
-		m_IdSequence = new AtomicLong();		
+
+		m_IdSequence = new AtomicLong();
 		m_JobIdDateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
-				 
+
 		m_ObjectMapper = new ObjectMapper();
 		m_ObjectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
 
 		// This requires the process manager and Elasticsearch connection in
 		// order to work, but failure is considered non-fatal
-		saveInfo();		
-	}	
-		
-	
+		saveInfo();
+	}
+
+
 	/**
 	 * Get the details of the specific job wrapped in a <code>SingleDocument</code>
-	 * 
+	 *
 	 * @param jobId
 	 * @return The JobDetails or throws UnknownJobException
 	 */
@@ -173,18 +175,18 @@ public class JobManager
 
 		doc.setDocument(m_JobProvider.getJobDetails(jobId));
 		doc.setExists(doc.getDocument() != null);
-		
+
 		return doc;
 	}
 
 	/**
 	 * Get details of all Jobs.
-	 * 
+	 *
 	 * @param skip Skip the first N Jobs. This parameter is for paging
 	 * results if not required set to 0.
 	 * @param take Take only this number of Jobs
-	 * @return A pagination object with hitCount set to the total number  
-	 * of jobs not the only the number returned here as determined by the 
+	 * @return A pagination object with hitCount set to the total number
+	 * of jobs not the only the number returned here as determined by the
 	 * <code>take</code>
 	 * parameter.
 	 */
@@ -194,19 +196,19 @@ public class JobManager
 	}
 
 	/**
-	 * Create a new job from the configuration object and insert into the 
+	 * Create a new job from the configuration object and insert into the
 	 * document store. The details of the newly created job are returned.
-	 *  
+	 *
 	 * @param jobConfig
 	 * @return The new job or <code>null</code> if an exception occurs.
 	 * @throws UnknownJobException
-	 * @throws IOException 
+	 * @throws IOException
 	 * @throws TooManyJobsException If the license is violated
 	 * @throws JobConfigurationException If the license is violated
 	 * @throws JobIdAlreadyExistsException If the alias is already taken
 	 */
 	public JobDetails createJob(JobConfiguration jobConfig)
-	throws UnknownJobException, IOException, TooManyJobsException, 
+	throws UnknownJobException, IOException, TooManyJobsException,
 		JobConfigurationException, JobIdAlreadyExistsException
 	{
 		// Negative m_MaxActiveJobs means unlimited
@@ -263,10 +265,10 @@ public class JobManager
 		{
 			m_JobProvider.jobIdIsUnique(jobId);
 		}
-		
+
 		JobDetails jobDetails;
-		
-		if (jobConfig.getReferenceJobId() != null && 
+
+		if (jobConfig.getReferenceJobId() != null &&
 				jobConfig.getReferenceJobId().isEmpty() == false)
 		{
 			JobDetails referenced = getReferencedJob(jobConfig.getReferenceJobId());
@@ -276,42 +278,42 @@ public class JobManager
 		{
 			jobDetails = new JobDetails(jobId, jobConfig);
 		}
-			
+
 		m_JobProvider.createJob(jobDetails);
-		
+
 		return jobDetails;
 	}
 
 
 	/**
 	 * Get a single result bucket
-	 * 
+	 *
 	 * @param jobId
 	 * @param bucketId
 	 * @param expand Include anomaly records. If false the bucket's records
 	 *  are set to <code>null</code> so they aren't serialised
 	 * @return
-	 * @throws NativeProcessRunException 
-	 * @throws UnknownJobException 
+	 * @throws NativeProcessRunException
+	 * @throws UnknownJobException
 	 */
-	public SingleDocument<Bucket> bucket(String jobId, 
-			String bucketId, boolean expand) 
+	public SingleDocument<Bucket> bucket(String jobId,
+			String bucketId, boolean expand)
 	throws NativeProcessRunException, UnknownJobException
 	{
 		SingleDocument<Bucket> bucket = m_JobProvider.bucket(jobId, bucketId, expand);
-		
+
 		if (bucket.isExists() && !expand)
 		{
 			bucket.getDocument().setRecords(null);
 		}
-		
+
 		return bucket;
 	}
-	
+
 
 	/**
 	 * Get result buckets
-	 * 
+	 *
 	 * @param jobId
 	 * @param expand Include anomaly records. If false the bucket's records
 	 *  are set to <code>null</code> so they aren't serialised
@@ -323,14 +325,14 @@ public class JobManager
 	 * @throws UnknownJobException
 	 * @throws NativeProcessRunException
 	 */
-	public Pagination<Bucket> buckets(String jobId, 
+	public Pagination<Bucket> buckets(String jobId,
 			boolean expand, int skip, int take,
-			double anomalyScoreThreshold, double normalizedProbabilityThreshold) 
+			double anomalyScoreThreshold, double normalizedProbabilityThreshold)
 	throws UnknownJobException, NativeProcessRunException
 	{
-		Pagination<Bucket> buckets = m_JobProvider.buckets(jobId, 
+		Pagination<Bucket> buckets = m_JobProvider.buckets(jobId,
 				expand, skip, take, anomalyScoreThreshold, normalizedProbabilityThreshold);
-		
+
 		if (!expand)
 		{
 			for (Bucket bucket : buckets.getDocuments())
@@ -341,10 +343,10 @@ public class JobManager
 
 		return buckets;
 	}
-	
-	
+
+
 	/**
-	 * Get result buckets between 2 dates 
+	 * Get result buckets between 2 dates
 	 * @param jobId
 	 * @param expand Include anomaly records. If false the bucket's records
 	 *  are set to <code>null</code> so they aren't serialised
@@ -353,31 +355,31 @@ public class JobManager
 	 * @param startEpochMs Return buckets starting at this time
 	 * @param endBucketMs Include buckets up to this time
 	 * @param anomalyScoreThreshold
-	 * @param normalizedProbabilityThreshold 
+	 * @param normalizedProbabilityThreshold
 	 * @return
-	 * @throws UnknownJobException 
-	 * @throws NativeProcessRunException 
+	 * @throws UnknownJobException
+	 * @throws NativeProcessRunException
 	 */
-	public Pagination<Bucket> buckets(String jobId, 
+	public Pagination<Bucket> buckets(String jobId,
 			boolean expand, int skip, int take, long startEpochMs, long endBucketMs,
 			double anomalyScoreThreshold, double normalizedProbabilityThreshold)
 	throws UnknownJobException, NativeProcessRunException
 	{
 		Pagination<Bucket> buckets =  m_JobProvider.buckets(jobId, expand,
-				skip, take, startEpochMs, endBucketMs, 
+				skip, take, startEpochMs, endBucketMs,
 				anomalyScoreThreshold, normalizedProbabilityThreshold);
-		
+
 		if (!expand)
 		{
 			for (Bucket bucket : buckets.getDocuments())
 			{
 				bucket.setRecords(null);
 			}
-		}		
+		}
 
 		return buckets;
 	}
-	
+
 	/**
 	 * Get a page of anomaly records from all buckets.
 	 * Records are sorted by probability
@@ -388,44 +390,44 @@ public class JobManager
 	 * @param take Take only this number of records
 	 * @return
 	 * @throws NativeProcessRunException
-	 * @throws UnknownJobException 
+	 * @throws UnknownJobException
 	 */
-	public Pagination<AnomalyRecord> records(String jobId, 
-			int skip, int take) 
-	throws NativeProcessRunException, UnknownJobException 
+	public Pagination<AnomalyRecord> records(String jobId,
+			int skip, int take)
+	throws NativeProcessRunException, UnknownJobException
 	{
 		return records(jobId, skip, take, DEFAULT_RECORD_SORT_FIELD, true, 0.0, 0.0);
 	}
-	
+
 
 	/**
 	 * Get a page of anomaly records from the buckets between
-	 * epochStart and epochEnd. 
-	 * Records are sorted by probability  
-	 * 
+	 * epochStart and epochEnd.
+	 * Records are sorted by probability
+	 *
 	 * @param jobId
 	 * @param skip
 	 * @param take
 	 * @param epochStartMs
 	 * @param epochEndMs
-	 * @param 
+	 * @param
 	 * @return
-	 * @throws UnknownJobException 
-	 * @throws NativeProcessRunException 
+	 * @throws UnknownJobException
+	 * @throws NativeProcessRunException
 	 */
-	public Pagination<AnomalyRecord> records(String jobId, 
+	public Pagination<AnomalyRecord> records(String jobId,
 			int skip, int take, long epochStartMs, long epochEndMs,
-			String scoreFilterField, double filterValue) 
-	throws NativeProcessRunException, UnknownJobException 
+			String scoreFilterField, double filterValue)
+	throws NativeProcessRunException, UnknownJobException
 	{
-		return records(jobId, skip, take, epochStartMs, epochEndMs, 
+		return records(jobId, skip, take, epochStartMs, epochEndMs,
 				DEFAULT_RECORD_SORT_FIELD, true, 0.0, 0.0);
 	}
-	
-	
+
+
 	/**
 	 * Get a page of anomaly records from all buckets.
-	 * 
+	 *
 	 * @param jobId
 	 * @param skip Skip the first N records. This parameter is for paging
 	 * results if not required set to 0.
@@ -436,28 +438,28 @@ public class JobManager
 	 * this value
 	 * @param normalizedProbabilityThreshold Return only buckets with a maxNormalizedProbability >=
 	 * this value
-	 * 
+	 *
 	 * @return
 	 * @throws NativeProcessRunException
-	 * @throws UnknownJobException 
+	 * @throws UnknownJobException
 	 */
-	public Pagination<AnomalyRecord> records(String jobId, 
-			int skip, int take, String sortField, boolean sortDescending, 
-			double anomalyScoreThreshold, double normalizedProbabilityThreshold) 
-	throws NativeProcessRunException, UnknownJobException 
+	public Pagination<AnomalyRecord> records(String jobId,
+			int skip, int take, String sortField, boolean sortDescending,
+			double anomalyScoreThreshold, double normalizedProbabilityThreshold)
+	throws NativeProcessRunException, UnknownJobException
 	{
-		Pagination<AnomalyRecord> records = m_JobProvider.records(jobId, 
-				skip, take, sortField, sortDescending, 
+		Pagination<AnomalyRecord> records = m_JobProvider.records(jobId,
+				skip, take, sortField, sortDescending,
 				anomalyScoreThreshold, normalizedProbabilityThreshold);
 
-		return records; 
+		return records;
 	}
-	
-	
+
+
 	/**
 	 * Get a page of anomaly records from the buckets between
-	 * epochStart and epochEnd. 
-	 * 
+	 * epochStart and epochEnd.
+	 *
 	 * @param jobId
 	 * @param skip
 	 * @param take
@@ -469,28 +471,28 @@ public class JobManager
 	 * this value
 	 * @param normalizedProbabilityThreshold Return only buckets with a maxNormalizedProbability >=
 	 * this value
-	 * 
+	 *
 	 * @return
 	 * @throws NativeProcessRunException
 	 * @throws UnknownJobException
 	 */
-	public Pagination<AnomalyRecord> records(String jobId, 
-			int skip, int take, long epochStartMs, long epochEndMs, 
-			String sortField, boolean sortDescending, 
-			double anomalyScoreThreshold, double normalizedProbabilityThreshold) 
+	public Pagination<AnomalyRecord> records(String jobId,
+			int skip, int take, long epochStartMs, long epochEndMs,
+			String sortField, boolean sortDescending,
+			double anomalyScoreThreshold, double normalizedProbabilityThreshold)
 	throws NativeProcessRunException, UnknownJobException
 	{
-		Pagination<AnomalyRecord> records = m_JobProvider.records(jobId, 
+		Pagination<AnomalyRecord> records = m_JobProvider.records(jobId,
 				skip, take, epochStartMs, epochEndMs, sortField, sortDescending,
 				anomalyScoreThreshold, normalizedProbabilityThreshold);
 
-		return records; 
+		return records;
 	}
-	
+
 	/**
 	 * Set the job's description.
 	 * If the description cannot be set an exception is thrown.
-	 * 
+	 *
 	 * @param jobId
 	 * @param description
 	 * @throws UnknownJobException
@@ -502,99 +504,99 @@ public class JobManager
 		update.put(JobDetails.DESCRIPTION, description);
 		m_JobProvider.updateJob(jobId, update);
 	}
-	
+
 	/**
 	 * Stop the running job and mark it as finished.<br/>
-	 * 
+	 *
 	 * @param jobId The job to stop
-	 * @throws UnknownJobException 
-	 * @throws NativeProcessRunException 
+	 * @throws UnknownJobException
+	 * @throws NativeProcessRunException
 	 * @throws JobInUseException if the job cannot be closed because data is
 	 * being streamed to it
 	 */
-	public void finishJob(String jobId) 
+	public void finishJob(String jobId)
 	throws UnknownJobException, NativeProcessRunException, JobInUseException
 	{
 		s_Logger.debug("Finish job " + jobId);
-		
+
 		// First check the job is in the database.
 		// this method throws if it isn't
 		if (m_JobProvider.jobExists(jobId))
 		{
-			m_ProcessManager.finishJob(jobId);	
+			m_ProcessManager.finishJob(jobId);
 		}
 	}
-		
+
 	/**
 	 * Set time the job last received data.
 	 * Updates the database document
-	 * 
+	 *
 	 * @param jobId
 	 * @param time
 	 * @return
-	 * @throws UnknownJobException 
+	 * @throws UnknownJobException
 	 */
-	private boolean updateLastDataTime(String jobId, Date time) 
+	private boolean updateLastDataTime(String jobId, Date time)
 	throws UnknownJobException
 	{
-		
+
 		Map<String, Object> update = new HashMap<>();
 		update.put(JobDetails.LAST_DATA_TIME, new Date());
 		update.put(JobDetails.STATUS, JobStatus.RUNNING);
-		return m_JobProvider.updateJob(jobId, update);	
+		return m_JobProvider.updateJob(jobId, update);
 	}
-	
+
 	/**
 	 * Stop the associated process and remove it from the Process
-	 * Manager then delete the job related documents from the 
+	 * Manager then delete the job related documents from the
 	 * database.
-	 * 
+	 *
 	 * @param jobId
 	 * @return
 	 * @throws UnknownJobException If the jobId is not recognised
-	 * @throws NativeProcessRunException 
+	 * @throws NativeProcessRunException
 	 * @throws JobInUseException If the job cannot be deleted because the
 	 * native process is in use.
 	 */
 	public boolean deleteJob(String jobId)
 	throws UnknownJobException, NativeProcessRunException, JobInUseException
-	{		
+	{
 		s_Logger.debug("Deleting job '" + jobId + "'");
-		
+
 		m_JobProvider.jobExists(jobId);
-		
+
 		m_ProcessManager.finishJob(jobId);
 		m_JobProvider.deleteJob(jobId);
-		
+
 		m_DataPersisterFactory.newDataPersister(jobId, s_Logger).deleteData();
-		
+
 		return true;
 	}
-	
+
 	/**
-	 * Passes data to the native process. If the process is not running a new 
-	 * one is started. 
-	 * This is a blocking call that won't return until all the data has been 
-	 * written to the process. A new thread is launched to parse the process's 
+	 * Passes data to the native process. If the process is not running a new
+	 * one is started.
+	 * This is a blocking call that won't return until all the data has been
+	 * written to the process. A new thread is launched to parse the process's
 	 * output
-	 * 
+	 *
 	 * @param jobId
 	 * @param input
 	 * @return
-	 * @throws NativeProcessRunException If there is an error starting the native 
+	 * @throws NativeProcessRunException If there is an error starting the native
 	 * process
 	 * @throws UnknownJobException If the jobId is not recognised
-	 * @throws MissingFieldException If a configured field is missing from 
+	 * @throws MissingFieldException If a configured field is missing from
 	 * the CSV header
-	 * @throws JsonParseException 
-	 * @throws JobInUseException if the job cannot be written to because 
+	 * @throws JsonParseException
+	 * @throws JobInUseException if the job cannot be written to because
 	 * it is already handling data
-	 * @throws HighProportionOfBadTimestampsException 
-	 * @throws OutOfOrderRecordsException 
+	 * @throws HighProportionOfBadTimestampsException
+	 * @throws OutOfOrderRecordsException
 	 * @throws TooManyJobsException If the license is violated
 	 */
-	public boolean dataToJob(String jobId, InputStream input) 
-	throws UnknownJobException, NativeProcessRunException, MissingFieldException, 
+	public boolean dataToJob(String jobId, InputStream input)
+	throws UnknownJobException, NativeProcessRunException, MissingFieldException,
 		JsonParseException, JobInUseException, HighProportionOfBadTimestampsException,
 		OutOfOrderRecordsException, TooManyJobsException
 	{
@@ -633,48 +635,60 @@ public class JobManager
 			throw ne;
 		}
 
-		updateLastDataTime(jobId, new Date()); 
-		
+		updateLastDataTime(jobId, new Date());
+
 		return true;
 	}
-	
-	
+
+
 	/**
-	 * The job id is a concatenation of the date in 'yyyyMMddHHmmss' format 
+	 * The job id is a concatenation of the date in 'yyyyMMddHHmmss' format
 	 * and a sequence number that is a minimum of 5 digits wide left padded
 	 * with zeros.<br/>
-	 * e.g. the first Id created 23rd November 2013 at 11am 
-	 * 	'20131125110000-00001' 
-	 * 
+	 * e.g. the first Id created 23rd November 2013 at 11am
+	 * 	'20131125110000-00001'
+	 *
 	 * @return The new unique job Id
 	 */
 	private String generateJobId()
 	{
 		String id = String.format("%s-%05d", m_JobIdDateFormat.format(new Date()),
-						m_IdSequence.incrementAndGet());		
+						m_IdSequence.incrementAndGet());
 		return id;
-	}		
-		
+	}
+
 	/**
 	 * Stops the Elasticsearch client and the Process Manager
 	 */
 	public void stop()
 	{
 		m_ProcessManager.stop();
-		try 
+		try
 		{
 			m_JobProvider.close();
 		}
-		catch (IOException e) 
+		catch (IOException e)
 		{
 			s_Logger.error("Exception closing job details provider", e);
 		}
 	}
-	
+
+	/**
+	 * returns true or throws an <code>UnknownJobException</code>
+	 * @param jobId
+	 * @return
+	 * @throws UnknownJobException
+	 */
+	public boolean jobExists(String jobId)
+	throws UnknownJobException
+	{
+		return m_JobProvider.jobExists(jobId);
+	}
+
 	/**
 	 * Get the Job details for the job Id. If the job cannot be found
 	 * <code>null</code> is returned.
-	 *  
+	 *
 	 * @param refId
 	 * @return <code>null</code> or the job details
 	 * @throws UnknownJobException If there is no previously created
@@ -692,13 +706,13 @@ public class JobManager
 			throw new UnknownJobException(refId, "Missing Job: Cannot find "
 					+ "referenced job with id '" + refId + "'",
 					ErrorCode.UNKNOWN_JOB_REFERENCE);
-	
+
 		}
 	}
-	
+
 	/**
 	 * Get the analytics version string.
-	 * 
+	 *
 	 * @return
 	 */
 	public String getAnalyticsVersion()
@@ -836,4 +850,15 @@ public class JobManager
 		s_Logger.info("Wrote Prelert info " + doc.toString() + " to Elasticsearch");
 	}
 
+
+	public void addAlertObserver(String jobId, AlertObserver ao)
+	throws ClosedJobException
+	{
+		m_ProcessManager.addAlertObserver(jobId, ao);
+	}
+
+	public boolean removeAlertObserver(String jobId, AlertObserver ao)
+	{
+		return m_ProcessManager.removeAlertObserver(jobId, ao);
+	}
 }

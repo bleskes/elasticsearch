@@ -24,25 +24,18 @@
  *                                                          *
  *                                                          *
  ************************************************************/
+
 package com.prelert.job.process;
 
-import java.io.InputStream;
-
-import org.apache.log4j.Logger;
+import com.prelert.rs.data.parsing.AlertObserver;
 
 /**
- * Factory method for creating new Runnable objects to parse the 
- * autodetect output.
+ * A runnable class that reads the autodetect results.
+ * Has methods to register and remove alert observers.
  */
-public interface ResultsReaderFactory 
+public interface ResultsReader extends Runnable
 {
-	/**
-	 * 
-	 * @param jobId
-	 * @param autoDetectOutput
-	 * @param logger Job specific logger
-	 * @return
-	 */
-	public ResultsReader newResultsParser(String jobId, InputStream autoDetectOutput,
-			Logger logger);
+	public void addAlertObserver(AlertObserver ao);
+
+	public boolean removeAlertObserver(AlertObserver ao);
 }

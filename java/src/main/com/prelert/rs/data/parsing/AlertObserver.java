@@ -24,25 +24,64 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.process;
+package com.prelert.rs.data.parsing;
 
-import java.io.InputStream;
-
-import org.apache.log4j.Logger;
+import com.prelert.rs.data.Bucket;
 
 /**
- * Factory method for creating new Runnable objects to parse the 
- * autodetect output.
+ * The observer class for alerting
+ *
+ * Abstract class, concrete sub-classes should implement {@linkplain #fire(Bucket)}
  */
-public interface ResultsReaderFactory 
+abstract public class AlertObserver
 {
+	private double m_AnomalyThreshold;
+	private double m_NormalisedThreshold;
+
+	public AlertObserver(double normlizedProbThreshold, double anomalyThreshold)
+	{
+		m_AnomalyThreshold = anomalyThreshold;
+		m_NormalisedThreshold = normlizedProbThreshold;
+	}
+
 	/**
-	 * 
-	 * @param jobId
-	 * @param autoDetectOutput
-	 * @param logger Job specific logger
+	 * Return true if the alert should be fired for these values.
+	 *
+	 * @param normalisedProb
+	 * @param anomalyScore
 	 * @return
 	 */
-	public ResultsReader newResultsParser(String jobId, InputStream autoDetectOutput,
-			Logger logger);
+	public boolean evaluate(double normalisedProb, double anomalyScore)
+	{
+		return normalisedProb >= m_NormalisedThreshold ||
+				anomalyScore  >= m_AnomalyThreshold;
+	}
+
+	/**
+	 * Fire the alert with the bucket the alert came from
+	 *
+	 * @param bucket
+	 */
+	abstract public void fire(Bucket bucket);
+
+
+	public double getAnomalyThreshold()
+	{
+		return m_AnomalyThreshold;
+	}
+
+	public void setAnomalyThreshold(double anomalyThreshold)
+	{
+		m_AnomalyThreshold = anomalyThreshold;
+	}
+
+	public double getNormalisedThreshold()
+	{
+		return m_NormalisedThreshold;
+	}
+
+	public void setNormalisedThreshold(double normalisedThreshold)
+	{
+		m_NormalisedThreshold = normalisedThreshold;
+	}
 }
