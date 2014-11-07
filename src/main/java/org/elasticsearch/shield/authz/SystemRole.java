@@ -17,15 +17,12 @@
 
 package org.elasticsearch.shield.authz;
 
-import org.elasticsearch.cluster.metadata.MetaData;
 import org.elasticsearch.common.base.Predicate;
-import org.elasticsearch.shield.User;
-import org.elasticsearch.transport.TransportRequest;
 
 /**
  *
  */
-public class SystemRole extends Permission.Global {
+public class SystemRole {
 
     public static final SystemRole INSTANCE = new SystemRole();
 
@@ -36,11 +33,6 @@ public class SystemRole extends Permission.Global {
     }
 
     public boolean check(String action) {
-        return PREDICATE.apply(action);
-    }
-
-    @Override
-    public boolean check(User user, String action, TransportRequest request, MetaData metaData) {
         return PREDICATE.apply(action);
     }
 }
