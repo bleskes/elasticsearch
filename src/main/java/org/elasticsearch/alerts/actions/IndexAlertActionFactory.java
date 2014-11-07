@@ -61,8 +61,4 @@ public class IndexAlertActionFactory implements AlertActionFactory {
         return new IndexAlertAction(index, type, client);
     }
 
-    @Override
-    public AlertAction readFrom(StreamInput in) throws IOException {
-        return new IndexAlertAction(in.readString(), in.readString(), client);
-    }
 }
