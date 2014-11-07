@@ -65,7 +65,6 @@ public class ESLicenseSigner {
                 try {
                     return Files.readAllBytes(privateKeyPath);
                 } catch (IOException e) {
-                    e.printStackTrace();
                     throw new IllegalStateException(e);
                 }
 
