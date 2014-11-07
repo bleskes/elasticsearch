@@ -27,7 +27,7 @@ import org.elasticsearch.common.xcontent.XContentParser;
 
 import java.io.IOException;
 
-public class ESLicense implements Comparable<ESLicense>, ToXContent {
+public class ESLicense implements ToXContent {
 
     private final String uid;
     private final String issuer;
@@ -123,12 +123,6 @@ public class ESLicense implements Comparable<ESLicense>, ToXContent {
      */
     public String signature() {
         return signature;
-    }
-
-    @Override
-    public int compareTo(ESLicense o) {
-        assert o != null;
-        return Long.compare(expiryDate, o.expiryDate);
     }
 
     public void verify() {
