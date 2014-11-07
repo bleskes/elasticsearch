@@ -172,6 +172,7 @@ public class ProcessCtrl
 	static final public String TIME_FIELD_ARG = "--timefield=";
 	static final public String TIME_FORMAT_ARG = "--timeformat=";
 	static final public String PERSIST_URL_BASE_ARG = "--persistUrlBase=";
+	static final public String PERSIST_INTERVAL_ARG = "--persistInterval=10800"; // 3 hours
 	static final public String VERSION_ARG = "--version";
 	static final public String INFO_ARG = "--info";
 	static final public String MAX_ANOMALY_RECORDS_ARG = "--maxAnomalyRecords=500";
@@ -531,11 +532,10 @@ public class ProcessCtrl
 		
 		// Input is always length encoded
 		command.add(LENGTH_ENCODED_INPUT_ARG);
-		
-		
-		String recordCountArg = MAX_ANOMALY_RECORDS_ARG;
-		command.add(recordCountArg);
-		
+
+		// Limit the number of output records
+		command.add(MAX_ANOMALY_RECORDS_ARG);
+
 		String timeField = DataDescription.DEFAULT_TIME_FIELD;
 
 		DataDescription dataDescription = job.getDataDescription();
@@ -590,10 +590,13 @@ public class ProcessCtrl
 			}
 		}
 
-		// Always supply a URI for persisting/restoring model state.
-		String persistUriBase = PERSIST_URL_BASE_ARG +
+		// Always supply a URL for persisting/restoring model state.
+		String persistUrlBase = PERSIST_URL_BASE_ARG +
 				"http://localhost:" + ES_HTTP_PORT + '/' + job.getId();
-		command.add(persistUriBase);
+		command.add(persistUrlBase);
+
+		// Persist model state every few hours even if the job isn't closed
+		command.add(PERSIST_INTERVAL_ARG);
 
 		// the logging id is the job id
 		String logId = LOG_ID_ARG + job.getId();
