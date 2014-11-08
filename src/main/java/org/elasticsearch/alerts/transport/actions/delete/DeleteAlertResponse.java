@@ -42,16 +42,11 @@ public class DeleteAlertResponse extends ActionResponse {
         return deleteResponse;
     }
 
-    public void deleteResponse(DeleteResponse deleteResponse){
-        this.deleteResponse = deleteResponse;
-    }
-
-
     @Override
     public void readFrom(StreamInput in) throws IOException {
         super.readFrom(in);
-        deleteResponse = new DeleteResponse();
         if (in.readBoolean()) {
+            deleteResponse = new DeleteResponse();
             deleteResponse.readFrom(in);
         }
     }
