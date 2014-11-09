@@ -50,6 +50,7 @@ public class NoMasterNodeTests extends AbstractAlertingTests {
         return ImmutableSettings.builder()
                 .put(settings)
                 .put(ElectMasterService.DISCOVERY_ZEN_MINIMUM_MASTER_NODES, 2)
+                .put("discovery.type", "zen")
                 .build();
     }
 
