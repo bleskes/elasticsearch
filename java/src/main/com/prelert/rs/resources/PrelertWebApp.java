@@ -77,7 +77,6 @@ public class PrelertWebApp extends Application
 	{
 		m_ResourceClasses = new HashSet<>();
 		m_ResourceClasses.add(ApiBase.class);
-		m_ResourceClasses.add(Alerts.class);
 		m_ResourceClasses.add(AlertsLongPoll.class);
 		m_ResourceClasses.add(Jobs.class);
 		m_ResourceClasses.add(Data.class);
@@ -123,7 +122,7 @@ public class PrelertWebApp extends Application
 
 		m_AlertManager = new AlertManager(
 				new ElasticsearchAlertPersister(esJob.getClient()),
-				m_JobManager);
+				esJob, m_JobManager);
 
 
 		m_Singletons = new HashSet<>();

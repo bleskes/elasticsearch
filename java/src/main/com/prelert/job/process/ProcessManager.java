@@ -460,9 +460,6 @@ public class ProcessManager
 					// wait for the process to exit
 					int exitValue = process.getProcess().waitFor();
 
-					String msg = String.format("Process returned with value %d.", exitValue);
-					process.getLogger().info(msg);
-
 					// wait for the results parsing and write to to the datastore
 					process.joinParserThread();
 
@@ -470,8 +467,11 @@ public class ProcessManager
 
 					setJobFinishedTimeAndStatus(jobId, process.getLogger(), JobStatus.CLOSED);
 
+					String msg = String.format("Process returned with value %d.", exitValue);
 					if (exitValue != 0)
 					{
+						process.getLogger().error(msg);
+
 						// Read any error output from the process
 						StringBuilder sb = new StringBuilder();
 						readProcessErrorOutput(process, sb);
@@ -482,6 +482,10 @@ public class ProcessManager
 
 						throw new NativeProcessRunException(sb.toString(),
 								ErrorCode.NATIVE_PROCESS_ERROR);
+					}
+					else
+					{
+						process.getLogger().info(msg);
 					}
 
 					// free the logger resources

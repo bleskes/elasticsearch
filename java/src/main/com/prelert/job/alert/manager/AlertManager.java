@@ -27,13 +27,18 @@
 
 package com.prelert.job.alert.manager;
 
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.TimeoutHandler;
+import javax.ws.rs.core.UriBuilder;
 
 import org.apache.log4j.Logger;
 
@@ -41,9 +46,13 @@ import com.prelert.job.UnknownJobException;
 import com.prelert.job.alert.Alert;
 import com.prelert.job.alert.persistence.AlertPersister;
 import com.prelert.job.manager.JobManager;
+import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.process.ClosedJobException;
+import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
+import com.prelert.rs.data.Detector;
 import com.prelert.rs.data.parsing.AlertObserver;
+import com.prelert.rs.resources.Buckets;
 
 
 /**
@@ -65,6 +74,7 @@ public class AlertManager implements TimeoutHandler
 	private AlertPersister m_AlertPersister;
 	private AtomicLong m_IdSequence;
 
+	public JobProvider m_JobProvider;
 	public JobManager m_JobManager;
 
 	public class AlertListener extends AlertObserver
@@ -72,27 +82,40 @@ public class AlertManager implements TimeoutHandler
 		private AsyncResponse m_Response;
 		private AlertManager m_Manager;
 		private String m_JobId;
+		private URI m_BaseUri;
 
 		private AlertListener(AsyncResponse response, AlertManager manager, String jobId,
-				double anomalyScoreThreshold, double normalizedProbabiltyThreshold)
+				double anomalyScoreThreshold, double normalizedProbabiltyThreshold,
+				URI baseUri)
 		{
 			super(normalizedProbabiltyThreshold, anomalyScoreThreshold);
 
 			m_Response = response;
 			m_Manager = manager;
 			m_JobId = jobId;
+			m_BaseUri = baseUri;
 		}
 
 		@Override
 		public void fire(Bucket bucket)
 		{
 			m_Manager.deregisterResponse(m_Response);
-			m_Response.resume(createAlert(bucket, m_JobId));
+			m_Response.resume(createAlert(bucket, this));
 		}
 
 		public AsyncResponse getResponse()
 		{
 			return m_Response;
+		}
+
+		public String getJobId()
+		{
+			return m_JobId;
+		}
+
+		public URI getBaseUri()
+		{
+			return m_BaseUri;
 		}
 	}
 
@@ -100,10 +123,12 @@ public class AlertManager implements TimeoutHandler
 	 *
 	 * @param alertPersister Knows how to save alerts
 	 */
-	public AlertManager(AlertPersister alertPersister, JobManager jobManager)
+	public AlertManager(AlertPersister alertPersister, JobProvider jobProvider,
+			JobManager jobManager)
 	{
-		m_JobManager = jobManager;
+		m_JobProvider = jobProvider;
 		m_AlertPersister = alertPersister;
+		m_JobManager = jobManager;
 		m_AsyncRepsonses = new HashMap<>();
 
 		String lastAlertId = m_AlertPersister.lastAlertId();
@@ -131,17 +156,18 @@ public class AlertManager implements TimeoutHandler
 	 * @param normalizedProbabiltyThreshold
 	 * @throws UnknownJobException
 	 */
-	public void registerRequest(AsyncResponse response, String jobId,
+	public void registerRequest(AsyncResponse response, String jobId, URI baseUri,
 			long timeout_secs, double anomalyScoreThreshold, double normalizedProbabiltyThreshold)
 	throws UnknownJobException
 	{
-		m_JobManager.jobExists(jobId);
+		m_JobProvider.jobExists(jobId);
 
 		response.setTimeout(timeout_secs, TimeUnit.SECONDS);
 		response.setTimeoutHandler(this);
 
 		AlertListener listener = this.new AlertListener(response, this, jobId,
-				anomalyScoreThreshold, normalizedProbabiltyThreshold);
+				anomalyScoreThreshold, normalizedProbabiltyThreshold,
+				baseUri);
 		registerListener(listener);
 
 		try
@@ -151,10 +177,10 @@ public class AlertManager implements TimeoutHandler
 		catch (ClosedJobException e)
 		{
 			s_Logger.info("Error alerting on closed job " + jobId);
+			deregisterResponse(response);
 			response.resume(e);
 		}
 	}
-
 
 
 	/**
@@ -202,23 +228,44 @@ public class AlertManager implements TimeoutHandler
 		}
 	}
 
-	private Alert createAlert(Bucket bucket, String jobId)
+	private Alert createAlert(Bucket bucket, AlertListener listener)
 	{
 		Alert alert = new Alert();
 		alert.setId(Long.toString(m_IdSequence.incrementAndGet()));
-		alert.setJobId(jobId);
+		alert.setTimestamp(new Date());
+		alert.setJobId(listener.getJobId());
 		alert.setAnomalyScore(bucket.getAnomalyScore());
 		alert.setNormalizedProbability(bucket.getMaxNormalizedProbability());
 
-//    	URI uri = UriBuilder.fromPath("results")
-//				.path(jobId)
-//				.path(Buckets.ENDPOINT)
-//				.path(bucket.getId())
-//				.build();
-//
-//    	alert.setUri(uri);
+    	URI uri = UriBuilder.fromUri(listener.getBaseUri())
+				    			.path("results")
+								.path(listener.getJobId())
+								.path(Buckets.ENDPOINT)
+								.path(bucket.getId())
+								.build();
+    	alert.setUri(uri);
 
-		return alert;
+    	if (listener.isAnomalyScoreAlert(bucket.getAnomalyScore()))
+    	{
+    		alert.setBucket(bucket);
+    	}
+    	else
+    	{
+    		List<AnomalyRecord> records = new ArrayList<>();
+    		for (Detector detector : bucket.getDetectors())
+    		{
+    			for (AnomalyRecord r : detector.getRecords())
+    			{
+    				if (r.getNormalizedProbability() > listener.getNormalisedProbThreshold())
+    				{
+    					records.add(r);
+    				}
+    			}
+    		}
+    		alert.setRecords(records);
+    	}
+
+    	return alert;
 	}
 
 }

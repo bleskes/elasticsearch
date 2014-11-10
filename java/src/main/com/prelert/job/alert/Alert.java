@@ -28,9 +28,12 @@ package com.prelert.job.alert;
 
 import java.net.URI;
 import java.util.Date;
+import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.prelert.rs.data.AnomalyRecord;
+import com.prelert.rs.data.Bucket;
 
 /**
  * Encapsulate an Engine API alert. Alerts have:
@@ -62,6 +65,8 @@ public class Alert
 	private double m_AnomalyScore;
 	private double m_NormalizedProb;
 	private boolean m_IsTimeout;
+	private Bucket m_Bucket;
+	private List<AnomalyRecord> m_Records;
 
 
 	public String getJobId()
@@ -133,4 +138,25 @@ public class Alert
 	{
 		m_IsTimeout = timeout;
 	}
+
+	public Bucket getBucket()
+	{
+		return m_Bucket;
+	}
+
+	public void setBucket(Bucket bucket)
+	{
+		m_Bucket = bucket;
+	}
+
+	public List<AnomalyRecord> getRecords()
+	{
+		return m_Records;
+	}
+
+	public void setRecords(List<AnomalyRecord> records)
+	{
+		m_Records = records;
+	}
+
 }

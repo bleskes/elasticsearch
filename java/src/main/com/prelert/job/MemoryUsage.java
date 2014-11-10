@@ -28,9 +28,6 @@ package com.prelert.job;
 
 import java.io.IOException;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
@@ -67,9 +64,7 @@ public class MemoryUsage
 
 	public void setId(String id)
 	{
-
 	}
-
 
 	public void setMemoryUsage(long m)
 	{
@@ -192,7 +187,7 @@ public class MemoryUsage
 					}
 					else
 					{
-						s_Logger.warn("Cannot parse " + TYPE + " : " + parser.getText()
+						s_Logger.warn("Cannot parse " + fieldName + " : " + parser.getText()
 										+ " as a long");
 					}
 					break;
@@ -204,7 +199,7 @@ public class MemoryUsage
 					}
 					else
 					{
-						s_Logger.warn("Cannot parse " + TYPE + " : " + parser.getText()
+						s_Logger.warn("Cannot parse " + fieldName + " : " + parser.getText()
 										+ " as a long");
 					}
 					break;
@@ -216,7 +211,7 @@ public class MemoryUsage
 					}
 					else
 					{
-						s_Logger.warn("Cannot parse " + TYPE + " : " + parser.getText()
+						s_Logger.warn("Cannot parse " + fieldName + " : " + parser.getText()
 										+ " as a long");
 					}
 					break;

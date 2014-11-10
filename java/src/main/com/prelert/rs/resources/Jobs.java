@@ -62,13 +62,13 @@ import com.prelert.rs.data.SingleDocument;
 
 /**
  * REST API Jobs end point use to create new Jobs list all jobs or get
- * details of a particular job.   
+ * details of a particular job.
  * <br/>
  * Jobs are created by POSTing to this endpoint:<br/>
  * <pre>curl -X POST -H 'Content-Type: application/json' 'http://localhost:8080/api/jobs'</pre>
- * Get details of a specific job:<br/> 
+ * Get details of a specific job:<br/>
  * <pre>curl 'http://localhost:8080/api/jobs/{job_id}'</pre>
- * or all jobs:<br/> 
+ * or all jobs:<br/>
  * <pre>curl 'http://localhost:8080/api/jobs'</pre>
  * Delete a job with:<br/>
  * <pre>curl -X DELETE 'http://localhost:8080/api/jobs/{job_id}'</pre>
@@ -76,87 +76,87 @@ import com.prelert.rs.data.SingleDocument;
 
 @Path("/jobs")
 public class Jobs extends ResourceWithJobManager
-{	
+{
 	static final private Logger s_Logger = Logger.getLogger(Jobs.class);
-	
+
 	/**
 	 * The name of this endpoint
 	 */
 	static public final String ENDPOINT = "jobs";
-	
+
 	/**
 	 * Get all job details.
-	 * 
+	 *
 	 * @return Array of JSON objects string
 	 */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Pagination<JobDetails> jobs(
     		@DefaultValue("0") @QueryParam("skip") int skip,
-    		@DefaultValue(JobManager.DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take) 
-    {      
+    		@DefaultValue(JobManager.DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take)
+    {
     	s_Logger.debug(String.format("Get all jobs, skip=%d, take=%d", skip, take));
-    	
+
     	JobManager manager = jobManager();
     	Pagination<JobDetails> results = manager.getJobs(skip, take);
-    	
+
     	setPagingUrls(ENDPOINT, results);
-    	
+
     	for (JobDetails job : results.getDocuments())
     	{
     		setEndPointLinks(job);
     	}
-    	
-    	s_Logger.debug(String.format("Returning %d of %d jobs", 
+
+    	s_Logger.debug(String.format("Returning %d of %d jobs",
     			results.getDocuments().size(), results.getHitCount()));
-    	
+
     	return results;
     }
-	
+
     @GET
 	@Path("/{jobId}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response job(@PathParam("jobId") String jobId)
-    {   	
+    {
     	s_Logger.debug("Get job '" + jobId + "'");
-    	
+
 		JobManager manager = jobManager();
 		SingleDocument<JobDetails> job;
-		try 
+		try
 		{
 			job = manager.getJob(jobId);
 			setEndPointLinks(job.getDocument());
 		}
-		catch (UnknownJobException e) 
+		catch (UnknownJobException e)
 		{
 			job = new SingleDocument<>();
 			job.setType(JobDetails.TYPE);
 			job.setDocumentId(jobId);
 		}
-				
+
 		if (job.isExists())
 		{
 			s_Logger.debug("Returning job '" + jobId + "'");
-			
+
 			return Response.ok(job).build();
 		}
 		else
 		{
 			s_Logger.debug(String.format("Cannot find job '%s'", jobId));
-			
+
 			return Response.status(Response.Status.NOT_FOUND).entity(job).build();
 		}
     }
-		
+
     @POST
-    @Consumes(MediaType.APPLICATION_JSON)  
+    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response createJob(JobConfiguration config) 
+    public Response createJob(JobConfiguration config)
     throws UnknownJobException, JobConfigurationException, IOException,
 			TooManyJobsException, JobIdAlreadyExistsException
-    {   		
+    {
     	s_Logger.debug("Creating new job");
-    	
+
     	// throws if a bad config
     	try
     	{
@@ -168,7 +168,7 @@ public class Jobs extends ResourceWithJobManager
     		s_Logger.error("Bad job configuration ", e);
     		throw e;
     	}
-    	
+
     	JobManager manager = jobManager();
     	JobDetails job = manager.createJob(config);
     	if (job == null)
@@ -176,18 +176,18 @@ public class Jobs extends ResourceWithJobManager
     		s_Logger.debug("Failed to create job");
     		return Response.serverError().build();
     	}
-    	
+
     	setEndPointLinks(job);
-    	
+
     	s_Logger.debug("Returning new job details location " + job.getLocation());
-    	String ent = String.format("{\"id\":\"%s\"}\n", job.getId()); 
-    	
+    	String ent = String.format("{\"id\":\"%s\"}\n", job.getId());
+
 		return Response.created(job.getLocation()).entity(ent).build();
-    }      
-    
+    }
+
     /**
-     * Set the job's description 
-     * 
+     * Set the job's description
+     *
      * @param jobId
      * @param description
      * @return
@@ -198,21 +198,21 @@ public class Jobs extends ResourceWithJobManager
 	@Path("/{jobId}/description")
     @Consumes({MediaType.TEXT_PLAIN, MediaType.APPLICATION_FORM_URLENCODED})
     public Response setDescription(@PathParam("jobId") String jobId,
-    		String description) 
-    throws UnknownJobException, JsonProcessingException    
+    		String description)
+    throws UnknownJobException, JsonProcessingException
     {
     	s_Logger.debug("Setting the job description");
-    	
-		JobManager manager = jobManager();		
+
+		JobManager manager = jobManager();
 		manager.setDescription(jobId, description);
-		
+
 		return Response.ok().build();
     }
-    
-    
+
+
     /**
      * Delete the job.
-     * 
+     *
      * @param jobId
      * @return
      * @throws NativeProcessRunException If there is an error deleting the job
@@ -222,18 +222,18 @@ public class Jobs extends ResourceWithJobManager
      */
     @DELETE
 	@Path("/{jobId}")
-    public Response deleteJob(@PathParam("jobId") String jobId) 
+    public Response deleteJob(@PathParam("jobId") String jobId)
     throws UnknownJobException, NativeProcessRunException, JobInUseException
-    {   	
+    {
     	s_Logger.debug("Delete job '" + jobId + "'");
-    	
+
 		JobManager manager = jobManager();
 		boolean deleted = manager.deleteJob(jobId);
-		
+
 		if (deleted)
 		{
 			new JobLogs().deleteLogs(jobId);
-			
+
 			s_Logger.debug("Job '" + jobId + "' deleted");
 			return Response.ok()
 					.build();
@@ -242,16 +242,16 @@ public class Jobs extends ResourceWithJobManager
 		{
 			String msg = "Error deleting job '" + jobId + "'";
 			s_Logger.warn(msg);
-			
+
 			return Response.status(Response.Status.NOT_FOUND)
 					.build();
 		}
     }
-    
-        
+
+
     /**
-     * Sets the URLs to the data, logs & results endpoints and the 
-     * location of this job 
+     * Sets the URLs to the data, logs & results endpoints and the
+     * location of this job
      * @param job
      */
     private void setEndPointLinks(JobDetails job)
@@ -260,33 +260,33 @@ public class Jobs extends ResourceWithJobManager
 				.path(ENDPOINT)
 				.path(job.getId())
 				.build();
-    	job.setLocation(location);   	
-    	
+    	job.setLocation(location);
+
     	URI data = m_UriInfo.getBaseUriBuilder()
 				.path(Data.ENDPOINT)
 				.path(job.getId())
 				.build();
     	job.setDataEndpoint(data);
-    	
+
     	URI buckets = m_UriInfo.getBaseUriBuilder()
 				.path("results")
 				.path(job.getId())
 				.path(Buckets.ENDPOINT)
 				.build();
     	job.setBucketsEndpoint(buckets);
-    	
+
     	URI records = m_UriInfo.getBaseUriBuilder()
 				.path("results")
 				.path(job.getId())
 				.path(Records.ENDPOINT)
 				.build();
     	job.setRecordsEndpoint(records);
-    	
+
     	URI logs = m_UriInfo.getBaseUriBuilder()
 				.path(Logs.ENDPOINT)
 				.path(job.getId())
 				.build();
-    	job.setLogsEndpoint(logs);      	
-    	
+    	job.setLogsEndpoint(logs);
+
     }
 }
