@@ -24,27 +24,18 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.rs.provider;
 
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
+package com.prelert.job.process;
 
-import com.prelert.job.TooManyJobsException;
-import com.prelert.rs.data.ApiError;
+import com.prelert.rs.data.parsing.AlertObserver;
 
 /**
- * Exception -> Response mapper for {@linkplain TooManyJobsException}.
+ * A runnable class that reads the autodetect results.
+ * Has methods to register and remove alert observers.
  */
-public class TooManyJobsExceptionMapper implements ExceptionMapper<TooManyJobsException>
+public interface ResultsReader extends Runnable
 {
-	@Override
-	public Response toResponse(TooManyJobsException e)
-	{
-		ApiError error = new ApiError(e.getErrorCode());
-		error.setCause(e.getCause());
-		error.setMessage(e.getMessage());
+	public void addAlertObserver(AlertObserver ao);
 
-		return Response.status(Response.Status.BAD_REQUEST)
-				.entity(error.toJson()).build();
-	}
+	public boolean removeAlertObserver(AlertObserver ao);
 }

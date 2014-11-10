@@ -24,28 +24,26 @@
  *                                                          *
  *                                                          *
  ************************************************************/
+
 package com.prelert.rs.provider;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 
-import com.prelert.job.status.HighProportionOfBadTimestampsException;
+import com.prelert.job.JobException;
 import com.prelert.rs.data.ApiError;
 
-
-/**
- * Exception to Response mapper for {@linkplain HighProportionOfBadTimestampsException}.
- */
-public class HighProportionOfBadTimestampsExceptionMapper 
-		implements ExceptionMapper<HighProportionOfBadTimestampsException>
+public class JobExceptionMapper
+implements ExceptionMapper<JobException>
 {
+
 	@Override
-	public Response toResponse(HighProportionOfBadTimestampsException e) 
+	public Response toResponse(JobException e)
 	{
 		ApiError error = new ApiError(e.getErrorCode());
-		error.setMessage(e.getMessage());
 		error.setCause(e.getCause());
-		
+		error.setMessage(e.getMessage());
+
 		return Response.status(Response.Status.BAD_REQUEST)
 				.entity(error.toJson()).build();
 	}

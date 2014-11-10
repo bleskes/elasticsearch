@@ -30,49 +30,45 @@ import com.prelert.rs.data.ErrorCode;
 
 /**
  * This type of exception represents an error where
- * an operation uses a <i>JobId</i> that does not exist. 
+ * an operation uses a <i>JobId</i> that does not exist.
  */
-public class UnknownJobException extends Exception 
+public class UnknownJobException extends JobException
 {
 	private static final long serialVersionUID = 8603362038035845948L;
 
 	private String m_JobId;
-	private ErrorCode m_ErrorCode;
-	
+
 	/**
-	 * Create with the default message and error code 
+	 * Create with the default message and error code
 	 * set to ErrorCode.MISSING_JOB_ERROR
 	 * @param jobId
 	 */
 	public UnknownJobException(String jobId)
 	{
-		super("No job with id '" + jobId + "'");
+		super("No job with id '" + jobId + "'", ErrorCode.MISSING_JOB_ERROR);
 		m_JobId = jobId;
-		m_ErrorCode = ErrorCode.MISSING_JOB_ERROR;
 	}
-	
+
 	/**
 	 * Create a new UnknownJobException with an error code
-	 * 
+	 *
 	 * @param jobId The Job Id that could not be found
-	 * @param message Details of error explaining the context 
+	 * @param message Details of error explaining the context
 	 * @param errorCode
 	 */
 	public UnknownJobException(String jobId, String message, ErrorCode errorCode)
 	{
-		super(message);
+		super(message, errorCode);
 		m_JobId = jobId;
-		m_ErrorCode = errorCode;
 	}
-	
+
 	public UnknownJobException(String jobId, String message, ErrorCode errorCode,
 			Throwable cause)
 	{
-		super(message, cause);
+		super(message, errorCode, cause);
 		m_JobId = jobId;
-		m_ErrorCode = errorCode;
 	}
-	
+
 	/**
 	 * Get the unknown <i>JobId</i> that was the source of the error.
 	 * @return
@@ -80,15 +76,5 @@ public class UnknownJobException extends Exception
 	public String getJobId()
 	{
 		return m_JobId;
-	}
-	
-	/**
-	 * Get the error code or 0 if not set.
-	 * 
-	 * @return
-	 */
-	public ErrorCode getErrorCode()
-	{
-		return m_ErrorCode;
 	}
 }

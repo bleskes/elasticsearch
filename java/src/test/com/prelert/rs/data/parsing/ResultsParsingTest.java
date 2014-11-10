@@ -43,23 +43,25 @@ import org.apache.log4j.Logger;
 import org.junit.Test;
 
 import com.fasterxml.jackson.core.JsonParseException;
+import com.prelert.job.MemoryUsage;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.persistence.JobResultsPersister;
 import com.prelert.job.persistence.JobRenormaliser;
 import com.prelert.job.quantiles.Quantiles;
 import com.prelert.rs.data.Bucket;
+import com.prelert.rs.data.Detector;
 import com.prelert.rs.data.parsing.AutoDetectParseException;
 import com.prelert.rs.data.parsing.AutoDetectResultsParser;
 
 /**
  * Tests for parsing the JSON output of autodetect_api
  */
-public class ResultsParsingTest 
+public class ResultsParsingTest
 {
-	public final static String METRIC_OUTPUT_SAMPLE = "[{\"timestamp\":1359450000,\"detectors\":[],\"rawAnomalyScore\":0,\"recordCount\":1,\"eventCount\":806}" +
+	public final static String METRIC_OUTPUT_SAMPLE = "[{\"timestamp\":1359450000,\"detectors\":[],\"rawAnomalyScore\":0, \"maxNormalizedProbability\":0,\"anomalyScore\":0,\"recordCount\":0,\"eventCount\":806}" +
 			",{\"quantileKind\":\"sysChange\",\"quantileState\":\"<a prelertcue=\\\"sysChange\\\" prelertkey=\\\"ApiAnomalyDetector\\\" prelertversion=\\\"2\\\" time=\\\"1359450000\\\"><a>2</a><b>1320</b><c><b>86.84367</b></c><d><a>201</a><b>1439</b><c><a>0</a><b>16383</b><c>4</c></c><c><a>0</a><b>8191</b><c>4</c></c><c><a>0</a><b>4095</b><c>6</c></c><c><a>0</a><b>15</b><c>3</c></c><c><a>0</a><b>0</b><c>1206</c></c><c><a>1</a><b>1</b><c>80</c></c><c><a>2</a><b>2</b><c>34</c></c><c><a>3</a><b>3</b><c>12</c></c><c><a>4</a><b>4</b><c>10</c></c><c><a>5</a><b>5</b><c>5</c></c><c><a>6</a><b>6</b><c>5</c></c><c><a>7</a><b>7</b><c>7</c></c><c><a>8</a><b>15</b><c>5</c></c><c><a>8</a><b>11</b><c>6</c></c><c><a>8</a><b>8</b><c>4</c></c><c><a>9</a><b>9</b><c>3</c></c><c><a>10</a><b>11</b><c>3</c></c><c><a>12</a><b>15</b><c>3</c></c><c><a>16</a><b>31</b><c>4</c></c><c><a>16</a><b>23</b><c>4</c></c><c><a>24</a><b>31</b><c>2</c></c><c><a>32</a><b>39</b><c>5</c></c><c><a>40</a><b>47</b><c>2</c></c><c><a>48</a><b>55</b><c>6</c></c><c><a>52</a><b>55</b><c>1</c></c><c><a>56</a><b>63</b><c>1</c></c><c><a>64</a><b>95</b><c>4</c></c><c><a>64</a><b>79</b><c>5</c></c><c><a>64</a><b>71</b><c>2</c></c><c><a>96</a><b>127</b><c>3</c></c></d><e><a>201</a><b>160</b><c><a>0</a><b>16383</b><c>0</c></c><c><a>1</a><b>1</b><c>17</c></c><c><a>2</a><b>2</b><c>24</c></c><c><a>3</a><b>3</b><c>12</c></c><c><a>4</a><b>4</b><c>10</c></c><c><a>5</a><b>5</b><c>5</c></c><c><a>6</a><b>6</b><c>5</c></c><c><a>7</a><b>7</b><c>7</c></c><c><a>8</a><b>8</b><c>6</c></c><c><a>9</a><b>9</b><c>4</c></c><c><a>10</a><b>10</b><c>3</c></c><c><a>11</a><b>11</b><c>4</c></c><c><a>12</a><b>12</b><c>3</c></c><c><a>13</a><b>13</b><c>4</c></c><c><a>14</a><b>14</b><c>1</c></c><c><a>15</a><b>15</b><c>2</c></c><c><a>17</a><b>17</b><c>1</c></c><c><a>18</a><b>18</b><c>2</c></c><c><a>22</a><b>22</b><c>2</c></c><c><a>24</a><b>24</b><c>1</c></c><c><a>25</a><b>25</b><c>3</c></c><c><a>26</a><b>26</b><c>1</c></c><c><a>29</a><b>29</b><c>1</c></c><c><a>30</a><b>30</b><c>1</c></c><c><a>32</a><b>32</b><c>1</c></c><c><a>33</a><b>33</b><c>1</c></c><c><a>35</a><b>35</b><c>1</c></c><c><a>36</a><b>36</b><c>1</c></c><c><a>38</a><b>38</b><c>2</c></c><c><a>39</a><b>39</b><c>1</c></c><c><a>40</a><b>40</b><c>1</c></c><c><a>44</a><b>44</b><c>1</c></c><c><a>51</a><b>51</b><c>4</c></c><c><a>52</a><b>52</b><c>1</c></c><c><a>53</a><b>53</b><c>1</c></c><c><a>54</a><b>54</b><c>1</c></c><c><a>55</a><b>55</b><c>1</c></c><c><a>56</a><b>56</b><c>1</c></c><c><a>58</a><b>58</b><c>1</c></c><c><a>59</a><b>59</b><c>1</c></c><c><a>62</a><b>62</b><c>1</c></c><c><a>64</a><b>64</b><c>2</c></c><c><a>66</a><b>66</b><c>1</c></c><c><a>67</a><b>67</b><c>3</c></c><c><a>70</a><b>70</b><c>1</c></c><c><a>73</a><b>73</b><c>1</c></c><c><a>76</a><b>76</b><c>1</c></c><c><a>77</a><b>77</b><c>1</c></c><c><a>79</a><b>79</b><c>1</c></c><c><a>84</a><b>84</b><c>1</c></c><c><a>97</a><b>97</b><c>1</c></c><c><a>115</a><b>115</b><c>1</c></c><c><a>116</a><b>116</b><c>1</c></c><c><a>140</a><b>140</b><c>1</c></c><c><a>167</a><b>167</b><c>1</c></c><c><a>182</a><b>182</b><c>1</c></c><c><a>5459</a><b>5459</b><c>1</c></c><c><a>9707</a><b>9707</b><c>1</c></c></e></a>\",\"timestamp\":1359450000}" +
 			",{\"quantileKind\":\"unusual\",\"quantileState\":\"<a prelertcue=\\\"unusual\\\" prelertkey=\\\"ApiAnomalyDetector\\\" prelertversion=\\\"2\\\" time=\\\"1359450000\\\"><a>0</a><b>25646</b><c><b>89.46405</b></c><d><a>201</a><b>26408</b><c><a>0</a><b>16383</b><c>67</c></c><c><a>0</a><b>8191</b><c>101</c></c><c><a>0</a><b>4095</b><c>71</c></c><c><a>0</a><b>2047</b><c>93</c></c><c><a>0</a><b>1023</b><c>124</c></c><c><a>0</a><b>511</b><c>21</c></c><c><a>0</a><b>0</b><c>25646</c></c><c><a>1</a><b>1</b><c>285</c></c></d><e><a>201</a><b>762</b><c><a>0</a><b>16383</b><c>2</c></c><c><a>0</a><b>8191</b><c>2</c></c><c><a>0</a><b>4095</b><c>2</c></c><c><a>0</a><b>2047</b><c>2</c></c><c><a>0</a><b>1023</b><c>1</c></c><c><a>0</a><b>63</b><c>2</c></c><c><a>0</a><b>31</b><c>2</c></c><c><a>1</a><b>1</b><c>285</c></c><c><a>2</a><b>2</b><c>116</c></c><c><a>3</a><b>3</b><c>53</c></c><c><a>4</a><b>4</b><c>41</c></c><c><a>5</a><b>5</b><c>29</c></c><c><a>6</a><b>6</b><c>25</c></c><c><a>7</a><b>7</b><c>16</c></c><c><a>8</a><b>8</b><c>14</c></c><c><a>9</a><b>9</b><c>15</c></c><c><a>10</a><b>10</b><c>8</c></c><c><a>11</a><b>11</b><c>12</c></c><c><a>12</a><b>12</b><c>4</c></c><c><a>13</a><b>13</b><c>6</c></c><c><a>14</a><b>14</b><c>6</c></c><c><a>15</a><b>15</b><c>4</c></c><c><a>16</a><b>31</b><c>2</c></c><c><a>16</a><b>19</b><c>2</c></c><c><a>16</a><b>16</b><c>7</c></c><c><a>17</a><b>17</b><c>3</c></c><c><a>18</a><b>19</b><c>1</c></c><c><a>20</a><b>23</b><c>2</c></c><c><a>20</a><b>21</b><c>2</c></c><c><a>22</a><b>22</b><c>5</c></c><c><a>23</a><b>23</b><c>2</c></c><c><a>24</a><b>31</b><c>1</c></c><c><a>24</a><b>25</b><c>1</c></c><c><a>26</a><b>27</b><c>2</c></c><c><a>27</a><b>27</b><c>1</c></c><c><a>30</a><b>30</b><c>3</c></c><c><a>31</a><b>31</b><c>1</c></c><c><a>32</a><b>63</b><c>1</c></c><c><a>32</a><b>32</b><c>2</c></c><c><a>33</a><b>33</b><c>2</c></c><c><a>34</a><b>34</b><c>2</c></c><c><a>35</a><b>35</b><c>4</c></c><c><a>40</a><b>41</b><c>2</c></c><c><a>42</a><b>43</b><c>2</c></c><c><a>43</a><b>43</b><c>1</c></c><c><a>44</a><b>45</b><c>2</c></c><c><a>46</a><b>47</b><c>1</c></c><c><a>48</a><b>51</b><c>2</c></c><c><a>52</a><b>55</b><c>2</c></c><c><a>52</a><b>52</b><c>1</c></c><c><a>53</a><b>53</b><c>2</c></c><c><a>56</a><b>59</b><c>1</c></c><c><a>56</a><b>57</b><c>1</c></c><c><a>56</a><b>56</b><c>1</c></c><c><a>57</a><b>57</b><c>1</c></c><c><a>58</a><b>59</b><c>2</c></c><c><a>60</a><b>63</b><c>2</c></c><c><a>62</a><b>63</b><c>1</c></c><c><a>64</a><b>127</b><c>2</c></c><c><a>64</a><b>79</b><c>1</c></c><c><a>64</a><b>71</b><c>2</c></c><c><a>64</a><b>67</b><c>1</c></c><c><a>72</a><b>79</b><c>2</c></c><c><a>76</a><b>79</b><c>1</c></c><c><a>80</a><b>95</b><c>2</c></c><c><a>88</a><b>95</b><c>1</c></c><c><a>96</a><b>111</b><c>2</c></c><c><a>96</a><b>103</b><c>1</c></c><c><a>100</a><b>100</b><c>1</c></c><c><a>101</a><b>101</b><c>3</c></c><c><a>104</a><b>111</b><c>2</c></c><c><a>108</a><b>109</b><c>1</c></c><c><a>110</a><b>111</b><c>2</c></c><c><a>112</a><b>127</b><c>2</c></c><c><a>112</a><b>119</b><c>2</c></c><c><a>112</a><b>115</b><c>1</c></c><c><a>114</a><b>114</b><c>1</c></c><c><a>115</a><b>115</b><c>3</c></c><c><a>116</a><b>119</b><c>1</c></c><c><a>120</a><b>127</b><c>2</c></c><c><a>124</a><b>127</b><c>1</c></c><c><a>128</a><b>135</b><c>2</c></c><c><a>128</a><b>131</b><c>2</c></c><c><a>136</a><b>143</b><c>1</c></c><c><a>160</a><b>175</b><c>2</c></c><c><a>176</a><b>191</b><c>1</c></c></e></a>\",\"timestamp\":1359450000}" +
-			",{\"timestamp\":1359453600,\"detectors\":[{\"name\":\"individual metric/responsetime/airline\",\"records\":[{\"probability\":0.0637541,\"byFieldName\":\"airline\",\"byFieldValue\":\"JZA\",\"typical\":1020.08,\"actual\":1042.14,\"fieldName\":\"responsetime\",\"function\":\"max\",\"partitionFieldName\":\"\",\"partitionFieldValue\":\"\"},{\"probability\":0.00748292,\"byFieldName\":\"airline\",\"byFieldValue\":\"AMX\",\"typical\":20.2137,\"actual\":22.8855,\"fieldName\":\"responsetime\",\"function\":\"max\",\"partitionFieldName\":\"\",\"partitionFieldValue\":\"\"},{\"probability\":0.023494,\"byFieldName\":\"airline\",\"byFieldValue\":\"DAL\",\"typical\":382.177,\"actual\":358.934,\"fieldName\":\"responsetime\",\"function\":\"min\",\"partitionFieldName\":\"\",\"partitionFieldValue\":\"\"},{\"probability\":0.0473552,\"byFieldName\":\"airline\",\"byFieldValue\":\"SWA\",\"typical\":152.148,\"actual\":96.6425,\"fieldName\":\"responsetime\",\"function\":\"min\",\"partitionFieldName\":\"\",\"partitionFieldValue\":\"\"}]}],\"rawAnomalyScore\":0.0140005,\"recordCount\":5,\"eventCount\":820}" +
+			",{\"timestamp\":1359453600,\"detectors\":[{\"name\":\"individual metric/responsetime/airline\",\"records\":[{\"probability\":0.0637541,\"byFieldName\":\"airline\",\"byFieldValue\":\"JZA\",\"typical\":1020.08,\"actual\":1042.14,\"fieldName\":\"responsetime\",\"function\":\"max\",\"partitionFieldName\":\"\",\"partitionFieldValue\":\"\"},{\"probability\":0.00748292,\"byFieldName\":\"airline\",\"byFieldValue\":\"AMX\",\"typical\":20.2137,\"actual\":22.8855,\"fieldName\":\"responsetime\",\"function\":\"max\",\"partitionFieldName\":\"\",\"partitionFieldValue\":\"\"},{\"probability\":0.023494,\"byFieldName\":\"airline\",\"byFieldValue\":\"DAL\",\"typical\":382.177,\"actual\":358.934,\"fieldName\":\"responsetime\",\"function\":\"min\",\"partitionFieldName\":\"\",\"partitionFieldValue\":\"\"},{\"probability\":0.0473552,\"byFieldName\":\"airline\",\"byFieldValue\":\"SWA\",\"typical\":152.148,\"actual\":96.6425,\"fieldName\":\"responsetime\",\"function\":\"min\",\"partitionFieldName\":\"\",\"partitionFieldValue\":\"\"}]}],\"rawAnomalyScore\":0.0140005, \"anomalyScore\":20.22688,\"maxNormalizedProbability\":10.5688, \"recordCount\":4,\"eventCount\":820}" +
 			",{\"quantileKind\":\"sysChange\",\"quantileState\":\"<a prelertcue=\\\"sysChange\\\" prelertkey=\\\"ApiAnomalyDetector\\\" prelertversion=\\\"2\\\" time=\\\"1359453600\\\"><a>2</a><b>1320</b><c><b>86.84367</b></c><d><a>201</a><b>1439</b><c><a>0</a><b>16383</b><c>4</c></c><c><a>0</a><b>8191</b><c>4</c></c><c><a>0</a><b>4095</b><c>6</c></c><c><a>0</a><b>15</b><c>3</c></c><c><a>0</a><b>0</b><c>1206</c></c><c><a>1</a><b>1</b><c>80</c></c><c><a>2</a><b>2</b><c>34</c></c><c><a>3</a><b>3</b><c>12</c></c><c><a>4</a><b>4</b><c>10</c></c><c><a>5</a><b>5</b><c>5</c></c><c><a>6</a><b>6</b><c>5</c></c><c><a>7</a><b>7</b><c>7</c></c><c><a>8</a><b>15</b><c>5</c></c><c><a>8</a><b>11</b><c>6</c></c><c><a>8</a><b>8</b><c>4</c></c><c><a>9</a><b>9</b><c>3</c></c><c><a>10</a><b>11</b><c>3</c></c><c><a>12</a><b>15</b><c>3</c></c><c><a>16</a><b>31</b><c>4</c></c><c><a>16</a><b>23</b><c>4</c></c><c><a>24</a><b>31</b><c>2</c></c><c><a>32</a><b>39</b><c>5</c></c><c><a>40</a><b>47</b><c>2</c></c><c><a>48</a><b>55</b><c>6</c></c><c><a>52</a><b>55</b><c>1</c></c><c><a>56</a><b>63</b><c>1</c></c><c><a>64</a><b>95</b><c>4</c></c><c><a>64</a><b>79</b><c>5</c></c><c><a>64</a><b>71</b><c>2</c></c><c><a>96</a><b>127</b><c>3</c></c></d><e><a>201</a><b>160</b><c><a>0</a><b>16383</b><c>0</c></c><c><a>1</a><b>1</b><c>17</c></c><c><a>2</a><b>2</b><c>24</c></c><c><a>3</a><b>3</b><c>12</c></c><c><a>4</a><b>4</b><c>10</c></c><c><a>5</a><b>5</b><c>5</c></c><c><a>6</a><b>6</b><c>5</c></c><c><a>7</a><b>7</b><c>7</c></c><c><a>8</a><b>8</b><c>6</c></c><c><a>9</a><b>9</b><c>4</c></c><c><a>10</a><b>10</b><c>3</c></c><c><a>11</a><b>11</b><c>4</c></c><c><a>12</a><b>12</b><c>3</c></c><c><a>13</a><b>13</b><c>4</c></c><c><a>14</a><b>14</b><c>1</c></c><c><a>15</a><b>15</b><c>2</c></c><c><a>17</a><b>17</b><c>1</c></c><c><a>18</a><b>18</b><c>2</c></c><c><a>22</a><b>22</b><c>2</c></c><c><a>24</a><b>24</b><c>1</c></c><c><a>25</a><b>25</b><c>3</c></c><c><a>26</a><b>26</b><c>1</c></c><c><a>29</a><b>29</b><c>1</c></c><c><a>30</a><b>30</b><c>1</c></c><c><a>32</a><b>32</b><c>1</c></c><c><a>33</a><b>33</b><c>1</c></c><c><a>35</a><b>35</b><c>1</c></c><c><a>36</a><b>36</b><c>1</c></c><c><a>38</a><b>38</b><c>2</c></c><c><a>39</a><b>39</b><c>1</c></c><c><a>40</a><b>40</b><c>1</c></c><c><a>44</a><b>44</b><c>1</c></c><c><a>51</a><b>51</b><c>4</c></c><c><a>52</a><b>52</b><c>1</c></c><c><a>53</a><b>53</b><c>1</c></c><c><a>54</a><b>54</b><c>1</c></c><c><a>55</a><b>55</b><c>1</c></c><c><a>56</a><b>56</b><c>1</c></c><c><a>58</a><b>58</b><c>1</c></c><c><a>59</a><b>59</b><c>1</c></c><c><a>62</a><b>62</b><c>1</c></c><c><a>64</a><b>64</b><c>2</c></c><c><a>66</a><b>66</b><c>1</c></c><c><a>67</a><b>67</b><c>3</c></c><c><a>70</a><b>70</b><c>1</c></c><c><a>73</a><b>73</b><c>1</c></c><c><a>76</a><b>76</b><c>1</c></c><c><a>77</a><b>77</b><c>1</c></c><c><a>79</a><b>79</b><c>1</c></c><c><a>84</a><b>84</b><c>1</c></c><c><a>97</a><b>97</b><c>1</c></c><c><a>115</a><b>115</b><c>1</c></c><c><a>116</a><b>116</b><c>1</c></c><c><a>140</a><b>140</b><c>1</c></c><c><a>167</a><b>167</b><c>1</c></c><c><a>182</a><b>182</b><c>1</c></c><c><a>5459</a><b>5459</b><c>1</c></c><c><a>9707</a><b>9707</b><c>1</c></c></e></a>\",\"timestamp\":1359453600}" +
 			",{\"quantileKind\":\"unusual\",\"quantileState\":\"<a prelertcue=\\\"unusual\\\" prelertkey=\\\"ApiAnomalyDetector\\\" prelertversion=\\\"2\\\" time=\\\"1359453600\\\"><a>0</a><b>25646</b><c><b>89.46405</b></c><d><a>201</a><b>26408</b><c><a>0</a><b>16383</b><c>67</c></c><c><a>0</a><b>8191</b><c>101</c></c><c><a>0</a><b>4095</b><c>71</c></c><c><a>0</a><b>2047</b><c>93</c></c><c><a>0</a><b>1023</b><c>124</c></c><c><a>0</a><b>511</b><c>21</c></c><c><a>0</a><b>0</b><c>25646</c></c><c><a>1</a><b>1</b><c>285</c></c></d><e><a>201</a><b>762</b><c><a>0</a><b>16383</b><c>2</c></c><c><a>0</a><b>8191</b><c>2</c></c><c><a>0</a><b>4095</b><c>2</c></c><c><a>0</a><b>2047</b><c>2</c></c><c><a>0</a><b>1023</b><c>1</c></c><c><a>0</a><b>63</b><c>2</c></c><c><a>0</a><b>31</b><c>2</c></c><c><a>1</a><b>1</b><c>285</c></c><c><a>2</a><b>2</b><c>116</c></c><c><a>3</a><b>3</b><c>53</c></c><c><a>4</a><b>4</b><c>41</c></c><c><a>5</a><b>5</b><c>29</c></c><c><a>6</a><b>6</b><c>25</c></c><c><a>7</a><b>7</b><c>16</c></c><c><a>8</a><b>8</b><c>14</c></c><c><a>9</a><b>9</b><c>15</c></c><c><a>10</a><b>10</b><c>8</c></c><c><a>11</a><b>11</b><c>12</c></c><c><a>12</a><b>12</b><c>4</c></c><c><a>13</a><b>13</b><c>6</c></c><c><a>14</a><b>14</b><c>6</c></c><c><a>15</a><b>15</b><c>4</c></c><c><a>16</a><b>31</b><c>2</c></c><c><a>16</a><b>19</b><c>2</c></c><c><a>16</a><b>16</b><c>7</c></c><c><a>17</a><b>17</b><c>3</c></c><c><a>18</a><b>19</b><c>1</c></c><c><a>20</a><b>23</b><c>2</c></c><c><a>20</a><b>21</b><c>2</c></c><c><a>22</a><b>22</b><c>5</c></c><c><a>23</a><b>23</b><c>2</c></c><c><a>24</a><b>31</b><c>1</c></c><c><a>24</a><b>25</b><c>1</c></c><c><a>26</a><b>27</b><c>2</c></c><c><a>27</a><b>27</b><c>1</c></c><c><a>30</a><b>30</b><c>3</c></c><c><a>31</a><b>31</b><c>1</c></c><c><a>32</a><b>63</b><c>1</c></c><c><a>32</a><b>32</b><c>2</c></c><c><a>33</a><b>33</b><c>2</c></c><c><a>34</a><b>34</b><c>2</c></c><c><a>35</a><b>35</b><c>4</c></c><c><a>40</a><b>41</b><c>2</c></c><c><a>42</a><b>43</b><c>2</c></c><c><a>43</a><b>43</b><c>1</c></c><c><a>44</a><b>45</b><c>2</c></c><c><a>46</a><b>47</b><c>1</c></c><c><a>48</a><b>51</b><c>2</c></c><c><a>52</a><b>55</b><c>2</c></c><c><a>52</a><b>52</b><c>1</c></c><c><a>53</a><b>53</b><c>2</c></c><c><a>56</a><b>59</b><c>1</c></c><c><a>56</a><b>57</b><c>1</c></c><c><a>56</a><b>56</b><c>1</c></c><c><a>57</a><b>57</b><c>1</c></c><c><a>58</a><b>59</b><c>2</c></c><c><a>60</a><b>63</b><c>2</c></c><c><a>62</a><b>63</b><c>1</c></c><c><a>64</a><b>127</b><c>2</c></c><c><a>64</a><b>79</b><c>1</c></c><c><a>64</a><b>71</b><c>2</c></c><c><a>64</a><b>67</b><c>1</c></c><c><a>72</a><b>79</b><c>2</c></c><c><a>76</a><b>79</b><c>1</c></c><c><a>80</a><b>95</b><c>2</c></c><c><a>88</a><b>95</b><c>1</c></c><c><a>96</a><b>111</b><c>2</c></c><c><a>96</a><b>103</b><c>1</c></c><c><a>100</a><b>100</b><c>1</c></c><c><a>101</a><b>101</b><c>3</c></c><c><a>104</a><b>111</b><c>2</c></c><c><a>108</a><b>109</b><c>1</c></c><c><a>110</a><b>111</b><c>2</c></c><c><a>112</a><b>127</b><c>2</c></c><c><a>112</a><b>119</b><c>2</c></c><c><a>112</a><b>115</b><c>1</c></c><c><a>114</a><b>114</b><c>1</c></c><c><a>115</a><b>115</b><c>3</c></c><c><a>116</a><b>119</b><c>1</c></c><c><a>120</a><b>127</b><c>2</c></c><c><a>124</a><b>127</b><c>1</c></c><c><a>128</a><b>135</b><c>2</c></c><c><a>128</a><b>131</b><c>2</c></c><c><a>136</a><b>143</b><c>1</c></c><c><a>160</a><b>175</b><c>2</c></c><c><a>176</a><b>191</b><c>1</c></c></e></a>\",\"timestamp\":1359453600}" +
 			"]";
@@ -69,14 +71,14 @@ public class ResultsParsingTest
 			"]";
 
 	/**
-	 * Simple results persister stores buckets and state in a local array. 
+	 * Simple results persister stores buckets and state in a local array.
 	 */
-	public class ResultsPersister implements JobResultsPersister 
+	public class ResultsPersister implements JobResultsPersister
 	{
 		List<Bucket> m_Buckets = new ArrayList<>();
 		SortedMap<String, Quantiles> m_Quantiles = new TreeMap<>();
 		int m_BucketCount;
-		
+
 		@Override
 		public void persistBucket(Bucket bucket)
 		{
@@ -88,13 +90,19 @@ public class ResultsParsingTest
 		{
 			m_Quantiles.put(quantiles.getId(), quantiles);
 		}
+		
+		@Override
+		public void persistMemoryUsage(MemoryUsage memUsagae)
+		{
+			
+		}
 
 		@Override
 		public boolean commitWrites()
 		{
 			return true;
 		}
-		
+
 		public List<Bucket> getBuckets()
 		{
 			return m_Buckets;
@@ -107,7 +115,7 @@ public class ResultsParsingTest
 		}
 
 		@Override
-		public void incrementBucketCount(long count) 
+		public void incrementBucketCount(long count)
 		{
 			m_BucketCount += count;
 		}
@@ -117,8 +125,9 @@ public class ResultsParsingTest
 	/**
 	 * Simple renormaliser just logs when it's called
 	 */
-	public class Renormaliser implements JobRenormaliser 
+	public class Renormaliser implements JobRenormaliser
 	{
+		@Override
 		public void updateBucketSysChange(String sysChangeState,
 											Date endTime, Logger logger)
 		{
@@ -126,6 +135,7 @@ public class ResultsParsingTest
 						" using quantiles: " + sysChangeState);
 		}
 
+		@Override
 		public void updateBucketUnusualBehaviour(String unusualBehaviourState,
 												Date endTime, Logger logger)
 		{
@@ -135,77 +145,120 @@ public class ResultsParsingTest
 	}
 
 
+	public class AlertListener extends AlertObserver
+	{
+		public AlertListener(double normlizedProbThreshold, double anomalyThreshold)
+		{
+			super(normlizedProbThreshold, anomalyThreshold);
+		}
+
+		private boolean m_AlertFired = false;
+		public double m_AnomalyScore;
+		public double m_NormalisedProb;
+
+		@Override
+		public void fire(Bucket bucket)
+		{
+			m_AlertFired = true;
+			m_AnomalyScore = bucket.getAnomalyScore();
+			m_NormalisedProb = bucket.getMaxNormalizedProbability();
+		}
+
+		public boolean isFired()
+		{
+			return m_AlertFired;
+		}
+	}
+
+
 	@Test
-	public void testParser() throws JsonParseException, IOException, 
+	public void testParser() throws JsonParseException, IOException,
 	AutoDetectParseException, UnknownJobException
 	{
 		BasicConfigurator.configure();
 		Logger logger = Logger.getLogger(ResultsParsingTest.class);
-		
+
 		InputStream inputStream = new ByteArrayInputStream(METRIC_OUTPUT_SAMPLE.getBytes("UTF-8"));
 		ResultsPersister persister = new ResultsPersister();
 		Renormaliser renormaliser = new Renormaliser();
-		
-		AutoDetectResultsParser.parseResults(inputStream, persister, renormaliser, logger);
+
+		AutoDetectResultsParser parser = new AutoDetectResultsParser();
+		parser.parseResults(inputStream, persister, renormaliser, logger);
 
 		List<Bucket> buckets = persister.getBuckets();
-		
+
 		assertEquals(2, buckets.size());
 		assertEquals(buckets.size(), persister.m_BucketCount);
 		assertEquals(new Date(1359450000000L), buckets.get(0).getTimestamp());
 		assertEquals(0, buckets.get(0).getRecordCount());
+
+		int recordCount = 0;
+		for (Detector d : buckets.get(0).getDetectors())
+		{
+			recordCount += d.getRecords().size();
+		}
+		assertEquals(recordCount, buckets.get(0).getRecordCount());
+
 		assertEquals(buckets.get(0).getEventCount(), 806);
 		assertEquals(0.0, buckets.get(0).getRawAnomalyScore(), 0.000001);
 
 		assertEquals(new Date(1359453600000L), buckets.get(1).getTimestamp());
 		assertEquals(4, buckets.get(1).getRecordCount());
+
+		recordCount = 0;
+		for (Detector d : buckets.get(1).getDetectors())
+		{
+			recordCount += d.getRecords().size();
+		}
+		assertEquals(recordCount, buckets.get(1).getRecordCount());
+
 		assertEquals(buckets.get(1).getEventCount(), 820);
 		assertEquals(0.0140005, buckets.get(1).getRawAnomalyScore(), 0.000001);
-						
+
 		com.prelert.rs.data.Detector detector = buckets.get(1).getDetectors().get(0);
 
 		assertEquals("individual metric/responsetime/airline", detector.getName());
 		assertEquals(4, detector.getRecords().size());
-		
-		assertEquals(0.0637541, detector.getRecords().get(0).getProbability(), 0.000001);		
+
+		assertEquals(0.0637541, detector.getRecords().get(0).getProbability(), 0.000001);
 		assertEquals("airline", detector.getRecords().get(0).getByFieldName());
 		assertEquals("JZA", detector.getRecords().get(0).getByFieldValue());
 		assertEquals(1020.08, 0.001, detector.getRecords().get(0).getTypical());
-		assertEquals(1042.14, 0.001, detector.getRecords().get(0).getActual());	
+		assertEquals(1042.14, 0.001, detector.getRecords().get(0).getActual());
 		assertEquals("responsetime", detector.getRecords().get(0).getFieldName());
 		assertEquals("max", detector.getRecords().get(0).getFunction());
 		assertEquals("", detector.getRecords().get(0).getPartitionFieldName());
 		assertEquals("", detector.getRecords().get(0).getPartitionFieldValue());
-		
-		assertEquals(0.00748292, detector.getRecords().get(1).getProbability(), 0.000001);		
+
+		assertEquals(0.00748292, detector.getRecords().get(1).getProbability(), 0.000001);
 		assertEquals("airline", detector.getRecords().get(1).getByFieldName());
 		assertEquals("AMX", detector.getRecords().get(1).getByFieldValue());
 		assertEquals(20.2137, 0.001, detector.getRecords().get(1).getTypical());
-		assertEquals(22.8855, 0.001, detector.getRecords().get(1).getActual());	
+		assertEquals(22.8855, 0.001, detector.getRecords().get(1).getActual());
 		assertEquals("responsetime", detector.getRecords().get(1).getFieldName());
 		assertEquals("max", detector.getRecords().get(1).getFunction());
 		assertEquals("", detector.getRecords().get(1).getPartitionFieldName());
-		assertEquals("", detector.getRecords().get(1).getPartitionFieldValue());		
-		
-		assertEquals(0.023494, detector.getRecords().get(2).getProbability(), 0.000001);		
+		assertEquals("", detector.getRecords().get(1).getPartitionFieldValue());
+
+		assertEquals(0.023494, detector.getRecords().get(2).getProbability(), 0.000001);
 		assertEquals("airline", detector.getRecords().get(2).getByFieldName());
 		assertEquals("DAL", detector.getRecords().get(2).getByFieldValue());
 		assertEquals(382.177, 0.001, detector.getRecords().get(2).getTypical());
-		assertEquals(358.934, 0.001, detector.getRecords().get(2).getActual());	
+		assertEquals(358.934, 0.001, detector.getRecords().get(2).getActual());
 		assertEquals("responsetime", detector.getRecords().get(2).getFieldName());
 		assertEquals("min", detector.getRecords().get(2).getFunction());
 		assertEquals("", detector.getRecords().get(2).getPartitionFieldName());
-		assertEquals("", detector.getRecords().get(2).getPartitionFieldValue());	
-		
-		assertEquals(0.0473552, detector.getRecords().get(3).getProbability(), 0.000001);		
+		assertEquals("", detector.getRecords().get(2).getPartitionFieldValue());
+
+		assertEquals(0.0473552, detector.getRecords().get(3).getProbability(), 0.000001);
 		assertEquals("airline", detector.getRecords().get(3).getByFieldName());
 		assertEquals("SWA", detector.getRecords().get(3).getByFieldValue());
 		assertEquals(152.148, 0.001, detector.getRecords().get(3).getTypical());
-		assertEquals(96.6425, 0.001, detector.getRecords().get(3).getActual());	
+		assertEquals(96.6425, 0.001, detector.getRecords().get(3).getActual());
 		assertEquals("responsetime", detector.getRecords().get(3).getFieldName());
 		assertEquals("min", detector.getRecords().get(3).getFunction());
 		assertEquals("", detector.getRecords().get(3).getPartitionFieldName());
-		assertEquals("", detector.getRecords().get(3).getPartitionFieldValue());	
+		assertEquals("", detector.getRecords().get(3).getPartitionFieldValue());
 
 		SortedMap<String, Quantiles> quantiles = persister.getQuantiles();
 
@@ -226,7 +279,8 @@ public class ResultsParsingTest
 		ResultsPersister persister = new ResultsPersister();
 		Renormaliser renormaliser = new Renormaliser();
 
-		AutoDetectResultsParser.parseResults(inputStream, persister, renormaliser, logger);
+		AutoDetectResultsParser parser = new AutoDetectResultsParser();
+		parser.parseResults(inputStream, persister, renormaliser, logger);
 
 		List<Bucket> buckets = persister.getBuckets();
 
@@ -234,6 +288,13 @@ public class ResultsParsingTest
 		assertEquals(buckets.size(), persister.m_BucketCount);
 		assertEquals(new Date(1379590200000L), buckets.get(0).getTimestamp());
 		assertEquals(4, buckets.get(0).getRecordCount());
+		int recordCount = 0;
+		for (Detector d : buckets.get(0).getDetectors())
+		{
+			recordCount += d.getRecords().size();
+		}
+		assertEquals(recordCount, buckets.get(0).getRecordCount());
+
 		assertEquals(buckets.get(0).getEventCount(), 1235);
 		assertEquals(1.30397, buckets.get(0).getRawAnomalyScore(), 0.000001);
 
@@ -251,6 +312,14 @@ public class ResultsParsingTest
 
 		assertEquals(new Date(1379590800000L), buckets.get(1).getTimestamp());
 		assertEquals(34, buckets.get(1).getRecordCount());
+
+		recordCount = 0;
+		for (Detector d : buckets.get(1).getDetectors())
+		{
+			recordCount += d.getRecords().size();
+		}
+		assertEquals(recordCount, buckets.get(1).getRecordCount());
+
 		assertEquals(buckets.get(1).getEventCount(), 1159);
 		assertEquals(1.26918, buckets.get(1).getRawAnomalyScore(), 0.000001);
 
@@ -258,6 +327,96 @@ public class ResultsParsingTest
 
 		assertEquals("population metric maximum/0/sum_cs_bytes_//cs_host/", detector.getName());
 		assertEquals(34, detector.getRecords().size());
+	}
+
+	/**
+	 * Register an alert listener and test it is fired
+	 * @throws AutoDetectParseException
+	 * @throws IOException
+	 * @throws JsonParseException
+	 */
+	@Test
+	public void testAlerting()
+	throws JsonParseException, IOException, AutoDetectParseException
+	{
+		BasicConfigurator.configure();
+		Logger logger = Logger.getLogger(ResultsParsingTest.class);
+
+		// 1. normalised prob threshold
+		InputStream inputStream = new ByteArrayInputStream(METRIC_OUTPUT_SAMPLE.getBytes("UTF-8"));
+		ResultsPersister persister = new ResultsPersister();
+		Renormaliser renormaliser = new Renormaliser();
+
+		double probThreshold = 9.0;
+		double scoreThreshold = 100.0;
+		AlertListener listener = new AlertListener(probThreshold, scoreThreshold);
+
+		AutoDetectResultsParser parser = new AutoDetectResultsParser();
+		parser.addObserver(listener);
+		parser.parseResults(inputStream, persister, renormaliser, logger);
+
+
+		assertEquals(0, parser.observerCount());
+		assertTrue(listener.isFired());
+		assertTrue(listener.m_NormalisedProb >= probThreshold);
+
+		// 2. anomaly score threshold
+		inputStream = new ByteArrayInputStream(METRIC_OUTPUT_SAMPLE.getBytes("UTF-8"));
+
+		probThreshold = 100.0;
+		scoreThreshold = 18.0;
+		listener = new AlertListener(probThreshold, scoreThreshold);
+
+		parser = new AutoDetectResultsParser();
+		parser.addObserver(listener);
+		parser.parseResults(inputStream, persister, renormaliser, logger);
+
+		assertEquals(0, parser.observerCount());
+		assertTrue(listener.isFired());
+		assertTrue(listener.m_AnomalyScore >= scoreThreshold);
+
+		// 3. neither threshold is reached
+		inputStream = new ByteArrayInputStream(METRIC_OUTPUT_SAMPLE.getBytes("UTF-8"));
+
+		probThreshold = 100.0;
+		scoreThreshold = 100.0;
+		listener = new AlertListener(probThreshold, scoreThreshold);
+
+		parser = new AutoDetectResultsParser();
+		parser.addObserver(listener);
+		parser.parseResults(inputStream, persister, renormaliser, logger);
+
+		assertEquals(1, parser.observerCount());
+		assertFalse(listener.isFired());
+		assertTrue(listener.m_AnomalyScore < scoreThreshold  &&
+				listener.m_NormalisedProb < probThreshold);
+
+
+		// 4. register 2 listeners only one of which is fired
+		inputStream = new ByteArrayInputStream(METRIC_OUTPUT_SAMPLE.getBytes("UTF-8"));
+
+		probThreshold = 100.0;
+		scoreThreshold = 100.0;
+		listener = new AlertListener(probThreshold, scoreThreshold);
+
+		parser = new AutoDetectResultsParser();
+		parser.addObserver(listener);
+
+		probThreshold = 2.0;
+		scoreThreshold = 1.0;
+		AlertListener firedListener = new AlertListener(probThreshold, scoreThreshold);
+		parser.addObserver(firedListener);
+
+		parser.parseResults(inputStream, persister, renormaliser, logger);
+
+		assertEquals(1, parser.observerCount());
+		assertFalse(listener.isFired());
+		assertTrue(listener.m_AnomalyScore < scoreThreshold  &&
+				listener.m_NormalisedProb < probThreshold);
+
+		assertTrue(firedListener.isFired());
+		assertTrue(firedListener.m_AnomalyScore >= scoreThreshold  ||
+				firedListener.m_NormalisedProb >= probThreshold);
 	}
 
 }

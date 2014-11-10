@@ -24,27 +24,64 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.rs.provider;
+package com.prelert.rs.data.parsing;
 
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
-
-import com.prelert.job.JobInUseException;
-import com.prelert.rs.data.ApiError;
+import com.prelert.rs.data.Bucket;
 
 /**
- * Exception -> Response mapper for {@linkplain com.prelert.job.JobInUseException}.
+ * The observer class for alerting
+ *
+ * Abstract class, concrete sub-classes should implement {@linkplain #fire(Bucket)}
  */
-public class JobInUseExceptionMapper implements ExceptionMapper<JobInUseException>
+abstract public class AlertObserver
 {
-	@Override
-	public Response toResponse(JobInUseException e) 
+	private double m_AnomalyThreshold;
+	private double m_NormalisedThreshold;
+
+	public AlertObserver(double normlizedProbThreshold, double anomalyThreshold)
 	{
-		ApiError error = new ApiError(e.getErrorCode());
-		error.setMessage(e.getMessage());
-		error.setCause(e.getCause());		
-		
-		return Response.status(Response.Status.BAD_REQUEST)
-				.entity(error.toJson()).build();
+		m_AnomalyThreshold = anomalyThreshold;
+		m_NormalisedThreshold = normlizedProbThreshold;
+	}
+
+	/**
+	 * Return true if the alert should be fired for these values.
+	 *
+	 * @param normalisedProb
+	 * @param anomalyScore
+	 * @return
+	 */
+	public boolean evaluate(double normalisedProb, double anomalyScore)
+	{
+		return normalisedProb >= m_NormalisedThreshold ||
+				anomalyScore  >= m_AnomalyThreshold;
+	}
+
+	/**
+	 * Fire the alert with the bucket the alert came from
+	 *
+	 * @param bucket
+	 */
+	abstract public void fire(Bucket bucket);
+
+
+	public double getAnomalyThreshold()
+	{
+		return m_AnomalyThreshold;
+	}
+
+	public void setAnomalyThreshold(double anomalyThreshold)
+	{
+		m_AnomalyThreshold = anomalyThreshold;
+	}
+
+	public double getNormalisedThreshold()
+	{
+		return m_NormalisedThreshold;
+	}
+
+	public void setNormalisedThreshold(double normalisedThreshold)
+	{
+		m_NormalisedThreshold = normalisedThreshold;
 	}
 }

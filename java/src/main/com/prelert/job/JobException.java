@@ -24,29 +24,35 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.rs.provider;
 
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
+package com.prelert.job;
 
-import com.prelert.job.JobConfigurationException;
-import com.prelert.rs.data.ApiError;
+import com.prelert.rs.data.ErrorCode;
 
 /**
- * Exception -> Response mapper for {@linkplain JobConfigurationException}.
+ * General job exception class with an specfic error code
+ * and message.
  */
-public class JobConfigurationExceptionMapper implements ExceptionMapper<JobConfigurationException>
+public class JobException extends Exception
 {
-	@Override
-	public Response toResponse(JobConfigurationException configException) 
+	private static final long serialVersionUID = -5289885963015348819L;
+
+	private ErrorCode m_ErrorCode;
+
+	public JobException(String message, ErrorCode errorCode)
 	{
-		ApiError error = new ApiError(configException.getErrorCode());
-		error.setMessage(configException.getMessage());
-		error.setCause(configException.getCause());
-		
-		return Response.status(Response.Status.BAD_REQUEST)
-				.entity(error.toJson()).build();
+		super(message);
+		m_ErrorCode = errorCode;
+	}
+
+	public JobException(String message, ErrorCode errorCode, Throwable cause)
+	{
+		super(message, cause);
+		m_ErrorCode = errorCode;
+	}
+
+	public ErrorCode getErrorCode()
+	{
+		return m_ErrorCode;
 	}
 }
-
-

@@ -172,6 +172,7 @@ public class ProcessCtrl
 	static final public String TIME_FIELD_ARG = "--timefield=";
 	static final public String TIME_FORMAT_ARG = "--timeformat=";
 	static final public String PERSIST_URL_BASE_ARG = "--persistUrlBase=";
+	static final public String PERSIST_INTERVAL_ARG = "--persistInterval=10800"; // 3 hours
 	static final public String VERSION_ARG = "--version";
 	static final public String INFO_ARG = "--info";
 	static final public String MAX_ANOMALY_RECORDS_ARG = "--maxAnomalyRecords=500";
@@ -455,13 +456,16 @@ public class ProcessCtrl
 	 * @param processName The name of program to execute this should exist in the 
 	 * directory PRELERT_HOME/bin/ 
 	 * @param logger The job's logger
+	 * @param filesToDelete This method will append File objects that need to be
+	 * deleted when the process completes
 	 * @return A Java Process object
 	 * @throws IOException
 	 */
-	static public Process buildAutoDetect(String processName, JobDetails job, Logger logger)
+	static public Process buildAutoDetect(String processName, JobDetails job,
+			Logger logger, List<File> filesToDelete)
 	throws IOException	
 	{
-		return buildAutoDetect(processName, job, null, logger);
+		return buildAutoDetect(processName, job, null, logger, filesToDelete);
 	}
 	
 	/**
@@ -477,12 +481,14 @@ public class ProcessCtrl
 	 * @param quantilesState if <code>null</code> this parameter is
 	 * ignored else the quantiles' state is restored from this object
 	 * @param logger The job's logger
-	 * 
+	 * @param filesToDelete This method will append File objects that need to be
+	 * deleted when the process completes
+	 *
 	 * @return A Java Process object
 	 * @throws IOException 
 	 */
 	static public Process buildAutoDetect(String processName, JobDetails job,
-			QuantilesState quantilesState, Logger logger)
+			QuantilesState quantilesState, Logger logger, List<File> filesToDelete)
 	throws IOException
 	{
 		logger.info("PRELERT_HOME is set to " + PRELERT_HOME);
@@ -512,6 +518,7 @@ public class ProcessCtrl
 		if (job.getAnalysisLimits() != null)
 		{			
 			File limitConfigFile = File.createTempFile("limitconfig", ".conf");
+			filesToDelete.add(limitConfigFile);
 			writeLimits(job.getAnalysisLimits(), limitConfigFile);		
 			String limits = LIMIT_CONFIG_ARG + limitConfigFile.toString();
 			command.add(limits);
@@ -525,11 +532,10 @@ public class ProcessCtrl
 		
 		// Input is always length encoded
 		command.add(LENGTH_ENCODED_INPUT_ARG);
-		
-		
-		String recordCountArg = MAX_ANOMALY_RECORDS_ARG;
-		command.add(recordCountArg);
-		
+
+		// Limit the number of output records
+		command.add(MAX_ANOMALY_RECORDS_ARG);
+
 		String timeField = DataDescription.DEFAULT_TIME_FIELD;
 
 		DataDescription dataDescription = job.getDataDescription();
@@ -584,10 +590,13 @@ public class ProcessCtrl
 			}
 		}
 
-		// Always supply a URI for persisting/restoring model state.
-		String persistUriBase = PERSIST_URL_BASE_ARG +
+		// Always supply a URL for persisting/restoring model state.
+		String persistUrlBase = PERSIST_URL_BASE_ARG +
 				"http://localhost:" + ES_HTTP_PORT + '/' + job.getId();
-		command.add(persistUriBase);
+		command.add(persistUrlBase);
+
+		// Persist model state every few hours even if the job isn't closed
+		command.add(PERSIST_INTERVAL_ARG);
 
 		// the logging id is the job id
 		String logId = LOG_ID_ARG + job.getId();
@@ -598,6 +607,7 @@ public class ProcessCtrl
 		{
 			// write to a temporary field config file
 			File fieldConfigFile = File.createTempFile("fieldconfig", ".conf");
+			filesToDelete.add(fieldConfigFile);
 			try (OutputStreamWriter osw = new OutputStreamWriter(
 					new FileOutputStream(fieldConfigFile),
 					StandardCharsets.UTF_8))

@@ -39,11 +39,12 @@ import javax.ws.rs.core.MediaType;
 
 import org.apache.log4j.Logger;
 
+import com.prelert.job.UnknownJobException;
 import com.prelert.job.alert.manager.AlertManager;
 
 /**
- * The alerts long poll endpoint. 
- * Subscribe to alerts from all jobs or an individual job. 
+ * The alerts long poll endpoint.
+ * Subscribe to alerts from an individual job
  */
 @Path("/alerts_longpoll")
 public class AlertsLongPoll extends ResourceWithJobManager
@@ -54,7 +55,7 @@ public class AlertsLongPoll extends ResourceWithJobManager
 	 * The name of this endpoint
 	 */
 	static public final String ENDPOINT = "alerts_longpoll";
-	
+
 	/**
 	 * The timeout query parameter
 	 */
@@ -63,54 +64,26 @@ public class AlertsLongPoll extends ResourceWithJobManager
 	 * The alert cursor query parameter
 	 */
 	static public final String CURSOR = "cursor";
-	
-	
-	@GET
-	@Produces(MediaType.APPLICATION_JSON)
-	public void poll(
-			@DefaultValue("90") @QueryParam(TIMEOUT) int timeout,
-			@DefaultValue("") @QueryParam(CURSOR) String cursor,
-			@Suspended final AsyncResponse asyncResponse)
-    throws InterruptedException 
-	{
-		s_Logger.debug("long poll alerts");
-		
-		AlertManager alertManager = alertManager();
-		
-		if (cursor.isEmpty() == false)
-		{
-			alertManager.registerRequestWithCursor(asyncResponse, cursor, timeout); 
-		}
-		else
-		{
-			alertManager.registerRequest(asyncResponse, timeout);
-		}
-	}
+	static public final String SCORE = "score";
+	static public final String PROBABILITY = "probability";
 
-	
+
 	@GET
-	@Path("/{jobId}")	
+	@Path("/{jobId}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public void pollJob(
 			@PathParam("jobId") String jobId,
 			@DefaultValue("90") @QueryParam(TIMEOUT) int timeout,
-			@DefaultValue("") @QueryParam(CURSOR) String cursor,
+			@DefaultValue("100.0") @QueryParam(SCORE) double anomalyScoreThreshold,
+			@DefaultValue("100.0") @QueryParam(PROBABILITY) double normalizedProbabiltyThreshold,
 			@Suspended final AsyncResponse asyncResponse)
-    throws InterruptedException 
+    throws InterruptedException, UnknownJobException
 	{
 		s_Logger.debug("long poll alerts for job " + jobId);
-		
+
 		AlertManager alertManager = alertManager();
-		
-		if (cursor.isEmpty() == false)
-		{
-			alertManager.registerRequestWithCursor(asyncResponse, jobId, 
-					cursor, timeout); 
-		}
-		else
-		{
-			alertManager.registerRequest(asyncResponse, jobId, timeout);
-		}
+		alertManager.registerRequest(asyncResponse, jobId, timeout, anomalyScoreThreshold,
+				normalizedProbabiltyThreshold);
 	}
-		
+
 }

@@ -118,6 +118,9 @@ public class StreamingInterceptorTest
 
 			Assert.assertEquals(LOG_CONTENTS, sb.toString());
 		}
+
+		// If the test has passed then clean up
+		Files.delete(tmpFile);
 	}
 
 }

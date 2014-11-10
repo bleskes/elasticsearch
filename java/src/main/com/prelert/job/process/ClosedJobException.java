@@ -25,29 +25,28 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.rs.provider;
+package com.prelert.job.process;
 
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
-
-import com.prelert.job.JobIdAlreadyExistsException;
-import com.prelert.rs.data.ApiError;
+import com.prelert.job.JobException;
+import com.prelert.rs.data.ErrorCode;
 
 /**
- * Exception -> Response mapper for {@linkplain JobIdAlreadyExistsException}.
+ * Exception thrown when a job is expected to be running
+ * but is closed
  */
-public class JobIdAlreadyExistsExceptionMapper 
-implements ExceptionMapper<JobIdAlreadyExistsException>
+public class ClosedJobException extends JobException
 {
-	@Override
-	public Response toResponse(JobIdAlreadyExistsException e) 
+	private static final long serialVersionUID = 5491387807381215423L;
+
+	private String m_JobId;
+
+	public ClosedJobException(String message, String jobId)
 	{
-		ApiError error = new ApiError(e.getErrorCode());
-		error.setMessage("The job cannot be created with the Id '" + e.getAlias()
-				+ "'. The Id is already used.");
-		
-		return Response.status(Response.Status.BAD_REQUEST)
-				.entity(error.toJson()).build();
+		super(message, ErrorCode.JOB_NOT_RUNNING);
 	}
 
+	public String getJobId()
+	{
+		return m_JobId;
+	}
 }

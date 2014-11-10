@@ -27,13 +27,8 @@
 
 package com.prelert.job.alert.manager;
 
-
-import java.io.IOException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -44,18 +39,20 @@ import org.apache.log4j.Logger;
 
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.alert.Alert;
-import com.prelert.job.alert.Severity;
 import com.prelert.job.alert.persistence.AlertPersister;
-import com.prelert.rs.data.Pagination;
+import com.prelert.job.manager.JobManager;
+import com.prelert.job.process.ClosedJobException;
+import com.prelert.rs.data.Bucket;
+import com.prelert.rs.data.parsing.AlertObserver;
 
 
 /**
- * Alerts are channelled through this object interested 
- * parties register for alert notification using the 
+ * Alerts are channelled through this object interested
+ * parties register for alert notification using the
  * observer pattern.
- * 
+ *
  * Handles Asynchronous HTTP requests
- * 
+ *
  * Alert Ids are a sequence shared between all jobs starting at 1
  * each alert has a unique id. The function {@linkplain #alertsAfterCursor(String)}
  * returns a list of alerts in the sequence after the alert Id (cursor) parameter
@@ -63,45 +60,52 @@ import com.prelert.rs.data.Pagination;
 public class AlertManager implements TimeoutHandler
 {
 	static public final Logger s_Logger = Logger.getLogger(AlertManager.class);
-	
-	
-	private Map<AsyncResponse, AlertListener> m_AsyncRepsonses; 
+
+	private Map<AsyncResponse, AlertListener> m_AsyncRepsonses;
 	private AlertPersister m_AlertPersister;
-	
 	private AtomicLong m_IdSequence;
-	
-	public class AlertListener
+
+	public JobManager m_JobManager;
+
+	public class AlertListener extends AlertObserver
 	{
 		private AsyncResponse m_Response;
 		private AlertManager m_Manager;
-		
-		private AlertListener(AsyncResponse response, AlertManager manager)
+		private String m_JobId;
+
+		private AlertListener(AsyncResponse response, AlertManager manager, String jobId,
+				double anomalyScoreThreshold, double normalizedProbabiltyThreshold)
 		{
+			super(normalizedProbabiltyThreshold, anomalyScoreThreshold);
+
 			m_Response = response;
 			m_Manager = manager;
+			m_JobId = jobId;
 		}
-		
-		public void fireAlert(Alert alert)
+
+		@Override
+		public void fire(Bucket bucket)
 		{
-			m_Manager.deregisterListener(this);
-			m_Response.resume(alert);
+			m_Manager.deregisterResponse(m_Response);
+			m_Response.resume(createAlert(bucket, m_JobId));
 		}
-		
+
 		public AsyncResponse getResponse()
 		{
 			return m_Response;
 		}
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param alertPersister Knows how to save alerts
 	 */
-	public AlertManager(AlertPersister alertPersister)
+	public AlertManager(AlertPersister alertPersister, JobManager jobManager)
 	{
+		m_JobManager = jobManager;
 		m_AlertPersister = alertPersister;
 		m_AsyncRepsonses = new HashMap<>();
-		
+
 		String lastAlertId = m_AlertPersister.lastAlertId();
 		try
 		{
@@ -115,197 +119,106 @@ public class AlertManager implements TimeoutHandler
 			s_Logger.info("New alert id sequence");
 			m_IdSequence = new AtomicLong();
 		}
-		
-	}
-	
-	/**
-	 * Non blocking asynchronous request for alerts
-	 * 
-	 * @param response
-	 * @param timeout_secs
-	 */
-	public void registerRequest(AsyncResponse response, long timeout_secs)
-	{
-		response.setTimeout(timeout_secs, TimeUnit.SECONDS);
-		response.setTimeoutHandler(this);
-		
-		AlertListener listener = this.new AlertListener(response, this);
-		registerListener(listener);
-	}
-	
-	/**
-	 * If any alerts after <code>alertCursor</code> then return 
-	 * them straight away else continue with the async request
-	 *  
-	 * @param response
-	 * @param alertCursor
-	 * @param timeout_secs
-	 */
-	public void registerRequestWithCursor(AsyncResponse response, String alertCursor, 
-			long timeout_secs)
-	{
-		List<Alert> alerts = m_AlertPersister.alertsAfter(alertCursor);
-		if (alerts.size() > 0)
-		{
-			response.resume(alerts);
-			return;
-		}
-		
-		registerRequest(response, timeout_secs);
 	}
 
 	/**
 	 * Non blocking asynchronous request for alerts by job
-	 * 
+	 *
 	 * @param response
 	 * @param jobId
 	 * @param timeout_secs
+	 * @param anomalyScoreThreshold
+	 * @param normalizedProbabiltyThreshold
+	 * @throws UnknownJobException
 	 */
-	public void registerRequest(AsyncResponse response, String jobId, 
-			long timeout_secs)
+	public void registerRequest(AsyncResponse response, String jobId,
+			long timeout_secs, double anomalyScoreThreshold, double normalizedProbabiltyThreshold)
+	throws UnknownJobException
 	{
+		m_JobManager.jobExists(jobId);
+
 		response.setTimeout(timeout_secs, TimeUnit.SECONDS);
 		response.setTimeoutHandler(this);
-		
-		AlertListener listener = this.new AlertListener(response, this);
+
+		AlertListener listener = this.new AlertListener(response, this, jobId,
+				anomalyScoreThreshold, normalizedProbabiltyThreshold);
 		registerListener(listener);
+
+		try
+		{
+			m_JobManager.addAlertObserver(jobId, listener);
+		}
+		catch (ClosedJobException e)
+		{
+			s_Logger.info("Error alerting on closed job " + jobId);
+			response.resume(e);
+		}
 	}
 
-	/***
-	 * If any alerts after <code>alertCursor</code> for <code>jobId</code> 
-	 * then return them straight away else continue with the async request
-	 * 
-	 * @param response
-	 * @param jobId
-	 * @param alertCursor
-	 * @param timeout_secs
-	 */
-	public void registerRequestWithCursor(AsyncResponse response, String jobId,
-			String alertCursor, long timeout_secs)
-	{
-		List<Alert> alerts = m_AlertPersister.alertsAfter(alertCursor, jobId);
-		if (alerts.size() > 0)
-		{
-			response.resume(alerts);
-			return;
-		}
-		
-		registerRequest(response, jobId, timeout_secs);
-	}
-	
+
+
 	/**
 	 * AysncResponse timeout handler
 	 */
 	@Override
-	public void handleTimeout(AsyncResponse response) 
+	public void handleTimeout(AsyncResponse response)
 	{
-		removeResponseFromList(response);
-		
-		response.resume(new Alert()); // empty object
+
+		Alert alert = new Alert();
+		alert.setTimeout(true);
+
+		AlertListener listener = getListener(response);
+		if (listener != null)
+		{
+			alert.setJobId(listener.m_JobId);
+			deregisterResponse(response);
+		}
+
+		response.resume(alert);
 	}
-	
-	private void removeResponseFromList(AsyncResponse response)
+
+
+	private AlertListener getListener(AsyncResponse response)
 	{
 		synchronized(m_AsyncRepsonses)
 		{
-			AlertListener removed = m_AsyncRepsonses.remove(response);
-//			if (removed == null)
-//			{
-//				throw new IllegalStateException("Unknown AsyncResponse removed");
-//			}
+			return m_AsyncRepsonses.get(response);
 		}
 	}
 
-	private void deregisterListener(AlertListener listener)
-	{
-		removeResponseFromList(listener.getResponse());
-		
-		// 
-	}
-	
-	private void saveAlert(Alert alert)
-	{
-		try 
-		{
-			m_AlertPersister.persistAlert(alert.getId(), alert.getJobId(), alert);
-		}
-		catch (IOException e) 
-		{
-		}
-	}
-	
 	private void registerListener(final AlertListener listener)
 	{
 		synchronized(m_AsyncRepsonses)
 		{
 			m_AsyncRepsonses.put(listener.getResponse(), listener);
 		}
-					
-		// fire a tests alert
-		TimerTask task = new TimerTask() 
-		{
-			@Override
-			public void run() 
-			{
-				listener.fireAlert(createDummyAlert());
-			}
-		};
-		Timer t = new Timer();
-		t.schedule(task, 10000);
 	}
-	
-	private Alert createDummyAlert()
+
+	private void deregisterResponse(AsyncResponse response)
+	{
+		synchronized(m_AsyncRepsonses)
+		{
+			m_AsyncRepsonses.remove(response);
+		}
+	}
+
+	private Alert createAlert(Bucket bucket, String jobId)
 	{
 		Alert alert = new Alert();
-		alert.setId(generateAlertId());
-		alert.setJobId("farequte");
-		alert.setReason("cos i said so");
-		alert.setSeverity(Severity.WARNING);
-		
+		alert.setId(Long.toString(m_IdSequence.incrementAndGet()));
+		alert.setJobId(jobId);
+		alert.setAnomalyScore(bucket.getAnomalyScore());
+		alert.setNormalizedProbability(bucket.getMaxNormalizedProbability());
+
+//    	URI uri = UriBuilder.fromPath("results")
+//				.path(jobId)
+//				.path(Buckets.ENDPOINT)
+//				.path(bucket.getId())
+//				.build();
+//
+//    	alert.setUri(uri);
+
 		return alert;
 	}
-	
-	
-	/**
-	 * Get a page of alerts optionally filtered by date.
-	 * 
-	 * @param skip Skip the first N alerts
-	 * @param take Get at most this many alerts
-	 * @param epochStart If <=0 this parameter is ignored 
-	 * @param epochEnd If <=0 this parameter is ignored
-	 * @return
-	 */
-	public Pagination<Alert> alerts(int skip, int take, long epochStart, 
-	                       long epochEnd)
-    {
-		return m_AlertPersister.alerts(skip, take, epochStart, epochEnd);
-    }
-	
-	
-	/**
-	 * Get a page of alerts for the given <code>jobId</code> 
-	 * optionally filtered by date.
-	 * 
-	 * @param jobId The job id
-	 * @param skip Skip the first N alerts
-	 * @param take Get at most this many alerts
-	 * @param epochStart If <=0 this parameter is ignored 
-	 * @param epochEnd If <=0 this parameter is ignored
-	 * @return
-	 * @throws UnknownJobException
-	 */
-	public Pagination<Alert> jobAlerts(String jobId, int skip, int take,
-							long epochStart, long epochEnd)
-	throws UnknownJobException
-	{
-		return m_AlertPersister.alertsForJob(jobId, skip, take, epochStart,
-				epochEnd);
-	}
-	
-	
-	private String generateAlertId()
-	{
-		return Long.toString(m_IdSequence.incrementAndGet());		
-	}		
 
 }

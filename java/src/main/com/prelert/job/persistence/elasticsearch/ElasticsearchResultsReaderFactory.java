@@ -32,7 +32,9 @@ import java.io.InputStream;
 import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.core.JsonParseException;
+import com.prelert.job.process.ResultsReader;
 import com.prelert.job.process.ResultsReaderFactory;
+import com.prelert.rs.data.parsing.AlertObserver;
 import com.prelert.rs.data.parsing.AutoDetectParseException;
 import com.prelert.rs.data.parsing.AutoDetectResultsParser;
 
@@ -55,7 +57,7 @@ public class ElasticsearchResultsReaderFactory implements ResultsReaderFactory
 	}
 	
 	@Override
-	public Runnable newResultsParser(String jobId, InputStream autoDetectOutput,
+	public ResultsReader newResultsParser(String jobId, InputStream autoDetectOutput,
 			Logger logger) 
 	{
 		return new ReadAutoDetectOutput(jobId, autoDetectOutput, m_JobProvider, logger);
@@ -66,12 +68,13 @@ public class ElasticsearchResultsReaderFactory implements ResultsReaderFactory
 	 * This private class parses the autodetect output stream and writes it
 	 * to Elasticsearch
 	 */
-	private class ReadAutoDetectOutput implements Runnable 
+	private class ReadAutoDetectOutput implements ResultsReader 
 	{
 		private String m_JobId;
 		private ElasticsearchJobProvider m_JobProvider;
 		private InputStream m_Stream;	
 		private Logger m_Logger;
+		private AutoDetectResultsParser m_Parser;
 		
 		public ReadAutoDetectOutput(String jobId, InputStream stream,
 				ElasticsearchJobProvider jobProvider, Logger logger)
@@ -79,7 +82,8 @@ public class ElasticsearchResultsReaderFactory implements ResultsReaderFactory
 			m_JobId = jobId;
 			m_Stream = stream;
 			m_JobProvider = jobProvider;
-			m_Logger = logger;
+			m_Logger = logger;			
+			m_Parser = new AutoDetectResultsParser();
 		}
 		
 		public void run() 
@@ -89,8 +93,7 @@ public class ElasticsearchResultsReaderFactory implements ResultsReaderFactory
 
 			try
 			{
-				AutoDetectResultsParser.parseResults(m_Stream,
-						persister, renormaliser, m_Logger);
+				m_Parser.parseResults(m_Stream, persister, renormaliser, m_Logger);
 			}
 			catch (JsonParseException e) 
 			{
@@ -130,6 +133,18 @@ public class ElasticsearchResultsReaderFactory implements ResultsReaderFactory
 			}
 
 			m_Logger.info("Parse results Complete");
+		}
+
+		@Override
+		public void addAlertObserver(AlertObserver ao) 
+		{
+			m_Parser.addObserver(ao);
+		}
+
+		@Override
+		public boolean removeAlertObserver(AlertObserver ao) 
+		{
+			return m_Parser.removeObserver(ao);
 		}
 	}
 }

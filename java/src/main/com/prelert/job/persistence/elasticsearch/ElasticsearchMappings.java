@@ -38,6 +38,7 @@ import com.prelert.job.AnalysisLimits;
 import com.prelert.job.DataDescription;
 import com.prelert.job.Detector;
 import com.prelert.job.JobDetails;
+import com.prelert.job.MemoryUsage;
 import com.prelert.job.ModelState;
 import com.prelert.job.quantiles.Quantiles;
 import com.prelert.job.usage.Usage;
@@ -86,7 +87,7 @@ public class ElasticsearchMappings
 						.endObject()
 						.startObject(JobDetails.DESCRIPTION)
 							.field("type", "string").field(INDEX, NOT_ANALYZED)
-						.endObject()						
+						.endObject()
 						.startObject(JobDetails.STATUS)
 							.field("type", "string").field(INDEX, NOT_ANALYZED)
 						.endObject()
@@ -98,19 +99,19 @@ public class ElasticsearchMappings
 						.endObject()
 						.startObject(JobDetails.LAST_DATA_TIME)
 							.field("type", "date")
-						.endObject()		
+						.endObject()
 						.startObject(JobDetails.COUNTS)
 							.field("type", "object")
 							.startObject("properties")
 								.startObject(JobDetails.BUCKET_COUNT)
 									.field("type", "long")
-								.endObject()							
+								.endObject()
 								.startObject(JobDetails.PROCESSED_RECORD_COUNT)
 									.field("type", "long")
 								.endObject()
 								.startObject(JobDetails.PROCESSED_FIELD_COUNT)
 									.field("type", "long")
-								.endObject()								
+								.endObject()
 								.startObject(JobDetails.INPUT_BYTES)
 								.field("type", "long")
 								.endObject()
@@ -119,7 +120,7 @@ public class ElasticsearchMappings
 								.endObject()
 								.startObject(JobDetails.INPUT_FIELD_COUNT)
 								.field("type", "long")
-								.endObject()								
+								.endObject()
 								.startObject(JobDetails.INVALID_DATE_COUNT)
 									.field("type", "long")
 								.endObject()
@@ -131,9 +132,23 @@ public class ElasticsearchMappings
 								.endObject()
 							.endObject()
 						.endObject()
+						.startObject(MemoryUsage.TYPE)
+							.field("type", "object")
+							.startObject("properties")
+								.startObject(MemoryUsage.VALUE)
+									.field("type", "long")
+								.endObject()
+								.startObject(MemoryUsage.NUMBER_BY_FIELDS)
+									.field("type", "long")
+								.endObject()
+								.startObject(MemoryUsage.NUMBER_PARTITION_FIELDS)
+									.field("type", "long")
+									.endObject()
+							.endObject()
+						.endObject()
 						.startObject(JobDetails.TIMEOUT)
 							.field("type", "long").field(INDEX, NO)
-						.endObject()											
+						.endObject()
 						.startObject(JobDetails.ANALYSIS_CONFIG)
 							.field("type", "object")
 							.startObject("properties")
@@ -150,7 +165,7 @@ public class ElasticsearchMappings
 									.startObject("properties")
 										.startObject(Detector.FUNCTION)
 											.field("type", "string").field(INDEX, NOT_ANALYZED)
-										.endObject()									
+										.endObject()
 										.startObject(Detector.FIELD_NAME)
 											.field("type", "string").field(INDEX, NOT_ANALYZED)
 										.endObject()	
@@ -169,7 +184,7 @@ public class ElasticsearchMappings
 									.endObject()
 								.endObject()
 							.endObject()
-						.endObject()						
+						.endObject()
 						.startObject(JobDetails.ANALYSIS_LIMITS)
 							.field("type", "object")
 							.startObject("properties")
@@ -277,7 +292,7 @@ public class ElasticsearchMappings
 					.startObject("properties")
 						.startObject(com.prelert.rs.data.Detector.NAME)
 							.field("type", "string").field(INDEX, NOT_ANALYZED)
-						.endObject()					
+						.endObject()
 					.endObject()
 				.endObject()
 			.endObject();
@@ -444,6 +459,39 @@ public class ElasticsearchMappings
 					.field("enabled", false)
 					.startObject("_all")
 						.field("enabled", false)
+					.endObject()
+				.endObject()
+			.endObject();
+
+		return mapping;
+	}
+
+
+	/**
+	 * Create the Elasticsearch mapping for {@linkplain MemoryUsage}.
+	 * TODO
+	 * @return
+	 * @throws IOException
+	 */
+	static public XContentBuilder memoryUsageMapping()
+	throws IOException
+	{
+		XContentBuilder mapping = jsonBuilder()
+			.startObject()
+				.startObject(MemoryUsage.TYPE)
+					.startObject("_all")
+						.field("enabled",  false)
+					.endObject()
+					.startObject("properties")
+						.startObject(MemoryUsage.VALUE)
+						    .field("type", "long")
+						.endObject()
+						.startObject(MemoryUsage.NUMBER_BY_FIELDS)
+							.field("type", "long")
+						.endObject()
+						.startObject(MemoryUsage.NUMBER_PARTITION_FIELDS)
+							.field("type", "long")
+						.endObject()
 					.endObject()
 				.endObject()
 			.endObject();

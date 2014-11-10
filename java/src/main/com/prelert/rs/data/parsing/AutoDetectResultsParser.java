@@ -29,6 +29,9 @@ package com.prelert.rs.data.parsing;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 import org.apache.log4j.Logger;
 
@@ -36,6 +39,7 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
+import com.prelert.job.MemoryUsage;
 import com.prelert.job.persistence.JobResultsPersister;
 import com.prelert.job.persistence.JobRenormaliser;
 import com.prelert.job.quantiles.Quantiles;
@@ -43,13 +47,48 @@ import com.prelert.job.quantiles.QuantilesState;
 import com.prelert.rs.data.*;
 
 /**
- * Parses the JSON output of the autodetect program. 
- * 
+ * Parses the JSON output of the autodetect program.
+ *
  * Expects an array of buckets so the first element will always be the
- * start array symbol and the data must be terminated with the end array symbol. 
+ * start array symbol and the data must be terminated with the end array symbol.
  */
-public class AutoDetectResultsParser 
+public class AutoDetectResultsParser
 {
+	private List<AlertObserver> m_Observers = new ArrayList<>();
+
+	public void addObserver(AlertObserver obs)
+	{
+		synchronized (m_Observers)
+		{
+			m_Observers.add(obs);
+		}
+	}
+
+	public boolean removeObserver(AlertObserver obs)
+	{
+		synchronized (m_Observers)
+		{
+			// relies on obj reference id for equality
+			int index = m_Observers.indexOf(obs);
+
+			if (index >= 0)
+			{
+				m_Observers.remove(index);
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+	}
+
+	public int observerCount()
+	{
+		return m_Observers.size();
+	}
+
+
 	/**
 	 * Parse the bucket results from inputstream and perist
 	 * via the JobDataPersister.
@@ -60,13 +99,13 @@ public class AutoDetectResultsParser
 	 * @param inputStream
 	 * @param persister
 	 * @param renormaliser
-	 * @param logger 
+	 * @param logger
 	 * @return
 	 * @throws JsonParseException
 	 * @throws IOException
 	 * @throws AutoDetectParseException
 	 */
-	static public void parseResults(InputStream inputStream,
+	public void parseResults(InputStream inputStream,
 			JobResultsPersister persister, JobRenormaliser renormaliser,
 			Logger logger)
 	throws JsonParseException, IOException, AutoDetectParseException
@@ -93,13 +132,13 @@ public class AutoDetectResultsParser
 			throw new AutoDetectParseException(
 					"Invalid JSON should start with an array of objects or an object = " + token);
 		}
-		
+
 		// Parse the buckets from the stream
 		int bucketCount = 0;
 		while (token != JsonToken.END_ARRAY)
-		{			
+		{
 			if (token == null) // end of input
-			{				
+			{
 				logger.error("Unexpected end of Json input");
 				break;
 			}
@@ -115,7 +154,8 @@ public class AutoDetectResultsParser
 						Bucket bucket = Bucket.parseJsonAfterStartObject(parser);
 						persister.persistBucket(bucket);
 						persister.incrementBucketCount(1);
-			
+						notifyObservers(bucket);
+
 						logger.debug("Bucket number " + ++bucketCount + " parsed from output");
 						break;
 					case Quantiles.QUANTILE_KIND:
@@ -127,6 +167,15 @@ public class AutoDetectResultsParser
 									"trigger renormalisation of " +
 									quantiles.getKind() + " scores");
 						triggerRenormalisation(quantiles, renormaliser, logger);
+						break;
+					case MemoryUsage.TYPE:
+						MemoryUsage memoryUsage = MemoryUsage.parseJsonAfterStartObject(parser);
+						logger.debug(String.format("Parsed memory usage: %d / %d / %d", 
+							memoryUsage.getMemoryUsage(),
+							memoryUsage.getNumberByFields(),
+							memoryUsage.getNumberPartitionFields()));
+						
+						persister.persistMemoryUsage(memoryUsage);
 						break;
 					default:
 						logger.error("Unexpected object parsed from output - first field " + fieldName);
@@ -152,7 +201,7 @@ public class AutoDetectResultsParser
 	}
 
 
-	static private void triggerRenormalisation(Quantiles quantiles,
+	private void triggerRenormalisation(Quantiles quantiles,
 			JobRenormaliser renormaliser, Logger logger)
 	{
 		if (QuantilesState.SYS_CHANGE_QUANTILES_KIND.equals(quantiles.getKind()))
@@ -168,5 +217,35 @@ public class AutoDetectResultsParser
 			logger.error("Unexpected kind of quantiles: " + quantiles.getKind());
 		}
 	}
+
+
+	private void notifyObservers(Bucket bucket)
+	{
+		List<AlertObserver> observersToFire = new ArrayList<>();
+
+		// one-time alerts so remove them from the list before firing
+		synchronized (m_Observers)
+		{
+			Iterator<AlertObserver> iter = m_Observers.iterator();
+			while (iter.hasNext())
+			{
+				AlertObserver ao = iter.next();
+
+				if (ao.evaluate(bucket.getMaxNormalizedProbability(),
+						bucket.getAnomalyScore()))
+				{
+					observersToFire.add(ao);
+					iter.remove();
+				}
+			}
+		}
+
+		for (AlertObserver ao : observersToFire)
+		{
+			ao.fire(bucket);
+		}
+	}
+
+
 }
 

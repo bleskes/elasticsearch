@@ -73,6 +73,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobIdAlreadyExistsException;
 import com.prelert.job.JobStatus;
+import com.prelert.job.MemoryUsage;
 import com.prelert.job.ModelState;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.persistence.JobProvider;
@@ -195,7 +196,7 @@ public class ElasticsearchJobProvider implements JobProvider
 
 				XContentBuilder usageMapping = ElasticsearchMappings.usageMapping();
 
-				m_Client.admin().indices().prepareCreate(PRELERT_USAGE_INDEX)					
+				m_Client.admin().indices().prepareCreate(PRELERT_USAGE_INDEX)
 								.addMapping(Usage.TYPE, usageMapping)
 								.get();
 			}
@@ -218,7 +219,7 @@ public class ElasticsearchJobProvider implements JobProvider
 		{
 			GetResponse response = m_Client.prepareGet(jobId, JobDetails.TYPE, jobId)
 							.setFetchSource(false)
-							.setFields()				
+							.setFields()
 							.get();
 			
 			if (response.isExists() == false)
@@ -263,17 +264,31 @@ public class ElasticsearchJobProvider implements JobProvider
 		try
 		{
 			GetResponse response = m_Client.prepareGet(jobId, JobDetails.TYPE, jobId).get();
-			if (response.isExists())
-			{
-				return m_ObjectMapper.convertValue(response.getSource(), JobDetails.class);
-			}		
-			else 
+			if (!response.isExists())
 			{
 				String msg = "No details for job with id " + jobId;
 				s_Logger.warn(msg);
 				throw new UnknownJobException(jobId, msg,
 						ErrorCode.MISSING_JOB_ERROR);
 			}
+			JobDetails details = m_ObjectMapper.convertValue(response.getSource(), JobDetails.class);
+
+			// Pull out the memoryUsage document, and add this to the JobDetails
+			GetResponse memoryUsageResponse = m_Client.prepareGet(
+				jobId, MemoryUsage.TYPE, MemoryUsage.TYPE).get();
+			if (!memoryUsageResponse.isExists())
+			{
+				String msg = "No memory usage details for job with id " 
+					+ jobId + " " + MemoryUsage.TYPE;
+				s_Logger.warn(msg);
+			}
+			else
+			{
+				MemoryUsage memoryUsage = m_ObjectMapper.convertValue(
+					memoryUsageResponse.getSource(), MemoryUsage.class);
+				details.setMemoryUsage(memoryUsage);
+			}
+			return details;
 		}
 		catch (IndexMissingException e)
 		{
@@ -332,6 +347,7 @@ public class ElasticsearchJobProvider implements JobProvider
 			XContentBuilder quantilesMapping = ElasticsearchMappings.quantilesMapping();
 			XContentBuilder modelStateMapping = ElasticsearchMappings.modelStateMapping();
 			XContentBuilder usageMapping = ElasticsearchMappings.usageMapping();
+			XContentBuilder memoryUsageMapping = ElasticsearchMappings.memoryUsageMapping();
 						
 			m_Client.admin().indices()
 					.prepareCreate(job.getId())					
@@ -342,6 +358,7 @@ public class ElasticsearchJobProvider implements JobProvider
 					.addMapping(Quantiles.TYPE, quantilesMapping)
 					.addMapping(ModelState.TYPE, modelStateMapping)
 					.addMapping(Usage.TYPE, usageMapping)
+					.addMapping(MemoryUsage.TYPE, memoryUsageMapping)
 					.get();
 
 			
@@ -390,7 +407,6 @@ public class ElasticsearchJobProvider implements JobProvider
 			{
 				return null;
 			}
-					
 		}
 		catch (IndexMissingException e)
 		{

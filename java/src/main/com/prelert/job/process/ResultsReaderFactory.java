@@ -43,6 +43,6 @@ public interface ResultsReaderFactory
 	 * @param logger Job specific logger
 	 * @return
 	 */
-	public Runnable newResultsParser(String jobId, InputStream autoDetectOutput,
+	public ResultsReader newResultsParser(String jobId, InputStream autoDetectOutput,
 			Logger logger);
 }

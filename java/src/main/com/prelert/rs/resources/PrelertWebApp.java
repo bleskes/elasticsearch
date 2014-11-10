@@ -44,22 +44,16 @@ import com.prelert.job.status.elasticsearch.ElasticsearchStatusReporterFactory;
 import com.prelert.job.usage.elasticsearch.ElasticsearchUsageReporterFactory;
 import com.prelert.rs.provider.AlertMessageBodyWriter;
 import com.prelert.rs.provider.ElasticsearchExceptionMapper;
-import com.prelert.rs.provider.HighProportionOfBadTimestampsExceptionMapper;
-import com.prelert.rs.provider.JobIdAlreadyExistsExceptionMapper;
-import com.prelert.rs.provider.JobConfigurationExceptionMapper;
+import com.prelert.rs.provider.JobExceptionMapper;
 import com.prelert.rs.provider.JobConfigurationMessageBodyReader;
-import com.prelert.rs.provider.JobInUseExceptionMapper;
-import com.prelert.rs.provider.MissingFieldExceptionMapper;
 import com.prelert.rs.provider.NativeProcessRunExceptionMapper;
-import com.prelert.rs.provider.OutOfOrderRecordsExceptionMapper;
 import com.prelert.rs.provider.PaginationWriter;
 import com.prelert.rs.provider.SingleDocumentWriter;
-import com.prelert.rs.provider.TooManyJobsExceptionMapper;
 import com.prelert.rs.provider.UnknownJobExceptionMapper;
 
 /**
  * Web application class contains the singleton objects accessed by the
- * resource classes 
+ * resource classes
  */
 
 public class PrelertWebApp extends Application
@@ -68,84 +62,81 @@ public class PrelertWebApp extends Application
 	 * The default Elasticsearch Cluster name
 	 */
 	public static final String DEFAULT_CLUSTER_NAME = "prelert";
-	
+
 	public static final String ES_CLUSTER_NAME_PROP = "es.cluster.name";
-	
+
 	public static final String PERSIST_RECORDS = "persist.records";
-	
+
 	private Set<Class<?>> m_ResourceClasses;
 	private Set<Object> m_Singletons;
-	
+
 	private JobManager m_JobManager;
 	private AlertManager m_AlertManager;
-	
+
 	public PrelertWebApp()
 	{
-		m_ResourceClasses = new HashSet<>();	    
+		m_ResourceClasses = new HashSet<>();
 		m_ResourceClasses.add(ApiBase.class);
 		m_ResourceClasses.add(Alerts.class);
 		m_ResourceClasses.add(AlertsLongPoll.class);
 		m_ResourceClasses.add(Jobs.class);
 		m_ResourceClasses.add(Data.class);
-		m_ResourceClasses.add(Buckets.class);	   
-		m_ResourceClasses.add(Records.class);	   
+		m_ResourceClasses.add(Buckets.class);
+		m_ResourceClasses.add(Records.class);
 		m_ResourceClasses.add(Logs.class);
-		
+
 		// Message body writers
 		m_ResourceClasses.add(AlertMessageBodyWriter.class);
+		m_ResourceClasses.add(JobConfigurationMessageBodyReader.class);
 		m_ResourceClasses.add(PaginationWriter.class);
-		m_ResourceClasses.add(SingleDocumentWriter.class);	   
-		m_ResourceClasses.add(JobConfigurationMessageBodyReader.class);	  
-		
+		m_ResourceClasses.add(SingleDocumentWriter.class);
+
+
 		// Exception mappers
 		m_ResourceClasses.add(ElasticsearchExceptionMapper.class);
-		m_ResourceClasses.add(HighProportionOfBadTimestampsExceptionMapper.class);
-		m_ResourceClasses.add(JobIdAlreadyExistsExceptionMapper.class);
-		m_ResourceClasses.add(JobConfigurationExceptionMapper.class);
-		m_ResourceClasses.add(JobInUseExceptionMapper.class);
-		m_ResourceClasses.add(MissingFieldExceptionMapper.class);
 		m_ResourceClasses.add(NativeProcessRunExceptionMapper.class);
-		m_ResourceClasses.add(OutOfOrderRecordsExceptionMapper.class);
-		m_ResourceClasses.add(TooManyJobsExceptionMapper.class);
 		m_ResourceClasses.add(UnknownJobExceptionMapper.class);
-		
+		m_ResourceClasses.add(JobExceptionMapper.class);
+
+
 		String elasticSearchClusterName = System.getProperty(ES_CLUSTER_NAME_PROP);
 		if (elasticSearchClusterName == null)
 		{
 			elasticSearchClusterName = DEFAULT_CLUSTER_NAME;
 		}
-		
+
 		ElasticsearchJobProvider esJob = new ElasticsearchJobProvider(
 				elasticSearchClusterName);
-		
+
 		DataPersisterFactory dataPersisterFactory = new NoneJobDataPersisterFactory();
 		if (System.getProperty(PERSIST_RECORDS) != null)
 		{
 			dataPersisterFactory = new ElasticsearchDataPersisterFactory(esJob.getClient());
 		}
-		
-		m_JobManager = new JobManager(esJob, 
+
+		m_JobManager = new JobManager(esJob,
 				new ElasticsearchResultsReaderFactory(esJob),
 				new ElasticsearchStatusReporterFactory(esJob.getClient()),
 				new ElasticsearchUsageReporterFactory(esJob.getClient()),
 				dataPersisterFactory
 			);
 
-		
 		m_AlertManager = new AlertManager(
-				new ElasticsearchAlertPersister(esJob.getClient()));
-				
+				new ElasticsearchAlertPersister(esJob.getClient()),
+				m_JobManager);
+
+
 		m_Singletons = new HashSet<>();
-		m_Singletons.add(m_JobManager);	
-		m_Singletons.add(m_AlertManager);	
+		m_Singletons.add(m_JobManager);
+		m_Singletons.add(m_AlertManager);
 	}
-	
+
 	@Override
-	public Set<Class<?>> getClasses() 
+	public Set<Class<?>> getClasses()
 	{
 	    return m_ResourceClasses;
 	}
-	
+
 	@Override
 	public Set<Object> getSingletons()
 	{
