@@ -30,9 +30,12 @@ package com.prelert.rs.client;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -53,7 +56,6 @@ import com.prelert.job.JobConfiguration;
 import com.prelert.job.alert.Alert;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.ApiError;
-import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.ErrorCode;
 
 
@@ -79,7 +81,6 @@ public class AlertSubscriptionTest
 	static final public String ALERTING_JOB_4 = "alerting-job-4";
 
 	static final public String [] JOB_IDS = {ALERTING_JOB_1, ALERTING_JOB_2, ALERTING_JOB_3, ALERTING_JOB_4};
-
 
 	static private void setupJobs(String baseUrl, EngineApiClient client)
 	throws ClientProtocolException, IOException
@@ -342,6 +343,17 @@ public class AlertSubscriptionTest
 
 					if (m_Quit)
 					{
+						s_Logger.warn("Quitting the alert poll thread");
+						break;
+					}
+
+					try
+					{
+						Thread.sleep(200);
+					}
+					catch (InterruptedException e)
+					{
+						s_Logger.error(e);
 						break;
 					}
 				}
@@ -451,7 +463,7 @@ public class AlertSubscriptionTest
 		{
 			try
 			{
-				m_Client.fileUpload(m_BaseUrl, m_JobId, m_File, false);
+				slowUpload(m_BaseUrl, m_JobId, m_File, 200);
 				m_Client.closeJob(m_BaseUrl, m_JobId);
 			}
 			catch (IOException e)
@@ -460,5 +472,55 @@ public class AlertSubscriptionTest
 				test(false);
 			}
 		}
+
+
+		public void slowUpload(String baseUrl, String jobId, final File dataFile,
+				final long sleepTimeMs)
+		throws IOException
+		{
+			final PipedInputStream pipedIn = new PipedInputStream();
+			final PipedOutputStream pipedOut = new PipedOutputStream(pipedIn);
+
+			new Thread(new Runnable() {
+				@Override
+				public void run() {
+					int n;
+					byte [] buf = new byte[2048];
+					try
+					{
+						FileInputStream fs;
+						try
+						{
+							fs = new FileInputStream(dataFile);
+						}
+						catch (FileNotFoundException e)
+						{
+							e.printStackTrace();
+							return;
+						}
+
+						while((n = fs.read(buf)) > -1)
+						{
+							pipedOut.write(buf, 0, n);
+							Thread.sleep(sleepTimeMs);
+						}
+						fs.close();
+
+						pipedOut.close();
+					}
+					catch (IOException e)
+					{
+						s_Logger.info(e);
+					}
+					catch (InterruptedException e)
+					{
+						s_Logger.info(e);
+					}
+				}
+			}).start();
+
+			m_Client.streamingUpload(baseUrl, jobId, pipedIn, false);
+		}
+
 	}
 }
