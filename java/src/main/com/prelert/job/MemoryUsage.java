@@ -31,6 +31,7 @@ import java.io.IOException;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.prelert.rs.data.parsing.AutoDetectParseException;
 
 import org.apache.log4j.Logger;
@@ -39,6 +40,7 @@ import org.apache.log4j.Logger;
  * Provide access to the C++ model memory usage numbers
  * for the Java process.
  */
+@JsonIgnoreProperties({"id"})
 public class MemoryUsage
 {
 	/**
