@@ -51,7 +51,9 @@ import com.prelert.job.DataDescription;
 import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.alert.Alert;
+import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.ApiError;
+import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.ErrorCode;
 
 
@@ -201,16 +203,35 @@ public class AlertSubscriptionTest
 				// this one will timeout
 				longPoll = new LongPollAlertTest(client, baseUrl, jobId, 99.9, 99.9, true);
 			}
+			else if (jobId == ALERTING_JOB_3)
+			{
+				// this one will timeout
+				longPoll = new LongPollAlertTest(client, baseUrl, jobId, null, 5.0, false);
+			}
+			else if (jobId == ALERTING_JOB_2)
+			{
+				// this one will timeout
+				longPoll = new LongPollAlertTest(client, baseUrl, jobId, 7.0, null, false);
+			}
 			else
 			{
+				// have 2 alerters for this job
+				longPoll = new LongPollAlertTest(client, baseUrl, jobId, 14.0, 2.3, false);
+				Thread th = new Thread(longPoll);
+				alertTestThreads.add(th);
+				th.start();
+
 				longPoll = new LongPollAlertTest(client, baseUrl, jobId, 4.5, 2.3, false);
+				longPollTests.add(longPoll);
 			}
 
+			longPollTests.add(longPoll);
 			Thread th = new Thread(longPoll);
 			alertTestThreads.add(th);
 			th.start();
 		}
 
+		s_Logger.info("Starting upload threads");
 		for (Thread th : uploaderThreads)
 		{
 			th.start();
@@ -220,6 +241,8 @@ public class AlertSubscriptionTest
 		{
 			th.join();
 		}
+
+		s_Logger.info("Upload threads finished");
 
 		// if alerting threads haven't stopped now they never will
 		for (LongPollAlertTest test : longPollTests)
@@ -249,6 +272,132 @@ public class AlertSubscriptionTest
 		}
 
 	}
+
+
+	/**
+	 * Subscribe to the long poll alerts end point for the job.
+	 * When the alert is fired chech its values and if it timed
+	 * out or not.
+	 */
+	static private class LongPollAlertTest implements Runnable
+	{
+		EngineApiClient m_Client;
+		String m_BaseUrl;
+		String m_JobId;
+		Double m_ScoreThreshold;
+		Double m_ProbabiltyThreshold;
+		boolean m_ShouldTimeout;
+		volatile boolean m_Quit;
+		boolean m_TestPassed;
+
+
+		public LongPollAlertTest(EngineApiClient client, String baseUrl, String jobId,
+				Double scoreThreshold, Double probabiltyThreshold, boolean shouldTimeout)
+		{
+			m_Client = client;
+			m_BaseUrl = baseUrl;
+			m_JobId = jobId;
+			m_ScoreThreshold = scoreThreshold;
+			m_ProbabiltyThreshold = probabiltyThreshold;
+			m_ShouldTimeout = shouldTimeout;
+		}
+
+		/**
+		 * Stops the thread's run loop
+		 */
+		public void quit()
+		{
+			m_Quit = true;
+		}
+
+		/**
+		 * Tests passed
+		 * @return
+		 */
+		public boolean isTestPassed()
+		{
+			return m_TestPassed;
+		}
+
+
+		@Override
+		public void run()
+		{
+			try
+			{
+				final int TIMEOUT = 30;
+
+				Alert alert = m_Client.pollJobAlert(m_BaseUrl, m_JobId, TIMEOUT,
+						m_ScoreThreshold, m_ProbabiltyThreshold);
+
+				// may get errors about the job not running if the data
+				// upload hasn't started
+				while (alert == null && m_Client.getLastError() != null)
+				{
+					ApiError err = m_Client.getLastError();
+					test(err.getErrorCode() == ErrorCode.JOB_NOT_RUNNING);
+
+					alert = m_Client.pollJobAlert(m_BaseUrl, m_JobId, TIMEOUT,
+							m_ScoreThreshold, m_ProbabiltyThreshold);
+
+					if (m_Quit)
+					{
+						break;
+					}
+				}
+
+				// alert should exist at this point
+				test(alert != null);
+				test(alert.getJobId().equals(m_JobId));
+				test(alert.isTimeout() == m_ShouldTimeout);
+				if (alert.isTimeout() == false)
+				{
+					if (m_ScoreThreshold != null && m_ProbabiltyThreshold != null)
+					{
+						test(alert.getAnomalyScore() >= m_ScoreThreshold ||
+								alert.getNormalizedProbability() >= m_ProbabiltyThreshold);
+					}
+					else if (m_ScoreThreshold != null)
+					{
+						test(alert.getAnomalyScore() >= m_ScoreThreshold);
+						test(alert.getRecords() == null);
+						test(alert.getBucket() != null);
+						test(alert.getBucket().getAnomalyScore() >= m_ScoreThreshold);
+					}
+					else if (m_ProbabiltyThreshold != null)
+					{
+						test(alert.getNormalizedProbability() >= m_ProbabiltyThreshold);
+						test(alert.getBucket() == null);
+						test(alert.getRecords() != null);
+						test(alert.getRecords().size() > 0);
+						for (AnomalyRecord r : alert.getRecords())
+						{
+							test(r.getNormalizedProbability() >= m_ProbabiltyThreshold);
+						}
+					}
+				}
+
+				m_TestPassed = true;
+			}
+			catch (JsonParseException e)
+			{
+				e.printStackTrace();
+				test(false);
+			}
+			catch (JsonMappingException e)
+			{
+				e.printStackTrace();
+				test(false);
+			}
+			catch (IOException e)
+			{
+				e.printStackTrace();
+				test(false);
+			}
+		}
+	}
+
+
 
 
 	/**
@@ -304,108 +453,6 @@ public class AlertSubscriptionTest
 			{
 				m_Client.fileUpload(m_BaseUrl, m_JobId, m_File, false);
 				m_Client.closeJob(m_BaseUrl, m_JobId);
-			}
-			catch (IOException e)
-			{
-				e.printStackTrace();
-				test(false);
-			}
-		}
-	}
-
-
-	/**
-	 * Subscribe to the long poll alerts end point for the job.
-	 * When the alert is fired chech its values and if it timed
-	 * out or not.
-	 */
-	static private class LongPollAlertTest implements Runnable
-	{
-		EngineApiClient m_Client;
-		String m_BaseUrl;
-		String m_JobId;
-		double m_ScoreThreshold;
-		double m_ProbabiltyThreshold;
-		boolean m_ShouldTimeout;
-		volatile boolean m_Quit;
-		boolean m_TestPassed;
-
-
-		public LongPollAlertTest(EngineApiClient client, String baseUrl, String jobId,
-				double scoreThreshold, double probabiltyThreshold, boolean shouldTimeout)
-		{
-			m_Client = client;
-			m_BaseUrl = baseUrl;
-			m_JobId = jobId;
-			m_ScoreThreshold = scoreThreshold;
-			m_ProbabiltyThreshold = probabiltyThreshold;
-			m_ShouldTimeout = shouldTimeout;
-		}
-
-		/**
-		 * Stops the thread's run loop
-		 */
-		public void quit()
-		{
-			m_Quit = true;
-		}
-
-		/**
-		 * Tests passed
-		 * @return
-		 */
-		public boolean isTestPassed()
-		{
-			return m_TestPassed;
-		}
-
-
-		@Override
-		public void run()
-		{
-			try
-			{
-				final int TIMEOUT = 30;
-
-				Alert alert = m_Client.pollJobAlert(m_BaseUrl, m_JobId, TIMEOUT,
-						m_ScoreThreshold, m_ProbabiltyThreshold);
-
-				// may get errors about the job not running if the data
-				// upload hasn't started
-				while (alert == null && m_Client.getLastError() != null)
-				{
-					ApiError err = m_Client.getLastError();
-					test(err.getErrorCode() == ErrorCode.JOB_NOT_RUNNING);
-
-					alert = m_Client.pollJobAlert(m_BaseUrl, m_JobId, TIMEOUT,
-							m_ScoreThreshold, m_ProbabiltyThreshold);
-
-					if (m_Quit)
-					{
-						break;
-					}
-				}
-
-				// alert must exist at this point
-				test(alert.getJobId().equals(m_JobId));
-				test(alert.isTimeout() == m_ShouldTimeout);
-				if (alert.isTimeout() == false)
-				{
-					test(alert.getAnomalyScore() >= m_ScoreThreshold ||
-						   alert.getNormalizedProbability() >= m_ProbabiltyThreshold);
-				}
-
-				m_TestPassed = true;
-			}
-			catch (JsonParseException e)
-			{
-				e.printStackTrace();
-				test(false);
-			}
-			catch (JsonMappingException e)
-			{
-				e.printStackTrace();
-				test(false);
 			}
 			catch (IOException e)
 			{

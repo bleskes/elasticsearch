@@ -82,8 +82,8 @@ public class AlertsLongPoll extends ResourceWithJobManager
 		s_Logger.debug("long poll alerts for job " + jobId);
 
 		AlertManager alertManager = alertManager();
-		alertManager.registerRequest(asyncResponse, jobId, timeout, anomalyScoreThreshold,
-				normalizedProbabiltyThreshold);
+		alertManager.registerRequest(asyncResponse, jobId, m_UriInfo.getBaseUri(),
+				timeout, anomalyScoreThreshold, normalizedProbabiltyThreshold);
 	}
 
 }

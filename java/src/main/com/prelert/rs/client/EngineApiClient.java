@@ -1064,9 +1064,9 @@ public class EngineApiClient implements Closeable
 	 * @param timeout Timeout the request after this many seconds.
 	 * If <code>null</code> then use the default.
 	 * @param anomalyScoreThreshold Alert if a record has an anomalyScore threshold
-	 * >= this value. This should be in the range 0-100.
+	 * >= this value. This should be in the range 0-100, ignored if <code>null</code>.
 	 * @param maxNormalizedProbability Alert if a bucket's maxNormalizedProbability
-	 * is >= this value. This should be in the range 0-100.
+	 * is >= this value. This should be in the range 0-100, ignored if <code>null</code>.
 	 *
 	 * @return
 	 * @throws JsonParseException

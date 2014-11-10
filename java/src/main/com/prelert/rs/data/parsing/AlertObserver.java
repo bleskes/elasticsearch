@@ -57,6 +57,11 @@ abstract public class AlertObserver
 				anomalyScore  >= m_AnomalyThreshold;
 	}
 
+	public boolean isAnomalyScoreAlert(double anomalyScore)
+	{
+		return anomalyScore >= m_AnomalyThreshold;
+	}
+
 	/**
 	 * Fire the alert with the bucket the alert came from
 	 *
@@ -75,12 +80,12 @@ abstract public class AlertObserver
 		m_AnomalyThreshold = anomalyThreshold;
 	}
 
-	public double getNormalisedThreshold()
+	public double getNormalisedProbThreshold()
 	{
 		return m_NormalisedThreshold;
 	}
 
-	public void setNormalisedThreshold(double normalisedThreshold)
+	public void setNormalisedProbThreshold(double normalisedThreshold)
 	{
 		m_NormalisedThreshold = normalisedThreshold;
 	}

@@ -171,7 +171,7 @@ public class AutoDetectResultsParser
 					case MemoryUsage.TYPE:
 						MemoryUsage memoryUsage = MemoryUsage.parseJsonAfterStartObject(parser);
 						logger.debug(String.format("Parsed memory usage: %d / %d / %d", 
-							memoryUsage.getMemoryUsage(),
+							memoryUsage.getValue(),
 							memoryUsage.getNumberByFields(),
 							memoryUsage.getNumberPartitionFields()));
 						

@@ -28,9 +28,6 @@ package com.prelert.job;
 
 import java.io.IOException;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
@@ -48,58 +45,55 @@ public class MemoryUsage
 	 * Field Names
 	 */
 	public static final String ID = "id";
-	public static final String TYPE = "memoryUsage";
 	public static final String VALUE = "value";
 	public static final String NUMBER_BY_FIELDS = "numberByFields";
 	public static final String NUMBER_PARTITION_FIELDS = "numberPartitionFields";
 
-	private static final Logger s_Logger = Logger.getLogger(MemoryUsage.class);
+    /**
+     * Elasticsearch type
+     */
+	public static final String TYPE = "memoryUsage";
+    
+    private static final Logger s_Logger = Logger.getLogger(MemoryUsage.class);
 
-	private long m_MemoryUsage;
+	private long m_Value;
 	private long m_NumberByFields;
 	private long m_NumberPartitionFields;
-	private String m_Type;
 
 	public String getId()
 	{
-		return "memoryUsage";
+		return TYPE;
 	}
 
-	public void setMemoryUsage(long m)
+	public void setId(String id)
 	{
-		m_MemoryUsage = m;
 	}
 
-	public long getMemoryUsage()
+	public void setValue(long m)
 	{
-		return m_MemoryUsage;
+		m_Value = m;
 	}
 
-	public void setType(String s) 
+	public long getValue()
 	{
-		m_Type = s;
+		return m_Value;
 	}
-	
-	public String getType()
-	{
-		return m_Type;
-	}
-	
+
 	public void setNumberByFields(long m)
 	{
 		m_NumberByFields = m;
 	}
-	
+
 	public long getNumberByFields()
 	{
 		return m_NumberByFields;
 	}
-	
+
 	public void setNumberPartitionFields(long m)
 	{
 		m_NumberPartitionFields = m;
 	}
-	
+
 	public long getNumberPartitionFields()
 	{
 		return m_NumberPartitionFields;
@@ -175,18 +169,17 @@ public class MemoryUsage
 				break;
 			case FIELD_NAME:
 				String fieldName = parser.getCurrentName();
-				memoryUsage.setType(fieldName);
 				switch (fieldName)
 				{
 				case TYPE:
 					token = parser.nextToken();
 					if (token == JsonToken.VALUE_NUMBER_INT)
 					{
-						memoryUsage.setMemoryUsage(parser.getLongValue());
+						memoryUsage.setValue(parser.getLongValue());
 					}
 					else
 					{
-						s_Logger.warn("Cannot parse " + TYPE + " : " + parser.getText()
+						s_Logger.warn("Cannot parse " + fieldName + " : " + parser.getText()
 										+ " as a long");
 					}
 					break;
@@ -198,7 +191,7 @@ public class MemoryUsage
 					}
 					else
 					{
-						s_Logger.warn("Cannot parse " + TYPE + " : " + parser.getText()
+						s_Logger.warn("Cannot parse " + fieldName + " : " + parser.getText()
 										+ " as a long");
 					}
 					break;
@@ -210,7 +203,7 @@ public class MemoryUsage
 					}
 					else
 					{
-						s_Logger.warn("Cannot parse " + TYPE + " : " + parser.getText()
+						s_Logger.warn("Cannot parse " + fieldName + " : " + parser.getText()
 										+ " as a long");
 					}
 					break;
