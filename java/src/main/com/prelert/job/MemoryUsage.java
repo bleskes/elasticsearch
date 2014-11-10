@@ -62,8 +62,14 @@ public class MemoryUsage
 
 	public String getId()
 	{
-		return "memoryUsage";
+		return TYPE;
 	}
+
+	public void setId(String id)
+	{
+
+	}
+
 
 	public void setMemoryUsage(long m)
 	{
@@ -75,31 +81,31 @@ public class MemoryUsage
 		return m_MemoryUsage;
 	}
 
-	public void setType(String s) 
+	public void setType(String s)
 	{
 		m_Type = s;
 	}
-	
+
 	public String getType()
 	{
 		return m_Type;
 	}
-	
+
 	public void setNumberByFields(long m)
 	{
 		m_NumberByFields = m;
 	}
-	
+
 	public long getNumberByFields()
 	{
 		return m_NumberByFields;
 	}
-	
+
 	public void setNumberPartitionFields(long m)
 	{
 		m_NumberPartitionFields = m;
 	}
-	
+
 	public long getNumberPartitionFields()
 	{
 		return m_NumberPartitionFields;
