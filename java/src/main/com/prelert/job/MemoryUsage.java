@@ -45,17 +45,20 @@ public class MemoryUsage
 	 * Field Names
 	 */
 	public static final String ID = "id";
-	public static final String TYPE = "memoryUsage";
 	public static final String VALUE = "value";
 	public static final String NUMBER_BY_FIELDS = "numberByFields";
 	public static final String NUMBER_PARTITION_FIELDS = "numberPartitionFields";
 
-	private static final Logger s_Logger = Logger.getLogger(MemoryUsage.class);
+    /**
+     * Elasticsearch type
+     */
+	public static final String TYPE = "memoryUsage";
+    
+    private static final Logger s_Logger = Logger.getLogger(MemoryUsage.class);
 
-	private long m_MemoryUsage;
+	private long m_Value;
 	private long m_NumberByFields;
 	private long m_NumberPartitionFields;
-	private String m_Type;
 
 	public String getId()
 	{
@@ -66,24 +69,14 @@ public class MemoryUsage
 	{
 	}
 
-	public void setMemoryUsage(long m)
+	public void setValue(long m)
 	{
-		m_MemoryUsage = m;
+		m_Value = m;
 	}
 
-	public long getMemoryUsage()
+	public long getValue()
 	{
-		return m_MemoryUsage;
-	}
-
-	public void setType(String s)
-	{
-		m_Type = s;
-	}
-
-	public String getType()
-	{
-		return m_Type;
+		return m_Value;
 	}
 
 	public void setNumberByFields(long m)
@@ -176,14 +169,13 @@ public class MemoryUsage
 				break;
 			case FIELD_NAME:
 				String fieldName = parser.getCurrentName();
-				memoryUsage.setType(fieldName);
 				switch (fieldName)
 				{
 				case TYPE:
 					token = parser.nextToken();
 					if (token == JsonToken.VALUE_NUMBER_INT)
 					{
-						memoryUsage.setMemoryUsage(parser.getLongValue());
+						memoryUsage.setValue(parser.getLongValue());
 					}
 					else
 					{

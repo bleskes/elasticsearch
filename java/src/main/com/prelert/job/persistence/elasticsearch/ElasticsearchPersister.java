@@ -354,7 +354,7 @@ public class ElasticsearchPersister implements JobResultsPersister
 		s_Logger.warn("---------------Doing serialisation of memory usage now");
 		
 		XContentBuilder builder = jsonBuilder().startObject()
-				.field(MemoryUsage.TYPE, memoryUsage.getMemoryUsage())
+				.field(MemoryUsage.VALUE, memoryUsage.getValue())
 				.field(MemoryUsage.NUMBER_BY_FIELDS, memoryUsage.getNumberByFields())
 				.field(MemoryUsage.NUMBER_PARTITION_FIELDS, memoryUsage.getNumberPartitionFields())	
 				.endObject();
