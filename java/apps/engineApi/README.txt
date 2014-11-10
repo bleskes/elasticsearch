@@ -14,7 +14,7 @@ data and querying results.
 
 Full documentation is available on the Prelert website:
 
-http://www.prelert.com/docs/engine_api/1.0/
+http://www.prelert.com/docs/engine_api/1.1/
 
 
 Getting Started
@@ -101,11 +101,11 @@ curl -X POST -H 'Content-Type: application/json' 'http://localhost:8080/engine/v
 }'
 
 In this example we are creating a new job with the ID 'farequote' and specifying
-that we want the analysis to be executed on the 'responsetime' field. This field 
+that we want the analysis to be executed on the 'responsetime' field. This field
 contains a numeric value, so we specify the metric function, which expands to all
-of min, mean, max, and sum. (Had we wanted to look at event rate or rare fields 
+of min, mean, max, and sum. (Had we wanted to look at event rate or rare fields
 we'd have used one of the other available functions.) By declaring byFieldName as
-'airline', the analysis will be performed across all airlines, instead of a 
+'airline', the analysis will be performed across all airlines, instead of a
 unique analysis done for each of the 19 airlines.
 
 bucketSpan defines that the analysis should be performed across hourly (3600
@@ -179,7 +179,7 @@ latest job. For example:
 For detailed explanation of the output, please refer to the jobResource object
 in the reference documentation. For now, note that the key piece of information
 is the jobId, which uniquely identifies this job and will be used in the
-remainder of this tutorial. 
+remainder of this tutorial.
 
 3. Upload Data
 --------------
@@ -289,9 +289,9 @@ curl 'http://localhost:8080/engine/v1/results/farequote/buckets/1403712000?expan
   }
 }
 
-This shows that between 2014-06-25T16:00:00-0000 and 2014-06-25T17:00:00-0000 
-(the bucket start time and bucketSpan) the responsetime for airline AAL increased 
-from a normal mean value of 99.8279 to 242.75. The probability of seeing 242.75 
+This shows that between 2014-06-25T16:00:00-0000 and 2014-06-25T17:00:00-0000
+(the bucket start time and bucketSpan) the responsetime for airline AAL increased
+from a normal mean value of 99.8279 to 242.75. The probability of seeing 242.75
 is 2.36652E-89 (which is very unlikely).
 
 This increased value is highly unexpected based upon the past behavior of this
@@ -346,7 +346,7 @@ Further information
 
 To view the full documentation, please visit:
 
-http://www.prelert.com/docs/engine_api/1.0/
+http://www.prelert.com/docs/engine_api/1.1/
 
 Code examples are also available from:
 
