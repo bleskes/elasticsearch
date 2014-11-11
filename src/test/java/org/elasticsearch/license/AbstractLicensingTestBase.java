@@ -27,6 +27,7 @@ import org.elasticsearch.license.core.ESLicense;
 import org.elasticsearch.license.licensor.ESLicenseSigner;
 import org.elasticsearch.license.manager.ESLicenseManager;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.runner.RunWith;
 
 import java.io.IOException;
@@ -46,7 +47,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsEqual.equalTo;
 
 @RunWith(value = com.carrotsearch.randomizedtesting.RandomizedRunner.class)
-public class AbstractLicensingTestBase {
+public abstract class AbstractLicensingTestBase {
 
     protected static String pubKeyPath = null;
     protected static String priKeyPath = null;
