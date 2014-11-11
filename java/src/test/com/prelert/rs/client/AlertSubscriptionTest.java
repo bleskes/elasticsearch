@@ -40,6 +40,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
 import org.apache.http.client.ClientProtocolException;
 import org.apache.log4j.ConsoleAppender;
@@ -64,6 +65,13 @@ import com.prelert.rs.data.ErrorCode;
  * <br>Jobs are created and an alert is subscribed for each then data
  * is uploaded to the job. Some alerts are expected to fire others
  * will timout.
+ * Synchronising registering for an alert and data upload is little difficult
+ * especially on machines with few cores so the the tests are run
+ * sequentially (apart from one where two jobs are run simultaneously).
+ * Without rewriting the API Client the fine grain sychnronisation control
+ * needed to make this test deterministic is non available - be aware the
+ * test will probably fail on single core machines.
+ *
  * <br>Returns a non-zero value if the tests fail.
  */
 public class AlertSubscriptionTest
@@ -78,9 +86,11 @@ public class AlertSubscriptionTest
 	static final public String ALERTING_JOB_1 = "alerting-job-1";
 	static final public String ALERTING_JOB_2 = "alerting-job-2";
 	static final public String ALERTING_JOB_3 = "alerting-job-3";
+	static final public String ALERTING_JOB_3_B = "alerting-job-3-b";
 	static final public String ALERTING_JOB_4 = "alerting-job-4";
 
-	static final public String [] JOB_IDS = {ALERTING_JOB_1, ALERTING_JOB_2, ALERTING_JOB_3, ALERTING_JOB_4};
+	static final public String [] JOB_IDS = {ALERTING_JOB_1, ALERTING_JOB_2, ALERTING_JOB_3,
+		ALERTING_JOB_3_B, ALERTING_JOB_4};
 
 	static private void setupJobs(String baseUrl, EngineApiClient client)
 	throws ClientProtocolException, IOException
@@ -119,7 +129,8 @@ public class AlertSubscriptionTest
 		for (String s : JOB_IDS)
 		{
 			config.setId(s);
-			client.createJob(baseUrl, config);
+			String jobId = client.createJob(baseUrl, config);
+			test(jobId.equals(s));
 		}
 	}
 
@@ -185,16 +196,21 @@ public class AlertSubscriptionTest
 		test(error.getErrorCode() == ErrorCode.JOB_NOT_RUNNING);
 
 
-		List<Thread> uploaderThreads = new ArrayList<>();
-		List<LongPollAlertTest> longPollTests = new ArrayList<>();
-		List<Thread> alertTestThreads = new ArrayList<>();
 
+		boolean passed = true;
 		for (String jobId : JOB_IDS)
 		{
+			List<Thread> uploaderThreads = new ArrayList<>();
+			List<LongPollAlertTest> longPollTests = new ArrayList<>();
+			List<Thread> alertTestThreads = new ArrayList<>();
+
 			File networkDataFile = new File(prelertTestDataHome +
 					"/engine_api_integration_test/network.csv");
 
-			DataUploader dl = new DataUploader(new EngineApiClient(), jobId, baseUrl, networkDataFile);
+			CountDownLatch latch = new CountDownLatch(2);
+
+			DataUploader dl = new DataUploader(new EngineApiClient(), jobId, baseUrl,
+					networkDataFile, latch);
 			dl.initiateUpload(); // makes the job active
 			uploaderThreads.add(new Thread(dl));
 
@@ -202,64 +218,75 @@ public class AlertSubscriptionTest
 			if (jobId == ALERTING_JOB_4)
 			{
 				// this one will timeout
-				longPoll = new LongPollAlertTest(client, baseUrl, jobId, 99.9, 99.9, true);
+				longPoll = new LongPollAlertTest(client, baseUrl, jobId, 99.9, 99.9, true, latch);
+			}
+			else if (jobId == ALERTING_JOB_3_B)
+			{
+				// this job is run in paralled with ALERTING_JOB_3
+				continue;
 			}
 			else if (jobId == ALERTING_JOB_3)
 			{
-				// this one will timeout
-				longPoll = new LongPollAlertTest(client, baseUrl, jobId, null, 5.0, false);
+				// do 2 jobs in parallel
+				dl = new DataUploader(new EngineApiClient(), ALERTING_JOB_3_B, baseUrl, networkDataFile, latch);
+				dl.initiateUpload(); // makes the job active
+				uploaderThreads.add(new Thread(dl));
+
+				longPoll = new LongPollAlertTest(client, baseUrl, ALERTING_JOB_3_B, null, 15.0, false, latch);
+				longPollTests.add(longPoll);
+				Thread testThread = new Thread(longPoll, ALERTING_JOB_3_B);
+				alertTestThreads.add(testThread);
+				testThread.start();
+
+
+				longPoll = new LongPollAlertTest(client, baseUrl, jobId, null, 5.0, false, latch);
 			}
 			else if (jobId == ALERTING_JOB_2)
 			{
-				// this one will timeout
-				longPoll = new LongPollAlertTest(client, baseUrl, jobId, 7.0, null, false);
+				longPoll = new LongPollAlertTest(client, baseUrl, jobId, 7.0, null, false, latch);
 			}
 			else
 			{
 				// have 2 alerters for this job
-				longPoll = new LongPollAlertTest(client, baseUrl, jobId, 14.0, 2.3, false);
+				longPoll = new LongPollAlertTest(client, baseUrl, jobId, 14.0, 2.3, false, latch);
 				Thread th = new Thread(longPoll);
 				alertTestThreads.add(th);
 				th.start();
 
-				longPoll = new LongPollAlertTest(client, baseUrl, jobId, 4.5, 2.3, false);
+				longPoll = new LongPollAlertTest(client, baseUrl, jobId, 4.5, 2.3, false, latch);
 				longPollTests.add(longPoll);
 			}
 
 			longPollTests.add(longPoll);
-			Thread th = new Thread(longPoll);
-			alertTestThreads.add(th);
-			th.start();
-		}
+			Thread testThread = new Thread(longPoll, jobId);
+			alertTestThreads.add(testThread);
+			testThread.start();
 
-		s_Logger.info("Starting upload threads");
-		for (Thread th : uploaderThreads)
-		{
-			th.start();
-		}
+			for (Thread th : uploaderThreads)
+			{
+				th.start();
+			}
 
-		for (Thread th : uploaderThreads)
-		{
-			th.join();
-		}
+			for (Thread th : uploaderThreads)
+			{
+				th.join();
+			}
 
-		s_Logger.info("Upload threads finished");
+			// if alerting threads haven't stopped now they never will
+			for (LongPollAlertTest test : longPollTests)
+			{
+				test.quit();
+			}
 
-		// if alerting threads haven't stopped now they never will
-		for (LongPollAlertTest test : longPollTests)
-		{
-			test.quit();
-		}
+			for (Thread th : alertTestThreads)
+			{
+				th.join();
+			}
 
-		for (Thread th : alertTestThreads)
-		{
-			th.join();
-		}
-
-		boolean passed = true;
-		for (LongPollAlertTest test : longPollTests)
-		{
-			passed = passed && test.isTestPassed();
+			for (LongPollAlertTest test : longPollTests)
+			{
+				passed = passed && test.isTestPassed();
+			}
 		}
 
 		if (passed)
@@ -290,10 +317,12 @@ public class AlertSubscriptionTest
 		boolean m_ShouldTimeout;
 		volatile boolean m_Quit;
 		boolean m_TestPassed;
+		CountDownLatch m_Latch;
 
 
 		public LongPollAlertTest(EngineApiClient client, String baseUrl, String jobId,
-				Double scoreThreshold, Double probabiltyThreshold, boolean shouldTimeout)
+				Double scoreThreshold, Double probabiltyThreshold, boolean shouldTimeout,
+				CountDownLatch latch)
 		{
 			m_Client = client;
 			m_BaseUrl = baseUrl;
@@ -301,6 +330,7 @@ public class AlertSubscriptionTest
 			m_ScoreThreshold = scoreThreshold;
 			m_ProbabiltyThreshold = probabiltyThreshold;
 			m_ShouldTimeout = shouldTimeout;
+			m_Latch = latch;
 		}
 
 		/**
@@ -328,7 +358,28 @@ public class AlertSubscriptionTest
 			{
 				final int TIMEOUT = 30;
 
-				Alert alert = m_Client.pollJobAlert(m_BaseUrl, m_JobId, TIMEOUT,
+				Alert alert = m_Client.pollJobAlert(m_BaseUrl, m_JobId, 3,
+						m_ScoreThreshold, m_ProbabiltyThreshold);
+
+				// This alert will timeout as the upload thread is still waiting
+				// on the latch
+				test(alert.isTimeout());
+				test(alert.getJobId().equals(m_JobId));
+				test(alert.getRecords() == null);
+				test(alert.getBucket() == null);
+
+				m_Latch.countDown();
+				try
+				{
+					m_Latch.await();
+				}
+				catch (InterruptedException e1)
+				{
+					s_Logger.error(e1);
+					test(false);
+				}
+
+				alert = m_Client.pollJobAlert(m_BaseUrl, m_JobId, TIMEOUT,
 						m_ScoreThreshold, m_ProbabiltyThreshold);
 
 				// may get errors about the job not running if the data
@@ -389,6 +440,7 @@ public class AlertSubscriptionTest
 					}
 				}
 
+				s_Logger.info("Got alert for job " + m_JobId);
 				m_TestPassed = true;
 			}
 			catch (JsonParseException e)
@@ -426,14 +478,17 @@ public class AlertSubscriptionTest
 		String m_BaseUrl;
 		String m_JobId;
 		File m_File;
+		CountDownLatch m_Latch;
 
-		public DataUploader(EngineApiClient client, String jobId, String baseUrl, File file)
+		public DataUploader(EngineApiClient client, String jobId, String baseUrl, File file,
+				CountDownLatch latch)
 		throws IOException
 		{
 			m_Client = client;
 			m_BaseUrl = baseUrl;
 			m_JobId = jobId;
 			m_File = file;
+			m_Latch = latch;
 		}
 
 		/**
@@ -463,12 +518,20 @@ public class AlertSubscriptionTest
 		{
 			try
 			{
+				m_Latch.countDown();
+				m_Latch.await();
+
 				slowUpload(m_BaseUrl, m_JobId, m_File, 200);
 				m_Client.closeJob(m_BaseUrl, m_JobId);
 			}
 			catch (IOException e)
 			{
-				e.printStackTrace();
+				s_Logger.error(e);
+				test(false);
+			}
+			catch (InterruptedException e)
+			{
+				s_Logger.error(e);
 				test(false);
 			}
 		}
