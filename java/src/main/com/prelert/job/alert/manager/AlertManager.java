@@ -245,23 +245,27 @@ public class AlertManager implements TimeoutHandler
 								.build();
     	alert.setUri(uri);
 
+
+		List<AnomalyRecord> records = new ArrayList<>();
+		for (Detector detector : bucket.getDetectors())
+		{
+			for (AnomalyRecord r : detector.getRecords())
+			{
+				if (r.getNormalizedProbability() > listener.getNormalisedProbThreshold())
+				{
+					records.add(r);
+				}
+			}
+		}
+
+
     	if (listener.isAnomalyScoreAlert(bucket.getAnomalyScore()))
     	{
+    		bucket.setRecords(records);
     		alert.setBucket(bucket);
     	}
     	else
     	{
-    		List<AnomalyRecord> records = new ArrayList<>();
-    		for (Detector detector : bucket.getDetectors())
-    		{
-    			for (AnomalyRecord r : detector.getRecords())
-    			{
-    				if (r.getNormalizedProbability() > listener.getNormalisedProbThreshold())
-    				{
-    					records.add(r);
-    				}
-    			}
-    		}
     		alert.setRecords(records);
     	}
 
