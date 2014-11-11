@@ -27,7 +27,7 @@
 
 package com.prelert.job.persistence;
 
-import com.prelert.job.MemoryUsage;
+import com.prelert.job.ModelSizeStats;
 
 import com.prelert.job.quantiles.Quantiles;
 import com.prelert.rs.data.Bucket;
@@ -53,9 +53,9 @@ public interface JobResultsPersister
 
 	/**
 	 * Persist the memory usage data
-	 * @param memoryUsage
+	 * @param modelSizeStats
 	 */
-	public void persistMemoryUsage(MemoryUsage memoryUsage);
+	public void persistModelSizeStats(ModelSizeStats modelSizeStats);
 
 	/**
 	 * Increment the jobs bucket result count by <code>count</code>

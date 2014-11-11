@@ -41,26 +41,26 @@ import org.apache.log4j.Logger;
  * for the Java process.
  */
 @JsonIgnoreProperties({"id"})
-public class MemoryUsage
+public class ModelSizeStats
 {
 	/**
 	 * Field Names
 	 */
 	public static final String ID = "id";
-	public static final String VALUE = "value";
-	public static final String NUMBER_BY_FIELDS = "numberByFields";
-	public static final String NUMBER_PARTITION_FIELDS = "numberPartitionFields";
+	public static final String MODEL_BYTES = "modelBytes";
+	public static final String TOTAL_BY_FIELD_COUNT = "totalByFieldCount";
+	public static final String TOTAL_PARTITION_FIELD_COUNT = "totalPartitionFieldCount";
 
     /**
      * Elasticsearch type
      */
-	public static final String TYPE = "memoryUsage";
+	public static final String TYPE = "modelSizeStats";
     
-    private static final Logger s_Logger = Logger.getLogger(MemoryUsage.class);
+    private static final Logger s_Logger = Logger.getLogger(ModelSizeStats.class);
 
-	private long m_Value;
-	private long m_NumberByFields;
-	private long m_NumberPartitionFields;
+	private long m_ModelBytes;
+	private long m_TotalByFieldCount;
+	private long m_TotalPartitionFieldCount;
 
 	public String getId()
 	{
@@ -71,39 +71,39 @@ public class MemoryUsage
 	{
 	}
 
-	public void setValue(long m)
+	public void setModelBytes(long m)
 	{
-		m_Value = m;
+		m_ModelBytes = m;
 	}
 
-	public long getValue()
+	public long getModelBytes()
 	{
-		return m_Value;
+		return m_ModelBytes;
 	}
 
-	public void setNumberByFields(long m)
+	public void setTotalByFieldCount(long m)
 	{
-		m_NumberByFields = m;
+		m_TotalByFieldCount = m;
 	}
 
-	public long getNumberByFields()
+	public long getTotalByFieldCount()
 	{
-		return m_NumberByFields;
+		return m_TotalByFieldCount;
 	}
 
-	public void setNumberPartitionFields(long m)
+	public void setTotalPartitionFieldCount(long m)
 	{
-		m_NumberPartitionFields = m;
+		m_TotalPartitionFieldCount = m;
 	}
 
-	public long getNumberPartitionFields()
+	public long getTotalPartitionFieldCount()
 	{
-		return m_NumberPartitionFields;
+		return m_TotalPartitionFieldCount;
 	}
 
 
 	/**
-	 * Create a new <code>MemoryUsage</code> and populate it from the JSON parser.
+	 * Create a new <code>ModelSizeStats</code> and populate it from the JSON parser.
 	 * The parser must be pointing at the start of the object then all the object's
 	 * fields are read and if they match the property names the appropriate
 	 * members are set.
@@ -113,18 +113,18 @@ public class MemoryUsage
 	 *
 	 * @param parser The JSON Parser should be pointing to the start of the object,
 	 * when the function returns it will be pointing to the end.
-	 * @return The new MemoryUsage
+	 * @return The new ModelSizeStats
 	 * @throws JsonParseException
 	 * @throws IOException
 	 * @throws AutoDetectParseException
 	 */
-	static public MemoryUsage parseJson(JsonParser parser)
+	static public ModelSizeStats parseJson(JsonParser parser)
 	throws JsonParseException, IOException, AutoDetectParseException
 	{
 		JsonToken token = parser.getCurrentToken();
 		if (JsonToken.START_OBJECT != token)
 		{
-			String msg = "Cannot parse MemoryUsage. The first token '" +
+			String msg = "Cannot parse ModelSizeStats. The first token '" +
 				parser.getText() + ", is not the start token";
 			s_Logger.error(msg);
 			throw new AutoDetectParseException(msg);
@@ -136,7 +136,7 @@ public class MemoryUsage
 
 
 	/**
-	 * Create a new <code>MemoryUsage</code> and populate it from the JSON parser.
+	 * Create a new <code>ModelSizeStats</code> and populate it from the JSON parser.
 	 * The parser must be pointing at the first token inside the object.  It
 	 * is assumed that prior code has validated that the previous token was
 	 * the start of an object.  Then all the object's fields are read and if
@@ -147,15 +147,15 @@ public class MemoryUsage
 	 *
 	 * @param parser The JSON Parser should be pointing to the start of the object,
 	 * when the function returns it will be pointing to the end.
-	 * @return The new MemoryUsage
+	 * @return The new ModelSizeStats
 	 * @throws JsonParseException
 	 * @throws IOException
 	 * @throws AutoDetectParseException
 	 */
-	static public MemoryUsage parseJsonAfterStartObject(JsonParser parser)
+	static public ModelSizeStats parseJsonAfterStartObject(JsonParser parser)
 	throws JsonParseException, IOException, AutoDetectParseException
 	{
-		MemoryUsage memoryUsage = new MemoryUsage();
+		ModelSizeStats modelSizeStats = new ModelSizeStats();
 
 		JsonToken token = parser.getCurrentToken();
 
@@ -164,10 +164,10 @@ public class MemoryUsage
 			switch(token)
 			{
 			case START_OBJECT:
-				s_Logger.error("Start object parsed in MemoryUsage");
+				s_Logger.error("Start object parsed in ModelSizeStats");
 				break;
 			case END_OBJECT:
-				s_Logger.error("End object parsed in MemoryUsage");
+				s_Logger.error("End object parsed in ModelSizeStats");
 				break;
 			case FIELD_NAME:
 				String fieldName = parser.getCurrentName();
@@ -177,7 +177,7 @@ public class MemoryUsage
 					token = parser.nextToken();
 					if (token == JsonToken.VALUE_NUMBER_INT)
 					{
-						memoryUsage.setValue(parser.getLongValue());
+						modelSizeStats.setModelBytes(parser.getLongValue());
 					}
 					else
 					{
@@ -185,11 +185,11 @@ public class MemoryUsage
 										+ " as a long");
 					}
 					break;
-				case NUMBER_BY_FIELDS:
+				case TOTAL_BY_FIELD_COUNT:
 					token = parser.nextToken();
 					if (token == JsonToken.VALUE_NUMBER_INT)
 					{
-						memoryUsage.setNumberByFields(parser.getLongValue());
+						modelSizeStats.setTotalByFieldCount(parser.getLongValue());
 					}
 					else
 					{
@@ -197,11 +197,11 @@ public class MemoryUsage
 										+ " as a long");
 					}
 					break;
-				case NUMBER_PARTITION_FIELDS:
+				case TOTAL_PARTITION_FIELD_COUNT:
 					token = parser.nextToken();
 					if (token == JsonToken.VALUE_NUMBER_INT)
 					{
-						memoryUsage.setNumberPartitionFields(parser.getLongValue());
+						modelSizeStats.setTotalPartitionFieldCount(parser.getLongValue());
 					}
 					else
 					{
@@ -211,13 +211,13 @@ public class MemoryUsage
 					break;
 				default:
 					token = parser.nextToken();
-					s_Logger.warn(String.format("Parse error unknown field in MemoryUsage %s:%s",
+					s_Logger.warn(String.format("Parse error unknown field in ModelSizeStats %s:%s",
 							fieldName, parser.nextTextValue()));
 					break;
 				}
 				break;
 			default:
-				s_Logger.warn("Parsing error: Only simple fields expected in MemoryUsage, not "
+				s_Logger.warn("Parsing error: Only simple fields expected in ModelSizeStats, not "
 						+ token);
 				break;
 			}
@@ -225,7 +225,7 @@ public class MemoryUsage
 			token = parser.nextToken();
 		}
 
-		return memoryUsage;
+		return modelSizeStats;
 	}
 
 }
