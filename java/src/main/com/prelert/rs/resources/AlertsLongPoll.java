@@ -36,11 +36,14 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 import org.apache.log4j.Logger;
 
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.alert.manager.AlertManager;
+import com.prelert.rs.data.ErrorCode;
+import com.prelert.rs.provider.RestApiException;
 
 /**
  * The alerts long poll endpoint.
@@ -79,7 +82,19 @@ public class AlertsLongPoll extends ResourceWithJobManager
 			@Suspended final AsyncResponse asyncResponse)
     throws InterruptedException, UnknownJobException
 	{
-		s_Logger.debug("long poll alerts for job " + jobId);
+		s_Logger.debug(String.format("long poll alerts for job %s, anomalyScore >= %f "
+				+ "normalized prob >= %f", jobId, anomalyScoreThreshold,
+				normalizedProbabiltyThreshold));
+
+		if ((anomalyScoreThreshold < 0 || anomalyScoreThreshold >= 100.0)
+				|| (normalizedProbabiltyThreshold < 0 || normalizedProbabiltyThreshold >= 100.0))
+		{
+			String msg = String.format("Invalid alert parameters. %s (%.2f) and %s (%.2f) must "
+					+ "be in the range 0-100", SCORE, anomalyScoreThreshold,
+					PROBABILITY, normalizedProbabiltyThreshold);
+			s_Logger.info(msg);
+			throw new RestApiException(msg, ErrorCode.INVALID_THRESHOLD_ARGUMENT, Response.Status.BAD_REQUEST);
+		}
 
 		AlertManager alertManager = alertManager();
 		alertManager.registerRequest(asyncResponse, jobId, m_UriInfo.getBaseUri(),

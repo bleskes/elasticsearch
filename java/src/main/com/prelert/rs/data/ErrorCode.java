@@ -212,6 +212,7 @@ public enum ErrorCode
 	 */
 	MISSING_LOG_FILE(50102),
 
+
 	// Rest API errors
 	/**
 	 * The date query parameter is un-parsable as a date
@@ -227,7 +228,15 @@ public enum ErrorCode
 	/**
 	 * Cannot alert on a Job that isn't running
 	 */
-	JOB_NOT_RUNNING(60103);
+	JOB_NOT_RUNNING(60103),
+
+	/**
+	 * The threshold parameters supplied to the alert are invalid
+	 */
+	INVALID_THRESHOLD_ARGUMENT(60103);
+
+
+
 
 
 	private long m_ErrorCode;
