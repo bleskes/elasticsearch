@@ -38,7 +38,7 @@ import com.prelert.job.AnalysisLimits;
 import com.prelert.job.DataDescription;
 import com.prelert.job.Detector;
 import com.prelert.job.JobDetails;
-import com.prelert.job.MemoryUsage;
+import com.prelert.job.ModelSizeStats;
 import com.prelert.job.ModelState;
 import com.prelert.job.quantiles.Quantiles;
 import com.prelert.job.usage.Usage;
@@ -132,16 +132,16 @@ public class ElasticsearchMappings
 								.endObject()
 							.endObject()
 						.endObject()
-						.startObject(MemoryUsage.TYPE)
+						.startObject(ModelSizeStats.TYPE)
 							.field("type", "object")
 							.startObject("properties")
-								.startObject(MemoryUsage.VALUE)
+								.startObject(ModelSizeStats.MODEL_BYTES)
 									.field("type", "long")
 								.endObject()
-								.startObject(MemoryUsage.NUMBER_BY_FIELDS)
+								.startObject(ModelSizeStats.TOTAL_BY_FIELD_COUNT)
 									.field("type", "long")
 								.endObject()
-								.startObject(MemoryUsage.NUMBER_PARTITION_FIELDS)
+								.startObject(ModelSizeStats.TOTAL_PARTITION_FIELD_COUNT)
 									.field("type", "long")
 									.endObject()
 							.endObject()
@@ -468,28 +468,28 @@ public class ElasticsearchMappings
 
 
 	/**
-	 * Create the Elasticsearch mapping for {@linkplain MemoryUsage}.
+	 * Create the Elasticsearch mapping for {@linkplain ModelSizeStats}.
 	 * TODO
 	 * @return
 	 * @throws IOException
 	 */
-	static public XContentBuilder memoryUsageMapping()
+	static public XContentBuilder modelSizeStatsMapping()
 	throws IOException
 	{
 		XContentBuilder mapping = jsonBuilder()
 			.startObject()
-				.startObject(MemoryUsage.TYPE)
+				.startObject(ModelSizeStats.TYPE)
 					.startObject("_all")
 						.field("enabled",  false)
 					.endObject()
 					.startObject("properties")
-						.startObject(MemoryUsage.VALUE)
+						.startObject(ModelSizeStats.MODEL_BYTES)
 						    .field("type", "long")
 						.endObject()
-						.startObject(MemoryUsage.NUMBER_BY_FIELDS)
+						.startObject(ModelSizeStats.TOTAL_BY_FIELD_COUNT)
 							.field("type", "long")
 						.endObject()
-						.startObject(MemoryUsage.NUMBER_PARTITION_FIELDS)
+						.startObject(ModelSizeStats.TOTAL_PARTITION_FIELD_COUNT)
 							.field("type", "long")
 						.endObject()
 					.endObject()

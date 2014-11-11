@@ -29,7 +29,7 @@ package com.prelert.job;
 import java.net.URI;
 import java.util.Date;
 
-import com.prelert.job.MemoryUsage;
+import com.prelert.job.ModelSizeStats;
 
 import org.apache.log4j.Logger;
 
@@ -91,7 +91,7 @@ public class JobDetails
 	private AnalysisConfig m_AnalysisConfig;
 	private AnalysisLimits m_AnalysisLimits;
 	private DataDescription m_DataDescription;
-	private MemoryUsage m_MemoryUsage;
+	private ModelSizeStats m_ModelSizeStats;
 	
 	/* These URIs are transient they don't need to be persisted */
 	private URI m_Location;
@@ -332,16 +332,16 @@ public class JobDetails
 	
 	/**
 	* The memory usage object
-	* @return The MemoryUsage
+	* @return The ModelSizeStats
 	*/
-	public MemoryUsage getMemoryUsage()
+	public ModelSizeStats getModelSizeStats()
 	{
-		return m_MemoryUsage;
+		return m_ModelSizeStats;
 	}
 
-	public void setMemoryUsage(MemoryUsage memoryUsage)
+	public void setModelSizeStats(ModelSizeStats modelSizeStats)
 	{
-		m_MemoryUsage = memoryUsage;
+		m_ModelSizeStats = modelSizeStats;
 	}
 
 	/**

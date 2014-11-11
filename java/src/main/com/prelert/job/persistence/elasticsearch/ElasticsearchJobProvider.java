@@ -73,7 +73,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobIdAlreadyExistsException;
 import com.prelert.job.JobStatus;
-import com.prelert.job.MemoryUsage;
+import com.prelert.job.ModelSizeStats;
 import com.prelert.job.ModelState;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.persistence.JobProvider;
@@ -273,20 +273,20 @@ public class ElasticsearchJobProvider implements JobProvider
 			}
 			JobDetails details = m_ObjectMapper.convertValue(response.getSource(), JobDetails.class);
 
-			// Pull out the memoryUsage document, and add this to the JobDetails
-			GetResponse memoryUsageResponse = m_Client.prepareGet(
-				jobId, MemoryUsage.TYPE, MemoryUsage.TYPE).get();
-			if (!memoryUsageResponse.isExists())
+			// Pull out the modelSizeStats document, and add this to the JobDetails
+			GetResponse modelSizeStatsResponse = m_Client.prepareGet(
+				jobId, ModelSizeStats.TYPE, ModelSizeStats.TYPE).get();
+			if (!modelSizeStatsResponse.isExists())
 			{
 				String msg = "No memory usage details for job with id " 
-					+ jobId + " " + MemoryUsage.TYPE;
+					+ jobId + " " + ModelSizeStats.TYPE;
 				s_Logger.warn(msg);
 			}
 			else
 			{
-				MemoryUsage memoryUsage = m_ObjectMapper.convertValue(
-					memoryUsageResponse.getSource(), MemoryUsage.class);
-				details.setMemoryUsage(memoryUsage);
+				ModelSizeStats modelSizeStats = m_ObjectMapper.convertValue(
+					modelSizeStatsResponse.getSource(), ModelSizeStats.class);
+				details.setModelSizeStats(modelSizeStats);
 			}
 			return details;
 		}
@@ -347,7 +347,7 @@ public class ElasticsearchJobProvider implements JobProvider
 			XContentBuilder quantilesMapping = ElasticsearchMappings.quantilesMapping();
 			XContentBuilder modelStateMapping = ElasticsearchMappings.modelStateMapping();
 			XContentBuilder usageMapping = ElasticsearchMappings.usageMapping();
-			XContentBuilder memoryUsageMapping = ElasticsearchMappings.memoryUsageMapping();
+			XContentBuilder modelSizeStatsMapping = ElasticsearchMappings.modelSizeStatsMapping();
 						
 			m_Client.admin().indices()
 					.prepareCreate(job.getId())					
@@ -358,7 +358,7 @@ public class ElasticsearchJobProvider implements JobProvider
 					.addMapping(Quantiles.TYPE, quantilesMapping)
 					.addMapping(ModelState.TYPE, modelStateMapping)
 					.addMapping(Usage.TYPE, usageMapping)
-					.addMapping(MemoryUsage.TYPE, memoryUsageMapping)
+					.addMapping(ModelSizeStats.TYPE, modelSizeStatsMapping)
 					.get();
 
 			
