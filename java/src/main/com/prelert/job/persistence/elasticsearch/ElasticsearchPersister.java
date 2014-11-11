@@ -43,7 +43,7 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 
 import com.prelert.job.JobDetails;
-import com.prelert.job.MemoryUsage;
+import com.prelert.job.ModelSizeStats;
 import com.prelert.job.persistence.JobResultsPersister;
 import com.prelert.job.quantiles.Quantiles;
 import com.prelert.rs.data.AnomalyCause;
@@ -73,7 +73,7 @@ import com.prelert.rs.data.Detector;
  * <b>Quantiles</b> may contain model quantiles used in normalisation
  * and are stored in documents of type {@link Quantiles.TYPE}
  * <br/>
- * <h2>MemoryUsage</h2>
+ * <h2>ModelSizeStats</h2>
  * This is stored in a flat structure
  * <br/>
  * @see com.prelert.job.persistence.elasticsearch.ElasticsearchMappings
@@ -236,23 +236,23 @@ public class ElasticsearchPersister implements JobResultsPersister
 
 	/**
 	 * Persist the memory usage data
-	 * @param memoryUsage If <code>null</code> then returns straight away.
+	 * @param modelSizeStats If <code>null</code> then returns straight away.
 	 * @throws IOException
 	 */
 	@Override
-	public void persistMemoryUsage(MemoryUsage memoryUsage)
+	public void persistModelSizeStats(ModelSizeStats modelSizeStats)
 	{
-		if (memoryUsage == null)
+		if (modelSizeStats == null)
 		{
-			s_Logger.warn("No memoryUsage to persist for job " + m_JobId);
+			s_Logger.warn("No modelSizeStats to persist for job " + m_JobId);
 			return;
 		}
 
 		try
 		{
-			XContentBuilder content = serialiseMemoryUsage(memoryUsage);
+			XContentBuilder content = serialiseModelSizeStats(modelSizeStats);
 
-			m_Client.prepareIndex(m_JobId, MemoryUsage.TYPE, memoryUsage.getId())
+			m_Client.prepareIndex(m_JobId, ModelSizeStats.TYPE, modelSizeStats.getId())
 					.setSource(content)
 					.execute().actionGet();
 
@@ -266,7 +266,7 @@ public class ElasticsearchPersister implements JobResultsPersister
 		}
 		catch (IOException e)
 		{
-			s_Logger.error("Error writing memoryUsage", e);
+			s_Logger.error("Error writing modelSizeStats", e);
 			return;
 		}
 
@@ -343,20 +343,20 @@ public class ElasticsearchPersister implements JobResultsPersister
 	}
 
 	/**
-	 * Return the memoryUsage as serialisable content
-	 * @param memoryUsage
+	 * Return the modelSizeStats as serialisable content
+	 * @param modelSizeStats
 	 * @return
 	 * @throws IOException
 	 */
-	private XContentBuilder serialiseMemoryUsage(MemoryUsage memoryUsage)
+	private XContentBuilder serialiseModelSizeStats(ModelSizeStats modelSizeStats)
 	throws IOException
 	{
 		s_Logger.warn("---------------Doing serialisation of memory usage now");
 		
 		XContentBuilder builder = jsonBuilder().startObject()
-				.field(MemoryUsage.VALUE, memoryUsage.getValue())
-				.field(MemoryUsage.NUMBER_BY_FIELDS, memoryUsage.getNumberByFields())
-				.field(MemoryUsage.NUMBER_PARTITION_FIELDS, memoryUsage.getNumberPartitionFields())	
+				.field(ModelSizeStats.MODEL_BYTES, modelSizeStats.getModelBytes())
+				.field(ModelSizeStats.TOTAL_BY_FIELD_COUNT, modelSizeStats.getTotalByFieldCount())
+				.field(ModelSizeStats.TOTAL_PARTITION_FIELD_COUNT, modelSizeStats.getTotalPartitionFieldCount())
 				.endObject();
 
 		return builder;
