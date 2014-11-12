@@ -233,7 +233,12 @@ public enum ErrorCode
 	/**
 	 * The threshold parameters supplied to the alert are invalid
 	 */
-	INVALID_THRESHOLD_ARGUMENT(60104);
+	INVALID_THRESHOLD_ARGUMENT(60104),
+
+	/**
+	 *
+	 */
+	INVALID_TIMEOUT_ARGUMENT(60105);
 
 
 	private long m_ErrorCode;
