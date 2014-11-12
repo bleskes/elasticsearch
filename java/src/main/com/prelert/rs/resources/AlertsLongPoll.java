@@ -86,8 +86,8 @@ public class AlertsLongPoll extends ResourceWithJobManager
 				+ "normalized prob >= %f", jobId, anomalyScoreThreshold,
 				normalizedProbabiltyThreshold));
 
-		if ((anomalyScoreThreshold < 0 || anomalyScoreThreshold >= 100.0)
-				|| (normalizedProbabiltyThreshold < 0 || normalizedProbabiltyThreshold >= 100.0))
+		if ((anomalyScoreThreshold < 0 || anomalyScoreThreshold > 100.0)
+				|| (normalizedProbabiltyThreshold < 0 || normalizedProbabiltyThreshold > 100.0))
 		{
 			String msg = String.format("Invalid alert parameters. %s (%.2f) and %s (%.2f) must "
 					+ "be in the range 0-100", SCORE, anomalyScoreThreshold,
