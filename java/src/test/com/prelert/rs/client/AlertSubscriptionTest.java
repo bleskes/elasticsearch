@@ -36,9 +36,11 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
@@ -49,6 +51,7 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 
 import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
@@ -57,7 +60,10 @@ import com.prelert.job.JobConfiguration;
 import com.prelert.job.alert.Alert;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.ApiError;
+import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.ErrorCode;
+import com.prelert.rs.data.Pagination;
+import com.prelert.rs.data.SingleDocument;
 
 
 /**
@@ -92,7 +98,25 @@ public class AlertSubscriptionTest
 	static final public String [] JOB_IDS = {ALERTING_JOB_1, ALERTING_JOB_2, ALERTING_JOB_3,
 		ALERTING_JOB_3_B, ALERTING_JOB_4};
 
-	static private void setupJobs(String baseUrl, EngineApiClient client)
+
+
+	private List<URI> m_RecordsUris;
+	List<URI> syncRecordsUris;
+
+	private List<URI> m_BucketUris;
+	List<URI> syncBucketUris;
+
+
+	public AlertSubscriptionTest()
+	{
+		m_RecordsUris = new ArrayList<>();
+		syncRecordsUris = Collections.synchronizedList(m_RecordsUris);
+
+		m_BucketUris = new ArrayList<>();
+		syncBucketUris = Collections.synchronizedList(m_RecordsUris);
+	}
+
+	private void setupJobs(String baseUrl, EngineApiClient client)
 	throws ClientProtocolException, IOException
 	{
 		for (String s : JOB_IDS)
@@ -146,12 +170,86 @@ public class AlertSubscriptionTest
 
 
 	/**
+	 * Check the alert's URL is valid and returns records
+	 *
+	 * @param uri
+	 * @param minNormalisedProb
+	 * @return
+	 * @throws JsonParseException
+	 * @throws JsonMappingException
+	 * @throws IOException
+	 */
+	public boolean validateRecordsUrl(EngineApiClient client, URI uri, double minNormalisedProb)
+	throws JsonParseException, JsonMappingException, IOException
+	{
+		Pagination<AnomalyRecord> records = client.get(uri, new TypeReference<Pagination<AnomalyRecord>>() {});
+		test(records != null);
+
+		// Because of re-normalisation the anomaly score might not be what it
+		// was when the alert was triggered
+
+		/*
+		test(records.getHitCount() > 0);
+		test(records.getDocumentCount() > 0);
+		test(records.getDocuments().size() == records.getDocumentCount());
+
+		for (AnomalyRecord r : records.getDocuments())
+		{
+			test(r.getNormalizedProbability() >= minNormalisedProb);
+		}
+
+		while (records.getNextPage() != null)
+		{
+			records = client.get(records.getNextPage(), new TypeReference<Pagination<AnomalyRecord>>() {});
+			test(records != null);
+			test(records.getHitCount() > 0);
+			test(records.getDocumentCount() > 0);
+			test(records.getDocuments().size() == records.getDocumentCount());
+
+			for (AnomalyRecord r : records.getDocuments())
+			{
+				test(r.getNormalizedProbability() >= minNormalisedProb);
+			}
+		}
+		 */
+		return true;
+	}
+
+	/**
+	 * Check that the alert's bucket URL points to a bucket and that
+	 * bucket has records
+	 *
+	 * @param uri
+	 * @param minAnomalyScore
+	 * @return
+	 * @throws JsonParseException
+	 * @throws JsonMappingException
+	 * @throws IOException
+	 */
+	public boolean validateBucketUrl(EngineApiClient client, URI uri, double minAnomalyScore)
+	throws JsonParseException, JsonMappingException, IOException
+	{
+		SingleDocument<Bucket> bucket = client.get(uri, new TypeReference<SingleDocument<Bucket>>() {});
+		test(bucket != null);
+		test(bucket.getDocument() != null);
+		test(bucket.getDocument().getRecords().isEmpty() == false);
+		test(bucket.getDocument().getRecords().size() == bucket.getDocument().getRecordCount());
+
+		// Because of re-normalisation the anomaly score might not be what it
+		// was when the alert was triggered
+		//test(bucket.getDocument().getAnomalyScore() >= minAnomalyScore);
+
+		return true;
+	}
+
+
+	/**
 	 * Throws if <code>condition</code> if false
 	 *
 	 * @param condition
 	 * @throws IllegalStateException
 	 */
-	static public void test(boolean condition)
+	public void test(boolean condition)
 	throws IllegalStateException
 	{
 		if (condition == false)
@@ -160,154 +258,13 @@ public class AlertSubscriptionTest
 		}
 	}
 
-	public static void main(String[] args)
-	throws FileNotFoundException, IOException, InterruptedException
-	{
-		configureLogging();
-
-		String baseUrl = API_BASE_URL;
-		if (args.length > 0)
-		{
-			baseUrl = args[0];
-		}
-
-		s_Logger.info("Testing Service at " + baseUrl);
-
-		final String prelertTestDataHome = System.getProperty("prelert.test.data.home");
-		if (prelertTestDataHome == null)
-		{
-			s_Logger.error("Error property prelert.test.data.home is not set");
-			return;
-		}
-
-		EngineApiClient client = new EngineApiClient();
-		setupJobs(baseUrl, client);
-
-		Alert alert = client.pollJobAlert(baseUrl, "non-existing-job", 5, null, null);
-		test(alert == null);
-		ApiError error = client.getLastError();
-		test(error != null);
-		test(error.getErrorCode() == ErrorCode.MISSING_JOB_ERROR);
-
-		alert = client.pollJobAlert(baseUrl, ALERTING_JOB_1, 5, null, null);
-		test(alert == null);
-		error = client.getLastError();
-		test(error != null);
-		test(error.getErrorCode() == ErrorCode.JOB_NOT_RUNNING);
-
-
-
-		boolean passed = true;
-		for (String jobId : JOB_IDS)
-		{
-			List<Thread> uploaderThreads = new ArrayList<>();
-			List<LongPollAlertTest> longPollTests = new ArrayList<>();
-			List<Thread> alertTestThreads = new ArrayList<>();
-
-			File networkDataFile = new File(prelertTestDataHome +
-					"/engine_api_integration_test/network.csv");
-
-			CountDownLatch latch = new CountDownLatch(2);
-
-			DataUploader dl = new DataUploader(new EngineApiClient(), jobId, baseUrl,
-					networkDataFile, latch);
-			dl.initiateUpload(); // makes the job active
-			uploaderThreads.add(new Thread(dl));
-
-			LongPollAlertTest longPoll;
-			if (jobId == ALERTING_JOB_4)
-			{
-				// this one will timeout
-				longPoll = new LongPollAlertTest(client, baseUrl, jobId, 99.9, 99.9, true, latch);
-			}
-			else if (jobId == ALERTING_JOB_3_B)
-			{
-				// this job is run in paralled with ALERTING_JOB_3
-				continue;
-			}
-			else if (jobId == ALERTING_JOB_3)
-			{
-				// do 2 jobs in parallel
-				dl = new DataUploader(new EngineApiClient(), ALERTING_JOB_3_B, baseUrl, networkDataFile, latch);
-				dl.initiateUpload(); // makes the job active
-				uploaderThreads.add(new Thread(dl));
-
-				longPoll = new LongPollAlertTest(client, baseUrl, ALERTING_JOB_3_B, null, 15.0, false, latch);
-				longPollTests.add(longPoll);
-				Thread testThread = new Thread(longPoll, ALERTING_JOB_3_B);
-				alertTestThreads.add(testThread);
-				testThread.start();
-
-
-				longPoll = new LongPollAlertTest(client, baseUrl, jobId, null, 5.0, false, latch);
-			}
-			else if (jobId == ALERTING_JOB_2)
-			{
-				longPoll = new LongPollAlertTest(client, baseUrl, jobId, 7.0, null, false, latch);
-			}
-			else
-			{
-				// have 2 alerters for this job
-				longPoll = new LongPollAlertTest(client, baseUrl, jobId, 14.0, 2.3, false, latch);
-				Thread th = new Thread(longPoll);
-				alertTestThreads.add(th);
-				th.start();
-
-				longPoll = new LongPollAlertTest(client, baseUrl, jobId, 4.5, 2.3, false, latch);
-				longPollTests.add(longPoll);
-			}
-
-			longPollTests.add(longPoll);
-			Thread testThread = new Thread(longPoll, jobId);
-			alertTestThreads.add(testThread);
-			testThread.start();
-
-			for (Thread th : uploaderThreads)
-			{
-				th.start();
-			}
-
-			for (Thread th : uploaderThreads)
-			{
-				th.join();
-			}
-
-			// if alerting threads haven't stopped now they never will
-			for (LongPollAlertTest test : longPollTests)
-			{
-				test.quit();
-			}
-
-			for (Thread th : alertTestThreads)
-			{
-				th.join();
-			}
-
-			for (LongPollAlertTest test : longPollTests)
-			{
-				passed = passed && test.isTestPassed();
-			}
-		}
-
-		if (passed)
-		{
-			s_Logger.info("All alert tests passed");
-		}
-		else
-		{
-			s_Logger.info("Alert tests failed");
-			System.exit(1);
-		}
-
-	}
-
 
 	/**
 	 * Subscribe to the long poll alerts end point for the job.
-	 * When the alert is fired chech its values and if it timed
+	 * When the alert is fired check its values and if it timed
 	 * out or not.
 	 */
-	static private class LongPollAlertTest implements Runnable
+	private class LongPollAlertTest implements Runnable
 	{
 		EngineApiClient m_Client;
 		String m_BaseUrl;
@@ -349,7 +306,6 @@ public class AlertSubscriptionTest
 		{
 			return m_TestPassed;
 		}
-
 
 		@Override
 		public void run()
@@ -419,6 +375,15 @@ public class AlertSubscriptionTest
 					{
 						test(alert.getAnomalyScore() >= m_ScoreThreshold ||
 								alert.getNormalizedProbability() >= m_ProbabiltyThreshold);
+
+						if (alert.getAnomalyScore() > m_ScoreThreshold)
+						{
+							m_BucketUris.add(alert.getUri());
+						}
+						else
+						{
+							m_RecordsUris.add(alert.getUri());
+						}
 					}
 					else if (m_ScoreThreshold != null)
 					{
@@ -426,6 +391,8 @@ public class AlertSubscriptionTest
 						test(alert.getRecords() == null);
 						test(alert.getBucket() != null);
 						test(alert.getBucket().getAnomalyScore() >= m_ScoreThreshold);
+
+						m_BucketUris.add(alert.getUri());
 					}
 					else if (m_ProbabiltyThreshold != null)
 					{
@@ -437,6 +404,8 @@ public class AlertSubscriptionTest
 						{
 							test(r.getNormalizedProbability() >= m_ProbabiltyThreshold);
 						}
+
+						m_RecordsUris.add(alert.getUri());
 					}
 				}
 
@@ -472,7 +441,7 @@ public class AlertSubscriptionTest
 	 * rest of the file.
 	 *
 	 */
-	static private class DataUploader implements Runnable
+	private class DataUploader implements Runnable
 	{
 		EngineApiClient m_Client;
 		String m_BaseUrl;
@@ -584,6 +553,176 @@ public class AlertSubscriptionTest
 
 			m_Client.streamingUpload(baseUrl, jobId, pipedIn, false);
 		}
+	}
 
+
+	public void runTests(String baseUrl, String prelertTestDataHome)
+	throws ClientProtocolException, IOException, InterruptedException
+	{
+		EngineApiClient client = new EngineApiClient();
+		setupJobs(baseUrl, client);
+
+		Alert alert = client.pollJobAlert(baseUrl, "non-existing-job", 5, null, null);
+		test(alert == null);
+		ApiError error = client.getLastError();
+		test(error != null);
+		test(error.getErrorCode() == ErrorCode.INVALID_THRESHOLD_ARGUMENT);
+
+		alert = client.pollJobAlert(baseUrl, "non-existing-job", 5, 10.0, null);
+		test(alert == null);
+		error = client.getLastError();
+		test(error != null);
+		test(error.getErrorCode() == ErrorCode.MISSING_JOB_ERROR);
+
+		alert = client.pollJobAlert(baseUrl, ALERTING_JOB_1, 5, 10.0, null);
+		test(alert == null);
+		error = client.getLastError();
+		test(error != null);
+		test(error.getErrorCode() == ErrorCode.JOB_NOT_RUNNING);
+
+		boolean passed = true;
+		for (String jobId : JOB_IDS)
+		{
+			List<Thread> uploaderThreads = new ArrayList<>();
+			List<LongPollAlertTest> longPollTests = new ArrayList<>();
+			List<Thread> alertTestThreads = new ArrayList<>();
+
+			File networkDataFile = new File(prelertTestDataHome +
+					"/engine_api_integration_test/network.csv");
+
+			CountDownLatch latch = new CountDownLatch(2);
+
+			DataUploader dl = new DataUploader(new EngineApiClient(), jobId, baseUrl,
+					networkDataFile, latch);
+			dl.initiateUpload(); // makes the job active
+			uploaderThreads.add(new Thread(dl));
+
+			LongPollAlertTest longPoll;
+			if (jobId == ALERTING_JOB_4)
+			{
+				// this one will timeout
+				longPoll = new LongPollAlertTest(client, baseUrl, jobId, 99.9, 99.9, true, latch);
+			}
+			else if (jobId == ALERTING_JOB_3_B)
+			{
+				// this job is run in paralled with ALERTING_JOB_3
+				continue;
+			}
+			else if (jobId == ALERTING_JOB_3)
+			{
+				// do 2 jobs in parallel
+				dl = new DataUploader(new EngineApiClient(), ALERTING_JOB_3_B, baseUrl, networkDataFile, latch);
+				dl.initiateUpload(); // makes the job active
+				uploaderThreads.add(new Thread(dl));
+
+				longPoll = new LongPollAlertTest(client, baseUrl, ALERTING_JOB_3_B, null, 15.0, false, latch);
+				longPollTests.add(longPoll);
+				Thread testThread = new Thread(longPoll, ALERTING_JOB_3_B);
+				alertTestThreads.add(testThread);
+				testThread.start();
+
+
+				longPoll = new LongPollAlertTest(client, baseUrl, jobId, null, 5.0, false, latch);
+			}
+			else if (jobId == ALERTING_JOB_2)
+			{
+				longPoll = new LongPollAlertTest(client, baseUrl, jobId, 7.0, null, false, latch);
+			}
+			else
+			{
+				// have 2 alerters for this job
+				longPoll = new LongPollAlertTest(client, baseUrl, jobId, 14.0, 2.3, false, latch);
+				Thread th = new Thread(longPoll);
+				alertTestThreads.add(th);
+				th.start();
+
+				longPoll = new LongPollAlertTest(client, baseUrl, jobId, 4.5, 2.3, false, latch);
+				longPollTests.add(longPoll);
+			}
+
+			longPollTests.add(longPoll);
+			Thread testThread = new Thread(longPoll, jobId);
+			alertTestThreads.add(testThread);
+			testThread.start();
+
+			for (Thread th : uploaderThreads)
+			{
+				th.start();
+			}
+
+			for (Thread th : uploaderThreads)
+			{
+				th.join();
+			}
+
+			// if alerting threads haven't stopped now they never will
+			for (LongPollAlertTest test : longPollTests)
+			{
+				test.quit();
+			}
+
+			for (Thread th : alertTestThreads)
+			{
+				th.join();
+			}
+
+			for (LongPollAlertTest test : longPollTests)
+			{
+				passed = passed && test.isTestPassed();
+			}
+		}
+
+		// HACK - wait for the records to be written to Elasticsearch
+		Thread.sleep(2000);
+
+		for (URI uri : this.m_BucketUris)
+		{
+			boolean uriOk = validateBucketUrl(client, uri, 0.0);
+			passed =  passed && uriOk;
+		}
+
+		for (URI uri : this.m_RecordsUris)
+		{
+			boolean uriOk = validateRecordsUrl(client, uri, 0.0);
+			passed =  passed && uriOk;
+		}
+
+		if (passed)
+		{
+			s_Logger.info("All alert tests passed");
+
+			for (String s : JOB_IDS)
+			{
+				client.deleteJob(baseUrl, s);
+			}
+		}
+		else
+		{
+			s_Logger.info("Alert tests failed");
+			System.exit(1);
+		}
+	}
+
+
+	public static void main(String[] args)
+	throws FileNotFoundException, IOException, InterruptedException
+	{
+		configureLogging();
+
+		String baseUrl = API_BASE_URL;
+		if (args.length > 0)
+		{
+			baseUrl = args[0];
+		}
+
+		s_Logger.info("Testing Service at " + baseUrl);
+		final String prelertTestDataHome = System.getProperty("prelert.test.data.home");
+		if (prelertTestDataHome == null)
+		{
+			s_Logger.error("Error property prelert.test.data.home is not set");
+			return;
+		}
+
+		new AlertSubscriptionTest().runTests(baseUrl, prelertTestDataHome);
 	}
 }

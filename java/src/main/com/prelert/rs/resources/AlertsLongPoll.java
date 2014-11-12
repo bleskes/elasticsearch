@@ -96,7 +96,7 @@ public class AlertsLongPoll extends ResourceWithJobManager
 			throw new RestApiException(msg, ErrorCode.INVALID_THRESHOLD_ARGUMENT, Response.Status.BAD_REQUEST);
 		}
 
-		if (anomalyScoreThreshold >= 100 && normalizedProbabiltyThreshold >= 100)
+		if (anomalyScoreThreshold >= 100.0 && normalizedProbabiltyThreshold >= 100.0)
 		{
 			String msg = String.format("No alerts will be generated if both threshold parameters are 100");
 			s_Logger.info(msg);

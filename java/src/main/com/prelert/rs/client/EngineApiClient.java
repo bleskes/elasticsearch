@@ -33,6 +33,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.net.URLEncoder;
 import java.util.Collections;
 import java.util.Map;
@@ -1351,11 +1352,47 @@ public class EngineApiClient implements Closeable
 	 * @throws JsonParseException
 	 * @throws JsonMappingException
 	 * @throws IOException
+	 * @see get(URI, TypeReference<T>)
 	 */
 	public <T> T get(String fullUrl, TypeReference<T> typeRef)
 	throws JsonParseException, JsonMappingException, IOException
 	{
 		HttpGet get = new HttpGet(fullUrl);
+		return get(get,typeRef);
+	}
+
+	/**
+	 * A generic HTTP GET to any Url. The result is converted from Json to
+	 * the type referenced in <code>typeRef</code>. A <code>TypeReference</code>
+	 * has to be used to preserve the generic type information that is usually
+	 * lost in due to erasure.
+	 * <br/>
+	 * If the response code is 200 or 404 try to parse the returned content
+	 * into an object of the generic parameter type <code>T</code>.
+	 * The 404 status code is not considered an error it simply means an
+	 * empty document was returned by the API.
+	 * <br/>
+	 * This method is useful for paging through a set of results via the
+	 * next or previous page links in a {@link Pagination} object.
+	 *
+	 * @param uri
+	 * @param typeRef
+	 * @return A new T or <code>null</code>
+	 * @throws JsonParseException
+	 * @throws JsonMappingException
+	 * @throws IOException
+	 * @see get(String, TypeReference<T>)
+	 */
+	public <T> T get(URI uri, TypeReference<T> typeRef)
+	throws JsonParseException, JsonMappingException, IOException
+	{
+		HttpGet get = new HttpGet(uri);
+		return get(get,typeRef);
+	}
+
+	private <T> T get(HttpGet get, TypeReference<T> typeRef)
+	throws JsonParseException, JsonMappingException, IOException
+	{
 		CloseableHttpResponse response = m_HttpClient.execute(get);
 
 		try
@@ -1377,7 +1414,7 @@ public class EngineApiClient implements Closeable
 				String msg = String.format(
 						"GET returned status code %d for url %s. "
 						+ "Returned content = %s",
-						response.getStatusLine().getStatusCode(), fullUrl,
+						response.getStatusLine().getStatusCode(), get.getURI(),
 						content);
 
 				s_Logger.error(msg);
