@@ -2,7 +2,8 @@
  * ELASTICSEARCH CONFIDENTIAL
  * __________________
  *
- *  [2014] Elasticsearch Incorporated. All Rights Reserved.
+ *  [2014] Elasticsearch Incorporated
+ *  All Rights Reserved.
  *
  * NOTICE:  All information contained herein is, and remains
  * the property of Elasticsearch Incorporated and its suppliers,
@@ -14,7 +15,6 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Elasticsearch Incorporated.
  */
-
 package org.elasticsearch.license.plugin;
 
 import org.elasticsearch.common.settings.ImmutableSettings;
