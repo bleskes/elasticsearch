@@ -268,7 +268,7 @@ public class AlertManager implements TimeoutHandler
     	{
     		alert.setRecords(records);
 
-    		String endEpoch = Long.toString((bucket.getTimestamp().getTime() + 1) / 1000);
+    		String endEpoch = Long.toString((bucket.getTimestamp().getTime() / 1000) + 1);
 
     		uriBuilder.path(Records.ENDPOINT)
     			.queryParam(ResourceWithJobManager.START_QUERY_PARAM, bucket.getId())
