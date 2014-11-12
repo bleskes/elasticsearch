@@ -31,7 +31,6 @@ import org.elasticsearch.cluster.ClusterChangedEvent;
 import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.cluster.ClusterStateListener;
 import org.elasticsearch.common.bytes.BytesReference;
-import org.elasticsearch.common.collect.ImmutableList;
 import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.component.AbstractComponent;
 import org.elasticsearch.common.component.LifecycleListener;
@@ -43,7 +42,6 @@ import org.elasticsearch.indices.IndicesService;
 import org.elasticsearch.threadpool.ThreadPool;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -55,7 +53,6 @@ public class AlertManager extends AbstractComponent {
     private final AlertScheduler scheduler;
     private final AlertsStore alertsStore;
     private final TriggerManager triggerManager;
-    private final ClusterService clusterService;
     private final AlertActionManager actionManager;
     private final AlertActionRegistry actionRegistry;
     private final AtomicBoolean started = new AtomicBoolean(false);
@@ -70,7 +67,6 @@ public class AlertManager extends AbstractComponent {
         this.threadPool = threadPool;
         this.scheduler.setAlertManager(this);
         this.alertsStore = alertsStore;
-        this.clusterService = clusterService;
         this.triggerManager = triggerManager;
         this.actionManager = actionManager;
         this.actionManager.setAlertManager(this);
@@ -100,11 +96,6 @@ public class AlertManager extends AbstractComponent {
         Tuple<Alert, IndexResponse> result = alertsStore.addAlert(alertName, alertSource);
         scheduler.add(alertName, result.v1());
         return result.v2();
-    }
-
-    public List<Alert> getAllAlerts() {
-        ensureStarted();
-        return ImmutableList.copyOf(alertsStore.getAlerts().values());
     }
 
     public boolean isStarted() {
