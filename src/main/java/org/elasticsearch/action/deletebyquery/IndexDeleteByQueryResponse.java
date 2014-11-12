@@ -19,7 +19,6 @@
 
 package org.elasticsearch.action.deletebyquery;
 
-import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionResponse;
 import org.elasticsearch.action.ActionWriteResponse;
 import org.elasticsearch.action.ShardOperationFailedException;
@@ -52,46 +51,6 @@ public class IndexDeleteByQueryResponse extends ActionResponse {
         return this.index;
     }
 
-    /**
-     * The total number of shards the delete by query was executed on.
-     *
-     * @deprecated use {@link #getShardInfo()}
-     */
-    @Deprecated
-    public int getTotalShards() {
-        return shardInfo.getTotal();
-    }
-
-    /**
-     * The successful number of shards the delete by query was executed on.
-     *
-     * @deprecated use {@link #getShardInfo()}
-     */
-    @Deprecated
-    public int getSuccessfulShards() {
-        return shardInfo.getSuccessful();
-    }
-
-    /**
-     * The failed number of shards the delete by query was executed on.
-     *
-     * @deprecated use {@link #getShardInfo()}
-     */
-    @Deprecated
-    public int getFailedShards() {
-        return shardInfo.getFailed();
-    }
-
-    /**
-     * The actual
-     *
-     * @deprecated use {@link #getShardInfo()}
-     */
-    @Deprecated
-    public ShardOperationFailedException[] getFailures() {
-        return shardInfo.getFailures();
-    }
-
     public ActionWriteResponse.ShardInfo getShardInfo() {
         return shardInfo;
     }
@@ -100,27 +59,13 @@ public class IndexDeleteByQueryResponse extends ActionResponse {
     public void readFrom(StreamInput in) throws IOException {
         super.readFrom(in);
         index = in.readString();
-        if (in.getVersion().before(Version.V_1_5_0)) {
-            in.readVInt();
-            in.readVInt();
-            in.readVInt();
-        }
-        if (in.getVersion().onOrAfter(Version.V_1_5_0)) {
-            shardInfo = ActionWriteResponse.ShardInfo.readShardInfo(in);
-        }
+        shardInfo = ActionWriteResponse.ShardInfo.readShardInfo(in);
     }
 
     @Override
     public void writeTo(StreamOutput out) throws IOException {
         super.writeTo(out);
         out.writeString(index);
-        if (out.getVersion().before(Version.V_1_5_0)) {
-            out.writeVInt(0);
-            out.writeVInt(0);
-            out.writeVInt(0);
-        }
-        if (out.getVersion().onOrAfter(Version.V_1_5_0)) {
-            shardInfo.writeTo(out);
-        }
+        shardInfo.writeTo(out);
     }
 }

@@ -19,7 +19,6 @@
 
 package org.elasticsearch.action;
 
-import org.elasticsearch.Version;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Streamable;
@@ -43,17 +42,13 @@ public abstract class ActionWriteResponse extends ActionResponse {
     @Override
     public void readFrom(StreamInput in) throws IOException {
         super.readFrom(in);
-        if (in.getVersion().onOrAfter(Version.V_1_5_0)) {
-            shardInfo = ActionWriteResponse.ShardInfo.readShardInfo(in);
-        }
+        shardInfo = ActionWriteResponse.ShardInfo.readShardInfo(in);
     }
 
     @Override
     public void writeTo(StreamOutput out) throws IOException {
         super.writeTo(out);
-        if (out.getVersion().onOrAfter(Version.V_1_5_0)) {
-            shardInfo.writeTo(out);
-        }
+        shardInfo.writeTo(out);
     }
 
     public ShardInfo getShardInfo() {
@@ -89,14 +84,6 @@ public abstract class ActionWriteResponse extends ActionResponse {
                 failures.add(new ActionWriteResponse.ShardInfo.Failure(failure.index(), failure.shardId(), null, failure.reason(), failure.status(), true));
             }
             for (ActionWriteResponse response : responses) {
-                if (response.getShardInfo() == null) {
-                    // A pre 1.5 write response, so the shard info header is unreliable
-                    total = -1;
-                    successful = -1;
-                    pending = -1;
-                    return;
-                }
-
                 total += response.getShardInfo().getTotal();
                 successful += response.getShardInfo().getSuccessful();
                 pending += response.getShardInfo().getPending();
