@@ -15,19 +15,4 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.alerts.actions;
-
-import org.elasticsearch.alerts.Alert;
-import org.elasticsearch.alerts.triggers.TriggerResult;
-import org.elasticsearch.common.io.stream.StreamInput;
-import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.common.xcontent.ToXContent;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-
-import java.io.IOException;
-
-public interface AlertAction extends ToXContent {
-
-    public String getActionName();
-
-}
+package org.elasticsearch.alerts.transport.actions.index;
