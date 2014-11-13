@@ -72,7 +72,7 @@ public class NoMasterNodeTests extends AbstractAlertingTests {
         alertsClient.prepareIndexAlert("my-first-alert")
                 .setAlertSource(alertSource)
                 .get();
-        assertAlertTriggered("my-first-alert");
+        assertAlertTriggered("my-first-alert", 1);
 
         // Stop the elected master, no new master will be elected b/c of m_m_n is set to 2
         internalTestCluster().stopCurrentMasterNode();
@@ -104,7 +104,7 @@ public class NoMasterNodeTests extends AbstractAlertingTests {
         alertsClient.prepareIndexAlert("my-second-alert")
                 .setAlertSource(alertSource)
                 .get();
-        assertAlertTriggered("my-second-alert");
+        assertAlertTriggered("my-second-alert", 2);
     }
 
 }
