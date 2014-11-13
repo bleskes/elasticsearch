@@ -49,6 +49,7 @@ public class AnalysisConfigTest
 	@Test
 	public void testFieldConfiguration()
 	{
+		// Single detector, not pre-summarised
 		AnalysisConfig ac = new AnalysisConfig();
 		Detector det = new Detector();
 		det.setFieldName("responsetime");
@@ -63,8 +64,12 @@ public class AnalysisConfigTest
 		{
 			Assert.assertTrue(analysisFields.contains(s));
 		}
-		
-		
+
+		for (String s : analysisFields)
+		{
+			Assert.assertTrue(ac.analysisFields().contains(s));
+		}
+
 		Assert.assertEquals(1, ac.fields().size());
 		Assert.assertTrue(ac.fields().contains("responsetime"));
 		
@@ -73,8 +78,26 @@ public class AnalysisConfigTest
 		
 		Assert.assertEquals(1, ac.partitionFields().size());
 		Assert.assertTrue(ac.partitionFields().contains("sourcetype"));
-		
-		
+
+		Assert.assertNull(ac.getSummaryCountFieldName());
+
+		// Single detector, pre-summarised
+		analysisFields.add("summaryCount");
+		ac.setSummaryCountFieldName("summaryCount");
+
+		for (String s : ac.analysisFields())
+		{
+			Assert.assertTrue(analysisFields.contains(s));
+		}
+
+		for (String s : analysisFields)
+		{
+			Assert.assertTrue(ac.analysisFields().contains(s));
+		}
+
+		Assert.assertEquals("summaryCount", ac.getSummaryCountFieldName());
+
+		// Multiple detectors, not pre-summarised
 		List<Detector> detectors = new ArrayList<>();
 		
 		ac = new AnalysisConfig();
@@ -106,8 +129,12 @@ public class AnalysisConfigTest
 		{
 			Assert.assertTrue(analysisFields.contains(s));
 		}
-		
-		
+
+		for (String s : analysisFields)
+		{
+			Assert.assertTrue(ac.analysisFields().contains(s));
+		}
+
 		Assert.assertEquals(2, ac.fields().size());
 		Assert.assertTrue(ac.fields().contains("metric1"));
 		Assert.assertTrue(ac.fields().contains("metric2"));
@@ -122,6 +149,23 @@ public class AnalysisConfigTest
 		Assert.assertEquals(2, ac.partitionFields().size());
 		Assert.assertTrue(ac.partitionFields().contains("partition_one"));
 		Assert.assertTrue(ac.partitionFields().contains("partition_two"));
-		
+
+		Assert.assertNull(ac.getSummaryCountFieldName());
+
+		// Multiple detectors, pre-summarised
+		analysisFields.add("summaryCount");
+		ac.setSummaryCountFieldName("summaryCount");
+
+		for (String s : ac.analysisFields())
+		{
+			Assert.assertTrue(analysisFields.contains(s));
+		}
+
+		for (String s : analysisFields)
+		{
+			Assert.assertTrue(ac.analysisFields().contains(s));
+		}
+
+		Assert.assertEquals("summaryCount", ac.getSummaryCountFieldName());
 	}
 }

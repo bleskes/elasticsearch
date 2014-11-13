@@ -40,9 +40,9 @@ import com.prelert.rs.data.ErrorCode;
  * Autodetect analysis configuration options describes which fields are 
  * analysed and the functions to use. 
  * <p/>
- * The configuration can contain multiple detectors, a new anomaly detector will 
- * be created for each detector configuration. The other fields 
- * <code>BucketSpan, PartitionField</code> etc apply to all detectors.<p/> 
+ * The configuration can contain multiple detectors, a new anomaly detector will
+ * be created for each detector configuration. The other fields
+ * <code>bucketSpan, summaryCountFieldName</code> etc apply to all detectors.<p/>
  * If a value has not been set it will be <code>null</code>
  * Object wrappers are used around integral types & booleans so they can take
  * <code>null</code> values.
@@ -55,6 +55,7 @@ public class AnalysisConfig
 	static final public String BUCKET_SPAN = "bucketSpan";
 	static final public String BATCH_SPAN = "batchSpan";
 	static final public String PERIOD = "period";
+	static final public String SUMMARY_COUNT_FIELD_NAME = "summaryCountFieldName";
 	static final public String DETECTORS = "detectors";
 	
 	/**
@@ -63,6 +64,7 @@ public class AnalysisConfig
 	private Long m_BucketSpan;
 	private Long m_BatchSpan;
 	private Long m_Period;
+	private String m_SummaryCountFieldName;
 	private List<Detector> m_Detectors;
 	
 	/**
@@ -106,7 +108,15 @@ public class AnalysisConfig
 			{
 				m_Period = ((Integer)obj).longValue();
 			}
-		}				
+		}
+		if (values.containsKey(SUMMARY_COUNT_FIELD_NAME))
+		{
+			Object obj = values.get(SUMMARY_COUNT_FIELD_NAME);
+			if (obj != null)
+			{
+				m_SummaryCountFieldName = (String)obj;
+			}
+		}
 		if (values.containsKey(DETECTORS))
 		{
 			Object obj = values.get(DETECTORS);
@@ -146,9 +156,9 @@ public class AnalysisConfig
 		return m_BatchSpan;
 	}
 	
-	public void setBatchSpan(Long m_BatchSpan) 
+	public void setBatchSpan(Long batchSpan)
 	{
-		this.m_BatchSpan = m_BatchSpan;
+		m_BatchSpan = batchSpan;
 	}
 	
 	/**
@@ -161,9 +171,23 @@ public class AnalysisConfig
 		return m_Period;
 	}
 	
-	public void setPeriod(Long m_Period) 
+	public void setPeriod(Long period)
 	{
-		this.m_Period = m_Period;
+		m_Period = period;
+	}
+
+	/**
+	 * The name of the field that contains counts for pre-summarised input
+	 * @return The field name or <code>null</code> if not set
+	 */
+	public String getSummaryCountFieldName()
+	{
+		return m_SummaryCountFieldName;
+	}
+
+	public void setSummaryCountFieldName(String summaryCountFieldName)
+	{
+		m_SummaryCountFieldName = summaryCountFieldName;
 	}
 
 	/**
@@ -182,17 +206,23 @@ public class AnalysisConfig
 	}
 	
 	/**
-	 * Return the list of fields required by the analysis. 
-	 * These are the partition, field, by field and over fields.
-	 * <code>null</code> and empty strings are filtered from the 
+	 * Return the list of fields required by the analysis.
+	 * These are the metric field, partition field, by field and over
+	 * field of each detector, plus the summary count field of the job.
+	 * <code>null</code> and empty strings are filtered from the
 	 * config
-	 * 
+	 *
 	 * @return List of required fields.
 	 */
 	public List<String> analysisFields()
 	{
 		Set<String> fields = new TreeSet<>();
-		
+
+		if (m_SummaryCountFieldName != null)
+		{
+			fields.add(m_SummaryCountFieldName);
+		}
+
 		for (Detector d : getDetectors())
 		{
 			if (d.getFieldName() != null)
@@ -212,10 +242,10 @@ public class AnalysisConfig
 				fields.add(d.getPartitionFieldName());
 			}
 		}
-		
-		// remove the null and empty strings
+
+		// remove empty strings
 		fields.remove("");
-		
+
 		return new ArrayList<String>(fields);
 	}
 	
@@ -312,24 +342,19 @@ public class AnalysisConfig
 		{
 			return false;
 		}
-		
-			
-		boolean equal = true;
+
 		for (int i=0; i<m_Detectors.size(); i++)
 		{
-			equal = equal && this.m_Detectors.get(i).equals(that.m_Detectors.get(i));
+			if (!this.m_Detectors.get(i).equals(that.m_Detectors.get(i)))
+			{
+				return false;
+			}
 		}		
-		
-		if (equal == false)
-		{
-			return false;
-		}
-		
-		equal = equal && JobDetails.bothNullOrEqual(this.m_BucketSpan, that.m_BucketSpan) &&
+
+		return JobDetails.bothNullOrEqual(this.m_BucketSpan, that.m_BucketSpan) &&
 				JobDetails.bothNullOrEqual(this.m_BatchSpan, that.m_BatchSpan) &&
-				JobDetails.bothNullOrEqual(this.m_Period, that.m_Period);
-		
-		return equal;
+				JobDetails.bothNullOrEqual(this.m_Period, that.m_Period) &&
+				JobDetails.bothNullOrEqual(this.m_SummaryCountFieldName, that.m_SummaryCountFieldName);
 	}
 	
 	/**
@@ -363,7 +388,9 @@ public class AnalysisConfig
 			throw new JobConfigurationException("Period cannot be < 0."
 					+ " Value = " + m_Period, ErrorCode.INVALID_VALUE);
 		}
-		
+
+		Detector.verifyFieldName(m_SummaryCountFieldName);
+
 		if (m_Detectors.size() == 0)
 		{
 			throw new JobConfigurationException("No detectors configured",
