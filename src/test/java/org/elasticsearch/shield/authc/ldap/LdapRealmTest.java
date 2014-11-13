@@ -69,7 +69,7 @@ public class LdapRealmTest extends LdapTest {
         String groupSearchBase = "o=sevenSeas";
         boolean isSubTreeSearch = true;
         String userTemplate = VALID_USER_TEMPLATE;
-        Settings settings = buildLdapSettings(apacheDsRule.getUrl(), userTemplate, groupSearchBase, isSubTreeSearch);
+        Settings settings = buildLdapSettings(ldapUrl(), userTemplate, groupSearchBase, isSubTreeSearch);
         StandardLdapConnectionFactory ldapFactory = new StandardLdapConnectionFactory(settings);
         LdapRealm ldap = new LdapRealm(buildNonCachingSettings(), ldapFactory, buildGroupAsRoleMapper(resourceWatcherService), restController);
 
@@ -84,7 +84,7 @@ public class LdapRealmTest extends LdapTest {
         boolean isSubTreeSearch = false;
         String userTemplate = VALID_USER_TEMPLATE;
         StandardLdapConnectionFactory ldapFactory = new StandardLdapConnectionFactory(
-                buildLdapSettings(apacheDsRule.getUrl(), userTemplate, groupSearchBase, isSubTreeSearch));
+                buildLdapSettings(ldapUrl(), userTemplate, groupSearchBase, isSubTreeSearch));
 
         LdapRealm ldap = new LdapRealm(buildNonCachingSettings(), ldapFactory, buildGroupAsRoleMapper(resourceWatcherService), restController);
 
@@ -99,7 +99,7 @@ public class LdapRealmTest extends LdapTest {
         boolean isSubTreeSearch = true;
         String userTemplate = VALID_USER_TEMPLATE;
         StandardLdapConnectionFactory ldapFactory = new StandardLdapConnectionFactory(
-                buildLdapSettings( apacheDsRule.getUrl(), userTemplate, groupSearchBase, isSubTreeSearch) );
+                buildLdapSettings(ldapUrl(), userTemplate, groupSearchBase, isSubTreeSearch) );
 
         ldapFactory = spy(ldapFactory);
         LdapRealm ldap = new LdapRealm( buildCachingSettings(), ldapFactory, buildGroupAsRoleMapper(resourceWatcherService), restController);
@@ -116,7 +116,7 @@ public class LdapRealmTest extends LdapTest {
         boolean isSubTreeSearch = true;
         String userTemplate = VALID_USER_TEMPLATE;
         StandardLdapConnectionFactory ldapFactory = new StandardLdapConnectionFactory(
-                buildLdapSettings( apacheDsRule.getUrl(), userTemplate, groupSearchBase, isSubTreeSearch) );
+                buildLdapSettings(ldapUrl(), userTemplate, groupSearchBase, isSubTreeSearch) );
 
         LdapGroupToRoleMapper roleMapper = buildGroupAsRoleMapper(resourceWatcherService);
 
@@ -142,7 +142,7 @@ public class LdapRealmTest extends LdapTest {
         boolean isSubTreeSearch = true;
         String userTemplate = VALID_USER_TEMPLATE;
         StandardLdapConnectionFactory ldapFactory = new StandardLdapConnectionFactory(
-                buildLdapSettings(apacheDsRule.getUrl(), userTemplate, groupSearchBase, isSubTreeSearch));
+                buildLdapSettings(ldapUrl(), userTemplate, groupSearchBase, isSubTreeSearch));
 
         ldapFactory = spy(ldapFactory);
         LdapRealm ldap = new LdapRealm( buildNonCachingSettings(), ldapFactory, buildGroupAsRoleMapper(resourceWatcherService), restController);

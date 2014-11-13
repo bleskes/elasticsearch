@@ -26,12 +26,9 @@ import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.watcher.ResourceWatcherService;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -43,9 +40,6 @@ import static org.hamcrest.Matchers.is;
  */
 public class InternalKeyServiceTests extends ElasticsearchTestCase {
 
-    @Rule
-    public TemporaryFolder tempFolder = new TemporaryFolder();
-
     private ResourceWatcherService watcherService;
     private Settings settings;
     private Environment env;
@@ -54,7 +48,8 @@ public class InternalKeyServiceTests extends ElasticsearchTestCase {
 
     @Before
     public void init() throws Exception {
-        keyFile = writeFile("system_key", InternalKeyService.generateKey());
+        keyFile = new File(newTempDir(), "system_key");
+        Streams.copy(InternalKeyService.generateKey(), keyFile);
         settings = ImmutableSettings.builder()
                 .put("shield.system_key.file", keyFile.getAbsolutePath())
                 .put("watcher.interval.high", "2s")
@@ -121,11 +116,5 @@ public class InternalKeyServiceTests extends ElasticsearchTestCase {
         }
         String signed2 = service.sign(text);
         assertThat(signed.equals(signed2), is(false));
-    }
-
-    private File writeFile(String name, byte[] content) throws IOException {
-        File file = tempFolder.newFile(name);
-        Streams.copy(content, file);
-        return file;
     }
 }

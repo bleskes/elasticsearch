@@ -26,9 +26,7 @@ import org.elasticsearch.shield.authc.support.RefreshListener;
 import org.elasticsearch.test.ElasticsearchTestCase;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.watcher.ResourceWatcherService;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -47,9 +45,6 @@ import static org.hamcrest.Matchers.*;
  *
  */
 public class FileUserRolesStoreTests extends ElasticsearchTestCase {
-
-    @Rule
-    public TemporaryFolder tempFolder = new TemporaryFolder();
 
     @Test
     public void testParseFile() throws Exception {
@@ -166,13 +161,13 @@ public class FileUserRolesStoreTests extends ElasticsearchTestCase {
     }
 
     private File writeUsersRoles(String input) throws Exception {
-        File file = tempFolder.newFile();
+        File file = newTempFile();
         com.google.common.io.Files.write(input.getBytes(Charsets.UTF_8), file);
         return file;
     }
 
     private void assertInvalidInputIsSilentlyIgnored(String input) throws Exception {
-        File file = tempFolder.newFile();
+        File file = newTempFile();
         com.google.common.io.Files.write(input.getBytes(Charsets.UTF_8), file);
         Map<String, String[]> usersRoles = FileUserRolesStore.parseFile(file.toPath(), null);
         assertThat(String.format(Locale.ROOT, "Expected userRoles to be empty, but was %s", usersRoles.keySet()), usersRoles.keySet(), hasSize(0));
