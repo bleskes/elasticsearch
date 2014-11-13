@@ -17,6 +17,7 @@
 
 package org.elasticsearch.alerts;
 
+import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.alerts.actions.AlertAction;
 import org.elasticsearch.alerts.triggers.ScriptedTrigger;
@@ -24,6 +25,7 @@ import org.elasticsearch.common.joda.time.DateTime;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.XContentHelper;
 import org.elasticsearch.test.ElasticsearchIntegrationTest;
 import org.junit.Test;
 
@@ -49,6 +51,13 @@ public class TestAlertSerialization extends ElasticsearchIntegrationTest {
 
         Alert parsedAlert = alertsStore.parseAlert("test-serialization", jsonBuilder.bytes());
         assertEquals(parsedAlert, alert);
+
+        logger.error(XContentHelper.convertToJson(jsonBuilder.bytes(),false,true));
+
+        if (true) {
+            throw new ElasticsearchException("foobarbaz");
+        }
+
     }
 
 }
