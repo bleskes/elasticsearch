@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.shield.transport.ssl;
+package org.elasticsearch.shield.ssl;
 
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.rest.RestStatus;
