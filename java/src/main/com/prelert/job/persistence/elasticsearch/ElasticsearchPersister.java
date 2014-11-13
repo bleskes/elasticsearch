@@ -351,8 +351,6 @@ public class ElasticsearchPersister implements JobResultsPersister
 	private XContentBuilder serialiseModelSizeStats(ModelSizeStats modelSizeStats)
 	throws IOException
 	{
-		s_Logger.warn("---------------Doing serialisation of memory usage now");
-		
 		XContentBuilder builder = jsonBuilder().startObject()
 				.field(ModelSizeStats.MODEL_BYTES, modelSizeStats.getModelBytes())
 				.field(ModelSizeStats.TOTAL_BY_FIELD_COUNT, modelSizeStats.getTotalByFieldCount())
