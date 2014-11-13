@@ -36,6 +36,9 @@ import java.util.Arrays;
  */
 public class SSLService extends AbstractComponent {
     static final String[] DEFAULT_CIPHERS = new String[] { "TLS_RSA_WITH_AES_128_CBC_SHA256", "TLS_RSA_WITH_AES_128_CBC_SHA", "TLS_DHE_RSA_WITH_AES_128_CBC_SHA", "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA" };
+    public static final String SHIELD_TRANSPORT_SSL = "shield.transport.ssl";
+    public static final String SHIELD_HTTP_SSL = "shield.http.ssl";
+    public static final String SHIELD_AUTHC_LDAP_URL = "shield.authc.ldap.url";
     private final TrustManagerFactory trustFactory;
     private final SSLContext sslContext;
     private final String[] ciphers;
@@ -125,7 +128,7 @@ public class SSLService extends AbstractComponent {
      *    - sslEngine.setNeedClientAuth(true)
      * Client-to-Node:
      *    - sslEngine.setUseClientMode(true)
-     * Node-from-Client (inbound):
+     * Http Client-to-Node (inbound):
      *    - sslEngine.setUserClientMode(false)
      *    - sslEngine.setNeedClientAuth(false)
      * @return
@@ -141,9 +144,9 @@ public class SSLService extends AbstractComponent {
     }
 
     public static boolean isSSLEnabled(Settings settings) {
-        return settings.getAsBoolean("shield.transport.ssl", false) ||
-                settings.getAsBoolean("shield.http.ssl", false) ||
-                (LdapSslSocketFactory.secureUrls(settings.getAsArray("shield.authc.ldap.url")) &&
+        return settings.getAsBoolean(SHIELD_TRANSPORT_SSL, false) ||
+                settings.getAsBoolean(SHIELD_HTTP_SSL, false) ||
+                (LdapSslSocketFactory.secureUrls(settings.getAsArray(SHIELD_AUTHC_LDAP_URL)) &&
                         LdapModule.enabled(settings));
     }
 }
