@@ -163,6 +163,10 @@ public class AlertManager extends AbstractComponent {
         }
     }
 
+    public long getNumberOfAlerts() {
+        return alertsStore.getAlerts().size();
+    }
+
     private final class AlertsClusterStateListener implements ClusterStateListener {
 
         @Override

@@ -280,6 +280,10 @@ public class AlertActionManager extends AbstractComponent {
         entry.setVersion(response.getVersion());
     }
 
+    public long getQueueSize() {
+        return actionsToBeProcessed.size();
+    }
+
     private class AlertHistoryRunnable implements Runnable {
 
         private final AlertActionEntry entry;
