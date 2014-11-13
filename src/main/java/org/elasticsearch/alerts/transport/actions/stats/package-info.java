@@ -16,6 +16,6 @@
  */
 
 /**
- * Delete action.
+ * Stats action.
  */
 package org.elasticsearch.alerts.transport.actions.stats;
