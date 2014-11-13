@@ -226,7 +226,7 @@ public class ProcessManager
 			String msg = String.format("Another connection is writing to job "
 					+ "%s. Jobs will only accept data from one connection at a time",
 					jobId);
-			s_Logger.error(msg);
+			s_Logger.warn(msg);
 			throw new JobInUseException(jobId, msg, ErrorCode.NATIVE_PROCESS_CONCURRENT_USE_ERROR);
 		}
 
@@ -252,7 +252,7 @@ public class ProcessManager
 			String msg = String.format("Exception writing to process for job %s", jobId);
 
 			StringBuilder sb = new StringBuilder(msg)
-					.append('\n').append(e.getMessage()).append('\n');
+					.append('\n').append(e.toString()).append('\n');
 			readProcessErrorOutput(process, sb);
 			process.getLogger().error(sb);
 

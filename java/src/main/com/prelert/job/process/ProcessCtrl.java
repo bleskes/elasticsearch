@@ -92,7 +92,9 @@ public class ProcessCtrl
 	 */
 	static final public String PRELERT_HOME;
 	/**
-	 * The base log file directory. Equivalent to $PRELERT_HOME/logs
+	 * The base log file directory. Equivalent to $PRELERT_HOME/logs,
+	 * however, always use this separate field as in future we may
+	 * wish to store log files separately to $PRELERT_HOME on Windows.
 	 */
 	static final public String LOG_DIR;	
 	/**
@@ -154,36 +156,34 @@ public class ProcessCtrl
 	/*
 	 * General arguments
 	 */
-	static final public String FIELD_CONFIG_ARG = "--fieldconfig=";
-	static final public String MODEL_CONFIG_ARG = "--modelconfig=";
-	static final public String LIMIT_CONFIG_ARG = "--limitconfig=";
-	static final public String BUCKET_SPAN_ARG = "--bucketspan=";
 	static final public String LOG_ID_ARG = "--logid=";
+
+	/*
+	 * Arguments used by both prelert_autodetect_api and prelert_normalize_api
+	 */
+	static final public String BUCKET_SPAN_ARG = "--bucketspan=";
 	static final public String LENGTH_ENCODED_INPUT_ARG = "--lengthEncodedInput";
+	static final public String SYS_STATE_CHANGE_ARG = "--sysChangeState=";
+	static final public String UNUSUAL_STATE_ARG = "--unusualState=";
+	static final public String DELETE_STATE_FILES_ARG = "--deleteStateFiles";
+	static final public String MODEL_CONFIG_ARG = "--modelconfig=";
 
 	/*
 	 * Arguments used by prelert_autodetect_api
 	 */
+	static final public String FIELD_CONFIG_ARG = "--fieldconfig=";
+	static final public String LIMIT_CONFIG_ARG = "--limitconfig=";
 	static final public String BATCH_SPAN_ARG = "--batchspan=";
 	static final public String PERIOD_ARG = "--period=";
-	static final public String PARTITION_FIELD_ARG = "--partitionfield=";
-	static final public String USE_NULL_ARG = "--usenull=";
+	static final public String SUMMARY_COUNT_FIELD_ARG = "--summarycountfield=";
 	static final public String DELIMITER_ARG = "--delimiter=";
 	static final public String TIME_FIELD_ARG = "--timefield=";
-	static final public String TIME_FORMAT_ARG = "--timeformat=";
 	static final public String PERSIST_URL_BASE_ARG = "--persistUrlBase=";
 	static final public String PERSIST_INTERVAL_ARG = "--persistInterval=10800"; // 3 hours
 	static final public String VERSION_ARG = "--version";
 	static final public String INFO_ARG = "--info";
 	static final public String MAX_ANOMALY_RECORDS_ARG = "--maxAnomalyRecords=500";
-	
-	/*
-	 * Arguments used by both prelert_autodetect_api and prelert_normalize_api
-	 */
-	static final public String SYS_STATE_CHANGE_ARG = "--sysChangeState=";
-	static final public String UNUSUAL_STATE_ARG = "--unusualState=";
-	static final public String DELETE_STATE_FILES_ARG = "--deleteStateFiles";
-	
+
 
 	/**
 	 * Name of the model config file
@@ -512,7 +512,12 @@ public class ProcessCtrl
 			{
 				String period = PERIOD_ARG + job.getAnalysisConfig().getPeriod();
 				command.add(period);
-			}		
+			}
+			if (job.getAnalysisConfig().getSummaryCountFieldName() != null)
+			{
+				String summaryCountField = SUMMARY_COUNT_FIELD_ARG + job.getAnalysisConfig().getSummaryCountFieldName();
+				command.add(summaryCountField);
+			}
 		}
 		
 		if (job.getAnalysisLimits() != null)

@@ -53,6 +53,8 @@ import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.Detector;
 import com.prelert.rs.data.parsing.AlertObserver;
 import com.prelert.rs.resources.Buckets;
+import com.prelert.rs.resources.Records;
+import com.prelert.rs.resources.ResourceWithJobManager;
 
 
 /**
@@ -237,14 +239,9 @@ public class AlertManager implements TimeoutHandler
 		alert.setAnomalyScore(bucket.getAnomalyScore());
 		alert.setNormalizedProbability(bucket.getMaxNormalizedProbability());
 
-    	URI uri = UriBuilder.fromUri(listener.getBaseUri())
+		UriBuilder uriBuilder = UriBuilder.fromUri(listener.getBaseUri())
 				    			.path("results")
-								.path(listener.getJobId())
-								.path(Buckets.ENDPOINT)
-								.path(bucket.getId())
-								.build();
-    	alert.setUri(uri);
-
+								.path(listener.getJobId());
 
 		List<AnomalyRecord> records = new ArrayList<>();
 		for (Detector detector : bucket.getDetectors())
@@ -263,11 +260,24 @@ public class AlertManager implements TimeoutHandler
     	{
     		bucket.setRecords(records);
     		alert.setBucket(bucket);
+
+    		uriBuilder.path(Buckets.ENDPOINT).path(bucket.getId())
+    			.queryParam(Buckets.EXPAND_QUERY_PARAM, true);
     	}
     	else
     	{
     		alert.setRecords(records);
+
+    		String endEpoch = Long.toString((bucket.getTimestamp().getTime() / 1000) + 1);
+
+    		uriBuilder.path(Records.ENDPOINT)
+    			.queryParam(ResourceWithJobManager.START_QUERY_PARAM, bucket.getId())
+    			.queryParam(ResourceWithJobManager.END_QUERY_PARAM, endEpoch)
+    			.queryParam(AnomalyRecord.NORMALIZED_PROBABILITY, listener.getNormalisedProbThreshold());
     	}
+
+
+    	alert.setUri(uriBuilder.build());
 
     	return alert;
 	}

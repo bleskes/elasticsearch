@@ -479,24 +479,37 @@ public class Detector
 		String [] fields = {m_FieldName, m_ByFieldName, m_OverFieldName, m_PartitionFieldName};
 		for (String field : fields)
 		{
-			if (field != null)
+			verifyFieldName(field);
+		}
+
+		return true;
+	}
+
+
+	/**
+	 * Check that the characters used in a field name will not cause problems.
+	 * @param field The field name to be validated
+	 * @return true
+	 * @throws JobConfigurationException
+	 */
+	public static boolean verifyFieldName(String field)
+	throws JobConfigurationException
+	{
+		if (field != null)
+		{
+			for (Character ch : PROHIBITED_FIELDNAME_CHARACTERS)
 			{
-				for (Character ch : PROHIBITED_FIELDNAME_CHARACTERS)
+				if (field.indexOf(ch) >= 0)
 				{
-					if (field.indexOf(ch) >= 0)
-					{
-						throw new JobConfigurationException(
-								"Invalid fieldname '" + field + "'. " + 
-								"Fieldnames including over, by and partition fields cannot " +
-								"contain any of these characters: " + PROHIBITED,
-								ErrorCode.PROHIBITIED_CHARACTER_IN_FIELD_NAME);
-					}
+					throw new JobConfigurationException(
+							"Invalid fieldname '" + field + "'. " +
+							"Fieldnames including over, by and partition fields cannot " +
+							"contain any of these characters: " + PROHIBITED,
+							ErrorCode.PROHIBITIED_CHARACTER_IN_FIELD_NAME);
 				}
 			}
 		}
-
-		
 		return true;
 	}
-	
+
 }
