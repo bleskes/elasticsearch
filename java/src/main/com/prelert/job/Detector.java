@@ -332,6 +332,8 @@ public class Detector
 	 * <li>If byFieldName is set function or fieldName must bet set</li>
 	 * <li>If overFieldName is set function or fieldName must bet set</li>
 	 * <li>function is one of the strings in the set {@link #ANALYSIS_FUNCTIONS}</li>
+	 * <li>Function cannot be 'metric' (explicitly or implicitly) in jobs that
+	 * take pre-summarised input</li>
 	 * <li>If function is not set but the fieldname happens to be the same 
 	 * as one of the function names (e.g.a field called 'count')
 	 * set function to 'metric'</li>
@@ -343,18 +345,18 @@ public class Detector
 	 * then overFieldName must not be set</li>
 	 * </ol>
 	 * 
+	 * @param isSummarised Is this detector in a pre-summarised job?
 	 * @return true
 	 * @throws JobConfigurationException
 	 */
-	public boolean verify()
+	public boolean verify(boolean isSummarised)
 	throws JobConfigurationException
 	{	
 		boolean emptyField = m_FieldName == null || m_FieldName.isEmpty();
 		boolean emptyByField = m_ByFieldName == null || m_ByFieldName.isEmpty();
 		boolean emptyOverField = m_OverFieldName == null || m_OverFieldName.isEmpty();
 		boolean emptyFunction = m_Function == null || m_Function.isEmpty();
-		
-		
+
 		if (emptyField && emptyByField && emptyOverField)
 		{
 			if (emptyFunction)
@@ -377,7 +379,17 @@ public class Detector
 			throw new JobConfigurationException("Unknown function '" + m_Function + "'",
 					ErrorCode.UNKNOWN_FUNCTION);
 		}
-		
+
+		if (isSummarised)
+		{
+			if (emptyFunction || m_Function.equals(METRIC))
+			{
+				throw new JobConfigurationException("The '" + METRIC + "' function "
+						+ "cannot be used in jobs that will take pre-summarized input",
+						ErrorCode.INVALID_FUNCTION);
+			}
+		}
+
 		// If function is not set but the fieldname happens 
 		// to be the same as one of the function names (e.g. 
 		// a field called 'count' set function to 'metric'
@@ -386,6 +398,7 @@ public class Detector
 			if (ANALYSIS_FUNCTIONS.contains(m_FieldName))
 			{
 				m_Function = METRIC;
+				emptyFunction = false;
 			}
 		}
 		
