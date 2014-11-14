@@ -44,7 +44,7 @@ public class LdapConnectionTests extends LdapTest {
         String user = "Horatio Hornblower";
         SecuredString userPass = SecuredStringTests.build("pass");
 
-        try (LdapConnection ldap = connectionFactory.bind(user, userPass)) {
+        try (GenericLdapConnection ldap = connectionFactory.bind(user, userPass)) {
             Map<String, String[]> attrs = ldap.getUserAttrs(ldap.getAuthenticatedUserDn());
 
             assertThat(attrs, hasKey("uid"));
@@ -67,7 +67,7 @@ public class LdapConnectionTests extends LdapTest {
 
         String user = "Horatio Hornblower";
         SecuredString userPass = SecuredStringTests.build("pass");
-        try (LdapConnection ldapConnection = ldapFac.bind(user, userPass)) {
+        try (GenericLdapConnection ldapConnection = ldapFac.bind(user, userPass)) {
         }
     }
 
@@ -83,7 +83,7 @@ public class LdapConnectionTests extends LdapTest {
         String user = "Horatio Hornblower";
         SecuredString userPass = SecuredStringTests.build("pass");
 
-        try (LdapConnection ldap = ldapFac.bind(user, userPass)) {
+        try (GenericLdapConnection ldap = ldapFac.bind(user, userPass)) {
             List<String> groups = ldap.getGroupsFromSearch(ldap.getAuthenticatedUserDn());
             assertThat(groups, contains("cn=HMS Lydia,ou=crews,ou=groups,o=sevenSeas"));
         }
@@ -98,7 +98,7 @@ public class LdapConnectionTests extends LdapTest {
                 buildLdapSettings(ldapUrl(), userTemplate, groupSearchBase, isSubTreeSearch));
 
         String user = "Horatio Hornblower";
-        try (LdapConnection ldap = ldapFac.bind(user, SecuredStringTests.build("pass"))) {
+        try (GenericLdapConnection ldap = ldapFac.bind(user, SecuredStringTests.build("pass"))) {
             List<String> groups = ldap.getGroupsFromSearch(ldap.getAuthenticatedUserDn());
             assertThat(groups, contains("cn=HMS Lydia,ou=crews,ou=groups,o=sevenSeas"));
         }
