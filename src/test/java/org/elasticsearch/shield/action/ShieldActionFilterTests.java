@@ -21,11 +21,13 @@ import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.search.SearchScrollRequest;
 import org.elasticsearch.action.support.ActionFilterChain;
+import org.elasticsearch.license.plugin.core.LicensesClientService;
 import org.elasticsearch.shield.User;
 import org.elasticsearch.shield.audit.AuditTrail;
 import org.elasticsearch.shield.authc.AuthenticationService;
 import org.elasticsearch.shield.authz.AuthorizationException;
 import org.elasticsearch.shield.authz.AuthorizationService;
+import org.elasticsearch.shield.license.LicenseEventsNotifier;
 import org.elasticsearch.shield.signature.SignatureService;
 import org.elasticsearch.shield.signature.SignatureException;
 import org.elasticsearch.test.ElasticsearchTestCase;
@@ -46,6 +48,7 @@ public class ShieldActionFilterTests extends ElasticsearchTestCase {
     private AuthorizationService authzService;
     private SignatureService signatureService;
     private AuditTrail auditTrail;
+    private LicenseEventsNotifier licenseEventsNotifier;
     private ShieldActionFilter filter;
 
     @Before
@@ -54,7 +57,8 @@ public class ShieldActionFilterTests extends ElasticsearchTestCase {
         authzService = mock(AuthorizationService.class);
         signatureService = mock(SignatureService.class);
         auditTrail = mock(AuditTrail.class);
-        filter = new ShieldActionFilter(authcService, authzService, signatureService, auditTrail);
+        licenseEventsNotifier = new MockLicenseEventsNotifier();
+        filter = new ShieldActionFilter(authcService, authzService, signatureService, auditTrail, licenseEventsNotifier);
     }
 
     @Test
@@ -113,5 +117,12 @@ public class ShieldActionFilterTests extends ElasticsearchTestCase {
         verify(listener).onFailure(isA(AuthorizationException.class));
         verify(auditTrail).tamperedRequest(user, "_action", request);
         verifyNoMoreInteractions(chain);
+    }
+
+    private class MockLicenseEventsNotifier extends LicenseEventsNotifier {
+        @Override
+        public void register(LicensesClientService.Listener listener) {
+            listener.onEnabled();
+        }
     }
 }

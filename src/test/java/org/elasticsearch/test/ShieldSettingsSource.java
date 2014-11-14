@@ -26,6 +26,8 @@ import org.elasticsearch.common.io.Streams;
 import org.elasticsearch.common.os.OsUtils;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.license.plugin.LicensePlugin;
+import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.shield.ShieldPlugin;
 import org.elasticsearch.shield.authc.esusers.ESUsersRealm;
 import org.elasticsearch.shield.authc.support.SecuredString;
@@ -89,7 +91,6 @@ public class ShieldSettingsSource extends ClusterDiscoveryConfiguration.UnicastZ
     public ShieldSettingsSource(int numOfNodes, boolean sslTransportEnabled, File parentFolder, ElasticsearchIntegrationTest.Scope scope) {
         super(numOfNodes, ImmutableSettings.builder()
                 .put("node.mode", "network")
-                .put("plugin.types", ShieldPlugin.class.getName())
                 .put("plugins.load_classpath_plugins", false)
                 .build(),
                 scope);
@@ -103,6 +104,7 @@ public class ShieldSettingsSource extends ClusterDiscoveryConfiguration.UnicastZ
     public Settings node(int nodeOrdinal) {
         File folder = createFolder(parentFolder, subfolderPrefix + "-" + nodeOrdinal);
         ImmutableSettings.Builder builder = ImmutableSettings.builder().put(super.node(nodeOrdinal))
+                .put("plugin.types", ShieldPlugin.class.getName() + "," + licensePluginClass().getName())
                 .put("shield.audit.enabled", RandomizedTest.randomBoolean())
                 .put(InternalSignatureService.FILE_SETTING, writeFile(folder, "system_key", systemKey))
                 .put("shield.authc.realms.esusers.type", ESUsersRealm.TYPE)
@@ -121,6 +123,16 @@ public class ShieldSettingsSource extends ClusterDiscoveryConfiguration.UnicastZ
 
         return builder.build();
     }
+
+    @Override
+    public Settings transportClient() {
+        ImmutableSettings.Builder builder = ImmutableSettings.builder().put(super.transportClient())
+                .put("plugin.types", ShieldPlugin.class.getName())
+                .put(getClientSSLSettings());
+        setUser(builder, transportClientUsername(), transportClientPassword());
+        return builder.build();
+    }
+
 
     protected String configUsers() {
         return CONFIG_STANDARD_USER;
@@ -150,12 +162,12 @@ public class ShieldSettingsSource extends ClusterDiscoveryConfiguration.UnicastZ
         return new SecuredString(DEFAULT_PASSWORD.toCharArray());
     }
 
-    @Override
-    public Settings transportClient() {
-        ImmutableSettings.Builder builder = ImmutableSettings.builder().put(super.transportClient())
-                .put(getClientSSLSettings());
-        setUser(builder, transportClientUsername(), transportClientPassword());
-        return builder.build();
+    protected Class<? extends Plugin> licensePluginClass() {
+        return LicensePlugin.class;
+    }
+
+    protected String licensePluginName() {
+        return LicensePlugin.NAME;
     }
 
     private void setUser(ImmutableSettings.Builder builder, String username, SecuredString password) {
