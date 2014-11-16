@@ -19,6 +19,7 @@
 
 package org.elasticsearch.index.cache.filter;
 
+import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Streamable;
@@ -44,7 +45,10 @@ public class FilterCacheStats implements Streamable, ToXContent {
         this.evictions = evictions;
     }
 
-    public void add(FilterCacheStats stats) {
+    public void add(@Nullable FilterCacheStats stats) {
+        if (stats == null) {
+            return;
+        }
         this.memorySize += stats.memorySize;
         this.evictions += stats.evictions;
     }

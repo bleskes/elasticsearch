@@ -50,11 +50,16 @@ public class FieldDataStats implements Streamable, ToXContent {
         this.fields = fields;
     }
 
-    public void add(FieldDataStats stats) {
+    public void add(@Nullable FieldDataStats stats) {
+        if (stats == null) {
+            return;
+        }
         this.memorySize += stats.memorySize;
         this.evictions += stats.evictions;
         if (stats.fields != null) {
-            if (fields == null) fields = new ObjectLongOpenHashMap<>();
+            if (fields == null) {
+                fields = new ObjectLongOpenHashMap<>();
+            }
             final boolean[] states = stats.fields.allocated;
             final Object[] keys = stats.fields.keys;
             final long[] values = stats.fields.values;

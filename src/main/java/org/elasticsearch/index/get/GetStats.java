@@ -19,6 +19,7 @@
 
 package org.elasticsearch.index.get;
 
+import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Streamable;
@@ -50,7 +51,7 @@ public class GetStats implements Streamable, ToXContent {
         this.current = current;
     }
 
-    public void add(GetStats stats) {
+    public void add(@Nullable GetStats stats) {
         if (stats == null) {
             return;
         }

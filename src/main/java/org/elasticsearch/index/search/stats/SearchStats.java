@@ -161,11 +161,11 @@ public class SearchStats implements Streamable, ToXContent {
         this.groupStats = groupStats;
     }
 
-    public void add(SearchStats searchStats) {
+    public void add(@Nullable SearchStats searchStats) {
         add(searchStats, true);
     }
 
-    public void add(SearchStats searchStats, boolean includeTypes) {
+    public void add(@Nullable SearchStats searchStats, boolean includeTypes) {
         if (searchStats == null) {
             return;
         }

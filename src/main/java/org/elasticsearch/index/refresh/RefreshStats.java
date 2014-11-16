@@ -19,6 +19,7 @@
 
 package org.elasticsearch.index.refresh;
 
+import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Streamable;
@@ -49,7 +50,7 @@ public class RefreshStats implements Streamable, ToXContent {
         this.totalTimeInMillis += totalTimeInMillis;
     }
 
-    public void add(RefreshStats refreshStats) {
+    public void add(@Nullable RefreshStats refreshStats) {
         if (refreshStats == null) {
             return;
         }

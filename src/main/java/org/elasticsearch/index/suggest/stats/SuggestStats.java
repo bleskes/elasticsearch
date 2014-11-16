@@ -19,6 +19,7 @@
 
 package org.elasticsearch.index.suggest.stats;
 
+import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Streamable;
@@ -75,7 +76,7 @@ public class SuggestStats implements Streamable, ToXContent {
         return current;
     }
 
-    public void add(SuggestStats suggestStats) {
+    public void add(@Nullable SuggestStats suggestStats) {
         if (suggestStats != null) {
             suggestCount += suggestStats.getCount();
             suggestTimeInMillis += suggestStats.getTimeInMillis();

@@ -46,6 +46,9 @@ public class IdCacheStats implements Streamable, ToXContent {
     }
 
     public void add(IdCacheStats stats) {
+        if (stats == null) {
+            return;
+        }
         this.memorySize += stats.memorySize;
     }
 

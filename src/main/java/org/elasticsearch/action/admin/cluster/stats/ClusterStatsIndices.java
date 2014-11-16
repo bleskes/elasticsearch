@@ -21,7 +21,9 @@ package org.elasticsearch.action.admin.cluster.stats;
 
 import com.carrotsearch.hppc.ObjectObjectOpenHashMap;
 import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
+import org.elasticsearch.Version;
 import org.elasticsearch.action.admin.indices.stats.CommonStats;
+import org.elasticsearch.action.admin.indices.stats.CommonStatsFlags;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Streamable;
@@ -38,19 +40,27 @@ import org.elasticsearch.index.store.StoreStats;
 import org.elasticsearch.search.suggest.completion.CompletionStats;
 
 import java.io.IOException;
+import java.util.EnumSet;
 
 public class ClusterStatsIndices implements ToXContent, Streamable {
 
+    // all flags that should be accumulated for primaries
+    private static final CommonStatsFlags primariesStats;
+    // all flags that should be accumulated for replicas
+    private static final CommonStatsFlags replicasStats;
+
+    static {
+        EnumSet<CommonStatsFlags.Flag> primariesFlags = EnumSet.allOf(CommonStatsFlags.Flag.class);
+        primariesFlags.remove(CommonStatsFlags.Flag.Docs);
+        primariesFlags.remove(CommonStatsFlags.Flag.Indexing);
+        primariesStats = new CommonStatsFlags(primariesFlags.toArray(new CommonStatsFlags.Flag[primariesFlags.size()]));
+        EnumSet<CommonStatsFlags.Flag> replicasFlags = EnumSet.complementOf(primariesFlags);
+        replicasStats = new CommonStatsFlags(replicasFlags.toArray(new CommonStatsFlags.Flag[replicasFlags.size()]));
+    }
+
     private int indexCount;
     private ShardStats shards;
-    private DocsStats docs;
-    private StoreStats store;
-    private FieldDataStats fieldData;
-    private FilterCacheStats filterCache;
-    private IdCacheStats idCache;
-    private CompletionStats completion;
-    private SegmentsStats segments;
-    private PercolateStats percolate;
+    private CommonStats indicesStats;
 
     private ClusterStatsIndices() {
     }
@@ -58,14 +68,7 @@ public class ClusterStatsIndices implements ToXContent, Streamable {
     public ClusterStatsIndices(ClusterStatsNodeResponse[] nodeResponses) {
         ObjectObjectOpenHashMap<String, ShardStats> countsPerIndex = new ObjectObjectOpenHashMap<>();
 
-        this.docs = new DocsStats();
-        this.store = new StoreStats();
-        this.fieldData = new FieldDataStats();
-        this.filterCache = new FilterCacheStats();
-        this.idCache = new IdCacheStats();
-        this.completion = new CompletionStats();
-        this.segments = new SegmentsStats();
-        this.percolate = new PercolateStats();
+        this.indicesStats = new CommonStats(CommonStatsFlags.ALL);
 
         for (ClusterStatsNodeResponse r : nodeResponses) {
             for (org.elasticsearch.action.admin.indices.stats.ShardStats shardStats : r.shardsStats()) {
@@ -78,18 +81,12 @@ public class ClusterStatsIndices implements ToXContent, Streamable {
                 indexShardStats.total++;
 
                 CommonStats shardCommonStats = shardStats.getStats();
-
                 if (shardStats.getShardRouting().primary()) {
                     indexShardStats.primaries++;
-                    docs.add(shardCommonStats.docs);
+                    indicesStats.add(shardCommonStats, primariesStats);
+                } else {
+                    indicesStats.add(shardCommonStats, replicasStats);
                 }
-                store.add(shardCommonStats.store);
-                fieldData.add(shardCommonStats.fieldData);
-                filterCache.add(shardCommonStats.filterCache);
-                idCache.add(shardCommonStats.idCache);
-                completion.add(shardCommonStats.completion);
-                segments.add(shardCommonStats.segments);
-                percolate.add(shardCommonStats.percolate);
             }
         }
 
@@ -108,64 +105,95 @@ public class ClusterStatsIndices implements ToXContent, Streamable {
         return this.shards;
     }
 
+    public CommonStats getStats() {
+        return indicesStats;
+    }
+
+    ;
+
+    /** Deprecated, use {@link #getStats()}.getDocs() */
+    @Deprecated
     public DocsStats getDocs() {
-        return docs;
+        return getStats().getDocs();
     }
 
+    /** Deprecated, use {@link #getStats()}.getStore() */
+    @Deprecated
     public StoreStats getStore() {
-        return store;
+        return getStats().getStore();
     }
 
+    /** Deprecated, use {@link #getStats()}.getFieldData() */
+    @Deprecated
     public FieldDataStats getFieldData() {
-        return fieldData;
+        return getStats().getFieldData();
     }
 
+    /** Deprecated, use {@link #getStats()}.getFilterCache() */
+    @Deprecated
     public FilterCacheStats getFilterCache() {
-        return filterCache;
+        return getStats().getFilterCache();
     }
 
+    /** Deprecated, use {@link #getStats()}.getIdCache() */
+    @Deprecated
     public IdCacheStats getIdCache() {
-        return idCache;
+        return getStats().getIdCache();
     }
 
+    /** Deprecated, use {@link #getStats()}.getCompletion() */
+    @Deprecated
     public CompletionStats getCompletion() {
-        return completion;
+        return getStats().getCompletion();
     }
 
+    /** Deprecated, use {@link #getStats()}.getSegments() */
+    @Deprecated
     public SegmentsStats getSegments() {
-        return segments;
+        return getStats().getSegments();
     }
 
+    /** Deprecated, use {@link #getStats()}.getPercolate() */
+    @Deprecated
     public PercolateStats getPercolate() {
-        return percolate;
+        return getStats().getPercolate();
     }
 
     @Override
     public void readFrom(StreamInput in) throws IOException {
         indexCount = in.readVInt();
         shards = ShardStats.readShardStats(in);
-        docs = DocsStats.readDocStats(in);
-        store = StoreStats.readStoreStats(in);
-        fieldData = FieldDataStats.readFieldDataStats(in);
-        filterCache = FilterCacheStats.readFilterCacheStats(in);
-        idCache = IdCacheStats.readIdCacheStats(in);
-        completion = CompletionStats.readCompletionStats(in);
-        segments = SegmentsStats.readSegmentsStats(in);
-        percolate = PercolateStats.readPercolateStats(in);
+        if (in.getVersion().onOrAfter(Version.V_1_5_0)) {
+            indicesStats = CommonStats.readCommonStats(in);
+        } else {
+            indicesStats = new CommonStats(CommonStatsFlags.ALL);
+            indicesStats.getDocs().add(DocsStats.readDocStats(in));
+            indicesStats.getStore().add(StoreStats.readStoreStats(in));
+            indicesStats.getFieldData().add(FieldDataStats.readFieldDataStats(in));
+            indicesStats.getFilterCache().add(FilterCacheStats.readFilterCacheStats(in));
+            indicesStats.getIdCache().add(IdCacheStats.readIdCacheStats(in));
+            indicesStats.getCompletion().add(CompletionStats.readCompletionStats(in));
+            indicesStats.getSegments().add(SegmentsStats.readSegmentsStats(in));
+            indicesStats.getPercolate().add(PercolateStats.readPercolateStats(in));
+        }
     }
 
     @Override
     public void writeTo(StreamOutput out) throws IOException {
         out.writeVInt(indexCount);
         shards.writeTo(out);
-        docs.writeTo(out);
-        store.writeTo(out);
-        fieldData.writeTo(out);
-        filterCache.writeTo(out);
-        idCache.writeTo(out);
-        completion.writeTo(out);
-        segments.writeTo(out);
-        percolate.writeTo(out);
+        if (out.getVersion().onOrAfter(Version.V_1_5_0)) {
+            indicesStats.writeTo(out);
+        } else {
+            indicesStats.getDocs().writeTo(out);
+            indicesStats.getStore().writeTo(out);
+            indicesStats.getFieldData().writeTo(out);
+            indicesStats.getFilterCache().writeTo(out);
+            indicesStats.getIdCache().writeTo(out);
+            indicesStats.getCompletion().writeTo(out);
+            indicesStats.getSegments().writeTo(out);
+            indicesStats.getPercolate().writeTo(out);
+        }
     }
 
     public static ClusterStatsIndices readIndicesStats(StreamInput in) throws IOException {
@@ -182,14 +210,7 @@ public class ClusterStatsIndices implements ToXContent, Streamable {
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
         builder.field(Fields.COUNT, indexCount);
         shards.toXContent(builder, params);
-        docs.toXContent(builder, params);
-        store.toXContent(builder, params);
-        fieldData.toXContent(builder, params);
-        filterCache.toXContent(builder, params);
-        idCache.toXContent(builder, params);
-        completion.toXContent(builder, params);
-        segments.toXContent(builder, params);
-        percolate.toXContent(builder, params);
+        indicesStats.toXContent(builder, params);
         return builder;
     }
 

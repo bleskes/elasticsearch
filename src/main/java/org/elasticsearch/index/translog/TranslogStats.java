@@ -18,6 +18,7 @@
  */
 package org.elasticsearch.index.translog;
 
+import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Streamable;
@@ -35,20 +36,21 @@ public class TranslogStats implements ToXContent, Streamable {
     private long translogSizeInBytes = 0;
     private int estimatedNumberOfOperations = 0;
 
-    public TranslogStats() {}
+    public TranslogStats() {
+    }
 
     public TranslogStats(int estimatedNumberOfOperations, long translogSizeInBytes) {
         this.estimatedNumberOfOperations = estimatedNumberOfOperations;
         this.translogSizeInBytes = translogSizeInBytes;
     }
 
-    public void add(TranslogStats translogStats) {
+    public void add(@Nullable TranslogStats translogStats) {
         if (translogStats == null) {
             return;
         }
 
         this.estimatedNumberOfOperations += translogStats.estimatedNumberOfOperations;
-        this.translogSizeInBytes =+ translogStats.translogSizeInBytes;
+        this.translogSizeInBytes = +translogStats.translogSizeInBytes;
     }
 
     @Override

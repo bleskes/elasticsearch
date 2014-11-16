@@ -19,6 +19,7 @@
 
 package org.elasticsearch.index.merge;
 
+import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Streamable;
@@ -57,7 +58,7 @@ public class MergeStats implements Streamable, ToXContent {
         this.currentSizeInBytes += currentSizeInBytes;
     }
 
-    public void add(MergeStats mergeStats) {
+    public void add(@Nullable MergeStats mergeStats) {
         if (mergeStats == null) {
             return;
         }

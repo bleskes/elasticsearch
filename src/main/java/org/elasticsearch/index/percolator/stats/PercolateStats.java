@@ -19,6 +19,7 @@
 package org.elasticsearch.index.percolator.stats;
 
 import org.elasticsearch.Version;
+import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Streamable;
@@ -119,7 +120,7 @@ public class PercolateStats implements Streamable, ToXContent {
         return builder;
     }
 
-    public void add(PercolateStats percolate) {
+    public void add(@Nullable PercolateStats percolate) {
         if (percolate == null) {
             return;
         }

@@ -19,9 +19,7 @@
 
 package org.elasticsearch.indices.stats;
 
-import org.apache.lucene.util.LuceneTestCase;
 import org.apache.lucene.util.Version;
-import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.admin.cluster.node.stats.NodesStatsResponse;
 import org.elasticsearch.action.admin.indices.stats.*;
 import org.elasticsearch.action.admin.indices.stats.CommonStatsFlags.Flag;
@@ -48,6 +46,7 @@ import org.elasticsearch.test.ElasticsearchIntegrationTest.Scope;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.Random;
 
@@ -870,6 +869,39 @@ public class IndexStatsTests extends ElasticsearchIntegrationTest {
         assertThat(stats.getTotal().indexing.getTypeStats().get("bar").getIndexCount(), greaterThan(0l));
         assertThat(stats.getTotal().indexing.getTypeStats().containsKey("baz"), is(false));
 
+    }
+
+    private CommonStatsFlags randomFlags() {
+        Flag[] flags = new Flag[randomIntBetween(1, Flag.values().length)];
+        for (int i = 0; i < flags.length; i++) {
+            flags[i] = randomFrom(Flag.values());
+        }
+        return new CommonStatsFlags(flags);
+    }
+
+    @Test
+    public void commonStatsAdditionTest() {
+        CommonStatsFlags originalFlags = randomFlags();
+        CommonStatsFlags otherFlags = randomFlags();
+        CommonStatsFlags filterFlags = randomFlags();
+
+        CommonStats original = new CommonStats(originalFlags);
+        CommonStats other = new CommonStats(otherFlags);
+
+        original.add(other, filterFlags);
+
+        EnumSet<Flag> added = EnumSet.copyOf(Arrays.asList(otherFlags.getFlags()));
+        added.retainAll(Arrays.asList(filterFlags.getFlags()));
+        EnumSet<Flag> expected = EnumSet.copyOf(Arrays.asList(originalFlags.getFlags()));
+        expected.addAll(added);
+
+        for (Flag flag : Flag.values()) {
+            boolean expecting = expected.contains(flag);
+            boolean actual = isSet(flag, original);
+            if (expecting != actual) {
+                assertThat("[" + flag + "] should " + (expecting ? "exist" : "not exist"), actual, equalTo(expecting));
+            }
+        }
     }
 
     private static void set(Flag flag, IndicesStatsRequestBuilder builder, boolean set) {

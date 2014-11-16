@@ -19,6 +19,7 @@
 
 package org.elasticsearch.index.flush;
 
+import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Streamable;
@@ -49,7 +50,7 @@ public class FlushStats implements Streamable, ToXContent {
         this.totalTimeInMillis += totalTimeInMillis;
     }
 
-    public void add(FlushStats flushStats) {
+    public void add(@Nullable FlushStats flushStats) {
         if (flushStats == null) {
             return;
         }

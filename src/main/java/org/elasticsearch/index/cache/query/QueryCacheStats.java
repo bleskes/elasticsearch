@@ -19,6 +19,7 @@
 
 package org.elasticsearch.index.cache.query;
 
+import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Streamable;
@@ -48,7 +49,10 @@ public class QueryCacheStats implements Streamable, ToXContent {
         this.missCount = missCount;
     }
 
-    public void add(QueryCacheStats stats) {
+    public void add(@Nullable QueryCacheStats stats) {
+        if (stats == null) {
+            return;
+        }
         this.memorySize += stats.memorySize;
         this.evictions += stats.evictions;
         this.hitCount += stats.hitCount;

@@ -243,151 +243,197 @@ public class CommonStats implements Streamable, ToXContent {
     public QueryCacheStats queryCache;
 
     public void add(CommonStats stats) {
-        if (docs == null) {
-            if (stats.getDocs() != null) {
-                docs = new DocsStats();
-                docs.add(stats.getDocs());
-            }
-        } else {
-            docs.add(stats.getDocs());
-        }
-        if (store == null) {
-            if (stats.getStore() != null) {
-                store = new StoreStats();
-                store.add(stats.getStore());
-            }
-        } else {
-            store.add(stats.getStore());
-        }
-        if (indexing == null) {
-            if (stats.getIndexing() != null) {
-                indexing = new IndexingStats();
-                indexing.add(stats.getIndexing());
-            }
-        } else {
-            indexing.add(stats.getIndexing());
-        }
-        if (get == null) {
-            if (stats.getGet() != null) {
-                get = new GetStats();
-                get.add(stats.getGet());
-            }
-        } else {
-            get.add(stats.getGet());
-        }
-        if (search == null) {
-            if (stats.getSearch() != null) {
-                search = new SearchStats();
-                search.add(stats.getSearch());
-            }
-        } else {
-            search.add(stats.getSearch());
-        }
-        if (merge == null) {
-            if (stats.getMerge() != null) {
-                merge = new MergeStats();
-                merge.add(stats.getMerge());
-            }
-        } else {
-            merge.add(stats.getMerge());
-        }
-        if (refresh == null) {
-            if (stats.getRefresh() != null) {
-                refresh = new RefreshStats();
-                refresh.add(stats.getRefresh());
-            }
-        } else {
-            refresh.add(stats.getRefresh());
-        }
-        if (flush == null) {
-            if (stats.getFlush() != null) {
-                flush = new FlushStats();
-                flush.add(stats.getFlush());
-            }
-        } else {
-            flush.add(stats.getFlush());
-        }
-        if (warmer == null) {
-            if (stats.getWarmer() != null) {
-                warmer = new WarmerStats();
-                warmer.add(stats.getWarmer());
-            }
-        } else {
-            warmer.add(stats.getWarmer());
-        }
-        if (filterCache == null) {
-            if (stats.getFilterCache() != null) {
-                filterCache = new FilterCacheStats();
-                filterCache.add(stats.getFilterCache());
-            }
-        } else {
-            filterCache.add(stats.getFilterCache());
-        }
+        add(stats, CommonStatsFlags.ALL);
+    }
 
-        if (idCache == null) {
-            if (stats.getIdCache() != null) {
-                idCache = new IdCacheStats();
-                idCache.add(stats.getIdCache());
-            }
-        } else {
-            idCache.add(stats.getIdCache());
-        }
+    /** allows to add a subset of metric */
+    public void add(CommonStats stats, CommonStatsFlags statsToAdd) {
+        for (CommonStatsFlags.Flag flag : statsToAdd.getFlags()) {
 
-        if (fieldData == null) {
-            if (stats.getFieldData() != null) {
-                fieldData = new FieldDataStats();
-                fieldData.add(stats.getFieldData());
+            switch (flag) {
+                case Store:
+                    if (store == null) {
+                        if (stats.getStore() != null) {
+                            store = new StoreStats();
+                            store.add(stats.getStore());
+                        }
+                    } else {
+                        store.add(stats.getStore());
+                    }
+                    break;
+                case Indexing:
+                    if (indexing == null) {
+                        if (stats.getIndexing() != null) {
+                            indexing = new IndexingStats();
+                            indexing.add(stats.getIndexing());
+                        }
+                    } else {
+                        indexing.add(stats.getIndexing());
+                    }
+                    break;
+                case Get:
+                    if (get == null) {
+                        if (stats.getGet() != null) {
+                            get = new GetStats();
+                            get.add(stats.getGet());
+                        }
+                    } else {
+                        get.add(stats.getGet());
+                    }
+                    break;
+                case Search:
+                    if (search == null) {
+                        if (stats.getSearch() != null) {
+                            search = new SearchStats();
+                            search.add(stats.getSearch());
+                        }
+                    } else {
+                        search.add(stats.getSearch());
+                    }
+                    break;
+                case Merge:
+                    if (merge == null) {
+                        if (stats.getMerge() != null) {
+                            merge = new MergeStats();
+                            merge.add(stats.getMerge());
+                        }
+                    } else {
+                        merge.add(stats.getMerge());
+                    }
+                    break;
+                case Flush:
+                    if (flush == null) {
+                        if (stats.getFlush() != null) {
+                            flush = new FlushStats();
+                            flush.add(stats.getFlush());
+                        }
+                    } else {
+                        flush.add(stats.getFlush());
+                    }
+                    break;
+                case Refresh:
+                    if (refresh == null) {
+                        if (stats.getRefresh() != null) {
+                            refresh = new RefreshStats();
+                            refresh.add(stats.getRefresh());
+                        }
+                    } else {
+                        refresh.add(stats.getRefresh());
+                    }
+                    break;
+                case FilterCache:
+                    if (filterCache == null) {
+                        if (stats.getFilterCache() != null) {
+                            filterCache = new FilterCacheStats();
+                            filterCache.add(stats.getFilterCache());
+                        }
+                    } else {
+                        filterCache.add(stats.getFilterCache());
+                    }
+                    break;
+                case IdCache:
+                    if (idCache == null) {
+                        if (stats.getIdCache() != null) {
+                            idCache = new IdCacheStats();
+                            idCache.add(stats.getIdCache());
+                        }
+                    } else {
+                        idCache.add(stats.getIdCache());
+                    }
+                    break;
+                case FieldData:
+                    if (fieldData == null) {
+                        if (stats.getFieldData() != null) {
+                            fieldData = new FieldDataStats();
+                            fieldData.add(stats.getFieldData());
+                        }
+                    } else {
+                        fieldData.add(stats.getFieldData());
+                    }
+                    break;
+                case Docs:
+                    if (docs == null) {
+                        if (stats.getDocs() != null) {
+                            docs = new DocsStats();
+                            docs.add(stats.getDocs());
+                        }
+                    } else {
+                        docs.add(stats.getDocs());
+                    }
+                    break;
+                case Warmer:
+                    if (warmer == null) {
+                        if (stats.getWarmer() != null) {
+                            warmer = new WarmerStats();
+                            warmer.add(stats.getWarmer());
+                        }
+                    } else {
+                        warmer.add(stats.getWarmer());
+                    }
+                    break;
+                case Percolate:
+                    if (percolate == null) {
+                        if (stats.getPercolate() != null) {
+                            percolate = new PercolateStats();
+                            percolate.add(stats.getPercolate());
+                        }
+                    } else {
+                        percolate.add(stats.getPercolate());
+                    }
+                    break;
+                case Completion:
+                    if (completion == null) {
+                        if (stats.getCompletion() != null) {
+                            completion = new CompletionStats();
+                            completion.add(stats.getCompletion());
+                        }
+                    } else {
+                        completion.add(stats.getCompletion());
+                    }
+                    break;
+                case Segments:
+                    if (segments == null) {
+                        if (stats.getSegments() != null) {
+                            segments = new SegmentsStats();
+                            segments.add(stats.getSegments());
+                        }
+                    } else {
+                        segments.add(stats.getSegments());
+                    }
+                    break;
+                case Translog:
+                    if (translog == null) {
+                        if (stats.getTranslog() != null) {
+                            translog = new TranslogStats();
+                            translog.add(stats.getTranslog());
+                        }
+                    } else {
+                        translog.add(stats.getTranslog());
+                    }
+                    break;
+                case Suggest:
+                    if (suggest == null) {
+                        if (stats.getSuggest() != null) {
+                            suggest = new SuggestStats();
+                            suggest.add(stats.getSuggest());
+                        }
+                    } else {
+                        suggest.add(stats.getSuggest());
+                    }
+                    break;
+                case QueryCache:
+                    if (queryCache == null) {
+                        if (stats.getQueryCache() != null) {
+                            queryCache = new QueryCacheStats();
+                            queryCache.add(stats.getQueryCache());
+                        }
+                    } else {
+                        queryCache.add(stats.getQueryCache());
+                    }
+                    break;
+                default:
+                    throw new IllegalStateException("Unknown Flag: " + flag);
             }
-        } else {
-            fieldData.add(stats.getFieldData());
-        }
-        if (percolate == null) {
-            if (stats.getPercolate() != null) {
-                percolate = new PercolateStats();
-                percolate.add(stats.getPercolate());
-            }
-        } else {
-            percolate.add(stats.getPercolate());
-        }
-        if (completion == null) {
-            if (stats.getCompletion() != null) {
-                completion = new CompletionStats();
-                completion.add(stats.getCompletion());
-            }
-        } else {
-            completion.add(stats.getCompletion());
-        }
-        if (segments == null) {
-            if (stats.getSegments() != null) {
-                segments = new SegmentsStats();
-                segments.add(stats.getSegments());
-            }
-        } else {
-            segments.add(stats.getSegments());
-        }
-        if (translog == null) {
-            if (stats.getTranslog() != null) {
-                translog = new TranslogStats();
-                translog.add(stats.getTranslog());
-            }
-        } else {
-            translog.add(stats.getTranslog());
-        }
-        if (suggest == null) {
-            if (stats.getSuggest() != null) {
-                suggest = new SuggestStats();
-                suggest.add(stats.getSuggest());
-            }
-        } else {
-            suggest.add(stats.getSuggest());
-        }
-        if (queryCache == null) {
-            if (stats.getQueryCache() != null) {
-                queryCache = new QueryCacheStats();
-                queryCache.add(stats.getQueryCache());
-            }
-        } else {
-            queryCache.add(stats.getQueryCache());
         }
     }
 

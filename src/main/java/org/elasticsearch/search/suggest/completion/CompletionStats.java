@@ -127,7 +127,7 @@ public class CompletionStats implements Streamable, ToXContent {
         static final XContentBuilderString FIELDS = new XContentBuilderString("fields");
     }
 
-    public void add(CompletionStats completion) {
+    public void add(@Nullable CompletionStats completion) {
         if (completion == null) {
             return;
         }
@@ -135,7 +135,9 @@ public class CompletionStats implements Streamable, ToXContent {
         sizeInBytes += completion.getSizeInBytes();
 
         if (completion.fields != null) {
-            if (fields == null) fields = new ObjectLongOpenHashMap<>();
+            if (fields == null) {
+                fields = new ObjectLongOpenHashMap<>();
+            }
 
             final boolean[] states = completion.fields.allocated;
             final Object[] keys = completion.fields.keys;

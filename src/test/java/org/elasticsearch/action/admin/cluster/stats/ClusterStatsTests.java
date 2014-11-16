@@ -33,7 +33,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 
-import static org.elasticsearch.test.ElasticsearchIntegrationTest.*;
+import static org.elasticsearch.test.ElasticsearchIntegrationTest.Scope;
 import static org.hamcrest.Matchers.is;
 
 @ClusterScope(scope = Scope.SUITE, numDataNodes = 1, numClientNodes = 0)
@@ -142,7 +142,7 @@ public class ClusterStatsTests extends ElasticsearchIntegrationTest {
         ClusterStatsResponse response = client().admin().cluster().prepareClusterStats().get();
         String msg = response.toString();
         assertThat(msg, response.getTimestamp(), Matchers.greaterThan(946681200000l)); // 1 Jan 2000
-        assertThat(msg, response.indicesStats.getStore().getSizeInBytes(), Matchers.greaterThan(0l));
+        assertThat(msg, response.indicesStats.getStats().getStore().getSizeInBytes(), Matchers.greaterThan(0l));
 
         assertThat(msg, response.nodesStats.getFs().getTotal().bytes(), Matchers.greaterThan(0l));
         assertThat(msg, response.nodesStats.getJvm().getVersions().size(), Matchers.greaterThan(0));

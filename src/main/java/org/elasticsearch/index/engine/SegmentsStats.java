@@ -20,6 +20,7 @@
 package org.elasticsearch.index.engine;
 
 import org.elasticsearch.Version;
+import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Streamable;
@@ -67,7 +68,7 @@ public class SegmentsStats implements Streamable, ToXContent {
         this.fixedBitSetMemoryInBytes += fixedBitSetMemoryInBytes;
     }
 
-    public void add(SegmentsStats mergeStats) {
+    public void add(@Nullable SegmentsStats mergeStats) {
         if (mergeStats == null) {
             return;
         }

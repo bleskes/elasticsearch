@@ -19,6 +19,7 @@
 
 package org.elasticsearch.index.shard;
 
+import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Streamable;
@@ -44,7 +45,7 @@ public class DocsStats implements Streamable, ToXContent {
         this.deleted = deleted;
     }
 
-    public void add(DocsStats docsStats) {
+    public void add(@Nullable DocsStats docsStats) {
         if (docsStats == null) {
             return;
         }

@@ -55,10 +55,6 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
 public class TransportClusterStatsAction extends TransportNodesOperationAction<ClusterStatsRequest, ClusterStatsResponse,
         TransportClusterStatsAction.ClusterStatsNodeRequest, ClusterStatsNodeResponse> {
 
-    private static final CommonStatsFlags SHARD_STATS_FLAGS = new CommonStatsFlags(CommonStatsFlags.Flag.Docs, CommonStatsFlags.Flag.Store,
-            CommonStatsFlags.Flag.FieldData, CommonStatsFlags.Flag.FilterCache, CommonStatsFlags.Flag.IdCache,
-            CommonStatsFlags.Flag.Completion, CommonStatsFlags.Flag.Segments, CommonStatsFlags.Flag.Percolate);
-
     private final NodeService nodeService;
     private final IndicesService indicesService;
 
@@ -119,7 +115,7 @@ public class TransportClusterStatsAction extends TransportNodesOperationAction<C
             for (IndexShard indexShard : indexService) {
                 if (indexShard.routingEntry() != null && indexShard.routingEntry().active()) {
                     // only report on fully started shards
-                    shardsStats.add(new ShardStats(indexShard, indexShard.routingEntry(), SHARD_STATS_FLAGS));
+                    shardsStats.add(new ShardStats(indexShard, indexShard.routingEntry(), CommonStatsFlags.ALL));
                 }
             }
         }

@@ -223,11 +223,11 @@ public class IndexingStats implements Streamable, ToXContent {
         this.typeStats = typeStats;
     }
 
-    public void add(IndexingStats indexingStats) {
+    public void add(@Nullable IndexingStats indexingStats) {
         add(indexingStats, true);
     }
 
-    public void add(IndexingStats indexingStats, boolean includeTypes) {
+    public void add(@Nullable IndexingStats indexingStats, boolean includeTypes) {
         if (indexingStats == null) {
             return;
         }

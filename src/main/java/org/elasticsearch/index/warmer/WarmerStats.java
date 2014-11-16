@@ -19,6 +19,7 @@
 
 package org.elasticsearch.index.warmer;
 
+import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Streamable;
@@ -53,7 +54,7 @@ public class WarmerStats implements Streamable, ToXContent {
         this.totalTimeInMillis += totalTimeInMillis;
     }
 
-    public void add(WarmerStats warmerStats) {
+    public void add(@Nullable WarmerStats warmerStats) {
         if (warmerStats == null) {
             return;
         }

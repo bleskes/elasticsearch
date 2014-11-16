@@ -19,6 +19,7 @@
 
 package org.elasticsearch.index.store;
 
+import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Streamable;
@@ -47,7 +48,7 @@ public class StoreStats implements Streamable, ToXContent {
         this.throttleTimeInNanos = throttleTimeInNanos;
     }
 
-    public void add(StoreStats stats) {
+    public void add(@Nullable StoreStats stats) {
         if (stats == null) {
             return;
         }
