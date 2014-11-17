@@ -93,27 +93,22 @@ public class AlertSubscriptionTest
 	static final public String ALERTING_JOB_2 = "alerting-job-2";
 	static final public String ALERTING_JOB_3 = "alerting-job-3";
 	static final public String ALERTING_JOB_3_B = "alerting-job-3-b";
-	static final public String ALERTING_JOB_4 = "alerting-job-4";
+	static final public String ALERT_TIMEOUT_JOB = "alerting-timeout-job";
 
 	static final public String [] JOB_IDS = {ALERTING_JOB_1, ALERTING_JOB_2, ALERTING_JOB_3,
-		ALERTING_JOB_3_B, ALERTING_JOB_4};
+		ALERTING_JOB_3_B, ALERT_TIMEOUT_JOB};
 
 
 
 	private List<URI> m_RecordsUris;
-	List<URI> syncRecordsUris;
-
 	private List<URI> m_BucketUris;
-	List<URI> syncBucketUris;
 
 
 	public AlertSubscriptionTest()
 	{
-		m_RecordsUris = new ArrayList<>();
-		syncRecordsUris = Collections.synchronizedList(m_RecordsUris);
+		m_RecordsUris = Collections.synchronizedList(new ArrayList<URI>());
 
-		m_BucketUris = new ArrayList<>();
-		syncBucketUris = Collections.synchronizedList(m_RecordsUris);
+		m_BucketUris = Collections.synchronizedList(new ArrayList<URI>());
 	}
 
 	private void setupJobs(String baseUrl, EngineApiClient client)
@@ -182,6 +177,7 @@ public class AlertSubscriptionTest
 	public boolean validateRecordsUrl(EngineApiClient client, URI uri, double minNormalisedProb)
 	throws JsonParseException, JsonMappingException, IOException
 	{
+		test(uri != null);
 		Pagination<AnomalyRecord> records = client.get(uri, new TypeReference<Pagination<AnomalyRecord>>() {});
 		test(records != null);
 
@@ -229,6 +225,7 @@ public class AlertSubscriptionTest
 	public boolean validateBucketUrl(EngineApiClient client, URI uri, double minAnomalyScore)
 	throws JsonParseException, JsonMappingException, IOException
 	{
+		test(uri != null);
 		SingleDocument<Bucket> bucket = client.get(uri, new TypeReference<SingleDocument<Bucket>>() {});
 		test(bucket != null);
 		test(bucket.getDocument() != null);
@@ -312,8 +309,6 @@ public class AlertSubscriptionTest
 		{
 			try
 			{
-				final int TIMEOUT = 30;
-
 				Alert alert = m_Client.pollJobAlert(m_BaseUrl, m_JobId, 3,
 						m_ScoreThreshold, m_ProbabiltyThreshold);
 
@@ -335,6 +330,7 @@ public class AlertSubscriptionTest
 					test(false);
 				}
 
+				final int TIMEOUT = 30;
 				alert = m_Client.pollJobAlert(m_BaseUrl, m_JobId, TIMEOUT,
 						m_ScoreThreshold, m_ProbabiltyThreshold);
 
@@ -407,9 +403,14 @@ public class AlertSubscriptionTest
 
 						m_RecordsUris.add(alert.getUri());
 					}
+
+					s_Logger.info("Got alert for job " + m_JobId);
+				}
+				else
+				{
+					s_Logger.info("Alert timed out for " + m_JobId);
 				}
 
-				s_Logger.info("Got alert for job " + m_JobId);
 				m_TestPassed = true;
 			}
 			catch (JsonParseException e)
@@ -598,7 +599,7 @@ public class AlertSubscriptionTest
 			uploaderThreads.add(new Thread(dl));
 
 			LongPollAlertTest longPoll;
-			if (jobId == ALERTING_JOB_4)
+			if (jobId == ALERT_TIMEOUT_JOB)
 			{
 				// this one will timeout
 				longPoll = new LongPollAlertTest(client, baseUrl, jobId, 99.9, 99.9, true, latch);
