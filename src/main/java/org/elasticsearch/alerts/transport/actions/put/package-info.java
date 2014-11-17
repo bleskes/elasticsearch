@@ -15,4 +15,4 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.alerts.transport.actions.index;
+package org.elasticsearch.alerts.transport.actions.put;

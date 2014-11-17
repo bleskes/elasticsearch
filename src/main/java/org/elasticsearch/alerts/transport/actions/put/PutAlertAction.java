@@ -15,30 +15,30 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.alerts.transport.actions.index;
+package org.elasticsearch.alerts.transport.actions.put;
 
 import org.elasticsearch.alerts.client.AlertsClientAction;
 import org.elasticsearch.alerts.client.AlertsClient;
 
 /**
  */
-public class IndexAlertAction extends AlertsClientAction<IndexAlertRequest, IndexAlertResponse, IndexAlertRequestBuilder> {
+public class PutAlertAction extends AlertsClientAction<PutAlertRequest, PutAlertResponse, PutAlertRequestBuilder> {
 
-    public static final IndexAlertAction INSTANCE = new IndexAlertAction();
-    public static final String NAME = "indices:data/write/alert/index";
+    public static final PutAlertAction INSTANCE = new PutAlertAction();
+    public static final String NAME = "indices:data/write/alert/put";
 
-    private IndexAlertAction() {
+    private PutAlertAction() {
         super(NAME);
     }
 
 
     @Override
-    public IndexAlertRequestBuilder newRequestBuilder(AlertsClient client) {
-        return new IndexAlertRequestBuilder(client);
+    public PutAlertRequestBuilder newRequestBuilder(AlertsClient client) {
+        return new PutAlertRequestBuilder(client);
     }
 
     @Override
-    public IndexAlertResponse newResponse() {
-        return new IndexAlertResponse();
+    public PutAlertResponse newResponse() {
+        return new PutAlertResponse();
     }
 }

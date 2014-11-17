@@ -70,6 +70,7 @@ public class TransportAlertStatsAction extends TransportMasterNodeOperationActio
         statsResponse.setAlertActionManagerStarted(alertActionManager.started());
         statsResponse.setAlertActionManagerQueueSize(alertActionManager.getQueueSize());
         statsResponse.setNumberOfRegisteredAlerts(alertManager.getNumberOfAlerts());
+        listener.onResponse(statsResponse);
     }
 
     @Override
