@@ -148,6 +148,7 @@ latest job. For example:
       "period" : null,
       "bucketSpan" : 3600,
       "batchSpan" : null
+      "summaryCountFieldName" : null
     },
     "analysisLimits" : null,
     "dataDescription" : {
