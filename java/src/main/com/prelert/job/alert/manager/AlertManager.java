@@ -34,7 +34,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.TimeoutHandler;
@@ -53,8 +52,6 @@ import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.Detector;
 import com.prelert.rs.data.parsing.AlertObserver;
 import com.prelert.rs.resources.Buckets;
-import com.prelert.rs.resources.Records;
-import com.prelert.rs.resources.ResourceWithJobManager;
 
 
 /**
@@ -74,7 +71,6 @@ public class AlertManager implements TimeoutHandler
 
 	private Map<AsyncResponse, AlertListener> m_AsyncRepsonses;
 	private AlertPersister m_AlertPersister;
-	private AtomicLong m_IdSequence;
 
 	public JobProvider m_JobProvider;
 	public JobManager m_JobManager;
@@ -133,19 +129,18 @@ public class AlertManager implements TimeoutHandler
 		m_JobManager = jobManager;
 		m_AsyncRepsonses = new HashMap<>();
 
+		/*
 		String lastAlertId = m_AlertPersister.lastAlertId();
 		try
 		{
 			long seq = Long.parseLong(lastAlertId);
-			m_IdSequence = new AtomicLong(seq);
-
 			s_Logger.info("Starting Alert Id sequence with value " + lastAlertId);
 		}
 		catch (NumberFormatException nfe)
 		{
 			s_Logger.info("New alert id sequence");
-			m_IdSequence = new AtomicLong();
 		}
+		*/
 	}
 
 	/**
@@ -233,15 +228,17 @@ public class AlertManager implements TimeoutHandler
 	private Alert createAlert(Bucket bucket, AlertListener listener)
 	{
 		Alert alert = new Alert();
-		alert.setId(Long.toString(m_IdSequence.incrementAndGet()));
 		alert.setTimestamp(new Date());
 		alert.setJobId(listener.getJobId());
 		alert.setAnomalyScore(bucket.getAnomalyScore());
-		alert.setNormalizedProbability(bucket.getMaxNormalizedProbability());
+		alert.setMaxNormalizedProbability(bucket.getMaxNormalizedProbability());
 
 		UriBuilder uriBuilder = UriBuilder.fromUri(listener.getBaseUri())
 				    			.path("results")
-								.path(listener.getJobId());
+								.path(listener.getJobId())
+								.path(Buckets.ENDPOINT)
+								.path(bucket.getId())
+								.queryParam(Buckets.EXPAND_QUERY_PARAM, true);
 
 		List<AnomalyRecord> records = new ArrayList<>();
 		for (Detector detector : bucket.getDetectors())
@@ -260,20 +257,10 @@ public class AlertManager implements TimeoutHandler
     	{
     		bucket.setRecords(records);
     		alert.setBucket(bucket);
-
-    		uriBuilder.path(Buckets.ENDPOINT).path(bucket.getId())
-    			.queryParam(Buckets.EXPAND_QUERY_PARAM, true);
     	}
     	else
     	{
     		alert.setRecords(records);
-
-    		String endEpoch = Long.toString((bucket.getTimestamp().getTime() / 1000) + 1);
-
-    		uriBuilder.path(Records.ENDPOINT)
-    			.queryParam(ResourceWithJobManager.START_QUERY_PARAM, bucket.getId())
-    			.queryParam(ResourceWithJobManager.END_QUERY_PARAM, endEpoch)
-    			.queryParam(AnomalyRecord.NORMALIZED_PROBABILITY, listener.getNormalisedProbThreshold());
     	}
 
 

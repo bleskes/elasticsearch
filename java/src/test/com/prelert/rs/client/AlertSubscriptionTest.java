@@ -62,7 +62,6 @@ import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.ApiError;
 import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.ErrorCode;
-import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
 
 
@@ -99,15 +98,11 @@ public class AlertSubscriptionTest
 		ALERTING_JOB_3_B, ALERT_TIMEOUT_JOB};
 
 
-
-	private List<URI> m_RecordsUris;
 	private List<URI> m_BucketUris;
 
 
 	public AlertSubscriptionTest()
 	{
-		m_RecordsUris = Collections.synchronizedList(new ArrayList<URI>());
-
 		m_BucketUris = Collections.synchronizedList(new ArrayList<URI>());
 	}
 
@@ -163,53 +158,6 @@ public class AlertSubscriptionTest
 		Logger.getRootLogger().addAppender(console);
 	}
 
-
-	/**
-	 * Check the alert's URL is valid and returns records
-	 *
-	 * @param uri
-	 * @param minNormalisedProb
-	 * @return
-	 * @throws JsonParseException
-	 * @throws JsonMappingException
-	 * @throws IOException
-	 */
-	public boolean validateRecordsUrl(EngineApiClient client, URI uri, double minNormalisedProb)
-	throws JsonParseException, JsonMappingException, IOException
-	{
-		test(uri != null);
-		Pagination<AnomalyRecord> records = client.get(uri, new TypeReference<Pagination<AnomalyRecord>>() {});
-		test(records != null);
-
-		// Because of re-normalisation the anomaly score might not be what it
-		// was when the alert was triggered
-
-		/*
-		test(records.getHitCount() > 0);
-		test(records.getDocumentCount() > 0);
-		test(records.getDocuments().size() == records.getDocumentCount());
-
-		for (AnomalyRecord r : records.getDocuments())
-		{
-			test(r.getNormalizedProbability() >= minNormalisedProb);
-		}
-
-		while (records.getNextPage() != null)
-		{
-			records = client.get(records.getNextPage(), new TypeReference<Pagination<AnomalyRecord>>() {});
-			test(records != null);
-			test(records.getHitCount() > 0);
-			test(records.getDocumentCount() > 0);
-			test(records.getDocuments().size() == records.getDocumentCount());
-
-			for (AnomalyRecord r : records.getDocuments())
-			{
-				test(r.getNormalizedProbability() >= minNormalisedProb);
-			}
-		}
-		 */
-		return true;
-	}
 
 	/**
 	 * Check that the alert's bucket URL points to a bucket and that
@@ -370,16 +318,7 @@ public class AlertSubscriptionTest
 					if (m_ScoreThreshold != null && m_ProbabiltyThreshold != null)
 					{
 						test(alert.getAnomalyScore() >= m_ScoreThreshold ||
-								alert.getNormalizedProbability() >= m_ProbabiltyThreshold);
-
-						if (alert.getAnomalyScore() > m_ScoreThreshold)
-						{
-							m_BucketUris.add(alert.getUri());
-						}
-						else
-						{
-							m_RecordsUris.add(alert.getUri());
-						}
+								alert.getMaxNormalizedProbability() >= m_ProbabiltyThreshold);
 					}
 					else if (m_ScoreThreshold != null)
 					{
@@ -387,12 +326,10 @@ public class AlertSubscriptionTest
 						test(alert.getRecords() == null);
 						test(alert.getBucket() != null);
 						test(alert.getBucket().getAnomalyScore() >= m_ScoreThreshold);
-
-						m_BucketUris.add(alert.getUri());
 					}
 					else if (m_ProbabiltyThreshold != null)
 					{
-						test(alert.getNormalizedProbability() >= m_ProbabiltyThreshold);
+						test(alert.getMaxNormalizedProbability() >= m_ProbabiltyThreshold);
 						test(alert.getBucket() == null);
 						test(alert.getRecords() != null);
 						test(alert.getRecords().size() > 0);
@@ -400,9 +337,9 @@ public class AlertSubscriptionTest
 						{
 							test(r.getNormalizedProbability() >= m_ProbabiltyThreshold);
 						}
-
-						m_RecordsUris.add(alert.getUri());
 					}
+
+					m_BucketUris.add(alert.getUri());
 
 					s_Logger.info("Got alert for job " + m_JobId);
 				}
@@ -410,6 +347,7 @@ public class AlertSubscriptionTest
 				{
 					s_Logger.info("Alert timed out for " + m_JobId);
 				}
+
 
 				m_TestPassed = true;
 			}
@@ -430,9 +368,6 @@ public class AlertSubscriptionTest
 			}
 		}
 	}
-
-
-
 
 	/**
 	 * Upload the contents of a file to the Engine API
@@ -679,12 +614,6 @@ public class AlertSubscriptionTest
 		for (URI uri : this.m_BucketUris)
 		{
 			boolean uriOk = validateBucketUrl(client, uri, 0.0);
-			passed =  passed && uriOk;
-		}
-
-		for (URI uri : this.m_RecordsUris)
-		{
-			boolean uriOk = validateRecordsUrl(client, uri, 0.0);
 			passed =  passed && uriOk;
 		}
 
