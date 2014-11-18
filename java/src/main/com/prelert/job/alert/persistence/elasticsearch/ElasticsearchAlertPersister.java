@@ -131,7 +131,7 @@ public class ElasticsearchAlertPersister implements AlertPersister
 		}
 
 
-		SortBuilder sb = new FieldSortBuilder(Alert.ID)
+		SortBuilder sb = new FieldSortBuilder(Alert.TIMESTAMP)
 							.order(SortOrder.ASC);
 
 		SearchResponse searchResponse = m_Client.prepareSearch(index)
@@ -164,8 +164,7 @@ public class ElasticsearchAlertPersister implements AlertPersister
 	{
 		FilterBuilder fb = FilterBuilders.matchAllFilter();
 
-		SortBuilder sb = new FieldSortBuilder(Alert.ID)
-							.ignoreUnmapped(true)
+		SortBuilder sb = new FieldSortBuilder(Alert.TIMESTAMP)
 							.order(SortOrder.DESC);
 
 		SearchResponse searchResponse = m_Client.prepareSearch("_all")
@@ -199,10 +198,10 @@ public class ElasticsearchAlertPersister implements AlertPersister
 
 	private List<Alert> getAlertsAfter(String alertId, String index)
 	{
-		RangeFilterBuilder fb = FilterBuilders.rangeFilter(Alert.ID);
+		RangeFilterBuilder fb = FilterBuilders.rangeFilter("_id");
 		fb.gt(alertId);
 
-		SortBuilder sb = new FieldSortBuilder(Alert.ID)
+		SortBuilder sb = new FieldSortBuilder(Alert.TIMESTAMP)
 							.ignoreUnmapped(true)
 							.order(SortOrder.ASC);
 

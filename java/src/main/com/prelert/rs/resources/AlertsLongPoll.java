@@ -66,7 +66,6 @@ public class AlertsLongPoll extends ResourceWithJobManager
 	/**
 	 * The alert cursor query parameter
 	 */
-	static public final String CURSOR = "cursor";
 	static public final String SCORE = "score";
 	static public final String PROBABILITY = "probability";
 

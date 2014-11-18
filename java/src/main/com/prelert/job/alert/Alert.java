@@ -39,12 +39,11 @@ import com.prelert.rs.data.Bucket;
  * Encapsulate an Engine API alert. Alerts have:
  * <ol>
  *  <li>Job Id - The source of the alert</li>
- *  <li>Filter - The normalisation filter</li>
- *  <li>Severity - See {@linkplain Severity}</li>
- *  <li>Normalised Score - The normalised anomaly score</li>
- *  <li>Bucket Time - The time of the alert </li>
- *  <li>Anomaly Records - The anomalies that caused the alert</li>
- *  <li>Reason - </li>
+ *  <li>Timestamp - The time of the alert </li>
+ *  <li>Bucket - The bucket that caused the alert if the alert was based on
+ *  anomaly score</li>
+ *  <li>Records - The records that caused the alert if the alert was based on a
+ *  normalized probability threshold</li>
  * </ol>
  */
 @JsonInclude(Include.NON_NULL)
@@ -52,18 +51,16 @@ public class Alert
 {
 	static final public String TYPE = "alert";
 
-	static final public String ID = "id";
 	static final public String JOB_ID = "JobId";
 	static final public String TIMESTAMP = "timestamp";
 	static final public String URI = "uri";
 
 
-	private String m_AlertId;
 	private String m_JobId;
 	private Date m_Timestamp;
 	private URI m_Uri;
 	private double m_AnomalyScore;
-	private double m_NormalizedProb;
+	private double m_MaxNormalizedProb;
 	private boolean m_IsTimeout;
 	private Bucket m_Bucket;
 	private List<AnomalyRecord> m_Records;
@@ -89,16 +86,6 @@ public class Alert
 		m_Timestamp = timestamp;
 	}
 
-	public String getId()
-	{
-		return m_AlertId;
-	}
-
-	public void setId(String value)
-	{
-		m_AlertId = value;
-	}
-
 	public double getAnomalyScore()
 	{
 		return m_AnomalyScore;
@@ -109,14 +96,14 @@ public class Alert
 		m_AnomalyScore = anomalyScore;
 	}
 
-	public double getNormalizedProbability()
+	public double getMaxNormalizedProbability()
 	{
-		return m_NormalizedProb;
+		return m_MaxNormalizedProb;
 	}
 
-	public void setNormalizedProbability(double prob)
+	public void setMaxNormalizedProbability(double prob)
 	{
-		m_NormalizedProb = prob;
+		m_MaxNormalizedProb = prob;
 	}
 
 	public URI getUri()
