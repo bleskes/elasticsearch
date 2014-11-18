@@ -19,13 +19,13 @@ package org.elasticsearch.alerts.transport.actions.get;
 
 import org.elasticsearch.action.ActionResponse;
 import org.elasticsearch.action.get.GetResponse;
-import org.elasticsearch.alerts.Alert;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 
 import java.io.IOException;
 
 /**
+ * The GetAlertResponse the response class wraps a GetResponse containing the alert source
  */
 public class GetAlertResponse extends ActionResponse {
     private boolean found = false;
@@ -39,6 +39,10 @@ public class GetAlertResponse extends ActionResponse {
         this.getResponse = getResponse;
     }
 
+    /**
+     * The GetResponse containing the alert source
+     * @param getResponse
+     */
     public void getResponse(GetResponse getResponse) {
         this.getResponse = getResponse;
     }

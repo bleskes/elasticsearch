@@ -15,12 +15,11 @@
  * from Elasticsearch Incorporated.
  */
 
+package org.elasticsearch.alerts.actions;
 
-package org.elasticsearch.alerts;
-
-import org.apache.lucene.util.LuceneTestCase;
-import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.alerts.AbstractAlertingTests;
+import org.elasticsearch.alerts.client.AlertsClient;
 import org.elasticsearch.alerts.transport.actions.stats.AlertsStatsRequest;
 import org.elasticsearch.alerts.transport.actions.stats.AlertsStatsResponse;
 import org.elasticsearch.common.bytes.BytesReference;
@@ -28,62 +27,57 @@ import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.test.ElasticsearchIntegrationTest;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 import static org.elasticsearch.index.query.QueryBuilders.termQuery;
 import static org.elasticsearch.search.builder.SearchSourceBuilder.searchSource;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.core.IsEqual.equalTo;
+
 
 /**
  */
-@ElasticsearchIntegrationTest.ClusterScope(scope = ElasticsearchIntegrationTest.Scope.SUITE, numClientNodes = 0, transportClientRatio = 0, numDataNodes = 3)
-public class TestBootStrap extends AbstractAlertingTests {
+@ElasticsearchIntegrationTest.ClusterScope(scope = ElasticsearchIntegrationTest.Scope.SUITE, numClientNodes = 0, transportClientRatio = 0)
+public class AlertStatsTests extends AbstractAlertingTests {
 
     @Test
-    @LuceneTestCase.AwaitsFix(bugUrl = "This test fails but shouldn't")
-    public void testBootStrapAlerts() throws Exception {
-        ensureGreen();
-
-        SearchRequest searchRequest = createTriggerSearchRequest("my-index").source(searchSource().query(termQuery("field", "value")));
-        BytesReference alertSource = createAlertSource("0 0/5 * * * ? *", searchRequest, "hits.total == 1");
-        alertClient().prepareIndexAlert("my-first-alert")
-                .setAlertSource(alertSource)
-                .get();
-
+    public void testStartedStats() throws Exception {
         AlertsStatsRequest alertsStatsRequest = alertClient().prepareAlertsStats().request();
         AlertsStatsResponse response = alertClient().alertsStats(alertsStatsRequest).actionGet();
 
         assertTrue(response.isAlertActionManagerStarted());
         assertTrue(response.isAlertManagerStarted());
-        assertThat(response.getNumberOfRegisteredAlerts(), equalTo(1L));
+        assertThat(response.getAlertActionManagerQueueSize(), equalTo(0L));
+        assertThat(response.getNumberOfRegisteredAlerts(), equalTo(0L));
+        assertThat(response.getAlertActionManagerLargestQueueSize(), equalTo(0L));
+    }
 
+    @Test
+    public void testAlertCountStats() throws Exception {
+        AlertsClient alertsClient = alertClient();
 
-        String oldMaster = internalTestCluster().getMasterName();
-
-        try {
-            internalTestCluster().stopCurrentMasterNode();
-        } catch (IOException ioe) {
-            throw new ElasticsearchException("Failed to stop current master", ioe);
-        }
-
-        //Wait for alerts to start
-        TimeValue maxTime = new TimeValue(30, TimeUnit.SECONDS);
-        Thread.sleep(maxTime.getMillis());
-
-        String newMaster = internalTestCluster().getMasterName();
-
-        assertFalse(newMaster.equals(oldMaster));
-        logger.info("Switched master from [{}] to [{}]",oldMaster,newMaster);
-
-        alertsStatsRequest = alertClient().prepareAlertsStats().request();
-        response = alertClient().alertsStats(alertsStatsRequest).actionGet();
+        AlertsStatsRequest alertsStatsRequest = alertsClient.prepareAlertsStats().request();
+        AlertsStatsResponse response = alertsClient.alertsStats(alertsStatsRequest).actionGet();
 
         assertTrue(response.isAlertActionManagerStarted());
         assertTrue(response.isAlertManagerStarted());
 
+        SearchRequest searchRequest = createTriggerSearchRequest("my-index").source(searchSource().query(termQuery("field", "value")));
+        BytesReference alertSource = createAlertSource("0/5 * * * * * ?", searchRequest, "hits.total == 1");
+        alertClient().prepareIndexAlert("testAlert")
+                .setAlertSource(alertSource)
+                .get();
+
+        response = alertClient().alertsStats(alertsStatsRequest).actionGet();
+
+        //Wait a little until we should have queued an action
+        TimeValue waitTime = new TimeValue(5, TimeUnit.SECONDS);
+        Thread.sleep(waitTime.getMillis());
+
+        assertTrue(response.isAlertActionManagerStarted());
+        assertTrue(response.isAlertManagerStarted());
         assertThat(response.getNumberOfRegisteredAlerts(), equalTo(1L));
+        assertThat(response.getAlertActionManagerLargestQueueSize(), greaterThan(0L));
 
     }
-
 }

@@ -25,14 +25,13 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import java.io.IOException;
 
 /**
+ * The Request to get the alert stats
  */
 public class AlertsStatsRequest extends MasterNodeOperationRequest<AlertsStatsRequest> {
 
 
     public AlertsStatsRequest() {
     }
-
-
 
     @Override
     public ActionRequestValidationException validate() {

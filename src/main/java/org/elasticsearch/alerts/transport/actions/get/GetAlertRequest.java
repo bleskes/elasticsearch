@@ -22,8 +22,6 @@ import org.elasticsearch.action.ActionRequestValidationException;
 import org.elasticsearch.action.IndicesRequest;
 import org.elasticsearch.action.ValidateActions;
 import org.elasticsearch.action.support.IndicesOptions;
-import org.elasticsearch.action.support.master.MasterNodeOperationRequest;
-import org.elasticsearch.alerts.AlertManager;
 import org.elasticsearch.alerts.AlertsStore;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
@@ -33,6 +31,7 @@ import org.elasticsearch.index.VersionType;
 import java.io.IOException;
 
 /**
+ * The request to get the alert by name (id)
  */
 public class GetAlertRequest extends ActionRequest<GetAlertRequest> implements IndicesRequest {
 
@@ -44,7 +43,10 @@ public class GetAlertRequest extends ActionRequest<GetAlertRequest> implements I
     public GetAlertRequest() {
     }
 
-
+    /**
+     * Constructor taking name (id) of the alert to retrieve
+     * @param alertName
+     */
     public GetAlertRequest(String alertName) {
         this.alertName = alertName;
     }
@@ -70,7 +72,10 @@ public class GetAlertRequest extends ActionRequest<GetAlertRequest> implements I
     }
 
 
-
+    /**
+     * The name of the alert to retrieve
+     * @return
+     */
     public String alertName() {
         return alertName;
     }
