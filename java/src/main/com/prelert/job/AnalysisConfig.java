@@ -396,10 +396,11 @@ public class AnalysisConfig
 			throw new JobConfigurationException("No detectors configured",
 					ErrorCode.INCOMPLETE_CONFIGURATION);
 		}
-		
+
+		boolean isSummarised = (m_SummaryCountFieldName != null && !m_SummaryCountFieldName.isEmpty());
 		for (Detector d : m_Detectors)
 		{
-			d.verify();
+			d.verify(isSummarised);
 		}
 		
 		return true;

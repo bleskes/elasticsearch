@@ -125,6 +125,12 @@ public enum ErrorCode
 	 */
 	PROHIBITIED_CHARACTER_IN_FIELD_NAME(10113),
 
+	/**
+	 * The function argument is not allowed in conjunction with
+	 * the other job parameters.
+	 */
+	INVALID_FUNCTION(10114),
+
 
 	// Data store errors
 	/**

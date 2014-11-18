@@ -36,9 +36,9 @@ import org.junit.Test;
 import com.prelert.rs.data.ErrorCode;
 
 /**
- * Test the valid detector/functions/field combinations i.e. the 
+ * Test the valid detector/functions/field combinations i.e. the
  * logic encoded in the table below
- * 
+ *
 <table cellpadding="4px" border="1" width="90%"><colgroup><col class="col_1" /><col class="col_2" /><col class="col_3" /><col class="col_4" /><col class="col_5" /></colgroup>
     <thead>
         <tr><th align="left" valign="top">name</th><th align="left" valign="top">description</th><th align="left" valign="top">fieldName</th><th align="left" valign="top">byFieldName</th><th align="left" valign="top">overFieldName</th></tr></thead><tbody>
@@ -63,7 +63,7 @@ public class VerifyDetectorConfigurationTest
 {
 	/**
 	 * Test the good/bad detector configurations
-	 * @throws JobConfigurationException 
+	 * @throws JobConfigurationException
 	 */
 	@Test
 	public void detectorsTest() throws JobConfigurationException
@@ -72,8 +72,9 @@ public class VerifyDetectorConfigurationTest
 		// are the only allowable functions
 		Detector d = new Detector();
 		d.setFunction(Detector.COUNT);
-		d.verify();
-		
+		d.verify(false);
+		d.verify(true);
+
 		Set<String> difference = new HashSet<String>(Detector.ANALYSIS_FUNCTIONS);
 		difference.remove(Detector.COUNT);
 		difference.remove(Detector.HIGH_COUNT);
@@ -85,39 +86,65 @@ public class VerifyDetectorConfigurationTest
 			try
 			{
 				d.setFunction(f);
-				d.verify();
+				d.verify(false);
 				System.out.println(f);
-				Assert.assertTrue(false); // should throw
+				Assert.fail("JobConfigurationException not thrown when expected");
+			}
+			catch (JobConfigurationException e)
+			{
+			}
+			try
+			{
+				d.setFunction(f);
+				d.verify(true);
+				System.out.println(f);
+				Assert.fail("JobConfigurationException not thrown when expected");
 			}
 			catch (JobConfigurationException e)
 			{
 			}
 		}
-		
+
 		// a byField on its own is invalid
 		d = new Detector();
 		d.setByFieldName("by");
 		try
 		{
-			d.verify();
-			Assert.assertTrue(false); // should throw
+			d.verify(false);
+			Assert.fail("JobConfigurationException not thrown when expected");
 		}
 		catch (JobConfigurationException e)
 		{
 		}
-		
+		try
+		{
+			d.verify(true);
+			Assert.fail("JobConfigurationException not thrown when expected");
+		}
+		catch (JobConfigurationException e)
+		{
+		}
+
 		// an overField on its own is invalid
 		d = new Detector();
 		d.setOverFieldName("over");
 		try
 		{
-			d.verify();
-			Assert.assertTrue(false); // should throw
+			d.verify(false);
+			Assert.fail("JobConfigurationException not thrown when expected");
 		}
 		catch (JobConfigurationException e)
 		{
 		}
-		
+		try
+		{
+			d.verify(true);
+			Assert.fail("JobConfigurationException not thrown when expected");
+		}
+		catch (JobConfigurationException e)
+		{
+		}
+
 		// certain fields aren't allowed with certain functions
 		// first do the over field
 		d = new Detector();
@@ -127,14 +154,22 @@ public class VerifyDetectorConfigurationTest
 			d.setFunction(f);
 			try
 			{
-				d.verify();
-				Assert.assertTrue(false); // should throw
+				d.verify(false);
+				Assert.fail("JobConfigurationException not thrown when expected");
+			}
+			catch (JobConfigurationException e)
+			{
+			}
+			try
+			{
+				d.verify(true);
+				Assert.fail("JobConfigurationException not thrown when expected");
 			}
 			catch (JobConfigurationException e)
 			{
 			}
 		}
-				
+
 		// these functions cannot have just an over field
 		difference = new HashSet<String>(Detector.ANALYSIS_FUNCTIONS);
 		difference.remove(Detector.COUNT);
@@ -145,41 +180,61 @@ public class VerifyDetectorConfigurationTest
 			d.setFunction(f);
 			try
 			{
-				d.verify();
-				Assert.assertTrue(false); // should throw
+				d.verify(false);
+				Assert.fail("JobConfigurationException not thrown when expected");
+			}
+			catch (JobConfigurationException e)
+			{
+			}
+			try
+			{
+				d.verify(true);
+				Assert.fail("JobConfigurationException not thrown when expected");
 			}
 			catch (JobConfigurationException e)
 			{
 			}
 		}
-		
+
 		// these functions can have just an over field
-		for (String f : new String [] {Detector.COUNT, Detector.HIGH_COUNT, 
+		for (String f : new String [] {Detector.COUNT, Detector.HIGH_COUNT,
 				Detector.LOW_COUNT})
 		{
 			d.setFunction(f);
-			d.verify();
+			d.verify(false);
+			d.verify(true);
 		}
-		
+
 		d.setByFieldName("by");
 		for (String f : new String [] {Detector.RARE, Detector.FREQ_RARE})
 		{
 			d.setFunction(f);
-			d.verify();
+			d.verify(false);
+			d.verify(true);
 		}
 		d.setByFieldName(null);
-		
-		
+
+
 		// some functions require a fieldname
 		d.setFieldName("f");
-		for (String f : new String [] {Detector.DISTINCT_COUNT, Detector.DC, 
-				Detector.METRIC, Detector.MEAN, Detector.AVG, Detector.MAX, 
+		for (String f : new String [] {Detector.DISTINCT_COUNT, Detector.DC,
+				Detector.METRIC, Detector.MEAN, Detector.AVG, Detector.MAX,
 				Detector.MIN, Detector.SUM})
 		{
 			d.setFunction(f);
-			d.verify();
+			d.verify(false);
+			try
+			{
+				d.verify(true);
+				Assert.assertFalse(Detector.METRIC.equals(f));
+			}
+			catch (JobConfigurationException e)
+			{
+				// "metric" is not allowed as the function for pre-summarised input
+				Assert.assertEquals(Detector.METRIC, f);
+			}
 		}
-		
+
 		// these functions cannot have a field name
 		difference = new HashSet<String>(Detector.ANALYSIS_FUNCTIONS);
 		difference.remove(Detector.DISTINCT_COUNT);
@@ -195,14 +250,22 @@ public class VerifyDetectorConfigurationTest
 			d.setFunction(f);
 			try
 			{
-				d.verify();
-				Assert.assertTrue(false); // should throw
+				d.verify(false);
+				Assert.fail("JobConfigurationException not thrown when expected");
+			}
+			catch (JobConfigurationException e)
+			{
+			}
+			try
+			{
+				d.verify(true);
+				Assert.fail("JobConfigurationException not thrown when expected");
 			}
 			catch (JobConfigurationException e)
 			{
 			}
 		}
-		
+
 
 		// these functions cannot have a by field
 		d = new Detector();
@@ -212,118 +275,166 @@ public class VerifyDetectorConfigurationTest
 			d.setFunction(f);
 			try
 			{
-				d.verify();
-				Assert.assertTrue(false); // should throw
+				d.verify(false);
+				Assert.fail("JobConfigurationException not thrown when expected");
+			}
+			catch (JobConfigurationException e)
+			{
+			}
+			try
+			{
+				d.verify(true);
+				Assert.fail("JobConfigurationException not thrown when expected");
 			}
 			catch (JobConfigurationException e)
 			{
 			}
 		}
-				
+
 		// these can have an by field
-		for (String f : new String [] {Detector.COUNT, Detector.HIGH_COUNT, 
-				Detector.LOW_COUNT, Detector.RARE, 
+		for (String f : new String [] {Detector.COUNT, Detector.HIGH_COUNT,
+				Detector.LOW_COUNT, Detector.RARE,
 				Detector.NON_ZERO_COUNT, Detector.NZC})
 		{
 			d.setFunction(f);
-			d.verify();
+			d.verify(false);
+			d.verify(true);
 		}
-		
+
 		d.setOverFieldName("over");
 		d.setFunction(Detector.FREQ_RARE);
-		d.verify();
+		d.verify(false);
+		d.verify(true);
 		d.setOverFieldName(null);
-		
+
 		// some functions require a fieldname
 		d.setFieldName("f");
-		for (String f : new String [] {Detector.METRIC, Detector.MEAN, 
-				Detector.AVG, Detector.MAX, 
+		for (String f : new String [] {Detector.METRIC, Detector.MEAN,
+				Detector.AVG, Detector.MAX,
 				Detector.MIN, Detector.SUM})
 		{
 			d.setFunction(f);
-			d.verify();
+			d.verify(false);
+			try
+			{
+				d.verify(true);
+				Assert.assertFalse(Detector.METRIC.equals(f));
+			}
+			catch (JobConfigurationException e)
+			{
+				// "metric" is not allowed as the function for pre-summarised input
+				Assert.assertEquals(Detector.METRIC, f);
+			}
 		}
-		
-		
+
+
 		// test field name
 		d = new Detector();
 		d.setFieldName("field");
-		
+
 		// these functions don't work with fieldname
-		for (String f : new String [] {Detector.COUNT, Detector.HIGH_COUNT, 
+		for (String f : new String [] {Detector.COUNT, Detector.HIGH_COUNT,
 				Detector.LOW_COUNT, Detector.NON_ZERO_COUNT, Detector.NZC,
 				Detector.RARE, Detector.FREQ_RARE})
 		{
 			try
 			{
 				d.setFunction(f);
-				d.verify();
-				Assert.assertTrue(false); // should throw
+				d.verify(false);
+				Assert.fail("JobConfigurationException not thrown when expected");
+			}
+			catch (JobConfigurationException e)
+			{
+			}
+			try
+			{
+				d.setFunction(f);
+				d.verify(true);
+				Assert.fail("JobConfigurationException not thrown when expected");
 			}
 			catch (JobConfigurationException e)
 			{
 			}
 		}
-		
-			
+
+
 		// these functions cant have a field
 		d.setOverFieldName(null);
-		for (String f : new String [] {Detector.HIGH_COUNT, 
+		for (String f : new String [] {Detector.HIGH_COUNT,
 				Detector.LOW_COUNT, Detector.NON_ZERO_COUNT, Detector.NZC,
 				Detector.RARE, Detector.FREQ_RARE})
 		{
 			try
 			{
 				d.setFunction(f);
-				d.verify();
-				Assert.assertTrue(false); // should throw
+				d.verify(false);
+				Assert.fail("JobConfigurationException not thrown when expected");
+			}
+			catch (JobConfigurationException e)
+			{
+			}
+			try
+			{
+				d.setFunction(f);
+				d.verify(true);
+				Assert.fail("JobConfigurationException not thrown when expected");
 			}
 			catch (JobConfigurationException e)
 			{
 			}
 		}
-		
+
 		d.setOverFieldName("over");
 		d.setFunction(Detector.FREQ_RARE);
 		try
 		{
-			d.verify();
-			Assert.assertTrue(false); // should throw
+			d.verify(false);
+			Assert.fail("JobConfigurationException not thrown when expected");
 		}
 		catch (JobConfigurationException e)
 		{
 		}
-		
-		
-		
+		try
+		{
+			d.verify(true);
+			Assert.fail("JobConfigurationException not thrown when expected");
+		}
+		catch (JobConfigurationException e)
+		{
+		}
+
+
 		d = new Detector();
 		d.setByFieldName("by");
-		for (String f : new String [] {Detector.HIGH_COUNT, 
+		for (String f : new String [] {Detector.HIGH_COUNT,
 				Detector.LOW_COUNT, Detector.NON_ZERO_COUNT, Detector.NZC})
 		{
 			d.setFunction(f);
-			d.verify();
+			d.verify(false);
+			d.verify(true);
 		}
-		
+
 		d = new Detector();
 		d.setOverFieldName("over");
-		for (String f : new String [] {Detector.COUNT, Detector.HIGH_COUNT, 
+		for (String f : new String [] {Detector.COUNT, Detector.HIGH_COUNT,
 				Detector.LOW_COUNT})
 		{
 			d.setFunction(f);
-			d.verify();
+			d.verify(false);
+			d.verify(true);
 		}
-		
+
 		d = new Detector();
 		d.setByFieldName("by");
 		d.setOverFieldName("over");
-		for (String f : new String [] {Detector.HIGH_COUNT, 
+		for (String f : new String [] {Detector.HIGH_COUNT,
 				Detector.LOW_COUNT})
 		{
 			d.setFunction(f);
-			d.verify();
+			d.verify(false);
+			d.verify(true);
 		}
-		
+
 		d = new Detector();
 		d.setByFieldName("by");
 		d.setOverFieldName("over");
@@ -332,15 +443,24 @@ public class VerifyDetectorConfigurationTest
 			try
 			{
 				d.setFunction(f);
-				d.verify();
-				Assert.assertTrue(false); // should throw
+				d.verify(false);
+				Assert.fail("JobConfigurationException not thrown when expected");
 			}
 			catch (JobConfigurationException e)
 			{
 			}
-		}			
+			try
+			{
+				d.setFunction(f);
+				d.verify(true);
+				Assert.fail("JobConfigurationException not thrown when expected");
+			}
+			catch (JobConfigurationException e)
+			{
+			}
+		}
 	}
-	
+
 	@Test
 	public void invalidFieldnamesTest()
 	{
@@ -350,100 +470,180 @@ public class VerifyDetectorConfigurationTest
 		d.setOverFieldName("over");
 		try
 		{
-			d.verify();
-			Assert.assertTrue(false); // should throw
+			d.verify(false);
+			Assert.fail("JobConfigurationException not thrown when expected");
 		}
 		catch (JobConfigurationException e)
 		{
-			Assert.assertTrue(e.getErrorCode() == ErrorCode.PROHIBITIED_CHARACTER_IN_FIELD_NAME);
+			Assert.assertEquals(ErrorCode.PROHIBITIED_CHARACTER_IN_FIELD_NAME, e.getErrorCode());
 		}
-		
+		try
+		{
+			d.verify(true);
+			Assert.fail("JobConfigurationException not thrown when expected");
+		}
+		catch (JobConfigurationException e)
+		{
+			// "metric" function for pre-summarised data trumps invalid characters
+			Assert.assertEquals(ErrorCode.INVALID_FUNCTION, e.getErrorCode());
+		}
+
 		d = new Detector();
 		d.setFieldName("f");
 		d.setByFieldName("(invalid-chars");
 		try
 		{
-			d.verify();
-			Assert.assertTrue(false); // should throw
+			d.verify(false);
+			Assert.fail("JobConfigurationException not thrown when expected");
 		}
 		catch (JobConfigurationException e)
 		{
-			Assert.assertTrue(e.getErrorCode() == ErrorCode.PROHIBITIED_CHARACTER_IN_FIELD_NAME);
+			Assert.assertEquals(ErrorCode.PROHIBITIED_CHARACTER_IN_FIELD_NAME, e.getErrorCode());
 		}
-		
+		try
+		{
+			d.verify(true);
+			Assert.fail("JobConfigurationException not thrown when expected");
+		}
+		catch (JobConfigurationException e)
+		{
+			// "metric" function for pre-summarised data trumps invalid characters
+			Assert.assertEquals(ErrorCode.INVALID_FUNCTION, e.getErrorCode());
+		}
+
 		d = new Detector();
 		d.setFieldName("f");
 		d.setOverFieldName("bad=name");
 		try
 		{
-			d.verify();
-			Assert.assertTrue(false); // should throw
+			d.verify(false);
+			Assert.fail("JobConfigurationException not thrown when expected");
 		}
 		catch (JobConfigurationException e)
 		{
-			Assert.assertTrue(e.getErrorCode() == ErrorCode.PROHIBITIED_CHARACTER_IN_FIELD_NAME);
-		}		
-		
+			Assert.assertEquals(ErrorCode.PROHIBITIED_CHARACTER_IN_FIELD_NAME, e.getErrorCode());
+		}
+		try
+		{
+			d.verify(true);
+			Assert.fail("JobConfigurationException not thrown when expected");
+		}
+		catch (JobConfigurationException e)
+		{
+			// "metric" function for pre-summarised data trumps invalid characters
+			Assert.assertEquals(ErrorCode.INVALID_FUNCTION, e.getErrorCode());
+		}
+
 		d.setOverFieldName("over");
 		d.setPartitionFieldName("bad\\name");
 		try
 		{
-			d.verify();
-			Assert.assertTrue(false); // should throw
+			d.verify(false);
+			Assert.fail("JobConfigurationException not thrown when expected");
 		}
 		catch (JobConfigurationException e)
 		{
-			Assert.assertTrue(e.getErrorCode() == ErrorCode.PROHIBITIED_CHARACTER_IN_FIELD_NAME);
+			Assert.assertEquals(ErrorCode.PROHIBITIED_CHARACTER_IN_FIELD_NAME, e.getErrorCode());
 		}
-			
+		try
+		{
+			d.verify(true);
+			Assert.fail("JobConfigurationException not thrown when expected");
+		}
+		catch (JobConfigurationException e)
+		{
+			// "metric" function for pre-summarised data trumps invalid characters
+			Assert.assertEquals(ErrorCode.INVALID_FUNCTION, e.getErrorCode());
+		}
+
 		d = new Detector();
 		d.setFieldName("over(");
 		try
 		{
-			d.verify();
-			Assert.assertTrue(false); // should throw
+			d.verify(false);
+			Assert.fail("JobConfigurationException not thrown when expected");
 		}
 		catch (JobConfigurationException e)
 		{
-			Assert.assertTrue(e.getErrorCode() == ErrorCode.PROHIBITIED_CHARACTER_IN_FIELD_NAME);
+			Assert.assertEquals(ErrorCode.PROHIBITIED_CHARACTER_IN_FIELD_NAME, e.getErrorCode());
 		}
-		
+		try
+		{
+			d.verify(true);
+			Assert.fail("JobConfigurationException not thrown when expected");
+		}
+		catch (JobConfigurationException e)
+		{
+			// "metric" function for pre-summarised data trumps invalid characters
+			Assert.assertEquals(ErrorCode.INVALID_FUNCTION, e.getErrorCode());
+		}
+
 		d = new Detector();
 		d.setFieldName("over)");
 		try
 		{
-			d.verify();
-			Assert.assertTrue(false); // should throw
+			d.verify(false);
+			Assert.fail("JobConfigurationException not thrown when expected");
 		}
 		catch (JobConfigurationException e)
 		{
-			Assert.assertTrue(e.getErrorCode() == ErrorCode.PROHIBITIED_CHARACTER_IN_FIELD_NAME);
+			Assert.assertEquals(ErrorCode.PROHIBITIED_CHARACTER_IN_FIELD_NAME, e.getErrorCode());
 		}
-		
+		try
+		{
+			d.verify(true);
+			Assert.fail("JobConfigurationException not thrown when expected");
+		}
+		catch (JobConfigurationException e)
+		{
+			// "metric" function for pre-summarised data trumps invalid characters
+			Assert.assertEquals(ErrorCode.INVALID_FUNCTION, e.getErrorCode());
+		}
+
 		d = new Detector();
 		d.setFieldName("f");
 		d.setByFieldName("b[");
 		try
 		{
-			d.verify();
-			Assert.assertTrue(false); // should throw
+			d.verify(false);
+			Assert.fail("JobConfigurationException not thrown when expected");
 		}
 		catch (JobConfigurationException e)
 		{
-			Assert.assertTrue(e.getErrorCode() == ErrorCode.PROHIBITIED_CHARACTER_IN_FIELD_NAME);
+			Assert.assertEquals(ErrorCode.PROHIBITIED_CHARACTER_IN_FIELD_NAME, e.getErrorCode());
 		}
-		
+		try
+		{
+			d.verify(true);
+			Assert.fail("JobConfigurationException not thrown when expected");
+		}
+		catch (JobConfigurationException e)
+		{
+			// "metric" function for pre-summarised data trumps invalid characters
+			Assert.assertEquals(ErrorCode.INVALID_FUNCTION, e.getErrorCode());
+		}
+
 		d = new Detector();
 		d.setFieldName("f");
 		d.setByFieldName("b]");
 		try
 		{
-			d.verify();
-			Assert.assertTrue(false); // should throw
+			d.verify(false);
+			Assert.fail("JobConfigurationException not thrown when expected");
 		}
 		catch (JobConfigurationException e)
 		{
-			Assert.assertTrue(e.getErrorCode() == ErrorCode.PROHIBITIED_CHARACTER_IN_FIELD_NAME);
+			Assert.assertEquals(ErrorCode.PROHIBITIED_CHARACTER_IN_FIELD_NAME, e.getErrorCode());
+		}
+		try
+		{
+			d.verify(true);
+			Assert.fail("JobConfigurationException not thrown when expected");
+		}
+		catch (JobConfigurationException e)
+		{
+			// "metric" function for pre-summarised data trumps invalid characters
+			Assert.assertEquals(ErrorCode.INVALID_FUNCTION, e.getErrorCode());
 		}
 	}
 }
