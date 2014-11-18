@@ -15,11 +15,13 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.shield.authc.ldap;
+package org.elasticsearch.shield.authc.active_directory;
 
 import org.elasticsearch.common.collect.ImmutableList;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.ESLoggerFactory;
+import org.elasticsearch.shield.authc.ldap.GenericLdapConnection;
+import org.elasticsearch.shield.authc.support.ldap.LdapConnection;
 
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
@@ -27,7 +29,7 @@ import javax.naming.directory.*;
 import java.util.List;
 
 /**
- *
+ * An Ldap Connection customized for active directory.
  */
 public class ActiveDirectoryConnection implements LdapConnection {
     private static final ESLogger logger = ESLoggerFactory.getLogger(GenericLdapConnection.class.getName());
@@ -35,7 +37,6 @@ public class ActiveDirectoryConnection implements LdapConnection {
     protected final DirContext ldapContext;
 
     private final String groupSearchDN;
-    protected final String groupAttribute = "memberOf";
 
     /**
      * This object is intended to be constructed by the LdapConnectionFactory
@@ -55,7 +56,7 @@ public class ActiveDirectoryConnection implements LdapConnection {
         try {
             ldapContext.close();
         } catch (NamingException e) {
-            throw new LdapException("Could not close the LDAP connection", e);
+            throw new ActiveDirectoryException("Could not close the LDAP connection", e);
         }
     }
 
@@ -63,6 +64,7 @@ public class ActiveDirectoryConnection implements LdapConnection {
     public List<String> getGroups() {
 
         String groupsSearchFilter = buildGroupQuery();
+        logger.debug("group SID to DN search filter: [{}]", groupsSearchFilter);
 
         // Search for groups the user belongs to in order to get their names
         //Create the search controls
@@ -70,18 +72,12 @@ public class ActiveDirectoryConnection implements LdapConnection {
 
         //Specify the search scope
         groupsSearchCtls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+        groupsSearchCtls.setReturningAttributes(new String[] {});  //we only need the entry DN
 
-        //Specify the Base for the search
-        String groupsSearchBase = "DC=ad,DC=test,DC=elasticsearch,DC=com";
-
-        //Specify the attributes to return
-        String groupsReturnedAtts[]={};
-        groupsSearchCtls.setReturningAttributes(groupsReturnedAtts);
-
-        ImmutableList.Builder<String> groups = ImmutableList.<String>builder();
+        ImmutableList.Builder<String> groups = ImmutableList.builder();
         try {
             //Search for objects using the filter
-            NamingEnumeration groupsAnswer = ldapContext.search(groupsSearchBase, groupsSearchFilter.toString(), groupsSearchCtls);
+            NamingEnumeration groupsAnswer = ldapContext.search(groupSearchDN, groupsSearchFilter, groupsSearchCtls);
 
             //Loop through the search results
             while (groupsAnswer.hasMoreElements()) {
@@ -89,13 +85,13 @@ public class ActiveDirectoryConnection implements LdapConnection {
                 groups.add(sr.getNameInNamespace());
             }
         } catch (NamingException ne) {
-            throw new LdapException("Exception occurred fetching AD groups", bindDn, ne);
+            throw new ActiveDirectoryException("Exception occurred fetching AD groups", bindDn, ne);
         }
         return groups.build();
     }
 
     private String buildGroupQuery() {
-        StringBuffer groupsSearchFilter = new StringBuffer("(|");
+        StringBuilder groupsSearchFilter = new StringBuilder("(|");
         try {
             SearchControls userSearchCtls = new SearchControls();
             userSearchCtls.setSearchScope(SearchControls.OBJECT_SCOPE);
@@ -117,7 +113,9 @@ public class ActiveDirectoryConnection implements LdapConnection {
                         Attribute attr = (Attribute)ae.next();
                         for (NamingEnumeration e = attr.getAll();e.hasMore();) {
                             byte[] sid = (byte[])e.next();
-                            groupsSearchFilter.append("(objectSid=" + binarySidToStringSid(sid) + ")");
+                            groupsSearchFilter.append("(objectSid=");
+                            groupsSearchFilter.append(binarySidToStringSid(sid));
+                            groupsSearchFilter.append(")");
                         }
                         groupsSearchFilter.append(")");
                     }
@@ -125,7 +123,7 @@ public class ActiveDirectoryConnection implements LdapConnection {
             }
 
         } catch (NamingException ne) {
-            throw new LdapException("Exception occurred fetching AD groups", bindDn, ne);
+            throw new ActiveDirectoryException("Exception occurred fetching AD groups", bindDn, ne);
         }
         return groupsSearchFilter.toString();
     }
@@ -139,10 +137,9 @@ public class ActiveDirectoryConnection implements LdapConnection {
      * No idea whats going on here.  Its copied from here:
      * http://blogs.msdn.com/b/alextch/archive/2007/06/18/sample-java-application-that-retrieves-group-membership-of-an-active-directory-user-account.aspx
      * @param SID byte encoded security ID
-     * @return
      */
     public String binarySidToStringSid( byte[] SID ) {
-        String strSID = "";
+        String strSID;
 
         //convert the SID into string format
 

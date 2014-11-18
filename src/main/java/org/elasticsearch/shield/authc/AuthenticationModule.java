@@ -19,6 +19,7 @@ package org.elasticsearch.shield.authc;
 
 import org.elasticsearch.common.collect.ImmutableList;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.shield.authc.active_directory.ActiveDirectoryModule;
 import org.elasticsearch.shield.authc.esusers.ESUsersModule;
 import org.elasticsearch.shield.authc.ldap.LdapModule;
 import org.elasticsearch.shield.authc.system.SystemRealm;
@@ -38,7 +39,9 @@ public class AuthenticationModule extends AbstractShieldModule.Node.Spawn {
         return ImmutableList.of(
                 new SystemRealm.Module(settings),
                 new ESUsersModule(settings),
-                new LdapModule(settings));
+                new LdapModule(settings),
+                new ActiveDirectoryModule(settings)
+        );
     }
 
     @Override

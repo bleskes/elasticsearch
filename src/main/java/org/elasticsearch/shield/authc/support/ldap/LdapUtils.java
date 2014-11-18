@@ -15,18 +15,23 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.shield.authc.ldap;
+package org.elasticsearch.shield.authc.support.ldap;
 
-import java.io.Closeable;
-import java.util.List;
+import org.elasticsearch.ElasticsearchException;
 
-/**
- * Represents a LDAP connection with an authenticated/bound user that needs closing.
- */
-public interface LdapConnection extends Closeable {
-    void close();
+import javax.naming.InvalidNameException;
+import javax.naming.ldap.LdapName;
 
-    List<String> getGroups();
+public class LdapUtils {
 
-    String getAuthenticatedUserDn();
+    private LdapUtils() {
+    }
+
+    public static LdapName ldapName(String dn) {
+        try {
+            return new LdapName(dn);
+        } catch (InvalidNameException e) {
+            throw new ElasticsearchException("Invalid group DN is set [" + dn + "]", e);
+        }
+    }
 }

@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.shield.authc.ldap;
+package org.elasticsearch.shield.authc.support.ldap;
 
 import com.carrotsearch.randomizedtesting.SysGlobals;
 import org.apache.directory.api.ldap.model.entry.Entry;

@@ -15,30 +15,20 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.shield.authc.ldap;
+package org.elasticsearch.shield.authc.active_directory;
 
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.rest.RestController;
-import org.elasticsearch.shield.authc.support.ldap.AbstractLdapRealm;
+import org.elasticsearch.env.Environment;
+import org.elasticsearch.shield.authc.support.ldap.GroupToRoleMapper;
+import org.elasticsearch.watcher.ResourceWatcherService;
 
 /**
- * Authenticates username/password tokens against ldap, locates groups and maps them to roles.
+ * LDAP Group to role mapper specific to the "shield.authc.ldap" package
  */
-public class LdapRealm extends AbstractLdapRealm {
-
-    public static final String TYPE = "ldap";
-
+public class ActiveDirectoryGroupToRoleMapper extends GroupToRoleMapper{
     @Inject
-    public LdapRealm(Settings settings,
-                     GenericLdapConnectionFactory ldap,
-                     LdapGroupToRoleMapper roleMapper,
-                     RestController restController) {
-        super(settings, ldap, roleMapper, restController);
-    }
-
-    @Override
-    public String type() {
-        return TYPE;
+    public ActiveDirectoryGroupToRoleMapper(Settings settings, Environment env, ResourceWatcherService watcherService) {
+        super(settings, env, watcherService);
     }
 }

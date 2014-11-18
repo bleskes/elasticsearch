@@ -15,12 +15,16 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.shield.authc.ldap;
+package org.elasticsearch.shield.authc.active_directory;
 
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.shield.authc.ldap.*;
 import org.elasticsearch.shield.authc.support.SecuredStringTests;
 import org.elasticsearch.shield.ssl.SSLService;
+import org.elasticsearch.shield.authc.support.ldap.LdapConnection;
+import org.elasticsearch.shield.authc.support.ldap.LdapSslSocketFactory;
+import org.elasticsearch.shield.authc.support.ldap.LdapTest;
 import org.elasticsearch.test.ElasticsearchTestCase;
 import org.elasticsearch.test.junit.annotations.Network;
 import org.hamcrest.Matchers;
@@ -39,11 +43,11 @@ public class ActiveDirectoryFactoryTests extends ElasticsearchTestCase {
     public static final String AD_LDAP_URL = "ldaps://54.213.145.20:636";
     public static final String PASSWORD = "NickFuryHeartsES";
     public static final String AD_DOMAIN = "ad.test.elasticsearch.com";
-    public static String SETTINGS_PREFIX = LdapRealm.class.getPackage().getName().substring("com.elasticsearch.".length()) + '.';
+    public static String SETTINGS_PREFIX = ActiveDirectoryRealm.class.getPackage().getName().substring("com.elasticsearch.".length()) + '.';
 
     @BeforeClass
     public static void setTrustStore() throws URISyntaxException {
-        File filename = new File(LdapConnectionTests.class.getResource("ldaptrust.jks").toURI()).getAbsoluteFile();
+        File filename = new File(LdapConnectionTests.class.getResource("../support/ldap/ldaptrust.jks").toURI()).getAbsoluteFile();
         LdapSslSocketFactory.init(new SSLService(ImmutableSettings.builder()
                 .put("shield.ssl.keystore", filename)
                 .put("shield.ssl.keystore_password", "changeit")
@@ -62,8 +66,6 @@ public class ActiveDirectoryFactoryTests extends ElasticsearchTestCase {
 
         String userName = "ironman";
         try (LdapConnection ldap = connectionFactory.bind(userName, SecuredStringTests.build(PASSWORD))) {
-            String userDN = ldap.getAuthenticatedUserDn();
-
             List<String> groups = ldap.getGroups();
             assertThat(groups, containsInAnyOrder(
                     containsString("Geniuses"),
@@ -100,8 +102,6 @@ public class ActiveDirectoryFactoryTests extends ElasticsearchTestCase {
 
         String userName = "hulk";
         try (LdapConnection ldap = connectionFactory.bind(userName, SecuredStringTests.build(PASSWORD))) {
-            String userDN = ldap.getAuthenticatedUserDn();
-
             List<String> groups = ldap.getGroups();
 
             assertThat(groups, containsInAnyOrder(
@@ -109,10 +109,10 @@ public class ActiveDirectoryFactoryTests extends ElasticsearchTestCase {
                     containsString("SHIELD"),
                     containsString("Geniuses"),
                     containsString("Philanthropists"),
-                    containsString("Users"),
+                    //containsString("Users"),  Users group is in a different user context
                     containsString("Domain Users"),
                     containsString("Supers")
-                    ));
+            ));
         }
     }
 
@@ -121,7 +121,7 @@ public class ActiveDirectoryFactoryTests extends ElasticsearchTestCase {
         String groupSearchBase = "DC=ad,DC=test,DC=elasticsearch,DC=com";
         String userTemplate = "CN={0},CN=Users,DC=ad,DC=test,DC=elasticsearch,DC=com";
         boolean isSubTreeSearch = true;
-        StandardLdapConnectionFactory connectionFactory = new StandardLdapConnectionFactory(
+        GenericLdapConnectionFactory connectionFactory = new GenericLdapConnectionFactory(
                 LdapTest.buildLdapSettings(AD_LDAP_URL, userTemplate, groupSearchBase, isSubTreeSearch));
 
         String user = "Bruce Banner";

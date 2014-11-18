@@ -24,6 +24,7 @@ import org.elasticsearch.shield.User;
 import org.elasticsearch.shield.authc.support.SecuredString;
 import org.elasticsearch.shield.authc.support.SecuredStringTests;
 import org.elasticsearch.shield.authc.support.UsernamePasswordToken;
+import org.elasticsearch.shield.authc.support.ldap.LdapTest;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.watcher.ResourceWatcherService;
 import org.junit.After;
@@ -60,7 +61,7 @@ public class LdapRealmTest extends LdapTest {
 
     @Test
     public void testRestHeaderRegistration() {
-        new LdapRealm(ImmutableSettings.EMPTY, mock(LdapConnectionFactory.class), mock(LdapGroupToRoleMapper.class), restController);
+        new LdapRealm(ImmutableSettings.EMPTY, mock(GenericLdapConnectionFactory.class), mock(LdapGroupToRoleMapper.class), restController);
         verify(restController).registerRelevantHeaders(UsernamePasswordToken.BASIC_AUTH_HEADER);
     }
 
@@ -70,7 +71,8 @@ public class LdapRealmTest extends LdapTest {
         boolean isSubTreeSearch = true;
         String userTemplate = VALID_USER_TEMPLATE;
         Settings settings = buildLdapSettings(ldapUrl(), userTemplate, groupSearchBase, isSubTreeSearch);
-        StandardLdapConnectionFactory ldapFactory = new StandardLdapConnectionFactory(settings);
+        GenericLdapConnectionFactory ldapFactory = new GenericLdapConnectionFactory(settings);
+
         LdapRealm ldap = new LdapRealm(buildNonCachingSettings(), ldapFactory, buildGroupAsRoleMapper(resourceWatcherService), restController);
 
         User user = ldap.authenticate(new UsernamePasswordToken(VALID_USERNAME, SecuredStringTests.build(PASSWORD)));
@@ -83,7 +85,7 @@ public class LdapRealmTest extends LdapTest {
         String groupSearchBase = "ou=crews,ou=groups,o=sevenSeas";
         boolean isSubTreeSearch = false;
         String userTemplate = VALID_USER_TEMPLATE;
-        StandardLdapConnectionFactory ldapFactory = new StandardLdapConnectionFactory(
+        GenericLdapConnectionFactory ldapFactory = new GenericLdapConnectionFactory(
                 buildLdapSettings(ldapUrl(), userTemplate, groupSearchBase, isSubTreeSearch));
 
         LdapRealm ldap = new LdapRealm(buildNonCachingSettings(), ldapFactory, buildGroupAsRoleMapper(resourceWatcherService), restController);
@@ -98,7 +100,7 @@ public class LdapRealmTest extends LdapTest {
         String groupSearchBase = "o=sevenSeas";
         boolean isSubTreeSearch = true;
         String userTemplate = VALID_USER_TEMPLATE;
-        StandardLdapConnectionFactory ldapFactory = new StandardLdapConnectionFactory(
+        GenericLdapConnectionFactory ldapFactory = new GenericLdapConnectionFactory(
                 buildLdapSettings(ldapUrl(), userTemplate, groupSearchBase, isSubTreeSearch) );
 
         ldapFactory = spy(ldapFactory);
@@ -115,7 +117,7 @@ public class LdapRealmTest extends LdapTest {
         String groupSearchBase = "o=sevenSeas";
         boolean isSubTreeSearch = true;
         String userTemplate = VALID_USER_TEMPLATE;
-        StandardLdapConnectionFactory ldapFactory = new StandardLdapConnectionFactory(
+        GenericLdapConnectionFactory ldapFactory = new GenericLdapConnectionFactory(
                 buildLdapSettings(ldapUrl(), userTemplate, groupSearchBase, isSubTreeSearch) );
 
         LdapGroupToRoleMapper roleMapper = buildGroupAsRoleMapper(resourceWatcherService);
@@ -141,7 +143,7 @@ public class LdapRealmTest extends LdapTest {
         String groupSearchBase = "o=sevenSeas";
         boolean isSubTreeSearch = true;
         String userTemplate = VALID_USER_TEMPLATE;
-        StandardLdapConnectionFactory ldapFactory = new StandardLdapConnectionFactory(
+        GenericLdapConnectionFactory ldapFactory = new GenericLdapConnectionFactory(
                 buildLdapSettings(ldapUrl(), userTemplate, groupSearchBase, isSubTreeSearch));
 
         ldapFactory = spy(ldapFactory);

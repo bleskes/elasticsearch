@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.shield.authc.ldap;
+package org.elasticsearch.shield.authc.active_directory;
 
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
@@ -23,22 +23,22 @@ import org.elasticsearch.rest.RestController;
 import org.elasticsearch.shield.authc.support.ldap.AbstractLdapRealm;
 
 /**
- * Authenticates username/password tokens against ldap, locates groups and maps them to roles.
+ *
  */
-public class LdapRealm extends AbstractLdapRealm {
+public class ActiveDirectoryRealm extends AbstractLdapRealm {
 
-    public static final String TYPE = "ldap";
+    public static final String type = "active_directory";
 
     @Inject
-    public LdapRealm(Settings settings,
-                     GenericLdapConnectionFactory ldap,
-                     LdapGroupToRoleMapper roleMapper,
-                     RestController restController) {
-        super(settings, ldap, roleMapper, restController);
+    public ActiveDirectoryRealm(Settings settings,
+                                ActiveDirectoryConnectionFactory connectionFactory,
+                                ActiveDirectoryGroupToRoleMapper roleMapper,
+                                RestController restController) {
+        super(settings, connectionFactory, roleMapper, restController);
     }
 
     @Override
     public String type() {
-        return TYPE;
+        return type;
     }
 }

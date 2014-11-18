@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.shield.authc.ldap;
+package org.elasticsearch.shield.authc.support.ldap;
 
 import com.carrotsearch.randomizedtesting.LifecycleScope;
 import com.carrotsearch.randomizedtesting.ThreadFilter;
@@ -23,6 +23,9 @@ import com.carrotsearch.randomizedtesting.annotations.ThreadLeakFilters;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
+import org.elasticsearch.shield.authc.ldap.GenericLdapConnectionFactory;
+import org.elasticsearch.shield.authc.ldap.LdapGroupToRoleMapper;
+import org.elasticsearch.shield.authc.ldap.LdapRealm;
 import org.elasticsearch.test.ElasticsearchTestCase;
 import org.elasticsearch.watcher.ResourceWatcherService;
 import org.junit.AfterClass;
@@ -53,16 +56,16 @@ public abstract class LdapTest extends ElasticsearchTestCase {
         return ldap.getUrl();
     }
 
-    static Settings buildLdapSettings(String ldapUrl, String userTemplate, String groupSearchBase, boolean isSubTreeSearch) {
+    public static Settings buildLdapSettings(String ldapUrl, String userTemplate, String groupSearchBase, boolean isSubTreeSearch) {
         return buildLdapSettings( new String[]{ldapUrl}, new String[]{userTemplate}, groupSearchBase, isSubTreeSearch );
     }
 
-    static Settings buildLdapSettings(String[] ldapUrl, String[] userTemplate, String groupSearchBase, boolean isSubTreeSearch) {
+    public static Settings buildLdapSettings(String[] ldapUrl, String[] userTemplate, String groupSearchBase, boolean isSubTreeSearch) {
         return ImmutableSettings.builder()
-                .putArray(SETTINGS_PREFIX + StandardLdapConnectionFactory.URLS_SETTING, ldapUrl)
-                .putArray(SETTINGS_PREFIX + StandardLdapConnectionFactory.USER_DN_TEMPLATES_SETTING, userTemplate)
-                .put(SETTINGS_PREFIX + StandardLdapConnectionFactory.GROUP_SEARCH_BASEDN_SETTING, groupSearchBase)
-                .put(SETTINGS_PREFIX + StandardLdapConnectionFactory.GROUP_SEARCH_SUBTREE_SETTING, isSubTreeSearch).build();
+                .putArray(SETTINGS_PREFIX + GenericLdapConnectionFactory.URLS_SETTING, ldapUrl)
+                .putArray(SETTINGS_PREFIX + GenericLdapConnectionFactory.USER_DN_TEMPLATES_SETTING, userTemplate)
+                .put(SETTINGS_PREFIX + GenericLdapConnectionFactory.GROUP_SEARCH_BASEDN_SETTING, groupSearchBase)
+                .put(SETTINGS_PREFIX + GenericLdapConnectionFactory.GROUP_SEARCH_SUBTREE_SETTING, isSubTreeSearch).build();
     }
 
     protected Settings buildNonCachingSettings() {
@@ -78,7 +81,7 @@ public abstract class LdapTest extends ElasticsearchTestCase {
 
     protected LdapGroupToRoleMapper buildGroupAsRoleMapper(ResourceWatcherService resourceWatcherService) {
         Settings settings = ImmutableSettings.builder()
-                .put("shield.authc.ldap." + LdapGroupToRoleMapper.USE_UNMAPPED_GROUPS_AS_ROLES_SETTING, true)
+                .put("shield.authc.ldap." + GroupToRoleMapper.USE_UNMAPPED_GROUPS_AS_ROLES_SETTING, true)
                 .build();
 
         return new LdapGroupToRoleMapper(settings, new Environment(settings), resourceWatcherService);

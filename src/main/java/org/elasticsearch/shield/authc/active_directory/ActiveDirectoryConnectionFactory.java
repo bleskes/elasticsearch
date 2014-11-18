@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.shield.authc.ldap;
+package org.elasticsearch.shield.authc.active_directory;
 
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.collect.ImmutableMap;
@@ -24,6 +24,8 @@ import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.shield.ShieldException;
 import org.elasticsearch.shield.authc.support.SecuredString;
+import org.elasticsearch.shield.authc.support.ldap.LdapConnectionFactory;
+import org.elasticsearch.shield.authc.support.ldap.LdapSslSocketFactory;
 
 import javax.naming.Context;
 import javax.naming.NamingEnumeration;
@@ -102,13 +104,13 @@ public class ActiveDirectoryConnectionFactory extends AbstractComponent implemen
                 if (!results.hasMore()) {
                     return new ActiveDirectoryConnection(ctx, name, userSearchDN);
                 }
-                throw new LdapException("Search for user [" + userName + "] by principle name yielded multiple results");
+                throw new ActiveDirectoryException("Search for user [" + userName + "] by principle name yielded multiple results");
             }
 
-            throw new LdapException("Search for user [" + userName + "], search root [" + userSearchDN + "] yielded no results");
+            throw new ActiveDirectoryException("Search for user [" + userName + "], search root [" + userSearchDN + "] yielded no results");
 
         } catch (NamingException e) {
-            throw new LdapException("Unable to authenticate user [" + userName + "] to active directory domain ["+ domainName +"]", e);
+            throw new ActiveDirectoryException("Unable to authenticate user [" + userName + "] to active directory domain ["+ domainName +"]", e);
         }
     }
 
