@@ -318,7 +318,24 @@ public class ElasticsearchJobProvider implements JobProvider
 		List<JobDetails> jobs = new ArrayList<>();
 		for (SearchHit hit : response.getHits().getHits())
 		{
-			jobs.add(m_ObjectMapper.convertValue(hit.getSource(), JobDetails.class)); 
+            JobDetails job = m_ObjectMapper.convertValue(hit.getSource(), JobDetails.class);
+
+			// Pull out the modelSizeStats document, and add this to the JobDetails
+			GetResponse modelSizeStatsResponse = m_Client.prepareGet(
+				job.getId(), ModelSizeStats.TYPE, ModelSizeStats.TYPE).get();
+
+			if (!modelSizeStatsResponse.isExists())
+			{
+				String msg = "No memory usage details for job with id " + job.getId();
+				s_Logger.warn(msg);
+			}
+			else
+			{
+				ModelSizeStats modelSizeStats = m_ObjectMapper.convertValue(
+					modelSizeStatsResponse.getSource(), ModelSizeStats.class);
+				job.setModelSizeStats(modelSizeStats);
+			}
+			jobs.add(job);
 		}
 
 		Pagination<JobDetails> page = new Pagination<>();
