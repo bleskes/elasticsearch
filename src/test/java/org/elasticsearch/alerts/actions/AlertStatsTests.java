@@ -36,7 +36,7 @@ import static org.hamcrest.core.IsEqual.equalTo;
 
 /**
  */
-@ElasticsearchIntegrationTest.ClusterScope(scope = ElasticsearchIntegrationTest.Scope.SUITE, numClientNodes = 0, transportClientRatio = 0)
+@ElasticsearchIntegrationTest.ClusterScope(scope = ElasticsearchIntegrationTest.Scope.TEST, numClientNodes = 0, transportClientRatio = 0)
 public class AlertStatsTests extends AbstractAlertingTests {
 
     @Test
@@ -77,6 +77,5 @@ public class AlertStatsTests extends AbstractAlertingTests {
         assertTrue(response.isAlertManagerStarted());
         assertThat(response.getNumberOfRegisteredAlerts(), equalTo(1L));
         //assertThat(response.getAlertActionManagerLargestQueueSize(), greaterThan(0L));
-
     }
 }
