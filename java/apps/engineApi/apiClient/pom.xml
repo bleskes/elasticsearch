@@ -9,17 +9,18 @@
 
   <modelVersion>4.0.0</modelVersion>
 
+  <parent>
+    <groupId>com.prelert</groupId>
+    <artifactId>engineAPI</artifactId>
+    <version>1.2.0</version>
+  </parent>
+
   <groupId>com.prelert.client</groupId>
   <artifactId>prelertEngineApiClient</artifactId>
-  <version>1.2.0</version>
   <packaging>jar</packaging>
 
   <name>prelertEngineApiClient</name>
   <url>http://maven.apache.org</url>
-
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-  </properties>
 
   <dependencies> 
     <!-- test jars -->
@@ -44,33 +45,27 @@
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-core</artifactId>
-      <version>2.2.3</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-annotations</artifactId>      
-      <version>2.2.3</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>      
-      <version>2.2.3</version>
       <scope>compile</scope>
     </dependency>  
+
     <dependency>
-      <groupId>log4j</groupId>
-      <artifactId>log4j</artifactId>
-      <version>1.2.17</version>
-      <scope>compile</scope>
-    </dependency>      
+      <groupId>com.prelert</groupId>
+      <artifactId>engine-api</artifactId>
+    </dependency>
   </dependencies>
 
 
   <build>
-    <sourceDirectory>${basedir}/../../../src/main</sourceDirectory>
-    <testSourceDirectory>${basedir}/../../../src/test</testSourceDirectory>
     <!-- 
       Set the main and test output directories to the same directory so 
       we can jar both the test classes and required classes together
@@ -80,58 +75,6 @@
 
 
     <plugins>
-      <!-- Compile -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.1</version>
-        <configuration>
-          <source>1.7</source>
-          <target>1.7</target>
-          <verbose>false</verbose>
-        </configuration>
-
-        <executions>
-          <!-- Compile main -->
-          <execution>   
-            <id>default-compile</id>
-            <phase>compile</phase>
-            <goals>
-              <goal>compile</goal>
-            </goals>     
-            <configuration>         
-              <includes>            
-                <include>com/prelert/rs/client/**/*.java</include>    
-                <include>com/prelert/rs/data/*.java</include>      
-                <include>com/prelert/job/*.java</include>          
-              </includes>
-              <excludes>
-                <exclude>com/prelert/rs/resources/*.java</exclude>  
-                <exclude>com/prelert/job/JobManager*</exclude>   
-                <exclude>com/prelert/job/ProcessManager*</exclude>  
-                <exclude>com/prelert/job/DetectorState.java</exclude>
-                <exclude>com/prelert/job/UnknownJobException.java</exclude>
-                <exclude>com/prelert/job/TooManyJobsException.java</exclude>
-              </excludes>
-            </configuration>
-          </execution>
-          
-          <!-- Compile test -->
-          <execution>
-            <id>default-testCompile</id>
-            <phase>test-compile</phase>
-            <goals>
-              <goal>testCompile</goal>
-            </goals>
-            <configuration>
-              <testIncludes>
-                <include>com/prelert/rs/client/**/*.java</include>  
-              </testIncludes>
-            </configuration> 
-          </execution>                  
-        </executions>        
-      </plugin>
-
       <!-- Set main class in jar file -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
