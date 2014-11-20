@@ -21,10 +21,12 @@ import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.alerts.actions.AlertAction;
 import org.elasticsearch.alerts.triggers.AlertTrigger;
 import org.elasticsearch.common.joda.time.DateTime;
+import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 public class Alert implements ToXContent {
@@ -37,12 +39,15 @@ public class Alert implements ToXContent {
     private DateTime lastActionFire;
     private long version;
     private boolean enabled;
-
+    private TimeValue throttlePeriod = new TimeValue(0);
+    private DateTime timeLastActionExecuted = null;
+    private AlertAckState ackState = AlertAckState.NOT_ACKABLE;
 
     public Alert() {
+        actions = new ArrayList<>();
     }
 
-    public Alert(String alertName, SearchRequest searchRequest, AlertTrigger trigger, List<AlertAction> actions, String schedule, DateTime lastActionFire, long version, boolean enabled) {
+    public Alert(String alertName, SearchRequest searchRequest, AlertTrigger trigger, List<AlertAction> actions, String schedule, DateTime lastActionFire, long version, boolean enabled, TimeValue throttlePeriod, AlertAckState ackState) {
         this.alertName = alertName;
         this.searchRequest = searchRequest;
         this.trigger = trigger;
@@ -51,6 +56,8 @@ public class Alert implements ToXContent {
         this.lastActionFire = lastActionFire;
         this.version = version;
         this.enabled = enabled;
+        this.throttlePeriod = throttlePeriod;
+        this.ackState = ackState;
     }
 
     @Override
@@ -60,9 +67,17 @@ public class Alert implements ToXContent {
         builder.field(AlertsStore.ENABLE.getPreferredName(), enabled);
         builder.field(AlertsStore.REQUEST_FIELD.getPreferredName());
         AlertUtils.writeSearchRequest(searchRequest, builder, params);
+        builder.field(AlertsStore.THROTTLE_PERIOD_FIELD.getPreferredName(), throttlePeriod.millis());
+        builder.field(AlertsStore.ACK_STATE_FIELD.getPreferredName(), ackState.toString());
+
+        if (timeLastActionExecuted != null) {
+            builder.field(AlertsStore.LAST_ACTION_EXECUTED_FIELD.getPreferredName(), timeLastActionExecuted);
+        }
+
         if (lastActionFire != null) {
             builder.field(AlertsStore.LAST_ACTION_FIRE.getPreferredName(), lastActionFire);
         }
+
         if (actions != null && !actions.isEmpty()) {
             builder.startObject(AlertsStore.ACTION_FIELD.getPreferredName());
             for (AlertAction action : actions){
@@ -168,6 +183,39 @@ public class Alert implements ToXContent {
 
     public void schedule(String schedule) {
         this.schedule = schedule;
+    }
+
+    /**
+     * @return The time the last action was executed
+     */
+    public DateTime getTimeLastActionExecuted() {
+        return timeLastActionExecuted;
+    }
+
+    public void setTimeLastActionExecuted(DateTime timeLastActionExecuted) {
+        this.timeLastActionExecuted = timeLastActionExecuted;
+    }
+
+    /**
+     * @return the minimum time between action executions
+     */
+    public TimeValue getThrottlePeriod() {
+        return throttlePeriod;
+    }
+
+    public void setThrottlePeriod(TimeValue throttlePeriod) {
+        this.throttlePeriod = throttlePeriod;
+    }
+
+    /**
+     * @return the ack state of this alert
+     */
+    public AlertAckState getAckState() {
+        return ackState;
+    }
+
+    public void setAckState(AlertAckState ackState) {
+        this.ackState = ackState;
     }
 
     @Override

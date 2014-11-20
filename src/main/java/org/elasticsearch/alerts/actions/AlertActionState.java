@@ -30,7 +30,8 @@ public enum AlertActionState implements ToXContent {
     SEARCH_UNDERWAY,
     NO_ACTION_NEEDED,
     ACTION_PERFORMED,
-    ERROR;
+    ERROR,
+    THROTTLED;
 
     public static final String FIELD_NAME = "state";
 
@@ -48,6 +49,8 @@ public enum AlertActionState implements ToXContent {
                 return "ACTION_PERFORMED";
             case ERROR:
                 return "ERROR";
+            case THROTTLED:
+                return "THROTTLED";
             default:
                 return "NO_ACTION_NEEDED";
         }
@@ -65,6 +68,8 @@ public enum AlertActionState implements ToXContent {
                 return ACTION_PERFORMED;
             case "ERROR":
                 return ERROR;
+            case "THROTTLED":
+                return THROTTLED;
             default:
                 throw new ElasticsearchIllegalArgumentException("Unknown value [" + s + "] for AlertHistoryState" );
         }

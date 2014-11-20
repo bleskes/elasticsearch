@@ -19,6 +19,7 @@ package org.elasticsearch.alerts.client;
 
 import org.elasticsearch.action.*;
 import org.elasticsearch.action.support.TransportAction;
+import org.elasticsearch.alerts.transport.actions.ack.*;
 import org.elasticsearch.alerts.transport.actions.delete.*;
 import org.elasticsearch.alerts.transport.actions.get.*;
 import org.elasticsearch.alerts.transport.actions.put.*;
@@ -37,7 +38,7 @@ public class NodeAlertsClient implements AlertsClient {
     @Inject
     public NodeAlertsClient(ThreadPool threadPool, Headers headers, TransportPutAlertAction transportPutAlertAction,
                             TransportGetAlertAction transportGetAlertAction, TransportDeleteAlertAction transportDeleteAlertAction,
-                            TransportAlertStatsAction transportAlertStatsAction) {
+                            TransportAlertStatsAction transportAlertStatsAction, TransportAckAlertAction transportAckAlertAction) {
         this.headers = headers;
         this.threadPool = threadPool;
         internalActions = ImmutableMap.<GenericAction, TransportAction>builder()
@@ -45,6 +46,7 @@ public class NodeAlertsClient implements AlertsClient {
                 .put(GetAlertAction.INSTANCE, transportGetAlertAction)
                 .put(DeleteAlertAction.INSTANCE, transportDeleteAlertAction)
                 .put(AlertsStatsAction.INSTANCE, transportAlertStatsAction)
+                .put(AckAlertAction.INSTANCE, transportAckAlertAction)
                 .build();
     }
 
@@ -120,6 +122,26 @@ public class NodeAlertsClient implements AlertsClient {
     @Override
     public void alertsStats(AlertsStatsRequest request, ActionListener<AlertsStatsResponse> listener) {
         execute(AlertsStatsAction.INSTANCE, request, listener);
+    }
+
+    @Override
+    public AckAlertRequestBuilder prepareAckAlert(String alertName) {
+        return new AckAlertRequestBuilder(this, alertName);
+    }
+
+    @Override
+    public AckAlertRequestBuilder prepareAckAlert() {
+        return new AckAlertRequestBuilder(this);
+    }
+
+    @Override
+    public void ackAlert(AckAlertRequest request, ActionListener<AckAlertResponse> listener) {
+        execute(AckAlertAction.INSTANCE, request, listener);
+    }
+
+    @Override
+    public ActionFuture<AckAlertResponse> ackAlert(AckAlertRequest request) {
+        return execute(AckAlertAction.INSTANCE, request);
     }
 
     @SuppressWarnings("unchecked")

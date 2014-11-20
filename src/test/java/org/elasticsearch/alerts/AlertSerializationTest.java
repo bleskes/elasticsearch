@@ -22,6 +22,7 @@ import org.elasticsearch.alerts.actions.AlertAction;
 import org.elasticsearch.alerts.actions.EmailAlertAction;
 import org.elasticsearch.alerts.triggers.ScriptedTrigger;
 import org.elasticsearch.common.joda.time.DateTime;
+import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
@@ -48,7 +49,9 @@ public class AlertSerializationTest extends ElasticsearchIntegrationTest {
                 "0/5 * * * * ? *",
                 new DateTime(),
                 0,
-                false);
+                false,
+                new TimeValue(0),
+                AlertAckState.NOT_TRIGGERED);
 
 
         XContentBuilder jsonBuilder = XContentFactory.jsonBuilder();
@@ -65,6 +68,11 @@ public class AlertSerializationTest extends ElasticsearchIntegrationTest {
         assertEquals(parsedAlert.schedule(), alert.schedule());
         assertEquals(parsedAlert.getSearchRequest().source(), alert.getSearchRequest().source());
         assertEquals(parsedAlert.trigger(), alert.trigger());
+        assertEquals(parsedAlert.getThrottlePeriod(), alert.getThrottlePeriod());
+        if (parsedAlert.getTimeLastActionExecuted() == null) {
+            assertNull(alert.getTimeLastActionExecuted());
+        }
+        assertEquals(parsedAlert.getAckState(), parsedAlert.getAckState());
     }
 
 
