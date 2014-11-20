@@ -18,9 +18,9 @@
 package org.elasticsearch.shield.authc.support.ldap;
 
 import org.elasticsearch.ElasticsearchException;
+import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.collect.ImmutableMap;
 import org.elasticsearch.common.component.AbstractComponent;
-import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
@@ -45,7 +45,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 /**
  * This class loads and monitors the file defining the mappings of LDAP Group DNs to internal ES Roles.
  */
-public abstract class GroupToRoleMapper extends AbstractComponent {
+public abstract class AbstractGroupToRoleMapper extends AbstractComponent {
 
     public static final String DEFAULT_FILE_NAME = "role_mapping.yml";
     public static final String ROLE_MAPPING_FILE_SETTING = "files.role_mapping";
@@ -53,20 +53,20 @@ public abstract class GroupToRoleMapper extends AbstractComponent {
 
     private final Path file;
     private final boolean useUnmappedGroupsAsRoles;
+    private final String realmType;
     private volatile ImmutableMap<LdapName, Set<String>> groupRoles;
 
     private CopyOnWriteArrayList<RefreshListener> listeners;
 
-    @Inject
-    public GroupToRoleMapper(Settings settings, Environment env, ResourceWatcherService watcherService) {
-        this(settings, env, watcherService, null);
-    }
-
-    GroupToRoleMapper(Settings settings, Environment env, ResourceWatcherService watcherService, RefreshListener listener) {
+    protected AbstractGroupToRoleMapper(Settings settings,
+                                        String realmType,
+                                        Environment env,
+                                        ResourceWatcherService watcherService,
+                                        @Nullable RefreshListener listener) {
         super(settings);
         useUnmappedGroupsAsRoles = componentSettings.getAsBoolean(USE_UNMAPPED_GROUPS_AS_ROLES_SETTING, false);
         file = resolveFile(componentSettings, env);
-        groupRoles = parseFile(file, logger);
+        groupRoles = parseFile(file, logger, realmType);
         FileWatcher watcher = new FileWatcher(file.getParent().toFile());
         watcher.addListener(new FileListener());
         watcherService.add(watcher, ResourceWatcherService.Frequency.HIGH);
@@ -74,6 +74,7 @@ public abstract class GroupToRoleMapper extends AbstractComponent {
         if (listener != null) {
             listeners.add(listener);
         }
+        this.realmType = realmType;
     }
 
     public synchronized void addListener(RefreshListener listener) {
@@ -88,7 +89,7 @@ public abstract class GroupToRoleMapper extends AbstractComponent {
         return Paths.get(location);
     }
 
-    public static ImmutableMap<LdapName, Set<String>> parseFile(Path path, ESLogger logger)  {
+    public static ImmutableMap<LdapName, Set<String>> parseFile(Path path, ESLogger logger, String realmType)  {
         if (!Files.exists(path)) {
             return ImmutableMap.of();
         }
@@ -111,7 +112,7 @@ public abstract class GroupToRoleMapper extends AbstractComponent {
                         }
                         groupRoles.add(role);
                     } catch (InvalidNameException e) {
-                        logger.error("Invalid group DN [{}] found in ldap group to role mappings [{}]. Skipping... ", e, ldapDN, path);
+                        logger.error("Invalid group DN [{}] found in [{}] group to role mappings [{}]. Skipping... ", e, ldapDN, realmType, path);
                     }
                 }
 
@@ -119,7 +120,7 @@ public abstract class GroupToRoleMapper extends AbstractComponent {
             return ImmutableMap.copyOf(groupToRoles);
 
         } catch (IOException e) {
-            throw new ElasticsearchException("unable to load ldap role mapper file [" + path.toAbsolutePath() + "]", e);
+            throw new ElasticsearchException("unable to load [" + realmType + "] role mapper file [" + path.toAbsolutePath() + "]", e);
         }
     }
 
@@ -137,7 +138,7 @@ public abstract class GroupToRoleMapper extends AbstractComponent {
             }
         }
         if (logger.isDebugEnabled()) {
-            logger.debug("The roles [{}], are mapped from these LDAP groups [{}]", roles, groupDns);
+            logger.debug("The roles [{}], are mapped from these [{}] groups [{}]", roles, realmType, groupDns);
         }
         return roles;
     }
@@ -165,8 +166,8 @@ public abstract class GroupToRoleMapper extends AbstractComponent {
 
         @Override
         public void onFileChanged(File file) {
-            if (file.equals(GroupToRoleMapper.this.file.toFile())) {
-                groupRoles = parseFile(file.toPath(), logger);
+            if (file.equals(AbstractGroupToRoleMapper.this.file.toFile())) {
+                groupRoles = parseFile(file.toPath(), logger, realmType);
                 notifyRefresh();
             }
         }

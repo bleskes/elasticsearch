@@ -22,9 +22,9 @@ import org.elasticsearch.common.collect.ImmutableMap;
 import org.elasticsearch.common.component.AbstractComponent;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.shield.ShieldException;
+import org.elasticsearch.shield.ShieldSettingsException;
 import org.elasticsearch.shield.authc.support.SecuredString;
-import org.elasticsearch.shield.authc.support.ldap.LdapConnectionFactory;
+import org.elasticsearch.shield.authc.support.ldap.ConnectionFactory;
 import org.elasticsearch.shield.authc.support.ldap.LdapSslSocketFactory;
 
 import javax.naming.Context;
@@ -42,7 +42,7 @@ import java.util.Hashtable;
  * Note that even though there is a separate factory for Active Directory, this factory would work against AD.  A template
  * for each user context would need to be supplied.
  */
-public class GenericLdapConnectionFactory extends AbstractComponent implements LdapConnectionFactory {
+public class LdapConnectionFactory extends AbstractComponent implements ConnectionFactory {
 
     public static final String USER_DN_TEMPLATES_SETTING = "user_dn_templates";
     public static final String GROUP_SEARCH_SUBTREE_SETTING = "group_search.subtree_search";
@@ -55,15 +55,15 @@ public class GenericLdapConnectionFactory extends AbstractComponent implements L
     protected final boolean findGroupsByAttribute;
 
     @Inject
-    public GenericLdapConnectionFactory(Settings settings) {
+    public LdapConnectionFactory(Settings settings) {
         super(settings);
         userDnTemplates = componentSettings.getAsArray(USER_DN_TEMPLATES_SETTING);
         if (userDnTemplates == null) {
-            throw new ShieldException("Missing required ldap setting [" + USER_DN_TEMPLATES_SETTING + "]");
+            throw new ShieldSettingsException("Missing required ldap setting [" + USER_DN_TEMPLATES_SETTING + "]");
         }
         String[] ldapUrls = componentSettings.getAsArray(URLS_SETTING);
         if (ldapUrls == null) {
-            throw new ShieldException("Missing required ldap setting [" + URLS_SETTING + "]");
+            throw new ShieldSettingsException("Missing required ldap setting [" + URLS_SETTING + "]");
         }
 
         ImmutableMap.Builder<String, Serializable> builder = ImmutableMap.<String, Serializable>builder()
@@ -80,13 +80,13 @@ public class GenericLdapConnectionFactory extends AbstractComponent implements L
     }
 
     /**
-     * This iterates through the configured user templates attempting to connect.  If all attempts fail, all exceptions
+     * This iterates through the configured user templates attempting to open.  If all attempts fail, all exceptions
      * are combined into one Exception as nested exceptions.
      * @param username a relative name, Not a distinguished name, that will be inserted into the template.
      * @return authenticated exception
      */
     @Override
-    public GenericLdapConnection bind(String username, SecuredString password) {
+    public LdapConnection open(String username, SecuredString password) {
         //SASL, MD5, etc. all options here stink, we really need to go over ssl + simple authentication
         Hashtable<String, Serializable> ldapEnv = new Hashtable<>(this.sharedLdapEnv);
         ldapEnv.put(Context.SECURITY_AUTHENTICATION, "simple");
@@ -99,7 +99,7 @@ public class GenericLdapConnectionFactory extends AbstractComponent implements L
                 DirContext ctx = new InitialDirContext(ldapEnv);
 
                 //return the first good connection
-                return new GenericLdapConnection(ctx, dn, findGroupsByAttribute, groupSubTreeSearch, groupSearchDN);
+                return new LdapConnection(ctx, dn, findGroupsByAttribute, groupSubTreeSearch, groupSearchDN);
 
             } catch (NamingException e) {
                 logger.warn("Failed ldap authentication with user template [{}], dn [{}]", e, template, dn );

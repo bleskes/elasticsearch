@@ -19,11 +19,8 @@ package org.elasticsearch.shield.authc.ldap;
 
 import org.elasticsearch.common.inject.util.Providers;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.shield.authc.Realm;
 import org.elasticsearch.shield.authc.support.ldap.LdapSslSocketFactory;
 import org.elasticsearch.shield.support.AbstractShieldModule;
-
-import static org.elasticsearch.common.inject.name.Names.named;
 
 /**
  * Configures Ldap object injections
@@ -31,11 +28,9 @@ import static org.elasticsearch.common.inject.name.Names.named;
 public class LdapModule extends AbstractShieldModule.Node {
 
     private final boolean enabled;
-    private final Settings ldapSettings;
 
     public LdapModule(Settings settings) {
         super(settings);
-        ldapSettings = settings.getComponentSettings(LdapModule.class);
         enabled = enabled(settings);
     }
 
@@ -46,7 +41,7 @@ public class LdapModule extends AbstractShieldModule.Node {
             for JNDI invokes a static getSocketFactory method from LdapSslSocketFactory.  */
             requestStaticInjection(LdapSslSocketFactory.class);
 
-            bind(Realm.class).annotatedWith(named(LdapRealm.TYPE)).to(LdapRealm.class).asEagerSingleton();
+            bind(LdapRealm.class).asEagerSingleton();
         } else {
             bind(LdapRealm.class).toProvider(Providers.<LdapRealm>of(null));
         }

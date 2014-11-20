@@ -61,7 +61,7 @@ public class LdapRealmTest extends LdapTest {
 
     @Test
     public void testRestHeaderRegistration() {
-        new LdapRealm(ImmutableSettings.EMPTY, mock(GenericLdapConnectionFactory.class), mock(LdapGroupToRoleMapper.class), restController);
+        new LdapRealm(ImmutableSettings.EMPTY, mock(LdapConnectionFactory.class), mock(LdapGroupToRoleMapper.class), restController);
         verify(restController).registerRelevantHeaders(UsernamePasswordToken.BASIC_AUTH_HEADER);
     }
 
@@ -71,7 +71,7 @@ public class LdapRealmTest extends LdapTest {
         boolean isSubTreeSearch = true;
         String userTemplate = VALID_USER_TEMPLATE;
         Settings settings = buildLdapSettings(ldapUrl(), userTemplate, groupSearchBase, isSubTreeSearch);
-        GenericLdapConnectionFactory ldapFactory = new GenericLdapConnectionFactory(settings);
+        LdapConnectionFactory ldapFactory = new LdapConnectionFactory(settings);
 
         LdapRealm ldap = new LdapRealm(buildNonCachingSettings(), ldapFactory, buildGroupAsRoleMapper(resourceWatcherService), restController);
 
@@ -85,7 +85,7 @@ public class LdapRealmTest extends LdapTest {
         String groupSearchBase = "ou=crews,ou=groups,o=sevenSeas";
         boolean isSubTreeSearch = false;
         String userTemplate = VALID_USER_TEMPLATE;
-        GenericLdapConnectionFactory ldapFactory = new GenericLdapConnectionFactory(
+        LdapConnectionFactory ldapFactory = new LdapConnectionFactory(
                 buildLdapSettings(ldapUrl(), userTemplate, groupSearchBase, isSubTreeSearch));
 
         LdapRealm ldap = new LdapRealm(buildNonCachingSettings(), ldapFactory, buildGroupAsRoleMapper(resourceWatcherService), restController);
@@ -100,7 +100,7 @@ public class LdapRealmTest extends LdapTest {
         String groupSearchBase = "o=sevenSeas";
         boolean isSubTreeSearch = true;
         String userTemplate = VALID_USER_TEMPLATE;
-        GenericLdapConnectionFactory ldapFactory = new GenericLdapConnectionFactory(
+        LdapConnectionFactory ldapFactory = new LdapConnectionFactory(
                 buildLdapSettings(ldapUrl(), userTemplate, groupSearchBase, isSubTreeSearch) );
 
         ldapFactory = spy(ldapFactory);
@@ -108,8 +108,8 @@ public class LdapRealmTest extends LdapTest {
         User user = ldap.authenticate( new UsernamePasswordToken(VALID_USERNAME, SecuredStringTests.build(PASSWORD)));
         user = ldap.authenticate( new UsernamePasswordToken(VALID_USERNAME, SecuredStringTests.build(PASSWORD)));
 
-        //verify one and only one bind -> caching is working
-        verify(ldapFactory, times(1)).bind(anyString(), any(SecuredString.class));
+        //verify one and only one open -> caching is working
+        verify(ldapFactory, times(1)).open(anyString(), any(SecuredString.class));
     }
 
     @Test
@@ -117,7 +117,7 @@ public class LdapRealmTest extends LdapTest {
         String groupSearchBase = "o=sevenSeas";
         boolean isSubTreeSearch = true;
         String userTemplate = VALID_USER_TEMPLATE;
-        GenericLdapConnectionFactory ldapFactory = new GenericLdapConnectionFactory(
+        LdapConnectionFactory ldapFactory = new LdapConnectionFactory(
                 buildLdapSettings(ldapUrl(), userTemplate, groupSearchBase, isSubTreeSearch) );
 
         LdapGroupToRoleMapper roleMapper = buildGroupAsRoleMapper(resourceWatcherService);
@@ -127,15 +127,15 @@ public class LdapRealmTest extends LdapTest {
         User user = ldap.authenticate( new UsernamePasswordToken(VALID_USERNAME, SecuredStringTests.build(PASSWORD)));
         user = ldap.authenticate( new UsernamePasswordToken(VALID_USERNAME, SecuredStringTests.build(PASSWORD)));
 
-        //verify one and only one bind -> caching is working
-        verify(ldapFactory, times(1)).bind(anyString(), any(SecuredString.class));
+        //verify one and only one open -> caching is working
+        verify(ldapFactory, times(1)).open(anyString(), any(SecuredString.class));
 
         roleMapper.notifyRefresh();
 
         user = ldap.authenticate( new UsernamePasswordToken(VALID_USERNAME, SecuredStringTests.build(PASSWORD)));
 
-        //we need to bind again
-        verify(ldapFactory, times(2)).bind(anyString(), any(SecuredString.class));
+        //we need to open again
+        verify(ldapFactory, times(2)).open(anyString(), any(SecuredString.class));
     }
 
     @Test
@@ -143,7 +143,7 @@ public class LdapRealmTest extends LdapTest {
         String groupSearchBase = "o=sevenSeas";
         boolean isSubTreeSearch = true;
         String userTemplate = VALID_USER_TEMPLATE;
-        GenericLdapConnectionFactory ldapFactory = new GenericLdapConnectionFactory(
+        LdapConnectionFactory ldapFactory = new LdapConnectionFactory(
                 buildLdapSettings(ldapUrl(), userTemplate, groupSearchBase, isSubTreeSearch));
 
         ldapFactory = spy(ldapFactory);
@@ -152,7 +152,7 @@ public class LdapRealmTest extends LdapTest {
         user = ldap.authenticate( new UsernamePasswordToken(VALID_USERNAME, SecuredStringTests.build(PASSWORD)));
 
         //verify two and only two binds -> caching is disabled
-        verify(ldapFactory, times(2)).bind(anyString(), any(SecuredString.class));
+        verify(ldapFactory, times(2)).open(anyString(), any(SecuredString.class));
     }
 
 
