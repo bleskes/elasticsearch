@@ -94,10 +94,10 @@ install: compile
 	cd $(ENGINEAPI_BUILD_DIR) && mvn $(MAVEN_ARGS) $(MAVEN_PROPS) -DskipTests=true install 
 
 test:
-	cd $(ENGINEAPI_BUILD_DIR) && mvn $(MAVEN_ARGS) $(MAVEN_PROPS) test
+	cd $(ENGINEAPI_BUILD_DIR) && mvn $(MAVEN_ARGS) $(MAVEN_PROPS) test $(SONAR_MAIN_STEP)
 
 clean:
-	cd $(ENGINEAPI_BUILD_DIR) && mvn $(MAVEN_ARGS) $(MAVEN_PROPS) clean
+	cd $(ENGINEAPI_BUILD_DIR) && mvn $(MAVEN_ARGS) $(MAVEN_PROPS) clean $(SONAR_INIT_STEP)
 
 deptree:
 	cd $(ENGINEAPI_BUILD_DIR) && mvn $(MAVEN_ARGS) $(MAVEN_PROPS) dependency:tree

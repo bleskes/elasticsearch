@@ -7,40 +7,20 @@
     The Engine REST API
   -->
 
-  <groupId>com.prelert</groupId>
-  <artifactId>engineApi</artifactId>
-  <version>1.2.0</version>
+  <parent>
+    <groupId>com.prelert</groupId>
+    <artifactId>engineAPI</artifactId>
+    <version>1.2.0</version>
+  </parent>
+
+  <artifactId>engine-api</artifactId>
   <packaging>jar</packaging>
 
-  <name>engineApi</name>
+  <name>engine-api</name>
   <url>http://maven.apache.org</url>
 
 
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-  </properties>
-
   <dependencies>
-    <!-- Test only -->
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.8.2</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit-dep</artifactId>
-      <version>4.8.2</version>
-      <scope>test</scope>
-    </dependency>      
-    <dependency>
-      <groupId>org.ini4j</groupId>
-      <artifactId>ini4j</artifactId>
-      <version>0.5.2</version>
-      <scope>test</scope>
-    </dependency>     
-
     <!-- provided jars -->
     <dependency>     
       <groupId>org.elasticsearch</groupId>
@@ -48,6 +28,7 @@
       <version>1.2.3</version>
       <scope>provided</scope>
     </dependency>
+
     <!-- runtime jars -->
     <dependency>
       <groupId>org.glassfish.jersey.core</groupId>
@@ -55,24 +36,16 @@
       <version>2.5.1</version>
     </dependency> 
     <dependency>
-      <groupId>log4j</groupId>
-      <artifactId>log4j</artifactId>
-      <version>1.2.17</version>
-    </dependency>    
-    <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-core</artifactId>
-      <version>2.2.3</version>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-annotations</artifactId>      
-      <version>2.2.3</version>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>      
-      <version>2.2.3</version>
     </dependency>   
     <dependency>
       <groupId>net.sf.supercsv</groupId>
@@ -88,63 +61,7 @@
 
 
   <build>
-    <sourceDirectory>${basedir}/../../../src/main</sourceDirectory>
-    <testSourceDirectory>${basedir}/../../../src/test</testSourceDirectory>
-
     <plugins>
-      <!-- Compile -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.1</version>
-        <configuration>
-          <source>1.7</source>
-          <target>1.7</target>
-          <verbose>false</verbose>
-        </configuration>
-
-        <executions> 
-          <!-- compile main -->
-          <execution> 
-            <id>default-compile</id>
-            <phase>compile</phase>
-            <goals>
-              <goal>compile</goal>
-            </goals>    
-            <configuration>
-              <includes>            
-                <include>com/prelert/job/**/*.java</include>
-                <include>com/prelert/rs/**/*.java</include> 
-              </includes>
-            
-              <excludes>
-                <exclude>com/prelert/rs/client/**/*.java</exclude>
-              </excludes>
-            </configuration>
-          </execution>
-          <!-- compile test -->
-          <execution> 
-            <id>default-testCompile</id>
-            <phase>test-compile</phase>
-            <goals>
-              <goal>testCompile</goal>
-            </goals>
-            <configuration>
-              <testIncludes>            
-                <include>com/prelert/job/**/*.java</include>
-                <include>com/prelert/rs/**/*.java</include>
-              </testIncludes>
-            
-              <testExcludes>
-                <exclude>com/prelert/rs/client/**/*.java</exclude>
-              </testExcludes>
-            </configuration>
-          </execution>
-
-        </executions>
-        
-      </plugin>
-
       <!-- install dependencies -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -191,7 +108,6 @@
 
         </executions>
       </plugin>
-
     </plugins>
   </build>
 
