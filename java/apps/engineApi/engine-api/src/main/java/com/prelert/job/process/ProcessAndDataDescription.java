@@ -36,7 +36,6 @@ import org.apache.log4j.Logger;
 
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
-import com.prelert.job.persistence.JobDataPersister;
 import com.prelert.job.status.StatusReporter;
 
 /**
@@ -63,7 +62,6 @@ public class ProcessAndDataDescription
 	private Logger m_JobLogger;
 
 	private StatusReporter m_StatusReporter;
-	private JobDataPersister m_DataPersister;
 
 	private AnalysisConfig m_AnalysisConfig;
 
@@ -90,7 +88,6 @@ public class ProcessAndDataDescription
 			long timeout, AnalysisConfig analysisConfig,
 			Logger logger, StatusReporter reporter,
 			ResultsReader outputParser,
-			JobDataPersister dataPersister,
 			List<File> filesToDelete)
 	{
 		m_Process = process;
@@ -109,8 +106,6 @@ public class ProcessAndDataDescription
 		m_JobLogger = logger;
 
 		m_OutputParser = outputParser;
-
-		m_DataPersister = dataPersister;
 
 		m_OutputParserThread = new Thread(m_OutputParser, jobId + "-Bucket-Parser");
 		m_OutputParserThread.start();
@@ -209,12 +204,6 @@ public class ProcessAndDataDescription
 	throws InterruptedException
 	{
 		m_OutputParserThread.join();
-	}
-
-
-	public JobDataPersister getDataPersister()
-	{
-		return m_DataPersister;
 	}
 
 	public ResultsReader getResultsReader()

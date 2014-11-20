@@ -54,8 +54,13 @@ import org.apache.log4j.PatternLayout;
 import org.apache.log4j.RollingFileAppender;
 
 import com.fasterxml.jackson.core.JsonParseException;
+import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
+import com.prelert.job.JobDetails;
+import com.prelert.job.JobInUseException;
+import com.prelert.job.JobStatus;
+import com.prelert.job.UnknownJobException;
 import com.prelert.job.persistence.DataPersisterFactory;
 import com.prelert.job.persistence.JobDataPersister;
 import com.prelert.job.persistence.JobProvider;
@@ -65,11 +70,6 @@ import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.job.status.StatusReporter;
 import com.prelert.job.status.StatusReporterFactory;
 import com.prelert.job.usage.UsageReporterFactory;
-import com.prelert.job.AnalysisConfig;
-import com.prelert.job.JobDetails;
-import com.prelert.job.JobInUseException;
-import com.prelert.job.JobStatus;
-import com.prelert.job.UnknownJobException;
 import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.parsing.AlertObserver;
 
@@ -241,7 +241,8 @@ public class ProcessManager
 			writeToJob(process.getDataDescription(), process.getAnalysisConfig(),
 					input, process.getProcess().getOutputStream(),
 					process.getStatusReporter(),
-					process.getDataPersister(), process.getLogger());
+					m_DataPersisterFactory.newDataPersister(jobId, s_Logger),
+					process.getLogger());
 
 			// check there wasn't an error in the input.
 			// throws if there was.
@@ -365,7 +366,6 @@ public class ProcessManager
 				m_ResultsReaderFactory.newResultsParser(jobId,
 						nativeProcess.getInputStream(),
 						logger),
-				m_DataPersisterFactory.newDataPersister(jobId, logger),
 				filesToDelete
 				);
 
