@@ -24,8 +24,7 @@
     <!-- provided jars -->
     <dependency>     
       <groupId>org.elasticsearch</groupId>
-      <artifactId>elasticsearch</artifactId>
-      <version>1.2.3</version>
+      <artifactId>elasticsearch</artifactId>    
       <scope>provided</scope>
     </dependency>
 
