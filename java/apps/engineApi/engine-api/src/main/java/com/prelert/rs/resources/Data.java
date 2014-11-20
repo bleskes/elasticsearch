@@ -12,17 +12,15 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import org.apache.log4j.Logger;
-
 import com.prelert.job.JobInUseException;
 import com.prelert.job.TooManyJobsException;
 import com.prelert.job.UnknownJobException;
-import com.prelert.job.manager.JobManager;
 import com.prelert.job.process.MissingFieldException;
 import com.prelert.job.process.NativeProcessRunException;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.rs.resources.data.DataStreamer;
+import com.prelert.rs.resources.data.UploadCommitter;
 
 
 /**
@@ -37,8 +35,6 @@ import com.prelert.rs.resources.data.DataStreamer;
 @Path("/data")
 public class Data extends ResourceWithJobManager
 {
-    static final private Logger s_Logger = Logger.getLogger(Data.class);
-
     /**
      * The name of this endpoint
      */
@@ -91,12 +87,8 @@ public class Data extends ResourceWithJobManager
     public Response commitUpload(@PathParam("jobId") String jobId)
     throws UnknownJobException, NativeProcessRunException, JobInUseException
     {
-        s_Logger.debug("Post to close data upload for job " + jobId);
-
-        JobManager manager = jobManager();
-        manager.finishJob(jobId);
-
-        s_Logger.debug("Process finished successfully, Job Id = '" + jobId + "'");
+        UploadCommitter uploadCommitter = new UploadCommitter(jobManager());
+        uploadCommitter.commitUpload(jobId);
         return Response.accepted().build();
     }
 }
