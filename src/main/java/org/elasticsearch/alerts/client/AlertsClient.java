@@ -117,8 +117,6 @@ public interface AlertsClient extends ElasticsearchClient<AlertsClient> {
      */
     PutAlertRequestBuilder preparePutAlert();
 
-
-    //@TODO : rename to putAlert
     /**
      * Put an alert and registers it with the scheduler
      *

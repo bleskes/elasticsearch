@@ -162,7 +162,7 @@ public class AlertManager extends AbstractComponent {
                         alert.setAckState(AlertAckState.NEEDS_ACK);
                     }
                 } else {
-                    entry.setEntryState(AlertActionState.THROTTLED);
+                    entry.setState(AlertActionState.THROTTLED);
                 }
                 alert.lastActionFire(entry.getFireTime());
                 alertsStore.updateAlert(alert);

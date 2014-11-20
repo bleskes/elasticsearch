@@ -49,7 +49,7 @@ import static org.hamcrest.core.IsEqual.equalTo;
 
 /**
  */
-@ElasticsearchIntegrationTest.ClusterScope(scope = ElasticsearchIntegrationTest.Scope.SUITE, numClientNodes = 0, transportClientRatio = 0, numDataNodes = 1)
+@ElasticsearchIntegrationTest.ClusterScope(scope = ElasticsearchIntegrationTest.Scope.TEST, numClientNodes = 0, transportClientRatio = 0, numDataNodes = 1)
 public class AlertThrottleTests extends AbstractAlertingTests {
 
     @Test
@@ -74,7 +74,7 @@ public class AlertThrottleTests extends AbstractAlertingTests {
         XContentBuilder jsonBuilder = XContentFactory.jsonBuilder();
         alert.toXContent(jsonBuilder, ToXContent.EMPTY_PARAMS);
 
-        PutAlertResponse putAlertResponse = alertsClient.prepareIndexAlert().setAlertName("throttled-alert").setAlertSource(jsonBuilder.bytes()).get();
+        PutAlertResponse putAlertResponse = alertsClient.preparePutAlert().setAlertName("throttled-alert").setAlertSource(jsonBuilder.bytes()).get();
         assertTrue(putAlertResponse.indexResponse().isCreated());
 
 
@@ -130,7 +130,7 @@ public class AlertThrottleTests extends AbstractAlertingTests {
 
         CountResponse countOfThrottledActions = client()
                 .prepareCount(AlertActionManager.ALERT_HISTORY_INDEX)
-                .setQuery(QueryBuilders.matchQuery(AlertActionState.FIELD_NAME, AlertActionState.THROTTLED.toString()))
+                .setQuery(QueryBuilders.matchQuery(AlertActionManager.STATE, AlertActionState.THROTTLED.toString()))
                 .get();
 
         assertThat(countOfThrottledActions.getCount(), greaterThan(0L));
@@ -160,7 +160,7 @@ public class AlertThrottleTests extends AbstractAlertingTests {
         XContentBuilder jsonBuilder = XContentFactory.jsonBuilder();
         alert.toXContent(jsonBuilder, ToXContent.EMPTY_PARAMS);
 
-        PutAlertResponse putAlertResponse = alertsClient.prepareIndexAlert().setAlertName("throttled-alert").setAlertSource(jsonBuilder.bytes()).get();
+        PutAlertResponse putAlertResponse = alertsClient.preparePutAlert().setAlertName("throttled-alert").setAlertSource(jsonBuilder.bytes()).get();
         assertTrue(putAlertResponse.indexResponse().isCreated());
 
         Thread.sleep(5*1000);
@@ -188,7 +188,7 @@ public class AlertThrottleTests extends AbstractAlertingTests {
 
         CountResponse countOfThrottledActions = client()
                 .prepareCount(AlertActionManager.ALERT_HISTORY_INDEX)
-                .setQuery(QueryBuilders.matchQuery(AlertActionState.FIELD_NAME, AlertActionState.THROTTLED.toString()))
+                .setQuery(QueryBuilders.matchQuery(AlertActionManager.STATE, AlertActionState.THROTTLED.toString()))
                 .get();
 
         assertThat(countOfThrottledActions.getCount(), greaterThan(0L));
