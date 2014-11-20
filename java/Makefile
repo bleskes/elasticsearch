@@ -55,6 +55,49 @@ ANT_PROPS+= -Dlibs.basedir=$(PRELERT_TOOLS_HOME)/java
 MAVEN_PROPS+= -Drepository.basedir=$(PRELERT_TOOLS_HOME)/maven
 endif
 
+
+ifdef BUILD_ENGINE_API
+
+# Maven install includes compile so don't bother with a separate compile target
+all: install
+
+install:
+	cd $(ENGINEAPI_BUILD_DIR) && mvn $(MAVEN_ARGS) $(MAVEN_PROPS) -DskipTests=true install
+
+test:
+	cd $(ENGINEAPI_BUILD_DIR) && mvn $(MAVEN_ARGS) $(MAVEN_PROPS) $(SONAR_INIT_STEP) test $(SONAR_MAIN_STEP)
+
+clean:
+	cd $(ENGINEAPI_BUILD_DIR) && mvn $(MAVEN_ARGS) $(MAVEN_PROPS) clean
+
+deptree:
+	cd $(ENGINEAPI_BUILD_DIR) && mvn $(MAVEN_ARGS) $(MAVEN_PROPS) dependency:tree
+
+analyze:
+	cd $(ENGINEAPI_BUILD_DIR) && mvn $(MAVEN_ARGS) $(MAVEN_PROPS) site
+
+endif
+ifdef OEM_NAME
+
+all: compile install
+
+compile:
+	cd $(PRELERTAPI_BUILD_DIR) && ant $(ANT_ARGS) $(ANT_PROPS) build
+
+# This target must depend on compile, or make -j could try to install at the
+# same time as compiling.
+install: compile
+	cd $(PRELERTAPI_BUILD_DIR) && ant $(ANT_ARGS) $(ANT_PROPS) prelert-home-install
+
+test:
+	cd $(PRELERTAPI_BUILD_DIR) && ant $(ANT_ARGS) $(ANT_PROPS) test
+
+clean:
+	cd $(PRELERTAPI_BUILD_DIR) && ant $(ANT_ARGS) $(ANT_PROPS) clean
+
+endif
+ifdef FULL_BUILD
+
 all: compile install
 
 compile_v3gui:
@@ -80,53 +123,9 @@ compile_devutils:
 compile_gwtclient:
 	cd $(GWTCLIENT_BUILD_DIR) && ant $(ANT_ARGS) $(ANT_PROPS) build
 
-compile_prelertAPI:
-	cd $(PRELERTAPI_BUILD_DIR) && ant $(ANT_ARGS) $(ANT_PROPS) build
-
-
-ifdef BUILD_ENGINE_API
-compile:
-	cd $(ENGINEAPI_BUILD_DIR) && mvn $(MAVEN_ARGS) $(MAVEN_PROPS) compile
-
-# This target must depend on compile, or make -j could try to install at the
-# same time as compiling.
-install: compile
-	cd $(ENGINEAPI_BUILD_DIR) && mvn $(MAVEN_ARGS) $(MAVEN_PROPS) -DskipTests=true install 
-
-test:
-	cd $(ENGINEAPI_BUILD_DIR) && mvn $(MAVEN_ARGS) $(MAVEN_PROPS) test $(SONAR_MAIN_STEP)
-
-clean:
-	cd $(ENGINEAPI_BUILD_DIR) && mvn $(MAVEN_ARGS) $(MAVEN_PROPS) clean $(SONAR_INIT_STEP)
-
-deptree:
-	cd $(ENGINEAPI_BUILD_DIR) && mvn $(MAVEN_ARGS) $(MAVEN_PROPS) dependency:tree
-
-analyze:
-	cd $(ENGINEAPI_BUILD_DIR) && mvn $(MAVEN_ARGS) $(MAVEN_PROPS) site
-
-endif
-ifdef OEM_NAME
-
-compile: compile_prelertAPI
-
-# This target must depend on compile, or make -j could try to install at the
-# same time as compiling.
-install: compile
-	cd $(PRELERTAPI_BUILD_DIR) && ant $(ANT_ARGS) $(ANT_PROPS) prelert-home-install
-
-test:
-	cd $(PRELERTAPI_BUILD_DIR) && ant $(ANT_ARGS) $(ANT_PROPS) test
-
-clean:
-	cd $(PRELERTAPI_BUILD_DIR) && ant $(ANT_ARGS) $(ANT_PROPS) clean
-
-endif
-ifdef FULL_BUILD
-
 # The sub-dependencies of the compile target will be built in parallel if
 # make -j is used, so must not depend on each other
-compile: compile_v3gui compile_demoUI compile_diagnosticsCA compile_openAPI compile_proxy compile_devutils compile_prelertAPI
+compile: compile_v3gui compile_demoUI compile_diagnosticsCA compile_openAPI compile_proxy compile_devutils
 
 # Install the UI, demo UI, Proxy and individual plugins.
 # Although we build all the real-time and download UIs, only one of them must
@@ -142,12 +141,9 @@ install: compile
 	cd $(PROXY_BUILD_DIR) && ant $(ANT_ARGS) $(ANT_PROPS) prelert-home-install-full
 	# Here there should be one install line per proxy plugin to be shipped
 	cd $(PROXY_BUILD_DIR) && ant $(ANT_ARGS) $(ANT_PROPS) -f build_plugin_introscope.xml prelert-home-install
-	# Prelert API
-	cd $(PRELERTAPI_BUILD_DIR) && ant $(ANT_ARGS) $(ANT_PROPS) prelert-home-install
 
 test:
 	cd $(PROXY_BUILD_DIR) && ant $(ANT_ARGS) $(ANT_PROPS) proxy-tests
-	cd $(PRELERTAPI_BUILD_DIR) && ant $(ANT_ARGS) $(ANT_PROPS) test
 
 clean:
 	cd $(V3GUI_BUILD_DIR) && ant $(ANT_ARGS) $(ANT_PROPS) clean
@@ -156,6 +152,6 @@ clean:
 	cd $(OPENAPI_DOWNLOAD_UI_BUILD_DIR) && ant $(ANT_ARGS) $(ANT_PROPS) clean
 	cd $(PROXY_BUILD_DIR) && ant $(ANT_ARGS) $(ANT_PROPS) clean-all
 	cd $(DEVUTILS_BUILD_DIR) && ant $(ANT_ARGS) $(ANT_PROPS) clean
-	cd $(PRELERTAPI_BUILD_DIR) && ant $(ANT_ARGS) $(ANT_PROPS) clean
+
 endif
 
