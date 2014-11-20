@@ -90,7 +90,7 @@ public class AlertThrottleTests extends AbstractAlertingTests {
         AckAlertResponse ackResponse = alertsClient.prepareAckAlert("throttled-alert").get();
         assertEquals(AlertAckState.ACKED, ackResponse.getAlertAckState());
 
-        Thread.sleep(5000); //Let any currently running stop
+        Thread.sleep(10000); //Let any currently running stop
 
         long countAfterAck = countResponse.getHits().getTotalHits();
 
