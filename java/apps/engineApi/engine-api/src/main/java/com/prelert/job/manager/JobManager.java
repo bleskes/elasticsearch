@@ -595,7 +595,7 @@ public class JobManager
 	 * @throws OutOfOrderRecordsException
 	 * @throws TooManyJobsException If the license is violated
 	 */
-	public boolean dataToJob(String jobId, InputStream input)
+	public boolean submitDataLoadJob(String jobId, InputStream input)
 	throws UnknownJobException, NativeProcessRunException, MissingFieldException,
 		JsonParseException, JobInUseException, HighProportionOfBadTimestampsException,
 		OutOfOrderRecordsException, TooManyJobsException
@@ -615,7 +615,7 @@ public class JobManager
 
 		try
 		{
-			if (m_ProcessManager.dataToJob(jobId, input) == false)
+			if (m_ProcessManager.processDataLoadJob(jobId, input) == false)
 			{
 				return false;
 			}

@@ -184,6 +184,6 @@ public class DataStreamer {
             JsonParseException, JobInUseException, HighProportionOfBadTimestampsException,
             OutOfOrderRecordsException, TooManyJobsException
     {
-        return m_JobManager.dataToJob(jobId, input);
+        return m_JobManager.submitDataLoadJob(jobId, input);
     }
 }

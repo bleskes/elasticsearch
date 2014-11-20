@@ -191,7 +191,7 @@ public class ProcessManager
 	 * @throws HighProportionOfBadTimestampsException
 	 * @throws OutOfOrderRecordsException
 	 */
-	public boolean dataToJob(String jobId, InputStream input)
+	public boolean processDataLoadJob(String jobId, InputStream input)
 	throws UnknownJobException, NativeProcessRunException, MissingFieldException,
 		JsonParseException, JobInUseException, HighProportionOfBadTimestampsException,
 		OutOfOrderRecordsException
