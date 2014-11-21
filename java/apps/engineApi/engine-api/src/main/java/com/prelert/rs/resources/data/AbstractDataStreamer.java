@@ -104,23 +104,7 @@ public abstract class AbstractDataStreamer {
     {
         LOGGER.debug("Handle Post data to job = " + jobId);
 
-        String contentEncoding = headers.getHeaderString(HttpHeaders.CONTENT_ENCODING);
-        if (contentEncoding!= null && contentEncoding.equals("gzip"))
-        {
-            LOGGER.info("Decompressing post data in job = " + jobId);
-            try
-            {
-                input = new GZIPInputStream(input);
-            }
-            catch (ZipException ze)
-            {
-                throw new RestApiException("Content-Encoding = gzip "
-                        + "but the data is not in gzip format",
-                        ErrorCode.UNCOMPRESSED_DATA,
-                        Response.Status.BAD_REQUEST);
-            }
-        }
-
+        input = tryDecompressingInputStream(headers, jobId, input);
 
         if (m_ShouldPersistDataToDisk)
         {
@@ -158,6 +142,28 @@ public abstract class AbstractDataStreamer {
         handleStream(jobId, input);
 
         LOGGER.debug("File uploaded to job " + jobId);
+    }
+
+    private InputStream tryDecompressingInputStream(HttpHeaders headers,
+            String jobId, InputStream input) throws IOException
+    {
+        String contentEncoding = headers.getHeaderString(HttpHeaders.CONTENT_ENCODING);
+        if (contentEncoding!= null && contentEncoding.equals("gzip"))
+        {
+            LOGGER.info("Decompressing post data in job = " + jobId);
+            try
+            {
+                return new GZIPInputStream(input);
+            }
+            catch (ZipException ze)
+            {
+                throw new RestApiException("Content-Encoding = gzip "
+                        + "but the data is not in gzip format",
+                        ErrorCode.UNCOMPRESSED_DATA,
+                        Response.Status.BAD_REQUEST);
+            }
+        }
+        return input;
     }
 
     /**
