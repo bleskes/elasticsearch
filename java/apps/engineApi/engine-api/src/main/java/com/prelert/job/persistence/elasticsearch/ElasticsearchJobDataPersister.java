@@ -81,34 +81,6 @@ public class ElasticsearchJobDataPersister implements JobDataPersister
 
         m_BufferedRecords = new String [DOC_BUFFER_SIZE][];
         m_Epochs = new long [DOC_BUFFER_SIZE];
-
-        m_Logger.info("Data will be persisted in the index " + m_IndexName);
-        createIndex();
-    }
-
-    private void createIndex()
-    {
-        if (isIndexExisting() == false)
-        {
-            try
-            {
-                XContentBuilder inputDataMapping = ElasticsearchMappings.inputDataMapping();
-
-                m_Client.admin().indices()
-                        .prepareCreate(m_IndexName)
-                        .addMapping(ElasticsearchJobDataPersister.TYPE, inputDataMapping)
-                        .get();
-            }
-            catch (IOException e)
-            {
-                m_Logger.error("Error creating the raw data index " + m_IndexName, e);
-            }
-        }
-    }
-
-    private boolean isIndexExisting()
-    {
-        return m_Client.admin().indices().prepareExists(m_IndexName).get().isExists();
     }
 
     @Override
@@ -163,6 +135,11 @@ public class ElasticsearchJobDataPersister implements JobDataPersister
     @Override
     public void persistRecord(long epoch, String [] record)
     {
+        if (isIndexExisting() == false) {
+            m_Logger.info("Data will be persisted in the index " + m_IndexName);
+            createIndex();
+        }
+
         String [] copy = new String[record.length];
         System.arraycopy(record, 0, copy, 0, record.length);
         m_BufferedRecords[m_BufferedRecordCount] = copy;
@@ -175,6 +152,28 @@ public class ElasticsearchJobDataPersister implements JobDataPersister
         {
             writeDocs();
         }
+    }
+
+    private void createIndex()
+    {
+        try
+        {
+            XContentBuilder inputDataMapping = ElasticsearchMappings.inputDataMapping();
+
+            m_Client.admin().indices()
+                    .prepareCreate(m_IndexName)
+                    .addMapping(ElasticsearchJobDataPersister.TYPE, inputDataMapping)
+                    .get();
+        }
+        catch (IOException e)
+        {
+            m_Logger.error("Error creating the raw data index " + m_IndexName, e);
+        }
+    }
+
+    private boolean isIndexExisting()
+    {
+        return m_Client.admin().indices().prepareExists(m_IndexName).get().isExists();
     }
 
     @Override
@@ -267,6 +266,10 @@ public class ElasticsearchJobDataPersister implements JobDataPersister
     @Override
     public boolean deleteData()
     {
+        if (isIndexExisting() == false)
+        {
+            return false;
+        }
         m_Logger.debug("Deleting the raw data index " + m_IndexName);
 
         // we don't care about errors here as the
