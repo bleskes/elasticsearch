@@ -105,40 +105,10 @@ public abstract class AbstractDataStreamer {
         LOGGER.debug("Handle Post data to job = " + jobId);
 
         input = tryDecompressingInputStream(headers, jobId, input);
-
         if (m_ShouldPersistDataToDisk)
         {
-            try
-            {
-                Files.createDirectory(FileSystems.getDefault().getPath(
-                        m_BaseDirectory, jobId));
-            }
-            catch (FileAlreadyExistsException e)
-            {
-                // continue
-            }
-
-            java.nio.file.Path filePath = FileSystems.getDefault().getPath(
-                    m_BaseDirectory, jobId, PERSISTED_FILE_NAME_DATE_FORMAT.format(new Date()) + ".gz");
-
-            LOGGER.info("Data will be persisted to: " + filePath);
-
-            // Create the interceptor for writing data to disk
-            // and start running in a new thread.
-            final StreamingInterceptor si = new StreamingInterceptor(filePath);
-            final InputStream uploadStream = input;
-
-            input = si.createStream();
-
-            new Thread() {
-                @Override
-                public void run()
-                {
-                    si.pump(uploadStream);
-                }
-            }.start();
+            input = persistDataToDisk(jobId, input);
         }
-
         handleStream(jobId, input);
 
         LOGGER.debug("File uploaded to job " + jobId);
@@ -163,6 +133,41 @@ public abstract class AbstractDataStreamer {
                         Response.Status.BAD_REQUEST);
             }
         }
+        return input;
+    }
+
+    private InputStream persistDataToDisk(String jobId, InputStream input)
+            throws IOException
+    {
+        try
+        {
+            Files.createDirectory(FileSystems.getDefault().getPath(
+                    m_BaseDirectory, jobId));
+        }
+        catch (FileAlreadyExistsException e)
+        {
+            // continue
+        }
+
+        java.nio.file.Path filePath = FileSystems.getDefault().getPath(
+                m_BaseDirectory, jobId, PERSISTED_FILE_NAME_DATE_FORMAT.format(new Date()) + ".gz");
+
+        LOGGER.info("Data will be persisted to: " + filePath);
+
+        // Create the interceptor for writing data to disk
+        // and start running in a new thread.
+        final StreamingInterceptor si = new StreamingInterceptor(filePath);
+        final InputStream uploadStream = input;
+
+        input = si.createStream();
+
+        new Thread() {
+            @Override
+            public void run()
+            {
+                si.pump(uploadStream);
+            }
+        }.start();
         return input;
     }
 
