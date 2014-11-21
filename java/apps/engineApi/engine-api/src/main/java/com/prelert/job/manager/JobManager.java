@@ -611,14 +611,7 @@ public class JobManager
 		}
 		catch (NativeProcessRunException ne)
 		{
-			try
-			{
-				m_ProcessManager.finishJob(jobId);
-			}
-			catch (NativeProcessRunException e)
-			{
-				s_Logger.warn("Error finishing job after submitDataLoadJob failed", e);
-			}
+			tryFinishingJob(jobId);
 
 			// rethrow
 			throw ne;
@@ -628,7 +621,6 @@ public class JobManager
 
 		return true;
 	}
-
 
     private void checkTooManyJobs(String jobId) throws TooManyJobsException
     {
@@ -646,6 +638,17 @@ public class JobManager
         }
     }
 
+    private void tryFinishingJob(String jobId) throws JobInUseException
+    {
+        try
+        {
+            m_ProcessManager.finishJob(jobId);
+        }
+        catch (NativeProcessRunException e)
+        {
+            s_Logger.warn("Error finishing job after submitDataLoadJob failed", e);
+        }
+    }
 
 	/**
 	 * The job id is a concatenation of the date in 'yyyyMMddHHmmss' format
