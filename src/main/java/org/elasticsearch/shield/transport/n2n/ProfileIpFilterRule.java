@@ -17,16 +17,32 @@
 
 package org.elasticsearch.shield.transport.n2n;
 
-import org.elasticsearch.common.Nullable;
+import org.elasticsearch.common.netty.handler.ipfilter.IpFilterRule;
 
 import java.net.InetAddress;
-import java.security.Principal;
 
 /**
- *
+ * helper interface for filter rules, which takes a tcp transport profile into account
  */
-public interface N2NAuthenticator {
+public class ProfileIpFilterRule {
 
-    boolean authenticate(@Nullable Principal peerPrincipal, @Nullable String profile, InetAddress peerAddress, int peerPort);
+    private final String profile;
+    private final IpFilterRule ipFilterRule;
 
+    public ProfileIpFilterRule(String profile, IpFilterRule ipFilterRule) {
+        this.profile = profile;
+        this.ipFilterRule = ipFilterRule;
+    }
+
+    public boolean contains(String profile, InetAddress inetAddress) {
+        return this.profile.equals(profile) && ipFilterRule.contains(inetAddress);
+    }
+
+    public boolean isAllowRule() {
+        return ipFilterRule.isAllowRule();
+    }
+
+    public boolean isDenyRule() {
+        return ipFilterRule.isDenyRule();
+    }
 }

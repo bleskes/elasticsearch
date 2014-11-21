@@ -19,8 +19,8 @@ package org.elasticsearch.shield.authc.ldap;
 
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.shield.authc.support.SecuredStringTests;
-import org.elasticsearch.shield.ssl.SSLService;
 import org.elasticsearch.shield.authc.support.ldap.LdapSslSocketFactory;
+import org.elasticsearch.shield.ssl.SSLService;
 import org.elasticsearch.test.ElasticsearchTestCase;
 import org.elasticsearch.test.junit.annotations.Network;
 import org.junit.AfterClass;
@@ -37,14 +37,13 @@ import static org.hamcrest.Matchers.hasItem;
 public class OpenLdapTests extends ElasticsearchTestCase {
     public static final String OPEN_LDAP_URL = "ldaps://54.200.235.244:636";
     public static final String PASSWORD = "NickFuryHeartsES";
-    public static final String SETTINGS_PREFIX = LdapRealm.class.getPackage().getName().substring("com.elasticsearch.".length()) + '.';
 
     @BeforeClass
     public static void setTrustStore() throws URISyntaxException {
         File filename = new File(LdapConnectionTests.class.getResource("../support/ldap/ldaptrust.jks").toURI()).getAbsoluteFile();
         LdapSslSocketFactory.init(new SSLService(ImmutableSettings.builder()
-                .put("shield.ssl.keystore", filename)
-                .put("shield.ssl.keystore_password", "changeit")
+                .put("shield.ssl.keystore.path", filename)
+                .put("shield.ssl.keystore.password", "changeit")
                 .build()));
     }
 

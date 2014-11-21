@@ -27,6 +27,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.BigArrays;
 import org.elasticsearch.http.netty.NettyHttpServerTransport;
 import org.elasticsearch.shield.ssl.SSLService;
+import org.elasticsearch.shield.transport.n2n.IPFilteringN2NAuthenticator;
 
 import javax.net.ssl.SSLEngine;
 
@@ -36,17 +37,19 @@ import javax.net.ssl.SSLEngine;
 public class NettySecuredHttpServerTransport extends NettyHttpServerTransport {
 
     private final boolean ssl;
-    private final N2NNettyUpstreamHandler shieldUpstreamHandler;
+    private final boolean ipFilterEnabled;
+    private final IPFilteringN2NAuthenticator authenticator;
     private final SSLService sslService;
 
     @Inject
     public NettySecuredHttpServerTransport(Settings settings, NetworkService networkService, BigArrays bigArrays,
-                                           @Nullable N2NNettyUpstreamHandler shieldUpstreamHandler, @Nullable SSLService sslService) {
+                                           @Nullable IPFilteringN2NAuthenticator authenticator, @Nullable SSLService sslService) {
         super(settings, networkService, bigArrays);
+        this.authenticator = authenticator;
         this.ssl = settings.getAsBoolean("shield.http.ssl", false);
         this.sslService = sslService;
-        this.shieldUpstreamHandler = shieldUpstreamHandler;
         assert !ssl || sslService != null : "ssl is enabled yet the ssl service is null";
+        this.ipFilterEnabled = settings.getAsBoolean("shield.transport.n2n.ip_filter.enabled", true);
     }
 
     @Override
@@ -70,8 +73,8 @@ public class NettySecuredHttpServerTransport extends NettyHttpServerTransport {
 
                 pipeline.addFirst("ssl", new SslHandler(engine));
             }
-            if (shieldUpstreamHandler != null) {
-                pipeline.addFirst("ipfilter", shieldUpstreamHandler);
+            if (ipFilterEnabled) {
+                pipeline.addFirst("ipfilter", new N2NNettyUpstreamHandler(authenticator, "default"));
             }
             return pipeline;
         }
