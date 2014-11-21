@@ -601,26 +601,37 @@ public class JobManager
 		OutOfOrderRecordsException, TooManyJobsException
 	{
 		checkTooManyJobs(jobId);
-
-		try
+		boolean success = tryProcessingDataLoadJob(jobId, input);
+		if (success)
 		{
-			if (m_ProcessManager.processDataLoadJob(jobId, input) == false)
-			{
-				return false;
-			}
+		    updateLastDataTime(jobId, new Date());
 		}
-		catch (NativeProcessRunException ne)
-		{
-			tryFinishingJob(jobId);
-
-			// rethrow
-			throw ne;
-		}
-
-		updateLastDataTime(jobId, new Date());
-
-		return true;
+		return success;
 	}
+
+
+    private boolean tryProcessingDataLoadJob(String jobId, InputStream input)
+            throws UnknownJobException, MissingFieldException,
+            JsonParseException, JobInUseException,
+            HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
+            NativeProcessRunException
+    {
+        try
+        {
+            if (m_ProcessManager.processDataLoadJob(jobId, input) == false)
+            {
+                return false;
+            }
+        }
+        catch (NativeProcessRunException ne)
+        {
+            tryFinishingJob(jobId);
+
+            //rethrow
+            throw ne;
+        }
+        return true;
+    }
 
     private void checkTooManyJobs(String jobId) throws TooManyJobsException
     {
