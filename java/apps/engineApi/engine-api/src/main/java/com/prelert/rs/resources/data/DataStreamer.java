@@ -67,7 +67,7 @@ public class DataStreamer {
     private static final SimpleDateFormat PERSISTED_FILE_NAME_DATE_FORMAT =
             new SimpleDateFormat("EEE_d_MMM_yyyy_HHmmss");
 
-    private final boolean m_IsPersistData;
+    private final boolean m_ShouldPersistDataToDisk;
     private final String m_BaseDirectory;
     private final JobManager m_JobManager;
 
@@ -75,7 +75,7 @@ public class DataStreamer {
     {
         // should we save uploaded data and where
         m_BaseDirectory = System.getProperty("persistbasedir");
-        m_IsPersistData = m_BaseDirectory != null;
+        m_ShouldPersistDataToDisk = m_BaseDirectory != null;
         m_JobManager = Objects.requireNonNull(jobManager);
     }
 
@@ -122,7 +122,7 @@ public class DataStreamer {
         }
 
 
-        if (m_IsPersistData)
+        if (m_ShouldPersistDataToDisk)
         {
             try
             {
