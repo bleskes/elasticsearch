@@ -88,8 +88,7 @@ public class ElasticsearchJobDataPersister implements JobDataPersister
 
     private void createIndex()
     {
-        if (m_Client.admin().indices().prepareExists(m_IndexName).get().isExists()
-                == false)
+        if (isIndexExisting() == false)
         {
             try
             {
@@ -105,6 +104,11 @@ public class ElasticsearchJobDataPersister implements JobDataPersister
                 m_Logger.error("Error creating the raw data index " + m_IndexName, e);
             }
         }
+    }
+
+    private boolean isIndexExisting()
+    {
+        return m_Client.admin().indices().prepareExists(m_IndexName).get().isExists();
     }
 
     @Override
