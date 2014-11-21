@@ -179,7 +179,10 @@ public class ElasticsearchJobDataPersister implements JobDataPersister
     @Override
     public void flushRecords()
     {
-        writeDocs();
+        if (m_BufferedRecordCount > 0)
+        {
+            writeDocs();
+        }
     }
 
     private void writeDocs()
