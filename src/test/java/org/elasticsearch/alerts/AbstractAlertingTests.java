@@ -119,7 +119,7 @@ public abstract class AbstractAlertingTests extends ElasticsearchIntegrationTest
         return internalTestCluster().getInstance(AlertsClient.class);
     }
 
-    protected void assertAlertTriggered(final String alertName, final long expectedAlertActionsWithActionPerformed) throws Exception {
+    protected void assertAlertTriggered(final String alertName, final long minimumExpectedAlertActionsWithActionPerformed) throws Exception {
         assertBusy(new Runnable() {
             @Override
             public void run() {
@@ -135,7 +135,7 @@ public abstract class AbstractAlertingTests extends ElasticsearchIntegrationTest
                         .setIndicesOptions(IndicesOptions.lenientExpandOpen())
                         .setQuery(boolQuery().must(matchQuery("alert_name", alertName)).must(matchQuery("state", AlertActionState.ACTION_PERFORMED.toString())))
                         .get();
-                assertThat(searchResponse.getHits().getTotalHits(), greaterThanOrEqualTo(expectedAlertActionsWithActionPerformed));
+                assertThat(searchResponse.getHits().getTotalHits(), greaterThanOrEqualTo(minimumExpectedAlertActionsWithActionPerformed));
                 assertThat((Integer) XContentMapValues.extractValue("response.hits.total", searchResponse.getHits().getAt(0).sourceAsMap()), greaterThanOrEqualTo(1));
             }
         });
@@ -171,6 +171,15 @@ public abstract class AbstractAlertingTests extends ElasticsearchIntegrationTest
         });
     }
 
+    protected void ensureAlertingStopped() throws Exception {
+        assertBusy(new Runnable() {
+            @Override
+            public void run() {
+                assertThat(alertClient().prepareAlertsStats().get().isAlertManagerStarted(), is(false));
+            }
+        });
+    }
+
     protected void startAlerting() throws Exception {
         alertClient().prepareAlertService().start().get();
         ensureAlertingStarted();
@@ -178,12 +187,7 @@ public abstract class AbstractAlertingTests extends ElasticsearchIntegrationTest
 
     protected void stopAlerting() throws Exception {
         alertClient().prepareAlertService().stop().get();
-        assertBusy(new Runnable() {
-            @Override
-            public void run() {
-                assertThat(alertClient().prepareAlertsStats().get().isAlertManagerStarted(), is(false));
-            }
-        });
+        ensureAlertingStopped();
     }
 
     protected static InternalTestCluster internalTestCluster() {
