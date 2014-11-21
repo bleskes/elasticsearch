@@ -354,6 +354,7 @@ public class ElasticsearchPersister implements JobResultsPersister
 		XContentBuilder builder = jsonBuilder().startObject()
 				.field(ModelSizeStats.MODEL_BYTES, modelSizeStats.getModelBytes())
 				.field(ModelSizeStats.TOTAL_BY_FIELD_COUNT, modelSizeStats.getTotalByFieldCount())
+				.field(ModelSizeStats.TOTAL_OVER_FIELD_COUNT, modelSizeStats.getTotalOverFieldCount())
 				.field(ModelSizeStats.TOTAL_PARTITION_FIELD_COUNT, modelSizeStats.getTotalPartitionFieldCount())
 				.endObject();
 
