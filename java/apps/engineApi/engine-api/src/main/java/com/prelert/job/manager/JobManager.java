@@ -45,6 +45,14 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.prelert.job.JobConfiguration;
+import com.prelert.job.JobConfigurationException;
+import com.prelert.job.JobDetails;
+import com.prelert.job.JobIdAlreadyExistsException;
+import com.prelert.job.JobInUseException;
+import com.prelert.job.JobStatus;
+import com.prelert.job.TooManyJobsException;
+import com.prelert.job.UnknownJobException;
 import com.prelert.job.persistence.DataPersisterFactory;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.process.ClosedJobException;
@@ -56,14 +64,6 @@ import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.job.status.StatusReporterFactory;
 import com.prelert.job.usage.UsageReporterFactory;
-import com.prelert.job.JobIdAlreadyExistsException;
-import com.prelert.job.JobConfiguration;
-import com.prelert.job.JobConfigurationException;
-import com.prelert.job.JobDetails;
-import com.prelert.job.JobInUseException;
-import com.prelert.job.JobStatus;
-import com.prelert.job.TooManyJobsException;
-import com.prelert.job.UnknownJobException;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.ErrorCode;
@@ -573,73 +573,131 @@ public class JobManager
 		return true;
 	}
 
-	/**
-	 * Passes data to the native process. If the process is not running a new
-	 * one is started.
-	 * This is a blocking call that won't return until all the data has been
-	 * written to the process. A new thread is launched to parse the process's
-	 * output
-	 *
-	 * @param jobId
-	 * @param input
-	 * @return
-	 * @throws NativeProcessRunException If there is an error starting the native
-	 * process
-	 * @throws UnknownJobException If the jobId is not recognised
-	 * @throws MissingFieldException If a configured field is missing from
-	 * the CSV header
-	 * @throws JsonParseException
-	 * @throws JobInUseException if the job cannot be written to because
-	 * it is already handling data
-	 * @throws HighProportionOfBadTimestampsException
-	 * @throws OutOfOrderRecordsException
-	 * @throws TooManyJobsException If the license is violated
-	 */
-	public boolean dataToJob(String jobId, InputStream input)
-	throws UnknownJobException, NativeProcessRunException, MissingFieldException,
-		JsonParseException, JobInUseException, HighProportionOfBadTimestampsException,
-		OutOfOrderRecordsException, TooManyJobsException
-	{
-		// Negative m_MaxActiveJobs means unlimited
-		if (m_MaxActiveJobs >= 0 &&
-			(m_ProcessManager.jobIsRunning(jobId) == false) &&
-			m_ProcessManager.numberOfRunningJobs() >= m_MaxActiveJobs)
-		{
-			throw new TooManyJobsException(m_MaxActiveJobs,
-					"Cannot reactivate job with id '" + jobId +
-					"' - your license limits you to " + m_MaxActiveJobs +
-					" concurrently running jobs.  You must close a job before" +
-					" you can reactivate a closed one.",
-					ErrorCode.LICENSE_VIOLATION);
-		}
+    /**
+     * Passes data to the native process. If the process is not running a new
+     * one is started.
+     * This is a blocking call that won't return until all the data has been
+     * written to the process. A new thread is launched to parse the process's
+     * output
+     *
+     * @param jobId
+     * @param input
+     * @return
+     * @throws NativeProcessRunException If there is an error starting the native
+     * process
+     * @throws UnknownJobException If the jobId is not recognised
+     * @throws MissingFieldException If a configured field is missing from
+     * the CSV header
+     * @throws JsonParseException
+     * @throws JobInUseException if the job cannot be written to because
+     * it is already handling data
+     * @throws HighProportionOfBadTimestampsException
+     * @throws OutOfOrderRecordsException
+     * @throws TooManyJobsException If the license is violated
+     */
+    public boolean submitDataLoadJob(String jobId, InputStream input)
+    throws UnknownJobException, NativeProcessRunException, MissingFieldException,
+        JsonParseException, JobInUseException, HighProportionOfBadTimestampsException,
+        OutOfOrderRecordsException, TooManyJobsException
+    {
+        return submitDataLoadJob(jobId, input, false);
+    }
 
-		try
-		{
-			if (m_ProcessManager.dataToJob(jobId, input) == false)
-			{
-				return false;
-			}
-		}
-		catch (NativeProcessRunException ne)
-		{
-			try
-			{
-				m_ProcessManager.finishJob(jobId);
-			}
-			catch (NativeProcessRunException e)
-			{
-				s_Logger.warn("Error finished job after dataToJob failed", e);
-			}
+    /**
+     * Passes data to the native process and requires its persistence.
+     * If the process is not running a new one is started.
+     *
+     * This is a blocking call that won't return until all the data has been
+     * written to the process. A new thread is launched to parse the process's
+     * output
+     *
+     * @param jobId
+     * @param input
+     * @return
+     * @throws NativeProcessRunException If there is an error starting the native
+     * process
+     * @throws UnknownJobException If the jobId is not recognised
+     * @throws MissingFieldException If a configured field is missing from
+     * the CSV header
+     * @throws JsonParseException
+     * @throws JobInUseException if the job cannot be written to because
+     * it is already handling data
+     * @throws HighProportionOfBadTimestampsException
+     * @throws OutOfOrderRecordsException
+     * @throws TooManyJobsException If the license is violated
+     */
+    public boolean submitDataLoadAndPersistJob(String jobId, InputStream input)
+    throws UnknownJobException, NativeProcessRunException, MissingFieldException,
+        JsonParseException, JobInUseException, HighProportionOfBadTimestampsException,
+        OutOfOrderRecordsException, TooManyJobsException
+    {
+        return submitDataLoadJob(jobId, input, true);
+    }
 
-			// rethrow
-			throw ne;
-		}
-
-		updateLastDataTime(jobId, new Date());
-
-		return true;
+    private  boolean submitDataLoadJob(String jobId, InputStream input, boolean shouldPersist)
+            throws UnknownJobException, NativeProcessRunException, MissingFieldException,
+            JsonParseException, JobInUseException, HighProportionOfBadTimestampsException,
+            OutOfOrderRecordsException, TooManyJobsException
+    {
+        checkTooManyJobs(jobId);
+        boolean success = tryProcessingDataLoadJob(jobId, input, shouldPersist);
+        if (success)
+        {
+            updateLastDataTime(jobId, new Date());
+        }
+        return success;
 	}
 
+
+    private boolean tryProcessingDataLoadJob(String jobId, InputStream input, boolean shouldPersist)
+            throws UnknownJobException, MissingFieldException,
+            JsonParseException, JobInUseException,
+            HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
+            NativeProcessRunException
+    {
+        boolean success = true;
+        try
+        {
+            success = shouldPersist ? m_ProcessManager.processDataLoadAndPersistJob(jobId, input)
+                    : m_ProcessManager.processDataLoadJob(jobId, input);
+        }
+        catch (NativeProcessRunException ne)
+        {
+            tryFinishingJob(jobId);
+
+            //rethrow
+            throw ne;
+        }
+        return success;
+    }
+
+    private void checkTooManyJobs(String jobId) throws TooManyJobsException
+    {
+        // Negative m_MaxActiveJobs means unlimited
+        if (m_MaxActiveJobs >= 0 &&
+            (m_ProcessManager.jobIsRunning(jobId) == false) &&
+            m_ProcessManager.numberOfRunningJobs() >= m_MaxActiveJobs)
+        {
+            throw new TooManyJobsException(m_MaxActiveJobs,
+                    "Cannot reactivate job with id '" + jobId +
+                    "' - your license limits you to " + m_MaxActiveJobs +
+                    " concurrently running jobs.  You must close a job before" +
+                    " you can reactivate a closed one.",
+                    ErrorCode.LICENSE_VIOLATION);
+        }
+    }
+
+    private void tryFinishingJob(String jobId) throws JobInUseException
+    {
+        try
+        {
+            m_ProcessManager.finishJob(jobId);
+        }
+        catch (NativeProcessRunException e)
+        {
+            s_Logger.warn("Error finishing job after submitDataLoadJob failed", e);
+        }
+    }
 
 	/**
 	 * The job id is a concatenation of the date in 'yyyyMMddHHmmss' format

@@ -136,14 +136,14 @@ public class RestoreStateTest
 			String input_part_2 = prelertSrcHome + "/gui/apps/autodetectAPI/test_data/flightcentre_forwards_2.csv";
 
 			InputStream fs = new FileInputStream(new File(input_part_1));
-			jobManager.dataToJob(job.getId(), fs);
+			jobManager.submitDataLoadJob(job.getId(), fs);
 			jobManager.finishJob(job.getId());
 
 			Thread.sleep(2000);
 
 			// now send the next part
 			fs = new FileInputStream(new File(input_part_2));
-			jobManager.dataToJob(job.getId(), fs);
+			jobManager.submitDataLoadJob(job.getId(), fs);
 			jobManager.finishJob(job.getId());
 			
 			Thread.sleep(1000);

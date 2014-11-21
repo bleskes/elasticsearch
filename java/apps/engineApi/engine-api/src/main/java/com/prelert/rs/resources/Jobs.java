@@ -36,9 +36,9 @@ import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -46,10 +46,10 @@ import javax.ws.rs.core.Response;
 import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.prelert.job.JobIdAlreadyExistsException;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobConfigurationException;
 import com.prelert.job.JobDetails;
+import com.prelert.job.JobIdAlreadyExistsException;
 import com.prelert.job.JobInUseException;
 import com.prelert.job.TooManyJobsException;
 import com.prelert.job.UnknownJobException;
@@ -267,6 +267,12 @@ public class Jobs extends ResourceWithJobManager
 				.path(job.getId())
 				.build();
     	job.setDataEndpoint(data);
+
+        URI dataload = m_UriInfo.getBaseUriBuilder()
+                .path(DataLoad.ENDPOINT)
+                .path(job.getId())
+                .build();
+        job.setDataEndpoint(dataload);
 
     	URI buckets = m_UriInfo.getBaseUriBuilder()
 				.path("results")

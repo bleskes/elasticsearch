@@ -25,33 +25,36 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.persistence.elasticsearch;
+package com.prelert.rs.resources.data;
 
-import org.apache.log4j.Logger;
-import org.elasticsearch.client.Client;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
-import com.prelert.job.persistence.DataPersisterFactory;
-import com.prelert.job.persistence.JobDataPersister;
-import com.prelert.job.persistence.none.NoneJobDataPersister;
+import org.junit.Test;
 
-public class ElasticsearchDataPersisterFactory implements DataPersisterFactory
+import com.prelert.job.JobInUseException;
+import com.prelert.job.UnknownJobException;
+import com.prelert.job.manager.JobManager;
+import com.prelert.job.process.NativeProcessRunException;
+
+public class UploadCommitterTest
 {
 
-    private Client m_Client;
-
-    public ElasticsearchDataPersisterFactory(Client client)
+    @Test(expected = NullPointerException.class)
+    public void testConstructor_GivenNullJobManager()
     {
-        m_Client = client;
+        new UploadCommitter(null);
     }
 
-    @Override
-    public JobDataPersister newDataPersister(String jobId, Logger logger)
+    @Test
+    public void testCommitUpload() throws UnknownJobException, NativeProcessRunException,
+            JobInUseException
     {
-        return new ElasticsearchJobDataPersister(jobId, m_Client, logger);
-    }
+        JobManager jobManager = mock(JobManager.class);
+        UploadCommitter uploadCommitter = new UploadCommitter(jobManager);
 
-    @Override
-    public JobDataPersister newNoneDataPersister() {
-        return new NoneJobDataPersister();
+        uploadCommitter.commitUpload("foo");
+
+        verify(jobManager).finishJob("foo");
     }
 }

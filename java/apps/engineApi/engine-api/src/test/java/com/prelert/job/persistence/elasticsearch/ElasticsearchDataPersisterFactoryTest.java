@@ -27,31 +27,38 @@
 
 package com.prelert.job.persistence.elasticsearch;
 
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+
 import org.apache.log4j.Logger;
 import org.elasticsearch.client.Client;
+import org.junit.Test;
 
-import com.prelert.job.persistence.DataPersisterFactory;
 import com.prelert.job.persistence.JobDataPersister;
 import com.prelert.job.persistence.none.NoneJobDataPersister;
 
-public class ElasticsearchDataPersisterFactory implements DataPersisterFactory
+public class ElasticsearchDataPersisterFactoryTest
 {
 
-    private Client m_Client;
-
-    public ElasticsearchDataPersisterFactory(Client client)
+    @Test
+    public void testNewDataPersister()
     {
-        m_Client = client;
+        Client client = mock(Client.class);
+        ElasticsearchDataPersisterFactory factory = new ElasticsearchDataPersisterFactory(client);
+
+        JobDataPersister persister = factory.newDataPersister("foo", mock(Logger.class));
+
+        assertTrue(persister instanceof ElasticsearchJobDataPersister);
     }
 
-    @Override
-    public JobDataPersister newDataPersister(String jobId, Logger logger)
+    @Test
+    public void testNewNoneDataPersister()
     {
-        return new ElasticsearchJobDataPersister(jobId, m_Client, logger);
-    }
+        Client client = mock(Client.class);
+        ElasticsearchDataPersisterFactory factory = new ElasticsearchDataPersisterFactory(client);
 
-    @Override
-    public JobDataPersister newNoneDataPersister() {
-        return new NoneJobDataPersister();
+        JobDataPersister persister = factory.newNoneDataPersister();
+
+        assertTrue(persister instanceof NoneJobDataPersister);
     }
 }
