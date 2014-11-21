@@ -25,33 +25,21 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.persistence.elasticsearch;
+package com.prelert.rs.resources.data;
 
-import org.apache.log4j.Logger;
-import org.elasticsearch.client.Client;
+import com.prelert.job.manager.JobManager;
 
-import com.prelert.job.persistence.DataPersisterFactory;
-import com.prelert.job.persistence.JobDataPersister;
-import com.prelert.job.persistence.none.NoneJobDataPersister;
-
-public class ElasticsearchDataPersisterFactory implements DataPersisterFactory
+public class DataStreamerAndPersister extends AbstractDataStreamer
 {
 
-    private Client m_Client;
-
-    public ElasticsearchDataPersisterFactory(Client client)
+    public DataStreamerAndPersister(JobManager jobManager)
     {
-        m_Client = client;
+        super(jobManager);
     }
 
     @Override
-    public JobDataPersister newDataPersister(String jobId, Logger logger)
+    protected boolean shouldPersistJobData()
     {
-        return new ElasticsearchJobDataPersister(jobId, m_Client, logger);
-    }
-
-    @Override
-    public JobDataPersister newNoneDataPersister() {
-        return new NoneJobDataPersister();
+        return true;
     }
 }

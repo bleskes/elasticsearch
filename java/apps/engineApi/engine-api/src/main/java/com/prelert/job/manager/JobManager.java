@@ -573,55 +573,93 @@ public class JobManager
 		return true;
 	}
 
-	/**
-	 * Passes data to the native process. If the process is not running a new
-	 * one is started.
-	 * This is a blocking call that won't return until all the data has been
-	 * written to the process. A new thread is launched to parse the process's
-	 * output
-	 *
-	 * @param jobId
-	 * @param input
-	 * @return
-	 * @throws NativeProcessRunException If there is an error starting the native
-	 * process
-	 * @throws UnknownJobException If the jobId is not recognised
-	 * @throws MissingFieldException If a configured field is missing from
-	 * the CSV header
-	 * @throws JsonParseException
-	 * @throws JobInUseException if the job cannot be written to because
-	 * it is already handling data
-	 * @throws HighProportionOfBadTimestampsException
-	 * @throws OutOfOrderRecordsException
-	 * @throws TooManyJobsException If the license is violated
-	 */
-	public boolean submitDataLoadJob(String jobId, InputStream input)
-	throws UnknownJobException, NativeProcessRunException, MissingFieldException,
-		JsonParseException, JobInUseException, HighProportionOfBadTimestampsException,
-		OutOfOrderRecordsException, TooManyJobsException
-	{
-		checkTooManyJobs(jobId);
-		boolean success = tryProcessingDataLoadJob(jobId, input);
-		if (success)
-		{
-		    updateLastDataTime(jobId, new Date());
-		}
-		return success;
+    /**
+     * Passes data to the native process. If the process is not running a new
+     * one is started.
+     * This is a blocking call that won't return until all the data has been
+     * written to the process. A new thread is launched to parse the process's
+     * output
+     *
+     * @param jobId
+     * @param input
+     * @return
+     * @throws NativeProcessRunException If there is an error starting the native
+     * process
+     * @throws UnknownJobException If the jobId is not recognised
+     * @throws MissingFieldException If a configured field is missing from
+     * the CSV header
+     * @throws JsonParseException
+     * @throws JobInUseException if the job cannot be written to because
+     * it is already handling data
+     * @throws HighProportionOfBadTimestampsException
+     * @throws OutOfOrderRecordsException
+     * @throws TooManyJobsException If the license is violated
+     */
+    public boolean submitDataLoadJob(String jobId, InputStream input)
+    throws UnknownJobException, NativeProcessRunException, MissingFieldException,
+        JsonParseException, JobInUseException, HighProportionOfBadTimestampsException,
+        OutOfOrderRecordsException, TooManyJobsException
+    {
+        return submitDataLoadJob(jobId, input, false);
+    }
+
+    /**
+     * Passes data to the native process and requires its persistence.
+     * If the process is not running a new one is started.
+     *
+     * This is a blocking call that won't return until all the data has been
+     * written to the process. A new thread is launched to parse the process's
+     * output
+     *
+     * @param jobId
+     * @param input
+     * @return
+     * @throws NativeProcessRunException If there is an error starting the native
+     * process
+     * @throws UnknownJobException If the jobId is not recognised
+     * @throws MissingFieldException If a configured field is missing from
+     * the CSV header
+     * @throws JsonParseException
+     * @throws JobInUseException if the job cannot be written to because
+     * it is already handling data
+     * @throws HighProportionOfBadTimestampsException
+     * @throws OutOfOrderRecordsException
+     * @throws TooManyJobsException If the license is violated
+     */
+    public boolean submitDataLoadAndPersistJob(String jobId, InputStream input)
+    throws UnknownJobException, NativeProcessRunException, MissingFieldException,
+        JsonParseException, JobInUseException, HighProportionOfBadTimestampsException,
+        OutOfOrderRecordsException, TooManyJobsException
+    {
+        return submitDataLoadJob(jobId, input, true);
+    }
+
+    private  boolean submitDataLoadJob(String jobId, InputStream input, boolean shouldPersist)
+            throws UnknownJobException, NativeProcessRunException, MissingFieldException,
+            JsonParseException, JobInUseException, HighProportionOfBadTimestampsException,
+            OutOfOrderRecordsException, TooManyJobsException
+    {
+        checkTooManyJobs(jobId);
+        boolean success = tryProcessingDataLoadJob(jobId, input, shouldPersist);
+        if (success)
+        {
+            updateLastDataTime(jobId, new Date());
+        }
+        return success;
 	}
 
 
-    private boolean tryProcessingDataLoadJob(String jobId, InputStream input)
+    private boolean tryProcessingDataLoadJob(String jobId, InputStream input, boolean shouldPersist)
             throws UnknownJobException, MissingFieldException,
             JsonParseException, JobInUseException,
             HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
             NativeProcessRunException
     {
+        boolean success = true;
         try
         {
-            if (m_ProcessManager.processDataLoadJob(jobId, input) == false)
-            {
-                return false;
-            }
+            success = shouldPersist ? m_ProcessManager.processDataLoadAndPersistJob(jobId, input)
+                    : m_ProcessManager.processDataLoadJob(jobId, input);
         }
         catch (NativeProcessRunException ne)
         {
@@ -630,7 +668,7 @@ public class JobManager
             //rethrow
             throw ne;
         }
-        return true;
+        return success;
     }
 
     private void checkTooManyJobs(String jobId) throws TooManyJobsException

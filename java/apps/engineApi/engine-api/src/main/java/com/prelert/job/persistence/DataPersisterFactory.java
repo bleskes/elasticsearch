@@ -30,11 +30,12 @@ package com.prelert.job.persistence;
 import org.apache.log4j.Logger;
 
 /**
- * Abstract Factory method for creating new {@link UsageReporter} 
- * instances. 
+ * Abstract Factory method for creating new {@link JobDataPersister}
+ * instances.
  */
-public interface DataPersisterFactory 
+public interface DataPersisterFactory
 {
-	public JobDataPersister newDataPersister(String jobId, Logger logger);
+    JobDataPersister newNoneDataPersister();
+    JobDataPersister newDataPersister(String jobId, Logger logger);
 }
 
