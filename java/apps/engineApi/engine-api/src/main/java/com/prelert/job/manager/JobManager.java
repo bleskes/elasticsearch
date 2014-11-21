@@ -617,7 +617,7 @@ public class JobManager
 			}
 			catch (NativeProcessRunException e)
 			{
-				s_Logger.warn("Error finished job after dataToJob failed", e);
+				s_Logger.warn("Error finishing job after submitDataLoadJob failed", e);
 			}
 
 			// rethrow
