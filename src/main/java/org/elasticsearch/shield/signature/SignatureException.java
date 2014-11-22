@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.shield.key;
+package org.elasticsearch.shield.signature;
 
 import org.elasticsearch.shield.authz.AuthorizationException;
 

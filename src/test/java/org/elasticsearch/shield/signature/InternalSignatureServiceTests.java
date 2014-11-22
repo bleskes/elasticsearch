@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.shield.key;
+package org.elasticsearch.shield.signature;
 
 import org.elasticsearch.common.io.Streams;
 import org.elasticsearch.common.settings.ImmutableSettings;
@@ -38,7 +38,7 @@ import static org.hamcrest.Matchers.is;
 /**
  *
  */
-public class InternalKeyServiceTests extends ElasticsearchTestCase {
+public class InternalSignatureServiceTests extends ElasticsearchTestCase {
 
     private ResourceWatcherService watcherService;
     private Settings settings;
@@ -49,7 +49,7 @@ public class InternalKeyServiceTests extends ElasticsearchTestCase {
     @Before
     public void init() throws Exception {
         keyFile = new File(newTempDir(), "system_key");
-        Streams.copy(InternalKeyService.generateKey(), keyFile);
+        Streams.copy(InternalSignatureService.generateKey(), keyFile);
         settings = ImmutableSettings.builder()
                 .put("shield.system_key.file", keyFile.getAbsolutePath())
                 .put("watcher.interval.high", "2s")
@@ -67,7 +67,7 @@ public class InternalKeyServiceTests extends ElasticsearchTestCase {
 
     @Test
     public void testSigned() throws Exception {
-        InternalKeyService service = new InternalKeyService(settings, env, watcherService);
+        InternalSignatureService service = new InternalSignatureService(settings, env, watcherService);
         String text = randomAsciiOfLength(10);
         String signed = service.sign(text);
         assertThat(service.signed(signed), is(true));
@@ -75,7 +75,7 @@ public class InternalKeyServiceTests extends ElasticsearchTestCase {
 
     @Test
     public void testSignAndUnsign() throws Exception {
-        InternalKeyService service = new InternalKeyService(settings, env, watcherService);
+        InternalSignatureService service = new InternalSignatureService(settings, env, watcherService);
         String text = randomAsciiOfLength(10);
         String signed = service.sign(text);
         assertThat(text.equals(signed), is(false));
@@ -85,7 +85,7 @@ public class InternalKeyServiceTests extends ElasticsearchTestCase {
 
     @Test
     public void testSignAndUnsign_NoKeyFile() throws Exception {
-        InternalKeyService service = new InternalKeyService(ImmutableSettings.EMPTY, env, watcherService);
+        InternalSignatureService service = new InternalSignatureService(ImmutableSettings.EMPTY, env, watcherService);
         String text = randomAsciiOfLength(10);
         String signed = service.sign(text);
         assertThat(text, equalTo(signed));
@@ -96,7 +96,7 @@ public class InternalKeyServiceTests extends ElasticsearchTestCase {
     @Test
     public void testReloadKey() throws Exception {
         final CountDownLatch latch = new CountDownLatch(1);
-        InternalKeyService service = new InternalKeyService(settings, env, watcherService, new InternalKeyService.Listener() {
+        InternalSignatureService service = new InternalSignatureService(settings, env, watcherService, new InternalSignatureService.Listener() {
             @Override
             public void onKeyRefresh() {
                 latch.countDown();
@@ -110,7 +110,7 @@ public class InternalKeyServiceTests extends ElasticsearchTestCase {
         // and so the resource watcher will pick up the change.
         sleep(1000);
 
-        Streams.copy(InternalKeyService.generateKey(), keyFile);
+        Streams.copy(InternalSignatureService.generateKey(), keyFile);
         if (!latch.await(10, TimeUnit.SECONDS)) {
             fail("waiting too long for test to complete. Expected callback is not called");
         }
