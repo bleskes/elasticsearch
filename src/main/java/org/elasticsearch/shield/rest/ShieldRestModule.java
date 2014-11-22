@@ -15,23 +15,33 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.shield.transport;
+package org.elasticsearch.shield.rest;
 
+import org.elasticsearch.common.inject.Module;
+import org.elasticsearch.common.inject.PreProcessModule;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.shield.SecurityFilter;
+import org.elasticsearch.rest.RestModule;
+import org.elasticsearch.shield.rest.action.RestShieldInfoAction;
 import org.elasticsearch.shield.support.AbstractShieldModule;
 
 /**
  *
  */
-public class SecuredRestModule extends AbstractShieldModule.Node {
+public class ShieldRestModule extends AbstractShieldModule.Node implements PreProcessModule {
 
-    public SecuredRestModule(Settings settings) {
+    public ShieldRestModule(Settings settings) {
         super(settings);
     }
 
     @Override
     protected void configureNode() {
-        bind(SecurityFilter.Rest.class).asEagerSingleton();
+        bind(ShieldRestFilter.class).asEagerSingleton();
+    }
+
+    @Override
+    public void processModule(Module module) {
+        if (module instanceof RestModule) {
+            ((RestModule) module).addRestAction(RestShieldInfoAction.class);
+        }
     }
 }

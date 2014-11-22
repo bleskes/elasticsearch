@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.shield.http;
+package org.elasticsearch.shield.rest.action;
 
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.inject.Inject;

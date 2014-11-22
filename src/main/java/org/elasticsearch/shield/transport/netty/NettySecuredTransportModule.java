@@ -20,7 +20,7 @@ package org.elasticsearch.shield.transport.netty;
 import org.elasticsearch.common.inject.Module;
 import org.elasticsearch.common.inject.PreProcessModule;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.shield.plugin.ShieldPlugin;
+import org.elasticsearch.shield.ShieldPlugin;
 import org.elasticsearch.shield.support.AbstractShieldModule;
 import org.elasticsearch.transport.TransportModule;
 

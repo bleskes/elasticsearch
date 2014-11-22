@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.shield.plugin;
+package org.elasticsearch.shield;
 
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -24,6 +24,7 @@ import org.elasticsearch.action.admin.cluster.node.info.NodesInfoResponse;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.http.HttpServerTransport;
 import org.elasticsearch.node.internal.InternalNode;
+import org.elasticsearch.shield.ShieldPlugin;
 import org.elasticsearch.shield.authc.support.SecuredString;
 import org.elasticsearch.shield.test.ShieldIntegrationTest;
 import org.elasticsearch.test.rest.client.http.HttpRequestBuilder;

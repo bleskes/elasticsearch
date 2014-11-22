@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.shield;
+package org.elasticsearch.integration;
 
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.MultiSearchResponse;

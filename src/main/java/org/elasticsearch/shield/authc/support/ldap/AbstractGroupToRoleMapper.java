@@ -26,7 +26,7 @@ import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.shield.authc.support.RefreshListener;
-import org.elasticsearch.shield.plugin.ShieldPlugin;
+import org.elasticsearch.shield.ShieldPlugin;
 import org.elasticsearch.watcher.FileChangesListener;
 import org.elasticsearch.watcher.FileWatcher;
 import org.elasticsearch.watcher.ResourceWatcherService;
@@ -58,12 +58,10 @@ public abstract class AbstractGroupToRoleMapper extends AbstractComponent {
 
     private CopyOnWriteArrayList<RefreshListener> listeners;
 
-    protected AbstractGroupToRoleMapper(Settings settings,
-                                        String realmType,
-                                        Environment env,
-                                        ResourceWatcherService watcherService,
-                                        @Nullable RefreshListener listener) {
+    protected AbstractGroupToRoleMapper(Settings settings, String realmType, Environment env,
+                                        ResourceWatcherService watcherService, @Nullable RefreshListener listener) {
         super(settings);
+        this.realmType = realmType;
         useUnmappedGroupsAsRoles = componentSettings.getAsBoolean(USE_UNMAPPED_GROUPS_AS_ROLES_SETTING, false);
         file = resolveFile(componentSettings, env);
         groupRoles = parseFile(file, logger, realmType);
@@ -74,7 +72,6 @@ public abstract class AbstractGroupToRoleMapper extends AbstractComponent {
         if (listener != null) {
             listeners.add(listener);
         }
-        this.realmType = realmType;
     }
 
     public synchronized void addListener(RefreshListener listener) {
@@ -89,24 +86,24 @@ public abstract class AbstractGroupToRoleMapper extends AbstractComponent {
         return Paths.get(location);
     }
 
-    public static ImmutableMap<LdapName, Set<String>> parseFile(Path path, ESLogger logger, String realmType)  {
+    public static ImmutableMap<LdapName, Set<String>> parseFile(Path path, ESLogger logger, String realmType) {
         if (!Files.exists(path)) {
             return ImmutableMap.of();
         }
 
-        try (FileInputStream in = new FileInputStream( path.toFile() )){
+        try (FileInputStream in = new FileInputStream(path.toFile())) {
             Settings settings = ImmutableSettings.builder()
                     .loadFromStream(path.toString(), in)
                     .build();
 
             Map<LdapName, Set<String>> groupToRoles = new HashMap<>();
             Set<String> roles = settings.names();
-            for(String role: roles){
-                for(String ldapDN: settings.getAsArray(role)){
+            for (String role : roles) {
+                for (String ldapDN : settings.getAsArray(role)) {
                     try {
                         LdapName group = new LdapName(ldapDN);
                         Set<String> groupRoles = groupToRoles.get(group);
-                        if (groupRoles == null){
+                        if (groupRoles == null) {
                             groupRoles = new HashSet<>();
                             groupToRoles.put(group, groupRoles);
                         }
@@ -129,7 +126,7 @@ public abstract class AbstractGroupToRoleMapper extends AbstractComponent {
      */
     public Set<String> mapRoles(List<String> groupDns) {
         Set<String> roles = new HashSet<>();
-        for(String groupDn: groupDns){
+        for (String groupDn : groupDns) {
             LdapName groupLdapName = LdapUtils.ldapName(groupDn);
             if (this.groupRoles.containsKey(groupLdapName)) {
                 roles.addAll(this.groupRoles.get(groupLdapName));
@@ -173,14 +170,4 @@ public abstract class AbstractGroupToRoleMapper extends AbstractComponent {
         }
     }
 
-    static interface Listener {
-
-        final Listener NOOP = new Listener() {
-            @Override
-            public void onRefresh() {
-            }
-        };
-
-        void onRefresh();
-    }
 }

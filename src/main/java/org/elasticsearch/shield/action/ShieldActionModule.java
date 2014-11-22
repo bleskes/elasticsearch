@@ -15,22 +15,31 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.shield;
+package org.elasticsearch.shield.action;
 
+import org.elasticsearch.action.ActionModule;
+import org.elasticsearch.common.inject.Module;
+import org.elasticsearch.common.inject.PreProcessModule;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.shield.support.AbstractShieldModule;
 
 /**
  *
  */
-public class SecurityFilterModule extends AbstractShieldModule.Node {
+public class ShieldActionModule extends AbstractShieldModule.Node implements PreProcessModule {
 
-    public SecurityFilterModule(Settings settings) {
+    public ShieldActionModule(Settings settings) {
         super(settings);
     }
 
     @Override
+    public void processModule(Module module) {
+        if (shieldEnabled && !clientMode && module instanceof ActionModule) {
+            ((ActionModule) module).registerFilter(ShieldActionFilter.class);
+        }
+    }
+
+    @Override
     protected void configureNode() {
-        bind(SecurityFilter.class).asEagerSingleton();
     }
 }

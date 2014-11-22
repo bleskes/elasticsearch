@@ -33,7 +33,6 @@ public interface Realm<T extends AuthenticationToken> {
      */
     String type();
 
-
     /**
      * @return  {@code true} if this realm supports the given authentication token, {@code false} otherwise.
      */
