@@ -25,23 +25,21 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.persistence.none;
+package com.prelert.rs.resources.data;
 
-import org.apache.log4j.Logger;
+import com.prelert.job.manager.JobManager;
 
-import com.prelert.job.persistence.DataPersisterFactory;
-import com.prelert.job.persistence.JobDataPersister;
-
-/**
- * Factory class for the don't persist anything data persister
- */
-public class NoneJobDataPersisterFactory implements DataPersisterFactory
+public class DataStreamerAndPersister extends AbstractDataStreamer
 {
 
-	@Override
-	public JobDataPersister newDataPersister(String jobId, Logger logger) 
-	{
-		return new NoneJobDataPersister();
-	}
+    public DataStreamerAndPersister(JobManager jobManager)
+    {
+        super(jobManager);
+    }
 
+    @Override
+    protected boolean shouldPersistJobData()
+    {
+        return true;
+    }
 }

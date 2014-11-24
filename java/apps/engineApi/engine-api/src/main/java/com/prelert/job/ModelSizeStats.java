@@ -49,6 +49,7 @@ public class ModelSizeStats
 	public static final String ID = "id";
 	public static final String MODEL_BYTES = "modelBytes";
 	public static final String TOTAL_BY_FIELD_COUNT = "totalByFieldCount";
+	public static final String TOTAL_OVER_FIELD_COUNT = "totalOverFieldCount";
 	public static final String TOTAL_PARTITION_FIELD_COUNT = "totalPartitionFieldCount";
 
     /**
@@ -60,6 +61,7 @@ public class ModelSizeStats
 
 	private long m_ModelBytes;
 	private long m_TotalByFieldCount;
+    private long m_TotalOverFieldCount;
 	private long m_TotalPartitionFieldCount;
 
 	public String getId()
@@ -100,6 +102,16 @@ public class ModelSizeStats
 	{
 		return m_TotalPartitionFieldCount;
 	}
+
+    public void setTotalOverFieldCount(long m)
+    {
+        m_TotalOverFieldCount = m;
+    }
+
+    public long getTotalOverFieldCount()
+    {
+        return m_TotalOverFieldCount;
+    }
 
 
 	/**
@@ -197,6 +209,18 @@ public class ModelSizeStats
 										+ " as a long");
 					}
 					break;
+                case TOTAL_OVER_FIELD_COUNT:
+                    token = parser.nextToken();
+                    if (token == JsonToken.VALUE_NUMBER_INT)
+                    {
+                        modelSizeStats.setTotalOverFieldCount(parser.getLongValue());
+                    }
+                    else
+                    {
+                        s_Logger.warn("Cannot parse " + fieldName + " : " + parser.getText()
+                                        + " as a long");
+                    }
+                    break;
 				case TOTAL_PARTITION_FIELD_COUNT:
 					token = parser.nextToken();
 					if (token == JsonToken.VALUE_NUMBER_INT)

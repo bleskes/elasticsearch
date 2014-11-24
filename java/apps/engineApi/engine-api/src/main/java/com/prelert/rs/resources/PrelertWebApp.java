@@ -35,17 +35,15 @@ import javax.ws.rs.core.Application;
 import com.prelert.job.alert.manager.AlertManager;
 import com.prelert.job.alert.persistence.elasticsearch.ElasticsearchAlertPersister;
 import com.prelert.job.manager.JobManager;
-import com.prelert.job.persistence.DataPersisterFactory;
 import com.prelert.job.persistence.elasticsearch.ElasticsearchDataPersisterFactory;
 import com.prelert.job.persistence.elasticsearch.ElasticsearchJobProvider;
 import com.prelert.job.persistence.elasticsearch.ElasticsearchResultsReaderFactory;
-import com.prelert.job.persistence.none.NoneJobDataPersisterFactory;
 import com.prelert.job.status.elasticsearch.ElasticsearchStatusReporterFactory;
 import com.prelert.job.usage.elasticsearch.ElasticsearchUsageReporterFactory;
 import com.prelert.rs.provider.AlertMessageBodyWriter;
 import com.prelert.rs.provider.ElasticsearchExceptionMapper;
-import com.prelert.rs.provider.JobExceptionMapper;
 import com.prelert.rs.provider.JobConfigurationMessageBodyReader;
+import com.prelert.rs.provider.JobExceptionMapper;
 import com.prelert.rs.provider.NativeProcessRunExceptionMapper;
 import com.prelert.rs.provider.PaginationWriter;
 import com.prelert.rs.provider.SingleDocumentWriter;
@@ -80,6 +78,7 @@ public class PrelertWebApp extends Application
 		m_ResourceClasses.add(AlertsLongPoll.class);
 		m_ResourceClasses.add(Jobs.class);
 		m_ResourceClasses.add(Data.class);
+		m_ResourceClasses.add(DataLoad.class);
 		m_ResourceClasses.add(Buckets.class);
 		m_ResourceClasses.add(Records.class);
 		m_ResourceClasses.add(Logs.class);
@@ -107,17 +106,11 @@ public class PrelertWebApp extends Application
 		ElasticsearchJobProvider esJob = new ElasticsearchJobProvider(
 				elasticSearchClusterName);
 
-		DataPersisterFactory dataPersisterFactory = new NoneJobDataPersisterFactory();
-		if (System.getProperty(PERSIST_RECORDS) != null)
-		{
-			dataPersisterFactory = new ElasticsearchDataPersisterFactory(esJob.getClient());
-		}
-
 		m_JobManager = new JobManager(esJob,
 				new ElasticsearchResultsReaderFactory(esJob),
 				new ElasticsearchStatusReporterFactory(esJob.getClient()),
 				new ElasticsearchUsageReporterFactory(esJob.getClient()),
-				dataPersisterFactory
+				new ElasticsearchDataPersisterFactory(esJob.getClient())
 			);
 
 		m_AlertManager = new AlertManager(

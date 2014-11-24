@@ -54,8 +54,13 @@ import org.apache.log4j.PatternLayout;
 import org.apache.log4j.RollingFileAppender;
 
 import com.fasterxml.jackson.core.JsonParseException;
+import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
+import com.prelert.job.JobDetails;
+import com.prelert.job.JobInUseException;
+import com.prelert.job.JobStatus;
+import com.prelert.job.UnknownJobException;
 import com.prelert.job.persistence.DataPersisterFactory;
 import com.prelert.job.persistence.JobDataPersister;
 import com.prelert.job.persistence.JobProvider;
@@ -65,11 +70,6 @@ import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.job.status.StatusReporter;
 import com.prelert.job.status.StatusReporterFactory;
 import com.prelert.job.usage.UsageReporterFactory;
-import com.prelert.job.AnalysisConfig;
-import com.prelert.job.JobDetails;
-import com.prelert.job.JobInUseException;
-import com.prelert.job.JobStatus;
-import com.prelert.job.UnknownJobException;
 import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.parsing.AlertObserver;
 
@@ -156,45 +156,96 @@ public class ProcessManager
 		Runtime.getRuntime().addShutdownHook(shutdownHook);
 	}
 
+	   /**
+     * Passes data to the native process. There are 3 alternate cases handled
+     * by this function
+     * <ol>
+     * <li>This is the first data sent to the job to create a new process</li>
+     * <li>The process has already been created and is still active</li>
+     * <li>The process was created and has expired with its internal state
+     * saved to the database. Create a new process and restore the persisted
+     * state</li>
+     * </ol>
+     * This is a blocking call that won't return untill all the data has been
+     * written to the process. A new thread is launched to parse the process's
+     * output.
+     * <br/>
+     * If there is an error due to the data being in the wrong format or some
+     * other runtime error a {@linkplain NativeProcessRunException} is thrown
+     * <br/>
+     * For CSV data if a configured field is missing from the header
+     * a {@linkplain MissingFieldException} is thrown
+     *
+     * @param jobId
+     * @param input
+     * @return True if successful or false if the data can't be written because
+     * it is already processing some data
+     * @throws UnknownJobException
+     * @throws NativeProcessRunException If there is a problem creating a new process
+     * @throws MissingFieldException If a configured field is missing from
+     * the CSV header
+     * @throws JsonParseException
+     * @throws JobInUseException if the data cannot be written to because
+     * the job is already handling data
+     * @throws HighProportionOfBadTimestampsException
+     * @throws OutOfOrderRecordsException
+     */
+    public boolean processDataLoadJob(String jobId, InputStream input)
+    throws UnknownJobException, NativeProcessRunException, MissingFieldException,
+        JsonParseException, JobInUseException, HighProportionOfBadTimestampsException,
+        OutOfOrderRecordsException
+    {
+        return processDataLoadJob(jobId, input, m_DataPersisterFactory.newNoneDataPersister());
+    }
 
-	/**
-	 * Passes data to the native process. There are 3 alternate cases handled
-	 * by this function
-	 * <ol>
-	 * <li>This is the first data sent to the job to create a new process</li>
-	 * <li>The process has already been created and is still active</li>
-	 * <li>The process was created and has expired with its internal state
-	 * saved to the database. Create a new process and restore the persisted
-	 * state</li>
-	 * </ol>
-	 * This is a blocking call that won't return untill all the data has been
-	 * written to the process. A new thread is launched to parse the process's
-	 * output.
-	 * <br/>
-	 * If there is an error due to the data being in the wrong format or some
-	 * other runtime error a {@linkplain NativeProcessRunException} is thrown
-	 * <br/>
-	 * For CSV data if a configured field is missing from the header
-	 * a {@linkplain MissingFieldException} is thrown
-	 *
-	 * @param jobId
-	 * @param input
-	 * @return True if successful or false if the data can't be written because
-	 * it is already processing some data
-	 * @throws UnknownJobException
-	 * @throws NativeProcessRunException If there is a problem creating a new process
-	 * @throws MissingFieldException If a configured field is missing from
-	 * the CSV header
-	 * @throws JsonParseException
-	 * @throws JobInUseException if the data cannot be written to because
-	 * the job is already handling data
-	 * @throws HighProportionOfBadTimestampsException
-	 * @throws OutOfOrderRecordsException
-	 */
-	public boolean dataToJob(String jobId, InputStream input)
-	throws UnknownJobException, NativeProcessRunException, MissingFieldException,
-		JsonParseException, JobInUseException, HighProportionOfBadTimestampsException,
-		OutOfOrderRecordsException
+    /**
+  * Persists the data and passes it to the native process. There are 3 alternate cases handled
+  * by this function
+  * <ol>
+  * <li>This is the first data sent to the job to create a new process</li>
+  * <li>The process has already been created and is still active</li>
+  * <li>The process was created and has expired with its internal state
+  * saved to the database. Create a new process and restore the persisted
+  * state</li>
+  * </ol>
+  * This is a blocking call that won't return untill all the data has been
+  * written to the process. A new thread is launched to parse the process's
+  * output.
+  * <br/>
+  * If there is an error due to the data being in the wrong format or some
+  * other runtime error a {@linkplain NativeProcessRunException} is thrown
+  * <br/>
+  * For CSV data if a configured field is missing from the header
+  * a {@linkplain MissingFieldException} is thrown
+  *
+  * @param jobId
+  * @param input
+  * @return True if successful or false if the data can't be written because
+  * it is already processing some data
+  * @throws UnknownJobException
+  * @throws NativeProcessRunException If there is a problem creating a new process
+  * @throws MissingFieldException If a configured field is missing from
+  * the CSV header
+  * @throws JsonParseException
+  * @throws JobInUseException if the data cannot be written to because
+  * the job is already handling data
+  * @throws HighProportionOfBadTimestampsException
+  * @throws OutOfOrderRecordsException
+  */
+ public boolean processDataLoadAndPersistJob(String jobId, InputStream input)
+ throws UnknownJobException, NativeProcessRunException, MissingFieldException,
+     JsonParseException, JobInUseException, HighProportionOfBadTimestampsException,
+     OutOfOrderRecordsException
+ {
+        return processDataLoadJob(jobId, input,
+                m_DataPersisterFactory.newDataPersister(jobId, s_Logger));
+ }
+
+    private boolean processDataLoadJob(String jobId, InputStream input,
+            JobDataPersister jobDataPersister) throws UnknownJobException,
+            NativeProcessRunException, MissingFieldException,
+            JsonParseException, JobInUseException,
+            HighProportionOfBadTimestampsException, OutOfOrderRecordsException
 	{
 		// stop the timeout
 		ScheduledFuture<?> future = m_JobIdToTimeoutFuture.remove(jobId);
@@ -241,7 +292,8 @@ public class ProcessManager
 			writeToJob(process.getDataDescription(), process.getAnalysisConfig(),
 					input, process.getProcess().getOutputStream(),
 					process.getStatusReporter(),
-					process.getDataPersister(), process.getLogger());
+					jobDataPersister,
+					process.getLogger());
 
 			// check there wasn't an error in the input.
 			// throws if there was.
@@ -365,7 +417,6 @@ public class ProcessManager
 				m_ResultsReaderFactory.newResultsParser(jobId,
 						nativeProcess.getInputStream(),
 						logger),
-				m_DataPersisterFactory.newDataPersister(jobId, logger),
 				filesToDelete
 				);
 

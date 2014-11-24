@@ -170,9 +170,10 @@ public class AutoDetectResultsParser
 						break;
 					case ModelSizeStats.TYPE:
 						ModelSizeStats modelSizeStats = ModelSizeStats.parseJsonAfterStartObject(parser);
-						logger.debug(String.format("Parsed memory usage: %d / %d / %d", 
+						logger.debug(String.format("Parsed ModelSizeStats: %d / %d / %d / %d", 
 							modelSizeStats.getModelBytes(),
 							modelSizeStats.getTotalByFieldCount(),
+                            modelSizeStats.getTotalOverFieldCount(),
 							modelSizeStats.getTotalPartitionFieldCount()));
 						
 						persister.persistModelSizeStats(modelSizeStats);

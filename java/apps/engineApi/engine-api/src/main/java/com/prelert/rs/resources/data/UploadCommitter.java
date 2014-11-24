@@ -25,33 +25,45 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.persistence.elasticsearch;
+package com.prelert.rs.resources.data;
+
+import java.util.Objects;
+
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
 
 import org.apache.log4j.Logger;
-import org.elasticsearch.client.Client;
 
-import com.prelert.job.persistence.DataPersisterFactory;
-import com.prelert.job.persistence.JobDataPersister;
-import com.prelert.job.persistence.none.NoneJobDataPersister;
+import com.prelert.job.JobInUseException;
+import com.prelert.job.UnknownJobException;
+import com.prelert.job.manager.JobManager;
+import com.prelert.job.process.NativeProcessRunException;
 
-public class ElasticsearchDataPersisterFactory implements DataPersisterFactory
-{
+public class UploadCommitter {
 
-    private Client m_Client;
+    private static final Logger LOGGER = Logger.getLogger(UploadCommitter.class);
 
-    public ElasticsearchDataPersisterFactory(Client client)
+    private final JobManager m_JobManager;
+
+    public UploadCommitter(JobManager jobManager)
     {
-        m_Client = client;
+        m_JobManager = Objects.requireNonNull(jobManager);
     }
-
-    @Override
-    public JobDataPersister newDataPersister(String jobId, Logger logger)
+    /**
+     * Retires the job cleans up after this
+     * @param jobId
+     * @return
+     * @throws UnknownJobException
+     * @throws NativeProcessRunException
+     * @throws JobInUseException
+     */
+    @Path("/{jobId}/close")
+    @POST
+    public void commitUpload(String jobId) throws UnknownJobException,
+            NativeProcessRunException, JobInUseException
     {
-        return new ElasticsearchJobDataPersister(jobId, m_Client, logger);
-    }
-
-    @Override
-    public JobDataPersister newNoneDataPersister() {
-        return new NoneJobDataPersister();
+        LOGGER.debug("Post to close data upload for job " + jobId);
+        m_JobManager.finishJob(jobId);
+        LOGGER.debug("Process finished successfully, Job Id = '" + jobId + "'");
     }
 }
