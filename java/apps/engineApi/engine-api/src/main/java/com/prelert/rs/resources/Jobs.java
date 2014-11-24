@@ -268,12 +268,6 @@ public class Jobs extends ResourceWithJobManager
 				.build();
     	job.setDataEndpoint(data);
 
-        URI dataload = m_UriInfo.getBaseUriBuilder()
-                .path(DataLoad.ENDPOINT)
-                .path(job.getId())
-                .build();
-        job.setDataEndpoint(dataload);
-
     	URI buckets = m_UriInfo.getBaseUriBuilder()
 				.path("results")
 				.path(job.getId())
