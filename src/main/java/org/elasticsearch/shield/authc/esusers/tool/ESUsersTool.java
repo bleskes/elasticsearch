@@ -27,6 +27,8 @@ import org.elasticsearch.common.collect.*;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.shield.User;
+import org.elasticsearch.shield.authc.Realms;
+import org.elasticsearch.shield.authc.esusers.ESUsersRealm;
 import org.elasticsearch.shield.authc.esusers.FileUserPasswdStore;
 import org.elasticsearch.shield.authc.esusers.FileUserRolesStore;
 import org.elasticsearch.shield.authc.support.Hasher;
@@ -133,8 +135,9 @@ public class ESUsersTool extends CliTool {
 
         @Override
         public ExitStatus execute(Settings settings, Environment env) throws Exception {
+            Settings esusersSettings = Realms.internalRealmSettings(settings, ESUsersRealm.TYPE);
             verifyRoles(terminal, settings, env, roles);
-            Path file = FileUserPasswdStore.resolveFile(settings, env);
+            Path file = FileUserPasswdStore.resolveFile(esusersSettings, env);
             Map<String, char[]> users = new HashMap<>(FileUserPasswdStore.parseFile(file, null));
             if (users.containsKey(username)) {
                 terminal.println("User [%s] already exists", username);
@@ -145,7 +148,7 @@ public class ESUsersTool extends CliTool {
             FileUserPasswdStore.writeFile(users, file);
 
             if (roles != null && roles.length > 0) {
-                file = FileUserRolesStore.resolveFile(settings, env);
+                file = FileUserRolesStore.resolveFile(esusersSettings, env);
                 Map<String, String[]> userRoles = new HashMap<>(FileUserRolesStore.parseFile(file, null));
                 userRoles.put(username, roles);
                 FileUserRolesStore.writeFile(userRoles, file);
@@ -178,7 +181,8 @@ public class ESUsersTool extends CliTool {
 
         @Override
         public ExitStatus execute(Settings settings, Environment env) throws Exception {
-            Path file = FileUserPasswdStore.resolveFile(settings, env);
+            Settings esusersSettings = Realms.internalRealmSettings(settings, ESUsersRealm.TYPE);
+            Path file = FileUserPasswdStore.resolveFile(esusersSettings, env);
             Map<String, char[]> users = new HashMap<>(FileUserPasswdStore.parseFile(file, null));
             if (!users.containsKey(username)) {
                 terminal.println("User [%s] doesn't exist", username);
@@ -192,7 +196,7 @@ public class ESUsersTool extends CliTool {
                 }
             }
 
-            file = FileUserRolesStore.resolveFile(settings, env);
+            file = FileUserRolesStore.resolveFile(esusersSettings, env);
             Map<String, String[]> userRoles = new HashMap<>(FileUserRolesStore.parseFile(file, null));
             if (Files.exists(file)) {
                 String[] roles = userRoles.remove(username);
@@ -246,7 +250,8 @@ public class ESUsersTool extends CliTool {
 
         @Override
         public ExitStatus execute(Settings settings, Environment env) throws Exception {
-            Path file = FileUserPasswdStore.resolveFile(settings, env);
+            Settings esusersSettings = Realms.internalRealmSettings(settings, ESUsersRealm.TYPE);
+            Path file = FileUserPasswdStore.resolveFile(esusersSettings, env);
             Map<String, char[]> users = new HashMap<>(FileUserPasswdStore.parseFile(file, null));
             if (!users.containsKey(username)) {
                 terminal.println("User [%s] doesn't exist", username);
@@ -314,14 +319,16 @@ public class ESUsersTool extends CliTool {
                 }
             }
 
-            Path path = FileUserPasswdStore.resolveFile(settings, env);
+            Settings esusersSettings = Realms.internalRealmSettings(settings, ESUsersRealm.TYPE);
+
+            Path path = FileUserPasswdStore.resolveFile(esusersSettings, env);
             Map<String, char[]> usersMap = FileUserPasswdStore.parseFile(path, null);
             if (!usersMap.containsKey(username)) {
                 terminal.println("User [%s] doesn't exist", username);
                 return ExitStatus.NO_USER;
             }
 
-            Path file = FileUserRolesStore.resolveFile(settings, env);
+            Path file = FileUserRolesStore.resolveFile(esusersSettings, env);
             Map<String, String[]> userRoles = FileUserRolesStore.parseFile(file, null);
 
             List<String> roles = Lists.newArrayList();
@@ -365,10 +372,11 @@ public class ESUsersTool extends CliTool {
 
         @Override
         public ExitStatus execute(Settings settings, Environment env) throws Exception {
+            Settings esusersSettings = Realms.internalRealmSettings(settings, ESUsersRealm.TYPE);
             ImmutableMap<String, Permission.Global.Role> knownRoles = loadRoles(terminal, settings, env);
-            Path userRolesFilePath = FileUserRolesStore.resolveFile(settings, env);
+            Path userRolesFilePath = FileUserRolesStore.resolveFile(esusersSettings, env);
             Map<String, String[]> userRoles = FileUserRolesStore.parseFile(userRolesFilePath, null);
-            Path userFilePath = FileUserPasswdStore.resolveFile(settings, env);
+            Path userFilePath = FileUserPasswdStore.resolveFile(esusersSettings, env);
             Set<String> users = FileUserPasswdStore.parseFile(userFilePath, null).keySet();
 
             if (username != null) {
@@ -384,7 +392,7 @@ public class ESUsersTool extends CliTool {
                     terminal.println("%-15s: %s", username, Joiner.on(",").useForNull("-").join(markedRoles));
                     if (!unknownRoles.isEmpty()) {
                         // at least one role is marked... so printing the legend
-                        Path rolesFile = FileRolesStore.resolveFile(settings, env).toAbsolutePath();
+                        Path rolesFile = FileRolesStore.resolveFile(esusersSettings, env).toAbsolutePath();
                         terminal.println();
                         terminal.println(" [*]   An unknown role. Please check [%s] to see available roles", rolesFile.toAbsolutePath());
                     }
@@ -409,7 +417,7 @@ public class ESUsersTool extends CliTool {
 
                 if (unknownRolesFound) {
                     // at least one role is marked... so printing the legend
-                    Path rolesFile = FileRolesStore.resolveFile(settings, env).toAbsolutePath();
+                    Path rolesFile = FileRolesStore.resolveFile(esusersSettings, env).toAbsolutePath();
                     terminal.println();
                     terminal.println(" [*]   An unknown role. Please check [%s] to see available roles", rolesFile.toAbsolutePath());
                 }

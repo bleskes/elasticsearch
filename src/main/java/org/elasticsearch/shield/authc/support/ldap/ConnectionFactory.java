@@ -17,6 +17,9 @@
 
 package org.elasticsearch.shield.authc.support.ldap;
 
+import org.elasticsearch.common.logging.ESLogger;
+import org.elasticsearch.common.logging.Loggers;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.shield.authc.support.SecuredString;
 
 /**
@@ -31,9 +34,16 @@ import org.elasticsearch.shield.authc.support.SecuredString;
     }
  </pre>
  */
-public interface ConnectionFactory {
+public abstract class ConnectionFactory {
 
-    static final String URLS_SETTING = "url";
+    public static final String URLS_SETTING = "url";
+
+    protected final ESLogger logger = Loggers.getLogger(getClass());
+    private final Settings settings;
+
+    protected ConnectionFactory(Settings settings) {
+        this.settings = settings;
+    }
 
     /**
      * Authenticates the given user and opens a new connection that bound to it (meaning, all operations
@@ -42,6 +52,6 @@ public interface ConnectionFactory {
      * @param user      The name of the user to authenticate the connection with.
      * @param password  The password of the user
      */
-    AbstractLdapConnection open(String user, SecuredString password) ;
+    public abstract AbstractLdapConnection open(String user, SecuredString password) ;
 
 }

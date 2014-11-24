@@ -17,6 +17,7 @@
 
 package org.elasticsearch.shield.authc;
 
+import com.carrotsearch.ant.tasks.junit4.dependencies.com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.io.stream.BytesStreamInput;
@@ -33,7 +34,10 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.mockito.Mockito;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import static org.hamcrest.Matchers.*;
@@ -67,8 +71,12 @@ public class InternalAuthenticationServiceTests extends ElasticsearchTestCase {
         when(firstRealm.type()).thenReturn("first");
         secondRealm = mock(Realm.class);
         when(secondRealm.type()).thenReturn("second");
-        realms = mock(Realms.class);
-        when(realms.realms()).thenReturn(new Realm[] {firstRealm, secondRealm});
+        realms = new Realms(ImmutableSettings.EMPTY, Collections.<String, Realm.Factory>emptyMap()) {
+            @Override
+            protected List<Realm> initRealms() {
+                return ImmutableList.of(firstRealm, secondRealm);
+            }
+        };
         signatureService = mock(SignatureService.class);
 
         auditTrail = mock(AuditTrail.class);
@@ -329,8 +337,8 @@ public class InternalAuthenticationServiceTests extends ElasticsearchTestCase {
         service = new InternalAuthenticationService(settings, realms, auditTrail, signatureService);
 
         User user1 = new User.Simple("username", "r1", "r2");
-        when(firstRealm.token(message)).thenReturn(token);
         when(firstRealm.supports(token)).thenReturn(true);
+        when(firstRealm.token(message)).thenReturn(token);
         when(firstRealm.authenticate(token)).thenReturn(user1);
         User user2 = service.authenticate("_action", message, User.SYSTEM);
         assertThat(user1, sameInstance(user2));

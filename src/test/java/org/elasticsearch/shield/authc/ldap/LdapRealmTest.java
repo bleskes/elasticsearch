@@ -19,6 +19,7 @@ package org.elasticsearch.shield.authc.ldap;
 
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.env.Environment;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.shield.User;
 import org.elasticsearch.shield.authc.support.SecuredString;
@@ -38,6 +39,7 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
 
 public class LdapRealmTest extends LdapTest {
+
     public static final String VALID_USER_TEMPLATE = "cn={0},ou=people,o=sevenSeas";
     public static final String VALID_USERNAME = "Thomas Masterman Hardy";
     public static final String PASSWORD = "pass";
@@ -61,7 +63,7 @@ public class LdapRealmTest extends LdapTest {
 
     @Test
     public void testRestHeaderRegistration() {
-        new LdapRealm(ImmutableSettings.EMPTY, mock(LdapConnectionFactory.class), mock(LdapGroupToRoleMapper.class), restController);
+        new LdapRealm.Factory(mock(Environment.class), resourceWatcherService, restController);
         verify(restController).registerRelevantHeaders(UsernamePasswordToken.BASIC_AUTH_HEADER);
     }
 
@@ -73,7 +75,7 @@ public class LdapRealmTest extends LdapTest {
         Settings settings = buildLdapSettings(ldapUrl(), userTemplate, groupSearchBase, isSubTreeSearch);
         LdapConnectionFactory ldapFactory = new LdapConnectionFactory(settings);
 
-        LdapRealm ldap = new LdapRealm(buildNonCachingSettings(), ldapFactory, buildGroupAsRoleMapper(resourceWatcherService), restController);
+        LdapRealm ldap = new LdapRealm("test-ldap-realm", buildNonCachingSettings(), ldapFactory, buildGroupAsRoleMapper(resourceWatcherService));
 
         User user = ldap.authenticate(new UsernamePasswordToken(VALID_USERNAME, SecuredStringTests.build(PASSWORD)));
         assertThat( user, notNullValue());
@@ -88,7 +90,7 @@ public class LdapRealmTest extends LdapTest {
         LdapConnectionFactory ldapFactory = new LdapConnectionFactory(
                 buildLdapSettings(ldapUrl(), userTemplate, groupSearchBase, isSubTreeSearch));
 
-        LdapRealm ldap = new LdapRealm(buildNonCachingSettings(), ldapFactory, buildGroupAsRoleMapper(resourceWatcherService), restController);
+        LdapRealm ldap = new LdapRealm("test-ldap-realm", buildNonCachingSettings(), ldapFactory, buildGroupAsRoleMapper(resourceWatcherService));
 
         User user = ldap.authenticate(new UsernamePasswordToken(VALID_USERNAME, SecuredStringTests.build(PASSWORD)));
         assertThat( user, notNullValue());
@@ -104,7 +106,7 @@ public class LdapRealmTest extends LdapTest {
                 buildLdapSettings(ldapUrl(), userTemplate, groupSearchBase, isSubTreeSearch) );
 
         ldapFactory = spy(ldapFactory);
-        LdapRealm ldap = new LdapRealm( buildCachingSettings(), ldapFactory, buildGroupAsRoleMapper(resourceWatcherService), restController);
+        LdapRealm ldap = new LdapRealm("test-ldap-realm", buildCachingSettings(), ldapFactory, buildGroupAsRoleMapper(resourceWatcherService));
         User user = ldap.authenticate( new UsernamePasswordToken(VALID_USERNAME, SecuredStringTests.build(PASSWORD)));
         user = ldap.authenticate( new UsernamePasswordToken(VALID_USERNAME, SecuredStringTests.build(PASSWORD)));
 
@@ -123,7 +125,7 @@ public class LdapRealmTest extends LdapTest {
         LdapGroupToRoleMapper roleMapper = buildGroupAsRoleMapper(resourceWatcherService);
 
         ldapFactory = spy(ldapFactory);
-        LdapRealm ldap = new LdapRealm( buildCachingSettings(), ldapFactory, roleMapper, restController);
+        LdapRealm ldap = new LdapRealm("test-ldap-realm", buildCachingSettings(), ldapFactory, roleMapper);
         User user = ldap.authenticate( new UsernamePasswordToken(VALID_USERNAME, SecuredStringTests.build(PASSWORD)));
         user = ldap.authenticate( new UsernamePasswordToken(VALID_USERNAME, SecuredStringTests.build(PASSWORD)));
 
@@ -147,7 +149,7 @@ public class LdapRealmTest extends LdapTest {
                 buildLdapSettings(ldapUrl(), userTemplate, groupSearchBase, isSubTreeSearch));
 
         ldapFactory = spy(ldapFactory);
-        LdapRealm ldap = new LdapRealm( buildNonCachingSettings(), ldapFactory, buildGroupAsRoleMapper(resourceWatcherService), restController);
+        LdapRealm ldap = new LdapRealm("test-ldap-realm", buildNonCachingSettings(), ldapFactory, buildGroupAsRoleMapper(resourceWatcherService));
         User user = ldap.authenticate( new UsernamePasswordToken(VALID_USERNAME, SecuredStringTests.build(PASSWORD)));
         user = ldap.authenticate( new UsernamePasswordToken(VALID_USERNAME, SecuredStringTests.build(PASSWORD)));
 
