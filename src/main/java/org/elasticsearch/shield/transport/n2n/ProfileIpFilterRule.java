@@ -28,10 +28,12 @@ public class ProfileIpFilterRule {
 
     private final String profile;
     private final IpFilterRule ipFilterRule;
+    private final String ruleSpec;
 
-    public ProfileIpFilterRule(String profile, IpFilterRule ipFilterRule) {
+    public ProfileIpFilterRule(String profile, IpFilterRule ipFilterRule, String ruleSpec) {
         this.profile = profile;
         this.ipFilterRule = ipFilterRule;
+        this.ruleSpec = ruleSpec;
     }
 
     public boolean contains(String profile, InetAddress inetAddress) {
@@ -44,5 +46,21 @@ public class ProfileIpFilterRule {
 
     public boolean isDenyRule() {
         return ipFilterRule.isDenyRule();
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder("profile=[");
+        builder.append(profile);
+        builder.append("], rule=[");
+        if (isAllowRule()) {
+            builder.append("allow ");
+        } else {
+            builder.append("deny ");
+        }
+
+        builder.append(ruleSpec);
+        builder.append("]");
+        return builder.toString();
     }
 }
