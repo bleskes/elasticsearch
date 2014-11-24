@@ -61,7 +61,7 @@ public class BootStrapTest extends AbstractAlertingTests {
 
         AlertsStatsResponse response = alertClient().prepareAlertsStats().get();
         assertTrue(response.isAlertActionManagerStarted());
-        assertTrue(response.isAlertManagerStarted());
+        assertThat(response.getAlertManagerStarted(), equalTo(State.STARTED));
         assertThat(response.getNumberOfRegisteredAlerts(), equalTo(1L));
     }
 
@@ -72,7 +72,7 @@ public class BootStrapTest extends AbstractAlertingTests {
 
         AlertsStatsResponse response = alertClient().prepareAlertsStats().get();
         assertTrue(response.isAlertActionManagerStarted());
-        assertTrue(response.isAlertManagerStarted());
+        assertThat(response.getAlertManagerStarted(), equalTo(State.STARTED));
         assertThat(response.getNumberOfRegisteredAlerts(), equalTo(0L));
 
         SearchRequest searchRequest = createTriggerSearchRequest("my-index").source(searchSource().query(termQuery("field", "value")));
@@ -99,7 +99,7 @@ public class BootStrapTest extends AbstractAlertingTests {
 
         response = alertClient().prepareAlertsStats().get();
         assertTrue(response.isAlertActionManagerStarted());
-        assertTrue(response.isAlertManagerStarted());
+        assertThat(response.getAlertManagerStarted(), equalTo(State.STARTED));
         assertThat(response.getNumberOfRegisteredAlerts(), equalTo(0L));
         assertThat(response.getAlertActionManagerLargestQueueSize(), equalTo(1L));
     }

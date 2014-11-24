@@ -18,6 +18,7 @@
 package org.elasticsearch.alerts.transport.actions.stats;
 
 import org.elasticsearch.action.ActionResponse;
+import org.elasticsearch.alerts.State;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 
@@ -29,7 +30,7 @@ import java.io.IOException;
 public class AlertsStatsResponse extends ActionResponse {
 
     private long numberOfRegisteredAlerts;
-    private boolean alertManagerStarted;
+    private State alertManagerState;
     private boolean alertActionManagerStarted;
     private long alertActionManagerQueueSize;
 
@@ -72,19 +73,14 @@ public class AlertsStatsResponse extends ActionResponse {
     }
 
     /**
-     * Returns true if the alert manager is successfully started
-     * @return
+     * Returns the state of the alert manager.
      */
-    public boolean isAlertManagerStarted() {
-        return alertManagerStarted;
+    public State getAlertManagerStarted() {
+        return alertManagerState;
     }
 
-    /**
-     * Sets if the alert manager is started
-     * @param alertManagerStarted
-     */
-    public void setAlertManagerStarted(boolean alertManagerStarted) {
-        this.alertManagerStarted = alertManagerStarted;
+    void setAlertManagerState(State alertManagerState) {
+        this.alertManagerState = alertManagerState;
     }
 
     /**
@@ -126,7 +122,7 @@ public class AlertsStatsResponse extends ActionResponse {
         numberOfRegisteredAlerts = in.readLong();
         alertActionManagerQueueSize = in.readLong();
         alertActionManagerLargestQueueSize = in.readLong();
-        alertManagerStarted = in.readBoolean();
+        alertManagerState = State.fromId(in.readByte());
         alertActionManagerStarted = in.readBoolean();
     }
 
@@ -136,7 +132,7 @@ public class AlertsStatsResponse extends ActionResponse {
         out.writeLong(numberOfRegisteredAlerts);
         out.writeLong(alertActionManagerQueueSize);
         out.writeLong(alertActionManagerLargestQueueSize);
-        out.writeBoolean(alertManagerStarted);
+        out.writeByte(alertManagerState.getId());
         out.writeBoolean(alertActionManagerStarted);
     }
 }
