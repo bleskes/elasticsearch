@@ -135,7 +135,7 @@ public class Detector
 	 * field names cannot contain any of these characters
 	 * 	[, ], (, ), =, ", \, -
 	 */
-	private static String PROHIBITED = "[, ], (, ), =, \", \\, -";
+	private static final String PROHIBITED = "[, ], (, ), =, \", \\, -";
 	private static final Character [] PROHIBITED_FIELDNAME_CHARACTERS =
 		{'[', ']', '(', ')', '=', '"', '\\', '-'};
 
