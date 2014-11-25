@@ -76,11 +76,11 @@ public class Records extends ResourceWithJobManager
 	 */
 	public static final String DESCENDING_ORDER = "desc";
 
-	private static final DateFormat DATE_FORMAT = new SimpleDateFormat(ISO_8601_DATE_FORMAT);
-	private static final DateFormat DATE_FORMAT_WITH_MS = new SimpleDateFormat(ISO_8601_DATE_FORMAT_WITH_MS);
+	private final DateFormat m_DateFormat = new SimpleDateFormat(ISO_8601_DATE_FORMAT);
+	private final DateFormat m_DateFormatWithMs = new SimpleDateFormat(ISO_8601_DATE_FORMAT_WITH_MS);
 
-	private static final DateFormat [] DATE_FORMATS = new DateFormat [] {
-		DATE_FORMAT, DATE_FORMAT_WITH_MS};
+	private final DateFormat [] m_DateFormats = new DateFormat [] {
+		m_DateFormat, m_DateFormatWithMs};
 
 	/**
 	 * Get all the records (in pages) for the job optionally filtered
@@ -119,7 +119,7 @@ public class Records extends ResourceWithJobManager
 		long epochStartMs = 0;
 		if (start.isEmpty() == false)
 		{
-			epochStartMs = paramToEpoch(start, DATE_FORMATS);
+			epochStartMs = paramToEpoch(start, m_DateFormats);
 			if (epochStartMs == 0) // could not be parsed
 			{
 				String msg = String.format(BAD_DATE_FROMAT_MSG, START_QUERY_PARAM, start);
@@ -132,7 +132,7 @@ public class Records extends ResourceWithJobManager
 		long epochEndMs = 0;
 		if (end.isEmpty() == false)
 		{
-			epochEndMs = paramToEpoch(end, DATE_FORMATS);
+			epochEndMs = paramToEpoch(end, m_DateFormats);
 			if (epochEndMs == 0) // could not be parsed
 			{
 				String msg = String.format(BAD_DATE_FROMAT_MSG, START_QUERY_PARAM, end);
