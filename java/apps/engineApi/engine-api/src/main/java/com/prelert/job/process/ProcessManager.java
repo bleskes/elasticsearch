@@ -715,8 +715,7 @@ public class ProcessManager
 	private ScheduledFuture<?> startShutdownTimer(final String jobId,
 			long timeoutSeconds)
 	{
-		ScheduledFuture<?> scheduledFuture =
-				m_ProcessTimeouts.schedule(new Runnable() {
+		return m_ProcessTimeouts.schedule(new Runnable() {
 					@Override
 					public void run()
 					{
@@ -762,8 +761,6 @@ public class ProcessManager
 				},
 				timeoutSeconds,
 				TimeUnit.SECONDS);
-
-		return scheduledFuture;
 	}
 
 	/**

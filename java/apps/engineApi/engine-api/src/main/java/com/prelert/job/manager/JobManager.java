@@ -448,11 +448,9 @@ public class JobManager
 			double anomalyScoreThreshold, double normalizedProbabilityThreshold)
 	throws NativeProcessRunException, UnknownJobException
 	{
-		Pagination<AnomalyRecord> records = m_JobProvider.records(jobId,
+		return m_JobProvider.records(jobId,
 				skip, take, sortField, sortDescending,
 				anomalyScoreThreshold, normalizedProbabilityThreshold);
-
-		return records;
 	}
 
 
@@ -482,11 +480,9 @@ public class JobManager
 			double anomalyScoreThreshold, double normalizedProbabilityThreshold)
 	throws NativeProcessRunException, UnknownJobException
 	{
-		Pagination<AnomalyRecord> records = m_JobProvider.records(jobId,
+		return m_JobProvider.records(jobId,
 				skip, take, epochStartMs, epochEndMs, sortField, sortDescending,
 				anomalyScoreThreshold, normalizedProbabilityThreshold);
-
-		return records;
 	}
 
 	/**
@@ -710,9 +706,8 @@ public class JobManager
 	 */
 	private String generateJobId()
 	{
-		String id = String.format("%s-%05d", m_JobIdDateFormat.format(new Date()),
+		return String.format("%s-%05d", m_JobIdDateFormat.format(new Date()),
 						m_IdSequence.incrementAndGet());
-		return id;
 	}
 
 	/**

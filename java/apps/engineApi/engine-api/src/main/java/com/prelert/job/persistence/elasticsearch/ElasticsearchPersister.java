@@ -311,7 +311,7 @@ public class ElasticsearchPersister implements JobResultsPersister
 	private XContentBuilder serialiseBucket(Bucket bucket)
 	throws IOException
 	{
-		XContentBuilder builder = jsonBuilder().startObject()
+		return jsonBuilder().startObject()
 				.field(Bucket.ID, bucket.getId())
 				.field(ElasticsearchMappings.ES_TIMESTAMP, bucket.getTimestamp())
 				.field(Bucket.RAW_ANOMALY_SCORE, bucket.getRawAnomalyScore())
@@ -320,8 +320,6 @@ public class ElasticsearchPersister implements JobResultsPersister
 				.field(Bucket.RECORD_COUNT, bucket.getRecordCount())
 				.field(Bucket.EVENT_COUNT, bucket.getEventCount())
 				.endObject();
-
-		return builder;
 	}
 
 
@@ -334,12 +332,10 @@ public class ElasticsearchPersister implements JobResultsPersister
 	private XContentBuilder serialiseQuantiles(Quantiles quantiles)
 	throws IOException
 	{
-		XContentBuilder builder = jsonBuilder().startObject()
+		return jsonBuilder().startObject()
 				.field(Quantiles.ID, quantiles.getId())
 				.field(Quantiles.QUANTILE_STATE, quantiles.getState())
 				.endObject();
-
-		return builder;
 	}
 
 	/**
@@ -351,14 +347,12 @@ public class ElasticsearchPersister implements JobResultsPersister
 	private XContentBuilder serialiseModelSizeStats(ModelSizeStats modelSizeStats)
 	throws IOException
 	{
-		XContentBuilder builder = jsonBuilder().startObject()
+		return jsonBuilder().startObject()
 				.field(ModelSizeStats.MODEL_BYTES, modelSizeStats.getModelBytes())
 				.field(ModelSizeStats.TOTAL_BY_FIELD_COUNT, modelSizeStats.getTotalByFieldCount())
 				.field(ModelSizeStats.TOTAL_OVER_FIELD_COUNT, modelSizeStats.getTotalOverFieldCount())
 				.field(ModelSizeStats.TOTAL_PARTITION_FIELD_COUNT, modelSizeStats.getTotalPartitionFieldCount())
 				.endObject();
-
-		return builder;
 	}
 
 	/**
@@ -370,11 +364,9 @@ public class ElasticsearchPersister implements JobResultsPersister
 	private XContentBuilder serialiseDetector(Detector detector)
 	throws IOException
 	{
-		XContentBuilder builder = jsonBuilder().startObject()
+		return jsonBuilder().startObject()
 				.field(Detector.NAME, detector.getName())
 				.endObject();
-
-		return builder;
 	}
 
 

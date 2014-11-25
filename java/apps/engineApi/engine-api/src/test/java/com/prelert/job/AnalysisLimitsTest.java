@@ -24,35 +24,32 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.status.elasticsearch;
 
-import org.apache.log4j.Logger;
-import org.elasticsearch.client.Client;
+package com.prelert.job;
 
-import com.prelert.job.JobDetails;
-import com.prelert.job.status.StatusReporter;
-import com.prelert.job.status.StatusReporterFactory;
-import com.prelert.job.usage.UsageReporter;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
-public class ElasticsearchStatusReporterFactory implements StatusReporterFactory
+import org.junit.Test;
+
+public class AnalysisLimitsTest
 {
-	private Client m_Client;
+    @Test
+    public void testEquals_GivenEqual()
+    {
+        AnalysisLimits analysisLimits1 = new AnalysisLimits(10, 100);
+        AnalysisLimits analysisLimits2 = new AnalysisLimits(10, 100);
 
-	/**
-	 * Construct the factory
-	 *
-	 * @param node The Elasticsearch node
-	 */
-	public ElasticsearchStatusReporterFactory(Client client)
-	{
-		m_Client = client;
-	}
+        assertTrue(analysisLimits1.equals(analysisLimits2));
+        assertTrue(analysisLimits2.equals(analysisLimits1));
+    }
 
-	@Override
-	public StatusReporter newStatusReporter(String jobId, JobDetails.Counts counts,
-			UsageReporter usageReporter, Logger logger)
-	{
-        return new ElasticsearchStatusReporter(m_Client, usageReporter, jobId,
-                counts, logger);
-	}
+    @Test
+    public void testHashCode_GivenEqual()
+    {
+        AnalysisLimits analysisLimits1 = new AnalysisLimits(10, 100);
+        AnalysisLimits analysisLimits2 = new AnalysisLimits(10, 100);
+
+        assertEquals(analysisLimits1.hashCode(), analysisLimits2.hashCode());
+    }
 }

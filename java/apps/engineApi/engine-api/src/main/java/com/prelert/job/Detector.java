@@ -30,6 +30,7 @@ package com.prelert.job;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -322,6 +323,13 @@ public class Detector
 				JobDetails.bothNullOrEqual(this.m_PartitionFieldName, that.m_PartitionFieldName) &&
 				JobDetails.bothNullOrEqual(this.m_UseNull, that.m_UseNull);
 	}
+
+    @Override
+    public int hashCode()
+    {
+        return Objects.hash(m_Function, m_FieldName, m_ByFieldName,
+                m_OverFieldName, m_PartitionFieldName, m_UseNull);
+    }
 
 	/**
 	 * Checks the configuration is valid

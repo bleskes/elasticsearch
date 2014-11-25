@@ -24,35 +24,31 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.status.elasticsearch;
 
-import org.apache.log4j.Logger;
-import org.elasticsearch.client.Client;
+package com.prelert.job;
 
-import com.prelert.job.JobDetails;
-import com.prelert.job.status.StatusReporter;
-import com.prelert.job.status.StatusReporterFactory;
-import com.prelert.job.usage.UsageReporter;
+import static org.junit.Assert.assertEquals;
 
-public class ElasticsearchStatusReporterFactory implements StatusReporterFactory
+import java.util.HashMap;
+import java.util.Map;
+
+import org.junit.Test;
+
+public class DetectorTest
 {
-	private Client m_Client;
+    @Test
+    public void testHashCode_GivenEqual()
+    {
+        Map<String, Object> detectorMap = new HashMap<>();
+        detectorMap.put(Detector.FUNCTION, "mean");
+        detectorMap.put(Detector.FIELD_NAME, "field");
+        detectorMap.put(Detector.BY_FIELD_NAME, "by");
+        detectorMap.put(Detector.OVER_FIELD_NAME, "over");
+        detectorMap.put(Detector.PARTITION_FIELD_NAME, "partition");
+        detectorMap.put(Detector.USE_NULL, false);
+        Detector detector1 = new Detector(detectorMap);
+        Detector detector2 = new Detector(detectorMap);
 
-	/**
-	 * Construct the factory
-	 *
-	 * @param node The Elasticsearch node
-	 */
-	public ElasticsearchStatusReporterFactory(Client client)
-	{
-		m_Client = client;
-	}
-
-	@Override
-	public StatusReporter newStatusReporter(String jobId, JobDetails.Counts counts,
-			UsageReporter usageReporter, Logger logger)
-	{
-        return new ElasticsearchStatusReporter(m_Client, usageReporter, jobId,
-                counts, logger);
-	}
+        assertEquals(detector1.hashCode(), detector2.hashCode());
+    }
 }
