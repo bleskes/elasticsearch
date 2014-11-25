@@ -75,7 +75,7 @@ public class ElasticsearchMappings
 	 * @return
 	 * @throws IOException
 	 */
-	static public XContentBuilder jobMapping()
+	public static XContentBuilder jobMapping()
 	throws IOException
 	{
 		XContentBuilder mapping = jsonBuilder()
@@ -237,7 +237,7 @@ public class ElasticsearchMappings
 	 * @return
 	 * @throws IOException
 	 */
-	static public XContentBuilder bucketMapping() 
+	public static XContentBuilder bucketMapping() 
 	throws IOException
 	{
 		XContentBuilder mapping = jsonBuilder()
@@ -283,7 +283,7 @@ public class ElasticsearchMappings
 	 * @return
 	 * @throws IOException
 	 */
-	static public XContentBuilder detectorMapping() 
+	public static XContentBuilder detectorMapping() 
 	throws IOException
 	{
 		XContentBuilder mapping = jsonBuilder()
@@ -312,7 +312,7 @@ public class ElasticsearchMappings
 	 * @return
 	 * @throws IOException
 	 */
-	static public XContentBuilder recordMapping() 
+	public static XContentBuilder recordMapping() 
 	throws IOException
 	{
 		XContentBuilder mapping = jsonBuilder()
@@ -422,7 +422,7 @@ public class ElasticsearchMappings
 	 * @return
 	 * @throws IOException
 	 */
-	static public XContentBuilder quantilesMapping()
+	public static XContentBuilder quantilesMapping()
 	throws IOException
 	{
 		XContentBuilder mapping = jsonBuilder()
@@ -453,7 +453,7 @@ public class ElasticsearchMappings
 	 * @return
 	 * @throws IOException
 	 */
-	static public XContentBuilder modelStateMapping()
+	public static XContentBuilder modelStateMapping()
 	throws IOException
 	{
 		XContentBuilder mapping = jsonBuilder()
@@ -476,7 +476,7 @@ public class ElasticsearchMappings
 	 * @return
 	 * @throws IOException
 	 */
-	static public XContentBuilder modelSizeStatsMapping()
+	public static XContentBuilder modelSizeStatsMapping()
 	throws IOException
 	{
 		XContentBuilder mapping = jsonBuilder()
@@ -512,7 +512,7 @@ public class ElasticsearchMappings
 	 * @return
 	 * @throws IOException
 	 */
-	static public XContentBuilder usageMapping() 
+	public static XContentBuilder usageMapping() 
 	throws IOException
 	{
 		XContentBuilder mapping = jsonBuilder()
@@ -548,7 +548,7 @@ public class ElasticsearchMappings
 	 * @return
 	 * @throws IOException
 	 */
-	static public XContentBuilder inputDataMapping() 
+	public static XContentBuilder inputDataMapping() 
 	throws IOException
 	{
 		XContentBuilder mapping = jsonBuilder()

@@ -81,7 +81,7 @@ import com.prelert.rs.data.SingleDocument;
  */
 public class AlertSubscriptionTest
 {
-	private final static Logger s_Logger = Logger.getLogger(AlertSubscriptionTest.class);
+	private static final Logger s_Logger = Logger.getLogger(AlertSubscriptionTest.class);
 
 	/**
 	 * The default base Url used in the test
@@ -148,7 +148,7 @@ public class AlertSubscriptionTest
 		}
 	}
 
-	static private void configureLogging()
+	private static void configureLogging()
 	{
 		// configure log4j
 		ConsoleAppender console = new ConsoleAppender();

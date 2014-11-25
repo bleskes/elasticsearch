@@ -110,7 +110,7 @@ public class NormalisedResult
 	}
 	
 	
-	static public NormalisedResult parseJson(JsonParser parser, Logger logger)
+	public static NormalisedResult parseJson(JsonParser parser, Logger logger)
 	throws JsonParseException, IOException
 	{
 		NormalisedResult result = new NormalisedResult();

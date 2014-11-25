@@ -51,7 +51,7 @@ import com.prelert.rs.data.ApiError;
  */
 public class JobCreateTest
 {
-	private final static Logger s_Logger = Logger.getLogger(JobCreateTest.class);
+	private static final Logger s_Logger = Logger.getLogger(JobCreateTest.class);
 
 	/**
 	 * The Engine API base Url
@@ -61,7 +61,7 @@ public class JobCreateTest
 	/**
 	 * Runnable class to create the new jobs
 	 */
-	static private class JobCreator implements Runnable
+	private static class JobCreator implements Runnable
 	{
 		private int m_NumJobs;
 		private JobConfiguration m_JobConfig;

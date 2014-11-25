@@ -326,7 +326,7 @@ public class ProcessCtrl
 	 * Set up an environment containing the PRELERT_HOME and LD_LIBRARY_PATH
 	 * (or equivalent) environment variables.
 	 */
-	static private void buildEnvironment(ProcessBuilder pb)
+	private static void buildEnvironment(ProcessBuilder pb)
 	{
 		// Always clear inherited environment variables
 		pb.environment().clear();
@@ -461,7 +461,7 @@ public class ProcessCtrl
 	 * @return A Java Process object
 	 * @throws IOException
 	 */
-	static public Process buildAutoDetect(String processName, JobDetails job,
+	public static Process buildAutoDetect(String processName, JobDetails job,
 			Logger logger, List<File> filesToDelete)
 	throws IOException
 	{
@@ -487,7 +487,7 @@ public class ProcessCtrl
 	 * @return A Java Process object
 	 * @throws IOException
 	 */
-	static public Process buildAutoDetect(String processName, JobDetails job,
+	public static Process buildAutoDetect(String processName, JobDetails job,
 			QuantilesState quantilesState, Logger logger, List<File> filesToDelete)
 	throws IOException
 	{
@@ -639,7 +639,7 @@ public class ProcessCtrl
 	 * @param emptyConfFile
 	 * @throws IOException
 	 */
-	static private void writeLimits(AnalysisLimits options, File emptyConfFile)
+	private static void writeLimits(AnalysisLimits options, File emptyConfFile)
 	throws IOException
 	{
 		StringBuilder contents = new StringBuilder("[anomaly]").append(NEW_LINE);
@@ -667,7 +667,7 @@ public class ProcessCtrl
 	 * Return true if there is a file PRELERT_HOME/config/prelertmodel.conf
 	 * @return
 	 */
-	static private boolean modelConfigFilePresent()
+	private static boolean modelConfigFilePresent()
 	{
 		File f = new File(CONFIG_DIR, PRELERT_MODEL_CONF);
 
@@ -683,7 +683,7 @@ public class ProcessCtrl
 	 * @param logger
 	 * @throws IOException
 	 */
-	static public void writeFieldConfig(AnalysisConfig config, OutputStreamWriter osw,
+	public static void writeFieldConfig(AnalysisConfig config, OutputStreamWriter osw,
 			Logger logger)
 	throws IOException
 	{
@@ -780,7 +780,7 @@ public class ProcessCtrl
 	 * @return
 	 * @throws IOException
 	 */
-	static public Process buildNormaliser(String jobId,
+	public static Process buildNormaliser(String jobId,
 			String sysChangeState, String unusualBehaviourState,
 			Integer bucketSpan, Logger logger)
 	throws IOException
@@ -848,7 +848,7 @@ public class ProcessCtrl
 	 * @return The state file path
 	 * @throws IOException
 	 */
-	static private Path writeNormaliserInitState(String jobId, String state)
+	private static Path writeNormaliserInitState(String jobId, String state)
 	throws IOException
 	{
 		// createTempFile has a race condition where it may return the same

@@ -142,7 +142,7 @@ public class Quantiles
 	 * @throws IOException
 	 * @throws AutoDetectParseException
 	 */
-	static public Quantiles parseJson(JsonParser parser)
+	public static Quantiles parseJson(JsonParser parser)
 	throws JsonParseException, IOException, AutoDetectParseException
 	{
 		JsonToken token = parser.getCurrentToken();
@@ -177,7 +177,7 @@ public class Quantiles
 	 * @throws IOException
 	 * @throws AutoDetectParseException
 	 */
-	static public Quantiles parseJsonAfterStartObject(JsonParser parser)
+	public static Quantiles parseJsonAfterStartObject(JsonParser parser)
 	throws JsonParseException, IOException, AutoDetectParseException
 	{
 		Quantiles quantiles = new Quantiles();

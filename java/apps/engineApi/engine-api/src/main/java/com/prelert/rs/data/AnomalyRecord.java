@@ -379,7 +379,7 @@ public class AnomalyRecord
 	 * @throws IOException
 	 * @throws AutoDetectParseException
 	 */
-	static public AnomalyRecord parseJson(JsonParser parser)
+	public static AnomalyRecord parseJson(JsonParser parser)
 	throws JsonParseException, IOException, AutoDetectParseException
 	{
 		AnomalyRecord record = new AnomalyRecord();

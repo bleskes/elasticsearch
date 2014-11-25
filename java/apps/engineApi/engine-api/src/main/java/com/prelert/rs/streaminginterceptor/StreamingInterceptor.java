@@ -49,7 +49,7 @@ import org.apache.log4j.Logger;
  */
 public class StreamingInterceptor 
 {
-	static private Logger s_Logger = Logger.getLogger(StreamingInterceptor.class); 
+	private static Logger s_Logger = Logger.getLogger(StreamingInterceptor.class); 
 	
 	private Path m_FileSink;
 	private PipedOutputStream m_OutputStream;

@@ -67,7 +67,7 @@ public class DataDescription
 		 * @return The data format
 		 */
 		@JsonCreator
-		static public DataFormat forString(String value)
+		public static DataFormat forString(String value)
 		{
 			return DataFormat.valueOf(value.toUpperCase());
 		}

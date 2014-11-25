@@ -438,7 +438,7 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
 	/**
 	 * Simple class to group information in the blocking queue
 	 */
-	static private class QuantileInfo
+	private static class QuantileInfo
 	{
 		public enum InfoType { END, SYS_CHANGE, UNUSUAL };
 

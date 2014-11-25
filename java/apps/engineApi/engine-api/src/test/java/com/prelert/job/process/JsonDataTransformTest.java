@@ -53,7 +53,7 @@ import com.prelert.job.usage.DummyUsageReporter;
 
 public class JsonDataTransformTest 
 {
-	static private Logger s_Logger = Logger.getLogger(JsonDataTransformTest.class);
+	private static Logger s_Logger = Logger.getLogger(JsonDataTransformTest.class);
 	
 	
 	/**

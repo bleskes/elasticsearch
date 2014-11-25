@@ -257,7 +257,7 @@ public class Bucket
 	 * @throws IOException
 	 * @throws AutoDetectParseException
 	 */
-	static public Bucket parseJson(JsonParser parser) 
+	public static Bucket parseJson(JsonParser parser) 
 	throws JsonParseException, IOException, AutoDetectParseException
 	{
 		JsonToken token = parser.getCurrentToken();
@@ -294,7 +294,7 @@ public class Bucket
 	 * @throws IOException
 	 * @throws AutoDetectParseException
 	 */
-	static public Bucket parseJsonAfterStartObject(JsonParser parser) 
+	public static Bucket parseJsonAfterStartObject(JsonParser parser) 
 	throws JsonParseException, IOException, AutoDetectParseException
 	{
 		Bucket bucket = new Bucket();

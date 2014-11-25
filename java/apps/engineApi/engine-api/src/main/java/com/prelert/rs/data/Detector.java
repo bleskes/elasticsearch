@@ -124,7 +124,7 @@ public class Detector
 	 * @throws IOException
 	 * @throws AutoDetectParseException
 	 */
-	static public Detector parseJson(JsonParser parser) 
+	public static Detector parseJson(JsonParser parser) 
 	throws JsonParseException, IOException, AutoDetectParseException
 	{
 		Detector detector = new Detector();

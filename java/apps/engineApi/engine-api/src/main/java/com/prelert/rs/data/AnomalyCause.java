@@ -209,7 +209,7 @@ public class AnomalyCause
 	 * @throws IOException
 	 * @throws AutoDetectParseException
 	 */
-	static public AnomalyCause parseJson(JsonParser parser)
+	public static AnomalyCause parseJson(JsonParser parser)
 	throws JsonParseException, IOException, AutoDetectParseException
 	{
 		AnomalyCause cause = new AnomalyCause();
