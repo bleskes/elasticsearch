@@ -25,14 +25,14 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.rs.data.parsing;
+package com.prelert.rs.data;
 
 /**
- * Data parsing exception 
+ * Data parsing exception
  */
-public class AutoDetectParseException extends Throwable 
+public class AutoDetectParseException extends Throwable
 {
-	public AutoDetectParseException(String message) 
+	public AutoDetectParseException(String message)
 	{
 		super(message);
 	}

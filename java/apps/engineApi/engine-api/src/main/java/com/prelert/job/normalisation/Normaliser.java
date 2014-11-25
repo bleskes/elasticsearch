@@ -41,7 +41,6 @@ import com.prelert.job.input.LengthEncodedWriter;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.process.NativeProcessRunException;
 import com.prelert.job.process.ProcessCtrl;
-import com.prelert.job.process.output.NormalisedResultsParser;
 import com.prelert.job.quantiles.QuantilesState;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
