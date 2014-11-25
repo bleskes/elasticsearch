@@ -75,7 +75,7 @@
             </goals>
             <configuration>
               <outputDirectory>${env.PRELERT_HOME}/cots/libjar</outputDirectory>
-              <overWriteReleases>tsrue</overWriteReleases>
+              <overWriteReleases>true</overWriteReleases>
               <overWriteSnapshots>true</overWriteSnapshots>
               <overWriteIfNewer>true</overWriteIfNewer>
               <!-- Don't copy test jars (JUnit) or provided -->
