@@ -34,9 +34,9 @@ import java.util.List;
 
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
+import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -55,34 +55,34 @@ import com.prelert.rs.provider.RestApiException;
 /**
  * API bucket results end point.
  * Access buckets and anomaly records, use the <pre>expand</pre> query argument
- * to get buckets and anomaly records in one query. 
- * Buckets can be filtered by date. 
+ * to get buckets and anomaly records in one query.
+ * Buckets can be filtered by date.
  */
 @Path("/results")
 public class Buckets extends ResourceWithJobManager
 {
-	static private final Logger s_Logger = Logger.getLogger(Buckets.class);
-	
+	private static final Logger s_Logger = Logger.getLogger(Buckets.class);
+
 	/**
 	 * The name of the endpoint
 	 */
-	static public final String ENDPOINT = "buckets";
-	
-	
-	static public final String EXPAND_QUERY_PARAM = "expand";
-	
+	public static final String ENDPOINT = "buckets";
 
-	static private final DateFormat s_DateFormat = new SimpleDateFormat(ISO_8601_DATE_FORMAT); 
-	static private final DateFormat s_DateFormatWithMs = new SimpleDateFormat(ISO_8601_DATE_FORMAT_WITH_MS); 
-	
-	static private final DateFormat [] s_DateFormats = new DateFormat [] {
+
+	public static final String EXPAND_QUERY_PARAM = "expand";
+
+
+	private static final DateFormat s_DateFormat = new SimpleDateFormat(ISO_8601_DATE_FORMAT);
+	private static final DateFormat s_DateFormatWithMs = new SimpleDateFormat(ISO_8601_DATE_FORMAT_WITH_MS);
+
+	private static final DateFormat [] s_DateFormats = new DateFormat [] {
 		s_DateFormat, s_DateFormatWithMs};
-	
-	
+
+
 	/**
-	 * Get all the bucket results (in pages) for the job optionally filtered 
+	 * Get all the bucket results (in pages) for the job optionally filtered
 	 * by date.
-	 * 
+	 *
 	 * @param jobId
 	 * @param expand Return anomaly records in-line with the results,
 	 *  default is false
@@ -93,8 +93,8 @@ public class Buckets extends ResourceWithJobManager
 	 * @param end The filter end date see {@linkplain #paramToEpoch(String)}
 	 * for the format the date string should take
 	 * @return
-	 * @throws NativeProcessRunException 
-	 * @throws UnknownJobException 
+	 * @throws NativeProcessRunException
+	 * @throws UnknownJobException
 	 */
 	@GET
 	@Path("/{jobId}/buckets")
@@ -106,19 +106,19 @@ public class Buckets extends ResourceWithJobManager
 			@DefaultValue(JobManager.DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take,
 			@DefaultValue("") @QueryParam(START_QUERY_PARAM) String start,
 			@DefaultValue("") @QueryParam(END_QUERY_PARAM) String end,
-			@DefaultValue("0.0") @QueryParam(Bucket.ANOMALY_SCORE) double anomalySoreFilter,			
+			@DefaultValue("0.0") @QueryParam(Bucket.ANOMALY_SCORE) double anomalySoreFilter,
 			@DefaultValue("0.0") @QueryParam(Bucket.MAX_NORMALIZED_PROBABILITY) double normalizedProbabilityFilter)
 	throws UnknownJobException, NativeProcessRunException
-	{	
+	{
 		s_Logger.debug(String.format("Get %s buckets for job %s. skip = %d, take = %d"
-				+ " start = '%s', end='%s', anomaly score filter=%f, unsual score filter= %f", 
+				+ " start = '%s', end='%s', anomaly score filter=%f, unsual score filter= %f",
 				expand?"expanded ":"", jobId, skip, take, start, end,
 						anomalySoreFilter, normalizedProbabilityFilter));
-		
+
 		long epochStart = 0;
 		if (start.isEmpty() == false)
 		{
-			epochStart = paramToEpoch(start, s_DateFormats);	
+			epochStart = paramToEpoch(start, s_DateFormats);
 			if (epochStart == 0) // could not be parsed
 			{
 				String msg = String.format(BAD_DATE_FROMAT_MSG, START_QUERY_PARAM, start);
@@ -127,23 +127,23 @@ public class Buckets extends ResourceWithJobManager
 						Response.Status.BAD_REQUEST);
 			}
 		}
-		
+
 		long epochEnd = 0;
 		if (end.isEmpty() == false)
 		{
-			epochEnd = paramToEpoch(end, s_DateFormats);	
+			epochEnd = paramToEpoch(end, s_DateFormats);
 			if (epochEnd == 0) // could not be parsed
 			{
 				String msg = String.format(BAD_DATE_FROMAT_MSG, START_QUERY_PARAM, end);
 				s_Logger.info(msg);
 				throw new RestApiException(msg, ErrorCode.UNPARSEABLE_DATE_ARGUMENT,
 						Response.Status.BAD_REQUEST);
-			}			
+			}
 		}
 
 		JobManager manager = jobManager();
 		Pagination<Bucket> buckets;
-		
+
 		if (epochStart > 0 || epochEnd > 0)
 		{
 			buckets = manager.buckets(jobId, expand, skip, take, epochStart, epochEnd,
@@ -163,7 +163,7 @@ public class Buckets extends ResourceWithJobManager
 								.append(jobId)
 								.append("/buckets")
 								.toString();
-    		
+
     		List<ResourceWithJobManager.KeyValue> queryParams = new ArrayList<>();
     		if (epochStart > 0)
     		{
@@ -178,26 +178,26 @@ public class Buckets extends ResourceWithJobManager
     		queryParams.add(this.new KeyValue(Bucket.MAX_NORMALIZED_PROBABILITY, String.format("%2.1f", normalizedProbabilityFilter)));
 
     		setPagingUrls(path, buckets, queryParams);
-    	}		
-			
-		s_Logger.debug(String.format("Return %d buckets for job %s", 
+    	}
+
+		s_Logger.debug(String.format("Return %d buckets for job %s",
 				buckets.getDocumentCount(), jobId));
-		
+
 		return buckets;
 	}
-	
-	
+
+
 	/**
-	 * Get an individual bucket and optionally the expanded results. 
-	 * 
-	 * 
+	 * Get an individual bucket and optionally the expanded results.
+	 *
+	 *
 	 * @param jobId
 	 * @param bucketId
 	 * @param expand Return anomaly records in-line with the bucket,
 	 * default is false
 	 * @return
-	 * @throws UnknownJobException 
-	 * @throws NativeProcessRunException 
+	 * @throws UnknownJobException
+	 * @throws NativeProcessRunException
 	 */
 	@GET
 	@Path("/{jobId}/buckets/{bucketId}")
@@ -207,26 +207,26 @@ public class Buckets extends ResourceWithJobManager
 			@DefaultValue("false") @QueryParam("expand") boolean expand)
 	throws NativeProcessRunException, UnknownJobException
 	{
-		s_Logger.debug(String.format("Get %s bucket %s for job %s", 
+		s_Logger.debug(String.format("Get %s bucket %s for job %s",
 				expand?"expanded ":"", bucketId, jobId));
 
 		JobManager manager = jobManager();
 		SingleDocument<Bucket> bucket = manager.bucket(jobId, bucketId, expand);
-		
+
 		if (bucket.isExists())
 		{
-			s_Logger.debug(String.format("Returning bucket %s for job %s", 
+			s_Logger.debug(String.format("Returning bucket %s for job %s",
 					bucketId, jobId));
 		}
 		else
 		{
-			s_Logger.debug(String.format("Cannot find bucket %s for job %s", 
+			s_Logger.debug(String.format("Cannot find bucket %s for job %s",
 					bucketId, jobId));
-			
+
 			return Response.status(Response.Status.NOT_FOUND).entity(bucket).build();
 		}
-					
+
 		return Response.ok(bucket).build();
 	}
-	
+
 }

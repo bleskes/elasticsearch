@@ -55,9 +55,9 @@ public class ElasticsearchMappings
 	/**
 	 * String constants used in mappings
 	 */
-	static final public String NOT_ANALYZED = "not_analyzed";
-	static final public String INDEX = "index";
-	static final public String NO = "no";
+	public static final String NOT_ANALYZED = "not_analyzed";
+	public static final String INDEX = "index";
+	public static final String NO = "no";
 	
 	/** 
 	 * Name of the field used to store the timestamp in Elasticsearch. 
@@ -65,7 +65,7 @@ public class ElasticsearchMappings
 	 * API Bucket Resource, and is chosen for consistency with the default field name used by
 	 * Logstash and Kibana.
 	 */
-	static final public String ES_TIMESTAMP = "@timestamp";
+	public static final String ES_TIMESTAMP = "@timestamp";
 	
 	
 	/**

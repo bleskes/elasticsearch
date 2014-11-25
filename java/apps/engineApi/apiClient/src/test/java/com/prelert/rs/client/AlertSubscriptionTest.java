@@ -86,15 +86,15 @@ public class AlertSubscriptionTest
 	/**
 	 * The default base Url used in the test
 	 */
-	static final public String API_BASE_URL = "http://localhost:8080/engine/v1";
+	public static final String API_BASE_URL = "http://localhost:8080/engine/v1";
 
-	static final public String ALERTING_JOB_1 = "alerting-job-1";
-	static final public String ALERTING_JOB_2 = "alerting-job-2";
-	static final public String ALERTING_JOB_3 = "alerting-job-3";
-	static final public String ALERTING_JOB_3_B = "alerting-job-3-b";
-	static final public String ALERT_TIMEOUT_JOB = "alerting-timeout-job";
+	public static final String ALERTING_JOB_1 = "alerting-job-1";
+	public static final String ALERTING_JOB_2 = "alerting-job-2";
+	public static final String ALERTING_JOB_3 = "alerting-job-3";
+	public static final String ALERTING_JOB_3_B = "alerting-job-3-b";
+	public static final String ALERT_TIMEOUT_JOB = "alerting-timeout-job";
 
-	static final public String [] JOB_IDS = {ALERTING_JOB_1, ALERTING_JOB_2, ALERTING_JOB_3,
+	public static final String [] JOB_IDS = {ALERTING_JOB_1, ALERTING_JOB_2, ALERTING_JOB_3,
 		ALERTING_JOB_3_B, ALERT_TIMEOUT_JOB};
 
 

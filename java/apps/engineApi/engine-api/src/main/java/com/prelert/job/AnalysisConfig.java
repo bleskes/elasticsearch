@@ -52,11 +52,11 @@ public class AnalysisConfig
 	/**
 	 * Serialisation names
 	 */
-	static final public String BUCKET_SPAN = "bucketSpan";
-	static final public String BATCH_SPAN = "batchSpan";
-	static final public String PERIOD = "period";
-	static final public String SUMMARY_COUNT_FIELD_NAME = "summaryCountFieldName";
-	static final public String DETECTORS = "detectors";
+	public static final String BUCKET_SPAN = "bucketSpan";
+	public static final String BATCH_SPAN = "batchSpan";
+	public static final String PERIOD = "period";
+	public static final String SUMMARY_COUNT_FIELD_NAME = "summaryCountFieldName";
+	public static final String DETECTORS = "detectors";
 	
 	/**
 	 * These values apply to all detectors

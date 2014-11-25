@@ -43,7 +43,7 @@ public class Data extends ResourceWithJobManager
     /**
      * The name of this endpoint
      */
-	static final public String ENDPOINT = "data";
+	public static final String ENDPOINT = "data";
 
     /**
      * Data upload endpoint.

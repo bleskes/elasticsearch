@@ -49,7 +49,7 @@ import com.prelert.rs.data.ApiError;
  */
 public class JsonDataRunner implements Runnable
 {
-	static final private Logger s_Logger = Logger.getLogger(JsonDataRunner.class);
+	private static final Logger s_Logger = Logger.getLogger(JsonDataRunner.class);
 	
 	/**
 	 * Job configuration as a format string.

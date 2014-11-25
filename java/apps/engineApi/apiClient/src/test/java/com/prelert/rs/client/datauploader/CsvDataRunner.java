@@ -47,7 +47,7 @@ import com.prelert.rs.client.EngineApiClient;
  */
 public class CsvDataRunner implements Runnable
 {
-	static final private Logger s_Logger = Logger.getLogger(CsvDataRunner.class);
+	private static final Logger s_Logger = Logger.getLogger(CsvDataRunner.class);
 	
 	/**
 	 * Job configuration as a format string.

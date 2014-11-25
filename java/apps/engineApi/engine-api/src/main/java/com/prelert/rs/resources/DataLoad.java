@@ -70,7 +70,7 @@ public class DataLoad extends ResourceWithJobManager
     /**
      * The name of this endpoint
      */
-    static final public String ENDPOINT = "dataload";
+    public static final String ENDPOINT = "dataload";
 
     /**
      * Data upload and persist endpoint.

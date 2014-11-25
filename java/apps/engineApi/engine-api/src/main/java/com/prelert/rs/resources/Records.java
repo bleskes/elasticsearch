@@ -60,27 +60,27 @@ import com.prelert.rs.provider.RestApiException;
 @Path("/results")
 public class Records extends ResourceWithJobManager
 {
-	static private final Logger s_Logger = Logger.getLogger(Records.class);
+	private static final Logger s_Logger = Logger.getLogger(Records.class);
 	
 	/**
 	 * The name of the records endpoint
 	 */
-	static public final String ENDPOINT = "records";
+	public static final String ENDPOINT = "records";
 	
 	/**
 	 * Sort field query parameter
 	 */
-	static public final String SORT_QUERY_PARAM = "sort";
+	public static final String SORT_QUERY_PARAM = "sort";
 	/**
 	 * Sort direction
 	 */
-	static public final String DESCENDING_ORDER = "desc";
+	public static final String DESCENDING_ORDER = "desc";
 	
 
-	static private final DateFormat s_DateFormat = new SimpleDateFormat(ISO_8601_DATE_FORMAT); 
-	static private final DateFormat s_DateFormatWithMs = new SimpleDateFormat(ISO_8601_DATE_FORMAT_WITH_MS); 
+	private static final DateFormat s_DateFormat = new SimpleDateFormat(ISO_8601_DATE_FORMAT); 
+	private static final DateFormat s_DateFormatWithMs = new SimpleDateFormat(ISO_8601_DATE_FORMAT_WITH_MS); 
 	
-	static private final DateFormat [] s_DateFormats = new DateFormat [] {
+	private static final DateFormat [] s_DateFormats = new DateFormat [] {
 		s_DateFormat, s_DateFormatWithMs};
 	
 	

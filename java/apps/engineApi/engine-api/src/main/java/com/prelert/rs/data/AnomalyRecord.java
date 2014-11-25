@@ -54,42 +54,42 @@ public class AnomalyRecord
 	/**
 	 * Serialisation fields
 	 */
-	static final public String TYPE = "record";
+	public static final String TYPE = "record";
 
 	/**
 	 * Data store ID field
 	 */
-	static final public String ID = "id";
+	public static final String ID = "id";
 
 	/**
 	 * Result fields (all detector types)
 	 */
-	static final public String PROBABILITY = "probability";
-	static final public String BY_FIELD_NAME = "byFieldName";
-	static final public String BY_FIELD_VALUE = "byFieldValue";
-	static final public String PARTITION_FIELD_NAME = "partitionFieldName";
-	static final public String PARTITION_FIELD_VALUE = "partitionFieldValue";
-	static final public String FUNCTION = "function";
-	static final public String TYPICAL = "typical";
-	static final public String ACTUAL = "actual";
+	public static final String PROBABILITY = "probability";
+	public static final String BY_FIELD_NAME = "byFieldName";
+	public static final String BY_FIELD_VALUE = "byFieldValue";
+	public static final String PARTITION_FIELD_NAME = "partitionFieldName";
+	public static final String PARTITION_FIELD_VALUE = "partitionFieldValue";
+	public static final String FUNCTION = "function";
+	public static final String TYPICAL = "typical";
+	public static final String ACTUAL = "actual";
 	
 	/**
 	 * Metric Results (including population metrics)
 	 */
-	static final public String FIELD_NAME = "fieldName";
+	public static final String FIELD_NAME = "fieldName";
 
 	/**
 	 * Population results
 	 */
-	static final public String OVER_FIELD_NAME = "overFieldName";
-	static final public String OVER_FIELD_VALUE = "overFieldValue";
-	static final public String CAUSES = "causes";
+	public static final String OVER_FIELD_NAME = "overFieldName";
+	public static final String OVER_FIELD_VALUE = "overFieldValue";
+	public static final String CAUSES = "causes";
 
 	/**
 	 * Normalisation
 	 */
-	static final public String ANOMALY_SCORE = "anomalyScore";
-	static final public String NORMALIZED_PROBABILITY = "normalizedProbability";
+	public static final String ANOMALY_SCORE = "anomalyScore";
+	public static final String NORMALIZED_PROBABILITY = "normalizedProbability";
 	
 	private static final Logger s_Logger = Logger.getLogger(AnomalyRecord.class);
 	

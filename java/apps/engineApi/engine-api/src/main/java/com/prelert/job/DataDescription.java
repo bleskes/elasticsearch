@@ -76,56 +76,56 @@ public class DataDescription
 	/**
 	 * Special time format string for epoch times (seconds)
 	 */
-	static final public String EPOCH = "epoch";
+	public static final String EPOCH = "epoch";
 	
 	/**
 	 * Special time format string for epoch times (milli-seconds)
 	 */
-	static final public String EPOCH_MS = "epoch_ms";
+	public static final String EPOCH_MS = "epoch_ms";
 	
 	/**
 	 * The format field name
 	 */
-	static final public String FORMAT = "format"; 
+	public static final String FORMAT = "format"; 
 	/**
 	 * The time field name
 	 */
-	static final public String TIME_FIELD_NAME = "timeField";
+	public static final String TIME_FIELD_NAME = "timeField";
 	
 	/**
 	 * By default autodetect expects the timestamp in a field with this name
 	 */
-	static final public String DEFAULT_TIME_FIELD = "time";
+	public static final String DEFAULT_TIME_FIELD = "time";
 	
 	/**
 	 * The timeFormat field name
 	 */	
-	static final public String TIME_FORMAT = "timeFormat";
+	public static final String TIME_FORMAT = "timeFormat";
 	/**
 	 * The field delimiter field name
 	 */
-	static final public String FIELD_DELIMITER = "fieldDelimiter";
+	public static final String FIELD_DELIMITER = "fieldDelimiter";
 	/**
 	 * The quote char field name
 	 */
-	static final public String QUOTE_CHARACTER = "quoteCharacter";
+	public static final String QUOTE_CHARACTER = "quoteCharacter";
 	
 	/**
 	 * The default field delimiter expected by the native autodetect_api
 	 * program.
 	 */
-	static final public char DEFAULT_DELIMITER = '\t';
+	public static final char DEFAULT_DELIMITER = '\t';
 	
 	/**
 	 * Csv data must have this line ending
 	 */
-	static final public char LINE_ENDING = '\n';
+	public static final char LINE_ENDING = '\n';
 	
 	/**
 	 * The default quote character used to escape text in 
 	 * delineated data formats 
 	 */
-	static final public char DEFAULT_QUOTE_CHAR = '"';
+	public static final char DEFAULT_QUOTE_CHAR = '"';
 	
 	private DataFormat m_DataFormat;
 	private String m_TimeFieldName;

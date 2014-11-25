@@ -42,8 +42,8 @@ public class AnalysisLimits
 	/**
 	 * Serialisation field names
 	 */
-	static final public String MAX_FIELD_VALUES = "maxFieldValues";
-	static final public String MAX_TIME_BUCKETS = "maxTimeBuckets";
+	public static final String MAX_FIELD_VALUES = "maxFieldValues";
+	public static final String MAX_TIME_BUCKETS = "maxTimeBuckets";
 	
 	private long m_MaxFieldValues;
 	private long m_MaxTimeBuckets;

@@ -79,7 +79,7 @@ import com.prelert.rs.data.SingleDocument;
  */
 public class EngineApiClient implements Closeable
 {
-	static final private Logger s_Logger = Logger.getLogger(EngineApiClient.class);
+	private static final Logger s_Logger = Logger.getLogger(EngineApiClient.class);
 
 	private ObjectMapper m_JsonMapper;
 

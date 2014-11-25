@@ -67,7 +67,7 @@ import com.prelert.rs.resources.Buckets;
  */
 public class AlertManager implements TimeoutHandler
 {
-	static public final Logger s_Logger = Logger.getLogger(AlertManager.class);
+	public static final Logger s_Logger = Logger.getLogger(AlertManager.class);
 
 	private Map<AsyncResponse, AlertListener> m_AsyncRepsonses;
 	private AlertPersister m_AlertPersister;

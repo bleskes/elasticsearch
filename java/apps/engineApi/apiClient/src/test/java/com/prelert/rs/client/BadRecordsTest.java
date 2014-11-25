@@ -49,12 +49,12 @@ import com.prelert.rs.data.ErrorCode;
  */
 public class BadRecordsTest implements Closeable
 {
-	static final private Logger s_Logger = Logger.getLogger(BadRecordsTest.class);
+	private static final Logger s_Logger = Logger.getLogger(BadRecordsTest.class);
 	
 	/**
 	 * The default base Url used in the test
 	 */
-	static final public String API_BASE_URL = "http://localhost:8080/engine/v1";
+	public static final String API_BASE_URL = "http://localhost:8080/engine/v1";
 	
 	private EngineApiClient m_EngineApiClient;
 	
