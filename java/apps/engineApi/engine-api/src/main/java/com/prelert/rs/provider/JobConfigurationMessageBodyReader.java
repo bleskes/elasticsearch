@@ -56,7 +56,7 @@ public class JobConfigurationMessageBodyReader implements MessageBodyReader<JobC
 	/**
 	 * The Object to JSON mapper.
 	 */
-	private static final ObjectMapper s_ObjectMapper = new ObjectMapper();
+	private static final ObjectMapper OBJECT_WRITER = new ObjectMapper();
 
 
    @Override
@@ -85,7 +85,7 @@ public class JobConfigurationMessageBodyReader implements MessageBodyReader<JobC
 
        try
        {
-    	   return s_ObjectMapper.readValue(input, JobConfiguration.class);
+    	   return OBJECT_WRITER.readValue(input, JobConfiguration.class);
        }
        catch (JsonParseException e)
        {

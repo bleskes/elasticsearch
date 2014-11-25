@@ -61,12 +61,12 @@ import com.prelert.rs.provider.RestApiException;
 public class Records extends ResourceWithJobManager
 {
 	private static final Logger LOGGER = Logger.getLogger(Records.class);
-	
+
 	/**
 	 * The name of the records endpoint
 	 */
 	public static final String ENDPOINT = "records";
-	
+
 	/**
 	 * Sort field query parameter
 	 */
@@ -75,19 +75,17 @@ public class Records extends ResourceWithJobManager
 	 * Sort direction
 	 */
 	public static final String DESCENDING_ORDER = "desc";
-	
 
-	private static final DateFormat s_DateFormat = new SimpleDateFormat(ISO_8601_DATE_FORMAT); 
-	private static final DateFormat s_DateFormatWithMs = new SimpleDateFormat(ISO_8601_DATE_FORMAT_WITH_MS); 
-	
-	private static final DateFormat [] s_DateFormats = new DateFormat [] {
-		s_DateFormat, s_DateFormatWithMs};
-	
-	
+	private static final DateFormat DATE_FORMAT = new SimpleDateFormat(ISO_8601_DATE_FORMAT);
+	private static final DateFormat DATE_FORMAT_WITH_MS = new SimpleDateFormat(ISO_8601_DATE_FORMAT_WITH_MS);
+
+	private static final DateFormat [] DATE_FORMATS = new DateFormat [] {
+		DATE_FORMAT, DATE_FORMAT_WITH_MS};
+
 	/**
-	 * Get all the records (in pages) for the job optionally filtered 
+	 * Get all the records (in pages) for the job optionally filtered
 	 * by date.
-	 * 
+	 *
 	 * @param jobId
 	 * @param skip
 	 * @param take
@@ -111,17 +109,17 @@ public class Records extends ResourceWithJobManager
 			@DefaultValue("0.0") @QueryParam(AnomalyRecord.ANOMALY_SCORE) double anomalySoreFilter,
 			@DefaultValue("0.0") @QueryParam(AnomalyRecord.NORMALIZED_PROBABILITY) double normalizedProbabilityFilter)
 	throws NativeProcessRunException, UnknownJobException
-	{	
+	{
 		LOGGER.debug(String.format("Get records for job %s. skip = %d, take = %d"
-				+ " start = '%s', end='%s', sort='%s' descending=%b"  
-				+ ", anomaly score filter=%f, unsual score filter= %f", 
+				+ " start = '%s', end='%s', sort='%s' descending=%b"
+				+ ", anomaly score filter=%f, unsual score filter= %f",
 				jobId, skip, take, start, end, sort, descending,
 				normalizedProbabilityFilter, anomalySoreFilter));
-		
+
 		long epochStartMs = 0;
 		if (start.isEmpty() == false)
 		{
-			epochStartMs = paramToEpoch(start, s_DateFormats);	
+			epochStartMs = paramToEpoch(start, DATE_FORMATS);
 			if (epochStartMs == 0) // could not be parsed
 			{
 				String msg = String.format(BAD_DATE_FROMAT_MSG, START_QUERY_PARAM, start);
@@ -130,20 +128,20 @@ public class Records extends ResourceWithJobManager
 						Response.Status.BAD_REQUEST);
 			}
 		}
-		
+
 		long epochEndMs = 0;
 		if (end.isEmpty() == false)
 		{
-			epochEndMs = paramToEpoch(end, s_DateFormats);	
+			epochEndMs = paramToEpoch(end, DATE_FORMATS);
 			if (epochEndMs == 0) // could not be parsed
 			{
 				String msg = String.format(BAD_DATE_FROMAT_MSG, START_QUERY_PARAM, end);
 				LOGGER.info(msg);
 				throw new RestApiException(msg, ErrorCode.UNPARSEABLE_DATE_ARGUMENT,
 						Response.Status.BAD_REQUEST);
-			}			
+			}
 		}
-			
+
 		JobManager manager = jobManager();
 		Pagination<AnomalyRecord> records;
 
@@ -154,7 +152,7 @@ public class Records extends ResourceWithJobManager
 		{
 			sort = ElasticsearchMappings.ES_TIMESTAMP;
 		}
-		
+
 		if (epochStartMs > 0 || epochEndMs > 0)
 		{
 			records = manager.records(jobId, skip, take, epochStartMs, epochEndMs, sort,
@@ -174,7 +172,7 @@ public class Records extends ResourceWithJobManager
 								.append(jobId)
 								.append("/records/")
 								.toString();
-    		
+
     		List<ResourceWithJobManager.KeyValue> queryParams = new ArrayList<>();
     		if (epochStartMs > 0)
     		{
@@ -188,14 +186,14 @@ public class Records extends ResourceWithJobManager
     		queryParams.add(this.new KeyValue(DESCENDING_ORDER, Boolean.toString(descending)));
     		queryParams.add(this.new KeyValue(AnomalyRecord.ANOMALY_SCORE, String.format("%2.1f", anomalySoreFilter)));
     		queryParams.add(this.new KeyValue(AnomalyRecord.NORMALIZED_PROBABILITY, String.format("%2.1f", normalizedProbabilityFilter)));
-    		
+
     		setPagingUrls(path, records, queryParams);
-    	}		
-			
-		LOGGER.debug(String.format("Return %d records for job %s", 
+    	}
+
+		LOGGER.debug(String.format("Return %d records for job %s",
 				records.getDocumentCount(), jobId));
-		
+
 		return records;
 	}
-		
+
 }

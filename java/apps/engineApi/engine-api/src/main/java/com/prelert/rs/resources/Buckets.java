@@ -71,12 +71,11 @@ public class Buckets extends ResourceWithJobManager
 
 	public static final String EXPAND_QUERY_PARAM = "expand";
 
+	private static final DateFormat DATE_FORMAT = new SimpleDateFormat(ISO_8601_DATE_FORMAT);
+	private static final DateFormat DATE_FORMAT_WITH_MS = new SimpleDateFormat(ISO_8601_DATE_FORMAT_WITH_MS);
 
-	private static final DateFormat s_DateFormat = new SimpleDateFormat(ISO_8601_DATE_FORMAT);
-	private static final DateFormat s_DateFormatWithMs = new SimpleDateFormat(ISO_8601_DATE_FORMAT_WITH_MS);
-
-	private static final DateFormat [] s_DateFormats = new DateFormat [] {
-		s_DateFormat, s_DateFormatWithMs};
+	private static final DateFormat [] DATE_FORMATS = new DateFormat [] {
+		DATE_FORMAT, DATE_FORMAT_WITH_MS};
 
 
 	/**
@@ -118,7 +117,7 @@ public class Buckets extends ResourceWithJobManager
 		long epochStart = 0;
 		if (start.isEmpty() == false)
 		{
-			epochStart = paramToEpoch(start, s_DateFormats);
+			epochStart = paramToEpoch(start, DATE_FORMATS);
 			if (epochStart == 0) // could not be parsed
 			{
 				String msg = String.format(BAD_DATE_FROMAT_MSG, START_QUERY_PARAM, start);
@@ -131,7 +130,7 @@ public class Buckets extends ResourceWithJobManager
 		long epochEnd = 0;
 		if (end.isEmpty() == false)
 		{
-			epochEnd = paramToEpoch(end, s_DateFormats);
+			epochEnd = paramToEpoch(end, DATE_FORMATS);
 			if (epochEnd == 0) // could not be parsed
 			{
 				String msg = String.format(BAD_DATE_FROMAT_MSG, START_QUERY_PARAM, end);
