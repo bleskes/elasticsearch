@@ -100,7 +100,8 @@ public class DataLoad extends ResourceWithJobManager
             OutOfOrderRecordsException, TooManyJobsException
     {
         AbstractDataStreamer dataStreamer = new DataStreamerAndPersister(jobManager());
-        dataStreamer.streamData(headers, jobId, input);
+        String contentEncoding = headers.getHeaderString(HttpHeaders.CONTENT_ENCODING);
+        dataStreamer.streamData(contentEncoding, jobId, input);
         return Response.accepted().build();
     }
 
