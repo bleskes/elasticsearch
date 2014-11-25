@@ -271,9 +271,7 @@ public class Bucket
 		}
 
 		token = parser.nextToken();
-		Bucket bucket = parseJsonAfterStartObject(parser);
-
-		return bucket;
+		return parseJsonAfterStartObject(parser);
 	}
 
 

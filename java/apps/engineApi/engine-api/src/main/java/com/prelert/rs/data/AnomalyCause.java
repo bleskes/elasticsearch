@@ -457,7 +457,7 @@ public class AnomalyCause
 
 		AnomalyCause that = (AnomalyCause)other;
 
-		boolean equal = this.m_Probability == that.m_Probability &&
+		return this.m_Probability == that.m_Probability &&
 				bothNullOrEqual(this.m_Typical, that.m_Typical) &&
 				bothNullOrEqual(this.m_Actual, that.m_Actual) &&
 				bothNullOrEqual(this.m_Function, that.m_Function) &&
@@ -468,8 +468,6 @@ public class AnomalyCause
 				bothNullOrEqual(this.m_PartitionFieldValue, that.m_PartitionFieldValue) &&
 				bothNullOrEqual(this.m_OverFieldName, that.m_OverFieldName) &&
 				bothNullOrEqual(this.m_OverFieldValue, that.m_OverFieldValue);
-
-		return equal;
 	}
 
 }
