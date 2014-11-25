@@ -72,8 +72,8 @@ public class AlertManager implements TimeoutHandler
 	private Map<AsyncResponse, AlertListener> m_AsyncRepsonses;
 	private AlertPersister m_AlertPersister;
 
-	public JobProvider m_JobProvider;
-	public JobManager m_JobManager;
+	private JobProvider m_JobProvider;
+	private JobManager m_JobManager;
 
 	public class AlertListener extends AlertObserver
 	{
