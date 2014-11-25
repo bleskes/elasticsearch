@@ -41,7 +41,7 @@ import org.apache.log4j.Logger;
  */
 public class JobDetails
 {
-	public static final Logger s_Logger = Logger.getLogger(JobDetails.class);
+	public static final Logger LOGGER = Logger.getLogger(JobDetails.class);
 
 	public static final long DEFAULT_TIMEOUT = 600;
 	public static final long DEFAULT_BUCKETSPAN = 300;

@@ -109,7 +109,7 @@ public class JobsTest implements Closeable
 	static final long FARE_QUOTE_NUM_EVENTS = 86229;
 
 	
-	private static final Logger s_Logger = Logger.getLogger(JobsTest.class);
+	private static final Logger LOGGER = Logger.getLogger(JobsTest.class);
 	
 	/**
 	 * The default base Url used in the test
@@ -230,8 +230,8 @@ public class JobsTest implements Closeable
 		String jobId = m_WebServiceClient.createJob(baseUrl, FLIGHT_CENTRE_JOB_CONFIG);
 		if (jobId == null || jobId.isEmpty())
 		{
-			s_Logger.error(m_WebServiceClient.getLastError().toJson());
-			s_Logger.error("No Job Id returned by create job");
+			LOGGER.error(m_WebServiceClient.getLastError().toJson());
+			LOGGER.error("No Job Id returned by create job");
 			test(jobId != null);
 		}
 		test(jobId.equals("flightcentre-csv"));
@@ -240,7 +240,7 @@ public class JobsTest implements Closeable
 		SingleDocument<JobDetails> doc = m_WebServiceClient.getJob(baseUrl, jobId);
 		if (doc.isExists() == false)
 		{
-			s_Logger.error("No Job at URL " + jobId);
+			LOGGER.error("No Job at URL " + jobId);
 		}
 		JobDetails job = doc.getDocument();
 		
@@ -311,8 +311,8 @@ public class JobsTest implements Closeable
 		String jobId = m_WebServiceClient.createJob(baseUrl, FARE_QUOTE_TIME_FORMAT_CONFIG);
 		if (jobId == null || jobId.isEmpty())
 		{
-			s_Logger.error("No Job Id returned by create job");
-			s_Logger.error(m_WebServiceClient.getLastError().toJson());
+			LOGGER.error("No Job Id returned by create job");
+			LOGGER.error(m_WebServiceClient.getLastError().toJson());
 			test(jobId != null);
 		}
 		
@@ -320,7 +320,7 @@ public class JobsTest implements Closeable
 		SingleDocument<JobDetails> doc = m_WebServiceClient.getJob(baseUrl, jobId);
 		if (doc.isExists() == false)
 		{
-			s_Logger.error("No Job at URL " + jobId);
+			LOGGER.error("No Job at URL " + jobId);
 		}
 		JobDetails job = doc.getDocument();
 		
@@ -367,7 +367,7 @@ public class JobsTest implements Closeable
 		String jobId = m_WebServiceClient.createJob(baseUrl, config);
 		if (jobId == null)
 		{
-			s_Logger.error("No Job Id returned by create job");
+			LOGGER.error("No Job Id returned by create job");
 			test(jobId != null);
 		}
 		test(jobId.equals(name));
@@ -376,7 +376,7 @@ public class JobsTest implements Closeable
 		SingleDocument<JobDetails> doc = m_WebServiceClient.getJob(baseUrl, jobId);
 		if (doc.isExists() == false)
 		{
-			s_Logger.error("No Job at URL " + jobId);
+			LOGGER.error("No Job at URL " + jobId);
 		}
 		JobDetails job = doc.getDocument();
 		
@@ -444,7 +444,7 @@ public class JobsTest implements Closeable
 		String jobId = m_WebServiceClient.createJob(baseUrl, config);
 		if (jobId == null)
 		{
-			s_Logger.error("No Job Id returned by create job");
+			LOGGER.error("No Job Id returned by create job");
 			test(jobId != null);
 		}
 		
@@ -452,7 +452,7 @@ public class JobsTest implements Closeable
 		SingleDocument<JobDetails> doc = m_WebServiceClient.getJob(baseUrl, jobId);
 		if (doc.isExists() == false)
 		{
-			s_Logger.error("No Job at URL " + jobId);
+			LOGGER.error("No Job at URL " + jobId);
 		}
 		JobDetails job = doc.getDocument();
 		
@@ -505,7 +505,7 @@ public class JobsTest implements Closeable
 		String jobId = m_WebServiceClient.createJob(baseUrl, config);
 		if (jobId == null)
 		{
-			s_Logger.error("No Job Id returned by create job");
+			LOGGER.error("No Job Id returned by create job");
 			test(jobId != null);
 		}
 		
@@ -513,7 +513,7 @@ public class JobsTest implements Closeable
 		SingleDocument<JobDetails> doc = m_WebServiceClient.getJob(baseUrl, jobId);
 		if (doc.isExists() == false)
 		{
-			s_Logger.error("No Job " + jobId);
+			LOGGER.error("No Job " + jobId);
 		}
 		JobDetails job = doc.getDocument();
 		
@@ -597,7 +597,7 @@ public class JobsTest implements Closeable
 		String jobId = m_WebServiceClient.createJob(baseUrl, jobConfig);
 		if (jobId == null)
 		{
-			s_Logger.error("No Job Id returned by create job");
+			LOGGER.error("No Job Id returned by create job");
 			test(jobId != null);
 		}
 		
@@ -605,7 +605,7 @@ public class JobsTest implements Closeable
 		SingleDocument<JobDetails> doc = m_WebServiceClient.getJob(baseUrl, jobId);
 		if (doc.isExists() == false)
 		{
-			s_Logger.error("No Job at URL " + jobId);
+			LOGGER.error("No Job at URL " + jobId);
 		}
 		JobDetails job = doc.getDocument();
 				
@@ -688,11 +688,11 @@ public class JobsTest implements Closeable
 				}
 				catch (IOException e)
 				{
-					s_Logger.info(e);
+					LOGGER.info(e);
 				}
 				catch (InterruptedException e) 
 				{
-					s_Logger.info(e);
+					LOGGER.info(e);
 				}				
 			}
 		}).start();
@@ -766,7 +766,7 @@ public class JobsTest implements Closeable
 			long expectedNumBuckets, long bucketSpan, long expectedTotalEvents) 
 	throws IOException
 	{
-		s_Logger.debug("Verifying results for job " + jobId);
+		LOGGER.debug("Verifying results for job " + jobId);
 		
 		long skip = 0;		
 		long lastBucketTime = 0;
@@ -1567,12 +1567,12 @@ public class JobsTest implements Closeable
 	{
 		for (String jobId : jobIds)
 		{
-			s_Logger.debug("Deleting job " + jobId);
+			LOGGER.debug("Deleting job " + jobId);
 			
 			boolean success = m_WebServiceClient.deleteJob(baseUrl, jobId); 
 			if (success == false)
 			{
-				s_Logger.error("Error deleting job " + baseUrl + "/" + jobId);
+				LOGGER.error("Error deleting job " + baseUrl + "/" + jobId);
 			}
 		}
 		
@@ -1632,12 +1632,12 @@ public class JobsTest implements Closeable
 			baseUrl = args[0];
 		}
 		
-		s_Logger.info("Testing Service at " + baseUrl);
+		LOGGER.info("Testing Service at " + baseUrl);
 		
 		final String prelertTestDataHome = System.getProperty("prelert.test.data.home");
 		if (prelertTestDataHome == null)
 		{
-			s_Logger.error("Error property prelert.test.data.home is not set");
+			LOGGER.error("Error property prelert.test.data.home is not set");
 			return;
 		}
 		
@@ -1795,7 +1795,7 @@ public class JobsTest implements Closeable
 		test.deleteJobsTest(baseUrl, jobUrls);
 		test.close();
 				
-		s_Logger.info("All tests passed Ok");
+		LOGGER.info("All tests passed Ok");
 	}
 
 }

@@ -60,7 +60,7 @@ public class Quantiles
 	 */
 	public static final String TYPE = "quantiles";
 
-	private static final Logger s_Logger = Logger.getLogger(Quantiles.class);
+	private static final Logger LOGGER = Logger.getLogger(Quantiles.class);
 
 	private Date m_Timestamp;
 
@@ -150,7 +150,7 @@ public class Quantiles
 		{
 			String msg = "Cannot parse Quantiles. The first token '" +
 					parser.getText() + ", is not the start token";
-			s_Logger.error(msg);
+			LOGGER.error(msg);
 
 			throw new AutoDetectParseException(msg);
 		}
@@ -188,10 +188,10 @@ public class Quantiles
 			switch(token)
 			{
 			case START_OBJECT:
-				s_Logger.error("Start object parsed in quantiles");
+				LOGGER.error("Start object parsed in quantiles");
 				break;
 			case END_OBJECT:
-				s_Logger.error("End object parsed in quantiles");
+				LOGGER.error("End object parsed in quantiles");
 				break;
 			case FIELD_NAME:
 				String fieldName = parser.getCurrentName();
@@ -207,7 +207,7 @@ public class Quantiles
 					}
 					else
 					{
-						s_Logger.warn("Cannot parse " + TIMESTAMP + " : " + parser.getText()
+						LOGGER.warn("Cannot parse " + TIMESTAMP + " : " + parser.getText()
 										+ " as a long");
 					}
 					break;
@@ -219,7 +219,7 @@ public class Quantiles
 					}
 					else
 					{
-						s_Logger.warn("Cannot parse " + QUANTILE_KIND + " : " + parser.getText()
+						LOGGER.warn("Cannot parse " + QUANTILE_KIND + " : " + parser.getText()
 										+ " as a string");
 					}
 					break;
@@ -231,18 +231,18 @@ public class Quantiles
 					}
 					else
 					{
-						s_Logger.warn("Cannot parse " + QUANTILE_STATE + " : " + parser.getText()
+						LOGGER.warn("Cannot parse " + QUANTILE_STATE + " : " + parser.getText()
 										+ " as a string");
 					}
 					break;
 				default:
-					s_Logger.warn(String.format("Parse error unknown field in Quantiles %s:%s",
+					LOGGER.warn(String.format("Parse error unknown field in Quantiles %s:%s",
 							fieldName, parser.nextTextValue()));
 					break;
 				}
 				break;
 			default:
-				s_Logger.warn("Parsing error: Only simple fields expected in quantiles not "
+				LOGGER.warn("Parsing error: Only simple fields expected in quantiles not "
 						+ token);
 				break;
 			}

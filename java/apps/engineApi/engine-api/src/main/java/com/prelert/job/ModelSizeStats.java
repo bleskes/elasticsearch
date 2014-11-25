@@ -57,7 +57,7 @@ public class ModelSizeStats
      */
 	public static final String TYPE = "modelSizeStats";
     
-    private static final Logger s_Logger = Logger.getLogger(ModelSizeStats.class);
+    private static final Logger LOGGER = Logger.getLogger(ModelSizeStats.class);
 
 	private long m_ModelBytes;
 	private long m_TotalByFieldCount;
@@ -138,7 +138,7 @@ public class ModelSizeStats
 		{
 			String msg = "Cannot parse ModelSizeStats. The first token '" +
 				parser.getText() + ", is not the start token";
-			s_Logger.error(msg);
+			LOGGER.error(msg);
 			throw new AutoDetectParseException(msg);
 		}
 
@@ -176,10 +176,10 @@ public class ModelSizeStats
 			switch(token)
 			{
 			case START_OBJECT:
-				s_Logger.error("Start object parsed in ModelSizeStats");
+				LOGGER.error("Start object parsed in ModelSizeStats");
 				break;
 			case END_OBJECT:
-				s_Logger.error("End object parsed in ModelSizeStats");
+				LOGGER.error("End object parsed in ModelSizeStats");
 				break;
 			case FIELD_NAME:
 				String fieldName = parser.getCurrentName();
@@ -193,7 +193,7 @@ public class ModelSizeStats
 					}
 					else
 					{
-						s_Logger.warn("Cannot parse " + fieldName + " : " + parser.getText()
+						LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
 										+ " as a long");
 					}
 					break;
@@ -205,7 +205,7 @@ public class ModelSizeStats
 					}
 					else
 					{
-						s_Logger.warn("Cannot parse " + fieldName + " : " + parser.getText()
+						LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
 										+ " as a long");
 					}
 					break;
@@ -217,7 +217,7 @@ public class ModelSizeStats
                     }
                     else
                     {
-                        s_Logger.warn("Cannot parse " + fieldName + " : " + parser.getText()
+                        LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
                                         + " as a long");
                     }
                     break;
@@ -229,19 +229,19 @@ public class ModelSizeStats
 					}
 					else
 					{
-						s_Logger.warn("Cannot parse " + fieldName + " : " + parser.getText()
+						LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
 										+ " as a long");
 					}
 					break;
 				default:
 					token = parser.nextToken();
-					s_Logger.warn(String.format("Parse error unknown field in ModelSizeStats %s:%s",
+					LOGGER.warn(String.format("Parse error unknown field in ModelSizeStats %s:%s",
 							fieldName, parser.nextTextValue()));
 					break;
 				}
 				break;
 			default:
-				s_Logger.warn("Parsing error: Only simple fields expected in ModelSizeStats, not "
+				LOGGER.warn("Parsing error: Only simple fields expected in ModelSizeStats, not "
 						+ token);
 				break;
 			}

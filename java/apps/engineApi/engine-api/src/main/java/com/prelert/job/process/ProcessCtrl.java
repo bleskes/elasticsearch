@@ -317,7 +317,7 @@ public class ProcessCtrl
 		LIB_PATH = libDir.getPath() + File.pathSeparatorChar + cotsDir.getPath();
 	}
 
-	private static final Logger s_Logger = Logger.getLogger(ProcessCtrl.class);
+	private static final Logger LOGGER = Logger.getLogger(ProcessCtrl.class);
 
 	static String s_AnalyticsVersion;
 
@@ -331,10 +331,10 @@ public class ProcessCtrl
 		// Always clear inherited environment variables
 		pb.environment().clear();
 
-		s_Logger.info(String.format("%s=%s", PRELERT_HOME_ENV, PRELERT_HOME));
+		LOGGER.info(String.format("%s=%s", PRELERT_HOME_ENV, PRELERT_HOME));
 		pb.environment().put(PRELERT_HOME_ENV, PRELERT_HOME);
 
-		s_Logger.info(String.format("%s=%s", LIB_PATH_ENV, LIB_PATH));
+		LOGGER.info(String.format("%s=%s", LIB_PATH_ENV, LIB_PATH));
 		pb.environment().put(LIB_PATH_ENV, LIB_PATH);
 	}
 
@@ -350,7 +350,7 @@ public class ProcessCtrl
 		command.add(AUTODETECT_PATH);
 		command.add(VERSION_ARG);
 
-		s_Logger.info("Getting version number from " + command);
+		LOGGER.info("Getting version number from " + command);
 
 		// Build the process
 		ProcessBuilder pb = new ProcessBuilder(command);
@@ -367,7 +367,7 @@ public class ProcessCtrl
 								StandardCharsets.UTF_8));
 
 				String output = reader.readLine();
-				s_Logger.debug("autodetect version output = " + output);
+				LOGGER.debug("autodetect version output = " + output);
 
 				if (exitValue >= 0)
 				{
@@ -387,14 +387,14 @@ public class ProcessCtrl
 			}
 			catch (InterruptedException ie)
 			{
-				s_Logger.error("Interrupted reading analytics version number", ie);
+				LOGGER.error("Interrupted reading analytics version number", ie);
 				return UNKNOWN_VERSION;
 			}
 
 		}
 		catch (IOException e)
 		{
-			s_Logger.error("Error reading analytics version number", e);
+			LOGGER.error("Error reading analytics version number", e);
 			return UNKNOWN_VERSION;
 		}
 	}
@@ -410,7 +410,7 @@ public class ProcessCtrl
 		command.add(AUTODETECT_PATH);
 		command.add(INFO_ARG);
 
-		s_Logger.info("Getting info from " + command);
+		LOGGER.info("Getting info from " + command);
 
 		// Build the process
 		ProcessBuilder pb = new ProcessBuilder(command);
@@ -427,7 +427,7 @@ public class ProcessCtrl
 								StandardCharsets.UTF_8));
 
 				String output = reader.readLine();
-				s_Logger.debug("autodetect info output = " + output);
+				LOGGER.debug("autodetect info output = " + output);
 
 				if (exitValue >= 0 && output != null)
 				{
@@ -436,12 +436,12 @@ public class ProcessCtrl
 			}
 			catch (InterruptedException ie)
 			{
-				s_Logger.error("Interrupted reading autodetect info", ie);
+				LOGGER.error("Interrupted reading autodetect info", ie);
 			}
 		}
 		catch (IOException e)
 		{
-			s_Logger.error("Error reading autodetect info", e);
+			LOGGER.error("Error reading autodetect info", e);
 		}
 
 		// On error return an empty JSON document

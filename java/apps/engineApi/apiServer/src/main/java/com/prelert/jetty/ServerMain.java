@@ -53,7 +53,7 @@ import org.glassfish.jersey.servlet.ServletProperties;
  */
 public class ServerMain
 {
-	private static final Logger s_Logger = Logger.getLogger(ServerMain.class);
+	private static final Logger LOGGER = Logger.getLogger(ServerMain.class);
 	/**
 	 * The web service resources
 	 */
@@ -90,27 +90,27 @@ public class ServerMain
 			String portProp = System.getProperty(JETTY_PORT_PROPERTY);
 			if (portProp == null)
 			{
-				s_Logger.info("Using default port " + JETTY_PORT);
+				LOGGER.info("Using default port " + JETTY_PORT);
 			}
 			else
 			{
 				jettyPort = Integer.parseInt(portProp);
-				s_Logger.info("Using port " + jettyPort);
+				LOGGER.info("Using port " + jettyPort);
 			}
 		}
 		catch (NumberFormatException e)
 		{
-			s_Logger.warn(String.format("Error parsing %s property value '%s' "
+			LOGGER.warn(String.format("Error parsing %s property value '%s' "
 					+ "cannot not be parsed as an integer",
 					JETTY_PORT_PROPERTY, System.getProperty(JETTY_PORT_PROPERTY)));
 
-			s_Logger.info("Using default port " + JETTY_PORT);
+			LOGGER.info("Using default port " + JETTY_PORT);
 		}
 
 		String jettyHome = System.getProperty(JETTY_HOME_PROPERTY);
 		if (jettyHome == null)
 		{
-			s_Logger.info("Using default " + JETTY_HOME_PROPERTY +
+			LOGGER.info("Using default " + JETTY_HOME_PROPERTY +
 							" of current directory");
 			jettyHome = ".";
 		}

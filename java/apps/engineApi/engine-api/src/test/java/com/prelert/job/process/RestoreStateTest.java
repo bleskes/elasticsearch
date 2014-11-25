@@ -61,7 +61,7 @@ import com.prelert.rs.data.Pagination;
 
 public class RestoreStateTest 
 {
-	private static final Logger s_Logger = Logger.getLogger(RestoreStateTest.class);
+	private static final Logger LOGGER = Logger.getLogger(RestoreStateTest.class);
 	
 	public static final String DEFAULT_CLUSTER_NAME = "prelert";
 	
@@ -90,7 +90,7 @@ public class RestoreStateTest
 		final String prelertSrcHome = System.getProperty("prelert.src.home");
 		if (prelertSrcHome == null)
 		{
-			s_Logger.error("Error property prelert.src.home is not set");
+			LOGGER.error("Error property prelert.src.home is not set");
 			return;
 		}
 		// configure log4j
@@ -122,13 +122,13 @@ public class RestoreStateTest
 		{
 			clusterName = args[0];
 		}
-		s_Logger.info("Using Elasticsearch cluster " + clusterName);
+		LOGGER.info("Using Elasticsearch cluster " + clusterName);
 		
 		ElasticsearchJobProvider esJob = new ElasticsearchJobProvider(clusterName);
 		JobManager jobManager = new JobManager(esJob, null, null, null, null);
 		JobDetails job = jobManager.createJob(jobConfig);
 		
-		s_Logger.info("Created job " + job.getId());
+		LOGGER.info("Created job " + job.getId());
 		
 		try 
 		{
@@ -165,7 +165,7 @@ public class RestoreStateTest
 
 			if (standardBuckets.size() != anomalyScores.size())
 			{
-				s_Logger.error(String.format("Number of buckets returned (%d) does not match the size of " 
+				LOGGER.error(String.format("Number of buckets returned (%d) does not match the size of " 
 						+ "saved results (%d)", anomalyScores.size(), standardBuckets.size()));
 							return;
 			}
@@ -177,7 +177,7 @@ public class RestoreStateTest
 				double diff = Math.abs(score.doubleValue() - anomalyScores.get(i));
 				if (diff > 0.01)
 				{
-					s_Logger.error(String.format("Anomaly score does not equal "
+					LOGGER.error(String.format("Anomaly score does not equal "
 							+ "expected anomaly score %d !+ %d", anomalyScores.get(i), score));
 
 					return;

@@ -49,7 +49,7 @@ import org.apache.log4j.Logger;
  */
 public class StreamingInterceptor 
 {
-	private static Logger s_Logger = Logger.getLogger(StreamingInterceptor.class); 
+	private static Logger LOGGER = Logger.getLogger(StreamingInterceptor.class); 
 	
 	private Path m_FileSink;
 	private PipedOutputStream m_OutputStream;
@@ -78,7 +78,7 @@ public class StreamingInterceptor
 		}
 		catch (IOException e) 
 		{
-			s_Logger.error("Failed to create stream", e);
+			LOGGER.error("Failed to create stream", e);
 		}
 		
 		return is;
@@ -115,11 +115,11 @@ public class StreamingInterceptor
 		}
 		catch (FileNotFoundException e) 
 		{
-			s_Logger.error("File not found", e);
+			LOGGER.error("File not found", e);
 		}
 		catch (IOException e) 
 		{
-			s_Logger.error("IoException in pump()", e);
+			LOGGER.error("IoException in pump()", e);
 		}
 		finally
 		{
@@ -129,7 +129,7 @@ public class StreamingInterceptor
 			} 
 			catch (IOException e) 
 			{
-				s_Logger.error("Exception closing the PipedOutputStream", e);
+				LOGGER.error("Exception closing the PipedOutputStream", e);
 			}
 		}
 	}
