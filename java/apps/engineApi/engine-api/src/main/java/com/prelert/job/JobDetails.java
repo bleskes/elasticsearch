@@ -28,6 +28,7 @@ package com.prelert.job;
 
 import java.net.URI;
 import java.util.Date;
+import java.util.Objects;
 
 import org.apache.log4j.Logger;
 
@@ -512,6 +513,7 @@ public class JobDetails
 	/**
 	 * Equality test
 	 */
+	@Override
 	public boolean equals(Object other)
 	{
 		if (this == other)
@@ -543,11 +545,20 @@ public class JobDetails
 				bothNullOrEqual(this.m_RecordsEndpoint, that.m_RecordsEndpoint);
 	}
 
+    @Override
+    public int hashCode()
+    {
+        return Objects.hash(m_JobId, m_Description, m_Status, m_CreateTime,
+                m_FinishedTime, m_LastDataTime, m_Counts, m_Timeout,
+                m_AnalysisConfig, m_AnalysisLimits, m_DataDescription,
+                m_Location, m_DataEndpoint, m_BucketsEndpoint, m_RecordsEndpoint);
+    }
+
 
 	/**
 	 * Job processed record counts
 	 */
-	public class Counts
+	public static class Counts
 	{
 		private long m_BucketCount;
 		private long m_ProcessedRecordCount;
@@ -703,6 +714,7 @@ public class JobDetails
 		/**
 		 * Equality test
 		 */
+		@Override
 		public boolean equals(Object other)
 		{
 			if (this == other)
@@ -727,5 +739,14 @@ public class JobDetails
 					this.m_MissingFieldCount == that.m_MissingFieldCount &&
 					this.m_OutOfOrderTimeStampCount == that.m_OutOfOrderTimeStampCount;
 		}
+
+        @Override
+        public int hashCode()
+        {
+            return Objects.hash(m_BucketCount, m_ProcessedRecordCount,
+                    m_ProcessedFieldCount, m_InputBytes, m_InputFieldCount,
+                    m_InputRecordCount, m_InvalidDateCount,
+                    m_MissingFieldCount, m_OutOfOrderTimeStampCount);
+        }
 	}
 }
