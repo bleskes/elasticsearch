@@ -401,36 +401,27 @@ public class Detector
 		// If function is not set but the fieldname happens
 		// to be the same as one of the function names (e.g.
 		// a field called 'count' set function to 'metric'
-		if (emptyFunction)
+		if (emptyFunction && ANALYSIS_FUNCTIONS.contains(m_FieldName))
 		{
-			if (ANALYSIS_FUNCTIONS.contains(m_FieldName))
-			{
-				m_Function = METRIC;
-				emptyFunction = false;
-			}
+			m_Function = METRIC;
+			emptyFunction = false;
 		}
 
 
-		if (!emptyByField)
+		if (!emptyByField && emptyField && emptyFunction)
 		{
-			if (emptyField && emptyFunction)
-			{
-				throw new JobConfigurationException(
-						"byFieldName must be used in "
-						+ "conjunction with fieldName or function",
-						ErrorCode.INVALID_FIELD_SELECTION);
-			}
+			throw new JobConfigurationException(
+					"byFieldName must be used in "
+							+ "conjunction with fieldName or function",
+							ErrorCode.INVALID_FIELD_SELECTION);
 		}
 
-		if (!emptyOverField)
+		if (!emptyOverField && emptyField && emptyFunction)
 		{
-			if (emptyField && emptyFunction)
-			{
-				throw new JobConfigurationException(
-						"overFieldName must be used in "
-						+ "conjunction with fieldName or function",
-						ErrorCode.INVALID_FIELD_SELECTION);
-			}
+			throw new JobConfigurationException(
+					"overFieldName must be used in "
+							+ "conjunction with fieldName or function",
+							ErrorCode.INVALID_FIELD_SELECTION);
 		}
 
 		// check functions have required fields
@@ -474,15 +465,12 @@ public class Detector
 						ErrorCode.INVALID_FIELD_SELECTION);
 			}
 
-			if (OVER_FIELD_NAME_FUNCTIONS.contains(m_Function))
+			if (emptyOverField && OVER_FIELD_NAME_FUNCTIONS.contains(m_Function))
 			{
-				if (emptyOverField)
-				{
-					throw new JobConfigurationException(
-							String.format("The overFieldName must be set when the "
-									+ " '%s' function is used", m_Function),
-							ErrorCode.INVALID_FIELD_SELECTION);
-				}
+				throw new JobConfigurationException(
+						String.format("The overFieldName must be set when the "
+								+ " '%s' function is used", m_Function),
+								ErrorCode.INVALID_FIELD_SELECTION);
 			}
 
 			if (!emptyOverField && (NON_ZERO_COUNT.equals(m_Function) || NZC.equals(m_Function)))
