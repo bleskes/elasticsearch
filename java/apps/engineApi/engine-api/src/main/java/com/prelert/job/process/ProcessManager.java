@@ -573,7 +573,7 @@ public class ProcessManager
 			}
 			catch (IOException ioe)
 			{
-				LOGGER.debug("Exception closing stopped process input stream");
+				LOGGER.debug("Exception closing stopped process input stream", ioe);
 			}
 
 			setJobFinishedTimeAndStatus(jobId, process.getLogger(), JobStatus.FAILED);
@@ -821,7 +821,7 @@ public class ProcessManager
 				}
 				catch (NativeProcessRunException e)
 				{
-					LOGGER.error("Error stopping running job " + jobId);
+					LOGGER.error("Error stopping running job " + jobId, e);
 				}
 			}
 		}

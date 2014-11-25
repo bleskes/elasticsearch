@@ -147,6 +147,7 @@ public class Normaliser
 			}
 			catch (IOException e)
 			{
+				m_Logger.warn("Error closing normalizer output stream", e);
 			}
 		}
 
@@ -244,6 +245,7 @@ public class Normaliser
 			}
 			catch (IOException e)
 			{
+				m_Logger.warn("Error closing unusual behaviour normalizer output stream", e);
 			}
 		}
 
@@ -254,7 +256,6 @@ public class Normaliser
 		}
 		catch (InterruptedException e)
 		{
-
 		}
 
         return mergeNormalisedUnusualIntoBuckets(
