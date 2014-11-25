@@ -126,7 +126,7 @@ public class ElasticsearchJobProvider implements JobProvider
 
 	{
 		m_Node = nodeBuilder()
-				.settings(buildSettings(elasticSearchClusterName, portRange))
+				.settings(buildSettings(portRange))
 				.client(true)
 				.clusterName(elasticSearchClusterName).node();
 
@@ -147,7 +147,7 @@ public class ElasticsearchJobProvider implements JobProvider
 	 * attempt multicast discovery and to only look for another node to connect
 	 * to on the local machine.
 	 */
-	private Settings buildSettings(String clustername, String portRange)
+	private Settings buildSettings(String portRange)
 	{
 		// Multicast discovery is expected to be disabled on the Elasticsearch
 		// data node, so disable it for this embedded node too and tell it to

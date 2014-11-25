@@ -453,19 +453,17 @@ public class ProcessCtrl
 	 * Calls {@link #buildProcess(String, JobDetails, QuantilesState, Logger)} with
 	 * quantilesState set to <code>null</code>.
 	 *
-	 * @param processName The name of program to execute this should exist in the
-	 * directory PRELERT_HOME/bin/
 	 * @param logger The job's logger
 	 * @param filesToDelete This method will append File objects that need to be
 	 * deleted when the process completes
 	 * @return A Java Process object
 	 * @throws IOException
 	 */
-	public static Process buildAutoDetect(String processName, JobDetails job,
+	public static Process buildAutoDetect(JobDetails job,
 			Logger logger, List<File> filesToDelete)
 	throws IOException
 	{
-		return buildAutoDetect(processName, job, null, logger, filesToDelete);
+		return buildAutoDetect(job, null, logger, filesToDelete);
 	}
 
 	/**
@@ -475,8 +473,6 @@ public class ProcessCtrl
 	 * <code>processName</code> is not the full path it is the relative path of the
 	 * program from the PRELERT_HOME/bin directory.
 	 *
-	 * @param processName The name of program to execute this should exist in the
-	 * directory PRELERT_HOME/bin/
 	 * @param job The job configuration
 	 * @param quantilesState if <code>null</code> this parameter is
 	 * ignored else the quantiles' state is restored from this object
@@ -487,7 +483,7 @@ public class ProcessCtrl
 	 * @return A Java Process object
 	 * @throws IOException
 	 */
-	public static Process buildAutoDetect(String processName, JobDetails job,
+	public static Process buildAutoDetect(JobDetails job,
 			QuantilesState quantilesState, Logger logger, List<File> filesToDelete)
 	throws IOException
 	{
