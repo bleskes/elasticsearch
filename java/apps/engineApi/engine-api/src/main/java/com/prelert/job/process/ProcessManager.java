@@ -109,7 +109,7 @@ public class ProcessManager
 	 */
 	public enum ProcessStatus {IN_USE, COMPLETED};
 
-	private static final Logger s_Logger = Logger.getLogger(ProcessManager.class);
+	private static final Logger LOGGER = Logger.getLogger(ProcessManager.class);
 
 	private ProcessCtrl m_ProcessCtrl;
 
@@ -238,7 +238,7 @@ public class ProcessManager
      OutOfOrderRecordsException
  {
         return processDataLoadJob(jobId, input,
-                m_DataPersisterFactory.newDataPersister(jobId, s_Logger));
+                m_DataPersisterFactory.newDataPersister(jobId, LOGGER));
  }
 
     private boolean processDataLoadJob(String jobId, InputStream input,
@@ -253,12 +253,12 @@ public class ProcessManager
 		{
 			if (future.cancel(false) == false)
 			{
-				s_Logger.warn("Failed to cancel future in dataToJob(...)");
+				LOGGER.warn("Failed to cancel future in dataToJob(...)");
 			}
 		}
 		else
 		{
-			s_Logger.debug("No future to cancel in dataToJob(...)");
+			LOGGER.debug("No future to cancel in dataToJob(...)");
 		}
 
 		ProcessAndDataDescription process = m_JobIdToProcessMap.get(jobId);
@@ -277,7 +277,7 @@ public class ProcessManager
 			String msg = String.format("Another connection is writing to job "
 					+ "%s. Jobs will only accept data from one connection at a time",
 					jobId);
-			s_Logger.warn(msg);
+			LOGGER.warn(msg);
 			throw new JobInUseException(jobId, msg, ErrorCode.NATIVE_PROCESS_CONCURRENT_USE_ERROR);
 		}
 
@@ -401,7 +401,7 @@ public class ProcessManager
 		catch (IOException e)
 		{
 			String msg = "Failed to launch process for job " + job.getId();
-			s_Logger.error(msg);
+			LOGGER.error(msg);
 			logger.error(msg, e);
 			throw new NativeProcessRunException(msg,
 					ErrorCode.NATIVE_PROCESS_START_ERROR, e);
@@ -455,12 +455,12 @@ public class ProcessManager
 		 * different places there are quite a lot of code paths through it.
 		 * Some code appears repeated but it is because of the multiple code paths
 		 */
-		s_Logger.info("Finishing job " + jobId);
+		LOGGER.info("Finishing job " + jobId);
 
 		ProcessAndDataDescription process = m_JobIdToProcessMap.get(jobId);
 		if (process == null)
 		{
-			s_Logger.warn("No job with id '" + jobId + "' to shutdown");
+			LOGGER.warn("No job with id '" + jobId + "' to shutdown");
 			// tidy up
 			m_JobIdToTimeoutFuture.remove(jobId);
 
@@ -471,12 +471,12 @@ public class ProcessManager
 
 		if (process.isInUse())
 		{
-			s_Logger.error("Cannot finish job while it is reading data");
+			LOGGER.error("Cannot finish job while it is reading data");
 			process.getLogger().error("Cannot finish job while it is reading data");
 
 			String msg = String.format("Cannot close job %s while the job is actively "
 					+ "processing data", jobId);
-			s_Logger.error(msg);
+			LOGGER.error(msg);
 			throw new JobInUseException(jobId, msg, ErrorCode.NATIVE_PROCESS_CONCURRENT_USE_ERROR);
 		}
 
@@ -487,12 +487,12 @@ public class ProcessManager
 		{
 			if (future.cancel(false) == false)
 			{
-				s_Logger.warn("Failed to cancel future in finishJob()");
+				LOGGER.warn("Failed to cancel future in finishJob()");
 			}
 		}
 		else
 		{
-			s_Logger.debug("No future to cancel in finishJob()");
+			LOGGER.debug("No future to cancel in finishJob()");
 		}
 		m_JobIdToTimeoutFuture.remove(jobId);
 
@@ -545,7 +545,7 @@ public class ProcessManager
 				catch (IOException | InterruptedException e)
 				{
 					String msg = "Exception closing the running native process";
-					s_Logger.warn(msg);
+					LOGGER.warn(msg);
 					process.getLogger().warn(msg, e);
 
 					setJobFinishedTimeAndStatus(jobId, process.getLogger(), JobStatus.FAILED);
@@ -560,7 +560,7 @@ public class ProcessManager
 		{
 			String msg = String.format("Native process for job '%s' has already exited",
 					jobId);
-			s_Logger.error(msg);
+			LOGGER.error(msg);
 			process.getLogger().error(msg);
 
 			// clean up resources and re-throw
@@ -573,7 +573,7 @@ public class ProcessManager
 			}
 			catch (IOException ioe)
 			{
-				s_Logger.debug("Exception closing stopped process input stream");
+				LOGGER.debug("Exception closing stopped process input stream");
 			}
 
 			setJobFinishedTimeAndStatus(jobId, process.getLogger(), JobStatus.FAILED);
@@ -640,7 +640,7 @@ public class ProcessManager
 		{
 			String msg = String.format("Error cannot set finished job status and time");
 			processLogger.warn(msg, e);
-			s_Logger.warn(msg, e);
+			LOGGER.warn(msg, e);
 		}
 	}
 
@@ -715,12 +715,11 @@ public class ProcessManager
 	private ScheduledFuture<?> startShutdownTimer(final String jobId,
 			long timeoutSeconds)
 	{
-		ScheduledFuture<?> scheduledFuture =
-				m_ProcessTimeouts.schedule(new Runnable() {
+		return m_ProcessTimeouts.schedule(new Runnable() {
 					@Override
 					public void run()
 					{
-						s_Logger.info("Timeout expired stopping process for job:" + jobId);
+						LOGGER.info("Timeout expired stopping process for job:" + jobId);
 
 						try
 						{
@@ -738,7 +737,7 @@ public class ProcessManager
 									String msg = String.format(
 											"Job '%s' is reading data and cannot be shutdown " +
 													"Rescheduling shutdown for %d seconds", jobId, waitSeconds);
-									s_Logger.warn(msg);
+									LOGGER.warn(msg);
 
 									// wait then try again
 									try
@@ -747,7 +746,7 @@ public class ProcessManager
 									}
 									catch (InterruptedException e1)
 									{
-										s_Logger.warn("Interrupted waiting for job to stop", e);
+										LOGGER.warn("Interrupted waiting for job to stop", e);
 										return;
 									}
 								}
@@ -755,15 +754,13 @@ public class ProcessManager
 						}
 						catch (NativeProcessRunException e)
 						{
-							s_Logger.error(String.format("Error in job %s finish timeout", jobId), e);
+							LOGGER.error(String.format("Error in job %s finish timeout", jobId), e);
 						}
 
 					}
 				},
 				timeoutSeconds,
 				TimeUnit.SECONDS);
-
-		return scheduledFuture;
 	}
 
 	/**
@@ -782,12 +779,12 @@ public class ProcessManager
 	 */
 	private void stopAllJobs()
 	{
-		s_Logger.info("Stopping all Engine API Jobs");
+		LOGGER.info("Stopping all Engine API Jobs");
 
 		// Stop new being scheduled
 		m_ProcessTimeouts.shutdownNow();
 
-		s_Logger.info(String.format("Terminating %d active autodetect processes",
+		LOGGER.info(String.format("Terminating %d active autodetect processes",
 				m_JobIdToTimeoutFuture.size()));
 
 		for (String jobId : m_JobIdToTimeoutFuture.keySet())
@@ -808,7 +805,7 @@ public class ProcessManager
 						String msg = String.format(
 								"Job '%s' is reading data and cannot be shutdown " +
 										"Rescheduling shutdown for %d seconds", jobId, waitSeconds);
-						s_Logger.info(msg);
+						LOGGER.info(msg);
 
 						// wait then try again
 						try
@@ -817,14 +814,14 @@ public class ProcessManager
 						}
 						catch (InterruptedException e1)
 						{
-							s_Logger.warn("Interrupted waiting for job to stop", e);
+							LOGGER.warn("Interrupted waiting for job to stop", e);
 							return;
 						}
 					}
 				}
 				catch (NativeProcessRunException e)
 				{
-					s_Logger.error("Error stopping running job " + jobId);
+					LOGGER.error("Error stopping running job " + jobId);
 				}
 			}
 		}
@@ -994,7 +991,7 @@ public class ProcessManager
 		{
 			String message = String.format("Cannot alert on job '%s' because "
 					+ "the job is not running", jobId);
-			s_Logger.info(message);
+			LOGGER.info(message);
 			throw new ClosedJobException(message, jobId);
 		}
 	}

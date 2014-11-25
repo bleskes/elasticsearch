@@ -90,7 +90,7 @@ import com.prelert.rs.data.SingleDocument;
 
 public class ElasticsearchJobProvider implements JobProvider
 {
-	public static final Logger s_Logger = Logger.getLogger(ElasticsearchJobProvider.class);
+	private static final Logger LOGGER = Logger.getLogger(ElasticsearchJobProvider.class);
 
 
 	/**
@@ -142,7 +142,7 @@ public class ElasticsearchJobProvider implements JobProvider
 
 		createUsageMeteringIndex();
 
-		s_Logger.info("Connecting to Elasticsearch cluster '"
+		LOGGER.info("Connecting to Elasticsearch cluster '"
 				+ elasticSearchClusterName + "'");
 	}
 
@@ -163,7 +163,7 @@ public class ElasticsearchJobProvider implements JobProvider
 
 		if (portRange != null && portRange.isEmpty() == false)
 		{
-			s_Logger.info("Using TCP port range " + portRange + " to connect to Elasticsearch");
+			LOGGER.info("Using TCP port range " + portRange + " to connect to Elasticsearch");
 			builder.put("transport.tcp.port", portRange);
 		}
 
@@ -204,7 +204,7 @@ public class ElasticsearchJobProvider implements JobProvider
 
 			if (indexExists == false)
 			{
-				s_Logger.info("Creating the internal '" + PRELERT_USAGE_INDEX + "' index");
+				LOGGER.info("Creating the internal '" + PRELERT_USAGE_INDEX + "' index");
 
 				XContentBuilder usageMapping = ElasticsearchMappings.usageMapping();
 
@@ -215,11 +215,11 @@ public class ElasticsearchJobProvider implements JobProvider
 		}
 		catch (InterruptedException | ExecutionException e)
 		{
-			s_Logger.warn("Error checking the usage metering index", e);
+			LOGGER.warn("Error checking the usage metering index", e);
 		}
 		catch (IOException e)
 		{
-			s_Logger.warn("Error creating the usage metering index", e);
+			LOGGER.warn("Error creating the usage metering index", e);
 		}
 
 	}
@@ -237,7 +237,7 @@ public class ElasticsearchJobProvider implements JobProvider
 			if (response.isExists() == false)
 			{
 				String msg = "No job document with id " + jobId;
-				s_Logger.warn(msg);
+				LOGGER.warn(msg);
 				throw new UnknownJobException(jobId, msg,
 						ErrorCode.MISSING_JOB_ERROR);
 			}
@@ -246,7 +246,7 @@ public class ElasticsearchJobProvider implements JobProvider
 		{
 			// the job does not exist
 			String msg = "Missing Index no job with id " + jobId;
-			s_Logger.warn(msg);
+			LOGGER.warn(msg);
 			throw new UnknownJobException(jobId, "No known job with id '" + jobId + "'",
 					ErrorCode.MISSING_JOB_ERROR);
 		}
@@ -279,7 +279,7 @@ public class ElasticsearchJobProvider implements JobProvider
 			if (!response.isExists())
 			{
 				String msg = "No details for job with id " + jobId;
-				s_Logger.warn(msg);
+				LOGGER.warn(msg);
 				throw new UnknownJobException(jobId, msg,
 						ErrorCode.MISSING_JOB_ERROR);
 			}
@@ -292,7 +292,7 @@ public class ElasticsearchJobProvider implements JobProvider
 			{
 				String msg = "No model size stats for job with id "
 					+ jobId + " " + ModelSizeStats.TYPE;
-				s_Logger.warn(msg);
+				LOGGER.warn(msg);
 			}
 			else
 			{
@@ -306,7 +306,7 @@ public class ElasticsearchJobProvider implements JobProvider
 		{
 			// the job does not exist
 			String msg = "Missing Index no job with id " + jobId;
-			s_Logger.warn(msg);
+			LOGGER.warn(msg);
 			throw new UnknownJobException(jobId, "No known job with id '" + jobId + "'",
 					ErrorCode.MISSING_JOB_ERROR);
 		}
@@ -339,7 +339,7 @@ public class ElasticsearchJobProvider implements JobProvider
 			if (!modelSizeStatsResponse.isExists())
 			{
 				String msg = "No memory usage details for job with id " + job.getId();
-				s_Logger.warn(msg);
+				LOGGER.warn(msg);
 			}
 			else
 			{
@@ -402,12 +402,12 @@ public class ElasticsearchJobProvider implements JobProvider
 		}
 		catch (ElasticsearchException e)
 		{
-			s_Logger.error("Error writing Elasticsearch mappings", e);
+			LOGGER.error("Error writing Elasticsearch mappings", e);
 			throw e;
 		}
 		catch (IOException e)
 		{
-			s_Logger.error("Error writing Elasticsearch mappings", e);
+			LOGGER.error("Error writing Elasticsearch mappings", e);
 		}
 
 		return false;
@@ -441,7 +441,7 @@ public class ElasticsearchJobProvider implements JobProvider
 		{
 			// the job does not exist
 			String msg = "Missing Index no job with id " + jobId;
-			s_Logger.error(msg);
+			LOGGER.error(msg);
 		}
 
 		return null;
@@ -467,13 +467,13 @@ public class ElasticsearchJobProvider implements JobProvider
 				}
 				catch (VersionConflictEngineException e)
 				{
-					s_Logger.warn("Conflict updating job document");
+					LOGGER.warn("Conflict updating job document");
 				}
 			}
 
 			if (retryCount <= 0)
 			{
-				s_Logger.warn("Unable to update conflicted job document " + jobId +
+				LOGGER.warn("Unable to update conflicted job document " + jobId +
 						". Updates = " + updates);
 				return false;
 			}
@@ -521,14 +521,14 @@ public class ElasticsearchJobProvider implements JobProvider
 			if (e.getCause() instanceof IndexMissingException)
 			{
 				String msg = String.format("Cannot delete job - no index with id '%s' in the database", jobId);
-				s_Logger.warn(msg);
+				LOGGER.warn(msg);
 				throw new UnknownJobException(jobId, msg,
 						ErrorCode.MISSING_JOB_ERROR);
 			}
 			else
 			{
 				String msg = "Error deleting index " + jobId;
-				s_Logger.error(msg);
+				LOGGER.error(msg);
 				throw new UnknownJobException(jobId, msg,
 						ErrorCode.DATA_STORE_ERROR, e.getCause());
 			}
@@ -1027,7 +1027,7 @@ public class ElasticsearchJobProvider implements JobProvider
 				String kind = response.getId();
 				if (response.isFailed() || !response.getResponse().isExists())
 				{
-					s_Logger.info("There are currently no " + kind +
+					LOGGER.info("There are currently no " + kind +
 									" quantiles for job " + jobId);
 				}
 				else
@@ -1035,7 +1035,7 @@ public class ElasticsearchJobProvider implements JobProvider
 					Object state = response.getResponse().getSource().get(Quantiles.QUANTILE_STATE);
 					if (state == null)
 					{
-						s_Logger.error("Inconsistency - no " + Quantiles.QUANTILE_STATE +
+						LOGGER.error("Inconsistency - no " + Quantiles.QUANTILE_STATE +
 										" field in " + kind +
 										" quantiles for job " + jobId);
 					}
@@ -1048,7 +1048,7 @@ public class ElasticsearchJobProvider implements JobProvider
 		}
 		catch (IndexMissingException e)
 		{
-			s_Logger.error("Unknown job '" + jobId + "'. Cannot read persisted state");
+			LOGGER.error("Unknown job '" + jobId + "'. Cannot read persisted state");
 			throw new UnknownJobException(jobId,
 					"Cannot read persisted quantiles", ErrorCode.MISSING_JOB_ERROR);
 		}

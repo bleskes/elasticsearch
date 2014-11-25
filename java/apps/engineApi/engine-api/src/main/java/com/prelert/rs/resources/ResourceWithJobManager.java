@@ -54,7 +54,7 @@ import com.prelert.rs.data.Pagination;
 abstract public class ResourceWithJobManager
 {
 	// TODO This field is hidden in subclasses
-	private static final Logger s_Logger = Logger.getLogger(ResourceWithJobManager.class);
+	private static final Logger LOGGER = Logger.getLogger(ResourceWithJobManager.class);
 
 	/**
 	 * Date query param format
@@ -113,7 +113,7 @@ abstract public class ResourceWithJobManager
 
 		if (m_RestApplication == null)
 		{
-			s_Logger.error("Application context has not been set in "
+			LOGGER.error("Application context has not been set in "
 					+ "the jobs resource");
 
 			throw new IllegalStateException("Application context has not been"
@@ -132,7 +132,7 @@ abstract public class ResourceWithJobManager
 
 		if (m_JobManager == null)
 		{
-			s_Logger.error("Application singleton set doesn't contain an " +
+			LOGGER.error("Application singleton set doesn't contain an " +
 					"instance of JobManager");
 
 			throw new IllegalStateException("Application singleton set doesn't "
@@ -156,7 +156,7 @@ abstract public class ResourceWithJobManager
 
 		if (m_RestApplication == null)
 		{
-			s_Logger.error("Application context has not been set in "
+			LOGGER.error("Application context has not been set in "
 					+ "the jobs resource");
 
 			throw new IllegalStateException("Application context has not been"
@@ -178,7 +178,7 @@ abstract public class ResourceWithJobManager
 			String msg = "Application singleton set doesn't contain an " +
 					"instance of AlertManager";
 
-			s_Logger.error(msg);
+			LOGGER.error(msg);
 			throw new IllegalStateException(msg);
 		}
 
@@ -198,7 +198,7 @@ abstract public class ResourceWithJobManager
 
 		if (m_RestApplication == null)
 		{
-			s_Logger.error("Application context has not been set in "
+			LOGGER.error("Application context has not been set in "
 					+ "the jobs resource");
 
 			throw new IllegalStateException("Application context has not been"
@@ -220,7 +220,7 @@ abstract public class ResourceWithJobManager
 			String msg = "Application singleton set doesn't contain an " +
 					"instance of Normaliser";
 
-			s_Logger.error(msg);
+			LOGGER.error(msg);
 			throw new IllegalStateException(msg);
 		}
 

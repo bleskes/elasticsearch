@@ -68,7 +68,7 @@ import com.prelert.rs.data.SingleDocument;
  */
 public class NormalizationTest implements Closeable
 {
-	private static final Logger s_Logger = Logger.getLogger(JobsTest.class);
+	private static final Logger LOGGER = Logger.getLogger(JobsTest.class);
 	
 	static final long FAREQUOTE_NUM_BUCKETS = 1439;
 	
@@ -123,7 +123,7 @@ public class NormalizationTest implements Closeable
 		String jobId = m_WebServiceClient.createJob(apiUrl, config);
 		if (jobId == null || jobId.isEmpty())
 		{
-			s_Logger.error("No Job Id returned by create job");
+			LOGGER.error("No Job Id returned by create job");
 			test(jobId != null && jobId.isEmpty() == false);
 		}
 		test(jobId.equals(TEST_JOB_ID));
@@ -482,12 +482,12 @@ public class NormalizationTest implements Closeable
 	{
 		for (String jobId : jobIds)
 		{
-			s_Logger.debug("Deleting job " + jobId);
+			LOGGER.debug("Deleting job " + jobId);
 			
 			boolean success = m_WebServiceClient.deleteJob(baseUrl, jobId); 
 			if (success == false)
 			{
-				s_Logger.error("Error deleting job " + baseUrl + "/" + jobId);
+				LOGGER.error("Error deleting job " + baseUrl + "/" + jobId);
 			}
 		}
 	}
@@ -533,12 +533,12 @@ public class NormalizationTest implements Closeable
 			baseUrl = args[0];
 		}
 		
-		s_Logger.info("Testing Service at " + baseUrl);
+		LOGGER.info("Testing Service at " + baseUrl);
 		
 		final String prelertTestDataHome = System.getProperty("prelert.test.data.home");
 		if (prelertTestDataHome == null)
 		{
-			s_Logger.error("Error property prelert.test.data.home is not set");
+			LOGGER.error("Error property prelert.test.data.home is not set");
 			return;
 		}
 		
@@ -570,6 +570,6 @@ public class NormalizationTest implements Closeable
 	
 		test.close();
 		
-		s_Logger.info("All tests passed Ok");
+		LOGGER.info("All tests passed Ok");
 	}
 }

@@ -26,25 +26,27 @@
  ************************************************************/
 package com.prelert.job;
 
+import static org.junit.Assert.assertEquals;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
-import org.junit.Test;
-
 import junit.framework.Assert;
 
+import org.junit.Test;
+
 /**
- * Tests the configured fields in the analysis are correct 
+ * Tests the configured fields in the analysis are correct
  * {@linkplain AnalysisConfig#analysisFields()}
  * {@linkplain AnalysisConfig#fields()}
  * {@linkplain AnalysisConfig#byFields()}
  * {@linkplain AnalysisConfig#overFields()}
  * {@linkplain AnalysisConfig#partitionFields()}
  */
-public class AnalysisConfigTest 
+public class AnalysisConfigTest
 {
 	@Test
 	public void testFieldConfiguration()
@@ -72,10 +74,10 @@ public class AnalysisConfigTest
 
 		Assert.assertEquals(1, ac.fields().size());
 		Assert.assertTrue(ac.fields().contains("responsetime"));
-		
+
 		Assert.assertEquals(1, ac.byFields().size());
 		Assert.assertTrue(ac.byFields().contains("airline"));
-		
+
 		Assert.assertEquals(1, ac.partitionFields().size());
 		Assert.assertTrue(ac.partitionFields().contains("sourcetype"));
 
@@ -99,30 +101,30 @@ public class AnalysisConfigTest
 
 		// Multiple detectors, not pre-summarised
 		List<Detector> detectors = new ArrayList<>();
-		
+
 		ac = new AnalysisConfig();
 		det = new Detector();
 		det.setFieldName("metric1");
 		det.setByFieldName("by_one");
 		det.setPartitionFieldName("partition_one");
 		detectors.add(det);
-		
+
 		det = new Detector();
 		det.setFieldName("metric2");
 		det.setByFieldName("by_two");
 		det.setOverFieldName("over_field");
 		detectors.add(det);
-		
+
 		det = new Detector();
 		det.setFieldName("metric2");
 		det.setByFieldName("by_two");
 		det.setPartitionFieldName("partition_two");
 		detectors.add(det);
-		
+
 		ac.setDetectors(detectors);
 
 		analysisFields = new TreeSet<String>(Arrays.asList(new String [] {
-				"metric1", "metric2", "by_one", "by_two", "over_field", 
+				"metric1", "metric2", "by_one", "by_two", "over_field",
 				"partition_one", "partition_two"}));
 
 		for (String s : ac.analysisFields())
@@ -138,14 +140,14 @@ public class AnalysisConfigTest
 		Assert.assertEquals(2, ac.fields().size());
 		Assert.assertTrue(ac.fields().contains("metric1"));
 		Assert.assertTrue(ac.fields().contains("metric2"));
-		
+
 		Assert.assertEquals(2, ac.byFields().size());
 		Assert.assertTrue(ac.byFields().contains("by_one"));
 		Assert.assertTrue(ac.byFields().contains("by_two"));
-		
+
 		Assert.assertEquals(1, ac.overFields().size());
 		Assert.assertTrue(ac.overFields().contains("over_field"));
-		
+
 		Assert.assertEquals(2, ac.partitionFields().size());
 		Assert.assertTrue(ac.partitionFields().contains("partition_one"));
 		Assert.assertTrue(ac.partitionFields().contains("partition_two"));
@@ -168,4 +170,13 @@ public class AnalysisConfigTest
 
 		Assert.assertEquals("summaryCount", ac.getSummaryCountFieldName());
 	}
+
+    @Test
+    public void testHashCode_GivenEqual()
+    {
+        AnalysisConfig analysisConfig1 = new AnalysisConfig();
+        AnalysisConfig analysisConfig2 = new AnalysisConfig();
+
+        assertEquals(analysisConfig1.hashCode(), analysisConfig2.hashCode());
+    }
 }

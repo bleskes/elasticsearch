@@ -67,7 +67,7 @@ import com.prelert.rs.resources.Buckets;
  */
 public class AlertManager implements TimeoutHandler
 {
-	public static final Logger s_Logger = Logger.getLogger(AlertManager.class);
+	private static final Logger LOGGER = Logger.getLogger(AlertManager.class);
 
 	private Map<AsyncResponse, AlertListener> m_AsyncRepsonses;
 	private AlertPersister m_AlertPersister;
@@ -134,11 +134,11 @@ public class AlertManager implements TimeoutHandler
 		try
 		{
 			long seq = Long.parseLong(lastAlertId);
-			s_Logger.info("Starting Alert Id sequence with value " + lastAlertId);
+			LOGGER.info("Starting Alert Id sequence with value " + lastAlertId);
 		}
 		catch (NumberFormatException nfe)
 		{
-			s_Logger.info("New alert id sequence");
+			LOGGER.info("New alert id sequence");
 		}
 		*/
 	}
@@ -173,7 +173,7 @@ public class AlertManager implements TimeoutHandler
 		}
 		catch (ClosedJobException e)
 		{
-			s_Logger.info("Error alerting on closed job " + jobId);
+			LOGGER.info("Error alerting on closed job " + jobId);
 			deregisterResponse(response);
 			response.resume(e);
 		}

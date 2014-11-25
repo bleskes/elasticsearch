@@ -46,7 +46,7 @@ import com.prelert.rs.client.datauploader.JsonDataRunner;
  */
 public class SoakTest 
 {
-	private static final Logger s_Logger = Logger.getLogger(SoakTest.class);
+	private static final Logger LOGGER = Logger.getLogger(SoakTest.class);
 	
 	public static final String DEFAULT_CHARSET = "UTF-8";
 	
@@ -70,7 +70,7 @@ public class SoakTest
 		
 		if (args.length == 0)
 		{
-			s_Logger.error("This program has one argument the path to the properties file " 
+			LOGGER.error("This program has one argument the path to the properties file " 
 					+ "containing the settings");
 			return;
 		}
@@ -107,7 +107,7 @@ public class SoakTest
 			}
 			catch (InterruptedException e) 
 			{
-				s_Logger.error("Interupted joining test thread", e);
+				LOGGER.error("Interupted joining test thread", e);
 			}
 		}
 	}

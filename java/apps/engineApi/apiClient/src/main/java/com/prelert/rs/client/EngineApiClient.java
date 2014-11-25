@@ -79,7 +79,7 @@ import com.prelert.rs.data.SingleDocument;
  */
 public class EngineApiClient implements Closeable
 {
-	private static final Logger s_Logger = Logger.getLogger(EngineApiClient.class);
+	private static final Logger LOGGER = Logger.getLogger(EngineApiClient.class);
 
 	private ObjectMapper m_JsonMapper;
 
@@ -119,7 +119,7 @@ public class EngineApiClient implements Closeable
 	throws IOException
 	{
 		String url = baseUrl + "/jobs";
-		s_Logger.debug("GET jobs: " + url);
+		LOGGER.debug("GET jobs: " + url);
 
 		Pagination<JobDetails> page = this.get(url,
 				new TypeReference<Pagination<JobDetails>>() {});
@@ -148,7 +148,7 @@ public class EngineApiClient implements Closeable
 	throws IOException
 	{
 		String url = baseUrl + "/jobs/" + jobId;
-		s_Logger.debug("GET job: " + url);
+		LOGGER.debug("GET job: " + url);
 
 		SingleDocument<JobDetails> doc = this.get(url,
 				new TypeReference<SingleDocument<JobDetails>>() {});
@@ -198,7 +198,7 @@ public class EngineApiClient implements Closeable
 	throws ClientProtocolException, IOException
 	{
 		String url = baseUrl + "/jobs";
-		s_Logger.debug("Create job: " + url);
+		LOGGER.debug("Create job: " + url);
 
 		HttpPost post = new HttpPost(url);
 
@@ -225,8 +225,8 @@ public class EngineApiClient implements Closeable
 				}
 				else
 				{
-					s_Logger.error("Job created but no 'id' field in returned content");
-					s_Logger.error("Response Content = " + content);
+					LOGGER.error("Job created but no 'id' field in returned content");
+					LOGGER.error("Response Content = " + content);
 				}
 			}
 			else
@@ -237,7 +237,7 @@ public class EngineApiClient implements Closeable
 						response.getStatusLine().getStatusCode(),
 						content);
 
-				s_Logger.error(msg);
+				LOGGER.error(msg);
 
 				m_LastError = m_JsonMapper.readValue(content,
 						new TypeReference<ApiError>() {} );
@@ -265,7 +265,7 @@ public class EngineApiClient implements Closeable
 	throws IOException
 	{
 		String url = baseUrl + "/jobs/" + jobId + "/description";
-		s_Logger.debug("PUT job description: " + url);
+		LOGGER.debug("PUT job description: " + url);
 
 		HttpPut put = new HttpPut(url);
 		StringEntity entity = new StringEntity(description);
@@ -287,7 +287,7 @@ public class EngineApiClient implements Closeable
 						response.getStatusLine().getStatusCode(),
 						content);
 
-				s_Logger.error(msg);
+				LOGGER.error(msg);
 
 				m_LastError = m_JsonMapper.readValue(content,
 						new TypeReference<ApiError>() {} );
@@ -311,7 +311,7 @@ public class EngineApiClient implements Closeable
 	throws ClientProtocolException, IOException
 	{
 		String url = baseUrl + "/jobs/" + jobId;
-		s_Logger.debug("DELETE job: " + url);
+		LOGGER.debug("DELETE job: " + url);
 
 		HttpDelete delete = new HttpDelete(url);
 
@@ -331,7 +331,7 @@ public class EngineApiClient implements Closeable
 						response.getStatusLine().getStatusCode(),
 						content);
 
-				s_Logger.error(msg);
+				LOGGER.error(msg);
 
 				m_LastError = m_JsonMapper.readValue(content,
 						new TypeReference<ApiError>() {} );
@@ -361,7 +361,7 @@ public class EngineApiClient implements Closeable
 	throws IOException
 	{
 		String postUrl = baseUrl + "/data/" + jobId;
-		s_Logger.debug("Uploading chunked data to " + postUrl);
+		LOGGER.debug("Uploading chunked data to " + postUrl);
 
 		final int BUFF_SIZE = 4096 * 1024;
 		byte [] buffer = new byte[BUFF_SIZE];
@@ -372,7 +372,7 @@ public class EngineApiClient implements Closeable
 			ByteArrayEntity entity = new ByteArrayEntity(buffer, 0, read);
 			entity.setContentType("application/octet-stream");
 
-			s_Logger.info("Upload " + ++uploadCount);
+			LOGGER.info("Upload " + ++uploadCount);
 
 			HttpPost post = new HttpPost(postUrl);
 			post.setEntity(entity);
@@ -389,7 +389,7 @@ public class EngineApiClient implements Closeable
 							uploadCount, response.getStatusLine().getStatusCode(),
 							content);
 
-					s_Logger.error(msg);
+					LOGGER.error(msg);
 
 					m_LastError = m_JsonMapper.readValue(content,
 							new TypeReference<ApiError>() {} );
@@ -425,7 +425,7 @@ public class EngineApiClient implements Closeable
 	throws IOException
 	{
 		String postUrl = baseUrl + "/data/" + jobId;
-		s_Logger.debug("Uploading data to " + postUrl);
+		LOGGER.debug("Uploading data to " + postUrl);
 
 		InputStreamEntity entity = new InputStreamEntity(inputStream);
 		entity.setContentType("application/octet-stream");
@@ -450,7 +450,7 @@ public class EngineApiClient implements Closeable
 						response.getStatusLine().getStatusCode(),
 						content);
 
-				s_Logger.error(msg);
+				LOGGER.error(msg);
 
 				if (content.isEmpty() == false)
 				{
@@ -504,7 +504,7 @@ public class EngineApiClient implements Closeable
 	{
 		// Send finish message
 		String closeUrl = baseUrl + "/data/" + jobId + "/close";
-		s_Logger.debug("Closing job " + closeUrl);
+		LOGGER.debug("Closing job " + closeUrl);
 
 		HttpPost post = new HttpPost(closeUrl);
 		try (CloseableHttpResponse response = m_HttpClient.execute(post))
@@ -520,7 +520,7 @@ public class EngineApiClient implements Closeable
 						response.getStatusLine().getStatusCode(),
 						content);
 
-				s_Logger.error(msg);
+				LOGGER.error(msg);
 
 				m_LastError = m_JsonMapper.readValue(content,
 						new TypeReference<ApiError>() {} );
@@ -674,7 +674,7 @@ public class EngineApiClient implements Closeable
 			queryChar = '&';
 		}
 
-		s_Logger.debug("GET buckets " + url);
+		LOGGER.debug("GET buckets " + url);
 
 		Pagination<Bucket> page = this.get(url,
 				new TypeReference<Pagination<Bucket>>() {});
@@ -712,7 +712,7 @@ public class EngineApiClient implements Closeable
 			url += "?expand=true";
 		}
 
-		s_Logger.debug("GET bucket " + url);
+		LOGGER.debug("GET bucket " + url);
 
 		SingleDocument<Bucket> doc = this.get(url,
 				new TypeReference<SingleDocument<Bucket>>() {});
@@ -885,7 +885,7 @@ public class EngineApiClient implements Closeable
 		}
 
 
-		s_Logger.debug("GET records " + url);
+		LOGGER.debug("GET records " + url);
 
 		Pagination<AnomalyRecord> page = this.get(url,
 				new TypeReference<Pagination<AnomalyRecord>>() {});
@@ -977,7 +977,7 @@ public class EngineApiClient implements Closeable
 			queryChar = '&';
 		}
 
-		s_Logger.debug("GET alerts " + url);
+		LOGGER.debug("GET alerts " + url);
 
 		Pagination<Alert> alerts = this.get(baseUrl,
 				new TypeReference<Pagination<Alert>>() {});
@@ -1039,7 +1039,7 @@ public class EngineApiClient implements Closeable
 			queryChar = '&';
 		}
 
-		s_Logger.debug("GET alerts " + url);
+		LOGGER.debug("GET alerts " + url);
 
 		Pagination<Alert> alerts = this.get(baseUrl,
 				new TypeReference<Pagination<Alert>>() {});
@@ -1119,7 +1119,7 @@ public class EngineApiClient implements Closeable
 						+ "Returned content = %s",
 						response.getStatusLine().getStatusCode(), jobId, content);
 
-				s_Logger.error(msg);
+				LOGGER.error(msg);
 
 				m_LastError = m_JsonMapper.readValue(content,
 						new TypeReference<ApiError>() {} );
@@ -1168,7 +1168,7 @@ public class EngineApiClient implements Closeable
 		String url = String.format("%s/logs/%s/tail?lines=%d",
 				baseUrl, jobId, lineCount);
 
-		s_Logger.debug("GET tail log " + url);
+		LOGGER.debug("GET tail log " + url);
 
 		return this.getStringContent(url);
 	}
@@ -1193,7 +1193,7 @@ public class EngineApiClient implements Closeable
 		String url = String.format("%s/logs/%s/%s/tail?lines=%d",
 				baseUrl, jobId, filename, lineCount);
 
-		s_Logger.debug("GET tail log " + url);
+		LOGGER.debug("GET tail log " + url);
 
 		return this.getStringContent(url);
 	}
@@ -1229,7 +1229,7 @@ public class EngineApiClient implements Closeable
 								response.getStatusLine().getStatusCode(),
 								content);
 
-				s_Logger.error(msg);
+				LOGGER.error(msg);
 
 				m_LastError = m_JsonMapper.readValue(content,
 						new TypeReference<ApiError>() {} );
@@ -1259,7 +1259,7 @@ public class EngineApiClient implements Closeable
 		String url = String.format("%s/logs/%s/%s",
 				baseUrl, jobId, logfileName);
 
-		s_Logger.debug("GET log file " + url);
+		LOGGER.debug("GET log file " + url);
 
 		return this.getStringContent(url);
 	}
@@ -1286,7 +1286,7 @@ public class EngineApiClient implements Closeable
 	{
 		String url = String.format("%s/logs/%s", baseUrl, jobId);
 
-		s_Logger.debug("GET download logs " + url);
+		LOGGER.debug("GET download logs " + url);
 
 		HttpGet get = new HttpGet(url);
 
@@ -1313,7 +1313,7 @@ public class EngineApiClient implements Closeable
 								response.getStatusLine().getStatusCode(),
 								content);
 
-				s_Logger.error(msg);
+				LOGGER.error(msg);
 
 				m_LastError = m_JsonMapper.readValue(content,
 						new TypeReference<ApiError>() {} );
@@ -1417,7 +1417,7 @@ public class EngineApiClient implements Closeable
 						response.getStatusLine().getStatusCode(), get.getURI(),
 						content);
 
-				s_Logger.error(msg);
+				LOGGER.error(msg);
 
 				m_LastError = m_JsonMapper.readValue(content,
 						new TypeReference<ApiError>() {} );

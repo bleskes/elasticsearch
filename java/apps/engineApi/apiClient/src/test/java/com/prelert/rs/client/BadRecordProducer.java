@@ -47,7 +47,7 @@ import com.prelert.job.JobConfiguration;
  */
 public class BadRecordProducer implements Runnable
 {	
-	private static final Logger s_Logger = Logger.getLogger(BadRecordProducer.class);
+	private static final Logger LOGGER = Logger.getLogger(BadRecordProducer.class);
 	
 	public static final String HEADER = "time,metric,value";
 	
@@ -115,7 +115,7 @@ public class BadRecordProducer implements Runnable
 		}
 		catch (InterruptedException e1) 
 		{
-			s_Logger.error("Producer interruputed pausing before write start");
+			LOGGER.error("Producer interruputed pausing before write start");
 		}
 
 		try
@@ -160,7 +160,7 @@ public class BadRecordProducer implements Runnable
 				m_OutputStream.close();
 			}
 			catch (IOException e) {
-				s_Logger.error("Error closing pipedoutputstream", e);
+				LOGGER.error("Error closing pipedoutputstream", e);
 			}
 		}
 	}
@@ -175,7 +175,7 @@ public class BadRecordProducer implements Runnable
 		} 
 		catch (IOException e) 
 		{
-			s_Logger.error("Error writing csv header", e);
+			LOGGER.error("Error writing csv header", e);
 		}
 	}
 
@@ -198,7 +198,7 @@ public class BadRecordProducer implements Runnable
 		} 
 		catch (IOException e) 
 		{
-			s_Logger.error("Error writing csv row", e);
+			LOGGER.error("Error writing csv row", e);
 		}			
 	}
 	
@@ -221,7 +221,7 @@ public class BadRecordProducer implements Runnable
 		} 
 		catch (IOException e) 
 		{
-			s_Logger.error("Error writing csv row", e);
+			LOGGER.error("Error writing csv row", e);
 		}	
 	}
 }

@@ -31,14 +31,15 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 
 import com.prelert.rs.data.ErrorCode;
 
 /**
- * Autodetect analysis configuration options describes which fields are 
- * analysed and the functions to use. 
+ * Autodetect analysis configuration options describes which fields are
+ * analysed and the functions to use.
  * <p/>
  * The configuration can contain multiple detectors, a new anomaly detector will
  * be created for each detector configuration. The other fields
@@ -47,7 +48,7 @@ import com.prelert.rs.data.ErrorCode;
  * Object wrappers are used around integral types & booleans so they can take
  * <code>null</code> values.
  */
-public class AnalysisConfig 
+public class AnalysisConfig
 {
 	/**
 	 * Serialisation names
@@ -57,7 +58,7 @@ public class AnalysisConfig
 	public static final String PERIOD = "period";
 	public static final String SUMMARY_COUNT_FIELD_NAME = "summaryCountFieldName";
 	public static final String DETECTORS = "detectors";
-	
+
 	/**
 	 * These values apply to all detectors
 	 */
@@ -66,7 +67,7 @@ public class AnalysisConfig
 	private Long m_Period;
 	private String m_SummaryCountFieldName;
 	private List<Detector> m_Detectors;
-	
+
 	/**
 	 * Default constructor
 	 */
@@ -74,17 +75,17 @@ public class AnalysisConfig
 	{
 		m_Detectors = new ArrayList<>();
 	}
-	
+
 	/**
-	 * Construct an AnalysisConfig from a map. Detector objects are 
+	 * Construct an AnalysisConfig from a map. Detector objects are
 	 * nested elements in the map.
 	 * @param values
 	 */
 	@SuppressWarnings("unchecked")
 	public AnalysisConfig(Map<String, Object> values)
-	{	
+	{
 		this();
-		
+
 		if (values.containsKey(BUCKET_SPAN))
 		{
 			Object obj = values.get(BUCKET_SPAN);
@@ -128,12 +129,12 @@ public class AnalysisConfig
 					m_Detectors.add(detector);
 				}
 			}
-		
+
 		}
 	}
-	
+
 	/**
-	 * The size of the interval the analysis is aggregated into measured in 
+	 * The size of the interval the analysis is aggregated into measured in
 	 * seconds
 	 * @return The bucketspan or <code>null</code> if not set
 	 */
@@ -141,36 +142,36 @@ public class AnalysisConfig
 	{
 		return m_BucketSpan;
 	}
-	
+
 	public void setBucketSpan(Long span)
 	{
 		m_BucketSpan = span;
-	}	
-	
+	}
+
 	/**
 	 * Interval into which to batch seasonal data measured in seconds
 	 * @return The batchspan or <code>null</code> if not set
 	 */
-	public Long getBatchSpan() 
+	public Long getBatchSpan()
 	{
 		return m_BatchSpan;
 	}
-	
+
 	public void setBatchSpan(Long batchSpan)
 	{
 		m_BatchSpan = batchSpan;
 	}
-	
+
 	/**
 	 * The repeat interval for periodic data in multiples of
-	 * {@linkplain #getBatchSpan()} 
+	 * {@linkplain #getBatchSpan()}
 	 * @return The period or <code>null</code> if not set
 	 */
-	public Long getPeriod() 
+	public Long getPeriod()
 	{
 		return m_Period;
 	}
-	
+
 	public void setPeriod(Long period)
 	{
 		m_Period = period;
@@ -192,19 +193,19 @@ public class AnalysisConfig
 
 	/**
 	 * The list of analysis detectors. In a valid configuration the list should
-	 * contain at least 1 {@link Detector} 
+	 * contain at least 1 {@link Detector}
 	 * @return The Detectors used in this job
 	 */
 	public List<Detector> getDetectors()
 	{
 		return m_Detectors;
 	}
-	
+
 	public void setDetectors(List<Detector> detectors)
 	{
 		m_Detectors = detectors;
 	}
-	
+
 	/**
 	 * Return the list of fields required by the analysis.
 	 * These are the metric field, partition field, by field and over
@@ -248,94 +249,94 @@ public class AnalysisConfig
 
 		return new ArrayList<String>(fields);
 	}
-	
-	
-	
+
+
+
 	public List<String> fields()
 	{
 		Set<String> fields = new HashSet<>();
-		
+
 		for (Detector d : getDetectors())
 		{
 			fields.add(d.getFieldName());
 		}
-		
+
 		// remove the null and empty strings
 		fields.remove("");
 		fields.remove(null);
-		
+
 		return new ArrayList<String>(fields);
 	}
-	
-	
-	
+
+
+
 	public List<String> byFields()
 	{
 		Set<String> fields = new HashSet<>();
-		
+
 		for (Detector d : getDetectors())
 		{
 			fields.add(d.getByFieldName());
 		}
-		
+
 		// remove the null and empty strings
 		fields.remove("");
 		fields.remove(null);
-		
+
 		return new ArrayList<String>(fields);
 	}
-	
+
 	public List<String> overFields()
 	{
 		Set<String> fields = new HashSet<>();
-		
+
 		for (Detector d : getDetectors())
 		{
 			fields.add(d.getOverFieldName());
 		}
-		
+
 		// remove the null and empty strings
 		fields.remove("");
 		fields.remove(null);
-		
+
 		return new ArrayList<String>(fields);
 	}
-	
-	
+
+
 	public List<String> partitionFields()
 	{
 		Set<String> fields = new HashSet<>();
-		
+
 		for (Detector d : getDetectors())
 		{
 			fields.add(d.getPartitionFieldName());
 		}
-		
+
 		// remove the null and empty strings
 		fields.remove("");
 		fields.remove(null);
-		
+
 		return new ArrayList<String>(fields);
 	}
-	
+
 	/**
-	 * The array of detectors are compared for equality but they are not sorted 
+	 * The array of detectors are compared for equality but they are not sorted
 	 * first so this test could fail simply because the detector arrays are in
 	 * different orders.
 	 */
-	@Override 
+	@Override
 	public boolean equals(Object other)
 	{
 		if (this == other)
 		{
 			return true;
 		}
-		
+
 		if (other instanceof AnalysisConfig == false)
 		{
 			return false;
 		}
-		
+
 		AnalysisConfig that = (AnalysisConfig)other;
 
 		if (this.m_Detectors.size() != that.m_Detectors.size())
@@ -349,14 +350,21 @@ public class AnalysisConfig
 			{
 				return false;
 			}
-		}		
+		}
 
 		return JobDetails.bothNullOrEqual(this.m_BucketSpan, that.m_BucketSpan) &&
 				JobDetails.bothNullOrEqual(this.m_BatchSpan, that.m_BatchSpan) &&
 				JobDetails.bothNullOrEqual(this.m_Period, that.m_Period) &&
 				JobDetails.bothNullOrEqual(this.m_SummaryCountFieldName, that.m_SummaryCountFieldName);
 	}
-	
+
+    @Override
+    public int hashCode()
+    {
+        return Objects.hash(m_Detectors, m_BucketSpan, m_BatchSpan, m_Period,
+                m_SummaryCountFieldName);
+    }
+
 	/**
 	 * Checks the configuration is valid
 	 * <ol>
@@ -364,25 +372,25 @@ public class AnalysisConfig
 	 * <li>Check there is at least one detector configured</li>
 	 * <li>Check all the detectors are configured correctly</li>
 	 * </ol>
-	 * 	
+	 *
 	 * @return true
 	 * @throws JobConfigurationException
 	 */
 	public boolean verify()
 	throws JobConfigurationException
-	{	
+	{
 		if (m_BucketSpan != null && m_BucketSpan < 0)
 		{
 			throw new JobConfigurationException("BucketSpan cannot be < 0."
 					+ " Value = " + m_BucketSpan, ErrorCode.INVALID_VALUE);
 		}
-		
+
 		if (m_BatchSpan != null && m_BatchSpan < 0)
 		{
 			throw new JobConfigurationException("BatchSpan cannot be < 0."
 					+ " Value = " + m_BatchSpan, ErrorCode.INVALID_VALUE);
 		}
-		
+
 		if (m_Period != null && m_Period < 0)
 		{
 			throw new JobConfigurationException("Period cannot be < 0."
@@ -402,7 +410,7 @@ public class AnalysisConfig
 		{
 			d.verify(isSummarised);
 		}
-		
+
 		return true;
 	}
 }

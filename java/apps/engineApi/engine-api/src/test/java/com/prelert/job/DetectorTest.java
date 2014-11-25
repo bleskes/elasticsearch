@@ -24,49 +24,31 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.rs.resources;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
+package com.prelert.job;
 
-import org.apache.log4j.Logger;
+import static org.junit.Assert.assertEquals;
 
-import com.prelert.job.manager.JobManager;
+import java.util.HashMap;
+import java.util.Map;
 
+import org.junit.Test;
 
+public class DetectorTest
+{
+    @Test
+    public void testHashCode_GivenEqual()
+    {
+        Map<String, Object> detectorMap = new HashMap<>();
+        detectorMap.put(Detector.FUNCTION, "mean");
+        detectorMap.put(Detector.FIELD_NAME, "field");
+        detectorMap.put(Detector.BY_FIELD_NAME, "by");
+        detectorMap.put(Detector.OVER_FIELD_NAME, "over");
+        detectorMap.put(Detector.PARTITION_FIELD_NAME, "partition");
+        detectorMap.put(Detector.USE_NULL, false);
+        Detector detector1 = new Detector(detectorMap);
+        Detector detector2 = new Detector(detectorMap);
 
-/**
- * API base resource  
- *
- */
-@Path("")
-public class ApiBase extends ResourceWithJobManager
-{	
-	private final Logger LOGGER = Logger.getLogger(ApiBase.class);
-	
-	private static final String VERSION_HTML = 
-			"<!DOCTYPE html>\n"
-			+ "<html>\n"
-			+ "<head><title>Prelert Engine</title></head>\n"
-			+ "<body>\n"
-			+ "<h1>Prelert Engine REST API</h1>\n"
-			+ "<h2>Analytics Version:</h2>\n"
-			+ "<p>%s</p>\n"
-			+ "</body>\n"
-			+ "</html>";
-		
-    @GET
-    @Produces(MediaType.TEXT_HTML)
-    public String version() 
-    {      
-    	LOGGER.debug("Get API Base document");
-    	
-    	JobManager manager = jobManager();
-    	String version = manager.getAnalyticsVersion();
-    	version = version.replace("\n", "<br/>");
-
-    	return String.format(VERSION_HTML, version);
+        assertEquals(detector1.hashCode(), detector2.hashCode());
     }
 }

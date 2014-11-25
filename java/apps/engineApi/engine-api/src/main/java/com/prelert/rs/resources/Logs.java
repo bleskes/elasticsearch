@@ -55,7 +55,7 @@ import com.prelert.job.logs.JobLogs;
 @Path("/logs")
 public class Logs extends ResourceWithJobManager
 {	
-	private static final Logger s_Logger = Logger.getLogger(Logs.class);
+	private static final Logger LOGGER = Logger.getLogger(Logs.class);
 	
 	/**
 	 * The name of this endpoint
@@ -106,7 +106,7 @@ public class Logs extends ResourceWithJobManager
     private Response zipJobLogFiles(String jobId)
     throws UnknownJobException
     {   	
-    	s_Logger.debug("Get zipped logs for job '" + jobId + "'");
+    	LOGGER.debug("Get zipped logs for job '" + jobId + "'");
     	
 		JobLogs logs = new JobLogs();
 		byte [] compressFiles = logs.zippedLogFiles(jobId);
@@ -133,7 +133,7 @@ public class Logs extends ResourceWithJobManager
     		@DefaultValue("10") @QueryParam("lines") int lines)
     throws UnknownJobException
     {   	
-    	s_Logger.debug("Tail log for job '" + jobId + "'");
+    	LOGGER.debug("Tail log for job '" + jobId + "'");
     	
 		JobLogs logs = new JobLogs();
 		return logs.tail(jobId, lines);
@@ -155,7 +155,7 @@ public class Logs extends ResourceWithJobManager
     		@PathParam("filename") String filename)
     throws UnknownJobException
     {   	
-    	s_Logger.debug(String.format("Get the log file %s for job %s", 
+    	LOGGER.debug(String.format("Get the log file %s for job %s", 
     			filename, jobId));
     	
 		JobLogs logs = new JobLogs();
@@ -179,7 +179,7 @@ public class Logs extends ResourceWithJobManager
     		@DefaultValue("10") @QueryParam("lines") int lines)
     throws UnknownJobException
     {   	
-    	s_Logger.debug("Tail log for job '" + jobId + "'");
+    	LOGGER.debug("Tail log for job '" + jobId + "'");
     	
 		JobLogs logs = new JobLogs();
 		return logs.tail(jobId, filename, lines);

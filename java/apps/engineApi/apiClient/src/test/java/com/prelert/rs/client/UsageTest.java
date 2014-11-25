@@ -63,7 +63,7 @@ import com.prelert.rs.data.SingleDocument;
  */
 public class UsageTest implements Closeable
 {
-	private static final Logger s_Logger = Logger.getLogger(UsageTest.class);
+	private static final Logger LOGGER = Logger.getLogger(UsageTest.class);
 
 	/**
 	 * The default base Url used in the test
@@ -129,15 +129,15 @@ public class UsageTest implements Closeable
 		String jobId = m_WebServiceClient.createJob(apiUrl, config);
 		if (jobId == null || jobId.isEmpty())
 		{
-			s_Logger.error("No Job Id returned by create job");
-			s_Logger.info(m_WebServiceClient.getLastError().toJson());
+			LOGGER.error("No Job Id returned by create job");
+			LOGGER.info(m_WebServiceClient.getLastError().toJson());
 			test(jobId != null && jobId.isEmpty() == false);
 		}
 		
 		boolean success = m_WebServiceClient.fileUpload(apiUrl, jobId, dataFile, compressed);
 		if (!success)
 		{
-			s_Logger.error(m_WebServiceClient.getLastError().toJson());
+			LOGGER.error(m_WebServiceClient.getLastError().toJson());
 			test(success);
 		}
 		m_WebServiceClient.closeJob(apiUrl, jobId);
@@ -216,12 +216,12 @@ public class UsageTest implements Closeable
 			baseUrl = args[0];
 		}
 		
-		s_Logger.info("Testing Service at " + baseUrl);
+		LOGGER.info("Testing Service at " + baseUrl);
 		
 		final String prelertTestDataHome = System.getProperty("prelert.test.data.home");
 		if (prelertTestDataHome == null)
 		{
-			s_Logger.error("Error property prelert.test.data.home is not set");
+			LOGGER.error("Error property prelert.test.data.home is not set");
 			return;
 		}
 		
@@ -262,7 +262,7 @@ public class UsageTest implements Closeable
 			}
 		}
 		
-		s_Logger.info("All tests passed Ok");
+		LOGGER.info("All tests passed Ok");
 		
 	}
 }

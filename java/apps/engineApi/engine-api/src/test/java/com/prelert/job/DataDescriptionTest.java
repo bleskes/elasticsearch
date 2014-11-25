@@ -24,49 +24,31 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.rs.resources;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
+package com.prelert.job;
 
-import org.apache.log4j.Logger;
+import static org.junit.Assert.assertEquals;
 
-import com.prelert.job.manager.JobManager;
+import java.util.HashMap;
+import java.util.Map;
 
+import org.junit.Test;
 
+public class DataDescriptionTest
+{
+    @Test
+    public void testHashCode_GivenEqual()
+    {
+        Map<String, Object> description = new HashMap<>();
+        description.put(DataDescription.FORMAT, "JSON");
+        description.put(DataDescription.TIME_FIELD_NAME, "timestamp");
+        description.put(DataDescription.QUOTE_CHARACTER, "'");
+        description.put(DataDescription.TIME_FORMAT, "timeFormat");
+        description.put(DataDescription.FIELD_DELIMITER, ",");
 
-/**
- * API base resource  
- *
- */
-@Path("")
-public class ApiBase extends ResourceWithJobManager
-{	
-	private final Logger LOGGER = Logger.getLogger(ApiBase.class);
-	
-	private static final String VERSION_HTML = 
-			"<!DOCTYPE html>\n"
-			+ "<html>\n"
-			+ "<head><title>Prelert Engine</title></head>\n"
-			+ "<body>\n"
-			+ "<h1>Prelert Engine REST API</h1>\n"
-			+ "<h2>Analytics Version:</h2>\n"
-			+ "<p>%s</p>\n"
-			+ "</body>\n"
-			+ "</html>";
-		
-    @GET
-    @Produces(MediaType.TEXT_HTML)
-    public String version() 
-    {      
-    	LOGGER.debug("Get API Base document");
-    	
-    	JobManager manager = jobManager();
-    	String version = manager.getAnalyticsVersion();
-    	version = version.replace("\n", "<br/>");
+        DataDescription dataDescription1 = new DataDescription(description);
+        DataDescription dataDescription2 = new DataDescription(description);
 
-    	return String.format(VERSION_HTML, version);
+        assertEquals(dataDescription1.hashCode(), dataDescription2.hashCode());
     }
 }

@@ -49,7 +49,7 @@ import com.prelert.rs.data.ErrorCode;
  */
 public class BadRecordsTest implements Closeable
 {
-	private static final Logger s_Logger = Logger.getLogger(BadRecordsTest.class);
+	private static final Logger LOGGER = Logger.getLogger(BadRecordsTest.class);
 	
 	/**
 	 * The default base Url used in the test
@@ -103,7 +103,7 @@ public class BadRecordsTest implements Closeable
 		ApiError error = m_EngineApiClient.getLastError();
 		test(error != null);
 		test(error.getErrorCode() == ErrorCode.TOO_MANY_BAD_DATES);
-		s_Logger.info(error);
+		LOGGER.info(error);
 
 		
 		m_EngineApiClient.closeJob(m_BaseUrl, jobId);
@@ -114,7 +114,7 @@ public class BadRecordsTest implements Closeable
 		}
 		catch (InterruptedException e) 
 		{
-			s_Logger.error(e);
+			LOGGER.error(e);
 		}
 	}
 	
@@ -148,7 +148,7 @@ public class BadRecordsTest implements Closeable
 		ApiError error = m_EngineApiClient.getLastError();
 		test(error != null);
 		test(error.getErrorCode() == ErrorCode.TOO_MANY_OUT_OF_ORDER_RECORDS);
-		s_Logger.info(error);
+		LOGGER.info(error);
 
 		
 		m_EngineApiClient.closeJob(m_BaseUrl, jobId);
@@ -159,7 +159,7 @@ public class BadRecordsTest implements Closeable
 		}
 		catch (InterruptedException e) 
 		{
-			s_Logger.error(e);
+			LOGGER.error(e);
 		}
 	}
 	
@@ -211,6 +211,6 @@ public class BadRecordsTest implements Closeable
 		
 		test.close();	
 		
-		s_Logger.info("All tests passed Ok");
+		LOGGER.info("All tests passed Ok");
 	}
 }

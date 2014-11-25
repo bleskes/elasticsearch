@@ -48,14 +48,14 @@ import com.prelert.rs.data.parsing.AutoDetectParseException;
  */
 @JsonInclude(Include.NON_NULL)
 @JsonIgnoreProperties({"records"})
-public class Detector 
+public class Detector
 {
 	public static final String TYPE = "detector";
 	public static final String NAME = "name";
 	public static final String RECORDS = "records";
-	
-	private static final Logger s_Logger = Logger.getLogger(Detector.class);
-	
+
+	private static final Logger LOGGER = Logger.getLogger(Detector.class);
+
 	private String m_Name;
 	private List<AnomalyRecord> m_Records;
 
@@ -64,13 +64,13 @@ public class Detector
 	{
 		m_Records = new ArrayList<>();
 	}
-	
+
 	public Detector(String name)
 	{
 		this();
 		m_Name = name.intern();
 	}
-	
+
 	/**
 	 * Create the detector from a map. Only the name field is read
 	 * @param values
@@ -83,25 +83,25 @@ public class Detector
 		}
 		else
 		{
-			s_Logger.error("Constructing detector from map with no " + NAME + " field");
+			LOGGER.error("Constructing detector from map with no " + NAME + " field");
 		}
 	}
-	
+
 	public String getName()
 	{
 		return m_Name;
 	}
-	
+
 	private void setName(String name)
 	{
 		m_Name = name.intern();
 	}
-	
+
 	public void addRecord(AnomalyRecord record)
 	{
 		m_Records.add(record);
 	}
-	
+
 	public List<AnomalyRecord> getRecords()
 	{
 		return m_Records;
@@ -110,13 +110,13 @@ public class Detector
 
 	/**
 	 * Create a new <code>Detector</code> and populate it from the JSON parser.
-	 * The parser must be pointing at the start of the object then all the object's 
-	 * fields are read and if they match the property names the appropriate 
+	 * The parser must be pointing at the start of the object then all the object's
+	 * fields are read and if they match the property names the appropriate
 	 * members are set.
-	 * 
+	 *
 	 * Does not validate that all the properties (or any) have been set but if
 	 * parsing fails an exception will be thrown.
-	 * 
+	 *
 	 * @param parser The JSON Parser should be pointing to the start of the object,
 	 * when the function returns it will be pointing to the end.
 	 * @return The new Detector
@@ -124,80 +124,80 @@ public class Detector
 	 * @throws IOException
 	 * @throws AutoDetectParseException
 	 */
-	public static Detector parseJson(JsonParser parser) 
+	public static Detector parseJson(JsonParser parser)
 	throws JsonParseException, IOException, AutoDetectParseException
 	{
 		Detector detector = new Detector();
-		
+
 		JsonToken token = parser.getCurrentToken();
 		if (JsonToken.START_OBJECT != token)
 		{
 			String msg = "Cannot parse detector. First token '" +
 					parser.getText() + ", is not the start token";
-			s_Logger.error(msg);
+			LOGGER.error(msg);
 			throw new AutoDetectParseException(msg);
 		}
-		
+
 		token = parser.nextToken();
 		while (token != JsonToken.END_OBJECT)
-		{						
+		{
 			switch(token)
 			{
 			case START_OBJECT:
-				s_Logger.error("Start object parsed in detector");				
+				LOGGER.error("Start object parsed in detector");
 				break;
 			case END_OBJECT:
-				s_Logger.error("End object parsed in detector");				
+				LOGGER.error("End object parsed in detector");
 				break;
 			case FIELD_NAME:
 				String fieldName = parser.getCurrentName();
 				switch (fieldName)
 				{
 				case NAME:
-					token = parser.nextToken(); 
+					token = parser.nextToken();
 					if (token == JsonToken.VALUE_STRING)
 					{
 						detector.setName(parser.getText());
 					}
 					else
 					{
-						s_Logger.warn("Cannot parse " + NAME + " : " + 
+						LOGGER.warn("Cannot parse " + NAME + " : " +
 								parser.getText() + " as a string");
 					}
-					break;					
+					break;
 				case RECORDS:
-					token = parser.nextToken(); 
+					token = parser.nextToken();
 					if (token == JsonToken.START_ARRAY)
 					{
-						token = parser.nextToken(); 
+						token = parser.nextToken();
 						while (token != JsonToken.END_ARRAY)
 						{
 							AnomalyRecord record = AnomalyRecord.parseJson(parser);
-							detector.addRecord(record);		
+							detector.addRecord(record);
 
 							token = parser.nextToken();
-						}						
+						}
 					}
 					else
 					{
-						s_Logger.warn("Expected the start of an array for field '" 
+						LOGGER.warn("Expected the start of an array for field '"
 									+ fieldName + "' not " + parser.getText());
 					}
-					break;	
+					break;
 				default:
-					s_Logger.warn(String.format("Parse error unknown field in detector %s:%s", 
+					LOGGER.warn(String.format("Parse error unknown field in detector %s:%s",
 							fieldName, parser.nextTextValue()));
-					break;				
+					break;
 				}
 				break;
 			default:
-				s_Logger.warn("Parsing error: Only simple fields expected in bucket not " + token);
-				break;			
+				LOGGER.warn("Parsing error: Only simple fields expected in bucket not " + token);
+				break;
 			}
-			
+
 			token = parser.nextToken();
 		}
-		
+
 		return detector;
 	}
 }

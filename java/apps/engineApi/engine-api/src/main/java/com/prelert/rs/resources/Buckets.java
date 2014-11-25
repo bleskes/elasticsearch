@@ -61,7 +61,7 @@ import com.prelert.rs.provider.RestApiException;
 @Path("/results")
 public class Buckets extends ResourceWithJobManager
 {
-	private static final Logger s_Logger = Logger.getLogger(Buckets.class);
+	private static final Logger LOGGER = Logger.getLogger(Buckets.class);
 
 	/**
 	 * The name of the endpoint
@@ -110,7 +110,7 @@ public class Buckets extends ResourceWithJobManager
 			@DefaultValue("0.0") @QueryParam(Bucket.MAX_NORMALIZED_PROBABILITY) double normalizedProbabilityFilter)
 	throws UnknownJobException, NativeProcessRunException
 	{
-		s_Logger.debug(String.format("Get %s buckets for job %s. skip = %d, take = %d"
+		LOGGER.debug(String.format("Get %s buckets for job %s. skip = %d, take = %d"
 				+ " start = '%s', end='%s', anomaly score filter=%f, unsual score filter= %f",
 				expand?"expanded ":"", jobId, skip, take, start, end,
 						anomalySoreFilter, normalizedProbabilityFilter));
@@ -122,7 +122,7 @@ public class Buckets extends ResourceWithJobManager
 			if (epochStart == 0) // could not be parsed
 			{
 				String msg = String.format(BAD_DATE_FROMAT_MSG, START_QUERY_PARAM, start);
-				s_Logger.info(msg);
+				LOGGER.info(msg);
 				throw new RestApiException(msg, ErrorCode.UNPARSEABLE_DATE_ARGUMENT,
 						Response.Status.BAD_REQUEST);
 			}
@@ -135,7 +135,7 @@ public class Buckets extends ResourceWithJobManager
 			if (epochEnd == 0) // could not be parsed
 			{
 				String msg = String.format(BAD_DATE_FROMAT_MSG, START_QUERY_PARAM, end);
-				s_Logger.info(msg);
+				LOGGER.info(msg);
 				throw new RestApiException(msg, ErrorCode.UNPARSEABLE_DATE_ARGUMENT,
 						Response.Status.BAD_REQUEST);
 			}
@@ -180,7 +180,7 @@ public class Buckets extends ResourceWithJobManager
     		setPagingUrls(path, buckets, queryParams);
     	}
 
-		s_Logger.debug(String.format("Return %d buckets for job %s",
+		LOGGER.debug(String.format("Return %d buckets for job %s",
 				buckets.getDocumentCount(), jobId));
 
 		return buckets;
@@ -207,7 +207,7 @@ public class Buckets extends ResourceWithJobManager
 			@DefaultValue("false") @QueryParam("expand") boolean expand)
 	throws NativeProcessRunException, UnknownJobException
 	{
-		s_Logger.debug(String.format("Get %s bucket %s for job %s",
+		LOGGER.debug(String.format("Get %s bucket %s for job %s",
 				expand?"expanded ":"", bucketId, jobId));
 
 		JobManager manager = jobManager();
@@ -215,12 +215,12 @@ public class Buckets extends ResourceWithJobManager
 
 		if (bucket.isExists())
 		{
-			s_Logger.debug(String.format("Returning bucket %s for job %s",
+			LOGGER.debug(String.format("Returning bucket %s for job %s",
 					bucketId, jobId));
 		}
 		else
 		{
-			s_Logger.debug(String.format("Cannot find bucket %s for job %s",
+			LOGGER.debug(String.format("Cannot find bucket %s for job %s",
 					bucketId, jobId));
 
 			return Response.status(Response.Status.NOT_FOUND).entity(bucket).build();

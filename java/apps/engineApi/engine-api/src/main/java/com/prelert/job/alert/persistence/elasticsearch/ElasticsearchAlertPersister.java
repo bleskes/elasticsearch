@@ -83,12 +83,10 @@ public class ElasticsearchAlertPersister implements AlertPersister
 	private XContentBuilder serialiseAlert(Alert alert)
 	throws IOException
 	{
-		XContentBuilder builder = jsonBuilder().startObject()
+		return jsonBuilder().startObject()
 				.field(Alert.JOB_ID, alert.getTimestamp())
 				.field(Alert.TIMESTAMP, alert.getTimestamp())
 				.endObject(); // TODO missing fields
-
-		return builder;
 	}
 
 	@Override
