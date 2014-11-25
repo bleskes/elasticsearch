@@ -222,9 +222,9 @@ public class Detector
 		return m_Function;
 	}
 
-	public void setFunction(String m_Function)
+	public void setFunction(String function)
 	{
-		this.m_Function = m_Function;
+		this.m_Function = function;
 	}
 
 	/**
@@ -236,9 +236,9 @@ public class Detector
 		return m_FieldName;
 	}
 
-	public void setFieldName(String m_FieldName)
+	public void setFieldName(String fieldName)
 	{
-		this.m_FieldName = m_FieldName;
+		this.m_FieldName =fieldName;
 	}
 
 	/**
@@ -250,9 +250,9 @@ public class Detector
 		return m_ByFieldName;
 	}
 
-	public void setByFieldName(String m_ByFieldName)
+	public void setByFieldName(String byFieldName)
 	{
-		this.m_ByFieldName = m_ByFieldName;
+		this.m_ByFieldName = byFieldName;
 	}
 
 	/**
@@ -264,9 +264,9 @@ public class Detector
 		return m_OverFieldName;
 	}
 
-	public void setOverFieldName(String m_OverFieldName)
+	public void setOverFieldName(String overFieldName)
 	{
-		this.m_OverFieldName = m_OverFieldName;
+		this.m_OverFieldName = overFieldName;
 	}
 
 	/**

@@ -148,18 +148,18 @@ public class AlertManager implements TimeoutHandler
 	 *
 	 * @param response
 	 * @param jobId
-	 * @param timeout_secs
+	 * @param timeoutSecs
 	 * @param anomalyScoreThreshold
 	 * @param normalizedProbabiltyThreshold
 	 * @throws UnknownJobException
 	 */
 	public void registerRequest(AsyncResponse response, String jobId, URI baseUri,
-			long timeout_secs, double anomalyScoreThreshold, double normalizedProbabiltyThreshold)
+			long timeoutSecs, double anomalyScoreThreshold, double normalizedProbabiltyThreshold)
 	throws UnknownJobException
 	{
 		m_JobProvider.jobExists(jobId);
 
-		response.setTimeout(timeout_secs, TimeUnit.SECONDS);
+		response.setTimeout(timeoutSecs, TimeUnit.SECONDS);
 		response.setTimeoutHandler(this);
 
 		AlertListener listener = this.new AlertListener(response, this, jobId,
