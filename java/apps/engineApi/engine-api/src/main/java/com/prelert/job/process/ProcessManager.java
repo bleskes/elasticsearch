@@ -282,7 +282,7 @@ public class ProcessManager
 		}
 
 		// check the process is running, throws if not
-		processStillRunning(process, jobId);
+		processStillRunning(process);
 
 		// write the data to the process
 		try
@@ -297,7 +297,7 @@ public class ProcessManager
 
 			// check there wasn't an error in the input.
 			// throws if there was.
-			processStillRunning(process, jobId);
+			processStillRunning(process);
 		}
 		catch (IOException e)
 		{
@@ -394,9 +394,7 @@ public class ProcessManager
 		{
 			// if state is null or empty it will be ignored
 			// else it is used to restore the quantiles
-			nativeProcess = ProcessCtrl.buildAutoDetect(
-					ProcessCtrl.AUTODETECT_API, job, quantilesState, logger,
-					filesToDelete);
+			nativeProcess = ProcessCtrl.buildAutoDetect(job, quantilesState, logger, filesToDelete);
 		}
 		catch (IOException e)
 		{
@@ -500,7 +498,7 @@ public class ProcessManager
 		try
 		{
 			// check the process is running, throws if not
-			if (processStillRunning(process, jobId))
+			if (processStillRunning(process))
 			{
 				m_JobIdToProcessMap.remove(jobId);
 				try
@@ -573,7 +571,7 @@ public class ProcessManager
 			}
 			catch (IOException ioe)
 			{
-				LOGGER.debug("Exception closing stopped process input stream");
+				LOGGER.debug("Exception closing stopped process input stream", ioe);
 			}
 
 			setJobFinishedTimeAndStatus(jobId, process.getLogger(), JobStatus.FAILED);
@@ -599,8 +597,7 @@ public class ProcessManager
 	 * if has terminated for some reason
 	 * @throws NativeProcessRunException If the process has exited
 	 */
-	private boolean processStillRunning(ProcessAndDataDescription process,
-									String jobId)
+	private boolean processStillRunning(ProcessAndDataDescription process)
     throws NativeProcessRunException
 	{
 		// Sanity check make sure the process hasn't terminated already
@@ -821,7 +818,7 @@ public class ProcessManager
 				}
 				catch (NativeProcessRunException e)
 				{
-					LOGGER.error("Error stopping running job " + jobId);
+					LOGGER.error("Error stopping running job " + jobId, e);
 				}
 			}
 		}

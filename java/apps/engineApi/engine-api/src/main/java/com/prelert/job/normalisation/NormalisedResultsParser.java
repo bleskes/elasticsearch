@@ -24,7 +24,7 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.process.output;
+package com.prelert.job.normalisation;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -43,65 +43,65 @@ import com.fasterxml.jackson.core.JsonToken;
 import com.prelert.job.normalisation.NormalisedResult;
 
 /**
- * Parse the JSON output of the Normaliser. 
+ * Parse the JSON output of the Normaliser.
  */
-public class NormalisedResultsParser implements Runnable 
+public class NormalisedResultsParser implements Runnable
 {
 	List<NormalisedResult> m_Results;
 	private InputStream m_InputStream;
 	private Logger m_Logger;
-	
+
 	public NormalisedResultsParser(InputStream inputStream, Logger logger)
 	{
 		m_InputStream = inputStream;
 		m_Logger = logger;
 		m_Results = new ArrayList<NormalisedResult>();
 	}
-	
+
 	@Override
-	public void run() 
+	public void run()
 	{
-		try 
+		try
 		{
 			//printResults();
 			parseResults();
-		} 
-		catch (JsonParseException e) 
+		}
+		catch (JsonParseException e)
 		{
 			m_Logger.warn("Error parsing normalise output", e);
 		}
-		catch (IOException e) 
+		catch (IOException e)
 		{
 			m_Logger.warn("Error reading normalise output", e);
 		}
-	
+
 	}
-	
-	
+
+
 	public List<NormalisedResult> getNormalisedResults()
 	{
 		return m_Results;
 	}
-	
-	
+
+
 	/**
 	 * Debugging print normalise output
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	@SuppressWarnings("unused")
-	private void printResults() throws IOException	
+	private void printResults() throws IOException
 	{
 		BufferedReader in = new BufferedReader(
 				new InputStreamReader(m_InputStream,
 				StandardCharsets.UTF_8));
-		
+
 		String line = null;
-		while((line = in.readLine()) != null) 
+		while((line = in.readLine()) != null)
 		{
 		    System.out.println(line);
 		}
 	}
-	
+
 	private void parseResults()
 	throws JsonParseException, IOException
 	{
@@ -119,14 +119,14 @@ public class NormalisedResultsParser implements Runnable
 		// Parse the results from the stream
 		int resultCount = 0;
 		while (token != null)
-		{			
+		{
 			NormalisedResult result = NormalisedResult.parseJson(parser, m_Logger);
 			m_Results.add(result);
 			resultCount++;
-			
+
 			token = parser.nextToken();
 		}
-		
+
 		m_Logger.info(resultCount + " records parsed from output");
 	}
 

@@ -410,14 +410,12 @@ public class JobManager
 	 * @param take
 	 * @param epochStartMs
 	 * @param epochEndMs
-	 * @param
 	 * @return
 	 * @throws UnknownJobException
 	 * @throws NativeProcessRunException
 	 */
 	public Pagination<AnomalyRecord> records(String jobId,
-			int skip, int take, long epochStartMs, long epochEndMs,
-			String scoreFilterField, double filterValue)
+			int skip, int take, long epochStartMs, long epochEndMs)
 	throws NativeProcessRunException, UnknownJobException
 	{
 		return records(jobId, skip, take, epochStartMs, epochEndMs,
@@ -537,7 +535,7 @@ public class JobManager
 	{
 
 		Map<String, Object> update = new HashMap<>();
-		update.put(JobDetails.LAST_DATA_TIME, new Date());
+		update.put(JobDetails.LAST_DATA_TIME, time);
 		update.put(JobDetails.STATUS, JobStatus.RUNNING);
 		return m_JobProvider.updateJob(jobId, update);
 	}

@@ -39,22 +39,26 @@ import java.util.List;
  * The job should have been created already and the job's data endpoint known
  * as it is the first argument to this program, the second is the file to upload.
  */
-public class StreamFile 
+public class StreamFile
 {
+	private StreamFile()
+	{
+	}
+
 	/**
-	 * The program expects 2 arguments a the Url of the job's data endpoint 
+	 * The program expects 2 arguments a the Url of the job's data endpoint
 	 * and the file to upload. The use the additional flag <code>--compressed</code>
 	 * if the data file is gzip compresseed and <code>--close</code> if you wish
-	 * to close the job once the upload is complete.  
-	 * 
+	 * to close the job once the upload is complete.
+	 *
 	 * @param args
-	 * @throws IOException 
+	 * @throws IOException
 	 */
-	public static void main(String[] args) 
+	public static void main(String[] args)
 	throws IOException
-	{	
+	{
 		List<String> argsList = Arrays.asList(args);
-		
+
 		if (argsList.size() < 2 || argsList.contains("--help"))
 		{
 			System.out.println("A filename and job id must be specified: ");
@@ -68,12 +72,12 @@ public class StreamFile
 			System.out.println("\t--help Show this help");
 			return;
 		}
-		
+
 		String url = args[0];
 		String filename = args[1];
 		boolean compressed = argsList.contains("--compressed");
 		boolean close = argsList.contains("--close");
-		
+
 		// extract the job id from the url
 		if (url.endsWith("/"))
 		{
@@ -84,10 +88,10 @@ public class StreamFile
 
 		lastIndex = url.lastIndexOf("/data");
 		String baseUrl = url.substring(0, lastIndex);
-				
-		
+
+
 		FileInputStream fs = new FileInputStream(new File(filename));
-		
+
 		try (EngineApiClient engineApiClient = new EngineApiClient())
 		{
 			long start = System.currentTimeMillis();
@@ -103,8 +107,8 @@ public class StreamFile
 
 			if (uploaded)
 			{
-				System.out.println(String.format("%s uploaded in %dms", 
-						filename, end - start));	
+				System.out.println(String.format("%s uploaded in %dms",
+						filename, end - start));
 			}
 		}
 	}

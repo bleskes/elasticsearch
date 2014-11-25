@@ -340,7 +340,6 @@ abstract public class ResourceWithJobManager
 			try
 			{
 				Date d = dateFormat.parse(date);
-				// TODO validate date
 				return d.getTime();
 			}
 			catch (ParseException pe)

@@ -81,6 +81,11 @@ public class ServerMain
 	 */
 	private static Server ms_Server;
 
+
+	private ServerMain()
+	{
+	}
+
 	public static void main(String[] args)
 	throws Exception
 	{

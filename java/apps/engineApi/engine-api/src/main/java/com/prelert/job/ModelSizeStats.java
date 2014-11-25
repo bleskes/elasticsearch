@@ -32,7 +32,7 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.prelert.rs.data.parsing.AutoDetectParseException;
+import com.prelert.rs.data.AutoDetectParseException;
 
 import org.apache.log4j.Logger;
 
@@ -56,7 +56,7 @@ public class ModelSizeStats
      * Elasticsearch type
      */
 	public static final String TYPE = "modelSizeStats";
-    
+
     private static final Logger LOGGER = Logger.getLogger(ModelSizeStats.class);
 
 	private long m_ModelBytes;

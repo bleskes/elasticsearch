@@ -146,9 +146,9 @@ abstract public class UsageReporter
 	/**
 	 * See {@linkplain #reportUsage()}
 	 * 
-	 * @param epoch_ms The time now - saved as the last update time
+	 * @param epochMs The time now - saved as the last update time
 	 */
-	private void reportUsage(long epoch_ms)
+	private void reportUsage(long epochMs)
 	{
 		m_Logger.info(String.format("An additional %dKiB, %d fields and %d records read by job %s",
 				m_BytesReadSinceLastReport >> 10, m_FieldsReadSinceLastReport, 
@@ -156,7 +156,7 @@ abstract public class UsageReporter
 
 		persistUsageCounts();
 
-		m_LastUpdateTimeMs = epoch_ms;
+		m_LastUpdateTimeMs = epochMs;
 		
 		m_BytesReadSinceLastReport = 0;
 		m_FieldsReadSinceLastReport = 0;

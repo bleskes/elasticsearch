@@ -71,6 +71,11 @@ import com.prelert.job.status.StatusReporter;
  */
 public class PipeToProcess
 {
+
+	private PipeToProcess()
+	{
+	}
+
 	/**
 	 * Read the csv input, transform to length encoded values and pipe
 	 * to the OutputStream.
@@ -689,7 +694,7 @@ public class PipeToProcess
 
 		if (gotFields[timeFieldIndex])
 		{
-			long missing = missingFieldCount(allFields, gotFields);
+			long missing = missingFieldCount(gotFields);
 			if (missing > 0)
 			{
 				reporter.reportMissingFields(missing);
@@ -732,7 +737,7 @@ public class PipeToProcess
 
 			if (gotFields[timeFieldIndex])
 			{
-				long missing = missingFieldCount(allFields, gotFields);
+				long missing = missingFieldCount(gotFields);
 				if (missing > 0)
 				{
 					reporter.reportMissingFields(missing);
@@ -851,7 +856,7 @@ public class PipeToProcess
 		//write record
 		if (gotFields[timeFieldIndex])
 		{
-			long missing = missingFieldCount(allFields, gotFields);
+			long missing = missingFieldCount(gotFields);
 			if (missing > 0)
 			{
 				reporter.reportMissingFields(missing);
@@ -921,7 +926,7 @@ public class PipeToProcess
 
 				if (gotFields[timeFieldIndex])
 				{
-					long missing = missingFieldCount(allFields, gotFields);
+					long missing = missingFieldCount(gotFields);
 					if (missing > 0)
 					{
 						reporter.reportMissingFields(missing);
@@ -977,7 +982,7 @@ public class PipeToProcess
 
 				if (gotFields[timeFieldIndex])
 				{
-					long missing = missingFieldCount(allFields, gotFields);
+					long missing = missingFieldCount(gotFields);
 					if (missing > 0)
 					{
 						reporter.reportMissingFields(missing);
@@ -1129,8 +1134,7 @@ public class PipeToProcess
 	 * @param gotFieldFlags
 	 * @return
 	 */
-	private static long missingFieldCount(String [] requiredFields,
-			boolean [] gotFieldFlags)
+	private static long missingFieldCount(boolean [] gotFieldFlags)
 	{
 		long count = 0;
 
