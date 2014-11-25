@@ -66,7 +66,11 @@ public class Detector
 	public static final String FREQ_RARE = "freq_rare";
 	public static final String METRIC = "metric";
 	public static final String MEAN = "mean";
+	public static final String HIGH_MEAN = "high_mean";
+	public static final String LOW_MEAN = "low_mean";
 	public static final String AVG = "avg";
+	public static final String HIGH_AVG = "high_avg";
+	public static final String LOW_AVG = "low_avg";
 	public static final String MIN = "min";
 	public static final String MAX = "max";
 	public static final String SUM = "sum";
@@ -85,6 +89,8 @@ public class Detector
 				FREQ_RARE,
 				METRIC,
 				MEAN, AVG,
+				HIGH_MEAN, HIGH_AVG,
+				LOW_MEAN, LOW_AVG,
 				MIN,
 				MAX,
 				SUM
@@ -109,6 +115,8 @@ public class Detector
 				DISTINCT_COUNT, DC,
 				METRIC,
 				MEAN, AVG,
+				HIGH_MEAN, HIGH_AVG,
+				LOW_MEAN, LOW_AVG,
 				MIN,
 				MAX,
 				SUM
