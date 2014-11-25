@@ -561,7 +561,7 @@ public class ProcessCtrl
 		command.add(timeFieldArg);
 
 		// Restoring the quantiles
-		if (quantilesState != null && quantilesState.getQuantilesKinds().size() > 0)
+		if (quantilesState != null && !quantilesState.getQuantilesKinds().isEmpty())
 		{
 			logger.info("Restoring quantiles for job '" + job.getId() + "'");
 
