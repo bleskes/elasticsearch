@@ -58,27 +58,27 @@ import com.prelert.rs.provider.RestApiException;
 @Path("/alerts")
 public class Alerts extends ResourceWithJobManager
 {
-	static final private Logger s_Logger = Logger.getLogger(Alerts.class);
+	private static final Logger LOGGER = Logger.getLogger(Alerts.class);
 
 	/**
 	 * The name of this endpoint
 	 */
-	static public final String ENDPOINT = "alerts";
+	public static final String ENDPOINT = "alerts";
 
 	/**
 	 * The severity query parameter
 	 */
-	static public final String SEVERITY_QUERY_PARAM = "severity";
+	public static final String SEVERITY_QUERY_PARAM = "severity";
 	/**
 	 * The anomaly score query parameter
 	 */
-	static public final String ANOMALY_SCORE_QUERY_PARAM = "score";
+	public static final String ANOMALY_SCORE_QUERY_PARAM = "score";
 
 
-	static private final DateFormat s_DateFormat = new SimpleDateFormat(ISO_8601_DATE_FORMAT);
-	static private final DateFormat s_DateFormatWithMs = new SimpleDateFormat(ISO_8601_DATE_FORMAT_WITH_MS);
+	private static final DateFormat s_DateFormat = new SimpleDateFormat(ISO_8601_DATE_FORMAT);
+	private static final DateFormat s_DateFormatWithMs = new SimpleDateFormat(ISO_8601_DATE_FORMAT_WITH_MS);
 
-	static private final DateFormat [] s_DateFormats = new DateFormat [] {
+	private static final DateFormat [] s_DateFormats = new DateFormat [] {
 		s_DateFormat, s_DateFormatWithMs};
 
 
@@ -95,7 +95,7 @@ public class Alerts extends ResourceWithJobManager
     {
     	boolean expand = true;
 
-		s_Logger.debug(String.format("Get %s alerts, skip = %d, take = %d"
+		LOGGER.debug(String.format("Get %s alerts, skip = %d, take = %d"
 				+ " start = '%s', end='%s'",
 				expand?"expanded ":"", skip, take, start, end));
 
@@ -106,7 +106,7 @@ public class Alerts extends ResourceWithJobManager
 			if (epochStart == 0) // could not be parsed
 			{
 				String msg = String.format(BAD_DATE_FROMAT_MSG, START_QUERY_PARAM, start);
-				s_Logger.info(msg);
+				LOGGER.info(msg);
 				throw new RestApiException(msg, ErrorCode.UNPARSEABLE_DATE_ARGUMENT,
 						Response.Status.BAD_REQUEST);
 			}
@@ -119,7 +119,7 @@ public class Alerts extends ResourceWithJobManager
 			if (epochEnd == 0) // could not be parsed
 			{
 				String msg = String.format(BAD_DATE_FROMAT_MSG, START_QUERY_PARAM, end);
-				s_Logger.info(msg);
+				LOGGER.info(msg);
 				throw new RestApiException(msg, ErrorCode.UNPARSEABLE_DATE_ARGUMENT,
 						Response.Status.BAD_REQUEST);
 			}
@@ -148,7 +148,7 @@ public class Alerts extends ResourceWithJobManager
     		setPagingUrls(ENDPOINT, alerts, queryParams);
     	}
 
-		s_Logger.debug(String.format("Return %d alerts", alerts.getDocuments().size()));
+		LOGGER.debug(String.format("Return %d alerts", alerts.getDocuments().size()));
 
 		return alerts;
     }
@@ -168,7 +168,7 @@ public class Alerts extends ResourceWithJobManager
     {
     	boolean expand = true;
 
-		s_Logger.debug(String.format("Get %s alerts for job %s, skip = %d, take = %d"
+		LOGGER.debug(String.format("Get %s alerts for job %s, skip = %d, take = %d"
 				+ " start = '%s', end='%s'",
 				expand?"expanded ":"", jobId, skip, take, start, end));
 
@@ -179,7 +179,7 @@ public class Alerts extends ResourceWithJobManager
 			if (epochStart == 0) // could not be parsed
 			{
 				String msg = String.format(BAD_DATE_FROMAT_MSG, START_QUERY_PARAM, start);
-				s_Logger.info(msg);
+				LOGGER.info(msg);
 				throw new RestApiException(msg, ErrorCode.UNPARSEABLE_DATE_ARGUMENT,
 						Response.Status.BAD_REQUEST);
 			}
@@ -192,7 +192,7 @@ public class Alerts extends ResourceWithJobManager
 			if (epochEnd == 0) // could not be parsed
 			{
 				String msg = String.format(BAD_DATE_FROMAT_MSG, START_QUERY_PARAM, end);
-				s_Logger.info(msg);
+				LOGGER.info(msg);
 				throw new RestApiException(msg, ErrorCode.UNPARSEABLE_DATE_ARGUMENT,
 						Response.Status.BAD_REQUEST);
 			}
@@ -227,7 +227,7 @@ public class Alerts extends ResourceWithJobManager
     		setPagingUrls(path, alerts, queryParams);
     	}
 
-		s_Logger.debug(String.format("Return %d alerts for job %s",
+		LOGGER.debug(String.format("Return %d alerts for job %s",
 				alerts.getDocumentCount(), jobId));
 
 		return alerts;

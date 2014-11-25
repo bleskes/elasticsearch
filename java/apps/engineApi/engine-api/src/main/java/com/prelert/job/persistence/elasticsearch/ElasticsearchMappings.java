@@ -47,38 +47,38 @@ import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
 
 /**
- * Static methods to create Elasticsearch mappings for the autodetect 
- * persisted objects/documents 
+ * Static methods to create Elasticsearch mappings for the autodetect
+ * persisted objects/documents
   */
-public class ElasticsearchMappings 
+public class ElasticsearchMappings
 {
 	/**
 	 * String constants used in mappings
 	 */
-	static final public String NOT_ANALYZED = "not_analyzed";
-	static final public String INDEX = "index";
-	static final public String NO = "no";
-	
-	/** 
-	 * Name of the field used to store the timestamp in Elasticsearch. 
-	 * Note the field name is different to {@link com.prelert.rs.data.Bucket#TIMESTAMP} used by the 
+	public static final String NOT_ANALYZED = "not_analyzed";
+	public static final String INDEX = "index";
+	public static final String NO = "no";
+
+	/**
+	 * Name of the field used to store the timestamp in Elasticsearch.
+	 * Note the field name is different to {@link com.prelert.rs.data.Bucket#TIMESTAMP} used by the
 	 * API Bucket Resource, and is chosen for consistency with the default field name used by
 	 * Logstash and Kibana.
 	 */
-	static final public String ES_TIMESTAMP = "@timestamp";
-	
-	
+	public static final String ES_TIMESTAMP = "@timestamp";
+
+
 	/**
 	 * Create the Elasticsearch mapping for {@linkplain com.prelert.job.JobDetails}.
 	 * The '_all' field is disabled as the document isn't meant to be searched.
-	 * 
+	 *
 	 * @return
 	 * @throws IOException
 	 */
-	static public XContentBuilder jobMapping()
+	public static XContentBuilder jobMapping()
 	throws IOException
 	{
-		XContentBuilder mapping = jsonBuilder()
+		return jsonBuilder()
 			.startObject()
 				.startObject(JobDetails.TYPE)
 					.startObject("properties")
@@ -171,19 +171,19 @@ public class ElasticsearchMappings
 										.endObject()
 										.startObject(Detector.FIELD_NAME)
 											.field("type", "string").field(INDEX, NOT_ANALYZED)
-										.endObject()	
+										.endObject()
 										.startObject(Detector.BY_FIELD_NAME)
 											.field("type", "string").field(INDEX, NOT_ANALYZED)
-										.endObject()	
+										.endObject()
 										.startObject(Detector.OVER_FIELD_NAME)
 											.field("type", "string").field(INDEX, NOT_ANALYZED)
-										.endObject()		
+										.endObject()
 										.startObject(Detector.PARTITION_FIELD_NAME)
 											.field("type", "string").field(INDEX, NOT_ANALYZED)
 										.endObject()
 										.startObject(Detector.USE_NULL)
 											.field("type", "boolean").field(INDEX, NOT_ANALYZED)
-										.endObject()	
+										.endObject()
 									.endObject()
 								.endObject()
 							.endObject()
@@ -196,9 +196,9 @@ public class ElasticsearchMappings
 								.endObject()
 								.startObject(AnalysisLimits.MAX_TIME_BUCKETS)
 										.field("type", "long").field(INDEX, NO)
-								.endObject()		
-							.endObject()	
-						.endObject()									
+								.endObject()
+							.endObject()
+						.endObject()
 						.startObject(JobDetails.DATA_DESCRIPTION)
 							.field("type", "object")
 							.startObject("properties")
@@ -207,7 +207,7 @@ public class ElasticsearchMappings
 								.endObject()
 								.startObject(DataDescription.TIME_FIELD_NAME)
 										.field("type", "string").field(INDEX, NOT_ANALYZED)
-								.endObject()	
+								.endObject()
 								.startObject(DataDescription.TIME_FORMAT)
 										.field("type", "string").field(INDEX, NOT_ANALYZED)
 								.endObject()
@@ -216,43 +216,41 @@ public class ElasticsearchMappings
 								.endObject()
 								.startObject(DataDescription.QUOTE_CHARACTER)
 										.field("type", "string").field(INDEX, NOT_ANALYZED)
-								.endObject()									
-							.endObject()	
-						.endObject()																		
-					.endObject() 
+								.endObject()
+							.endObject()
+						.endObject()
+					.endObject()
 					.startObject("_all")
 						.field("enabled", "false")
-					.endObject()								
+					.endObject()
 				.endObject()
 			.endObject();
-		
-		return mapping;
 	}
-	
-	
+
+
 	/**
 	 * Create the Elasticsearch mapping for {@linkplain com.prelert.rs.data.Bucket}.
 	 * The '_all' field is disabled as the document isn't meant to be searched.
-	 * 
+	 *
 	 * @return
 	 * @throws IOException
 	 */
-	static public XContentBuilder bucketMapping() 
+	public static XContentBuilder bucketMapping()
 	throws IOException
 	{
-		XContentBuilder mapping = jsonBuilder()
+		return jsonBuilder()
 			.startObject()
 				.startObject(Bucket.TYPE)
 					.startObject("_all")
 						.field("enabled", false)
-					.endObject()				
+					.endObject()
 					.startObject("properties")
 						.startObject(Bucket.ID)
 							.field("type", "string")
 						.endObject()
 						.startObject(ES_TIMESTAMP)
 							.field("type", "date")
-						.endObject()						
+						.endObject()
 						.startObject(Bucket.RAW_ANOMALY_SCORE)
 							.field("type", "double")
 						.endObject()
@@ -267,26 +265,24 @@ public class ElasticsearchMappings
 						.endObject()
 						.startObject(Bucket.EVENT_COUNT)
 							.field("type", "long")
-						.endObject()						
+						.endObject()
 					.endObject()
 				.endObject()
 		.endObject();
-			
-		return mapping;
 	}
-	
-	
+
+
 	/**
 	 * Create the Elasticsearch mapping for {@linkplain com.prelert.rs.data.Detector}.
 	 * The '_all' field is disabled as the document isn't meant to be searched.
-	 * 
+	 *
 	 * @return
 	 * @throws IOException
 	 */
-	static public XContentBuilder detectorMapping() 
+	public static XContentBuilder detectorMapping()
 	throws IOException
 	{
-		XContentBuilder mapping = jsonBuilder()
+		return jsonBuilder()
 			.startObject()
 				.startObject(com.prelert.rs.data.Detector.TYPE)
 					.startObject("_all")
@@ -299,23 +295,21 @@ public class ElasticsearchMappings
 					.endObject()
 				.endObject()
 			.endObject();
-			
-		return mapping;
 	}
-	
-	
+
+
 	/**
 	 * Create the Elasticsearch mapping for {@linkplain com.prelert.rs.data.Detector}.
 	 * The '_all' field is disabled as the document isn't meant to be searched.
 	 * Records have a _parent mapping to a {@linkplain com.prelert.rs.data.Bucket}.
-	 * 
+	 *
 	 * @return
 	 * @throws IOException
 	 */
-	static public XContentBuilder recordMapping() 
+	public static XContentBuilder recordMapping()
 	throws IOException
 	{
-		XContentBuilder mapping = jsonBuilder()
+		return jsonBuilder()
 			.startObject()
 				.startObject(AnomalyRecord.TYPE)
 					.startObject("_all")
@@ -330,28 +324,28 @@ public class ElasticsearchMappings
 						.endObject()
 						.startObject(AnomalyRecord.ACTUAL)
 							.field("type", "double").field(INDEX, NOT_ANALYZED)
-						.endObject()						
+						.endObject()
 						.startObject(AnomalyRecord.TYPICAL)
 							.field("type", "double").field(INDEX, NOT_ANALYZED)
-						.endObject()						
+						.endObject()
 						.startObject(AnomalyRecord.PROBABILITY)
 							.field("type", "double")
-						.endObject()		
+						.endObject()
 						.startObject(AnomalyRecord.FUNCTION)
 							.field("type", "string").field(INDEX, NOT_ANALYZED)
 						.endObject()
 						.startObject(AnomalyRecord.BY_FIELD_NAME)
 							.field("type", "string").field(INDEX, NOT_ANALYZED)
-						.endObject()	
+						.endObject()
 						.startObject(AnomalyRecord.BY_FIELD_VALUE)
 							.field("type", "string").field(INDEX, NOT_ANALYZED)
-						.endObject()		
+						.endObject()
 						.startObject(AnomalyRecord.FIELD_NAME)
 							.field("type", "string").field(INDEX, NOT_ANALYZED)
 						.endObject()
 						.startObject(AnomalyRecord.PARTITION_FIELD_NAME)
 							.field("type", "string").field(INDEX, NOT_ANALYZED)
-						.endObject()		
+						.endObject()
 						.startObject(AnomalyRecord.PARTITION_FIELD_VALUE)
 							.field("type", "string").field(INDEX, NOT_ANALYZED)
 						.endObject()
@@ -407,8 +401,6 @@ public class ElasticsearchMappings
 					.endObject()
 				.endObject()
 			.endObject();
-
-		return mapping;
 	}
 
 
@@ -422,10 +414,10 @@ public class ElasticsearchMappings
 	 * @return
 	 * @throws IOException
 	 */
-	static public XContentBuilder quantilesMapping()
+	public static XContentBuilder quantilesMapping()
 	throws IOException
 	{
-		XContentBuilder mapping = jsonBuilder()
+		return jsonBuilder()
 			.startObject()
 				.startObject(Quantiles.TYPE)
 					.startObject("_all")
@@ -438,8 +430,6 @@ public class ElasticsearchMappings
 					.endObject()
 				.endObject()
 			.endObject();
-
-		return mapping;
 	}
 
 
@@ -453,10 +443,10 @@ public class ElasticsearchMappings
 	 * @return
 	 * @throws IOException
 	 */
-	static public XContentBuilder modelStateMapping()
+	public static XContentBuilder modelStateMapping()
 	throws IOException
 	{
-		XContentBuilder mapping = jsonBuilder()
+		return jsonBuilder()
 			.startObject()
 				.startObject(ModelState.TYPE)
 					.field("enabled", false)
@@ -465,8 +455,6 @@ public class ElasticsearchMappings
 					.endObject()
 				.endObject()
 			.endObject();
-
-		return mapping;
 	}
 
 
@@ -476,10 +464,10 @@ public class ElasticsearchMappings
 	 * @return
 	 * @throws IOException
 	 */
-	static public XContentBuilder modelSizeStatsMapping()
+	public static XContentBuilder modelSizeStatsMapping()
 	throws IOException
 	{
-		XContentBuilder mapping = jsonBuilder()
+		return jsonBuilder()
 			.startObject()
 				.startObject(ModelSizeStats.TYPE)
 					.startObject("_all")
@@ -501,21 +489,19 @@ public class ElasticsearchMappings
 					.endObject()
 				.endObject()
 			.endObject();
-
-		return mapping;
 	}
 
 
 	/**
 	 * The Elasticsearch mappings for the usage documents
-	 * 
+	 *
 	 * @return
 	 * @throws IOException
 	 */
-	static public XContentBuilder usageMapping() 
+	public static XContentBuilder usageMapping()
 	throws IOException
 	{
-		XContentBuilder mapping = jsonBuilder()
+		return jsonBuilder()
 			.startObject()
 				.startObject(Usage.TYPE)
 					.startObject("_all")
@@ -524,43 +510,41 @@ public class ElasticsearchMappings
 					.startObject("properties")
 						.startObject(Usage.TIMESTAMP)
 							.field("type", "date")
-						.endObject()	
+						.endObject()
 						.startObject(Usage.INPUT_BYTES)
 							.field("type", "long")
-						.endObject()	
+						.endObject()
 						.startObject(Usage.INPUT_FIELD_COUNT)
 							.field("type", "long")
 						.endObject()
 						.startObject(Usage.INPUT_RECORD_COUNT)
 							.field("type", "long")
-						.endObject()						
+						.endObject()
 					.endObject()
 				.endObject()
 			.endObject();
-			
-		return mapping;
 	}
-	
-		
+
+
 	/**
 	 * Mapping for the saved data records
-	 *  
+	 *
 	 * @return
 	 * @throws IOException
 	 */
-	static public XContentBuilder inputDataMapping() 
+	public static XContentBuilder inputDataMapping()
 	throws IOException
 	{
-		XContentBuilder mapping = jsonBuilder()
+		return jsonBuilder()
 			.startObject()
 				.startObject(ElasticsearchJobDataPersister.TYPE)
 					.startObject("_all")
 						.field("enabled", false)
 					.endObject()
-					.startObject("properties")	
+					.startObject("properties")
 						.startObject("epoch")
 							.field("type", "date")
-						.endObject()					
+						.endObject()
 						.startObject(ElasticsearchJobDataPersister.FIELDS)
 							.field("type", "string")
 							.field("index_name", "field")
@@ -580,12 +564,10 @@ public class ElasticsearchMappings
 							.field("type", "string")
 							.field("index_name", "partitionField")
 							.field(INDEX, NOT_ANALYZED)
-						.endObject()							
+						.endObject()
 					.endObject()
 				.endObject()
 			.endObject();
-			
-		return mapping;
 	}
-	
+
 }

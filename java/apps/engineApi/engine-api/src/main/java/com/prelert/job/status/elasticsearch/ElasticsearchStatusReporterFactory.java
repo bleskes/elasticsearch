@@ -34,13 +34,13 @@ import com.prelert.job.status.StatusReporter;
 import com.prelert.job.status.StatusReporterFactory;
 import com.prelert.job.usage.UsageReporter;
 
-public class ElasticsearchStatusReporterFactory implements StatusReporterFactory 
+public class ElasticsearchStatusReporterFactory implements StatusReporterFactory
 {
 	private Client m_Client;
-	
+
 	/**
 	 * Construct the factory
-	 * 
+	 *
 	 * @param node The Elasticsearch node
 	 */
 	public ElasticsearchStatusReporterFactory(Client client)
@@ -50,10 +50,9 @@ public class ElasticsearchStatusReporterFactory implements StatusReporterFactory
 
 	@Override
 	public StatusReporter newStatusReporter(String jobId, JobDetails.Counts counts,
-			UsageReporter usageReporter, Logger logger) 
+			UsageReporter usageReporter, Logger logger)
 	{
-		StatusReporter reporter =  new ElasticsearchStatusReporter(m_Client, 
-				usageReporter, jobId, counts, logger);
-		return reporter;
+        return new ElasticsearchStatusReporter(m_Client, usageReporter, jobId,
+                counts, logger);
 	}
 }

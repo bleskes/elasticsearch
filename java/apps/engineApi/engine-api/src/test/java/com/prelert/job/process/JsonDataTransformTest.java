@@ -53,7 +53,7 @@ import com.prelert.job.usage.DummyUsageReporter;
 
 public class JsonDataTransformTest 
 {
-	static private Logger s_Logger = Logger.getLogger(JsonDataTransformTest.class);
+	private static Logger LOGGER = Logger.getLogger(JsonDataTransformTest.class);
 	
 	
 	/**
@@ -110,12 +110,12 @@ public class JsonDataTransformTest
 				new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
 		ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
 		
-		DummyUsageReporter usageReporter = new DummyUsageReporter("job_id", s_Logger);
+		DummyUsageReporter usageReporter = new DummyUsageReporter("job_id", LOGGER);
 		DummyStatusReporter statusReporter = new DummyStatusReporter(usageReporter);
 		DummyJobDataPersister dataPersister = new DummyJobDataPersister();
 		
 		pm.writeToJob(dd, ac, bis, bos, statusReporter, 
-				 dataPersister, s_Logger);
+				 dataPersister, LOGGER);
 		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 		
 		Assert.assertEquals(usageReporter.getTotalBytesRead(), 
@@ -242,11 +242,11 @@ public class JsonDataTransformTest
 				new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
 		ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
 		
-		DummyUsageReporter usageReporter = new DummyUsageReporter("job_id", s_Logger);
+		DummyUsageReporter usageReporter = new DummyUsageReporter("job_id", LOGGER);
 		DummyStatusReporter statusReporter = new DummyStatusReporter(usageReporter);
 		DummyJobDataPersister dp = new DummyJobDataPersister();
 		
-		pm.writeToJob(dd, ac, bis, bos, statusReporter, dp, s_Logger);
+		pm.writeToJob(dd, ac, bis, bos, statusReporter, dp, LOGGER);
 		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 		
 		Assert.assertEquals(usageReporter.getTotalBytesRead(), statusReporter.getBytesRead());
@@ -373,11 +373,11 @@ public class JsonDataTransformTest
 				new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
 		ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
 		
-		DummyUsageReporter usageReporter = new DummyUsageReporter("job_id", s_Logger);
+		DummyUsageReporter usageReporter = new DummyUsageReporter("job_id", LOGGER);
 		DummyStatusReporter statusReporter = new DummyStatusReporter(usageReporter);
 		DummyJobDataPersister dp = new DummyJobDataPersister();
 		
-		pm.writeToJob(dd, ac, bis, bos, statusReporter, dp, s_Logger);
+		pm.writeToJob(dd, ac, bis, bos, statusReporter, dp, LOGGER);
 		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 		
 		Assert.assertEquals(usageReporter.getTotalBytesRead(), 
@@ -506,11 +506,11 @@ public class JsonDataTransformTest
 				new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
 		ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
 		
-		DummyUsageReporter usageReporter = new DummyUsageReporter("job_id", s_Logger);
+		DummyUsageReporter usageReporter = new DummyUsageReporter("job_id", LOGGER);
 		DummyStatusReporter statusReporter = new DummyStatusReporter(usageReporter);
 		DummyJobDataPersister dp = new DummyJobDataPersister();
 		
-		pm.writeToJob(dd, ac, bis, bos, statusReporter, dp, s_Logger);
+		pm.writeToJob(dd, ac, bis, bos, statusReporter, dp, LOGGER);
 		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 		
 		Assert.assertEquals(usageReporter.getTotalBytesRead(), 
@@ -674,13 +674,13 @@ public class JsonDataTransformTest
 					new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
 			ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
 
-			DummyUsageReporter usageReporter = new DummyUsageReporter("job_id", s_Logger);
+			DummyUsageReporter usageReporter = new DummyUsageReporter("job_id", LOGGER);
 			DummyStatusReporter statusReporter = new DummyStatusReporter(usageReporter);
 			DummyJobDataPersister dp = new DummyJobDataPersister();
 			
 			DataDescription dd = dds[count++];
 
-			pm.writeToJob(dd, ac, bis, bos, statusReporter, dp, s_Logger);
+			pm.writeToJob(dd, ac, bis, bos, statusReporter, dp, LOGGER);
 			ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 
 			Assert.assertEquals(usageReporter.getTotalBytesRead(), 
@@ -825,11 +825,11 @@ public class JsonDataTransformTest
 					new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
 			ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
 
-			DummyUsageReporter usageReporter = new DummyUsageReporter("job_id", s_Logger);
+			DummyUsageReporter usageReporter = new DummyUsageReporter("job_id", LOGGER);
 			DummyStatusReporter statusReporter = new DummyStatusReporter(usageReporter);
 			DummyJobDataPersister dp = new DummyJobDataPersister();
 			
-			pm.writeToJob(dd, ac, bis, bos, statusReporter, dp, s_Logger);
+			pm.writeToJob(dd, ac, bis, bos, statusReporter, dp, LOGGER);
 			ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 			
 			Assert.assertEquals(usageReporter.getTotalBytesRead(), 
@@ -952,11 +952,11 @@ public class JsonDataTransformTest
 				new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
 		ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
 
-		DummyUsageReporter usageReporter = new DummyUsageReporter("job_id", s_Logger);
+		DummyUsageReporter usageReporter = new DummyUsageReporter("job_id", LOGGER);
 		DummyStatusReporter statusReporter = new DummyStatusReporter(usageReporter);
 		DummyJobDataPersister dp = new DummyJobDataPersister();
 		
-		pm.writeToJob(dd, ac, bis, bos, statusReporter, dp, s_Logger);
+		pm.writeToJob(dd, ac, bis, bos, statusReporter, dp, LOGGER);
 		ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 			
 		Assert.assertEquals(usageReporter.getTotalBytesRead(), 
@@ -1100,11 +1100,11 @@ public class JsonDataTransformTest
 					new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
 			ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
 
-			DummyUsageReporter usageReporter = new DummyUsageReporter("job_id", s_Logger);
+			DummyUsageReporter usageReporter = new DummyUsageReporter("job_id", LOGGER);
 			DummyStatusReporter statusReporter = new DummyStatusReporter(usageReporter);
 			DummyJobDataPersister dp = new DummyJobDataPersister();
 			
-			pm.writeToJob(dd, ac, bis, bos, statusReporter, dp, s_Logger);
+			pm.writeToJob(dd, ac, bis, bos, statusReporter, dp, LOGGER);
 			ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 
 			Assert.assertEquals(usageReporter.getTotalBytesRead(), 

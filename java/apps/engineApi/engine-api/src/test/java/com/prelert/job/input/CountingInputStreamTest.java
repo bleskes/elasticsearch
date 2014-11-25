@@ -42,12 +42,12 @@ import com.prelert.job.usage.DummyUsageReporter;
 
 public class CountingInputStreamTest 
 {
-	static private Logger s_Logger = Logger.getLogger(CountingInputStreamTest.class);
+	private static Logger LOGGER = Logger.getLogger(CountingInputStreamTest.class);
 
 	@Test	
 	public void testLengthEncodedWriter() throws IOException
 	{
-		DummyUsageReporter usageReporter = new DummyUsageReporter("", s_Logger);
+		DummyUsageReporter usageReporter = new DummyUsageReporter("", LOGGER);
 		DummyStatusReporter statusReporter = new DummyStatusReporter(usageReporter);
 		
 		InputStream source = new ByteArrayInputStream("123".getBytes(StandardCharsets.UTF_8));
@@ -70,7 +70,7 @@ public class CountingInputStreamTest
 		source = new ByteArrayInputStream(("To the man who only has a hammer,"
 				+ " everything he encounters begins to look like a nail.").getBytes(StandardCharsets.UTF_8));
 		
-		usageReporter = new DummyUsageReporter("", s_Logger);
+		usageReporter = new DummyUsageReporter("", LOGGER);
 		statusReporter = new DummyStatusReporter(usageReporter);
 		
 		try (CountingInputStream counting = new CountingInputStream(source, 
@@ -92,7 +92,7 @@ public class CountingInputStreamTest
 		source = new ByteArrayInputStream(("To the man who only has a hammer,"
 				+ " everything he encounters begins to look like a nail.").getBytes(StandardCharsets.UTF_8));
 		
-		usageReporter = new DummyUsageReporter("", s_Logger);
+		usageReporter = new DummyUsageReporter("", LOGGER);
 		statusReporter = new DummyStatusReporter(usageReporter);
 		
 		try (CountingInputStream counting = new CountingInputStream(source, 

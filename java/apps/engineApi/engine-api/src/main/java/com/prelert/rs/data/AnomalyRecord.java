@@ -54,44 +54,44 @@ public class AnomalyRecord
 	/**
 	 * Serialisation fields
 	 */
-	static final public String TYPE = "record";
+	public static final String TYPE = "record";
 
 	/**
 	 * Data store ID field
 	 */
-	static final public String ID = "id";
+	public static final String ID = "id";
 
 	/**
 	 * Result fields (all detector types)
 	 */
-	static final public String PROBABILITY = "probability";
-	static final public String BY_FIELD_NAME = "byFieldName";
-	static final public String BY_FIELD_VALUE = "byFieldValue";
-	static final public String PARTITION_FIELD_NAME = "partitionFieldName";
-	static final public String PARTITION_FIELD_VALUE = "partitionFieldValue";
-	static final public String FUNCTION = "function";
-	static final public String TYPICAL = "typical";
-	static final public String ACTUAL = "actual";
+	public static final String PROBABILITY = "probability";
+	public static final String BY_FIELD_NAME = "byFieldName";
+	public static final String BY_FIELD_VALUE = "byFieldValue";
+	public static final String PARTITION_FIELD_NAME = "partitionFieldName";
+	public static final String PARTITION_FIELD_VALUE = "partitionFieldValue";
+	public static final String FUNCTION = "function";
+	public static final String TYPICAL = "typical";
+	public static final String ACTUAL = "actual";
 	
 	/**
 	 * Metric Results (including population metrics)
 	 */
-	static final public String FIELD_NAME = "fieldName";
+	public static final String FIELD_NAME = "fieldName";
 
 	/**
 	 * Population results
 	 */
-	static final public String OVER_FIELD_NAME = "overFieldName";
-	static final public String OVER_FIELD_VALUE = "overFieldValue";
-	static final public String CAUSES = "causes";
+	public static final String OVER_FIELD_NAME = "overFieldName";
+	public static final String OVER_FIELD_VALUE = "overFieldValue";
+	public static final String CAUSES = "causes";
 
 	/**
 	 * Normalisation
 	 */
-	static final public String ANOMALY_SCORE = "anomalyScore";
-	static final public String NORMALIZED_PROBABILITY = "normalizedProbability";
+	public static final String ANOMALY_SCORE = "anomalyScore";
+	public static final String NORMALIZED_PROBABILITY = "normalizedProbability";
 	
-	private static final Logger s_Logger = Logger.getLogger(AnomalyRecord.class);
+	private static final Logger LOGGER = Logger.getLogger(AnomalyRecord.class);
 	
 	private String m_DetectorName;
 	private int m_IdNum;
@@ -163,7 +163,7 @@ public class AnomalyRecord
 		}
 		if (idStart <= epochLen)
 		{
-			s_Logger.error("Anomaly record ID not in expected format: " + id);
+			LOGGER.error("Anomaly record ID not in expected format: " + id);
 			return;
 		}
 		m_Parent = id.substring(0, epochLen).intern();
@@ -379,7 +379,7 @@ public class AnomalyRecord
 	 * @throws IOException
 	 * @throws AutoDetectParseException
 	 */
-	static public AnomalyRecord parseJson(JsonParser parser)
+	public static AnomalyRecord parseJson(JsonParser parser)
 	throws JsonParseException, IOException, AutoDetectParseException
 	{
 		AnomalyRecord record = new AnomalyRecord();
@@ -389,7 +389,7 @@ public class AnomalyRecord
 		{
 			String msg = "Cannot parse anomaly record. First token '" +
 					parser.getText() + ", is not the start object token";
-			s_Logger.error(msg);
+			LOGGER.error(msg);
 			throw new AutoDetectParseException(msg);
 		}
 
@@ -399,10 +399,10 @@ public class AnomalyRecord
 			switch(token)
 			{
 			case START_OBJECT:
-				s_Logger.error("Start object parsed in anomaly record");
+				LOGGER.error("Start object parsed in anomaly record");
 				break;
 			case END_OBJECT:
-				s_Logger.error("End object parsed in anomaly record");
+				LOGGER.error("End object parsed in anomaly record");
 				break;
 			case FIELD_NAME:
 				String fieldName = parser.getCurrentName();
@@ -416,7 +416,7 @@ public class AnomalyRecord
 					}
 					else
 					{
-						s_Logger.warn("Cannot parse " + fieldName + " : " + parser.getText()
+						LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
 								+ " as a double");
 					}
 					break;
@@ -428,7 +428,7 @@ public class AnomalyRecord
 					}
 					else
 					{
-						s_Logger.warn("Cannot parse " + fieldName + " : " + parser.getText()
+						LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
 								+ " as a double");
 					}
 					break;
@@ -440,7 +440,7 @@ public class AnomalyRecord
 					}
 					else
 					{
-						s_Logger.warn("Cannot parse " + fieldName + " : " + parser.getText()
+						LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
 								+ " as a double");
 					}
 					break;
@@ -452,7 +452,7 @@ public class AnomalyRecord
 					}
 					else
 					{
-						s_Logger.warn("Cannot parse " + fieldName + " : " + parser.getText()
+						LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
 								+ " as a string");
 					}
 					break;
@@ -464,7 +464,7 @@ public class AnomalyRecord
 					}
 					else
 					{
-						s_Logger.warn("Cannot parse " + fieldName + " : " + parser.getText()
+						LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
 								+ " as a string");
 					}
 					break;
@@ -476,7 +476,7 @@ public class AnomalyRecord
 					}
 					else
 					{
-						s_Logger.warn("Cannot parse " + fieldName + " : " + parser.getText()
+						LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
 								+ " as a string");
 					}
 					break;
@@ -488,7 +488,7 @@ public class AnomalyRecord
 					}
 					else
 					{
-						s_Logger.warn("Cannot parse " + fieldName + " : " + parser.getText()
+						LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
 								+ " as a string");
 					}
 					break;
@@ -500,7 +500,7 @@ public class AnomalyRecord
 					}
 					else
 					{
-						s_Logger.warn("Cannot parse " + fieldName + " : " + parser.getText()
+						LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
 								+ " as a string");
 					}
 					break;
@@ -512,7 +512,7 @@ public class AnomalyRecord
 					}
 					else
 					{
-						s_Logger.warn("Cannot parse " + fieldName + " : " + parser.getText()
+						LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
 								+ " as a double");
 					}
 					break;
@@ -524,7 +524,7 @@ public class AnomalyRecord
 					}
 					else
 					{
-						s_Logger.warn("Cannot parse " + fieldName + " : " + parser.getText()
+						LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
 								+ " as a double");
 					}
 					break;
@@ -536,7 +536,7 @@ public class AnomalyRecord
 					}
 					else
 					{
-						s_Logger.warn("Cannot parse " + fieldName + " : " + parser.getText()
+						LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
 								+ " as a string");
 					}
 					break;
@@ -548,7 +548,7 @@ public class AnomalyRecord
 					}
 					else
 					{
-						s_Logger.warn("Cannot parse " + fieldName + " : " + parser.getText()
+						LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
 								+ " as a string");
 					}
 					break;
@@ -560,7 +560,7 @@ public class AnomalyRecord
 					}
 					else
 					{
-						s_Logger.warn("Cannot parse " + fieldName + " : " + parser.getText()
+						LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
 								+ " as a string");
 					}
 					break;
@@ -569,7 +569,7 @@ public class AnomalyRecord
 					if (token != JsonToken.START_ARRAY)
 					{
 						String msg = "Invalid value Expecting an array of causes";
-						s_Logger.warn(msg);
+						LOGGER.warn(msg);
 						throw new AutoDetectParseException(msg);
 					}
 					
@@ -583,13 +583,13 @@ public class AnomalyRecord
 					}
 					break;
 				default:
-					s_Logger.warn(String.format("Parse error unknown field in Anomaly Record %s:%s",
+					LOGGER.warn(String.format("Parse error unknown field in Anomaly Record %s:%s",
 							fieldName, parser.nextTextValue()));
 					break;
 				}
 				break;
 			default:
-				s_Logger.warn("Parsing error: Only simple fields expected in Anomaly Record not "
+				LOGGER.warn("Parsing error: Only simple fields expected in Anomaly Record not "
 								+ token);
 				break;
 			}

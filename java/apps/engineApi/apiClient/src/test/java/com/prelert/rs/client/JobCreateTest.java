@@ -51,7 +51,7 @@ import com.prelert.rs.data.ApiError;
  */
 public class JobCreateTest
 {
-	private final static Logger s_Logger = Logger.getLogger(JobCreateTest.class);
+	private static final Logger LOGGER = Logger.getLogger(JobCreateTest.class);
 
 	/**
 	 * The Engine API base Url
@@ -61,7 +61,7 @@ public class JobCreateTest
 	/**
 	 * Runnable class to create the new jobs
 	 */
-	static private class JobCreator implements Runnable
+	private static class JobCreator implements Runnable
 	{
 		private int m_NumJobs;
 		private JobConfiguration m_JobConfig;
@@ -143,7 +143,7 @@ public class JobCreateTest
 
 		if (args.length == 0)
 		{
-			s_Logger.error("This program has one argument the base Url of the"
+			LOGGER.error("This program has one argument the base Url of the"
 					+ " REST API");
 			return;
 		}
@@ -179,7 +179,7 @@ public class JobCreateTest
 			}
 			catch (InterruptedException e)
 			{
-				s_Logger.error("Interupted joining test thread", e);
+				LOGGER.error("Interupted joining test thread", e);
 			}
 		}
 
@@ -194,7 +194,7 @@ public class JobCreateTest
 					ApiError error = client.getLastError();
 					if (error != null)
 					{
-						s_Logger.error(error.toJson());
+						LOGGER.error(error.toJson());
 					}
 				}
 			}

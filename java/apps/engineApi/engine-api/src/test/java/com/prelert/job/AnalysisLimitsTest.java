@@ -25,36 +25,31 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.rs.resources.data;
+package com.prelert.job;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
-import com.prelert.job.JobInUseException;
-import com.prelert.job.UnknownJobException;
-import com.prelert.job.manager.JobManager;
-import com.prelert.job.process.NativeProcessRunException;
-
-public class UploadCommitterTest
+public class AnalysisLimitsTest
 {
-
-    @Test(expected = NullPointerException.class)
-    public void testConstructor_GivenNullJobManager()
+    @Test
+    public void testEquals_GivenEqual()
     {
-        new UploadCommitter(null);
+        AnalysisLimits analysisLimits1 = new AnalysisLimits(10, 100);
+        AnalysisLimits analysisLimits2 = new AnalysisLimits(10, 100);
+
+        assertTrue(analysisLimits1.equals(analysisLimits2));
+        assertTrue(analysisLimits2.equals(analysisLimits1));
     }
 
     @Test
-    public void testCommitUpload() throws UnknownJobException, NativeProcessRunException,
-            JobInUseException
+    public void testHashCode_GivenEqual()
     {
-        JobManager jobManager = mock(JobManager.class);
-        UploadCommitter uploadCommitter = new UploadCommitter(jobManager);
+        AnalysisLimits analysisLimits1 = new AnalysisLimits(10, 100);
+        AnalysisLimits analysisLimits2 = new AnalysisLimits(10, 100);
 
-        uploadCommitter.commitUpload("foo");
-
-        verify(jobManager).finishJob("foo");
+        assertEquals(analysisLimits1.hashCode(), analysisLimits2.hashCode());
     }
 }

@@ -45,9 +45,9 @@ import org.apache.commons.lang.SystemUtils;
 import org.apache.log4j.Logger;
 
 import com.prelert.job.AnalysisConfig;
-import com.prelert.job.Detector;
 import com.prelert.job.AnalysisLimits;
 import com.prelert.job.DataDescription;
+import com.prelert.job.Detector;
 import com.prelert.job.JobDetails;
 import com.prelert.job.quantiles.QuantilesState;
 
@@ -59,187 +59,187 @@ import com.prelert.job.quantiles.QuantilesState;
  * of LIB_PATH or PRELERT_HOME are overwritten.
  *
  * This class first needs to know where PRELERT_HOME is so it checks for
- * the system property <b>prelert.home</b> and failing that looks for the 
+ * the system property <b>prelert.home</b> and failing that looks for the
  * PRELERT_HOME env var. If neither exist prelert home is set to an empty string.
  */
-public class ProcessCtrl 
+public class ProcessCtrl
 {
 	/**
 	 * System property storing the Elasticsearch HTTP port
 	 */
-	static final public String ES_HTTP_PORT_PROP = "es.http.port";
+	public static final String ES_HTTP_PORT_PROP = "es.http.port";
 
 	/**
 	 * Default Elasticsearch HTTP port
 	 */
-	static final public String DEFAULT_ES_HTTP_PORT = "9200";
+	public static final String DEFAULT_ES_HTTP_PORT = "9200";
 
 	/**
 	 * Elasticsearch HTTP port we'll pass on to the Autodetect API program
 	 */
-	static final public String ES_HTTP_PORT;
+	public static final String ES_HTTP_PORT;
 
 	/**
 	 * Autodetect API native program name
 	 */
-	static final public String AUTODETECT_API = "prelert_autodetect_api";
+	public static final String AUTODETECT_API = "prelert_autodetect_api";
 	/**
 	 * The normalisation native program name
 	 */
-	static final public String NORMALIZE_API = "prelert_normalize_api";	
+	public static final String NORMALIZE_API = "prelert_normalize_api";
 	/**
 	 * The location of Prelert Home. Equivalent to $PRELERT_HOME
 	 */
-	static final public String PRELERT_HOME;
+	public static final String PRELERT_HOME;
 	/**
 	 * The base log file directory. Equivalent to $PRELERT_HOME/logs,
 	 * however, always use this separate field as in future we may
 	 * wish to store log files separately to $PRELERT_HOME on Windows.
 	 */
-	static final public String LOG_DIR;	
+	public static final String LOG_DIR;
 	/**
 	 * The config directory. Equivalent to $PRELERT_HOME/config
 	 */
-	static final public String CONFIG_DIR;	
+	public static final String CONFIG_DIR;
 	/**
-	 * The full to the autodetect program 
+	 * The full to the autodetect program
 	 */
-	static final public String AUTODETECT_PATH;
+	public static final String AUTODETECT_PATH;
 	/**
 	 *  The full to the normalisation program
 	 */
-	static final public String NORMALIZE_PATH; 
+	public static final String NORMALIZE_PATH;
 	/**
 	 * Equivalent to $PRELERT_HOME/lib + $PRELERT_HOME/cots/lib
 	 * (or $PRELERT_HOME/cots/bin on Windows)
 	 */
-	static final public String LIB_PATH;
+	public static final String LIB_PATH;
 	/**
 	 * The name of the platform path environment variable.
 	 * See {@linkplain #OSX_LIB_PATH_ENV}, {@linkplain #LINUX_LIB_PATH_ENV}
 	 * and {@linkplain #WIN_LIB_PATH_ENV}, {@linkplain #SOLARIS_LIB_PATH_ENV}
 	 */
-	static final public String LIB_PATH_ENV;	
+	public static final String LIB_PATH_ENV;
 	/**
 	 * Name of the System property containing the value of Prelert Home
 	 */
-	static final public String PRELERT_HOME_PROPERTY = "prelert.home";
+	public static final String PRELERT_HOME_PROPERTY = "prelert.home";
 	/**
-	 * Name of the environment variable PRELERT_HOME 
+	 * Name of the environment variable PRELERT_HOME
 	 */
-	static final public String PRELERT_HOME_ENV = "PRELERT_HOME";
+	public static final String PRELERT_HOME_ENV = "PRELERT_HOME";
 	/**
 	 * Name of the System property path to the logs directory
 	 */
-	static final public String PRELERT_LOGS_PROPERTY = "prelert.logs";
+	public static final String PRELERT_LOGS_PROPERTY = "prelert.logs";
 	/**
-	 * Name of the environment variable PRELERT_LOGS 
+	 * Name of the environment variable PRELERT_LOGS
 	 */
-	static final public String PRELERT_LOGS_ENV = "PRELERT_LOGS";
+	public static final String PRELERT_LOGS_ENV = "PRELERT_LOGS";
 	/**
 	 * OSX library path variable
 	 */
-	static final public String OSX_LIB_PATH_ENV = "DYLD_LIBRARY_PATH";
+	public static final String OSX_LIB_PATH_ENV = "DYLD_LIBRARY_PATH";
 	/**
 	 * Linux library path variable
-	 */	
-	static final public String LINUX_LIB_PATH_ENV = "LD_LIBRARY_PATH";
+	 */
+	public static final String LINUX_LIB_PATH_ENV = "LD_LIBRARY_PATH";
 	/**
 	 * Windows library path variable
-	 */	
-	static final public String WIN_LIB_PATH_ENV = "Path";
+	 */
+	public static final String WIN_LIB_PATH_ENV = "Path";
 	/**
 	 * Solaris library path variable
-	 */	
-	static final public String SOLARIS_LIB_PATH_ENV = "LD_LIBRARY_PATH_64";
-	
+	 */
+	public static final String SOLARIS_LIB_PATH_ENV = "LD_LIBRARY_PATH_64";
+
 	/*
 	 * General arguments
 	 */
-	static final public String LOG_ID_ARG = "--logid=";
+	public static final String LOG_ID_ARG = "--logid=";
 
 	/*
 	 * Arguments used by both prelert_autodetect_api and prelert_normalize_api
 	 */
-	static final public String BUCKET_SPAN_ARG = "--bucketspan=";
-	static final public String LENGTH_ENCODED_INPUT_ARG = "--lengthEncodedInput";
-	static final public String SYS_STATE_CHANGE_ARG = "--sysChangeState=";
-	static final public String UNUSUAL_STATE_ARG = "--unusualState=";
-	static final public String DELETE_STATE_FILES_ARG = "--deleteStateFiles";
-	static final public String MODEL_CONFIG_ARG = "--modelconfig=";
+	public static final String BUCKET_SPAN_ARG = "--bucketspan=";
+	public static final String LENGTH_ENCODED_INPUT_ARG = "--lengthEncodedInput";
+	public static final String SYS_STATE_CHANGE_ARG = "--sysChangeState=";
+	public static final String UNUSUAL_STATE_ARG = "--unusualState=";
+	public static final String DELETE_STATE_FILES_ARG = "--deleteStateFiles";
+	public static final String MODEL_CONFIG_ARG = "--modelconfig=";
 
 	/*
 	 * Arguments used by prelert_autodetect_api
 	 */
-	static final public String FIELD_CONFIG_ARG = "--fieldconfig=";
-	static final public String LIMIT_CONFIG_ARG = "--limitconfig=";
-	static final public String BATCH_SPAN_ARG = "--batchspan=";
-	static final public String PERIOD_ARG = "--period=";
-	static final public String SUMMARY_COUNT_FIELD_ARG = "--summarycountfield=";
-	static final public String DELIMITER_ARG = "--delimiter=";
-	static final public String TIME_FIELD_ARG = "--timefield=";
-	static final public String PERSIST_URL_BASE_ARG = "--persistUrlBase=";
-	static final public String PERSIST_INTERVAL_ARG = "--persistInterval=10800"; // 3 hours
-	static final public String VERSION_ARG = "--version";
-	static final public String INFO_ARG = "--info";
-	static final public String MAX_ANOMALY_RECORDS_ARG = "--maxAnomalyRecords=500";
+	public static final String FIELD_CONFIG_ARG = "--fieldconfig=";
+	public static final String LIMIT_CONFIG_ARG = "--limitconfig=";
+	public static final String BATCH_SPAN_ARG = "--batchspan=";
+	public static final String PERIOD_ARG = "--period=";
+	public static final String SUMMARY_COUNT_FIELD_ARG = "--summarycountfield=";
+	public static final String DELIMITER_ARG = "--delimiter=";
+	public static final String TIME_FIELD_ARG = "--timefield=";
+	public static final String PERSIST_URL_BASE_ARG = "--persistUrlBase=";
+	public static final String PERSIST_INTERVAL_ARG = "--persistInterval=10800"; // 3 hours
+	public static final String VERSION_ARG = "--version";
+	public static final String INFO_ARG = "--info";
+	public static final String MAX_ANOMALY_RECORDS_ARG = "--maxAnomalyRecords=500";
 
 
 	/**
 	 * Name of the model config file
 	 */
-	static final public String PRELERT_MODEL_CONF = "prelertmodel.conf";
-	
+	public static final String PRELERT_MODEL_CONF = "prelertmodel.conf";
+
 	/**
-	 * The unknown analytics version number string returned when the version 
-	 * cannot be read 
+	 * The unknown analytics version number string returned when the version
+	 * cannot be read
 	 */
-	static final public String UNKNOWN_VERSION = "Unknown version of the analytics";
-	
+	public static final String UNKNOWN_VERSION = "Unknown version of the analytics";
+
 	/**
 	 * Persisted quantiles are written to disk so they can be read by
 	 * the autodetect program.  All quantiles files have this extension.
 	 */
-	static final public String QUANTILES_FILE_EXTENSION = ".xml";
-			
+	public static final String QUANTILES_FILE_EXTENSION = ".xml";
+
 	/*
 	 * command line args
 	 */
-	static final public String BY_ARG = "by";
-	static final public String OVER_ARG = "over";
-	
+	public static final String BY_ARG = "by";
+	public static final String OVER_ARG = "over";
+
 	/*
 	 * Field config file strings
 	 */
-	static final public String DOT_IS_ENABLED = ".isEnabled";
-	static final public String DOT_USE_NULL = ".useNull";
-	static final public String DOT_BY = ".by";
-	static final public String DOT_OVER = ".over";
-	static final public String DOT_PARTITION = ".partition";
-	static final public char NEW_LINE = '\n';
-	
+	public static final String DOT_IS_ENABLED = ".isEnabled";
+	public static final String DOT_USE_NULL = ".useNull";
+	public static final String DOT_BY = ".by";
+	public static final String DOT_OVER = ".over";
+	public static final String DOT_PARTITION = ".partition";
+	public static final char NEW_LINE = '\n';
+
 	/*
 	 * The configuration fields used in limits.conf
 	 */
-	static final public String MAX_FIELD_VALUES_CONFIG_STR = "maxfieldvalues";
-	static final public String MAX_TIME_BUCKETS_CONFIG_STR = "maxtimebuckets";	
+	public static final String MAX_FIELD_VALUES_CONFIG_STR = "maxfieldvalues";
+	public static final String MAX_TIME_BUCKETS_CONFIG_STR = "maxtimebuckets";
 
 
 	/*
 	 * Normalisation input fields
 	 */
-	static final public String PROBABILITY = "probability";
-	static final public String RAW_ANOMALY_SCORE = "rawAnomalyScore";
-	
-	
-	
+	public static final String PROBABILITY = "probability";
+	public static final String RAW_ANOMALY_SCORE = "rawAnomalyScore";
+
+
+
 	/**
 	 * Static initialisation finds Elasticsearch HTTP port, Prelert home and the
 	 * path to the binaries.  It also sets the lib path to
 	 * PRELERT_HOME/(lib|bin) + PRELERT_HOME/cots/(lib|bin)
 	 */
 	static
-	{	
+	{
 		if (System.getProperty(ES_HTTP_PORT_PROP) != null)
 		{
 			ES_HTTP_PORT = System.getProperty(ES_HTTP_PORT_PROP);
@@ -258,7 +258,7 @@ public class ProcessCtrl
 		{
 			prelertHome = System.getenv().get(PRELERT_HOME_ENV);
 		}
-		
+
 		String logPath = null;
 		if (System.getProperty(PRELERT_LOGS_PROPERTY) != null)
 		{
@@ -268,27 +268,27 @@ public class ProcessCtrl
 		{
 			logPath = System.getenv().get(PRELERT_LOGS_ENV);
 		}
-		
-		PRELERT_HOME = prelertHome; 
-		File executable = new File(new File(PRELERT_HOME, "bin"), AUTODETECT_API);		
+
+		PRELERT_HOME = prelertHome;
+		File executable = new File(new File(PRELERT_HOME, "bin"), AUTODETECT_API);
 		AUTODETECT_PATH = executable.getPath();
-		
-		executable = new File(new File(PRELERT_HOME, "bin"), NORMALIZE_API);	
+
+		executable = new File(new File(PRELERT_HOME, "bin"), NORMALIZE_API);
 		NORMALIZE_PATH = executable.getPath();
-		
+
 		if (logPath != null)
 		{
 			LOG_DIR = logPath;
 		}
 		else
 		{
-			File logDir = new File(PRELERT_HOME, "logs");	
+			File logDir = new File(PRELERT_HOME, "logs");
 			LOG_DIR = logDir.toString();
 		}
-		
-		File configDir = new File(PRELERT_HOME, "config");	
+
+		File configDir = new File(PRELERT_HOME, "config");
 		CONFIG_DIR = configDir.toString();
-				
+
 		String libSubDirectory = "lib";
 		if (SystemUtils.IS_OS_MAC_OSX)
 		{
@@ -301,24 +301,24 @@ public class ProcessCtrl
 		}
 		else if (SystemUtils.IS_OS_LINUX)
 		{
-			LIB_PATH_ENV = LINUX_LIB_PATH_ENV; 
+			LIB_PATH_ENV = LINUX_LIB_PATH_ENV;
 		}
 		else if (SystemUtils.IS_OS_SUN_OS)
 		{
-			LIB_PATH_ENV = SOLARIS_LIB_PATH_ENV; 
+			LIB_PATH_ENV = SOLARIS_LIB_PATH_ENV;
 		}
-		else 
+		else
 		{
 			throw new UnsupportedOperationException("Unsupported platform " + SystemUtils.OS_NAME);
 		}
-		
+
 		File libDir = new File(PRELERT_HOME, libSubDirectory);
 		File cotsDir = new File(new File(PRELERT_HOME, "cots"), libSubDirectory);
 		LIB_PATH = libDir.getPath() + File.pathSeparatorChar + cotsDir.getPath();
 	}
-	
-	static final private Logger s_Logger = Logger.getLogger(ProcessCtrl.class);
-	
+
+	private static final Logger LOGGER = Logger.getLogger(ProcessCtrl.class);
+
 	static String s_AnalyticsVersion;
 
 
@@ -326,32 +326,32 @@ public class ProcessCtrl
 	 * Set up an environment containing the PRELERT_HOME and LD_LIBRARY_PATH
 	 * (or equivalent) environment variables.
 	 */
-	static private void buildEnvironment(ProcessBuilder pb)
+	private static void buildEnvironment(ProcessBuilder pb)
 	{
 		// Always clear inherited environment variables
 		pb.environment().clear();
 
-		s_Logger.info(String.format("%s=%s", PRELERT_HOME_ENV, PRELERT_HOME));
+		LOGGER.info(String.format("%s=%s", PRELERT_HOME_ENV, PRELERT_HOME));
 		pb.environment().put(PRELERT_HOME_ENV, PRELERT_HOME);
 
-		s_Logger.info(String.format("%s=%s", LIB_PATH_ENV, LIB_PATH));
+		LOGGER.info(String.format("%s=%s", LIB_PATH_ENV, LIB_PATH));
 		pb.environment().put(LIB_PATH_ENV, LIB_PATH);
 	}
 
 
 	synchronized public String getAnalyticsVersion()
 	{
-		if (s_AnalyticsVersion != null) 
+		if (s_AnalyticsVersion != null)
 		{
 			return s_AnalyticsVersion;
 		}
-		
+
 		List<String> command = new ArrayList<>();
 		command.add(AUTODETECT_PATH);
 		command.add(VERSION_ARG);
-		
-		s_Logger.info("Getting version number from " + command);
-		
+
+		LOGGER.info("Getting version number from " + command);
+
 		// Build the process
 		ProcessBuilder pb = new ProcessBuilder(command);
 		buildEnvironment(pb);
@@ -363,19 +363,19 @@ public class ProcessCtrl
 			{
 				int exitValue = proc.waitFor();
 				BufferedReader reader = new BufferedReader(
-						new InputStreamReader(proc.getErrorStream(), 
+						new InputStreamReader(proc.getErrorStream(),
 								StandardCharsets.UTF_8));
-				
-				String output = reader.readLine();
-				s_Logger.debug("autodetect version output = " + output);
 
-				if (exitValue >= 0) 
+				String output = reader.readLine();
+				LOGGER.debug("autodetect version output = " + output);
+
+				if (exitValue >= 0)
 				{
 					if (output == null)
 					{
-						return UNKNOWN_VERSION;						
+						return UNKNOWN_VERSION;
 					}
-					
+
 					s_AnalyticsVersion = output;
 					return s_AnalyticsVersion;
 				}
@@ -387,14 +387,14 @@ public class ProcessCtrl
 			}
 			catch (InterruptedException ie)
 			{
-				s_Logger.error("Interrupted reading analytics version number", ie);
+				LOGGER.error("Interrupted reading analytics version number", ie);
 				return UNKNOWN_VERSION;
 			}
-			
+
 		}
 		catch (IOException e)
 		{
-			s_Logger.error("Error reading analytics version number", e);
+			LOGGER.error("Error reading analytics version number", e);
 			return UNKNOWN_VERSION;
 		}
 	}
@@ -410,7 +410,7 @@ public class ProcessCtrl
 		command.add(AUTODETECT_PATH);
 		command.add(INFO_ARG);
 
-		s_Logger.info("Getting info from " + command);
+		LOGGER.info("Getting info from " + command);
 
 		// Build the process
 		ProcessBuilder pb = new ProcessBuilder(command);
@@ -427,7 +427,7 @@ public class ProcessCtrl
 								StandardCharsets.UTF_8));
 
 				String output = reader.readLine();
-				s_Logger.debug("autodetect info output = " + output);
+				LOGGER.debug("autodetect info output = " + output);
 
 				if (exitValue >= 0 && output != null)
 				{
@@ -436,12 +436,12 @@ public class ProcessCtrl
 			}
 			catch (InterruptedException ie)
 			{
-				s_Logger.error("Interrupted reading autodetect info", ie);
+				LOGGER.error("Interrupted reading autodetect info", ie);
 			}
 		}
 		catch (IOException e)
 		{
-			s_Logger.error("Error reading autodetect info", e);
+			LOGGER.error("Error reading autodetect info", e);
 		}
 
 		// On error return an empty JSON document
@@ -450,33 +450,33 @@ public class ProcessCtrl
 
 
 	/**
-	 * Calls {@link #buildProcess(String, JobDetails, QuantilesState, Logger)} with 
+	 * Calls {@link #buildProcess(String, JobDetails, QuantilesState, Logger)} with
 	 * quantilesState set to <code>null</code>.
-	 * 
-	 * @param processName The name of program to execute this should exist in the 
-	 * directory PRELERT_HOME/bin/ 
+	 *
+	 * @param processName The name of program to execute this should exist in the
+	 * directory PRELERT_HOME/bin/
 	 * @param logger The job's logger
 	 * @param filesToDelete This method will append File objects that need to be
 	 * deleted when the process completes
 	 * @return A Java Process object
 	 * @throws IOException
 	 */
-	static public Process buildAutoDetect(String processName, JobDetails job,
+	public static Process buildAutoDetect(String processName, JobDetails job,
 			Logger logger, List<File> filesToDelete)
-	throws IOException	
+	throws IOException
 	{
 		return buildAutoDetect(processName, job, null, logger, filesToDelete);
 	}
-	
+
 	/**
 	 * Sets the environment variables PRELERT_HOME and LIB_PATH (or platform
-	 * variants) and starts the process in that environment. Any inherited value 
-	 * of LIB_PATH or PRELERT_HOME is overwritten. 
+	 * variants) and starts the process in that environment. Any inherited value
+	 * of LIB_PATH or PRELERT_HOME is overwritten.
 	 * <code>processName</code> is not the full path it is the relative path of the
 	 * program from the PRELERT_HOME/bin directory.
-	 * 
-	 * @param processName The name of program to execute this should exist in the 
-	 * directory PRELERT_HOME/bin/ 
+	 *
+	 * @param processName The name of program to execute this should exist in the
+	 * directory PRELERT_HOME/bin/
 	 * @param job The job configuration
 	 * @param quantilesState if <code>null</code> this parameter is
 	 * ignored else the quantiles' state is restored from this object
@@ -485,14 +485,14 @@ public class ProcessCtrl
 	 * deleted when the process completes
 	 *
 	 * @return A Java Process object
-	 * @throws IOException 
+	 * @throws IOException
 	 */
-	static public Process buildAutoDetect(String processName, JobDetails job,
+	public static Process buildAutoDetect(String processName, JobDetails job,
 			QuantilesState quantilesState, Logger logger, List<File> filesToDelete)
 	throws IOException
 	{
 		logger.info("PRELERT_HOME is set to " + PRELERT_HOME);
-		
+
 		List<String> command = new ArrayList<>();
 		command.add(AUTODETECT_PATH);
 
@@ -502,7 +502,7 @@ public class ProcessCtrl
 			{
 				String bucketspan = BUCKET_SPAN_ARG + job.getAnalysisConfig().getBucketSpan();
 				command.add(bucketspan);
-			}		
+			}
 			if (job.getAnalysisConfig().getBatchSpan() != null)
 			{
 				String batchspan = BATCH_SPAN_ARG + job.getAnalysisConfig().getBatchSpan();
@@ -519,22 +519,22 @@ public class ProcessCtrl
 				command.add(summaryCountField);
 			}
 		}
-		
+
 		if (job.getAnalysisLimits() != null)
-		{			
+		{
 			File limitConfigFile = File.createTempFile("limitconfig", ".conf");
 			filesToDelete.add(limitConfigFile);
-			writeLimits(job.getAnalysisLimits(), limitConfigFile);		
+			writeLimits(job.getAnalysisLimits(), limitConfigFile);
 			String limits = LIMIT_CONFIG_ARG + limitConfigFile.toString();
 			command.add(limits);
 		}
-				
+
 		if (modelConfigFilePresent())
 		{
 			String modelConfigFile = new File(CONFIG_DIR, PRELERT_MODEL_CONF).toString();
 			command.add(MODEL_CONFIG_ARG + modelConfigFile);
 		}
-		
+
 		// Input is always length encoded
 		command.add(LENGTH_ENCODED_INPUT_ARG);
 
@@ -552,7 +552,7 @@ public class ProcessCtrl
 						+  dataDescription.getFieldDelimiter();
 				command.add(delimiterArg);
 			}
-			
+
 			if (dataDescription.getTimeField() != null &&
 					dataDescription.getTimeField().isEmpty() == false)
 			{
@@ -621,26 +621,26 @@ public class ProcessCtrl
 			}
 
 			String fieldConfig = FIELD_CONFIG_ARG + fieldConfigFile.toString();
-			command.add(fieldConfig);	
+			command.add(fieldConfig);
 		}
-		
+
 		// Build the process
 		logger.info("Starting autodetect process with command: " +  command);
 		ProcessBuilder pb = new ProcessBuilder(command);
 		buildEnvironment(pb);
 
-		return pb.start();		
+		return pb.start();
 	}
 
 
 	/**
 	 * Write the Prelert autodetect model options to <code>emptyConfFile</code>.
-	 * 
+	 *
 	 * @param emptyConfFile
 	 * @throws IOException
 	 */
-	static private void writeLimits(AnalysisLimits options, File emptyConfFile) 
-	throws IOException	
+	private static void writeLimits(AnalysisLimits options, File emptyConfFile)
+	throws IOException
 	{
 		StringBuilder contents = new StringBuilder("[anomaly]").append(NEW_LINE);
 		if (options.getMaxFieldValues() > 0)
@@ -659,22 +659,22 @@ public class ProcessCtrl
 				StandardCharsets.UTF_8))
 		{
 			osw.write(contents.toString());
-		}		
+		}
 	}
-	
-	
+
+
 	/**
 	 * Return true if there is a file PRELERT_HOME/config/prelertmodel.conf
 	 * @return
 	 */
-	static private boolean modelConfigFilePresent()
+	private static boolean modelConfigFilePresent()
 	{
 		File f = new File(CONFIG_DIR, PRELERT_MODEL_CONF);
-		
+
 		return f.exists() && !f.isDirectory();
 	}
-	
-	
+
+
 	/**
 	 * Write the Prelert autodetect field options to the output stream.
 	 *
@@ -683,7 +683,7 @@ public class ProcessCtrl
 	 * @param logger
 	 * @throws IOException
 	 */
-	static public void writeFieldConfig(AnalysisConfig config, OutputStreamWriter osw,
+	public static void writeFieldConfig(AnalysisConfig config, OutputStreamWriter osw,
 			Logger logger)
 	throws IOException
 	{
@@ -729,12 +729,12 @@ public class ProcessCtrl
 				continue;
 			}
 			detectorKeys.add(key);
-			
+
 			// .isEnabled is only necessary if nothing else is going to be added
 			// for this key
 			if (detector.isUseNull() == null &&
 					isNullOrEmpty(detector.getByFieldName()) &&
-					isNullOrEmpty(detector.getOverFieldName()) && 
+					isNullOrEmpty(detector.getOverFieldName()) &&
 					isNullOrEmpty(detector.getPartitionFieldName()))
 			{
 				contents.append(key).append(DOT_IS_ENABLED).append(" = true").append(NEW_LINE);
@@ -761,16 +761,16 @@ public class ProcessCtrl
 			}
 		}
 
-		logger.debug("FieldConfig: \n" + contents.toString());	
+		logger.debug("FieldConfig: \n" + contents.toString());
 
 		osw.write(contents.toString());
 	}
 
 
 	/**
-	 * The process can be initialised with both sysChangeState and 
-	 * unusualBehaviourState if either is <code>null</code> then is 
-	 * is not used. 
+	 * The process can be initialised with both sysChangeState and
+	 * unusualBehaviourState if either is <code>null</code> then is
+	 * is not used.
 	 *
 	 * @param jobId
 	 * @param sysChangeState Set to <code>null</code> to be ignored
@@ -780,16 +780,16 @@ public class ProcessCtrl
 	 * @return
 	 * @throws IOException
 	 */
-	static public Process buildNormaliser(String jobId, 
+	public static Process buildNormaliser(String jobId,
 			String sysChangeState, String unusualBehaviourState,
 			Integer bucketSpan, Logger logger)
 	throws IOException
 	{
 		logger.info("PRELERT_HOME is set to " + PRELERT_HOME);
-		
+
 		List<String> command = new ArrayList<>();
 		command.add(NORMALIZE_PATH);
-		
+
 		if (sysChangeState != null)
 		{
 			Path sysChangeStateFilePath = writeNormaliserInitState(jobId,
@@ -803,7 +803,7 @@ public class ProcessCtrl
 		{
 			Path unusualStateFilePath = writeNormaliserInitState(jobId,
 					unusualBehaviourState);
-			
+
 			String stateFileArg = UNUSUAL_STATE_ARG + unusualStateFilePath;
 			command.add(stateFileArg);
 		}
@@ -818,28 +818,28 @@ public class ProcessCtrl
 			String bucketSpanArg = BUCKET_SPAN_ARG + bucketSpan.toString();
 			command.add(bucketSpanArg);
 		}
-		
+
 		// TODO Log everything to the default normalize_api dir
 //		String logId = LOG_ID_ARG + jobId;
 //		command.add(logId);
-		
+
 		command.add(LENGTH_ENCODED_INPUT_ARG);
-		
+
 		if (modelConfigFilePresent())
 		{
 			String modelConfigFile = new File(CONFIG_DIR, PRELERT_MODEL_CONF).toString();
 			command.add(MODEL_CONFIG_ARG + modelConfigFile);
 		}
-		
+
 		// Build the process
 		logger.info("Starting normaliser process with command: " +  command);
 		ProcessBuilder pb = new ProcessBuilder(command);
 		buildEnvironment(pb);
 
-		return pb.start();		
+		return pb.start();
 	}
 
-	
+
 	/**
 	 * Write the normaliser init state to file.
 	 *
@@ -848,7 +848,7 @@ public class ProcessCtrl
 	 * @return The state file path
 	 * @throws IOException
 	 */
-	static private Path writeNormaliserInitState(String jobId, String state)
+	private static Path writeNormaliserInitState(String jobId, String state)
 	throws IOException
 	{
 		// createTempFile has a race condition where it may return the same
@@ -877,7 +877,7 @@ public class ProcessCtrl
 	{
 		return (arg != null && arg.isEmpty() == false);
 	}
-	
+
 	/**
 	 * Returns true if the string arg is either null or empty
 	 * i.e. it is NOT a valid string
@@ -887,5 +887,5 @@ public class ProcessCtrl
 	{
 		return (arg == null || arg.isEmpty());
 	}
-	
+
 }

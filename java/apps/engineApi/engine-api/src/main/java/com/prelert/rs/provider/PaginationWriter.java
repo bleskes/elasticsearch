@@ -46,26 +46,26 @@ import com.prelert.rs.data.Pagination;
 
 /**
  * Web service provider converts generic Pagination objects to JSON.
- * As all results are wrapped in generic Pagination objects this 
- * MessageBodyWriter will write all specialisations. 
+ * As all results are wrapped in generic Pagination objects this
+ * MessageBodyWriter will write all specialisations.
  * Conversion to JSON is done using the Jackson ObjectMapper
- * 
+ *
  * @param <T>
  */
-public class PaginationWriter<T> implements MessageBodyWriter<Pagination<T>> 
+public class PaginationWriter<T> implements MessageBodyWriter<Pagination<T>>
 {
 	/**
 	 * The Object to JSON mapper.
 	 * Writes dates in ISO 8601 format
 	 */
-	static final private ObjectWriter s_ObjectWriter = 
+	private static final ObjectWriter s_ObjectWriter =
 			new ObjectMapper()
 				.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
 				.writer().withDefaultPrettyPrinter();
-	
+
 	@Override
-	public boolean isWriteable(Class<?> type, Type genericType, 
-			Annotation[] annotations, MediaType mediaType) 
+	public boolean isWriteable(Class<?> type, Type genericType,
+			Annotation[] annotations, MediaType mediaType)
 	{
 		// no need to check the media type because of the @Produces annotation
 		if (type == Pagination.class &&
@@ -73,13 +73,13 @@ public class PaginationWriter<T> implements MessageBodyWriter<Pagination<T>>
 		{
 			return true;
 		}
-		
+
 		return false;
 	}
-	
+
 	@Override
 	public long getSize(Pagination<T> arg0, Class<?> arg1, Type arg2,
-			Annotation[] arg3, MediaType arg4) 
+			Annotation[] arg3, MediaType arg4)
 	{
 		// deprecated by JAX-RS 2.0
 		return 0;
@@ -91,10 +91,10 @@ public class PaginationWriter<T> implements MessageBodyWriter<Pagination<T>>
 	@Override
 	public void writeTo(Pagination<T> bean, Class<?> type, Type genericType,
 			Annotation[] annotations, MediaType mediaType,
-			MultivaluedMap<String, Object> httpHeaders, 
+			MultivaluedMap<String, Object> httpHeaders,
 			OutputStream entityStream)
-	throws IOException, WebApplicationException 
-	{		
+	throws IOException, WebApplicationException
+	{
 		s_ObjectWriter.writeValue(entityStream, bean);
 	}
 

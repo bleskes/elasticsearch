@@ -48,23 +48,23 @@ public class AnomalyCause
 	/**
 	 * Result fields
 	 */
-	static final public String PROBABILITY = "probability";
-	static final public String OVER_FIELD_NAME = "overFieldName";
-	static final public String OVER_FIELD_VALUE = "overFieldValue";
-	static final public String BY_FIELD_NAME = "byFieldName";
-	static final public String BY_FIELD_VALUE = "byFieldValue";
-	static final public String PARTITION_FIELD_NAME = "partitionFieldName";
-	static final public String PARTITION_FIELD_VALUE = "partitionFieldValue";
-	static final public String FUNCTION = "function";
-	static final public String TYPICAL = "typical";
-	static final public String ACTUAL = "actual";
+	public static final String PROBABILITY = "probability";
+	public static final String OVER_FIELD_NAME = "overFieldName";
+	public static final String OVER_FIELD_VALUE = "overFieldValue";
+	public static final String BY_FIELD_NAME = "byFieldName";
+	public static final String BY_FIELD_VALUE = "byFieldValue";
+	public static final String PARTITION_FIELD_NAME = "partitionFieldName";
+	public static final String PARTITION_FIELD_VALUE = "partitionFieldValue";
+	public static final String FUNCTION = "function";
+	public static final String TYPICAL = "typical";
+	public static final String ACTUAL = "actual";
 
 	/**
 	 * Metric Results
 	 */
-	static final public String FIELD_NAME = "fieldName";
+	public static final String FIELD_NAME = "fieldName";
 
-	private static final Logger s_Logger = Logger.getLogger(AnomalyCause.class);
+	private static final Logger LOGGER = Logger.getLogger(AnomalyCause.class);
 
 	private double m_Probability;
 	private String m_ByFieldName;
@@ -209,7 +209,7 @@ public class AnomalyCause
 	 * @throws IOException
 	 * @throws AutoDetectParseException
 	 */
-	static public AnomalyCause parseJson(JsonParser parser)
+	public static AnomalyCause parseJson(JsonParser parser)
 	throws JsonParseException, IOException, AutoDetectParseException
 	{
 		AnomalyCause cause = new AnomalyCause();
@@ -219,7 +219,7 @@ public class AnomalyCause
 		{
 			String msg = "Cannot parse anomaly cause. First token '" +
 					parser.getText() + ", is not the start object token";
-			s_Logger.error(msg);
+			LOGGER.error(msg);
 			throw new AutoDetectParseException(msg);
 		}
 
@@ -229,10 +229,10 @@ public class AnomalyCause
 			switch(token)
 			{
 			case START_OBJECT:
-				s_Logger.error("Start object parsed in anomaly cause");
+				LOGGER.error("Start object parsed in anomaly cause");
 				break;
 			case END_OBJECT:
-				s_Logger.error("End object parsed in anomaly cause");
+				LOGGER.error("End object parsed in anomaly cause");
 				break;
 			case FIELD_NAME:
 				String fieldName = parser.getCurrentName();
@@ -246,7 +246,7 @@ public class AnomalyCause
 					}
 					else
 					{
-						s_Logger.warn("Cannot parse " + fieldName + " : " + parser.getText()
+						LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
 								+ " as a double");
 					}
 					break;
@@ -258,7 +258,7 @@ public class AnomalyCause
 					}
 					else
 					{
-						s_Logger.warn("Cannot parse " + fieldName + " : " + parser.getText()
+						LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
 								+ " as a string");
 					}
 					break;
@@ -270,7 +270,7 @@ public class AnomalyCause
 					}
 					else
 					{
-						s_Logger.warn("Cannot parse " + fieldName + " : " + parser.getText()
+						LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
 								+ " as a string");
 					}
 					break;
@@ -282,7 +282,7 @@ public class AnomalyCause
 					}
 					else
 					{
-						s_Logger.warn("Cannot parse " + fieldName + " : " + parser.getText()
+						LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
 								+ " as a string");
 					}
 					break;
@@ -294,7 +294,7 @@ public class AnomalyCause
 					}
 					else
 					{
-						s_Logger.warn("Cannot parse " + fieldName + " : " + parser.getText()
+						LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
 								+ " as a string");
 					}
 					break;
@@ -306,7 +306,7 @@ public class AnomalyCause
 					}
 					else
 					{
-						s_Logger.warn("Cannot parse " + fieldName + " : " + parser.getText()
+						LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
 								+ " as a string");
 					}
 					break;
@@ -318,7 +318,7 @@ public class AnomalyCause
 					}
 					else
 					{
-						s_Logger.warn("Cannot parse " + fieldName + " : " + parser.getText()
+						LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
 								+ " as a double");
 					}
 					break;
@@ -330,7 +330,7 @@ public class AnomalyCause
 					}
 					else
 					{
-						s_Logger.warn("Cannot parse " + fieldName + " : " + parser.getText()
+						LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
 								+ " as a double");
 					}
 					break;
@@ -342,7 +342,7 @@ public class AnomalyCause
 					}
 					else
 					{
-						s_Logger.warn("Cannot parse " + fieldName + " : " + parser.getText()
+						LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
 								+ " as a string");
 					}
 					break;
@@ -354,7 +354,7 @@ public class AnomalyCause
 					}
 					else
 					{
-						s_Logger.warn("Cannot parse " + fieldName + " : " + parser.getText()
+						LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
 								+ " as a string");
 					}
 					break;
@@ -366,18 +366,18 @@ public class AnomalyCause
 					}
 					else
 					{
-						s_Logger.warn("Cannot parse " + fieldName + " : " + parser.getText()
+						LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
 								+ " as a string");
 					}
 					break;
 				default:
-					s_Logger.warn(String.format("Parse error unknown field in Anomaly Cause %s:%s",
+					LOGGER.warn(String.format("Parse error unknown field in Anomaly Cause %s:%s",
 							fieldName, parser.nextTextValue()));
 					break;
 				}
 				break;
 			default:
-				s_Logger.warn("Parsing error: Only simple fields expected in Anomaly Cause not "
+				LOGGER.warn("Parsing error: Only simple fields expected in Anomaly Cause not "
 								+ token);
 				break;
 			}
@@ -457,7 +457,7 @@ public class AnomalyCause
 
 		AnomalyCause that = (AnomalyCause)other;
 
-		boolean equal = this.m_Probability == that.m_Probability &&
+		return this.m_Probability == that.m_Probability &&
 				bothNullOrEqual(this.m_Typical, that.m_Typical) &&
 				bothNullOrEqual(this.m_Actual, that.m_Actual) &&
 				bothNullOrEqual(this.m_Function, that.m_Function) &&
@@ -468,8 +468,6 @@ public class AnomalyCause
 				bothNullOrEqual(this.m_PartitionFieldValue, that.m_PartitionFieldValue) &&
 				bothNullOrEqual(this.m_OverFieldName, that.m_OverFieldName) &&
 				bothNullOrEqual(this.m_OverFieldValue, that.m_OverFieldValue);
-
-		return equal;
 	}
 
 }

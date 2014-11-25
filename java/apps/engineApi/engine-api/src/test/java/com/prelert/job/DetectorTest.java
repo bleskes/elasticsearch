@@ -25,62 +25,30 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.rs.provider;
+package com.prelert.job;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Type;
+import static org.junit.Assert.assertEquals;
 
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.ext.MessageBodyWriter;
+import java.util.HashMap;
+import java.util.Map;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.prelert.job.alert.Alert;
+import org.junit.Test;
 
-
-/**
- * Web service provider writes {@linkplain Alert} objects JSON.
- */
-public class AlertMessageBodyWriter implements MessageBodyWriter<Alert>
+public class DetectorTest
 {
-	/**
-	 * The Object to JSON mapper.
-	 * Writes dates in ISO 8601 format
-	 */
-	private static final ObjectWriter s_ObjectWriter =
-			new ObjectMapper()
-				.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
-				.writer().withDefaultPrettyPrinter();
+    @Test
+    public void testHashCode_GivenEqual()
+    {
+        Map<String, Object> detectorMap = new HashMap<>();
+        detectorMap.put(Detector.FUNCTION, "mean");
+        detectorMap.put(Detector.FIELD_NAME, "field");
+        detectorMap.put(Detector.BY_FIELD_NAME, "by");
+        detectorMap.put(Detector.OVER_FIELD_NAME, "over");
+        detectorMap.put(Detector.PARTITION_FIELD_NAME, "partition");
+        detectorMap.put(Detector.USE_NULL, false);
+        Detector detector1 = new Detector(detectorMap);
+        Detector detector2 = new Detector(detectorMap);
 
-
-	@Override
-	public long getSize(Alert arg0, Class<?> arg1, Type arg2,
-			Annotation[] arg3, MediaType arg4)
-	{
-		// deprecated by JAX-RS 2.0
-		return 0;
-	}
-
-	@Override
-	public boolean isWriteable(Class<?> type, Type genericType, Annotation[] arg2,
-			MediaType mediaType)
-	{
-		// no need to check the media type because of the @Produces annotation
-		return type == Alert.class;
-	}
-
-	@Override
-	public void writeTo(Alert bean, Class<?> type,
-			Type genericType, Annotation[] annotations, MediaType mediaType,
-			MultivaluedMap<String, Object> httpHeaders,
-			OutputStream entityStream)
-    throws IOException, WebApplicationException
-	{
-		s_ObjectWriter.writeValue(entityStream, bean);
-	}
+        assertEquals(detector1.hashCode(), detector2.hashCode());
+    }
 }

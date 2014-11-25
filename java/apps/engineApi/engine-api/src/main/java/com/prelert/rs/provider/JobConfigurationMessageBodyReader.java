@@ -51,17 +51,17 @@ import com.prelert.rs.data.ErrorCode;
 * bean. Only conversion from JSON is supported.
 */
 @Consumes(MediaType.APPLICATION_JSON)
-public class JobConfigurationMessageBodyReader implements MessageBodyReader<JobConfiguration> 
+public class JobConfigurationMessageBodyReader implements MessageBodyReader<JobConfiguration>
 {
 	/**
 	 * The Object to JSON mapper.
 	 */
-	static final private ObjectMapper s_ObjectMapper = new ObjectMapper();
+	private static final ObjectMapper s_ObjectMapper = new ObjectMapper();
 
 
    @Override
    public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotatios,
-           MediaType mediaType) 
+           MediaType mediaType)
    {
        // no need to check the media type because of the @Consumes annotation
        return type == JobConfiguration.class;
@@ -79,19 +79,18 @@ public class JobConfigurationMessageBodyReader implements MessageBodyReader<JobC
            if (mediaType.equals(MediaType.APPLICATION_JSON_TYPE.withCharset("UTF-8")) == false)
            {
         	   throw new WebApplicationException(
-        			   Response.status(Response.Status.UNSUPPORTED_MEDIA_TYPE).build());        	   
+        			   Response.status(Response.Status.UNSUPPORTED_MEDIA_TYPE).build());
            }
        }
 
        try
        {
-    	   JobConfiguration conf = s_ObjectMapper.readValue(input, JobConfiguration.class);
-    	   return conf;
+    	   return s_ObjectMapper.readValue(input, JobConfiguration.class);
        }
-       catch (JsonParseException e)       
+       catch (JsonParseException e)
        {
     	   throw new JobConfigurationParseException(
-    			   "JSON parse error reading the job configuration", e, 
+    			   "JSON parse error reading the job configuration", e,
     			   ErrorCode.JOB_CONFIG_PARSE_ERROR);
        }
        catch (JsonMappingException e)
@@ -99,7 +98,7 @@ public class JobConfigurationMessageBodyReader implements MessageBodyReader<JobC
     	   throw new JobConfigurationParseException(
     			   "JSON mapping error reading the job configuration", e,
     			   ErrorCode.JOB_CONFIG_UNKNOWN_FIELD_ERROR);
-       }       
+       }
    }
 
 }

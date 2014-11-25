@@ -25,45 +25,30 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.rs.resources.data;
+package com.prelert.job;
 
-import java.util.Objects;
+import static org.junit.Assert.assertEquals;
 
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
+import java.util.HashMap;
+import java.util.Map;
 
-import org.apache.log4j.Logger;
+import org.junit.Test;
 
-import com.prelert.job.JobInUseException;
-import com.prelert.job.UnknownJobException;
-import com.prelert.job.manager.JobManager;
-import com.prelert.job.process.NativeProcessRunException;
-
-public class UploadCommitter {
-
-    private static final Logger LOGGER = Logger.getLogger(UploadCommitter.class);
-
-    private final JobManager m_JobManager;
-
-    public UploadCommitter(JobManager jobManager)
+public class DataDescriptionTest
+{
+    @Test
+    public void testHashCode_GivenEqual()
     {
-        m_JobManager = Objects.requireNonNull(jobManager);
-    }
-    /**
-     * Retires the job cleans up after this
-     * @param jobId
-     * @return
-     * @throws UnknownJobException
-     * @throws NativeProcessRunException
-     * @throws JobInUseException
-     */
-    @Path("/{jobId}/close")
-    @POST
-    public void commitUpload(String jobId) throws UnknownJobException,
-            NativeProcessRunException, JobInUseException
-    {
-        LOGGER.debug("Post to close data upload for job " + jobId);
-        m_JobManager.finishJob(jobId);
-        LOGGER.debug("Process finished successfully, Job Id = '" + jobId + "'");
+        Map<String, Object> description = new HashMap<>();
+        description.put(DataDescription.FORMAT, "JSON");
+        description.put(DataDescription.TIME_FIELD_NAME, "timestamp");
+        description.put(DataDescription.QUOTE_CHARACTER, "'");
+        description.put(DataDescription.TIME_FORMAT, "timeFormat");
+        description.put(DataDescription.FIELD_DELIMITER, ",");
+
+        DataDescription dataDescription1 = new DataDescription(description);
+        DataDescription dataDescription2 = new DataDescription(description);
+
+        assertEquals(dataDescription1.hashCode(), dataDescription2.hashCode());
     }
 }

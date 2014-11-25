@@ -52,6 +52,7 @@ import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.settings.ImmutableSettings;
+import org.elasticsearch.common.settings.ImmutableSettings.Builder;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.index.engine.VersionConflictEngineException;
@@ -89,75 +90,86 @@ import com.prelert.rs.data.SingleDocument;
 
 public class ElasticsearchJobProvider implements JobProvider
 {
-	static public final Logger s_Logger = Logger.getLogger(ElasticsearchJobProvider.class);
-			
-	/**
-	 * Elasticsearch settings that instruct the node not to accept HTTP, not to
-	 * attempt multicast discovery and to only look for another node to connect
-	 * to on the local machine.
-	 */
-	static public final Settings LOCAL_SETTINGS;
-	static
-	{
-		LOCAL_SETTINGS = ImmutableSettings.settingsBuilder()
-				.put("http.enabled", "false")
-				.put("discovery.zen.ping.multicast.enabled", "false")
-				.put("discovery.zen.ping.unicast.hosts", "localhost")
-				.build();
-	}
-	
+	private static final Logger LOGGER = Logger.getLogger(ElasticsearchJobProvider.class);
+
+
 	/**
 	 * The index to store total usage/metering information
 	 */
-	static public final String PRELERT_USAGE_INDEX = "prelert-usage";
+	public static final String PRELERT_USAGE_INDEX = "prelert-usage";
 
 	/**
 	 * Where to store the prelert info in Elasticsearch - must match what's
 	 * expected by kibana/engineAPI/app/directives/prelertLogUsage.js
 	 */
-	static public final String PRELERT_INFO_INDEX = "prelert-int";
-	static public final String PRELERT_INFO_TYPE = "info";
-	static public final String PRELERT_INFO_ID = "infoStats";
-	
-	static public final String _PARENT = "_parent";
-	
-	static private final List<String> SECONDARY_SORT = new ArrayList<>(); 
-//	static 
+	public static final String PRELERT_INFO_INDEX = "prelert-int";
+	public static final String PRELERT_INFO_TYPE = "info";
+	public static final String PRELERT_INFO_ID = "infoStats";
+
+	public static final String _PARENT = "_parent";
+
+	private static final List<String> SECONDARY_SORT = new ArrayList<>();
+//	static
 //	{
 //		SECONDARY_SORT.add(AnomalyRecord.ANOMALY_SCORE);
 //	}
-	
-	
+
+
 	private Node m_Node;
 	private Client m_Client;
-	
+
 	private ObjectMapper m_ObjectMapper;
-	
 
 	public ElasticsearchJobProvider(String elasticSearchClusterName)
+	{
+		this(elasticSearchClusterName, null);
+	}
+
+	public ElasticsearchJobProvider(String elasticSearchClusterName,
+			String portRange)
+
+	{
+		m_Node = nodeBuilder()
+				.settings(buildSettings(elasticSearchClusterName, portRange))
+				.client(true)
+				.clusterName(elasticSearchClusterName).node();
+
+		m_Client = m_Node.client();
+
+		m_ObjectMapper = new ObjectMapper();
+		m_ObjectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+		m_ObjectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+		createUsageMeteringIndex();
+
+		LOGGER.info("Connecting to Elasticsearch cluster '"
+				+ elasticSearchClusterName + "'");
+	}
+
+	/**
+	 * Elasticsearch settings that instruct the node not to accept HTTP, not to
+	 * attempt multicast discovery and to only look for another node to connect
+	 * to on the local machine.
+	 */
+	private Settings buildSettings(String clustername, String portRange)
 	{
 		// Multicast discovery is expected to be disabled on the Elasticsearch
 		// data node, so disable it for this embedded node too and tell it to
 		// expect the data node to be on the same machine
-		this(nodeBuilder().settings(LOCAL_SETTINGS).client(true)
-				.clusterName(elasticSearchClusterName).node());
+		Builder builder = ImmutableSettings.settingsBuilder()
+				.put("http.enabled", "false")
+				.put("discovery.zen.ping.multicast.enabled", "false")
+				.put("discovery.zen.ping.unicast.hosts", "localhost");
 
-		s_Logger.info("Connecting to Elasticsearch cluster '"
-				+ elasticSearchClusterName + "'");		
+		if (portRange != null && portRange.isEmpty() == false)
+		{
+			LOGGER.info("Using TCP port range " + portRange + " to connect to Elasticsearch");
+			builder.put("transport.tcp.port", portRange);
+		}
+
+		return builder.build();
 	}
-	
-	public ElasticsearchJobProvider(Node node)
-	{
-		m_Node = node;
-		m_Client = m_Node.client();
-		
-		m_ObjectMapper = new ObjectMapper();
-		m_ObjectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
-		m_ObjectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-		
-		createUsageMeteringIndex();
-	}
-	
+
 	/**
 	 * Close the Elasticsearch node
 	 */
@@ -167,24 +179,24 @@ public class ElasticsearchJobProvider implements JobProvider
 		m_Node.close();
 	}
 
-	
+
 	public Client getClient()
 	{
 		return m_Client;
 	}
-	
+
 	public Node getNode()
 	{
 		return m_Node;
 	}
-		
+
 	/**
-	 * If the {@value ElasticsearchJobProvider#PRELERT_USAGE_INDEX} index does 
+	 * If the {@value ElasticsearchJobProvider#PRELERT_USAGE_INDEX} index does
 	 * not exist create it here with the usage document mapping.
 	 */
 	private void createUsageMeteringIndex()
 	{
-		try 
+		try
 		{
 			boolean indexExists = m_Client.admin().indices()
 					.exists(new IndicesExistsRequest(PRELERT_USAGE_INDEX))
@@ -192,7 +204,7 @@ public class ElasticsearchJobProvider implements JobProvider
 
 			if (indexExists == false)
 			{
-				s_Logger.info("Creating the internal '" + PRELERT_USAGE_INDEX + "' index");
+				LOGGER.info("Creating the internal '" + PRELERT_USAGE_INDEX + "' index");
 
 				XContentBuilder usageMapping = ElasticsearchMappings.usageMapping();
 
@@ -200,20 +212,20 @@ public class ElasticsearchJobProvider implements JobProvider
 								.addMapping(Usage.TYPE, usageMapping)
 								.get();
 			}
-		} 
-		catch (InterruptedException | ExecutionException e) 
-		{
-			s_Logger.warn("Error checking the usage metering index", e);
 		}
-		catch (IOException e) 
+		catch (InterruptedException | ExecutionException e)
 		{
-			s_Logger.warn("Error creating the usage metering index", e);
+			LOGGER.warn("Error checking the usage metering index", e);
 		}
-		
+		catch (IOException e)
+		{
+			LOGGER.warn("Error creating the usage metering index", e);
+		}
+
 	}
 
 	@Override
-	public boolean jobExists(String jobId) throws UnknownJobException 
+	public boolean jobExists(String jobId) throws UnknownJobException
 	{
 		try
 		{
@@ -221,11 +233,11 @@ public class ElasticsearchJobProvider implements JobProvider
 							.setFetchSource(false)
 							.setFields()
 							.get();
-			
+
 			if (response.isExists() == false)
 			{
 				String msg = "No job document with id " + jobId;
-				s_Logger.warn(msg);
+				LOGGER.warn(msg);
 				throw new UnknownJobException(jobId, msg,
 						ErrorCode.MISSING_JOB_ERROR);
 			}
@@ -234,32 +246,32 @@ public class ElasticsearchJobProvider implements JobProvider
 		{
 			// the job does not exist
 			String msg = "Missing Index no job with id " + jobId;
-			s_Logger.warn(msg);
-			throw new UnknownJobException(jobId, "No known job with id '" + jobId + "'", 
+			LOGGER.warn(msg);
+			throw new UnknownJobException(jobId, "No known job with id '" + jobId + "'",
 					ErrorCode.MISSING_JOB_ERROR);
 		}
-		
+
 		return true;
 	}
-	
+
 
 	@Override
-	public boolean jobIdIsUnique(String jobId) throws JobIdAlreadyExistsException 
+	public boolean jobIdIsUnique(String jobId) throws JobIdAlreadyExistsException
 	{
-		IndicesExistsResponse res = 
+		IndicesExistsResponse res =
 				m_Client.admin().indices().exists(new IndicesExistsRequest(jobId)).actionGet();
-		
+
 		if (res.isExists())
 		{
 			throw new JobIdAlreadyExistsException(jobId);
 		}
-		
+
 		return true;
 	}
 
-	
+
 	@Override
-	public JobDetails getJobDetails(String jobId) throws UnknownJobException 
+	public JobDetails getJobDetails(String jobId) throws UnknownJobException
 	{
 		try
 		{
@@ -267,7 +279,7 @@ public class ElasticsearchJobProvider implements JobProvider
 			if (!response.isExists())
 			{
 				String msg = "No details for job with id " + jobId;
-				s_Logger.warn(msg);
+				LOGGER.warn(msg);
 				throw new UnknownJobException(jobId, msg,
 						ErrorCode.MISSING_JOB_ERROR);
 			}
@@ -278,9 +290,9 @@ public class ElasticsearchJobProvider implements JobProvider
 				jobId, ModelSizeStats.TYPE, ModelSizeStats.TYPE).get();
 			if (!modelSizeStatsResponse.isExists())
 			{
-				String msg = "No model size stats for job with id " 
+				String msg = "No model size stats for job with id "
 					+ jobId + " " + ModelSizeStats.TYPE;
-				s_Logger.warn(msg);
+				LOGGER.warn(msg);
 			}
 			else
 			{
@@ -294,21 +306,21 @@ public class ElasticsearchJobProvider implements JobProvider
 		{
 			// the job does not exist
 			String msg = "Missing Index no job with id " + jobId;
-			s_Logger.warn(msg);
-			throw new UnknownJobException(jobId, "No known job with id '" + jobId + "'", 
+			LOGGER.warn(msg);
+			throw new UnknownJobException(jobId, "No known job with id '" + jobId + "'",
 					ErrorCode.MISSING_JOB_ERROR);
 		}
 	}
 
 	@Override
-	public Pagination<JobDetails> getJobs(int skip, int take) 
+	public Pagination<JobDetails> getJobs(int skip, int take)
 	{
 		FilterBuilder fb = FilterBuilders.matchAllFilter();
 		SortBuilder sb = new FieldSortBuilder(JobDetails.ID)
 								.ignoreUnmapped(true)
 								.order(SortOrder.ASC);
 
-		SearchResponse response = m_Client.prepareSearch("_all") 
+		SearchResponse response = m_Client.prepareSearch("_all")
 				.setTypes(JobDetails.TYPE)
 				.setPostFilter(fb)
 				.setFrom(skip).setSize(take)
@@ -327,7 +339,7 @@ public class ElasticsearchJobProvider implements JobProvider
 			if (!modelSizeStatsResponse.isExists())
 			{
 				String msg = "No memory usage details for job with id " + job.getId();
-				s_Logger.warn(msg);
+				LOGGER.warn(msg);
 			}
 			else
 			{
@@ -349,13 +361,13 @@ public class ElasticsearchJobProvider implements JobProvider
 
 	/**
 	 * Create the Elasticsearch index and the mappings
-	 * @throws  
+	 * @throws
 	 */
 	@Override
-	public boolean createJob(JobDetails job) 
-	throws JobIdAlreadyExistsException 
+	public boolean createJob(JobDetails job)
+	throws JobIdAlreadyExistsException
 	{
-		try		
+		try
 		{
 			XContentBuilder jobMapping = ElasticsearchMappings.jobMapping();
 			XContentBuilder bucketMapping = ElasticsearchMappings.bucketMapping();
@@ -365,9 +377,9 @@ public class ElasticsearchJobProvider implements JobProvider
 			XContentBuilder modelStateMapping = ElasticsearchMappings.modelStateMapping();
 			XContentBuilder usageMapping = ElasticsearchMappings.usageMapping();
 			XContentBuilder modelSizeStatsMapping = ElasticsearchMappings.modelSizeStatsMapping();
-						
+
 			m_Client.admin().indices()
-					.prepareCreate(job.getId())					
+					.prepareCreate(job.getId())
 					.addMapping(JobDetails.TYPE, jobMapping)
 					.addMapping(Bucket.TYPE, bucketMapping)
 					.addMapping(Detector.TYPE, detectorMapping)
@@ -378,35 +390,35 @@ public class ElasticsearchJobProvider implements JobProvider
 					.addMapping(ModelSizeStats.TYPE, modelSizeStatsMapping)
 					.get();
 
-			
+
 			String json = m_ObjectMapper.writeValueAsString(job);
-						
+
 			m_Client.prepareIndex(job.getId(), JobDetails.TYPE, job.getId())
 					.setSource(json)
 					.setRefresh(true)
 					.get();
-			
+
 			return true;
 		}
 		catch (ElasticsearchException e)
 		{
-			s_Logger.error("Error writing Elasticsearch mappings", e);
+			LOGGER.error("Error writing Elasticsearch mappings", e);
 			throw e;
-		} 
-		catch (IOException e) 
-		{
-			s_Logger.error("Error writing Elasticsearch mappings", e);
 		}
-		
+		catch (IOException e)
+		{
+			LOGGER.error("Error writing Elasticsearch mappings", e);
+		}
+
 		return false;
 	}
-	
+
 	/**
-	 * Returns null if the field cannot be found or converted to 
+	 * Returns null if the field cannot be found or converted to
 	 * type V
 	 */
 	@Override
-	public <V> V getField(String jobId, String fieldName) 
+	public <V> V getField(String jobId, String fieldName)
 	{
 		try
 		{
@@ -414,7 +426,7 @@ public class ElasticsearchJobProvider implements JobProvider
 					.prepareGet(jobId, JobDetails.TYPE, jobId)
 					.setFields(fieldName)
 					.get();
-			try 
+			try
 			{
 				GetField f = response.getField(fieldName);
 				if (f != null)
@@ -429,16 +441,16 @@ public class ElasticsearchJobProvider implements JobProvider
 		{
 			// the job does not exist
 			String msg = "Missing Index no job with id " + jobId;
-			s_Logger.error(msg);
+			LOGGER.error(msg);
 		}
-		
+
 		return null;
 	}
 
 
 	@Override
 	public boolean updateJob(String jobId, Map<String, Object> updates)
-	throws UnknownJobException 
+	throws UnknownJobException
 	{
 		if (jobExists(jobId))
 		{
@@ -450,28 +462,28 @@ public class ElasticsearchJobProvider implements JobProvider
 					m_Client.prepareUpdate(jobId, JobDetails.TYPE, jobId)
 										.setDoc(updates)
 										.get();
-					
+
 					break;
 				}
 				catch (VersionConflictEngineException e)
 				{
-					s_Logger.warn("Conflict updating job document");
+					LOGGER.warn("Conflict updating job document");
 				}
 			}
-			
+
 			if (retryCount <= 0)
 			{
-				s_Logger.warn("Unable to update conflicted job document " + jobId +
+				LOGGER.warn("Unable to update conflicted job document " + jobId +
 						". Updates = " + updates);
 				return false;
 			}
-			
+
 			return true;
 		}
-		
+
 		return false;
 	}
-	
+
 	@Override
 	public boolean setJobStatus(String jobId, JobStatus status)
 	throws UnknownJobException
@@ -479,23 +491,23 @@ public class ElasticsearchJobProvider implements JobProvider
 		Map<String, Object> update = new HashMap<>();
 		update.put(JobDetails.STATUS, status);
 		return this.updateJob(jobId, update);
-	
+
 	}
 
 	@Override
-	public boolean setJobFinishedTimeandStatus(String jobId, Date time, 
+	public boolean setJobFinishedTimeandStatus(String jobId, Date time,
 			JobStatus status)
 	throws UnknownJobException
 	{
 		Map<String, Object> update = new HashMap<>();
 		update.put(JobDetails.FINISHED_TIME, time);
 		update.put(JobDetails.STATUS, status);
-		return this.updateJob(jobId, update);	
+		return this.updateJob(jobId, update);
 	}
-	
-	
+
+
 	@Override
-	public boolean deleteJob(String jobId) throws UnknownJobException 
+	public boolean deleteJob(String jobId) throws UnknownJobException
 	{
 		try
 		{
@@ -504,20 +516,20 @@ public class ElasticsearchJobProvider implements JobProvider
 
 			return response.isAcknowledged();
 		}
-		catch (InterruptedException|ExecutionException e) 
+		catch (InterruptedException|ExecutionException e)
 		{
 			if (e.getCause() instanceof IndexMissingException)
 			{
 				String msg = String.format("Cannot delete job - no index with id '%s' in the database", jobId);
-				s_Logger.warn(msg);
-				throw new UnknownJobException(jobId, msg, 
+				LOGGER.warn(msg);
+				throw new UnknownJobException(jobId, msg,
 						ErrorCode.MISSING_JOB_ERROR);
 			}
 			else
 			{
 				String msg = "Error deleting index " + jobId;
-				s_Logger.error(msg);
-				throw new UnknownJobException(jobId, msg, 
+				LOGGER.error(msg);
+				throw new UnknownJobException(jobId, msg,
 						ErrorCode.DATA_STORE_ERROR, e.getCause());
 			}
 		}
@@ -531,7 +543,7 @@ public class ElasticsearchJobProvider implements JobProvider
 	throws UnknownJobException
 	{
 		FilterBuilder fb = null;
-		
+
 		if (anomalyScoreThreshold > 0.0)
 		{
 			RangeFilterBuilder scoreFilter = FilterBuilders.rangeFilter(Bucket.ANOMALY_SCORE);
@@ -542,23 +554,23 @@ public class ElasticsearchJobProvider implements JobProvider
 		{
 			RangeFilterBuilder scoreFilter = FilterBuilders.rangeFilter(Bucket.MAX_NORMALIZED_PROBABILITY);
 			scoreFilter.gte(normalizedProbabilityThreshold);
-			
+
 			if (fb == null)
 			{
 				fb = scoreFilter;
 			}
-			else 
+			else
 			{
 				fb = FilterBuilders.andFilter(scoreFilter, fb);
 			}
-			
+
 		}
-		
+
 		if (fb == null)
 		{
 			fb = FilterBuilders.matchAllFilter();
 		}
-		
+
 		return buckets(jobId, expand, skip, take, fb);
 	}
 
@@ -569,7 +581,7 @@ public class ElasticsearchJobProvider implements JobProvider
 	throws UnknownJobException
 	{
 		FilterBuilder fb = null;
-		
+
 		if (startEpochMs > 0 || endEpochMs > 0)
 		{
 			// HACK for the timestamps being @timestamp in the database
@@ -583,36 +595,36 @@ public class ElasticsearchJobProvider implements JobProvider
 			{
 				timeRange.lt(endEpochMs);
 			}
-			
+
 			fb = timeRange;
 		}
-		
-		
+
+
 		if (anomalyScoreThreshold > 0.0)
 		{
 			RangeFilterBuilder scoreFilter = FilterBuilders.rangeFilter(Bucket.ANOMALY_SCORE);
 			scoreFilter.gte(anomalyScoreThreshold);
-			
+
 			if (fb == null)
 			{
 				fb = scoreFilter;
 			}
-			else 
+			else
 			{
 				fb = FilterBuilders.andFilter(scoreFilter, fb);
 			}
 		}
-		
+
 		if (normalizedProbabilityThreshold > 0.0)
 		{
 			RangeFilterBuilder scoreFilter = FilterBuilders.rangeFilter(Bucket.MAX_NORMALIZED_PROBABILITY);
 			scoreFilter.gte(normalizedProbabilityThreshold);
-			
+
 			if (fb == null)
 			{
 				fb = scoreFilter;
 			}
-			else 
+			else
 			{
 				fb = FilterBuilders.andFilter(scoreFilter, fb);
 			}
@@ -620,12 +632,12 @@ public class ElasticsearchJobProvider implements JobProvider
 
 		return buckets(jobId, expand, skip, take, fb);
 	}
-	
-	private Pagination<Bucket> buckets(String jobId, 
+
+	private Pagination<Bucket> buckets(String jobId,
 			boolean expand, int skip, int take,
-			FilterBuilder fb) 
+			FilterBuilder fb)
 	throws UnknownJobException
-	{	
+	{
 		SortBuilder sb = new FieldSortBuilder(Bucket.ID)
 					.ignoreUnmapped(true)
 					.order(SortOrder.ASC);
@@ -634,7 +646,7 @@ public class ElasticsearchJobProvider implements JobProvider
 		try
 		{
 			searchResponse = m_Client.prepareSearch(jobId)
-										.setTypes(Bucket.TYPE)		
+										.setTypes(Bucket.TYPE)
 										.addSort(sb)
 										.setPostFilter(fb)
 										.setFrom(skip).setSize(take)
@@ -646,11 +658,11 @@ public class ElasticsearchJobProvider implements JobProvider
 		}
 
 		List<Bucket> results = new ArrayList<>();
-		
-		
+
+
 		for (SearchHit hit : searchResponse.getHits().getHits())
 		{
-			// Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch, 
+			// Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch,
 			// and replace using the API 'timestamp' key.
 			Object timestamp = hit.getSource().remove(ElasticsearchMappings.ES_TIMESTAMP);
 			hit.getSource().put(Bucket.TIMESTAMP, timestamp);
@@ -662,19 +674,19 @@ public class ElasticsearchJobProvider implements JobProvider
 				int rskip = 0;
 				int rtake = 500;
 				Pagination<AnomalyRecord> page = this.bucketRecords(
-						jobId, hit.getId(), rskip, rtake, 
+						jobId, hit.getId(), rskip, rtake,
 						AnomalyRecord.PROBABILITY, false);
-				
+
 				if (page.getHitCount() > 0)
 				{
 					bucket.setRecords(page.getDocuments());
 				}
-				
+
 				while (page.getHitCount() > rskip + rtake)
 				{
 					rskip += rtake;
 					page = this.bucketRecords(
-							jobId, hit.getId(), rskip, rtake, 
+							jobId, hit.getId(), rskip, rtake,
 							AnomalyRecord.PROBABILITY, false);
 					bucket.getRecords().addAll(page.getDocuments());
 				}
@@ -682,7 +694,7 @@ public class ElasticsearchJobProvider implements JobProvider
 
 			results.add(bucket);
 		}
-		
+
 
 		Pagination<Bucket> page = new Pagination<>();
 		page.setDocuments(results);
@@ -692,9 +704,9 @@ public class ElasticsearchJobProvider implements JobProvider
 
 		return page;
 	}
-	
+
 	@Override
-	public SingleDocument<Bucket> bucket(String jobId, 
+	public SingleDocument<Bucket> bucket(String jobId,
 			String bucketId, boolean expand)
 	throws UnknownJobException
 	{
@@ -707,62 +719,62 @@ public class ElasticsearchJobProvider implements JobProvider
 		{
 			throw new UnknownJobException(jobId);
 		}
-		
+
 		SingleDocument<Bucket> doc = new SingleDocument<>();
 		doc.setType(Bucket.TYPE);
 		doc.setDocumentId(bucketId);
 		if (response.isExists())
 		{
-			// Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch, 
+			// Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch,
 			// and replace using the API 'timestamp' key.
 			Object timestamp = response.getSource().remove(ElasticsearchMappings.ES_TIMESTAMP);
 			response.getSource().put(Bucket.TIMESTAMP, timestamp);
 
 			Bucket bucket = m_ObjectMapper.convertValue(response.getSource(), Bucket.class);
-			
+
 			if (expand)
 			{
 				int rskip = 0;
 				int rtake = 500;
 				Pagination<AnomalyRecord> page = this.bucketRecords(
-						jobId, bucketId, rskip, rtake, 
+						jobId, bucketId, rskip, rtake,
 						AnomalyRecord.PROBABILITY, false);
 				bucket.setRecords(page.getDocuments());
-				
+
 				while (page.getHitCount() > rskip + rtake)
 				{
 					rskip += rtake;
 					page = this.bucketRecords(
-							jobId, bucketId, rskip, rtake, 
+							jobId, bucketId, rskip, rtake,
 							AnomalyRecord.PROBABILITY, false);
 					bucket.getRecords().addAll(page.getDocuments());
 				}
 			}
-			
+
 			doc.setDocument(bucket);
 		}
-		
+
 		return doc;
 	}
-	
+
 
 	@Override
 	public Pagination<AnomalyRecord> bucketRecords(String jobId,
 			String bucketId, int skip, int take, String sortField, boolean descending)
 	throws UnknownJobException
 	{
-		 FilterBuilder bucketFilter = FilterBuilders.hasParentFilter(Bucket.TYPE, 
+		 FilterBuilder bucketFilter = FilterBuilders.hasParentFilter(Bucket.TYPE,
 								FilterBuilders.termFilter(Bucket.ID, bucketId));
-		 
+
 		 SortBuilder sb = null;
 		 if (sortField != null)
 		 {
 			 sb = new FieldSortBuilder(sortField)
 						 .ignoreUnmapped(true)
 						 .missing("_last")
-						 .order(descending ? SortOrder.DESC : SortOrder.ASC);		
+						 .order(descending ? SortOrder.DESC : SortOrder.ASC);
 		 }
-		 
+
 		 List<String> secondarySort = Arrays.asList(new String[] {
 			 AnomalyRecord.ANOMALY_SCORE,
 			 AnomalyRecord.OVER_FIELD_VALUE,
@@ -771,21 +783,21 @@ public class ElasticsearchJobProvider implements JobProvider
 			 AnomalyRecord.FIELD_NAME,
 			 AnomalyRecord.FUNCTION}
 		 );
-		
+
 		return records(jobId, skip, take, bucketFilter, sb, secondarySort,
 				descending);
 	}
-	
-	
+
+
 	@Override
 	public Pagination<AnomalyRecord> records(String jobId,
-			int skip, int take,	long startEpochMs, long endEpochMs, 
-			String sortField, boolean descending, 
+			int skip, int take,	long startEpochMs, long endEpochMs,
+			String sortField, boolean descending,
 			double anomalyScoreThreshold, double normalizedProbabilityThreshold)
 	throws UnknownJobException
 	{
 		FilterBuilder fb = null;
-		
+
 		if (startEpochMs > 0 || endEpochMs > 0)
 		{
 			// HACK for the timestamps being @timestamp in the database
@@ -799,52 +811,52 @@ public class ElasticsearchJobProvider implements JobProvider
 			{
 				rangeFilter.lt(endEpochMs);
 			}
-			
+
 			fb = FilterBuilders.hasParentFilter(Bucket.TYPE, rangeFilter);
 		}
-		
+
 		if (anomalyScoreThreshold > 0.0)
 		{
 			RangeFilterBuilder scoreFilter = FilterBuilders.rangeFilter(AnomalyRecord.ANOMALY_SCORE);
 			scoreFilter.gte(anomalyScoreThreshold);
-			
+
 			if (fb == null)
 			{
 				fb = scoreFilter;
 			}
-			else 
+			else
 			{
 				fb = FilterBuilders.andFilter(scoreFilter, fb);
 			}
 		}
-		
+
 		if (normalizedProbabilityThreshold > 0.0)
 		{
 			RangeFilterBuilder scoreFilter = FilterBuilders.rangeFilter(AnomalyRecord.NORMALIZED_PROBABILITY);
 			scoreFilter.gte(normalizedProbabilityThreshold);
-			
+
 			if (fb == null)
 			{
 				fb = scoreFilter;
 			}
-			else 
+			else
 			{
 				fb = FilterBuilders.andFilter(scoreFilter, fb);
 			}
 		}
-		
+
 
 		return records(jobId, skip, take, fb, sortField, descending);
 	}
-	
+
 	/**
-	 * Light testing suggests that this method is actually 
+	 * Light testing suggests that this method is actually
 	 * slower than querying each bucket individually.
 	 * Best to query records by bucket id in a loop
 	 */
 	@Override
 	public Pagination<AnomalyRecord> records(String jobId,
-			List<String> bucketIds,  int skip, 
+			List<String> bucketIds,  int skip,
 			int take, String sortField, boolean descending)
 	throws UnknownJobException
 	{
@@ -860,7 +872,7 @@ public class ElasticsearchJobProvider implements JobProvider
 
 		return records(jobId, skip, take, bucketFilter, sortField, descending);
 	}
-	
+
 	@Override
 	public Pagination<AnomalyRecord> records(String jobId,
 			int skip, int take, String sortField, boolean descending,
@@ -868,7 +880,7 @@ public class ElasticsearchJobProvider implements JobProvider
 	throws UnknownJobException
 	{
 		 FilterBuilder fb = null;
-		 
+
 		 if (anomalyScoreThreshold > 0.0)
 		 {
 			 RangeFilterBuilder scoreFilter = FilterBuilders.rangeFilter(AnomalyRecord.ANOMALY_SCORE);
@@ -884,7 +896,7 @@ public class ElasticsearchJobProvider implements JobProvider
 			 {
 				 fb = scoreFilter;
 			 }
-			 else 
+			 else
 			 {
 				 fb = FilterBuilders.andFilter(scoreFilter, fb);
 			 }
@@ -894,14 +906,14 @@ public class ElasticsearchJobProvider implements JobProvider
 		 {
 			 fb = FilterBuilders.matchAllFilter();
 		 }
-		 
+
 		return records(jobId, skip, take, fb, sortField, descending);
 	}
-	
-	
+
+
 	private Pagination<AnomalyRecord> records(String jobId,
 			int skip, int take, FilterBuilder recordFilter,
-			String sortField, boolean descending) 
+			String sortField, boolean descending)
     throws UnknownJobException
 	{
 		 SortBuilder sb = null;
@@ -910,19 +922,19 @@ public class ElasticsearchJobProvider implements JobProvider
 			 sb = new FieldSortBuilder(sortField)
 						 .ignoreUnmapped(true)
 						 .missing("_last")
-						 .order(descending ? SortOrder.DESC : SortOrder.ASC);		
+						 .order(descending ? SortOrder.DESC : SortOrder.ASC);
 		 }
-		 
+
 		return records(jobId, skip, take, recordFilter, sb, SECONDARY_SORT, descending);
 	}
-	
-	
+
+
 	/**
 	 * The returned records have the parent bucket id set.
 	 */
 	private Pagination<AnomalyRecord> records(String jobId, int skip, int take,
 			FilterBuilder recordFilter, SortBuilder sb, List<String> secondarySort,
-			boolean descending) 
+			boolean descending)
 	throws UnknownJobException
 	{
 		SearchRequestBuilder searchBuilder = m_Client.prepareSearch(jobId)
@@ -931,19 +943,19 @@ public class ElasticsearchJobProvider implements JobProvider
 				.setFrom(skip).setSize(take)
 				.addField(_PARENT)   // include the parent id
 				.setFetchSource(true);  // the field option turns off source so request it explicitly
-		
-		
+
+
 		if (sb != null)
 		{
 			searchBuilder.addSort(sb);
 		}
-		
+
 		for (String sortField : secondarySort)
 		{
 			searchBuilder.addSort(sortField, descending ? SortOrder.DESC : SortOrder.ASC);
 		}
 
-		
+
 		SearchResponse searchResponse;
 		try
 		{
@@ -961,24 +973,24 @@ public class ElasticsearchJobProvider implements JobProvider
 
 			// replace logstash timestamp name with timestamp
 			m.put(Bucket.TIMESTAMP, m.remove(ElasticsearchMappings.ES_TIMESTAMP));
-			
+
 			AnomalyRecord record = m_ObjectMapper.convertValue(
 					m, AnomalyRecord.class);
 
 			// set the ID and parent ID
 			record.setId(hit.getId());
 			record.setParent(hit.field(_PARENT).getValue().toString());
-			
+
 			results.add(record);
 		}
-		
+
 		Pagination<AnomalyRecord> page = new Pagination<>();
 		page.setDocuments(results);
 		page.setHitCount(searchResponse.getHits().getTotalHits());
 		page.setSkip(skip);
 		page.setTake(take);
-		
-		return page;	
+
+		return page;
 	}
 
 
@@ -986,12 +998,12 @@ public class ElasticsearchJobProvider implements JobProvider
 	 * Always returns true
 	 */
 	@Override
-	public boolean savePrelertInfo(String infoDoc) 
+	public boolean savePrelertInfo(String infoDoc)
 	{
 		m_Client.prepareIndex(PRELERT_INFO_INDEX, PRELERT_INFO_TYPE, PRELERT_INFO_ID)
 						.setSource(infoDoc)
 						.execute().actionGet();
-		
+
 		return true;
 	}
 
@@ -1015,7 +1027,7 @@ public class ElasticsearchJobProvider implements JobProvider
 				String kind = response.getId();
 				if (response.isFailed() || !response.getResponse().isExists())
 				{
-					s_Logger.info("There are currently no " + kind +
+					LOGGER.info("There are currently no " + kind +
 									" quantiles for job " + jobId);
 				}
 				else
@@ -1023,7 +1035,7 @@ public class ElasticsearchJobProvider implements JobProvider
 					Object state = response.getResponse().getSource().get(Quantiles.QUANTILE_STATE);
 					if (state == null)
 					{
-						s_Logger.error("Inconsistency - no " + Quantiles.QUANTILE_STATE +
+						LOGGER.error("Inconsistency - no " + Quantiles.QUANTILE_STATE +
 										" field in " + kind +
 										" quantiles for job " + jobId);
 					}
@@ -1036,7 +1048,7 @@ public class ElasticsearchJobProvider implements JobProvider
 		}
 		catch (IndexMissingException e)
 		{
-			s_Logger.error("Unknown job '" + jobId + "'. Cannot read persisted state");
+			LOGGER.error("Unknown job '" + jobId + "'. Cannot read persisted state");
 			throw new UnknownJobException(jobId,
 					"Cannot read persisted quantiles", ErrorCode.MISSING_JOB_ERROR);
 		}
