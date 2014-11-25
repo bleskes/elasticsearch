@@ -39,6 +39,7 @@ import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
+import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 
@@ -121,17 +122,16 @@ public class ElasticsearchPersister implements JobResultsPersister
 		{
 			XContentBuilder content = serialiseBucket(bucket);
 
-			m_Client.prepareIndex(m_JobId, Bucket.TYPE, bucket.getId())
+			IndexResponse response = m_Client.prepareIndex(m_JobId, Bucket.TYPE, bucket.getId())
 					.setSource(content)
 					.execute().actionGet();
 
-			/* TODO this method is only in version Elasticsearch 1.0
 			if (response.isCreated() == false)
 			{
 				LOGGER.error(String.format("Bucket %s document not created",
 						bucket.getId()));
 			}
-			*/
+
 
 			for (Detector detector : bucket.getDetectors())
 			{
@@ -140,18 +140,16 @@ public class ElasticsearchPersister implements JobResultsPersister
 					m_DetectorNames.add(detector.getName());
 					// Write the detector
 					content = serialiseDetector(detector);
-					m_Client.prepareIndex(m_JobId, Detector.TYPE, detector.getName())
+					response = m_Client.prepareIndex(m_JobId, Detector.TYPE, detector.getName())
 						.setSource(content)
 						.get();
 				}
 
-				/* TODO this method is only in version Elasticsearch 1.0
 				if (response.isCreated() == false)
 				{
 					LOGGER.error(String.format("Detector %s document not created",
-							detectorId));
+							detector.getName()));
 				}
-				*/
 
 				BulkRequestBuilder bulkRequest = m_Client.prepareBulk();
 				int count = 1;
@@ -207,17 +205,15 @@ public class ElasticsearchPersister implements JobResultsPersister
 		{
 			XContentBuilder content = serialiseQuantiles(quantiles);
 
-			m_Client.prepareIndex(m_JobId, Quantiles.TYPE, quantiles.getId())
+			IndexResponse response = m_Client.prepareIndex(m_JobId, Quantiles.TYPE, quantiles.getId())
 					.setSource(content)
 					.execute().actionGet();
 
-			/* TODO this method is only in version Elasticsearch 1.0
 			if (response.isCreated() == false)
 			{
-				LOGGER.error(String.format("Bucket %s document not created",
-						bucket.getId()));
+				LOGGER.error(String.format("Quantile %s document not created",
+						quantiles.getId()));
 			}
-			*/
 		}
 		catch (IOException e)
 		{
@@ -252,17 +248,15 @@ public class ElasticsearchPersister implements JobResultsPersister
 		{
 			XContentBuilder content = serialiseModelSizeStats(modelSizeStats);
 
-			m_Client.prepareIndex(m_JobId, ModelSizeStats.TYPE, modelSizeStats.getId())
+			IndexResponse response = m_Client.prepareIndex(m_JobId, ModelSizeStats.TYPE, modelSizeStats.getId())
 					.setSource(content)
 					.execute().actionGet();
 
-			/* TODO this method is only in version Elasticsearch 1.0
 			if (response.isCreated() == false)
 			{
-				LOGGER.error(String.format("Bucket %s document not created",
-						bucket.getId()));
+				LOGGER.error(String.format("Model size stats %s document not created",
+						modelSizeStats.getId()));
 			}
-			*/
 		}
 		catch (IOException e)
 		{

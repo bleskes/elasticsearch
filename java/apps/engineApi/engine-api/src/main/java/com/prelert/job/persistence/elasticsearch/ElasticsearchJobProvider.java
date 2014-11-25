@@ -109,10 +109,6 @@ public class ElasticsearchJobProvider implements JobProvider
 	public static final String _PARENT = "_parent";
 
 	private static final List<String> SECONDARY_SORT = new ArrayList<>();
-//	static
-//	{
-//		SECONDARY_SORT.add(AnomalyRecord.ANOMALY_SCORE);
-//	}
 
 
 	private Node m_Node;
