@@ -30,8 +30,6 @@ import java.net.URI;
 import java.util.Date;
 import java.util.Objects;
 
-import org.apache.log4j.Logger;
-
 /**
  * This class represents a configured and created Job. The creation time is
  * set to the time the object was constructed, Status is set to
@@ -42,8 +40,6 @@ import org.apache.log4j.Logger;
  */
 public class JobDetails
 {
-	private static final Logger LOGGER = Logger.getLogger(JobDetails.class);
-
 	public static final long DEFAULT_TIMEOUT = 600;
 	public static final long DEFAULT_BUCKETSPAN = 300;
 

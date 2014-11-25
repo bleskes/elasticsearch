@@ -38,11 +38,12 @@ public class ClosedJobException extends JobException
 {
 	private static final long serialVersionUID = 5491387807381215423L;
 
-	private String m_JobId;
+	private final String m_JobId;
 
 	public ClosedJobException(String message, String jobId)
 	{
 		super(message, ErrorCode.JOB_NOT_RUNNING);
+		m_JobId = jobId;
 	}
 
 	public String getJobId()

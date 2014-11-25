@@ -39,8 +39,8 @@ public class OutOfOrderRecordsException extends JobException
 {
 	private static final long serialVersionUID = -7088347813900268191L;
 
-	private long m_NumberBad;
-	private long m_TotalNumber;
+	private final long m_NumberBad;
+	private final long m_TotalNumber;
 
 	public OutOfOrderRecordsException(long numberBadRecords,
 			long totalNumberRecords)

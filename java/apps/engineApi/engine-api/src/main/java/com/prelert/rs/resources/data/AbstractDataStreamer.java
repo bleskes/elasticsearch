@@ -57,7 +57,7 @@ import com.prelert.rs.streaminginterceptor.StreamingInterceptor;
 
 public abstract class AbstractDataStreamer {
 
-    protected final Logger LOGGER = Logger.getLogger(getClass());
+    protected static final Logger LOGGER = Logger.getLogger(AbstractDataStreamer.class);
 
     /**
      * Persisted data files are named with this date format
