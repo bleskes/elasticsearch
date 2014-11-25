@@ -81,20 +81,20 @@ import com.prelert.rs.data.SingleDocument;
  */
 public class AlertSubscriptionTest
 {
-	private final static Logger s_Logger = Logger.getLogger(AlertSubscriptionTest.class);
+	private static final Logger LOGGER = Logger.getLogger(AlertSubscriptionTest.class);
 
 	/**
 	 * The default base Url used in the test
 	 */
-	static final public String API_BASE_URL = "http://localhost:8080/engine/v1";
+	public static final String API_BASE_URL = "http://localhost:8080/engine/v1";
 
-	static final public String ALERTING_JOB_1 = "alerting-job-1";
-	static final public String ALERTING_JOB_2 = "alerting-job-2";
-	static final public String ALERTING_JOB_3 = "alerting-job-3";
-	static final public String ALERTING_JOB_3_B = "alerting-job-3-b";
-	static final public String ALERT_TIMEOUT_JOB = "alerting-timeout-job";
+	public static final String ALERTING_JOB_1 = "alerting-job-1";
+	public static final String ALERTING_JOB_2 = "alerting-job-2";
+	public static final String ALERTING_JOB_3 = "alerting-job-3";
+	public static final String ALERTING_JOB_3_B = "alerting-job-3-b";
+	public static final String ALERT_TIMEOUT_JOB = "alerting-timeout-job";
 
-	static final public String [] JOB_IDS = {ALERTING_JOB_1, ALERTING_JOB_2, ALERTING_JOB_3,
+	public static final String [] JOB_IDS = {ALERTING_JOB_1, ALERTING_JOB_2, ALERTING_JOB_3,
 		ALERTING_JOB_3_B, ALERT_TIMEOUT_JOB};
 
 
@@ -148,7 +148,7 @@ public class AlertSubscriptionTest
 		}
 	}
 
-	static private void configureLogging()
+	private static void configureLogging()
 	{
 		// configure log4j
 		ConsoleAppender console = new ConsoleAppender();
@@ -274,7 +274,7 @@ public class AlertSubscriptionTest
 				}
 				catch (InterruptedException e1)
 				{
-					s_Logger.error(e1);
+					LOGGER.error(e1);
 					test(false);
 				}
 
@@ -294,7 +294,7 @@ public class AlertSubscriptionTest
 
 					if (m_Quit)
 					{
-						s_Logger.warn("Quitting the alert poll thread");
+						LOGGER.warn("Quitting the alert poll thread");
 						break;
 					}
 
@@ -304,7 +304,7 @@ public class AlertSubscriptionTest
 					}
 					catch (InterruptedException e)
 					{
-						s_Logger.error(e);
+						LOGGER.error(e);
 						break;
 					}
 				}
@@ -341,11 +341,11 @@ public class AlertSubscriptionTest
 
 					m_BucketUris.add(alert.getUri());
 
-					s_Logger.info("Got alert for job " + m_JobId);
+					LOGGER.info("Got alert for job " + m_JobId);
 				}
 				else
 				{
-					s_Logger.info("Alert timed out for " + m_JobId);
+					LOGGER.info("Alert timed out for " + m_JobId);
 				}
 
 
@@ -431,12 +431,12 @@ public class AlertSubscriptionTest
 			}
 			catch (IOException e)
 			{
-				s_Logger.error(e);
+				LOGGER.error(e);
 				test(false);
 			}
 			catch (InterruptedException e)
 			{
-				s_Logger.error(e);
+				LOGGER.error(e);
 				test(false);
 			}
 		}
@@ -478,11 +478,11 @@ public class AlertSubscriptionTest
 					}
 					catch (IOException e)
 					{
-						s_Logger.info(e);
+						LOGGER.info(e);
 					}
 					catch (InterruptedException e)
 					{
-						s_Logger.info(e);
+						LOGGER.info(e);
 					}
 				}
 			}).start();
@@ -619,7 +619,7 @@ public class AlertSubscriptionTest
 
 		if (passed)
 		{
-			s_Logger.info("All alert tests passed");
+			LOGGER.info("All alert tests passed");
 
 			for (String s : JOB_IDS)
 			{
@@ -628,7 +628,7 @@ public class AlertSubscriptionTest
 		}
 		else
 		{
-			s_Logger.info("Alert tests failed");
+			LOGGER.info("Alert tests failed");
 			System.exit(1);
 		}
 	}
@@ -645,11 +645,11 @@ public class AlertSubscriptionTest
 			baseUrl = args[0];
 		}
 
-		s_Logger.info("Testing Service at " + baseUrl);
+		LOGGER.info("Testing Service at " + baseUrl);
 		final String prelertTestDataHome = System.getProperty("prelert.test.data.home");
 		if (prelertTestDataHome == null)
 		{
-			s_Logger.error("Error property prelert.test.data.home is not set");
+			LOGGER.error("Error property prelert.test.data.home is not set");
 			return;
 		}
 

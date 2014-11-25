@@ -60,27 +60,27 @@ import com.prelert.rs.provider.RestApiException;
 @Path("/results")
 public class Records extends ResourceWithJobManager
 {
-	static private final Logger s_Logger = Logger.getLogger(Records.class);
+	private static final Logger LOGGER = Logger.getLogger(Records.class);
 	
 	/**
 	 * The name of the records endpoint
 	 */
-	static public final String ENDPOINT = "records";
+	public static final String ENDPOINT = "records";
 	
 	/**
 	 * Sort field query parameter
 	 */
-	static public final String SORT_QUERY_PARAM = "sort";
+	public static final String SORT_QUERY_PARAM = "sort";
 	/**
 	 * Sort direction
 	 */
-	static public final String DESCENDING_ORDER = "desc";
+	public static final String DESCENDING_ORDER = "desc";
 	
 
-	static private final DateFormat s_DateFormat = new SimpleDateFormat(ISO_8601_DATE_FORMAT); 
-	static private final DateFormat s_DateFormatWithMs = new SimpleDateFormat(ISO_8601_DATE_FORMAT_WITH_MS); 
+	private static final DateFormat s_DateFormat = new SimpleDateFormat(ISO_8601_DATE_FORMAT); 
+	private static final DateFormat s_DateFormatWithMs = new SimpleDateFormat(ISO_8601_DATE_FORMAT_WITH_MS); 
 	
-	static private final DateFormat [] s_DateFormats = new DateFormat [] {
+	private static final DateFormat [] s_DateFormats = new DateFormat [] {
 		s_DateFormat, s_DateFormatWithMs};
 	
 	
@@ -112,7 +112,7 @@ public class Records extends ResourceWithJobManager
 			@DefaultValue("0.0") @QueryParam(AnomalyRecord.NORMALIZED_PROBABILITY) double normalizedProbabilityFilter)
 	throws NativeProcessRunException, UnknownJobException
 	{	
-		s_Logger.debug(String.format("Get records for job %s. skip = %d, take = %d"
+		LOGGER.debug(String.format("Get records for job %s. skip = %d, take = %d"
 				+ " start = '%s', end='%s', sort='%s' descending=%b"  
 				+ ", anomaly score filter=%f, unsual score filter= %f", 
 				jobId, skip, take, start, end, sort, descending,
@@ -125,7 +125,7 @@ public class Records extends ResourceWithJobManager
 			if (epochStartMs == 0) // could not be parsed
 			{
 				String msg = String.format(BAD_DATE_FROMAT_MSG, START_QUERY_PARAM, start);
-				s_Logger.info(msg);
+				LOGGER.info(msg);
 				throw new RestApiException(msg, ErrorCode.UNPARSEABLE_DATE_ARGUMENT,
 						Response.Status.BAD_REQUEST);
 			}
@@ -138,7 +138,7 @@ public class Records extends ResourceWithJobManager
 			if (epochEndMs == 0) // could not be parsed
 			{
 				String msg = String.format(BAD_DATE_FROMAT_MSG, START_QUERY_PARAM, end);
-				s_Logger.info(msg);
+				LOGGER.info(msg);
 				throw new RestApiException(msg, ErrorCode.UNPARSEABLE_DATE_ARGUMENT,
 						Response.Status.BAD_REQUEST);
 			}			
@@ -192,7 +192,7 @@ public class Records extends ResourceWithJobManager
     		setPagingUrls(path, records, queryParams);
     	}		
 			
-		s_Logger.debug(String.format("Return %d records for job %s", 
+		LOGGER.debug(String.format("Return %d records for job %s", 
 				records.getDocumentCount(), jobId));
 		
 		return records;

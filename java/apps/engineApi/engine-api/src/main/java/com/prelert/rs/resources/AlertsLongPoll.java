@@ -52,22 +52,22 @@ import com.prelert.rs.provider.RestApiException;
 @Path("/alerts_longpoll")
 public class AlertsLongPoll extends ResourceWithJobManager
 {
-	static final private Logger s_Logger = Logger.getLogger(AlertsLongPoll.class);
+	private static final Logger LOGGER = Logger.getLogger(AlertsLongPoll.class);
 
 	/**
 	 * The name of this endpoint
 	 */
-	static public final String ENDPOINT = "alerts_longpoll";
+	public static final String ENDPOINT = "alerts_longpoll";
 
 	/**
 	 * The timeout query parameter
 	 */
-	static public final String TIMEOUT = "timeout";
+	public static final String TIMEOUT = "timeout";
 	/**
 	 * The alert cursor query parameter
 	 */
-	static public final String SCORE = "score";
-	static public final String PROBABILITY = "probability";
+	public static final String SCORE = "score";
+	public static final String PROBABILITY = "probability";
 
 
 	@GET
@@ -81,7 +81,7 @@ public class AlertsLongPoll extends ResourceWithJobManager
 			@Suspended final AsyncResponse asyncResponse)
     throws InterruptedException, UnknownJobException
 	{
-		s_Logger.debug(String.format("long poll alerts for job %s, anomalyScore >= %f "
+		LOGGER.debug(String.format("long poll alerts for job %s, anomalyScore >= %f "
 				+ "normalized prob >= %f", jobId, anomalyScoreThreshold,
 				normalizedProbabiltyThreshold));
 
@@ -91,21 +91,21 @@ public class AlertsLongPoll extends ResourceWithJobManager
 			String msg = String.format("Invalid alert parameters. %s (%.2f) and %s (%.2f) must "
 					+ "be in the range 0-100", SCORE, anomalyScoreThreshold,
 					PROBABILITY, normalizedProbabiltyThreshold);
-			s_Logger.info(msg);
+			LOGGER.info(msg);
 			throw new RestApiException(msg, ErrorCode.INVALID_THRESHOLD_ARGUMENT, Response.Status.BAD_REQUEST);
 		}
 
 		if (anomalyScoreThreshold >= 100.0 && normalizedProbabiltyThreshold >= 100.0)
 		{
 			String msg = String.format("No alerts will be generated if both threshold parameters are 100");
-			s_Logger.info(msg);
+			LOGGER.info(msg);
 			throw new RestApiException(msg, ErrorCode.INVALID_THRESHOLD_ARGUMENT, Response.Status.BAD_REQUEST);
 		}
 
 		if (timeout <= 0)
 		{
 			String msg = String.format("Invalid timeout parameter. Timeout must be > 0");
-			s_Logger.info(msg);
+			LOGGER.info(msg);
 			throw new RestApiException(msg, ErrorCode.INVALID_TIMEOUT_ARGUMENT, Response.Status.BAD_REQUEST);
 		}
 

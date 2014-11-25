@@ -77,12 +77,12 @@ import com.prelert.rs.data.SingleDocument;
 @Path("/jobs")
 public class Jobs extends ResourceWithJobManager
 {
-	static final private Logger s_Logger = Logger.getLogger(Jobs.class);
+	private static final Logger LOGGER = Logger.getLogger(Jobs.class);
 
 	/**
 	 * The name of this endpoint
 	 */
-	static public final String ENDPOINT = "jobs";
+	public static final String ENDPOINT = "jobs";
 
 	/**
 	 * Get all job details.
@@ -95,7 +95,7 @@ public class Jobs extends ResourceWithJobManager
     		@DefaultValue("0") @QueryParam("skip") int skip,
     		@DefaultValue(JobManager.DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take)
     {
-    	s_Logger.debug(String.format("Get all jobs, skip=%d, take=%d", skip, take));
+    	LOGGER.debug(String.format("Get all jobs, skip=%d, take=%d", skip, take));
 
     	JobManager manager = jobManager();
     	Pagination<JobDetails> results = manager.getJobs(skip, take);
@@ -107,7 +107,7 @@ public class Jobs extends ResourceWithJobManager
     		setEndPointLinks(job);
     	}
 
-    	s_Logger.debug(String.format("Returning %d of %d jobs",
+    	LOGGER.debug(String.format("Returning %d of %d jobs",
     			results.getDocuments().size(), results.getHitCount()));
 
     	return results;
@@ -118,7 +118,7 @@ public class Jobs extends ResourceWithJobManager
     @Produces(MediaType.APPLICATION_JSON)
     public Response job(@PathParam("jobId") String jobId)
     {
-    	s_Logger.debug("Get job '" + jobId + "'");
+    	LOGGER.debug("Get job '" + jobId + "'");
 
 		JobManager manager = jobManager();
 		SingleDocument<JobDetails> job;
@@ -136,13 +136,13 @@ public class Jobs extends ResourceWithJobManager
 
 		if (job.isExists())
 		{
-			s_Logger.debug("Returning job '" + jobId + "'");
+			LOGGER.debug("Returning job '" + jobId + "'");
 
 			return Response.ok(job).build();
 		}
 		else
 		{
-			s_Logger.debug(String.format("Cannot find job '%s'", jobId));
+			LOGGER.debug(String.format("Cannot find job '%s'", jobId));
 
 			return Response.status(Response.Status.NOT_FOUND).entity(job).build();
 		}
@@ -155,7 +155,7 @@ public class Jobs extends ResourceWithJobManager
     throws UnknownJobException, JobConfigurationException, IOException,
 			TooManyJobsException, JobIdAlreadyExistsException
     {
-    	s_Logger.debug("Creating new job");
+    	LOGGER.debug("Creating new job");
 
     	// throws if a bad config
     	try
@@ -165,7 +165,7 @@ public class Jobs extends ResourceWithJobManager
     	catch (JobConfigurationException e)
     	{
     		// log error and rethrow
-    		s_Logger.error("Bad job configuration ", e);
+    		LOGGER.error("Bad job configuration ", e);
     		throw e;
     	}
 
@@ -173,13 +173,13 @@ public class Jobs extends ResourceWithJobManager
     	JobDetails job = manager.createJob(config);
     	if (job == null)
     	{
-    		s_Logger.debug("Failed to create job");
+    		LOGGER.debug("Failed to create job");
     		return Response.serverError().build();
     	}
 
     	setEndPointLinks(job);
 
-    	s_Logger.debug("Returning new job details location " + job.getLocation());
+    	LOGGER.debug("Returning new job details location " + job.getLocation());
     	String ent = String.format("{\"id\":\"%s\"}\n", job.getId());
 
 		return Response.created(job.getLocation()).entity(ent).build();
@@ -201,7 +201,7 @@ public class Jobs extends ResourceWithJobManager
     		String description)
     throws UnknownJobException, JsonProcessingException
     {
-    	s_Logger.debug("Setting the job description");
+    	LOGGER.debug("Setting the job description");
 
 		JobManager manager = jobManager();
 		manager.setDescription(jobId, description);
@@ -225,7 +225,7 @@ public class Jobs extends ResourceWithJobManager
     public Response deleteJob(@PathParam("jobId") String jobId)
     throws UnknownJobException, NativeProcessRunException, JobInUseException
     {
-    	s_Logger.debug("Delete job '" + jobId + "'");
+    	LOGGER.debug("Delete job '" + jobId + "'");
 
 		JobManager manager = jobManager();
 		boolean deleted = manager.deleteJob(jobId);
@@ -234,14 +234,14 @@ public class Jobs extends ResourceWithJobManager
 		{
 			new JobLogs().deleteLogs(jobId);
 
-			s_Logger.debug("Job '" + jobId + "' deleted");
+			LOGGER.debug("Job '" + jobId + "' deleted");
 			return Response.ok()
 					.build();
 		}
 		else
 		{
 			String msg = "Error deleting job '" + jobId + "'";
-			s_Logger.warn(msg);
+			LOGGER.warn(msg);
 
 			return Response.status(Response.Status.NOT_FOUND)
 					.build();

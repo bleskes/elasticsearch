@@ -56,7 +56,7 @@ import com.prelert.rs.data.ErrorCode;
  */
 public class ParallelUploadTest 
 {
-	private final static Logger s_Logger = Logger.getLogger(ParallelUploadTest.class);
+	private static final Logger LOGGER = Logger.getLogger(ParallelUploadTest.class);
 
 	
 	public static void main(String[] args) 
@@ -71,7 +71,7 @@ public class ParallelUploadTest
 		
 		if (args.length == 0)
 		{
-			s_Logger.error("This program has one argument the base Url of the"
+			LOGGER.error("This program has one argument the base Url of the"
 					+ " REST API");
 			return;
 		}
@@ -94,7 +94,7 @@ public class ParallelUploadTest
 			}
 			catch (InterruptedException e1) 
 			{
-				s_Logger.error(e1);
+				LOGGER.error(e1);
 			}
 		} 
 		
@@ -155,11 +155,11 @@ public class ParallelUploadTest
 		}
 		catch (InterruptedException e) 
 		{
-			s_Logger.error("Interupted joining test thread", e);
+			LOGGER.error("Interupted joining test thread", e);
 		}
 		
 		
-		s_Logger.info("All tests passed Ok");
+		LOGGER.info("All tests passed Ok");
 
 	}
 }

@@ -46,14 +46,14 @@ import com.prelert.rs.client.datauploader.JsonDataRunner;
  */
 public class SoakTest 
 {
-	static final private Logger s_Logger = Logger.getLogger(SoakTest.class);
+	private static final Logger LOGGER = Logger.getLogger(SoakTest.class);
 	
-	static final public String DEFAULT_CHARSET = "UTF-8";
+	public static final String DEFAULT_CHARSET = "UTF-8";
 	
 	/**
 	 * The default base Url used in the test
 	 */
-	static final public String API_BASE_URL = "http://localhost:8080/engine/v1/";
+	public static final String API_BASE_URL = "http://localhost:8080/engine/v1/";
 	
 		
 	
@@ -70,7 +70,7 @@ public class SoakTest
 		
 		if (args.length == 0)
 		{
-			s_Logger.error("This program has one argument the path to the properties file " 
+			LOGGER.error("This program has one argument the path to the properties file " 
 					+ "containing the settings");
 			return;
 		}
@@ -107,7 +107,7 @@ public class SoakTest
 			}
 			catch (InterruptedException e) 
 			{
-				s_Logger.error("Interupted joining test thread", e);
+				LOGGER.error("Interupted joining test thread", e);
 			}
 		}
 	}

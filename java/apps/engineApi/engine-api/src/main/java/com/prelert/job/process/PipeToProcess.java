@@ -93,7 +93,7 @@ public class PipeToProcess
 	 * of the records read have missing fields
 	 * @throws OutOfOrderRecordsException
 	 */
-	static public void pipeCsv(DataDescription dd, AnalysisConfig analysisConfig,
+	public static void pipeCsv(DataDescription dd, AnalysisConfig analysisConfig,
 		InputStream is, OutputStream os, StatusReporter statusReporter,
 		JobDataPersister dataPersister,	Logger logger)
 	throws IOException, MissingFieldException, HighProportionOfBadTimestampsException,
@@ -290,7 +290,7 @@ public class PipeToProcess
 	 * of the records read have missing fields or unparseable date formats
 	 * @throws OutOfOrderRecordsException
 	 */
-	static public void transformAndPipeCsv(DataDescription dd, AnalysisConfig analysisConfig,
+	public static void transformAndPipeCsv(DataDescription dd, AnalysisConfig analysisConfig,
 			InputStream is, OutputStream os, StatusReporter statusReporter,
 			JobDataPersister dataPersister,	Logger logger)
 	throws IOException, MissingFieldException, HighProportionOfBadTimestampsException,
@@ -543,7 +543,7 @@ public class PipeToProcess
 	 * @param analysisFields
 	 * @return
 	 */
-	static private List<Pair<String, Integer>> findFieldIndexes(
+	private static List<Pair<String, Integer>> findFieldIndexes(
 			String [] header, String timeField, List<String> analysisFields,
 			Logger logger)
 	{
@@ -584,7 +584,7 @@ public class PipeToProcess
 	 * of the records read have missing fields or unparsable date formats
 	 * @throws OutOfOrderRecordsException
 	 */
-	static public void transformAndPipeJson(DataDescription dd,
+	public static void transformAndPipeJson(DataDescription dd,
 			AnalysisConfig analysisConfig, InputStream is, OutputStream os,
 			StatusReporter statusReporter,
 			JobDataPersister dataPersister, Logger logger)
@@ -639,7 +639,7 @@ public class PipeToProcess
 	 * of the records read have missing fields or unparsable date formats
 	 * @throws OutOfOrderRecordsException
 	 */
-	static private void pipeJson(JsonParser parser, String timeField,
+	private static void pipeJson(JsonParser parser, String timeField,
 			AnalysisConfig analysisConfig, OutputStream os,
 			StatusReporter reporter,
 			JobDataPersister dataPersister, Logger logger)
@@ -802,7 +802,7 @@ public class PipeToProcess
 	 * of the records read have missing fields or unparsable date formats
 	 * @throws OutOfOrderRecordsException
 	 */
-	static private void pipeJsonAndTransformTime(JsonParser parser,
+	private static void pipeJsonAndTransformTime(JsonParser parser,
 			AnalysisConfig ac, OutputStream os,
 			DataDescription dd, StatusReporter reporter,
 			JobDataPersister dataPersister, Logger logger)
@@ -1050,7 +1050,7 @@ public class PipeToProcess
 	 * @throws IOException
 	 * @throws JsonParseException
 	 */
-	static private long readJsonRecord(JsonParser parser, String [] record,
+	private static long readJsonRecord(JsonParser parser, String [] record,
 			Map<String, Integer> fieldMap,
 			boolean [] gotFields, Logger logger)
 	throws JsonParseException, IOException
@@ -1129,7 +1129,7 @@ public class PipeToProcess
 	 * @param gotFieldFlags
 	 * @return
 	 */
-	static private long missingFieldCount(String [] requiredFields,
+	private static long missingFieldCount(String [] requiredFields,
 			boolean [] gotFieldFlags)
 	{
 		long count = 0;
@@ -1151,7 +1151,7 @@ public class PipeToProcess
 	 * @param <T>
 	 * @param <U>
 	 */
-	static private class Pair<T,U>
+	private static class Pair<T,U>
 	{
 	    public final T m_First;
 	    public final U m_Second;
@@ -1171,7 +1171,7 @@ public class PipeToProcess
 	 * @param os
 	 * @throws IOException
 	 */
-	static public void pipe(InputStream is, OutputStream os)
+	public static void pipe(InputStream is, OutputStream os)
 	throws IOException
 	{
 		int n;

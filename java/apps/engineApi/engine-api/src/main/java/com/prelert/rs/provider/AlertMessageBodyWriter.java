@@ -52,15 +52,15 @@ public class AlertMessageBodyWriter implements MessageBodyWriter<Alert>
 	 * The Object to JSON mapper.
 	 * Writes dates in ISO 8601 format
 	 */
-	static final private ObjectWriter s_ObjectWriter = 
+	private static final ObjectWriter s_ObjectWriter =
 			new ObjectMapper()
 				.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
 				.writer().withDefaultPrettyPrinter();
-	
+
 
 	@Override
 	public long getSize(Alert arg0, Class<?> arg1, Type arg2,
-			Annotation[] arg3, MediaType arg4) 
+			Annotation[] arg3, MediaType arg4)
 	{
 		// deprecated by JAX-RS 2.0
 		return 0;
@@ -68,18 +68,18 @@ public class AlertMessageBodyWriter implements MessageBodyWriter<Alert>
 
 	@Override
 	public boolean isWriteable(Class<?> type, Type genericType, Annotation[] arg2,
-			MediaType mediaType) 
+			MediaType mediaType)
 	{
 		// no need to check the media type because of the @Produces annotation
 		return type == Alert.class;
 	}
 
 	@Override
-	public void writeTo(Alert bean, Class<?> type, 
+	public void writeTo(Alert bean, Class<?> type,
 			Type genericType, Annotation[] annotations, MediaType mediaType,
-			MultivaluedMap<String, Object> httpHeaders, 
+			MultivaluedMap<String, Object> httpHeaders,
 			OutputStream entityStream)
-    throws IOException, WebApplicationException 
+    throws IOException, WebApplicationException
 	{
 		s_ObjectWriter.writeValue(entityStream, bean);
 	}

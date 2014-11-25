@@ -78,28 +78,28 @@ import com.prelert.rs.data.parsing.AlertObserver;
  */
 public class JobManager
 {
-	static public final Logger s_Logger = Logger.getLogger(JobManager.class);
+	private static final Logger LOGGER = Logger.getLogger(JobManager.class);
 
 	/**
 	 * Field name in which to store the API version in the usage info
 	 */
-	static public final String APP_VER_FIELDNAME = "appVer";
+	public static final String APP_VER_FIELDNAME = "appVer";
 
 	/**
 	 * The default number of documents returned in queries as a string.
 	 */
-	static public final String DEFAULT_PAGE_SIZE_STR = "100";
+	public static final String DEFAULT_PAGE_SIZE_STR = "100";
 
 	/**
 	 * The default number of documents returned in queries.
 	 */
-	static public final int DEFAULT_PAGE_SIZE;
+	public static final int DEFAULT_PAGE_SIZE;
 	static
 	{
 		DEFAULT_PAGE_SIZE = Integer.parseInt(DEFAULT_PAGE_SIZE_STR);
 	}
 
-	static public final String DEFAULT_RECORD_SORT_FIELD = AnomalyRecord.PROBABILITY;
+	public static final String DEFAULT_RECORD_SORT_FIELD = AnomalyRecord.PROBABILITY;
 
 	private ProcessManager m_ProcessManager;
 
@@ -125,9 +125,9 @@ public class JobManager
 	/**
 	 * constraints in the license key.
 	 */
-	static public final String JOBS_LICENSE_CONSTRAINT = "jobs";
-	static public final String DETECTORS_LICENSE_CONSTRAINT = "detectors";
-	static public final String PARTITIONS_LICENSE_CONSTRAINT = "partitions";
+	public static final String JOBS_LICENSE_CONSTRAINT = "jobs";
+	public static final String DETECTORS_LICENSE_CONSTRAINT = "detectors";
+	public static final String PARTITIONS_LICENSE_CONSTRAINT = "partitions";
 
 	/**
 	 * Create a JobManager
@@ -517,7 +517,7 @@ public class JobManager
 	public void finishJob(String jobId)
 	throws UnknownJobException, NativeProcessRunException, JobInUseException
 	{
-		s_Logger.debug("Finish job " + jobId);
+		LOGGER.debug("Finish job " + jobId);
 
 		// First check the job is in the database.
 		// this method throws if it isn't
@@ -561,14 +561,14 @@ public class JobManager
 	public boolean deleteJob(String jobId)
 	throws UnknownJobException, NativeProcessRunException, JobInUseException
 	{
-		s_Logger.debug("Deleting job '" + jobId + "'");
+		LOGGER.debug("Deleting job '" + jobId + "'");
 
 		m_JobProvider.jobExists(jobId);
 
 		m_ProcessManager.finishJob(jobId);
 		m_JobProvider.deleteJob(jobId);
 
-		m_DataPersisterFactory.newDataPersister(jobId, s_Logger).deleteData();
+		m_DataPersisterFactory.newDataPersister(jobId, LOGGER).deleteData();
 
 		return true;
 	}
@@ -695,7 +695,7 @@ public class JobManager
         }
         catch (NativeProcessRunException e)
         {
-            s_Logger.warn("Error finishing job after submitDataLoadJob failed", e);
+            LOGGER.warn("Error finishing job after submitDataLoadJob failed", e);
         }
     }
 
@@ -727,7 +727,7 @@ public class JobManager
 		}
 		catch (IOException e)
 		{
-			s_Logger.error("Exception closing job details provider", e);
+			LOGGER.error("Exception closing job details provider", e);
 		}
 	}
 
@@ -838,7 +838,7 @@ public class JobManager
 			{
 				m_MaxActiveJobs = -1;
 			}
-			s_Logger.info("Max active jobs = " + m_MaxActiveJobs);
+			LOGGER.info("Max active jobs = " + m_MaxActiveJobs);
 			constraint = doc.get(DETECTORS_LICENSE_CONSTRAINT);
 			if (constraint != null)
 			{
@@ -848,7 +848,7 @@ public class JobManager
 			{
 				m_MaxDetectorsPerJob = -1;
 			}
-			s_Logger.info("Max detectors per job = " + m_MaxDetectorsPerJob);
+			LOGGER.info("Max detectors per job = " + m_MaxDetectorsPerJob);
 			constraint = doc.get(PARTITIONS_LICENSE_CONSTRAINT);
 			if (constraint != null)
 			{
@@ -858,16 +858,16 @@ public class JobManager
 			{
 				m_MaxPartitionsPerJob = -1;
 			}
-			s_Logger.info("Max partitions per job = " + m_MaxPartitionsPerJob);
+			LOGGER.info("Max partitions per job = " + m_MaxPartitionsPerJob);
 		}
 		catch (IOException e)
 		{
-			s_Logger.warn("Failed to parse JSON document " + backendInfo, e);
+			LOGGER.warn("Failed to parse JSON document " + backendInfo, e);
 			return;
 		}
 		catch (ClassCastException e)
 		{
-			s_Logger.warn("Parsed non-object JSON document " + backendInfo, e);
+			LOGGER.warn("Parsed non-object JSON document " + backendInfo, e);
 			return;
 		}
 
@@ -885,12 +885,12 @@ public class JobManager
 		}
 		catch (IOException e)
 		{
-			s_Logger.warn("Failed to load API version meta-data", e);
+			LOGGER.warn("Failed to load API version meta-data", e);
 			return;
 		}
 		catch (IllegalArgumentException e)
 		{
-			s_Logger.warn("Malformed API version meta-data", e);
+			LOGGER.warn("Malformed API version meta-data", e);
 			return;
 		}
 
@@ -901,11 +901,11 @@ public class JobManager
 		}
 		catch (Exception e)
 		{
-			s_Logger.warn("Error writing Prelert info to Elasticsearch", e);
+			LOGGER.warn("Error writing Prelert info to Elasticsearch", e);
 			return;
 		}
 
-		s_Logger.info("Wrote Prelert info " + doc.toString() + " to Elasticsearch");
+		LOGGER.info("Wrote Prelert info " + doc.toString() + " to Elasticsearch");
 	}
 
 

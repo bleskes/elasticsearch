@@ -58,7 +58,7 @@ import com.prelert.job.usage.DummyUsageReporter;
 
 public class DataFormatWarningsTest 
 {
-	Logger s_Logger = Logger.getLogger(DataFormatWarningsTest.class);
+	Logger LOGGER = Logger.getLogger(DataFormatWarningsTest.class);
 	
 	/**
 	 * Writes to nowhere
@@ -165,7 +165,7 @@ public class DataFormatWarningsTest
 			System.setProperty(StatusReporter.ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS_PROP,
 					Integer.toString(MAX_PERCENT_OUT_OF_ORDER_ERRORS));
 
-			DummyUsageReporter usageReporter = new DummyUsageReporter("test-job", s_Logger);
+			DummyUsageReporter usageReporter = new DummyUsageReporter("test-job", LOGGER);
 			DummyStatusReporter statusReporter = new DummyStatusReporter(usageReporter);
 			JobDataPersister dp = new NoneJobDataPersister();
 			
@@ -177,7 +177,7 @@ public class DataFormatWarningsTest
 			try
 			{
 				pm.writeToJob(dd, ac, bis, new NullOutputStream(), 
-						statusReporter, dp, s_Logger);
+						statusReporter, dp, LOGGER);
 				Assert.assertTrue(false); // should throw
 			}
 			catch (HighProportionOfBadTimestampsException e)
@@ -286,7 +286,7 @@ public class DataFormatWarningsTest
 			System.setProperty(StatusReporter.ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS_PROP,
 					Integer.toString(MAX_PERCENT_OUT_OF_ORDER_ERRORS));
 
-			DummyUsageReporter usageReporter = new DummyUsageReporter("test-job", s_Logger);
+			DummyUsageReporter usageReporter = new DummyUsageReporter("test-job", LOGGER);
 			DummyStatusReporter statusReporter = new DummyStatusReporter(usageReporter);
 			JobDataPersister dp = new NoneJobDataPersister();
 			
@@ -298,7 +298,7 @@ public class DataFormatWarningsTest
 			try
 			{
 				pm.writeToJob(dd, ac, bis, new NullOutputStream(),
-						statusReporter, dp, s_Logger);
+						statusReporter, dp, LOGGER);
 				Assert.assertTrue(false); // should throw
 			}
 			catch (HighProportionOfBadTimestampsException e)
@@ -408,7 +408,7 @@ public class DataFormatWarningsTest
 			System.setProperty(StatusReporter.ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS_PROP,
 					Integer.toString(MAX_PERCENT_OUT_OF_ORDER_ERRORS));
 
-			DummyUsageReporter usageReporter = new DummyUsageReporter("test-job", s_Logger);
+			DummyUsageReporter usageReporter = new DummyUsageReporter("test-job", LOGGER);
 			DummyStatusReporter statusReporter = new DummyStatusReporter(usageReporter);
 			JobDataPersister dp = new NoneJobDataPersister();
 			
@@ -420,7 +420,7 @@ public class DataFormatWarningsTest
 			try
 			{
 				pm.writeToJob(dd, ac, bis, new NullOutputStream(), 
-						statusReporter, dp, s_Logger);
+						statusReporter, dp, LOGGER);
 				Assert.assertTrue(false); // should throw
 			}
 			catch (OutOfOrderRecordsException e)
@@ -529,7 +529,7 @@ public class DataFormatWarningsTest
 			System.setProperty(StatusReporter.ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS_PROP,
 					Integer.toString(MAX_PERCENT_OUT_OF_ORDER_ERRORS));
 
-			DummyUsageReporter usageReporter = new DummyUsageReporter("test-job", s_Logger);
+			DummyUsageReporter usageReporter = new DummyUsageReporter("test-job", LOGGER);
 			DummyStatusReporter statusReporter = new DummyStatusReporter(usageReporter);
 			JobDataPersister dp = new NoneJobDataPersister();
 			
@@ -541,7 +541,7 @@ public class DataFormatWarningsTest
 			try
 			{
 				pm.writeToJob(dd, ac, bis, new NullOutputStream(), 
-						statusReporter, dp, s_Logger);
+						statusReporter, dp, LOGGER);
 				Assert.assertTrue(false); // should throw
 			}
 			catch (OutOfOrderRecordsException e)

@@ -63,6 +63,8 @@ public class PrelertWebApp extends Application
 
 	public static final String ES_CLUSTER_NAME_PROP = "es.cluster.name";
 
+	public static final String ES_TRANSPORT_PORT_RANGE = "es.transport.port";
+
 	public static final String PERSIST_RECORDS = "persist.records";
 
 	private Set<Class<?>> m_ResourceClasses;
@@ -102,9 +104,11 @@ public class PrelertWebApp extends Application
 		{
 			elasticSearchClusterName = DEFAULT_CLUSTER_NAME;
 		}
+		String portRange = System.getProperty(ES_TRANSPORT_PORT_RANGE);
+
 
 		ElasticsearchJobProvider esJob = new ElasticsearchJobProvider(
-				elasticSearchClusterName);
+				elasticSearchClusterName, portRange);
 
 		m_JobManager = new JobManager(esJob,
 				new ElasticsearchResultsReaderFactory(esJob),

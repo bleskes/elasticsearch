@@ -267,7 +267,7 @@ public enum ErrorCode
 	}
 
 	@JsonCreator
-	static public ErrorCode fromCode(@JsonProperty("errorCode") long errorCode)
+	public static ErrorCode fromCode(@JsonProperty("errorCode") long errorCode)
 	{
 		for (ErrorCode e : ErrorCode.values())
 		{

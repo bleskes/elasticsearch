@@ -43,10 +43,10 @@ import com.fasterxml.jackson.core.JsonToken;
  */
 public class NormalisedResult 
 {
-	static public final String RAW_ANOMALY_SCORE = "rawAnomalyScore";
-	static public final String NORMALIZED_PROBABILITY = "normalizedProbability";
-	static public final String SYS_CHANGE_SCORE = "anomalyScore";
-	static public final String ID = "id";
+	public static final String RAW_ANOMALY_SCORE = "rawAnomalyScore";
+	public static final String NORMALIZED_PROBABILITY = "normalizedProbability";
+	public static final String SYS_CHANGE_SCORE = "anomalyScore";
+	public static final String ID = "id";
 	
 	
 	private double m_RawAnomalyScore;
@@ -110,7 +110,7 @@ public class NormalisedResult
 	}
 	
 	
-	static public NormalisedResult parseJson(JsonParser parser, Logger logger)
+	public static NormalisedResult parseJson(JsonParser parser, Logger logger)
 	throws JsonParseException, IOException
 	{
 		NormalisedResult result = new NormalisedResult();

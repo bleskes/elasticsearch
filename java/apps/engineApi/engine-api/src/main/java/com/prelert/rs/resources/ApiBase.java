@@ -44,7 +44,7 @@ import com.prelert.job.manager.JobManager;
 @Path("")
 public class ApiBase extends ResourceWithJobManager
 {	
-	private final Logger s_Logger = Logger.getLogger(ApiBase.class);
+	private final Logger LOGGER = Logger.getLogger(ApiBase.class);
 	
 	private static final String VERSION_HTML = 
 			"<!DOCTYPE html>\n"
@@ -61,7 +61,7 @@ public class ApiBase extends ResourceWithJobManager
     @Produces(MediaType.TEXT_HTML)
     public String version() 
     {      
-    	s_Logger.debug("Get API Base document");
+    	LOGGER.debug("Get API Base document");
     	
     	JobManager manager = jobManager();
     	String version = manager.getAnalyticsVersion();

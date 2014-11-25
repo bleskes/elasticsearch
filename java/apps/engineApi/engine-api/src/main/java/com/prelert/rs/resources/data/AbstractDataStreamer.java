@@ -38,7 +38,6 @@ import java.util.Objects;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipException;
 
-import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 
 import org.apache.log4j.Logger;
@@ -97,14 +96,14 @@ public abstract class AbstractDataStreamer {
      * @throws OutOfOrderRecordsException
      * @throws TooManyJobsException If the license is violated
      */
-    public void streamData(HttpHeaders headers, String jobId, InputStream input)
+    public void streamData(String contentEncoding, String jobId, InputStream input)
             throws IOException, UnknownJobException, NativeProcessRunException,
             MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException,
             OutOfOrderRecordsException, TooManyJobsException
     {
         LOGGER.debug("Handle Post data to job = " + jobId);
 
-        input = tryDecompressingInputStream(headers, jobId, input);
+        input = tryDecompressingInputStream(contentEncoding, jobId, input);
         if (m_ShouldPersistDataToDisk)
         {
             input = persistDataToDisk(jobId, input);
@@ -114,10 +113,9 @@ public abstract class AbstractDataStreamer {
         LOGGER.debug("File uploaded to job " + jobId);
     }
 
-    private InputStream tryDecompressingInputStream(HttpHeaders headers,
+    private InputStream tryDecompressingInputStream(String contentEncoding,
             String jobId, InputStream input) throws IOException
     {
-        String contentEncoding = headers.getHeaderString(HttpHeaders.CONTENT_ENCODING);
         if (contentEncoding!= null && contentEncoding.equals("gzip"))
         {
             LOGGER.info("Decompressing post data in job = " + jobId);

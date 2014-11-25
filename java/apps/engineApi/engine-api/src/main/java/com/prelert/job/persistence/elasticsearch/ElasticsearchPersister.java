@@ -80,7 +80,7 @@ import com.prelert.rs.data.Detector;
  */
 public class ElasticsearchPersister implements JobResultsPersister
 {
-	static public final Logger s_Logger = Logger.getLogger(ElasticsearchPersister.class);
+	private static final Logger LOGGER = Logger.getLogger(ElasticsearchPersister.class);
 
 	private Client m_Client;
 	private String m_JobId;
@@ -128,7 +128,7 @@ public class ElasticsearchPersister implements JobResultsPersister
 			/* TODO this method is only in version Elasticsearch 1.0
 			if (response.isCreated() == false)
 			{
-				s_Logger.error(String.format("Bucket %s document not created",
+				LOGGER.error(String.format("Bucket %s document not created",
 						bucket.getId()));
 			}
 			*/
@@ -148,7 +148,7 @@ public class ElasticsearchPersister implements JobResultsPersister
 				/* TODO this method is only in version Elasticsearch 1.0
 				if (response.isCreated() == false)
 				{
-					s_Logger.error(String.format("Detector %s document not created",
+					LOGGER.error(String.format("Detector %s document not created",
 							detectorId));
 				}
 				*/
@@ -169,10 +169,10 @@ public class ElasticsearchPersister implements JobResultsPersister
 				BulkResponse bulkResponse = bulkRequest.execute().actionGet();
 				if (bulkResponse.hasFailures())
 				{
-					s_Logger.error("BulkResponse has errors");
+					LOGGER.error("BulkResponse has errors");
 					for (BulkItemResponse item : bulkResponse.getItems())
 					{
-						s_Logger.error(item.getFailureMessage());
+						LOGGER.error(item.getFailureMessage());
 					}
 				}
 			}
@@ -180,7 +180,7 @@ public class ElasticsearchPersister implements JobResultsPersister
 		}
 		catch (IOException e)
 		{
-			s_Logger.error("Error writing bucket state", e);
+			LOGGER.error("Error writing bucket state", e);
 		}
 	}
 
@@ -199,7 +199,7 @@ public class ElasticsearchPersister implements JobResultsPersister
 	{
 		if (quantiles == null)
 		{
-			s_Logger.warn("No quantiles to persist for job " + m_JobId);
+			LOGGER.warn("No quantiles to persist for job " + m_JobId);
 			return;
 		}
 
@@ -214,14 +214,14 @@ public class ElasticsearchPersister implements JobResultsPersister
 			/* TODO this method is only in version Elasticsearch 1.0
 			if (response.isCreated() == false)
 			{
-				s_Logger.error(String.format("Bucket %s document not created",
+				LOGGER.error(String.format("Bucket %s document not created",
 						bucket.getId()));
 			}
 			*/
 		}
 		catch (IOException e)
 		{
-			s_Logger.error("Error writing quantiles", e);
+			LOGGER.error("Error writing quantiles", e);
 			return;
 		}
 
@@ -244,7 +244,7 @@ public class ElasticsearchPersister implements JobResultsPersister
 	{
 		if (modelSizeStats == null)
 		{
-			s_Logger.warn("No modelSizeStats to persist for job " + m_JobId);
+			LOGGER.warn("No modelSizeStats to persist for job " + m_JobId);
 			return;
 		}
 
@@ -259,14 +259,14 @@ public class ElasticsearchPersister implements JobResultsPersister
 			/* TODO this method is only in version Elasticsearch 1.0
 			if (response.isCreated() == false)
 			{
-				s_Logger.error(String.format("Bucket %s document not created",
+				LOGGER.error(String.format("Bucket %s document not created",
 						bucket.getId()));
 			}
 			*/
 		}
 		catch (IOException e)
 		{
-			s_Logger.error("Error writing modelSizeStats", e);
+			LOGGER.error("Error writing modelSizeStats", e);
 			return;
 		}
 

@@ -47,7 +47,7 @@ import com.prelert.rs.client.EngineApiClient;
  */
 public class CsvDataRunner implements Runnable
 {
-	static final private Logger s_Logger = Logger.getLogger(CsvDataRunner.class);
+	private static final Logger LOGGER = Logger.getLogger(CsvDataRunner.class);
 	
 	/**
 	 * Job configuration as a format string.
@@ -143,7 +143,7 @@ public class CsvDataRunner implements Runnable
 		{
 			String msg = "Job must be created before the thread is started " 
 					+ "call createJob() first";
-			s_Logger.error(msg);
+			LOGGER.error(msg);
 			throw new IllegalStateException(msg);
 		}
 
@@ -158,7 +158,7 @@ public class CsvDataRunner implements Runnable
 		try {
 			m_ApiClient.streamingUpload(m_BaseUrl, m_JobId, inputStream, false);
 		} catch (IOException e) {
-			s_Logger.error("Error streaming data", e);
+			LOGGER.error("Error streaming data", e);
 		}
 
 
@@ -168,7 +168,7 @@ public class CsvDataRunner implements Runnable
 		}
 		catch (InterruptedException e) 
 		{
-			s_Logger.error("Interupted joining producer thread", e);
+			LOGGER.error("Interupted joining producer thread", e);
 		}
 	}
 
@@ -189,7 +189,7 @@ public class CsvDataRunner implements Runnable
 			}
 			catch (IOException e)
 			{
-				s_Logger.error(e);
+				LOGGER.error(e);
 				m_OutputStream = null;
 			}
 		}
@@ -205,7 +205,7 @@ public class CsvDataRunner implements Runnable
 			}
 			catch (InterruptedException e1) 
 			{
-				s_Logger.error("Producer interruputed pausing before write start");
+				LOGGER.error("Producer interruputed pausing before write start");
 			}
 
 
@@ -233,7 +233,7 @@ public class CsvDataRunner implements Runnable
 
 
 					long iterEndMs = System.currentTimeMillis();
-					s_Logger.info(String.format("%d metrics uploaded in  %d ms", 
+					LOGGER.info(String.format("%d metrics uploaded in  %d ms", 
 							m_NumTimeSeries, iterEndMs - iterStartMs));
 
 
@@ -244,7 +244,7 @@ public class CsvDataRunner implements Runnable
 					}
 
 					long sleepTime = (iterStartMs + (m_PointIntervalSecs * 1000)) - iterEndMs;
-					s_Logger.info(String.format("Sleeping for %d ms", sleepTime));
+					LOGGER.info(String.format("Sleeping for %d ms", sleepTime));
 					if (sleepTime > 0)
 					{
 						try
@@ -253,7 +253,7 @@ public class CsvDataRunner implements Runnable
 						}
 						catch (InterruptedException e) 
 						{
-							s_Logger.info("Producer interrupted while sleeping");
+							LOGGER.info("Producer interrupted while sleeping");
 							break;
 						}
 					}
@@ -272,7 +272,7 @@ public class CsvDataRunner implements Runnable
 					m_OutputStream.close();
 				}
 				catch (IOException e) {
-					s_Logger.error("Error closing pipedoutputstream", e);
+					LOGGER.error("Error closing pipedoutputstream", e);
 				}
 			}
 
@@ -288,7 +288,7 @@ public class CsvDataRunner implements Runnable
 			} 
 			catch (IOException e) 
 			{
-				s_Logger.error("Error writing csv header", e);
+				LOGGER.error("Error writing csv header", e);
 			}
 		}
 
@@ -310,7 +310,7 @@ public class CsvDataRunner implements Runnable
 			} 
 			catch (IOException e) 
 			{
-				s_Logger.error("Error writing csv row", e);
+				LOGGER.error("Error writing csv row", e);
 			}			
 		}
 

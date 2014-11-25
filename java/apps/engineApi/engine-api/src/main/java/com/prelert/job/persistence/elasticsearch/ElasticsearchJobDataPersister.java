@@ -47,7 +47,7 @@ import com.prelert.job.persistence.JobDataPersister;
 
 public class ElasticsearchJobDataPersister implements JobDataPersister
 {
-    static public String PERSISTED_RECORD_TYPE = "saved-data";
+    public static String PERSISTED_RECORD_TYPE = "saved-data";
 
     public static final String FIELDS = "fields";
     public static final String BY_FIELDS = "byFields";
