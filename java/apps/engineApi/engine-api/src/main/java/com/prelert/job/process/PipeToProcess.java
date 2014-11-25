@@ -71,6 +71,11 @@ import com.prelert.job.status.StatusReporter;
  */
 public class PipeToProcess
 {
+
+	private PipeToProcess()
+	{
+	}
+
 	/**
 	 * Read the csv input, transform to length encoded values and pipe
 	 * to the OutputStream.
