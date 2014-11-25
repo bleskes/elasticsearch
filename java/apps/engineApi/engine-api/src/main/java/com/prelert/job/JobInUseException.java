@@ -36,7 +36,7 @@ public class JobInUseException extends JobException
 {
 	private static final long serialVersionUID = -2759814168552580059L;
 
-	private String m_JobId;
+	private final String m_JobId;
 
 	/**
 	 * Create a new JobInUseException.

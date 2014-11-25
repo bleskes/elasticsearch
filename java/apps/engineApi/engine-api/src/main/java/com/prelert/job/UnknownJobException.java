@@ -36,7 +36,7 @@ public class UnknownJobException extends JobException
 {
 	private static final long serialVersionUID = 8603362038035845948L;
 
-	private String m_JobId;
+	private final String m_JobId;
 
 	/**
 	 * Create with the default message and error code

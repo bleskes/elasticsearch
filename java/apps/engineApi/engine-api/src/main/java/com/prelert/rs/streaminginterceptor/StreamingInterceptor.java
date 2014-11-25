@@ -41,46 +41,46 @@ import java.util.zip.GZIPOutputStream;
 import org.apache.log4j.Logger;
 
 /**
- * This class is designed to sit invisibly in the middle of an inputstream 
- * reading the input and writing a copy of the gzipped data to file 
+ * This class is designed to sit invisibly in the middle of an inputstream
+ * reading the input and writing a copy of the gzipped data to file
  * before forwarding it on. The {@link StreamingInterceptor#pump(InputStream)}
- * method reads from the input stream, gzips a copy of the data and writes it 
+ * method reads from the input stream, gzips a copy of the data and writes it
  * to disk then passes the data on through a PipedOutputStream/InputStream pair.
  */
-public class StreamingInterceptor 
+public class StreamingInterceptor
 {
-	private static Logger LOGGER = Logger.getLogger(StreamingInterceptor.class); 
-	
+	private static final Logger LOGGER = Logger.getLogger(StreamingInterceptor.class);
+
 	private Path m_FileSink;
 	private PipedOutputStream m_OutputStream;
-	
+
 	/**
-	 * The file to write the intercepted data to  
+	 * The file to write the intercepted data to
 	 * @param sink
 	 */
-	public StreamingInterceptor(Path fileSink) 
+	public StreamingInterceptor(Path fileSink)
 	{
 		m_FileSink = fileSink;
 	}
-	
+
 	/**
-	 * Create the InputStream data will be made available on when  
+	 * Create the InputStream data will be made available on when
 	 * {@link StreamingInterceptor#pump(InputStream)} is called.
 	 * @return
 	 */
 	public InputStream createStream()
-	{		
+	{
 		PipedInputStream is = new PipedInputStream();
-		
-		try 
+
+		try
 		{
 			m_OutputStream = new PipedOutputStream(is);
 		}
-		catch (IOException e) 
+		catch (IOException e)
 		{
 			LOGGER.error("Failed to create stream", e);
 		}
-		
+
 		return is;
 	}
 
@@ -97,37 +97,37 @@ public class StreamingInterceptor
 			throw new IllegalStateException("StreamingInterceptor cannot run the "
 					+ "pump(InputStream) method before createStream() has been called");
 		}
-		
-		
-		
-		try (OutputStream fileOutput = new GZIPOutputStream( 
+
+
+
+		try (OutputStream fileOutput = new GZIPOutputStream(
 				new BufferedOutputStream(Files.newOutputStream(m_FileSink))))
 		{
-		
+
 				int n;
-			
+
 			byte[] buffer = new byte[131072]; // 128kB
 			while ((n = input.read(buffer)) > -1)
 			{
 				fileOutput.write(buffer, 0, n);
 				m_OutputStream.write(buffer, 0, n);
-			}		
+			}
 		}
-		catch (FileNotFoundException e) 
+		catch (FileNotFoundException e)
 		{
 			LOGGER.error("File not found", e);
 		}
-		catch (IOException e) 
+		catch (IOException e)
 		{
 			LOGGER.error("IoException in pump()", e);
 		}
 		finally
 		{
-			try 
+			try
 			{
 				m_OutputStream.close();
-			} 
-			catch (IOException e) 
+			}
+			catch (IOException e)
 			{
 				LOGGER.error("Exception closing the PipedOutputStream", e);
 			}

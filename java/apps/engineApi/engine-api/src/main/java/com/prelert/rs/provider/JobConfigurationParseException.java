@@ -39,30 +39,30 @@ import com.prelert.rs.data.ErrorCode;
 public class JobConfigurationParseException extends WebApplicationException
 {
 	private static final long serialVersionUID = -7189040309467301076L;
-	
-	private ErrorCode m_ErrorCode;
-	
+
+	private final ErrorCode m_ErrorCode;
+
 	public JobConfigurationParseException(String message, Throwable cause)
 	{
 		super(message, cause);
 		m_ErrorCode = ErrorCode.JOB_CONFIG_PARSE_ERROR;
 	}
-	
-	
-	public JobConfigurationParseException(String message, Throwable cause, 
+
+
+	public JobConfigurationParseException(String message, Throwable cause,
 			ErrorCode errorCode)
 	{
 		super(message, cause);
 		m_ErrorCode = errorCode;
 	}
-	
+
 	@Override
 	public Response getResponse()
 	{
 		ApiError err = new ApiError(m_ErrorCode);
 		err.setMessage(this.getMessage());
 		err.setCause(this.getCause());
-		
+
 		return Response.status(Response.Status.BAD_REQUEST)
 				.entity(err.toJson()).build();
 	}

@@ -38,15 +38,15 @@ import com.prelert.job.manager.JobManager;
 
 
 /**
- * API base resource  
+ * API base resource
  *
  */
 @Path("")
 public class ApiBase extends ResourceWithJobManager
-{	
-	private final Logger LOGGER = Logger.getLogger(ApiBase.class);
-	
-	private static final String VERSION_HTML = 
+{
+	private static final Logger LOGGER = Logger.getLogger(ApiBase.class);
+
+	private static final String VERSION_HTML =
 			"<!DOCTYPE html>\n"
 			+ "<html>\n"
 			+ "<head><title>Prelert Engine</title></head>\n"
@@ -56,13 +56,13 @@ public class ApiBase extends ResourceWithJobManager
 			+ "<p>%s</p>\n"
 			+ "</body>\n"
 			+ "</html>";
-		
+
     @GET
     @Produces(MediaType.TEXT_HTML)
-    public String version() 
-    {      
+    public String version()
+    {
     	LOGGER.debug("Get API Base document");
-    	
+
     	JobManager manager = jobManager();
     	String version = manager.getAnalyticsVersion();
     	version = version.replace("\n", "<br/>");

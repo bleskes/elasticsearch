@@ -37,7 +37,7 @@ public class JobException extends Exception
 {
 	private static final long serialVersionUID = -5289885963015348819L;
 
-	private ErrorCode m_ErrorCode;
+	private final ErrorCode m_ErrorCode;
 
 	public JobException(String message, ErrorCode errorCode)
 	{

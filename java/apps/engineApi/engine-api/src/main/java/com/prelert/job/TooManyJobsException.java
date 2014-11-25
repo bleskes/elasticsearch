@@ -36,7 +36,7 @@ public class TooManyJobsException extends JobException
 {
 	private static final long serialVersionUID = 8503362038035845948L;
 
-	private int m_Limit;
+	private final int m_Limit;
 
 	/**
 	 * Create a new TooManyJobsException with an error code
