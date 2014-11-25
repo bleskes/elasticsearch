@@ -55,12 +55,12 @@ import com.prelert.job.logs.JobLogs;
 @Path("/logs")
 public class Logs extends ResourceWithJobManager
 {	
-	static final private Logger s_Logger = Logger.getLogger(Logs.class);
+	private static final Logger s_Logger = Logger.getLogger(Logs.class);
 	
 	/**
 	 * The name of this endpoint
 	 */
-	static public final String ENDPOINT = "logs";
+	public static final String ENDPOINT = "logs";
 	
     /**
      * Get the contents of the log directory zipped. 

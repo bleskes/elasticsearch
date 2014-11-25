@@ -52,22 +52,22 @@ import com.prelert.rs.provider.RestApiException;
 @Path("/alerts_longpoll")
 public class AlertsLongPoll extends ResourceWithJobManager
 {
-	static final private Logger s_Logger = Logger.getLogger(AlertsLongPoll.class);
+	private static final Logger s_Logger = Logger.getLogger(AlertsLongPoll.class);
 
 	/**
 	 * The name of this endpoint
 	 */
-	static public final String ENDPOINT = "alerts_longpoll";
+	public static final String ENDPOINT = "alerts_longpoll";
 
 	/**
 	 * The timeout query parameter
 	 */
-	static public final String TIMEOUT = "timeout";
+	public static final String TIMEOUT = "timeout";
 	/**
 	 * The alert cursor query parameter
 	 */
-	static public final String SCORE = "score";
-	static public final String PROBABILITY = "probability";
+	public static final String SCORE = "score";
+	public static final String PROBABILITY = "probability";
 
 
 	@GET

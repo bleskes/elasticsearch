@@ -47,13 +47,13 @@ public class JobConfiguration
 	/**
 	 * Characters that cannot be in a job id: '\\', '/', '*', '?', '"', '<', '>', '|', ' ', ','
 	 */
-	static private Set<Character> PROHIBITED_JOB_ID_CHARACTERS = 
+	private static Set<Character> PROHIBITED_JOB_ID_CHARACTERS = 
 			new HashSet<>(Arrays.asList('\\', '/', '*', '?', '"', '<', '>', '|', ' ', ',' ));
 			
 	/**
 	 * Max number of chars in a job id
 	 */
-	static private int MAX_JOB_ID_LENGTH = 64;
+	private static int MAX_JOB_ID_LENGTH = 64;
 	
 	private String m_ID;
 	private String m_Description;
@@ -200,7 +200,7 @@ public class JobConfiguration
 	/**
 	 * Builder for constructing JobConfiguration instances.
 	 */
-	static public class JobConfigurationBuilder
+	public static class JobConfigurationBuilder
 	{
 		private JobConfiguration m_JobConfig;
 		

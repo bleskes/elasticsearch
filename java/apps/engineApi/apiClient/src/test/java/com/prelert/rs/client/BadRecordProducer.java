@@ -47,9 +47,9 @@ import com.prelert.job.JobConfiguration;
  */
 public class BadRecordProducer implements Runnable
 {	
-	static private final Logger s_Logger = Logger.getLogger(BadRecordProducer.class);
+	private static final Logger s_Logger = Logger.getLogger(BadRecordProducer.class);
 	
-	static public final String HEADER = "time,metric,value";
+	public static final String HEADER = "time,metric,value";
 	
 	public enum TestType {OUT_OF_ORDER_RECORDS, BAD_TIMESTAMP};
 

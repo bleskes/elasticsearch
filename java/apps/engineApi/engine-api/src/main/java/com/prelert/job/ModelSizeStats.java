@@ -130,7 +130,7 @@ public class ModelSizeStats
 	 * @throws IOException
 	 * @throws AutoDetectParseException
 	 */
-	static public ModelSizeStats parseJson(JsonParser parser)
+	public static ModelSizeStats parseJson(JsonParser parser)
 	throws JsonParseException, IOException, AutoDetectParseException
 	{
 		JsonToken token = parser.getCurrentToken();
@@ -164,7 +164,7 @@ public class ModelSizeStats
 	 * @throws IOException
 	 * @throws AutoDetectParseException
 	 */
-	static public ModelSizeStats parseJsonAfterStartObject(JsonParser parser)
+	public static ModelSizeStats parseJsonAfterStartObject(JsonParser parser)
 	throws JsonParseException, IOException, AutoDetectParseException
 	{
 		ModelSizeStats modelSizeStats = new ModelSizeStats();

@@ -56,7 +56,7 @@ public class JobConfigurationMessageBodyReader implements MessageBodyReader<JobC
 	/**
 	 * The Object to JSON mapper.
 	 */
-	static final private ObjectMapper s_ObjectMapper = new ObjectMapper();
+	private static final ObjectMapper s_ObjectMapper = new ObjectMapper();
 
 
    @Override

@@ -29,12 +29,9 @@ package com.prelert.rs.resources.data;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.io.InputStream;
-
-import javax.ws.rs.core.HttpHeaders;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -73,10 +70,9 @@ public class DataStreamerAndPersisterTest
     {
         JobManager jobManager = mock(JobManager.class);
         DataStreamerAndPersister dataStreamer = new DataStreamerAndPersister(jobManager);
-        HttpHeaders httpHeaders = createHttpHeadersWithoutContentEncoding();
         InputStream inputStream = mock(InputStream.class);
 
-        dataStreamer.streamData(httpHeaders, "foo", inputStream);
+        dataStreamer.streamData(null, "foo", inputStream);
 
         verify(jobManager).submitDataLoadAndPersistJob("foo", inputStream);
         Mockito.verifyNoMoreInteractions(jobManager);
@@ -85,12 +81,5 @@ public class DataStreamerAndPersisterTest
     private void givenNoPersistBaseDir()
     {
         System.clearProperty("persistbasedir");
-    }
-
-    private HttpHeaders createHttpHeadersWithoutContentEncoding()
-    {
-        HttpHeaders httpHeaders = mock(HttpHeaders.class);
-        when(httpHeaders.getHeaderString(HttpHeaders.CONTENT_ENCODING)).thenReturn(null);
-        return httpHeaders;
     }
 }

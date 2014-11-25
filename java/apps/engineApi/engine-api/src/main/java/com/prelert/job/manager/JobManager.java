@@ -78,28 +78,28 @@ import com.prelert.rs.data.parsing.AlertObserver;
  */
 public class JobManager
 {
-	static public final Logger s_Logger = Logger.getLogger(JobManager.class);
+	public static final Logger s_Logger = Logger.getLogger(JobManager.class);
 
 	/**
 	 * Field name in which to store the API version in the usage info
 	 */
-	static public final String APP_VER_FIELDNAME = "appVer";
+	public static final String APP_VER_FIELDNAME = "appVer";
 
 	/**
 	 * The default number of documents returned in queries as a string.
 	 */
-	static public final String DEFAULT_PAGE_SIZE_STR = "100";
+	public static final String DEFAULT_PAGE_SIZE_STR = "100";
 
 	/**
 	 * The default number of documents returned in queries.
 	 */
-	static public final int DEFAULT_PAGE_SIZE;
+	public static final int DEFAULT_PAGE_SIZE;
 	static
 	{
 		DEFAULT_PAGE_SIZE = Integer.parseInt(DEFAULT_PAGE_SIZE_STR);
 	}
 
-	static public final String DEFAULT_RECORD_SORT_FIELD = AnomalyRecord.PROBABILITY;
+	public static final String DEFAULT_RECORD_SORT_FIELD = AnomalyRecord.PROBABILITY;
 
 	private ProcessManager m_ProcessManager;
 
@@ -125,9 +125,9 @@ public class JobManager
 	/**
 	 * constraints in the license key.
 	 */
-	static public final String JOBS_LICENSE_CONSTRAINT = "jobs";
-	static public final String DETECTORS_LICENSE_CONSTRAINT = "detectors";
-	static public final String PARTITIONS_LICENSE_CONSTRAINT = "partitions";
+	public static final String JOBS_LICENSE_CONSTRAINT = "jobs";
+	public static final String DETECTORS_LICENSE_CONSTRAINT = "detectors";
+	public static final String PARTITIONS_LICENSE_CONSTRAINT = "partitions";
 
 	/**
 	 * Create a JobManager

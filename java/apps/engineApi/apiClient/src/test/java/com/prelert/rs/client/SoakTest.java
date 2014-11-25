@@ -46,14 +46,14 @@ import com.prelert.rs.client.datauploader.JsonDataRunner;
  */
 public class SoakTest 
 {
-	static final private Logger s_Logger = Logger.getLogger(SoakTest.class);
+	private static final Logger s_Logger = Logger.getLogger(SoakTest.class);
 	
-	static final public String DEFAULT_CHARSET = "UTF-8";
+	public static final String DEFAULT_CHARSET = "UTF-8";
 	
 	/**
 	 * The default base Url used in the test
 	 */
-	static final public String API_BASE_URL = "http://localhost:8080/engine/v1/";
+	public static final String API_BASE_URL = "http://localhost:8080/engine/v1/";
 	
 		
 	

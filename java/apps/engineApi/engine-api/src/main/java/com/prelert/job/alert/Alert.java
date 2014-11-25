@@ -49,11 +49,11 @@ import com.prelert.rs.data.Bucket;
 @JsonInclude(Include.NON_NULL)
 public class Alert
 {
-	static final public String TYPE = "alert";
+	public static final String TYPE = "alert";
 
-	static final public String JOB_ID = "JobId";
-	static final public String TIMESTAMP = "timestamp";
-	static final public String URI = "uri";
+	public static final String JOB_ID = "JobId";
+	public static final String TIMESTAMP = "timestamp";
+	public static final String URI = "uri";
 
 
 	private String m_JobId;

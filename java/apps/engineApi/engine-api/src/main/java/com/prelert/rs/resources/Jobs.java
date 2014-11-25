@@ -77,12 +77,12 @@ import com.prelert.rs.data.SingleDocument;
 @Path("/jobs")
 public class Jobs extends ResourceWithJobManager
 {
-	static final private Logger s_Logger = Logger.getLogger(Jobs.class);
+	private static final Logger s_Logger = Logger.getLogger(Jobs.class);
 
 	/**
 	 * The name of this endpoint
 	 */
-	static public final String ENDPOINT = "jobs";
+	public static final String ENDPOINT = "jobs";
 
 	/**
 	 * Get all job details.

@@ -68,7 +68,7 @@ import com.prelert.rs.data.SingleDocument;
  */
 public class NormalizationTest implements Closeable
 {
-	static final private Logger s_Logger = Logger.getLogger(JobsTest.class);
+	private static final Logger s_Logger = Logger.getLogger(JobsTest.class);
 	
 	static final long FAREQUOTE_NUM_BUCKETS = 1439;
 	
@@ -77,7 +77,7 @@ public class NormalizationTest implements Closeable
 	/**
 	 * The default base Url used in the test
 	 */
-	static final public String API_BASE_URL = "http://localhost:8080/engine/v1";
+	public static final String API_BASE_URL = "http://localhost:8080/engine/v1";
 	
 	private EngineApiClient m_WebServiceClient;
 	

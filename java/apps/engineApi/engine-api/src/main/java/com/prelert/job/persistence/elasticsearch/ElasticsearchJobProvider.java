@@ -90,24 +90,25 @@ import com.prelert.rs.data.SingleDocument;
 
 public class ElasticsearchJobProvider implements JobProvider
 {
-	static public final Logger s_Logger = Logger.getLogger(ElasticsearchJobProvider.class);
+	public static final Logger s_Logger = Logger.getLogger(ElasticsearchJobProvider.class);
+
 
 	/**
 	 * The index to store total usage/metering information
 	 */
-	static public final String PRELERT_USAGE_INDEX = "prelert-usage";
+	public static final String PRELERT_USAGE_INDEX = "prelert-usage";
 
 	/**
 	 * Where to store the prelert info in Elasticsearch - must match what's
 	 * expected by kibana/engineAPI/app/directives/prelertLogUsage.js
 	 */
-	static public final String PRELERT_INFO_INDEX = "prelert-int";
-	static public final String PRELERT_INFO_TYPE = "info";
-	static public final String PRELERT_INFO_ID = "infoStats";
+	public static final String PRELERT_INFO_INDEX = "prelert-int";
+	public static final String PRELERT_INFO_TYPE = "info";
+	public static final String PRELERT_INFO_ID = "infoStats";
 
-	static public final String _PARENT = "_parent";
+	public static final String _PARENT = "_parent";
 
-	static private final List<String> SECONDARY_SORT = new ArrayList<>();
+	private static final List<String> SECONDARY_SORT = new ArrayList<>();
 //	static
 //	{
 //		SECONDARY_SORT.add(AnomalyRecord.ANOMALY_SCORE);
@@ -126,6 +127,7 @@ public class ElasticsearchJobProvider implements JobProvider
 
 	public ElasticsearchJobProvider(String elasticSearchClusterName,
 			String portRange)
+
 	{
 		m_Node = nodeBuilder()
 				.settings(buildSettings(elasticSearchClusterName, portRange))
@@ -143,7 +145,6 @@ public class ElasticsearchJobProvider implements JobProvider
 		s_Logger.info("Connecting to Elasticsearch cluster '"
 				+ elasticSearchClusterName + "'");
 	}
-
 
 	/**
 	 * Elasticsearch settings that instruct the node not to accept HTTP, not to
@@ -168,7 +169,6 @@ public class ElasticsearchJobProvider implements JobProvider
 
 		return builder.build();
 	}
-
 
 	/**
 	 * Close the Elasticsearch node

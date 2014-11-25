@@ -50,11 +50,11 @@ import com.prelert.rs.data.parsing.AutoDetectParseException;
 @JsonIgnoreProperties({"records"})
 public class Detector 
 {
-	static final public String TYPE = "detector";
-	static final public String NAME = "name";
-	static final public String RECORDS = "records";
+	public static final String TYPE = "detector";
+	public static final String NAME = "name";
+	public static final String RECORDS = "records";
 	
-	static final private Logger s_Logger = Logger.getLogger(Detector.class);
+	private static final Logger s_Logger = Logger.getLogger(Detector.class);
 	
 	private String m_Name;
 	private List<AnomalyRecord> m_Records;
@@ -124,7 +124,7 @@ public class Detector
 	 * @throws IOException
 	 * @throws AutoDetectParseException
 	 */
-	static public Detector parseJson(JsonParser parser) 
+	public static Detector parseJson(JsonParser parser) 
 	throws JsonParseException, IOException, AutoDetectParseException
 	{
 		Detector detector = new Detector();

@@ -109,7 +109,7 @@ public class ProcessManager
 	 */
 	public enum ProcessStatus {IN_USE, COMPLETED};
 
-	static private final Logger s_Logger = Logger.getLogger(ProcessManager.class);
+	private static final Logger s_Logger = Logger.getLogger(ProcessManager.class);
 
 	private ProcessCtrl m_ProcessCtrl;
 

@@ -42,7 +42,7 @@ import com.prelert.job.usage.DummyUsageReporter;
 
 public class CountingInputStreamTest 
 {
-	static private Logger s_Logger = Logger.getLogger(CountingInputStreamTest.class);
+	private static Logger s_Logger = Logger.getLogger(CountingInputStreamTest.class);
 
 	@Test	
 	public void testLengthEncodedWriter() throws IOException

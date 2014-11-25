@@ -56,7 +56,7 @@ import com.prelert.rs.data.ErrorCode;
  */
 public class ParallelUploadTest 
 {
-	private final static Logger s_Logger = Logger.getLogger(ParallelUploadTest.class);
+	private static final Logger s_Logger = Logger.getLogger(ParallelUploadTest.class);
 
 	
 	public static void main(String[] args) 

@@ -48,21 +48,21 @@ public class AnomalyCause
 	/**
 	 * Result fields
 	 */
-	static final public String PROBABILITY = "probability";
-	static final public String OVER_FIELD_NAME = "overFieldName";
-	static final public String OVER_FIELD_VALUE = "overFieldValue";
-	static final public String BY_FIELD_NAME = "byFieldName";
-	static final public String BY_FIELD_VALUE = "byFieldValue";
-	static final public String PARTITION_FIELD_NAME = "partitionFieldName";
-	static final public String PARTITION_FIELD_VALUE = "partitionFieldValue";
-	static final public String FUNCTION = "function";
-	static final public String TYPICAL = "typical";
-	static final public String ACTUAL = "actual";
+	public static final String PROBABILITY = "probability";
+	public static final String OVER_FIELD_NAME = "overFieldName";
+	public static final String OVER_FIELD_VALUE = "overFieldValue";
+	public static final String BY_FIELD_NAME = "byFieldName";
+	public static final String BY_FIELD_VALUE = "byFieldValue";
+	public static final String PARTITION_FIELD_NAME = "partitionFieldName";
+	public static final String PARTITION_FIELD_VALUE = "partitionFieldValue";
+	public static final String FUNCTION = "function";
+	public static final String TYPICAL = "typical";
+	public static final String ACTUAL = "actual";
 
 	/**
 	 * Metric Results
 	 */
-	static final public String FIELD_NAME = "fieldName";
+	public static final String FIELD_NAME = "fieldName";
 
 	private static final Logger s_Logger = Logger.getLogger(AnomalyCause.class);
 
@@ -209,7 +209,7 @@ public class AnomalyCause
 	 * @throws IOException
 	 * @throws AutoDetectParseException
 	 */
-	static public AnomalyCause parseJson(JsonParser parser)
+	public static AnomalyCause parseJson(JsonParser parser)
 	throws JsonParseException, IOException, AutoDetectParseException
 	{
 		AnomalyCause cause = new AnomalyCause();

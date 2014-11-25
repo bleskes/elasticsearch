@@ -63,12 +63,12 @@ import com.prelert.rs.data.SingleDocument;
  */
 public class UsageTest implements Closeable
 {
-	static final private Logger s_Logger = Logger.getLogger(UsageTest.class);
+	private static final Logger s_Logger = Logger.getLogger(UsageTest.class);
 
 	/**
 	 * The default base Url used in the test
 	 */
-	static final public String API_BASE_URL = "http://localhost:8080/engine/v1";
+	public static final String API_BASE_URL = "http://localhost:8080/engine/v1";
 	
 	static final long FLIGHTCENTRE_NUM_BUCKETS = 296;
 	static final long FLIGHTCENTRE_NUM_RECORDS = 175910;

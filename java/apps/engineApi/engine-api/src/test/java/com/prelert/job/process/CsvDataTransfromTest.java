@@ -53,7 +53,7 @@ import com.prelert.job.usage.DummyUsageReporter;
 
 public class CsvDataTransfromTest 
 {
-	static private Logger s_Logger = Logger.getLogger(CsvDataTransfromTest.class);
+	private static Logger s_Logger = Logger.getLogger(CsvDataTransfromTest.class);
 	
 	/**
 	 * Test transforming csv data with time in epoch format 
