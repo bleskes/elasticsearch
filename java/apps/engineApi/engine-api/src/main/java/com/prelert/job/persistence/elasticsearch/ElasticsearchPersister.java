@@ -80,7 +80,7 @@ import com.prelert.rs.data.Detector;
  */
 public class ElasticsearchPersister implements JobResultsPersister
 {
-	public static final Logger LOGGER = Logger.getLogger(ElasticsearchPersister.class);
+	private static final Logger LOGGER = Logger.getLogger(ElasticsearchPersister.class);
 
 	private Client m_Client;
 	private String m_JobId;

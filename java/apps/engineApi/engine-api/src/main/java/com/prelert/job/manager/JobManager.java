@@ -78,7 +78,7 @@ import com.prelert.rs.data.parsing.AlertObserver;
  */
 public class JobManager
 {
-	public static final Logger LOGGER = Logger.getLogger(JobManager.class);
+	private static final Logger LOGGER = Logger.getLogger(JobManager.class);
 
 	/**
 	 * Field name in which to store the API version in the usage info

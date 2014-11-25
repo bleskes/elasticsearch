@@ -90,7 +90,7 @@ import com.prelert.rs.data.SingleDocument;
 
 public class ElasticsearchJobProvider implements JobProvider
 {
-	public static final Logger LOGGER = Logger.getLogger(ElasticsearchJobProvider.class);
+	private static final Logger LOGGER = Logger.getLogger(ElasticsearchJobProvider.class);
 
 
 	/**
