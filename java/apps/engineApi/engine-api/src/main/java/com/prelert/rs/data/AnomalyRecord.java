@@ -405,10 +405,10 @@ public class AnomalyRecord
 				break;
 			case FIELD_NAME:
 				String fieldName = parser.getCurrentName();
+				token = parser.nextToken();
 				switch (fieldName)
 				{
 				case PROBABILITY:
-					token = parser.nextToken();
 					if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)
 					{
 						record.setProbability(parser.getDoubleValue());
@@ -420,7 +420,6 @@ public class AnomalyRecord
 					}
 					break;
 				case ANOMALY_SCORE:
-					token = parser.nextToken();
 					if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)
 					{
 						record.setAnomalyScore(parser.getDoubleValue());
@@ -432,7 +431,6 @@ public class AnomalyRecord
 					}
 					break;
 				case NORMALIZED_PROBABILITY:
-					token = parser.nextToken();
 					if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)
 					{
 						record.setNormalizedProbability(parser.getDoubleValue());
@@ -444,7 +442,6 @@ public class AnomalyRecord
 					}
 					break;
 				case BY_FIELD_NAME:
-					token = parser.nextToken();
 					if (token == JsonToken.VALUE_STRING)
 					{
 						record.setByFieldName(parser.getText());
@@ -456,7 +453,6 @@ public class AnomalyRecord
 					}
 					break;
 				case BY_FIELD_VALUE:
-					token = parser.nextToken();
 					if (token == JsonToken.VALUE_STRING)
 					{
 						record.setByFieldValue(parser.getText());
@@ -468,7 +464,6 @@ public class AnomalyRecord
 					}
 					break;
 				case PARTITION_FIELD_NAME:
-					token = parser.nextToken();
 					if (token == JsonToken.VALUE_STRING)
 					{
 						record.setPartitionFieldName(parser.getText());
@@ -480,7 +475,6 @@ public class AnomalyRecord
 					}
 					break;
 				case PARTITION_FIELD_VALUE:
-					token = parser.nextToken();
 					if (token == JsonToken.VALUE_STRING)
 					{
 						record.setPartitionFieldValue(parser.getText());
@@ -492,7 +486,6 @@ public class AnomalyRecord
 					}
 					break;
 				case FUNCTION:
-					token = parser.nextToken();
 					if (token == JsonToken.VALUE_STRING)
 					{
 						record.setFunction(parser.getText());
@@ -504,7 +497,6 @@ public class AnomalyRecord
 					}
 					break;
 				case TYPICAL:
-					token = parser.nextToken();
 					if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)
 					{
 						record.setTypical(parser.getDoubleValue());
@@ -516,7 +508,6 @@ public class AnomalyRecord
 					}
 					break;
 				case ACTUAL:
-					token = parser.nextToken();
 					if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)
 					{
 						record.setActual(parser.getDoubleValue());
@@ -528,7 +519,6 @@ public class AnomalyRecord
 					}
 					break;
 				case FIELD_NAME:
-					token = parser.nextToken();
 					if (token == JsonToken.VALUE_STRING)
 					{
 						record.setFieldName(parser.getText());
@@ -540,7 +530,6 @@ public class AnomalyRecord
 					}
 					break;
 				case OVER_FIELD_NAME:
-					token = parser.nextToken();
 					if (token == JsonToken.VALUE_STRING)
 					{
 						record.setOverFieldName(parser.getText());
@@ -552,7 +541,6 @@ public class AnomalyRecord
 					}
 					break;
 				case OVER_FIELD_VALUE:
-					token = parser.nextToken();
 					if (token == JsonToken.VALUE_STRING)
 					{
 						record.setOverFieldValue(parser.getText());
@@ -564,7 +552,6 @@ public class AnomalyRecord
 					}
 					break;
 				case CAUSES:
-					token = parser.nextToken();
 					if (token != JsonToken.START_ARRAY)
 					{
 						String msg = "Invalid value Expecting an array of causes";
@@ -583,7 +570,7 @@ public class AnomalyRecord
 					break;
 				default:
 					LOGGER.warn(String.format("Parse error unknown field in Anomaly Record %s:%s",
-							fieldName, parser.nextTextValue()));
+							fieldName, parser.getText()));
 					break;
 				}
 				break;

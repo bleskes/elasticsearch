@@ -175,10 +175,9 @@ public class Quantiles
 	 * @return The new quantiles
 	 * @throws JsonParseException
 	 * @throws IOException
-	 * @throws AutoDetectParseException
 	 */
 	public static Quantiles parseJsonAfterStartObject(JsonParser parser)
-	throws JsonParseException, IOException, AutoDetectParseException
+	throws JsonParseException, IOException
 	{
 		Quantiles quantiles = new Quantiles();
 
