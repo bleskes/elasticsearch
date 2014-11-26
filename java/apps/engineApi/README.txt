@@ -14,7 +14,7 @@ data and querying results.
 
 Full documentation is available on the Prelert website:
 
-http://www.prelert.com/docs/engine_api/1.1/
+http://www.prelert.com/docs/engine_api/1.2/
 
 
 Getting Started
@@ -347,7 +347,7 @@ Further information
 
 To view the full documentation, please visit:
 
-http://www.prelert.com/docs/engine_api/1.1/
+http://www.prelert.com/docs/engine_api/1.2/
 
 Code examples are also available from:
 
