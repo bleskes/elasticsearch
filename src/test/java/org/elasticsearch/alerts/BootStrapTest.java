@@ -69,7 +69,6 @@ public class BootStrapTest extends AbstractAlertingTests {
     @Test
     public void testBootStrapHistory() throws Exception {
         ensureAlertingStarted();
-        internalTestCluster().ensureAtLeastNumDataNodes(2);
 
         AlertsStatsResponse response = alertClient().prepareAlertsStats().get();
         assertTrue(response.isAlertActionManagerStarted());
@@ -99,7 +98,6 @@ public class BootStrapTest extends AbstractAlertingTests {
                 .setSource(XContentFactory.jsonBuilder().value(entry))
                 .get();
         assertTrue(indexResponse.isCreated());
-        client().admin().indices().prepareRefresh(actionHistoryIndex).get();
 
         stopAlerting();
         startAlerting();

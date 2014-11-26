@@ -43,7 +43,7 @@ import static org.hamcrest.core.Is.is;
 
 /**
  */
-@ElasticsearchIntegrationTest.ClusterScope(scope = ElasticsearchIntegrationTest.Scope.TEST, numClientNodes = 0, transportClientRatio = 0, numDataNodes = 0)
+@ElasticsearchIntegrationTest.ClusterScope(scope = ElasticsearchIntegrationTest.Scope.TEST, numClientNodes = 0, transportClientRatio = 0, randomDynamicTemplates = false, numDataNodes = 0)
 public class NoMasterNodeTests extends AbstractAlertingTests {
 
     private ClusterDiscoveryConfiguration.UnicastZen config;
