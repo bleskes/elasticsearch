@@ -37,7 +37,7 @@ public class MissingFieldException extends JobException
 {
 	private static final long serialVersionUID = -5303432170987377451L;
 
-	private String m_MissingFieldName;
+	private final String m_MissingFieldName;
 
 	public MissingFieldException(String fieldName, String message)
 	{

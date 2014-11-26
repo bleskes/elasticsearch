@@ -399,7 +399,7 @@ public class AnalysisConfig
 
 		Detector.verifyFieldName(m_SummaryCountFieldName);
 
-		if (m_Detectors.size() == 0)
+		if (m_Detectors.isEmpty())
 		{
 			throw new JobConfigurationException("No detectors configured",
 					ErrorCode.INCOMPLETE_CONFIGURATION);

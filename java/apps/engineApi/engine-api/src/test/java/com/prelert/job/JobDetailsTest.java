@@ -30,6 +30,8 @@ package com.prelert.job;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Date;
+
 import org.junit.Test;
 
 import com.prelert.job.JobDetails.Counts;
@@ -43,6 +45,9 @@ public class JobDetailsTest
         JobConfiguration jobConfiguration = new JobConfiguration();
         JobDetails jobDetails1 = new JobDetails("foo", jobConfiguration);
         JobDetails jobDetails2 = new JobDetails("foo", jobConfiguration);
+        Date createTime = new Date();
+        jobDetails1.setCreateTime(createTime);
+        jobDetails2.setCreateTime(createTime);
 
         assertEquals(jobDetails1.hashCode(), jobDetails2.hashCode());
     }

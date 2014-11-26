@@ -37,7 +37,7 @@ public class JobIdAlreadyExistsException extends JobException
 {
 	private static final long serialVersionUID = 8656604180755905746L;
 
-	private String m_JobId;
+	private final String m_JobId;
 
 	/**
 	 * Create a new JobIdAlreadyExistsException with the error code

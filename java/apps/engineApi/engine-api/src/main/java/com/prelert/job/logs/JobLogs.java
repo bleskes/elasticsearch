@@ -311,7 +311,7 @@ public class JobLogs
 			String msg = "Cannot find log file " + file;
 			LOGGER.warn(msg);
 			throw new UnknownJobException(jobId, msg,
-					 ErrorCode.MISSING_LOG_FILE);
+					 ErrorCode.MISSING_LOG_FILE, e);
 		}
 		catch (IOException e)
 		{

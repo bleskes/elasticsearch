@@ -67,6 +67,9 @@ public class ElasticsearchMappings
 	 */
 	public static final String ES_TIMESTAMP = "@timestamp";
 
+	private ElasticsearchMappings()
+	{
+	}
 
 	/**
 	 * Create the Elasticsearch mapping for {@linkplain com.prelert.job.JobDetails}.

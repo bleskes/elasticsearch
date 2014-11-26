@@ -39,8 +39,8 @@ public class HighProportionOfBadTimestampsException extends JobException
 {
 	private static final long serialVersionUID = -7776085998658495251L;
 
-	private long m_NumberBad;
-	private long m_TotalNumber;
+	private final long m_NumberBad;
+	private final long m_TotalNumber;
 
 	public HighProportionOfBadTimestampsException(long numberBadRecords,
 			long totalNumberRecords)

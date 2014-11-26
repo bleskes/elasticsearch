@@ -40,7 +40,6 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
-import com.prelert.rs.data.parsing.AutoDetectParseException;
 
 /**
  * Anomaly Record POJO.
@@ -72,7 +71,7 @@ public class AnomalyRecord
 	public static final String FUNCTION = "function";
 	public static final String TYPICAL = "typical";
 	public static final String ACTUAL = "actual";
-	
+
 	/**
 	 * Metric Results (including population metrics)
 	 */
@@ -90,9 +89,9 @@ public class AnomalyRecord
 	 */
 	public static final String ANOMALY_SCORE = "anomalyScore";
 	public static final String NORMALIZED_PROBABILITY = "normalizedProbability";
-	
+
 	private static final Logger LOGGER = Logger.getLogger(AnomalyRecord.class);
-	
+
 	private String m_DetectorName;
 	private int m_IdNum;
 	private double m_Probability;
@@ -193,35 +192,35 @@ public class AnomalyRecord
 	{
 		return m_AnomalyScore;
 	}
-	
+
 	public void setAnomalyScore(double anomalyScore)
 	{
 		m_HadBigNormalisedUpdate |= isBigUpdate(m_AnomalyScore, anomalyScore);
 		m_AnomalyScore = anomalyScore;
 	}
-	
+
 	public double getNormalizedProbability()
 	{
 		return m_NormalizedProbability;
 	}
-	
+
 	public void setNormalizedProbability(double normalizedProbability)
 	{
 		m_HadBigNormalisedUpdate |= isBigUpdate(m_NormalizedProbability, normalizedProbability);
 		m_NormalizedProbability = normalizedProbability;
 	}
-	
-	
-	public Date getTimestamp() 
+
+
+	public Date getTimestamp()
 	{
 		return m_Timestamp;
 	}
-	
-	public void setTimestamp(Date timestamp) 
+
+	public void setTimestamp(Date timestamp)
 	{
 		m_Timestamp = timestamp;
 	}
-	
+
 	public double getProbability()
 	{
 		return m_Probability;
@@ -356,11 +355,11 @@ public class AnomalyRecord
 	{
 		return m_Parent;
 	}
-	
+
 	public void setParent(String parent)
 	{
 		m_Parent = parent.intern();
-	}	
+	}
 
 
 	/**
@@ -572,13 +571,13 @@ public class AnomalyRecord
 						LOGGER.warn(msg);
 						throw new AutoDetectParseException(msg);
 					}
-					
+
 					token = parser.nextToken();
 					while (token != JsonToken.END_ARRAY)
 					{
 						AnomalyCause cause = AnomalyCause.parseJson(parser);
 						record.addCause(cause);
-						
+
 						token = parser.nextToken();
 					}
 					break;
@@ -599,21 +598,21 @@ public class AnomalyRecord
 
 		return record;
 	}
-	
-	
+
+
 	private boolean bothNullOrEqual(Object o1, Object o2)
 	{
 		if (o1 == null && o2 == null)
 		{
 			return true;
 		}
-		
+
 		if (o1 == null || o2 == null)
 		{
 			return false;
 		}
-		
-		return o1.equals(o2);	
+
+		return o1.equals(o2);
 	}
 
 	@Override
@@ -668,20 +667,20 @@ public class AnomalyRecord
 		return result;
 	}
 
-	
-	@Override 
+
+	@Override
 	public boolean equals(Object other)
 	{
 		if (this == other)
 		{
 			return true;
 		}
-		
+
 		if (other instanceof AnomalyRecord == false)
 		{
 			return false;
 		}
-		
+
 		AnomalyRecord that = (AnomalyRecord)other;
 
 		// ID is NOT compared, so that a record from the data store will compare

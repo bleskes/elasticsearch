@@ -91,7 +91,7 @@ public class ElasticsearchStatusReporter extends StatusReporter
 				}
 				catch (VersionConflictEngineException e)
 				{
-					m_Logger.debug("Conflict updating job status counts");
+					m_Logger.debug("Conflict updating job status counts", e);
 				}
 			}
 

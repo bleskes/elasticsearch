@@ -50,7 +50,7 @@ import com.prelert.job.persistence.JobRenormaliser;
 import com.prelert.job.quantiles.Quantiles;
 import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.Detector;
-import com.prelert.rs.data.parsing.AutoDetectParseException;
+import com.prelert.rs.data.AutoDetectParseException;
 import com.prelert.rs.data.parsing.AutoDetectResultsParser;
 
 /**
@@ -90,11 +90,11 @@ public class ResultsParsingTest
 		{
 			m_Quantiles.put(quantiles.getId(), quantiles);
 		}
-		
+
 		@Override
 		public void persistModelSizeStats(ModelSizeStats memUsagae)
 		{
-			
+
 		}
 
 		@Override

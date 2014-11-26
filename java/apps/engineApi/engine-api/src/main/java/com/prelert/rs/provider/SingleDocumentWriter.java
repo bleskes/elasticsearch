@@ -56,7 +56,7 @@ public class SingleDocumentWriter<T> implements MessageBodyWriter<SingleDocument
 	 * The Object to JSON mapper.
 	 * Writes dates in ISO 8601 format
 	 */
-	private static final ObjectWriter s_ObjectWriter =
+	private static final ObjectWriter OBJECT_WRITER =
 			new ObjectMapper()
 			.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
 			.writer().withDefaultPrettyPrinter();
@@ -88,6 +88,6 @@ public class SingleDocumentWriter<T> implements MessageBodyWriter<SingleDocument
 			OutputStream entityStream)
 	throws IOException, WebApplicationException
 	{
-		s_ObjectWriter.writeValue(entityStream, bean);
+		OBJECT_WRITER.writeValue(entityStream, bean);
 	}
 }
