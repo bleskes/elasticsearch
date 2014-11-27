@@ -216,8 +216,10 @@ public class ProcessCtrl
 	public static final String DOT_BY = ".by";
 	public static final String DOT_OVER = ".over";
 	public static final String DOT_PARTITION = ".partition";
+    public static final String DOT_EXCLUDE_FREQUENT = ".excludefrequent";
 	public static final char NEW_LINE = '\n';
 
+	
 	/*
 	 * The configuration fields used in limits.conf
 	 */
@@ -742,6 +744,12 @@ public class ProcessCtrl
 					.append((detector.isUseNull() ? " = true" : " = false"))
 					.append(NEW_LINE);
 			}
+
+            if (isNotNullOrEmpty(detector.getExcludeFrequent()))
+            {
+                contents.append(key).append(DOT_EXCLUDE_FREQUENT).append(" = ").
+                    append(detector.getExcludeFrequent()).append(NEW_LINE);
+            }
 
 			if (isNotNullOrEmpty(detector.getByFieldName()))
 			{

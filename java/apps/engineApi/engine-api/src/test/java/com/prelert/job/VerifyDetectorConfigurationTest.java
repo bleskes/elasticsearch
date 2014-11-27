@@ -218,8 +218,8 @@ public class VerifyDetectorConfigurationTest
 		// some functions require a fieldname
 		d.setFieldName("f");
 		for (String f : new String [] {Detector.DISTINCT_COUNT, Detector.DC,
-				Detector.METRIC, Detector.MEAN, Detector.AVG, Detector.MAX,
-				Detector.MIN, Detector.SUM})
+				Detector.METRIC, Detector.MEAN, Detector.HIGH_MEAN, Detector.LOW_MEAN, Detector.AVG,
+				Detector.HIGH_AVG, Detector.LOW_AVG, Detector.MAX, Detector.MIN, Detector.SUM})
 		{
 			d.setFunction(f);
 			d.verify(false);
@@ -241,7 +241,11 @@ public class VerifyDetectorConfigurationTest
 		difference.remove(Detector.DC);
 		difference.remove(Detector.METRIC);
 		difference.remove(Detector.MEAN);
+		difference.remove(Detector.LOW_MEAN);
+		difference.remove(Detector.HIGH_MEAN);
 		difference.remove(Detector.AVG);
+		difference.remove(Detector.LOW_AVG);
+        difference.remove(Detector.HIGH_AVG);
 		difference.remove(Detector.MIN);
 		difference.remove(Detector.MAX);
 		difference.remove(Detector.SUM);
@@ -309,9 +313,9 @@ public class VerifyDetectorConfigurationTest
 
 		// some functions require a fieldname
 		d.setFieldName("f");
-		for (String f : new String [] {Detector.METRIC, Detector.MEAN,
-				Detector.AVG, Detector.MAX,
-				Detector.MIN, Detector.SUM})
+        for (String f : new String[] { Detector.METRIC, Detector.MEAN, Detector.HIGH_MEAN,
+                Detector.LOW_MEAN, Detector.AVG, Detector.HIGH_AVG, Detector.LOW_AVG, Detector.MAX,
+                Detector.MIN, Detector.SUM })
 		{
 			d.setFunction(f);
 			d.verify(false);
