@@ -128,7 +128,7 @@ public class ElasticsearchPersister implements JobResultsPersister
 
 			if (response.isCreated() == false)
 			{
-				LOGGER.error(String.format("Bucket %s document not created",
+				LOGGER.warn(String.format("Bucket %s document has been overwritten",
 						bucket.getId()));
 			}
 
@@ -147,7 +147,7 @@ public class ElasticsearchPersister implements JobResultsPersister
 
 				if (response.isCreated() == false)
 				{
-					LOGGER.error(String.format("Detector %s document not created",
+					LOGGER.warn(String.format("Detector %s document has been overwritten",
 							detector.getName()));
 				}
 
@@ -205,15 +205,11 @@ public class ElasticsearchPersister implements JobResultsPersister
 		{
 			XContentBuilder content = serialiseQuantiles(quantiles);
 
-			IndexResponse response = m_Client.prepareIndex(m_JobId, Quantiles.TYPE, quantiles.getId())
+			m_Client.prepareIndex(m_JobId, Quantiles.TYPE, quantiles.getId())
 					.setSource(content)
 					.execute().actionGet();
 
-			if (response.isCreated() == false)
-			{
-				LOGGER.error(String.format("Quantile %s document not created",
-						quantiles.getId()));
-			}
+			// Don't warn on overwrite as we expect this
 		}
 		catch (IOException e)
 		{
@@ -248,15 +244,11 @@ public class ElasticsearchPersister implements JobResultsPersister
 		{
 			XContentBuilder content = serialiseModelSizeStats(modelSizeStats);
 
-			IndexResponse response = m_Client.prepareIndex(m_JobId, ModelSizeStats.TYPE, modelSizeStats.getId())
+			m_Client.prepareIndex(m_JobId, ModelSizeStats.TYPE, modelSizeStats.getId())
 					.setSource(content)
 					.execute().actionGet();
 
-			if (response.isCreated() == false)
-			{
-				LOGGER.error(String.format("Model size stats %s document not created",
-						modelSizeStats.getId()));
-			}
+			// Don't warn on overwrite as we expect this
 		}
 		catch (IOException e)
 		{
@@ -264,12 +256,8 @@ public class ElasticsearchPersister implements JobResultsPersister
 			return;
 		}
 
-		// Refresh the index when persisting quantiles so that previously
-		// persisted results will be available for searching.  Do this using the
-		// indices API rather than the index API (used to write the quantiles
-		// above), because this will refresh all shards rather than just the
-		// shard that the quantiles document itself was written to.
-		commitWrites();
+		// Don't commit as we expect masses of these updates and they're only
+		// for information at the API level
 	}
 
 

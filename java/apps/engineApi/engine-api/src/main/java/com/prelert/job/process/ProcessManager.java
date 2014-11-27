@@ -56,7 +56,6 @@ import org.apache.log4j.RollingFileAppender;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
-import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobInUseException;
 import com.prelert.job.JobStatus;
@@ -64,6 +63,8 @@ import com.prelert.job.UnknownJobException;
 import com.prelert.job.persistence.DataPersisterFactory;
 import com.prelert.job.persistence.JobDataPersister;
 import com.prelert.job.persistence.JobProvider;
+import com.prelert.job.process.writer.DataToProcessWriter;
+import com.prelert.job.process.writer.DataToProcessWriterFactory;
 import com.prelert.job.quantiles.QuantilesState;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
@@ -675,27 +676,9 @@ public class ProcessManager
 	{
 		// Oracle's documentation recommends buffering process streams
 		BufferedOutputStream bufferedStream = new BufferedOutputStream(output);
-
-		if (dataDescription.transform())
-		{
-			if (dataDescription.getFormat() == DataFormat.JSON)
-			{
-				PipeToProcess.transformAndPipeJson(dataDescription, analysisConfig, input,
-						bufferedStream, statusReporter,
-						dataPersister, jobLogger);
-			}
-			else
-			{
-				PipeToProcess.transformAndPipeCsv(dataDescription, analysisConfig, input,
-						bufferedStream, statusReporter,
-						dataPersister, jobLogger);
-			}
-		}
-		else
-		{
-			PipeToProcess.pipeCsv(dataDescription, analysisConfig, input,
-					bufferedStream, statusReporter, dataPersister,jobLogger);
-		}
+        DataToProcessWriter writer = new DataToProcessWriterFactory().create(bufferedStream,
+                dataDescription, analysisConfig, statusReporter, dataPersister, jobLogger);
+        writer.write(input);
 	}
 
 

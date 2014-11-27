@@ -275,7 +275,7 @@ public class DataDescription
 
 	/**
 	 * Returns true if the data described by this object needs
-	 * at transforming before processing by autodetect.
+	 * transforming before processing by autodetect.
 	 * A transformation must be applied if either a timeformat is
 	 * not in seconds since the epoch or the data is in Json format.
 	 * @return True if the data should be transformed.
