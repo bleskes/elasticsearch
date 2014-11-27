@@ -32,6 +32,7 @@ import org.elasticsearch.common.joda.time.DateTime;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.script.ScriptService;
+import org.elasticsearch.test.junit.annotations.TestLogging;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -67,6 +68,7 @@ public class BootStrapTest extends AbstractAlertingTests {
     }
 
     @Test
+    @TestLogging("alerts.actions:DEBUG")
     public void testBootStrapHistory() throws Exception {
         ensureAlertingStarted();
 
