@@ -45,7 +45,7 @@ ANT_ARGS=--noconfig
 # variable
 ANT_PROPS=-Dbuild.sysclasspath=ignore
 
-# Don't let Maven download dependencies during offical builds
+# Don't let Maven download dependencies during official builds
 MAVEN_ARGS=--offline
 
 ifdef PRELERT_TOOLS_HOME

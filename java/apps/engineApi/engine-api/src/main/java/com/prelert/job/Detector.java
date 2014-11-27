@@ -52,6 +52,7 @@ public class Detector
 	public static final String OVER_FIELD_NAME = "overFieldName";
 	public static final String PARTITION_FIELD_NAME = "partitionFieldName";
 	public static final String USE_NULL = "useNull";
+    public static final String EXCLUDE_FREQUENT = "excludeFrequent";
 
 
 	public static final String COUNT = "count";
@@ -65,7 +66,11 @@ public class Detector
 	public static final String FREQ_RARE = "freq_rare";
 	public static final String METRIC = "metric";
 	public static final String MEAN = "mean";
+	public static final String HIGH_MEAN = "high_mean";
+	public static final String LOW_MEAN = "low_mean";
 	public static final String AVG = "avg";
+	public static final String HIGH_AVG = "high_avg";
+	public static final String LOW_AVG = "low_avg";
 	public static final String MIN = "min";
 	public static final String MAX = "max";
 	public static final String SUM = "sum";
@@ -84,6 +89,8 @@ public class Detector
 				FREQ_RARE,
 				METRIC,
 				MEAN, AVG,
+				HIGH_MEAN, HIGH_AVG,
+				LOW_MEAN, LOW_AVG,
 				MIN,
 				MAX,
 				SUM
@@ -108,6 +115,8 @@ public class Detector
 				DISTINCT_COUNT, DC,
 				METRIC,
 				MEAN, AVG,
+				HIGH_MEAN, HIGH_AVG,
+				LOW_MEAN, LOW_AVG,
 				MIN,
 				MAX,
 				SUM
@@ -147,7 +156,8 @@ public class Detector
 	private String m_OverFieldName;
 	private String m_PartitionFieldName;
 	private Boolean m_UseNull;
-
+    private String m_ExcludeFrequent;
+		
 	public Detector()
 	{
 
@@ -208,6 +218,14 @@ public class Detector
 				this.setUseNull((Boolean)field);
 			}
 		}
+        if (detectorMap.containsKey(EXCLUDE_FREQUENT))
+        {
+            Object field = detectorMap.get(EXCLUDE_FREQUENT);
+            if (field != null)
+            {
+                setExcludeFrequent(field.toString());
+            }
+        }
 	}
 
 
@@ -301,7 +319,25 @@ public class Detector
 		this.m_UseNull = useNull;
 	}
 
-	@Override
+    /**
+     * Excludes frequently-occuring metrics from the analysis;
+     * can apply to 'by' field, 'over' field, or both
+     * It will be validated by the C++ process
+     *
+     * @return the value that the user set 
+     */
+    public String getExcludeFrequent()
+    {
+        return m_ExcludeFrequent;
+    }
+
+    public void setExcludeFrequent(String v)
+    {
+        m_ExcludeFrequent = v;
+    }
+
+
+	@Override 
 	public boolean equals(Object other)
 	{
 		if (this == other)
@@ -321,7 +357,8 @@ public class Detector
 				JobDetails.bothNullOrEqual(this.m_ByFieldName, that.m_ByFieldName) &&
 				JobDetails.bothNullOrEqual(this.m_OverFieldName, that.m_OverFieldName) &&
 				JobDetails.bothNullOrEqual(this.m_PartitionFieldName, that.m_PartitionFieldName) &&
-				JobDetails.bothNullOrEqual(this.m_UseNull, that.m_UseNull);
+				JobDetails.bothNullOrEqual(this.m_UseNull, that.m_UseNull) &&
+                JobDetails.bothNullOrEqual(this.m_ExcludeFrequent, that.m_ExcludeFrequent);
 	}
 
     @Override
@@ -482,7 +519,6 @@ public class Detector
 			}
 
 		}
-
 
 		// field names cannot contain certain characters
 		String [] fields = {m_FieldName, m_ByFieldName, m_OverFieldName, m_PartitionFieldName};
