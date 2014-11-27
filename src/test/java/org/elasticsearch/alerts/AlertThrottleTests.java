@@ -169,7 +169,7 @@ public class AlertThrottleTests extends AbstractAlertingTests {
                     }
                 }
 
-                assertThat(countResponse.getCount(), equalTo(1L));
+                assertThat(countResponse.getCount(), greaterThanOrEqualTo(1L));
             }
         });
 
@@ -183,7 +183,7 @@ public class AlertThrottleTests extends AbstractAlertingTests {
                         .setTypes("action-type")
                         .setSource(searchSource().query(matchAllQuery()).buildAsBytes())
                         .get();
-                assertThat(countResponse.getCount(), equalTo(2L));
+                assertThat(countResponse.getCount(), greaterThanOrEqualTo(2L));
             }
         });
 
