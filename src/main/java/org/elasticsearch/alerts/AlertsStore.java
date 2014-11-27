@@ -169,6 +169,7 @@ public class AlertsStore extends AbstractComponent {
                     loadAlerts();
                 } catch (Exception e) {
                     logger.warn("Failed to load alerts", e);
+                    alertMap.clear();
                     return false;
                 }
                 templateHelper.checkAndUploadIndexTemplate(state, "alerts");

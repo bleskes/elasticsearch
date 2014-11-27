@@ -135,6 +135,7 @@ public class AlertActionManager extends AbstractComponent {
             loadQueue();
         } catch (Exception e) {
             logger.error("Unable to load unfinished jobs into the job queue", e);
+            actionsToBeProcessed.clear();
             return false;
         }
         templateHelper.checkAndUploadIndexTemplate(state, "alerthistory");
