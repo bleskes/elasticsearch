@@ -49,6 +49,7 @@ public class AlertActionEntry implements ToXContent {
     private Map<String, Object> searchResponse;
     private boolean triggered;
     private String errorMsg;
+    private Map<String,Object> metadata;
 
     AlertActionEntry() {
     }
@@ -194,6 +195,19 @@ public class AlertActionEntry implements ToXContent {
         this.errorMsg = errorMsg;
     }
 
+    /**
+     * @return The metadata that was associated with the alert when this entry was created
+     */
+    public Map<String, Object> getMetadata() {
+        return metadata;
+    }
+
+    public void setMetadata(Map<String, Object> metadata) {
+        this.metadata = metadata;
+    }
+
+
+
     @Override
     public XContentBuilder toXContent(XContentBuilder historyEntry, Params params) throws IOException {
         historyEntry.startObject();
@@ -222,8 +236,12 @@ public class AlertActionEntry implements ToXContent {
         if (errorMsg != null) {
             historyEntry.field("error_msg", errorMsg);
         }
-        historyEntry.endObject();
 
+        if (metadata != null) {
+            historyEntry.field("meta", metadata);
+        }
+
+        historyEntry.endObject();
 
         return historyEntry;
     }

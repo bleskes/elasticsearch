@@ -102,10 +102,18 @@ public abstract class AbstractAlertingTests extends ElasticsearchIntegrationTest
     }
 
     protected BytesReference createAlertSource(String cron, SearchRequest request, String scriptTrigger) throws IOException {
+        return createAlertSource(cron, request, scriptTrigger, null);
+    }
+
+    protected BytesReference createAlertSource(String cron, SearchRequest request, String scriptTrigger, Map<String,Object> metadata) throws IOException {
         XContentBuilder builder = jsonBuilder().startObject();
         builder.field("schedule", cron);
         builder.field("request");
         AlertUtils.writeSearchRequest(request, builder, ToXContent.EMPTY_PARAMS);
+
+        if (metadata != null) {
+            builder.field("meta", metadata);
+        }
 
         builder.startObject("trigger");
         builder.startObject("script");
@@ -118,6 +126,7 @@ public abstract class AbstractAlertingTests extends ElasticsearchIntegrationTest
         builder.field("index", "my-index");
         builder.field("type", "trail");
         builder.endObject();
+
         builder.endObject();
 
         return builder.endObject().bytes();
