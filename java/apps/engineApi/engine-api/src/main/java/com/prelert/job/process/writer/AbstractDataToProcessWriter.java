@@ -73,8 +73,6 @@ abstract class AbstractDataToProcessWriter implements DataToProcessWriter
         long epoch = 0L;
         try
         {
-            // parse as a double and throw away the fractional
-            // component
             epoch = m_DateTransformer.transform(record[timeFieldIndex]);
         }
         catch (CannotParseTimestampException e)
