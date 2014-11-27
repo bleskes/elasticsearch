@@ -281,6 +281,7 @@ public class AlertActionManager extends AbstractComponent {
                 .setOpType(IndexRequest.OpType.CREATE)
                 .get();
         entry.setVersion(response.getVersion());
+        logger.debug("Added alert action for alert [{}]", alert.alertName());
 
         long currentSize = actionsToBeProcessed.size() + 1;
         actionsToBeProcessed.add(entry);
@@ -299,9 +300,11 @@ public class AlertActionManager extends AbstractComponent {
 
     private void updateHistoryEntry(AlertActionEntry entry) throws IOException {
         ensureStarted();
+        logger.debug("Updating alert action [{}]", entry.getId());
         IndexResponse response = client.prepareIndex(getAlertHistoryIndexNameForTime(entry.getScheduledTime()), ALERT_HISTORY_TYPE, entry.getId())
                 .setSource(XContentFactory.jsonBuilder().value(entry))
                 .get();
+        logger.debug("Updated alert action [{}]", entry.getId());
         entry.setVersion(response.getVersion());
     }
 
