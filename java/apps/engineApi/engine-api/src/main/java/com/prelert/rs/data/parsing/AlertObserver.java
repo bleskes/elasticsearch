@@ -33,7 +33,7 @@ import com.prelert.rs.data.Bucket;
  *
  * Abstract class, concrete sub-classes should implement {@linkplain #fire(Bucket)}
  */
-abstract public class AlertObserver
+public abstract class AlertObserver
 {
 	private double m_AnomalyThreshold;
 	private double m_NormalisedThreshold;
@@ -67,7 +67,7 @@ abstract public class AlertObserver
 	 *
 	 * @param bucket
 	 */
-	abstract public void fire(Bucket bucket);
+	public abstract void fire(Bucket bucket);
 
 
 	public double getAnomalyThreshold()

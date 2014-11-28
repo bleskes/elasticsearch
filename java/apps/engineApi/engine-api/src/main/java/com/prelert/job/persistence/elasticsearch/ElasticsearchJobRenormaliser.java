@@ -111,7 +111,7 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
 	/**
 	 * Shut down the worker thread
 	 */
-	synchronized public boolean shutdown(Logger logger)
+	public synchronized boolean shutdown(Logger logger)
 	{
 		try
 		{
@@ -141,7 +141,7 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
 	 * @param logger
 	 */
 	@Override
-	synchronized public void updateBucketSysChange(String sysChangeState,
+	public synchronized void updateBucketSysChange(String sysChangeState,
 										Date endTime, Logger logger)
 	{
 		if (m_QuantileUpdateThread.isAlive())
@@ -228,7 +228,7 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
 	 * @param logger
 	 */
 	@Override
-	synchronized public void updateBucketUnusualBehaviour(String unusualBehaviourState,
+	public synchronized void updateBucketUnusualBehaviour(String unusualBehaviourState,
 											Date endTime, Logger logger)
 	{
 		if (m_QuantileUpdateThread.isAlive())

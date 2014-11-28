@@ -48,12 +48,12 @@ import com.prelert.job.status.StatusReporter;
  */
 public class ProcessAndDataDescription
 {
-	final private Process m_Process;
-	final private DataDescription m_DataDescription;
-	volatile private boolean m_IsInUse;
-	final private long m_TimeoutSeconds;
-	final private BufferedReader m_ErrorReader;
-	final private List<String> m_InterestingFields;
+	private final Process m_Process;
+	private final DataDescription m_DataDescription;
+	private volatile boolean m_IsInUse;
+	private final long m_TimeoutSeconds;
+	private final BufferedReader m_ErrorReader;
+	private final List<String> m_InterestingFields;
 
 
 	private ResultsReader m_OutputParser;
