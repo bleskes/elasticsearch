@@ -68,6 +68,11 @@ public class SslMultiPortTests extends ShieldIntegrationTest {
                 .build();
     }
 
+    @Override
+    protected boolean sslTransportEnabled() {
+        return true;
+    }
+
     private TransportClient createTransportClient(Settings additionalSettings) {
         Settings settings = ImmutableSettings.builder().put(transportClientSettings())
                 .put("name", "programmatic_transport_client")
