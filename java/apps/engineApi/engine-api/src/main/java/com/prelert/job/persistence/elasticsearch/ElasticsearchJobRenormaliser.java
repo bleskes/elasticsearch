@@ -47,7 +47,7 @@ import com.prelert.job.JobDetails;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.normalisation.Normaliser;
 import com.prelert.job.persistence.JobRenormaliser;
-import com.prelert.job.process.NativeProcessRunException;
+import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.Pagination;
