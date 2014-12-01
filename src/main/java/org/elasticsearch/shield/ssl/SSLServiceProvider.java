@@ -17,20 +17,29 @@
 
 package org.elasticsearch.shield.ssl;
 
+import org.elasticsearch.common.inject.Inject;
+import org.elasticsearch.common.inject.Provider;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.shield.support.AbstractShieldModule;
 
 /**
  *
  */
-public class SSLModule extends AbstractShieldModule {
+public class SSLServiceProvider implements Provider<SSLService> {
 
-    public SSLModule(Settings settings) {
-        super(settings);
+    private final Settings settings;
+
+    private SSLService service;
+
+    @Inject
+    public SSLServiceProvider(Settings settings) {
+        this.settings = settings;
     }
 
     @Override
-    protected void configure(boolean clientMode) {
-        bind(SSLServiceProvider.class).asEagerSingleton();
+    public synchronized SSLService get() {
+        if (service == null) {
+            service = new SSLService(settings);
+        }
+        return service;
     }
 }
