@@ -69,7 +69,7 @@ public class UsernamePasswordToken implements AuthenticationToken {
 
         UsernamePasswordToken that = (UsernamePasswordToken) o;
 
-        return password.equals(password) &&
+        return Objects.equals(password, that.password) &&
                 Objects.equals(username, that.username);
     }
 
