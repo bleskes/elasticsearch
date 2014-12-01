@@ -28,16 +28,16 @@
 package com.prelert.job.normalisation;
 
 
-public class NormaliserProcess 
+public class NormaliserProcess
 {
-	final private Process m_Process;
-	
+	private final Process m_Process;
+
 	public NormaliserProcess(Process process)
 	{
 		m_Process = process;
 	}
-	
-	
+
+
 	public Process getProcess()
 	{
 		return m_Process;

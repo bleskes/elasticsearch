@@ -219,7 +219,7 @@ public class ProcessCtrl
     public static final String DOT_EXCLUDE_FREQUENT = ".excludefrequent";
 	public static final char NEW_LINE = '\n';
 
-	
+
 	/*
 	 * The configuration fields used in limits.conf
 	 */
@@ -341,7 +341,7 @@ public class ProcessCtrl
 	}
 
 
-	synchronized public String getAnalyticsVersion()
+	public synchronized String getAnalyticsVersion()
 	{
 		if (s_AnalyticsVersion != null)
 		{
@@ -406,7 +406,7 @@ public class ProcessCtrl
 	 * Get the C++ process to print a JSON document containing some of the usage
 	 * and license info
 	 */
-	synchronized public String getInfo()
+	public synchronized String getInfo()
 	{
 		List<String> command = new ArrayList<>();
 		command.add(AUTODETECT_PATH);

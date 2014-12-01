@@ -25,35 +25,29 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.process;
+package com.prelert.job.process.exceptions;
 
 import com.prelert.job.JobException;
 import com.prelert.rs.data.ErrorCode;
 
 /**
- * Exception thrown when there is an error running
- * a native process (autodetect).
+ * Exception thrown when a job is expected to be running
+ * but is closed
  */
-public class NativeProcessRunException extends JobException
+public class ClosedJobException extends JobException
 {
-	private static final long serialVersionUID = 5722287151589093943L;
+	private static final long serialVersionUID = 5491387807381215423L;
 
-	/**
-	 * Create exception with error code ErrorCode.NATIVE_PROCESS_ERROR
-	 * @param message
-	 */
-	public NativeProcessRunException(String message)
+	private final String m_JobId;
+
+	public ClosedJobException(String message, String jobId)
 	{
-		super(message, ErrorCode.NATIVE_PROCESS_ERROR);
+		super(message, ErrorCode.JOB_NOT_RUNNING);
+		m_JobId = jobId;
 	}
 
-	public NativeProcessRunException(String message, ErrorCode errorCode)
+	public String getJobId()
 	{
-		super(message, errorCode);
-	}
-
-	public NativeProcessRunException(String message, ErrorCode errorCode, Throwable cause)
-	{
-		super(message, errorCode, cause);
+		return m_JobId;
 	}
 }

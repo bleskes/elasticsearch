@@ -30,7 +30,7 @@ package com.prelert.rs.provider;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 
-import com.prelert.job.process.NativeProcessRunException;
+import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.rs.data.ApiError;
 
 /**

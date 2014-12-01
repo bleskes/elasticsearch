@@ -55,7 +55,7 @@ import com.prelert.job.TooManyJobsException;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.logs.JobLogs;
 import com.prelert.job.manager.JobManager;
-import com.prelert.job.process.NativeProcessRunException;
+import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
 

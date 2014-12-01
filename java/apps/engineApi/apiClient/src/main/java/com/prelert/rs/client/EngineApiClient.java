@@ -46,6 +46,7 @@ import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.InputStreamEntity;
@@ -271,32 +272,43 @@ public class EngineApiClient implements Closeable
 		StringEntity entity = new StringEntity(description);
 		put.setEntity(entity);
 
-		try (CloseableHttpResponse response = m_HttpClient.execute(put))
-		{
-			if (response.getStatusLine().getStatusCode() == 200)
-			{
-				m_LastError = null;
-				return true;
-			}
-			else
-			{
-				String content = EntityUtils.toString(response.getEntity());
-				String msg = String.format(
-						"Error putting job descriptio. Status code = %d, "
-						+ "Returned content: %s",
-						response.getStatusLine().getStatusCode(),
-						content);
-
-				LOGGER.error(msg);
-
-				m_LastError = m_JsonMapper.readValue(content,
-						new TypeReference<ApiError>() {} );
-
-				return false;
-			}
-		}
+		return executeRequest(put, "putting job description");
 	}
 
+	/**
+	 * Executes an HTTP request and checks if the response was OK. If not, it logs the error.
+	 *
+	 * @return True if response was OK, otherwise false.
+	 */
+    private boolean executeRequest(HttpUriRequest httpRequest, String activityDescription)
+            throws IOException, JsonParseException, JsonMappingException
+    {
+        try (CloseableHttpResponse response = m_HttpClient.execute(httpRequest))
+        {
+            if (response.getStatusLine().getStatusCode() == 200)
+            {
+                m_LastError = null;
+                return true;
+            }
+            else
+            {
+                String content = EntityUtils.toString(response.getEntity());
+                String msg = String.format(
+                        "Error %s. Status code = %d, "
+                        + "Returned content: %s",
+                        activityDescription,
+                        response.getStatusLine().getStatusCode(),
+                        content);
+
+                LOGGER.error(msg);
+
+                m_LastError = m_JsonMapper.readValue(content,
+                        new TypeReference<ApiError>() {} );
+
+                return false;
+            }
+        }
+    }
 
 	/**
 	 * Delete an individual job
@@ -315,30 +327,7 @@ public class EngineApiClient implements Closeable
 
 		HttpDelete delete = new HttpDelete(url);
 
-		try (CloseableHttpResponse response = m_HttpClient.execute(delete))
-		{
-			if (response.getStatusLine().getStatusCode() == 200)
-			{
-				m_LastError = null;
-				return true;
-			}
-			else
-			{
-				String content = EntityUtils.toString(response.getEntity());
-				String msg = String.format(
-						"Error deleting job, status code = %d. "
-						+ "Returned content: %s",
-						response.getStatusLine().getStatusCode(),
-						content);
-
-				LOGGER.error(msg);
-
-				m_LastError = m_JsonMapper.readValue(content,
-						new TypeReference<ApiError>() {} );
-
-				return false;
-			}
-		}
+        return executeRequest(delete, "deleting job");
 	}
 
 	/**
