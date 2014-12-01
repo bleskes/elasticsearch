@@ -66,14 +66,35 @@ abstract class AbstractDataToProcessWriter implements DataToProcessWriter
         m_DateTransformer = Objects.requireNonNull(dateTransformer);
     }
 
+    /**
+     * Parses the timestamp and checks for validity. If valid, it writes
+     * the record and returns the timestamp as an epoch. If not, it logs
+     * as necessary and returns null.
+     */
     protected Long transformTimeAndWrite(String[] record, int timeFieldIndex, long lastEpoch,
             long inputFieldCount) throws IOException,
             HighProportionOfBadTimestampsException, OutOfOrderRecordsException
     {
+        Long epoch = getValidEpochOrNull(record[timeFieldIndex], lastEpoch, inputFieldCount);
+        if (epoch == null)
+        {
+            return null;
+        }
+
+        // write record
+        record[timeFieldIndex] = Long.toString(epoch);
+        m_LengthEncodedWriter.writeRecord(record);
+        m_JobDataPersister.persistRecord(epoch, record);
+        m_StatusReporter.reportRecordWritten(inputFieldCount);
+        return epoch;
+    }
+
+    private Long getValidEpochOrNull(String timestamp, long lastEpoch, long inputFieldCount)
+    {
         long epoch = 0L;
         try
         {
-            epoch = m_DateTransformer.transform(record[timeFieldIndex]);
+            epoch = m_DateTransformer.transform(timestamp);
         }
         catch (CannotParseTimestampException e)
         {
@@ -86,13 +107,7 @@ abstract class AbstractDataToProcessWriter implements DataToProcessWriter
         {
             // out of order
             m_StatusReporter.reportOutOfOrderRecord(inputFieldCount);
-        }
-        else
-        {   // write record
-            record[timeFieldIndex] = Long.toString(epoch);
-            m_LengthEncodedWriter.writeRecord(record);
-            m_JobDataPersister.persistRecord(epoch, record);
-            m_StatusReporter.reportRecordWritten(inputFieldCount);
+            return null;
         }
         return epoch;
     }
