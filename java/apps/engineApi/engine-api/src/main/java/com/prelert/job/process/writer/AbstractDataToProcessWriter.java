@@ -88,6 +88,7 @@ abstract class AbstractDataToProcessWriter implements DataToProcessWriter
         {
             // out of order
             m_StatusReporter.reportOutOfOrderRecord(inputFieldCount);
+            return null;
         }
         else
         {   // write record
