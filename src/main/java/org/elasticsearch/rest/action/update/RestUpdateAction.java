@@ -19,6 +19,7 @@
 
 package org.elasticsearch.rest.action.update;
 
+import org.elasticsearch.action.ActionWriteResponse;
 import org.elasticsearch.action.WriteConsistencyLevel;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.support.replication.ReplicationType;
@@ -41,7 +42,6 @@ import java.util.Map;
 
 import static org.elasticsearch.rest.RestRequest.Method.POST;
 import static org.elasticsearch.rest.RestStatus.CREATED;
-import static org.elasticsearch.rest.RestStatus.OK;
 
 /**
  */
@@ -128,7 +128,6 @@ public class RestUpdateAction extends BaseRestHandler {
             @Override
             public RestResponse buildResponse(UpdateResponse response, XContentBuilder builder) throws Exception {
                 builder.startObject();
-                response.getShardInfo().toXContent(builder, request);
                 builder.field(Fields._INDEX, response.getIndex())
                         .field(Fields._TYPE, response.getType())
                         .field(Fields._ID, response.getId())
@@ -141,10 +140,12 @@ public class RestUpdateAction extends BaseRestHandler {
                 }
 
                 builder.endObject();
-                RestStatus status = OK;
+                ActionWriteResponse.ShardInfo shardInfo = response.getShardInfo();
+                RestStatus status = shardInfo.status();
                 if (response.isCreated()) {
                     status = CREATED;
                 }
+                shardInfo.toXContent(builder, request);
                 return new BytesRestResponse(status, builder);
             }
         });

@@ -7,7 +7,7 @@
         body:
           settings:
             number_of_shards: "1"
-            number_of_replicas: "1"
+            number_of_replicas: "0"
 
  - do:
       cluster.health:
@@ -24,7 +24,7 @@
  - match:   { _type:    baz }
  - match:   { _id:      "1"}
  - match:   { _version: 1}
- - match:   { _shards.total: 2}
- - match:   { _shards.successful: 2}
+ - match:   { _shards.total: 1}
+ - match:   { _shards.successful: 1}
  - match:   { _shards.failed: 0}
  - is_false:   _shards.pending

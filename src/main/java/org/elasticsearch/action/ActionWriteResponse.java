@@ -19,6 +19,7 @@
 
 package org.elasticsearch.action;
 
+import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Streamable;
@@ -36,6 +37,8 @@ import java.util.List;
  * Base class for write action responses.
  */
 public abstract class ActionWriteResponse extends ActionResponse {
+
+    public final static ActionWriteResponse.ShardInfo.Failure[] EMPTY = new ActionWriteResponse.ShardInfo.Failure[0];
 
     private ShardInfo shardInfo;
 
@@ -64,7 +67,7 @@ public abstract class ActionWriteResponse extends ActionResponse {
         private int total;
         private int successful;
         private int pending;
-        private Failure[] failures = new Failure[0];
+        private Failure[] failures = EMPTY;
 
         private ShardInfo() {
         }
@@ -76,6 +79,11 @@ public abstract class ActionWriteResponse extends ActionResponse {
             this.failures = failures;
         }
 
+        /**
+         * This constructor is used for request that have touched multiple shard groups (e.g. delete_by_query) and the
+         * shard info headers for each shard group, the total, successful, pending and failures are rolled up
+         * into a single shard info header.
+         */
         public <T extends ActionWriteResponse> ShardInfo(List<T> responses, List<ShardOperationFailedException> primaryFailures) {
             List<Failure> failures = new ArrayList<>();
             for (ShardOperationFailedException failure : primaryFailures) {
@@ -145,10 +153,10 @@ public abstract class ActionWriteResponse extends ActionResponse {
 
         @Override
         public void readFrom(StreamInput in) throws IOException {
-            total = in.readInt();
-            successful = in.readInt();
-            pending = in.readInt();
-            int size = in.readInt();
+            total = in.readVInt();
+            successful = in.readVInt();
+            pending = in.readVInt();
+            int size = in.readVInt();
             failures = new Failure[size];
             for (int i = 0; i < size; i++) {
                 Failure failure = new Failure();
@@ -159,10 +167,10 @@ public abstract class ActionWriteResponse extends ActionResponse {
 
         @Override
         public void writeTo(StreamOutput out) throws IOException {
-            out.writeInt(total);
-            out.writeInt(successful);
-            out.writeInt(pending);
-            out.writeInt(failures.length);
+            out.writeVInt(total);
+            out.writeVInt(successful);
+            out.writeVInt(pending);
+            out.writeVInt(failures.length);
             for (Failure failure : failures) {
                 failure.writeTo(out);
             }
@@ -170,23 +178,21 @@ public abstract class ActionWriteResponse extends ActionResponse {
 
         @Override
         public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
-            if (total != -1 && successful != -1 && pending != -1) {
-                builder.startObject(Fields._SHARDS);
-                builder.field(Fields.TOTAL, total);
-                builder.field(Fields.SUCCESSFUL, successful);
-                if (pending > 0) {
-                    builder.field(Fields.PENDING, pending);
-                }
-                builder.field(Fields.FAILED, getFailed());
-                if (failures.length > 0) {
-                    builder.startArray(Fields.FAILURES);
-                    for (Failure failure : failures) {
-                        failure.toXContent(builder, params);
-                    }
-                    builder.endArray();
-                }
-                builder.endObject();
+            builder.startObject(Fields._SHARDS);
+            builder.field(Fields.TOTAL, total);
+            builder.field(Fields.SUCCESSFUL, successful);
+            if (pending > 0) {
+                builder.field(Fields.PENDING, pending);
             }
+            builder.field(Fields.FAILED, getFailed());
+            if (failures.length > 0) {
+                builder.startArray(Fields.FAILURES);
+                for (Failure failure : failures) {
+                    failure.toXContent(builder, params);
+                }
+                builder.endArray();
+            }
+            builder.endObject();
             return builder;
         }
 
@@ -205,7 +211,7 @@ public abstract class ActionWriteResponse extends ActionResponse {
             private RestStatus status;
             private boolean primary;
 
-            public Failure(String index, int shardId, String nodeId, String reason, RestStatus status, boolean primary) {
+            public Failure(String index, int shardId, @Nullable String nodeId, String reason, RestStatus status, boolean primary) {
                 this.index = index;
                 this.shardId = shardId;
                 this.nodeId = nodeId;
@@ -234,6 +240,7 @@ public abstract class ActionWriteResponse extends ActionResponse {
             /**
              * @return On what node the failure occurred.
              */
+            @Nullable
             public String nodeId() {
                 return nodeId;
             }
@@ -288,6 +295,7 @@ public abstract class ActionWriteResponse extends ActionResponse {
                 builder.field(Fields._NODE, nodeId);
                 builder.field(Fields.REASON, reason);
                 builder.field(Fields.STATUS, status);
+                builder.field(Fields.PRIMARY, primary);
                 builder.endObject();
                 return builder;
             }
@@ -299,6 +307,7 @@ public abstract class ActionWriteResponse extends ActionResponse {
                 private static final XContentBuilderString _NODE = new XContentBuilderString("_node");
                 private static final XContentBuilderString REASON = new XContentBuilderString("reason");
                 private static final XContentBuilderString STATUS = new XContentBuilderString("status");
+                private static final XContentBuilderString PRIMARY = new XContentBuilderString("primary");
 
             }
         }

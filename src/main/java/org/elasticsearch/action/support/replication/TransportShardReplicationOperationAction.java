@@ -113,6 +113,10 @@ public abstract class TransportShardReplicationOperationAction<Request extends S
 
     protected abstract String executor();
 
+    /**
+     * @return  A tuple containing not null values, as first value the result of the primary operation and as second value
+     *          the request to be executed on the replica shards.
+     */
     protected abstract Tuple<Response, ReplicaRequest> shardOperationOnPrimary(ClusterState clusterState, PrimaryOperationRequest shardRequest);
 
     protected abstract void shardOperationOnReplica(ReplicaOperationRequest shardRequest);
@@ -574,7 +578,7 @@ public abstract class TransportShardReplicationOperationAction<Request extends S
             if (newPrimaryShard != null) {
                 numberOfPendingShardInstances++;
             }
-            ReplicationState replicationState = new ReplicationState(por, shardIt, primaryResponse, listener, numberOfPendingShardInstances, numberOfUnassignedReplicas);
+            ReplicationState replicationState = new ReplicationState(por, shardIt, primaryResponse.v1(), primaryResponse.v2(), listener, numberOfPendingShardInstances, numberOfUnassignedReplicas);
             if (numberOfPendingShardInstances == 0) {
                 replicationState.forceFinish();
                 return;
@@ -759,8 +763,6 @@ public abstract class TransportShardReplicationOperationAction<Request extends S
         }
     }
 
-    private final static ActionWriteResponse.ShardInfo.Failure[] EMPTY = new ActionWriteResponse.ShardInfo.Failure[0];
-
     public final class ReplicationState {
 
         private final Request request;
@@ -775,10 +777,10 @@ public abstract class TransportShardReplicationOperationAction<Request extends S
         private final AtomicInteger pending;
         private final int numberOfShardInstances;
 
-        public ReplicationState(PrimaryOperationRequest por, ShardIterator shardsIter, Tuple<Response, ReplicaRequest> primaryResponse, ActionListener<Response> listener, int numberOfPendingShardInstances, int numberOfUnassignedReplicas) {
+        public ReplicationState(PrimaryOperationRequest por, ShardIterator shardsIter, Response finalResponse, ReplicaRequest replicaRequest, ActionListener<Response> listener, int numberOfPendingShardInstances, int numberOfUnassignedReplicas) {
             this.request = por.request;
-            this.finalResponse = primaryResponse.v1();
-            this.replicaRequest = primaryResponse.v2();
+            this.finalResponse = finalResponse;
+            this.replicaRequest = replicaRequest;
             this.shardId = shardsIter.shardId();
             this.listener = listener;
             this.numberOfShardInstances = 1 + numberOfPendingShardInstances + numberOfUnassignedReplicas;
@@ -830,7 +832,7 @@ public abstract class TransportShardReplicationOperationAction<Request extends S
                         );
                     }
                 } else {
-                    failuresArray = EMPTY;
+                    failuresArray = ActionWriteResponse.EMPTY;
                 }
                 finalResponse.setShardInfo(
                         new ActionWriteResponse.ShardInfo(

@@ -19,7 +19,6 @@
 
 package org.elasticsearch.action.deletebyquery;
 
-import org.elasticsearch.action.ActionResponse;
 import org.elasticsearch.action.ActionWriteResponse;
 import org.elasticsearch.action.ShardOperationFailedException;
 import org.elasticsearch.common.io.stream.StreamInput;
@@ -31,14 +30,13 @@ import java.util.List;
 /**
  * Delete by query response executed on a specific index.
  */
-public class IndexDeleteByQueryResponse extends ActionResponse {
+public class IndexDeleteByQueryResponse extends ActionWriteResponse {
 
     private String index;
-    private ActionWriteResponse.ShardInfo shardInfo;
 
     IndexDeleteByQueryResponse(String index, List<ShardDeleteByQueryResponse> shardResponses, List<ShardOperationFailedException> failures) {
         this.index = index;
-        this.shardInfo = new ActionWriteResponse.ShardInfo(shardResponses, failures);
+        setShardInfo(new ActionWriteResponse.ShardInfo(shardResponses, failures));
     }
 
     IndexDeleteByQueryResponse() {
@@ -51,21 +49,15 @@ public class IndexDeleteByQueryResponse extends ActionResponse {
         return this.index;
     }
 
-    public ActionWriteResponse.ShardInfo getShardInfo() {
-        return shardInfo;
-    }
-
     @Override
     public void readFrom(StreamInput in) throws IOException {
         super.readFrom(in);
         index = in.readString();
-        shardInfo = ActionWriteResponse.ShardInfo.readShardInfo(in);
     }
 
     @Override
     public void writeTo(StreamOutput out) throws IOException {
         super.writeTo(out);
         out.writeString(index);
-        shardInfo.writeTo(out);
     }
 }

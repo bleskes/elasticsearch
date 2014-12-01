@@ -65,7 +65,7 @@ public class DeleteByQueryTests extends ElasticsearchIntegrationTest {
 
         DeleteByQueryResponse response = deleteByQueryRequestBuilder.execute().actionGet();
         assertThat(response.status(), equalTo(RestStatus.OK));
-        assertSyncShardInfo(response.getIndex("twitter").getShardInfo());
+        assertSyncShardInfo(response.getIndex("twitter").getShardInfo(), getNumShards("twitter"));
 
         client().admin().indices().prepareRefresh().execute().actionGet();
         search = client().prepareSearch().setQuery(QueryBuilders.matchAllQuery()).execute().actionGet();
@@ -95,7 +95,7 @@ public class DeleteByQueryTests extends ElasticsearchIntegrationTest {
         deleteByQueryRequestBuilder.setIndicesOptions(IndicesOptions.lenientExpandOpen());
         DeleteByQueryResponse response = deleteByQueryRequestBuilder.execute().actionGet();
         assertThat(response.status(), equalTo(RestStatus.OK));
-        assertSyncShardInfo(response.getIndex("twitter").getShardInfo());
+        assertSyncShardInfo(response.getIndex("twitter").getShardInfo(), getNumShards("twitter"));
 
         client().admin().indices().prepareRefresh().execute().actionGet();
         search = client().prepareSearch().setQuery(QueryBuilders.matchAllQuery()).execute().actionGet();
@@ -118,7 +118,7 @@ public class DeleteByQueryTests extends ElasticsearchIntegrationTest {
         assertThat(response.getIndices().size(), equalTo(1));
         assertThat(response.getIndices().get("test").getShardInfo().getFailures().length, equalTo(twitter.numPrimaries));
         for (ActionWriteResponse.ShardInfo.Failure failure : response.getIndices().get("test").getShardInfo().getFailures()) {
-            assertThat(failure.reason(), containsString("[test] [has_child] unsupported in delete_by_query api"));
+            assertThat(failure.reason(), containsString("[test] [has_child] query and filter unsupported in delete_by_query api"));
             assertThat(failure.status(), equalTo(RestStatus.BAD_REQUEST));
             assertThat(failure.shardId(), greaterThan(-1));
         }
@@ -190,11 +190,11 @@ public class DeleteByQueryTests extends ElasticsearchIntegrationTest {
         return randomBoolean() ? "test" : "alias";
     }
 
-    // Sometimes if we don't wait for green not all shard copies are fully started and then a replica failure occurs and this is ok.
-    private void assertSyncShardInfo(ActionWriteResponse.ShardInfo shardInfo) {
+    private void assertSyncShardInfo(ActionWriteResponse.ShardInfo shardInfo, NumShards numShards) {
+        assertThat(shardInfo.getTotal(), equalTo(numShards.totalNumShards));
         assertThat(shardInfo.getSuccessful(), greaterThanOrEqualTo(1));
         assertThat(shardInfo.getPending(), equalTo(0));
-        assertThat(shardInfo.getFailures().length, equalTo(shardInfo.getTotal() - shardInfo.getSuccessful()));
+        assertThat(shardInfo.getFailed(), equalTo(0));
         for (ActionWriteResponse.ShardInfo.Failure failure : shardInfo.getFailures()) {
             assertThat(failure.status(), equalTo(RestStatus.OK));
         }

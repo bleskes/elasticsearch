@@ -150,7 +150,7 @@ public class TransportDeleteMappingAction extends TransportMasterNodeOperationAc
                             for (IndexDeleteByQueryResponse indexResponse : deleteByQueryResponse) {
                                 logger.trace("Delete by query for index [{}] completed with total[{}], successful[{}] and failed[{}]", indexResponse.getIndex(), indexResponse.getShardInfo().getTotal(), indexResponse.getShardInfo().getSuccessful(), indexResponse.getShardInfo().getFailed());
                                 for (ActionWriteResponse.ShardInfo.Failure failure : indexResponse.getShardInfo().getFailures()) {
-                                    logger.trace("[{}/{}/{}] Delete by query shard failure reason: {}", failure.index(), failure.shardId(), failure.nodeId(), failure.reason());
+                                    logger.trace("[{}/{}/{}/{}] Delete by query shard failure reason: {}", failure.index(), failure.shardId(), failure.primary(), failure.nodeId(), failure.reason());
                                 }
                             }
                         }

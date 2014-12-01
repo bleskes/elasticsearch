@@ -19,7 +19,6 @@
 
 package org.elasticsearch.action.deletebyquery;
 
-import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionWriteResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
@@ -48,16 +47,12 @@ public class ShardDeleteByQueryResponse extends ActionWriteResponse {
     @Override
     public void readFrom(StreamInput in) throws IOException {
         super.readFrom(in);
-        if (in.getVersion().onOrAfter(Version.V_1_5_0)) {
-            shardId = ShardId.readShardId(in);
-        }
+        shardId = ShardId.readShardId(in);
     }
 
     @Override
     public void writeTo(StreamOutput out) throws IOException {
         super.writeTo(out);
-        if (out.getVersion().onOrAfter(Version.V_1_5_0)) {
-            shardId.writeTo(out);
-        }
+        shardId.writeTo(out);
     }
 }

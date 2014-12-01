@@ -20,6 +20,7 @@
 package org.elasticsearch.rest.action.index;
 
 import org.elasticsearch.ElasticsearchIllegalArgumentException;
+import org.elasticsearch.action.ActionWriteResponse;
 import org.elasticsearch.action.WriteConsistencyLevel;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
@@ -110,17 +111,18 @@ public class RestIndexAction extends BaseRestHandler {
             @Override
             public RestResponse buildResponse(IndexResponse response, XContentBuilder builder) throws Exception {
                 builder.startObject();
-                response.getShardInfo().toXContent(builder, request);
                 builder.field(Fields._INDEX, response.getIndex())
                         .field(Fields._TYPE, response.getType())
                         .field(Fields._ID, response.getId())
                         .field(Fields._VERSION, response.getVersion())
                         .field(Fields.CREATED, response.isCreated());
                 builder.endObject();
-                RestStatus status = OK;
+                ActionWriteResponse.ShardInfo shardInfo = response.getShardInfo();
+                RestStatus status = shardInfo.status();
                 if (response.isCreated()) {
                     status = CREATED;
                 }
+                shardInfo.toXContent(builder, request);
                 return new BytesRestResponse(status, builder);
             }
         });
