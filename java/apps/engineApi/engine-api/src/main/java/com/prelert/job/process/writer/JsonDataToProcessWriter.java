@@ -47,7 +47,6 @@ import com.prelert.job.DataDescription;
 import com.prelert.job.input.CountingInputStream;
 import com.prelert.job.input.LengthEncodedWriter;
 import com.prelert.job.persistence.JobDataPersister;
-import com.prelert.job.process.dateparsing.CannotParseTimestampException;
 import com.prelert.job.process.dateparsing.DateTransformer;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
@@ -144,50 +143,14 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter
                 m_AnalysisConfig.partitionFields(), allFields);
 
 
-        // write header and first record
+        // write header
         m_LengthEncodedWriter.writeRecord(allFields);
 
         int recordsWritten = 0;
-        long inputFieldCount = readJsonRecord(parser, record, fieldMap, gotFields);
-        int recordCount = (inputFieldCount > 0) ? 1 : 0; // if at least one field consider it a record
-
-        inputFieldCount = Math.max(inputFieldCount - 1, 0); // time fields doesn't count
-
-        if (gotFields[timeFieldIndex])
-        {
-            long missing = missingFieldCount(gotFields);
-            if (missing > 0)
-            {
-                m_StatusReporter.reportMissingFields(missing);
-            }
-
-            try
-            {
-                // parse as a double and throw away the fractional
-                // component
-                long epoch = m_DateTransformer.transform((record[timeFieldIndex]));
-                record[timeFieldIndex] = new Long(epoch).toString();
-
-                m_LengthEncodedWriter.writeRecord(record);
-                m_JobDataPersister.persistRecord(epoch, record);
-                recordsWritten++;
-                m_StatusReporter.reportRecordWritten(inputFieldCount);
-            }
-            catch (CannotParseTimestampException e)
-            {
-                m_StatusReporter.reportDateParseError(inputFieldCount);
-                m_Logger.error(e.getMessage());
-            }
-
-        }
-        else
-        {
-            m_Logger.warn("Missing time field from JSON document");
-            m_StatusReporter.reportMissingField();
-        }
-
+        int recordCount = 0;
         long lastEpoch = 0;
-        inputFieldCount = readJsonRecord(parser, record, fieldMap, gotFields);
+
+        long inputFieldCount = readJsonRecord(parser, record, fieldMap, gotFields);
         while (inputFieldCount > 0)
         {
             inputFieldCount = Math.max(inputFieldCount - 1, 0); // time field doesn't count
