@@ -19,7 +19,7 @@
  * may be reproduced, adapted or transmitted in any form or *
  * by any means, electronic, mechanical, photocopying,      *
  * recording or otherwise.                                  *
- *                                                  
+ *
  *                                                          *
  *----------------------------------------------------------*
  *                                                          *
@@ -31,12 +31,13 @@ import com.prelert.job.status.StatusReporter;
 import com.prelert.job.usage.UsageReporter;
 
 /**
- * Dummy StatusReporter with an 
+ * Dummy StatusReporter with an
  *
  */
-public class DummyStatusReporter extends StatusReporter 
+public class DummyStatusReporter extends StatusReporter
 {
-	public DummyStatusReporter(UsageReporter usageReporter) 
+	boolean m_StatusReported = false;
+	public DummyStatusReporter(UsageReporter usageReporter)
 	{
 		super("DummyJobId", usageReporter, null);
 	}
@@ -44,7 +45,11 @@ public class DummyStatusReporter extends StatusReporter
 	@Override
 	protected void reportStatus(long totalRecords)
 	{
-		// do nothing
+		m_StatusReported = true;
 	}
 
+	public boolean isStatusReported()
+	{
+		return m_StatusReported;
+	}
 }
