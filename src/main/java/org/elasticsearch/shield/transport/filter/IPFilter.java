@@ -15,10 +15,9 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.shield.transport.n2n;
+package org.elasticsearch.shield.transport.filter;
 
 import org.elasticsearch.ElasticsearchParseException;
-import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.component.AbstractComponent;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.jackson.dataformat.yaml.snakeyaml.error.YAMLException;
@@ -33,10 +32,12 @@ import org.elasticsearch.shield.audit.AuditTrail;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.security.Principal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
-public class IPFilteringN2NAuthenticator extends AbstractComponent implements N2NAuthenticator {
+public class IPFilter extends AbstractComponent {
 
     private static final ProfileIpFilterRule[] NO_RULES = new ProfileIpFilterRule[0];
     private static final ProfileIpFilterRule ACCEPT_ALL_RULE = new ProfileIpFilterRule("default",
@@ -47,14 +48,13 @@ public class IPFilteringN2NAuthenticator extends AbstractComponent implements N2
     private volatile ProfileIpFilterRule[] rules = NO_RULES;
 
     @Inject
-    public IPFilteringN2NAuthenticator(Settings settings, AuditTrail auditTrail) {
+    public IPFilter(Settings settings, AuditTrail auditTrail) {
         super(settings);
         this.auditTrail = auditTrail;
         rules = parseSettings(settings, logger);
     }
 
-    @Override
-    public boolean authenticate(@Nullable Principal peerPrincipal, String profile, InetAddress peerAddress, int peerPort) {
+    public boolean accept(String profile, InetAddress peerAddress) {
         if (rules == NO_RULES) {
             return true;
         }

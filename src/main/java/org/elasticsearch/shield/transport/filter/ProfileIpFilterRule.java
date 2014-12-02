@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.shield.transport.n2n;
+package org.elasticsearch.shield.transport.filter;
 
 import org.elasticsearch.common.netty.handler.ipfilter.IpFilterRule;
 
