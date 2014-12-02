@@ -51,7 +51,7 @@ import com.prelert.rs.data.Pagination;
  * Abstract resource class that knows how to access a
  * {@linkplain com.prelert.job.manager.JobManager}
  */
-abstract public class ResourceWithJobManager
+public abstract class ResourceWithJobManager
 {
 	// TODO This field is hidden in subclasses
 	private static final Logger LOGGER = Logger.getLogger(ResourceWithJobManager.class);

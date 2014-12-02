@@ -24,30 +24,29 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-
-package com.prelert.job.process;
+package com.prelert.job.process.exceptions;
 
 import com.prelert.job.JobException;
 import com.prelert.rs.data.ErrorCode;
 
 /**
- * Exception thrown when a job is expected to be running
- * but is closed
+ * Represents the case where a job has been configured to use
+ * a specific field but that field is missing from the data.
  */
-public class ClosedJobException extends JobException
+public class MissingFieldException extends JobException
 {
-	private static final long serialVersionUID = 5491387807381215423L;
+	private static final long serialVersionUID = -5303432170987377451L;
 
-	private final String m_JobId;
+	private final String m_MissingFieldName;
 
-	public ClosedJobException(String message, String jobId)
+	public MissingFieldException(String fieldName, String message)
 	{
-		super(message, ErrorCode.JOB_NOT_RUNNING);
-		m_JobId = jobId;
+		super(message, ErrorCode.MISSING_FIELD);
+		m_MissingFieldName = fieldName;
 	}
 
-	public String getJobId()
+	public String getMissingFieldName()
 	{
-		return m_JobId;
+		return m_MissingFieldName;
 	}
 }

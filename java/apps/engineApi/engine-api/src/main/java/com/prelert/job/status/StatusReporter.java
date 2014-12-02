@@ -40,7 +40,7 @@ import com.prelert.job.usage.UsageReporter;
  * of errors the {@linkplain StatusReporter#checkStatus(int)} method
  * throws an error.
  */
-abstract public class StatusReporter
+public abstract class StatusReporter
 {
 	/**
 	 * The max percentage of date parse errors allowed before
@@ -384,5 +384,5 @@ abstract public class StatusReporter
 	 *
 	 * @param totalRecords
 	 */
-	abstract protected void reportStatus(long totalRecords);
+	protected abstract void reportStatus(long totalRecords);
 }

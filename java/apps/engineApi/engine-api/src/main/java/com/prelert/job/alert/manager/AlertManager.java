@@ -46,7 +46,7 @@ import com.prelert.job.alert.Alert;
 import com.prelert.job.alert.persistence.AlertPersister;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.persistence.JobProvider;
-import com.prelert.job.process.ClosedJobException;
+import com.prelert.job.process.exceptions.ClosedJobException;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.Detector;

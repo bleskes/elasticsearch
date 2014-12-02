@@ -24,29 +24,36 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.process;
+
+package com.prelert.job.process.exceptions;
 
 import com.prelert.job.JobException;
 import com.prelert.rs.data.ErrorCode;
 
 /**
- * Represents the case where a job has been configured to use
- * a specific field but that field is missing from the data.
+ * Exception thrown when there is an error running
+ * a native process (autodetect).
  */
-public class MissingFieldException extends JobException
+public class NativeProcessRunException extends JobException
 {
-	private static final long serialVersionUID = -5303432170987377451L;
+	private static final long serialVersionUID = 5722287151589093943L;
 
-	private final String m_MissingFieldName;
-
-	public MissingFieldException(String fieldName, String message)
+	/**
+	 * Create exception with error code ErrorCode.NATIVE_PROCESS_ERROR
+	 * @param message
+	 */
+	public NativeProcessRunException(String message)
 	{
-		super(message, ErrorCode.MISSING_FIELD);
-		m_MissingFieldName = fieldName;
+		super(message, ErrorCode.NATIVE_PROCESS_ERROR);
 	}
 
-	public String getMissingFieldName()
+	public NativeProcessRunException(String message, ErrorCode errorCode)
 	{
-		return m_MissingFieldName;
+		super(message, errorCode);
+	}
+
+	public NativeProcessRunException(String message, ErrorCode errorCode, Throwable cause)
+	{
+		super(message, errorCode, cause);
 	}
 }

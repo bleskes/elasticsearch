@@ -30,7 +30,7 @@ package com.prelert.job.process.writer;
 import java.io.IOException;
 import java.io.InputStream;
 
-import com.prelert.job.process.MissingFieldException;
+import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 
