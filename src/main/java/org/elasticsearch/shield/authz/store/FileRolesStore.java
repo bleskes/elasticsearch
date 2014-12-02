@@ -32,7 +32,6 @@ import org.elasticsearch.common.xcontent.yaml.YamlXContent;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.shield.ShieldException;
 import org.elasticsearch.shield.ShieldPlugin;
-import org.elasticsearch.shield.authz.AuthorizationService;
 import org.elasticsearch.shield.authz.Permission;
 import org.elasticsearch.shield.authz.Privilege;
 import org.elasticsearch.shield.support.Validation;
@@ -66,16 +65,16 @@ public class FileRolesStore extends AbstractComponent implements RolesStore {
     private volatile ImmutableMap<String, Permission.Global.Role> permissions;
 
     @Inject
-    public FileRolesStore(Settings settings, Environment env, ResourceWatcherService watcherService, AuthorizationService authzService) {
-        this(settings, env, watcherService, authzService, Listener.NOOP);
+    public FileRolesStore(Settings settings, Environment env, ResourceWatcherService watcherService) {
+        this(settings, env, watcherService, Listener.NOOP);
     }
 
-    public FileRolesStore(Settings settings, Environment env, ResourceWatcherService watcherService, AuthorizationService authzService, Listener listener) {
+    public FileRolesStore(Settings settings, Environment env, ResourceWatcherService watcherService, Listener listener) {
         super(settings);
         file = resolveFile(settings, env);
-        permissions = parseFile(file, logger, authzService);
+        permissions = parseFile(file, logger);
         FileWatcher watcher = new FileWatcher(file.getParent().toFile());
-        watcher.addListener(new FileListener(authzService));
+        watcher.addListener(new FileListener());
         watcherService.add(watcher, ResourceWatcherService.Frequency.HIGH);
         this.listener = listener;
     }
@@ -94,7 +93,7 @@ public class FileRolesStore extends AbstractComponent implements RolesStore {
         return Paths.get(location);
     }
 
-    public static ImmutableMap<String, Permission.Global.Role> parseFile(Path path, ESLogger logger, AuthorizationService authzService) {
+    public static ImmutableMap<String, Permission.Global.Role> parseFile(Path path, ESLogger logger) {
         if (logger != null) {
             logger.trace("Reading roles file located at [{}]", path);
         }
@@ -245,12 +244,6 @@ public class FileRolesStore extends AbstractComponent implements RolesStore {
 
     private class FileListener extends FileChangesListener {
 
-        private final AuthorizationService authzService;
-
-        private FileListener(AuthorizationService authzService) {
-            this.authzService = authzService;
-        }
-
         @Override
         public void onFileCreated(File file) {
             onFileChanged(file);
@@ -264,7 +257,7 @@ public class FileRolesStore extends AbstractComponent implements RolesStore {
         @Override
         public void onFileChanged(File file) {
             if (file.equals(FileRolesStore.this.file.toFile())) {
-                permissions = parseFile(file.toPath(), logger, authzService);
+                permissions = parseFile(file.toPath(), logger);
                 listener.onRefresh();
             }
         }
