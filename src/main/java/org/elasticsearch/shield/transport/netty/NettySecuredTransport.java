@@ -85,8 +85,8 @@ public class NettySecuredTransport extends NettyTransport {
                 serverEngine.setNeedClientAuth(profileSettings.getAsBoolean("shield.ssl.client.auth", settings.getAsBoolean("shield.transport.ssl.client.auth", true)));
 
                 pipeline.addFirst("ssl", new SslHandler(serverEngine));
-                pipeline.replace("dispatcher", "dispatcher", new SecuredMessageChannelHandler(nettyTransport, logger));
             }
+            pipeline.replace("dispatcher", "dispatcher", new SecuredMessageChannelHandler(nettyTransport, name, logger));
             if (authenticator != null) {
                 pipeline.addFirst("ipfilter", new NettyIPFilterUpstreamHandler(authenticator, name));
             }
@@ -108,8 +108,8 @@ public class NettySecuredTransport extends NettyTransport {
                 clientEngine.setUseClientMode(true);
 
                 pipeline.addFirst("ssl", new SslHandler(clientEngine));
-                pipeline.replace("dispatcher", "dispatcher", new SecuredMessageChannelHandler(nettyTransport, logger));
             }
+            pipeline.replace("dispatcher", "dispatcher", new SecuredMessageChannelHandler(nettyTransport, "default", logger));
             return pipeline;
         }
     }
