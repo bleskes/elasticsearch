@@ -59,7 +59,11 @@ public class Detector
 	public static final String HIGH_COUNT = "high_count";
 	public static final String LOW_COUNT = "low_count";
 	public static final String NON_ZERO_COUNT = "non_zero_count";
+	public static final String LOW_NON_ZERO_COUNT = "low_non_zero_count";
+	public static final String HIGH_NON_ZERO_COUNT = "high_non_zero_count";
 	public static final String NZC = "nzc";
+	public static final String LOW_NZC = "low_nzc";
+	public static final String HIGH_NZC = "high_nzc";
 	public static final String DISTINCT_COUNT = "distinct_count";
 	public static final String DC = "dc";
 	public static final String RARE = "rare";
@@ -84,6 +88,8 @@ public class Detector
 				HIGH_COUNT,
 				LOW_COUNT,
 				NON_ZERO_COUNT, NZC,
+				LOW_NON_ZERO_COUNT, LOW_NZC,
+				HIGH_NON_ZERO_COUNT, HIGH_NZC,
 				DISTINCT_COUNT, DC,
 				RARE,
 				FREQ_RARE,
@@ -104,7 +110,9 @@ public class Detector
 				COUNT,
 				HIGH_COUNT,
 				LOW_COUNT,
-				NON_ZERO_COUNT, NZC
+				NON_ZERO_COUNT, NZC,
+				LOW_NON_ZERO_COUNT, LOW_NZC,
+                HIGH_NON_ZERO_COUNT, HIGH_NZC
 			}));
 
 	/**
@@ -140,6 +148,16 @@ public class Detector
 				FREQ_RARE
 			}));
 
+	/**
+     * The set of functions that cannot have an over fieldname
+     */
+	private static final Set<String> NO_OVER_FIELD_NAME_FUNCTIONS =
+	        new HashSet<String>(Arrays.<String>asList(new String [] {
+                NON_ZERO_COUNT, NZC,
+                LOW_NON_ZERO_COUNT, LOW_NZC,
+                HIGH_NON_ZERO_COUNT, HIGH_NZC
+            }));
+
 
 	/**
 	 * field names cannot contain any of these characters
@@ -157,7 +175,7 @@ public class Detector
 	private String m_PartitionFieldName;
 	private Boolean m_UseNull;
     private String m_ExcludeFrequent;
-		
+
 	public Detector()
 	{
 
@@ -324,7 +342,7 @@ public class Detector
      * can apply to 'by' field, 'over' field, or both
      * It will be validated by the C++ process
      *
-     * @return the value that the user set 
+     * @return the value that the user set
      */
     public String getExcludeFrequent()
     {
@@ -337,7 +355,7 @@ public class Detector
     }
 
 
-	@Override 
+	@Override
 	public boolean equals(Object other)
 	{
 		if (this == other)
@@ -510,7 +528,7 @@ public class Detector
 								ErrorCode.INVALID_FIELD_SELECTION);
 			}
 
-			if (!emptyOverField && (NON_ZERO_COUNT.equals(m_Function) || NZC.equals(m_Function)))
+			if (!emptyOverField && NO_OVER_FIELD_NAME_FUNCTIONS.contains(m_Function))
 			{
 				throw new JobConfigurationException(
 						String.format("overFieldName cannot be used with function '%s'",
