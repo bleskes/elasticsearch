@@ -229,9 +229,10 @@ public class DetectorTest
 
         // some functions require a fieldname
         d.setFieldName("f");
-        for (String f : new String [] {Detector.DISTINCT_COUNT, Detector.DC,
-                Detector.METRIC, Detector.MEAN, Detector.HIGH_MEAN, Detector.LOW_MEAN, Detector.AVG,
-                Detector.HIGH_AVG, Detector.LOW_AVG, Detector.MAX, Detector.MIN, Detector.SUM})
+        for (String f : new String[] { Detector.DISTINCT_COUNT, Detector.DC, Detector.METRIC,
+                Detector.MEAN, Detector.HIGH_MEAN, Detector.LOW_MEAN, Detector.AVG,
+                Detector.HIGH_AVG, Detector.LOW_AVG, Detector.MAX, Detector.MIN, Detector.SUM,
+                Detector.LOW_SUM, Detector.HIGH_SUM })
         {
             d.setFunction(f);
             d.verify(false);
@@ -261,6 +262,8 @@ public class DetectorTest
         difference.remove(Detector.MIN);
         difference.remove(Detector.MAX);
         difference.remove(Detector.SUM);
+        difference.remove(Detector.LOW_SUM);
+        difference.remove(Detector.HIGH_SUM);
         for (String f : difference)
         {
             d.setFunction(f);

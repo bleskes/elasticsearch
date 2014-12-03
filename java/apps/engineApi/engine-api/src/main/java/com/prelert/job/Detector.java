@@ -78,6 +78,8 @@ public class Detector
 	public static final String MIN = "min";
 	public static final String MAX = "max";
 	public static final String SUM = "sum";
+	public static final String LOW_SUM = "low_sum";
+	public static final String HIGH_SUM = "high_sum";
 
 	/**
 	 * The set of valid function names.
@@ -99,7 +101,9 @@ public class Detector
 				LOW_MEAN, LOW_AVG,
 				MIN,
 				MAX,
-				SUM
+				SUM,
+				LOW_SUM,
+				HIGH_SUM
 			}));
 
 	/**
@@ -127,7 +131,9 @@ public class Detector
 				LOW_MEAN, LOW_AVG,
 				MIN,
 				MAX,
-				SUM
+				SUM,
+				LOW_SUM,
+				HIGH_SUM
 			}));
 
 	/**
