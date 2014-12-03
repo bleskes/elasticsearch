@@ -20,7 +20,7 @@ package org.elasticsearch.shield.audit;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.shield.User;
 import org.elasticsearch.shield.authc.AuthenticationToken;
-import org.elasticsearch.shield.transport.filter.ProfileIpFilterRule;
+import org.elasticsearch.shield.transport.filter.ShieldIpFilterRule;
 import org.elasticsearch.transport.TransportMessage;
 import org.elasticsearch.transport.TransportRequest;
 
@@ -77,11 +77,11 @@ public interface AuditTrail {
         }
 
         @Override
-        public void connectionGranted(InetAddress inetAddress, ProfileIpFilterRule rule) {
+        public void connectionGranted(InetAddress inetAddress, String profile, ShieldIpFilterRule rule) {
         }
 
         @Override
-        public void connectionDenied(InetAddress inetAddress, ProfileIpFilterRule rule) {
+        public void connectionDenied(InetAddress inetAddress, String profile, ShieldIpFilterRule rule) {
         }
     };
 
@@ -105,7 +105,7 @@ public interface AuditTrail {
 
     void tamperedRequest(User user, String action, TransportRequest request);
 
-    void connectionGranted(InetAddress inetAddress, ProfileIpFilterRule rule);
+    void connectionGranted(InetAddress inetAddress, String profile, ShieldIpFilterRule rule);
 
-    void connectionDenied(InetAddress inetAddress, ProfileIpFilterRule rule);
+    void connectionDenied(InetAddress inetAddress, String profile, ShieldIpFilterRule rule);
 }
