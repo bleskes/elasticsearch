@@ -25,6 +25,7 @@ import org.elasticsearch.alerts.client.AlertsClient;
 import org.elasticsearch.alerts.rest.*;
 import org.elasticsearch.alerts.scheduler.AlertScheduler;
 import org.elasticsearch.alerts.transport.actions.ack.TransportAckAlertAction;
+import org.elasticsearch.alerts.transport.actions.config.TransportConfigAlertAction;
 import org.elasticsearch.alerts.transport.actions.delete.TransportDeleteAlertAction;
 import org.elasticsearch.alerts.transport.actions.get.TransportGetAlertAction;
 import org.elasticsearch.alerts.transport.actions.put.TransportPutAlertAction;
@@ -55,6 +56,7 @@ public class AlertingModule extends AbstractModule {
         bind(TransportAlertStatsAction.class).asEagerSingleton();
         bind(TransportAckAlertAction.class).asEagerSingleton();
         bind(TransportAlertsServiceAction.class).asEagerSingleton();
+        bind(TransportConfigAlertAction.class).asEagerSingleton();
         bind(AlertsClient.class).to(NodeAlertsClient.class).asEagerSingleton();
 
         // Rest layer

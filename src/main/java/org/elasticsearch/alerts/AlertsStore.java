@@ -79,8 +79,8 @@ public class AlertsStore extends AbstractComponent {
     private final ConfigurationManager configurationManager;
     private final AtomicBoolean started = new AtomicBoolean(false);
 
-    private int scrollSize;
-    private TimeValue scrollTimeout;
+    private final int scrollSize;
+    private final TimeValue scrollTimeout;
 
     @Inject
     public AlertsStore(Settings settings, Client client, AlertActionRegistry alertActionRegistry,
@@ -92,6 +92,10 @@ public class AlertsStore extends AbstractComponent {
         this.alertMap = ConcurrentCollections.newConcurrentMap();
         this.triggerManager = triggerManager;
         this.configurationManager = configurationManager;
+        // Not using component settings, to let AlertsStore and AlertActionManager share the same settings
+        this.scrollTimeout = settings.getAsTime("alerts.scroll.timeout", TimeValue.timeValueSeconds(30));
+        this.scrollSize = settings.getAsInt("alerts.scroll.size", 100);
+
     }
 
     /**
@@ -134,13 +138,6 @@ public class AlertsStore extends AbstractComponent {
         return true;
     }
 
-    private void loadSettings() {
-        // Not using component settings, to let AlertsStore and AlertActionManager share the same settings
-        Settings indexedSettings = configurationManager.getGlobalConfig();
-        this.scrollTimeout = configurationManager.getOverriddenTimeValue("alerts.scroll.timeout", indexedSettings, TimeValue.timeValueSeconds(30));
-        this.scrollSize = configurationManager.getOverriddenIntValue("alerts.scroll.size", indexedSettings, 100);
-    }
-
     /**
      * Deletes the alert with the specified name if exists
      */
@@ -167,9 +164,7 @@ public class AlertsStore extends AbstractComponent {
             return true;
         }
 
-        if (configurationManager.isReady(state)) {
-            loadSettings();
-        } else {
+        if (!configurationManager.isReady(state)) {
             return false;
         }
 

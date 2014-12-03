@@ -161,8 +161,7 @@ public class AlertManager extends AbstractComponent {
     }
 
     private void loadSettings() {
-        Settings indexedSettings = configurationManager.getGlobalConfig();
-        manuallyStopped = !configurationManager.getOverriddenBooleanValue("alerts.start_immediately", indexedSettings, true);
+        manuallyStopped = !settings.getAsBoolean("alerts.start_immediately",  true);
     }
 
     public TriggerResult executeAlert(AlertActionEntry entry) throws IOException {
@@ -279,7 +278,6 @@ public class AlertManager extends AbstractComponent {
 
             while(true) {
                 if (configurationManager.isReady(initialState)) {
-                    loadSettings();
                     break;
                 }
                 clusterState = newClusterState(clusterState);
