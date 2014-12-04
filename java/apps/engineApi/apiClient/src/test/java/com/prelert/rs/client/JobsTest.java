@@ -223,7 +223,7 @@ public class JobsTest implements Closeable
 				+ "\"detectors\":[{\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}] "
 				+ "},"
 				+ "\"dataDescription\":{\"fieldDelimiter\":\",\", \"timeField\":\"_time\", \"timeFormat\" : \"epoch\"},"
-				+ "\"analysisLimits\": {\"maxFieldValues\":2000, \"maxTimeBuckets\":5000}"
+				+ "\"analysisLimits\": {\"modelMemoryLimit\":2000}"
 				+ "}";		
 		
 		
@@ -259,7 +259,7 @@ public class JobsTest implements Closeable
 		test(ac.equals(job.getAnalysisConfig()));
 		test(dd.equals(job.getDataDescription()));
 		
-		AnalysisLimits al = new AnalysisLimits(2000, 5000);
+		AnalysisLimits al = new AnalysisLimits(2000);
 		test(job.getAnalysisLimits().equals(al));
 		
 		test(job.getDescription().equals("Flight Centre Job"));

@@ -37,8 +37,8 @@ public class AnalysisLimitsTest
     @Test
     public void testEquals_GivenEqual()
     {
-        AnalysisLimits analysisLimits1 = new AnalysisLimits(10, 100);
-        AnalysisLimits analysisLimits2 = new AnalysisLimits(10, 100);
+        AnalysisLimits analysisLimits1 = new AnalysisLimits(10);
+        AnalysisLimits analysisLimits2 = new AnalysisLimits(10);
 
         assertTrue(analysisLimits1.equals(analysisLimits2));
         assertTrue(analysisLimits2.equals(analysisLimits1));
@@ -47,8 +47,8 @@ public class AnalysisLimitsTest
     @Test
     public void testHashCode_GivenEqual()
     {
-        AnalysisLimits analysisLimits1 = new AnalysisLimits(10, 100);
-        AnalysisLimits analysisLimits2 = new AnalysisLimits(10, 100);
+        AnalysisLimits analysisLimits1 = new AnalysisLimits(5555);
+        AnalysisLimits analysisLimits2 = new AnalysisLimits(5555);
 
         assertEquals(analysisLimits1.hashCode(), analysisLimits2.hashCode());
     }
