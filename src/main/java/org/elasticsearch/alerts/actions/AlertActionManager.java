@@ -235,10 +235,10 @@ public class AlertActionManager extends AbstractComponent {
                             entry.setTrigger(triggerManager.instantiateAlertTrigger(parser));
                             break;
                         case REQUEST:
-                            entry.setSearchRequest(AlertUtils.readSearchRequest(parser));
+                            entry.setTriggerRequest(AlertUtils.readSearchRequest(parser));
                             break;
                         case RESPONSE:
-                            entry.setSearchResponse(parser.map());
+                            entry.setTriggerResponse(parser.map());
                             break;
                         case METADATA:
                             entry.setMetadata(parser.map());
@@ -367,7 +367,7 @@ public class AlertActionManager extends AbstractComponent {
                 updateHistoryEntry(entry, AlertActionState.SEARCH_UNDERWAY);
                 logger.debug("Running an alert action entry for [{}]", entry.getAlertName());
                 TriggerResult result = alertManager.executeAlert(entry);
-                entry.setSearchResponse(result.getResponse());
+                entry.setTriggerResponse(result.getTriggerResponse());
                 if (result.isTriggered()) {
                     entry.setTriggered(true);
                     if (result.isThrottled()) {
