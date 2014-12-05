@@ -22,6 +22,7 @@ import org.elasticsearch.common.inject.AbstractModule;
 import org.elasticsearch.common.inject.Module;
 import org.elasticsearch.common.inject.SpawnModules;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.shield.ShieldPlugin;
 
 /**
  *
@@ -35,7 +36,7 @@ public abstract class AbstractShieldModule extends AbstractModule {
     public AbstractShieldModule(Settings settings) {
         this.settings = settings;
         this.clientMode = !"node".equals(settings.get(Client.CLIENT_TYPE_SETTING));
-        this.shieldEnabled = settings.getAsBoolean("shield.enabled", true);
+        this.shieldEnabled = ShieldPlugin.shieldEnabled(settings);
     }
 
     @Override
@@ -72,15 +73,5 @@ public abstract class AbstractShieldModule extends AbstractModule {
         }
 
         protected abstract void configureNode();
-
-        public static abstract class Spawn extends Node implements SpawnModules {
-
-            protected Spawn(Settings settings) {
-                super(settings);
-            }
-
-            public abstract Iterable<? extends AbstractShieldModule.Node> spawnModules();
-        }
-
     }
 }
