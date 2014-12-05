@@ -277,7 +277,6 @@ public class AlertManager extends AbstractComponent {
                 if (configurationManager.start(initialState)) {
                     break;
                 }
-                logger.error("CONFIG NOT STARTED");
                 clusterState = newClusterState(clusterState);
             }
             // Try to load alert store before the action manager, b/c action depends on alert store
@@ -285,14 +284,12 @@ public class AlertManager extends AbstractComponent {
                 if (alertsStore.start(clusterState)) {
                     break;
                 }
-                logger.error("STORE NOT STARTED");
                 clusterState = newClusterState(clusterState);
             }
             while (true) {
                 if (actionManager.start(clusterState)) {
                     break;
                 }
-                logger.error("ACTION NOT STARTED");
                 clusterState = newClusterState(clusterState);
             }
 
