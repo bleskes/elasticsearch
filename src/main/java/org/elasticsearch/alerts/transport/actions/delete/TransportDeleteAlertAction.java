@@ -73,7 +73,7 @@ public class TransportDeleteAlertAction extends TransportMasterNodeOperationActi
 
     @Override
     protected ClusterBlockException checkBlock(DeleteAlertRequest request, ClusterState state) {
-        return state.blocks().indicesBlockedException(ClusterBlockLevel.WRITE, new String[]{AlertsStore.ALERT_INDEX});
+        return state.blocks().indexBlockedException(ClusterBlockLevel.WRITE, AlertsStore.ALERT_INDEX);
     }
 
 
