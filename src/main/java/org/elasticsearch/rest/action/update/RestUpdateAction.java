@@ -139,13 +139,13 @@ public class RestUpdateAction extends BaseRestHandler {
                     builder.endObject();
                 }
 
-                builder.endObject();
                 ActionWriteResponse.ShardInfo shardInfo = response.getShardInfo();
+                shardInfo.toXContent(builder, request);
+                builder.endObject();
                 RestStatus status = shardInfo.status();
                 if (response.isCreated()) {
                     status = CREATED;
                 }
-                shardInfo.toXContent(builder, request);
                 return new BytesRestResponse(status, builder);
             }
         });

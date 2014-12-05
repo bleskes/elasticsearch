@@ -3,11 +3,20 @@
 
  - do:
       indices.create:
-        index: foobar
+        index: foobar1
         body:
           settings:
             number_of_shards: "1"
             number_of_replicas: "0"
+
+
+ - do:
+      indices.create:
+        index: foobar2
+        body:
+          settings:
+            number_of_shards: "1"
+            number_of_replicas: "1"
 
  - do:
       cluster.health:
@@ -15,12 +24,12 @@
 
  - do:
       index:
-          index:  foobar
+          index:  foobar1
           type:   baz
           id:     1
           body:   { foo: bar }
 
- - match:   { _index:   foobar }
+ - match:   { _index:   foobar1 }
  - match:   { _type:    baz }
  - match:   { _id:      "1"}
  - match:   { _version: 1}
@@ -28,3 +37,20 @@
  - match:   { _shards.successful: 1}
  - match:   { _shards.failed: 0}
  - is_false:   _shards.pending
+
+ - do:
+      index:
+          index:  foobar2
+          type:   baz
+          id:     1
+          replication:  async
+          body:   { foo: bar }
+
+ - match:   { _index:   foobar2 }
+ - match:   { _type:    baz }
+ - match:   { _id:      "1"}
+ - match:   { _version: 1}
+ - match:   { _shards.total: 2}
+ - match:   { _shards.successful: 1}
+ - match:   { _shards.failed: 0}
+ - match:   { _shards.pending: 1}

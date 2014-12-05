@@ -116,13 +116,13 @@ public class RestIndexAction extends BaseRestHandler {
                         .field(Fields._ID, response.getId())
                         .field(Fields._VERSION, response.getVersion())
                         .field(Fields.CREATED, response.isCreated());
-                builder.endObject();
                 ActionWriteResponse.ShardInfo shardInfo = response.getShardInfo();
+                shardInfo.toXContent(builder, request);
+                builder.endObject();
                 RestStatus status = shardInfo.status();
                 if (response.isCreated()) {
                     status = CREATED;
                 }
-                shardInfo.toXContent(builder, request);
                 return new BytesRestResponse(status, builder);
             }
         });
