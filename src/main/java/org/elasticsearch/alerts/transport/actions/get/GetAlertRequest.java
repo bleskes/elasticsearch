@@ -17,11 +17,9 @@
 
 package org.elasticsearch.alerts.transport.actions.get;
 
-import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.ActionRequestValidationException;
-import org.elasticsearch.action.IndicesRequest;
 import org.elasticsearch.action.ValidateActions;
-import org.elasticsearch.action.support.IndicesOptions;
+import org.elasticsearch.action.support.master.MasterNodeOperationRequest;
 import org.elasticsearch.alerts.AlertsStore;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
@@ -33,7 +31,7 @@ import java.io.IOException;
 /**
  * The request to get the alert by name (id)
  */
-public class GetAlertRequest extends ActionRequest<GetAlertRequest> implements IndicesRequest {
+public class GetAlertRequest extends MasterNodeOperationRequest<GetAlertRequest> {
 
     private String alertName;
     private long version = Versions.MATCH_ANY;
@@ -59,16 +57,6 @@ public class GetAlertRequest extends ActionRequest<GetAlertRequest> implements I
             validationException = ValidateActions.addValidationError("alertName is missing", validationException);
         }
         return validationException;
-    }
-
-    @Override
-    public String[] indices() {
-        return new String[]{AlertsStore.ALERT_INDEX};
-    }
-
-    @Override
-    public IndicesOptions indicesOptions() {
-        return IndicesOptions.strictSingleIndexNoExpandForbidClosed();
     }
 
 
