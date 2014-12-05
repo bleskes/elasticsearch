@@ -43,7 +43,7 @@ public class ConfigurationManager extends AbstractComponent {
     public static final String CONFIG_INDEX = AlertsStore.ALERT_INDEX;
     public static final String GLOBAL_CONFIG_NAME = "global";
     private volatile boolean readyToRead = false;
-    private volatile CopyOnWriteArrayList<ConfigurableComponentListener> registeredComponents;
+    private final CopyOnWriteArrayList<ConfigurableComponentListener> registeredComponents;
 
     @Inject
     public ConfigurationManager(Settings settings, Client client) {
