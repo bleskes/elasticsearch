@@ -29,9 +29,6 @@ import org.elasticsearch.common.xcontent.XContentBuilderString;
 import org.elasticsearch.rest.RestStatus;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * Base class for write action responses.
@@ -77,32 +74,6 @@ public abstract class ActionWriteResponse extends ActionResponse {
             this.successful = successful;
             this.pending = pending;
             this.failures = failures;
-        }
-
-        /**
-         * This constructor is used for request that have touched multiple shard groups (e.g. delete_by_query) and the
-         * shard info headers for each shard group, the total, successful, pending and failures are rolled up
-         * into a single shard info header.
-         */
-        public <T extends ActionWriteResponse> ShardInfo(List<T> responses, List<ShardOperationFailedException> primaryFailures) {
-            List<Failure> failures = new ArrayList<>();
-            for (ShardOperationFailedException failure : primaryFailures) {
-                // Set the status here, since it is a failure on primary shard
-                // The failure doesn't include the node id, maybe add it to ShardOperationFailedException...
-                failures.add(new ActionWriteResponse.ShardInfo.Failure(failure.index(), failure.shardId(), null, failure.reason(), failure.status(), true));
-            }
-            for (ActionWriteResponse response : responses) {
-                total += response.getShardInfo().getTotal();
-                successful += response.getShardInfo().getSuccessful();
-                pending += response.getShardInfo().getPending();
-                if (response.getShardInfo().failures.length > 0) {
-                    failures.addAll(Arrays.asList(response.getShardInfo().failures));
-                }
-            }
-            if (!failures.isEmpty()) {
-                failures.addAll(Arrays.asList(this.failures));
-                this.failures = failures.toArray(new Failure[failures.size()]);
-            }
         }
 
         /**

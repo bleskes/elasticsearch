@@ -19,7 +19,7 @@
 
 package org.elasticsearch.action.deletebyquery;
 
-import org.elasticsearch.action.ShardOperationFailedException;
+import org.elasticsearch.action.ActionWriteResponse;
 import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.replication.TransportIndexReplicationOperationAction;
 import org.elasticsearch.cluster.ClusterService;
@@ -47,8 +47,8 @@ public class TransportIndexDeleteByQueryAction extends TransportIndexReplication
     }
 
     @Override
-    protected IndexDeleteByQueryResponse newResponseInstance(IndexDeleteByQueryRequest request, List<ShardDeleteByQueryResponse> shardDeleteByQueryResponses, int failuresCount, List<ShardOperationFailedException> shardFailures) {
-        return new IndexDeleteByQueryResponse(request.index(), shardDeleteByQueryResponses, shardFailures);
+    protected IndexDeleteByQueryResponse newResponseInstance(IndexDeleteByQueryRequest request, List<ShardDeleteByQueryResponse> shardDeleteByQueryResponses, ActionWriteResponse.ShardInfo shardInfo) {
+        return new IndexDeleteByQueryResponse(request.index(), shardInfo);
     }
 
     @Override

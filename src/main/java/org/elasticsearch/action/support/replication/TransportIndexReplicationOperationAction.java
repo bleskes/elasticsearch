@@ -19,11 +19,11 @@
 
 package org.elasticsearch.action.support.replication;
 
-import com.google.common.collect.Lists;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.ActionResponse;
 import org.elasticsearch.action.ActionWriteResponse;
+import org.elasticsearch.action.ActionWriteResponse.ShardInfo.Failure;
 import org.elasticsearch.action.ShardOperationFailedException;
 import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.DefaultShardOperationFailedException;
@@ -37,6 +37,8 @@ import org.elasticsearch.cluster.routing.ShardIterator;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.threadpool.ThreadPool;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReferenceArray;
@@ -72,7 +74,7 @@ public abstract class TransportIndexReplicationOperationAction<Request extends I
             throw blockException;
         }
 
-        GroupShardsIterator groups;
+        final GroupShardsIterator groups;
         try {
             groups = shards(request);
         } catch (Throwable e) {
@@ -113,8 +115,12 @@ public abstract class TransportIndexReplicationOperationAction<Request extends I
 
                 private void returnIfNeeded() {
                     if (completionCounter.decrementAndGet() == 0) {
-                        List<ShardResponse> responses = Lists.newArrayList();
-                        List<ShardOperationFailedException> failures = Lists.newArrayList();
+                        List<ShardResponse> responses = new ArrayList<>();
+                        List<Failure> failureList = new ArrayList<>();
+
+                        int total = groups.totalSize();
+                        int pending = 0;
+                        int successful = 0;
                         for (int i = 0; i < shardsResponses.length(); i++) {
                             ShardActionResult shardActionResult = shardsResponses.get(i);
                             if (shardActionResult == null) {
@@ -123,21 +129,44 @@ public abstract class TransportIndexReplicationOperationAction<Request extends I
                             }
                             if (shardActionResult.isFailure()) {
                                 assert accumulateExceptions() && shardActionResult.shardFailure != null;
-                                failures.add(shardActionResult.shardFailure);
+                                // Set the status here, since it is a failure on primary shard
+                                // The failure doesn't include the node id, maybe add it to ShardOperationFailedException...
+                                ShardOperationFailedException sf = shardActionResult.shardFailure;
+                                failureList.add(new Failure(sf.index(), sf.shardId(), null, sf.reason(), sf.status(), true));
                             } else {
+                                pending += shardActionResult.shardResponse.getShardInfo().getPending();
+                                successful += shardActionResult.shardResponse.getShardInfo().getSuccessful();
+                                failureList.addAll(Arrays.asList(shardActionResult.shardResponse.getShardInfo().getFailures()));
                                 responses.add(shardActionResult.shardResponse);
                             }
                         }
+                        assert failureList.size() == 0 || numShardGroupFailures(failureList) == failureCounter.get();
 
-                        assert failures.size() == 0 || failures.size() == failureCounter.get();
-                        listener.onResponse(newResponseInstance(request, responses, failureCounter.get(), failures));
+                        final Failure[] failures;
+                        if (failureList.isEmpty()) {
+                            failures = ActionWriteResponse.EMPTY;
+                        } else {
+                            failures = failureList.toArray(new Failure[failureList.size()]);
+                        }
+                        listener.onResponse(newResponseInstance(request, responses, new ActionWriteResponse.ShardInfo(total, successful, pending, failures)));
                     }
                 }
+
+                private int numShardGroupFailures(List<Failure> failures) {
+                    int numShardGroupFailures = 0;
+                    for (Failure failure : failures) {
+                        if (failure.primary()) {
+                            numShardGroupFailures++;
+                        }
+                    }
+                    return numShardGroupFailures;
+                }
             });
+
         }
     }
 
-    protected abstract Response newResponseInstance(Request request, List<ShardResponse> shardResponses, int failuresCount, List<ShardOperationFailedException> shardFailures);
+    protected abstract Response newResponseInstance(Request request, List<ShardResponse> shardResponses, ActionWriteResponse.ShardInfo shardInfo);
 
     protected abstract GroupShardsIterator shards(Request request) throws ElasticsearchException;
 
