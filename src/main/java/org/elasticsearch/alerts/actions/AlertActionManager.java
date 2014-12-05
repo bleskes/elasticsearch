@@ -121,7 +121,7 @@ public class AlertActionManager extends AbstractComponent {
         if (started.get()) {
             return true;
         }
-        if (!configurationManager.isReady(state)) {
+        if (!configurationManager.start(state)) {
             return false;
         }
 

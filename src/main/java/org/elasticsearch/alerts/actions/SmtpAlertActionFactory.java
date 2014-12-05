@@ -47,7 +47,7 @@ public class SmtpAlertActionFactory implements AlertActionFactory, ConfigurableC
     private static final String PASSWD_SETTING = "alerts.action.email.from.passwd";
 
     private final ConfigurationManager configurationManager;
-    private Settings settings;
+    private volatile Settings settings;
 
     public SmtpAlertActionFactory(ConfigurationManager configurationManager) {
         this.configurationManager = configurationManager;
@@ -170,6 +170,6 @@ public class SmtpAlertActionFactory implements AlertActionFactory, ConfigurableC
 
     @Override
     public void receiveConfigurationUpdate(Settings settings) {
-
+        this.settings = settings;
     }
 }
