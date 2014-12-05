@@ -42,47 +42,25 @@ import static org.hamcrest.Matchers.*;
 
 /**
  */
-@ElasticsearchIntegrationTest.ClusterScope(scope = ElasticsearchIntegrationTest.Scope.TEST, numDataNodes = 0, numClientNodes = 0)
 public class ShardInfoTests extends ElasticsearchIntegrationTest {
 
     private int numCopies;
-    private int minNumberOfNodes;
+    private int numNodes;
 
     @Test
     public void testIndexAndDelete() throws Exception {
         prepareIndex(1);
         IndexResponse indexResponse = client().prepareIndex("idx", "type").setSource("{}").get();
-        assertShardInfo(indexResponse, minNumberOfNodes, 0);
+        assertShardInfo(indexResponse);
         DeleteResponse deleteResponse = client().prepareDelete("idx", "type", indexResponse.getId()).get();
-        assertShardInfo(deleteResponse, minNumberOfNodes, 0);
-
-        for (int i = minNumberOfNodes + 1; i < numCopies; i++) {
-            logger.info("Checking replication information with {} active copies", i);
-            internalCluster().startNode();
-            ensureActiveShardCopies(0, i);
-
-            indexResponse = client().prepareIndex("idx", "type").setSource("{}").get();
-            assertShardInfo(indexResponse, i, 0);
-
-            deleteResponse = client().prepareDelete("idx", "type", indexResponse.getId()).get();
-            assertShardInfo(deleteResponse, i, 0);
-        }
+        assertShardInfo(deleteResponse);
     }
 
     @Test
     public void testUpdate() throws Exception {
         prepareIndex(1);
         UpdateResponse updateResponse = client().prepareUpdate("idx", "type", "1").setDoc("{}").setDocAsUpsert(true).get();
-        assertShardInfo(updateResponse, minNumberOfNodes, 0);
-
-        for (int i = minNumberOfNodes + 1; i < numCopies; i++) {
-            logger.info("Checking replication information with {} active replicas", i);
-            internalCluster().startNode();
-            ensureActiveShardCopies(0, i);
-
-            updateResponse = client().prepareUpdate("idx", "type", "1").setDoc("{}").get();
-            assertShardInfo(updateResponse, i, 0);
-        }
+        assertShardInfo(updateResponse);
     }
 
     @Test
@@ -97,39 +75,14 @@ public class ShardInfoTests extends ElasticsearchIntegrationTest {
         bulkRequestBuilder = client().prepareBulk();
         for (BulkItemResponse item : bulkResponse) {
             assertThat(item.isFailed(), equalTo(false));
-            assertShardInfo(item.getResponse(), minNumberOfNodes, 0);
+            assertShardInfo(item.getResponse());
             bulkRequestBuilder.add(client().prepareDelete("idx", "type", item.getId()));
         }
 
         bulkResponse = bulkRequestBuilder.get();
         for (BulkItemResponse item : bulkResponse) {
             assertThat(item.isFailed(), equalTo(false));
-            assertShardInfo(item.getResponse(), minNumberOfNodes, 0);
-        }
-
-        for (int i = minNumberOfNodes + 1; i < numCopies; i++) {
-            logger.info("Checking replication information with {} active replicas", i);
-            internalCluster().startNode();
-            ensureActiveShardCopies(0, i);
-
-            bulkRequestBuilder = client().prepareBulk();
-            for (int j = 0; j < 10; j++) {
-                bulkRequestBuilder.add(client().prepareIndex("idx", "type").setSource("{}"));
-            }
-
-            bulkResponse = bulkRequestBuilder.get();
-            bulkRequestBuilder = client().prepareBulk();
-            for (BulkItemResponse item : bulkResponse) {
-                assertThat(item.isFailed(), equalTo(false));
-                assertShardInfo(item.getResponse(), i, 0);
-                bulkRequestBuilder.add(client().prepareDelete("idx", "type", item.getId()));
-            }
-
-            bulkResponse = bulkRequestBuilder.get();
-            for (BulkItemResponse item : bulkResponse) {
-                assertThat(item.isFailed(), equalTo(false));
-                assertShardInfo(item.getResponse(), i, 0);
-            }
+            assertShardInfo(item.getResponse());
         }
     }
 
@@ -144,42 +97,15 @@ public class ShardInfoTests extends ElasticsearchIntegrationTest {
         BulkResponse bulkResponse = bulkRequestBuilder.get();
         for (BulkItemResponse item : bulkResponse) {
             assertThat(item.isFailed(), equalTo(false));
-            assertShardInfo(item.getResponse(), minNumberOfNodes, 0);
-        }
-
-        for (int i = minNumberOfNodes + 1; i < numCopies; i++) {
-            logger.info("Checking replication information with {} active replicas", i);
-            internalCluster().startNode();
-            ensureActiveShardCopies(0, i);
-
-            bulkRequestBuilder = client().prepareBulk();
-            for (int j = 0; j < 10; j++) {
-                bulkRequestBuilder.add(client().prepareUpdate("idx", "type", Integer.toString(i)).setDoc("{}"));
-            }
-
-            bulkResponse = bulkRequestBuilder.get();
-            for (BulkItemResponse item : bulkResponse) {
-                assertThat(item.isFailed(), equalTo(false));
-                assertShardInfo(item.getResponse(), i, 0);
-            }
+            assertShardInfo(item.getResponse());
         }
     }
 
     @Test
     public void testDeleteWithRoutingRequiredButNotSpecified() throws Exception {
-        prepareIndex(2);
+        prepareIndex(2, true);
         DeleteResponse deleteResponse = client().prepareDelete("idx", "type", "1").get();
-        assertShardInfo(deleteResponse, numCopies * 2, minNumberOfNodes * 2, 0);
-
-        for (int i = minNumberOfNodes + 1; i < numCopies; i++) {
-            logger.info("Checking replication information with {} active replicas", i);
-            internalCluster().startNode();
-            ensureActiveShardCopies(0, i);
-            ensureActiveShardCopies(1, i);
-
-            deleteResponse = client().prepareDelete("idx", "type", "1").get();
-            assertShardInfo(deleteResponse, numCopies * 2, i * 2, 0);
-        }
+        assertShardInfo(deleteResponse, numCopies * 2, numNodes * 2, 0);
     }
 
     @Test
@@ -188,19 +114,7 @@ public class ShardInfoTests extends ElasticsearchIntegrationTest {
         IndexDeleteByQueryResponse indexDeleteByQueryResponse = client().prepareDeleteByQuery("idx")
                 .setQuery(QueryBuilders.matchAllQuery())
                 .get().getIndex("idx");
-        assertShardInfo(indexDeleteByQueryResponse, numCopies * 2, minNumberOfNodes * 2, 0);
-
-        for (int i = minNumberOfNodes + 1; i < numCopies; i++) {
-            logger.info("Checking replication information with {} active replicas", i);
-            internalCluster().startNode();
-            ensureActiveShardCopies(0, i);
-            ensureActiveShardCopies(1, i);
-
-            indexDeleteByQueryResponse = client().prepareDeleteByQuery("idx")
-                    .setQuery(QueryBuilders.matchAllQuery())
-                    .get().getIndex("idx");
-            assertShardInfo(indexDeleteByQueryResponse, numCopies * 2, i * 2, 0);
-        }
+        assertShardInfo(indexDeleteByQueryResponse, numCopies * 2, numNodes * 2, 0);
     }
 
     @Test
@@ -210,19 +124,39 @@ public class ShardInfoTests extends ElasticsearchIntegrationTest {
                 .setReplicationType(ReplicationType.ASYNC)
                 .setSource("{}")
                 .get();
-        assertShardInfo(indexResponse, 1, minNumberOfNodes - 1);
+        assertShardInfo(indexResponse, numCopies, 1, numNodes - 1);
+    }
 
-        for (int i = minNumberOfNodes + 1; i < numCopies; i++) {
-            logger.info("Checking replication information with {} active replicas", i);
-            internalCluster().startNode();
-            ensureActiveShardCopies(0, i);
+    private void prepareIndex(int numberOfPrimaryShards) throws Exception {
+        prepareIndex(numberOfPrimaryShards, false);
+    }
 
-            indexResponse = client().prepareIndex("idx", "type")
-                    .setReplicationType(ReplicationType.ASYNC)
-                    .setSource("{}")
-                    .get();
-            assertShardInfo(indexResponse, 1, i - 1);
+    private void prepareIndex(int numberOfPrimaryShards, boolean routingRequired) throws Exception {
+        numNodes = cluster().numDataNodes();
+        logger.info("Number of nodes: {}", numNodes);
+        int maxNumberOfCopies = (numNodes * 2) - 1;
+        numCopies = randomIntBetween(numNodes, maxNumberOfCopies);
+        logger.info("Number of copies: {}", numCopies);
+
+        assertAcked(prepareCreate("idx").setSettings(
+                ImmutableSettings.builder()
+                        .put(IndexMetaData.SETTING_NUMBER_OF_SHARDS, numberOfPrimaryShards)
+                        .put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, numCopies - 1))
+                .addMapping("type", "_routing", "required=" + routingRequired)
+                .get());
+        for (int i = 0; i < numberOfPrimaryShards; i++) {
+            ensureActiveShardCopies(i, numNodes);
         }
+    }
+
+    private void assertShardInfo(ActionWriteResponse response) {
+        assertShardInfo(response, numCopies, numNodes, 0);
+    }
+
+    private void assertShardInfo(ActionWriteResponse response, int expectedTotal, int expectedSuccessful, int expectedPending) {
+        assertThat(response.getShardInfo().getTotal(), equalTo(expectedTotal));
+        assertThat(response.getShardInfo().getSuccessful(), equalTo(expectedSuccessful));
+        assertThat(response.getShardInfo().getPending(), equalTo(expectedPending));
     }
 
     private void ensureActiveShardCopies(final int shardId, final int copyCount) throws Exception {
@@ -246,33 +180,4 @@ public class ShardInfoTests extends ElasticsearchIntegrationTest {
             }
         });
     }
-
-    private void prepareIndex(int numberOfPrimaryShards) throws Exception {
-        int numReplicas = scaledRandomIntBetween(0, 5);
-        numCopies = numReplicas + 1;
-        logger.info("Number of shard copies {}", numCopies);
-
-        minNumberOfNodes = (numCopies / 2) + 1;
-        logger.info("Initially starting {} nodes", minNumberOfNodes);
-        internalCluster().startNodesAsync(minNumberOfNodes).get();
-        assertAcked(prepareCreate("idx").setSettings(
-                ImmutableSettings.builder()
-                        .put(IndexMetaData.SETTING_NUMBER_OF_SHARDS, numberOfPrimaryShards)
-                        .put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, numReplicas))
-                .get());
-        for (int i = 0; i < numberOfPrimaryShards; i++) {
-            ensureActiveShardCopies(i, minNumberOfNodes);
-        }
-    }
-
-    private void assertShardInfo(ActionWriteResponse response, int expectedSuccessful, int expectedPending) {
-        assertShardInfo(response, numCopies, expectedSuccessful, expectedPending);
-    }
-
-    private void assertShardInfo(ActionWriteResponse response, int expecteTotal, int expectedSuccessful, int expectedPending) {
-        assertThat(response.getShardInfo().getTotal(), equalTo(expecteTotal));
-        assertThat(response.getShardInfo().getSuccessful(), equalTo(expectedSuccessful));
-        assertThat(response.getShardInfo().getPending(), equalTo(expectedPending));
-    }
-
 }
