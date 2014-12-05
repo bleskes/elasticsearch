@@ -70,6 +70,7 @@ public abstract class ActionWriteResponse extends ActionResponse {
         }
 
         public ShardInfo(int total, int successful, int pending, Failure... failures) {
+            assert total >= 0 && successful >= 0 && pending >= 0;
             this.total = total;
             this.successful = successful;
             this.pending = pending;

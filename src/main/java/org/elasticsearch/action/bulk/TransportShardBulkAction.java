@@ -389,8 +389,8 @@ public class TransportShardBulkAction extends TransportShardReplicationOperation
 
         @SuppressWarnings("unchecked")
         <T extends ActionWriteResponse> T response() {
-            // set all to -1, we will embed this into the replica request and not use it
-            response.setShardInfo(new ActionWriteResponse.ShardInfo(-1, -1, -1));
+            // set all to 0, we will embed this into the replica request and not use it
+            response.setShardInfo(new ActionWriteResponse.ShardInfo(0, 0, 0));
             return (T) response;
         }
 
