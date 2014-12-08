@@ -199,21 +199,11 @@ public class JobManager
      * @throws JobConfigurationException If the license is violated
      * @throws JobIdAlreadyExistsException If the alias is already taken
      */
-    public JobDetails createJob(JobConfiguration jobConfig)
-    throws UnknownJobException, IOException, TooManyJobsException,
-        JobConfigurationException, JobIdAlreadyExistsException
+    public JobDetails createJob(JobConfiguration jobConfig) throws UnknownJobException,
+            IOException, TooManyJobsException, JobConfigurationException,
+            JobIdAlreadyExistsException
     {
-        // Negative m_MaxActiveJobs means unlimited
-        if (m_LicenseJobLimit >= 0 &&
-            m_ProcessManager.numberOfRunningJobs() >= m_LicenseJobLimit)
-        {
-            throw new TooManyJobsException(m_LicenseJobLimit,
-                    "Cannot create new job - your license limits you to " +
-                    m_LicenseJobLimit + " concurrently running " +
-                    (m_LicenseJobLimit == 1 ? "job" : "jobs") +
-                    ".  You must close a job before you can create a new one.",
-                    ErrorCode.LICENSE_VIOLATION);
-        }
+        checkCreateJobForTooManyJobsAgainstLicenseLimit();
 
         // Negative m_MaxDetectorsPerJob means unlimited
         if (m_MaxDetectorsPerJob >= 0 &&
@@ -276,6 +266,26 @@ public class JobManager
         return jobDetails;
     }
 
+
+    private void checkCreateJobForTooManyJobsAgainstLicenseLimit() throws TooManyJobsException
+    {
+        if (areMoreJobsRunningThanLicenseLimit())
+        {
+            throw new TooManyJobsException(m_LicenseJobLimit,
+                    "Cannot create new job - your license limits you to " +
+                    m_LicenseJobLimit + " concurrently running " +
+                    (m_LicenseJobLimit == 1 ? "job" : "jobs") +
+                    ".  You must close a job before you can create a new one.",
+                    ErrorCode.LICENSE_VIOLATION);
+        }
+    }
+
+    private boolean areMoreJobsRunningThanLicenseLimit()
+    {
+        // Negative m_LicenseJobLimit means unlimited
+        return m_LicenseJobLimit >= 0 &&
+                m_ProcessManager.numberOfRunningJobs() >= m_LicenseJobLimit;
+    }
 
     /**
      * Get a single result bucket
@@ -689,7 +699,7 @@ public class JobManager
             return;
         }
         checkTooManyJobsAgainstHardLimit(jobId);
-        checkTooManyJobsAgainstLicenseLimit(jobId);
+        checkDataLoadForTooManyJobsAgainstLicenseLimit(jobId);
     }
 
     private void checkTooManyJobsAgainstHardLimit(String jobId) throws TooManyJobsException
@@ -705,11 +715,10 @@ public class JobManager
         }
     }
 
-    private void checkTooManyJobsAgainstLicenseLimit(String jobId) throws TooManyJobsException
+    private void checkDataLoadForTooManyJobsAgainstLicenseLimit(String jobId)
+            throws TooManyJobsException
     {
-        // Negative m_MaxActiveJobs means unlimited
-        if (m_LicenseJobLimit >= 0 &&
-            m_ProcessManager.numberOfRunningJobs() >= m_LicenseJobLimit)
+        if (areMoreJobsRunningThanLicenseLimit())
         {
             throw new TooManyJobsException(m_LicenseJobLimit,
                     "Cannot reactivate job with id '" + jobId +
