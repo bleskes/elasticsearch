@@ -53,17 +53,13 @@ import com.prelert.job.JobInUseException;
 import com.prelert.job.JobStatus;
 import com.prelert.job.TooManyJobsException;
 import com.prelert.job.UnknownJobException;
-import com.prelert.job.persistence.DataPersisterFactory;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.process.ProcessManager;
-import com.prelert.job.process.ResultsReaderFactory;
 import com.prelert.job.process.exceptions.ClosedJobException;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
-import com.prelert.job.status.StatusReporterFactory;
-import com.prelert.job.usage.UsageReporterFactory;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.ErrorCode;
@@ -101,7 +97,7 @@ public class JobManager
 
     public static final String DEFAULT_RECORD_SORT_FIELD = AnomalyRecord.PROBABILITY;
 
-    private ProcessManager m_ProcessManager;
+	private final ProcessManager m_ProcessManager;
 
 
     private AtomicLong m_IdSequence;
@@ -110,9 +106,6 @@ public class JobManager
     private ObjectMapper m_ObjectMapper;
 
     private JobProvider m_JobProvider;
-
-    private DataPersisterFactory m_DataPersisterFactory;
-
 
     /**
      * These default to unlimited (indicated by negative limits), but may be
@@ -134,19 +127,11 @@ public class JobManager
      *
      * @param jobDetailsProvider
      */
-    public JobManager(JobProvider jobProvider,
-            ResultsReaderFactory resultsReaderFactory,
-            StatusReporterFactory statusReporterFactory,
-            UsageReporterFactory usageReporterFactory,
-            DataPersisterFactory dataPersisterFactory)
+	public JobManager(JobProvider jobProvider, ProcessManager processManager)
     {
         m_JobProvider = jobProvider;
 
-        m_DataPersisterFactory = dataPersisterFactory;
-
-        m_ProcessManager = new ProcessManager(jobProvider,
-                resultsReaderFactory, statusReporterFactory,
-                usageReporterFactory, dataPersisterFactory);
+		m_ProcessManager = processManager;
 
         m_IdSequence = new AtomicLong();
         m_JobIdDateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
@@ -587,7 +572,7 @@ public class JobManager
         m_ProcessManager.finishJob(jobId);
         m_JobProvider.deleteJob(jobId);
 
-        m_DataPersisterFactory.newDataPersister(jobId, LOGGER).deleteData();
+		m_ProcessManager.deletePersistedData(jobId);
 
         return true;
     }

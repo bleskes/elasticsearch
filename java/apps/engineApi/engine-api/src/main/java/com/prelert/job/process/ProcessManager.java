@@ -482,7 +482,7 @@ public class ProcessManager
             process.setInUse(true);
 
             ControlMsgToProcessWriter writer = new ControlMsgToProcessWriter(
-                    process.getProcess().getOutputStream(), 
+                    process.getProcess().getOutputStream(),
                     process.getAnalysisConfig());
 
             if (calcInterim)
@@ -1072,4 +1072,8 @@ public class ProcessManager
         return false;
     }
 
+    public void deletePersistedData(String jobId)
+    {
+        m_DataPersisterFactory.newDataPersister(jobId, LOGGER).deleteData();
+    }
 }
