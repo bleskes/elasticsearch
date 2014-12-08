@@ -699,7 +699,7 @@ public class JobManager
             throw new TooManyJobsException(m_MaxAllowedJobs,
                     "Cannot reactivate job with id '" + jobId +
                     "' - no more than " + m_MaxAllowedJobs +
-                    " jobs are allowed to run concurrently.  You must close a job before" +
+                    " jobs are allowed to run concurrently. You must close a job before" +
                     " you can reactivate a closed one.",
                     ErrorCode.TOO_MANY_JOBS_RUNNING_CONCURRENTLY);
         }
@@ -714,7 +714,7 @@ public class JobManager
             throw new TooManyJobsException(m_LicenseJobLimit,
                     "Cannot reactivate job with id '" + jobId +
                     "' - your license limits you to " + m_LicenseJobLimit +
-                    " concurrently running jobs.  You must close a job before" +
+                    " concurrently running jobs. You must close a job before" +
                     " you can reactivate a closed one.",
                     ErrorCode.LICENSE_VIOLATION);
         }
