@@ -111,6 +111,7 @@ public class RestBulkAction extends BaseRestHandler {
                         builder.field(Fields.ERROR, itemResponse.getFailure().getMessage());
                     } else {
                         ActionWriteResponse.ShardInfo shardInfo = itemResponse.getResponse().getShardInfo();
+                        shardInfo.toXContent(builder, request);
                         if (itemResponse.getResponse() instanceof DeleteResponse) {
                             DeleteResponse deleteResponse = itemResponse.getResponse();
                             if (deleteResponse.isFound()) {
@@ -134,7 +135,6 @@ public class RestBulkAction extends BaseRestHandler {
                                 builder.field(Fields.STATUS, shardInfo.status());
                             }
                         }
-                        shardInfo.toXContent(builder, request);
                     }
                     builder.endObject();
                     builder.endObject();

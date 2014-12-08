@@ -111,13 +111,13 @@ public class RestIndexAction extends BaseRestHandler {
             @Override
             public RestResponse buildResponse(IndexResponse response, XContentBuilder builder) throws Exception {
                 builder.startObject();
+                ActionWriteResponse.ShardInfo shardInfo = response.getShardInfo();
                 builder.field(Fields._INDEX, response.getIndex())
                         .field(Fields._TYPE, response.getType())
                         .field(Fields._ID, response.getId())
                         .field(Fields._VERSION, response.getVersion())
+                        .value(shardInfo)
                         .field(Fields.CREATED, response.isCreated());
-                ActionWriteResponse.ShardInfo shardInfo = response.getShardInfo();
-                shardInfo.toXContent(builder, request);
                 builder.endObject();
                 RestStatus status = shardInfo.status();
                 if (response.isCreated()) {
