@@ -58,6 +58,8 @@ import com.prelert.job.status.StatusReporter;
  * consists of number of fields followed by length/value pairs.
  * See CLengthEncodedInputParser.h in the C++ code for a more
  * detailed description.
+ * A control field is added to the end of each length encoded
+ * line.
  */
 class CsvDataToProcessWriter extends AbstractDataToProcessWriter
 {
@@ -136,13 +138,14 @@ class CsvDataToProcessWriter extends AbstractDataToProcessWriter
                 }
             }
 
-            String [] filteredHeader = new String [fieldIndexes.size()];
-            int i=0;
+            // filtered header is all the analysis fields + the time field + control field
+            String[] filteredHeader = new String[fieldIndexes.size() + 1];
+            int i = 0;
             for (Pair<String, Integer> p : fieldIndexes)
             {
                 filteredHeader[i++] = p.m_First;
             }
-
+            filteredHeader[filteredHeader.length - 1] = LengthEncodedWriter.CONTROL_FIELD_NAME;
 
             int timeFieldIndex = Arrays.asList(filteredHeader).indexOf(
                     m_DataDescription.getTimeField());
@@ -161,11 +164,13 @@ class CsvDataToProcessWriter extends AbstractDataToProcessWriter
 
             m_LengthEncodedWriter.writeRecord(filteredHeader);
 
-
-            int numFields = fieldIndexes.size();
+            // The + 1 is for the control field
+            int numFields = fieldIndexes.size() + 1;
             List<String> line;
 
-            String [] record = new String [numFields];
+            String[] record = new String[numFields];
+            // Control field is always empty for real input
+            record[numFields - 1] = "";
 
             long lastEpoch = 0;
             while ((line = csvReader.read()) != null)
