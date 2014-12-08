@@ -112,7 +112,7 @@ public class ShardInfoTests extends ElasticsearchIntegrationTest {
     @Test
     public void testDeleteByQuery() throws Exception {
         int numPrimaryShards = randomIntBetween(1, 2);
-        prepareIndex(2);
+        prepareIndex(numPrimaryShards);
         IndexDeleteByQueryResponse indexDeleteByQueryResponse = client().prepareDeleteByQuery("idx")
                 .setQuery(QueryBuilders.matchAllQuery())
                 .get().getIndex("idx");
