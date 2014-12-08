@@ -97,7 +97,10 @@ public class JobManager
 
     public static final String DEFAULT_RECORD_SORT_FIELD = AnomalyRecord.PROBABILITY;
 
-	private final ProcessManager m_ProcessManager;
+    private static final String MAX_JOBS_FACTOR_NAME = "prelert.max.jobs.factor";
+    private static final double DEFAULT_MAX_JOBS_FACTOR = 3.0;
+
+    private final ProcessManager m_ProcessManager;
 
 
     private AtomicLong m_IdSequence;
@@ -107,11 +110,13 @@ public class JobManager
 
     private JobProvider m_JobProvider;
 
+    private final int m_MaxAllowedJobs;
+
     /**
      * These default to unlimited (indicated by negative limits), but may be
      * overridden by constraints in the license key.
      */
-    private int m_MaxActiveJobs = -1;
+    private int m_LicenseJobLimit = -1;
     private int m_MaxDetectorsPerJob = -1;
     private int m_MaxPartitionsPerJob = -1;
 
@@ -127,11 +132,13 @@ public class JobManager
      *
      * @param jobDetailsProvider
      */
-	public JobManager(JobProvider jobProvider, ProcessManager processManager)
+    public JobManager(JobProvider jobProvider, ProcessManager processManager)
     {
         m_JobProvider = jobProvider;
 
-		m_ProcessManager = processManager;
+        m_ProcessManager = processManager;
+
+        m_MaxAllowedJobs = calculateMaxJobsAllowed();
 
         m_IdSequence = new AtomicLong();
         m_JobIdDateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
@@ -197,13 +204,13 @@ public class JobManager
         JobConfigurationException, JobIdAlreadyExistsException
     {
         // Negative m_MaxActiveJobs means unlimited
-        if (m_MaxActiveJobs >= 0 &&
-            m_ProcessManager.numberOfRunningJobs() >= m_MaxActiveJobs)
+        if (m_LicenseJobLimit >= 0 &&
+            m_ProcessManager.numberOfRunningJobs() >= m_LicenseJobLimit)
         {
-            throw new TooManyJobsException(m_MaxActiveJobs,
+            throw new TooManyJobsException(m_LicenseJobLimit,
                     "Cannot create new job - your license limits you to " +
-                    m_MaxActiveJobs + " concurrently running " +
-                    (m_MaxActiveJobs == 1 ? "job" : "jobs") +
+                    m_LicenseJobLimit + " concurrently running " +
+                    (m_LicenseJobLimit == 1 ? "job" : "jobs") +
                     ".  You must close a job before you can create a new one.",
                     ErrorCode.LICENSE_VIOLATION);
         }
@@ -572,7 +579,7 @@ public class JobManager
         m_ProcessManager.finishJob(jobId);
         m_JobProvider.deleteJob(jobId);
 
-		m_ProcessManager.deletePersistedData(jobId);
+        m_ProcessManager.deletePersistedData(jobId);
 
         return true;
     }
@@ -677,14 +684,28 @@ public class JobManager
 
     private void checkTooManyJobs(String jobId) throws TooManyJobsException
     {
-        // Negative m_MaxActiveJobs means unlimited
-        if (m_MaxActiveJobs >= 0 &&
-            (m_ProcessManager.jobIsRunning(jobId) == false) &&
-            m_ProcessManager.numberOfRunningJobs() >= m_MaxActiveJobs)
+        if (m_ProcessManager.jobIsRunning(jobId))
         {
-            throw new TooManyJobsException(m_MaxActiveJobs,
+            return;
+        }
+
+        if (m_ProcessManager.numberOfRunningJobs() >= m_MaxAllowedJobs)
+        {
+            throw new TooManyJobsException(m_MaxAllowedJobs,
                     "Cannot reactivate job with id '" + jobId +
-                    "' - your license limits you to " + m_MaxActiveJobs +
+                    "' - no more than " + m_MaxAllowedJobs +
+                    " jobs are allowed to run concurrently.  You must close a job before" +
+                    " you can reactivate a closed one.",
+                    ErrorCode.TOO_MANY_JOBS_RUNNING_CONCURRENTLY);
+        }
+
+        // Negative m_LicenseJobLimit means unlimited
+        if (m_LicenseJobLimit >= 0 &&
+            m_ProcessManager.numberOfRunningJobs() >= m_LicenseJobLimit)
+        {
+            throw new TooManyJobsException(m_LicenseJobLimit,
+                    "Cannot reactivate job with id '" + jobId +
+                    "' - your license limits you to " + m_LicenseJobLimit +
                     " concurrently running jobs.  You must close a job before" +
                     " you can reactivate a closed one.",
                     ErrorCode.LICENSE_VIOLATION);
@@ -787,7 +808,7 @@ public class JobManager
      */
     public int getMaxActiveJobs()
     {
-        return m_MaxActiveJobs;
+        return m_LicenseJobLimit;
     }
 
     /**
@@ -835,13 +856,13 @@ public class JobManager
             JsonNode constraint = doc.get(JOBS_LICENSE_CONSTRAINT);
             if (constraint != null)
             {
-                m_MaxActiveJobs = constraint.asInt(-1);
+                m_LicenseJobLimit = constraint.asInt(-1);
             }
             else
             {
-                m_MaxActiveJobs = -1;
+                m_LicenseJobLimit = -1;
             }
-            LOGGER.info("Max active jobs = " + m_MaxActiveJobs);
+            LOGGER.info("License job limit = " + m_LicenseJobLimit);
             constraint = doc.get(DETECTORS_LICENSE_CONSTRAINT);
             if (constraint != null)
             {
@@ -921,5 +942,32 @@ public class JobManager
     public boolean removeAlertObserver(String jobId, AlertObserver ao)
     {
         return m_ProcessManager.removeAlertObserver(jobId, ao);
+    }
+
+    private static int calculateMaxJobsAllowed()
+    {
+        int cores = Runtime.getRuntime().availableProcessors();
+        double factor = readMaxJobsFactorOrDefault();
+        return (int) Math.ceil(cores * factor);
+    }
+
+    private static double readMaxJobsFactorOrDefault()
+    {
+        String readMaxJobsFactor = System.getProperty(MAX_JOBS_FACTOR_NAME);
+        if (readMaxJobsFactor == null)
+        {
+            return DEFAULT_MAX_JOBS_FACTOR;
+        }
+        try
+        {
+            return Double.parseDouble(readMaxJobsFactor);
+        }
+        catch (NumberFormatException e)
+        {
+            LOGGER.warn(String.format(
+                    "Max jobs factor is invalid: %s. Default value of %f is used.",
+                    readMaxJobsFactor, DEFAULT_MAX_JOBS_FACTOR));
+            return DEFAULT_MAX_JOBS_FACTOR;
+        }
     }
 }
