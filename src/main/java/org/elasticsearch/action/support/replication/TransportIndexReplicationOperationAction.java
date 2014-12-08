@@ -34,7 +34,9 @@ import org.elasticsearch.cluster.block.ClusterBlockException;
 import org.elasticsearch.cluster.block.ClusterBlockLevel;
 import org.elasticsearch.cluster.routing.GroupShardsIterator;
 import org.elasticsearch.cluster.routing.ShardIterator;
+import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.index.shard.ShardId;
 import org.elasticsearch.threadpool.ThreadPool;
 
 import java.util.ArrayList;
@@ -132,7 +134,24 @@ public abstract class TransportIndexReplicationOperationAction<Request extends I
                                 // Set the status here, since it is a failure on primary shard
                                 // The failure doesn't include the node id, maybe add it to ShardOperationFailedException...
                                 ShardOperationFailedException sf = shardActionResult.shardFailure;
-                                failureList.add(new Failure(sf.index(), sf.shardId(), null, sf.reason(), sf.status(), true));
+
+                                ShardIterator thisShardIterator = null;
+                                ShardId shardId = new ShardId(sf.index(), sf.shardId());
+                                for (ShardIterator shardIterator : groups) {
+                                    if (shardIterator.shardId().equals(shardId)) {
+                                        thisShardIterator = shardIterator;
+                                        break;
+                                    }
+                                }
+
+                                assert thisShardIterator != null;
+                                for (ShardRouting shardRouting = thisShardIterator.nextOrNull(); shardRouting != null; shardRouting = thisShardIterator.nextOrNull()) {
+                                    if (shardRouting.primary()) {
+                                        failureList.add(new Failure(sf.index(), sf.shardId(), shardRouting.currentNodeId(), sf.reason(), sf.status(), true));
+                                    } else {
+                                        failureList.add(new Failure(sf.index(), sf.shardId(), shardRouting.currentNodeId(), "Not executed because operation failed on primary shard", sf.status(), false));
+                                    }
+                                }
                             } else {
                                 pending += shardActionResult.shardResponse.getShardInfo().getPending();
                                 successful += shardActionResult.shardResponse.getShardInfo().getSuccessful();
