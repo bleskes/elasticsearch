@@ -44,10 +44,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
 import com.prelert.job.Detector;
-import com.prelert.job.JobIdAlreadyExistsException;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobConfigurationException;
 import com.prelert.job.JobDetails;
+import com.prelert.job.JobIdAlreadyExistsException;
 import com.prelert.job.JobInUseException;
 import com.prelert.job.TooManyJobsException;
 import com.prelert.job.UnknownJobException;
@@ -61,27 +61,27 @@ import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.Pagination;
 
 
-public class RestoreStateTest 
+public class RestoreStateTest
 {
 	private static final Logger LOGGER = Logger.getLogger(RestoreStateTest.class);
-	
+
 	public static final String DEFAULT_CLUSTER_NAME = "prelert";
-	
+
 	/**
 	 * Elasticsearch must be running for this test.
-	 * 
+	 *
 	 * @param args
 	 * @throws IOException
-	 * @throws UnconfiguredJobException 
-	 * @throws NativeProcessRunException 
-	 * @throws InterruptedException 
-	 * @throws UnknownJobException 
+	 * @throws UnconfiguredJobException
+	 * @throws NativeProcessRunException
+	 * @throws InterruptedException
+	 * @throws UnknownJobException
 	 * @throws MissingFieldException
-	 * @throws HighProportionOfBadTimestampsException 
-	 * @throws OutOfOrderRecordsException 
+	 * @throws HighProportionOfBadTimestampsException
+	 * @throws OutOfOrderRecordsException
 	 * @throws JobConfigurationException If the license is violated
 	 * @throws TooManyJobsException If the license is violated
-	 * @throws JobIdAlreadyExistsException 
+	 * @throws JobIdAlreadyExistsException
 	 */
 	public static void main(String[] args)
 	throws IOException, NativeProcessRunException, UnknownJobException,
@@ -96,13 +96,13 @@ public class RestoreStateTest
 			return;
 		}
 		// configure log4j
-		ConsoleAppender console = new ConsoleAppender(); 		
-		console.setLayout(new PatternLayout("%d [%p|%c|%C{1}] %m%n")); 
+		ConsoleAppender console = new ConsoleAppender();
+		console.setLayout(new PatternLayout("%d [%p|%c|%C{1}] %m%n"));
 		console.setThreshold(Level.INFO);
 		console.activateOptions();
 		Logger.getRootLogger().addAppender(console);
-		
-		
+
+
 		Detector detector = new Detector();
 		detector.setFieldName("responsetime");
 		detector.setByFieldName("airline");
@@ -111,28 +111,29 @@ public class RestoreStateTest
 		AnalysisConfig config = new AnalysisConfig();
 		config.setDetectors(d);
 		config.setBucketSpan(3600L);
-		
+
 		DataDescription dd = new DataDescription();
 		dd.setFieldDelimiter(',');
-				
+
 		JobConfiguration jobConfig = new JobConfiguration.JobConfigurationBuilder(config)
 				.dataDescription(dd)
-				.build();		
-		
+				.build();
+
 		String clusterName = DEFAULT_CLUSTER_NAME;
 		if (args.length > 0)
 		{
 			clusterName = args[0];
 		}
 		LOGGER.info("Using Elasticsearch cluster " + clusterName);
-		
+
 		ElasticsearchJobProvider esJob = new ElasticsearchJobProvider(clusterName);
-		JobManager jobManager = new JobManager(esJob, null, null, null, null);
+		ProcessManager processManager = new ProcessManager(esJob, null, null, null, null);
+		JobManager jobManager = new JobManager(esJob, processManager);
 		JobDetails job = jobManager.createJob(jobConfig);
-		
+
 		LOGGER.info("Created job " + job.getId());
-		
-		try 
+
+		try
 		{
 			String input_part_1 = prelertSrcHome + "/gui/apps/autodetectAPI/test_data/flightcentre_forwards_1.csv";
 			String input_part_2 = prelertSrcHome + "/gui/apps/autodetectAPI/test_data/flightcentre_forwards_2.csv";
@@ -147,27 +148,27 @@ public class RestoreStateTest
 			fs = new FileInputStream(new File(input_part_2));
 			jobManager.submitDataLoadJob(job.getId(), fs);
 			jobManager.finishJob(job.getId());
-			
+
 			Thread.sleep(1000);
 
-			Pagination<Bucket> buckets = 
+			Pagination<Bucket> buckets =
 					jobManager.buckets(job.getId(), false, 0, 100, 0.0, 0.0);
 
 			List<Double> anomalyScores = new ArrayList<>();
 			for (Bucket bucket : buckets.getDocuments())
 			{
-				anomalyScores.add(bucket.getAnomalyScore());			
+				anomalyScores.add(bucket.getAnomalyScore());
 			}
 
 			String testResults = prelertSrcHome + "/gui/apps/autodetectAPI/test_data/engine_api_integration_test/flightcentre_split_results.json";
 
 			ObjectMapper mapper = new ObjectMapper();
-			List<Map<String,Object>> standardBuckets = mapper.readValue(new File(testResults), 
+			List<Map<String,Object>> standardBuckets = mapper.readValue(new File(testResults),
 					new TypeReference<List<Map<String,Object>>>() {});
 
 			if (standardBuckets.size() != anomalyScores.size())
 			{
-				LOGGER.error(String.format("Number of buckets returned (%d) does not match the size of " 
+				LOGGER.error(String.format("Number of buckets returned (%d) does not match the size of "
 						+ "saved results (%d)", anomalyScores.size(), standardBuckets.size()));
 							return;
 			}
@@ -175,7 +176,7 @@ public class RestoreStateTest
 			int i=0;
 			for (Map<String, Object> bucket : standardBuckets)
 			{
-				Number score = (Number)bucket.get("anomalyScore");			
+				Number score = (Number)bucket.get("anomalyScore");
 				double diff = Math.abs(score.doubleValue() - anomalyScores.get(i));
 				if (diff > 0.01)
 				{
@@ -194,5 +195,5 @@ public class RestoreStateTest
 			jobManager.deleteJob(job.getId());
 			jobManager.stop();
 		}
-	}	
+	}
 }

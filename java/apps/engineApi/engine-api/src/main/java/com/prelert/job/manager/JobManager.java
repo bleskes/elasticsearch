@@ -53,17 +53,13 @@ import com.prelert.job.JobInUseException;
 import com.prelert.job.JobStatus;
 import com.prelert.job.TooManyJobsException;
 import com.prelert.job.UnknownJobException;
-import com.prelert.job.persistence.DataPersisterFactory;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.process.ProcessManager;
-import com.prelert.job.process.ResultsReaderFactory;
 import com.prelert.job.process.exceptions.ClosedJobException;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
-import com.prelert.job.status.StatusReporterFactory;
-import com.prelert.job.usage.UsageReporterFactory;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.ErrorCode;
@@ -101,7 +97,10 @@ public class JobManager
 
     public static final String DEFAULT_RECORD_SORT_FIELD = AnomalyRecord.PROBABILITY;
 
-    private ProcessManager m_ProcessManager;
+    private static final String MAX_JOBS_FACTOR_NAME = "prelert.max.jobs.factor";
+    private static final double DEFAULT_MAX_JOBS_FACTOR = 3.0;
+
+    private final ProcessManager m_ProcessManager;
 
 
     private AtomicLong m_IdSequence;
@@ -111,15 +110,23 @@ public class JobManager
 
     private JobProvider m_JobProvider;
 
-    private DataPersisterFactory m_DataPersisterFactory;
-
+    private final int m_MaxAllowedJobs;
 
     /**
      * These default to unlimited (indicated by negative limits), but may be
      * overridden by constraints in the license key.
      */
-    private int m_MaxActiveJobs = -1;
+    private int m_LicenseJobLimit = -1;
     private int m_MaxDetectorsPerJob = -1;
+
+    /**
+     * The limit on number of partitions per job.
+     * A negative limit means unlimited.
+     * Note that the Java code can really only do anything with this if it's
+     * zero, as it doesn't count the number of distinct values of the partition
+     * field.  However, if the limit is zero it can reject any configured
+     * partition field settings.
+     */
     private int m_MaxPartitionsPerJob = -1;
 
     /**
@@ -134,19 +141,13 @@ public class JobManager
      *
      * @param jobDetailsProvider
      */
-    public JobManager(JobProvider jobProvider,
-            ResultsReaderFactory resultsReaderFactory,
-            StatusReporterFactory statusReporterFactory,
-            UsageReporterFactory usageReporterFactory,
-            DataPersisterFactory dataPersisterFactory)
+    public JobManager(JobProvider jobProvider, ProcessManager processManager)
     {
         m_JobProvider = jobProvider;
 
-        m_DataPersisterFactory = dataPersisterFactory;
+        m_ProcessManager = processManager;
 
-        m_ProcessManager = new ProcessManager(jobProvider,
-                resultsReaderFactory, statusReporterFactory,
-                usageReporterFactory, dataPersisterFactory);
+        m_MaxAllowedJobs = calculateMaxJobsAllowed();
 
         m_IdSequence = new AtomicLong();
         m_JobIdDateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
@@ -207,21 +208,11 @@ public class JobManager
      * @throws JobConfigurationException If the license is violated
      * @throws JobIdAlreadyExistsException If the alias is already taken
      */
-    public JobDetails createJob(JobConfiguration jobConfig)
-    throws UnknownJobException, IOException, TooManyJobsException,
-        JobConfigurationException, JobIdAlreadyExistsException
+    public JobDetails createJob(JobConfiguration jobConfig) throws UnknownJobException,
+            IOException, TooManyJobsException, JobConfigurationException,
+            JobIdAlreadyExistsException
     {
-        // Negative m_MaxActiveJobs means unlimited
-        if (m_MaxActiveJobs >= 0 &&
-            m_ProcessManager.numberOfRunningJobs() >= m_MaxActiveJobs)
-        {
-            throw new TooManyJobsException(m_MaxActiveJobs,
-                    "Cannot create new job - your license limits you to " +
-                    m_MaxActiveJobs + " concurrently running " +
-                    (m_MaxActiveJobs == 1 ? "job" : "jobs") +
-                    ".  You must close a job before you can create a new one.",
-                    ErrorCode.LICENSE_VIOLATION);
-        }
+        checkCreateJobForTooManyJobsAgainstLicenseLimit();
 
         // Negative m_MaxDetectorsPerJob means unlimited
         if (m_MaxDetectorsPerJob >= 0 &&
@@ -284,6 +275,25 @@ public class JobManager
         return jobDetails;
     }
 
+    private void checkCreateJobForTooManyJobsAgainstLicenseLimit() throws TooManyJobsException
+    {
+        if (areMoreJobsRunningThanLicenseLimit())
+        {
+            throw new TooManyJobsException(m_LicenseJobLimit,
+                    "Cannot create new job - your license limits you to " +
+                    m_LicenseJobLimit + " concurrently running " +
+                    (m_LicenseJobLimit == 1 ? "job" : "jobs") +
+                    ".  You must close a job before you can create a new one.",
+                    ErrorCode.LICENSE_VIOLATION);
+        }
+    }
+
+    private boolean areMoreJobsRunningThanLicenseLimit()
+    {
+        // Negative m_LicenseJobLimit means unlimited
+        return m_LicenseJobLimit >= 0 &&
+                m_ProcessManager.numberOfRunningJobs() >= m_LicenseJobLimit;
+    }
 
     /**
      * Get a single result bucket
@@ -587,7 +597,7 @@ public class JobManager
         m_ProcessManager.finishJob(jobId);
         m_JobProvider.deleteJob(jobId);
 
-        m_DataPersisterFactory.newDataPersister(jobId, LOGGER).deleteData();
+        m_ProcessManager.deletePersistedData(jobId);
 
         return true;
     }
@@ -692,19 +702,41 @@ public class JobManager
 
     private void checkTooManyJobs(String jobId) throws TooManyJobsException
     {
-        // Negative m_MaxActiveJobs means unlimited
-        if (m_MaxActiveJobs >= 0 &&
-            (m_ProcessManager.jobIsRunning(jobId) == false) &&
-            m_ProcessManager.numberOfRunningJobs() >= m_MaxActiveJobs)
+        if (m_ProcessManager.jobIsRunning(jobId))
         {
-            throw new TooManyJobsException(m_MaxActiveJobs,
+            return;
+        }
+        checkTooManyJobsAgainstHardLimit(jobId);
+        checkDataLoadForTooManyJobsAgainstLicenseLimit(jobId);
+    }
+
+    private void checkTooManyJobsAgainstHardLimit(String jobId) throws TooManyJobsException
+    {
+        if (m_ProcessManager.numberOfRunningJobs() >= m_MaxAllowedJobs)
+        {
+            throw new TooManyJobsException(m_MaxAllowedJobs,
                     "Cannot reactivate job with id '" + jobId +
-                    "' - your license limits you to " + m_MaxActiveJobs +
-                    " concurrently running jobs.  You must close a job before" +
+                    "' - no more than " + m_MaxAllowedJobs +
+                    " jobs are allowed to run concurrently. You must close a job before" +
+                    " you can reactivate a closed one.",
+                    ErrorCode.TOO_MANY_JOBS_RUNNING_CONCURRENTLY);
+        }
+    }
+
+    private void checkDataLoadForTooManyJobsAgainstLicenseLimit(String jobId)
+            throws TooManyJobsException
+    {
+        if (areMoreJobsRunningThanLicenseLimit())
+        {
+            throw new TooManyJobsException(m_LicenseJobLimit,
+                    "Cannot reactivate job with id '" + jobId +
+                    "' - your license limits you to " + m_LicenseJobLimit +
+                    " concurrently running jobs. You must close a job before" +
                     " you can reactivate a closed one.",
                     ErrorCode.LICENSE_VIOLATION);
         }
     }
+
 
     private void tryFinishingJob(String jobId) throws JobInUseException
     {
@@ -797,38 +829,6 @@ public class JobManager
     }
 
     /**
-     * Get the limit on number of active jobs.
-     * A negative limit means unlimited.
-     */
-    public int getMaxActiveJobs()
-    {
-        return m_MaxActiveJobs;
-    }
-
-    /**
-     * Get the limit on number of detectors per job.
-     * A negative limit means unlimited.
-     */
-    public int getMaxDetectorsPerJob()
-    {
-        return m_MaxDetectorsPerJob;
-    }
-
-    /**
-     * Get the limit on number of partitions per job.
-     * A negative limit means unlimited.
-     * Note that the Java code can really only do anything with this if it's
-     * zero, as it doesn't count the number of distinct values of the partition
-     * field.  However, if the limit is zero it can reject any configured
-     * partition field settings.
-     */
-    public int getMaxPartitionsPerJob()
-    {
-        return m_MaxPartitionsPerJob;
-    }
-
-
-    /**
      * Attempt to get usage and license info from the C++ process, add extra
      * fields and persist to Elasticsearch.  Any failures are logged but do not
      * otherwise impact operation of this process.  Additionally, any license
@@ -850,13 +850,13 @@ public class JobManager
             JsonNode constraint = doc.get(JOBS_LICENSE_CONSTRAINT);
             if (constraint != null)
             {
-                m_MaxActiveJobs = constraint.asInt(-1);
+                m_LicenseJobLimit = constraint.asInt(-1);
             }
             else
             {
-                m_MaxActiveJobs = -1;
+                m_LicenseJobLimit = -1;
             }
-            LOGGER.info("Max active jobs = " + m_MaxActiveJobs);
+            LOGGER.info("License job limit = " + m_LicenseJobLimit);
             constraint = doc.get(DETECTORS_LICENSE_CONSTRAINT);
             if (constraint != null)
             {
@@ -936,5 +936,32 @@ public class JobManager
     public boolean removeAlertObserver(String jobId, AlertObserver ao)
     {
         return m_ProcessManager.removeAlertObserver(jobId, ao);
+    }
+
+    private static int calculateMaxJobsAllowed()
+    {
+        int cores = Runtime.getRuntime().availableProcessors();
+        double factor = readMaxJobsFactorOrDefault();
+        return (int) Math.ceil(cores * factor);
+    }
+
+    private static double readMaxJobsFactorOrDefault()
+    {
+        String readMaxJobsFactor = System.getProperty(MAX_JOBS_FACTOR_NAME);
+        if (readMaxJobsFactor == null)
+        {
+            return DEFAULT_MAX_JOBS_FACTOR;
+        }
+        try
+        {
+            return Double.parseDouble(readMaxJobsFactor);
+        }
+        catch (NumberFormatException e)
+        {
+            LOGGER.warn(String.format(
+                    "Max jobs factor is invalid: %s. Default value of %f is used.",
+                    readMaxJobsFactor, DEFAULT_MAX_JOBS_FACTOR));
+            return DEFAULT_MAX_JOBS_FACTOR;
+        }
     }
 }

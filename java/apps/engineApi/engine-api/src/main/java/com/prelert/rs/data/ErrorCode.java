@@ -180,6 +180,12 @@ public enum ErrorCode
 	 */
 	TOO_MANY_OUT_OF_ORDER_RECORDS(30105),
 
+	 /**
+     * User is trying to upload data for a job while there are too
+     * many jobs running concurrently.
+     */
+    TOO_MANY_JOBS_RUNNING_CONCURRENTLY(30106),
+
 
 	// native process errors
 	/**
