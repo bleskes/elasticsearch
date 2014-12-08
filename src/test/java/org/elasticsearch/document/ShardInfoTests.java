@@ -103,18 +103,20 @@ public class ShardInfoTests extends ElasticsearchIntegrationTest {
 
     @Test
     public void testDeleteWithRoutingRequiredButNotSpecified() throws Exception {
-        prepareIndex(2, true);
+        int numPrimaryShards = randomIntBetween(1, 2);
+        prepareIndex(numPrimaryShards, true);
         DeleteResponse deleteResponse = client().prepareDelete("idx", "type", "1").get();
-        assertShardInfo(deleteResponse, numCopies * 2, numNodes * 2, 0);
+        assertShardInfo(deleteResponse, numCopies * numPrimaryShards, numNodes * numPrimaryShards, 0);
     }
 
     @Test
     public void testDeleteByQuery() throws Exception {
+        int numPrimaryShards = randomIntBetween(1, 2);
         prepareIndex(2);
         IndexDeleteByQueryResponse indexDeleteByQueryResponse = client().prepareDeleteByQuery("idx")
                 .setQuery(QueryBuilders.matchAllQuery())
                 .get().getIndex("idx");
-        assertShardInfo(indexDeleteByQueryResponse, numCopies * 2, numNodes * 2, 0);
+        assertShardInfo(indexDeleteByQueryResponse, numCopies * numPrimaryShards, numNodes * numPrimaryShards, 0);
     }
 
     @Test
