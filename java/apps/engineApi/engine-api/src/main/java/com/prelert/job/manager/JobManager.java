@@ -688,7 +688,12 @@ public class JobManager
         {
             return;
         }
+        checkTooManyJobsAgainstHardLimit(jobId);
+        checkTooManyJobsAgainstLicenseLimit(jobId);
+    }
 
+    private void checkTooManyJobsAgainstHardLimit(String jobId) throws TooManyJobsException
+    {
         if (m_ProcessManager.numberOfRunningJobs() >= m_MaxAllowedJobs)
         {
             throw new TooManyJobsException(m_MaxAllowedJobs,
@@ -698,8 +703,11 @@ public class JobManager
                     " you can reactivate a closed one.",
                     ErrorCode.TOO_MANY_JOBS_RUNNING_CONCURRENTLY);
         }
+    }
 
-        // Negative m_LicenseJobLimit means unlimited
+    private void checkTooManyJobsAgainstLicenseLimit(String jobId) throws TooManyJobsException
+    {
+        // Negative m_MaxActiveJobs means unlimited
         if (m_LicenseJobLimit >= 0 &&
             m_ProcessManager.numberOfRunningJobs() >= m_LicenseJobLimit)
         {
@@ -711,6 +719,7 @@ public class JobManager
                     ErrorCode.LICENSE_VIOLATION);
         }
     }
+
 
     private void tryFinishingJob(String jobId) throws JobInUseException
     {
