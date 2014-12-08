@@ -118,6 +118,15 @@ public class JobManager
      */
     private int m_LicenseJobLimit = -1;
     private int m_MaxDetectorsPerJob = -1;
+
+    /**
+     * The limit on number of partitions per job.
+     * A negative limit means unlimited.
+     * Note that the Java code can really only do anything with this if it's
+     * zero, as it doesn't count the number of distinct values of the partition
+     * field.  However, if the limit is zero it can reject any configured
+     * partition field settings.
+     */
     private int m_MaxPartitionsPerJob = -1;
 
     /**
@@ -265,7 +274,6 @@ public class JobManager
 
         return jobDetails;
     }
-
 
     private void checkCreateJobForTooManyJobsAgainstLicenseLimit() throws TooManyJobsException
     {
@@ -819,38 +827,6 @@ public class JobManager
     {
         return  m_ProcessManager.getAnalyticsVersion();
     }
-
-    /**
-     * Get the limit on number of active jobs.
-     * A negative limit means unlimited.
-     */
-    public int getMaxActiveJobs()
-    {
-        return m_LicenseJobLimit;
-    }
-
-    /**
-     * Get the limit on number of detectors per job.
-     * A negative limit means unlimited.
-     */
-    public int getMaxDetectorsPerJob()
-    {
-        return m_MaxDetectorsPerJob;
-    }
-
-    /**
-     * Get the limit on number of partitions per job.
-     * A negative limit means unlimited.
-     * Note that the Java code can really only do anything with this if it's
-     * zero, as it doesn't count the number of distinct values of the partition
-     * field.  However, if the limit is zero it can reject any configured
-     * partition field settings.
-     */
-    public int getMaxPartitionsPerJob()
-    {
-        return m_MaxPartitionsPerJob;
-    }
-
 
     /**
      * Attempt to get usage and license info from the C++ process, add extra
