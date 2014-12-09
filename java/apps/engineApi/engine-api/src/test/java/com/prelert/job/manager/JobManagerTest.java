@@ -193,7 +193,7 @@ public class JobManagerTest
                 new JobDetails("foo", new JobConfiguration()));
         givenProcessInfo(5);
         when(m_ProcessManager.jobIsRunning("foo")).thenReturn(false);
-        when(m_ProcessManager.numberOfRunningJobs()).thenReturn(3);
+        when(m_ProcessManager.numberOfRunningJobs()).thenReturn(0);
         when(m_ProcessManager.processDataLoadJob("foo", inputStream)).thenReturn(true);
         JobManager jobManager = new JobManager(m_JobProvider, m_ProcessManager);
 
