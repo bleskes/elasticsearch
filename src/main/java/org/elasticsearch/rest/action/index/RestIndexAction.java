@@ -115,9 +115,9 @@ public class RestIndexAction extends BaseRestHandler {
                 builder.field(Fields._INDEX, response.getIndex())
                         .field(Fields._TYPE, response.getType())
                         .field(Fields._ID, response.getId())
-                        .field(Fields._VERSION, response.getVersion())
-                        .value(shardInfo)
-                        .field(Fields.CREATED, response.isCreated());
+                        .field(Fields._VERSION, response.getVersion());
+                shardInfo.toXContent(builder, request);
+                builder.field(Fields.CREATED, response.isCreated());
                 builder.endObject();
                 RestStatus status = shardInfo.status();
                 if (response.isCreated()) {

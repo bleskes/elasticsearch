@@ -132,9 +132,9 @@ public class RestUpdateAction extends BaseRestHandler {
                 builder.field(Fields._INDEX, response.getIndex())
                         .field(Fields._TYPE, response.getType())
                         .field(Fields._ID, response.getId())
-                        .field(Fields._VERSION, response.getVersion())
-                        .value(shardInfo);
+                        .field(Fields._VERSION, response.getVersion());
 
+                shardInfo.toXContent(builder, request);
                 if (response.getGetResult() != null) {
                     builder.startObject(Fields.GET);
                     response.getGetResult().toXContentEmbedded(builder, request);

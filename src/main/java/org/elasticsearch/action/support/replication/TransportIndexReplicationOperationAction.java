@@ -36,7 +36,6 @@ import org.elasticsearch.cluster.routing.GroupShardsIterator;
 import org.elasticsearch.cluster.routing.ShardIterator;
 import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.index.shard.ShardId;
 import org.elasticsearch.threadpool.ThreadPool;
 
 import java.util.ArrayList;
@@ -110,7 +109,7 @@ public abstract class TransportIndexReplicationOperationAction<Request extends I
                     int index = indexCounter.getAndIncrement();
                     if (accumulateExceptions()) {
                         shardsResponses.set(index, new ShardActionResult(
-                                new DefaultShardOperationFailedException(request.index(), shardIt.shardId().id(), e)));
+                                new DefaultShardOperationFailedException(request.index(), shardIt.shardId().id(), e), shardIt));
                     }
                     returnIfNeeded();
                 }
@@ -135,21 +134,12 @@ public abstract class TransportIndexReplicationOperationAction<Request extends I
                                 // The failure doesn't include the node id, maybe add it to ShardOperationFailedException...
                                 ShardOperationFailedException sf = shardActionResult.shardFailure;
 
-                                ShardIterator thisShardIterator = null;
-                                ShardId shardId = new ShardId(sf.index(), sf.shardId());
-                                for (ShardIterator shardIterator : groups) {
-                                    if (shardIterator.shardId().equals(shardId)) {
-                                        thisShardIterator = shardIterator;
-                                        break;
-                                    }
-                                }
-
-                                assert thisShardIterator != null;
-                                for (ShardRouting shardRouting = thisShardIterator.nextOrNull(); shardRouting != null; shardRouting = thisShardIterator.nextOrNull()) {
+                                ShardIterator shardIterator = shardActionResult.shardIterator;
+                                for (ShardRouting shardRouting = shardIterator.nextOrNull(); shardRouting != null; shardRouting = shardIterator.nextOrNull()) {
                                     if (shardRouting.primary()) {
                                         failureList.add(new Failure(sf.index(), sf.shardId(), shardRouting.currentNodeId(), sf.reason(), sf.status(), true));
                                     } else {
-                                        failureList.add(new Failure(sf.index(), sf.shardId(), shardRouting.currentNodeId(), "Not executed because operation failed on primary shard", sf.status(), false));
+                                        failureList.add(new Failure(sf.index(), sf.shardId(), shardRouting.currentNodeId(), "Failed to execute on replica shard: " + sf.reason(), sf.status(), false));
                                     }
                                 }
                             } else {
@@ -205,16 +195,19 @@ public abstract class TransportIndexReplicationOperationAction<Request extends I
 
         private final ShardResponse shardResponse;
         private final ShardOperationFailedException shardFailure;
+        private final ShardIterator shardIterator;
 
         private ShardActionResult(ShardResponse shardResponse) {
             assert shardResponse != null;
             this.shardResponse = shardResponse;
             this.shardFailure = null;
+            this.shardIterator = null;
         }
 
-        private ShardActionResult(ShardOperationFailedException shardOperationFailedException) {
+        private ShardActionResult(ShardOperationFailedException shardOperationFailedException, ShardIterator shardIterator) {
             assert shardOperationFailedException != null;
             this.shardFailure = shardOperationFailedException;
+            this.shardIterator = shardIterator;
             this.shardResponse = null;
         }
 
