@@ -489,18 +489,29 @@ public class ProcessManager
             {
                 writer.writeCalcInterimMessage();
             }
-            writer.writeFlushMessage();
+            String flushId = writer.writeFlushMessage();
 
             // Check there wasn't an error in the transfer.
             // Throws if there was.
             processStillRunning(process);
+
+            process.getResultsReader().waitForFlushComplete(flushId);
         }
-        catch (IOException e)
+        catch (InterruptedException ie)
+        {
+            String msg = String.format("Interrupted while flushing process for job %s", jobId);
+
+            process.getLogger().error(msg);
+
+            throw new NativeProcessRunException(msg,
+                    ErrorCode.NATIVE_PROCESS_FLUSH_INTERRUPTED);
+        }
+        catch (IOException ioe)
         {
             String msg = String.format("Exception flushing process for job %s", jobId);
 
             StringBuilder sb = new StringBuilder(msg)
-                    .append('\n').append(e.toString()).append('\n');
+                    .append('\n').append(ioe.toString()).append('\n');
             readProcessErrorOutput(process, sb);
             process.getLogger().error(sb);
 
@@ -523,7 +534,6 @@ public class ProcessManager
      * data in which case this function should be tried again after a wait period
      * else the process is stopped successfully and ProcessStatus.COMPLETED is
      * returned.
-     *
      *
      * @param jobId
      * @return The process finished status

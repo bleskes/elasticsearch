@@ -212,6 +212,13 @@ public enum ErrorCode
 	 */
 	NATIVE_PROCESS_CONCURRENT_USE_ERROR(40103),
 
+	/**
+	 * A flush command to the native autodetect process was interrupted.
+	 * Data received prior to the flush may or may not have been processed if a
+	 * flush request returns with this error code.
+	 */
+	NATIVE_PROCESS_FLUSH_INTERRUPTED(40104),
+
 
 	// Log file reading errors
 	/**
