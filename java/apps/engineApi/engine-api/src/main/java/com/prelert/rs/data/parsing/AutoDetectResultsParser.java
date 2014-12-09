@@ -59,6 +59,7 @@ public class AutoDetectResultsParser
 {
     private List<AlertObserver> m_Observers = new ArrayList<>();
     private Set<String> m_AcknowledgedFlushes = new HashSet<>();
+    private volatile boolean m_ParsingStarted;
     private volatile boolean m_ParsingInProgress;
 
     public void addObserver(AlertObserver obs)
@@ -117,6 +118,7 @@ public class AutoDetectResultsParser
     {
         synchronized (m_AcknowledgedFlushes)
         {
+            m_ParsingStarted = true;
             m_ParsingInProgress = true;
             m_AcknowledgedFlushes.notifyAll();
         }
@@ -130,6 +132,9 @@ public class AutoDetectResultsParser
             // Don't leave any threads waiting for flushes in the lurch
             synchronized (m_AcknowledgedFlushes)
             {
+                // Leave m_ParsingStarted set to true to avoid deadlock in the
+                // case where the entire parse happens without the interested
+                // thread getting scheduled
                 m_ParsingInProgress = false;
                 m_AcknowledgedFlushes.notifyAll();
             }
@@ -162,14 +167,14 @@ public class AutoDetectResultsParser
 
     /**
      * Can be used by unit tests to ensure the pre-condition of the
-     * waitForFlushAcknowledgement() method is met.
+     * {@link #waitForFlushAcknowledgement(String) waitForFlushAcknowledgement} method is met.
      */
     void waitForParseStart()
     throws InterruptedException
     {
         synchronized (m_AcknowledgedFlushes)
         {
-            while (!m_ParsingInProgress)
+            while (!m_ParsingStarted)
             {
                 m_AcknowledgedFlushes.wait();
             }
