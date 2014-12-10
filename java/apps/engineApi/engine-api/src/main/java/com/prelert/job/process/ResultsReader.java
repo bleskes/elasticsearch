@@ -32,10 +32,14 @@ import com.prelert.rs.data.parsing.AlertObserver;
 /**
  * A runnable class that reads the autodetect results.
  * Has methods to register and remove alert observers.
+ * Also has a method to wait for a flush to be complete.
  */
 public interface ResultsReader extends Runnable
 {
-	public void addAlertObserver(AlertObserver ao);
+    public void addAlertObserver(AlertObserver ao);
 
-	public boolean removeAlertObserver(AlertObserver ao);
+    public boolean removeAlertObserver(AlertObserver ao);
+
+    public void waitForFlushComplete(String flushId)
+    throws InterruptedException;
 }

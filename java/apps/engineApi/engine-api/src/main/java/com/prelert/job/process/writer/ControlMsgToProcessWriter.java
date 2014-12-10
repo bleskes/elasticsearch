@@ -32,6 +32,7 @@ import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicLong;
 
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.input.LengthEncodedWriter;
@@ -45,12 +46,23 @@ public class ControlMsgToProcessWriter
     /**
      * This should be the same size as the buffer in the C++ autodetect process.
      */
-    private final static int FLUSH_SPACES_LENGTH = 8192;
+    private static final int FLUSH_SPACES_LENGTH = 8192;
 
     /**
      * This must match the code defined in the api::CAnomalyDetector C++ class.
      */
-    private final static String INTERIM_MESSAGE_CODE = "i";
+    private static final String FLUSH_MESSAGE_CODE = "f";
+
+    /**
+     * This must match the code defined in the api::CAnomalyDetector C++ class.
+     */
+    private static final String INTERIM_MESSAGE_CODE = "i";
+
+    /**
+     * An number to uniquely identify each flush so that subsequent code can
+     * wait for acknowledgement of the correct flush.
+     */
+    private static AtomicLong ms_FlushNumber = new AtomicLong(1);
 
     private final LengthEncodedWriter m_LengthEncodedWriter;
     private final AnalysisConfig m_AnalysisConfig;
@@ -77,14 +89,24 @@ public class ControlMsgToProcessWriter
 
     /**
      * Send a flush message to the C++ autodetect process.
+     * This actually consists of two messages: one to carry the flush ID and the
+     * other (which might not be processed until much later) to fill the buffers
+     * and force prior messages through.
+     * @return an ID for this flush that will be echoed back by the C++
+     * autodetect process once it is complete.
      * @throws IOException
      */
-    public void writeFlushMessage() throws IOException
+    public String writeFlushMessage() throws IOException
     {
+        String flushId = Long.toString(ms_FlushNumber.getAndIncrement());
+        writeMessage(FLUSH_MESSAGE_CODE + flushId);
+
         char[] spaces = new char[FLUSH_SPACES_LENGTH];
         Arrays.fill(spaces, ' ');
         writeMessage(new String(spaces));
+
         m_LengthEncodedWriter.flush();
+        return flushId;
     }
 
 
@@ -100,6 +122,8 @@ public class ControlMsgToProcessWriter
     {
         List<String> analysisFields = m_AnalysisConfig.analysisFields();
 
+        // The fields consist of all the analysis fields plus the time and the
+        // control field, hence + 2
         m_LengthEncodedWriter.writeNumFields(analysisFields.size() + 2);
 
         // Write blank values for all analysis fields and the time
