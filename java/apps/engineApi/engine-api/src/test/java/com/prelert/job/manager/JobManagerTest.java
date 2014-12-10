@@ -85,16 +85,16 @@ public class JobManagerTest
     }
 
     @Test
-    public void testSubmitDataLoadJob_GivenProcessIsRunningMoreJobsThanLicenseAllows()
+    public void testSubmitDataLoadJob_GivenProcessIsRunningAsManyJobsAsLicenseAllows()
             throws JsonParseException, UnknownJobException, NativeProcessRunException,
             MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException,
             OutOfOrderRecordsException, TooManyJobsException
     {
         when(m_JobProvider.getJobDetails("foo")).thenReturn(
                 new JobDetails("foo", new JobConfiguration()));
-        givenProcessInfo(5);
+        givenProcessInfo(2);
         when(m_ProcessManager.jobIsRunning("foo")).thenReturn(false);
-        when(m_ProcessManager.numberOfRunningJobs()).thenReturn(5);
+        when(m_ProcessManager.numberOfRunningJobs()).thenReturn(2);
         JobManager jobManager = new JobManager(m_JobProvider, m_ProcessManager);
 
         m_ExpectedException.expect(TooManyJobsException.class);
