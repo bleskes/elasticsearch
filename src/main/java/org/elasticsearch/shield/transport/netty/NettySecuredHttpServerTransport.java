@@ -18,7 +18,6 @@
 package org.elasticsearch.shield.transport.netty;
 
 import org.elasticsearch.common.inject.Inject;
-import org.elasticsearch.common.inject.internal.Nullable;
 import org.elasticsearch.common.netty.channel.ChannelPipeline;
 import org.elasticsearch.common.netty.channel.ChannelPipelineFactory;
 import org.elasticsearch.common.netty.handler.ssl.SslHandler;
@@ -27,7 +26,6 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.BigArrays;
 import org.elasticsearch.http.netty.NettyHttpServerTransport;
 import org.elasticsearch.shield.ssl.SSLService;
-import org.elasticsearch.shield.ssl.SSLServiceProvider;
 import org.elasticsearch.shield.transport.filter.IPFilter;
 
 import javax.net.ssl.SSLEngine;
@@ -38,14 +36,16 @@ import javax.net.ssl.SSLEngine;
 public class NettySecuredHttpServerTransport extends NettyHttpServerTransport {
 
     private final IPFilter ipFilter;
-    private final @Nullable SSLService sslService;
+    private final SSLService sslService;
+    private final boolean ssl;
 
     @Inject
     public NettySecuredHttpServerTransport(Settings settings, NetworkService networkService, BigArrays bigArrays,
-                                           IPFilter ipFilter, SSLServiceProvider sslServiceProvider) {
+                                           IPFilter ipFilter, SSLService sslService) {
         super(settings, networkService, bigArrays);
         this.ipFilter = ipFilter;
-        this.sslService = settings.getAsBoolean("shield.http.ssl", false) ? sslServiceProvider.get() : null;
+        this.ssl = settings.getAsBoolean("shield.http.ssl", false);
+        this.sslService =  sslService;
     }
 
     @Override
@@ -62,7 +62,7 @@ public class NettySecuredHttpServerTransport extends NettyHttpServerTransport {
         @Override
         public ChannelPipeline getPipeline() throws Exception {
             ChannelPipeline pipeline = super.getPipeline();
-            if (sslService != null) {
+            if (ssl) {
                 SSLEngine engine = sslService.createSSLEngine();
                 engine.setUseClientMode(false);
                 engine.setNeedClientAuth(settings.getAsBoolean("shield.http.ssl.client.auth", false));
