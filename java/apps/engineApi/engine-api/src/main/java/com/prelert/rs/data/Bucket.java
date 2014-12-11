@@ -402,6 +402,22 @@ public class Bucket
                                 + " as an int");
                     }
                     break;
+                case IS_INTERIM:
+                    token = parser.nextToken();
+                    if (token == JsonToken.VALUE_TRUE)
+                    {
+                        bucket.setInterim(true);
+                    }
+                    else if (token == JsonToken.VALUE_FALSE)
+                    {
+                        bucket.setInterim(false);
+                    }
+                    else
+                    {
+                        LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
+                                + " as a boolean");
+                    }
+                    break;
                 case DETECTORS:
                     token = parser.nextToken();
                     if (token != JsonToken.START_ARRAY)
@@ -422,7 +438,7 @@ public class Bucket
                     break;
                 default:
                     LOGGER.warn(String.format("Parse error unknown field in Bucket %s:%s",
-                            fieldName, parser.nextTextValue()));
+                            fieldName, parser.nextToken().asString()));
                     break;
                 }
                 break;

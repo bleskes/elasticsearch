@@ -579,6 +579,22 @@ public class AnomalyRecord
                                 + " as a string");
                     }
                     break;
+                case IS_INTERIM:
+                    token = parser.nextToken();
+                    if (token == JsonToken.VALUE_TRUE)
+                    {
+                        record.setInterim(true);
+                    }
+                    else if (token == JsonToken.VALUE_FALSE)
+                    {
+                        record.setInterim(false);
+                    }
+                    else
+                    {
+                        LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
+                                + " as a boolean");
+                    }
+                    break;
                 case CAUSES:
                     token = parser.nextToken();
                     if (token != JsonToken.START_ARRAY)
@@ -599,7 +615,7 @@ public class AnomalyRecord
                     break;
                 default:
                     LOGGER.warn(String.format("Parse error unknown field in Anomaly Record %s:%s",
-                            fieldName, parser.nextTextValue()));
+                            fieldName, parser.nextToken().asString()));
                     break;
                 }
                 break;
