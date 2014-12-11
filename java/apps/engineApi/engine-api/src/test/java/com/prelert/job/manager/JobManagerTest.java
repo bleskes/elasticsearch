@@ -99,7 +99,7 @@ public class JobManagerTest
 
         m_ExpectedException.expect(TooManyJobsException.class);
         m_ExpectedException.expectMessage("Cannot reactivate job with id 'foo' - your license "
-                + "limits you to 5 concurrently running jobs. You must close a job before you "
+                + "limits you to 2 concurrently running jobs. You must close a job before you "
                 + "can reactivate a closed one.");
         m_ExpectedException.expect(ErrorCodeMatcher
                 .hasErrorCode(ErrorCode.LICENSE_VIOLATION));
