@@ -63,137 +63,137 @@ import com.prelert.rs.data.Pagination;
 
 public class RestoreStateTest
 {
-	private static final Logger LOGGER = Logger.getLogger(RestoreStateTest.class);
+    private static final Logger LOGGER = Logger.getLogger(RestoreStateTest.class);
 
-	public static final String DEFAULT_CLUSTER_NAME = "prelert";
+    public static final String DEFAULT_CLUSTER_NAME = "prelert";
 
-	/**
-	 * Elasticsearch must be running for this test.
-	 *
-	 * @param args
-	 * @throws IOException
-	 * @throws UnconfiguredJobException
-	 * @throws NativeProcessRunException
-	 * @throws InterruptedException
-	 * @throws UnknownJobException
-	 * @throws MissingFieldException
-	 * @throws HighProportionOfBadTimestampsException
-	 * @throws OutOfOrderRecordsException
-	 * @throws JobConfigurationException If the license is violated
-	 * @throws TooManyJobsException If the license is violated
-	 * @throws JobIdAlreadyExistsException
-	 */
-	public static void main(String[] args)
-	throws IOException, NativeProcessRunException, UnknownJobException,
-		InterruptedException, JobInUseException, MissingFieldException,
-		HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
-		JobConfigurationException, TooManyJobsException, JobIdAlreadyExistsException
-	{
-		final String prelertSrcHome = System.getProperty("prelert.src.home");
-		if (prelertSrcHome == null)
-		{
-			LOGGER.error("Error property prelert.src.home is not set");
-			return;
-		}
-		// configure log4j
-		ConsoleAppender console = new ConsoleAppender();
-		console.setLayout(new PatternLayout("%d [%p|%c|%C{1}] %m%n"));
-		console.setThreshold(Level.INFO);
-		console.activateOptions();
-		Logger.getRootLogger().addAppender(console);
+    /**
+     * Elasticsearch must be running for this test.
+     *
+     * @param args
+     * @throws IOException
+     * @throws UnconfiguredJobException
+     * @throws NativeProcessRunException
+     * @throws InterruptedException
+     * @throws UnknownJobException
+     * @throws MissingFieldException
+     * @throws HighProportionOfBadTimestampsException
+     * @throws OutOfOrderRecordsException
+     * @throws JobConfigurationException If the license is violated
+     * @throws TooManyJobsException If the license is violated
+     * @throws JobIdAlreadyExistsException
+     */
+    public static void main(String[] args)
+    throws IOException, NativeProcessRunException, UnknownJobException,
+        InterruptedException, JobInUseException, MissingFieldException,
+        HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
+        JobConfigurationException, TooManyJobsException, JobIdAlreadyExistsException
+    {
+        final String prelertSrcHome = System.getProperty("prelert.src.home");
+        if (prelertSrcHome == null)
+        {
+            LOGGER.error("Error property prelert.src.home is not set");
+            return;
+        }
+        // configure log4j
+        ConsoleAppender console = new ConsoleAppender();
+        console.setLayout(new PatternLayout("%d [%p|%c|%C{1}] %m%n"));
+        console.setThreshold(Level.INFO);
+        console.activateOptions();
+        Logger.getRootLogger().addAppender(console);
 
 
-		Detector detector = new Detector();
-		detector.setFieldName("responsetime");
-		detector.setByFieldName("airline");
-		List<Detector> d = new ArrayList<>();
-		d.add(detector);
-		AnalysisConfig config = new AnalysisConfig();
-		config.setDetectors(d);
-		config.setBucketSpan(3600L);
+        Detector detector = new Detector();
+        detector.setFieldName("responsetime");
+        detector.setByFieldName("airline");
+        List<Detector> d = new ArrayList<>();
+        d.add(detector);
+        AnalysisConfig config = new AnalysisConfig();
+        config.setDetectors(d);
+        config.setBucketSpan(3600L);
 
-		DataDescription dd = new DataDescription();
-		dd.setFieldDelimiter(',');
+        DataDescription dd = new DataDescription();
+        dd.setFieldDelimiter(',');
 
-		JobConfiguration jobConfig = new JobConfiguration.JobConfigurationBuilder(config)
-				.dataDescription(dd)
-				.build();
+        JobConfiguration jobConfig = new JobConfiguration.JobConfigurationBuilder(config)
+                .dataDescription(dd)
+                .build();
 
-		String clusterName = DEFAULT_CLUSTER_NAME;
-		if (args.length > 0)
-		{
-			clusterName = args[0];
-		}
-		LOGGER.info("Using Elasticsearch cluster " + clusterName);
+        String clusterName = DEFAULT_CLUSTER_NAME;
+        if (args.length > 0)
+        {
+            clusterName = args[0];
+        }
+        LOGGER.info("Using Elasticsearch cluster " + clusterName);
 
-		ElasticsearchJobProvider esJob = new ElasticsearchJobProvider(clusterName);
-		ProcessManager processManager = new ProcessManager(esJob, null, null, null, null);
-		JobManager jobManager = new JobManager(esJob, processManager);
-		JobDetails job = jobManager.createJob(jobConfig);
+        ElasticsearchJobProvider esJob = new ElasticsearchJobProvider(clusterName);
+        ProcessManager processManager = new ProcessManager(esJob, null, null, null, null);
+        JobManager jobManager = new JobManager(esJob, processManager);
+        JobDetails job = jobManager.createJob(jobConfig);
 
-		LOGGER.info("Created job " + job.getId());
+        LOGGER.info("Created job " + job.getId());
 
-		try
-		{
-			String input_part_1 = prelertSrcHome + "/gui/apps/autodetectAPI/test_data/flightcentre_forwards_1.csv";
-			String input_part_2 = prelertSrcHome + "/gui/apps/autodetectAPI/test_data/flightcentre_forwards_2.csv";
+        try
+        {
+            String input_part_1 = prelertSrcHome + "/gui/apps/autodetectAPI/test_data/flightcentre_forwards_1.csv";
+            String input_part_2 = prelertSrcHome + "/gui/apps/autodetectAPI/test_data/flightcentre_forwards_2.csv";
 
-			InputStream fs = new FileInputStream(new File(input_part_1));
-			jobManager.submitDataLoadJob(job.getId(), fs);
-			jobManager.finishJob(job.getId());
+            InputStream fs = new FileInputStream(new File(input_part_1));
+            jobManager.submitDataLoadJob(job.getId(), fs);
+            jobManager.finishJob(job.getId());
 
-			Thread.sleep(2000);
+            Thread.sleep(2000);
 
-			// now send the next part
-			fs = new FileInputStream(new File(input_part_2));
-			jobManager.submitDataLoadJob(job.getId(), fs);
-			jobManager.finishJob(job.getId());
+            // now send the next part
+            fs = new FileInputStream(new File(input_part_2));
+            jobManager.submitDataLoadJob(job.getId(), fs);
+            jobManager.finishJob(job.getId());
 
-			Thread.sleep(1000);
+            Thread.sleep(1000);
 
-			Pagination<Bucket> buckets =
-					jobManager.buckets(job.getId(), false, 0, 100, 0.0, 0.0);
+            Pagination<Bucket> buckets =
+                    jobManager.buckets(job.getId(), false, false, 0, 100, 0.0, 0.0);
 
-			List<Double> anomalyScores = new ArrayList<>();
-			for (Bucket bucket : buckets.getDocuments())
-			{
-				anomalyScores.add(bucket.getAnomalyScore());
-			}
+            List<Double> anomalyScores = new ArrayList<>();
+            for (Bucket bucket : buckets.getDocuments())
+            {
+                anomalyScores.add(bucket.getAnomalyScore());
+            }
 
-			String testResults = prelertSrcHome + "/gui/apps/autodetectAPI/test_data/engine_api_integration_test/flightcentre_split_results.json";
+            String testResults = prelertSrcHome + "/gui/apps/autodetectAPI/test_data/engine_api_integration_test/flightcentre_split_results.json";
 
-			ObjectMapper mapper = new ObjectMapper();
-			List<Map<String,Object>> standardBuckets = mapper.readValue(new File(testResults),
-					new TypeReference<List<Map<String,Object>>>() {});
+            ObjectMapper mapper = new ObjectMapper();
+            List<Map<String,Object>> standardBuckets = mapper.readValue(new File(testResults),
+                    new TypeReference<List<Map<String,Object>>>() {});
 
-			if (standardBuckets.size() != anomalyScores.size())
-			{
-				LOGGER.error(String.format("Number of buckets returned (%d) does not match the size of "
-						+ "saved results (%d)", anomalyScores.size(), standardBuckets.size()));
-							return;
-			}
+            if (standardBuckets.size() != anomalyScores.size())
+            {
+                LOGGER.error(String.format("Number of buckets returned (%d) does not match the size of "
+                        + "saved results (%d)", anomalyScores.size(), standardBuckets.size()));
+                            return;
+            }
 
-			int i=0;
-			for (Map<String, Object> bucket : standardBuckets)
-			{
-				Number score = (Number)bucket.get("anomalyScore");
-				double diff = Math.abs(score.doubleValue() - anomalyScores.get(i));
-				if (diff > 0.01)
-				{
-					LOGGER.error(String.format("Anomaly score does not equal "
-							+ "expected anomaly score %d !+ %d", anomalyScores.get(i), score));
+            int i=0;
+            for (Map<String, Object> bucket : standardBuckets)
+            {
+                Number score = (Number)bucket.get("anomalyScore");
+                double diff = Math.abs(score.doubleValue() - anomalyScores.get(i));
+                if (diff > 0.01)
+                {
+                    LOGGER.error(String.format("Anomaly score does not equal "
+                            + "expected anomaly score %d !+ %d", anomalyScores.get(i), score));
 
-					return;
-				}
+                    return;
+                }
 
-				i++;
-			}
+                i++;
+            }
 
-		}
-		finally
-		{
-			jobManager.deleteJob(job.getId());
-			jobManager.stop();
-		}
-	}
+        }
+        finally
+        {
+            jobManager.deleteJob(job.getId());
+            jobManager.stop();
+        }
+    }
 }

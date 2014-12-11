@@ -313,6 +313,13 @@ public class AutoDetectResultsParser
 
     private void notifyObservers(Bucket bucket)
     {
+        // Never alert on interim results
+        if (bucket.isInterim() != null &&
+            bucket.isInterim() == true)
+        {
+            return;
+        }
+
         List<AlertObserver> observersToFire = new ArrayList<>();
 
         // one-time alerts so remove them from the list before firing

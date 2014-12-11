@@ -302,15 +302,17 @@ public class JobManager
      * @param bucketId
      * @param expand Include anomaly records. If false the bucket's records
      *  are set to <code>null</code> so they aren't serialised
+     * @param includeInterim Include interim results
      * @return
      * @throws NativeProcessRunException
      * @throws UnknownJobException
      */
     public SingleDocument<Bucket> bucket(String jobId,
-            String bucketId, boolean expand)
+            String bucketId, boolean expand, boolean includeInterim)
     throws NativeProcessRunException, UnknownJobException
     {
-        SingleDocument<Bucket> bucket = m_JobProvider.bucket(jobId, bucketId, expand);
+        SingleDocument<Bucket> bucket = m_JobProvider.bucket(jobId,
+                bucketId, expand, includeInterim);
 
         if (bucket.isExists() && !expand)
         {
@@ -327,6 +329,7 @@ public class JobManager
      * @param jobId
      * @param expand Include anomaly records. If false the bucket's records
      *  are set to <code>null</code> so they aren't serialised
+     * @param includeInterim Include interim results
      * @param skip
      * @param take
      * @param anomalyScoreThreshold
@@ -336,12 +339,12 @@ public class JobManager
      * @throws NativeProcessRunException
      */
     public Pagination<Bucket> buckets(String jobId,
-            boolean expand, int skip, int take,
+            boolean expand, boolean includeInterim, int skip, int take,
             double anomalyScoreThreshold, double normalizedProbabilityThreshold)
     throws UnknownJobException, NativeProcessRunException
     {
-        Pagination<Bucket> buckets = m_JobProvider.buckets(jobId,
-                expand, skip, take, anomalyScoreThreshold, normalizedProbabilityThreshold);
+        Pagination<Bucket> buckets = m_JobProvider.buckets(jobId, expand,
+                includeInterim, skip, take, anomalyScoreThreshold, normalizedProbabilityThreshold);
 
         if (!expand)
         {
@@ -360,6 +363,7 @@ public class JobManager
      * @param jobId
      * @param expand Include anomaly records. If false the bucket's records
      *  are set to <code>null</code> so they aren't serialised
+     * @param includeInterim Include interim results
      * @param skip
      * @param take
      * @param startEpochMs Return buckets starting at this time
@@ -371,12 +375,12 @@ public class JobManager
      * @throws NativeProcessRunException
      */
     public Pagination<Bucket> buckets(String jobId,
-            boolean expand, int skip, int take, long startEpochMs, long endBucketMs,
+            boolean expand, boolean includeInterim, int skip, int take, long startEpochMs, long endBucketMs,
             double anomalyScoreThreshold, double normalizedProbabilityThreshold)
     throws UnknownJobException, NativeProcessRunException
     {
         Pagination<Bucket> buckets =  m_JobProvider.buckets(jobId, expand,
-                skip, take, startEpochMs, endBucketMs,
+                includeInterim, skip, take, startEpochMs, endBucketMs,
                 anomalyScoreThreshold, normalizedProbabilityThreshold);
 
         if (!expand)
@@ -406,7 +410,7 @@ public class JobManager
             int skip, int take)
     throws NativeProcessRunException, UnknownJobException
     {
-        return records(jobId, skip, take, DEFAULT_RECORD_SORT_FIELD, true, 0.0, 0.0);
+        return records(jobId, skip, take, false, DEFAULT_RECORD_SORT_FIELD, true, 0.0, 0.0);
     }
 
 
@@ -428,7 +432,7 @@ public class JobManager
             int skip, int take, long epochStartMs, long epochEndMs)
     throws NativeProcessRunException, UnknownJobException
     {
-        return records(jobId, skip, take, epochStartMs, epochEndMs,
+        return records(jobId, skip, take, epochStartMs, epochEndMs, false,
                 DEFAULT_RECORD_SORT_FIELD, true, 0.0, 0.0);
     }
 
@@ -440,6 +444,7 @@ public class JobManager
      * @param skip Skip the first N records. This parameter is for paging
      * results if not required set to 0.
      * @param take Take only this number of records
+     * @param includeInterim Include interim results
      * @param sortField The field to sort by
      * @param sortDescending
      * @param anomalyScoreThreshold Return only buckets with an anomalyScore >=
@@ -452,12 +457,12 @@ public class JobManager
      * @throws UnknownJobException
      */
     public Pagination<AnomalyRecord> records(String jobId,
-            int skip, int take, String sortField, boolean sortDescending,
+            int skip, int take, boolean includeInterim, String sortField, boolean sortDescending,
             double anomalyScoreThreshold, double normalizedProbabilityThreshold)
     throws NativeProcessRunException, UnknownJobException
     {
         return m_JobProvider.records(jobId,
-                skip, take, sortField, sortDescending,
+                skip, take, includeInterim, sortField, sortDescending,
                 anomalyScoreThreshold, normalizedProbabilityThreshold);
     }
 
@@ -471,6 +476,7 @@ public class JobManager
      * @param take
      * @param epochStartMs
      * @param epochEndMs
+     * @param includeInterim Include interim results
      * @param sortField
      * @param sortDescending
      * @param anomalyScoreThreshold Return only buckets with an anomalyScore >=
@@ -484,12 +490,12 @@ public class JobManager
      */
     public Pagination<AnomalyRecord> records(String jobId,
             int skip, int take, long epochStartMs, long epochEndMs,
-            String sortField, boolean sortDescending,
+            boolean includeInterim, String sortField, boolean sortDescending,
             double anomalyScoreThreshold, double normalizedProbabilityThreshold)
     throws NativeProcessRunException, UnknownJobException
     {
-        return m_JobProvider.records(jobId,
-                skip, take, epochStartMs, epochEndMs, sortField, sortDescending,
+        return m_JobProvider.records(jobId, skip, take,
+                epochStartMs, epochEndMs, includeInterim, sortField, sortDescending,
                 anomalyScoreThreshold, normalizedProbabilityThreshold);
     }
 
