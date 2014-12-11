@@ -112,10 +112,10 @@ public class ElasticsearchJobProvider implements JobProvider
     private static final List<String> SECONDARY_SORT = new ArrayList<>();
 
 
-    private Node m_Node;
-    private Client m_Client;
+    private final Node m_Node;
+    private final Client m_Client;
 
-    private ObjectMapper m_ObjectMapper;
+    private final ObjectMapper m_ObjectMapper;
 
     public ElasticsearchJobProvider(String elasticSearchClusterName)
     {
@@ -175,15 +175,9 @@ public class ElasticsearchJobProvider implements JobProvider
         m_Node.close();
     }
 
-
     public Client getClient()
     {
         return m_Client;
-    }
-
-    public Node getNode()
-    {
-        return m_Node;
     }
 
     /**
@@ -425,7 +419,6 @@ public class ElasticsearchJobProvider implements JobProvider
             try
             {
                 GetField f = response.getField(fieldName);
-                if (f != null)
                 return (f != null) ? (V)f.getValue() : null;
             }
             catch (ClassCastException e)
