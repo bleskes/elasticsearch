@@ -59,11 +59,11 @@ import com.prelert.rs.data.ErrorCode;
  */
 public class Normaliser
 {
-	private String m_JobId;
+	private final String m_JobId;
 
-	private JobProvider m_JobProvider;
+	private final JobProvider m_JobProvider;
 
-	private Logger m_Logger;
+	private final Logger m_Logger;
 
 	public Normaliser(String jobId, JobProvider jobProvider,
 			Logger logger)
