@@ -65,6 +65,22 @@ public class NormalisedResultTest
     }
 
     @Test
+    public void testCopyConstructor()
+    {
+        NormalisedResult original = new NormalisedResult();
+        original.setId("foo");
+        original.setRawAnomalyScore(42.0);
+        original.setNormalizedSysChangeScore(43.0);
+        original.setNormalizedProbability(0.01);
+
+        NormalisedResult copy = new NormalisedResult(original);
+        assertEquals("foo", copy.getId());
+        assertEquals(42.0, copy.getRawAnomalyScore(), ERROR);
+        assertEquals(43.0, copy.getNormalizedSysChangeScore(), ERROR);
+        assertEquals(0.01, copy.getNormalizedProbability(), ERROR);
+    }
+
+    @Test
     public void testParseJson_GivenEmptyInput() throws JsonParseException, IOException
     {
         String input = "";
