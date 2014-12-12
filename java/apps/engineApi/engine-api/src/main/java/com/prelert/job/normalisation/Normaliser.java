@@ -63,13 +63,21 @@ public class Normaliser
 
 	private final JobProvider m_JobProvider;
 
+	private final NormaliserProcessFactory m_ProcessFactory;
+
 	private final Logger m_Logger;
 
-	public Normaliser(String jobId, JobProvider jobProvider,
-			Logger logger)
+    public Normaliser(String jobId, JobProvider jobProvider, Logger logger)
+    {
+        this(jobId, jobProvider, new NormaliserProcessFactory(), logger);
+    }
+
+    Normaliser(String jobId, JobProvider jobProvider,
+            NormaliserProcessFactory processFactory, Logger logger)
 	{
 		m_JobId = jobId;
 		m_JobProvider = jobProvider;
+		m_ProcessFactory = processFactory;
 		m_Logger = logger;
 	}
 
@@ -514,11 +522,8 @@ public class Normaliser
 	{
 		try
 		{
-			Process proc = ProcessCtrl.buildNormaliser(m_JobId,
-					sysChangeState, unusualBehaviourState,
-					bucketSpan,  m_Logger);
-
-			return new NormaliserProcess(proc);
+            return m_ProcessFactory.create(m_JobId, sysChangeState, unusualBehaviourState,
+                    bucketSpan, m_Logger);
 		}
 		catch (IOException e)
 		{
