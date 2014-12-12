@@ -815,8 +815,8 @@ public class JobsTest implements Closeable
 				
 				int start = Math.max(0,  buckets.getSkip() - buckets.getTake());
 				String prevPageUrl = String.format(
-						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&anomalyScore=0.0&maxNormalizedProbability=0.0", 
-						baseUrl, jobId,  start, buckets.getTake(), false);
+						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&includeInterim=%b&anomalyScore=0.0&maxNormalizedProbability=0.0", 
+						baseUrl, jobId,  start, buckets.getTake(), false, false);
 				
 				test(prevPageUrl.equals(buckets.getPreviousPage().toString()));
 			}
@@ -831,8 +831,8 @@ public class JobsTest implements Closeable
 			{
 				int start = Math.max(0,  buckets.getSkip() + buckets.getTake());
 				String nextPageUrl = String.format(
-						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&anomalyScore=0.0&maxNormalizedProbability=0.0", 
-						baseUrl, jobId, start, buckets.getTake(), false);
+						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&includeInterim=%b&anomalyScore=0.0&maxNormalizedProbability=0.0", 
+						baseUrl, jobId, start, buckets.getTake(), false, false);
 
 				test(nextPageUrl.equals(buckets.getNextPage().toString()));
 			}
@@ -891,8 +891,8 @@ public class JobsTest implements Closeable
 				
 				int start = Math.max(0,  buckets.getSkip() - buckets.getTake());
 				String prevPageUrl = String.format(
-						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&anomalyScore=0.0&maxNormalizedProbability=0.0", 
-						baseUrl, jobId, start, buckets.getTake(), true);
+						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&includeInterim=%b&anomalyScore=0.0&maxNormalizedProbability=0.0", 
+						baseUrl, jobId, start, buckets.getTake(), true, false);
 
 				test(prevPageUrl.equals(buckets.getPreviousPage().toString()));						
 			}
@@ -906,8 +906,8 @@ public class JobsTest implements Closeable
 			{
 				int start = Math.max(0,  buckets.getSkip() + buckets.getTake());
 				String nextPageUrl = String.format(
-						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&anomalyScore=0.0&maxNormalizedProbability=0.0", 
-						baseUrl, jobId, start, buckets.getTake(), true);
+						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&includeInterim=%b&anomalyScore=0.0&maxNormalizedProbability=0.0", 
+						baseUrl, jobId, start, buckets.getTake(), true, false);
 
 				test(nextPageUrl.equals(buckets.getNextPage().toString()));
 			}
