@@ -124,94 +124,16 @@ public class NormalisedResult
                     switch (fieldName)
                     {
                         case RAW_ANOMALY_SCORE:
-                            // TODO this is string should be output as a double
-                            // if (token == JsonToken.VALUE_NUMBER_FLOAT ||
-                            // token == JsonToken.VALUE_NUMBER_INT)
-                            // {
-                            // result.setRawAnomalyScore(parser.getDoubleValue());
-                            // }
-
-                            if (token == JsonToken.VALUE_STRING)
-                            {
-                                String val = parser.getValueAsString();
-                                if (val.isEmpty() == false)
-                                {
-                                    try
-                                    {
-                                        result.setRawAnomalyScore(Double.parseDouble(val));
-                                    }
-                                    catch (NumberFormatException nfe)
-                                    {
-                                        logger.warn("Cannot parse " + RAW_ANOMALY_SCORE + " : "
-                                                + parser.getText() + " as a double");
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                logger.warn("Cannot parse " + RAW_ANOMALY_SCORE + " : "
-                                        + parser.getText() + " as a double");
-                            }
+                            result.setRawAnomalyScore(parseStringValueAsDoubleOrZero(token, parser,
+                                    RAW_ANOMALY_SCORE, logger));
                             break;
                         case SYS_CHANGE_SCORE:
-                            // TODO this is string should be output as a double
-                            // if (token == JsonToken.VALUE_NUMBER_FLOAT ||
-                            // token == JsonToken.VALUE_NUMBER_INT)
-                            // {
-                            // result.setNormalizedSysChangeScore(parser.getDoubleValue());
-                            // }
-
-                            if (token == JsonToken.VALUE_STRING)
-                            {
-                                String val = parser.getValueAsString();
-                                if (val.isEmpty() == false)
-                                {
-                                    try
-                                    {
-                                        result.setNormalizedSysChangeScore(Double.parseDouble(val));
-                                    }
-                                    catch (NumberFormatException nfe)
-                                    {
-                                        logger.warn("Cannot parse " + SYS_CHANGE_SCORE + " : "
-                                                + parser.getText() + " as a double");
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                logger.warn("Cannot parse " + SYS_CHANGE_SCORE + " : "
-                                        + parser.getText() + " as a double");
-                            }
+                            result.setNormalizedSysChangeScore(parseStringValueAsDoubleOrZero(
+                                    token, parser, SYS_CHANGE_SCORE, logger));
                             break;
                         case NORMALIZED_PROBABILITY:
-                            // TODO this is string should be output as a double
-                            // if (token == JsonToken.VALUE_NUMBER_FLOAT ||
-                            // token == JsonToken.VALUE_NUMBER_INT)
-                            // {
-                            // result.setNormalizedProbability(parser.getDoubleValue());
-                            // }
-
-                            if (token == JsonToken.VALUE_STRING)
-                            {
-                                String val = parser.getValueAsString();
-                                if (val.isEmpty() == false)
-                                {
-                                    try
-                                    {
-                                        result.setNormalizedProbability(Double.parseDouble(val));
-                                    }
-                                    catch (NumberFormatException nfe)
-                                    {
-                                        logger.warn("Cannot parse " + NORMALIZED_PROBABILITY
-                                                + " : " + parser.getText() + " as a double");
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                logger.warn("Cannot parse " + NORMALIZED_PROBABILITY + " : "
-                                        + parser.getText() + " as a double");
-                            }
+                            result.setNormalizedProbability(parseStringValueAsDoubleOrZero(
+                                    token, parser, NORMALIZED_PROBABILITY, logger));
                             break;
                         case ID:
                             result.setId(parser.getValueAsString());
@@ -233,5 +155,37 @@ public class NormalisedResult
         }
 
         return result;
+    }
+
+    private static double parseStringValueAsDoubleOrZero(JsonToken token, JsonParser parser,
+            String key, Logger logger) throws JsonParseException, IOException
+    {
+        // TODO this is string should be output as a double
+        // if (token == JsonToken.VALUE_NUMBER_FLOAT ||
+        //     token == JsonToken.VALUE_NUMBER_INT)
+        // {
+        //     return parser.getDoubleValue();
+        // }
+
+        if (token == JsonToken.VALUE_STRING)
+        {
+            String val = parser.getValueAsString();
+            if (val.isEmpty() == false)
+            {
+                try
+                {
+                    return Double.parseDouble(val);
+                }
+                catch (NumberFormatException nfe)
+                {
+                    logger.warn("Cannot parse " + key + " : " + parser.getText() + " as a double");
+                }
+            }
+        }
+        else
+        {
+            logger.warn("Cannot parse " + key + " : " + parser.getText() + " as a double");
+        }
+        return 0.0;
     }
 }
