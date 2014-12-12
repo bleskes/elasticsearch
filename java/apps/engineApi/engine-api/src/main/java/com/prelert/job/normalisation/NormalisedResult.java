@@ -121,29 +121,7 @@ public class NormalisedResult
                 case FIELD_NAME:
                     String fieldName = parser.getCurrentName();
                     token = parser.nextToken();
-                    switch (fieldName)
-                    {
-                        case RAW_ANOMALY_SCORE:
-                            result.setRawAnomalyScore(parseStringValueAsDoubleOrZero(token, parser,
-                                    RAW_ANOMALY_SCORE, logger));
-                            break;
-                        case SYS_CHANGE_SCORE:
-                            result.setNormalizedSysChangeScore(parseStringValueAsDoubleOrZero(
-                                    token, parser, SYS_CHANGE_SCORE, logger));
-                            break;
-                        case NORMALIZED_PROBABILITY:
-                            result.setNormalizedProbability(parseStringValueAsDoubleOrZero(
-                                    token, parser, NORMALIZED_PROBABILITY, logger));
-                            break;
-                        case ID:
-                            result.setId(parser.getValueAsString());
-                            break;
-                        default:
-                            logger.trace(String.format(
-                                    "Parsed unknown field in NormalisedResult %s:%s", fieldName,
-                                    parser.getValueAsString()));
-                            break;
-                    }
+                    handleFieldName(result, token, parser, fieldName, logger);
                     break;
                 default:
                     logger.warn("Parsing error: Only simple fields expected in NormalisedResult not "
@@ -155,6 +133,34 @@ public class NormalisedResult
         }
 
         return result;
+    }
+
+    private static void handleFieldName(NormalisedResult result, JsonToken token, JsonParser parser,
+            String fieldName, Logger logger) throws JsonParseException, IOException
+    {
+        switch (fieldName)
+        {
+            case RAW_ANOMALY_SCORE:
+                result.setRawAnomalyScore(parseStringValueAsDoubleOrZero(token, parser,
+                        RAW_ANOMALY_SCORE, logger));
+                break;
+            case SYS_CHANGE_SCORE:
+                result.setNormalizedSysChangeScore(parseStringValueAsDoubleOrZero(token, parser,
+                        SYS_CHANGE_SCORE, logger));
+                break;
+            case NORMALIZED_PROBABILITY:
+                result.setNormalizedProbability(parseStringValueAsDoubleOrZero(token, parser,
+                        NORMALIZED_PROBABILITY, logger));
+                break;
+            case ID:
+                result.setId(parser.getValueAsString());
+                break;
+            default:
+                logger.trace(String.format(
+                        "Parsed unknown field in NormalisedResult %s:%s", fieldName,
+                        parser.getValueAsString()));
+                break;
+        }
     }
 
     private static double parseStringValueAsDoubleOrZero(JsonToken token, JsonParser parser,
