@@ -122,15 +122,12 @@ public class Normaliser
 		NormaliserProcess process = createNormaliserProcess(
 				sysChangeState, null, bucketSpan);
 
-		NormalisedResultsParser resultsParser = new NormalisedResultsParser(
-							process.getProcess().getInputStream(),
-							m_Logger);
+		NormalisedResultsParser resultsParser = process.createNormalisedResultsParser(m_Logger);
 
 		Thread parserThread = new Thread(resultsParser, m_JobId + "-Normalizer-Parser");
 		parserThread.start();
 
-		LengthEncodedWriter writer = new LengthEncodedWriter(
-				process.getProcess().getOutputStream());
+		LengthEncodedWriter writer = process.createProcessWriter();
 
 		try
 		{
@@ -151,7 +148,7 @@ public class Normaliser
 		{
 			try
 			{
-				process.getProcess().getOutputStream().close();
+				process.closeOutputStream();
 			}
 			catch (IOException e)
 			{
@@ -217,15 +214,12 @@ public class Normaliser
 		NormaliserProcess process = createNormaliserProcess(
 				null, unusualBehaviourState, bucketSpan);
 
-		NormalisedResultsParser resultsParser = new NormalisedResultsParser(
-							process.getProcess().getInputStream(),
-							m_Logger);
+		NormalisedResultsParser resultsParser = process.createNormalisedResultsParser(m_Logger);
 
 		Thread parserThread = new Thread(resultsParser, m_JobId + "-Normalizer-Parser");
 		parserThread.start();
 
-		LengthEncodedWriter writer = new LengthEncodedWriter(
-				process.getProcess().getOutputStream());
+		LengthEncodedWriter writer = process.createProcessWriter();
 
 		try
 		{
@@ -249,7 +243,7 @@ public class Normaliser
 		{
 			try
 			{
-				process.getProcess().getOutputStream().close();
+			    process.closeOutputStream();
 			}
 			catch (IOException e)
 			{
@@ -296,15 +290,12 @@ public class Normaliser
 		NormaliserProcess process = createNormaliserProcess(
 				sysChangeState, unusualBehaviourState, bucketSpan);
 
-		NormalisedResultsParser resultsParser = new NormalisedResultsParser(
-							process.getProcess().getInputStream(),
-							m_Logger);
+		NormalisedResultsParser resultsParser = process.createNormalisedResultsParser(m_Logger);
 
 		Thread parserThread = new Thread(resultsParser, m_JobId + "-Normalizer-Parser");
 		parserThread.start();
 
-		LengthEncodedWriter writer = new LengthEncodedWriter(
-				process.getProcess().getOutputStream());
+		LengthEncodedWriter writer = process.createProcessWriter();
 		try
 		{
 			writer.writeNumFields(2);
@@ -335,7 +326,7 @@ public class Normaliser
 			try
 			{
 				// closing the input to the job terminates it
-				process.getProcess().getOutputStream().close();
+			    process.closeOutputStream();
 			}
 			catch (IOException e)
 			{
