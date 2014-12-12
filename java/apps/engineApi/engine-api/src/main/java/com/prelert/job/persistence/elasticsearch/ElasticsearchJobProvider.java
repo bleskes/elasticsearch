@@ -554,6 +554,8 @@ public class ElasticsearchJobProvider implements JobProvider
             }
         }
 
+        fb = andWithInterimFilter(includeInterim, Bucket.IS_INTERIM, fb);
+
         if (fb == null)
         {
             fb = FilterBuilders.matchAllFilter();
@@ -1067,9 +1069,12 @@ public class ElasticsearchJobProvider implements JobProvider
             return fb;
         }
 
-        // Implemented as "NOT isInterim == true" so that not present is
-        // equivalent to false.  This improves backwards compatibility.
-        TermFilterBuilder interimFilter = FilterBuilders.termFilter(fieldName, "true");
+        // Implemented as "NOT isInterim == true" so that not present and null
+        // are equivalent to false.  This improves backwards compatibility.
+        // Also, note how for a boolean field, unlike numeric term filters, the
+        // term value is supplied as a string.
+        TermFilterBuilder interimFilter = FilterBuilders.termFilter(fieldName,
+                Boolean.TRUE.toString());
         FilterBuilder notInterimFilter = FilterBuilders.notFilter(interimFilter);
         if (fb == null)
         {
