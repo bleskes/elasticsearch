@@ -71,6 +71,7 @@ public class LdapGroupToRoleMapperTest extends ElasticsearchTestCase {
                 .build();
 
         AbstractGroupToRoleMapper mapper = new LdapGroupToRoleMapper(settings,
+                "ldap1",
                 new Environment(settings),
                 new ResourceWatcherService(settings, threadPool));
 
@@ -87,6 +88,7 @@ public class LdapGroupToRoleMapperTest extends ElasticsearchTestCase {
                 .build();
 
         AbstractGroupToRoleMapper mapper = new LdapGroupToRoleMapper(settings,
+                "ldap1",
                 new Environment(settings),
                 new ResourceWatcherService(settings, threadPool));
 

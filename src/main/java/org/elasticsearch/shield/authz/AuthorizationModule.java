@@ -33,7 +33,7 @@ public class AuthorizationModule extends AbstractShieldModule.Node {
 
     @Override
     protected void configureNode() {
-        bind(RolesStore.class).to(FileRolesStore.class);
+        bind(RolesStore.class).to(FileRolesStore.class).asEagerSingleton();
         bind(AuthorizationService.class).to(InternalAuthorizationService.class).asEagerSingleton();
     }
 }
