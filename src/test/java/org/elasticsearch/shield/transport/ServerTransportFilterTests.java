@@ -43,7 +43,7 @@ public class ServerTransportFilterTests extends ElasticsearchTestCase {
     public void init() throws Exception {
         authcService = mock(AuthenticationService.class);
         authzService = mock(AuthorizationService.class);
-        filter = new ServerTransportFilter.Node(authcService, authzService);
+        filter = new ServerTransportFilter.NodeProfile(authcService, authzService);
     }
 
     @Test
