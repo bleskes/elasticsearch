@@ -451,9 +451,8 @@ public class ProcessManager
         ProcessAndDataDescription process = m_JobIdToProcessMap.get(jobId);
         if (process == null)
         {
-            // This shouldn't happen if the request came through the REST API as
-            // the job manager has previously checked whether the job exists
-            LOGGER.warn("No job with id '" + jobId + "' to flush");
+            LOGGER.warn("Native process for job '" + jobId +
+                     "' is not running - nothing to flush");
             // tidy up
             m_JobIdToTimeoutFuture.remove(jobId);
 

@@ -31,29 +31,15 @@ import java.io.IOException;
 
 import org.apache.log4j.Logger;
 
-import com.prelert.job.input.LengthEncodedWriter;
+import com.prelert.job.process.ProcessCtrl;
 
-public class NormaliserProcess
+public class NormaliserProcessFactory
 {
-    private final Process m_Process;
-
-    public NormaliserProcess(Process process)
+    public NormaliserProcess create(String jobId, String sysChangeState,
+            String unusualBehaviourState, Integer bucketSpan, Logger logger) throws IOException
     {
-        m_Process = process;
-    }
-
-    public NormalisedResultsParser createNormalisedResultsParser(Logger logger)
-    {
-        return new NormalisedResultsParser(m_Process.getInputStream(), logger);
-    }
-
-    public LengthEncodedWriter createProcessWriter()
-    {
-        return new LengthEncodedWriter(m_Process.getOutputStream());
-    }
-
-    public void closeOutputStream() throws IOException
-    {
-        m_Process.getOutputStream().close();
+        Process proc = ProcessCtrl.buildNormaliser(jobId, sysChangeState, unusualBehaviourState,
+                bucketSpan, logger);
+        return new NormaliserProcess(proc);
     }
 }

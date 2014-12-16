@@ -480,6 +480,60 @@ public class EngineApiClient implements Closeable
 
 
     /**
+     * Flush the job, ensuring that no previously uploaded data is waiting in
+     * buffers.
+     *
+     * @param baseUrl The base URL for the REST API including version number
+     * e.g <code>http://localhost:8080/engine/v1/</code>
+     * @param jobId The Job's unique Id
+     * @param calcInterim Should interim results for the most recent bucket be
+     * calculated based on the partial data uploaded for it so far?
+     * @return True if successful
+     * @throws IOException
+     */
+    public boolean flushJob(String baseUrl, String jobId, boolean calcInterim)
+    throws IOException
+    {
+        // Send flush message
+        String flushUrl = baseUrl + "/data/" + jobId + "/flush";
+        if (calcInterim)
+        {
+            flushUrl += "?calcInterim=true";
+        }
+        LOGGER.debug("Flushing job " + flushUrl);
+
+        HttpPost post = new HttpPost(flushUrl);
+        try (CloseableHttpResponse response = m_HttpClient.execute(post))
+        {
+            String content = EntityUtils.toString(response.getEntity());
+
+            if (response.getStatusLine().getStatusCode() != 200)
+            {
+                String msg = String.format(
+                        "Error flushing job %s, status code = %d. "
+                        + "Returned content: %s",
+                        jobId,
+                        response.getStatusLine().getStatusCode(),
+                        content);
+
+                LOGGER.error(msg);
+
+                m_LastError = m_JsonMapper.readValue(content,
+                        new TypeReference<ApiError>() {} );
+
+                return false;
+            }
+            else
+            {
+                m_LastError = null;
+            }
+        }
+
+        return true;
+    }
+
+
+    /**
      * Finish the job after all the data has been uploaded
      *
      * @param baseUrl The base URL for the REST API including version number
@@ -524,6 +578,7 @@ public class EngineApiClient implements Closeable
 
         return true;
     }
+
 
     /**
      * Get the bucket results for a particular job.
@@ -791,6 +846,7 @@ public class EngineApiClient implements Closeable
         return page;
     }
 
+
     /**
      * Get a single bucket for a particular job and bucket Id
      *
@@ -808,10 +864,39 @@ public class EngineApiClient implements Closeable
             String bucketId, boolean expand)
     throws JsonMappingException, IOException
     {
+        return getBucket(baseUrl, jobId, bucketId, expand, false);
+    }
+
+
+    /**
+     * Get a single bucket for a particular job and bucket Id
+     *
+     * @param baseUrl The base URL for the REST API including version number
+     * e.g <code>http://localhost:8080/engine/v1/</code>
+     * @param jobId The Job's unique Id
+     * @param bucketId The bucket to get
+     * @param expand If true include the anomaly records for the bucket
+     * @param includeInterim Include interim results
+     *
+     * @return A {@link SingleDocument} object containing the requested
+     * {@link Bucket} or an empty {@link SingleDocument} if it does not exist
+     * @throws IOException
+     */
+    public SingleDocument<Bucket> getBucket(String baseUrl, String jobId,
+            String bucketId, boolean expand, boolean includeInterim)
+    throws JsonMappingException, IOException
+    {
         String url = baseUrl + "/results/" + jobId + "/buckets/" + bucketId;
+        char queryChar = '?';
         if (expand)
         {
-            url += "?expand=true";
+            url += queryChar + "expand=true";
+            queryChar = '&';
+        }
+        if (includeInterim)
+        {
+            url += queryChar + "includeInterim=true";
+            queryChar = '&';
         }
 
         LOGGER.debug("GET bucket " + url);
