@@ -68,13 +68,8 @@ public class PaginationWriter<T> implements MessageBodyWriter<Pagination<T>>
 			Annotation[] annotations, MediaType mediaType)
 	{
 		// no need to check the media type because of the @Produces annotation
-		if (type == Pagination.class &&
-				genericType instanceof ParameterizedType)
-		{
-			return true;
-		}
-
-		return false;
+		return type == Pagination.class &&
+				genericType instanceof ParameterizedType;
 	}
 
 	@Override

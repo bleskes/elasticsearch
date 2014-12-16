@@ -117,9 +117,10 @@ public class JsonDataToProcessWriterTest
         writer.write(inputStream);
 
         List<String[]> expectedRecords = new ArrayList<>();
-        expectedRecords.add(new String[] {"value", "time"});
-        expectedRecords.add(new String[] {"1.0", "1"});
-        expectedRecords.add(new String[] {"2.0", "2"});
+        // The final field is the control field
+        expectedRecords.add(new String[] {"value", "time", "."});
+        expectedRecords.add(new String[] {"1.0", "1", ""});
+        expectedRecords.add(new String[] {"2.0", "2", ""});
         assertWrittenRecordsEqualTo(expectedRecords);
 
         verify(m_StatusReporter).finishReporting();
@@ -141,8 +142,9 @@ public class JsonDataToProcessWriterTest
         writer.write(inputStream);
 
         List<String[]> expectedRecords = new ArrayList<>();
-        expectedRecords.add(new String[] {"value", "time"});
-        expectedRecords.add(new String[] {"3.0", "3"});
+        // The final field is the control field
+        expectedRecords.add(new String[] {"value", "time", "."});
+        expectedRecords.add(new String[] {"3.0", "3", ""});
         assertWrittenRecordsEqualTo(expectedRecords);
 
         verify(m_StatusReporter, times(2)).reportOutOfOrderRecord(2);

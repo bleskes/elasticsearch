@@ -55,24 +55,22 @@ import com.prelert.rs.data.SingleDocument;
 
 
 /**
- * Tests the normalisation of the API buckets and records endpoints.
- * Does not validate the actual normalised values other than to say
- * that for a given batch job at least 1 anomaly should be 100%.
+ * Tests the interim results for both buckets and records endpoints.
  * <br/>
  * The system property 'prelert.test.data.home' must be set and point
  * to a directory containing the file:
  * <ol>
- * <li>/engine_api_integration_test/farequote.csv</li>
+ * <li>/engine_api_integration_test/farequote_part.csv</li>
  * </ol>
  *
  */
-public class NormalizationTest implements Closeable
+public class InterimResultsTest implements Closeable
 {
     private static final Logger LOGGER = Logger.getLogger(JobsTest.class);
 
-    static final long FAREQUOTE_NUM_BUCKETS = 1439;
+    static final long FAREQUOTE_NUM_FINAL_BUCKETS = 770;
 
-    static final String TEST_JOB_ID = "farequote-norm-test";
+    static final String TEST_JOB_ID = "farequote-interim-test";
 
     /**
      * The default base Url used in the test
@@ -82,11 +80,10 @@ public class NormalizationTest implements Closeable
     private EngineApiClient m_WebServiceClient;
 
 
-
     /**
      * Creates a new http client call {@linkplain #close()} once finished
      */
-    public NormalizationTest()
+    public InterimResultsTest()
     {
         m_WebServiceClient = new EngineApiClient();
     }
@@ -116,7 +113,7 @@ public class NormalizationTest implements Closeable
         dd.setTimeFormat("yyyy-MM-dd HH:mm:ssX");
 
         JobConfiguration config = new JobConfiguration(ac);
-        config.setDescription("Farequote normalisation test");
+        config.setDescription("Farequote interim results test");
         config.setId(TEST_JOB_ID);
         config.setDataDescription(dd);
 
@@ -132,32 +129,28 @@ public class NormalizationTest implements Closeable
     }
 
 
-
     /**
-     * Test the system change normalisation for the farequote
-     * data set.
+     * Verify results that are considered final.
      * <ol>
-     * <li>Test that getting all the results at once is the same as
-     * paging them</li>
-     * <li>Check there is one large anomaly in the data with score 100</li>
-     * <li>Get buckets by date range and check the values match the same
-     * buckets from get all results.</li>
+     * <li>There should not be any results for 16:10 on 30th January 2013</li>
      * </ol>
-     *
      *
      * @param baseUrl
      * @param jobId
+     * @param includeInterim
      * @return
      * @throws IOException
      */
-    public boolean verifyFarequoteNormalisedBuckets(String baseUrl, String jobId)
+    public boolean verifyFarequoteInterimBuckets(String baseUrl, String jobId,
+            boolean includeInterim)
     throws IOException
     {
-        Pagination<Bucket> allBuckets = m_WebServiceClient.getBuckets(baseUrl,
-                jobId, false, 0l, 1500l, 0.0, 0.0);
-        test(allBuckets.getDocumentCount() == FAREQUOTE_NUM_BUCKETS);
-        test(allBuckets.getHitCount() == FAREQUOTE_NUM_BUCKETS);
+        long expectedBuckets = (includeInterim ? FAREQUOTE_NUM_FINAL_BUCKETS + 1 : FAREQUOTE_NUM_FINAL_BUCKETS);
 
+        Pagination<Bucket> allBuckets = m_WebServiceClient.getBuckets(baseUrl,
+                jobId, false, includeInterim, 0l, 1500l, 0.0, 0.0);
+        test(allBuckets.getDocumentCount() == expectedBuckets);
+        test(allBuckets.getHitCount() == expectedBuckets);
 
         /*
          * Test that getting all the results at once is the same as
@@ -165,17 +158,17 @@ public class NormalizationTest implements Closeable
          */
         List<Bucket> pagedBuckets = new ArrayList<>();
         long skip = 0, take = 100;
-        while (skip < FAREQUOTE_NUM_BUCKETS)
+        while (skip < expectedBuckets)
         {
             Pagination<Bucket> buckets = m_WebServiceClient.getBuckets(baseUrl,
-                    jobId, false, skip, take, 0.0, 0.0);
+                    jobId, false, includeInterim, skip, take, 0.0, 0.0);
             pagedBuckets.addAll(buckets.getDocuments());
 
             skip += take;
         }
-        test(pagedBuckets.size() == FAREQUOTE_NUM_BUCKETS);
+        test(pagedBuckets.size() == expectedBuckets);
 
-        for (int i=0; i<FAREQUOTE_NUM_BUCKETS; i++)
+        for (int i = 0; i < expectedBuckets; i++)
         {
             test(Double.compare(pagedBuckets.get(i).getAnomalyScore(),
                                 allBuckets.getDocuments().get(i).getAnomalyScore()) == 0);
@@ -184,8 +177,16 @@ public class NormalizationTest implements Closeable
                     allBuckets.getDocuments().get(i).getMaxNormalizedProbability()) == 0);
 
             test(pagedBuckets.get(i).equals(allBuckets.getDocuments().get(i)));
-        }
 
+            if (i < FAREQUOTE_NUM_FINAL_BUCKETS)
+            {
+                test(pagedBuckets.get(i).isInterim() == null || pagedBuckets.get(i).isInterim() == false);
+            }
+            else
+            {
+                test(pagedBuckets.get(i).isInterim() != null && pagedBuckets.get(i).isInterim() == true);
+            }
+        }
 
         /*
          * Test that paging buckets by date is the same
@@ -195,9 +196,9 @@ public class NormalizationTest implements Closeable
         while (skip < allBuckets.getHitCount())
         {
             Pagination<Bucket> buckets = m_WebServiceClient.getBuckets(baseUrl,
-                    jobId, false, skip, take,
+                    jobId, false, includeInterim, skip, take,
                     allBuckets.getDocuments().get(0).getEpoch(),
-                    allBuckets.getDocuments().get((int)allBuckets.getHitCount()-1).getEpoch() +1,
+                    allBuckets.getDocuments().get((int)allBuckets.getHitCount() - 1).getEpoch() + 1,
                     0.0, 0.0);
 
             pagedBuckets.addAll(buckets.getDocuments());
@@ -206,7 +207,7 @@ public class NormalizationTest implements Closeable
         }
         test(pagedBuckets.size() == allBuckets.getDocumentCount());
 
-        for (int i=0; i<pagedBuckets.size(); i++)
+        for (int i = 0; i < pagedBuckets.size(); i++)
         {
             test(Double.compare(pagedBuckets.get(i).getAnomalyScore(),
                                 allBuckets.getDocuments().get(i).getAnomalyScore()) == 0);
@@ -215,23 +216,39 @@ public class NormalizationTest implements Closeable
                     allBuckets.getDocuments().get(i).getMaxNormalizedProbability()) == 0);
 
             test(pagedBuckets.get(i).equals(allBuckets.getDocuments().get(i)));
+
+            if (i < FAREQUOTE_NUM_FINAL_BUCKETS)
+            {
+                test(pagedBuckets.get(i).isInterim() == null || pagedBuckets.get(i).isInterim() == false);
+            }
+            else
+            {
+                test(pagedBuckets.get(i).isInterim() != null && pagedBuckets.get(i).isInterim() == true);
+            }
         }
 
         /*
          * Test get buckets by date range with a time string
          */
-        String [] startDateFormats = new String[] {"2013-01-30T15:10:00Z", "1359558600"};
-        String [] endDateFormats = new String[] {"2013-01-31T22:10:00.000+0000", "1359670200"};
+        String [] startDateFormats = new String[] {"2013-01-29T05:10:00Z", "1359436200"};
+        String [] endDateFormats = new String[] {"2013-01-30T16:15:00.000+0000", "1359562500"};
 
-        for (int i=0; i<startDateFormats.length; i++)
+        for (int i = 0; i < startDateFormats.length; i++)
         {
             Pagination<Bucket> byDate = m_WebServiceClient.getBuckets(
-                    baseUrl, jobId, false, 0l, 1000l,
+                    baseUrl, jobId, false, includeInterim, 0l, 1000l,
                     startDateFormats[i], endDateFormats[i],
                     0.0, 0.0);
 
-            test(byDate.getDocuments().get(0).getEpoch() == 1359558600l);
-            test(byDate.getDocuments().get(byDate.getDocumentCount() -1).getEpoch() == 1359669900l);
+            test(byDate.getDocuments().get(0).getEpoch() == 1359436200l);
+            if (includeInterim)
+            {
+                test(byDate.getDocuments().get(byDate.getDocumentCount() - 1).getEpoch() == 1359562200l);
+            }
+            else
+            {
+                test(byDate.getDocuments().get(byDate.getDocumentCount() - 1).getEpoch() == 1359561900l);
+            }
 
             int startIndex = Collections.binarySearch(allBuckets.getDocuments(),
                     byDate.getDocuments().get(0),
@@ -244,7 +261,7 @@ public class NormalizationTest implements Closeable
             });
 
             test(startIndex >= 0);
-            for (int j=0; j<byDate.getDocumentCount(); j++)
+            for (int j = 0; j < byDate.getDocumentCount(); j++)
             {
                 test(Double.compare(byDate.getDocuments().get(j).getAnomalyScore(),
                         allBuckets.getDocuments().get(j + startIndex).getAnomalyScore()) == 0);
@@ -256,34 +273,16 @@ public class NormalizationTest implements Closeable
             }
         }
 
-
-        /*
-         * We know there is one large anomaly in the farequote data
-         * with score 90+
-         */
-        int highAnomalyScoreCount = 0;
-        for (Bucket b : pagedBuckets)
+        // The big anomaly is in bucket 771, which will only be present if
+        // interim results have been requested.
+        if (includeInterim)
         {
-            if (b.getAnomalyScore() >= 90.0)
-            {
-                highAnomalyScoreCount++;
-            }
+            test(Boolean.TRUE.equals(pagedBuckets.get(770).isInterim()));
+            test(pagedBuckets.get(770).getAnomalyScore() >= 90.0);
         }
-        test(highAnomalyScoreCount == 1);
-
-        // The big anomaly spans buckets 771 and 772.  Which one of these has
-        // the higher score may vary as the analytics are updated, but each
-        // should have a score of at least 70 and the sum of the scores should
-        // be greater than 165.
-        double bucket771Score = pagedBuckets.get(770).getAnomalyScore();
-        double bucket772Score = pagedBuckets.get(771).getAnomalyScore();
-        test(bucket771Score >= 70.0);
-        test(bucket772Score >= 70.0);
-        test(bucket771Score + bucket772Score >= 165.0);
 
         Pagination<Bucket> allBucketsExpanded = m_WebServiceClient.getBuckets(baseUrl,
-                jobId, true, 0l, 1500l, 0.0, 0.0);
-
+                jobId, true, includeInterim, 0l, 1500l, 0.0, 0.0);
 
         /*
          * The bucket unusual score is the max unusual score
@@ -296,12 +295,11 @@ public class NormalizationTest implements Closeable
             for (AnomalyRecord r : bucket.getRecords())
             {
                 bucketMax = Math.max(r.getNormalizedProbability(), bucketMax);
+                test(r.isInterim() == bucket.isInterim());
             }
 
             test(bucketMax == bucket.getMaxNormalizedProbability());
         }
-
-
 
         /*
          * Check the bucket unusual score is equal to the max unusual
@@ -309,11 +307,16 @@ public class NormalizationTest implements Closeable
          * the same anomaly score as the bucket.
          */
         // the test takes ages to go through every bucket, don't do all for now
-        int count = 30;
+        int toIgnore = 750;
         for (Bucket bucket: allBucketsExpanded.getDocuments())
         {
+            if (--toIgnore > 0)
+            {
+                continue;
+            }
+
             SingleDocument<Bucket> bucketDoc = m_WebServiceClient.getBucket(
-                    baseUrl, jobId, bucket.getId(), true);
+                    baseUrl, jobId, bucket.getId(), true, includeInterim);
 
             List<AnomalyRecord> records = bucketDoc.getDocument().getRecords();
 
@@ -323,37 +326,32 @@ public class NormalizationTest implements Closeable
                 bucketMax = Math.max(r.getNormalizedProbability(), bucketMax);
 
                 test(r.getAnomalyScore() == bucket.getAnomalyScore());
+                test(r.isInterim() == bucket.isInterim());
             }
 
             test(bucketMax == bucket.getMaxNormalizedProbability());
-
-            if (count-- < 0)
-            {
-                break;
-            }
         }
-
 
         return true;
     }
 
 
-
-
     /**
-     * Get records via the 'records' end point and check the normalised
-     * scores for both unusual & state change.
+     * Get records via the 'records' end point and check that interim
+     * results are included if and only if requested.
      *
      * @param baseUrl
      * @param jobId
+     * @param includeInterim
      * @return
      * @throws IOException
      */
-    public boolean verifyFarequoteNormalisedRecords(String baseUrl, String jobId)
+    public boolean verifyFarequoteInterimRecords(String baseUrl, String jobId,
+            boolean includeInterim)
     throws IOException
     {
         Pagination<AnomalyRecord> allRecords = m_WebServiceClient.getRecords(
-                baseUrl, jobId, 0l, 3000l);
+                baseUrl, jobId, 0l, 3000l, includeInterim);
 
         /*
          * Test that getting all the results at once is the same as
@@ -363,13 +361,13 @@ public class NormalizationTest implements Closeable
         long skip = 0, take = 1000;
 
         Pagination<AnomalyRecord> page = m_WebServiceClient.getRecords(
-                baseUrl, jobId, skip, take);
+                baseUrl, jobId, skip, take, includeInterim);
         skip += take;
         pagedRecords.addAll(page.getDocuments());
 
         while (skip < page.getHitCount())
         {
-            page = m_WebServiceClient.getRecords(baseUrl, jobId, skip, take);
+            page = m_WebServiceClient.getRecords(baseUrl, jobId, skip, take, includeInterim);
             skip += take;
             pagedRecords.addAll(page.getDocuments());
         }
@@ -389,16 +387,16 @@ public class NormalizationTest implements Closeable
 
         // need start and end dates first
         Pagination<Bucket> allBuckets = m_WebServiceClient.getBuckets(baseUrl,
-                jobId, true, 0l, 3000l, 0.0, 0.0);
+                jobId, true, includeInterim, 0l, 3000l, 0.0, 0.0);
         long startDate = allBuckets.getDocuments().get(0).getEpoch();
-        long endDate = allBuckets.getDocuments().get(allBuckets.getDocumentCount()-1).getEpoch() + 1;
+        long endDate = allBuckets.getDocuments().get(allBuckets.getDocumentCount() - 1).getEpoch() + 1;
 
         pagedRecords = new ArrayList<>();
         skip = 0; take = 200;
 
         page = m_WebServiceClient.getRecords(
                 baseUrl, jobId, skip, take,
-                startDate, endDate);
+                startDate, endDate, includeInterim);
         skip += take;
         pagedRecords.addAll(page.getDocuments());
 
@@ -406,7 +404,7 @@ public class NormalizationTest implements Closeable
         {
             page = m_WebServiceClient.getRecords(
                     baseUrl, jobId, skip, take,
-                    startDate, endDate);
+                    startDate, endDate, includeInterim);
 
             skip += take;
             pagedRecords.addAll(page.getDocuments());
@@ -427,47 +425,22 @@ public class NormalizationTest implements Closeable
          * There should be one anomaly with unusual score of 90+
          * and at least one with anomaly score 90+
          */
-        int highAnomalyScoreCount = 0;
-        int highUnusualScoreCount = 0;
+        int numInterimRecords = 0;
         for (AnomalyRecord record : pagedRecords)
         {
-            if (record.getNormalizedProbability() >= 90.0)
+            if (Boolean.TRUE.equals(record.isInterim()))
             {
-                highUnusualScoreCount++;
-            }
-            if (record.getAnomalyScore() >= 90.0)
-            {
-                highAnomalyScoreCount++;
+                ++numInterimRecords;
             }
         }
 
-        test(highAnomalyScoreCount >= 1);
-        test(highUnusualScoreCount == 1);
-
-        /*
-         * Test get records by date range with a time string
-         */
-        String [] startDateFormats = new String[] {"2013-01-30T15:10:00Z", "1359558600"};
-        String [] endDateFormats = new String[] {"2013-01-31T22:10:00.000+0000", "1359670200"};
-        for (int i=0; i<startDateFormats.length; i++)
+        if (includeInterim)
         {
-            Pagination<AnomalyRecord> byDate = m_WebServiceClient.getRecords(
-                    baseUrl, jobId, 0l, 2000l,
-                    startDateFormats[i], endDateFormats[i]);
-
-            Collections.sort(byDate.getDocuments(), new Comparator<AnomalyRecord>() {
-
-                @Override
-                public int compare(AnomalyRecord o1, AnomalyRecord o2)
-                {
-                    return o1.getTimestamp().compareTo(o2.getTimestamp());
-                }
-            });
-
-            // must be equal or after start date and before the end date
-            test(byDate.getDocuments().get(0).getTimestamp().compareTo(new Date(1359558600000l)) >= 0);
-            test(byDate.getDocuments().get(byDate.getDocumentCount() -1)
-                    .getTimestamp().compareTo(new Date(1359670200000l)) < 0);
+            test(numInterimRecords == 3);
+        }
+        else
+        {
+            test(numInterimRecords == 0);
         }
 
         return true;
@@ -548,10 +521,9 @@ public class NormalizationTest implements Closeable
             return;
         }
 
-
         String farequoteJob = TEST_JOB_ID;
 
-        NormalizationTest test = new NormalizationTest();
+        InterimResultsTest test = new InterimResultsTest();
         List<String> jobUrls = new ArrayList<>();
 
         // Always delete the test job first in case it is hanging around
@@ -559,16 +531,19 @@ public class NormalizationTest implements Closeable
         test.m_WebServiceClient.deleteJob(baseUrl, farequoteJob);
         jobUrls.add(farequoteJob);
 
-        File fareQuoteData = new File(prelertTestDataHome +
-                "/engine_api_integration_test/farequote.csv");
+        File fareQuotePartData = new File(prelertTestDataHome +
+                "/engine_api_integration_test/farequote_part.csv");
         // Farequote test
         test.createFarequoteJob(baseUrl);
         test.m_WebServiceClient.fileUpload(baseUrl, farequoteJob,
-                fareQuoteData, false);
+                fareQuotePartData, false);
+        test.m_WebServiceClient.flushJob(baseUrl, farequoteJob, true);
         test.m_WebServiceClient.closeJob(baseUrl, farequoteJob);
 
-        test.verifyFarequoteNormalisedBuckets(baseUrl, farequoteJob);
-
+        test.verifyFarequoteInterimBuckets(baseUrl, farequoteJob, false);
+        test.verifyFarequoteInterimBuckets(baseUrl, farequoteJob, true);
+        test.verifyFarequoteInterimRecords(baseUrl, farequoteJob, false);
+        test.verifyFarequoteInterimRecords(baseUrl, farequoteJob, true);
 
         //==========================
         // Clean up test jobs

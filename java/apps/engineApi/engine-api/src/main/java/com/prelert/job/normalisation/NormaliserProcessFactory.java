@@ -25,31 +25,21 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job;
+package com.prelert.job.normalisation;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import java.io.IOException;
 
-import org.junit.Test;
+import org.apache.log4j.Logger;
 
-public class AnalysisLimitsTest
+import com.prelert.job.process.ProcessCtrl;
+
+public class NormaliserProcessFactory
 {
-    @Test
-    public void testEquals_GivenEqual()
+    public NormaliserProcess create(String jobId, String sysChangeState,
+            String unusualBehaviourState, Integer bucketSpan, Logger logger) throws IOException
     {
-        AnalysisLimits analysisLimits1 = new AnalysisLimits(10);
-        AnalysisLimits analysisLimits2 = new AnalysisLimits(10);
-
-        assertTrue(analysisLimits1.equals(analysisLimits2));
-        assertTrue(analysisLimits2.equals(analysisLimits1));
-    }
-
-    @Test
-    public void testHashCode_GivenEqual()
-    {
-        AnalysisLimits analysisLimits1 = new AnalysisLimits(5555);
-        AnalysisLimits analysisLimits2 = new AnalysisLimits(5555);
-
-        assertEquals(analysisLimits1.hashCode(), analysisLimits2.hashCode());
+        Process proc = ProcessCtrl.buildNormaliser(jobId, sysChangeState, unusualBehaviourState,
+                bucketSpan, logger);
+        return new NormaliserProcess(proc);
     }
 }

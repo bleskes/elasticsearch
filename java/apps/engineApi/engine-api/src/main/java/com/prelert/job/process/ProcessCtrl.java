@@ -223,8 +223,7 @@ public class ProcessCtrl
 	/*
 	 * The configuration fields used in limits.conf
 	 */
-	public static final String MAX_FIELD_VALUES_CONFIG_STR = "maxfieldvalues";
-	public static final String MAX_TIME_BUCKETS_CONFIG_STR = "maxtimebuckets";
+	public static final String  MODEL_MEMORY_LIMIT_CONFIG_STR = "modelmemorylimit";
 
 
 	/*
@@ -640,16 +639,11 @@ public class ProcessCtrl
 	private static void writeLimits(AnalysisLimits options, File emptyConfFile)
 	throws IOException
 	{
-		StringBuilder contents = new StringBuilder("[anomaly]").append(NEW_LINE);
-		if (options.getMaxFieldValues() > 0)
+		StringBuilder contents = new StringBuilder("[memory]").append(NEW_LINE);
+		if (options.getModelMemoryLimit() > 0)
 		{
-			contents.append(MAX_FIELD_VALUES_CONFIG_STR + " = ")
-					.append(options.getMaxFieldValues()).append(NEW_LINE);
-		}
-		if (options.getMaxTimeBuckets() > 0)
-		{
-			contents.append(MAX_TIME_BUCKETS_CONFIG_STR + " = ")
-					.append(options.getMaxTimeBuckets()).append(NEW_LINE);
+			contents.append(MODEL_MEMORY_LIMIT_CONFIG_STR + " = ")
+					.append(options.getModelMemoryLimit()).append(NEW_LINE);
 		}
 
 		try (OutputStreamWriter osw = new OutputStreamWriter(

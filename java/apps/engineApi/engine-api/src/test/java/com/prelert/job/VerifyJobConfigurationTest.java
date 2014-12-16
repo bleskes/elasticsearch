@@ -150,7 +150,7 @@ public class VerifyJobConfigurationTest
 	public void analysisLimitsTest()
 	throws JobConfigurationException
 	{
-		AnalysisLimits ao = new AnalysisLimits(-1, 10000);
+		AnalysisLimits ao = new AnalysisLimits(-1);
 		try
 		{
 			ao.verify();
@@ -160,14 +160,14 @@ public class VerifyJobConfigurationTest
 		{
 		}
 		
-		ao = new AnalysisLimits(300, -5000);
+		ao = new AnalysisLimits(300);
 		try
 		{
 			ao.verify();
-			Assert.assertTrue(false); // shouldn't get here
 		}
 		catch (JobConfigurationException e)
 		{
+			Assert.assertTrue(false); // shouldn't get here
 		}
 	}
 	
@@ -249,7 +249,7 @@ public class VerifyJobConfigurationTest
 		jc.setAnalysisConfig(ac);
 		jc.verify(); // ok
 		
-		jc.setAnalysisLimits(new AnalysisLimits(-1, 0));
+		jc.setAnalysisLimits(new AnalysisLimits(-1));
 		try
 		{
 			jc.verify();
@@ -259,7 +259,7 @@ public class VerifyJobConfigurationTest
 		{
 		}
 		
-		jc.setAnalysisLimits(new AnalysisLimits(1000, 50000));
+		jc.setAnalysisLimits(new AnalysisLimits(1000));
 		jc.verify();
 		
 		DataDescription dc = new DataDescription();

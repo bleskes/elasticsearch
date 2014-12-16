@@ -27,19 +27,33 @@
 
 package com.prelert.job.normalisation;
 
+import java.io.IOException;
+
+import org.apache.log4j.Logger;
+
+import com.prelert.job.input.LengthEncodedWriter;
 
 public class NormaliserProcess
 {
-	private final Process m_Process;
+    private final Process m_Process;
 
-	public NormaliserProcess(Process process)
-	{
-		m_Process = process;
-	}
+    public NormaliserProcess(Process process)
+    {
+        m_Process = process;
+    }
 
+    public NormalisedResultsParser createNormalisedResultsParser(Logger logger)
+    {
+        return new NormalisedResultsParser(m_Process.getInputStream(), logger);
+    }
 
-	public Process getProcess()
-	{
-		return m_Process;
-	}
+    public LengthEncodedWriter createProcessWriter()
+    {
+        return new LengthEncodedWriter(m_Process.getOutputStream());
+    }
+
+    public void closeOutputStream() throws IOException
+    {
+        m_Process.getOutputStream().close();
+    }
 }

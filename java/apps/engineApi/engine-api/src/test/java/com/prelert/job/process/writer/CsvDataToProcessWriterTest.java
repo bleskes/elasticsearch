@@ -119,9 +119,10 @@ public class CsvDataToProcessWriterTest
         writer.write(inputStream);
 
         List<String[]> expectedRecords = new ArrayList<>();
-        expectedRecords.add(new String[] {"time", "value"});
-        expectedRecords.add(new String[] {"1", "1.0"});
-        expectedRecords.add(new String[] {"2", "2.0"});
+        // The final field is the control field
+        expectedRecords.add(new String[] {"time", "value", "."});
+        expectedRecords.add(new String[] {"1", "1.0", ""});
+        expectedRecords.add(new String[] {"2", "2.0", ""});
         assertWrittenRecordsEqualTo(expectedRecords);
 
         verify(m_StatusReporter).finishReporting();
@@ -144,8 +145,9 @@ public class CsvDataToProcessWriterTest
         writer.write(inputStream);
 
         List<String[]> expectedRecords = new ArrayList<>();
-        expectedRecords.add(new String[] {"time", "value"});
-        expectedRecords.add(new String[] {"3", "3.0"});
+        // The final field is the control field
+        expectedRecords.add(new String[] {"time", "value", "."});
+        expectedRecords.add(new String[] {"3", "3.0", ""});
         assertWrittenRecordsEqualTo(expectedRecords);
 
         verify(m_StatusReporter, times(2)).reportOutOfOrderRecord(2);

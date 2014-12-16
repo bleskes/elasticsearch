@@ -81,399 +81,411 @@ import com.prelert.rs.data.Detector;
  */
 public class ElasticsearchPersister implements JobResultsPersister
 {
-	private static final Logger LOGGER = Logger.getLogger(ElasticsearchPersister.class);
+    private static final Logger LOGGER = Logger.getLogger(ElasticsearchPersister.class);
 
-	private Client m_Client;
-	private String m_JobId;
+    private Client m_Client;
+    private String m_JobId;
 
-	private Set<String> m_DetectorNames;
+    private Set<String> m_DetectorNames;
 
-	/**
-	 * Create with the Elasticsearch client. Data will be written to
-	 * the index <code>jobId</code>
-	 *
-	 * @param jobId The job Id/Elasticsearch index
-	 * @param client The Elasticsearch client
-	 */
-	public ElasticsearchPersister(String jobId, Client client)
-	{
-		m_JobId = jobId;
-		m_Client = client;
-		m_DetectorNames = new HashSet<String>();
-	}
+    /**
+     * Create with the Elasticsearch client. Data will be written to
+     * the index <code>jobId</code>
+     *
+     * @param jobId The job Id/Elasticsearch index
+     * @param client The Elasticsearch client
+     */
+    public ElasticsearchPersister(String jobId, Client client)
+    {
+        m_JobId = jobId;
+        m_Client = client;
+        m_DetectorNames = new HashSet<String>();
+    }
 
-	/**
-	 * This implementation tracks detector names and only writes detectors
-	 * to the database when it sees one it hasn't seen before. If the
-	 * same instance is used to write all buckets in the job then the
-	 * detectors will only be written once else they will be written multiple
-	 * times and Elasticsearch will overwrite them creating new versions of
-	 * the document but the end result is the same.
-	 */
-	@Override
-	public void persistBucket(Bucket bucket)
-	{
-		if (bucket.getDetectors() == null)
-		{
-			return;
-		}
+    /**
+     * This implementation tracks detector names and only writes detectors
+     * to the database when it sees one it hasn't seen before. If the
+     * same instance is used to write all buckets in the job then the
+     * detectors will only be written once else they will be written multiple
+     * times and Elasticsearch will overwrite them creating new versions of
+     * the document but the end result is the same.
+     */
+    @Override
+    public void persistBucket(Bucket bucket)
+    {
+        if (bucket.getDetectors() == null)
+        {
+            return;
+        }
 
-		try
-		{
-			XContentBuilder content = serialiseBucket(bucket);
+        try
+        {
+            XContentBuilder content = serialiseBucket(bucket);
 
-			IndexResponse response = m_Client.prepareIndex(m_JobId, Bucket.TYPE, bucket.getId())
-					.setSource(content)
-					.execute().actionGet();
+            IndexResponse response = m_Client.prepareIndex(m_JobId, Bucket.TYPE, bucket.getId())
+                    .setSource(content)
+                    .execute().actionGet();
 
-			if (response.isCreated() == false)
-			{
-				LOGGER.warn(String.format("Bucket %s document has been overwritten",
-						bucket.getId()));
-			}
-
-
-			for (Detector detector : bucket.getDetectors())
-			{
-				if (m_DetectorNames.contains(detector.getName()) == false)
-				{
-					m_DetectorNames.add(detector.getName());
-					// Write the detector
-					content = serialiseDetector(detector);
-					response = m_Client.prepareIndex(m_JobId, Detector.TYPE, detector.getName())
-						.setSource(content)
-						.get();
-				}
-
-				if (response.isCreated() == false)
-				{
-					LOGGER.warn(String.format("Detector %s document has been overwritten",
-							detector.getName()));
-				}
-
-				BulkRequestBuilder bulkRequest = m_Client.prepareBulk();
-				int count = 1;
-				for (AnomalyRecord record : detector.getRecords())
-				{
-					content = serialiseRecord(record, bucket.getTimestamp());
-
-					String recordId = record.generateNewId(bucket.getId(), detector.getName(), count);
-					bulkRequest.add(m_Client.prepareIndex(m_JobId, AnomalyRecord.TYPE, recordId)
-							.setSource(content)
-							.setParent(bucket.getId()));
-					++count;
-				}
-
-				BulkResponse bulkResponse = bulkRequest.execute().actionGet();
-				if (bulkResponse.hasFailures())
-				{
-					LOGGER.error("BulkResponse has errors");
-					for (BulkItemResponse item : bulkResponse.getItems())
-					{
-						LOGGER.error(item.getFailureMessage());
-					}
-				}
-			}
-
-		}
-		catch (IOException e)
-		{
-			LOGGER.error("Error writing bucket state", e);
-		}
-	}
+            if (response.isCreated() == false)
+            {
+                LOGGER.warn(String.format("Bucket %s document has been overwritten",
+                        bucket.getId()));
+            }
 
 
-	/**
-	 * The quantiles objects are written with one of two keys, such that
-	 * the latest quantiles will overwrite the previous ones.  For each ES index,
-	 * which corresponds to a job, there can only be 2 quantiles documents,
-	 * one for system change quantiles and the other for unusual behaviour
-	 * quantiles.
-	 * @param quantiles If <code>null</code> then returns straight away.
-	 * @throws IOException
-	 */
-	@Override
-	public void persistQuantiles(Quantiles quantiles)
-	{
-		if (quantiles == null)
-		{
-			LOGGER.warn("No quantiles to persist for job " + m_JobId);
-			return;
-		}
+            for (Detector detector : bucket.getDetectors())
+            {
+                if (m_DetectorNames.contains(detector.getName()) == false)
+                {
+                    m_DetectorNames.add(detector.getName());
+                    // Write the detector
+                    content = serialiseDetector(detector);
+                    response = m_Client.prepareIndex(m_JobId, Detector.TYPE, detector.getName())
+                        .setSource(content)
+                        .get();
+                }
 
-		try
-		{
-			XContentBuilder content = serialiseQuantiles(quantiles);
+                if (response.isCreated() == false)
+                {
+                    LOGGER.warn(String.format("Detector %s document has been overwritten",
+                            detector.getName()));
+                }
 
-			m_Client.prepareIndex(m_JobId, Quantiles.TYPE, quantiles.getId())
-					.setSource(content)
-					.execute().actionGet();
+                BulkRequestBuilder bulkRequest = m_Client.prepareBulk();
+                int count = 1;
+                for (AnomalyRecord record : detector.getRecords())
+                {
+                    content = serialiseRecord(record, bucket.getTimestamp());
 
-			// Don't warn on overwrite as we expect this
-		}
-		catch (IOException e)
-		{
-			LOGGER.error("Error writing quantiles", e);
-			return;
-		}
+                    String recordId = record.generateNewId(bucket.getId(), detector.getName(), count);
+                    bulkRequest.add(m_Client.prepareIndex(m_JobId, AnomalyRecord.TYPE, recordId)
+                            .setSource(content)
+                            .setParent(bucket.getId()));
+                    ++count;
+                }
 
-		// Refresh the index when persisting quantiles so that previously
-		// persisted results will be available for searching.  Do this using the
-		// indices API rather than the index API (used to write the quantiles
-		// above), because this will refresh all shards rather than just the
-		// shard that the quantiles document itself was written to.
-		commitWrites();
-	}
+                BulkResponse bulkResponse = bulkRequest.execute().actionGet();
+                if (bulkResponse.hasFailures())
+                {
+                    LOGGER.error("BulkResponse has errors");
+                    for (BulkItemResponse item : bulkResponse.getItems())
+                    {
+                        LOGGER.error(item.getFailureMessage());
+                    }
+                }
+            }
 
-
-	/**
-	 * Persist the memory usage data
-	 * @param modelSizeStats If <code>null</code> then returns straight away.
-	 * @throws IOException
-	 */
-	@Override
-	public void persistModelSizeStats(ModelSizeStats modelSizeStats)
-	{
-		if (modelSizeStats == null)
-		{
-			LOGGER.warn("No modelSizeStats to persist for job " + m_JobId);
-			return;
-		}
-
-		try
-		{
-			XContentBuilder content = serialiseModelSizeStats(modelSizeStats);
-
-			m_Client.prepareIndex(m_JobId, ModelSizeStats.TYPE, modelSizeStats.getId())
-					.setSource(content)
-					.execute().actionGet();
-
-			// Don't warn on overwrite as we expect this
-		}
-		catch (IOException e)
-		{
-			LOGGER.error("Error writing modelSizeStats", e);
-			return;
-		}
-
-		// Don't commit as we expect masses of these updates and they're only
-		// for information at the API level
-	}
+        }
+        catch (IOException e)
+        {
+            LOGGER.error("Error writing bucket state", e);
+        }
+    }
 
 
-	@Override
-	public void incrementBucketCount(long count)
-	{
-		m_Client.prepareUpdate(m_JobId, JobDetails.TYPE, m_JobId)
-						.setScript("update-bucket-count")
-						.addScriptParam("count", count)
-						.setRetryOnConflict(3).get();
-	}
+    /**
+     * The quantiles objects are written with one of two keys, such that
+     * the latest quantiles will overwrite the previous ones.  For each ES index,
+     * which corresponds to a job, there can only be 2 quantiles documents,
+     * one for system change quantiles and the other for unusual behaviour
+     * quantiles.
+     * @param quantiles If <code>null</code> then returns straight away.
+     * @throws IOException
+     */
+    @Override
+    public void persistQuantiles(Quantiles quantiles)
+    {
+        if (quantiles == null)
+        {
+            LOGGER.warn("No quantiles to persist for job " + m_JobId);
+            return;
+        }
+
+        try
+        {
+            XContentBuilder content = serialiseQuantiles(quantiles);
+
+            m_Client.prepareIndex(m_JobId, Quantiles.TYPE, quantiles.getId())
+                    .setSource(content)
+                    .execute().actionGet();
+
+            // Don't warn on overwrite as we expect this
+        }
+        catch (IOException e)
+        {
+            LOGGER.error("Error writing quantiles", e);
+            return;
+        }
+
+        // Refresh the index when persisting quantiles so that previously
+        // persisted results will be available for searching.  Do this using the
+        // indices API rather than the index API (used to write the quantiles
+        // above), because this will refresh all shards rather than just the
+        // shard that the quantiles document itself was written to.
+        commitWrites();
+    }
 
 
-	/**
-	 * Refreshes the elastic search index
-	 * @return
-	 */
-	@Override
-	public boolean commitWrites()
-	{
-		// refresh the index so the buckets are immediately searchable
-		m_Client.admin().indices().refresh(new RefreshRequest(m_JobId)).actionGet();
-		return true;
-	}
+    /**
+     * Persist the memory usage data
+     * @param modelSizeStats If <code>null</code> then returns straight away.
+     * @throws IOException
+     */
+    @Override
+    public void persistModelSizeStats(ModelSizeStats modelSizeStats)
+    {
+        if (modelSizeStats == null)
+        {
+            LOGGER.warn("No modelSizeStats to persist for job " + m_JobId);
+            return;
+        }
+
+        try
+        {
+            XContentBuilder content = serialiseModelSizeStats(modelSizeStats);
+
+            m_Client.prepareIndex(m_JobId, ModelSizeStats.TYPE, modelSizeStats.getId())
+                    .setSource(content)
+                    .execute().actionGet();
+
+            // Don't warn on overwrite as we expect this
+        }
+        catch (IOException e)
+        {
+            LOGGER.error("Error writing modelSizeStats", e);
+            return;
+        }
+
+        // Don't commit as we expect masses of these updates and they're only
+        // for information at the API level
+    }
 
 
-	/**
-	 * Return the bucket as serialisable content
-	 * @param bucket
-	 * @return
-	 * @throws IOException
-	 */
-	private XContentBuilder serialiseBucket(Bucket bucket)
-	throws IOException
-	{
-		return jsonBuilder().startObject()
-				.field(Bucket.ID, bucket.getId())
-				.field(ElasticsearchMappings.ES_TIMESTAMP, bucket.getTimestamp())
-				.field(Bucket.RAW_ANOMALY_SCORE, bucket.getRawAnomalyScore())
-				.field(Bucket.ANOMALY_SCORE, bucket.getAnomalyScore())
-				.field(Bucket.MAX_NORMALIZED_PROBABILITY, bucket.getMaxNormalizedProbability())
-				.field(Bucket.RECORD_COUNT, bucket.getRecordCount())
-				.field(Bucket.EVENT_COUNT, bucket.getEventCount())
-				.endObject();
-	}
+    @Override
+    public void incrementBucketCount(long count)
+    {
+        m_Client.prepareUpdate(m_JobId, JobDetails.TYPE, m_JobId)
+                        .setScript("update-bucket-count")
+                        .addScriptParam("count", count)
+                        .setRetryOnConflict(3).get();
+    }
 
 
-	/**
-	 * Return the quantiles as serialisable content
-	 * @param quantiles
-	 * @return
-	 * @throws IOException
-	 */
-	private XContentBuilder serialiseQuantiles(Quantiles quantiles)
-	throws IOException
-	{
-		return jsonBuilder().startObject()
-				.field(Quantiles.ID, quantiles.getId())
-				.field(Quantiles.QUANTILE_STATE, quantiles.getState())
-				.endObject();
-	}
-
-	/**
-	 * Return the modelSizeStats as serialisable content
-	 * @param modelSizeStats
-	 * @return
-	 * @throws IOException
-	 */
-	private XContentBuilder serialiseModelSizeStats(ModelSizeStats modelSizeStats)
-	throws IOException
-	{
-		return jsonBuilder().startObject()
-				.field(ModelSizeStats.MODEL_BYTES, modelSizeStats.getModelBytes())
-				.field(ModelSizeStats.TOTAL_BY_FIELD_COUNT, modelSizeStats.getTotalByFieldCount())
-				.field(ModelSizeStats.TOTAL_OVER_FIELD_COUNT, modelSizeStats.getTotalOverFieldCount())
-				.field(ModelSizeStats.TOTAL_PARTITION_FIELD_COUNT, modelSizeStats.getTotalPartitionFieldCount())
-				.endObject();
-	}
-
-	/**
-	 * Return the detector as serialisable content
-	 * @param detector
-	 * @return
-	 * @throws IOException
-	 */
-	private XContentBuilder serialiseDetector(Detector detector)
-	throws IOException
-	{
-		return jsonBuilder().startObject()
-				.field(Detector.NAME, detector.getName())
-				.endObject();
-	}
+    /**
+     * Refreshes the elastic search index
+     * @return
+     */
+    @Override
+    public boolean commitWrites()
+    {
+        // refresh the index so the buckets are immediately searchable
+        m_Client.admin().indices().refresh(new RefreshRequest(m_JobId)).actionGet();
+        return true;
+    }
 
 
-	/**
-	 * Return the anomaly record as serialisable content
-	 *
-	 * @param record Record to serialise
-	 * @param bucketTime The timestamp of the anomaly record parent bucket
-	 * @return
-	 * @throws IOException
-	 */
-	private XContentBuilder serialiseRecord(AnomalyRecord record, Date bucketTime)
-	throws IOException
-	{
-		XContentBuilder builder = jsonBuilder().startObject()
-				.field(AnomalyRecord.PROBABILITY, record.getProbability())
-				.field(AnomalyRecord.ANOMALY_SCORE, record.getAnomalyScore())
-				.field(AnomalyRecord.NORMALIZED_PROBABILITY, record.getNormalizedProbability())
-				.field(ElasticsearchMappings.ES_TIMESTAMP, bucketTime);
+    /**
+     * Return the bucket as serialisable content
+     * @param bucket
+     * @return
+     * @throws IOException
+     */
+    private XContentBuilder serialiseBucket(Bucket bucket)
+    throws IOException
+    {
+        XContentBuilder builder = jsonBuilder().startObject()
+                .field(Bucket.ID, bucket.getId())
+                .field(ElasticsearchMappings.ES_TIMESTAMP, bucket.getTimestamp())
+                .field(Bucket.RAW_ANOMALY_SCORE, bucket.getRawAnomalyScore())
+                .field(Bucket.ANOMALY_SCORE, bucket.getAnomalyScore())
+                .field(Bucket.MAX_NORMALIZED_PROBABILITY, bucket.getMaxNormalizedProbability())
+                .field(Bucket.RECORD_COUNT, bucket.getRecordCount())
+                .field(Bucket.EVENT_COUNT, bucket.getEventCount());
 
-		if (record.getByFieldName() != null)
-		{
-			builder.field(AnomalyRecord.BY_FIELD_NAME, record.getByFieldName());
-		}
-		if (record.getByFieldValue() != null)
-		{
-			builder.field(AnomalyRecord.BY_FIELD_VALUE, record.getByFieldValue());
-		}
-		if (record.getTypical() != null)
-		{
-			builder.field(AnomalyRecord.TYPICAL, record.getTypical());
-		}
-		if (record.getActual() != null)
-		{
-			builder.field(AnomalyRecord.ACTUAL, record.getActual());
-		}
-		if (record.getFieldName() != null)
-		{
-			builder.field(AnomalyRecord.FIELD_NAME, record.getFieldName());
-		}
-		if (record.getFunction() != null)
-		{
-			builder.field(AnomalyRecord.FUNCTION, record.getFunction());
-		}
-		if (record.getPartitionFieldName() != null)
-		{
-			builder.field(AnomalyRecord.PARTITION_FIELD_NAME, record.getPartitionFieldName());
-		}
-		if (record.getPartitionFieldValue() != null)
-		{
-			builder.field(AnomalyRecord.PARTITION_FIELD_VALUE, record.getPartitionFieldValue());
-		}
-		if (record.getOverFieldName() != null)
-		{
-			builder.field(AnomalyRecord.OVER_FIELD_NAME, record.getOverFieldName());
-		}
-		if (record.getOverFieldValue() != null)
-		{
-			builder.field(AnomalyRecord.OVER_FIELD_VALUE, record.getOverFieldValue());
-		}
-		if (record.getCauses() != null)
-		{
-			builder.startArray(AnomalyRecord.CAUSES);
-			for (AnomalyCause cause : record.getCauses())
-			{
-				serialiseCause(cause, builder);
-			}
-			builder.endArray();
-		}
+        if (bucket.isInterim() != null)
+        {
+            builder.field(Bucket.IS_INTERIM, bucket.isInterim());
+        }
 
-		builder.endObject();
+        builder.endObject();
 
-		return builder;
-	}
+        return builder;
+    }
 
 
-	/**
-	 * Augment the anomaly record serialisable content with a cause
-	 *
-	 * @param cause Cause to serialise
-	 * @param builder JSON builder to be augmented
-	 * @throws IOException
-	 */
-	private void serialiseCause(AnomalyCause cause, XContentBuilder builder)
-	throws IOException
-	{
-		builder.startObject()
-				.field(AnomalyCause.PROBABILITY, cause.getProbability())
-				.field(AnomalyCause.ACTUAL, cause.getActual())
-				.field(AnomalyCause.TYPICAL, cause.getTypical());
+    /**
+     * Return the quantiles as serialisable content
+     * @param quantiles
+     * @return
+     * @throws IOException
+     */
+    private XContentBuilder serialiseQuantiles(Quantiles quantiles)
+    throws IOException
+    {
+        return jsonBuilder().startObject()
+                .field(Quantiles.ID, quantiles.getId())
+                .field(Quantiles.QUANTILE_STATE, quantiles.getState())
+                .endObject();
+    }
 
-		if (cause.getByFieldName() != null)
-		{
-			builder.field(AnomalyCause.BY_FIELD_NAME, cause.getByFieldName());
-		}
-		if (cause.getByFieldValue() != null)
-		{
-			builder.field(AnomalyCause.BY_FIELD_VALUE, cause.getByFieldValue());
-		}
-		if (cause.getFieldName() != null)
-		{
-			builder.field(AnomalyCause.FIELD_NAME, cause.getFieldName());
-		}
-		if (cause.getFunction() != null)
-		{
-			builder.field(AnomalyCause.FUNCTION, cause.getFunction());
-		}
-		if (cause.getPartitionFieldName() != null)
-		{
-			builder.field(AnomalyCause.PARTITION_FIELD_NAME, cause.getPartitionFieldName());
-		}
-		if (cause.getPartitionFieldValue() != null)
-		{
-			builder.field(AnomalyCause.PARTITION_FIELD_VALUE, cause.getPartitionFieldValue());
-		}
-		if (cause.getOverFieldName() != null)
-		{
-			builder.field(AnomalyCause.OVER_FIELD_NAME, cause.getOverFieldName());
-		}
-		if (cause.getOverFieldValue() != null)
-		{
-			builder.field(AnomalyCause.OVER_FIELD_VALUE, cause.getOverFieldValue());
-		}
+    /**
+     * Return the modelSizeStats as serialisable content
+     * @param modelSizeStats
+     * @return
+     * @throws IOException
+     */
+    private XContentBuilder serialiseModelSizeStats(ModelSizeStats modelSizeStats)
+    throws IOException
+    {
+        return jsonBuilder().startObject()
+                .field(ModelSizeStats.MODEL_BYTES, modelSizeStats.getModelBytes())
+                .field(ModelSizeStats.TOTAL_BY_FIELD_COUNT, modelSizeStats.getTotalByFieldCount())
+                .field(ModelSizeStats.TOTAL_OVER_FIELD_COUNT, modelSizeStats.getTotalOverFieldCount())
+                .field(ModelSizeStats.TOTAL_PARTITION_FIELD_COUNT, modelSizeStats.getTotalPartitionFieldCount())
+                .endObject();
+    }
 
-		builder.endObject();
-	}
+    /**
+     * Return the detector as serialisable content
+     * @param detector
+     * @return
+     * @throws IOException
+     */
+    private XContentBuilder serialiseDetector(Detector detector)
+    throws IOException
+    {
+        return jsonBuilder().startObject()
+                .field(Detector.NAME, detector.getName())
+                .endObject();
+    }
+
+
+    /**
+     * Return the anomaly record as serialisable content
+     *
+     * @param record Record to serialise
+     * @param bucketTime The timestamp of the anomaly record parent bucket
+     * @return
+     * @throws IOException
+     */
+    private XContentBuilder serialiseRecord(AnomalyRecord record, Date bucketTime)
+    throws IOException
+    {
+        XContentBuilder builder = jsonBuilder().startObject()
+                .field(AnomalyRecord.PROBABILITY, record.getProbability())
+                .field(AnomalyRecord.ANOMALY_SCORE, record.getAnomalyScore())
+                .field(AnomalyRecord.NORMALIZED_PROBABILITY, record.getNormalizedProbability())
+                .field(ElasticsearchMappings.ES_TIMESTAMP, bucketTime);
+
+        if (record.getByFieldName() != null)
+        {
+            builder.field(AnomalyRecord.BY_FIELD_NAME, record.getByFieldName());
+        }
+        if (record.getByFieldValue() != null)
+        {
+            builder.field(AnomalyRecord.BY_FIELD_VALUE, record.getByFieldValue());
+        }
+        if (record.getTypical() != null)
+        {
+            builder.field(AnomalyRecord.TYPICAL, record.getTypical());
+        }
+        if (record.getActual() != null)
+        {
+            builder.field(AnomalyRecord.ACTUAL, record.getActual());
+        }
+        if (record.isInterim() != null)
+        {
+            builder.field(AnomalyRecord.IS_INTERIM, record.isInterim());
+        }
+        if (record.getFieldName() != null)
+        {
+            builder.field(AnomalyRecord.FIELD_NAME, record.getFieldName());
+        }
+        if (record.getFunction() != null)
+        {
+            builder.field(AnomalyRecord.FUNCTION, record.getFunction());
+        }
+        if (record.getPartitionFieldName() != null)
+        {
+            builder.field(AnomalyRecord.PARTITION_FIELD_NAME, record.getPartitionFieldName());
+        }
+        if (record.getPartitionFieldValue() != null)
+        {
+            builder.field(AnomalyRecord.PARTITION_FIELD_VALUE, record.getPartitionFieldValue());
+        }
+        if (record.getOverFieldName() != null)
+        {
+            builder.field(AnomalyRecord.OVER_FIELD_NAME, record.getOverFieldName());
+        }
+        if (record.getOverFieldValue() != null)
+        {
+            builder.field(AnomalyRecord.OVER_FIELD_VALUE, record.getOverFieldValue());
+        }
+        if (record.getCauses() != null)
+        {
+            builder.startArray(AnomalyRecord.CAUSES);
+            for (AnomalyCause cause : record.getCauses())
+            {
+                serialiseCause(cause, builder);
+            }
+            builder.endArray();
+        }
+
+        builder.endObject();
+
+        return builder;
+    }
+
+
+    /**
+     * Augment the anomaly record serialisable content with a cause
+     *
+     * @param cause Cause to serialise
+     * @param builder JSON builder to be augmented
+     * @throws IOException
+     */
+    private void serialiseCause(AnomalyCause cause, XContentBuilder builder)
+    throws IOException
+    {
+        builder.startObject()
+                .field(AnomalyCause.PROBABILITY, cause.getProbability())
+                .field(AnomalyCause.ACTUAL, cause.getActual())
+                .field(AnomalyCause.TYPICAL, cause.getTypical());
+
+        if (cause.getByFieldName() != null)
+        {
+            builder.field(AnomalyCause.BY_FIELD_NAME, cause.getByFieldName());
+        }
+        if (cause.getByFieldValue() != null)
+        {
+            builder.field(AnomalyCause.BY_FIELD_VALUE, cause.getByFieldValue());
+        }
+        if (cause.getFieldName() != null)
+        {
+            builder.field(AnomalyCause.FIELD_NAME, cause.getFieldName());
+        }
+        if (cause.getFunction() != null)
+        {
+            builder.field(AnomalyCause.FUNCTION, cause.getFunction());
+        }
+        if (cause.getPartitionFieldName() != null)
+        {
+            builder.field(AnomalyCause.PARTITION_FIELD_NAME, cause.getPartitionFieldName());
+        }
+        if (cause.getPartitionFieldValue() != null)
+        {
+            builder.field(AnomalyCause.PARTITION_FIELD_VALUE, cause.getPartitionFieldValue());
+        }
+        if (cause.getOverFieldName() != null)
+        {
+            builder.field(AnomalyCause.OVER_FIELD_NAME, cause.getOverFieldName());
+        }
+        if (cause.getOverFieldValue() != null)
+        {
+            builder.field(AnomalyCause.OVER_FIELD_VALUE, cause.getOverFieldValue());
+        }
+
+        builder.endObject();
+    }
 
 }

@@ -27,79 +27,78 @@
 
 package com.prelert.job.usage;
 
+import junit.framework.Assert;
+
 import org.apache.log4j.Logger;
 import org.junit.Test;
 
-
-import junit.framework.Assert;
-
-public class UsageReporterTest 
+public class UsageReporterTest
 {
 	@Test
 	public void testUpdatePeriod()
 	{
-		// set the update interval to 2 secs
-		System.setProperty(UsageReporter.UPDATE_INTERVAL_PROP, "2");
-		
+		// set the update interval to 1 secs
+		System.setProperty(UsageReporter.UPDATE_INTERVAL_PROP, "1");
+
 		Logger logger = Logger.getLogger(UsageReporterTest.class);
 		DummyUsageReporter usage = new DummyUsageReporter("job1", logger);
-		
+
 		usage.addBytesRead(10);
 		usage.addFieldsRecordsRead(5);
-		
+
 		Assert.assertEquals(10, usage.getBytesReadSinceLastReport());
 		Assert.assertEquals(5, usage.getFieldsReadSinceLastReport());
 		Assert.assertEquals(1, usage.getRecordsReadSinceLastReport());
-		
+
 		try
 		{
-			Thread.sleep(4000);
+			Thread.sleep(1500);
 		}
 		catch (InterruptedException e)
 		{
 			Assert.assertTrue(false);
 		}
-		
+
 		usage.addBytesRead(50);
 		Assert.assertTrue(usage.persistUsageWasCalled());
-		
+
 		Assert.assertEquals(usage.m_TotalByteCount, 60);
 		Assert.assertEquals(usage.m_TotalFieldCount, 5);
 		Assert.assertEquals(usage.m_TotalRecordCount, 1);
-		
+
 		Assert.assertEquals(0, usage.getBytesReadSinceLastReport());
 		Assert.assertEquals(0, usage.getFieldsReadSinceLastReport());
 		Assert.assertEquals(0, usage.getRecordsReadSinceLastReport());
-		
-		
+
+
 		// Write another
 		usage.addBytesRead(20);
 		usage.addFieldsRecordsRead(10);
-				
+
 		Assert.assertEquals(20, usage.getBytesReadSinceLastReport());
 		Assert.assertEquals(10, usage.getFieldsReadSinceLastReport());
 		Assert.assertEquals(1, usage.getRecordsReadSinceLastReport());
-		
-		
+
+
 		try
 		{
-			Thread.sleep(4000);
+			Thread.sleep(1500);
 		}
 		catch (InterruptedException e)
 		{
 			Assert.assertTrue(false);
 		}
-		
+
 		usage.addBytesRead(10);
 		Assert.assertTrue(usage.persistUsageWasCalled());
-		
+
 		Assert.assertEquals(usage.m_TotalByteCount, 90);
 		Assert.assertEquals(usage.m_TotalFieldCount, 15);
 		Assert.assertEquals(usage.m_TotalRecordCount, 2);
-		
+
 		Assert.assertEquals(0, usage.getBytesReadSinceLastReport());
 		Assert.assertEquals(0, usage.getFieldsReadSinceLastReport());
 		Assert.assertEquals(0, usage.getRecordsReadSinceLastReport());
-		
+
 	}
 }

@@ -49,154 +49,154 @@ import com.fasterxml.jackson.core.JsonToken;
 @JsonIgnoreProperties({"records"})
 public class Detector
 {
-	public static final String TYPE = "detector";
-	public static final String NAME = "name";
-	public static final String RECORDS = "records";
+    public static final String TYPE = "detector";
+    public static final String NAME = "name";
+    public static final String RECORDS = "records";
 
-	private static final Logger LOGGER = Logger.getLogger(Detector.class);
+    private static final Logger LOGGER = Logger.getLogger(Detector.class);
 
-	private String m_Name;
-	private List<AnomalyRecord> m_Records;
-
-
-	public Detector()
-	{
-		m_Records = new ArrayList<>();
-	}
-
-	public Detector(String name)
-	{
-		this();
-		m_Name = name.intern();
-	}
-
-	/**
-	 * Create the detector from a map. Only the name field is read
-	 * @param values
-	 */
-	public Detector(Map<String, Object> values)
-	{
-		if (values.containsKey(NAME))
-		{
-			m_Name = values.get(NAME).toString().intern();
-		}
-		else
-		{
-			LOGGER.error("Constructing detector from map with no " + NAME + " field");
-		}
-	}
-
-	public String getName()
-	{
-		return m_Name;
-	}
-
-	private void setName(String name)
-	{
-		m_Name = name.intern();
-	}
-
-	public void addRecord(AnomalyRecord record)
-	{
-		m_Records.add(record);
-	}
-
-	public List<AnomalyRecord> getRecords()
-	{
-		return m_Records;
-	}
+    private String m_Name;
+    private List<AnomalyRecord> m_Records;
 
 
-	/**
-	 * Create a new <code>Detector</code> and populate it from the JSON parser.
-	 * The parser must be pointing at the start of the object then all the object's
-	 * fields are read and if they match the property names the appropriate
-	 * members are set.
-	 *
-	 * Does not validate that all the properties (or any) have been set but if
-	 * parsing fails an exception will be thrown.
-	 *
-	 * @param parser The JSON Parser should be pointing to the start of the object,
-	 * when the function returns it will be pointing to the end.
-	 * @return The new Detector
-	 * @throws JsonParseException
-	 * @throws IOException
-	 * @throws AutoDetectParseException
-	 */
-	public static Detector parseJson(JsonParser parser)
-	throws JsonParseException, IOException, AutoDetectParseException
-	{
-		Detector detector = new Detector();
+    public Detector()
+    {
+        m_Records = new ArrayList<>();
+    }
 
-		JsonToken token = parser.getCurrentToken();
-		if (JsonToken.START_OBJECT != token)
-		{
-			String msg = "Cannot parse detector. First token '" +
-					parser.getText() + ", is not the start token";
-			LOGGER.error(msg);
-			throw new AutoDetectParseException(msg);
-		}
+    public Detector(String name)
+    {
+        this();
+        m_Name = name.intern();
+    }
 
-		token = parser.nextToken();
-		while (token != JsonToken.END_OBJECT)
-		{
-			switch(token)
-			{
-			case START_OBJECT:
-				LOGGER.error("Start object parsed in detector");
-				break;
-			case END_OBJECT:
-				LOGGER.error("End object parsed in detector");
-				break;
-			case FIELD_NAME:
-				String fieldName = parser.getCurrentName();
-				switch (fieldName)
-				{
-				case NAME:
-					token = parser.nextToken();
-					if (token == JsonToken.VALUE_STRING)
-					{
-						detector.setName(parser.getText());
-					}
-					else
-					{
-						LOGGER.warn("Cannot parse " + NAME + " : " +
-								parser.getText() + " as a string");
-					}
-					break;
-				case RECORDS:
-					token = parser.nextToken();
-					if (token == JsonToken.START_ARRAY)
-					{
-						token = parser.nextToken();
-						while (token != JsonToken.END_ARRAY)
-						{
-							AnomalyRecord record = AnomalyRecord.parseJson(parser);
-							detector.addRecord(record);
+    /**
+     * Create the detector from a map. Only the name field is read
+     * @param values
+     */
+    public Detector(Map<String, Object> values)
+    {
+        if (values.containsKey(NAME))
+        {
+            m_Name = values.get(NAME).toString().intern();
+        }
+        else
+        {
+            LOGGER.error("Constructing detector from map with no " + NAME + " field");
+        }
+    }
 
-							token = parser.nextToken();
-						}
-					}
-					else
-					{
-						LOGGER.warn("Expected the start of an array for field '"
-									+ fieldName + "' not " + parser.getText());
-					}
-					break;
-				default:
-					LOGGER.warn(String.format("Parse error unknown field in detector %s:%s",
-							fieldName, parser.nextTextValue()));
-					break;
-				}
-				break;
-			default:
-				LOGGER.warn("Parsing error: Only simple fields expected in bucket not " + token);
-				break;
-			}
+    public String getName()
+    {
+        return m_Name;
+    }
 
-			token = parser.nextToken();
-		}
+    private void setName(String name)
+    {
+        m_Name = name.intern();
+    }
 
-		return detector;
-	}
+    public void addRecord(AnomalyRecord record)
+    {
+        m_Records.add(record);
+    }
+
+    public List<AnomalyRecord> getRecords()
+    {
+        return m_Records;
+    }
+
+
+    /**
+     * Create a new <code>Detector</code> and populate it from the JSON parser.
+     * The parser must be pointing at the start of the object then all the object's
+     * fields are read and if they match the property names the appropriate
+     * members are set.
+     *
+     * Does not validate that all the properties (or any) have been set but if
+     * parsing fails an exception will be thrown.
+     *
+     * @param parser The JSON Parser should be pointing to the start of the object,
+     * when the function returns it will be pointing to the end.
+     * @return The new Detector
+     * @throws JsonParseException
+     * @throws IOException
+     * @throws AutoDetectParseException
+     */
+    public static Detector parseJson(JsonParser parser)
+    throws JsonParseException, IOException, AutoDetectParseException
+    {
+        Detector detector = new Detector();
+
+        JsonToken token = parser.getCurrentToken();
+        if (JsonToken.START_OBJECT != token)
+        {
+            String msg = "Cannot parse detector. First token '" +
+                    parser.getText() + ", is not the start token";
+            LOGGER.error(msg);
+            throw new AutoDetectParseException(msg);
+        }
+
+        token = parser.nextToken();
+        while (token != JsonToken.END_OBJECT)
+        {
+            switch(token)
+            {
+            case START_OBJECT:
+                LOGGER.error("Start object parsed in detector");
+                break;
+            case END_OBJECT:
+                LOGGER.error("End object parsed in detector");
+                break;
+            case FIELD_NAME:
+                String fieldName = parser.getCurrentName();
+                switch (fieldName)
+                {
+                case NAME:
+                    token = parser.nextToken();
+                    if (token == JsonToken.VALUE_STRING)
+                    {
+                        detector.setName(parser.getText());
+                    }
+                    else
+                    {
+                        LOGGER.warn("Cannot parse " + NAME + " : " +
+                                parser.getText() + " as a string");
+                    }
+                    break;
+                case RECORDS:
+                    token = parser.nextToken();
+                    if (token == JsonToken.START_ARRAY)
+                    {
+                        token = parser.nextToken();
+                        while (token != JsonToken.END_ARRAY)
+                        {
+                            AnomalyRecord record = AnomalyRecord.parseJson(parser);
+                            detector.addRecord(record);
+
+                            token = parser.nextToken();
+                        }
+                    }
+                    else
+                    {
+                        LOGGER.warn("Expected the start of an array for field '"
+                                    + fieldName + "' not " + parser.getText());
+                    }
+                    break;
+                default:
+                    LOGGER.warn(String.format("Parse error unknown field in detector %s:%s",
+                            fieldName, parser.nextToken().asString()));
+                    break;
+                }
+                break;
+            default:
+                LOGGER.warn("Parsing error: Only simple fields expected in bucket not " + token);
+                break;
+            }
+
+            token = parser.nextToken();
+        }
+
+        return detector;
+    }
 }

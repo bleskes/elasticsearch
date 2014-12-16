@@ -38,6 +38,7 @@ import com.prelert.job.manager.JobManager;
 import com.prelert.job.persistence.elasticsearch.ElasticsearchDataPersisterFactory;
 import com.prelert.job.persistence.elasticsearch.ElasticsearchJobProvider;
 import com.prelert.job.persistence.elasticsearch.ElasticsearchResultsReaderFactory;
+import com.prelert.job.process.ProcessManager;
 import com.prelert.job.status.elasticsearch.ElasticsearchStatusReporterFactory;
 import com.prelert.job.usage.elasticsearch.ElasticsearchUsageReporterFactory;
 import com.prelert.rs.provider.AlertMessageBodyWriter;
@@ -110,12 +111,7 @@ public class PrelertWebApp extends Application
 		ElasticsearchJobProvider esJob = new ElasticsearchJobProvider(
 				elasticSearchClusterName, portRange);
 
-		m_JobManager = new JobManager(esJob,
-				new ElasticsearchResultsReaderFactory(esJob),
-				new ElasticsearchStatusReporterFactory(esJob.getClient()),
-				new ElasticsearchUsageReporterFactory(esJob.getClient()),
-				new ElasticsearchDataPersisterFactory(esJob.getClient())
-			);
+		m_JobManager = new JobManager(esJob, createProcessManager(esJob));
 
 		m_AlertManager = new AlertManager(
 				new ElasticsearchAlertPersister(esJob.getClient()),
@@ -125,6 +121,16 @@ public class PrelertWebApp extends Application
 		m_Singletons = new HashSet<>();
 		m_Singletons.add(m_JobManager);
 		m_Singletons.add(m_AlertManager);
+	}
+
+	private static ProcessManager createProcessManager(ElasticsearchJobProvider jobProvider)
+	{
+	    return new ProcessManager(jobProvider,
+                new ElasticsearchResultsReaderFactory(jobProvider),
+                new ElasticsearchStatusReporterFactory(jobProvider.getClient()),
+                new ElasticsearchUsageReporterFactory(jobProvider.getClient()),
+                new ElasticsearchDataPersisterFactory(jobProvider.getClient())
+        );
 	}
 
 	@Override
