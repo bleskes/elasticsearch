@@ -115,25 +115,30 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter
     {
         List<String> analysisFields = m_AnalysisConfig.analysisFields();
 
-        // record is all the analysis fields + the time field
-        String [] allFields = new String [analysisFields.size() +1];
+        // record is all the analysis fields + the time field + control field
+        String[] allFields = new String[analysisFields.size() + 2];
 
-        int i=0;
+        int i = 0;
         for (String s : analysisFields)
         {
             allFields[i] = s;
             i++;
         }
 
-        int timeFieldIndex = allFields.length -1;
+        // time field is the penultimate item
+        int timeFieldIndex = allFields.length - 2;
         allFields[timeFieldIndex] = m_DataDescription.getTimeField();
-        // time field is the last item
+
+        // control field is the last item
+        int controlFieldIndex = allFields.length - 1;
+        allFields[controlFieldIndex] = LengthEncodedWriter.CONTROL_FIELD_NAME;
 
         String [] record = new String[allFields.length];
-        boolean [] gotFields = new boolean[record.length];
+        // We never expect to get the control field, hence - 1 here
+        boolean [] gotFields = new boolean[allFields.length - 1];
 
         Map<String, Integer> fieldMap = new HashMap<>();
-        for (i = 0; i < allFields.length; i++)
+        for (i = 0; i < allFields.length - 1; i++)
         {
             fieldMap.put(allFields[i], new Integer(i));
         }

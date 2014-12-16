@@ -180,6 +180,12 @@ public enum ErrorCode
 	 */
 	TOO_MANY_OUT_OF_ORDER_RECORDS(30105),
 
+	 /**
+     * User is trying to upload data for a job while there are too
+     * many jobs running concurrently.
+     */
+    TOO_MANY_JOBS_RUNNING_CONCURRENTLY(30106),
+
 
 	// native process errors
 	/**
@@ -205,6 +211,13 @@ public enum ErrorCode
 	 * and will result in this error condition.
 	 */
 	NATIVE_PROCESS_CONCURRENT_USE_ERROR(40103),
+
+	/**
+	 * A flush command to the native autodetect process was interrupted.
+	 * Data received prior to the flush may or may not have been processed if a
+	 * flush request returns with this error code.
+	 */
+	NATIVE_PROCESS_FLUSH_INTERRUPTED(40104),
 
 
 	// Log file reading errors

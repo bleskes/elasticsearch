@@ -25,31 +25,41 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job;
+package com.prelert.rs.provider;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 
 import org.junit.Test;
 
-public class AnalysisLimitsTest
-{
-    @Test
-    public void testEquals_GivenEqual()
-    {
-        AnalysisLimits analysisLimits1 = new AnalysisLimits(10);
-        AnalysisLimits analysisLimits2 = new AnalysisLimits(10);
+import com.prelert.rs.data.Pagination;
 
-        assertTrue(analysisLimits1.equals(analysisLimits2));
-        assertTrue(analysisLimits2.equals(analysisLimits1));
+public class PaginationWriterTest
+{
+
+    private final PaginationWriter<String> m_PaginationWriter = new PaginationWriter<>();
+
+    @Test
+    public void testIsWritable()
+    {
+        assertFalse(m_PaginationWriter.isWriteable(
+                String.class, mock(Type.class), null, null));
+        assertFalse(m_PaginationWriter.isWriteable(
+                String.class, mock(ParameterizedType.class), null, null));
+        assertFalse(m_PaginationWriter.isWriteable(
+                Pagination.class, mock(Type.class), null, null));
+        assertTrue(m_PaginationWriter.isWriteable(
+                Pagination.class, mock(ParameterizedType.class), null, null));
     }
 
     @Test
-    public void testHashCode_GivenEqual()
+    public void testGetSize()
     {
-        AnalysisLimits analysisLimits1 = new AnalysisLimits(5555);
-        AnalysisLimits analysisLimits2 = new AnalysisLimits(5555);
-
-        assertEquals(analysisLimits1.hashCode(), analysisLimits2.hashCode());
+        assertEquals(0, m_PaginationWriter.getSize(null, null, null, null, null));
     }
 }

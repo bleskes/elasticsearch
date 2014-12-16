@@ -39,125 +39,113 @@ import java.util.List;
  * pairs. The first call to one the of the <code>writeRecord() </code> methods
  * should be with the header fields, once the headers are written records
  * can be written sequentially.
- * 
+ *
  * <p>See CLengthEncodedInputParser.h in the C++ code for a more
- * detailed description.  
+ * detailed description.
  */
-public class LengthEncodedWriter 
+public class LengthEncodedWriter
 {
-	private OutputStream m_OutputStream;
-	private ByteBuffer m_LengthBuffer;
-	
-	/**
-	 * Create the writer on the OutputStream <code>os</code>.
-	 * This object will never close <code>os</code>.
-	 * @param os
-	 */
-	public LengthEncodedWriter(OutputStream os)
-	{
-		m_OutputStream = os;	
-		// This will be used to convert 32 bit integers to network byte order
-		m_LengthBuffer = ByteBuffer.allocate(4); // 4 == sizeof(int)
-	}
-	
-	/**
-	 * Convert each String in the record array to a length/value encoded pair
-	 * and write to the outputstream. 
-	 * @param record
-	 * @throws IOException
-	 * @see {@link #writeRecord(List)}
-	 */
-	public void writeRecord(String [] record)
-	throws IOException
-	{		
-		byte[] utf8Bytes;
-		
-		// number fields
-		m_LengthBuffer.clear(); 
-		m_LengthBuffer.putInt(record.length);
-		m_OutputStream.write(m_LengthBuffer.array());
-		
-		for (String field : record)
-		{
-			utf8Bytes = field.getBytes(StandardCharsets.UTF_8);
-			m_LengthBuffer.clear();			
-			m_LengthBuffer.putInt(utf8Bytes.length);
-			m_OutputStream.write(m_LengthBuffer.array());
-			m_OutputStream.write(utf8Bytes);			
-		}		
-	}
-	
-	
-	/**
-	 * Convert each String in the record list to a length/value encoded 
-	 * pair and write to the outputstream. 
-	 * 
-	 * @param record
-	 * @throws IOException
-	 * @see {@link #writeRecord(String [])}
-	 */	
-	public void writeRecord(List<String> record)
-	throws IOException
-	{		
-		byte[] utf8Bytes;
-		
-		// number fields
-		m_LengthBuffer.clear(); 
-		m_LengthBuffer.putInt(record.size());
-		m_OutputStream.write(m_LengthBuffer.array());
-		
-		for (String field : record)
-		{
-			utf8Bytes = field.getBytes(StandardCharsets.UTF_8);
-			m_LengthBuffer.clear();			
-			m_LengthBuffer.putInt(utf8Bytes.length);
-			m_OutputStream.write(m_LengthBuffer.array());
-			m_OutputStream.write(utf8Bytes);			
-		}		
-	}
-	
-		
-	/**
-	 * Lower level functions to write records individually.
-	 * After this function is called {@link #writeField(String)} 
-	 * must be called <code>numFields</code> times.
-	 * 
-	 * @param numFields
-	 * @throws IOException
-	 * @see {@link #writeField(String)}
-	 */
-	public void writeNumFields(int numFields) throws IOException
-	{
-		// number fields
-		m_LengthBuffer.clear(); 
-		m_LengthBuffer.putInt(numFields);
-		m_OutputStream.write(m_LengthBuffer.array());
-	}
-	
-	
-	/**
-	 * Lower level functions to write record fields individually.
-	 * 
-	 * @param numFields
-	 * @throws IOException
-	 * @see {@link #writeNumFields(int)}
-	 */
-	public void writeField(String field) throws IOException
-	{
-		byte[] utf8Bytes = field.getBytes(StandardCharsets.UTF_8);
-		m_LengthBuffer.clear();			
-		m_LengthBuffer.putInt(utf8Bytes.length);
-		m_OutputStream.write(m_LengthBuffer.array());
-		m_OutputStream.write(utf8Bytes);	
-	}
-	
-	
-	/**
-	 * Flush the output stream.
-	 * @throws IOException
-	 */
-	public void flush() throws IOException
-	{
-		m_OutputStream.flush();
-	}
+    /**
+     * Value must match api::CAnomalyDetector::CONTROL_FIELD_NAME in the C++
+     * code.
+     */
+    public static final String CONTROL_FIELD_NAME = ".";
+
+    private OutputStream m_OutputStream;
+    private ByteBuffer m_LengthBuffer;
+
+    /**
+     * Create the writer on the OutputStream <code>os</code>.
+     * This object will never close <code>os</code>.
+     * @param os
+     */
+    public LengthEncodedWriter(OutputStream os)
+    {
+        m_OutputStream = os;
+        // This will be used to convert 32 bit integers to network byte order
+        m_LengthBuffer = ByteBuffer.allocate(4); // 4 == sizeof(int)
+    }
+
+    /**
+     * Convert each String in the record array to a length/value encoded pair
+     * and write to the outputstream.
+     * @param record
+     * @throws IOException
+     * @see {@link #writeRecord(List)}
+     */
+    public void writeRecord(String[] record)
+    throws IOException
+    {
+        writeNumFields(record.length);
+
+        for (String field : record)
+        {
+            writeField(field);
+        }
+    }
+
+
+    /**
+     * Convert each String in the record list to a length/value encoded
+     * pair and write to the outputstream.
+     *
+     * @param record
+     * @throws IOException
+     * @see {@link #writeRecord(String[])}
+     */
+    public void writeRecord(List<String> record)
+    throws IOException
+    {
+        writeNumFields(record.size());
+
+        for (String field : record)
+        {
+            writeField(field);
+        }
+    }
+
+
+    /**
+     * Lower level functions to write records individually.
+     * After this function is called {@link #writeField(String)}
+     * must be called <code>numFields</code> times.
+     *
+     * @param numFields
+     * @throws IOException
+     * @see {@link #writeField(String)}
+     */
+    public void writeNumFields(int numFields) throws IOException
+    {
+        // number fields
+        m_LengthBuffer.clear();
+        m_LengthBuffer.putInt(numFields);
+        m_OutputStream.write(m_LengthBuffer.array());
+    }
+
+
+    /**
+     * Lower level functions to write record fields individually.
+     *
+     * @param numFields
+     * @throws IOException
+     * @see {@link #writeNumFields(int)}
+     */
+    public void writeField(String field) throws IOException
+    {
+        byte[] utf8Bytes = field.getBytes(StandardCharsets.UTF_8);
+        m_LengthBuffer.clear();
+        m_LengthBuffer.putInt(utf8Bytes.length);
+        m_OutputStream.write(m_LengthBuffer.array());
+        m_OutputStream.write(utf8Bytes);
+    }
+
+
+    /**
+     * Flush the output stream.
+     * @throws IOException
+     */
+    public void flush() throws IOException
+    {
+        m_OutputStream.flush();
+    }
 }

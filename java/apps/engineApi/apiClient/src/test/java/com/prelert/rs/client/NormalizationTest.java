@@ -271,10 +271,9 @@ public class NormalizationTest implements Closeable
 		}
 		test(highAnomalyScoreCount == 1);
 
-		// the big anomaly is in bucket 772
-		test(pagedBuckets.get(771).getAnomalyScore() >= 90.0);
-		
-		
+		// the big anomaly spans buckets 771 and 772, but the first of these will have the higher score
+		test(pagedBuckets.get(770).getAnomalyScore() >= 90.0);
+
 		Pagination<Bucket> allBucketsExpanded = m_WebServiceClient.getBuckets(baseUrl, 
 				jobId, true, 0l, 1500l, 0.0, 0.0);
 		

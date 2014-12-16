@@ -223,7 +223,7 @@ public class JobsTest implements Closeable
 				+ "\"detectors\":[{\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}] "
 				+ "},"
 				+ "\"dataDescription\":{\"fieldDelimiter\":\",\", \"timeField\":\"_time\", \"timeFormat\" : \"epoch\"},"
-				+ "\"analysisLimits\": {\"maxFieldValues\":2000, \"maxTimeBuckets\":5000}"
+				+ "\"analysisLimits\": {\"modelMemoryLimit\":2000}"
 				+ "}";		
 		
 		
@@ -259,7 +259,7 @@ public class JobsTest implements Closeable
 		test(ac.equals(job.getAnalysisConfig()));
 		test(dd.equals(job.getDataDescription()));
 		
-		AnalysisLimits al = new AnalysisLimits(2000, 5000);
+		AnalysisLimits al = new AnalysisLimits(2000);
 		test(job.getAnalysisLimits().equals(al));
 		
 		test(job.getDescription().equals("Flight Centre Job"));
@@ -815,8 +815,8 @@ public class JobsTest implements Closeable
 				
 				int start = Math.max(0,  buckets.getSkip() - buckets.getTake());
 				String prevPageUrl = String.format(
-						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&anomalyScore=0.0&maxNormalizedProbability=0.0", 
-						baseUrl, jobId,  start, buckets.getTake(), false);
+						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&includeInterim=%b&anomalyScore=0.0&maxNormalizedProbability=0.0", 
+						baseUrl, jobId,  start, buckets.getTake(), false, false);
 				
 				test(prevPageUrl.equals(buckets.getPreviousPage().toString()));
 			}
@@ -831,8 +831,8 @@ public class JobsTest implements Closeable
 			{
 				int start = Math.max(0,  buckets.getSkip() + buckets.getTake());
 				String nextPageUrl = String.format(
-						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&anomalyScore=0.0&maxNormalizedProbability=0.0", 
-						baseUrl, jobId, start, buckets.getTake(), false);
+						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&includeInterim=%b&anomalyScore=0.0&maxNormalizedProbability=0.0", 
+						baseUrl, jobId, start, buckets.getTake(), false, false);
 
 				test(nextPageUrl.equals(buckets.getNextPage().toString()));
 			}
@@ -891,8 +891,8 @@ public class JobsTest implements Closeable
 				
 				int start = Math.max(0,  buckets.getSkip() - buckets.getTake());
 				String prevPageUrl = String.format(
-						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&anomalyScore=0.0&maxNormalizedProbability=0.0", 
-						baseUrl, jobId, start, buckets.getTake(), true);
+						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&includeInterim=%b&anomalyScore=0.0&maxNormalizedProbability=0.0", 
+						baseUrl, jobId, start, buckets.getTake(), true, false);
 
 				test(prevPageUrl.equals(buckets.getPreviousPage().toString()));						
 			}
@@ -906,8 +906,8 @@ public class JobsTest implements Closeable
 			{
 				int start = Math.max(0,  buckets.getSkip() + buckets.getTake());
 				String nextPageUrl = String.format(
-						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&anomalyScore=0.0&maxNormalizedProbability=0.0", 
-						baseUrl, jobId, start, buckets.getTake(), true);
+						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&includeInterim=%b&anomalyScore=0.0&maxNormalizedProbability=0.0", 
+						baseUrl, jobId, start, buckets.getTake(), true, false);
 
 				test(nextPageUrl.equals(buckets.getNextPage().toString()));
 			}
