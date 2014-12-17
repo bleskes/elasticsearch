@@ -18,32 +18,34 @@
 package org.elasticsearch.shield.authc.support.ldap;
 
 import javax.net.SocketFactory;
+import javax.net.ssl.SSLParameters;
+import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
+import java.io.IOException;
+import java.net.InetAddress;
 
 /**
- * This factory is needed for JNDI configuration for LDAP connections.  It wraps a single instance of a static
- * factory that is initiated by the settings constructor.  JNDI uses reflection to call the getDefault() static method
- * then checks to make sure that the factory returned is an LdapSslSocketFactory.  Because of this we have to wrap
- * the socket factory
- * <p/>
- * http://docs.oracle.com/javase/tutorial/jndi/ldap/ssl.html
+ * This factory is needed for JNDI configuration for LDAP connections with hostname verification. Each SSLSocket must
+ * have the appropriate SSLParameters set to indicate that hostname verification is required
  */
-public class LdapSslSocketFactory extends AbstractLdapSslSocketFactory {
+public class HostnameVerifyingLdapSslSocketFactory extends AbstractLdapSslSocketFactory {
+    private static HostnameVerifyingLdapSslSocketFactory instance;
+    private final SSLParameters sslParameters;
 
-    private static LdapSslSocketFactory instance;
-
-    public LdapSslSocketFactory(SSLSocketFactory socketFactory) {
+    public HostnameVerifyingLdapSslSocketFactory(SSLSocketFactory socketFactory) {
         super(socketFactory);
+        sslParameters = new SSLParameters();
+        sslParameters.setEndpointIdentificationAlgorithm("LDAPS");
     }
 
     /**
-     * This is invoked by JNDI and the returned SocketFactory must be an LdapSslSocketFactory object
+     * This is invoked by JNDI and the returned SocketFactory must be an HostnameVerifyingLdapSslSocketFactory object
      *
-     * @return a singleton instance of LdapSslSocketFactory set by calling the init static method.
+     * @return a singleton instance of HostnameVerifyingLdapSslSocketFactory set by calling the init static method.
      */
     public static synchronized SocketFactory getDefault() {
         if (instance == null) {
-            instance = new LdapSslSocketFactory(sslService.getSSLSocketFactory());
+            instance = new HostnameVerifyingLdapSslSocketFactory(sslService.getSSLSocketFactory());
         }
         return instance;
     }
@@ -59,5 +61,14 @@ public class LdapSslSocketFactory extends AbstractLdapSslSocketFactory {
     public static void clear() {
         logger.error("clear should only be called by tests");
         instance = null;
+    }
+
+    /**
+     * Configures the socket to require hostname verification using the LDAPS
+     * @param sslSocket
+     */
+    @Override
+    protected void configureSSLSocket(SSLSocket sslSocket) {
+        sslSocket.setSSLParameters(sslParameters);
     }
 }
