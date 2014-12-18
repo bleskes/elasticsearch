@@ -77,6 +77,7 @@ public class InternalAuthenticationServiceTests extends ElasticsearchTestCase {
                 return ImmutableList.of(firstRealm, secondRealm);
             }
         };
+        realms.start();
         signatureService = mock(SignatureService.class);
 
         auditTrail = mock(AuditTrail.class);
