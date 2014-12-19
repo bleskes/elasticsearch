@@ -255,7 +255,7 @@ public enum ErrorCode
 	INVALID_THRESHOLD_ARGUMENT(60104),
 
 	/**
-	 *
+	 * The timeout argument is not a valid number or is a negative number
 	 */
 	INVALID_TIMEOUT_ARGUMENT(60105);
 
