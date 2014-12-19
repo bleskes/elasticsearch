@@ -46,6 +46,7 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 import org.elasticsearch.action.update.UpdateRequestBuilder;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.script.ScriptService;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.invocation.InvocationOnMock;
@@ -80,7 +81,7 @@ public class ElasticsearchUsageReporterTest
 
         verify(client, times(2)).prepareUpdate(indexCaptor.capture(), eq(Usage.TYPE),
                 idCaptor.capture());
-        verify(updateRequestBuilder, times(2)).setScript("update-usage");
+        verify(updateRequestBuilder, times(2)).setScript("update-usage", ScriptService.ScriptType.FILE);
         verify(updateRequestBuilder, times(2)).addScriptParam("bytes", 10L);
         verify(updateRequestBuilder, times(2)).addScriptParam("fieldCount", 30L);
         verify(updateRequestBuilder, times(2)).addScriptParam("recordCount", 1L);

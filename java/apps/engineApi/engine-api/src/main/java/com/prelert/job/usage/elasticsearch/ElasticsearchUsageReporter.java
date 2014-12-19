@@ -34,6 +34,7 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.script.ScriptService;
 
 import com.prelert.job.usage.Usage;
 import com.prelert.job.usage.UsageReporter;
@@ -108,7 +109,7 @@ public class ElasticsearchUsageReporter extends UsageReporter
 		m_UpsertMap.put(Usage.INPUT_RECORD_COUNT, new Long(additionalRecords));
 		
 		UpdateResponse response = m_Client.prepareUpdate(index, Usage.TYPE, id)
-				.setScript("update-usage")
+				.setScript("update-usage", ScriptService.ScriptType.FILE)
 				.addScriptParam("bytes", additionalBytes)
 				.addScriptParam("fieldCount", additionalFields)
 				.addScriptParam("recordCount", additionalRecords)
