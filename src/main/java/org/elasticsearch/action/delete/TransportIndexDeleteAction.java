@@ -52,11 +52,6 @@ public class TransportIndexDeleteAction extends TransportIndexReplicationOperati
     }
 
     @Override
-    protected boolean accumulateExceptions() {
-        return false;
-    }
-
-    @Override
     protected GroupShardsIterator shards(IndexDeleteRequest request) {
         return clusterService.operationRouting().broadcastDeleteShards(clusterService.state(), request.index());
     }

@@ -52,11 +52,6 @@ public class TransportIndexDeleteByQueryAction extends TransportIndexReplication
     }
 
     @Override
-    protected boolean accumulateExceptions() {
-        return true;
-    }
-
-    @Override
     protected ClusterBlockException checkGlobalBlock(ClusterState state, IndexDeleteByQueryRequest request) {
         return state.blocks().globalBlockedException(ClusterBlockLevel.WRITE);
     }
