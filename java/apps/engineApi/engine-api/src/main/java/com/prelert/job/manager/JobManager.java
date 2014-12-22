@@ -900,7 +900,7 @@ public class JobManager
         {
             Properties props = new Properties();
             // Try to get the API version as recorded by Maven at build time
-            InputStream is = getClass().getResourceAsStream("/META-INF/maven/com.prelert/engineApi/pom.properties");
+            InputStream is = getClass().getResourceAsStream("/META-INF/maven/com.prelert/engine-api/pom.properties");
             if (is != null)
             {
                 props.load(is);
