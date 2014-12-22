@@ -1,9 +1,0 @@
-dataSource.xml
-databaseManagerTestContext.xml
-pluginLocator.xml
-prelertDAOs.xml
-referenceDbDAOs.xml
-*plugins.xml
-proxy*.properties
-cavstatus.properties
-tests.properties
