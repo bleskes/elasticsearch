@@ -352,10 +352,10 @@ public class AnalysisConfig
 			}
 		}
 
-		return JobDetails.bothNullOrEqual(this.m_BucketSpan, that.m_BucketSpan) &&
-				JobDetails.bothNullOrEqual(this.m_BatchSpan, that.m_BatchSpan) &&
-				JobDetails.bothNullOrEqual(this.m_Period, that.m_Period) &&
-				JobDetails.bothNullOrEqual(this.m_SummaryCountFieldName, that.m_SummaryCountFieldName);
+        return Objects.equals(this.m_BucketSpan, that.m_BucketSpan) &&
+                Objects.equals(this.m_BatchSpan, that.m_BatchSpan) &&
+                Objects.equals(this.m_Period, that.m_Period) &&
+                Objects.equals(this.m_SummaryCountFieldName, that.m_SummaryCountFieldName);
 	}
 
     @Override

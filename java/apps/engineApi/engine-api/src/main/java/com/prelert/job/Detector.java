@@ -385,13 +385,13 @@ public class Detector
 
         Detector that = (Detector)other;
 
-        return JobDetails.bothNullOrEqual(this.m_Function, that.m_Function) &&
-                JobDetails.bothNullOrEqual(this.m_FieldName, that.m_FieldName) &&
-                JobDetails.bothNullOrEqual(this.m_ByFieldName, that.m_ByFieldName) &&
-                JobDetails.bothNullOrEqual(this.m_OverFieldName, that.m_OverFieldName) &&
-                JobDetails.bothNullOrEqual(this.m_PartitionFieldName, that.m_PartitionFieldName) &&
-                JobDetails.bothNullOrEqual(this.m_UseNull, that.m_UseNull) &&
-                JobDetails.bothNullOrEqual(this.m_ExcludeFrequent, that.m_ExcludeFrequent);
+        return Objects.equals(this.m_Function, that.m_Function) &&
+               Objects.equals(this.m_FieldName, that.m_FieldName) &&
+               Objects.equals(this.m_ByFieldName, that.m_ByFieldName) &&
+               Objects.equals(this.m_OverFieldName, that.m_OverFieldName) &&
+               Objects.equals(this.m_PartitionFieldName, that.m_PartitionFieldName) &&
+               Objects.equals(this.m_UseNull, that.m_UseNull) &&
+               Objects.equals(this.m_ExcludeFrequent, that.m_ExcludeFrequent);
     }
 
     @Override
