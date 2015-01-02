@@ -34,6 +34,7 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 
+import static org.elasticsearch.shield.transport.support.TransportProfileUtil.getProfilePort;
 import static org.elasticsearch.test.ElasticsearchIntegrationTest.ClusterScope;
 import static org.elasticsearch.test.ElasticsearchIntegrationTest.Scope;
 import static org.hamcrest.Matchers.instanceOf;
@@ -82,7 +83,7 @@ public class IpFilteringIntegrationTests extends ShieldIntegrationTest {
     @Test
     public void testThatIpFilteringIsAppliedForProfile() throws Exception {
         try (Socket socket = new Socket()){
-            trySocketConnection(socket, new InetSocketAddress("localhost", randomClientPort));
+            trySocketConnection(socket, new InetSocketAddress("localhost", getProfilePort("client", internalCluster())));
             assertThat(socket.isClosed(), is(true));
         }
     }
