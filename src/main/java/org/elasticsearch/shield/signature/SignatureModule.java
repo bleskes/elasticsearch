@@ -31,6 +31,7 @@ public class SignatureModule extends AbstractShieldModule.Node {
 
     @Override
     protected void configureNode() {
+        bind(InternalSignatureService.class).asEagerSingleton();
         bind(SignatureService.class).to(InternalSignatureService.class).asEagerSingleton();
     }
 }
