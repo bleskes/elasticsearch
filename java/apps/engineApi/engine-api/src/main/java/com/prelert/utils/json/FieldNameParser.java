@@ -89,4 +89,41 @@ public abstract class FieldNameParser<T>
 
     protected abstract void handleFieldName(String fieldName, T data)
             throws AutoDetectParseException, JsonParseException, IOException;
+
+    protected double parseAsDoubleOrZero(JsonToken token, String fieldName)
+            throws JsonParseException, IOException
+    {
+        if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)
+        {
+            return m_Parser.getDoubleValue();
+        }
+        m_Logger.warn("Cannot parse " + fieldName + " : " + m_Parser.getText() + " as a double");
+        return 0.0;
+    }
+
+    protected String parseAsStringOrNull(JsonToken token, String fieldName)
+            throws JsonParseException, IOException
+    {
+        if (token == JsonToken.VALUE_STRING)
+        {
+            return m_Parser.getText();
+        }
+        m_Logger.warn("Cannot parse " + fieldName + " : " + m_Parser.getText() + " as a string");
+        return null;
+    }
+
+    protected Boolean parseAsBooleanOrNull(JsonToken token, String fieldName)
+            throws JsonParseException, IOException
+    {
+        if (token == JsonToken.VALUE_TRUE)
+        {
+            return true;
+        }
+        if (token == JsonToken.VALUE_FALSE)
+        {
+            return false;
+        }
+        m_Logger.warn("Cannot parse " + fieldName + " : " + m_Parser.getText() + " as a boolean");
+        return null;
+    }
 }

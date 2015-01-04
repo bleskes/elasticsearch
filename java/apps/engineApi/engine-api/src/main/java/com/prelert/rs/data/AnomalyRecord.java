@@ -393,162 +393,46 @@ public class AnomalyRecord
             switch (fieldName)
             {
             case PROBABILITY:
-                if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)
-                {
-                    record.setProbability(m_Parser.getDoubleValue());
-                }
-                else
-                {
-                    LOGGER.warn("Cannot parse " + fieldName + " : " + m_Parser.getText()
-                            + " as a double");
-                }
+                record.setProbability(parseAsDoubleOrZero(token, fieldName));
                 break;
             case ANOMALY_SCORE:
-                if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)
-                {
-                    record.setAnomalyScore(m_Parser.getDoubleValue());
-                }
-                else
-                {
-                    LOGGER.warn("Cannot parse " + fieldName + " : " + m_Parser.getText()
-                            + " as a double");
-                }
+                record.setAnomalyScore(parseAsDoubleOrZero(token, fieldName));
                 break;
             case NORMALIZED_PROBABILITY:
-                if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)
-                {
-                    record.setNormalizedProbability(m_Parser.getDoubleValue());
-                }
-                else
-                {
-                    LOGGER.warn("Cannot parse " + fieldName + " : " + m_Parser.getText()
-                            + " as a double");
-                }
+                record.setNormalizedProbability(parseAsDoubleOrZero(token, fieldName));
                 break;
             case BY_FIELD_NAME:
-                if (token == JsonToken.VALUE_STRING)
-                {
-                    record.setByFieldName(m_Parser.getText());
-                }
-                else
-                {
-                    LOGGER.warn("Cannot parse " + fieldName + " : " + m_Parser.getText()
-                            + " as a string");
-                }
+                record.setByFieldName(parseAsStringOrNull(token, fieldName));
                 break;
             case BY_FIELD_VALUE:
-                if (token == JsonToken.VALUE_STRING)
-                {
-                    record.setByFieldValue(m_Parser.getText());
-                }
-                else
-                {
-                    LOGGER.warn("Cannot parse " + fieldName + " : " + m_Parser.getText()
-                            + " as a string");
-                }
+                record.setByFieldValue(parseAsStringOrNull(token, fieldName));
                 break;
             case PARTITION_FIELD_NAME:
-                if (token == JsonToken.VALUE_STRING)
-                {
-                    record.setPartitionFieldName(m_Parser.getText());
-                }
-                else
-                {
-                    LOGGER.warn("Cannot parse " + fieldName + " : " + m_Parser.getText()
-                            + " as a string");
-                }
+                record.setPartitionFieldName(parseAsStringOrNull(token, fieldName));
                 break;
             case PARTITION_FIELD_VALUE:
-                if (token == JsonToken.VALUE_STRING)
-                {
-                    record.setPartitionFieldValue(m_Parser.getText());
-                }
-                else
-                {
-                    LOGGER.warn("Cannot parse " + fieldName + " : " + m_Parser.getText()
-                            + " as a string");
-                }
+                record.setPartitionFieldValue(parseAsStringOrNull(token, fieldName));
                 break;
             case FUNCTION:
-                if (token == JsonToken.VALUE_STRING)
-                {
-                    record.setFunction(m_Parser.getText());
-                }
-                else
-                {
-                    LOGGER.warn("Cannot parse " + fieldName + " : " + m_Parser.getText()
-                            + " as a string");
-                }
+                record.setFunction(parseAsStringOrNull(token, fieldName));
                 break;
             case TYPICAL:
-                if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)
-                {
-                    record.setTypical(m_Parser.getDoubleValue());
-                }
-                else
-                {
-                    LOGGER.warn("Cannot parse " + fieldName + " : " + m_Parser.getText()
-                            + " as a double");
-                }
+                record.setTypical(parseAsDoubleOrZero(token, fieldName));
                 break;
             case ACTUAL:
-                if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)
-                {
-                    record.setActual(m_Parser.getDoubleValue());
-                }
-                else
-                {
-                    LOGGER.warn("Cannot parse " + fieldName + " : " + m_Parser.getText()
-                            + " as a double");
-                }
+                record.setActual(parseAsDoubleOrZero(token, fieldName));
                 break;
             case FIELD_NAME:
-                if (token == JsonToken.VALUE_STRING)
-                {
-                    record.setFieldName(m_Parser.getText());
-                }
-                else
-                {
-                    LOGGER.warn("Cannot parse " + fieldName + " : " + m_Parser.getText()
-                            + " as a string");
-                }
+                record.setFieldName(parseAsStringOrNull(token, fieldName));
                 break;
             case OVER_FIELD_NAME:
-                if (token == JsonToken.VALUE_STRING)
-                {
-                    record.setOverFieldName(m_Parser.getText());
-                }
-                else
-                {
-                    LOGGER.warn("Cannot parse " + fieldName + " : " + m_Parser.getText()
-                            + " as a string");
-                }
+                record.setOverFieldName(parseAsStringOrNull(token, fieldName));
                 break;
             case OVER_FIELD_VALUE:
-                if (token == JsonToken.VALUE_STRING)
-                {
-                    record.setOverFieldValue(m_Parser.getText());
-                }
-                else
-                {
-                    LOGGER.warn("Cannot parse " + fieldName + " : " + m_Parser.getText()
-                            + " as a string");
-                }
+                record.setOverFieldValue(parseAsStringOrNull(token, fieldName));
                 break;
             case IS_INTERIM:
-                if (token == JsonToken.VALUE_TRUE)
-                {
-                    record.setInterim(true);
-                }
-                else if (token == JsonToken.VALUE_FALSE)
-                {
-                    record.setInterim(false);
-                }
-                else
-                {
-                    LOGGER.warn("Cannot parse " + fieldName + " : " + m_Parser.getText()
-                            + " as a boolean");
-                }
+                record.setInterim(parseAsBooleanOrNull(token, fieldName));
                 break;
             case CAUSES:
                 if (token != JsonToken.START_ARRAY)
