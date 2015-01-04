@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -42,6 +42,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
+import com.prelert.utils.json.FieldNameParser;
 
 /**
  * Anomaly Record POJO.
@@ -377,6 +378,218 @@ public class AnomalyRecord
         m_Parent = parent.intern();
     }
 
+    private static class AnomalyRecordJsonParser extends FieldNameParser<AnomalyRecord> {
+
+        public AnomalyRecordJsonParser(JsonParser jsonParser, Logger logger)
+        {
+            super("Anomaly Record", jsonParser, logger);
+        }
+
+        @Override
+        protected void handleFieldName(String fieldName, AnomalyRecord record)
+                throws AutoDetectParseException, JsonParseException, IOException
+        {
+            JsonToken token;
+            switch (fieldName)
+            {
+            case PROBABILITY:
+                token = m_Parser.nextToken();
+                if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)
+                {
+                    record.setProbability(m_Parser.getDoubleValue());
+                }
+                else
+                {
+                    LOGGER.warn("Cannot parse " + fieldName + " : " + m_Parser.getText()
+                            + " as a double");
+                }
+                break;
+            case ANOMALY_SCORE:
+                token = m_Parser.nextToken();
+                if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)
+                {
+                    record.setAnomalyScore(m_Parser.getDoubleValue());
+                }
+                else
+                {
+                    LOGGER.warn("Cannot parse " + fieldName + " : " + m_Parser.getText()
+                            + " as a double");
+                }
+                break;
+            case NORMALIZED_PROBABILITY:
+                token = m_Parser.nextToken();
+                if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)
+                {
+                    record.setNormalizedProbability(m_Parser.getDoubleValue());
+                }
+                else
+                {
+                    LOGGER.warn("Cannot parse " + fieldName + " : " + m_Parser.getText()
+                            + " as a double");
+                }
+                break;
+            case BY_FIELD_NAME:
+                token = m_Parser.nextToken();
+                if (token == JsonToken.VALUE_STRING)
+                {
+                    record.setByFieldName(m_Parser.getText());
+                }
+                else
+                {
+                    LOGGER.warn("Cannot parse " + fieldName + " : " + m_Parser.getText()
+                            + " as a string");
+                }
+                break;
+            case BY_FIELD_VALUE:
+                token = m_Parser.nextToken();
+                if (token == JsonToken.VALUE_STRING)
+                {
+                    record.setByFieldValue(m_Parser.getText());
+                }
+                else
+                {
+                    LOGGER.warn("Cannot parse " + fieldName + " : " + m_Parser.getText()
+                            + " as a string");
+                }
+                break;
+            case PARTITION_FIELD_NAME:
+                token = m_Parser.nextToken();
+                if (token == JsonToken.VALUE_STRING)
+                {
+                    record.setPartitionFieldName(m_Parser.getText());
+                }
+                else
+                {
+                    LOGGER.warn("Cannot parse " + fieldName + " : " + m_Parser.getText()
+                            + " as a string");
+                }
+                break;
+            case PARTITION_FIELD_VALUE:
+                token = m_Parser.nextToken();
+                if (token == JsonToken.VALUE_STRING)
+                {
+                    record.setPartitionFieldValue(m_Parser.getText());
+                }
+                else
+                {
+                    LOGGER.warn("Cannot parse " + fieldName + " : " + m_Parser.getText()
+                            + " as a string");
+                }
+                break;
+            case FUNCTION:
+                token = m_Parser.nextToken();
+                if (token == JsonToken.VALUE_STRING)
+                {
+                    record.setFunction(m_Parser.getText());
+                }
+                else
+                {
+                    LOGGER.warn("Cannot parse " + fieldName + " : " + m_Parser.getText()
+                            + " as a string");
+                }
+                break;
+            case TYPICAL:
+                token = m_Parser.nextToken();
+                if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)
+                {
+                    record.setTypical(m_Parser.getDoubleValue());
+                }
+                else
+                {
+                    LOGGER.warn("Cannot parse " + fieldName + " : " + m_Parser.getText()
+                            + " as a double");
+                }
+                break;
+            case ACTUAL:
+                token = m_Parser.nextToken();
+                if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)
+                {
+                    record.setActual(m_Parser.getDoubleValue());
+                }
+                else
+                {
+                    LOGGER.warn("Cannot parse " + fieldName + " : " + m_Parser.getText()
+                            + " as a double");
+                }
+                break;
+            case FIELD_NAME:
+                token = m_Parser.nextToken();
+                if (token == JsonToken.VALUE_STRING)
+                {
+                    record.setFieldName(m_Parser.getText());
+                }
+                else
+                {
+                    LOGGER.warn("Cannot parse " + fieldName + " : " + m_Parser.getText()
+                            + " as a string");
+                }
+                break;
+            case OVER_FIELD_NAME:
+                token = m_Parser.nextToken();
+                if (token == JsonToken.VALUE_STRING)
+                {
+                    record.setOverFieldName(m_Parser.getText());
+                }
+                else
+                {
+                    LOGGER.warn("Cannot parse " + fieldName + " : " + m_Parser.getText()
+                            + " as a string");
+                }
+                break;
+            case OVER_FIELD_VALUE:
+                token = m_Parser.nextToken();
+                if (token == JsonToken.VALUE_STRING)
+                {
+                    record.setOverFieldValue(m_Parser.getText());
+                }
+                else
+                {
+                    LOGGER.warn("Cannot parse " + fieldName + " : " + m_Parser.getText()
+                            + " as a string");
+                }
+                break;
+            case IS_INTERIM:
+                token = m_Parser.nextToken();
+                if (token == JsonToken.VALUE_TRUE)
+                {
+                    record.setInterim(true);
+                }
+                else if (token == JsonToken.VALUE_FALSE)
+                {
+                    record.setInterim(false);
+                }
+                else
+                {
+                    LOGGER.warn("Cannot parse " + fieldName + " : " + m_Parser.getText()
+                            + " as a boolean");
+                }
+                break;
+            case CAUSES:
+                token = m_Parser.nextToken();
+                if (token != JsonToken.START_ARRAY)
+                {
+                    String msg = "Invalid value Expecting an array of causes";
+                    LOGGER.warn(msg);
+                    throw new AutoDetectParseException(msg);
+                }
+
+                token = m_Parser.nextToken();
+                while (token != JsonToken.END_ARRAY)
+                {
+                    AnomalyCause cause = AnomalyCause.parseJson(m_Parser);
+                    record.addCause(cause);
+
+                    token = m_Parser.nextToken();
+                }
+                break;
+            default:
+                LOGGER.warn(String.format("Parse error unknown field in Anomaly Record %s:%s",
+                        fieldName, m_Parser.nextToken().asString()));
+                break;
+            }
+        }
+
+    }
 
     /**
      * Create a new <code>AnomalyRecord</code> and populate it from the JSON parser.
@@ -398,236 +611,9 @@ public class AnomalyRecord
     throws JsonParseException, IOException, AutoDetectParseException
     {
         AnomalyRecord record = new AnomalyRecord();
-
-        JsonToken token = parser.getCurrentToken();
-        if (JsonToken.START_OBJECT != token)
-        {
-            String msg = "Cannot parse anomaly record. First token '" +
-                    parser.getText() + ", is not the start object token";
-            LOGGER.error(msg);
-            throw new AutoDetectParseException(msg);
-        }
-
-        token = parser.nextToken();
-        while (token != JsonToken.END_OBJECT)
-        {
-            switch(token)
-            {
-            case START_OBJECT:
-                LOGGER.error("Start object parsed in anomaly record");
-                break;
-            case END_OBJECT:
-                LOGGER.error("End object parsed in anomaly record");
-                break;
-            case FIELD_NAME:
-                String fieldName = parser.getCurrentName();
-                switch (fieldName)
-                {
-                case PROBABILITY:
-                    token = parser.nextToken();
-                    if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)
-                    {
-                        record.setProbability(parser.getDoubleValue());
-                    }
-                    else
-                    {
-                        LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
-                                + " as a double");
-                    }
-                    break;
-                case ANOMALY_SCORE:
-                    token = parser.nextToken();
-                    if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)
-                    {
-                        record.setAnomalyScore(parser.getDoubleValue());
-                    }
-                    else
-                    {
-                        LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
-                                + " as a double");
-                    }
-                    break;
-                case NORMALIZED_PROBABILITY:
-                    token = parser.nextToken();
-                    if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)
-                    {
-                        record.setNormalizedProbability(parser.getDoubleValue());
-                    }
-                    else
-                    {
-                        LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
-                                + " as a double");
-                    }
-                    break;
-                case BY_FIELD_NAME:
-                    token = parser.nextToken();
-                    if (token == JsonToken.VALUE_STRING)
-                    {
-                        record.setByFieldName(parser.getText());
-                    }
-                    else
-                    {
-                        LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
-                                + " as a string");
-                    }
-                    break;
-                case BY_FIELD_VALUE:
-                    token = parser.nextToken();
-                    if (token == JsonToken.VALUE_STRING)
-                    {
-                        record.setByFieldValue(parser.getText());
-                    }
-                    else
-                    {
-                        LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
-                                + " as a string");
-                    }
-                    break;
-                case PARTITION_FIELD_NAME:
-                    token = parser.nextToken();
-                    if (token == JsonToken.VALUE_STRING)
-                    {
-                        record.setPartitionFieldName(parser.getText());
-                    }
-                    else
-                    {
-                        LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
-                                + " as a string");
-                    }
-                    break;
-                case PARTITION_FIELD_VALUE:
-                    token = parser.nextToken();
-                    if (token == JsonToken.VALUE_STRING)
-                    {
-                        record.setPartitionFieldValue(parser.getText());
-                    }
-                    else
-                    {
-                        LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
-                                + " as a string");
-                    }
-                    break;
-                case FUNCTION:
-                    token = parser.nextToken();
-                    if (token == JsonToken.VALUE_STRING)
-                    {
-                        record.setFunction(parser.getText());
-                    }
-                    else
-                    {
-                        LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
-                                + " as a string");
-                    }
-                    break;
-                case TYPICAL:
-                    token = parser.nextToken();
-                    if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)
-                    {
-                        record.setTypical(parser.getDoubleValue());
-                    }
-                    else
-                    {
-                        LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
-                                + " as a double");
-                    }
-                    break;
-                case ACTUAL:
-                    token = parser.nextToken();
-                    if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)
-                    {
-                        record.setActual(parser.getDoubleValue());
-                    }
-                    else
-                    {
-                        LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
-                                + " as a double");
-                    }
-                    break;
-                case FIELD_NAME:
-                    token = parser.nextToken();
-                    if (token == JsonToken.VALUE_STRING)
-                    {
-                        record.setFieldName(parser.getText());
-                    }
-                    else
-                    {
-                        LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
-                                + " as a string");
-                    }
-                    break;
-                case OVER_FIELD_NAME:
-                    token = parser.nextToken();
-                    if (token == JsonToken.VALUE_STRING)
-                    {
-                        record.setOverFieldName(parser.getText());
-                    }
-                    else
-                    {
-                        LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
-                                + " as a string");
-                    }
-                    break;
-                case OVER_FIELD_VALUE:
-                    token = parser.nextToken();
-                    if (token == JsonToken.VALUE_STRING)
-                    {
-                        record.setOverFieldValue(parser.getText());
-                    }
-                    else
-                    {
-                        LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
-                                + " as a string");
-                    }
-                    break;
-                case IS_INTERIM:
-                    token = parser.nextToken();
-                    if (token == JsonToken.VALUE_TRUE)
-                    {
-                        record.setInterim(true);
-                    }
-                    else if (token == JsonToken.VALUE_FALSE)
-                    {
-                        record.setInterim(false);
-                    }
-                    else
-                    {
-                        LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
-                                + " as a boolean");
-                    }
-                    break;
-                case CAUSES:
-                    token = parser.nextToken();
-                    if (token != JsonToken.START_ARRAY)
-                    {
-                        String msg = "Invalid value Expecting an array of causes";
-                        LOGGER.warn(msg);
-                        throw new AutoDetectParseException(msg);
-                    }
-
-                    token = parser.nextToken();
-                    while (token != JsonToken.END_ARRAY)
-                    {
-                        AnomalyCause cause = AnomalyCause.parseJson(parser);
-                        record.addCause(cause);
-
-                        token = parser.nextToken();
-                    }
-                    break;
-                default:
-                    LOGGER.warn(String.format("Parse error unknown field in Anomaly Record %s:%s",
-                            fieldName, parser.nextToken().asString()));
-                    break;
-                }
-                break;
-            default:
-                LOGGER.warn("Parsing error: Only simple fields expected in Anomaly Record not "
-                                + token);
-                break;
-            }
-
-            token = parser.nextToken();
-        }
-
+        AnomalyRecordJsonParser anomalyRecordJsonParser = new AnomalyRecordJsonParser(parser,
+                LOGGER);
+        anomalyRecordJsonParser.parse(record);
         return record;
     }
 
