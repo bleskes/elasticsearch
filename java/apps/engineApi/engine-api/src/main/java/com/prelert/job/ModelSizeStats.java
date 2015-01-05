@@ -185,48 +185,16 @@ public class ModelSizeStats
             switch (fieldName)
             {
             case TYPE:
-                if (token == JsonToken.VALUE_NUMBER_INT)
-                {
-                    modelSizeStats.setModelBytes(m_Parser.getLongValue());
-                }
-                else
-                {
-                    LOGGER.warn("Cannot parse " + fieldName + " : " + m_Parser.getText()
-                                    + " as a long");
-                }
+                modelSizeStats.setModelBytes(parseAsLongOrZero(token, fieldName));
                 break;
             case TOTAL_BY_FIELD_COUNT:
-                if (token == JsonToken.VALUE_NUMBER_INT)
-                {
-                    modelSizeStats.setTotalByFieldCount(m_Parser.getLongValue());
-                }
-                else
-                {
-                    LOGGER.warn("Cannot parse " + fieldName + " : " + m_Parser.getText()
-                                    + " as a long");
-                }
+                modelSizeStats.setTotalByFieldCount(parseAsLongOrZero(token, fieldName));
                 break;
             case TOTAL_OVER_FIELD_COUNT:
-                if (token == JsonToken.VALUE_NUMBER_INT)
-                {
-                    modelSizeStats.setTotalOverFieldCount(m_Parser.getLongValue());
-                }
-                else
-                {
-                    LOGGER.warn("Cannot parse " + fieldName + " : " + m_Parser.getText()
-                                    + " as a long");
-                }
+                modelSizeStats.setTotalOverFieldCount(parseAsLongOrZero(token, fieldName));
                 break;
             case TOTAL_PARTITION_FIELD_COUNT:
-                if (token == JsonToken.VALUE_NUMBER_INT)
-                {
-                    modelSizeStats.setTotalPartitionFieldCount(m_Parser.getLongValue());
-                }
-                else
-                {
-                    LOGGER.warn("Cannot parse " + fieldName + " : " + m_Parser.getText()
-                                    + " as a long");
-                }
+                modelSizeStats.setTotalPartitionFieldCount(parseAsLongOrZero(token, fieldName));
                 break;
             default:
                 LOGGER.warn(String.format("Parse error unknown field in ModelSizeStats %s:%s",
