@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -30,6 +30,8 @@ package com.prelert.job.quantiles;
 import java.io.IOException;
 import java.util.Date;
 
+import org.apache.log4j.Logger;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -38,8 +40,6 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.prelert.rs.data.AutoDetectParseException;
 
-import org.apache.log4j.Logger;
-
 /**
  * Quantiles Result POJO
  */
@@ -47,272 +47,272 @@ import org.apache.log4j.Logger;
 @JsonInclude(Include.NON_NULL)
 public class Quantiles
 {
-	/**
-	 * Field Names
-	 */
-	public static final String ID = "id";
-	public static final String TIMESTAMP = "timestamp";
-	public static final String QUANTILE_KIND = "quantileKind";
-	public static final String QUANTILE_STATE = "quantileState";
+    /**
+     * Field Names
+     */
+    public static final String ID = "id";
+    public static final String TIMESTAMP = "timestamp";
+    public static final String QUANTILE_KIND = "quantileKind";
+    public static final String QUANTILE_STATE = "quantileState";
 
-	/**
-	 * Elasticsearch type
-	 */
-	public static final String TYPE = "quantiles";
+    /**
+     * Elasticsearch type
+     */
+    public static final String TYPE = "quantiles";
 
-	private static final Logger LOGGER = Logger.getLogger(Quantiles.class);
+    private static final Logger LOGGER = Logger.getLogger(Quantiles.class);
 
-	private Date m_Timestamp;
+    private Date m_Timestamp;
 
-	/**
-	 * The kind of quantiles is also the Elasticsearch ID, so m_Kind is used for
-	 * both
-	 */
-	private String m_Kind;
-	private String m_State;
-
-
-	public Date getTimestamp()
-	{
-		return m_Timestamp;
-	}
+    /**
+     * The kind of quantiles is also the Elasticsearch ID, so m_Kind is used for
+     * both
+     */
+    private String m_Kind;
+    private String m_State;
 
 
-	public void setTimestamp(Date timestamp)
-	{
-		m_Timestamp = timestamp;
-	}
+    public Date getTimestamp()
+    {
+        return m_Timestamp;
+    }
 
 
-	/**
-	 * The ID is the kind of quantiles
-	 */
-	public String getId()
-	{
-		return m_Kind;
-	}
+    public void setTimestamp(Date timestamp)
+    {
+        m_Timestamp = timestamp;
+    }
 
 
-	/**
-	 * The ID is the kind of quantiles
-	 */
-	public void setId(String id)
-	{
-		m_Kind = id;
-	}
+    /**
+     * The ID is the kind of quantiles
+     */
+    public String getId()
+    {
+        return m_Kind;
+    }
 
 
-	public String getKind()
-	{
-		return m_Kind;
-	}
+    /**
+     * The ID is the kind of quantiles
+     */
+    public void setId(String id)
+    {
+        m_Kind = id;
+    }
 
 
-	public void setKind(String kind)
-	{
-		m_Kind = kind;
-	}
+    public String getKind()
+    {
+        return m_Kind;
+    }
 
 
-	public String getState()
-	{
-		return m_State;
-	}
+    public void setKind(String kind)
+    {
+        m_Kind = kind;
+    }
 
 
-	public void setState(String state)
-	{
-		m_State = state;
-	}
+    public String getState()
+    {
+        return m_State;
+    }
 
 
-	/**
-	 * Create a new <code>Quantiles</code> and populate it from the JSON parser.
-	 * The parser must be pointing at the start of the object then all the object's
-	 * fields are read and if they match the property names the appropriate
-	 * members are set.
-	 *
-	 * Does not validate that all the properties (or any) have been set but if
-	 * parsing fails an exception will be thrown.
-	 *
-	 * @param parser The JSON Parser should be pointing to the start of the object,
-	 * when the function returns it will be pointing to the end.
-	 * @return The new quantiles
-	 * @throws JsonParseException
-	 * @throws IOException
-	 * @throws AutoDetectParseException
-	 */
-	public static Quantiles parseJson(JsonParser parser)
-	throws JsonParseException, IOException, AutoDetectParseException
-	{
-		JsonToken token = parser.getCurrentToken();
-		if (JsonToken.START_OBJECT != token)
-		{
-			String msg = "Cannot parse Quantiles. The first token '" +
-					parser.getText() + ", is not the start token";
-			LOGGER.error(msg);
-
-			throw new AutoDetectParseException(msg);
-		}
-
-		token = parser.nextToken();
-		return parseJsonAfterStartObject(parser);
-	}
+    public void setState(String state)
+    {
+        m_State = state;
+    }
 
 
-	/**
-	 * Create a new <code>Quantiles</code> and populate it from the JSON parser.
-	 * The parser must be pointing at the first token inside the object.  It
-	 * is assumed that prior code has validated that the previous token was
-	 * the start of an object.  Then all the object's fields are read and if
-	 * they match the property names the appropriate members are set.
-	 *
-	 * Does not validate that all the properties (or any) have been set but if
-	 * parsing fails an exception will be thrown.
-	 *
-	 * @param parser The JSON Parser should be pointing to the start of the object,
-	 * when the function returns it will be pointing to the end.
-	 * @return The new quantiles
-	 * @throws JsonParseException
-	 * @throws IOException
-	 * @throws AutoDetectParseException
-	 */
-	public static Quantiles parseJsonAfterStartObject(JsonParser parser)
-	throws JsonParseException, IOException, AutoDetectParseException
-	{
-		Quantiles quantiles = new Quantiles();
+    /**
+     * Create a new <code>Quantiles</code> and populate it from the JSON parser.
+     * The parser must be pointing at the start of the object then all the object's
+     * fields are read and if they match the property names the appropriate
+     * members are set.
+     *
+     * Does not validate that all the properties (or any) have been set but if
+     * parsing fails an exception will be thrown.
+     *
+     * @param parser The JSON Parser should be pointing to the start of the object,
+     * when the function returns it will be pointing to the end.
+     * @return The new quantiles
+     * @throws JsonParseException
+     * @throws IOException
+     * @throws AutoDetectParseException
+     */
+    public static Quantiles parseJson(JsonParser parser)
+    throws JsonParseException, IOException, AutoDetectParseException
+    {
+        JsonToken token = parser.getCurrentToken();
+        if (JsonToken.START_OBJECT != token)
+        {
+            String msg = "Cannot parse Quantiles. The first token '" +
+                    parser.getText() + ", is not the start token";
+            LOGGER.error(msg);
 
-		JsonToken token = parser.getCurrentToken();
-		while (token != JsonToken.END_OBJECT)
-		{
-			switch(token)
-			{
-			case START_OBJECT:
-				LOGGER.error("Start object parsed in quantiles");
-				break;
-			case END_OBJECT:
-				LOGGER.error("End object parsed in quantiles");
-				break;
-			case FIELD_NAME:
-				String fieldName = parser.getCurrentName();
-				switch (fieldName)
-				{
-				case TIMESTAMP:
-					token = parser.nextToken();
-					if (token == JsonToken.VALUE_NUMBER_INT)
-					{
-						// convert seconds to ms
-						long val = parser.getLongValue() * 1000;
-						quantiles.setTimestamp(new Date(val));
-					}
-					else
-					{
-						LOGGER.warn("Cannot parse " + TIMESTAMP + " : " + parser.getText()
-										+ " as a long");
-					}
-					break;
-				case QUANTILE_KIND:
-					token = parser.nextToken();
-					if (token == JsonToken.VALUE_STRING)
-					{
-						quantiles.setKind(parser.getText());
-					}
-					else
-					{
-						LOGGER.warn("Cannot parse " + QUANTILE_KIND + " : " + parser.getText()
-										+ " as a string");
-					}
-					break;
-				case QUANTILE_STATE:
-					token = parser.nextToken();
-					if (token == JsonToken.VALUE_STRING)
-					{
-						quantiles.setState(parser.getText());
-					}
-					else
-					{
-						LOGGER.warn("Cannot parse " + QUANTILE_STATE + " : " + parser.getText()
-										+ " as a string");
-					}
-					break;
-				default:
-					LOGGER.warn(String.format("Parse error unknown field in Quantiles %s:%s",
-							fieldName, parser.nextTextValue()));
-					break;
-				}
-				break;
-			default:
-				LOGGER.warn("Parsing error: Only simple fields expected in quantiles not "
-						+ token);
-				break;
-			}
+            throw new AutoDetectParseException(msg);
+        }
 
-			token = parser.nextToken();
-		}
-
-		return quantiles;
-	}
+        token = parser.nextToken();
+        return parseJsonAfterStartObject(parser);
+    }
 
 
-	@Override
-	public int hashCode()
-	{
-		final int prime = 31;
-		int result = (m_Kind == null) ? 0 : m_Kind.hashCode();
-		result = prime * result + ((m_State == null) ? 0 : m_State.hashCode());
-		return result;
-	}
+    /**
+     * Create a new <code>Quantiles</code> and populate it from the JSON parser.
+     * The parser must be pointing at the first token inside the object.  It
+     * is assumed that prior code has validated that the previous token was
+     * the start of an object.  Then all the object's fields are read and if
+     * they match the property names the appropriate members are set.
+     *
+     * Does not validate that all the properties (or any) have been set but if
+     * parsing fails an exception will be thrown.
+     *
+     * @param parser The JSON Parser should be pointing to the start of the object,
+     * when the function returns it will be pointing to the end.
+     * @return The new quantiles
+     * @throws JsonParseException
+     * @throws IOException
+     * @throws AutoDetectParseException
+     */
+    public static Quantiles parseJsonAfterStartObject(JsonParser parser)
+    throws JsonParseException, IOException, AutoDetectParseException
+    {
+        Quantiles quantiles = new Quantiles();
+
+        JsonToken token = parser.getCurrentToken();
+        while (token != JsonToken.END_OBJECT)
+        {
+            switch(token)
+            {
+            case START_OBJECT:
+                LOGGER.error("Start object parsed in quantiles");
+                break;
+            case END_OBJECT:
+                LOGGER.error("End object parsed in quantiles");
+                break;
+            case FIELD_NAME:
+                String fieldName = parser.getCurrentName();
+                switch (fieldName)
+                {
+                case TIMESTAMP:
+                    token = parser.nextToken();
+                    if (token == JsonToken.VALUE_NUMBER_INT)
+                    {
+                        // convert seconds to ms
+                        long val = parser.getLongValue() * 1000;
+                        quantiles.setTimestamp(new Date(val));
+                    }
+                    else
+                    {
+                        LOGGER.warn("Cannot parse " + TIMESTAMP + " : " + parser.getText()
+                                        + " as a long");
+                    }
+                    break;
+                case QUANTILE_KIND:
+                    token = parser.nextToken();
+                    if (token == JsonToken.VALUE_STRING)
+                    {
+                        quantiles.setKind(parser.getText());
+                    }
+                    else
+                    {
+                        LOGGER.warn("Cannot parse " + QUANTILE_KIND + " : " + parser.getText()
+                                        + " as a string");
+                    }
+                    break;
+                case QUANTILE_STATE:
+                    token = parser.nextToken();
+                    if (token == JsonToken.VALUE_STRING)
+                    {
+                        quantiles.setState(parser.getText());
+                    }
+                    else
+                    {
+                        LOGGER.warn("Cannot parse " + QUANTILE_STATE + " : " + parser.getText()
+                                        + " as a string");
+                    }
+                    break;
+                default:
+                    LOGGER.warn(String.format("Parse error unknown field in Quantiles %s:%s",
+                            fieldName, parser.nextTextValue()));
+                    break;
+                }
+                break;
+            default:
+                LOGGER.warn("Parsing error: Only simple fields expected in quantiles not "
+                        + token);
+                break;
+            }
+
+            token = parser.nextToken();
+        }
+
+        return quantiles;
+    }
 
 
-	/**
-	 * Compare all the fields.
-	 */
-	@Override
-	public boolean equals(Object other)
-	{
-		if (this == other)
-		{
-			return true;
-		}
+    @Override
+    public int hashCode()
+    {
+        final int prime = 31;
+        int result = (m_Kind == null) ? 0 : m_Kind.hashCode();
+        result = prime * result + ((m_State == null) ? 0 : m_State.hashCode());
+        return result;
+    }
 
-		if (other instanceof Quantiles == false)
-		{
-			return false;
-		}
 
-		Quantiles that = (Quantiles)other;
+    /**
+     * Compare all the fields.
+     */
+    @Override
+    public boolean equals(Object other)
+    {
+        if (this == other)
+        {
+            return true;
+        }
 
-		if (m_Kind == null)
-		{
-			if (that.m_Kind != null)
-			{
-				return false;
-			}
-		}
-		else
-		{
-			if (!m_Kind.equals(that.m_Kind))
-			{
-				return false;
-			}
-		}
+        if (other instanceof Quantiles == false)
+        {
+            return false;
+        }
 
-		if (m_State == null)
-		{
-			if (that.m_State != null)
-			{
-				return false;
-			}
-		}
-		else
-		{
-			if (!m_State.equals(that.m_State))
-			{
-				return false;
-			}
-		}
+        Quantiles that = (Quantiles)other;
 
-		return true;
-	}
+        if (m_Kind == null)
+        {
+            if (that.m_Kind != null)
+            {
+                return false;
+            }
+        }
+        else
+        {
+            if (!m_Kind.equals(that.m_Kind))
+            {
+                return false;
+            }
+        }
+
+        if (m_State == null)
+        {
+            if (that.m_State != null)
+            {
+                return false;
+            }
+        }
+        else
+        {
+            if (!m_State.equals(that.m_State))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
 }
 
