@@ -28,12 +28,13 @@ package com.prelert.job;
 
 import java.io.IOException;
 
+import org.apache.log4j.Logger;
+
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.prelert.rs.data.AutoDetectParseException;
-
-import org.apache.log4j.Logger;
+import com.prelert.utils.json.FieldNameParser;
 
 /**
  * Simple class to parse and store a flush ID.
@@ -80,17 +81,11 @@ public class FlushAcknowledgement
     public static FlushAcknowledgement parseJson(JsonParser parser)
     throws JsonParseException, IOException, AutoDetectParseException
     {
-        JsonToken token = parser.getCurrentToken();
-        if (JsonToken.START_OBJECT != token)
-        {
-            String msg = "Cannot parse FlushAcknowledgement. The first token '" +
-                parser.getText() + ", is not the start token";
-            LOGGER.error(msg);
-            throw new AutoDetectParseException(msg);
-        }
-
-        token = parser.nextToken();
-        return parseJsonAfterStartObject(parser);
+        FlushAcknowledgement acknowledgement = new FlushAcknowledgement();
+        FlushAcknowledgementJsonParser flushAcknowledgementJsonParser =
+                new FlushAcknowledgementJsonParser(parser, LOGGER);
+        flushAcknowledgementJsonParser.parse(acknowledgement);
+        return acknowledgement;
     }
 
 
@@ -109,58 +104,42 @@ public class FlushAcknowledgement
      * @return The new FlushAcknowledgement
      * @throws JsonParseException
      * @throws IOException
+     * @throws AutoDetectParseException
      */
     public static FlushAcknowledgement parseJsonAfterStartObject(JsonParser parser)
-    throws JsonParseException, IOException
+    throws JsonParseException, IOException, AutoDetectParseException
     {
-        FlushAcknowledgement ack = new FlushAcknowledgement();
-
-        JsonToken token = parser.getCurrentToken();
-
-        while (token != JsonToken.END_OBJECT)
-        {
-            switch(token)
-            {
-            case START_OBJECT:
-                LOGGER.error("Start object parsed in FlushAcknowledgement");
-                break;
-            case END_OBJECT:
-                LOGGER.error("End object parsed in FlushAcknowledgement");
-                break;
-            case FIELD_NAME:
-                String fieldName = parser.getCurrentName();
-                switch (fieldName)
-                {
-                case FLUSH:
-                    token = parser.nextToken();
-                    if (token == JsonToken.VALUE_STRING)
-                    {
-                        ack.setId(parser.getText());
-                    }
-                    else
-                    {
-                        LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
-                                        + " as a string");
-                    }
-                    break;
-                default:
-                    token = parser.nextToken();
-                    LOGGER.warn(String.format("Parse error unknown field in FlushAcknowledgement %s:%s",
-                            fieldName, parser.nextTextValue()));
-                    break;
-                }
-                break;
-            default:
-                LOGGER.warn("Parsing error: Only simple fields expected in FlushAcknowledgement, not "
-                        + token);
-                break;
-            }
-
-            token = parser.nextToken();
-        }
-
-        return ack;
+        FlushAcknowledgement acknowledgement = new FlushAcknowledgement();
+        FlushAcknowledgementJsonParser flushAcknowledgementJsonParser =
+                new FlushAcknowledgementJsonParser(parser, LOGGER);
+        flushAcknowledgementJsonParser.parseAfterStartObject(acknowledgement);
+        return acknowledgement;
     }
 
+    private static class FlushAcknowledgementJsonParser extends FieldNameParser<FlushAcknowledgement>
+    {
+
+        public FlushAcknowledgementJsonParser(JsonParser jsonParser, Logger logger)
+        {
+            super("FlushAcknowledgement", jsonParser, logger);
+        }
+
+        @Override
+        protected void handleFieldName(String fieldName, FlushAcknowledgement ack)
+                throws AutoDetectParseException, JsonParseException, IOException
+        {
+            JsonToken token = m_Parser.nextToken();
+            switch (fieldName)
+            {
+            case FLUSH:
+                ack.setId(parseAsStringOrNull(token, fieldName));
+                break;
+            default:
+                LOGGER.warn(String.format("Parse error unknown field in FlushAcknowledgement %s:%s",
+                        fieldName, token.asString()));
+                break;
+            }
+        }
+    }
 }
 

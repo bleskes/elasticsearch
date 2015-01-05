@@ -44,6 +44,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
+import com.prelert.utils.json.FieldNameParser;
 
 /**
  * Bucket Result POJO
@@ -276,18 +277,21 @@ public class Bucket
     public static Bucket parseJson(JsonParser parser)
     throws JsonParseException, IOException, AutoDetectParseException
     {
-        JsonToken token = parser.getCurrentToken();
-        if (JsonToken.START_OBJECT != token)
+        Bucket bucket = new Bucket();
+        BucketJsonParser bucketJsonParser = new BucketJsonParser(parser, LOGGER);
+        bucketJsonParser.parse(bucket);
+        setRecordCountToSumOfDetectorsRecords(bucket);
+        return bucket;
+    }
+
+    /** Set the record count to what was actually read */
+    private static void setRecordCountToSumOfDetectorsRecords(Bucket bucket)
+    {
+        bucket.m_RecordCount = 0;
+        for (Detector d : bucket.getDetectors())
         {
-            String msg = "Cannot parse Bucket. The first token '" +
-                    parser.getText() + ", is not the start token";
-            LOGGER.error(msg);
-
-            throw new AutoDetectParseException(msg);
+            bucket.m_RecordCount += d.getRecords().size();
         }
-
-        token = parser.nextToken();
-        return parseJsonAfterStartObject(parser);
     }
 
 
@@ -312,155 +316,81 @@ public class Bucket
     throws JsonParseException, IOException, AutoDetectParseException
     {
         Bucket bucket = new Bucket();
-
-        JsonToken token = parser.getCurrentToken();
-        while (token != JsonToken.END_OBJECT)
-        {
-            switch(token)
-            {
-            case START_OBJECT:
-                LOGGER.error("Start object parsed in bucket");
-                break;
-            case END_OBJECT:
-                LOGGER.error("End object parsed in bucket");
-                break;
-            case FIELD_NAME:
-                String fieldName = parser.getCurrentName();
-                switch (fieldName)
-                {
-                case TIMESTAMP:
-                    token = parser.nextToken();
-                    if (token == JsonToken.VALUE_NUMBER_INT)
-                    {
-                        // convert seconds to ms
-                        long val = parser.getLongValue() * 1000;
-                        bucket.setTimestamp(new Date(val));
-                    }
-                    else
-                    {
-                        LOGGER.warn("Cannot parse " + TIMESTAMP + " : " + parser.getText()
-                                        + " as a long");
-                    }
-                    break;
-                case RAW_ANOMALY_SCORE:
-                    token = parser.nextToken();
-                    if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)
-                    {
-                        bucket.setRawAnomalyScore(parser.getDoubleValue());
-                    }
-                    else
-                    {
-                        LOGGER.warn("Cannot parse " + RAW_ANOMALY_SCORE + " : " + parser.getText()
-                                        + " as a double");
-                    }
-                    break;
-                case ANOMALY_SCORE:
-                    token = parser.nextToken();
-                    if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)
-                    {
-                        bucket.setAnomalyScore(parser.getDoubleValue());
-                    }
-                    else
-                    {
-                        LOGGER.warn("Cannot parse " + ANOMALY_SCORE + " : " + parser.getText()
-                                        + " as a double");
-                    }
-                    break;
-                case MAX_NORMALIZED_PROBABILITY:
-                    token = parser.nextToken();
-                    if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)
-                    {
-                        bucket.setMaxNormalizedProbability(parser.getDoubleValue());
-                    }
-                    else
-                    {
-                        LOGGER.warn("Cannot parse " + MAX_NORMALIZED_PROBABILITY + " : " + parser.getText()
-                                        + " as a double");
-                    }
-                    break;
-                case RECORD_COUNT:
-                    token = parser.nextToken();
-                    if (token == JsonToken.VALUE_NUMBER_INT)
-                    {
-                        bucket.setRecordCount(parser.getIntValue());
-                    }
-                    else
-                    {
-                        LOGGER.warn("Cannot parse " + RECORD_COUNT + " : " + parser.getText()
-                                + " as an int");
-                    }
-                    break;
-                case EVENT_COUNT:
-                    token = parser.nextToken();
-                    if (token == JsonToken.VALUE_NUMBER_INT)
-                    {
-                        bucket.setEventCount(parser.getLongValue());
-                    }
-                    else
-                    {
-                        LOGGER.warn("Cannot parse " + EVENT_COUNT + " : " + parser.getText()
-                                + " as an int");
-                    }
-                    break;
-                case IS_INTERIM:
-                    token = parser.nextToken();
-                    if (token == JsonToken.VALUE_TRUE)
-                    {
-                        bucket.setInterim(true);
-                    }
-                    else if (token == JsonToken.VALUE_FALSE)
-                    {
-                        bucket.setInterim(false);
-                    }
-                    else
-                    {
-                        LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
-                                + " as a boolean");
-                    }
-                    break;
-                case DETECTORS:
-                    token = parser.nextToken();
-                    if (token != JsonToken.START_ARRAY)
-                    {
-                        String msg = "Invalid value Expecting an array of detectors";
-                        LOGGER.warn(msg);
-                        throw new AutoDetectParseException(msg);
-                    }
-
-                    token = parser.nextToken();
-                    while (token != JsonToken.END_ARRAY)
-                    {
-                        Detector detector = Detector.parseJson(parser);
-                        bucket.addDetector(detector);
-
-                        token = parser.nextToken();
-                    }
-                    break;
-                default:
-                    LOGGER.warn(String.format("Parse error unknown field in Bucket %s:%s",
-                            fieldName, parser.nextToken().asString()));
-                    break;
-                }
-                break;
-            default:
-                LOGGER.warn("Parsing error: Only simple fields expected in bucket not "
-                        + token);
-                break;
-            }
-
-            token = parser.nextToken();
-        }
-
-        // Set the record count to what was actually read
-        bucket.m_RecordCount = 0;
-        for (Detector d : bucket.getDetectors())
-        {
-            bucket.m_RecordCount += d.getRecords().size();
-        }
-
+        BucketJsonParser bucketJsonParser = new BucketJsonParser(parser, LOGGER);
+        bucketJsonParser.parseAfterStartObject(bucket);
+        setRecordCountToSumOfDetectorsRecords(bucket);
         return bucket;
     }
 
+    private static class BucketJsonParser extends FieldNameParser<Bucket>
+    {
+        public BucketJsonParser(JsonParser jsonParser, Logger logger)
+        {
+            super("Bucket", jsonParser, logger);
+        }
+
+        @Override
+        protected void handleFieldName(String fieldName, Bucket bucket)
+                throws AutoDetectParseException, JsonParseException, IOException
+        {
+            JsonToken token = m_Parser.nextToken();
+            switch (fieldName)
+            {
+            case TIMESTAMP:
+                if (token == JsonToken.VALUE_NUMBER_INT)
+                {
+                    // convert seconds to ms
+                    long val = m_Parser.getLongValue() * 1000;
+                    bucket.setTimestamp(new Date(val));
+                }
+                else
+                {
+                    LOGGER.warn("Cannot parse " + TIMESTAMP + " : " + m_Parser.getText()
+                                    + " as a long");
+                }
+                break;
+            case RAW_ANOMALY_SCORE:
+                bucket.setRawAnomalyScore(parseAsDoubleOrZero(token, fieldName));
+                break;
+            case ANOMALY_SCORE:
+                bucket.setAnomalyScore(parseAsDoubleOrZero(token, fieldName));
+                break;
+            case MAX_NORMALIZED_PROBABILITY:
+                bucket.setMaxNormalizedProbability(parseAsDoubleOrZero(token, fieldName));
+                break;
+            case RECORD_COUNT:
+                bucket.setRecordCount(parseAsIntOrZero(token, fieldName));
+                break;
+            case EVENT_COUNT:
+                bucket.setEventCount(parseAsLongOrZero(token, fieldName));
+                break;
+            case IS_INTERIM:
+                bucket.setInterim(parseAsBooleanOrNull(token, fieldName));
+                break;
+            case DETECTORS:
+                if (token != JsonToken.START_ARRAY)
+                {
+                    String msg = "Invalid value Expecting an array of detectors";
+                    LOGGER.warn(msg);
+                    throw new AutoDetectParseException(msg);
+                }
+
+                token = m_Parser.nextToken();
+                while (token != JsonToken.END_ARRAY)
+                {
+                    Detector detector = Detector.parseJson(m_Parser);
+                    bucket.addDetector(detector);
+
+                    token = m_Parser.nextToken();
+                }
+                break;
+            default:
+                LOGGER.warn(String.format("Parse error unknown field in Bucket %s:%s",
+                        fieldName, token.asString()));
+                break;
+            }
+        }
+    }
 
     @Override
     public int hashCode()
@@ -469,7 +399,6 @@ public class Bucket
         return Objects.hash(m_Timestamp, m_EventCount, m_RawAnomalyScore, m_AnomalyScore,
                 m_MaxNormalizedProbability, m_RecordCount, m_Records, m_IsInterim);
     }
-
 
     /**
      * Compare all the fields and embedded anomaly records
