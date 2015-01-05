@@ -39,6 +39,7 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.prelert.rs.data.AutoDetectParseException;
+import com.prelert.utils.json.FieldNameParser;
 
 /**
  * Quantiles Result POJO
@@ -145,18 +146,10 @@ public class Quantiles
     public static Quantiles parseJson(JsonParser parser)
     throws JsonParseException, IOException, AutoDetectParseException
     {
-        JsonToken token = parser.getCurrentToken();
-        if (JsonToken.START_OBJECT != token)
-        {
-            String msg = "Cannot parse Quantiles. The first token '" +
-                    parser.getText() + ", is not the start token";
-            LOGGER.error(msg);
-
-            throw new AutoDetectParseException(msg);
-        }
-
-        token = parser.nextToken();
-        return parseJsonAfterStartObject(parser);
+        Quantiles quantiles = new Quantiles();
+        QuantilesJsonParser quantilesJsonParser = new QuantilesJsonParser(parser, LOGGER);
+        quantilesJsonParser.parse(quantiles);
+        return quantiles;
     }
 
 
@@ -181,78 +174,52 @@ public class Quantiles
     throws JsonParseException, IOException, AutoDetectParseException
     {
         Quantiles quantiles = new Quantiles();
-
-        JsonToken token = parser.getCurrentToken();
-        while (token != JsonToken.END_OBJECT)
-        {
-            switch(token)
-            {
-            case START_OBJECT:
-                LOGGER.error("Start object parsed in quantiles");
-                break;
-            case END_OBJECT:
-                LOGGER.error("End object parsed in quantiles");
-                break;
-            case FIELD_NAME:
-                String fieldName = parser.getCurrentName();
-                switch (fieldName)
-                {
-                case TIMESTAMP:
-                    token = parser.nextToken();
-                    if (token == JsonToken.VALUE_NUMBER_INT)
-                    {
-                        // convert seconds to ms
-                        long val = parser.getLongValue() * 1000;
-                        quantiles.setTimestamp(new Date(val));
-                    }
-                    else
-                    {
-                        LOGGER.warn("Cannot parse " + TIMESTAMP + " : " + parser.getText()
-                                        + " as a long");
-                    }
-                    break;
-                case QUANTILE_KIND:
-                    token = parser.nextToken();
-                    if (token == JsonToken.VALUE_STRING)
-                    {
-                        quantiles.setKind(parser.getText());
-                    }
-                    else
-                    {
-                        LOGGER.warn("Cannot parse " + QUANTILE_KIND + " : " + parser.getText()
-                                        + " as a string");
-                    }
-                    break;
-                case QUANTILE_STATE:
-                    token = parser.nextToken();
-                    if (token == JsonToken.VALUE_STRING)
-                    {
-                        quantiles.setState(parser.getText());
-                    }
-                    else
-                    {
-                        LOGGER.warn("Cannot parse " + QUANTILE_STATE + " : " + parser.getText()
-                                        + " as a string");
-                    }
-                    break;
-                default:
-                    LOGGER.warn(String.format("Parse error unknown field in Quantiles %s:%s",
-                            fieldName, parser.nextTextValue()));
-                    break;
-                }
-                break;
-            default:
-                LOGGER.warn("Parsing error: Only simple fields expected in quantiles not "
-                        + token);
-                break;
-            }
-
-            token = parser.nextToken();
-        }
-
+        QuantilesJsonParser quantilesJsonParser = new QuantilesJsonParser(parser, LOGGER);
+        quantilesJsonParser.parseAfterStartObject(quantiles);
         return quantiles;
     }
 
+    private static class QuantilesJsonParser extends FieldNameParser<Quantiles>
+    {
+
+        public QuantilesJsonParser(JsonParser jsonParser, Logger logger)
+        {
+            super("Quantiles", jsonParser, logger);
+        }
+
+        @Override
+        protected void handleFieldName(String fieldName, Quantiles quantiles)
+                throws AutoDetectParseException, JsonParseException, IOException
+        {
+            JsonToken token = m_Parser.nextToken();
+            switch (fieldName)
+            {
+            case TIMESTAMP:
+                if (token == JsonToken.VALUE_NUMBER_INT)
+                {
+                    // convert seconds to ms
+                    long val = m_Parser.getLongValue() * 1000;
+                    quantiles.setTimestamp(new Date(val));
+                }
+                else
+                {
+                    LOGGER.warn("Cannot parse " + TIMESTAMP + " : " + m_Parser.getText()
+                                    + " as a long");
+                }
+                break;
+            case QUANTILE_KIND:
+                quantiles.setKind(parseAsStringOrNull(token, fieldName));
+                break;
+            case QUANTILE_STATE:
+                quantiles.setState(parseAsStringOrNull(token, fieldName));
+                break;
+            default:
+                LOGGER.warn(String.format("Parse error unknown field in Quantiles %s:%s",
+                        fieldName, token.asString()));
+                break;
+            }
+        }
+    }
 
     @Override
     public int hashCode()
