@@ -483,30 +483,6 @@ public class JobDetails
 	}
 
 	/**
-	 * Helper function returns true if the objects are equal or
-	 * both null.
-	 *
-	 * @param o1
-	 * @param o2
-	 * @return True if both null or both are non-null and equal
-	 */
-	public static <T> boolean bothNullOrEqual(T o1, T o2)
-	{
-		if (o1 == null && o2 == null)
-		{
-			return true;
-		}
-
-		if (o1 == null || o2 == null)
-		{
-			return false;
-		}
-
-		return o1.equals(o2);
-	}
-
-
-	/**
 	 * Equality test
 	 */
 	@Override
@@ -524,21 +500,21 @@ public class JobDetails
 
 		JobDetails that = (JobDetails)other;
 
-		return bothNullOrEqual(this.m_JobId, that.m_JobId) &&
-				bothNullOrEqual(this.m_Description, that.m_Description) &&
+		return Objects.equals(this.m_JobId, that.m_JobId) &&
+		        Objects.equals(this.m_Description, that.m_Description) &&
 				(this.m_Status == that.m_Status) &&
-				bothNullOrEqual(this.m_CreateTime, that.m_CreateTime) &&
-				bothNullOrEqual(this.m_FinishedTime, that.m_FinishedTime) &&
-				bothNullOrEqual(this.m_LastDataTime, that.m_LastDataTime) &&
+				Objects.equals(this.m_CreateTime, that.m_CreateTime) &&
+				Objects.equals(this.m_FinishedTime, that.m_FinishedTime) &&
+				Objects.equals(this.m_LastDataTime, that.m_LastDataTime) &&
 				this.m_Counts.equals(that.m_Counts) &&
 				(this.m_Timeout == that.m_Timeout) &&
-				bothNullOrEqual(this.m_AnalysisConfig, that.m_AnalysisConfig) &&
-				bothNullOrEqual(this.m_AnalysisLimits, that.m_AnalysisLimits) &&
-				bothNullOrEqual(this.m_DataDescription, that.m_DataDescription) &&
-				bothNullOrEqual(this.m_Location, that.m_Location) &&
-				bothNullOrEqual(this.m_DataEndpoint, that.m_DataEndpoint) &&
-				bothNullOrEqual(this.m_BucketsEndpoint, that.m_BucketsEndpoint) &&
-				bothNullOrEqual(this.m_RecordsEndpoint, that.m_RecordsEndpoint);
+				Objects.equals(this.m_AnalysisConfig, that.m_AnalysisConfig) &&
+				Objects.equals(this.m_AnalysisLimits, that.m_AnalysisLimits) &&
+				Objects.equals(this.m_DataDescription, that.m_DataDescription) &&
+				Objects.equals(this.m_Location, that.m_Location) &&
+				Objects.equals(this.m_DataEndpoint, that.m_DataEndpoint) &&
+				Objects.equals(this.m_BucketsEndpoint, that.m_BucketsEndpoint) &&
+				Objects.equals(this.m_RecordsEndpoint, that.m_RecordsEndpoint);
 	}
 
     @Override

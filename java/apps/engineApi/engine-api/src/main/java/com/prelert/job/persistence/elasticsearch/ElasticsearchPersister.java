@@ -42,6 +42,7 @@ import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.script.ScriptService;
 
 import com.prelert.job.JobDetails;
 import com.prelert.job.ModelSizeStats;
@@ -265,7 +266,7 @@ public class ElasticsearchPersister implements JobResultsPersister
     public void incrementBucketCount(long count)
     {
         m_Client.prepareUpdate(m_JobId, JobDetails.TYPE, m_JobId)
-                        .setScript("update-bucket-count")
+                        .setScript("update-bucket-count", ScriptService.ScriptType.FILE)
                         .addScriptParam("count", count)
                         .setRetryOnConflict(3).get();
     }

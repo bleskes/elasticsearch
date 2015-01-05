@@ -112,7 +112,7 @@ public class ProcessManager
      * IN_USE means the process is running its analysis, COMPLETED means
      * it stopped normally.
      */
-    public enum ProcessStatus {IN_USE, COMPLETED};
+    public enum ProcessStatus { IN_USE, COMPLETED }
 
     private static final Logger LOGGER = Logger.getLogger(ProcessManager.class);
 

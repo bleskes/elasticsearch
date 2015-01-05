@@ -1,5 +1,0 @@
-// This security policy is for the unit tests only
-grant {
-	// Allow everything for now
-	permission java.security.AllPermission;
-};

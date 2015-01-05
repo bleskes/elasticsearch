@@ -327,9 +327,9 @@ public class DataDescription
 
 		return this.m_DataFormat == that.m_DataFormat &&
 				this.m_QuoteCharacter == that.m_QuoteCharacter &&
-				JobDetails.bothNullOrEqual(this.m_TimeFieldName, that.m_TimeFieldName) &&
-				JobDetails.bothNullOrEqual(this.m_TimeFormat, that.m_TimeFormat) &&
-				JobDetails.bothNullOrEqual(this.m_FieldDelimiter, that.m_FieldDelimiter);
+				Objects.equals(this.m_TimeFieldName, that.m_TimeFieldName) &&
+				Objects.equals(this.m_TimeFormat, that.m_TimeFormat) &&
+				Objects.equals(this.m_FieldDelimiter, that.m_FieldDelimiter);
 	}
 
     @Override

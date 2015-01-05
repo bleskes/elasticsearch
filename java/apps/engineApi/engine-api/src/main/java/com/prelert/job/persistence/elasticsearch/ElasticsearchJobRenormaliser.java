@@ -440,7 +440,7 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
      */
     private static class QuantileInfo
     {
-        public enum InfoType { END, SYS_CHANGE, UNUSUAL };
+        public enum InfoType { END, SYS_CHANGE, UNUSUAL }
 
         public InfoType m_Type;
         public String m_State;
@@ -542,6 +542,6 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
                 }
             }
         }
-    };
-};
+    }
+}
 
