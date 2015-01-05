@@ -134,6 +134,17 @@ public abstract class FieldNameParser<T>
     protected abstract void handleFieldName(String fieldName, T data)
             throws AutoDetectParseException, JsonParseException, IOException;
 
+    protected int parseAsIntOrZero(JsonToken token, String fieldName) throws JsonParseException,
+            IOException
+    {
+        if (token == JsonToken.VALUE_NUMBER_INT)
+        {
+            return m_Parser.getIntValue();
+        }
+        m_Logger.warn("Cannot parse " + fieldName + " : " + m_Parser.getText() + " as an int");
+        return 0;
+    }
+
     protected long parseAsLongOrZero(JsonToken token, String fieldName)
             throws JsonParseException, IOException
     {

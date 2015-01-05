@@ -359,26 +359,10 @@ public class Bucket
                 bucket.setMaxNormalizedProbability(parseAsDoubleOrZero(token, fieldName));
                 break;
             case RECORD_COUNT:
-                if (token == JsonToken.VALUE_NUMBER_INT)
-                {
-                    bucket.setRecordCount(m_Parser.getIntValue());
-                }
-                else
-                {
-                    LOGGER.warn("Cannot parse " + RECORD_COUNT + " : " + m_Parser.getText()
-                            + " as an int");
-                }
+                bucket.setRecordCount(parseAsIntOrZero(token, fieldName));
                 break;
             case EVENT_COUNT:
-                if (token == JsonToken.VALUE_NUMBER_INT)
-                {
-                    bucket.setEventCount(m_Parser.getLongValue());
-                }
-                else
-                {
-                    LOGGER.warn("Cannot parse " + EVENT_COUNT + " : " + m_Parser.getText()
-                            + " as an int");
-                }
+                bucket.setEventCount(parseAsLongOrZero(token, fieldName));
                 break;
             case IS_INTERIM:
                 bucket.setInterim(parseAsBooleanOrNull(token, fieldName));
