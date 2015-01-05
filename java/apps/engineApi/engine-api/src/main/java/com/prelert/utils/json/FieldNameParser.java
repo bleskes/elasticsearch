@@ -36,6 +36,13 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.prelert.rs.data.AutoDetectParseException;
 
+/**
+ * Base class that allows parsing of simple JSON objects given a JsonParser
+ * that either points to the start object, or right after it. The class defines
+ * an abstract method that allows clients to specify how the fieldNames should be parsed,
+ * without having to duplicate the rest of the parsing process. It also provide helper
+ * methods for parsing the next token as various data types.
+ */
 public abstract class FieldNameParser<T>
 {
     private final String m_ObjectName;
@@ -49,6 +56,21 @@ public abstract class FieldNameParser<T>
         m_Logger = logger;
     }
 
+    /**
+     * Populates the passed in data from the JSON parser.
+     * The parser must be pointing at the start of the object then all the object's
+     * fields are read and if they match the property names the appropriate
+     * members are set.
+     *
+     * Does not validate that all the properties (or any) have been set but if
+     * parsing fails an exception will be thrown.
+     *
+     * @param data The data object to be populated
+     * @return The populated data
+     * @throws JsonParseException
+     * @throws IOException
+     * @throws AutoDetectParseException
+     */
     public void parse(T data) throws AutoDetectParseException, JsonParseException, IOException
     {
         JsonToken token = m_Parser.getCurrentToken();
@@ -60,8 +82,30 @@ public abstract class FieldNameParser<T>
             m_Logger.error(msg);
             throw new AutoDetectParseException(msg);
         }
+        m_Parser.nextToken();
+        parseAfterStartObject(data);
+    }
 
-        token = m_Parser.nextToken();
+    /**
+     * Populates the passed in data from the JSON parser.
+     * The parser must be pointing at the first token inside the object.  It
+     * is assumed that prior code has validated that the previous token was
+     * the start of an object.  Then all the object's fields are read and if
+     * they match the property names the appropriate members are set.
+     *
+     * Does not validate that all the properties (or any) have been set but if
+     * parsing fails an exception will be thrown.
+     *
+     * @param data The data object to be populated
+     * @return The populated data
+     * @throws JsonParseException
+     * @throws IOException
+     * @throws AutoDetectParseException
+     */
+    public void parseAfterStartObject(T data) throws AutoDetectParseException, JsonParseException,
+            IOException
+    {
+        JsonToken token = m_Parser.getCurrentToken();
         while (token != JsonToken.END_OBJECT)
         {
             switch(token)
