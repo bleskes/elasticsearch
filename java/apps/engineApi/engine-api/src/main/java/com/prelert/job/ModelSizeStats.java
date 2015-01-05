@@ -35,6 +35,7 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.prelert.rs.data.AutoDetectParseException;
+import com.prelert.utils.json.FieldNameParser;
 
 /**
  * Provide access to the C++ model memory usage numbers
@@ -133,17 +134,11 @@ public class ModelSizeStats
     public static ModelSizeStats parseJson(JsonParser parser)
     throws JsonParseException, IOException, AutoDetectParseException
     {
-        JsonToken token = parser.getCurrentToken();
-        if (JsonToken.START_OBJECT != token)
-        {
-            String msg = "Cannot parse ModelSizeStats. The first token '" +
-                parser.getText() + ", is not the start token";
-            LOGGER.error(msg);
-            throw new AutoDetectParseException(msg);
-        }
-
-        token = parser.nextToken();
-        return parseJsonAfterStartObject(parser);
+        ModelSizeStats modelSizeStats = new ModelSizeStats();
+        ModelSizeStatsJsonParser modelSizeStatsJsonParser = new ModelSizeStatsJsonParser(parser,
+                LOGGER);
+        modelSizeStatsJsonParser.parse(modelSizeStats);
+        return modelSizeStats;
     }
 
 
@@ -168,88 +163,77 @@ public class ModelSizeStats
     throws JsonParseException, IOException, AutoDetectParseException
     {
         ModelSizeStats modelSizeStats = new ModelSizeStats();
+        ModelSizeStatsJsonParser modelSizeStatsJsonParser = new ModelSizeStatsJsonParser(parser,
+                LOGGER);
+        modelSizeStatsJsonParser.parseAfterStartObject(modelSizeStats);
+        return modelSizeStats;
+    }
 
-        JsonToken token = parser.getCurrentToken();
+    private static class ModelSizeStatsJsonParser extends FieldNameParser<ModelSizeStats>
+    {
 
-        while (token != JsonToken.END_OBJECT)
+        public ModelSizeStatsJsonParser(JsonParser jsonParser, Logger logger)
         {
-            switch(token)
+            super("ModelSizeStats", jsonParser, logger);
+        }
+
+        @Override
+        protected void handleFieldName(String fieldName, ModelSizeStats modelSizeStats)
+                throws AutoDetectParseException, JsonParseException, IOException
+        {
+            JsonToken token = m_Parser.nextToken();
+            switch (fieldName)
             {
-            case START_OBJECT:
-                LOGGER.error("Start object parsed in ModelSizeStats");
-                break;
-            case END_OBJECT:
-                LOGGER.error("End object parsed in ModelSizeStats");
-                break;
-            case FIELD_NAME:
-                String fieldName = parser.getCurrentName();
-                switch (fieldName)
+            case TYPE:
+                if (token == JsonToken.VALUE_NUMBER_INT)
                 {
-                case TYPE:
-                    token = parser.nextToken();
-                    if (token == JsonToken.VALUE_NUMBER_INT)
-                    {
-                        modelSizeStats.setModelBytes(parser.getLongValue());
-                    }
-                    else
-                    {
-                        LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
-                                        + " as a long");
-                    }
-                    break;
-                case TOTAL_BY_FIELD_COUNT:
-                    token = parser.nextToken();
-                    if (token == JsonToken.VALUE_NUMBER_INT)
-                    {
-                        modelSizeStats.setTotalByFieldCount(parser.getLongValue());
-                    }
-                    else
-                    {
-                        LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
-                                        + " as a long");
-                    }
-                    break;
-                case TOTAL_OVER_FIELD_COUNT:
-                    token = parser.nextToken();
-                    if (token == JsonToken.VALUE_NUMBER_INT)
-                    {
-                        modelSizeStats.setTotalOverFieldCount(parser.getLongValue());
-                    }
-                    else
-                    {
-                        LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
-                                        + " as a long");
-                    }
-                    break;
-                case TOTAL_PARTITION_FIELD_COUNT:
-                    token = parser.nextToken();
-                    if (token == JsonToken.VALUE_NUMBER_INT)
-                    {
-                        modelSizeStats.setTotalPartitionFieldCount(parser.getLongValue());
-                    }
-                    else
-                    {
-                        LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
-                                        + " as a long");
-                    }
-                    break;
-                default:
-                    token = parser.nextToken();
-                    LOGGER.warn(String.format("Parse error unknown field in ModelSizeStats %s:%s",
-                            fieldName, parser.nextTextValue()));
-                    break;
+                    modelSizeStats.setModelBytes(m_Parser.getLongValue());
+                }
+                else
+                {
+                    LOGGER.warn("Cannot parse " + fieldName + " : " + m_Parser.getText()
+                                    + " as a long");
+                }
+                break;
+            case TOTAL_BY_FIELD_COUNT:
+                if (token == JsonToken.VALUE_NUMBER_INT)
+                {
+                    modelSizeStats.setTotalByFieldCount(m_Parser.getLongValue());
+                }
+                else
+                {
+                    LOGGER.warn("Cannot parse " + fieldName + " : " + m_Parser.getText()
+                                    + " as a long");
+                }
+                break;
+            case TOTAL_OVER_FIELD_COUNT:
+                if (token == JsonToken.VALUE_NUMBER_INT)
+                {
+                    modelSizeStats.setTotalOverFieldCount(m_Parser.getLongValue());
+                }
+                else
+                {
+                    LOGGER.warn("Cannot parse " + fieldName + " : " + m_Parser.getText()
+                                    + " as a long");
+                }
+                break;
+            case TOTAL_PARTITION_FIELD_COUNT:
+                if (token == JsonToken.VALUE_NUMBER_INT)
+                {
+                    modelSizeStats.setTotalPartitionFieldCount(m_Parser.getLongValue());
+                }
+                else
+                {
+                    LOGGER.warn("Cannot parse " + fieldName + " : " + m_Parser.getText()
+                                    + " as a long");
                 }
                 break;
             default:
-                LOGGER.warn("Parsing error: Only simple fields expected in ModelSizeStats, not "
-                        + token);
+                LOGGER.warn(String.format("Parse error unknown field in ModelSizeStats %s:%s",
+                        fieldName, token.asString()));
                 break;
             }
-
-            token = parser.nextToken();
         }
-
-        return modelSizeStats;
     }
 }
 
