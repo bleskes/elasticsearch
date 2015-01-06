@@ -51,8 +51,8 @@ import com.prelert.job.persistence.JobRenormaliser;
 import com.prelert.job.quantiles.Quantiles;
 import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.Detector;
-import com.prelert.rs.data.AutoDetectParseException;
 import com.prelert.rs.data.parsing.AutoDetectResultsParser;
+import com.prelert.utils.json.AutoDetectParseException;
 
 /**
  * Tests for parsing the JSON output of autodetect_api
