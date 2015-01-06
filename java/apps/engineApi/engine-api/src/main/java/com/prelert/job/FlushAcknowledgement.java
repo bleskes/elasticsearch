@@ -129,15 +129,14 @@ public class FlushAcknowledgement
                 throws AutoDetectParseException, JsonParseException, IOException
         {
             JsonToken token = m_Parser.nextToken();
-            switch (fieldName)
+            if (FLUSH.equals(fieldName))
             {
-            case FLUSH:
                 ack.setId(parseAsStringOrNull(token, fieldName));
-                break;
-            default:
+            }
+            else
+            {
                 LOGGER.warn(String.format("Parse error unknown field in FlushAcknowledgement %s:%s",
                         fieldName, token.asString()));
-                break;
             }
         }
     }
