@@ -50,6 +50,8 @@ import com.prelert.job.usage.UsageReporter;
  */
 public class ElasticsearchStatusReporter extends StatusReporter
 {
+    private static final int RETRY_ON_CONFLICT = 3;
+
     private Client m_Client;
 
     public ElasticsearchStatusReporter(Client client, UsageReporter usageReporter,
@@ -87,7 +89,7 @@ public class ElasticsearchStatusReporter extends StatusReporter
         {
             UpdateRequestBuilder updateBuilder = m_Client.prepareUpdate(m_JobId,
                     JobDetails.TYPE, m_JobId);
-            updateBuilder.setRetryOnConflict(3);
+            updateBuilder.setRetryOnConflict(RETRY_ON_CONFLICT);
 
             Map<String, Object> updates = new HashMap<>();
             updates.put(JobDetails.PROCESSED_RECORD_COUNT, getProcessedRecordCount());
