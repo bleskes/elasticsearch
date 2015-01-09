@@ -56,6 +56,7 @@ public class JobLogs
 {
     private static final Logger LOGGER = Logger.getLogger(JobLogs.class);
 
+    private static final String DEFAULT_LOG_FILE = "autodetect_api.log";
     private static final String LOG_FILE_EXTENSION = ".log";
 
     /**
@@ -142,7 +143,7 @@ public class JobLogs
      * Return the last N lines from the file or less if the file
      * is shorter than N lines.
      *
-     * @param jobId Read the log file for this job
+     * @param jobId Read the default log file for this job
      * @param nLines Lines to tail
      * @return
      * @throws UnknownJobException If jobId is not recognised
@@ -151,7 +152,7 @@ public class JobLogs
     public String tail(String jobId, int nLines)
     throws UnknownJobException
     {
-        return tail(jobId, jobId + LOG_FILE_EXTENSION, nLines);
+        return tail(jobId, DEFAULT_LOG_FILE, nLines);
     }
 
     /**
@@ -205,7 +206,8 @@ public class JobLogs
         try
         {
             RandomAccessFile logFile = new RandomAccessFile(file, "r");
-            try{
+            try
+            {
                 // got to where we think the last N lines will start
                 long seek = Math.max(logFile.length() - (nLines * expectedLineSize), 0);
                 logFile.seek(seek);
