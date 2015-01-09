@@ -1,3 +1,30 @@
+/************************************************************
+ *                                                          *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ *                                                          *
+ *----------------------------------------------------------*
+ *----------------------------------------------------------*
+ * WARNING:                                                 *
+ * THIS FILE CONTAINS UNPUBLISHED PROPRIETARY               *
+ * SOURCE CODE WHICH IS THE PROPERTY OF PRELERT LTD AND     *
+ * PARENT OR SUBSIDIARY COMPANIES.                          *
+ * PLEASE READ THE FOLLOWING AND TAKE CAREFUL NOTE:         *
+ *                                                          *
+ * This source code is confidential and any person who      *
+ * receives a copy of it, or believes that they are viewing *
+ * it without permission is asked to notify Prelert Ltd     *
+ * on +44 (0)20 3567 1249 or email to legal@prelert.com.    *
+ * All intellectual property rights in this source code     *
+ * are owned by Prelert Ltd.  No part of this source code   *
+ * may be reproduced, adapted or transmitted in any form or *
+ * by any means, electronic, mechanical, photocopying,      *
+ * recording or otherwise.                                  *
+ *                                                          *
+ *----------------------------------------------------------*
+ *                                                          *
+ *                                                          *
+ ************************************************************/
+
 package com.prelert.job.status.elasticsearch;
 
 
@@ -5,15 +32,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
-import com.prelert.job.JobDetails;
-import com.prelert.job.status.StatusReporter;
-import com.prelert.job.usage.UsageReporter;
-
 import org.apache.log4j.Logger;
 import org.elasticsearch.action.update.UpdateRequestBuilder;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.index.engine.VersionConflictEngineException;
 import org.elasticsearch.indices.IndexMissingException;
+
+import com.prelert.job.JobDetails;
+import com.prelert.job.status.StatusReporter;
+import com.prelert.job.usage.UsageReporter;
 
 
 /**
@@ -24,93 +50,70 @@ import org.elasticsearch.indices.IndexMissingException;
  */
 public class ElasticsearchStatusReporter extends StatusReporter
 {
-	private Client m_Client;
+    private static final int RETRY_ON_CONFLICT = 3;
 
-	public ElasticsearchStatusReporter(Client client, UsageReporter usageReporter,
-			String jobId, JobDetails.Counts counts, Logger logger)
-	{
-		super(jobId, counts, usageReporter, logger);
-		m_Client = client;
-	}
+    private Client m_Client;
 
-
-	/**
-	 * Log a message then write to elastic search.
-	 */
-	@Override
-	protected void reportStatus(long totalRecords)
-	{
-		String status = String.format("%d records written to autodetect with %d "
-				+ "missing fields, %d were discarded because the date could not be "
-				+ "read and %d were ignored as because they weren't in ascending "
-				+ "chronological order.", getProcessedRecordCount(),
-				getMissingFieldErrorCount(), getDateParseErrorsCount(),
-				getOutOfOrderRecordCount());
-
-		m_Logger.info(status);
-
-		persistStats();
-	}
-
-	/**
-	 * Write the status counts to the datastore
-	 * @return
-	 */
-	private boolean persistStats()
-	{
-		try
-		{
-			UpdateRequestBuilder updateBuilder = m_Client.prepareUpdate(m_JobId,
-					JobDetails.TYPE, m_JobId);
-
-			updateBuilder.setRetryOnConflict(1);
+    public ElasticsearchStatusReporter(Client client, UsageReporter usageReporter,
+            String jobId, JobDetails.Counts counts, Logger logger)
+    {
+        super(jobId, counts, usageReporter, logger);
+        m_Client = client;
+    }
 
 
-			Map<String, Object> updates = new HashMap<>();
-			updates.put(JobDetails.PROCESSED_RECORD_COUNT, getProcessedRecordCount());
-			updates.put(JobDetails.PROCESSED_FIELD_COUNT, getProcessedFieldCount());
-			updates.put(JobDetails.INPUT_RECORD_COUNT, getInputRecordCount());
-			updates.put(JobDetails.INPUT_BYTES, getBytesRead());
-			updates.put(JobDetails.INPUT_FIELD_COUNT, getInputFieldCount());
-			updates.put(JobDetails.INVALID_DATE_COUNT, getDateParseErrorsCount());
-			updates.put(JobDetails.MISSING_FIELD_COUNT, getMissingFieldErrorCount());
-			updates.put(JobDetails.OUT_OF_ORDER_TIME_COUNT, getOutOfOrderRecordCount());
+    /**
+     * Log a message then write to elastic search.
+     */
+    @Override
+    protected void reportStatus(long totalRecords)
+    {
+        String status = String.format("%d records written to autodetect with %d "
+                + "missing fields, %d were discarded because the date could not be "
+                + "read and %d were ignored as because they weren't in ascending "
+                + "chronological order.", getProcessedRecordCount(),
+                getMissingFieldErrorCount(), getDateParseErrorsCount(),
+                getOutOfOrderRecordCount());
 
-			Map<String, Object> counts = new HashMap<>();
-			counts.put(JobDetails.COUNTS, updates);
+        m_Logger.info(status);
 
-			updateBuilder.setDoc(counts).setRefresh(true);
+        persistStats();
+    }
 
-			int retryCount = 3;
-			while (--retryCount > 0)
-			{
-				try
-				{
-					m_Client.update(updateBuilder.request()).get();
-					break;
-				}
-				catch (VersionConflictEngineException e)
-				{
-					m_Logger.debug("Conflict updating job status counts", e);
-				}
-			}
+    /**
+     * Write the status counts to the datastore
+     */
+    private void persistStats()
+    {
+        try
+        {
+            UpdateRequestBuilder updateBuilder = m_Client.prepareUpdate(m_JobId,
+                    JobDetails.TYPE, m_JobId);
+            updateBuilder.setRetryOnConflict(RETRY_ON_CONFLICT);
 
-			if (retryCount <= 0)
-			{
-				m_Logger.warn("Unable to update conflicted job status counts");
-				return false;
-			}
+            Map<String, Object> updates = new HashMap<>();
+            updates.put(JobDetails.PROCESSED_RECORD_COUNT, getProcessedRecordCount());
+            updates.put(JobDetails.PROCESSED_FIELD_COUNT, getProcessedFieldCount());
+            updates.put(JobDetails.INPUT_RECORD_COUNT, getInputRecordCount());
+            updates.put(JobDetails.INPUT_BYTES, getBytesRead());
+            updates.put(JobDetails.INPUT_FIELD_COUNT, getInputFieldCount());
+            updates.put(JobDetails.INVALID_DATE_COUNT, getDateParseErrorsCount());
+            updates.put(JobDetails.MISSING_FIELD_COUNT, getMissingFieldErrorCount());
+            updates.put(JobDetails.OUT_OF_ORDER_TIME_COUNT, getOutOfOrderRecordCount());
 
-			return true;
-		}
-		catch (IndexMissingException | InterruptedException | ExecutionException e)
-		{
-			String msg = String.format("Error writing the job '%s' status stats.",
-					m_JobId);
+            Map<String, Object> counts = new HashMap<>();
+            counts.put(JobDetails.COUNTS, updates);
 
-			m_Logger.warn(msg, e);
+            updateBuilder.setDoc(counts).setRefresh(true);
 
-			return false;
-		}
-	}
+            m_Client.update(updateBuilder.request()).get();
+        }
+        catch (IndexMissingException | InterruptedException | ExecutionException e)
+        {
+            String msg = String.format("Error writing the job '%s' status stats.",
+                    m_JobId);
+
+            m_Logger.warn(msg, e);
+        }
+    }
 }
