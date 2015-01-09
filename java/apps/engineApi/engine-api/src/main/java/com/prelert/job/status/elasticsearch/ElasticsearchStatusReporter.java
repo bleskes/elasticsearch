@@ -35,7 +35,6 @@ import java.util.concurrent.ExecutionException;
 import org.apache.log4j.Logger;
 import org.elasticsearch.action.update.UpdateRequestBuilder;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.index.engine.VersionConflictEngineException;
 import org.elasticsearch.indices.IndexMissingException;
 
 import com.prelert.job.JobDetails;
@@ -81,17 +80,14 @@ public class ElasticsearchStatusReporter extends StatusReporter
 
     /**
      * Write the status counts to the datastore
-     * @return
      */
-    private boolean persistStats()
+    private void persistStats()
     {
         try
         {
             UpdateRequestBuilder updateBuilder = m_Client.prepareUpdate(m_JobId,
                     JobDetails.TYPE, m_JobId);
-
-            updateBuilder.setRetryOnConflict(1);
-
+            updateBuilder.setRetryOnConflict(3);
 
             Map<String, Object> updates = new HashMap<>();
             updates.put(JobDetails.PROCESSED_RECORD_COUNT, getProcessedRecordCount());
@@ -108,27 +104,7 @@ public class ElasticsearchStatusReporter extends StatusReporter
 
             updateBuilder.setDoc(counts).setRefresh(true);
 
-            int retryCount = 3;
-            while (--retryCount > 0)
-            {
-                try
-                {
-                    m_Client.update(updateBuilder.request()).get();
-                    break;
-                }
-                catch (VersionConflictEngineException e)
-                {
-                    m_Logger.debug("Conflict updating job status counts", e);
-                }
-            }
-
-            if (retryCount <= 0)
-            {
-                m_Logger.warn("Unable to update conflicted job status counts");
-                return false;
-            }
-
-            return true;
+            m_Client.update(updateBuilder.request()).get();
         }
         catch (IndexMissingException | InterruptedException | ExecutionException e)
         {
@@ -136,8 +112,6 @@ public class ElasticsearchStatusReporter extends StatusReporter
                     m_JobId);
 
             m_Logger.warn(msg, e);
-
-            return false;
         }
     }
 }
