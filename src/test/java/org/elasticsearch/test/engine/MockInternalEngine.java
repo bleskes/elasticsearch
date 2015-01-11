@@ -27,9 +27,10 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.SearcherManager;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.index.engine.Engine.Searcher;
 import org.elasticsearch.index.engine.EngineConfig;
 import org.elasticsearch.index.engine.EngineException;
-import org.elasticsearch.index.engine.internal.InternalEngine;
+import org.elasticsearch.index.engine.internal.SeqNoEngine;
 import org.elasticsearch.index.shard.ShardId;
 import org.elasticsearch.test.ElasticsearchIntegrationTest;
 
@@ -39,7 +40,7 @@ import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-public class MockInternalEngine extends InternalEngine {
+public class MockInternalEngine extends SeqNoEngine {
     public static final String WRAP_READER_RATIO = "index.engine.mock.random.wrap_reader_ratio";
     public static final String READER_WRAPPER_TYPE = "index.engine.mock.random.wrapper";
 

@@ -49,8 +49,8 @@ import org.elasticsearch.index.query.QueryParseContext;
 import org.elasticsearch.index.query.QueryParsingException;
 import org.elasticsearch.index.settings.IndexSettings;
 import org.elasticsearch.index.shard.AbstractIndexShardComponent;
-import org.elasticsearch.index.shard.ShardId;
 import org.elasticsearch.index.shard.IndexShard;
+import org.elasticsearch.index.shard.ShardId;
 import org.elasticsearch.indices.IndicesLifecycle;
 import org.elasticsearch.percolator.PercolatorService;
 
@@ -292,23 +292,6 @@ public class PercolatorQueriesRegistry extends AbstractIndexShardComponent imple
     }
 
     private class RealTimePercolatorOperationListener extends IndexingOperationListener {
-
-        @Override
-        public Engine.Create preCreate(Engine.Create create) {
-            // validate the query here, before we index
-            if (PercolatorService.TYPE_NAME.equals(create.type())) {
-                parsePercolatorDocument(create.id(), create.source());
-            }
-            return create;
-        }
-
-        @Override
-        public void postCreateUnderLock(Engine.Create create) {
-            // add the query under a doc lock
-            if (PercolatorService.TYPE_NAME.equals(create.type())) {
-                addPercolateQuery(create.id(), create.source());
-            }
-        }
 
         @Override
         public Engine.Index preIndex(Engine.Index index) {

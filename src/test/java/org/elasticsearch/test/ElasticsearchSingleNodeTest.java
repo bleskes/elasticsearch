@@ -36,6 +36,7 @@ import org.elasticsearch.common.util.BigArrays;
 import org.elasticsearch.common.util.concurrent.EsExecutors;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.index.IndexService;
+import org.elasticsearch.index.engine.internal.SeqNoEngine;
 import org.elasticsearch.indices.IndicesService;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.node.NodeBuilder;
@@ -190,7 +191,7 @@ public abstract class ElasticsearchSingleNodeTest extends ElasticsearchTestCase 
         return instanceFromNode.indexServiceSafe(index);
     }
 
-    protected static org.elasticsearch.index.engine.Engine engine(IndexService service) {
+    protected static SeqNoEngine engine(IndexService service) {
         return service.shard(0).engine();
     }
 

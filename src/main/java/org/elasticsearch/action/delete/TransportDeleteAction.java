@@ -39,6 +39,7 @@ import org.elasticsearch.common.lucene.uid.Versions;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.index.VersionType;
 import org.elasticsearch.index.engine.Engine;
+import org.elasticsearch.index.sequence.SequenceNo;
 import org.elasticsearch.index.shard.IndexShard;
 import org.elasticsearch.indices.IndexAlreadyExistsException;
 import org.elasticsearch.indices.IndicesService;
@@ -127,7 +128,9 @@ public class TransportDeleteAction extends TransportShardReplicationOperationAct
                                     break;
                                 }
                             }
-                            DeleteResponse response = new DeleteResponse(request.concreteIndex(), request.request().type(), request.request().id(), version, found);
+
+                            // nocommit - improved or destroy :)
+                            DeleteResponse response = new DeleteResponse(request.concreteIndex(), request.request().type(), request.request().id(), version, SequenceNo.UNKNOWN, found);
                             response.setShardInfo(indexDeleteResponse.getShardInfo());
                             listener.onResponse(response);
                         }
@@ -172,11 +175,12 @@ public class TransportDeleteAction extends TransportShardReplicationOperationAct
     protected Tuple<DeleteResponse, DeleteRequest> shardOperationOnPrimary(ClusterState clusterState, PrimaryOperationRequest shardRequest) {
         DeleteRequest request = shardRequest.request;
         IndexShard indexShard = indicesService.indexServiceSafe(shardRequest.shardId.getIndex()).shardSafe(shardRequest.shardId.id());
-        Engine.Delete delete = indexShard.prepareDelete(request.type(), request.id(), request.version(), request.versionType(), Engine.Operation.Origin.PRIMARY);
-        indexShard.delete(delete);
-        // update the request with teh version so it will go to the replicas
-        request.versionType(delete.versionType().versionTypeForReplicationAndRecovery());
+        Engine.Delete delete = indexShard.prepareDelete(request.type(), request.id(), request.version(), request.versionType());
+        indexShard.delete(delete, true);
+        // update the request with the version so it will go to the replicas
+        request.versionType(delete.versionType());
         request.version(delete.version());
+        request.sequenceNo(delete.sequenceNo());
 
         assert request.versionType().validateVersionForWrites(request.version());
 
@@ -188,7 +192,7 @@ public class TransportDeleteAction extends TransportShardReplicationOperationAct
             }
         }
 
-        DeleteResponse response = new DeleteResponse(shardRequest.shardId.getIndex(), request.type(), request.id(), delete.version(), delete.found());
+        DeleteResponse response = new DeleteResponse(shardRequest.shardId.getIndex(), request.type(), request.id(), delete.version(), delete.sequenceNo(), delete.found());
         return new Tuple<>(response, shardRequest.request);
     }
 
@@ -196,9 +200,9 @@ public class TransportDeleteAction extends TransportShardReplicationOperationAct
     protected void shardOperationOnReplica(ReplicaOperationRequest shardRequest) {
         DeleteRequest request = shardRequest.request;
         IndexShard indexShard = indicesService.indexServiceSafe(shardRequest.shardId.getIndex()).shardSafe(shardRequest.shardId.id());
-        Engine.Delete delete = indexShard.prepareDelete(request.type(), request.id(), request.version(), request.versionType(), Engine.Operation.Origin.REPLICA);
+        Engine.Delete delete = indexShard.prepareDelete(request.type(), request.id(), request.version(), request.versionType());
 
-        indexShard.delete(delete);
+        indexShard.delete(delete, false);
 
         if (request.refresh()) {
             try {

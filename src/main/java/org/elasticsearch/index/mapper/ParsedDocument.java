@@ -24,6 +24,7 @@ import org.apache.lucene.document.Field;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.index.mapper.ParseContext.Document;
+import org.elasticsearch.index.sequence.SequenceNo;
 
 import java.util.List;
 
@@ -32,7 +33,7 @@ import java.util.List;
  */
 public class ParsedDocument {
 
-    private final Field uid, version;
+    private final Field uid, version, seqNoTerm, seqNoCounter;
 
     private final String id;
 
@@ -54,9 +55,11 @@ public class ParsedDocument {
 
     private String parent;
 
-    public ParsedDocument(Field uid, Field version, String id, String type, String routing, long timestamp, long ttl, List<Document> documents, Analyzer analyzer, BytesReference source, boolean mappingsModified) {
+    public ParsedDocument(Field uid, Field version, Tuple<Field, Field> seqNo, String id, String type, String routing, long timestamp, long ttl, List<Document> documents, Analyzer analyzer, BytesReference source, boolean mappingsModified) {
         this.uid = uid;
         this.version = version;
+        this.seqNoTerm = seqNo.v1();
+        this.seqNoCounter = seqNo.v2();
         this.id = id;
         this.type = type;
         this.routing = routing;
@@ -74,6 +77,11 @@ public class ParsedDocument {
 
     public Field version() {
         return version;
+    }
+
+    public void setSequenceNo(SequenceNo sequenceNo) {
+        seqNoTerm.setLongValue(sequenceNo.term());
+        seqNoCounter.setLongValue(sequenceNo.counter());
     }
 
     public String id() {

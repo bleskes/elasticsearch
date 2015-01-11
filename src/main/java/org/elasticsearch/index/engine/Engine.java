@@ -30,15 +30,14 @@ import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.lease.Releasable;
-import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.lucene.uid.Versions;
 import org.elasticsearch.common.unit.ByteSizeValue;
-import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.VersionType;
 import org.elasticsearch.index.deletionpolicy.SnapshotIndexCommit;
 import org.elasticsearch.index.mapper.DocumentMapper;
-import org.elasticsearch.index.mapper.ParseContext.Document;
+import org.elasticsearch.index.mapper.ParseContext;
 import org.elasticsearch.index.mapper.ParsedDocument;
+import org.elasticsearch.index.sequence.SequenceNo;
 import org.elasticsearch.index.shard.ShardId;
 import org.elasticsearch.index.translog.Translog;
 
@@ -265,120 +264,58 @@ public interface Engine extends Closeable {
         }
     }
 
-    static interface Operation {
-        static enum Type {
-            CREATE,
-            INDEX,
-            DELETE
-        }
+    public abstract class IndexingOperation {
 
-        static enum Origin {
-            PRIMARY,
-            REPLICA,
-            RECOVERY
-        }
-
-        Type opType();
-
-        Origin origin();
-    }
-
-    static abstract class IndexingOperation implements Operation {
-
-        private final DocumentMapper docMapper;
-        private final Term uid;
-        private final ParsedDocument doc;
-        private long version;
-        private final VersionType versionType;
-        private final Origin origin;
-        private final boolean canHaveDuplicates;
-
+        protected final Term uid;
+        protected SequenceNo sequenceNo;
+        protected long version;
+        protected VersionType versionType;
         private final long startTime;
         private long endTime;
 
-        public IndexingOperation(DocumentMapper docMapper, Term uid, ParsedDocument doc, long version, VersionType versionType, Origin origin, long startTime, boolean canHaveDuplicates) {
-            this.docMapper = docMapper;
+        public IndexingOperation(Term uid, SequenceNo sequenceNo, long version, VersionType versionType, long startTime) {
             this.uid = uid;
-            this.doc = doc;
+            this.sequenceNo = sequenceNo;
             this.version = version;
             this.versionType = versionType;
-            this.origin = origin;
             this.startTime = startTime;
-            this.canHaveDuplicates = canHaveDuplicates;
         }
 
-        public IndexingOperation(DocumentMapper docMapper, Term uid, ParsedDocument doc) {
-            this(docMapper, uid, doc, Versions.MATCH_ANY, VersionType.INTERNAL, Origin.PRIMARY, System.nanoTime(), true);
+        public static enum Type {
+            INDEX,
+            CREATE,
+            DELETE
         }
 
-        public DocumentMapper docMapper() {
-            return this.docMapper;
-        }
+        public abstract String id();
 
-        @Override
-        public Origin origin() {
-            return this.origin;
-        }
+        public abstract String type();
 
-        public ParsedDocument parsedDoc() {
-            return this.doc;
-        }
+        public abstract Type opType();
 
         public Term uid() {
             return this.uid;
         }
 
-        public String type() {
-            return this.doc.type();
+        public SequenceNo sequenceNo() {
+            return sequenceNo;
         }
 
-        public String id() {
-            return this.doc.id();
-        }
-
-        public String routing() {
-            return this.doc.routing();
-        }
-
-        public long timestamp() {
-            return this.doc.timestamp();
-        }
-
-        public long ttl() {
-            return this.doc.ttl();
-        }
-
-        public long version() {
-            return this.version;
-        }
-
-        public void updateVersion(long version) {
-            this.version = version;
-            this.doc.version().setLongValue(version);
+        public void sequenceNo(SequenceNo sequenceNo) {
+            this.sequenceNo = sequenceNo;
         }
 
         public VersionType versionType() {
             return this.versionType;
         }
 
-        public boolean canHaveDuplicates() {
-            return this.canHaveDuplicates;
+        public long version() {
+            return version;
         }
 
-        public String parent() {
-            return this.doc.parent();
-        }
-
-        public List<Document> docs() {
-            return this.doc.docs();
-        }
-
-        public Analyzer analyzer() {
-            return this.doc.analyzer();
-        }
-
-        public BytesReference source() {
-            return this.doc.source();
+        public void updateVersion(long version, VersionType versionType) {
+            this.version = version;
+            this.versionType = versionType;
         }
 
         /**
@@ -400,47 +337,80 @@ public interface Engine extends Closeable {
         }
     }
 
-    static final class Create extends IndexingOperation {
-        private final boolean autoGeneratedId;
+    static class Index extends IndexingOperation {
 
-        public Create(DocumentMapper docMapper, Term uid, ParsedDocument doc, long version, VersionType versionType, Origin origin, long startTime, boolean canHaveDuplicates, boolean autoGeneratedId) {
-            super(docMapper, uid, doc, version, versionType, origin, startTime, canHaveDuplicates);
-            this.autoGeneratedId = autoGeneratedId;
-        }
+        private final DocumentMapper docMapper;
+        private final ParsedDocument doc;
 
-        public Create(DocumentMapper docMapper, Term uid, ParsedDocument doc, long version, VersionType versionType, Origin origin, long startTime) {
-            this(docMapper, uid, doc, version, versionType, origin, startTime, true, false);
-        }
-
-        public Create(DocumentMapper docMapper, Term uid, ParsedDocument doc) {
-            super(docMapper, uid, doc);
-            autoGeneratedId = false;
-        }
-
-        @Override
-        public Type opType() {
-            return Type.CREATE;
-        }
-
-
-        public boolean autoGeneratedId() {
-            return this.autoGeneratedId;
-        }
-    }
-
-    static final class Index extends IndexingOperation {
         private boolean created;
 
-        public Index(DocumentMapper docMapper, Term uid, ParsedDocument doc, long version, VersionType versionType, Origin origin, long startTime, boolean canHaveDuplicates) {
-            super(docMapper, uid, doc, version, versionType, origin, startTime, canHaveDuplicates);
+        public Index(DocumentMapper docMapper, Term uid, ParsedDocument doc, SequenceNo sequenceNo, long version, VersionType versionType, long startTime) {
+            super(uid, sequenceNo, version, versionType, startTime);
+            this.docMapper = docMapper;
+            this.doc = doc;
+            this.doc.setSequenceNo(sequenceNo);
         }
 
-        public Index(DocumentMapper docMapper, Term uid, ParsedDocument doc, long version, VersionType versionType, Origin origin, long startTime) {
-            super(docMapper, uid, doc, version, versionType, origin, startTime, true);
+        public Index(DocumentMapper docMapper, Term uid, ParsedDocument doc, SequenceNo sequenceNo) {
+            this(docMapper, uid, doc, sequenceNo, Versions.MATCH_ANY, VersionType.INTERNAL, System.nanoTime());
         }
 
-        public Index(DocumentMapper docMapper, Term uid, ParsedDocument doc) {
-            super(docMapper, uid, doc);
+        public String type() {
+            return this.doc.type();
+        }
+
+        public String id() {
+            return this.doc.id();
+        }
+
+        public DocumentMapper docMapper() {
+            return this.docMapper;
+        }
+
+        public ParsedDocument parsedDoc() {
+            return this.doc;
+        }
+
+        public void sequenceNo(SequenceNo sequenceNo) {
+            super.sequenceNo(sequenceNo);
+            this.doc.setSequenceNo(sequenceNo);
+        }
+
+        public String routing() {
+            return this.doc.routing();
+        }
+
+        public long timestamp() {
+            return this.doc.timestamp();
+        }
+
+        public long ttl() {
+            return this.doc.ttl();
+        }
+
+        public long version() {
+            return this.version;
+        }
+
+        public void updateVersion(long version, VersionType versionType) {
+            super.updateVersion(version, versionType);
+            this.doc.version().setLongValue(version);
+        }
+
+        public String parent() {
+            return this.doc.parent();
+        }
+
+        public List<ParseContext.Document> docs() {
+            return this.doc.docs();
+        }
+
+        public Analyzer analyzer() {
+            return this.doc.analyzer();
+        }
+
+        public BytesReference source() {
+            return this.doc.source();
         }
 
         @Override
@@ -460,35 +430,41 @@ public interface Engine extends Closeable {
         }
     }
 
-    static class Delete implements Operation {
+    static final class Create extends Index {
+
+        public Create(DocumentMapper docMapper, Term uid, ParsedDocument doc, SequenceNo sequenceNo, long version, VersionType versionType, long startTime) {
+            super(docMapper, uid, doc, sequenceNo, version, versionType, startTime);
+        }
+
+        public Create(DocumentMapper docMapper, Term uid, ParsedDocument doc, SequenceNo sequenceNo) {
+            super(docMapper, uid, doc, sequenceNo);
+        }
+
+        @Override
+        public Type opType() {
+            return Type.CREATE;
+        }
+    }
+
+    static final class Delete extends IndexingOperation {
+
         private final String type;
         private final String id;
-        private final Term uid;
-        private long version;
-        private final VersionType versionType;
-        private final Origin origin;
         private boolean found;
 
-        private final long startTime;
-        private long endTime;
-
-        public Delete(String type, String id, Term uid, long version, VersionType versionType, Origin origin, long startTime, boolean found) {
+        public Delete(String type, String id, Term uid, SequenceNo sequenceNo, long version, VersionType versionType, long startTime, boolean found) {
+            super(uid, sequenceNo, version, versionType, startTime);
             this.type = type;
             this.id = id;
-            this.uid = uid;
-            this.version = version;
-            this.versionType = versionType;
-            this.origin = origin;
-            this.startTime = startTime;
             this.found = found;
         }
 
-        public Delete(String type, String id, Term uid) {
-            this(type, id, uid, Versions.MATCH_ANY, VersionType.INTERNAL, Origin.PRIMARY, System.nanoTime(), false);
+        public Delete(String type, String id, Term uid, SequenceNo sequenceNo) {
+            this(type, id, uid, sequenceNo, Versions.MATCH_ANY, VersionType.INTERNAL, System.nanoTime(), false);
         }
 
         public Delete(Delete template, VersionType versionType) {
-            this(template.type(), template.id(), template.uid(), template.version(), versionType, template.origin(), template.startTime(), template.found());
+            this(template.type(), template.id(), template.uid(), template.sequenceNo(), template.version(), versionType, template.startTime(), template.found());
         }
 
         @Override
@@ -496,10 +472,6 @@ public interface Engine extends Closeable {
             return Type.DELETE;
         }
 
-        @Override
-        public Origin origin() {
-            return this.origin;
-        }
 
         public String type() {
             return this.type;
@@ -509,62 +481,28 @@ public interface Engine extends Closeable {
             return this.id;
         }
 
-        public Term uid() {
-            return this.uid;
-        }
-
-        public void updateVersion(long version, boolean found) {
-            this.version = version;
+        public void found(boolean found) {
             this.found = found;
-        }
-
-        /**
-         * before delete execution this is the version to be deleted. After this is the version of the "delete" transaction record.
-         */
-        public long version() {
-            return this.version;
-        }
-
-        public VersionType versionType() {
-            return this.versionType;
         }
 
         public boolean found() {
             return this.found;
         }
 
-        /**
-         * Returns operation start time in nanoseconds.
-         */
-        public long startTime() {
-            return this.startTime;
-        }
-
-        public void endTime(long endTime) {
-            this.endTime = endTime;
-        }
-
-        /**
-         * Returns operation end time in nanoseconds.
-         */
-        public long endTime() {
-            return this.endTime;
-        }
     }
 
-    static class DeleteByQuery {
+    static final class DeleteByQuery {
         private final Query query;
         private final BytesReference source;
         private final String[] filteringAliases;
         private final Filter aliasFilter;
         private final String[] types;
         private final BitDocIdSetFilter parentFilter;
-        private final Operation.Origin origin;
 
         private final long startTime;
         private long endTime;
 
-        public DeleteByQuery(Query query, BytesReference source, @Nullable String[] filteringAliases, @Nullable Filter aliasFilter, BitDocIdSetFilter parentFilter, Operation.Origin origin, long startTime, String... types) {
+        public DeleteByQuery(Query query, BytesReference source, @Nullable String[] filteringAliases, @Nullable Filter aliasFilter, BitDocIdSetFilter parentFilter, long startTime, String... types) {
             this.query = query;
             this.source = source;
             this.types = types;
@@ -572,7 +510,6 @@ public interface Engine extends Closeable {
             this.aliasFilter = aliasFilter;
             this.parentFilter = parentFilter;
             this.startTime = startTime;
-            this.origin = origin;
         }
 
         public Query query() {
@@ -601,10 +538,6 @@ public interface Engine extends Closeable {
 
         public BitDocIdSetFilter parentFilter() {
             return parentFilter;
-        }
-
-        public Operation.Origin origin() {
-            return this.origin;
         }
 
         /**

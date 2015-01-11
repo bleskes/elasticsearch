@@ -18,13 +18,12 @@
  */
 package org.elasticsearch.index.engine.internal;
 
-import org.elasticsearch.index.engine.Engine;
 import org.elasticsearch.index.engine.EngineConfig;
 import org.elasticsearch.index.engine.EngineFactory;
 
 public class InternalEngineFactory implements EngineFactory {
     @Override
-    public Engine newEngine(EngineConfig config) {
-        return new InternalEngine(config);
+    public SeqNoEngine newEngine(EngineConfig config) {
+        return new SeqNoEngine(config);
     }
 }

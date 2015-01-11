@@ -19,9 +19,12 @@
 
 package org.elasticsearch.action.index;
 
-import org.elasticsearch.action.ActionWriteResponse;
+import org.elasticsearch.action.ActionDocWriteResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentBuilderString;
+import org.elasticsearch.index.sequence.SequenceNo;
 
 import java.io.IOException;
 
@@ -31,52 +34,17 @@ import java.io.IOException;
  * @see org.elasticsearch.action.index.IndexRequest
  * @see org.elasticsearch.client.Client#index(IndexRequest)
  */
-public class IndexResponse extends ActionWriteResponse {
+public class IndexResponse extends ActionDocWriteResponse {
 
-    private String index;
-    private String id;
-    private String type;
-    private long version;
     private boolean created;
 
     public IndexResponse() {
 
     }
 
-    public IndexResponse(String index, String type, String id, long version, boolean created) {
-        this.index = index;
-        this.id = id;
-        this.type = type;
-        this.version = version;
+    public IndexResponse(String index, String type, String id, long version, SequenceNo sequenceNo, boolean created) {
+        super(index, type, id, version, sequenceNo);
         this.created = created;
-    }
-
-    /**
-     * The index the document was indexed into.
-     */
-    public String getIndex() {
-        return this.index;
-    }
-
-    /**
-     * The type of the document indexed.
-     */
-    public String getType() {
-        return this.type;
-    }
-
-    /**
-     * The id of the document indexed.
-     */
-    public String getId() {
-        return this.id;
-    }
-
-    /**
-     * Returns the current version of the doc indexed.
-     */
-    public long getVersion() {
-        return this.version;
     }
 
     /**
@@ -89,20 +57,22 @@ public class IndexResponse extends ActionWriteResponse {
     @Override
     public void readFrom(StreamInput in) throws IOException {
         super.readFrom(in);
-        index = in.readSharedString();
-        type = in.readSharedString();
-        id = in.readString();
-        version = in.readLong();
         created = in.readBoolean();
     }
 
     @Override
     public void writeTo(StreamOutput out) throws IOException {
         super.writeTo(out);
-        out.writeSharedString(index);
-        out.writeSharedString(type);
-        out.writeString(id);
-        out.writeLong(version);
         out.writeBoolean(created);
+    }
+
+    @Override
+    public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
+        super.toXContent(builder, params);
+        return builder.field(Fields.CREATED, created);
+    }
+
+    static final class Fields {
+        static final XContentBuilderString CREATED = new XContentBuilderString("created");
     }
 }

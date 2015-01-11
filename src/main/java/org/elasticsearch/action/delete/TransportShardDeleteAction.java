@@ -85,10 +85,11 @@ public class TransportShardDeleteAction extends TransportShardReplicationOperati
     protected Tuple<ShardDeleteResponse, ShardDeleteRequest> shardOperationOnPrimary(ClusterState clusterState, PrimaryOperationRequest shardRequest) {
         ShardDeleteRequest request = shardRequest.request;
         IndexShard indexShard = indicesService.indexServiceSafe(shardRequest.shardId.getIndex()).shardSafe(shardRequest.shardId.id());
-        Engine.Delete delete = indexShard.prepareDelete(request.type(), request.id(), request.version(), VersionType.INTERNAL, Engine.Operation.Origin.PRIMARY);
-        indexShard.delete(delete);
+        Engine.Delete delete = indexShard.prepareDelete(request.type(), request.id(), request.version(), VersionType.INTERNAL);
+        indexShard.delete(delete, true);
         // update the version to happen on the replicas
         request.version(delete.version());
+        request.sequenceNo(delete.sequenceNo());
 
         if (request.refresh()) {
             try {
@@ -106,14 +107,14 @@ public class TransportShardDeleteAction extends TransportShardReplicationOperati
     protected void shardOperationOnReplica(ReplicaOperationRequest shardRequest) {
         ShardDeleteRequest request = shardRequest.request;
         IndexShard indexShard = indicesService.indexServiceSafe(shardRequest.shardId.getIndex()).shardSafe(shardRequest.shardId.id());
-        Engine.Delete delete = indexShard.prepareDelete(request.type(), request.id(), request.version(), VersionType.INTERNAL, Engine.Operation.Origin.REPLICA);
+        Engine.Delete delete = indexShard.prepareDelete(request.type(), request.id(), request.version(), VersionType.INTERNAL, request.sequenceNo());
 
         // IndexDeleteAction doesn't support version type at the moment. Hard coded for the INTERNAL version
         delete = new Engine.Delete(delete, VersionType.INTERNAL.versionTypeForReplicationAndRecovery());
 
         assert delete.versionType().validateVersionForWrites(delete.version());
 
-        indexShard.delete(delete);
+        indexShard.delete(delete, false);
 
         if (request.refresh()) {
             try {
@@ -122,7 +123,6 @@ public class TransportShardDeleteAction extends TransportShardReplicationOperati
                 // ignore
             }
         }
-
     }
 
     @Override

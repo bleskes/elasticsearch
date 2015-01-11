@@ -20,7 +20,6 @@
 package org.elasticsearch.rest.action.index;
 
 import org.elasticsearch.ElasticsearchIllegalArgumentException;
-import org.elasticsearch.action.ActionWriteResponse;
 import org.elasticsearch.action.WriteConsistencyLevel;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
@@ -29,7 +28,6 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentBuilderString;
 import org.elasticsearch.index.VersionType;
 import org.elasticsearch.rest.*;
 import org.elasticsearch.rest.action.support.RestActions;
@@ -39,7 +37,8 @@ import java.io.IOException;
 
 import static org.elasticsearch.rest.RestRequest.Method.POST;
 import static org.elasticsearch.rest.RestRequest.Method.PUT;
-import static org.elasticsearch.rest.RestStatus.*;
+import static org.elasticsearch.rest.RestStatus.BAD_REQUEST;
+import static org.elasticsearch.rest.RestStatus.CREATED;
 
 /**
  *
@@ -89,7 +88,7 @@ public class RestIndexAction extends BaseRestHandler {
         if (sOpType != null) {
             try {
                 indexRequest.opType(IndexRequest.OpType.fromString(sOpType));
-            } catch (ElasticsearchIllegalArgumentException eia){
+            } catch (ElasticsearchIllegalArgumentException eia) {
                 try {
                     XContentBuilder builder = channel.newBuilder();
                     channel.sendResponse(new BytesRestResponse(BAD_REQUEST, builder.startObject().field("error", eia.getMessage()).endObject()));
@@ -111,15 +110,9 @@ public class RestIndexAction extends BaseRestHandler {
             @Override
             public RestResponse buildResponse(IndexResponse response, XContentBuilder builder) throws Exception {
                 builder.startObject();
-                ActionWriteResponse.ShardInfo shardInfo = response.getShardInfo();
-                builder.field(Fields._INDEX, response.getIndex())
-                        .field(Fields._TYPE, response.getType())
-                        .field(Fields._ID, response.getId())
-                        .field(Fields._VERSION, response.getVersion());
-                shardInfo.toXContent(builder, request);
-                builder.field(Fields.CREATED, response.isCreated());
+                response.toXContent(builder, request);
                 builder.endObject();
-                RestStatus status = shardInfo.status();
+                RestStatus status = response.getShardInfo().status();
                 if (response.isCreated()) {
                     status = CREATED;
                 }
@@ -127,13 +120,4 @@ public class RestIndexAction extends BaseRestHandler {
             }
         });
     }
-
-    static final class Fields {
-        static final XContentBuilderString _INDEX = new XContentBuilderString("_index");
-        static final XContentBuilderString _TYPE = new XContentBuilderString("_type");
-        static final XContentBuilderString _ID = new XContentBuilderString("_id");
-        static final XContentBuilderString _VERSION = new XContentBuilderString("_version");
-        static final XContentBuilderString CREATED = new XContentBuilderString("created");
-    }
-
 }

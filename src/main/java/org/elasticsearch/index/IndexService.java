@@ -41,7 +41,6 @@ import org.elasticsearch.index.cache.bitset.ShardBitsetFilterCacheModule;
 import org.elasticsearch.index.cache.filter.ShardFilterCacheModule;
 import org.elasticsearch.index.cache.query.ShardQueryCacheModule;
 import org.elasticsearch.index.deletionpolicy.DeletionPolicyModule;
-import org.elasticsearch.index.engine.Engine;
 import org.elasticsearch.index.fielddata.IndexFieldDataService;
 import org.elasticsearch.index.fielddata.ShardFieldDataModule;
 import org.elasticsearch.index.gateway.IndexShardGatewayModule;
@@ -57,6 +56,7 @@ import org.elasticsearch.index.percolator.PercolatorQueriesRegistry;
 import org.elasticsearch.index.percolator.PercolatorShardModule;
 import org.elasticsearch.index.query.IndexQueryParserService;
 import org.elasticsearch.index.search.stats.ShardSearchModule;
+import org.elasticsearch.index.sequence.SequenceNoModule;
 import org.elasticsearch.index.settings.IndexSettings;
 import org.elasticsearch.index.settings.IndexSettingsService;
 import org.elasticsearch.index.shard.IndexShard;
@@ -320,6 +320,7 @@ public class IndexService extends AbstractIndexComponent implements IndexCompone
             modules.add(new ShardTermVectorsModule());
             modules.add(new IndexShardSnapshotModule());
             modules.add(new SuggestShardModule());
+            modules.add(new SequenceNoModule());
             try {
                 shardInjector = modules.createChildInjector(injector);
             } catch (CreationException e) {

@@ -34,15 +34,13 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.util.CancellableThreads;
 import org.elasticsearch.common.util.concurrent.FutureUtils;
-import org.elasticsearch.index.engine.Engine;
-import org.elasticsearch.index.gateway.IndexShardGateway;
-import org.elasticsearch.index.gateway.IndexShardGatewayRecoveryException;
 import org.elasticsearch.index.IndexService;
+import org.elasticsearch.index.engine.Engine;
 import org.elasticsearch.index.settings.IndexSettings;
 import org.elasticsearch.index.shard.AbstractIndexShardComponent;
+import org.elasticsearch.index.shard.IndexShard;
 import org.elasticsearch.index.shard.IndexShardState;
 import org.elasticsearch.index.shard.ShardId;
-import org.elasticsearch.index.shard.IndexShard;
 import org.elasticsearch.index.translog.*;
 import org.elasticsearch.indices.recovery.RecoveryState;
 import org.elasticsearch.rest.RestStatus;
@@ -264,10 +262,10 @@ public class IndexShardGateway extends AbstractIndexShardComponent implements Cl
                         break;
                     }
                     try {
-                        Engine.IndexingOperation potentialIndexOperation = indexShard.performRecoveryOperation(operation);
-                        if (potentialIndexOperation != null && potentialIndexOperation.parsedDoc().mappingsModified()) {
-                            if (!typesToUpdate.contains(potentialIndexOperation.docMapper().type())) {
-                                typesToUpdate.add(potentialIndexOperation.docMapper().type());
+                        Engine.Index potentialIndex = indexShard.performRecoveryOperation(operation);
+                        if (potentialIndex != null && potentialIndex.parsedDoc().mappingsModified()) {
+                            if (!typesToUpdate.contains(potentialIndex.docMapper().type())) {
+                                typesToUpdate.add(potentialIndex.docMapper().type());
                             }
                         }
                         recoveryState.getTranslog().addTranslogOperations(1);

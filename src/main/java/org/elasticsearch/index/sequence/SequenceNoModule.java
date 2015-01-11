@@ -17,33 +17,17 @@
  * under the License.
  */
 
-package org.elasticsearch.index.engine.internal;
+package org.elasticsearch.index.sequence;
 
-import org.apache.lucene.util.RamUsageEstimator;
-import org.elasticsearch.index.sequence.SequenceNo;
+import org.elasticsearch.common.inject.AbstractModule;
 
-/** Holds a deleted version, which just adds a timestmap to {@link VersionValue} so we know when we can expire the deletion. */
-
-class DeleteVersionValue extends VersionValue {
-    private final long time;
-
-    public DeleteVersionValue(long version, long time, SequenceNo sequenceNo) {
-        super(version, sequenceNo);
-        this.time = time;
-    }
+/**
+ */
+public class SequenceNoModule extends AbstractModule {
 
     @Override
-    public long time() {
-        return this.time;
-    }
-
-    @Override
-    public boolean delete() {
-        return true;
-    }
-
-    @Override
-    public long ramBytesUsed() {
-        return super.ramBytesUsed() + RamUsageEstimator.NUM_BYTES_LONG;
+    protected void configure() {
+        bind(PrimarySequenceNumberService.class).asEagerSingleton();
+        bind(ReplicaSequenceNumberService.class).asEagerSingleton();
     }
 }

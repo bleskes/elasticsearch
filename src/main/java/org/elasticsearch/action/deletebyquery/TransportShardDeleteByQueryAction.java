@@ -32,9 +32,9 @@ import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.BigArrays;
+import org.elasticsearch.index.IndexService;
 import org.elasticsearch.index.engine.Engine;
 import org.elasticsearch.index.query.ParsedQuery;
-import org.elasticsearch.index.IndexService;
 import org.elasticsearch.index.shard.IndexShard;
 import org.elasticsearch.indices.IndicesService;
 import org.elasticsearch.script.ScriptService;
@@ -108,9 +108,9 @@ public class TransportShardDeleteByQueryAction extends TransportShardReplication
                 indexShard.acquireSearcher(DELETE_BY_QUERY_API), indexService, indexShard, scriptService,
                 pageCacheRecycler, bigArrays, threadPool.estimatedTimeInMillisCounter()));
         try {
-            Engine.DeleteByQuery deleteByQuery = indexShard.prepareDeleteByQuery(request.source(), request.filteringAliases(), Engine.Operation.Origin.PRIMARY, request.types());
+            Engine.DeleteByQuery deleteByQuery = indexShard.prepareDeleteByQuery(request.source(), request.filteringAliases(), request.types());
             SearchContext.current().parsedQuery(new ParsedQuery(deleteByQuery.query()));
-            indexShard.deleteByQuery(deleteByQuery);
+            indexShard.deleteByQuery(deleteByQuery, true);
         } finally {
             try (SearchContext searchContext = SearchContext.current()) {
                 SearchContext.removeCurrent();
@@ -130,9 +130,9 @@ public class TransportShardDeleteByQueryAction extends TransportShardReplication
                 indexShard.acquireSearcher(DELETE_BY_QUERY_API, true), indexService, indexShard, scriptService,
                 pageCacheRecycler, bigArrays, threadPool.estimatedTimeInMillisCounter()));
         try {
-            Engine.DeleteByQuery deleteByQuery = indexShard.prepareDeleteByQuery(request.source(), request.filteringAliases(), Engine.Operation.Origin.REPLICA, request.types());
+            Engine.DeleteByQuery deleteByQuery = indexShard.prepareDeleteByQuery(request.source(), request.filteringAliases(), request.types());
             SearchContext.current().parsedQuery(new ParsedQuery(deleteByQuery.query()));
-            indexShard.deleteByQuery(deleteByQuery);
+            indexShard.deleteByQuery(deleteByQuery, false);
         } finally {
             try (SearchContext searchContext = SearchContext.current()) {
                 SearchContext.removeCurrent();

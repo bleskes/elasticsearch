@@ -22,7 +22,6 @@ package org.elasticsearch.index.mapper;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
@@ -46,7 +45,6 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.text.StringAndBytesText;
 import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.xcontent.*;
-import org.elasticsearch.common.xcontent.smile.SmileXContent;
 import org.elasticsearch.index.analysis.NamedAnalyzer;
 import org.elasticsearch.index.cache.bitset.BitsetFilterCache;
 import org.elasticsearch.index.mapper.internal.*;
@@ -190,6 +188,7 @@ public class DocumentMapper implements ToXContent {
             this.rootMappers.put(TimestampFieldMapper.class, new TimestampFieldMapper(indexSettings));
             this.rootMappers.put(TTLFieldMapper.class, new TTLFieldMapper(indexSettings));
             this.rootMappers.put(VersionFieldMapper.class, new VersionFieldMapper());
+            this.rootMappers.put(SeqNoFieldMapper.class, new SeqNoFieldMapper());
             this.rootMappers.put(ParentFieldMapper.class, new ParentFieldMapper(indexSettings));
             // _field_names last so that it can see all other fields
             this.rootMappers.put(FieldNamesFieldMapper.class, new FieldNamesFieldMapper(indexSettings));
@@ -578,7 +577,7 @@ public class DocumentMapper implements ToXContent {
             }
         }
 
-        ParsedDocument doc = new ParsedDocument(context.uid(), context.version(), context.id(), context.type(), source.routing(), source.timestamp(), source.ttl(), context.docs(), context.analyzer(),
+        ParsedDocument doc = new ParsedDocument(context.uid(), context.version(), context.sequenceNo(), context.id(), context.type(), source.routing(), source.timestamp(), source.ttl(), context.docs(), context.analyzer(),
                 context.source(), context.mappingsModified()).parent(source.parent());
         // reset the context to free up memory
         context.reset(null, null, null, null);

@@ -19,12 +19,11 @@
 
 package org.elasticsearch.action.delete;
 
-import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionRequestValidationException;
 import org.elasticsearch.action.support.replication.ShardReplicationOperationRequest;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.common.lucene.uid.Versions;
+import org.elasticsearch.index.sequence.SequenceNo;
 
 import java.io.IOException;
 
@@ -41,6 +40,7 @@ public class ShardDeleteRequest extends ShardReplicationOperationRequest<ShardDe
     private boolean refresh = false;
     private long version;
     private String originalIndex;
+    private SequenceNo sequenceNo = SequenceNo.UNKNOWN;
 
     ShardDeleteRequest(IndexDeleteRequest request, int shardId) {
         super(request);
@@ -93,6 +93,14 @@ public class ShardDeleteRequest extends ShardReplicationOperationRequest<ShardDe
 
     public long version() {
         return this.version;
+    }
+
+    public SequenceNo sequenceNo() {
+        return this.sequenceNo;
+    }
+
+    public void sequenceNo(SequenceNo sequenceNo) {
+        this.sequenceNo = sequenceNo;
     }
 
     @Override

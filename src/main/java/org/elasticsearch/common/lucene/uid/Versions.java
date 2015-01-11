@@ -30,6 +30,7 @@ import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.util.concurrent.ConcurrentCollections;
 import org.elasticsearch.index.mapper.internal.UidFieldMapper;
+import org.elasticsearch.index.sequence.SequenceNo;
 
 /** Utility class to resolve the Lucene doc ID and version for a given uid. */
 public class Versions {
@@ -89,11 +90,13 @@ public class Versions {
     public static class DocIdAndVersion {
         public final int docId;
         public final long version;
+        public final SequenceNo sequenceNo;
         public final LeafReaderContext context;
 
-        public DocIdAndVersion(int docId, long version, LeafReaderContext context) {
+        public DocIdAndVersion(int docId, long version, SequenceNo sequenceNo, LeafReaderContext context) {
             this.docId = docId;
             this.version = version;
+            this.sequenceNo = sequenceNo;
             this.context = context;
         }
     }

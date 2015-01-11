@@ -37,6 +37,7 @@ import org.elasticsearch.common.lucene.uid.Versions;
 import org.elasticsearch.common.unit.ByteSizeValue;
 import org.elasticsearch.index.VersionType;
 import org.elasticsearch.index.engine.Engine;
+import org.elasticsearch.index.sequence.SequenceNo;
 import org.elasticsearch.index.shard.IndexShardComponent;
 
 import java.io.Closeable;
@@ -266,6 +267,8 @@ public interface Translog extends IndexShardComponent, Closeable, Accountable {
 
         long estimateSize();
 
+        SequenceNo sequenceNo();
+
         Source getSource();
     }
 
@@ -286,7 +289,7 @@ public interface Translog extends IndexShardComponent, Closeable, Accountable {
     }
 
     static class Create implements Operation {
-        public static final int SERIALIZATION_FORMAT = 6;
+        public static final int SERIALIZATION_FORMAT = 7;
 
         private String id;
         private String type;
@@ -297,6 +300,7 @@ public interface Translog extends IndexShardComponent, Closeable, Accountable {
         private long ttl;
         private long version = Versions.MATCH_ANY;
         private VersionType versionType = VersionType.INTERNAL;
+        private SequenceNo sequenceNo = SequenceNo.UNKNOWN;
 
         public Create() {
         }
@@ -311,11 +315,13 @@ public interface Translog extends IndexShardComponent, Closeable, Accountable {
             this.ttl = create.ttl();
             this.version = create.version();
             this.versionType = create.versionType();
+            this.sequenceNo = create.sequenceNo();
         }
 
-        public Create(String type, String id, byte[] source) {
+        public Create(String type, String id, SequenceNo sequenceNo, byte[] source) {
             this.id = id;
             this.type = type;
+            this.sequenceNo = sequenceNo;
             this.source = new BytesArray(source);
         }
 
@@ -327,6 +333,11 @@ public interface Translog extends IndexShardComponent, Closeable, Accountable {
         @Override
         public long estimateSize() {
             return ((id.length() + type.length()) * 2) + source.length() + 12;
+        }
+
+        @Override
+        public SequenceNo sequenceNo() {
+            return sequenceNo;
         }
 
         public String id() {
@@ -398,6 +409,12 @@ public interface Translog extends IndexShardComponent, Closeable, Accountable {
             if (version >= 6) {
                 this.versionType = VersionType.fromValue(in.readByte());
             }
+            if (version >= 7) {
+                this.sequenceNo = SequenceNo.readFrom(in);
+            } else {
+                // before this version the engine didn't translate version type *before* writing to the translog (but did translate the version it self)
+                this.versionType = this.versionType.versionTypeForReplicationAndRecovery();
+            }
 
             assert versionType.validateVersionForWrites(version);
         }
@@ -424,6 +441,7 @@ public interface Translog extends IndexShardComponent, Closeable, Accountable {
             out.writeLong(timestamp);
             out.writeLong(ttl);
             out.writeByte(versionType.getValue());
+            sequenceNo.writeTo(out);
         }
     }
 
@@ -439,6 +457,7 @@ public interface Translog extends IndexShardComponent, Closeable, Accountable {
         private String parent;
         private long timestamp;
         private long ttl;
+        private SequenceNo sequenceNo = SequenceNo.UNKNOWN;
 
         public Index() {
         }
@@ -453,9 +472,10 @@ public interface Translog extends IndexShardComponent, Closeable, Accountable {
             this.timestamp = index.timestamp();
             this.ttl = index.ttl();
             this.versionType = index.versionType();
+            this.sequenceNo = index.sequenceNo();
         }
 
-        public Index(String type, String id, byte[] source) {
+        public Index(String type, String id, SequenceNo sequenceNo, byte[] source) {
             this.type = type;
             this.id = id;
             this.source = new BytesArray(source);
@@ -469,6 +489,11 @@ public interface Translog extends IndexShardComponent, Closeable, Accountable {
         @Override
         public long estimateSize() {
             return ((id.length() + type.length()) * 2) + source.length() + 12;
+        }
+
+        @Override
+        public SequenceNo sequenceNo() {
+            return sequenceNo;
         }
 
         public String type() {
@@ -541,6 +566,12 @@ public interface Translog extends IndexShardComponent, Closeable, Accountable {
                 if (version >= 6) {
                     this.versionType = VersionType.fromValue(in.readByte());
                 }
+                if (version >= 7) {
+                    this.sequenceNo = SequenceNo.readFrom(in);
+                } else {
+                    // before this version the engine didn't translate version type *before* writing to the translog (but did translate the version it self)
+                    this.versionType = this.versionType.versionTypeForReplicationAndRecovery();
+                }
             } catch (Exception e) {
                 throw new ElasticsearchException("failed to read [" + type + "][" + id + "]", e);
             }
@@ -570,15 +601,17 @@ public interface Translog extends IndexShardComponent, Closeable, Accountable {
             out.writeLong(timestamp);
             out.writeLong(ttl);
             out.writeByte(versionType.getValue());
+            sequenceNo.writeTo(out);
         }
     }
 
     static class Delete implements Operation {
-        public static final int SERIALIZATION_FORMAT = 2;
+        public static final int SERIALIZATION_FORMAT = 3;
 
         private Term uid;
         private long version = Versions.MATCH_ANY;
         private VersionType versionType = VersionType.INTERNAL;
+        private SequenceNo sequenceNo = SequenceNo.UNKNOWN;
 
         public Delete() {
         }
@@ -587,13 +620,14 @@ public interface Translog extends IndexShardComponent, Closeable, Accountable {
             this(delete.uid());
             this.version = delete.version();
             this.versionType = delete.versionType();
+            this.sequenceNo = delete.sequenceNo();
         }
 
         public Delete(Term uid) {
             this.uid = uid;
         }
 
-        public Delete(Term uid, long version, VersionType versionType) {
+        public Delete(Term uid, long version, VersionType versionType, SequenceNo sequenceNo) {
             this.uid = uid;
             this.version = version;
             this.versionType = versionType;
@@ -607,6 +641,11 @@ public interface Translog extends IndexShardComponent, Closeable, Accountable {
         @Override
         public long estimateSize() {
             return ((uid.field().length() + uid.text().length()) * 2) + 20;
+        }
+
+        @Override
+        public SequenceNo sequenceNo() {
+            return sequenceNo;
         }
 
         public Term uid() {
@@ -636,6 +675,12 @@ public interface Translog extends IndexShardComponent, Closeable, Accountable {
             if (version >= 2) {
                 this.versionType = VersionType.fromValue(in.readByte());
             }
+            if (version >= 3) {
+                this.sequenceNo = SequenceNo.readFrom(in);
+            } else {
+                // before this version the engine didn't translate version type *before* writing to the translog (but did translate the version it self)
+                this.versionType = this.versionType.versionTypeForReplicationAndRecovery();
+            }
             assert versionType.validateVersionForWrites(version);
 
         }
@@ -647,6 +692,7 @@ public interface Translog extends IndexShardComponent, Closeable, Accountable {
             out.writeString(uid.text());
             out.writeLong(version);
             out.writeByte(versionType.getValue());
+            sequenceNo.writeTo(out);
         }
     }
 
@@ -679,6 +725,12 @@ public interface Translog extends IndexShardComponent, Closeable, Accountable {
         @Override
         public long estimateSize() {
             return source.length() + 8;
+        }
+
+        @Override
+        public SequenceNo sequenceNo() {
+            // TODO ?
+            throw new UnsupportedOperationException("meh!");
         }
 
         public BytesReference source() {

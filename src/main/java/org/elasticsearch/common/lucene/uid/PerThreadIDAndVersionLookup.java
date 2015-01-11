@@ -19,24 +19,19 @@ package org.elasticsearch.common.lucene.uid;
  * under the License.
  */
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.apache.lucene.index.DocsAndPositionsEnum;
-import org.apache.lucene.index.DocsEnum;
-import org.apache.lucene.index.Fields;
-import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.LeafReaderContext;
-import org.apache.lucene.index.NumericDocValues;
-import org.apache.lucene.index.Terms;
-import org.apache.lucene.index.TermsEnum;
+import org.apache.lucene.index.*;
 import org.apache.lucene.util.Bits;
 import org.apache.lucene.util.BytesRef;
 import org.elasticsearch.common.Numbers;
 import org.elasticsearch.common.lucene.uid.Versions.DocIdAndVersion;
+import org.elasticsearch.index.mapper.internal.SeqNoFieldMapper;
 import org.elasticsearch.index.mapper.internal.UidFieldMapper;
 import org.elasticsearch.index.mapper.internal.VersionFieldMapper;
+import org.elasticsearch.index.sequence.SequenceNo;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 
 /** Utility class to do efficient primary-key (only 1 doc contains the
@@ -55,6 +50,8 @@ final class PerThreadIDAndVersionLookup {
     private final DocsAndPositionsEnum[] posEnums;
     private final Bits[] liveDocs;
     private final NumericDocValues[] versions;
+    private final NumericDocValues[] sequenceNoTerms;
+    private final NumericDocValues[] sequenceNoCounter;
     private final int numSegs;
     private final boolean hasDeletions;
     private final boolean[] hasPayloads;
@@ -69,6 +66,8 @@ final class PerThreadIDAndVersionLookup {
         posEnums = new DocsAndPositionsEnum[leaves.size()];
         liveDocs = new Bits[leaves.size()];
         versions = new NumericDocValues[leaves.size()];
+        sequenceNoTerms = new NumericDocValues[leaves.size()];
+        sequenceNoCounter = new NumericDocValues[leaves.size()];
         hasPayloads = new boolean[leaves.size()];
         int numSegs = 0;
         boolean hasDeletions = false;
@@ -87,6 +86,8 @@ final class PerThreadIDAndVersionLookup {
                     liveDocs[numSegs] = readerContext.reader().getLiveDocs();
                     hasDeletions |= readerContext.reader().hasDeletions();
                     versions[numSegs] = readerContext.reader().getNumericDocValues(VersionFieldMapper.NAME);
+                    sequenceNoTerms[numSegs] = readerContext.reader().getNumericDocValues(SeqNoFieldMapper.NAME_TERM);
+                    sequenceNoCounter[numSegs] = readerContext.reader().getNumericDocValues(SeqNoFieldMapper.NAME_COUNTER);
                     numSegs++;
                 }
             }
@@ -101,6 +102,8 @@ final class PerThreadIDAndVersionLookup {
             if (termsEnums[seg].seekExact(id)) {
 
                 NumericDocValues segVersions = versions[seg];
+                NumericDocValues segSeqNoTerm = sequenceNoTerms[seg];
+                NumericDocValues segSeqNoCounter = sequenceNoCounter[seg];
                 if (segVersions != null || hasPayloads[seg] == false) {
                     // Use NDV to retrieve the version, in which case we only need DocsEnum:
 
@@ -113,10 +116,13 @@ final class PerThreadIDAndVersionLookup {
 
                     if (docID != DocsEnum.NO_MORE_DOCS) {
                         if (segVersions != null) {
-                            return new DocIdAndVersion(docID, segVersions.get(docID), readerContexts[seg]);
+                            return new DocIdAndVersion(docID, segVersions.get(docID),
+                                    new SequenceNo(segSeqNoTerm.get(docID), segSeqNoCounter.get(docID)),
+                                    readerContexts[seg]
+                            );
                         } else {
                             // _uid found, but no doc values and no payloads
-                            return new DocIdAndVersion(docID, Versions.NOT_SET, readerContexts[seg]);
+                            return new DocIdAndVersion(docID, Versions.NOT_SET, SequenceNo.UNKNOWN, readerContexts[seg]);
                         }
                     } else {
                         assert hasDeletions;
@@ -134,7 +140,7 @@ final class PerThreadIDAndVersionLookup {
                     final BytesRef payload = dpe.getPayload();
                     if (payload != null && payload.length == 8) {
                         // TODO: does this break the nested docs case?  we are not returning the last matching docID here?
-                        return new DocIdAndVersion(d, Numbers.bytesToLong(payload), readerContexts[seg]);
+                        return new DocIdAndVersion(d, Numbers.bytesToLong(payload), SequenceNo.UNKNOWN, readerContexts[seg]);
                     }
                 }
             }

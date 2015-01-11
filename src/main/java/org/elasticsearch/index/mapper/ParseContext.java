@@ -31,6 +31,7 @@ import org.elasticsearch.ElasticsearchIllegalArgumentException;
 import org.elasticsearch.ElasticsearchIllegalStateException;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.bytes.BytesReference;
+import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.lucene.all.AllEntries;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentParser;
@@ -350,6 +351,16 @@ public abstract class ParseContext {
         }
 
         @Override
+        public Tuple<Field, Field> sequenceNo() {
+            return in.sequenceNo();
+        }
+
+        @Override
+        public void sequenceNo(Tuple<Field, Field> sequenceNo) {
+            in.sequenceNo(sequenceNo);
+        }
+
+        @Override
         public AllEntries allEntries() {
             return in.allEntries();
         }
@@ -420,6 +431,7 @@ public abstract class ParseContext {
         private DocumentMapper.ParseListener listener;
 
         private Field uid, version;
+        private Tuple<Field, Field> sequenceNo;
 
         private StringBuilder stringBuilder = new StringBuilder();
 
@@ -452,6 +464,7 @@ public abstract class ParseContext {
             this.analyzer = null;
             this.uid = null;
             this.version = null;
+            this.sequenceNo = null;
             this.id = null;
             this.sourceToParse = source;
             this.source = source == null ? null : sourceToParse.source();
@@ -594,6 +607,14 @@ public abstract class ParseContext {
 
         public void version(Field version) {
             this.version = version;
+        }
+
+        public Tuple<Field, Field> sequenceNo() {
+            return this.sequenceNo;
+        }
+
+        public void sequenceNo(Tuple<Field, Field> sequenceNo) {
+            this.sequenceNo = sequenceNo;
         }
 
         public AllEntries allEntries() {
@@ -760,6 +781,10 @@ public abstract class ParseContext {
     public abstract Field version();
 
     public abstract void version(Field version);
+
+    public abstract Tuple<Field, Field> sequenceNo();
+
+    public abstract void sequenceNo(Tuple<Field, Field> sequenceNo);
 
     public final boolean includeInAll(Boolean includeInAll, FieldMapper mapper) {
         return includeInAll(includeInAll, mapper.fieldType().indexOptions() != IndexOptions.NONE);

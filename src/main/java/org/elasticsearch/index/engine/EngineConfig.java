@@ -34,6 +34,7 @@ import org.elasticsearch.index.deletionpolicy.SnapshotDeletionPolicy;
 import org.elasticsearch.index.indexing.ShardIndexingService;
 import org.elasticsearch.index.merge.policy.MergePolicyProvider;
 import org.elasticsearch.index.merge.scheduler.MergeSchedulerProvider;
+import org.elasticsearch.index.sequence.PrimarySequenceNumberService;
 import org.elasticsearch.index.settings.IndexSettingsService;
 import org.elasticsearch.index.shard.ShardId;
 import org.elasticsearch.index.store.Store;
@@ -62,6 +63,7 @@ public final class EngineConfig {
     private final ThreadPool threadPool;
     private final ShardIndexingService indexingService;
     private final IndexSettingsService indexSettingsService;
+    private final PrimarySequenceNumberService primarySequenceNumberService;
     @Nullable
     private final IndicesWarmer warmer;
     private final Store store;
@@ -133,12 +135,17 @@ public final class EngineConfig {
     /**
      * Creates a new {@link org.elasticsearch.index.engine.EngineConfig}
      */
-    public EngineConfig(ShardId shardId, boolean optimizeAutoGenerateId, ThreadPool threadPool, ShardIndexingService indexingService, IndexSettingsService indexSettingsService, IndicesWarmer warmer, Store store, SnapshotDeletionPolicy deletionPolicy, Translog translog, MergePolicyProvider mergePolicyProvider, MergeSchedulerProvider mergeScheduler, Analyzer analyzer, Similarity similarity, CodecService codecService, Engine.FailedEngineListener failedEngineListener) {
+    public EngineConfig(ShardId shardId, boolean optimizeAutoGenerateId, ThreadPool threadPool, ShardIndexingService indexingService,
+                        IndexSettingsService indexSettingsService, PrimarySequenceNumberService primarySequenceNumberService,
+                        IndicesWarmer warmer, Store store, SnapshotDeletionPolicy deletionPolicy, Translog translog,
+                        MergePolicyProvider mergePolicyProvider, MergeSchedulerProvider mergeScheduler, Analyzer analyzer,
+                        Similarity similarity, CodecService codecService, Engine.FailedEngineListener failedEngineListener) {
         this.shardId = shardId;
         this.optimizeAutoGenerateId = optimizeAutoGenerateId;
         this.threadPool = threadPool;
         this.indexingService = indexingService;
         this.indexSettingsService = indexSettingsService;
+        this.primarySequenceNumberService = primarySequenceNumberService;
         this.warmer = warmer;
         this.store = store;
         this.deletionPolicy = deletionPolicy;
@@ -274,8 +281,8 @@ public final class EngineConfig {
      * Returns a {@link org.elasticsearch.index.indexing.ShardIndexingService} used inside the engine to inform about
      * pre and post index and create operations. The operations are used for statistic purposes etc.
      *
-     * @see org.elasticsearch.index.indexing.ShardIndexingService#postCreate(org.elasticsearch.index.engine.Engine.Create)
-     * @see org.elasticsearch.index.indexing.ShardIndexingService#preCreate(org.elasticsearch.index.engine.Engine.Create)
+     * @see org.elasticsearch.index.indexing.ShardIndexingService#postIndex(org.elasticsearch.index.engine.Engine.Index)
+     * @see org.elasticsearch.index.indexing.ShardIndexingService#preIndex(org.elasticsearch.index.engine.Engine.Index)
      *
      */
     public ShardIndexingService getIndexingService() {
@@ -354,6 +361,10 @@ public final class EngineConfig {
      */
     public Settings getIndexSettings() {
         return indexSettingsService.getSettings();
+    }
+
+    public PrimarySequenceNumberService getPrimarySequenceNumberService() {
+        return primarySequenceNumberService;
     }
 
     /**

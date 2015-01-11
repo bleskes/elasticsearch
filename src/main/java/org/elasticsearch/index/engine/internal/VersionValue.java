@@ -21,6 +21,7 @@ package org.elasticsearch.index.engine.internal;
 
 import org.apache.lucene.util.Accountable;
 import org.apache.lucene.util.RamUsageEstimator;
+import org.elasticsearch.index.sequence.SequenceNo;
 import org.elasticsearch.index.translog.Translog;
 
 import java.util.Collection;
@@ -29,15 +30,24 @@ import java.util.Collections;
 class VersionValue implements Accountable {
 
     private final long version;
-    private final Translog.Location translogLocation;
+    private Translog.Location translogLocation;
+    private final SequenceNo sequenceNo;
 
-    public VersionValue(long version, Translog.Location translogLocation) {
+    public VersionValue(long version, SequenceNo sequenceNo) {
         this.version = version;
-        this.translogLocation = translogLocation;
+        this.sequenceNo = sequenceNo;
     }
 
     public long time() {
         throw new UnsupportedOperationException();
+    }
+
+    public void translogLocation(Translog.Location location) {
+        this.translogLocation = location;
+    }
+
+    public SequenceNo sequenceNo() {
+        return sequenceNo;
     }
 
     public long version() {
@@ -54,7 +64,9 @@ class VersionValue implements Accountable {
 
     @Override
     public long ramBytesUsed() {
-        return RamUsageEstimator.NUM_BYTES_OBJECT_HEADER + RamUsageEstimator.NUM_BYTES_LONG + RamUsageEstimator.NUM_BYTES_OBJECT_REF + translogLocation.ramBytesUsed();
+        return RamUsageEstimator.NUM_BYTES_OBJECT_HEADER + RamUsageEstimator.NUM_BYTES_LONG
+                + RamUsageEstimator.NUM_BYTES_OBJECT_REF + translogLocation.ramBytesUsed()
+                + RamUsageEstimator.NUM_BYTES_OBJECT_HEADER + sequenceNo.ramBytesUsed();
     }
     
     @Override

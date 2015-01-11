@@ -30,7 +30,7 @@ public class InternalEngineSettingsTest extends ElasticsearchSingleNodeTest {
     public void testLuceneSettings() {
         final IndexService service = createIndex("foo");
         // INDEX_COMPOUND_ON_FLUSH
-        InternalEngine engine = ((InternalEngine)engine(service));
+        SeqNoEngine engine = engine(service);
         assertThat(engine.currentIndexWriterConfig().getUseCompoundFile(), is(true));
         client().admin().indices().prepareUpdateSettings("foo").setSettings(ImmutableSettings.builder().put(EngineConfig.INDEX_COMPOUND_ON_FLUSH, false).build()).get();
         assertThat(engine.currentIndexWriterConfig().getUseCompoundFile(), is(false));

@@ -30,10 +30,10 @@ public class IndexFailedEngineException extends EngineException {
 
     private final String id;
 
-    public IndexFailedEngineException(ShardId shardId, Engine.Index index, Throwable cause) {
-        super(shardId, "Index failed for [" + index.type() + "#" + index.id() + "]", cause);
-        this.type = index.type();
-        this.id = index.id();
+    public IndexFailedEngineException(ShardId shardId, Engine.IndexingOperation op, Throwable cause) {
+        super(shardId, "Index failed for [" + op.type() + "#" + op.id() + "]", cause);
+        this.type = op.type();
+        this.id = op.id();
     }
 
     public String type() {
