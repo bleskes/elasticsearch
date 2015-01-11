@@ -87,6 +87,8 @@ public abstract class Privilege<P extends Privilege<P>> {
 
     public static class System extends Privilege<System> {
 
+        private static final Predicate<String> INTERNAL_PREDICATE = new AutomatonPredicate(patterns("internal:*"));
+
         protected static final Predicate<String> PREDICATE = new AutomatonPredicate(patterns(
                 "internal:*",
                 "indices:monitor/*",  // added for marvel
@@ -100,6 +102,10 @@ public abstract class Privilege<P extends Privilege<P>> {
         @Override
         public Predicate<String> predicate() {
             return PREDICATE;
+        }
+
+        public Predicate<String> internalActionPredicate() {
+            return INTERNAL_PREDICATE;
         }
 
         @Override

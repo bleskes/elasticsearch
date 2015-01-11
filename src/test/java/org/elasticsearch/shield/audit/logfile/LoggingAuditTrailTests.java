@@ -290,7 +290,7 @@ public class LoggingAuditTrailTests extends ElasticsearchTestCase {
     }
 
     @Test
-    public void testAccessGranted_SystemAction() throws Exception {
+    public void testAccessGranted_InternalSystemAction() throws Exception {
         for (Level level : Level.values()) {
             CapturingLogger logger = new CapturingLogger(level);
             LoggingAuditTrail auditTrail = new LoggingAuditTrail(logger);
