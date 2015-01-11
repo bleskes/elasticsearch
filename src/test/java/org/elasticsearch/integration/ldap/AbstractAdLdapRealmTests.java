@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.integration;
+package org.elasticsearch.integration.ldap;
 
 import com.carrotsearch.randomizedtesting.LifecycleScope;
 import org.apache.lucene.util.AbstractRandomizedTest;

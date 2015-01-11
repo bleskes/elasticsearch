@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.integration;
+package org.elasticsearch.integration.ldap;
 
 import org.elasticsearch.test.junit.annotations.Network;
 import org.junit.Test;
