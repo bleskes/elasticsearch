@@ -21,7 +21,6 @@ import org.apache.lucene.util.CollectionUtil;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.collect.Lists;
 import org.elasticsearch.common.collect.Sets;
-import org.elasticsearch.common.component.AbstractComponent;
 import org.elasticsearch.common.component.AbstractLifecycleComponent;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.ImmutableSettings;
@@ -38,7 +37,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class Realms extends AbstractLifecycleComponent<Realms> implements Iterable<Realm> {
 
     private final Map<String, Realm.Factory> factories;
-    private List<Realm> realms = Collections.EMPTY_LIST;
+    private List<Realm> realms = Collections.emptyList();
 
     @Inject
     public Realms(Settings settings, Map<String, Realm.Factory> factories) {
@@ -60,6 +59,15 @@ public class Realms extends AbstractLifecycleComponent<Realms> implements Iterab
     @Override
     public Iterator<Realm> iterator() {
         return realms.iterator();
+    }
+
+    public Realm realm(String name) {
+        for (Realm realm : realms) {
+            if (name.equals(realm.name)) {
+                return realm;
+            }
+        }
+        return null;
     }
 
     public Realm.Factory realmFactory(String type) {

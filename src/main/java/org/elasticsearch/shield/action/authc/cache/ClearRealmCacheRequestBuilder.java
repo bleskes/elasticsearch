@@ -1,0 +1,69 @@
+/*
+ * ELASTICSEARCH CONFIDENTIAL
+ * __________________
+ *
+ *  [2014] Elasticsearch Incorporated. All Rights Reserved.
+ *
+ * NOTICE:  All information contained herein is, and remains
+ * the property of Elasticsearch Incorporated and its suppliers,
+ * if any.  The intellectual and technical concepts contained
+ * herein are proprietary to Elasticsearch Incorporated
+ * and its suppliers and may be covered by U.S. and Foreign Patents,
+ * patents in process, and are protected by trade secret or copyright law.
+ * Dissemination of this information or reproduction of this material
+ * is strictly forbidden unless prior written permission is obtained
+ * from Elasticsearch Incorporated.
+ */
+
+package org.elasticsearch.shield.action.authc.cache;
+
+import org.elasticsearch.action.ActionListener;
+import org.elasticsearch.action.support.nodes.NodesOperationRequestBuilder;
+import org.elasticsearch.client.Client;
+import org.elasticsearch.client.ClusterAdminClient;
+import org.elasticsearch.shield.client.ShieldAuthcClient;
+import org.elasticsearch.shield.client.ShieldClient;
+
+/**
+ *
+ */
+public class ClearRealmCacheRequestBuilder extends NodesOperationRequestBuilder<ClearRealmCacheRequest, ClearRealmCacheResponse, ClearRealmCacheRequestBuilder> {
+
+    private final ShieldAuthcClient authcClient;
+
+    public ClearRealmCacheRequestBuilder(Client client) {
+        this(client.admin().cluster());
+    }
+
+    public ClearRealmCacheRequestBuilder(ClusterAdminClient client) {
+        super(client, new ClearRealmCacheRequest());
+        authcClient = new ShieldClient(client).authc();
+    }
+
+    /**
+     * Sets the realms for which caches will be evicted. When not set all the caches of all realms will be
+     * evicted.
+     *
+     * @param realms    The realm names
+     */
+    public ClearRealmCacheRequestBuilder realms(String... realms) {
+        request.realms(realms);
+        return this;
+    }
+
+    /**
+     * Sets the usernames of the users that should be evicted from the caches. When not set, all users
+     * will be evicted.
+     *
+     * @param usernames The usernames
+     */
+    public ClearRealmCacheRequestBuilder usernames(String... usernames) {
+        request.usernames(usernames);
+        return this;
+    }
+
+    @Override
+    protected void doExecute(ActionListener<ClearRealmCacheResponse> listener) {
+        authcClient.clearRealmCache(request, listener);
+    }
+}
