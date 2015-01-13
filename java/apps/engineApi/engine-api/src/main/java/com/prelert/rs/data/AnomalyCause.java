@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -37,6 +37,8 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
+import com.prelert.utils.json.AutoDetectParseException;
+import com.prelert.utils.json.FieldNameParser;
 
 /**
  * Anomaly Cause POJO.
@@ -213,179 +215,65 @@ public class AnomalyCause
     throws JsonParseException, IOException, AutoDetectParseException
     {
         AnomalyCause cause = new AnomalyCause();
+        AnomalyCauseJsonParser anomalyCauseJsonParser = new AnomalyCauseJsonParser(parser, LOGGER);
+        anomalyCauseJsonParser.parse(cause);
+        return cause;
+    }
 
-        JsonToken token = parser.getCurrentToken();
-        if (JsonToken.START_OBJECT != token)
+    private static class AnomalyCauseJsonParser extends FieldNameParser<AnomalyCause>
+    {
+
+        public AnomalyCauseJsonParser(JsonParser jsonParser, Logger logger)
         {
-            String msg = "Cannot parse anomaly cause. First token '" +
-                    parser.getText() + ", is not the start object token";
-            LOGGER.error(msg);
-            throw new AutoDetectParseException(msg);
+            super("AnomalyCause", jsonParser, logger);
         }
 
-        token = parser.nextToken();
-        while (token != JsonToken.END_OBJECT)
+        @Override
+        protected void handleFieldName(String fieldName, AnomalyCause cause)
+                throws AutoDetectParseException, JsonParseException, IOException
         {
-            switch(token)
+            JsonToken token = m_Parser.nextToken();
+            switch (fieldName)
             {
-            case START_OBJECT:
-                LOGGER.error("Start object parsed in anomaly cause");
+            case PROBABILITY:
+                cause.setProbability(parseAsDoubleOrZero(token, fieldName));
                 break;
-            case END_OBJECT:
-                LOGGER.error("End object parsed in anomaly cause");
+            case BY_FIELD_NAME:
+                cause.setByFieldName(parseAsStringOrNull(token, fieldName));
+                break;
+            case BY_FIELD_VALUE:
+                cause.setByFieldValue(parseAsStringOrNull(token, fieldName));
+                break;
+            case PARTITION_FIELD_NAME:
+                cause.setPartitionFieldName(parseAsStringOrNull(token, fieldName));
+                break;
+            case PARTITION_FIELD_VALUE:
+                cause.setPartitionFieldValue(parseAsStringOrNull(token, fieldName));
+                break;
+            case FUNCTION:
+                cause.setFunction(parseAsStringOrNull(token, fieldName));
+                break;
+            case TYPICAL:
+                cause.setTypical(parseAsDoubleOrZero(token, fieldName));
+                break;
+            case ACTUAL:
+                cause.setActual(parseAsDoubleOrZero(token, fieldName));
                 break;
             case FIELD_NAME:
-                String fieldName = parser.getCurrentName();
-                switch (fieldName)
-                {
-                case PROBABILITY:
-                    token = parser.nextToken();
-                    if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)
-                    {
-                        cause.setProbability(parser.getDoubleValue());
-                    }
-                    else
-                    {
-                        LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
-                                + " as a double");
-                    }
-                    break;
-                case BY_FIELD_NAME:
-                    token = parser.nextToken();
-                    if (token == JsonToken.VALUE_STRING)
-                    {
-                        cause.setByFieldName(parser.getText());
-                    }
-                    else
-                    {
-                        LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
-                                + " as a string");
-                    }
-                    break;
-                case BY_FIELD_VALUE:
-                    token = parser.nextToken();
-                    if (token == JsonToken.VALUE_STRING)
-                    {
-                        cause.setByFieldValue(parser.getText());
-                    }
-                    else
-                    {
-                        LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
-                                + " as a string");
-                    }
-                    break;
-                case PARTITION_FIELD_NAME:
-                    token = parser.nextToken();
-                    if (token == JsonToken.VALUE_STRING)
-                    {
-                        cause.setPartitionFieldName(parser.getText());
-                    }
-                    else
-                    {
-                        LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
-                                + " as a string");
-                    }
-                    break;
-                case PARTITION_FIELD_VALUE:
-                    token = parser.nextToken();
-                    if (token == JsonToken.VALUE_STRING)
-                    {
-                        cause.setPartitionFieldValue(parser.getText());
-                    }
-                    else
-                    {
-                        LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
-                                + " as a string");
-                    }
-                    break;
-                case FUNCTION:
-                    token = parser.nextToken();
-                    if (token == JsonToken.VALUE_STRING)
-                    {
-                        cause.setFunction(parser.getText());
-                    }
-                    else
-                    {
-                        LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
-                                + " as a string");
-                    }
-                    break;
-                case TYPICAL:
-                    token = parser.nextToken();
-                    if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)
-                    {
-                        cause.setTypical(parser.getDoubleValue());
-                    }
-                    else
-                    {
-                        LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
-                                + " as a double");
-                    }
-                    break;
-                case ACTUAL:
-                    token = parser.nextToken();
-                    if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)
-                    {
-                        cause.setActual(parser.getDoubleValue());
-                    }
-                    else
-                    {
-                        LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
-                                + " as a double");
-                    }
-                    break;
-                case FIELD_NAME:
-                    token = parser.nextToken();
-                    if (token == JsonToken.VALUE_STRING)
-                    {
-                        cause.setFieldName(parser.getText());
-                    }
-                    else
-                    {
-                        LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
-                                + " as a string");
-                    }
-                    break;
-                case OVER_FIELD_NAME:
-                    token = parser.nextToken();
-                    if (token == JsonToken.VALUE_STRING)
-                    {
-                        cause.setOverFieldName(parser.getText());
-                    }
-                    else
-                    {
-                        LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
-                                + " as a string");
-                    }
-                    break;
-                case OVER_FIELD_VALUE:
-                    token = parser.nextToken();
-                    if (token == JsonToken.VALUE_STRING)
-                    {
-                        cause.setOverFieldValue(parser.getText());
-                    }
-                    else
-                    {
-                        LOGGER.warn("Cannot parse " + fieldName + " : " + parser.getText()
-                                + " as a string");
-                    }
-                    break;
-                default:
-                    LOGGER.warn(String.format("Parse error unknown field in Anomaly Cause %s:%s",
-                            fieldName, parser.nextToken().asString()));
-                    break;
-                }
+                cause.setFieldName(parseAsStringOrNull(token, fieldName));
+                break;
+            case OVER_FIELD_NAME:
+                cause.setOverFieldName(parseAsStringOrNull(token, fieldName));
+                break;
+            case OVER_FIELD_VALUE:
+                cause.setOverFieldValue(parseAsStringOrNull(token, fieldName));
                 break;
             default:
-                LOGGER.warn("Parsing error: Only simple fields expected in Anomaly Cause not "
-                                + token);
+                LOGGER.warn(String.format("Parse error unknown field in Anomaly Cause %s:%s",
+                        fieldName, token.asString()));
                 break;
             }
-
-            token = parser.nextToken();
         }
-
-        return cause;
     }
 
     @Override

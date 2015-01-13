@@ -48,6 +48,7 @@ import com.prelert.job.persistence.JobRenormaliser;
 import com.prelert.job.quantiles.Quantiles;
 import com.prelert.job.quantiles.QuantilesState;
 import com.prelert.rs.data.*;
+import com.prelert.utils.json.AutoDetectParseException;
 
 /**
  * Parses the JSON output of the autodetect program.

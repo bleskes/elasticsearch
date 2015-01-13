@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -50,53 +50,53 @@ import com.prelert.job.logs.JobLogs;
  * The <pre>zip</pre> endpoint returns a file attachment of the zipped log files,
  * <pre>tail</pre> returns the last 10 lines of text of the latest log file but
  * accepts the <pre>lines</pre> query parameter if more than the last 10 lines
- * are wanted. 
+ * are wanted.
  */
 @Path("/logs")
 public class Logs extends ResourceWithJobManager
-{	
-	private static final Logger LOGGER = Logger.getLogger(Logs.class);
-	
-	/**
-	 * The name of this endpoint
-	 */
-	public static final String ENDPOINT = "logs";
-	
+{
+    private static final Logger LOGGER = Logger.getLogger(Logs.class);
+
     /**
-     * Get the contents of the log directory zipped. 
-     * This is the same as {@link #zipLogFiles(String)} 
-     * 
+     * The name of this endpoint
+     */
+    public static final String ENDPOINT = "logs";
+
+    /**
+     * Get the contents of the log directory zipped.
+     * This is the same as {@link #zipLogFiles(String)}
+     *
      * @param jobId
      * @return
      * @throws UnknownJobException
      */
     @GET
-	@Path("/{jobId}/")
+    @Path("/{jobId}/")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     public Response jobLogFiles(@PathParam("jobId") String jobId)
     throws UnknownJobException
-    {   	
-    	return zipJobLogFiles(jobId);
+    {
+        return zipJobLogFiles(jobId);
     }
-    
-    
+
+
     /**
      * Get the contents of the log directory zipped
-     * This is the same as {@link #jobLogFiles(String)} 
-     * 
+     * This is the same as {@link #jobLogFiles(String)}
+     *
      * @param jobId
      * @return
      * @throws UnknownJobException
      */
     @GET
-	@Path("/{jobId}/zip")
+    @Path("/{jobId}/zip")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     public Response zipLogFiles(@PathParam("jobId") String jobId)
     throws UnknownJobException
-    {   	
-    	return zipJobLogFiles(jobId);
+    {
+        return zipJobLogFiles(jobId);
     }
-    
+
     /**
      * Return a response with a file attachment of the zipped log files.
      * @param jobId
@@ -105,84 +105,84 @@ public class Logs extends ResourceWithJobManager
      */
     private Response zipJobLogFiles(String jobId)
     throws UnknownJobException
-    {   	
-    	LOGGER.debug("Get zipped logs for job '" + jobId + "'");
-    	
-		JobLogs logs = new JobLogs();
-		byte [] compressFiles = logs.zippedLogFiles(jobId);
-		
-		String filename = jobId + "_logs.zip";
-		
-		return Response.ok(compressFiles)
-				.header("Content-Disposition", "attachment; filename=\"" + filename + "\"")
-				.build();
+    {
+        LOGGER.debug("Get zipped logs for job '" + jobId + "'");
+
+        JobLogs logs = new JobLogs();
+        byte [] compressFiles = logs.zippedLogFiles(jobId);
+
+        String filename = jobId + "_logs.zip";
+
+        return Response.ok(compressFiles)
+                .header("Content-Disposition", "attachment; filename=\"" + filename + "\"")
+                .build();
     }
-    
+
     /**
-     * Tail the log file with the same name as the job id.
-     * 
+     * Tail the default log file for this job id.
+     *
      * @param jobId
      * @param lines Number of lines to tail
      * @return
      * @throws UnknownJobException
      */
     @GET
-	@Path("/{jobId}/tail")
+    @Path("/{jobId}/tail")
     @Produces(MediaType.TEXT_PLAIN)
     public String tailDefaultLogFile(@PathParam("jobId") String jobId,
-    		@DefaultValue("10") @QueryParam("lines") int lines)
+            @DefaultValue("10") @QueryParam("lines") int lines)
     throws UnknownJobException
-    {   	
-    	LOGGER.debug("Tail log for job '" + jobId + "'");
-    	
-		JobLogs logs = new JobLogs();
-		return logs.tail(jobId, lines);
+    {
+        LOGGER.debug("Tail default log for job '" + jobId + "'");
+
+        JobLogs logs = new JobLogs();
+        return logs.tail(jobId, lines);
     }
-    
+
     /**
      * Read the entire log file
-     * 
+     *
      * @param jobId
      * @param lines Number of lines to tail
      * @return
      * @throws UnknownJobException
-     * @throws IOException 
+     * @throws IOException
      */
     @GET
-	@Path("/{jobId}/{filename}")
+    @Path("/{jobId}/{filename}")
     @Produces(MediaType.TEXT_PLAIN)
     public String getLogFile(@PathParam("jobId") String jobId,
-    		@PathParam("filename") String filename)
+            @PathParam("filename") String filename)
     throws UnknownJobException
-    {   	
-    	LOGGER.debug(String.format("Get the log file %s for job %s", 
-    			filename, jobId));
-    	
-		JobLogs logs = new JobLogs();
-		return logs.file(jobId, filename);
+    {
+        LOGGER.debug(String.format("Get the log file %s for job %s",
+                filename, jobId));
+
+        JobLogs logs = new JobLogs();
+        return logs.file(jobId, filename);
     }
-    
-    
+
+
     /**
      * Tail the specific log file
-     * 
+     *
      * @param jobId
      * @param lines Number of lines to tail
      * @return
      * @throws UnknownJobException
      */
     @GET
-	@Path("/{jobId}/{filename}/tail")
+    @Path("/{jobId}/{filename}/tail")
     @Produces(MediaType.TEXT_PLAIN)
     public String tailLogFile(@PathParam("jobId") String jobId,
-    		@PathParam("filename") String filename,
-    		@DefaultValue("10") @QueryParam("lines") int lines)
+            @PathParam("filename") String filename,
+            @DefaultValue("10") @QueryParam("lines") int lines)
     throws UnknownJobException
-    {   	
-    	LOGGER.debug("Tail log for job '" + jobId + "'");
-    	
-		JobLogs logs = new JobLogs();
-		return logs.tail(jobId, filename, lines);
+    {
+        LOGGER.debug("Tail log file '" + filename + "' for job '" + jobId + "'");
+
+        JobLogs logs = new JobLogs();
+        return logs.tail(jobId, filename, lines);
     }
 
 }

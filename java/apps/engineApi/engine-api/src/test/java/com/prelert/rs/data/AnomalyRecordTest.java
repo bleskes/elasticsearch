@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -29,11 +29,23 @@ package com.prelert.rs.data;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 
 import org.junit.Test;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
+import com.prelert.utils.json.AutoDetectParseException;
+
 public class AnomalyRecordTest
 {
+
+    private static final double ERROR = 0.001;
 
     @Test
     public void testGetId_GivenIdIsZero()
@@ -67,5 +79,78 @@ public class AnomalyRecordTest
         assertEquals("1403701200", anomalyRecord.getParent());
         assertEquals("1403701200individual metric/0/0/responsetime/airline/1",
                 anomalyRecord.getId());
+    }
+
+    @Test (expected = AutoDetectParseException.class)
+    public void testParseJson_GivenParserDoesNotPointAtStartObject()
+            throws JsonParseException, IOException, AutoDetectParseException
+    {
+        String input = "{}";
+        JsonParser parser = createJsonParser(input);
+
+        AnomalyRecord.parseJson(parser);
+    }
+
+    @Test
+    public void testParseJson_GivenEmptyInput()
+            throws JsonParseException, IOException, AutoDetectParseException
+    {
+        String input = "{}";
+        JsonParser parser = createJsonParser(input);
+        parser.nextToken();
+
+        assertEquals(new AnomalyRecord(), AnomalyRecord.parseJson(parser));
+        assertEquals(JsonToken.END_OBJECT, parser.getCurrentToken());
+    }
+
+    @Test
+    public void testParseJson_GivenAnomalyRecordWithAllFieldsPopulatedAndValid()
+            throws JsonParseException, IOException, AutoDetectParseException
+    {
+        String input = "{\"probability\": 0.01,"
+                + "\"anomalyScore\" : 42.0,"
+                + "\"normalizedProbability\" : 0.05,"
+                + "\"byFieldName\" : \"someByFieldName\","
+                + "\"byFieldValue\" : \"someByFieldValue\","
+                + "\"partitionFieldName\" : \"somePartitionFieldName\","
+                + "\"partitionFieldValue\" : \"somePartitionFieldValue\","
+                + "\"function\" : \"someFunction\","
+                + "\"typical\" : 3.3,"
+                + "\"actual\" : 1.3,"
+                + "\"fieldName\" : \"someFieldName\","
+                + "\"overFieldName\" : \"someOverFieldName\","
+                + "\"overFieldValue\" : \"someOverFieldValue\","
+                + "\"isInterim\" : true,"
+                + "\"causes\" : [{\"probability\" : 0.01}, {\"probability\" : 0.02}]"
+                + "}";
+        JsonParser parser = createJsonParser(input);
+        parser.nextToken();
+
+        AnomalyRecord anomalyRecord = AnomalyRecord.parseJson(parser);
+
+        assertEquals(0.01, anomalyRecord.getProbability(), ERROR);
+        assertEquals(42.0, anomalyRecord.getAnomalyScore(), ERROR);
+        assertEquals(0.05, anomalyRecord.getNormalizedProbability(), ERROR);
+        assertEquals("someByFieldName", anomalyRecord.getByFieldName());
+        assertEquals("someByFieldValue", anomalyRecord.getByFieldValue());
+        assertEquals("somePartitionFieldName", anomalyRecord.getPartitionFieldName());
+        assertEquals("somePartitionFieldValue", anomalyRecord.getPartitionFieldValue());
+        assertEquals("someFunction", anomalyRecord.getFunction());
+        assertEquals(3.3, anomalyRecord.getTypical(), ERROR);
+        assertEquals(1.3, anomalyRecord.getActual(), ERROR);
+        assertEquals("someFieldName", anomalyRecord.getFieldName());
+        assertEquals("someOverFieldName", anomalyRecord.getOverFieldName());
+        assertEquals("someOverFieldValue", anomalyRecord.getOverFieldValue());
+        assertTrue(anomalyRecord.isInterim());
+        assertEquals(2, anomalyRecord.getCauses().size());
+
+        assertEquals(JsonToken.END_OBJECT, parser.getCurrentToken());
+    }
+
+    private static final JsonParser createJsonParser(String input) throws JsonParseException,
+            IOException
+    {
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(input.getBytes());
+        return new JsonFactory().createParser(inputStream);
     }
 }

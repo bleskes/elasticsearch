@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -25,12 +25,12 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.rs.data;
+package com.prelert.utils.json;
 
 /**
  * Data parsing exception
  */
-public class AutoDetectParseException extends Throwable
+public class AutoDetectParseException extends Exception
 {
 	public AutoDetectParseException(String message)
 	{

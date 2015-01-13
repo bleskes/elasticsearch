@@ -35,8 +35,8 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.process.ResultsReader;
 import com.prelert.job.process.ResultsReaderFactory;
 import com.prelert.rs.data.parsing.AlertObserver;
-import com.prelert.rs.data.AutoDetectParseException;
 import com.prelert.rs.data.parsing.AutoDetectResultsParser;
+import com.prelert.utils.json.AutoDetectParseException;
 
 /**
  * Factory class to produce Runnable objects that will parse the
