@@ -453,7 +453,6 @@ public abstract class TransportShardReplicationOperationAction<Request extends S
                             if (exp.unwrapCause() instanceof ConnectTransportException || exp.unwrapCause() instanceof NodeClosedException ||
                                     retryPrimaryException(exp)) {
                                 primaryOperationStarted.set(false);
-                                internalRequest.request().setCanHaveDuplicates();
                                 // we already marked it as started when we executed it (removed the listener) so pass false
                                 // to re-add to the cluster listener
                                 logger.trace("received an error from node the primary was assigned to ({}), scheduling a retry", exp.getMessage());
@@ -512,7 +511,6 @@ public abstract class TransportShardReplicationOperationAction<Request extends S
                 PrimaryResponse<Response, ReplicaRequest> response = shardOperationOnPrimary(clusterState, new PrimaryOperationRequest(primaryShardId, internalRequest.concreteIndex(), internalRequest.request()));
                 performReplicas(response);
             } catch (Throwable e) {
-                internalRequest.request.setCanHaveDuplicates();
                 // shard has not been allocated yet, retry it here
                 if (retryPrimaryException(e)) {
                     primaryOperationStarted.set(false);
@@ -575,14 +573,7 @@ public abstract class TransportShardReplicationOperationAction<Request extends S
                     }
                 }
                 shardIt.reset();
-                internalRequest.request().setCanHaveDuplicates(); // safe side, cluster state changed, we might have dups
             } else {
-                shardIt.reset();
-                while ((shard = shardIt.nextOrNull()) != null) {
-                    if (shard.state() != ShardRoutingState.STARTED) {
-                        internalRequest.request().setCanHaveDuplicates();
-                    }
-                }
                 shardIt.reset();
             }
 

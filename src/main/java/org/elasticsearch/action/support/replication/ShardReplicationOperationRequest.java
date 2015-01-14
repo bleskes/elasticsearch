@@ -48,7 +48,6 @@ public abstract class ShardReplicationOperationRequest<T extends ShardReplicatio
     private boolean threadedOperation = true;
     private ReplicationType replicationType = ReplicationType.DEFAULT;
     private WriteConsistencyLevel consistencyLevel = WriteConsistencyLevel.DEFAULT;
-    private volatile boolean canHaveDuplicates = false;
 
     protected ShardReplicationOperationRequest() {
 
@@ -79,17 +78,6 @@ public abstract class ShardReplicationOperationRequest<T extends ShardReplicatio
         this.threadedOperation = request.operationThreaded();
         this.replicationType = request.replicationType();
         this.consistencyLevel = request.consistencyLevel();
-    }
-
-    void setCanHaveDuplicates() {
-        this.canHaveDuplicates = true;
-    }
-
-    /**
-     * Is this request can potentially be dup on a single shard.
-     */
-    public boolean canHaveDuplicates() {
-        return canHaveDuplicates;
     }
 
     /**
@@ -201,8 +189,9 @@ public abstract class ShardReplicationOperationRequest<T extends ShardReplicatio
         consistencyLevel = WriteConsistencyLevel.fromId(in.readByte());
         timeout = TimeValue.readTimeValue(in);
         index = in.readSharedString();
-        if (in.getVersion().onOrAfter(Version.V_1_2_0)) {
-            canHaveDuplicates = in.readBoolean();
+        if (in.getVersion().onOrAfter(Version.V_1_2_0) && in.getVersion().before(Version.V_1_5_0)) {
+            // canHaveDuplicates was introduced in 1.2.0 and removed in 1.5.0
+            in.readBoolean();
         }
         // no need to serialize threaded* parameters, since they only matter locally
     }
@@ -214,8 +203,9 @@ public abstract class ShardReplicationOperationRequest<T extends ShardReplicatio
         out.writeByte(consistencyLevel.id());
         timeout.writeTo(out);
         out.writeSharedString(index);
-        if (out.getVersion().onOrAfter(Version.V_1_2_0)) {
-            out.writeBoolean(canHaveDuplicates);
+        if (out.getVersion().onOrAfter(Version.V_1_2_0) && out.getVersion().before(Version.V_1_5_0)) {
+            // canHaveDuplicates was introduced in 1.2.0 and removed in 1.5.0
+            out.writeBoolean(true);
         }
     }
 
