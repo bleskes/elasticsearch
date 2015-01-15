@@ -22,6 +22,7 @@ import org.elasticsearch.ElasticsearchIllegalStateException;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.action.support.IndicesOptions;
+import org.elasticsearch.alerts.triggers.TriggerResult;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.collect.MapBuilder;
@@ -48,6 +49,8 @@ public final class AlertUtils {
 
     private static final String FIRE_TIME_VARIABLE_NAME = "FIRE_TIME";
     private static final String SCHEDULED_FIRE_TIME_VARIABLE_NAME = "SCHEDULED_FIRE_TIME";
+    private static final String ALERT_NAME_VARIABLE_NAME = "ALERT_NAME";
+    private static final String RESPONSE_VARIABLE_NAME = "response";
 
     public static final FormatDateTimeFormatter dateTimeFormatter = DateFieldMapper.Defaults.DATE_TIME_FORMATTER;
 
