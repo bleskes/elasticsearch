@@ -46,6 +46,8 @@ public class DoubleDateTransformer implements DateTransformer {
     {
         try
         {
+            // parse as a double and throw away the fractional
+            // component
             long longValue = Double.valueOf(timestamp).longValue();
             return m_IsMillisecond ? longValue / 1000 : longValue;
         }
