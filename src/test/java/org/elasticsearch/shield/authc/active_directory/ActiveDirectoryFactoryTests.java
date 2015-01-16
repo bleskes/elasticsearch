@@ -20,6 +20,7 @@ package org.elasticsearch.shield.authc.active_directory;
 import org.apache.lucene.util.LuceneTestCase;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.shield.authc.RealmConfig;
 import org.elasticsearch.shield.authc.ldap.LdapConnection;
 import org.elasticsearch.shield.authc.ldap.LdapConnectionFactory;
 import org.elasticsearch.shield.authc.ldap.LdapConnectionTests;
@@ -30,7 +31,9 @@ import org.elasticsearch.shield.ssl.SSLService;
 import org.elasticsearch.test.ElasticsearchTestCase;
 import org.elasticsearch.test.junit.annotations.Network;
 import org.hamcrest.Matchers;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -68,8 +71,8 @@ public class ActiveDirectoryFactoryTests extends ElasticsearchTestCase {
 
     @Test @SuppressWarnings("unchecked")
     public void testAdAuth() {
-        ActiveDirectoryConnectionFactory connectionFactory = new ActiveDirectoryConnectionFactory(
-                buildAdSettings(AD_LDAP_URL, AD_DOMAIN, false));
+        RealmConfig config = new RealmConfig("ad-test", buildAdSettings(AD_LDAP_URL, AD_DOMAIN, false));
+        ActiveDirectoryConnectionFactory connectionFactory = new ActiveDirectoryConnectionFactory(config);
 
         String userName = "ironman";
         try (AbstractLdapConnection ldap = connectionFactory.open(userName, SecuredStringTests.build(PASSWORD))) {
@@ -94,7 +97,8 @@ public class ActiveDirectoryFactoryTests extends ElasticsearchTestCase {
                 .put(ConnectionFactory.HOSTNAME_VERIFICATION_SETTING, false)
                 .put(ConnectionFactory.TIMEOUT_TCP_READ_SETTING, "1ms")
                 .build();
-        ActiveDirectoryConnectionFactory connectionFactory = new ActiveDirectoryConnectionFactory(settings);
+        RealmConfig config = new RealmConfig("ad-test", settings);
+        ActiveDirectoryConnectionFactory connectionFactory = new ActiveDirectoryConnectionFactory(config);
 
         try (AbstractLdapConnection ldap = connectionFactory.open("ironman", SecuredStringTests.build(PASSWORD))) {
             fail("The TCP connection should timeout before getting groups back");
@@ -105,8 +109,8 @@ public class ActiveDirectoryFactoryTests extends ElasticsearchTestCase {
 
     @Test
     public void testAdAuth_avengers() {
-        ActiveDirectoryConnectionFactory connectionFactory = new ActiveDirectoryConnectionFactory(
-                buildAdSettings(AD_LDAP_URL, AD_DOMAIN, false));
+        RealmConfig config = new RealmConfig("ad-test", buildAdSettings(AD_LDAP_URL, AD_DOMAIN, false));
+        ActiveDirectoryConnectionFactory connectionFactory = new ActiveDirectoryConnectionFactory(config);
 
         String[] users = new String[]{"cap", "hawkeye", "hulk", "ironman", "thor", "blackwidow", };
         for(String user: users) {
@@ -119,7 +123,8 @@ public class ActiveDirectoryFactoryTests extends ElasticsearchTestCase {
     @Test @SuppressWarnings("unchecked")
     public void testAdAuth_specificUserSearch() {
         Settings settings = buildAdSettings(AD_LDAP_URL, AD_DOMAIN, "CN=Users,DC=ad,DC=test,DC=elasticsearch,DC=com", false);
-        ActiveDirectoryConnectionFactory connectionFactory = new ActiveDirectoryConnectionFactory(settings);
+        RealmConfig config = new RealmConfig("ad-test", settings);
+        ActiveDirectoryConnectionFactory connectionFactory = new ActiveDirectoryConnectionFactory(config);
 
         String userName = "hulk";
         try (AbstractLdapConnection ldap = connectionFactory.open(userName, SecuredStringTests.build(PASSWORD))) {
@@ -139,7 +144,8 @@ public class ActiveDirectoryFactoryTests extends ElasticsearchTestCase {
     @Test @SuppressWarnings("unchecked")
     public void testAdUpnLogin() {
         Settings settings = buildAdSettings(AD_LDAP_URL, AD_DOMAIN, "CN=Users,DC=ad,DC=test,DC=elasticsearch,DC=com", false);
-        ActiveDirectoryConnectionFactory connectionFactory = new ActiveDirectoryConnectionFactory(settings);
+        RealmConfig config = new RealmConfig("ad-test", settings);
+        ActiveDirectoryConnectionFactory connectionFactory = new ActiveDirectoryConnectionFactory(config);
 
         //Login with the UserPrincipalName
         String userDN;
@@ -166,7 +172,8 @@ public class ActiveDirectoryFactoryTests extends ElasticsearchTestCase {
         String groupSearchBase = "DC=ad,DC=test,DC=elasticsearch,DC=com";
         String userTemplate = "CN={0},CN=Users,DC=ad,DC=test,DC=elasticsearch,DC=com";
         Settings settings = LdapTest.buildLdapSettings(AD_LDAP_URL, userTemplate, groupSearchBase, true, false);
-        LdapConnectionFactory connectionFactory = new LdapConnectionFactory(settings);
+        RealmConfig config = new RealmConfig("ad-test", settings);
+        LdapConnectionFactory connectionFactory = new LdapConnectionFactory(config);
 
         String user = "Bruce Banner";
         try (LdapConnection ldap = connectionFactory.open(user, SecuredStringTests.build(PASSWORD))) {
@@ -189,8 +196,8 @@ public class ActiveDirectoryFactoryTests extends ElasticsearchTestCase {
 
     @Test(expected = ActiveDirectoryException.class)
     public void testAdAuthWithHostnameVerification() {
-        ActiveDirectoryConnectionFactory connectionFactory = new ActiveDirectoryConnectionFactory(
-                buildAdSettings(AD_LDAP_URL, AD_DOMAIN));
+        RealmConfig config = new RealmConfig("ad-test", buildAdSettings(AD_LDAP_URL, AD_DOMAIN));
+        ActiveDirectoryConnectionFactory connectionFactory = new ActiveDirectoryConnectionFactory(config);
 
         String userName = "ironman";
         try (AbstractLdapConnection ldap = connectionFactory.open(userName, SecuredStringTests.build(PASSWORD))) {
@@ -203,7 +210,8 @@ public class ActiveDirectoryFactoryTests extends ElasticsearchTestCase {
         String groupSearchBase = "DC=ad,DC=test,DC=elasticsearch,DC=com";
         String userTemplate = "CN={0},CN=Users,DC=ad,DC=test,DC=elasticsearch,DC=com";
         Settings settings = LdapTest.buildLdapSettings(AD_LDAP_URL, userTemplate, groupSearchBase, true);
-        LdapConnectionFactory connectionFactory = new LdapConnectionFactory(settings);
+        RealmConfig config = new RealmConfig("ad-test", settings);
+        LdapConnectionFactory connectionFactory = new LdapConnectionFactory(config);
 
         String user = "Bruce Banner";
         try (LdapConnection ldap = connectionFactory.open(user, SecuredStringTests.build(PASSWORD))) {

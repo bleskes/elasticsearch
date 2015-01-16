@@ -17,6 +17,9 @@
 
 package org.elasticsearch.shield.authc.support.ldap;
 
+import org.elasticsearch.common.logging.ESLogger;
+import org.elasticsearch.common.logging.Loggers;
+
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLSocket;
@@ -29,6 +32,9 @@ import java.net.InetAddress;
  * have the appropriate SSLParameters set to indicate that hostname verification is required
  */
 public class HostnameVerifyingLdapSslSocketFactory extends AbstractLdapSslSocketFactory {
+
+    private static final ESLogger logger = Loggers.getLogger(HostnameVerifyingLdapSslSocketFactory.class);
+
     private static HostnameVerifyingLdapSslSocketFactory instance;
     private final SSLParameters sslParameters;
 
