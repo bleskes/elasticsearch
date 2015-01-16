@@ -53,7 +53,7 @@ public class ClearRealmsCacheTests extends ShieldIntegrationTest {
     public static void init() throws Exception {
         usernames = new String[randomIntBetween(5, 10)];
         for (int i = 0; i < usernames.length; i++) {
-            usernames[i] = "user_" + i;
+            usernames[i] = randomAsciiOfLength(6) + "_" + i;
         }
     }
 
@@ -75,6 +75,9 @@ public class ClearRealmsCacheTests extends ShieldIntegrationTest {
         EVICT_SOME() {
 
             private final String[] evicted_usernames = randomSelection(usernames);
+            {
+                Arrays.sort(evicted_usernames);
+            }
 
             @Override
             public ClearRealmCacheRequest createRequest() {
@@ -206,11 +209,13 @@ public class ClearRealmsCacheTests extends ShieldIntegrationTest {
 
     // selects a random sub-set of the give values
     private static String[] randomSelection(String[] values) {
-        double base = randomDouble();
         List<String> list = new ArrayList<>();
-        for (String value : values) {
-            if (randomDouble() < base) {
-                list.add(value);
+        while (list.isEmpty()) {
+            double base = randomDouble();
+            for (String value : values) {
+                if (randomDouble() < base) {
+                    list.add(value);
+                }
             }
         }
         return list.toArray(new String[list.size()]);
