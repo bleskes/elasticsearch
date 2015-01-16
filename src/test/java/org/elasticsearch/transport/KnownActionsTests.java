@@ -93,7 +93,7 @@ public class KnownActionsTests extends ShieldIntegrationTest {
                 }
             });
         } catch (IOException ioe) {
-            throw new ElasticsearchIllegalStateException("Could not load known actions", ioe);
+            throw new ElasticsearchIllegalStateException("could not load known actions", ioe);
         }
         return knownActionsBuilder.build();
     }
@@ -108,7 +108,7 @@ public class KnownActionsTests extends ShieldIntegrationTest {
                 }
             });
         } catch (IOException ioe) {
-            throw new ElasticsearchIllegalStateException("Could not load known handlers", ioe);
+            throw new ElasticsearchIllegalStateException("could not load known handlers", ioe);
         }
         return knownHandlersBuilder.build();
     }

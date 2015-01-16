@@ -67,7 +67,7 @@ public class LdapConnection extends AbstractLdapConnection {
     public List<String> groups() {
         List<String> groups = isFindGroupsByAttribute ? getGroupsFromUserAttrs(bindDn) : getGroupsFromSearch(bindDn);
         if (logger.isDebugEnabled()) {
-            logger.debug("Found these groups [{}] for userDN [{}]", groups, this.bindDn);
+            logger.debug("found groups [{}] for userDN [{}]", groups, this.bindDn);
         }
         return groups;
     }
@@ -97,7 +97,7 @@ public class LdapConnection extends AbstractLdapConnection {
                 groups.add(results.next().getNameInNamespace());
             }
         } catch (NamingException | LdapException e ) {
-            throw new LdapException("Could not search for an LDAP group for user [" + userDn + "]", e);
+            throw new LdapException("could not search for an LDAP group for user [" + userDn + "]", e);
         }
         return groups;
     }
@@ -126,7 +126,7 @@ public class LdapConnection extends AbstractLdapConnection {
                 }
             }
         } catch (NamingException | LdapException e) {
-            throw new LdapException("Could not look up group attributes for user [" + userDn + "]", e);
+            throw new LdapException("could not look up group attributes for user [" + userDn + "]", e);
         }
         return groupDns;
     }

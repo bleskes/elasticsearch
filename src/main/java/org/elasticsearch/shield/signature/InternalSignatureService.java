@@ -97,7 +97,7 @@ public class InternalSignatureService extends AbstractLifecycleComponent<Interna
             byte[] bytes = Files.readAllBytes(file);
             return new SecretKeySpec(bytes, KEY_ALGO);
         } catch (IOException e) {
-            throw new ShieldException("Could not read secret key", e);
+            throw new ShieldException("could not read secret key", e);
         }
     }
 
@@ -151,7 +151,7 @@ public class InternalSignatureService extends AbstractLifecycleComponent<Interna
             mac.init(key);
             return mac;
         } catch (Exception e) {
-            throw new ElasticsearchException("Could not initialize mac", e);
+            throw new ElasticsearchException("could not initialize mac", e);
         }
     }
 
@@ -195,7 +195,8 @@ public class InternalSignatureService extends AbstractLifecycleComponent<Interna
         @Override
         public void onFileDeleted(File file) {
             if (file.equals(keyFile.toFile())) {
-                logger.error("System key file was removed! As long as the system key file is missing, elasticsearch won't function as expected for some requests (e.g. scroll/scan)");
+                logger.error("system key file was removed! as long as the system key file is missing, elasticsearch " +
+                        "won't function as expected for some requests (e.g. scroll/scan)");
                 key = null;
             }
         }

@@ -32,7 +32,7 @@ public class ShieldTestUtils {
         try {
             Streams.copy(content, file.toFile());
         } catch (IOException e) {
-            throw new ElasticsearchException("Error writing file in test", e);
+            throw new ElasticsearchException("error writing file in test", e);
         }
         return file.toFile().getAbsolutePath();
     }

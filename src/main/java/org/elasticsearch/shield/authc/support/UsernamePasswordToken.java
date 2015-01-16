@@ -86,13 +86,13 @@ public class UsernamePasswordToken implements AuthenticationToken {
 
         Matcher matcher = BASIC_AUTH_PATTERN.matcher(authStr.trim());
         if (!matcher.matches()) {
-            throw new AuthenticationException("Invalid basic authentication header value");
+            throw new AuthenticationException("invalid basic authentication header value");
         }
 
         char[] userpasswd = CharArrays.utf8BytesToChars(Base64.decodeBase64(matcher.group(1)));
         int i = CharArrays.indexOf(userpasswd, ':');
         if (i < 0) {
-            throw new AuthenticationException("Invalid basic authentication header value");
+            throw new AuthenticationException("invalid basic authentication header value");
         }
 
         return new UsernamePasswordToken(
@@ -108,13 +108,13 @@ public class UsernamePasswordToken implements AuthenticationToken {
 
         Matcher matcher = BASIC_AUTH_PATTERN.matcher(authStr.trim());
         if (!matcher.matches()) {
-            throw new AuthenticationException("Invalid basic authentication header value");
+            throw new AuthenticationException("invalid basic authentication header value");
         }
 
         char[] userpasswd = CharArrays.utf8BytesToChars(Base64.decodeBase64(matcher.group(1)));
         int i = CharArrays.indexOf(userpasswd, ':');
         if (i < 0) {
-            throw new AuthenticationException("Invalid basic authentication header value");
+            throw new AuthenticationException("invalid basic authentication header value");
         }
 
         return new UsernamePasswordToken(
@@ -123,7 +123,7 @@ public class UsernamePasswordToken implements AuthenticationToken {
     }
 
     public static void putTokenHeader(TransportRequest request, UsernamePasswordToken token) {
-        request.putHeader("Authorization", basicAuthHeaderValue(token.username, token.password));
+        request.putHeader(BASIC_AUTH_HEADER, basicAuthHeaderValue(token.username, token.password));
     }
 
     public static String basicAuthHeaderValue(String username, SecuredString passwd) {

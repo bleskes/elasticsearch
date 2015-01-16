@@ -31,6 +31,7 @@ import java.util.Arrays;
  * from memory dumps.  (this is hard as dot net uses windows system crypto.  Thats probably the reason java still doesn't have it)
  */
 public class SecuredString implements CharSequence {
+
     private final char[] chars;
     private boolean cleared = false;
 
@@ -154,7 +155,7 @@ public class SecuredString implements CharSequence {
 
     private void throwIfCleared() {
         if (cleared) {
-            throw new ElasticsearchException("Attempt to use cleared password");
+            throw new ElasticsearchException("attempt to use cleared password");
         }
     }
 }

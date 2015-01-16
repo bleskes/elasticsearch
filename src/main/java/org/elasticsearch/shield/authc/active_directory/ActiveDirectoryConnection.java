@@ -55,7 +55,7 @@ public class ActiveDirectoryConnection extends AbstractLdapConnection {
         try {
             jndiContext.close();
         } catch (NamingException e) {
-            throw new ActiveDirectoryException("Could not close the LDAP connection", e);
+            throw new ActiveDirectoryException("could not close the LDAP connection", e);
         }
     }
 
@@ -84,11 +84,11 @@ public class ActiveDirectoryConnection extends AbstractLdapConnection {
                 groups.add(sr.getNameInNamespace());
             }
         } catch (NamingException | LdapException ne) {
-            throw new ActiveDirectoryException("Exception occurred fetching AD groups", bindDn, ne);
+            throw new ActiveDirectoryException("failed to fetch AD groups", bindDn, ne);
         }
         List<String> groupList = groups.build();
         if (logger.isDebugEnabled()) {
-            logger.debug("Found these groups [{}] for userDN [{}]", groupList, this.bindDn);
+            logger.debug("found these groups [{}] for userDN [{}]", groupList, this.bindDn);
         }
         return groupList;
     }
@@ -130,7 +130,7 @@ public class ActiveDirectoryConnection extends AbstractLdapConnection {
             }
 
         } catch (NamingException | LdapException ne) {
-            throw new ActiveDirectoryException("Exception occurred fetching AD groups", bindDn, ne);
+            throw new ActiveDirectoryException("failed to fetch AD groups", bindDn, ne);
         }
         return groupsSearchFilter.toString();
     }

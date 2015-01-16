@@ -49,7 +49,7 @@ public class ClosableNamingEnumeration<T> implements Closeable, NamingEnumeratio
         try {
             namingEnumeration.close();
         } catch (NamingException e) {
-            throw new LdapException("Error occurred trying to close a naming enumeration", e);
+            throw new LdapException("error occurred trying to close a naming enumeration", e);
         }
     }
 
