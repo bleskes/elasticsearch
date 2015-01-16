@@ -121,7 +121,7 @@ public class ActiveDirectoryFactoryTests extends ElasticsearchTestCase {
     }
 
     @Test @SuppressWarnings("unchecked")
-    public void testAdAuth_specificUserSearch() {
+    public void testAuthenticate_specificUserSearch() {
         Settings settings = buildAdSettings(AD_LDAP_URL, AD_DOMAIN, "CN=Users,DC=ad,DC=test,DC=elasticsearch,DC=com", false);
         RealmConfig config = new RealmConfig("ad-test", settings);
         ActiveDirectoryConnectionFactory connectionFactory = new ActiveDirectoryConnectionFactory(config);
@@ -142,7 +142,7 @@ public class ActiveDirectoryFactoryTests extends ElasticsearchTestCase {
     }
 
     @Test @SuppressWarnings("unchecked")
-    public void testAdUpnLogin() {
+    public void testAuthenticate_UserPrincipalName() {
         Settings settings = buildAdSettings(AD_LDAP_URL, AD_DOMAIN, "CN=Users,DC=ad,DC=test,DC=elasticsearch,DC=com", false);
         RealmConfig config = new RealmConfig("ad-test", settings);
         ActiveDirectoryConnectionFactory connectionFactory = new ActiveDirectoryConnectionFactory(config);
@@ -168,7 +168,26 @@ public class ActiveDirectoryFactoryTests extends ElasticsearchTestCase {
     }
 
     @Test @SuppressWarnings("unchecked")
-    public void testAD_standardLdapConnection(){
+    public void testCustomUserFilter() {
+        Settings settings = ImmutableSettings.builder()
+                .put(buildAdSettings(AD_LDAP_URL, AD_DOMAIN, "CN=Users,DC=ad,DC=test,DC=elasticsearch,DC=com", false))
+                .put(ActiveDirectoryConnectionFactory.AD_USER_SEARCH_FILTER_SETTING, "(&(objectclass=user)(userPrincipalName={0}@ad.test.elasticsearch.com))")
+                .build();
+        RealmConfig config = new RealmConfig("ad-test", settings);
+        ActiveDirectoryConnectionFactory connectionFactory = new ActiveDirectoryConnectionFactory(config);
+
+        //Login with the UserPrincipalName
+        try (AbstractLdapConnection ldap = connectionFactory.open("erik.selvig", SecuredStringTests.build(PASSWORD))) {
+            List<String> groups = ldap.groups();
+            assertThat(groups, containsInAnyOrder(
+                    containsString("Geniuses"),
+                    containsString("Domain Users")));
+        }
+    }
+
+
+    @Test @SuppressWarnings("unchecked")
+    public void testStandardLdapConnection(){
         String groupSearchBase = "DC=ad,DC=test,DC=elasticsearch,DC=com";
         String userTemplate = "CN={0},CN=Users,DC=ad,DC=test,DC=elasticsearch,DC=com";
         Settings settings = LdapTest.buildLdapSettings(AD_LDAP_URL, userTemplate, groupSearchBase, true, false);
@@ -177,8 +196,8 @@ public class ActiveDirectoryFactoryTests extends ElasticsearchTestCase {
 
         String user = "Bruce Banner";
         try (LdapConnection ldap = connectionFactory.open(user, SecuredStringTests.build(PASSWORD))) {
-            List<String> groups = ldap.getGroupsFromUserAttrs(ldap.authenticatedUserDn());
-            List<String> groups2 = ldap.getGroupsFromSearch(ldap.authenticatedUserDn());
+            List<String> groups = ldap.getGroupsFromUserAttrs();
+            List<String> groups2 = ldap.getGroupsFromSearch();
 
             assertThat(groups, containsInAnyOrder(
                     containsString("Avengers"),
@@ -206,7 +225,7 @@ public class ActiveDirectoryFactoryTests extends ElasticsearchTestCase {
     }
 
     @Test(expected = LdapException.class)
-    public void testADStandardLdapHostnameVerification(){
+    public void testStandardLdapHostnameVerification(){
         String groupSearchBase = "DC=ad,DC=test,DC=elasticsearch,DC=com";
         String userTemplate = "CN={0},CN=Users,DC=ad,DC=test,DC=elasticsearch,DC=com";
         Settings settings = LdapTest.buildLdapSettings(AD_LDAP_URL, userTemplate, groupSearchBase, true);
