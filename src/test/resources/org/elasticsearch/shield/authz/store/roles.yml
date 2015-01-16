@@ -4,6 +4,8 @@ role1:
     'idx1,idx2': READ
     idx3: crud
 
+#alkdlfkd
+
 role2:
   cluster: ALL, MONITOR
 
@@ -11,9 +13,11 @@ role3:
   indices:
     '/.*_.*/': READ, WRITE
 
+#dadfad
 role4:
   cluster:
   indices:
+    #adfldkkd
     'idx2':
     '': READ
     'idx1': []
