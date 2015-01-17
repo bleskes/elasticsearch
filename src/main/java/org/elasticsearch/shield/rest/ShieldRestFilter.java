@@ -47,6 +47,8 @@ public class ShieldRestFilter extends RestFilter {
             service.authenticate(request);
         }
 
+        RemoteHostHeader.process(request);
+
         filterChain.continueProcessing(request, channel);
     }
 }
