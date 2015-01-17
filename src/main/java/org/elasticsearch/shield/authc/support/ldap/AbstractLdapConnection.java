@@ -18,6 +18,7 @@
 package org.elasticsearch.shield.authc.support.ldap;
 
 import org.elasticsearch.common.logging.ESLogger;
+import org.elasticsearch.common.unit.TimeValue;
 
 import javax.naming.NamingException;
 import javax.naming.directory.DirContext;
@@ -32,6 +33,8 @@ public abstract class AbstractLdapConnection implements Closeable {
     protected final ESLogger logger;
     protected final DirContext jndiContext;
     protected final String bindDn;
+    protected final GroupsResolver groupsResolver;
+    protected final TimeValue timeout;
 
     /**
      * This object is intended to be constructed by the LdapConnectionFactory
@@ -41,10 +44,12 @@ public abstract class AbstractLdapConnection implements Closeable {
      * outside of and be reused across all connections. We can't keep a static logger in this class
      * since we want the logger to be contextual (i.e. aware of the settings and its enviorment).
      */
-    public AbstractLdapConnection(ESLogger logger, DirContext ctx, String boundName) {
+    public AbstractLdapConnection(ESLogger logger, DirContext ctx, String boundName, GroupsResolver groupsResolver, TimeValue timeout) {
         this.logger = logger;
         this.jndiContext = ctx;
         this.bindDn = boundName;
+        this.groupsResolver = groupsResolver;
+        this.timeout = timeout;
     }
 
     /**
@@ -70,5 +75,13 @@ public abstract class AbstractLdapConnection implements Closeable {
     /**
      * @return List of fully distinguished group names
      */
-    public abstract List<String> groups();
+    public List<String> groups() {
+        return groupsResolver.resolve(jndiContext, bindDn, timeout);
+    }
+
+    public static interface GroupsResolver {
+
+        List<String> resolve(DirContext ctx, String userDn, TimeValue timeout);
+
+    }
 }
