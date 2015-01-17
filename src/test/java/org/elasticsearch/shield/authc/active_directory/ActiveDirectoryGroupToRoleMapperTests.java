@@ -15,24 +15,29 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.shield.authc.ldap;
+package org.elasticsearch.shield.authc.active_directory;
 
+import org.elasticsearch.common.settings.ImmutableSettings;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.shield.authc.RealmConfig;
-import org.elasticsearch.shield.authc.support.RefreshListener;
 import org.elasticsearch.shield.authc.support.ldap.AbstractGroupToRoleMapper;
+import org.elasticsearch.shield.authc.support.ldap.AbstractGroupToRoleMapperTests;
 import org.elasticsearch.watcher.ResourceWatcherService;
 
+import java.nio.file.Path;
+
 /**
- * LDAP Group to role mapper specific to the "shield.authc.ldap" package
+ *
  */
-public class LdapGroupToRoleMapper extends AbstractGroupToRoleMapper {
+public class ActiveDirectoryGroupToRoleMapperTests extends AbstractGroupToRoleMapperTests {
 
-    public LdapGroupToRoleMapper(RealmConfig config, ResourceWatcherService watcherService, RefreshListener listener) {
-        super(LdapRealm.TYPE, config, watcherService, listener);
-    }
-
-    public LdapGroupToRoleMapper(RealmConfig config, ResourceWatcherService watcherService) {
-        super(LdapRealm.TYPE, config, watcherService, null);
+    @Override
+    protected AbstractGroupToRoleMapper createMapper(Path file, ResourceWatcherService watcherService) {
+        Settings adSettings = ImmutableSettings.builder()
+                .put("files.role_mapping", file.toAbsolutePath())
+                .build();
+        RealmConfig config = new RealmConfig("ad-group-mapper-test", adSettings, settings, env);
+        return new ActiveDirectoryGroupToRoleMapper(config, watcherService);
     }
 
 }
