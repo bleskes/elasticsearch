@@ -75,6 +75,7 @@ public class HostnameVerifyingLdapSslSocketFactory extends AbstractLdapSslSocket
      */
     @Override
     protected void configureSSLSocket(SSLSocket sslSocket) {
+        super.configureSSLSocket(sslSocket);
         sslSocket.setSSLParameters(sslParameters);
     }
 }

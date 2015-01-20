@@ -91,5 +91,7 @@ public abstract class AbstractLdapSslSocketFactory extends SocketFactory {
      * @param sslSocket
      */
     protected void configureSSLSocket(SSLSocket sslSocket) {
+        sslSocket.setEnabledProtocols(sslService.supportedProtocols());
+        sslSocket.setEnabledCipherSuites(sslService.ciphers());
     }
 }
