@@ -20,6 +20,7 @@ package org.elasticsearch.shield.authc.support.ldap;
 import org.elasticsearch.shield.authc.ldap.LdapException;
 
 import javax.naming.directory.SearchControls;
+import java.util.Locale;
 
 /**
  *
@@ -44,7 +45,7 @@ public enum SearchScope {
         if (scope == null) {
             return defaultScope;
         }
-        switch (scope.toLowerCase()) {
+        switch (scope.toLowerCase(Locale.ENGLISH)) {
             case "base":
             case "object": return BASE;
             case "one_level" : return ONE_LEVEL;
