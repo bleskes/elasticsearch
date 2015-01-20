@@ -106,10 +106,7 @@ public abstract class ActionDocWriteResponse extends ActionWriteResponse impleme
                 .field(Fields._TYPE, type)
                 .field(Fields._ID, id)
                 .field(Fields._VERSION, version)
-                .startObject(Fields._SEQNO)
-                .field(Fields._SEQNO_TERM, sequenceNo.term())
-                .field(Fields._SEQNO_COUNTER, sequenceNo.counter())
-                .endObject()
+                .field(Fields._SEQNO, sequenceNo, params)
                 .value(getShardInfo());
         return builder;
     }
@@ -120,7 +117,5 @@ public abstract class ActionDocWriteResponse extends ActionWriteResponse impleme
         static final XContentBuilderString _ID = new XContentBuilderString("_id");
         static final XContentBuilderString _VERSION = new XContentBuilderString("_version");
         static final XContentBuilderString _SEQNO = new XContentBuilderString("_seqno");
-        static final XContentBuilderString _SEQNO_TERM = new XContentBuilderString("term");
-        static final XContentBuilderString _SEQNO_COUNTER = new XContentBuilderString("counter");
     }
 }

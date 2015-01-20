@@ -26,6 +26,7 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.apache.log4j.spi.LoggingEvent;
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.document.BinaryDocValuesField;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.NumericDocValuesField;
 import org.apache.lucene.document.TextField;
@@ -33,13 +34,13 @@ import org.apache.lucene.index.*;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.MockDirectoryWrapper;
+import org.apache.lucene.util.BytesRef;
 import org.elasticsearch.ExceptionsHelper;
 import org.elasticsearch.Version;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.bytes.BytesReference;
-import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.lucene.Lucene;
 import org.elasticsearch.common.lucene.uid.Versions;
 import org.elasticsearch.common.settings.ImmutableSettings;
@@ -168,13 +169,11 @@ public class InternalEngineTests extends ElasticsearchLuceneTestCase {
     private ParsedDocument testParsedDocument(String uid, String id, String type, String routing, long timestamp, long ttl, Document document, Analyzer analyzer, BytesReference source, boolean mappingsModified) {
         Field uidField = new Field("_uid", uid, UidFieldMapper.Defaults.FIELD_TYPE);
         Field versionField = new NumericDocValuesField("_version", 0);
-        Field seqNoTermField = new NumericDocValuesField(SeqNoFieldMapper.NAME_TERM, -1);
-        Field seqNoTermCounter = new NumericDocValuesField(SeqNoFieldMapper.NAME_COUNTER, -1);
+        Field seqNoField = new BinaryDocValuesField(SeqNoFieldMapper.NAME, new BytesRef(BytesRef.EMPTY_BYTES));
         document.add(uidField);
         document.add(versionField);
-        document.add(seqNoTermField);
-        document.add(seqNoTermCounter);
-        return new ParsedDocument(uidField, versionField, new Tuple<>(seqNoTermField, seqNoTermCounter), id, type, routing,
+        document.add(seqNoField);
+        return new ParsedDocument(uidField, versionField, seqNoField, id, type, routing,
                 timestamp, ttl, Arrays.asList(document), analyzer, source, mappingsModified);
     }
 

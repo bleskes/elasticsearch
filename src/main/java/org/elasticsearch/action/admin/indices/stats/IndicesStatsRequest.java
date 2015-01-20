@@ -247,6 +247,15 @@ public class IndicesStatsRequest extends BroadcastOperationRequest<IndicesStatsR
         return flags.isSet(Flag.Translog);
     }
 
+    public IndicesStatsRequest sequence(boolean sequence) {
+        flags.set(Flag.Sequence, sequence);
+        return this;
+    }
+
+    public boolean sequence() {
+        return flags.isSet(Flag.Sequence);
+    }
+
     public IndicesStatsRequest suggest(boolean suggest) {
         flags.set(Flag.Suggest, suggest);
         return this;

@@ -34,7 +34,7 @@ import org.elasticsearch.index.deletionpolicy.SnapshotDeletionPolicy;
 import org.elasticsearch.index.indexing.ShardIndexingService;
 import org.elasticsearch.index.merge.policy.MergePolicyProvider;
 import org.elasticsearch.index.merge.scheduler.MergeSchedulerProvider;
-import org.elasticsearch.index.sequence.PrimarySequenceNumberService;
+import org.elasticsearch.index.sequence.SequenceNumbersService;
 import org.elasticsearch.index.settings.IndexSettingsService;
 import org.elasticsearch.index.shard.ShardId;
 import org.elasticsearch.index.store.Store;
@@ -63,7 +63,7 @@ public final class EngineConfig {
     private final ThreadPool threadPool;
     private final ShardIndexingService indexingService;
     private final IndexSettingsService indexSettingsService;
-    private final PrimarySequenceNumberService primarySequenceNumberService;
+    private final SequenceNumbersService seqNoService;
     @Nullable
     private final IndicesWarmer warmer;
     private final Store store;
@@ -136,7 +136,7 @@ public final class EngineConfig {
      * Creates a new {@link org.elasticsearch.index.engine.EngineConfig}
      */
     public EngineConfig(ShardId shardId, boolean optimizeAutoGenerateId, ThreadPool threadPool, ShardIndexingService indexingService,
-                        IndexSettingsService indexSettingsService, PrimarySequenceNumberService primarySequenceNumberService,
+                        IndexSettingsService indexSettingsService, SequenceNumbersService seqNoService,
                         IndicesWarmer warmer, Store store, SnapshotDeletionPolicy deletionPolicy, Translog translog,
                         MergePolicyProvider mergePolicyProvider, MergeSchedulerProvider mergeScheduler, Analyzer analyzer,
                         Similarity similarity, CodecService codecService, Engine.FailedEngineListener failedEngineListener) {
@@ -145,7 +145,7 @@ public final class EngineConfig {
         this.threadPool = threadPool;
         this.indexingService = indexingService;
         this.indexSettingsService = indexSettingsService;
-        this.primarySequenceNumberService = primarySequenceNumberService;
+        this.seqNoService = seqNoService;
         this.warmer = warmer;
         this.store = store;
         this.deletionPolicy = deletionPolicy;
@@ -363,8 +363,8 @@ public final class EngineConfig {
         return indexSettingsService.getSettings();
     }
 
-    public PrimarySequenceNumberService getPrimarySequenceNumberService() {
-        return primarySequenceNumberService;
+    public SequenceNumbersService getSeqNoService() {
+        return seqNoService;
     }
 
     /**

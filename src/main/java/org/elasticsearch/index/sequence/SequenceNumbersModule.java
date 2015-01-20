@@ -23,11 +23,10 @@ import org.elasticsearch.common.inject.AbstractModule;
 
 /**
  */
-public class SequenceNoModule extends AbstractModule {
+public class SequenceNumbersModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(PrimarySequenceNumberService.class).asEagerSingleton();
-        bind(ReplicaSequenceNumberService.class).asEagerSingleton();
+        bind(SequenceNumbersService.class).asEagerSingleton();
     }
 }

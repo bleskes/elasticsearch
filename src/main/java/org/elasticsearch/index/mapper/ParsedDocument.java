@@ -33,7 +33,7 @@ import java.util.List;
  */
 public class ParsedDocument {
 
-    private final Field uid, version, seqNoTerm, seqNoCounter;
+    private final Field uid, version, sequenceNo;
 
     private final String id;
 
@@ -55,11 +55,10 @@ public class ParsedDocument {
 
     private String parent;
 
-    public ParsedDocument(Field uid, Field version, Tuple<Field, Field> seqNo, String id, String type, String routing, long timestamp, long ttl, List<Document> documents, Analyzer analyzer, BytesReference source, boolean mappingsModified) {
+    public ParsedDocument(Field uid, Field version, Field sequenceNo, String id, String type, String routing, long timestamp, long ttl, List<Document> documents, Analyzer analyzer, BytesReference source, boolean mappingsModified) {
         this.uid = uid;
         this.version = version;
-        this.seqNoTerm = seqNo.v1();
-        this.seqNoCounter = seqNo.v2();
+        this.sequenceNo = sequenceNo;
         this.id = id;
         this.type = type;
         this.routing = routing;
@@ -80,8 +79,7 @@ public class ParsedDocument {
     }
 
     public void setSequenceNo(SequenceNo sequenceNo) {
-        seqNoTerm.setLongValue(sequenceNo.term());
-        seqNoCounter.setLongValue(sequenceNo.counter());
+        this.sequenceNo.setBytesValue(sequenceNo.toBytes());
     }
 
     public String id() {

@@ -50,7 +50,7 @@ final class PerThreadIDAndVersionLookup {
     private final DocsAndPositionsEnum[] posEnums;
     private final Bits[] liveDocs;
     private final NumericDocValues[] versions;
-    private final NumericDocValues[] sequenceNoTerms;
+    private final BinaryDocValues[] sequenceNo;
     private final NumericDocValues[] sequenceNoCounter;
     private final int numSegs;
     private final boolean hasDeletions;
@@ -66,7 +66,7 @@ final class PerThreadIDAndVersionLookup {
         posEnums = new DocsAndPositionsEnum[leaves.size()];
         liveDocs = new Bits[leaves.size()];
         versions = new NumericDocValues[leaves.size()];
-        sequenceNoTerms = new NumericDocValues[leaves.size()];
+        sequenceNo = new BinaryDocValues[leaves.size()];
         sequenceNoCounter = new NumericDocValues[leaves.size()];
         hasPayloads = new boolean[leaves.size()];
         int numSegs = 0;
@@ -86,8 +86,7 @@ final class PerThreadIDAndVersionLookup {
                     liveDocs[numSegs] = readerContext.reader().getLiveDocs();
                     hasDeletions |= readerContext.reader().hasDeletions();
                     versions[numSegs] = readerContext.reader().getNumericDocValues(VersionFieldMapper.NAME);
-                    sequenceNoTerms[numSegs] = readerContext.reader().getNumericDocValues(SeqNoFieldMapper.NAME_TERM);
-                    sequenceNoCounter[numSegs] = readerContext.reader().getNumericDocValues(SeqNoFieldMapper.NAME_COUNTER);
+                    sequenceNo[numSegs] = readerContext.reader().getBinaryDocValues(SeqNoFieldMapper.NAME);
                     numSegs++;
                 }
             }
@@ -102,8 +101,7 @@ final class PerThreadIDAndVersionLookup {
             if (termsEnums[seg].seekExact(id)) {
 
                 NumericDocValues segVersions = versions[seg];
-                NumericDocValues segSeqNoTerm = sequenceNoTerms[seg];
-                NumericDocValues segSeqNoCounter = sequenceNoCounter[seg];
+                BinaryDocValues segSeqNo = sequenceNo[seg];
                 if (segVersions != null || hasPayloads[seg] == false) {
                     // Use NDV to retrieve the version, in which case we only need DocsEnum:
 
@@ -117,7 +115,7 @@ final class PerThreadIDAndVersionLookup {
                     if (docID != DocsEnum.NO_MORE_DOCS) {
                         if (segVersions != null) {
                             return new DocIdAndVersion(docID, segVersions.get(docID),
-                                    new SequenceNo(segSeqNoTerm.get(docID), segSeqNoCounter.get(docID)),
+                                    new SequenceNo(segSeqNo.get(docID)),
                                     readerContexts[seg]
                             );
                         } else {

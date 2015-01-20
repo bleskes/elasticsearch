@@ -27,6 +27,8 @@ import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.admin.indices.create.TransportCreateIndexAction;
 import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.AutoCreateIndex;
+import org.elasticsearch.action.support.replication.ReplicationShardOperationFailedException;
+import org.elasticsearch.action.support.replication.ShardReplicationOperationReplicaResponse;
 import org.elasticsearch.action.support.replication.TransportShardReplicationOperationAction;
 import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.cluster.ClusterState;
@@ -183,27 +185,31 @@ public class TransportIndexAction extends TransportShardReplicationOperationActi
         IndexShard indexShard = indexService.shardSafe(shardRequest.shardId.id());
         SourceToParse sourceToParse = SourceToParse.source(SourceToParse.Origin.PRIMARY, request.source()).type(request.type()).id(request.id())
                 .routing(request.routing()).parent(request.parent()).timestamp(request.timestamp()).ttl(request.ttl());
-        Engine.Index index;
-        if (request.opType() == IndexRequest.OpType.INDEX) {
-            index = indexShard.prepareIndex(sourceToParse, request.version(), request.versionType());
-            if (index.parsedDoc().mappingsModified()) {
-                mappingUpdatedAction.updateMappingOnMaster(shardRequest.shardId.getIndex(), index.docMapper(), indexService.indexUUID());
+        Engine.Index index = null;
+        try {
+            if (request.opType() == IndexRequest.OpType.INDEX) {
+                index = indexShard.prepareIndex(sourceToParse, request.version(), request.versionType());
+                if (index.parsedDoc().mappingsModified()) {
+                    mappingUpdatedAction.updateMappingOnMaster(shardRequest.shardId.getIndex(), index.docMapper(), indexService.indexUUID());
+                }
+                indexShard.index(index, true);
+            } else {
+                Engine.Create create = indexShard.prepareCreate(sourceToParse, request.version(), request.versionType());
+                if (create.parsedDoc().mappingsModified()) {
+                    mappingUpdatedAction.updateMappingOnMaster(shardRequest.shardId.getIndex(), create.docMapper(), indexService.indexUUID());
+                }
+                index = create;
+                indexShard.create(create);
             }
-            indexShard.index(index, true);
-        } else {
-            Engine.Create create = indexShard.prepareCreate(sourceToParse, request.version(), request.versionType());
-            if (create.parsedDoc().mappingsModified()) {
-                mappingUpdatedAction.updateMappingOnMaster(shardRequest.shardId.getIndex(), create.docMapper(), indexService.indexUUID());
+            if (request.refresh()) {
+                try {
+                    indexShard.refresh("refresh_flag_index", false);
+                } catch (Throwable e) {
+                    // ignore
+                }
             }
-            indexShard.create(create);
-            index = create;
-        }
-        if (request.refresh()) {
-            try {
-                indexShard.refresh("refresh_flag_index", false);
-            } catch (Throwable e) {
-                // ignore
-            }
+        } catch (Throwable t) {
+            throw new ReplicationShardOperationFailedException(shardRequest.shardId, t, index == null ? null : index.sequenceNo());
         }
 
         // update the version and seq no on the request, so it will be used for the replicas
@@ -217,7 +223,7 @@ public class TransportIndexAction extends TransportShardReplicationOperationActi
     }
 
     @Override
-    protected void shardOperationOnReplica(ReplicaOperationRequest shardRequest) {
+    protected ShardReplicationOperationReplicaResponse shardOperationOnReplica(ReplicaOperationRequest shardRequest) {
         IndexShard indexShard = indicesService.indexServiceSafe(shardRequest.shardId.getIndex()).shardSafe(shardRequest.shardId.id());
         IndexRequest request = shardRequest.request;
         SourceToParse sourceToParse = SourceToParse.source(SourceToParse.Origin.REPLICA, request.source()).type(request.type()).id(request.id())
@@ -231,5 +237,6 @@ public class TransportIndexAction extends TransportShardReplicationOperationActi
                 // ignore
             }
         }
+        return new ShardReplicationOperationReplicaResponse(indexShard.seqNoService().maxConsecutiveSeqNo());
     }
 }

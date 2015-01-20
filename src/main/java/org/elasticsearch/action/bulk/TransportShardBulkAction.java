@@ -32,6 +32,7 @@ import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.support.ActionFilters;
+import org.elasticsearch.action.support.replication.ShardReplicationOperationReplicaResponse;
 import org.elasticsearch.action.support.replication.TransportShardReplicationOperationAction;
 import org.elasticsearch.action.update.UpdateHelper;
 import org.elasticsearch.action.update.UpdateRequest;
@@ -568,7 +569,7 @@ public class TransportShardBulkAction extends TransportShardReplicationOperation
     }
 
 
-    protected void shardOperationOnReplica(ReplicaOperationRequest shardRequest) {
+    protected ShardReplicationOperationReplicaResponse shardOperationOnReplica(ReplicaOperationRequest shardRequest) {
         IndexShard indexShard = indicesService.indexServiceSafe(shardRequest.shardId.getIndex()).shardSafe(shardRequest.shardId.id());
         final BulkShardRequest request = shardRequest.request;
         for (int i = 0; i < request.items().length; i++) {
@@ -612,6 +613,7 @@ public class TransportShardBulkAction extends TransportShardReplicationOperation
                 // ignore
             }
         }
+        return new ShardReplicationOperationReplicaResponse(indexShard.seqNoService().maxConsecutiveSeqNo());
     }
 
     private void applyVersion(BulkItemRequest item, long version, VersionType versionType) {

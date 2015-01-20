@@ -158,6 +158,11 @@ public class IndicesStatsRequestBuilder extends BroadcastOperationRequestBuilder
         return this;
     }
 
+    public IndicesStatsRequestBuilder setSequence(boolean sequence) {
+        request.sequence(sequence);
+        return this;
+    }
+
     public IndicesStatsRequestBuilder setSuggest(boolean suggest) {
         request.suggest(suggest);
         return this;

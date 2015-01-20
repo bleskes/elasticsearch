@@ -19,12 +19,12 @@
 
 package org.elasticsearch.index.mapper.internal;
 
+import org.apache.lucene.document.BinaryDocValuesField;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
-import org.apache.lucene.document.NumericDocValuesField;
 import org.apache.lucene.index.DocValuesType;
 import org.apache.lucene.index.IndexOptions;
-import org.elasticsearch.common.collect.Tuple;
+import org.apache.lucene.util.BytesRef;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.index.fielddata.FieldDataType;
@@ -39,8 +39,6 @@ import java.util.Map;
 public class SeqNoFieldMapper extends AbstractFieldMapper<byte[]> implements InternalMapper, RootMapper {
 
     public static final String NAME = "_seq_no";
-    public static final String NAME_TERM = NAME + "_term";
-    public static final String NAME_COUNTER = NAME + "_counter";
 
     public static class Defaults {
         public static final String NAME = SeqNoFieldMapper.NAME;
@@ -50,7 +48,7 @@ public class SeqNoFieldMapper extends AbstractFieldMapper<byte[]> implements Int
             FIELD_TYPE.setIndexOptions(IndexOptions.NONE); // not indexed for now
             FIELD_TYPE.setStored(true);
             FIELD_TYPE.setOmitNorms(true);
-            FIELD_TYPE.setDocValuesType(DocValuesType.NUMERIC);
+            FIELD_TYPE.setDocValuesType(DocValuesType.BINARY);
             FIELD_TYPE.freeze();
         }
 
@@ -76,14 +74,6 @@ public class SeqNoFieldMapper extends AbstractFieldMapper<byte[]> implements Int
             return builder;
         }
     }
-
-    private final ThreadLocal<Tuple<Field, Field>> fieldCache = new ThreadLocal<Tuple<Field, Field>>() {
-        @Override
-        protected Tuple<Field, Field> initialValue() {
-            return new Tuple<Field, Field>(new NumericDocValuesField(NAME_TERM, -1L), new NumericDocValuesField(NAME_COUNTER, -1L));
-        }
-    };
-
     public SeqNoFieldMapper() {
         super(new Names(NAME, NAME, NAME, NAME), Defaults.BOOST, Defaults.FIELD_TYPE, null, null, null, null, null, null, null, null, ImmutableSettings.EMPTY);
     }
@@ -96,9 +86,8 @@ public class SeqNoFieldMapper extends AbstractFieldMapper<byte[]> implements Int
     @Override
     protected void parseCreateField(ParseContext context, List<Field> fields) throws IOException {
         // see UidFieldMapper.parseCreateField
-        final Tuple<Field, Field> seqNo = fieldCache.get();
-        fields.add(seqNo.v1());
-        fields.add(seqNo.v2());
+        BinaryDocValuesField seqNo = new BinaryDocValuesField(names.indexName(), new BytesRef());
+        fields.add(seqNo);
         context.sequenceNo(seqNo);
     }
 
@@ -156,7 +145,6 @@ public class SeqNoFieldMapper extends AbstractFieldMapper<byte[]> implements Int
 
     @Override
     public void close() {
-        fieldCache.remove();
     }
 
     @Override

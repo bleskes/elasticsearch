@@ -222,6 +222,7 @@ public abstract class DocWriteRequest<T extends DocWriteRequest> extends ShardRe
         refresh = in.readBoolean();
         version = in.readLong();
         versionType = VersionType.fromValue(in.readByte());
+        sequenceNo = SequenceNo.readFrom(in);
     }
 
     @Override
@@ -233,6 +234,7 @@ public abstract class DocWriteRequest<T extends DocWriteRequest> extends ShardRe
         out.writeBoolean(refresh);
         out.writeLong(version);
         out.writeByte(versionType.getValue());
+        sequenceNo.writeTo(out);
     }
 
     @Override

@@ -38,6 +38,7 @@ import org.elasticsearch.index.merge.MergeStats;
 import org.elasticsearch.index.percolator.stats.PercolateStats;
 import org.elasticsearch.index.refresh.RefreshStats;
 import org.elasticsearch.index.search.stats.SearchStats;
+import org.elasticsearch.index.sequence.SequenceStats;
 import org.elasticsearch.index.shard.DocsStats;
 import org.elasticsearch.index.shard.IndexShard;
 import org.elasticsearch.index.store.StoreStats;
@@ -115,6 +116,9 @@ public class CommonStats implements Streamable, ToXContent {
                 case QueryCache:
                     queryCache = new QueryCacheStats();
                     break;
+                case Sequence:
+                    sequence = new SequenceStats();
+                    break;
                 default:
                     throw new IllegalStateException("Unknown Flag: " + flag);
             }
@@ -181,6 +185,9 @@ public class CommonStats implements Streamable, ToXContent {
                 case QueryCache:
                     queryCache = indexShard.queryCache().stats();
                     break;
+                case Sequence:
+                    sequence = indexShard.seqNoService().stats();
+                    break;
                 default:
                     throw new IllegalStateException("Unknown Flag: " + flag);
             }
@@ -240,6 +247,9 @@ public class CommonStats implements Streamable, ToXContent {
 
     @Nullable
     public QueryCacheStats queryCache;
+
+    @Nullable
+    public SequenceStats sequence;
 
     public void add(CommonStats stats) {
         if (docs == null) {
@@ -388,6 +398,15 @@ public class CommonStats implements Streamable, ToXContent {
         } else {
             queryCache.add(stats.getQueryCache());
         }
+
+        if (sequence == null) {
+            if (stats.getSequenceStats() != null) {
+                sequence = new SequenceStats();
+                sequence.add(stats.getSequenceStats());
+            }
+        } else {
+            sequence.add(stats.getSequenceStats());
+        }
     }
 
     @Nullable
@@ -480,6 +499,11 @@ public class CommonStats implements Streamable, ToXContent {
         return queryCache;
     }
 
+    @Nullable
+    public SequenceStats getSequenceStats() {
+        return sequence;
+    }
+
     public static CommonStats readCommonStats(StreamInput in) throws IOException {
         CommonStats stats = new CommonStats();
         stats.readFrom(in);
@@ -563,6 +587,7 @@ public class CommonStats implements Streamable, ToXContent {
         translog = in.readOptionalStreamable(new TranslogStats());
         suggest = in.readOptionalStreamable(new SuggestStats());
         queryCache = in.readOptionalStreamable(new QueryCacheStats());
+        sequence = in.readOptionalStreamable(new SequenceStats());
     }
 
     @Override
@@ -660,6 +685,7 @@ public class CommonStats implements Streamable, ToXContent {
         out.writeOptionalStreamable(translog);
         out.writeOptionalStreamable(suggest);
         out.writeOptionalStreamable(queryCache);
+        out.writeOptionalStreamable(sequence);
     }
 
     // note, requires a wrapping object
@@ -718,6 +744,9 @@ public class CommonStats implements Streamable, ToXContent {
         }
         if (queryCache != null) {
             queryCache.toXContent(builder, params);
+        }
+        if (sequence != null) {
+            sequence.toXContent(builder, params);
         }
         return builder;
     }

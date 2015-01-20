@@ -58,8 +58,8 @@ import org.elasticsearch.index.merge.policy.ElasticsearchMergePolicy;
 import org.elasticsearch.index.merge.policy.MergePolicyProvider;
 import org.elasticsearch.index.merge.scheduler.MergeSchedulerProvider;
 import org.elasticsearch.index.search.nested.IncludeNestedDocsQuery;
-import org.elasticsearch.index.sequence.PrimarySequenceNumberService;
 import org.elasticsearch.index.sequence.SequenceNo;
+import org.elasticsearch.index.sequence.SequenceNumbersService;
 import org.elasticsearch.index.shard.ShardId;
 import org.elasticsearch.index.store.Store;
 import org.elasticsearch.index.translog.Translog;
@@ -140,7 +140,7 @@ public class SeqNoEngine implements Closeable {
     private final AtomicLong translogIdGenerator = new AtomicLong();
     private final AtomicBoolean versionMapRefreshPending = new AtomicBoolean();
 
-    private final PrimarySequenceNumberService primarySequenceNumberService;
+    private final SequenceNumbersService seqNoService;
 
     private SegmentInfos lastCommittedSegmentInfos;
 
@@ -161,7 +161,7 @@ public class SeqNoEngine implements Closeable {
             this.indexingService = engineConfig.getIndexingService();
             this.warmer = engineConfig.getWarmer();
             this.deletionPolicy = engineConfig.getDeletionPolicy();
-            this.primarySequenceNumberService = engineConfig.getPrimarySequenceNumberService();
+            this.seqNoService = engineConfig.getSeqNoService();
             this.translog = engineConfig.getTranslog();
             this.mergePolicyProvider = engineConfig.getMergePolicyProvider();
             this.mergeScheduler = engineConfig.getMergeScheduler();
@@ -389,7 +389,7 @@ public class SeqNoEngine implements Closeable {
 
                     if (asPrimary) {
                         assert op.sequenceNo() == SequenceNo.UNKNOWN;
-                        op.sequenceNo(primarySequenceNumberService.getNextSequenceNo());
+                        op.sequenceNo(seqNoService.seqNoGenerator().getNextSequenceNo());
                     } else if (currentSeqNo.largerThan(op.sequenceNo())) {
                         // we never override an existing newer value.
                         return;

@@ -27,6 +27,8 @@ import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.admin.indices.create.TransportCreateIndexAction;
 import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.AutoCreateIndex;
+import org.elasticsearch.action.support.replication.ReplicationShardOperationFailedException;
+import org.elasticsearch.action.support.replication.ShardReplicationOperationReplicaResponse;
 import org.elasticsearch.action.support.replication.TransportShardReplicationOperationAction;
 import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.cluster.ClusterState;
@@ -176,7 +178,11 @@ public class TransportDeleteAction extends TransportShardReplicationOperationAct
         DeleteRequest request = shardRequest.request;
         IndexShard indexShard = indicesService.indexServiceSafe(shardRequest.shardId.getIndex()).shardSafe(shardRequest.shardId.id());
         Engine.Delete delete = indexShard.prepareDelete(request.type(), request.id(), request.version(), request.versionType());
-        indexShard.delete(delete, true);
+        try {
+            indexShard.delete(delete, true);
+        } catch (Throwable t) {
+            throw new ReplicationShardOperationFailedException(shardRequest.shardId, t, delete.sequenceNo());
+        }
         // update the request with the version so it will go to the replicas
         request.versionType(delete.versionType());
         request.version(delete.version());
@@ -197,7 +203,7 @@ public class TransportDeleteAction extends TransportShardReplicationOperationAct
     }
 
     @Override
-    protected void shardOperationOnReplica(ReplicaOperationRequest shardRequest) {
+    protected ShardReplicationOperationReplicaResponse shardOperationOnReplica(ReplicaOperationRequest shardRequest) {
         DeleteRequest request = shardRequest.request;
         IndexShard indexShard = indicesService.indexServiceSafe(shardRequest.shardId.getIndex()).shardSafe(shardRequest.shardId.id());
         Engine.Delete delete = indexShard.prepareDelete(request.type(), request.id(), request.version(), request.versionType());
@@ -211,11 +217,12 @@ public class TransportDeleteAction extends TransportShardReplicationOperationAct
                 // ignore
             }
         }
+        return new ShardReplicationOperationReplicaResponse(indexShard.seqNoService().maxConsecutiveSeqNo());
     }
 
     @Override
     protected ShardIterator shards(ClusterState clusterState, InternalRequest request) {
         return clusterService.operationRouting()
-                .deleteShards(clusterService.state(), request.concreteIndex(), request.request().type(), request.request().id(), request.request().routing());
+                .deleteShards(clusterState, request.concreteIndex(), request.request().type(), request.request().id(), request.request().routing());
     }
 }

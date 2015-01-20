@@ -167,6 +167,7 @@ import org.elasticsearch.action.update.UpdateAction;
 import org.elasticsearch.common.inject.AbstractModule;
 import org.elasticsearch.common.inject.multibindings.MapBinder;
 import org.elasticsearch.common.inject.multibindings.Multibinder;
+import org.elasticsearch.index.sequence.TransportConsensusUpdateAction;
 
 import java.util.List;
 import java.util.Map;
@@ -336,6 +337,7 @@ public class ActionModule extends AbstractModule {
         // also register any supporting classes
         if (!proxy) {
             bind(TransportLivenessAction.class).asEagerSingleton();
+            bind(TransportConsensusUpdateAction.class).asEagerSingleton();
             MapBinder<GenericAction, TransportAction> transportActionsBinder
                     = MapBinder.newMapBinder(binder(), GenericAction.class, TransportAction.class);
             for (Map.Entry<String, ActionEntry> entry : actions.entrySet()) {

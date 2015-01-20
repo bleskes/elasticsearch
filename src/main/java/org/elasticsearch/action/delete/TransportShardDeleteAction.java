@@ -21,6 +21,7 @@ package org.elasticsearch.action.delete;
 
 import org.elasticsearch.ElasticsearchIllegalStateException;
 import org.elasticsearch.action.support.ActionFilters;
+import org.elasticsearch.action.support.replication.ShardReplicationOperationReplicaResponse;
 import org.elasticsearch.action.support.replication.TransportShardReplicationOperationAction;
 import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.cluster.ClusterState;
@@ -104,7 +105,7 @@ public class TransportShardDeleteAction extends TransportShardReplicationOperati
     }
 
     @Override
-    protected void shardOperationOnReplica(ReplicaOperationRequest shardRequest) {
+    protected ShardReplicationOperationReplicaResponse shardOperationOnReplica(ReplicaOperationRequest shardRequest) {
         ShardDeleteRequest request = shardRequest.request;
         IndexShard indexShard = indicesService.indexServiceSafe(shardRequest.shardId.getIndex()).shardSafe(shardRequest.shardId.id());
         Engine.Delete delete = indexShard.prepareDelete(request.type(), request.id(), request.version(), VersionType.INTERNAL, request.sequenceNo());
@@ -123,6 +124,7 @@ public class TransportShardDeleteAction extends TransportShardReplicationOperati
                 // ignore
             }
         }
+        return new ShardReplicationOperationReplicaResponse(indexShard.seqNoService().maxConsecutiveSeqNo());
     }
 
     @Override

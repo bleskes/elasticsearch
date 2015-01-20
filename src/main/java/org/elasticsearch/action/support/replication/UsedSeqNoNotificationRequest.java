@@ -16,34 +16,42 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 package org.elasticsearch.action.support.replication;
 
-import org.elasticsearch.ElasticsearchWrapperException;
-import org.elasticsearch.common.Nullable;
+import org.elasticsearch.common.io.stream.StreamInput;
+import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.index.sequence.SequenceNo;
-import org.elasticsearch.index.shard.IndexShardException;
 import org.elasticsearch.index.shard.ShardId;
+import org.elasticsearch.transport.TransportRequest;
 
-/**
- * An exception indicating that a failure occurred performing an operation on a (primary) shard.
- * Potentially containing a seq number that should go to all replicas, notifying them of it.
- */
-public class ReplicationShardOperationFailedException extends IndexShardException implements ElasticsearchWrapperException {
+import java.io.IOException;
 
-    @Nullable
-    final private SequenceNo sequenceNo;
 
-    public ReplicationShardOperationFailedException(ShardId shardId, Throwable cause) {
-        this(shardId, cause, null);
+class UsedSeqNoNotificationRequest extends TransportRequest {
+
+    public ShardId shardId;
+    public SequenceNo sequenceNo;
+
+    UsedSeqNoNotificationRequest() {
     }
 
-    public ReplicationShardOperationFailedException(ShardId shardId, Throwable cause, @Nullable SequenceNo sequenceNo) {
-        super(shardId, "", cause);
+    UsedSeqNoNotificationRequest(ShardId shardId, SequenceNo sequenceNo) {
+        this.shardId = shardId;
         this.sequenceNo = sequenceNo;
     }
 
-    public SequenceNo sequenceNo() {
-        return sequenceNo;
+    @Override
+    public void readFrom(StreamInput in) throws IOException {
+        super.readFrom(in);
+        shardId = ShardId.readShardId(in);
+        sequenceNo = SequenceNo.readFrom(in);
+    }
+
+    @Override
+    public void writeTo(StreamOutput out) throws IOException {
+        super.writeTo(out);
+        shardId.writeTo(out);
+        sequenceNo.writeTo(out);
     }
 }
+

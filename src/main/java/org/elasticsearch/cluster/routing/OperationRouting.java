@@ -65,6 +65,10 @@ public class OperationRouting extends AbstractComponent {
         return shards(clusterState, index, type, id, routing).shardsIt();
     }
 
+    public ShardIterator getShards(ClusterState clusterState, ShardId shardId) {
+        return shards(clusterState, shardId.index().name(), shardId.id()).shardsIt();
+    }
+
     public ShardIterator getShards(ClusterState clusterState, String index, String type, String id, @Nullable String routing, @Nullable String preference) throws IndexMissingException, IndexShardMissingException {
         return preferenceActiveShardIterator(shards(clusterState, index, type, id, routing), clusterState.nodes().localNodeId(), clusterState.nodes(), preference);
     }

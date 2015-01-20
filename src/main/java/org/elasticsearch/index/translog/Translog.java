@@ -446,7 +446,7 @@ public interface Translog extends IndexShardComponent, Closeable, Accountable {
     }
 
     static class Index implements Operation {
-        public static final int SERIALIZATION_FORMAT = 6;
+        public static final int SERIALIZATION_FORMAT = 7;
 
         private String id;
         private String type;

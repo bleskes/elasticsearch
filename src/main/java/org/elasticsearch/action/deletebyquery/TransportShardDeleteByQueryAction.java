@@ -21,6 +21,7 @@ package org.elasticsearch.action.deletebyquery;
 
 import org.elasticsearch.ElasticsearchIllegalStateException;
 import org.elasticsearch.action.support.ActionFilters;
+import org.elasticsearch.action.support.replication.ShardReplicationOperationReplicaResponse;
 import org.elasticsearch.action.support.replication.TransportShardReplicationOperationAction;
 import org.elasticsearch.cache.recycler.PageCacheRecycler;
 import org.elasticsearch.cluster.ClusterService;
@@ -121,7 +122,7 @@ public class TransportShardDeleteByQueryAction extends TransportShardReplication
 
 
     @Override
-    protected void shardOperationOnReplica(ReplicaOperationRequest shardRequest) {
+    protected ShardReplicationOperationReplicaResponse shardOperationOnReplica(ReplicaOperationRequest shardRequest) {
         ShardDeleteByQueryRequest request = shardRequest.request;
         IndexService indexService = indicesService.indexServiceSafe(shardRequest.shardId.getIndex());
         IndexShard indexShard = indexService.shardSafe(shardRequest.shardId.id());
@@ -138,6 +139,7 @@ public class TransportShardDeleteByQueryAction extends TransportShardReplication
                 SearchContext.removeCurrent();
             }
         }
+        return new ShardReplicationOperationReplicaResponse(indexShard.seqNoService().maxConsecutiveSeqNo());
     }
 
     @Override
