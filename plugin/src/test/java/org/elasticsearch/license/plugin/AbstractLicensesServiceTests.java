@@ -32,11 +32,10 @@ import org.elasticsearch.license.plugin.core.LicensesStatus;
 import org.elasticsearch.test.InternalTestCluster;
 import org.junit.Before;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.elasticsearch.license.plugin.core.LicensesService.LicensesUpdateResponse;
 import static org.hamcrest.Matchers.equalTo;
@@ -92,7 +91,22 @@ public abstract class AbstractLicensesServiceTests extends AbstractLicensesInteg
         return new Action(new Runnable() {
             @Override
             public void run() {
-                clientService.register(feature, new LicensesService.TrialLicenseOptions(expiryDuration, 10),
+                clientService.register(feature, new LicensesService.TrialLicenseOptions(expiryDuration, 10), Collections.<LicensesService.ExpirationCallback>emptyList(),
+                        clientListener);
+
+                // invoke clusterChanged event to flush out pendingRegistration
+                LicensesService licensesService = (LicensesService) clientService;
+                ClusterChangedEvent event = new ClusterChangedEvent("", clusterService().state(), clusterService().state());
+                licensesService.clusterChanged(event);
+            }
+        }, 0, 1, "should trigger onEnable for " + feature + " once [trial license]");
+    }
+
+    protected Action registerWithEventNotification(final LicensesClientService clientService, final LicensesClientService.Listener clientListener, final String feature, final TimeValue expiryDuration, final Collection<LicensesService.ExpirationCallback> expirationCallbacks) {
+        return new Action(new Runnable() {
+            @Override
+            public void run() {
+                clientService.register(feature, new LicensesService.TrialLicenseOptions(expiryDuration, 10), expirationCallbacks,
                         clientListener);
 
                 // invoke clusterChanged event to flush out pendingRegistration
@@ -106,15 +120,18 @@ public abstract class AbstractLicensesServiceTests extends AbstractLicensesInteg
     protected class TestTrackingClientListener implements LicensesClientService.Listener {
         CountDownLatch enableLatch;
         CountDownLatch disableLatch;
+        AtomicBoolean enabled = new AtomicBoolean(false);
 
         final boolean track;
+        final String featureName;
 
-        public TestTrackingClientListener(boolean track) {
-            this.track = track;
+        public TestTrackingClientListener(String featureName) {
+            this(featureName, true);
         }
 
-        public TestTrackingClientListener() {
-            this(true);
+        public TestTrackingClientListener(String featureName, boolean track) {
+            this.track = track;
+            this.featureName = featureName;
         }
 
         public synchronized void latch(CountDownLatch enableLatch, CountDownLatch disableLatch) {
@@ -123,14 +140,20 @@ public abstract class AbstractLicensesServiceTests extends AbstractLicensesInteg
         }
 
         @Override
-        public void onEnabled() {
+        public void onEnabled(License license) {
+            assertNotNull(license);
+            assertThat(license.feature(), equalTo(featureName));
+            enabled.set(true);
             if (track) {
                 this.enableLatch.countDown();
             }
         }
 
         @Override
-        public void onDisabled() {
+        public void onDisabled(License license) {
+            assertNotNull(license);
+            assertThat(license.feature(), equalTo(featureName));
+            enabled.set(false);
             if (track) {
                 this.disableLatch.countDown();
             }
