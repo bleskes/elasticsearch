@@ -35,7 +35,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.Locale;
 
 import static org.elasticsearch.shield.authc.support.UsernamePasswordToken.basicAuthHeaderValue;
 
@@ -79,7 +78,6 @@ public class ShieldRestTests extends ShieldIntegrationTest {
 
     @Test
     public void test() throws IOException {
-        logger.info("current default locale is [{}]", Locale.getDefault());
         delegate.test();
     }
 
