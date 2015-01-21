@@ -19,7 +19,6 @@ package org.elasticsearch.shield.authc.active_directory;
 
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.collect.ImmutableMap;
-import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.shield.ShieldSettingsException;
@@ -63,7 +62,6 @@ public class ActiveDirectoryConnectionFactory extends ConnectionFactory<ActiveDi
     private final TimeValue timeout;
     private final AbstractLdapConnection.GroupsResolver groupResolver;
 
-    @Inject
     public ActiveDirectoryConnectionFactory(RealmConfig config) {
         super(ActiveDirectoryConnection.class, config);
         Settings settings = config.settings();
