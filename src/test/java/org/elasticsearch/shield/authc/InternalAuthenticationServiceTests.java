@@ -232,7 +232,7 @@ public class InternalAuthenticationServiceTests extends ElasticsearchTestCase {
         } catch (AuthenticationException ae) {
             // expected
         }
-        verify(auditTrail).anonymousAccess("_action", message);
+        verify(auditTrail).anonymousAccessDenied("_action", message);
     }
 
     @Test
@@ -245,7 +245,7 @@ public class InternalAuthenticationServiceTests extends ElasticsearchTestCase {
         } catch (AuthenticationException ae) {
             // expected
         }
-        verify(auditTrail).anonymousAccess(restRequest);
+        verify(auditTrail).anonymousAccessDenied(restRequest);
     }
 
     @Test
