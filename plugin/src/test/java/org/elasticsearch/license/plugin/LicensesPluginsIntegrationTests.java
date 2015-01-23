@@ -143,8 +143,8 @@ public class LicensesPluginsIntegrationTests extends AbstractLicensesIntegration
     @Test
     public void testRandomFeatureLicensesActions() throws Exception {
         int nNodes = randomIntBetween(2, 10);
-        int trialLicenseDuration1 = rarely() ? -1 : randomIntBetween(4, 6);
-        int trialLicenseDuration2 = rarely() ? -1 : randomIntBetween(4, 6);
+        int trialLicenseDuration1 = rarely() ? -1 : randomIntBetween(6, 8);
+        int trialLicenseDuration2 = rarely() ? -1 : randomIntBetween(6, 8);
 
         startNodesWithConsumerPlugins(nNodes, trialLicenseDuration1, trialLicenseDuration2);
 
@@ -154,7 +154,7 @@ public class LicensesPluginsIntegrationTests extends AbstractLicensesIntegration
         } else {
             assertEagerConsumerPluginDisableNotification(3 * 2);
             assertLicenseManagerDisabledFeatureFor(FEATURE_NAME_1);
-            putLicense(FEATURE_NAME_1, TimeValue.timeValueMillis(500 * 2));
+            putLicense(FEATURE_NAME_1, TimeValue.timeValueSeconds(5));
         }
 
         if (trialLicenseDuration2 != -1) {
@@ -163,7 +163,7 @@ public class LicensesPluginsIntegrationTests extends AbstractLicensesIntegration
         } else {
             assertLazyConsumerPluginDisableNotification(3 * 2);
             assertLicenseManagerDisabledFeatureFor(FEATURE_NAME_2);
-            putLicense(FEATURE_NAME_2, TimeValue.timeValueMillis(500 * 2));
+            putLicense(FEATURE_NAME_2, TimeValue.timeValueSeconds(5));
         }
 
         logger.info(" --> check license enabled notification");
@@ -174,8 +174,8 @@ public class LicensesPluginsIntegrationTests extends AbstractLicensesIntegration
 
         logger.info(" --> check license expiry notification");
         // consumer plugin should notify onDisabled on all data nodes (expired signed license)
-        assertEagerConsumerPluginDisableNotification(3 * 2);
-        assertLazyConsumerPluginDisableNotification(3 * 2);
+        assertEagerConsumerPluginDisableNotification(8 * 2);
+        assertLazyConsumerPluginDisableNotification(8 * 2);
         assertLicenseManagerDisabledFeatureFor(FEATURE_NAME_1);
         assertLicenseManagerDisabledFeatureFor(FEATURE_NAME_2);
 
