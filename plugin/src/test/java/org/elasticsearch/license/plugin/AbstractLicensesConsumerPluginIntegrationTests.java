@@ -49,7 +49,7 @@ public abstract class AbstractLicensesConsumerPluginIntegrationTests extends Abs
         this.consumerPlugin = consumerPlugin;
     }
 
-    private final int trialLicenseDurationInSeconds = 5;
+    private final int trialLicenseDurationInSeconds = 10;
 
     protected Settings nodeSettings(int nodeOrdinal) {
         return ImmutableSettings.settingsBuilder()
@@ -78,7 +78,7 @@ public abstract class AbstractLicensesConsumerPluginIntegrationTests extends Abs
         // managerService should report feature to be enabled on all data nodes
         assertLicenseManagerEnabledFeatureFor(consumerPlugin.featureName());
         // consumer plugin service should return enabled on all data nodes
-        assertConsumerPluginEnabledNotification(1);
+        assertConsumerPluginEnabledNotification(2);
 
         logger.info(" --> check trial license expiry notification");
         // consumer plugin should notify onDisabled on all data nodes (expired trial license)
