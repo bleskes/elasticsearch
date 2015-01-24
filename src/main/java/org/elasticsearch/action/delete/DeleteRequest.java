@@ -20,7 +20,10 @@
 package org.elasticsearch.action.delete;
 
 import org.elasticsearch.action.ActionRequest;
+import org.elasticsearch.action.ActionRequestValidationException;
 import org.elasticsearch.action.support.replication.DocWriteRequest;
+
+import static org.elasticsearch.action.ValidateActions.addValidationError;
 
 /**
  * A request to delete a document from an index based on its type and id. Best created using
@@ -78,6 +81,15 @@ public class DeleteRequest extends DocWriteRequest<DeleteRequest> {
      */
     public DeleteRequest(ActionRequest request) {
         super(request);
+    }
+
+    @Override
+    public ActionRequestValidationException validate() {
+        ActionRequestValidationException validationException = super.validate();
+        if (id() == null) {
+            validationException = addValidationError("id is missing", validationException);
+        }
+        return validationException;
     }
 
     @Override

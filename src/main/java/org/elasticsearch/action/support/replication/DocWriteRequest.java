@@ -98,9 +98,6 @@ public abstract class DocWriteRequest<T extends DocWriteRequest> extends ShardRe
         if (type == null) {
             validationException = addValidationError("type is missing", validationException);
         }
-        if (id == null) {
-            validationException = addValidationError("id is missing", validationException);
-        }
         if (!versionType.validateVersionForWrites(version)) {
             validationException = addValidationError("illegal version value [" + version + "] for version type [" + versionType.name() + "]", validationException);
         }
