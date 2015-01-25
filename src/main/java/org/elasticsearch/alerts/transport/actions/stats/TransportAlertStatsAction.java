@@ -23,6 +23,8 @@ import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.master.TransportMasterNodeOperationAction;
 import org.elasticsearch.alerts.AlertService;
 import org.elasticsearch.alerts.actions.AlertActionService;
+import org.elasticsearch.alerts.AlertsBuild;
+import org.elasticsearch.alerts.AlertsVersion;
 import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.block.ClusterBlockException;
@@ -72,6 +74,8 @@ public class TransportAlertStatsAction extends TransportMasterNodeOperationActio
         statsResponse.setAlertActionManagerQueueSize(alertActionService.getQueueSize());
         statsResponse.setNumberOfRegisteredAlerts(alertService.getNumberOfAlerts());
         statsResponse.setAlertActionManagerLargestQueueSize(alertActionService.getLargestQueueSize());
+        statsResponse.setVersion(AlertsVersion.CURRENT);
+        statsResponse.setBuild(AlertsBuild.CURRENT);
         listener.onResponse(statsResponse);
     }
 
