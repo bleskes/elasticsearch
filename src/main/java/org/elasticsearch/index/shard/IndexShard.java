@@ -64,7 +64,7 @@ import org.elasticsearch.index.codec.CodecService;
 import org.elasticsearch.index.deletionpolicy.SnapshotDeletionPolicy;
 import org.elasticsearch.index.deletionpolicy.SnapshotIndexCommit;
 import org.elasticsearch.index.engine.*;
-import org.elasticsearch.index.engine.internal.SeqNoEngine;
+import org.elasticsearch.index.engine.internal.InternalEngine;
 import org.elasticsearch.index.fielddata.FieldDataStats;
 import org.elasticsearch.index.fielddata.IndexFieldDataService;
 import org.elasticsearch.index.fielddata.ShardFieldData;
@@ -130,7 +130,7 @@ public class IndexShard extends AbstractIndexShardComponent implements IndexShar
     private final InternalIndicesLifecycle indicesLifecycle;
     private final Store store;
     private final MergeSchedulerProvider mergeScheduler;
-    private final AtomicReference<SeqNoEngine> currentEngineReference = new AtomicReference<>();
+    private final AtomicReference<InternalEngine> currentEngineReference = new AtomicReference<>();
     private final Translog translog;
     private final IndexAliasesService indexAliasesService;
     private final ShardIndexingService indexingService;
@@ -231,7 +231,7 @@ public class IndexShard extends AbstractIndexShardComponent implements IndexShar
         return this.store;
     }
 
-    public SeqNoEngine engine() {
+    public InternalEngine engine() {
         return engineSafe();
     }
 
@@ -688,7 +688,7 @@ public class IndexShard extends AbstractIndexShardComponent implements IndexShar
                 }
                 changeState(IndexShardState.CLOSED, reason);
             } finally {
-                final SeqNoEngine engine = this.currentEngineReference.getAndSet(null);
+                final InternalEngine engine = this.currentEngineReference.getAndSet(null);
                 IOUtils.close(engine);
             }
         }
@@ -747,7 +747,7 @@ public class IndexShard extends AbstractIndexShardComponent implements IndexShar
             if (state != IndexShardState.RECOVERING) {
                 throw new IndexShardNotRecoveringException(shardId, state);
             }
-            final SeqNoEngine engine = this.currentEngineReference.getAndSet(null);
+            final InternalEngine engine = this.currentEngineReference.getAndSet(null);
             IOUtils.close(engine);
         }
     }
@@ -932,13 +932,13 @@ public class IndexShard extends AbstractIndexShardComponent implements IndexShar
     }
 
     public void updateBufferSize(ByteSizeValue shardIndexingBufferSize, ByteSizeValue shardTranslogBufferSize) {
-        SeqNoEngine engine = engineSafe();
+        InternalEngine engine = engineSafe();
         engine.updateIndexingBufferSize(shardIndexingBufferSize);
         translog().updateBuffer(shardTranslogBufferSize);
     }
 
     public void markAsInactive() {
-        SeqNoEngine engine = engineSafe();
+        InternalEngine engine = engineSafe();
         engine.updateIndexingBufferSize(EngineConfig.INACTIVE_SHARD_INDEXING_BUFFER);
         translog().updateBuffer(Translog.INACTIVE_SHARD_TRANSLOG_BUFFER);
     }
@@ -1063,8 +1063,8 @@ public class IndexShard extends AbstractIndexShardComponent implements IndexShar
         }
     }
 
-    private SeqNoEngine engineSafe() {
-        SeqNoEngine engine = this.currentEngineReference.get();
+    private InternalEngine engineSafe() {
+        InternalEngine engine = this.currentEngineReference.get();
         if (engine == null) {
             throw new EngineClosedException(shardId);
         }

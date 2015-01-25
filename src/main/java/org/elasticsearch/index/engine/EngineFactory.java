@@ -18,12 +18,12 @@
  */
 package org.elasticsearch.index.engine;
 
-import org.elasticsearch.index.engine.internal.SeqNoEngine;
+import org.elasticsearch.index.engine.internal.InternalEngine;
 
 /**
  * Simple Engine Factory
  */
 public interface EngineFactory {
 
-    public SeqNoEngine newEngine(EngineConfig config);
+    public InternalEngine newEngine(EngineConfig config);
 }

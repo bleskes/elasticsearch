@@ -47,8 +47,8 @@ public class SequenceNo implements Comparable<SequenceNo>, Accountable, ToXConte
 
     public SequenceNo(BytesRef bytesRef) {
         ByteArrayDataInput in = new ByteArrayDataInput(bytesRef.bytes, bytesRef.offset, bytesRef.length);
-        term = ByteUtils.readVLong(in) + 1;
-        counter = ByteUtils.readVLong(in) + 1;
+        term = ByteUtils.readVLong(in) - 1;
+        counter = ByteUtils.readVLong(in) - 1;
         assert (term >= 0 && counter >= 0) || (term == -1 && counter == -1) : "illegal values: term [" + term + "], counter [" + counter + "]";
     }
 

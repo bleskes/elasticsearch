@@ -20,14 +20,14 @@ package org.elasticsearch.test.engine;
 
 import org.elasticsearch.index.engine.EngineConfig;
 import org.elasticsearch.index.engine.EngineFactory;
-import org.elasticsearch.index.engine.internal.SeqNoEngine;
+import org.elasticsearch.index.engine.internal.InternalEngine;
 
 /**
  *
  */
 public final class MockEngineFactory implements EngineFactory {
     @Override
-    public SeqNoEngine newEngine(EngineConfig config) {
+    public InternalEngine newEngine(EngineConfig config) {
         return new MockInternalEngine(config);
     }
 }

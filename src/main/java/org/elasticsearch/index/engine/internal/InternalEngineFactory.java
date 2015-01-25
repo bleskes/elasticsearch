@@ -23,7 +23,7 @@ import org.elasticsearch.index.engine.EngineFactory;
 
 public class InternalEngineFactory implements EngineFactory {
     @Override
-    public SeqNoEngine newEngine(EngineConfig config) {
-        return new SeqNoEngine(config);
+    public InternalEngine newEngine(EngineConfig config) {
+        return new InternalEngine(config);
     }
 }

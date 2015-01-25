@@ -50,6 +50,7 @@ import org.elasticsearch.common.util.concurrent.EsRejectedExecutionException;
 import org.elasticsearch.index.deletionpolicy.SnapshotDeletionPolicy;
 import org.elasticsearch.index.deletionpolicy.SnapshotIndexCommit;
 import org.elasticsearch.index.engine.*;
+import org.elasticsearch.index.engine.Engine.*;
 import org.elasticsearch.index.indexing.ShardIndexingService;
 import org.elasticsearch.index.mapper.Uid;
 import org.elasticsearch.index.merge.OnGoingMerge;
@@ -58,12 +59,14 @@ import org.elasticsearch.index.merge.policy.MergePolicyProvider;
 import org.elasticsearch.index.merge.scheduler.MergeSchedulerProvider;
 import org.elasticsearch.index.search.nested.IncludeNestedDocsQuery;
 import org.elasticsearch.index.sequence.SequenceNo;
+import org.elasticsearch.index.sequence.SequenceNumbersService;
 import org.elasticsearch.index.shard.ShardId;
 import org.elasticsearch.index.store.Store;
 import org.elasticsearch.index.translog.Translog;
 import org.elasticsearch.indices.IndicesWarmer;
 import org.elasticsearch.threadpool.ThreadPool;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.*;
@@ -79,7 +82,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 /**
  *
  */
-public class InternalEngine implements Engine {
+public class InternalEngine implements Closeable {
 
     protected final ESLogger logger;
     protected final ShardId shardId;
@@ -132,12 +135,15 @@ public class InternalEngine implements Engine {
 
     private volatile Throwable failedEngine = null;
     private final Lock failEngineLock = new ReentrantLock();
-    private final FailedEngineListener failedEngineListener;
+    private final Engine.FailedEngineListener failedEngineListener;
 
     private final AtomicLong translogIdGenerator = new AtomicLong();
     private final AtomicBoolean versionMapRefreshPending = new AtomicBoolean();
 
+    private final SequenceNumbersService seqNoService;
+
     private SegmentInfos lastCommittedSegmentInfos;
+
 
     private final IndexThrottle throttle;
 
@@ -155,6 +161,7 @@ public class InternalEngine implements Engine {
             this.indexingService = engineConfig.getIndexingService();
             this.warmer = engineConfig.getWarmer();
             this.deletionPolicy = engineConfig.getDeletionPolicy();
+            this.seqNoService = engineConfig.getSeqNoService();
             this.translog = engineConfig.getTranslog();
             this.mergePolicyProvider = engineConfig.getMergePolicyProvider();
             this.mergeScheduler = engineConfig.getMergeScheduler();
@@ -169,7 +176,7 @@ public class InternalEngine implements Engine {
             throttle = new IndexThrottle();
             this.engineConfig = engineConfig;
             listener = new EngineConfig.EngineSettingsListener(logger, engineConfig) {
-                @Override
+
                 protected void onChange() {
                     updateSettings();
                 }
@@ -191,7 +198,7 @@ public class InternalEngine implements Engine {
         }
     }
 
-    @Override
+
     public void updateIndexingBufferSize(ByteSizeValue indexingBufferSize) {
         ByteSizeValue preValue = engineConfig.getIndexingBufferSize();
         try (InternalLock _ = readLock.acquire()) {
@@ -275,17 +282,17 @@ public class InternalEngine implements Engine {
             final boolean concurrencyNeedsUpdate = iwc.getMaxThreadStates() != engineConfig.getIndexConcurrency();
             final boolean codecNeedsUpdate = iwc.getCodec().equals(engineConfig.getCodec()) == false;
             if (codecNeedsUpdate || concurrencyNeedsUpdate) {
-                flush(FlushType.NEW_WRITER, false, false);
+                flush(Engine.FlushType.NEW_WRITER, false, false);
             }
         }
     }
 
-    @Override
+
     public ByteSizeValue indexingBufferSize() {
         return engineConfig.getIndexingBufferSize();
     }
 
-    @Override
+
     public GetResult get(Get get) throws EngineException {
         try (InternalLock _ = readLock.acquire()) {
             if (get.realtime()) {
@@ -337,125 +344,136 @@ public class InternalEngine implements Engine {
         }
     }
 
-    @Override
-    public void create(Create create) throws EngineException {
+
+    public boolean performOperation(IndexingOperation op, boolean asPrimary) {
         final IndexWriter writer;
         try (InternalLock _ = readLock.acquire()) {
             writer = currentIndexWriter();
             try (Releasable r = throttle.acquireThrottle()) {
-                innerCreate(create, writer);
+                synchronized (dirtyLock(op.uid())) {
+                    final long currentVersion;
+                    final SequenceNo currentSeqNo;
+                    VersionValue versionValue = versionMap.getUnderLock(op.uid().bytes());
+                    if (versionValue == null) {
+                        Versions.DocIdAndVersion docIdAndVersion = loadCurrentVersionFromIndex(op.uid());
+                        currentVersion = docIdAndVersion == null ? Versions.NOT_FOUND : docIdAndVersion.version;
+                        currentSeqNo = docIdAndVersion == null ? SequenceNo.UNKNOWN : docIdAndVersion.sequenceNo;
+                    } else {
+                        if (engineConfig.isEnableGcDeletes() && versionValue.delete() && (engineConfig.getThreadPool().estimatedTimeInMillis() - versionValue.time()) > engineConfig.getGcDeletesInMillis()) {
+                            currentVersion = Versions.NOT_FOUND; // deleted, and GC
+                            currentSeqNo = SequenceNo.UNKNOWN;
+                        } else {
+                            currentVersion = versionValue.version();
+                            currentSeqNo = versionValue.sequenceNo();
+                        }
+                    }
+
+                    long updatedVersion;
+                    long expectedVersion = op.version();
+                    if (op.versionType().isVersionConflictForWrites(currentVersion, expectedVersion)) {
+                        if (asPrimary) {
+                            throw new VersionConflictEngineException(shardId, op.type(), op.id(), currentVersion, expectedVersion);
+                        } else {
+                            // on replicas we just ignore as this is cause by out of order delivery
+                            return false;
+                        }
+                    }
+
+                    if (op.opType() == IndexingOperation.Type.CREATE && asPrimary) {
+                        if (currentVersion != Versions.NOT_FOUND && (versionValue == null || versionValue.delete() == false)) {
+                            throw new DocumentAlreadyExistsException(shardId, op.type(), op.id());
+                        }
+                    }
+
+                    // move to replica
+                    updatedVersion = op.versionType().updateVersion(currentVersion, expectedVersion);
+                    op.updateVersion(updatedVersion, op.versionType().versionTypeForReplicationAndRecovery());
+
+                    if (asPrimary) {
+                        assert op.sequenceNo() == SequenceNo.UNKNOWN;
+                        op.sequenceNo(seqNoService.seqNoGenerator().getNextSequenceNo());
+                    } else if (currentSeqNo.largerThan(op.sequenceNo())) {
+                        // we never override an existing newer value.
+                        return false;
+                    }
+
+                    final Translog.Operation translogOperation;
+                    final VersionValue newVersionValue;
+                    Index index = null;
+                    Delete delete = null;
+                    switch (op.opType()) {
+                        case CREATE:
+                        case INDEX:
+                            index = (Index) op;
+                            index.created(currentVersion == Versions.NOT_FOUND || (versionValue != null && versionValue.delete()));
+                            indexToLucene(index, writer, currentVersion != Versions.NOT_FOUND);
+                            // TODO, no commit: it doesn't seem like we need Translog.Create - find out what it adds
+                            translogOperation = op.opType() == IndexingOperation.Type.CREATE ? new Translog.Create((Create) op) : new Translog.Index(index);
+                            newVersionValue = new VersionValue(op.version(), op.sequenceNo());
+                            break;
+                        case DELETE:
+                            delete = (Delete) op;
+                            if (currentVersion == Versions.NOT_FOUND) {
+                                // doc does not exist and no prior deletes
+                                delete.found(false);
+                            } else if (versionValue != null && versionValue.delete()) {
+                                // a "delete on delete", in this case, we still increment the version, log it, and return that version
+                                delete.found(false);
+                            } else {
+                                // we deleted a currently existing document
+                                writer.deleteDocuments(delete.uid());
+                                delete.found(true);
+                            }
+                            translogOperation = new Translog.Delete(delete);
+                            newVersionValue = new DeleteVersionValue(op.version(), engineConfig.getThreadPool().estimatedTimeInMillis(), op.sequenceNo());
+                            break;
+                        default:
+                            throw new UnsupportedOperationException("unknown operation type [" + op.opType() + "]");
+                    }
+
+                    Translog.Location translogLocation = translog.add(translogOperation);
+                    newVersionValue.translogLocation(translogLocation);
+                    versionMap.putUnderLock(op.uid().bytes(), newVersionValue);
+
+                    switch (op.opType()) {
+                        case INDEX:
+                            assert index != null;
+                            assert delete == null;
+                            indexingService.postIndexUnderLock(index);
+                            break;
+                        case DELETE:
+                            assert index == null;
+                            assert delete != null;
+                            indexingService.postDeleteUnderLock(delete);
+                            break;
+                    }
+                }
             }
             dirty = true;
             flushNeeded = true;
         } catch (OutOfMemoryError | IllegalStateException | IOException t) {
-            maybeFailEngine(t, "create");
-            throw new CreateFailedEngineException(shardId, create, t);
+            maybeFailEngine(t, "index_op(primary)");
+            throw new IndexFailedEngineException(shardId, op, t);
         }
         checkVersionMapRefresh();
+        maybePruneDeletedTombstones();
+        return true;
     }
 
-
-    private void innerCreate(Create create, IndexWriter writer) throws IOException {
-//        if (engineConfig.isOptimizeAutoGenerateId() && create.autoGeneratedId() && !create.canHaveDuplicates()) {
-//            // We don't need to lock because this ID cannot be concurrently updated:
-//            innerCreateNoLock(create, writer, Versions.NOT_FOUND, null);
-//        } else {
-//            synchronized (dirtyLock(create.uid())) {
-//                final long currentVersion;
-//                final VersionValue versionValue;
-//                versionValue = versionMap.getUnderLock(create.uid().bytes());
-//                if (versionValue == null) {
-//                    currentVersion = loadCurrentVersionFromIndex(create.uid());
-//                } else {
-//                    if (engineConfig.isEnableGcDeletes() && versionValue.delete() && (engineConfig.getThreadPool().estimatedTimeInMillis() - versionValue.time()) > engineConfig.getGcDeletesInMillis()) {
-//                        currentVersion = Versions.NOT_FOUND; // deleted, and GC
-//                    } else {
-//                        currentVersion = versionValue.version();
-//                    }
-//                }
-//                innerCreateNoLock(create, writer, currentVersion, versionValue);
-//            }
-//        }
-    }
-
-    private void innerCreateNoLock(Create create, IndexWriter writer, long currentVersion, VersionValue versionValue) throws IOException {
-//
-//        // same logic as index
-//        long updatedVersion;
-//        long expectedVersion = create.version();
-//        if (create.versionType().isVersionConflictForWrites(currentVersion, expectedVersion)) {
-//            if (create.origin() == Operation.Origin.RECOVERY) {
-//                return;
-//            } else {
-//                throw new VersionConflictEngineException(shardId, create.type(), create.id(), currentVersion, expectedVersion);
-//            }
-//        }
-//        updatedVersion = create.versionType().updateVersion(currentVersion, expectedVersion);
-//
-//        // if the doc exists
-//        boolean doUpdate = false;
-//        if ((versionValue != null && versionValue.delete() == false) || (versionValue == null && currentVersion != Versions.NOT_FOUND)) {
-//            if (create.origin() == Operation.Origin.RECOVERY) {
-//                return;
-//            } else if (create.origin() == Operation.Origin.REPLICA) {
-//                // #7142: the primary already determined it's OK to index this document, and we confirmed above that the version doesn't
-//                // conflict, so we must also update here on the replica to remain consistent:
-//                doUpdate = true;
-//            } else if (create.origin() == Operation.Origin.PRIMARY && create.autoGeneratedId() && create.canHaveDuplicates() && currentVersion == 1 && create.version() == Versions.MATCH_ANY) {
-//                /**
-//                 * If bulk index request fails due to a disconnect, unavailable shard etc. then the request is
-//                 * retried before it actually fails. However, the documents might already be indexed.
-//                 * For autogenerated ids this means that a version conflict will be reported in the bulk request
-//                 * although the document was indexed properly.
-//                 * To avoid this we have to make sure that the index request is treated as an update and set updatedVersion to 1.
-//                 * See also discussion on https://github.com/elasticsearch/elasticsearch/pull/9125
-//                 */
-//                doUpdate = true;
-//                updatedVersion = 1;
-//            } else {
-//                // On primary, we throw DAEE if the _uid is already in the index with an older version:
-//                assert create.origin() == Operation.Origin.PRIMARY;
-//                throw new DocumentAlreadyExistsException(shardId, create.type(), create.id());
-//            }
-//        }
-//
-//        create.updateVersion(updatedVersion);
-//
-//        if (doUpdate) {
-//            if (create.docs().size() > 1) {
-//                writer.updateDocuments(create.uid(), create.docs(), create.analyzer());
-//            } else {
-//                writer.updateDocument(create.uid(), create.docs().get(0), create.analyzer());
-//            }
-//        } else {
-//            if (create.docs().size() > 1) {
-//                writer.addDocuments(create.docs(), create.analyzer());
-//            } else {
-//                writer.addDocument(create.docs().get(0), create.analyzer());
-//            }
-//        }
-//        Translog.Location translogLocation = translog.add(new Translog.Create(create));
-//
-//        versionMap.putUnderLock(create.uid().bytes(), new VersionValue(updatedVersion, translogLocation));
-//
-//        indexingService.postCreateUnderLock(create);
-    }
-
-    @Override
-    public void index(Index index) throws EngineException {
-        final IndexWriter writer;
-        try (InternalLock _ = readLock.acquire()) {
-            writer = currentIndexWriter();
-            try (Releasable r = throttle.acquireThrottle()) {
-                innerIndex(index, writer);
+    private void indexToLucene(Index index, IndexWriter writer, boolean update) throws IOException {
+        if (update) {
+            if (index.docs().size() > 1) {
+                writer.updateDocuments(index.uid(), index.docs(), index.analyzer());
+            } else {
+                writer.updateDocument(index.uid(), index.docs().get(0), index.analyzer());
             }
-            dirty = true;
-            flushNeeded = true;
-        } catch (OutOfMemoryError | IllegalStateException | IOException t) {
-            maybeFailEngine(t, "index");
-            throw new IndexFailedEngineException(shardId, index, t);
+        } else {
+            if (index.docs().size() > 1) {
+                writer.addDocuments(index.docs(), index.analyzer());
+            } else {
+                writer.addDocument(index.docs().get(0), index.analyzer());
+            }
         }
-        checkVersionMapRefresh();
     }
 
     /**
@@ -485,74 +503,6 @@ public class InternalEngine implements Engine {
         }
     }
 
-    private void innerIndex(Index index, IndexWriter writer) throws IOException {
-        synchronized (dirtyLock(index.uid())) {
-            final long currentVersion;
-            VersionValue versionValue = versionMap.getUnderLock(index.uid().bytes());
-            if (versionValue == null) {
-                currentVersion = loadCurrentVersionFromIndex(index.uid());
-            } else {
-                if (engineConfig.isEnableGcDeletes() && versionValue.delete() && (engineConfig.getThreadPool().estimatedTimeInMillis() - versionValue.time()) > engineConfig.getGcDeletesInMillis()) {
-                    currentVersion = Versions.NOT_FOUND; // deleted, and GC
-                } else {
-                    currentVersion = versionValue.version();
-                }
-            }
-
-            long updatedVersion;
-            long expectedVersion = index.version();
-            if (index.versionType().isVersionConflictForWrites(currentVersion, expectedVersion)) {
-//                if (index.origin() == Operation.Origin.RECOVERY) {
-//                    return;
-//                } else {
-//                    throw new VersionConflictEngineException(shardId, index.type(), index.id(), currentVersion, expectedVersion);
-//                }
-            }
-            updatedVersion = index.versionType().updateVersion(currentVersion, expectedVersion);
-
-            index.updateVersion(updatedVersion, index.versionType().versionTypeForReplicationAndRecovery());
-            if (currentVersion == Versions.NOT_FOUND) {
-                // document does not exists, we can optimize for create
-                index.created(true);
-                if (index.docs().size() > 1) {
-                    writer.addDocuments(index.docs(), index.analyzer());
-                } else {
-                    writer.addDocument(index.docs().get(0), index.analyzer());
-                }
-            } else {
-                if (versionValue != null) {
-                    index.created(versionValue.delete()); // we have a delete which is not GC'ed...
-                }
-                if (index.docs().size() > 1) {
-                    writer.updateDocuments(index.uid(), index.docs(), index.analyzer());
-                } else {
-                    writer.updateDocument(index.uid(), index.docs().get(0), index.analyzer());
-                }
-            }
-            Translog.Location translogLocation = translog.add(new Translog.Index(index));
-            VersionValue version = new VersionValue(updatedVersion, SequenceNo.UNKNOWN);
-            version.translogLocation(translogLocation);
-            versionMap.putUnderLock(index.uid().bytes(), version);
-
-            indexingService.postIndexUnderLock(index);
-        }
-    }
-
-    @Override
-    public void delete(Delete delete) throws EngineException {
-        try (InternalLock _ = readLock.acquire()) {
-            final IndexWriter indexWriter = currentIndexWriter();
-            innerDelete(delete, indexWriter);
-            dirty = true;
-            flushNeeded = true;
-        } catch (OutOfMemoryError | IllegalStateException | IOException t) {
-            maybeFailEngine(t, "delete");
-            throw new DeleteFailedEngineException(shardId, delete, t);
-        }
-
-        maybePruneDeletedTombstones();
-    }
-
     private void maybePruneDeletedTombstones() {
         // It's expensive to prune because we walk the deletes map acquiring dirtyLock for each uid so we only do it
         // every 1/4 of gcDeletesInMillis:
@@ -561,55 +511,7 @@ public class InternalEngine implements Engine {
         }
     }
 
-    private void innerDelete(Delete delete, IndexWriter writer) throws IOException {
-        synchronized (dirtyLock(delete.uid())) {
-            final long currentVersion;
-            VersionValue versionValue = versionMap.getUnderLock(delete.uid().bytes());
-            if (versionValue == null) {
-                currentVersion = loadCurrentVersionFromIndex(delete.uid());
-            } else {
-                if (engineConfig.isEnableGcDeletes() && versionValue.delete() && (engineConfig.getThreadPool().estimatedTimeInMillis() - versionValue.time()) > engineConfig.getGcDeletesInMillis()) {
-                    currentVersion = Versions.NOT_FOUND; // deleted, and GC
-                } else {
-                    currentVersion = versionValue.version();
-                }
-            }
 
-            long updatedVersion;
-            long expectedVersion = delete.version();
-            if (delete.versionType().isVersionConflictForWrites(currentVersion, expectedVersion)) {
-//                if (delete.origin() == Operation.Origin.RECOVERY) {
-//                    return;
-//                } else {
-//                    throw new VersionConflictEngineException(shardId, delete.type(), delete.id(), currentVersion, expectedVersion);
-//                }
-            }
-            updatedVersion = delete.versionType().updateVersion(currentVersion, expectedVersion);
-            final boolean found;
-            if (currentVersion == Versions.NOT_FOUND) {
-                // doc does not exist and no prior deletes
-                found = false;
-            } else if (versionValue != null && versionValue.delete()) {
-                // a "delete on delete", in this case, we still increment the version, log it, and return that version
-                found = false;
-            } else {
-                // we deleted a currently existing document
-                writer.deleteDocuments(delete.uid());
-                found = true;
-            }
-
-            delete.updateVersion(updatedVersion, delete.versionType().versionTypeForReplicationAndRecovery());
-            delete.found(found);
-            Translog.Location translogLocation = translog.add(new Translog.Delete(delete));
-            DeleteVersionValue version = new DeleteVersionValue(updatedVersion, engineConfig.getThreadPool().estimatedTimeInMillis(), SequenceNo.UNKNOWN);
-            version.translogLocation(translogLocation);
-            versionMap.putUnderLock(delete.uid().bytes(), version);
-
-            indexingService.postDeleteUnderLock(delete);
-        }
-    }
-
-    @Override
     public void delete(DeleteByQuery delete) throws EngineException {
         try (InternalLock _ = readLock.acquire()) {
             final IndexWriter indexWriter = currentIndexWriter();
@@ -638,7 +540,7 @@ public class InternalEngine implements Engine {
         refresh("delete_by_query", true);
     }
 
-    @Override
+
     public final Searcher acquireSearcher(String source) throws EngineException {
         boolean success = false;
          /* Acquire order here is store -> manager since we need
@@ -677,7 +579,7 @@ public class InternalEngine implements Engine {
         return new EngineSearcher(source, searcher, manager);
     }
 
-    @Override
+
     public boolean refreshNeeded() {
         if (store.tryIncRef()) {
             /*
@@ -701,7 +603,7 @@ public class InternalEngine implements Engine {
         return false;
     }
 
-    @Override
+
     public void refresh(String source, boolean force) throws EngineException {
         // we obtain a read lock here, since we don't want a flush to happen while we are refreshing
         // since it flushes the index as well (though, in terms of concurrency, we are allowed to do it)
@@ -735,7 +637,7 @@ public class InternalEngine implements Engine {
         versionMapRefreshPending.set(false);
     }
 
-    @Override
+
     public void flush(FlushType type, boolean force, boolean waitIfOngoing) throws EngineException {
         ensureOpen();
         if (type == FlushType.NEW_WRITER || type == FlushType.COMMIT_TRANSLOG) {
@@ -938,12 +840,12 @@ public class InternalEngine implements Engine {
         }
     }
 
-    @Override
+
     public void forceMerge(boolean flush, boolean waitForMerge) {
         forceMerge(flush, waitForMerge, 1, false, false);
     }
 
-    @Override
+
     public void forceMerge(boolean flush, boolean waitForMerge, int maxNumSegments, boolean onlyExpungeDeletes, boolean upgrade) throws EngineException {
         if (optimizeMutex.compareAndSet(false, true)) {
             try (InternalLock _ = readLock.acquire()) {
@@ -983,12 +885,12 @@ public class InternalEngine implements Engine {
         } else if (flush) {
             // we only need to monitor merges for async calls if we are going to flush
             engineConfig.getThreadPool().executor(ThreadPool.Names.OPTIMIZE).execute(new AbstractRunnable() {
-                @Override
+
                 public void onFailure(Throwable t) {
                     logger.error("Exception while waiting for merges asynchronously after optimize", t);
                 }
 
-                @Override
+
                 protected void doRun() throws Exception {
                     waitForMerges(true);
                 }
@@ -997,7 +899,6 @@ public class InternalEngine implements Engine {
     }
 
 
-    @Override
     public SnapshotIndexCommit snapshotIndex() throws EngineException {
         // we have to flush outside of the readlock otherwise we might have a problem upgrading
         // the to a write lock when we fail the engine in this operation
@@ -1010,7 +911,7 @@ public class InternalEngine implements Engine {
         }
     }
 
-    @Override
+
     public void recover(RecoveryHandler recoveryHandler) throws EngineException {
         // take a write lock here so it won't happen while a flush is in progress
         // this means that next commits will not be allowed once the lock is released
@@ -1102,7 +1003,7 @@ public class InternalEngine implements Engine {
         return a.ramBytesUsed();
     }
 
-    @Override
+
     public SegmentsStats segmentsStats() {
 
         // Does ensureOpen for us:
@@ -1110,24 +1011,24 @@ public class InternalEngine implements Engine {
         assert indexWriter != null;
 
         try (final Searcher searcher = acquireSearcher("segments_stats")) {
-                SegmentsStats stats = new SegmentsStats();
-                for (LeafReaderContext reader : searcher.reader().leaves()) {
-                    final SegmentReader segmentReader = segmentReader(reader.reader());
-                    stats.add(1, segmentReader.ramBytesUsed());
-                    stats.addTermsMemoryInBytes(guardedRamBytesUsed(segmentReader.getPostingsReader()));
-                    stats.addStoredFieldsMemoryInBytes(guardedRamBytesUsed(segmentReader.getFieldsReader()));
-                    stats.addTermVectorsMemoryInBytes(guardedRamBytesUsed(segmentReader.getTermVectorsReader()));
-                    stats.addNormsMemoryInBytes(guardedRamBytesUsed(segmentReader.getNormsReader()));
-                    stats.addDocValuesMemoryInBytes(guardedRamBytesUsed(segmentReader.getDocValuesReader()));
-                }
-                stats.addVersionMapMemoryInBytes(versionMap.ramBytesUsed());
-                stats.addIndexWriterMemoryInBytes(indexWriter.ramBytesUsed());
-                stats.addIndexWriterMaxMemoryInBytes((long) (indexWriter.getConfig().getRAMBufferSizeMB() * 1024 * 1024));
-                return stats;
+            SegmentsStats stats = new SegmentsStats();
+            for (LeafReaderContext reader : searcher.reader().leaves()) {
+                final SegmentReader segmentReader = segmentReader(reader.reader());
+                stats.add(1, segmentReader.ramBytesUsed());
+                stats.addTermsMemoryInBytes(guardedRamBytesUsed(segmentReader.getPostingsReader()));
+                stats.addStoredFieldsMemoryInBytes(guardedRamBytesUsed(segmentReader.getFieldsReader()));
+                stats.addTermVectorsMemoryInBytes(guardedRamBytesUsed(segmentReader.getTermVectorsReader()));
+                stats.addNormsMemoryInBytes(guardedRamBytesUsed(segmentReader.getNormsReader()));
+                stats.addDocValuesMemoryInBytes(guardedRamBytesUsed(segmentReader.getDocValuesReader()));
+            }
+            stats.addVersionMapMemoryInBytes(versionMap.ramBytesUsed());
+            stats.addIndexWriterMemoryInBytes(indexWriter.ramBytesUsed());
+            stats.addIndexWriterMaxMemoryInBytes((long) (indexWriter.getConfig().getRAMBufferSizeMB() * 1024 * 1024));
+            return stats;
         }
     }
 
-    @Override
+
     public List<Segment> segments(boolean verbose) {
         try (InternalLock _ = readLock.acquire()) {
             ensureOpen();
@@ -1189,7 +1090,7 @@ public class InternalEngine implements Engine {
 
             Segment[] segmentsArr = segments.values().toArray(new Segment[segments.values().size()]);
             Arrays.sort(segmentsArr, new Comparator<Segment>() {
-                @Override
+
                 public int compare(Segment o1, Segment o2) {
                     return (int) (o1.getGeneration() - o2.getGeneration());
                 }
@@ -1212,7 +1113,7 @@ public class InternalEngine implements Engine {
         }
     }
 
-    @Override
+
     public void close() throws ElasticsearchException {
         logger.debug("close now acquire writeLock");
         try (InternalLock _ = writeLock.acquire()) {
@@ -1254,7 +1155,7 @@ public class InternalEngine implements Engine {
         return currentIndexWriter().getConfig();
     }
 
-    @Override
+
     public void failEngine(String reason, Throwable failure) {
         assert failure != null;
         if (failEngineLock.tryLock()) {
@@ -1310,9 +1211,9 @@ public class InternalEngine implements Engine {
         return dirtyLock(uid.bytes());
     }
 
-    private long loadCurrentVersionFromIndex(Term uid) throws IOException {
+    private Versions.DocIdAndVersion loadCurrentVersionFromIndex(Term uid) throws IOException {
         try (final Searcher searcher = acquireSearcher("load_version")) {
-            return Versions.loadVersion(searcher.reader(), uid);
+            return Versions.loadDocIdAndVersion(searcher.reader(), uid);
         }
     }
 
@@ -1355,7 +1256,7 @@ public class InternalEngine implements Engine {
             // Warm-up hook for newly-merged segments. Warming up segments here is better since it will be performed at the end
             // of the merge operation and won't slow down _refresh
             iwc.setMergedSegmentWarmer(new IndexReaderWarmer() {
-                @Override
+
                 public void warm(LeafReader reader) throws IOException {
                     try {
                         assert isMergedSegment(reader);
@@ -1401,22 +1302,22 @@ public class InternalEngine implements Engine {
             this.manager = manager;
         }
 
-        @Override
+
         public String source() {
             return this.source;
         }
 
-        @Override
+
         public IndexReader reader() {
             return searcher.getIndexReader();
         }
 
-        @Override
+
         public IndexSearcher searcher() {
             return searcher;
         }
 
-        @Override
+
         public void close() throws ElasticsearchException {
             if (!released.compareAndSet(false, true)) {
                 /* In general, searchers should never be released twice or this would break reference counting. There is one rare case
@@ -1443,7 +1344,6 @@ public class InternalEngine implements Engine {
     class SearchFactory extends SearcherFactory {
 
 
-        @Override
         public IndexSearcher newSearcher(IndexReader reader) throws IOException {
             IndexSearcher searcher = new IndexSearcher(reader);
             searcher.setSimilarity(engineConfig.getSimilarity());
@@ -1522,7 +1422,7 @@ public class InternalEngine implements Engine {
             assert onGoingRecoveries.get() >= 0 : "ongoingRecoveries must be >= 0 but was: " + onGoingRecoveries.get();
         }
 
-        @Override
+
         public void close() throws ElasticsearchException {
             endRecovery();
         }
@@ -1535,7 +1435,7 @@ public class InternalEngine implements Engine {
             this.lock = lock;
         }
 
-        @Override
+
         public void close() {
             lock.unlock();
         }
@@ -1579,29 +1479,29 @@ public class InternalEngine implements Engine {
 
     private static final class NoOpLock implements Lock {
 
-        @Override
+
         public void lock() {
         }
 
-        @Override
+
         public void lockInterruptibly() throws InterruptedException {
         }
 
-        @Override
+
         public boolean tryLock() {
             return true;
         }
 
-        @Override
+
         public boolean tryLock(long time, TimeUnit unit) throws InterruptedException {
             return true;
         }
 
-        @Override
+
         public void unlock() {
         }
 
-        @Override
+
         public Condition newCondition() {
             throw new UnsupportedOperationException("NoOpLock can't provide a condition");
         }
@@ -1632,7 +1532,7 @@ public class InternalEngine implements Engine {
 
 
     class FailEngineOnMergeFailure implements MergeSchedulerProvider.FailureListener {
-        @Override
+
         public void onFailedMerge(MergePolicy.MergeException e) {
             if (Lucene.isCorruptionException(e)) {
                 if (engineConfig.isFailEngineOnCorruption()) {
@@ -1650,7 +1550,7 @@ public class InternalEngine implements Engine {
         private final AtomicInteger numMergesInFlight = new AtomicInteger(0);
         private final AtomicBoolean isThrottling = new AtomicBoolean();
 
-        @Override
+
         public synchronized void beforeMerge(OnGoingMerge merge) {
             int maxNumMerges = mergeScheduler.getMaxMerges();
             if (numMergesInFlight.incrementAndGet() > maxNumMerges) {
@@ -1662,7 +1562,7 @@ public class InternalEngine implements Engine {
             }
         }
 
-        @Override
+
         public synchronized void afterMerge(OnGoingMerge merge) {
             int maxNumMerges = mergeScheduler.getMaxMerges();
             if (numMergesInFlight.decrementAndGet() < maxNumMerges) {
