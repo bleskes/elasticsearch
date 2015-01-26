@@ -55,15 +55,30 @@ public class AnalysisConfig
      */
     public static final String BUCKET_SPAN = "bucketSpan";
     public static final String BATCH_SPAN = "batchSpan";
+    public static final String LATENCY = "latency";
     public static final String PERIOD = "period";
     public static final String SUMMARY_COUNT_FIELD_NAME = "summaryCountFieldName";
     public static final String DETECTORS = "detectors";
+
+    /**
+     * An upper bound for the number of latency buckets in order to avoid values that would cause
+     * too much delay in finalising results and to minimise memory overhead of handling out-of-order
+     * records.
+     */
+    public static final int MAX_LATENCY_BUCKETS = 10;
+
+    /**
+     * This is the bucket span that will be used if no bucket span is specified.
+     * Note that this is duplicated from the C++ side.
+     */
+    public static final long DEFAULT_BUCKET_SPAN = 300;
 
     /**
      * These values apply to all detectors
      */
     private Long m_BucketSpan;
     private Long m_BatchSpan;
+    private Long m_Latency = 0L;
     private Long m_Period;
     private String m_SummaryCountFieldName;
     private List<Detector> m_Detectors;
@@ -100,6 +115,14 @@ public class AnalysisConfig
             if (obj != null)
             {
                 m_BatchSpan = ((Integer)obj).longValue();
+            }
+        }
+        if (values.containsKey(LATENCY))
+        {
+            Object obj = values.get(LATENCY);
+            if (obj != null)
+            {
+                m_Latency = ((Integer)obj).longValue();
             }
         }
         if (values.containsKey(PERIOD))
@@ -160,6 +183,24 @@ public class AnalysisConfig
     public void setBatchSpan(Long batchSpan)
     {
         m_BatchSpan = batchSpan;
+    }
+
+    /**
+     * The latency interval (seconds) during which out-of-order records should be handled.
+     * @return The latency interval (seconds) or <code>null</code> if not set
+     */
+    public Long getLatency()
+    {
+        return m_Latency;
+    }
+
+    /**
+     * Set the latency interval during which out-of-order records should be handled.
+     * @param latency the latency interval in seconds
+     */
+    public void setLatency(Long latency)
+    {
+        m_Latency = latency;
     }
 
     /**
@@ -354,6 +395,7 @@ public class AnalysisConfig
 
         return Objects.equals(this.m_BucketSpan, that.m_BucketSpan) &&
                 Objects.equals(this.m_BatchSpan, that.m_BatchSpan) &&
+                Objects.equals(this.m_Latency, that.m_Latency) &&
                 Objects.equals(this.m_Period, that.m_Period) &&
                 Objects.equals(this.m_SummaryCountFieldName, that.m_SummaryCountFieldName);
     }
@@ -361,14 +403,15 @@ public class AnalysisConfig
     @Override
     public int hashCode()
     {
-        return Objects.hash(m_Detectors, m_BucketSpan, m_BatchSpan, m_Period,
+        return Objects.hash(m_Detectors, m_BucketSpan, m_BatchSpan, m_Latency, m_Period,
                 m_SummaryCountFieldName);
     }
 
     /**
      * Checks the configuration is valid
      * <ol>
-     * <li>Check that if non-null BucketSpan, BatchSpan and Period are &gt= 0</li>
+     * <li>Check that if non-null BucketSpan, BatchSpan, Latency and Period are &gt= 0</li>
+     * <li>Check that if non-null Latency is &lt= MAX_LATENCY </li>
      * <li>Check there is at least one detector configured</li>
      * <li>Check all the detectors are configured correctly</li>
      * </ol>
@@ -376,8 +419,7 @@ public class AnalysisConfig
      * @return true
      * @throws JobConfigurationException
      */
-    public boolean verify()
-    throws JobConfigurationException
+    public boolean verify() throws JobConfigurationException
     {
         if (m_BucketSpan != null && m_BucketSpan < 0)
         {
@@ -390,6 +432,8 @@ public class AnalysisConfig
             throw new JobConfigurationException("BatchSpan cannot be < 0."
                     + " Value = " + m_BatchSpan, ErrorCode.INVALID_VALUE);
         }
+
+        validateLatency();
 
         if (m_Period != null && m_Period < 0)
         {
@@ -412,5 +456,26 @@ public class AnalysisConfig
         }
 
         return true;
+    }
+
+    private void validateLatency() throws JobConfigurationException
+    {
+        if (m_Latency == null)
+        {
+            return;
+        }
+        if (m_Latency < 0)
+        {
+            throw new JobConfigurationException("Latency cannot be < 0."
+                    + " Value = " + m_Latency, ErrorCode.INVALID_VALUE);
+        }
+        long bucketSpan = (m_BucketSpan == null) ? DEFAULT_BUCKET_SPAN : m_BucketSpan;
+        long maxLatency = MAX_LATENCY_BUCKETS * bucketSpan;
+        if (m_Latency > maxLatency)
+        {
+            throw new JobConfigurationException(
+                    "Latency cannot be > " + MAX_LATENCY_BUCKETS + " * " + bucketSpan + " = "
+                    + maxLatency + "." + " Value = " + m_Latency, ErrorCode.INVALID_VALUE);
+        }
     }
 }

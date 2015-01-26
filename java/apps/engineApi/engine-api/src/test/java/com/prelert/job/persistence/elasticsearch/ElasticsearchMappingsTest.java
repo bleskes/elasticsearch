@@ -127,6 +127,10 @@ public class ElasticsearchMappingsTest
                         "            \"type\": \"long\"," +
                         "            \"index\": \"no\"" +
                         "          }," +
+                        "          \"latency\": {" +
+                        "            \"type\": \"long\"," +
+                        "            \"index\": \"no\"" +
+                        "          }," +
                         "          \"period\": {" +
                         "            \"type\": \"long\"," +
                         "            \"index\": \"no\"" +

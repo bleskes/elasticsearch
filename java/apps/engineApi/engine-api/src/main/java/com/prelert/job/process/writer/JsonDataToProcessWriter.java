@@ -153,7 +153,6 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter
 
         int recordsWritten = 0;
         int recordCount = 0;
-        long lastEpoch = 0;
 
         long inputFieldCount = readJsonRecord(parser, record, fieldMap, gotFields);
         while (inputFieldCount > 0)
@@ -168,11 +167,10 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter
                     m_StatusReporter.reportMissingFields(missing);
                 }
 
-                Long epoch = transformTimeAndWrite(record, timeFieldIndex, lastEpoch, inputFieldCount);
+                Long epoch = transformTimeAndWrite(record, timeFieldIndex, inputFieldCount);
                 if (epoch != null)
                 {
                     recordsWritten++;
-                    lastEpoch = epoch;
                 }
             }
             else

@@ -27,6 +27,7 @@
 package com.prelert.job;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,7 +37,9 @@ import java.util.TreeSet;
 
 import junit.framework.Assert;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 /**
  * Tests the configured fields in the analysis are correct
@@ -48,128 +51,152 @@ import org.junit.Test;
  */
 public class AnalysisConfigTest
 {
-	@Test
-	public void testFieldConfiguration()
-	{
-		// Single detector, not pre-summarised
-		AnalysisConfig ac = new AnalysisConfig();
-		Detector det = new Detector();
-		det.setFieldName("responsetime");
-		det.setByFieldName("airline");
-		det.setPartitionFieldName("sourcetype");
-		ac.setDetectors(Arrays.asList(det));
+    @Rule
+    public ExpectedException m_ExpectedException = ExpectedException.none();
 
-		Set<String> analysisFields = new TreeSet<String>(Arrays.asList(new String [] {
-				"responsetime", "airline", "sourcetype"}));
+    @Test
+    public void testFieldConfiguration()
+    {
+        // Single detector, not pre-summarised
+        AnalysisConfig ac = new AnalysisConfig();
+        Detector det = new Detector();
+        det.setFieldName("responsetime");
+        det.setByFieldName("airline");
+        det.setPartitionFieldName("sourcetype");
+        ac.setDetectors(Arrays.asList(det));
 
-		for (String s : ac.analysisFields())
-		{
-			Assert.assertTrue(analysisFields.contains(s));
-		}
+        Set<String> analysisFields = new TreeSet<String>(Arrays.asList(new String [] {
+                "responsetime", "airline", "sourcetype"}));
 
-		for (String s : analysisFields)
-		{
-			Assert.assertTrue(ac.analysisFields().contains(s));
-		}
+        for (String s : ac.analysisFields())
+        {
+            Assert.assertTrue(analysisFields.contains(s));
+        }
 
-		Assert.assertEquals(1, ac.fields().size());
-		Assert.assertTrue(ac.fields().contains("responsetime"));
+        for (String s : analysisFields)
+        {
+            Assert.assertTrue(ac.analysisFields().contains(s));
+        }
 
-		Assert.assertEquals(1, ac.byFields().size());
-		Assert.assertTrue(ac.byFields().contains("airline"));
+        Assert.assertEquals(1, ac.fields().size());
+        Assert.assertTrue(ac.fields().contains("responsetime"));
 
-		Assert.assertEquals(1, ac.partitionFields().size());
-		Assert.assertTrue(ac.partitionFields().contains("sourcetype"));
+        Assert.assertEquals(1, ac.byFields().size());
+        Assert.assertTrue(ac.byFields().contains("airline"));
 
-		Assert.assertNull(ac.getSummaryCountFieldName());
+        Assert.assertEquals(1, ac.partitionFields().size());
+        Assert.assertTrue(ac.partitionFields().contains("sourcetype"));
 
-		// Single detector, pre-summarised
-		analysisFields.add("summaryCount");
-		ac.setSummaryCountFieldName("summaryCount");
+        Assert.assertNull(ac.getSummaryCountFieldName());
 
-		for (String s : ac.analysisFields())
-		{
-			Assert.assertTrue(analysisFields.contains(s));
-		}
+        // Single detector, pre-summarised
+        analysisFields.add("summaryCount");
+        ac.setSummaryCountFieldName("summaryCount");
 
-		for (String s : analysisFields)
-		{
-			Assert.assertTrue(ac.analysisFields().contains(s));
-		}
+        for (String s : ac.analysisFields())
+        {
+            Assert.assertTrue(analysisFields.contains(s));
+        }
 
-		Assert.assertEquals("summaryCount", ac.getSummaryCountFieldName());
+        for (String s : analysisFields)
+        {
+            Assert.assertTrue(ac.analysisFields().contains(s));
+        }
 
-		// Multiple detectors, not pre-summarised
-		List<Detector> detectors = new ArrayList<>();
+        Assert.assertEquals("summaryCount", ac.getSummaryCountFieldName());
 
-		ac = new AnalysisConfig();
-		det = new Detector();
-		det.setFieldName("metric1");
-		det.setByFieldName("by_one");
-		det.setPartitionFieldName("partition_one");
-		detectors.add(det);
+        // Multiple detectors, not pre-summarised
+        List<Detector> detectors = new ArrayList<>();
 
-		det = new Detector();
-		det.setFieldName("metric2");
-		det.setByFieldName("by_two");
-		det.setOverFieldName("over_field");
-		detectors.add(det);
+        ac = new AnalysisConfig();
+        det = new Detector();
+        det.setFieldName("metric1");
+        det.setByFieldName("by_one");
+        det.setPartitionFieldName("partition_one");
+        detectors.add(det);
 
-		det = new Detector();
-		det.setFieldName("metric2");
-		det.setByFieldName("by_two");
-		det.setPartitionFieldName("partition_two");
-		detectors.add(det);
+        det = new Detector();
+        det.setFieldName("metric2");
+        det.setByFieldName("by_two");
+        det.setOverFieldName("over_field");
+        detectors.add(det);
 
-		ac.setDetectors(detectors);
+        det = new Detector();
+        det.setFieldName("metric2");
+        det.setByFieldName("by_two");
+        det.setPartitionFieldName("partition_two");
+        detectors.add(det);
 
-		analysisFields = new TreeSet<String>(Arrays.asList(new String [] {
-				"metric1", "metric2", "by_one", "by_two", "over_field",
-				"partition_one", "partition_two"}));
+        ac.setDetectors(detectors);
 
-		for (String s : ac.analysisFields())
-		{
-			Assert.assertTrue(analysisFields.contains(s));
-		}
+        analysisFields = new TreeSet<String>(Arrays.asList(new String [] {
+                "metric1", "metric2", "by_one", "by_two", "over_field",
+                "partition_one", "partition_two"}));
 
-		for (String s : analysisFields)
-		{
-			Assert.assertTrue(ac.analysisFields().contains(s));
-		}
+        for (String s : ac.analysisFields())
+        {
+            Assert.assertTrue(analysisFields.contains(s));
+        }
 
-		Assert.assertEquals(2, ac.fields().size());
-		Assert.assertTrue(ac.fields().contains("metric1"));
-		Assert.assertTrue(ac.fields().contains("metric2"));
+        for (String s : analysisFields)
+        {
+            Assert.assertTrue(ac.analysisFields().contains(s));
+        }
 
-		Assert.assertEquals(2, ac.byFields().size());
-		Assert.assertTrue(ac.byFields().contains("by_one"));
-		Assert.assertTrue(ac.byFields().contains("by_two"));
+        Assert.assertEquals(2, ac.fields().size());
+        Assert.assertTrue(ac.fields().contains("metric1"));
+        Assert.assertTrue(ac.fields().contains("metric2"));
 
-		Assert.assertEquals(1, ac.overFields().size());
-		Assert.assertTrue(ac.overFields().contains("over_field"));
+        Assert.assertEquals(2, ac.byFields().size());
+        Assert.assertTrue(ac.byFields().contains("by_one"));
+        Assert.assertTrue(ac.byFields().contains("by_two"));
 
-		Assert.assertEquals(2, ac.partitionFields().size());
-		Assert.assertTrue(ac.partitionFields().contains("partition_one"));
-		Assert.assertTrue(ac.partitionFields().contains("partition_two"));
+        Assert.assertEquals(1, ac.overFields().size());
+        Assert.assertTrue(ac.overFields().contains("over_field"));
 
-		Assert.assertNull(ac.getSummaryCountFieldName());
+        Assert.assertEquals(2, ac.partitionFields().size());
+        Assert.assertTrue(ac.partitionFields().contains("partition_one"));
+        Assert.assertTrue(ac.partitionFields().contains("partition_two"));
 
-		// Multiple detectors, pre-summarised
-		analysisFields.add("summaryCount");
-		ac.setSummaryCountFieldName("summaryCount");
+        Assert.assertNull(ac.getSummaryCountFieldName());
 
-		for (String s : ac.analysisFields())
-		{
-			Assert.assertTrue(analysisFields.contains(s));
-		}
+        // Multiple detectors, pre-summarised
+        analysisFields.add("summaryCount");
+        ac.setSummaryCountFieldName("summaryCount");
 
-		for (String s : analysisFields)
-		{
-			Assert.assertTrue(ac.analysisFields().contains(s));
-		}
+        for (String s : ac.analysisFields())
+        {
+            Assert.assertTrue(analysisFields.contains(s));
+        }
 
-		Assert.assertEquals("summaryCount", ac.getSummaryCountFieldName());
-	}
+        for (String s : analysisFields)
+        {
+            Assert.assertTrue(ac.analysisFields().contains(s));
+        }
+
+        Assert.assertEquals("summaryCount", ac.getSummaryCountFieldName());
+    }
+
+    @Test
+    public void testVerify_GivenLatencyIsMoreThanMax() throws JobConfigurationException
+    {
+        AnalysisConfig analysisConfig = new AnalysisConfig();
+        Detector detector = new Detector();
+        detector.setFieldName("responsetime");
+        detector.setByFieldName("airline");
+        detector.setPartitionFieldName("sourcetype");
+        analysisConfig.setDetectors(Arrays.asList(detector));
+
+        analysisConfig.setBucketSpan(600L);
+        analysisConfig.setLatency(6000L);
+        assertTrue(analysisConfig.verify());
+
+        analysisConfig.setLatency(6001L);
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expectMessage("Latency cannot be > 10 * 600 = 6000. Value = 6001");
+
+        analysisConfig.verify();
+    }
 
     @Test
     public void testHashCode_GivenEqual()

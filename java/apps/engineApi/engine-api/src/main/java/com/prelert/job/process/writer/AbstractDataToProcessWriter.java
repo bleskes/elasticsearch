@@ -51,6 +51,7 @@ abstract class AbstractDataToProcessWriter implements DataToProcessWriter
     protected final JobDataPersister m_JobDataPersister;
     protected final Logger m_Logger;
     protected final DateTransformer m_DateTransformer;
+    private long m_LatestEpoch = 0L;
 
     protected AbstractDataToProcessWriter(LengthEncodedWriter lengthEncodedWriter,
             DataDescription dataDescription, AnalysisConfig analysisConfig,
@@ -71,11 +72,10 @@ abstract class AbstractDataToProcessWriter implements DataToProcessWriter
      * the record and returns the timestamp as an epoch. If not, it logs
      * as necessary and returns null.
      */
-    protected Long transformTimeAndWrite(String[] record, int timeFieldIndex, long lastEpoch,
-            long inputFieldCount) throws IOException,
-            HighProportionOfBadTimestampsException, OutOfOrderRecordsException
+    protected Long transformTimeAndWrite(String[] record, int timeFieldIndex, long inputFieldCount)
+            throws IOException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException
     {
-        Long epoch = getValidEpochOrNull(record[timeFieldIndex], lastEpoch, inputFieldCount);
+        Long epoch = getValidEpochOrNull(record[timeFieldIndex], inputFieldCount);
         if (epoch == null)
         {
             return null;
@@ -89,7 +89,7 @@ abstract class AbstractDataToProcessWriter implements DataToProcessWriter
         return epoch;
     }
 
-    private Long getValidEpochOrNull(String timestamp, long lastEpoch, long inputFieldCount)
+    private Long getValidEpochOrNull(String timestamp, long inputFieldCount)
     {
         long epoch = 0L;
         try
@@ -103,12 +103,13 @@ abstract class AbstractDataToProcessWriter implements DataToProcessWriter
             return null;
         }
 
-        if (epoch < lastEpoch)
+        if (epoch < m_LatestEpoch - m_AnalysisConfig.getLatency())
         {
             // out of order
             m_StatusReporter.reportOutOfOrderRecord(inputFieldCount);
             return null;
         }
+        m_LatestEpoch = Math.max(m_LatestEpoch, epoch);
         return epoch;
     }
 }
