@@ -27,16 +27,16 @@ import org.elasticsearch.shield.support.AbstractShieldModule;
 /**
  *
  */
-public class NettySecuredHttpServerTransportModule extends AbstractShieldModule implements PreProcessModule {
+public class ShieldNettyHttpServerTransportModule extends AbstractShieldModule implements PreProcessModule {
 
-    public NettySecuredHttpServerTransportModule(Settings settings) {
+    public ShieldNettyHttpServerTransportModule(Settings settings) {
         super(settings);
     }
 
     @Override
     public void processModule(Module module) {
         if (module instanceof HttpServerModule) {
-            ((HttpServerModule) module).setHttpServerTransport(NettySecuredHttpServerTransport.class, ShieldPlugin.NAME);
+            ((HttpServerModule) module).setHttpServerTransport(ShieldNettyHttpServerTransport.class, ShieldPlugin.NAME);
         }
     }
 

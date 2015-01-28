@@ -31,7 +31,7 @@ import org.elasticsearch.shield.authc.support.SecuredString;
 import org.elasticsearch.shield.authc.support.UsernamePasswordToken;
 import org.elasticsearch.shield.authc.support.ldap.SearchScope;
 import org.elasticsearch.shield.authz.AuthorizationException;
-import org.elasticsearch.shield.transport.netty.NettySecuredTransport;
+import org.elasticsearch.shield.transport.netty.ShieldNettyTransport;
 import org.elasticsearch.test.ShieldIntegrationTest;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
@@ -172,7 +172,7 @@ abstract public class AbstractAdLdapRealmTests extends ShieldIntegrationTest {
         return settingsBuilder()
                 .put("shield.ssl.keystore.path", store.getPath())
                 .put("shield.ssl.keystore.password", password)
-                .put(NettySecuredTransport.HOSTNAME_VERIFICATION_SETTING, false)
+                .put(ShieldNettyTransport.HOSTNAME_VERIFICATION_SETTING, false)
                 .put("shield.ssl.truststore.path", store.getPath())
                 .put("shield.ssl.truststore.password", password).build();
     }

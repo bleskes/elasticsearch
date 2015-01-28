@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.test;
+package org.elasticsearch.integration;
 
 import org.elasticsearch.ExceptionsHelper;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
@@ -26,6 +26,7 @@ import org.elasticsearch.action.search.MultiSearchResponse;
 import org.elasticsearch.action.search.SearchPhaseExecutionException;
 import org.elasticsearch.shield.authc.support.SecuredString;
 import org.elasticsearch.shield.authz.AuthorizationException;
+import org.elasticsearch.test.ShieldIntegrationTest;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

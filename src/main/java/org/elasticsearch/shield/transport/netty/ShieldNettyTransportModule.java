@@ -27,16 +27,16 @@ import org.elasticsearch.transport.TransportModule;
 /**
  *
  */
-public class NettySecuredTransportModule extends AbstractShieldModule implements PreProcessModule {
+public class ShieldNettyTransportModule extends AbstractShieldModule implements PreProcessModule {
 
-    public NettySecuredTransportModule(Settings settings) {
+    public ShieldNettyTransportModule(Settings settings) {
         super(settings);
     }
 
     @Override
     public void processModule(Module module) {
         if (module instanceof TransportModule) {
-            ((TransportModule) module).setTransport(NettySecuredTransport.class, ShieldPlugin.NAME);
+            ((TransportModule) module).setTransport(ShieldNettyTransport.class, ShieldPlugin.NAME);
         }
     }
 

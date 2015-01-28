@@ -29,7 +29,7 @@ import org.elasticsearch.shield.rest.ShieldRestModule;
 import org.elasticsearch.shield.license.LicenseModule;
 import org.elasticsearch.shield.ssl.SSLModule;
 import org.elasticsearch.shield.support.AbstractShieldModule;
-import org.elasticsearch.shield.transport.SecuredTransportModule;
+import org.elasticsearch.shield.transport.ShieldTransportModule;
 
 /**
  *
@@ -48,7 +48,7 @@ public class ShieldModule extends AbstractShieldModule.Spawn {
         if (clientMode) {
             return ImmutableList.<Module>of(
                     new ShieldActionModule(settings),
-                    new SecuredTransportModule(settings),
+                    new ShieldTransportModule(settings),
                     new SSLModule(settings));
         }
 
@@ -59,7 +59,7 @@ public class ShieldModule extends AbstractShieldModule.Spawn {
                 new AuditTrailModule(settings),
                 new ShieldRestModule(settings),
                 new ShieldActionModule(settings),
-                new SecuredTransportModule(settings),
+                new ShieldTransportModule(settings),
                 new SignatureModule(settings),
                 new SSLModule(settings));
     }
