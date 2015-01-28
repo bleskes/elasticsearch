@@ -50,7 +50,9 @@ import org.elasticsearch.index.store.StoreFileMetaData;
 import org.elasticsearch.indices.store.TransportNodesListShardStoreMetaData;
 import org.elasticsearch.transport.ConnectTransportException;
 
-import java.util.*;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -415,6 +417,15 @@ public class LocalGatewayAllocator extends AbstractComponent implements GatewayA
                 logger.debug(sb.toString());
             }
         }
+        if (logger.isInfoEnabled()) {
+            StringBuilder sb = new StringBuilder("retrieved the following versions for " + shard + ":");
+            for (TransportNodesListGatewayStartedShards.NodeLocalGatewayStartedShards nodeInfo : response) {
+                sb.append("\n node " + nodeInfo.getNode() + ": version [" + nodeInfo.version() + "]");
+            }
+            ;
+            logger.info(sb.toString());
+        }
+
 
         for (TransportNodesListGatewayStartedShards.NodeLocalGatewayStartedShards nodeShardState : response) {
             // -1 version means it does not exists, which is what the API returns, and what we expect to

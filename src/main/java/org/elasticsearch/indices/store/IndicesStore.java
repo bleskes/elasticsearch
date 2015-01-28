@@ -20,7 +20,6 @@
 package org.elasticsearch.indices.store;
 
 import org.apache.lucene.store.StoreRateLimiting;
-import org.elasticsearch.Version;
 import org.elasticsearch.cluster.*;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.cluster.node.DiscoveryNode;
@@ -182,51 +181,52 @@ public class IndicesStore extends AbstractComponent implements ClusterStateListe
     }
 
     boolean shardCanBeDeleted(ClusterState state, IndexShardRoutingTable indexShardRoutingTable) {
+        return false;
         // a shard can be deleted if all its copies are active, and its not allocated on this node
-        if (indexShardRoutingTable.size() == 0) {
-            // should not really happen, there should always be at least 1 (primary) shard in a
-            // shard replication group, in any case, protected from deleting something by mistake
-            return false;
-        }
-
-        for (ShardRouting shardRouting : indexShardRoutingTable) {
-            // be conservative here, check on started, not even active
-            if (!shardRouting.started()) {
-                return false;
-            }
-
-            // if the allocated or relocation node id doesn't exists in the cluster state  it may be a stale node,
-            // make sure we don't do anything with this until the routing table has properly been rerouted to reflect
-            // the fact that the node does not exists
-            DiscoveryNode node = state.nodes().get(shardRouting.currentNodeId());
-            if (node == null) {
-                return false;
-            }
-            // If all nodes have been upgraded to >= 1.3.0 at some point we get back here and have the chance to
-            // run this api. (when cluster state is then updated)
-            if (node.getVersion().before(Version.V_1_3_0)) {
-                logger.debug("Skip deleting deleting shard instance [{}], a node holding a shard instance is < 1.3.0", shardRouting);
-                return false;
-            }
-            if (shardRouting.relocatingNodeId() != null) {
-                node = state.nodes().get(shardRouting.relocatingNodeId());
-                if (node == null) {
-                    return false;
-                }
-                if (node.getVersion().before(Version.V_1_3_0)) {
-                    logger.debug("Skip deleting deleting shard instance [{}], a node holding a shard instance is < 1.3.0", shardRouting);
-                    return false;
-                }
-            }
-
-            // check if shard is active on the current node or is getting relocated to the our node
-            String localNodeId = state.getNodes().localNode().id();
-            if (localNodeId.equals(shardRouting.currentNodeId()) || localNodeId.equals(shardRouting.relocatingNodeId())) {
-                return false;
-            }
-        }
-
-        return true;
+////        if (indexShardRoutingTable.size() == 0) {
+////            // should not really happen, there should always be at least 1 (primary) shard in a
+////            // shard replication group, in any case, protected from deleting something by mistake
+////            return false;
+////        }
+////
+////        for (ShardRouting shardRouting : indexShardRoutingTable) {
+////            // be conservative here, check on started, not even active
+////            if (!shardRouting.started()) {
+////                return false;
+////            }
+////
+////            // if the allocated or relocation node id doesn't exists in the cluster state  it may be a stale node,
+////            // make sure we don't do anything with this until the routing table has properly been rerouted to reflect
+////            // the fact that the node does not exists
+////            DiscoveryNode node = state.nodes().get(shardRouting.currentNodeId());
+////            if (node == null) {
+////                return false;
+////            }
+////            // If all nodes have been upgraded to >= 1.3.0 at some point we get back here and have the chance to
+////            // run this api. (when cluster state is then updated)
+////            if (node.getVersion().before(Version.V_1_3_0)) {
+////                logger.debug("Skip deleting deleting shard instance [{}], a node holding a shard instance is < 1.3.0", shardRouting);
+////                return false;
+////            }
+////            if (shardRouting.relocatingNodeId() != null) {
+////                node = state.nodes().get(shardRouting.relocatingNodeId());
+////                if (node == null) {
+////                    return false;
+////                }
+////                if (node.getVersion().before(Version.V_1_3_0)) {
+////                    logger.debug("Skip deleting deleting shard instance [{}], a node holding a shard instance is < 1.3.0", shardRouting);
+////                    return false;
+////                }
+////            }
+////
+////            // check if shard is active on the current node or is getting relocated to the our node
+////            String localNodeId = state.getNodes().localNode().id();
+////            if (localNodeId.equals(shardRouting.currentNodeId()) || localNodeId.equals(shardRouting.relocatingNodeId())) {
+////                return false;
+////            }
+////        }
+//
+//        return true;
     }
 
     // TODO will have to ammend this for shadow replicas so we don't delete the shared copy...
