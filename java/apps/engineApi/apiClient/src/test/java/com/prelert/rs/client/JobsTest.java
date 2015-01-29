@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -166,7 +166,7 @@ public class JobsTest implements Closeable
 			if (jobs.getSkip() > 0)
 			{
 				int start = Math.max(0,  jobs.getSkip() -jobs.getTake());
-				prevPageUrl = String.format("%s?skip=%d&take=%D", baseUrl,
+				prevPageUrl = String.format("%s?skip=%d&take=%d", baseUrl,
 						start, jobs.getTake());							
 			}
 			test((prevPageUrl == null && jobs.getPreviousPage() == null) ||
@@ -176,7 +176,7 @@ public class JobsTest implements Closeable
 			if (jobs.getHitCount() > jobs.getSkip() + jobs.getTake())
 			{
 				int start = jobs.getSkip() + jobs.getTake();
-				nextPageUrl = String.format("%s?skip=%d&take=%D", baseUrl,
+				nextPageUrl = String.format("%s?skip=%d&take=%d", baseUrl,
 						start, jobs.getTake());							
 			}
 			test((nextPageUrl == null && jobs.getNextPage() == null) ||
