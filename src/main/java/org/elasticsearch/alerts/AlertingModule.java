@@ -18,7 +18,7 @@
 package org.elasticsearch.alerts;
 
 
-import org.elasticsearch.alerts.actions.AlertActionManager;
+import org.elasticsearch.alerts.actions.AlertActionService;
 import org.elasticsearch.alerts.actions.AlertActionRegistry;
 import org.elasticsearch.alerts.client.NodeAlertsClient;
 import org.elasticsearch.alerts.client.AlertsClient;
@@ -31,7 +31,7 @@ import org.elasticsearch.alerts.transport.actions.get.TransportGetAlertAction;
 import org.elasticsearch.alerts.transport.actions.put.TransportPutAlertAction;
 import org.elasticsearch.alerts.transport.actions.service.TransportAlertsServiceAction;
 import org.elasticsearch.alerts.transport.actions.stats.TransportAlertStatsAction;
-import org.elasticsearch.alerts.triggers.TriggerManager;
+import org.elasticsearch.alerts.triggers.TriggerService;
 import org.elasticsearch.common.inject.AbstractModule;
 
 
@@ -42,12 +42,12 @@ public class AlertingModule extends AbstractModule {
         // Core components
         bind(TemplateHelper.class).asEagerSingleton();
         bind(AlertsStore.class).asEagerSingleton();
-        bind(AlertManager.class).asEagerSingleton();
-        bind(AlertActionManager.class).asEagerSingleton();
-        bind(TriggerManager.class).asEagerSingleton();
+        bind(AlertService.class).asEagerSingleton();
+        bind(AlertActionService.class).asEagerSingleton();
+        bind(TriggerService.class).asEagerSingleton();
         bind(AlertScheduler.class).asEagerSingleton();
         bind(AlertActionRegistry.class).asEagerSingleton();
-        bind(ConfigurationManager.class).asEagerSingleton();
+        bind(ConfigurationService.class).asEagerSingleton();
 
         // Transport and client layer
         bind(TransportPutAlertAction.class).asEagerSingleton();

@@ -23,7 +23,7 @@ import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.master.TransportMasterNodeOperationAction;
 import org.elasticsearch.alerts.Alert;
-import org.elasticsearch.alerts.AlertManager;
+import org.elasticsearch.alerts.AlertService;
 import org.elasticsearch.alerts.AlertsStore;
 import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.cluster.ClusterState;
@@ -44,13 +44,13 @@ import java.io.IOException;
  */
 public class TransportGetAlertAction extends TransportMasterNodeOperationAction<GetAlertRequest,  GetAlertResponse> {
 
-    private final AlertManager alertManager;
+    private final AlertService alertService;
 
     @Inject
     public TransportGetAlertAction(Settings settings, TransportService transportService, ClusterService clusterService,
-                                   ThreadPool threadPool, ActionFilters actionFilters, AlertManager alertManager) {
+                                   ThreadPool threadPool, ActionFilters actionFilters, AlertService alertService) {
         super(settings, GetAlertAction.NAME, transportService, clusterService, threadPool, actionFilters);
-        this.alertManager = alertManager;
+        this.alertService = alertService;
     }
 
     @Override
@@ -70,7 +70,7 @@ public class TransportGetAlertAction extends TransportMasterNodeOperationAction<
 
     @Override
     protected void masterOperation(GetAlertRequest request, ClusterState state, ActionListener<GetAlertResponse> listener) throws ElasticsearchException {
-        Alert alert = alertManager.getAlert(request.alertName());
+        Alert alert = alertService.getAlert(request.alertName());
         GetResult getResult;
         if (alert != null) {
             BytesReference alertSource = null;

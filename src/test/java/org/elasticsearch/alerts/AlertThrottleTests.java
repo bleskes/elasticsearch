@@ -22,7 +22,7 @@ import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
-import org.elasticsearch.alerts.actions.AlertActionManager;
+import org.elasticsearch.alerts.actions.AlertActionService;
 import org.elasticsearch.alerts.actions.AlertActionState;
 import org.elasticsearch.alerts.actions.IndexAlertAction;
 import org.elasticsearch.alerts.client.AlertsClient;
@@ -117,8 +117,8 @@ public class AlertThrottleTests extends AbstractAlertingTests {
         assertThat(parsedAlert.getAckState(), equalTo(AlertAckState.NOT_TRIGGERED));
 
         CountResponse countOfThrottledActions = client()
-                .prepareCount(AlertActionManager.ALERT_HISTORY_INDEX_PREFIX + "*")
-                .setQuery(QueryBuilders.matchQuery(AlertActionManager.STATE, AlertActionState.THROTTLED.toString()))
+                .prepareCount(AlertActionService.ALERT_HISTORY_INDEX_PREFIX + "*")
+                .setQuery(QueryBuilders.matchQuery(AlertActionService.STATE, AlertActionState.THROTTLED.toString()))
                 .get();
         assertThat(countOfThrottledActions.getCount(), greaterThan(0L));
     }
@@ -162,7 +162,7 @@ public class AlertThrottleTests extends AbstractAlertingTests {
                         .get();
 
                 if (countResponse.getCount() != 1){
-                    SearchResponse actionResponse = client().prepareSearch(AlertActionManager.ALERT_HISTORY_INDEX_PREFIX + "*")
+                    SearchResponse actionResponse = client().prepareSearch(AlertActionService.ALERT_HISTORY_INDEX_PREFIX + "*")
                             .setQuery(matchAllQuery())
                             .get();
                     for (SearchHit hit : actionResponse.getHits()) {
@@ -189,8 +189,8 @@ public class AlertThrottleTests extends AbstractAlertingTests {
         });
 
         CountResponse countOfThrottledActions = client()
-                .prepareCount(AlertActionManager.ALERT_HISTORY_INDEX_PREFIX + "*")
-                .setQuery(QueryBuilders.matchQuery(AlertActionManager.STATE, AlertActionState.THROTTLED.toString()))
+                .prepareCount(AlertActionService.ALERT_HISTORY_INDEX_PREFIX + "*")
+                .setQuery(QueryBuilders.matchQuery(AlertActionService.STATE, AlertActionState.THROTTLED.toString()))
                 .get();
         assertThat(countOfThrottledActions.getCount(), greaterThan(0L));
     }

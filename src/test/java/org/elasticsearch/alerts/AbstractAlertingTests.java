@@ -20,7 +20,7 @@ package org.elasticsearch.alerts;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.support.IndicesOptions;
-import org.elasticsearch.alerts.actions.AlertActionManager;
+import org.elasticsearch.alerts.actions.AlertActionService;
 import org.elasticsearch.alerts.actions.AlertActionState;
 import org.elasticsearch.alerts.client.AlertsClient;
 import org.elasticsearch.alerts.plugin.AlertsPlugin;
@@ -158,7 +158,7 @@ public abstract class AbstractAlertingTests extends ElasticsearchIntegrationTest
             @Override
             public void run() {
                 ClusterState state = client().admin().cluster().prepareState().get().getState();
-                String[] alertHistoryIndices = state.metaData().concreteIndices(IndicesOptions.lenientExpandOpen(), AlertActionManager.ALERT_HISTORY_INDEX_PREFIX + "*");
+                String[] alertHistoryIndices = state.metaData().concreteIndices(IndicesOptions.lenientExpandOpen(), AlertActionService.ALERT_HISTORY_INDEX_PREFIX + "*");
                 assertThat(alertHistoryIndices, not(emptyArray()));
                 for (String index : alertHistoryIndices) {
                     IndexRoutingTable routingTable = state.getRoutingTable().index(index);
@@ -180,7 +180,7 @@ public abstract class AbstractAlertingTests extends ElasticsearchIntegrationTest
             @Override
             public void run() {
                 ClusterState state = client().admin().cluster().prepareState().get().getState();
-                String[] alertHistoryIndices = state.metaData().concreteIndices(IndicesOptions.lenientExpandOpen(), AlertActionManager.ALERT_HISTORY_INDEX_PREFIX + "*");
+                String[] alertHistoryIndices = state.metaData().concreteIndices(IndicesOptions.lenientExpandOpen(), AlertActionService.ALERT_HISTORY_INDEX_PREFIX + "*");
                 assertThat(alertHistoryIndices, not(emptyArray()));
                 for (String index : alertHistoryIndices) {
                     IndexRoutingTable routingTable = state.getRoutingTable().index(index);
@@ -188,7 +188,7 @@ public abstract class AbstractAlertingTests extends ElasticsearchIntegrationTest
                     assertThat(routingTable.allPrimaryShardsActive(), is(true));
                 }
 
-                SearchResponse searchResponse = client().prepareSearch(AlertActionManager.ALERT_HISTORY_INDEX_PREFIX + "*")
+                SearchResponse searchResponse = client().prepareSearch(AlertActionService.ALERT_HISTORY_INDEX_PREFIX + "*")
                         .setIndicesOptions(IndicesOptions.lenientExpandOpen())
                         .setQuery(boolQuery().must(matchQuery("alert_name", alertName)).must(matchQuery("state", AlertActionState.ACTION_PERFORMED.toString())))
                         .get();
@@ -201,7 +201,7 @@ public abstract class AbstractAlertingTests extends ElasticsearchIntegrationTest
     }
 
     protected long findNumberOfPerformedActions(String alertName) {
-        SearchResponse searchResponse = client().prepareSearch(AlertActionManager.ALERT_HISTORY_INDEX_PREFIX + "*")
+        SearchResponse searchResponse = client().prepareSearch(AlertActionService.ALERT_HISTORY_INDEX_PREFIX + "*")
                 .setIndicesOptions(IndicesOptions.lenientExpandOpen())
                 .setQuery(boolQuery().must(matchQuery("alert_name", alertName)).must(matchQuery("state", AlertActionState.ACTION_PERFORMED.toString())))
                 .get();
@@ -214,7 +214,7 @@ public abstract class AbstractAlertingTests extends ElasticsearchIntegrationTest
             public void run() {
                 // The alerthistory index gets created in the background when the first alert fires, so we to check first is this index is created and shards are started
                 ClusterState state = client().admin().cluster().prepareState().get().getState();
-                String[] alertHistoryIndices = state.metaData().concreteIndices(IndicesOptions.lenientExpandOpen(), AlertActionManager.ALERT_HISTORY_INDEX_PREFIX + "*");
+                String[] alertHistoryIndices = state.metaData().concreteIndices(IndicesOptions.lenientExpandOpen(), AlertActionService.ALERT_HISTORY_INDEX_PREFIX + "*");
                 assertThat(alertHistoryIndices, not(emptyArray()));
                 for (String index : alertHistoryIndices) {
                     IndexRoutingTable routingTable = state.getRoutingTable().index(index);
@@ -222,7 +222,7 @@ public abstract class AbstractAlertingTests extends ElasticsearchIntegrationTest
                     assertThat(routingTable.allPrimaryShardsActive(), is(true));
                 }
 
-                SearchResponse searchResponse = client().prepareSearch(AlertActionManager.ALERT_HISTORY_INDEX_PREFIX + "*")
+                SearchResponse searchResponse = client().prepareSearch(AlertActionService.ALERT_HISTORY_INDEX_PREFIX + "*")
                         .setIndicesOptions(IndicesOptions.lenientExpandOpen())
                         .setQuery(boolQuery().must(matchQuery("alert_name", alertName)).must(matchQuery("state", AlertActionState.NO_ACTION_NEEDED.toString())))
                         .get();
@@ -342,29 +342,29 @@ public abstract class AbstractAlertingTests extends ElasticsearchIntegrationTest
             // First manually stop alerting on non elected master node, this will prevent that alerting becomes active
             // on these nodes
             for (String node : nodes) {
-                AlertManager alertManager = _testCluster.getInstance(AlertManager.class, node);
-                assertThat(alertManager.getState(), equalTo(State.STOPPED));
-                alertManager.stop(); // Prevents these nodes from starting alerting when new elected master node is picked.
+                AlertService alertService = _testCluster.getInstance(AlertService.class, node);
+                assertThat(alertService.getState(), equalTo(State.STOPPED));
+                alertService.stop(); // Prevents these nodes from starting alerting when new elected master node is picked.
             }
 
             // Then stop alerting on elected master node and wait until alerting has stopped on it.
-            final AlertManager alertManager = _testCluster.getInstance(AlertManager.class, masterNode);
+            final AlertService alertService = _testCluster.getInstance(AlertService.class, masterNode);
             try {
                 assertBusy(new Runnable() {
                     @Override
                     public void run() {
-                        assertThat(alertManager.getState(), not(equalTo(State.STARTING)));
+                        assertThat(alertService.getState(), not(equalTo(State.STARTING)));
                     }
                 });
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
-            alertManager.stop();
+            alertService.stop();
             try {
                 assertBusy(new Runnable() {
                     @Override
                     public void run() {
-                        assertThat(alertManager.getState(), equalTo(State.STOPPED));
+                        assertThat(alertService.getState(), equalTo(State.STOPPED));
                     }
                 });
             } catch (Exception e) {
