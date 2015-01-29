@@ -31,9 +31,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * An alert action entry is an event of an alert that fired on particular moment in time.
+ * An alert history is an event of an alert that fired on particular moment in time.
  */
-public class AlertActionEntry implements ToXContent {
+public class AlertHistory implements ToXContent {
 
     private String id;
     private String alertName;
@@ -56,10 +56,10 @@ public class AlertActionEntry implements ToXContent {
     private transient long version;
     private transient XContentType contentType;
 
-    AlertActionEntry() {
+    AlertHistory() {
     }
 
-    public AlertActionEntry(Alert alert, DateTime scheduledTime, DateTime fireTime, AlertActionState state) throws IOException {
+    public AlertHistory(Alert alert, DateTime scheduledTime, DateTime fireTime, AlertActionState state) throws IOException {
         this.id = alert.getAlertName() + "#" + scheduledTime.toDateTimeISO();
         this.alertName = alert.getAlertName();
         this.fireTime = fireTime;
@@ -299,7 +299,7 @@ public class AlertActionEntry implements ToXContent {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        AlertActionEntry entry = (AlertActionEntry) o;
+        AlertHistory entry = (AlertHistory) o;
         if (!id.equals(entry.id)) return false;
 
         return true;
