@@ -19,7 +19,7 @@
 package org.elasticsearch.shield.authc.support.ldap;
 
 import org.elasticsearch.common.inject.Inject;
-import org.elasticsearch.shield.ssl.SSLService;
+import org.elasticsearch.shield.ssl.ClientSSLService;
 
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocket;
@@ -32,7 +32,7 @@ import java.net.InetAddress;
  */
 public abstract class AbstractLdapSslSocketFactory extends SocketFactory {
 
-    protected static SSLService sslService;
+    protected static ClientSSLService clientSSLService;
 
     private final SSLSocketFactory socketFactory;
 
@@ -40,8 +40,8 @@ public abstract class AbstractLdapSslSocketFactory extends SocketFactory {
      * This should only be invoked once to establish a static instance that will be used for each constructor.
      */
     @Inject
-    public static void init(SSLService sslService) {
-        AbstractLdapSslSocketFactory.sslService = sslService;
+    public static void init(ClientSSLService sslService) {
+        AbstractLdapSslSocketFactory.clientSSLService = sslService;
     }
 
     public AbstractLdapSslSocketFactory(SSLSocketFactory sslSocketFactory) {
@@ -91,7 +91,7 @@ public abstract class AbstractLdapSslSocketFactory extends SocketFactory {
      * @param sslSocket
      */
     protected void configureSSLSocket(SSLSocket sslSocket) {
-        sslSocket.setEnabledProtocols(sslService.supportedProtocols());
-        sslSocket.setEnabledCipherSuites(sslService.ciphers());
+        sslSocket.setEnabledProtocols(clientSSLService.supportedProtocols());
+        sslSocket.setEnabledCipherSuites(clientSSLService.ciphers());
     }
 }

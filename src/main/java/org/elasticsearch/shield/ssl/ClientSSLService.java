@@ -17,26 +17,33 @@
 
 package org.elasticsearch.shield.ssl;
 
-import org.elasticsearch.common.inject.util.Providers;
+import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.shield.support.AbstractShieldModule;
+import org.elasticsearch.shield.ShieldSettingsException;
 
-/**
- *
- */
-public class SSLModule extends AbstractShieldModule {
+public class ClientSSLService extends AbstractSSLService {
 
-    public SSLModule(Settings settings) {
+    @Inject
+    public ClientSSLService(Settings settings) {
         super(settings);
     }
 
     @Override
-    protected void configure(boolean clientMode) {
-        bind(ClientSSLService.class).asEagerSingleton();
-        if (!clientMode) {
-            bind(ServerSSLService.class).asEagerSingleton();
-        } else {
-            bind(ServerSSLService.class).toProvider(Providers.<ServerSSLService>of(null));
+    protected SSLSettings sslSettings(Settings customSettings) {
+        SSLSettings sslSettings = new SSLSettings(customSettings, componentSettings);
+
+        if (sslSettings.keyStorePath != null) {
+            if (sslSettings.keyStorePassword == null) {
+                throw new ShieldSettingsException("no keystore password configured");
+            }
         }
+
+        if (sslSettings.trustStorePath != null) {
+            if (sslSettings.trustStorePassword == null) {
+                throw new ShieldSettingsException("no truststore password configured");
+            }
+        }
+
+        return sslSettings;
     }
 }

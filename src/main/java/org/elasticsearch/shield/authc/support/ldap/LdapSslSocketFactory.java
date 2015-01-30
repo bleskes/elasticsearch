@@ -48,7 +48,7 @@ public class LdapSslSocketFactory extends AbstractLdapSslSocketFactory {
      */
     public static synchronized SocketFactory getDefault() {
         if (instance == null) {
-            instance = new LdapSslSocketFactory(sslService.getSSLSocketFactory());
+            instance = new LdapSslSocketFactory(clientSSLService.getSSLSocketFactory());
         }
         return instance;
     }
