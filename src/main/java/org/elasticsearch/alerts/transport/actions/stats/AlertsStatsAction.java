@@ -17,13 +17,13 @@
 
 package org.elasticsearch.alerts.transport.actions.stats;
 
-import org.elasticsearch.alerts.client.AlertsClientAction;
-import org.elasticsearch.alerts.client.AlertsClient;
+import org.elasticsearch.alerts.client.AlertsAction;
+import org.elasticsearch.client.Client;
 
 /**
  * This Action gets the stats for the alert plugin
  */
-public class AlertsStatsAction extends AlertsClientAction<AlertsStatsRequest, AlertsStatsResponse, AlertsStatsRequestBuilder> {
+public class AlertsStatsAction extends AlertsAction<AlertsStatsRequest, AlertsStatsResponse, AlertsStatsRequestBuilder> {
 
     public static final AlertsStatsAction INSTANCE = new AlertsStatsAction();
     public static final String NAME = "cluster/alerts/stats";
@@ -38,7 +38,8 @@ public class AlertsStatsAction extends AlertsClientAction<AlertsStatsRequest, Al
     }
 
     @Override
-    public AlertsStatsRequestBuilder newRequestBuilder(AlertsClient client) {
+    public AlertsStatsRequestBuilder newRequestBuilder(Client client) {
         return new AlertsStatsRequestBuilder(client);
     }
+
 }

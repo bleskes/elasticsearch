@@ -43,8 +43,7 @@ public class AlertsStatsResponse extends ActionResponse {
     }
 
     /**
-     * Gets the current queue size in the alert action manager
-     * @return
+     * @return The current queue size in the alert action manager
      */
     public long getAlertActionManagerQueueSize() {
         return alertActionManagerQueueSize;
@@ -55,8 +54,7 @@ public class AlertsStatsResponse extends ActionResponse {
     }
 
     /**
-     * The number of alerts currently registered in the system
-     * @return
+     * @return The number of alerts currently registered in the system
      */
     public long getNumberOfRegisteredAlerts() {
         return numberOfRegisteredAlerts;
@@ -78,8 +76,7 @@ public class AlertsStatsResponse extends ActionResponse {
     }
 
     /**
-     * Returns true if the alert action manager is started
-     * @return
+     * @return {@code true} if the alert action manager is started
      */
     public boolean isAlertActionManagerStarted() {
         return alertActionManagerStarted;
@@ -90,8 +87,7 @@ public class AlertsStatsResponse extends ActionResponse {
     }
 
     /**
-     * Sets the largest queue size the alert action manager queue has grown to
-     * @return
+     * @return The largest queue size the alert action manager queue has grown to
      */
     public long getAlertActionManagerLargestQueueSize() {
         return alertActionManagerLargestQueueSize;

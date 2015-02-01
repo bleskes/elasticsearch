@@ -35,10 +35,6 @@ public class AckAlertResponse extends ActionResponse {
     public AckAlertResponse() {
     }
 
-    /**
-     * The Constructor that takes the ack state for the alert
-     * @param alertAckState
-     */
     public AckAlertResponse(@Nullable AlertAckState alertAckState) {
         this.alertAckState = alertAckState;
     }

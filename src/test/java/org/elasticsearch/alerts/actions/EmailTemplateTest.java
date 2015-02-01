@@ -22,6 +22,7 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.ShardSearchFailure;
 import org.elasticsearch.alerts.Alert;
 import org.elasticsearch.alerts.AlertAckState;
+import org.elasticsearch.alerts.support.init.proxy.ScriptServiceProxy;
 import org.elasticsearch.alerts.triggers.ScriptedTrigger;
 import org.elasticsearch.alerts.triggers.TriggerResult;
 import org.elasticsearch.common.joda.time.DateTime;
@@ -82,7 +83,7 @@ public class EmailTemplateTest extends ElasticsearchTestCase {
         engineServiceSet.add(mustacheScriptEngineService);
 
         ScriptService scriptService = new ScriptService(settings, new Environment(), engineServiceSet, new ResourceWatcherService(settings, tp));
-        String parsedTemplate = SmtpAlertActionFactory.renderTemplate(template, alert, result, scriptService);
+        String parsedTemplate = SmtpAlertActionFactory.renderTemplate(template, alert, result, ScriptServiceProxy.of(scriptService));
         tp.shutdownNow();
         assertEquals("test-email-template triggered with 0 hits", parsedTemplate);
 

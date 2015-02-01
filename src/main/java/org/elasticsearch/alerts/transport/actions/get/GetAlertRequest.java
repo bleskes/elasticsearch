@@ -42,8 +42,7 @@ public class GetAlertRequest extends MasterNodeOperationRequest<GetAlertRequest>
     }
 
     /**
-     * Constructor taking name (id) of the alert to retrieve
-     * @param alertName
+     * @param alertName name (id) of the alert to retrieve
      */
     public GetAlertRequest(String alertName) {
         this.alertName = alertName;
@@ -61,8 +60,7 @@ public class GetAlertRequest extends MasterNodeOperationRequest<GetAlertRequest>
 
 
     /**
-     * The name of the alert to retrieve
-     * @return
+     * @return The name of the alert to retrieve
      */
     public String alertName() {
         return alertName;
