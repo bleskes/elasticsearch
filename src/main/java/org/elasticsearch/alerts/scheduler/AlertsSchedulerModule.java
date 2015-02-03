@@ -16,3 +16,16 @@
  */
 
 package org.elasticsearch.alerts.scheduler;
+
+import org.elasticsearch.common.inject.AbstractModule;
+
+/**
+ *
+ */
+public class AlertsSchedulerModule extends AbstractModule {
+
+    @Override
+    protected void configure() {
+        bind(AlertScheduler.class).asEagerSingleton();
+    }
+}

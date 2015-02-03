@@ -15,13 +15,13 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.alerts.rest;
+package org.elasticsearch.alerts.rest.action;
 
-import org.elasticsearch.action.get.GetResponse;
+import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.alerts.AlertsStore;
 import org.elasticsearch.alerts.client.AlertsClient;
-import org.elasticsearch.alerts.transport.actions.get.GetAlertRequest;
-import org.elasticsearch.alerts.transport.actions.get.GetAlertResponse;
+import org.elasticsearch.alerts.transport.actions.delete.DeleteAlertRequest;
+import org.elasticsearch.alerts.transport.actions.delete.DeleteAlertResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
@@ -29,43 +29,40 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.rest.*;
 import org.elasticsearch.rest.action.support.RestBuilderListener;
 
-import static org.elasticsearch.rest.RestRequest.Method.GET;
+import static org.elasticsearch.rest.RestRequest.Method.DELETE;
 import static org.elasticsearch.rest.RestStatus.NOT_FOUND;
 import static org.elasticsearch.rest.RestStatus.OK;
 
 /**
- * The rest action to get an alert
  */
-public class RestGetAlertAction extends BaseRestHandler {
+public class RestDeleteAlertAction extends BaseRestHandler {
 
     private final AlertsClient alertsClient;
 
     @Inject
-    public RestGetAlertAction(Settings settings, RestController controller, Client client, AlertsClient alertsClient) {
+    public RestDeleteAlertAction(Settings settings, RestController controller, Client client, AlertsClient alertsClient) {
         super(settings, controller, client);
         this.alertsClient = alertsClient;
-        controller.registerHandler(GET, AlertsStore.ALERT_INDEX + "/alert/{name}", this);
+        controller.registerHandler(DELETE, AlertsStore.ALERT_INDEX + "/alert/{name}", this);
     }
 
     @Override
     protected void handleRequest(RestRequest request, RestChannel channel, Client client) throws Exception {
-        final GetAlertRequest getAlertRequest = new GetAlertRequest();
-        getAlertRequest.alertName(request.param("name"));
-        alertsClient.getAlert(getAlertRequest, new RestBuilderListener<GetAlertResponse>(channel) {
+        DeleteAlertRequest indexAlertRequest = new DeleteAlertRequest();
+        indexAlertRequest.setAlertName(request.param("name"));
+        alertsClient.deleteAlert(indexAlertRequest, new RestBuilderListener<DeleteAlertResponse>(channel) {
             @Override
-            public RestResponse buildResponse(GetAlertResponse result, XContentBuilder builder) throws Exception {
-                GetResponse getResponse = result.getResponse();
+            public RestResponse buildResponse(DeleteAlertResponse result, XContentBuilder builder) throws Exception {
+                DeleteResponse deleteResponse = result.deleteResponse();
                 builder.startObject()
-                        .field("found", getResponse.isExists())
-                        .field("_index", getResponse.getIndex())
-                        .field("_type", getResponse.getType())
-                        .field("_id", getResponse.getId())
-                        .field("_version", getResponse.getVersion())
-                        .field("alert", getResponse.getSource())
+                        .field("found", deleteResponse.isFound())
+                        .field("_index", deleteResponse.getIndex())
+                        .field("_type", deleteResponse.getType())
+                        .field("_id", deleteResponse.getId())
+                        .field("_version", deleteResponse.getVersion())
                         .endObject();
-
                 RestStatus status = OK;
-                if (!getResponse.isExists()) {
+                if (!deleteResponse.isFound()) {
                     status = NOT_FOUND;
                 }
                 return new BytesRestResponse(status, builder);

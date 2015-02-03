@@ -15,12 +15,13 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.alerts;
+package org.elasticsearch.alerts.support;
 
 import org.elasticsearch.action.ActionFuture;
 import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateRequest;
 import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateResponse;
 import org.elasticsearch.action.admin.indices.template.put.TransportPutIndexTemplateAction;
+import org.elasticsearch.alerts.AlertsStore;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.metadata.IndexTemplateMetaData;
 import org.elasticsearch.common.component.AbstractComponent;
@@ -37,12 +38,12 @@ import java.util.regex.Pattern;
 
 /**
  */
-public class TemplateHelper extends AbstractComponent {
+public class TemplateUtils extends AbstractComponent {
 
     private final TransportPutIndexTemplateAction transportPutIndexTemplateAction;
 
     @Inject
-    public TemplateHelper(Settings settings, TransportPutIndexTemplateAction transportPutIndexTemplateAction) {
+    public TemplateUtils(Settings settings, TransportPutIndexTemplateAction transportPutIndexTemplateAction) {
         super(settings);
         this.transportPutIndexTemplateAction = transportPutIndexTemplateAction;
     }

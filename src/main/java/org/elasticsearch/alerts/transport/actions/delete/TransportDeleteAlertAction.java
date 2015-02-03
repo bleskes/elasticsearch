@@ -21,7 +21,7 @@ import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.master.TransportMasterNodeOperationAction;
-import org.elasticsearch.alerts.AlertService;
+import org.elasticsearch.alerts.AlertsService;
 import org.elasticsearch.alerts.AlertsStore;
 import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.cluster.ClusterState;
@@ -37,13 +37,13 @@ import org.elasticsearch.transport.TransportService;
  */
 public class TransportDeleteAlertAction extends TransportMasterNodeOperationAction<DeleteAlertRequest,  DeleteAlertResponse> {
 
-    private final AlertService alertService;
+    private final AlertsService alertsService;
 
     @Inject
     public TransportDeleteAlertAction(Settings settings, TransportService transportService, ClusterService clusterService,
-                                      ThreadPool threadPool, ActionFilters actionFilters, AlertService alertService) {
+                                      ThreadPool threadPool, ActionFilters actionFilters, AlertsService alertsService) {
         super(settings, DeleteAlertAction.NAME, transportService, clusterService, threadPool, actionFilters);
-        this.alertService = alertService;
+        this.alertsService = alertsService;
     }
 
     @Override
@@ -64,7 +64,7 @@ public class TransportDeleteAlertAction extends TransportMasterNodeOperationActi
     @Override
     protected void masterOperation(DeleteAlertRequest request, ClusterState state, ActionListener<DeleteAlertResponse> listener) throws ElasticsearchException {
         try {
-            DeleteAlertResponse response = new DeleteAlertResponse(alertService.deleteAlert(request.getAlertName()));
+            DeleteAlertResponse response = new DeleteAlertResponse(alertsService.deleteAlert(request.getAlertName()));
             listener.onResponse(response);
         } catch (Exception e) {
             listener.onFailure(e);

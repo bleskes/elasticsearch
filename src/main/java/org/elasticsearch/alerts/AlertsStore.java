@@ -30,6 +30,8 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.alerts.actions.AlertAction;
 import org.elasticsearch.alerts.actions.AlertActionRegistry;
+import org.elasticsearch.alerts.support.AlertUtils;
+import org.elasticsearch.alerts.support.TemplateUtils;
 import org.elasticsearch.alerts.support.init.proxy.ClientProxy;
 import org.elasticsearch.alerts.triggers.TriggerService;
 import org.elasticsearch.cluster.ClusterState;
@@ -73,7 +75,7 @@ public class AlertsStore extends AbstractComponent {
 
     private final ClientProxy client;
     private final TriggerService triggerService;
-    private final TemplateHelper templateHelper;
+    private final TemplateUtils templateUtils;
     private final ConcurrentMap<String, Alert> alertMap;
     private final AlertActionRegistry alertActionRegistry;
     private final AtomicBoolean started = new AtomicBoolean(false);
@@ -83,11 +85,11 @@ public class AlertsStore extends AbstractComponent {
 
     @Inject
     public AlertsStore(Settings settings, ClientProxy client, AlertActionRegistry alertActionRegistry,
-                       TriggerService triggerService, TemplateHelper templateHelper) {
+                       TriggerService triggerService, TemplateUtils templateUtils) {
         super(settings);
         this.client = client;
         this.alertActionRegistry = alertActionRegistry;
-        this.templateHelper = templateHelper;
+        this.templateUtils = templateUtils;
         this.alertMap = ConcurrentCollections.newConcurrentMap();
         this.triggerService = triggerService;
         // Not using component settings, to let AlertsStore and AlertActionManager share the same settings
@@ -173,7 +175,7 @@ public class AlertsStore extends AbstractComponent {
                     alertMap.clear();
                     return false;
                 }
-                templateHelper.checkAndUploadIndexTemplate(state, "alerts");
+                templateUtils.checkAndUploadIndexTemplate(state, "alerts");
                 started.set(true);
                 return true;
             } else {
@@ -182,7 +184,7 @@ public class AlertsStore extends AbstractComponent {
             }
         } else {
             logger.info("No previous .alert index, skip loading of alerts");
-            templateHelper.checkAndUploadIndexTemplate(state, "alerts");
+            templateUtils.checkAndUploadIndexTemplate(state, "alerts");
             started.set(true);
             return true;
         }

@@ -15,4 +15,17 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.alerts.rest;
+package org.elasticsearch.alerts.triggers;
+
+import org.elasticsearch.common.inject.AbstractModule;
+
+/**
+ *
+ */
+public class AlertsTriggerModule extends AbstractModule {
+
+    @Override
+    protected void configure() {
+        bind(TriggerService.class).asEagerSingleton();
+    }
+}

@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.alerts.rest;
+package org.elasticsearch.alerts.rest.action;
 
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.alerts.AlertsStore;
