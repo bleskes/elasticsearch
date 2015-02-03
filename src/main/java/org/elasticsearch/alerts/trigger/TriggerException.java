@@ -15,4 +15,20 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.alerts.actions;
+package org.elasticsearch.alerts.trigger;
+
+import org.elasticsearch.alerts.AlertsException;
+
+/**
+ *
+ */
+public class TriggerException extends AlertsException {
+
+    public TriggerException(String msg) {
+        super(msg);
+    }
+
+    public TriggerException(String msg, Throwable cause) {
+        super(msg, cause);
+    }
+}

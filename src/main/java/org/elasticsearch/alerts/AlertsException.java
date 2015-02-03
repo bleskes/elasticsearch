@@ -15,22 +15,20 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.alerts.scheduler;
+package org.elasticsearch.alerts;
 
-import org.quartz.Job;
-import org.quartz.JobExecutionContext;
-import org.quartz.JobExecutionException;
+import org.elasticsearch.ElasticsearchException;
 
-public class AlertExecutorJob implements Job {
+/**
+ * A base class for all alerts exceptions
+ */
+public class AlertsException extends ElasticsearchException {
 
-    public AlertExecutorJob () {
+    public AlertsException(String msg) {
+        super(msg);
     }
 
-    @Override
-    public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
-        String alertName = jobExecutionContext.getJobDetail().getKey().getName();
-        ((AlertScheduler)jobExecutionContext.getJobDetail().getJobDataMap().get("manager")).executeAlert(alertName,
-                jobExecutionContext);
+    public AlertsException(String msg, Throwable cause) {
+        super(msg, cause);
     }
 }
-

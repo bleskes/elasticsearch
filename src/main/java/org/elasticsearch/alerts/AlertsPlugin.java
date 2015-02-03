@@ -17,10 +17,8 @@
 
 package org.elasticsearch.alerts;
 
-import org.elasticsearch.alerts.AlertsModule;
 import org.elasticsearch.alerts.support.init.InitializingService;
 import org.elasticsearch.common.collect.ImmutableList;
-import org.elasticsearch.common.collect.Lists;
 import org.elasticsearch.common.component.LifecycleComponent;
 import org.elasticsearch.common.inject.Module;
 import org.elasticsearch.common.settings.Settings;

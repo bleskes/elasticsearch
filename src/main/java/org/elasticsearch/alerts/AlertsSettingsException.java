@@ -15,20 +15,18 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.alerts.actions;
+package org.elasticsearch.alerts;
 
+/**
+ *
+ */
+public class AlertsSettingsException extends AlertsException {
 
-import org.elasticsearch.alerts.Alert;
-import org.elasticsearch.alerts.AlertsService;
-import org.elasticsearch.alerts.triggers.TriggerResult;
-import org.elasticsearch.common.xcontent.XContentParser;
+    public AlertsSettingsException(String msg, Throwable cause) {
+        super(msg, cause);
+    }
 
-import java.io.IOException;
-
-public interface AlertActionFactory {
-
-    AlertAction createAction(XContentParser parser) throws IOException;
-
-    public boolean doAction(AlertAction action, Alert alert, AlertsService.AlertRun alertRun);
-
+    public AlertsSettingsException(String msg) {
+        super(msg);
+    }
 }

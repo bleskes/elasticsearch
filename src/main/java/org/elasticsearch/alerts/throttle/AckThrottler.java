@@ -15,17 +15,24 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.alerts.scheduler;
+package org.elasticsearch.alerts.throttle;
 
-import org.elasticsearch.common.inject.AbstractModule;
+import org.elasticsearch.alerts.Alert;
+import org.elasticsearch.alerts.trigger.Trigger;
+
+import static org.elasticsearch.alerts.support.AlertsDateUtils.formatDate;
 
 /**
  *
  */
-public class AlertsSchedulerModule extends AbstractModule {
+public class AckThrottler implements Throttler {
 
     @Override
-    protected void configure() {
-        bind(AlertScheduler.class).asEagerSingleton();
+    public Result throttle(Alert alert, Trigger.Result result) {
+        Alert.Status.Ack ack = alert.status().ack();
+        if (ack != null) {
+            return Result.throttle("alert [" + alert.name() + "] was acked at [" + formatDate(ack.timestamp()));
+        }
+        return Result.NO;
     }
 }

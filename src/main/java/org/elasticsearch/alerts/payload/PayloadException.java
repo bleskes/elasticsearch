@@ -15,17 +15,20 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.alerts.triggers;
+package org.elasticsearch.alerts.payload;
 
-import org.elasticsearch.common.inject.AbstractModule;
+import org.elasticsearch.alerts.AlertsException;
 
 /**
  *
  */
-public class AlertsTriggerModule extends AbstractModule {
+public class PayloadException extends AlertsException {
 
-    @Override
-    protected void configure() {
-        bind(TriggerService.class).asEagerSingleton();
+    public PayloadException(String msg) {
+        super(msg);
+    }
+
+    public PayloadException(String msg, Throwable cause) {
+        super(msg, cause);
     }
 }

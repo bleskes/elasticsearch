@@ -15,4 +15,27 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.alerts.triggers;
+package org.elasticsearch.alerts.scheduler.schedule;
+
+import org.elasticsearch.common.xcontent.ToXContent;
+import org.elasticsearch.common.xcontent.XContentParser;
+
+import java.io.IOException;
+
+/**
+ *
+ */
+public interface Schedule extends ToXContent {
+
+    String type();
+
+    String cron();
+
+    static interface Parser<S extends Schedule> {
+
+        String type();
+
+        S parse(XContentParser parser) throws IOException;
+
+    }
+}

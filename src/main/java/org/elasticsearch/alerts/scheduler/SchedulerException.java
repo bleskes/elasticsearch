@@ -15,17 +15,20 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.alerts.triggers;
+package org.elasticsearch.alerts.scheduler;
 
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.common.xcontent.ToXContent;
+import org.elasticsearch.alerts.AlertsException;
 
-public interface AlertTrigger extends ToXContent {
+/**
+ *
+ */
+public class SchedulerException extends AlertsException {
 
-    /**
-     * Returns the name of this trigger, can be used to look up the action factory for creating this trigger
-     * @return
-     */
-    public String getTriggerName();
+    public SchedulerException(String msg) {
+        super(msg);
+    }
+
+    public SchedulerException(String msg, Throwable cause) {
+        super(msg, cause);
+    }
 }
