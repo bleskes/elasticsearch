@@ -180,7 +180,8 @@ class CsvDataToProcessWriter extends AbstractDataToProcessWriter
                 i = 0;
                 if (maxIndex >= line.size())
                 {
-                    m_Logger.warn("Not enough fields in csv record " + line);
+                    m_Logger.warn("Not enough fields in csv record, expected at least "  + maxIndex
+                    		+ ". "+ line);
 
                     Arrays.fill(record, "");
                     for (Pair<String, Integer> p : fieldIndexes)
