@@ -38,8 +38,10 @@ ifdef PRELERT_TOOLS_HOME
 MAVEN_PROPS+= -Drepository.basedir=$(PRELERT_TOOLS_HOME)/maven
 endif
 
+ifdef BUILD_MODEL_VISUALISER
 
-ifdef BUILD_ENGINE_API
+
+else if BUILD_ENGINE_API
 
 # Maven install includes compile so don't bother with a separate compile target
 all: install
