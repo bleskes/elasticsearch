@@ -249,7 +249,7 @@ public class Alert implements ToXContent {
 
     public static class Status implements ToXContent {
 
-        enum State {
+        public enum State {
             NOT_EXECUTED,
             EXECUTED,
             ACKED
