@@ -28,7 +28,6 @@ include $(PRELERT_SRC_HOME)/mk/defines.mk
 
 ENGINEAPI_BUILD_DIR=$(PRELERT_SRC_HOME)/java/apps/engineApi
 
-
 # Don't let Maven download dependencies during official builds
 # To update the dependencies run "make MAVEN_ARGS="
 MAVEN_ARGS=--offline
