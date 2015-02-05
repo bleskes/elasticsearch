@@ -21,7 +21,7 @@ package org.elasticsearch.alerts;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.ElasticsearchIllegalStateException;
 import org.elasticsearch.action.index.IndexResponse;
-import org.elasticsearch.alerts.actions.AlertActionRegistry;
+import org.elasticsearch.alerts.actions.Action;
 import org.elasticsearch.alerts.history.AlertRecord;
 import org.elasticsearch.alerts.history.HistoryService;
 import org.elasticsearch.alerts.scheduler.Scheduler;
@@ -52,7 +52,6 @@ public class AlertsService extends AbstractComponent {
     private final Scheduler scheduler;
     private final AlertsStore alertsStore;
     private final HistoryService historyService;
-    private final AlertActionRegistry actionRegistry;
     private final ThreadPool threadPool;
     private final ClusterService clusterService;
     private final KeyedLock<String> alertLock = new KeyedLock<>();
@@ -63,14 +62,13 @@ public class AlertsService extends AbstractComponent {
     @Inject
     public AlertsService(Settings settings, ClusterService clusterService, Scheduler scheduler, AlertsStore alertsStore,
                          IndicesService indicesService, HistoryService historyService,
-                         AlertActionRegistry actionRegistry, ThreadPool threadPool) {
+                         ThreadPool threadPool) {
         super(settings);
         this.scheduler = scheduler;
         this.threadPool = threadPool;
         this.alertsStore = alertsStore;
         this.historyService = historyService;
         this.historyService.setAlertsService(this);
-        this.actionRegistry = actionRegistry;
         this.clusterService = clusterService;
 
         scheduler.addListener(new SchedulerListener());
@@ -190,7 +188,10 @@ public class AlertsService extends AbstractComponent {
                 if (!throttleResult.throttle()) {
                     Map<String, Object> data = alert.payload().execute(alert, triggerResult, entry.getScheduledTime(), entry.getFireTime());
                     alertRun = new AlertRun(triggerResult, data);
-                    actionRegistry.doAction(alert, alertRun);
+                    for (Action action : alert.actions()){
+                        Action.Result actionResult = action.execute(alert, data);
+                        //TODO : process action result, what to do if just one action fails or throws exception ?
+                    }
                     alert.status().executed(entry.getScheduledTime());
                 } else {
                     alert.status().throttled(entry.getFireTime(), throttleResult.reason());

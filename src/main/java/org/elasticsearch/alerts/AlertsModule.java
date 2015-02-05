@@ -18,7 +18,7 @@
 package org.elasticsearch.alerts;
 
 
-import org.elasticsearch.alerts.actions.AlertActionRegistry;
+import org.elasticsearch.alerts.actions.ActionModule;
 import org.elasticsearch.alerts.client.AlertsClientModule;
 import org.elasticsearch.alerts.history.HistoryService;
 import org.elasticsearch.alerts.payload.PayloadModule;
@@ -45,7 +45,8 @@ public class AlertsModule extends AbstractModule implements SpawnModules {
                 new AlertsRestModule(),
                 new SchedulerModule(),
                 new AlertsTransportModule(),
-                new TriggerModule());
+                new TriggerModule(),
+                new ActionModule());
     }
 
     @Override
@@ -56,7 +57,6 @@ public class AlertsModule extends AbstractModule implements SpawnModules {
         bind(AlertsStore.class).asEagerSingleton();
         bind(TemplateUtils.class).asEagerSingleton();
         bind(HistoryService.class).asEagerSingleton();
-        bind(AlertActionRegistry.class).asEagerSingleton();
         bind(ConfigurationService.class).asEagerSingleton();
 
     }
