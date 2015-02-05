@@ -1,6 +1,6 @@
 ############################################################
 #                                                          #
-# Contents of file Copyright (c) Prelert Ltd 2006-2014     #
+# Contents of file Copyright (c) Prelert Ltd 2006-2015     #
 #                                                          #
 #----------------------------------------------------------#
 #----------------------------------------------------------#
@@ -38,10 +38,7 @@ ifdef PRELERT_TOOLS_HOME
 MAVEN_PROPS+= -Drepository.basedir=$(PRELERT_TOOLS_HOME)/maven
 endif
 
-ifdef BUILD_MODEL_VISUALISER
-
-
-else if BUILD_ENGINE_API
+ifdef BUILD_ENGINE_API
 
 # Maven install includes compile so don't bother with a separate compile target
 all: install
@@ -62,3 +59,4 @@ analyze:
 	cd $(ENGINEAPI_BUILD_DIR) && mvn $(MAVEN_ARGS) $(MAVEN_PROPS) site
 
 endif
+
