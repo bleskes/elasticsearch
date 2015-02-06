@@ -15,50 +15,53 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.shield.authc.support.ldap;
+package org.elasticsearch.shield.authc.ldap.support;
 
-import com.carrotsearch.randomizedtesting.LifecycleScope;
-import com.carrotsearch.randomizedtesting.ThreadFilter;
-import com.carrotsearch.randomizedtesting.annotations.ThreadLeakFilters;
+import com.unboundid.ldap.listener.InMemoryDirectoryServer;
+import com.unboundid.ldap.sdk.*;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.shield.authc.RealmConfig;
-import org.elasticsearch.shield.authc.ldap.LdapGroupToRoleMapper;
+import org.elasticsearch.shield.authc.ldap.LdapRealm;
 import org.elasticsearch.test.ElasticsearchTestCase;
 import org.elasticsearch.watcher.ResourceWatcherService;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 
-import static org.elasticsearch.shield.authc.ldap.LdapConnectionFactory.*;
+import java.nio.file.Paths;
+
+import static org.elasticsearch.shield.authc.ldap.LdapSessionFactory.*;
 
 @Ignore
-@ThreadLeakFilters(defaultFilters = true, filters = { LdapTest.ApachedsThreadLeakFilter.class })
 public abstract class LdapTest extends ElasticsearchTestCase {
 
-    private static ApacheDsEmbedded ldap;
+    protected static InMemoryDirectoryServer ldapServer;
 
     @BeforeClass
     public static void startLdap() throws Exception {
-        ldap = new ApacheDsEmbedded("o=sevenSeas", "seven-seas.ldif", newTempDir(LifecycleScope.SUITE));
-        ldap.startServer();
+        ldapServer = new InMemoryDirectoryServer("o=sevenSeas");
+        ldapServer.add("o=sevenSeas", new Attribute("dc", "UnboundID"), new Attribute("objectClass", "top", "domain", "extensibleObject"));
+        ldapServer.importFromLDIF(false, Paths.get(LdapTest.class.getResource("seven-seas.ldif").toURI()).toAbsolutePath().toString());
+        ldapServer.startListening();
     }
 
     @AfterClass
     public static void stopLdap() throws Exception {
-        ldap.stopAndCleanup();
-        ldap = null;
+        ldapServer.shutDown(true);
+        ldapServer = null;
     }
 
-    protected String ldapUrl() {
-        return ldap.getUrl();
+    protected String ldapUrl() throws LDAPException {
+        LDAPURL url = new LDAPURL("ldap", "localhost", ldapServer.getListenPort(), null, null, null, null);
+        return url.toString();
     }
 
-    public static Settings buildLdapSettings(String ldapUrl, String userTemplate, String groupSearchBase, SearchScope scope) {
+    public static Settings buildLdapSettings(String ldapUrl, String userTemplate, String groupSearchBase, LdapSearchScope scope) {
         return buildLdapSettings(ldapUrl, new String[] { userTemplate }, groupSearchBase, scope);
     }
 
-    public static Settings buildLdapSettings(String ldapUrl, String[] userTemplate, String groupSearchBase, SearchScope scope) {
+    public static Settings buildLdapSettings(String ldapUrl, String[] userTemplate, String groupSearchBase, LdapSearchScope scope) {
         return ImmutableSettings.builder()
                 .putArray(URLS_SETTING, ldapUrl)
                 .putArray(USER_DN_TEMPLATES_SETTING, userTemplate)
@@ -74,29 +77,12 @@ public abstract class LdapTest extends ElasticsearchTestCase {
                 .put(HOSTNAME_VERIFICATION_SETTING, hostnameVerification).build();
     }
 
-    protected LdapGroupToRoleMapper buildGroupAsRoleMapper(ResourceWatcherService resourceWatcherService) {
+    protected GroupToRoleMapper buildGroupAsRoleMapper(ResourceWatcherService resourceWatcherService) {
         Settings settings = ImmutableSettings.builder()
-                .put(AbstractGroupToRoleMapper.USE_UNMAPPED_GROUPS_AS_ROLES_SETTING, true)
+                .put(GroupToRoleMapper.USE_UNMAPPED_GROUPS_AS_ROLES_SETTING, true)
                 .build();
         RealmConfig config = new RealmConfig("ldap1", settings);
 
-        return new LdapGroupToRoleMapper(config, resourceWatcherService);
-    }
-
-    /**
-     * thread filter because apache ds leaks a thread when LdapServer is started
-     */
-    public final static class ApachedsThreadLeakFilter implements ThreadFilter {
-
-        @Override
-        public boolean reject(Thread t) {
-            for (StackTraceElement stackTraceElement : t.getStackTrace()) {
-                if (stackTraceElement.getClassName().startsWith("org.apache.mina.filter.executor.UnorderedThreadPoolExecutor")) {
-                    return true;
-                }
-            }
-
-            return false;
-        }
+        return new GroupToRoleMapper(LdapRealm.TYPE, config, resourceWatcherService, null);
     }
 }

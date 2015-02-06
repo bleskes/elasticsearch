@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.shield.authc.support.ldap;
+package org.elasticsearch.shield.authc.ldap.support;
 
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.shield.User;
@@ -33,13 +33,13 @@ import java.util.Set;
  */
 public abstract class AbstractLdapRealm extends CachingUsernamePasswordRealm {
 
-    protected final ConnectionFactory connectionFactory;
-    protected final AbstractGroupToRoleMapper roleMapper;
+    protected final SessionFactory sessionFactory;
+    protected final GroupToRoleMapper roleMapper;
 
     protected AbstractLdapRealm(String type, RealmConfig config,
-                                ConnectionFactory connectionFactory, AbstractGroupToRoleMapper roleMapper) {
+                                SessionFactory sessionFactory, GroupToRoleMapper roleMapper) {
         super(type, config);
-        this.connectionFactory = connectionFactory;
+        this.sessionFactory = sessionFactory;
         this.roleMapper = roleMapper;
         roleMapper.addListener(new Listener());
     }
@@ -51,7 +51,7 @@ public abstract class AbstractLdapRealm extends CachingUsernamePasswordRealm {
      */
     @Override
     protected User doAuthenticate(UsernamePasswordToken token) {
-        try (AbstractLdapConnection session = connectionFactory.open(token.principal(), token.credentials())) {
+        try (LdapSession session = sessionFactory.open(token.principal(), token.credentials())) {
             List<String> groupDNs = session.groups();
             Set<String> roles = roleMapper.mapRoles(groupDNs);
             return new User.Simple(token.principal(), roles.toArray(new String[roles.size()]));

@@ -15,18 +15,29 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.shield.authc.active_directory;
+package org.elasticsearch.shield.authc.ldap;
 
-import org.elasticsearch.shield.authc.RealmConfig;
-import org.elasticsearch.shield.authc.support.ldap.AbstractGroupToRoleMapper;
-import org.elasticsearch.watcher.ResourceWatcherService;
+import org.elasticsearch.shield.ShieldException;
 
 /**
- * LDAP Group to role mapper specific to the "shield.authc.ldap" package
+ * LdapExceptions typically wrap {@link com.unboundid.ldap.sdk.LDAPException}, and have an additional
+ * parameter of DN attached to each message.
  */
-public class ActiveDirectoryGroupToRoleMapper extends AbstractGroupToRoleMapper {
+public class ShieldLdapException extends ShieldException {
 
-    public ActiveDirectoryGroupToRoleMapper(RealmConfig config, ResourceWatcherService watcherService) {
-        super(ActiveDirectoryRealm.TYPE, config, watcherService, null);
+    public ShieldLdapException(String msg){
+        super(msg);
+    }
+
+    public ShieldLdapException(String msg, Throwable cause){
+        super(msg, cause);
+    }
+
+    public ShieldLdapException(String msg, String dn) {
+        this(msg, dn, null);
+    }
+
+    public ShieldLdapException(String msg, String dn, Throwable cause) {
+        super( msg + "; LDAP DN=[" + dn + "]", cause);
     }
 }
