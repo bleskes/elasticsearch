@@ -175,7 +175,7 @@ public class AlertActionsTest extends AbstractAlertingTests {
                 null,
                 1,
                 new TimeValue(0),
-                Alert.Status.NOT_ACKABLE
+                Alert.Status.Ack.State.AWAITS_EXECUTION
         );
 
         XContentBuilder jsonBuilder = XContentFactory.jsonBuilder();
