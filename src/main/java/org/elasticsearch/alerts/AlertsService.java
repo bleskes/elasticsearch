@@ -43,7 +43,6 @@ import org.elasticsearch.indices.IndicesService;
 import org.elasticsearch.threadpool.ThreadPool;
 
 import java.io.IOException;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -186,10 +185,10 @@ public class AlertsService extends AbstractComponent {
                 alert.status().onTrigger(true, entry.fireTime());
                 Throttler.Result throttleResult = alert.throttler().throttle(alert, triggerResult);
                 if (!throttleResult.throttle()) {
-                    Map<String, Object> data = alert.payload().execute(alert, triggerResult, entry.scheduledTime(), entry.fireTime());
-                    alertRun = new AlertRun(triggerResult, throttleResult, data);
+                    Payload payload = alert.transform().apply(alert, triggerResult, triggerResult.payload(), entry.scheduledTime(), entry.fireTime());
+                    alertRun = new AlertRun(triggerResult, throttleResult, payload);
                     for (Action action : alert.actions()){
-                        Action.Result actionResult = action.execute(alert, data);
+                        Action.Result actionResult = action.execute(alert, payload);
                         //TODO : process action result, what to do if just one action fails or throws exception ?
                     }
                     alert.status().onExecution(entry.scheduledTime());
@@ -370,12 +369,12 @@ public class AlertsService extends AbstractComponent {
 
         private final Trigger.Result triggerResult;
         private final Throttler.Result throttleResult;
-        private final Map<String, Object> data;
+        private final Payload payload;
 
-        public AlertRun(Trigger.Result triggerResult, Throttler.Result throttleResult, Map<String, Object> data) {
+        public AlertRun(Trigger.Result triggerResult, Throttler.Result throttleResult, Payload payload) {
             this.triggerResult = triggerResult;
             this.throttleResult = throttleResult;
-            this.data = data;
+            this.payload = payload;
         }
 
         public Trigger.Result triggerResult() {
@@ -386,8 +385,8 @@ public class AlertsService extends AbstractComponent {
             return throttleResult;
         }
 
-        public Map<String, Object> data() {
-            return data;
+        public Payload payload() {
+            return payload;
         }
     }
 

@@ -20,6 +20,7 @@ package org.elasticsearch.alerts.trigger.search;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.alerts.Alert;
+import org.elasticsearch.alerts.Payload;
 import org.elasticsearch.alerts.support.AlertUtils;
 import org.elasticsearch.alerts.support.init.proxy.ClientProxy;
 import org.elasticsearch.alerts.support.init.proxy.ScriptServiceProxy;
@@ -30,7 +31,6 @@ import org.elasticsearch.common.xcontent.XContentHelper;
 import org.elasticsearch.search.SearchHit;
 
 import java.io.IOException;
-import java.util.Map;
 
 public abstract class SearchTrigger extends Trigger<SearchTrigger.Result> {
 
@@ -74,8 +74,8 @@ public abstract class SearchTrigger extends Trigger<SearchTrigger.Result> {
 
         private final SearchRequest request;
 
-        public Result(String type, boolean triggered, SearchRequest request, Map<String, Object> data) {
-            super(type, triggered, data);
+        public Result(String type, boolean triggered, SearchRequest request, Payload payload) {
+            super(type, triggered, payload);
             this.request = request;
         }
 

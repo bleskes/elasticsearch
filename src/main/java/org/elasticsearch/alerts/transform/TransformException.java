@@ -15,20 +15,20 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.alerts.payload;
+package org.elasticsearch.alerts.transform;
 
 import org.elasticsearch.alerts.AlertsException;
 
 /**
  *
  */
-public class PayloadException extends AlertsException {
+public class TransformException extends AlertsException {
 
-    public PayloadException(String msg) {
+    public TransformException(String msg) {
         super(msg);
     }
 
-    public PayloadException(String msg, Throwable cause) {
+    public TransformException(String msg, Throwable cause) {
         super(msg, cause);
     }
 }

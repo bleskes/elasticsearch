@@ -58,7 +58,7 @@ import static org.hamcrest.core.Is.is;
 
 /**
  */
-public class AlertActionsTest extends AbstractAlertingTests {
+public class ActionsTest extends AbstractAlertingTests {
 
     @Test
     public void testAlertActionParser() throws Exception {
