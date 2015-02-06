@@ -162,6 +162,7 @@ public class ProcessCtrl
      * Arguments used by both prelert_autodetect_api and prelert_normalize_api
      */
     public static final String BUCKET_SPAN_ARG = "--bucketspan=";
+    public static final String LATENCY_ARG = "--latency=";
     public static final String LENGTH_ENCODED_INPUT_ARG = "--lengthEncodedInput";
     public static final String SYS_STATE_CHANGE_ARG = "--sysChangeState=";
     public static final String UNUSUAL_STATE_ARG = "--unusualState=";
@@ -504,6 +505,11 @@ public class ProcessCtrl
             {
                 String batchspan = BATCH_SPAN_ARG + job.getAnalysisConfig().getBatchSpan();
                 command.add(batchspan);
+            }
+            if (job.getAnalysisConfig().getLatency() != null)
+            {
+                String latency = LATENCY_ARG + job.getAnalysisConfig().getLatency();
+                command.add(latency);
             }
             if (job.getAnalysisConfig().getPeriod() != null)
             {

@@ -46,7 +46,7 @@ public class OutOfOrderRecordsException extends JobException
 			long totalNumberRecords)
 	{
 		super(String.format("A high proportion of records are not in ascending "
-						+ "chronological order (%d of %d).",
+						+ "chronological order (%d of %d) and/or not within latency.",
 						numberBadRecords, totalNumberRecords),
 			ErrorCode.TOO_MANY_OUT_OF_ORDER_RECORDS);
 

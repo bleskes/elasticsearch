@@ -43,11 +43,11 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.prelert.job.FlushAcknowledgement;
 import com.prelert.job.ModelSizeStats;
-import com.prelert.job.persistence.JobResultsPersister;
 import com.prelert.job.persistence.JobRenormaliser;
+import com.prelert.job.persistence.JobResultsPersister;
 import com.prelert.job.quantiles.Quantiles;
 import com.prelert.job.quantiles.QuantilesState;
-import com.prelert.rs.data.*;
+import com.prelert.rs.data.Bucket;
 import com.prelert.utils.json.AutoDetectParseException;
 
 /**

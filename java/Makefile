@@ -1,6 +1,6 @@
 ############################################################
 #                                                          #
-# Contents of file Copyright (c) Prelert Ltd 2006-2014     #
+# Contents of file Copyright (c) Prelert Ltd 2006-2015     #
 #                                                          #
 #----------------------------------------------------------#
 #----------------------------------------------------------#
@@ -28,7 +28,6 @@ include $(PRELERT_SRC_HOME)/mk/defines.mk
 
 ENGINEAPI_BUILD_DIR=$(PRELERT_SRC_HOME)/java/apps/engineApi
 
-
 # Don't let Maven download dependencies during official builds
 # To update the dependencies run "make MAVEN_ARGS="
 MAVEN_ARGS=--offline
@@ -37,7 +36,6 @@ ifdef PRELERT_TOOLS_HOME
 # Override the default tools location if $PRELERT_TOOLS_HOME is set
 MAVEN_PROPS+= -Drepository.basedir=$(PRELERT_TOOLS_HOME)/maven
 endif
-
 
 ifdef BUILD_ENGINE_API
 
@@ -60,3 +58,4 @@ analyze:
 	cd $(ENGINEAPI_BUILD_DIR) && mvn $(MAVEN_ARGS) $(MAVEN_PROPS) site
 
 endif
+
