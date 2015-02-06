@@ -152,6 +152,38 @@ public class JsonDataToProcessWriterTest
         verify(m_DataPersister).flushRecords();
     }
 
+    @Test
+    public void testWrite_GivenTimeFormatIsEpochAndSomeTimestampsWithinLatencySomeOutOfOrder()
+            throws MissingFieldException, HighProportionOfBadTimestampsException,
+            OutOfOrderRecordsException, IOException
+    {
+        m_AnalysisConfig.setLatency(2L);
+
+        StringBuilder input = new StringBuilder();
+        input.append("{\"time\":\"4\", \"metric\":\"foo\", \"value\":\"4.0\"}");
+        input.append("{\"time\":\"5\", \"metric\":\"foo\", \"value\":\"5.0\"}");
+        input.append("{\"time\":\"3\", \"metric\":\"bar\", \"value\":\"3.0\"}");
+        input.append("{\"time\":\"4\", \"metric\":\"bar\", \"value\":\"4.0\"}");
+        input.append("{\"time\":\"2\", \"metric\":\"bar\", \"value\":\"2.0\"}");
+        InputStream inputStream = createInputStream(input.toString());
+        JsonDataToProcessWriter writer = createWriter();
+
+        writer.write(inputStream);
+
+        List<String[]> expectedRecords = new ArrayList<>();
+        // The final field is the control field
+        expectedRecords.add(new String[] {"value", "time", "."});
+        expectedRecords.add(new String[] {"4.0", "4", ""});
+        expectedRecords.add(new String[] {"5.0", "5", ""});
+        expectedRecords.add(new String[] {"3.0", "3", ""});
+        expectedRecords.add(new String[] {"4.0", "4", ""});
+        assertWrittenRecordsEqualTo(expectedRecords);
+
+        verify(m_StatusReporter, times(1)).reportOutOfOrderRecord(2);
+        verify(m_StatusReporter).finishReporting();
+        verify(m_DataPersister).flushRecords();
+    }
+
     private static InputStream createInputStream(String input)
     {
         return new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
