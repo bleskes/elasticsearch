@@ -172,7 +172,6 @@ class CsvDataToProcessWriter extends AbstractDataToProcessWriter
             // Control field is always empty for real input
             record[numFields - 1] = "";
 
-            long lastEpoch = 0;
             while ((line = csvReader.read()) != null)
             {
                 lineCount++;
@@ -208,11 +207,10 @@ class CsvDataToProcessWriter extends AbstractDataToProcessWriter
                     }
                 }
 
-                Long epoch = transformTimeAndWrite(record, timeFieldIndex, lastEpoch, inputFieldCount);
+                Long epoch = transformTimeAndWrite(record, timeFieldIndex, inputFieldCount);
                 if (epoch != null)
                 {
                     recordsWritten++;
-                    lastEpoch = epoch;
                 }
             }
 

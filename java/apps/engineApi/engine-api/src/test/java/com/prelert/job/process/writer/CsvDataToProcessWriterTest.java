@@ -28,6 +28,7 @@
 package com.prelert.job.process.writer;
 
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.times;
@@ -155,6 +156,39 @@ public class CsvDataToProcessWriterTest
         verify(m_DataPersister).flushRecords();
     }
 
+    @Test
+    public void testWrite_GivenTimeFormatIsEpochAndSomeTimestampsWithinLatencySomeOutOfOrder()
+            throws MissingFieldException, HighProportionOfBadTimestampsException,
+            OutOfOrderRecordsException, IOException
+    {
+        m_AnalysisConfig.setLatency(2L);
+
+        StringBuilder input = new StringBuilder();
+        input.append("time,metric,value\n");
+        input.append("4,foo,4.0\n");
+        input.append("5,foo,5.0\n");
+        input.append("3,foo,3.0\n");
+        input.append("4,bar,4.0\n");
+        input.append("2,bar,2.0\n");
+        InputStream inputStream = createInputStream(input.toString());
+        CsvDataToProcessWriter writer = createWriter();
+
+        writer.write(inputStream);
+
+        List<String[]> expectedRecords = new ArrayList<>();
+        // The final field is the control field
+        expectedRecords.add(new String[] {"time", "value", "."});
+        expectedRecords.add(new String[] {"4", "4.0", ""});
+        expectedRecords.add(new String[] {"5", "5.0", ""});
+        expectedRecords.add(new String[] {"3", "3.0", ""});
+        expectedRecords.add(new String[] {"4", "4.0", ""});
+        assertWrittenRecordsEqualTo(expectedRecords);
+
+        verify(m_StatusReporter, times(1)).reportOutOfOrderRecord(2);
+        verify(m_StatusReporter).finishReporting();
+        verify(m_DataPersister).flushRecords();
+    }
+
     private static InputStream createInputStream(String input)
     {
         return new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
@@ -168,6 +202,7 @@ public class CsvDataToProcessWriterTest
 
     private void assertWrittenRecordsEqualTo(List<String[]> expectedRecords)
     {
+        assertEquals(expectedRecords.size(), m_WrittenRecords.size());
         for (int i = 0; i < expectedRecords.size(); i++)
         {
             assertArrayEquals(expectedRecords.get(i), m_WrittenRecords.get(i));
