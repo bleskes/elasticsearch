@@ -27,7 +27,6 @@
 package com.prelert.job;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -175,27 +174,6 @@ public class AnalysisConfigTest
         }
 
         Assert.assertEquals("summaryCount", ac.getSummaryCountFieldName());
-    }
-
-    @Test
-    public void testVerify_GivenLatencyIsMoreThanMax() throws JobConfigurationException
-    {
-        AnalysisConfig analysisConfig = new AnalysisConfig();
-        Detector detector = new Detector();
-        detector.setFieldName("responsetime");
-        detector.setByFieldName("airline");
-        detector.setPartitionFieldName("sourcetype");
-        analysisConfig.setDetectors(Arrays.asList(detector));
-
-        analysisConfig.setBucketSpan(600L);
-        analysisConfig.setLatency(6000L);
-        assertTrue(analysisConfig.verify());
-
-        analysisConfig.setLatency(6001L);
-        m_ExpectedException.expect(JobConfigurationException.class);
-        m_ExpectedException.expectMessage("Latency cannot be > 10 * 600 = 6000. Value = 6001");
-
-        analysisConfig.verify();
     }
 
     @Test

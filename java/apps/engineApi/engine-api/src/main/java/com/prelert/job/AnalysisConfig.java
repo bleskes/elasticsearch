@@ -61,19 +61,6 @@ public class AnalysisConfig
     public static final String DETECTORS = "detectors";
 
     /**
-     * An upper bound for the number of latency buckets in order to avoid values that would cause
-     * too much delay in finalising results and to minimise memory overhead of handling out-of-order
-     * records.
-     */
-    public static final int MAX_LATENCY_BUCKETS = 10;
-
-    /**
-     * This is the bucket span that will be used if no bucket span is specified.
-     * Note that this is duplicated from the C++ side.
-     */
-    public static final long DEFAULT_BUCKET_SPAN = 300;
-
-    /**
      * These values apply to all detectors
      */
     private Long m_BucketSpan;
@@ -433,7 +420,11 @@ public class AnalysisConfig
                     + " Value = " + m_BatchSpan, ErrorCode.INVALID_VALUE);
         }
 
-        validateLatency();
+        if (m_Latency != null && m_Latency < 0)
+        {
+            throw new JobConfigurationException("Latency cannot be < 0."
+                    + " Value = " + m_Latency, ErrorCode.INVALID_VALUE);
+        }
 
         if (m_Period != null && m_Period < 0)
         {
@@ -456,26 +447,5 @@ public class AnalysisConfig
         }
 
         return true;
-    }
-
-    private void validateLatency() throws JobConfigurationException
-    {
-        if (m_Latency == null)
-        {
-            return;
-        }
-        if (m_Latency < 0)
-        {
-            throw new JobConfigurationException("Latency cannot be < 0."
-                    + " Value = " + m_Latency, ErrorCode.INVALID_VALUE);
-        }
-        long bucketSpan = (m_BucketSpan == null) ? DEFAULT_BUCKET_SPAN : m_BucketSpan;
-        long maxLatency = MAX_LATENCY_BUCKETS * bucketSpan;
-        if (m_Latency > maxLatency)
-        {
-            throw new JobConfigurationException(
-                    "Latency cannot be > " + MAX_LATENCY_BUCKETS + " * " + bucketSpan + " = "
-                    + maxLatency + "." + " Value = " + m_Latency, ErrorCode.INVALID_VALUE);
-        }
     }
 }
