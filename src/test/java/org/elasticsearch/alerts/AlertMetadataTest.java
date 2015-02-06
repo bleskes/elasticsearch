@@ -19,6 +19,7 @@ package org.elasticsearch.alerts;
 
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.alerts.history.HistoryStore;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -26,7 +27,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.elasticsearch.alerts.history.HistoryService.ALERT_HISTORY_INDEX_PREFIX;
 import static org.elasticsearch.index.query.QueryBuilders.matchAllQuery;
 import static org.elasticsearch.index.query.QueryBuilders.termQuery;
 import static org.elasticsearch.search.builder.SearchSourceBuilder.searchSource;
@@ -55,7 +55,7 @@ public class AlertMetadataTest extends AbstractAlertingTests {
         assertNoAlertTrigger("1", 1);
 
         refresh();
-        SearchResponse searchResponse = client().prepareSearch(ALERT_HISTORY_INDEX_PREFIX + "*")
+        SearchResponse searchResponse = client().prepareSearch(HistoryStore.ALERT_HISTORY_INDEX_PREFIX + "*")
                 .setQuery(termQuery("meta.foo", "bar"))
                 .get();
         assertThat(searchResponse.getHits().getTotalHits(), greaterThan(0L));

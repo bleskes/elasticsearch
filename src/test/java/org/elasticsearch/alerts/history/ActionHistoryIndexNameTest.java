@@ -15,9 +15,8 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.alerts;
+package org.elasticsearch.alerts.history;
 
-import org.elasticsearch.alerts.history.HistoryService;
 import org.elasticsearch.common.joda.time.DateTime;
 import org.elasticsearch.common.joda.time.DateTimeZone;
 import org.elasticsearch.test.ElasticsearchTestCase;
@@ -31,10 +30,10 @@ public class ActionHistoryIndexNameTest extends ElasticsearchTestCase {
 
     @Test
     public void testActionHistoryNameTest() {
-        assertThat(HistoryService.getAlertHistoryIndexNameForTime(new DateTime(0, DateTimeZone.UTC)), equalTo(".alert_history_1970-01-01"));
-        assertThat(HistoryService.getAlertHistoryIndexNameForTime(new DateTime(100000000000L, DateTimeZone.UTC)), equalTo(".alert_history_1973-03-03"));
-        assertThat(HistoryService.getAlertHistoryIndexNameForTime(new DateTime(1416582852000L, DateTimeZone.UTC)), equalTo(".alert_history_2014-11-21"));
-        assertThat(HistoryService.getAlertHistoryIndexNameForTime(new DateTime(2833165811000L, DateTimeZone.UTC)), equalTo(".alert_history_2059-10-12"));
+        assertThat(HistoryStore.getAlertHistoryIndexNameForTime(new DateTime(0, DateTimeZone.UTC)), equalTo(".alert_history_1970-01-01"));
+        assertThat(HistoryStore.getAlertHistoryIndexNameForTime(new DateTime(100000000000L, DateTimeZone.UTC)), equalTo(".alert_history_1973-03-03"));
+        assertThat(HistoryStore.getAlertHistoryIndexNameForTime(new DateTime(1416582852000L, DateTimeZone.UTC)), equalTo(".alert_history_2014-11-21"));
+        assertThat(HistoryStore.getAlertHistoryIndexNameForTime(new DateTime(2833165811000L, DateTimeZone.UTC)), equalTo(".alert_history_2059-10-12"));
     }
 
 }
