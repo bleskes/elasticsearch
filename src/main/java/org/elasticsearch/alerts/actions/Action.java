@@ -17,10 +17,11 @@
 
 package org.elasticsearch.alerts.actions;
 
-import org.elasticsearch.alerts.Alert;
+import org.elasticsearch.alerts.AlertContext;
 import org.elasticsearch.alerts.Payload;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.xcontent.ToXContent;
+import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
 
 import java.io.IOException;
@@ -46,7 +47,7 @@ public abstract class Action<R extends Action.Result> implements ToXContent {
     /**
      * Executes this action
      */
-    public abstract R execute(Alert alert, Payload payload) throws IOException;
+    public abstract R execute(AlertContext context, Payload payload) throws IOException;
 
 
     /**
@@ -69,11 +70,10 @@ public abstract class Action<R extends Action.Result> implements ToXContent {
 
     public static abstract class Result implements ToXContent {
 
-        private final boolean success;
+        protected final String type;
+        protected final boolean success;
 
-        private final String type;
-
-        public Result(String type, boolean success) {
+        protected Result(String type, boolean success) {
             this.type = type;
             this.success = success;
         }
@@ -85,5 +85,15 @@ public abstract class Action<R extends Action.Result> implements ToXContent {
         public boolean success() {
             return success;
         }
+
+        @Override
+        public final XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
+            builder.startObject();
+            builder.field("success", success);
+            xContentBody(builder, params);
+            return builder.endObject();
+        }
+
+        protected abstract XContentBuilder xContentBody(XContentBuilder builder, Params params) throws IOException;
     }
 }
