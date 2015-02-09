@@ -167,7 +167,7 @@ public class FiredAlert implements ToXContent {
         return this.errorMessage;
     }
 
-    public void errorMsg(String errorMessage) {
+    public void errorMessage(String errorMessage) {
         this.errorMessage = errorMessage;
     }
 
@@ -352,7 +352,7 @@ public class FiredAlert implements ToXContent {
                     } else if (SCHEDULED_FIRE_TIME_FIELD.match(currentFieldName)) {
                         entry.scheduledTime(DateTime.parse(parser.text()));
                     } else if (ERROR_MESSAGE_FIELD.match(currentFieldName)) {
-                        entry.errorMsg(parser.textOrNull());
+                        entry.errorMessage(parser.textOrNull());
                     } else if (STATE_FIELD.match(currentFieldName)) {
                         entry.state(State.fromString(parser.text()));
                     } else {
