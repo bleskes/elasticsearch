@@ -368,12 +368,19 @@ public class ProcessCtrl
                         new InputStreamReader(proc.getErrorStream(),
                                 StandardCharsets.UTF_8));
 
-                String output = reader.readLine();
+                String output = "";
+                String line = reader.readLine();
+                while (line != null)
+                {
+                	output += line + '\n';
+                	line = reader.readLine();
+                }
+
                 LOGGER.debug("autodetect version output = " + output);
 
                 if (exitValue >= 0)
                 {
-                    if (output == null)
+                    if (output.isEmpty())
                     {
                         return UNKNOWN_VERSION;
                     }
