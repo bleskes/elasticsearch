@@ -151,20 +151,6 @@
             </goals>
           </execution>
         </executions>
-
-        <configuration>
-          <sourcepath>${basedir}/../../../src/main</sourcepath>
-          <includes>
-            <include>com/prelert/rs/data/*.java</include>
-            <include>com/prelert/job/*.java</include>
-            <include>com/prelert/rs/client/*.java</include>
-          </includes>
-          <excludes>
-            <exclude>com/prelert/job/DetectorState.java</exclude>
-            <exclude>com/prelert/job/UnknownJobException.java</exclude>
-            <exclude>com/prelert/job/TooManyJobsException.java</exclude>
-          </excludes>
-        </configuration>
       </plugin>
 
 
@@ -186,17 +172,6 @@
         <configuration>
           <author>false</author>
           <show>public</show>
-          <sourcepath>${basedir}/../../../src/main</sourcepath>
-          <sourceFileIncludes>
-            <include>com/prelert/rs/data/*.java</include>
-            <include>com/prelert/job/*.java</include>
-            <include>com/prelert/rs/client/*.java</include>
-          </sourceFileIncludes>
-          <sourceFileExcludes>
-            <exclude>com/prelert/job/DetectorState.java</exclude>
-            <exclude>com/prelert/job/UnknownJobException.java</exclude>
-            <exclude>com/prelert/job/TooManyJobsException.java</exclude>
-          </sourceFileExcludes>
         </configuration>
       </plugin>
 
