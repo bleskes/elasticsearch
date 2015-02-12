@@ -744,7 +744,7 @@ public class Store extends AbstractIndexShardComponent implements CloseableIndex
                 }
                 builder.put(file, new StoreFileMetaData(file, directory.fileLength(file), checksum, version, fileHash));
             } finally {
-                ThreadTracer.onOpEnd("file_read", "checksum check [{}], with hash [{}]", readFileAsHash);
+                ThreadTracer.onOpEnd("file_read", "checksum check [{}], with hash [{}]", file, readFileAsHash);
             }
         }
 
