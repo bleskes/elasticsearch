@@ -71,7 +71,7 @@ public class ActiveDirectorySessionFactoryTests extends ElasticsearchTestCase {
         ActiveDirectorySessionFactory sessionFactory = new ActiveDirectorySessionFactory(config, clientSSLService);
 
         String userName = "ironman";
-        try (LdapSession ldap = sessionFactory.open(userName, SecuredStringTests.build(PASSWORD))) {
+        try (LdapSession ldap = sessionFactory.session(userName, SecuredStringTests.build(PASSWORD))) {
             List<String> groups = ldap.groups();
             assertThat(groups, containsInAnyOrder(
                     containsString("Geniuses"),
@@ -97,7 +97,7 @@ public class ActiveDirectorySessionFactoryTests extends ElasticsearchTestCase {
         RealmConfig config = new RealmConfig("ad-test", settings);
         ActiveDirectorySessionFactory sessionFactory = new ActiveDirectorySessionFactory(config, clientSSLService);
 
-        try (LdapSession ldap = sessionFactory.open("ironman", SecuredStringTests.build(PASSWORD))) {
+        try (LdapSession ldap = sessionFactory.session("ironman", SecuredStringTests.build(PASSWORD))) {
             // In certain cases we may have a successful bind, but a search should take longer and cause a timeout
             ldap.groups();
             fail("The TCP connection should timeout before getting groups back");
@@ -113,7 +113,7 @@ public class ActiveDirectorySessionFactoryTests extends ElasticsearchTestCase {
 
         String[] users = new String[]{"cap", "hawkeye", "hulk", "ironman", "thor", "blackwidow", };
         for(String user: users) {
-            try (LdapSession ldap = sessionFactory.open(user, SecuredStringTests.build(PASSWORD))) {
+            try (LdapSession ldap = sessionFactory.session(user, SecuredStringTests.build(PASSWORD))) {
                 assertThat("group avenger test for user "+user, ldap.groups(), hasItem(Matchers.containsString("Avengers")));
             }
         }
@@ -126,7 +126,7 @@ public class ActiveDirectorySessionFactoryTests extends ElasticsearchTestCase {
         ActiveDirectorySessionFactory sessionFactory = new ActiveDirectorySessionFactory(config, clientSSLService);
 
         String userName = "hulk";
-        try (LdapSession ldap = sessionFactory.open(userName, SecuredStringTests.build(PASSWORD))) {
+        try (LdapSession ldap = sessionFactory.session(userName, SecuredStringTests.build(PASSWORD))) {
             List<String> groups = ldap.groups();
 
             assertThat(groups, containsInAnyOrder(
@@ -147,7 +147,7 @@ public class ActiveDirectorySessionFactoryTests extends ElasticsearchTestCase {
         ActiveDirectorySessionFactory sessionFactory = new ActiveDirectorySessionFactory(config, clientSSLService);
 
         String userName = "hulk";
-        try (LdapSession ldap = sessionFactory.open(userName, SecuredStringTests.build(PASSWORD))) {
+        try (LdapSession ldap = sessionFactory.session(userName, SecuredStringTests.build(PASSWORD))) {
             List<String> groups = ldap.groups();
 
             assertThat(groups, containsInAnyOrder(
@@ -172,7 +172,7 @@ public class ActiveDirectorySessionFactoryTests extends ElasticsearchTestCase {
         ActiveDirectorySessionFactory sessionFactory = new ActiveDirectorySessionFactory(config, clientSSLService);
 
         String userName = "hulk";
-        try (LdapSession ldap = sessionFactory.open(userName, SecuredStringTests.build(PASSWORD))) {
+        try (LdapSession ldap = sessionFactory.session(userName, SecuredStringTests.build(PASSWORD))) {
             List<String> groups = ldap.groups();
 
             assertThat(groups, hasItem(containsString("Avengers")));
@@ -187,7 +187,7 @@ public class ActiveDirectorySessionFactoryTests extends ElasticsearchTestCase {
 
         //Login with the UserPrincipalName
         String userDN;
-        try (LdapSession ldap = sessionFactory.open("erik.selvig", SecuredStringTests.build(PASSWORD))) {
+        try (LdapSession ldap = sessionFactory.session("erik.selvig", SecuredStringTests.build(PASSWORD))) {
             List<String> groups = ldap.groups();
             userDN = ldap.authenticatedUserDn();
             assertThat(groups, containsInAnyOrder(
@@ -196,7 +196,7 @@ public class ActiveDirectorySessionFactoryTests extends ElasticsearchTestCase {
                     containsString("Domain Users")));
         }
         //Same user but login with sAMAccountName
-        try (LdapSession ldap = sessionFactory.open("selvig", SecuredStringTests.build(PASSWORD))) {
+        try (LdapSession ldap = sessionFactory.session("selvig", SecuredStringTests.build(PASSWORD))) {
             assertThat(ldap.authenticatedUserDn(), is(userDN));
 
             List<String> groups = ldap.groups();
@@ -217,7 +217,7 @@ public class ActiveDirectorySessionFactoryTests extends ElasticsearchTestCase {
         ActiveDirectorySessionFactory sessionFactory = new ActiveDirectorySessionFactory(config, clientSSLService);
 
         //Login with the UserPrincipalName
-        try (LdapSession ldap = sessionFactory.open("erik.selvig", SecuredStringTests.build(PASSWORD))) {
+        try (LdapSession ldap = sessionFactory.session("erik.selvig", SecuredStringTests.build(PASSWORD))) {
             List<String> groups = ldap.groups();
             assertThat(groups, containsInAnyOrder(
                     containsString("Geniuses"),
@@ -236,7 +236,7 @@ public class ActiveDirectorySessionFactoryTests extends ElasticsearchTestCase {
         LdapSessionFactory sessionFactory = new LdapSessionFactory(config, clientSSLService);
 
         String user = "Bruce Banner";
-        try (LdapSession ldap = sessionFactory.open(user, SecuredStringTests.build(PASSWORD))) {
+        try (LdapSession ldap = sessionFactory.session(user, SecuredStringTests.build(PASSWORD))) {
             List<String> groups = ldap.groups();
 
             assertThat(groups, containsInAnyOrder(
@@ -255,7 +255,7 @@ public class ActiveDirectorySessionFactoryTests extends ElasticsearchTestCase {
         LdapSessionFactory sessionFactory = new LdapSessionFactory(config, clientSSLService);
 
         String user = "Bruce Banner";
-        try (LdapSession ldap = sessionFactory.open(user, SecuredStringTests.build(PASSWORD))) {
+        try (LdapSession ldap = sessionFactory.session(user, SecuredStringTests.build(PASSWORD))) {
             List<String> groups = ldap.groups();
 
             assertThat(groups, containsInAnyOrder(
@@ -272,7 +272,7 @@ public class ActiveDirectorySessionFactoryTests extends ElasticsearchTestCase {
         ActiveDirectorySessionFactory sessionFactory = new ActiveDirectorySessionFactory(config, clientSSLService);
 
         String userName = "ironman";
-        try (LdapSession ldap = sessionFactory.open(userName, SecuredStringTests.build(PASSWORD))) {
+        try (LdapSession ldap = sessionFactory.session(userName, SecuredStringTests.build(PASSWORD))) {
             fail("Test active directory certificate does not have proper hostname/ip address for hostname verification");
         } catch (ActiveDirectoryException e) {
             assertThat(e.getMessage(), containsString("failed to connect to any active directory servers"));
@@ -291,7 +291,7 @@ public class ActiveDirectorySessionFactoryTests extends ElasticsearchTestCase {
         LdapSessionFactory sessionFactory = new LdapSessionFactory(config, clientSSLService);
 
         String user = "Bruce Banner";
-        try (LdapSession ldap = sessionFactory.open(user, SecuredStringTests.build(PASSWORD))) {
+        try (LdapSession ldap = sessionFactory.session(user, SecuredStringTests.build(PASSWORD))) {
             fail("Test active directory certificate does not have proper hostname/ip address for hostname verification");
         }
     }
