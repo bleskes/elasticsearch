@@ -343,6 +343,8 @@ public class ElasticsearchPersister implements JobResultsPersister
                 .field(ModelSizeStats.TOTAL_BY_FIELD_COUNT, modelSizeStats.getTotalByFieldCount())
                 .field(ModelSizeStats.TOTAL_OVER_FIELD_COUNT, modelSizeStats.getTotalOverFieldCount())
                 .field(ModelSizeStats.TOTAL_PARTITION_FIELD_COUNT, modelSizeStats.getTotalPartitionFieldCount())
+                .field(ModelSizeStats.BUCKET_ALLOCATION_FAILURES_COUNT, modelSizeStats.getBucketAllocationFailuresCount())
+                .field(ModelSizeStats.MEMORY_STATUS, modelSizeStats.getMemoryStatus())
                 .endObject();
     }
 

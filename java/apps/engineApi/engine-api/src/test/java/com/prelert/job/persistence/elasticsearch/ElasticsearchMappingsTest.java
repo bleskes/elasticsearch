@@ -110,6 +110,12 @@ public class ElasticsearchMappingsTest
                         "          \"totalPartitionFieldCount\": {" +
                         "            \"type\": \"long\"" +
                         "          }" +
+                        "          \"bucketAllocationFailuresCount\": {" +
+                        "            \"type\": \"long\"" +
+                        "          }" +
+                        "          \"memoryStatus\": {" +
+                        "            \"type\": \"string\"" +
+                        "          }" +
                         "        }" +
                         "      }," +
                         "      \"timeout\": {" +

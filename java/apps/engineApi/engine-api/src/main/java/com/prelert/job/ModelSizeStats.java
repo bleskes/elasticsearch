@@ -52,18 +52,45 @@ public class ModelSizeStats
     public static final String TOTAL_BY_FIELD_COUNT = "totalByFieldCount";
     public static final String TOTAL_OVER_FIELD_COUNT = "totalOverFieldCount";
     public static final String TOTAL_PARTITION_FIELD_COUNT = "totalPartitionFieldCount";
+    public static final String BUCKET_ALLOCATION_FAILURES_COUNT = "bucketAllocationFailuresCount";
+    public static final String MEMORY_STATUS = "memoryStatus";
 
     /**
      * Elasticsearch type
      */
     public static final String TYPE = "modelSizeStats";
 
+    /**
+     * The status of the memory monitored by the ResourceMonitor.
+     * OK is default, SOFT_LIMIT means that the models have done
+     * some aggressive pruning to keep the memory below the limit,
+     * and HARD_LIMIT means that samples have been dropped
+     */
+    public enum MemoryStatus { OK, SOFT_LIMIT, HARD_LIMIT };
+
     private static final Logger LOGGER = Logger.getLogger(ModelSizeStats.class);
+
+    /**
+     * Constructor
+     */
+    public ModelSizeStats()
+    {
+        m_ModelBytes = 0;
+        m_ModelBytes = 0;
+        m_TotalByFieldCount = 0;
+        m_TotalOverFieldCount = 0;
+        m_TotalPartitionFieldCount = 0;
+        m_BucketAllocationFailuresCount = 0;
+        m_MemoryStatus = MemoryStatus.OK;
+    }
+
 
     private long m_ModelBytes;
     private long m_TotalByFieldCount;
     private long m_TotalOverFieldCount;
     private long m_TotalPartitionFieldCount;
+    private long m_BucketAllocationFailuresCount;
+    private MemoryStatus m_MemoryStatus;
 
     public String getId()
     {
@@ -114,6 +141,32 @@ public class ModelSizeStats
         return m_TotalOverFieldCount;
     }
 
+    public void setBucketAllocationFailuresCount(long m)
+    {
+        m_BucketAllocationFailuresCount = m;
+    }
+
+    public long getBucketAllocationFailuresCount()
+    {
+        return m_BucketAllocationFailuresCount;
+    }
+
+    public void setMemoryStatus(String m)
+    {
+        if (m == null || m == "")
+        {
+            m_MemoryStatus = MemoryStatus.OK;
+        }
+        else
+        {
+            m_MemoryStatus = MemoryStatus.valueOf(m);
+        }
+    }
+
+    public String getMemoryStatus()
+    {
+        return m_MemoryStatus.name();
+    }
 
     /**
      * Create a new <code>ModelSizeStats</code> and populate it from the JSON parser.
@@ -195,6 +248,13 @@ public class ModelSizeStats
                 break;
             case TOTAL_PARTITION_FIELD_COUNT:
                 modelSizeStats.setTotalPartitionFieldCount(parseAsLongOrZero(token, fieldName));
+                break;
+            case BUCKET_ALLOCATION_FAILURES_COUNT:
+                modelSizeStats.setBucketAllocationFailuresCount(parseAsLongOrZero(token, fieldName));
+                break;
+            case MEMORY_STATUS:
+                int status = parseAsIntOrZero(token, fieldName);
+                modelSizeStats.setMemoryStatus(MemoryStatus.values()[status].name());
                 break;
             default:
                 LOGGER.warn(String.format("Parse error unknown field in ModelSizeStats %s:%s",
