@@ -181,12 +181,14 @@ public class TransportNodesListShardStoreMetaData extends TransportNodesOperatio
             for (int i = 0; i < shardLocations.length; i++) {
                 shardIndexLocations[i] = new File(shardLocations[i], "index");
             }
+            ThreadTracer.onOpStart();
             for (File shardIndexLocation : shardIndexLocations) {
                 if (shardIndexLocation.exists()) {
                     exists = true;
                     break;
                 }
             }
+            ThreadTracer.onOpEnd("file_exists", "check existence of {}", shardIndexLocations);
             if (!exists) {
                 return new StoreFilesMetaData(false, shardId, ImmutableMap.<String, StoreFileMetaData>of());
             }

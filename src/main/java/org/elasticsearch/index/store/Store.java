@@ -486,7 +486,7 @@ public class Store extends AbstractIndexShardComponent implements CloseableIndex
                     ex.add(new CorruptIndexException(builder.toString()));
                     CodecUtil.checkFooter(input);
                 } finally {
-                    ThreadTracer.onOpEnd("file_read", "corruption marker");
+                    ThreadTracer.onOpEnd("file_read", "corruption marker in [{}]", file);
                 }
             }
         }
@@ -641,6 +641,7 @@ public class Store extends AbstractIndexShardComponent implements CloseableIndex
                 // we either know the index is corrupted or it's just not there
                 throw ex;
             } catch (Throwable ex) {
+                ThreadTracer.onOpStart();
                 try {
                     // Lucene checks the checksum after it tries to lookup the codec etc.
                     // in that case we might get only IAE or similar exceptions while we are really corrupt...
@@ -653,6 +654,8 @@ public class Store extends AbstractIndexShardComponent implements CloseableIndex
                   throw cex;
                 } catch (Throwable e) {
                     // ignore...
+                } finally {
+                    ThreadTracer.onOpEnd("integrity_check", "due to [{}]", ex.getMessage());
                 }
 
                 throw ex;
@@ -744,7 +747,7 @@ public class Store extends AbstractIndexShardComponent implements CloseableIndex
                 }
                 builder.put(file, new StoreFileMetaData(file, directory.fileLength(file), checksum, version, fileHash));
             } finally {
-                ThreadTracer.onOpEnd("file_read", "checksum check [{}], with hash [{}]", file, readFileAsHash);
+                ThreadTracer.onOpEnd("file_read", "checksum check [{}], with hash [{}] of size [{}]", file, readFileAsHash, fileHash.bytes.length);
             }
         }
 
