@@ -38,6 +38,7 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Streamable;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.common.util.ThreadTracer;
 import org.elasticsearch.env.NodeEnvironment;
 import org.elasticsearch.index.service.IndexService;
 import org.elasticsearch.index.shard.ShardId;
@@ -67,12 +68,15 @@ public class TransportNodesListShardStoreMetaData extends TransportNodesOperatio
 
     private final NodeEnvironment nodeEnv;
 
+    private final long slowOpThresholdInMillis;
+
     @Inject
     public TransportNodesListShardStoreMetaData(Settings settings, ClusterName clusterName, ThreadPool threadPool, ClusterService clusterService, TransportService transportService,
                                                 IndicesService indicesService, NodeEnvironment nodeEnv, ActionFilters actionFilters) {
         super(settings, ACTION_NAME, clusterName, threadPool, clusterService, transportService, actionFilters);
         this.indicesService = indicesService;
         this.nodeEnv = nodeEnv;
+        this.slowOpThresholdInMillis = settings.getAsTime("indices.store.slow_op_threshold", TimeValue.timeValueMillis(50)).millis();
     }
 
     public ActionFuture<NodesStoreFilesMetaData> list(ShardId shardId, boolean onlyUnallocated, String[] nodesIds, @Nullable TimeValue timeout) {
@@ -146,7 +150,7 @@ public class TransportNodesListShardStoreMetaData extends TransportNodesOperatio
 
     private StoreFilesMetaData listStoreMetaData(ShardId shardId) throws IOException {
         logger.trace("listing store meta data for {}", shardId);
-        long startTime = System.currentTimeMillis();
+        ThreadTracer.startAnalysis(slowOpThresholdInMillis);
         boolean exists = false;
         try {
             IndexService indexService = indicesService.indexService(shardId.index().name());
@@ -186,13 +190,13 @@ public class TransportNodesListShardStoreMetaData extends TransportNodesOperatio
             if (!exists) {
                 return new StoreFilesMetaData(false, shardId, ImmutableMap.<String, StoreFileMetaData>of());
             }
-            return new StoreFilesMetaData(false, shardId, Store.readMetadataSnapshot(shardIndexLocations, logger).asMap());
+            return new StoreFilesMetaData(false, shardId, Store.readMetadataSnapshot(shardId, shardIndexLocations, logger).asMap());
         } finally {
-            TimeValue took = new TimeValue(System.currentTimeMillis() - startTime);
+            ThreadTracer.Analysis analysis = ThreadTracer.stopAnalysis();
             if (exists) {
-                logger.debug("{} loaded store meta data (took [{}])", shardId, took);
+                logger.debug("{} loaded store meta data. {}", shardId, analysis);
             } else {
-                logger.trace("{} didn't find any store meta data to load (took [{}])", shardId, took);
+                logger.trace("{} didn't find any store meta data to load. {}", shardId, analysis);
             }
         }
     }

@@ -41,6 +41,7 @@ import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.lucene.Directories;
 import org.elasticsearch.common.lucene.Lucene;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.util.ThreadTracer;
 import org.elasticsearch.index.CloseableIndexComponent;
 import org.elasticsearch.index.codec.CodecService;
 import org.elasticsearch.index.settings.IndexSettings;
@@ -306,14 +307,16 @@ public class Store extends AbstractIndexShardComponent implements CloseableIndex
      * Reads a MetadataSnapshot from the given index locations or returns an empty snapshot if it can't be read.
      * @throws IOException if the index we try to read is corrupted
      */
-    public static MetadataSnapshot readMetadataSnapshot(File[] indexLocations, ESLogger logger) throws IOException {
+    public static MetadataSnapshot readMetadataSnapshot(final ShardId shardId, File[] indexLocations, ESLogger logger) throws IOException {
         final Directory[] dirs = new Directory[indexLocations.length];
         try {
+            ThreadTracer.onOpStart();
             for (int i=0; i< indexLocations.length; i++) {
                 dirs[i] = new SimpleFSDirectory(indexLocations[i]);
             }
             DistributorDirectory dir = new DistributorDirectory(dirs);
-            failIfCorrupted(dir, new ShardId("", 1));
+            ThreadTracer.onOpEnd("dir_constr", "[{}] dirs", indexLocations.length);
+            failIfCorrupted(dir, shardId);
             return new MetadataSnapshot(null, dir, logger);
         } catch (IndexNotFoundException ex) {
             // that's fine - happens all the time no need to log
@@ -462,10 +465,13 @@ public class Store extends AbstractIndexShardComponent implements CloseableIndex
     }
 
     private static final void failIfCorrupted(Directory directory, ShardId shardId) throws IOException {
+        ThreadTracer.onOpStart();
         final String[] files = directory.listAll();
+        ThreadTracer.onOpEnd("dir_list", "{} corruption check", shardId);
         List<CorruptIndexException> ex = new ArrayList<>();
         for (String file : files) {
             if (file.startsWith(CORRUPTED)) {
+                ThreadTracer.onOpStart();
                 try(ChecksumIndexInput input = directory.openChecksumInput(file, IOContext.READONCE)) {
                     int version = CodecUtil.checkHeader(input, CODEC, VERSION_START, VERSION);
                     String msg = input.readString();
@@ -479,6 +485,8 @@ public class Store extends AbstractIndexShardComponent implements CloseableIndex
                     }
                     ex.add(new CorruptIndexException(builder.toString()));
                     CodecUtil.checkFooter(input);
+                } finally {
+                    ThreadTracer.onOpEnd("file_read", "corruption marker");
                 }
             }
         }
@@ -600,7 +608,9 @@ public class Store extends AbstractIndexShardComponent implements CloseableIndex
             ImmutableMap.Builder<String, StoreFileMetaData> builder = ImmutableMap.builder();
             Tuple<Map<String, String>, Long> tuple = readLegacyChecksums(directory);
             try {
+                ThreadTracer.onOpStart();
                 final SegmentInfos segmentCommitInfos = Store.readSegmentsInfo(commit, directory);
+                ThreadTracer.onOpEnd("seg_info", "read (commit [{}])", commit);
                 Version maxVersion = Version.LUCENE_3_0; // we don't know which version was used to write so we take the max version.
                 for (SegmentCommitInfo info : segmentCommitInfos) {
                     final Version version = info.info.getVersion();
@@ -612,7 +622,9 @@ public class Store extends AbstractIndexShardComponent implements CloseableIndex
                         if (version.onOrAfter(Version.LUCENE_4_8) && legacyChecksum == null) {
                             checksumFromLuceneFile(directory, file, builder, logger, version, Lucene46SegmentInfoFormat.SI_EXTENSION.equals(IndexFileNames.getExtension(file)));
                         } else {
+                            ThreadTracer.onOpStart();
                             builder.put(file, new StoreFileMetaData(file, directory.fileLength(file), legacyChecksum, null));
+                            ThreadTracer.onOpEnd("file_meta", "list file length [{}]", file);
                         }
                     }
                 }
@@ -621,7 +633,9 @@ public class Store extends AbstractIndexShardComponent implements CloseableIndex
                 if (maxVersion.onOrAfter(Version.LUCENE_4_8) && legacyChecksum == null) {
                     checksumFromLuceneFile(directory, segmentsFile, builder, logger, maxVersion, true);
                 } else {
+                    ThreadTracer.onOpStart();
                     builder.put(segmentsFile, new StoreFileMetaData(segmentsFile, directory.fileLength(segmentsFile), legacyChecksum, null));
+                    ThreadTracer.onOpEnd("file_meta", "list file length [{}]", segmentsFile);
                 }
             } catch (CorruptIndexException | IndexNotFoundException ex) {
                 // we either know the index is corrupted or it's just not there
@@ -659,7 +673,10 @@ public class Store extends AbstractIndexShardComponent implements CloseableIndex
         static Tuple<Map<String, String>, Long> readLegacyChecksums(Directory directory) throws IOException {
             synchronized (directory) {
                 long lastFound = -1;
-                for (String name : directory.listAll()) {
+                ThreadTracer.onOpStart();
+                String[] names = directory.listAll();
+                ThreadTracer.onOpEnd("dir_list", "legacy checksums");
+                for (String name : names) {
                     if (!isChecksum(name)) {
                         continue;
                     }
@@ -669,10 +686,14 @@ public class Store extends AbstractIndexShardComponent implements CloseableIndex
                     }
                 }
                 if (lastFound > -1) {
+                    ThreadTracer.onOpStart();
                     try (IndexInput indexInput = directory.openInput(CHECKSUMS_PREFIX + lastFound, IOContext.READONCE)) {
                         indexInput.readInt(); // version
                         return new Tuple(indexInput.readStringStringMap(), lastFound);
+                    } finally {
+                        ThreadTracer.onOpEnd("file_read", "legacy checksum [{}]", CHECKSUMS_PREFIX + lastFound);
                     }
+
                 }
                 return new Tuple(new HashMap<>(), -1l);
             }
@@ -705,6 +726,7 @@ public class Store extends AbstractIndexShardComponent implements CloseableIndex
         private static void checksumFromLuceneFile(Directory directory, String file, ImmutableMap.Builder<String, StoreFileMetaData> builder,  ESLogger logger, Version version, boolean readFileAsHash) throws IOException {
             final String checksum;
             final BytesRef fileHash = new BytesRef();
+            ThreadTracer.onOpStart();
             try (IndexInput in = directory.openInput(file, IOContext.READONCE)) {
                 try {
                     if (in.length() < CodecUtil.footerLength()) {
@@ -721,6 +743,8 @@ public class Store extends AbstractIndexShardComponent implements CloseableIndex
                     throw ex;
                 }
                 builder.put(file, new StoreFileMetaData(file, directory.fileLength(file), checksum, version, fileHash));
+            } finally {
+                ThreadTracer.onOpEnd("file_read", "checksum check [{}], with hash [{}]", readFileAsHash);
             }
         }
 
