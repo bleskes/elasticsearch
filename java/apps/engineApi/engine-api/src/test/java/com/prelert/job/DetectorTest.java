@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -229,8 +229,9 @@ public class DetectorTest
 
         // some functions require a fieldname
         d.setFieldName("f");
-        for (String f : new String[] { Detector.DISTINCT_COUNT, Detector.DC, Detector.METRIC,
-                Detector.MEAN, Detector.HIGH_MEAN, Detector.LOW_MEAN, Detector.AVG,
+        for (String f : new String[] { Detector.DISTINCT_COUNT, Detector.DC,
+                Detector.INFO_CONTENT, Detector.LOW_INFO_CONTENT, Detector.HIGH_INFO_CONTENT,
+                Detector.METRIC, Detector.MEAN, Detector.HIGH_MEAN, Detector.LOW_MEAN, Detector.AVG,
                 Detector.HIGH_AVG, Detector.LOW_AVG, Detector.MAX, Detector.MIN, Detector.SUM,
                 Detector.LOW_SUM, Detector.HIGH_SUM, Detector.NON_ZERO_SUM,
                 Detector.LOW_NON_ZERO_SUM, Detector.HIGH_NON_ZERO_SUM })
@@ -253,6 +254,9 @@ public class DetectorTest
         difference = new HashSet<String>(Detector.ANALYSIS_FUNCTIONS);
         difference.remove(Detector.DISTINCT_COUNT);
         difference.remove(Detector.DC);
+        difference.remove(Detector.INFO_CONTENT);
+        difference.remove(Detector.LOW_INFO_CONTENT);
+        difference.remove(Detector.HIGH_INFO_CONTENT);
         difference.remove(Detector.METRIC);
         difference.remove(Detector.MEAN);
         difference.remove(Detector.LOW_MEAN);
@@ -293,7 +297,8 @@ public class DetectorTest
         // these functions cannot have a by field
         d = new Detector();
         d.setByFieldName("by");
-        for (String f : new String [] {Detector.DISTINCT_COUNT, Detector.DC})
+        for (String f : new String [] {Detector.DISTINCT_COUNT, Detector.DC,
+                Detector.INFO_CONTENT, Detector.LOW_INFO_CONTENT, Detector.HIGH_INFO_CONTENT})
         {
             d.setFunction(f);
             try
