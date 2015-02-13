@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -68,6 +68,9 @@ public class Detector
     public static final String DC = "dc";
     public static final String RARE = "rare";
     public static final String FREQ_RARE = "freq_rare";
+    public static final String INFO_CONTENT = "info_content";
+    public static final String LOW_INFO_CONTENT = "low_info_content";
+    public static final String HIGH_INFO_CONTENT = "high_info_content";
     public static final String METRIC = "metric";
     public static final String MEAN = "mean";
     public static final String HIGH_MEAN = "high_mean";
@@ -98,6 +101,9 @@ public class Detector
                 DISTINCT_COUNT, DC,
                 RARE,
                 FREQ_RARE,
+                INFO_CONTENT,
+                LOW_INFO_CONTENT,
+                HIGH_INFO_CONTENT,
                 METRIC,
                 MEAN, AVG,
                 HIGH_MEAN, HIGH_AVG,
@@ -131,6 +137,9 @@ public class Detector
     public static final Set<String> FIELD_NAME_FUNCTIONS =
             new HashSet<String>(Arrays.<String>asList(new String [] {
                 DISTINCT_COUNT, DC,
+                INFO_CONTENT,
+                LOW_INFO_CONTENT,
+                HIGH_INFO_CONTENT,
                 METRIC,
                 MEAN, AVG,
                 HIGH_MEAN, HIGH_AVG,
@@ -160,7 +169,21 @@ public class Detector
     public static final Set<String> OVER_FIELD_NAME_FUNCTIONS =
             new HashSet<String>(Arrays.<String>asList(new String [] {
                 DISTINCT_COUNT, DC,
-                FREQ_RARE
+                FREQ_RARE,
+                INFO_CONTENT,
+                LOW_INFO_CONTENT,
+                HIGH_INFO_CONTENT
+            }));
+
+    /**
+     * The set of functions that cannot have an by fieldname
+     */
+    private static final Set<String> NO_BY_FIELD_NAME_FUNCTIONS =
+            new HashSet<String>(Arrays.<String>asList(new String [] {
+                DISTINCT_COUNT, DC,
+                INFO_CONTENT,
+                LOW_INFO_CONTENT,
+                HIGH_INFO_CONTENT
             }));
 
     /**
@@ -289,7 +312,7 @@ public class Detector
 
     public void setFieldName(String fieldName)
     {
-        this.m_FieldName =fieldName;
+        this.m_FieldName = fieldName;
     }
 
     /**
@@ -527,7 +550,7 @@ public class Detector
                 }
             }
 
-            if (!emptyByField && (DISTINCT_COUNT.equals(m_Function) || DC.equals(m_Function)))
+            if (!emptyByField && NO_BY_FIELD_NAME_FUNCTIONS.contains(m_Function))
             {
                 throw new JobConfigurationException(
                         String.format("byFieldName cannot be used with function '%s'",
