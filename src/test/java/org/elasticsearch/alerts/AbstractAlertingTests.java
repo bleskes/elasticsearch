@@ -138,7 +138,9 @@ public abstract class AbstractAlertingTests extends ElasticsearchIntegrationTest
         }
         builder.startObject();
 
-        builder.startObject("schedule").field("cron", cron).endObject();
+        builder.startObject("schedule")
+                .field("cron", cron)
+                .endObject();
 
         if (metadata != null) {
             builder.field("meta", metadata);
@@ -288,7 +290,7 @@ public abstract class AbstractAlertingTests extends ElasticsearchIntegrationTest
                         .get();
                 assertThat(searchResponse.getHits().getTotalHits(), greaterThanOrEqualTo(minimumExpectedAlertActionsWithActionPerformed));
                 if (assertTriggerSearchMatched) {
-                    assertThat((Integer) XContentMapValues.extractValue("alert_run.trigger_result.script.payload.hits.total", searchResponse.getHits().getAt(0).sourceAsMap()), greaterThanOrEqualTo(1));
+                    assertThat((Integer) XContentMapValues.extractValue("alert_execution.trigger_result.script.payload.hits.total", searchResponse.getHits().getAt(0).sourceAsMap()), greaterThanOrEqualTo(1));
                 }
             }
         });
@@ -437,7 +439,7 @@ public abstract class AbstractAlertingTests extends ElasticsearchIntegrationTest
             // on these nodes
             for (String node : nodes) {
                 AlertsService alertsService = _testCluster.getInstance(AlertsService.class, node);
-                assertThat(alertsService.getState(), equalTo(AlertsService.State.STOPPED));
+                assertThat(alertsService.state(), equalTo(AlertsService.State.STOPPED));
                 alertsService.stop(); // Prevents these nodes from starting alerting when new elected master node is picked.
             }
 
@@ -447,7 +449,7 @@ public abstract class AbstractAlertingTests extends ElasticsearchIntegrationTest
                 assertBusy(new Runnable() {
                     @Override
                     public void run() {
-                        assertThat(alertsService.getState(), not(equalTo(AlertsService.State.STARTING)));
+                        assertThat(alertsService.state(), not(equalTo(AlertsService.State.STARTING)));
                     }
                 });
             } catch (Exception e) {
@@ -458,7 +460,7 @@ public abstract class AbstractAlertingTests extends ElasticsearchIntegrationTest
                 assertBusy(new Runnable() {
                     @Override
                     public void run() {
-                        assertThat(alertsService.getState(), equalTo(AlertsService.State.STOPPED));
+                        assertThat(alertsService.state(), equalTo(AlertsService.State.STOPPED));
                     }
                 });
             } catch (Exception e) {
