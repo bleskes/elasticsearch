@@ -48,7 +48,6 @@ import com.prelert.rs.provider.JobExceptionMapper;
 import com.prelert.rs.provider.NativeProcessRunExceptionMapper;
 import com.prelert.rs.provider.PaginationWriter;
 import com.prelert.rs.provider.SingleDocumentWriter;
-import com.prelert.rs.provider.UnknownJobExceptionMapper;
 
 /**
  * Web application class contains the singleton objects accessed by the
@@ -96,7 +95,6 @@ public class PrelertWebApp extends Application
 		// Exception mappers
 		m_ResourceClasses.add(ElasticsearchExceptionMapper.class);
 		m_ResourceClasses.add(NativeProcessRunExceptionMapper.class);
-		m_ResourceClasses.add(UnknownJobExceptionMapper.class);
 		m_ResourceClasses.add(JobExceptionMapper.class);
 
 

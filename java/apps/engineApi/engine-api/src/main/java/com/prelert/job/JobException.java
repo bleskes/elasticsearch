@@ -30,10 +30,9 @@ package com.prelert.job;
 import com.prelert.rs.data.ErrorCode;
 
 /**
- * General job exception class with an specfic error code
- * and message.
+ * General job exception class with a specific error code and message.
  */
-public class JobException extends Exception
+abstract public class JobException extends Exception
 {
 	private static final long serialVersionUID = -5289885963015348819L;
 
