@@ -33,14 +33,14 @@ import com.google.common.net.InternetDomainName;
 
 
 /**
- * Split a hostname into effective top level domain and sub domain
+ * Split a hostname into Highest Registered Domain and sub domain
  * using Google guava InternetDomainName<br/>
  *
  * The logic is a little different as we wish to accept domains that
  * aren't recognised top level domains such as those ending '.local'.
  * See the unit tests for clear examples
  */
-public class EffectiveTLD
+public class HighestRegisteredDomain
 {
 	/**
 	 * Immutable class for the domain split results
@@ -48,12 +48,12 @@ public class EffectiveTLD
 	static public class DomainSplit
 	{
 		private String m_SubDomain;
-		private String m_EffectiveTLD;
+		private String m_HighestRegisteredDomain;
 
-		private DomainSplit(String subDomain, String effectiveTLD)
+		private DomainSplit(String subDomain, String highestRegisteredDomain)
 		{
 			m_SubDomain = subDomain;
-			m_EffectiveTLD = effectiveTLD;
+			m_HighestRegisteredDomain = highestRegisteredDomain;
 		}
 
 		public String getSubDomain()
@@ -61,9 +61,9 @@ public class EffectiveTLD
 			return m_SubDomain;
 		}
 
-		public String getEffectiveTLD()
+		public String getHighestRegisteredDomain()
 		{
-			return m_EffectiveTLD;
+			return m_HighestRegisteredDomain;
 		}
 	}
 
@@ -92,7 +92,7 @@ public class EffectiveTLD
 		InternetDomainName idn = InternetDomainName.from(host);
 
 		StringBuilder subDomain = new StringBuilder();
-		String effectiveTLD = "";
+		String highestRegistered = "";
 
 		// for the case where the host is internal like .local
 		// so the not a recognised public suffix
@@ -101,7 +101,7 @@ public class EffectiveTLD
 			List<String> parts = idn.parts();
 			if (idn.parts().size() > 0)
 			{
-				effectiveTLD = parts.get(parts.size() -1);
+				highestRegistered = parts.get(parts.size() -1);
 				for (int i=0; i<parts.size() -1; i++)
 				{
 					subDomain.append(parts.get(i)).append('.');
@@ -114,7 +114,7 @@ public class EffectiveTLD
 				}
 			}
 
-			return new DomainSplit(subDomain.toString(), effectiveTLD);
+			return new DomainSplit(subDomain.toString(), highestRegistered);
 		}
 
 		while (idn.isTopPrivateDomain() == false)
@@ -129,8 +129,8 @@ public class EffectiveTLD
 			subDomain.deleteCharAt(subDomain.length() -1);
 		}
 
-		effectiveTLD = idn.topPrivateDomain().toString();
+		highestRegistered = idn.topPrivateDomain().toString();
 
-		return new DomainSplit(subDomain.toString(), effectiveTLD);
+		return new DomainSplit(subDomain.toString(), highestRegistered);
 	}
 }

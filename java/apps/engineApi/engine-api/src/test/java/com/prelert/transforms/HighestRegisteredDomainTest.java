@@ -33,9 +33,9 @@ import com.google.common.net.InternetDomainName;
 
 import org.junit.Test;
 
-public class EffectiveTLDTest
+public class HighestRegisteredDomainTest
 {
-	private void checkTopLevelDomain(String fullName, String registeredNameExpected)
+	private void checkHighestRegisteredDomain(String fullName, String registeredNameExpected)
 	{
 		InternetDomainName effectiveTLD = InternetDomainName.from(fullName);
 
@@ -55,10 +55,10 @@ public class EffectiveTLDTest
 	private void testDomainSplit(String subDomainExpected,
           String domainExpected, String hostName)
 	{
-		EffectiveTLD.DomainSplit split = EffectiveTLD.lookup(hostName);
+		HighestRegisteredDomain.DomainSplit split = HighestRegisteredDomain.lookup(hostName);
 
 		assertEquals(subDomainExpected, split.getSubDomain());
-		assertEquals(domainExpected, split.getEffectiveTLD());
+		assertEquals(domainExpected, split.getHighestRegisteredDomain());
 	}
 
 	@Test
@@ -100,15 +100,15 @@ public class EffectiveTLDTest
 	}
 
 	@Test
-	public void testTopLevelDomainCases()
+	public void testHighestRegisteredDomainCases()
 	{
 	    // Any copyright is dedicated to the Public Domain.
 	    // http://creativecommons.org/publicdomain/zero/1.0/
 
 	    // Mixed case.
 	    checkIsPublicSuffix("COM");
-	    checkTopLevelDomain("example.COM", "example.com");
-	    checkTopLevelDomain("WwW.example.COM", "example.com");
+	    checkHighestRegisteredDomain("example.COM", "example.com");
+	    checkHighestRegisteredDomain("WwW.example.COM", "example.com");
 
 	    // These pass steve's test but fail here. Example isn't a valid (declared, not active) TLD
 //	    checkIsPublicSuffix("example");
@@ -124,27 +124,27 @@ public class EffectiveTLDTest
 
 	    // TLD with only 1 rule.
 	    checkIsPublicSuffix("biz");
-	    checkTopLevelDomain("domain.biz", "domain.biz");
-	    checkTopLevelDomain("b.domain.biz", "domain.biz");
-	    checkTopLevelDomain("a.b.domain.biz", "domain.biz");
+	    checkHighestRegisteredDomain("domain.biz", "domain.biz");
+	    checkHighestRegisteredDomain("b.domain.biz", "domain.biz");
+	    checkHighestRegisteredDomain("a.b.domain.biz", "domain.biz");
 	    // TLD with some 2-level rules.
 	   // checkPublicSuffix("com", "");
-	    checkTopLevelDomain("example.com", "example.com");
-	    checkTopLevelDomain("b.example.com", "example.com");
-	    checkTopLevelDomain("a.b.example.com", "example.com");
+	    checkHighestRegisteredDomain("example.com", "example.com");
+	    checkHighestRegisteredDomain("b.example.com", "example.com");
+	    checkHighestRegisteredDomain("a.b.example.com", "example.com");
 	    checkIsPublicSuffix("uk.com");
-	    checkTopLevelDomain("example.uk.com", "example.uk.com");
-	    checkTopLevelDomain("b.example.uk.com", "example.uk.com");
-	    checkTopLevelDomain("a.b.example.uk.com", "example.uk.com");
-	    checkTopLevelDomain("test.ac", "test.ac");
+	    checkHighestRegisteredDomain("example.uk.com", "example.uk.com");
+	    checkHighestRegisteredDomain("b.example.uk.com", "example.uk.com");
+	    checkHighestRegisteredDomain("a.b.example.uk.com", "example.uk.com");
+	    checkHighestRegisteredDomain("test.ac", "test.ac");
 	    // TLD with only 1 (wildcard) rule.
 
 	    // cy passes Steve's test but is not considered a valid TLD here
 	    // gov.cy is.
 	    checkIsPublicSuffix("gov.cy");
-	    checkTopLevelDomain("c.gov.cy", "c.gov.cy");  // changed to pass test - inserted .gov, .net
-	    checkTopLevelDomain("b.c.net.cy", "c.net.cy");
-	    checkTopLevelDomain("a.b.c.net.cy", "c.net.cy");
+	    checkHighestRegisteredDomain("c.gov.cy", "c.gov.cy");  // changed to pass test - inserted .gov, .net
+	    checkHighestRegisteredDomain("b.c.net.cy", "c.net.cy");
+	    checkHighestRegisteredDomain("a.b.c.net.cy", "c.net.cy");
 
 	    // More complex TLD.
 	    checkIsPublicSuffix("jp");    // jp is valid because you can have any 2nd level domain
@@ -152,17 +152,17 @@ public class EffectiveTLDTest
 	    checkIsPublicSuffix("kyoto.jp");
 	    checkIsPublicSuffix("c.kobe.jp");
 	    checkIsPublicSuffix("ide.kyoto.jp");
-	    checkTopLevelDomain("test.jp", "test.jp");
-	    checkTopLevelDomain("www.test.jp", "test.jp");
-	    checkTopLevelDomain("test.ac.jp", "test.ac.jp");
-	    checkTopLevelDomain("www.test.ac.jp", "test.ac.jp");
-	    checkTopLevelDomain("test.kyoto.jp", "test.kyoto.jp");
-	    checkTopLevelDomain("b.ide.kyoto.jp", "b.ide.kyoto.jp");
-	    checkTopLevelDomain("a.b.ide.kyoto.jp", "b.ide.kyoto.jp");
-	    checkTopLevelDomain("b.c.kobe.jp", "b.c.kobe.jp");
-	    checkTopLevelDomain("a.b.c.kobe.jp", "b.c.kobe.jp");
-	    checkTopLevelDomain("city.kobe.jp", "city.kobe.jp");
-	    checkTopLevelDomain("www.city.kobe.jp", "city.kobe.jp");
+	    checkHighestRegisteredDomain("test.jp", "test.jp");
+	    checkHighestRegisteredDomain("www.test.jp", "test.jp");
+	    checkHighestRegisteredDomain("test.ac.jp", "test.ac.jp");
+	    checkHighestRegisteredDomain("www.test.ac.jp", "test.ac.jp");
+	    checkHighestRegisteredDomain("test.kyoto.jp", "test.kyoto.jp");
+	    checkHighestRegisteredDomain("b.ide.kyoto.jp", "b.ide.kyoto.jp");
+	    checkHighestRegisteredDomain("a.b.ide.kyoto.jp", "b.ide.kyoto.jp");
+	    checkHighestRegisteredDomain("b.c.kobe.jp", "b.c.kobe.jp");
+	    checkHighestRegisteredDomain("a.b.c.kobe.jp", "b.c.kobe.jp");
+	    checkHighestRegisteredDomain("city.kobe.jp", "city.kobe.jp");
+	    checkHighestRegisteredDomain("www.city.kobe.jp", "city.kobe.jp");
 
 
 	    // TLD with a wildcard rule and exceptions.
@@ -177,34 +177,34 @@ public class EffectiveTLDTest
 	    checkIsPublicSuffix("us");
 	    checkIsPublicSuffix("ak.us");
 	    checkIsPublicSuffix("k12.ak.us");
-	    checkTopLevelDomain("test.us", "test.us");
-	    checkTopLevelDomain("www.test.us", "test.us");
-	    checkTopLevelDomain("test.ak.us", "test.ak.us");
-	    checkTopLevelDomain("www.test.ak.us", "test.ak.us");
-	    checkTopLevelDomain("test.k12.ak.us", "test.k12.ak.us");
-	    checkTopLevelDomain("www.test.k12.ak.us", "test.k12.ak.us");
+	    checkHighestRegisteredDomain("test.us", "test.us");
+	    checkHighestRegisteredDomain("www.test.us", "test.us");
+	    checkHighestRegisteredDomain("test.ak.us", "test.ak.us");
+	    checkHighestRegisteredDomain("www.test.ak.us", "test.ak.us");
+	    checkHighestRegisteredDomain("test.k12.ak.us", "test.k12.ak.us");
+	    checkHighestRegisteredDomain("www.test.k12.ak.us", "test.k12.ak.us");
 
 	    // IDN labels.
 	    checkIsPublicSuffix("公司.cn");
 	    checkIsPublicSuffix("中国");
-	    checkTopLevelDomain("食狮.com.cn", "食狮.com.cn");
-	    checkTopLevelDomain("食狮.公司.cn", "食狮.公司.cn");
-	    checkTopLevelDomain("www.食狮.公司.cn", "食狮.公司.cn");
-	    checkTopLevelDomain("shishi.公司.cn", "shishi.公司.cn");
-	    checkTopLevelDomain("食狮.中国", "食狮.中国");
-	    checkTopLevelDomain("www.食狮.中国", "食狮.中国");
-	    checkTopLevelDomain("shishi.中国", "shishi.中国");
+	    checkHighestRegisteredDomain("食狮.com.cn", "食狮.com.cn");
+	    checkHighestRegisteredDomain("食狮.公司.cn", "食狮.公司.cn");
+	    checkHighestRegisteredDomain("www.食狮.公司.cn", "食狮.公司.cn");
+	    checkHighestRegisteredDomain("shishi.公司.cn", "shishi.公司.cn");
+	    checkHighestRegisteredDomain("食狮.中国", "食狮.中国");
+	    checkHighestRegisteredDomain("www.食狮.中国", "食狮.中国");
+	    checkHighestRegisteredDomain("shishi.中国", "shishi.中国");
 
 	    // Same as above, but punycoded.
 	    checkIsPublicSuffix("xn--55qx5d.cn");
 	    checkIsPublicSuffix("xn--fiqs8s");
-	    checkTopLevelDomain("xn--85x722f.com.cn", "xn--85x722f.com.cn");
-	    checkTopLevelDomain("xn--85x722f.xn--55qx5d.cn", "xn--85x722f.xn--55qx5d.cn");
-	    checkTopLevelDomain("www.xn--85x722f.xn--55qx5d.cn", "xn--85x722f.xn--55qx5d.cn");
-	    checkTopLevelDomain("shishi.xn--55qx5d.cn", "shishi.xn--55qx5d.cn");
-	    checkTopLevelDomain("xn--85x722f.xn--fiqs8s", "xn--85x722f.xn--fiqs8s");
-	    checkTopLevelDomain("www.xn--85x722f.xn--fiqs8s", "xn--85x722f.xn--fiqs8s");
-	    checkTopLevelDomain("shishi.xn--fiqs8s", "shishi.xn--fiqs8s");
+	    checkHighestRegisteredDomain("xn--85x722f.com.cn", "xn--85x722f.com.cn");
+	    checkHighestRegisteredDomain("xn--85x722f.xn--55qx5d.cn", "xn--85x722f.xn--55qx5d.cn");
+	    checkHighestRegisteredDomain("www.xn--85x722f.xn--55qx5d.cn", "xn--85x722f.xn--55qx5d.cn");
+	    checkHighestRegisteredDomain("shishi.xn--55qx5d.cn", "shishi.xn--55qx5d.cn");
+	    checkHighestRegisteredDomain("xn--85x722f.xn--fiqs8s", "xn--85x722f.xn--fiqs8s");
+	    checkHighestRegisteredDomain("www.xn--85x722f.xn--fiqs8s", "xn--85x722f.xn--fiqs8s");
+	    checkHighestRegisteredDomain("shishi.xn--fiqs8s", "shishi.xn--fiqs8s");
 	}
 
 }
