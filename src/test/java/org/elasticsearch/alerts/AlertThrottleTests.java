@@ -139,7 +139,7 @@ public class AlertThrottleTests extends AbstractAlertingTests {
 
         CountResponse countOfThrottledActions = client()
                 .prepareCount(HistoryStore.ALERT_HISTORY_INDEX_PREFIX + "*")
-                .setQuery(QueryBuilders.matchQuery(FiredAlert.Parser.STATE_FIELD.getPreferredName(), FiredAlert.State.THROTTLED.toString()))
+                .setQuery(QueryBuilders.matchQuery(FiredAlert.Parser.STATE_FIELD.getPreferredName(), FiredAlert.State.THROTTLED.id()))
                 .get();
         assertThat(countOfThrottledActions.getCount(), greaterThan(0L));
     }
@@ -216,7 +216,7 @@ public class AlertThrottleTests extends AbstractAlertingTests {
 
         CountResponse countOfThrottledActions = client()
                 .prepareCount(HistoryStore.ALERT_HISTORY_INDEX_PREFIX + "*")
-                .setQuery(QueryBuilders.matchQuery(FiredAlert.Parser.STATE_FIELD.getPreferredName(), FiredAlert.State.THROTTLED.toString()))
+                .setQuery(QueryBuilders.matchQuery(FiredAlert.Parser.STATE_FIELD.getPreferredName(), FiredAlert.State.THROTTLED.id()))
                 .get();
         assertThat(countOfThrottledActions.getCount(), greaterThan(0L));
     }
