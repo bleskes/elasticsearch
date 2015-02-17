@@ -39,9 +39,6 @@ public class ActionRegistry  {
 
     /**
      * Reads the contents of parser to create the correct Action
-     * @param parser The parser containing the trigger definition
-     * @return a new Action instance from the parser
-     * @throws IOException
      */
     public Action parse(XContentParser parser) throws IOException {
         String type = null;
@@ -51,11 +48,11 @@ public class ActionRegistry  {
             if (token == XContentParser.Token.FIELD_NAME) {
                 type = parser.currentName();
             } else if (token == XContentParser.Token.START_OBJECT && type != null) {
-                Action.Parser triggerParser = parsers.get(type);
-                if (triggerParser == null) {
+                Action.Parser actionParser = parsers.get(type);
+                if (actionParser == null) {
                     throw new ActionException("unknown action type [" + type + "]");
                 }
-                action = triggerParser.parse(parser);
+                action = actionParser.parse(parser);
             }
         }
         return action;
@@ -63,8 +60,9 @@ public class ActionRegistry  {
 
     /**
      * Reads the contents of parser to create the correct Action.Result
-     * @param parser The parser containing the trigger definition
-     * @return a new Action.Result instance from the parser
+     *
+     * @param parser    The parser containing the action definition
+     * @return          A new Action.Result instance from the parser
      * @throws IOException
      */
     public Action.Result parseResult(XContentParser parser) throws IOException {
@@ -75,11 +73,11 @@ public class ActionRegistry  {
             if (token == XContentParser.Token.FIELD_NAME) {
                 type = parser.currentName();
             } else if (token == XContentParser.Token.START_OBJECT && type != null) {
-                Action.Parser triggerParser = parsers.get(type);
-                if (triggerParser == null) {
+                Action.Parser actionParser = parsers.get(type);
+                if (actionParser == null) {
                     throw new ActionException("unknown action type [" + type + "]");
                 }
-                result = triggerParser.parseResult(parser);
+                result = actionParser.parseResult(parser);
             }
         }
         return result;

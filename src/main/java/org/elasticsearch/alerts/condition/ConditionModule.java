@@ -15,10 +15,10 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.alerts.trigger;
+package org.elasticsearch.alerts.condition;
 
-import org.elasticsearch.alerts.trigger.search.ScriptSearchTrigger;
-import org.elasticsearch.alerts.trigger.simple.SimpleTrigger;
+import org.elasticsearch.alerts.condition.search.ScriptSearchCondition;
+import org.elasticsearch.alerts.condition.simple.SimpleCondition;
 import org.elasticsearch.common.inject.AbstractModule;
 import org.elasticsearch.common.inject.multibindings.MapBinder;
 
@@ -28,28 +28,28 @@ import java.util.Map;
 /**
  *
  */
-public class TriggerModule extends AbstractModule {
+public class ConditionModule extends AbstractModule {
 
-    private final Map<String, Class<? extends Trigger.Parser>> parsers = new HashMap<>();
+    private final Map<String, Class<? extends Condition.Parser>> parsers = new HashMap<>();
 
-    public void registerTrigger(String type, Class<? extends Trigger.Parser> parserType) {
+    public void registerCondition(String type, Class<? extends Condition.Parser> parserType) {
         parsers.put(type, parserType);
     }
 
     @Override
     protected void configure() {
 
-        MapBinder<String, Trigger.Parser> parsersBinder = MapBinder.newMapBinder(binder(), String.class, Trigger.Parser.class);
-        bind(ScriptSearchTrigger.Parser.class).asEagerSingleton();
-        parsersBinder.addBinding(ScriptSearchTrigger.TYPE).to(ScriptSearchTrigger.Parser.class);
-        bind(SimpleTrigger.Parser.class).asEagerSingleton();
-        parsersBinder.addBinding(SimpleTrigger.TYPE).to(SimpleTrigger.Parser.class);
+        MapBinder<String, Condition.Parser> parsersBinder = MapBinder.newMapBinder(binder(), String.class, Condition.Parser.class);
+        bind(ScriptSearchCondition.Parser.class).asEagerSingleton();
+        parsersBinder.addBinding(ScriptSearchCondition.TYPE).to(ScriptSearchCondition.Parser.class);
+        bind(SimpleCondition.Parser.class).asEagerSingleton();
+        parsersBinder.addBinding(SimpleCondition.TYPE).to(SimpleCondition.Parser.class);
 
-        for (Map.Entry<String, Class<? extends Trigger.Parser>> entry : parsers.entrySet()) {
+        for (Map.Entry<String, Class<? extends Condition.Parser>> entry : parsers.entrySet()) {
             bind(entry.getValue()).asEagerSingleton();
             parsersBinder.addBinding(entry.getKey()).to(entry.getValue());
         }
 
-        bind(TriggerRegistry.class).asEagerSingleton();
+        bind(ConditionRegistry.class).asEagerSingleton();
     }
 }

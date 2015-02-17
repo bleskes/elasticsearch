@@ -15,23 +15,20 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.alerts.throttle;
+package org.elasticsearch.alerts.condition;
 
-import org.elasticsearch.alerts.ExecutionContext;
-import org.elasticsearch.alerts.condition.Condition;
-
-import static org.elasticsearch.alerts.support.AlertsDateUtils.formatDate;
+import org.elasticsearch.alerts.AlertsException;
 
 /**
  *
  */
-public class AckThrottler implements Throttler {
+public class ConditionException extends AlertsException {
 
-    @Override
-    public Result throttle(ExecutionContext ctx, Condition.Result result) {
-        if (ctx.alert().acked()) {
-            return Result.throttle("alert [" + ctx.alert().name() + "] was acked at [" + formatDate(ctx.alert().status().ackStatus().timestamp()) + "]");
-        }
-        return Result.NO;
+    public ConditionException(String msg) {
+        super(msg);
+    }
+
+    public ConditionException(String msg, Throwable cause) {
+        super(msg, cause);
     }
 }

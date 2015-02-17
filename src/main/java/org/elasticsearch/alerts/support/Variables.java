@@ -15,20 +15,14 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.alerts.trigger;
-
-import org.elasticsearch.alerts.AlertsException;
+package org.elasticsearch.alerts.support;
 
 /**
  *
  */
-public class TriggerException extends AlertsException {
+public final class Variables {
 
-    public TriggerException(String msg) {
-        super(msg);
-    }
+    public static final String FIRE_TIME = "fire_time";
+    public static final String SCHEDULED_FIRE_TIME = "scheduled_fire_time";
 
-    public TriggerException(String msg, Throwable cause) {
-        super(msg, cause);
-    }
 }
