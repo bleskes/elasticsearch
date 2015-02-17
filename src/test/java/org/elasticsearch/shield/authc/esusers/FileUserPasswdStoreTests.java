@@ -72,8 +72,8 @@ public class FileUserPasswdStoreTests extends ElasticsearchTestCase {
     }
 
     @After
-    public void shutdown() {
-        threadPool.shutdownNow();
+    public void shutdown() throws InterruptedException {
+        terminate(threadPool);
     }
 
     @Test
