@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -130,6 +130,16 @@ public enum ErrorCode
 	 * the other job parameters.
 	 */
 	INVALID_FUNCTION(10114),
+
+	/**
+	 * The transform name isn't recognised
+	 */
+	UNKNOWN_TRANSFORM(10201),
+
+	/**
+	 * The transform does not have the correct number of arguments
+	 */
+	INCORRECT_TRANSFORM_ARGUMENT_COUNT(10202),
 
 
 	// Data store errors
