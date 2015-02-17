@@ -31,6 +31,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 
 import com.prelert.job.JobException;
+import com.prelert.job.UnknownJobException;
 import com.prelert.rs.data.ApiError;
 
 public class JobExceptionMapper
@@ -44,7 +45,14 @@ implements ExceptionMapper<JobException>
 		error.setCause(e.getCause());
 		error.setMessage(e.getMessage());
 
-		return Response.status(Response.Status.BAD_REQUEST)
+
+		Response.Status statusCode = Response.Status.BAD_REQUEST;
+		if (e instanceof UnknownJobException)
+		{
+			statusCode = Response.Status.NOT_FOUND;
+		}
+
+		return Response.status(statusCode)
 				.entity(error.toJson()).build();
 	}
 }
