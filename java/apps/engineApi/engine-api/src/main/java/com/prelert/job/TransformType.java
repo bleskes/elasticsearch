@@ -64,7 +64,7 @@ public enum TransformType
 		return m_Arity;
 	}
 
-	public boolean verify(Transform tr) throws TransformConfigurationException
+	public boolean verify(TransformConfig tr) throws TransformConfigurationException
 	{
 		if (tr.getInputs().size() != m_Arity)
 		{

@@ -49,7 +49,7 @@ import com.prelert.job.DataDescription;
 import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
-import com.prelert.job.Transform;
+import com.prelert.job.TransformConfig;
 
 public class JobConfigurationSerialisationTest {
 
@@ -170,7 +170,7 @@ public class JobConfigurationSerialisationTest {
 		AnalysisLimits al = new AnalysisLimits(2000);
 		assertEquals(al, config.getAnalysisLimits());
 
-		Transform tr = new Transform();
+		TransformConfig tr = new TransformConfig();
 		tr.setTransform("a_function");
 		tr.setInputs(Arrays.asList("field1"));
 		tr.setOutputs(Arrays.asList("out_field"));
@@ -220,7 +220,7 @@ public class JobConfigurationSerialisationTest {
 
 		assertNull(config.getAnalysisLimits());
 
-		Transform tr = new Transform();
+		TransformConfig tr = new TransformConfig();
 		tr.setTransform("a_function");
 		tr.setInputs(Arrays.asList("field1", "field2"));
 		tr.setOutputs(Arrays.asList("out_field"));

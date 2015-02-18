@@ -89,7 +89,7 @@ public class JobDetails
 	private AnalysisLimits m_AnalysisLimits;
 	private DataDescription m_DataDescription;
 	private ModelSizeStats m_ModelSizeStats;
-	private List<Transform> m_Transforms;
+	private List<TransformConfig> m_Transforms;
 	private Counts m_Counts;
 
 	/* These URIs are transient they don't need to be persisted */
@@ -358,12 +358,12 @@ public class JobDetails
 		m_DataDescription = dd;
 	}
 
-	public List<Transform> getTransforms()
+	public List<TransformConfig> getTransforms()
 	{
 		return m_Transforms;
 	}
 
-	public void setTransforms(List<Transform> transforms)
+	public void setTransforms(List<TransformConfig> transforms)
 	{
 		m_Transforms = transforms;
 	}

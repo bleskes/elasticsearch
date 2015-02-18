@@ -45,7 +45,7 @@ public class TransfromTest {
 	@Test
 	public void testUnknownTransfrom()
 	{
-		Transform tr = new Transform();
+		TransformConfig tr = new TransformConfig();
 		tr.setInputs(Arrays.asList("f1", "f2"));
 		tr.setTransform("unknown+transform");
 
@@ -74,7 +74,7 @@ public class TransfromTest {
 				inputs.add(Integer.toString(arg));
 			}
 
-			Transform tr = new Transform();
+			TransformConfig tr = new TransformConfig();
 			tr.setTransform(type.toString());
 			tr.setInputs(inputs);
 
@@ -101,7 +101,7 @@ public class TransfromTest {
 				inputs.add(Integer.toString(arg));
 			}
 
-			Transform tr = new Transform();
+			TransformConfig tr = new TransformConfig();
 			tr.setTransform(type.toString());
 			tr.setInputs(inputs);
 

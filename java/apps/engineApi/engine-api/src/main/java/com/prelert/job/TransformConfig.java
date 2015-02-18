@@ -29,7 +29,7 @@ package com.prelert.job;
 
 import java.util.List;
 
-public class Transform
+public class TransformConfig
 {
 	// Serialisation strings
 	public static final String TYPE = "transform";
@@ -43,7 +43,7 @@ public class Transform
 	private List<String> m_Outputs;
 	private TransformType m_Type;
 
-	public Transform()
+	public TransformConfig()
 	{
 	}
 
@@ -128,7 +128,7 @@ public class Transform
 			return false;
 		}
 
-		Transform other = (Transform) obj;
+		TransformConfig other = (TransformConfig) obj;
 		if (m_Inputs == null)
 		{
 			if (other.m_Inputs != null)

@@ -34,16 +34,30 @@ import java.util.Set;
 /**
  * Utility class for methods involving arrays of transforms
  */
-public class Transforms
+public class TransformConfigs
 {
+	private List<TransformConfig> m_Transforms;
+
+	public TransformConfigs(List<TransformConfig> transforms)
+	{
+		m_Transforms = transforms;
+	}
+
+
+	public List<TransformConfig> getTransforms()
+	{
+		return m_Transforms;
+	}
+
+
 	/**
 	 * Set of all the field names configured as inputs to the transforms
 	 * @return
 	 */
-	static public Set<String> inputFieldNames(List<Transform> transforms)
+	public Set<String> inputFieldNames()
 	{
 		Set<String> fields = new HashSet<>();
-		for (Transform t : transforms)
+		for (TransformConfig t : m_Transforms)
 		{
 			fields.addAll(t.getInputs());
 		}
@@ -51,10 +65,10 @@ public class Transforms
 		return fields;
 	}
 
-	static public Set<String> outputFieldNames(List<Transform> transforms)
+	public Set<String> outputFieldNames()
 	{
 		Set<String> fields = new HashSet<>();
-		for (Transform t : transforms)
+		for (TransformConfig t : m_Transforms)
 		{
 			fields.addAll(t.getOutputs());
 		}
@@ -62,9 +76,9 @@ public class Transforms
 		return fields;
 	}
 
-	static public boolean verify(List<Transform> transforms) throws JobConfigurationException
+	static public boolean verify(List<TransformConfig> transforms) throws JobConfigurationException
 	{
-		for (Transform tr : transforms)
+		for (TransformConfig tr : transforms)
 		{
 			tr.verify();
 		}

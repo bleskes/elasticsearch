@@ -41,7 +41,7 @@ import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
 import com.prelert.job.Detector;
 import com.prelert.job.JobDetails;
-import com.prelert.job.Transform;
+import com.prelert.job.TransformConfig;
 import com.prelert.rs.data.SingleDocument;
 
 
@@ -122,7 +122,7 @@ public class TransformJobTest implements Closeable
 		test(dd.equals(job.getDataDescription()));
 
 
-		Transform tr = new Transform();
+		TransformConfig tr = new TransformConfig();
 		tr.setTransform("domain_lookup");
 		tr.setInputs(Arrays.asList("field1"));
 

@@ -40,7 +40,7 @@ import com.prelert.job.Detector;
 import com.prelert.job.JobDetails;
 import com.prelert.job.ModelSizeStats;
 import com.prelert.job.ModelState;
-import com.prelert.job.Transform;
+import com.prelert.job.TransformConfig;
 import com.prelert.job.quantiles.Quantiles;
 import com.prelert.job.usage.Usage;
 import com.prelert.rs.data.AnomalyCause;
@@ -232,13 +232,13 @@ public class ElasticsearchMappings
                         .startObject(JobDetails.TRANSFORMS)
                             .field("type", "object")
                             .startObject("properties")
-                                .startObject(Transform.TRANSFORM)
+                                .startObject(TransformConfig.TRANSFORM)
                                     .field("type", "string").field(INDEX, NOT_ANALYZED)
                                 .endObject()
-                                .startObject(Transform.INPUTS)
+                                .startObject(TransformConfig.INPUTS)
                                     .field("type", "string").field(INDEX, NOT_ANALYZED)
                                 .endObject()
-                                .startObject(Transform.OUTPUTS)
+                                .startObject(TransformConfig.OUTPUTS)
                                     .field("type", "string").field(INDEX, NOT_ANALYZED)
                                 .endObject()
                             .endObject()

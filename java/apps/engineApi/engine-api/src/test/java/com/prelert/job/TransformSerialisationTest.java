@@ -37,7 +37,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
-import com.prelert.job.Transform;
+import com.prelert.job.TransformConfig;
 
 public class TransformSerialisationTest
 {
@@ -45,11 +45,11 @@ public class TransformSerialisationTest
 	public void testDeserialise_singleFieldAsArray() throws JsonProcessingException, IOException
 	{
 		ObjectMapper mapper = new ObjectMapper();
-		ObjectReader reader = mapper.reader(Transform.class)
+		ObjectReader reader = mapper.reader(TransformConfig.class)
 							.with(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY);
 
 		String json = "{\"inputs\":\"dns\", \"transform\":\"highest_registered_domain\"}";
-		Transform tr = reader.readValue(json);
+		TransformConfig tr = reader.readValue(json);
 
 		Assert.assertEquals(1,  tr.getInputs().size());
 		Assert.assertEquals("dns", tr.getInputs().get(0));
@@ -70,11 +70,11 @@ public class TransformSerialisationTest
 	public void testDeserialise_fieldsArray() throws JsonProcessingException, IOException
 	{
 		ObjectMapper mapper = new ObjectMapper();
-		ObjectReader reader = mapper.reader(Transform.class)
+		ObjectReader reader = mapper.reader(TransformConfig.class)
 							.with(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY);
 
 		String json = "{\"inputs\":[\"dns\"], \"transform\":\"highest_registered_domain\"}";
-		Transform tr = reader.readValue(json);
+		TransformConfig tr = reader.readValue(json);
 
 		Assert.assertEquals(1,  tr.getInputs().size());
 		Assert.assertEquals("dns", tr.getInputs().get(0));
