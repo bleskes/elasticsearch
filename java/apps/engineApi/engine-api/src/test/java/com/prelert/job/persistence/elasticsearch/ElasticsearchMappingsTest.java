@@ -203,6 +203,23 @@ public class ElasticsearchMappingsTest
                         "            \"index\": \"not_analyzed\"" +
                         "          }" +
                         "        }" +
+                        "      }," +
+                        "      \"transforms\": {" +
+                        "        \"type\": \"object\"," +
+                        "        \"properties\": {" +
+                        "          \"transform\": {" +
+                        "            \"type\": \"string\"," +
+                        "            \"index\": \"not_analyzed\"" +
+                        "          }," +
+                        "          \"inputs\": {" +
+                        "            \"type\": \"string\"," +
+                        "            \"index\": \"not_analyzed\"" +
+                        "          }," +
+                        "          \"outputs\": {" +
+                        "            \"type\": \"string\"," +
+                        "            \"index\": \"not_analyzed\"" +
+                        "          }" +
+                        "        }" +
                         "      }" +
                         "    }," +
                         "    \"_all\": {" +

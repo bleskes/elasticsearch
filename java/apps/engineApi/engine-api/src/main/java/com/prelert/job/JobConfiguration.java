@@ -29,6 +29,7 @@ package com.prelert.job;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import com.prelert.rs.data.ErrorCode;
@@ -60,7 +61,7 @@ public class JobConfiguration
 
 	private AnalysisConfig m_AnalysisConfig;
 	private AnalysisLimits m_AnalysisLimits;
-	private Transforms m_Transforms;
+	private List<Transform> m_Transforms;
 	private DataDescription m_DataDescription;
 	private String m_ReferenceJobId;
 	private Long m_Timeout;
@@ -181,12 +182,12 @@ public class JobConfiguration
 		m_Timeout = timeout;
 	}
 
-	public Transforms getTransforms()
+	public List<Transform> getTransforms()
 	{
 		return m_Transforms;
 	}
 
-	public void setTransforms(Transforms transforms)
+	public void setTransforms(List<Transform> transforms)
 	{
 		m_Transforms = transforms;
 	}
@@ -295,7 +296,7 @@ public class JobConfiguration
 
 		if (m_Transforms != null)
 		{
-			m_Transforms.verify();
+			Transforms.verify(m_Transforms);
 		}
 
 		if (m_Timeout != null && m_Timeout < 0)

@@ -40,8 +40,10 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.MessageBodyReader;
 
 import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
 import com.prelert.job.JobConfiguration;
 import com.prelert.rs.data.ErrorCode;
 
@@ -56,7 +58,8 @@ public class JobConfigurationMessageBodyReader implements MessageBodyReader<JobC
 	/**
 	 * The Object to JSON mapper.
 	 */
-	private static final ObjectMapper OBJECT_WRITER = new ObjectMapper();
+	private static final ObjectReader OBJECT_READER = new ObjectMapper().reader(JobConfiguration.class)
+							.with(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY);;
 
 
 	@Override
@@ -83,7 +86,7 @@ public class JobConfigurationMessageBodyReader implements MessageBodyReader<JobC
 
 		try
 		{
-			return OBJECT_WRITER.readValue(input, JobConfiguration.class);
+			return OBJECT_READER.readValue(input);
 		}
 		catch (JsonParseException e)
 		{

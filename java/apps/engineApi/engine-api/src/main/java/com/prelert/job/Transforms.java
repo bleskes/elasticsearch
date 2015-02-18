@@ -31,28 +31,19 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * Utility class for methods involving arrays of transforms
+ */
 public class Transforms
 {
-	private List<Transform> m_Transforms;
-
-	public List<Transform> getTransforms()
-	{
-		return m_Transforms;
-	}
-
-	public void setTransforms(List<Transform> transforms)
-	{
-		m_Transforms = transforms;
-	}
-
 	/**
 	 * Set of all the field names configured as inputs to the transforms
 	 * @return
 	 */
-	public Set<String> inputFieldNames()
+	static public Set<String> inputFieldNames(List<Transform> transforms)
 	{
 		Set<String> fields = new HashSet<>();
-		for (Transform t : m_Transforms)
+		for (Transform t : transforms)
 		{
 			fields.addAll(t.getInputs());
 		}
@@ -60,10 +51,10 @@ public class Transforms
 		return fields;
 	}
 
-	public Set<String> outputFieldNames()
+	static public Set<String> outputFieldNames(List<Transform> transforms)
 	{
 		Set<String> fields = new HashSet<>();
-		for (Transform t : m_Transforms)
+		for (Transform t : transforms)
 		{
 			fields.addAll(t.getOutputs());
 		}
@@ -71,9 +62,9 @@ public class Transforms
 		return fields;
 	}
 
-	public boolean verify() throws JobConfigurationException
+	static public boolean verify(List<Transform> transforms) throws JobConfigurationException
 	{
-		for (Transform tr : m_Transforms)
+		for (Transform tr : transforms)
 		{
 			tr.verify();
 		}

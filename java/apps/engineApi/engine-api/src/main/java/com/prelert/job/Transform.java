@@ -31,6 +31,13 @@ import java.util.List;
 
 public class Transform
 {
+	// Serialisation strings
+	public static final String TYPE = "transform";
+	public static final String TRANSFORM = "transform";
+	public static final String INPUTS = "inputs";
+	public static final String OUTPUTS = "outputs";
+
+
 	private List<String> m_Inputs;
 	private String m_Name;
 	private List<String> m_Outputs;
@@ -88,5 +95,81 @@ public class Transform
 	public boolean verify() throws TransformConfigurationException
 	{
 		return type().verify(this);
+	}
+
+	@Override
+	public int hashCode()
+	{
+		final int prime = 31;
+		int result = 1;
+		result = prime * result
+				+ ((m_Inputs == null) ? 0 : m_Inputs.hashCode());
+		result = prime * result + ((m_Name == null) ? 0 : m_Name.hashCode());
+		result = prime * result
+				+ ((m_Outputs == null) ? 0 : m_Outputs.hashCode());
+		result = prime * result + ((m_Type == null) ? 0 : m_Type.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj)
+	{
+		if (this == obj)
+		{
+			return true;
+		}
+		if (obj == null)
+		{
+			return false;
+		}
+
+		if (getClass() != obj.getClass())
+		{
+			return false;
+		}
+
+		Transform other = (Transform) obj;
+		if (m_Inputs == null)
+		{
+			if (other.m_Inputs != null)
+			{
+				return false;
+			}
+		}
+		else if (!m_Inputs.equals(other.m_Inputs))
+		{
+			return false;
+		}
+
+		if (m_Name == null)
+		{
+			if (other.m_Name != null)
+			{
+				return false;
+			}
+		}
+		else if (!m_Name.equals(other.m_Name))
+		{
+			return false;
+		}
+
+		if (m_Outputs == null)
+		{
+			if (other.m_Outputs != null)
+			{
+				return false;
+			}
+		}
+		else if (!m_Outputs.equals(other.m_Outputs))
+		{
+			return false;
+		}
+
+		if (m_Type != other.m_Type)
+		{
+			return false;
+		}
+
+		return true;
 	}
 }
