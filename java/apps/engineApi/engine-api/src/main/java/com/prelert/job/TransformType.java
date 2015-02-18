@@ -93,7 +93,7 @@ public enum TransformType
 	 */
 	public static TransformType fromString(String prettyName) throws TransformConfigurationException
 	{
-		if (prettyName == Names.DOMAIN_LOOKUP_NAME)
+		if (prettyName.equals(Names.DOMAIN_LOOKUP_NAME))
 		{
 			return DOMAIN_LOOKUP;
 		}

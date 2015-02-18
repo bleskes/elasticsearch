@@ -129,6 +129,7 @@ public class JobDetails
 		m_AnalysisConfig = jobConfig.getAnalysisConfig();
 		m_AnalysisLimits = jobConfig.getAnalysisLimits();
 		m_DataDescription = jobConfig.getDataDescription();
+		m_Transforms = jobConfig.getTransforms();
 	}
 
 	/**
