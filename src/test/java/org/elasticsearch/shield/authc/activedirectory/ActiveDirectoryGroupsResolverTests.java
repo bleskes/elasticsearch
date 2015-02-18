@@ -86,7 +86,7 @@ public class ActiveDirectoryGroupsResolverTests extends ElasticsearchTestCase {
                 containsString("SHIELD"),
                 containsString("Geniuses"),
                 containsString("Philanthropists"),
-                containsString("Users"),
+                containsString("CN=Users,CN=Builtin"),
                 containsString("Domain Users"),
                 containsString("Supers")));
     }
@@ -110,7 +110,7 @@ public class ActiveDirectoryGroupsResolverTests extends ElasticsearchTestCase {
                 .build();
         ActiveDirectoryGroupsResolver resolver = new ActiveDirectoryGroupsResolver(settings, "DC=ad,DC=test,DC=elasticsearch,DC=com");
         List<String> groups = resolver.resolve(ldapConnection, BRUCE_BANNER_DN, TimeValue.timeValueSeconds(10), NoOpLogger.INSTANCE);
-        assertThat(groups, hasItem(containsString("Users")));
+        assertThat(groups, hasItem(containsString("CN=Users,CN=Builtin")));
     }
 
     @Test

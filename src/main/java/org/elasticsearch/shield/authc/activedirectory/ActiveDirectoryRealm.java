@@ -21,7 +21,7 @@ import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.shield.authc.RealmConfig;
 import org.elasticsearch.shield.authc.ldap.support.AbstractLdapRealm;
-import org.elasticsearch.shield.authc.ldap.support.GroupToRoleMapper;
+import org.elasticsearch.shield.authc.ldap.support.LdapRoleMapper;
 import org.elasticsearch.shield.ssl.ClientSSLService;
 import org.elasticsearch.watcher.ResourceWatcherService;
 
@@ -34,7 +34,7 @@ public class ActiveDirectoryRealm extends AbstractLdapRealm {
 
     public ActiveDirectoryRealm(RealmConfig config,
                                 ActiveDirectorySessionFactory connectionFactory,
-                                GroupToRoleMapper roleMapper) {
+                                LdapRoleMapper roleMapper) {
 
         super(TYPE, config, connectionFactory, roleMapper);
     }
@@ -54,7 +54,7 @@ public class ActiveDirectoryRealm extends AbstractLdapRealm {
         @Override
         public ActiveDirectoryRealm create(RealmConfig config) {
             ActiveDirectorySessionFactory connectionFactory = new ActiveDirectorySessionFactory(config, clientSSLService);
-            GroupToRoleMapper roleMapper = new GroupToRoleMapper(TYPE, config, watcherService, null);
+            LdapRoleMapper roleMapper = new LdapRoleMapper(TYPE, config, watcherService, null);
             return new ActiveDirectoryRealm(config, connectionFactory, roleMapper);
         }
     }

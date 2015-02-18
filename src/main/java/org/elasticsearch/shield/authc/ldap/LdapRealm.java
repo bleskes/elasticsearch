@@ -23,7 +23,7 @@ import org.elasticsearch.rest.RestController;
 import org.elasticsearch.shield.ShieldSettingsException;
 import org.elasticsearch.shield.authc.RealmConfig;
 import org.elasticsearch.shield.authc.ldap.support.AbstractLdapRealm;
-import org.elasticsearch.shield.authc.ldap.support.GroupToRoleMapper;
+import org.elasticsearch.shield.authc.ldap.support.LdapRoleMapper;
 import org.elasticsearch.shield.authc.ldap.support.SessionFactory;
 import org.elasticsearch.shield.ssl.ClientSSLService;
 import org.elasticsearch.watcher.ResourceWatcherService;
@@ -35,7 +35,7 @@ public class LdapRealm extends AbstractLdapRealm {
 
     public static final String TYPE = "ldap";
 
-    public LdapRealm(RealmConfig config, SessionFactory ldap, GroupToRoleMapper roleMapper) {
+    public LdapRealm(RealmConfig config, SessionFactory ldap, LdapRoleMapper roleMapper) {
         super(TYPE, config, ldap, roleMapper);
     }
 
@@ -54,7 +54,7 @@ public class LdapRealm extends AbstractLdapRealm {
         @Override
         public LdapRealm create(RealmConfig config) {
             SessionFactory sessionFactory = sessionFactory(config, clientSSLService);
-            GroupToRoleMapper roleMapper = new GroupToRoleMapper(TYPE, config, watcherService, null);
+            LdapRoleMapper roleMapper = new LdapRoleMapper(TYPE, config, watcherService, null);
             return new LdapRealm(config, sessionFactory, roleMapper);
         }
 
