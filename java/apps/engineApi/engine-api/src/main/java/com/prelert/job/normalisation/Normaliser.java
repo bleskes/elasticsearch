@@ -321,33 +321,30 @@ public class Normaliser
     {
         Iterator<NormalisedResult> scoresIter = normalisedScores.iterator();
 
-        try
+        for (Bucket bucket : buckets)
         {
-            for (Bucket bucket : buckets)
+            bucket.resetBigNormalisedUpdateFlag();
+
+            double maxNormalizedProbability = 0.0;
+            for (AnomalyRecord record : bucket.getRecords())
             {
-                bucket.resetBigNormalisedUpdateFlag();
-
-                double maxNormalizedProbability = 0.0;
-                for (AnomalyRecord record : bucket.getRecords())
+                if (!scoresIter.hasNext())
                 {
-                    record.resetBigNormalisedUpdateFlag();
-
-                    NormalisedResult normalised = scoresIter.next();
-
-                    record.setNormalizedProbability(normalised.getNormalizedProbability());
-
-                    maxNormalizedProbability = Math.max(maxNormalizedProbability,
-                            normalised.getNormalizedProbability());
+                    String msg = "Error iterating normalised results";
+                    m_Logger.error(msg);
+                    throw new NativeProcessRunException(msg, ErrorCode.NATIVE_PROCESS_ERROR);
                 }
+                record.resetBigNormalisedUpdateFlag();
 
-                bucket.setMaxNormalizedProbability(maxNormalizedProbability);
+                NormalisedResult normalised = scoresIter.next();
+
+                record.setNormalizedProbability(normalised.getNormalizedProbability());
+
+                maxNormalizedProbability = Math.max(maxNormalizedProbability,
+                        normalised.getNormalizedProbability());
             }
-        }
-        catch (NoSuchElementException e)
-        {
-            String msg = "Error iterating normalised results";
-            m_Logger.error(msg, e);
-            throw new NativeProcessRunException(msg, ErrorCode.NATIVE_PROCESS_ERROR);
+
+            bucket.setMaxNormalizedProbability(maxNormalizedProbability);
         }
 
         return buckets;
