@@ -15,12 +15,14 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.alerts.condition;
+package org.elasticsearch.alerts.input;
 
 import org.elasticsearch.alerts.ExecutionContext;
+import org.elasticsearch.alerts.Payload;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.xcontent.ToXContent;
+import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
 
 import java.io.IOException;
@@ -28,41 +30,39 @@ import java.io.IOException;
 /**
  *
  */
-public abstract class Condition<R extends Condition.Result> implements ToXContent {
-
-    protected static final ParseField MET_FIELD = new ParseField("met");
+public abstract class Input<R extends Input.Result> implements ToXContent {
 
     protected final ESLogger logger;
 
-    protected Condition(ESLogger logger) {
+    protected Input(ESLogger logger) {
         this.logger = logger;
     }
 
     /**
-     * @return the type of this condition
+     * @return the type of this input
      */
     public abstract String type();
 
     /**
-     * Executes this condition
+     * Executes this input
      */
     public abstract R execute(ExecutionContext ctx) throws IOException;
 
 
     /**
-     * Parses xcontent to a concrete condition of the same type.
+     * Parses xcontent to a concrete input of the same type.
      */
-    public static interface Parser<R extends Condition.Result, C extends Condition<R>> {
+    public static interface Parser<R extends Input.Result, I extends Input<R>> {
 
         /**
-         * @return  The type of the condition
+         * @return  The type of the input
          */
         String type();
 
         /**
-         * Parses the given xcontent and creates a concrete condition
+         * Parses the given xcontent and creates a concrete input
          */
-        C parse(XContentParser parser) throws IOException;
+        I parse(XContentParser parser) throws IOException;
 
         /**
          * Parses the given xContent and creates a concrete result
@@ -72,19 +72,32 @@ public abstract class Condition<R extends Condition.Result> implements ToXConten
 
     public abstract static class Result implements ToXContent {
 
-        private final String type;
-        private final boolean met;
+        public static final ParseField PAYLOAD_FIELD = new ParseField("payload");
 
-        public Result(String type, boolean met) {
+        private final String type;
+        private final Payload payload;
+
+        public Result(String type, Payload payload) {
             this.type = type;
-            this.met = met;
+            this.payload = payload;
         }
 
         public String type() {
             return type;
         }
 
-        public boolean met() { return met; }
 
+        public Payload payload() {
+            return payload;
+        }
+
+        @Override
+        public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
+            builder.startObject()
+            .field(PAYLOAD_FIELD.getPreferredName(), payload);
+            return toXContentBody(builder, params).endObject();
+        }
+
+        protected abstract XContentBuilder toXContentBody(XContentBuilder builder, Params params) throws IOException;
     }
 }

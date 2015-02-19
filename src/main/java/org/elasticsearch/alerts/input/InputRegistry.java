@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.alerts.condition;
+package org.elasticsearch.alerts.input;
 
 import org.elasticsearch.common.collect.ImmutableMap;
 import org.elasticsearch.common.inject.Inject;
@@ -27,63 +27,56 @@ import java.util.Map;
 /**
  *
  */
-public class ConditionRegistry {
+public class InputRegistry {
 
-    private final ImmutableMap<String, Condition.Parser> parsers;
+    private final ImmutableMap<String, Input.Parser> parsers;
 
     @Inject
-    public ConditionRegistry(Map<String, Condition.Parser> parsers) {
+    public InputRegistry(Map<String, Input.Parser> parsers) {
         this.parsers = ImmutableMap.copyOf(parsers);
     }
 
     /**
-     * Reads the contents of parser to create the correct Condition
+     * Reads the contents of parser to create the correct Input
      *
-     * @param parser    The parser containing the condition definition
-     * @return          A new condition instance from the parser
-     * @throws IOException
+     * @param parser    The parser containing the input definition
+     * @return          A new input instance from the parser
+     * @throws java.io.IOException
      */
-    public Condition parse(XContentParser parser) throws IOException {
+    public Input parse(XContentParser parser) throws IOException {
         String type = null;
         XContentParser.Token token;
-        Condition condition = null;
+        Input input = null;
         while ((token = parser.nextToken()) != XContentParser.Token.END_OBJECT) {
             if (token == XContentParser.Token.FIELD_NAME) {
                 type = parser.currentName();
             } else if (token == XContentParser.Token.START_OBJECT && type != null) {
-                Condition.Parser conditionParser = parsers.get(type);
-                if (conditionParser == null) {
-                    throw new ConditionException("unknown condition type [" + type + "]");
+                Input.Parser inputParser = parsers.get(type);
+                if (inputParser == null) {
+                    throw new InputException("unknown input type [" + type + "]");
                 }
-                condition = conditionParser.parse(parser);
+                input = inputParser.parse(parser);
             }
         }
-        return condition;
+        return input;
     }
 
-    /**
-     * Reads the contents of parser to create the correct Condition.Result
-     *
-     * @param parser    The parser containing the condition result definition
-     * @return          A new condition result instance from the parser
-     * @throws IOException
-     */
-    public Condition.Result parseResult(XContentParser parser) throws IOException {
+    public Input.Result parseResult(XContentParser parser) throws IOException {
         String type = null;
         XContentParser.Token token;
-        Condition.Result conditionResult = null;
+        Input.Result inputResult = null;
         while ((token = parser.nextToken()) != XContentParser.Token.END_OBJECT) {
             if (token == XContentParser.Token.FIELD_NAME) {
                 type = parser.currentName();
             } else if (token == XContentParser.Token.START_OBJECT && type != null) {
-                Condition.Parser conditionParser = parsers.get(type);
-                if (conditionParser == null) {
-                    throw new ConditionException("unknown condition type [" + type + "]");
+                Input.Parser inputParser = parsers.get(type);
+                if (inputParser == null) {
+                    throw new InputException("unknown input type [" + type + "]");
                 }
-                conditionResult = conditionParser.parseResult(parser);
+                inputResult = inputParser.parseResult(parser);
             }
         }
-        return conditionResult;
+        return inputResult;
     }
 
 }

@@ -15,12 +15,13 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.alerts.condition.simple;
+
+package org.elasticsearch.alerts.input.simple;
 
 import org.elasticsearch.alerts.ExecutionContext;
 import org.elasticsearch.alerts.Payload;
-import org.elasticsearch.alerts.condition.Condition;
-import org.elasticsearch.alerts.condition.ConditionException;
+import org.elasticsearch.alerts.input.Input;
+import org.elasticsearch.alerts.input.InputException;
 import org.elasticsearch.common.component.AbstractComponent;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.logging.ESLogger;
@@ -31,15 +32,14 @@ import org.elasticsearch.common.xcontent.XContentParser;
 import java.io.IOException;
 
 /**
- * A condition that is always met and returns a static/fixed payload
+ * This class just defines a simple xcontent map as an input
  */
-public class SimpleCondition extends Condition<SimpleCondition.Result> {
+public class SimpleInput extends Input<SimpleInput.Result> {
 
     public static final String TYPE = "simple";
-
     private final Payload payload;
 
-    public SimpleCondition(ESLogger logger, Payload payload) {
+    public SimpleInput(ESLogger logger, Payload payload) {
         super(logger);
         this.payload = payload;
     }
@@ -51,18 +51,20 @@ public class SimpleCondition extends Condition<SimpleCondition.Result> {
 
     @Override
     public Result execute(ExecutionContext ctx) throws IOException {
-        return new Result(payload);
+        return new Result(TYPE, payload);
     }
 
     @Override
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
-        return payload.toXContent(builder, params);
+        builder.startObject();
+        builder.field(Input.Result.PAYLOAD_FIELD.getPreferredName(), payload);
+        return builder.endObject();
     }
 
-    public static class Result extends Condition.Result {
+    public static class Result extends Input.Result {
 
-        public Result(Payload payload) {
-            super(TYPE, true, payload);
+        public Result(String type, Payload payload) {
+            super(type, payload);
         }
 
         @Override
@@ -71,7 +73,7 @@ public class SimpleCondition extends Condition<SimpleCondition.Result> {
         }
     }
 
-    public static class Parser extends AbstractComponent implements Condition.Parser<Result, SimpleCondition> {
+    public static class Parser extends AbstractComponent implements Input.Parser<Result,SimpleInput> {
 
         @Inject
         public Parser(Settings settings) {
@@ -84,45 +86,53 @@ public class SimpleCondition extends Condition<SimpleCondition.Result> {
         }
 
         @Override
-        public SimpleCondition parse(XContentParser parser) throws IOException {
-            return new SimpleCondition(logger, new Payload.XContent(parser));
+        public SimpleInput parse(XContentParser parser) throws IOException {
+            Payload payload = null;
+
+            String currentFieldName = null;
+            XContentParser.Token token;
+            while ((token = parser.nextToken()) != XContentParser.Token.END_OBJECT) {
+                if (token == XContentParser.Token.FIELD_NAME) {
+                    currentFieldName = parser.currentName();
+                } else if (token == XContentParser.Token.START_OBJECT && currentFieldName != null) {
+                    if (Input.Result.PAYLOAD_FIELD.match(currentFieldName)) {
+                        payload = new Payload.XContent(parser);
+                    } else {
+                        throw new InputException("unable to parse [" + TYPE + "] input. unexpected field [" + currentFieldName + "]");
+                    }
+                }
+            }
+
+            if (payload == null) {
+                throw new InputException("unable to parse [" + TYPE + "] input [payload] is a required field");
+            }
+
+            return new SimpleInput(logger, payload);
         }
 
         @Override
         public Result parseResult(XContentParser parser) throws IOException {
+            Payload payload = null;
+
             String currentFieldName = null;
             XContentParser.Token token;
-            Payload payload = null;
-            boolean met = false;
             while ((token = parser.nextToken()) != XContentParser.Token.END_OBJECT) {
                 if (token == XContentParser.Token.FIELD_NAME) {
                     currentFieldName = parser.currentName();
-                } else if (token.isValue()) {
-                    if (token == XContentParser.Token.VALUE_BOOLEAN) {
-                        if (Condition.Result.MET_FIELD.match(currentFieldName)) {
-                            met = parser.booleanValue();
-                        } else {
-                            throw new ConditionException("unable to parse simple condition result. unexpected field [" + currentFieldName + "]");
-                        }
-                    } else {
-                        throw new ConditionException("unable to parse simple condition result. unexpected field [" + currentFieldName + "]");
-                    }
-                } else if (token == XContentParser.Token.START_OBJECT) {
-                    if (Condition.Result.PAYLOAD_FIELD.match(currentFieldName)) {
+                } else if (token == XContentParser.Token.START_OBJECT && currentFieldName != null) {
+                    if (Input.Result.PAYLOAD_FIELD.match(currentFieldName)) {
                         payload = new Payload.XContent(parser);
                     } else {
-                        throw new ConditionException("unable to parse simple condition result. unexpected field [" + currentFieldName + "]");
+                        throw new InputException("unable to parse [" + TYPE + "] input result. unexpected field [" + currentFieldName + "]");
                     }
-                } else {
-                    throw new ConditionException("unable to parse simple condition result. unexpected token [" + token + "]");
                 }
             }
 
-            if (!met) {
-                throw new ConditionException("unable to parse simple condition result. simple condition always matches, yet [met] field is either missing or set to [false]");
+            if (payload == null) {
+                throw new InputException("unable to parse [" + TYPE + "] input result [payload] is a required field");
             }
 
-            return new Result(payload);
+            return new Result(TYPE, payload);
         }
     }
 }
