@@ -57,13 +57,13 @@ import com.prelert.rs.data.ErrorCode;
  */
 public class Normaliser
 {
-	private final String m_JobId;
+    private final String m_JobId;
 
-	private final JobProvider m_JobProvider;
+    private final JobProvider m_JobProvider;
 
-	private final NormaliserProcessFactory m_ProcessFactory;
+    private final NormaliserProcessFactory m_ProcessFactory;
 
-	private final Logger m_Logger;
+    private final Logger m_Logger;
 
     public Normaliser(String jobId, JobProvider jobProvider, Logger logger)
     {
@@ -72,313 +72,313 @@ public class Normaliser
 
     Normaliser(String jobId, JobProvider jobProvider,
             NormaliserProcessFactory processFactory, Logger logger)
-	{
-		m_JobId = jobId;
-		m_JobProvider = jobProvider;
-		m_ProcessFactory = processFactory;
-		m_Logger = logger;
-	}
+    {
+        m_JobId = jobId;
+        m_JobProvider = jobProvider;
+        m_ProcessFactory = processFactory;
+        m_Logger = logger;
+    }
 
 
-	/**
-	 * Normalise buckets anomaly score for system state change.
-	 * Seed the normaliser with state retrieved from the data store.
-	 *
-	 * @param bucketSpan If <code>null</code> the default is used
-	 * @param buckets Will be modified to have the normalised result
-	 * @return
-	 * @throws NativeProcessRunException
-	 * @throws UnknownJobException
-	 */
-	public List<Bucket> normaliseForSystemChange(Integer bucketSpan,
-			List<Bucket> buckets)
-	throws NativeProcessRunException, UnknownJobException
-	{
-		QuantilesState state = m_JobProvider.getQuantilesState(m_JobId);
+    /**
+     * Normalise buckets anomaly score for system state change.
+     * Seed the normaliser with state retrieved from the data store.
+     *
+     * @param bucketSpan If <code>null</code> the default is used
+     * @param buckets Will be modified to have the normalised result
+     * @return
+     * @throws NativeProcessRunException
+     * @throws UnknownJobException
+     */
+    public List<Bucket> normaliseForSystemChange(Integer bucketSpan,
+            List<Bucket> buckets)
+    throws NativeProcessRunException, UnknownJobException
+    {
+        QuantilesState state = m_JobProvider.getQuantilesState(m_JobId);
 
-		return normaliseForSystemChange(bucketSpan, buckets,
-				state.getQuantilesState(QuantilesState.SYS_CHANGE_QUANTILES_KIND));
-	}
-
-
-	/**
-	 * Normalise buckets anomaly score for system state change.
-	 * Seed the normaliser with the state provided.
-	 *
-	 * @param bucketSpan If <code>null</code> the default is used
-	 * @param buckets Will be modified to have the normalised result
-	 * @param sysChangeState The state to be used to seed the system change
-	 * normaliser
-	 * @return
-	 * @throws NativeProcessRunException
-	 * @throws UnknownJobException
-	 */
-	public List<Bucket> normaliseForSystemChange(Integer bucketSpan,
-			List<Bucket> buckets, String sysChangeState)
-	throws NativeProcessRunException, UnknownJobException
-	{
-		NormaliserProcess process = createNormaliserProcess(
-				sysChangeState, null, bucketSpan);
-
-		NormalisedResultsParser resultsParser = process.createNormalisedResultsParser(m_Logger);
-
-		Thread parserThread = new Thread(resultsParser, m_JobId + "-Normalizer-Parser");
-		parserThread.start();
-
-		LengthEncodedWriter writer = process.createProcessWriter();
-
-		try
-		{
-			writer.writeNumFields(1);
-			writer.writeField(ProcessCtrl.RAW_ANOMALY_SCORE);
-
-			for (Bucket bucket : buckets)
-			{
-				writer.writeNumFields(1);
-				writer.writeField(Double.toString(bucket.getRawAnomalyScore()));
-			}
-		}
-		catch (IOException e)
-		{
-			m_Logger.warn("Error writing to the normalizer", e);
-		}
-		finally
-		{
-			try
-			{
-				process.closeOutputStream();
-			}
-			catch (IOException e)
-			{
-				m_Logger.warn("Error closing normalizer output stream", e);
-			}
-		}
-
-		// Wait for the output parser
-		try
-		{
-			parserThread.join();
-		}
-		catch (InterruptedException e)
-		{
-		}
-
-		return mergeNormalisedSystemChangeScoresIntoBuckets(
-				resultsParser.getNormalisedResults(), buckets);
-	}
+        return normaliseForSystemChange(bucketSpan, buckets,
+                state.getQuantilesState(QuantilesState.SYS_CHANGE_QUANTILES_KIND));
+    }
 
 
-	/**
-	 * Normalise the bucket and its nested records for unusual
-	 * behaviour.
-	 * The bucket's anomaly score is set to the max record score.
-	 * Seed the normaliser with state retrieved from the data store.
-	 *
-	 * @param bucketSpan If <code>null</code> the default is used
-	 * @param expandedBuckets Will be modified to have the normalised result
-	 * @return
-	 * @throws NativeProcessRunException
-	 * @throws UnknownJobException
-	 */
-	public List<Bucket> normaliseForUnusualBehaviour(Integer bucketSpan,
-			List<Bucket> expandedBuckets)
-	throws NativeProcessRunException, UnknownJobException
-	{
-		QuantilesState state = m_JobProvider.getQuantilesState(m_JobId);
+    /**
+     * Normalise buckets anomaly score for system state change.
+     * Seed the normaliser with the state provided.
+     *
+     * @param bucketSpan If <code>null</code> the default is used
+     * @param buckets Will be modified to have the normalised result
+     * @param sysChangeState The state to be used to seed the system change
+     * normaliser
+     * @return
+     * @throws NativeProcessRunException
+     * @throws UnknownJobException
+     */
+    public List<Bucket> normaliseForSystemChange(Integer bucketSpan,
+            List<Bucket> buckets, String sysChangeState)
+    throws NativeProcessRunException, UnknownJobException
+    {
+        NormaliserProcess process = createNormaliserProcess(
+                sysChangeState, null, bucketSpan);
 
-		return normaliseForUnusualBehaviour(bucketSpan, expandedBuckets,
-			state.getQuantilesState(QuantilesState.UNUSUAL_QUANTILES_KIND));
-	}
+        NormalisedResultsParser resultsParser = process.createNormalisedResultsParser(m_Logger);
+
+        Thread parserThread = new Thread(resultsParser, m_JobId + "-Normalizer-Parser");
+        parserThread.start();
+
+        LengthEncodedWriter writer = process.createProcessWriter();
+
+        try
+        {
+            writer.writeNumFields(1);
+            writer.writeField(ProcessCtrl.RAW_ANOMALY_SCORE);
+
+            for (Bucket bucket : buckets)
+            {
+                writer.writeNumFields(1);
+                writer.writeField(Double.toString(bucket.getRawAnomalyScore()));
+            }
+        }
+        catch (IOException e)
+        {
+            m_Logger.warn("Error writing to the normalizer", e);
+        }
+        finally
+        {
+            try
+            {
+                process.closeOutputStream();
+            }
+            catch (IOException e)
+            {
+                m_Logger.warn("Error closing normalizer output stream", e);
+            }
+        }
+
+        // Wait for the output parser
+        try
+        {
+            parserThread.join();
+        }
+        catch (InterruptedException e)
+        {
+        }
+
+        return mergeNormalisedSystemChangeScoresIntoBuckets(
+                resultsParser.getNormalisedResults(), buckets);
+    }
 
 
-	/**
-	 * Normalise the bucket and its nested records for unusual
-	 * behaviour.
-	 * The bucket's anomaly score is set to the max record score.
-	 * Seed the normaliser with the state provided.
-	 *
-	 * @param bucketSpan If <code>null</code> the default is used
-	 * @param expandedBuckets Will be modified to have the normalised result
-	 * @param unusualBehaviourState The state to be used to seed the unusual behaviour
-	 * normaliser
-	 * @return
-	 * @throws NativeProcessRunException
-	 * @throws UnknownJobException
-	 */
-	public List<Bucket> normaliseForUnusualBehaviour(Integer bucketSpan,
-			List<Bucket> expandedBuckets, String unusualBehaviourState)
-	throws NativeProcessRunException, UnknownJobException
-	{
-		NormaliserProcess process = createNormaliserProcess(
-				null, unusualBehaviourState, bucketSpan);
+    /**
+     * Normalise the bucket and its nested records for unusual
+     * behaviour.
+     * The bucket's anomaly score is set to the max record score.
+     * Seed the normaliser with state retrieved from the data store.
+     *
+     * @param bucketSpan If <code>null</code> the default is used
+     * @param expandedBuckets Will be modified to have the normalised result
+     * @return
+     * @throws NativeProcessRunException
+     * @throws UnknownJobException
+     */
+    public List<Bucket> normaliseForUnusualBehaviour(Integer bucketSpan,
+            List<Bucket> expandedBuckets)
+    throws NativeProcessRunException, UnknownJobException
+    {
+        QuantilesState state = m_JobProvider.getQuantilesState(m_JobId);
 
-		NormalisedResultsParser resultsParser = process.createNormalisedResultsParser(m_Logger);
+        return normaliseForUnusualBehaviour(bucketSpan, expandedBuckets,
+            state.getQuantilesState(QuantilesState.UNUSUAL_QUANTILES_KIND));
+    }
 
-		Thread parserThread = new Thread(resultsParser, m_JobId + "-Normalizer-Parser");
-		parserThread.start();
 
-		LengthEncodedWriter writer = process.createProcessWriter();
+    /**
+     * Normalise the bucket and its nested records for unusual
+     * behaviour.
+     * The bucket's anomaly score is set to the max record score.
+     * Seed the normaliser with the state provided.
+     *
+     * @param bucketSpan If <code>null</code> the default is used
+     * @param expandedBuckets Will be modified to have the normalised result
+     * @param unusualBehaviourState The state to be used to seed the unusual behaviour
+     * normaliser
+     * @return
+     * @throws NativeProcessRunException
+     * @throws UnknownJobException
+     */
+    public List<Bucket> normaliseForUnusualBehaviour(Integer bucketSpan,
+            List<Bucket> expandedBuckets, String unusualBehaviourState)
+    throws NativeProcessRunException, UnknownJobException
+    {
+        NormaliserProcess process = createNormaliserProcess(
+                null, unusualBehaviourState, bucketSpan);
 
-		try
-		{
-			writer.writeNumFields(1);
-			writer.writeField(ProcessCtrl.PROBABILITY);
+        NormalisedResultsParser resultsParser = process.createNormalisedResultsParser(m_Logger);
 
-			for (Bucket bucket : expandedBuckets)
-			{
-				for (AnomalyRecord record : bucket.getRecords())
-				{
-					writer.writeNumFields(1);
-					writer.writeField(Double.toString(record.getProbability()));
-				}
-			}
-		}
-		catch (IOException e)
-		{
-			m_Logger.warn("Error writing to the normalizer", e);
-		}
-		finally
-		{
-			try
-			{
-			    process.closeOutputStream();
-			}
-			catch (IOException e)
-			{
-				m_Logger.warn("Error closing unusual behaviour normalizer output stream", e);
-			}
-		}
+        Thread parserThread = new Thread(resultsParser, m_JobId + "-Normalizer-Parser");
+        parserThread.start();
 
-		// Wait for the output parser
-		try
-		{
-			parserThread.join();
-		}
-		catch (InterruptedException e)
-		{
-		}
+        LengthEncodedWriter writer = process.createProcessWriter();
+
+        try
+        {
+            writer.writeNumFields(1);
+            writer.writeField(ProcessCtrl.PROBABILITY);
+
+            for (Bucket bucket : expandedBuckets)
+            {
+                for (AnomalyRecord record : bucket.getRecords())
+                {
+                    writer.writeNumFields(1);
+                    writer.writeField(Double.toString(record.getProbability()));
+                }
+            }
+        }
+        catch (IOException e)
+        {
+            m_Logger.warn("Error writing to the normalizer", e);
+        }
+        finally
+        {
+            try
+            {
+                process.closeOutputStream();
+            }
+            catch (IOException e)
+            {
+                m_Logger.warn("Error closing unusual behaviour normalizer output stream", e);
+            }
+        }
+
+        // Wait for the output parser
+        try
+        {
+            parserThread.join();
+        }
+        catch (InterruptedException e)
+        {
+        }
 
         return mergeNormalisedUnusualIntoBuckets(
                 resultsParser.getNormalisedResults(), expandedBuckets);
-	}
+    }
 
-	/**
-	 * Replace bucket and record anomaly scores with the new
-	 * normalised scores
-	 *
-	 * @param normalisedScores
-	 * @param buckets
-	 * @return
-	 * @throws NativeProcessRunException
-	 */
-	private List<Bucket> mergeNormalisedSystemChangeScoresIntoBuckets(
-			List<NormalisedResult> normalisedScores,
-			List<Bucket> buckets)
-	throws NativeProcessRunException
-	{
-		Iterator<NormalisedResult> resultIter = normalisedScores.iterator();
+    /**
+     * Replace bucket and record anomaly scores with the new
+     * normalised scores
+     *
+     * @param normalisedScores
+     * @param buckets
+     * @return
+     * @throws NativeProcessRunException
+     */
+    private List<Bucket> mergeNormalisedSystemChangeScoresIntoBuckets(
+            List<NormalisedResult> normalisedScores,
+            List<Bucket> buckets)
+    throws NativeProcessRunException
+    {
+        Iterator<NormalisedResult> resultIter = normalisedScores.iterator();
 
-		try
-		{
-			for (Bucket bucket : buckets)
-			{
-				bucket.resetBigNormalisedUpdateFlag();
+        try
+        {
+            for (Bucket bucket : buckets)
+            {
+                bucket.resetBigNormalisedUpdateFlag();
 
-				double anomalyScore = resultIter.next().getNormalizedSysChangeScore();
-				bucket.setAnomalyScore(anomalyScore);
+                double anomalyScore = resultIter.next().getNormalizedSysChangeScore();
+                bucket.setAnomalyScore(anomalyScore);
 
-				for (AnomalyRecord record : bucket.getRecords())
-				{
-					record.resetBigNormalisedUpdateFlag();
+                for (AnomalyRecord record : bucket.getRecords())
+                {
+                    record.resetBigNormalisedUpdateFlag();
 
-					record.setAnomalyScore(anomalyScore);
-				}
-			}
-		}
-		catch (NoSuchElementException e)
-		{
-			String msg = "Error iterating normalised results";
-			m_Logger.error(msg, e);
-			throw new NativeProcessRunException(msg, ErrorCode.NATIVE_PROCESS_ERROR);
-		}
+                    record.setAnomalyScore(anomalyScore);
+                }
+            }
+        }
+        catch (NoSuchElementException e)
+        {
+            String msg = "Error iterating normalised results";
+            m_Logger.error(msg, e);
+            throw new NativeProcessRunException(msg, ErrorCode.NATIVE_PROCESS_ERROR);
+        }
 
-		return buckets;
-	}
+        return buckets;
+    }
 
 
-	/**
-	 * Set the bucket's unusual score equal to the highest of those
-	 * on the records it contains
-	 *
-	 * @param normalisedScores
-	 * @param buckets
-	 * @return
-	 * @throws NativeProcessRunException
-	 */
-	private List<Bucket> mergeNormalisedUnusualIntoBuckets(
-			List<NormalisedResult> normalisedScores,
-			List<Bucket> buckets) throws NativeProcessRunException
-	{
-		Iterator<NormalisedResult> scoresIter = normalisedScores.iterator();
+    /**
+     * Set the bucket's unusual score equal to the highest of those
+     * on the records it contains
+     *
+     * @param normalisedScores
+     * @param buckets
+     * @return
+     * @throws NativeProcessRunException
+     */
+    private List<Bucket> mergeNormalisedUnusualIntoBuckets(
+            List<NormalisedResult> normalisedScores,
+            List<Bucket> buckets) throws NativeProcessRunException
+    {
+        Iterator<NormalisedResult> scoresIter = normalisedScores.iterator();
 
-		try
-		{
-			for (Bucket bucket : buckets)
-			{
-				bucket.resetBigNormalisedUpdateFlag();
+        try
+        {
+            for (Bucket bucket : buckets)
+            {
+                bucket.resetBigNormalisedUpdateFlag();
 
-				double maxNormalizedProbability = 0.0;
-				for (AnomalyRecord record : bucket.getRecords())
-				{
-					record.resetBigNormalisedUpdateFlag();
+                double maxNormalizedProbability = 0.0;
+                for (AnomalyRecord record : bucket.getRecords())
+                {
+                    record.resetBigNormalisedUpdateFlag();
 
-					NormalisedResult normalised = scoresIter.next();
+                    NormalisedResult normalised = scoresIter.next();
 
-					record.setNormalizedProbability(normalised.getNormalizedProbability());
+                    record.setNormalizedProbability(normalised.getNormalizedProbability());
 
-					maxNormalizedProbability = Math.max(maxNormalizedProbability,
-							normalised.getNormalizedProbability());
-				}
+                    maxNormalizedProbability = Math.max(maxNormalizedProbability,
+                            normalised.getNormalizedProbability());
+                }
 
-				bucket.setMaxNormalizedProbability(maxNormalizedProbability);
-			}
-		}
-		catch (NoSuchElementException e)
-		{
-			String msg = "Error iterating normalised results";
-			m_Logger.error(msg, e);
-			throw new NativeProcessRunException(msg, ErrorCode.NATIVE_PROCESS_ERROR);
-		}
+                bucket.setMaxNormalizedProbability(maxNormalizedProbability);
+            }
+        }
+        catch (NoSuchElementException e)
+        {
+            String msg = "Error iterating normalised results";
+            m_Logger.error(msg, e);
+            throw new NativeProcessRunException(msg, ErrorCode.NATIVE_PROCESS_ERROR);
+        }
 
-		return buckets;
-	}
+        return buckets;
+    }
 
-	/**
-	 * Create and start the normalization process
-	 *
-	 * @param sysChangeState
-	 * @param unusualBehaviourState
-	 * @param bucketSpan If <code>null</code> the default is used
-	 * @return
-	 * @throws NativeProcessRunException
-	 */
-	private NormaliserProcess createNormaliserProcess(
-			String sysChangeState,
-			String unusualBehaviourState,
-			Integer bucketSpan)
-	throws NativeProcessRunException
-	{
-		try
-		{
+    /**
+     * Create and start the normalization process
+     *
+     * @param sysChangeState
+     * @param unusualBehaviourState
+     * @param bucketSpan If <code>null</code> the default is used
+     * @return
+     * @throws NativeProcessRunException
+     */
+    private NormaliserProcess createNormaliserProcess(
+            String sysChangeState,
+            String unusualBehaviourState,
+            Integer bucketSpan)
+    throws NativeProcessRunException
+    {
+        try
+        {
             return m_ProcessFactory.create(m_JobId, sysChangeState, unusualBehaviourState,
                     bucketSpan, m_Logger);
-		}
-		catch (IOException e)
-		{
-			String msg = "Failed to start normalisation process for job " + m_JobId;
-			m_Logger.error(msg, e);
-			throw new NativeProcessRunException(msg,
-					ErrorCode.NATIVE_PROCESS_START_ERROR, e);
-		}
-	}
+        }
+        catch (IOException e)
+        {
+            String msg = "Failed to start normalisation process for job " + m_JobId;
+            m_Logger.error(msg, e);
+            throw new NativeProcessRunException(msg,
+                    ErrorCode.NATIVE_PROCESS_START_ERROR, e);
+        }
+    }
 }
