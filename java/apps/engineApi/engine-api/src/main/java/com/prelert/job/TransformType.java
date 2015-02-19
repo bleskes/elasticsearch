@@ -27,6 +27,8 @@
 
 package com.prelert.job;
 
+import java.util.EnumSet;
+
 import com.prelert.rs.data.ErrorCode;
 
 /**
@@ -36,7 +38,8 @@ import com.prelert.rs.data.ErrorCode;
  */
 public enum TransformType
 {
-	DOMAIN_LOOKUP(Names.DOMAIN_LOOKUP_NAME, 1);
+	DOMAIN_LOOKUP(Names.DOMAIN_LOOKUP_NAME, 1),
+	CONCAT(Names.CONCAT, -1);
 
 	/**
 	 * Enums cannot use static fields in their constructors as the
@@ -47,6 +50,7 @@ public enum TransformType
 	public class Names
 	{
 		public static final String DOMAIN_LOOKUP_NAME = "domain_lookup";
+		public static final String CONCAT = "concat";
 	}
 
 
@@ -59,13 +63,36 @@ public enum TransformType
 		m_PrettyName = prettyName;
 	}
 
+	/**
+	 * Arity of -1 means the function is variadic e.g. concat
+	 * @return
+	 */
 	public int arity()
 	{
 		return m_Arity;
 	}
 
+	public String prettyName()
+	{
+		return m_PrettyName;
+	}
+
 	public boolean verify(TransformConfig tr) throws TransformConfigurationException
 	{
+		if (m_Arity == -1)
+		{
+			if (tr.getInputs().size() > 0)
+			{
+				return true;
+			}
+			else
+			{
+				String msg = "Function arity error expected at least one argument, got 0";
+				throw new TransformConfigurationException(msg, ErrorCode.INCORRECT_TRANSFORM_ARGUMENT_COUNT);
+			}
+
+		}
+
 		if (tr.getInputs().size() != m_Arity)
 		{
 			String msg = "Function arity error expected " + m_Arity + " arguments, got "
@@ -93,16 +120,20 @@ public enum TransformType
 	 */
 	public static TransformType fromString(String prettyName) throws TransformConfigurationException
 	{
-		if (prettyName.equals(Names.DOMAIN_LOOKUP_NAME))
+		EnumSet<TransformType> all = EnumSet.allOf(TransformType.class);
+
+		for (TransformType type : all)
 		{
-			return DOMAIN_LOOKUP;
+			if (type.prettyName().equals(prettyName))
+			{
+				return type;
+			}
 		}
-		else
-		{
-			throw new TransformConfigurationException(
+
+		throw new TransformConfigurationException(
 								"Unknown TransformType '" + prettyName + "'",
 								ErrorCode.UNKNOWN_TRANSFORM);
-		}
+
 	}
 
 }

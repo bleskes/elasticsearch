@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -25,13 +25,20 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.process.dateparsing;
+package com.prelert.transforms.date;
 
-public class CannotParseTimestampException extends Exception {
+import com.prelert.transforms.Transform;
 
-    private static final long serialVersionUID = 1L;
+public abstract class DateTransform extends Transform
+{
+	public DateTransform(int[] inputIndicies, int[] outputIndicies)
+	{
+		super(inputIndicies, outputIndicies);
+	}
 
-    public CannotParseTimestampException(String message, Throwable cause) {
-        super(message, cause);
-    }
+	/**
+	 * The epoch time from the last transform
+	 * @return
+	 */
+	public abstract long epoch();
 }

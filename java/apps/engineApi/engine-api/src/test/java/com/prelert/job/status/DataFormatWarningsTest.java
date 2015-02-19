@@ -46,6 +46,8 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
 import com.prelert.job.Detector;
+import com.prelert.job.TransformConfig;
+import com.prelert.job.TransformConfigs;
 import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.persistence.JobDataPersister;
 import com.prelert.job.persistence.none.NoneJobDataPersister;
@@ -176,7 +178,7 @@ public class DataFormatWarningsTest
 
 			try
 			{
-				pm.writeToJob(dd, ac, bis, new NullOutputStream(),
+				pm.writeToJob(dd, ac, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, new NullOutputStream(),
 						statusReporter, dp, LOGGER);
 				Assert.assertTrue(false); // should throw
 			}
@@ -299,7 +301,7 @@ public class DataFormatWarningsTest
 
 			try
 			{
-				pm.writeToJob(dd, ac, bis, new NullOutputStream(),
+				pm.writeToJob(dd, ac, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, new NullOutputStream(),
 						statusReporter, dp, LOGGER);
 				Assert.assertTrue(false); // should throw
 			}
@@ -423,7 +425,7 @@ public class DataFormatWarningsTest
 
 			try
 			{
-				pm.writeToJob(dd, ac, bis, new NullOutputStream(),
+				pm.writeToJob(dd, ac, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, new NullOutputStream(),
 						statusReporter, dp, LOGGER);
 				Assert.assertTrue(false); // should throw
 			}
@@ -546,7 +548,7 @@ public class DataFormatWarningsTest
 
 			try
 			{
-				pm.writeToJob(dd, ac, bis, new NullOutputStream(),
+				pm.writeToJob(dd, ac, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, new NullOutputStream(),
 						statusReporter, dp, LOGGER);
 				Assert.assertTrue(false); // should throw
 			}

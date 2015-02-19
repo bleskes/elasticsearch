@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -31,10 +31,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.log4j.Logger;
 import org.supercsv.io.CsvListReader;
@@ -42,14 +42,15 @@ import org.supercsv.prefs.CsvPreference;
 
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
+import com.prelert.job.TransformConfigs;
 import com.prelert.job.input.CountingInputStream;
 import com.prelert.job.input.LengthEncodedWriter;
 import com.prelert.job.persistence.JobDataPersister;
-import com.prelert.job.process.dateparsing.DateTransformer;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.job.status.StatusReporter;
+import com.prelert.transforms.Transform;
 
 /**
  * A writer for transforming and piping CSV data from an
@@ -66,20 +67,18 @@ class CsvDataToProcessWriter extends AbstractDataToProcessWriter
 
     public CsvDataToProcessWriter(LengthEncodedWriter lengthEncodedWriter,
             DataDescription dataDescription, AnalysisConfig analysisConfig,
-            StatusReporter statusReporter, JobDataPersister jobDataPersister, Logger logger,
-            DateTransformer dateTransformer)
+            TransformConfigs transforms, StatusReporter statusReporter,
+            JobDataPersister jobDataPersister, Logger logger)
     {
-        super(lengthEncodedWriter, dataDescription, analysisConfig, statusReporter,
-                jobDataPersister, logger, dateTransformer);
+        super(lengthEncodedWriter, dataDescription, analysisConfig, transforms,
+        		statusReporter, jobDataPersister, logger);
     }
 
     /**
      * Read the csv input, transform to length encoded values and pipe
      * to the OutputStream.
-     * No transformation is applied to the data the timestamp is expected
-     * in seconds from the epoch.
-     * If any of the fields in <code>analysisFields</code> or the
-     * <code>DataDescription</code>s timeField is missing from the CSV header
+     * If any of the expected fields in the transform inputs, analysis input or
+     * if the expected time field is missing from the CSV header
      * a <code>MissingFieldException</code> is thrown
      *
      * @throws IOException
@@ -100,9 +99,6 @@ class CsvDataToProcessWriter extends AbstractDataToProcessWriter
         int recordsWritten = 0;
         int lineCount = 0;
 
-        List<String> analysisFields = m_AnalysisConfig.analysisFields();
-        m_StatusReporter.setAnalysedFieldsPerRecord(analysisFields.size());
-
         CountingInputStream countingStream = new CountingInputStream(inputStream, m_StatusReporter);
 
         try (CsvListReader csvReader = new CsvListReader(
@@ -110,111 +106,60 @@ class CsvDataToProcessWriter extends AbstractDataToProcessWriter
                 csvPref))
         {
             String[] header = csvReader.getHeader(true);
-            long inputFieldCount = Math.max(header.length - 1, 0); // time fields doesn't count
+            long inputFieldCount = Math.max(header.length -1, 0); // time field doesn't count
 
-
-            List<Pair<String, Integer>> fieldIndexes =
-                    findFieldIndexes(header, analysisFields);
+            List<Transform> transforms = buildTransforms(header);
+            writeHeader();
 
             int maxIndex = 0;
-            Iterator<Pair<String, Integer>> iter = fieldIndexes.iterator();
-            while (iter.hasNext())
+            for (Integer index : m_InFieldIndexes.values())
             {
-                Pair<String, Integer> p = iter.next();
-
-                if (p.m_Second > maxIndex)
-                {
-                    maxIndex = p.m_Second;
-                }
-
-                if (p.m_Second < 0)
-                {
-                    String msg = String.format("Field configured for analysis "
-                            + "'%s' is not in the CSV header '%s'",
-                            p.m_First, Arrays.toString(header));
-                    m_Logger.error(msg);
-
-                    throw new MissingFieldException(p.m_First, msg);
-                }
+            	maxIndex = Math.max(index, maxIndex);
             }
 
-            // filtered header is all the analysis fields + the time field + control field
-            String[] filteredHeader = new String[fieldIndexes.size() + 1];
-            int i = 0;
-            for (Pair<String, Integer> p : fieldIndexes)
-            {
-                filteredHeader[i++] = p.m_First;
-            }
-            filteredHeader[filteredHeader.length - 1] = LengthEncodedWriter.CONTROL_FIELD_NAME;
 
-            int timeFieldIndex = Arrays.asList(filteredHeader).indexOf(
-                    m_DataDescription.getTimeField());
-            if (timeFieldIndex < 0)
-            {
-                String message = String.format("Cannot find timestamp field '%s'"
-                        + " in CSV header '%s'", m_DataDescription.getTimeField(),
-                        Arrays.toString(filteredHeader));
-                m_Logger.error(message);
-                throw new MissingFieldException(m_DataDescription.getTimeField(), message);
-            }
-
-            m_JobDataPersister.setFieldMappings(m_AnalysisConfig.fields(),
-                    m_AnalysisConfig.byFields(), m_AnalysisConfig.overFields(),
-                    m_AnalysisConfig.partitionFields(), filteredHeader);
-
-            m_LengthEncodedWriter.writeRecord(filteredHeader);
-
-            // The + 1 is for the control field
-            int numFields = fieldIndexes.size() + 1;
-            List<String> line;
-
+            int numFields = m_OutFieldIndexes.size();
             String[] record = new String[numFields];
-            // Control field is always empty for real input
-            record[numFields - 1] = "";
+            record[record.length -1] = ""; // The control field is always an empty string
+
+            List<String> line;
 
             while ((line = csvReader.read()) != null)
             {
                 lineCount++;
 
-                i = 0;
                 if (maxIndex >= line.size())
                 {
                     m_Logger.warn("Not enough fields in csv record, expected at least "  + maxIndex
                     		+ ". "+ line);
 
                     Arrays.fill(record, "");
-                    for (Pair<String, Integer> p : fieldIndexes)
+                    for (InputOutputMap inOut : m_InputOutputMap)
                     {
-                        if (p.m_Second >= line.size())
+                        if (inOut.m_Input >= line.size())
                         {
                             m_StatusReporter.reportMissingField();
-                            i++;
                             continue;
                         }
 
-                        String field = line.get(p.m_Second);
-                        record[i] = (field == null) ? "" : field;
-                        i++;
+                        String field = line.get(inOut.m_Input);
+                        record[inOut.m_Output] = (field == null) ? "" : field;
                     }
                 }
                 else
                 {
-                    for (Pair<String, Integer> p : fieldIndexes)
+                    for (InputOutputMap inOut : m_InputOutputMap)
                     {
-                        String field = line.get(p.m_Second);
-                        record[i] = (field == null) ? "" : field;
-                        i++;
+                        String field = line.get(inOut.m_Input);
+                        record[inOut.m_Output] = (field == null) ? "" : field;
                     }
                 }
 
-                Long epoch = transformTimeAndWrite(record, timeFieldIndex, inputFieldCount);
-                if (epoch != null)
-                {
-                    recordsWritten++;
-                }
+                applyTransformsAndWrite(transforms, line.toArray(new String[0]) ,
+                						record, inputFieldCount);
             }
 
-            // This function can throw and the exceptions thrown
+            // This function can throw
             m_StatusReporter.finishReporting();
 
             m_LengthEncodedWriter.flush();
@@ -230,52 +175,26 @@ class CsvDataToProcessWriter extends AbstractDataToProcessWriter
                 recordsWritten, lineCount));
     }
 
-    /**
-     * Finds the indexes of the analysis fields and the
-     * timestamp field in <code>header</code>.
-     *
-     * @param header
-     * @param analysisFields
-     * @return
-     */
-    private List<Pair<String, Integer>> findFieldIndexes(String[] header,
-            List<String> analysisFields)
+    @Override
+    protected boolean checkForMissingFields(Collection<String> inputFields,
+											Map<String, Integer> inputFieldIndicies,
+											String [] header)
+    throws MissingFieldException
     {
-        List<String> headerList = Arrays.asList(header);  // TODO header could be empty
+    	for (String field : inputFields)
+    	{
+    		Integer index = inputFieldIndicies.get(field);
+    		if (index == null)
+    		{
+    			String msg = String.format("Field configured for analysis "
+    					+ "'%s' is not in the CSV header '%s'",
+    					field, Arrays.toString(header));
 
-        List<Pair<String, Integer>> fieldIndexes = new ArrayList<>();
+    			m_Logger.error(msg);
+    			throw new MissingFieldException(field, msg);
+    		}
+    	}
 
-        String timeField = m_DataDescription.getTimeField();
-        // time field
-        Pair<String, Integer> p = new Pair<>(timeField,
-                headerList.indexOf(timeField));
-        fieldIndexes.add(p);
-        m_Logger.info("Index of field " + p.m_First + " is " + p.m_Second);
-
-        for (String field : analysisFields)
-        {
-            p = new Pair<>(field, headerList.indexOf(field));
-            fieldIndexes.add(p);
-            m_Logger.info("Index of field " + p.m_First + " is " + p.m_Second);
-        }
-
-        return fieldIndexes;
-    }
-
-    /**
-     * Generic helper class
-     *
-     * @param <T>
-     * @param <U>
-     */
-    private static class Pair<T,U>
-    {
-        public final T m_First;
-        public final U m_Second;
-        public Pair(T first, U second)
-        {
-            this.m_First = first;
-            this.m_Second = second;
-        }
+    	return true;
     }
 }

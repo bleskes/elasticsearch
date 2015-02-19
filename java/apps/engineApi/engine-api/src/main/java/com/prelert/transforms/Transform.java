@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -25,36 +25,57 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.process.dateparsing;
+package com.prelert.transforms;
 
-import static org.junit.Assert.assertEquals;
-
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-
-public class DateFormatDateTransformerTest
+public abstract class Transform
 {
+	protected final int [] m_InputIndicies;
+	protected final int [] m_OutputIndicies;
 
-    @Rule
-    public ExpectedException m_ExpectedException = ExpectedException.none();
+	/**
+	 *
+	 * @param inputIndicies Input indexes into the <code>record</code>
+	 * @param outputIndicies Transform results go into these indexes
+	 */
+	public Transform(int [] inputIndicies, int [] outputIndicies)
+	{
+		m_InputIndicies = inputIndicies;
+		m_OutputIndicies = outputIndicies;
+	}
 
-    @Test
-    public void testTransform_GivenValidTimestamp() throws CannotParseTimestampException
-    {
-        DateFormatDateTransformer transformer = new DateFormatDateTransformer("y-M-d");
+	/**
+	 * Return a copy of the array.
+	 * This function is only really here for testing purposes
+	 * @return
+	 */
+	public int [] inputIndicies()
+	{
+		int [] tmp = new int[m_InputIndicies.length];
+		System.arraycopy(m_InputIndicies, 0, tmp, 0, tmp.length);
+		return tmp;
+	}
 
-        assertEquals(1388534400, transformer.transform("2014-01-01"));
-    }
+	/**
+	 * Return a copy of the array.
+	 * This function is only really here for testing purposes
+	 * @return
+	 */
+	public int [] outputIndicies()
+	{
+		int [] tmp = new int[m_OutputIndicies.length];
+		System.arraycopy(m_OutputIndicies, 0, tmp, 0, tmp.length);
+		return tmp;
+	}
 
-    @Test
-    public void testTransform_GivenInvalidTimestamp() throws CannotParseTimestampException
-    {
-        m_ExpectedException.expect(CannotParseTimestampException.class);
-        m_ExpectedException.expectMessage("Cannot parse date 'invalid' with format string 'y-M-d'");
-
-        DateFormatDateTransformer transformer = new DateFormatDateTransformer("y-M-d");
-
-        assertEquals(1388534400, transformer.transform("invalid"));
-    }
+	/**
+	 * Transform function
+	 *
+	 * @param inputRecord
+	 * @param outputRecord
+	 * @return
+	 * @throws TransformException
+	 */
+	public abstract boolean transform(String [] inputRecord,
+									String [] outputRecord)
+				throws TransformException;
 }

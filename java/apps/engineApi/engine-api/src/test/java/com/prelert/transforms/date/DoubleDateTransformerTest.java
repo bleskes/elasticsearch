@@ -25,39 +25,64 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.process.dateparsing;
+package com.prelert.transforms.date;
 
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import static org.junit.Assert.assertEquals;
 
-/**
- * A transformer that attempts to parse a String timestamp
- * as a data according to a timeFormat. It converts that
- * to a long that represents the equivalent epoch.
- */
-public class DateFormatDateTransformer implements DateTransformer {
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
-    private final String m_TimeFormat;
+import com.prelert.transforms.TransformException;
 
-    public DateFormatDateTransformer(String timeFormat)
+public class DoubleDateTransformerTest
+{
+
+    @Rule
+    public ExpectedException m_ExpectedException = ExpectedException.none();
+
+    @Test
+    public void testTransform_GivenTimestampIsNotMilliseconds() throws TransformException
     {
-        m_TimeFormat = timeFormat;
+    	DoubleDateTransform transformer = new DoubleDateTransform(false, new int [] {0},
+												new int [] {0});
+
+    	String [] input = {"1000"};
+    	String [] output = new String[1];
+
+		transformer.transform(input, output);
+
+		assertEquals(1000, transformer.epoch());
+		assertEquals("1000", output[0]);
     }
 
-    @Override
-    public long transform(String timestamp) throws CannotParseTimestampException
+    @Test
+    public void testTransform_GivenTimestampIsMilliseconds() throws TransformException
     {
-        try
-        {
-            DateFormat dateFormat = new SimpleDateFormat(m_TimeFormat);
-            return dateFormat.parse(timestamp).getTime() / 1000;
-        }
-        catch (ParseException pe)
-        {
-            String message = String.format("Cannot parse date '%s' with format string '%s'",
-                    timestamp, m_TimeFormat);
-            throw new CannotParseTimestampException(message, pe);
-        }
+    	DoubleDateTransform transformer = new DoubleDateTransform(true, new int [] {0},
+				new int [] {0});
+
+		String [] input = {"1000"};
+		String [] output = new String[1];
+
+		transformer.transform(input, output);
+
+		assertEquals(1, transformer.epoch());
+		assertEquals("1", output[0]);
+    }
+
+    @Test
+    public void testTransform_GivenTimestampIsNotValidDouble() throws TransformException
+    {
+        m_ExpectedException.expect(ParseTimestampException.class);
+        m_ExpectedException.expectMessage("Cannot parse timestamp 'invalid' as epoch value");
+
+    	DoubleDateTransform transformer = new DoubleDateTransform(false, new int [] {0},
+				new int [] {0});
+
+		String [] input = {"invalid"};
+		String [] output = new String[1];
+
+		transformer.transform(input, output);
     }
 }

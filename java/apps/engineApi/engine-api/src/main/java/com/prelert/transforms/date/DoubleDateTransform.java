@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -25,37 +25,61 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.process.dateparsing;
+package com.prelert.transforms.date;
+
+import com.prelert.transforms.TransformException;
 
 /**
  * A transformer that attempts to parse a String timestamp
  * as a double and convert that to a long that represents
- * an epoch. If m_IsMillisecond is true, it will convert to seconds.
+ * an epoch time in seconds.
+ * If m_IsMillisecond is true, it assumes the number represents
+ * time in milli-seconds and will convert to seconds
  */
-public class DoubleDateTransformer implements DateTransformer {
+public class DoubleDateTransform extends DateTransform
+{
+	private final boolean m_IsMillisecond;
+	private long m_Epoch;
 
-    private final boolean m_IsMillisecond;
-
-    public DoubleDateTransformer(boolean isMillisecond)
+    public DoubleDateTransform(boolean isMillisecond,
+    		int[] inputIndicies, int[] outputIndicies)
     {
-        m_IsMillisecond = isMillisecond;
+    	super(inputIndicies, outputIndicies);
+    	m_IsMillisecond = isMillisecond;
     }
 
     @Override
-    public long transform(String timestamp) throws CannotParseTimestampException
+	public long epoch()
     {
+    	return m_Epoch;
+    }
+
+	@Override
+	public boolean transform(String[] inputRecord, String[] outputRecord)
+	throws TransformException
+	{
+		String field = inputRecord[m_InputIndicies[0]];
+		if (field == null)
+		{
+			throw new ParseTimestampException("Cannot parse null string");
+		}
+
         try
         {
             // parse as a double and throw away the fractional
             // component
-            long longValue = Double.valueOf(timestamp).longValue();
-            return m_IsMillisecond ? longValue / 1000 : longValue;
+            long longValue = Double.valueOf(field).longValue();
+            m_Epoch = m_IsMillisecond ? longValue / 1000 : longValue;
+
+            outputRecord[m_OutputIndicies[0]] = Long.toString(m_Epoch);
+            return true;
         }
         catch (NumberFormatException e)
         {
             String message = String.format(
-                    "Cannot parse timestamp '%s' as epoch value", timestamp);
-            throw new CannotParseTimestampException(message, e);
+                    "Cannot parse timestamp '%s' as epoch value", inputRecord[m_InputIndicies[0]]);
+            throw new ParseTimestampException(message);
         }
-    }
+	}
 }
+

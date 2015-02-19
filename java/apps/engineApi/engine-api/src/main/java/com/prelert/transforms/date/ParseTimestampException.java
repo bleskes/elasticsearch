@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -25,17 +25,17 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.process.dateparsing;
+package com.prelert.transforms.date;
 
-/**
- * An interface for transforming a String timestamp into epochs.
- */
-public interface DateTransformer {
-    /**
-     *
-     * @param timestamp A String representing a timestamp
-     * @return The epoch that the timestamp corresponds to
-     * @throws CannotParseTimestampException If the timestamp cannot be parsed
-     */
-    long transform(String timestamp) throws CannotParseTimestampException;
+import com.prelert.transforms.TransformException;
+
+public class ParseTimestampException extends TransformException
+{
+	private static final long serialVersionUID = -184672266466521404L;
+
+	public ParseTimestampException(String message)
+	{
+		super(message);
+	}
+
 }

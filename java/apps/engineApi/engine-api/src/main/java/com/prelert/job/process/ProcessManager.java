@@ -59,6 +59,7 @@ import com.prelert.job.DataDescription;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobInUseException;
 import com.prelert.job.JobStatus;
+import com.prelert.job.TransformConfigs;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.persistence.DataPersisterFactory;
 import com.prelert.job.persistence.JobDataPersister;
@@ -295,7 +296,7 @@ public class ProcessManager
             process.setInUse(true);
 
             writeToJob(process.getDataDescription(), process.getAnalysisConfig(),
-                    input, process.getProcess().getOutputStream(),
+                    process.getTransforms(), input, process.getProcess().getOutputStream(),
                     process.getStatusReporter(),
                     jobDataPersister,
                     process.getLogger());
@@ -413,7 +414,8 @@ public class ProcessManager
 
         ProcessAndDataDescription procAndDD = new ProcessAndDataDescription(
                 nativeProcess, jobId,
-                job.getDataDescription(), job.getTimeout(), job.getAnalysisConfig(), logger,
+                job.getDataDescription(), job.getTimeout(), job.getAnalysisConfig(),
+                new TransformConfigs(job.getTransforms()), logger,
                 m_StatusReporterFactory.newStatusReporter(jobId, job.getCounts(),
                         m_UsageReporterFactory.newUsageReporter(jobId, logger),
                          logger),
@@ -761,6 +763,7 @@ public class ProcessManager
      */
     public void writeToJob(DataDescription dataDescription,
             AnalysisConfig analysisConfig,
+            TransformConfigs transforms,
             InputStream input, OutputStream output,
             StatusReporter statusReporter,
             JobDataPersister dataPersister,
@@ -771,7 +774,7 @@ public class ProcessManager
         // Oracle's documentation recommends buffering process streams
         BufferedOutputStream bufferedStream = new BufferedOutputStream(output);
         DataToProcessWriter writer = new DataToProcessWriterFactory().create(bufferedStream,
-                dataDescription, analysisConfig, statusReporter, dataPersister, jobLogger);
+                dataDescription, analysisConfig, transforms, statusReporter, dataPersister, jobLogger);
         writer.write(input);
     }
 

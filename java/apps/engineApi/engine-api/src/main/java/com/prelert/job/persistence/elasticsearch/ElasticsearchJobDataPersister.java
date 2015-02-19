@@ -150,7 +150,14 @@ public class ElasticsearchJobDataPersister implements JobDataPersister
 
         if (m_BufferedRecordCount == DOC_BUFFER_SIZE)
         {
-            writeDocs();
+        	try
+            {
+        		writeDocs();
+            }
+            finally
+            {
+                m_BufferedRecordCount = 0;
+            }
         }
     }
 
@@ -191,71 +198,65 @@ public class ElasticsearchJobDataPersister implements JobDataPersister
 
         BulkRequestBuilder bulkRequest = m_Client.prepareBulk();
 
-        try
+        for (int count=0; count<m_BufferedRecordCount; count++)
         {
-            for (int count=0; count<m_BufferedRecordCount; count++)
-            {
-                try
-                {
-                    XContentBuilder jsonBuilder = XContentFactory.jsonBuilder();
+        	try
+        	{
+        		XContentBuilder jsonBuilder = XContentFactory.jsonBuilder();
 
-                    String [] bufferedRecord = m_BufferedRecords[count];
-                    // epoch in ms
-                    jsonBuilder.startObject().field("epoch", m_Epochs[count] * 1000);
+        		String [] bufferedRecord = m_BufferedRecords[count];
+        		// epoch in ms
+        		jsonBuilder.startObject().field("epoch", m_Epochs[count] * 1000);
 
 
-                    for (int i=0; i<m_FieldNames.length; i++)
-                    {
-                        try
-                        {
-                            jsonBuilder.field(m_FieldNames[i], Double.parseDouble(bufferedRecord[m_FieldMappings[i]]));
-                        }
-                        catch (NumberFormatException e)
-                        {
-                            jsonBuilder.field(m_FieldNames[i], bufferedRecord[m_FieldMappings[i]]);
-                        }
-                    }
+        		for (int i=0; i<m_FieldNames.length; i++)
+        		{
+        			try
+        			{
+        				jsonBuilder.field(m_FieldNames[i], Double.parseDouble(bufferedRecord[m_FieldMappings[i]]));
+        			}
+        			catch (NumberFormatException e)
+        			{
+        				jsonBuilder.field(m_FieldNames[i], bufferedRecord[m_FieldMappings[i]]);
+        			}
+        		}
 
-                    jsonBuilder.startArray(BY_FIELDS);
-                    for (int i=0; i<m_ByFieldMappings.length; i++)
-                    {
-                        jsonBuilder.value(bufferedRecord[m_ByFieldMappings[i]]);
-                    }
-                    jsonBuilder.endArray();
+        		jsonBuilder.startArray(BY_FIELDS);
+        		for (int i=0; i<m_ByFieldMappings.length; i++)
+        		{
+        			jsonBuilder.value(bufferedRecord[m_ByFieldMappings[i]]);
+        		}
+        		jsonBuilder.endArray();
 
-                    jsonBuilder.startArray(OVER_FIELDS);
-                    for (int i=0; i<m_OverFieldMappings.length; i++)
-                    {
-                        jsonBuilder.value(bufferedRecord[m_OverFieldMappings[i]]);
-                    }
-                    jsonBuilder.endArray();
+        		jsonBuilder.startArray(OVER_FIELDS);
+        		for (int i=0; i<m_OverFieldMappings.length; i++)
+        		{
+        			jsonBuilder.value(bufferedRecord[m_OverFieldMappings[i]]);
+        		}
+        		jsonBuilder.endArray();
 
-                    jsonBuilder.startArray(PARTITION_FIELDS);
-                    for (int i=0; i<m_PartitionFieldMappings.length; i++)
-                    {
-                        jsonBuilder.value(bufferedRecord[m_PartitionFieldMappings[i]]);
-                    }
-                    jsonBuilder.endArray();
+        		jsonBuilder.startArray(PARTITION_FIELDS);
+        		for (int i=0; i<m_PartitionFieldMappings.length; i++)
+        		{
+        			jsonBuilder.value(bufferedRecord[m_PartitionFieldMappings[i]]);
+        		}
+        		jsonBuilder.endArray();
 
-                    jsonBuilder.endObject();
+        		jsonBuilder.endObject();
 
 
-                    bulkRequest.add(m_Client.prepareIndex(m_IndexName, PERSISTED_RECORD_TYPE)
-                            .setSource(jsonBuilder));
+        		bulkRequest.add(m_Client.prepareIndex(m_IndexName, PERSISTED_RECORD_TYPE)
+        				.setSource(jsonBuilder));
 
-                    m_BufferedRecords[count] = null; // free mem
+        		m_BufferedRecords[count] = null; // free mem
 
-                }
-                catch (IOException e)
-                {
-                    m_Logger.error("Error creating json builder", e);
-                }
-            }
+        	}
+        	catch (IOException e)
+        	{
+        		m_Logger.error("Error creating json builder", e);
+        	}
         }
-        finally
-        {
-            m_BufferedRecordCount = 0;
-        }
+
 
 
         BulkResponse bulkResponse = bulkRequest.execute().actionGet();

@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -55,10 +55,10 @@ import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.Detector;
+import com.prelert.job.TransformConfig;
+import com.prelert.job.TransformConfigs;
 import com.prelert.job.input.LengthEncodedWriter;
 import com.prelert.job.persistence.JobDataPersister;
-import com.prelert.job.process.dateparsing.DateTransformer;
-import com.prelert.job.process.dateparsing.DoubleDateTransformer;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
@@ -74,7 +74,6 @@ public class CsvDataToProcessWriterTest
     @Mock private StatusReporter m_StatusReporter;
     @Mock private JobDataPersister m_DataPersister;
     @Mock private Logger m_Logger;
-    private DateTransformer m_DateTransformer;
 
     private List<String[]> m_WrittenRecords;
 
@@ -102,8 +101,6 @@ public class CsvDataToProcessWriterTest
         Detector detector = new Detector();
         detector.setFieldName("value");
         m_AnalysisConfig.setDetectors(Arrays.asList(detector));
-
-        m_DateTransformer = new DoubleDateTransformer(false);
     }
 
     @Test
@@ -197,7 +194,8 @@ public class CsvDataToProcessWriterTest
     private CsvDataToProcessWriter createWriter()
     {
         return new CsvDataToProcessWriter(m_LengthEncodedWriter, m_DataDescription,
-                m_AnalysisConfig, m_StatusReporter, m_DataPersister, m_Logger, m_DateTransformer);
+                m_AnalysisConfig, new TransformConfigs(Arrays.<TransformConfig>asList()),
+                m_StatusReporter, m_DataPersister, m_Logger);
     }
 
     private void assertWrittenRecordsEqualTo(List<String[]> expectedRecords)

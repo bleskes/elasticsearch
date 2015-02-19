@@ -40,7 +40,7 @@ import org.junit.Test;
 import com.prelert.rs.data.ErrorCode;
 
 
-public class TransfromTest {
+public class TransfromConfigTest {
 
 	@Test
 	public void testUnknownTransfrom()
@@ -69,7 +69,15 @@ public class TransfromTest {
 		for (TransformType type : types)
 		{
 			List<String> inputs = new ArrayList<>();
-			for (int arg = 0; arg < type.arity(); ++arg)
+
+			int argCount = type.arity();
+			if (type.arity() < 0)
+			{
+				// variadic
+				argCount = 2;
+			}
+
+			for (int arg = 0; arg < argCount; ++arg)
 			{
 				inputs.add(Integer.toString(arg));
 			}
@@ -81,6 +89,38 @@ public class TransfromTest {
 			tr.verify();
 			assertEquals(type, tr.type());
 		}
+	}
+
+	@Test
+	public void testVariadicTransformVerifies() throws JobConfigurationException
+	{
+
+		List<String> inputs = new ArrayList<>();
+
+		TransformConfig tr = new TransformConfig();
+		tr.setTransform(TransformType.Names.CONCAT);
+		assertEquals(TransformType.CONCAT, tr.type());
+
+		tr.setInputs(inputs);
+		for (int arg = 0; arg < 1; ++arg)
+		{
+			inputs.add(Integer.toString(arg));
+		}
+		tr.verify();
+
+		inputs.clear();
+		for (int arg = 0; arg < 2; ++arg)
+		{
+			inputs.add(Integer.toString(arg));
+		}
+		tr.verify();
+
+		inputs.clear();
+		for (int arg = 0; arg < 3; ++arg)
+		{
+			inputs.add(Integer.toString(arg));
+		}
+		tr.verify();
 	}
 
 
@@ -96,7 +136,15 @@ public class TransfromTest {
 		{
 			List<String> inputs = new ArrayList<>();
 
-			for (int arg = 0; arg < type.arity() -1; ++arg)
+
+			int argCount = type.arity() -1;
+			if (type.arity() < 0)
+			{
+				// variadic
+				argCount = 0;
+			}
+
+			for (int arg = 0; arg < argCount; ++arg)
 			{
 				inputs.add(Integer.toString(arg));
 			}
