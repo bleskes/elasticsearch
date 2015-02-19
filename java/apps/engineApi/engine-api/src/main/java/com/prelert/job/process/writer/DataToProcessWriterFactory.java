@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -34,11 +34,9 @@ import org.apache.log4j.Logger;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
+import com.prelert.job.TransformConfigs;
 import com.prelert.job.input.LengthEncodedWriter;
 import com.prelert.job.persistence.JobDataPersister;
-import com.prelert.job.process.dateparsing.DateFormatDateTransformer;
-import com.prelert.job.process.dateparsing.DateTransformer;
-import com.prelert.job.process.dateparsing.DoubleDateTransformer;
 import com.prelert.job.status.StatusReporter;
 
 /**
@@ -57,24 +55,17 @@ public class DataToProcessWriterFactory
      *  format is JSON or otherwise a {@link CsvDataToProcessWriter}
      */
     public DataToProcessWriter create(OutputStream outputStream,
-            DataDescription dataDescription, AnalysisConfig analysisConfig,
+            DataDescription dataDescription, AnalysisConfig analysisConfig, TransformConfigs transforms,
             StatusReporter statusReporter, JobDataPersister jobDataPersister, Logger logger)
     {
         // Don't close the output stream as it causes the autodetect
         // process to quit
         LengthEncodedWriter lengthEncodedWriter = new LengthEncodedWriter(outputStream);
 
-        DateTransformer dateTransformer = new DoubleDateTransformer(false);
-        if (dataDescription.isTransformTime())
-        {
-            dateTransformer = dataDescription.isEpochMs() ? new DoubleDateTransformer(true) :
-                new DateFormatDateTransformer(dataDescription.getTimeFormat());
-        }
-
         return (dataDescription.getFormat() == DataFormat.JSON) ?
                 new JsonDataToProcessWriter(lengthEncodedWriter, dataDescription, analysisConfig,
-                        statusReporter, jobDataPersister, logger, dateTransformer) :
+                        transforms, statusReporter, jobDataPersister, logger) :
                 new CsvDataToProcessWriter(lengthEncodedWriter, dataDescription, analysisConfig,
-                        statusReporter, jobDataPersister, logger, dateTransformer);
+                		transforms, statusReporter, jobDataPersister, logger);
     }
 }

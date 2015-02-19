@@ -24,55 +24,50 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.process.writer;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
+package com.prelert.transforms.date;
 
-import junit.framework.Assert;
+import static org.junit.Assert.assertEquals;
 
+import org.junit.Rule;
 import org.junit.Test;
-import org.supercsv.io.CsvListReader;
-import org.supercsv.prefs.CsvPreference;
+import org.junit.rules.ExpectedException;
 
-import com.prelert.job.DataDescription;
+import com.prelert.transforms.TransformException;
 
-public class CsvParserTest {
+public class DateFormatDateTransformerTest
+{
 
-	/**
-	 * Test parsing CSV with the NUL character code point (\0 or \u0000)
-	 * @throws IOException
-	 */
-	@Test
-	public void test() throws IOException
-	{
-		String data = "1422936876.262044869, 1422936876.262044869, 90, 2, 10.132.0.1, 0, 224.0.0.5, 0, 1, 1, 268435460, null, null, null, null, null, null, null, null, null, null, null\n"
-				+ "1422943772.875342698, 1422943772.875342698, 90, 2, 10.132.0.1, 0, 224.0.0.5, 0, 1, 1, 268435460,,,,,\0,\u0000,,,,,\u0000\n";
-		InputStream inputStream = new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
+    @Rule
+    public ExpectedException m_ExpectedException = ExpectedException.none();
 
-        CsvPreference csvPref = new CsvPreference.Builder(
-                DataDescription.DEFAULT_QUOTE_CHAR,
-                ',',
-                new String(new char[] {DataDescription.LINE_ENDING})).build();
+    @Test
+    public void testTransform_GivenValidTimestamp() throws TransformException
+    {
+    	DateFormatTransform transformer = new DateFormatTransform("y-M-d", new int [] {0},
+    														new int [] {0});
 
-        try (CsvListReader csvReader = new CsvListReader(
-                new InputStreamReader(inputStream, StandardCharsets.UTF_8),
-                csvPref))
-        {
-            String[] header = csvReader.getHeader(true);
-            System.out.println(header.length);
+    	String [] input = {"2014-01-01"};
+    	String [] output = new String[1];
 
-            List<String> line;
-            while ((line = csvReader.read()) != null)
-            {
-            	Assert.assertEquals(22, line.size());
-            }
+    	transformer.transform(input, output);
 
-        }
-	}
+        assertEquals(1388534400, transformer.epoch());
+        assertEquals("1388534400", output[0]);
+    }
 
+    @Test
+    public void testTransform_GivenInvalidTimestamp() throws TransformException
+    {
+        m_ExpectedException.expect(ParseTimestampException.class);
+        m_ExpectedException.expectMessage("Cannot parse date 'invalid' with format string 'y-M-d'");
+
+    	DateFormatTransform transformer = new DateFormatTransform("y-M-d",
+    							new int [] {0}, new int [] {0});
+
+    	String [] input = {"invalid"};
+    	String [] output = new String[1];
+
+    	transformer.transform(input, output);
+    }
 }

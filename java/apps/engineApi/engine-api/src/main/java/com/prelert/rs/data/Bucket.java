@@ -480,4 +480,9 @@ public class Bucket
     {
         m_HadBigNormalisedUpdate = false;
     }
+
+    public void raiseBigNormalisedUpdateFlag()
+    {
+        m_HadBigNormalisedUpdate = true;
+    }
 }

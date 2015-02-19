@@ -28,6 +28,7 @@ package com.prelert.job;
 
 import java.net.URI;
 import java.util.Date;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -68,6 +69,7 @@ public class JobDetails
 	public static final String ANALYSIS_CONFIG = "analysisConfig";
 	public static final String ANALYSIS_LIMITS = "analysisLimits";
 	public static final String DATA_DESCRIPTION = "dataDescription";
+	public static final String TRANSFORMS = "transforms";
 
 	public static final String DESCRIPTION = "description";
 
@@ -87,6 +89,8 @@ public class JobDetails
 	private AnalysisLimits m_AnalysisLimits;
 	private DataDescription m_DataDescription;
 	private ModelSizeStats m_ModelSizeStats;
+	private List<TransformConfig> m_Transforms;
+	private Counts m_Counts;
 
 	/* These URIs are transient they don't need to be persisted */
 	private URI m_Location;
@@ -94,8 +98,6 @@ public class JobDetails
 	private URI m_BucketsEndpoint;
 	private URI m_RecordsEndpoint;
 	private URI m_LogsEndpoint;
-
-	private Counts m_Counts;
 
 
 	/**
@@ -127,6 +129,7 @@ public class JobDetails
 		m_AnalysisConfig = jobConfig.getAnalysisConfig();
 		m_AnalysisLimits = jobConfig.getAnalysisLimits();
 		m_DataDescription = jobConfig.getDataDescription();
+		m_Transforms = jobConfig.getTransforms();
 	}
 
 	/**
@@ -353,6 +356,16 @@ public class JobDetails
 	public void setDataDescription(DataDescription dd)
 	{
 		m_DataDescription = dd;
+	}
+
+	public List<TransformConfig> getTransforms()
+	{
+		return m_Transforms;
+	}
+
+	public void setTransforms(List<TransformConfig> transforms)
+	{
+		m_Transforms = transforms;
 	}
 
 	/**

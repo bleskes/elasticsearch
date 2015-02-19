@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -25,13 +25,15 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.process.dateparsing;
+package com.prelert.transforms.date;
 
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+
+import com.prelert.transforms.TransformException;
 
 public class DoubleDateTransformerTest
 {
@@ -40,29 +42,47 @@ public class DoubleDateTransformerTest
     public ExpectedException m_ExpectedException = ExpectedException.none();
 
     @Test
-    public void testTransform_GivenTimestampIsNotMilliseconds() throws CannotParseTimestampException
+    public void testTransform_GivenTimestampIsNotMilliseconds() throws TransformException
     {
-        DoubleDateTransformer transformer = new DoubleDateTransformer(false);
+    	DoubleDateTransform transformer = new DoubleDateTransform(false, new int [] {0},
+												new int [] {0});
 
-        assertEquals(1000, transformer.transform("1000"));
+    	String [] input = {"1000"};
+    	String [] output = new String[1];
+
+		transformer.transform(input, output);
+
+		assertEquals(1000, transformer.epoch());
+		assertEquals("1000", output[0]);
     }
 
     @Test
-    public void testTransform_GivenTimestampIsMilliseconds() throws CannotParseTimestampException
+    public void testTransform_GivenTimestampIsMilliseconds() throws TransformException
     {
-        DoubleDateTransformer transformer = new DoubleDateTransformer(true);
+    	DoubleDateTransform transformer = new DoubleDateTransform(true, new int [] {0},
+				new int [] {0});
 
-        assertEquals(1, transformer.transform("1000"));
+		String [] input = {"1000"};
+		String [] output = new String[1];
+
+		transformer.transform(input, output);
+
+		assertEquals(1, transformer.epoch());
+		assertEquals("1", output[0]);
     }
 
     @Test
-    public void testTransform_GivenTimestampIsNotValidDouble() throws CannotParseTimestampException
+    public void testTransform_GivenTimestampIsNotValidDouble() throws TransformException
     {
-        m_ExpectedException.expect(CannotParseTimestampException.class);
+        m_ExpectedException.expect(ParseTimestampException.class);
         m_ExpectedException.expectMessage("Cannot parse timestamp 'invalid' as epoch value");
 
-        DoubleDateTransformer transformer = new DoubleDateTransformer(false);
+    	DoubleDateTransform transformer = new DoubleDateTransform(false, new int [] {0},
+				new int [] {0});
 
-        assertEquals(1000, transformer.transform("invalid"));
+		String [] input = {"invalid"};
+		String [] output = new String[1];
+
+		transformer.transform(input, output);
     }
 }

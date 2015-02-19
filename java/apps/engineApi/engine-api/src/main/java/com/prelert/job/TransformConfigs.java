@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -25,17 +25,64 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.process.dateparsing;
+package com.prelert.job;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
- * An interface for transforming a String timestamp into epochs.
+ * Utility class for methods involving arrays of transforms
  */
-public interface DateTransformer {
-    /**
-     *
-     * @param timestamp A String representing a timestamp
-     * @return The epoch that the timestamp corresponds to
-     * @throws CannotParseTimestampException If the timestamp cannot be parsed
-     */
-    long transform(String timestamp) throws CannotParseTimestampException;
+public class TransformConfigs
+{
+	private List<TransformConfig> m_Transforms;
+
+	public TransformConfigs(List<TransformConfig> transforms)
+	{
+		m_Transforms = transforms;
+	}
+
+
+	public List<TransformConfig> getTransforms()
+	{
+		return m_Transforms;
+	}
+
+
+	/**
+	 * Set of all the field names configured as inputs to the transforms
+	 * @return
+	 */
+	public Set<String> inputFieldNames()
+	{
+		Set<String> fields = new HashSet<>();
+		for (TransformConfig t : m_Transforms)
+		{
+			fields.addAll(t.getInputs());
+		}
+
+		return fields;
+	}
+
+	public Set<String> outputFieldNames()
+	{
+		Set<String> fields = new HashSet<>();
+		for (TransformConfig t : m_Transforms)
+		{
+			fields.addAll(t.getOutputs());
+		}
+
+		return fields;
+	}
+
+	static public boolean verify(List<TransformConfig> transforms) throws JobConfigurationException
+	{
+		for (TransformConfig tr : transforms)
+		{
+			tr.verify();
+		}
+
+		return true;
+	}
 }

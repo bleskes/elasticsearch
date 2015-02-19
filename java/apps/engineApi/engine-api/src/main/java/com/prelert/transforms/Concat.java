@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -25,36 +25,35 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.process.dateparsing;
+package com.prelert.transforms;
 
-import static org.junit.Assert.assertEquals;
-
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-
-public class DateFormatDateTransformerTest
+/**
+ * Concatenate input fields
+ */
+public class Concat extends Transform
 {
+	public Concat(int[] inputIndicies, int[] outputIndicies)
+	{
+		super(inputIndicies, outputIndicies);
+	}
 
-    @Rule
-    public ExpectedException m_ExpectedException = ExpectedException.none();
+	/**
+	 * Concat has only 1 output field
+	 */
+	@Override
+	public boolean transform(String[] inputRecord, String[] outputRecord)
+	throws TransformException
+	{
+		StringBuilder builder = new StringBuilder();
 
-    @Test
-    public void testTransform_GivenValidTimestamp() throws CannotParseTimestampException
-    {
-        DateFormatDateTransformer transformer = new DateFormatDateTransformer("y-M-d");
+		for (int i=0; i<m_InputIndicies.length; i++)
+		{
+			builder.append(inputRecord[m_InputIndicies[i]]);
+		}
 
-        assertEquals(1388534400, transformer.transform("2014-01-01"));
-    }
+		outputRecord[m_OutputIndicies[0]] = builder.toString();
 
-    @Test
-    public void testTransform_GivenInvalidTimestamp() throws CannotParseTimestampException
-    {
-        m_ExpectedException.expect(CannotParseTimestampException.class);
-        m_ExpectedException.expectMessage("Cannot parse date 'invalid' with format string 'y-M-d'");
+		return true;
+	}
 
-        DateFormatDateTransformer transformer = new DateFormatDateTransformer("y-M-d");
-
-        assertEquals(1388534400, transformer.transform("invalid"));
-    }
 }

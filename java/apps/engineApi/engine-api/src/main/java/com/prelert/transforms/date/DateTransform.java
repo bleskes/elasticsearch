@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -25,39 +25,20 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.process.dateparsing;
+package com.prelert.transforms.date;
 
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import com.prelert.transforms.Transform;
 
-/**
- * A transformer that attempts to parse a String timestamp
- * as a data according to a timeFormat. It converts that
- * to a long that represents the equivalent epoch.
- */
-public class DateFormatDateTransformer implements DateTransformer {
+public abstract class DateTransform extends Transform
+{
+	public DateTransform(int[] inputIndicies, int[] outputIndicies)
+	{
+		super(inputIndicies, outputIndicies);
+	}
 
-    private final String m_TimeFormat;
-
-    public DateFormatDateTransformer(String timeFormat)
-    {
-        m_TimeFormat = timeFormat;
-    }
-
-    @Override
-    public long transform(String timestamp) throws CannotParseTimestampException
-    {
-        try
-        {
-            DateFormat dateFormat = new SimpleDateFormat(m_TimeFormat);
-            return dateFormat.parse(timestamp).getTime() / 1000;
-        }
-        catch (ParseException pe)
-        {
-            String message = String.format("Cannot parse date '%s' with format string '%s'",
-                    timestamp, m_TimeFormat);
-            throw new CannotParseTimestampException(message, pe);
-        }
-    }
+	/**
+	 * The epoch time from the last transform
+	 * @return
+	 */
+	public abstract long epoch();
 }

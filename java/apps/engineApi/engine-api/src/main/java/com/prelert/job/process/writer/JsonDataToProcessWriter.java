@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -31,8 +31,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayDeque;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Deque;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -44,19 +44,20 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
+import com.prelert.job.TransformConfigs;
 import com.prelert.job.input.CountingInputStream;
 import com.prelert.job.input.LengthEncodedWriter;
 import com.prelert.job.persistence.JobDataPersister;
-import com.prelert.job.process.dateparsing.DateTransformer;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.job.status.StatusReporter;
+import com.prelert.transforms.Transform;
 
 /**
  * A writer for transforming and piping JSON data from an
  * inputstream to outputstream.
- * The data writtin to output is length encoded each record
+ * The data written to output is length encoded each record
  * consists of number of fields followed by length/value pairs.
  * See CLengthEncodedInputParser.h in the C++ code for a more
  * detailed description.
@@ -66,11 +67,11 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter
 
     public JsonDataToProcessWriter(LengthEncodedWriter lengthEncodedWriter,
             DataDescription dataDescription, AnalysisConfig analysisConfig,
-            StatusReporter statusReporter, JobDataPersister jobDataPersister, Logger logger,
-            DateTransformer dateTransformer)
+            TransformConfigs transforms, StatusReporter statusReporter,
+            JobDataPersister jobDataPersister, Logger logger)
     {
-        super(lengthEncodedWriter, dataDescription, analysisConfig, statusReporter,
-                jobDataPersister, logger, dateTransformer);
+        super(lengthEncodedWriter, dataDescription, analysisConfig, transforms,
+        		statusReporter, jobDataPersister, logger);
     }
 
     /**
@@ -113,51 +114,36 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter
     private void writeJson(JsonParser parser) throws IOException, MissingFieldException,
             HighProportionOfBadTimestampsException, OutOfOrderRecordsException
     {
-        List<String> analysisFields = m_AnalysisConfig.analysisFields();
+    	Collection<String> analysisFields = inputFields();
 
-        // record is all the analysis fields + the time field + control field
-        String[] allFields = new String[analysisFields.size() + 2];
+        List<Transform> transforms = buildTransforms(analysisFields.toArray(new String[0]));
 
-        int i = 0;
-        for (String s : analysisFields)
-        {
-            allFields[i] = s;
-            i++;
-        }
+        writeHeader();
 
-        // time field is the penultimate item
-        int timeFieldIndex = allFields.length - 2;
-        allFields[timeFieldIndex] = m_DataDescription.getTimeField();
+        int numFields = m_OutFieldIndexes.size();
+        String[] input = new String[numFields];
+        String[] record = new String[numFields];
+        record[record.length -1] = ""; // The control field is always an empty string
 
-        // control field is the last item
-        int controlFieldIndex = allFields.length - 1;
-        allFields[controlFieldIndex] = LengthEncodedWriter.CONTROL_FIELD_NAME;
+        // We never expect to get the control field
+        boolean [] gotFields = new boolean[analysisFields.size()];
 
-        String [] record = new String[allFields.length];
-        // We never expect to get the control field, hence - 1 here
-        boolean [] gotFields = new boolean[allFields.length - 1];
-
-        Map<String, Integer> fieldMap = new HashMap<>();
-        for (i = 0; i < allFields.length - 1; i++)
-        {
-            fieldMap.put(allFields[i], new Integer(i));
-        }
-
-        m_JobDataPersister.setFieldMappings(m_AnalysisConfig.fields(),
-                m_AnalysisConfig.byFields(), m_AnalysisConfig.overFields(),
-                m_AnalysisConfig.partitionFields(), allFields);
-
-
-        // write header
-        m_LengthEncodedWriter.writeRecord(allFields);
 
         int recordsWritten = 0;
         int recordCount = 0;
 
-        long inputFieldCount = readJsonRecord(parser, record, fieldMap, gotFields);
+        int timeFieldIndex = m_InFieldIndexes.get(m_DataDescription.getTimeField());
+
+        long inputFieldCount = readJsonRecord(parser, input, m_InFieldIndexes, gotFields);
         while (inputFieldCount > 0)
         {
             inputFieldCount = Math.max(inputFieldCount - 1, 0); // time field doesn't count
+
+            for (InputOutputMap inOut : m_InputOutputMap)
+            {
+                String field = input[inOut.m_Input];
+                record[inOut.m_Output] = (field == null) ? "" : field;
+            }
 
             if (gotFields[timeFieldIndex])
             {
@@ -167,11 +153,8 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter
                     m_StatusReporter.reportMissingFields(missing);
                 }
 
-                Long epoch = transformTimeAndWrite(record, timeFieldIndex, inputFieldCount);
-                if (epoch != null)
-                {
-                    recordsWritten++;
-                }
+                applyTransformsAndWrite(transforms, input, record, inputFieldCount);
+
             }
             else
             {
@@ -181,7 +164,7 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter
 
             ++recordCount;
 
-            inputFieldCount = readJsonRecord(parser, record, fieldMap, gotFields);
+            inputFieldCount = readJsonRecord(parser, input, m_InFieldIndexes, gotFields);
         }
 
         m_Logger.debug(String.format("Transferred %d of %d Json records to autodetect.",
@@ -277,6 +260,18 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter
         return fieldCount;
     }
 
+    /**
+     * Don't enforce the check that all the fields are present in JSON docs.
+     * Always returns true
+     */
+    @Override
+    protected boolean checkForMissingFields(Collection<String> inputFields,
+												Map<String, Integer> inputFieldIndicies,
+												String [] header)
+    throws MissingFieldException
+    {
+    	return true;
+    }
 
     /**
      * Return the number of missing fields

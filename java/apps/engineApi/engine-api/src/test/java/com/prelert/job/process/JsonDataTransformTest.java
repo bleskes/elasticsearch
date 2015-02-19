@@ -44,6 +44,8 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
 import com.prelert.job.Detector;
+import com.prelert.job.TransformConfig;
+import com.prelert.job.TransformConfigs;
 import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.persistence.DummyJobDataPersister;
 import com.prelert.job.process.exceptions.MissingFieldException;
@@ -91,9 +93,9 @@ public class JsonDataTransformTest
                                                 {"1350824404", "JQA", "8", "flightcentre", ""},
                                                 {"1350824404", "DJA", "1200", "flightcentre", ""}};
 
-        // data is written in the order of the required fields
-        // then the time field and finally the control field
-        int [] fieldMap = new int [] {1, 2, 3, 0, 4};
+        // The first output field is time then fields are written
+        // alphabetical order then finally the control field
+        int [] fieldMap = new int [] {0, 1, 2, 3, 4};
 
         DataDescription dd = new DataDescription();
         dd.setFormat(DataFormat.JSON);
@@ -117,7 +119,7 @@ public class JsonDataTransformTest
         DummyStatusReporter statusReporter = new DummyStatusReporter(usageReporter);
         DummyJobDataPersister dataPersister = new DummyJobDataPersister();
 
-        pm.writeToJob(dd, ac, bis, bos, statusReporter,
+        pm.writeToJob(dd, ac, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter,
                  dataPersister, LOGGER);
         ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 
@@ -216,9 +218,9 @@ public class JsonDataTransformTest
                                                 {"1350824404", "DJA", "1200", "flightcentre", ""}};
 
 
-        // data fields are in alphabetical order followed by
-        // the time field and finally the control field
-        int [] fieldMap = new int [] {1, 2, 3, 0, 4};
+        // The first output field is time then fields are written
+        // alphabetical order then finally the control field
+        int [] fieldMap = new int [] {0, 1, 2, 3, 4};
 
         DataDescription dd = new DataDescription();
         dd.setFormat(DataFormat.JSON);
@@ -251,7 +253,7 @@ public class JsonDataTransformTest
         DummyStatusReporter statusReporter = new DummyStatusReporter(usageReporter);
         DummyJobDataPersister dp = new DummyJobDataPersister();
 
-        pm.writeToJob(dd, ac, bis, bos, statusReporter, dp, LOGGER);
+        pm.writeToJob(dd, ac, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter, dp, LOGGER);
         ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 
         Assert.assertEquals(usageReporter.getTotalBytesRead(), statusReporter.getBytesRead());
@@ -349,9 +351,9 @@ public class JsonDataTransformTest
 
 
 
-        // data fields are in alphabetical order followed by
-        // the time field and finally the control field
-        int [] fieldMap = new int [] {1, 2, 3, 0, 4};
+        // The first output field is time then fields are written
+        // alphabetical order then finally the control field
+        int [] fieldMap = new int [] {0, 1, 2, 3, 4};
 
         DataDescription dd = new DataDescription();
         dd.setFormat(DataFormat.JSON);
@@ -384,7 +386,7 @@ public class JsonDataTransformTest
         DummyStatusReporter statusReporter = new DummyStatusReporter(usageReporter);
         DummyJobDataPersister dp = new DummyJobDataPersister();
 
-        pm.writeToJob(dd, ac, bis, bos, statusReporter, dp, LOGGER);
+        pm.writeToJob(dd, ac, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter, dp, LOGGER);
         ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 
         Assert.assertEquals(usageReporter.getTotalBytesRead(),
@@ -484,9 +486,9 @@ public class JsonDataTransformTest
                                                 {"1350824404", "JQA", "8", "flightcentre", ""},
                                                 {"1350824404", "DJA", "1200", "flightcentre", ""}};
 
-        // data fields are in alphabetical order followed by
-        // the time field and finally the control field
-        int [] fieldMap = new int [] {1, 2, 3, 0, 4};
+        // The first output field is time then fields are written
+        // alphabetical order then finally the control field
+        int [] fieldMap = new int [] {0, 1, 2, 3, 4};
 
         DataDescription dd = new DataDescription();
         dd.setFormat(DataFormat.JSON);
@@ -519,7 +521,7 @@ public class JsonDataTransformTest
         DummyStatusReporter statusReporter = new DummyStatusReporter(usageReporter);
         DummyJobDataPersister dp = new DummyJobDataPersister();
 
-        pm.writeToJob(dd, ac, bis, bos, statusReporter, dp, LOGGER);
+        pm.writeToJob(dd, ac, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter, dp, LOGGER);
         ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 
         Assert.assertEquals(usageReporter.getTotalBytesRead(),
@@ -638,9 +640,9 @@ public class JsonDataTransformTest
                 {"1350824404", "DJA", "1200", "flightcentre", ""}};
 
 
-        // data fields are in alphabetical order followed by
-        // the time field and finally the control field
-        int [] fieldMap = new int [] {1, 2, 3, 0, 4};
+        // The first output field is time then fields are written
+        // alphabetical order then finally the control field
+        int [] fieldMap = new int [] {0, 1, 2, 3, 4};
 
         DataDescription dateFormatDD = new DataDescription();
         dateFormatDD.setFormat(DataFormat.JSON);
@@ -691,7 +693,7 @@ public class JsonDataTransformTest
 
             DataDescription dd = dds[count++];
 
-            pm.writeToJob(dd, ac, bis, bos, statusReporter, dp, LOGGER);
+            pm.writeToJob(dd, ac, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter, dp, LOGGER);
             ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 
             Assert.assertEquals(usageReporter.getTotalBytesRead(),
@@ -793,9 +795,9 @@ public class JsonDataTransformTest
                                                 {"1350824402", "my.test.metric3", "12345.678", "boooo", ""},
                                                 {"1350824402", "my.test.metric4", "12345.678", "", ""}};
 
-        // data fields are in alphabetical order followed by
-        // the time field and finally the control field
-        int [] fieldMap = new int [] {1, 3, 2, 0, 4};
+        // The first output field is time then fields are written
+        // alphabetical order then finally the control field
+        int [] fieldMap = new int [] {0, 1, 3, 2, 4};
 
         DataDescription dd = new DataDescription();
         dd.setFormat(DataFormat.JSON);
@@ -842,7 +844,7 @@ public class JsonDataTransformTest
             DummyStatusReporter statusReporter = new DummyStatusReporter(usageReporter);
             DummyJobDataPersister dp = new DummyJobDataPersister();
 
-            pm.writeToJob(dd, ac, bis, bos, statusReporter, dp, LOGGER);
+            pm.writeToJob(dd, ac, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter, dp, LOGGER);
             ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 
             Assert.assertEquals(usageReporter.getTotalBytesRead(),
@@ -930,9 +932,9 @@ public class JsonDataTransformTest
                                                 {"1350824402", "my.test.metric4", "12345.678", "", "", ""}};
 
 
-        // data fields are in alphabetical order followed by
-        // the time field and finally the control field
-        int [] fieldMap = new int [] {1, 4, 3, 2, 0, 5};
+        // The first output field is time then fields are written
+        // alphabetical order then finally the control field
+        int [] fieldMap = new int [] {0, 1, 4, 3, 2, 5};
 
         DataDescription dd = new DataDescription();
         dd.setFormat(DataFormat.JSON);
@@ -971,7 +973,7 @@ public class JsonDataTransformTest
         DummyStatusReporter statusReporter = new DummyStatusReporter(usageReporter);
         DummyJobDataPersister dp = new DummyJobDataPersister();
 
-        pm.writeToJob(dd, ac, bis, bos, statusReporter, dp, LOGGER);
+        pm.writeToJob(dd, ac, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter, dp, LOGGER);
         ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 
         Assert.assertEquals(usageReporter.getTotalBytesRead(),
@@ -1069,9 +1071,9 @@ public class JsonDataTransformTest
                                                 {"1350824402", "my.test.metric3", "12345.678", "boooo", ""},
                                                 {"1350824402", "my.test.metric4", "12345.678", "", ""}};
 
-        // data is written in the order of the required fields
-        // then the time field and finally the control field
-        int [] fieldMap = new int [] {1, 3, 2, 0, 4};
+        // The first output field is time then fields are written
+        // alphabetical order then finally the control field
+        int [] fieldMap = new int [] {0, 1, 3, 2, 4};
 
         DataDescription dd = new DataDescription();
         dd.setFormat(DataFormat.JSON);
@@ -1121,7 +1123,7 @@ public class JsonDataTransformTest
             DummyStatusReporter statusReporter = new DummyStatusReporter(usageReporter);
             DummyJobDataPersister dp = new DummyJobDataPersister();
 
-            pm.writeToJob(dd, ac, bis, bos, statusReporter, dp, LOGGER);
+            pm.writeToJob(dd, ac, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter, dp, LOGGER);
             ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 
             Assert.assertEquals(usageReporter.getTotalBytesRead(),

@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -42,6 +42,7 @@ import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.persistence.JobDataPersister;
 import com.prelert.job.status.StatusReporter;
+import com.prelert.job.TransformConfigs;
 
 @RunWith(MockitoJUnitRunner.class)
 public class DataToProcessWriterFactoryTest
@@ -55,7 +56,7 @@ public class DataToProcessWriterFactoryTest
 
         DataToProcessWriterFactory factory = new DataToProcessWriterFactory();
         DataToProcessWriter writer = factory.create(mock(OutputStream.class), dataDescription,
-                mock(AnalysisConfig.class), mock(StatusReporter.class),
+                mock(AnalysisConfig.class), mock(TransformConfigs.class), mock(StatusReporter.class),
                 mock(JobDataPersister.class), mock(Logger.class));
 
         assertTrue(writer instanceof JsonDataToProcessWriter);
@@ -69,7 +70,7 @@ public class DataToProcessWriterFactoryTest
 
         DataToProcessWriterFactory factory = new DataToProcessWriterFactory();
         DataToProcessWriter writer = factory.create(mock(OutputStream.class), dataDescription,
-                mock(AnalysisConfig.class), mock(StatusReporter.class),
+                mock(AnalysisConfig.class), mock(TransformConfigs.class), mock(StatusReporter.class),
                 mock(JobDataPersister.class), mock(Logger.class));
 
         assertTrue(writer instanceof CsvDataToProcessWriter);

@@ -122,9 +122,12 @@ public abstract class StatusReporter
 	}
 
 	/**
-	 * Increment the number of records written by 1.
+	 * Increment the number of records written by 1 and increment
+	 * the total number of fields read.
 	 *
-	 * @param inputFieldCount Number of fields in the record
+	 * @param inputFieldCount Number of fields in the record.
+	 * Note this is not the number of processed fields (by field etc)
+	 * but the actual number of fields in the record
 	 *
 	 * @throws HighProportionOfBadTimestampsException
 	 * @throws OutOfOrderRecordsException

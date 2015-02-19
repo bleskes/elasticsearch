@@ -40,7 +40,7 @@ import com.google.common.net.InternetDomainName;
  * aren't recognised top level domains such as those ending '.local'.
  * See the unit tests for clear examples
  */
-public class HighestRegisteredDomain
+public class HighestRegisteredDomain extends Transform
 {
 	/**
 	 * Immutable class for the domain split results
@@ -65,6 +65,11 @@ public class HighestRegisteredDomain
 		{
 			return m_HighestRegisteredDomain;
 		}
+	}
+
+	public HighestRegisteredDomain(int[] inputIndicies, int[] outputIndicies)
+	{
+		super(inputIndicies, outputIndicies);
 	}
 
 	/**
@@ -133,4 +138,16 @@ public class HighestRegisteredDomain
 
 		return new DomainSplit(subDomain.toString(), highestRegistered);
 	}
+
+	@Override
+	public boolean transform(String[] inputRecord,
+							String[] outputRecord)
+	throws TransformException
+	{
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+
+
 }

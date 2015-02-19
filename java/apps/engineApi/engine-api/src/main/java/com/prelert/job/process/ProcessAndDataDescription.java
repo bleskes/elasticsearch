@@ -36,6 +36,7 @@ import org.apache.log4j.Logger;
 
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
+import com.prelert.job.TransformConfigs;
 import com.prelert.job.status.StatusReporter;
 
 /**
@@ -65,6 +66,8 @@ public class ProcessAndDataDescription
 
 	private AnalysisConfig m_AnalysisConfig;
 
+	private TransformConfigs m_Transforms;
+
 	private List<File> m_FilesToDelete;
 
 	/**
@@ -86,6 +89,7 @@ public class ProcessAndDataDescription
 	public ProcessAndDataDescription(Process process, String jobId,
 			DataDescription dd,
 			long timeout, AnalysisConfig analysisConfig,
+			TransformConfigs transforms,
 			Logger logger, StatusReporter reporter,
 			ResultsReader outputParser,
 			List<File> filesToDelete)
@@ -101,6 +105,8 @@ public class ProcessAndDataDescription
 
 		m_AnalysisConfig = analysisConfig;
 		m_InterestingFields = analysisConfig.analysisFields();
+
+		m_Transforms = transforms;
 
 		m_StatusReporter = reporter;
 		m_JobLogger = logger;
@@ -163,14 +169,15 @@ public class ProcessAndDataDescription
 		return m_ErrorReader;
 	}
 
-
-
-
 	public AnalysisConfig getAnalysisConfig()
 	{
 		return m_AnalysisConfig;
 	}
 
+	public TransformConfigs getTransforms()
+	{
+		return m_Transforms;
+	}
 
 
 	/**

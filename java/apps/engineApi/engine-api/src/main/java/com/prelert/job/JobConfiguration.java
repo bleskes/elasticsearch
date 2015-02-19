@@ -29,6 +29,7 @@ package com.prelert.job;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import com.prelert.rs.data.ErrorCode;
@@ -60,6 +61,7 @@ public class JobConfiguration
 
 	private AnalysisConfig m_AnalysisConfig;
 	private AnalysisLimits m_AnalysisLimits;
+	private List<TransformConfig> m_Transforms;
 	private DataDescription m_DataDescription;
 	private String m_ReferenceJobId;
 	private Long m_Timeout;
@@ -180,6 +182,16 @@ public class JobConfiguration
 		m_Timeout = timeout;
 	}
 
+	public List<TransformConfig> getTransforms()
+	{
+		return m_Transforms;
+	}
+
+	public void setTransforms(List<TransformConfig> transforms)
+	{
+		m_Transforms = transforms;
+	}
+
 	/**
 	 * If not set the input data is assumed to be csv with a '_time' field
 	 * in epoch format.
@@ -247,6 +259,7 @@ public class JobConfiguration
 	 * <li>Verify {@link AnalysisConfig#verify() AnalysisConfig}</li>
 	 * <li>Verify {@link AnalysisLimits#verify() AnalysisLimits}</li>
 	 * <li>Verify {@link DataDescription#verify() DataDescription}</li>
+	 * <li>Verify {@link TransformConfigs#verify() Transforms}</li>
 	 * <li>Check timeout is a +ve number</li>
 	 * <li>The job ID cannot contain any upper case characters or any
 	 * characters in {@link #PROHIBITED_JOB_ID_CHARACTERS}</li>
@@ -279,6 +292,11 @@ public class JobConfiguration
 		if (m_DataDescription != null)
 		{
 			m_DataDescription.verify();
+		}
+
+		if (m_Transforms != null)
+		{
+			TransformConfigs.verify(m_Transforms);
 		}
 
 		if (m_Timeout != null && m_Timeout < 0)

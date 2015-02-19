@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -25,13 +25,17 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.process.dateparsing;
+package com.prelert.transforms.date;
 
-public class CannotParseTimestampException extends Exception {
+import com.prelert.transforms.TransformException;
 
-    private static final long serialVersionUID = 1L;
+public class ParseTimestampException extends TransformException
+{
+	private static final long serialVersionUID = -184672266466521404L;
 
-    public CannotParseTimestampException(String message, Throwable cause) {
-        super(message, cause);
-    }
+	public ParseTimestampException(String message)
+	{
+		super(message);
+	}
+
 }
