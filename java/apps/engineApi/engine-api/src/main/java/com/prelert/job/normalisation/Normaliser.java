@@ -326,6 +326,7 @@ public class Normaliser
             bucket.resetBigNormalisedUpdateFlag();
 
             double maxNormalizedProbability = 0.0;
+            boolean anyRecordHadBigUpdate = false;
             for (AnomalyRecord record : bucket.getRecords())
             {
                 if (!scoresIter.hasNext())
@@ -334,17 +335,24 @@ public class Normaliser
                     m_Logger.error(msg);
                     throw new NativeProcessRunException(msg, ErrorCode.NATIVE_PROCESS_ERROR);
                 }
+                double preNormalizedProbability = record.getNormalizedProbability();
                 record.resetBigNormalisedUpdateFlag();
 
                 NormalisedResult normalised = scoresIter.next();
 
                 record.setNormalizedProbability(normalised.getNormalizedProbability());
+                anyRecordHadBigUpdate |= record.hadBigNormalisedUpdate();
 
-                maxNormalizedProbability = Math.max(maxNormalizedProbability,
-                        normalised.getNormalizedProbability());
+                maxNormalizedProbability = (record.hadBigNormalisedUpdate()) ?
+                        Math.max(maxNormalizedProbability, normalised.getNormalizedProbability())
+                        : Math.max(maxNormalizedProbability, preNormalizedProbability);
             }
 
             bucket.setMaxNormalizedProbability(maxNormalizedProbability);
+            if (anyRecordHadBigUpdate)
+            {
+                bucket.raiseBigNormalisedUpdateFlag();
+            }
         }
 
         return buckets;
