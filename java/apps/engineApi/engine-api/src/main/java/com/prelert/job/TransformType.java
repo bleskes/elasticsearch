@@ -27,7 +27,9 @@
 
 package com.prelert.job;
 
+import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.List;
 
 import com.prelert.rs.data.ErrorCode;
 
@@ -38,8 +40,8 @@ import com.prelert.rs.data.ErrorCode;
  */
 public enum TransformType
 {
-	DOMAIN_LOOKUP(Names.DOMAIN_LOOKUP_NAME, 1),
-	CONCAT(Names.CONCAT, -1);
+	DOMAIN_LOOKUP(Names.DOMAIN_LOOKUP_NAME, 1, Arrays.asList("subDomain", "hrd")),
+	CONCAT(Names.CONCAT, -1, Arrays.asList("concat"));
 
 	/**
 	 * Enums cannot use static fields in their constructors as the
@@ -56,11 +58,13 @@ public enum TransformType
 
 	private int m_Arity;
 	private String m_PrettyName;
+	private List<String> m_DefaultOutputNames;
 
-	private TransformType(String prettyName, int arity)
+	private TransformType(String prettyName, int arity, List<String> defaultOutputNames)
 	{
 		m_Arity = arity;
 		m_PrettyName = prettyName;
+		m_DefaultOutputNames = defaultOutputNames;
 	}
 
 	/**
@@ -75,6 +79,11 @@ public enum TransformType
 	public String prettyName()
 	{
 		return m_PrettyName;
+	}
+
+	public List<String> defaultOutputNames()
+	{
+		return m_DefaultOutputNames;
 	}
 
 	public boolean verify(TransformConfig tr) throws TransformConfigurationException
@@ -133,7 +142,6 @@ public enum TransformType
 		throw new TransformConfigurationException(
 								"Unknown TransformType '" + prettyName + "'",
 								ErrorCode.UNKNOWN_TRANSFORM);
-
 	}
 
 }

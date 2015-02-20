@@ -60,9 +60,19 @@ public class TransformFactory
 	throws TransformConfigurationException
 	{
 		int input[] = new int [transformConfig.getInputs().size()];
-		int output[] = new int [transformConfig.getOutputs().size()];
 
 		fillIndexArray(transformConfig.getInputs(), inputIndiciesMap, input, logger);
+
+		// some default outputs may not be in the analysis
+		int count = 0;
+		for (String field : transformConfig.getOutputs())
+		{
+			if (outputIndiciesMap.containsKey(field))
+			{
+				count++;
+			}
+		}
+		int output[] = new int [count];
 		fillIndexArray(transformConfig.getOutputs(), outputIndiciesMap, output, logger);
 
 		TransformType type = transformConfig.type();

@@ -118,17 +118,11 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
 
     	Collection<String> inputFields = inputFields();
     	m_InFieldIndexes = inputFieldIndicies(header, inputFields);
-
-
-
     	checkForMissingFields(inputFields, m_InFieldIndexes, header);
 
     	m_OutFieldIndexes = outputFieldIndicies();
-
     	m_InputOutputMap = createInputOutputMap();
-
         m_StatusReporter.setAnalysedFieldsPerRecord(m_AnalysisConfig.analysisFields().size());
-
 
         m_JobDataPersister.setFieldMappings(m_AnalysisConfig.fields(),
                 m_AnalysisConfig.byFields(), m_AnalysisConfig.overFields(),
@@ -264,7 +258,7 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
      *
      * @return
      */
-    protected Collection<String> inputFields()
+    public final Collection<String> inputFields()
     {
     	Set<String> requiredFields = new HashSet<>(m_AnalysisConfig.analysisFields());
 
@@ -282,7 +276,7 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
      * @param inputFields The required input fields
      * @return
      */
-    protected Map<String, Integer> inputFieldIndicies(String[] header, Collection<String> inputFields)
+    protected final Map<String, Integer> inputFieldIndicies(String[] header, Collection<String> inputFields)
     {
         List<String> headerList = Arrays.asList(header);  // TODO header could be empty
 
@@ -301,6 +295,11 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
         return fieldIndexes;
     }
 
+    public Map<String, Integer> getInputFieldIndicies()
+    {
+    	return m_InFieldIndexes;
+    }
+
     /**
      * Create indicies of the output fields.
      * This is the time field and all the fields configured for analysis
@@ -311,7 +310,7 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
      * @param inputFields
      * @return
      */
-    protected Map<String, Integer> outputFieldIndicies()
+    protected final Map<String, Integer> outputFieldIndicies()
     {
     	Map<String, Integer> fieldIndexes = new HashMap<String, Integer>();
 
@@ -333,12 +332,17 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
     	return fieldIndexes;
     }
 
+    public Map<String, Integer> getOutputFieldIndicies()
+    {
+    	return m_OutFieldIndexes;
+    }
+
     /**
      * For inputs that aren't transformed create a map of input index
-     * to output index
+     * to output index. This does not include the time or control fields
      * @return
      */
-    protected List<InputOutputMap> createInputOutputMap()
+    protected final List<InputOutputMap> createInputOutputMap()
     {
     	// where no transform
     	List<InputOutputMap> inputOutputMap = new ArrayList<>();
@@ -356,6 +360,11 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
     	}
 
     	return inputOutputMap;
+    }
+
+    public List<InputOutputMap> getInputOutputMap()
+    {
+    	return m_InputOutputMap;
     }
 
 

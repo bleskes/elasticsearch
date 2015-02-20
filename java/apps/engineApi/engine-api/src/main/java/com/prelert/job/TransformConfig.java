@@ -27,6 +27,7 @@
 
 package com.prelert.job;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -72,6 +73,18 @@ public class TransformConfig
 
 	public List<String> getOutputs()
 	{
+		if (m_Outputs == null || m_Outputs.size() == 0)
+		{
+			try
+			{
+				m_Outputs = type().defaultOutputNames();
+			}
+			catch (TransformConfigurationException e)
+			{
+				m_Outputs = Collections.emptyList();
+			}
+		}
+
 		return m_Outputs;
 	}
 

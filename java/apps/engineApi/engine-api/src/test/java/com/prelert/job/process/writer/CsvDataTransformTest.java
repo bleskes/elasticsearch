@@ -57,9 +57,9 @@ import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.job.usage.DummyUsageReporter;
 
-public class CsvDataTransfromTest
+public class CsvDataTransformTest
 {
-    private static Logger LOGGER = Logger.getLogger(CsvDataTransfromTest.class);
+    private static Logger LOGGER = Logger.getLogger(CsvDataTransformTest.class);
 
     /**
      * Test transforming csv data with time in epoch format
