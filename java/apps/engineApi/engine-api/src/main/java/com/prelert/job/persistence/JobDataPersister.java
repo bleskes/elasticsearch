@@ -27,46 +27,103 @@
 
 package com.prelert.job.persistence;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Persist the records sent the the API.
- * Records are mapped by the by, over, partition and metric fields. 
+ * Only the analysis fields written, records are mapped by the
+ * by, over, partition and metric fields.
  */
-public interface JobDataPersister 
+public abstract class JobDataPersister
 {
+    public static final String FIELDS = "fields";
+    public static final String BY_FIELDS = "byFields";
+    public static final String OVER_FIELDS = "overFields";
+    public static final String PARTITION_FIELDS = "partitionFields";
+
+
+    protected String [] m_FieldNames;
+    protected int [] m_FieldMappings;
+    protected int [] m_ByFieldMappings;
+    protected int [] m_OverFieldMappings;
+    protected int [] m_PartitionFieldMappings;
+
+
+
 	/**
 	 * Find each of the lists of requried fields (by, over, etc)
 	 * in the header and save the indexes so the field mappings can
 	 * be used in calls to {@linkplain #persistRecord(long, String[])}
+	 *
 	 * @param fields
 	 * @param byFields
 	 * @param overFields
 	 * @param partitionFields
-	 * @param header
+	 * @param fieldMap Field -> index map for the record passed in
+	 * {@link #persistRecord())}
 	 */
 	public void setFieldMappings(List<String> fields,
 			List<String> byFields, List<String> overFields,
-			List<String> partitionFields, String[] header);
+			List<String> partitionFields, Map<String, Integer> fieldMap)
+    {
+        m_FieldNames = new String [fields.size()];
+        m_FieldNames = fields.<String>toArray(m_FieldNames);
+        m_FieldMappings = new int [fields.size()];
+        m_ByFieldMappings = new int [byFields.size()];
+        m_OverFieldMappings = new int [overFields.size()];
+        m_PartitionFieldMappings = new int [partitionFields.size()];
+
+        List<List<String>> allFieldTypes = Arrays.asList(fields, byFields,
+                overFields, partitionFields);
+
+        int [][] allFieldMappings = new int [][] {m_FieldMappings, m_ByFieldMappings,
+                m_OverFieldMappings, m_PartitionFieldMappings};
+
+        int i = 0;
+        for (List<String> fieldType : allFieldTypes)
+        {
+            int j = 0;
+            for (String f : fieldType)
+            {
+                Integer index = fieldMap.get(f);
+                if (index != null)
+                {
+                    allFieldMappings[i][j] = index;
+                }
+                else
+                {
+                    // not found in header - so resize and delete from the array
+                    int [] tmp = new int [allFieldMappings[i].length -1];
+                    System.arraycopy(allFieldMappings[i], 0, tmp, 0, j);
+                    System.arraycopy(allFieldMappings[i], j+1, tmp, j, tmp.length - j);
+                }
+
+                j++;
+            }
+            i++;
+        }
+    }
 
 	/**
-	 * Save the record as per the field mappings 
+	 * Save the record as per the field mappings
 	 * set up in {@linkplain #setFieldMappings(List, List, List, List, String[])}
-	 * 
-	 * @param epoch 
+	 *
+	 * @param epoch
 	 * @param record
 	 */
-	public void persistRecord(long epoch, String[] record);
-	
+	public abstract void persistRecord(long epoch, String[] record);
+
 	/**
 	 * Delete all the persisted records
-	 * 
+	 *
 	 * @return
 	 */
-	public boolean deleteData();
-	
+	public abstract boolean deleteData();
+
 	/**
 	 * Flush any records that may not have been persisted yet
 	 */
-	public void flushRecords();
+	public abstract void flushRecords();
 }

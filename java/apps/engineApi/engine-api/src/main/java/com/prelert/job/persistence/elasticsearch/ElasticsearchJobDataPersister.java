@@ -29,8 +29,6 @@ package com.prelert.job.persistence.elasticsearch;
 
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import org.apache.log4j.Logger;
@@ -44,15 +42,14 @@ import org.elasticsearch.common.xcontent.XContentFactory;
 
 import com.prelert.job.persistence.JobDataPersister;
 
-
-public class ElasticsearchJobDataPersister implements JobDataPersister
+/**
+ * Write the data sent to the API (analysis fields only) to Elasticsearch
+ * @author dkyle
+ *
+ */
+public class ElasticsearchJobDataPersister extends JobDataPersister
 {
     public static final String PERSISTED_RECORD_TYPE = "saved-data";
-
-    public static final String FIELDS = "fields";
-    public static final String BY_FIELDS = "byFields";
-    public static final String OVER_FIELDS = "overFields";
-    public static final String PARTITION_FIELDS = "partitionFields";
 
     public static final String TYPE = "saved-data";
 
@@ -61,11 +58,7 @@ public class ElasticsearchJobDataPersister implements JobDataPersister
     private Client m_Client;
     private String m_IndexName;
 
-    private String [] m_FieldNames;
-    private int [] m_FieldMappings;
-    private int [] m_ByFieldMappings;
-    private int [] m_OverFieldMappings;
-    private int [] m_PartitionFieldMappings;
+
 
     private String [][] m_BufferedRecords;
     private long [] m_Epochs;
@@ -81,51 +74,6 @@ public class ElasticsearchJobDataPersister implements JobDataPersister
 
         m_BufferedRecords = new String [DOC_BUFFER_SIZE][];
         m_Epochs = new long [DOC_BUFFER_SIZE];
-    }
-
-    @Override
-    public void setFieldMappings(List<String> fields,
-            List<String> byFields, List<String> overFields,
-            List<String> partitionFields, String [] header)
-    {
-        List<String> headerList = Arrays.asList(header);
-
-        m_FieldNames = new String [fields.size()];
-        m_FieldNames = fields.<String>toArray(m_FieldNames);
-        m_FieldMappings = new int [fields.size()];
-        m_ByFieldMappings = new int [byFields.size()];
-        m_OverFieldMappings = new int [overFields.size()];
-        m_PartitionFieldMappings = new int [partitionFields.size()];
-
-        List<List<String>> allFieldTypes = Arrays.asList(fields, byFields,
-                overFields, partitionFields);
-
-        int [][] allFieldMappings = new int [][] {m_FieldMappings, m_ByFieldMappings,
-                m_OverFieldMappings, m_PartitionFieldMappings};
-
-        int i = 0;
-        for (List<String> fieldType : allFieldTypes)
-        {
-            int j = 0;
-            for (String f : fieldType)
-            {
-                int index = headerList.indexOf(f);
-                if (index >= 0)
-                {
-                    allFieldMappings[i][j] = index;
-                }
-                else
-                {
-                    // not found in header
-                    int [] tmp = new int [allFieldMappings[i].length -1];
-                    System.arraycopy(allFieldMappings[i], 0, tmp, 0, j);
-                    System.arraycopy(allFieldMappings[i], j+1, tmp, j, tmp.length - j);
-                }
-
-                j++;
-            }
-            i++;
-        }
     }
 
     /**

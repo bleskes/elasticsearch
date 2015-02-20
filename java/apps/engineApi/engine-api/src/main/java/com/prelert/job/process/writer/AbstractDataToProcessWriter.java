@@ -129,11 +129,11 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
 
         m_StatusReporter.setAnalysedFieldsPerRecord(m_AnalysisConfig.analysisFields().size());
 
-        /* TODO
+
         m_JobDataPersister.setFieldMappings(m_AnalysisConfig.fields(),
                 m_AnalysisConfig.byFields(), m_AnalysisConfig.overFields(),
-                m_AnalysisConfig.partitionFields(), record);
-        */
+                m_AnalysisConfig.partitionFields(), m_InFieldIndexes);
+
 
         boolean isDateFromatString = m_DataDescription.isTransformTime()
         									&& !m_DataDescription.isEpochMs();

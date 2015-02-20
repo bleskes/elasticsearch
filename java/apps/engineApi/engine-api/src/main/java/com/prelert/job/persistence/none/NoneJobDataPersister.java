@@ -27,33 +27,38 @@
 package com.prelert.job.persistence.none;
 
 import java.util.List;
+import java.util.Map;
 
 import com.prelert.job.persistence.JobDataPersister;
 
 /**
  * A 'do nothing' job data persister
  */
-public class NoneJobDataPersister implements JobDataPersister 
+public class NoneJobDataPersister extends JobDataPersister
 {
+	/**
+	 * No point setting up the field mappings here
+	 */
 	@Override
-	public void setFieldMappings(List<String> fields, List<String> byFields,
-			List<String> overFields, List<String> partitionFields,
-			String[] header) 
+	public void setFieldMappings(List<String> fields,
+			List<String> byFields, List<String> overFields,
+			List<String> partitionFields, Map<String, Integer> fieldMap)
+    {
+
+    }
+
+	@Override
+	public void persistRecord(long epoch, String[] record)
 	{
 	}
 
 	@Override
-	public void persistRecord(long epoch, String[] record) 
+	public void flushRecords()
 	{
 	}
-	
+
 	@Override
-	public void flushRecords() 
-	{
-	}
-	
-	@Override
-	public boolean deleteData() 
+	public boolean deleteData()
 	{
 		return false;
 	}
