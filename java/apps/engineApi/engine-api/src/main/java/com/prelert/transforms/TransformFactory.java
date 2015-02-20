@@ -36,20 +36,34 @@ import com.prelert.job.TransformConfig;
 import com.prelert.job.TransformConfigurationException;
 import com.prelert.job.TransformType;
 
-
+/**
+ * Create transforms from the configuration object.
+ * Transforms need to know where to read strings from and where
+ * write the output to hence input & output maps required by the
+ * create method.
+ */
 public class TransformFactory
 {
+	/**
+	 *
+	 * @param transformConfig
+	 * @param inputIndiciesMap
+	 * @param outputIndiciesMap
+	 * @param logger
+	 * @return
+	 * @throws TransformConfigurationException
+	 */
 	public static Transform create(TransformConfig transformConfig,
-			Map<String, Integer> inputMap,
-			Map<String, Integer> outputIndicies,
+			Map<String, Integer> inputIndiciesMap,
+			Map<String, Integer> outputIndiciesMap,
 			Logger logger)
 	throws TransformConfigurationException
 	{
 		int input[] = new int [transformConfig.getInputs().size()];
 		int output[] = new int [transformConfig.getOutputs().size()];
 
-		fillIndexArray(transformConfig.getInputs(), inputMap, input, logger);
-		fillIndexArray(transformConfig.getOutputs(), outputIndicies, output, logger);
+		fillIndexArray(transformConfig.getInputs(), inputIndiciesMap, input, logger);
+		fillIndexArray(transformConfig.getOutputs(), outputIndiciesMap, output, logger);
 
 		TransformType type = transformConfig.type();
 
@@ -73,6 +87,15 @@ public class TransformFactory
 		}
 	}
 
+	/**
+	 * For each <code>field</code> fill the <code>indexArray</code>
+	 * with the index from the <code>indicies</code> map.
+	 *
+	 * @param fields
+	 * @param indicies
+	 * @param indexArray
+	 * @param logger
+	 */
 	private static void fillIndexArray(List<String> fields, Map<String, Integer> indicies,
 										int [] indexArray, Logger logger)
 	{

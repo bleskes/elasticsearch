@@ -27,6 +27,14 @@
 
 package com.prelert.transforms;
 
+
+/**
+ * Abstract transform class.
+ * Instances are created with maps telling it which field(s)
+ * to read from in the input array and where to write to in
+ * the output array. Input and output arrays are passed to the
+ * {@link #transform(String[], String[]) function
+ */
 public abstract class Transform
 {
 	protected final int [] m_InputIndicies;
@@ -34,8 +42,9 @@ public abstract class Transform
 
 	/**
 	 *
-	 * @param inputIndicies Input indexes into the <code>record</code>
-	 * @param outputIndicies Transform results go into these indexes
+	 * @param inputIndicies Indicies into the input record
+	 * @param outputIndicies Indicies into the output record.
+	 * Transform results go into these indicies
 	 */
 	public Transform(int [] inputIndicies, int [] outputIndicies)
 	{

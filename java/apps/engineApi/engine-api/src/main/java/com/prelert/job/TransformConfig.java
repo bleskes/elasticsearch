@@ -29,6 +29,9 @@ package com.prelert.job;
 
 import java.util.List;
 
+/**
+ * Represents an API data transform
+ */
 public class TransformConfig
 {
 	// Serialisation strings
@@ -135,6 +138,7 @@ public class TransformConfig
 		}
 
 		TransformConfig other = (TransformConfig) obj;
+
 		if (m_Inputs == null)
 		{
 			if (other.m_Inputs != null)

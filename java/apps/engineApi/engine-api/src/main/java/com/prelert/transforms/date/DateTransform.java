@@ -29,6 +29,10 @@ package com.prelert.transforms.date;
 
 import com.prelert.transforms.Transform;
 
+/**
+ * Abstract class introduces the {@link #epoch()} method for
+ * date transforms
+ */
 public abstract class DateTransform extends Transform
 {
 	public DateTransform(int[] inputIndicies, int[] outputIndicies)

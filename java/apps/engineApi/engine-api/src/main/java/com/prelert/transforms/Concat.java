@@ -44,6 +44,11 @@ public class Concat extends Transform
 	public boolean transform(String[] inputRecord, String[] outputRecord)
 	throws TransformException
 	{
+		if (m_OutputIndicies.length == 0)
+		{
+			return true;
+		}
+
 		StringBuilder builder = new StringBuilder();
 
 		for (int i=0; i<m_InputIndicies.length; i++)

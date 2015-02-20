@@ -34,8 +34,8 @@ import java.text.SimpleDateFormat;
 import com.prelert.transforms.TransformException;
 
 /**
- * A transformer that attempts to parse a String timestamp
- * as a data according to a timeFormat. It converts that
+ * A transform that attempts to parse a String timestamp
+ * according to a timeFormat. It converts that
  * to a long that represents the equivalent epoch.
  */
 public class DateFormatTransform extends DateTransform

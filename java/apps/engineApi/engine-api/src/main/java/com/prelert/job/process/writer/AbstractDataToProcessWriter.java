@@ -98,77 +98,19 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
     }
 
 
-    protected boolean applyTransformsAndWrite(List<Transform> transforms,
-    									String [] input, String [] output,
-    									long numberOfFieldsRead)
-    throws HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException
-    {
-
-    	try
-    	{
-			m_DateTransform.transform(input, output);
-		}
-    	catch (TransformException e)
-    	{
-            m_StatusReporter.reportDateParseError(m_InFieldIndexes.size());
-            m_Logger.error(e.getMessage());
-    		return false;
-		}
-
-    	long epoch = m_DateTransform.epoch();
-        if (epoch < m_LatestEpoch - m_AnalysisConfig.getLatency())
-        {
-            // out of order
-            m_StatusReporter.reportOutOfOrderRecord(m_InFieldIndexes.size());
-            return false;
-        }
-        m_LatestEpoch = Math.max(m_LatestEpoch, epoch);
-
-
-        for (Transform tr : transforms)
-        {
-        	try
-        	{
-        		tr.transform(input, output);
-        	}
-        	catch (TransformException e)
-        	{
-        		m_Logger.warn("e");
-        	}
-        }
-
-        write(output, epoch, numberOfFieldsRead);
-
-        return true;
-    }
-
-    protected void write(String [] record, long epoch, long numberOfFieldsRead)
-    throws HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException
-    {
-        m_LengthEncodedWriter.writeRecord(record);
-        m_JobDataPersister.persistRecord(epoch, record);
-        m_StatusReporter.reportRecordWritten(numberOfFieldsRead);
-    }
-
-
-    protected void writeHeader() throws IOException
-    {
-        //  header is all the analysis input fields + the time field + control field
-        int numFields = m_OutFieldIndexes.size();
-        String[] record = new String[numFields];
-
-        Iterator<Map.Entry<String, Integer>> itr = m_OutFieldIndexes.entrySet().iterator();
-        while (itr.hasNext())
-        {
-        	Map.Entry<String, Integer> entry = itr.next();
-        	record[entry.getValue()] = entry.getKey();
-        }
-
-        // Write the header
-        m_LengthEncodedWriter.writeRecord(record);
-    }
-
-
+    /**
+     * Create the transforms. This must be called before any of the write
+     * functions even if no transforms are configured as it creates the
+     * date transform and sets up the field mappings.<br>
+     *
+     * Finds the required input indicies in the <code>header</code>
+     * and sets the mappings for the transforms so they know where
+     * to read their inputs.
+     *
+     * @param header
+     * @return
+     * @throws MissingFieldException
+     */
     public List<Transform> buildTransforms(String [] header)
     throws MissingFieldException
     {
@@ -224,6 +166,97 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
 
     	return transforms;
     }
+
+    /**
+     * Transform the input data and write to length encoded writer.<br>
+     *
+     * Fields that aren't transformed i.e. those in m_InputOutputMap must be
+     * copied from input to output before this function is called.
+     *
+     * @param transforms See {@linkplain #buildTransforms(String[])}
+     * @param input The record the transforms should read their input from. The contents should
+     * align with the header paramter passed to {@linkplain #buildTransforms(String[])}
+     * @param output The record that will be written to the length encoded writer.
+     * This should be the same size as the number of output (analysis fields) i.e.
+     * the size of the map returned by {@linkplain #outputFieldIndicies()}
+     * @param numberOfFieldsRead The total number read not just those included in the analysis
+     *
+     * @return
+     * @throws HighProportionOfBadTimestampsException
+     * @throws OutOfOrderRecordsException
+     * @throws IOException
+     */
+    protected boolean applyTransformsAndWrite(List<Transform> transforms,
+    									String [] input, String [] output,
+    									long numberOfFieldsRead)
+    throws HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException
+    {
+
+    	try
+    	{
+			m_DateTransform.transform(input, output);
+		}
+    	catch (TransformException e)
+    	{
+            m_StatusReporter.reportDateParseError(m_InFieldIndexes.size());
+            m_Logger.error(e.getMessage());
+    		return false;
+		}
+
+    	long epoch = m_DateTransform.epoch();
+        if (epoch < m_LatestEpoch - m_AnalysisConfig.getLatency())
+        {
+            // out of order
+            m_StatusReporter.reportOutOfOrderRecord(m_InFieldIndexes.size());
+            return false;
+        }
+        m_LatestEpoch = Math.max(m_LatestEpoch, epoch);
+
+
+        for (Transform tr : transforms)
+        {
+        	try
+        	{
+        		tr.transform(input, output);
+        	}
+        	catch (TransformException e)
+        	{
+        		m_Logger.warn("e");
+        	}
+        }
+
+        m_LengthEncodedWriter.writeRecord(output);
+        m_JobDataPersister.persistRecord(epoch, output);
+        m_StatusReporter.reportRecordWritten(numberOfFieldsRead);
+
+        return true;
+    }
+
+
+    /**
+     * Write the header.
+     * The header is created from the list of analysis input fields,
+     * the time field and the control field
+     *
+     * @throws IOException
+     */
+    protected void writeHeader() throws IOException
+    {
+        //  header is all the analysis input fields + the time field + control field
+        int numFields = m_OutFieldIndexes.size();
+        String[] record = new String[numFields];
+
+        Iterator<Map.Entry<String, Integer>> itr = m_OutFieldIndexes.entrySet().iterator();
+        while (itr.hasNext())
+        {
+        	Map.Entry<String, Integer> entry = itr.next();
+        	record[entry.getValue()] = entry.getKey();
+        }
+
+        // Write the header
+        m_LengthEncodedWriter.writeRecord(record);
+    }
+
 
     /**
      * Get all the expected input fields
@@ -310,12 +343,6 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
     	// where no transform
     	List<InputOutputMap> inputOutputMap = new ArrayList<>();
 
-    	// time field
-//    	inputOutputMap.add(new InputOutputMap(
-//    						m_InFieldIndexes.get(m_DataDescription.getTimeField()), 0));
-//
-//    	int outIndex = 1;
-
     	int outIndex = TIME_FIELD_OUT_INDEX + 1;
     	for (String field : m_AnalysisConfig.analysisFields())
     	{
@@ -349,6 +376,8 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
     										Map<String, Integer> inputFieldIndicies,
     										String [] header)
     throws MissingFieldException;
+
+
 
     /**
      * Input and output array indexes map
