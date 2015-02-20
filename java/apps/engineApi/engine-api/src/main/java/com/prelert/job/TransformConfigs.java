@@ -27,6 +27,7 @@
 
 package com.prelert.job;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -41,6 +42,10 @@ public class TransformConfigs
 	public TransformConfigs(List<TransformConfig> transforms)
 	{
 		m_Transforms = transforms;
+		if (m_Transforms == null)
+		{
+			m_Transforms = Collections.emptyList();
+		}
 	}
 
 
