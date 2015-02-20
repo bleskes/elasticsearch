@@ -28,6 +28,8 @@
 package com.prelert.rs.client;
 
 import java.io.Closeable;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Arrays;
 
@@ -41,7 +43,10 @@ import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
 import com.prelert.job.Detector;
 import com.prelert.job.JobDetails;
+import com.prelert.job.JobStatus;
 import com.prelert.job.TransformConfig;
+import com.prelert.rs.data.AnomalyRecord;
+import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
 
 
@@ -79,10 +84,10 @@ public class TransformJobTest implements Closeable
 		final String TRANSFORM_JOB_CONFIG = "{\"id\":\"transform-job-test\","
 				+ "\"description\":\"Transform Job\","
 				+ "\"analysisConfig\" : {"
-				+ "\"detectors\":[{\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}]},"
-				+ "\"transforms\":[{\"transform\":\"domain_lookup\", \"inputs\":[\"field1\"]}],"
-				+ "\"dataDescription\":{\"fieldDelimiter\":\",\", \"timeField\":\"time\", "
-				+ "\"timeFormat\":\"yyyy-MM-dd HH:mm:ssX\"} }}";
+				+ "\"detectors\":[{\"fieldName\":\"value\",\"byFieldName\":\"instance_metric\"}]},"
+				+ "\"transforms\":[{\"transform\":\"concat\", \"inputs\":[\"instance\", \"metric\"], \"outputs\":\"instance_metric\"}],"
+				+ "\"dataDescription\":{\"fieldDelimiter\":\",\", \"timeField\":\"timestamp\", "
+				+ "\"timeFormat\":\"epoch\"} }}";
 
 		m_WebServiceClient.deleteJob(baseUrl, "transform-job-test");
 
@@ -105,16 +110,16 @@ public class TransformJobTest implements Closeable
 
 
 		Detector d = new Detector();
-		d.setFieldName("responsetime");
-		d.setByFieldName("airline");
+		d.setFieldName("value");
+		d.setByFieldName("instance_metric");
 
 		AnalysisConfig ac = new AnalysisConfig();
 		ac.setDetectors(Arrays.asList(d));
 
 		DataDescription dd = new DataDescription();
 		dd.setFieldDelimiter(',');
-		dd.setTimeFormat("yyyy-MM-dd HH:mm:ssX");
-		dd.setTimeField("time");
+		dd.setTimeFormat("epoch");
+		dd.setTimeField("timestamp");
 
 		test(job.getDescription().equals("Transform Job"));
 
@@ -123,12 +128,57 @@ public class TransformJobTest implements Closeable
 
 
 		TransformConfig tr = new TransformConfig();
-		tr.setTransform("domain_lookup");
-		tr.setInputs(Arrays.asList("field1"));
+		tr.setTransform("concat");
+		tr.setInputs(Arrays.asList("instance", "metric"));
+		tr.setOutputs(Arrays.asList("instance_metric"));
 
 		test(job.getTransforms().size() == 1);
 		test(tr.equals(job.getTransforms().get(0)));
 	}
+
+	/**
+     * Upload the contents of <code>dataFile</code> to the server.
+     *
+     * @param baseUrl The URL of the REST API i.e. an URL like
+     *  <code>http://prelert-host:8080/engine/version/</code>
+     * @param jobId The Job's Id
+     * @param dataFile Should match the data configuration format of the job
+     * @param compressed Is the data gzipped compressed?
+     * @throws IOException
+     */
+    public void uploadData(String baseUrl, String jobId, File dataFile, boolean compressed)
+    throws IOException
+    {
+        FileInputStream stream = new FileInputStream(dataFile);
+        boolean success = m_WebServiceClient.streamingUpload(baseUrl, jobId, stream, compressed);
+        test(success);
+
+        SingleDocument<JobDetails> job = m_WebServiceClient.getJob(baseUrl, jobId);
+        test(job.isExists());
+        test(job.getDocument().getStatus() == JobStatus.RUNNING);
+    }
+
+    /**
+     * Finish the job (as all data has been uploaded).
+     *
+     * @param baseUrl The URL of the REST API i.e. an URL like
+     *  <code>http://prelert-host:8080/engine/version/</code>
+     * @param jobId The Job's Id
+     * @return
+     * @throws IOException
+     */
+    public boolean closeJob(String baseUrl, String jobId)
+    throws IOException
+    {
+        boolean closed = m_WebServiceClient.closeJob(baseUrl, jobId);
+        test(closed);
+
+        SingleDocument<JobDetails> job = m_WebServiceClient.getJob(baseUrl, jobId);
+        test(job.isExists());
+        test(job.getDocument().getStatus() == JobStatus.CLOSED);
+
+        return closed;
+    }
 
 	/**
 	 * Throws an exception if <code>condition</code> is false.
@@ -163,11 +213,22 @@ public class TransformJobTest implements Closeable
 		LOGGER.info("Testing Service at " + baseUrl);
 
 
+        final String prelertTestDataHome = System.getProperty("prelert.test.data.home");
+        if (prelertTestDataHome == null)
+        {
+            LOGGER.error("Error property prelert.test.data.home is not set");
+            return;
+        }
+
+        File dataFile = new File(prelertTestDataHome +
+                "/engine_api_integration_test/transforms/aws_instance_metric_spit.csv");
+
 		try (TransformJobTest transformTest = new TransformJobTest())
 		{
 			transformTest.createJob(baseUrl);
+			transformTest.uploadData(baseUrl, "transform-job-test", dataFile, false);
+			transformTest.closeJob(baseUrl, "transform-job-test");
 		}
-
 
 		LOGGER.info("All tests passed Ok");
 	}
