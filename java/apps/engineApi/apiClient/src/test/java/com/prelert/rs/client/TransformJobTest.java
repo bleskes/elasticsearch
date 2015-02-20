@@ -32,6 +32,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.http.client.ClientProtocolException;
 import org.apache.log4j.ConsoleAppender;
@@ -51,8 +53,12 @@ import com.prelert.rs.data.SingleDocument;
 
 
 /**
- * Create a job with a transform and test the transform is applied.
+ * Create a job with a concat transform and test the transform is applied.
+ * Assuming the job has created anomaly records check that the by field value
+ * looks like it has been concatenated by matching a regex.
  *
+ * This isn't really a test of the concat transform but a test that
+ * transforms work - concat is the simplest to test.
  */
 public class TransformJobTest implements Closeable
 {
@@ -180,6 +186,34 @@ public class TransformJobTest implements Closeable
         return closed;
     }
 
+    /**
+     * Assuming some anomaly records are generated make sure the
+     * by field value looks like it has been concatenated by
+     * matching a regex
+     *
+     * @param baseUrl
+     * @param jobId
+     * @return
+     * @throws IOException
+     */
+    public boolean checkRecordsHaveConcattedField(String baseUrl, String jobId) throws IOException
+    {
+        Pagination<AnomalyRecord> records = m_WebServiceClient.getRecords(baseUrl, jobId,
+                0l, 500l, null, null, AnomalyRecord.NORMALIZED_PROBABILITY, true, null, null);
+
+        test(records.getDocumentCount() > 0);
+
+        // The concatenated fields are something like i-1f501643DiskReadBytes
+        Pattern p = Pattern.compile("i-[a-f0-9]{8}[a-zA-Z]*");
+        for (AnomalyRecord r : records.getDocuments())
+        {
+            Matcher matcher = p.matcher(r.getByFieldValue());
+            test(matcher.matches());
+        }
+
+        return true;
+    }
+
 	/**
 	 * Throws an exception if <code>condition</code> is false.
 	 *
@@ -228,6 +262,7 @@ public class TransformJobTest implements Closeable
 			transformTest.createJob(baseUrl);
 			transformTest.uploadData(baseUrl, "transform-job-test", dataFile, false);
 			transformTest.closeJob(baseUrl, "transform-job-test");
+			transformTest.checkRecordsHaveConcattedField(baseUrl, "transform-job-test");
 		}
 
 		LOGGER.info("All tests passed Ok");
