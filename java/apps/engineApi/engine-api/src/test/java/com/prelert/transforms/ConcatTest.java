@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -25,31 +25,48 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.persistence;
+package com.prelert.transforms;
 
-public class DummyJobDataPersister extends JobDataPersister
+import static org.junit.Assert.*;
+
+import org.junit.Test;
+
+public class ConcatTest
 {
-	private int m_RecordCount = 0;
-
-	@Override
-	public void persistRecord(long epoch, String[] record)
+	@Test
+	public void testMultipleInputs() throws TransformException
 	{
-		m_RecordCount++;
+		Concat concat = new Concat(new int [] {1,  2, 4}, new int [] {1});
+
+		String [] input = {"a", "b", "c", "d", "e"};
+		String [] output = new String [2];
+
+		concat.transform(input, output);
+		assertNull(output[0]);
+		assertEquals("bce", output[1]);
 	}
 
-	@Override
-	public void flushRecords()
+	@Test
+	public void testZeroInputs() throws TransformException
 	{
+		Concat concat = new Concat(new int [] {}, new int [] {0});
+
+		String [] input = {"a", "b", "c", "d", "e"};
+		String [] output = new String [1];
+
+		concat.transform(input, output);
+		assertEquals("", output[0]);
 	}
 
-	@Override
-	public boolean deleteData()
+	@Test
+	public void testNoOutput() throws TransformException
 	{
-		return false;
-	}
+		Concat concat = new Concat(new int [] {}, new int [0]);
 
-	public int getRecordCount()
-	{
-		return m_RecordCount;
+		String [] input = {"a", "b", "c", "d", "e"};
+		String [] output = new String [1];
+
+		concat.transform(input, output);
+		assertNull(output[0]);
 	}
 }

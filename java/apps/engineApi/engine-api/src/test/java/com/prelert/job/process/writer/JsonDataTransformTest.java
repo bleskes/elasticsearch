@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -24,7 +24,8 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.process;
+
+package com.prelert.job.process.writer;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -48,6 +49,7 @@ import com.prelert.job.TransformConfig;
 import com.prelert.job.TransformConfigs;
 import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.persistence.DummyJobDataPersister;
+import com.prelert.job.process.ProcessManager;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.status.DummyStatusReporter;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;

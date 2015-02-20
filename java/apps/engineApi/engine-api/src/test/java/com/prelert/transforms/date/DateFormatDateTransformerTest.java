@@ -70,4 +70,32 @@ public class DateFormatDateTransformerTest
 
     	transformer.transform(input, output);
     }
+
+    @Test
+    public void testTransform_GivenNull() throws TransformException
+    {
+        m_ExpectedException.expect(ParseTimestampException.class);
+
+    	DateFormatTransform transformer = new DateFormatTransform("y-M-d",
+    							new int [] {0}, new int [] {0});
+
+    	String [] input = {null};
+    	String [] output = new String[1];
+
+    	transformer.transform(input, output);
+    }
+
+    @Test
+    public void testTransform_GivenBadFormat() throws TransformException
+    {
+        m_ExpectedException.expect(IllegalArgumentException.class);
+
+    	DateFormatTransform transformer = new DateFormatTransform("e",
+    							new int [] {0}, new int [] {0});
+
+    	String [] input = {"2015-02-01"};
+    	String [] output = new String[1];
+
+    	transformer.transform(input, output);
+    }
 }

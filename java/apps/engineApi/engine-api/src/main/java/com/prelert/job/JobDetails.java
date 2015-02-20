@@ -156,6 +156,7 @@ public class JobDetails
 		m_AnalysisConfig = details.getAnalysisConfig();
 		m_AnalysisLimits = details.getAnalysisLimits();
 		m_DataDescription = details.getDataDescription();
+		m_Transforms = details.getTransforms();
 
 		// only override these if explicitly set
 		if (jobConfig.getTimeout() != null)
@@ -181,6 +182,11 @@ public class JobDetails
 		if (jobConfig.getDescription() != null)
 		{
 			m_Description = jobConfig.getDescription();
+		}
+
+		if (jobConfig.getTransforms() != null)
+		{
+			m_Transforms = jobConfig.getTransforms();
 		}
 	}
 

@@ -40,7 +40,8 @@ import org.junit.Test;
 import com.prelert.rs.data.ErrorCode;
 
 
-public class TransfromConfigTest {
+public class TransformConfigTest
+{
 
 	@Test
 	public void testUnknownTransfrom()
