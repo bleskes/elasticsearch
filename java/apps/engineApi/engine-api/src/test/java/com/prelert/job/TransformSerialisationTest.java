@@ -54,7 +54,8 @@ public class TransformSerialisationTest
 		Assert.assertEquals(1,  tr.getInputs().size());
 		Assert.assertEquals("dns", tr.getInputs().get(0));
 		Assert.assertEquals("highest_registered_domain", tr.getTransform());
-		Assert.assertNull(tr.getOutputs());
+		Assert.assertEquals(0, tr.getOutputs().size());
+
 
 		json = "{\"inputs\":\"dns\", \"transform\":\"highest_registered_domain\", \"outputs\":\"catted\"}";
 		tr = reader.readValue(json);

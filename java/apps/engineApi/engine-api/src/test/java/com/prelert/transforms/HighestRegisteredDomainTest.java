@@ -207,4 +207,44 @@ public class HighestRegisteredDomainTest
 	    checkHighestRegisteredDomain("shishi.xn--fiqs8s", "shishi.xn--fiqs8s");
 	}
 
+	/**
+	 * Get sub domain only
+	 * @throws TransformException
+	 */
+	@Test
+	public void testTransform_SingleOutput() throws TransformException
+	{
+		HighestRegisteredDomain transform = new HighestRegisteredDomain(new int [] {2}, new int [] {0});
+
+		String [] input = {"", "", "www.test.ac.jp"};
+		String [] output = new String [2];
+
+		transform.transform(input, output);
+		assertEquals("www", output[0]);
+		assertNull(output[1]);
+
+		input[2] = "a.b.domain.biz";
+		transform.transform(input, output);
+		assertEquals("a.b", output[0]);
+		assertNull(output[1]);
+	}
+
+	@Test
+	public void testTransform_AllOutputs() throws TransformException
+	{
+		HighestRegisteredDomain transform = new HighestRegisteredDomain(new int [] {2}, new int [] {0, 1});
+
+		String [] input = {"", "", "www.test.ac.jp"};
+		String [] output = new String [2];
+
+		transform.transform(input, output);
+		assertEquals("www", output[0]);
+		assertEquals("test.ac.jp", output[1]);
+
+		input[2] = "a.b.domain.biz";
+		transform.transform(input, output);
+		assertEquals("a.b", output[0]);
+		assertEquals("domain.biz", output[1]);
+	}
+
 }

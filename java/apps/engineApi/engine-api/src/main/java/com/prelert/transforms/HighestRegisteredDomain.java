@@ -144,7 +144,14 @@ public class HighestRegisteredDomain extends Transform
 							String[] outputRecord)
 	throws TransformException
 	{
-		// TODO Auto-generated method stub
+		DomainSplit split = lookup(inputRecord[m_InputIndicies[0]]);
+
+		outputRecord[m_OutputIndicies[0]] = split.m_SubDomain;
+		if (m_OutputIndicies.length == 2)
+		{
+			outputRecord[m_OutputIndicies[1]] = split.m_HighestRegisteredDomain;
+		}
+
 		return false;
 	}
 
