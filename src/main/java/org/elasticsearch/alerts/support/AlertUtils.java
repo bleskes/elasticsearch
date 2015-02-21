@@ -146,7 +146,7 @@ public final class AlertUtils {
                         searchRequest.templateName(parser.textOrNull());
                         break;
                     case "template_type":
-                        searchRequest.templateType(readScriptType(parser.textOrNull()));
+                        searchRequest.templateType(ScriptService.ScriptType.valueOf(parser.text().toUpperCase(Locale.ROOT)));
                         break;
                     case "search_type":
                         searchType = SearchType.fromString(parser.text());
@@ -181,7 +181,7 @@ public final class AlertUtils {
             builder.field("template_name", searchRequest.templateName());
         }
         if (searchRequest.templateType() != null) {
-            builder.field("template_type", writeScriptType(searchRequest.templateType()));
+            builder.field("template_type", searchRequest.templateType().name().toLowerCase(Locale.ROOT));
         }
         builder.startArray("indices");
         for (String index : searchRequest.indices()) {
@@ -210,32 +210,6 @@ public final class AlertUtils {
             builder.field("search_type", searchRequest.searchType().toString().toLowerCase(Locale.ENGLISH));
         }
         builder.endObject();
-    }
-
-    static ScriptService.ScriptType readScriptType(String value) {
-        switch (value) {
-            case "indexed":
-                return ScriptService.ScriptType.INDEXED;
-            case "inline":
-                return ScriptService.ScriptType.INLINE;
-            case "file":
-                return ScriptService.ScriptType.FILE;
-            default:
-                throw new ElasticsearchIllegalArgumentException("Unknown script_type value [" + value + "]");
-        }
-    }
-
-    static String writeScriptType(ScriptService.ScriptType value) {
-        switch (value) {
-            case INDEXED:
-                return "indexed";
-            case INLINE:
-                return "inline";
-            case FILE:
-                return "file";
-            default:
-                throw new ElasticsearchIllegalArgumentException("Illegal script_type value [" + value + "]");
-        }
     }
 
 }

@@ -27,16 +27,15 @@ import org.elasticsearch.alerts.actions.Action;
 import org.elasticsearch.alerts.actions.Actions;
 import org.elasticsearch.alerts.actions.index.IndexAction;
 import org.elasticsearch.alerts.client.AlertsClient;
+import org.elasticsearch.alerts.condition.search.ScriptSearchCondition;
 import org.elasticsearch.alerts.history.FiredAlert;
 import org.elasticsearch.alerts.history.HistoryStore;
 import org.elasticsearch.alerts.scheduler.schedule.CronSchedule;
 import org.elasticsearch.alerts.support.init.proxy.ClientProxy;
-import org.elasticsearch.alerts.support.init.proxy.ScriptServiceProxy;
 import org.elasticsearch.alerts.transform.SearchTransform;
 import org.elasticsearch.alerts.transport.actions.ack.AckAlertResponse;
 import org.elasticsearch.alerts.transport.actions.get.GetAlertResponse;
 import org.elasticsearch.alerts.transport.actions.put.PutAlertResponse;
-import org.elasticsearch.alerts.condition.search.ScriptSearchCondition;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
@@ -52,9 +51,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.elasticsearch.index.query.QueryBuilders.matchAllQuery;
 import static org.elasticsearch.search.builder.SearchSourceBuilder.searchSource;
-import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.greaterThanOrEqualTo;
-import static org.hamcrest.Matchers.lessThanOrEqualTo;
+import static org.hamcrest.Matchers.*;
 import static org.hamcrest.core.IsEqual.equalTo;
 
 /**
@@ -81,9 +78,9 @@ public class AlertThrottleTests extends AbstractAlertingTests {
         Alert alert = new Alert(
                 "test-serialization",
                 new CronSchedule("0/5 * * * * ? *"),
-                new ScriptSearchCondition(logger, ScriptServiceProxy.of(scriptService()), ClientProxy.of(client()),
+                new ScriptSearchCondition(logger, scriptService(), ClientProxy.of(client()),
                         request, "hits.total > 0", ScriptService.ScriptType.INLINE, "groovy"),
-                new SearchTransform(logger, ScriptServiceProxy.of(scriptService()), ClientProxy.of(client()), request),
+                new SearchTransform(logger, scriptService(), ClientProxy.of(client()), request),
                 new TimeValue(0),
                 new Actions(actions),
                 null,
@@ -164,9 +161,9 @@ public class AlertThrottleTests extends AbstractAlertingTests {
         Alert alert = new Alert(
                 "test-time-throttle",
                 new CronSchedule("0/5 * * * * ? *"),
-                new ScriptSearchCondition(logger, ScriptServiceProxy.of(scriptService()), ClientProxy.of(client()),
+                new ScriptSearchCondition(logger, scriptService(), ClientProxy.of(client()),
                         request, "hits.total > 0", ScriptService.ScriptType.INLINE, "groovy"),
-                new SearchTransform(logger, ScriptServiceProxy.of(scriptService()), ClientProxy.of(client()), request),
+                new SearchTransform(logger, scriptService(), ClientProxy.of(client()), request),
                 new TimeValue(10, TimeUnit.SECONDS),
                 new Actions(actions),
                 null,

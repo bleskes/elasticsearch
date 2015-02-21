@@ -25,8 +25,8 @@ import org.elasticsearch.alerts.actions.email.service.Email;
 import org.elasticsearch.alerts.actions.email.service.EmailService;
 import org.elasticsearch.alerts.actions.email.service.Profile;
 import org.elasticsearch.alerts.scheduler.schedule.CronSchedule;
-import org.elasticsearch.alerts.support.StringTemplateUtils;
 import org.elasticsearch.alerts.support.init.proxy.ScriptServiceProxy;
+import org.elasticsearch.alerts.support.template.ScriptTemplate;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.common.joda.time.DateTime;
 import org.elasticsearch.common.settings.ImmutableSettings;
@@ -52,8 +52,6 @@ import java.util.Set;
 public class EmailActionTest extends ElasticsearchTestCase {
 
     public void testEmailTemplateRender() throws IOException, MessagingException {
-        StringTemplateUtils.Template template =
-                new StringTemplateUtils.Template("{{alert_name}} executed with {{response.hits.total}} hits");
 
         Settings settings = ImmutableSettings.settingsBuilder().build();
         MustacheScriptEngineService mustacheScriptEngineService = new MustacheScriptEngineService(settings);
@@ -61,8 +59,9 @@ public class EmailActionTest extends ElasticsearchTestCase {
         Set<ScriptEngineService> engineServiceSet = new HashSet<>();
         engineServiceSet.add(mustacheScriptEngineService);
 
-        ScriptService scriptService = new ScriptService(settings, new Environment(), engineServiceSet, new ResourceWatcherService(settings, threadPool));
-        StringTemplateUtils stringTemplateUtils = new StringTemplateUtils(settings, ScriptServiceProxy.of(scriptService));
+        ScriptServiceProxy scriptService = ScriptServiceProxy.of(new ScriptService(settings, new Environment(), engineServiceSet, new ResourceWatcherService(settings, threadPool)));
+
+        ScriptTemplate template = new ScriptTemplate(scriptService, "{{alert_name}} executed with {{response.hits.total}} hits");
 
         EmailService emailService = new EmailServiceMock();
 
@@ -76,7 +75,7 @@ public class EmailActionTest extends ElasticsearchTestCase {
         emailBuilder.from(from);
         emailBuilder.to(to);
 
-        EmailAction emailAction = new EmailAction(logger, emailService, stringTemplateUtils, emailBuilder,
+        EmailAction emailAction = new EmailAction(logger, emailService, emailBuilder,
                 new Authentication("testname", "testpassword"), Profile.STANDARD, "testaccount", template, template, null, true);
 
         //This is ok since the execution of the action only relies on the alert name
