@@ -18,7 +18,6 @@
 package org.elasticsearch.alerts.throttle;
 
 import org.elasticsearch.alerts.ExecutionContext;
-import org.elasticsearch.alerts.condition.Condition;
 
 import static org.elasticsearch.alerts.support.AlertsDateUtils.formatDate;
 
@@ -28,7 +27,7 @@ import static org.elasticsearch.alerts.support.AlertsDateUtils.formatDate;
 public class AckThrottler implements Throttler {
 
     @Override
-    public Result throttle(ExecutionContext ctx, Condition.Result result) {
+    public Result throttle(ExecutionContext ctx) {
         if (ctx.alert().acked()) {
             return Result.throttle("alert [" + ctx.alert().name() + "] was acked at [" + formatDate(ctx.alert().status().ackStatus().timestamp()) + "]");
         }

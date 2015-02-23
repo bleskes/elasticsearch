@@ -18,8 +18,6 @@
 package org.elasticsearch.alerts.throttle;
 
 import org.elasticsearch.alerts.ExecutionContext;
-import org.elasticsearch.alerts.condition.Condition;
-import org.elasticsearch.common.ParseField;
 
 /**
  *
@@ -28,17 +26,14 @@ public interface Throttler {
 
     public static final Throttler NO_THROTTLE = new Throttler() {
         @Override
-        public Result throttle(ExecutionContext ctx, Condition.Result result) {
+        public Result throttle(ExecutionContext ctx) {
             return Result.NO;
         }
     };
 
-    Result throttle(ExecutionContext ctx, Condition.Result result);
+    Result throttle(ExecutionContext ctx);
 
     static class Result {
-
-        public static ParseField THROTTLE_FIELD = new ParseField("throttle");
-        public static ParseField REASON_FIELD = new ParseField("reason");
 
         public static final Result NO = new Result(false, null);
         
