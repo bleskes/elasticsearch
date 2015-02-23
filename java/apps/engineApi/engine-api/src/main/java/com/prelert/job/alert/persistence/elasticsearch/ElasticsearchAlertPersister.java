@@ -200,7 +200,7 @@ public class ElasticsearchAlertPersister implements AlertPersister
 		fb.gt(alertId);
 
 		SortBuilder sb = new FieldSortBuilder(Alert.TIMESTAMP)
-							.ignoreUnmapped(true)
+							.unmappedType("date")
 							.order(SortOrder.ASC);
 
 		int from = 0;

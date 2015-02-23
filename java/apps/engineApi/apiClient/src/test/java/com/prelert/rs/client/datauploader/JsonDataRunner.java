@@ -50,21 +50,21 @@ import com.prelert.rs.data.ApiError;
 public class JsonDataRunner implements Runnable
 {
 	private static final Logger LOGGER = Logger.getLogger(JsonDataRunner.class);
-	
+
 	/**
 	 * Job configuration as a format string.
 	 * The bucketSpan value should be replaced
 	 */
 	public static final String JOB_CONFIG_TEMPLATE = "{"
 			+ "\"analysisConfig\" : {"
-				+ "\"bucketSpan\":%d,"  
+				+ "\"bucketSpan\":%d,"
 				+ "\"detectors\" :[{\"function\":\"metric\",\"fieldName\":\"metric_value\",\"byFieldName\":\"metric_field\"}] "
 			+ "},"
 			+ "\"dataDescription\":{"
 				+ "\"format\":\"JSON\", \"timeField\":\"time\", \"timeFormat\":\"yyyy-MM-dd'T'HH:mm:ssX\"} "
 			+ "}"
 			+ "}";
-	
+
 	/**
 	 * Job configuration with an ID field as a format string.
 	 * id and bucketSpan should be replaced
@@ -72,42 +72,42 @@ public class JsonDataRunner implements Runnable
 	public static final String JOB_CONFIG_WITH_ID_TEMPLATE = "{"
 		    + "\"id\":\"%s\","
 			+ "\"analysisConfig\" : {"
-				+ "\"bucketSpan\":%d,"  
+				+ "\"bucketSpan\":%d,"
 				+ "\"detectors\" :[{\"function\":\"metric\",\"fieldName\":\"metric_value\",\"byFieldName\":\"metric_field\"}] "
 			+ "},"
 			+ "\"dataDescription\":{"
 				+ "\"format\":\"JSON\", \"timeField\":\"time\", \"timeFormat\":\"yyyy-MM-dd'T'HH:mm:ssX\"} "
 			+ "}"
 			+ "}";
-	
-	
+
+
 	public static final String JSON_DOC_TEMPLATE = "{"
 				+ "\"time\":\"%s\", \"metric_field\":\"%s\", \"metric_value\":%d"
 			+ "}";
-	
+
 	public static final long DEFAULT_NUMBER_TIME_SERIES = 100000;
 	public static final long DEFAULT_TIME_SERIES_POINT_INTERVAL_SECS = 15;
 	public static final long DEFAULT_NUMBER_ITERATIONS = 100;
 	public static final long DEFAULT_BUCKETSPAN_SECS = 300;
-	
+
 
 	private EngineApiClient m_ApiClient;
 	private String m_BaseUrl;
-	
+
 	private String m_JobId;
-	
+
 	// members are final as read by multiple threads
 	final private long m_NumTimeSeries;
 	final private long m_NumIterations;
 	final private long m_PointIntervalSecs;
 	final private long m_BucketSpan;
-	
+
 	volatile private boolean m_Stop;
 
 
 	/**
 	 * Create the data generator with default settings.
-	 * 
+	 *
 	 * @param baseUrl REST API url e.g. <code>http://localhost:8080/engine/version/</code>
 	 */
 	public JsonDataRunner(String baseUrl)
@@ -118,13 +118,13 @@ public class JsonDataRunner implements Runnable
 
 
 	/**
-	 * 
+	 *
 	 * @param baseUrl REST API url e.g. <code>http://localhost:8080/engine/version/</code>
 	 * @param numberTimeSeries Number of time series to create
-	 * @param numIterations A value <= 0 means there is no limit and the thread 
-	 * will run indefinitely 
-	 * @param pointIntervalSecs The time between writing each new data point 
-	 * for each time series. 
+	 * @param numIterations A value <= 0 means there is no limit and the thread
+	 * will run indefinitely
+	 * @param pointIntervalSecs The time between writing each new data point
+	 * for each time series.
 	 * @param bucketSpanSecs The job bucketSpan
 	 */
 	public JsonDataRunner(String baseUrl, long numberTimeSeries, long numIterations,
@@ -134,35 +134,35 @@ public class JsonDataRunner implements Runnable
 		m_NumIterations = numIterations;
 		m_PointIntervalSecs = pointIntervalSecs;
 		m_BucketSpan = bucketSpanSecs;
-		
+
 		m_ApiClient = new EngineApiClient();
 		m_BaseUrl = baseUrl;
-		
+
 		m_Stop = false;
 	}
 
-	
-	public String createJob() 
+
+	public String createJob()
 	throws ClientProtocolException, IOException
 	{
 		String jobConfig = String.format(JOB_CONFIG_TEMPLATE, m_BucketSpan);
 		m_JobId = m_ApiClient.createJob(m_BaseUrl, jobConfig);
-		
+
 		return m_JobId;
 	}
-	
-	
-	public String createJob(String jobName) 
+
+
+	public String createJob(String jobName)
 	throws ClientProtocolException, IOException
 	{
 		m_ApiClient.deleteJob(m_BaseUrl, jobName);
-		
+
 		String jobConfig = String.format(JOB_CONFIG_WITH_ID_TEMPLATE, jobName, m_BucketSpan);
 		m_JobId = m_ApiClient.createJob(m_BaseUrl, jobConfig);
-		
+
 		return m_JobId;
 	}
-	
+
 	/**
 	 * Stop the thread running (eventually)
 	 */
@@ -173,10 +173,10 @@ public class JsonDataRunner implements Runnable
 
 	@Override
 	public void run()
-	{		
+	{
 		if (m_JobId == null || m_JobId.isEmpty())
 		{
-			String msg = "Job must be created before the thread is started " 
+			String msg = "Job must be created before the thread is started "
 					+ "call createJob() first";
 			LOGGER.error(msg);
 			throw new IllegalStateException(msg);
@@ -190,7 +190,7 @@ public class JsonDataRunner implements Runnable
 		Thread producerThread = new Thread(producer, "Producer-Thread");
 		producerThread.start();
 
-		try 
+		try
 		{
 			boolean ok = m_ApiClient.streamingUpload(m_BaseUrl, m_JobId, inputStream, false);
 			if (!ok)
@@ -199,7 +199,7 @@ public class JsonDataRunner implements Runnable
 				LOGGER.error(error.toJson());
 			}
 		}
-		catch (IOException e) 
+		catch (IOException e)
 		{
 			LOGGER.error("Error streaming data", e);
 		}
@@ -209,7 +209,7 @@ public class JsonDataRunner implements Runnable
 		{
 			producerThread.join();
 		}
-		catch (InterruptedException e) 
+		catch (InterruptedException e)
 		{
 			LOGGER.error("Interupted joining producer thread", e);
 		}
@@ -217,11 +217,11 @@ public class JsonDataRunner implements Runnable
 
 	/**
 	 * Producer thread.
-	 * Writes to a PipedOuptstream connected to the PipedInputStream 
+	 * Writes to a PipedOuptstream connected to the PipedInputStream
 	 * passed in the constructor
 	 */
 	private class SoakTestProducer implements Runnable
-	{		
+	{
 		private PipedOutputStream m_OutputStream;
 
 		public SoakTestProducer(PipedInputStream sink)
@@ -239,19 +239,19 @@ public class JsonDataRunner implements Runnable
 
 		@Override
 		public void run()
-		{					
-			// HACK wait for the parent thread to open the connection 
+		{
+			// HACK wait for the parent thread to open the connection
 			// before writing
-			try 
+			try
 			{
 				Thread.sleep(1000);
 			}
-			catch (InterruptedException e1) 
+			catch (InterruptedException e1)
 			{
 				LOGGER.error("Producer interruputed pausing before write start");
 			}
 
-			
+
 			SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX");
 			try
 			{
@@ -262,7 +262,7 @@ public class JsonDataRunner implements Runnable
 					{
 						break;
 					}
-					
+
 					long iterStartMs = System.currentTimeMillis();
 
 					Date now = new Date();
@@ -272,13 +272,13 @@ public class JsonDataRunner implements Runnable
 					long timeSeriesCount = 0;
 					while (++timeSeriesCount <= m_NumTimeSeries)
 					{
-						//writeTimeSeriesJsonDoc(timeSeriesCount, epoch);		
-						writeTimeSeriesJsonDoc(timeSeriesCount, dateStr);	
+						//writeTimeSeriesJsonDoc(timeSeriesCount, epoch);
+						writeTimeSeriesJsonDoc(timeSeriesCount, dateStr);
 					}
 
 
 					long iterEndMs = System.currentTimeMillis();
-					LOGGER.info(String.format("%d metrics uploaded in  %d ms", 
+					LOGGER.info(String.format("%d metrics uploaded in  %d ms",
 							m_NumTimeSeries, iterEndMs - iterStartMs));
 
 
@@ -296,23 +296,23 @@ public class JsonDataRunner implements Runnable
 						{
 							Thread.sleep(sleepTime);
 						}
-						catch (InterruptedException e) 
+						catch (InterruptedException e)
 						{
 							LOGGER.info("Producer interrupted while sleeping");
 							break;
 						}
 					}
-					
-					
-					synchronized (JsonDataRunner.this) 
+
+
+					synchronized (JsonDataRunner.this)
 					{
 						JsonDataRunner.this.notify();
 					}
 				}
 			}
-			finally 
-			{				
-				try 
+			finally
+			{
+				try
 				{
 					m_OutputStream.close();
 				}
@@ -322,37 +322,38 @@ public class JsonDataRunner implements Runnable
 			}
 
 		}
-		
-		
+
+
 
 		/**
 		 * Generate a random value for the time series using ThreadLocalRandom
 		 * @param timeSeriesId
 		 * @param epoch
 		 */
+		@SuppressWarnings("unused")
 		private void writeTimeSeriesJsonDoc(long timeSeriesId, long epoch)
 		{
 			String timeSeries = "metric" + timeSeriesId;
 			int value = ThreadLocalRandom.current().nextInt(512);
 
 			String row = String.format(JSON_DOC_TEMPLATE, epoch, timeSeries, value);
-			try 
+			try
 			{
 				m_OutputStream.write(row.getBytes(StandardCharsets.UTF_8));
 				//m_OutputStream.write(10); // newline char
-			} 
-			catch (IOException e) 
+			}
+			catch (IOException e)
 			{
 				LOGGER.error("Error writing JSON document", e);
-			}			
+			}
 		}
-		
-		
+
+
 		/**
 		 * Generate a random value for the time series using ThreadLocalRandom
 		 * @param timeSeriesId
 		 * @param date
-		 * 
+		 *
 		 */
 		private void writeTimeSeriesJsonDoc(long timeSeriesId, String date)
 		{
@@ -360,15 +361,15 @@ public class JsonDataRunner implements Runnable
 			int value = ThreadLocalRandom.current().nextInt(512);
 
 			String row = String.format(JSON_DOC_TEMPLATE, date, timeSeries, value);
-			try 
+			try
 			{
 				m_OutputStream.write(row.getBytes(StandardCharsets.UTF_8));
 				//m_OutputStream.write(10); // newline char
-			} 
-			catch (IOException e) 
+			}
+			catch (IOException e)
 			{
 				LOGGER.error("Error writing JSON document", e);
-			}			
+			}
 		}
 
 	}

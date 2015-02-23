@@ -307,7 +307,7 @@ public class ElasticsearchJobProvider implements JobProvider
     {
         FilterBuilder fb = FilterBuilders.matchAllFilter();
         SortBuilder sb = new FieldSortBuilder(JobDetails.ID)
-                                .ignoreUnmapped(true)
+                                .unmappedType("string")
                                 .order(SortOrder.ASC);
 
         SearchResponse response = m_Client.prepareSearch("_all")
@@ -407,6 +407,7 @@ public class ElasticsearchJobProvider implements JobProvider
      * Returns null if the field cannot be found or converted to
      * type V
      */
+    @SuppressWarnings("unchecked")
     @Override
     public <V> V getField(String jobId, String fieldName)
     {
@@ -631,7 +632,7 @@ public class ElasticsearchJobProvider implements JobProvider
     throws UnknownJobException
     {
         SortBuilder sb = new FieldSortBuilder(Bucket.ID)
-                    .ignoreUnmapped(true)
+                    .unmappedType("string")
                     .order(SortOrder.ASC);
 
         SearchResponse searchResponse;
@@ -769,7 +770,6 @@ public class ElasticsearchJobProvider implements JobProvider
         if (sortField != null)
         {
             sb = new FieldSortBuilder(sortField)
-                        .ignoreUnmapped(true)
                         .missing("_last")
                         .order(descending ? SortOrder.DESC : SortOrder.ASC);
         }
@@ -922,7 +922,6 @@ public class ElasticsearchJobProvider implements JobProvider
         if (sortField != null)
         {
             sb = new FieldSortBuilder(sortField)
-                        .ignoreUnmapped(true)
                         .missing("_last")
                         .order(descending ? SortOrder.DESC : SortOrder.ASC);
         }

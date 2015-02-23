@@ -70,6 +70,7 @@ public class AlertManager implements TimeoutHandler
 	private static final Logger LOGGER = Logger.getLogger(AlertManager.class);
 
 	private Map<AsyncResponse, AlertListener> m_AsyncRepsonses;
+	@SuppressWarnings("unused")
 	private AlertPersister m_AlertPersister;
 
 	private JobProvider m_JobProvider;

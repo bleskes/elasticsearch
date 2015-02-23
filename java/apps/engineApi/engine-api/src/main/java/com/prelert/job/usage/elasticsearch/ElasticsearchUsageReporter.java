@@ -32,7 +32,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
-import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.script.ScriptService;
 
@@ -43,77 +42,77 @@ import static com.prelert.job.persistence.elasticsearch.ElasticsearchJobProvider
 
 /**
  * Persist Usage (metering) data to elasticsearch.
- * Data is written per job to the job index and summed for 
- * all jobs to the {@value com.prelert.job.manager.JobManager.PRELERT_METERING_INDEX} 
+ * Data is written per job to the job index and summed for
+ * all jobs to the {@value com.prelert.job.manager.JobManager.PRELERT_METERING_INDEX}
  * index.
  */
-public class ElasticsearchUsageReporter extends UsageReporter 
+public class ElasticsearchUsageReporter extends UsageReporter
 {
 	private Client m_Client;
 	private SimpleDateFormat m_SimpleDateFormat;
 	private String m_DocId;
 	private long m_CurrentHour;
-	
+
 	private Map<String, Object> m_UpsertMap;
-	
-	public ElasticsearchUsageReporter(Client client, String jobId, Logger logger) 
+
+	public ElasticsearchUsageReporter(Client client, String jobId, Logger logger)
 	{
 		super(jobId, logger);
 		m_Client = client;
-		m_CurrentHour = 0;		
+		m_CurrentHour = 0;
 		m_SimpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXX");
 		m_UpsertMap = new HashMap<>();
-		
+
 		m_UpsertMap.put(Usage.TIMESTAMP, "");
 		m_UpsertMap.put(Usage.INPUT_BYTES, null);
 	}
 
 	@Override
-	public boolean persistUsageCounts() 
+	public boolean persistUsageCounts()
 	{
 		long hour =  System.currentTimeMillis() / 3600000; // ms in the hour
-		
+
 		if (m_CurrentHour != hour)
 		{
 			Date date = new Date(hour * 3600000);
 			m_DocId = "usage-" + m_SimpleDateFormat.format(date);
 			m_UpsertMap.put(Usage.TIMESTAMP, date);
 		}
-		
-		// update global count		
+
+		// update global count
 		updateDocument(PRELERT_USAGE_INDEX,  m_DocId, getBytesReadSinceLastReport(),
 				getFieldsReadSinceLastReport(), getRecordsReadSinceLastReport());
 		updateDocument(getJobId(), m_DocId, getBytesReadSinceLastReport(),
 				getFieldsReadSinceLastReport(), getRecordsReadSinceLastReport());
-			
+
 		return true;
 	}
 
-	
+
 	/**
 	 * Update the metering document in the given index/id.
 	 * Uses a script to update the volume field and 'upsert'
 	 * to create the doc if it doesn't exist.
-	 * 
+	 *
 	 * @param index
 	 * @param id Doc id is also its timestamp
 	 * @param additionalBytes Add this value to the running total
 	 * @param additionalFields Add this value to the running total
 	 * @param additionalRecords Add this value to the running total
 	 */
-	private void updateDocument(String index, String id, 
+	private void updateDocument(String index, String id,
 			long additionalBytes, long additionalFields, long additionalRecords)
 	{
 		m_UpsertMap.put(Usage.INPUT_BYTES, new Long(additionalBytes));
 		m_UpsertMap.put(Usage.INPUT_FIELD_COUNT, new Long(additionalFields));
 		m_UpsertMap.put(Usage.INPUT_RECORD_COUNT, new Long(additionalRecords));
-		
-		UpdateResponse response = m_Client.prepareUpdate(index, Usage.TYPE, id)
+
+		m_Client.prepareUpdate(index, Usage.TYPE, id)
 				.setScript("update-usage", ScriptService.ScriptType.FILE)
 				.addScriptParam("bytes", additionalBytes)
 				.addScriptParam("fieldCount", additionalFields)
 				.addScriptParam("recordCount", additionalRecords)
 				.setUpsert(m_UpsertMap)
 				.setRetryOnConflict(3).get();
-	}		
+	}
 }
