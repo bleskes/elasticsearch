@@ -342,29 +342,10 @@ public class AnalysisConfig
      */
     public boolean verify() throws JobConfigurationException
     {
-        if (m_BucketSpan != null && m_BucketSpan < 0)
-        {
-            throw new JobConfigurationException("BucketSpan cannot be < 0."
-                    + " Value = " + m_BucketSpan, ErrorCode.INVALID_VALUE);
-        }
-
-        if (m_BatchSpan != null && m_BatchSpan < 0)
-        {
-            throw new JobConfigurationException("BatchSpan cannot be < 0."
-                    + " Value = " + m_BatchSpan, ErrorCode.INVALID_VALUE);
-        }
-
-        if (m_Latency != null && m_Latency < 0)
-        {
-            throw new JobConfigurationException("Latency cannot be < 0."
-                    + " Value = " + m_Latency, ErrorCode.INVALID_VALUE);
-        }
-
-        if (m_Period != null && m_Period < 0)
-        {
-            throw new JobConfigurationException("Period cannot be < 0."
-                    + " Value = " + m_Period, ErrorCode.INVALID_VALUE);
-        }
+        checkFieldIsNotNegativeIfSpecified("BucketSpan", m_BucketSpan);
+        checkFieldIsNotNegativeIfSpecified("BatchSpan", m_BatchSpan);
+        checkFieldIsNotNegativeIfSpecified("Latency", m_Latency);
+        checkFieldIsNotNegativeIfSpecified("Period", m_Period);
 
         Detector.verifyFieldName(m_SummaryCountFieldName);
 
@@ -381,5 +362,15 @@ public class AnalysisConfig
         }
 
         return true;
+    }
+
+    private static void checkFieldIsNotNegativeIfSpecified(String fieldName, Long value)
+            throws JobConfigurationException
+    {
+        if (value != null && value < 0)
+        {
+            String msg = String.format("%s cannot be < 0. Value = %d", fieldName, value);
+            throw new JobConfigurationException(msg, ErrorCode.INVALID_VALUE);
+        }
     }
 }
