@@ -15,25 +15,20 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.alerts.scheduler.schedule;
+package org.elasticsearch.alerts.scheduler.schedule.support;
 
+import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.xcontent.ToXContent;
-import org.elasticsearch.common.xcontent.XContentParser;
-
-import java.io.IOException;
 
 /**
  *
  */
-public interface Schedule extends ToXContent {
+public interface Times extends ToXContent {
 
-    String type();
+    public static final ParseField MONTH_FIELD = new ParseField("in", "month");
+    public static final ParseField DAY_FIELD = new ParseField("on", "day");
+    public static final ParseField TIME_FIELD = new ParseField("at", "time");
+    public static final ParseField HOUR_FIELD = new ParseField("hour");
+    public static final ParseField MINUTE_FIELD = new ParseField("minute");
 
-    static interface Parser<S extends Schedule> {
-
-        String type();
-
-        S parse(XContentParser parser) throws IOException;
-
-    }
 }

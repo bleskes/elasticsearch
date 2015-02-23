@@ -17,23 +17,39 @@
 
 package org.elasticsearch.alerts.scheduler.schedule;
 
-import org.elasticsearch.common.xcontent.ToXContent;
-import org.elasticsearch.common.xcontent.XContentParser;
-
-import java.io.IOException;
+import java.util.Arrays;
+import java.util.Objects;
 
 /**
  *
  */
-public interface Schedule extends ToXContent {
+public abstract class CronnableSchedule implements Schedule {
 
-    String type();
+    protected final String[] crons;
 
-    static interface Parser<S extends Schedule> {
+    public CronnableSchedule(String... crons) {
+        this.crons = crons;
+        Arrays.sort(crons);
+    }
 
-        String type();
+    public String[] crons() {
+        return crons;
+    }
 
-        S parse(XContentParser parser) throws IOException;
+    @Override
+    public int hashCode() {
+        return Objects.hash((Object[]) crons);
+    }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        final CronnableSchedule other = (CronnableSchedule) obj;
+        return Objects.deepEquals(this.crons, other.crons);
     }
 }
