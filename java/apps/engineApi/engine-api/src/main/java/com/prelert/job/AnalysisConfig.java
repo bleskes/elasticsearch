@@ -30,7 +30,6 @@ package com.prelert.job;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
@@ -76,71 +75,6 @@ public class AnalysisConfig
     public AnalysisConfig()
     {
         m_Detectors = new ArrayList<>();
-    }
-
-    /**
-     * Construct an AnalysisConfig from a map. Detector objects are
-     * nested elements in the map.
-     * @param values
-     */
-    @SuppressWarnings("unchecked")
-    public AnalysisConfig(Map<String, Object> values)
-    {
-        this();
-
-        if (values.containsKey(BUCKET_SPAN))
-        {
-            Object obj = values.get(BUCKET_SPAN);
-            if (obj != null)
-            {
-                m_BucketSpan = ((Integer)obj).longValue();
-            }
-        }
-        if (values.containsKey(BATCH_SPAN))
-        {
-            Object obj = values.get(BATCH_SPAN);
-            if (obj != null)
-            {
-                m_BatchSpan = ((Integer)obj).longValue();
-            }
-        }
-        if (values.containsKey(LATENCY))
-        {
-            Object obj = values.get(LATENCY);
-            if (obj != null)
-            {
-                m_Latency = ((Integer)obj).longValue();
-            }
-        }
-        if (values.containsKey(PERIOD))
-        {
-            Object obj = values.get(PERIOD);
-            if (obj != null)
-            {
-                m_Period = ((Integer)obj).longValue();
-            }
-        }
-        if (values.containsKey(SUMMARY_COUNT_FIELD_NAME))
-        {
-            Object obj = values.get(SUMMARY_COUNT_FIELD_NAME);
-            if (obj != null)
-            {
-                m_SummaryCountFieldName = (String)obj;
-            }
-        }
-        if (values.containsKey(DETECTORS))
-        {
-            Object obj = values.get(DETECTORS);
-            if (obj instanceof ArrayList)
-            {
-                for (Map<String, Object> detectorMap : (ArrayList<Map<String, Object>>)obj)
-                {
-                    Detector detector = new Detector(detectorMap);
-                    m_Detectors.add(detector);
-                }
-            }
-
-        }
     }
 
     /**

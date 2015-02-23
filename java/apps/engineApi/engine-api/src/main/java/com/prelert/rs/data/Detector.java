@@ -30,7 +30,6 @@ package com.prelert.rs.data;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.log4j.Logger;
 
@@ -70,22 +69,6 @@ public class Detector
     {
         this();
         m_Name = name.intern();
-    }
-
-    /**
-     * Create the detector from a map. Only the name field is read
-     * @param values
-     */
-    public Detector(Map<String, Object> values)
-    {
-        if (values.containsKey(NAME))
-        {
-            m_Name = values.get(NAME).toString().intern();
-        }
-        else
-        {
-            LOGGER.error("Constructing detector from map with no " + NAME + " field");
-        }
     }
 
     public String getName()

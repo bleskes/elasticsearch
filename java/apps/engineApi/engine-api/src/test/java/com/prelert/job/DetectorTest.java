@@ -29,9 +29,7 @@ package com.prelert.job;
 
 import static org.junit.Assert.assertEquals;
 
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import junit.framework.Assert;
@@ -679,15 +677,21 @@ public class DetectorTest
     @Test
     public void testHashCode_GivenEqual()
     {
-        Map<String, Object> detectorMap = new HashMap<>();
-        detectorMap.put(Detector.FUNCTION, "mean");
-        detectorMap.put(Detector.FIELD_NAME, "field");
-        detectorMap.put(Detector.BY_FIELD_NAME, "by");
-        detectorMap.put(Detector.OVER_FIELD_NAME, "over");
-        detectorMap.put(Detector.PARTITION_FIELD_NAME, "partition");
-        detectorMap.put(Detector.USE_NULL, false);
-        Detector detector1 = new Detector(detectorMap);
-        Detector detector2 = new Detector(detectorMap);
+        Detector detector1 = new Detector();
+        detector1.setFunction("mean");
+        detector1.setFieldName("field");
+        detector1.setByFieldName("by");
+        detector1.setOverFieldName("over");
+        detector1.setPartitionFieldName("partition");
+        detector1.setUseNull(false);
+
+        Detector detector2 = new Detector();
+        detector2.setFunction("mean");
+        detector2.setFieldName("field");
+        detector2.setByFieldName("by");
+        detector2.setOverFieldName("over");
+        detector2.setPartitionFieldName("partition");
+        detector2.setUseNull(false);
 
         assertEquals(detector1.hashCode(), detector2.hashCode());
     }
