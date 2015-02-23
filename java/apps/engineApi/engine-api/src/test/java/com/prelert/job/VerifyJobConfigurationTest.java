@@ -27,6 +27,8 @@
 
 package com.prelert.job;
 
+import static org.junit.Assert.*;
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -363,6 +365,48 @@ public class VerifyJobConfigurationTest
         Assert.assertFalse(analysisFields.contains("max"));
         Assert.assertFalse(analysisFields.contains(""));
         Assert.assertFalse(analysisFields.contains(null));
+    }
+
+
+    @Test
+    public void test_checkTransformOutputIsInAnalysisFields() throws JobConfigurationException
+    {
+        JobConfiguration jc = new JobConfiguration();
+
+        Detector d1 = new Detector();
+        d1.setFieldName("domain");
+        d1.setOverFieldName("client");
+        d1.setFunction("info_content");
+
+        Detector d2 = new Detector();
+        d2.setFieldName("metric");
+
+        AnalysisConfig ac = new AnalysisConfig();
+        ac.setDetectors(Arrays.asList(new Detector[] {d1, d2}));
+
+        DataDescription dc = new DataDescription();
+
+        TransformConfig tc = new TransformConfig();
+        tc.setTransform(TransformType.Names.DOMAIN_LOOKUP_NAME);
+        tc.setInputs(Arrays.asList("dns"));
+
+        jc.setTransforms(Arrays.asList(tc));
+        jc.setAnalysisConfig(ac);
+        jc.setDataDescription(dc);
+
+        try
+        {
+            jc.verify();
+            fail("verify should throw"); // shouldn't get here
+        }
+        catch (JobConfigurationException e)
+        {
+            assertTrue(e instanceof TransformConfigurationException);
+            assertEquals(e.getErrorCode(), ErrorCode.NO_OUTPUTS_USED);
+        }
+
+        d1.setFieldName(TransformType.DOMAIN_LOOKUP.defaultOutputNames().get(0));
+        assertTrue(jc.verify());
     }
 
 }

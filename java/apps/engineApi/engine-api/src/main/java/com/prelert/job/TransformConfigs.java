@@ -81,7 +81,7 @@ public class TransformConfigs
 		return fields;
 	}
 
-	static public boolean verify(List<TransformConfig> transforms) throws JobConfigurationException
+	public static boolean verify(List<TransformConfig> transforms) throws TransformConfigurationException
 	{
 		for (TransformConfig tr : transforms)
 		{

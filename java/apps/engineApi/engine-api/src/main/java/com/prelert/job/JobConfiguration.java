@@ -297,6 +297,7 @@ public class JobConfiguration
 		if (m_Transforms != null)
 		{
 			TransformConfigs.verify(m_Transforms);
+			checkTransformOutputIsInAnalysisFields();
 		}
 
 		if (m_Timeout != null && m_Timeout < 0)
@@ -340,5 +341,32 @@ public class JobConfiguration
 		}
 
 		return true;
+	}
+
+	public boolean checkTransformOutputIsInAnalysisFields() throws TransformConfigurationException
+	{
+	    Set<String> analysisFieldSet = new HashSet<String>(m_AnalysisConfig.analysisFields());
+	    for (TransformConfig tc : m_Transforms)
+	    {
+	        boolean usesAnOutput = false;
+	        for (String outputName : tc.getOutputs())
+	        {
+	            if (analysisFieldSet.contains(outputName))
+	            {
+	                usesAnOutput = true;
+	            }
+	        }
+
+	        if (!usesAnOutput)
+	        {
+	            String msg = String.format("None of the outputs of transform '%s' are used."
+	                                        + " Please review your configuration",
+	                                            tc.type().prettyName());
+
+	            throw new TransformConfigurationException(msg, ErrorCode.NO_OUTPUTS_USED);
+	        }
+	    }
+
+	    return false;
 	}
 }

@@ -141,6 +141,11 @@ public enum ErrorCode
 	 */
 	INCORRECT_TRANSFORM_ARGUMENT_COUNT(10202),
 
+	/**
+	 * If none of the outputs of a particular transform are used
+	 * in the analysis then the transform's configuration is in error
+	 */
+	NO_OUTPUTS_USED(10203),
 
 	// Data store errors
 	/**
