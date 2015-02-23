@@ -19,6 +19,7 @@ package org.elasticsearch.alerts.actions.email.service.support;
 
 import org.elasticsearch.common.xcontent.ToXContent;
 
+import javax.activation.FileTypeMap;
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeBodyPart;
 
@@ -27,22 +28,20 @@ import javax.mail.internet.MimeBodyPart;
  */
 public abstract class BodyPartSource implements ToXContent {
 
+    protected static FileTypeMap fileTypeMap = FileTypeMap.getDefaultFileTypeMap();
+
     protected final String id;
     protected final String name;
-    protected final String description;
+    protected final String contentType;
 
-    public BodyPartSource(String id) {
-        this(id, id);
+    public BodyPartSource(String id, String contentType) {
+        this(id, id, contentType);
     }
 
-    public BodyPartSource(String id, String name) {
-        this(id, name, name);
-    }
-
-    public BodyPartSource(String id, String name, String description) {
+    public BodyPartSource(String id, String name, String contentType) {
         this.id = id;
         this.name = name;
-        this.description = description;
+        this.contentType = contentType;
     }
 
     public String id() {
@@ -53,8 +52,8 @@ public abstract class BodyPartSource implements ToXContent {
         return name;
     }
 
-    public String description() {
-        return description;
+    public String contentType() {
+        return contentType;
     }
 
     public abstract MimeBodyPart bodyPart() throws MessagingException;
