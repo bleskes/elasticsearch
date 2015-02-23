@@ -76,6 +76,9 @@ public class HighestRegisteredDomainTest
 	    testDomainSplit("internalunlikelyhostname", "bizarre", "internalunlikelyhostname.bizarre");
 	    testDomainSplit("", "internalunlikelyhostname.info", "internalunlikelyhostname.info");  // .info is a valid TLD
 	    testDomainSplit("internalunlikelyhostname", "information", "internalunlikelyhostname.information");
+	    testDomainSplit("", "216.22.0.192", "216.22.0.192");
+	    testDomainSplit("", "::1", "::1");
+	    testDomainSplit("", "FE80:0000:0000:0000:0202:B3FF:FE1E:8329", "FE80:0000:0000:0000:0202:B3FF:FE1E:8329");
 	    testDomainSplit("216.22", "project.coop", "216.22.project.coop");
 	    testDomainSplit("www", "xn--h1alffa9f.xn--p1ai", "www.xn--h1alffa9f.xn--p1ai");
 	    testDomainSplit("", "", "");

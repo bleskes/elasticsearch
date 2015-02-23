@@ -29,6 +29,7 @@ package com.prelert.transforms;
 
 import java.util.List;
 
+import com.google.common.net.InetAddresses;
 import com.google.common.net.InternetDomainName;
 
 
@@ -92,6 +93,13 @@ public class HighestRegisteredDomain extends Transform
         if (host.isEmpty())
         {
             return new DomainSplit("", "");
+        }
+
+        // Put IP addresses into the domain portion of the result in their
+        // entirety
+        if (InetAddresses.isInetAddress(host))
+        {
+            return new DomainSplit("", host);
         }
 
         InternetDomainName idn = InternetDomainName.from(host);
