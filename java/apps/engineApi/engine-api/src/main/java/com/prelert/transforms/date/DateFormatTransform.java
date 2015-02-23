@@ -45,32 +45,32 @@ public class DateFormatTransform extends DateTransform
     private DateFormat m_DateFormat;
 
     public DateFormatTransform(String timeFormat,
-    		int[] inputIndicies, int[] outputIndicies)
+            int[] inputIndicies, int[] outputIndicies)
     {
-    	super(inputIndicies, outputIndicies);
+        super(inputIndicies, outputIndicies);
         m_TimeFormat = timeFormat;
 
         m_DateFormat = new SimpleDateFormat(m_TimeFormat);
     }
 
     @Override
-	public long epoch()
+    public long epoch()
     {
-    	return m_Epoch;
+        return m_Epoch;
     }
 
     /**
      * Expects 1 input and 1 output.
      */
-	@Override
-	public boolean transform(String[] inputRecord,String[] outputRecord)
-	throws TransformException
-	{
-		String field = inputRecord[m_InputIndicies[0]];
-		if (field == null)
-		{
-			throw new ParseTimestampException("Cannot parse null string");
-		}
+    @Override
+    public boolean transform(String[] inputRecord,String[] outputRecord)
+    throws TransformException
+    {
+        String field = inputRecord[m_InputIndicies[0]];
+        if (field == null)
+        {
+            throw new ParseTimestampException("Cannot parse null string");
+        }
 
         try
         {
@@ -82,9 +82,9 @@ public class DateFormatTransform extends DateTransform
         catch (ParseException pe)
         {
             String message = String.format("Cannot parse date '%s' with format string '%s'",
-            		inputRecord[m_InputIndicies[0]], m_TimeFormat);
+                    inputRecord[m_InputIndicies[0]], m_TimeFormat);
 
             throw new ParseTimestampException(message);
         }
-	}
+    }
 }

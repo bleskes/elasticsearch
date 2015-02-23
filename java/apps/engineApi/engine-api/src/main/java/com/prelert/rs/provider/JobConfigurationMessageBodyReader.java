@@ -55,51 +55,51 @@ import com.prelert.rs.data.ErrorCode;
 @Consumes(MediaType.APPLICATION_JSON)
 public class JobConfigurationMessageBodyReader implements MessageBodyReader<JobConfiguration>
 {
-	/**
-	 * The Object to JSON mapper.
-	 */
-	private static final ObjectReader OBJECT_READER = new ObjectMapper().reader(JobConfiguration.class)
-							.with(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY);;
+     /**
+      * The Object to JSON mapper.
+      */
+     private static final ObjectReader OBJECT_READER = new ObjectMapper().reader(JobConfiguration.class)
+                                   .with(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY);
 
 
-	@Override
-	public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotatios,
-			MediaType mediaType)
-	{
-		// no need to check the media type because of the @Consumes annotation
-		return type == JobConfiguration.class;
-	}
+     @Override
+     public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotatios,
+               MediaType mediaType)
+     {
+          // no need to check the media type because of the @Consumes annotation
+          return type == JobConfiguration.class;
+     }
 
-	@Override
-	public JobConfiguration readFrom(Class<JobConfiguration> bean, Type genericType,
-			Annotation[] annotation, MediaType mediaType,
-			MultivaluedMap<String, String> httpHeaders, InputStream input)
-					throws IOException, WebApplicationException
-	{
-		// Sanity check. The consumes annotation means only Json should be read
-		if (!mediaType.equals(MediaType.APPLICATION_JSON_TYPE)
-			&& !mediaType.equals(MediaType.APPLICATION_JSON_TYPE.withCharset("UTF-8")))
-		{
-			throw new WebApplicationException(
-					Response.status(Response.Status.UNSUPPORTED_MEDIA_TYPE).build());
-		}
+     @Override
+     public JobConfiguration readFrom(Class<JobConfiguration> bean, Type genericType,
+               Annotation[] annotation, MediaType mediaType,
+               MultivaluedMap<String, String> httpHeaders, InputStream input)
+                         throws IOException, WebApplicationException
+     {
+          // Sanity check. The consumes annotation means only Json should be read
+          if (!mediaType.equals(MediaType.APPLICATION_JSON_TYPE)
+               && !mediaType.equals(MediaType.APPLICATION_JSON_TYPE.withCharset("UTF-8")))
+          {
+               throw new WebApplicationException(
+                         Response.status(Response.Status.UNSUPPORTED_MEDIA_TYPE).build());
+          }
 
-		try
-		{
-			return OBJECT_READER.readValue(input);
-		}
-		catch (JsonParseException e)
-		{
-			throw new JobConfigurationParseException(
-					"JSON parse error reading the job configuration", e,
-					ErrorCode.JOB_CONFIG_PARSE_ERROR);
-		}
-		catch (JsonMappingException e)
-		{
-			throw new JobConfigurationParseException(
-					"JSON mapping error reading the job configuration", e,
-					ErrorCode.JOB_CONFIG_UNKNOWN_FIELD_ERROR);
-		}
-	}
+          try
+          {
+               return OBJECT_READER.readValue(input);
+          }
+          catch (JsonParseException e)
+          {
+               throw new JobConfigurationParseException(
+                         "JSON parse error reading the job configuration", e,
+                         ErrorCode.JOB_CONFIG_PARSE_ERROR);
+          }
+          catch (JsonMappingException e)
+          {
+               throw new JobConfigurationParseException(
+                         "JSON mapping error reading the job configuration", e,
+                         ErrorCode.JOB_CONFIG_UNKNOWN_FIELD_ERROR);
+          }
+     }
 
 }

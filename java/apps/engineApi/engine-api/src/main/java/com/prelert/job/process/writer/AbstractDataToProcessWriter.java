@@ -62,7 +62,7 @@ import com.prelert.transforms.date.DoubleDateTransform;
 
 public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
 {
-	protected static int TIME_FIELD_OUT_INDEX = 0;
+    protected static int TIME_FIELD_OUT_INDEX = 0;
 
     protected final LengthEncodedWriter m_LengthEncodedWriter;
     protected final DataDescription m_DataDescription;
@@ -114,14 +114,14 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
     public List<Transform> buildTransforms(String [] header)
     throws MissingFieldException
     {
-    	List<Transform> transforms = new ArrayList<>();
+        List<Transform> transforms = new ArrayList<>();
 
-    	Collection<String> inputFields = inputFields();
-    	m_InFieldIndexes = inputFieldIndicies(header, inputFields);
-    	checkForMissingFields(inputFields, m_InFieldIndexes, header);
+        Collection<String> inputFields = inputFields();
+        m_InFieldIndexes = inputFieldIndicies(header, inputFields);
+        checkForMissingFields(inputFields, m_InFieldIndexes, header);
 
-    	m_OutFieldIndexes = outputFieldIndicies();
-    	m_InputOutputMap = createInputOutputMap();
+        m_OutFieldIndexes = outputFieldIndicies();
+        m_InputOutputMap = createInputOutputMap();
         m_StatusReporter.setAnalysedFieldsPerRecord(m_AnalysisConfig.analysisFields().size());
 
         m_JobDataPersister.setFieldMappings(m_AnalysisConfig.fields(),
@@ -130,35 +130,35 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
 
 
         boolean isDateFromatString = m_DataDescription.isTransformTime()
-        									&& !m_DataDescription.isEpochMs();
+                                            && !m_DataDescription.isEpochMs();
         if (isDateFromatString)
         {
-        	m_DateTransform = new DateFormatTransform(m_DataDescription.getTimeFormat(),
-					new int[] {m_InFieldIndexes.get(m_DataDescription.getTimeField())},
-					new int [] {m_OutFieldIndexes.get(m_DataDescription.getTimeField())});
+            m_DateTransform = new DateFormatTransform(m_DataDescription.getTimeFormat(),
+                    new int[] {m_InFieldIndexes.get(m_DataDescription.getTimeField())},
+                    new int [] {m_OutFieldIndexes.get(m_DataDescription.getTimeField())});
         }
         else
         {
-        	m_DateTransform = new DoubleDateTransform(m_DataDescription.isEpochMs(),
-					new int[] {m_InFieldIndexes.get(m_DataDescription.getTimeField())},
-					new int [] {m_OutFieldIndexes.get(m_DataDescription.getTimeField())});
+            m_DateTransform = new DoubleDateTransform(m_DataDescription.isEpochMs(),
+                    new int[] {m_InFieldIndexes.get(m_DataDescription.getTimeField())},
+                    new int [] {m_OutFieldIndexes.get(m_DataDescription.getTimeField())});
         }
 
-    	for (TransformConfig config : m_TransformConfigs.getTransforms())
-    	{
-    		try
-    		{
-				Transform tr = TransformFactory.create(config, m_InFieldIndexes,
-													m_OutFieldIndexes, m_Logger);
-				transforms.add(tr);
-			}
-    		catch (TransformConfigurationException e)
-    		{
-				m_Logger.error("Error creating transform " + config, e);
-			}
-    	}
+        for (TransformConfig config : m_TransformConfigs.getTransforms())
+        {
+            try
+            {
+                Transform tr = TransformFactory.create(config, m_InFieldIndexes,
+                                                    m_OutFieldIndexes, m_Logger);
+                transforms.add(tr);
+            }
+            catch (TransformConfigurationException e)
+            {
+                m_Logger.error("Error creating transform " + config, e);
+            }
+        }
 
-    	return transforms;
+        return transforms;
     }
 
     /**
@@ -181,23 +181,23 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
      * @throws IOException
      */
     protected boolean applyTransformsAndWrite(List<Transform> transforms,
-    									String [] input, String [] output,
-    									long numberOfFieldsRead)
+                                        String [] input, String [] output,
+                                        long numberOfFieldsRead)
     throws HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException
     {
 
-    	try
-    	{
-			m_DateTransform.transform(input, output);
-		}
-    	catch (TransformException e)
-    	{
+        try
+        {
+            m_DateTransform.transform(input, output);
+        }
+        catch (TransformException e)
+        {
             m_StatusReporter.reportDateParseError(m_InFieldIndexes.size());
             m_Logger.error(e.getMessage());
-    		return false;
-		}
+            return false;
+        }
 
-    	long epoch = m_DateTransform.epoch();
+        long epoch = m_DateTransform.epoch();
         if (epoch < m_LatestEpoch - m_AnalysisConfig.getLatency())
         {
             // out of order
@@ -209,14 +209,14 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
 
         for (Transform tr : transforms)
         {
-        	try
-        	{
-        		tr.transform(input, output);
-        	}
-        	catch (TransformException e)
-        	{
-        		m_Logger.warn("e");
-        	}
+            try
+            {
+                tr.transform(input, output);
+            }
+            catch (TransformException e)
+            {
+                m_Logger.warn("e");
+            }
         }
 
         m_LengthEncodedWriter.writeRecord(output);
@@ -243,8 +243,8 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
         Iterator<Map.Entry<String, Integer>> itr = m_OutFieldIndexes.entrySet().iterator();
         while (itr.hasNext())
         {
-        	Map.Entry<String, Integer> entry = itr.next();
-        	record[entry.getValue()] = entry.getKey();
+            Map.Entry<String, Integer> entry = itr.next();
+            record[entry.getValue()] = entry.getKey();
         }
 
         // Write the header
@@ -260,14 +260,14 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
      */
     public final Collection<String> inputFields()
     {
-    	Set<String> requiredFields = new HashSet<>(m_AnalysisConfig.analysisFields());
+        Set<String> requiredFields = new HashSet<>(m_AnalysisConfig.analysisFields());
 
-    	requiredFields.removeAll(m_TransformConfigs.outputFieldNames()); // inputs not in a transform
-    	requiredFields.addAll(m_TransformConfigs.inputFieldNames());
+        requiredFields.removeAll(m_TransformConfigs.outputFieldNames()); // inputs not in a transform
+        requiredFields.addAll(m_TransformConfigs.inputFieldNames());
 
-    	requiredFields.add(m_DataDescription.getTimeField());
+        requiredFields.add(m_DataDescription.getTimeField());
 
-    	return requiredFields;
+        return requiredFields;
     }
 
     /**
@@ -284,12 +284,12 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
 
         for (String field : inputFields)
         {
-        	int index = headerList.indexOf(field);
-        	if (index >= 0)
-        	{
-        		fieldIndexes.put(field, index);
-        		m_Logger.info("Index of field " + field + " is " + index);
-        	}
+            int index = headerList.indexOf(field);
+            if (index >= 0)
+            {
+                fieldIndexes.put(field, index);
+                m_Logger.info("Index of field " + field + " is " + index);
+            }
         }
 
         return fieldIndexes;
@@ -297,7 +297,7 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
 
     public Map<String, Integer> getInputFieldIndicies()
     {
-    	return m_InFieldIndexes;
+        return m_InFieldIndexes;
     }
 
     /**
@@ -312,29 +312,29 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
      */
     protected final Map<String, Integer> outputFieldIndicies()
     {
-    	Map<String, Integer> fieldIndexes = new HashMap<String, Integer>();
+        Map<String, Integer> fieldIndexes = new HashMap<String, Integer>();
 
-    	// time field
-    	fieldIndexes.put(m_DataDescription.getTimeField(), TIME_FIELD_OUT_INDEX);
+        // time field
+        fieldIndexes.put(m_DataDescription.getTimeField(), TIME_FIELD_OUT_INDEX);
 
-    	int index = 1;
-    	List<String> analysisFields = m_AnalysisConfig.analysisFields();
-    	Collections.sort(analysisFields);
+        int index = 1;
+        List<String> analysisFields = m_AnalysisConfig.analysisFields();
+        Collections.sort(analysisFields);
 
-    	for (String field : m_AnalysisConfig.analysisFields())
-    	{
-    		fieldIndexes.put(field, index++);
-    	}
+        for (String field : m_AnalysisConfig.analysisFields())
+        {
+            fieldIndexes.put(field, index++);
+        }
 
-    	// control field
-    	fieldIndexes.put(LengthEncodedWriter.CONTROL_FIELD_NAME, index);
+        // control field
+        fieldIndexes.put(LengthEncodedWriter.CONTROL_FIELD_NAME, index);
 
-    	return fieldIndexes;
+        return fieldIndexes;
     }
 
     public Map<String, Integer> getOutputFieldIndicies()
     {
-    	return m_OutFieldIndexes;
+        return m_OutFieldIndexes;
     }
 
     /**
@@ -344,27 +344,27 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
      */
     protected final List<InputOutputMap> createInputOutputMap()
     {
-    	// where no transform
-    	List<InputOutputMap> inputOutputMap = new ArrayList<>();
+        // where no transform
+        List<InputOutputMap> inputOutputMap = new ArrayList<>();
 
-    	int outIndex = TIME_FIELD_OUT_INDEX + 1;
-    	for (String field : m_AnalysisConfig.analysisFields())
-    	{
-    		Integer inIndex = m_InFieldIndexes.get(field);
-    		if (inIndex != null)
-    		{
-    			inputOutputMap.add(new InputOutputMap(inIndex, outIndex));
-    		}
+        int outIndex = TIME_FIELD_OUT_INDEX + 1;
+        for (String field : m_AnalysisConfig.analysisFields())
+        {
+            Integer inIndex = m_InFieldIndexes.get(field);
+            if (inIndex != null)
+            {
+                inputOutputMap.add(new InputOutputMap(inIndex, outIndex));
+            }
 
-    		++outIndex;
-    	}
+            ++outIndex;
+        }
 
-    	return inputOutputMap;
+        return inputOutputMap;
     }
 
     public List<InputOutputMap> getInputOutputMap()
     {
-    	return m_InputOutputMap;
+        return m_InputOutputMap;
     }
 
 
@@ -382,8 +382,8 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
      * @throws MissingFieldException
      */
     protected abstract boolean checkForMissingFields(Collection<String> inputFields,
-    										Map<String, Integer> inputFieldIndicies,
-    										String [] header)
+                                            Map<String, Integer> inputFieldIndicies,
+                                            String [] header)
     throws MissingFieldException;
 
 
@@ -393,14 +393,13 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
      */
     protected class InputOutputMap
     {
-    	int m_Input;
-    	int m_Output;
+        int m_Input;
+        int m_Output;
 
-    	public InputOutputMap(int in, int out)
-    	{
-    		m_Input = in;
-    		m_Output = out;
-    	}
+        public InputOutputMap(int in, int out)
+        {
+            m_Input = in;
+            m_Output = out;
+        }
     }
-
 }

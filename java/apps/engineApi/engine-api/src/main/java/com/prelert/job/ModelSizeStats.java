@@ -70,9 +70,13 @@ public class ModelSizeStats
 
     private static final Logger LOGGER = Logger.getLogger(ModelSizeStats.class);
 
-    /**
-     * Constructor
-     */
+    private long m_ModelBytes;
+    private long m_TotalByFieldCount;
+    private long m_TotalOverFieldCount;
+    private long m_TotalPartitionFieldCount;
+    private long m_BucketAllocationFailuresCount;
+    private MemoryStatus m_MemoryStatus;
+
     public ModelSizeStats()
     {
         m_ModelBytes = 0;
@@ -83,14 +87,6 @@ public class ModelSizeStats
         m_BucketAllocationFailuresCount = 0;
         m_MemoryStatus = MemoryStatus.OK;
     }
-
-
-    private long m_ModelBytes;
-    private long m_TotalByFieldCount;
-    private long m_TotalOverFieldCount;
-    private long m_TotalPartitionFieldCount;
-    private long m_BucketAllocationFailuresCount;
-    private MemoryStatus m_MemoryStatus;
 
     public String getId()
     {

@@ -38,31 +38,31 @@ import com.prelert.transforms.TransformException;
  */
 public class DoubleDateTransform extends DateTransform
 {
-	private final boolean m_IsMillisecond;
-	private long m_Epoch;
+    private final boolean m_IsMillisecond;
+    private long m_Epoch;
 
     public DoubleDateTransform(boolean isMillisecond,
-    		int[] inputIndicies, int[] outputIndicies)
+            int[] inputIndicies, int[] outputIndicies)
     {
-    	super(inputIndicies, outputIndicies);
-    	m_IsMillisecond = isMillisecond;
+        super(inputIndicies, outputIndicies);
+        m_IsMillisecond = isMillisecond;
     }
 
     @Override
-	public long epoch()
+    public long epoch()
     {
-    	return m_Epoch;
+        return m_Epoch;
     }
 
-	@Override
-	public boolean transform(String[] inputRecord, String[] outputRecord)
-	throws TransformException
-	{
-		String field = inputRecord[m_InputIndicies[0]];
-		if (field == null)
-		{
-			throw new ParseTimestampException("Cannot parse null string");
-		}
+    @Override
+    public boolean transform(String[] inputRecord, String[] outputRecord)
+    throws TransformException
+    {
+        String field = inputRecord[m_InputIndicies[0]];
+        if (field == null)
+        {
+            throw new ParseTimestampException("Cannot parse null string");
+        }
 
         try
         {
@@ -80,6 +80,6 @@ public class DoubleDateTransform extends DateTransform
                     "Cannot parse timestamp '%s' as epoch value", inputRecord[m_InputIndicies[0]]);
             throw new ParseTimestampException(message);
         }
-	}
+    }
 }
 

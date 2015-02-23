@@ -59,7 +59,7 @@ public class TransformFactory
 			Logger logger)
 	throws TransformConfigurationException
 	{
-		int input[] = new int [transformConfig.getInputs().size()];
+		int[] input = new int[transformConfig.getInputs().size()];
 
 		fillIndexArray(transformConfig.getInputs(), inputIndiciesMap, input, logger);
 
@@ -72,7 +72,7 @@ public class TransformFactory
 				count++;
 			}
 		}
-		int output[] = new int [count];
+		int[] output = new int[count];
 		fillIndexArray(transformConfig.getOutputs(), outputIndiciesMap, output, logger);
 
 		TransformType type = transformConfig.type();

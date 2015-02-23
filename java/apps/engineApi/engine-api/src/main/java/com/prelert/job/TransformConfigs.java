@@ -37,57 +37,57 @@ import java.util.Set;
  */
 public class TransformConfigs
 {
-	private List<TransformConfig> m_Transforms;
+    private List<TransformConfig> m_Transforms;
 
-	public TransformConfigs(List<TransformConfig> transforms)
-	{
-		m_Transforms = transforms;
-		if (m_Transforms == null)
-		{
-			m_Transforms = Collections.emptyList();
-		}
-	}
-
-
-	public List<TransformConfig> getTransforms()
-	{
-		return m_Transforms;
-	}
+    public TransformConfigs(List<TransformConfig> transforms)
+    {
+        m_Transforms = transforms;
+        if (m_Transforms == null)
+        {
+            m_Transforms = Collections.emptyList();
+        }
+    }
 
 
-	/**
-	 * Set of all the field names configured as inputs to the transforms
-	 * @return
-	 */
-	public Set<String> inputFieldNames()
-	{
-		Set<String> fields = new HashSet<>();
-		for (TransformConfig t : m_Transforms)
-		{
-			fields.addAll(t.getInputs());
-		}
+    public List<TransformConfig> getTransforms()
+    {
+        return m_Transforms;
+    }
 
-		return fields;
-	}
 
-	public Set<String> outputFieldNames()
-	{
-		Set<String> fields = new HashSet<>();
-		for (TransformConfig t : m_Transforms)
-		{
-			fields.addAll(t.getOutputs());
-		}
+    /**
+     * Set of all the field names configured as inputs to the transforms
+     * @return
+     */
+    public Set<String> inputFieldNames()
+    {
+        Set<String> fields = new HashSet<>();
+        for (TransformConfig t : m_Transforms)
+        {
+            fields.addAll(t.getInputs());
+        }
 
-		return fields;
-	}
+        return fields;
+    }
 
-	static public boolean verify(List<TransformConfig> transforms) throws JobConfigurationException
-	{
-		for (TransformConfig tr : transforms)
-		{
-			tr.verify();
-		}
+    public Set<String> outputFieldNames()
+    {
+        Set<String> fields = new HashSet<>();
+        for (TransformConfig t : m_Transforms)
+        {
+            fields.addAll(t.getOutputs());
+        }
 
-		return true;
-	}
+        return fields;
+    }
+
+    public static boolean verify(List<TransformConfig> transforms) throws JobConfigurationException
+    {
+        for (TransformConfig tr : transforms)
+        {
+            tr.verify();
+        }
+
+        return true;
+    }
 }

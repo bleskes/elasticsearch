@@ -32,21 +32,21 @@ package com.prelert.transforms;
  */
 public class PassThrough extends Transform
 {
-	public PassThrough(int[] inputIndicies, int[] outputIndicies)
-	{
-		super(inputIndicies, outputIndicies);
-	}
+    public PassThrough(int[] inputIndicies, int[] outputIndicies)
+    {
+        super(inputIndicies, outputIndicies);
+    }
 
-	@Override
-	public boolean transform(String[] inputRecord, String[] outputRecord)
-	throws TransformException
-	{
-		for (int i=0; i<m_InputIndicies.length; i++)
-		{
-			outputRecord[m_OutputIndicies[i]] = inputRecord[m_InputIndicies[i]];
-		}
+    @Override
+    public boolean transform(String[] inputRecord, String[] outputRecord)
+    throws TransformException
+    {
+        for (int i=0; i<m_InputIndicies.length; i++)
+        {
+            outputRecord[m_OutputIndicies[i]] = inputRecord[m_InputIndicies[i]];
+        }
 
-		return true;
-	}
+        return true;
+    }
 
 }

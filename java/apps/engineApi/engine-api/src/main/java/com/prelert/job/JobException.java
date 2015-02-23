@@ -32,26 +32,26 @@ import com.prelert.rs.data.ErrorCode;
 /**
  * General job exception class with a specific error code and message.
  */
-abstract public class JobException extends Exception
+public abstract class JobException extends Exception
 {
-	private static final long serialVersionUID = -5289885963015348819L;
+    private static final long serialVersionUID = -5289885963015348819L;
 
-	private final ErrorCode m_ErrorCode;
+    private final ErrorCode m_ErrorCode;
 
-	public JobException(String message, ErrorCode errorCode)
-	{
-		super(message);
-		m_ErrorCode = errorCode;
-	}
+    public JobException(String message, ErrorCode errorCode)
+    {
+        super(message);
+        m_ErrorCode = errorCode;
+    }
 
-	public JobException(String message, ErrorCode errorCode, Throwable cause)
-	{
-		super(message, cause);
-		m_ErrorCode = errorCode;
-	}
+    public JobException(String message, ErrorCode errorCode, Throwable cause)
+    {
+        super(message, cause);
+        m_ErrorCode = errorCode;
+    }
 
-	public ErrorCode getErrorCode()
-	{
-		return m_ErrorCode;
-	}
+    public ErrorCode getErrorCode()
+    {
+        return m_ErrorCode;
+    }
 }
