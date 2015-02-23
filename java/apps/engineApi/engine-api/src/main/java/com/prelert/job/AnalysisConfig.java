@@ -346,20 +346,8 @@ public class AnalysisConfig
         checkFieldIsNotNegativeIfSpecified("BatchSpan", m_BatchSpan);
         checkFieldIsNotNegativeIfSpecified("Latency", m_Latency);
         checkFieldIsNotNegativeIfSpecified("Period", m_Period);
-
         Detector.verifyFieldName(m_SummaryCountFieldName);
-
-        if (m_Detectors.isEmpty())
-        {
-            throw new JobConfigurationException("No detectors configured",
-                    ErrorCode.INCOMPLETE_CONFIGURATION);
-        }
-
-        boolean isSummarised = (m_SummaryCountFieldName != null && !m_SummaryCountFieldName.isEmpty());
-        for (Detector d : m_Detectors)
-        {
-            d.verify(isSummarised);
-        }
+        verifyDetectors();
 
         return true;
     }
@@ -371,6 +359,21 @@ public class AnalysisConfig
         {
             String msg = String.format("%s cannot be < 0. Value = %d", fieldName, value);
             throw new JobConfigurationException(msg, ErrorCode.INVALID_VALUE);
+        }
+    }
+
+    private void verifyDetectors() throws JobConfigurationException
+    {
+        if (m_Detectors.isEmpty())
+        {
+            throw new JobConfigurationException("No detectors configured",
+                    ErrorCode.INCOMPLETE_CONFIGURATION);
+        }
+
+        boolean isSummarised = (m_SummaryCountFieldName != null && !m_SummaryCountFieldName.isEmpty());
+        for (Detector d : m_Detectors)
+        {
+            d.verify(isSummarised);
         }
     }
 }
