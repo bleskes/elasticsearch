@@ -29,170 +29,125 @@ package com.prelert.job;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Represents an API data transform
  */
 public class TransformConfig
 {
-	// Serialisation strings
-	public static final String TYPE = "transform";
-	public static final String TRANSFORM = "transform";
-	public static final String INPUTS = "inputs";
-	public static final String OUTPUTS = "outputs";
+    // Serialisation strings
+    public static final String TYPE = "transform";
+    public static final String TRANSFORM = "transform";
+    public static final String INPUTS = "inputs";
+    public static final String OUTPUTS = "outputs";
 
 
-	private List<String> m_Inputs;
-	private String m_Name;
-	private List<String> m_Outputs;
-	private TransformType m_Type;
+    private List<String> m_Inputs;
+    private String m_Name;
+    private List<String> m_Outputs;
+    private TransformType m_Type;
 
-	public TransformConfig()
-	{
-	}
+    public TransformConfig()
+    {
+    }
 
-	public List<String> getInputs()
-	{
-		return m_Inputs;
-	}
+    public List<String> getInputs()
+    {
+        return m_Inputs;
+    }
 
-	public void setInputs(List<String> fields)
-	{
-		m_Inputs = fields;
-	}
+    public void setInputs(List<String> fields)
+    {
+        m_Inputs = fields;
+    }
 
-	public String getTransform()
-	{
-		return m_Name;
-	}
+    public String getTransform()
+    {
+        return m_Name;
+    }
 
-	public void setTransform(String type)
-	{
-		m_Name = type;
-	}
+    public void setTransform(String type)
+    {
+        m_Name = type;
+    }
 
-	public List<String> getOutputs()
-	{
-		if (m_Outputs == null || m_Outputs.size() == 0)
-		{
-			try
-			{
-				m_Outputs = type().defaultOutputNames();
-			}
-			catch (TransformConfigurationException e)
-			{
-				m_Outputs = Collections.emptyList();
-			}
-		}
+    public List<String> getOutputs()
+    {
+        if (m_Outputs == null || m_Outputs.isEmpty())
+        {
+            try
+            {
+                m_Outputs = type().defaultOutputNames();
+            }
+            catch (TransformConfigurationException e)
+            {
+                m_Outputs = Collections.emptyList();
+            }
+        }
 
-		return m_Outputs;
-	}
+        return m_Outputs;
+    }
 
-	public void setOutputs(List<String> outputs)
-	{
-		m_Outputs = outputs;
-	}
+    public void setOutputs(List<String> outputs)
+    {
+        m_Outputs = outputs;
+    }
 
-	/**
-	 * This field shouldn't be serialised as its created dynamically
-	 * Type may be null when the class is constructed.
-	 * @return
-	 */
-	public TransformType type() throws TransformConfigurationException
-	{
-		if (m_Type == null)
-		{
-			m_Type = TransformType.fromString(m_Name);
-		}
+    /**
+     * This field shouldn't be serialised as its created dynamically
+     * Type may be null when the class is constructed.
+     * @return
+     */
+    public TransformType type() throws TransformConfigurationException
+    {
+        if (m_Type == null)
+        {
+            m_Type = TransformType.fromString(m_Name);
+        }
 
-		return m_Type;
-	}
+        return m_Type;
+    }
 
-	public boolean verify() throws TransformConfigurationException
-	{
-		return type().verify(this);
-	}
+    public boolean verify() throws TransformConfigurationException
+    {
+        return type().verify(this);
+    }
 
-	@Override
-	public String toString()
-	{
-		return m_Name;
-	}
+    @Override
+    public String toString()
+    {
+        return m_Name;
+    }
 
-	@Override
-	public int hashCode()
-	{
-		final int prime = 31;
-		int result = 1;
-		result = prime * result
-				+ ((m_Inputs == null) ? 0 : m_Inputs.hashCode());
-		result = prime * result + ((m_Name == null) ? 0 : m_Name.hashCode());
-		result = prime * result
-				+ ((m_Outputs == null) ? 0 : m_Outputs.hashCode());
-		result = prime * result + ((m_Type == null) ? 0 : m_Type.hashCode());
-		return result;
-	}
+    @Override
+    public int hashCode()
+    {
+        return Objects.hash(m_Inputs, m_Name, m_Outputs, m_Type);
+    }
 
-	@Override
-	public boolean equals(Object obj)
-	{
-		if (this == obj)
-		{
-			return true;
-		}
-		if (obj == null)
-		{
-			return false;
-		}
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (this == obj)
+        {
+            return true;
+        }
+        if (obj == null)
+        {
+            return false;
+        }
 
-		if (getClass() != obj.getClass())
-		{
-			return false;
-		}
+        if (getClass() != obj.getClass())
+        {
+            return false;
+        }
 
-		TransformConfig other = (TransformConfig) obj;
+        TransformConfig other = (TransformConfig) obj;
 
-		if (m_Inputs == null)
-		{
-			if (other.m_Inputs != null)
-			{
-				return false;
-			}
-		}
-		else if (!m_Inputs.equals(other.m_Inputs))
-		{
-			return false;
-		}
-
-		if (m_Name == null)
-		{
-			if (other.m_Name != null)
-			{
-				return false;
-			}
-		}
-		else if (!m_Name.equals(other.m_Name))
-		{
-			return false;
-		}
-
-		if (m_Outputs == null)
-		{
-			if (other.m_Outputs != null)
-			{
-				return false;
-			}
-		}
-		else if (!m_Outputs.equals(other.m_Outputs))
-		{
-			return false;
-		}
-
-		if (m_Type != other.m_Type)
-		{
-			return false;
-		}
-
-		return true;
-	}
+        return Objects.equals(this.m_Inputs, other.m_Inputs)
+                && Objects.equals(this.m_Name, other.m_Name)
+                && Objects.equals(this.m_Outputs, other.m_Outputs)
+                && Objects.equals(this.m_Type, other.m_Type);
+    }
 }

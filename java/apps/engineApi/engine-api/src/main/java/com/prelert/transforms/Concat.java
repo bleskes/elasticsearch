@@ -32,33 +32,33 @@ package com.prelert.transforms;
  */
 public class Concat extends Transform
 {
-	public Concat(int[] inputIndicies, int[] outputIndicies)
-	{
-		super(inputIndicies, outputIndicies);
-	}
+    public Concat(int[] inputIndicies, int[] outputIndicies)
+    {
+        super(inputIndicies, outputIndicies);
+    }
 
-	/**
-	 * Concat has only 1 output field
-	 */
-	@Override
-	public boolean transform(String[] inputRecord, String[] outputRecord)
-	throws TransformException
-	{
-		if (m_OutputIndicies.length == 0)
-		{
-			return true;
-		}
+    /**
+     * Concat has only 1 output field
+     */
+    @Override
+    public boolean transform(String[] inputRecord, String[] outputRecord)
+    throws TransformException
+    {
+        if (m_OutputIndicies.length == 0)
+        {
+            return true;
+        }
 
-		StringBuilder builder = new StringBuilder();
+        StringBuilder builder = new StringBuilder();
 
-		for (int i=0; i<m_InputIndicies.length; i++)
-		{
-			builder.append(inputRecord[m_InputIndicies[i]]);
-		}
+        for (int i=0; i<m_InputIndicies.length; i++)
+        {
+            builder.append(inputRecord[m_InputIndicies[i]]);
+        }
 
-		outputRecord[m_OutputIndicies[0]] = builder.toString();
+        outputRecord[m_OutputIndicies[0]] = builder.toString();
 
-		return true;
-	}
+        return true;
+    }
 
 }

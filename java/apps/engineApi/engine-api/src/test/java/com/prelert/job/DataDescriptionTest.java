@@ -29,25 +29,28 @@ package com.prelert.job;
 
 import static org.junit.Assert.assertEquals;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.junit.Test;
+
+import com.prelert.job.DataDescription.DataFormat;
 
 public class DataDescriptionTest
 {
     @Test
     public void testHashCode_GivenEqual()
     {
-        Map<String, Object> description = new HashMap<>();
-        description.put(DataDescription.FORMAT, "JSON");
-        description.put(DataDescription.TIME_FIELD_NAME, "timestamp");
-        description.put(DataDescription.QUOTE_CHARACTER, "'");
-        description.put(DataDescription.TIME_FORMAT, "timeFormat");
-        description.put(DataDescription.FIELD_DELIMITER, ",");
+        DataDescription dataDescription1 = new DataDescription();
+        dataDescription1.setFormat(DataFormat.JSON);
+        dataDescription1.setTimeField("timestamp");
+        dataDescription1.setQuoteCharacter('\'');
+        dataDescription1.setTimeFormat("timeFormat");
+        dataDescription1.setFieldDelimiter(',');
 
-        DataDescription dataDescription1 = new DataDescription(description);
-        DataDescription dataDescription2 = new DataDescription(description);
+        DataDescription dataDescription2 = new DataDescription();
+        dataDescription2.setFormat(DataFormat.JSON);
+        dataDescription2.setTimeField("timestamp");
+        dataDescription2.setQuoteCharacter('\'');
+        dataDescription2.setTimeFormat("timeFormat");
+        dataDescription2.setFieldDelimiter(',');
 
         assertEquals(dataDescription1.hashCode(), dataDescription2.hashCode());
     }

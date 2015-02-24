@@ -27,12 +27,12 @@
 
 package com.prelert.transforms;
 
-abstract public class TransformException extends Exception
+public abstract class TransformException extends Exception
 {
-	private static final long serialVersionUID = -4162269539818180916L;
+    private static final long serialVersionUID = -4162269539818180916L;
 
-	public TransformException(String message)
-	{
-		super(message);
-	}
+    public TransformException(String message)
+    {
+        super(message);
+    }
 }

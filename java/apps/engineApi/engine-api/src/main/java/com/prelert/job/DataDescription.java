@@ -28,7 +28,6 @@
 package com.prelert.job;
 
 import java.text.SimpleDateFormat;
-import java.util.Map;
 import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -141,56 +140,6 @@ public class DataDescription
 		m_TimeFormat = EPOCH;
 		m_FieldDelimiter = DEFAULT_DELIMITER;
 		m_QuoteCharacter = DEFAULT_QUOTE_CHAR;
-	}
-
-	/**
-	 * Construct a DataDescription from the map
-	 * @param values
-	 */
-	public DataDescription(Map<String, Object> values)
-	{
-		this();
-
-		if (values.containsKey(FORMAT))
-		{
-			Object obj = values.get(FORMAT);
-			if (obj != null)
-			{
-				m_DataFormat = DataFormat.valueOf(obj.toString().toUpperCase());
-			}
-		}
-		if (values.containsKey(TIME_FIELD_NAME))
-		{
-			Object obj = values.get(TIME_FIELD_NAME);
-			if (obj != null)
-			{
-				m_TimeFieldName = obj.toString();
-			}
-		}
-		if (values.containsKey(TIME_FORMAT))
-		{
-			Object obj = values.get(TIME_FORMAT);
-			if (obj != null)
-			{
-				m_TimeFormat = obj.toString();
-			}
-		}
-		if (values.containsKey(FIELD_DELIMITER))
-		{
-			Object obj = values.get(FIELD_DELIMITER);
-			if (obj != null)
-			{
-				m_FieldDelimiter = obj.toString().charAt(0);
-			}
-		}
-		if (values.containsKey(QUOTE_CHARACTER))
-		{
-			Object obj = values.get(QUOTE_CHARACTER);
-			if (obj != null)
-			{
-				m_QuoteCharacter = obj.toString().charAt(0);
-			}
-		}
 	}
 
 	/**

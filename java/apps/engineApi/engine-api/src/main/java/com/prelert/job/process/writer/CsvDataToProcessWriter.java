@@ -71,7 +71,7 @@ class CsvDataToProcessWriter extends AbstractDataToProcessWriter
             JobDataPersister jobDataPersister, Logger logger)
     {
         super(lengthEncodedWriter, dataDescription, analysisConfig, transforms,
-        		statusReporter, jobDataPersister, logger);
+                statusReporter, jobDataPersister, logger);
     }
 
     /**
@@ -114,7 +114,7 @@ class CsvDataToProcessWriter extends AbstractDataToProcessWriter
             int maxIndex = 0;
             for (Integer index : m_InFieldIndexes.values())
             {
-            	maxIndex = Math.max(index, maxIndex);
+                maxIndex = Math.max(index, maxIndex);
             }
 
 
@@ -131,7 +131,7 @@ class CsvDataToProcessWriter extends AbstractDataToProcessWriter
                 if (maxIndex >= line.size())
                 {
                     m_Logger.warn("Not enough fields in csv record, expected at least "  + maxIndex
-                    		+ ". "+ line);
+                            + ". "+ line);
 
                     Arrays.fill(record, "");
                     for (InputOutputMap inOut : m_InputOutputMap)
@@ -156,7 +156,7 @@ class CsvDataToProcessWriter extends AbstractDataToProcessWriter
                 }
 
                 applyTransformsAndWrite(transforms, line.toArray(new String[0]) ,
-                						record, inputFieldCount);
+                                        record, inputFieldCount);
             }
 
             // This function can throw
@@ -177,24 +177,24 @@ class CsvDataToProcessWriter extends AbstractDataToProcessWriter
 
     @Override
     protected boolean checkForMissingFields(Collection<String> inputFields,
-											Map<String, Integer> inputFieldIndicies,
-											String [] header)
+                                            Map<String, Integer> inputFieldIndicies,
+                                            String [] header)
     throws MissingFieldException
     {
-    	for (String field : inputFields)
-    	{
-    		Integer index = inputFieldIndicies.get(field);
-    		if (index == null)
-    		{
-    			String msg = String.format("Field configured for analysis "
-    					+ "'%s' is not in the CSV header '%s'",
-    					field, Arrays.toString(header));
+        for (String field : inputFields)
+        {
+            Integer index = inputFieldIndicies.get(field);
+            if (index == null)
+            {
+                String msg = String.format("Field configured for analysis "
+                        + "'%s' is not in the CSV header '%s'",
+                        field, Arrays.toString(header));
 
-    			m_Logger.error(msg);
-    			throw new MissingFieldException(field, msg);
-    		}
-    	}
+                m_Logger.error(msg);
+                throw new MissingFieldException(field, msg);
+            }
+        }
 
-    	return true;
+        return true;
     }
 }

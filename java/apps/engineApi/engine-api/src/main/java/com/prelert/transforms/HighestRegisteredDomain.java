@@ -29,6 +29,7 @@ package com.prelert.transforms;
 
 import java.util.List;
 
+import com.google.common.net.InetAddresses;
 import com.google.common.net.InternetDomainName;
 
 
@@ -42,119 +43,123 @@ import com.google.common.net.InternetDomainName;
  */
 public class HighestRegisteredDomain extends Transform
 {
-	/**
-	 * Immutable class for the domain split results
-	 */
-	static public class DomainSplit
-	{
-		private String m_SubDomain;
-		private String m_HighestRegisteredDomain;
+    /**
+     * Immutable class for the domain split results
+     */
+    public static class DomainSplit
+    {
+        private String m_SubDomain;
+        private String m_HighestRegisteredDomain;
 
-		private DomainSplit(String subDomain, String highestRegisteredDomain)
-		{
-			m_SubDomain = subDomain;
-			m_HighestRegisteredDomain = highestRegisteredDomain;
-		}
+        private DomainSplit(String subDomain, String highestRegisteredDomain)
+        {
+            m_SubDomain = subDomain;
+            m_HighestRegisteredDomain = highestRegisteredDomain;
+        }
 
-		public String getSubDomain()
-		{
-			return m_SubDomain;
-		}
+        public String getSubDomain()
+        {
+            return m_SubDomain;
+        }
 
-		public String getHighestRegisteredDomain()
-		{
-			return m_HighestRegisteredDomain;
-		}
-	}
+        public String getHighestRegisteredDomain()
+        {
+            return m_HighestRegisteredDomain;
+        }
+    }
 
-	public HighestRegisteredDomain(int[] inputIndicies, int[] outputIndicies)
-	{
-		super(inputIndicies, outputIndicies);
-	}
+    public HighestRegisteredDomain(int[] inputIndicies, int[] outputIndicies)
+    {
+        super(inputIndicies, outputIndicies);
+    }
 
-	/**
-	 * Split host into effective top level domain and sub domain
-	 * following this logic:<br/>
-	 * <ol>
-	 * <li>An empty host returns empty domain and sub domain</li>
-	 * <li>If the host does not have a recognised public suffix such as .local
-	 * the effective TLD is everything after the final '.' and the subdomain
-	 * is everything before the the final '.'</li>
-	 * <li>The host has a public suffix so split according to the rules
-	 * of the Guava InternetDomainname class </li>
-	 * </ol>
-	 *
-	 * @param host
-	 * @return
-	 */
-	static public DomainSplit lookup(String host)
-	{
-		if (host.isEmpty())
-		{
-			return new DomainSplit("", "");
-		}
+    /**
+     * Split host into effective top level domain and sub domain
+     * following this logic:<br/>
+     * <ol>
+     * <li>An empty host returns empty domain and sub domain</li>
+     * <li>If the host does not have a recognised public suffix such as .local
+     * the effective TLD is everything after the final '.' and the subdomain
+     * is everything before the the final '.'</li>
+     * <li>The host has a public suffix so split according to the rules
+     * of the Guava InternetDomainname class </li>
+     * </ol>
+     *
+     * @param host
+     * @return
+     */
+    static public DomainSplit lookup(String host)
+    {
+        if (host.isEmpty())
+        {
+            return new DomainSplit("", "");
+        }
 
-		InternetDomainName idn = InternetDomainName.from(host);
+        // Put IP addresses into the domain portion of the result in their
+        // entirety
+        if (InetAddresses.isInetAddress(host))
+        {
+            return new DomainSplit("", host);
+        }
 
-		StringBuilder subDomain = new StringBuilder();
-		String highestRegistered = "";
+        InternetDomainName idn = InternetDomainName.from(host);
 
-		// for the case where the host is internal like .local
-		// so the not a recognised public suffix
-		if (idn.hasPublicSuffix() == false)
-		{
-			List<String> parts = idn.parts();
-			if (idn.parts().size() > 0)
-			{
-				highestRegistered = parts.get(parts.size() -1);
-				for (int i=0; i<parts.size() -1; i++)
-				{
-					subDomain.append(parts.get(i)).append('.');
-				}
+        StringBuilder subDomain = new StringBuilder();
+        String highestRegistered = "";
 
-				if (subDomain.length() > 0)
-				{
-					// trim final '.'
-					subDomain.deleteCharAt(subDomain.length() -1);
-				}
-			}
+        // for the case where the host is internal like .local
+        // so the not a recognised public suffix
+        if (idn.hasPublicSuffix() == false)
+        {
+            List<String> parts = idn.parts();
+            if (!idn.parts().isEmpty())
+            {
+                highestRegistered = parts.get(parts.size() -1);
+                for (int i=0; i<parts.size() -1; i++)
+                {
+                    subDomain.append(parts.get(i)).append('.');
+                }
 
-			return new DomainSplit(subDomain.toString(), highestRegistered);
-		}
+                if (subDomain.length() > 0)
+                {
+                    // trim final '.'
+                    subDomain.deleteCharAt(subDomain.length() -1);
+                }
+            }
 
-		while (idn.isTopPrivateDomain() == false)
-		{
-			subDomain.append(idn.parts().get(0)).append('.');
-			idn = idn.parent();
-		}
+            return new DomainSplit(subDomain.toString(), highestRegistered);
+        }
 
-		if (subDomain.length() > 0)
-		{
-			// trim final '.'
-			subDomain.deleteCharAt(subDomain.length() -1);
-		}
+        while (idn.isTopPrivateDomain() == false)
+        {
+            subDomain.append(idn.parts().get(0)).append('.');
+            idn = idn.parent();
+        }
 
-		highestRegistered = idn.topPrivateDomain().toString();
+        if (subDomain.length() > 0)
+        {
+            // trim final '.'
+            subDomain.deleteCharAt(subDomain.length() -1);
+        }
 
-		return new DomainSplit(subDomain.toString(), highestRegistered);
-	}
+        highestRegistered = idn.topPrivateDomain().toString();
 
-	@Override
-	public boolean transform(String[] inputRecord,
-							String[] outputRecord)
-	throws TransformException
-	{
-		DomainSplit split = lookup(inputRecord[m_InputIndicies[0]]);
+        return new DomainSplit(subDomain.toString(), highestRegistered);
+    }
 
-		outputRecord[m_OutputIndicies[0]] = split.m_SubDomain;
-		if (m_OutputIndicies.length == 2)
-		{
-			outputRecord[m_OutputIndicies[1]] = split.m_HighestRegisteredDomain;
-		}
+    @Override
+    public boolean transform(String[] inputRecord,
+                            String[] outputRecord)
+    throws TransformException
+    {
+        DomainSplit split = lookup(inputRecord[m_InputIndicies[0]]);
 
-		return false;
-	}
+        outputRecord[m_OutputIndicies[0]] = split.m_SubDomain;
+        if (m_OutputIndicies.length == 2)
+        {
+            outputRecord[m_OutputIndicies[1]] = split.m_HighestRegisteredDomain;
+        }
 
-
-
+        return false;
+    }
 }

@@ -27,6 +27,7 @@
 package com.prelert.job;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -174,6 +175,77 @@ public class AnalysisConfigTest
         }
 
         Assert.assertEquals("summaryCount", ac.getSummaryCountFieldName());
+    }
+
+    @Test
+    public void testVerify_GivenNegativeBucketSpan() throws JobConfigurationException
+    {
+        AnalysisConfig analysisConfig = new AnalysisConfig();
+        analysisConfig.setBucketSpan(-1L);
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expectMessage("BucketSpan cannot be < 0. Value = -1");
+
+        analysisConfig.verify();
+    }
+
+    @Test
+    public void testVerify_GivenNegativeBatchSpan() throws JobConfigurationException
+    {
+        AnalysisConfig analysisConfig = new AnalysisConfig();
+        analysisConfig.setBatchSpan(-1L);
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expectMessage("BatchSpan cannot be < 0. Value = -1");
+
+        analysisConfig.verify();
+    }
+
+    @Test
+    public void testVerify_GivenNegativeLatency() throws JobConfigurationException
+    {
+        AnalysisConfig analysisConfig = new AnalysisConfig();
+        analysisConfig.setLatency(-1L);
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expectMessage("Latency cannot be < 0. Value = -1");
+
+        analysisConfig.verify();
+    }
+
+    @Test
+    public void testVerify_GivenNegativePeriod() throws JobConfigurationException
+    {
+        AnalysisConfig analysisConfig = new AnalysisConfig();
+        analysisConfig.setPeriod(-1L);
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expectMessage("Period cannot be < 0. Value = -1");
+
+        analysisConfig.verify();
+    }
+
+    @Test
+    public void testVerify_GivenDefaultConfig_ShouldBeInvalidDueToNoDetectors() throws JobConfigurationException
+    {
+        AnalysisConfig analysisConfig = new AnalysisConfig();
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expectMessage("No detectors configured");
+
+        analysisConfig.verify();
+    }
+
+    @Test
+    public void testVerify_GivenValidConfig() throws JobConfigurationException
+    {
+        AnalysisConfig analysisConfig = new AnalysisConfig();
+        analysisConfig.setBucketSpan(3600L);
+        analysisConfig.setBatchSpan(0L);
+        analysisConfig.setLatency(0L);
+        analysisConfig.setPeriod(0L);
+        List<Detector> detectors = new ArrayList<>();
+        Detector detector = new Detector();
+        detector.setFieldName("count");
+        detectors.add(detector);
+        analysisConfig.setDetectors(detectors);
+
+        assertTrue(analysisConfig.verify());
     }
 
     @Test

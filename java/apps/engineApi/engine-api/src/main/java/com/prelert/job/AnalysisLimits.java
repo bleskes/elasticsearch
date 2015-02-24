@@ -27,7 +27,6 @@
 
 package com.prelert.job;
 
-import java.util.Map;
 import java.util.Objects;
 
 import com.prelert.rs.data.ErrorCode;
@@ -59,24 +58,6 @@ public class AnalysisLimits
 	public AnalysisLimits(long modelMemoryLimit)
 	{
 		m_ModelMemoryLimit = modelMemoryLimit;
-	}
-
-	/**
-	 * Create and set field values from the Map.
-	 * @param values
-	 */
-	public AnalysisLimits(Map<String, Object> values)
-	{
-		this();
-
-		if (values.containsKey(MODEL_MEMORY_LIMIT))
-		{
-			Object obj = values.get(MODEL_MEMORY_LIMIT);
-			if (obj != null)
-			{
-				m_ModelMemoryLimit = ((Number)obj).longValue();
-			}
-		}
 	}
 
 	/**

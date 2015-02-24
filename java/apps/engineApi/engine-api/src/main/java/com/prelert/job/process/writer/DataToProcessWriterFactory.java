@@ -66,6 +66,6 @@ public class DataToProcessWriterFactory
                 new JsonDataToProcessWriter(lengthEncodedWriter, dataDescription, analysisConfig,
                         transforms, statusReporter, jobDataPersister, logger) :
                 new CsvDataToProcessWriter(lengthEncodedWriter, dataDescription, analysisConfig,
-                		transforms, statusReporter, jobDataPersister, logger);
+                        transforms, statusReporter, jobDataPersister, logger);
     }
 }

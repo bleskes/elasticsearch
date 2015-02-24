@@ -71,7 +71,7 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter
             JobDataPersister jobDataPersister, Logger logger)
     {
         super(lengthEncodedWriter, dataDescription, analysisConfig, transforms,
-        		statusReporter, jobDataPersister, logger);
+                statusReporter, jobDataPersister, logger);
     }
 
     /**
@@ -114,7 +114,7 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter
     private void writeJson(JsonParser parser) throws IOException, MissingFieldException,
             HighProportionOfBadTimestampsException, OutOfOrderRecordsException
     {
-    	Collection<String> analysisFields = inputFields();
+        Collection<String> analysisFields = inputFields();
 
         List<Transform> transforms = buildTransforms(analysisFields.toArray(new String[0]));
 
@@ -266,11 +266,11 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter
      */
     @Override
     protected boolean checkForMissingFields(Collection<String> inputFields,
-												Map<String, Integer> inputFieldIndicies,
-												String [] header)
+                                                Map<String, Integer> inputFieldIndicies,
+                                                String [] header)
     throws MissingFieldException
     {
-    	return true;
+        return true;
     }
 
     /**

@@ -30,7 +30,6 @@ package com.prelert.job;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
@@ -76,71 +75,6 @@ public class AnalysisConfig
     public AnalysisConfig()
     {
         m_Detectors = new ArrayList<>();
-    }
-
-    /**
-     * Construct an AnalysisConfig from a map. Detector objects are
-     * nested elements in the map.
-     * @param values
-     */
-    @SuppressWarnings("unchecked")
-    public AnalysisConfig(Map<String, Object> values)
-    {
-        this();
-
-        if (values.containsKey(BUCKET_SPAN))
-        {
-            Object obj = values.get(BUCKET_SPAN);
-            if (obj != null)
-            {
-                m_BucketSpan = ((Integer)obj).longValue();
-            }
-        }
-        if (values.containsKey(BATCH_SPAN))
-        {
-            Object obj = values.get(BATCH_SPAN);
-            if (obj != null)
-            {
-                m_BatchSpan = ((Integer)obj).longValue();
-            }
-        }
-        if (values.containsKey(LATENCY))
-        {
-            Object obj = values.get(LATENCY);
-            if (obj != null)
-            {
-                m_Latency = ((Integer)obj).longValue();
-            }
-        }
-        if (values.containsKey(PERIOD))
-        {
-            Object obj = values.get(PERIOD);
-            if (obj != null)
-            {
-                m_Period = ((Integer)obj).longValue();
-            }
-        }
-        if (values.containsKey(SUMMARY_COUNT_FIELD_NAME))
-        {
-            Object obj = values.get(SUMMARY_COUNT_FIELD_NAME);
-            if (obj != null)
-            {
-                m_SummaryCountFieldName = (String)obj;
-            }
-        }
-        if (values.containsKey(DETECTORS))
-        {
-            Object obj = values.get(DETECTORS);
-            if (obj instanceof ArrayList)
-            {
-                for (Map<String, Object> detectorMap : (ArrayList<Map<String, Object>>)obj)
-                {
-                    Detector detector = new Detector(detectorMap);
-                    m_Detectors.add(detector);
-                }
-            }
-
-        }
     }
 
     /**
@@ -408,32 +342,28 @@ public class AnalysisConfig
      */
     public boolean verify() throws JobConfigurationException
     {
-        if (m_BucketSpan != null && m_BucketSpan < 0)
-        {
-            throw new JobConfigurationException("BucketSpan cannot be < 0."
-                    + " Value = " + m_BucketSpan, ErrorCode.INVALID_VALUE);
-        }
-
-        if (m_BatchSpan != null && m_BatchSpan < 0)
-        {
-            throw new JobConfigurationException("BatchSpan cannot be < 0."
-                    + " Value = " + m_BatchSpan, ErrorCode.INVALID_VALUE);
-        }
-
-        if (m_Latency != null && m_Latency < 0)
-        {
-            throw new JobConfigurationException("Latency cannot be < 0."
-                    + " Value = " + m_Latency, ErrorCode.INVALID_VALUE);
-        }
-
-        if (m_Period != null && m_Period < 0)
-        {
-            throw new JobConfigurationException("Period cannot be < 0."
-                    + " Value = " + m_Period, ErrorCode.INVALID_VALUE);
-        }
-
+        checkFieldIsNotNegativeIfSpecified("BucketSpan", m_BucketSpan);
+        checkFieldIsNotNegativeIfSpecified("BatchSpan", m_BatchSpan);
+        checkFieldIsNotNegativeIfSpecified("Latency", m_Latency);
+        checkFieldIsNotNegativeIfSpecified("Period", m_Period);
         Detector.verifyFieldName(m_SummaryCountFieldName);
+        verifyDetectors();
 
+        return true;
+    }
+
+    private static void checkFieldIsNotNegativeIfSpecified(String fieldName, Long value)
+            throws JobConfigurationException
+    {
+        if (value != null && value < 0)
+        {
+            String msg = String.format("%s cannot be < 0. Value = %d", fieldName, value);
+            throw new JobConfigurationException(msg, ErrorCode.INVALID_VALUE);
+        }
+    }
+
+    private void verifyDetectors() throws JobConfigurationException
+    {
         if (m_Detectors.isEmpty())
         {
             throw new JobConfigurationException("No detectors configured",
@@ -445,7 +375,5 @@ public class AnalysisConfig
         {
             d.verify(isSummarised);
         }
-
-        return true;
     }
 }

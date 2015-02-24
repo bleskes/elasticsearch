@@ -35,14 +35,14 @@ import com.prelert.transforms.Transform;
  */
 public abstract class DateTransform extends Transform
 {
-	public DateTransform(int[] inputIndicies, int[] outputIndicies)
-	{
-		super(inputIndicies, outputIndicies);
-	}
+    public DateTransform(int[] inputIndicies, int[] outputIndicies)
+    {
+        super(inputIndicies, outputIndicies);
+    }
 
-	/**
-	 * The epoch time from the last transform
-	 * @return
-	 */
-	public abstract long epoch();
+    /**
+     * The epoch time from the last transform
+     * @return
+     */
+    public abstract long epoch();
 }

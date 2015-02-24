@@ -29,7 +29,6 @@ package com.prelert.job;
 
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -218,73 +217,6 @@ public class Detector
     {
 
     }
-
-    /**
-     * Populate the detector from the String -> object map.
-     *
-     * @param detectorMap
-     */
-    public Detector(Map<String, Object> detectorMap)
-    {
-        if (detectorMap.containsKey(FUNCTION))
-        {
-            Object field = detectorMap.get(FUNCTION);
-            if (field != null)
-            {
-                this.setFunction(field.toString());
-            }
-        }
-        if (detectorMap.containsKey(FIELD_NAME))
-        {
-            Object field = detectorMap.get(FIELD_NAME);
-            if (field != null)
-            {
-                this.setFieldName(field.toString());
-            }
-        }
-        if (detectorMap.containsKey(BY_FIELD_NAME))
-        {
-            Object field = detectorMap.get(BY_FIELD_NAME);
-            if (field != null)
-            {
-                this.setByFieldName(field.toString());
-            }
-        }
-        if (detectorMap.containsKey(OVER_FIELD_NAME))
-        {
-            Object field = detectorMap.get(OVER_FIELD_NAME);
-            if (field != null)
-            {
-                this.setOverFieldName(field.toString());
-            }
-        }
-        if (detectorMap.containsKey(PARTITION_FIELD_NAME))
-        {
-            Object obj = detectorMap.get(PARTITION_FIELD_NAME);
-            if (obj != null)
-            {
-                m_PartitionFieldName = obj.toString();
-            }
-        }
-        if (detectorMap.containsKey(USE_NULL))
-        {
-            Object field = detectorMap.get(USE_NULL);
-            if (field != null && field instanceof Boolean)
-            {
-                this.setUseNull((Boolean)field);
-            }
-        }
-        if (detectorMap.containsKey(EXCLUDE_FREQUENT))
-        {
-            Object field = detectorMap.get(EXCLUDE_FREQUENT);
-            if (field != null)
-            {
-                setExcludeFrequent(field.toString());
-            }
-        }
-    }
-
-
 
     /**
      * The analysis function used e.g. count, rare, min etc. There is no

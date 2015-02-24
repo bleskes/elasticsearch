@@ -37,54 +37,53 @@ package com.prelert.transforms;
  */
 public abstract class Transform
 {
-	protected final int [] m_InputIndicies;
-	protected final int [] m_OutputIndicies;
+    protected final int [] m_InputIndicies;
+    protected final int [] m_OutputIndicies;
 
-	/**
-	 *
-	 * @param inputIndicies Indicies into the input record
-	 * @param outputIndicies Indicies into the output record.
-	 * Transform results go into these indicies
-	 */
-	public Transform(int [] inputIndicies, int [] outputIndicies)
-	{
-		m_InputIndicies = inputIndicies;
-		m_OutputIndicies = outputIndicies;
-	}
+    /**
+     *
+     * @param inputIndicies Indicies into the input record
+     * @param outputIndicies Indicies into the output record.
+     * Transform results go into these indicies
+     */
+    public Transform(int [] inputIndicies, int [] outputIndicies)
+    {
+        m_InputIndicies = inputIndicies;
+        m_OutputIndicies = outputIndicies;
+    }
 
-	/**
-	 * Return a copy of the array.
-	 * This function is only really here for testing purposes
-	 * @return
-	 */
-	public int [] inputIndicies()
-	{
-		int [] tmp = new int[m_InputIndicies.length];
-		System.arraycopy(m_InputIndicies, 0, tmp, 0, tmp.length);
-		return tmp;
-	}
+    /**
+     * Return a copy of the array.
+     * This function is only really here for testing purposes
+     * @return
+     */
+    public int [] inputIndicies()
+    {
+        int [] tmp = new int[m_InputIndicies.length];
+        System.arraycopy(m_InputIndicies, 0, tmp, 0, tmp.length);
+        return tmp;
+    }
 
-	/**
-	 * Return a copy of the array.
-	 * This function is only really here for testing purposes
-	 * @return
-	 */
-	public int [] outputIndicies()
-	{
-		int [] tmp = new int[m_OutputIndicies.length];
-		System.arraycopy(m_OutputIndicies, 0, tmp, 0, tmp.length);
-		return tmp;
-	}
+    /**
+     * Return a copy of the array.
+     * This function is only really here for testing purposes
+     * @return
+     */
+    public int [] outputIndicies()
+    {
+        int [] tmp = new int[m_OutputIndicies.length];
+        System.arraycopy(m_OutputIndicies, 0, tmp, 0, tmp.length);
+        return tmp;
+    }
 
-	/**
-	 * Transform function
-	 *
-	 * @param inputRecord
-	 * @param outputRecord
-	 * @return
-	 * @throws TransformException
-	 */
-	public abstract boolean transform(String [] inputRecord,
-									String [] outputRecord)
-				throws TransformException;
+    /**
+     * Transform function
+     *
+     * @param inputRecord
+     * @param outputRecord
+     * @return
+     * @throws TransformException
+     */
+    public abstract boolean transform(String[] inputRecord, String[] outputRecord)
+            throws TransformException;
 }
