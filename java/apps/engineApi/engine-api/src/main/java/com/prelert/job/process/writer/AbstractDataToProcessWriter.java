@@ -215,7 +215,7 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
             }
             catch (TransformException e)
             {
-                m_Logger.warn("e");
+                m_Logger.warn(e);
             }
         }
 
