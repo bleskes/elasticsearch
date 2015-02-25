@@ -248,15 +248,20 @@ public class ElasticsearchJobProvider implements JobProvider
     @Override
     public boolean jobIdIsUnique(String jobId) throws JobIdAlreadyExistsException
     {
-        IndicesExistsResponse res =
-                m_Client.admin().indices().exists(new IndicesExistsRequest(jobId)).actionGet();
-
-        if (res.isExists())
+        if (indexExists(jobId))
         {
             throw new JobIdAlreadyExistsException(jobId);
         }
 
         return true;
+    }
+
+    private boolean indexExists(String jobId)
+    {
+        IndicesExistsResponse res =
+                m_Client.admin().indices().exists(new IndicesExistsRequest(jobId)).actionGet();
+
+        return res.isExists();
     }
 
 
@@ -501,10 +506,17 @@ public class ElasticsearchJobProvider implements JobProvider
     {
         try
         {
-            DeleteIndexResponse response = m_Client.admin()
-                    .indices().delete(new DeleteIndexRequest(jobId)).get();
+            if (indexExists(jobId))
+            {
+                DeleteIndexResponse response = m_Client.admin()
+                        .indices().delete(new DeleteIndexRequest(jobId)).get();
 
-            return response.isAcknowledged();
+                return response.isAcknowledged();
+            }
+            else
+            {
+                throw new UnknownJobException(jobId);
+            }
         }
         catch (InterruptedException|ExecutionException e)
         {

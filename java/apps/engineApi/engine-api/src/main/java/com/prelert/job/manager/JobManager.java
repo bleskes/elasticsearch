@@ -598,14 +598,14 @@ public class JobManager
     {
         LOGGER.debug("Deleting job '" + jobId + "'");
 
-        m_JobProvider.jobExists(jobId);
-
-        m_ProcessManager.finishJob(jobId);
-        m_JobProvider.deleteJob(jobId);
+        if (m_ProcessManager.jobIsRunning(jobId))
+        {
+            m_ProcessManager.finishJob(jobId);
+        }
 
         m_ProcessManager.deletePersistedData(jobId);
 
-        return true;
+        return m_JobProvider.deleteJob(jobId);
     }
 
     /**
