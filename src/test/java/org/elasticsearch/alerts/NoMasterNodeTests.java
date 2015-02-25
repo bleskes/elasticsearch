@@ -124,6 +124,7 @@ public class NoMasterNodeTests extends AbstractAlertingTests {
                     .setAlertSource(alertSource)
                     .get();
         }
+        ensureGreen();
 
         for (int i = 1; i <= numberOfFailures; i++) {
             logger.info("Failure round {}", i);
