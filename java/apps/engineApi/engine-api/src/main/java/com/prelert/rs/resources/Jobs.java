@@ -85,6 +85,16 @@ public class Jobs extends ResourceWithJobManager
 	public static final String ENDPOINT = "jobs";
 
 	/**
+	 * Message returned on successful deletion of a job
+	 */
+	public static final String DELETE_ACK = "{\"acknowledged\":true}\n";
+
+	/**
+     * Message returned if deletion of a job fails
+     */
+	public static final String DELETE_FAIL = "{\"acknowledged\":false}\n";
+
+	/**
 	 * Get all job details.
 	 *
 	 * @return Array of JSON objects string
@@ -235,16 +245,14 @@ public class Jobs extends ResourceWithJobManager
 			new JobLogs().deleteLogs(jobId);
 
 			LOGGER.debug("Job '" + jobId + "' deleted");
-			return Response.ok()
-					.build();
+			return Response.ok().entity(DELETE_ACK).build();
 		}
 		else
 		{
 			String msg = "Error deleting job '" + jobId + "'";
 			LOGGER.warn(msg);
 
-			return Response.status(Response.Status.NOT_FOUND)
-					.build();
+			return Response.status(Response.Status.NOT_FOUND).entity(DELETE_FAIL).build();
 		}
     }
 
