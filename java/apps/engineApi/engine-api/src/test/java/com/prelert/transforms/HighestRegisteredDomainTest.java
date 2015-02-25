@@ -110,7 +110,8 @@ public class HighestRegisteredDomainTest
 	    // Any copyright is dedicated to the Public Domain.
 	    // http://creativecommons.org/publicdomain/zero/1.0/
 
-	    checkHighestRegisteredDomain("_nfsv4idmapdomain.prelert.com", "prelert.com");
+	    // Domains starting with _ aren't valid
+	    //checkHighestRegisteredDomain("_nfsv4idmapdomain.prelert.com", "prelert.com");
 
 	    // Mixed case.
 	    checkIsPublicSuffix("COM");
@@ -224,8 +225,7 @@ public class HighestRegisteredDomainTest
 		HighestRegisteredDomain transform = new HighestRegisteredDomain(new int [] {2}, new int [] {0},
 		                    mock(Logger.class));
 
-		//String [] input = {"", "", "www.test.ac.jp"};
-		String [] input = {"", "", "com"};
+		String [] input = {"", "", "www.test.ac.jp"};
 		String [] output = new String [2];
 
 		transform.transform(input, output);
