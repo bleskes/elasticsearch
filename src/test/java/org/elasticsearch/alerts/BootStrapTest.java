@@ -120,6 +120,9 @@ public class BootStrapTest extends AbstractAlertingTests {
                 .get();
         assertTrue(indexResponse.isCreated());
 
+        // The executor doesn't get shutdown when alerts stops, so the largest queue size don't get reset.
+        long previousLargestQueueSize = response.getAlertActionManagerLargestQueueSize();
+
         stopAlerting();
         startAlerting();
 
@@ -127,7 +130,7 @@ public class BootStrapTest extends AbstractAlertingTests {
         assertTrue(response.isAlertActionManagerStarted());
         assertThat(response.getAlertManagerStarted(), equalTo(AlertsService.State.STARTED));
         assertThat(response.getNumberOfRegisteredAlerts(), equalTo(1L));
-        assertThat(response.getAlertActionManagerLargestQueueSize(), equalTo(1L));
+        assertThat(response.getAlertActionManagerLargestQueueSize() - previousLargestQueueSize, equalTo(1L));
     }
 
     @Test

@@ -135,6 +135,7 @@ public class NoMasterNodeTests extends AbstractAlertingTests {
                 String alertName = "alert" + i;
                 assertAlertWithMinimumPerformedActionsCount(alertName, i);
             }
+            ensureGreen();
             stopElectedMasterNodeAndWait();
             startElectedMasterNodeAndWait();
 
