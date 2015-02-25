@@ -81,12 +81,17 @@ public abstract class Transform implements ToXContent {
         }
     }
 
-    static interface Parser<T extends Transform> {
+    public static interface Parser<T extends Transform> {
 
         String type();
 
         T parse(XContentParser parser) throws IOException;
 
+    }
+
+    public static interface SourceBuilder extends ToXContent {
+
+        String type();
     }
 
 }

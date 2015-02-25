@@ -16,12 +16,15 @@
  */
 
 
-package org.elasticsearch.alerts;
+package org.elasticsearch.alerts.test.integration;
 
 import org.elasticsearch.action.WriteConsistencyLevel;
 import org.elasticsearch.action.count.CountResponse;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.alerts.Alert;
+import org.elasticsearch.alerts.AlertsService;
+import org.elasticsearch.alerts.AlertsStore;
 import org.elasticsearch.alerts.actions.Action;
 import org.elasticsearch.alerts.actions.Actions;
 import org.elasticsearch.alerts.condition.script.ScriptCondition;
@@ -31,6 +34,8 @@ import org.elasticsearch.alerts.input.search.SearchInput;
 import org.elasticsearch.alerts.scheduler.schedule.CronSchedule;
 import org.elasticsearch.alerts.support.Script;
 import org.elasticsearch.alerts.support.init.proxy.ClientProxy;
+import org.elasticsearch.alerts.test.AbstractAlertsIntegrationTests;
+import org.elasticsearch.alerts.test.AlertsTestUtils;
 import org.elasticsearch.alerts.transform.SearchTransform;
 import org.elasticsearch.alerts.transport.actions.put.PutAlertResponse;
 import org.elasticsearch.alerts.transport.actions.stats.AlertsStatsResponse;
@@ -56,13 +61,13 @@ import static org.hamcrest.core.IsEqual.equalTo;
 
 /**
  */
-public class BootStrapTest extends AbstractAlertingTests {
+public class BootStrapTests extends AbstractAlertsIntegrationTests {
 
     @Test
     public void testBootStrapAlerts() throws Exception {
         ensureAlertingStarted();
 
-        SearchRequest searchRequest = createConditionSearchRequest("my-index").source(searchSource().query(termQuery("field", "value")));
+        SearchRequest searchRequest = AlertsTestUtils.newInputSearchRequest("my-index").source(searchSource().query(termQuery("field", "value")));
         BytesReference alertSource = createAlertSource("0 0/5 * * * ? *", searchRequest, "hits.total == 1");
         client().prepareIndex(AlertsStore.ALERT_INDEX, AlertsStore.ALERT_TYPE, "my-first-alert")
                 .setSource(alertSource)
@@ -89,16 +94,17 @@ public class BootStrapTest extends AbstractAlertingTests {
         assertThat(response.getAlertManagerStarted(), equalTo(AlertsService.State.STARTED));
         assertThat(response.getNumberOfRegisteredAlerts(), equalTo(0L));
 
-        SearchRequest searchRequest = createConditionSearchRequest("my-index").source(searchSource().query(termQuery("field", "value")));
+        SearchRequest searchRequest = AlertsTestUtils.newInputSearchRequest("my-index").source(searchSource().query(termQuery("field", "value")));
         Alert alert = new Alert(
                 "test-serialization",
                 new CronSchedule("0/5 * * * * ? 2035"), //Set this into the future so we don't get any extra runs
                 new SearchInput(logger, scriptService(), ClientProxy.of(client()), searchRequest),
                 new ScriptCondition(logger, scriptService(), new Script("return true")),
                 new SearchTransform(logger, scriptService(), ClientProxy.of(client()), searchRequest),
-                new Actions(new ArrayList<Action>()), null, new Alert.Status(), new TimeValue(0)
-
-        );
+                new Actions(new ArrayList<Action>()),
+                null, // metadata
+                new TimeValue(0),
+                new Alert.Status());
 
         XContentBuilder builder = jsonBuilder().value(alert);
         IndexResponse indexResponse = client().prepareIndex(AlertsStore.ALERT_INDEX, AlertsStore.ALERT_TYPE, alert.name())
@@ -137,7 +143,7 @@ public class BootStrapTest extends AbstractAlertingTests {
         DateTime now = new DateTime(DateTimeZone.UTC);
         long numberOfAlertHistoryIndices = randomIntBetween(2,8);
         long numberOfAlertHistoryEntriesPerIndex = randomIntBetween(5,10);
-        SearchRequest searchRequest = createConditionSearchRequest("my-index").source(searchSource().query(termQuery("field", "value")));
+        SearchRequest searchRequest = AlertsTestUtils.newInputSearchRequest("my-index").source(searchSource().query(termQuery("field", "value")));
 
         for (int i = 0; i < numberOfAlertHistoryIndices; i++) {
             DateTime historyIndexDate = now.minus((new TimeValue(i, TimeUnit.DAYS)).getMillis());
@@ -156,14 +162,13 @@ public class BootStrapTest extends AbstractAlertingTests {
                         new ScriptCondition(logger, scriptService(), new Script("return true")),
                         new SearchTransform(logger, scriptService(), ClientProxy.of(client()), searchRequest),
                         new Actions(new ArrayList<Action>()),
-                        null,
-                        new Alert.Status(),
-                        new TimeValue(0)
-                );
+                        null, // metatdata
+                        new TimeValue(0),
+                        new Alert.Status());
                 XContentBuilder jsonBuilder = jsonBuilder();
                 alert.toXContent(jsonBuilder, ToXContent.EMPTY_PARAMS);
 
-                PutAlertResponse putAlertResponse = alertClient().preparePutAlert(alert.name()).setAlertSource(jsonBuilder.bytes()).get();
+                PutAlertResponse putAlertResponse = alertClient().preparePutAlert(alert.name()).source(jsonBuilder.bytes()).get();
                 assertTrue(putAlertResponse.indexResponse().isCreated());
 
                 FiredAlert firedAlert = new FiredAlert(alert, historyIndexDate, historyIndexDate);

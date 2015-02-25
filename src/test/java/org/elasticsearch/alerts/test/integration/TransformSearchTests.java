@@ -15,40 +15,34 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.alerts;
+package org.elasticsearch.alerts.test.integration;
 
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.alerts.actions.Action;
-import org.elasticsearch.alerts.actions.Actions;
-import org.elasticsearch.alerts.actions.index.IndexAction;
-import org.elasticsearch.alerts.condition.script.ScriptCondition;
-import org.elasticsearch.alerts.input.search.SearchInput;
-import org.elasticsearch.alerts.scheduler.schedule.CronSchedule;
-import org.elasticsearch.alerts.support.Script;
-import org.elasticsearch.alerts.support.init.proxy.ClientProxy;
+import org.elasticsearch.alerts.scheduler.schedule.IntervalSchedule.Interval;
+import org.elasticsearch.alerts.test.AbstractAlertsIntegrationTests;
+import org.elasticsearch.alerts.test.AlertsTestUtils;
 import org.elasticsearch.alerts.transform.SearchTransform;
 import org.elasticsearch.alerts.transport.actions.put.PutAlertResponse;
 import org.elasticsearch.common.unit.TimeValue;
-import org.elasticsearch.common.xcontent.ToXContent;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentFactory;
-import org.elasticsearch.script.ScriptService;
 import org.elasticsearch.search.SearchHit;
 import org.junit.Test;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
+import static org.elasticsearch.alerts.actions.ActionBuilders.indexAction;
+import static org.elasticsearch.alerts.client.AlertSourceBuilder.alertSourceBuilder;
+import static org.elasticsearch.alerts.input.InputBuilders.searchInput;
+import static org.elasticsearch.alerts.transform.TransformBuilders.searchTransform;
+import static org.elasticsearch.alerts.scheduler.schedule.Schedules.interval;
 import static org.elasticsearch.index.query.QueryBuilders.matchAllQuery;
 import static org.elasticsearch.search.builder.SearchSourceBuilder.searchSource;
 import static org.hamcrest.Matchers.greaterThan;
 
 /**
  */
-public class TransformSearchTest extends AbstractAlertingTests {
+public class TransformSearchTests extends AbstractAlertsIntegrationTests {
 
     @Test
     public void testTransformSearchRequest() throws Exception {
@@ -58,31 +52,23 @@ public class TransformSearchTest extends AbstractAlertingTests {
         index("my-payload-index","payload", "mytestresult");
         refresh();
 
-        SearchRequest conditionRequest = createConditionSearchRequest("my-condition-index").source(searchSource().query(matchAllQuery()));
-        SearchRequest transformRequest = createConditionSearchRequest("my-payload-index").source(searchSource().query(matchAllQuery()));
+        SearchRequest inputRequest = AlertsTestUtils.newInputSearchRequest("my-condition-index").source(searchSource().query(matchAllQuery()));
+        SearchRequest transformRequest = AlertsTestUtils.newInputSearchRequest("my-payload-index").source(searchSource().query(matchAllQuery()));
         transformRequest.searchType(SearchTransform.DEFAULT_SEARCH_TYPE);
-
-        List<Action> actions = new ArrayList<>();
-        actions.add(new IndexAction(logger, ClientProxy.of(client()), "my-payload-output","result"));
 
         Map<String, Object> metadata = new HashMap<>();
         metadata.put("foo", "bar");
         metadata.put("list", "baz");
 
-        Alert alert = new Alert(
-                "test-serialization",
-                new CronSchedule("0/5 * * * * ? *"),
-                new SearchInput(logger, scriptService(), ClientProxy.of(client()),
-                        conditionRequest),
-                new ScriptCondition(logger, scriptService(), new Script("return true")),
-                new SearchTransform(logger, scriptService(), ClientProxy.of(client()), transformRequest),
-                new Actions(actions), metadata, new Alert.Status(), new TimeValue(0)
-        );
-
-        XContentBuilder jsonBuilder = XContentFactory.jsonBuilder();
-        alert.toXContent(jsonBuilder, ToXContent.EMPTY_PARAMS);
-
-        PutAlertResponse putAlertResponse = alertClient().preparePutAlert("test-payload").setAlertSource(jsonBuilder.bytes()).get();
+        PutAlertResponse putAlertResponse = alertClient().preparePutAlert("test-payload")
+                .source(alertSourceBuilder()
+                        .schedule(interval(5, Interval.Unit.SECONDS))
+                        .input(searchInput(inputRequest))
+                        .transform(searchTransform(transformRequest))
+                        .addAction(indexAction("my-payload-output", "result"))
+                        .metadata(metadata)
+                        .throttlePeriod(TimeValue.timeValueSeconds(0)))
+                .get();
         assertTrue(putAlertResponse.indexResponse().isCreated());
 
         assertAlertWithMinimumPerformedActionsCount("test-payload", 1, false);

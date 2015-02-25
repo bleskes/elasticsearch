@@ -30,8 +30,7 @@ import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
 /**
  */
-public class TestAlwaysFalseCondition extends ElasticsearchTestCase {
-
+public class AlwaysTrueConditionTests extends ElasticsearchTestCase {
 
     @Test
     public void testExecute() throws Exception {
@@ -47,7 +46,6 @@ public class TestAlwaysFalseCondition extends ElasticsearchTestCase {
         builder.endObject();
         XContentParser xp = XContentFactory.xContent(builder.bytes()).createParser(builder.bytes());
         xp.nextToken();
-
         Condition alwaysTrue = p.parse(xp);
         assertTrue(alwaysTrue.execute(null).met());
     }
@@ -61,7 +59,6 @@ public class TestAlwaysFalseCondition extends ElasticsearchTestCase {
         builder.endObject();
         XContentParser xp = XContentFactory.xContent(builder.bytes()).createParser(builder.bytes());
         xp.nextToken();
-
         p.parse(xp);
         fail("expected a condition exception trying to parse an invalid condition XContent, ["
                 + AlwaysTrueCondition.TYPE + "] condition should not parse with a body");
@@ -95,4 +92,5 @@ public class TestAlwaysFalseCondition extends ElasticsearchTestCase {
         fail("expected a condition exception trying to parse an invalid condition result XContent, ["
                 + AlwaysTrueCondition.TYPE + "] condition result should not parse with a [met] field");
     }
+
 }

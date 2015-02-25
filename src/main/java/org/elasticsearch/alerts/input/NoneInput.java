@@ -15,27 +15,32 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.alerts.condition.simple;
+package org.elasticsearch.alerts.input;
 
 import org.elasticsearch.alerts.ExecutionContext;
-import org.elasticsearch.alerts.condition.Condition;
-import org.elasticsearch.alerts.condition.ConditionException;
+import org.elasticsearch.alerts.Payload;
+import org.elasticsearch.common.collect.ImmutableMap;
 import org.elasticsearch.common.component.AbstractComponent;
-import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
+ *
  */
-public class AlwaysTrueCondition extends Condition<Condition.Result> {
+public class NoneInput extends Input<NoneInput.Result> {
 
-    public static final String TYPE = "always_true";
+    public static final String TYPE = "none";
 
-    public static final Result RESULT = new Result(TYPE, true) {
+    private static final Payload EMPTY_PAYLOAD = new Payload() {
+        @Override
+        public Map<String, Object> data() {
+            return ImmutableMap.of();
+        }
 
         @Override
         public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
@@ -43,7 +48,7 @@ public class AlwaysTrueCondition extends Condition<Condition.Result> {
         }
     };
 
-    public AlwaysTrueCondition(ESLogger logger) {
+    public NoneInput(ESLogger logger) {
         super(logger);
     }
 
@@ -54,7 +59,7 @@ public class AlwaysTrueCondition extends Condition<Condition.Result> {
 
     @Override
     public Result execute(ExecutionContext ctx) throws IOException {
-        return RESULT;
+        return Result.INSTANCE;
     }
 
     @Override
@@ -62,16 +67,27 @@ public class AlwaysTrueCondition extends Condition<Condition.Result> {
         return builder.startObject().endObject();
     }
 
-    @Override
-    public boolean equals(Object obj) {
-        return obj instanceof AlwaysTrueCondition;
+    public static class Result extends Input.Result {
+
+        static final Result INSTANCE = new Result();
+
+        private Result() {
+            super(TYPE, EMPTY_PAYLOAD);
+        }
+
+        @Override
+        protected XContentBuilder toXContentBody(XContentBuilder builder, Params params) throws IOException {
+            return builder.startObject().endObject();
+        }
     }
 
-    public static class Parser extends AbstractComponent implements Condition.Parser<Result, AlwaysTrueCondition> {
+    public static class Parser extends AbstractComponent implements Input.Parser<Result, NoneInput> {
 
-        @Inject
+        private final NoneInput input;
+
         public Parser(Settings settings) {
             super(settings);
+            this.input = new NoneInput(logger);
         }
 
         @Override
@@ -80,31 +96,31 @@ public class AlwaysTrueCondition extends Condition<Condition.Result> {
         }
 
         @Override
-        public AlwaysTrueCondition parse(XContentParser parser) throws IOException {
-            if (parser.currentToken() != XContentParser.Token.START_OBJECT){
-                throw new ConditionException("unable to parse [" + TYPE + "] condition. expected a start object token, found [" + parser.currentToken() + "]");
+        public NoneInput parse(XContentParser parser) throws IOException {
+            if (parser.currentToken() != XContentParser.Token.START_OBJECT) {
+
             }
-            XContentParser.Token token = parser.nextToken();
-            if (token != XContentParser.Token.END_OBJECT) {
-                throw new ConditionException("unable to parse [" + TYPE + "] condition. expected an empty object, but found an object with [" + token + "]");
+            parser.nextToken();
+            if (parser.currentToken() != XContentParser.Token.END_OBJECT) {
+
             }
-            return new AlwaysTrueCondition(logger);
+            return input;
         }
 
         @Override
         public Result parseResult(XContentParser parser) throws IOException {
-            if (parser.currentToken() != XContentParser.Token.START_OBJECT){
-                throw new ConditionException("unable to parse [" + TYPE + "] condition result. expected a start object token, found [" + parser.currentToken() + "]");
+            if (parser.currentToken() != XContentParser.Token.START_OBJECT) {
+
             }
-            XContentParser.Token token = parser.nextToken();
-            if (token != XContentParser.Token.END_OBJECT) {
-                throw new ConditionException("unable to parse [" + TYPE + "] condition. expected an empty object, but found an object with [" + token + "]");
+            parser.nextToken();
+            if (parser.currentToken() != XContentParser.Token.END_OBJECT) {
+
             }
-            return RESULT;
+            return Result.INSTANCE;
         }
     }
 
-    public static class SourceBuilder implements Condition.SourceBuilder {
+    public static class SourceBuilder implements Input.SourceBuilder {
 
         public static final SourceBuilder INSTANCE = new SourceBuilder();
 

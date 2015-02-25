@@ -55,6 +55,23 @@ public interface Payload extends ToXContent {
         public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
             return builder.value(data);
         }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            Simple simple = (Simple) o;
+
+            if (!data.equals(simple.data)) return false;
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            return data.hashCode();
+        }
     }
 
     static class ActionResponse extends Simple {
@@ -62,7 +79,6 @@ public interface Payload extends ToXContent {
         public ActionResponse(org.elasticsearch.action.ActionResponse response) {
             super(responseToData(response));
         }
-
     }
 
     static class XContent extends Simple {

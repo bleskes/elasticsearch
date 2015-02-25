@@ -24,6 +24,7 @@ import org.elasticsearch.common.component.AbstractComponent;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
 
@@ -34,6 +35,7 @@ import java.io.IOException;
 public class AlwaysFalseCondition extends Condition<Condition.Result> {
 
     public static final String TYPE = "always_false";
+
     public static final Result RESULT = new Result(TYPE, false) {
 
         @Override
@@ -60,6 +62,11 @@ public class AlwaysFalseCondition extends Condition<Condition.Result> {
     @Override
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
         return builder.startObject().endObject();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return obj instanceof AlwaysFalseCondition;
     }
 
     public static class Parser extends AbstractComponent implements Condition.Parser<Result, AlwaysFalseCondition> {
@@ -89,6 +96,24 @@ public class AlwaysFalseCondition extends Condition<Condition.Result> {
                 throw new ConditionException("unable to parse [" + TYPE + "] condition result. expected an empty object, but found an object with [" + token + "]");
             }
             return RESULT;
+        }
+    }
+
+    public static class SourceBuilder implements Condition.SourceBuilder {
+
+        public static final SourceBuilder INSTANCE = new SourceBuilder();
+
+        private SourceBuilder() {
+        }
+
+        @Override
+        public String type() {
+            return TYPE;
+        }
+
+        @Override
+        public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
+            return builder.startObject().endObject();
         }
     }
 
