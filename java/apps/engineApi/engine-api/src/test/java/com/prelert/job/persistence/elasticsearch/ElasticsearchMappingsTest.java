@@ -92,6 +92,9 @@ public class ElasticsearchMappingsTest
                         "          }," +
                         "          \"outOfOrderTimeStampCount\": {" +
                         "            \"type\": \"long\"" +
+                        "          }," +
+                        "          \"failedTransformCount\": {" +
+                        "            \"type\": \"long\"" +
                         "          }" +
                         "        }" +
                         "      }," +
