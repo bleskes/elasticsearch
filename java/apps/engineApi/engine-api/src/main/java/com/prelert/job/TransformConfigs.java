@@ -81,12 +81,12 @@ public class TransformConfigs
         return fields;
     }
 
-	public static boolean verify(List<TransformConfig> transforms) throws TransformConfigurationException
-	{
-		for (TransformConfig tr : transforms)
-		{
-			tr.verify();
-		}
+    public static boolean verify(List<TransformConfig> transforms) throws TransformConfigurationException
+    {
+        for (TransformConfig tr : transforms)
+        {
+            tr.verify();
+        }
 
         return true;
     }
