@@ -64,6 +64,7 @@ public abstract class StatusReporter
 	private long m_DateParseErrorsCount = 0;
 	private long m_MissingFieldErrorCount = 0;
 	private long m_OutOfOrderRecordCount = 0;
+	private long m_FailedTransformCount = 0;
 
 	private long m_AnalyzedFieldsPerRecord = 1;
 
@@ -119,6 +120,7 @@ public abstract class StatusReporter
 		m_DateParseErrorsCount = counts.getInvalidDateCount();
 		m_MissingFieldErrorCount = counts.getMissingFieldCount();
 		m_OutOfOrderRecordCount = counts.getOutOfOrderTimeStampCount();
+		m_FailedTransformCount = counts.getFailedTransformCount();
 	}
 
 	/**
@@ -169,6 +171,13 @@ public abstract class StatusReporter
 		m_MissingFieldErrorCount++;
 	}
 
+    /**
+     * Increments by 1 the failed transform count
+     */
+    public void reportFailedTransform()
+    {
+        m_FailedTransformCount++;
+    }
 
 	public void reportMissingFields(long missingCount)
 	{
@@ -230,6 +239,11 @@ public abstract class StatusReporter
 	public long getBytesRead()
 	{
 		return m_BytesRead;
+	}
+
+	public long getFailedTransformCount()
+	{
+	    return m_FailedTransformCount;
 	}
 
 	public long getProcessedFieldCount()

@@ -71,9 +71,9 @@ public class ElasticsearchStatusReporter extends StatusReporter
         String status = String.format("%d records written to autodetect with %d "
                 + "missing fields, %d were discarded because the date could not be "
                 + "read and %d were ignored as because they weren't in ascending "
-                + "chronological order.", getProcessedRecordCount(),
+                + "chronological order and %d transforms failed.", getProcessedRecordCount(),
                 getMissingFieldErrorCount(), getDateParseErrorsCount(),
-                getOutOfOrderRecordCount());
+                getOutOfOrderRecordCount(), getFailedTransformCount());
 
         m_Logger.info(status);
 
@@ -100,6 +100,7 @@ public class ElasticsearchStatusReporter extends StatusReporter
             updates.put(JobDetails.INVALID_DATE_COUNT, getDateParseErrorsCount());
             updates.put(JobDetails.MISSING_FIELD_COUNT, getMissingFieldErrorCount());
             updates.put(JobDetails.OUT_OF_ORDER_TIME_COUNT, getOutOfOrderRecordCount());
+            updates.put(JobDetails.FAILED_TRANSFORM_COUNT, getFailedTransformCount());
 
             Map<String, Object> counts = new HashMap<>();
             counts.put(JobDetails.COUNTS, updates);

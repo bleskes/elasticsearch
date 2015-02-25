@@ -63,6 +63,7 @@ public class JobDetails
 	public static final String INVALID_DATE_COUNT = "invalidDateCount";
 	public static final String MISSING_FIELD_COUNT = "missingFieldCount";
 	public static final String OUT_OF_ORDER_TIME_COUNT = "outOfOrderTimeStampCount";
+	public static final String FAILED_TRANSFORM_COUNT = "failedTransformCount";
 
 	public static final String TIMEOUT = "timeout";
 
@@ -560,9 +561,9 @@ public class JobDetails
 		private long m_InvalidDateCount;
 		private long m_MissingFieldCount;
 		private long m_OutOfOrderTimeStampCount;
+		private long m_FailedTransformCount;
 
-
-		/**
+        /**
 		 * The number of bucket results
 		 * @return
 		 */
@@ -703,6 +704,23 @@ public class JobDetails
 		}
 
 		/**
+		 * The number of transforms that failed.
+		 * In theory this could be more than the number of records
+		 * if multiple transforms are applied to each record
+		 * @return
+		 */
+        public long getFailedTransformCount()
+        {
+            return m_FailedTransformCount;
+        }
+
+        public void setFailedTransformCount(long failedTransformCount)
+        {
+            this.m_FailedTransformCount = failedTransformCount;
+        }
+
+
+		/**
 		 * Equality test
 		 */
 		@Override
@@ -728,7 +746,8 @@ public class JobDetails
 					this.m_InputRecordCount == that.m_InputRecordCount &&
 					this.m_InvalidDateCount == that.m_InvalidDateCount &&
 					this.m_MissingFieldCount == that.m_MissingFieldCount &&
-					this.m_OutOfOrderTimeStampCount == that.m_OutOfOrderTimeStampCount;
+					this.m_OutOfOrderTimeStampCount == that.m_OutOfOrderTimeStampCount &&
+					this.m_FailedTransformCount == that.m_FailedTransformCount;
 		}
 
         @Override
@@ -737,7 +756,7 @@ public class JobDetails
             return Objects.hash(m_BucketCount, m_ProcessedRecordCount,
                     m_ProcessedFieldCount, m_InputBytes, m_InputFieldCount,
                     m_InputRecordCount, m_InvalidDateCount,
-                    m_MissingFieldCount, m_OutOfOrderTimeStampCount);
+                    m_MissingFieldCount, m_OutOfOrderTimeStampCount, m_FailedTransformCount);
         }
 	}
 }
