@@ -26,6 +26,7 @@ import org.elasticsearch.alerts.condition.script.ScriptCondition;
 import org.elasticsearch.alerts.input.Input;
 import org.elasticsearch.alerts.input.search.SearchInput;
 import org.elasticsearch.alerts.scheduler.schedule.CronSchedule;
+import org.elasticsearch.alerts.support.Script;
 import org.elasticsearch.alerts.support.init.proxy.ClientProxy;
 import org.elasticsearch.alerts.transform.SearchTransform;
 import org.elasticsearch.alerts.transport.actions.delete.DeleteAlertRequest;
@@ -72,7 +73,7 @@ public class ActionsTest extends AbstractAlertingTests {
 
         Input alertInput = new SearchInput(logger, scriptService(), ClientProxy.of(client()),
                 createConditionSearchRequest());
-        Condition alertCondition = new ScriptCondition(logger, scriptService(), "return true", ScriptService.ScriptType.INLINE, "groovy");
+        Condition alertCondition = new ScriptCondition(logger, scriptService(), new Script("return true"));
 
 
 

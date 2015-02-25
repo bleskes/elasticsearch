@@ -19,8 +19,11 @@ package org.elasticsearch.alerts.condition.script;
 
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.ShardSearchFailure;
+import org.elasticsearch.alerts.AlertsSettingsException;
+import org.elasticsearch.alerts.ExecutionContext;
 import org.elasticsearch.alerts.Payload;
 import org.elasticsearch.alerts.condition.ConditionException;
+import org.elasticsearch.alerts.support.Script;
 import org.elasticsearch.alerts.support.init.proxy.ScriptServiceProxy;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
@@ -44,6 +47,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
+import static org.mockito.Mockito.*;
 
 /**
  */
@@ -65,9 +69,11 @@ public class ScriptConditionTests extends ElasticsearchTestCase {
     @Test
     public void testExecute() throws Exception {
         ScriptServiceProxy scriptService = getScriptServiceProxy(tp);
-        ScriptCondition condition = new ScriptCondition(logger, scriptService, "hits.total > 1", ScriptService.ScriptType.INLINE, "groovy");
+        ScriptCondition condition = new ScriptCondition(logger, scriptService, new Script("hits.total > 1"));
         SearchResponse response = new SearchResponse(InternalSearchResponse.empty(), "", 3, 3, 500l, new ShardSearchFailure[0]);
-        assertFalse(condition.processPayload(new Payload.ActionResponse(response)).met());
+        ExecutionContext ctx = mock(ExecutionContext.class);
+        when(ctx.payload()).thenReturn(new Payload.ActionResponse(response));
+        assertFalse(condition.execute(ctx).met());
     }
 
     @Test
@@ -76,31 +82,35 @@ public class ScriptConditionTests extends ElasticsearchTestCase {
 
         XContentBuilder builder = createConditionContent("hits.total > 1", null, null);
         XContentParser parser = XContentFactory.xContent(builder.bytes()).createParser(builder.bytes());
+        parser.nextToken();
         ScriptCondition condition = conditionParser.parse(parser);
 
         SearchResponse response = new SearchResponse(InternalSearchResponse.empty(), "", 3, 3, 500l, new ShardSearchFailure[0]);
+        ExecutionContext ctx = mock(ExecutionContext.class);
+        when(ctx.payload()).thenReturn(new Payload.ActionResponse(response));
 
-        assertFalse(condition.processPayload(new Payload.ActionResponse(response)).met());
+        assertFalse(condition.execute(ctx).met());
 
 
         builder = createConditionContent("return true", null, null);
         parser = XContentFactory.xContent(builder.bytes()).createParser(builder.bytes());
+        parser.nextToken();
         condition = conditionParser.parse(parser);
 
-        assertTrue(condition.processPayload(new Payload.ActionResponse(response)).met());
+        reset(ctx);
+        when(ctx.payload()).thenReturn(new Payload.ActionResponse(response));
+
+        assertTrue(condition.execute(ctx).met());
     }
 
-    @Test(expected = ConditionException.class)
+    @Test(expected = AlertsSettingsException.class)
     public void testParser_InValid() throws Exception {
         ScriptCondition.Parser conditionParser = new ScriptCondition.Parser(ImmutableSettings.settingsBuilder().build(), getScriptServiceProxy(tp));
         XContentBuilder builder = XContentFactory.jsonBuilder();
         builder.startObject().endObject();
         XContentParser parser = XContentFactory.xContent(builder.bytes()).createParser(builder.bytes());
-        try {
-            conditionParser.parse(parser);
-        } catch (Throwable t) {
-            throw t;
-        }
+        parser.nextToken();
+        conditionParser.parse(parser);
         fail("expected a condition exception trying to parse an invalid condition XContent");
     }
 
@@ -152,20 +162,15 @@ public class ScriptConditionTests extends ElasticsearchTestCase {
     }
 
     private static XContentBuilder createConditionContent(String script, String scriptLang, ScriptService.ScriptType scriptType) throws IOException {
-        XContentBuilder jsonBuilder = jsonBuilder();
-        jsonBuilder.startObject();
-        jsonBuilder.field("script");
-        jsonBuilder.startObject();
-        jsonBuilder.field("script", script);
+        XContentBuilder builder = jsonBuilder().startObject();
+        builder.field("script", script);
         if (scriptLang != null) {
-            jsonBuilder.field("script_lang", scriptLang);
+            builder.field("lang", scriptLang);
         }
         if (scriptType != null) {
-            jsonBuilder.field("script_type", scriptType.toString());
+            builder.field("type", scriptType.toString());
         }
-        jsonBuilder.endObject();
-        jsonBuilder.endObject();
-        return jsonBuilder;
+        return builder.endObject();
     }
 
 
