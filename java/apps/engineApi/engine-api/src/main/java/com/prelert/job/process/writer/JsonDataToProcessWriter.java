@@ -137,13 +137,10 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter
         long inputFieldCount = readJsonRecord(parser, input, m_InFieldIndexes, gotFields);
         while (inputFieldCount > 0)
         {
+            Arrays.fill(record, "");
+
             inputFieldCount = Math.max(inputFieldCount - 1, 0); // time field doesn't count
 
-            for (InputOutputMap inOut : m_InputOutputMap)
-            {
-                String field = input[inOut.m_Input];
-                record[inOut.m_Output] = (field == null) ? "" : field;
-            }
 
             if (gotFields[timeFieldIndex])
             {
@@ -153,8 +150,13 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter
                     m_StatusReporter.reportMissingFields(missing);
                 }
 
-                applyTransformsAndWrite(transforms, input, record, inputFieldCount);
+                for (InputOutputMap inOut : m_InputOutputMap)
+                {
+                    String field = input[inOut.m_Input];
+                    record[inOut.m_Output] = (field == null) ? "" : field;
+                }
 
+                applyTransformsAndWrite(transforms, input, record, inputFieldCount);
             }
             else
             {

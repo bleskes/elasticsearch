@@ -28,7 +28,9 @@
 package com.prelert.transforms;
 
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.mock;
 
+import org.apache.log4j.Logger;
 import org.junit.Test;
 
 public class ConcatTest
@@ -36,7 +38,7 @@ public class ConcatTest
 	@Test
 	public void testMultipleInputs() throws TransformException
 	{
-		Concat concat = new Concat(new int [] {1,  2, 4}, new int [] {1});
+		Concat concat = new Concat(new int [] {1,  2, 4}, new int [] {1}, mock(Logger.class));
 
 		String [] input = {"a", "b", "c", "d", "e"};
 		String [] output = new String [2];
@@ -49,7 +51,7 @@ public class ConcatTest
 	@Test
 	public void testZeroInputs() throws TransformException
 	{
-		Concat concat = new Concat(new int [] {}, new int [] {0});
+		Concat concat = new Concat(new int [] {}, new int [] {0}, mock(Logger.class));
 
 		String [] input = {"a", "b", "c", "d", "e"};
 		String [] output = new String [1];
@@ -61,7 +63,7 @@ public class ConcatTest
 	@Test
 	public void testNoOutput() throws TransformException
 	{
-		Concat concat = new Concat(new int [] {}, new int [0]);
+		Concat concat = new Concat(new int [] {}, new int [0], mock(Logger.class));
 
 		String [] input = {"a", "b", "c", "d", "e"};
 		String [] output = new String [1];

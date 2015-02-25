@@ -178,7 +178,8 @@ public class DataFormatWarningsTest
 
 			try
 			{
-				pm.writeToJob(dd, ac, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, new NullOutputStream(),
+				pm.writeToJob(dd, ac, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, 
+				        new NullOutputStream(),
 						statusReporter, dp, LOGGER);
 				Assert.assertTrue(false); // should throw
 			}

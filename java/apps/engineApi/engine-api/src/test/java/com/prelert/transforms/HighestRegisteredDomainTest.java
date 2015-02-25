@@ -28,9 +28,11 @@
 package com.prelert.transforms;
 
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.mock;
 
 import com.google.common.net.InternetDomainName;
 
+import org.apache.log4j.Logger;
 import org.junit.Test;
 
 public class HighestRegisteredDomainTest
@@ -107,6 +109,8 @@ public class HighestRegisteredDomainTest
 	{
 	    // Any copyright is dedicated to the Public Domain.
 	    // http://creativecommons.org/publicdomain/zero/1.0/
+
+	    checkHighestRegisteredDomain("_nfsv4idmapdomain.prelert.com", "prelert.com");
 
 	    // Mixed case.
 	    checkIsPublicSuffix("COM");
@@ -217,9 +221,11 @@ public class HighestRegisteredDomainTest
 	@Test
 	public void testTransform_SingleOutput() throws TransformException
 	{
-		HighestRegisteredDomain transform = new HighestRegisteredDomain(new int [] {2}, new int [] {0});
+		HighestRegisteredDomain transform = new HighestRegisteredDomain(new int [] {2}, new int [] {0},
+		                    mock(Logger.class));
 
-		String [] input = {"", "", "www.test.ac.jp"};
+		//String [] input = {"", "", "www.test.ac.jp"};
+		String [] input = {"", "", "com"};
 		String [] output = new String [2];
 
 		transform.transform(input, output);
@@ -232,10 +238,13 @@ public class HighestRegisteredDomainTest
 		assertNull(output[1]);
 	}
 
+
+
 	@Test
 	public void testTransform_AllOutputs() throws TransformException
 	{
-		HighestRegisteredDomain transform = new HighestRegisteredDomain(new int [] {2}, new int [] {0, 1});
+		HighestRegisteredDomain transform = new HighestRegisteredDomain(new int [] {2}, new int [] {0, 1},
+		        mock(Logger.class));
 
 		String [] input = {"", "", "www.test.ac.jp"};
 		String [] output = new String [2];
@@ -249,5 +258,20 @@ public class HighestRegisteredDomainTest
 		assertEquals("a.b", output[0]);
 		assertEquals("domain.biz", output[1]);
 	}
+
+    @Test
+    public void testTransformTrimWhiteSpace() throws TransformException
+    {
+        HighestRegisteredDomain transform = new HighestRegisteredDomain(new int [] {2}, new int [] {0, 1},
+                mock(Logger.class));
+
+        String [] input = {"", "", " time.apple.com "};
+        String [] output = new String [2];
+
+        transform.transform(input, output);
+        assertEquals("time", output[0]);
+        assertEquals("apple.com", output[1]);
+    }
+
 
 }

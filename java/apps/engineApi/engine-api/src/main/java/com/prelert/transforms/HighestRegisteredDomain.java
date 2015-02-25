@@ -29,6 +29,8 @@ package com.prelert.transforms;
 
 import java.util.List;
 
+import org.apache.log4j.Logger;
+
 import com.google.common.net.InetAddresses;
 import com.google.common.net.InternetDomainName;
 
@@ -68,9 +70,10 @@ public class HighestRegisteredDomain extends Transform
         }
     }
 
-    public HighestRegisteredDomain(int[] inputIndicies, int[] outputIndicies)
+    public HighestRegisteredDomain(int[] inputIndicies, int[] outputIndicies,
+             Logger logger)
     {
-        super(inputIndicies, outputIndicies);
+        super(inputIndicies, outputIndicies, logger);
     }
 
     /**
@@ -81,6 +84,8 @@ public class HighestRegisteredDomain extends Transform
      * <li>If the host does not have a recognised public suffix such as .local
      * the effective TLD is everything after the final '.' and the subdomain
      * is everything before the the final '.'</li>
+     * <li>The host <em>is</em>  a public suffix return '' as the subdomain and the
+     * host as the highest registered domain</li>
      * <li>The host has a public suffix so split according to the rules
      * of the Guava InternetDomainname class </li>
      * </ol>
@@ -95,6 +100,8 @@ public class HighestRegisteredDomain extends Transform
             return new DomainSplit("", "");
         }
 
+        host = host.trim();
+
         // Put IP addresses into the domain portion of the result in their
         // entirety
         if (InetAddresses.isInetAddress(host))
@@ -102,7 +109,13 @@ public class HighestRegisteredDomain extends Transform
             return new DomainSplit("", host);
         }
 
+
         InternetDomainName idn = InternetDomainName.from(host);
+
+        if (idn.isPublicSuffix())
+        {
+            return new DomainSplit("", host);
+        }
 
         StringBuilder subDomain = new StringBuilder();
         String highestRegistered = "";
@@ -150,16 +163,23 @@ public class HighestRegisteredDomain extends Transform
     @Override
     public boolean transform(String[] inputRecord,
                             String[] outputRecord)
-    throws TransformException
     {
-        DomainSplit split = lookup(inputRecord[m_InputIndicies[0]]);
-
-        outputRecord[m_OutputIndicies[0]] = split.m_SubDomain;
-        if (m_OutputIndicies.length == 2)
+        try
         {
-            outputRecord[m_OutputIndicies[1]] = split.m_HighestRegisteredDomain;
-        }
+            DomainSplit split = lookup(inputRecord[m_InputIndicies[0]]);
 
-        return false;
+            outputRecord[m_OutputIndicies[0]] = split.m_SubDomain;
+            if (m_OutputIndicies.length == 2)
+            {
+                outputRecord[m_OutputIndicies[1]] = split.m_HighestRegisteredDomain;
+            }
+
+            return true;
+        }
+        catch (IllegalArgumentException e)
+        {
+            m_Logger.error("Cannot extract domain. " + e.getMessage());
+            return false;
+        }
     }
 }

@@ -27,6 +27,8 @@
 
 package com.prelert.transforms.date;
 
+import org.apache.log4j.Logger;
+
 import com.prelert.transforms.TransformException;
 
 /**
@@ -42,9 +44,9 @@ public class DoubleDateTransform extends DateTransform
     private long m_Epoch;
 
     public DoubleDateTransform(boolean isMillisecond,
-            int[] inputIndicies, int[] outputIndicies)
+            int[] inputIndicies, int[] outputIndicies, Logger logger)
     {
-        super(inputIndicies, outputIndicies);
+        super(inputIndicies, outputIndicies, logger);
         m_IsMillisecond = isMillisecond;
     }
 

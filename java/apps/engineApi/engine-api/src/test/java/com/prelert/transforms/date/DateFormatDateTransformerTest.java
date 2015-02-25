@@ -28,7 +28,9 @@
 package com.prelert.transforms.date;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
 
+import org.apache.log4j.Logger;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -45,7 +47,7 @@ public class DateFormatDateTransformerTest
     public void testTransform_GivenValidTimestamp() throws TransformException
     {
     	DateFormatTransform transformer = new DateFormatTransform("y-M-d", new int [] {0},
-    														new int [] {0});
+    														new int [] {0}, mock(Logger.class));
 
     	String [] input = {"2014-01-01"};
     	String [] output = new String[1];
@@ -63,7 +65,7 @@ public class DateFormatDateTransformerTest
         m_ExpectedException.expectMessage("Cannot parse date 'invalid' with format string 'y-M-d'");
 
     	DateFormatTransform transformer = new DateFormatTransform("y-M-d",
-    							new int [] {0}, new int [] {0});
+    							new int [] {0}, new int [] {0}, mock(Logger.class));
 
     	String [] input = {"invalid"};
     	String [] output = new String[1];
@@ -77,7 +79,7 @@ public class DateFormatDateTransformerTest
         m_ExpectedException.expect(ParseTimestampException.class);
 
     	DateFormatTransform transformer = new DateFormatTransform("y-M-d",
-    							new int [] {0}, new int [] {0});
+    							new int [] {0}, new int [] {0}, mock(Logger.class));
 
     	String [] input = {null};
     	String [] output = new String[1];
@@ -91,7 +93,7 @@ public class DateFormatDateTransformerTest
         m_ExpectedException.expect(IllegalArgumentException.class);
 
     	DateFormatTransform transformer = new DateFormatTransform("e",
-    							new int [] {0}, new int [] {0});
+    							new int [] {0}, new int [] {0}, mock(Logger.class));
 
     	String [] input = {"2015-02-01"};
     	String [] output = new String[1];

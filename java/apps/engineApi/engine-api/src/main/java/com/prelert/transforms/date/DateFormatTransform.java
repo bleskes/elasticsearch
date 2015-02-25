@@ -31,6 +31,8 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
+import org.apache.log4j.Logger;
+
 import com.prelert.transforms.TransformException;
 
 /**
@@ -45,9 +47,9 @@ public class DateFormatTransform extends DateTransform
     private DateFormat m_DateFormat;
 
     public DateFormatTransform(String timeFormat,
-            int[] inputIndicies, int[] outputIndicies)
+            int[] inputIndicies, int[] outputIndicies, Logger logger)
     {
-        super(inputIndicies, outputIndicies);
+        super(inputIndicies, outputIndicies, logger);
         m_TimeFormat = timeFormat;
 
         m_DateFormat = new SimpleDateFormat(m_TimeFormat);

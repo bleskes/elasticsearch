@@ -135,13 +135,15 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
         {
             m_DateTransform = new DateFormatTransform(m_DataDescription.getTimeFormat(),
                     new int[] {m_InFieldIndexes.get(m_DataDescription.getTimeField())},
-                    new int [] {m_OutFieldIndexes.get(m_DataDescription.getTimeField())});
+                    new int [] {m_OutFieldIndexes.get(m_DataDescription.getTimeField())},
+                    m_Logger);
         }
         else
         {
             m_DateTransform = new DoubleDateTransform(m_DataDescription.isEpochMs(),
                     new int[] {m_InFieldIndexes.get(m_DataDescription.getTimeField())},
-                    new int [] {m_OutFieldIndexes.get(m_DataDescription.getTimeField())});
+                    new int [] {m_OutFieldIndexes.get(m_DataDescription.getTimeField())},
+                    m_Logger);
         }
 
         for (TransformConfig config : m_TransformConfigs.getTransforms())
@@ -211,7 +213,11 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
         {
             try
             {
-                tr.transform(input, output);
+                boolean success = tr.transform(input, output);
+                if (!success)
+                {
+                    m_StatusReporter.reportFailedTransform();
+                }
             }
             catch (TransformException e)
             {

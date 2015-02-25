@@ -27,14 +27,16 @@
 
 package com.prelert.transforms;
 
+import org.apache.log4j.Logger;
+
 /**
  * A no op transform simply passes data through it
  */
 public class PassThrough extends Transform
 {
-    public PassThrough(int[] inputIndicies, int[] outputIndicies)
+    public PassThrough(int[] inputIndicies, int[] outputIndicies, Logger logger)
     {
-        super(inputIndicies, outputIndicies);
+        super(inputIndicies, outputIndicies, logger);
     }
 
     @Override

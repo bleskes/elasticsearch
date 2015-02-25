@@ -27,6 +27,8 @@
 
 package com.prelert.transforms;
 
+import org.apache.log4j.Logger;
+
 
 /**
  * Abstract transform class.
@@ -40,16 +42,20 @@ public abstract class Transform
     protected final int [] m_InputIndicies;
     protected final int [] m_OutputIndicies;
 
+    protected final Logger m_Logger;
+
     /**
      *
      * @param inputIndicies Indicies into the input record
      * @param outputIndicies Indicies into the output record.
+     * @param logger
      * Transform results go into these indicies
      */
-    public Transform(int [] inputIndicies, int [] outputIndicies)
+    public Transform(int [] inputIndicies, int [] outputIndicies, Logger logger)
     {
         m_InputIndicies = inputIndicies;
         m_OutputIndicies = outputIndicies;
+        m_Logger = logger;
     }
 
     /**

@@ -81,12 +81,12 @@ public class TransformFactory
 		{
 			case DOMAIN_LOOKUP:
 			{
-				return new HighestRegisteredDomain(input, output);
+				return new HighestRegisteredDomain(input, output, logger);
 
 			}
 			case CONCAT:
 			{
-				return new Concat(input, output);
+				return new Concat(input, output, logger);
 			}
 			default:
 			{

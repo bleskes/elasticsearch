@@ -27,6 +27,8 @@
 
 package com.prelert.transforms.date;
 
+import org.apache.log4j.Logger;
+
 import com.prelert.transforms.Transform;
 
 /**
@@ -35,9 +37,9 @@ import com.prelert.transforms.Transform;
  */
 public abstract class DateTransform extends Transform
 {
-    public DateTransform(int[] inputIndicies, int[] outputIndicies)
+    public DateTransform(int[] inputIndicies, int[] outputIndicies, Logger logger)
     {
-        super(inputIndicies, outputIndicies);
+        super(inputIndicies, outputIndicies, logger);
     }
 
     /**

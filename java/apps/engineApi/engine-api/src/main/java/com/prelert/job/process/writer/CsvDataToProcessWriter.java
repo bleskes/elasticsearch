@@ -128,12 +128,13 @@ class CsvDataToProcessWriter extends AbstractDataToProcessWriter
             {
                 lineCount++;
 
+                Arrays.fill(record, "");
+
                 if (maxIndex >= line.size())
                 {
                     m_Logger.warn("Not enough fields in csv record, expected at least "  + maxIndex
                             + ". "+ line);
 
-                    Arrays.fill(record, "");
                     for (InputOutputMap inOut : m_InputOutputMap)
                     {
                         if (inOut.m_Input >= line.size())

@@ -28,7 +28,9 @@
 package com.prelert.transforms.date;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
 
+import org.apache.log4j.Logger;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -45,7 +47,7 @@ public class DoubleDateTransformerTest
     public void testTransform_GivenTimestampIsNotMilliseconds() throws TransformException
     {
     	DoubleDateTransform transformer = new DoubleDateTransform(false, new int [] {0},
-												new int [] {0});
+												new int [] {0}, mock(Logger.class));
 
     	String [] input = {"1000"};
     	String [] output = new String[1];
@@ -60,7 +62,7 @@ public class DoubleDateTransformerTest
     public void testTransform_GivenTimestampIsMilliseconds() throws TransformException
     {
     	DoubleDateTransform transformer = new DoubleDateTransform(true, new int [] {0},
-				new int [] {0});
+				new int [] {0}, mock(Logger.class));
 
 		String [] input = {"1000"};
 		String [] output = new String[1];
@@ -78,7 +80,7 @@ public class DoubleDateTransformerTest
         m_ExpectedException.expectMessage("Cannot parse timestamp 'invalid' as epoch value");
 
     	DoubleDateTransform transformer = new DoubleDateTransform(false, new int [] {0},
-				new int [] {0});
+				new int [] {0}, mock(Logger.class));
 
 		String [] input = {"invalid"};
 		String [] output = new String[1];

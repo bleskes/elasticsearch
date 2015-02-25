@@ -27,14 +27,16 @@
 
 package com.prelert.transforms;
 
+import org.apache.log4j.Logger;
+
 /**
  * Concatenate input fields
  */
 public class Concat extends Transform
 {
-    public Concat(int[] inputIndicies, int[] outputIndicies)
+    public Concat(int[] inputIndicies, int[] outputIndicies, Logger logger)
     {
-        super(inputIndicies, outputIndicies);
+        super(inputIndicies, outputIndicies, logger);
     }
 
     /**
