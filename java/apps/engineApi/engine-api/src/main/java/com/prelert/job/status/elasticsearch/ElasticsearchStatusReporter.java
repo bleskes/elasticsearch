@@ -70,7 +70,7 @@ public class ElasticsearchStatusReporter extends StatusReporter
     {
         String status = String.format("%d records written to autodetect with %d "
                 + "missing fields, %d were discarded because the date could not be "
-                + "read and %d were ignored as because they weren't in ascending "
+                + "read and %d were ignored because they weren't in ascending "
                 + "chronological order and %d transforms failed.", getProcessedRecordCount(),
                 getMissingFieldErrorCount(), getDateParseErrorsCount(),
                 getOutOfOrderRecordCount(), getFailedTransformCount());
