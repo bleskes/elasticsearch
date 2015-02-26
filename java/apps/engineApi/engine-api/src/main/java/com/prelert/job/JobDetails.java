@@ -486,7 +486,7 @@ public class JobDetails
 
 	/**
 	 * Prints the more salient fields in a JSON-like format suitable for logging.
-	 * If every field was written it woul spam the log file.
+	 * If every field was written it would spam the log file.
 	 */
 	@Override
 	public String toString()
