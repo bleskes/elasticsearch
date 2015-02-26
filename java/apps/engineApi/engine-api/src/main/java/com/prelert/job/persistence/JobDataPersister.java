@@ -98,6 +98,7 @@ public abstract class JobDataPersister
                     int [] tmp = new int [allFieldMappings[i].length -1];
                     System.arraycopy(allFieldMappings[i], 0, tmp, 0, j);
                     System.arraycopy(allFieldMappings[i], j+1, tmp, j, tmp.length - j);
+                    allFieldMappings[i] = tmp;
                 }
 
                 j++;

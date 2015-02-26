@@ -126,7 +126,7 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
 
         m_JobDataPersister.setFieldMappings(m_AnalysisConfig.fields(),
                 m_AnalysisConfig.byFields(), m_AnalysisConfig.overFields(),
-                m_AnalysisConfig.partitionFields(), m_InFieldIndexes);
+                m_AnalysisConfig.partitionFields(), m_OutFieldIndexes);
 
 
         boolean isDateFromatString = m_DataDescription.isTransformTime()
