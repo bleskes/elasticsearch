@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -51,5 +51,30 @@ public class DummyJobDataPersister extends JobDataPersister
 	public int getRecordCount()
 	{
 		return m_RecordCount;
+	}
+
+	public String [] getFieldNames()
+	{
+	    return m_FieldNames;
+	}
+
+	public int [] getFieldMappings()
+	{
+	    return m_FieldMappings;
+	}
+
+	public int [] getByFieldMappings()
+	{
+	    return m_ByFieldMappings;
+	}
+
+	public int [] getOverFieldMappings()
+	{
+	    return m_OverFieldMappings;
+	}
+
+	public int [] getPartitionFieldMappings()
+	{
+	    return m_PartitionFieldMappings;
 	}
 }
