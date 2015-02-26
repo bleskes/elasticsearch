@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -98,7 +98,17 @@ public abstract class JobDataPersister
                     int [] tmp = new int [allFieldMappings[i].length -1];
                     System.arraycopy(allFieldMappings[i], 0, tmp, 0, j);
                     System.arraycopy(allFieldMappings[i], j+1, tmp, j, tmp.length - j);
-                    allFieldMappings[i] = tmp;
+
+                    //allFieldMappings[i] = tmp;
+                    switch (i)
+                    {
+                    case 0: m_FieldMappings = tmp; break;
+                    case 1: m_ByFieldMappings = tmp; break;
+                    case 2: m_OverFieldMappings = tmp; break;
+                    case 3: m_PartitionFieldMappings = tmp; break;
+                    default:
+                        break;
+                    }
                 }
 
                 j++;

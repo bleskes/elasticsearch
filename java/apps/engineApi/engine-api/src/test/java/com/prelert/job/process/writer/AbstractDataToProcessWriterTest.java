@@ -51,7 +51,7 @@ import com.prelert.job.TransformConfig;
 import com.prelert.job.TransformConfigs;
 import com.prelert.job.TransformType;
 import com.prelert.job.input.LengthEncodedWriter;
-import com.prelert.job.persistence.JobDataPersister;
+import com.prelert.job.persistence.DummyJobDataPersister;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.writer.AbstractDataToProcessWriter.InputOutputMap;
 import com.prelert.job.status.StatusReporter;
@@ -68,14 +68,15 @@ public class AbstractDataToProcessWriterTest
 {
     @Mock private LengthEncodedWriter m_LengthEncodedWriter;
     @Mock private StatusReporter m_StatusReporter;
-    @Mock private JobDataPersister m_DataPersister;
     @Mock private Logger m_Logger;
 
 
 	@Test
 	public void testInputFields_MulitpleInputsSingleOutput() throws MissingFieldException
 	{
-		DataDescription dd = new DataDescription();
+	    DummyJobDataPersister persister = new DummyJobDataPersister();
+
+	    DataDescription dd = new DataDescription();
 		dd.setTimeField("timeField");
 
 		AnalysisConfig ac = new AnalysisConfig();
@@ -93,7 +94,7 @@ public class AbstractDataToProcessWriterTest
 
 
 		AbstractDataToProcessWriter writer = new CsvDataToProcessWriter(m_LengthEncodedWriter
-				, dd, ac, transforms, m_StatusReporter, m_DataPersister, m_Logger);
+				, dd, ac, transforms, m_StatusReporter, persister, m_Logger);
 
 		Set<String> inputFields = new HashSet<>(writer.inputFields());
 		assertEquals(4, inputFields.size());
@@ -119,7 +120,7 @@ public class AbstractDataToProcessWriterTest
 		Assert.assertEquals(new Integer(3), inputIndicies.get("value"));
 
 		Map<String, Integer> outputIndicies = writer.getOutputFieldIndicies();
-		assertEquals(4, inputIndicies.size());
+		assertEquals(4, outputIndicies.size());
 		Assert.assertEquals(new Integer(0), outputIndicies.get("timeField"));
 		Assert.assertEquals(new Integer(1), outputIndicies.get("host-metric"));
 		Assert.assertEquals(new Integer(2), outputIndicies.get("value"));
@@ -130,11 +131,20 @@ public class AbstractDataToProcessWriterTest
 		assertEquals(1, inOutMaps.size());
 		assertEquals(inOutMaps.get(0).m_Input, 3);
 		assertEquals(inOutMaps.get(0).m_Output, 2);
+
+		// The persister's field mappings are the same as the output indicies
+        assertArrayEquals(new String[] {"value"}, persister.getFieldNames());
+        assertArrayEquals(new int [] {2}, persister.getFieldMappings());
+        assertArrayEquals(new int [] {1}, persister.getByFieldMappings());
+        assertArrayEquals(new int [0], persister.getOverFieldMappings());
+        assertArrayEquals(new int [0],  persister.getPartitionFieldMappings());
 	}
 
 	@Test
 	public void testInputFields_SingleInputMulitpleOutputs() throws MissingFieldException
 	{
+	    DummyJobDataPersister persister = new DummyJobDataPersister();
+
 		DataDescription dd = new DataDescription();
 		dd.setTimeField("timeField");
 
@@ -153,7 +163,7 @@ public class AbstractDataToProcessWriterTest
 
 
 		AbstractDataToProcessWriter writer = new CsvDataToProcessWriter(m_LengthEncodedWriter
-				, dd, ac, transforms, m_StatusReporter, m_DataPersister, m_Logger);
+				, dd, ac, transforms, m_StatusReporter, persister, m_Logger);
 
 		Set<String> inputFields = new HashSet<>(writer.inputFields());
 
@@ -204,6 +214,16 @@ public class AbstractDataToProcessWriterTest
 			outIndices[i] = allOutputs.indexOf(TransformType.DOMAIN_LOOKUP.defaultOutputNames().get(i)) + 1;
 		}
 		assertArrayEquals(outIndices, tr.outputIndicies());
+
+
+        // The persister's field mappings are the same as the output indicies
+        assertArrayEquals(new String[] {"value"}, persister.getFieldNames());
+        assertArrayEquals(new int [] {outputIndicies.get("value")}, persister.getFieldMappings());
+        assertArrayEquals(new int [] {outputIndicies.get(TransformType.DOMAIN_LOOKUP.defaultOutputNames().get(0))},
+                                    persister.getByFieldMappings());
+        assertArrayEquals(new int [] {outputIndicies.get(TransformType.DOMAIN_LOOKUP.defaultOutputNames().get(1))},
+                                    persister.getOverFieldMappings());
+        assertArrayEquals(new int [0],  persister.getPartitionFieldMappings());
 	}
 
 
@@ -215,6 +235,8 @@ public class AbstractDataToProcessWriterTest
 	public void testInputFields_SingleInputMulitpleOutputs_OnlyOneOutputUsed()
 	throws MissingFieldException
 	{
+	    DummyJobDataPersister persister = new DummyJobDataPersister();
+
 		DataDescription dd = new DataDescription();
 		dd.setTimeField("timeField");
 
@@ -232,7 +254,7 @@ public class AbstractDataToProcessWriterTest
 
 
 		AbstractDataToProcessWriter writer = new CsvDataToProcessWriter(m_LengthEncodedWriter
-				, dd, ac, transforms, m_StatusReporter, m_DataPersister, m_Logger);
+				, dd, ac, transforms, m_StatusReporter, persister, m_Logger);
 
 		Set<String> inputFields = new HashSet<>(writer.inputFields());
 
@@ -281,5 +303,14 @@ public class AbstractDataToProcessWriterTest
 		int [] outIndices = new int [1];
 		outIndices[0] = allOutputs.indexOf(TransformType.DOMAIN_LOOKUP.defaultOutputNames().get(0)) + 1;
 		assertArrayEquals(outIndices, tr.outputIndicies());
+
+
+        // The persister's field mappings are the same as the output indicies
+        assertArrayEquals(new String[] {"value"}, persister.getFieldNames());
+        assertArrayEquals(new int [] {outputIndicies.get("value")}, persister.getFieldMappings());
+        assertArrayEquals(new int [] {outputIndicies.get(TransformType.DOMAIN_LOOKUP.defaultOutputNames().get(0))},
+                persister.getByFieldMappings());
+        assertArrayEquals(new int [0], persister.getOverFieldMappings());
+        assertArrayEquals(new int [0],  persister.getPartitionFieldMappings());
 	}
 }
