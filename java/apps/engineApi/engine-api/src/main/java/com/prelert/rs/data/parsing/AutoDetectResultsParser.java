@@ -248,7 +248,7 @@ public class AutoDetectResultsParser
                         break;
                     case ModelSizeStats.TYPE:
                         ModelSizeStats modelSizeStats = ModelSizeStats.parseJsonAfterStartObject(parser);
-                        logger.debug(String.format("Parsed ModelSizeStats: %d / %d / %d / %d / %d / %s",
+                        logger.trace(String.format("Parsed ModelSizeStats: %d / %d / %d / %d / %d / %s",
                             modelSizeStats.getModelBytes(),
                             modelSizeStats.getTotalByFieldCount(),
                             modelSizeStats.getTotalOverFieldCount(),
