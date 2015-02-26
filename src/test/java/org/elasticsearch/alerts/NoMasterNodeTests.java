@@ -36,6 +36,8 @@ import org.elasticsearch.test.discovery.ClusterDiscoveryConfiguration;
 import org.elasticsearch.test.junit.annotations.TestLogging;
 import org.junit.Test;
 
+import java.util.concurrent.TimeUnit;
+
 import static org.elasticsearch.index.query.QueryBuilders.termQuery;
 import static org.elasticsearch.search.builder.SearchSourceBuilder.searchSource;
 import static org.hamcrest.Matchers.equalTo;
@@ -154,7 +156,7 @@ public class NoMasterNodeTests extends AbstractAlertingTests {
                 }
                 return true;
             }
-        }), equalTo(true));
+        }, 30, TimeUnit.SECONDS), equalTo(true));
         // Ensure that the alert manager doesn't run elsewhere
         for (AlertsService alertsService : internalTestCluster().getInstances(AlertsService.class)) {
             assertThat(alertsService.state(), is(AlertsService.State.STOPPED));
