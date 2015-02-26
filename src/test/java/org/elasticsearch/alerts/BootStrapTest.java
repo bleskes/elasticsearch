@@ -50,6 +50,7 @@ import java.util.concurrent.TimeUnit;
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 import static org.elasticsearch.index.query.QueryBuilders.termQuery;
 import static org.elasticsearch.search.builder.SearchSourceBuilder.searchSource;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.core.IsEqual.equalTo;
 
@@ -120,9 +121,6 @@ public class BootStrapTest extends AbstractAlertingTests {
                 .get();
         assertTrue(indexResponse.isCreated());
 
-        // The executor doesn't get shutdown when alerts stops, so the largest queue size don't get reset.
-        long previousLargestQueueSize = response.getAlertActionManagerLargestQueueSize();
-
         stopAlerting();
         startAlerting();
 
@@ -130,7 +128,7 @@ public class BootStrapTest extends AbstractAlertingTests {
         assertTrue(response.isAlertActionManagerStarted());
         assertThat(response.getAlertManagerStarted(), equalTo(AlertsService.State.STARTED));
         assertThat(response.getNumberOfRegisteredAlerts(), equalTo(1L));
-        assertThat(response.getAlertActionManagerLargestQueueSize() - previousLargestQueueSize, equalTo(1L));
+        assertThat(response.getAlertActionManagerLargestQueueSize(), greaterThanOrEqualTo(1l));
     }
 
     @Test
