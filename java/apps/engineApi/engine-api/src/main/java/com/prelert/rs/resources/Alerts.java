@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -78,7 +78,28 @@ public class Alerts extends ResourceWithJobManager
     private final DateFormat [] m_DateFormats = new DateFormat [] {
         m_DateFormat, m_DateFormatWithMs};
 
+    private static class AlertsParams
+    {
+        boolean expand;
+        int skip;
+        int take;
+        String start;
+        String end;
+        String severity;
+        double anomalyScore;
 
+        public AlertsParams(boolean expand, int skip, int take, String start, String end,
+                String severity, double anomalyScore)
+        {
+            this.expand = expand;
+            this.skip = skip;
+            this.take = take;
+            this.start = start;
+            this.end = end;
+            this.severity = severity;
+            this.anomalyScore = anomalyScore;
+        }
+    }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -90,17 +111,23 @@ public class Alerts extends ResourceWithJobManager
             @DefaultValue("") @QueryParam(SEVERITY_QUERY_PARAM) String severity,
             @DefaultValue("0.0") @QueryParam(ANOMALY_SCORE_QUERY_PARAM) double anomalyScore)
     {
-        boolean expand = true;
+        AlertsParams params = new AlertsParams(true, skip, take, start, end, severity, anomalyScore);
+        Pagination<Alert> alerts = paginateAlerts(params, ENDPOINT);
+        LOGGER.debug(String.format("Return %d alerts", alerts.getDocuments().size()));
+        return alerts;
+    }
 
+    private Pagination<Alert> paginateAlerts(AlertsParams params, String path)
+    {
         LOGGER.debug(String.format("Get %s alerts, skip = %d, take = %d"
                 + " start = '%s', end='%s'",
-                expand?"expanded ":"", skip, take, start, end));
+                params.expand?"expanded ":"", params.skip, params.take, params.start, params.end));
 
-        long epochStart = paramToEpochIfValidOrThrow(start, m_DateFormats, LOGGER);
-        long epochEnd = paramToEpochIfValidOrThrow(end, m_DateFormats, LOGGER);
+        long epochStart = paramToEpochIfValidOrThrow(params.start, m_DateFormats, LOGGER);
+        long epochEnd = paramToEpochIfValidOrThrow(params.end, m_DateFormats, LOGGER);
 
         Pagination<Alert> alerts = new Pagination<>();
-//        AlertManager manager = alertManager();
+        //AlertManager manager = alertManager();
         //Pagination<Alert> alerts = manager.alerts(skip, take, epochStart, epochEnd);
 
         // paging
@@ -109,20 +136,17 @@ public class Alerts extends ResourceWithJobManager
             List<ResourceWithJobManager.KeyValue> queryParams = new ArrayList<>();
             if (epochStart > 0)
             {
-                queryParams.add(this.new KeyValue(START_QUERY_PARAM, start));
+                queryParams.add(this.new KeyValue(START_QUERY_PARAM, params.start));
             }
             if (epochEnd > 0)
             {
-                queryParams.add(this.new KeyValue(END_QUERY_PARAM, end));
+                queryParams.add(this.new KeyValue(END_QUERY_PARAM, params.end));
             }
 
-            queryParams.add(this.new KeyValue(SEVERITY_QUERY_PARAM, severity));
+            queryParams.add(this.new KeyValue(SEVERITY_QUERY_PARAM, params.severity));
 
-            setPagingUrls(ENDPOINT, alerts, queryParams);
+            setPagingUrls(path, alerts, queryParams);
         }
-
-        LOGGER.debug(String.format("Return %d alerts", alerts.getDocuments().size()));
-
         return alerts;
     }
 
@@ -139,48 +163,11 @@ public class Alerts extends ResourceWithJobManager
             @DefaultValue("0.0") @QueryParam(ANOMALY_SCORE_QUERY_PARAM) double anomalyScore)
     throws UnknownJobException
     {
-        boolean expand = true;
-
-        LOGGER.debug(String.format("Get %s alerts for job %s, skip = %d, take = %d"
-                + " start = '%s', end='%s'",
-                expand?"expanded ":"", jobId, skip, take, start, end));
-
-        long epochStart = paramToEpochIfValidOrThrow(start, m_DateFormats, LOGGER);
-        long epochEnd = paramToEpochIfValidOrThrow(end, m_DateFormats, LOGGER);
-
-        Pagination<Alert> alerts = new Pagination<>();
-//        AlertManager manager = alertManager();
-//        Pagination<Alert>  alerts = manager.jobAlerts(jobId, skip, take,
-//                epochStart, epochEnd);
-
-        // paging
-        if (alerts.isAllResults() == false)
-        {
-            String path = new StringBuilder()
-                                .append(ENDPOINT)
-                                .append("/")
-                                .append(jobId)
-                                .toString();
-
-            List<ResourceWithJobManager.KeyValue> queryParams = new ArrayList<>();
-            if (epochStart > 0)
-            {
-                queryParams.add(this.new KeyValue(START_QUERY_PARAM, start));
-            }
-            if (epochEnd > 0)
-            {
-                queryParams.add(this.new KeyValue(END_QUERY_PARAM, end));
-            }
-
-            queryParams.add(this.new KeyValue(SEVERITY_QUERY_PARAM, severity));
-
-            setPagingUrls(path, alerts, queryParams);
-        }
-
+        AlertsParams params = new AlertsParams(true, skip, take, start, end, severity, anomalyScore);
+        String path = new StringBuilder().append(ENDPOINT).append("/").append(jobId).toString();
+        Pagination<Alert> alerts = paginateAlerts(params, path);
         LOGGER.debug(String.format("Return %d alerts for job %s",
                 alerts.getDocumentCount(), jobId));
-
         return alerts;
     }
-
 }
