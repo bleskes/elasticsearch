@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -52,234 +52,234 @@ import com.prelert.rs.data.ErrorCode;
 @JsonInclude(Include.NON_NULL)
 public class DataDescription
 {
-	/**
-	 * Enum of the acceptable data formats.
-	 */
-	public enum DataFormat
-	{
-		JSON, DELINEATED;
+    /**
+     * Enum of the acceptable data formats.
+     */
+    public enum DataFormat
+    {
+        JSON, DELINEATED;
 
-		/**
-		 * Case-insensitive from string method.
-		 * Works with either JSON, json, etc.
-		 *
-		 * @param value
-		 * @return The data format
-		 */
-		@JsonCreator
-		public static DataFormat forString(String value)
-		{
-			return DataFormat.valueOf(value.toUpperCase());
-		}
-	}
+        /**
+         * Case-insensitive from string method.
+         * Works with either JSON, json, etc.
+         *
+         * @param value
+         * @return The data format
+         */
+        @JsonCreator
+        public static DataFormat forString(String value)
+        {
+            return DataFormat.valueOf(value.toUpperCase());
+        }
+    }
 
-	/**
-	 * Special time format string for epoch times (seconds)
-	 */
-	public static final String EPOCH = "epoch";
+    /**
+     * Special time format string for epoch times (seconds)
+     */
+    public static final String EPOCH = "epoch";
 
-	/**
-	 * Special time format string for epoch times (milli-seconds)
-	 */
-	public static final String EPOCH_MS = "epoch_ms";
+    /**
+     * Special time format string for epoch times (milli-seconds)
+     */
+    public static final String EPOCH_MS = "epoch_ms";
 
-	/**
-	 * The format field name
-	 */
-	public static final String FORMAT = "format";
-	/**
-	 * The time field name
-	 */
-	public static final String TIME_FIELD_NAME = "timeField";
+    /**
+     * The format field name
+     */
+    public static final String FORMAT = "format";
+    /**
+     * The time field name
+     */
+    public static final String TIME_FIELD_NAME = "timeField";
 
-	/**
-	 * By default autodetect expects the timestamp in a field with this name
-	 */
-	public static final String DEFAULT_TIME_FIELD = "time";
+    /**
+     * By default autodetect expects the timestamp in a field with this name
+     */
+    public static final String DEFAULT_TIME_FIELD = "time";
 
-	/**
-	 * The timeFormat field name
-	 */
-	public static final String TIME_FORMAT = "timeFormat";
-	/**
-	 * The field delimiter field name
-	 */
-	public static final String FIELD_DELIMITER = "fieldDelimiter";
-	/**
-	 * The quote char field name
-	 */
-	public static final String QUOTE_CHARACTER = "quoteCharacter";
+    /**
+     * The timeFormat field name
+     */
+    public static final String TIME_FORMAT = "timeFormat";
+    /**
+     * The field delimiter field name
+     */
+    public static final String FIELD_DELIMITER = "fieldDelimiter";
+    /**
+     * The quote char field name
+     */
+    public static final String QUOTE_CHARACTER = "quoteCharacter";
 
-	/**
-	 * The default field delimiter expected by the native autodetect_api
-	 * program.
-	 */
-	public static final char DEFAULT_DELIMITER = '\t';
+    /**
+     * The default field delimiter expected by the native autodetect_api
+     * program.
+     */
+    public static final char DEFAULT_DELIMITER = '\t';
 
-	/**
-	 * Csv data must have this line ending
-	 */
-	public static final char LINE_ENDING = '\n';
+    /**
+     * Csv data must have this line ending
+     */
+    public static final char LINE_ENDING = '\n';
 
-	/**
-	 * The default quote character used to escape text in
-	 * delineated data formats
-	 */
-	public static final char DEFAULT_QUOTE_CHAR = '"';
+    /**
+     * The default quote character used to escape text in
+     * delineated data formats
+     */
+    public static final char DEFAULT_QUOTE_CHAR = '"';
 
-	private DataFormat m_DataFormat;
-	private String m_TimeFieldName;
-	private String m_TimeFormat;
-	private char m_FieldDelimiter;
-	private char m_QuoteCharacter;
+    private DataFormat m_DataFormat;
+    private String m_TimeFieldName;
+    private String m_TimeFormat;
+    private char m_FieldDelimiter;
+    private char m_QuoteCharacter;
 
-	public DataDescription()
-	{
-		m_DataFormat = DataFormat.DELINEATED;
-		m_TimeFieldName = DEFAULT_TIME_FIELD;
-		m_TimeFormat = EPOCH;
-		m_FieldDelimiter = DEFAULT_DELIMITER;
-		m_QuoteCharacter = DEFAULT_QUOTE_CHAR;
-	}
+    public DataDescription()
+    {
+        m_DataFormat = DataFormat.DELINEATED;
+        m_TimeFieldName = DEFAULT_TIME_FIELD;
+        m_TimeFormat = EPOCH;
+        m_FieldDelimiter = DEFAULT_DELIMITER;
+        m_QuoteCharacter = DEFAULT_QUOTE_CHAR;
+    }
 
-	/**
-	 * The format of the data to be processed.
-	 * Defaults to {@link DataDescription.DataFormat#DELINEATED}
-	 * @return The data format
-	 */
-	public DataFormat getFormat()
-	{
-		return m_DataFormat;
-	}
+    /**
+     * The format of the data to be processed.
+     * Defaults to {@link DataDescription.DataFormat#DELINEATED}
+     * @return The data format
+     */
+    public DataFormat getFormat()
+    {
+        return m_DataFormat;
+    }
 
-	public void setFormat(DataFormat format)
-	{
-		m_DataFormat = format;
-	}
+    public void setFormat(DataFormat format)
+    {
+        m_DataFormat = format;
+    }
 
-	/**
-	 * The name of the field containing the timestamp
-	 * @return A String if set or <code>null</code>
-	 */
-	public String getTimeField()
-	{
-		return m_TimeFieldName;
-	}
+    /**
+     * The name of the field containing the timestamp
+     * @return A String if set or <code>null</code>
+     */
+    public String getTimeField()
+    {
+        return m_TimeFieldName;
+    }
 
-	public void setTimeField(String fieldName)
-	{
-		m_TimeFieldName = fieldName;
-	}
+    public void setTimeField(String fieldName)
+    {
+        m_TimeFieldName = fieldName;
+    }
 
-	/**
-	 * Either {@value #EPOCH}, {@value #EPOCH_MS} or a SimpleDateTime format string.
-	 * If not set (is <code>null</code> or an empty string) or set to
-	 * {@value #EPOCH} (the default) then the date is assumed to be in
-	 * seconds from the epoch.
-	 * @return A String if set or <code>null</code>
-	 */
-	public String getTimeFormat()
-	{
-		return m_TimeFormat;
-	}
+    /**
+     * Either {@value #EPOCH}, {@value #EPOCH_MS} or a SimpleDateTime format string.
+     * If not set (is <code>null</code> or an empty string) or set to
+     * {@value #EPOCH} (the default) then the date is assumed to be in
+     * seconds from the epoch.
+     * @return A String if set or <code>null</code>
+     */
+    public String getTimeFormat()
+    {
+        return m_TimeFormat;
+    }
 
-	public void setTimeFormat(String format)
-	{
-		m_TimeFormat = format;
-	}
+    public void setTimeFormat(String format)
+    {
+        m_TimeFormat = format;
+    }
 
-	/**
-	 * If the data is in a delineated format with a header e.g. csv or tsv
-	 * this is the delimiter character used. This is only applicable if
-	 * {@linkplain #getFormat()} is {@link DataDescription.DataFormat#DELINEATED}.
-	 * The default value is {@value #DEFAULT_DELIMITER}
-	 *
-	 * @return A char
-	 */
-	public char getFieldDelimiter()
-	{
-		return m_FieldDelimiter;
-	}
+    /**
+     * If the data is in a delineated format with a header e.g. csv or tsv
+     * this is the delimiter character used. This is only applicable if
+     * {@linkplain #getFormat()} is {@link DataDescription.DataFormat#DELINEATED}.
+     * The default value is {@value #DEFAULT_DELIMITER}
+     *
+     * @return A char
+     */
+    public char getFieldDelimiter()
+    {
+        return m_FieldDelimiter;
+    }
 
-	public void setFieldDelimiter(char delimiter)
-	{
-		m_FieldDelimiter = delimiter;
-	}
+    public void setFieldDelimiter(char delimiter)
+    {
+        m_FieldDelimiter = delimiter;
+    }
 
-	/**
-	 * The quote character used in delineated formats.
-	 * Defaults to {@value #DEFAULT_QUOTE_CHAR}
-	 * @return The delineated format quote character
-	 */
-	public char getQuoteCharacter()
-	{
-		return m_QuoteCharacter;
-	}
+    /**
+     * The quote character used in delineated formats.
+     * Defaults to {@value #DEFAULT_QUOTE_CHAR}
+     * @return The delineated format quote character
+     */
+    public char getQuoteCharacter()
+    {
+        return m_QuoteCharacter;
+    }
 
-	public void setQuoteCharacter(char value)
-	{
-		m_QuoteCharacter = value;
-	}
-
-
-	/**
-	 * Returns true if the data described by this object needs
-	 * transforming before processing by autodetect.
-	 * A transformation must be applied if either a timeformat is
-	 * not in seconds since the epoch or the data is in Json format.
-	 * @return True if the data should be transformed.
-	 */
-	public boolean transform()
-	{
-		return m_DataFormat == DataFormat.JSON ||
-				isTransformTime();
-	}
+    public void setQuoteCharacter(char value)
+    {
+        m_QuoteCharacter = value;
+    }
 
 
-	/**
-	 * Return true if the time is in a format that needs transforming.
-	 * Anytime format this isn't {@value #EPOCH} or <code>null</code>
-	 * needs transforming.
-	 * @return True if the time field needs to be transformed.
-	 */
-	public boolean isTransformTime()
-	{
-		return m_TimeFormat != null && !EPOCH.equals(m_TimeFormat);
-	}
+    /**
+     * Returns true if the data described by this object needs
+     * transforming before processing by autodetect.
+     * A transformation must be applied if either a timeformat is
+     * not in seconds since the epoch or the data is in Json format.
+     * @return True if the data should be transformed.
+     */
+    public boolean transform()
+    {
+        return m_DataFormat == DataFormat.JSON ||
+                isTransformTime();
+    }
 
-	/**
-	 * Return true if the time format is {@value #EPOCH_MS}
-	 * @return True if the date is in milli-seconds since the epoch.
-	 */
-	public boolean isEpochMs()
-	{
-		return EPOCH_MS.equals(m_TimeFormat);
-	}
 
-	/**
-	 * Overridden equality test
-	 */
-	@Override
-	public boolean equals(Object other)
-	{
-		if (this == other)
-		{
-			return true;
-		}
+    /**
+     * Return true if the time is in a format that needs transforming.
+     * Anytime format this isn't {@value #EPOCH} or <code>null</code>
+     * needs transforming.
+     * @return True if the time field needs to be transformed.
+     */
+    public boolean isTransformTime()
+    {
+        return m_TimeFormat != null && !EPOCH.equals(m_TimeFormat);
+    }
 
-		if (other instanceof DataDescription == false)
-		{
-			return false;
-		}
+    /**
+     * Return true if the time format is {@value #EPOCH_MS}
+     * @return True if the date is in milli-seconds since the epoch.
+     */
+    public boolean isEpochMs()
+    {
+        return EPOCH_MS.equals(m_TimeFormat);
+    }
 
-		DataDescription that = (DataDescription)other;
+    /**
+     * Overridden equality test
+     */
+    @Override
+    public boolean equals(Object other)
+    {
+        if (this == other)
+        {
+            return true;
+        }
 
-		return this.m_DataFormat == that.m_DataFormat &&
-				this.m_QuoteCharacter == that.m_QuoteCharacter &&
-				Objects.equals(this.m_TimeFieldName, that.m_TimeFieldName) &&
-				Objects.equals(this.m_TimeFormat, that.m_TimeFormat) &&
-				Objects.equals(this.m_FieldDelimiter, that.m_FieldDelimiter);
-	}
+        if (other instanceof DataDescription == false)
+        {
+            return false;
+        }
+
+        DataDescription that = (DataDescription)other;
+
+        return this.m_DataFormat == that.m_DataFormat &&
+                this.m_QuoteCharacter == that.m_QuoteCharacter &&
+                Objects.equals(this.m_TimeFieldName, that.m_TimeFieldName) &&
+                Objects.equals(this.m_TimeFormat, that.m_TimeFormat) &&
+                Objects.equals(this.m_FieldDelimiter, that.m_FieldDelimiter);
+    }
 
     @Override
     public int hashCode()
@@ -288,38 +288,38 @@ public class DataDescription
                 m_TimeFormat, m_FieldDelimiter);
     }
 
-	/**
-	 * Verify the data description configuration
-	 * <ol>
-	 * <li>Check the timeFormat - if set - is either {@value #EPOCH},
-	 * {@value #EPOCH_MS} or a valid format string</li>
-	 * <li></li>
-	 * </ol>
-	 * @return true
-	 * @throws JobConfigurationException
-	 */
-	public boolean verify()
-	throws JobConfigurationException
-	{
-		if (m_TimeFormat != null && m_TimeFormat.isEmpty() == false)
-		{
-			if (m_TimeFormat.equals(EPOCH) || m_TimeFormat.equals(EPOCH_MS))
-			{
-				return true;
-			}
+    /**
+     * Verify the data description configuration
+     * <ol>
+     * <li>Check the timeFormat - if set - is either {@value #EPOCH},
+     * {@value #EPOCH_MS} or a valid format string</li>
+     * <li></li>
+     * </ol>
+     * @return true
+     * @throws JobConfigurationException
+     */
+    public boolean verify()
+    throws JobConfigurationException
+    {
+        if (m_TimeFormat != null && m_TimeFormat.isEmpty() == false)
+        {
+            if (m_TimeFormat.equals(EPOCH) || m_TimeFormat.equals(EPOCH_MS))
+            {
+                return true;
+            }
 
-			try
-			{
-				new SimpleDateFormat(m_TimeFormat);
-			}
-			catch (IllegalArgumentException e)
-			{
-				throw new JobConfigurationException(
-						"Invalid Time format string '" + m_TimeFormat + "'",
-						ErrorCode.INVALID_DATE_FORMAT, e);
-			}
-		}
+            try
+            {
+                new SimpleDateFormat(m_TimeFormat);
+            }
+            catch (IllegalArgumentException e)
+            {
+                throw new JobConfigurationException(
+                        "Invalid Time format string '" + m_TimeFormat + "'",
+                        ErrorCode.INVALID_DATE_FORMAT, e);
+            }
+        }
 
-		return true;
-	}
+        return true;
+    }
 }

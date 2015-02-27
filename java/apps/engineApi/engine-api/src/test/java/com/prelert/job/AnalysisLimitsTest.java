@@ -30,16 +30,44 @@ package com.prelert.job;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 public class AnalysisLimitsTest
 {
+    @Rule
+    public ExpectedException m_ExpectedException = ExpectedException.none();
+
+    @Test
+    public void testVerify_GivenNegativeModeLMemoryLimit() throws JobConfigurationException
+    {
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expectMessage("Invalid Analysis limit modelMemoryLimit must be >= 0");
+
+        AnalysisLimits limits = new AnalysisLimits();
+        limits.setModelMemoryLimit(-1L);
+
+        limits.verify();
+    }
+
+    @Test
+    public void testVerify_GivenValidModeLMemoryLimit() throws JobConfigurationException
+    {
+        AnalysisLimits limits = new AnalysisLimits();
+        limits.setModelMemoryLimit(0L);
+        assertTrue(limits.verify());
+        limits.setModelMemoryLimit(1L);
+        assertTrue(limits.verify());
+    }
+
     @Test
     public void testEquals_GivenEqual()
     {
         AnalysisLimits analysisLimits1 = new AnalysisLimits(10);
         AnalysisLimits analysisLimits2 = new AnalysisLimits(10);
 
+        assertTrue(analysisLimits1.equals(analysisLimits1));
         assertTrue(analysisLimits1.equals(analysisLimits2));
         assertTrue(analysisLimits2.equals(analysisLimits1));
     }
