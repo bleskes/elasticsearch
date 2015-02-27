@@ -105,7 +105,7 @@ public class Alerts extends ResourceWithJobManager
 			epochStart = paramToEpoch(start, m_DateFormats);
 			if (epochStart == 0) // could not be parsed
 			{
-				String msg = String.format(BAD_DATE_FROMAT_MSG, START_QUERY_PARAM, start);
+				String msg = String.format(BAD_DATE_FORMAT_MSG, START_QUERY_PARAM, start);
 				LOGGER.info(msg);
 				throw new RestApiException(msg, ErrorCode.UNPARSEABLE_DATE_ARGUMENT,
 						Response.Status.BAD_REQUEST);
@@ -118,7 +118,7 @@ public class Alerts extends ResourceWithJobManager
 			epochEnd = paramToEpoch(end, m_DateFormats);
 			if (epochEnd == 0) // could not be parsed
 			{
-				String msg = String.format(BAD_DATE_FROMAT_MSG, START_QUERY_PARAM, end);
+				String msg = String.format(BAD_DATE_FORMAT_MSG, START_QUERY_PARAM, end);
 				LOGGER.info(msg);
 				throw new RestApiException(msg, ErrorCode.UNPARSEABLE_DATE_ARGUMENT,
 						Response.Status.BAD_REQUEST);
@@ -178,7 +178,7 @@ public class Alerts extends ResourceWithJobManager
 			epochStart = paramToEpoch(start, m_DateFormats);
 			if (epochStart == 0) // could not be parsed
 			{
-				String msg = String.format(BAD_DATE_FROMAT_MSG, START_QUERY_PARAM, start);
+				String msg = String.format(BAD_DATE_FORMAT_MSG, START_QUERY_PARAM, start);
 				LOGGER.info(msg);
 				throw new RestApiException(msg, ErrorCode.UNPARSEABLE_DATE_ARGUMENT,
 						Response.Status.BAD_REQUEST);
@@ -191,7 +191,7 @@ public class Alerts extends ResourceWithJobManager
 			epochEnd = paramToEpoch(end, m_DateFormats);
 			if (epochEnd == 0) // could not be parsed
 			{
-				String msg = String.format(BAD_DATE_FROMAT_MSG, START_QUERY_PARAM, end);
+				String msg = String.format(BAD_DATE_FORMAT_MSG, START_QUERY_PARAM, end);
 				LOGGER.info(msg);
 				throw new RestApiException(msg, ErrorCode.UNPARSEABLE_DATE_ARGUMENT,
 						Response.Status.BAD_REQUEST);

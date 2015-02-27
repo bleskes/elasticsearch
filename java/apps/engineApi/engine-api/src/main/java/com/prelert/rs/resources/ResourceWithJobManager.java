@@ -78,7 +78,7 @@ public abstract class ResourceWithJobManager
 	/**
 	 * Format string for the un-parseable date error message
 	 */
-	public static final String BAD_DATE_FROMAT_MSG = "Error: Query param '%s' with value"
+	public static final String BAD_DATE_FORMAT_MSG = "Error: Query param '%s' with value"
 			+ " '%s' cannot be parsed as a date or converted to a number (epoch)";
 
 
