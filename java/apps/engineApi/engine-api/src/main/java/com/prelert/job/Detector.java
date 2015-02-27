@@ -82,9 +82,9 @@ public class Detector
     public static final String SUM = "sum";
     public static final String LOW_SUM = "low_sum";
     public static final String HIGH_SUM = "high_sum";
-    public static final String NON_ZERO_SUM = "non_zero_sum";
-    public static final String LOW_NON_ZERO_SUM = "low_non_zero_sum";
-    public static final String HIGH_NON_ZERO_SUM = "high_non_zero_sum";
+    public static final String NON_NULL_SUM = "non_null_sum";
+    public static final String LOW_NON_NULL_SUM = "low_non_null_sum";
+    public static final String HIGH_NON_NULL_SUM = "high_non_null_sum";
 
     /**
      * The set of valid function names.
@@ -112,9 +112,9 @@ public class Detector
                 SUM,
                 LOW_SUM,
                 HIGH_SUM,
-                NON_ZERO_SUM,
-                LOW_NON_ZERO_SUM,
-                HIGH_NON_ZERO_SUM
+                NON_NULL_SUM,
+                LOW_NON_NULL_SUM,
+                HIGH_NON_NULL_SUM
             }));
 
     /**
@@ -148,9 +148,9 @@ public class Detector
                 SUM,
                 LOW_SUM,
                 HIGH_SUM,
-                NON_ZERO_SUM,
-                LOW_NON_ZERO_SUM,
-                HIGH_NON_ZERO_SUM
+                NON_NULL_SUM,
+                LOW_NON_NULL_SUM,
+                HIGH_NON_NULL_SUM
             }));
 
     /**
