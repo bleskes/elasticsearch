@@ -380,20 +380,12 @@ public class ProcessCtrl
 
                     LOGGER.debug("autodetect version output = " + output);
 
-                    if (exitValue >= 0)
-                    {
-                        if (output.isEmpty())
-                        {
-                            return UNKNOWN_VERSION;
-                        }
-
-                        return output;
-                    }
-                    else
+                    if (exitValue < 0)
                     {
                         return String.format("Error autodetect returned %d. \nError Output = '%s'.\n%s",
                                 exitValue, output, UNKNOWN_VERSION);
                     }
+                    return output.isEmpty() ? UNKNOWN_VERSION : output;
                 }
                 catch (InterruptedException ie)
                 {
