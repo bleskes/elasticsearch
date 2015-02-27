@@ -156,8 +156,11 @@ class CsvDataToProcessWriter extends AbstractDataToProcessWriter
                     }
                 }
 
-                applyTransformsAndWrite(transforms, line.toArray(new String[0]) ,
-                                        record, inputFieldCount);
+                if (applyTransformsAndWrite(transforms, line.toArray(new String[0]) ,
+                                        record, inputFieldCount) == true)
+                {
+                    ++recordsWritten;
+                }
             }
 
             // This function can throw
