@@ -33,10 +33,15 @@ import static org.mockito.Mockito.mock;
 import com.google.common.net.InternetDomainName;
 
 import org.apache.log4j.Logger;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 public class HighestRegisteredDomainTest
 {
+    @Rule
+    public ExpectedException expected = ExpectedException.none();
+
 	private void checkHighestRegisteredDomain(String fullName, String registeredNameExpected)
 	{
 		InternetDomainName effectiveTLD = InternetDomainName.from(fullName);
@@ -105,13 +110,24 @@ public class HighestRegisteredDomainTest
 	}
 
 	@Test
+	public void testDomainSplit_SanitisedDomains()
+	{
+        testDomainSplit("_example", "local", "_example.local");
+        testDomainSplit("www._maps", "google.co.uk", "www._maps.google.co.uk");
+        testDomainSplit("-forum", "theregister.co.uk", "-forum.theregister.co.uk");
+
+        testDomainSplit("www._yourmp", "parliament.uk", "www._yourmp.parliament.uk");
+        testDomainSplit("www.-a", "cgs.act.edu.au", "www.-a.cgs.act.edu.au");
+	}
+
+	@Test
 	public void testHighestRegisteredDomainCases()
 	{
 	    // Any copyright is dedicated to the Public Domain.
 	    // http://creativecommons.org/publicdomain/zero/1.0/
 
-	    // Domains starting with _ aren't valid
-	    //checkHighestRegisteredDomain("_nfsv4idmapdomain.prelert.com", "prelert.com");
+	    // Domain parts starting with _ aren't valid
+	    assertFalse(InternetDomainName.isValid("_nfsv4idmapdomain.prelert.com"));
 
 	    // Mixed case.
 	    checkIsPublicSuffix("COM");
@@ -214,6 +230,62 @@ public class HighestRegisteredDomainTest
 	    checkHighestRegisteredDomain("www.xn--85x722f.xn--fiqs8s", "xn--85x722f.xn--fiqs8s");
 	    checkHighestRegisteredDomain("shishi.xn--fiqs8s", "shishi.xn--fiqs8s");
 	}
+
+	@Test
+	public void testSanitiseDomainName()
+	{
+	    String ok_domain = "nfsv4idmapdomain.prelert.com";
+	    assertTrue(InternetDomainName.isValid(ok_domain));
+	    assertTrue(HighestRegisteredDomain.sanitiseDomainName(ok_domain) == ok_domain);
+	    ok_domain = "nfsv4idmapdomain\u3002prelert\uFF0Ecom";
+	    assertTrue(InternetDomainName.isValid(ok_domain));
+	    assertTrue(HighestRegisteredDomain.sanitiseDomainName(ok_domain) == ok_domain);
+	    ok_domain = "www.test.ac\uFF61jp";
+	    assertTrue(InternetDomainName.isValid(ok_domain));
+	    assertTrue(HighestRegisteredDomain.sanitiseDomainName(ok_domain) == ok_domain);
+	    ok_domain = "xn--85x722f.com.cn";
+	    assertTrue(InternetDomainName.isValid(ok_domain));
+	    assertTrue(HighestRegisteredDomain.sanitiseDomainName(ok_domain) == ok_domain);
+	    ok_domain = "x_n--85x722f.com.cn";
+	    assertTrue(InternetDomainName.isValid(ok_domain));
+	    assertTrue(HighestRegisteredDomain.sanitiseDomainName(ok_domain) == ok_domain);
+	    ok_domain = "食狮.com.cn";
+	    assertTrue(InternetDomainName.isValid(ok_domain));
+	    assertTrue(HighestRegisteredDomain.sanitiseDomainName(ok_domain) == ok_domain);
+
+	    String bad_domain = "_nfsv4idmapdomain.prelert.com";
+	    assertFalse(InternetDomainName.isValid(bad_domain));
+	    String sanitisedDomain = HighestRegisteredDomain.sanitiseDomainName(bad_domain);
+	    assertEquals("p_nfsv4idmapdomain.prelert.com", sanitisedDomain);
+
+	    bad_domain = "_www.test.ac\uFF61jp";
+	    assertFalse(InternetDomainName.isValid(bad_domain));
+	    sanitisedDomain = HighestRegisteredDomain.sanitiseDomainName(bad_domain);
+	    assertEquals(HighestRegisteredDomain.replaceDots("p_www.test.ac\uFF61jp"), sanitisedDomain);
+
+	    bad_domain = "_xn--85x722f.com.cn";
+	    assertFalse(InternetDomainName.isValid(bad_domain));
+	    sanitisedDomain = HighestRegisteredDomain.sanitiseDomainName(bad_domain);
+	    assertEquals("p_xn--85x722f.com.cn", sanitisedDomain);
+	}
+
+	@Test()
+	public void testInvalidHRDThrows_Underscore()
+	{
+        expected.expect(IllegalArgumentException.class);
+	    expected.expectMessage(HighestRegisteredDomain.INVALID_HRD_MSG);
+
+	    HighestRegisteredDomain.lookup("info._prelert.com");
+	}
+
+    @Test()
+    public void testInvalidHRDThrows_Dash()
+    {
+        expected.expect(IllegalArgumentException.class);
+        expected.expectMessage(HighestRegisteredDomain.INVALID_HRD_MSG);
+
+        HighestRegisteredDomain.lookup("info.prelert.-com");
+    }
 
 	/**
 	 * Get sub domain only

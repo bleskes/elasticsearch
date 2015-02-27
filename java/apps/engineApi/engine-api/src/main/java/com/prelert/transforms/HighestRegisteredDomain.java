@@ -45,6 +45,8 @@ import com.google.common.net.InternetDomainName;
  */
 public class HighestRegisteredDomain extends Transform
 {
+    public static final String INVALID_HRD_MSG = "The highest registered domain contains " +
+                            "invalid characters";
     /**
      * Immutable class for the domain split results
      */
@@ -76,9 +78,75 @@ public class HighestRegisteredDomain extends Transform
         super(inputIndicies, outputIndicies, logger);
     }
 
+
     /**
-     * Split host into effective top level domain and sub domain
-     * following this logic:<br/>
+     * The InternetDomainName class isn't very lenient and won't tolerate
+     * parts starting with a '_' or '-'. It may be against the RFC in
+     * many domains in the wild have subdomain parts starting with '_'
+     * the Highest Registered Domain will never start with a '_'.
+     *
+     * This functions splits the domain into parts by '.' and prepends
+     * an extra character if the part starts with '_' or '-' so it can
+     * be passed into InternetDomainName without an exception being
+     * thrown.
+     *
+     *
+     * @param domain
+     * @return If not modified the domain argument is returned
+     * otherwise a new string with 'p' preceeding the invalid
+     * '_' or '-'
+     */
+    public static String sanitiseDomainName(String domain)
+    {
+        String dotDomain = HighestRegisteredDomain.replaceDots(domain);
+
+        String dotCharRegex = "\\.";
+
+        String [] split = dotDomain.split(dotCharRegex);
+
+        boolean modifed = false;
+        for (int i=0; i<split.length; ++i)
+        {
+            String part = split[i];
+            if (part.startsWith("-") || part.startsWith("_"))
+            {
+                split[i] = 'p' + part;
+                modifed = true;
+            }
+        }
+
+        if (!modifed)
+        {
+            return domain;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        for (String part : split)
+        {
+            sb.append(part).append('.');
+        }
+        sb.deleteCharAt(sb.length() -1);  // delete last dot
+
+        return sb.toString();
+    }
+
+    /**
+     * Replace the various unicode dot characters u3002, uFF0E and uFF61
+     * with the ascii '.'
+     *
+     * @param input
+     * @return
+     */
+    public static String replaceDots(String input)
+    {
+        return input.replaceAll("\u3002|\uFF0E|\uFF61", ".");
+    }
+
+    /**
+     * Split host into effective top level domain and sub domain.
+     * First the host argument is sanitised with {@link #sanitiseDomainName(String)}
+     * then split according to the following logic:<br/>
+     *
      * <ol>
      * <li>An empty host returns empty domain and sub domain</li>
      * <li>If the host does not have a recognised public suffix such as .local
@@ -92,6 +160,8 @@ public class HighestRegisteredDomain extends Transform
      *
      * @param host
      * @return
+     * @throws IllegalArgumentException if the HRD part of the host contains
+     * invalid characters i.e. it starts with '_' or '-'
      */
     static public DomainSplit lookup(String host)
     {
@@ -109,55 +179,69 @@ public class HighestRegisteredDomain extends Transform
             return new DomainSplit("", host);
         }
 
+        String sanitisedDomain = HighestRegisteredDomain.sanitiseDomainName(host);
+        boolean sanitised = sanitisedDomain != host;
 
-        InternetDomainName idn = InternetDomainName.from(host);
+        InternetDomainName idn = InternetDomainName.from(sanitisedDomain);
 
         if (idn.isPublicSuffix())
         {
             return new DomainSplit("", host);
         }
 
-        StringBuilder subDomain = new StringBuilder();
         String highestRegistered = "";
 
         // for the case where the host is internal like .local
-        // so the not a recognised public suffix
+        // so is not a recognised public suffix
         if (idn.hasPublicSuffix() == false)
         {
+            String subDomain = "";
+
             List<String> parts = idn.parts();
             if (!idn.parts().isEmpty())
             {
                 highestRegistered = parts.get(parts.size() -1);
-                for (int i=0; i<parts.size() -1; i++)
+
+                // does this have a public suffix thats been sanitised?
+                if (sanitised)
                 {
-                    subDomain.append(parts.get(i)).append('.');
+                    // the input argument should end with the HRD
+                    if (host.endsWith(highestRegistered) == false)
+                    {
+                        throw new IllegalArgumentException(INVALID_HRD_MSG);
+                    }
                 }
 
-                if (subDomain.length() > 0)
+                subDomain = host.substring(0, host.length() - (highestRegistered.length()));
+                if (subDomain.endsWith("."))
                 {
-                    // trim final '.'
-                    subDomain.deleteCharAt(subDomain.length() -1);
+                    subDomain = subDomain.substring(0, subDomain.length() -1);
                 }
             }
 
-            return new DomainSplit(subDomain.toString(), highestRegistered);
-        }
-
-        while (idn.isTopPrivateDomain() == false)
-        {
-            subDomain.append(idn.parts().get(0)).append('.');
-            idn = idn.parent();
-        }
-
-        if (subDomain.length() > 0)
-        {
-            // trim final '.'
-            subDomain.deleteCharAt(subDomain.length() -1);
+            return new DomainSplit(subDomain, highestRegistered);
         }
 
         highestRegistered = idn.topPrivateDomain().toString();
+        String subDomain = host.substring(0, host.length() - (highestRegistered.length()));
+        if (subDomain.endsWith("."))
+        {
+            subDomain = subDomain.substring(0, subDomain.length() -1);
+        }
 
-        return new DomainSplit(subDomain.toString(), highestRegistered);
+        // check that the highest registered domain has
+        // not been sanitised - this part should never
+        // contain invalid characters
+        if (sanitised)
+        {
+            // the input argument should end with the HRD
+            if (host.endsWith(highestRegistered) == false)
+            {
+                throw new IllegalArgumentException(INVALID_HRD_MSG);
+            }
+        }
+
+        return new DomainSplit(subDomain, highestRegistered);
     }
 
     @Override
@@ -166,7 +250,7 @@ public class HighestRegisteredDomain extends Transform
     {
         try
         {
-            DomainSplit split = lookup(inputRecord[m_InputIndicies[0]]);
+            DomainSplit split = HighestRegisteredDomain.lookup(inputRecord[m_InputIndicies[0]]);
 
             outputRecord[m_OutputIndicies[0]] = split.m_SubDomain;
             if (m_OutputIndicies.length == 2)
