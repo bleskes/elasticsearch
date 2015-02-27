@@ -309,64 +309,68 @@ public class JobConfiguration
 
 		if (m_ID != null && m_ID.isEmpty() == false)
 		{
-			if (m_ID.length() > MAX_JOB_ID_LENGTH)
-			{
-				throw new JobConfigurationException(
-						"The job id cannot contain more than " + MAX_JOB_ID_LENGTH +
-						" characters.",
-						ErrorCode.JOB_ID_TOO_LONG);
-			}
-
-			for (Character ch : PROHIBITED_JOB_ID_CHARACTERS)
-			{
-				if (m_ID.indexOf(ch) >= 0)
-				{
-					throw new JobConfigurationException(
-							"The job id contains the prohibited character '" + ch + "'. "
-							+ "The id cannot contain any of the following characters: "
-							+ "[\\, /, *, ?, \", <, >, |,  , ,]",
-							ErrorCode.PROHIBITIED_CHARACTER_IN_JOB_ID);
-				}
-			}
-
-			for (char c : m_ID.toCharArray())
-			{
-			    if (Character.isUpperCase(c))
-			    {
-					throw new JobConfigurationException(
-							"The job id cannot contain any uppercase characters",
-							ErrorCode.PROHIBITIED_CHARACTER_IN_JOB_ID);
-			    }
-			}
+			checkValidId();
 		}
 
 		return true;
 	}
 
-	public boolean checkTransformOutputIsInAnalysisFields() throws TransformConfigurationException
-	{
-	    Set<String> analysisFieldSet = new HashSet<String>(m_AnalysisConfig.analysisFields());
-	    for (TransformConfig tc : m_Transforms)
-	    {
-	        boolean usesAnOutput = false;
-	        for (String outputName : tc.getOutputs())
-	        {
-	            if (analysisFieldSet.contains(outputName))
-	            {
-	                usesAnOutput = true;
-	            }
-	        }
+    private boolean checkTransformOutputIsInAnalysisFields() throws TransformConfigurationException
+    {
+        Set<String> analysisFieldSet = new HashSet<String>(m_AnalysisConfig.analysisFields());
+        for (TransformConfig tc : m_Transforms)
+        {
+            boolean usesAnOutput = false;
+            for (String outputName : tc.getOutputs())
+            {
+                if (analysisFieldSet.contains(outputName))
+                {
+                    usesAnOutput = true;
+                }
+            }
 
-	        if (!usesAnOutput)
-	        {
-	            String msg = String.format("None of the outputs of transform '%s' are used."
-	                                        + " Please review your configuration",
-	                                            tc.type().prettyName());
+            if (!usesAnOutput)
+            {
+                String msg = String.format("None of the outputs of transform '%s' are used."
+                                            + " Please review your configuration",
+                                                tc.type().prettyName());
 
-	            throw new TransformConfigurationException(msg, ErrorCode.NO_OUTPUTS_USED);
-	        }
-	    }
+                throw new TransformConfigurationException(msg, ErrorCode.NO_OUTPUTS_USED);
+            }
+        }
 
-	    return false;
-	}
+        return false;
+    }
+
+    private void checkValidId() throws JobConfigurationException
+    {
+        if (m_ID.length() > MAX_JOB_ID_LENGTH)
+        {
+            throw new JobConfigurationException(
+                    "The job id cannot contain more than " + MAX_JOB_ID_LENGTH + " characters.",
+                    ErrorCode.JOB_ID_TOO_LONG);
+        }
+
+        for (Character ch : PROHIBITED_JOB_ID_CHARACTERS)
+        {
+            if (m_ID.indexOf(ch) >= 0)
+            {
+                throw new JobConfigurationException(
+                        "The job id contains the prohibited character '" + ch + "'. "
+                        + "The id cannot contain any of the following characters: "
+                        + "[\\, /, *, ?, \", <, >, |,  , ,]",
+                        ErrorCode.PROHIBITIED_CHARACTER_IN_JOB_ID);
+            }
+        }
+
+        for (char c : m_ID.toCharArray())
+        {
+            if (Character.isUpperCase(c))
+            {
+                throw new JobConfigurationException(
+                        "The job id cannot contain any uppercase characters",
+                        ErrorCode.PROHIBITIED_CHARACTER_IN_JOB_ID);
+            }
+        }
+    }
 }

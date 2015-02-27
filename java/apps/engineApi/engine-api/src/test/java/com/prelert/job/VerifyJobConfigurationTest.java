@@ -27,7 +27,9 @@
 
 package com.prelert.job;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.Arrays;
 import java.util.List;
@@ -217,7 +219,7 @@ public class VerifyJobConfigurationTest
         }
 
 
-        jc.setId("bad id with UPPERCASE chars");
+        jc.setId("bad_id_with_UPPERCASE_chars");
         try
         {
             jc.verify();
