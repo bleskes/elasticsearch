@@ -321,9 +321,6 @@ public class ProcessCtrl
 
     private static final Logger LOGGER = Logger.getLogger(ProcessCtrl.class);
 
-    static String s_AnalyticsVersion;
-
-
     /**
      * Set up an environment containing the PRELERT_HOME and LD_LIBRARY_PATH
      * (or equivalent) environment variables.
@@ -341,73 +338,77 @@ public class ProcessCtrl
     }
 
 
-    public synchronized String getAnalyticsVersion()
+    public String getAnalyticsVersion()
     {
-        if (s_AnalyticsVersion != null)
-        {
-            return s_AnalyticsVersion;
-        }
-
-        List<String> command = new ArrayList<>();
-        command.add(AUTODETECT_PATH);
-        command.add(VERSION_ARG);
-
-        LOGGER.info("Getting version number from " + command);
-
-        // Build the process
-        ProcessBuilder pb = new ProcessBuilder(command);
-        buildEnvironment(pb);
-
-        try
-        {
-            Process proc = pb.start();
-            try
-            {
-                int exitValue = proc.waitFor();
-                BufferedReader reader = new BufferedReader(
-                        new InputStreamReader(proc.getErrorStream(),
-                                StandardCharsets.UTF_8));
-
-                String output = "";
-                String line = reader.readLine();
-                while (line != null)
-                {
-                	output += line + '\n';
-                	line = reader.readLine();
-                }
-
-                LOGGER.debug("autodetect version output = " + output);
-
-                if (exitValue >= 0)
-                {
-                    if (output.isEmpty())
-                    {
-                        return UNKNOWN_VERSION;
-                    }
-
-                    s_AnalyticsVersion = output;
-                    return s_AnalyticsVersion;
-                }
-                else
-                {
-                    return String.format("Error autodetect returned %d. \nError Output = '%s'.\n%s",
-                            exitValue, output, UNKNOWN_VERSION);
-                }
-            }
-            catch (InterruptedException ie)
-            {
-                LOGGER.error("Interrupted reading analytics version number", ie);
-                return UNKNOWN_VERSION;
-            }
-
-        }
-        catch (IOException e)
-        {
-            LOGGER.error("Error reading analytics version number", e);
-            return UNKNOWN_VERSION;
-        }
+        return AnalyticsVersionHolder.s_AnalyticsVersion;
     }
 
+    // Static field lazy initialization idiom
+    private static class AnalyticsVersionHolder
+    {
+        static final String s_AnalyticsVersion = detectAnalyticsVersion();
+
+        private static String detectAnalyticsVersion()
+        {
+            List<String> command = new ArrayList<>();
+            command.add(AUTODETECT_PATH);
+            command.add(VERSION_ARG);
+
+            LOGGER.info("Getting version number from " + command);
+
+            // Build the process
+            ProcessBuilder pb = new ProcessBuilder(command);
+            buildEnvironment(pb);
+
+            try
+            {
+                Process proc = pb.start();
+                try
+                {
+                    int exitValue = proc.waitFor();
+                    BufferedReader reader = new BufferedReader(
+                            new InputStreamReader(proc.getErrorStream(),
+                                    StandardCharsets.UTF_8));
+
+                    String output = "";
+                    String line = reader.readLine();
+                    while (line != null)
+                    {
+                        output += line + '\n';
+                        line = reader.readLine();
+                    }
+
+                    LOGGER.debug("autodetect version output = " + output);
+
+                    if (exitValue >= 0)
+                    {
+                        if (output.isEmpty())
+                        {
+                            return UNKNOWN_VERSION;
+                        }
+
+                        return output;
+                    }
+                    else
+                    {
+                        return String.format("Error autodetect returned %d. \nError Output = '%s'.\n%s",
+                                exitValue, output, UNKNOWN_VERSION);
+                    }
+                }
+                catch (InterruptedException ie)
+                {
+                    LOGGER.error("Interrupted reading analytics version number", ie);
+                    return UNKNOWN_VERSION;
+                }
+
+            }
+            catch (IOException e)
+            {
+                LOGGER.error("Error reading analytics version number", e);
+                return UNKNOWN_VERSION;
+            }
+        }
+    }
 
     /**
      * Get the C++ process to print a JSON document containing some of the usage
