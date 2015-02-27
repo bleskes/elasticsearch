@@ -19,6 +19,7 @@ package org.elasticsearch.alerts;
 
 import org.elasticsearch.cluster.ClusterChangedEvent;
 import org.elasticsearch.cluster.ClusterService;
+import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.ClusterStateListener;
 import org.elasticsearch.common.component.AbstractComponent;
 import org.elasticsearch.common.component.LifecycleListener;
@@ -51,19 +52,26 @@ public class AlertsLifeCycleService extends AbstractComponent implements Cluster
         indicesService.addLifecycleListener(new LifecycleListener() {
             @Override
             public void beforeStop() {
-                AlertsLifeCycleService.this.alertsService.stop();
+                stop(false);
             }
         });
         manuallyStopped = !settings.getAsBoolean("alerts.start_immediately",  true);
     }
 
-    public synchronized void start() {
-        manuallyStopped = false;
-        alertsService.start(clusterService.state());
+    public void start() {
+        start(clusterService.state());
     }
 
-    public synchronized void stop() {
-        manuallyStopped = true;
+    public void stop() {
+        stop(true);
+    }
+
+    private synchronized void start(ClusterState state) {
+        alertsService.start(state);
+    }
+
+    private synchronized void stop(boolean manual) {
+        manuallyStopped = manual;
         alertsService.stop();
     }
 
@@ -77,7 +85,7 @@ public class AlertsLifeCycleService extends AbstractComponent implements Cluster
             threadPool.executor(ThreadPool.Names.GENERIC).execute(new Runnable() {
                 @Override
                 public void run() {
-                    alertsService.stop();
+                    stop(false);
                 }
             });
         } else {
@@ -90,7 +98,7 @@ public class AlertsLifeCycleService extends AbstractComponent implements Cluster
                 threadPool.executor(ThreadPool.Names.GENERIC).execute(new Runnable() {
                     @Override
                     public void run() {
-                        alertsService.start(event.state());
+                        start(event.state());
                     }
                 });
             }
