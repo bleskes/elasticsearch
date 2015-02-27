@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -28,13 +28,204 @@
 package com.prelert.job;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import com.prelert.job.DataDescription.DataFormat;
 
 public class DataDescriptionTest
 {
+    @Rule
+    public ExpectedException m_ExpectedException = ExpectedException.none();
+
+    @Test
+    public void testVerify_GivenNullTimeFormat() throws JobConfigurationException
+    {
+        DataDescription description = new DataDescription();
+        description.setTimeFormat(null);
+
+        assertTrue(description.verify());
+    }
+
+    @Test
+    public void testVerify_GivenEmptyTimeFormat() throws JobConfigurationException
+    {
+        DataDescription description = new DataDescription();
+        description.setTimeFormat("");
+
+        assertTrue(description.verify());
+    }
+
+    @Test
+    public void testVerify_GivenTimeFormatIsEpoch() throws JobConfigurationException
+    {
+        DataDescription description = new DataDescription();
+        description.setTimeFormat("epoch");
+
+        assertTrue(description.verify());
+    }
+
+    @Test
+    public void testVerify_GivenTimeFormatIsEpochMs() throws JobConfigurationException
+    {
+        DataDescription description = new DataDescription();
+        description.setTimeFormat("epoch_ms");
+
+        assertTrue(description.verify());
+    }
+
+    @Test
+    public void testVerify_GivenTimeFormatIsValidDateFormat() throws JobConfigurationException
+    {
+        DataDescription description = new DataDescription();
+        description.setTimeFormat("yyyy-MM-dd");
+
+        assertTrue(description.verify());
+    }
+
+    @Test
+    public void testVerify_GivenTimeFormatIsInvalidDateFormat() throws JobConfigurationException
+    {
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expectMessage("Invalid Time format string 'invalid'");
+
+        DataDescription description = new DataDescription();
+        description.setTimeFormat("invalid");
+
+        description.verify();
+    }
+
+    @Test
+    public void testEquals_GivenEqual()
+    {
+        DataDescription description1 = new DataDescription();
+        description1.setFormat(DataFormat.JSON);
+        description1.setQuoteCharacter('"');
+        description1.setTimeField("timestamp");
+        description1.setTimeFormat("epoch");
+        description1.setFieldDelimiter(',');
+
+        DataDescription description2 = new DataDescription();
+        description2.setFormat(DataFormat.JSON);
+        description2.setQuoteCharacter('"');
+        description2.setTimeField("timestamp");
+        description2.setTimeFormat("epoch");
+        description2.setFieldDelimiter(',');
+
+        assertTrue(description1.equals(description1));
+        assertTrue(description1.equals(description2));
+        assertTrue(description2.equals(description1));
+    }
+
+    @Test
+    public void testEquals_GivenDifferentDateFormat()
+    {
+        DataDescription description1 = new DataDescription();
+        description1.setFormat(DataFormat.JSON);
+        description1.setQuoteCharacter('"');
+        description1.setTimeField("timestamp");
+        description1.setTimeFormat("epoch");
+        description1.setFieldDelimiter(',');
+
+        DataDescription description2 = new DataDescription();
+        description2.setFormat(DataFormat.DELINEATED);
+        description2.setQuoteCharacter('"');
+        description2.setTimeField("timestamp");
+        description2.setTimeFormat("epoch");
+        description2.setFieldDelimiter(',');
+
+        assertFalse(description1.equals(description2));
+        assertFalse(description2.equals(description1));
+    }
+
+    @Test
+    public void testEquals_GivenDifferentQuoteCharacter()
+    {
+        DataDescription description1 = new DataDescription();
+        description1.setFormat(DataFormat.JSON);
+        description1.setQuoteCharacter('"');
+        description1.setTimeField("timestamp");
+        description1.setTimeFormat("epoch");
+        description1.setFieldDelimiter(',');
+
+        DataDescription description2 = new DataDescription();
+        description2.setFormat(DataFormat.JSON);
+        description2.setQuoteCharacter('\'');
+        description2.setTimeField("timestamp");
+        description2.setTimeFormat("epoch");
+        description2.setFieldDelimiter(',');
+
+        assertFalse(description1.equals(description2));
+        assertFalse(description2.equals(description1));
+    }
+
+    @Test
+    public void testEquals_GivenDifferentTimeField()
+    {
+        DataDescription description1 = new DataDescription();
+        description1.setFormat(DataFormat.JSON);
+        description1.setQuoteCharacter('"');
+        description1.setTimeField("timestamp");
+        description1.setTimeFormat("epoch");
+        description1.setFieldDelimiter(',');
+
+        DataDescription description2 = new DataDescription();
+        description2.setFormat(DataFormat.JSON);
+        description2.setQuoteCharacter('"');
+        description2.setTimeField("time");
+        description2.setTimeFormat("epoch");
+        description2.setFieldDelimiter(',');
+
+        assertFalse(description1.equals(description2));
+        assertFalse(description2.equals(description1));
+    }
+
+    @Test
+    public void testEquals_GivenDifferentTimeFormat()
+    {
+        DataDescription description1 = new DataDescription();
+        description1.setFormat(DataFormat.JSON);
+        description1.setQuoteCharacter('"');
+        description1.setTimeField("timestamp");
+        description1.setTimeFormat("epoch");
+        description1.setFieldDelimiter(',');
+
+        DataDescription description2 = new DataDescription();
+        description2.setFormat(DataFormat.JSON);
+        description2.setQuoteCharacter('"');
+        description2.setTimeField("timestamp");
+        description2.setTimeFormat("epoch_ms");
+        description2.setFieldDelimiter(',');
+
+        assertFalse(description1.equals(description2));
+        assertFalse(description2.equals(description1));
+    }
+
+    @Test
+    public void testEquals_GivenDifferentFieldDelimiter()
+    {
+        DataDescription description1 = new DataDescription();
+        description1.setFormat(DataFormat.JSON);
+        description1.setQuoteCharacter('"');
+        description1.setTimeField("timestamp");
+        description1.setTimeFormat("epoch");
+        description1.setFieldDelimiter(',');
+
+        DataDescription description2 = new DataDescription();
+        description2.setFormat(DataFormat.JSON);
+        description2.setQuoteCharacter('"');
+        description2.setTimeField("timestamp");
+        description2.setTimeFormat("epoch");
+        description2.setFieldDelimiter(';');
+
+        assertFalse(description1.equals(description2));
+        assertFalse(description2.equals(description1));
+    }
+
     @Test
     public void testHashCode_GivenEqual()
     {
