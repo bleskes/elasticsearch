@@ -47,10 +47,8 @@ import com.prelert.job.UnknownJobException;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.rs.data.Bucket;
-import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
-import com.prelert.rs.provider.RestApiException;
 
 /**
  * API bucket results end point.
@@ -118,31 +116,8 @@ public class Buckets extends ResourceWithJobManager
                 anomalySoreFilter, normalizedProbabilityFilter,
                 includeInterim ? "including" : "excluding"));
 
-        long epochStart = 0;
-        if (start.isEmpty() == false)
-        {
-            epochStart = paramToEpoch(start, m_DateFormats);
-            if (epochStart == 0) // could not be parsed
-            {
-                String msg = String.format(BAD_DATE_FORMAT_MSG, START_QUERY_PARAM, start);
-                LOGGER.info(msg);
-                throw new RestApiException(msg, ErrorCode.UNPARSEABLE_DATE_ARGUMENT,
-                        Response.Status.BAD_REQUEST);
-            }
-        }
-
-        long epochEnd = 0;
-        if (end.isEmpty() == false)
-        {
-            epochEnd = paramToEpoch(end, m_DateFormats);
-            if (epochEnd == 0) // could not be parsed
-            {
-                String msg = String.format(BAD_DATE_FORMAT_MSG, START_QUERY_PARAM, end);
-                LOGGER.info(msg);
-                throw new RestApiException(msg, ErrorCode.UNPARSEABLE_DATE_ARGUMENT,
-                        Response.Status.BAD_REQUEST);
-            }
-        }
+        long epochStart = paramToEpochIfValidOrThrow(start, m_DateFormats, LOGGER);
+        long epochEnd = paramToEpochIfValidOrThrow(end, m_DateFormats, LOGGER);
 
         JobManager manager = jobManager();
         Pagination<Bucket> buckets;

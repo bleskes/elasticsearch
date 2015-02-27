@@ -39,16 +39,13 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 
 import org.apache.log4j.Logger;
 
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.alert.Alert;
 import com.prelert.job.manager.JobManager;
-import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.Pagination;
-import com.prelert.rs.provider.RestApiException;
 
 /**
  * The alerts endpoint.
@@ -99,32 +96,8 @@ public class Alerts extends ResourceWithJobManager
                 + " start = '%s', end='%s'",
                 expand?"expanded ":"", skip, take, start, end));
 
-        long epochStart = 0;
-        if (start.isEmpty() == false)
-        {
-            epochStart = paramToEpoch(start, m_DateFormats);
-            if (epochStart == 0) // could not be parsed
-            {
-                String msg = String.format(BAD_DATE_FORMAT_MSG, START_QUERY_PARAM, start);
-                LOGGER.info(msg);
-                throw new RestApiException(msg, ErrorCode.UNPARSEABLE_DATE_ARGUMENT,
-                        Response.Status.BAD_REQUEST);
-            }
-        }
-
-        long epochEnd = 0;
-        if (end.isEmpty() == false)
-        {
-            epochEnd = paramToEpoch(end, m_DateFormats);
-            if (epochEnd == 0) // could not be parsed
-            {
-                String msg = String.format(BAD_DATE_FORMAT_MSG, START_QUERY_PARAM, end);
-                LOGGER.info(msg);
-                throw new RestApiException(msg, ErrorCode.UNPARSEABLE_DATE_ARGUMENT,
-                        Response.Status.BAD_REQUEST);
-            }
-        }
-
+        long epochStart = paramToEpochIfValidOrThrow(start, m_DateFormats, LOGGER);
+        long epochEnd = paramToEpochIfValidOrThrow(end, m_DateFormats, LOGGER);
 
         Pagination<Alert> alerts = new Pagination<>();
 //        AlertManager manager = alertManager();
@@ -172,31 +145,8 @@ public class Alerts extends ResourceWithJobManager
                 + " start = '%s', end='%s'",
                 expand?"expanded ":"", jobId, skip, take, start, end));
 
-        long epochStart = 0;
-        if (start.isEmpty() == false)
-        {
-            epochStart = paramToEpoch(start, m_DateFormats);
-            if (epochStart == 0) // could not be parsed
-            {
-                String msg = String.format(BAD_DATE_FORMAT_MSG, START_QUERY_PARAM, start);
-                LOGGER.info(msg);
-                throw new RestApiException(msg, ErrorCode.UNPARSEABLE_DATE_ARGUMENT,
-                        Response.Status.BAD_REQUEST);
-            }
-        }
-
-        long epochEnd = 0;
-        if (end.isEmpty() == false)
-        {
-            epochEnd = paramToEpoch(end, m_DateFormats);
-            if (epochEnd == 0) // could not be parsed
-            {
-                String msg = String.format(BAD_DATE_FORMAT_MSG, START_QUERY_PARAM, end);
-                LOGGER.info(msg);
-                throw new RestApiException(msg, ErrorCode.UNPARSEABLE_DATE_ARGUMENT,
-                        Response.Status.BAD_REQUEST);
-            }
-        }
+        long epochStart = paramToEpochIfValidOrThrow(start, m_DateFormats, LOGGER);
+        long epochEnd = paramToEpochIfValidOrThrow(end, m_DateFormats, LOGGER);
 
         Pagination<Alert> alerts = new Pagination<>();
 //        AlertManager manager = alertManager();
