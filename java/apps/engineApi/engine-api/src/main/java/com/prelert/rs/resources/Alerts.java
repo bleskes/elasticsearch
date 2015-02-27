@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -39,16 +39,13 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 
 import org.apache.log4j.Logger;
 
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.alert.Alert;
 import com.prelert.job.manager.JobManager;
-import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.Pagination;
-import com.prelert.rs.provider.RestApiException;
 
 /**
  * The alerts endpoint.
@@ -58,179 +55,119 @@ import com.prelert.rs.provider.RestApiException;
 @Path("/alerts")
 public class Alerts extends ResourceWithJobManager
 {
-	private static final Logger LOGGER = Logger.getLogger(Alerts.class);
+    private static final Logger LOGGER = Logger.getLogger(Alerts.class);
 
-	/**
-	 * The name of this endpoint
-	 */
-	public static final String ENDPOINT = "alerts";
+    /**
+     * The name of this endpoint
+     */
+    public static final String ENDPOINT = "alerts";
 
-	/**
-	 * The severity query parameter
-	 */
-	public static final String SEVERITY_QUERY_PARAM = "severity";
-	/**
-	 * The anomaly score query parameter
-	 */
-	public static final String ANOMALY_SCORE_QUERY_PARAM = "score";
-
-
-	private final DateFormat m_DateFormat = new SimpleDateFormat(ISO_8601_DATE_FORMAT);
-	private final DateFormat m_DateFormatWithMs = new SimpleDateFormat(ISO_8601_DATE_FORMAT_WITH_MS);
-
-	private final DateFormat [] m_DateFormats = new DateFormat [] {
-		m_DateFormat, m_DateFormatWithMs};
+    /**
+     * The severity query parameter
+     */
+    public static final String SEVERITY_QUERY_PARAM = "severity";
+    /**
+     * The anomaly score query parameter
+     */
+    public static final String ANOMALY_SCORE_QUERY_PARAM = "score";
 
 
+    private final DateFormat m_DateFormat = new SimpleDateFormat(ISO_8601_DATE_FORMAT);
+    private final DateFormat m_DateFormatWithMs = new SimpleDateFormat(ISO_8601_DATE_FORMAT_WITH_MS);
+
+    private final DateFormat [] m_DateFormats = new DateFormat [] {
+        m_DateFormat, m_DateFormatWithMs};
+
+    private static class AlertsParams
+    {
+        boolean expand;
+        int skip;
+        int take;
+        String start;
+        String end;
+        String severity;
+        double anomalyScore;
+
+        public AlertsParams(boolean expand, int skip, int take, String start, String end,
+                String severity, double anomalyScore)
+        {
+            this.expand = expand;
+            this.skip = skip;
+            this.take = take;
+            this.start = start;
+            this.end = end;
+            this.severity = severity;
+            this.anomalyScore = anomalyScore;
+        }
+    }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Pagination<Alert> alerts(
-    		@DefaultValue("0") @QueryParam("skip") int skip,
-    		@DefaultValue(JobManager.DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take,
-			@DefaultValue("") @QueryParam(START_QUERY_PARAM) String start,
-			@DefaultValue("") @QueryParam(END_QUERY_PARAM) String end,
-			@DefaultValue("") @QueryParam(SEVERITY_QUERY_PARAM) String severity,
-			@DefaultValue("0.0") @QueryParam(ANOMALY_SCORE_QUERY_PARAM) double anomalyScore)
+            @DefaultValue("0") @QueryParam("skip") int skip,
+            @DefaultValue(JobManager.DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take,
+            @DefaultValue("") @QueryParam(START_QUERY_PARAM) String start,
+            @DefaultValue("") @QueryParam(END_QUERY_PARAM) String end,
+            @DefaultValue("") @QueryParam(SEVERITY_QUERY_PARAM) String severity,
+            @DefaultValue("0.0") @QueryParam(ANOMALY_SCORE_QUERY_PARAM) double anomalyScore)
     {
-    	boolean expand = true;
+        AlertsParams params = new AlertsParams(true, skip, take, start, end, severity, anomalyScore);
+        Pagination<Alert> alerts = paginateAlerts(params, ENDPOINT);
+        LOGGER.debug(String.format("Return %d alerts", alerts.getDocuments().size()));
+        return alerts;
+    }
 
-		LOGGER.debug(String.format("Get %s alerts, skip = %d, take = %d"
-				+ " start = '%s', end='%s'",
-				expand?"expanded ":"", skip, take, start, end));
+    private Pagination<Alert> paginateAlerts(AlertsParams params, String path)
+    {
+        LOGGER.debug(String.format("Get %s alerts, skip = %d, take = %d"
+                + " start = '%s', end='%s'",
+                params.expand?"expanded ":"", params.skip, params.take, params.start, params.end));
 
-		long epochStart = 0;
-		if (start.isEmpty() == false)
-		{
-			epochStart = paramToEpoch(start, m_DateFormats);
-			if (epochStart == 0) // could not be parsed
-			{
-				String msg = String.format(BAD_DATE_FROMAT_MSG, START_QUERY_PARAM, start);
-				LOGGER.info(msg);
-				throw new RestApiException(msg, ErrorCode.UNPARSEABLE_DATE_ARGUMENT,
-						Response.Status.BAD_REQUEST);
-			}
-		}
+        long epochStart = paramToEpochIfValidOrThrow(params.start, m_DateFormats, LOGGER);
+        long epochEnd = paramToEpochIfValidOrThrow(params.end, m_DateFormats, LOGGER);
 
-		long epochEnd = 0;
-		if (end.isEmpty() == false)
-		{
-			epochEnd = paramToEpoch(end, m_DateFormats);
-			if (epochEnd == 0) // could not be parsed
-			{
-				String msg = String.format(BAD_DATE_FROMAT_MSG, START_QUERY_PARAM, end);
-				LOGGER.info(msg);
-				throw new RestApiException(msg, ErrorCode.UNPARSEABLE_DATE_ARGUMENT,
-						Response.Status.BAD_REQUEST);
-			}
-		}
+        Pagination<Alert> alerts = new Pagination<>();
+        //AlertManager manager = alertManager();
+        //Pagination<Alert> alerts = manager.alerts(skip, take, epochStart, epochEnd);
 
+        // paging
+        if (alerts.isAllResults() == false)
+        {
+            List<ResourceWithJobManager.KeyValue> queryParams = new ArrayList<>();
+            if (epochStart > 0)
+            {
+                queryParams.add(this.new KeyValue(START_QUERY_PARAM, params.start));
+            }
+            if (epochEnd > 0)
+            {
+                queryParams.add(this.new KeyValue(END_QUERY_PARAM, params.end));
+            }
 
-		Pagination<Alert> alerts = new Pagination<>();
-//		AlertManager manager = alertManager();
-		//Pagination<Alert> alerts = manager.alerts(skip, take, epochStart, epochEnd);
+            queryParams.add(this.new KeyValue(SEVERITY_QUERY_PARAM, params.severity));
 
-		// paging
-    	if (alerts.isAllResults() == false)
-    	{
-    		List<ResourceWithJobManager.KeyValue> queryParams = new ArrayList<>();
-    		if (epochStart > 0)
-    		{
-    			queryParams.add(this.new KeyValue(START_QUERY_PARAM, start));
-    		}
-    		if (epochEnd > 0)
-    		{
-    			queryParams.add(this.new KeyValue(END_QUERY_PARAM, end));
-    		}
-
-    		queryParams.add(this.new KeyValue(SEVERITY_QUERY_PARAM, severity));
-
-    		setPagingUrls(ENDPOINT, alerts, queryParams);
-    	}
-
-		LOGGER.debug(String.format("Return %d alerts", alerts.getDocuments().size()));
-
-		return alerts;
+            setPagingUrls(path, alerts, queryParams);
+        }
+        return alerts;
     }
 
     @GET
-	@Path("/{jobId}")
+    @Path("/{jobId}")
     @Produces(MediaType.APPLICATION_JSON)
     public Pagination<Alert> jobAlerts(
-    		@PathParam("jobId") String jobId,
-    		@DefaultValue("0") @QueryParam("skip") int skip,
-    		@DefaultValue(JobManager.DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take,
-			@DefaultValue("") @QueryParam(START_QUERY_PARAM) String start,
-			@DefaultValue("") @QueryParam(END_QUERY_PARAM) String end,
-			@DefaultValue("") @QueryParam(SEVERITY_QUERY_PARAM) String severity,
-			@DefaultValue("0.0") @QueryParam(ANOMALY_SCORE_QUERY_PARAM) double anomalyScore)
-	throws UnknownJobException
+            @PathParam("jobId") String jobId,
+            @DefaultValue("0") @QueryParam("skip") int skip,
+            @DefaultValue(JobManager.DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take,
+            @DefaultValue("") @QueryParam(START_QUERY_PARAM) String start,
+            @DefaultValue("") @QueryParam(END_QUERY_PARAM) String end,
+            @DefaultValue("") @QueryParam(SEVERITY_QUERY_PARAM) String severity,
+            @DefaultValue("0.0") @QueryParam(ANOMALY_SCORE_QUERY_PARAM) double anomalyScore)
+    throws UnknownJobException
     {
-    	boolean expand = true;
-
-		LOGGER.debug(String.format("Get %s alerts for job %s, skip = %d, take = %d"
-				+ " start = '%s', end='%s'",
-				expand?"expanded ":"", jobId, skip, take, start, end));
-
-		long epochStart = 0;
-		if (start.isEmpty() == false)
-		{
-			epochStart = paramToEpoch(start, m_DateFormats);
-			if (epochStart == 0) // could not be parsed
-			{
-				String msg = String.format(BAD_DATE_FROMAT_MSG, START_QUERY_PARAM, start);
-				LOGGER.info(msg);
-				throw new RestApiException(msg, ErrorCode.UNPARSEABLE_DATE_ARGUMENT,
-						Response.Status.BAD_REQUEST);
-			}
-		}
-
-		long epochEnd = 0;
-		if (end.isEmpty() == false)
-		{
-			epochEnd = paramToEpoch(end, m_DateFormats);
-			if (epochEnd == 0) // could not be parsed
-			{
-				String msg = String.format(BAD_DATE_FROMAT_MSG, START_QUERY_PARAM, end);
-				LOGGER.info(msg);
-				throw new RestApiException(msg, ErrorCode.UNPARSEABLE_DATE_ARGUMENT,
-						Response.Status.BAD_REQUEST);
-			}
-		}
-
-		Pagination<Alert> alerts = new Pagination<>();
-//		AlertManager manager = alertManager();
-//		Pagination<Alert>  alerts = manager.jobAlerts(jobId, skip, take,
-//				epochStart, epochEnd);
-
-		// paging
-    	if (alerts.isAllResults() == false)
-    	{
-    		String path = new StringBuilder()
-    							.append(ENDPOINT)
-    							.append("/")
-    							.append(jobId)
-								.toString();
-
-    		List<ResourceWithJobManager.KeyValue> queryParams = new ArrayList<>();
-    		if (epochStart > 0)
-    		{
-    			queryParams.add(this.new KeyValue(START_QUERY_PARAM, start));
-    		}
-    		if (epochEnd > 0)
-    		{
-    			queryParams.add(this.new KeyValue(END_QUERY_PARAM, end));
-    		}
-
-    		queryParams.add(this.new KeyValue(SEVERITY_QUERY_PARAM, severity));
-
-    		setPagingUrls(path, alerts, queryParams);
-    	}
-
-		LOGGER.debug(String.format("Return %d alerts for job %s",
-				alerts.getDocumentCount(), jobId));
-
-		return alerts;
+        AlertsParams params = new AlertsParams(true, skip, take, start, end, severity, anomalyScore);
+        String path = new StringBuilder().append(ENDPOINT).append("/").append(jobId).toString();
+        Pagination<Alert> alerts = paginateAlerts(params, path);
+        LOGGER.debug(String.format("Return %d alerts for job %s",
+                alerts.getDocumentCount(), jobId));
+        return alerts;
     }
-
 }

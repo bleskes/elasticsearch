@@ -37,6 +37,7 @@ import java.util.Set;
 
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
@@ -45,7 +46,9 @@ import org.apache.log4j.Logger;
 import com.prelert.job.alert.manager.AlertManager;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.normalisation.Normaliser;
+import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.Pagination;
+import com.prelert.rs.provider.RestApiException;
 
 /**
  * Abstract resource class that knows how to access a
@@ -53,50 +56,50 @@ import com.prelert.rs.data.Pagination;
  */
 public abstract class ResourceWithJobManager
 {
-	// TODO This field is hidden in subclasses
-	private static final Logger LOGGER = Logger.getLogger(ResourceWithJobManager.class);
+    // TODO This field is hidden in subclasses
+    private static final Logger LOGGER = Logger.getLogger(ResourceWithJobManager.class);
 
-	/**
-	 * Date query param format
-	 */
-	public static final String ISO_8601_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ssX";
-	/**
-	 * Date query param format with ms
-	 */
-	public static final String ISO_8601_DATE_FORMAT_WITH_MS = "yyyy-MM-dd'T'HH:mm:ss.SSSX";
+    /**
+     * Date query param format
+     */
+    public static final String ISO_8601_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ssX";
+    /**
+     * Date query param format with ms
+     */
+    public static final String ISO_8601_DATE_FORMAT_WITH_MS = "yyyy-MM-dd'T'HH:mm:ss.SSSX";
 
-	/**
-	 * The filter 'start' query parameter
-	 */
-	public static final String START_QUERY_PARAM = "start";
+    /**
+     * The filter 'start' query parameter
+     */
+    public static final String START_QUERY_PARAM = "start";
 
-	/**
-	 * The filter 'end' query parameter
-	 */
-	public static final String END_QUERY_PARAM = "end";
+    /**
+     * The filter 'end' query parameter
+     */
+    public static final String END_QUERY_PARAM = "end";
 
-	/**
-	 * Format string for the un-parseable date error message
-	 */
-	public static final String BAD_DATE_FROMAT_MSG = "Error: Query param '%s' with value"
-			+ " '%s' cannot be parsed as a date or converted to a number (epoch)";
+    /**
+     * Format string for the un-parseable date error message
+     */
+    public static final String BAD_DATE_FORMAT_MSG = "Error: Query param '%s' with value"
+            + " '%s' cannot be parsed as a date or converted to a number (epoch)";
 
 
-	/**
-	 * Application context injected by the framework
-	 */
-	@Context
-	private Application m_RestApplication;
+    /**
+     * Application context injected by the framework
+     */
+    @Context
+    private Application m_RestApplication;
 
-	private JobManager m_JobManager;
-	private AlertManager m_AlertManager;
-	private Normaliser m_Normaliser;
+    private JobManager m_JobManager;
+    private AlertManager m_AlertManager;
+    private Normaliser m_Normaliser;
 
-	/**
-	 *
-	 */
-	@Context
-	protected UriInfo m_UriInfo;
+    /**
+     *
+     */
+    @Context
+    protected UriInfo m_UriInfo;
 
 
     /**
@@ -106,40 +109,40 @@ public abstract class ResourceWithJobManager
      */
     protected JobManager jobManager()
     {
-    	if (m_JobManager != null)
-    	{
-    		return m_JobManager;
-    	}
+        if (m_JobManager != null)
+        {
+            return m_JobManager;
+        }
 
-		if (m_RestApplication == null)
-		{
-			LOGGER.error("Application context has not been set in "
-					+ "the jobs resource");
+        if (m_RestApplication == null)
+        {
+            LOGGER.error("Application context has not been set in "
+                    + "the jobs resource");
 
-			throw new IllegalStateException("Application context has not been"
-					+ " set in the jobs resource");
-		}
+            throw new IllegalStateException("Application context has not been"
+                    + " set in the jobs resource");
+        }
 
-		Set<Object> singletons = m_RestApplication.getSingletons();
-		for (Object obj : singletons)
-		{
-			if (obj instanceof JobManager)
-			{
-				m_JobManager = (JobManager)obj;
-				break;
-			}
-		}
+        Set<Object> singletons = m_RestApplication.getSingletons();
+        for (Object obj : singletons)
+        {
+            if (obj instanceof JobManager)
+            {
+                m_JobManager = (JobManager)obj;
+                break;
+            }
+        }
 
-		if (m_JobManager == null)
-		{
-			LOGGER.error("Application singleton set doesn't contain an " +
-					"instance of JobManager");
+        if (m_JobManager == null)
+        {
+            LOGGER.error("Application singleton set doesn't contain an " +
+                    "instance of JobManager");
 
-			throw new IllegalStateException("Application singleton set doesn't "
-					+ "contain an instance of JobManager");
-		}
+            throw new IllegalStateException("Application singleton set doesn't "
+                    + "contain an instance of JobManager");
+        }
 
-		return m_JobManager;
+        return m_JobManager;
     }
 
     /**
@@ -149,40 +152,40 @@ public abstract class ResourceWithJobManager
      */
     protected AlertManager alertManager()
     {
-    	if (m_AlertManager != null)
-    	{
-    		return m_AlertManager;
-    	}
+        if (m_AlertManager != null)
+        {
+            return m_AlertManager;
+        }
 
-		if (m_RestApplication == null)
-		{
-			LOGGER.error("Application context has not been set in "
-					+ "the jobs resource");
+        if (m_RestApplication == null)
+        {
+            LOGGER.error("Application context has not been set in "
+                    + "the jobs resource");
 
-			throw new IllegalStateException("Application context has not been"
-					+ " set in the jobs resource");
-		}
+            throw new IllegalStateException("Application context has not been"
+                    + " set in the jobs resource");
+        }
 
-		Set<Object> singletons = m_RestApplication.getSingletons();
-		for (Object obj : singletons)
-		{
-			if (obj instanceof AlertManager)
-			{
-				m_AlertManager = (AlertManager)obj;
-				break;
-			}
-		}
+        Set<Object> singletons = m_RestApplication.getSingletons();
+        for (Object obj : singletons)
+        {
+            if (obj instanceof AlertManager)
+            {
+                m_AlertManager = (AlertManager)obj;
+                break;
+            }
+        }
 
-		if (m_AlertManager == null)
-		{
-			String msg = "Application singleton set doesn't contain an " +
-					"instance of AlertManager";
+        if (m_AlertManager == null)
+        {
+            String msg = "Application singleton set doesn't contain an " +
+                    "instance of AlertManager";
 
-			LOGGER.error(msg);
-			throw new IllegalStateException(msg);
-		}
+            LOGGER.error(msg);
+            throw new IllegalStateException(msg);
+        }
 
-		return m_AlertManager;
+        return m_AlertManager;
     }
 
     /**
@@ -191,40 +194,40 @@ public abstract class ResourceWithJobManager
      */
     protected Normaliser normaliser()
     {
-    	if (m_Normaliser != null)
-    	{
-    		return m_Normaliser;
-    	}
+        if (m_Normaliser != null)
+        {
+            return m_Normaliser;
+        }
 
-		if (m_RestApplication == null)
-		{
-			LOGGER.error("Application context has not been set in "
-					+ "the jobs resource");
+        if (m_RestApplication == null)
+        {
+            LOGGER.error("Application context has not been set in "
+                    + "the jobs resource");
 
-			throw new IllegalStateException("Application context has not been"
-					+ " set in the jobs resource");
-		}
+            throw new IllegalStateException("Application context has not been"
+                    + " set in the jobs resource");
+        }
 
-		Set<Object> singletons = m_RestApplication.getSingletons();
-		for (Object obj : singletons)
-		{
-			if (obj instanceof Normaliser)
-			{
-				m_Normaliser = (Normaliser)obj;
-				break;
-			}
-		}
+        Set<Object> singletons = m_RestApplication.getSingletons();
+        for (Object obj : singletons)
+        {
+            if (obj instanceof Normaliser)
+            {
+                m_Normaliser = (Normaliser)obj;
+                break;
+            }
+        }
 
-		if (m_Normaliser == null)
-		{
-			String msg = "Application singleton set doesn't contain an " +
-					"instance of Normaliser";
+        if (m_Normaliser == null)
+        {
+            String msg = "Application singleton set doesn't contain an " +
+                    "instance of Normaliser";
 
-			LOGGER.error(msg);
-			throw new IllegalStateException(msg);
-		}
+            LOGGER.error(msg);
+            throw new IllegalStateException(msg);
+        }
 
-		return m_Normaliser;
+        return m_Normaliser;
     }
 
 
@@ -237,10 +240,10 @@ public abstract class ResourceWithJobManager
      * @param path
      * @param page
      */
-	protected void setPagingUrls(String path, Pagination<?> page)
-	{
-		setPagingUrls(path, page, Collections.<KeyValue>emptyList());
-	}
+    protected void setPagingUrls(String path, Pagination<?> page)
+    {
+        setPagingUrls(path, page, Collections.<KeyValue>emptyList());
+    }
 
     /**
      * Set the previous and next page URLs if appropriate.
@@ -253,128 +256,160 @@ public abstract class ResourceWithJobManager
      * @param page
      * @param queryParams List of extra query parameters
      */
-	protected void setPagingUrls(String path, Pagination<?> page,
-			List<KeyValue> queryParams)
-	{
-		if (page.isAllResults() == false)
-		{
-			// Is there a next page of results
-			int remaining = (int)page.getHitCount() -
-					(page.getSkip() + page.getTake());
-			if (remaining > 0)
-			{
-				int nextPageStart = page.getSkip() + page.getTake();
-				UriBuilder uriBuilder = m_UriInfo.getBaseUriBuilder()
-						.path(path)
-						.queryParam("skip", nextPageStart)
-						.queryParam("take", page.getTake());
-				for (KeyValue pair : queryParams)
-				{
-					uriBuilder.queryParam(pair.getKey(), pair.getValue());
-				}
+    protected void setPagingUrls(String path, Pagination<?> page,
+            List<KeyValue> queryParams)
+    {
+        if (page.isAllResults() == false)
+        {
+            // Is there a next page of results
+            int remaining = (int)page.getHitCount() -
+                    (page.getSkip() + page.getTake());
+            if (remaining > 0)
+            {
+                int nextPageStart = page.getSkip() + page.getTake();
+                UriBuilder uriBuilder = m_UriInfo.getBaseUriBuilder()
+                        .path(path)
+                        .queryParam("skip", nextPageStart)
+                        .queryParam("take", page.getTake());
+                for (KeyValue pair : queryParams)
+                {
+                    uriBuilder.queryParam(pair.getKey(), pair.getValue());
+                }
 
-				 URI nextUri = uriBuilder.build();
+                 URI nextUri = uriBuilder.build();
 
-				page.setNextPage(nextUri);
-			}
+                page.setNextPage(nextUri);
+            }
 
-			// previous page
-			if (page.getSkip() > 0)
-			{
-				int prevPageStart = Math.max(0, page.getSkip() - page.getTake());
+            // previous page
+            if (page.getSkip() > 0)
+            {
+                int prevPageStart = Math.max(0, page.getSkip() - page.getTake());
 
-				UriBuilder uriBuilder = m_UriInfo.getBaseUriBuilder()
-						.path(path)
-						.queryParam("skip", prevPageStart)
-						.queryParam("take", page.getTake());
+                UriBuilder uriBuilder = m_UriInfo.getBaseUriBuilder()
+                        .path(path)
+                        .queryParam("skip", prevPageStart)
+                        .queryParam("take", page.getTake());
 
-				for (KeyValue pair : queryParams)
-				{
-					uriBuilder.queryParam(pair.getKey(), pair.getValue());
-				}
+                for (KeyValue pair : queryParams)
+                {
+                    uriBuilder.queryParam(pair.getKey(), pair.getValue());
+                }
 
-				 URI prevUri = uriBuilder.build();
+                 URI prevUri = uriBuilder.build();
 
-				page.setPreviousPage(prevUri);
-			}
-		}
-	}
+                page.setPreviousPage(prevUri);
+            }
+        }
+    }
+
+    /**
+     * If the date is an empty string, it returns 0. Otherwise, it
+     * first tries to parse the date first as a Long and convert that
+     * to an epoch time. If the long number has more than 10 digits
+     * it is considered a time in milliseconds else if 10 or less digits
+     * it is in seconds. If that fails it tries to parse the string
+     * using one of the DateFormats passed in the array.
+     *
+     * If the date string cannot be parsed a {@link RestApiException} is thrown.
+     *
+     * @param dateFormats Try to parse the date string with these date formats.
+     * The array should be ordered the most likely to work first.
+     * @param date
+     * @return The epoch time in milliseconds or 0 if the date is empty.
+     * @throws RestApiException if the date cannot be parsed
+     */
+    protected long paramToEpochIfValidOrThrow(String date, DateFormat[] dateFormats, Logger logger)
+    {
+        long epochStart = 0;
+        if (date.isEmpty() == false)
+        {
+            epochStart = paramToEpoch(date, dateFormats);
+            if (epochStart == 0) // could not be parsed
+            {
+                String msg = String.format(BAD_DATE_FORMAT_MSG, START_QUERY_PARAM, date);
+                logger.info(msg);
+                throw new RestApiException(msg, ErrorCode.UNPARSEABLE_DATE_ARGUMENT,
+                        Response.Status.BAD_REQUEST);
+            }
+        }
+        return epochStart;
+    }
+
+    /**
+     * First tries to parse the date first as a Long and convert that
+     * to an epoch time. If the long number has more than 10 digits
+     * it is considered a time in milliseconds else if 10 or less digits
+     * it is in seconds. If that fails it tries to parse the string
+     * using one of the DateFormats passed in the array.
+     *
+     * If the date string cannot be parsed 0 is returned.
+     *
+     * @param dateFormats Try to parse the date string with these date formats.
+     * The array should be ordered the most likely to work first.
+     * @param date
+     * @return The epoch time in milliseconds or 0 if the date cannot be parsed.
+     */
+    private long paramToEpoch(String date, DateFormat dateFormats [])
+    {
+        try
+        {
+            long epoch = Long.parseLong(date);
+            if (date.trim().length() <= 10) // seconds
+            {
+                return epoch * 1000;
+            }
+            else
+            {
+                return epoch;
+            }
+        }
+        catch (NumberFormatException nfe)
+        {
+            // not a number
+        }
+
+        for (DateFormat dateFormat : dateFormats)
+        {
+            // try parsing as a date string
+            try
+            {
+                Date d = dateFormat.parse(date);
+                return d.getTime();
+            }
+            catch (ParseException pe)
+            {
+                // not a date
+            }
+        }
+
+        // Could not do the conversion
+        return 0;
+    }
 
 
-	/**
-	 * First tries to parse the date first as a Long and convert that
-	 * to an epoch time. If the long number has more than 10 digits
-	 * it is considered a time in milliseconds else if 10 or less digits
-	 * it is in seconds. If that fails it tries to parse the string
-	 * using one of the DateForamts passed in the array.
-	 *
-	 * If the date string cannot be parsed 0 is returned.
-	 *
-	 * @param dateFormats Try to parse the date string with these date formats.
-	 * The array should be ordered the most likely to work first.
-	 * @param date
-	 * @return The epoch time in milliseconds or 0 if the date cannot be parsed.
-	 */
-	protected long paramToEpoch(String date, DateFormat dateFormats [])
-	{
-		try
-		{
-			long epoch = Long.parseLong(date);
-			if (date.trim().length() <= 10) // seconds
-			{
-				return epoch * 1000;
-			}
-			else
-			{
-				return epoch;
-			}
-		}
-		catch (NumberFormatException nfe)
-		{
-			// not a number
-		}
+    /**
+     * Simple class to pair key, value strings
+     */
+    protected class KeyValue
+    {
+        private String m_Key;
+        private String m_Value;
 
-		for (DateFormat dateFormat : dateFormats)
-		{
-			// try parsing as a date string
-			try
-			{
-				Date d = dateFormat.parse(date);
-				return d.getTime();
-			}
-			catch (ParseException pe)
-			{
-				// not a date
-			}
-		}
+        public KeyValue(String key, String value)
+        {
+            m_Key = key;
+            m_Value = value;
+        }
 
-		// Could not do the conversion
-		return 0;
-	}
+        public String getKey()
+        {
+            return m_Key;
+        }
 
-
-	/**
-	 * Simple class to pair key, value strings
-	 */
-	protected class KeyValue
-	{
-		private String m_Key;
-		private String m_Value;
-
-		public KeyValue(String key, String value)
-		{
-			m_Key = key;
-			m_Value = value;
-		}
-
-		public String getKey()
-		{
-			return m_Key;
-		}
-
-		public String getValue()
-		{
-			return m_Value;
-		}
-	}
+        public String getValue()
+        {
+            return m_Value;
+        }
+    }
 }

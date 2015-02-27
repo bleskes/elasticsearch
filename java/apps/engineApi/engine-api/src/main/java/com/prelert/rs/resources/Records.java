@@ -34,12 +34,11 @@ import java.util.List;
 
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
+import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 
 import org.apache.log4j.Logger;
 
@@ -49,9 +48,7 @@ import com.prelert.job.persistence.elasticsearch.ElasticsearchMappings;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
-import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.Pagination;
-import com.prelert.rs.provider.RestApiException;
 
 /**
  * API record results end point.
@@ -124,31 +121,8 @@ public class Records extends ResourceWithJobManager
                 normalizedProbabilityFilter, anomalySoreFilter,
                 includeInterim ? "including" : "excluding"));
 
-        long epochStartMs = 0;
-        if (start.isEmpty() == false)
-        {
-            epochStartMs = paramToEpoch(start, m_DateFormats);
-            if (epochStartMs == 0) // could not be parsed
-            {
-                String msg = String.format(BAD_DATE_FROMAT_MSG, START_QUERY_PARAM, start);
-                LOGGER.info(msg);
-                throw new RestApiException(msg, ErrorCode.UNPARSEABLE_DATE_ARGUMENT,
-                        Response.Status.BAD_REQUEST);
-            }
-        }
-
-        long epochEndMs = 0;
-        if (end.isEmpty() == false)
-        {
-            epochEndMs = paramToEpoch(end, m_DateFormats);
-            if (epochEndMs == 0) // could not be parsed
-            {
-                String msg = String.format(BAD_DATE_FROMAT_MSG, START_QUERY_PARAM, end);
-                LOGGER.info(msg);
-                throw new RestApiException(msg, ErrorCode.UNPARSEABLE_DATE_ARGUMENT,
-                        Response.Status.BAD_REQUEST);
-            }
-        }
+        long epochStartMs = paramToEpochIfValidOrThrow(start, m_DateFormats, LOGGER);
+        long epochEndMs = paramToEpochIfValidOrThrow(end, m_DateFormats, LOGGER);
 
         JobManager manager = jobManager();
         Pagination<AnomalyRecord> records;
