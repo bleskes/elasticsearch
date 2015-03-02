@@ -60,7 +60,7 @@ public class ElasticsearchResultsReaderFactory implements ResultsReaderFactory
     public ResultsReader newResultsParser(String jobId, InputStream autoDetectOutput,
             Logger logger)
     {
-        return new ReadAutoDetectOutput(jobId, autoDetectOutput, m_JobProvider, logger);
+        return new ReadAutoDetectOutput(jobId, autoDetectOutput, logger);
     }
 
 
@@ -71,17 +71,14 @@ public class ElasticsearchResultsReaderFactory implements ResultsReaderFactory
     private class ReadAutoDetectOutput implements ResultsReader
     {
         private String m_JobId;
-        private ElasticsearchJobProvider m_JobProvider;
         private InputStream m_Stream;
         private Logger m_Logger;
         private AutoDetectResultsParser m_Parser;
 
-        public ReadAutoDetectOutput(String jobId, InputStream stream,
-                ElasticsearchJobProvider jobProvider, Logger logger)
+        public ReadAutoDetectOutput(String jobId, InputStream stream, Logger logger)
         {
             m_JobId = jobId;
             m_Stream = stream;
-            m_JobProvider = jobProvider;
             m_Logger = logger;
             m_Parser = new AutoDetectResultsParser();
         }
