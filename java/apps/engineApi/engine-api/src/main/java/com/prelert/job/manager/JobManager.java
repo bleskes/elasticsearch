@@ -396,49 +396,6 @@ public class JobManager
 
     /**
      * Get a page of anomaly records from all buckets.
-     * Records are sorted by probability
-     *
-     * @param jobId
-     * @param skip Skip the first N records. This parameter is for paging
-     * results if not required set to 0.
-     * @param take Take only this number of records
-     * @return
-     * @throws NativeProcessRunException
-     * @throws UnknownJobException
-     */
-    public Pagination<AnomalyRecord> records(String jobId,
-            int skip, int take)
-    throws NativeProcessRunException, UnknownJobException
-    {
-        return records(jobId, skip, take, false, DEFAULT_RECORD_SORT_FIELD, true, 0.0, 0.0);
-    }
-
-
-    /**
-     * Get a page of anomaly records from the buckets between
-     * epochStart and epochEnd.
-     * Records are sorted by probability
-     *
-     * @param jobId
-     * @param skip
-     * @param take
-     * @param epochStartMs
-     * @param epochEndMs
-     * @return
-     * @throws UnknownJobException
-     * @throws NativeProcessRunException
-     */
-    public Pagination<AnomalyRecord> records(String jobId,
-            int skip, int take, long epochStartMs, long epochEndMs)
-    throws NativeProcessRunException, UnknownJobException
-    {
-        return records(jobId, skip, take, epochStartMs, epochEndMs, false,
-                DEFAULT_RECORD_SORT_FIELD, true, 0.0, 0.0);
-    }
-
-
-    /**
-     * Get a page of anomaly records from all buckets.
      *
      * @param jobId
      * @param skip Skip the first N records. This parameter is for paging
@@ -785,18 +742,6 @@ public class JobManager
         {
             LOGGER.error("Exception closing job details provider", e);
         }
-    }
-
-    /**
-     * returns true or throws an <code>UnknownJobException</code>
-     * @param jobId
-     * @return
-     * @throws UnknownJobException
-     */
-    public boolean jobExists(String jobId)
-    throws UnknownJobException
-    {
-        return m_JobProvider.jobExists(jobId);
     }
 
     /**
