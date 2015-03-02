@@ -37,7 +37,6 @@ import org.elasticsearch.license.plugin.core.LicensesService;
 import org.elasticsearch.plugins.AbstractPlugin;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.shield.license.LicenseService;
-import org.elasticsearch.test.ElasticsearchIntegrationTest.ClusterScope;
 import org.elasticsearch.test.ShieldIntegrationTest;
 import org.elasticsearch.test.ShieldSettingsSource;
 import org.junit.Test;
@@ -47,14 +46,12 @@ import java.util.Collection;
 import java.util.List;
 
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
-import static org.elasticsearch.test.ElasticsearchIntegrationTest.Scope.SUITE;
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertNoFailures;
 import static org.hamcrest.Matchers.*;
 
 /**
  *
  */
-@ClusterScope(scope = SUITE)
 public class LicensingTests extends ShieldIntegrationTest {
 
     static final License DUMMY_LICENSE = License.builder()

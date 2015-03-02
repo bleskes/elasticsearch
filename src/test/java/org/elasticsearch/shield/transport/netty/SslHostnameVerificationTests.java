@@ -24,8 +24,6 @@ import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.transport.TransportAddress;
-import org.elasticsearch.test.ElasticsearchIntegrationTest.ClusterScope;
-import org.elasticsearch.test.ElasticsearchIntegrationTest.Scope;
 import org.elasticsearch.test.ShieldIntegrationTest;
 import org.elasticsearch.transport.Transport;
 import org.junit.Test;
@@ -39,7 +37,6 @@ import static org.elasticsearch.common.settings.ImmutableSettings.settingsBuilde
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 
-@ClusterScope(scope = Scope.SUITE)
 public class SslHostnameVerificationTests extends ShieldIntegrationTest {
 
     static Path keystore;
