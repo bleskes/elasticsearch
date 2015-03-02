@@ -78,17 +78,17 @@ import com.prelert.rs.data.SingleDocument;
  * <li>/engine_api_integration_test/flightcentre.json</li>
  * <li>/engine_api_integration_test/farequote_ISO_8601.csv</li>
  * </ol>
- * 
+ *
  * These tests will only pass if the Engine has a full license.
  * The developer license does not allow > 1 job
- * 
+ *
  */
 public class JobsTest implements Closeable
 {
 	static final String ISO_8601_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ssX";
 	static final String ISO_8601_DATE_FORMAT_WITH_MS = "yyyy-MM-dd'T'HH:mm:ss.SSSX";
-	
-	
+
+
 	/**
 	 * This is a format string insert a reference job id.
 	 */
@@ -108,16 +108,16 @@ public class JobsTest implements Closeable
 	 */
 	static final long FARE_QUOTE_NUM_EVENTS = 86229;
 
-	
+
 	private static final Logger LOGGER = Logger.getLogger(JobsTest.class);
-	
+
 	/**
 	 * The default base Url used in the test
 	 */
 	public static final String API_BASE_URL = "http://localhost:8080/engine/v1";
-	
+
 	private EngineApiClient m_WebServiceClient;
-	
+
 	/**
 	 * Creates a new http client call {@linkplain #close()} once finished
 	 */
@@ -125,34 +125,34 @@ public class JobsTest implements Closeable
 	{
 		m_WebServiceClient = new EngineApiClient();
 	}
-	
+
 	@Override
-	public void close() throws IOException 
+	public void close() throws IOException
 	{
 		m_WebServiceClient.close();
-	}	
+	}
 
-	
-	private JobDetails getJob(String baseUrl, String jobId) 
+
+	private JobDetails getJob(String baseUrl, String jobId)
 	throws IOException
 	{
 		return m_WebServiceClient.getJob(baseUrl, jobId).getDocument();
 	}
-	
+
 	/**
 	 * Get all the jobs and test the pagination objects values are
 	 * set correctly
-	 * 
+	 *
 	 * @param baseUrl The URL of the REST API i.e. an URL like
 	 * 	<code>http://prelert-host:8080/engine/version/</code>
 	 * @return
 	 * @throws IOException
 	 */
-	public boolean getJobsTest(String baseUrl) 
+	public boolean getJobsTest(String baseUrl)
 	throws IOException
 	{
-		Pagination<JobDetails> jobs = m_WebServiceClient.getJobs(baseUrl); 
-		
+		Pagination<JobDetails> jobs = m_WebServiceClient.getJobs(baseUrl);
+
 		test(jobs.getHitCount() >= jobs.getDocuments().size());
 		test(jobs.getTake() > 0);
 		if (jobs.getHitCount() < jobs.getTake())
@@ -167,22 +167,22 @@ public class JobsTest implements Closeable
 			{
 				int start = Math.max(0,  jobs.getSkip() -jobs.getTake());
 				prevPageUrl = String.format("%s?skip=%d&take=%d", baseUrl,
-						start, jobs.getTake());							
+						start, jobs.getTake());
 			}
 			test((prevPageUrl == null && jobs.getPreviousPage() == null) ||
 					prevPageUrl.equals(jobs.getPreviousPage().toString()));
-			
+
 			String nextPageUrl = null;
 			if (jobs.getHitCount() > jobs.getSkip() + jobs.getTake())
 			{
 				int start = jobs.getSkip() + jobs.getTake();
 				nextPageUrl = String.format("%s?skip=%d&take=%d", baseUrl,
-						start, jobs.getTake());							
+						start, jobs.getTake());
 			}
 			test((nextPageUrl == null && jobs.getNextPage() == null) ||
 					nextPageUrl.equals(jobs.getNextPage().toString()));
 		}
-		
+
 		// jobs should be sorted by ascending Id
 		if (jobs.getDocuments().size() > 1)
 		{
@@ -192,41 +192,41 @@ public class JobsTest implements Closeable
 				String currentId = jobs.getDocuments().get(i).getId();
 
 				test(lastId.compareTo(currentId) < 0);
-				
+
 				lastId = jobs.getDocuments().get(i).getId();
 			}
-		}		
-			
+		}
+
 		return true;
 	}
-	
+
 
 	/**
-	 * Creates a job using the FlightCentre configuration then 
-	 * reads it back verifying all the correct properties are set. 
-	 * 
+	 * Creates a job using the FlightCentre configuration then
+	 * reads it back verifying all the correct properties are set.
+	 *
 	 * @param baseUrl The URL of the REST API i.e. an URL like
 	 * 	<code>http://prelert-host:8080/engine/version/</code>
-	 * 
+	 *
 	 * @return The Id of the created job
 	 * @throws ClientProtocolException
 	 * @throws IOException
 	 */
-	public String createFlightCentreCsvJobTest(String baseUrl) 
+	public String createFlightCentreCsvJobTest(String baseUrl)
 	throws ClientProtocolException, IOException
-	{	
-		final String FLIGHT_CENTRE_JOB_CONFIG = "{\"id\":\"flightcentre-csv\"," 
+	{
+		final String FLIGHT_CENTRE_JOB_CONFIG = "{\"id\":\"flightcentre-csv\","
 				+ "\"description\":\"Flight Centre Job\","
 				+ "\"analysisConfig\" : {"
-				+ "\"bucketSpan\":3600,"  
+				+ "\"bucketSpan\":3600,"
 				//+ "\"detectors\":[{\"function\":\"count\"}, {\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}] "
 				+ "\"detectors\":[{\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}] "
 				+ "},"
 				+ "\"dataDescription\":{\"fieldDelimiter\":\",\", \"timeField\":\"_time\", \"timeFormat\" : \"epoch\"},"
 				+ "\"analysisLimits\": {\"modelMemoryLimit\":2000}"
-				+ "}";		
-		
-		
+				+ "}";
+
+
 		String jobId = m_WebServiceClient.createJob(baseUrl, FLIGHT_CENTRE_JOB_CONFIG);
 		if (jobId == null || jobId.isEmpty())
 		{
@@ -235,7 +235,7 @@ public class JobsTest implements Closeable
 			test(jobId != null);
 		}
 		test(jobId.equals("flightcentre-csv"));
-		
+
 		// get job by location, verify
 		SingleDocument<JobDetails> doc = m_WebServiceClient.getJob(baseUrl, jobId);
 		if (doc.isExists() == false)
@@ -243,71 +243,71 @@ public class JobsTest implements Closeable
 			LOGGER.error("No Job at URL " + jobId);
 		}
 		JobDetails job = doc.getDocument();
-		
+
 		Detector d = new Detector();
 		d.setFieldName("responsetime");
-		d.setByFieldName("airline");		
+		d.setByFieldName("airline");
 		AnalysisConfig ac = new AnalysisConfig();
 		ac.setBucketSpan(3600L);
 		ac.setDetectors(Arrays.asList(d));
-		
+
 		DataDescription dd = new DataDescription();
 		dd.setFieldDelimiter(',');
 		dd.setTimeField("_time");
-		
+
 
 		test(ac.equals(job.getAnalysisConfig()));
 		test(dd.equals(job.getDataDescription()));
-		
+
 		AnalysisLimits al = new AnalysisLimits(2000);
 		test(job.getAnalysisLimits().equals(al));
-		
+
 		test(job.getDescription().equals("Flight Centre Job"));
-				
+
 		test(job.getLocation().toString().equals(baseUrl + "/jobs/" + jobId));
 		test(job.getRecordsEndpoint().toString().equals(baseUrl + "/results/" + jobId + "/records"));
 		test(job.getBucketsEndpoint().toString().equals(baseUrl + "/results/" + jobId + "/buckets"));
 		test(job.getDataEndpoint().toString().equals(baseUrl + "/data/" + jobId));
-		
+
 		test(job.getLastDataTime() == null);
 		test(job.getFinishedTime() == null);
-		
+
 		test(job.getStatus() == JobStatus.CLOSED);
-		
+
 		Calendar cal = Calendar.getInstance();
 		cal.setTime(new Date());
 		cal.add(Calendar.MINUTE, -2);
 		Date twoMinsAgo = cal.getTime();
 		cal.add(Calendar.MINUTE, 4);
 		Date twoMinsInFuture = cal.getTime();
-		
+
 		test(job.getCreateTime().after(twoMinsAgo) && job.getCreateTime().before(twoMinsInFuture));
-		
+
 		return jobId;
 	}
-	
+
 	/**
-	 * Creates a job using the Farequote ISO 8601 time format configuration 
-	 * then reads it back verifying all the correct properties are set. 
-	 * 
+	 * Creates a job using the Farequote ISO 8601 time format configuration
+	 * then reads it back verifying all the correct properties are set.
+	 *
 	 * @param baseUrl The URL of the REST API i.e. an URL like
 	 * 	<code>http://prelert-host:8080/engine/version/</code>
-	 * 
+	 *
 	 * @return The Id of the created job
 	 * @throws ClientProtocolException
 	 * @throws IOException
 	 */
-	public String createFareQuoteTimeFormatJobTest(String baseUrl) 
+	public String createFareQuoteTimeFormatJobTest(String baseUrl)
 	throws ClientProtocolException, IOException
-	{	
-		final String FARE_QUOTE_TIME_FORMAT_CONFIG = "{" 
+	{
+		final String FARE_QUOTE_TIME_FORMAT_CONFIG = "{"
 				+ "\"description\":\"Farequote Time Format Job\","
 				+ "\"analysisConfig\" : {"
 				+ "\"detectors\":[{\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}] "
 				+ "},"
-				+ "\"dataDescription\":{\"fieldDelimiter\":\",\", \"timeField\":\"time\", " 
-				+ "\"timeFormat\":\"yyyy-MM-dd HH:mm:ssX\"} }}";	
-		
+				+ "\"dataDescription\":{\"fieldDelimiter\":\",\", \"timeField\":\"time\", "
+				+ "\"timeFormat\":\"yyyy-MM-dd HH:mm:ssX\"} }}";
+
 		String jobId = m_WebServiceClient.createJob(baseUrl, FARE_QUOTE_TIME_FORMAT_CONFIG);
 		if (jobId == null || jobId.isEmpty())
 		{
@@ -315,7 +315,7 @@ public class JobsTest implements Closeable
 			LOGGER.error(m_WebServiceClient.getLastError().toJson());
 			test(jobId != null);
 		}
-		
+
 		// get job by location, verify
 		SingleDocument<JobDetails> doc = m_WebServiceClient.getJob(baseUrl, jobId);
 		if (doc.isExists() == false)
@@ -323,28 +323,28 @@ public class JobsTest implements Closeable
 			LOGGER.error("No Job at URL " + jobId);
 		}
 		JobDetails job = doc.getDocument();
-		
+
 		verifyFareQuoteTimeFormatJobTest(job, baseUrl, jobId);
-		
+
 		return jobId;
 	}
-	
-	
+
+
 	/**
-	 * Creates a job for the flightcentre csv data with the date in ms 
+	 * Creates a job for the flightcentre csv data with the date in ms
 	 * from the epoch
-	 * 
+	 *
 	 * @param baseUrl The URL of the REST API i.e. an URL like
 	 * 	<code>http://prelert-host:8080/engine/version/</code>
 	 * @param name The name for the job
-	 * 
+	 *
 	 * @return The Id of the created job
 	 * @throws ClientProtocolException
 	 * @throws IOException
 	 */
-	public String createFlightCentreMsCsvFormatJobTest(String baseUrl, String name) 
+	public String createFlightCentreMsCsvFormatJobTest(String baseUrl, String name)
 	throws ClientProtocolException, IOException
-	{	
+	{
 		Detector d = new Detector();
 		d.setFieldName("responsetime");
 		d.setByFieldName("airline");
@@ -352,26 +352,26 @@ public class JobsTest implements Closeable
 		AnalysisConfig ac = new AnalysisConfig();
 		ac.setBucketSpan(3600L);
 		ac.setDetectors(Arrays.asList(d));
-		
+
 		DataDescription dd = new DataDescription();
 		dd.setFormat(DataFormat.DELINEATED);
 		dd.setFieldDelimiter(',');
 		dd.setTimeField("_time");
 		dd.setTimeFormat("epoch_ms");
-		
+
 		JobConfiguration config = new JobConfiguration(ac);
 		config.setId(name);
 		config.setDataDescription(dd);
-		
-				
+
+
 		String jobId = m_WebServiceClient.createJob(baseUrl, config);
 		if (jobId == null)
 		{
 			LOGGER.error("No Job Id returned by create job");
-			test(jobId != null);
+			test(false);
 		}
 		test(jobId.equals(name));
-		
+
 		// get job by location, verify
 		SingleDocument<JobDetails> doc = m_WebServiceClient.getJob(baseUrl, jobId);
 		if (doc.isExists() == false)
@@ -379,75 +379,75 @@ public class JobsTest implements Closeable
 			LOGGER.error("No Job at URL " + jobId);
 		}
 		JobDetails job = doc.getDocument();
-		
-		
+
+
 		test(ac.equals(job.getAnalysisConfig()));
 		test(dd.equals(job.getDataDescription()));
 		test(job.getAnalysisLimits() == null);
-		
+
 		test(job.getId().equals(name));
 		test(job.getDescription() == null);
-				
+
 		test(job.getLocation().toString().equals(baseUrl + "/jobs/" + jobId));
 		test(job.getRecordsEndpoint().toString().equals(baseUrl + "/results/" + jobId + "/records"));
 		test(job.getBucketsEndpoint().toString().equals(baseUrl + "/results/" + jobId + "/buckets"));
 		test(job.getDataEndpoint().toString().equals(baseUrl + "/data/" + jobId));
-		
+
 		test(job.getLastDataTime() == null);
 		test(job.getFinishedTime() == null);
-		
+
 		test(job.getStatus() == JobStatus.CLOSED);
-		
+
 		Calendar cal = Calendar.getInstance();
 		cal.setTime(new Date());
 		cal.add(Calendar.MINUTE, -2);
 		Date twoMinsAgo = cal.getTime();
 		cal.add(Calendar.MINUTE, 4);
 		Date twoMinsInFuture = cal.getTime();
-		
+
 		test(job.getCreateTime().after(twoMinsAgo) && job.getCreateTime().before(twoMinsInFuture));
-		
+
 		return jobId;
 	}
-	
-	
+
+
 	/**
-	 * Creates a job for the flightcentre JSON data with the date in ms 
+	 * Creates a job for the flightcentre JSON data with the date in ms
 	 * from the epoch
-	 * 
+	 *
 	 * @param baseUrl The URL of the REST API i.e. an URL like
 	 * 	<code>http://prelert-host:8080/engine/version/</code>
-	 * 
+	 *
 	 * @return The Id of the created job
 	 * @throws ClientProtocolException
 	 * @throws IOException
 	 */
-	public String createFlightCentreMsJsonFormatJobTest(String baseUrl) 
+	public String createFlightCentreMsJsonFormatJobTest(String baseUrl)
 	throws ClientProtocolException, IOException
-	{	
+	{
 		Detector d = new Detector();
 		d.setFieldName("responsetime");
 		d.setByFieldName("airline");
 		AnalysisConfig ac = new AnalysisConfig();
 		ac.setBucketSpan(3600L);
 		ac.setDetectors(Arrays.asList(d));
-		
+
 		DataDescription dd = new DataDescription();
 		dd.setFormat(DataFormat.JSON);
 		dd.setTimeField("timestamp");
 		dd.setTimeFormat("epoch_ms");
-		
+
 		JobConfiguration config = new JobConfiguration(ac);
 		config.setDataDescription(dd);
-		
-				
+
+
 		String jobId = m_WebServiceClient.createJob(baseUrl, config);
 		if (jobId == null)
 		{
 			LOGGER.error("No Job Id returned by create job");
-			test(jobId != null);
+			test(false);
 		}
-		
+
 		// get job by location, verify
 		SingleDocument<JobDetails> doc = m_WebServiceClient.getJob(baseUrl, jobId);
 		if (doc.isExists() == false)
@@ -455,50 +455,50 @@ public class JobsTest implements Closeable
 			LOGGER.error("No Job at URL " + jobId);
 		}
 		JobDetails job = doc.getDocument();
-		
-		
+
+
 		test(ac.equals(job.getAnalysisConfig()));
 		test(dd.equals(job.getDataDescription()));
 		test(job.getAnalysisLimits() == null);
-				
+
 		test(job.getLocation().toString().equals(baseUrl + "/jobs/" + jobId));
 		test(job.getRecordsEndpoint().toString().equals(baseUrl + "/results/" + jobId + "/records"));
 		test(job.getBucketsEndpoint().toString().equals(baseUrl + "/results/" + jobId + "/buckets"));
 		test(job.getDataEndpoint().toString().equals(baseUrl + "/data/" + jobId));
-		
+
 		test(job.getLastDataTime() == null);
 		test(job.getFinishedTime() == null);
-		
+
 		test(job.getDescription() == null);
-		
+
 		test(job.getStatus() == JobStatus.CLOSED);
-		
+
 		Calendar cal = Calendar.getInstance();
 		cal.setTime(new Date());
 		cal.add(Calendar.MINUTE, -2);
 		Date twoMinsAgo = cal.getTime();
 		cal.add(Calendar.MINUTE, 4);
 		Date twoMinsInFuture = cal.getTime();
-		
+
 		test(job.getCreateTime().after(twoMinsAgo) && job.getCreateTime().before(twoMinsInFuture));
-		
-		
+
+
 		return jobId;
 	}
-	
+
 	/**
 	 * Create a new job base on configuration for job <code>refJobId</code>.
-	 * 
+	 *
 	 * @param baseUrl The URL of the REST API i.e. an URL like
 	 * 	<code>http://prelert-host:8080/engine/version/</code>
 	 * @param refJobId The Job Id to use as the configuration for this
 	 * new job
-	 * 
+	 *
 	 * @return The Id of the created job
 	 * @throws ClientProtocolException
 	 * @throws IOException
 	 */
-	public String createJobFromFareQuoteTimeFormatRefId(String baseUrl, String refJobId) 
+	public String createJobFromFareQuoteTimeFormatRefId(String baseUrl, String refJobId)
 	throws ClientProtocolException, IOException
 	{
 		String config = String.format(JOB_REFERENCE_CONFIG, refJobId);
@@ -506,9 +506,9 @@ public class JobsTest implements Closeable
 		if (jobId == null)
 		{
 			LOGGER.error("No Job Id returned by create job");
-			test(jobId != null);
+			test(false);
 		}
-		
+
 		// get job by location, verify
 		SingleDocument<JobDetails> doc = m_WebServiceClient.getJob(baseUrl, jobId);
 		if (doc.isExists() == false)
@@ -516,24 +516,24 @@ public class JobsTest implements Closeable
 			LOGGER.error("No Job " + jobId);
 		}
 		JobDetails job = doc.getDocument();
-		
+
 		verifyFareQuoteTimeFormatJobTest(job, baseUrl, jobId);
-		
+
 		test(jobId.equals(job.getId()));
-		
-		return jobId;		
+
+		return jobId;
 	}
-	
-	
+
+
 	private void verifyFareQuoteTimeFormatJobTest(JobDetails job, String baseUrl,
-			String jobId) 
+			String jobId)
 	{
 		Detector d = new Detector();
 		d.setFieldName("responsetime");
 		d.setByFieldName("airline");
 		AnalysisConfig ac = new AnalysisConfig();
 		ac.setDetectors(Arrays.asList(d));
-		
+
 		DataDescription dd = new DataDescription();
 		dd.setFieldDelimiter(',');
 		dd.setTimeField("time");
@@ -542,65 +542,65 @@ public class JobsTest implements Closeable
 		test(ac.equals(job.getAnalysisConfig()));
 		test(dd.equals(job.getDataDescription()));
 		test(job.getAnalysisLimits() == null);
-		
+
 		test(job.getDescription().equals("Farequote Time Format Job"));
-				
+
 		test(job.getLocation().toString().equals(baseUrl + "/jobs/" + jobId));
 		test(job.getRecordsEndpoint().toString().equals(baseUrl + "/results/" + jobId + "/records"));
 		test(job.getBucketsEndpoint().toString().equals(baseUrl + "/results/" + jobId + "/buckets"));
 		test(job.getDataEndpoint().toString().equals(baseUrl + "/data/" + jobId));
-		
+
 		test(job.getLastDataTime() == null);
 		test(job.getFinishedTime() == null);
-		
+
 		test(job.getStatus() == JobStatus.CLOSED);
-		
+
 		Calendar cal = Calendar.getInstance();
 		cal.setTime(new Date());
 		cal.add(Calendar.MINUTE, -2);
 		Date twoMinsAgo = cal.getTime();
 		cal.add(Calendar.MINUTE, 4);
 		Date twoMinsInFuture = cal.getTime();
-		
+
 		test(job.getCreateTime().after(twoMinsAgo) && job.getCreateTime().before(twoMinsInFuture));
 	}
-	
+
 	/**
-	 * Creates a job using the FlightCentre Json configuration then 
-	 * reads it back verifying all the correct properties are set. 
-	 * 
+	 * Creates a job using the FlightCentre Json configuration then
+	 * reads it back verifying all the correct properties are set.
+	 *
 	 * @param baseUrl The URL of the REST API i.e. an URL like
 	 * 	<code>http://prelert-host:8080/engine/version/</code>
-	 * 
+	 *
 	 * @return The Id of the created job
 	 * @throws ClientProtocolException
 	 * @throws IOException
 	 */
-	public String createFlightCentreJsonJobTest(String baseUrl) 
+	public String createFlightCentreJsonJobTest(String baseUrl)
 	throws ClientProtocolException, IOException
-	{	
+	{
 		Detector d = new Detector();
 		d.setFieldName("responsetime");
 		d.setByFieldName("airline");
 		AnalysisConfig ac = new AnalysisConfig();
 		ac.setBucketSpan(3600L);
 		ac.setDetectors(Arrays.asList(d));
-		
+
 		DataDescription dd = new DataDescription();
 		dd.setFormat(DataFormat.JSON);
 		dd.setTimeField("timestamp");
-		
+
 		JobConfiguration jobConfig = new JobConfiguration(ac);
 		jobConfig.setDataDescription(dd);
 		jobConfig.setDescription("Flight Centre JSON");
-		
+
 		String jobId = m_WebServiceClient.createJob(baseUrl, jobConfig);
 		if (jobId == null)
 		{
 			LOGGER.error("No Job Id returned by create job");
-			test(jobId != null);
+			test(false);
 		}
-		
+
 		// get job by location, verify
 		SingleDocument<JobDetails> doc = m_WebServiceClient.getJob(baseUrl, jobId);
 		if (doc.isExists() == false)
@@ -608,43 +608,43 @@ public class JobsTest implements Closeable
 			LOGGER.error("No Job at URL " + jobId);
 		}
 		JobDetails job = doc.getDocument();
-				
+
 		test(ac.equals(job.getAnalysisConfig()));
 		test(dd.equals(job.getDataDescription()));
 		test(job.getAnalysisLimits() == null);
-				
+
 		test(job.getLocation().toString().equals(baseUrl + "/jobs/" + jobId));
 		test(job.getRecordsEndpoint().toString().equals(baseUrl + "/results/" + jobId + "/records"));
 		test(job.getBucketsEndpoint().toString().equals(baseUrl + "/results/" + jobId + "/buckets"));
 		test(job.getDataEndpoint().toString().equals(baseUrl + "/data/" + jobId));
-		
+
 		test(job.getLastDataTime() == null);
 		test(job.getFinishedTime() == null);
-		
+
 		test(job.getStatus() == JobStatus.CLOSED);
-		
+
 		test(job.getDescription().equals("Flight Centre JSON"));
-		
+
 		Calendar cal = Calendar.getInstance();
 		cal.setTime(new Date());
 		cal.add(Calendar.MINUTE, -2);
 		Date twoMinsAgo = cal.getTime();
 		cal.add(Calendar.MINUTE, 4);
 		Date twoMinsInFuture = cal.getTime();
-		
+
 		test(job.getCreateTime().after(twoMinsAgo) && job.getCreateTime().before(twoMinsInFuture));
-		
+
 		return jobId;
 	}
 
 	/**
-	 * Slowly upload the contents of <code>dataFile</code> 1024 bytes at a 
-	 * time to the server. Starts a background thread to write the data 
-	 * and sleeps between each 1024B upload. 
+	 * Slowly upload the contents of <code>dataFile</code> 1024 bytes at a
+	 * time to the server. Starts a background thread to write the data
+	 * and sleeps between each 1024B upload.
 	 * </br>
-	 * This is to show that a slow streaming server works the 
-	 * same as a faster local server. 
-	 * 
+	 * This is to show that a slow streaming server works the
+	 * same as a faster local server.
+	 *
 	 * @param baseUrl The URL of the REST API i.e. an URL like
 	 * 	<code>http://prelert-host:8080/engine/version/</code>
 	 * @param jobId The Job's Id
@@ -653,12 +653,12 @@ public class JobsTest implements Closeable
 	 * @throws IOException
 	 */
 	public void slowUpload(String baseUrl, String jobId, final File dataFile,
-			final long sleepTimeMs) 
+			final long sleepTimeMs)
 	throws IOException
 	{
 		final PipedInputStream pipedIn = new PipedInputStream();
 		final PipedOutputStream pipedOut = new PipedOutputStream(pipedIn);
-		
+
 		new Thread(new Runnable() {
 			@Override
 			public void run() {
@@ -667,21 +667,21 @@ public class JobsTest implements Closeable
 				try
 				{
 					FileInputStream fs;
-					try 
+					try
 					{
 						fs = new FileInputStream(dataFile);
-					} 
-					catch (FileNotFoundException e) 
+					}
+					catch (FileNotFoundException e)
 					{
 						e.printStackTrace();
 						return;
 					}
 
-					while((n = fs.read(buf)) > -1) 
+					while((n = fs.read(buf)) > -1)
 					{
 						pipedOut.write(buf, 0, n);
 						Thread.sleep(sleepTimeMs);
-					}	
+					}
 					fs.close();
 
 					pipedOut.close();
@@ -690,20 +690,20 @@ public class JobsTest implements Closeable
 				{
 					LOGGER.info(e);
 				}
-				catch (InterruptedException e) 
+				catch (InterruptedException e)
 				{
 					LOGGER.info(e);
-				}				
+				}
 			}
 		}).start();
-		
+
 		m_WebServiceClient.streamingUpload(baseUrl, jobId, pipedIn, false);
 	}
 
-	
+
 	/**
 	 * Upload the contents of <code>dataFile</code> to the server.
-	 * 
+	 *
 	 * @param baseUrl The URL of the REST API i.e. an URL like
 	 * 	<code>http://prelert-host:8080/engine/version/</code>
 	 * @param jobId The Job's Id
@@ -711,46 +711,46 @@ public class JobsTest implements Closeable
 	 * @param compressed Is the data gzipped compressed?
 	 * @throws IOException
 	 */
-	public void uploadData(String baseUrl, String jobId, File dataFile, boolean compressed) 
+	public void uploadData(String baseUrl, String jobId, File dataFile, boolean compressed)
 	throws IOException
 	{
 		FileInputStream stream = new FileInputStream(dataFile);
-		boolean success = m_WebServiceClient.streamingUpload(baseUrl, jobId, stream, compressed);		
+		boolean success = m_WebServiceClient.streamingUpload(baseUrl, jobId, stream, compressed);
 		test(success);
-				
+
 		SingleDocument<JobDetails> job = m_WebServiceClient.getJob(baseUrl, jobId);
 		test(job.isExists());
-		test(job.getDocument().getStatus() == JobStatus.RUNNING);		
+		test(job.getDocument().getStatus() == JobStatus.RUNNING);
 	}
-	
-	
+
+
 	/**
 	 * Finish the job (as all data has been uploaded).
-	 * 
+	 *
 	 * @param baseUrl The URL of the REST API i.e. an URL like
 	 * 	<code>http://prelert-host:8080/engine/version/</code>
 	 * @param jobId The Job's Id
 	 * @return
-	 * @throws IOException 
+	 * @throws IOException
 	 */
-	public boolean closeJob(String baseUrl, String jobId) 
+	public boolean closeJob(String baseUrl, String jobId)
 	throws IOException
 	{
 		boolean closed = m_WebServiceClient.closeJob(baseUrl, jobId);
 		test(closed);
-		
+
 		SingleDocument<JobDetails> job = m_WebServiceClient.getJob(baseUrl, jobId);
 		test(job.isExists());
 		test(job.getDocument().getStatus() == JobStatus.CLOSED);
-				
+
 		return closed;
 	}
-	
+
 	/**
-	 * Read the job bucket results and verify they are present and have 
+	 * Read the job bucket results and verify they are present and have
 	 * sensible values then do the same again but getting the anomaly
 	 * records inline using the <code>expand</code> query parameter.
-	 * 
+	 *
 	 * @param baseUrl The URL of the REST API i.e. an URL like
 	 * 	<code>http://prelert-host:8080/engine/version/</code>
 	 * @param jobId The job id
@@ -760,20 +760,20 @@ public class JobsTest implements Closeable
 	 * @param expectedTotalEvents The total number of input records (events)
 	 * expected for the job
 	 *
-	 * @throws IOException 
+	 * @throws IOException
 	 */
-	public void verifyJobResults(String baseUrl, String jobId, long take, 
-			long expectedNumBuckets, long bucketSpan, long expectedTotalEvents) 
+	public void verifyJobResults(String baseUrl, String jobId, long take,
+			long expectedNumBuckets, long bucketSpan, long expectedTotalEvents)
 	throws IOException
 	{
 		LOGGER.debug("Verifying results for job " + jobId);
-		
-		long skip = 0;		
+
+		long skip = 0;
 		long lastBucketTime = 0;
 		long eventCount = 0;
 		while (true) // break when getNextUrl() == false
 		{
-			Pagination<Bucket> buckets = m_WebServiceClient.getBuckets(baseUrl, 
+			Pagination<Bucket> buckets = m_WebServiceClient.getBuckets(baseUrl,
 					jobId, false, skip, take, 0.0, 0.0);
 
 			test(buckets.getHitCount() == expectedNumBuckets);
@@ -797,7 +797,7 @@ public class JobsTest implements Closeable
 			test(bucket.getDocumentId().equals(Long.toString(lastBucketTime)));
 			test(bucket.getType().equals(Bucket.TYPE));
 
-			validateBuckets(Arrays.asList(new Bucket[]{bucket.getDocument()}), 
+			validateBuckets(Arrays.asList(new Bucket[]{bucket.getDocument()}),
 					bucketSpan, 0, false);
 
 			SingleDocument<Bucket> nonExistentBucket = m_WebServiceClient.getBucket(
@@ -812,26 +812,26 @@ public class JobsTest implements Closeable
 			{
 				// should be a previous page
 				test(buckets.getPreviousPage() != null);
-				
+
 				int start = Math.max(0,  buckets.getSkip() - buckets.getTake());
 				String prevPageUrl = String.format(
-						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&includeInterim=%b&anomalyScore=0.0&maxNormalizedProbability=0.0", 
+						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&includeInterim=%b&anomalyScore=0.0&maxNormalizedProbability=0.0",
 						baseUrl, jobId,  start, buckets.getTake(), false, false);
-				
+
 				test(prevPageUrl.equals(buckets.getPreviousPage().toString()));
 			}
-			
+
 
 			if (buckets.getNextPage() == null)
 			{
-				test(expectedNumBuckets == (skip + buckets.getDocumentCount()));		
+				test(expectedNumBuckets == (skip + buckets.getDocumentCount()));
 				break;
 			}
 			else
 			{
 				int start = Math.max(0,  buckets.getSkip() + buckets.getTake());
 				String nextPageUrl = String.format(
-						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&includeInterim=%b&anomalyScore=0.0&maxNormalizedProbability=0.0", 
+						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&includeInterim=%b&anomalyScore=0.0&maxNormalizedProbability=0.0",
 						baseUrl, jobId, start, buckets.getTake(), false, false);
 
 				test(nextPageUrl.equals(buckets.getNextPage().toString()));
@@ -844,12 +844,12 @@ public class JobsTest implements Closeable
 		test(eventCount == expectedTotalEvents);
 
 		// the same with expanded buckets
-		skip = 0;		
+		skip = 0;
 		lastBucketTime = 0;
 		eventCount = 0;
 		while (true) // break when getNextUrl() == false
 		{
-			Pagination<Bucket> buckets = m_WebServiceClient.getBuckets(baseUrl, 
+			Pagination<Bucket> buckets = m_WebServiceClient.getBuckets(baseUrl,
 					jobId, true, skip, take, 0.0, 0.0);
 
 			test(buckets.getHitCount() == expectedNumBuckets);
@@ -863,9 +863,9 @@ public class JobsTest implements Closeable
 
 			// time in seconds
 			lastBucketTime = buckets.getDocuments().get(
-					buckets.getDocuments().size() -1).getTimestamp().getTime() / 1000;			
+					buckets.getDocuments().size() -1).getTimestamp().getTime() / 1000;
 
-			SingleDocument<Bucket> bucket = m_WebServiceClient.getBucket(baseUrl, jobId, 
+			SingleDocument<Bucket> bucket = m_WebServiceClient.getBucket(baseUrl, jobId,
 					Long.toString(lastBucketTime), true);
 
 			test(bucket.isExists() == true);
@@ -873,7 +873,7 @@ public class JobsTest implements Closeable
 			test(bucket.getDocumentId().equals(Long.toString(lastBucketTime)));
 			test(bucket.getType().equals(Bucket.TYPE));
 
-			validateBuckets(Arrays.asList(new Bucket[]{bucket.getDocument()}), 
+			validateBuckets(Arrays.asList(new Bucket[]{bucket.getDocument()}),
 					bucketSpan, 0, true);
 
 			SingleDocument<Bucket> nonExistentBucket = m_WebServiceClient.getBucket(
@@ -888,25 +888,25 @@ public class JobsTest implements Closeable
 			{
 				// should be a previous page
 				test(buckets.getPreviousPage() != null);
-				
+
 				int start = Math.max(0,  buckets.getSkip() - buckets.getTake());
 				String prevPageUrl = String.format(
-						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&includeInterim=%b&anomalyScore=0.0&maxNormalizedProbability=0.0", 
+						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&includeInterim=%b&anomalyScore=0.0&maxNormalizedProbability=0.0",
 						baseUrl, jobId, start, buckets.getTake(), true, false);
 
-				test(prevPageUrl.equals(buckets.getPreviousPage().toString()));						
+				test(prevPageUrl.equals(buckets.getPreviousPage().toString()));
 			}
-			
+
 			if (buckets.getNextPage() == null)
 			{
-				test(expectedNumBuckets == (skip + buckets.getDocumentCount()));		
+				test(expectedNumBuckets == (skip + buckets.getDocumentCount()));
 				break;
 			}
 			else
 			{
 				int start = Math.max(0,  buckets.getSkip() + buckets.getTake());
 				String nextPageUrl = String.format(
-						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&includeInterim=%b&anomalyScore=0.0&maxNormalizedProbability=0.0", 
+						"%s/results/%s/buckets?skip=%d&take=%d&expand=%b&includeInterim=%b&anomalyScore=0.0&maxNormalizedProbability=0.0",
 						baseUrl, jobId, start, buckets.getTake(), true, false);
 
 				test(nextPageUrl.equals(buckets.getNextPage().toString()));
@@ -917,11 +917,11 @@ public class JobsTest implements Closeable
 
 		test(eventCount == expectedTotalEvents);
 	}
-	
-	
+
+
 	/**
 	 * Simple verification that the buckets have sensible values
-	 * 
+	 *
 	 * @param buckets
 	 * @param bucketSpan
 	 * @param lastBucketTime The first bucket in this list should be at time
@@ -933,12 +933,12 @@ public class JobsTest implements Closeable
 			long lastBucketTime, boolean expanded)
 	{
 		test(buckets.size() > 0);
-		
-		
+
+
 		for (Bucket b : buckets)
-		{			
+		{
 			test(b.getAnomalyScore() >= 0.0);
-			test(b.getRecordCount() >= 0);			
+			test(b.getRecordCount() >= 0);
 			test(b.getDetectors().size() == 0);
 			test(b.getId() != null && b.getId().isEmpty() == false);
 			long epoch = b.getEpoch();
@@ -952,7 +952,7 @@ public class JobsTest implements Closeable
 			test(b.getTimestamp().before(new Date()));
 
 			// epoch and timestamp should be the same
-			test(date.equals(b.getTimestamp()));	
+			test(date.equals(b.getTimestamp()));
 
 			// must be more than 0 events
 			test(b.getEventCount() > 0);
@@ -962,21 +962,21 @@ public class JobsTest implements Closeable
 				lastBucketTime += bucketSpan;
 				test(epoch == lastBucketTime);
 			}
-			
-			
+
+
 			if (expanded)
 			{
 				test(b.getRecords().size() >= 0);
 				test(b.getRecordCount() >= 0);
 				test(b.getRecordCount() == b.getRecords().size());
-				
+
 				// records are sorted by probability ascending
 				double probability = 0.0;
 				for (AnomalyRecord r: b.getRecords())
 				{
 					test(r.getProbability() >= probability);
 					probability = r.getProbability();
-					
+
 					// at a minimum all records should have this field
 					test(r.getFunction() != null);
 				}
@@ -986,28 +986,28 @@ public class JobsTest implements Closeable
 				test(b.getRecords() == null || b.getRecords().size() == 0);
 			}
 		}
-		
+
 	}
-	
-	
+
+
 	/**
 	 * Test filtering bucket results by date.
 	 * Tests each of the 3 acceptable date formats and paging the results.
-	 * 
+	 *
 	 * @param baseUrl The URL of the REST API i.e. an URL like
 	 * 	<code>http://prelert-host:8080/engine/version/</code>
 	 * @param jobId The job id
 	 * @param start Filter start date
 	 * @param end Filter end date
-	 * 
+	 *
 	 * @throws IOException
 	 */
-	public void testBucketDateFilters(String baseUrl, String jobId, Date start, Date end) 
+	public void testBucketDateFilters(String baseUrl, String jobId, Date start, Date end)
 	throws IOException
 	{
 		final String ISO_8601_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ssX";
 		final String ISO_8601_DATE_FORMAT_WITH_MS = "yyyy-MM-dd'T'HH:mm:ss.SSSX";
-		
+
 		// test 3 date formats
 		Long epochStart = start.getTime() / 1000;
 		Long epochEnd = end.getTime() / 1000;
@@ -1015,54 +1015,54 @@ public class JobsTest implements Closeable
 		String dateEnd = new SimpleDateFormat(ISO_8601_DATE_FORMAT).format(end);
 		String dateStartMs = new SimpleDateFormat(ISO_8601_DATE_FORMAT_WITH_MS).format(start);
 		String dateEndMs = new SimpleDateFormat(ISO_8601_DATE_FORMAT_WITH_MS).format(end);
-		
+
 		// query with the 3 date formats
-		Pagination<Bucket> buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, 
-				false, null, null, epochStart, epochEnd, 0.0, 0.0);	
+		Pagination<Bucket> buckets = m_WebServiceClient.getBuckets(baseUrl, jobId,
+				false, null, null, epochStart, epochEnd, 0.0, 0.0);
 		test(buckets.getDocuments().get(0).getTimestamp().compareTo(start) >= 0);
 		test(buckets.getDocuments().get(buckets.getDocumentCount() -1)
 				.getTimestamp().compareTo(end) < 0);
-		
-		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, false, 
-				null, null, dateStart, dateEnd, 0.0, 0.0);		
+
+		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, false,
+				null, null, dateStart, dateEnd, 0.0, 0.0);
 		test(buckets.getDocuments().get(0).getTimestamp().compareTo(start) >= 0);
 		test(buckets.getDocuments().get(buckets.getDocumentCount() -1)
 				.getTimestamp().compareTo(end) < 0);
-		
-		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, false, 
-				null, null, dateStartMs, dateEndMs, 0.0, 0.0);		
+
+		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, false,
+				null, null, dateStartMs, dateEndMs, 0.0, 0.0);
 		test(buckets.getDocuments().get(0).getTimestamp().compareTo(start) >= 0);
 		test(buckets.getDocuments().get(buckets.getDocumentCount() -1)
-				.getTimestamp().compareTo(end) < 0);		
-		
-		
+				.getTimestamp().compareTo(end) < 0);
+
+
 		// just a start date
-		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, false, 
-				0L, 100L, dateStart, null, 0.0, 0.0);		
+		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, false,
+				0L, 100L, dateStart, null, 0.0, 0.0);
 		test(buckets.getDocuments().get(0).getTimestamp().compareTo(start) >= 0);
 
-		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, false, 
-				0L, 100L, epochStart, null, 0.0, 0.0);		
+		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, false,
+				0L, 100L, epochStart, null, 0.0, 0.0);
 		test(buckets.getDocuments().get(0).getTimestamp().compareTo(start) >= 0);
-		
-		
+
+
 		// just an end date
-		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, false, 
-				null, null, null, dateEndMs, 0.0, 0.0);		
+		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, false,
+				null, null, null, dateEndMs, 0.0, 0.0);
 		test(buckets.getDocuments().get(buckets.getDocumentCount() -1)
 				.getTimestamp().compareTo(end) < 0);
-		
-		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, false, 
-				null, null, null, dateEnd, 0.0, 0.0);		
+
+		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, false,
+				null, null, null, dateEnd, 0.0, 0.0);
 		test(buckets.getDocuments().get(buckets.getDocumentCount() -1)
 				.getTimestamp().compareTo(end) < 0);
-		
-		
+
+
 		// Test paging from the start date
 		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, false,  0L, 5L,
 				dateStart, null, 0.0, 0.0);
-		test(buckets.getDocuments().get(0).getTimestamp().compareTo(start) >= 0);	
-		
+		test(buckets.getDocuments().get(0).getTimestamp().compareTo(start) >= 0);
+
 		Date lastDate = buckets.getDocuments().get(buckets.getDocumentCount() -1)
 				.getTimestamp();
 
@@ -1072,80 +1072,80 @@ public class JobsTest implements Closeable
 			String url = buckets.getNextPage().toString();
 			buckets = m_WebServiceClient.<Pagination<Bucket>>get(url,
 						new TypeReference<Pagination<Bucket>>() {});
-			
+
 			Date firstDate = buckets.getDocuments().get(0).getTimestamp();
-			
+
 			test(firstDate.compareTo(lastDate) >= 0);
-			
+
 			lastDate = buckets.getDocuments().get(buckets.getDocumentCount() -1)
 					.getTimestamp();
 			bucketCount++;
 		}
-		
+
 		// and page backwards
 		while (buckets.getPreviousPage() != null)
 		{
 			String url = buckets.getPreviousPage().toString();
 			buckets = m_WebServiceClient.<Pagination<Bucket>>get(url,
 						new TypeReference<Pagination<Bucket>>() {});
-			
+
 			Date date = buckets.getDocuments().get(buckets.getDocumentCount() -1)
 					.getTimestamp();
-			
+
 			test(date.compareTo(lastDate) <= 0);
-			
+
 			lastDate = buckets.getDocuments().get(0).getTimestamp();
 			bucketCount--;
 		}
-		
+
 		test(bucketCount == 0);
 	}
-	
+
 	/**
 	 * Get buckets filtered by anomaly & unusual scores.
-	 * 
+	 *
 	 * @param baseUrl
 	 * @param jobId
 	 * @throws IOException
 	 */
-	public void testBucketScoreFilters(String baseUrl, String jobId) 
+	public void testBucketScoreFilters(String baseUrl, String jobId)
 	throws IOException
 	{
-		
-		Pagination<Bucket> buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, 
+
+		Pagination<Bucket> buckets = m_WebServiceClient.getBuckets(baseUrl, jobId,
 				false, 0l, 4000l, null, null, 50.0, 40.0);
 		test(buckets.getDocumentCount() > 0);
-		
+
 		for (Bucket b : buckets.getDocuments())
 		{
 			test(b.getAnomalyScore() >= 50.0);
 			test(b.getMaxNormalizedProbability()  >= 40.0);
 		}
 
-		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, 
+		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId,
 				false, 0l, 4000l, null, null, 20.0, 0.0);
 		test(buckets.getDocumentCount() > 0);
-		
+
 		for (Bucket b : buckets.getDocuments())
 		{
 			test(b.getAnomalyScore() >= 20.0);
 		}
-		
-		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId, 
+
+		buckets = m_WebServiceClient.getBuckets(baseUrl, jobId,
 				false, 0l, 4000l, null, null, 20.0, 15.0);
 		test(buckets.getDocumentCount() > 0);
-		
+
 		for (Bucket b : buckets.getDocuments())
 		{
 			test(b.getMaxNormalizedProbability() >= 15.0);
 		}
 	}
-	
-	
+
+
 	/**
 	 * Test the sort options for the records endpoint.
 	 * Sort by anomaly score, unsual score, time, etc
-	 * 
+	 *
 	 * @param baseUrl The URL of the REST API i.e. an URL like
 	 * 	<code>http://prelert-host:8080/engine/version/</code>
 	 * @param jobId The job id
@@ -1153,187 +1153,187 @@ public class JobsTest implements Closeable
 	 * @param end Filter end date
 	 * @throws IOException
 	 */
-	public void testSortingRecords(String baseUrl, String jobId, Date start, Date end) 
+	public void testSortingRecords(String baseUrl, String jobId, Date start, Date end)
 	throws IOException
-	{	
+	{
 		// test 3 date formats
 		Long epochStart = start.getTime() / 1000;
 		Long epochEnd = end.getTime() / 1000;
 		String dateStartMs = new SimpleDateFormat(ISO_8601_DATE_FORMAT_WITH_MS).format(start);
 		String dateEnd = new SimpleDateFormat(ISO_8601_DATE_FORMAT).format(end);
-		
+
 		// most unusual first
-		Pagination<AnomalyRecord> records = m_WebServiceClient.getRecords(baseUrl, jobId, 
+		Pagination<AnomalyRecord> records = m_WebServiceClient.getRecords(baseUrl, jobId,
 				0l, 500l, epochStart, epochEnd, AnomalyRecord.NORMALIZED_PROBABILITY, true, null, null);
-		
+
 		test(records.getDocumentCount() > 0);
 		test(records.getDocumentCount() == records.getDocuments().size());
-		
-		double score = 100.0; // max score		
+
+		double score = 100.0; // max score
 		for (AnomalyRecord r : records.getDocuments())
 		{
 			test(r.getNormalizedProbability() <= score);
 			score = r.getNormalizedProbability();
 		}
-		
+
 		// least unusual first
-		records = m_WebServiceClient.getRecords(baseUrl, jobId, 
+		records = m_WebServiceClient.getRecords(baseUrl, jobId,
 				0l, 500l, epochStart, epochEnd, AnomalyRecord.NORMALIZED_PROBABILITY, false, null, null);
-		
+
 		test(records.getDocumentCount() > 0);
 		test(records.getDocumentCount() == records.getDocuments().size());
-		
-		score = 0.0; 		
+
+		score = 0.0;
 		for (AnomalyRecord r : records.getDocuments())
 		{
 			test(r.getNormalizedProbability() >= score);
 			score = r.getNormalizedProbability();
 		}
-		
+
 		// most anomalous first
-		records = m_WebServiceClient.getRecords(baseUrl, jobId, 
+		records = m_WebServiceClient.getRecords(baseUrl, jobId,
 				0l, 100l, null, null, AnomalyRecord.ANOMALY_SCORE, true, null, null);
-		
+
 		test(records.getDocumentCount() > 0);
 		test(records.getDocumentCount() == records.getDocuments().size());
-		
-		score = 100.0; 		
+
+		score = 100.0;
 		for (AnomalyRecord r : records.getDocuments())
 		{
 			test(r.getAnomalyScore() <= score);
 			score = r.getAnomalyScore();
 		}
-		
+
 		// lease anomalous first
-		records = m_WebServiceClient.getRecords(baseUrl, jobId, 
+		records = m_WebServiceClient.getRecords(baseUrl, jobId,
 				0l, 100l, null, null, AnomalyRecord.ANOMALY_SCORE, false, null, null);
-		
+
 		test(records.getDocumentCount() > 0);
 		test(records.getDocumentCount() == records.getDocuments().size());
-		
-		score = 0.0; 		
+
+		score = 0.0;
 		for (AnomalyRecord r : records.getDocuments())
 		{
 			test(r.getAnomalyScore() >= score);
 			score = r.getAnomalyScore();
 		}
-		
-			
+
+
 		// order by by-field value
-		records = m_WebServiceClient.getRecords(baseUrl, jobId, 
+		records = m_WebServiceClient.getRecords(baseUrl, jobId,
 				0l, 500l, dateStartMs, dateEnd, "byFieldValue", true, null, null);
-		
+
 		test(records.getDocumentCount() > 0);
 		test(records.getDocumentCount() == records.getDocuments().size());
-		
-		String fieldValue = "ZZZZZZZZZZZZZZZZ";		
+
+		String fieldValue = "ZZZZZZZZZZZZZZZZ";
 		for (AnomalyRecord r : records.getDocuments())
 		{
 			test(r.getByFieldValue().compareTo(fieldValue) <= 0);
 			fieldValue = r.getByFieldValue();
 		}
-		
-		
+
+
 		// order by time oldest first
-		records = m_WebServiceClient.getRecords(baseUrl, jobId, 
+		records = m_WebServiceClient.getRecords(baseUrl, jobId,
 				0l, 500l, epochStart, epochEnd, "timestamp", false, null, null);
-		
+
 		test(records.getDocumentCount() > 0);
 		test(records.getDocumentCount() == records.getDocuments().size());
-		
-		long startTime = 0l; 	
+
+		long startTime = 0l;
 		for (AnomalyRecord r : records.getDocuments())
 		{
 			test(r.getTimestamp().getTime() >= startTime);
 			startTime = r.getTimestamp().getTime();
 		}
-		
+
 		// order by time newest first
-		records = m_WebServiceClient.getRecords(baseUrl, jobId, 
+		records = m_WebServiceClient.getRecords(baseUrl, jobId,
 				0l, 500l, dateStartMs, dateEnd, "timestamp", true, null, null);
-		
+
 		test(records.getDocumentCount() > 0);
 		test(records.getDocumentCount() == records.getDocuments().size());
-		
-		startTime = new Date().getTime();		
+
+		startTime = new Date().getTime();
 		for (AnomalyRecord r : records.getDocuments())
 		{
 			test(r.getTimestamp().getTime() <= startTime);
 			startTime = r.getTimestamp().getTime();
 		}
 	}
-	
+
 	/**
-	 * Filter records by anomaly score or unusual score. 
+	 * Filter records by anomaly score or unusual score.
 	 * Checks that the returned records all have a score >= the filter value
-	 *  
+	 *
 	 * @param baseUrl
 	 * @param jobId
 	 * @throws IOException
 	 */
-	public void testRecordScoreFilters(String baseUrl, String jobId) 
+	public void testRecordScoreFilters(String baseUrl, String jobId)
 	throws IOException
 	{
-		Pagination<AnomalyRecord> records = m_WebServiceClient.getRecords(baseUrl, jobId, 
+		Pagination<AnomalyRecord> records = m_WebServiceClient.getRecords(baseUrl, jobId,
 				0l, 4000l, null, null, AnomalyRecord.ANOMALY_SCORE, true, 8.0, 20.0);
-		
+
 		test(records.getDocumentCount() > 0);
 		double score = 100.0;
 		for (AnomalyRecord r : records.getDocuments())
-		{			
+		{
 			test(r.getAnomalyScore() >= 8.0);
 			test(r.getNormalizedProbability() >= 20.0);
-			
+
 			test(r.getAnomalyScore() <= score);
 			score = r.getAnomalyScore();
 		}
-		
-		records = m_WebServiceClient.getRecords(baseUrl, jobId, 
+
+		records = m_WebServiceClient.getRecords(baseUrl, jobId,
 				0l, 4000l, null, null, AnomalyRecord.BY_FIELD_VALUE, false, null, 12.5);
-		
+
 		test(records.getDocumentCount() > 0);
-		
+
 		String fieldValue = "";
 		for (AnomalyRecord r : records.getDocuments())
 		{
 			test(r.getNormalizedProbability() >= 12.5);
-			
+
 			test(r.getByFieldValue().compareTo(fieldValue) >= 0);
 			fieldValue = r.getByFieldValue();
 		}
-		
-		records = m_WebServiceClient.getRecords(baseUrl, jobId, 
+
+		records = m_WebServiceClient.getRecords(baseUrl, jobId,
 				0l, 4000l, null, null, AnomalyRecord.ANOMALY_SCORE, true, 40.0, 0.0);
-		
+
 		test(records.getDocumentCount() > 0);
-		
+
 		score = 100.0;
 		for (AnomalyRecord r : records.getDocuments())
 		{
 			test(r.getAnomalyScore() >= 40.0);
-			
+
 			test(r.getAnomalyScore() <= score);
 			score = r.getAnomalyScore();
-		}		
+		}
 	}
-	
-	
+
+
 	/**
 	 * Test filtering bucket results by date.
 	 * Tests each of the 3 acceptable date formats and paging the results.
-	 * 
+	 *
 	 * @param baseUrl The URL of the REST API i.e. an URL like
 	 * 	<code>http://prelert-host:8080/engine/version/</code>
 	 * @param jobId The job id
 	 * @param start Filter start date
 	 * @param end Filter end date
-	 * 
+	 *
 	 * @throws IOException
 	 */
-	public void testRecordDateFilters(String baseUrl, String jobId, Date start, Date end) 
+	public void testRecordDateFilters(String baseUrl, String jobId, Date start, Date end)
 	throws IOException
 	{
-	
+
 		// test 3 date formats
 		Long epochStart = start.getTime() / 1000;
 		Long epochEnd = end.getTime() / 1000;
@@ -1341,45 +1341,45 @@ public class JobsTest implements Closeable
 		String dateEnd = new SimpleDateFormat(ISO_8601_DATE_FORMAT).format(end);
 		String dateStartMs = new SimpleDateFormat(ISO_8601_DATE_FORMAT_WITH_MS).format(start);
 		String dateEndMs = new SimpleDateFormat(ISO_8601_DATE_FORMAT_WITH_MS).format(end);
-		
+
 		// query with the 3 date formats
-		Pagination<AnomalyRecord> records = m_WebServiceClient.getRecords(baseUrl, jobId, 
-				null, null, epochStart, epochEnd);		
+		Pagination<AnomalyRecord> records = m_WebServiceClient.getRecords(baseUrl, jobId,
+				null, null, epochStart, epochEnd);
 		testBetweeen2Dates(records.getDocuments(), start, end);
-		
-		records = m_WebServiceClient.getRecords(baseUrl, jobId, 
-				null, null, dateStart, dateEnd);		
-		testBetweeen2Dates(records.getDocuments(), start, end);
-		
+
 		records = m_WebServiceClient.getRecords(baseUrl, jobId,
-				null, null, dateStartMs, dateEndMs);		
-		testBetweeen2Dates(records.getDocuments(), start, end);	
-		
-		
+				null, null, dateStart, dateEnd);
+		testBetweeen2Dates(records.getDocuments(), start, end);
+
+		records = m_WebServiceClient.getRecords(baseUrl, jobId,
+				null, null, dateStartMs, dateEndMs);
+		testBetweeen2Dates(records.getDocuments(), start, end);
+
+
 		// just a start date
-		records = m_WebServiceClient.getRecords(baseUrl, jobId, 
+		records = m_WebServiceClient.getRecords(baseUrl, jobId,
 				0L, 100L, dateStart, null);
 		testBetweeen2Dates(records.getDocuments(), start, new Date());
 
-		records = m_WebServiceClient.getRecords(baseUrl, jobId, 
-				0L, 100L, epochStart, null);		
+		records = m_WebServiceClient.getRecords(baseUrl, jobId,
+				0L, 100L, epochStart, null);
 		testBetweeen2Dates(records.getDocuments(), start, new Date());
-		
-		
+
+
 		// just an end date
-		records = m_WebServiceClient.getRecords(baseUrl, jobId, 
-				null, null, null, dateEndMs);		
+		records = m_WebServiceClient.getRecords(baseUrl, jobId,
+				null, null, null, dateEndMs);
 		testBetweeen2Dates(records.getDocuments(), new Date(0), end);
-		
-		records = m_WebServiceClient.getRecords(baseUrl, jobId, 
-				null, null, null, dateEnd);		
+
+		records = m_WebServiceClient.getRecords(baseUrl, jobId,
+				null, null, null, dateEnd);
 		testBetweeen2Dates(records.getDocuments(), new Date(0), end);
-		
-		
+
+
 		// Test paging from the start date
 		records = m_WebServiceClient.getRecords(baseUrl, jobId,  0L, 5L, dateStart, null);
 		testBetweeen2Dates(records.getDocuments(), start, new Date());
-		
+
 
 		int bucketCount = 0;
 		while (records.getNextPage() != null)
@@ -1387,26 +1387,26 @@ public class JobsTest implements Closeable
 			String url = records.getNextPage().toString();
 			records = m_WebServiceClient.<Pagination<AnomalyRecord>>get(url,
 						new TypeReference<Pagination<AnomalyRecord>>() {});
-			
+
 			testBetweeen2Dates(records.getDocuments(), start, new Date());
 			bucketCount++;
 		}
-		
+
 		// and page backwards
 		while (records.getPreviousPage() != null)
 		{
 			String url = records.getPreviousPage().toString();
 			records = m_WebServiceClient.<Pagination<AnomalyRecord>>get(url,
 						new TypeReference<Pagination<AnomalyRecord>>() {});
-			
+
 			testBetweeen2Dates(records.getDocuments(), start, new Date());
 			bucketCount--;
 		}
-		
+
 		test(bucketCount == 0);
 	}
-	
-	
+
+
 	private void testBetweeen2Dates(List<AnomalyRecord> records, Date start, Date end)
 	{
 		test(records.size() > 0);
@@ -1416,61 +1416,61 @@ public class JobsTest implements Closeable
 			test(r.getTimestamp().compareTo(end) < 0);
 		}
 	}
-	
-	
+
+
 	/**
 	 * Test setting the description field of the job
-	 * 
+	 *
 	 * @param baseUrl The URL of the REST API i.e. an URL like
 	 * 	<code>http://prelert-host:8080/engine/version/</code>
 	 * @param jobId The job id
 	 * @throws IOException
 	 */
-	public void testSetDescription(String baseUrl, String jobId) 
+	public void testSetDescription(String baseUrl, String jobId)
 	throws IOException
 	{
 		JobDetails job = m_WebServiceClient.getJob(baseUrl, jobId).getDocument();
 		String orignalDescription = job.getDescription();
-		
+
 		String desc1 = "a simple job";
 		m_WebServiceClient.setJobDescription(baseUrl, jobId, desc1);
 		job = m_WebServiceClient.getJob(baseUrl, jobId).getDocument();
 		test(job != null);
 		test(job.getDescription().equals(desc1));
-		
+
 		String emptyDesc = "";
 		m_WebServiceClient.setJobDescription(baseUrl, jobId, emptyDesc);
 		job = m_WebServiceClient.getJob(baseUrl, jobId).getDocument();
 		test(job != null);
 		test(job.getDescription().equals(emptyDesc));
-		
+
 		String longerDesc = "a little big longer\nwWith newline characters";
 		m_WebServiceClient.setJobDescription(baseUrl, jobId, longerDesc);
 		job = m_WebServiceClient.getJob(baseUrl, jobId).getDocument();
 		test(job != null);
 		test(job.getDescription().equals(longerDesc));
-		
+
 		// Set the description back to what it was
 		m_WebServiceClient.setJobDescription(baseUrl, jobId, orignalDescription);
 		job = m_WebServiceClient.getJob(baseUrl, jobId).getDocument();
 		test(job != null);
 		test(job.getDescription().equals(orignalDescription));
 	}
-	
-	
+
+
 	/**
 	 * Tails the log files with requesting different numbers of lines
-	 * and checks that some content is present. 
+	 * and checks that some content is present.
 	 * Downloads the zipped log files and checks for at least 2 files.
-	 * 
+	 *
 	 * @param baseUrl The URL of the REST API i.e. an URL like
 	 * 	<code>http://prelert-host:8080/engine/version/</code>
 	 * @param jobId The job id
-	 * 
+	 *
 	 * @throws ClientProtocolException
 	 * @throws IOException
 	 */
-	public void testReadLogFiles(String baseUrl, String jobId) 
+	public void testReadLogFiles(String baseUrl, String jobId)
 	throws ClientProtocolException, IOException
 	{
 		//tail
@@ -1478,37 +1478,37 @@ public class JobsTest implements Closeable
 		String [] logLines = tail.split("\n");
 		test(logLines.length > 0);
 		test(logLines.length <= 2);
-		
+
 		tail = m_WebServiceClient.tailLog(baseUrl, jobId);
 		logLines = tail.split("\n");
 		test(logLines.length > 0);
 		test(logLines.length <= 10);
-		
+
 		tail = m_WebServiceClient.tailLog(baseUrl, jobId, 50);
 		logLines = tail.split("\n");
 		test(logLines.length > 0);
 		test(logLines.length <= 50);
-		
-		// whole file 
-		String file = m_WebServiceClient.downloadLog(baseUrl, jobId, "engine_api");		
+
+		// whole file
+		String file = m_WebServiceClient.downloadLog(baseUrl, jobId, "engine_api");
 		logLines = file.split("\n");
 		test(logLines.length > 0);
-		
-		file = m_WebServiceClient.downloadLog(baseUrl, jobId, jobId);		
+
+		file = m_WebServiceClient.downloadLog(baseUrl, jobId, jobId);
 		logLines = file.split("\n");
 		test(logLines.length > 0);
-							
+
 		// tail a named file
-		tail = m_WebServiceClient.tailLog(baseUrl, jobId, "engine_api", 10);		
+		tail = m_WebServiceClient.tailLog(baseUrl, jobId, "engine_api", 10);
 		logLines = tail.split("\n");
 		test(logLines.length > 0);
 		test(logLines.length <= 10);
-		
+
 		tail = m_WebServiceClient.tailLog(baseUrl, jobId, jobId, 10);
 		logLines = tail.split("\n");
 		test(logLines.length > 0);
 		test(logLines.length <= 10);
-			
+
 		// zip of log files
 		try (ZipInputStream zip = m_WebServiceClient.downloadAllLogs(baseUrl, jobId))
 		{
@@ -1537,12 +1537,12 @@ public class JobsTest implements Closeable
 
 		/*
 		// check errors by ask for a file that doesn't exist
-		file = m_WebServiceClient.downloadLog(baseUrl, jobId, "not_a_file");	
+		file = m_WebServiceClient.downloadLog(baseUrl, jobId, "not_a_file");
 		test(file.isEmpty());
 		ApiError error = m_WebServiceClient.getLastError();
 		test(error != null);
 		test(error.getErrorCode() == ErrorCode.MISSING_LOG_FILE);
-		
+
 		// get a file in a job that doesn't exist
 		file = m_WebServiceClient.downloadLog(baseUrl, "not_a_job", "not_a_file");
 		test(file.isEmpty());
@@ -1551,54 +1551,54 @@ public class JobsTest implements Closeable
 		test(error.getErrorCode() == ErrorCode.MISSING_LOG_FILE);
 		*/
 	}
-	
+
 
 	/**
 	 * Delete all the jobs in the list of job ids
-	 * 
+	 *
 	 * @param baseUrl The URL of the REST API i.e. an URL like
 	 * 	<code>http://prelert-host:8080/engine/version/</code>
 	 * @param jobIds The list of ids of the jobs to delete
 	 * @throws IOException
-	 * @throws InterruptedException 
+	 * @throws InterruptedException
 	 */
-	public void deleteJobsTest(String baseUrl, List<String> jobIds) 
+	public void deleteJobsTest(String baseUrl, List<String> jobIds)
 	throws IOException, InterruptedException
 	{
 		for (String jobId : jobIds)
 		{
 			LOGGER.debug("Deleting job " + jobId);
-			
-			boolean success = m_WebServiceClient.deleteJob(baseUrl, jobId); 
+
+			boolean success = m_WebServiceClient.deleteJob(baseUrl, jobId);
 			if (success == false)
 			{
 				LOGGER.error("Error deleting job " + baseUrl + "/" + jobId);
 			}
 		}
-		
+
 		for (String jobId : jobIds)
 		{
 			SingleDocument<JobDetails> doc = m_WebServiceClient.getJob(baseUrl, jobId);
-			test(doc.isExists() == false);		
+			test(doc.isExists() == false);
 		}
-		
+
 		for (String jobId : jobIds)
 		{
-			boolean success = m_WebServiceClient.deleteJob(baseUrl, jobId); 
+			boolean success = m_WebServiceClient.deleteJob(baseUrl, jobId);
 			test(success == false);
 			ApiError error = m_WebServiceClient.getLastError();
 			test(error.getErrorCode() == ErrorCode.MISSING_JOB_ERROR);
 		}
 	}
-	
-	
+
+
 	/**
 	 * Throws an exception if <code>condition</code> is false.
-	 * 
+	 *
 	 * @param condition
 	 * @throws IllegalStateException
 	 */
-	public static void test(boolean condition) 
+	public static void test(boolean condition)
 	throws IllegalStateException
 	{
 		if (condition == false)
@@ -1607,72 +1607,72 @@ public class JobsTest implements Closeable
 		}
 	}
 
-	
+
 	/**
 	 * The program takes one argument which is the base Url of the RESTful API.
-	 * If no arguments are given then {@value #API_BASE_URL} is used. 
-	 * 
+	 * If no arguments are given then {@value #API_BASE_URL} is used.
+	 *
 	 * @param args
 	 * @throws IOException
-	 * @throws InterruptedException 
+	 * @throws InterruptedException
 	 */
-	public static void main(String[] args) 
+	public static void main(String[] args)
 	throws IOException, InterruptedException
 	{
 		// configure log4j
-		ConsoleAppender console = new ConsoleAppender(); 		
-		console.setLayout(new PatternLayout("%d [%p|%c|%C{1}] %m%n")); 
+		ConsoleAppender console = new ConsoleAppender();
+		console.setLayout(new PatternLayout("%d [%p|%c|%C{1}] %m%n"));
 		console.setThreshold(Level.INFO);
 		console.activateOptions();
 		Logger.getRootLogger().addAppender(console);
-				
+
 		String baseUrl = API_BASE_URL;
 		if (args.length > 0)
 		{
 			baseUrl = args[0];
 		}
-		
+
 		LOGGER.info("Testing Service at " + baseUrl);
-		
+
 		final String prelertTestDataHome = System.getProperty("prelert.test.data.home");
 		if (prelertTestDataHome == null)
 		{
 			LOGGER.error("Error property prelert.test.data.home is not set");
 			return;
 		}
-		
-				
-		JobsTest test = new JobsTest();	
+
+
+		JobsTest test = new JobsTest();
 		List<String> jobUrls = new ArrayList<>();
-		
-		File flightCentreData = new File(prelertTestDataHome + 
+
+		File flightCentreData = new File(prelertTestDataHome +
 				"/engine_api_integration_test/flightcentre.csv.gz");
-		File fareQuoteData = new File(prelertTestDataHome + 
-				"/engine_api_integration_test/farequote.csv");		
-		File flightCentreJsonData = new File(prelertTestDataHome + 
+		File fareQuoteData = new File(prelertTestDataHome +
+				"/engine_api_integration_test/farequote.csv");
+		File flightCentreJsonData = new File(prelertTestDataHome +
 				"/engine_api_integration_test/flightcentre.json");
-		File flightCentreMsData = new File(prelertTestDataHome + 
+		File flightCentreMsData = new File(prelertTestDataHome +
 				"/engine_api_integration_test/flightcentre_ms.csv");
-		File flightCentreMsJsonData = new File(prelertTestDataHome +  
+		File flightCentreMsJsonData = new File(prelertTestDataHome +
 				"/engine_api_integration_test/flightcentre_ms.json");
-		
+
 		final long FLIGHT_CENTRE_NUM_BUCKETS = 24;
 		final long FARE_QUOTE_NUM_BUCKETS = 1439;
 
 		test.getJobsTest(baseUrl);
-		
+
 		// Always delete the test named jobs first in case they
 		// are hanging around from a previous run
 		test.m_WebServiceClient.deleteJob(baseUrl, "flightcentre-csv");
 		test.m_WebServiceClient.deleteJob(baseUrl, "flightcentre-epoch-ms");
 
-		
+
 		//=================
-		// CSV & Gzip test 
+		// CSV & Gzip test
 		//
 		String flightCentreJobId = test.createFlightCentreCsvJobTest(baseUrl);
 		test.getJobsTest(baseUrl);
-		
+
 		test.testSetDescription(baseUrl, flightCentreJobId);
 		test.uploadData(baseUrl, flightCentreJobId, flightCentreData, true);
 		test.closeJob(baseUrl, flightCentreJobId);
@@ -1680,9 +1680,9 @@ public class JobsTest implements Closeable
 		test.verifyJobResults(baseUrl, flightCentreJobId, 100, FLIGHT_CENTRE_NUM_BUCKETS,
 				3600, FLIGHT_CENTRE_NUM_EVENTS);
 		test.testBucketScoreFilters(baseUrl, flightCentreJobId);
-		jobUrls.add(flightCentreJobId);		
+		jobUrls.add(flightCentreJobId);
 
-		
+
 		//=================
 		// JSON test
 		//
@@ -1694,13 +1694,13 @@ public class JobsTest implements Closeable
 		test.testSetDescription(baseUrl, flightCentreJsonJobId);
 		test.verifyJobResults(baseUrl, flightCentreJsonJobId, 100, FLIGHT_CENTRE_NUM_BUCKETS,
 				3600, FLIGHT_CENTRE_NUM_EVENTS);
-		jobUrls.add(flightCentreJsonJobId);	
-			
+		jobUrls.add(flightCentreJsonJobId);
+
 		//=================
 		// Time format test
 		//
 		String farequoteTimeFormatJobId = test.createFareQuoteTimeFormatJobTest(baseUrl);
-		jobUrls.add(farequoteTimeFormatJobId);		
+		jobUrls.add(farequoteTimeFormatJobId);
 		test.getJobsTest(baseUrl);
 
 		test.slowUpload(baseUrl, farequoteTimeFormatJobId, fareQuoteData, 10);
@@ -1710,16 +1710,16 @@ public class JobsTest implements Closeable
 		test.testBucketScoreFilters(baseUrl, farequoteTimeFormatJobId);
 		test.testReadLogFiles(baseUrl, farequoteTimeFormatJobId);
 		test.testSetDescription(baseUrl, farequoteTimeFormatJobId);
-					
+
 		// known dates for the farequote data
 		Date start = new Date(1359406800000L);
 		Date end = new Date(1359662400000L);
 		test.testBucketDateFilters(baseUrl, farequoteTimeFormatJobId, start, end);
 		test.testRecordDateFilters(baseUrl, farequoteTimeFormatJobId, start, end);
-		
+
 		test.testSortingRecords(baseUrl, farequoteTimeFormatJobId, start, end);
 		test.testRecordScoreFilters(baseUrl, farequoteTimeFormatJobId);
-		
+
 		//============================
 		// Create another job based on
 		// the config used above
@@ -1735,39 +1735,39 @@ public class JobsTest implements Closeable
 		test.testRecordScoreFilters(baseUrl, farequoteTimeFormatJobId);
 		test.testBucketScoreFilters(baseUrl, refJobId);
 		test.testReadLogFiles(baseUrl, refJobId);
-		
-		
-		jobUrls.add(refJobId);		
 
-		
+
+		jobUrls.add(refJobId);
+
+
 		//=====================================================
 		// timestamp in ms from the epoch for both csv and json
 		//
 		String jobId = test.createFlightCentreMsCsvFormatJobTest(baseUrl, "flightcentre-epoch-ms");
-	 	jobUrls.add(jobId);	
+	 	jobUrls.add(jobId);
 	 	test.getJobsTest(baseUrl);
 	 	test.uploadData(baseUrl, jobId, flightCentreMsData, false);
-	 	test.closeJob(baseUrl, jobId);	
+	 	test.closeJob(baseUrl, jobId);
 	 	test.verifyJobResults(baseUrl, jobId, 150, FLIGHT_CENTRE_NUM_BUCKETS,
 				3600, FLIGHT_CENTRE_NUM_EVENTS);
 	 	test.testReadLogFiles(baseUrl, jobId);
-		test.testBucketDateFilters(baseUrl, jobId, new Date(1350824400000L), 
+		test.testBucketDateFilters(baseUrl, jobId, new Date(1350824400000L),
 				new Date(1350913371000L));
 
 	 	jobId = test.createFlightCentreMsJsonFormatJobTest(baseUrl);
-	 	jobUrls.add(jobId);	
+	 	jobUrls.add(jobId);
 	 	test.getJobsTest(baseUrl);
 	 	test.uploadData(baseUrl, jobId, flightCentreMsJsonData, false);
-	 	test.closeJob(baseUrl, jobId);	
+	 	test.closeJob(baseUrl, jobId);
 		test.verifyJobResults(baseUrl, jobId, 150, FLIGHT_CENTRE_NUM_BUCKETS,
 				3600, FLIGHT_CENTRE_NUM_EVENTS);
-		
+
 		start = new Date(1350824400000L);
 		end = new Date(1350913371000L);
-		test.testBucketDateFilters(baseUrl, jobId, start, end); 
+		test.testBucketDateFilters(baseUrl, jobId, start, end);
 		test.testRecordDateFilters(baseUrl, jobId, start, end);
 		test.testSortingRecords(baseUrl, jobId, start, end);
-		
+
 		test.testReadLogFiles(baseUrl, jobId);
 
 
@@ -1775,26 +1775,26 @@ public class JobsTest implements Closeable
 		// double upload test (upload same file twice)
 		//
 		String doubleUploadTest = test.createFareQuoteTimeFormatJobTest(baseUrl);
-		jobUrls.add(doubleUploadTest);		
+		jobUrls.add(doubleUploadTest);
 
 		test.uploadData(baseUrl, doubleUploadTest, fareQuoteData, false);
 		test.uploadData(baseUrl, doubleUploadTest, fareQuoteData, false);
-		
-		test.closeJob(baseUrl, doubleUploadTest);	
+
+		test.closeJob(baseUrl, doubleUploadTest);
 		test.verifyJobResults(baseUrl, doubleUploadTest, 150, FARE_QUOTE_NUM_BUCKETS,
 				300, FARE_QUOTE_NUM_EVENTS);
-					
+
 		// known dates for the farequote data
 		start = new Date(1359406800000L);
 		end = new Date(1359662400000L);
 		test.testBucketDateFilters(baseUrl, doubleUploadTest, start, end);
-		
-		
+
+
 		//==========================
 		// Clean up test jobs
 		test.deleteJobsTest(baseUrl, jobUrls);
 		test.close();
-				
+
 		LOGGER.info("All tests passed Ok");
 	}
 

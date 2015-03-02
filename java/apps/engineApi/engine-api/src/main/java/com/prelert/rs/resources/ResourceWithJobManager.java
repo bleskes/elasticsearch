@@ -45,7 +45,6 @@ import org.apache.log4j.Logger;
 
 import com.prelert.job.alert.manager.AlertManager;
 import com.prelert.job.manager.JobManager;
-import com.prelert.job.normalisation.Normaliser;
 import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.provider.RestApiException;
@@ -93,7 +92,6 @@ public abstract class ResourceWithJobManager
 
     private JobManager m_JobManager;
     private AlertManager m_AlertManager;
-    private Normaliser m_Normaliser;
 
     /**
      *
