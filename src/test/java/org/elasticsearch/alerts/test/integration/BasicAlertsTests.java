@@ -41,6 +41,7 @@ import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogram;
 import org.elasticsearch.search.aggregations.bucket.histogram.Histogram;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.test.junit.annotations.TestLogging;
 import org.junit.Test;
 
 import java.util.Locale;
@@ -104,6 +105,7 @@ public class BasicAlertsTests extends AbstractAlertsIntegrationTests {
     }
 
     @Test
+    @TestLogging("action.admin.indices.delete:TRACE")
     public void testDeleteAlert() throws Exception {
         AlertsClient alertsClient = alertClient();
         createIndex("my-index");
