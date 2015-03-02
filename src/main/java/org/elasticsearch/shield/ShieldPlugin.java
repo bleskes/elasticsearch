@@ -19,6 +19,7 @@ package org.elasticsearch.shield;
 
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.support.Headers;
+import org.elasticsearch.cluster.settings.ClusterDynamicSettingsModule;
 import org.elasticsearch.common.collect.ImmutableList;
 import org.elasticsearch.common.component.LifecycleComponent;
 import org.elasticsearch.common.inject.Module;
@@ -32,6 +33,7 @@ import org.elasticsearch.shield.authc.support.UsernamePasswordToken;
 import org.elasticsearch.shield.authz.store.FileRolesStore;
 import org.elasticsearch.shield.license.LicenseService;
 import org.elasticsearch.shield.signature.InternalSignatureService;
+import org.elasticsearch.shield.transport.filter.IPFilter;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -77,7 +79,7 @@ public class ShieldPlugin extends AbstractPlugin {
     @Override
     public Collection<Class<? extends LifecycleComponent>> services() {
         return enabled && !clientMode ?
-                ImmutableList.<Class<? extends LifecycleComponent>>of(LicenseService.class, FileRolesStore.class, Realms.class, InternalSignatureService.class) :
+                ImmutableList.<Class<? extends LifecycleComponent>>of(LicenseService.class, FileRolesStore.class, Realms.class, InternalSignatureService.class, IPFilter.class) :
                 ImmutableList.<Class<? extends LifecycleComponent>>of();
     }
 
@@ -91,6 +93,10 @@ public class ShieldPlugin extends AbstractPlugin {
         addUserSettings(settingsBuilder);
         addTribeSettings(settingsBuilder);
         return settingsBuilder.build();
+    }
+
+    public void onModule(ClusterDynamicSettingsModule clusterDynamicSettingsModule) {
+        clusterDynamicSettingsModule.addDynamicSettings("shield.transport.filter.*", "shield.http.filter.*", "transport.profiles.*", IPFilter.IP_FILTER_ENABLED_SETTING, IPFilter.IP_FILTER_ENABLED_HTTP_SETTING);
     }
 
     private void addUserSettings(ImmutableSettings.Builder settingsBuilder) {
