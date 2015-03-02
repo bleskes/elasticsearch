@@ -101,12 +101,6 @@ public abstract class UsageReporter
 		++m_RecordsReadSinceLastReport;
 	}
 
-	public void addFieldsRecordsRead(long fieldsRead, long recordsRead)
-	{
-		m_FieldsReadSinceLastReport += fieldsRead;
-		m_RecordsReadSinceLastReport += recordsRead;
-	}
-
 	public long getBytesReadSinceLastReport()
 	{
 		return m_BytesReadSinceLastReport;

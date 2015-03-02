@@ -189,49 +189,6 @@ public abstract class ResourceWithJobManager
     }
 
     /**
-     * Get the results normaliser object from the application's set of singletons
-     * @return
-     */
-    protected Normaliser normaliser()
-    {
-        if (m_Normaliser != null)
-        {
-            return m_Normaliser;
-        }
-
-        if (m_RestApplication == null)
-        {
-            LOGGER.error("Application context has not been set in "
-                    + "the jobs resource");
-
-            throw new IllegalStateException("Application context has not been"
-                    + " set in the jobs resource");
-        }
-
-        Set<Object> singletons = m_RestApplication.getSingletons();
-        for (Object obj : singletons)
-        {
-            if (obj instanceof Normaliser)
-            {
-                m_Normaliser = (Normaliser)obj;
-                break;
-            }
-        }
-
-        if (m_Normaliser == null)
-        {
-            String msg = "Application singleton set doesn't contain an " +
-                    "instance of Normaliser";
-
-            LOGGER.error(msg);
-            throw new IllegalStateException(msg);
-        }
-
-        return m_Normaliser;
-    }
-
-
-    /**
      * Set the previous and next page URLs if appropriate.
      * If there are more hits than the take value is set to the results
      * will be paged else the next and previous page URLs will be
