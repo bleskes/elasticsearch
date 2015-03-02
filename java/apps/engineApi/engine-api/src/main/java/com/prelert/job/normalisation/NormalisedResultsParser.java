@@ -40,14 +40,13 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
-import com.prelert.job.normalisation.NormalisedResult;
 
 /**
  * Parse the JSON output of the Normaliser.
  */
 public class NormalisedResultsParser implements Runnable
 {
-	List<NormalisedResult> m_Results;
+	private List<NormalisedResult> m_Results;
 	private InputStream m_InputStream;
 	private Logger m_Logger;
 

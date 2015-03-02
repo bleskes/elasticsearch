@@ -449,24 +449,6 @@ public class ProcessCtrl
         return "{}";
     }
 
-
-    /**
-     * Calls {@link #buildProcess(String, JobDetails, QuantilesState, Logger)} with
-     * quantilesState set to <code>null</code>.
-     *
-     * @param logger The job's logger
-     * @param filesToDelete This method will append File objects that need to be
-     * deleted when the process completes
-     * @return A Java Process object
-     * @throws IOException
-     */
-    public static Process buildAutoDetect(JobDetails job,
-            Logger logger, List<File> filesToDelete)
-    throws IOException
-    {
-        return buildAutoDetect(job, null, logger, filesToDelete);
-    }
-
     /**
      * Sets the environment variables PRELERT_HOME and LIB_PATH (or platform
      * variants) and starts the process in that environment. Any inherited value
