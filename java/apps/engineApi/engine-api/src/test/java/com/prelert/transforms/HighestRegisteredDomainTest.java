@@ -102,6 +102,15 @@ public class HighestRegisteredDomainTest
 	    testDomainSplit("example", "local", "example.local");
 	    testDomainSplit("b.example", "local", "b.example.local");
 	    testDomainSplit("a.b.example", "local", "a.b.example.local");
+
+	    testDomainSplit("r192494180984795-1-1041782-channel-live.ums", "ustream.tv", "r192494180984795-1-1041782-channel-live.ums.ustream.tv");
+
+	    testDomainSplit("192.168.62.9", "prelert.com", "192.168.62.9.prelert.com");
+
+	    // These are not a valid DNS names
+	    testDomainSplit("kerberos.http.192.168.62.222", "", "kerberos.http.192.168.62.222");
+	    testDomainSplit("192.168.62.9\143\127", "", "192.168.62.9\143\127");
+
 	}
 
 	@Test
@@ -118,6 +127,9 @@ public class HighestRegisteredDomainTest
         testDomainSplit("www", "-foundation.org", "www.-foundation.org");
         testDomainSplit("", "_nfsv4idmapdomain", "_nfsv4idmapdomain");
         testDomainSplit("_nfsv4idmapdomain", "prelert.com", "_nfsv4idmapdomain.prelert.com");
+
+        testDomainSplit("lb._dns-sd._udp.0.123.168", "192.in-addr.arpa", "lb._dns-sd._udp.0.123.168.192.in-addr.arpa");
+        testDomainSplit("_kerberos._http.192.168.62.222", "", "_kerberos._http.192.168.62.222");
 	}
 
 	@Test

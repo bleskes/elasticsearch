@@ -186,7 +186,7 @@ public class HighestRegisteredDomain extends Transform
     }
 
     /**
-     * Split host into effective top level domain and sub domain.
+     * Split host into Highest Registered Domain and sub domain.
      * First the host argument is sanitised with {@link #sanitiseDomainName(String)}
      * then split according to the following logic:<br/>
      *
@@ -199,12 +199,17 @@ public class HighestRegisteredDomain extends Transform
      * host as the highest registered domain</li>
      * <li>The host has a public suffix so split according to the rules
      * of the Guava InternetDomainname class </li>
+     * <li>The host is completly invalid e.g '192.168.62.9\143\127' or
+     * '_kerberos._udp.192.168.62.226'. Return the host as the sub domain
+     * and HRD is ""</li>
      * </ol>
      *
+     * A result is always returned even if host is not a valid DNS name
+     * in which case the sub domain is equal to the host argument and the highest
+     * registered domain is ""
+     *
      * @param host
-     * @return
-     * @throws IllegalArgumentException if the HRD part of the host contains
-     * invalid characters i.e. it starts with '_' or '-'
+     * @return Sub domain, HRD pair
      */
     static public DomainSplit lookup(String host)
     {
@@ -225,7 +230,17 @@ public class HighestRegisteredDomain extends Transform
         String sanitisedDomain = HighestRegisteredDomain.sanitiseDomainName(host);
         boolean sanitised = sanitisedDomain != host;
 
-        InternetDomainName idn = InternetDomainName.from(sanitisedDomain);
+        InternetDomainName idn;
+        try
+        {
+            // if this fails after sanitisation return
+            // host as the subdomain
+            idn = InternetDomainName.from(sanitisedDomain);
+        }
+        catch (IllegalArgumentException e)
+        {
+            return new DomainSplit(host, "");
+        }
 
         if (idn.isPublicSuffix())
         {

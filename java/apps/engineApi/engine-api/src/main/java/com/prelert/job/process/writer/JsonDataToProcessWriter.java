@@ -156,7 +156,7 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter
                     record[inOut.m_Output] = (field == null) ? "" : field;
                 }
 
-                if (applyTransformsAndWrite(transforms, input, record, inputFieldCount) == true)
+                if (applyTransformsAndWrite(transforms, input, record, inputFieldCount))
                 {
                     ++recordsWritten;
                 }
