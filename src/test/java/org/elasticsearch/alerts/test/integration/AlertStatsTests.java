@@ -69,7 +69,7 @@ public class AlertStatsTests extends AbstractAlertsIntegrationTests {
         assertThat(response.getAlertManagerStarted(), equalTo(AlertsService.State.STARTED));
 
         SearchRequest searchRequest = AlertsTestUtils.newInputSearchRequest("my-index").source(searchSource().query(termQuery("field", "value")));
-        BytesReference alertSource = createAlertSource("* * * * * ? *", searchRequest, "hits.total == 1");
+        BytesReference alertSource = createAlertSource("* * * * * ? *", searchRequest, "payload.hits.total == 1");
         alertClient().preparePutAlert("testAlert")
                 .source(alertSource)
                 .get();
