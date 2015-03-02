@@ -59,7 +59,6 @@ import org.elasticsearch.index.engine.VersionConflictEngineException;
 import org.elasticsearch.index.get.GetField;
 import org.elasticsearch.index.query.FilterBuilder;
 import org.elasticsearch.index.query.FilterBuilders;
-import org.elasticsearch.index.query.IdsFilterBuilder;
 import org.elasticsearch.index.query.RangeFilterBuilder;
 import org.elasticsearch.index.query.TermFilterBuilder;
 import org.elasticsearch.indices.IndexMissingException;
@@ -858,31 +857,6 @@ public class ElasticsearchJobProvider implements JobProvider
 
 
         return records(jobId, skip, take, fb, sortField, descending);
-    }
-
-    /**
-     * Light testing suggests that this method is actually
-     * slower than querying each bucket individually.
-     * Best to query records by bucket id in a loop
-     */
-    @Override
-    public Pagination<AnomalyRecord> records(String jobId,
-            List<String> bucketIds,  int skip, int take,
-            boolean includeInterim, String sortField, boolean descending)
-    throws UnknownJobException
-    {
-        IdsFilterBuilder idFilter = FilterBuilders.idsFilter(Bucket.TYPE);
-        for (String id : bucketIds)
-        {
-            idFilter.addIds(id);
-        }
-
-        FilterBuilder bucketFilter = FilterBuilders.hasParentFilter(
-                Bucket.TYPE, idFilter);
-
-        bucketFilter = andWithInterimFilter(includeInterim, Bucket.IS_INTERIM, bucketFilter);
-
-        return records(jobId, skip, take, bucketFilter, sortField, descending);
     }
 
     @Override

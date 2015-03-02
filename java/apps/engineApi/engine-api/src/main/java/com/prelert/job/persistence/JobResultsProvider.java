@@ -28,7 +28,6 @@
 package com.prelert.job.persistence;
 
 import java.io.Closeable;
-import java.util.List;
 
 import com.prelert.job.UnknownJobException;
 import com.prelert.rs.data.AnomalyRecord;
@@ -188,29 +187,5 @@ public interface JobResultsProvider extends Closeable
             int skip, int take, long startEpochMs, long endEpochMs,
             boolean includeInterim, String sortField, boolean sortDescending,
             double anomalyScoreThreshold, double normalizedProbabilityThreshold)
-    throws UnknownJobException;
-
-
-    /**
-     * Get the anomaly records in the list of buckets.
-     * The returned records will have the
-     * <code>parent</code> member set to the parent bucket's id.
-     *
-     * @param jobId
-     * @param bucketIds The list of parent buckets
-     * @param skip Skip the first N records. This parameter is for paging
-     * if not required set to 0.
-     * @param take Take only this number of records
-     * @param includeInterim Include interim results
-     * @param sortField The field to sort results by if <code>null</code> no
-     * sort is applied
-     * @param sortDescending Sort in descending order
-     *
-     * @return
-     * @throws UnknownJobException If the job id is no recognised
-     */
-    public Pagination<AnomalyRecord> records(String jobId,
-            List<String> bucketIds, int skip, int take, boolean includeInterim,
-            String sortField, boolean sortDescending)
     throws UnknownJobException;
 }
