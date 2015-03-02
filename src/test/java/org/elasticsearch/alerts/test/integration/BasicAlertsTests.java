@@ -76,7 +76,7 @@ public class BasicAlertsTests extends AbstractAlertsIntegrationTests {
                 .source(alertSourceBuilder()
                         .schedule(interval(5, IntervalSchedule.Interval.Unit.SECONDS))
                         .input(searchInput(searchRequest))
-                        .condition(scriptCondition("payload.hits.total == 1")))
+                        .condition(scriptCondition("ctx.payload.hits.total == 1")))
                 .get();
         assertAlertWithMinimumPerformedActionsCount("my-first-alert", 1);
 
@@ -93,7 +93,7 @@ public class BasicAlertsTests extends AbstractAlertsIntegrationTests {
                 .source(alertSourceBuilder()
                         .schedule(interval(5, IntervalSchedule.Interval.Unit.SECONDS))
                         .input(searchInput(searchRequest))
-                        .condition(scriptCondition("payload.hits.total == 1")))
+                        .condition(scriptCondition("ctx.payload.hits.total == 1")))
                 .get();
 
         // The alert's condition won't meet because there is no data that matches with the query
@@ -113,7 +113,7 @@ public class BasicAlertsTests extends AbstractAlertsIntegrationTests {
                 .source(alertSourceBuilder()
                         .schedule(interval(5, IntervalSchedule.Interval.Unit.SECONDS))
                         .input(searchInput(searchRequest))
-                        .condition(scriptCondition("payload.hits.total == 1")))
+                        .condition(scriptCondition("ctx.payload.hits.total == 1")))
                 .get();
         assertThat(indexResponse.indexResponse().isCreated(), is(true));
 
@@ -187,7 +187,7 @@ public class BasicAlertsTests extends AbstractAlertsIntegrationTests {
                 .source(alertSourceBuilder()
                         .schedule(interval(5, IntervalSchedule.Interval.Unit.SECONDS))
                         .input(searchInput(searchRequest))
-                        .condition(scriptCondition("payload.hits?.hits[0]._score == 1.0")))
+                        .condition(scriptCondition("ctx.payload.hits?.hits[0]._score == 1.0")))
                 .get();
         assertThat(indexResponse.indexResponse().isCreated(), is(true));
         assertAlertWithMinimumPerformedActionsCount("my-first-alert", 1);
@@ -205,17 +205,17 @@ public class BasicAlertsTests extends AbstractAlertsIntegrationTests {
 
 
         alertClient().preparePutAlert("1")
-                .source(source.condition(scriptCondition("payload.hits.total == 1")))
+                .source(source.condition(scriptCondition("ctx.payload.hits.total == 1")))
                 .get();
         assertAlertWithMinimumPerformedActionsCount("1", 0, false);
 
         alertClient().preparePutAlert("1")
-                .source(source.condition(scriptCondition("payload.hits.total == 0")))
+                .source(source.condition(scriptCondition("ctx.payload.hits.total == 0")))
                 .get();
         assertAlertWithMinimumPerformedActionsCount("1", 1, false);
 
         alertClient().preparePutAlert("1")
-                .source(source.schedule(cron("0/5 * * * * ? 2020")).condition(scriptCondition("payload.hits.total == 0")))
+                .source(source.schedule(cron("0/5 * * * * ? 2020")).condition(scriptCondition("ctx.payload.hits.total == 0")))
                 .get();
 
         Thread.sleep(5000);
@@ -262,7 +262,7 @@ public class BasicAlertsTests extends AbstractAlertsIntegrationTests {
                 .source(alertSourceBuilder()
                         .schedule(cron("* 0/1 * * * ? *"))
                         .input(searchInput(searchRequest))
-                        .condition(scriptCondition("payload.aggregations.rate.buckets[0]?.doc_count > 5"))
+                        .condition(scriptCondition("ctx.payload.aggregations.rate.buckets[0]?.doc_count > 5"))
                         .addAction(indexAction("my-index", "trail")))
                 .get();
 
@@ -311,7 +311,7 @@ public class BasicAlertsTests extends AbstractAlertsIntegrationTests {
 
         alertClient().prepareDeleteAlert(alertName).get();
         alertClient().preparePutAlert(alertName)
-                .source(createAlertSource(String.format(Locale.ROOT, "0/%s * * * * ? *", (scheduleTimeInMs / 1000)), request, "return payload.hits.total >= 3"))
+                .source(createAlertSource(String.format(Locale.ROOT, "0/%s * * * * ? *", (scheduleTimeInMs / 1000)), request, "return ctx.payload.hits.total >= 3"))
                 .get();
 
         long time1 = System.currentTimeMillis();
