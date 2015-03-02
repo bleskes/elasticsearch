@@ -33,15 +33,10 @@ import static org.mockito.Mockito.mock;
 import com.google.common.net.InternetDomainName;
 
 import org.apache.log4j.Logger;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 public class HighestRegisteredDomainTest
 {
-    @Rule
-    public ExpectedException expected = ExpectedException.none();
-
 	private void checkHighestRegisteredDomain(String fullName, String registeredNameExpected)
 	{
 		InternetDomainName effectiveTLD = InternetDomainName.from(fullName);
@@ -118,6 +113,11 @@ public class HighestRegisteredDomainTest
 
         testDomainSplit("www._yourmp", "parliament.uk", "www._yourmp.parliament.uk");
         testDomainSplit("www.-a", "cgs.act.edu.au", "www.-a.cgs.act.edu.au");
+
+        testDomainSplit("", "-foundation.org", "-foundation.org");
+        testDomainSplit("www", "-foundation.org", "www.-foundation.org");
+        testDomainSplit("", "_nfsv4idmapdomain", "_nfsv4idmapdomain");
+        testDomainSplit("_nfsv4idmapdomain", "prelert.com", "_nfsv4idmapdomain.prelert.com");
 	}
 
 	@Test
@@ -256,36 +256,32 @@ public class HighestRegisteredDomainTest
 	    String bad_domain = "_nfsv4idmapdomain.prelert.com";
 	    assertFalse(InternetDomainName.isValid(bad_domain));
 	    String sanitisedDomain = HighestRegisteredDomain.sanitiseDomainName(bad_domain);
-	    assertEquals("p_nfsv4idmapdomain.prelert.com", sanitisedDomain);
+	    assertTrue(sanitisedDomain != ok_domain);
+	    assertEquals("p_nfsv4idmapdomain.pprelert.com", sanitisedDomain);
+	    assertEquals(bad_domain, HighestRegisteredDomain.desanitise(sanitisedDomain));
 
 	    bad_domain = "_www.test.ac\uFF61jp";
 	    assertFalse(InternetDomainName.isValid(bad_domain));
 	    sanitisedDomain = HighestRegisteredDomain.sanitiseDomainName(bad_domain);
+	    assertTrue(sanitisedDomain != ok_domain);
 	    assertEquals(HighestRegisteredDomain.replaceDots("p_www.test.ac\uFF61jp"), sanitisedDomain);
+	    assertEquals(HighestRegisteredDomain.replaceDots(bad_domain),
+	                    HighestRegisteredDomain.desanitise(sanitisedDomain));
 
 	    bad_domain = "_xn--85x722f.com.cn";
 	    assertFalse(InternetDomainName.isValid(bad_domain));
 	    sanitisedDomain = HighestRegisteredDomain.sanitiseDomainName(bad_domain);
+	    assertTrue(sanitisedDomain != ok_domain);
 	    assertEquals("p_xn--85x722f.com.cn", sanitisedDomain);
+	    assertEquals(bad_domain, HighestRegisteredDomain.desanitise(sanitisedDomain));
+
+        bad_domain = "-foundation.org";
+        assertFalse(InternetDomainName.isValid(bad_domain));
+        sanitisedDomain = HighestRegisteredDomain.sanitiseDomainName(bad_domain);
+        assertTrue(sanitisedDomain != ok_domain);
+        assertEquals("p-foundation.org", sanitisedDomain);
+        assertEquals(bad_domain, HighestRegisteredDomain.desanitise(sanitisedDomain));
 	}
-
-	@Test()
-	public void testInvalidHRDThrows_Underscore()
-	{
-        expected.expect(IllegalArgumentException.class);
-	    expected.expectMessage(HighestRegisteredDomain.INVALID_HRD_MSG);
-
-	    HighestRegisteredDomain.lookup("info._prelert.com");
-	}
-
-    @Test()
-    public void testInvalidHRDThrows_Dash()
-    {
-        expected.expect(IllegalArgumentException.class);
-        expected.expectMessage(HighestRegisteredDomain.INVALID_HRD_MSG);
-
-        HighestRegisteredDomain.lookup("info.prelert.-com");
-    }
 
 	/**
 	 * Get sub domain only
@@ -344,6 +340,4 @@ public class HighestRegisteredDomainTest
         assertEquals("time", output[0]);
         assertEquals("apple.com", output[1]);
     }
-
-
 }
