@@ -102,11 +102,11 @@ public class ElasticsearchJobProvider implements JobProvider
      * Where to store the prelert info in Elasticsearch - must match what's
      * expected by kibana/engineAPI/app/directives/prelertLogUsage.js
      */
-    public static final String PRELERT_INFO_INDEX = "prelert-int";
-    public static final String PRELERT_INFO_TYPE = "info";
-    public static final String PRELERT_INFO_ID = "infoStats";
+    private static final String PRELERT_INFO_INDEX = "prelert-int";
+    private static final String PRELERT_INFO_TYPE = "info";
+    private static final String PRELERT_INFO_ID = "infoStats";
 
-    public static final String _PARENT = "_parent";
+    private static final String _PARENT = "_parent";
 
     private static final List<String> SECONDARY_SORT = new ArrayList<>();
 
