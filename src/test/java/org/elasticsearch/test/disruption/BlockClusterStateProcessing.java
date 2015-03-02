@@ -32,7 +32,6 @@ public class BlockClusterStateProcessing extends SingleNodeDisruption {
 
     AtomicReference<CountDownLatch> disruptionLatch = new AtomicReference<>();
 
-
     public BlockClusterStateProcessing(Random random) {
         this(null, random);
     }
@@ -44,7 +43,7 @@ public class BlockClusterStateProcessing extends SingleNodeDisruption {
 
 
     @Override
-    public void startDisrupting() {
+    public synchronized void startDisrupting() {
         final String disruptionNodeCopy = disruptedNode;
         if (disruptionNodeCopy == null) {
             return;
@@ -81,10 +80,13 @@ public class BlockClusterStateProcessing extends SingleNodeDisruption {
     }
 
     @Override
-    public void stopDisrupting() {
+    public synchronized void stopDisrupting() {
         CountDownLatch latch = disruptionLatch.get();
         if (latch != null) {
             latch.countDown();
+            boolean success = disruptionLatch.compareAndSet(latch, null);
+            assert success : "latch change while stopping";
+
         }
 
     }

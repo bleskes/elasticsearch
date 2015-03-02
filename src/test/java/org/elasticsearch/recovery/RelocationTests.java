@@ -21,10 +21,13 @@ package org.elasticsearch.recovery;
 
 import com.carrotsearch.hppc.IntOpenHashSet;
 import com.carrotsearch.hppc.procedures.IntProcedure;
+import com.carrotsearch.randomizedtesting.annotations.Repeat;
 import com.google.common.base.Predicate;
+import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.lucene.index.IndexFileNames;
 import org.apache.lucene.util.LuceneTestCase.Slow;
+import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.admin.cluster.state.ClusterStateResponse;
 import org.elasticsearch.action.admin.indices.recovery.RecoveryResponse;
@@ -49,8 +52,11 @@ import org.elasticsearch.common.Priority;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.common.util.concurrent.AbstractRunnable;
+import org.elasticsearch.common.util.concurrent.ConcurrentCollections;
 import org.elasticsearch.discovery.DiscoveryService;
 import org.elasticsearch.discovery.DiscoverySettings;
+import org.elasticsearch.discovery.zen.publish.PublishClusterStateAction;
 import org.elasticsearch.env.NodeEnvironment;
 import org.elasticsearch.index.shard.IndexShard;
 import org.elasticsearch.index.shard.IndexShardState;
@@ -58,14 +64,17 @@ import org.elasticsearch.index.shard.ShardId;
 import org.elasticsearch.indices.IndicesLifecycle;
 import org.elasticsearch.indices.recovery.RecoveryFileChunkRequest;
 import org.elasticsearch.indices.recovery.RecoverySettings;
+import org.elasticsearch.indices.recovery.RecoverySource;
 import org.elasticsearch.indices.recovery.RecoveryTarget;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
-import org.elasticsearch.test.BackgroundIndexer;
 import org.elasticsearch.test.ElasticsearchIntegrationTest;
 import org.elasticsearch.test.ElasticsearchIntegrationTest.ClusterScope;
+import org.elasticsearch.test.disruption.BlockClusterStateProcessing;
 import org.elasticsearch.test.junit.annotations.TestLogging;
 import org.elasticsearch.test.transport.MockTransportService;
+import org.elasticsearch.test.transport.MockTransportService.Tracer;
+import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.*;
 import org.junit.Test;
 
@@ -77,10 +86,13 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
+import java.util.Set;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.elasticsearch.common.settings.ImmutableSettings.settingsBuilder;
 import static org.elasticsearch.index.query.QueryBuilders.matchAllQuery;
@@ -91,7 +103,7 @@ import static org.hamcrest.Matchers.*;
 /**
  */
 @ClusterScope(scope = Scope.TEST, numDataNodes = 0)
-@TestLogging("indices.recovery:TRACE,index.shard.service:TRACE")
+@TestLogging("indices.recovery:TRACE,index.shard:TRACE")
 public class RelocationTests extends ElasticsearchIntegrationTest {
     private final TimeValue ACCEPTABLE_RELOCATION_TIME = new TimeValue(5, TimeUnit.MINUTES);
 
@@ -150,43 +162,69 @@ public class RelocationTests extends ElasticsearchIntegrationTest {
         assertThat(client().prepareCount("test").execute().actionGet().getCount(), equalTo(20l));
     }
 
+    private void indexDocs(final int docCount, final String index, final AtomicInteger idGenerator) throws ExecutionException, InterruptedException {
+        List<IndexRequestBuilder> builders = new ArrayList<>();
+        for (int i = 0; i < docCount; i++) {
+            int id = idGenerator.incrementAndGet();
+            builders.add(client().prepareIndex(index, "type", Long.toString(id)).setSource("field", "value_" + id));
+        }
+        indexRandom(false, true, false, builders);
+        logger.info("--> done indexing [{}]", docCount);
+    }
+
     @Test
     @Slow
-    public void testRelocationWhileIndexingRandom() throws Exception {
+    @Repeat(iterations = 40)
+    public void testRelocationWhileIndexingRandom() throws Throwable {
         int numberOfRelocations = scaledRandomIntBetween(1, rarely() ? 10 : 4);
         int numberOfReplicas = randomBoolean() ? 0 : 1;
         int numberOfNodes = numberOfReplicas == 0 ? 2 : 3;
 
         logger.info("testRelocationWhileIndexingRandom(numRelocations={}, numberOfReplicas={}, numberOfNodes={})", numberOfRelocations, numberOfReplicas, numberOfNodes);
 
+        ImmutableSettings.Builder nodeSettings = ImmutableSettings.builder()
+                .put("discovery.type", "zen").put(TransportModule.TRANSPORT_SERVICE_TYPE_KEY, MockTransportService.class.getName());
+
+        String master = internalCluster().startNode(nodeSettings);
+
         String[] nodes = new String[numberOfNodes];
         logger.info("--> starting [node1] ...");
-        nodes[0] = internalCluster().startNode();
+        nodes[0] = internalCluster().startNode(nodeSettings);
+
+        AtomicInteger idGenerator = new AtomicInteger(0);
 
         logger.info("--> creating test index ...");
         client().admin().indices().prepareCreate("test")
                 .setSettings(settingsBuilder()
                                 .put("index.number_of_shards", 1)
                                 .put("index.number_of_replicas", numberOfReplicas)
+                                .put("index.routing.allocation.exclude._name", master)
                 ).execute().actionGet();
-
 
         for (int i = 1; i < numberOfNodes; i++) {
             logger.info("--> starting [node{}] ...", i + 1);
-            nodes[i] = internalCluster().startNode();
-            if (i != numberOfNodes - 1) {
-                ClusterHealthResponse healthResponse = client().admin().cluster().prepareHealth().setWaitForEvents(Priority.LANGUID)
-                        .setWaitForNodes(Integer.toString(i + 1)).setWaitForGreenStatus().execute().actionGet();
-                assertThat(healthResponse.isTimedOut(), equalTo(false));
-            }
+            nodes[i] = internalCluster().startNode(nodeSettings);
         }
 
-        int numDocs = scaledRandomIntBetween(200, 2500);
-        try (BackgroundIndexer indexer = new BackgroundIndexer("test", "type1", client(), numDocs)) {
-            logger.info("--> waiting for {} docs to be indexed ...", numDocs);
-            waitForDocs(numDocs, indexer);
-            logger.info("--> {} docs indexed", numDocs);
+        ClusterHealthResponse healthResponse = client().admin().cluster().prepareHealth().setWaitForEvents(Priority.LANGUID)
+                .setWaitForNodes(Integer.toString(numberOfNodes + 1)).setWaitForGreenStatus().execute().actionGet();
+        assertThat(healthResponse.isTimedOut(), equalTo(false));
 
+        final BlockClusterStateProcessing clusterStateBlocker = new BlockClusterStateProcessing(randomFrom(nodes), getRandom());
+        internalCluster().setDisruptionScheme(clusterStateBlocker);
+
+        int numDocs = scaledRandomIntBetween(200, 2500);
+        logger.info("--> indexing {} docs ...", numDocs);
+        indexDocs(numDocs, "test", idGenerator);
+        logger.info("--> {} docs indexed", numDocs);
+
+        try (RecoveryIndexer recoveryIndexer = new RecoveryIndexer(
+                "test", idGenerator, internalCluster().getInstance(ThreadPool.class),
+                clusterStateBlocker
+        )) {
+            for (TransportService transportService : internalCluster().getInstances(TransportService.class)) {
+                ((MockTransportService) transportService).addTracer(recoveryIndexer);
+            }
             logger.info("--> starting relocations...");
             int nodeShiftBased = numberOfReplicas; // if we have replicas shift those
             for (int i = 0; i < numberOfRelocations; i++) {
@@ -194,9 +232,6 @@ public class RelocationTests extends ElasticsearchIntegrationTest {
                 int toNode = fromNode == 0 ? 1 : 0;
                 fromNode += nodeShiftBased;
                 toNode += nodeShiftBased;
-                numDocs = scaledRandomIntBetween(200, 1000);
-                logger.debug("--> Allow indexer to index [{}] documents", numDocs);
-                indexer.continueIndexing(numDocs);
                 logger.info("--> START relocate the shard from {} to {}", nodes[fromNode], nodes[toNode]);
                 client().admin().cluster().prepareReroute()
                         .add(new MoveAllocationCommand(new ShardId("test", 0), nodes[fromNode], nodes[toNode]))
@@ -207,55 +242,171 @@ public class RelocationTests extends ElasticsearchIntegrationTest {
                 }
                 ClusterHealthResponse clusterHealthResponse = client().admin().cluster().prepareHealth().setWaitForEvents(Priority.LANGUID).setWaitForRelocatingShards(0).setTimeout(ACCEPTABLE_RELOCATION_TIME).execute().actionGet();
                 assertThat(clusterHealthResponse.isTimedOut(), equalTo(false));
-                clusterHealthResponse = client().admin().cluster().prepareHealth().setWaitForEvents(Priority.LANGUID).setWaitForRelocatingShards(0).setTimeout(ACCEPTABLE_RELOCATION_TIME).execute().actionGet();
-                assertThat(clusterHealthResponse.isTimedOut(), equalTo(false));
-                indexer.pauseIndexing();
+                recoveryIndexer.waitForIndexersAndClean();
+                recoveryIndexer.rethrowErrors();
                 logger.info("--> DONE relocate the shard from {} to {}", fromNode, toNode);
+                validateDocs(idGenerator.get());
             }
             logger.info("--> done relocations");
-            logger.info("--> waiting for indexing threads to stop ...");
-            indexer.stop();
-            logger.info("--> indexing threads stopped");
+        }
 
-            logger.info("--> refreshing the index");
-            client().admin().indices().prepareRefresh("test").execute().actionGet();
-            logger.info("--> searching the index");
-            boolean ranOnce = false;
-            for (int i = 0; i < 10; i++) {
-                try {
-                    logger.info("--> START search test round {}", i + 1);
-                    SearchHits hits = client().prepareSearch("test").setQuery(matchAllQuery()).setSize((int) indexer.totalIndexedDocs()).setNoFields().execute().actionGet().getHits();
-                    ranOnce = true;
-                    if (hits.totalHits() != indexer.totalIndexedDocs()) {
-                        int[] hitIds = new int[(int) indexer.totalIndexedDocs()];
-                        for (int hit = 0; hit < indexer.totalIndexedDocs(); hit++) {
-                            hitIds[hit] = hit + 1;
-                        }
-                        IntOpenHashSet set = IntOpenHashSet.from(hitIds);
-                        for (SearchHit hit : hits.hits()) {
-                            int id = Integer.parseInt(hit.id());
-                            if (!set.remove(id)) {
-                                logger.error("Extra id [{}]", id);
-                            }
-                        }
-                        set.forEach(new IntProcedure() {
+        validateDocs(idGenerator.get());
 
-                            @Override
-                            public void apply(int value) {
-                                logger.error("Missing id [{}]", value);
-                            }
+    }
 
-                        });
+    protected void validateDocs(int totalDocs) {
+        logger.info("--> refreshing the index");
+        client().admin().indices().prepareRefresh("test").execute().actionGet();
+        logger.info("--> searching the index");
+        boolean ranOnce = false;
+        for (int i = 0; i < 10; i++) {
+            try {
+                logger.info("--> START search test round {}", i + 1);
+                SearchHits hits = client().prepareSearch("test").setQuery(matchAllQuery()).setSize(totalDocs).setNoFields().execute().actionGet().getHits();
+                ranOnce = true;
+                if (hits.totalHits() != totalDocs) {
+                    int[] hitIds = new int[(int) totalDocs];
+                    for (int hit = 0; hit < totalDocs; hit++) {
+                        hitIds[hit] = hit + 1;
                     }
-                    assertThat(hits.totalHits(), equalTo(indexer.totalIndexedDocs()));
-                    logger.info("--> DONE search test round {}", i + 1);
-                } catch (SearchPhaseExecutionException ex) {
-                    // TODO: the first run fails with this failure, waiting for relocating nodes set to 0 is not enough?
-                    logger.warn("Got exception while searching.", ex);
+                    IntOpenHashSet set = IntOpenHashSet.from(hitIds);
+                    for (SearchHit hit : hits.hits()) {
+                        int id = Integer.parseInt(hit.id());
+                        if (!set.remove(id)) {
+                            logger.error("Extra id [{}]", id);
+                        }
+                    }
+                    set.forEach(new IntProcedure() {
+
+                        @Override
+                        public void apply(int value) {
+                            logger.error("Missing id [{}]", value);
+                        }
+
+                    });
                 }
+                assertThat(hits.totalHits(), equalTo((long) totalDocs));
+                logger.info("--> DONE search test round {}", i + 1);
+            } catch (SearchPhaseExecutionException ex) {
+                // TODO: the first run fails with this failure, waiting for relocating nodes set to 0 is not enough?
+                logger.warn("Got exception while searching.", ex);
             }
-            if (!ranOnce) {
-                fail();
+        }
+        if (!ranOnce) {
+            fail();
+        }
+    }
+
+
+    final static Set<String> recoveryActions = new HashSet<>();
+
+    static {
+        recoveryActions.add(RecoverySource.Actions.START_RECOVERY);
+        recoveryActions.add(RecoveryTarget.Actions.FILES_INFO);
+        //recoveryActions.add(RecoveryTarget.Actions.FILE_CHUNK) <-- over kill?
+        recoveryActions.add(RecoveryTarget.Actions.CLEAN_FILES);
+        //RecoveryTarget.Actions.TRANSLOG_OPS, <-- over kill?
+        recoveryActions.add(RecoveryTarget.Actions.PREPARE_TRANSLOG);
+        recoveryActions.add(RecoveryTarget.Actions.FINALIZE);
+        recoveryActions.add(PublishClusterStateAction.ACTION_NAME);
+    }
+
+    private class RecoveryIndexer extends Tracer implements AutoCloseable {
+
+        final String index;
+        final AtomicInteger idGenerator;
+        final AtomicReference<Throwable> error = new AtomicReference<>();
+        final ThreadPool threadPool;
+        final AtomicBoolean closed = new AtomicBoolean(false);
+        final BlockingQueue<CountDownLatch> onGoingIndexers = ConcurrentCollections.newBlockingQueue();
+        private final BlockClusterStateProcessing clusterStateBlocker;
+
+        private RecoveryIndexer(String index, AtomicInteger idGenerator, ThreadPool threadPool,
+                                BlockClusterStateProcessing clusterStateBlocker) {
+            this.index = index;
+            this.idGenerator = idGenerator;
+            this.threadPool = threadPool;
+            this.clusterStateBlocker = clusterStateBlocker;
+        }
+
+
+        @Override
+        public void receivedRequest(long requestId, String action) {
+            super.receivedRequest(requestId, action);
+            if (recoveryActions.contains(action)) {
+                logger.info("--> received request[{}], indexing some docs", action);
+                backgroundIndexDocs();
+            }
+        }
+
+        protected void backgroundIndexDocs() {
+            if (error.get() != null || closed.get()) {
+                // no need to generate more data.
+                return;
+            }
+            final CountDownLatch latch = new CountDownLatch(1);
+            onGoingIndexers.add(latch);
+            threadPool.generic().execute(new AbstractRunnable() {
+                @Override
+                public void onFailure(Throwable t) {
+                    error.set(t);
+                    latch.countDown();
+                    onGoingIndexers.remove(latch);
+                }
+
+                @Override
+                protected void doRun() throws Exception {
+                    //indexAndDelete(index, indexNode.get(), deleteNode.get(), idGenerator);
+                    indexDocs(1, index, idGenerator);
+                    latch.countDown();
+                    onGoingIndexers.remove(latch);
+                }
+            });
+        }
+
+        @Override
+        public void receivedResponse(long requestId, DiscoveryNode sourceNode, String action) {
+            super.receivedResponse(requestId, sourceNode, action);
+            if (RecoverySource.Actions.START_RECOVERY.equals(action)) {
+                logger.info("--> received response for [{}], indexing some docs & blocking cluster state", action);
+                clusterStateBlocker.startDisrupting();
+                threadPool.schedule(TimeValue.timeValueSeconds(1), ThreadPool.Names.GENERIC, new Runnable() {
+                    @Override
+                    public void run() {
+                        clusterStateBlocker.stopDisrupting();
+                    }
+                });
+            }
+            if (recoveryActions.contains(action)) {
+                logger.info("--> received response for [{}], indexing some docs", action);
+                backgroundIndexDocs();
+            }
+        }
+
+        public void rethrowErrors() throws Throwable {
+            Throwable t = error.get();
+            if (t != null) {
+                throw t;
+            }
+        }
+
+        @Override
+        public void close() throws Exception {
+            closed.set(true);
+            waitForIndexersAndClean();
+
+            Throwable t = error.get();
+            if (t != null) {
+                throw new ElasticsearchException("error during background indexing", t);
+            }
+        }
+
+        public void waitForIndexersAndClean() throws InterruptedException {
+            clusterStateBlocker.stopDisrupting();
+            List<CountDownLatch> latches = Lists.newArrayList();
+            onGoingIndexers.drainTo(latches);
+            for (CountDownLatch latch : latches) {
+                latch.await();
             }
         }
     }
