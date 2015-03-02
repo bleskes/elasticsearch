@@ -330,11 +330,10 @@ public class ProcessCtrl
         // Always clear inherited environment variables
         pb.environment().clear();
 
-        LOGGER.info(String.format("%s=%s", PRELERT_HOME_ENV, PRELERT_HOME));
         pb.environment().put(PRELERT_HOME_ENV, PRELERT_HOME);
-
-        LOGGER.info(String.format("%s=%s", LIB_PATH_ENV, LIB_PATH));
         pb.environment().put(LIB_PATH_ENV, LIB_PATH);
+
+        LOGGER.debug(String.format("Process Environment = " + pb.environment().toString()));
     }
 
 
