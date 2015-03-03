@@ -47,6 +47,9 @@ class JsonRecordReader
     private final Map<String, Integer> m_FieldMap;
     private final Logger m_Logger;
     private int m_NestedLevel;
+    private long m_FieldCount;
+    private Deque<String> m_NestedFields;
+    private String m_NestedSuffix;
 
     /**
      * Create a reader that parses the mapped fields from JSON.
@@ -84,12 +87,8 @@ class JsonRecordReader
     {
         Arrays.fill(gotFields, false);
         Arrays.fill(record, "");
-
-        m_NestedLevel = 0;
-        Deque<String> stack = new ArrayDeque<String>();
-
-        long fieldCount = 0;
-        String nestedSuffix = "";
+        m_FieldCount = 0;
+        clearNestedLevel();
 
         JsonToken token = tryNextTokenOrReadToEndOnError();
         while (!(token == JsonToken.END_OBJECT && m_NestedLevel == 0))
@@ -101,55 +100,27 @@ class JsonRecordReader
             if (token == JsonToken.END_OBJECT)
             {
                 m_NestedLevel--;
-                String objectFieldName = stack.pop();
+                String objectFieldName = m_NestedFields.pop();
 
-                int lastIndex = nestedSuffix.length() - objectFieldName.length() -1;
-                nestedSuffix = nestedSuffix.substring(0, lastIndex);
+                int lastIndex = m_NestedSuffix.length() - objectFieldName.length() -1;
+                m_NestedSuffix = m_NestedSuffix.substring(0, lastIndex);
             }
             else if (token == JsonToken.FIELD_NAME)
             {
-                String fieldName = m_Parser.getCurrentName();
-                token = tryNextTokenOrReadToEndOnError();
-
-                if (token == null)
-                {
-                    break;
-                }
-                else if (token == JsonToken.START_OBJECT)
-                {
-                    m_NestedLevel++;
-                    stack.push(fieldName);
-
-                    nestedSuffix = nestedSuffix + fieldName + ".";
-                }
-                else if (token == JsonToken.START_ARRAY)
-                {
-                    // consume the whole array but do nothing with it
-                    while (token != JsonToken.END_ARRAY)
-                    {
-                        token = tryNextTokenOrReadToEndOnError();
-                    }
-                    m_Logger.warn("Ignoring array field");
-                }
-                else
-                {
-                    ++fieldCount;
-
-                    String fieldValue = m_Parser.getText();
-
-                    Integer index = m_FieldMap.get(nestedSuffix + fieldName);
-                    if (index != null)
-                    {
-                        record[index] = fieldValue;
-                        gotFields[index] = true;
-                    }
-                }
+                parseFieldValuePair(record, gotFields);
             }
 
             token = tryNextTokenOrReadToEndOnError();
         }
 
-        return fieldCount;
+        return m_FieldCount;
+    }
+
+    private void clearNestedLevel()
+    {
+        m_NestedLevel = 0;
+        m_NestedFields = new ArrayDeque<String>();
+        m_NestedSuffix = "";
     }
 
     private JsonToken tryNextTokenOrReadToEndOnError() throws IOException
@@ -164,6 +135,7 @@ class JsonRecordReader
             {
                 readToEndOfObject();
             }
+            clearNestedLevel();
         }
         return null;
     }
@@ -179,8 +151,49 @@ class JsonRecordReader
             }
             catch (JsonParseException e)
             {
+                continue;
             }
         }
         while (token != JsonToken.END_OBJECT);
+    }
+
+    private void parseFieldValuePair(String[] record, boolean[] gotFields) throws IOException
+    {
+        String fieldName = m_Parser.getCurrentName();
+        JsonToken token = tryNextTokenOrReadToEndOnError();
+
+        if (token == null)
+        {
+            return;
+        }
+
+        if (token == JsonToken.START_OBJECT)
+        {
+            m_NestedLevel++;
+            m_NestedFields.push(fieldName);
+            m_NestedSuffix = m_NestedSuffix + fieldName + ".";
+        }
+        else if (token == JsonToken.START_ARRAY)
+        {
+            // consume the whole array but do nothing with it
+            while (token != JsonToken.END_ARRAY)
+            {
+                token = tryNextTokenOrReadToEndOnError();
+            }
+            m_Logger.warn("Ignoring array field");
+        }
+        else
+        {
+            ++m_FieldCount;
+
+            String fieldValue = m_Parser.getText();
+
+            Integer index = m_FieldMap.get(m_NestedSuffix + fieldName);
+            if (index != null)
+            {
+                record[index] = fieldValue;
+                gotFields[index] = true;
+            }
+        }
     }
 }
