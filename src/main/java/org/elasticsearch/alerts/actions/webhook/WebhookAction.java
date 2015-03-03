@@ -27,6 +27,8 @@ import org.elasticsearch.alerts.support.Script;
 import org.elasticsearch.alerts.support.Variables;
 import org.elasticsearch.alerts.support.template.Template;
 import org.elasticsearch.alerts.support.template.XContentTemplate;
+import org.elasticsearch.alerts.transform.Transform;
+import org.elasticsearch.alerts.transform.TransformRegistry;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.component.AbstractComponent;
@@ -53,8 +55,8 @@ public class WebhookAction extends Action<WebhookAction.Result> {
     private final Template url;
     private final @Nullable Template body;
 
-    public WebhookAction(ESLogger logger, HttpClient httpClient, HttpMethod method, Template url, Template body) {
-        super(logger);
+    public WebhookAction(ESLogger logger, @Nullable Transform transform, HttpClient httpClient, HttpMethod method, Template url, Template body) {
+        super(logger, transform);
         this.httpClient = httpClient;
         this.method = method;
         this.url = url;
@@ -67,7 +69,7 @@ public class WebhookAction extends Action<WebhookAction.Result> {
     }
 
     @Override
-    public Result execute(ExecutionContext ctx, Payload payload) throws IOException {
+    public Result doExecute(ExecutionContext ctx, Payload payload) throws IOException {
         Map<String, Object> model = Variables.createCtxModel(ctx, payload);
         String urlText = url.render(model);
         String bodyText = body != null ? body.render(model) : XContentTemplate.YAML.render(model);
@@ -92,6 +94,11 @@ public class WebhookAction extends Action<WebhookAction.Result> {
     @Override
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
         builder.startObject();
+        if (transform != null) {
+            builder.startObject(Transform.Parser.TRANSFORM_FIELD.getPreferredName())
+                    .field(transform.type(), transform)
+                    .endObject();
+        }
         builder.field(Parser.METHOD_FIELD.getPreferredName(), method.getName().toLowerCase(Locale.ROOT));
         builder.field(Parser.URL_FIELD.getPreferredName(), url);
         if (body != null) {
@@ -110,6 +117,7 @@ public class WebhookAction extends Action<WebhookAction.Result> {
         if (body != null ? !body.equals(that.body) : that.body != null) return false;
         if (!method.equals(that.method)) return false;
         if (!url.equals(that.url)) return false;
+        if (transform != null ? !transform.equals(that.transform) : that.transform != null) return false;
 
         return true;
     }
@@ -119,6 +127,7 @@ public class WebhookAction extends Action<WebhookAction.Result> {
         int result = method.hashCode();
         result = 31 * result + url.hashCode();
         result = 31 * result + (body != null ? body.hashCode() : 0);
+        result = 31 * result + (transform != null ? transform.hashCode() : 0);
         return result;
     }
 
@@ -126,6 +135,10 @@ public class WebhookAction extends Action<WebhookAction.Result> {
 
         public Result(String type, boolean success) {
             super(type, success);
+        }
+
+        void transformResult(Transform.Result result) {
+            this.transformResult = result;
         }
 
         public static class Executed extends Result {
@@ -189,12 +202,14 @@ public class WebhookAction extends Action<WebhookAction.Result> {
 
         private final Template.Parser templateParser;
         private final HttpClient httpClient;
+        private final TransformRegistry transformRegistry;
 
         @Inject
-        public Parser(Settings settings, Template.Parser templateParser, HttpClient httpClient) {
+        public Parser(Settings settings, Template.Parser templateParser, HttpClient httpClient, TransformRegistry transformRegistry) {
             super(settings);
             this.templateParser = templateParser;
             this.httpClient = httpClient;
+            this.transformRegistry = transformRegistry;
         }
 
         @Override
@@ -204,6 +219,7 @@ public class WebhookAction extends Action<WebhookAction.Result> {
 
         @Override
         public WebhookAction parse(XContentParser parser) throws IOException {
+            Transform transform = null;
             HttpMethod method = HttpMethod.POST;
             Template urlTemplate = null;
             Template bodyTemplate = null;
@@ -232,6 +248,8 @@ public class WebhookAction extends Action<WebhookAction.Result> {
                         } catch (Template.Parser.ParseException pe) {
                             throw new ActionSettingsException("could not parse webhook action [body] template", pe);
                         }
+                    } else if (Transform.Parser.TRANSFORM_FIELD.match(currentFieldName)) {
+                        transform = transformRegistry.parse(parser);
                     }  else {
                         throw new ActionSettingsException("could not parse webhook action. unexpected field [" + currentFieldName + "]");
                     }
@@ -244,11 +262,12 @@ public class WebhookAction extends Action<WebhookAction.Result> {
                 throw new ActionSettingsException("could not parse webhook action. [url_template] is required");
             }
 
-            return new WebhookAction(logger, httpClient, method, urlTemplate, bodyTemplate);
+            return new WebhookAction(logger, transform, httpClient, method, urlTemplate, bodyTemplate);
         }
 
         @Override
         public Result parseResult(XContentParser parser) throws IOException {
+            Transform.Result transformResult = null;
             String currentFieldName = null;
             XContentParser.Token token;
             Boolean success = null;
@@ -275,7 +294,11 @@ public class WebhookAction extends Action<WebhookAction.Result> {
                             throw new ActionException("could not parse webhook result. unexpected boolean field [" + currentFieldName + "]");
                         }
                     } else {
-                        throw new ActionException("unable to parse webhook action result. unexpected field [" + currentFieldName + "]" );
+                        throw new ActionException("unable to parse webhook action result. unexpected field [" + currentFieldName + "]");
+                    }
+                } else if (token == XContentParser.Token.START_OBJECT) {
+                    if (Transform.Parser.TRANSFORM_RESULT_FIELD.match(currentFieldName)) {
+
                     }
                 } else {
                     throw new ActionException("unable to parse webhook action result. unexpected field [" + currentFieldName + "]" );
@@ -286,7 +309,11 @@ public class WebhookAction extends Action<WebhookAction.Result> {
                 throw new ActionException("could not parse webhook result. expected boolean field [success]");
             }
 
-            return success ? new Result.Executed(httpStatus, url, body) : new Result.Failure(reason);
+            Result result =  success ? new Result.Executed(httpStatus, url, body) : new Result.Failure(reason);
+            if (transformResult != null) {
+                result.transformResult(transformResult);
+            }
+            return result;
         }
     }
 
