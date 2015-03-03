@@ -36,12 +36,10 @@ import static org.hamcrest.Matchers.is;
 @ClusterScope(scope = TEST, numDataNodes = 1)
 public class IpFilteringUpdateTests extends ShieldIntegrationTest {
 
-    private boolean httpEnabled = false;
+    private final boolean httpEnabled = randomBoolean();
 
     @Override
     protected Settings nodeSettings(int nodeOrdinal) {
-        httpEnabled = randomBoolean();
-
         return settingsBuilder()
                 .put(super.nodeSettings(nodeOrdinal))
                 .put(InternalNode.HTTP_ENABLED, httpEnabled)
@@ -116,7 +114,7 @@ public class IpFilteringUpdateTests extends ShieldIntegrationTest {
             return;
         }
 
-        IPFilter ipFilter = internalCluster().getInstance(IPFilter.class);
+        IPFilter ipFilter = internalCluster().getDataNodeInstance(IPFilter.class);
         String message = String.format(Locale.ROOT, "Expected allowed connection for profile %s against host %s", profile, host);
         assertThat(message, ipFilter.accept(profile, InetAddress.getByName(host)), is(true));
     }
@@ -127,7 +125,7 @@ public class IpFilteringUpdateTests extends ShieldIntegrationTest {
             return;
         }
 
-        IPFilter ipFilter = internalCluster().getInstance(IPFilter.class);
+        IPFilter ipFilter = internalCluster().getDataNodeInstance(IPFilter.class);
         String message = String.format(Locale.ROOT, "Expected rejection for profile %s against host %s", profile, host);
         assertThat(message, ipFilter.accept(profile, InetAddress.getByName(host)), is(false));
     }
