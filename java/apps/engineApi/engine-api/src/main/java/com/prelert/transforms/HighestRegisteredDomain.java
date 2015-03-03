@@ -247,6 +247,10 @@ public class HighestRegisteredDomain extends Transform
         catch (IllegalArgumentException e)
         {
             String [] split = HighestRegisteredDomain.splitDomain(host);
+            if (split.length == 0)
+            {
+                return new DomainSplit("", "");
+            }
             if (split.length == 1)
             {
                 return new DomainSplit(split[0], "");

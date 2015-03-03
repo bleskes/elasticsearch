@@ -66,6 +66,9 @@ public class HighestRegisteredDomainTest
 	@Test
 	public void testDomainSplit()
 	{
+	    testDomainSplit("", "", "");
+	    testDomainSplit("", "", ".");
+
 	    // Test cases from https://github.com/john-kurkowski/tldextract/tree/master/tldextract/tests
 	    testDomainSplit("www", "google.com", "www.google.com");
 	    testDomainSplit("www.maps", "google.co.uk", "www.maps.google.co.uk");
