@@ -44,8 +44,6 @@ import com.prelert.job.persistence.JobDataPersister;
 
 /**
  * Write the data sent to the API (analysis fields only) to Elasticsearch
- * @author dkyle
- *
  */
 public class ElasticsearchJobDataPersister extends JobDataPersister
 {

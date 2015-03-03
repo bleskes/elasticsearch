@@ -108,9 +108,28 @@ public class HighestRegisteredDomainTest
 	    testDomainSplit("192.168.62.9", "prelert.com", "192.168.62.9.prelert.com");
 
 	    // These are not a valid DNS names
-	    testDomainSplit("kerberos.http.192.168.62.222", "", "kerberos.http.192.168.62.222");
-	    testDomainSplit("192.168.62.9\143\127", "", "192.168.62.9\143\127");
+	    testDomainSplit("kerberos.http.192.168", "62.222", "kerberos.http.192.168.62.222");
+	    testDomainSplit("192.168", "62.9\143\127", "192.168.62.9\143\127");
+	}
 
+	@Test
+	public void testTooLongDnsName()
+	{
+	    // no part of the DNS name can be longer than 63 octets
+	    String dnsLongerThan254Chars = "davesbucketdavesbucketdavesbucketdavesbucketdavesbucketdaves.bucketdavesbucketdavesbucketdavesbucketdavesbucketdaves.bucketdavesbucketdavesbucketdavesbucketdavesbucket.davesbucketdavesbucketdavesbucketdavesbucket.davesbucketdavesbucket.prelert.s3.amazonaws.com";
+	    String hrd = "prelert.s3.amazonaws.com";
+	    testDomainSplit(dnsLongerThan254Chars.substring(0, dnsLongerThan254Chars.length() - (hrd.length() + 1)),
+	                            hrd, dnsLongerThan254Chars);
+
+	    // this one needs sanitising
+        dnsLongerThan254Chars = "_davesbucketdavesbucketdavesbucketdavesbucket-davesbucketdaves.-bucketdavesbucketdavesbucketdavesbucketdavesbucketdaves.bucketdavesbucketdavesbucketdavesbucketdavesbucket.davesbucketdavesbucketdavesbucketdavesbucket.davesbucketdavesbucket.prelert.s3.amazonaws.com";
+        hrd = "prelert.s3.amazonaws.com";
+        testDomainSplit(dnsLongerThan254Chars.substring(0, dnsLongerThan254Chars.length() - (hrd.length() + 1)),
+                                hrd, dnsLongerThan254Chars);
+
+        String bad = "0u1aof\209\1945\188hI4\236\197\205J\244\188\247\223\190F\2135\229gVE7\230i\215\231\205Qzay\225UJ\192pw\216\231\204\194\216\193QV4g\196\207Whpvx.fVxl\194BjA\245kbYk\211XG\235\198\218B\252\219\225S\197\217I\2538n\229\244\213\252\215Ly\226NW\242\248\244Q\220\245\221c\207\189\205Hxq5\224\240.\189Jt4\243\245t\244\198\199p\210\1987r\2050L\239sR0M\190w\238\223\234L\226\2242D\233\210\206\195h\199\206tA\214J\192C\224\191b\188\201\251\198M\244h\206.\198\242l\2114\191JBU\198h\207\215w\243\228R\1924\242\208\191CV\208p\197gDW\198P\217\195X\191Fp\196\197J\193\245\2070\196zH\197\243\253g\239.adz.beacon.base.net";
+        hrd = "base.net";
+        testDomainSplit(bad.substring(0, bad.length() - (hrd.length() +1)), hrd, bad);
 	}
 
 	@Test
@@ -129,7 +148,7 @@ public class HighestRegisteredDomainTest
         testDomainSplit("_nfsv4idmapdomain", "prelert.com", "_nfsv4idmapdomain.prelert.com");
 
         testDomainSplit("lb._dns-sd._udp.0.123.168", "192.in-addr.arpa", "lb._dns-sd._udp.0.123.168.192.in-addr.arpa");
-        testDomainSplit("_kerberos._http.192.168.62.222", "", "_kerberos._http.192.168.62.222");
+        testDomainSplit("_kerberos._http.192.168", "62.222", "_kerberos._http.192.168.62.222");
 	}
 
 	@Test

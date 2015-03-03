@@ -200,8 +200,8 @@ public class HighestRegisteredDomain extends Transform
      * <li>The host has a public suffix so split according to the rules
      * of the Guava InternetDomainname class </li>
      * <li>The host is completly invalid e.g '192.168.62.9\143\127' or
-     * '_kerberos._udp.192.168.62.226'. Return the host as the sub domain
-     * and HRD is ""</li>
+     * '_kerberos._udp.192.168.62.226'. Return the 2 right most parts as the HRD
+     * and everythin else as the sub domain</li>
      * </ol>
      *
      * A result is always returned even if host is not a valid DNS name
@@ -230,6 +230,11 @@ public class HighestRegisteredDomain extends Transform
         String sanitisedDomain = HighestRegisteredDomain.sanitiseDomainName(host);
         boolean sanitised = sanitisedDomain != host;
 
+        if (sanitisedDomain.length() > 253)
+        {
+            sanitisedDomain = sanitisedDomain.substring(sanitisedDomain.length() - 253, sanitisedDomain.length());
+        }
+
         InternetDomainName idn;
         try
         {
@@ -239,7 +244,21 @@ public class HighestRegisteredDomain extends Transform
         }
         catch (IllegalArgumentException e)
         {
-            return new DomainSplit(host, "");
+            String [] split = HighestRegisteredDomain.splitDomain(host);
+            if (split.length == 1)
+            {
+                return new DomainSplit(split[0], "");
+            }
+            else if (split.length == 2)
+            {
+                return new DomainSplit(split[0], split[1]);
+            }
+            else
+            {
+                String hrd = split[split.length -2] + "." + split[split.length -1];
+                String sub = host.substring(0, host.length() - (hrd.length() + 1));
+                return new DomainSplit(sub, hrd);
+            }
         }
 
         if (idn.isPublicSuffix())
@@ -292,6 +311,12 @@ public class HighestRegisteredDomain extends Transform
         try
         {
             DomainSplit split = HighestRegisteredDomain.lookup(inputRecord[m_InputIndicies[0]]);
+
+            if (split.m_HighestRegisteredDomain.isEmpty())
+            {
+                System.out.println(inputRecord[m_InputIndicies[0]]);
+            }
+
 
             outputRecord[m_OutputIndicies[0]] = split.m_SubDomain;
             if (m_OutputIndicies.length == 2)
