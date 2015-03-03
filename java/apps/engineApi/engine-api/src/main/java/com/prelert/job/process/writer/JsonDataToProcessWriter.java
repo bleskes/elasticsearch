@@ -29,19 +29,15 @@ package com.prelert.job.process.writer;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Deque;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
 import com.prelert.job.TransformConfigs;
@@ -134,7 +130,8 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter
 
         int timeFieldIndex = m_InFieldIndexes.get(m_DataDescription.getTimeField());
 
-        long inputFieldCount = readJsonRecord(parser, input, m_InFieldIndexes, gotFields);
+        JsonRecordReader recordReader = new JsonRecordReader(parser, m_InFieldIndexes, m_Logger);
+        long inputFieldCount = recordReader.read(input, gotFields);
         while (inputFieldCount > 0)
         {
             Arrays.fill(record, "");
@@ -169,137 +166,11 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter
 
             ++recordCount;
 
-            inputFieldCount = readJsonRecord(parser, input, m_InFieldIndexes, gotFields);
+            inputFieldCount = recordReader.read(input, gotFields);
         }
 
         m_Logger.debug(String.format("Transferred %d of %d Json records to autodetect.",
                 recordsWritten, recordCount));
-    }
-
-    /**
-     * Read the JSON object and write to the record array.
-     * Nested objects are flattened with the field names separated by
-     * a '.'.
-     * e.g. for a record with a nested 'tags' object:
-     *  "{"name":"my.test.metric1","tags":{"tag1":"blah","tag2":"boo"},"time":1350824400,"value":12345.678}"
-     * use 'tags.tag1' to reference the tag1 field in the nested object
-     *
-     * Array fields in the JSON are ignored
-     *
-     * @param parser
-     * @param record Read fields are written to this array
-     * @param fieldMap Map to field name to record array index position
-     * @param gotFields boolean array each element is true if that field
-     * was read
-     *
-     * @return The number of fields in the JSON doc
-     * @throws IOException
-     * @throws JsonParseException
-     */
-    private long readJsonRecord(JsonParser parser, String[] record, Map<String, Integer> fieldMap,
-            boolean[] gotFields) throws JsonParseException, IOException
-    {
-        Arrays.fill(gotFields, false);
-        Arrays.fill(record, "");
-
-        int nestedLevel = 0;
-        Deque<String> stack = new ArrayDeque<String>();
-
-        long fieldCount = 0;
-        String nestedSuffix = "";
-
-        JsonToken token = tryNextTokenOrReadToEndOnError(parser, nestedLevel);
-        while (!(token == JsonToken.END_OBJECT && nestedLevel == 0))
-        {
-            if (token == null)
-            {
-                break;
-            }
-            if (token == JsonToken.END_OBJECT)
-            {
-                nestedLevel--;
-                String objectFieldName = stack.pop();
-
-                int lastIndex = nestedSuffix.length() - objectFieldName.length() -1;
-                nestedSuffix = nestedSuffix.substring(0, lastIndex);
-            }
-            else if (token == JsonToken.FIELD_NAME)
-            {
-                String fieldName = parser.getCurrentName();
-                token = tryNextTokenOrReadToEndOnError(parser, nestedLevel);
-
-                if (token == null)
-                {
-                    break;
-                }
-                else if (token == JsonToken.START_OBJECT)
-                {
-                    nestedLevel++;
-                    stack.push(fieldName);
-
-                    nestedSuffix = nestedSuffix + fieldName + ".";
-                }
-                else if (token == JsonToken.START_ARRAY)
-                {
-                    // consume the whole array but do nothing with it
-                    while (token != JsonToken.END_ARRAY)
-                    {
-                        token = tryNextTokenOrReadToEndOnError(parser, nestedLevel);
-                    }
-                    m_Logger.warn("Ignoring array field");
-                }
-                else
-                {
-                    ++fieldCount;
-
-                    String fieldValue = parser.getText();
-
-                    Integer index = fieldMap.get(nestedSuffix + fieldName);
-                    if (index != null)
-                    {
-                        record[index] = fieldValue;
-                        gotFields[index] = true;
-                    }
-                }
-            }
-
-            token = tryNextTokenOrReadToEndOnError(parser, nestedLevel);
-        }
-
-        return fieldCount;
-    }
-
-    private static JsonToken tryNextTokenOrReadToEndOnError(JsonParser parser, int nestedLevel)
-            throws IOException
-    {
-        try
-        {
-            return parser.nextToken();
-        }
-        catch (JsonParseException e)
-        {
-            for (int i = 0; i <= nestedLevel; i++)
-            {
-                readToEndObject(parser);
-            }
-        }
-        return null;
-    }
-
-    private static void readToEndObject(JsonParser parser) throws IOException
-    {
-        JsonToken token = null;
-        do
-        {
-            try
-            {
-                token = parser.nextToken();
-            }
-            catch (JsonParseException e)
-            {
-            }
-        }
-        while (token != JsonToken.END_OBJECT);
     }
 
     /**
