@@ -50,6 +50,8 @@ public class HighestRegisteredDomain extends Transform
 
     private static final String DOT_CHAR_REGEX = "\\.";
 
+    private static final int MAX_DNS_NAME_LENGTH = 253;
+
     /**
      * Immutable class for the domain split results
      */
@@ -230,9 +232,9 @@ public class HighestRegisteredDomain extends Transform
         String sanitisedDomain = HighestRegisteredDomain.sanitiseDomainName(host);
         boolean sanitised = sanitisedDomain != host;
 
-        if (sanitisedDomain.length() > 253)
+        if (sanitisedDomain.length() > MAX_DNS_NAME_LENGTH)
         {
-            sanitisedDomain = sanitisedDomain.substring(sanitisedDomain.length() - 253, sanitisedDomain.length());
+            sanitisedDomain = sanitisedDomain.substring(sanitisedDomain.length() - MAX_DNS_NAME_LENGTH, sanitisedDomain.length());
         }
 
         InternetDomainName idn;
@@ -311,12 +313,6 @@ public class HighestRegisteredDomain extends Transform
         try
         {
             DomainSplit split = HighestRegisteredDomain.lookup(inputRecord[m_InputIndicies[0]]);
-
-            if (split.m_HighestRegisteredDomain.isEmpty())
-            {
-                System.out.println(inputRecord[m_InputIndicies[0]]);
-            }
-
 
             outputRecord[m_OutputIndicies[0]] = split.m_SubDomain;
             if (m_OutputIndicies.length == 2)
