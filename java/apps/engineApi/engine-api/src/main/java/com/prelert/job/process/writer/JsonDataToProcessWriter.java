@@ -208,7 +208,7 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter
         long fieldCount = 0;
         String nestedSuffix = "";
 
-        JsonToken token = parser.nextToken();
+        JsonToken token = tryNextTokenOrReadToEndOnError(parser, nestedLevel);
         while (!(token == JsonToken.END_OBJECT && nestedLevel == 0))
         {
             if (token == null)
@@ -226,9 +226,13 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter
             else if (token == JsonToken.FIELD_NAME)
             {
                 String fieldName = parser.getCurrentName();
-                token = parser.nextToken();
+                token = tryNextTokenOrReadToEndOnError(parser, nestedLevel);
 
-                if (token == JsonToken.START_OBJECT)
+                if (token == null)
+                {
+                    break;
+                }
+                else if (token == JsonToken.START_OBJECT)
                 {
                     nestedLevel++;
                     stack.push(fieldName);
@@ -240,7 +244,7 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter
                     // consume the whole array but do nothing with it
                     while (token != JsonToken.END_ARRAY)
                     {
-                        token = parser.nextToken();
+                        token = tryNextTokenOrReadToEndOnError(parser, nestedLevel);
                     }
                     m_Logger.warn("Ignoring array field");
                 }
@@ -259,10 +263,43 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter
                 }
             }
 
-            token = parser.nextToken();
+            token = tryNextTokenOrReadToEndOnError(parser, nestedLevel);
         }
 
         return fieldCount;
+    }
+
+    private static JsonToken tryNextTokenOrReadToEndOnError(JsonParser parser, int nestedLevel)
+            throws IOException
+    {
+        try
+        {
+            return parser.nextToken();
+        }
+        catch (JsonParseException e)
+        {
+            for (int i = 0; i <= nestedLevel; i++)
+            {
+                readToEndObject(parser);
+            }
+        }
+        return null;
+    }
+
+    private static void readToEndObject(JsonParser parser) throws IOException
+    {
+        JsonToken token = null;
+        do
+        {
+            try
+            {
+                token = parser.nextToken();
+            }
+            catch (JsonParseException e)
+            {
+            }
+        }
+        while (token != JsonToken.END_OBJECT);
     }
 
     /**

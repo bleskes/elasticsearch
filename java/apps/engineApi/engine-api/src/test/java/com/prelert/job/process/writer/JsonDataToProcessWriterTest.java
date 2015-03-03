@@ -52,10 +52,10 @@ import org.mockito.stubbing.Answer;
 
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
-import com.prelert.job.TransformConfig;
-import com.prelert.job.TransformConfigs;
 import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.Detector;
+import com.prelert.job.TransformConfig;
+import com.prelert.job.TransformConfigs;
 import com.prelert.job.input.LengthEncodedWriter;
 import com.prelert.job.persistence.JobDataPersister;
 import com.prelert.job.process.exceptions.MissingFieldException;
@@ -177,6 +177,92 @@ public class JsonDataToProcessWriterTest
         assertWrittenRecordsEqualTo(expectedRecords);
 
         verify(m_StatusReporter, times(1)).reportOutOfOrderRecord(2);
+        verify(m_StatusReporter).finishReporting();
+        verify(m_DataPersister).flushRecords();
+    }
+
+    @Test
+    public void testWrite_GivenMalformedJsonWithoutNestedLevels()
+            throws MissingFieldException, HighProportionOfBadTimestampsException,
+            OutOfOrderRecordsException, IOException
+    {
+        m_AnalysisConfig.setLatency(2L);
+
+        StringBuilder input = new StringBuilder();
+        input.append("{\"time\":\"1\", \"value\":\"1.0\"}");
+        input.append("{\"time\":\"2\" \"value\":\"2.0\"}");
+        input.append("{\"time\":\"3\", \"value\":\"3.0\"}");
+        InputStream inputStream = createInputStream(input.toString());
+        JsonDataToProcessWriter writer = createWriter();
+
+        writer.write(inputStream);
+
+        List<String[]> expectedRecords = new ArrayList<>();
+        // The final field is the control field
+        expectedRecords.add(new String[] {"time", "value", "."});
+        expectedRecords.add(new String[] {"1", "1.0", ""});
+        expectedRecords.add(new String[] {"2", "", ""});
+        expectedRecords.add(new String[] {"3", "3.0", ""});
+        assertWrittenRecordsEqualTo(expectedRecords);
+
+        verify(m_StatusReporter).reportMissingFields(1);
+        verify(m_StatusReporter).finishReporting();
+        verify(m_DataPersister).flushRecords();
+    }
+
+    @Test
+    public void testWrite_GivenMalformedJsonWithNestedLevels()
+            throws MissingFieldException, HighProportionOfBadTimestampsException,
+            OutOfOrderRecordsException, IOException
+    {
+        Detector detector = new Detector();
+        detector.setFieldName("nested.value");
+        m_AnalysisConfig.setDetectors(Arrays.asList(detector));
+        m_AnalysisConfig.setLatency(2L);
+
+        StringBuilder input = new StringBuilder();
+        input.append("{\"time\":\"1\", \"nested\":{\"value\":\"1.0\"}}");
+        input.append("{\"time\":\"2\", \"nested\":{\"value\":\"2.0\"} \"foo\":\"bar\"}");
+        input.append("{\"time\":\"3\", \"nested\":{\"value\":\"3.0\"}}");
+        InputStream inputStream = createInputStream(input.toString());
+        JsonDataToProcessWriter writer = createWriter();
+
+        writer.write(inputStream);
+
+        List<String[]> expectedRecords = new ArrayList<>();
+        // The final field is the control field
+        expectedRecords.add(new String[] {"time", "nested.value", "."});
+        expectedRecords.add(new String[] {"1", "1.0", ""});
+        expectedRecords.add(new String[] {"2", "2.0", ""});
+        expectedRecords.add(new String[] {"3", "3.0", ""});
+        assertWrittenRecordsEqualTo(expectedRecords);
+
+        verify(m_StatusReporter).finishReporting();
+        verify(m_DataPersister).flushRecords();
+    }
+
+    @Test
+    public void testWrite_GivenJsonWithArrayField()
+            throws MissingFieldException, HighProportionOfBadTimestampsException,
+            OutOfOrderRecordsException, IOException
+    {
+        m_AnalysisConfig.setLatency(2L);
+
+        StringBuilder input = new StringBuilder();
+        input.append("{\"time\":\"1\", \"array\":[\"foo\", \"bar\"], \"value\":\"1.0\"}");
+        input.append("{\"time\":\"2\", \"array\":[], \"value\":\"2.0\"}");
+        InputStream inputStream = createInputStream(input.toString());
+        JsonDataToProcessWriter writer = createWriter();
+
+        writer.write(inputStream);
+
+        List<String[]> expectedRecords = new ArrayList<>();
+        // The final field is the control field
+        expectedRecords.add(new String[] {"time", "value", "."});
+        expectedRecords.add(new String[] {"1", "1.0", ""});
+        expectedRecords.add(new String[] {"2", "2.0", ""});
+        assertWrittenRecordsEqualTo(expectedRecords);
+
         verify(m_StatusReporter).finishReporting();
         verify(m_DataPersister).flushRecords();
     }
