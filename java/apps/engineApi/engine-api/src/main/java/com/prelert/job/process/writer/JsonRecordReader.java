@@ -42,6 +42,7 @@ import com.fasterxml.jackson.core.JsonToken;
 
 class JsonRecordReader
 {
+    private static final int PARSE_ERRORS_LIMIT = 1000;
 
     private final JsonParser m_Parser;
     private final Map<String, Integer> m_FieldMap;
@@ -80,10 +81,10 @@ class JsonRecordReader
      * was read
      *
      * @return The number of fields in the JSON doc
-     * @throws IOException
      * @throws JsonParseException
+     * @throws IOException
      */
-    public long read(String[] record, boolean[] gotFields) throws IOException
+    long read(String[] record, boolean[] gotFields) throws IOException
     {
         Arrays.fill(gotFields, false);
         Arrays.fill(record, "");
@@ -143,6 +144,7 @@ class JsonRecordReader
     private void readToEndOfObject() throws IOException
     {
         JsonToken token = null;
+        int errorCounter = 0;
         do
         {
             try
@@ -151,7 +153,11 @@ class JsonRecordReader
             }
             catch (JsonParseException e)
             {
-                continue;
+                errorCounter++;
+                if (errorCounter >= PARSE_ERRORS_LIMIT)
+                {
+                    throw e;
+                }
             }
         }
         while (token != JsonToken.END_OBJECT);

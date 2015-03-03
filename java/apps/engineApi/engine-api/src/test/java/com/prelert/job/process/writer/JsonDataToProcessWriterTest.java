@@ -50,6 +50,7 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
@@ -239,6 +240,22 @@ public class JsonDataToProcessWriterTest
 
         verify(m_StatusReporter).finishReporting();
         verify(m_DataPersister).flushRecords();
+    }
+
+    @Test (expected = JsonParseException.class)
+    public void testWrite_GivenMalformedJsonThatNeverRecovers()
+            throws MissingFieldException, HighProportionOfBadTimestampsException,
+            OutOfOrderRecordsException, IOException
+    {
+        m_AnalysisConfig.setLatency(2L);
+
+        StringBuilder input = new StringBuilder();
+        input.append("{\"time\":\"1\", \"value\":\"2.0\"}");
+        input.append("{\"time");
+        InputStream inputStream = createInputStream(input.toString());
+        JsonDataToProcessWriter writer = createWriter();
+
+        writer.write(inputStream);
     }
 
     @Test
