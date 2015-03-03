@@ -92,7 +92,7 @@ public class TransformFactory
 			{
 				// This code will never be hit it's to
 				// keep the compiler happy.
-				throw new IllegalArgumentException("Uknown transfrom type " + type);
+				throw new IllegalArgumentException("Unknown transform type " + type);
 			}
 		}
 	}
