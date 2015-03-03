@@ -132,6 +132,7 @@ class JsonRecordReader
         }
         catch (JsonParseException e)
         {
+            m_Logger.warn("Attempting to recover from malformed JSON data.", e);
             for (int i = 0; i <= m_NestedLevel; i++)
             {
                 readToEndOfObject();
@@ -156,6 +157,7 @@ class JsonRecordReader
                 errorCounter++;
                 if (errorCounter >= PARSE_ERRORS_LIMIT)
                 {
+                    m_Logger.error("Failed to recover from malformed JSON data.", e);
                     throw e;
                 }
             }
