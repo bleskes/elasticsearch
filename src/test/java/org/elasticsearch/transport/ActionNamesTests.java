@@ -21,17 +21,25 @@ package org.elasticsearch.transport;
 
 import com.google.common.collect.Lists;
 import org.elasticsearch.Version;
-import org.elasticsearch.action.admin.indices.get.GetIndexAction;
 import org.elasticsearch.action.admin.cluster.repositories.verify.VerifyRepositoryAction;
+import org.elasticsearch.action.admin.indices.get.GetIndexAction;
+import org.elasticsearch.action.bulk.TransportShardBulkAction;
+import org.elasticsearch.action.delete.DeleteAction;
+import org.elasticsearch.action.delete.TransportShardDeleteAction;
+import org.elasticsearch.action.deletebyquery.TransportShardDeleteByQueryAction;
 import org.elasticsearch.action.exists.ExistsAction;
+import org.elasticsearch.action.index.IndexAction;
+import org.elasticsearch.action.update.UpdateAction;
 import org.elasticsearch.cluster.action.shard.ShardStateAction;
 import org.elasticsearch.discovery.zen.ping.unicast.UnicastZenPing;
-import org.elasticsearch.search.action.SearchServiceTransportAction;
 import org.elasticsearch.repositories.VerifyNodeRepositoryAction;
+import org.elasticsearch.search.action.SearchServiceTransportAction;
 import org.elasticsearch.test.ElasticsearchIntegrationTest;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static org.hamcrest.CoreMatchers.*;
 
@@ -57,6 +65,12 @@ public class ActionNamesTests extends ElasticsearchIntegrationTest {
         post_1_4_actions.add(SearchServiceTransportAction.FETCH_ID_SCROLL_ACTION_NAME);
         post_1_4_actions.add(VerifyRepositoryAction.NAME);
         post_1_4_actions.add(VerifyNodeRepositoryAction.ACTION_NAME);
+        post_1_4_actions.add(IndexAction.NAME + "[pr]");
+        post_1_4_actions.add(DeleteAction.NAME + "[pr]");
+        post_1_4_actions.add(UpdateAction.NAME + "[pr]");
+        post_1_4_actions.add(TransportShardBulkAction.ACTION_NAME + "[pr]");
+        post_1_4_actions.add(TransportShardDeleteByQueryAction.ACTION_NAME + "[pr]");
+        post_1_4_actions.add(TransportShardDeleteAction.ACTION_NAME + "[pr]");
     }
 
     @Test

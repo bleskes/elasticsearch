@@ -42,7 +42,7 @@ import org.elasticsearch.transport.TransportService;
  */
 public class TransportShardDeleteAction extends TransportShardReplicationOperationAction<ShardDeleteRequest, ShardDeleteRequest, ShardDeleteResponse> {
 
-    private static final String ACTION_NAME = DeleteAction.NAME + "[s]";
+    public static final String ACTION_NAME = DeleteAction.NAME + "[s]";
 
     @Inject
     public TransportShardDeleteAction(Settings settings, TransportService transportService,
