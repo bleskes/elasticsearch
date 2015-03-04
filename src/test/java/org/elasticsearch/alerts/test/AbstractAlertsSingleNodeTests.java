@@ -21,6 +21,7 @@ import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthStatus;
 import org.elasticsearch.action.admin.indices.refresh.RefreshResponse;
 import org.elasticsearch.action.index.IndexResponse;
+import org.elasticsearch.alerts.AlertsLifeCycleService;
 import org.elasticsearch.alerts.support.init.proxy.ClientProxy;
 import org.elasticsearch.alerts.support.init.proxy.ScriptServiceProxy;
 import org.elasticsearch.client.Requests;
@@ -28,6 +29,7 @@ import org.elasticsearch.common.Priority;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.test.ElasticsearchSingleNodeTest;
 import org.junit.AfterClass;
+import org.junit.BeforeClass;
 
 import java.util.Collections;
 import java.util.Map;
@@ -40,9 +42,14 @@ import static org.hamcrest.Matchers.equalTo;
  */
 public abstract class AbstractAlertsSingleNodeTests extends ElasticsearchSingleNodeTest {
 
+    @BeforeClass
+    public static void initSuite() throws Exception {
+        getInstanceFromNode(AlertsLifeCycleService.class).start();
+    }
+
     @AfterClass
     public static void cleanupSuite() throws Exception {
-        node().stop();
+        getInstanceFromNode(AlertsLifeCycleService.class).stop();
     }
 
     @Override
