@@ -49,6 +49,7 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
+import static org.elasticsearch.alerts.test.AlertsTestUtils.mockExecutionContext;
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 import static org.mockito.Mockito.*;
 
@@ -74,13 +75,7 @@ public class ScriptConditionTests extends ElasticsearchTestCase {
         ScriptServiceProxy scriptService = getScriptServiceProxy(tp);
         ScriptCondition condition = new ScriptCondition(logger, scriptService, new Script("ctx.payload.hits.total > 1"));
         SearchResponse response = new SearchResponse(InternalSearchResponse.empty(), "", 3, 3, 500l, new ShardSearchFailure[0]);
-        ExecutionContext ctx = mock(ExecutionContext.class);
-        Alert alert = mock(Alert.class);
-        when(alert.name()).thenReturn("_name");
-        when(ctx.alert()).thenReturn(alert);
-        when(ctx.scheduledTime()).thenReturn(new DateTime());
-        when(ctx.fireTime()).thenReturn(new DateTime());
-        when(ctx.payload()).thenReturn(new Payload.ActionResponse(response));
+        ExecutionContext ctx = mockExecutionContext("_name", new Payload.ActionResponse(response));
         assertFalse(condition.execute(ctx).met());
     }
 
@@ -90,13 +85,7 @@ public class ScriptConditionTests extends ElasticsearchTestCase {
         Script script = new Script("ctx.payload.hits.total > threshold", ScriptService.ScriptType.INLINE, ScriptService.DEFAULT_LANG, ImmutableMap.<String, Object>of("threshold", 1));
         ScriptCondition condition = new ScriptCondition(logger, scriptService, script);
         SearchResponse response = new SearchResponse(InternalSearchResponse.empty(), "", 3, 3, 500l, new ShardSearchFailure[0]);
-        ExecutionContext ctx = mock(ExecutionContext.class);
-        Alert alert = mock(Alert.class);
-        when(alert.name()).thenReturn("_name");
-        when(ctx.alert()).thenReturn(alert);
-        when(ctx.scheduledTime()).thenReturn(new DateTime());
-        when(ctx.fireTime()).thenReturn(new DateTime());
-        when(ctx.payload()).thenReturn(new Payload.ActionResponse(response));
+        ExecutionContext ctx = mockExecutionContext("_name", new Payload.ActionResponse(response));
         assertFalse(condition.execute(ctx).met());
     }
 
@@ -110,13 +99,7 @@ public class ScriptConditionTests extends ElasticsearchTestCase {
         ScriptCondition condition = conditionParser.parse(parser);
 
         SearchResponse response = new SearchResponse(InternalSearchResponse.empty(), "", 3, 3, 500l, new ShardSearchFailure[0]);
-        ExecutionContext ctx = mock(ExecutionContext.class);
-        Alert alert = mock(Alert.class);
-        when(alert.name()).thenReturn("_name");
-        when(ctx.alert()).thenReturn(alert);
-        when(ctx.scheduledTime()).thenReturn(new DateTime());
-        when(ctx.fireTime()).thenReturn(new DateTime());
-        when(ctx.payload()).thenReturn(new Payload.ActionResponse(response));
+        ExecutionContext ctx = mockExecutionContext("_name", new Payload.ActionResponse(response));
 
         assertFalse(condition.execute(ctx).met());
 
@@ -126,11 +109,7 @@ public class ScriptConditionTests extends ElasticsearchTestCase {
         parser.nextToken();
         condition = conditionParser.parse(parser);
 
-        reset(ctx);
-        when(ctx.alert()).thenReturn(alert);
-        when(ctx.scheduledTime()).thenReturn(new DateTime());
-        when(ctx.fireTime()).thenReturn(new DateTime());
-        when(ctx.payload()).thenReturn(new Payload.ActionResponse(response));
+        ctx = mockExecutionContext("_name", new Payload.ActionResponse(response));
 
         assertTrue(condition.execute(ctx).met());
     }
@@ -182,8 +161,6 @@ public class ScriptConditionTests extends ElasticsearchTestCase {
         }
         fail("expected a condition exception trying to parse an invalid condition XContent");
     }
-
-
 
     private static ScriptServiceProxy getScriptServiceProxy(ThreadPool tp) {
         Settings settings = ImmutableSettings.settingsBuilder().build();
