@@ -18,7 +18,9 @@
 package org.elasticsearch.alerts.test;
 
 import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.alerts.AlertsPlugin;
 import org.elasticsearch.alerts.AlertsService;
@@ -45,6 +47,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.support.XContentMapValues;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.test.ElasticsearchIntegrationTest;
 import org.elasticsearch.test.ElasticsearchIntegrationTest.ClusterScope;
 import org.elasticsearch.test.InternalTestCluster;
@@ -110,6 +113,15 @@ public abstract class AbstractAlertsIntegrationTests extends ElasticsearchIntegr
         // Clear all internal alerting state for the next test method:
         logger.info("[{}#{}]: clearing alerts", getTestClass().getSimpleName(), getTestName());
         stopAlerting();
+    }
+
+    protected long docCount(String index, String type, SearchSourceBuilder source) {
+        SearchRequestBuilder builder = client().prepareSearch(index).setSearchType(SearchType.COUNT);
+        if (type != null) {
+            builder.setTypes(type);
+        }
+        builder.setSource(source.buildAsBytes());
+        return builder.get().getHits().getTotalHits();
     }
 
     protected BytesReference createAlertSource(String cron, SearchRequest conditionRequest, String conditionScript) throws IOException {
