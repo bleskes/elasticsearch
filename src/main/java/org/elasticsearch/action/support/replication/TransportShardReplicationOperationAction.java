@@ -45,7 +45,9 @@ import org.elasticsearch.common.util.concurrent.AbstractRunnable;
 import org.elasticsearch.index.IndexService;
 import org.elasticsearch.index.engine.DocumentAlreadyExistsException;
 import org.elasticsearch.index.engine.VersionConflictEngineException;
+import org.elasticsearch.index.shard.IllegalIndexShardStateException;
 import org.elasticsearch.index.shard.IndexShard;
+import org.elasticsearch.index.shard.IndexShardState;
 import org.elasticsearch.index.shard.ShardId;
 import org.elasticsearch.indices.IndicesService;
 import org.elasticsearch.node.NodeClosedException;
@@ -70,6 +72,7 @@ public abstract class TransportShardReplicationOperationAction<Request extends S
     protected final TransportRequestOptions transportOptions;
 
     final String transportReplicaAction;
+    final String transportPrimaryRelayAction;
     final String executor;
     final boolean checkWriteConsistency;
 
@@ -83,11 +86,13 @@ public abstract class TransportShardReplicationOperationAction<Request extends S
         this.shardStateAction = shardStateAction;
 
         this.transportReplicaAction = actionName + "[r]";
+        this.transportPrimaryRelayAction = actionName + "[pr]";
         this.executor = executor();
         this.checkWriteConsistency = checkWriteConsistency();
 
         transportService.registerHandler(actionName, new OperationTransportHandler());
         transportService.registerHandler(transportReplicaAction, new ReplicaOperationTransportHandler());
+        transportService.registerHandler(transportPrimaryRelayAction, new PrimaryRelayOperationTransportHandler());
 
         this.transportOptions = transportOptions();
 
@@ -97,7 +102,7 @@ public abstract class TransportShardReplicationOperationAction<Request extends S
 
     @Override
     protected void doExecute(Request request, ActionListener<Response> listener) {
-        new AsyncShardOperationAction(request, listener).start();
+        new AsyncShardOperationAction(request, listener, false).start();
     }
 
     protected abstract Request newRequestInstance();
@@ -108,7 +113,7 @@ public abstract class TransportShardReplicationOperationAction<Request extends S
 
     protected abstract String executor();
 
-    protected abstract PrimaryResponse<Response, ReplicaRequest> shardOperationOnPrimary(ClusterState clusterState, PrimaryOperationRequest shardRequest) throws Throwable;
+    protected abstract PrimaryResponse<Response, ReplicaRequest> shardOperationOnPrimary(ClusterState clusterState, PrimaryOperationRequest shardRequest, IndexService indexService, IndexShard indexShard) throws Throwable;
 
     protected abstract void shardOperationOnReplica(ReplicaOperationRequest shardRequest);
 
@@ -203,25 +208,7 @@ public abstract class TransportShardReplicationOperationAction<Request extends S
             request.listenerThreaded(false);
             // if we have a local operation, execute it on a thread since we don't spawn
             request.operationThreaded(true);
-            execute(request, new ActionListener<Response>() {
-                @Override
-                public void onResponse(Response result) {
-                    try {
-                        channel.sendResponse(result);
-                    } catch (Throwable e) {
-                        onFailure(e);
-                    }
-                }
-
-                @Override
-                public void onFailure(Throwable e) {
-                    try {
-                        channel.sendResponse(e);
-                    } catch (Throwable e1) {
-                        logger.warn("Failed to send response for " + actionName, e1);
-                    }
-                }
-            });
+            execute(request, new BasicActionListener<Response>(channel, actionName, logger));
         }
     }
 
@@ -252,6 +239,26 @@ public abstract class TransportShardReplicationOperationAction<Request extends S
                 throw t;
             }
             channel.sendResponse(TransportResponse.Empty.INSTANCE);
+        }
+    }
+
+    class PrimaryRelayOperationTransportHandler extends BaseTransportRequestHandler<Request> {
+
+        @Override
+        public Request newInstance() {
+            return newRequestInstance();
+        }
+
+        @Override
+        public String executor() {
+            return executor;
+        }
+
+        @Override
+        public void messageReceived(final Request request, final TransportChannel channel) throws Exception {
+            // no need to have a threaded listener since we just send back a response
+            request.listenerThreaded(false);
+            new AsyncShardOperationAction(request, new BasicActionListener<Response>(channel, transportPrimaryRelayAction, logger), true).start();
         }
     }
 
@@ -328,9 +335,12 @@ public abstract class TransportShardReplicationOperationAction<Request extends S
         private final AtomicBoolean primaryOperationStarted = new AtomicBoolean();
         private final ReplicationType replicationType;
         private volatile ClusterStateObserver observer;
+        private final boolean relocatedPrimary;
+        private final BaseTransportResponseHandler<Response> primaryResponseHandler;
 
-        AsyncShardOperationAction(Request request, ActionListener<Response> listener) {
+        AsyncShardOperationAction(Request request, final ActionListener<Response> listener, boolean relocatedPrimary) {
             this.internalRequest = new InternalRequest(request);
+            this.relocatedPrimary = relocatedPrimary;
             this.listener = listener;
 
             if (request.replicationType() != ReplicationType.DEFAULT) {
@@ -338,6 +348,40 @@ public abstract class TransportShardReplicationOperationAction<Request extends S
             } else {
                 replicationType = defaultReplicationType;
             }
+
+            primaryResponseHandler = new BaseTransportResponseHandler<Response>() {
+
+                @Override
+                public Response newInstance() {
+                    return newResponseInstance();
+                }
+
+                @Override
+                public String executor() {
+                    return ThreadPool.Names.SAME;
+                }
+
+                @Override
+                public void handleResponse(Response response) {
+                    listener.onResponse(response);
+                }
+
+                @Override
+                public void handleException(TransportException exp) {
+                    // if we got disconnected from the node, or the node / shard is not in the right state (being closed)
+                    if (exp.unwrapCause() instanceof ConnectTransportException || exp.unwrapCause() instanceof NodeClosedException ||
+                            retryPrimaryException(exp)) {
+                        primaryOperationStarted.set(false);
+                        internalRequest.request().setCanHaveDuplicates();
+                        // we already marked it as started when we executed it (removed the listener) so pass false
+                        // to re-add to the cluster listener
+                        logger.trace("received an error from node the primary was assigned to ({}), scheduling a retry", exp.getMessage());
+                        retry(exp);
+                    } else {
+                        listener.onFailure(exp);
+                    }
+                }
+            };
         }
 
         public void start() {
@@ -400,8 +444,18 @@ public abstract class TransportShardReplicationOperationAction<Request extends S
                 if (!shard.primary()) {
                     continue;
                 }
-                if (!shard.active() || !observer.observedState().nodes().nodeExists(shard.currentNodeId())) {
-                    logger.trace("primary shard [{}] is not yet active or we do not know the node it is assigned to [{}], scheduling a retry.", shard.shardId(), shard.currentNodeId());
+                final String nodeId;
+                final String localNodeId = observer.observedState().nodes().localNodeId();
+                if (relocatedPrimary && shard.relocating()) {
+                    nodeId = shard.relocatingNodeId();
+                    if (localNodeId.equals(nodeId) == false) {
+                        throw new ElasticsearchIllegalStateException("primary operation relayed due to relocation but local copy isn't relocation target. shard " + shard + " local node id [" + localNodeId + "]");
+                    }
+                } else {
+                    nodeId = shard.currentNodeId();
+                }
+                if (!shard.active() || !observer.observedState().nodes().nodeExists(nodeId)) {
+                    logger.trace("primary shard [{}] is not yet active or we do not know the node it is assigned to [{}], scheduling a retry.", shard.shardId(), nodeId);
                     retryBecauseUnavailable(shardIt.shardId(), "Primary shard is not active or isn't assigned is a known node.");
                     return;
                 }
@@ -411,7 +465,7 @@ public abstract class TransportShardReplicationOperationAction<Request extends S
                 }
 
                 foundPrimary = true;
-                if (shard.currentNodeId().equals(observer.observedState().nodes().localNodeId())) {
+                if (nodeId.equals(localNodeId)) {
                     try {
                         if (internalRequest.request().operationThreaded()) {
                             internalRequest.request().beforeLocalFork();
@@ -432,40 +486,8 @@ public abstract class TransportShardReplicationOperationAction<Request extends S
                         listener.onFailure(t);
                     }
                 } else {
-                    DiscoveryNode node = observer.observedState().nodes().get(shard.currentNodeId());
-                    transportService.sendRequest(node, actionName, internalRequest.request(), transportOptions, new BaseTransportResponseHandler<Response>() {
-
-                        @Override
-                        public Response newInstance() {
-                            return newResponseInstance();
-                        }
-
-                        @Override
-                        public String executor() {
-                            return ThreadPool.Names.SAME;
-                        }
-
-                        @Override
-                        public void handleResponse(Response response) {
-                            listener.onResponse(response);
-                        }
-
-                        @Override
-                        public void handleException(TransportException exp) {
-                            // if we got disconnected from the node, or the node / shard is not in the right state (being closed)
-                            if (exp.unwrapCause() instanceof ConnectTransportException || exp.unwrapCause() instanceof NodeClosedException ||
-                                    retryPrimaryException(exp)) {
-                                primaryOperationStarted.set(false);
-                                internalRequest.request().setCanHaveDuplicates();
-                                // we already marked it as started when we executed it (removed the listener) so pass false
-                                // to re-add to the cluster listener
-                                logger.trace("received an error from node the primary was assigned to ({}), scheduling a retry", exp.getMessage());
-                                retry(exp);
-                            } else {
-                                listener.onFailure(exp);
-                            }
-                        }
-                    });
+                    DiscoveryNode node = observer.observedState().nodes().get(nodeId);
+                    transportService.sendRequest(node, actionName, internalRequest.request(), transportOptions, primaryResponseHandler);
                 }
                 break;
             }
@@ -477,10 +499,19 @@ public abstract class TransportShardReplicationOperationAction<Request extends S
         }
 
         void retry(Throwable failure) {
+            retry(failure, false);
+        }
+
+        void retry(Throwable failure, boolean immediately) {
             assert failure != null;
             if (observer.isTimedOut()) {
                 // we running as a last attempt after a timeout has happened. don't retry
                 listener.onFailure(failure);
+                return;
+            }
+            if (immediately) {
+                // nocommit how do we avoid infinite loops, do we care?
+                doStart();
                 return;
             }
             // make it threaded operation so we fork on the discovery listener thread
@@ -511,8 +542,25 @@ public abstract class TransportShardReplicationOperationAction<Request extends S
             if (raiseFailureIfHaveNotEnoughActiveShardCopies(shard, clusterState)) {
                 return;
             }
+            IndexShard indexShard = null;
             try {
-                PrimaryResponse<Response, ReplicaRequest> response = shardOperationOnPrimary(clusterState, new PrimaryOperationRequest(primaryShardId, internalRequest.concreteIndex(), internalRequest.request()));
+                IndexService indexService = indicesService.indexServiceSafe(shard.getIndex());
+                indexShard = indexService.shardSafe(shard.id());
+                if (indexShard.state() == IndexShardState.RELOCATED) {
+                    final String relocatingNodeId = shard.relocatingNodeId();
+                    final DiscoveryNode node = relocatingNodeId == null ? null : observer.observedState().nodes().get(relocatingNodeId);
+                    if (node == null) {
+                        throw new IllegalIndexShardStateException(shard.shardId(), indexShard.state(),
+                                "shard is marked as relocated but target node note found. routing [" + shard + "]");
+                    }
+                    logger.trace("relaying operation [{}] to relocated primary [{}]", internalRequest.request, shard);
+
+                    transportService.sendRequest(node, transportPrimaryRelayAction, internalRequest.request(), transportOptions,
+                            primaryResponseHandler);
+                    return;
+                }
+                PrimaryResponse<Response, ReplicaRequest> response = shardOperationOnPrimary(clusterState,
+                        new PrimaryOperationRequest(primaryShardId, internalRequest.concreteIndex(), internalRequest.request()), indexService, indexShard);
                 performReplicas(response);
             } catch (Throwable e) {
                 internalRequest.request.setCanHaveDuplicates();
@@ -520,7 +568,12 @@ public abstract class TransportShardReplicationOperationAction<Request extends S
                 if (retryPrimaryException(e)) {
                     primaryOperationStarted.set(false);
                     logger.trace("had an error while performing operation on primary ({}), scheduling a retry.", e.getMessage());
-                    retry(e);
+                    if (indexShard != null && indexShard.state() == IndexShardState.RELOCATED) {
+                        // the shard got relocated on us, retry immediately so it will be relayed..
+                        retry(e, true);
+                    } else {
+                        retry(e);
+                    }
                     return;
                 }
                 if (e instanceof ElasticsearchException && ((ElasticsearchException) e).status() == RestStatus.CONFLICT) {
@@ -687,28 +740,28 @@ public abstract class TransportShardReplicationOperationAction<Request extends S
                 final DiscoveryNode node = observer.observedState().nodes().get(nodeId);
                 transportService.sendRequest(node, transportReplicaAction, shardRequest,
                         transportOptions, new EmptyTransportResponseHandler(ThreadPool.Names.SAME) {
-                    @Override
-                    public void handleResponse(TransportResponse.Empty vResponse) {
-                        finishIfPossible();
-                    }
+                            @Override
+                            public void handleResponse(TransportResponse.Empty vResponse) {
+                                finishIfPossible();
+                            }
 
-                    @Override
-                    public void handleException(TransportException exp) {
-                        logger.trace("[{}] Transport failure during replica request [{}] ", exp, node, internalRequest.request());
-                        if (!ignoreReplicaException(exp)) {
-                            logger.warn("Failed to perform " + actionName + " on remote replica " + node + shardIt.shardId(), exp);
-                            shardStateAction.shardFailed(shard, indexMetaData.getUUID(),
-                                    "Failed to perform [" + actionName + "] on replica, message [" + ExceptionsHelper.detailedMessage(exp) + "]");
-                        }
-                        finishIfPossible();
-                    }
+                            @Override
+                            public void handleException(TransportException exp) {
+                                logger.trace("[{}] Transport failure during replica request [{}] ", exp, node, internalRequest.request());
+                                if (!ignoreReplicaException(exp)) {
+                                    logger.warn("Failed to perform " + actionName + " on remote replica " + node + shardIt.shardId(), exp);
+                                    shardStateAction.shardFailed(shard, indexMetaData.getUUID(),
+                                            "Failed to perform [" + actionName + "] on replica, message [" + ExceptionsHelper.detailedMessage(exp) + "]");
+                                }
+                                finishIfPossible();
+                            }
 
-                    private void finishIfPossible() {
-                        if (counter.decrementAndGet() == 0) {
-                            listener.onResponse(response.response());
-                        }
-                    }
-                });
+                            private void finishIfPossible() {
+                                if (counter.decrementAndGet() == 0) {
+                                    listener.onResponse(response.response());
+                                }
+                            }
+                        });
             } else {
                 if (internalRequest.request().operationThreaded()) {
                     internalRequest.request().beforeLocalFork();
@@ -770,11 +823,11 @@ public abstract class TransportShardReplicationOperationAction<Request extends S
             }
             final int sizeActive;
             final int requiredNumber;
-            IndexRoutingTable indexRoutingTable =  state.getRoutingTable().index(shard.index());
+            IndexRoutingTable indexRoutingTable = state.getRoutingTable().index(shard.index());
             if (indexRoutingTable != null) {
                 IndexShardRoutingTable shardRoutingTable = indexRoutingTable.shard(shard.getId());
                 if (shardRoutingTable != null) {
-                    sizeActive =  shardRoutingTable.activeShards().size();
+                    sizeActive = shardRoutingTable.activeShards().size();
                     if (consistencyLevel == WriteConsistencyLevel.QUORUM && shardRoutingTable.getSize() > 2) {
                         // only for more than 2 in the number of shardIt it makes sense, otherwise its 1 shard with 1 replica, quorum is 1 (which is what it is initialized to)
                         requiredNumber = (shardRoutingTable.getSize() / 2) + 1;
@@ -805,7 +858,7 @@ public abstract class TransportShardReplicationOperationAction<Request extends S
         }
 
         void retryBecauseUnavailable(ShardId shardId, String message) {
-            retry(new UnavailableShardsException(shardId, message + " Timeout: [" + internalRequest.request().timeout() +"], request: " +  internalRequest.request().toString()));
+            retry(new UnavailableShardsException(shardId, message + " Timeout: [" + internalRequest.request().timeout() + "], request: " + internalRequest.request().toString()));
         }
 
     }

@@ -163,7 +163,8 @@ public class RecoveryTarget extends AbstractComponent {
             return;
         }
         final StartRecoveryRequest request = new StartRecoveryRequest(recoveryStatus.shardId(), recoveryStatus.sourceNode(), clusterService.localNode(),
-                false, existingFiles, recoveryStatus.state().getType(), recoveryStatus.recoveryId());
+                recoveryStatus.indexShard().routingEntry().primary(), // primaries need to be marked and relocated
+                existingFiles, recoveryStatus.state().getType(), recoveryStatus.recoveryId());
 
         final AtomicReference<RecoveryResponse> responseHolder = new AtomicReference<>();
         try {

@@ -50,7 +50,6 @@ import org.elasticsearch.index.IndexService;
 import org.elasticsearch.index.deletionpolicy.SnapshotIndexCommit;
 import org.elasticsearch.index.engine.Engine;
 import org.elasticsearch.index.mapper.DocumentMapper;
-import org.elasticsearch.index.shard.IllegalIndexShardStateException;
 import org.elasticsearch.index.shard.IndexShard;
 import org.elasticsearch.index.shard.IndexShardClosedException;
 import org.elasticsearch.index.shard.IndexShardState;
@@ -135,11 +134,11 @@ public class RecoverySourceHandler implements Engine.RecoveryHandler {
      * Perform phase1 of the recovery operations. Once this {@link SnapshotIndexCommit}
      * snapshot has been performed no commit operations (files being fsync'd)
      * are effectively allowed on this index until all recovery phases are done
-     *
+     * <p/>
      * Phase1 examines the segment files on the target node and copies over the
      * segments that are missing. Only segments that have the same size and
      * checksum can be reused
-     *
+     * <p/>
      * {@code InternalEngine#recover} is responsible for snapshotting the index
      * and releasing the snapshot once all 3 phases of recovery are complete
      */
@@ -403,12 +402,12 @@ public class RecoverySourceHandler implements Engine.RecoveryHandler {
 
     /**
      * Perform phase2 of the recovery process
-     *
+     * <p/>
      * Phase2 takes a snapshot of the current translog *without* acquiring the
      * write lock (however, the translog snapshot is a point-in-time view of
      * the translog). It then sends each translog operation to the target node
      * so it can be replayed into the new shard.
-     *
+     * <p/>
      * {@code InternalEngine#recover} is responsible for taking the snapshot
      * of the translog and releasing it once all 3 phases of recovery are complete
      */
@@ -454,11 +453,11 @@ public class RecoverySourceHandler implements Engine.RecoveryHandler {
 
     /**
      * Perform phase 3 of the recovery process
-     *
+     * <p/>
      * Phase3 again takes a snapshot of the translog, however this time the
      * snapshot is acquired under a write lock. The translog operations are
      * sent to the target node where they are replayed.
-     *
+     * <p/>
      * {@code InternalEngine#recover} is responsible for taking the snapshot
      * of the translog, and after phase 3 completes the snapshots from all
      * three phases are released.
@@ -493,13 +492,11 @@ public class RecoverySourceHandler implements Engine.RecoveryHandler {
 
 
         if (request.markAsRelocated()) {
-            // TODO what happens if the recovery process fails afterwards, we need to mark this back to started
             try {
                 shard.relocated("to " + request.targetNode());
-            } catch (IllegalIndexShardStateException e) {
-                // we can ignore this exception since, on the other node, when it moved to phase3
-                // it will also send shard started, which might cause the index shard we work against
-                // to move be closed by the time we get to the the relocated method
+            } catch (IOException e) {
+                // no need to fail the recovery if we failed to close the engine. the other copy is already started and is good.
+                logger.debug("failed to close engine after relocation", e);
             }
         }
         stopWatch.stop();
@@ -572,7 +569,7 @@ public class RecoverySourceHandler implements Engine.RecoveryHandler {
 
     /**
      * Send the given snapshot's operations to this handler's target node.
-     *
+     * <p/>
      * Operations are bulked into a single request depending on an operation
      * count limit or size-in-bytes limit
      *

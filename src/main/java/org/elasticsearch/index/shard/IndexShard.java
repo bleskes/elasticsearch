@@ -400,13 +400,15 @@ public class IndexShard extends AbstractIndexShardComponent {
         }
     }
 
-    public IndexShard relocated(String reason) throws IndexShardNotStartedException {
+    public IndexShard relocated(String reason) throws IndexShardNotStartedException, IOException {
         synchronized (mutex) {
             if (state != IndexShardState.STARTED) {
                 throw new IndexShardNotStartedException(shardId, state);
             }
             changeState(IndexShardState.RELOCATED, reason);
+            closeEngine(false);
         }
+
         return this;
     }
 
@@ -708,15 +710,19 @@ public class IndexShard extends AbstractIndexShardComponent {
                 }
                 changeState(IndexShardState.CLOSED, reason);
             } finally {
-                final Engine engine = this.currentEngineReference.getAndSet(null);
-                try {
-                    if (flushEngine && this.flushOnClose) {
-                        engine.flushAndClose();
-                    }
-                } finally { // playing safe here and close the engine even if the above succeeds - close can be called multiple times
-                    IOUtils.close(engine);
-                }
+                closeEngine(flushEngine);
             }
+        }
+    }
+
+    protected void closeEngine(boolean flushEngine) throws IOException {
+        final Engine engine = this.currentEngineReference.getAndSet(null);
+        try {
+            if (flushEngine && this.flushOnClose) {
+                engine.flushAndClose();
+            }
+        } finally { // playing safe here and close the engine even if the above succeeds - close can be called multiple times
+            IOUtils.close(engine);
         }
     }
 
@@ -890,19 +896,10 @@ public class IndexShard extends AbstractIndexShardComponent {
 
     private void writeAllowed(Engine.Operation.Origin origin) throws IllegalIndexShardStateException {
         IndexShardState state = this.state; // one time volatile read
-
-        if (origin == Engine.Operation.Origin.PRIMARY) {
-            // for primaries, we only allow to write when actually started (so the cluster has decided we started)
-            // otherwise, we need to retry, we also want to still allow to index if we are relocated in case it fails
-            if (state != IndexShardState.STARTED && state != IndexShardState.RELOCATED) {
-                throw new IllegalIndexShardStateException(shardId, state, "operation only allowed when started/recovering, origin [" + origin + "]");
-            }
-        } else {
-            // for replicas, we allow to write also while recovering, since we index also during recovery to replicas
-            // and rely on version checks to make sure its consistent
-            if (state != IndexShardState.STARTED && state != IndexShardState.RELOCATED && state != IndexShardState.RECOVERING && state != IndexShardState.POST_RECOVERY) {
-                throw new IllegalIndexShardStateException(shardId, state, "operation only allowed when started/recovering, origin [" + origin + "]");
-            }
+        // for replicas, we allow to write also while recovering, since we index also during recovery to replicas
+        // and rely on version checks to make sure its consistent
+        if (state != IndexShardState.STARTED && state != IndexShardState.RECOVERING && state != IndexShardState.POST_RECOVERY) {
+            throw new IllegalIndexShardStateException(shardId, state, "operation only allowed when started/recovering, origin [" + origin + "]");
         }
     }
 
