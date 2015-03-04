@@ -27,7 +27,8 @@
 
 package com.prelert.job.process.writer;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
@@ -51,13 +52,14 @@ import org.mockito.stubbing.Answer;
 
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
+import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.Detector;
 import com.prelert.job.TransformConfig;
 import com.prelert.job.TransformConfigs;
 import com.prelert.job.TransformType;
-import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.input.LengthEncodedWriter;
 import com.prelert.job.persistence.JobDataPersister;
+import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
@@ -90,8 +92,9 @@ public class DataWithTransformsToProcessWriterTest
     }
 
 	@Test
-	public void testCsvWriteWithConcat()
-	throws MissingFieldException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException
+    public void testCsvWriteWithConcat() throws MissingFieldException,
+            HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException,
+            MalformedJsonException
 	{
         StringBuilder input = new StringBuilder();
         input.append("time,host,metric,value\n");
@@ -118,8 +121,9 @@ public class DataWithTransformsToProcessWriterTest
 	}
 
 	@Test
-	public void testJsonWriteWithConcat()
-	throws MissingFieldException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException
+    public void testJsonWriteWithConcat() throws MissingFieldException,
+            HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException,
+            MalformedJsonException
 	{
         StringBuilder input = new StringBuilder();
         input.append("{\"time\" : 1, \"host\" : \"hostA\", \"metric\" : \"foo\", \"value\" : 3.0}\n");

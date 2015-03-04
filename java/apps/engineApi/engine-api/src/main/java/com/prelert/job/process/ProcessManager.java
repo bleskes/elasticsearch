@@ -65,6 +65,7 @@ import com.prelert.job.persistence.DataPersisterFactory;
 import com.prelert.job.persistence.JobDataPersister;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.process.exceptions.ClosedJobException;
+import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.process.writer.ControlMsgToProcessWriter;
@@ -195,11 +196,12 @@ public class ProcessManager
      * the job is already handling data
      * @throws HighProportionOfBadTimestampsException
      * @throws OutOfOrderRecordsException
+     * @throws MalformedJsonException
      */
     public boolean processDataLoadJob(String jobId, InputStream input)
     throws UnknownJobException, NativeProcessRunException, MissingFieldException,
         JsonParseException, JobInUseException, HighProportionOfBadTimestampsException,
-        OutOfOrderRecordsException
+        OutOfOrderRecordsException, MalformedJsonException
     {
         return processDataLoadJob(jobId, input, m_DataPersisterFactory.newNoneDataPersister());
     }
@@ -237,11 +239,12 @@ public class ProcessManager
      * the job is already handling data
      * @throws HighProportionOfBadTimestampsException
      * @throws OutOfOrderRecordsException
+     * @throws MalformedJsonException
      */
     public boolean processDataLoadAndPersistJob(String jobId, InputStream input)
     throws UnknownJobException, NativeProcessRunException, MissingFieldException,
         JsonParseException, JobInUseException, HighProportionOfBadTimestampsException,
-        OutOfOrderRecordsException
+        OutOfOrderRecordsException, MalformedJsonException
     {
         return processDataLoadJob(jobId, input,
                 m_DataPersisterFactory.newDataPersister(jobId, LOGGER));
@@ -249,9 +252,9 @@ public class ProcessManager
 
     private boolean processDataLoadJob(String jobId, InputStream input,
             JobDataPersister jobDataPersister) throws UnknownJobException,
-            NativeProcessRunException, MissingFieldException,
-            JsonParseException, JobInUseException,
-            HighProportionOfBadTimestampsException, OutOfOrderRecordsException
+            NativeProcessRunException, MissingFieldException, JsonParseException,
+            JobInUseException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
+            MalformedJsonException
     {
         // stop the timeout
         ScheduledFuture<?> future = m_JobIdToTimeoutFuture.remove(jobId);
@@ -760,6 +763,7 @@ public class ProcessManager
      * @throws IOException
      * @throws HighProportionOfBadTimestampsException
      * @throws OutOfOrderRecordsException
+     * @throws MalformedJsonException
      */
     public void writeToJob(DataDescription dataDescription,
             AnalysisConfig analysisConfig,
@@ -769,7 +773,7 @@ public class ProcessManager
             JobDataPersister dataPersister,
             Logger jobLogger)
     throws JsonParseException, MissingFieldException, IOException,
-        HighProportionOfBadTimestampsException, OutOfOrderRecordsException
+        HighProportionOfBadTimestampsException, OutOfOrderRecordsException, MalformedJsonException
     {
         // Oracle's documentation recommends buffering process streams
         BufferedOutputStream bufferedStream = new BufferedOutputStream(output);

@@ -41,6 +41,7 @@ import com.prelert.job.JobInUseException;
 import com.prelert.job.TooManyJobsException;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.manager.JobManager;
+import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
@@ -66,7 +67,7 @@ public class DataStreamerAndPersisterTest
             throws UnknownJobException, NativeProcessRunException,
             MissingFieldException, JobInUseException,
             HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
-            TooManyJobsException, IOException
+            TooManyJobsException, IOException, MalformedJsonException
     {
         JobManager jobManager = mock(JobManager.class);
         DataStreamerAndPersister dataStreamer = new DataStreamerAndPersister(jobManager);

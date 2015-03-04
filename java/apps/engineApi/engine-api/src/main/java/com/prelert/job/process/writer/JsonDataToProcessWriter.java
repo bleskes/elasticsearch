@@ -44,6 +44,7 @@ import com.prelert.job.TransformConfigs;
 import com.prelert.job.input.CountingInputStream;
 import com.prelert.job.input.LengthEncodedWriter;
 import com.prelert.job.persistence.JobDataPersister;
+import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
@@ -84,10 +85,12 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter
      * @throws HighProportionOfBadTimestampsException If a large proportion
      * of the records read have missing fields
      * @throws OutOfOrderRecordsException
+     * @throws MalformedJsonException
      */
     @Override
     public void write(InputStream inputStream) throws IOException, MissingFieldException,
-            HighProportionOfBadTimestampsException, OutOfOrderRecordsException
+            HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
+            MalformedJsonException
     {
         CountingInputStream countingStream = new CountingInputStream(inputStream, m_StatusReporter);
         m_StatusReporter.setAnalysedFieldsPerRecord(m_AnalysisConfig.analysisFields().size());
@@ -108,7 +111,8 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter
     }
 
     private void writeJson(JsonParser parser) throws IOException, MissingFieldException,
-            HighProportionOfBadTimestampsException, OutOfOrderRecordsException
+            HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
+            MalformedJsonException
     {
         Collection<String> analysisFields = inputFields();
 

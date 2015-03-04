@@ -46,6 +46,7 @@ import org.apache.log4j.Logger;
 import com.prelert.job.JobInUseException;
 import com.prelert.job.TooManyJobsException;
 import com.prelert.job.UnknownJobException;
+import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
@@ -95,6 +96,7 @@ public class DataLoad extends ResourceWithJobManager
      * @throws HighProportionOfBadTimestampsException
      * @throws OutOfOrderRecordsException
      * @throws TooManyJobsException If the license is violated
+     * @throws MalformedJsonException If JSON data is malformed and we cannot recover
      */
     @POST
     @Path("/{jobId}")
@@ -104,7 +106,7 @@ public class DataLoad extends ResourceWithJobManager
             @PathParam("jobId") String jobId, InputStream input)
     throws IOException, UnknownJobException, NativeProcessRunException,
             MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException,
-            OutOfOrderRecordsException, TooManyJobsException
+            OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException
     {
         AbstractDataStreamer dataStreamer = new DataStreamerAndPersister(jobManager());
         String contentEncoding = headers.getHeaderString(HttpHeaders.CONTENT_ENCODING);

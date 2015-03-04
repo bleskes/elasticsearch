@@ -53,6 +53,7 @@ import com.prelert.job.TooManyJobsException;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.persistence.elasticsearch.ElasticsearchJobProvider;
+import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
@@ -82,12 +83,13 @@ public class RestoreStateTest
      * @throws JobConfigurationException If the license is violated
      * @throws TooManyJobsException If the license is violated
      * @throws JobIdAlreadyExistsException
+     * @throws MalformedJsonException
      */
-    public static void main(String[] args)
-    throws IOException, NativeProcessRunException, UnknownJobException,
-        InterruptedException, JobInUseException, MissingFieldException,
-        HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
-        JobConfigurationException, TooManyJobsException, JobIdAlreadyExistsException
+    public static void main(String[] args) throws IOException, NativeProcessRunException,
+            UnknownJobException, InterruptedException, JobInUseException, MissingFieldException,
+            HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
+            JobConfigurationException, TooManyJobsException, JobIdAlreadyExistsException,
+            MalformedJsonException
     {
         final String prelertSrcHome = System.getProperty("prelert.src.home");
         if (prelertSrcHome == null)
