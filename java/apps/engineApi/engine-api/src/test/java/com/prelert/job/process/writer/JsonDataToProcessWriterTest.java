@@ -50,7 +50,6 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 
-import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
@@ -59,6 +58,7 @@ import com.prelert.job.TransformConfig;
 import com.prelert.job.TransformConfigs;
 import com.prelert.job.input.LengthEncodedWriter;
 import com.prelert.job.persistence.JobDataPersister;
+import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
@@ -104,7 +104,8 @@ public class JsonDataToProcessWriterTest
 
     @Test
     public void testWrite_GivenTimeFormatIsEpochAndDataIsValid() throws MissingFieldException,
-            HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException
+            HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException,
+            MalformedJsonException
     {
         StringBuilder input = new StringBuilder();
         input.append("{\"time\":\"1\", \"metric\":\"foo\", \"value\":\"1.0\"}");
@@ -128,7 +129,7 @@ public class JsonDataToProcessWriterTest
     @Test
     public void testWrite_GivenTimeFormatIsEpochAndTimestampsAreOutOfOrder()
             throws MissingFieldException, HighProportionOfBadTimestampsException,
-            OutOfOrderRecordsException, IOException
+            OutOfOrderRecordsException, IOException, MalformedJsonException
     {
         StringBuilder input = new StringBuilder();
         input.append("{\"time\":\"3\", \"metric\":\"foo\", \"value\":\"3.0\"}");
@@ -153,7 +154,7 @@ public class JsonDataToProcessWriterTest
     @Test
     public void testWrite_GivenTimeFormatIsEpochAndSomeTimestampsWithinLatencySomeOutOfOrder()
             throws MissingFieldException, HighProportionOfBadTimestampsException,
-            OutOfOrderRecordsException, IOException
+            OutOfOrderRecordsException, IOException, MalformedJsonException
     {
         m_AnalysisConfig.setLatency(2L);
 
@@ -185,7 +186,7 @@ public class JsonDataToProcessWriterTest
     @Test
     public void testWrite_GivenMalformedJsonWithoutNestedLevels()
             throws MissingFieldException, HighProportionOfBadTimestampsException,
-            OutOfOrderRecordsException, IOException
+            OutOfOrderRecordsException, IOException, MalformedJsonException
     {
         m_AnalysisConfig.setLatency(2L);
 
@@ -214,7 +215,7 @@ public class JsonDataToProcessWriterTest
     @Test
     public void testWrite_GivenMalformedJsonWithNestedLevels()
             throws MissingFieldException, HighProportionOfBadTimestampsException,
-            OutOfOrderRecordsException, IOException
+            OutOfOrderRecordsException, IOException, MalformedJsonException
     {
         Detector detector = new Detector();
         detector.setFieldName("nested.value");
@@ -242,10 +243,10 @@ public class JsonDataToProcessWriterTest
         verify(m_DataPersister).flushRecords();
     }
 
-    @Test (expected = JsonParseException.class)
+    @Test (expected = MalformedJsonException.class)
     public void testWrite_GivenMalformedJsonThatNeverRecovers()
             throws MissingFieldException, HighProportionOfBadTimestampsException,
-            OutOfOrderRecordsException, IOException
+            OutOfOrderRecordsException, IOException, MalformedJsonException
     {
         m_AnalysisConfig.setLatency(2L);
 
@@ -261,7 +262,7 @@ public class JsonDataToProcessWriterTest
     @Test
     public void testWrite_GivenJsonWithArrayField()
             throws MissingFieldException, HighProportionOfBadTimestampsException,
-            OutOfOrderRecordsException, IOException
+            OutOfOrderRecordsException, IOException, MalformedJsonException
     {
         m_AnalysisConfig.setLatency(2L);
 

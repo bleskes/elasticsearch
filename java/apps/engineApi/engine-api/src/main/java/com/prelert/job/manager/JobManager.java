@@ -56,6 +56,7 @@ import com.prelert.job.UnknownJobException;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.process.ProcessManager;
 import com.prelert.job.process.exceptions.ClosedJobException;
+import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
@@ -586,11 +587,12 @@ public class JobManager
      * @throws HighProportionOfBadTimestampsException
      * @throws OutOfOrderRecordsException
      * @throws TooManyJobsException If the license is violated
+     * @throws MalformedJsonException If JSON data is malformed and we cannot recover
      */
     public boolean submitDataLoadJob(String jobId, InputStream input)
     throws UnknownJobException, NativeProcessRunException, MissingFieldException,
         JsonParseException, JobInUseException, HighProportionOfBadTimestampsException,
-        OutOfOrderRecordsException, TooManyJobsException
+        OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException
     {
         return submitDataLoadJob(jobId, input, false);
     }
@@ -617,11 +619,12 @@ public class JobManager
      * @throws HighProportionOfBadTimestampsException
      * @throws OutOfOrderRecordsException
      * @throws TooManyJobsException If the license is violated
+     * @throws MalformedJsonException If JSON data is malformed and we cannot recover
      */
     public boolean submitDataLoadAndPersistJob(String jobId, InputStream input)
     throws UnknownJobException, NativeProcessRunException, MissingFieldException,
         JsonParseException, JobInUseException, HighProportionOfBadTimestampsException,
-        OutOfOrderRecordsException, TooManyJobsException
+        OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException
     {
         return submitDataLoadJob(jobId, input, true);
     }
@@ -629,7 +632,7 @@ public class JobManager
     private  boolean submitDataLoadJob(String jobId, InputStream input, boolean shouldPersist)
             throws UnknownJobException, NativeProcessRunException, MissingFieldException,
             JsonParseException, JobInUseException, HighProportionOfBadTimestampsException,
-            OutOfOrderRecordsException, TooManyJobsException
+            OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException
     {
         checkTooManyJobs(jobId);
         boolean success = tryProcessingDataLoadJob(jobId, input, shouldPersist);
@@ -645,7 +648,7 @@ public class JobManager
             throws UnknownJobException, MissingFieldException,
             JsonParseException, JobInUseException,
             HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
-            NativeProcessRunException
+            NativeProcessRunException, MalformedJsonException
     {
         boolean success = true;
         try

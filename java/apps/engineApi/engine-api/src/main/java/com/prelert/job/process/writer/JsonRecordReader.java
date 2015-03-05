@@ -39,6 +39,7 @@ import org.apache.log4j.Logger;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
+import com.prelert.job.process.exceptions.MalformedJsonException;
 
 class JsonRecordReader
 {
@@ -81,10 +82,10 @@ class JsonRecordReader
      * was read
      *
      * @return The number of fields in the JSON doc
-     * @throws JsonParseException
      * @throws IOException
+     * @throws MalformedJsonException
      */
-    long read(String[] record, boolean[] gotFields) throws IOException
+    long read(String[] record, boolean[] gotFields) throws IOException, MalformedJsonException
     {
         Arrays.fill(gotFields, false);
         Arrays.fill(record, "");
@@ -124,7 +125,7 @@ class JsonRecordReader
         m_NestedSuffix = "";
     }
 
-    private JsonToken tryNextTokenOrReadToEndOnError() throws IOException
+    private JsonToken tryNextTokenOrReadToEndOnError() throws IOException, MalformedJsonException
     {
         try
         {
@@ -142,7 +143,7 @@ class JsonRecordReader
         return null;
     }
 
-    private void readToEndOfObject() throws IOException
+    private void readToEndOfObject() throws IOException, MalformedJsonException
     {
         JsonToken token = null;
         int errorCounter = 0;
@@ -158,14 +159,15 @@ class JsonRecordReader
                 if (errorCounter >= PARSE_ERRORS_LIMIT)
                 {
                     m_Logger.error("Failed to recover from malformed JSON data.", e);
-                    throw e;
+                    throw new MalformedJsonException(e);
                 }
             }
         }
         while (token != JsonToken.END_OBJECT);
     }
 
-    private void parseFieldValuePair(String[] record, boolean[] gotFields) throws IOException
+    private void parseFieldValuePair(String[] record, boolean[] gotFields)
+            throws IOException, MalformedJsonException
     {
         String fieldName = m_Parser.getCurrentName();
         JsonToken token = tryNextTokenOrReadToEndOnError();

@@ -44,12 +44,13 @@ import org.junit.Test;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
+import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.Detector;
 import com.prelert.job.TransformConfig;
 import com.prelert.job.TransformConfigs;
-import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.persistence.DummyJobDataPersister;
 import com.prelert.job.process.ProcessManager;
+import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.status.DummyStatusReporter;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
@@ -64,15 +65,11 @@ public class JsonDataTransformTest
     /**
      * Test transforming JSON without a time format to length encoded
      * with the extra fields not used in the analysis filtered out
-     *
-     * @throws IOException
-     * @throws HighProportionOfBadTimestampsException
-     * @throws OutOfOrderRecordsException
      */
     @Test
-    public void plainJsonToLengthEncoded()
-    throws IOException, MissingFieldException, HighProportionOfBadTimestampsException,
-        OutOfOrderRecordsException
+    public void plainJsonToLengthEncoded() throws IOException, MissingFieldException,
+            HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
+            MalformedJsonException
     {
         String data = "{\"timestamp\": \"1350824400\", \"airline\": \"DJA\", \"junk_field\": \"nonsense\", \"responsetime\": \"622\", \"sourcetype\": \"flightcentre\"}" +
                     "{\"timestamp\": \"1350824401\", \"airline\": \"JQA\", \"junk_field\": \"nonsense\", \"responsetime\": \"1742\", \"sourcetype\": \"flightcentre\"}" +
@@ -187,15 +184,11 @@ public class JsonDataTransformTest
 
     /**
      * Test transforming JSON with a time format to length encoded.
-     *
-     * @throws IOException
-     * @throws HighProportionOfBadTimestampsException
-     * @throws OutOfOrderRecordsException
      */
     @Test
-    public void jsonWithDateFormatToLengthEncoded()
-    throws IOException, MissingFieldException, HighProportionOfBadTimestampsException,
-        OutOfOrderRecordsException
+    public void jsonWithDateFormatToLengthEncoded() throws IOException, MissingFieldException,
+            HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
+            MalformedJsonException
     {
         // The json docs are have different field orders
         String data = "{\"airline\": \"DJA\", \"timestamp\": \"2012-10-21T14:00:00\", \"responsetime\": \"622\", \"sourcetype\": \"flightcentre\"}" +
@@ -319,15 +312,11 @@ public class JsonDataTransformTest
     /**
      * Test transforming JSON with a time format
      * and extra fields to length encoded.
-     *
-     * @throws IOException
-     * @throws HighProportionOfBadTimestampsException
-     * @throws OutOfOrderRecordsException
      */
     @Test
-    public void jsonWithDateFormatAndExtraFieldsToLengthEncoded()
-    throws IOException, MissingFieldException, HighProportionOfBadTimestampsException,
-        OutOfOrderRecordsException
+    public void jsonWithDateFormatAndExtraFieldsToLengthEncoded() throws IOException,
+            MissingFieldException, HighProportionOfBadTimestampsException,
+            OutOfOrderRecordsException, MalformedJsonException
     {
         // Document fields are not in the same order
         String data = "{\"extra_field\": \"extra\", \"timestamp\": \"2012-10-21T14:00:00\", \"airline\": \"DJA\", \"responsetime\": \"622\", \"sourcetype\": \"flightcentre\", \"junk_field\": \"nonsense\"}" +
@@ -457,15 +446,11 @@ public class JsonDataTransformTest
     /**
      * In this test the input JSON documents have their fields in
      * an inconsistent changing order.
-     *
-     * @throws IOException
-     * @throws MissingFieldException
-     * @throws HighProportionOfBadTimestampsException
-     * @throws OutOfOrderRecordsException
      */
     @Test
-    public void differentFieldsOrderJsonToLengthEncoded()
-    throws IOException, MissingFieldException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException
+    public void differentFieldsOrderJsonToLengthEncoded() throws IOException,
+            MissingFieldException, HighProportionOfBadTimestampsException,
+            OutOfOrderRecordsException, MalformedJsonException
     {
         String data = "{\"timestamp\": \"1350824400\", \"airline\": \"DJA\", \"junk_field\": \"nonsense\", \"responsetime\": \"622\", \"sourcetype\": \"flightcentre\"}" +
                     "{\"junk_field\": \"nonsense\", \"airline\": \"JQA\", \"timestamp\": \"1350824401\", \"responsetime\": \"1742\", \"sourcetype\": \"flightcentre\"}" +
@@ -590,15 +575,11 @@ public class JsonDataTransformTest
     /**
      * JSON documents have missing fields. Test conversion is robust and
      * passes records with empty strings for the missing fields.
-     *
-     * @throws IOException
-     * @throws HighProportionOfBadTimestampsException
-     * @throws OutOfOrderRecordsException
      */
     @Test
-    public void jsonMissingFieldsToLengthEncoded()
-            throws IOException, MissingFieldException, HighProportionOfBadTimestampsException,
-            OutOfOrderRecordsException
+    public void jsonMissingFieldsToLengthEncoded() throws IOException, MissingFieldException,
+            HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
+            MalformedJsonException
             {
         // Document fields are not in the same order
         String dateFormatData = "{\"timestamp\": \"2012-10-21T14:00:00\", \"airline\": \"DJA\", \"responsetime\": \"622\"}" +
@@ -762,17 +743,11 @@ public class JsonDataTransformTest
 
     /**
      * JSON docs can contain nested documents. Test they are parsed properly
-     *
-     * @throws IOException
-     * @throws MissingFieldException
-     * @throws JsonParseException
-     * @throws OutOfOrderRecordsException
-     * @throws HighProportionOfBadTimestampsException
      */
     @Test
-    public void nestedObjectTest() throws JsonParseException,
-        MissingFieldException, IOException, HighProportionOfBadTimestampsException,
-        OutOfOrderRecordsException
+    public void nestedObjectTest() throws JsonParseException, MissingFieldException, IOException,
+            HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
+            MalformedJsonException
     {
         String epochData = "{\"name\":\"my.test.metric1\",\"tags\":{\"tag1\":\"blah\",\"tag2\":\"boo\"},\"time\":1350824400,\"value\":12345.678}"
                 + "{\"name\":\"my.test.metric2\",\"tags\":{\"tag1\":\"blaah\",\"tag2\":\"booo\"},\"time\":1350824401,\"value\":12345.678}"
@@ -911,13 +886,11 @@ public class JsonDataTransformTest
 
     /**
      * Test deeply nested docs
-     * @throws OutOfOrderRecordsException
-     * @throws HighProportionOfBadTimestampsException
      */
     @Test
-    public void moreNestedFieldsTest()
-    throws JsonParseException, MissingFieldException, IOException,
-        HighProportionOfBadTimestampsException, OutOfOrderRecordsException
+    public void moreNestedFieldsTest() throws JsonParseException, MissingFieldException,
+            IOException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
+            MalformedJsonException
     {
         String data = "{\"name\":\"my.test.metric1\",\"tags\":{\"tag1\":{\"key1\":\"value1\"}, \"tag2\":\"boo\"},\"time\":1350824400,\"value\":12345.678}"
                 + "{\"name\":\"my.test.metric2\",\"tags\":{\"tag1\":{\"key1\":\"value1\"}, \"tag2\":\"booo\"},\"time\":1350824401,\"value\":12345.678}"
@@ -1038,17 +1011,11 @@ public class JsonDataTransformTest
 
     /**
      * Test converting epoch times with a fraction of a second component.
-     *
-     * @throws JsonParseException
-     * @throws MissingFieldException
-     * @throws IOException
-     * @throws OutOfOrderRecordsException
-     * @throws HighProportionOfBadTimestampsException
      */
     @Test
-    public void epochWithFractionTest() throws JsonParseException,
-        MissingFieldException, IOException,
-        HighProportionOfBadTimestampsException, OutOfOrderRecordsException
+    public void epochWithFractionTest() throws JsonParseException, MissingFieldException,
+            IOException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
+            MalformedJsonException
     {
         String epochData = "{\"name\":\"my.test.metric1\",\"tags\":{\"tag1\":\"blah\",\"tag2\":\"boo\"},\"time\":1350824400.4543154,\"value\":12345.678}"
                 + "{\"name\":\"my.test.metric2\",\"tags\":{\"tag1\":\"blaah\",\"tag2\":\"booo\"},\"time\":1350824401.834431,\"value\":12345.678}"

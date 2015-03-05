@@ -45,17 +45,15 @@ import org.junit.Test;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
+import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.Detector;
 import com.prelert.job.TransformConfig;
 import com.prelert.job.TransformConfigs;
-import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.persistence.JobDataPersister;
 import com.prelert.job.persistence.none.NoneJobDataPersister;
 import com.prelert.job.process.ProcessManager;
+import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;
-import com.prelert.job.status.HighProportionOfBadTimestampsException;
-import com.prelert.job.status.OutOfOrderRecordsException;
-import com.prelert.job.status.StatusReporter;
 import com.prelert.job.usage.DummyUsageReporter;
 
 public class DataFormatWarningsTest
@@ -77,16 +75,10 @@ public class DataFormatWarningsTest
 	/**
 	 * Test writing csv data with unparseble dates throws a
 	 * HighProportionOfBadTimestampsException
-	 *
-	 * @throws JsonParseException
-	 * @throws MissingFieldException
-	 * @throws IOException
-	 * @throws OutOfOrderRecordsException
 	 */
 	@Test
-	public void highProportionOfBadTimestampsCsvTest()
-	throws JsonParseException, MissingFieldException, IOException,
-			OutOfOrderRecordsException
+    public void highProportionOfBadTimestampsCsvTest() throws JsonParseException,
+            MissingFieldException, IOException, OutOfOrderRecordsException, MalformedJsonException
 	{
 		final String HEADER = "time,responsetime,sourcetype,airline\n";
 		final String RECORD_TEMPLATE = "\"%s\",0.35,Farequote,AAL\n";
@@ -178,7 +170,7 @@ public class DataFormatWarningsTest
 
 			try
 			{
-				pm.writeToJob(dd, ac, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, 
+				pm.writeToJob(dd, ac, new TransformConfigs(Arrays.<TransformConfig>asList()), bis,
 				        new NullOutputStream(),
 						statusReporter, dp, LOGGER);
 				Assert.assertTrue(false); // should throw
@@ -200,16 +192,10 @@ public class DataFormatWarningsTest
 	/**
 	 * Test writing JSON data with unparseble dates throws a
 	 * HighProportionOfBadTimestampsException
-	 *
-	 * @throws JsonParseException
-	 * @throws MissingFieldException
-	 * @throws IOException
-	 * @throws OutOfOrderRecordsException
 	 */
 	@Test
-	public void highProportionOfBadTimestampsJsonTest()
-	throws JsonParseException, MissingFieldException, IOException,
-			OutOfOrderRecordsException
+    public void highProportionOfBadTimestampsJsonTest() throws JsonParseException,
+            MissingFieldException, IOException, OutOfOrderRecordsException, MalformedJsonException
 	{
 		final String RECORD_TEMPLATE = "{\"time\":\"%s\","
 				+ "\"responsetime\":0.35,"
@@ -322,16 +308,10 @@ public class DataFormatWarningsTest
 
 	/**
 	 * Test writing CSV with out of order records should throw an exception
-	 *
-	 * @throws JsonParseException
-	 * @throws MissingFieldException
-	 * @throws IOException
-	 * @throws OutOfOrderRecordsException
 	 */
 	@Test
-	public void OutOfOrderRecondsCsvTest()
-	throws JsonParseException, MissingFieldException, IOException,
-		HighProportionOfBadTimestampsException
+    public void OutOfOrderRecondsCsvTest() throws JsonParseException, MissingFieldException,
+            IOException, HighProportionOfBadTimestampsException, MalformedJsonException
 	{
 		final String HEADER = "time,responsetime,sourcetype,airline\n";
 		final String RECORD_TEMPLATE = "\"%s\",0.35,Farequote,AAL\n";
@@ -446,16 +426,10 @@ public class DataFormatWarningsTest
 
 	/**
 	 * Test writing JSON with out of order records should throw an exception
-	 *
-	 * @throws JsonParseException
-	 * @throws MissingFieldException
-	 * @throws IOException
-	 * @throws OutOfOrderRecordsException
 	 */
 	@Test
-	public void outOfOrderRecordsJsonTest()
-	throws JsonParseException, MissingFieldException, IOException,
-		HighProportionOfBadTimestampsException
+    public void outOfOrderRecordsJsonTest() throws JsonParseException, MissingFieldException,
+            IOException, HighProportionOfBadTimestampsException, MalformedJsonException
 	{
 		final String RECORD_TEMPLATE = "{\"time\":\"%s\","
 				+ "\"responsetime\":0.35,"

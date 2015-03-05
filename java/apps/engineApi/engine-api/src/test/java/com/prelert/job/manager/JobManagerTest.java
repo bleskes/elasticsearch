@@ -58,6 +58,7 @@ import com.prelert.job.TooManyJobsException;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.process.ProcessManager;
+import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
@@ -88,7 +89,7 @@ public class JobManagerTest
     public void testSubmitDataLoadJob_GivenProcessIsRunningAsManyJobsAsLicenseAllows()
             throws JsonParseException, UnknownJobException, NativeProcessRunException,
             MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException,
-            OutOfOrderRecordsException, TooManyJobsException
+            OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException
     {
         when(m_JobProvider.getJobDetails("foo")).thenReturn(
                 new JobDetails("foo", new JobConfiguration()));
@@ -111,7 +112,7 @@ public class JobManagerTest
     public void testSubmitDataLoadJob_GivenDefaultFactorAndProcessIsRunningMoreJobsThanMaxAllowed()
             throws JsonParseException, UnknownJobException, NativeProcessRunException,
             MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException,
-            OutOfOrderRecordsException, TooManyJobsException
+            OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException
     {
         int max = 3 * Runtime.getRuntime().availableProcessors();
         when(m_JobProvider.getJobDetails("foo")).thenReturn(
@@ -135,7 +136,7 @@ public class JobManagerTest
     public void testSubmitDataLoadJob_GivenSpecifiedFactorAndProcessIsRunningMoreJobsThanMaxAllowed()
             throws JsonParseException, UnknownJobException, NativeProcessRunException,
             MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException,
-            OutOfOrderRecordsException, TooManyJobsException
+            OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException
     {
         System.setProperty("prelert.max.jobs.factor", "5.0");
         int max = 5 * Runtime.getRuntime().availableProcessors();
@@ -160,7 +161,7 @@ public class JobManagerTest
     public void testSubmitDataLoadJob_GivenInvalidFactorAndProcessIsRunningMoreJobsThanMaxAllowed()
             throws JsonParseException, UnknownJobException, NativeProcessRunException,
             MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException,
-            OutOfOrderRecordsException, TooManyJobsException
+            OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException
     {
         System.setProperty("prelert.max.jobs.factor", "invalid");
         int max = 3 * Runtime.getRuntime().availableProcessors();
@@ -186,7 +187,7 @@ public class JobManagerTest
     public void testSubmitDataLoadJob_GivenProcessIsRunSuccessfully()
             throws JsonParseException, UnknownJobException, NativeProcessRunException,
             MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException,
-            OutOfOrderRecordsException, TooManyJobsException
+            OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException
     {
         InputStream inputStream = mock(InputStream.class);
         when(m_JobProvider.getJobDetails("foo")).thenReturn(

@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -25,39 +25,17 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.process.writer;
+package com.prelert.job.process.exceptions;
 
-import java.io.IOException;
-import java.io.InputStream;
+import com.prelert.job.JobException;
+import com.prelert.rs.data.ErrorCode;
 
-import com.prelert.job.process.exceptions.MalformedJsonException;
-import com.prelert.job.process.exceptions.MissingFieldException;
-import com.prelert.job.status.HighProportionOfBadTimestampsException;
-import com.prelert.job.status.OutOfOrderRecordsException;
-
-/**
- * A writer for transforming and piping data from an
- * inputstream to outputstream as the process expects.
- */
-public interface DataToProcessWriter
+public class MalformedJsonException extends JobException
 {
-    /**
-     * Reads the input, transform to length encoded values and pipe
-     * to the OutputStream.
-     * No transformation is applied to the data the timestamp is expected
-     * in seconds from the epoch.
-     * If any of the fields in <code>analysisFields</code> or the
-     * <code>DataDescription</code>s timeField is missing from the CSV header
-     * a <code>MissingFieldException</code> is thrown
-     *
-     * @throws IOException
-     * @throws MissingFieldException If any fields are missing from the input
-     * @throws HighProportionOfBadTimestampsException If a large proportion
-     * of the records read have missing fields
-     * @throws OutOfOrderRecordsException
-     * @throws MalformedJsonException If JSON data is malformed and we cannot recover.
-     */
-    void write(InputStream inputStream) throws IOException, MissingFieldException,
-            HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
-            MalformedJsonException;
+    private static final long serialVersionUID = 1L;
+
+    public MalformedJsonException(Throwable cause)
+    {
+        super("The input JSON data is malformed.", ErrorCode.MALFORMED_JSON, cause);
+    }
 }

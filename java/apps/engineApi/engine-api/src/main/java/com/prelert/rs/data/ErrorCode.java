@@ -201,6 +201,10 @@ public enum ErrorCode
      */
     TOO_MANY_JOBS_RUNNING_CONCURRENTLY(30106),
 
+    /**
+     * The input JSON data is malformed.
+     */
+    MALFORMED_JSON(30107),
 
 	// native process errors
 	/**

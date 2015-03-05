@@ -27,7 +27,7 @@
 
 package com.prelert.job.process.writer;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.fail;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -38,19 +38,20 @@ import java.util.Arrays;
 import java.util.Set;
 import java.util.TreeSet;
 
+import junit.framework.Assert;
+
 import org.apache.log4j.Logger;
 import org.junit.Test;
 
-import junit.framework.Assert;
-
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
+import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.Detector;
 import com.prelert.job.TransformConfig;
 import com.prelert.job.TransformConfigs;
-import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.persistence.DummyJobDataPersister;
 import com.prelert.job.process.ProcessManager;
+import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.status.DummyStatusReporter;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
@@ -63,12 +64,11 @@ public class CsvDataTransformTest
 
     /**
      * Test transforming csv data with time in epoch format
-     * @throws HighProportionOfBadTimestampsException
-     * @throws OutOfOrderRecordsException
      */
     @Test
-    public void plainCSVToLengthEncoded()
-    throws IOException, MissingFieldException,HighProportionOfBadTimestampsException, OutOfOrderRecordsException
+    public void plainCSVToLengthEncoded() throws IOException, MissingFieldException,
+            HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
+            MalformedJsonException
     {
         String data = "airline,responsetime,sourcetype,time\n" +
                     "DJA,622,flightcentre,1350824400\n" +
@@ -176,12 +176,11 @@ public class CsvDataTransformTest
     /**
      * Test transforming csv data with time in epoch format
      * and a non-standard quote character
-     * @throws HighProportionOfBadTimestampsException
-     * @throws OutOfOrderRecordsException
      */
     @Test
-    public void quotedCSVToLengthEncoded()
-    throws IOException, MissingFieldException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException
+    public void quotedCSVToLengthEncoded() throws IOException, MissingFieldException,
+            HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
+            MalformedJsonException
     {
         // ? is the quote char
         String data = "airline,responsetime,sourcetype,time\n" +
@@ -291,12 +290,11 @@ public class CsvDataTransformTest
 
     /**
      * Test transforming csv data with a time format
-     * @throws HighProportionOfBadTimestampsException
-     * @throws OutOfOrderRecordsException
      */
     @Test
-    public void csvWithDateFormat()
-    throws IOException, MissingFieldException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException
+    public void csvWithDateFormat() throws IOException, MissingFieldException,
+            HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
+            MalformedJsonException
     {
         // ? is the quote char
         String data = "date,airline,responsetime,sourcetype\n" +
@@ -425,15 +423,10 @@ public class CsvDataTransformTest
 
     /**
      * Write CSV data with extra fields that should be filtered out
-     *
-     * @throws IOException
-     * @throws MissingFieldException
-     * @throws HighProportionOfBadTimestampsException
-     * @throws OutOfOrderRecordsException
      */
     @Test
     public void plainCsvWithExtraFields() throws IOException, MissingFieldException,
-        HighProportionOfBadTimestampsException, OutOfOrderRecordsException
+        HighProportionOfBadTimestampsException, OutOfOrderRecordsException, MalformedJsonException
     {
         String data = "airline,responsetime,sourcetype,airport,time,baggage\n" +
                     "DJA,622,flightcentre,MAN,1350824400,none\n" +
@@ -536,16 +529,12 @@ public class CsvDataTransformTest
     }
 
     /**
-     * Write CSV data with the time field missing this should throw
-     * a MissingFieldException
-     *
-     * @throws IOException
-     * @throws HighProportionOfBadTimestampsException
-     * @throws OutOfOrderRecordsException
+     * Write CSV data with the time field missing this should throw a MissingFieldException
      */
     @Test
-    public void plainCsvWithMissingTimeField()
-    throws IOException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException
+    public void plainCsvWithMissingTimeField() throws IOException,
+            HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
+            MalformedJsonException
     {
         // no time field
         String data = "airline,responsetime,airport,sourcetype,baggage\n" +
@@ -632,16 +621,12 @@ public class CsvDataTransformTest
 
 
     /**
-     * Write CSV data with an analysis field missing this should throw
-     * a MissingFieldException
-     *
-     * @throws IOException
-     * @throws HighProportionOfBadTimestampsException
-     * @throws OutOfOrderRecordsException
+     * Write CSV data with an analysis field missing this should throw a MissingFieldException
      */
     @Test
-    public void plainCsvWithMissingField()
-    throws IOException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException
+    public void plainCsvWithMissingField() throws IOException,
+            HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
+            MalformedJsonException
     {
         String data = "airline,responsetime,airport,sourcetype,time,baggage\n" +
                 "DJA,622,flightcentre,MAN,1350824400,none\n" +
@@ -726,16 +711,11 @@ public class CsvDataTransformTest
     /**
      * Tests writing csv records where some records have
      * missing values. Tests for epoch, epoch_ms and timeformat
-     *
-     * @throws IOException
-     * @throws MissingFieldException
-     * @throws HighProportionOfBadTimestampsException
-     * @throws OutOfOrderRecordsException
      */
     @Test
     public void plainCsvWithIncompleteRecords()
     throws IOException, MissingFieldException, HighProportionOfBadTimestampsException,
-        OutOfOrderRecordsException
+        OutOfOrderRecordsException, MalformedJsonException
     {
         String epoch_data = "time,airline,responsetime,sourcetype,airport,baggage\n" +
                 "1350824400,DJA,622,flightcentre,MAN,none\n" +
@@ -875,13 +855,11 @@ public class CsvDataTransformTest
 
     /**
      * Test converting timestamps with fractional components
-     * @throws OutOfOrderRecordsException
-     * @throws HighProportionOfBadTimestampsException
      */
     @Test
-    public void epochWithFractionTest()
-    throws IOException, MissingFieldException,
-    HighProportionOfBadTimestampsException, OutOfOrderRecordsException
+    public void epochWithFractionTest() throws IOException, MissingFieldException,
+            HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
+            MalformedJsonException
     {
         String epochData = "airline,responsetime,sourcetype,airport,_time,baggage\n" +
                 "DJA,622,flightcentre,MAN,1350824400.115846484,none\n" +
