@@ -679,9 +679,9 @@ public class JobManager
         {
             throw new TooManyJobsException(m_MaxAllowedJobs,
                     "Cannot reactivate job with id '" + jobId +
-                    "' - no more than " + m_MaxAllowedJobs +
-                    " jobs are allowed to run concurrently. You must close a job before" +
-                    " you can reactivate a closed one.",
+                    "'. The maximum numuber of concurrently running jobs is limited as a function " +
+                    "of the number of CPU cores see this error code's help documentation " +
+                    "for details of how to elevate the setting",
                     ErrorCode.TOO_MANY_JOBS_RUNNING_CONCURRENTLY);
         }
     }
