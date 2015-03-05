@@ -83,6 +83,11 @@ public abstract class ResourceWithJobManager
     public static final String BAD_DATE_FORMAT_MSG = "Error: Query param '%s' with value"
             + " '%s' cannot be parsed as a date or converted to a number (epoch)";
 
+    /**
+     * Message returned on successful deletion of a job
+     */
+    public static final String ACKNOWLEDGEMENT = "{\"acknowledged\":true}\n";
+
 
     /**
      * Application context injected by the framework

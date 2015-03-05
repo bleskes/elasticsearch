@@ -52,6 +52,7 @@ import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
+import com.prelert.job.status.RecordStats;
 import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.provider.RestApiException;
 import com.prelert.rs.streaminginterceptor.StreamingInterceptor;
@@ -97,8 +98,9 @@ public abstract class AbstractDataStreamer {
      * @throws OutOfOrderRecordsException
      * @throws TooManyJobsException If the license is violated
      * @throws MalformedJsonException If JSON data is malformed and we cannot recover
+     * @return Count of records, fields, bytes, etc written
      */
-    public void streamData(String contentEncoding, String jobId, InputStream input)
+    public RecordStats streamData(String contentEncoding, String jobId, InputStream input)
             throws IOException, UnknownJobException, NativeProcessRunException,
             MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException,
             OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException
@@ -110,9 +112,11 @@ public abstract class AbstractDataStreamer {
         {
             input = persistDataToDisk(jobId, input);
         }
-        handleStream(jobId, input);
+        RecordStats stats = handleStream(jobId, input);
 
         LOGGER.debug("File uploaded to job " + jobId);
+
+        return stats;
     }
 
     private InputStream tryDecompressingInputStream(String contentEncoding,
@@ -190,8 +194,9 @@ public abstract class AbstractDataStreamer {
      * @throws OutOfOrderRecordsException
      * @throws TooManyJobsException If the license is violated
      * @throws MalformedJsonException If JSON data is malformed and we cannot recover
+     * @return Count of records, fields, bytes, etc written
      */
-    private boolean handleStream(String jobId, InputStream input) throws
+    private RecordStats handleStream(String jobId, InputStream input) throws
             NativeProcessRunException, UnknownJobException, MissingFieldException,
             JsonParseException, JobInUseException, HighProportionOfBadTimestampsException,
             OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException

@@ -61,6 +61,7 @@ import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
+import com.prelert.job.status.RecordStats;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.ErrorCode;
@@ -588,8 +589,9 @@ public class JobManager
      * @throws OutOfOrderRecordsException
      * @throws TooManyJobsException If the license is violated
      * @throws MalformedJsonException If JSON data is malformed and we cannot recover
+     * @return Count of records, fields, bytes, etc written
      */
-    public boolean submitDataLoadJob(String jobId, InputStream input)
+    public RecordStats submitDataLoadJob(String jobId, InputStream input)
     throws UnknownJobException, NativeProcessRunException, MissingFieldException,
         JsonParseException, JobInUseException, HighProportionOfBadTimestampsException,
         OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException
@@ -619,9 +621,13 @@ public class JobManager
      * @throws HighProportionOfBadTimestampsException
      * @throws OutOfOrderRecordsException
      * @throws TooManyJobsException If the license is violated
+<<<<<<< HEAD
      * @throws MalformedJsonException If JSON data is malformed and we cannot recover
+=======
+     * @return Count of records, fields, bytes, etc written
+>>>>>>> Refactor to allow the processed data stats to be passed back to the original rest call
      */
-    public boolean submitDataLoadAndPersistJob(String jobId, InputStream input)
+    public RecordStats submitDataLoadAndPersistJob(String jobId, InputStream input)
     throws UnknownJobException, NativeProcessRunException, MissingFieldException,
         JsonParseException, JobInUseException, HighProportionOfBadTimestampsException,
         OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException
@@ -629,31 +635,29 @@ public class JobManager
         return submitDataLoadJob(jobId, input, true);
     }
 
-    private  boolean submitDataLoadJob(String jobId, InputStream input, boolean shouldPersist)
+    private  RecordStats submitDataLoadJob(String jobId, InputStream input, boolean shouldPersist)
             throws UnknownJobException, NativeProcessRunException, MissingFieldException,
             JsonParseException, JobInUseException, HighProportionOfBadTimestampsException,
             OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException
     {
         checkTooManyJobs(jobId);
-        boolean success = tryProcessingDataLoadJob(jobId, input, shouldPersist);
-        if (success)
-        {
-            updateLastDataTime(jobId, new Date());
-        }
-        return success;
+        RecordStats stats = tryProcessingDataLoadJob(jobId, input, shouldPersist);
+        updateLastDataTime(jobId, new Date());
+
+        return stats;
     }
 
 
-    private boolean tryProcessingDataLoadJob(String jobId, InputStream input, boolean shouldPersist)
+    private RecordStats tryProcessingDataLoadJob(String jobId, InputStream input, boolean shouldPersist)
             throws UnknownJobException, MissingFieldException,
             JsonParseException, JobInUseException,
             HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
             NativeProcessRunException, MalformedJsonException
     {
-        boolean success = true;
+        RecordStats stats;
         try
         {
-            success = shouldPersist ? m_ProcessManager.processDataLoadAndPersistJob(jobId, input)
+            stats = shouldPersist ? m_ProcessManager.processDataLoadAndPersistJob(jobId, input)
                     : m_ProcessManager.processDataLoadJob(jobId, input);
         }
         catch (NativeProcessRunException ne)
@@ -663,7 +667,7 @@ public class JobManager
             //rethrow
             throw ne;
         }
-        return success;
+        return stats;
     }
 
     private void checkTooManyJobs(String jobId) throws TooManyJobsException

@@ -27,12 +27,14 @@
  ************************************************************/
 package com.prelert.job.status;
 
+import org.apache.log4j.Logger;
+
+import com.prelert.job.JobDetails;
 import com.prelert.job.status.StatusReporter;
 import com.prelert.job.usage.UsageReporter;
 
 /**
- * Dummy StatusReporter with an
- *
+ * Dummy StatusReporter for testing abstract class
  */
 public class DummyStatusReporter extends StatusReporter
 {
@@ -40,6 +42,12 @@ public class DummyStatusReporter extends StatusReporter
 	public DummyStatusReporter(UsageReporter usageReporter)
 	{
 		super("DummyJobId", usageReporter, null);
+	}
+
+	public DummyStatusReporter(JobDetails.Counts counts,
+                            UsageReporter usageReporter)
+	{
+	    super("DummyJobId", counts, usageReporter, null);
 	}
 
 	@Override

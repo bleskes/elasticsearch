@@ -48,6 +48,7 @@ import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
+import com.prelert.job.status.RecordStats;
 import com.prelert.job.status.StatusReporter;
 import com.prelert.transforms.Transform;
 
@@ -88,12 +89,14 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter
      * @throws MalformedJsonException
      */
     @Override
-    public void write(InputStream inputStream) throws IOException, MissingFieldException,
+    public RecordStats write(InputStream inputStream) throws IOException, MissingFieldException,
             HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
             MalformedJsonException
     {
         CountingInputStream countingStream = new CountingInputStream(inputStream, m_StatusReporter);
         m_StatusReporter.setAnalysedFieldsPerRecord(m_AnalysisConfig.analysisFields().size());
+
+        m_StatusReporter.startNewIncrementalCount();
 
         try (JsonParser parser = new JsonFactory().createParser(countingStream))
         {
@@ -108,6 +111,8 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter
             // as it would suppress any exceptions from the try block
             m_JobDataPersister.flushRecords();
         }
+
+        return m_StatusReporter.incrementalStats();
     }
 
     private void writeJson(JsonParser parser) throws IOException, MissingFieldException,

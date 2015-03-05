@@ -136,7 +136,7 @@ public class Data extends ResourceWithJobManager
         LOGGER.debug("Post to flush data upload for job " + jobId +
                      " with " + CALC_INTERIM_PARAM + '=' + calcInterim);
         jobManager().flushJob(jobId, calcInterim);
-        return Response.ok().build();
+        return Response.ok().entity(ACKNOWLEDGEMENT).build();
     }
 
 
@@ -157,6 +157,6 @@ public class Data extends ResourceWithJobManager
         LOGGER.debug("Post to close data upload for job " + jobId);
         jobManager().finishJob(jobId);
         LOGGER.debug("Process finished successfully, Job Id = '" + jobId + "'");
-        return Response.accepted().build();
+        return Response.accepted().entity(ACKNOWLEDGEMENT).build();
     }
 }

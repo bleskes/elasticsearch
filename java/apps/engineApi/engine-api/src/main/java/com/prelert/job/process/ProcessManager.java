@@ -74,6 +74,7 @@ import com.prelert.job.process.writer.DataToProcessWriterFactory;
 import com.prelert.job.quantiles.QuantilesState;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
+import com.prelert.job.status.RecordStats;
 import com.prelert.job.status.StatusReporter;
 import com.prelert.job.status.StatusReporterFactory;
 import com.prelert.job.usage.UsageReporterFactory;
@@ -197,8 +198,9 @@ public class ProcessManager
      * @throws HighProportionOfBadTimestampsException
      * @throws OutOfOrderRecordsException
      * @throws MalformedJsonException
+     * @return Count of records, fields, bytes, etc written
      */
-    public boolean processDataLoadJob(String jobId, InputStream input)
+    public RecordStats processDataLoadJob(String jobId, InputStream input)
     throws UnknownJobException, NativeProcessRunException, MissingFieldException,
         JsonParseException, JobInUseException, HighProportionOfBadTimestampsException,
         OutOfOrderRecordsException, MalformedJsonException
@@ -239,9 +241,13 @@ public class ProcessManager
      * the job is already handling data
      * @throws HighProportionOfBadTimestampsException
      * @throws OutOfOrderRecordsException
+<<<<<<< HEAD
      * @throws MalformedJsonException
+=======
+     * @return Count of records, fields, bytes, etc written
+>>>>>>> Refactor to allow the processed data stats to be passed back to the original rest call
      */
-    public boolean processDataLoadAndPersistJob(String jobId, InputStream input)
+    public RecordStats processDataLoadAndPersistJob(String jobId, InputStream input)
     throws UnknownJobException, NativeProcessRunException, MissingFieldException,
         JsonParseException, JobInUseException, HighProportionOfBadTimestampsException,
         OutOfOrderRecordsException, MalformedJsonException
@@ -250,7 +256,7 @@ public class ProcessManager
                 m_DataPersisterFactory.newDataPersister(jobId, LOGGER));
     }
 
-    private boolean processDataLoadJob(String jobId, InputStream input,
+    private RecordStats processDataLoadJob(String jobId, InputStream input,
             JobDataPersister jobDataPersister) throws UnknownJobException,
             NativeProcessRunException, MissingFieldException, JsonParseException,
             JobInUseException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
@@ -294,11 +300,12 @@ public class ProcessManager
         processStillRunning(process);
 
         // write the data to the process
+        RecordStats stats;
         try
         {
             process.setInUse(true);
 
-            writeToJob(process.getDataDescription(), process.getAnalysisConfig(),
+            stats = writeToJob(process.getDataDescription(), process.getAnalysisConfig(),
                     process.getTransforms(), input, process.getProcess().getOutputStream(),
                     process.getStatusReporter(),
                     jobDataPersister,
@@ -329,7 +336,7 @@ public class ProcessManager
             m_JobIdToTimeoutFuture.put(jobId, future);
         }
 
-        return true;
+        return stats;
     }
 
     /**
@@ -763,9 +770,13 @@ public class ProcessManager
      * @throws IOException
      * @throws HighProportionOfBadTimestampsException
      * @throws OutOfOrderRecordsException
+<<<<<<< HEAD
      * @throws MalformedJsonException
+=======
+     * @return Count of records, fields, bytes, etc written
+>>>>>>> Refactor to allow the processed data stats to be passed back to the original rest call
      */
-    public void writeToJob(DataDescription dataDescription,
+    public RecordStats writeToJob(DataDescription dataDescription,
             AnalysisConfig analysisConfig,
             TransformConfigs transforms,
             InputStream input, OutputStream output,
@@ -779,7 +790,8 @@ public class ProcessManager
         BufferedOutputStream bufferedStream = new BufferedOutputStream(output);
         DataToProcessWriter writer = new DataToProcessWriterFactory().create(bufferedStream,
                 dataDescription, analysisConfig, transforms, statusReporter, dataPersister, jobLogger);
-        writer.write(input);
+
+        return writer.write(input);
     }
 
 

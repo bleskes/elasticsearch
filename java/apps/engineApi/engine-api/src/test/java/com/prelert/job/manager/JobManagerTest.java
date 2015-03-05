@@ -29,7 +29,6 @@ package com.prelert.job.manager;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -63,6 +62,7 @@ import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
+import com.prelert.job.status.RecordStats;
 import com.prelert.rs.data.ErrorCode;
 
 public class JobManagerTest
@@ -198,10 +198,12 @@ public class JobManagerTest
         givenProcessInfo(5);
         when(m_ProcessManager.jobIsRunning("foo")).thenReturn(false);
         when(m_ProcessManager.numberOfRunningJobs()).thenReturn(0);
-        when(m_ProcessManager.processDataLoadJob("foo", inputStream)).thenReturn(true);
+        when(m_ProcessManager.processDataLoadJob("foo", inputStream)).thenReturn(new RecordStats());
         JobManager jobManager = new JobManager(m_JobProvider, m_ProcessManager);
 
-        assertTrue(jobManager.submitDataLoadJob("foo", inputStream));
+        RecordStats stats = jobManager.submitDataLoadJob("foo", inputStream);
+        assertNotNull(stats);
+
         ArgumentCaptor<Map> updateCaptor = ArgumentCaptor.forClass(Map.class);
         verify(m_JobProvider).updateJob(eq("foo"), updateCaptor.capture());
         Map updates = updateCaptor.getValue();

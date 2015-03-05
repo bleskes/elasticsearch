@@ -49,6 +49,7 @@ import com.prelert.job.persistence.JobDataPersister;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
+import com.prelert.job.status.RecordStats;
 import com.prelert.job.status.StatusReporter;
 import com.prelert.transforms.Transform;
 
@@ -88,7 +89,7 @@ class CsvDataToProcessWriter extends AbstractDataToProcessWriter
      * @throws OutOfOrderRecordsException
      */
     @Override
-    public void write(InputStream inputStream) throws IOException, MissingFieldException,
+    public RecordStats write(InputStream inputStream) throws IOException, MissingFieldException,
             HighProportionOfBadTimestampsException, OutOfOrderRecordsException
     {
         CsvPreference csvPref = new CsvPreference.Builder(
@@ -100,6 +101,8 @@ class CsvDataToProcessWriter extends AbstractDataToProcessWriter
         int lineCount = 0;
 
         CountingInputStream countingStream = new CountingInputStream(inputStream, m_StatusReporter);
+
+        m_StatusReporter.startNewIncrementalCount();
 
         try (CsvListReader csvReader = new CsvListReader(
                 new InputStreamReader(countingStream, StandardCharsets.UTF_8),
@@ -177,6 +180,8 @@ class CsvDataToProcessWriter extends AbstractDataToProcessWriter
 
         m_Logger.debug(String.format("Transferred %d of %d CSV records to autodetect.",
                 recordsWritten, lineCount));
+
+        return m_StatusReporter.incrementalStats();
     }
 
     @Override

@@ -58,13 +58,10 @@ public abstract class StatusReporter
 	public static final String ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS_PROP =
 			"max.percent.outoforder.errors";
 
-	private long m_RecordsWritten = 0;
-	private long m_InputFieldCount = 0;
-	private long m_BytesRead = 0;
-	private long m_DateParseErrorsCount = 0;
-	private long m_MissingFieldErrorCount = 0;
-	private long m_OutOfOrderRecordCount = 0;
-	private long m_FailedTransformCount = 0;
+
+	private RecordStats m_TotalRecordStats;
+	private RecordStats m_IncrementalRecordStats;
+
 
 	private long m_AnalyzedFieldsPerRecord = 1;
 
@@ -85,6 +82,9 @@ public abstract class StatusReporter
 		m_JobId = jobId;
 		m_UsageReporter = usageReporter;
 		m_Logger = logger;
+
+		m_TotalRecordStats = new RecordStats();
+		m_IncrementalRecordStats = new RecordStats();
 
 		m_AcceptablePercentDateParseErrors = ACCEPTABLE_PERCENTAGE_DATE_PARSE_ERRORS;
 
@@ -115,12 +115,12 @@ public abstract class StatusReporter
 	{
 		this(jobId, usageReporter, logger);
 
-		m_RecordsWritten = counts.getProcessedRecordCount();
-		m_BytesRead = counts.getInputBytes();
-		m_DateParseErrorsCount = counts.getInvalidDateCount();
-		m_MissingFieldErrorCount = counts.getMissingFieldCount();
-		m_OutOfOrderRecordCount = counts.getOutOfOrderTimeStampCount();
-		m_FailedTransformCount = counts.getFailedTransformCount();
+		m_TotalRecordStats.setRecordsWritten(counts.getProcessedRecordCount());
+		m_TotalRecordStats.setBytesRead(counts.getInputBytes());
+		m_TotalRecordStats.setDateParseErrorsCount(counts.getInvalidDateCount());
+		m_TotalRecordStats.setMissingFieldErrorCount(counts.getMissingFieldCount());
+		m_TotalRecordStats.setOutOfOrderRecordCount(counts.getOutOfOrderTimeStampCount());
+		m_TotalRecordStats.setFailedTransformCount(counts.getFailedTransformCount());
 	}
 
 	/**
@@ -139,8 +139,8 @@ public abstract class StatusReporter
 	{
 		m_UsageReporter.addFieldsRecordsRead(inputFieldCount);
 
-		m_InputFieldCount += inputFieldCount;
-		m_RecordsWritten += 1;
+		m_TotalRecordStats.m_InputFieldCount += inputFieldCount;
+		m_TotalRecordStats.m_RecordsWritten += 1;
 
 		// report at various boundaries
 		long totalRecords = getInputRecordCount() ;
@@ -157,8 +157,8 @@ public abstract class StatusReporter
 	 */
 	public void reportDateParseError(long inputFieldCount)
 	{
-		m_DateParseErrorsCount++;
-		m_InputFieldCount += inputFieldCount;
+	    m_TotalRecordStats.m_DateParseErrorsCount++;
+	    m_TotalRecordStats.m_InputFieldCount += inputFieldCount;
 		m_UsageReporter.addFieldsRecordsRead(inputFieldCount);
 	}
 
@@ -168,7 +168,7 @@ public abstract class StatusReporter
 	 */
 	public void reportMissingField()
 	{
-		m_MissingFieldErrorCount++;
+	    m_TotalRecordStats.m_MissingFieldErrorCount++;
 	}
 
     /**
@@ -176,12 +176,12 @@ public abstract class StatusReporter
      */
     public void reportFailedTransform()
     {
-        m_FailedTransformCount++;
+        m_TotalRecordStats.m_FailedTransformCount++;
     }
 
 	public void reportMissingFields(long missingCount)
 	{
-		m_MissingFieldErrorCount += missingCount;
+	    m_TotalRecordStats.m_MissingFieldErrorCount += missingCount;
 	}
 
 	/**
@@ -190,7 +190,7 @@ public abstract class StatusReporter
 	 */
 	public void reportBytesRead(long newBytes)
 	{
-		m_BytesRead += newBytes;
+	    m_TotalRecordStats.m_BytesRead += newBytes;
 		m_UsageReporter.addBytesRead(newBytes);
 	}
 
@@ -199,8 +199,8 @@ public abstract class StatusReporter
 	 */
 	public void reportOutOfOrderRecord(long inputFieldCount)
 	{
-		m_OutOfOrderRecordCount++;
-		m_InputFieldCount += inputFieldCount;
+	    m_TotalRecordStats.m_OutOfOrderRecordCount++;
+	    m_TotalRecordStats.m_InputFieldCount += inputFieldCount;
 		m_UsageReporter.addFieldsRecordsRead(inputFieldCount);
 	}
 
@@ -213,37 +213,38 @@ public abstract class StatusReporter
 	 */
 	public long getInputRecordCount()
 	{
-		return m_RecordsWritten + m_OutOfOrderRecordCount + m_DateParseErrorsCount;
+		return m_TotalRecordStats.m_RecordsWritten + m_TotalRecordStats.m_OutOfOrderRecordCount
+		                    + m_TotalRecordStats.m_DateParseErrorsCount;
 	}
 
 	public long getProcessedRecordCount()
 	{
-		return m_RecordsWritten;
+		return m_TotalRecordStats.m_RecordsWritten;
 	}
 
 	public long getDateParseErrorsCount()
 	{
-		return m_DateParseErrorsCount;
+		return m_TotalRecordStats.m_DateParseErrorsCount;
 	}
 
 	public long getMissingFieldErrorCount()
 	{
-		return m_MissingFieldErrorCount;
+		return m_TotalRecordStats.m_MissingFieldErrorCount;
 	}
 
 	public long getOutOfOrderRecordCount()
 	{
-		return m_OutOfOrderRecordCount;
+		return m_TotalRecordStats.m_OutOfOrderRecordCount;
 	}
 
 	public long getBytesRead()
 	{
-		return m_BytesRead;
+		return m_TotalRecordStats.m_BytesRead;
 	}
 
 	public long getFailedTransformCount()
 	{
-	    return m_FailedTransformCount;
+	    return m_TotalRecordStats.m_FailedTransformCount;
 	}
 
 	public long getProcessedFieldCount()
@@ -261,7 +262,7 @@ public abstract class StatusReporter
 
 	public long getInputFieldCount()
 	{
-		return m_InputFieldCount;
+		return m_TotalRecordStats.m_InputFieldCount;
 	}
 
 	public int getAcceptablePercentDateParseErrors()
@@ -393,6 +394,17 @@ public abstract class StatusReporter
 			throw new OutOfOrderRecordsException(
 					getOutOfOrderRecordCount(), totalRecords);
 		}
+	}
+
+
+	public void startNewIncrementalCount()
+	{
+	    m_IncrementalRecordStats = new RecordStats();
+	}
+
+	public RecordStats incrementalStats()
+	{
+	    return m_IncrementalRecordStats;
 	}
 
 	/**

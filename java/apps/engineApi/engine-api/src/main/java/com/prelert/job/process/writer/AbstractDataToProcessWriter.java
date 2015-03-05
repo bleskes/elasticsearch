@@ -163,6 +163,35 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
         return transforms;
     }
 
+    private void findDependencies(TransformConfig transform,
+                                        List<TransformConfig> otherTransforms,
+                                        List<TransformConfig> results)
+    {
+        Iterator<TransformConfig> itr = otherTransforms.iterator();
+
+        List<TransformConfig> dependencies = new ArrayList<>();
+        while (itr.hasNext())
+        {
+            dependencies.clear();
+
+            TransformConfig tc = itr.next();
+            for (String input : transform.getInputs())
+            {
+                if (tc.getOutputs().contains(input))
+                {
+                    dependencies.add(tc);
+                    results.add(tc);
+                    itr.remove();
+                }
+            }
+
+            for (TransformConfig dep : dependencies)
+            {
+                findDependencies(tc, otherTransforms, results);
+            }
+        }
+    }
+
     /**
      * Transform the input data and write to length encoded writer.<br>
      *
@@ -213,8 +242,7 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
         {
             try
             {
-                boolean success = tr.transform(input, output);
-                if (!success)
+                if (!tr.transform(input, output))
                 {
                     m_StatusReporter.reportFailedTransform();
                 }

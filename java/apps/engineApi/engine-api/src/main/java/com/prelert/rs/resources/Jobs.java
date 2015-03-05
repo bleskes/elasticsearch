@@ -85,11 +85,6 @@ public class Jobs extends ResourceWithJobManager
 	public static final String ENDPOINT = "jobs";
 
 	/**
-	 * Message returned on successful deletion of a job
-	 */
-	public static final String DELETE_ACK = "{\"acknowledged\":true}\n";
-
-	/**
      * Message returned if deletion of a job fails
      */
 	public static final String DELETE_FAIL = "{\"acknowledged\":false}\n";
@@ -245,7 +240,7 @@ public class Jobs extends ResourceWithJobManager
 			new JobLogs().deleteLogs(jobId);
 
 			LOGGER.debug("Job '" + jobId + "' deleted");
-			return Response.ok().entity(DELETE_ACK).build();
+			return Response.ok().entity(ACKNOWLEDGEMENT).build();
 		}
 		else
 		{
