@@ -17,7 +17,10 @@
 
 package org.elasticsearch.alerts.history;
 
-import org.elasticsearch.alerts.*;
+import org.elasticsearch.alerts.Alert;
+import org.elasticsearch.alerts.AlertExecution;
+import org.elasticsearch.alerts.ExecutionContext;
+import org.elasticsearch.alerts.Payload;
 import org.elasticsearch.alerts.actions.email.EmailAction;
 import org.elasticsearch.alerts.actions.webhook.WebhookAction;
 import org.elasticsearch.alerts.condition.Condition;
@@ -34,25 +37,24 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.junit.Test;
 
+import static org.hamcrest.Matchers.equalTo;
+
 /**
  */
 public class FiredAlertTests extends AbstractAlertsIntegrationTests {
 
     @Test
     public void testParser() throws Exception {
-
         Alert alert = AlertsTestUtils.createTestAlert("fired_test", scriptService(), httpClient(), noopEmailService(), logger);
         FiredAlert firedAlert = new FiredAlert(alert, new DateTime(), new DateTime());
         XContentBuilder jsonBuilder = XContentFactory.jsonBuilder();
         firedAlert.toXContent(jsonBuilder, ToXContent.EMPTY_PARAMS);
         FiredAlert parsedFiredAlert = firedAlertParser().parse(jsonBuilder.bytes(), firedAlert.id(), 0);
 
-
         XContentBuilder jsonBuilder2 = XContentFactory.jsonBuilder();
         parsedFiredAlert.toXContent(jsonBuilder2, ToXContent.EMPTY_PARAMS);
 
-        assertEquals(jsonBuilder.bytes().toUtf8(), jsonBuilder2.bytes().toUtf8());
-
+        assertThat(jsonBuilder.bytes().toUtf8(), equalTo(jsonBuilder2.bytes().toUtf8()));
     }
 
     @Test
@@ -72,9 +74,11 @@ public class FiredAlertTests extends AbstractAlertsIntegrationTests {
         XContentBuilder jsonBuilder = XContentFactory.jsonBuilder();
         firedAlert.toXContent(jsonBuilder, ToXContent.EMPTY_PARAMS);
         FiredAlert parsedFiredAlert = firedAlertParser().parse(jsonBuilder.bytes(), firedAlert.id(), 0);
+
         XContentBuilder jsonBuilder2 = XContentFactory.jsonBuilder();
         parsedFiredAlert.toXContent(jsonBuilder2, ToXContent.EMPTY_PARAMS);
-        assertEquals(jsonBuilder.bytes().toUtf8(), jsonBuilder2.bytes().toUtf8());
+
+        assertThat(jsonBuilder.bytes().toUtf8(), equalTo(jsonBuilder2.bytes().toUtf8()));
     }
 
     @Test
@@ -94,9 +98,11 @@ public class FiredAlertTests extends AbstractAlertsIntegrationTests {
         XContentBuilder jsonBuilder = XContentFactory.jsonBuilder();
         firedAlert.toXContent(jsonBuilder, ToXContent.EMPTY_PARAMS);
         FiredAlert parsedFiredAlert = firedAlertParser().parse(jsonBuilder.bytes(), firedAlert.id(), 0);
+
         XContentBuilder jsonBuilder2 = XContentFactory.jsonBuilder();
         parsedFiredAlert.toXContent(jsonBuilder2, ToXContent.EMPTY_PARAMS);
-        assertEquals(jsonBuilder.bytes().toUtf8(), jsonBuilder2.bytes().toUtf8());
+
+        assertThat(jsonBuilder.bytes().toUtf8(), equalTo(jsonBuilder2.bytes().toUtf8()));
     }
 
 

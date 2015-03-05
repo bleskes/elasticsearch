@@ -71,9 +71,9 @@ public class TransportAlertsStatsAction extends TransportMasterNodeOperationActi
         AlertsStatsResponse statsResponse = new AlertsStatsResponse();
         statsResponse.setAlertManagerState(alertsService.state());
         statsResponse.setAlertActionManagerStarted(historyService.started());
-        statsResponse.setAlertActionManagerQueueSize(historyService.getQueueSize());
+        statsResponse.setAlertActionManagerQueueSize(historyService.queueSize());
         statsResponse.setNumberOfRegisteredAlerts(alertsService.getNumberOfAlerts());
-        statsResponse.setAlertActionManagerLargestQueueSize(historyService.getLargestQueueSize());
+        statsResponse.setAlertActionManagerLargestQueueSize(historyService.largestQueueSize());
         statsResponse.setVersion(AlertsVersion.CURRENT);
         statsResponse.setBuild(AlertsBuild.CURRENT);
         listener.onResponse(statsResponse);

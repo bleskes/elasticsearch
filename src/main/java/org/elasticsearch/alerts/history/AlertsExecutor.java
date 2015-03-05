@@ -17,28 +17,17 @@
 
 package org.elasticsearch.alerts.history;
 
-import org.elasticsearch.common.inject.AbstractModule;
+import java.util.concurrent.BlockingQueue;
 
 /**
+ *
  */
-public class HistoryModule extends AbstractModule {
+public interface AlertsExecutor {
 
-    private final Class<? extends AlertsExecutor> executorClass;
+    BlockingQueue queue();
 
-    public HistoryModule() {
-        this(InternalAlertsExecutor.class);
-    }
+    long largestPoolSize();
 
-    protected HistoryModule(Class<? extends AlertsExecutor> executorClass) {
-        this.executorClass = executorClass;
-    }
+    void execute(Runnable runnable);
 
-    @Override
-    protected void configure() {
-        bind(FiredAlert.Parser.class).asEagerSingleton();
-        bind(HistoryStore.class).asEagerSingleton();
-        bind(HistoryService.class).asEagerSingleton();
-        bind(executorClass).asEagerSingleton();
-        bind(AlertsExecutor.class).to(executorClass);
-    }
 }
