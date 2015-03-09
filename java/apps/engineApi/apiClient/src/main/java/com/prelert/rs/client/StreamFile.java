@@ -35,7 +35,7 @@ import java.util.List;
 
 /**
  * Simple program to upload a file to the Prelert Engine API.
- * <br/>
+ * <br>
  * The job should have been created already and the job's data endpoint known
  * as it is the first argument to this program, the second is the file to upload.
  */
