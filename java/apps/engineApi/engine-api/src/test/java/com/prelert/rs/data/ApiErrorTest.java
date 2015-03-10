@@ -38,11 +38,7 @@ public class ApiErrorTest
     {
         ApiError apiError = new ApiError();
 
-        StringBuilder expected = new StringBuilder();
-        expected.append("{").append(System.lineSeparator())
-                .append("}").append(System.lineSeparator());
-
-        assertEquals(expected.toString(), apiError.toJson());
+        assertEquals("{\n}\n", apiError.toJson());
     }
 
     @Test
@@ -54,16 +50,11 @@ public class ApiErrorTest
         apiError.setCause(new RuntimeException("Cause message"));
 
         StringBuilder expected = new StringBuilder();
-        expected.append("{")
-                .append(System.lineSeparator())
-                .append("  \"message\" : \"Some message\",")
-                .append(System.lineSeparator())
-                .append("  \"errorCode\" : 30001,")
-                .append(System.lineSeparator())
-                .append("  \"cause\" : \"java.lang.RuntimeException: Cause message\"")
-                .append(System.lineSeparator())
-                .append("}")
-                .append(System.lineSeparator());
+        expected.append("{\n")
+                .append("  \"message\" : \"Some message\",\n")
+                .append("  \"errorCode\" : 30001,\n")
+                .append("  \"cause\" : \"java.lang.RuntimeException: Cause message\"\n")
+                .append("}\n");
 
         assertEquals(expected.toString(), apiError.toJson());
     }
