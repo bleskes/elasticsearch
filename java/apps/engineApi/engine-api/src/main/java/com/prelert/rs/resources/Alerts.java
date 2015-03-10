@@ -143,6 +143,8 @@ public class Alerts extends ResourceWithJobManager
                 queryParams.add(this.new KeyValue(END_QUERY_PARAM, params.end));
             }
 
+            queryParams.add(this.new KeyValue(ANOMALY_SCORE_QUERY_PARAM,
+                                Double.toString(params.anomalyScore)));
             queryParams.add(this.new KeyValue(SEVERITY_QUERY_PARAM, params.severity));
 
             setPagingUrls(path, alerts, queryParams);

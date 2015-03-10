@@ -43,6 +43,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import com.prelert.job.DataCounts;
 import com.prelert.job.JobDetails;
 import com.prelert.job.usage.UsageReporter;
 
@@ -50,7 +51,7 @@ public class ElasticsearchStatusReporterTest
 {
     @Mock private Client m_Client;
     @Mock private UsageReporter m_UsageReporter;
-    @Mock private JobDetails.Counts m_Counts;
+    @Mock private DataCounts m_Counts;
     @Mock private Logger m_Logger;
 
     @Before

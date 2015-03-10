@@ -55,6 +55,7 @@ import org.apache.log4j.RollingFileAppender;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.AnalysisConfig;
+import com.prelert.job.DataCounts;
 import com.prelert.job.DataDescription;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobInUseException;
@@ -74,7 +75,6 @@ import com.prelert.job.process.writer.DataToProcessWriterFactory;
 import com.prelert.job.quantiles.QuantilesState;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
-import com.prelert.job.status.RecordStats;
 import com.prelert.job.status.StatusReporter;
 import com.prelert.job.status.StatusReporterFactory;
 import com.prelert.job.usage.UsageReporterFactory;
@@ -200,7 +200,7 @@ public class ProcessManager
      * @throws MalformedJsonException
      * @return Count of records, fields, bytes, etc written
      */
-    public RecordStats processDataLoadJob(String jobId, InputStream input)
+    public DataCounts processDataLoadJob(String jobId, InputStream input)
     throws UnknownJobException, NativeProcessRunException, MissingFieldException,
         JsonParseException, JobInUseException, HighProportionOfBadTimestampsException,
         OutOfOrderRecordsException, MalformedJsonException
@@ -247,7 +247,7 @@ public class ProcessManager
      * @return Count of records, fields, bytes, etc written
 >>>>>>> Refactor to allow the processed data stats to be passed back to the original rest call
      */
-    public RecordStats processDataLoadAndPersistJob(String jobId, InputStream input)
+    public DataCounts processDataLoadAndPersistJob(String jobId, InputStream input)
     throws UnknownJobException, NativeProcessRunException, MissingFieldException,
         JsonParseException, JobInUseException, HighProportionOfBadTimestampsException,
         OutOfOrderRecordsException, MalformedJsonException
@@ -256,7 +256,7 @@ public class ProcessManager
                 m_DataPersisterFactory.newDataPersister(jobId, LOGGER));
     }
 
-    private RecordStats processDataLoadJob(String jobId, InputStream input,
+    private DataCounts processDataLoadJob(String jobId, InputStream input,
             JobDataPersister jobDataPersister) throws UnknownJobException,
             NativeProcessRunException, MissingFieldException, JsonParseException,
             JobInUseException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
@@ -300,7 +300,7 @@ public class ProcessManager
         processStillRunning(process);
 
         // write the data to the process
-        RecordStats stats;
+        DataCounts stats;
         try
         {
             process.setInUse(true);
@@ -776,7 +776,7 @@ public class ProcessManager
      * @return Count of records, fields, bytes, etc written
 >>>>>>> Refactor to allow the processed data stats to be passed back to the original rest call
      */
-    public RecordStats writeToJob(DataDescription dataDescription,
+    public DataCounts writeToJob(DataDescription dataDescription,
             AnalysisConfig analysisConfig,
             TransformConfigs transforms,
             InputStream input, OutputStream output,

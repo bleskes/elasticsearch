@@ -49,6 +49,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import com.fasterxml.jackson.core.JsonParseException;
+import com.prelert.job.DataCounts;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobInUseException;
@@ -62,7 +63,6 @@ import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
-import com.prelert.job.status.RecordStats;
 import com.prelert.rs.data.ErrorCode;
 
 public class JobManagerTest
@@ -198,10 +198,10 @@ public class JobManagerTest
         givenProcessInfo(5);
         when(m_ProcessManager.jobIsRunning("foo")).thenReturn(false);
         when(m_ProcessManager.numberOfRunningJobs()).thenReturn(0);
-        when(m_ProcessManager.processDataLoadJob("foo", inputStream)).thenReturn(new RecordStats());
+        when(m_ProcessManager.processDataLoadJob("foo", inputStream)).thenReturn(new DataCounts());
         JobManager jobManager = new JobManager(m_JobProvider, m_ProcessManager);
 
-        RecordStats stats = jobManager.submitDataLoadJob("foo", inputStream);
+        DataCounts stats = jobManager.submitDataLoadJob("foo", inputStream);
         assertNotNull(stats);
 
         ArgumentCaptor<Map> updateCaptor = ArgumentCaptor.forClass(Map.class);

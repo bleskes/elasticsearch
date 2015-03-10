@@ -29,25 +29,25 @@ package com.prelert.job.status;
 
 import org.apache.log4j.Logger;
 
-import com.prelert.job.JobDetails;
+import com.prelert.job.DataCounts;
 import com.prelert.job.usage.UsageReporter;
 
 /**
- * Abstract Factory method for creating new {@link StatusReporter} 
- * instances. 
+ * Abstract Factory method for creating new {@link StatusReporter}
+ * instances.
  */
-public interface StatusReporterFactory 
+public interface StatusReporterFactory
 {
 	/**
-	 * Return a new StatusReporter for the given job id. 
+	 * Return a new StatusReporter for the given job id.
 	 * @param jobId
 	 * @param counts The persisted counts for the job
 	 * @param usageReporter
-	 * to be analysed in each record. This count does not include the 
+	 * to be analysed in each record. This count does not include the
 	 * time field
 	 * @param logger The job logger
 	 * @return
 	 */
-	public StatusReporter newStatusReporter(String jobId, JobDetails.Counts 
+	public StatusReporter newStatusReporter(String jobId, DataCounts
 			counts, UsageReporter usageReporter, Logger logger);
 }

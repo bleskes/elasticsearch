@@ -29,7 +29,7 @@ package com.prelert.job.status.elasticsearch;
 import org.apache.log4j.Logger;
 import org.elasticsearch.client.Client;
 
-import com.prelert.job.JobDetails;
+import com.prelert.job.DataCounts;
 import com.prelert.job.status.StatusReporter;
 import com.prelert.job.status.StatusReporterFactory;
 import com.prelert.job.usage.UsageReporter;
@@ -49,7 +49,7 @@ public class ElasticsearchStatusReporterFactory implements StatusReporterFactory
 	}
 
 	@Override
-	public StatusReporter newStatusReporter(String jobId, JobDetails.Counts counts,
+	public StatusReporter newStatusReporter(String jobId, DataCounts counts,
 			UsageReporter usageReporter, Logger logger)
 	{
         return new ElasticsearchStatusReporter(m_Client, usageReporter, jobId,

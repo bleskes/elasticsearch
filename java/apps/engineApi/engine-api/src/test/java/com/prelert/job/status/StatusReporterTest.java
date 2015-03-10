@@ -37,7 +37,7 @@ import java.lang.reflect.InvocationTargetException;
 
 import org.junit.Test;
 
-import com.prelert.job.JobDetails;
+import com.prelert.job.DataCounts;
 import com.prelert.job.usage.UsageReporter;
 
 public class StatusReporterTest {
@@ -65,7 +65,7 @@ public class StatusReporterTest {
     {
         DummyStatusReporter reporter = new DummyStatusReporter(mock(UsageReporter.class));
 
-        RecordStats stats = reporter.incrementalStats();
+        DataCounts stats = reporter.incrementalStats();
         assertNotNull(stats);
 
         testAllFieldsEqualZero(stats);
@@ -75,7 +75,7 @@ public class StatusReporterTest {
     public void testComplexConstructor()
     throws IntrospectionException, IllegalAccessException, IllegalArgumentException, InvocationTargetException
     {
-        JobDetails.Counts counts = new JobDetails.Counts();
+        DataCounts counts = new DataCounts();
 
         counts.setProcessedRecordCount(1);
         counts.setInputBytes(2);
@@ -86,7 +86,7 @@ public class StatusReporterTest {
 
         DummyStatusReporter reporter = new DummyStatusReporter(counts, mock(UsageReporter.class));
 
-        RecordStats stats = reporter.incrementalStats();
+        DataCounts stats = reporter.incrementalStats();
         assertNotNull(stats);
         testAllFieldsEqualZero(stats);
 
@@ -98,11 +98,11 @@ public class StatusReporterTest {
         assertEquals(6, reporter.getFailedTransformCount());
     }
 
-    private void testAllFieldsEqualZero(RecordStats stats)
+    private void testAllFieldsEqualZero(DataCounts stats)
     throws IntrospectionException, IllegalAccessException, IllegalArgumentException, InvocationTargetException
     {
         for(PropertyDescriptor propertyDescriptor :
-            Introspector.getBeanInfo(RecordStats.class, Object.class).getPropertyDescriptors())
+            Introspector.getBeanInfo(DataCounts.class, Object.class).getPropertyDescriptors())
         {
             assertEquals(new Long(0), propertyDescriptor.getReadMethod().invoke(stats));
         }

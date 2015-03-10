@@ -353,7 +353,7 @@ public class Detector
     public int hashCode()
     {
         return Objects.hash(m_Function, m_FieldName, m_ByFieldName,
-                m_OverFieldName, m_PartitionFieldName, m_UseNull);
+                m_OverFieldName, m_PartitionFieldName, m_UseNull, m_ExcludeFrequent);
     }
 
     /**

@@ -536,8 +536,8 @@ public class InterimResultsTest implements Closeable
         test.createFarequoteJob(baseUrl);
         test.m_WebServiceClient.fileUpload(baseUrl, farequoteJob,
                 fareQuotePartData, false);
-        test.m_WebServiceClient.flushJob(baseUrl, farequoteJob, true);
-        test.m_WebServiceClient.closeJob(baseUrl, farequoteJob);
+        InterimResultsTest.test(test.m_WebServiceClient.flushJob(baseUrl, farequoteJob, true) == true);
+        InterimResultsTest.test(test.m_WebServiceClient.closeJob(baseUrl, farequoteJob) == true);
 
         test.verifyFarequoteInterimBuckets(baseUrl, farequoteJob, false);
         test.verifyFarequoteInterimBuckets(baseUrl, farequoteJob, true);

@@ -42,6 +42,7 @@ import javax.ws.rs.core.Response;
 
 import org.apache.log4j.Logger;
 
+import com.prelert.job.DataCounts;
 import com.prelert.job.JobInUseException;
 import com.prelert.job.TooManyJobsException;
 import com.prelert.job.UnknownJobException;
@@ -110,8 +111,8 @@ public class Data extends ResourceWithJobManager
     {
         AbstractDataStreamer dataStreamer = new DataStreamer(jobManager());
         String contentEncoding = headers.getHeaderString(HttpHeaders.CONTENT_ENCODING);
-        dataStreamer.streamData(contentEncoding, jobId, input);
-        return Response.accepted().build();
+        DataCounts stats = dataStreamer.streamData(contentEncoding, jobId, input);
+        return Response.accepted().entity(stats).build();
     }
 
 

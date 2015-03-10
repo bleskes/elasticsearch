@@ -41,6 +41,7 @@ import org.supercsv.io.CsvListReader;
 import org.supercsv.prefs.CsvPreference;
 
 import com.prelert.job.AnalysisConfig;
+import com.prelert.job.DataCounts;
 import com.prelert.job.DataDescription;
 import com.prelert.job.TransformConfigs;
 import com.prelert.job.input.CountingInputStream;
@@ -49,7 +50,6 @@ import com.prelert.job.persistence.JobDataPersister;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
-import com.prelert.job.status.RecordStats;
 import com.prelert.job.status.StatusReporter;
 import com.prelert.transforms.Transform;
 
@@ -89,7 +89,7 @@ class CsvDataToProcessWriter extends AbstractDataToProcessWriter
      * @throws OutOfOrderRecordsException
      */
     @Override
-    public RecordStats write(InputStream inputStream) throws IOException, MissingFieldException,
+    public DataCounts write(InputStream inputStream) throws IOException, MissingFieldException,
             HighProportionOfBadTimestampsException, OutOfOrderRecordsException
     {
         CsvPreference csvPref = new CsvPreference.Builder(

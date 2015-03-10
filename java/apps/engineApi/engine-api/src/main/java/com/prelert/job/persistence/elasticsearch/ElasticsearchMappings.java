@@ -35,6 +35,7 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.AnalysisLimits;
+import com.prelert.job.DataCounts;
 import com.prelert.job.DataDescription;
 import com.prelert.job.Detector;
 import com.prelert.job.JobDetails;
@@ -107,34 +108,34 @@ public class ElasticsearchMappings
                         .startObject(JobDetails.COUNTS)
                             .field("type", "object")
                             .startObject("properties")
-                                .startObject(JobDetails.BUCKET_COUNT)
+                                .startObject(DataCounts.BUCKET_COUNT)
                                     .field("type", "long")
                                 .endObject()
-                                .startObject(JobDetails.PROCESSED_RECORD_COUNT)
+                                .startObject(DataCounts.PROCESSED_RECORD_COUNT)
                                     .field("type", "long")
                                 .endObject()
-                                .startObject(JobDetails.PROCESSED_FIELD_COUNT)
+                                .startObject(DataCounts.PROCESSED_FIELD_COUNT)
                                     .field("type", "long")
                                 .endObject()
-                                .startObject(JobDetails.INPUT_BYTES)
+                                .startObject(DataCounts.INPUT_BYTES)
                                     .field("type", "long")
                                 .endObject()
-                                .startObject(JobDetails.INPUT_RECORD_COUNT)
+                                .startObject(DataCounts.INPUT_RECORD_COUNT)
                                     .field("type", "long")
                                 .endObject()
-                                .startObject(JobDetails.INPUT_FIELD_COUNT)
+                                .startObject(DataCounts.INPUT_FIELD_COUNT)
                                     .field("type", "long")
                                 .endObject()
-                                .startObject(JobDetails.INVALID_DATE_COUNT)
+                                .startObject(DataCounts.INVALID_DATE_COUNT)
                                     .field("type", "long")
                                 .endObject()
-                                .startObject(JobDetails.MISSING_FIELD_COUNT)
+                                .startObject(DataCounts.MISSING_FIELD_COUNT)
                                     .field("type", "long")
                                 .endObject()
-                                .startObject(JobDetails.OUT_OF_ORDER_TIME_COUNT)
+                                .startObject(DataCounts.OUT_OF_ORDER_TIME_COUNT)
                                     .field("type", "long")
                                 .endObject()
-                                .startObject(JobDetails.FAILED_TRANSFORM_COUNT)
+                                .startObject(DataCounts.FAILED_TRANSFORM_COUNT)
                                     .field("type", "long")
                                 .endObject()
                             .endObject()
@@ -493,7 +494,6 @@ public class ElasticsearchMappings
 
     /**
      * Create the Elasticsearch mapping for {@linkplain ModelSizeStats}.
-     * TODO
      * @return
      * @throws IOException
      */

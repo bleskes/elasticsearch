@@ -31,10 +31,10 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import com.prelert.job.process.exceptions.MalformedJsonException;
+import com.prelert.job.DataCounts;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
-import com.prelert.job.status.RecordStats;
 
 /**
  * A writer for transforming and piping data from an
@@ -59,6 +59,7 @@ public interface DataToProcessWriter
      * @throws MalformedJsonException If JSON data is malformed and we cannot recover.
      * @return Counts of the records processed, bytes read etc
      */
-    RecordStats write(InputStream inputStream) throws IOException, MissingFieldException,
-            HighProportionOfBadTimestampsException, OutOfOrderRecordsException;
+    DataCounts write(InputStream inputStream) throws IOException, MissingFieldException,
+            HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
+            MalformedJsonException;
 }

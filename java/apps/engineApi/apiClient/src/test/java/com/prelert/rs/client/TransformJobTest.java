@@ -62,7 +62,7 @@ import com.prelert.rs.data.SingleDocument;
  */
 public class TransformJobTest implements Closeable
 {
-	private static final Logger LOGGER = Logger.getLogger(JobsTest.class);
+	private static final Logger LOGGER = Logger.getLogger(TransformJobTest.class);
 
 	/**
 	 * The default base Url used in the test

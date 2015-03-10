@@ -27,9 +27,7 @@
  ************************************************************/
 package com.prelert.job.status;
 
-import org.apache.log4j.Logger;
-
-import com.prelert.job.JobDetails;
+import com.prelert.job.DataCounts;
 import com.prelert.job.status.StatusReporter;
 import com.prelert.job.usage.UsageReporter;
 
@@ -44,7 +42,7 @@ public class DummyStatusReporter extends StatusReporter
 		super("DummyJobId", usageReporter, null);
 	}
 
-	public DummyStatusReporter(JobDetails.Counts counts,
+	public DummyStatusReporter(DataCounts counts,
                             UsageReporter usageReporter)
 	{
 	    super("DummyJobId", counts, usageReporter, null);

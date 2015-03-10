@@ -37,6 +37,7 @@ import org.elasticsearch.action.update.UpdateRequestBuilder;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.indices.IndexMissingException;
 
+import com.prelert.job.DataCounts;
 import com.prelert.job.JobDetails;
 import com.prelert.job.status.StatusReporter;
 import com.prelert.job.usage.UsageReporter;
@@ -55,7 +56,7 @@ public class ElasticsearchStatusReporter extends StatusReporter
     private Client m_Client;
 
     public ElasticsearchStatusReporter(Client client, UsageReporter usageReporter,
-            String jobId, JobDetails.Counts counts, Logger logger)
+            String jobId, DataCounts counts, Logger logger)
     {
         super(jobId, counts, usageReporter, logger);
         m_Client = client;
@@ -92,15 +93,15 @@ public class ElasticsearchStatusReporter extends StatusReporter
             updateBuilder.setRetryOnConflict(RETRY_ON_CONFLICT);
 
             Map<String, Object> updates = new HashMap<>();
-            updates.put(JobDetails.PROCESSED_RECORD_COUNT, getProcessedRecordCount());
-            updates.put(JobDetails.PROCESSED_FIELD_COUNT, getProcessedFieldCount());
-            updates.put(JobDetails.INPUT_RECORD_COUNT, getInputRecordCount());
-            updates.put(JobDetails.INPUT_BYTES, getBytesRead());
-            updates.put(JobDetails.INPUT_FIELD_COUNT, getInputFieldCount());
-            updates.put(JobDetails.INVALID_DATE_COUNT, getDateParseErrorsCount());
-            updates.put(JobDetails.MISSING_FIELD_COUNT, getMissingFieldErrorCount());
-            updates.put(JobDetails.OUT_OF_ORDER_TIME_COUNT, getOutOfOrderRecordCount());
-            updates.put(JobDetails.FAILED_TRANSFORM_COUNT, getFailedTransformCount());
+            updates.put(DataCounts.PROCESSED_RECORD_COUNT, getProcessedRecordCount());
+            updates.put(DataCounts.PROCESSED_FIELD_COUNT, getProcessedFieldCount());
+            updates.put(DataCounts.INPUT_RECORD_COUNT, getInputRecordCount());
+            updates.put(DataCounts.INPUT_BYTES, getBytesRead());
+            updates.put(DataCounts.INPUT_FIELD_COUNT, getInputFieldCount());
+            updates.put(DataCounts.INVALID_DATE_COUNT, getDateParseErrorsCount());
+            updates.put(DataCounts.MISSING_FIELD_COUNT, getMissingFieldErrorCount());
+            updates.put(DataCounts.OUT_OF_ORDER_TIME_COUNT, getOutOfOrderRecordCount());
+            updates.put(DataCounts.FAILED_TRANSFORM_COUNT, getFailedTransformCount());
 
             Map<String, Object> counts = new HashMap<>();
             counts.put(JobDetails.COUNTS, updates);

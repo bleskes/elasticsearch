@@ -45,6 +45,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.prelert.job.DataCounts;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobConfigurationException;
 import com.prelert.job.JobDetails;
@@ -61,7 +62,6 @@ import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
-import com.prelert.job.status.RecordStats;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.ErrorCode;
@@ -591,7 +591,7 @@ public class JobManager
      * @throws MalformedJsonException If JSON data is malformed and we cannot recover
      * @return Count of records, fields, bytes, etc written
      */
-    public RecordStats submitDataLoadJob(String jobId, InputStream input)
+    public DataCounts submitDataLoadJob(String jobId, InputStream input)
     throws UnknownJobException, NativeProcessRunException, MissingFieldException,
         JsonParseException, JobInUseException, HighProportionOfBadTimestampsException,
         OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException
@@ -627,7 +627,7 @@ public class JobManager
      * @return Count of records, fields, bytes, etc written
 >>>>>>> Refactor to allow the processed data stats to be passed back to the original rest call
      */
-    public RecordStats submitDataLoadAndPersistJob(String jobId, InputStream input)
+    public DataCounts submitDataLoadAndPersistJob(String jobId, InputStream input)
     throws UnknownJobException, NativeProcessRunException, MissingFieldException,
         JsonParseException, JobInUseException, HighProportionOfBadTimestampsException,
         OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException
@@ -635,26 +635,26 @@ public class JobManager
         return submitDataLoadJob(jobId, input, true);
     }
 
-    private  RecordStats submitDataLoadJob(String jobId, InputStream input, boolean shouldPersist)
+    private  DataCounts submitDataLoadJob(String jobId, InputStream input, boolean shouldPersist)
             throws UnknownJobException, NativeProcessRunException, MissingFieldException,
             JsonParseException, JobInUseException, HighProportionOfBadTimestampsException,
             OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException
     {
         checkTooManyJobs(jobId);
-        RecordStats stats = tryProcessingDataLoadJob(jobId, input, shouldPersist);
+        DataCounts stats = tryProcessingDataLoadJob(jobId, input, shouldPersist);
         updateLastDataTime(jobId, new Date());
 
         return stats;
     }
 
 
-    private RecordStats tryProcessingDataLoadJob(String jobId, InputStream input, boolean shouldPersist)
+    private DataCounts tryProcessingDataLoadJob(String jobId, InputStream input, boolean shouldPersist)
             throws UnknownJobException, MissingFieldException,
             JsonParseException, JobInUseException,
             HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
             NativeProcessRunException, MalformedJsonException
     {
-        RecordStats stats;
+        DataCounts stats;
         try
         {
             stats = shouldPersist ? m_ProcessManager.processDataLoadAndPersistJob(jobId, input)

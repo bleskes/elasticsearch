@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -37,8 +37,6 @@ import java.util.Date;
 import java.util.List;
 
 import org.junit.Test;
-
-import com.prelert.job.JobDetails.Counts;
 
 public class JobDetailsTest
 {
@@ -165,43 +163,5 @@ public class JobDetailsTest
         jobDetails2.setCreateTime(createTime);
 
         assertEquals(jobDetails1.hashCode(), jobDetails2.hashCode());
-    }
-
-    @Test
-    public void testCountsEquals_GivenEqualCounts()
-    {
-        Counts counts1 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9);
-        Counts counts2 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9);
-
-        assertTrue(counts1.equals(counts2));
-        assertTrue(counts2.equals(counts1));
-    }
-
-    @Test
-    public void testCountsHashCode_GivenEqualCounts()
-    {
-        Counts counts1 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9);
-        Counts counts2 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9);
-
-        assertEquals(counts1.hashCode(), counts2.hashCode());
-    }
-
-    private static Counts createCounts(long bucketCount,
-            long processedRecordCount, long processedFieldCount,
-            long inputBytes, long inputFieldCount, long inputRecordCount,
-            long invalidDateCount, long missingFieldCount,
-            long outOfOrderTimeStampCount)
-    {
-        Counts counts = new Counts();
-        counts.setBucketCount(bucketCount);
-        counts.setProcessedRecordCount(processedRecordCount);
-        counts.setProcessedFieldCount(processedFieldCount);
-        counts.setInputBytes(inputBytes);
-        counts.setInputFieldCount(inputFieldCount);
-        counts.setInputRecordCount(inputRecordCount);
-        counts.setInvalidDateCount(invalidDateCount);
-        counts.setMissingFieldCount(missingFieldCount);
-        counts.setOutOfOrderTimeStampCount(outOfOrderTimeStampCount);
-        return counts;
     }
 }
