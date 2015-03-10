@@ -279,40 +279,18 @@ public class AnomalyCause
     @Override
     public int hashCode()
     {
-        final int prime = 31;
-        int result = 1;
-        long temp;
-        temp = Double.doubleToLongBits(m_Probability);
-        result = prime * result + (int) (temp ^ (temp >>> 32));
-        temp = Double.doubleToLongBits(m_Actual);
-        result = prime * result + (int) (temp ^ (temp >>> 32));
-        temp = Double.doubleToLongBits(m_Typical);
-        result = prime * result + (int) (temp ^ (temp >>> 32));
-        result = prime * result
-                + ((m_ByFieldName == null) ? 0 : m_ByFieldName.hashCode());
-        result = prime * result
-                + ((m_ByFieldValue == null) ? 0 : m_ByFieldValue.hashCode());
-        result = prime * result
-                + ((m_FieldName == null) ? 0 : m_FieldName.hashCode());
-        result = prime * result
-                + ((m_Function == null) ? 0 : m_Function.hashCode());
-        result = prime * result
-                + ((m_OverFieldName == null) ? 0 : m_OverFieldName.hashCode());
-        result = prime
-                * result
-                + ((m_OverFieldValue == null) ? 0 : m_OverFieldValue.hashCode());
-        result = prime
-                * result
-                + ((m_PartitionFieldName == null) ? 0 : m_PartitionFieldName
-                        .hashCode());
-        result = prime
-                * result
-                + ((m_PartitionFieldValue == null) ? 0 : m_PartitionFieldValue
-                        .hashCode());
-
-        return result;
+        return Objects.hash(m_Probability,
+                m_Actual,
+                m_Typical,
+                m_ByFieldName,
+                m_ByFieldValue,
+                m_FieldName,
+                m_Function,
+                m_OverFieldName,
+                m_OverFieldValue,
+                m_PartitionFieldName,
+                m_PartitionFieldValue);
     }
-
 
     @Override
     public boolean equals(Object other)
