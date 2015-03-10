@@ -56,6 +56,7 @@ import com.prelert.job.UnknownJobException;
 import com.prelert.job.logs.JobLogs;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
+import com.prelert.rs.data.Acknowledgement;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
 
@@ -240,7 +241,7 @@ public class Jobs extends ResourceWithJobManager
 			new JobLogs().deleteLogs(jobId);
 
 			LOGGER.debug("Job '" + jobId + "' deleted");
-			return Response.ok().entity(ACKNOWLEDGEMENT).build();
+			return Response.ok().entity(new Acknowledgement()).build();
 		}
 		else
 		{

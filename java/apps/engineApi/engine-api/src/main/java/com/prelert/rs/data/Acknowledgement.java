@@ -25,62 +25,30 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.rs.provider;
-
-import java.io.IOException;
-import java.io.OutputStream;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Type;
-
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.ext.MessageBodyWriter;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.prelert.job.alert.Alert;
-
+package com.prelert.rs.data;
 
 /**
- * Web service provider writes {@linkplain Alert} objects as JSON.
+ * The acknowledgement message for the REST API.
+ * Operations such as delete that don't return data
+ * should return this.
  */
-public class AlertMessageBodyWriter implements MessageBodyWriter<Alert>
+public class Acknowledgement
 {
-	/**
-	 * The Object to JSON mapper.
-	 * Writes dates in ISO 8601 format
-	 */
-	private static final ObjectWriter OBJECT_WRITER =
-			new ObjectMapper()
-				.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
-				.writer().withDefaultPrettyPrinter();
+    /**
+     * Get the acknowledgement value. Always returns true
+     * @return true
+     */
+    public boolean getAcknowledgment()
+    {
+        return true;
+    }
 
-
-	@Override
-	public long getSize(Alert arg0, Class<?> arg1, Type arg2,
-			Annotation[] arg3, MediaType arg4)
-	{
-		// deprecated by JAX-RS 2.0
-		return 0;
-	}
-
-	@Override
-	public boolean isWriteable(Class<?> type, Type genericType, Annotation[] arg2,
-			MediaType mediaType)
-	{
-		// no need to check the media type because of the @Produces annotation
-		return type == Alert.class;
-	}
-
-	@Override
-	public void writeTo(Alert bean, Class<?> type,
-			Type genericType, Annotation[] annotations, MediaType mediaType,
-			MultivaluedMap<String, Object> httpHeaders,
-			OutputStream entityStream)
-    throws IOException, WebApplicationException
-	{
-		OBJECT_WRITER.writeValue(entityStream, bean);
-	}
+    /**
+     * Set the acknowledgement value.
+     * This method is only present for serialistion it doesn't do anything
+     * @param value Not used
+     */
+    public void setAcknowledgment(boolean value)
+    {
+    }
 }

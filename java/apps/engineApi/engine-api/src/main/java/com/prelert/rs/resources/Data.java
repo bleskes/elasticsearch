@@ -50,6 +50,7 @@ import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
+import com.prelert.rs.data.Acknowledgement;
 import com.prelert.rs.resources.data.AbstractDataStreamer;
 import com.prelert.rs.resources.data.DataStreamer;
 
@@ -136,7 +137,7 @@ public class Data extends ResourceWithJobManager
         LOGGER.debug("Post to flush data upload for job " + jobId +
                      " with " + CALC_INTERIM_PARAM + '=' + calcInterim);
         jobManager().flushJob(jobId, calcInterim);
-        return Response.ok().entity(ACKNOWLEDGEMENT).build();
+        return Response.ok().entity(new Acknowledgement()).build();
     }
 
 
@@ -157,6 +158,6 @@ public class Data extends ResourceWithJobManager
         LOGGER.debug("Post to close data upload for job " + jobId);
         jobManager().finishJob(jobId);
         LOGGER.debug("Process finished successfully, Job Id = '" + jobId + "'");
-        return Response.accepted().entity(ACKNOWLEDGEMENT).build();
+        return Response.accepted().entity(new Acknowledgement()).build();
     }
 }

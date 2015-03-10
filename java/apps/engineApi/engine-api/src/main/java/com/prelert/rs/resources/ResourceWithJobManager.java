@@ -84,12 +84,6 @@ public abstract class ResourceWithJobManager
             + " '%s' cannot be parsed as a date or converted to a number (epoch)";
 
     /**
-     * Message returned on successful deletion of a job
-     */
-    public static final String ACKNOWLEDGEMENT = "{\"acknowledged\":true}\n";
-
-
-    /**
      * Application context injected by the framework
      */
     @Context

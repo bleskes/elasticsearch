@@ -40,47 +40,47 @@ import javax.ws.rs.ext.MessageBodyWriter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.prelert.job.alert.Alert;
+import com.prelert.rs.data.Acknowledgement;
 
 
 /**
- * Web service provider writes {@linkplain Alert} objects as JSON.
+ * Web service provider writes {@linkplain Acknowledgement} objects as JSON.
  */
-public class AlertMessageBodyWriter implements MessageBodyWriter<Alert>
+public class AcknowledgementWriter implements MessageBodyWriter<Acknowledgement>
 {
-	/**
-	 * The Object to JSON mapper.
-	 * Writes dates in ISO 8601 format
-	 */
-	private static final ObjectWriter OBJECT_WRITER =
-			new ObjectMapper()
-				.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
-				.writer().withDefaultPrettyPrinter();
+    /**
+     * The Object to JSON mapper.
+     * Writes dates in ISO 8601 format
+     */
+    private static final ObjectWriter OBJECT_WRITER =
+            new ObjectMapper()
+                .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
+                .writer().withDefaultPrettyPrinter();
 
 
-	@Override
-	public long getSize(Alert arg0, Class<?> arg1, Type arg2,
-			Annotation[] arg3, MediaType arg4)
-	{
-		// deprecated by JAX-RS 2.0
-		return 0;
-	}
+    @Override
+    public long getSize(Acknowledgement arg0, Class<?> arg1, Type arg2,
+            Annotation[] arg3, MediaType arg4)
+    {
+        // deprecated by JAX-RS 2.0
+        return 0;
+    }
 
-	@Override
-	public boolean isWriteable(Class<?> type, Type genericType, Annotation[] arg2,
-			MediaType mediaType)
-	{
-		// no need to check the media type because of the @Produces annotation
-		return type == Alert.class;
-	}
+    @Override
+    public boolean isWriteable(Class<?> type, Type genericType, Annotation[] arg2,
+            MediaType mediaType)
+    {
+        // no need to check the media type because of the @Produces annotation
+        return type == Acknowledgement.class;
+    }
 
-	@Override
-	public void writeTo(Alert bean, Class<?> type,
-			Type genericType, Annotation[] annotations, MediaType mediaType,
-			MultivaluedMap<String, Object> httpHeaders,
-			OutputStream entityStream)
+    @Override
+    public void writeTo(Acknowledgement bean, Class<?> type,
+            Type genericType, Annotation[] annotations, MediaType mediaType,
+            MultivaluedMap<String, Object> httpHeaders,
+            OutputStream entityStream)
     throws IOException, WebApplicationException
-	{
-		OBJECT_WRITER.writeValue(entityStream, bean);
-	}
+    {
+        OBJECT_WRITER.writeValue(entityStream, bean);
+    }
 }
