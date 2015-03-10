@@ -27,7 +27,6 @@
 
 package com.prelert.job.process.writer;
 
-import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -42,6 +41,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InOrder;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import com.prelert.job.AnalysisConfig;
@@ -82,6 +82,8 @@ public class ControlMsgToProcessWriterTest
     {
         ControlMsgToProcessWriter writer = new ControlMsgToProcessWriter(m_LengthEncodedWriter,
                 m_AnalysisConfig);
+        long firstId = Long.parseLong(writer.writeFlushMessage());
+        Mockito.reset(m_LengthEncodedWriter);
 
         writer.writeFlushMessage();
 
@@ -89,7 +91,7 @@ public class ControlMsgToProcessWriterTest
 
         inOrder.verify(m_LengthEncodedWriter).writeNumFields(4);
         inOrder.verify(m_LengthEncodedWriter, times(3)).writeField("");
-        inOrder.verify(m_LengthEncodedWriter).writeField("f1");
+        inOrder.verify(m_LengthEncodedWriter).writeField("f" + (firstId + 1));
 
         inOrder.verify(m_LengthEncodedWriter).writeNumFields(4);
         inOrder.verify(m_LengthEncodedWriter, times(3)).writeField("");
@@ -99,17 +101,5 @@ public class ControlMsgToProcessWriterTest
 
         inOrder.verify(m_LengthEncodedWriter).flush();
         verifyNoMoreInteractions(m_LengthEncodedWriter);
-    }
-
-    @Test
-    public void testWriteFlushMessage_ShouldIncrementIdForEachFlush() throws IOException
-    {
-        ControlMsgToProcessWriter writer = new ControlMsgToProcessWriter(m_LengthEncodedWriter,
-                m_AnalysisConfig);
-
-        long flushId1 = Long.parseLong(writer.writeFlushMessage());
-        long flushId2 = Long.parseLong(writer.writeFlushMessage());
-
-        assertEquals(flushId2, flushId1 + 1);
     }
 }
