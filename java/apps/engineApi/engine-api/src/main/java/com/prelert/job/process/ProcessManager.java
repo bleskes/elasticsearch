@@ -485,7 +485,7 @@ public class ProcessManager
         {
             process.setInUse(true);
 
-            ControlMsgToProcessWriter writer = new ControlMsgToProcessWriter(
+            ControlMsgToProcessWriter writer = ControlMsgToProcessWriter.create(
                     process.getProcess().getOutputStream(),
                     process.getAnalysisConfig());
 

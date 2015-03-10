@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -67,13 +67,16 @@ public class ControlMsgToProcessWriter
     private final LengthEncodedWriter m_LengthEncodedWriter;
     private final AnalysisConfig m_AnalysisConfig;
 
-    public ControlMsgToProcessWriter(OutputStream os,
-            AnalysisConfig analysisConfig)
+    public static ControlMsgToProcessWriter create(OutputStream os, AnalysisConfig analysisConfig)
     {
-        m_LengthEncodedWriter = new LengthEncodedWriter(os);
-        m_AnalysisConfig = Objects.requireNonNull(analysisConfig);
+        return new ControlMsgToProcessWriter(new LengthEncodedWriter(os), analysisConfig);
     }
 
+    ControlMsgToProcessWriter(LengthEncodedWriter outputStreamWriter, AnalysisConfig analysisConfig)
+    {
+        m_LengthEncodedWriter = Objects.requireNonNull(outputStreamWriter);
+        m_AnalysisConfig = Objects.requireNonNull(analysisConfig);
+    }
 
     /**
      * Send an instruction to calculate interim results to the C++ autodetect
