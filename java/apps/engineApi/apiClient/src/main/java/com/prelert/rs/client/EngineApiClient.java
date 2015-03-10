@@ -73,9 +73,9 @@ import com.prelert.rs.data.SingleDocument;
 /**
  * A Http Client for the Prelert Engine RESTful API.
  *
- * <br/>
+ * <br>
  * Contains methods to create jobs, list jobs, upload data and query results.
- * <br/>
+ * <br>
  * Implements closeable so it can be used in a try-with-resource statement
  */
 public class EngineApiClient implements Closeable
@@ -164,7 +164,7 @@ public class EngineApiClient implements Closeable
 
     /**
      * Create a new Job from the <code>JobConfiguration</code> object.
-     * <br/>
+     * <br>
      * Internally this function converts <code>jobConfig</code> to a JSON
      * string and calls {@link #createJob(String, String)}
      *
@@ -317,7 +317,8 @@ public class EngineApiClient implements Closeable
      * e.g <code>http://localhost:8080/engine/v1/</code>
      * @param jobId The Job's unique Id
      * @return If the job existed and was deleted return true else false
-     * @throws IOException, ClientProtocolException
+     * @throws ClientProtocolException
+     * @throws IOException
      */
     public boolean deleteJob(String baseUrl, String jobId)
     throws ClientProtocolException, IOException
@@ -338,7 +339,7 @@ public class EngineApiClient implements Closeable
      * reconstructing the records from the chunks.
      *
      * @param baseUrl The base URL for the REST API including version number
-     * e.g <code>http://localhost:8080/engine/v1/</code>>
+     * e.g <code>http://localhost:8080/engine/v1/</code>
      * @param jobId The Job's unique Id
      * @param inputStream The data to write to the web service
      * @return True
@@ -406,12 +407,10 @@ public class EngineApiClient implements Closeable
      * @param compressed Is the data gzipped compressed?
      * @return True if successful
      * @throws IOException
-     * @throws InterruptedException
      * @see #chunkedUpload(String, String, InputStream)
      */
     public boolean streamingUpload(String baseUrl, String jobId,
-            InputStream inputStream, boolean compressed)
-    throws IOException
+            InputStream inputStream, boolean compressed) throws IOException
     {
         String postUrl = baseUrl + "/data/" + jobId;
         LOGGER.debug("Uploading data to " + postUrl);
@@ -608,7 +607,7 @@ public class EngineApiClient implements Closeable
      * e.g <code>http://localhost:8080/engine/v1/</code>
      * @param jobId The Job's unique Id
      * @param expand If true include the anomaly records for the bucket
-     * @param includeInterim Include interim results
+     * @param isInterim Include interim results
      *
      * @return A {@link Pagination} object containing a list of {@link Bucket buckets}
      * @throws IOException
@@ -624,18 +623,17 @@ public class EngineApiClient implements Closeable
      * Get the bucket results for a particular job and optionally filter by
      * anomaly or unusual score.
      *
-     * Calls {@link #getBuckets(String, String, boolean, Long, Long, , Double, Double)}
+     * Calls {@link #getBuckets(String, String, boolean, boolean, Long, Long, Double, Double)}
      * with the skip and take parameters set to <code>null</code>
      *
      * @param baseUrl The base URL for the REST API including version number
      * e.g <code>http://localhost:8080/engine/v1/</code>
      * @param jobId The Job's unique Id
      * @param expand If true include the anomaly records for the bucket
-     * @param includeInterim Include interim results
-     * @param anomalyScoreThreshold Return only buckets with an anomalyScore >=
+     * @param anomalyScoreThreshold Return only buckets with an anomalyScore &gt;=
      * this value. If <code>null</code> then ignored
-     * @param normalizedProbabilityThreshold Return only buckets with a maxNormalizedProbability >=
-     * this value. If <code>null</code> then ignored
+     * @param normalizedProbabilityThreshold Return only buckets with a maxNormalizedProbability
+     * &gt;= this value. If <code>null</code> then ignored
      *
      * @return A {@link Pagination} object containing a list of {@link Bucket buckets}
      * @throws IOException
@@ -652,17 +650,17 @@ public class EngineApiClient implements Closeable
      * Get the bucket results for a particular job and optionally filter by
      * anomaly or unusual score.
      *
-     * Calls {@link #getBuckets(String, String, boolean, Long, Long, , Double, Double)}
+     * Calls {@link #getBuckets(String, String, boolean, boolean, Long, Long, Double, Double)}
      * with the skip and take parameters set to <code>null</code>
      *
      * @param baseUrl The base URL for the REST API including version number
      * e.g <code>http://localhost:8080/engine/v1/</code>
      * @param jobId The Job's unique Id
      * @param expand If true include the anomaly records for the bucket
-     * @param anomalyScoreThreshold Return only buckets with an anomalyScore >=
+     * @param anomalyScoreThreshold Return only buckets with an anomalyScore &gt;=
      * this value. If <code>null</code> then ignored
-     * @param normalizedProbabilityThreshold Return only buckets with a maxNormalizedProbability >=
-     * this value. If <code>null</code> then ignored
+     * @param normalizedProbabilityThreshold Return only buckets with a maxNormalizedProbability
+     * &gt;= this value. If <code>null</code> then ignored
      *
      * @return A {@link Pagination} object containing a list of {@link Bucket buckets}
      * @throws IOException
@@ -684,10 +682,10 @@ public class EngineApiClient implements Closeable
      * @param expand If true include the anomaly records for the bucket
      * @param skip The number of buckets to skip
      * @param take The max number of buckets to request.
-     * @param anomalyScoreThreshold Return only buckets with an anomalyScore >=
+     * @param anomalyScoreThreshold Return only buckets with an anomalyScore &gt;=
      * this value. If <code>null</code> then ignored
-     * @param normalizedProbabilityThreshold Return only buckets with a maxNormalizedProbability >=
-     * this value. If <code>null</code> then ignored
+     * @param normalizedProbabilityThreshold Return only buckets with a maxNormalizedProbability
+     * &gt;= this value. If <code>null</code> then ignored
      *
      * @return A {@link Pagination} object containing a list of {@link Bucket buckets}
      * @throws IOException
@@ -711,10 +709,10 @@ public class EngineApiClient implements Closeable
      * @param includeInterim Include interim results
      * @param skip The number of buckets to skip
      * @param take The max number of buckets to request.
-     * @param anomalyScoreThreshold Return only buckets with an anomalyScore >=
+     * @param anomalyScoreThreshold Return only buckets with an anomalyScore &gt;=
      * this value. If <code>null</code> then ignored
-     * @param normalizedProbabilityThreshold Return only buckets with a maxNormalizedProbability >=
-     * this value. If <code>null</code> then ignored
+     * @param normalizedProbabilityThreshold Return only buckets with a maxNormalizedProbability
+     * &gt;= this value. If <code>null</code> then ignored
      *
      * @return A {@link Pagination} object containing a list of {@link Bucket buckets}
      * @throws IOException
@@ -742,10 +740,10 @@ public class EngineApiClient implements Closeable
      * or an ISO 8601 date String. If <code>null</code> then ignored
      * @param end The end date filter as either a Long (seconds from epoch)
      * or an ISO 8601 date String. If <code>null</code> then ignored
-     * @param anomalyScoreThreshold Return only buckets with an anomalyScore >=
+     * @param anomalyScoreThreshold Return only buckets with an anomalyScore &gt;=
      * this value. If <code>null</code> then ignored
-     * @param normalizedProbabilityThreshold Return only buckets with a maxNormalizedProbability >=
-     * this value. If <code>null</code> then ignored
+     * @param normalizedProbabilityThreshold Return only buckets with a maxNormalizedProbability
+     * &gt;= this value. If <code>null</code> then ignored
      *
      * @return A {@link Pagination} object containing a list of {@link Bucket buckets}
      * @throws IOException
@@ -774,10 +772,10 @@ public class EngineApiClient implements Closeable
      * or an ISO 8601 date String. If <code>null</code> then ignored
      * @param end The end date filter as either a Long (seconds from epoch)
      * or an ISO 8601 date String. If <code>null</code> then ignored
-     * @param anomalyScoreThreshold Return only buckets with an anomalyScore >=
+     * @param anomalyScoreThreshold Return only buckets with an anomalyScore &gt;=
      * this value. If <code>null</code> then ignored
-     * @param normalizedProbabilityThreshold Return only buckets with a maxNormalizedProbability >=
-     * this value. If <code>null</code> then ignored
+     * @param normalizedProbabilityThreshold Return only buckets with a maxNormalizedProbability
+     * &gt;= this value. If <code>null</code> then ignored
      *
      * @return A {@link Pagination} object containing a list of {@link Bucket buckets}
      * @throws IOException
@@ -1089,12 +1087,12 @@ public class EngineApiClient implements Closeable
      * @param end The end date filter as either a Long (seconds from epoch)
      * or an ISO 8601 date String. If <code>null</code> then ignored
      * @param sortField The field to sort the results by, ignored if <code>null</code>
-     * @param sort_descending If sort_field is not <code>null</code> then sort
+     * @param sortDescending If sort_field is not <code>null</code> then sort
      * records in descending order if true else sort ascending
      * @param anomalyScoreFilterValue If not <code>null</code> return only the
-     * records with an anomalyScore >= anomalyScoreFilterValue
+     * records with an anomalyScore &gt;= anomalyScoreFilterValue
      * @param normalizedProbabilityFilterValue If not <code>null</code> return only the
-     * records with a normalizedProbability >= normalizedProbabilityFilterValue
+     * records with a normalizedProbability &gt;= normalizedProbabilityFilterValue
      *
      * @return A {@link Pagination} object containing a list of
      * {@link AnomalyRecord anomaly records}
@@ -1132,12 +1130,12 @@ public class EngineApiClient implements Closeable
      * or an ISO 8601 date String. If <code>null</code> then ignored
      * @param includeInterim Include interim results
      * @param sortField The field to sort the results by, ignored if <code>null</code>
-     * @param sort_descending If sort_field is not <code>null</code> then sort
+     * @param sortDescending If sort_field is not <code>null</code> then sort
      * records in descending order if true else sort ascending
      * @param anomalyScoreFilterValue If not <code>null</code> return only the
-     * records with an anomalyScore >= anomalyScoreFilterValue
+     * records with an anomalyScore &gt;= anomalyScoreFilterValue
      * @param normalizedProbabilityFilterValue If not <code>null</code> return only the
-     * records with a normalizedProbability >= normalizedProbabilityFilterValue
+     * records with a normalizedProbability &gt;= normalizedProbabilityFilterValue
      *
      * @return A {@link Pagination} object containing a list of
      * {@link AnomalyRecord anomaly records}
@@ -1379,9 +1377,9 @@ public class EngineApiClient implements Closeable
      * @param timeout Timeout the request after this many seconds.
      * If <code>null</code> then use the default.
      * @param anomalyScoreThreshold Alert if a record has an anomalyScore threshold
-     * >= this value. This should be in the range 0-100, ignored if <code>null</code>.
+     * &gt;= this value. This should be in the range 0-100, ignored if <code>null</code>.
      * @param maxNormalizedProbability Alert if a bucket's maxNormalizedProbability
-     * is >= this value. This should be in the range 0-100, ignored if <code>null</code>.
+     * is &gt;= this value. This should be in the range 0-100, ignored if <code>null</code>.
      *
      * @return
      * @throws JsonParseException
@@ -1500,12 +1498,11 @@ public class EngineApiClient implements Closeable
      * @throws ClientProtocolException
      * @throws IOException
      */
-    public String tailLog(String baseUrl, String jobId, String filename,
-            int lineCount)
+    public String tailLog(String baseUrl, String jobId, String logfileName, int lineCount)
     throws ClientProtocolException, IOException
     {
         String url = String.format("%s/logs/%s/%s/tail?lines=%d",
-                baseUrl, jobId, filename, lineCount);
+                baseUrl, jobId, logfileName, lineCount);
 
         LOGGER.debug("GET tail log " + url);
 
@@ -1556,8 +1553,8 @@ public class EngineApiClient implements Closeable
 
     /**
      * Download the specified log file for the job.
-     * The autodetect process writes a log file named after with the job id
-     * <job_id>.log while the Java component logs to engine_api.log.
+     * The autodetect process writes a log file named after the job id (&lt;job_id&gt;.log)
+     * while the Java component logs to engine_api.log.
      *
      * @param baseUrl The base URL for the REST API including version number
      * e.g <code>http://localhost:8080/engine/v1/</code>
@@ -1651,12 +1648,12 @@ public class EngineApiClient implements Closeable
      * the type referenced in <code>typeRef</code>. A <code>TypeReference</code>
      * has to be used to preserve the generic type information that is usually
      * lost in due to erasure.
-     * <br/>
+     * <br>
      * If the response code is 200 or 404 try to parse the returned content
      * into an object of the generic parameter type <code>T</code>.
      * The 404 status code is not considered an error it simply means an
      * empty document was returned by the API.
-     * <br/>
+     * <br>
      * This method is useful for paging through a set of results via the
      * next or previous page links in a {@link Pagination} object.
      *
@@ -1666,7 +1663,7 @@ public class EngineApiClient implements Closeable
      * @throws JsonParseException
      * @throws JsonMappingException
      * @throws IOException
-     * @see get(URI, TypeReference<T>)
+     * @see get(URI, TypeReference)
      */
     public <T> T get(String fullUrl, TypeReference<T> typeRef)
     throws JsonParseException, JsonMappingException, IOException
@@ -1680,12 +1677,12 @@ public class EngineApiClient implements Closeable
      * the type referenced in <code>typeRef</code>. A <code>TypeReference</code>
      * has to be used to preserve the generic type information that is usually
      * lost in due to erasure.
-     * <br/>
+     * <br>
      * If the response code is 200 or 404 try to parse the returned content
      * into an object of the generic parameter type <code>T</code>.
      * The 404 status code is not considered an error it simply means an
      * empty document was returned by the API.
-     * <br/>
+     * <br>
      * This method is useful for paging through a set of results via the
      * next or previous page links in a {@link Pagination} object.
      *
@@ -1695,7 +1692,7 @@ public class EngineApiClient implements Closeable
      * @throws JsonParseException
      * @throws JsonMappingException
      * @throws IOException
-     * @see get(String, TypeReference<T>)
+     * @see get(String, TypeReference)
      */
     public <T> T get(URI uri, TypeReference<T> typeRef)
     throws JsonParseException, JsonMappingException, IOException
