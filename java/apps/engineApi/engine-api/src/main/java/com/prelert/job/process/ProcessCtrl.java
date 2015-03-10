@@ -233,6 +233,10 @@ public class ProcessCtrl
     public static final String PROBABILITY = "probability";
     public static final String RAW_ANOMALY_SCORE = "rawAnomalyScore";
 
+    /**
+     * System property storing the flag that disables model persistence
+     */
+    public static final String DONT_PERSIST_MODEL_STATE = "no.model.state.persist";
 
 
     /**
@@ -579,13 +583,22 @@ public class ProcessCtrl
             }
         }
 
-        // Always supply a URL for persisting/restoring model state.
-        String persistUrlBase = PERSIST_URL_BASE_ARG +
-                "http://localhost:" + ES_HTTP_PORT + '/' + job.getId();
-        command.add(persistUrlBase);
+        // Supply a URL for persisting/restoring model state unless model
+        // persistence has been explicitly disabled.
+        if (System.getProperty(DONT_PERSIST_MODEL_STATE) != null)
+        {
+            logger.info("Will not persist model state - " +
+                    DONT_PERSIST_MODEL_STATE + " property was specified");
+        }
+        else
+        {
+            String persistUrlBase = PERSIST_URL_BASE_ARG +
+                    "http://localhost:" + ES_HTTP_PORT + '/' + job.getId();
+            command.add(persistUrlBase);
 
-        // Persist model state every few hours even if the job isn't closed
-        command.add(PERSIST_INTERVAL_ARG);
+            // Persist model state every few hours even if the job isn't closed
+            command.add(PERSIST_INTERVAL_ARG);
+        }
 
         // the logging id is the job id
         String logId = LOG_ID_ARG + job.getId();
