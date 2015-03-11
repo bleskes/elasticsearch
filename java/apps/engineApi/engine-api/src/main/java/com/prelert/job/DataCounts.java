@@ -29,9 +29,19 @@ package com.prelert.job;
 
 import java.util.Objects;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+
 /**
- * Job processed record counts
+ * Job processed record counts.
+ *
+ * The getInput... methods return the actual number of
+ * fields/records sent the the API including invalid records.
+ * The getProcessed... methods are the number sent to the
+ * Engine
  */
+
+@JsonInclude(Include.NON_NULL)
 public class DataCounts
 {
     public static final String BUCKET_COUNT = "bucketCount";
@@ -46,7 +56,7 @@ public class DataCounts
     public static final String FAILED_TRANSFORM_COUNT = "failedTransformCount";
 
 
-    private long m_BucketCount;
+    private Long m_BucketCount;
     private long m_ProcessedRecordCount;
     private long m_ProcessedFieldCount;
     private long m_InputRecordCount;
@@ -60,7 +70,7 @@ public class DataCounts
 
     public DataCounts()
     {
-
+        m_BucketCount = new Long(0);
     }
 
     public DataCounts(DataCounts lhs)
@@ -80,23 +90,23 @@ public class DataCounts
 
     /**
      * The number of bucket results
-     * @return
+     * @return May be <code>null</code>
      */
-    public long getBucketCount()
+    public Long getBucketCount()
     {
         return m_BucketCount;
     }
 
-    public void setBucketCount(long count)
+    public void setBucketCount(Long count)
     {
         m_BucketCount = count;
     }
 
     /**
      * Number of records processed by this job.
-     * This value is the number of records sent to the job
-     * including any records that my be discarded for any
-     * reason e.g. because the date cannot be read
+     * This value is the number of records sent passed on to
+     * the engine i.e. {@linkplain #getInputRecordCount()} minus
+     * records with bad dates or out of order
      * @return
      */
     public long getProcessedRecordCount()
@@ -130,32 +140,19 @@ public class DataCounts
         m_ProcessedFieldCount = count;
     }
 
-    public void incrementProcessedFieldCount(long additional)
-    {
-        m_ProcessedFieldCount += additional;
-    }
-
-
-
     /**
-     * Total number of input records
+     * Total number of input records read.
+     * This = processed record count + date parse error records count
+     * + out of order record count.
+     *
+     * Records with missing fields are counted as they are still written.
      * @return
      */
     public long getInputRecordCount()
     {
-        return m_InputRecordCount;
+        return m_ProcessedRecordCount + m_OutOfOrderTimeStampCount
+                                + m_InvalidDateCount;
     }
-
-    public void setInputRecordCount(long count)
-    {
-        m_InputRecordCount = count;
-    }
-
-    public void incrementInputRecordCount(long additional)
-    {
-        m_InputRecordCount += additional;
-    }
-
 
     /**
      * The total number of bytes sent to this job.
@@ -189,11 +186,15 @@ public class DataCounts
         return m_InputFieldCount;
     }
 
-    public void setInputFieldCount(long volume)
+    public void setInputFieldCount(long count)
     {
-        m_InputFieldCount = volume;
+        m_InputFieldCount = count;
     }
 
+    public void incrementInputFieldCount(long additional)
+    {
+        m_InputFieldCount += additional;
+    }
 
     /**
      * The number of records with an invalid date field that could

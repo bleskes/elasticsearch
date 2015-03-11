@@ -98,6 +98,26 @@ public class StatusReporterTest {
         assertEquals(6, reporter.getFailedTransformCount());
     }
 
+    @Test
+    public void resetIncrementalCounts()
+    throws IllegalAccessException, IllegalArgumentException, InvocationTargetException,
+        IntrospectionException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException
+    {
+        DummyStatusReporter reporter = new DummyStatusReporter(mock(UsageReporter.class));
+        DataCounts stats = reporter.incrementalStats();
+        assertNotNull(stats);
+        testAllFieldsEqualZero(stats);
+
+        reporter.reportRecordWritten(5);
+        assertEquals(1, reporter.incrementalStats().getInputRecordCount());
+        assertEquals(5, reporter.incrementalStats().getInputFieldCount());
+
+        reporter.startNewIncrementalCount();
+        stats = reporter.incrementalStats();
+        assertNotNull(stats);
+        testAllFieldsEqualZero(stats);
+    }
+
     private void testAllFieldsEqualZero(DataCounts stats)
     throws IntrospectionException, IllegalAccessException, IllegalArgumentException, InvocationTargetException
     {

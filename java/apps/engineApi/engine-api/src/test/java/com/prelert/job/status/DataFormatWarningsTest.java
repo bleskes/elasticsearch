@@ -179,10 +179,20 @@ public class DataFormatWarningsTest
 			{
 				long percentBad = (e.getNumberBad() * 100 )/ e.getTotalNumber();
 
-				Assert.assertTrue(statusReporter.isStatusReported());
+                Assert.assertTrue(statusReporter.isStatusReported());
+                Assert.assertTrue(usageReporter.persistUsageWasCalled());
 
-				Assert.assertEquals(statusReporter.getBytesRead(),
-						usageReporter.getBytesReadSinceLastReport() );
+                Assert.assertEquals(statusReporter.getBytesRead(),
+                        usageReporter.getTotalBytesRead());
+                Assert.assertEquals(statusReporter.getInputFieldCount(),
+                        usageReporter.getTotalFieldsRead());
+                Assert.assertEquals(statusReporter.getInputRecordCount(),
+                        usageReporter.getTotalRecordsRead());
+
+                Assert.assertEquals(0, usageReporter.getBytesReadSinceLastReport());
+                Assert.assertEquals(0, usageReporter.getFieldsReadSinceLastReport());
+                Assert.assertEquals(0, usageReporter.getRecordsReadSinceLastReport());
+
 				Assert.assertTrue(percentBad >= MAX_PERCENT_DATE_PARSE_ERRORS);
 			}
 		}
@@ -296,10 +306,20 @@ public class DataFormatWarningsTest
 			{
 				long percentBad = (e.getNumberBad() * 100 )/ e.getTotalNumber();
 
-				Assert.assertTrue(statusReporter.isStatusReported());
+                Assert.assertTrue(statusReporter.isStatusReported());
+                Assert.assertTrue(usageReporter.persistUsageWasCalled());
 
-				Assert.assertEquals(statusReporter.getBytesRead(),
-						usageReporter.getBytesReadSinceLastReport());
+                Assert.assertEquals(statusReporter.getBytesRead(),
+                        usageReporter.getTotalBytesRead());
+                Assert.assertEquals(statusReporter.getInputFieldCount(),
+                        usageReporter.getTotalFieldsRead());
+                Assert.assertEquals(statusReporter.getInputRecordCount(),
+                        usageReporter.getTotalRecordsRead());
+
+                Assert.assertEquals(0, usageReporter.getBytesReadSinceLastReport());
+                Assert.assertEquals(0, usageReporter.getFieldsReadSinceLastReport());
+                Assert.assertEquals(0, usageReporter.getRecordsReadSinceLastReport());
+
 				Assert.assertTrue(percentBad >= MAX_PERCENT_DATE_PARSE_ERRORS);
 			}
 		}
@@ -414,10 +434,20 @@ public class DataFormatWarningsTest
 			{
 				long percentBad = (e.getNumberOutOfOrder() * 100 )/ e.getTotalNumber();
 
-				Assert.assertTrue(statusReporter.isStatusReported());
+                Assert.assertTrue(statusReporter.isStatusReported());
+                Assert.assertTrue(usageReporter.persistUsageWasCalled());
 
-				Assert.assertEquals(statusReporter.getBytesRead(),
-						usageReporter.getBytesReadSinceLastReport());
+                Assert.assertEquals(statusReporter.getBytesRead(),
+                        usageReporter.getTotalBytesRead());
+                Assert.assertEquals(statusReporter.getInputFieldCount(),
+                        usageReporter.getTotalFieldsRead());
+                Assert.assertEquals(statusReporter.getInputRecordCount(),
+                        usageReporter.getTotalRecordsRead());
+
+                Assert.assertEquals(0, usageReporter.getBytesReadSinceLastReport());
+                Assert.assertEquals(0, usageReporter.getFieldsReadSinceLastReport());
+                Assert.assertEquals(0, usageReporter.getRecordsReadSinceLastReport());
+
 				Assert.assertTrue(percentBad >= MAX_PERCENT_OUT_OF_ORDER_ERRORS);
 			}
 		}
@@ -532,9 +562,19 @@ public class DataFormatWarningsTest
 				long percentBad = (e.getNumberOutOfOrder() * 100 )/ e.getTotalNumber();
 
 				Assert.assertTrue(statusReporter.isStatusReported());
+				Assert.assertTrue(usageReporter.persistUsageWasCalled());
 
 				Assert.assertEquals(statusReporter.getBytesRead(),
-						usageReporter.getBytesReadSinceLastReport());
+						usageReporter.getTotalBytesRead());
+				Assert.assertEquals(statusReporter.getInputFieldCount(),
+				        usageReporter.getTotalFieldsRead());
+                Assert.assertEquals(statusReporter.getInputRecordCount(),
+                        usageReporter.getTotalRecordsRead());
+
+                Assert.assertEquals(0, usageReporter.getBytesReadSinceLastReport());
+                Assert.assertEquals(0, usageReporter.getFieldsReadSinceLastReport());
+                Assert.assertEquals(0, usageReporter.getRecordsReadSinceLastReport());
+
 				Assert.assertTrue(percentBad >= MAX_PERCENT_OUT_OF_ORDER_ERRORS);
 			}
 		}

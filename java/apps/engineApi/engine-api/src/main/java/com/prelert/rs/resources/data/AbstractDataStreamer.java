@@ -113,6 +113,8 @@ public abstract class AbstractDataStreamer {
             input = persistDataToDisk(jobId, input);
         }
         DataCounts stats = handleStream(jobId, input);
+        // set the bucket count to null so it doesn't appear in the output
+        stats.setBucketCount(null);
 
         LOGGER.debug("File uploaded to job " + jobId);
 

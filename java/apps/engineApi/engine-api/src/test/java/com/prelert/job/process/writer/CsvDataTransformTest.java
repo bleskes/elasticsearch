@@ -138,6 +138,8 @@ public class CsvDataTransformTest
         Assert.assertEquals(0, statusReporter.getDateParseErrorsCount());
         Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());
 
+        Assert.assertEquals(statusReporter.runningTotalStats(), statusReporter.incrementalStats());
+
         String [] lines = data.split("\\n");
 
         boolean isHeader = true;
@@ -254,6 +256,8 @@ public class CsvDataTransformTest
 
         Assert.assertEquals(dp.getRecordCount(), 4);
 
+        Assert.assertEquals(statusReporter.runningTotalStats(), statusReporter.incrementalStats());
+
         ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 
         boolean isHeader = true;
@@ -367,6 +371,8 @@ public class CsvDataTransformTest
         Assert.assertEquals(0, statusReporter.getMissingFieldErrorCount());
         Assert.assertEquals(0, statusReporter.getDateParseErrorsCount());
         Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());
+
+        Assert.assertEquals(statusReporter.runningTotalStats(), statusReporter.incrementalStats());
 
         String [] lines = data.split("\\n");
 
@@ -493,6 +499,8 @@ public class CsvDataTransformTest
         Assert.assertEquals(0, statusReporter.getDateParseErrorsCount());
         Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());
 
+        Assert.assertEquals(statusReporter.runningTotalStats(), statusReporter.incrementalStats());
+
         Assert.assertEquals(dp.getRecordCount(), 8);
 
         String [] lines = data.split("\\n");
@@ -615,6 +623,8 @@ public class CsvDataTransformTest
             Assert.assertEquals(0, statusReporter.getMissingFieldErrorCount());
             Assert.assertEquals(0, statusReporter.getDateParseErrorsCount());
             Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());
+
+            Assert.assertEquals(statusReporter.runningTotalStats(), statusReporter.incrementalStats());
         }
     }
 
@@ -681,6 +691,8 @@ public class CsvDataTransformTest
             Assert.assertEquals(0, statusReporter.getMissingFieldErrorCount());
             Assert.assertEquals(0, statusReporter.getDateParseErrorsCount());
             Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());
+
+            Assert.assertEquals(statusReporter.runningTotalStats(), statusReporter.incrementalStats());
         }
 
         // Do the same again but with a time format configured
@@ -814,6 +826,8 @@ public class CsvDataTransformTest
             Assert.assertEquals(3, statusReporter.getMissingFieldErrorCount());
             Assert.assertEquals(0, statusReporter.getDateParseErrorsCount());
             Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());
+
+            Assert.assertEquals(statusReporter.runningTotalStats(), statusReporter.incrementalStats());
 
 
             Assert.assertEquals(dp.getRecordCount(), 6);

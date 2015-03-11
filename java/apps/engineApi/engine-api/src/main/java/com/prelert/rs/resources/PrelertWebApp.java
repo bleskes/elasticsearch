@@ -43,6 +43,7 @@ import com.prelert.job.status.elasticsearch.ElasticsearchStatusReporterFactory;
 import com.prelert.job.usage.elasticsearch.ElasticsearchUsageReporterFactory;
 import com.prelert.rs.provider.AcknowledgementWriter;
 import com.prelert.rs.provider.AlertMessageBodyWriter;
+import com.prelert.rs.provider.DataCountsWriter;
 import com.prelert.rs.provider.ElasticsearchExceptionMapper;
 import com.prelert.rs.provider.JobConfigurationMessageBodyReader;
 import com.prelert.rs.provider.JobExceptionMapper;
@@ -89,6 +90,7 @@ public class PrelertWebApp extends Application
 		// Message body writers
 		m_ResourceClasses.add(AcknowledgementWriter.class);
 		m_ResourceClasses.add(AlertMessageBodyWriter.class);
+		m_ResourceClasses.add(DataCountsWriter.class);
 		m_ResourceClasses.add(JobConfigurationMessageBodyReader.class);
 		m_ResourceClasses.add(PaginationWriter.class);
 		m_ResourceClasses.add(SingleDocumentWriter.class);

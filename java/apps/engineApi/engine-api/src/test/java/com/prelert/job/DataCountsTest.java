@@ -42,8 +42,8 @@ public class DataCountsTest
     @Test
     public void testCountsEquals_GivenEqualCounts()
     {
-        DataCounts counts1 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
-        DataCounts counts2 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+        DataCounts counts1 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9);
+        DataCounts counts2 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9);
 
         assertTrue(counts1.equals(counts2));
         assertTrue(counts2.equals(counts1));
@@ -52,8 +52,8 @@ public class DataCountsTest
     @Test
     public void testCountsHashCode_GivenEqualCounts()
     {
-        DataCounts counts1 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
-        DataCounts counts2 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+        DataCounts counts1 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9);
+        DataCounts counts2 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9);
 
         assertEquals(counts1.hashCode(), counts2.hashCode());
     }
@@ -61,7 +61,7 @@ public class DataCountsTest
     @Test
     public void testCountsCopyConstructor()
     {
-        DataCounts counts1 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+        DataCounts counts1 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9);
         DataCounts counts2 = new DataCounts(counts1);
 
         assertEquals(counts1.hashCode(), counts2.hashCode());
@@ -78,11 +78,49 @@ public class DataCountsTest
     public void testCountCopyCreatedFieldsNotZero()
     throws IntrospectionException, IllegalAccessException, IllegalArgumentException, InvocationTargetException
     {
-        DataCounts counts1 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+        DataCounts counts1 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9);
         testAllFieldsGreaterThanZero(counts1);
 
         DataCounts counts2 = new DataCounts(counts1);
         testAllFieldsGreaterThanZero(counts2);
+    }
+
+    @Test
+    public void testIncrements()
+    {
+        DataCounts counts = new DataCounts();
+
+        counts.incrementFailedTransformCount(5);
+        assertEquals(5, counts.getFailedTransformCount());
+
+        counts.incrementInputBytes(15);
+        assertEquals(15, counts.getInputBytes());
+
+        counts.incrementInvalidDateCount(20);
+        assertEquals(20, counts.getInvalidDateCount());
+
+        counts.incrementMissingFieldCount(25);
+        assertEquals(25, counts.getMissingFieldCount());
+
+        counts.incrementOutOfOrderTimeStampCount(30);
+        assertEquals(30, counts.getOutOfOrderTimeStampCount());
+
+        counts.incrementProcessedRecordCount(40);
+        assertEquals(40, counts.getProcessedRecordCount());
+    }
+
+    @Test
+    public void testGetInputRecordCount()
+    {
+        DataCounts counts = new DataCounts();
+        counts.incrementProcessedRecordCount(5);
+        assertEquals(5, counts.getInputRecordCount());
+
+        counts.incrementOutOfOrderTimeStampCount(2);
+        assertEquals(7, counts.getInputRecordCount());
+
+        counts.incrementInvalidDateCount(1);
+        assertEquals(8, counts.getInputRecordCount());
     }
 
     private void testAllFieldsEqualZero(DataCounts stats)
@@ -108,7 +146,7 @@ public class DataCountsTest
 
     private static DataCounts createCounts(long bucketCount,
             long processedRecordCount, long processedFieldCount,
-            long inputBytes, long inputFieldCount, long inputRecordCount,
+            long inputBytes, long inputFieldCount,
             long invalidDateCount, long missingFieldCount,
             long outOfOrderTimeStampCount, long failedTransformCount)
     {
@@ -118,7 +156,6 @@ public class DataCountsTest
         counts.setProcessedFieldCount(processedFieldCount);
         counts.setInputBytes(inputBytes);
         counts.setInputFieldCount(inputFieldCount);
-        counts.setInputRecordCount(inputRecordCount);
         counts.setInvalidDateCount(invalidDateCount);
         counts.setMissingFieldCount(missingFieldCount);
         counts.setOutOfOrderTimeStampCount(outOfOrderTimeStampCount);

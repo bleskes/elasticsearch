@@ -135,6 +135,7 @@ public class JsonDataTransformTest
         Assert.assertEquals(0, statusReporter.getDateParseErrorsCount());
         Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());
 
+        Assert.assertEquals(statusReporter.runningTotalStats(), statusReporter.incrementalStats());
 
 
         Assert.assertEquals(dataPersister.getRecordCount(), 8);
@@ -259,6 +260,8 @@ public class JsonDataTransformTest
         Assert.assertEquals(0, statusReporter.getMissingFieldErrorCount());
         Assert.assertEquals(0, statusReporter.getDateParseErrorsCount());
         Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());
+
+        Assert.assertEquals(statusReporter.runningTotalStats(), statusReporter.incrementalStats());
 
         Assert.assertEquals(usageReporter.getTotalBytesRead(),
                 data.getBytes(StandardCharsets.UTF_8).length - 1);
@@ -393,6 +396,8 @@ public class JsonDataTransformTest
         Assert.assertEquals(0, statusReporter.getMissingFieldErrorCount());
         Assert.assertEquals(0, statusReporter.getDateParseErrorsCount());
         Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());
+
+        Assert.assertEquals(statusReporter.runningTotalStats(), statusReporter.incrementalStats());
 
         Assert.assertEquals(usageReporter.getTotalBytesRead(),
                 data.getBytes(StandardCharsets.UTF_8).length - 1);
@@ -964,6 +969,8 @@ public class JsonDataTransformTest
         Assert.assertEquals(2, statusReporter.getMissingFieldErrorCount());
         Assert.assertEquals(0, statusReporter.getDateParseErrorsCount());
         Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());
+
+        Assert.assertEquals(statusReporter.runningTotalStats(), statusReporter.incrementalStats());
 
         Assert.assertEquals(dp.getRecordCount(), 4);
 
