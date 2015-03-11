@@ -38,7 +38,7 @@ public class Acknowledgement
      * Get the acknowledgement value. Always returns true
      * @return true
      */
-    public boolean getAcknowledgment()
+    public boolean getAcknowledgement()
     {
         return true;
     }
@@ -48,7 +48,7 @@ public class Acknowledgement
      * This method is only present for serialistion it doesn't do anything
      * @param value Not used
      */
-    public void setAcknowledgment(boolean value)
+    public void setAcknowledgement(boolean value)
     {
     }
 }
