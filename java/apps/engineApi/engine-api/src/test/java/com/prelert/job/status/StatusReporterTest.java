@@ -100,7 +100,7 @@ public class StatusReporterTest
     }
 
     @Test
-    public void resetIncrementalCounts()
+    public void testResetIncrementalCounts()
     throws IllegalAccessException, IllegalArgumentException, InvocationTargetException,
         IntrospectionException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException
     {
@@ -109,13 +109,13 @@ public class StatusReporterTest
         assertNotNull(stats);
         testAllFieldsEqualZero(stats);
 
-        reporter.setAnalysedFieldsPerRecord(5);
+        reporter.setAnalysedFieldsPerRecord(3);
 
         reporter.reportRecordWritten(5);
         assertEquals(1, reporter.incrementalStats().getInputRecordCount());
         assertEquals(5, reporter.incrementalStats().getInputFieldCount());
         assertEquals(1, reporter.incrementalStats().getProcessedRecordCount());
-        assertEquals(5, reporter.incrementalStats().getProcessedFieldCount());
+        assertEquals(3, reporter.incrementalStats().getProcessedFieldCount());
 
         assertEquals(reporter.incrementalStats(), reporter.runningTotalStats());
 
@@ -123,6 +123,29 @@ public class StatusReporterTest
         stats = reporter.incrementalStats();
         assertNotNull(stats);
         testAllFieldsEqualZero(stats);
+    }
+
+    @Test
+    public void testReportRecordsWritten()
+    throws HighProportionOfBadTimestampsException, OutOfOrderRecordsException
+    {
+        DummyStatusReporter reporter = new DummyStatusReporter(mock(UsageReporter.class));
+        reporter.setAnalysedFieldsPerRecord(3);
+
+        reporter.reportRecordWritten(5);
+        assertEquals(1, reporter.incrementalStats().getInputRecordCount());
+        assertEquals(5, reporter.incrementalStats().getInputFieldCount());
+        assertEquals(1, reporter.incrementalStats().getProcessedRecordCount());
+        assertEquals(3, reporter.incrementalStats().getProcessedFieldCount());
+
+        reporter.reportRecordWritten(5);
+        reporter.reportMissingField();
+        assertEquals(2, reporter.incrementalStats().getInputRecordCount());
+        assertEquals(10, reporter.incrementalStats().getInputFieldCount());
+        assertEquals(2, reporter.incrementalStats().getProcessedRecordCount());
+        assertEquals(5, reporter.incrementalStats().getProcessedFieldCount());
+
+        assertEquals(reporter.incrementalStats(), reporter.runningTotalStats());
     }
 
     private void testAllFieldsEqualZero(DataCounts stats)
