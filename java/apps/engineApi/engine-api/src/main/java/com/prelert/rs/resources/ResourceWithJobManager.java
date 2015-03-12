@@ -30,6 +30,7 @@ package com.prelert.rs.resources;
 import java.net.URI;
 import java.text.DateFormat;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -61,11 +62,19 @@ public abstract class ResourceWithJobManager
     /**
      * Date query param format
      */
-    public static final String ISO_8601_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ssX";
+    private static final String ISO_8601_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ssX";
     /**
      * Date query param format with ms
      */
-    public static final String ISO_8601_DATE_FORMAT_WITH_MS = "yyyy-MM-dd'T'HH:mm:ss.SSSX";
+    private static final String ISO_8601_DATE_FORMAT_WITH_MS = "yyyy-MM-dd'T'HH:mm:ss.SSSX";
+
+    /**
+     * The date formats to be used while trying to parse timestamps.
+     * The array should be ordered the most likely to work first.
+     */
+    private static final DateFormat[] DATE_FORMATS = new DateFormat [] {
+            new SimpleDateFormat(ISO_8601_DATE_FORMAT),
+            new SimpleDateFormat(ISO_8601_DATE_FORMAT_WITH_MS)};
 
     /**
      * The filter 'start' query parameter
@@ -263,22 +272,20 @@ public abstract class ResourceWithJobManager
      * to an epoch time. If the long number has more than 10 digits
      * it is considered a time in milliseconds else if 10 or less digits
      * it is in seconds. If that fails it tries to parse the string
-     * using one of the DateFormats passed in the array.
+     * using one of the DateFormats in {@link #DATE_FORMATS}.
      *
      * If the date string cannot be parsed a {@link RestApiException} is thrown.
      *
-     * @param dateFormats Try to parse the date string with these date formats.
-     * The array should be ordered the most likely to work first.
      * @param date
      * @return The epoch time in milliseconds or 0 if the date is empty.
      * @throws RestApiException if the date cannot be parsed
      */
-    protected long paramToEpochIfValidOrThrow(String date, DateFormat dateFormats[], Logger logger)
+    protected long paramToEpochIfValidOrThrow(String date, Logger logger)
     {
         long epochStart = 0;
         if (date.isEmpty() == false)
         {
-            epochStart = paramToEpoch(date, dateFormats);
+            epochStart = paramToEpoch(date);
             if (epochStart == 0) // could not be parsed
             {
                 String msg = String.format(BAD_DATE_FORMAT_MSG, START_QUERY_PARAM, date);
@@ -295,16 +302,14 @@ public abstract class ResourceWithJobManager
      * to an epoch time. If the long number has more than 10 digits
      * it is considered a time in milliseconds else if 10 or less digits
      * it is in seconds. If that fails it tries to parse the string
-     * using one of the DateFormats passed in the array.
+     * using one of the DateFormats in {@link #DATE_FORMATS}.
      *
      * If the date string cannot be parsed 0 is returned.
      *
-     * @param dateFormats Try to parse the date string with these date formats.
-     * The array should be ordered the most likely to work first.
      * @param date
      * @return The epoch time in milliseconds or 0 if the date cannot be parsed.
      */
-    private long paramToEpoch(String date, DateFormat dateFormats[])
+    private long paramToEpoch(String date)
     {
         try
         {
@@ -323,7 +328,7 @@ public abstract class ResourceWithJobManager
             // not a number
         }
 
-        for (DateFormat dateFormat : dateFormats)
+        for (DateFormat dateFormat : DATE_FORMATS)
         {
             // try parsing as a date string
             try

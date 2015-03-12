@@ -27,8 +27,6 @@
 
 package com.prelert.rs.resources;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -70,13 +68,6 @@ public class Alerts extends ResourceWithJobManager
      * The anomaly score query parameter
      */
     public static final String ANOMALY_SCORE_QUERY_PARAM = "score";
-
-
-    private final DateFormat m_DateFormat = new SimpleDateFormat(ISO_8601_DATE_FORMAT);
-    private final DateFormat m_DateFormatWithMs = new SimpleDateFormat(ISO_8601_DATE_FORMAT_WITH_MS);
-
-    private final DateFormat [] m_DateFormats = new DateFormat [] {
-        m_DateFormat, m_DateFormatWithMs};
 
     private static class AlertsParams
     {
@@ -123,8 +114,8 @@ public class Alerts extends ResourceWithJobManager
                 + " start = '%s', end='%s'",
                 params.expand?"expanded ":"", params.skip, params.take, params.start, params.end));
 
-        long epochStart = paramToEpochIfValidOrThrow(params.start, m_DateFormats, LOGGER);
-        long epochEnd = paramToEpochIfValidOrThrow(params.end, m_DateFormats, LOGGER);
+        long epochStart = paramToEpochIfValidOrThrow(params.start, LOGGER);
+        long epochEnd = paramToEpochIfValidOrThrow(params.end, LOGGER);
 
         Pagination<Alert> alerts = new Pagination<>();
         //AlertManager manager = alertManager();

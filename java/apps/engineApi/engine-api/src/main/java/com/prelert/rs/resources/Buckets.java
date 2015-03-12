@@ -27,8 +27,6 @@
 
 package com.prelert.rs.resources;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -70,13 +68,6 @@ public class Buckets extends ResourceWithJobManager
     public static final String EXPAND_QUERY_PARAM = "expand";
     public static final String INCLUDE_INTERIM_QUERY_PARAM = "includeInterim";
 
-    private final DateFormat m_DateFormat = new SimpleDateFormat(ISO_8601_DATE_FORMAT);
-    private final DateFormat m_DateFormatWithMs = new SimpleDateFormat(ISO_8601_DATE_FORMAT_WITH_MS);
-
-    private final DateFormat [] m_DateFormats = new DateFormat [] {
-        m_DateFormat, m_DateFormatWithMs};
-
-
     /**
      * Get all the bucket results (in pages) for the job optionally filtered
      * by date.
@@ -116,8 +107,8 @@ public class Buckets extends ResourceWithJobManager
                 anomalySoreFilter, normalizedProbabilityFilter,
                 includeInterim ? "including" : "excluding"));
 
-        long epochStart = paramToEpochIfValidOrThrow(start, m_DateFormats, LOGGER);
-        long epochEnd = paramToEpochIfValidOrThrow(end, m_DateFormats, LOGGER);
+        long epochStart = paramToEpochIfValidOrThrow(start, LOGGER);
+        long epochEnd = paramToEpochIfValidOrThrow(end, LOGGER);
 
         JobManager manager = jobManager();
         Pagination<Bucket> buckets;
