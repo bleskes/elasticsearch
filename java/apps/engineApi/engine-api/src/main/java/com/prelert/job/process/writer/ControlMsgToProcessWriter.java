@@ -35,6 +35,7 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.prelert.job.AnalysisConfig;
+import com.prelert.job.process.InterimResultsParams;
 
 /**
  * A writer for sending control messages to the C++ autodetect process.
@@ -80,14 +81,25 @@ public class ControlMsgToProcessWriter
     /**
      * Send an instruction to calculate interim results to the C++ autodetect
      * process.
+     * @param interimResultsParams Parameters indicating whether interim resuls should be written
+     * and for which buckets
      * @throws IOException
      */
-    public void writeCalcInterimMessage() throws IOException
+    public void writeCalcInterimMessage(InterimResultsParams interimResultsParams) throws IOException
     {
-        writeMessage(INTERIM_MESSAGE_CODE);
-        m_LengthEncodedWriter.flush();
+        if (interimResultsParams.shouldCalculate())
+        {
+            StringBuilder message = new StringBuilder(INTERIM_MESSAGE_CODE);
+            if (interimResultsParams.getStart().isEmpty() == false)
+            {
+                message.append(interimResultsParams.getStart());
+                message.append(' ');
+                message.append(interimResultsParams.getEnd());
+            }
+            writeMessage(message.toString());
+            m_LengthEncodedWriter.flush();
+        }
     }
-
 
     /**
      * Send a flush message to the C++ autodetect process.

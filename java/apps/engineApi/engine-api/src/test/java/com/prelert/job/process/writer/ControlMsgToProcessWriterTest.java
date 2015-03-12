@@ -45,6 +45,7 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import com.prelert.job.AnalysisConfig;
+import com.prelert.job.process.InterimResultsParams;
 
 public class ControlMsgToProcessWriterTest
 {
@@ -61,17 +62,44 @@ public class ControlMsgToProcessWriterTest
     }
 
     @Test
-    public void testWriteCalcInterimMessage() throws IOException
+    public void testWriteCalcInterimMessage_GivenCalcInterimResultsWithNoTimeParams() throws IOException
     {
         ControlMsgToProcessWriter writer = new ControlMsgToProcessWriter(m_LengthEncodedWriter,
                 m_AnalysisConfig);
 
-        writer.writeCalcInterimMessage();
+        writer.writeCalcInterimMessage(new InterimResultsParams(true, null, null));
 
         InOrder inOrder = inOrder(m_LengthEncodedWriter);
         inOrder.verify(m_LengthEncodedWriter).writeNumFields(4);
         inOrder.verify(m_LengthEncodedWriter, times(3)).writeField("");
         inOrder.verify(m_LengthEncodedWriter).writeField("i");
+        inOrder.verify(m_LengthEncodedWriter).flush();
+        verifyNoMoreInteractions(m_LengthEncodedWriter);
+    }
+
+    @Test
+    public void testWriteCalcInterimMessage_GivenNoCalcInterimResults() throws IOException
+    {
+        ControlMsgToProcessWriter writer = new ControlMsgToProcessWriter(m_LengthEncodedWriter,
+                m_AnalysisConfig);
+
+        writer.writeCalcInterimMessage(new InterimResultsParams(false, null, null));
+
+        verifyNoMoreInteractions(m_LengthEncodedWriter);
+    }
+
+    @Test
+    public void testWriteCalcInterimMessage_GivenCalcInterimResultsWithTimeParams() throws IOException
+    {
+        ControlMsgToProcessWriter writer = new ControlMsgToProcessWriter(m_LengthEncodedWriter,
+                m_AnalysisConfig);
+
+        writer.writeCalcInterimMessage(new InterimResultsParams(true, 120L, 180L));
+
+        InOrder inOrder = inOrder(m_LengthEncodedWriter);
+        inOrder.verify(m_LengthEncodedWriter).writeNumFields(4);
+        inOrder.verify(m_LengthEncodedWriter, times(3)).writeField("");
+        inOrder.verify(m_LengthEncodedWriter).writeField("i120 180");
         inOrder.verify(m_LengthEncodedWriter).flush();
         verifyNoMoreInteractions(m_LengthEncodedWriter);
     }

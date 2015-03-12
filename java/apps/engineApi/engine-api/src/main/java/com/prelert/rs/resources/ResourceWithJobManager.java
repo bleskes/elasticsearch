@@ -44,6 +44,7 @@ import javax.ws.rs.core.UriInfo;
 
 import org.apache.log4j.Logger;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.prelert.job.alert.manager.AlertManager;
 import com.prelert.job.manager.JobManager;
 import com.prelert.rs.data.ErrorCode;
@@ -108,7 +109,6 @@ public abstract class ResourceWithJobManager
      */
     @Context
     protected UriInfo m_UriInfo;
-
 
     /**
      * Get the job manager object from the application's set of singletons
@@ -348,6 +348,11 @@ public abstract class ResourceWithJobManager
         return 0;
     }
 
+    @VisibleForTesting
+    protected void setApplication(Application application)
+    {
+        m_RestApplication = application;
+    }
 
     /**
      * Simple class to pair key, value strings

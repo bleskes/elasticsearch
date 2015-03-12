@@ -58,6 +58,7 @@ import com.prelert.job.exceptions.TooManyJobsException;
 import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.persistence.none.NoneJobDataPersister;
+import com.prelert.job.process.InterimResultsParams;
 import com.prelert.job.process.ProcessManager;
 import com.prelert.job.process.exceptions.ClosedJobException;
 import com.prelert.job.process.exceptions.MalformedJsonException;
@@ -494,13 +495,13 @@ public class JobManager
      * sitting in buffers.
      *
      * @param jobId The job to flush
-     * @param calcInterim Should interim results be calculated based on the data
-     * up to the point of the flush?
+     * @param interimResultsParams Parameters about whether interim results calculation
+     * should occur and for which period of time
      * @throws UnknownJobException
      * @throws NativeProcessRunException
      * @throws JobInUseException if a data upload is part way through
      */
-    public void flushJob(String jobId, boolean calcInterim)
+    public void flushJob(String jobId, InterimResultsParams interimResultsParams)
     throws UnknownJobException, NativeProcessRunException, JobInUseException
     {
         LOGGER.debug("Flush job " + jobId);
@@ -509,7 +510,7 @@ public class JobManager
         // this method throws if it isn't
         if (m_JobProvider.jobExists(jobId))
         {
-            m_ProcessManager.flushJob(jobId, calcInterim);
+            m_ProcessManager.flushJob(jobId, interimResultsParams);
         }
     }
 

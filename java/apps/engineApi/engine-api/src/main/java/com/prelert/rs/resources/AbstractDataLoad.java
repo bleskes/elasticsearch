@@ -46,12 +46,15 @@ import com.prelert.job.DataCounts;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.TooManyJobsException;
 import com.prelert.job.exceptions.UnknownJobException;
+import com.prelert.job.process.InterimResultsParams;
 import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.rs.data.Acknowledgement;
+import com.prelert.rs.data.ErrorCode;
+import com.prelert.rs.provider.RestApiException;
 import com.prelert.rs.resources.data.AbstractDataStreamer;
 import com.prelert.rs.resources.data.DataStreamer;
 import com.prelert.rs.resources.data.DataStreamerAndPersister;
@@ -122,15 +125,56 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
     @Path("/{jobId}/flush")
     @POST
     public Response flushUpload(@PathParam("jobId") String jobId,
-            @DefaultValue("false") @QueryParam(CALC_INTERIM_PARAM) boolean calcInterim)
+            @DefaultValue("false") @QueryParam(CALC_INTERIM_PARAM) boolean calcInterim,
+            @DefaultValue("") @QueryParam(START_QUERY_PARAM) String start,
+            @DefaultValue("") @QueryParam(END_QUERY_PARAM) String end)
     throws UnknownJobException, NativeProcessRunException, JobInUseException
     {
         LOGGER.debug("Post to flush data upload for job " + jobId +
                      " with " + CALC_INTERIM_PARAM + '=' + calcInterim);
-        jobManager().flushJob(jobId, calcInterim);
+        if (!areValidInterimResultsParams(calcInterim, start, end))
+        {
+            throwInvalidInterimResultsParamRestApiException();
+        }
+        jobManager().flushJob(jobId, createInterimResultsParams(calcInterim, start, end));
         return Response.ok().entity(new Acknowledgement()).build();
     }
 
+    private boolean areValidInterimResultsParams(boolean calcInterim, String start, String end)
+    {
+        if (calcInterim == false)
+        {
+            return start.isEmpty() && end.isEmpty();
+        }
+        return !start.isEmpty() || (start.isEmpty() && end.isEmpty());
+    }
+
+    private void throwInvalidInterimResultsParamRestApiException()
+    {
+        throw new RestApiException("Invalid interim results parameters.", ErrorCode.DATA_ERROR,
+                Response.Status.BAD_REQUEST);
+    }
+
+    private InterimResultsParams createInterimResultsParams(boolean calcInterim, String start,
+            String end) throws UnknownJobException
+    {
+        Long epochStart = null;
+        Long epochEnd = null;
+        if (calcInterim && !start.isEmpty())
+        {
+            epochStart = paramToEpochIfValidOrThrow(start, LOGGER) / 1000;
+            epochEnd = paramToEpochIfValidOrThrow(end, LOGGER) / 1000;
+            if (end.isEmpty() || epochEnd.equals(epochStart))
+            {
+                epochEnd = epochStart + 1;
+            }
+            if (epochEnd.longValue() < epochStart.longValue())
+            {
+                throwInvalidInterimResultsParamRestApiException();
+            }
+        }
+        return new InterimResultsParams(calcInterim, epochStart, epochEnd);
+    }
 
     /**
      * Calling this endpoint indicates that data transfer is complete.

@@ -448,13 +448,13 @@ public class ProcessManager
      * sitting in buffers.
      *
      * @param jobId The job to flush
-     * @param calcInterim Should interim results be calculated based on the data
-     * up to the point of the flush?
+     * @param interimResultsParams Parameters about whether interim results calculation
+     * should occur and for which period of time
      * @throws NativeProcessRunException If the process has already terminated
      * @throws JobInUseException if the job cannot be closed because data is
      * being streamed to it
      */
-    public void flushJob(String jobId, boolean calcInterim)
+    public void flushJob(String jobId, InterimResultsParams interimResultsParams)
     throws NativeProcessRunException, JobInUseException
     {
         LOGGER.info("Flushing job " + jobId);
@@ -495,10 +495,7 @@ public class ProcessManager
                     process.getProcess().getOutputStream(),
                     process.getAnalysisConfig());
 
-            if (calcInterim)
-            {
-                writer.writeCalcInterimMessage();
-            }
+            writer.writeCalcInterimMessage(interimResultsParams);
             String flushId = writer.writeFlushMessage();
 
             // Check there wasn't an error in the transfer.
