@@ -37,6 +37,7 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 
+import com.prelert.job.DataCounts;
 import com.prelert.job.JobConfiguration;
 import com.prelert.rs.data.ApiError;
 import com.prelert.rs.data.ErrorCode;
@@ -44,22 +45,22 @@ import com.prelert.rs.data.ErrorCode;
 
 /**
  * Upload data that has a high proportion of records that have
- * unparseable dates or are not in ascending time order. 
- * Check the appropriate error code is returned.  
+ * unparseable dates or are not in ascending time order.
+ * Check the appropriate error code is returned.
  */
 public class BadRecordsTest implements Closeable
 {
 	private static final Logger LOGGER = Logger.getLogger(BadRecordsTest.class);
-	
+
 	/**
 	 * The default base Url used in the test
 	 */
 	public static final String API_BASE_URL = "http://localhost:8080/engine/v1";
-	
+
 	private EngineApiClient m_EngineApiClient;
-	
+
 	private String m_BaseUrl;
-	
+
 	/**
 	 * Creates a new http client call {@linkplain #close()} once finished
 	 */
@@ -68,22 +69,22 @@ public class BadRecordsTest implements Closeable
 		m_BaseUrl = baseUrl;
 		m_EngineApiClient = new EngineApiClient();
 	}
-	
+
 	@Override
-	public void close() throws IOException 
+	public void close() throws IOException
 	{
 		m_EngineApiClient.close();
 	}
-	
-	
+
+
 	/**
 	 * Generate records with unparsable dates the streaming client
 	 * should return {@link ErrorCode#TOO_MANY_BAD_DATES} error.
-	 * 
+	 *
 	 * @throws ClientProtocolException
 	 * @throws IOException
 	 */
-	public void testUnparseableDates() 
+	public void testUnparseableDates()
 	throws ClientProtocolException, IOException
 	{
 		PipedInputStream inputStream = new PipedInputStream();
@@ -95,40 +96,50 @@ public class BadRecordsTest implements Closeable
 		JobConfiguration jc = producer.getJobConfiguration();
 		jc.setDescription("Bad dates test");
 		String jobId = m_EngineApiClient.createJob(m_BaseUrl, jc);
-		
+
 		producerThread.start();
 
-		boolean success = m_EngineApiClient.streamingUpload(m_BaseUrl, jobId, inputStream, false);
-		test(success == false);
+		DataCounts counts = m_EngineApiClient.streamingUpload(m_BaseUrl, jobId, inputStream, false);
+
 		ApiError error = m_EngineApiClient.getLastError();
 		test(error != null);
 		test(error.getErrorCode() == ErrorCode.TOO_MANY_BAD_DATES);
+
+		test(counts.getOutOfOrderTimeStampCount() == 0);
+        test(counts.getInvalidDateCount() > 0);
+        test(counts.getProcessedFieldCount() > 0);
+        test(counts.getProcessedRecordCount() > 0);
+        test(counts.getFailedTransformCount() > 0);
+        test(counts.getInputBytes() > 0);
+        test(counts.getInputFieldCount() > 0);
+        test(counts.getInputRecordCount() > 0);
+        test(counts.getMissingFieldCount() == 0);
 		LOGGER.info(error);
 
-		
+
 		m_EngineApiClient.closeJob(m_BaseUrl, jobId);
-		
-		try 
+
+		try
 		{
 			producerThread.join();
 		}
-		catch (InterruptedException e) 
+		catch (InterruptedException e)
 		{
 			LOGGER.error(e);
 		}
 	}
-	
-	
+
+
 	/**
 	 * Generate records with that are not in ascending time order.
-	 * 
-	 * The client should return with 
+	 *
+	 * The client should return with
 	 * {@link ErrorCode#TOO_MANY_OUT_OF_ORDER_RECORDS} error.
-	 * 
+	 *
 	 * @throws ClientProtocolException
 	 * @throws IOException
 	 */
-	public void testOutOfOrderDates() 
+	public void testOutOfOrderDates()
 	throws ClientProtocolException, IOException
 	{
 		PipedInputStream inputStream = new PipedInputStream();
@@ -140,37 +151,47 @@ public class BadRecordsTest implements Closeable
 		JobConfiguration jc = producer.getJobConfiguration();
 		jc.setDescription("Out of order records test");
 		String jobId = m_EngineApiClient.createJob(m_BaseUrl, jc);
-		
+
 		producerThread.start();
 
-		boolean success = m_EngineApiClient.streamingUpload(m_BaseUrl, jobId, inputStream, false);
-		test(success == false);
+		DataCounts counts = m_EngineApiClient.streamingUpload(m_BaseUrl, jobId, inputStream, false);
+
 		ApiError error = m_EngineApiClient.getLastError();
 		test(error != null);
 		test(error.getErrorCode() == ErrorCode.TOO_MANY_OUT_OF_ORDER_RECORDS);
 		LOGGER.info(error);
 
-		
+		test(counts.getInvalidDateCount() == 0);
+		test(counts.getOutOfOrderTimeStampCount() > 0);
+		test(counts.getProcessedFieldCount() > 0);
+		test(counts.getProcessedRecordCount() > 0);
+		test(counts.getFailedTransformCount() > 0);
+		test(counts.getInputBytes() > 0);
+		test(counts.getInputFieldCount() > 0);
+		test(counts.getInputRecordCount() > 0);
+		test(counts.getMissingFieldCount() == 0);
+
+
 		m_EngineApiClient.closeJob(m_BaseUrl, jobId);
-		
-		try 
+
+		try
 		{
 			producerThread.join();
 		}
-		catch (InterruptedException e) 
+		catch (InterruptedException e)
 		{
 			LOGGER.error(e);
 		}
 	}
-	
-	
+
+
 	/**
 	 * Throws an exception if <code>condition</code> is false.
-	 * 
+	 *
 	 * @param condition
 	 * @throws IllegalStateException
 	 */
-	public static void test(boolean condition) 
+	public static void test(boolean condition)
 	throws IllegalStateException
 	{
 		if (condition == false)
@@ -178,39 +199,39 @@ public class BadRecordsTest implements Closeable
 			throw new IllegalStateException();
 		}
 	}
-	
-	
+
+
 	/**
 	 * The program takes one argument which is the base Url of the RESTful API.
-	 * If no arguments are given then {@value #API_BASE_URL} is used. 
-	 * 
+	 * If no arguments are given then {@value #API_BASE_URL} is used.
+	 *
 	 * @param args
 	 * @throws IOException
-	 * @throws InterruptedException 
+	 * @throws InterruptedException
 	 */
-	public static void main(String[] args) 
+	public static void main(String[] args)
 	throws IOException, InterruptedException
 	{
 		// configure log4j
-		ConsoleAppender console = new ConsoleAppender(); 		
-		console.setLayout(new PatternLayout("%d [%p|%c|%C{1}] %m%n")); 
+		ConsoleAppender console = new ConsoleAppender();
+		console.setLayout(new PatternLayout("%d [%p|%c|%C{1}] %m%n"));
 		console.setThreshold(Level.INFO);
 		console.activateOptions();
 		Logger.getRootLogger().addAppender(console);
-				
+
 		String baseUrl = API_BASE_URL;
 		if (args.length > 0)
 		{
 			baseUrl = args[0];
 		}
 
-		
+
 		BadRecordsTest test = new BadRecordsTest(baseUrl);
 		test.testUnparseableDates();
 		test.testOutOfOrderDates();
-		
-		test.close();	
-		
+
+		test.close();
+
 		LOGGER.info("All tests passed Ok");
 	}
 }

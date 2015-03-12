@@ -40,7 +40,8 @@ import org.junit.Test;
 import com.prelert.job.DataCounts;
 import com.prelert.job.usage.UsageReporter;
 
-public class StatusReporterTest {
+public class StatusReporterTest
+{
 
     @Test
     public void testSettingAcceptablePercentages()
@@ -108,9 +109,15 @@ public class StatusReporterTest {
         assertNotNull(stats);
         testAllFieldsEqualZero(stats);
 
+        reporter.setAnalysedFieldsPerRecord(5);
+
         reporter.reportRecordWritten(5);
         assertEquals(1, reporter.incrementalStats().getInputRecordCount());
         assertEquals(5, reporter.incrementalStats().getInputFieldCount());
+        assertEquals(1, reporter.incrementalStats().getProcessedRecordCount());
+        assertEquals(5, reporter.incrementalStats().getProcessedFieldCount());
+
+        assertEquals(reporter.incrementalStats(), reporter.runningTotalStats());
 
         reporter.startNewIncrementalCount();
         stats = reporter.incrementalStats();
@@ -124,6 +131,11 @@ public class StatusReporterTest {
         for(PropertyDescriptor propertyDescriptor :
             Introspector.getBeanInfo(DataCounts.class, Object.class).getPropertyDescriptors())
         {
+            if (propertyDescriptor.getDisplayName().equals("analysedFieldsPerRecord"))
+            {
+                continue;
+            }
+
             assertEquals(new Long(0), propertyDescriptor.getReadMethod().invoke(stats));
         }
     }

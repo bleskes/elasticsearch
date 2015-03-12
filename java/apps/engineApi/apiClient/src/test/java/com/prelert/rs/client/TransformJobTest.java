@@ -42,6 +42,7 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 
 import com.prelert.job.AnalysisConfig;
+import com.prelert.job.DataCounts;
 import com.prelert.job.DataDescription;
 import com.prelert.job.Detector;
 import com.prelert.job.JobDetails;
@@ -156,8 +157,8 @@ public class TransformJobTest implements Closeable
     throws IOException
     {
         FileInputStream stream = new FileInputStream(dataFile);
-        boolean success = m_WebServiceClient.streamingUpload(baseUrl, jobId, stream, compressed);
-        test(success);
+        DataCounts counts = m_WebServiceClient.streamingUpload(baseUrl, jobId, stream, compressed);
+        test(counts.getProcessedRecordCount() > 0);
 
         SingleDocument<JobDetails> job = m_WebServiceClient.getJob(baseUrl, jobId);
         test(job.isExists());

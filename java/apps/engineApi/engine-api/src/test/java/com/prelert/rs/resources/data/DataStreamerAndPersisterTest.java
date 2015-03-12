@@ -29,6 +29,7 @@ package com.prelert.rs.resources.data;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -37,6 +38,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
+import com.prelert.job.DataCounts;
 import com.prelert.job.JobInUseException;
 import com.prelert.job.TooManyJobsException;
 import com.prelert.job.UnknownJobException;
@@ -72,6 +74,9 @@ public class DataStreamerAndPersisterTest
         JobManager jobManager = mock(JobManager.class);
         DataStreamerAndPersister dataStreamer = new DataStreamerAndPersister(jobManager);
         InputStream inputStream = mock(InputStream.class);
+
+        when(jobManager.submitDataLoadAndPersistJob("foo", inputStream)).thenReturn(
+                new DataCounts());
 
         dataStreamer.streamData(null, "foo", inputStream);
 

@@ -267,15 +267,8 @@ public abstract class StatusReporter
 
 	public long getProcessedFieldCount()
 	{
-		long processedFieldCount =
-				(getProcessedRecordCount() * getAnalysedFieldsPerRecord())
-				- getMissingFieldErrorCount();
-
-		// processedFieldCount could be a -ve value if no
-		// records have been written in which case it should be 0
-		processedFieldCount = (processedFieldCount < 0) ? 0 : processedFieldCount;
-
-		return processedFieldCount;
+	    m_TotalRecordStats.calcProcessedFieldCount(getAnalysedFieldsPerRecord());
+	    return m_TotalRecordStats.getProcessedFieldCount();
 	}
 
 	public long getInputFieldCount()
@@ -422,11 +415,13 @@ public abstract class StatusReporter
 
 	public DataCounts incrementalStats()
 	{
+	    m_IncrementalRecordStats.calcProcessedFieldCount(getAnalysedFieldsPerRecord());
 	    return m_IncrementalRecordStats;
 	}
 
     public DataCounts runningTotalStats()
     {
+        m_TotalRecordStats.calcProcessedFieldCount(getAnalysedFieldsPerRecord());
         return m_TotalRecordStats;
     }
 

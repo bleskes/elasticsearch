@@ -38,6 +38,7 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 
+import com.prelert.job.DataCounts;
 import com.prelert.rs.client.datauploader.CsvDataRunner;
 import com.prelert.rs.data.ApiError;
 import com.prelert.rs.data.ErrorCode;
@@ -46,58 +47,58 @@ import com.prelert.rs.data.ErrorCode;
  * This program tests the case where multiple processes try to write
  * to the same job and checks the correct errors are returned.
  * A background thread is started which opens a conenction to the API
- * server and writes random data to a job then the main thread tries 
- * various operations that should fail. 
+ * server and writes random data to a job then the main thread tries
+ * various operations that should fail.
  * The tests are:
  * <ol>
  * <li>Try to close a job when it is being streamed data</li>
  * <li>Try to write to a job when it is being streamed data</li>
  * </ol>
  */
-public class ParallelUploadTest 
+public class ParallelUploadTest
 {
 	private static final Logger LOGGER = Logger.getLogger(ParallelUploadTest.class);
 
-	
-	public static void main(String[] args) 
+
+	public static void main(String[] args)
 	throws FileNotFoundException, IOException
-	{		
+	{
 		// configure log4j
-		ConsoleAppender console = new ConsoleAppender(); 		
-		console.setLayout(new PatternLayout("%d [%p|%c|%C{1}] %m%n")); 
+		ConsoleAppender console = new ConsoleAppender();
+		console.setLayout(new PatternLayout("%d [%p|%c|%C{1}] %m%n"));
 		console.setThreshold(Level.INFO);
 		console.activateOptions();
 		Logger.getRootLogger().addAppender(console);
-		
+
 		if (args.length == 0)
 		{
 			LOGGER.error("This program has one argument the base Url of the"
 					+ " REST API");
 			return;
 		}
-		
+
 		String url = args[0];
-		
-		CsvDataRunner jobRunner = new CsvDataRunner(url);  
+
+		CsvDataRunner jobRunner = new CsvDataRunner(url);
 		String jobId = jobRunner.createJob();
 
 		Thread testThread = new Thread(jobRunner);
 		testThread.start();
-		
-		
+
+
 		// wait for the runner thread to start the upload
-		synchronized (jobRunner) 
+		synchronized (jobRunner)
 		{
-			try 
+			try
 			{
 				jobRunner.wait();
 			}
-			catch (InterruptedException e1) 
+			catch (InterruptedException e1)
 			{
 				LOGGER.error(e1);
 			}
-		} 
-		
+		}
+
 		try (EngineApiClient client = new EngineApiClient())
 		{
 			// cannot close a job when another process is writing to it
@@ -106,38 +107,38 @@ public class ParallelUploadTest
 			{
 				throw new IllegalStateException("Error closed job while writing to it");
 			}
-			
+
 			ApiError apiError = client.getLastError();
 
 			if (apiError.getErrorCode() != ErrorCode.NATIVE_PROCESS_CONCURRENT_USE_ERROR)
 			{
 				throw new IllegalStateException("Closing Job: Error code should be job in use error");
 			}
-			
+
 			// cannot write to the job when another process is writing to it
 			String data = CsvDataRunner.HEADER + "\n1000,metric,100\n";
 			InputStream is = new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
-			boolean uploaded = client.streamingUpload(url, jobId, is, false);
-			
-			if (uploaded)
+			DataCounts counts = client.streamingUpload(url, jobId, is, false);
+
+			if (counts.getProcessedRecordCount() > 0)
 			{
 				throw new IllegalStateException("Error wrote to job in use");
 			}
-			
+
 			apiError = client.getLastError();
 			if (apiError.getErrorCode() != ErrorCode.NATIVE_PROCESS_CONCURRENT_USE_ERROR)
 			{
 				throw new IllegalStateException("Writing data: Error code should be job in use error");
 			}
-			
-			
+
+
 			// cannot delete a job when another process is writing to it
 			boolean deleted = client.deleteJob(url, jobId);
 			if (deleted)
 			{
 				throw new IllegalStateException("Error deleted job while writing to it");
 			}
-			
+
 			apiError = client.getLastError();
 
 			if (apiError.getErrorCode() != ErrorCode.NATIVE_PROCESS_CONCURRENT_USE_ERROR)
@@ -145,20 +146,20 @@ public class ParallelUploadTest
 				throw new IllegalStateException("Deleting Job: Error code should be job in use error");
 			}
 		}
-		
+
 		jobRunner.cancel();
-		
-		
+
+
 		try
 		{
 			testThread.join();
 		}
-		catch (InterruptedException e) 
+		catch (InterruptedException e)
 		{
 			LOGGER.error("Interupted joining test thread", e);
 		}
-		
-		
+
+
 		LOGGER.info("All tests passed Ok");
 
 	}

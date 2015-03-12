@@ -94,7 +94,7 @@ public class UsageTest implements Closeable
 
 
 
-	public String runFarequoteJob(String apiUrl, File dataFile, boolean isJson,
+	private String runFarequoteJob(String apiUrl, File dataFile, boolean isJson,
 			boolean compressed)
 	throws ClientProtocolException, IOException
 	{
@@ -134,28 +134,38 @@ public class UsageTest implements Closeable
 			test(jobId != null && jobId.isEmpty() == false);
 		}
 
-		boolean success = m_WebServiceClient.fileUpload(apiUrl, jobId, dataFile, compressed);
-		if (!success)
+		DataCounts counts = m_WebServiceClient.fileUpload(apiUrl, jobId, dataFile, compressed);
+		if (counts.getInputRecordCount() == 0)
 		{
 			LOGGER.error(m_WebServiceClient.getLastError().toJson());
-			test(success);
+			test(false);
 		}
+
+		validateFlightCentreCounts(counts, isJson, compressed, false);
+
 		m_WebServiceClient.closeJob(apiUrl, jobId);
 
 
 		return jobId;
 	}
 
+	private DataCounts jobDataCounts(String apiUrl, String jobId) throws IOException
+	{
+	    SingleDocument<JobDetails> job =  m_WebServiceClient.getJob(apiUrl, jobId);
+	    test(job.isExists());
 
-	public void validateFlightCentreCounts(String apiUrl, String jobId,
-			boolean isJson)
+	    return job.getDocument().getCounts();
+	}
+
+
+	public void validateFlightCentreCounts(DataCounts counts, boolean isJson, boolean isCompressed,
+	                                boolean compareBucketCount)
 	throws IOException
 	{
-		SingleDocument<JobDetails> job =  m_WebServiceClient.getJob(apiUrl, jobId);
-		test(job.isExists());
-
-		DataCounts counts = job.getDocument().getCounts();
-		test(counts.getBucketCount() == FLIGHTCENTRE_NUM_BUCKETS);
+	    if (compareBucketCount)
+		{
+	        test(counts.getBucketCount() == FLIGHTCENTRE_NUM_BUCKETS);
+		}
 		test(counts.getInputRecordCount() == FLIGHTCENTRE_NUM_RECORDS);
 		test(counts.getInputFieldCount() == FLIGHTCENTRE_NUM_FIELDS);
 
@@ -166,8 +176,14 @@ public class UsageTest implements Closeable
 		else
 		{
 			// the gzipped data is 1 byte smaller (assuming this is a new line)
-			test(counts.getInputBytes() == FLIGHTCENTRE_INPUT_BYTES_CSV ||
-					counts.getInputBytes() == FLIGHTCENTRE_INPUT_BYTES_CSV -1);
+		    if (isCompressed)
+			{
+		        test(counts.getInputBytes() == FLIGHTCENTRE_INPUT_BYTES_CSV -1);
+			}
+		    else
+		    {
+		        test(counts.getInputBytes() == FLIGHTCENTRE_INPUT_BYTES_CSV);
+		    }
 
 		}
 
@@ -238,19 +254,23 @@ public class UsageTest implements Closeable
 
 			boolean isJson = false;
 			boolean isCompressed = false;
+			boolean compareBuckets = true;
 			String jobId;
 
 			jobId = test.runFarequoteJob(baseUrl, flightCentreDataCsv, isJson, isCompressed);
-			test.validateFlightCentreCounts(baseUrl, jobId, isJson);
+			DataCounts counts = test.jobDataCounts(baseUrl, jobId);
+			test.validateFlightCentreCounts(counts, isJson, isCompressed, compareBuckets);
 
 			isCompressed = true;
 			jobId = test.runFarequoteJob(baseUrl, flightCenterDataCsvGzip, isJson, isCompressed);
-			test.validateFlightCentreCounts(baseUrl, jobId, isJson);
+			counts = test.jobDataCounts(baseUrl, jobId);
+			test.validateFlightCentreCounts(counts, isJson, isCompressed, compareBuckets);
 
 			isJson = true;
 			isCompressed = false;
 			jobId = test.runFarequoteJob(baseUrl, flightCentreDataJson, isJson, isCompressed);
-			test.validateFlightCentreCounts(baseUrl, jobId, isJson);
+			counts = test.jobDataCounts(baseUrl, jobId);
+			test.validateFlightCentreCounts(counts, isJson, isCompressed, compareBuckets);
 
 			jobs.add(jobId);
 

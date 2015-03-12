@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -61,6 +61,7 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.prelert.job.DataCounts;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
 import com.prelert.job.alert.Alert;
@@ -342,11 +343,11 @@ public class EngineApiClient implements Closeable
      * e.g <code>http://localhost:8080/engine/v1/</code>
      * @param jobId The Job's unique Id
      * @param inputStream The data to write to the web service
-     * @return True
+     * @return
      * @throws IOException
      * @see #streamingUpload(String, String, InputStream, boolean)
      */
-    public boolean chunkedUpload(String baseUrl, String jobId,
+    public DataCounts chunkedUpload(String baseUrl, String jobId,
             InputStream inputStream)
     throws IOException
     {
@@ -357,12 +358,15 @@ public class EngineApiClient implements Closeable
         byte [] buffer = new byte[BUFF_SIZE];
         int read = 0;
         int uploadCount = 0;
+        DataCounts uploadCounts = new DataCounts();
+
         while ((read = inputStream.read(buffer)) > -1)
         {
             ByteArrayEntity entity = new ByteArrayEntity(buffer, 0, read);
             entity.setContentType("application/octet-stream");
 
             LOGGER.info("Upload " + ++uploadCount);
+
 
             HttpPost post = new HttpPost(postUrl);
             post.setEntity(entity);
@@ -387,11 +391,13 @@ public class EngineApiClient implements Closeable
                 else
                 {
                     m_LastError = null;
+
+                    uploadCounts = m_JsonMapper.readValue(content, new TypeReference<DataCounts>() {});
                 }
             }
         }
 
-        return true;
+        return uploadCounts;
     }
 
     /**
@@ -405,12 +411,13 @@ public class EngineApiClient implements Closeable
      * @param jobId The Job's unique Id
      * @param inputStream The data to write to the web service
      * @param compressed Is the data gzipped compressed?
-     * @return True if successful
+     * @return DataCounts
      * @throws IOException
      * @see #chunkedUpload(String, String, InputStream)
      */
-    public boolean streamingUpload(String baseUrl, String jobId,
-            InputStream inputStream, boolean compressed) throws IOException
+    public DataCounts streamingUpload(String baseUrl, String jobId,
+            InputStream inputStream, boolean compressed)
+    throws IOException
     {
         String postUrl = baseUrl + "/data/" + jobId;
         LOGGER.debug("Uploading data to " + postUrl);
@@ -450,10 +457,12 @@ public class EngineApiClient implements Closeable
                     m_LastError = null;
                 }
 
-                return false;
+                return new DataCounts();
             }
-
-            return true;
+            else
+            {
+                return m_JsonMapper.readValue(content, new TypeReference<DataCounts>() {} );
+            }
         }
     }
 
@@ -466,10 +475,10 @@ public class EngineApiClient implements Closeable
      * @param jobId The Job's Id
      * @param dataFile Should match the data configuration format of the job
      * @param compressed Is the data gzipped compressed?
-     * @return True if successful
+     * @return
      * @throws IOException
      */
-    public boolean fileUpload(String baseUrl, String jobId, File dataFile, boolean compressed)
+    public DataCounts fileUpload(String baseUrl, String jobId, File dataFile, boolean compressed)
     throws IOException
     {
         FileInputStream stream = new FileInputStream(dataFile);

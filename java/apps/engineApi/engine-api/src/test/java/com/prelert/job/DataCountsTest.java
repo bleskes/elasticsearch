@@ -78,7 +78,7 @@ public class DataCountsTest
     public void testCountCopyCreatedFieldsNotZero()
     throws IntrospectionException, IllegalAccessException, IllegalArgumentException, InvocationTargetException
     {
-        DataCounts counts1 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9);
+        DataCounts counts1 = createCounts(1, 200, 400, 3, 4, 5, 6, 7, 8);
         testAllFieldsGreaterThanZero(counts1);
 
         DataCounts counts2 = new DataCounts(counts1);
@@ -123,12 +123,31 @@ public class DataCountsTest
         assertEquals(8, counts.getInputRecordCount());
     }
 
+    @Test
+    public void testCalcProcessedFieldCount()
+    {
+        DataCounts counts = new DataCounts();
+        counts.setProcessedRecordCount(10);
+        counts.setMissingFieldCount(0);
+        counts.calcProcessedFieldCount(3);
+
+        assertEquals(30, counts.getProcessedFieldCount());
+
+        counts.setMissingFieldCount(5);
+        counts.calcProcessedFieldCount(3);
+        assertEquals(25, counts.getProcessedFieldCount());
+    }
+
     private void testAllFieldsEqualZero(DataCounts stats)
     throws IntrospectionException, IllegalAccessException, IllegalArgumentException, InvocationTargetException
     {
         for(PropertyDescriptor propertyDescriptor :
             Introspector.getBeanInfo(DataCounts.class, Object.class).getPropertyDescriptors())
         {
+            if (propertyDescriptor.getDisplayName().equals("analysedFieldsPerRecord"))
+            {
+                continue;
+            }
             assertEquals(new Long(0), propertyDescriptor.getReadMethod().invoke(stats));
         }
     }

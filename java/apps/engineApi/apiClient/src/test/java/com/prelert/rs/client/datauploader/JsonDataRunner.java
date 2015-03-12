@@ -192,11 +192,12 @@ public class JsonDataRunner implements Runnable
 
 		try
 		{
-			boolean ok = m_ApiClient.streamingUpload(m_BaseUrl, m_JobId, inputStream, false);
-			if (!ok)
+			m_ApiClient.streamingUpload(m_BaseUrl, m_JobId, inputStream, false);
+
+			ApiError error = m_ApiClient.getLastError();
+			if (error != null)
 			{
-				ApiError error = m_ApiClient.getLastError();
-				LOGGER.error(error.toJson());
+			    LOGGER.error(error.toJson());
 			}
 		}
 		catch (IOException e)

@@ -29,8 +29,11 @@ package com.prelert.job;
 
 import java.util.Objects;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * Job processed record counts.
@@ -38,10 +41,15 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
  * The getInput... methods return the actual number of
  * fields/records sent the the API including invalid records.
  * The getProcessed... methods are the number sent to the
- * Engine
+ * Engine.
+ *
+ * The <code>inputRecordCount</code> field is calculated so it
+ * should not be set in deserialisation but it should be read in
+ * serialistion - hence the annotations and the private setter
  */
 
 @JsonInclude(Include.NON_NULL)
+@JsonIgnoreProperties({"analysedFieldsPerRecord"})
 public class DataCounts
 {
     public static final String BUCKET_COUNT = "bucketCount";
@@ -59,14 +67,12 @@ public class DataCounts
     private Long m_BucketCount;
     private long m_ProcessedRecordCount;
     private long m_ProcessedFieldCount;
-    private long m_InputRecordCount;
     private long m_InputBytes;
     private long m_InputFieldCount;
     private long m_InvalidDateCount;
     private long m_MissingFieldCount;
     private long m_OutOfOrderTimeStampCount;
     private long m_FailedTransformCount;
-
 
     public DataCounts()
     {
@@ -78,7 +84,6 @@ public class DataCounts
         m_BucketCount = lhs.m_BucketCount;
         m_ProcessedRecordCount = lhs.m_ProcessedRecordCount;
         m_ProcessedFieldCount = lhs.m_ProcessedFieldCount;
-        m_InputRecordCount = lhs.m_InputRecordCount;
         m_InputBytes = lhs.m_InputBytes;
         m_InputFieldCount = lhs.m_InputFieldCount;
         m_InvalidDateCount = lhs.m_InvalidDateCount;
@@ -140,6 +145,17 @@ public class DataCounts
         m_ProcessedFieldCount = count;
     }
 
+    public void calcProcessedFieldCount(long analysisFieldsPerRecord)
+    {
+        m_ProcessedFieldCount =
+                (m_ProcessedRecordCount * analysisFieldsPerRecord)
+                - m_MissingFieldCount;
+
+        // processedFieldCount could be a -ve value if no
+        // records have been written in which case it should be 0
+        m_ProcessedFieldCount = (m_ProcessedFieldCount < 0) ? 0 : m_ProcessedFieldCount;
+    }
+
     /**
      * Total number of input records read.
      * This = processed record count + date parse error records count
@@ -148,10 +164,22 @@ public class DataCounts
      * Records with missing fields are counted as they are still written.
      * @return
      */
+    @JsonProperty
     public long getInputRecordCount()
     {
         return m_ProcessedRecordCount + m_OutOfOrderTimeStampCount
                                 + m_InvalidDateCount;
+    }
+
+    /**
+     * Only present to keep jackson serialisation happy.
+     * This property should not be deserialised
+     * @param count
+     */
+    @JsonIgnore
+    private void setInputRecordCount(long count)
+    {
+        throw new IllegalStateException();
     }
 
     /**
@@ -281,6 +309,7 @@ public class DataCounts
         m_FailedTransformCount += additional;
     }
 
+
     /**
      * Equality test
      */
@@ -299,12 +328,11 @@ public class DataCounts
 
         DataCounts that = (DataCounts)other;
 
-        return this.m_BucketCount == that.m_BucketCount &&
+        return this.m_BucketCount.equals(that.m_BucketCount) &&
                 this.m_ProcessedRecordCount == that.m_ProcessedRecordCount &&
                 this.m_ProcessedFieldCount == that.m_ProcessedFieldCount &&
                 this.m_InputBytes == that.m_InputBytes &&
                 this.m_InputFieldCount == that.m_InputFieldCount &&
-                this.m_InputRecordCount == that.m_InputRecordCount &&
                 this.m_InvalidDateCount == that.m_InvalidDateCount &&
                 this.m_MissingFieldCount == that.m_MissingFieldCount &&
                 this.m_OutOfOrderTimeStampCount == that.m_OutOfOrderTimeStampCount &&
@@ -314,9 +342,8 @@ public class DataCounts
     @Override
     public int hashCode()
     {
-        return Objects.hash(m_BucketCount, m_ProcessedRecordCount,
-                m_ProcessedFieldCount, m_InputBytes, m_InputFieldCount,
-                m_InputRecordCount, m_InvalidDateCount,
-                m_MissingFieldCount, m_OutOfOrderTimeStampCount, m_FailedTransformCount);
+        return Objects.hash(m_BucketCount, m_ProcessedRecordCount, m_ProcessedFieldCount,
+                m_InputBytes, m_InputFieldCount, m_InvalidDateCount, m_MissingFieldCount,
+                m_OutOfOrderTimeStampCount, m_FailedTransformCount);
     }
 }
