@@ -27,8 +27,6 @@
 
 package com.prelert.rs.resources;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -78,12 +76,6 @@ public class Records extends ResourceWithJobManager
      */
     public static final String DESCENDING_ORDER = "desc";
 
-    private final DateFormat m_DateFormat = new SimpleDateFormat(ISO_8601_DATE_FORMAT);
-    private final DateFormat m_DateFormatWithMs = new SimpleDateFormat(ISO_8601_DATE_FORMAT_WITH_MS);
-
-    private final DateFormat [] m_DateFormats = new DateFormat [] {
-        m_DateFormat, m_DateFormatWithMs};
-
     /**
      * Get all the records (in pages) for the job optionally filtered
      * by date.
@@ -121,8 +113,8 @@ public class Records extends ResourceWithJobManager
                 normalizedProbabilityFilter, anomalySoreFilter,
                 includeInterim ? "including" : "excluding"));
 
-        long epochStartMs = paramToEpochIfValidOrThrow(start, m_DateFormats, LOGGER);
-        long epochEndMs = paramToEpochIfValidOrThrow(end, m_DateFormats, LOGGER);
+        long epochStartMs = paramToEpochIfValidOrThrow(start, LOGGER);
+        long epochEndMs = paramToEpochIfValidOrThrow(end, LOGGER);
 
         JobManager manager = jobManager();
         Pagination<AnomalyRecord> records;
