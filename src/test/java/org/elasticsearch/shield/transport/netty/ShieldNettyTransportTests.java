@@ -24,7 +24,9 @@ import org.elasticsearch.common.netty.handler.ssl.SslHandler;
 import org.elasticsearch.common.network.NetworkService;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.settings.SettingsFilter;
 import org.elasticsearch.common.util.BigArrays;
+import org.elasticsearch.shield.ShieldSettingsFilter;
 import org.elasticsearch.shield.ssl.ClientSSLService;
 import org.elasticsearch.shield.ssl.ServerSSLService;
 import org.elasticsearch.test.ElasticsearchTestCase;
@@ -45,6 +47,7 @@ public class ShieldNettyTransportTests extends ElasticsearchTestCase {
 
     private ServerSSLService serverSSLService;
     private ClientSSLService clientSSLService;
+    private ShieldSettingsFilter settingsFilter;
 
     @Before
     public void createSSLService() throws Exception {
@@ -53,14 +56,15 @@ public class ShieldNettyTransportTests extends ElasticsearchTestCase {
                 .put("shield.ssl.keystore.path", testnodeStore)
                 .put("shield.ssl.keystore.password", "testnode")
                 .build();
-        serverSSLService = new ServerSSLService(settings);
+        settingsFilter = new ShieldSettingsFilter(settings, new SettingsFilter(settings));
+        serverSSLService = new ServerSSLService(settings, settingsFilter);
         clientSSLService = new ClientSSLService(settings);
     }
 
     @Test
     public void testThatSSLCanBeDisabledByProfile() throws Exception {
         Settings settings = ImmutableSettings.builder().put("shield.transport.ssl", true).build();
-        ShieldNettyTransport transport = new ShieldNettyTransport(settings, mock(ThreadPool.class), mock(NetworkService.class), mock(BigArrays.class), Version.CURRENT, null, serverSSLService, clientSSLService);
+        ShieldNettyTransport transport = new ShieldNettyTransport(settings, mock(ThreadPool.class), mock(NetworkService.class), mock(BigArrays.class), Version.CURRENT, null, serverSSLService, clientSSLService, settingsFilter);
         setOpenChannelsHandlerToMock(transport);
         ChannelPipelineFactory factory = transport.configureServerChannelPipelineFactory("client", ImmutableSettings.builder().put("shield.ssl", false).build());
         assertThat(factory.getPipeline().get(SslHandler.class), nullValue());
@@ -69,7 +73,7 @@ public class ShieldNettyTransportTests extends ElasticsearchTestCase {
     @Test
     public void testThatSSLCanBeEnabledByProfile() throws Exception {
         Settings settings = ImmutableSettings.builder().put("shield.transport.ssl", false).build();
-        ShieldNettyTransport transport = new ShieldNettyTransport(settings, mock(ThreadPool.class), mock(NetworkService.class), mock(BigArrays.class), Version.CURRENT, null, serverSSLService, clientSSLService);
+        ShieldNettyTransport transport = new ShieldNettyTransport(settings, mock(ThreadPool.class), mock(NetworkService.class), mock(BigArrays.class), Version.CURRENT, null, serverSSLService, clientSSLService, settingsFilter);
         setOpenChannelsHandlerToMock(transport);
         ChannelPipelineFactory factory = transport.configureServerChannelPipelineFactory("client", ImmutableSettings.builder().put("shield.ssl", true).build());
         assertThat(factory.getPipeline().get(SslHandler.class), notNullValue());
@@ -78,7 +82,7 @@ public class ShieldNettyTransportTests extends ElasticsearchTestCase {
     @Test
     public void testThatProfileTakesDefaultSSLSetting() throws Exception {
         Settings settings = ImmutableSettings.builder().put("shield.transport.ssl", true).build();
-        ShieldNettyTransport transport = new ShieldNettyTransport(settings, mock(ThreadPool.class), mock(NetworkService.class), mock(BigArrays.class), Version.CURRENT, null, serverSSLService, clientSSLService);
+        ShieldNettyTransport transport = new ShieldNettyTransport(settings, mock(ThreadPool.class), mock(NetworkService.class), mock(BigArrays.class), Version.CURRENT, null, serverSSLService, clientSSLService, settingsFilter);
         setOpenChannelsHandlerToMock(transport);
         ChannelPipelineFactory factory = transport.configureServerChannelPipelineFactory("client", ImmutableSettings.EMPTY);
         assertThat(factory.getPipeline().get(SslHandler.class), notNullValue());
