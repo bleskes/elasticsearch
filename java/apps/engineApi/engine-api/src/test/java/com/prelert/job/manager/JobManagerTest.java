@@ -114,7 +114,6 @@ public class JobManagerTest
             MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException,
             OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException
     {
-        int max = 3 * Runtime.getRuntime().availableProcessors();
         when(m_JobProvider.getJobDetails("foo")).thenReturn(
                 new JobDetails("foo", new JobConfiguration()));
         givenProcessInfo(5);
@@ -140,7 +139,6 @@ public class JobManagerTest
             OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException
     {
         System.setProperty("prelert.max.jobs.factor", "5.0");
-        int max = 5 * Runtime.getRuntime().availableProcessors();
         when(m_JobProvider.getJobDetails("foo")).thenReturn(
                 new JobDetails("foo", new JobConfiguration()));
         givenProcessInfo(5);
@@ -166,7 +164,6 @@ public class JobManagerTest
             OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException
     {
         System.setProperty("prelert.max.jobs.factor", "invalid");
-        int max = 3 * Runtime.getRuntime().availableProcessors();
         when(m_JobProvider.getJobDetails("foo")).thenReturn(
                 new JobDetails("foo", new JobConfiguration()));
         givenProcessInfo(5);

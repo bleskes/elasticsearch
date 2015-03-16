@@ -621,11 +621,8 @@ public class JobManager
      * @throws HighProportionOfBadTimestampsException
      * @throws OutOfOrderRecordsException
      * @throws TooManyJobsException If the license is violated
-<<<<<<< HEAD
      * @throws MalformedJsonException If JSON data is malformed and we cannot recover
-=======
      * @return Count of records, fields, bytes, etc written
->>>>>>> Refactor to allow the processed data stats to be passed back to the original rest call
      */
     public DataCounts submitDataLoadAndPersistJob(String jobId, InputStream input)
     throws UnknownJobException, NativeProcessRunException, MissingFieldException,

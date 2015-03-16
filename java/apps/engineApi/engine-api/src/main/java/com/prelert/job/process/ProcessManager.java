@@ -241,11 +241,8 @@ public class ProcessManager
      * the job is already handling data
      * @throws HighProportionOfBadTimestampsException
      * @throws OutOfOrderRecordsException
-<<<<<<< HEAD
      * @throws MalformedJsonException
-=======
      * @return Count of records, fields, bytes, etc written
->>>>>>> Refactor to allow the processed data stats to be passed back to the original rest call
      */
     public DataCounts processDataLoadAndPersistJob(String jobId, InputStream input)
     throws UnknownJobException, NativeProcessRunException, MissingFieldException,
@@ -770,11 +767,8 @@ public class ProcessManager
      * @throws IOException
      * @throws HighProportionOfBadTimestampsException
      * @throws OutOfOrderRecordsException
-<<<<<<< HEAD
      * @throws MalformedJsonException
-=======
      * @return Count of records, fields, bytes, etc written
->>>>>>> Refactor to allow the processed data stats to be passed back to the original rest call
      */
     public DataCounts writeToJob(DataDescription dataDescription,
             AnalysisConfig analysisConfig,
