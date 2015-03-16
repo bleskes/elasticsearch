@@ -106,13 +106,6 @@ public class BadRecordsTest implements Closeable
 		test(error.getErrorCode() == ErrorCode.TOO_MANY_BAD_DATES);
 
 		test(counts.getOutOfOrderTimeStampCount() == 0);
-        test(counts.getInvalidDateCount() > 0);
-        test(counts.getProcessedFieldCount() > 0);
-        test(counts.getProcessedRecordCount() > 0);
-        test(counts.getFailedTransformCount() > 0);
-        test(counts.getInputBytes() > 0);
-        test(counts.getInputFieldCount() > 0);
-        test(counts.getInputRecordCount() > 0);
         test(counts.getMissingFieldCount() == 0);
 		LOGGER.info(error);
 
@@ -162,13 +155,6 @@ public class BadRecordsTest implements Closeable
 		LOGGER.info(error);
 
 		test(counts.getInvalidDateCount() == 0);
-		test(counts.getOutOfOrderTimeStampCount() > 0);
-		test(counts.getProcessedFieldCount() > 0);
-		test(counts.getProcessedRecordCount() > 0);
-		test(counts.getFailedTransformCount() > 0);
-		test(counts.getInputBytes() > 0);
-		test(counts.getInputFieldCount() > 0);
-		test(counts.getInputRecordCount() > 0);
 		test(counts.getMissingFieldCount() == 0);
 
 
