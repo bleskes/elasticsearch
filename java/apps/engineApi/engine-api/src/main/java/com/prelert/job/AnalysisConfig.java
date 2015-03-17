@@ -370,7 +370,7 @@ public class AnalysisConfig
                     ErrorCode.INCOMPLETE_CONFIGURATION);
         }
 
-        boolean isSummarised = (m_SummaryCountFieldName != null && !m_SummaryCountFieldName.isEmpty());
+        boolean isSummarised = m_SummaryCountFieldName != null && !m_SummaryCountFieldName.isEmpty();
         for (Detector d : m_Detectors)
         {
             d.verify(isSummarised);
