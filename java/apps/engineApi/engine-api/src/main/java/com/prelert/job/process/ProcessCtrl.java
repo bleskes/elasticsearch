@@ -392,6 +392,7 @@ public class ProcessCtrl
                 }
                 catch (InterruptedException ie)
                 {
+                    Thread.currentThread().interrupt();
                     LOGGER.error("Interrupted reading analytics version number", ie);
                     return UNKNOWN_VERSION;
                 }
@@ -441,6 +442,7 @@ public class ProcessCtrl
             }
             catch (InterruptedException ie)
             {
+                Thread.currentThread().interrupt();
                 LOGGER.error("Interrupted reading autodetect info", ie);
             }
         }

@@ -507,6 +507,7 @@ public class ProcessManager
         }
         catch (InterruptedException ie)
         {
+            Thread.currentThread().interrupt();
             String msg = String.format("Interrupted while flushing process for job %s", jobId);
 
             process.getLogger().error(msg);
@@ -833,6 +834,7 @@ public class ProcessManager
                                     }
                                     catch (InterruptedException e1)
                                     {
+                                        Thread.currentThread().interrupt();
                                         LOGGER.warn("Interrupted waiting for job to stop", e);
                                         return;
                                     }
@@ -901,6 +903,7 @@ public class ProcessManager
                         }
                         catch (InterruptedException e1)
                         {
+                            Thread.currentThread().interrupt();
                             LOGGER.warn("Interrupted waiting for job to stop", e);
                             return;
                         }
