@@ -53,7 +53,7 @@ public class TransformFactory
 	 * @return
 	 * @throws TransformConfigurationException
 	 */
-	public static Transform create(TransformConfig transformConfig,
+	public Transform create(TransformConfig transformConfig,
 			Map<String, Integer> inputIndiciesMap,
 			Map<String, Integer> outputIndiciesMap,
 			Logger logger)
