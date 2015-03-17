@@ -147,50 +147,6 @@ public class DependencySorterTest
     }
 
     @Test
-    public void testFindDependencies_CatchCircularDependency()
-    {
-        List<TransformConfig> transforms = new ArrayList<>();
-
-        List<String> inputs = Arrays.asList("ina", "ab");
-        List<String> outputs = Arrays.asList("ab");
-        TransformConfig concat = createContatTransform(inputs, outputs);
-        transforms.add(concat);
-
-        List<TransformConfig> deps = DependencySorter.findDependencies(Arrays.asList("ab"),
-                transforms);
-
-        fail();
-    }
-
-    @Test
-    public void testFindDependencies_CatchCircularDependencyTransitive()
-    {
-        List<TransformConfig> transforms = new ArrayList<>();
-
-        List<String> inputs = Arrays.asList("ina", "inb");
-        List<String> outputs = Arrays.asList("ab"); // default output
-        TransformConfig concat = createContatTransform(inputs, outputs);
-        transforms.add(concat);
-
-        TransformConfig concat1 = createContatTransform(Arrays.asList("ina", "inc"),
-                                                        Arrays.asList("ac"));
-        transforms.add(concat1);
-
-        TransformConfig concat2 = createContatTransform(Arrays.asList("concat", "ac"),
-                Arrays.asList());
-        transforms.add(concat2);
-
-        TransformConfig concat3 = createContatTransform(Arrays.asList("ina", "inb"),
-                Arrays.asList());
-        transforms.add(concat3);
-
-        List<TransformConfig> deps = DependencySorter.findDependencies(Arrays.asList("ab"),
-                transforms);
-
-        fail();
-    }
-
-    @Test
     public void testSortByDependency_NoDependencies()
     {
         List<TransformConfig> transforms = new ArrayList<>();
@@ -289,6 +245,99 @@ public class DependencySorterTest
         int chain2Concat2Index = orderedDeps.indexOf(chain2Concat2);
         assertTrue(chain2Concat2Index >= 0);
         assertTrue(chain2ConcatIndex < chain2Concat2Index);
+    }
+
+    @Test
+    public void testFindDependencies_CatchCircularDependency()
+    {
+        List<TransformConfig> transforms = new ArrayList<>();
+
+        List<String> inputs = Arrays.asList("ina", "ab");
+        List<String> outputs = Arrays.asList("ab");
+        TransformConfig concat = createContatTransform(inputs, outputs);
+        transforms.add(concat);
+
+        int chainIndex = DependencySorter.checkForCircularDependencies(transforms);
+        assertEquals(chainIndex, 0);
+    }
+
+    @Test
+    public void testCheckForCircularDependencies_CatchCircularDependency()
+    {
+        List<TransformConfig> transforms = new ArrayList<>();
+
+        TransformConfig concat = createContatTransform(Arrays.asList("ina", "abc"),
+                                                        Arrays.asList("ab"));
+        transforms.add(concat);
+
+        TransformConfig concat2 = createContatTransform(Arrays.asList("ab", "ac"),
+                                                        Arrays.asList("abc"));
+        transforms.add(concat2);
+
+        TransformConfig concat3 = createContatTransform(Arrays.asList("ind", "ine"),
+                                                        Arrays.asList("de"));
+        transforms.add(concat3);
+
+        int chainIndex = DependencySorter.checkForCircularDependencies(transforms);
+        assertEquals(chainIndex, 0);
+    }
+
+    @Test
+    public void testCheckForCircularDependencies_CatchCircularDependencyTransitive()
+    {
+        List<TransformConfig> transforms = new ArrayList<>();
+
+        TransformConfig concatNoChain = createContatTransform(Arrays.asList("ind", "ine"),
+                                                        Arrays.asList("de"));
+        transforms.add(concatNoChain);
+
+        TransformConfig concat = createContatTransform(Arrays.asList("ina", "abcd"),
+                                                        Arrays.asList("ab"));
+        transforms.add(concat);
+
+        TransformConfig concat1 = createContatTransform(Arrays.asList("ab", "inc"),
+                                                        Arrays.asList("abc"));
+        transforms.add(concat1);
+
+        TransformConfig concat2 = createContatTransform(Arrays.asList("abc", "ind"),
+                                                        Arrays.asList("abcd"));
+        transforms.add(concat2);
+
+        int chainIndex = DependencySorter.checkForCircularDependencies(transforms);
+        assertEquals(chainIndex, 1);
+    }
+
+    @Test
+    public void testCheckForCircularDependencies_NoCircles()
+    {
+        List<TransformConfig> transforms = new ArrayList<>();
+
+        TransformConfig concat = createContatTransform(Arrays.asList("ina", "inb"),
+                                                            Arrays.asList("ab"));
+        transforms.add(concat);
+
+        int chainIndex = DependencySorter.checkForCircularDependencies(transforms);
+        assertEquals(chainIndex, -1);
+
+        // add more transforms
+        TransformConfig concat1 = createContatTransform(Arrays.asList("inc", "ind"),
+                                                        Arrays.asList("cd"));
+        transforms.add(concat1);
+
+        chainIndex = DependencySorter.checkForCircularDependencies(transforms);
+        assertEquals(chainIndex, -1);
+
+
+        TransformConfig hrd1 = createHrdTransform(Arrays.asList("ab"),
+                Arrays.asList());
+        transforms.add(hrd1);
+
+        TransformConfig concat3 = createContatTransform(Arrays.asList("hrd", "cd"),
+                Arrays.asList());
+        transforms.add(concat3);
+
+        chainIndex = DependencySorter.checkForCircularDependencies(transforms);
+        assertEquals(chainIndex, -1);
     }
 
 

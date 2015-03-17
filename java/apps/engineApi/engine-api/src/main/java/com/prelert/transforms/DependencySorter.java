@@ -27,9 +27,11 @@
 
 package com.prelert.transforms;
 
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Set;
 
 import com.prelert.job.TransformConfig;
 
@@ -45,7 +47,11 @@ public class DependencySorter
      * For the input field get the chain of transforms that
      * must be executed to get that field.
      * The returned list is ordered so that the ones at the
-     * end of the list are dependent on those at the beginning
+     * end of the list are dependent on those at the beginning.
+     *
+     * Note if there is a circular dependency in the list of
+     * transforms this will cause a stack overflow.
+     * Check with {@linkplain #checkForCircularDependencies(List)} first.
      *
      * @param input
      * @param transforms
@@ -76,6 +82,10 @@ public class DependencySorter
      * must be executed to get those fields.
      * The returned list is ordered so that the ones at the
      * end of the list are dependent on those at the beginning
+     *
+     * Note if there is a circular dependency in the list of
+     * transforms this will cause a stack overflow.
+     * Check with {@linkplain #checkForCircularDependencies(List)} first.
      *
      * @param inputs
      * @param transforms
@@ -119,7 +129,6 @@ public class DependencySorter
         int index = dependencies.indexOf(transform);
         if (index >= 0)
         {
-            // TODO need to do a circular dependency check here
             return;
         }
 
@@ -144,6 +153,10 @@ public class DependencySorter
     /**
      * Return an ordered list of transforms (the same size as the
      * input list) that sorted in terms of dependencies.
+     *
+     * Note if there is a circular dependency in the list of
+     * transforms this will cause a stack overflow.
+     * Check with {@linkplain #checkForCircularDependencies(List)} first.
      *
      * @param transforms
      * @return List of transforms ordered by dependencies
@@ -200,7 +213,6 @@ public class DependencySorter
         int index = dependencies.indexOf(transform);
         if (index >= 0)
         {
-            // TODO need to do a circular dependency check here
             return transforms;
         }
 
@@ -223,6 +235,67 @@ public class DependencySorter
 
         dependencies.add(transform);
         return transforms;
+    }
+
+
+    /**
+     * Find circular dependencies in the list of transforms.
+     * This might be because a transforms input is its output
+     * or because of a transitive dependency.
+     *
+     * If there is a circular dependency the index of the transform
+     * in the <code>transforms</code> list at the start of the chain
+     * is returned else -1
+     *
+     * @param transforms
+     * @return -1 if no circular dependencies else the index of the
+     * transform at the start of the circular chain
+     */
+    public static int checkForCircularDependencies(List<TransformConfig> transforms)
+    {
+        for (int i=0; i<transforms.size(); i++)
+        {
+            Set<Integer> chain = new HashSet<Integer>();
+            chain.add(new Integer(i));
+
+            TransformConfig tc = transforms.get(i);
+            if (checkCircularDependenciesRecursive(tc, transforms, chain) == false)
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+
+    private static boolean checkCircularDependenciesRecursive(TransformConfig transform,
+                                                    List<TransformConfig> transforms,
+                                                    Set<Integer> chain)
+    {
+        boolean result = true;
+
+        for (int i=0; i<transforms.size(); i++)
+        {
+            TransformConfig tc = transforms.get(i);
+
+            for (String input : transform.getInputs())
+            {
+                if (tc.getOutputs().contains(input))
+                {
+                    Integer index = new Integer(i);
+                    if (chain.contains(index))
+                    {
+                        return false;
+                    }
+
+                    chain.add(index);
+                    result = result && checkCircularDependenciesRecursive(tc, transforms, chain);
+                }
+            }
+        }
+
+        return result;
     }
 
 }
