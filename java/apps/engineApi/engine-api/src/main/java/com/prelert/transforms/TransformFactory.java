@@ -80,20 +80,13 @@ public class TransformFactory
 		switch (type)
 		{
 			case DOMAIN_LOOKUP:
-			{
 				return new HighestRegisteredDomain(input, output, logger);
-
-			}
 			case CONCAT:
-			{
 				return new Concat(input, output, logger);
-			}
 			default:
-			{
 				// This code will never be hit it's to
 				// keep the compiler happy.
 				throw new IllegalArgumentException("Unknown transform type " + type);
-			}
 		}
 	}
 
