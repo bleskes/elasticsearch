@@ -92,7 +92,7 @@ public class AnalysisLimits
 		}
 
 		AnalysisLimits that = (AnalysisLimits)other;
-		return (this.m_ModelMemoryLimit == that.m_ModelMemoryLimit);
+		return this.m_ModelMemoryLimit == that.m_ModelMemoryLimit;
 	}
 
     @Override

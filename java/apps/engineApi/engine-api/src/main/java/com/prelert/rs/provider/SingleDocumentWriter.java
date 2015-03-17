@@ -67,7 +67,7 @@ public class SingleDocumentWriter<T> implements MessageBodyWriter<SingleDocument
 			Annotation[] annotations, MediaType mediaType)
 	{
 		// no need to check the media type because of the @Produces annotation
-		return (type == SingleDocument.class);
+		return type == SingleDocument.class;
 	}
 
 	@Override

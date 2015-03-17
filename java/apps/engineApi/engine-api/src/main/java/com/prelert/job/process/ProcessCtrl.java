@@ -351,6 +351,10 @@ public class ProcessCtrl
     {
         static final String s_AnalyticsVersion = detectAnalyticsVersion();
 
+        private AnalyticsVersionHolder()
+        {
+        }
+
         private static String detectAnalyticsVersion()
         {
             List<String> command = new ArrayList<>();
@@ -392,6 +396,7 @@ public class ProcessCtrl
                 }
                 catch (InterruptedException ie)
                 {
+                    Thread.currentThread().interrupt();
                     LOGGER.error("Interrupted reading analytics version number", ie);
                     return UNKNOWN_VERSION;
                 }
@@ -441,6 +446,7 @@ public class ProcessCtrl
             }
             catch (InterruptedException ie)
             {
+                Thread.currentThread().interrupt();
                 LOGGER.error("Interrupted reading autodetect info", ie);
             }
         }
@@ -735,7 +741,7 @@ public class ProcessCtrl
             if (detector.isUseNull() != null)
             {
                 contents.append(key).append(DOT_USE_NULL)
-                    .append((detector.isUseNull() ? " = true" : " = false"))
+                    .append(detector.isUseNull() ? " = true" : " = false")
                     .append(NEW_LINE);
             }
 
@@ -872,7 +878,7 @@ public class ProcessCtrl
      */
     private static boolean isNotNullOrEmpty(String arg)
     {
-        return (arg != null && arg.isEmpty() == false);
+        return arg != null && arg.isEmpty() == false;
     }
 
     /**
@@ -882,7 +888,7 @@ public class ProcessCtrl
      */
     private static boolean isNullOrEmpty(String arg)
     {
-        return (arg == null || arg.isEmpty());
+        return arg == null || arg.isEmpty();
     }
 
 }

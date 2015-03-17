@@ -161,6 +161,7 @@ public class Normaliser
         }
         catch (InterruptedException e)
         {
+            Thread.currentThread().interrupt();
         }
 
         return mergeNormalisedSystemChangeScoresIntoBuckets(
@@ -256,6 +257,7 @@ public class Normaliser
         }
         catch (InterruptedException e)
         {
+            Thread.currentThread().interrupt();
         }
 
         return mergeNormalisedUnusualIntoBuckets(
