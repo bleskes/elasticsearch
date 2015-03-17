@@ -54,6 +54,10 @@ public enum TransformType
     {
         public static final String DOMAIN_LOOKUP_NAME = "domain_lookup";
         public static final String CONCAT = "concat";
+
+        private Names()
+        {
+        }
     }
 
 

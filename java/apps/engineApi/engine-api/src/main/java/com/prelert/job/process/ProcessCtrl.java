@@ -351,6 +351,10 @@ public class ProcessCtrl
     {
         static final String s_AnalyticsVersion = detectAnalyticsVersion();
 
+        private AnalyticsVersionHolder()
+        {
+        }
+
         private static String detectAnalyticsVersion()
         {
             List<String> command = new ArrayList<>();
