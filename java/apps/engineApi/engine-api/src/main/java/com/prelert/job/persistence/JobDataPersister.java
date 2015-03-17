@@ -102,12 +102,20 @@ public abstract class JobDataPersister
                     //allFieldMappings[i] = tmp;
                     switch (i)
                     {
-                    case 0: m_FieldMappings = tmp; break;
-                    case 1: m_ByFieldMappings = tmp; break;
-                    case 2: m_OverFieldMappings = tmp; break;
-                    case 3: m_PartitionFieldMappings = tmp; break;
-                    default:
-                        break;
+                        case 0:
+                            m_FieldMappings = tmp;
+                            break;
+                        case 1:
+                            m_ByFieldMappings = tmp;
+                            break;
+                        case 2:
+                            m_OverFieldMappings = tmp;
+                            break;
+                        case 3:
+                            m_PartitionFieldMappings = tmp;
+                            break;
+                        default:
+                            break;
                     }
                 }
 

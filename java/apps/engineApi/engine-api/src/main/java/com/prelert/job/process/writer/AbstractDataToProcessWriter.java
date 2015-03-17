@@ -146,11 +146,12 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
                     m_Logger);
         }
 
+        TransformFactory transformFactory = new TransformFactory();
         for (TransformConfig config : m_TransformConfigs.getTransforms())
         {
             try
             {
-                Transform tr = TransformFactory.create(config, m_InFieldIndexes,
+                Transform tr = transformFactory.create(config, m_InFieldIndexes,
                                                     m_OutFieldIndexes, m_Logger);
                 transforms.add(tr);
             }

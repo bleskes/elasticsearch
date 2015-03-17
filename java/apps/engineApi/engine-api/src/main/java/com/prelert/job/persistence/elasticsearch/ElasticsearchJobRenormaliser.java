@@ -125,6 +125,7 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
         }
         catch (InterruptedException e)
         {
+            Thread.currentThread().interrupt();
             logger.info("Interrupted whilst shutting down renormaliser thread");
             return false;
         }
@@ -535,6 +536,7 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
             }
             catch (InterruptedException e)
             {
+                Thread.currentThread().interrupt();
                 // Thread will exit now
                 if (lastLogger != null)
                 {

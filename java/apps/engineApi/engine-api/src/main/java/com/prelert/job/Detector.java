@@ -413,14 +413,11 @@ public class Detector
                     ErrorCode.UNKNOWN_FUNCTION);
         }
 
-        if (isSummarised)
+        if (isSummarised && (emptyFunction || m_Function.equals(METRIC)))
         {
-            if (emptyFunction || m_Function.equals(METRIC))
-            {
-                throw new JobConfigurationException("The '" + METRIC + "' function "
-                        + "cannot be used in jobs that will take pre-summarized input",
-                        ErrorCode.INVALID_FUNCTION);
-            }
+            throw new JobConfigurationException("The '" + METRIC + "' function "
+                    + "cannot be used in jobs that will take pre-summarized input",
+                    ErrorCode.INVALID_FUNCTION);
         }
 
         // If function is not set but the fieldname happens
@@ -452,15 +449,12 @@ public class Detector
         // check functions have required fields
         if (!emptyFunction)
         {
-            if (FIELD_NAME_FUNCTIONS.contains(m_Function))
+            if (FIELD_NAME_FUNCTIONS.contains(m_Function) && emptyField)
             {
-                if (emptyField)
-                {
-                    throw new JobConfigurationException(
-                            String.format("The fieldName must be set when the "
-                                    + " '%s' function is used", m_Function),
-                            ErrorCode.INVALID_FIELD_SELECTION);
-                }
+                throw new JobConfigurationException(
+                        String.format("The fieldName must be set when the "
+                                + " '%s' function is used", m_Function),
+                        ErrorCode.INVALID_FIELD_SELECTION);
             }
 
             if (!emptyField && (FIELD_NAME_FUNCTIONS.contains(m_Function) == false))
@@ -471,15 +465,12 @@ public class Detector
                         ErrorCode.INVALID_FIELD_SELECTION);
             }
 
-            if (BY_FIELD_NAME_FUNCTIONS.contains(m_Function))
+            if (BY_FIELD_NAME_FUNCTIONS.contains(m_Function) && emptyByField)
             {
-                if (emptyByField)
-                {
-                    throw new JobConfigurationException(
-                            String.format("The byFieldName must be set when the "
-                                    + " '%s' function is used", m_Function),
-                            ErrorCode.INVALID_FIELD_SELECTION);
-                }
+                throw new JobConfigurationException(
+                        String.format("The byFieldName must be set when the "
+                                + " '%s' function is used", m_Function),
+                        ErrorCode.INVALID_FIELD_SELECTION);
             }
 
             if (!emptyByField && NO_BY_FIELD_NAME_FUNCTIONS.contains(m_Function))

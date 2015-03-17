@@ -27,7 +27,8 @@
 
 package com.prelert.transforms;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 
 import java.util.ArrayList;
@@ -61,7 +62,7 @@ public class TransformFactoryTest {
 		Map<String, Integer> outputMap = new HashMap<>();
 		outputMap.put("concatted", 2);
 
-		Transform tr = TransformFactory.create(conf, inputMap, outputMap, mock(Logger.class));
+		Transform tr = new TransformFactory().create(conf, inputMap, outputMap, mock(Logger.class));
 		assertTrue(tr instanceof Concat);
 
 		int [] inputIndicies = tr.inputIndicies();
@@ -88,7 +89,7 @@ public class TransformFactoryTest {
 			conf.setTransform(type.prettyName());
 
 			// throws IllegalArgumentException if it doesn't handle the type
-			TransformFactory.create(conf, inputIndicies, outputIndicies, mock(Logger.class));
+			new TransformFactory().create(conf, inputIndicies, outputIndicies, mock(Logger.class));
 		}
 	}
 
