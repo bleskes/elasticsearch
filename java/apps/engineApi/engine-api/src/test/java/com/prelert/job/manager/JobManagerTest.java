@@ -37,12 +37,10 @@ import static org.mockito.Mockito.when;
 import java.io.InputStream;
 import java.util.Map;
 
-import org.hamcrest.Description;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.internal.matchers.TypeSafeMatcher;
 import org.junit.rules.ExpectedException;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
@@ -50,6 +48,7 @@ import org.mockito.MockitoAnnotations;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.DataCounts;
+import com.prelert.job.ErrorCodeMatcher;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobInUseException;
@@ -102,8 +101,8 @@ public class JobManagerTest
         m_ExpectedException.expectMessage("Cannot reactivate job with id 'foo' - your license "
                 + "limits you to 2 concurrently running jobs. You must close a job before you "
                 + "can reactivate a closed one.");
-        m_ExpectedException.expect(ErrorCodeMatcher
-                .hasErrorCode(ErrorCode.LICENSE_VIOLATION));
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.<TooManyJobsException>hasErrorCode(ErrorCode.LICENSE_VIOLATION));
 
         jobManager.submitDataLoadJob("foo", mock(InputStream.class));
     }
@@ -126,8 +125,8 @@ public class JobManagerTest
                 "The maximum numuber of concurrently running jobs is limited as a function " +
                 "of the number of CPU cores see this error code's help documentation " +
                 "for details of how to elevate the setting");
-        m_ExpectedException.expect(ErrorCodeMatcher
-                .hasErrorCode(ErrorCode.TOO_MANY_JOBS_RUNNING_CONCURRENTLY));
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.<TooManyJobsException>hasErrorCode(ErrorCode.TOO_MANY_JOBS_RUNNING_CONCURRENTLY));
 
         jobManager.submitDataLoadJob("foo", mock(InputStream.class));
     }
@@ -152,7 +151,7 @@ public class JobManagerTest
                 "of the number of CPU cores see this error code's help documentation " +
                 "for details of how to elevate the setting");
         m_ExpectedException.expect(ErrorCodeMatcher
-                .hasErrorCode(ErrorCode.TOO_MANY_JOBS_RUNNING_CONCURRENTLY));
+                .<TooManyJobsException>hasErrorCode(ErrorCode.TOO_MANY_JOBS_RUNNING_CONCURRENTLY));
 
         jobManager.submitDataLoadJob("foo", mock(InputStream.class));
     }
@@ -176,8 +175,8 @@ public class JobManagerTest
                 "The maximum numuber of concurrently running jobs is limited as a function " +
                 "of the number of CPU cores see this error code's help documentation " +
                 "for details of how to elevate the setting");
-        m_ExpectedException.expect(ErrorCodeMatcher
-                .hasErrorCode(ErrorCode.TOO_MANY_JOBS_RUNNING_CONCURRENTLY));
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.<TooManyJobsException>hasErrorCode(ErrorCode.TOO_MANY_JOBS_RUNNING_CONCURRENTLY));
 
         jobManager.submitDataLoadJob("foo", mock(InputStream.class));
     }
@@ -214,35 +213,4 @@ public class JobManagerTest
         when(m_ProcessManager.getInfo()).thenReturn(info);
     }
 
-    private static class ErrorCodeMatcher extends TypeSafeMatcher<TooManyJobsException> {
-
-        private ErrorCode m_ExpectedErrorCode;
-        private ErrorCode m_ActualErrorCode;
-
-        public static ErrorCodeMatcher hasErrorCode(ErrorCode expected)
-        {
-            return new ErrorCodeMatcher(expected);
-        }
-
-        private ErrorCodeMatcher(ErrorCode expectedErrorCode)
-        {
-            m_ExpectedErrorCode = expectedErrorCode;
-        }
-
-        @Override
-        public void describeTo(Description description)
-        {
-            description.appendValue(m_ActualErrorCode)
-                    .appendText(" was found instead of ")
-                    .appendValue(m_ExpectedErrorCode);
-        }
-
-        @Override
-        public boolean matchesSafely(TooManyJobsException item)
-        {
-            m_ActualErrorCode = item.getErrorCode();
-            return m_ActualErrorCode.equals(m_ExpectedErrorCode);
-        }
-
-    }
 }

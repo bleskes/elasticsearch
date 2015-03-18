@@ -141,11 +141,22 @@ public enum ErrorCode
 	 */
 	INCORRECT_TRANSFORM_ARGUMENT_COUNT(10202),
 
-	/**
-	 * If none of the outputs of a particular transform are used
-	 * in the analysis then the transform's configuration is in error
-	 */
-	NO_OUTPUTS_USED(10203),
+    /**
+     * If none of the outputs of a particular transform are used
+     * in the analysis then the transform's configuration is in error
+     */
+    TRANSFORM_OUTPUTS_UNUSED(10203),
+
+    /**
+     * The transform has a circular dependency
+     */
+    TRANSFORM_HAS_CIRCULAR_DEPENDENCY(10204),
+
+    /**
+     * 2 or more transforms have the same output fieldname
+     */
+    DUPLICATED_TRANSFORM_OUTPUT_NAME(10205),
+
 
 	// Data store errors
 	/**

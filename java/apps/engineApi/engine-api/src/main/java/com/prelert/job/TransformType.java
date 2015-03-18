@@ -42,7 +42,7 @@ import com.prelert.rs.data.ErrorCode;
 public enum TransformType
 {
     DOMAIN_LOOKUP(Names.DOMAIN_LOOKUP_NAME, 1, Arrays.asList("subDomain", "hrd")),
-    CONCAT(Names.CONCAT, -1, Arrays.asList("concat"));
+    CONCAT(Names.CONCAT, Names.VARIADIC_ARGS, Arrays.asList("concat"));
 
     /**
      * Enums cannot use static fields in their constructors as the
@@ -55,15 +55,18 @@ public enum TransformType
         public static final String DOMAIN_LOOKUP_NAME = "domain_lookup";
         public static final String CONCAT = "concat";
 
+        private static final int VARIADIC_ARGS = -1;
+
         private Names()
         {
         }
     }
 
 
-    private int m_Arity;
-    private String m_PrettyName;
-    private List<String> m_DefaultOutputNames;
+
+    private final int m_Arity;
+    private final String m_PrettyName;
+    private final List<String> m_DefaultOutputNames;
 
     private TransformType(String prettyName, int arity, List<String> defaultOutputNames)
     {
@@ -93,7 +96,13 @@ public enum TransformType
 
     public boolean verify(TransformConfig tr) throws TransformConfigurationException
     {
-        if (m_Arity == -1)
+        if (tr.getInputs() == null)
+        {
+            String msg = "Function arity error no inputs defined";
+            throw new TransformConfigurationException(msg, ErrorCode.INCORRECT_TRANSFORM_ARGUMENT_COUNT);
+        }
+
+        if (m_Arity == Names.VARIADIC_ARGS)
         {
             if (!tr.getInputs().isEmpty())
             {
@@ -120,7 +129,7 @@ public enum TransformType
     @Override
     public String toString()
     {
-        return m_PrettyName;
+        return prettyName();
     }
 
     /**

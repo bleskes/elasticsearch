@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -208,48 +208,6 @@ public class JobConfiguration
 		m_DataDescription = description;
 	}
 
-
-	/**
-	 * Builder for constructing JobConfiguration instances.
-	 */
-	public static class JobConfigurationBuilder
-	{
-		private JobConfiguration m_JobConfig;
-
-		public JobConfigurationBuilder(String jobReferenceId)
-		{
-			m_JobConfig = new JobConfiguration(jobReferenceId);
-		}
-
-		public JobConfigurationBuilder(AnalysisConfig analysisConfig)
-		{
-			m_JobConfig = new JobConfiguration(analysisConfig);
-		}
-
-		public JobConfigurationBuilder analysisLimits(AnalysisLimits analysisLimits)
-		{
-			m_JobConfig.m_AnalysisLimits = analysisLimits;
-			return this;
-		}
-
-		public JobConfigurationBuilder dataDescription(DataDescription dataDescription)
-		{
-			m_JobConfig.m_DataDescription = dataDescription;
-			return this;
-		}
-
-		public JobConfigurationBuilder timeout(Long timeout)
-		{
-			m_JobConfig.m_Timeout = timeout;
-			return this;
-		}
-
-		public JobConfiguration build()
-		{
-			return m_JobConfig;
-		}
-	}
-
 	/**
 	 * Checks the job configuration settings and throws an exception
 	 * if any values are invalid
@@ -296,7 +254,7 @@ public class JobConfiguration
 
 		if (m_Transforms != null)
 		{
-			TransformConfigs.verify(m_Transforms);
+			new TransformConfigs(m_Transforms).verify();
 			checkTransformOutputIsInAnalysisFields();
 		}
 
@@ -335,7 +293,7 @@ public class JobConfiguration
                                             + " Please review your configuration",
                                                 tc.type().prettyName());
 
-                throw new TransformConfigurationException(msg, ErrorCode.NO_OUTPUTS_USED);
+                throw new TransformConfigurationException(msg, ErrorCode.TRANSFORM_OUTPUTS_UNUSED);
             }
         }
 

@@ -36,7 +36,9 @@ import java.util.List;
 
 import junit.framework.Assert;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import com.prelert.rs.data.ErrorCode;
 
@@ -44,8 +46,53 @@ import com.prelert.rs.data.ErrorCode;
  * Test the {@link JobConfiguration#verify()} function for
  * basic errors in the configuration
  */
-public class VerifyJobConfigurationTest
+public class JobConfigurationTest
 {
+    @Rule
+    public ExpectedException m_ExpectedException = ExpectedException.none();
+
+    @Test
+    public void testCheckValidId_IdTooLong() throws JobConfigurationException
+    {
+        JobConfiguration conf = new JobConfiguration();
+        conf.setReferenceJobId("ref");
+        conf.setId("averyveryveryaveryveryveryaveryveryveryaveryveryveryaveryveryveryaveryveryverylongid");
+
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCode.JOB_ID_TOO_LONG));
+
+        conf.verify();
+    }
+
+    @Test
+    public void testCheckValidId_ProhibitedChars() throws JobConfigurationException
+    {
+        JobConfiguration conf = new JobConfiguration();
+        conf.setReferenceJobId("ref");
+        conf.setId("?");
+
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCode.PROHIBITIED_CHARACTER_IN_JOB_ID));
+
+        conf.verify();
+    }
+
+    @Test
+    public void testCheckValidId_UpperCaseChars() throws JobConfigurationException
+    {
+        JobConfiguration conf = new JobConfiguration();
+        conf.setReferenceJobId("ref");
+
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCode.PROHIBITIED_CHARACTER_IN_JOB_ID));
+
+        conf.setId("UPPERCASE");
+        conf.verify();
+    }
+
     @Test
     public void dataDescriptionTest()
     throws JobConfigurationException
@@ -404,7 +451,7 @@ public class VerifyJobConfigurationTest
         catch (JobConfigurationException e)
         {
             assertTrue(e instanceof TransformConfigurationException);
-            assertEquals(e.getErrorCode(), ErrorCode.NO_OUTPUTS_USED);
+            assertEquals(e.getErrorCode(), ErrorCode.TRANSFORM_OUTPUTS_UNUSED);
         }
 
         d1.setFieldName(TransformType.DOMAIN_LOOKUP.defaultOutputNames().get(0));

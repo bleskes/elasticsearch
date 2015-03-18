@@ -32,6 +32,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.prelert.rs.data.ErrorCode;
+import com.prelert.transforms.DependencySorter;
+
 /**
  * Utility class for methods involving arrays of transforms
  */
@@ -81,13 +84,60 @@ public class TransformConfigs
         return fields;
     }
 
-    public static boolean verify(List<TransformConfig> transforms) throws TransformConfigurationException
+    public boolean verify()
+    throws TransformConfigurationException
     {
-        for (TransformConfig tr : transforms)
+        String duplicatedName = outputNamesAreUnique();
+        if (duplicatedName != null)
+        {
+            String msg = String.format("Transform output name %s is used more than once", duplicatedName);
+             throw new TransformConfigurationException(msg, ErrorCode.DUPLICATED_TRANSFORM_OUTPUT_NAME);
+        }
+
+        // TODO check inputs/outputs are used
+
+
+        // Check for circular dependencies
+        int index = DependencySorter.checkForCircularDependencies(m_Transforms);
+        if (index >= 0)
+        {
+            TransformConfig tc = m_Transforms.get(index);
+            String msg = String.format("Transform type %s with inputs %s has a circular dependency",
+                                        tc.type(), tc.getInputs());
+            throw new TransformConfigurationException(msg, ErrorCode.TRANSFORM_HAS_CIRCULAR_DEPENDENCY);
+        }
+
+
+        for (TransformConfig tr : m_Transforms)
         {
             tr.verify();
         }
 
         return true;
     }
+
+
+    /**
+     * return null or the duplicate name
+     * @return
+     */
+    private String outputNamesAreUnique()
+    {
+        Set<String> fields = new HashSet<>();
+        for (TransformConfig t : m_Transforms)
+        {
+            for (String output : t.getOutputs())
+            {
+                if (fields.contains(output))
+                {
+                    return output;
+                }
+                fields.add(output);
+            }
+        }
+
+        return null;
+    }
+
+
 }

@@ -396,14 +396,14 @@ public abstract class StatusReporter
 		if (percentBadDate > getAcceptablePercentDateParseErrors())
 		{
 			throw new HighProportionOfBadTimestampsException(
-					getDateParseErrorsCount(), totalRecords);
+					getDateParseErrorsCount(), totalRecords, m_IncrementalRecordStats);
 		}
 
 		long percentOutOfOrder = (getOutOfOrderRecordCount() * 100) / totalRecords;
 		if (percentOutOfOrder > getAcceptablePercentOutOfOrderErrors())
 		{
 			throw new OutOfOrderRecordsException(
-					getOutOfOrderRecordCount(), totalRecords);
+					getOutOfOrderRecordCount(), totalRecords, m_IncrementalRecordStats);
 		}
 	}
 

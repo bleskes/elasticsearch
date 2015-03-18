@@ -117,9 +117,8 @@ public class RestoreStateTest
         DataDescription dd = new DataDescription();
         dd.setFieldDelimiter(',');
 
-        JobConfiguration jobConfig = new JobConfiguration.JobConfigurationBuilder(config)
-                .dataDescription(dd)
-                .build();
+        JobConfiguration jobConfig = new JobConfiguration(config);
+        jobConfig.setDataDescription(dd);
 
         String clusterName = DEFAULT_CLUSTER_NAME;
         if (args.length > 0)
