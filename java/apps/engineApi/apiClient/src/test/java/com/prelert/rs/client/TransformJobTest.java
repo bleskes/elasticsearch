@@ -58,6 +58,10 @@ import com.prelert.rs.data.SingleDocument;
  * Assuming the job has created anomaly records check that the by field value
  * looks like it has been concatenated by matching a regex.
  *
+ * Also creates a 2nd job where the input to the date transform is the
+ * output of concat this simply checks that the records are processed
+ * without any date parse errors
+ *
  * This isn't really a test of the concat transform but a test that
  * transforms work - concat is the simplest to test.
  */
