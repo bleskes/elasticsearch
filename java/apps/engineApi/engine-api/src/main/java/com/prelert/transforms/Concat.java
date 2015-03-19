@@ -27,38 +27,42 @@
 
 package com.prelert.transforms;
 
+import java.util.List;
+
 import org.apache.log4j.Logger;
+
 
 /**
  * Concatenate input fields
  */
 public class Concat extends Transform
 {
-    public Concat(int[] inputIndicies, int[] outputIndicies, Logger logger)
+    public Concat(List<TransformIndex> readIndicies, List<TransformIndex> writeIndicies, Logger logger)
     {
-        super(inputIndicies, outputIndicies, logger);
+        super(readIndicies, writeIndicies, logger);
     }
 
     /**
      * Concat has only 1 output field
      */
     @Override
-    public boolean transform(String[] inputRecord, String[] outputRecord)
+    public boolean transform(String[][] readWriteArea)
     throws TransformException
     {
-        if (m_OutputIndicies.length == 0)
+        if (m_WriteIndicies.size() == 0)
         {
             return true;
         }
 
         StringBuilder builder = new StringBuilder();
 
-        for (int i=0; i<m_InputIndicies.length; i++)
+        for (TransformIndex i : m_ReadIndicies)
         {
-            builder.append(inputRecord[m_InputIndicies[i]]);
+            builder.append(readWriteArea[i.array][i.index]);
         }
 
-        outputRecord[m_OutputIndicies[0]] = builder.toString();
+        TransformIndex writeIndex = m_WriteIndicies.get(0);
+        readWriteArea[writeIndex.array][writeIndex.index] = builder.toString();
 
         return true;
     }

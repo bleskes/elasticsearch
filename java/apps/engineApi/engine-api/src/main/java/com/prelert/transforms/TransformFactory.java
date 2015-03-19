@@ -27,6 +27,7 @@
 
 package com.prelert.transforms;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -35,6 +36,7 @@ import org.apache.log4j.Logger;
 import com.prelert.job.TransformConfig;
 import com.prelert.job.TransformConfigurationException;
 import com.prelert.job.TransformType;
+import com.prelert.transforms.Transform.TransformIndex;
 
 /**
  * Create transforms from the configuration object.
@@ -44,10 +46,15 @@ import com.prelert.job.TransformType;
  */
 public class TransformFactory
 {
+    public final static int INPUT_ARRAY_INDEX = 0;
+    public final static int SCRATCH_ARRAY_INDEX = 1;
+    public final static int OUTPUT_ARRAY_INDEX = 2;
+
 	/**
 	 *
 	 * @param transformConfig
 	 * @param inputIndiciesMap
+	 * @param scratchAreaIndiciesMap
 	 * @param outputIndiciesMap
 	 * @param logger
 	 * @return
@@ -55,34 +62,68 @@ public class TransformFactory
 	 */
 	public Transform create(TransformConfig transformConfig,
 			Map<String, Integer> inputIndiciesMap,
+			Map<String, Integer> scratchAreaIndiciesMap,
 			Map<String, Integer> outputIndiciesMap,
 			Logger logger)
 	throws TransformConfigurationException
 	{
 		int[] input = new int[transformConfig.getInputs().size()];
-
 		fillIndexArray(transformConfig.getInputs(), inputIndiciesMap, input, logger);
 
-		// some default outputs may not be in the analysis
-		int count = 0;
-		for (String field : transformConfig.getOutputs())
+		List<TransformIndex> readIndicies = new ArrayList<>();
+		for (String field : transformConfig.getInputs())
 		{
-			if (outputIndiciesMap.containsKey(field))
-			{
-				count++;
-			}
+		    Integer index = inputIndiciesMap.get(field);
+		    if (index != null)
+		    {
+		        readIndicies.add(new TransformIndex(INPUT_ARRAY_INDEX, index));
+		    }
+		    else
+		    {
+		        index = scratchAreaIndiciesMap.get(field);
+	            if (index != null)
+	            {
+	                readIndicies.add(new TransformIndex(SCRATCH_ARRAY_INDEX, index));
+	            }
+	            else if (outputIndiciesMap.containsKey(field)) // also check the outputs array for this input
+	            {
+	                index = outputIndiciesMap.get(field);
+	                readIndicies.add(new TransformIndex(SCRATCH_ARRAY_INDEX, index));
+	            }
+	            else
+	            {
+	                throw new IllegalStateException("Transform input '" + field +
+	                                "' cannot be found");
+	            }
+		    }
 		}
-		int[] output = new int[count];
-		fillIndexArray(transformConfig.getOutputs(), outputIndiciesMap, output, logger);
+
+		List<TransformIndex> writeIndicies = new ArrayList<>();
+        for (String field : transformConfig.getOutputs())
+        {
+            Integer index = outputIndiciesMap.get(field);
+            if (index != null)
+            {
+                writeIndicies.add(new TransformIndex(OUTPUT_ARRAY_INDEX, index));
+            }
+            else
+            {
+                index = scratchAreaIndiciesMap.get(field);
+                if (index != null)
+                {
+                    writeIndicies.add(new TransformIndex(SCRATCH_ARRAY_INDEX, index));
+                }
+            }
+        }
 
 		TransformType type = transformConfig.type();
 
 		switch (type)
 		{
 			case DOMAIN_LOOKUP:
-				return new HighestRegisteredDomain(input, output, logger);
+				return new HighestRegisteredDomain(readIndicies, writeIndicies, logger);
 			case CONCAT:
-				return new Concat(input, output, logger);
+				return new Concat(readIndicies, writeIndicies, logger);
 			default:
 				// This code will never be hit it's to
 				// keep the compiler happy.
@@ -110,10 +151,10 @@ public class TransformFactory
 			{
 				indexArray[i++] = index;
 			}
-			else
-			{
-				logger.error("Field '" + field + "' not indexed");
-			}
+//			else
+//			{
+//				logger.error("Field '" + field + "' not indexed");
+//			}
 		}
 	}
 }

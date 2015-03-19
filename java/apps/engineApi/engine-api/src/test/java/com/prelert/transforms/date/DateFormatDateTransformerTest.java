@@ -30,12 +30,17 @@ package com.prelert.transforms.date;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.log4j.Logger;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import com.prelert.transforms.Transform;
 import com.prelert.transforms.TransformException;
+import com.prelert.transforms.Transform.TransformIndex;
 
 public class DateFormatDateTransformerTest
 {
@@ -46,13 +51,18 @@ public class DateFormatDateTransformerTest
     @Test
     public void testTransform_GivenValidTimestamp() throws TransformException
     {
-    	DateFormatTransform transformer = new DateFormatTransform("y-M-d", new int [] {0},
-    														new int [] {0}, mock(Logger.class));
+        List<TransformIndex> readIndicies = createIndexArray(new TransformIndex(0, 0));
+        List<TransformIndex> writeIndicies = createIndexArray(new TransformIndex(2, 0));
+
+        DateFormatTransform transformer = new DateFormatTransform("y-M-d",
+                                        readIndicies, writeIndicies, mock(Logger.class));
 
     	String [] input = {"2014-01-01"};
+    	String [] scratch = {};
     	String [] output = new String[1];
+        String [][] readWriteArea = {input, scratch, output};
 
-    	transformer.transform(input, output);
+        transformer.transform(readWriteArea);
 
         assertEquals(1388534400, transformer.epoch());
         assertEquals("1388534400", output[0]);
@@ -64,13 +74,18 @@ public class DateFormatDateTransformerTest
         m_ExpectedException.expect(ParseTimestampException.class);
         m_ExpectedException.expectMessage("Cannot parse date 'invalid' with format string 'y-M-d'");
 
-    	DateFormatTransform transformer = new DateFormatTransform("y-M-d",
-    							new int [] {0}, new int [] {0}, mock(Logger.class));
+        List<TransformIndex> readIndicies = createIndexArray(new TransformIndex(0, 0));
+        List<TransformIndex> writeIndicies = createIndexArray(new TransformIndex(2, 0));
+
+        DateFormatTransform transformer = new DateFormatTransform("y-M-d",
+                                        readIndicies, writeIndicies, mock(Logger.class));
 
     	String [] input = {"invalid"};
+    	String [] scratch = {};
     	String [] output = new String[1];
+        String [][] readWriteArea = {input, scratch, output};
 
-    	transformer.transform(input, output);
+        transformer.transform(readWriteArea);
     }
 
     @Test
@@ -78,13 +93,18 @@ public class DateFormatDateTransformerTest
     {
         m_ExpectedException.expect(ParseTimestampException.class);
 
-    	DateFormatTransform transformer = new DateFormatTransform("y-M-d",
-    							new int [] {0}, new int [] {0}, mock(Logger.class));
+        List<TransformIndex> readIndicies = createIndexArray(new TransformIndex(1, 0));
+        List<TransformIndex> writeIndicies = createIndexArray(new TransformIndex(2, 0));
 
-    	String [] input = {null};
+        DateFormatTransform transformer = new DateFormatTransform("y-M-d",
+                                        readIndicies, writeIndicies, mock(Logger.class));
+
+    	String [] input = {};
+    	String [] scratch = {null};
     	String [] output = new String[1];
+        String [][] readWriteArea = {input, scratch, output};
 
-    	transformer.transform(input, output);
+        transformer.transform(readWriteArea);
     }
 
     @Test
@@ -92,12 +112,48 @@ public class DateFormatDateTransformerTest
     {
         m_ExpectedException.expect(IllegalArgumentException.class);
 
-    	DateFormatTransform transformer = new DateFormatTransform("e",
-    							new int [] {0}, new int [] {0}, mock(Logger.class));
+        List<TransformIndex> readIndicies = createIndexArray(new TransformIndex(0, 0));
+        List<TransformIndex> writeIndicies = createIndexArray(new TransformIndex(2, 0));
+
+        DateFormatTransform transformer = new DateFormatTransform("e",
+                                        readIndicies, writeIndicies, mock(Logger.class));
 
     	String [] input = {"2015-02-01"};
+    	String [] scratch = {};
     	String [] output = new String[1];
+        String [][] readWriteArea = {input, scratch, output};
 
-    	transformer.transform(input, output);
+        transformer.transform(readWriteArea);
+    }
+
+    @Test
+    public void testTransform_FromScratchArea() throws TransformException
+    {
+        List<TransformIndex> readIndicies = createIndexArray(new TransformIndex(1, 0));
+        List<TransformIndex> writeIndicies = createIndexArray(new TransformIndex(2, 0));
+
+        DateFormatTransform transformer = new DateFormatTransform("y-M-d",
+                                        readIndicies, writeIndicies, mock(Logger.class));
+
+        String [] input = {};
+        String [] scratch = {"2014-01-01"};
+        String [] output = new String[1];
+        String [][] readWriteArea = {input, scratch, output};
+
+        transformer.transform(readWriteArea);
+
+        assertEquals(1388534400, transformer.epoch());
+        assertEquals("1388534400", output[0]);
+    }
+
+    private List<TransformIndex> createIndexArray(TransformIndex...indexs)
+    {
+        List<TransformIndex> result = new ArrayList<Transform.TransformIndex>();
+        for (TransformIndex i : indexs)
+        {
+            result.add(i);
+        }
+
+        return result;
     }
 }

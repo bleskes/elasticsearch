@@ -145,9 +145,9 @@ public class TransformConfig
 
         TransformConfig other = (TransformConfig) obj;
 
-        return Objects.equals(this.m_Inputs, other.m_Inputs)
+        return Objects.equals(this.m_Type, other.m_Type)
                 && Objects.equals(this.m_Name, other.m_Name)
-                && Objects.equals(this.m_Outputs, other.m_Outputs)
-                && Objects.equals(this.m_Type, other.m_Type);
+                && Objects.equals(this.m_Inputs, other.m_Inputs)
+                && Objects.equals(this.m_Outputs, other.m_Outputs);
     }
 }

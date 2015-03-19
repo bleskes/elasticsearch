@@ -30,7 +30,11 @@ package com.prelert.transforms;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.google.common.net.InternetDomainName;
+import com.prelert.transforms.Transform.TransformIndex;
 
 import org.apache.log4j.Logger;
 import org.junit.Test;
@@ -324,18 +328,23 @@ public class HighestRegisteredDomainTest
 	@Test
 	public void testTransform_SingleOutput() throws TransformException
 	{
-		HighestRegisteredDomain transform = new HighestRegisteredDomain(new int [] {2}, new int [] {0},
-		                    mock(Logger.class));
+        List<TransformIndex> readIndicies = createIndexArray(new TransformIndex(0, 2));
+        List<TransformIndex> writeIndicies = createIndexArray(new TransformIndex(2, 0));
+
+        HighestRegisteredDomain transform = new HighestRegisteredDomain(
+                                        readIndicies, writeIndicies, mock(Logger.class));
 
 		String [] input = {"", "", "www.test.ac.jp"};
+		String [] scratch = {};
 		String [] output = new String [2];
+        String [][] readWriteArea = {input, scratch, output};
 
-		transform.transform(input, output);
+        transform.transform(readWriteArea);
 		assertEquals("www", output[0]);
 		assertNull(output[1]);
 
 		input[2] = "a.b.domain.biz";
-		transform.transform(input, output);
+		transform.transform(readWriteArea);
 		assertEquals("a.b", output[0]);
 		assertNull(output[1]);
 	}
@@ -345,18 +354,24 @@ public class HighestRegisteredDomainTest
 	@Test
 	public void testTransform_AllOutputs() throws TransformException
 	{
-		HighestRegisteredDomain transform = new HighestRegisteredDomain(new int [] {2}, new int [] {0, 1},
-		        mock(Logger.class));
+        List<TransformIndex> readIndicies = createIndexArray(new TransformIndex(0, 2));
+        List<TransformIndex> writeIndicies = createIndexArray(new TransformIndex(2, 0), new TransformIndex(2, 1));
+
+        HighestRegisteredDomain transform = new HighestRegisteredDomain(
+                                        readIndicies, writeIndicies, mock(Logger.class));
+
 
 		String [] input = {"", "", "www.test.ac.jp"};
+		String [] scratch = {};
 		String [] output = new String [2];
+        String [][] readWriteArea = {input, scratch, output};
 
-		transform.transform(input, output);
+        transform.transform(readWriteArea);
 		assertEquals("www", output[0]);
 		assertEquals("test.ac.jp", output[1]);
 
 		input[2] = "a.b.domain.biz";
-		transform.transform(input, output);
+		transform.transform(readWriteArea);
 		assertEquals("a.b", output[0]);
 		assertEquals("domain.biz", output[1]);
 	}
@@ -364,14 +379,49 @@ public class HighestRegisteredDomainTest
     @Test
     public void testTransformTrimWhiteSpace() throws TransformException
     {
-        HighestRegisteredDomain transform = new HighestRegisteredDomain(new int [] {2}, new int [] {0, 1},
-                mock(Logger.class));
+        List<TransformIndex> readIndicies = createIndexArray(new TransformIndex(1, 2));
+        List<TransformIndex> writeIndicies = createIndexArray(new TransformIndex(2, 0), new TransformIndex(2, 1));
 
-        String [] input = {"", "", " time.apple.com "};
+        HighestRegisteredDomain transform = new HighestRegisteredDomain(
+                                        readIndicies, writeIndicies, mock(Logger.class));
+
+        String [] input = {};
+        String [] scratch = {"", "", " time.apple.com "};
         String [] output = new String [2];
+        String [][] readWriteArea = {input, scratch, output};
 
-        transform.transform(input, output);
+        transform.transform(readWriteArea);
         assertEquals("time", output[0]);
         assertEquals("apple.com", output[1]);
+    }
+
+    @Test
+    public void testTransform_WriteToScratch() throws TransformException
+    {
+        List<TransformIndex> readIndicies = createIndexArray(new TransformIndex(1, 2));
+        List<TransformIndex> writeIndicies = createIndexArray(new TransformIndex(2, 0), new TransformIndex(2, 1));
+
+        HighestRegisteredDomain transform = new HighestRegisteredDomain(
+                                        readIndicies, writeIndicies, mock(Logger.class));
+
+        String [] input = {};
+        String [] scratch = {"", "", " time.apple.com "};
+        String [] output = new String [2];
+        String [][] readWriteArea = {input, scratch, output};
+
+        transform.transform(readWriteArea);
+        assertEquals("time", output[0]);
+        assertEquals("apple.com", output[1]);
+    }
+
+    private List<TransformIndex> createIndexArray(TransformIndex...indexs)
+    {
+        List<TransformIndex> result = new ArrayList<Transform.TransformIndex>();
+        for (TransformIndex i : indexs)
+        {
+            result.add(i);
+        }
+
+        return result;
     }
 }

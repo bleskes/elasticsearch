@@ -273,9 +273,16 @@ public class JobConfiguration
 		return true;
 	}
 
+	/**
+	 * Transform outputs should be used in either the date field or an analysis field
+	 * @return
+	 * @throws TransformConfigurationException
+	 */
     private boolean checkTransformOutputIsInAnalysisFields() throws TransformConfigurationException
     {
         Set<String> analysisFieldSet = new HashSet<String>(m_AnalysisConfig.analysisFields());
+        analysisFieldSet.add(m_DataDescription.getTimeField());
+
         for (TransformConfig tc : m_Transforms)
         {
             boolean usesAnOutput = false;

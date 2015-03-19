@@ -65,6 +65,9 @@ public class TransformJobTest implements Closeable
 {
 	private static final Logger LOGGER = Logger.getLogger(TransformJobTest.class);
 
+    private static final String CONCAT_METRIC_JOB = "concat-metricname-test";
+    private static final String CONCAT_DATE_JOB = "concat-date-test";
+
 	/**
 	 * The default base Url used in the test
 	 */
@@ -86,9 +89,49 @@ public class TransformJobTest implements Closeable
 		m_WebServiceClient.close();
 	}
 
-	public void createJob(String baseUrl) throws ClientProtocolException, IOException
+	public void createDateConcatJob(String baseUrl) throws ClientProtocolException, IOException
+    {
+        final String JOB_CONFIG = "{\"id\":\"concat-date-test\","
+                + "\"description\":\"Transform Job\","
+                + "\"analysisConfig\" : {"
+                + "\"detectors\":[{\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}]},"
+                + "\"transforms\":[{\"transform\":\"concat\", \"inputs\":[\"date\", \"time\"], \"outputs\":\"datetime\"}],"
+                + "\"dataDescription\":{\"fieldDelimiter\":\",\", \"timeField\":\"datetime\", "
+                + "\"timeFormat\":\"yyyy-MM-ddHH:mm:ssX\"} }";
+
+
+        m_WebServiceClient.deleteJob(baseUrl, CONCAT_DATE_JOB);
+
+        String jobId = m_WebServiceClient.createJob(baseUrl, JOB_CONFIG);
+        if (jobId == null || jobId.isEmpty())
+        {
+            LOGGER.error(m_WebServiceClient.getLastError().toJson());
+            LOGGER.error("No Job Id returned by create job");
+            test(jobId != null);
+        }
+        test(jobId.equals(CONCAT_DATE_JOB));
+
+        // get job by location, verify
+        SingleDocument<JobDetails> doc = m_WebServiceClient.getJob(baseUrl, jobId);
+        if (doc.isExists() == false)
+        {
+            LOGGER.error("No Job at URL " + jobId);
+        }
+        JobDetails job = doc.getDocument();
+
+        TransformConfig tr = new TransformConfig();
+        tr.setTransform("concat");
+        tr.setInputs(Arrays.asList("date", "time"));
+        tr.setOutputs(Arrays.asList("datetime"));
+
+        test(job.getTransforms().size() == 1);
+        test(tr.equals(job.getTransforms().get(0)));
+
+    }
+
+	public void createSplitMetricJob(String baseUrl) throws ClientProtocolException, IOException
 	{
-		final String TRANSFORM_JOB_CONFIG = "{\"id\":\"transform-job-test\","
+		final String TRANSFORM_JOB_CONFIG = "{\"id\":\"concat-metricname-test\","
 				+ "\"description\":\"Transform Job\","
 				+ "\"analysisConfig\" : {"
 				+ "\"detectors\":[{\"fieldName\":\"value\",\"byFieldName\":\"instance_metric\"}]},"
@@ -96,7 +139,7 @@ public class TransformJobTest implements Closeable
 				+ "\"dataDescription\":{\"fieldDelimiter\":\",\", \"timeField\":\"timestamp\", "
 				+ "\"timeFormat\":\"epoch\"} }}";
 
-		m_WebServiceClient.deleteJob(baseUrl, "transform-job-test");
+		m_WebServiceClient.deleteJob(baseUrl, CONCAT_METRIC_JOB);
 
 		String jobId = m_WebServiceClient.createJob(baseUrl, TRANSFORM_JOB_CONFIG);
 		if (jobId == null || jobId.isEmpty())
@@ -105,7 +148,7 @@ public class TransformJobTest implements Closeable
 			LOGGER.error("No Job Id returned by create job");
 			test(jobId != null);
 		}
-		test(jobId.equals("transform-job-test"));
+		test(jobId.equals(CONCAT_METRIC_JOB));
 
 		// get job by location, verify
 		SingleDocument<JobDetails> doc = m_WebServiceClient.getJob(baseUrl, jobId);
@@ -159,6 +202,7 @@ public class TransformJobTest implements Closeable
         FileInputStream stream = new FileInputStream(dataFile);
         DataCounts counts = m_WebServiceClient.streamingUpload(baseUrl, jobId, stream, compressed);
         test(counts.getProcessedRecordCount() > 0);
+        test(counts.getInvalidDateCount() == 0);
 
         SingleDocument<JobDetails> job = m_WebServiceClient.getJob(baseUrl, jobId);
         test(job.isExists());
@@ -200,7 +244,7 @@ public class TransformJobTest implements Closeable
     public boolean checkRecordsHaveConcattedField(String baseUrl, String jobId) throws IOException
     {
         Pagination<AnomalyRecord> records = m_WebServiceClient.getRecords(baseUrl, jobId,
-                0l, 500l, null, null, AnomalyRecord.NORMALIZED_PROBABILITY, true, null, null);
+                0l, 50l, null, null, AnomalyRecord.NORMALIZED_PROBABILITY, true, null, null);
 
         test(records.getDocumentCount() > 0);
 
@@ -255,15 +299,21 @@ public class TransformJobTest implements Closeable
             return;
         }
 
-        File dataFile = new File(prelertTestDataHome +
+        File splitMetricDataFile = new File(prelertTestDataHome +
                 "/engine_api_integration_test/transforms/aws_instance_metric_spit.csv");
+        File splitDateTimeDataFile = new File(prelertTestDataHome +
+                "/engine_api_integration_test/transforms/split_date_time.csv");
 
 		try (TransformJobTest transformTest = new TransformJobTest())
 		{
-			transformTest.createJob(baseUrl);
-			transformTest.uploadData(baseUrl, "transform-job-test", dataFile, false);
-			transformTest.closeJob(baseUrl, "transform-job-test");
-			transformTest.checkRecordsHaveConcattedField(baseUrl, "transform-job-test");
+			transformTest.createSplitMetricJob(baseUrl);
+			transformTest.uploadData(baseUrl, CONCAT_METRIC_JOB, splitMetricDataFile, false);
+			transformTest.closeJob(baseUrl, CONCAT_METRIC_JOB);
+			transformTest.checkRecordsHaveConcattedField(baseUrl, CONCAT_METRIC_JOB);
+
+            transformTest.createDateConcatJob(baseUrl);
+            transformTest.uploadData(baseUrl, CONCAT_DATE_JOB, splitDateTimeDataFile, false);
+            transformTest.closeJob(baseUrl, CONCAT_DATE_JOB);
 		}
 
 		LOGGER.info("All tests passed Ok");

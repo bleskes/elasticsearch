@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
@@ -43,6 +44,7 @@ import org.junit.Test;
 import com.prelert.job.TransformConfig;
 import com.prelert.job.TransformConfigurationException;
 import com.prelert.job.TransformType;
+import com.prelert.transforms.Transform.TransformIndex;
 
 public class TransformFactoryTest {
 
@@ -58,19 +60,21 @@ public class TransformFactoryTest {
 		inputMap.put("field1", 5);
 		inputMap.put("field2", 3);
 
+		Map<String, Integer> scratchMap = new HashMap<>();
 
 		Map<String, Integer> outputMap = new HashMap<>();
 		outputMap.put("concatted", 2);
 
-		Transform tr = new TransformFactory().create(conf, inputMap, outputMap, mock(Logger.class));
+		Transform tr = new TransformFactory().create(conf, inputMap, scratchMap,
+		                                    outputMap, mock(Logger.class));
 		assertTrue(tr instanceof Concat);
 
-		int [] inputIndicies = tr.inputIndicies();
-		assertEquals(inputIndicies[0], 5);
-		assertEquals(inputIndicies[1], 3);
+		List<TransformIndex> inputIndicies = tr.getReadIndicies();
+		assertEquals(inputIndicies.get(0), new TransformIndex(0, 5));
+		assertEquals(inputIndicies.get(1), new TransformIndex(0, 3));
 
-		int [] outputIndicies = tr.outputIndicies();
-		assertEquals(outputIndicies[0], 2);
+		List<TransformIndex> outputIndicies = tr.getWriteIndicies();
+		assertEquals(outputIndicies.get(0), new TransformIndex(2, 2));
 	}
 
 	@Test
@@ -79,6 +83,7 @@ public class TransformFactoryTest {
 		EnumSet<TransformType> all = EnumSet.allOf(TransformType.class);
 
 		Map<String, Integer> inputIndicies = new HashMap<>();
+		Map<String, Integer> scratchMap = new HashMap<>();
 		Map<String, Integer> outputIndicies = new HashMap<>();
 
 		for (TransformType type : all)
@@ -89,7 +94,8 @@ public class TransformFactoryTest {
 			conf.setTransform(type.prettyName());
 
 			// throws IllegalArgumentException if it doesn't handle the type
-			new TransformFactory().create(conf, inputIndicies, outputIndicies, mock(Logger.class));
+			new TransformFactory().create(conf, inputIndicies, scratchMap,
+			                    outputIndicies, mock(Logger.class));
 		}
 	}
 

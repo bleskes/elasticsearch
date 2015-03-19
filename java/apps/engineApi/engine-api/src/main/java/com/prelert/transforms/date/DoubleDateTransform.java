@@ -27,6 +27,8 @@
 
 package com.prelert.transforms.date;
 
+import java.util.List;
+
 import org.apache.log4j.Logger;
 
 import com.prelert.transforms.TransformException;
@@ -43,10 +45,10 @@ public class DoubleDateTransform extends DateTransform
     private final boolean m_IsMillisecond;
     private long m_Epoch;
 
-    public DoubleDateTransform(boolean isMillisecond,
-            int[] inputIndicies, int[] outputIndicies, Logger logger)
+    public DoubleDateTransform(boolean isMillisecond, List<TransformIndex> readIndicies,
+            List<TransformIndex> writeIndicies, Logger logger)
     {
-        super(inputIndicies, outputIndicies, logger);
+        super(readIndicies, writeIndicies, logger);
         m_IsMillisecond = isMillisecond;
     }
 
@@ -57,10 +59,22 @@ public class DoubleDateTransform extends DateTransform
     }
 
     @Override
-    public boolean transform(String[] inputRecord, String[] outputRecord)
+    public boolean transform(String[][] readWriteArea)
     throws TransformException
     {
-        String field = inputRecord[m_InputIndicies[0]];
+        if (m_ReadIndicies.size() == 0)
+        {
+            throw new ParseTimestampException("Cannot parse null string");
+        }
+
+        if (m_WriteIndicies.size() == 0)
+        {
+            throw new ParseTimestampException("No write index for the datetime format transform");
+        }
+
+        TransformIndex i = m_ReadIndicies.get(0);
+        String field = readWriteArea[i.array][i.index];
+
         if (field == null)
         {
             throw new ParseTimestampException("Cannot parse null string");
@@ -73,13 +87,14 @@ public class DoubleDateTransform extends DateTransform
             long longValue = Double.valueOf(field).longValue();
             m_Epoch = m_IsMillisecond ? longValue / 1000 : longValue;
 
-            outputRecord[m_OutputIndicies[0]] = Long.toString(m_Epoch);
+            i = m_WriteIndicies.get(0);
+            readWriteArea[i.array][i.index] = Long.toString(m_Epoch);
             return true;
         }
         catch (NumberFormatException e)
         {
             String message = String.format(
-                    "Cannot parse timestamp '%s' as epoch value", inputRecord[m_InputIndicies[0]]);
+                    "Cannot parse timestamp '%s' as epoch value", field);
             throw new ParseTimestampException(message);
         }
     }

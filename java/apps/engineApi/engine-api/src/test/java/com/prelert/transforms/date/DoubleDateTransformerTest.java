@@ -30,12 +30,17 @@ package com.prelert.transforms.date;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.log4j.Logger;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import com.prelert.transforms.Transform;
 import com.prelert.transforms.TransformException;
+import com.prelert.transforms.Transform.TransformIndex;
 
 public class DoubleDateTransformerTest
 {
@@ -46,13 +51,18 @@ public class DoubleDateTransformerTest
     @Test
     public void testTransform_GivenTimestampIsNotMilliseconds() throws TransformException
     {
-    	DoubleDateTransform transformer = new DoubleDateTransform(false, new int [] {0},
-												new int [] {0}, mock(Logger.class));
+        List<TransformIndex> readIndicies = createIndexArray(new TransformIndex(0, 0));
+        List<TransformIndex> writeIndicies = createIndexArray(new TransformIndex(2, 0));
+
+        DoubleDateTransform transformer = new DoubleDateTransform(false,
+                                        readIndicies, writeIndicies, mock(Logger.class));
 
     	String [] input = {"1000"};
+    	String [] scratch = {};
     	String [] output = new String[1];
+    	String [][] readWriteArea = {input, scratch, output};
 
-		transformer.transform(input, output);
+		transformer.transform(readWriteArea);
 
 		assertEquals(1000, transformer.epoch());
 		assertEquals("1000", output[0]);
@@ -61,13 +71,18 @@ public class DoubleDateTransformerTest
     @Test
     public void testTransform_GivenTimestampIsMilliseconds() throws TransformException
     {
-    	DoubleDateTransform transformer = new DoubleDateTransform(true, new int [] {0},
-				new int [] {0}, mock(Logger.class));
+        List<TransformIndex> readIndicies = createIndexArray(new TransformIndex(0, 0));
+        List<TransformIndex> writeIndicies = createIndexArray(new TransformIndex(2, 0));
+
+        DoubleDateTransform transformer = new DoubleDateTransform(true,
+                                        readIndicies, writeIndicies, mock(Logger.class));
 
 		String [] input = {"1000"};
+		String [] scratch = {};
 		String [] output = new String[1];
+        String [][] readWriteArea = {input, scratch, output};
 
-		transformer.transform(input, output);
+        transformer.transform(readWriteArea);
 
 		assertEquals(1, transformer.epoch());
 		assertEquals("1", output[0]);
@@ -79,12 +94,45 @@ public class DoubleDateTransformerTest
         m_ExpectedException.expect(ParseTimestampException.class);
         m_ExpectedException.expectMessage("Cannot parse timestamp 'invalid' as epoch value");
 
-    	DoubleDateTransform transformer = new DoubleDateTransform(false, new int [] {0},
-				new int [] {0}, mock(Logger.class));
+        List<TransformIndex> readIndicies = createIndexArray(new TransformIndex(0, 0));
+        List<TransformIndex> writeIndicies = createIndexArray(new TransformIndex(2, 0));
+
+        DoubleDateTransform transformer = new DoubleDateTransform(false,
+                                        readIndicies, writeIndicies, mock(Logger.class));
 
 		String [] input = {"invalid"};
+		String [] scratch = {};
 		String [] output = new String[1];
+        String [][] readWriteArea = {input, scratch, output};
 
-		transformer.transform(input, output);
+        transformer.transform(readWriteArea);
+    }
+
+    @Test
+    public void testTransform_InputFromScratchArea() throws TransformException
+    {
+        List<TransformIndex> readIndicies = createIndexArray(new TransformIndex(1, 0));
+        List<TransformIndex> writeIndicies = createIndexArray(new TransformIndex(2, 0));
+
+        DoubleDateTransform transformer = new DoubleDateTransform(false,
+                                        readIndicies, writeIndicies, mock(Logger.class));
+
+        String [] input = {};
+        String [] scratch = {"1000"};
+        String [] output = new String[1];
+        String [][] readWriteArea = {input, scratch, output};
+
+        transformer.transform(readWriteArea);
+    }
+
+    private List<TransformIndex> createIndexArray(TransformIndex...indexs)
+    {
+        List<TransformIndex> result = new ArrayList<Transform.TransformIndex>();
+        for (TransformIndex i : indexs)
+        {
+            result.add(i);
+        }
+
+        return result;
     }
 }

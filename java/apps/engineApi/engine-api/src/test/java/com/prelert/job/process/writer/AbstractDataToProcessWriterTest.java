@@ -55,7 +55,10 @@ import com.prelert.job.persistence.DummyJobDataPersister;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.writer.AbstractDataToProcessWriter.InputOutputMap;
 import com.prelert.job.status.StatusReporter;
+import com.prelert.transforms.Concat;
+import com.prelert.transforms.HighestRegisteredDomain;
 import com.prelert.transforms.Transform;
+import com.prelert.transforms.Transform.TransformIndex;
 
 /**
  * Testing methods of AbstractDataToProcessWriter but uses the concrete instances.
@@ -105,11 +108,17 @@ public class AbstractDataToProcessWriterTest
 
 
 		String [] header = {"timeField", "metric", "host", "value"};
-		List<Transform> trs = writer.buildTransforms(header);
+		writer.buildTransforms(header);
+		List<Transform> trs = writer.m_PostDateTransforms;
 		assertEquals(1, trs.size());
 		Transform tr = trs.get(0);
-		assertArrayEquals(new int []{2, 1}, tr.inputIndicies());
-		assertArrayEquals(new int []{1}, tr.outputIndicies());
+
+        List<TransformIndex> readIndicies = tr.getReadIndicies();
+        assertEquals(readIndicies.get(0), new TransformIndex(0, 2));
+        assertEquals(readIndicies.get(1), new TransformIndex(0, 1));
+
+        List<TransformIndex> writeIndicies = tr.getWriteIndicies();
+        assertEquals(writeIndicies.get(0), new TransformIndex(2, 1));
 
 
 		Map<String, Integer> inputIndicies = writer.getInputFieldIndicies();
@@ -173,7 +182,8 @@ public class AbstractDataToProcessWriterTest
 		assertTrue(inputFields.contains("domain"));
 
 		String [] header = {"timeField", "domain", "value"};
-		List<Transform> trs = writer.buildTransforms(header);
+		writer.buildTransforms(header);
+		List<Transform> trs = writer.m_PostDateTransforms;
 		assertEquals(1, trs.size());
 
 		Map<String, Integer> inputIndicies = writer.getInputFieldIndicies();
@@ -206,14 +216,16 @@ public class AbstractDataToProcessWriterTest
 		assertEquals(inOutMaps.get(0).m_Output, allOutputs.indexOf("value") + 1);
 
 		Transform tr = trs.get(0);
-		assertArrayEquals(new int []{1}, tr.inputIndicies());
+        assertEquals(tr.getReadIndicies().get(0), new TransformIndex(0, 1));
 
+        List<TransformIndex> writeIndicies = new ArrayList<>();
 		int [] outIndices = new int [TransformType.DOMAIN_LOOKUP.defaultOutputNames().size()];
 		for (int i = 0; i < outIndices.length; i++)
 		{
-			outIndices[i] = allOutputs.indexOf(TransformType.DOMAIN_LOOKUP.defaultOutputNames().get(i)) + 1;
+			writeIndicies.add(new TransformIndex(2,
+			                allOutputs.indexOf(TransformType.DOMAIN_LOOKUP.defaultOutputNames().get(i)) + 1));
 		}
-		assertArrayEquals(outIndices, tr.outputIndicies());
+		assertEquals(writeIndicies, tr.getWriteIndicies());
 
 
         // The persister's field mappings are the same as the output indicies
@@ -264,7 +276,8 @@ public class AbstractDataToProcessWriterTest
 		assertTrue(inputFields.contains("domain"));
 
 		String [] header = {"timeField", "domain", "value"};
-		List<Transform> trs = writer.buildTransforms(header);
+		writer.buildTransforms(header);
+		List<Transform> trs = writer.m_PostDateTransforms;
 		assertEquals(1, trs.size());
 
 		Map<String, Integer> inputIndicies = writer.getInputFieldIndicies();
@@ -298,11 +311,11 @@ public class AbstractDataToProcessWriterTest
 		assertEquals(inOutMaps.get(0).m_Output, allOutputs.indexOf("value") + 1);
 
 		Transform tr = trs.get(0);
-		assertArrayEquals(new int []{1}, tr.inputIndicies());
+        assertEquals(tr.getReadIndicies().get(0), new TransformIndex(0, 1));
 
-		int [] outIndices = new int [1];
-		outIndices[0] = allOutputs.indexOf(TransformType.DOMAIN_LOOKUP.defaultOutputNames().get(0)) + 1;
-		assertArrayEquals(outIndices, tr.outputIndicies());
+		TransformIndex ti = new TransformIndex(2,
+		                allOutputs.indexOf(TransformType.DOMAIN_LOOKUP.defaultOutputNames().get(0)) + 1);
+		assertEquals(tr.getWriteIndicies().get(0), ti);
 
 
         // The persister's field mappings are the same as the output indicies
@@ -313,4 +326,67 @@ public class AbstractDataToProcessWriterTest
         assertArrayEquals(new int [0], persister.getOverFieldMappings());
         assertArrayEquals(new int [0],  persister.getPartitionFieldMappings());
 	}
+
+
+
+    /**
+     * Only one output of the transform is used
+     * @throws MissingFieldException
+     */
+    @Test
+    public void testBuildTransforms_ChainedTransforms()
+    throws MissingFieldException
+    {
+        DummyJobDataPersister persister = new DummyJobDataPersister();
+
+        DataDescription dd = new DataDescription();
+        dd.setTimeField("datetime");
+
+        AnalysisConfig ac = new AnalysisConfig();
+        Detector detector = new Detector();
+        detector.setFieldName("value");
+        detector.setByFieldName(TransformType.DOMAIN_LOOKUP.defaultOutputNames().get(0));
+        ac.setDetectors(Arrays.asList(detector));
+
+        TransformConfig concatTc = new TransformConfig();
+        concatTc.setInputs(Arrays.asList("date", "time"));
+        concatTc.setOutputs(Arrays.asList("datetime"));
+        concatTc.setTransform(TransformType.Names.CONCAT);
+
+        TransformConfig hrdTc = new TransformConfig();
+        hrdTc.setInputs(Arrays.asList("domain"));
+        hrdTc.setTransform(TransformType.Names.DOMAIN_LOOKUP_NAME);
+
+        TransformConfigs transforms = new TransformConfigs(Arrays.asList(concatTc, hrdTc));
+
+
+        AbstractDataToProcessWriter writer = new CsvDataToProcessWriter(m_LengthEncodedWriter
+                , dd, ac, transforms, m_StatusReporter, persister, m_Logger);
+
+        Set<String> inputFields = new HashSet<>(writer.inputFields());
+
+        assertEquals(4, inputFields.size());
+        assertTrue(inputFields.contains("date"));
+        assertTrue(inputFields.contains("time"));
+        assertTrue(inputFields.contains("value"));
+        assertTrue(inputFields.contains("domain"));
+
+        String [] header = {"date", "time", "domain", "value"};
+
+        writer.buildTransforms(header);
+        List<Transform> trs = writer.m_DateInputTransforms;
+        assertEquals(1, trs.size());
+        assertTrue(trs.get(0) instanceof Concat);
+
+        trs = writer.m_PostDateTransforms;
+        assertEquals(1, trs.size());
+        assertTrue(trs.get(0) instanceof HighestRegisteredDomain);
+
+        Map<String, Integer> inputIndicies = writer.getInputFieldIndicies();
+        assertEquals(4, inputIndicies.size());
+        Assert.assertEquals(new Integer(0), inputIndicies.get("date"));
+        Assert.assertEquals(new Integer(1), inputIndicies.get("time"));
+        Assert.assertEquals(new Integer(2), inputIndicies.get("domain"));
+        Assert.assertEquals(new Integer(3), inputIndicies.get("value"));
+    }
 }

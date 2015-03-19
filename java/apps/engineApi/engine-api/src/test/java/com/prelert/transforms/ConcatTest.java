@@ -30,20 +30,30 @@ package com.prelert.transforms;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.log4j.Logger;
 import org.junit.Test;
+
+import com.prelert.transforms.Transform.TransformIndex;
 
 public class ConcatTest
 {
 	@Test
 	public void testMultipleInputs() throws TransformException
 	{
-		Concat concat = new Concat(new int [] {1,  2, 4}, new int [] {1}, mock(Logger.class));
+	    List<TransformIndex> readIndicies = createIndexArray(new TransformIndex(0, 1), new TransformIndex(0, 2), new TransformIndex(0, 4));
+	    List<TransformIndex> writeIndicies = createIndexArray(new TransformIndex(2, 1));
+
+		Concat concat = new Concat(readIndicies, writeIndicies, mock(Logger.class));
 
 		String [] input = {"a", "b", "c", "d", "e"};
+		String [] scratch = {};
 		String [] output = new String [2];
+		String [][] readWriteArea = {input, scratch, output};
 
-		concat.transform(input, output);
+		concat.transform(readWriteArea);
 		assertNull(output[0]);
 		assertEquals("bce", output[1]);
 	}
@@ -51,24 +61,63 @@ public class ConcatTest
 	@Test
 	public void testZeroInputs() throws TransformException
 	{
-		Concat concat = new Concat(new int [] {}, new int [] {0}, mock(Logger.class));
+        List<TransformIndex> readIndicies = createIndexArray();
+        List<TransformIndex> writeIndicies = createIndexArray(new TransformIndex(2, 0));
+
+        Concat concat = new Concat(readIndicies, writeIndicies, mock(Logger.class));
 
 		String [] input = {"a", "b", "c", "d", "e"};
+		String [] scratch = {};
 		String [] output = new String [1];
+        String [][] readWriteArea = {input, scratch, output};
 
-		concat.transform(input, output);
+        concat.transform(readWriteArea);
 		assertEquals("", output[0]);
 	}
 
 	@Test
 	public void testNoOutput() throws TransformException
 	{
-		Concat concat = new Concat(new int [] {}, new int [0], mock(Logger.class));
+	    List<TransformIndex> readIndicies = createIndexArray(new TransformIndex(0, 1), new TransformIndex(0, 2), new TransformIndex(0, 3));
+	    List<TransformIndex> writeIndicies = createIndexArray();
+
+	    Concat concat = new Concat(readIndicies, writeIndicies, mock(Logger.class));
 
 		String [] input = {"a", "b", "c", "d", "e"};
+		String [] scratch = {};
 		String [] output = new String [1];
+        String [][] readWriteArea = {input, scratch, output};
 
-		concat.transform(input, output);
+        concat.transform(readWriteArea);
 		assertNull(output[0]);
 	}
+
+    @Test
+    public void testScratchAreaInputs() throws TransformException
+    {
+        List<TransformIndex> readIndicies = createIndexArray(new TransformIndex(0, 1), new TransformIndex(0, 2),
+                                        new TransformIndex(1, 0), new TransformIndex(1, 2));
+        List<TransformIndex> writeIndicies = createIndexArray(new TransformIndex(1, 4));
+
+        Concat concat = new Concat(readIndicies, writeIndicies, mock(Logger.class));
+
+        String [] input = {"a", "b", "c", "d", "e"};
+        String [] scratch = {"a", "b", "c", "d", null};
+        String [] output = new String [1];
+        String [][] readWriteArea = {input, scratch, output};
+
+        concat.transform(readWriteArea);
+        assertEquals("bcac", scratch[4]);
+    }
+
+    private List<TransformIndex> createIndexArray(TransformIndex...indexs)
+    {
+        List<TransformIndex> result = new ArrayList<Transform.TransformIndex>();
+        for (TransformIndex i : indexs)
+        {
+            result.add(i);
+        }
+
+        return result;
+    }
 }

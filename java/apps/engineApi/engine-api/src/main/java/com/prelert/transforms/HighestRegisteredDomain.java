@@ -77,12 +77,10 @@ public class HighestRegisteredDomain extends Transform
         }
     }
 
-    public HighestRegisteredDomain(int[] inputIndicies, int[] outputIndicies,
-             Logger logger)
+    public HighestRegisteredDomain(List<TransformIndex> readIndicies, List<TransformIndex> writeIndicies, Logger logger)
     {
-        super(inputIndicies, outputIndicies, logger);
+        super(readIndicies, writeIndicies, logger);
     }
-
 
     /**
      * The InternetDomainName class isn't very lenient and won't tolerate
@@ -311,17 +309,33 @@ public class HighestRegisteredDomain extends Transform
     }
 
     @Override
-    public boolean transform(String[] inputRecord,
-                            String[] outputRecord)
+    public boolean transform(String[][] readWriteArea)
     {
+        if (m_WriteIndicies.size() == 0)
+        {
+            return true;
+        }
+
+        if (m_ReadIndicies.size() == 0)
+        {
+            return false;
+        }
+
+        TransformIndex i = m_ReadIndicies.get(0);
+        String field = readWriteArea[i.array][i.index];
+
         try
         {
-            DomainSplit split = HighestRegisteredDomain.lookup(inputRecord[m_InputIndicies[0]]);
 
-            outputRecord[m_OutputIndicies[0]] = split.m_SubDomain;
-            if (m_OutputIndicies.length == 2)
+            DomainSplit split = HighestRegisteredDomain.lookup(field);
+
+            i = m_WriteIndicies.get(0);
+            readWriteArea[i.array][i.index] = split.m_SubDomain;
+
+            if (m_WriteIndicies.size() > 1)
             {
-                outputRecord[m_OutputIndicies[1]] = split.m_HighestRegisteredDomain;
+                i = m_WriteIndicies.get(1);
+                readWriteArea[i.array][i.index] = split.m_HighestRegisteredDomain;
             }
 
             return true;

@@ -27,8 +27,9 @@
 
 package com.prelert.transforms;
 
-import org.apache.log4j.Logger;
+import java.util.List;
 
+import org.apache.log4j.Logger;
 
 /**
  * Abstract transform class.
@@ -39,57 +40,102 @@ import org.apache.log4j.Logger;
  */
 public abstract class Transform
 {
-    protected final int [] m_InputIndicies;
-    protected final int [] m_OutputIndicies;
-
     protected final Logger m_Logger;
+
+    public static class TransformIndex
+    {
+        public final int array;
+        public final int index;
+
+        public TransformIndex(int a, int b)
+        {
+            this.array = a;
+            this.index = b;
+        }
+
+        @Override
+        public int hashCode()
+        {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + array;
+            result = prime * result + index;
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj)
+        {
+            if (this == obj)
+            {
+                return true;
+            }
+            if (obj == null)
+            {
+                return false;
+            }
+            if (getClass() != obj.getClass())
+            {
+                return false;
+            }
+            TransformIndex other = (TransformIndex) obj;
+            if (array != other.array || index != other.index)
+            {
+                return false;
+            }
+            return true;
+        }
+    }
+
+    protected List<TransformIndex> m_ReadIndicies;
+    protected List<TransformIndex> m_WriteIndicies;
 
     /**
      *
      * @param inputIndicies Indicies into the input record
+     * @param scratchAreaIndicies Indicies into the scratch area
+     * (where reading the output of another transform or writing
+     * an intermediate result)
      * @param outputIndicies Indicies into the output record.
      * @param logger
      * Transform results go into these indicies
      */
-    public Transform(int [] inputIndicies, int [] outputIndicies, Logger logger)
+    public Transform(List<TransformIndex> readIndicies, List<TransformIndex> writeIndicies, Logger logger)
     {
-        m_InputIndicies = inputIndicies;
-        m_OutputIndicies = outputIndicies;
         m_Logger = logger;
+
+        m_ReadIndicies = readIndicies;
+        m_WriteIndicies = writeIndicies;
     }
 
     /**
-     * Return a copy of the array.
-     * This function is only really here for testing purposes
+     * The indicies for the inputs
      * @return
      */
-    public int [] inputIndicies()
+    public List<TransformIndex> getReadIndicies()
     {
-        int [] tmp = new int[m_InputIndicies.length];
-        System.arraycopy(m_InputIndicies, 0, tmp, 0, tmp.length);
-        return tmp;
+        return m_ReadIndicies;
     }
 
     /**
-     * Return a copy of the array.
-     * This function is only really here for testing purposes
+     * The write output indicies
      * @return
      */
-    public int [] outputIndicies()
+    public List<TransformIndex> getWriteIndicies()
     {
-        int [] tmp = new int[m_OutputIndicies.length];
-        System.arraycopy(m_OutputIndicies, 0, tmp, 0, tmp.length);
-        return tmp;
+        return m_WriteIndicies;
     }
 
     /**
-     * Transform function
+     * Transform function.
+     * The read write array of arrays area typically contains an input array,
+     * scratch area array and the output array. The scratch area is used in the
+     * case where the transform is chained so reads/writes to an intermediate area
      *
-     * @param inputRecord
-     * @param outputRecord
+     * @param readWriteArea
      * @return
      * @throws TransformException
      */
-    public abstract boolean transform(String[] inputRecord, String[] outputRecord)
-            throws TransformException;
+    public abstract boolean transform(String[][] readWriteArea)
+    throws TransformException;
 }

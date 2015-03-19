@@ -51,7 +51,6 @@ import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.job.status.StatusReporter;
-import com.prelert.transforms.Transform;
 
 /**
  * A writer for transforming and piping CSV data from an
@@ -111,7 +110,7 @@ class CsvDataToProcessWriter extends AbstractDataToProcessWriter
             String[] header = csvReader.getHeader(true);
             long inputFieldCount = Math.max(header.length -1, 0); // time field doesn't count
 
-            List<Transform> transforms = buildTransforms(header);
+            buildTransforms(header);
             writeHeader();
 
             int maxIndex = 0;
@@ -159,7 +158,7 @@ class CsvDataToProcessWriter extends AbstractDataToProcessWriter
                     }
                 }
 
-                if (applyTransformsAndWrite(transforms, line.toArray(new String[0]) ,
+                if (applyTransformsAndWrite(line.toArray(new String[0]) ,
                                         record, inputFieldCount))
                 {
                     ++recordsWritten;

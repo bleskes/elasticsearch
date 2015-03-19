@@ -30,6 +30,7 @@ package com.prelert.transforms.date;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.List;
 
 import org.apache.log4j.Logger;
 
@@ -46,12 +47,12 @@ public class DateFormatTransform extends DateTransform
     private long m_Epoch;
     private DateFormat m_DateFormat;
 
-    public DateFormatTransform(String timeFormat,
-            int[] inputIndicies, int[] outputIndicies, Logger logger)
+    public DateFormatTransform(String timeFormat, List<TransformIndex> readIndicies,
+            List<TransformIndex> writeIndicies, Logger logger)
     {
-        super(inputIndicies, outputIndicies, logger);
-        m_TimeFormat = timeFormat;
+        super(readIndicies, writeIndicies, logger);
 
+        m_TimeFormat = timeFormat;
         m_DateFormat = new SimpleDateFormat(m_TimeFormat);
     }
 
@@ -65,10 +66,23 @@ public class DateFormatTransform extends DateTransform
      * Expects 1 input and 1 output.
      */
     @Override
-    public boolean transform(String[] inputRecord,String[] outputRecord)
+    public boolean transform(String[][] readWriteArea)
     throws TransformException
     {
-        String field = inputRecord[m_InputIndicies[0]];
+        if (m_ReadIndicies.size() == 0)
+        {
+            throw new ParseTimestampException("Cannot parse null string");
+        }
+
+        if (m_WriteIndicies.size() == 0)
+        {
+            throw new ParseTimestampException("No write index for the datetime format transform");
+        }
+
+
+        TransformIndex i = m_ReadIndicies.get(0);
+        String field = readWriteArea[i.array][i.index];
+
         if (field == null)
         {
             throw new ParseTimestampException("Cannot parse null string");
@@ -78,13 +92,14 @@ public class DateFormatTransform extends DateTransform
         {
             m_Epoch = m_DateFormat.parse(field).getTime() / 1000;
 
-            outputRecord[m_OutputIndicies[0]] = Long.toString(m_Epoch);
+            i = m_WriteIndicies.get(0);
+            readWriteArea[i.array][i.index] = Long.toString(m_Epoch);
             return true;
         }
         catch (ParseException pe)
         {
             String message = String.format("Cannot parse date '%s' with format string '%s'",
-                    inputRecord[m_InputIndicies[0]], m_TimeFormat);
+                    field, m_TimeFormat);
 
             throw new ParseTimestampException(message);
         }

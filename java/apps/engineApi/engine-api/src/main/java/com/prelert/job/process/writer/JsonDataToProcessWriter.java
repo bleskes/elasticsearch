@@ -31,7 +31,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
@@ -50,7 +49,6 @@ import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.job.status.StatusReporter;
-import com.prelert.transforms.Transform;
 
 /**
  * A writer for transforming and piping JSON data from an
@@ -120,7 +118,7 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter
     {
         Collection<String> analysisFields = inputFields();
 
-        List<Transform> transforms = buildTransforms(analysisFields.toArray(new String[0]));
+        buildTransforms(analysisFields.toArray(new String[0]));
 
         writeHeader();
 
@@ -161,7 +159,7 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter
                     record[inOut.m_Output] = (field == null) ? "" : field;
                 }
 
-                if (applyTransformsAndWrite(transforms, input, record, inputFieldCount))
+                if (applyTransformsAndWrite(input, record, inputFieldCount))
                 {
                     ++recordsWritten;
                 }
