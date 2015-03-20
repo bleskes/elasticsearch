@@ -71,7 +71,7 @@ public class ElasticsearchMappings
 
     private static final String DATE = "date";
     private static final String LONG = "long";
-    private static final String OBJECT = "properties";
+    private static final String OBJECT = "object";
     private static final String PROPERTIES = "properties";
     private static final String STRING = "string";
     private static final String TYPE = "type";

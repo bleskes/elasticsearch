@@ -31,7 +31,7 @@ import java.io.IOException;
 
 import org.apache.log4j.Logger;
 
-import com.prelert.job.input.LengthEncodedWriter;
+import com.prelert.job.process.writer.LengthEncodedWriter;
 
 public class NormaliserProcess
 {

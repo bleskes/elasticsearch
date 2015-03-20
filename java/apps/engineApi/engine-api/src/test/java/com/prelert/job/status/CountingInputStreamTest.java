@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -25,7 +25,7 @@
  *                                                          *
  ***********************************************************/
 
-package com.prelert.job.input;
+package com.prelert.job.status;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -36,66 +36,83 @@ import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.prelert.job.status.DummyStatusReporter;
+import com.prelert.job.status.CountingInputStream;
 import com.prelert.job.usage.DummyUsageReporter;
 
 
-public class CountingInputStreamTest 
+public class CountingInputStreamTest
 {
 	private static Logger LOGGER = Logger.getLogger(CountingInputStreamTest.class);
 
-	@Test	
-	public void testLengthEncodedWriter() throws IOException
+	@Test
+	public void testRead_OneByteAtATime() throws IOException
 	{
 		DummyUsageReporter usageReporter = new DummyUsageReporter("", LOGGER);
 		DummyStatusReporter statusReporter = new DummyStatusReporter(usageReporter);
-		
-		InputStream source = new ByteArrayInputStream("123".getBytes(StandardCharsets.UTF_8));
-		
-		try (CountingInputStream counting = new CountingInputStream(source, 
+
+		final String TEXT = "123";
+		InputStream source = new ByteArrayInputStream(TEXT.getBytes(StandardCharsets.UTF_8));
+
+		try (CountingInputStream counting = new CountingInputStream(source,
 				statusReporter))
 		{
 			while (counting.read() >= 0)
 			{
 				;
 			}
-			// an extra byte is read because we don't check the return 
+			// an extra byte is read because we don't check the return
 			// value of the read() method
-			Assert.assertTrue(usageReporter.getBytesReadSinceLastReport() == 4);
-			
+			Assert.assertEquals(TEXT.length()+1, usageReporter.getBytesReadSinceLastReport());
+
 			Assert.assertEquals(usageReporter.getBytesReadSinceLastReport(),
 					statusReporter.getBytesRead());
 		}
-		
-		source = new ByteArrayInputStream(("To the man who only has a hammer,"
-				+ " everything he encounters begins to look like a nail.").getBytes(StandardCharsets.UTF_8));
-		
+	}
+
+	public void testRead_WithBuffer() throws IOException
+	{
+	    final String TEXT = "To the man who only has a hammer,"
+	              + " everything he encounters begins to look like a nail.";
+
+        DummyUsageReporter usageReporter = new DummyUsageReporter("", LOGGER);
+        DummyStatusReporter statusReporter = new DummyStatusReporter(usageReporter);
+
+        InputStream source = new ByteArrayInputStream(TEXT.getBytes(StandardCharsets.UTF_8));
+
 		usageReporter = new DummyUsageReporter("", LOGGER);
 		statusReporter = new DummyStatusReporter(usageReporter);
-		
-		try (CountingInputStream counting = new CountingInputStream(source, 
+
+		try (CountingInputStream counting = new CountingInputStream(source,
 				statusReporter))
 		{
-			byte buf [] = new byte[6];
+			byte buf [] = new byte[256];
 			while (counting.read(buf) >= 0)
 			{
 				;
 			}
-			// an extra byte is read because we don't check the return 
-			// value of the read() method
-			Assert.assertTrue(usageReporter.getBytesReadSinceLastReport() == 85);
-			
+			// one less byte is reported because we don't check
+			// the return value of the read() method
+			Assert.assertEquals(TEXT.length() -1, usageReporter.getBytesReadSinceLastReport());
+
 			Assert.assertEquals(usageReporter.getBytesReadSinceLastReport(),
 					statusReporter.getBytesRead());
 		}
-		
-		source = new ByteArrayInputStream(("To the man who only has a hammer,"
-				+ " everything he encounters begins to look like a nail.").getBytes(StandardCharsets.UTF_8));
-		
+	}
+
+    public void testRead_WithTinyBuffer() throws IOException
+    {
+        final String TEXT = "To the man who only has a hammer,"
+                  + " everything he encounters begins to look like a nail.";
+
+        DummyUsageReporter usageReporter = new DummyUsageReporter("", LOGGER);
+        DummyStatusReporter statusReporter = new DummyStatusReporter(usageReporter);
+
+        InputStream source = new ByteArrayInputStream(TEXT.getBytes(StandardCharsets.UTF_8));
+
 		usageReporter = new DummyUsageReporter("", LOGGER);
 		statusReporter = new DummyStatusReporter(usageReporter);
-		
-		try (CountingInputStream counting = new CountingInputStream(source, 
+
+		try (CountingInputStream counting = new CountingInputStream(source,
 				statusReporter))
 		{
 			byte buf [] = new byte[8];
@@ -103,17 +120,14 @@ public class CountingInputStreamTest
 			{
 				;
 			}
-			// an extra byte is read because we don't check the return 
+			// an extra byte is read because we don't check the return
 			// value of the read() method
-			Assert.assertTrue(usageReporter.getBytesReadSinceLastReport() == 85);
-			
+			Assert.assertEquals(TEXT.length() -1, usageReporter.getBytesReadSinceLastReport());
+
 			Assert.assertEquals(usageReporter.getBytesReadSinceLastReport(),
 					statusReporter.getBytesRead());
 		}
-		
-		
-		
-	}
 
+	}
 
 }

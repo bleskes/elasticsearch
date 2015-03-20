@@ -35,7 +35,6 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.prelert.job.AnalysisConfig;
-import com.prelert.job.input.LengthEncodedWriter;
 
 /**
  * A writer for sending control messages to the C++ autodetect process.

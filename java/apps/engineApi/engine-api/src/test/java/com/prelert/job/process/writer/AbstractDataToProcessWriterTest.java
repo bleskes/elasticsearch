@@ -47,7 +47,6 @@ import org.mockito.runners.MockitoJUnitRunner;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
 import com.prelert.job.Detector;
-import com.prelert.job.input.LengthEncodedWriter;
 import com.prelert.job.persistence.DummyJobDataPersister;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.writer.AbstractDataToProcessWriter.InputOutputMap;

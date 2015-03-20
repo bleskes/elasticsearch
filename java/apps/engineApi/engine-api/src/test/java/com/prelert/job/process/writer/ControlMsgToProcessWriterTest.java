@@ -45,7 +45,6 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import com.prelert.job.AnalysisConfig;
-import com.prelert.job.input.LengthEncodedWriter;
 
 public class ControlMsgToProcessWriterTest
 {

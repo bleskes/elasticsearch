@@ -25,7 +25,7 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job;
+package com.prelert.job.transform;
 
 import static org.junit.Assert.*;
 
@@ -37,6 +37,7 @@ import java.util.Set;
 
 import org.junit.Test;
 
+import com.prelert.job.JobConfigurationException;
 import com.prelert.job.transform.TransformConfig;
 import com.prelert.job.transform.TransformConfigurationException;
 import com.prelert.job.transform.TransformType;

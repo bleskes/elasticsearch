@@ -46,9 +46,9 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import com.prelert.job.UnknownJobException;
-import com.prelert.job.input.LengthEncodedWriter;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
+import com.prelert.job.process.writer.LengthEncodedWriter;
 import com.prelert.job.quantiles.QuantilesState;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;

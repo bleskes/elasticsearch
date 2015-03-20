@@ -25,7 +25,7 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.input;
+package com.prelert.job.process.writer;
 
 import java.io.IOException;
 import java.io.OutputStream;

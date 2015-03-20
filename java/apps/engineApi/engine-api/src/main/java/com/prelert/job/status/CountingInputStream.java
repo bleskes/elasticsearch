@@ -24,13 +24,11 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.input;
+package com.prelert.job.status;
 
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-
-import com.prelert.job.status.StatusReporter;
 
 /**
  * Simple wrapper around an inputstream instance that counts
