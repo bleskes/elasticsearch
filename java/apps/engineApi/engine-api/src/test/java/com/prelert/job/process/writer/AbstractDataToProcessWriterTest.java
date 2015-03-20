@@ -29,6 +29,7 @@ package com.prelert.job.process.writer;
 
 import static org.junit.Assert.*;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -74,7 +75,7 @@ public class AbstractDataToProcessWriterTest
 
 
 	@Test
-	public void testInputFields_MulitpleInputsSingleOutput() throws MissingFieldException
+	public void testInputFields_MulitpleInputsSingleOutput() throws MissingFieldException, IOException
 	{
 	    DummyJobDataPersister persister = new DummyJobDataPersister();
 
@@ -107,7 +108,7 @@ public class AbstractDataToProcessWriterTest
 
 
 		String [] header = {"timeField", "metric", "host", "value"};
-		writer.buildTransforms(header);
+		writer.buildTransformsAndWriteHeader(header);
 		List<Transform> trs = writer.m_PostDateTransforms;
 		assertEquals(1, trs.size());
 		Transform tr = trs.get(0);
@@ -149,7 +150,7 @@ public class AbstractDataToProcessWriterTest
 	}
 
 	@Test
-	public void testInputFields_SingleInputMulitpleOutputs() throws MissingFieldException
+	public void testInputFields_SingleInputMulitpleOutputs() throws MissingFieldException, IOException
 	{
 	    DummyJobDataPersister persister = new DummyJobDataPersister();
 
@@ -181,7 +182,7 @@ public class AbstractDataToProcessWriterTest
 		assertTrue(inputFields.contains("domain"));
 
 		String [] header = {"timeField", "domain", "value"};
-		writer.buildTransforms(header);
+		writer.buildTransformsAndWriteHeader(header);
 		List<Transform> trs = writer.m_PostDateTransforms;
 		assertEquals(1, trs.size());
 
@@ -241,10 +242,11 @@ public class AbstractDataToProcessWriterTest
 	/**
 	 * Only one output of the transform is used
 	 * @throws MissingFieldException
+	 * @throws IOException
 	 */
 	@Test
 	public void testInputFields_SingleInputMulitpleOutputs_OnlyOneOutputUsed()
-	throws MissingFieldException
+	throws MissingFieldException, IOException
 	{
 	    DummyJobDataPersister persister = new DummyJobDataPersister();
 
@@ -275,7 +277,7 @@ public class AbstractDataToProcessWriterTest
 		assertTrue(inputFields.contains("domain"));
 
 		String [] header = {"timeField", "domain", "value"};
-		writer.buildTransforms(header);
+		writer.buildTransformsAndWriteHeader(header);
 		List<Transform> trs = writer.m_PostDateTransforms;
 		assertEquals(1, trs.size());
 
@@ -331,10 +333,11 @@ public class AbstractDataToProcessWriterTest
     /**
      * Only one output of the transform is used
      * @throws MissingFieldException
+     * @throws IOException
      */
     @Test
     public void testBuildTransforms_ChainedTransforms()
-    throws MissingFieldException
+    throws MissingFieldException, IOException
     {
         DummyJobDataPersister persister = new DummyJobDataPersister();
 
@@ -372,7 +375,7 @@ public class AbstractDataToProcessWriterTest
 
         String [] header = {"date", "time", "domain", "value"};
 
-        writer.buildTransforms(header);
+        writer.buildTransformsAndWriteHeader(header);
         List<Transform> trs = writer.m_DateInputTransforms;
         assertEquals(1, trs.size());
         assertTrue(trs.get(0) instanceof Concat);

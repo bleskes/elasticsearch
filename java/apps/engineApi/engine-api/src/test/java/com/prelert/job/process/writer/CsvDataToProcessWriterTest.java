@@ -114,6 +114,7 @@ public class CsvDataToProcessWriterTest
         CsvDataToProcessWriter writer = createWriter();
 
         writer.write(inputStream);
+        verify(m_StatusReporter, times(1)).startNewIncrementalCount();
 
         List<String[]> expectedRecords = new ArrayList<>();
         // The final field is the control field
@@ -140,6 +141,7 @@ public class CsvDataToProcessWriterTest
         CsvDataToProcessWriter writer = createWriter();
 
         writer.write(inputStream);
+        verify(m_StatusReporter, times(1)).startNewIncrementalCount();
 
         List<String[]> expectedRecords = new ArrayList<>();
         // The final field is the control field
@@ -170,6 +172,7 @@ public class CsvDataToProcessWriterTest
         CsvDataToProcessWriter writer = createWriter();
 
         writer.write(inputStream);
+        verify(m_StatusReporter, times(1)).startNewIncrementalCount();
 
         List<String[]> expectedRecords = new ArrayList<>();
         // The final field is the control field

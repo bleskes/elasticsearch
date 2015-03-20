@@ -90,7 +90,6 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter
             HighProportionOfBadTimestampsException, OutOfOrderRecordsException, MalformedJsonException
     {
         CountingInputStream countingStream = new CountingInputStream(inputStream, m_StatusReporter);
-        m_StatusReporter.setAnalysedFieldsPerRecord(m_AnalysisConfig.analysisFields().size());
 
         m_StatusReporter.startNewIncrementalCount();
 
@@ -117,11 +116,9 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter
     {
         Collection<String> analysisFields = inputFields();
 
-        buildTransforms(analysisFields.toArray(new String[0]));
+        buildTransformsAndWriteHeader(analysisFields.toArray(new String[0]));
 
-        writeHeader();
-
-        int numFields = m_OutFieldIndexes.size();
+        int numFields = outputFieldCount();
         String[] input = new String[numFields];
         String[] record = new String[numFields];
         record[record.length -1] = ""; // The control field is always an empty string
@@ -166,7 +163,7 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter
             else
             {
                 m_Logger.warn("Missing time field from JSON document");
-                m_StatusReporter.reportMissingField();
+                m_StatusReporter.reportDateParseError(numFields);
             }
 
             ++recordCount;

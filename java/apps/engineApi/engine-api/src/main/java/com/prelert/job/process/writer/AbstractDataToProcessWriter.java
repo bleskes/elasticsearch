@@ -78,7 +78,6 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
     protected List<Transform> m_PostDateTransforms;
 
     protected Map<String, Integer> m_InFieldIndexes;
-    protected Map<String, Integer> m_OutFieldIndexes;
     protected List<InputOutputMap> m_InputOutputMap;
 
     private String [] m_ScratchArea;
@@ -109,25 +108,31 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
 
 
     /**
-     * Create the transforms. This must be called before any of the write
-     * functions even if no transforms are configured as it creates the
+     * Create the transforms. This must be called before {@linkplain #write(java.io.InputStream)}
+     * even if no transforms are configured as it creates the
      * date transform and sets up the field mappings.<br>
      *
      * Finds the required input indicies in the <code>header</code>
      * and sets the mappings for the transforms so they know where
-     * to read their inputs.
+     * to read their inputs and write outputs.
+     *
+     * Transforms can be chained so some write their outputs to
+     * a scratch area which is input to another transform
+     *
+     * Writes the header.
      *
      * @param header
      * @throws MissingFieldException
+     * @throws IOException
      */
-    public void buildTransforms(String [] header)
-    throws MissingFieldException
+    public void buildTransformsAndWriteHeader(String [] header)
+    throws MissingFieldException, IOException
     {
         Collection<String> inputFields = inputFields();
         m_InFieldIndexes = inputFieldIndicies(header, inputFields);
         checkForMissingFields(inputFields, m_InFieldIndexes, header);
 
-        m_OutFieldIndexes = outputFieldIndicies();
+        Map<String, Integer> outFieldIndexes = outputFieldIndicies();
         m_InputOutputMap = createInputOutputMap(m_InFieldIndexes);
         m_StatusReporter.setAnalysedFieldsPerRecord(m_AnalysisConfig.analysisFields().size());
 
@@ -139,10 +144,10 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
 
         m_JobDataPersister.setFieldMappings(m_AnalysisConfig.fields(),
                 m_AnalysisConfig.byFields(), m_AnalysisConfig.overFields(),
-                m_AnalysisConfig.partitionFields(), m_OutFieldIndexes);
+                m_AnalysisConfig.partitionFields(), outFieldIndexes);
 
 
-        buildDateTransform(scratchAreaIndicies);
+        buildDateTransform(scratchAreaIndicies, outFieldIndexes);
 
         List<TransformConfig> dateInputTransforms = DependencySorter.findDependencies(
                                     m_DataDescription.getTimeField(), m_TransformConfigs.getTransforms());
@@ -154,7 +159,7 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
             try
             {
                 Transform tr = transformFactory.create(config, m_InFieldIndexes, scratchAreaIndicies,
-                                                    m_OutFieldIndexes, m_Logger);
+                        outFieldIndexes, m_Logger);
                 m_DateInputTransforms.add(tr);
             }
             catch (TransformConfigurationException e)
@@ -178,7 +183,7 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
             try
             {
                 Transform tr = transformFactory.create(config, m_InFieldIndexes, scratchAreaIndicies,
-                                                    m_OutFieldIndexes, m_Logger);
+                        outFieldIndexes, m_Logger);
                 m_PostDateTransforms.add(tr);
             }
             catch (TransformConfigurationException e)
@@ -186,9 +191,12 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
                 m_Logger.error("Error creating transform " + config, e);
             }
         }
+
+        writeHeader(outFieldIndexes);
     }
 
-    protected void buildDateTransform(Map<String, Integer> scratchAreaIndicies)
+    protected void buildDateTransform(Map<String, Integer> scratchAreaIndicies,
+            Map<String, Integer> outFieldIndexes)
     {
         boolean isDateFromatString = m_DataDescription.isTransformTime()
                 && !m_DataDescription.isEpochMs();
@@ -202,7 +210,7 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
         }
         else
         {
-            index = m_OutFieldIndexes.get(m_DataDescription.getTimeField());
+            index = outFieldIndexes.get(m_DataDescription.getTimeField());
             if (index != null)
             {
                 // date field could also be an output field
@@ -224,7 +232,7 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
 
         List<TransformIndex> writeIndicies = new ArrayList<>();
         writeIndicies.add(new TransformIndex(TransformFactory.OUTPUT_ARRAY_INDEX,
-                m_OutFieldIndexes.get(m_DataDescription.getTimeField())));
+                outFieldIndexes.get(m_DataDescription.getTimeField())));
 
         if (isDateFromatString)
         {
@@ -245,8 +253,11 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
      * Fields that aren't transformed i.e. those in m_InputOutputMap must be
      * copied from input to output before this function is called.
      *
+     * First all the transforms whose outputs the Date transform relies
+     * on are executed then the date transform then the remaining transforms.
+     *
      * @param input The record the transforms should read their input from. The contents should
-     * align with the header paramter passed to {@linkplain #buildTransforms(String[])}
+     * align with the header parameter passed to {@linkplain #buildTransformsAndWriteHeader(String[])}
      * @param output The record that will be written to the length encoded writer.
      * This should be the same size as the number of output (analysis fields) i.e.
      * the size of the map returned by {@linkplain #outputFieldIndicies()}
@@ -330,13 +341,13 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
      *
      * @throws IOException
      */
-    protected void writeHeader() throws IOException
+    protected void writeHeader(Map<String, Integer> outFieldIndexes) throws IOException
     {
         //  header is all the analysis input fields + the time field + control field
-        int numFields = m_OutFieldIndexes.size();
+        int numFields = outFieldIndexes.size();
         String[] record = new String[numFields];
 
-        Iterator<Map.Entry<String, Integer>> itr = m_OutFieldIndexes.entrySet().iterator();
+        Iterator<Map.Entry<String, Integer>> itr = outFieldIndexes.entrySet().iterator();
         while (itr.hasNext())
         {
             Map.Entry<String, Integer> entry = itr.next();
@@ -440,12 +451,33 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
         return fieldIndexes;
     }
 
-    public Map<String, Integer> getOutputFieldIndicies()
+    /**
+     * The number of fields used in the analysis +
+     * the time and control fields
+     * @return
+     */
+    public int outputFieldCount()
     {
-        return m_OutFieldIndexes;
+        return m_AnalysisConfig.analysisFields().size() + 2;
+    }
+
+    protected Map<String, Integer> getOutputFieldIndicies()
+    {
+        return outputFieldIndicies();
     }
 
 
+    /**
+     * Find all the scratch area fields. These are those
+     * that are input to a transform but are not written to the
+     * output or read from input. i.e. for the case where a transforms
+     * output is used exclusively by another transform
+     *
+     * @param inputFields Fields we expect in the header
+     * @param outputFields Fields that are written to the analytics
+     * @param dateTimeField
+     * @return
+     */
     protected final Map<String, Integer> scratchAreaIndicies(Collection<String> inputFields,
                                             Collection<String> outputFields, String dateTimeField)
     {

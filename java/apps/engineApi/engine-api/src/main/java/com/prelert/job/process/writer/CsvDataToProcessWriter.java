@@ -109,8 +109,7 @@ class CsvDataToProcessWriter extends AbstractDataToProcessWriter
             String[] header = csvReader.getHeader(true);
             long inputFieldCount = Math.max(header.length -1, 0); // time field doesn't count
 
-            buildTransforms(header);
-            writeHeader();
+            buildTransformsAndWriteHeader(header);
 
             int maxIndex = 0;
             for (Integer index : m_InFieldIndexes.values())
@@ -119,7 +118,7 @@ class CsvDataToProcessWriter extends AbstractDataToProcessWriter
             }
 
 
-            int numFields = m_OutFieldIndexes.size();
+            int numFields = outputFieldCount();
             String[] record = new String[numFields];
             record[record.length -1] = ""; // The control field is always an empty string
 
