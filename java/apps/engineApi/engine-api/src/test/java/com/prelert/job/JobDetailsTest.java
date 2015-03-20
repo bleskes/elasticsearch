@@ -38,6 +38,8 @@ import java.util.List;
 
 import org.junit.Test;
 
+import com.prelert.job.transform.TransformConfig;
+
 public class JobDetailsTest
 {
 

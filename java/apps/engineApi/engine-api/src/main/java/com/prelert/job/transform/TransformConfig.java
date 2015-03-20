@@ -25,7 +25,7 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job;
+package com.prelert.job.transform;
 
 import java.util.Collections;
 import java.util.List;

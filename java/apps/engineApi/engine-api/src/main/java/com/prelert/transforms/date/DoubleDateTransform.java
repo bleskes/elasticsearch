@@ -43,7 +43,7 @@ import com.prelert.transforms.TransformException;
 public class DoubleDateTransform extends DateTransform
 {
     private final boolean m_IsMillisecond;
-    private long m_Epoch;
+
 
     public DoubleDateTransform(boolean isMillisecond, List<TransformIndex> readIndicies,
             List<TransformIndex> writeIndicies, Logger logger)
@@ -53,21 +53,15 @@ public class DoubleDateTransform extends DateTransform
     }
 
     @Override
-    public long epoch()
-    {
-        return m_Epoch;
-    }
-
-    @Override
     public boolean transform(String[][] readWriteArea)
     throws TransformException
     {
-        if (m_ReadIndicies.size() == 0)
+        if (m_ReadIndicies.isEmpty())
         {
             throw new ParseTimestampException("Cannot parse null string");
         }
 
-        if (m_WriteIndicies.size() == 0)
+        if (m_WriteIndicies.isEmpty())
         {
             throw new ParseTimestampException("No write index for the datetime format transform");
         }

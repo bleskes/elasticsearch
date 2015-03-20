@@ -25,7 +25,7 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job;
+package com.prelert.job.transform;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.Set;
 
 import com.prelert.rs.data.ErrorCode;
-import com.prelert.transforms.DependencySorter;
 
 /**
  * Utility class for methods involving arrays of transforms
@@ -98,7 +97,7 @@ public class TransformConfigs
 
 
         // Check for circular dependencies
-        int index = DependencySorter.checkForCircularDependencies(m_Transforms);
+        int index = TransformConfigs.checkForCircularDependencies(m_Transforms);
         if (index >= 0)
         {
             TransformConfig tc = m_Transforms.get(index);
@@ -137,6 +136,68 @@ public class TransformConfigs
         }
 
         return null;
+    }
+
+
+
+    /**
+     * Find circular dependencies in the list of transforms.
+     * This might be because a transform's input is its output
+     * or because of a transitive dependency.
+     *
+     * If there is a circular dependency the index of the transform
+     * in the <code>transforms</code> list at the start of the chain
+     * is returned else -1
+     *
+     * @param transforms
+     * @return -1 if no circular dependencies else the index of the
+     * transform at the start of the circular chain
+     */
+    public static int checkForCircularDependencies(List<TransformConfig> transforms)
+    {
+        for (int i=0; i<transforms.size(); i++)
+        {
+            Set<Integer> chain = new HashSet<Integer>();
+            chain.add(new Integer(i));
+
+            TransformConfig tc = transforms.get(i);
+            if (checkCircularDependenciesRecursive(tc, transforms, chain) == false)
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+
+    private static boolean checkCircularDependenciesRecursive(TransformConfig transform,
+                                                    List<TransformConfig> transforms,
+                                                    Set<Integer> chain)
+    {
+        boolean result = true;
+
+        for (int i=0; i<transforms.size(); i++)
+        {
+            TransformConfig tc = transforms.get(i);
+
+            for (String input : transform.getInputs())
+            {
+                if (tc.getOutputs().contains(input))
+                {
+                    Integer index = new Integer(i);
+                    if (chain.contains(index))
+                    {
+                        return false;
+                    }
+
+                    chain.add(index);
+                    result = result && checkCircularDependenciesRecursive(tc, transforms, chain);
+                }
+            }
+        }
+
+        return result;
     }
 
 

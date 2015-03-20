@@ -31,6 +31,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
+import com.prelert.job.transform.TransformConfig;
+
 /**
  * This class represents a configured and created Job. The creation time is
  * set to the time the object was constructed, Status is set to

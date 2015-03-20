@@ -36,8 +36,8 @@ import org.apache.log4j.Logger;
 
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
-import com.prelert.job.TransformConfigs;
 import com.prelert.job.status.StatusReporter;
+import com.prelert.job.transform.TransformConfigs;
 
 /**
  * The native process and its data description object.

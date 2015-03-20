@@ -44,7 +44,6 @@ import com.prelert.transforms.TransformException;
 public class DateFormatTransform extends DateTransform
 {
     private final String m_TimeFormat;
-    private long m_Epoch;
     private DateFormat m_DateFormat;
 
     public DateFormatTransform(String timeFormat, List<TransformIndex> readIndicies,
@@ -56,12 +55,6 @@ public class DateFormatTransform extends DateTransform
         m_DateFormat = new SimpleDateFormat(m_TimeFormat);
     }
 
-    @Override
-    public long epoch()
-    {
-        return m_Epoch;
-    }
-
     /**
      * Expects 1 input and 1 output.
      */
@@ -69,12 +62,12 @@ public class DateFormatTransform extends DateTransform
     public boolean transform(String[][] readWriteArea)
     throws TransformException
     {
-        if (m_ReadIndicies.size() == 0)
+        if (m_ReadIndicies.isEmpty())
         {
             throw new ParseTimestampException("Cannot parse null string");
         }
 
-        if (m_WriteIndicies.size() == 0)
+        if (m_WriteIndicies.isEmpty())
         {
             throw new ParseTimestampException("No write index for the datetime format transform");
         }

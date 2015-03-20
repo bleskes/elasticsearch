@@ -39,13 +39,13 @@ package com.prelert.job;
  */
 public class ModelState
 {
-	private ModelState()
-	{
-	}
-
 	/**
 	 * The type of this class used when persisting the data
 	 */
 	public static final String TYPE = "modelState";
+
+    private ModelState()
+    {
+    }
 }
 

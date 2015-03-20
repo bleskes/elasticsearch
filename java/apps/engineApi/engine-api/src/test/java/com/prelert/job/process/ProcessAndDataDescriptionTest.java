@@ -42,9 +42,9 @@ import org.junit.Test;
 
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
-import com.prelert.job.TransformConfig;
-import com.prelert.job.TransformConfigs;
 import com.prelert.job.status.StatusReporter;
+import com.prelert.job.transform.TransformConfig;
+import com.prelert.job.transform.TransformConfigs;
 
 public class ProcessAndDataDescriptionTest
 {

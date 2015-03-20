@@ -39,6 +39,8 @@ import com.prelert.transforms.Transform;
  */
 public abstract class DateTransform extends Transform
 {
+    protected long m_Epoch;
+
     public DateTransform(List<TransformIndex> readIndicies, List<TransformIndex> writeIndicies, Logger logger)
     {
         super(readIndicies, writeIndicies, logger);
@@ -48,5 +50,8 @@ public abstract class DateTransform extends Transform
      * The epoch time from the last transform
      * @return
      */
-    public abstract long epoch();
+    public long epoch()
+    {
+        return m_Epoch;
+    }
 }

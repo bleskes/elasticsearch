@@ -49,7 +49,7 @@ public class Concat extends Transform
     public boolean transform(String[][] readWriteArea)
     throws TransformException
     {
-        if (m_WriteIndicies.size() == 0)
+        if (m_WriteIndicies.isEmpty())
         {
             return true;
         }

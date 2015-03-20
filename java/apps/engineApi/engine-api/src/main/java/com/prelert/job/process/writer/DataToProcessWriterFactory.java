@@ -34,10 +34,10 @@ import org.apache.log4j.Logger;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
-import com.prelert.job.TransformConfigs;
 import com.prelert.job.input.LengthEncodedWriter;
 import com.prelert.job.persistence.JobDataPersister;
 import com.prelert.job.status.StatusReporter;
+import com.prelert.job.transform.TransformConfigs;
 
 /**
  * Factory for creating the suitable writer depending on

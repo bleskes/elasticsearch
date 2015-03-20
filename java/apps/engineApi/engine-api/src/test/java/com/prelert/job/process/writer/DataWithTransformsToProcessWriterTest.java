@@ -54,9 +54,6 @@ import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.Detector;
-import com.prelert.job.TransformConfig;
-import com.prelert.job.TransformConfigs;
-import com.prelert.job.TransformType;
 import com.prelert.job.input.LengthEncodedWriter;
 import com.prelert.job.persistence.JobDataPersister;
 import com.prelert.job.process.exceptions.MalformedJsonException;
@@ -64,6 +61,9 @@ import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.job.status.StatusReporter;
+import com.prelert.job.transform.TransformConfig;
+import com.prelert.job.transform.TransformConfigs;
+import com.prelert.job.transform.TransformType;
 
 @RunWith(MockitoJUnitRunner.class)
 public class DataWithTransformsToProcessWriterTest

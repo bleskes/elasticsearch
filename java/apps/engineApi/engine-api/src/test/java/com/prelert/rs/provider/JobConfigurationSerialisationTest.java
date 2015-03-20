@@ -49,7 +49,7 @@ import com.prelert.job.DataDescription;
 import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
-import com.prelert.job.TransformConfig;
+import com.prelert.job.transform.TransformConfig;
 
 public class JobConfigurationSerialisationTest {
 

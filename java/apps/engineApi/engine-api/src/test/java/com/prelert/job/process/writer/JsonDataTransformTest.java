@@ -46,8 +46,6 @@ import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.Detector;
-import com.prelert.job.TransformConfig;
-import com.prelert.job.TransformConfigs;
 import com.prelert.job.persistence.DummyJobDataPersister;
 import com.prelert.job.process.ProcessManager;
 import com.prelert.job.process.exceptions.MalformedJsonException;
@@ -55,6 +53,8 @@ import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.status.DummyStatusReporter;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
+import com.prelert.job.transform.TransformConfig;
+import com.prelert.job.transform.TransformConfigs;
 import com.prelert.job.usage.DummyUsageReporter;
 
 public class JsonDataTransformTest

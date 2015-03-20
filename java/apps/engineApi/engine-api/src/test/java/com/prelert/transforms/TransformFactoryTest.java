@@ -41,9 +41,9 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 import org.junit.Test;
 
-import com.prelert.job.TransformConfig;
-import com.prelert.job.TransformConfigurationException;
-import com.prelert.job.TransformType;
+import com.prelert.job.transform.TransformConfig;
+import com.prelert.job.transform.TransformConfigurationException;
+import com.prelert.job.transform.TransformType;
 import com.prelert.transforms.Transform.TransformIndex;
 
 public class TransformFactoryTest {

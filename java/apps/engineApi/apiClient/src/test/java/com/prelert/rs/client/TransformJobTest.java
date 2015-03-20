@@ -47,7 +47,7 @@ import com.prelert.job.DataDescription;
 import com.prelert.job.Detector;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobStatus;
-import com.prelert.job.TransformConfig;
+import com.prelert.job.transform.TransformConfig;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;

@@ -33,9 +33,9 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
-import com.prelert.job.TransformConfig;
-import com.prelert.job.TransformConfigurationException;
-import com.prelert.job.TransformType;
+import com.prelert.job.transform.TransformConfig;
+import com.prelert.job.transform.TransformConfigurationException;
+import com.prelert.job.transform.TransformType;
 import com.prelert.transforms.Transform.TransformIndex;
 
 /**
@@ -46,9 +46,9 @@ import com.prelert.transforms.Transform.TransformIndex;
  */
 public class TransformFactory
 {
-    public final static int INPUT_ARRAY_INDEX = 0;
-    public final static int SCRATCH_ARRAY_INDEX = 1;
-    public final static int OUTPUT_ARRAY_INDEX = 2;
+    public static final int INPUT_ARRAY_INDEX = 0;
+    public static final int SCRATCH_ARRAY_INDEX = 1;
+    public static final int OUTPUT_ARRAY_INDEX = 2;
 
 	/**
 	 *
@@ -68,7 +68,7 @@ public class TransformFactory
 	throws TransformConfigurationException
 	{
 		int[] input = new int[transformConfig.getInputs().size()];
-		fillIndexArray(transformConfig.getInputs(), inputIndiciesMap, input, logger);
+		fillIndexArray(transformConfig.getInputs(), inputIndiciesMap, input);
 
 		List<TransformIndex> readIndicies = new ArrayList<>();
 		for (String field : transformConfig.getInputs())
@@ -138,10 +138,9 @@ public class TransformFactory
 	 * @param fields
 	 * @param indicies
 	 * @param indexArray
-	 * @param logger
 	 */
 	private static void fillIndexArray(List<String> fields, Map<String, Integer> indicies,
-										int [] indexArray, Logger logger)
+										int [] indexArray)
 	{
 		int i = 0;
 		for (String field : fields)

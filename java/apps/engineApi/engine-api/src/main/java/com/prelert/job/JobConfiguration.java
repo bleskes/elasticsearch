@@ -32,6 +32,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.prelert.job.transform.TransformConfig;
+import com.prelert.job.transform.TransformConfigs;
+import com.prelert.job.transform.TransformConfigurationException;
 import com.prelert.rs.data.ErrorCode;
 
 /**

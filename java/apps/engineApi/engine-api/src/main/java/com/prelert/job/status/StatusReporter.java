@@ -106,7 +106,6 @@ public abstract class StatusReporter
 		}
 		catch (NumberFormatException e)
 		{
-
 		}
 	}
 

@@ -211,7 +211,7 @@ public class HighestRegisteredDomain extends Transform
      * @param host
      * @return Sub domain, HRD pair
      */
-    static public DomainSplit lookup(String host)
+    public static DomainSplit lookup(String host)
     {
         if (host.isEmpty())
         {
@@ -311,12 +311,12 @@ public class HighestRegisteredDomain extends Transform
     @Override
     public boolean transform(String[][] readWriteArea)
     {
-        if (m_WriteIndicies.size() == 0)
+        if (m_WriteIndicies.isEmpty())
         {
             return true;
         }
 
-        if (m_ReadIndicies.size() == 0)
+        if (m_ReadIndicies.isEmpty())
         {
             return false;
         }

@@ -443,10 +443,10 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
     {
         public enum InfoType { END, SYS_CHANGE, UNUSUAL }
 
-        public InfoType m_Type;
-        public String m_State;
-        public long m_EndBucketEpochMs;
-        public Logger m_Logger;
+        public final InfoType m_Type;
+        public final String m_State;
+        public final long m_EndBucketEpochMs;
+        public final Logger m_Logger;
 
         public QuantileInfo(InfoType type, String state,
                             long endBucketEpochMs, Logger logger)
@@ -456,7 +456,7 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
             m_EndBucketEpochMs = endBucketEpochMs;
             m_Logger = logger;
         }
-    };
+    }
 
 
     /**
@@ -473,6 +473,7 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
      */
     private class QueueDrainer implements Runnable
     {
+        @Override
         public void run()
         {
             Logger lastLogger = null;

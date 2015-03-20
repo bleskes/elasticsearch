@@ -42,7 +42,7 @@ import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.persistence.JobDataPersister;
 import com.prelert.job.status.StatusReporter;
-import com.prelert.job.TransformConfigs;
+import com.prelert.job.transform.TransformConfigs;
 
 @RunWith(MockitoJUnitRunner.class)
 public class DataToProcessWriterFactoryTest

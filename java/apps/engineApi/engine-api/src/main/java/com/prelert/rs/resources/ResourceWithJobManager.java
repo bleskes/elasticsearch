@@ -273,7 +273,7 @@ public abstract class ResourceWithJobManager
      * @return The epoch time in milliseconds or 0 if the date is empty.
      * @throws RestApiException if the date cannot be parsed
      */
-    protected long paramToEpochIfValidOrThrow(String date, DateFormat[] dateFormats, Logger logger)
+    protected long paramToEpochIfValidOrThrow(String date, DateFormat dateFormats[], Logger logger)
     {
         long epochStart = 0;
         if (date.isEmpty() == false)
@@ -304,7 +304,7 @@ public abstract class ResourceWithJobManager
      * @param date
      * @return The epoch time in milliseconds or 0 if the date cannot be parsed.
      */
-    private long paramToEpoch(String date, DateFormat dateFormats [])
+    private long paramToEpoch(String date, DateFormat dateFormats[])
     {
         try
         {

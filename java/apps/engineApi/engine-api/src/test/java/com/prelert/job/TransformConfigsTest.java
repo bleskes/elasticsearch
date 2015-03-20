@@ -39,6 +39,10 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import com.prelert.job.transform.TransformConfig;
+import com.prelert.job.transform.TransformConfigs;
+import com.prelert.job.transform.TransformConfigurationException;
+import com.prelert.job.transform.TransformType;
 import com.prelert.rs.data.ErrorCode;
 
 public class TransformConfigsTest
@@ -105,6 +109,99 @@ public class TransformConfigsTest
         transforms.add(createConcatTransform(Arrays.asList("a", "c"), Arrays.asList()));
 
         assertTrue(new TransformConfigs(transforms).verify());
+    }
+
+    @Test
+    public void testFindDependencies_CatchCircularDependency()
+    {
+        List<TransformConfig> transforms = new ArrayList<>();
+
+        List<String> inputs = Arrays.asList("ina", "ab");
+        List<String> outputs = Arrays.asList("ab");
+        TransformConfig concat = createConcatTransform(inputs, outputs);
+        transforms.add(concat);
+
+        int chainIndex = TransformConfigs.checkForCircularDependencies(transforms);
+        assertEquals(chainIndex, 0);
+    }
+
+    @Test
+    public void testCheckForCircularDependencies_CatchCircularDependency()
+    {
+        List<TransformConfig> transforms = new ArrayList<>();
+
+        TransformConfig concat = createConcatTransform(Arrays.asList("ina", "abc"),
+                                                        Arrays.asList("ab"));
+        transforms.add(concat);
+
+        TransformConfig concat2 = createConcatTransform(Arrays.asList("ab", "ac"),
+                                                        Arrays.asList("abc"));
+        transforms.add(concat2);
+
+        TransformConfig concat3 = createConcatTransform(Arrays.asList("ind", "ine"),
+                                                        Arrays.asList("de"));
+        transforms.add(concat3);
+
+        int chainIndex = TransformConfigs.checkForCircularDependencies(transforms);
+        assertEquals(chainIndex, 0);
+    }
+
+    @Test
+    public void testCheckForCircularDependencies_CatchCircularDependencyTransitive()
+    {
+        List<TransformConfig> transforms = new ArrayList<>();
+
+        TransformConfig concatNoChain = createConcatTransform(Arrays.asList("ind", "ine"),
+                                                        Arrays.asList("de"));
+        transforms.add(concatNoChain);
+
+        TransformConfig concat = createConcatTransform(Arrays.asList("ina", "abcd"),
+                                                        Arrays.asList("ab"));
+        transforms.add(concat);
+
+        TransformConfig concat1 = createConcatTransform(Arrays.asList("ab", "inc"),
+                                                        Arrays.asList("abc"));
+        transforms.add(concat1);
+
+        TransformConfig concat2 = createConcatTransform(Arrays.asList("abc", "ind"),
+                                                        Arrays.asList("abcd"));
+        transforms.add(concat2);
+
+        int chainIndex = TransformConfigs.checkForCircularDependencies(transforms);
+        assertEquals(chainIndex, 1);
+    }
+
+    @Test
+    public void testCheckForCircularDependencies_NoCircles()
+    {
+        List<TransformConfig> transforms = new ArrayList<>();
+
+        TransformConfig concat = createConcatTransform(Arrays.asList("ina", "inb"),
+                                                            Arrays.asList("ab"));
+        transforms.add(concat);
+
+        int chainIndex = TransformConfigs.checkForCircularDependencies(transforms);
+        assertEquals(chainIndex, -1);
+
+        // add more transforms
+        TransformConfig concat1 = createConcatTransform(Arrays.asList("inc", "ind"),
+                                                        Arrays.asList("cd"));
+        transforms.add(concat1);
+
+        chainIndex = TransformConfigs.checkForCircularDependencies(transforms);
+        assertEquals(chainIndex, -1);
+
+
+        TransformConfig hrd1 = createHrdTransform(Arrays.asList("ab"),
+                Arrays.asList());
+        transforms.add(hrd1);
+
+        TransformConfig concat3 = createConcatTransform(Arrays.asList("hrd", "cd"),
+                Arrays.asList());
+        transforms.add(concat3);
+
+        chainIndex = TransformConfigs.checkForCircularDependencies(transforms);
+        assertEquals(chainIndex, -1);
     }
 
 

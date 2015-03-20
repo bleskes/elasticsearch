@@ -124,7 +124,7 @@ public abstract class AbstractDataStreamer {
     private InputStream tryDecompressingInputStream(String contentEncoding,
             String jobId, InputStream input) throws IOException
     {
-        if (contentEncoding!= null && contentEncoding.equals("gzip"))
+        if ("gzip".equals(contentEncoding))
         {
             LOGGER.info("Decompressing post data in job = " + jobId);
             try

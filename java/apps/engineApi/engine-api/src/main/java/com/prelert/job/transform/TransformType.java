@@ -25,7 +25,7 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job;
+package com.prelert.job.transform;
 
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -43,6 +43,8 @@ public enum TransformType
 {
     DOMAIN_LOOKUP(Names.DOMAIN_LOOKUP_NAME, 1, Arrays.asList("subDomain", "hrd")),
     CONCAT(Names.CONCAT, Names.VARIADIC_ARGS, Arrays.asList("concat"));
+//    DATE_FORMAT(Names.DATE_FORMAT, 1, Arrays.asList("datetime")),
+//    DATE_EPOCH(Names.DATE_EPOCH, 1, Arrays.asList("datetime"));
 
     /**
      * Enums cannot use static fields in their constructors as the
@@ -54,6 +56,8 @@ public enum TransformType
     {
         public static final String DOMAIN_LOOKUP_NAME = "domain_lookup";
         public static final String CONCAT = "concat";
+//        public static final String DATE_FORMAT = "date_format";
+//        public static final String DATE_EPOCH = "date_epoch";
 
         private static final int VARIADIC_ARGS = -1;
 

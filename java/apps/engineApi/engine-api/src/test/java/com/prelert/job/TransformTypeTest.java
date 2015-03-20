@@ -35,6 +35,10 @@ import java.util.Set;
 
 import org.junit.Test;
 
+import com.prelert.job.transform.TransformConfig;
+import com.prelert.job.transform.TransformConfigurationException;
+import com.prelert.job.transform.TransformType;
+
 public class TransformTypeTest
 {
     @Test
