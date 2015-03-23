@@ -71,6 +71,8 @@ import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.process.writer.ControlMsgToProcessWriter;
 import com.prelert.job.process.writer.DataToProcessWriter;
 import com.prelert.job.process.writer.DataToProcessWriterFactory;
+import com.prelert.job.process.writer.LengthEncodedWriter;
+import com.prelert.job.process.writer.RecordWriter;
 import com.prelert.job.quantiles.QuantilesState;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
@@ -749,18 +751,12 @@ public class ProcessManager
     /**
      * Transform the data according to the data description and
      * pipe to the output.
-     * Data is written via BufferedOutputStream which is more
-     * suited for small writes.
-     * Only the fields matching those in the list <code>analysisFields</code>
-     * are send to the process.
-     * For CSV data <code>MissingFieldException</code> is
-     * thrown if any fields are missing from the header JSON objects may
-     * be different so an error is logged in that case.
+     * Data is written via the recordWriter parameter
      *
+     *@param recordWriter
      * @param dataDescription
      * @param analysisFields
      * @param input
-     * @param output
      * @param statusReporter
      * @param jobLogger
      * @throws JsonParseException
@@ -770,6 +766,50 @@ public class ProcessManager
      * @throws OutOfOrderRecordsException
      * @throws MalformedJsonException
      * @return Count of records, fields, bytes, etc written
+     */
+    public DataCounts writeToJob(RecordWriter recordWriter,
+            DataDescription dataDescription,
+            AnalysisConfig analysisConfig,
+            TransformConfigs transforms,
+            InputStream input,
+            StatusReporter statusReporter,
+            JobDataPersister dataPersister,
+            Logger jobLogger)
+    throws JsonParseException, MissingFieldException, IOException,
+        HighProportionOfBadTimestampsException, OutOfOrderRecordsException, MalformedJsonException
+    {
+        DataToProcessWriter writer = new DataToProcessWriterFactory().create(recordWriter,
+                dataDescription, analysisConfig, transforms, statusReporter, dataPersister, jobLogger);
+
+        return writer.write(input);
+    }
+
+    /**
+     * Transform the data according to the data description and
+     * pipe to the output.
+     * Data is written via BufferedOutputStream which is more
+     * suited for small writes.
+     * Only the fields matching those in the list <code>analysisFields</code>
+     * are send to the process.
+     * For CSV data <code>MissingFieldException</code> is
+     * thrown if any fields are missing from the header JSON objects may
+     * be different so an error is logged in that case.
+     *
+     * @param dataDescription
+     * @param analysisConfig
+     * @param transforms
+     * @param input
+     * @param output
+     * @param statusReporter
+     * @param dataPersister
+     * @param jobLogger
+     * @return
+     * @throws JsonParseException
+     * @throws MissingFieldException
+     * @throws IOException
+     * @throws HighProportionOfBadTimestampsException
+     * @throws OutOfOrderRecordsException
+     * @throws MalformedJsonException
      */
     public DataCounts writeToJob(DataDescription dataDescription,
             AnalysisConfig analysisConfig,
@@ -781,9 +821,13 @@ public class ProcessManager
     throws JsonParseException, MissingFieldException, IOException,
         HighProportionOfBadTimestampsException, OutOfOrderRecordsException, MalformedJsonException
     {
+        // Don't close the output stream as it causes the autodetect
+        // process to quit
         // Oracle's documentation recommends buffering process streams
         BufferedOutputStream bufferedStream = new BufferedOutputStream(output);
-        DataToProcessWriter writer = new DataToProcessWriterFactory().create(bufferedStream,
+        LengthEncodedWriter lengthEncodedWriter = new LengthEncodedWriter(bufferedStream);
+
+        DataToProcessWriter writer = new DataToProcessWriterFactory().create(lengthEncodedWriter,
                 dataDescription, analysisConfig, transforms, statusReporter, dataPersister, jobLogger);
 
         return writer.write(input);

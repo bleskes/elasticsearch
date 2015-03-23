@@ -28,8 +28,10 @@
 package com.prelert.job.manager;
 
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -55,13 +57,17 @@ import com.prelert.job.JobStatus;
 import com.prelert.job.TooManyJobsException;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.persistence.JobProvider;
+import com.prelert.job.persistence.none.NoneJobDataPersister;
 import com.prelert.job.process.ProcessManager;
 import com.prelert.job.process.exceptions.ClosedJobException;
 import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
+import com.prelert.job.process.writer.CsvRecordWriter;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
+import com.prelert.job.status.none.NoneStatusReporter;
+import com.prelert.job.transform.TransformConfigs;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.ErrorCode;
@@ -665,6 +671,24 @@ public class JobManager
             throw ne;
         }
         return stats;
+    }
+
+    public String preveiwTransforms(String jobId, InputStream input)
+    throws JsonParseException, MissingFieldException, HighProportionOfBadTimestampsException,
+    OutOfOrderRecordsException, MalformedJsonException, IOException, UnknownJobException
+    {
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        CsvRecordWriter writer = new CsvRecordWriter(output);
+        JobDetails job = m_JobProvider.getJobDetails(jobId);
+
+        m_ProcessManager.writeToJob(writer, job.getDataDescription(),
+                            job.getAnalysisConfig(),
+                            new TransformConfigs(job.getTransforms()), input,
+                            new NoneStatusReporter(),
+                            new NoneJobDataPersister(), LOGGER);
+
+        String text = new String(output.toByteArray(), StandardCharsets.UTF_8);
+        return text;
     }
 
     private void checkTooManyJobs(String jobId) throws TooManyJobsException
