@@ -116,7 +116,7 @@ public class ElasticsearchResultsReaderFactory implements ResultsReaderFactory
                     byte [] buff = new byte [512];
                     while (m_Stream.read(buff) >= 0)
                     {
-                        ;
+                        // Do nothing
                     }
                     m_Stream.close();
                 }

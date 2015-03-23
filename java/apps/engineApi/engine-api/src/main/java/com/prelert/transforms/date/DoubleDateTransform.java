@@ -53,27 +53,8 @@ public class DoubleDateTransform extends DateTransform
     }
 
     @Override
-    public boolean transform(String[][] readWriteArea)
-    throws TransformException
+    protected boolean parseAndWriteDate(String field, String[][] readWriteArea) throws TransformException
     {
-        if (m_ReadIndicies.isEmpty())
-        {
-            throw new ParseTimestampException("Cannot parse null string");
-        }
-
-        if (m_WriteIndicies.isEmpty())
-        {
-            throw new ParseTimestampException("No write index for the datetime format transform");
-        }
-
-        TransformIndex i = m_ReadIndicies.get(0);
-        String field = readWriteArea[i.array][i.index];
-
-        if (field == null)
-        {
-            throw new ParseTimestampException("Cannot parse null string");
-        }
-
         try
         {
             // parse as a double and throw away the fractional
@@ -81,8 +62,8 @@ public class DoubleDateTransform extends DateTransform
             long longValue = Double.valueOf(field).longValue();
             m_Epoch = m_IsMillisecond ? longValue / 1000 : longValue;
 
-            i = m_WriteIndicies.get(0);
-            readWriteArea[i.array][i.index] = Long.toString(m_Epoch);
+            TransformIndex writeIndex = m_WriteIndicies.get(0);
+            readWriteArea[writeIndex.array][writeIndex.index] = Long.toString(m_Epoch);
             return true;
         }
         catch (NumberFormatException e)
