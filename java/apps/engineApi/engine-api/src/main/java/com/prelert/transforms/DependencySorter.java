@@ -27,6 +27,7 @@
 
 package com.prelert.transforms;
 
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
@@ -66,20 +67,7 @@ public class DependencySorter
     public static List<TransformConfig> findDependencies(String input,
                                             List<TransformConfig> transforms)
     {
-        List<TransformConfig> dependencies = new LinkedList<>();
-
-        ListIterator<TransformConfig> itr = transforms.listIterator();
-        while (itr.hasNext())
-        {
-            TransformConfig tc = itr.next();
-
-            if (tc.getOutputs().contains(input))
-            {
-                findDependenciesRecursive(tc, transforms, dependencies);
-            }
-
-        }
-        return dependencies;
+        return findDependencies(Arrays.asList(input), transforms);
     }
 
 
