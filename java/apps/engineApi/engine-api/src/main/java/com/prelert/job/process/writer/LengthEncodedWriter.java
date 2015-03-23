@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -43,14 +43,8 @@ import java.util.List;
  * <p>See CLengthEncodedInputParser.h in the C++ code for a more
  * detailed description.
  */
-public class LengthEncodedWriter
+public class LengthEncodedWriter implements RecordWriter
 {
-    /**
-     * Value must match api::CAnomalyDetector::CONTROL_FIELD_NAME in the C++
-     * code.
-     */
-    public static final String CONTROL_FIELD_NAME = ".";
-
     private OutputStream m_OutputStream;
     private ByteBuffer m_LengthBuffer;
 
@@ -66,6 +60,7 @@ public class LengthEncodedWriter
         m_LengthBuffer = ByteBuffer.allocate(4); // 4 == sizeof(int)
     }
 
+
     /**
      * Convert each String in the record array to a length/value encoded pair
      * and write to the outputstream.
@@ -73,6 +68,7 @@ public class LengthEncodedWriter
      * @throws IOException
      * @see {@link #writeRecord(List)}
      */
+    @Override
     public void writeRecord(String[] record)
     throws IOException
     {
@@ -84,7 +80,6 @@ public class LengthEncodedWriter
         }
     }
 
-
     /**
      * Convert each String in the record list to a length/value encoded
      * pair and write to the outputstream.
@@ -93,6 +88,7 @@ public class LengthEncodedWriter
      * @throws IOException
      * @see {@link #writeRecord(String[])}
      */
+    @Override
     public void writeRecord(List<String> record)
     throws IOException
     {
@@ -125,6 +121,7 @@ public class LengthEncodedWriter
 
     /**
      * Lower level functions to write record fields individually.
+     * {@linkplain #writeNumFields(int)} must be called first
      *
      * @param numFields
      * @throws IOException
@@ -140,10 +137,10 @@ public class LengthEncodedWriter
     }
 
 
-    /**
-     * Flush the output stream.
-     * @throws IOException
+    /* (non-Javadoc)
+     * @see com.prelert.job.process.writer.RecordWriter#flush()
      */
+    @Override
     public void flush() throws IOException
     {
         m_OutputStream.flush();

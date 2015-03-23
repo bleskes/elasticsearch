@@ -65,7 +65,7 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
 {
     protected static int TIME_FIELD_OUT_INDEX = 0;
 
-    protected final LengthEncodedWriter m_LengthEncodedWriter;
+    protected final RecordWriter m_RecordWriter;
     protected final DataDescription m_DataDescription;
     protected final AnalysisConfig m_AnalysisConfig;
     protected final StatusReporter m_StatusReporter;
@@ -86,12 +86,12 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
     private long m_LatestEpoch;
 
 
-    protected AbstractDataToProcessWriter(LengthEncodedWriter lengthEncodedWriter,
+    protected AbstractDataToProcessWriter(RecordWriter recordWriter,
             DataDescription dataDescription, AnalysisConfig analysisConfig,
             TransformConfigs transformConfigs, StatusReporter statusReporter,
             JobDataPersister jobDataPersister, Logger logger)
     {
-        m_LengthEncodedWriter = Objects.requireNonNull(lengthEncodedWriter);
+        m_RecordWriter = Objects.requireNonNull(recordWriter);
         m_DataDescription = Objects.requireNonNull(dataDescription);
         m_AnalysisConfig = Objects.requireNonNull(analysisConfig);
         m_StatusReporter = Objects.requireNonNull(statusReporter);
@@ -326,7 +326,7 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
             }
         }
 
-        m_LengthEncodedWriter.writeRecord(output);
+        m_RecordWriter.writeRecord(output);
         m_JobDataPersister.persistRecord(epoch, output);
         m_StatusReporter.reportRecordWritten(numberOfFieldsRead);
 
@@ -355,7 +355,7 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
         }
 
         // Write the header
-        m_LengthEncodedWriter.writeRecord(record);
+        m_RecordWriter.writeRecord(record);
     }
 
 

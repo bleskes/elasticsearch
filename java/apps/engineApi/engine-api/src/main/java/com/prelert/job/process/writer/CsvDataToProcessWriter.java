@@ -64,12 +64,12 @@ import com.prelert.job.transform.TransformConfigs;
 class CsvDataToProcessWriter extends AbstractDataToProcessWriter
 {
 
-    public CsvDataToProcessWriter(LengthEncodedWriter lengthEncodedWriter,
+    public CsvDataToProcessWriter(RecordWriter recordWriter,
             DataDescription dataDescription, AnalysisConfig analysisConfig,
             TransformConfigs transforms, StatusReporter statusReporter,
             JobDataPersister jobDataPersister, Logger logger)
     {
-        super(lengthEncodedWriter, dataDescription, analysisConfig, transforms,
+        super(recordWriter, dataDescription, analysisConfig, transforms,
                 statusReporter, jobDataPersister, logger);
     }
 
@@ -166,7 +166,7 @@ class CsvDataToProcessWriter extends AbstractDataToProcessWriter
             // This function can throw
             m_StatusReporter.finishReporting();
 
-            m_LengthEncodedWriter.flush();
+            m_RecordWriter.flush();
         }
         finally
         {

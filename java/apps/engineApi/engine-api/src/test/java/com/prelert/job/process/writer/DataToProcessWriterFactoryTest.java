@@ -30,8 +30,6 @@ package com.prelert.job.process.writer;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 
-import java.io.OutputStream;
-
 import org.apache.log4j.Logger;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -55,7 +53,7 @@ public class DataToProcessWriterFactoryTest
         dataDescription.setFormat(DataFormat.JSON);
 
         DataToProcessWriterFactory factory = new DataToProcessWriterFactory();
-        DataToProcessWriter writer = factory.create(mock(OutputStream.class), dataDescription,
+        DataToProcessWriter writer = factory.create(mock(LengthEncodedWriter.class), dataDescription,
                 mock(AnalysisConfig.class), mock(TransformConfigs.class), mock(StatusReporter.class),
                 mock(JobDataPersister.class), mock(Logger.class));
 
@@ -69,7 +67,7 @@ public class DataToProcessWriterFactoryTest
         dataDescription.setFormat(DataFormat.DELINEATED);
 
         DataToProcessWriterFactory factory = new DataToProcessWriterFactory();
-        DataToProcessWriter writer = factory.create(mock(OutputStream.class), dataDescription,
+        DataToProcessWriter writer = factory.create(mock(LengthEncodedWriter.class), dataDescription,
                 mock(AnalysisConfig.class), mock(TransformConfigs.class), mock(StatusReporter.class),
                 mock(JobDataPersister.class), mock(Logger.class));
 

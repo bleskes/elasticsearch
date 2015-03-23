@@ -1,3 +1,6 @@
+package com.prelert.job.process.writer;
+
+import java.io.IOException;
 /************************************************************
  *                                                          *
  * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
@@ -25,40 +28,55 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.process.writer;
-
-import org.apache.log4j.Logger;
-
-import com.prelert.job.AnalysisConfig;
-import com.prelert.job.DataDescription;
-import com.prelert.job.DataDescription.DataFormat;
-import com.prelert.job.persistence.JobDataPersister;
-import com.prelert.job.status.StatusReporter;
-import com.prelert.job.transform.TransformConfigs;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 /**
- * Factory for creating the suitable writer depending on
- * whether the data format is JSON or not, and on the kind
- * of date transformation that should occur.
+ * Write the records to the output stream as UTF 8 encoded CSV
  */
-public class DataToProcessWriterFactory
+public class CsvRecordWriter implements RecordWriter
 {
+    private OutputStream m_OutputStream;
 
     /**
-     * Constructs a {@link DataToProcessWriter} depending on
-     * the data format and the time transformation.
-     *
-     * @return A {@link JsonDataToProcessWriter} if the data
-     *  format is JSON or otherwise a {@link CsvDataToProcessWriter}
+     * Create the writer on the OutputStream <code>os</code>.
+     * This object will never close <code>os</code>.
+     * @param os
      */
-    public DataToProcessWriter create(RecordWriter writer,
-            DataDescription dataDescription, AnalysisConfig analysisConfig, TransformConfigs transforms,
-            StatusReporter statusReporter, JobDataPersister jobDataPersister, Logger logger)
+    public CsvRecordWriter(OutputStream os)
     {
-        return (dataDescription.getFormat() == DataFormat.JSON) ?
-                new JsonDataToProcessWriter(writer, dataDescription, analysisConfig,
-                        transforms, statusReporter, jobDataPersister, logger) :
-                new CsvDataToProcessWriter(writer, dataDescription, analysisConfig,
-                        transforms, statusReporter, jobDataPersister, logger);
+        m_OutputStream = os;
     }
+
+    @Override
+    public void writeRecord(String[] record) throws IOException
+    {
+        for (int i=0; i<record.length -1; i++)
+        {
+            m_OutputStream.write(record[i].getBytes(StandardCharsets.UTF_8));
+            m_OutputStream.write(',');
+        }
+        m_OutputStream.write(record[record.length -1].getBytes(StandardCharsets.UTF_8));
+        m_OutputStream.write('\n');
+    }
+
+    @Override
+    public void writeRecord(List<String> record) throws IOException
+    {
+        for (int i=0; i<record.size() -1; i++)
+        {
+            m_OutputStream.write(record.get(i).getBytes(StandardCharsets.UTF_8));
+            m_OutputStream.write(',');
+        }
+        m_OutputStream.write(record.get(record.size()-1).getBytes(StandardCharsets.UTF_8));
+        m_OutputStream.write('\n');
+    }
+
+    @Override
+    public void flush() throws IOException
+    {
+        m_OutputStream.flush();
+    }
+
 }

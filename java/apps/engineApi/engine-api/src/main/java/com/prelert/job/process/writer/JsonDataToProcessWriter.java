@@ -60,12 +60,12 @@ import com.prelert.job.transform.TransformConfigs;
 class JsonDataToProcessWriter extends AbstractDataToProcessWriter
 {
 
-    public JsonDataToProcessWriter(LengthEncodedWriter lengthEncodedWriter,
+    public JsonDataToProcessWriter(RecordWriter recordWriter,
             DataDescription dataDescription, AnalysisConfig analysisConfig,
             TransformConfigs transforms, StatusReporter statusReporter,
             JobDataPersister jobDataPersister, Logger logger)
     {
-        super(lengthEncodedWriter, dataDescription, analysisConfig, transforms,
+        super(recordWriter, dataDescription, analysisConfig, transforms,
                 statusReporter, jobDataPersister, logger);
     }
 
@@ -96,7 +96,7 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter
         try (JsonParser parser = new JsonFactory().createParser(countingStream))
         {
             writeJson(parser);
-            m_LengthEncodedWriter.flush();
+            m_RecordWriter.flush();
             // this line can throw and will be propagated
             m_StatusReporter.finishReporting();
         }

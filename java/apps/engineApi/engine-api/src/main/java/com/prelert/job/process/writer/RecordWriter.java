@@ -27,38 +27,42 @@
 
 package com.prelert.job.process.writer;
 
-import org.apache.log4j.Logger;
-
-import com.prelert.job.AnalysisConfig;
-import com.prelert.job.DataDescription;
-import com.prelert.job.DataDescription.DataFormat;
-import com.prelert.job.persistence.JobDataPersister;
-import com.prelert.job.status.StatusReporter;
-import com.prelert.job.transform.TransformConfigs;
+import java.io.IOException;
+import java.util.List;
 
 /**
- * Factory for creating the suitable writer depending on
- * whether the data format is JSON or not, and on the kind
- * of date transformation that should occur.
+ * Interface for classes that write arrays of strings to the
+ * Prelert analytics processes.
  */
-public class DataToProcessWriterFactory
+public interface RecordWriter
 {
+    /**
+     * Value must match api::CAnomalyDetector::CONTROL_FIELD_NAME in the C++
+     * code.
+     */
+    public static final String CONTROL_FIELD_NAME = ".";
 
     /**
-     * Constructs a {@link DataToProcessWriter} depending on
-     * the data format and the time transformation.
-     *
-     * @return A {@link JsonDataToProcessWriter} if the data
-     *  format is JSON or otherwise a {@link CsvDataToProcessWriter}
+     * Write each String in the record array
+     * @param record
+     * @throws IOException
+     * @see {@link #writeRecord(List)}
      */
-    public DataToProcessWriter create(RecordWriter writer,
-            DataDescription dataDescription, AnalysisConfig analysisConfig, TransformConfigs transforms,
-            StatusReporter statusReporter, JobDataPersister jobDataPersister, Logger logger)
-    {
-        return (dataDescription.getFormat() == DataFormat.JSON) ?
-                new JsonDataToProcessWriter(writer, dataDescription, analysisConfig,
-                        transforms, statusReporter, jobDataPersister, logger) :
-                new CsvDataToProcessWriter(writer, dataDescription, analysisConfig,
-                        transforms, statusReporter, jobDataPersister, logger);
-    }
+    public abstract void writeRecord(String[] record) throws IOException;
+
+    /**
+     * Write each String in the record list
+     *
+     * @param record
+     * @throws IOException
+     * @see {@link #writeRecord(String[])}
+     */
+    public abstract void writeRecord(List<String> record) throws IOException;
+
+    /**
+     * Flush the output stream.
+     * @throws IOException
+     */
+    public abstract void flush() throws IOException;
+
 }
