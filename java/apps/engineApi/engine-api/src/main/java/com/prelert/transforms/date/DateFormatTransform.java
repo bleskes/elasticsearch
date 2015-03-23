@@ -55,38 +55,15 @@ public class DateFormatTransform extends DateTransform
         m_DateFormat = new SimpleDateFormat(m_TimeFormat);
     }
 
-    /**
-     * Expects 1 input and 1 output.
-     */
     @Override
-    public boolean transform(String[][] readWriteArea)
-    throws TransformException
+    protected boolean parseAndWriteDate(String field, String[][] readWriteArea) throws TransformException
     {
-        if (m_ReadIndicies.isEmpty())
-        {
-            throw new ParseTimestampException("Cannot parse null string");
-        }
-
-        if (m_WriteIndicies.isEmpty())
-        {
-            throw new ParseTimestampException("No write index for the datetime format transform");
-        }
-
-
-        TransformIndex i = m_ReadIndicies.get(0);
-        String field = readWriteArea[i.array][i.index];
-
-        if (field == null)
-        {
-            throw new ParseTimestampException("Cannot parse null string");
-        }
-
         try
         {
             m_Epoch = m_DateFormat.parse(field).getTime() / 1000;
 
-            i = m_WriteIndicies.get(0);
-            readWriteArea[i.array][i.index] = Long.toString(m_Epoch);
+            TransformIndex writeIndex = m_WriteIndicies.get(0);
+            readWriteArea[writeIndex.array][writeIndex.index] = Long.toString(m_Epoch);
             return true;
         }
         catch (ParseException pe)

@@ -32,6 +32,7 @@ import java.util.List;
 import org.apache.log4j.Logger;
 
 import com.prelert.transforms.Transform;
+import com.prelert.transforms.TransformException;
 
 /**
  * Abstract class introduces the {@link #epoch()} method for
@@ -54,4 +55,33 @@ public abstract class DateTransform extends Transform
     {
         return m_Epoch;
     }
+
+    /**
+     * Expects 1 input and 1 output.
+     */
+    @Override
+    public final boolean transform(String[][] readWriteArea) throws TransformException
+    {
+        if (m_ReadIndicies.isEmpty())
+        {
+            throw new ParseTimestampException("Cannot parse null string");
+        }
+
+        if (m_WriteIndicies.isEmpty())
+        {
+            throw new ParseTimestampException("No write index for the datetime format transform");
+        }
+
+        TransformIndex i = m_ReadIndicies.get(0);
+        String field = readWriteArea[i.array][i.index];
+
+        if (field == null)
+        {
+            throw new ParseTimestampException("Cannot parse null string");
+        }
+        return parseAndWriteDate(field, readWriteArea);
+    }
+
+    protected abstract boolean parseAndWriteDate(String field, String[][] readWriteArea)
+            throws TransformException;
 }
