@@ -800,56 +800,63 @@ public class ProcessManager
      * @param timeoutSeconds
      * @return
      */
-    private ScheduledFuture<?> startShutdownTimer(final String jobId,
-            long timeoutSeconds)
+    private ScheduledFuture<?> startShutdownTimer(String jobId, long timeoutSeconds)
     {
-        return m_ProcessTimeouts.schedule(new Runnable() {
-                    @Override
-                    public void run()
-                    {
-                        LOGGER.info("Timeout expired stopping process for job:" + jobId);
+        return m_ProcessTimeouts.schedule(new FinishJobRunnable(jobId), timeoutSeconds,
+                TimeUnit.SECONDS);
+    }
 
+    private class FinishJobRunnable implements Runnable
+    {
+        private final String m_JobId;
+
+        public FinishJobRunnable(String jobId)
+        {
+            m_JobId = jobId;
+        }
+
+        @Override
+        public void run()
+        {
+            LOGGER.info("Timeout expired stopping process for job:" + m_JobId);
+
+            try
+            {
+                boolean notFinished = true;
+                while (notFinished)
+                {
+                    try
+                    {
+                        finishJob(m_JobId);
+                        notFinished = false;
+                    }
+                    catch (JobInUseException e)
+                    {
+                        int waitSeconds = 10;
+                        String msg = String.format(
+                                "Job '%s' is reading data and cannot be shutdown " +
+                                        "Rescheduling shutdown for %d seconds", m_JobId, waitSeconds);
+                        LOGGER.warn(msg);
+
+                        // wait then try again
                         try
                         {
-                            boolean notFinished = true;
-                            while (notFinished)
-                            {
-                                try
-                                {
-                                    finishJob(jobId);
-                                    notFinished = false;
-                                }
-                                catch (JobInUseException e)
-                                {
-                                    int waitSeconds = 10;
-                                    String msg = String.format(
-                                            "Job '%s' is reading data and cannot be shutdown " +
-                                                    "Rescheduling shutdown for %d seconds", jobId, waitSeconds);
-                                    LOGGER.warn(msg);
-
-                                    // wait then try again
-                                    try
-                                    {
-                                        Thread.sleep(waitSeconds * 1000);
-                                    }
-                                    catch (InterruptedException e1)
-                                    {
-                                        Thread.currentThread().interrupt();
-                                        LOGGER.warn("Interrupted waiting for job to stop", e);
-                                        return;
-                                    }
-                                }
-                            }
+                            Thread.sleep(waitSeconds * 1000);
                         }
-                        catch (NativeProcessRunException e)
+                        catch (InterruptedException e1)
                         {
-                            LOGGER.error(String.format("Error in job %s finish timeout", jobId), e);
+                            Thread.currentThread().interrupt();
+                            LOGGER.warn("Interrupted waiting for job to stop", e);
+                            return;
                         }
-
                     }
-                },
-                timeoutSeconds,
-                TimeUnit.SECONDS);
+                }
+            }
+            catch (NativeProcessRunException e)
+            {
+                LOGGER.error(String.format("Error in job %s finish timeout", m_JobId), e);
+            }
+        }
     }
 
     /**
