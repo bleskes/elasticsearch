@@ -878,7 +878,10 @@ public class ProcessManager
                     }
                     catch (JobInUseException e)
                     {
-                        wait(WAIT_SECONDS_BEFORE_RETRY, e);
+                        if (wait(WAIT_SECONDS_BEFORE_RETRY, e) == false)
+                        {
+                            return;
+                        }
                     }
                 }
             }
@@ -888,7 +891,7 @@ public class ProcessManager
             }
         }
 
-        private void wait(int waitSeconds, JobInUseException e)
+        private boolean wait(int waitSeconds, JobInUseException e)
         {
             String msg = String.format(
                     "Job '%s' is reading data and cannot be shutdown " +
@@ -904,8 +907,9 @@ public class ProcessManager
             {
                 Thread.currentThread().interrupt();
                 LOGGER.warn("Interrupted waiting for job to stop", e);
-                return;
+                return false;
             }
+            return true;
         }
     }
 
