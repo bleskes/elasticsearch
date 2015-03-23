@@ -284,7 +284,13 @@ public class JobConfiguration
     private boolean checkTransformOutputIsInAnalysisFields() throws TransformConfigurationException
     {
         Set<String> analysisFieldSet = new HashSet<String>(m_AnalysisConfig.analysisFields());
-        analysisFieldSet.add(m_DataDescription.getTimeField());
+
+        String timeField = DataDescription.DEFAULT_TIME_FIELD;
+        if (m_DataDescription != null)
+        {
+            timeField = m_DataDescription.getTimeField();
+        }
+        analysisFieldSet.add(timeField);
 
         for (TransformConfig tc : m_Transforms)
         {
