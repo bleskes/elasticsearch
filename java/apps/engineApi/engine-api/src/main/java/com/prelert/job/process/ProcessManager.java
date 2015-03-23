@@ -808,6 +808,8 @@ public class ProcessManager
 
     private class FinishJobRunnable implements Runnable
     {
+        private static final int WAIT_SECONDS_BEFORE_RETRY = 10;
+
         private final String m_JobId;
 
         public FinishJobRunnable(String jobId)
@@ -832,29 +834,33 @@ public class ProcessManager
                     }
                     catch (JobInUseException e)
                     {
-                        int waitSeconds = 10;
-                        String msg = String.format(
-                                "Job '%s' is reading data and cannot be shutdown " +
-                                        "Rescheduling shutdown for %d seconds", m_JobId, waitSeconds);
-                        LOGGER.warn(msg);
-
-                        // wait then try again
-                        try
-                        {
-                            Thread.sleep(waitSeconds * 1000);
-                        }
-                        catch (InterruptedException e1)
-                        {
-                            Thread.currentThread().interrupt();
-                            LOGGER.warn("Interrupted waiting for job to stop", e);
-                            return;
-                        }
+                        wait(WAIT_SECONDS_BEFORE_RETRY, e);
                     }
                 }
             }
             catch (NativeProcessRunException e)
             {
                 LOGGER.error(String.format("Error in job %s finish timeout", m_JobId), e);
+            }
+        }
+
+        private void wait(int waitSeconds, JobInUseException e)
+        {
+            String msg = String.format(
+                    "Job '%s' is reading data and cannot be shutdown " +
+                            "Rescheduling shutdown for %d seconds", m_JobId, waitSeconds);
+            LOGGER.warn(msg);
+
+            // wait then try again
+            try
+            {
+                Thread.sleep(waitSeconds * 1000);
+            }
+            catch (InterruptedException e1)
+            {
+                Thread.currentThread().interrupt();
+                LOGGER.warn("Interrupted waiting for job to stop", e);
+                return;
             }
         }
     }
