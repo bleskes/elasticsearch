@@ -98,6 +98,11 @@ public class AlertManager implements TimeoutHandler
 		@Override
 		public void fire(Bucket bucket)
 		{
+		    LOGGER.info(String.format("Alert fired in bucket %s, probablilty = %f, anomaly score = %f",
+		                                bucket.getTimestamp(),
+		                                bucket.getMaxNormalizedProbability(),
+		                                bucket.getAnomalyScore()));
+
 			m_Manager.deregisterResponse(m_Response);
 			m_Response.resume(createAlert(bucket, this));
 		}
