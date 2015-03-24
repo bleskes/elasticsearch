@@ -117,6 +117,7 @@ public class ElasticsearchJobDataPersister extends JobDataPersister
                     .prepareCreate(m_IndexName)
                     .addMapping(ElasticsearchJobDataPersister.TYPE, inputDataMapping)
                     .get();
+            m_Client.admin().cluster().prepareHealth().setWaitForYellowStatus().execute().actionGet();
         }
         catch (IOException e)
         {
