@@ -1,0 +1,57 @@
+/*
+ * ELASTICSEARCH CONFIDENTIAL
+ * __________________
+ *
+ *  [2014] Elasticsearch Incorporated. All Rights Reserved.
+ *
+ * NOTICE:  All information contained herein is, and remains
+ * the property of Elasticsearch Incorporated and its suppliers,
+ * if any.  The intellectual and technical concepts contained
+ * herein are proprietary to Elasticsearch Incorporated
+ * and its suppliers and may be covered by U.S. and Foreign Patents,
+ * patents in process, and are protected by trade secret or copyright law.
+ * Dissemination of this information or reproduction of this material
+ * is strictly forbidden unless prior written permission is obtained
+ * from Elasticsearch Incorporated.
+ */
+
+package org.elasticsearch.watcher.transport.actions.get;
+
+import org.elasticsearch.action.ActionListener;
+import org.elasticsearch.action.ActionRequestBuilder;
+import org.elasticsearch.watcher.client.WatcherClient;
+import org.elasticsearch.client.Client;
+import org.elasticsearch.index.VersionType;
+
+/**
+ * A delete document action request builder.
+ */
+public class GetWatchRequestBuilder extends ActionRequestBuilder<GetWatchRequest, GetWatchResponse, GetWatchRequestBuilder, Client> {
+
+    public GetWatchRequestBuilder(Client client, String watchName) {
+        super(client, new GetWatchRequest(watchName));
+    }
+
+
+    public GetWatchRequestBuilder(Client client) {
+        super(client, new GetWatchRequest());
+    }
+
+    public GetWatchRequestBuilder setWatchName(String watchName) {
+        request.watchName(watchName);
+        return this;
+    }
+
+    /**
+     * Sets the type of versioning to use. Defaults to {@link org.elasticsearch.index.VersionType#INTERNAL}.
+     */
+    public GetWatchRequestBuilder setVersionType(VersionType versionType) {
+        request.versionType(versionType);
+        return this;
+    }
+
+    @Override
+    protected void doExecute(final ActionListener<GetWatchResponse> listener) {
+        new WatcherClient(client).getWatch(request, listener);
+    }
+}
