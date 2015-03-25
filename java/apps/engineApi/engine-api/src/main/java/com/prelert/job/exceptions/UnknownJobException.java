@@ -24,41 +24,57 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job;
+package com.prelert.job.exceptions;
 
 import com.prelert.rs.data.ErrorCode;
 
 /**
- * This exception is thrown is an operation is attempted on a job
- * that can't be executed as the job is already being used.
+ * This type of exception represents an error where
+ * an operation uses a <i>JobId</i> that does not exist.
  */
-public class JobInUseException extends JobException
+public class UnknownJobException extends JobException
 {
-	private static final long serialVersionUID = -2759814168552580059L;
+	private static final long serialVersionUID = 8603362038035845948L;
 
 	private final String m_JobId;
 
 	/**
-	 * Create a new JobInUseException.
-	 *
-	 * @param jobId The Id of the job some operation was attempted on.
-	 * @param message Details of error explaining the context
-	 * @param The error code
-	 * @see ErrorCode
+	 * Create with the default message and error code
+	 * set to ErrorCode.MISSING_JOB_ERROR
+	 * @param jobId
 	 */
-	public JobInUseException(String jobId, String message, ErrorCode errorCode)
+	public UnknownJobException(String jobId)
+	{
+		super("No job with id '" + jobId + "'", ErrorCode.MISSING_JOB_ERROR);
+		m_JobId = jobId;
+	}
+
+	/**
+	 * Create a new UnknownJobException with an error code
+	 *
+	 * @param jobId The Job Id that could not be found
+	 * @param message Details of error explaining the context
+	 * @param errorCode
+	 */
+	public UnknownJobException(String jobId, String message, ErrorCode errorCode)
 	{
 		super(message, errorCode);
 		m_JobId = jobId;
 	}
 
+	public UnknownJobException(String jobId, String message, ErrorCode errorCode,
+			Throwable cause)
+	{
+		super(message, errorCode, cause);
+		m_JobId = jobId;
+	}
+
 	/**
-	 * Get the <i>JobId</i> that was the source of the error.
-	 * @return The job id string
+	 * Get the unknown <i>JobId</i> that was the source of the error.
+	 * @return
 	 */
 	public String getJobId()
 	{
 		return m_JobId;
 	}
 }
-

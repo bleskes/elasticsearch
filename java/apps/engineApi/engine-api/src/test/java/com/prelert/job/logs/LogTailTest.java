@@ -35,7 +35,7 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-import com.prelert.job.UnknownJobException;
+import com.prelert.job.exceptions.UnknownJobException;
 
 /**
  * Tests the tail file functions in {@link com.prelert.job.logs.JobLogs}

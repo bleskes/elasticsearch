@@ -29,6 +29,7 @@ package com.prelert.job;
 
 import java.util.Objects;
 
+import com.prelert.job.exceptions.JobConfigurationException;
 import com.prelert.rs.data.ErrorCode;
 
 /**

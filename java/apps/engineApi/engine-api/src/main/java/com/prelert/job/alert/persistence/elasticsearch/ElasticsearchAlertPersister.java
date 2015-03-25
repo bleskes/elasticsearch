@@ -48,9 +48,9 @@ import org.elasticsearch.search.sort.SortOrder;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.prelert.job.UnknownJobException;
 import com.prelert.job.alert.Alert;
 import com.prelert.job.alert.persistence.AlertPersister;
+import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.rs.data.Pagination;
 
 public class ElasticsearchAlertPersister implements AlertPersister

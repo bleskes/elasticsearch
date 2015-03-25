@@ -33,7 +33,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.Function;
 
+import com.prelert.job.exceptions.JobConfigurationException;
 import com.prelert.rs.data.ErrorCode;
 
 /**
@@ -180,30 +182,14 @@ public class AnalysisConfig
     public List<String> analysisFields()
     {
         Set<String> fields = new TreeSet<>();
-
-        if (m_SummaryCountFieldName != null)
-        {
-            fields.add(m_SummaryCountFieldName);
-        }
+        addIfNotNull(fields, m_SummaryCountFieldName);
 
         for (Detector d : getDetectors())
         {
-            if (d.getFieldName() != null)
-            {
-                fields.add(d.getFieldName());
-            }
-            if (d.getByFieldName() != null)
-            {
-                fields.add(d.getByFieldName() );
-            }
-            if (d.getOverFieldName() != null)
-            {
-                fields.add(d.getOverFieldName());
-            }
-            if (d.getPartitionFieldName() != null)
-            {
-                fields.add(d.getPartitionFieldName());
-            }
+            addIfNotNull(fields, d.getFieldName());
+            addIfNotNull(fields, d.getByFieldName());
+            addIfNotNull(fields, d.getOverFieldName());
+            addIfNotNull(fields, d.getPartitionFieldName());
         }
 
         // remove empty strings
@@ -212,73 +198,49 @@ public class AnalysisConfig
         return new ArrayList<String>(fields);
     }
 
-
+    private static void addIfNotNull(Set<String> fields, String field)
+    {
+        if (field != null)
+        {
+            fields.add(field);
+        }
+    }
 
     public List<String> fields()
+    {
+        return collectNonNullAndNonEmptyDetectorFields(d -> d.getFieldName());
+    }
+
+    private List<String> collectNonNullAndNonEmptyDetectorFields(
+            Function<Detector, String> fieldGetter)
     {
         Set<String> fields = new HashSet<>();
 
         for (Detector d : getDetectors())
         {
-            fields.add(d.getFieldName());
+            addIfNotNull(fields, fieldGetter.apply(d));
         }
 
-        // remove the null and empty strings
+        // remove empty strings
         fields.remove("");
-        fields.remove(null);
 
         return new ArrayList<String>(fields);
     }
 
-
-
     public List<String> byFields()
     {
-        Set<String> fields = new HashSet<>();
-
-        for (Detector d : getDetectors())
-        {
-            fields.add(d.getByFieldName());
-        }
-
-        // remove the null and empty strings
-        fields.remove("");
-        fields.remove(null);
-
-        return new ArrayList<String>(fields);
+        return collectNonNullAndNonEmptyDetectorFields(d -> d.getByFieldName());
     }
 
     public List<String> overFields()
     {
-        Set<String> fields = new HashSet<>();
-
-        for (Detector d : getDetectors())
-        {
-            fields.add(d.getOverFieldName());
-        }
-
-        // remove the null and empty strings
-        fields.remove("");
-        fields.remove(null);
-
-        return new ArrayList<String>(fields);
+        return collectNonNullAndNonEmptyDetectorFields(d -> d.getOverFieldName());
     }
 
 
     public List<String> partitionFields()
     {
-        Set<String> fields = new HashSet<>();
-
-        for (Detector d : getDetectors())
-        {
-            fields.add(d.getPartitionFieldName());
-        }
-
-        // remove the null and empty strings
-        fields.remove("");
-        fields.remove(null);
-
-        return new ArrayList<String>(fields);
+        return collectNonNullAndNonEmptyDetectorFields(d -> d.getPartitionFieldName());
     }
 
     /**

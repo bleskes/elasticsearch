@@ -27,7 +27,7 @@
 
 package com.prelert.job.process.exceptions;
 
-import com.prelert.job.JobException;
+import com.prelert.job.exceptions.JobException;
 import com.prelert.rs.data.ErrorCode;
 
 /**

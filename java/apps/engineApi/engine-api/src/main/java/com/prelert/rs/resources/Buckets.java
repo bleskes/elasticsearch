@@ -43,7 +43,7 @@ import javax.ws.rs.core.Response;
 
 import org.apache.log4j.Logger;
 
-import com.prelert.job.UnknownJobException;
+import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.rs.data.Bucket;

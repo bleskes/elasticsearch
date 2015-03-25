@@ -24,37 +24,48 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-
-package com.prelert.job;
+package com.prelert.job.exceptions;
 
 import com.prelert.rs.data.ErrorCode;
 
-
 /**
- * Job ids (names) must be unique no 2 jobs can have the same id.
+ * This type of exception represents an error where an operation
+ * would result in too many jobs running at the same time.
  */
-public class JobIdAlreadyExistsException extends JobException
+public class TooManyJobsException extends JobException
 {
-	private static final long serialVersionUID = 8656604180755905746L;
+	private static final long serialVersionUID = 8503362038035845948L;
 
-	private final String m_JobId;
+	private final int m_Limit;
 
 	/**
-	 * Create a new JobIdAlreadyExistsException with the error code
-	 * and Id (job name)
+	 * Create a new TooManyJobsException with an error code
 	 *
-	 * @param jobId The Job Id that could not be found
+	 * @param limit The limit on the number of jobs
+	 * @param message Details of error explaining the context
+	 * @param errorCode
 	 */
-	public JobIdAlreadyExistsException(String jobId)
+	public TooManyJobsException(int limit, String message, ErrorCode errorCode)
 	{
-		super("The job cannot be created with the Id '" + jobId
-				+ "'. The Id is already used.", ErrorCode.JOB_ID_TAKEN);
-		m_JobId = jobId;
+		super(message, errorCode);
+		m_Limit = limit;
 	}
 
-	public String getAlias()
+
+	public TooManyJobsException(int limit, String message, ErrorCode errorCode,
+			Throwable cause)
 	{
-		return m_JobId;
+		super(message, errorCode, cause);
+		m_Limit = limit;
 	}
 
+
+	/**
+	 * Get the limit on the number of concurrently running jobs.
+	 * @return
+	 */
+	public int getLimit()
+	{
+		return m_Limit;
+	}
 }
