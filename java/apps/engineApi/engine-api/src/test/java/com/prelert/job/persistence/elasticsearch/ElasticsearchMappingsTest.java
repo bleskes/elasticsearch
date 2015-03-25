@@ -144,6 +144,14 @@ public class ElasticsearchMappingsTest
                         "            \"type\": \"long\"," +
                         "            \"index\": \"no\"" +
                         "          }," +
+                        "          \"summaryCountFieldName\": {" +
+                        "            \"type\": \"string\"," +
+                        "            \"index\": \"not_analyzed\"" +
+                        "          }," +
+                        "          \"categorizationFieldName\": {" +
+                        "            \"type\": \"string\"," +
+                        "            \"index\": \"not_analyzed\"" +
+                        "          }," +
                         "          \"detectors\": {" +
                         "            \"properties\": {" +
                         "              \"function\": {" +

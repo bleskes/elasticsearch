@@ -686,6 +686,11 @@ public class ProcessCtrl
     throws IOException
     {
         StringBuilder contents = new StringBuilder();
+        if (isNotNullOrEmpty(config.getCategorizationFieldName()))
+        {
+            contents.append("categorizationfield").append(" = ")
+                    .append(config.getCategorizationFieldName()).append(NEW_LINE);
+        }
 
         Set<String> detectorKeys = new HashSet<>();
         for (Detector detector : config.getDetectors())
