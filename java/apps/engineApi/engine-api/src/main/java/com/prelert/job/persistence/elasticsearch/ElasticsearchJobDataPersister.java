@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -117,7 +117,7 @@ public class ElasticsearchJobDataPersister extends JobDataPersister
                     .prepareCreate(m_IndexName)
                     .addMapping(ElasticsearchJobDataPersister.TYPE, inputDataMapping)
                     .get();
-            m_Client.admin().cluster().prepareHealth().setWaitForYellowStatus().execute().actionGet();
+            m_Client.admin().cluster().prepareHealth(m_IndexName).setWaitForYellowStatus().execute().actionGet();
         }
         catch (IOException e)
         {

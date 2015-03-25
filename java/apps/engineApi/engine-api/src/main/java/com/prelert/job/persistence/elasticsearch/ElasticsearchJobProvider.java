@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -200,7 +200,7 @@ public class ElasticsearchJobProvider implements JobProvider
                 m_Client.admin().indices().prepareCreate(PRELERT_USAGE_INDEX)
                                 .addMapping(Usage.TYPE, usageMapping)
                                 .get();
-                m_Client.admin().cluster().prepareHealth().setWaitForYellowStatus().execute().actionGet();
+                m_Client.admin().cluster().prepareHealth(PRELERT_USAGE_INDEX).setWaitForYellowStatus().execute().actionGet();
             }
         }
         catch (InterruptedException | ExecutionException e)
@@ -384,7 +384,7 @@ public class ElasticsearchJobProvider implements JobProvider
                     .addMapping(Usage.TYPE, usageMapping)
                     .addMapping(ModelSizeStats.TYPE, modelSizeStatsMapping)
                     .get();
-            m_Client.admin().cluster().prepareHealth().setWaitForYellowStatus().execute().actionGet();
+            m_Client.admin().cluster().prepareHealth(job.getId()).setWaitForYellowStatus().execute().actionGet();
 
 
             String json = m_ObjectMapper.writeValueAsString(job);
