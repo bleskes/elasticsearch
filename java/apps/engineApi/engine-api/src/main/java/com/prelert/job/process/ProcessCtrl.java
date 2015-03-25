@@ -162,28 +162,28 @@ public class ProcessCtrl
      * Arguments used by both prelert_autodetect_api and prelert_normalize_api
      */
     public static final String BUCKET_SPAN_ARG = "--bucketspan=";
-    public static final String LATENCY_ARG = "--latency=";
+    public static final String DELETE_STATE_FILES_ARG = "--deleteStateFiles";
     public static final String LENGTH_ENCODED_INPUT_ARG = "--lengthEncodedInput";
+    public static final String MODEL_CONFIG_ARG = "--modelconfig=";
     public static final String SYS_STATE_CHANGE_ARG = "--sysChangeState=";
     public static final String UNUSUAL_STATE_ARG = "--unusualState=";
-    public static final String DELETE_STATE_FILES_ARG = "--deleteStateFiles";
-    public static final String MODEL_CONFIG_ARG = "--modelconfig=";
 
     /*
      * Arguments used by prelert_autodetect_api
      */
-    public static final String FIELD_CONFIG_ARG = "--fieldconfig=";
-    public static final String LIMIT_CONFIG_ARG = "--limitconfig=";
     public static final String BATCH_SPAN_ARG = "--batchspan=";
-    public static final String PERIOD_ARG = "--period=";
-    public static final String SUMMARY_COUNT_FIELD_ARG = "--summarycountfield=";
     public static final String DELIMITER_ARG = "--delimiter=";
-    public static final String TIME_FIELD_ARG = "--timefield=";
-    public static final String PERSIST_URL_BASE_ARG = "--persistUrlBase=";
-    public static final String PERSIST_INTERVAL_ARG = "--persistInterval=10800"; // 3 hours
-    public static final String VERSION_ARG = "--version";
+    public static final String FIELD_CONFIG_ARG = "--fieldconfig=";
     public static final String INFO_ARG = "--info";
+    public static final String LIMIT_CONFIG_ARG = "--limitconfig=";
+    public static final String LATENCY_ARG = "--latency=";
     public static final String MAX_ANOMALY_RECORDS_ARG = "--maxAnomalyRecords=500";
+    public static final String PERIOD_ARG = "--period=";
+    public static final String PERSIST_INTERVAL_ARG = "--persistInterval=10800"; // 3 hours
+    public static final String PERSIST_URL_BASE_ARG = "--persistUrlBase=";
+    public static final String SUMMARY_COUNT_FIELD_ARG = "--summarycountfield=";
+    public static final String TIME_FIELD_ARG = "--timefield=";
+    public static final String VERSION_ARG = "--version";
 
 
     /**
