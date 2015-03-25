@@ -27,7 +27,7 @@
 
 package com.prelert.job.transform;
 
-import com.prelert.job.JobConfigurationException;
+import com.prelert.job.exceptions.JobConfigurationException;
 import com.prelert.rs.data.ErrorCode;
 
 /**

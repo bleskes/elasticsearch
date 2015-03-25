@@ -34,7 +34,7 @@ import java.util.NoSuchElementException;
 
 import org.apache.log4j.Logger;
 
-import com.prelert.job.UnknownJobException;
+import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.process.ProcessCtrl;
 import com.prelert.job.process.exceptions.NativeProcessRunException;

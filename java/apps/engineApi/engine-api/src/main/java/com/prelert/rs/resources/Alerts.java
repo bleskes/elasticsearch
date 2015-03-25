@@ -42,8 +42,8 @@ import javax.ws.rs.core.MediaType;
 
 import org.apache.log4j.Logger;
 
-import com.prelert.job.UnknownJobException;
 import com.prelert.job.alert.Alert;
+import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.manager.JobManager;
 import com.prelert.rs.data.Pagination;
 

@@ -30,8 +30,8 @@ package com.prelert.rs.provider;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 
-import com.prelert.job.JobException;
-import com.prelert.job.UnknownJobException;
+import com.prelert.job.exceptions.JobException;
+import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.rs.data.ApiError;
 
 public class JobExceptionMapper

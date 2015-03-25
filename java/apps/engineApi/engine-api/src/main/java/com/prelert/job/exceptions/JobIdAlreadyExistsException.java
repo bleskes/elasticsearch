@@ -25,33 +25,36 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job;
+package com.prelert.job.exceptions;
 
 import com.prelert.rs.data.ErrorCode;
 
+
 /**
- * General job exception class with a specific error code and message.
+ * Job ids (names) must be unique no 2 jobs can have the same id.
  */
-public abstract class JobException extends Exception
+public class JobIdAlreadyExistsException extends JobException
 {
-    private static final long serialVersionUID = -5289885963015348819L;
+	private static final long serialVersionUID = 8656604180755905746L;
 
-    private final ErrorCode m_ErrorCode;
+	private final String m_JobId;
 
-    public JobException(String message, ErrorCode errorCode)
-    {
-        super(message);
-        m_ErrorCode = errorCode;
-    }
+	/**
+	 * Create a new JobIdAlreadyExistsException with the error code
+	 * and Id (job name)
+	 *
+	 * @param jobId The Job Id that could not be found
+	 */
+	public JobIdAlreadyExistsException(String jobId)
+	{
+		super("The job cannot be created with the Id '" + jobId
+				+ "'. The Id is already used.", ErrorCode.JOB_ID_TAKEN);
+		m_JobId = jobId;
+	}
 
-    public JobException(String message, ErrorCode errorCode, Throwable cause)
-    {
-        super(message, cause);
-        m_ErrorCode = errorCode;
-    }
+	public String getAlias()
+	{
+		return m_JobId;
+	}
 
-    public ErrorCode getErrorCode()
-    {
-        return m_ErrorCode;
-    }
 }

@@ -30,8 +30,8 @@ package com.prelert.job.alert.persistence;
 import java.io.IOException;
 import java.util.List;
 
-import com.prelert.job.UnknownJobException;
 import com.prelert.job.alert.Alert;
+import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.rs.data.Pagination;
 
 public interface AlertPersister 

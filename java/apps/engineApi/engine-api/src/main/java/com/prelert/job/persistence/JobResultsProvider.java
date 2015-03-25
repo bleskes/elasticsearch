@@ -29,7 +29,7 @@ package com.prelert.job.persistence;
 
 import java.io.Closeable;
 
-import com.prelert.job.UnknownJobException;
+import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.Pagination;

@@ -30,6 +30,7 @@ package com.prelert.job;
 import org.hamcrest.Description;
 import org.junit.internal.matchers.TypeSafeMatcher;
 
+import com.prelert.job.exceptions.JobException;
 import com.prelert.rs.data.ErrorCode;
 
 /**

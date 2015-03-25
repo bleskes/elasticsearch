@@ -41,6 +41,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import com.prelert.job.exceptions.JobConfigurationException;
+
 /**
  * Tests the configured fields in the analysis are correct
  * {@linkplain AnalysisConfig#analysisFields()}

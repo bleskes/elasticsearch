@@ -34,6 +34,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import com.prelert.job.exceptions.JobConfigurationException;
+
 public class AnalysisLimitsTest
 {
     @Rule

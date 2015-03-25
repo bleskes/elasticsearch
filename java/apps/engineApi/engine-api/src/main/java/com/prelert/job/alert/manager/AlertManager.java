@@ -41,9 +41,9 @@ import javax.ws.rs.core.UriBuilder;
 
 import org.apache.log4j.Logger;
 
-import com.prelert.job.UnknownJobException;
 import com.prelert.job.alert.Alert;
 import com.prelert.job.alert.persistence.AlertPersister;
+import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.process.exceptions.ClosedJobException;

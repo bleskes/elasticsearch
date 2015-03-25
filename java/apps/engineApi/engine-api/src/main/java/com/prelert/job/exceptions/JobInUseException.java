@@ -1,4 +1,3 @@
-
 /************************************************************
  *                                                          *
  * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
@@ -25,30 +24,41 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job;
+package com.prelert.job.exceptions;
 
 import com.prelert.rs.data.ErrorCode;
 
 /**
- * Represents the invalid configuration of a job.
+ * This exception is thrown is an operation is attempted on a job
+ * that can't be executed as the job is already being used.
  */
-public class JobConfigurationException extends JobException
+public class JobInUseException extends JobException
 {
-	private static final long serialVersionUID = -563428978300447381L;
+	private static final long serialVersionUID = -2759814168552580059L;
+
+	private final String m_JobId;
 
 	/**
-	 * Create a new JobConfigurationException.
+	 * Create a new JobInUseException.
 	 *
+	 * @param jobId The Id of the job some operation was attempted on.
 	 * @param message Details of error explaining the context
-	 * @param errorCode See {@linkplain com.prelert.rs.data.ErrorCode}
+	 * @param The error code
+	 * @see ErrorCode
 	 */
-	public JobConfigurationException(String message, ErrorCode errorCode)
+	public JobInUseException(String jobId, String message, ErrorCode errorCode)
 	{
 		super(message, errorCode);
+		m_JobId = jobId;
 	}
 
-	public JobConfigurationException(String message, ErrorCode errorCode, Throwable cause)
+	/**
+	 * Get the <i>JobId</i> that was the source of the error.
+	 * @return The job id string
+	 */
+	public String getJobId()
 	{
-		super(message, errorCode, cause);
+		return m_JobId;
 	}
 }
+

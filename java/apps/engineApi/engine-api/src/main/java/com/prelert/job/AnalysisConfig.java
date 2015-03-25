@@ -34,6 +34,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 
+import com.prelert.job.exceptions.JobConfigurationException;
 import com.prelert.rs.data.ErrorCode;
 
 /**

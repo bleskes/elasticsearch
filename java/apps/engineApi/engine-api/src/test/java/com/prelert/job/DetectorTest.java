@@ -36,6 +36,7 @@ import junit.framework.Assert;
 
 import org.junit.Test;
 
+import com.prelert.job.exceptions.JobConfigurationException;
 import com.prelert.rs.data.ErrorCode;
 
 /**

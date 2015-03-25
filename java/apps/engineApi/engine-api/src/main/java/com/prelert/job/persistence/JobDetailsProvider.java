@@ -32,9 +32,9 @@ import java.util.Date;
 import java.util.Map;
 
 import com.prelert.job.JobDetails;
-import com.prelert.job.JobIdAlreadyExistsException;
 import com.prelert.job.JobStatus;
-import com.prelert.job.UnknownJobException;
+import com.prelert.job.exceptions.JobIdAlreadyExistsException;
+import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.rs.data.Pagination;
 
 /**
