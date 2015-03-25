@@ -168,11 +168,7 @@ public class Detector
      */
     public static final Set<String> OVER_FIELD_NAME_FUNCTIONS =
             new HashSet<String>(Arrays.<String>asList(new String [] {
-                DISTINCT_COUNT, DC,
-                FREQ_RARE,
-                INFO_CONTENT,
-                LOW_INFO_CONTENT,
-                HIGH_INFO_CONTENT
+                FREQ_RARE
             }));
 
     /**
@@ -180,10 +176,6 @@ public class Detector
      */
     private static final Set<String> NO_BY_FIELD_NAME_FUNCTIONS =
             new HashSet<String>(Arrays.<String>asList(new String [] {
-                DISTINCT_COUNT, DC,
-                INFO_CONTENT,
-                LOW_INFO_CONTENT,
-                HIGH_INFO_CONTENT
             }));
 
     /**
@@ -454,7 +446,7 @@ public class Detector
             {
                 throw new JobConfigurationException(
                         String.format("The fieldName must be set when the "
-                                + " '%s' function is used", m_Function),
+                                + "'%s' function is used", m_Function),
                         ErrorCode.INVALID_FIELD_SELECTION);
             }
 
@@ -470,7 +462,7 @@ public class Detector
             {
                 throw new JobConfigurationException(
                         String.format("The byFieldName must be set when the "
-                                + " '%s' function is used", m_Function),
+                                + "'%s' function is used", m_Function),
                         ErrorCode.INVALID_FIELD_SELECTION);
             }
 
@@ -486,7 +478,7 @@ public class Detector
             {
                 throw new JobConfigurationException(
                         String.format("The overFieldName must be set when the "
-                                + " '%s' function is used", m_Function),
+                                + "'%s' function is used", m_Function),
                                 ErrorCode.INVALID_FIELD_SELECTION);
             }
 
