@@ -15,31 +15,25 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.watcher.transport.actions.ack;
+package org.elasticsearch.watcher;
 
-import org.elasticsearch.watcher.client.WatcherAction;
-import org.elasticsearch.client.Client;
 
-/**
- * This action acks an watch in memory, and the index
- */
-public class AckWatchAction extends WatcherAction<AckWatchRequest, AckWatchResponse, AckWatchRequestBuilder> {
+import org.elasticsearch.common.collect.ImmutableList;
+import org.elasticsearch.common.inject.AbstractModule;
+import org.elasticsearch.common.inject.Module;
+import org.elasticsearch.common.inject.SpawnModules;
+import org.elasticsearch.watcher.transport.WatcherTransportModule;
 
-    public static final AckWatchAction INSTANCE = new AckWatchAction();
-    public static final String NAME = "cluster:admin/watcher/watch/ack";
 
-    private AckWatchAction() {
-        super(NAME);
+public class TransportClientWatcherModule extends AbstractModule implements SpawnModules {
+
+    @Override
+    public Iterable<? extends Module> spawnModules() {
+        return ImmutableList.of(new WatcherTransportModule());
     }
 
     @Override
-    public AckWatchResponse newResponse() {
-        return new AckWatchResponse();
-    }
-
-    @Override
-    public AckWatchRequestBuilder newRequestBuilder(Client client) {
-        return new AckWatchRequestBuilder(client);
+    protected void configure() {
     }
 
 }

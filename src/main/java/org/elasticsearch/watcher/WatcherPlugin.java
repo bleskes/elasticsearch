@@ -17,6 +17,8 @@
 
 package org.elasticsearch.watcher;
 
+import org.elasticsearch.client.Client;
+import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.watcher.actions.email.service.InternalEmailService;
 import org.elasticsearch.watcher.support.init.InitializingService;
 import org.elasticsearch.common.collect.ImmutableList;
@@ -36,9 +38,11 @@ public class WatcherPlugin extends AbstractPlugin {
     public static final String SCHEDULER_THREAD_POOL_NAME = "watcher_scheduler";
 
     private final Settings settings;
+    private final boolean transportClient;
 
     public WatcherPlugin(Settings settings) {
         this.settings = settings;
+        transportClient = "transport".equals(settings.get(Client.CLIENT_TYPE_SETTING));
     }
 
     @Override public String name() {
@@ -51,11 +55,16 @@ public class WatcherPlugin extends AbstractPlugin {
 
     @Override
     public Collection<Class<? extends Module>> modules() {
-        return ImmutableList.<Class<? extends Module>>of(WatcherModule.class);
+        return transportClient ?
+                ImmutableList.<Class<? extends Module>>of(TransportClientWatcherModule.class) :
+                ImmutableList.<Class<? extends Module>>of(WatcherModule.class);
     }
 
     @Override
     public Collection<Class<? extends LifecycleComponent>> services() {
+        if (transportClient) {
+            return ImmutableList.of();
+        }
         return ImmutableList.<Class<? extends LifecycleComponent>>of(
                 // the initialization service must be first in the list
                 // as other services may depend on one of the initialized
@@ -66,6 +75,9 @@ public class WatcherPlugin extends AbstractPlugin {
 
     @Override
     public Settings additionalSettings() {
+        if (transportClient) {
+            return ImmutableSettings.EMPTY;
+        }
         int availableProcessors = EsExecutors.boundedNumberOfProcessors(settings);
         return settingsBuilder()
                 .put("threadpool." + SCHEDULER_THREAD_POOL_NAME + ".type", "fixed")
