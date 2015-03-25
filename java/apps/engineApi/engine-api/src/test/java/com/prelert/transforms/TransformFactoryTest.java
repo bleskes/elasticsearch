@@ -93,6 +93,13 @@ public class TransformFactoryTest {
 			conf.setOutputs(new ArrayList<String>());
 			conf.setTransform(type.prettyName());
 
+			List<String> args = new ArrayList<>();
+			for (int i=0; i<type.initArgumentCount(); i++)
+			{
+			    args.add(Integer.toString(i));
+			}
+			conf.setArguments(args);
+
 			// throws IllegalArgumentException if it doesn't handle the type
 			new TransformFactory().create(conf, inputIndicies, scratchMap,
 			                    outputIndicies, mock(Logger.class));

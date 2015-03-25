@@ -41,10 +41,9 @@ import com.prelert.rs.data.ErrorCode;
  */
 public enum TransformType
 {
-    DOMAIN_LOOKUP(Names.DOMAIN_LOOKUP_NAME, 1, Arrays.asList("subDomain", "hrd")),
-    CONCAT(Names.CONCAT, Names.VARIADIC_ARGS, Arrays.asList("concat"));
-//    DATE_FORMAT(Names.DATE_FORMAT, 1, Arrays.asList("datetime")),
-//    DATE_EPOCH(Names.DATE_EPOCH, 1, Arrays.asList("datetime"));
+    DOMAIN_LOOKUP(Names.DOMAIN_LOOKUP_NAME, 1, 0, Arrays.asList("subDomain", "hrd")),
+    CONCAT(Names.CONCAT, Names.VARIADIC_ARGS, 0, Arrays.asList("concat")),
+    REGEX_EXTRACT(Names.REGEX_EXTRACT, 1, 1, Arrays.asList(""));
 
     /**
      * Enums cannot use static fields in their constructors as the
@@ -56,8 +55,7 @@ public enum TransformType
     {
         public static final String DOMAIN_LOOKUP_NAME = "domain_lookup";
         public static final String CONCAT = "concat";
-//        public static final String DATE_FORMAT = "date_format";
-//        public static final String DATE_EPOCH = "date_epoch";
+        public static final String REGEX_EXTRACT = "regex_extract";
 
         private static final int VARIADIC_ARGS = -1;
 
@@ -66,15 +64,16 @@ public enum TransformType
         }
     }
 
-
-
     private final int m_Arity;
+    private final int m_InitArgumentCount;
     private final String m_PrettyName;
     private final List<String> m_DefaultOutputNames;
 
-    private TransformType(String prettyName, int arity, List<String> defaultOutputNames)
+    private TransformType(String prettyName, int arity, int requiredArgumentCount,
+                        List<String> defaultOutputNames)
     {
         m_Arity = arity;
+        m_InitArgumentCount = requiredArgumentCount;
         m_PrettyName = prettyName;
         m_DefaultOutputNames = defaultOutputNames;
     }
@@ -88,6 +87,17 @@ public enum TransformType
         return m_Arity;
     }
 
+    /**
+     * The number of non-input arguments required by the transform
+     * when it is created.
+     * e.g. RegexExtract requires 1 argument that is the actual regex
+     * @return
+     */
+    public int initArgumentCount()
+    {
+        return m_InitArgumentCount;
+    }
+
     public String prettyName()
     {
         return m_PrettyName;
@@ -98,17 +108,24 @@ public enum TransformType
         return m_DefaultOutputNames;
     }
 
-    public boolean verify(TransformConfig tr) throws TransformConfigurationException
+    public boolean verify(TransformConfig tc) throws TransformConfigurationException
     {
-        if (tr.getInputs() == null)
+        if (tc.getInputs() == null)
         {
             String msg = "Function arity error no inputs defined";
             throw new TransformConfigurationException(msg, ErrorCode.INCORRECT_TRANSFORM_ARGUMENT_COUNT);
         }
 
+        if (m_InitArgumentCount != tc.getArguments().size())
+        {
+            String msg = String.format("Transform type %s must be defined with %d arguments",
+                                            tc.getTransform(), m_InitArgumentCount);
+            throw new TransformConfigurationException(msg, ErrorCode.TRANSFORM_MISSING_INITAILISER_ARGUMENT);
+        }
+
         if (m_Arity == Names.VARIADIC_ARGS)
         {
-            if (!tr.getInputs().isEmpty())
+            if (!tc.getInputs().isEmpty())
             {
                 return true;
             }
@@ -117,13 +134,12 @@ public enum TransformType
                 String msg = "Function arity error expected at least one argument, got 0";
                 throw new TransformConfigurationException(msg, ErrorCode.INCORRECT_TRANSFORM_ARGUMENT_COUNT);
             }
-
         }
 
-        if (tr.getInputs().size() != m_Arity)
+        if (tc.getInputs().size() != m_Arity)
         {
             String msg = "Function arity error expected " + m_Arity + " arguments, got "
-                        + tr.getInputs().size();
+                        + tc.getInputs().size();
             throw new TransformConfigurationException(msg, ErrorCode.INCORRECT_TRANSFORM_ARGUMENT_COUNT);
         }
 

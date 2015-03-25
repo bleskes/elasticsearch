@@ -19,34 +19,59 @@
  * may be reproduced, adapted or transmitted in any form or *
  * by any means, electronic, mechanical, photocopying,      *
  * recording or otherwise.                                  *
- *
  *                                                          *
  *----------------------------------------------------------*
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.status.none;
+
+package com.prelert.transforms;
+
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.mock;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.log4j.Logger;
+import org.junit.Test;
 
-import com.prelert.job.status.StatusReporter;
-import com.prelert.job.usage.none.NoneUsageReporter;
+import com.prelert.transforms.Transform.TransformIndex;
 
-public class NoneStatusReporter extends StatusReporter
-{
-    private static final Logger LOGGER = Logger.getLogger(NoneStatusReporter.class);
+public class RegexExtractTest {
 
-    public NoneStatusReporter(String jobId)
+    @Test
+    public void testTransform() throws TransformException
     {
-        super(jobId, new NoneUsageReporter(), LOGGER);
+        List<TransformIndex> readIndicies = createIndexArray(new TransformIndex(0, 0));
+        List<TransformIndex> writeIndicies = createIndexArray(new TransformIndex(2, 0),
+                new TransformIndex(2, 1), new TransformIndex(2, 2));
+
+        String regex = "Tag=\"Windfarm ([0-9]+)\\.Turbine ([0-9]+)\\.(.*)\"";
+
+        RegexExtract transform = new RegexExtract(regex, readIndicies, writeIndicies, mock(Logger.class));
+
+        String [] input = {"Tag=\"Windfarm 04.Turbine 06.Temperature\""};
+        String [] scratch = {};
+        String [] output = new String [3];
+        String [][] readWriteArea = {input, scratch, output};
+
+        transform.transform(readWriteArea);
+        assertEquals("04", output[0]);
+        assertEquals("06", output[1]);
+        assertEquals("Temperature", output[2]);
     }
 
-    /**
-     * Does nothing
-     */
-    @Override
-    protected void reportStatus(long totalRecords)
+
+    private List<TransformIndex> createIndexArray(TransformIndex...indexs)
     {
+        List<TransformIndex> result = new ArrayList<Transform.TransformIndex>();
+        for (TransformIndex i : indexs)
+        {
+            result.add(i);
+        }
+
+        return result;
     }
 
 }

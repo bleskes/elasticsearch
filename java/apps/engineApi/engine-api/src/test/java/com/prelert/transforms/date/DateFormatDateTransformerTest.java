@@ -145,6 +145,42 @@ public class DateFormatDateTransformerTest
         assertEquals("1388534400", output[0]);
     }
 
+
+    @Test
+    public void testTransform_WithBrackets() throws TransformException
+    {
+        List<TransformIndex> readIndicies = createIndexArray(new TransformIndex(0, 0));
+        List<TransformIndex> writeIndicies = createIndexArray(new TransformIndex(2, 0));
+
+        DateFormatTransform transformer = new DateFormatTransform("[yyyy-MM-dd HH:mm:ssX]",
+                                        readIndicies, writeIndicies, mock(Logger.class));
+
+        String [] input = {"[2014-06-23 00:00:00Z]"};
+        String [] scratch = {};
+        String [] output = new String[1];
+        String [][] readWriteArea = {input, scratch, output};
+
+        transformer.transform(readWriteArea);
+    }
+
+    @Test
+    public void testTransform_Example() throws TransformException
+    {
+        List<TransformIndex> readIndicies = createIndexArray(new TransformIndex(0, 0));
+        List<TransformIndex> writeIndicies = createIndexArray(new TransformIndex(2, 0));
+
+        DateFormatTransform transformer = new DateFormatTransform("[dd/MMM/yyyy:HH:mm:ssX",
+                                        readIndicies, writeIndicies, mock(Logger.class));
+
+        String [] input = {"[02/Jul/2013:13:36:07+0000"};
+        String [] scratch = {};
+        String [] output = new String[1];
+        String [][] readWriteArea = {input, scratch, output};
+
+        transformer.transform(readWriteArea);
+    }
+
+
     private List<TransformIndex> createIndexArray(TransformIndex...indexs)
     {
         List<TransformIndex> result = new ArrayList<Transform.TransformIndex>();

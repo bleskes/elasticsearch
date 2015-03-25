@@ -75,21 +75,28 @@ public class TransformConfigTest
 		{
 			List<String> inputs = new ArrayList<>();
 
-			int argCount = type.arity();
+			int arity = type.arity();
 			if (type.arity() < 0)
 			{
 				// variadic
-				argCount = 2;
+				arity = 2;
 			}
 
-			for (int arg = 0; arg < argCount; ++arg)
+			for (int arg = 0; arg < arity; ++arg)
+            {
+                inputs.add(Integer.toString(arg));
+            }
+
+			List<String> initArgs = new ArrayList<>();
+			for (int arg = 0; arg < type.initArgumentCount(); ++arg)
 			{
-				inputs.add(Integer.toString(arg));
+			    initArgs.add(Integer.toString(arg));
 			}
 
 			TransformConfig tr = new TransformConfig();
 			tr.setTransform(type.toString());
 			tr.setInputs(inputs);
+			tr.setArguments(initArgs);
 
 			tr.verify();
 			assertEquals(type, tr.type());
@@ -139,35 +146,99 @@ public class TransformConfigTest
 
 		for (TransformType type : types)
 		{
-			List<String> inputs = new ArrayList<>();
-
-
-			int argCount = type.arity() -1;
-			if (type.arity() < 0)
-			{
-				// variadic
-				argCount = 0;
-			}
-
-			for (int arg = 0; arg < argCount; ++arg)
-			{
-				inputs.add(Integer.toString(arg));
-			}
-
 			TransformConfig tr = new TransformConfig();
 			tr.setTransform(type.toString());
-			tr.setInputs(inputs);
+
+            List<String> inputs = new ArrayList<>();
+            tr.setInputs(inputs);
+
+            int argCount = type.arity() -1;
+            if (type.arity() < 0)
+            {
+                // variadic
+                argCount = 0;
+            }
+
+            for (int arg = 0; arg < argCount; ++arg)
+            {
+                inputs.add(Integer.toString(arg));
+            }
+
+
+
+
+			int initArgCount = 0;
+			if (type.initArgumentCount() == 0)
+			{
+			    initArgCount = 1;
+			}
+
+			List<String> initArgs = new ArrayList<>();
+			for (int i=0; i<initArgCount; i++)
+			{
+			    initArgs.add(Integer.toString(i));
+			}
+			tr.setArguments(initArgs);
 
 			try
 			{
 				tr.verify();
-				fail("Transform with the wrong argument count should throw an TransformConfigurationException");
+				fail("Transform with the wrong init argument count should throw an TransformConfigurationException");
 			}
 			catch (TransformConfigurationException e)
 			{
-				assertEquals(ErrorCode.INCORRECT_TRANSFORM_ARGUMENT_COUNT, e.getErrorCode());
+				assertEquals(ErrorCode.TRANSFORM_MISSING_INITAILISER_ARGUMENT, e.getErrorCode());
 			}
+
+			initArgs = new ArrayList<>();
+			for (int i=0; i<type.initArgumentCount(); i++)
+			{
+			    initArgs.add(Integer.toString(i));
+			}
+			tr.setArguments(initArgs);
+
+
+            try
+            {
+                tr.verify();
+                fail("Transform with the wrong argument count should throw an TransformConfigurationException");
+            }
+            catch (TransformConfigurationException e)
+            {
+                assertEquals(ErrorCode.INCORRECT_TRANSFORM_ARGUMENT_COUNT, e.getErrorCode());
+            }
+
 		}
+	}
+
+	@Test
+	public void testVerify_NoInputsThrows()
+	{
+	    Set<TransformType> types = EnumSet.allOf(TransformType.class);
+
+	    for (TransformType type : types)
+	    {
+	        TransformConfig tr = new TransformConfig();
+	        tr.setTransform(type.toString());
+
+	        List<String> initArgs = new ArrayList<>();
+	        for (int i=0; i<type.initArgumentCount(); i++)
+	        {
+	            initArgs.add(Integer.toString(i));
+	        }
+	        tr.setArguments(initArgs);
+
+	        try
+	        {
+	            tr.verify();
+	            fail("Transform with zero inputs should throw an TransformConfigurationException");
+	        }
+	        catch (TransformConfigurationException e)
+	        {
+	            assertEquals(ErrorCode.INCORRECT_TRANSFORM_ARGUMENT_COUNT, e.getErrorCode());
+	        }
+
+	    }
 	}
 
 }

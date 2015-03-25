@@ -214,6 +214,10 @@ public class ElasticsearchMappingsTest
                         "            \"type\": \"string\"," +
                         "            \"index\": \"not_analyzed\"" +
                         "          }," +
+                        "          \"arguments\": {" +
+                        "            \"type\": \"string\"," +
+                        "            \"index\": \"not_analyzed\"" +
+                        "          }," +
                         "          \"inputs\": {" +
                         "            \"type\": \"string\"," +
                         "            \"index\": \"not_analyzed\"" +

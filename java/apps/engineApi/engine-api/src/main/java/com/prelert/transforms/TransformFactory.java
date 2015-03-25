@@ -124,6 +124,9 @@ public class TransformFactory
 				return new HighestRegisteredDomain(readIndicies, writeIndicies, logger);
 			case CONCAT:
 				return new Concat(readIndicies, writeIndicies, logger);
+			case REGEX_EXTRACT:
+			    return new RegexExtract(transformConfig.getArguments().get(0), readIndicies,
+			                                writeIndicies, logger);
 			default:
 				// This code will never be hit it's to
 				// keep the compiler happy.

@@ -39,17 +39,20 @@ public class TransformConfig
     // Serialisation strings
     public static final String TYPE = "transform";
     public static final String TRANSFORM = "transform";
+    public static final String ARGUMENTS = "arguments";
     public static final String INPUTS = "inputs";
     public static final String OUTPUTS = "outputs";
 
 
     private List<String> m_Inputs;
     private String m_Name;
+    private List<String> m_Arguments;
     private List<String> m_Outputs;
     private TransformType m_Type;
 
     public TransformConfig()
     {
+        m_Arguments = Collections.emptyList();
     }
 
     public List<String> getInputs()
@@ -70,6 +73,16 @@ public class TransformConfig
     public void setTransform(String type)
     {
         m_Name = type;
+    }
+
+    public List<String> getArguments()
+    {
+        return m_Arguments;
+    }
+
+    public void setArguments(List<String> args)
+    {
+        m_Arguments = args;
     }
 
     public List<String> getOutputs()
@@ -123,7 +136,7 @@ public class TransformConfig
     @Override
     public int hashCode()
     {
-        return Objects.hash(m_Inputs, m_Name, m_Outputs, m_Type);
+        return Objects.hash(m_Inputs, m_Name, m_Outputs, m_Type, m_Arguments);
     }
 
     @Override
@@ -148,6 +161,7 @@ public class TransformConfig
         return Objects.equals(this.m_Type, other.m_Type)
                 && Objects.equals(this.m_Name, other.m_Name)
                 && Objects.equals(this.m_Inputs, other.m_Inputs)
-                && Objects.equals(this.m_Outputs, other.m_Outputs);
+                && Objects.equals(this.m_Outputs, other.m_Outputs)
+                && Objects.equals(this.m_Arguments, other.m_Arguments);
     }
 }

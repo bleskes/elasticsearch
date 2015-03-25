@@ -258,7 +258,7 @@ public class JobConfiguration
 		if (m_Transforms != null)
 		{
 			new TransformConfigs(m_Transforms).verify();
-			checkTransformOutputIsInAnalysisFields();
+			checkTransformOutputIsUsed();
 		}
 
 		if (m_Timeout != null && m_Timeout < 0)
@@ -277,27 +277,29 @@ public class JobConfiguration
 	}
 
 	/**
-	 * Transform outputs should be used in either the date field or an analysis field
+	 * Transform outputs should be used in either the date field,
+	 * as an analysis field or input to another transform
 	 * @return
 	 * @throws TransformConfigurationException
 	 */
-    private boolean checkTransformOutputIsInAnalysisFields() throws TransformConfigurationException
+    private boolean checkTransformOutputIsUsed() throws TransformConfigurationException
     {
-        Set<String> analysisFieldSet = new HashSet<String>(m_AnalysisConfig.analysisFields());
+        Set<String> usedFields = new TransformConfigs(m_Transforms).inputFieldNames();
+        usedFields.addAll(m_AnalysisConfig.analysisFields());
 
         String timeField = DataDescription.DEFAULT_TIME_FIELD;
         if (m_DataDescription != null)
         {
             timeField = m_DataDescription.getTimeField();
         }
-        analysisFieldSet.add(timeField);
+        usedFields.add(timeField);
 
         for (TransformConfig tc : m_Transforms)
         {
             boolean usesAnOutput = false;
             for (String outputName : tc.getOutputs())
             {
-                if (analysisFieldSet.contains(outputName))
+                if (usedFields.contains(outputName))
                 {
                     usesAnOutput = true;
                 }

@@ -51,13 +51,8 @@ import com.prelert.job.status.OutOfOrderRecordsException;
 
 
 /**
- * Streaming data endpoint
- *
- * <pre>curl -X POST 'http://localhost:8080/api/data/<jobid>/' --data @<filename></pre>
- * <br/>
- * Binary gzipped files must be POSTed with the --data-binary option
- * <pre>curl -X POST 'http://localhost:8080/api/data/<jobid>/' --data-binary @<filename.gz></pre>
- *
+ * Upload data to this endpoint and it will return the data
+ * after the pre-processing transforms have been applied.
  */
 @Path("/preview")
 public class Preview extends ResourceWithJobManager
@@ -65,7 +60,7 @@ public class Preview extends ResourceWithJobManager
     private static final Logger LOGGER = Logger.getLogger(Preview.class);
 
     /**
-     * Data upload endpoint.
+     * Preview transform output
      *
      * @param headers
      * @param jobId

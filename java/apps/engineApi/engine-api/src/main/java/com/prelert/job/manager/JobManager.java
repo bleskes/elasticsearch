@@ -684,7 +684,7 @@ public class JobManager
         m_ProcessManager.writeToJob(writer, job.getDataDescription(),
                             job.getAnalysisConfig(),
                             new TransformConfigs(job.getTransforms()), input,
-                            new NoneStatusReporter(),
+                            new NoneStatusReporter("preview-job"),
                             new NoneJobDataPersister(), LOGGER);
 
         String text = new String(output.toByteArray(), StandardCharsets.UTF_8);
