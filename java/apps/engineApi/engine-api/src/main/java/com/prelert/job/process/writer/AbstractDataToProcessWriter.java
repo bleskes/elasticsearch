@@ -57,6 +57,7 @@ import com.prelert.transforms.Transform;
 import com.prelert.transforms.TransformException;
 import com.prelert.transforms.TransformFactory;
 import com.prelert.transforms.Transform.TransformIndex;
+import com.prelert.transforms.Transform.TransformResult;
 import com.prelert.transforms.date.DateFormatTransform;
 import com.prelert.transforms.date.DateTransform;
 import com.prelert.transforms.date.DoubleDateTransform;
@@ -275,19 +276,9 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
         m_ReadWriteArea[TransformFactory.INPUT_ARRAY_INDEX] = input;
         m_ReadWriteArea[TransformFactory.OUTPUT_ARRAY_INDEX] = output;
 
-        for (Transform tr : m_DateInputTransforms)
+        if (!applyTransforms(m_DateInputTransforms))
         {
-            try
-            {
-                if (!tr.transform(m_ReadWriteArea))
-                {
-                    m_StatusReporter.reportFailedTransform();
-                }
-            }
-            catch (TransformException e)
-            {
-                m_Logger.warn(e);
-            }
+            return false;
         }
 
         try
@@ -311,13 +302,33 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
         m_LatestEpoch = Math.max(m_LatestEpoch, epoch);
 
 
-        for (Transform tr : m_PostDateTransforms)
+        // Now do the rest of the transforms
+        if (!applyTransforms(m_PostDateTransforms))
+        {
+            return false;
+        }
+
+        m_RecordWriter.writeRecord(output);
+        m_JobDataPersister.persistRecord(epoch, output);
+        m_StatusReporter.reportRecordWritten(numberOfFieldsRead);
+
+        return true;
+    }
+
+    private boolean applyTransforms(List<Transform> transforms)
+    {
+        for (Transform tr : transforms)
         {
             try
             {
-                if (!tr.transform(m_ReadWriteArea))
+                TransformResult result = tr.transform(m_ReadWriteArea);
+                if (result == TransformResult.FAIL)
                 {
                     m_StatusReporter.reportFailedTransform();
+                }
+                else if (result == TransformResult.FATAL_FAIL)
+                {
+                    return false;
                 }
             }
             catch (TransformException e)
@@ -325,10 +336,6 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
                 m_Logger.warn(e);
             }
         }
-
-        m_RecordWriter.writeRecord(output);
-        m_JobDataPersister.persistRecord(epoch, output);
-        m_StatusReporter.reportRecordWritten(numberOfFieldsRead);
 
         return true;
     }

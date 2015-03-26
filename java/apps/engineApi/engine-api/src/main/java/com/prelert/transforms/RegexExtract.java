@@ -32,7 +32,6 @@ import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
 
-
 public class RegexExtract extends Transform
 {
     private final Pattern m_Pattern;
@@ -46,7 +45,7 @@ public class RegexExtract extends Transform
     }
 
     @Override
-    public boolean transform(String[][] readWriteArea)
+    public TransformResult transform(String[][] readWriteArea)
     throws TransformException
     {
         TransformIndex readIndex = m_ReadIndicies.get(0);
@@ -62,8 +61,10 @@ public class RegexExtract extends Transform
                 TransformIndex index = m_WriteIndicies.get(i);
                 readWriteArea[index.array][index.index] = match.group(i+1);
             }
+
+            return TransformResult.OK;
         }
 
-        return false;
+        return TransformResult.FAIL;
     }
 }

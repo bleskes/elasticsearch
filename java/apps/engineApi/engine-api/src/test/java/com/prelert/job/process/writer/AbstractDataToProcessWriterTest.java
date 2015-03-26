@@ -28,6 +28,7 @@
 package com.prelert.job.process.writer;
 
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -45,12 +46,16 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import com.google.common.base.Verify;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
 import com.prelert.job.Detector;
 import com.prelert.job.persistence.DummyJobDataPersister;
+import com.prelert.job.persistence.JobDataPersister;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.writer.AbstractDataToProcessWriter.InputOutputMap;
+import com.prelert.job.status.HighProportionOfBadTimestampsException;
+import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.job.status.StatusReporter;
 import com.prelert.job.transform.TransformConfig;
 import com.prelert.job.transform.TransformConfigs;
@@ -71,6 +76,7 @@ public class AbstractDataToProcessWriterTest
 {
     @Mock private LengthEncodedWriter m_LengthEncodedWriter;
     @Mock private StatusReporter m_StatusReporter;
+    @Mock private JobDataPersister m_DataPersister;
     @Mock private Logger m_Logger;
 
 
@@ -391,4 +397,63 @@ public class AbstractDataToProcessWriterTest
         Assert.assertEquals(new Integer(2), inputIndicies.get("domain"));
         Assert.assertEquals(new Integer(3), inputIndicies.get("value"));
     }
+
+
+    /**
+     * The exclude transform returns fail fatal meaning the record
+     * shouldn't be processed.
+     *
+     * @throws MissingFieldException
+     * @throws IOException
+     * @throws OutOfOrderRecordsException
+     * @throws HighProportionOfBadTimestampsException
+     */
+    @Test
+    public void testApplyTransforms_transformReturnsFatalFail()
+    throws MissingFieldException, IOException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException
+    {
+        DataDescription dd = new DataDescription();
+        dd.setTimeField("datetime");
+
+        AnalysisConfig ac = new AnalysisConfig();
+        Detector detector = new Detector();
+        detector.setFieldName("value");
+        detector.setByFieldName("metric");
+        ac.setDetectors(Arrays.asList(detector));
+
+        TransformConfig excludeConfig = new TransformConfig();
+        excludeConfig.setInputs(Arrays.asList("metric"));
+        excludeConfig.setArguments(Arrays.asList("metricA"));
+        excludeConfig.setTransform(TransformType.Names.EXCLUDE_FILTER);
+
+        TransformConfigs transforms = new TransformConfigs(Arrays.asList(excludeConfig));
+
+        AbstractDataToProcessWriter writer = new CsvDataToProcessWriter(m_LengthEncodedWriter
+                , dd, ac, transforms, m_StatusReporter, m_DataPersister, m_Logger);
+
+        String [] header = {"datetime", "metric", "value"};
+
+        writer.buildTransformsAndWriteHeader(header);
+
+        // metricA is excluded
+        String [] input = {"1", "metricA", "0"};
+        String [] output = new String[3];
+
+
+        assertFalse(writer.applyTransformsAndWrite(input, output, 3));
+
+        verify(m_LengthEncodedWriter, times(0)).writeRecord(output);
+        verify(m_StatusReporter, times(0)).reportRecordWritten(3);
+        verify(m_DataPersister, times(0)).persistRecord(1, output);
+
+        // this is ok
+        input = new String [] {"2", "metricB", "0"};
+        String [] expectedOutput = {"2", null, null};
+        assertTrue(writer.applyTransformsAndWrite(input, output, 3));
+
+        verify(m_LengthEncodedWriter, times(1)).writeRecord(expectedOutput);
+        verify(m_StatusReporter, times(1)).reportRecordWritten(3);
+        verify(m_DataPersister, times(1)).persistRecord(2, expectedOutput);
+    }
+
 }

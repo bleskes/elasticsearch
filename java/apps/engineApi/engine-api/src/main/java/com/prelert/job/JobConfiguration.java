@@ -297,7 +297,8 @@ public class JobConfiguration
 
         for (TransformConfig tc : m_Transforms)
         {
-            boolean usesAnOutput = false;
+            // if the type has no default outputs it doesn't need an output
+            boolean usesAnOutput = tc.type().defaultOutputNames().size() == 0;
             for (String outputName : tc.getOutputs())
             {
                 if (usedFields.contains(outputName))

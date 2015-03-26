@@ -24,55 +24,42 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-
 package com.prelert.transforms;
 
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.mock;
-
-import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
-import org.junit.Test;
 
-import com.prelert.transforms.Transform.TransformIndex;
-import com.prelert.transforms.Transform.TransformResult;
+/**
+ * Matches a field against a regex
+ */
+public class ExcludeFilter extends Transform
+{
+    private final Pattern m_Pattern;
 
-public class RegexExtractTest {
-
-    @Test
-    public void testTransform() throws TransformException
+    public ExcludeFilter(String regex, List<TransformIndex> readIndicies,
+            List<TransformIndex> writeIndicies, Logger logger)
     {
-        List<TransformIndex> readIndicies = createIndexArray(new TransformIndex(0, 0));
-        List<TransformIndex> writeIndicies = createIndexArray(new TransformIndex(2, 0),
-                new TransformIndex(2, 1), new TransformIndex(2, 2));
+        super(readIndicies, writeIndicies, logger);
 
-        String regex = "Tag=\"Windfarm ([0-9]+)\\.Turbine ([0-9]+)\\.(.*)\"";
-
-        RegexExtract transform = new RegexExtract(regex, readIndicies, writeIndicies, mock(Logger.class));
-
-        String [] input = {"Tag=\"Windfarm 04.Turbine 06.Temperature\""};
-        String [] scratch = {};
-        String [] output = new String [3];
-        String [][] readWriteArea = {input, scratch, output};
-
-        assertEquals(TransformResult.OK, transform.transform(readWriteArea));
-        assertEquals("04", output[0]);
-        assertEquals("06", output[1]);
-        assertEquals("Temperature", output[2]);
+        m_Pattern = Pattern.compile(regex);
     }
 
-
-    private List<TransformIndex> createIndexArray(TransformIndex...indexs)
+    /**
+     * Returns {@link TransformResult#FATAL_FAIL} if the record matches the regex
+     */
+    @Override
+    public TransformResult transform(String[][] readWriteArea)
+    throws TransformException
     {
-        List<TransformIndex> result = new ArrayList<Transform.TransformIndex>();
-        for (TransformIndex i : indexs)
-        {
-            result.add(i);
-        }
+        TransformIndex readIndex = m_ReadIndicies.get(0);
+        String field = readWriteArea[readIndex.array][readIndex.index];
 
-        return result;
+        Matcher match = m_Pattern.matcher(field);
+
+        return match.matches() ? TransformResult.FATAL_FAIL : TransformResult.OK;
     }
 
 }

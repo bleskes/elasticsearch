@@ -37,6 +37,7 @@ import org.apache.log4j.Logger;
 import org.junit.Test;
 
 import com.prelert.transforms.Transform.TransformIndex;
+import com.prelert.transforms.Transform.TransformResult;
 
 public class ConcatTest
 {
@@ -53,7 +54,7 @@ public class ConcatTest
 		String [] output = new String [2];
 		String [][] readWriteArea = {input, scratch, output};
 
-		concat.transform(readWriteArea);
+		assertEquals(TransformResult.OK, concat.transform(readWriteArea));
 		assertNull(output[0]);
 		assertEquals("bce", output[1]);
 	}
@@ -71,7 +72,7 @@ public class ConcatTest
 		String [] output = new String [1];
         String [][] readWriteArea = {input, scratch, output};
 
-        concat.transform(readWriteArea);
+        assertEquals(TransformResult.OK, concat.transform(readWriteArea));
 		assertEquals("", output[0]);
 	}
 
@@ -88,7 +89,7 @@ public class ConcatTest
 		String [] output = new String [1];
         String [][] readWriteArea = {input, scratch, output};
 
-        concat.transform(readWriteArea);
+        assertEquals(TransformResult.FAIL, concat.transform(readWriteArea));
 		assertNull(output[0]);
 	}
 
@@ -106,7 +107,7 @@ public class ConcatTest
         String [] output = new String [1];
         String [][] readWriteArea = {input, scratch, output};
 
-        concat.transform(readWriteArea);
+        assertEquals(TransformResult.OK, concat.transform(readWriteArea));
         assertEquals("bcac", scratch[4]);
     }
 

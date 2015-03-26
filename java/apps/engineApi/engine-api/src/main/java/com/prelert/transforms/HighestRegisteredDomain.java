@@ -309,16 +309,16 @@ public class HighestRegisteredDomain extends Transform
     }
 
     @Override
-    public boolean transform(String[][] readWriteArea)
+    public TransformResult transform(String[][] readWriteArea)
     {
         if (m_WriteIndicies.isEmpty())
         {
-            return true;
+            return TransformResult.FAIL;
         }
 
         if (m_ReadIndicies.isEmpty())
         {
-            return false;
+            return TransformResult.FAIL;
         }
 
         TransformIndex i = m_ReadIndicies.get(0);
@@ -338,12 +338,12 @@ public class HighestRegisteredDomain extends Transform
                 readWriteArea[i.array][i.index] = split.m_HighestRegisteredDomain;
             }
 
-            return true;
+            return TransformResult.OK;
         }
         catch (IllegalArgumentException e)
         {
             m_Logger.error("Cannot extract domain. " + e.getMessage());
-            return false;
+            return TransformResult.FAIL;
         }
     }
 }

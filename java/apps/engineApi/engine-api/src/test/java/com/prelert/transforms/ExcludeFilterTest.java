@@ -24,7 +24,6 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-
 package com.prelert.transforms;
 
 import static org.junit.Assert.*;
@@ -39,28 +38,62 @@ import org.junit.Test;
 import com.prelert.transforms.Transform.TransformIndex;
 import com.prelert.transforms.Transform.TransformResult;
 
-public class RegexExtractTest {
-
+public class ExcludeFilterTest
+{
     @Test
-    public void testTransform() throws TransformException
+    public void testTransform_matches() throws TransformException
     {
         List<TransformIndex> readIndicies = createIndexArray(new TransformIndex(0, 0));
-        List<TransformIndex> writeIndicies = createIndexArray(new TransformIndex(2, 0),
-                new TransformIndex(2, 1), new TransformIndex(2, 2));
+        List<TransformIndex> writeIndicies = createIndexArray();
 
-        String regex = "Tag=\"Windfarm ([0-9]+)\\.Turbine ([0-9]+)\\.(.*)\"";
+        String regex = "cat";
 
-        RegexExtract transform = new RegexExtract(regex, readIndicies, writeIndicies, mock(Logger.class));
+        ExcludeFilter transform = new ExcludeFilter(regex, readIndicies, writeIndicies, mock(Logger.class));
 
-        String [] input = {"Tag=\"Windfarm 04.Turbine 06.Temperature\""};
+        String [] input = {"cat"};
+        String [] scratch = {};
+        String [] output = {};
+        String [][] readWriteArea = {input, scratch, output};
+
+        assertEquals(TransformResult.FATAL_FAIL, transform.transform(readWriteArea));
+    }
+
+    @Test
+    public void testTransform_noMatches() throws TransformException
+    {
+        List<TransformIndex> readIndicies = createIndexArray(new TransformIndex(0, 0));
+        List<TransformIndex> writeIndicies = createIndexArray();
+
+        String regex = "boat";
+
+        ExcludeFilter transform = new ExcludeFilter(regex, readIndicies, writeIndicies, mock(Logger.class));
+
+        String [] input = {"cat"};
+        String [] scratch = {};
+        String [] output = {};
+        String [][] readWriteArea = {input, scratch, output};
+
+        assertEquals(TransformResult.OK, transform.transform(readWriteArea));
+    }
+
+    @Test
+    public void testTransform_matchesRegex() throws TransformException
+    {
+        List<TransformIndex> readIndicies = createIndexArray(new TransformIndex(0, 0));
+        List<TransformIndex> writeIndicies = createIndexArray();
+
+        String regex = "metric[0-9]+";
+
+        ExcludeFilter transform = new ExcludeFilter(regex, readIndicies, writeIndicies, mock(Logger.class));
+        String [] input = {"metric01"};
         String [] scratch = {};
         String [] output = new String [3];
         String [][] readWriteArea = {input, scratch, output};
 
+        assertEquals(TransformResult.FATAL_FAIL, transform.transform(readWriteArea));
+
+        readWriteArea[0] = new String [] {"metric02-A"};
         assertEquals(TransformResult.OK, transform.transform(readWriteArea));
-        assertEquals("04", output[0]);
-        assertEquals("06", output[1]);
-        assertEquals("Temperature", output[2]);
     }
 
 

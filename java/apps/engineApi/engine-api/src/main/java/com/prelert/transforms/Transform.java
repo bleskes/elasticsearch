@@ -34,12 +34,23 @@ import org.apache.log4j.Logger;
 /**
  * Abstract transform class.
  * Instances are created with maps telling it which field(s)
- * to read from in the input array and where to write to in
- * the output array. Input and output arrays are passed to the
- * {@link #transform(String[], String[]) function
+ * to read from in the input array and where to write to.
+ * The read/write area is passed in the {@linkplain #transform(String[][])}
+ * function.
+ *
+ * Some transforms may fail and we will continue processing for
+ * others a failure is terminal meaning the record should not be
+ * processed further
  */
 public abstract class Transform
 {
+    /**
+     * OK means the transform was successful,
+     * FAIL means the transform failed but it's ok to continue processing
+     * FATAL_FAIL means the no further processing should take place
+     */
+    public enum TransformResult {OK, FAIL, FATAL_FAIL};
+
     protected final Logger m_Logger;
 
     public static class TransformIndex
@@ -92,11 +103,8 @@ public abstract class Transform
 
     /**
      *
-     * @param inputIndicies Indicies into the input record
-     * @param scratchAreaIndicies Indicies into the scratch area
-     * (where reading the output of another transform or writing
-     * an intermediate result)
-     * @param outputIndicies Indicies into the output record.
+     * @param readIndicies Read inputs from these indicies
+     * @param writeIndicies Outputs are written to these indicies
      * @param logger
      * Transform results go into these indicies
      */
@@ -136,6 +144,6 @@ public abstract class Transform
      * @return
      * @throws TransformException
      */
-    public abstract boolean transform(String[][] readWriteArea)
+    public abstract TransformResult transform(String[][] readWriteArea)
     throws TransformException;
 }

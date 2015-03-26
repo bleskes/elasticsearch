@@ -56,7 +56,7 @@ public class DateFormatTransform extends DateTransform
     }
 
     @Override
-    protected boolean parseAndWriteDate(String field, String[][] readWriteArea) throws TransformException
+    protected TransformResult parseAndWriteDate(String field, String[][] readWriteArea) throws TransformException
     {
         try
         {
@@ -64,7 +64,7 @@ public class DateFormatTransform extends DateTransform
 
             TransformIndex writeIndex = m_WriteIndicies.get(0);
             readWriteArea[writeIndex.array][writeIndex.index] = Long.toString(m_Epoch);
-            return true;
+            return TransformResult.OK;
         }
         catch (ParseException pe)
         {

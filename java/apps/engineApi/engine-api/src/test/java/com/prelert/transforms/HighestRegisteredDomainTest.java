@@ -35,6 +35,7 @@ import java.util.List;
 
 import com.google.common.net.InternetDomainName;
 import com.prelert.transforms.Transform.TransformIndex;
+import com.prelert.transforms.Transform.TransformResult;
 
 import org.apache.log4j.Logger;
 import org.junit.Test;
@@ -409,7 +410,7 @@ public class HighestRegisteredDomainTest
         String [] output = new String [2];
         String [][] readWriteArea = {input, scratch, output};
 
-        transform.transform(readWriteArea);
+        assertEquals(TransformResult.OK, transform.transform(readWriteArea));
         assertEquals("time", output[0]);
         assertEquals("apple.com", output[1]);
     }

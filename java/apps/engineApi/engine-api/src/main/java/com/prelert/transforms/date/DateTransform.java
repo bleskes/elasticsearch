@@ -60,7 +60,7 @@ public abstract class DateTransform extends Transform
      * Expects 1 input and 1 output.
      */
     @Override
-    public final boolean transform(String[][] readWriteArea) throws TransformException
+    public final TransformResult transform(String[][] readWriteArea) throws TransformException
     {
         if (m_ReadIndicies.isEmpty())
         {
@@ -82,6 +82,6 @@ public abstract class DateTransform extends Transform
         return parseAndWriteDate(field, readWriteArea);
     }
 
-    protected abstract boolean parseAndWriteDate(String field, String[][] readWriteArea)
+    protected abstract TransformResult parseAndWriteDate(String field, String[][] readWriteArea)
             throws TransformException;
 }

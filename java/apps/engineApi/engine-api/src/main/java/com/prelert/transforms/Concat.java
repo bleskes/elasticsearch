@@ -46,12 +46,12 @@ public class Concat extends Transform
      * Concat has only 1 output field
      */
     @Override
-    public boolean transform(String[][] readWriteArea)
+    public TransformResult transform(String[][] readWriteArea)
     throws TransformException
     {
         if (m_WriteIndicies.isEmpty())
         {
-            return true;
+            return TransformResult.FAIL;
         }
 
         StringBuilder builder = new StringBuilder();
@@ -64,7 +64,7 @@ public class Concat extends Transform
         TransformIndex writeIndex = m_WriteIndicies.get(0);
         readWriteArea[writeIndex.array][writeIndex.index] = builder.toString();
 
-        return true;
+        return TransformResult.OK;
     }
 
 }
