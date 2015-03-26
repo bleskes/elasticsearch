@@ -272,12 +272,12 @@ public class InterimResultsTest implements Closeable
             }
         }
 
-        // The big anomaly is in bucket 771, which will only be present if
-        // interim results have been requested.
+        // The big anomaly is in bucket 771, which will only be present
+        // if interim results have been requested.
         if (includeInterim)
         {
             test(Boolean.TRUE.equals(pagedBuckets.get(770).isInterim()));
-            test(pagedBuckets.get(770).getAnomalyScore() >= 90.0);
+            test(pagedBuckets.get(770).getAnomalyScore() >= 60.0);
         }
 
         Pagination<Bucket> allBucketsExpanded = m_WebServiceClient.getBuckets(baseUrl,
