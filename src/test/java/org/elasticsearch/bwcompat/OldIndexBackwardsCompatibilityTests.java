@@ -19,7 +19,6 @@
 
 package org.elasticsearch.bwcompat;
 
-import com.carrotsearch.randomizedtesting.LifecycleScope;
 import org.apache.lucene.util.LuceneTestCase;
 import org.apache.lucene.util.TestUtil;
 import org.elasticsearch.Version;
@@ -30,6 +29,7 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.io.FileSystemUtils;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.env.NodeEnvironment;
 import org.elasticsearch.index.engine.EngineConfig;
 import org.elasticsearch.index.merge.policy.MergePolicyModule;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -52,13 +52,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.*;
 
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertAcked;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
@@ -68,10 +62,9 @@ import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 public class OldIndexBackwardsCompatibilityTests extends ElasticsearchIntegrationTest {
     // TODO: test for proper exception on unsupported indexes (maybe via separate test?)
     // We have a 0.20.6.zip etc for this.
-    
+
     static List<String> indexes;
-    static Path indicesDir;
-    
+
     @BeforeClass
     public static void initIndexesList() throws Exception {
         indexes = new ArrayList<>();
@@ -84,57 +77,54 @@ public class OldIndexBackwardsCompatibilityTests extends ElasticsearchIntegratio
         }
         Collections.sort(indexes);
     }
-    
+
     @AfterClass
     public static void tearDownStatics() {
         indexes = null;
-        indicesDir = null;
     }
-    
+
     @Override
     public Settings nodeSettings(int ord) {
         return ImmutableSettings.builder()
-            .put(Node.HTTP_ENABLED, true) // for _upgrade
-            .put(MergePolicyModule.MERGE_POLICY_TYPE_KEY, NoMergePolicyProvider.class) // disable merging so no segments will be upgraded
-            .build();
-    }
-    
-    void setupDataLoadingNodes() throws Exception {
-        Path dataDir = newTempDirPath(LifecycleScope.SUITE);
-        indicesDir = dataDir.resolve(internalCluster().getClusterName()).resolve("nodes/0/indices/");
-        assertFalse(Files.exists(indicesDir));
-        Files.createDirectories(indicesDir);
-        ImmutableSettings.Builder nodeSettings = ImmutableSettings.builder()
-            .put("path.data", dataDir.toAbsolutePath());
-        internalCluster().startNode(nodeSettings);
+                .put(Node.HTTP_ENABLED, true) // for _upgrade
+                .put(MergePolicyModule.MERGE_POLICY_TYPE_KEY, NoMergePolicyProvider.class) // disable merging so no segments will be upgraded
+                .build();
     }
 
     String loadIndex(String indexFile) throws Exception {
         Path unzipDir = newTempDirPath();
         Path unzipDataDir = unzipDir.resolve("data");
         String indexName = indexFile.replace(".zip", "").toLowerCase(Locale.ROOT);
-        
+
         // decompress the index
         Path backwardsIndex = Paths.get(getClass().getResource(indexFile).toURI());
         try (InputStream stream = Files.newInputStream(backwardsIndex)) {
             TestUtil.unzip(stream, unzipDir);
         }
-        
+
         // check it is unique
         assertTrue(Files.exists(unzipDataDir));
         Path[] list = FileSystemUtils.files(unzipDataDir);
         if (list.length != 1) {
             throw new IllegalStateException("Backwards index must contain exactly one cluster");
         }
-        
-        // move to the real data dir
+
+        // the bwc scripts packs the indices under this path
         Path src = list[0].resolve("nodes/0/indices/" + indexName);
-        Path dest = indicesDir.resolve(indexName);
+        // get a random path from one of the nodes
+        final String node = randomFrom(internalCluster().getDataNodeNames());
+        Path dest = randomFrom(internalCluster().getInstance(NodeEnvironment.class, node).nodeDataPaths());
+        dest = dest.resolve(NodeEnvironment.INDICES_FOLDER);
+        // if this is the first index, there will be no indices folder.
+        Files.createDirectories(dest);
+        dest = dest.resolve(indexName);
         assertTrue("[" + indexFile + "] missing index dir: " + src.toString(), Files.exists(src));
+
+        logger.info("--> injecting index [{}] into node [{}], path [{}]", indexName, node, dest);
         Files.move(src, dest);
         assertFalse(Files.exists(src));
         assertTrue(Files.exists(dest));
-        
+
         // force reloading dangling indices with a cluster state republish
         client().admin().cluster().prepareReroute().get();
         ensureGreen(indexName);
@@ -145,14 +135,18 @@ public class OldIndexBackwardsCompatibilityTests extends ElasticsearchIntegratio
         ElasticsearchAssertions.assertAcked(client().admin().indices().prepareDelete(indexName).get());
         ElasticsearchAssertions.assertAllFilesClosed();
     }
-    
+
     public void testAllVersionsTested() throws Exception {
         SortedSet<String> expectedVersions = new TreeSet<>();
         for (java.lang.reflect.Field field : Version.class.getDeclaredFields()) {
             if (Modifier.isStatic(field.getModifiers()) && field.getType() == Version.class) {
-                Version v = (Version)field.get(Version.class);
-                if (v.snapshot()) continue;
-                if (v.onOrBefore(Version.V_0_20_6)) continue;
+                Version v = (Version) field.get(Version.class);
+                if (v.snapshot()) {
+                    continue;
+                }
+                if (v.onOrBefore(Version.V_0_20_6)) {
+                    continue;
+                }
 
                 expectedVersions.add("index-" + v.toString() + ".zip");
             }
@@ -173,14 +167,12 @@ public class OldIndexBackwardsCompatibilityTests extends ElasticsearchIntegratio
     }
 
     public void testOldIndexes() throws Exception {
-        setupDataLoadingNodes();
-        
         Collections.shuffle(indexes, getRandom());
         for (String index : indexes) {
             long startTime = System.currentTimeMillis();
             logger.info("--> Testing old index " + index);
             assertOldIndexWorks(index);
-            logger.info("--> Done testing " + index + ", took " + ((System.currentTimeMillis() - startTime)/1000.0) + " seconds");
+            logger.info("--> Done testing " + index + ", took " + ((System.currentTimeMillis() - startTime) / 1000.0) + " seconds");
         }
     }
 
@@ -193,15 +185,15 @@ public class OldIndexBackwardsCompatibilityTests extends ElasticsearchIntegratio
         assertUpgradeWorks(indexName, isLatestLuceneVersion(index));
         unloadIndex(indexName);
     }
-    
+
     Version extractVersion(String index) {
         return Version.fromString(index.substring(index.indexOf('-') + 1, index.lastIndexOf('.')));
     }
-    
+
     boolean isLatestLuceneVersion(String index) {
         Version version = extractVersion(index);
         return version.luceneVersion.major == Version.CURRENT.luceneVersion.major &&
-               version.luceneVersion.minor == Version.CURRENT.luceneVersion.minor;
+                version.luceneVersion.minor == Version.CURRENT.luceneVersion.minor;
     }
 
 
@@ -229,8 +221,8 @@ public class OldIndexBackwardsCompatibilityTests extends ElasticsearchIntegratio
 
     void assertRealtimeGetWorks(String indexName) {
         assertAcked(client().admin().indices().prepareUpdateSettings(indexName).setSettings(ImmutableSettings.builder()
-            .put("refresh_interval", -1)
-            .build()));
+                .put("refresh_interval", -1)
+                .build()));
         SearchRequestBuilder searchReq = client().prepareSearch(indexName).setQuery(QueryBuilders.matchAllQuery());
         SearchHit hit = searchReq.get().getHits().getAt(0);
         String docId = hit.getId();
@@ -239,23 +231,23 @@ public class OldIndexBackwardsCompatibilityTests extends ElasticsearchIntegratio
         GetResponse getRsp = client().prepareGet(indexName, "doc", docId).get();
         Map<String, Object> source = getRsp.getSourceAsMap();
         assertThat(source, Matchers.hasKey("foo"));
-        
+
         assertAcked(client().admin().indices().prepareUpdateSettings(indexName).setSettings(ImmutableSettings.builder()
-            .put("refresh_interval", EngineConfig.DEFAULT_REFRESH_INTERVAL)
-            .build()));
+                .put("refresh_interval", EngineConfig.DEFAULT_REFRESH_INTERVAL)
+                .build()));
     }
 
     void assertNewReplicasWork(String indexName) throws Exception {
-        final int numReplicas = randomIntBetween(2, 3);
+        final int numReplicas = randomIntBetween(1, Math.max(1, internalCluster().numDataNodes() - 1));
         logger.debug("Creating [{}] replicas for index [{}]", numReplicas, indexName);
         assertAcked(client().admin().indices().prepareUpdateSettings(indexName).setSettings(ImmutableSettings.builder()
-                .put("number_of_replicas", numReplicas)
+                        .put("number_of_replicas", numReplicas)
         ).execute().actionGet());
         ensureGreen(indexName);
-        
+
         // TODO: do something with the replicas! query? index?
     }
-    
+
     void assertUpgradeWorks(String indexName, boolean alreadyLatest) throws Exception {
         HttpRequestBuilder httpClient = httpClient();
 

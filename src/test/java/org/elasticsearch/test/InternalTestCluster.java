@@ -325,6 +325,10 @@ public final class InternalTestCluster extends TestCluster {
         return nodes.keySet().toArray(Strings.EMPTY_ARRAY);
     }
 
+    public String[] getDataNodeNames() {
+        return Maps.filterEntries(nodes, new EntryNodePredicate(new DataNodePredicate())).keySet().toArray(Strings.EMPTY_ARRAY);
+    }
+
     private static boolean isLocalTransportConfigured() {
         if ("local".equals(System.getProperty("es.node.mode", "network"))) {
             return true;
