@@ -205,7 +205,7 @@ public class TransformConfigTest
             }
             catch (TransformConfigurationException e)
             {
-                assertEquals(ErrorCode.INCORRECT_TRANSFORM_ARGUMENT_COUNT, e.getErrorCode());
+                assertEquals(ErrorCode.INCORRECT_TRANSFORM_INPUT_COUNT, e.getErrorCode());
             }
 
 		}
@@ -235,7 +235,7 @@ public class TransformConfigTest
 	        }
 	        catch (TransformConfigurationException e)
 	        {
-	            assertEquals(ErrorCode.INCORRECT_TRANSFORM_ARGUMENT_COUNT, e.getErrorCode());
+	            assertEquals(ErrorCode.INCORRECT_TRANSFORM_INPUT_COUNT, e.getErrorCode());
 	        }
 
 	    }

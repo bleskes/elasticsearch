@@ -136,32 +136,32 @@ public enum ErrorCode
 	 */
 	UNKNOWN_TRANSFORM(10201),
 
-    /**
-     * Some transforms such as Regex require an argument when
-     * first constructed
-     */
-    TRANSFORM_MISSING_INITAILISER_ARGUMENT(10202),
-
 	/**
-	 * The transform does not have the correct number of arguments
+	 * The transform does not have the correct number of inputs
 	 */
-	INCORRECT_TRANSFORM_ARGUMENT_COUNT(10203),
+	INCORRECT_TRANSFORM_INPUT_COUNT(10202),
 
     /**
      * If none of the outputs of a particular transform are used
      * in the analysis then the transform's configuration is in error
      */
-    TRANSFORM_OUTPUTS_UNUSED(10204),
+    TRANSFORM_OUTPUTS_UNUSED(10203),
 
     /**
      * The transform has a circular dependency
      */
-    TRANSFORM_HAS_CIRCULAR_DEPENDENCY(10205),
+    TRANSFORM_HAS_CIRCULAR_DEPENDENCY(10204),
 
     /**
      * 2 or more transforms have the same output fieldname
      */
-    DUPLICATED_TRANSFORM_OUTPUT_NAME(10206),
+    DUPLICATED_TRANSFORM_OUTPUT_NAME(10205),
+
+    /**
+     * Some transforms such as Regex require an argument when
+     * first constructed
+     */
+    TRANSFORM_MISSING_INITAILISER_ARGUMENT(10206),
 
 
 	// Data store errors

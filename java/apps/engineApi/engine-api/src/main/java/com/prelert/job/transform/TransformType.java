@@ -113,7 +113,7 @@ public enum TransformType
         if (tc.getInputs() == null)
         {
             String msg = "Function arity error no inputs defined";
-            throw new TransformConfigurationException(msg, ErrorCode.INCORRECT_TRANSFORM_ARGUMENT_COUNT);
+            throw new TransformConfigurationException(msg, ErrorCode.INCORRECT_TRANSFORM_INPUT_COUNT);
         }
 
         if (m_InitArgumentCount != tc.getArguments().size())
@@ -132,7 +132,7 @@ public enum TransformType
             else
             {
                 String msg = "Function arity error expected at least one argument, got 0";
-                throw new TransformConfigurationException(msg, ErrorCode.INCORRECT_TRANSFORM_ARGUMENT_COUNT);
+                throw new TransformConfigurationException(msg, ErrorCode.INCORRECT_TRANSFORM_INPUT_COUNT);
             }
         }
 
@@ -140,7 +140,7 @@ public enum TransformType
         {
             String msg = "Function arity error expected " + m_Arity + " arguments, got "
                         + tc.getInputs().size();
-            throw new TransformConfigurationException(msg, ErrorCode.INCORRECT_TRANSFORM_ARGUMENT_COUNT);
+            throw new TransformConfigurationException(msg, ErrorCode.INCORRECT_TRANSFORM_INPUT_COUNT);
         }
 
         return true;
