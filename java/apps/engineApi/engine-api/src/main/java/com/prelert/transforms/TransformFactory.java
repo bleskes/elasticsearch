@@ -127,6 +127,9 @@ public class TransformFactory
 			case REGEX_EXTRACT:
 			    return new RegexExtract(transformConfig.getArguments().get(0), readIndicies,
 			                                writeIndicies, logger);
+            case REGEX_SPLIT:
+                return new RegexSplit(transformConfig.getArguments().get(0), readIndicies,
+                                            writeIndicies, logger);
             case EXCLUDE_FILTER:
                 return new ExcludeFilter(transformConfig.getArguments().get(0), readIndicies,
                                             writeIndicies, logger);

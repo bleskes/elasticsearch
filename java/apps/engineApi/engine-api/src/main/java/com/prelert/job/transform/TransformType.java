@@ -44,6 +44,7 @@ public enum TransformType
     DOMAIN_LOOKUP(Names.DOMAIN_LOOKUP_NAME, 1, 0, Arrays.asList("subDomain", "hrd")),
     CONCAT(Names.CONCAT, Names.VARIADIC_ARGS, 0, Arrays.asList("concat")),
     REGEX_EXTRACT(Names.REGEX_EXTRACT, 1, 1, Arrays.asList("")),
+    REGEX_SPLIT(Names.REGEX_SPLIT, 1, 1, Arrays.asList("")),
     EXCLUDE_FILTER(Names.EXCLUDE_FILTER, 1, 1, Arrays.asList());
 
     /**
@@ -57,6 +58,7 @@ public enum TransformType
         public static final String DOMAIN_LOOKUP_NAME = "domain_lookup";
         public static final String CONCAT = "concat";
         public static final String REGEX_EXTRACT = "regex_extract";
+        public static final String REGEX_SPLIT = "regex_split";
         public static final String EXCLUDE_FILTER = "exclude_filter";
 
         private static final int VARIADIC_ARGS = -1;

@@ -275,6 +275,7 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
     {
         m_ReadWriteArea[TransformFactory.INPUT_ARRAY_INDEX] = input;
         m_ReadWriteArea[TransformFactory.OUTPUT_ARRAY_INDEX] = output;
+        Arrays.fill(m_ReadWriteArea[TransformFactory.SCRATCH_ARRAY_INDEX], "");
 
         if (!applyTransforms(m_DateInputTransforms))
         {
