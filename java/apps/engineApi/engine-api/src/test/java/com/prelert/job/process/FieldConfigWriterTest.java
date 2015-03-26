@@ -27,6 +27,10 @@
 
 package com.prelert.job.process;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -108,5 +112,20 @@ public class FieldConfigWriterTest
         Assert.assertEquals("ts_hash", value);
         value = fieldConfig.get(iniConfig.getGlobalSectionName(), "rare(ipaddress)-host.partition");
         Assert.assertEquals("host", value);
+    }
+
+    @Test
+    public void testWrite_GivenConfigHasCategorizationField() throws IOException
+    {
+        AnalysisConfig config = new AnalysisConfig();
+        config.setCategorizationFieldName("foo");
+        OutputStreamWriter writer = mock(OutputStreamWriter.class);
+        Logger logger = mock(Logger.class);
+        FieldConfigWriter fieldConfigWriter = new FieldConfigWriter(config, writer, logger);
+
+        fieldConfigWriter.write();
+
+        verify(writer).write("categorizationfield = foo\n");
+        verifyNoMoreInteractions(writer);
     }
 }
