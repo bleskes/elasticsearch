@@ -28,6 +28,7 @@
 package com.prelert.job;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -61,6 +62,10 @@ public class AnalysisConfig
     public static final String PERIOD = "period";
     public static final String SUMMARY_COUNT_FIELD_NAME = "summaryCountFieldName";
     public static final String DETECTORS = "detectors";
+
+    private static final String PRELERT_CATEGORY_FIELD = "prelertcategory";
+    public static final Set<String> AUTO_CREATED_FIELDS = new HashSet<>(
+            Arrays.asList(PRELERT_CATEGORY_FIELD));
 
     /**
      * These values apply to all detectors
