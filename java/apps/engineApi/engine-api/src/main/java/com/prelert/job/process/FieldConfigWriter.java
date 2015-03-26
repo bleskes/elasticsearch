@@ -40,12 +40,16 @@ import com.prelert.job.Detector;
 
 public class FieldConfigWriter
 {
+
+    private static final String CATEGORIZATION_FIELD_KEY = "categorizationfield";
     private static final String DOT_IS_ENABLED = ".isEnabled";
     private static final String DOT_USE_NULL = ".useNull";
     private static final String DOT_BY = ".by";
     private static final String DOT_OVER = ".over";
     private static final String DOT_PARTITION = ".partition";
     private static final String DOT_EXCLUDE_FREQUENT = ".excludefrequent";
+    private static final String EQUALS = " = ";
+    private static final String HYPHEN = "-";
     private static final char NEW_LINE = '\n';
 
     private final AnalysisConfig m_Config;
@@ -69,7 +73,7 @@ public class FieldConfigWriter
         StringBuilder contents = new StringBuilder();
         if (isNotNullOrEmpty(m_Config.getCategorizationFieldName()))
         {
-            contents.append("categorizationfield").append(" = ")
+            contents.append(CATEGORIZATION_FIELD_KEY).append(EQUALS)
                     .append(m_Config.getCategorizationFieldName()).append(NEW_LINE);
         }
 
@@ -94,15 +98,15 @@ public class FieldConfigWriter
 
             if (isNotNullOrEmpty(detector.getByFieldName()))
             {
-                keyBuilder.append("-").append(detector.getByFieldName());
+                keyBuilder.append(HYPHEN).append(detector.getByFieldName());
             }
             if (isNotNullOrEmpty(detector.getOverFieldName()))
             {
-                keyBuilder.append("-").append(detector.getOverFieldName());
+                keyBuilder.append(HYPHEN).append(detector.getOverFieldName());
             }
             if (isNotNullOrEmpty(detector.getPartitionFieldName()))
             {
-                keyBuilder.append("-").append(detector.getPartitionFieldName());
+                keyBuilder.append(HYPHEN).append(detector.getPartitionFieldName());
             }
 
             String key = keyBuilder.toString();
@@ -133,20 +137,23 @@ public class FieldConfigWriter
 
             if (isNotNullOrEmpty(detector.getExcludeFrequent()))
             {
-                contents.append(key).append(DOT_EXCLUDE_FREQUENT).append(" = ").
+                contents.append(key).append(DOT_EXCLUDE_FREQUENT).append(EQUALS).
                     append(detector.getExcludeFrequent()).append(NEW_LINE);
             }
             if (isNotNullOrEmpty(detector.getByFieldName()))
             {
-                contents.append(key).append(DOT_BY).append(" = ").append(detector.getByFieldName()).append(NEW_LINE);
+                contents.append(key).append(DOT_BY).append(EQUALS)
+                        .append(detector.getByFieldName()).append(NEW_LINE);
             }
             if (isNotNullOrEmpty(detector.getOverFieldName()))
             {
-                contents.append(key).append(DOT_OVER).append(" = ").append(detector.getOverFieldName()).append(NEW_LINE);
+                contents.append(key).append(DOT_OVER).append(EQUALS)
+                        .append(detector.getOverFieldName()).append(NEW_LINE);
             }
             if (isNotNullOrEmpty(detector.getPartitionFieldName()))
             {
-                contents.append(key).append(DOT_PARTITION).append(" = ").append(detector.getPartitionFieldName()).append(NEW_LINE);
+                contents.append(key).append(DOT_PARTITION).append(EQUALS)
+                        .append(detector.getPartitionFieldName()).append(NEW_LINE);
             }
         }
 
