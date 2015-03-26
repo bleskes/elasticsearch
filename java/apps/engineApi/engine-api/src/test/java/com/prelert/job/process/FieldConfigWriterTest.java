@@ -48,65 +48,65 @@ import com.prelert.job.Detector;
 
 public class FieldConfigWriterTest
 {
-	@Test
-	public void testMultipleDetectorsToConfFile()
-	throws IOException
-	{
-		List<Detector> detectors = new ArrayList<>();
+    @Test
+    public void testMultipleDetectorsToConfFile()
+    throws IOException
+    {
+        List<Detector> detectors = new ArrayList<>();
 
-		Detector d = new Detector();
-		d.setFieldName("Integer_Value");
-		d.setByFieldName("ts_hash");
-		detectors.add(d);
-		Detector d2 = new Detector();
-		d2.setFunction("count");
-		d2.setByFieldName("ipaddress");
-		detectors.add(d2);
-		Detector d3 = new Detector();
-		d3.setFunction("max");
-		d3.setFieldName("Integer_Value");
-		d3.setOverFieldName("ts_hash");
-		detectors.add(d3);
-		Detector d4 = new Detector();
-		d4.setFunction("rare");
-		d4.setFieldName("ipaddress");
-		d4.setPartitionFieldName("host");
-		detectors.add(d4);
+        Detector d = new Detector();
+        d.setFieldName("Integer_Value");
+        d.setByFieldName("ts_hash");
+        detectors.add(d);
+        Detector d2 = new Detector();
+        d2.setFunction("count");
+        d2.setByFieldName("ipaddress");
+        detectors.add(d2);
+        Detector d3 = new Detector();
+        d3.setFunction("max");
+        d3.setFieldName("Integer_Value");
+        d3.setOverFieldName("ts_hash");
+        detectors.add(d3);
+        Detector d4 = new Detector();
+        d4.setFunction("rare");
+        d4.setFieldName("ipaddress");
+        d4.setPartitionFieldName("host");
+        detectors.add(d4);
 
-		AnalysisConfig config = new AnalysisConfig();
-		config.setDetectors(detectors);
+        AnalysisConfig config = new AnalysisConfig();
+        config.setDetectors(detectors);
 
-		ByteArrayOutputStream ba = new ByteArrayOutputStream();
-		try (OutputStreamWriter osw = new OutputStreamWriter(ba, "UTF-8"))
-		{
-			BasicConfigurator.configure();
-			Logger logger = Logger.getLogger(FieldConfigWriterTest.class);
+        ByteArrayOutputStream ba = new ByteArrayOutputStream();
+        try (OutputStreamWriter osw = new OutputStreamWriter(ba, "UTF-8"))
+        {
+            BasicConfigurator.configure();
+            Logger logger = Logger.getLogger(FieldConfigWriterTest.class);
 
-			new FieldConfigWriter(config, osw, logger).write();
-		}
+            new FieldConfigWriter(config, osw, logger).write();
+        }
 
-		// read the ini file - all the settings are in the global section
-		StringReader reader = new StringReader(ba.toString("UTF-8"));
+        // read the ini file - all the settings are in the global section
+        StringReader reader = new StringReader(ba.toString("UTF-8"));
 
-		Config iniConfig = new Config();
-		iniConfig.setLineSeparator(new String(new char [] {ProcessCtrl.NEW_LINE}));
-		iniConfig.setGlobalSection(true);
+        Config iniConfig = new Config();
+        iniConfig.setLineSeparator(new String(new char [] {ProcessCtrl.NEW_LINE}));
+        iniConfig.setGlobalSection(true);
 
-		Ini fieldConfig = new Ini();
-		fieldConfig.setConfig(iniConfig);
-		fieldConfig.load(reader);
+        Ini fieldConfig = new Ini();
+        fieldConfig.setConfig(iniConfig);
+        fieldConfig.load(reader);
 
-		Section section = fieldConfig.get(iniConfig.getGlobalSectionName());
+        Section section = fieldConfig.get(iniConfig.getGlobalSectionName());
 
-		Assert.assertEquals(detectors.size(), section.size());
+        Assert.assertEquals(detectors.size(), section.size());
 
-		String value = fieldConfig.get(iniConfig.getGlobalSectionName(), "Integer_Value-ts_hash.by");
-		Assert.assertEquals("ts_hash", value);
-		value = fieldConfig.get(iniConfig.getGlobalSectionName(), "count-ipaddress.by");
-		Assert.assertEquals("ipaddress", value);
-		value = fieldConfig.get(iniConfig.getGlobalSectionName(), "max(Integer_Value)-ts_hash.over");
-		Assert.assertEquals("ts_hash", value);
-		value = fieldConfig.get(iniConfig.getGlobalSectionName(), "rare(ipaddress)-host.partition");
-		Assert.assertEquals("host", value);
-	}
+        String value = fieldConfig.get(iniConfig.getGlobalSectionName(), "Integer_Value-ts_hash.by");
+        Assert.assertEquals("ts_hash", value);
+        value = fieldConfig.get(iniConfig.getGlobalSectionName(), "count-ipaddress.by");
+        Assert.assertEquals("ipaddress", value);
+        value = fieldConfig.get(iniConfig.getGlobalSectionName(), "max(Integer_Value)-ts_hash.over");
+        Assert.assertEquals("ts_hash", value);
+        value = fieldConfig.get(iniConfig.getGlobalSectionName(), "rare(ipaddress)-host.partition");
+        Assert.assertEquals("host", value);
+    }
 }
