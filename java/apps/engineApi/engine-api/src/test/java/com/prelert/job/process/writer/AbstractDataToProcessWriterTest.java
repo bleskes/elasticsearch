@@ -165,13 +165,13 @@ public class AbstractDataToProcessWriterTest
 		AnalysisConfig ac = new AnalysisConfig();
         Detector detector = new Detector();
         detector.setFieldName("value");
-        detector.setByFieldName(TransformType.DOMAIN_LOOKUP.defaultOutputNames().get(0));
-        detector.setOverFieldName(TransformType.DOMAIN_LOOKUP.defaultOutputNames().get(1));
+        detector.setByFieldName(TransformType.DOMAIN_SPLIT.defaultOutputNames().get(0));
+        detector.setOverFieldName(TransformType.DOMAIN_SPLIT.defaultOutputNames().get(1));
         ac.setDetectors(Arrays.asList(detector));
 
         TransformConfig tc = new TransformConfig();
         tc.setInputs(Arrays.asList("domain"));
-        tc.setTransform(TransformType.Names.DOMAIN_LOOKUP_NAME);
+        tc.setTransform(TransformType.Names.DOMAIN_SPLIT_NAME);
 
         TransformConfigs transforms = new TransformConfigs(Arrays.asList(tc));
 
@@ -199,7 +199,7 @@ public class AbstractDataToProcessWriterTest
 
 		Map<String, Integer> outputIndicies = writer.getOutputFieldIndicies();
 
-		List<String> allOutputs = new ArrayList<>(TransformType.DOMAIN_LOOKUP.defaultOutputNames());
+		List<String> allOutputs = new ArrayList<>(TransformType.DOMAIN_SPLIT.defaultOutputNames());
 		allOutputs.add("value");
 		Collections.sort(allOutputs);  // outputs are in alphabetical order
 
@@ -224,11 +224,11 @@ public class AbstractDataToProcessWriterTest
         assertEquals(tr.getReadIndicies().get(0), new TransformIndex(0, 1));
 
         List<TransformIndex> writeIndicies = new ArrayList<>();
-		int [] outIndices = new int [TransformType.DOMAIN_LOOKUP.defaultOutputNames().size()];
+		int [] outIndices = new int [TransformType.DOMAIN_SPLIT.defaultOutputNames().size()];
 		for (int i = 0; i < outIndices.length; i++)
 		{
 			writeIndicies.add(new TransformIndex(2,
-			                allOutputs.indexOf(TransformType.DOMAIN_LOOKUP.defaultOutputNames().get(i)) + 1));
+			                allOutputs.indexOf(TransformType.DOMAIN_SPLIT.defaultOutputNames().get(i)) + 1));
 		}
 		assertEquals(writeIndicies, tr.getWriteIndicies());
 
@@ -236,9 +236,9 @@ public class AbstractDataToProcessWriterTest
         // The persister's field mappings are the same as the output indicies
         assertArrayEquals(new String[] {"value"}, persister.getFieldNames());
         assertArrayEquals(new int [] {outputIndicies.get("value")}, persister.getFieldMappings());
-        assertArrayEquals(new int [] {outputIndicies.get(TransformType.DOMAIN_LOOKUP.defaultOutputNames().get(0))},
+        assertArrayEquals(new int [] {outputIndicies.get(TransformType.DOMAIN_SPLIT.defaultOutputNames().get(0))},
                                     persister.getByFieldMappings());
-        assertArrayEquals(new int [] {outputIndicies.get(TransformType.DOMAIN_LOOKUP.defaultOutputNames().get(1))},
+        assertArrayEquals(new int [] {outputIndicies.get(TransformType.DOMAIN_SPLIT.defaultOutputNames().get(1))},
                                     persister.getOverFieldMappings());
         assertArrayEquals(new int [0],  persister.getPartitionFieldMappings());
 	}
@@ -261,12 +261,12 @@ public class AbstractDataToProcessWriterTest
 		AnalysisConfig ac = new AnalysisConfig();
         Detector detector = new Detector();
         detector.setFieldName("value");
-        detector.setByFieldName(TransformType.DOMAIN_LOOKUP.defaultOutputNames().get(0));
+        detector.setByFieldName(TransformType.DOMAIN_SPLIT.defaultOutputNames().get(0));
         ac.setDetectors(Arrays.asList(detector));
 
         TransformConfig tc = new TransformConfig();
         tc.setInputs(Arrays.asList("domain"));
-        tc.setTransform(TransformType.Names.DOMAIN_LOOKUP_NAME);
+        tc.setTransform(TransformType.Names.DOMAIN_SPLIT_NAME);
 
         TransformConfigs transforms = new TransformConfigs(Arrays.asList(tc));
 
@@ -295,7 +295,7 @@ public class AbstractDataToProcessWriterTest
 		Map<String, Integer> outputIndicies = writer.getOutputFieldIndicies();
 
 		List<String> allOutputs = new ArrayList<>();
-		allOutputs.add(TransformType.DOMAIN_LOOKUP.defaultOutputNames().get(0));
+		allOutputs.add(TransformType.DOMAIN_SPLIT.defaultOutputNames().get(0));
 		allOutputs.add("value");
 		Collections.sort(allOutputs);  // outputs are in alphabetical order
 
@@ -320,14 +320,14 @@ public class AbstractDataToProcessWriterTest
         assertEquals(tr.getReadIndicies().get(0), new TransformIndex(0, 1));
 
 		TransformIndex ti = new TransformIndex(2,
-		                allOutputs.indexOf(TransformType.DOMAIN_LOOKUP.defaultOutputNames().get(0)) + 1);
+		                allOutputs.indexOf(TransformType.DOMAIN_SPLIT.defaultOutputNames().get(0)) + 1);
 		assertEquals(tr.getWriteIndicies().get(0), ti);
 
 
         // The persister's field mappings are the same as the output indicies
         assertArrayEquals(new String[] {"value"}, persister.getFieldNames());
         assertArrayEquals(new int [] {outputIndicies.get("value")}, persister.getFieldMappings());
-        assertArrayEquals(new int [] {outputIndicies.get(TransformType.DOMAIN_LOOKUP.defaultOutputNames().get(0))},
+        assertArrayEquals(new int [] {outputIndicies.get(TransformType.DOMAIN_SPLIT.defaultOutputNames().get(0))},
                 persister.getByFieldMappings());
         assertArrayEquals(new int [0], persister.getOverFieldMappings());
         assertArrayEquals(new int [0],  persister.getPartitionFieldMappings());
@@ -352,7 +352,7 @@ public class AbstractDataToProcessWriterTest
         AnalysisConfig ac = new AnalysisConfig();
         Detector detector = new Detector();
         detector.setFieldName("value");
-        detector.setByFieldName(TransformType.DOMAIN_LOOKUP.defaultOutputNames().get(0));
+        detector.setByFieldName(TransformType.DOMAIN_SPLIT.defaultOutputNames().get(0));
         ac.setDetectors(Arrays.asList(detector));
 
         TransformConfig concatTc = new TransformConfig();
@@ -362,7 +362,7 @@ public class AbstractDataToProcessWriterTest
 
         TransformConfig hrdTc = new TransformConfig();
         hrdTc.setInputs(Arrays.asList("domain"));
-        hrdTc.setTransform(TransformType.Names.DOMAIN_LOOKUP_NAME);
+        hrdTc.setTransform(TransformType.Names.DOMAIN_SPLIT_NAME);
 
         TransformConfigs transforms = new TransformConfigs(Arrays.asList(concatTc, hrdTc));
 

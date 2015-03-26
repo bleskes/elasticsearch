@@ -218,7 +218,7 @@ public class TransformConfigsTest
     private TransformConfig createHrdTransform(List<String> inputs, List<String> outputs)
     {
         TransformConfig concat = new TransformConfig();
-        concat.setTransform(TransformType.DOMAIN_LOOKUP.prettyName());
+        concat.setTransform(TransformType.DOMAIN_SPLIT.prettyName());
         concat.setInputs(inputs);
         concat.setOutputs(outputs);
         return concat;

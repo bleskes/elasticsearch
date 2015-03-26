@@ -120,7 +120,7 @@ public class TransformFactory
 
 		switch (type)
 		{
-			case DOMAIN_LOOKUP:
+			case DOMAIN_SPLIT:
 				return new HighestRegisteredDomain(readIndicies, writeIndicies, logger);
 			case CONCAT:
 				return new Concat(readIndicies, writeIndicies, logger);

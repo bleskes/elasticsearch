@@ -70,9 +70,9 @@ public class TransformTypeTest
         assertTrue(TransformType.CONCAT.verify(conf));
 
         conf = new TransformConfig();
-        conf.setTransform(TransformType.DOMAIN_LOOKUP.prettyName());
+        conf.setTransform(TransformType.DOMAIN_SPLIT.prettyName());
         conf.setInputs(Arrays.asList("dns"));
-        assertTrue(TransformType.DOMAIN_LOOKUP.verify(conf));
+        assertTrue(TransformType.DOMAIN_SPLIT.verify(conf));
     }
 
     @Test
@@ -86,9 +86,9 @@ public class TransformTypeTest
         tryVerify(TransformType.CONCAT, conf);
 
         conf = new TransformConfig();
-        conf.setTransform(TransformType.DOMAIN_LOOKUP.prettyName());
+        conf.setTransform(TransformType.DOMAIN_SPLIT.prettyName());
         conf.setInputs(Arrays.asList());
-        tryVerify(TransformType.DOMAIN_LOOKUP, conf);
+        tryVerify(TransformType.DOMAIN_SPLIT, conf);
 
     }
 

@@ -288,7 +288,7 @@ public class JobConfigurationTest
         JobConfiguration jc = buildJobConfigurationNoTransforms();
 
         TransformConfig tc = new TransformConfig();
-        tc.setTransform(TransformType.Names.DOMAIN_LOOKUP_NAME);
+        tc.setTransform(TransformType.Names.DOMAIN_SPLIT_NAME);
         tc.setInputs(Arrays.asList("dns"));
 
         jc.setTransforms(Arrays.asList(tc));
@@ -305,7 +305,7 @@ public class JobConfigurationTest
         }
 
 
-        jc.getAnalysisConfig().getDetectors().get(0).setFieldName(TransformType.DOMAIN_LOOKUP.defaultOutputNames().get(0));
+        jc.getAnalysisConfig().getDetectors().get(0).setFieldName(TransformType.DOMAIN_SPLIT.defaultOutputNames().get(0));
         assertTrue(jc.verify());
     }
 
@@ -344,7 +344,7 @@ public class JobConfigurationTest
         DataDescription dc = new DataDescription();
 
         TransformConfig tc = new TransformConfig();
-        tc.setTransform(TransformType.Names.DOMAIN_LOOKUP_NAME);
+        tc.setTransform(TransformType.Names.DOMAIN_SPLIT_NAME);
         tc.setInputs(Arrays.asList("dns"));
 
         jc.setAnalysisConfig(ac);
