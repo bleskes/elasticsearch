@@ -19,6 +19,7 @@ package org.elasticsearch.watcher.input;
 
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchRequestBuilder;
+import org.elasticsearch.watcher.input.http.HttpInput;
 import org.elasticsearch.watcher.input.search.SearchInput;
 import org.elasticsearch.watcher.input.simple.SimpleInput;
 
@@ -47,5 +48,9 @@ public final class InputBuilders {
 
     public static SimpleInput.SourceBuilder simpleInput(Map<String, Object> data) {
         return new SimpleInput.SourceBuilder(data);
+    }
+
+    public static HttpInput.SourceBuilder httpInput() {
+        return new HttpInput.SourceBuilder();
     }
 }

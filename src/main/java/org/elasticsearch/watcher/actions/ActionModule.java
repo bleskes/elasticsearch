@@ -17,14 +17,13 @@
 
 package org.elasticsearch.watcher.actions;
 
+import org.elasticsearch.common.inject.AbstractModule;
+import org.elasticsearch.common.inject.multibindings.MapBinder;
 import org.elasticsearch.watcher.actions.email.EmailAction;
 import org.elasticsearch.watcher.actions.email.service.EmailService;
 import org.elasticsearch.watcher.actions.email.service.InternalEmailService;
 import org.elasticsearch.watcher.actions.index.IndexAction;
-import org.elasticsearch.watcher.actions.webhook.HttpClient;
 import org.elasticsearch.watcher.actions.webhook.WebhookAction;
-import org.elasticsearch.common.inject.AbstractModule;
-import org.elasticsearch.common.inject.multibindings.MapBinder;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -58,7 +57,6 @@ public class ActionModule extends AbstractModule {
         }
 
         bind(ActionRegistry.class).asEagerSingleton();
-        bind(HttpClient.class).asEagerSingleton();
         bind(EmailService.class).to(InternalEmailService.class).asEagerSingleton();
     }
 
