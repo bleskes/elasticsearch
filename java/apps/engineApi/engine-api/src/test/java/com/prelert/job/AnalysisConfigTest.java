@@ -42,6 +42,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import com.prelert.job.exceptions.JobConfigurationException;
+import com.prelert.rs.data.ErrorCode;
 
 /**
  * Tests the configured fields in the analysis are correct
@@ -177,6 +178,119 @@ public class AnalysisConfigTest
         }
 
         Assert.assertEquals("summaryCount", ac.getSummaryCountFieldName());
+    }
+
+    @Test
+    public void testVerify_throws()
+    throws JobConfigurationException
+    {
+        AnalysisConfig ac = new AnalysisConfig();
+
+        // no detector config
+        Detector d = new Detector();
+        ac.setDetectors(Arrays.asList(new Detector[] {d}));
+        try
+        {
+            ac.verify();
+            Assert.assertTrue(false); // shouldn't get here
+        }
+        catch (JobConfigurationException e)
+        {
+            assertEquals(ErrorCode.INVALID_FIELD_SELECTION, e.getErrorCode());
+        }
+
+        // count works with no fields
+        d.setFunction("count");
+        ac.verify();
+
+        d.setFunction("distinct_count");
+        try
+        {
+            ac.verify();
+            Assert.assertTrue(false); // shouldn't get here
+        }
+        catch (JobConfigurationException e)
+        {
+            assertEquals(ErrorCode.INVALID_FIELD_SELECTION, e.getErrorCode());
+        }
+
+        // should work now
+        d.setFieldName("somefield");
+        d.setOverFieldName("over");
+        ac.verify();
+
+        d.setFunction("info_content");
+        ac.verify();
+
+        d.setByFieldName("by");
+        try
+        {
+            ac.verify();
+            Assert.assertTrue(false); // shouldn't get here
+        }
+        catch (JobConfigurationException e)
+        {
+            assertEquals(ErrorCode.INVALID_FIELD_SELECTION, e.getErrorCode());
+        }
+
+        d.setByFieldName(null);
+        d.setFunction("made_up_function");
+        try
+        {
+            ac.verify();
+            Assert.assertTrue(false); // shouldn't get here
+        }
+        catch (JobConfigurationException e)
+        {
+            assertEquals(ErrorCode.UNKNOWN_FUNCTION, e.getErrorCode());
+        }
+
+        ac.setBatchSpan(-1L);
+        try
+        {
+            ac.verify();
+            Assert.assertTrue(false); // shouldn't get here
+        }
+        catch (JobConfigurationException e)
+        {
+            assertEquals(ErrorCode.INVALID_VALUE, e.getErrorCode());
+        }
+
+        ac = new AnalysisConfig();
+        ac.setBucketSpan(-1L);
+        try
+        {
+            ac.verify();
+            Assert.assertTrue(false); // shouldn't get here
+        }
+        catch (JobConfigurationException e)
+        {
+            assertEquals(ErrorCode.INVALID_VALUE, e.getErrorCode());
+        }
+
+        ac = new AnalysisConfig();
+        ac.setPeriod(-1L);
+        try
+        {
+            ac.verify();
+            Assert.assertTrue(false); // shouldn't get here
+        }
+        catch (JobConfigurationException e)
+        {
+            assertEquals(ErrorCode.INVALID_VALUE, e.getErrorCode());
+        }
+
+        ac = new AnalysisConfig();
+        ac.setLatency(-1L);
+        try
+        {
+            ac.verify();
+            Assert.assertTrue(false); // shouldn't get here
+        }
+        catch (JobConfigurationException e)
+        {
+            assertEquals(ErrorCode.INVALID_VALUE, e.getErrorCode());
+        }
     }
 
     @Test

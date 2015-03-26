@@ -98,149 +98,6 @@ public class JobConfigurationTest
     }
 
     @Test
-    public void dataDescriptionTest()
-    throws JobConfigurationException
-    {
-        String badFormat = "YYY-mm-UU hh:mm:ssY";
-        DataDescription dd = new DataDescription();
-
-        dd.setTimeFormat(badFormat);
-        try
-        {
-            dd.verify();
-            // shouldn't get here
-            Assert.assertTrue("Invalid format should throw", false);
-        }
-        catch (JobConfigurationException e)
-        {
-        }
-
-        String goodFormat = "yyyy.MM.dd G 'at' HH:mm:ss z";
-        dd.setTimeFormat(goodFormat);
-        Assert.assertTrue("Good time format", dd.verify());
-    }
-
-
-    @Test
-    public void analysisConfigTest()
-    throws JobConfigurationException
-    {
-        AnalysisConfig ac = new AnalysisConfig();
-
-        // no detector config
-        Detector d = new Detector();
-        ac.setDetectors(Arrays.asList(new Detector[] {d}));
-        try
-        {
-            ac.verify();
-            Assert.assertTrue(false); // shouldn't get here
-        }
-        catch (JobConfigurationException e)
-        {
-        }
-
-        // count works with no fields
-        d.setFunction("count");
-        ac.verify();
-
-        d.setFunction("distinct_count");
-        try
-        {
-            ac.verify();
-            Assert.assertTrue(false); // shouldn't get here
-        }
-        catch (JobConfigurationException e)
-        {
-        }
-
-        // should work now
-        d.setFieldName("somefield");
-        d.setOverFieldName("over");
-        ac.verify();
-
-        d.setFunction("info_content");
-        ac.verify();
-
-        d.setByFieldName("by");
-        try
-        {
-            ac.verify();
-            Assert.assertTrue(false); // shouldn't get here
-        }
-        catch (JobConfigurationException e)
-        {
-        }
-
-        d.setByFieldName(null);
-        d.setFunction("made_up_function");
-        try
-        {
-            ac.verify();
-            Assert.assertTrue(false); // shouldn't get here
-        }
-        catch (JobConfigurationException e)
-        {
-        }
-
-        ac.setBatchSpan(-1L);
-        try
-        {
-            ac.verify();
-            Assert.assertTrue(false); // shouldn't get here
-        }
-        catch (JobConfigurationException e)
-        {
-        }
-
-        ac = new AnalysisConfig();
-        ac.setBucketSpan(-1L);
-        try
-        {
-            ac.verify();
-            Assert.assertTrue(false); // shouldn't get here
-        }
-        catch (JobConfigurationException e)
-        {
-        }
-
-        ac = new AnalysisConfig();
-        ac.setPeriod(-1L);
-        try
-        {
-            ac.verify();
-            Assert.assertTrue(false); // shouldn't get here
-        }
-        catch (JobConfigurationException e)
-        {
-        }
-    }
-
-    @Test
-    public void analysisLimitsTest()
-    throws JobConfigurationException
-    {
-        AnalysisLimits ao = new AnalysisLimits(-1);
-        try
-        {
-            ao.verify();
-            Assert.assertTrue(false); // shouldn't get here
-        }
-        catch (JobConfigurationException e)
-        {
-        }
-
-        ao = new AnalysisLimits(300);
-        try
-        {
-            ao.verify();
-        }
-        catch (JobConfigurationException e)
-        {
-            Assert.assertTrue(false); // shouldn't get here
-        }
-    }
-
-    @Test
     public void jobConfigurationTest()
     throws JobConfigurationException
     {
@@ -326,6 +183,7 @@ public class JobConfigurationTest
         }
         catch (JobConfigurationException e)
         {
+            Assert.assertEquals(ErrorCode.INVALID_VALUE, e.getErrorCode());
         }
 
         jc.setAnalysisLimits(new AnalysisLimits(1000));
@@ -342,12 +200,12 @@ public class JobConfigurationTest
         }
         catch (JobConfigurationException e)
         {
+            Assert.assertEquals(ErrorCode.INVALID_DATE_FORMAT, e.getErrorCode());
         }
 
 
         dc = new DataDescription();
         jc.setDataDescription(dc);
-
 
         jc.setTimeout(-1L);
         try
@@ -357,6 +215,7 @@ public class JobConfigurationTest
         }
         catch (JobConfigurationException e)
         {
+            Assert.assertEquals(ErrorCode.INVALID_VALUE, e.getErrorCode());
         }
 
         jc.setTimeout(300L);
@@ -382,11 +241,13 @@ public class JobConfigurationTest
         d2.setOverFieldName("over");
 
         AnalysisConfig ac = new AnalysisConfig();
+        ac.setSummaryCountFieldName("agg");
         ac.setDetectors(Arrays.asList(new Detector[] {d1, d2}));
 
         List<String> analysisFields = ac.analysisFields();
-        Assert.assertTrue(analysisFields.size() == 4);
+        Assert.assertTrue(analysisFields.size() == 5);
 
+        Assert.assertTrue(analysisFields.contains("agg"));
         Assert.assertTrue(analysisFields.contains("field"));
         Assert.assertTrue(analysisFields.contains("by"));
         Assert.assertTrue(analysisFields.contains("field2"));
@@ -422,7 +283,50 @@ public class JobConfigurationTest
 
 
     @Test
-    public void test_checkTransformOutputIsInAnalysisFields() throws JobConfigurationException
+    public void testCheckTransformOutputIsUsed_throws() throws JobConfigurationException
+    {
+        JobConfiguration jc = buildJobConfigurationNoTransforms();
+
+        TransformConfig tc = new TransformConfig();
+        tc.setTransform(TransformType.Names.DOMAIN_LOOKUP_NAME);
+        tc.setInputs(Arrays.asList("dns"));
+
+        jc.setTransforms(Arrays.asList(tc));
+
+        try
+        {
+            jc.verify();
+            fail("verify should throw"); // shouldn't get here
+        }
+        catch (JobConfigurationException e)
+        {
+            assertTrue(e instanceof TransformConfigurationException);
+            assertEquals(e.getErrorCode(), ErrorCode.TRANSFORM_OUTPUTS_UNUSED);
+        }
+
+
+        jc.getAnalysisConfig().getDetectors().get(0).setFieldName(TransformType.DOMAIN_LOOKUP.defaultOutputNames().get(0));
+        assertTrue(jc.verify());
+    }
+
+    @Test
+    public void testCheckTransformOutputIsUsed_transformHasNoOutput()
+    throws JobConfigurationException
+    {
+        JobConfiguration jc = buildJobConfigurationNoTransforms();
+
+        // The exclude filter has no output
+        TransformConfig tc = new TransformConfig();
+        tc.setTransform(TransformType.Names.EXCLUDE_FILTER);
+        tc.setArguments(Arrays.asList("whitelisted_host"));
+        tc.setInputs(Arrays.asList("dns"));
+
+        jc.setTransforms(Arrays.asList(tc));
+
+        jc.verify();
+    }
+
+    private JobConfiguration buildJobConfigurationNoTransforms()
     {
         JobConfiguration jc = new JobConfiguration();
 
@@ -443,23 +347,11 @@ public class JobConfigurationTest
         tc.setTransform(TransformType.Names.DOMAIN_LOOKUP_NAME);
         tc.setInputs(Arrays.asList("dns"));
 
-        jc.setTransforms(Arrays.asList(tc));
         jc.setAnalysisConfig(ac);
         jc.setDataDescription(dc);
 
-        try
-        {
-            jc.verify();
-            fail("verify should throw"); // shouldn't get here
-        }
-        catch (JobConfigurationException e)
-        {
-            assertTrue(e instanceof TransformConfigurationException);
-            assertEquals(e.getErrorCode(), ErrorCode.TRANSFORM_OUTPUTS_UNUSED);
-        }
-
-        d1.setFieldName(TransformType.DOMAIN_LOOKUP.defaultOutputNames().get(0));
-        assertTrue(jc.verify());
+        return jc;
     }
+
 
 }

@@ -30,6 +30,7 @@ package com.prelert.job;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import junit.framework.Assert;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -98,6 +99,29 @@ public class DataDescriptionTest
         description.setTimeFormat("invalid");
 
         description.verify();
+    }
+
+    @Test
+    public void testVerify_GivenTimeFormatIsInvalidDateParseFormat()
+    throws JobConfigurationException
+    {
+        String badFormat = "YYY-mm-UU hh:mm:ssY";
+        DataDescription dd = new DataDescription();
+
+        dd.setTimeFormat(badFormat);
+        try
+        {
+            dd.verify();
+            // shouldn't get here
+            Assert.assertTrue("Invalid format should throw", false);
+        }
+        catch (JobConfigurationException e)
+        {
+        }
+
+        String goodFormat = "yyyy.MM.dd G 'at' HH:mm:ss z";
+        dd.setTimeFormat(goodFormat);
+        Assert.assertTrue("Good time format", dd.verify());
     }
 
     @Test

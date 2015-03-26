@@ -27,14 +27,14 @@
 
 package com.prelert.job;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import com.prelert.job.exceptions.JobConfigurationException;
+import com.prelert.rs.data.ErrorCode;
 
 public class AnalysisLimitsTest
 {
@@ -51,6 +51,33 @@ public class AnalysisLimitsTest
         limits.setModelMemoryLimit(-1L);
 
         limits.verify();
+    }
+
+
+    @Test
+    public void testVerify_modelMemoryLimitThrowsException()
+    throws JobConfigurationException
+    {
+        AnalysisLimits ao = new AnalysisLimits(-1);
+        try
+        {
+            ao.verify();
+            fail("Verify should throw");
+        }
+        catch (JobConfigurationException e)
+        {
+            assertEquals(ErrorCode.INVALID_VALUE, e.getErrorCode());
+        }
+
+        ao = new AnalysisLimits(300);
+        try
+        {
+            ao.verify();
+        }
+        catch (JobConfigurationException e)
+        {
+            fail("verify should not throw");
+        }
     }
 
     @Test
