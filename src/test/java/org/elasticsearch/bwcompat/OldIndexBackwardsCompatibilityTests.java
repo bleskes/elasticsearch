@@ -30,6 +30,7 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.io.FileSystemUtils;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.index.engine.EngineConfig;
 import org.elasticsearch.index.merge.policy.MergePolicyModule;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.node.Node;
@@ -111,8 +112,7 @@ public class OldIndexBackwardsCompatibilityTests extends ElasticsearchIntegratio
     String loadIndex(String indexFile) throws Exception {
         Path unzipDir = newTempDirPath();
         Path unzipDataDir = unzipDir.resolve("data");
-        String indexDir = indexFile.replace(".zip", "");
-        String indexName = indexDir.toLowerCase(Locale.ROOT);
+        String indexName = indexFile.replace(".zip", "").toLowerCase(Locale.ROOT);
         
         // decompress the index
         Path backwardsIndex = Paths.get(getClass().getResource(indexFile).toURI());
@@ -130,15 +130,7 @@ public class OldIndexBackwardsCompatibilityTests extends ElasticsearchIntegratio
         // move to the real data dir
         Path src = list[0].resolve("nodes/0/indices/" + indexName);
         Path dest = indicesDir.resolve(indexName);
-        /*StringBuffer msg = new StringBuffer();
-        msg.append("[" + indexFile + "] missing index dir: " + src.toString() + "\nContents:\n");
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(src.getParent())) {
-            for (Path entry: stream) {
-                msg.append(entry.toString() + "\n");
-            }
-        }
-        assertTrue(msg.toString(), Files.exists(src));
-        */assertTrue("[" + indexFile + "] missing index dir: " + src.toString(), Files.exists(src));
+        assertTrue("[" + indexFile + "] missing index dir: " + src.toString(), Files.exists(src));
         Files.move(src, dest);
         assertFalse(Files.exists(src));
         assertTrue(Files.exists(dest));
@@ -186,9 +178,9 @@ public class OldIndexBackwardsCompatibilityTests extends ElasticsearchIntegratio
         Collections.shuffle(indexes, getRandom());
         for (String index : indexes) {
             long startTime = System.currentTimeMillis();
-            logger.info("Testing old index " + index);
+            logger.info("--> Testing old index " + index);
             assertOldIndexWorks(index);
-            logger.info("Done with " + index + ", took " + ((System.currentTimeMillis() - startTime)/1000.0) + " seconds");
+            logger.info("--> Done testing " + index + ", took " + ((System.currentTimeMillis() - startTime)/1000.0) + " seconds");
         }
     }
 
@@ -223,12 +215,14 @@ public class OldIndexBackwardsCompatibilityTests extends ElasticsearchIntegratio
     }
 
     void assertBasicSearchWorks(String indexName) {
+        logger.info("--> testing basic search");
         SearchRequestBuilder searchReq = client().prepareSearch(indexName).setQuery(QueryBuilders.matchAllQuery());
         SearchResponse searchRsp = searchReq.get();
         ElasticsearchAssertions.assertNoFailures(searchRsp);
         long numDocs = searchRsp.getHits().getTotalHits();
         logger.info("Found " + numDocs + " in old index");
-        
+
+        logger.info("--> testing basic search with sort");
         searchReq.addSort("long_sort", SortOrder.ASC);
         ElasticsearchAssertions.assertNoFailures(searchReq.get());
     }
@@ -245,9 +239,9 @@ public class OldIndexBackwardsCompatibilityTests extends ElasticsearchIntegratio
         GetResponse getRsp = client().prepareGet(indexName, "doc", docId).get();
         Map<String, Object> source = getRsp.getSourceAsMap();
         assertThat(source, Matchers.hasKey("foo"));
-
+        
         assertAcked(client().admin().indices().prepareUpdateSettings(indexName).setSettings(ImmutableSettings.builder()
-            .put("refresh_interval", "1s")
+            .put("refresh_interval", EngineConfig.DEFAULT_REFRESH_INTERVAL)
             .build()));
     }
 
@@ -255,7 +249,7 @@ public class OldIndexBackwardsCompatibilityTests extends ElasticsearchIntegratio
         final int numReplicas = randomIntBetween(2, 3);
         logger.debug("Creating [{}] replicas for index [{}]", numReplicas, indexName);
         assertAcked(client().admin().indices().prepareUpdateSettings(indexName).setSettings(ImmutableSettings.builder()
-            .put("number_of_replicas", numReplicas)
+                .put("number_of_replicas", numReplicas)
         ).execute().actionGet());
         ensureGreen(indexName);
         
