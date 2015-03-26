@@ -37,17 +37,13 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.apache.commons.lang.SystemUtils;
 import org.apache.log4j.Logger;
 
-import com.prelert.job.AnalysisConfig;
 import com.prelert.job.AnalysisLimits;
 import com.prelert.job.DataDescription;
-import com.prelert.job.Detector;
 import com.prelert.job.JobDetails;
 import com.prelert.job.quantiles.QuantilesState;
 
@@ -209,17 +205,7 @@ public class ProcessCtrl
     public static final String BY_ARG = "by";
     public static final String OVER_ARG = "over";
 
-    /*
-     * Field config file strings
-     */
-    public static final String DOT_IS_ENABLED = ".isEnabled";
-    public static final String DOT_USE_NULL = ".useNull";
-    public static final String DOT_BY = ".by";
-    public static final String DOT_OVER = ".over";
-    public static final String DOT_PARTITION = ".partition";
-    public static final String DOT_EXCLUDE_FREQUENT = ".excludefrequent";
     public static final char NEW_LINE = '\n';
-
 
     /*
      * The configuration fields used in limits.conf
@@ -620,7 +606,7 @@ public class ProcessCtrl
                     new FileOutputStream(fieldConfigFile),
                     StandardCharsets.UTF_8))
             {
-                writeFieldConfig(job.getAnalysisConfig(), osw, logger);
+                new FieldConfigWriter(job.getAnalysisConfig(), osw, logger).write();
             }
 
             String fieldConfig = FIELD_CONFIG_ARG + fieldConfigFile.toString();
@@ -671,110 +657,6 @@ public class ProcessCtrl
 
         return f.exists() && !f.isDirectory();
     }
-
-
-    /**
-     * Write the Prelert autodetect field options to the output stream.
-     *
-     * @param config The configuration to write
-     * @param osw Stream to write to
-     * @param logger
-     * @throws IOException
-     */
-    public static void writeFieldConfig(AnalysisConfig config, OutputStreamWriter osw,
-            Logger logger)
-    throws IOException
-    {
-        StringBuilder contents = new StringBuilder();
-        if (isNotNullOrEmpty(config.getCategorizationFieldName()))
-        {
-            contents.append("categorizationfield").append(" = ")
-                    .append(config.getCategorizationFieldName()).append(NEW_LINE);
-        }
-
-        Set<String> detectorKeys = new HashSet<>();
-        for (Detector detector : config.getDetectors())
-        {
-            StringBuilder keyBuilder = new StringBuilder();
-            if (isNotNullOrEmpty(detector.getFunction()))
-            {
-                keyBuilder.append(detector.getFunction());
-                if (detector.getFieldName() != null)
-                {
-                    keyBuilder.append("(")
-                            .append(detector.getFieldName())
-                            .append(")");
-                }
-            }
-            else if (isNotNullOrEmpty(detector.getFieldName()))
-            {
-                keyBuilder.append(detector.getFieldName());
-            }
-
-            if (isNotNullOrEmpty(detector.getByFieldName()))
-            {
-                keyBuilder.append("-").append(detector.getByFieldName());
-            }
-            if (isNotNullOrEmpty(detector.getOverFieldName()))
-            {
-                keyBuilder.append("-").append(detector.getOverFieldName());
-            }
-            if (isNotNullOrEmpty(detector.getPartitionFieldName()))
-            {
-                keyBuilder.append("-").append(detector.getPartitionFieldName());
-            }
-
-            String key = keyBuilder.toString();
-            if (detectorKeys.contains(key))
-            {
-                logger.warn(String.format(
-                        "Duplicate detector key '%s' ignorning this detector", key));
-                continue;
-            }
-            detectorKeys.add(key);
-
-            // .isEnabled is only necessary if nothing else is going to be added
-            // for this key
-            if (detector.isUseNull() == null &&
-                    isNullOrEmpty(detector.getByFieldName()) &&
-                    isNullOrEmpty(detector.getOverFieldName()) &&
-                    isNullOrEmpty(detector.getPartitionFieldName()))
-            {
-                contents.append(key).append(DOT_IS_ENABLED).append(" = true").append(NEW_LINE);
-            }
-
-            if (detector.isUseNull() != null)
-            {
-                contents.append(key).append(DOT_USE_NULL)
-                    .append(detector.isUseNull() ? " = true" : " = false")
-                    .append(NEW_LINE);
-            }
-
-            if (isNotNullOrEmpty(detector.getExcludeFrequent()))
-            {
-                contents.append(key).append(DOT_EXCLUDE_FREQUENT).append(" = ").
-                    append(detector.getExcludeFrequent()).append(NEW_LINE);
-            }
-
-            if (isNotNullOrEmpty(detector.getByFieldName()))
-            {
-                contents.append(key).append(DOT_BY).append(" = ").append(detector.getByFieldName()).append(NEW_LINE);
-            }
-            if (isNotNullOrEmpty(detector.getOverFieldName()))
-            {
-                contents.append(key).append(DOT_OVER).append(" = ").append(detector.getOverFieldName()).append(NEW_LINE);
-            }
-            if (isNotNullOrEmpty(detector.getPartitionFieldName()))
-            {
-                contents.append(key).append(DOT_PARTITION).append(" = ").append(detector.getPartitionFieldName()).append(NEW_LINE);
-            }
-        }
-
-        logger.debug("FieldConfig: \n" + contents.toString());
-
-        osw.write(contents.toString());
-    }
-
 
     /**
      * The process can be initialised with both sysChangeState and
@@ -874,26 +756,4 @@ public class ProcessCtrl
 
         return stateFile;
     }
-
-
-    /**
-     * Returns true if the string arg is not null and not empty
-     * i.e. it is a valid string
-     * @param arg
-     */
-    private static boolean isNotNullOrEmpty(String arg)
-    {
-        return arg != null && arg.isEmpty() == false;
-    }
-
-    /**
-     * Returns true if the string arg is either null or empty
-     * i.e. it is NOT a valid string
-     * @param arg
-     */
-    private static boolean isNullOrEmpty(String arg)
-    {
-        return arg == null || arg.isEmpty();
-    }
-
 }

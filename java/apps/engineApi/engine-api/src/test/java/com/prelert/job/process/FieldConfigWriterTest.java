@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -46,19 +46,14 @@ import org.junit.Test;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.Detector;
 
-/**
- * Test the functions in {@linkplain com.prelert.job.process.ProcessCtl} for
- * writing the analysis configurations as either config files or comamnd line
- * arguments to autodetect 
- */
-public class FieldConfigTest 
-{		
+public class FieldConfigWriterTest
+{
 	@Test
 	public void testMultipleDetectorsToConfFile()
 	throws IOException
 	{
 		List<Detector> detectors = new ArrayList<>();
-		
+
 		Detector d = new Detector();
 		d.setFieldName("Integer_Value");
 		d.setByFieldName("ts_hash");
@@ -77,34 +72,34 @@ public class FieldConfigTest
 		d4.setFieldName("ipaddress");
 		d4.setPartitionFieldName("host");
 		detectors.add(d4);
-		
+
 		AnalysisConfig config = new AnalysisConfig();
 		config.setDetectors(detectors);
-		
+
 		ByteArrayOutputStream ba = new ByteArrayOutputStream();
 		try (OutputStreamWriter osw = new OutputStreamWriter(ba, "UTF-8"))
 		{
 			BasicConfigurator.configure();
-			Logger logger = Logger.getLogger(FieldConfigTest.class);
-			
-			ProcessCtrl.writeFieldConfig(config, osw, logger);
+			Logger logger = Logger.getLogger(FieldConfigWriterTest.class);
+
+			new FieldConfigWriter(config, osw, logger).write();
 		}
-		
+
 		// read the ini file - all the settings are in the global section
 		StringReader reader = new StringReader(ba.toString("UTF-8"));
-		
+
 		Config iniConfig = new Config();
 		iniConfig.setLineSeparator(new String(new char [] {ProcessCtrl.NEW_LINE}));
 		iniConfig.setGlobalSection(true);
-		
+
 		Ini fieldConfig = new Ini();
 		fieldConfig.setConfig(iniConfig);
 		fieldConfig.load(reader);
-		
+
 		Section section = fieldConfig.get(iniConfig.getGlobalSectionName());
-		
+
 		Assert.assertEquals(detectors.size(), section.size());
-		
+
 		String value = fieldConfig.get(iniConfig.getGlobalSectionName(), "Integer_Value-ts_hash.by");
 		Assert.assertEquals("ts_hash", value);
 		value = fieldConfig.get(iniConfig.getGlobalSectionName(), "count-ipaddress.by");
