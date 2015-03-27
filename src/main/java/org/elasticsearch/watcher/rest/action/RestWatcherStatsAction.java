@@ -49,6 +49,7 @@ public class RestWatcherStatsAction extends WatcherRestHandler {
         watcherClient.watcherStats(new WatcherStatsRequest(), new RestBuilderListener<WatcherStatsResponse>(restChannel) {
             @Override
             public RestResponse buildResponse(WatcherStatsResponse watcherStatsResponse, XContentBuilder builder) throws Exception {
+                builder.startObject();
                 builder.field("watch_service_state", watcherStatsResponse.getWatchServiceState().toString().toLowerCase(Locale.ROOT))
                         .field("watch_count", watcherStatsResponse.getWatchesCount());
 
@@ -56,7 +57,7 @@ public class RestWatcherStatsAction extends WatcherRestHandler {
                         .field("size", watcherStatsResponse.getExecutionQueueSize())
                         .field("max_size", watcherStatsResponse.getWatchExecutionQueueMaxSize())
                         .endObject();
-
+                builder.endObject();
                 return new BytesRestResponse(OK, builder);
 
             }
