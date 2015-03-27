@@ -69,6 +69,10 @@ public class RealmConfig {
         return settings;
     }
 
+    public Settings globalSettings() {
+        return globalSettings;
+    }
+
     public ESLogger logger(Class clazz) {
         return Loggers.getLogger(clazz, globalSettings);
     }

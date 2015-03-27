@@ -22,6 +22,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.shield.authc.activedirectory.ActiveDirectoryRealm;
 import org.elasticsearch.shield.authc.esusers.ESUsersRealm;
 import org.elasticsearch.shield.authc.ldap.LdapRealm;
+import org.elasticsearch.shield.authc.pki.PkiRealm;
 import org.elasticsearch.shield.support.AbstractShieldModule;
 
 /**
@@ -39,6 +40,7 @@ public class AuthenticationModule extends AbstractShieldModule.Node {
         mapBinder.addBinding(ESUsersRealm.TYPE).to(ESUsersRealm.Factory.class).asEagerSingleton();
         mapBinder.addBinding(ActiveDirectoryRealm.TYPE).to(ActiveDirectoryRealm.Factory.class).asEagerSingleton();
         mapBinder.addBinding(LdapRealm.TYPE).to(LdapRealm.Factory.class).asEagerSingleton();
+        mapBinder.addBinding(PkiRealm.TYPE).to(PkiRealm.Factory.class).asEagerSingleton();
 
         bind(Realms.class).asEagerSingleton();
         bind(AuthenticationService.class).to(InternalAuthenticationService.class).asEagerSingleton();
