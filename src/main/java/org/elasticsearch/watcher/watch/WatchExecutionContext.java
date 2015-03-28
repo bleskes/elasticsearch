@@ -17,12 +17,13 @@
 
 package org.elasticsearch.watcher.watch;
 
+import org.elasticsearch.common.joda.time.DateTime;
 import org.elasticsearch.watcher.actions.Action;
 import org.elasticsearch.watcher.condition.Condition;
 import org.elasticsearch.watcher.input.Input;
 import org.elasticsearch.watcher.throttle.Throttler;
 import org.elasticsearch.watcher.transform.Transform;
-import org.elasticsearch.common.joda.time.DateTime;
+import org.elasticsearch.watcher.trigger.TriggerEvent;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -35,8 +36,7 @@ public class WatchExecutionContext {
     private final String id;
     private final Watch watch;
     private final DateTime executionTime;
-    private final DateTime fireTime;
-    private final DateTime scheduledTime;
+    private final TriggerEvent triggerEvent;
 
     private Input.Result inputResult;
     private Condition.Result conditionResult;
@@ -46,12 +46,11 @@ public class WatchExecutionContext {
 
     private Payload payload;
 
-    public WatchExecutionContext(String id, Watch watch, DateTime executionTime, DateTime fireTime, DateTime scheduledTime) {
+    public WatchExecutionContext(String id, Watch watch, DateTime executionTime, TriggerEvent triggerEvent) {
         this.id = id;
         this.watch = watch;
         this.executionTime = executionTime;
-        this.fireTime = fireTime;
-        this.scheduledTime = scheduledTime;
+        this.triggerEvent = triggerEvent;
     }
 
     public String id() {
@@ -66,12 +65,8 @@ public class WatchExecutionContext {
         return executionTime;
     }
 
-    public DateTime fireTime() {
-        return fireTime;
-    }
-
-    public DateTime scheduledTime() {
-        return scheduledTime;
+    public TriggerEvent triggerEvent() {
+        return triggerEvent;
     }
 
     public Payload payload() {

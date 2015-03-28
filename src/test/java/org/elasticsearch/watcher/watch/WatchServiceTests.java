@@ -19,14 +19,15 @@ package org.elasticsearch.watcher.watch;
 
 import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.index.IndexResponse;
-import org.elasticsearch.watcher.WatcherException;
-import org.elasticsearch.watcher.history.HistoryService;
-import org.elasticsearch.watcher.scheduler.Scheduler;
-import org.elasticsearch.watcher.scheduler.schedule.Schedule;
 import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.test.ElasticsearchTestCase;
+import org.elasticsearch.watcher.WatcherException;
+import org.elasticsearch.watcher.history.HistoryService;
+import org.elasticsearch.watcher.trigger.Trigger;
+import org.elasticsearch.watcher.trigger.TriggerEngine;
+import org.elasticsearch.watcher.trigger.TriggerService;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -42,7 +43,7 @@ import static org.mockito.Mockito.*;
  */
 public class WatchServiceTests extends ElasticsearchTestCase {
 
-    private Scheduler scheduler;
+    private TriggerService triggerService;
     private WatchStore watchStore;
     private WatchService watchService;
     private HistoryService historyService;
@@ -50,11 +51,11 @@ public class WatchServiceTests extends ElasticsearchTestCase {
 
     @Before
     public void init() throws Exception {
-        scheduler = mock(Scheduler.class);
+        triggerService = mock(TriggerService.class);
         watchStore = mock(WatchStore.class);
         historyService =  mock(HistoryService.class);
         watchLockService = mock(WatchLockService.class);
-        watchService = new WatchService(ImmutableSettings.EMPTY, scheduler, watchStore, historyService, watchLockService);
+        watchService = new WatchService(ImmutableSettings.EMPTY, triggerService, watchStore, historyService, watchLockService);
         Field field = WatchService.class.getDeclaredField("state");
         field.setAccessible(true);
         AtomicReference<WatchService.State> state = (AtomicReference<WatchService.State>) field.get(watchService);
@@ -75,21 +76,21 @@ public class WatchServiceTests extends ElasticsearchTestCase {
         IndexResponse response = watchService.putWatch("_name", new BytesArray("{}"));
         assertThat(response, sameInstance(indexResponse));
 
-        verify(scheduler, times(1)).add(any(Scheduler.Job.class));
+        verify(triggerService, times(1)).add(any(TriggerEngine.Job.class));
     }
 
     @Test
     public void testPutWatch_NotSchedule() {
-        Schedule schedule = mock(Schedule.class);
+        Trigger trigger = mock(Trigger.class);
 
         IndexResponse indexResponse = mock(IndexResponse.class);
         Watch watch = mock(Watch.class);
-        when(watch.schedule()).thenReturn(schedule);
+        when(watch.trigger()).thenReturn(trigger);
         WatchStore.WatchPut watchPut = mock(WatchStore.WatchPut.class);
         when(watchPut.indexResponse()).thenReturn(indexResponse);
         when(watchPut.current()).thenReturn(watch);
         Watch previousWatch = mock(Watch.class);
-        when(previousWatch.schedule()).thenReturn(schedule);
+        when(previousWatch.trigger()).thenReturn(trigger);
         when(watchPut.previous()).thenReturn(previousWatch);
 
         WatchLockService.Lock lock = mock(WatchLockService.Lock.class);
@@ -98,7 +99,7 @@ public class WatchServiceTests extends ElasticsearchTestCase {
         IndexResponse response = watchService.putWatch("_name", new BytesArray("{}"));
         assertThat(response, sameInstance(indexResponse));
 
-        verifyZeroInteractions(scheduler);
+        verifyZeroInteractions(triggerService);
     }
 
     @Test
@@ -114,7 +115,7 @@ public class WatchServiceTests extends ElasticsearchTestCase {
         WatchStore.WatchDelete watchDelete = watchService.deleteWatch("_name");
 
         assertThat(watchDelete, sameInstance(expectedWatchDelete));
-        verify(scheduler, times(1)).remove("_name");
+        verify(triggerService, times(1)).remove("_name");
     }
 
     @Test
@@ -130,7 +131,7 @@ public class WatchServiceTests extends ElasticsearchTestCase {
         WatchStore.WatchDelete watchDelete = watchService.deleteWatch("_name");
 
         assertThat(watchDelete, sameInstance(expectedWatchDelete));
-        verifyZeroInteractions(scheduler);
+        verifyZeroInteractions(triggerService);
     }
 
     @Test
