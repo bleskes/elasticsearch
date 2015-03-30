@@ -28,15 +28,15 @@
 package com.prelert.job.persistence;
 
 import com.prelert.job.ModelSizeStats;
-
 import com.prelert.job.quantiles.Quantiles;
 import com.prelert.rs.data.Bucket;
+import com.prelert.rs.data.CategoryDefinition;
 
 /**
  * Interface for classes that persist {@linkplain Bucket Buckets} and
  * {@linkplain Quantiles Quantiles}
  */
-public interface JobResultsPersister 
+public interface JobResultsPersister
 {
 	/**
 	 * Persist the result bucket
@@ -44,8 +44,13 @@ public interface JobResultsPersister
 	 */
 	public void persistBucket(Bucket bucket);
 
-
 	/**
+     * Persist the category definition
+     * @param category The category to be persisted
+     */
+    public void persistCategoryDefinition(CategoryDefinition category);
+
+    /**
 	 * Persist the quantiles
 	 * @param quantiles
 	 */
@@ -65,10 +70,10 @@ public interface JobResultsPersister
 
 
 	/**
-	 * Once all the job data has been written this function will be 
+	 * Once all the job data has been written this function will be
 	 * called to commit the data if the implementing persister requries
-	 * it. 
-	 * 
+	 * it.
+	 *
 	 * @return True if successful
 	 */
 	public boolean commitWrites();

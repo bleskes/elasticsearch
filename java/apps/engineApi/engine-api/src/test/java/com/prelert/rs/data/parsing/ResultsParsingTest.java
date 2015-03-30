@@ -27,7 +27,11 @@
 
 package com.prelert.rs.data.parsing;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -46,12 +50,12 @@ import org.junit.Test;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.ModelSizeStats;
 import com.prelert.job.exceptions.UnknownJobException;
-import com.prelert.job.persistence.JobResultsPersister;
 import com.prelert.job.persistence.JobRenormaliser;
+import com.prelert.job.persistence.JobResultsPersister;
 import com.prelert.job.quantiles.Quantiles;
 import com.prelert.rs.data.Bucket;
+import com.prelert.rs.data.CategoryDefinition;
 import com.prelert.rs.data.Detector;
-import com.prelert.rs.data.parsing.AutoDetectResultsParser;
 import com.prelert.utils.json.AutoDetectParseException;
 
 /**
@@ -137,6 +141,12 @@ public class ResultsParsingTest
         public void persistBucket(Bucket bucket)
         {
             m_Buckets.add(bucket);
+        }
+
+        @Override
+        public void persistCategoryDefinition(CategoryDefinition category)
+        {
+            // Do nothing
         }
 
         @Override

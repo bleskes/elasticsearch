@@ -47,6 +47,7 @@ import com.prelert.job.usage.Usage;
 import com.prelert.rs.data.AnomalyCause;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
+import com.prelert.rs.data.CategoryDefinition;
 
 /**
  * Static methods to create Elasticsearch mappings for the autodetect
@@ -318,6 +319,25 @@ public class ElasticsearchMappings
             .endObject();
     }
 
+    public static XContentBuilder categoryDefinitionMapping() throws IOException
+    {
+        return jsonBuilder()
+                .startObject()
+                    .startObject(CategoryDefinition.TYPE)
+                        .startObject("_all")
+                            .field("enabled", false)
+                        .endObject()
+                        .startObject(PROPERTIES)
+                            .startObject(CategoryDefinition.CATEGORY_ID)
+                                .field(TYPE, LONG)
+                            .endObject()
+                            .startObject(CategoryDefinition.EXAMPLES)
+                                .field(TYPE, STRING).field(INDEX, NO)
+                            .endObject()
+                        .endObject()
+                    .endObject()
+                .endObject();
+    }
 
     /**
      * Create the Elasticsearch mapping for {@linkplain com.prelert.rs.data.Detector}.

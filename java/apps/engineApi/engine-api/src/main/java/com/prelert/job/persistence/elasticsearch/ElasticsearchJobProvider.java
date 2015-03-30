@@ -37,6 +37,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 import org.elasticsearch.ElasticsearchException;
@@ -83,6 +84,7 @@ import com.prelert.job.quantiles.QuantilesState;
 import com.prelert.job.usage.Usage;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
+import com.prelert.rs.data.CategoryDefinition;
 import com.prelert.rs.data.Detector;
 import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.Pagination;
@@ -366,6 +368,7 @@ public class ElasticsearchJobProvider implements JobProvider
         {
             XContentBuilder jobMapping = ElasticsearchMappings.jobMapping();
             XContentBuilder bucketMapping = ElasticsearchMappings.bucketMapping();
+            XContentBuilder categoryDefinitionMapping = ElasticsearchMappings.categoryDefinitionMapping();
             XContentBuilder detectorMapping = ElasticsearchMappings.detectorMapping();
             XContentBuilder recordMapping = ElasticsearchMappings.recordMapping();
             XContentBuilder quantilesMapping = ElasticsearchMappings.quantilesMapping();
@@ -377,6 +380,7 @@ public class ElasticsearchJobProvider implements JobProvider
                     .prepareCreate(job.getId())
                     .addMapping(JobDetails.TYPE, jobMapping)
                     .addMapping(Bucket.TYPE, bucketMapping)
+                    .addMapping(CategoryDefinition.TYPE, categoryDefinitionMapping)
                     .addMapping(Detector.TYPE, detectorMapping)
                     .addMapping(AnomalyRecord.TYPE, recordMapping)
                     .addMapping(Quantiles.TYPE, quantilesMapping)
@@ -800,6 +804,38 @@ public class ElasticsearchJobProvider implements JobProvider
                 descending);
     }
 
+
+    @Override
+    public Pagination<CategoryDefinition> categoryDefinitions(String jobId, int skip, int take)
+            throws UnknownJobException
+    {
+        SearchRequestBuilder searchBuilder = m_Client.prepareSearch(jobId)
+                .setTypes(CategoryDefinition.TYPE)
+                .setFrom(skip).setSize(take)
+                .addSort(new FieldSortBuilder(CategoryDefinition.CATEGORY_ID).order(SortOrder.ASC));
+
+        SearchResponse searchResponse;
+        try
+        {
+            searchResponse = searchBuilder.get();
+        }
+        catch (IndexMissingException e)
+        {
+            throw new UnknownJobException(jobId);
+        }
+
+        List<CategoryDefinition> results = Arrays.stream(searchResponse.getHits().getHits())
+                .map(hit -> m_ObjectMapper.convertValue(hit.getSource(), CategoryDefinition.class))
+                .collect(Collectors.toList());
+
+        Pagination<CategoryDefinition> page = new Pagination<>();
+        page.setDocuments(results);
+        page.setHitCount(searchResponse.getHits().getTotalHits());
+        page.setSkip(skip);
+        page.setTake(take);
+
+        return page;
+    }
 
     @Override
     public Pagination<AnomalyRecord> records(String jobId,

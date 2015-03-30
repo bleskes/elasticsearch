@@ -279,6 +279,13 @@ public class Jobs extends ResourceWithJobManager
 				.build();
     	job.setBucketsEndpoint(buckets);
 
+        URI categoryDefinitions = m_UriInfo.getBaseUriBuilder()
+                .path("results")
+                .path(job.getId())
+                .path(CategoryDefinitions.ENDPOINT)
+                .build();
+        job.setCategoryDefinitionsEndpoint(categoryDefinitions);
+
     	URI records = m_UriInfo.getBaseUriBuilder()
 				.path("results")
 				.path(job.getId())

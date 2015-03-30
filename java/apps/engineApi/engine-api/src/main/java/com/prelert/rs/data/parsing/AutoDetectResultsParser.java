@@ -48,6 +48,7 @@ import com.prelert.job.persistence.JobResultsPersister;
 import com.prelert.job.quantiles.Quantiles;
 import com.prelert.job.quantiles.QuantilesState;
 import com.prelert.rs.data.Bucket;
+import com.prelert.rs.data.CategoryDefinition;
 import com.prelert.utils.json.AutoDetectParseException;
 
 /**
@@ -271,6 +272,10 @@ public class AutoDetectResultsParser
                             m_AcknowledgedFlushes.add(ack.getId());
                             m_AcknowledgedFlushes.notifyAll();
                         }
+                        break;
+                    case CategoryDefinition.TYPE:
+                        CategoryDefinition category = CategoryDefinition.parseJsonAfterStartObject(parser);
+                        persister.persistCategoryDefinition(category);
                         break;
                     default:
                         logger.error("Unexpected object parsed from output - first field " + fieldName);
