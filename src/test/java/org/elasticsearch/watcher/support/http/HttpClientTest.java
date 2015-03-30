@@ -46,9 +46,9 @@ public class HttpClientTest extends ElasticsearchTestCase {
 
     @Before
     public void init() throws Exception {
-        webServer = new MockWebServer();
         while (webPort < 9300) {
             try {
+                webServer = new MockWebServer();
                 webServer.start(webPort);
                 break;
             } catch (BindException be) {
