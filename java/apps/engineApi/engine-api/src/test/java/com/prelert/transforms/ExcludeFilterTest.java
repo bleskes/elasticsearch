@@ -97,6 +97,27 @@ public class ExcludeFilterTest
     }
 
 
+    @Test
+    public void testTransform_matchesMultipleInputs() throws TransformException
+    {
+        List<TransformIndex> readIndicies = createIndexArray(new TransformIndex(0, 0),
+                                                            new TransformIndex(0, 1),
+                                                            new TransformIndex(0, 2));
+        List<TransformIndex> writeIndicies = createIndexArray();
+
+        String regex = "boat";
+
+        ExcludeFilter transform = new ExcludeFilter(regex, readIndicies, writeIndicies, mock(Logger.class));
+
+        String [] input = {"cat", "hat", "boat"};
+        String [] scratch = {};
+        String [] output = {};
+        String [][] readWriteArea = {input, scratch, output};
+
+        assertEquals(TransformResult.FATAL_FAIL, transform.transform(readWriteArea));
+    }
+
+
     private List<TransformIndex> createIndexArray(TransformIndex...indexs)
     {
         List<TransformIndex> result = new ArrayList<Transform.TransformIndex>();

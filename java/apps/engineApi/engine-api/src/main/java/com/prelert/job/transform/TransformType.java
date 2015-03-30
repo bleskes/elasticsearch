@@ -43,8 +43,8 @@ public enum TransformType
 {
     DOMAIN_SPLIT(Names.DOMAIN_SPLIT_NAME, 1, 0, Arrays.asList("subDomain", "hrd")),
     CONCAT(Names.CONCAT, Names.VARIADIC_ARGS, 0, Arrays.asList("concat")),
-    REGEX_EXTRACT(Names.REGEX_EXTRACT, 1, 1, Arrays.asList("")),
-    REGEX_SPLIT(Names.REGEX_SPLIT, 1, 1, Arrays.asList("")),
+    REGEX_EXTRACT(Names.EXTRACT, 1, 1, Arrays.asList("")),
+    REGEX_SPLIT(Names.SPLIT, 1, 1, Arrays.asList("")),
     EXCLUDE_FILTER(Names.EXCLUDE_FILTER, 1, 1, Arrays.asList());
 
     /**
@@ -57,8 +57,8 @@ public enum TransformType
     {
         public static final String DOMAIN_SPLIT_NAME = "domain_split";
         public static final String CONCAT = "concat";
-        public static final String REGEX_EXTRACT = "regex_extract";
-        public static final String REGEX_SPLIT = "regex_split";
+        public static final String EXTRACT = "extract";
+        public static final String SPLIT = "split";
         public static final String EXCLUDE_FILTER = "exclude_filter";
 
         private static final int VARIADIC_ARGS = -1;

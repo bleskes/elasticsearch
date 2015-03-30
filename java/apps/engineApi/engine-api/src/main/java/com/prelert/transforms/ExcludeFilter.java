@@ -54,12 +54,20 @@ public class ExcludeFilter extends Transform
     public TransformResult transform(String[][] readWriteArea)
     throws TransformException
     {
-        TransformIndex readIndex = m_ReadIndicies.get(0);
-        String field = readWriteArea[readIndex.array][readIndex.index];
+        TransformResult result = TransformResult.OK;
+        for (TransformIndex readIndex : m_ReadIndicies)
+        {
+            String field = readWriteArea[readIndex.array][readIndex.index];
+            Matcher match = m_Pattern.matcher(field);
 
-        Matcher match = m_Pattern.matcher(field);
+            if (match.matches())
+            {
+                result = TransformResult.FATAL_FAIL;
+                break;
+            }
+        }
 
-        return match.matches() ? TransformResult.FATAL_FAIL : TransformResult.OK;
+        return result;
     }
 
 }
