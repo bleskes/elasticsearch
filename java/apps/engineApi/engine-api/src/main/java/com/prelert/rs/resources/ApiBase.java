@@ -36,10 +36,8 @@ import org.apache.log4j.Logger;
 import com.prelert.job.manager.JobManager;
 
 
-
 /**
  * API base resource
- *
  */
 @Path("")
 public class ApiBase extends ResourceWithJobManager
@@ -51,7 +49,7 @@ public class ApiBase extends ResourceWithJobManager
 			+ "<html>\n"
 			+ "<head><title>Prelert Engine</title></head>\n"
 			+ "<body>\n"
-			+ "<h1>Prelert Engine REST API</h1>\n"
+			+ "<h1>Prelert Engine API %s</h1>\n"
 			+ "<h2>Analytics Version:</h2>\n"
 			+ "<p>%s</p>\n"
 			+ "</body>\n"
@@ -64,9 +62,10 @@ public class ApiBase extends ResourceWithJobManager
     	LOGGER.debug("Get API Base document");
 
     	JobManager manager = jobManager();
-    	String version = manager.getAnalyticsVersion();
-    	version = version.replace("\n", "<br/>");
+    	String apiVersion = manager.apiVersion();
+    	String analyticsVersion = manager.getAnalyticsVersion();
+    	analyticsVersion = analyticsVersion.replace("\n", "<br/>");
 
-    	return String.format(VERSION_HTML, version);
+    	return String.format(VERSION_HTML, apiVersion, analyticsVersion);
     }
 }

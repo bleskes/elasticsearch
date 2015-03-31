@@ -869,27 +869,7 @@ public class JobManager
         }
 
         // Try to add extra fields (just appVer for now)
-        try
-        {
-            Properties props = new Properties();
-            // Try to get the API version as recorded by Maven at build time
-            InputStream is = getClass().getResourceAsStream("/META-INF/maven/com.prelert/engine-api/pom.properties");
-            if (is != null)
-            {
-                props.load(is);
-            }
-            doc.put(APP_VER_FIELDNAME, props.getProperty("version"));
-        }
-        catch (IOException e)
-        {
-            LOGGER.warn("Failed to load API version meta-data", e);
-            return;
-        }
-        catch (IllegalArgumentException e)
-        {
-            LOGGER.warn("Malformed API version meta-data", e);
-            return;
-        }
+        doc.put(APP_VER_FIELDNAME, apiVersion());
 
         // Try to persist the modified document
         try
@@ -903,6 +883,35 @@ public class JobManager
         }
 
         LOGGER.info("Wrote Prelert info " + doc.toString() + " to Elasticsearch");
+    }
+
+    public String apiVersion()
+    {
+        // Try to add extra fields (just appVer for now)
+        try
+        {
+            Properties props = new Properties();
+            // Try to get the API version as recorded by Maven at build time
+            InputStream is = getClass().getResourceAsStream("/META-INF/maven/com.prelert/engine-api/pom.properties");
+            if (is != null)
+            {
+                try
+                {
+                    props.load(is);
+                    return props.getProperty("version");
+                }
+                finally
+                {
+                    is.close();
+                }
+            }
+        }
+        catch (IOException e)
+        {
+            LOGGER.warn("Failed to load API version meta-data", e);
+        }
+
+        return "";
     }
 
 
