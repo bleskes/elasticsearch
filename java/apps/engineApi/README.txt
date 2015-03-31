@@ -14,7 +14,7 @@ data and querying results.
 
 Full documentation is available on the Prelert website:
 
-http://www.prelert.com/docs/engine_api/1.3/
+http://www.prelert.com/docs/engine_api/1.4/
 
 
 Getting Started
@@ -66,8 +66,10 @@ http://curl.haxx.se) which allows the easy transfer of data using a URL syntax
 over HTTP.
 
 Before we start, please download the example CSV file from
-http://s3.amazonaws.com/prelert_demo/farequote.csv.
-Time series data must be ordered by date. The raw csv data looks like this:
+http://s3.amazonaws.com/prelert_demo/farequote.csv. Time series data are
+preferred to be ordered by date. (In case data cannot be sent in time order, see
+http://www.prelert.com/docs/engine_api/1.4/outofsequence.html.) The raw CSV
+data looks like this:
 
 time,airline,responsetime,sourcetype
 2014-06-23 00:00:00Z,AAL,132.2046,farequote
@@ -103,7 +105,7 @@ curl -X POST -H 'Content-Type: application/json' 'http://localhost:8080/engine/v
 In this example we are creating a new job with the ID 'farequote' and specifying
 that we want the analysis to be executed on the 'responsetime' field. This field
 contains a numeric value, so we specify the metric function, which expands to all
-of min, mean, max, and sum. (Had we wanted to look at event rate or rare fields
+of min, mean, and max. (Had we wanted to look at event rate or rare fields
 we'd have used one of the other available functions.) By declaring byFieldName as
 'airline', the analysis will be performed across all airlines, instead of a
 unique analysis done for each of the 19 airlines.
@@ -347,7 +349,7 @@ Further information
 
 To view the full documentation, please visit:
 
-http://www.prelert.com/docs/engine_api/1.3/
+http://www.prelert.com/docs/engine_api/1.4/
 
 Code examples are also available from:
 
