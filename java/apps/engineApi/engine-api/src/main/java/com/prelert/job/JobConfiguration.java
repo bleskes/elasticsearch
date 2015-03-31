@@ -287,6 +287,12 @@ public class JobConfiguration
     {
         Set<String> usedFields = new TransformConfigs(m_Transforms).inputFieldNames();
         usedFields.addAll(m_AnalysisConfig.analysisFields());
+        boolean isSummarised = m_AnalysisConfig.getSummaryCountFieldName() != null &&
+                                m_AnalysisConfig.getSummaryCountFieldName().isEmpty() == false;
+        if (isSummarised)
+        {
+            usedFields.remove(m_AnalysisConfig.getSummaryCountFieldName());
+        }
 
         String timeField = DataDescription.DEFAULT_TIME_FIELD;
         if (m_DataDescription != null)
@@ -304,6 +310,21 @@ public class JobConfiguration
                 if (usedFields.contains(outputName))
                 {
                     usesAnOutput = true;
+                    break;
+                }
+            }
+
+            if (isSummarised)
+            {
+                if (tc.getOutputs().contains(m_AnalysisConfig.getSummaryCountFieldName()))
+                {
+                    String msg = String.format("Transform '%s' has a output with the same name as the "
+                            + "summary count field. Transform outputs cannot be used the summary count "
+                            + "field please review your configuration",
+                                tc.type().prettyName());
+
+                    throw new TransformConfigurationException(msg, ErrorCode.DUPLICATED_TRANSFORM_OUTPUT_NAME);
+
                 }
             }
 

@@ -310,6 +310,35 @@ public class JobConfigurationTest
     }
 
     @Test
+    public void testCheckTransformOutputIsUsed_outputIsSummaryCountField() throws JobConfigurationException
+    {
+        JobConfiguration jc = buildJobConfigurationNoTransforms();
+        jc.getAnalysisConfig().setSummaryCountFieldName("summaryCountField");
+
+        TransformConfig tc = new TransformConfig();
+        tc.setTransform(TransformType.Names.DOMAIN_SPLIT_NAME);
+        tc.setInputs(Arrays.asList("dns"));
+        tc.setOutputs(Arrays.asList("summaryCountField"));
+
+        jc.setTransforms(Arrays.asList(tc));
+
+        try
+        {
+            jc.verify();
+            fail("verify should throw"); // shouldn't get here
+        }
+        catch (JobConfigurationException e)
+        {
+            assertTrue(e instanceof TransformConfigurationException);
+            assertEquals(e.getErrorCode(), ErrorCode.DUPLICATED_TRANSFORM_OUTPUT_NAME);
+        }
+
+        jc.getAnalysisConfig().getDetectors().get(0).setFieldName(TransformType.DOMAIN_SPLIT.defaultOutputNames().get(0));
+        tc.setOutputs(TransformType.DOMAIN_SPLIT.defaultOutputNames());
+        assertTrue(jc.verify());
+    }
+
+    @Test
     public void testCheckTransformOutputIsUsed_transformHasNoOutput()
     throws JobConfigurationException
     {
@@ -336,7 +365,7 @@ public class JobConfigurationTest
         d1.setFunction("info_content");
 
         Detector d2 = new Detector();
-        d2.setFieldName("metric");
+        d2.setFunction("count");
 
         AnalysisConfig ac = new AnalysisConfig();
         ac.setDetectors(Arrays.asList(new Detector[] {d1, d2}));
