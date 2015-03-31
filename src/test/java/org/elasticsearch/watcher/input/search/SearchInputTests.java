@@ -78,7 +78,7 @@ public class SearchInputTests extends ElasticsearchIntegrationTest {
 
         SearchInput searchInput = new SearchInput(logger,
                 ScriptServiceProxy.of(internalCluster().getInstance(ScriptService.class)),
-                ClientProxy.of(client()), request);
+                ClientProxy.of(client()), request, null);
         WatchExecutionContext ctx = new WatchExecutionContext("test-watch",
                 new Watch("test-alert",
                         new ClockMock(),
@@ -115,7 +115,7 @@ public class SearchInputTests extends ElasticsearchIntegrationTest {
 
         SearchInput searchInput = new SearchInput(logger,
                 ScriptServiceProxy.of(internalCluster().getInstance(ScriptService.class)),
-                ClientProxy.of(client()), request);
+                ClientProxy.of(client()), request, null);
         WatchExecutionContext ctx = new WatchExecutionContext("test-watch",
                 new Watch("test-alert",
                         new ClockMock(),
@@ -146,7 +146,8 @@ public class SearchInputTests extends ElasticsearchIntegrationTest {
                 .source(searchSource()
                         .query(filteredQuery(matchQuery("event_type", "a"), rangeFilter("_timestamp").from("{{ctx.trigger.scheduled_time}}||-30s").to("{{ctx.trigger.triggered_time}}"))));
 
-        XContentBuilder builder = WatcherUtils.writeSearchRequest(request, jsonBuilder(), ToXContent.EMPTY_PARAMS);
+        SearchInput.SourceBuilder sourceBuilder = new SearchInput.SourceBuilder(request);
+        XContentBuilder builder = jsonBuilder().value(sourceBuilder);
         XContentParser parser = JsonXContent.jsonXContent.createParser(builder.bytes());
         parser.nextToken();
 

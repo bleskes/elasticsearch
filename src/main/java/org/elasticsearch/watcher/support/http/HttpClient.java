@@ -95,9 +95,9 @@ public class HttpClient extends AbstractComponent {
         }
 
         HttpResponse response = new HttpResponse();
-        response.inputStream(urlConnection.getInputStream());
         response.status(urlConnection.getResponseCode());
         logger.debug("http status code: {}", response.status());
+        response.inputStream(urlConnection.getInputStream());
         return response;
     }
 
