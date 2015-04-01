@@ -45,6 +45,7 @@ import org.apache.log4j.Logger;
 import com.prelert.job.AnalysisLimits;
 import com.prelert.job.DataDescription;
 import com.prelert.job.JobDetails;
+import com.prelert.job.process.writer.FieldConfigWriter;
 import com.prelert.job.quantiles.QuantilesState;
 
 
