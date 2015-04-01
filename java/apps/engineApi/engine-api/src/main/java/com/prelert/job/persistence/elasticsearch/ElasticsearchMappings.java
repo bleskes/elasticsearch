@@ -35,6 +35,7 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.AnalysisLimits;
+import com.prelert.job.CategorizerState;
 import com.prelert.job.DataCounts;
 import com.prelert.job.DataDescription;
 import com.prelert.job.Detector;
@@ -317,6 +318,19 @@ public class ElasticsearchMappings
                     .endObject()
                 .endObject()
             .endObject();
+    }
+
+    public static XContentBuilder categorizerStateMapping() throws IOException
+    {
+        return jsonBuilder()
+                .startObject()
+                    .startObject(CategorizerState.TYPE)
+                        .field("enabled", false)
+                        .startObject("_all")
+                            .field("enabled", false)
+                        .endObject()
+                    .endObject()
+                .endObject();
     }
 
     public static XContentBuilder categoryDefinitionMapping() throws IOException

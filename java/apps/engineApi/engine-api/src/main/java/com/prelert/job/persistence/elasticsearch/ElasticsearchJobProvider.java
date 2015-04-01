@@ -72,6 +72,7 @@ import org.elasticsearch.search.sort.SortOrder;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.prelert.job.CategorizerState;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobStatus;
 import com.prelert.job.ModelSizeStats;
@@ -368,6 +369,7 @@ public class ElasticsearchJobProvider implements JobProvider
         {
             XContentBuilder jobMapping = ElasticsearchMappings.jobMapping();
             XContentBuilder bucketMapping = ElasticsearchMappings.bucketMapping();
+            XContentBuilder categorizerStateMapping = ElasticsearchMappings.categorizerStateMapping();
             XContentBuilder categoryDefinitionMapping = ElasticsearchMappings.categoryDefinitionMapping();
             XContentBuilder detectorMapping = ElasticsearchMappings.detectorMapping();
             XContentBuilder recordMapping = ElasticsearchMappings.recordMapping();
@@ -380,6 +382,7 @@ public class ElasticsearchJobProvider implements JobProvider
                     .prepareCreate(job.getId())
                     .addMapping(JobDetails.TYPE, jobMapping)
                     .addMapping(Bucket.TYPE, bucketMapping)
+                    .addMapping(CategorizerState.TYPE, categorizerStateMapping)
                     .addMapping(CategoryDefinition.TYPE, categoryDefinitionMapping)
                     .addMapping(Detector.TYPE, detectorMapping)
                     .addMapping(AnomalyRecord.TYPE, recordMapping)
