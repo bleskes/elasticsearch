@@ -61,6 +61,11 @@ public class HttpInputIntegrationTest extends AbstractWatcherIntegrationTests {
                 .build();
     }
 
+    @Override
+    protected boolean enableShield() {
+        return false;
+    }
+
     @Test
     public void testHttpInput() throws Exception {
         ScriptServiceProxy sc = scriptService();
@@ -151,7 +156,6 @@ public class HttpInputIntegrationTest extends AbstractWatcherIntegrationTests {
         assertThat(payload.size(), equalTo(1));
         assertThat(((Map) payload.get("hits")).size(), equalTo(1));
         assertThat((Integer) ((Map) payload.get("hits")).get("total"), equalTo(1));
-        System.out.println(searchResponse);
     }
 
 }
