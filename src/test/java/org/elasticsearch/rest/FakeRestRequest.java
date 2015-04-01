@@ -61,7 +61,7 @@ public class FakeRestRequest extends RestRequest {
         return false;
     }
 
-    @Override
+    // Don't add Override annotation as this method doesn't exist in ES 1.x branch anymore
     public boolean contentUnsafe() {
         return false;
     }
