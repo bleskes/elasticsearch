@@ -63,7 +63,7 @@ public class NoMasterNodeTests extends AbstractWatcherIntegrationTests {
     }
 
     @Override
-    protected boolean shieldEnabled() {
+    protected boolean enableShield() {
         return false;
     }
 
