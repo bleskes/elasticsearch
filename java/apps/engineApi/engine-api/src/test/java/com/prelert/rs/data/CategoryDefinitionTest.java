@@ -66,10 +66,14 @@ public class CategoryDefinitionTest
     {
         CategoryDefinition category1 = new CategoryDefinition();
         category1.setCategoryId(42);
+        category1.setTerms("foo bar");
+        category1.setRegex(".*?foo.*?bar.*");
         category1.addExample("foo");
         category1.addExample("bar");
         CategoryDefinition category2 = new CategoryDefinition();
         category2.setCategoryId(42);
+        category2.setTerms("foo bar");
+        category2.setRegex(".*?foo.*?bar.*");
         category2.addExample("bar");
         category2.addExample("foo");
 
@@ -81,11 +85,55 @@ public class CategoryDefinitionTest
     public void testEquals_GivenCategoryDefinitionsWithDifferentIds()
     {
         CategoryDefinition category1 = new CategoryDefinition();
-        category1.setCategoryId(1);
+        category1.setCategoryId(42);
+        category1.setTerms("foo bar");
+        category1.setRegex(".*?foo.*?bar.*");
         category1.addExample("foo");
         category1.addExample("bar");
         CategoryDefinition category2 = new CategoryDefinition();
-        category2.setCategoryId(2);
+        category2.setCategoryId(1);
+        category2.setTerms("foo bar");
+        category2.setRegex(".*?foo.*?bar.*");
+        category2.addExample("bar");
+        category2.addExample("foo");
+
+        assertFalse(category1.equals(category2));
+        assertFalse(category2.equals(category1));
+    }
+
+    @Test
+    public void testEquals_GivenCategoryDefinitionsWithDifferentTerms()
+    {
+        CategoryDefinition category1 = new CategoryDefinition();
+        category1.setCategoryId(42);
+        category1.setTerms("foo bar");
+        category1.setRegex(".*?foo.*?bar.*");
+        category1.addExample("foo");
+        category1.addExample("bar");
+        CategoryDefinition category2 = new CategoryDefinition();
+        category2.setCategoryId(42);
+        category2.setTerms("foo");
+        category2.setRegex(".*?foo.*?bar.*");
+        category2.addExample("bar");
+        category2.addExample("foo");
+
+        assertFalse(category1.equals(category2));
+        assertFalse(category2.equals(category1));
+    }
+
+    @Test
+    public void testEquals_GivenCategoryDefinitionsWithDifferentRegex()
+    {
+        CategoryDefinition category1 = new CategoryDefinition();
+        category1.setCategoryId(42);
+        category1.setTerms("foo bar");
+        category1.setRegex(".*?foo.*?bar.*");
+        category1.addExample("foo");
+        category1.addExample("bar");
+        CategoryDefinition category2 = new CategoryDefinition();
+        category2.setCategoryId(42);
+        category2.setTerms("foo bar");
+        category2.setRegex(".*?foo.*");
         category2.addExample("bar");
         category2.addExample("foo");
 
@@ -97,11 +145,15 @@ public class CategoryDefinitionTest
     public void testEquals_GivenCategoryDefinitionsWithDifferentExamples()
     {
         CategoryDefinition category1 = new CategoryDefinition();
-        category1.setCategoryId(1);
-        category1.addExample("bar");
+        category1.setCategoryId(42);
+        category1.setTerms("foo bar");
+        category1.setRegex(".*?foo.*?bar.*");
         category1.addExample("foo");
+        category1.addExample("bar");
         CategoryDefinition category2 = new CategoryDefinition();
-        category2.setCategoryId(1);
+        category2.setCategoryId(42);
+        category2.setTerms("foo bar");
+        category2.setRegex(".*?foo.*?bar.*");
         category2.addExample("bar");
         category2.addExample("foobar");
 
@@ -139,13 +191,18 @@ public class CategoryDefinitionTest
     public void testParseJson_GivenCategoryDefinitionWithAllFieldsPopulatedAndValid()
             throws JsonParseException, IOException, AutoDetectParseException
     {
-        String input = "{\"categoryDefinition\": 1, \"examples\": [\"foo\", \"bar\"]}";
+        String input = "{\"categoryDefinition\": 1,"
+                     + " \"terms\":\"foo bar\","
+                     + " \"regex\":\".*?foo.*?bar.*\","
+                     + " \"examples\": [\"foo\", \"bar\"]}";
         JsonParser parser = createJsonParser(input);
         parser.nextToken();
 
         CategoryDefinition category = CategoryDefinition.parseJson(parser);
 
         assertEquals(1, category.getCategoryId());
+        assertEquals("foo bar", category.getTerms());
+        assertEquals(".*?foo.*?bar.*", category.getRegex());
         assertEquals(Arrays.asList("bar", "foo"), category.getExamples());
 
         assertEquals(JsonToken.END_OBJECT, parser.getCurrentToken());

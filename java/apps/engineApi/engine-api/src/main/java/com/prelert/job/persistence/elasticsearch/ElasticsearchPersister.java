@@ -40,7 +40,6 @@ import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
-import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.xcontent.XContentBuilder;
@@ -201,13 +200,8 @@ public class ElasticsearchPersister implements JobResultsPersister
             return;
         }
         String categoryId = String.valueOf(category.getCategoryId());
-        IndexRequest indexRequest =
-                new IndexRequest(m_JobId, CategoryDefinition.TYPE, categoryId)
-                .source(content);
-        m_Client.prepareUpdate(m_JobId, CategoryDefinition.TYPE, categoryId)
-                .setScript("update-category-examples", ScriptService.ScriptType.FILE)
-                .addScriptParam("example", category.getExamples().get(0))
-                .setUpsert(indexRequest)
+        m_Client.prepareIndex(m_JobId, CategoryDefinition.TYPE, categoryId)
+                .setSource(content)
                 .execute().actionGet();
     }
 
@@ -345,6 +339,8 @@ public class ElasticsearchPersister implements JobResultsPersister
         List<String> examples = category.getExamples();
         return jsonBuilder().startObject()
                 .field(CategoryDefinition.CATEGORY_ID, category.getCategoryId())
+                .field(CategoryDefinition.TERMS, category.getTerms())
+                .field(CategoryDefinition.REGEX, category.getRegex())
                 .array(CategoryDefinition.EXAMPLES, examples.toArray(new Object[examples.size()]))
                 .endObject();
     }

@@ -50,17 +50,16 @@ public class CategoryDefinition
 {
     public static final String TYPE = "categoryDefinition";
     public static final String CATEGORY_ID = "categoryId";
+    public static final String TERMS = "terms";
+    public static final String REGEX = "regex";
     public static final String EXAMPLES = "examples";
 
     private static final Logger LOGGER = Logger.getLogger(CategoryDefinition.class);
 
-    private long m_Id;
-    private final Set<String> m_Examples;
-
-    public CategoryDefinition()
-    {
-        m_Examples = new TreeSet<>();
-    }
+    private long m_Id = 0L;
+    private String m_Terms = "";
+    private String m_Regex = "";
+    private final Set<String> m_Examples = new TreeSet<>();
 
     public long getCategoryId()
     {
@@ -70,6 +69,26 @@ public class CategoryDefinition
     public void setCategoryId(long categoryId)
     {
         m_Id = categoryId;
+    }
+
+    public String getTerms()
+    {
+        return m_Terms;
+    }
+
+    public void setTerms(String terms)
+    {
+        m_Terms = terms;
+    }
+
+    public String getRegex()
+    {
+        return m_Regex;
+    }
+
+    public void setRegex(String regex)
+    {
+        m_Regex = regex;
     }
 
     public List<String> getExamples()
@@ -101,13 +120,15 @@ public class CategoryDefinition
         }
         CategoryDefinition that = (CategoryDefinition) other;
         return Objects.equal(this.m_Id, that.m_Id)
+                && Objects.equal(this.m_Terms, that.m_Terms)
+                && Objects.equal(this.m_Regex, that.m_Regex)
                 && Objects.equal(this.m_Examples, that.m_Examples);
     }
 
     @Override
     public int hashCode()
     {
-        return Objects.hashCode(m_Id, m_Examples);
+        return Objects.hashCode(m_Id, m_Terms, m_Regex, m_Examples);
     }
 
     /**
@@ -179,6 +200,12 @@ public class CategoryDefinition
             {
             case TYPE:
                 category.setCategoryId(parseAsLongOrZero(token, fieldName));
+                break;
+            case TERMS:
+                category.setTerms(parseAsStringOrNull(token, fieldName));
+                break;
+            case REGEX:
+                category.setRegex(parseAsStringOrNull(token, fieldName));
                 break;
             case EXAMPLES:
                 parseExamples(token, fieldName, category);
