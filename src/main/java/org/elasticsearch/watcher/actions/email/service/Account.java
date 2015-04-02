@@ -63,7 +63,7 @@ public class Account {
         return config.name;
     }
 
-    public void send(Email email, Authentication auth, Profile profile) throws MessagingException {
+    public Email send(Email email, Authentication auth, Profile profile) throws MessagingException {
 
         // applying the defaults on missing emails fields
         email = config.defaults.apply(email);
@@ -108,6 +108,7 @@ public class Account {
                 }
             }
         }
+        return email;
     }
 
     static class Config {
