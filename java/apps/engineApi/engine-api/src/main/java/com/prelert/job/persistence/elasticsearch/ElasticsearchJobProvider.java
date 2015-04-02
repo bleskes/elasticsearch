@@ -840,6 +840,32 @@ public class ElasticsearchJobProvider implements JobProvider
         return page;
     }
 
+
+    @Override
+    public SingleDocument<CategoryDefinition> categoryDefinition(String jobId, String categoryId)
+            throws UnknownJobException
+    {
+        GetResponse response;
+
+        try
+        {
+            response = m_Client.prepareGet(jobId, CategoryDefinition.TYPE, categoryId).get();
+        }
+        catch (IndexMissingException e)
+        {
+            throw new UnknownJobException(jobId);
+        }
+
+        SingleDocument<CategoryDefinition> doc = new SingleDocument<>();
+        doc.setType(CategoryDefinition.TYPE);
+        doc.setDocumentId(categoryId);
+        if (response.isExists())
+        {
+            doc.setDocument(m_ObjectMapper.convertValue(response.getSource(), CategoryDefinition.class));
+        }
+        return doc;
+    }
+
     @Override
     public Pagination<AnomalyRecord> records(String jobId,
             int skip, int take, long startEpochMs, long endEpochMs,

@@ -134,6 +134,9 @@ public interface JobResultsProvider extends Closeable
     public Pagination<CategoryDefinition> categoryDefinitions(String jobId, int skip, int take)
     throws UnknownJobException;
 
+    public SingleDocument<CategoryDefinition> categoryDefinition(String jobId, String categoryId)
+    throws UnknownJobException;
+
     /**
      * Get the anomaly records for all buckets.
      * The returned records will have the <code>parent</code> member

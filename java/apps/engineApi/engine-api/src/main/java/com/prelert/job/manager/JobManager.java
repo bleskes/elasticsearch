@@ -409,6 +409,11 @@ public class JobManager
         return m_JobProvider.categoryDefinitions(jobId, skip, take);
     }
 
+    public SingleDocument<CategoryDefinition> categoryDefinition(String jobId, String categoryId)
+            throws UnknownJobException
+    {
+        return m_JobProvider.categoryDefinition(jobId, categoryId);
+    }
 
     /**
      * Get a page of anomaly records from all buckets.

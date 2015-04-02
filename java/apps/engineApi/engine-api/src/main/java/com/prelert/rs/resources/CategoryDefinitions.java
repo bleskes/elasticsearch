@@ -36,6 +36,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 import org.apache.log4j.Logger;
 
@@ -43,6 +44,7 @@ import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.manager.JobManager;
 import com.prelert.rs.data.CategoryDefinition;
 import com.prelert.rs.data.Pagination;
+import com.prelert.rs.data.SingleDocument;
 
 /**
  * API bucket results end point.
@@ -98,5 +100,41 @@ public class CategoryDefinitions extends ResourceWithJobManager
                 categoryDefinitions.getDocumentCount(), jobId));
 
         return categoryDefinitions;
+    }
+
+    /**
+     * Get all the bucket results (in pages) for the job optionally filtered
+     * by date.
+     *
+     * @param jobId
+     * @param take
+     * @return
+     * @throws UnknownJobException
+     */
+    @GET
+    @Path("/{jobId}/categorydefinitions/{categoryId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response categoryDefinition(@PathParam("jobId") String jobId,
+            @PathParam("categoryId") String categoryId)
+    throws UnknownJobException
+    {
+        LOGGER.debug(String.format("Get category definition for job %s with id %s.", jobId, categoryId));
+
+        SingleDocument<CategoryDefinition> category = jobManager().categoryDefinition(jobId, categoryId);
+
+        if (category.isExists())
+        {
+            LOGGER.debug(String.format("Returning category definition %s for job %s",
+                    categoryId, jobId));
+        }
+        else
+        {
+            LOGGER.debug(String.format("Cannot find categroy definition %s for job %s",
+                    categoryId, jobId));
+
+            return Response.status(Response.Status.NOT_FOUND).entity(category).build();
+        }
+
+        return Response.ok(category).build();
     }
 }
