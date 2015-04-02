@@ -178,9 +178,9 @@ public class CategoryDefinition
             throws JsonParseException, IOException, AutoDetectParseException
     {
         CategoryDefinition category = new CategoryDefinition();
-        CategoryDefinitionJsonParser flushAcknowledgementJsonParser =
+        CategoryDefinitionJsonParser categoryJsonParser =
                 new CategoryDefinitionJsonParser(parser, LOGGER);
-        flushAcknowledgementJsonParser.parseAfterStartObject(category);
+        categoryJsonParser.parseAfterStartObject(category);
         return category;
     }
 
