@@ -412,8 +412,7 @@ public class DiscoveryWithServiceDisruptionsTests extends ElasticsearchIntegrati
      * This test is a superset of tests run in the Jepsen test suite, with the exception of versioned updates
      */
     @Test
-    // NOTE: if you remove the awaitFix, make sure to port the test to the 1.x branch
-    @LuceneTestCase.AwaitsFix(bugUrl = "needs some more work to stabilize")
+    // NOTE: nocommit if you remove the awaitFix, make sure to port the test to the 1.x branch
     @TestLogging("action.index:TRACE,action.get:TRACE,discovery:TRACE,cluster.service:TRACE,indices.recovery:TRACE,indices.cluster:TRACE")
     public void testAckedIndexing() throws Exception {
         // TODO: add node count randomizaion
@@ -426,8 +425,11 @@ public class DiscoveryWithServiceDisruptionsTests extends ElasticsearchIntegrati
                 ));
         ensureGreen();
 
-        ServiceDisruptionScheme disruptionScheme = addRandomDisruptionScheme();
-        logger.info("disruption scheme [{}] added", disruptionScheme);
+        ServiceDisruptionScheme disruptionScheme = randomFrom(new NetworkUnresponsivePartition(getRandom()),
+                new NetworkDelaysPartition(getRandom()),
+                new NetworkDisconnectPartition(getRandom()));
+        setDisruptionScheme(disruptionScheme);
+        logger.info("--> disruption scheme [{}] added", disruptionScheme);
 
         final ConcurrentHashMap<String, String> ackedDocs = new ConcurrentHashMap<>(); // id -> node sent.
 
@@ -438,7 +440,7 @@ public class DiscoveryWithServiceDisruptionsTests extends ElasticsearchIntegrati
         final AtomicReference<CountDownLatch> countDownLatchRef = new AtomicReference<>();
         final List<Exception> exceptedExceptions = Collections.synchronizedList(new ArrayList<Exception>());
 
-        logger.info("starting indexers");
+        logger.info("--> starting indexers");
         try {
             for (final String node : nodes) {
                 final Semaphore semaphore = new Semaphore(0);
@@ -457,10 +459,10 @@ public class DiscoveryWithServiceDisruptionsTests extends ElasticsearchIntegrati
                                 }
                                 logger.info("[{}] Acquired semaphore and it has {} permits left", name, semaphore.availablePermits());
                                 try {
-                                    id = Integer.toString(idGenerator.incrementAndGet());
+                                    id = "id_" + Integer.toString(idGenerator.incrementAndGet());
                                     int shard = ((InternalTestCluster) cluster()).getInstance(DjbHashFunction.class).hash(id) % numPrimaries;
                                     logger.trace("[{}] indexing id [{}] through node [{}] targeting shard [{}]", name, id, node, shard);
-                                    IndexResponse response = client.prepareIndex("test", "type", id).setSource("{}").setTimeout("1s").get();
+                                    IndexResponse response = client.prepareIndex("test", "type", id).setSource("{}").get("10s");
                                     assertThat(response.getVersion(), equalTo(1l));
                                     ackedDocs.put(id, node);
                                     logger.trace("[{}] indexed id [{}] through node [{}]", name, id, node);
@@ -487,7 +489,7 @@ public class DiscoveryWithServiceDisruptionsTests extends ElasticsearchIntegrati
             }
 
             int docsPerIndexer = randomInt(3);
-            logger.info("indexing " + docsPerIndexer + " docs per indexer before partition");
+            logger.info("--> indexing " + docsPerIndexer + " docs per indexer before partition");
             countDownLatchRef.set(new CountDownLatch(docsPerIndexer * indexers.size()));
             for (Semaphore semaphore : semaphores) {
                 semaphore.release(docsPerIndexer);
@@ -495,25 +497,25 @@ public class DiscoveryWithServiceDisruptionsTests extends ElasticsearchIntegrati
             assertTrue(countDownLatchRef.get().await(1, TimeUnit.MINUTES));
 
             for (int iter = 1 + randomInt(2); iter > 0; iter--) {
-                logger.info("starting disruptions & indexing (iteration [{}])", iter);
+                logger.info("--> starting disruptions & indexing (iteration [{}])", iter);
                 disruptionScheme.startDisrupting();
 
                 docsPerIndexer = 1 + randomInt(5);
-                logger.info("indexing " + docsPerIndexer + " docs per indexer during partition");
+                logger.info("--> indexing " + docsPerIndexer + " docs per indexer during partition");
                 countDownLatchRef.set(new CountDownLatch(docsPerIndexer * indexers.size()));
                 Collections.shuffle(semaphores);
                 for (Semaphore semaphore : semaphores) {
                     assertThat(semaphore.availablePermits(), equalTo(0));
                     semaphore.release(docsPerIndexer);
                 }
-                assertTrue(countDownLatchRef.get().await(60000 + disruptionScheme.expectedTimeToHeal().millis() * (docsPerIndexer * indexers.size()), TimeUnit.MILLISECONDS));
+                assertTrue(countDownLatchRef.get().await(30000 + 10000 * docsPerIndexer, TimeUnit.MILLISECONDS));
 
-                logger.info("stopping disruption");
+                logger.info("--> stopping disruption");
                 disruptionScheme.stopDisrupting();
                 ensureStableCluster(3, TimeValue.timeValueMillis(disruptionScheme.expectedTimeToHeal().millis() + DISRUPTION_HEALING_OVERHEAD.millis()));
                 ensureGreen("test");
 
-                logger.info("validating successful docs");
+                logger.info("--> validating successful docs");
                 for (String node : nodes) {
                     try {
                         logger.debug("validating through node [{}]", node);
@@ -526,7 +528,7 @@ public class DiscoveryWithServiceDisruptionsTests extends ElasticsearchIntegrati
                     }
                 }
 
-                logger.info("done validating (iteration [{}])", iter);
+                logger.info("--> done validating (iteration [{}])", iter);
             }
         } finally {
             if (exceptedExceptions.size() > 0) {
@@ -536,7 +538,7 @@ public class DiscoveryWithServiceDisruptionsTests extends ElasticsearchIntegrati
                 }
                 logger.debug(sb.toString());
             }
-            logger.info("shutting down indexers");
+            logger.info("--> shutting down indexers");
             stop.set(true);
             for (Thread indexer : indexers) {
                 indexer.interrupt();
@@ -971,19 +973,6 @@ public class DiscoveryWithServiceDisruptionsTests extends ElasticsearchIntegrati
         internalCluster().setDisruptionScheme(partition);
 
         return partition;
-    }
-
-    private ServiceDisruptionScheme addRandomDisruptionScheme() {
-        // TODO: add partial partitions
-        List<ServiceDisruptionScheme> list = Arrays.asList(
-                new NetworkUnresponsivePartition(getRandom()),
-                new NetworkDelaysPartition(getRandom()),
-                new NetworkDisconnectPartition(getRandom()),
-                new SlowClusterStateProcessing(getRandom())
-        );
-        Collections.shuffle(list);
-        setDisruptionScheme(list.get(0));
-        return list.get(0);
     }
 
     private void ensureStableCluster(int nodeCount) {
