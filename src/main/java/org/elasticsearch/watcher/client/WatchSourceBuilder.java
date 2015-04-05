@@ -17,14 +17,6 @@
 
 package org.elasticsearch.watcher.client;
 
-import org.elasticsearch.watcher.trigger.Trigger;
-import org.elasticsearch.watcher.watch.Watch;
-import org.elasticsearch.watcher.actions.Action;
-import org.elasticsearch.watcher.condition.Condition;
-import org.elasticsearch.watcher.condition.ConditionBuilders;
-import org.elasticsearch.watcher.input.Input;
-import org.elasticsearch.watcher.input.NoneInput;
-import org.elasticsearch.watcher.transform.Transform;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.ToXContent;
@@ -32,6 +24,14 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.search.builder.SearchSourceBuilderException;
+import org.elasticsearch.watcher.actions.Action;
+import org.elasticsearch.watcher.condition.Condition;
+import org.elasticsearch.watcher.condition.ConditionBuilders;
+import org.elasticsearch.watcher.input.Input;
+import org.elasticsearch.watcher.input.NoneInput;
+import org.elasticsearch.watcher.transform.Transform;
+import org.elasticsearch.watcher.trigger.Trigger;
+import org.elasticsearch.watcher.watch.Watch;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -42,10 +42,6 @@ import java.util.Set;
  *
  */
 public class WatchSourceBuilder implements ToXContent {
-
-    public static WatchSourceBuilder watchSourceBuilder() {
-        return new WatchSourceBuilder();
-    }
 
     private Trigger.SourceBuilder trigger;
     private Input.SourceBuilder input = NoneInput.SourceBuilder.INSTANCE;
@@ -116,11 +112,11 @@ public class WatchSourceBuilder implements ToXContent {
             builder.field(Watch.Parser.THROTTLE_PERIOD_FIELD.getPreferredName(), throttlePeriod.getMillis());
         }
 
-        builder.startArray(Watch.Parser.ACTIONS_FIELD.getPreferredName());
+        builder.startObject(Watch.Parser.ACTIONS_FIELD.getPreferredName());
         for (Action.SourceBuilder action : actions) {
-            builder.startObject().field(action.type(), action).endObject();
+            builder.field(action.type(), action);
         }
-        builder.endArray();
+        builder.endObject();
 
         if (metadata != null) {
             builder.field(Watch.Parser.META_FIELD.getPreferredName(), metadata);

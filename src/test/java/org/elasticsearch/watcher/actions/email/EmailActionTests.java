@@ -27,13 +27,10 @@ import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.test.ElasticsearchTestCase;
 import org.elasticsearch.watcher.actions.ActionSettingsException;
-import org.elasticsearch.watcher.actions.TransformMocks;
 import org.elasticsearch.watcher.actions.email.service.*;
 import org.elasticsearch.watcher.support.init.proxy.ScriptServiceProxy;
 import org.elasticsearch.watcher.support.template.ScriptTemplate;
 import org.elasticsearch.watcher.support.template.Template;
-import org.elasticsearch.watcher.transform.Transform;
-import org.elasticsearch.watcher.transform.TransformRegistry;
 import org.elasticsearch.watcher.watch.Payload;
 import org.elasticsearch.watcher.watch.WatchExecutionContext;
 import org.junit.Test;
@@ -76,8 +73,7 @@ public class EmailActionTests extends ElasticsearchTestCase {
         Template textBody = randomBoolean() ? null : mock(Template.class);
         Template htmlBody = randomBoolean() ? null : mock(Template.class);
         boolean attachPayload = randomBoolean();
-        Transform transform = randomBoolean() ? null : mock(Transform.class);
-        EmailAction action = new EmailAction(logger, transform, service, email, auth, profile, account, subject, textBody, htmlBody, attachPayload);
+        EmailAction action = new EmailAction(logger, service, email, auth, profile, account, subject, textBody, htmlBody, attachPayload);
 
         final Map<String, Object> data = new HashMap<>();
         Payload payload = new Payload() {
@@ -97,16 +93,10 @@ public class EmailActionTests extends ElasticsearchTestCase {
         String ctxId = randomAsciiOfLength(5);
         WatchExecutionContext ctx = mockExecutionContext("watch1", now, payload);
         when(ctx.id()).thenReturn(ctxId);
-        if (transform != null) {
-            Transform.Result transformResult = mock(Transform.Result.class);
-            when(transformResult.type()).thenReturn("_transform_type");
-            when(transformResult.payload()).thenReturn(new Payload.Simple("_key", "_value"));
-            when(transform.apply(ctx, payload)).thenReturn(transformResult);
-        }
         Map<String, Object> expectedModel = ImmutableMap.<String, Object>builder()
                 .put("ctx", ImmutableMap.<String, Object>builder()
                         .put("watch_name", "watch1")
-                        .put("payload", transform == null ? data : new Payload.Simple("_key", "_value").data())
+                        .put("payload", data)
                         .put("execution_time", now)
                         .put("trigger", ImmutableMap.<String, Object>builder()
                                 .put("triggered_time", now)
@@ -125,7 +115,7 @@ public class EmailActionTests extends ElasticsearchTestCase {
             when (htmlBody.render(expectedModel)).thenReturn("_html_body");
         }
 
-        EmailAction.Result result = action.execute(ctx);
+        EmailAction.Result result = action.execute("_id", ctx, payload);
 
         assertThat(result, notNullValue());
         assertThat(result, instanceOf(EmailAction.Result.Success.class));
@@ -140,11 +130,6 @@ public class EmailActionTests extends ElasticsearchTestCase {
         }
         if (attachPayload) {
             assertThat(actualEmail.attachments(), hasKey("payload"));
-        }
-        if (transform != null) {
-            assertThat(result.transformResult(), notNullValue());
-            assertThat(result.transformResult().type(), equalTo("_transform_type"));
-            assertThat(result.transformResult().payload().data(), equalTo(new Payload.Simple("_key", "_value").data()));
         }
     }
 
@@ -161,8 +146,6 @@ public class EmailActionTests extends ElasticsearchTestCase {
         ScriptTemplate subject = randomBoolean() ? new ScriptTemplate(scriptService, "_subject") : null;
         ScriptTemplate textBody = randomBoolean() ? new ScriptTemplate(scriptService, "_text_body") : null;
         ScriptTemplate htmlBody = randomBoolean() ? new ScriptTemplate(scriptService, "_text_html") : null;
-        final Transform transform = randomBoolean() ? null : new TransformMocks.TransformMock();
-        TransformRegistry transformRegistry = transform == null ? mock(TransformRegistry.class) : new TransformMocks.TransformRegistryMock(transform);
         boolean attachPayload = randomBoolean();
         XContentBuilder builder = jsonBuilder().startObject()
                 .field("account", "_account")
@@ -221,17 +204,12 @@ public class EmailActionTests extends ElasticsearchTestCase {
                 builder.field("html_body", htmlBody);
             }
         }
-        if (transform != null) {
-            builder.startObject("transform")
-                    .startObject("_transform").endObject()
-                    .endObject();
-        }
         BytesReference bytes = builder.bytes();
         XContentParser parser = JsonXContent.jsonXContent.createParser(bytes);
         parser.nextToken();
 
         EmailAction action = new EmailAction.Parser(ImmutableSettings.EMPTY, emailService,
-                new ScriptTemplate.Parser(ImmutableSettings.EMPTY, scriptService), transformRegistry).parse(parser);
+                new ScriptTemplate.Parser(ImmutableSettings.EMPTY, scriptService)).parse(parser);
 
         assertThat(action, notNullValue());
         assertThat(action.account, is("_account"));
@@ -263,10 +241,6 @@ public class EmailActionTests extends ElasticsearchTestCase {
         } else {
             assertThat(action.emailPrototype.replyTo(), nullValue());
         }
-        if (transform != null) {
-            assertThat(action.transform(), notNullValue());
-            assertThat(action.transform(), equalTo(transform));
-        }
     }
 
     @Test @Repeat(iterations = 20)
@@ -296,10 +270,8 @@ public class EmailActionTests extends ElasticsearchTestCase {
         Template textBody = new TemplateMock("_text_body");
         Template htmlBody = randomBoolean() ? null : new TemplateMock("_html_body");
         boolean attachPayload = randomBoolean();
-        Transform transform = randomBoolean() ? null : new TransformMocks.TransformMock();
-        TransformRegistry transformRegistry = transform == null ? mock(TransformRegistry.class) : new TransformMocks.TransformRegistryMock(transform);
 
-        EmailAction action = new EmailAction(logger, transform, service, email, auth, profile, account, subject, textBody, htmlBody, attachPayload);
+        EmailAction action = new EmailAction(logger, service, email, auth, profile, account, subject, textBody, htmlBody, attachPayload);
 
         XContentBuilder builder = jsonBuilder();
         action.toXContent(builder, Attachment.XContent.EMPTY_PARAMS);
@@ -307,7 +279,7 @@ public class EmailActionTests extends ElasticsearchTestCase {
         System.out.println(bytes.toUtf8());
         XContentParser parser = JsonXContent.jsonXContent.createParser(bytes);
         parser.nextToken();
-        EmailAction parsed = new EmailAction.Parser(ImmutableSettings.EMPTY,service, new TemplateMock.Parser(), transformRegistry).parse(parser);
+        EmailAction parsed = new EmailAction.Parser(ImmutableSettings.EMPTY,service, new TemplateMock.Parser()).parse(parser);
         assertThat(parsed, equalTo(action));
 
     }
@@ -321,7 +293,7 @@ public class EmailActionTests extends ElasticsearchTestCase {
         BytesReference bytes = builder.bytes();
         XContentParser parser = JsonXContent.jsonXContent.createParser(bytes);
         new EmailAction.Parser(ImmutableSettings.EMPTY, emailService,
-                new ScriptTemplate.Parser(ImmutableSettings.EMPTY, scriptService), mock(TransformRegistry.class)).parse(parser);
+                new ScriptTemplate.Parser(ImmutableSettings.EMPTY, scriptService)).parse(parser);
     }
 
     @Test @Repeat(iterations = 20)
@@ -335,25 +307,11 @@ public class EmailActionTests extends ElasticsearchTestCase {
                 .textBody("_text_body")
                 .build();
 
-        Transform.Result transformResult = randomBoolean() ? null : mock(Transform.Result.class);
-        if (transformResult != null) {
-            when(transformResult.type()).thenReturn("_transform_type");
-            when(transformResult.payload()).thenReturn(new Payload.Simple("_key", "_value"));
-        }
-        TransformRegistry transformRegistry = transformResult != null ? new TransformMocks.TransformRegistryMock(transformResult) : mock(TransformRegistry.class);
-
         XContentBuilder builder = jsonBuilder().startObject()
                 .field("success", success);
         if (success) {
             builder.field("email", email);
             builder.field("account", "_account");
-            if (transformResult != null) {
-                builder.startObject("transform_result")
-                        .startObject("_transform_type")
-                            .field("payload", new Payload.Simple("_key", "_value").data())
-                        .endObject()
-                    .endObject();
-            }
         } else {
             builder.field("reason", "_reason");
         }
@@ -361,20 +319,13 @@ public class EmailActionTests extends ElasticsearchTestCase {
         BytesReference bytes = builder.bytes();
         XContentParser parser = JsonXContent.jsonXContent.createParser(bytes);
         parser.nextToken();
-        EmailAction.Result result = new EmailAction.Parser(ImmutableSettings.EMPTY, mock(EmailService.class), new TemplateMock.Parser(), transformRegistry)
+        EmailAction.Result result = new EmailAction.Parser(ImmutableSettings.EMPTY, mock(EmailService.class), new TemplateMock.Parser())
                 .parseResult(parser);
         assertThat(result.success(), is(success));
         if (success) {
             assertThat(result, instanceOf(EmailAction.Result.Success.class));
             assertThat(((EmailAction.Result.Success) result).email(), equalTo(email));
             assertThat(((EmailAction.Result.Success) result).account(), is("_account"));
-            if (transformResult != null) {
-                assertThat(result.transformResult(), notNullValue());
-                assertThat(result.transformResult().type(), equalTo("_transform_type"));
-                assertThat(result.transformResult().payload().data(), equalTo(new Payload.Simple("_key", "_value").data()));
-            } else {
-                assertThat(result.transformResult(), nullValue());
-            }
         } else {
             assertThat(result, instanceOf(EmailAction.Result.Failure.class));
             assertThat(((EmailAction.Result.Failure) result).reason(), is("_reason"));
@@ -389,7 +340,7 @@ public class EmailActionTests extends ElasticsearchTestCase {
         BytesReference bytes = builder.bytes();
         XContentParser parser = JsonXContent.jsonXContent.createParser(bytes);
         parser.nextToken();
-        new EmailAction.Parser(ImmutableSettings.EMPTY, mock(EmailService.class), new TemplateMock.Parser(), mock(TransformRegistry.class))
+        new EmailAction.Parser(ImmutableSettings.EMPTY, mock(EmailService.class), new TemplateMock.Parser())
                 .parseResult(parser);
     }
 

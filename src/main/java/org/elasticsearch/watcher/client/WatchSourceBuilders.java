@@ -15,31 +15,28 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.watcher.actions;
+package org.elasticsearch.watcher.client;
 
-import org.elasticsearch.watcher.actions.email.EmailAction;
-import org.elasticsearch.watcher.actions.index.IndexAction;
-import org.elasticsearch.watcher.actions.webhook.WebhookAction;
 import org.elasticsearch.watcher.support.http.TemplatedHttpRequest;
+import org.elasticsearch.watcher.support.template.ScriptTemplate;
 
 /**
  *
  */
-public final class ActionBuilders {
+public final class WatchSourceBuilders {
 
-    private ActionBuilders() {
+    private WatchSourceBuilders() {
     }
 
-    public static EmailAction.SourceBuilder emailAction(String id) {
-        return new EmailAction.SourceBuilder(id);
+    public static WatchSourceBuilder watchBuilder() {
+        return new WatchSourceBuilder();
     }
 
-    public static IndexAction.SourceBuilder indexAction(String id, String index, String type) {
-        return new IndexAction.SourceBuilder(id, index, type);
+    public static ScriptTemplate.SourceBuilder template(String text) {
+        return new ScriptTemplate.SourceBuilder(text);
     }
 
-    public static WebhookAction.SourceBuilder webhookAction(String id, TemplatedHttpRequest.SourceBuilder httpRequest) {
-        return new WebhookAction.SourceBuilder(id, httpRequest);
+    public static TemplatedHttpRequest.SourceBuilder templatedHttpRequest(String host, int port) {
+        return new TemplatedHttpRequest.SourceBuilder(host, port);
     }
-
 }

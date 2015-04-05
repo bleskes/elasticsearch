@@ -27,7 +27,6 @@ import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.script.ScriptService;
 import org.elasticsearch.test.ElasticsearchIntegrationTest;
 import org.elasticsearch.watcher.actions.ActionException;
-import org.elasticsearch.watcher.actions.TransformMocks;
 import org.elasticsearch.watcher.actions.email.service.Authentication;
 import org.elasticsearch.watcher.actions.email.service.Email;
 import org.elasticsearch.watcher.actions.email.service.EmailService;
@@ -36,8 +35,6 @@ import org.elasticsearch.watcher.support.http.HttpClient;
 import org.elasticsearch.watcher.support.init.proxy.ClientProxy;
 import org.elasticsearch.watcher.support.init.proxy.ScriptServiceProxy;
 import org.elasticsearch.watcher.test.WatcherTestUtils;
-import org.elasticsearch.watcher.transform.Transform;
-import org.elasticsearch.watcher.transform.TransformRegistry;
 import org.elasticsearch.watcher.trigger.schedule.ScheduleTriggerEvent;
 import org.elasticsearch.watcher.watch.Payload;
 import org.elasticsearch.watcher.watch.Watch;
@@ -50,9 +47,8 @@ import java.util.Map;
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 import static org.elasticsearch.index.query.QueryBuilders.matchAllQuery;
 import static org.elasticsearch.search.builder.SearchSourceBuilder.searchSource;
-import static org.hamcrest.Matchers.*;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
 
 /**
  */
@@ -61,7 +57,7 @@ public class IndexActionTests extends ElasticsearchIntegrationTest {
     @Test
     public void testIndexActionExecute() throws Exception {
 
-        IndexAction action = new IndexAction(logger, null, ClientProxy.of(client()), "test-index", "test-type");
+        IndexAction action = new IndexAction(logger, ClientProxy.of(client()), "test-index", "test-type");
         final String account = "account1";
         Watch alert = WatcherTestUtils.createTestWatch("testAlert",
                 ClientProxy.of(client()),
@@ -83,7 +79,7 @@ public class IndexActionTests extends ElasticsearchIntegrationTest {
 
         Map<String, Object> payloadMap = new HashMap<>();
         payloadMap.put("test", "foo");
-        IndexAction.Result result = action.execute(ctx, new Payload.Simple(payloadMap));
+        IndexAction.Result result = action.execute("_id", ctx, new Payload.Simple(payloadMap));
 
         assertThat(result.success(), equalTo(true));
         Map<String, Object> responseData = result.response().data();
@@ -103,20 +99,13 @@ public class IndexActionTests extends ElasticsearchIntegrationTest {
 
     @Test @Repeat(iterations = 10)
     public void testParser() throws Exception {
-        final Transform transform = randomBoolean() ? null : new TransformMocks.TransformMock();
-        TransformRegistry transformRegistry = transform == null ? mock(TransformRegistry.class) : new TransformMocks.TransformRegistryMock(transform);
         XContentBuilder builder = jsonBuilder();
-        builder.startObject();
-        {
-            builder.field(IndexAction.Parser.INDEX_FIELD.getPreferredName(), "test-index");
-            builder.field(IndexAction.Parser.TYPE_FIELD.getPreferredName(), "test-type");
-            if (transform != null){
-                builder.startObject(Transform.Parser.TRANSFORM_FIELD.getPreferredName()).field(transform.type(), transform);
-            }
-        }
-        builder.endObject();
+        builder.startObject()
+                .field(IndexAction.Parser.INDEX_FIELD.getPreferredName(), "test-index")
+                .field(IndexAction.Parser.TYPE_FIELD.getPreferredName(), "test-type")
+                .endObject();
 
-        IndexAction.Parser actionParser = new IndexAction.Parser(ImmutableSettings.EMPTY, ClientProxy.of(client()), transformRegistry);
+        IndexAction.Parser actionParser = new IndexAction.Parser(ImmutableSettings.EMPTY, ClientProxy.of(client()));
         XContentParser parser = JsonXContent.jsonXContent.createParser(builder.bytes());
         parser.nextToken();
 
@@ -124,13 +113,6 @@ public class IndexActionTests extends ElasticsearchIntegrationTest {
 
         assertThat(action.type, equalTo("test-type"));
         assertThat(action.index, equalTo("test-index"));
-
-        if (transform != null) {
-            assertThat(action.transform(), notNullValue());
-            assertThat(action.transform(), equalTo(transform));
-        } else {
-            assertThat(action.transform(), nullValue());
-        }
     }
 
     @Test @Repeat(iterations = 10)
@@ -148,7 +130,7 @@ public class IndexActionTests extends ElasticsearchIntegrationTest {
             }
         }
         builder.endObject();
-        IndexAction.Parser actionParser = new IndexAction.Parser(ImmutableSettings.EMPTY, ClientProxy.of(client()), null);
+        IndexAction.Parser actionParser = new IndexAction.Parser(ImmutableSettings.EMPTY, ClientProxy.of(client()));
         XContentParser parser = JsonXContent.jsonXContent.createParser(builder.bytes());
         parser.nextToken();
         try {
@@ -165,13 +147,6 @@ public class IndexActionTests extends ElasticsearchIntegrationTest {
     public void testParser_Result() throws Exception {
         boolean success = randomBoolean();
 
-        Transform.Result transformResult = randomBoolean() ? null : mock(Transform.Result.class);
-        if (transformResult != null) {
-            when(transformResult.type()).thenReturn("_transform_type");
-            when(transformResult.payload()).thenReturn(new Payload.Simple("_key", "_value"));
-        }
-        TransformRegistry transformRegistry = transformResult != null ? new TransformMocks.TransformRegistryMock(transformResult) : mock(TransformRegistry.class);
-
         XContentBuilder builder = jsonBuilder().startObject()
                 .field("success", success);
         if (success) {
@@ -181,22 +156,14 @@ public class IndexActionTests extends ElasticsearchIntegrationTest {
             data.put("version", 1);
             data.put("type", "test-type");
             data.put("index", "test-index");
-
             builder.field(IndexAction.Parser.RESPONSE_FIELD.getPreferredName(), data);
-            if (transformResult != null) {
-                builder.startObject("transform_result")
-                        .startObject("_transform_type")
-                        .field("payload", new Payload.Simple("_key", "_value").data())
-                        .endObject()
-                        .endObject();
-            }
         } else {
             builder.field("reason", "_reason");
         }
 
         XContentParser parser = JsonXContent.jsonXContent.createParser(builder.bytes());
         parser.nextToken();
-        IndexAction.Result result = new IndexAction.Parser(ImmutableSettings.EMPTY, ClientProxy.of(client()), transformRegistry)
+        IndexAction.Result result = new IndexAction.Parser(ImmutableSettings.EMPTY, ClientProxy.of(client()))
                 .parseResult(parser);
 
         assertThat(result.success(), is(success));

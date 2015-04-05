@@ -17,9 +17,10 @@
 
 package org.elasticsearch.watcher.support.template;
 
-import org.elasticsearch.watcher.WatcherException;
 import org.elasticsearch.common.xcontent.ToXContent;
+import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.watcher.WatcherException;
 
 import java.io.IOException;
 import java.util.Map;
@@ -45,6 +46,22 @@ public interface Template extends ToXContent {
                 super(msg, cause);
             }
         }
+    }
 
+    interface SourceBuilder extends ToXContent {
+    }
+
+    class InstanceSourceBuilder implements SourceBuilder {
+
+        private final Template template;
+
+        public InstanceSourceBuilder(Template template) {
+            this.template = template;
+        }
+
+        @Override
+        public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
+            return template.toXContent(builder, params);
+        }
     }
 }
