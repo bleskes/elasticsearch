@@ -28,6 +28,7 @@ import org.elasticsearch.watcher.client.WatcherClientModule;
 import org.elasticsearch.watcher.condition.ConditionModule;
 import org.elasticsearch.watcher.history.HistoryModule;
 import org.elasticsearch.watcher.input.InputModule;
+import org.elasticsearch.watcher.license.LicenseModule;
 import org.elasticsearch.watcher.rest.WatcherRestModule;
 import org.elasticsearch.watcher.shield.WatcherShieldModule;
 import org.elasticsearch.watcher.support.TemplateUtils;
@@ -53,6 +54,7 @@ public class WatcherModule extends AbstractModule implements SpawnModules {
     public Iterable<? extends Module> spawnModules() {
         return ImmutableList.of(
                 new InitializingModule(),
+                new LicenseModule(),
                 new WatchModule(),
                 new TemplateModule(),
                 new HttpClientModule(),

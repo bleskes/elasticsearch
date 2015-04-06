@@ -22,6 +22,7 @@ import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.license.plugin.LicenseVersion;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -37,7 +38,7 @@ public class WatcherVersion implements Serializable {
 
     // The first internal beta has already been released, without this class being here, so we start version version 2.
     public static final int V_1_0_0_Beta2_ID = /*00*/1000002;
-    public static final WatcherVersion V_1_0_0_Beta2 = new WatcherVersion(V_1_0_0_Beta2_ID, true, Version.V_1_4_0);
+    public static final WatcherVersion V_1_0_0_Beta2 = new WatcherVersion(V_1_0_0_Beta2_ID, true, Version.V_1_4_0, LicenseVersion.V_1_0_0);
 
     public static final WatcherVersion CURRENT = V_1_0_0_Beta2;
 
@@ -51,7 +52,7 @@ public class WatcherVersion implements Serializable {
                 return V_1_0_0_Beta2;
 
             default:
-                return new WatcherVersion(id, null, Version.CURRENT);
+                return new WatcherVersion(id, null, Version.CURRENT, LicenseVersion.CURRENT);
         }
     }
 
@@ -110,9 +111,9 @@ public class WatcherVersion implements Serializable {
     public final byte build;
     public final Boolean snapshot;
     public final Version minEsCompatibilityVersion;
-    // TODO: Once licencing integration has been completed license version should be added to
+    public final LicenseVersion minLicenseCompatibilityVersion;
 
-    WatcherVersion(int id, @Nullable Boolean snapshot, Version minEsCompatibilityVersion) {
+    WatcherVersion(int id, @Nullable Boolean snapshot, Version minEsCompatibilityVersion, LicenseVersion minLicenseCompatibilityVersion) {
         this.id = id;
         this.major = (byte) ((id / 1000000) % 100);
         this.minor = (byte) ((id / 10000) % 100);
@@ -120,6 +121,7 @@ public class WatcherVersion implements Serializable {
         this.build = (byte) (id % 100);
         this.snapshot = snapshot;
         this.minEsCompatibilityVersion = minEsCompatibilityVersion;
+        this.minLicenseCompatibilityVersion = minLicenseCompatibilityVersion;
     }
 
     public boolean snapshot() {
@@ -162,11 +164,19 @@ public class WatcherVersion implements Serializable {
     }
 
     /**
-     * @return  The minimum elasticsearch version this shield version is compatible with.
+     * @return  The minimum elasticsearch version this watcher version is compatible with.
      */
     public Version minimumEsCompatiblityVersion() {
         return minEsCompatibilityVersion;
     }
+
+    /**
+     * @return  The minimum license plugin version this watcher version is compatible with.
+     */
+    public LicenseVersion minimumLicenseCompatibilityVersion() {
+        return minLicenseCompatibilityVersion;
+    }
+
 
     /**
      * Just the version number (without -SNAPSHOT if snapshot).

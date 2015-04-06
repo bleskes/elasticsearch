@@ -84,7 +84,7 @@ public class NoMasterNodeTests extends AbstractWatcherIntegrationTests {
         config = new ClusterDiscoveryConfiguration.UnicastZen(2);
         internalTestCluster().startNodesAsync(2).get();
         createIndex("my-index");
-        ensureWatcherStarted();
+        ensureWatcherStarted(false);
 
         // Have a sample document in the index, the watch is going to evaluate
         client().prepareIndex("my-index", "my-type").setSource("field", "value").get();
@@ -133,7 +133,7 @@ public class NoMasterNodeTests extends AbstractWatcherIntegrationTests {
         client().prepareIndex("my-index", "my-type").setSource("field", "value").get();
 
         // watcher starts in the background, it can happen we get here too soon, so wait until watcher has started.
-        ensureWatcherStarted();
+        ensureWatcherStarted(false);
         for (int i = 1; i <= numberOfWatches; i++) {
             String watchName = "watch" + i;
             SearchRequest searchRequest = WatcherTestUtils.newInputSearchRequest("my-index").source(searchSource().query(termQuery("field", "value")));
@@ -182,7 +182,7 @@ public class NoMasterNodeTests extends AbstractWatcherIntegrationTests {
 
     private void startElectedMasterNodeAndWait() throws Exception {
         internalTestCluster().startNode();
-        ensureWatcherStarted();
+        ensureWatcherStarted(false);
     }
 
 }
