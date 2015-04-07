@@ -69,14 +69,6 @@ public abstract class ResourceWithJobManager
     private static final String ISO_8601_DATE_FORMAT_WITH_MS = "yyyy-MM-dd'T'HH:mm:ss.SSSX";
 
     /**
-     * The date formats to be used while trying to parse timestamps.
-     * The array should be ordered the most likely to work first.
-     */
-    private static final DateFormat[] DATE_FORMATS = new DateFormat [] {
-            new SimpleDateFormat(ISO_8601_DATE_FORMAT),
-            new SimpleDateFormat(ISO_8601_DATE_FORMAT_WITH_MS)};
-
-    /**
      * The filter 'start' query parameter
      */
     public static final String START_QUERY_PARAM = "start";
@@ -91,6 +83,16 @@ public abstract class ResourceWithJobManager
      */
     public static final String BAD_DATE_FORMAT_MSG = "Error: Query param '%s' with value"
             + " '%s' cannot be parsed as a date or converted to a number (epoch)";
+
+    /**
+     * The date formats to be used while trying to parse timestamps.
+     * The array should be ordered the most likely to work first.
+     * Also note that DateFormat objects are not thread-safe, thus
+     * we create new instances for each endpoint.
+     */
+    private final DateFormat[] m_DateFormats = new DateFormat [] {
+            new SimpleDateFormat(ISO_8601_DATE_FORMAT),
+            new SimpleDateFormat(ISO_8601_DATE_FORMAT_WITH_MS)};
 
     /**
      * Application context injected by the framework
@@ -328,7 +330,7 @@ public abstract class ResourceWithJobManager
             // not a number
         }
 
-        for (DateFormat dateFormat : DATE_FORMATS)
+        for (DateFormat dateFormat : m_DateFormats)
         {
             // try parsing as a date string
             try
