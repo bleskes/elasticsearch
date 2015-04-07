@@ -90,6 +90,10 @@ public class NoMasterNodeTests extends AbstractWatcherIntegrationTests {
         client().prepareIndex("my-index", "my-type").setSource("field", "value").get();
         SearchRequest searchRequest = WatcherTestUtils.newInputSearchRequest("my-index").source(searchSource().query(termQuery("field", "value")));
         BytesReference watchSource = createWatchSource("0/5 * * * * ? *", searchRequest, "ctx.payload.hits.total == 1");
+
+        // we first need to make sure the license is enabled, otherwise all APIs will be blocked
+        ensureLicenseEnabled();
+
         watcherClient().preparePutWatch("my-first-watch")
                 .source(watchSource)
                 .get();
@@ -106,6 +110,9 @@ public class NoMasterNodeTests extends AbstractWatcherIntegrationTests {
         }
         // Bring back the 2nd node and wait for elected master node to come back and watcher to work as expected.
         startElectedMasterNodeAndWait();
+
+        // we first need to make sure the license is enabled, otherwise all APIs will be blocked
+        ensureLicenseEnabled();
 
         // Our first watch's condition should at least have been met twice
         assertWatchWithMinimumPerformedActionsCount("my-first-watch", 2);
@@ -138,9 +145,7 @@ public class NoMasterNodeTests extends AbstractWatcherIntegrationTests {
             String watchName = "watch" + i;
             SearchRequest searchRequest = WatcherTestUtils.newInputSearchRequest("my-index").source(searchSource().query(termQuery("field", "value")));
             BytesReference watchSource = createWatchSource("0/5 * * * * ? *", searchRequest, "ctx.payload.hits.total == 1");
-            watcherClient().preparePutWatch(watchName)
-                    .source(watchSource)
-                    .get();
+            watchService().putWatch(watchName, watchSource);
         }
         ensureGreen();
 
@@ -183,6 +188,10 @@ public class NoMasterNodeTests extends AbstractWatcherIntegrationTests {
     private void startElectedMasterNodeAndWait() throws Exception {
         internalTestCluster().startNode();
         ensureWatcherStarted(false);
+    }
+
+    private WatchService watchService() {
+        return getInstanceFromMaster(WatchService.class);
     }
 
 }
