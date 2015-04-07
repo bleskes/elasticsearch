@@ -88,6 +88,7 @@ public class JobDetails
 	private URI m_Location;
 	private URI m_DataEndpoint;
 	private URI m_BucketsEndpoint;
+	private URI m_CategoryDefinitionsEndpoint;
 	private URI m_RecordsEndpoint;
 	private URI m_LogsEndpoint;
 
@@ -419,8 +420,17 @@ public class JobDetails
 		m_BucketsEndpoint = results;
 	}
 
+	public URI getCategoryDefinitionsEndpoint()
+	{
+	    return m_CategoryDefinitionsEndpoint;
+	}
 
-	/**
+	public void setCategoryDefinitionsEndpoint(URI categoryDefinitions)
+    {
+	    m_CategoryDefinitionsEndpoint = categoryDefinitions;
+    }
+
+    /**
 	 * This Job's results endpoint as the full URL path
 	 *
 	 * @return The Job's results URI

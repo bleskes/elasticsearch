@@ -35,6 +35,7 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.AnalysisLimits;
+import com.prelert.job.CategorizerState;
 import com.prelert.job.DataCounts;
 import com.prelert.job.DataDescription;
 import com.prelert.job.Detector;
@@ -47,6 +48,7 @@ import com.prelert.job.usage.Usage;
 import com.prelert.rs.data.AnomalyCause;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
+import com.prelert.rs.data.CategoryDefinition;
 
 /**
  * Static methods to create Elasticsearch mappings for the autodetect
@@ -188,6 +190,12 @@ public class ElasticsearchMappings
                                 .startObject(AnalysisConfig.PERIOD)
                                     .field(TYPE, LONG).field(INDEX, NO)
                                 .endObject()
+                                .startObject(AnalysisConfig.SUMMARY_COUNT_FIELD_NAME)
+                                    .field(TYPE, STRING).field(INDEX, NOT_ANALYZED)
+                                .endObject()
+                                .startObject(AnalysisConfig.CATEGORIZATION_FIELD_NAME)
+                                    .field(TYPE, STRING).field(INDEX, NOT_ANALYZED)
+                                .endObject()
                                 .startObject(AnalysisConfig.DETECTORS)
                                     .startObject(PROPERTIES)
                                         .startObject(Detector.FUNCTION)
@@ -312,6 +320,44 @@ public class ElasticsearchMappings
             .endObject();
     }
 
+    public static XContentBuilder categorizerStateMapping() throws IOException
+    {
+        return jsonBuilder()
+                .startObject()
+                    .startObject(CategorizerState.TYPE)
+                        .field("enabled", false)
+                        .startObject("_all")
+                            .field("enabled", false)
+                        .endObject()
+                    .endObject()
+                .endObject();
+    }
+
+    public static XContentBuilder categoryDefinitionMapping() throws IOException
+    {
+        return jsonBuilder()
+                .startObject()
+                    .startObject(CategoryDefinition.TYPE)
+                        .startObject("_all")
+                            .field("enabled", false)
+                        .endObject()
+                        .startObject(PROPERTIES)
+                            .startObject(CategoryDefinition.CATEGORY_ID)
+                                .field(TYPE, LONG)
+                            .endObject()
+                            .startObject(CategoryDefinition.TERMS)
+                                .field(TYPE, STRING).field(INDEX, NO)
+                            .endObject()
+                            .startObject(CategoryDefinition.REGEX)
+                                .field(TYPE, STRING).field(INDEX, NO)
+                            .endObject()
+                            .startObject(CategoryDefinition.EXAMPLES)
+                                .field(TYPE, STRING).field(INDEX, NO)
+                            .endObject()
+                        .endObject()
+                    .endObject()
+                .endObject();
+    }
 
     /**
      * Create the Elasticsearch mapping for {@linkplain com.prelert.rs.data.Detector}.

@@ -35,6 +35,6 @@ public interface JobProvider extends JobDetailsProvider, JobResultsProvider
 	/**
 	 * Get the persisted quantiles state for the job
 	 */
-	public QuantilesState getQuantilesState(String jobId) 
+	public QuantilesState getQuantilesState(String jobId)
 	throws UnknownJobException;
 }

@@ -70,6 +70,7 @@ import com.prelert.job.status.none.NoneStatusReporter;
 import com.prelert.job.transform.TransformConfigs;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
+import com.prelert.rs.data.CategoryDefinition;
 import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
@@ -400,6 +401,18 @@ public class JobManager
         }
 
         return buckets;
+    }
+
+    public Pagination<CategoryDefinition> categoryDefinitions(String jobId, int skip, int take)
+            throws UnknownJobException
+    {
+        return m_JobProvider.categoryDefinitions(jobId, skip, take);
+    }
+
+    public SingleDocument<CategoryDefinition> categoryDefinition(String jobId, String categoryId)
+            throws UnknownJobException
+    {
+        return m_JobProvider.categoryDefinition(jobId, categoryId);
     }
 
     /**

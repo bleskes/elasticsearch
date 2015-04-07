@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -24,57 +24,24 @@
  *                                                          *
  *                                                          *
  ************************************************************/
+package com.prelert.job;
 
-package com.prelert.job.persistence;
-
-import com.prelert.job.ModelSizeStats;
-import com.prelert.job.quantiles.Quantiles;
-import com.prelert.rs.data.Bucket;
-import com.prelert.rs.data.CategoryDefinition;
 
 /**
- * Interface for classes that persist {@linkplain Bucket Buckets} and
- * {@linkplain Quantiles Quantiles}
+ * The categorizer state does not need to be loaded on the Java side.
+ * However, the Java process DOES set up a mapping on the Elasticsearch
+ * index to tell Elasticsearch not to analyse the categorizer state documents
+ * in any way.
  */
-public interface JobResultsPersister
+public class CategorizerState
 {
-	/**
-	 * Persist the result bucket
-	 * @param bucket
-	 */
-	public void persistBucket(Bucket bucket);
-
-	/**
-     * Persist the category definition
-     * @param category The category to be persisted
-     */
-    public void persistCategoryDefinition(CategoryDefinition category);
-
     /**
-	 * Persist the quantiles
-	 * @param quantiles
-	 */
-	public void persistQuantiles(Quantiles quantiles);
+     * The type of this class used when persisting the data
+     */
+    public static final String TYPE = "categorizerState";
 
-	/**
-	 * Persist the memory usage data
-	 * @param modelSizeStats
-	 */
-	public void persistModelSizeStats(ModelSizeStats modelSizeStats);
-
-	/**
-	 * Increment the jobs bucket result count by <code>count</code>
-	 * @param count
-	 */
-	public void incrementBucketCount(long count);
-
-
-	/**
-	 * Once all the job data has been written this function will be
-	 * called to commit the data if the implementing persister requries
-	 * it.
-	 *
-	 * @return True if successful
-	 */
-	public boolean commitWrites();
+    private CategorizerState()
+    {
+    }
 }
+

@@ -189,6 +189,10 @@ class CsvDataToProcessWriter extends AbstractDataToProcessWriter
     {
         for (String field : inputFields)
         {
+            if (AnalysisConfig.AUTO_CREATED_FIELDS.contains(field))
+            {
+                continue;
+            }
             Integer index = inputFieldIndicies.get(field);
             if (index == null)
             {

@@ -28,6 +28,7 @@
 package com.prelert.job;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -56,16 +57,22 @@ public class AnalysisConfig
      */
     public static final String BUCKET_SPAN = "bucketSpan";
     public static final String BATCH_SPAN = "batchSpan";
+    public static final String CATEGORIZATION_FIELD_NAME = "categorizationFieldName";
     public static final String LATENCY = "latency";
     public static final String PERIOD = "period";
     public static final String SUMMARY_COUNT_FIELD_NAME = "summaryCountFieldName";
     public static final String DETECTORS = "detectors";
+
+    private static final String PRELERT_CATEGORY_FIELD = "prelertcategory";
+    public static final Set<String> AUTO_CREATED_FIELDS = new HashSet<>(
+            Arrays.asList(PRELERT_CATEGORY_FIELD));
 
     /**
      * These values apply to all detectors
      */
     private Long m_BucketSpan;
     private Long m_BatchSpan;
+    private String m_CategorizationFieldName;
     private Long m_Latency = 0L;
     private Long m_Period;
     private String m_SummaryCountFieldName;
@@ -106,6 +113,16 @@ public class AnalysisConfig
     public void setBatchSpan(Long batchSpan)
     {
         m_BatchSpan = batchSpan;
+    }
+
+    public String getCategorizationFieldName()
+    {
+        return m_CategorizationFieldName;
+    }
+
+    public void setCategorizationFieldName(String categorizationFieldName)
+    {
+        m_CategorizationFieldName = categorizationFieldName;
     }
 
     /**
@@ -173,7 +190,8 @@ public class AnalysisConfig
     /**
      * Return the list of fields required by the analysis.
      * These are the metric field, partition field, by field and over
-     * field of each detector, plus the summary count field of the job.
+     * field of each detector, plus the summary count field and the
+     * categorization field name of the job.
      * <code>null</code> and empty strings are filtered from the
      * config
      *
@@ -182,6 +200,7 @@ public class AnalysisConfig
     public List<String> analysisFields()
     {
         Set<String> fields = new TreeSet<>();
+        addIfNotNull(fields, m_CategorizationFieldName);
         addIfNotNull(fields, m_SummaryCountFieldName);
 
         for (Detector d : getDetectors())
@@ -309,6 +328,7 @@ public class AnalysisConfig
         checkFieldIsNotNegativeIfSpecified("Latency", m_Latency);
         checkFieldIsNotNegativeIfSpecified("Period", m_Period);
         Detector.verifyFieldName(m_SummaryCountFieldName);
+        Detector.verifyFieldName(m_CategorizationFieldName);
         verifyDetectors();
 
         return true;

@@ -32,6 +32,7 @@ import java.io.Closeable;
 import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
+import com.prelert.rs.data.CategoryDefinition;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
 
@@ -128,6 +129,12 @@ public interface JobResultsProvider extends Closeable
     public Pagination<AnomalyRecord> bucketRecords(String jobId,
             String bucketId, int skip, int take, boolean includeInterim, String sortField,
             boolean sortDescending)
+    throws UnknownJobException;
+
+    public Pagination<CategoryDefinition> categoryDefinitions(String jobId, int skip, int take)
+    throws UnknownJobException;
+
+    public SingleDocument<CategoryDefinition> categoryDefinition(String jobId, String categoryId)
     throws UnknownJobException;
 
     /**
