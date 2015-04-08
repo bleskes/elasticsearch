@@ -22,6 +22,7 @@ package org.elasticsearch.common.xcontent;
 import org.elasticsearch.common.Booleans;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -79,6 +80,14 @@ public interface ToXContent {
 
         public MapParams(Map<String, String> params) {
             this.params = params;
+        }
+
+        /* constructs a HashMap based on a list of key, params pairs */
+        public MapParams(String... keyParams) {
+            params = new HashMap<>(keyParams.length / 2 + 1);
+            for (int i = 0; i < keyParams.length; i += 2) {
+                params.put(keyParams[i], keyParams[i + 1]);
+            }
         }
 
         @Override
