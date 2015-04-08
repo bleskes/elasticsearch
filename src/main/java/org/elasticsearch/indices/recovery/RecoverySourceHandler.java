@@ -299,6 +299,7 @@ public class RecoverySourceHandler implements Engine.RecoveryHandler {
                                 final boolean lastChunk = readCount == len;
                                 final RecoveryFileChunkRequest fileChunkRequest = new RecoveryFileChunkRequest(request.recoveryId(), request.shardId(), md, position,
                                         content, lastChunk,shard.translog().estimatedNumberOfOperations(), throttleTimeInNanos);
+                                logger.trace("sending [{}]", fileChunkRequest);
                                 cancellableThreads.execute(new Interruptable() {
                                     @Override
                                     public void run() throws InterruptedException {
