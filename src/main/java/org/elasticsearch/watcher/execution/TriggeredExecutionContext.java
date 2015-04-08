@@ -15,19 +15,28 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.watcher.history;
+package org.elasticsearch.watcher.execution;
 
-import java.util.concurrent.BlockingQueue;
+import org.elasticsearch.common.joda.time.DateTime;
+import org.elasticsearch.watcher.trigger.TriggerEvent;
+import org.elasticsearch.watcher.watch.Watch;
 
 /**
- *
  */
-public interface WatchExecutor {
+public class TriggeredExecutionContext extends WatchExecutionContext {
 
-    BlockingQueue<Runnable> queue();
+    public TriggeredExecutionContext(Watch watch, DateTime executionTime, TriggerEvent triggerEvent) {
+        super(watch, executionTime, triggerEvent);
+    }
 
-    long largestPoolSize();
+    @Override
+    final public boolean simulateAction(String actionId) {
+        return false;
+    }
 
-    void execute(Runnable runnable);
+    @Override
+    final public boolean recordInHistory() {
+        return true;
+    }
 
 }

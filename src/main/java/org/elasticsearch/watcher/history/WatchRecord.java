@@ -67,8 +67,8 @@ public class WatchRecord implements ToXContent {
     WatchRecord() {
     }
 
-    public WatchRecord(Watch watch, TriggerEvent triggerEvent) {
-        this.id = watch.name() + "#" + triggerEvent.triggeredTime().toDateTimeISO();
+    public WatchRecord(String id, Watch watch, TriggerEvent triggerEvent) {
+        this.id = id;
         this.name = watch.name();
         this.triggerEvent = triggerEvent;
         this.condition = watch.condition();
@@ -114,6 +114,10 @@ public class WatchRecord implements ToXContent {
 
     void version(long version) {
         this.version = version;
+    }
+
+    public WatchExecution execution() {
+        return execution;
     }
 
     public void update(State state, @Nullable String message) {

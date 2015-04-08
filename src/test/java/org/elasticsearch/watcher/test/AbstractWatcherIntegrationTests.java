@@ -54,6 +54,7 @@ import org.elasticsearch.watcher.actions.email.service.Email;
 import org.elasticsearch.watcher.actions.email.service.EmailService;
 import org.elasticsearch.watcher.actions.email.service.Profile;
 import org.elasticsearch.watcher.client.WatcherClient;
+import org.elasticsearch.watcher.execution.ExecutionService;
 import org.elasticsearch.watcher.history.HistoryStore;
 import org.elasticsearch.watcher.history.WatchRecord;
 import org.elasticsearch.watcher.license.LicenseService;
@@ -286,6 +287,10 @@ public abstract class AbstractWatcherIntegrationTests extends ElasticsearchInteg
 
     protected Watch.Parser watchParser() {
         return getInstanceFromMaster(Watch.Parser.class);
+    }
+
+    protected ExecutionService executionService() {
+        return getInstanceFromMaster(ExecutionService.class);
     }
 
     protected TriggerService triggerService() {

@@ -25,7 +25,7 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.watcher.transform.Transform;
 import org.elasticsearch.watcher.watch.Payload;
-import org.elasticsearch.watcher.watch.WatchExecutionContext;
+import org.elasticsearch.watcher.execution.WatchExecutionContext;
 
 import java.io.IOException;
 
@@ -83,6 +83,7 @@ public abstract class Action<R extends Action.Result> implements ToXContent {
         public boolean success() {
             return success;
         }
+
 
         @Override
         public final XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {

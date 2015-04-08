@@ -27,7 +27,7 @@ import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.watcher.input.Input;
 import org.elasticsearch.watcher.input.InputException;
 import org.elasticsearch.watcher.watch.Payload;
-import org.elasticsearch.watcher.watch.WatchExecutionContext;
+import org.elasticsearch.watcher.execution.WatchExecutionContext;
 
 import java.io.IOException;
 import java.util.Map;
@@ -54,7 +54,7 @@ public class SimpleInput extends Input<SimpleInput.Result> {
 
     @Override
     public Result execute(WatchExecutionContext ctx) throws IOException {
-        return new Result(TYPE, payload);
+        return new Result(payload);
     }
 
     @Override
@@ -86,8 +86,8 @@ public class SimpleInput extends Input<SimpleInput.Result> {
 
     public static class Result extends Input.Result {
 
-        public Result(String type, Payload payload) {
-            super(type, payload);
+        public Result(Payload payload) {
+            super(TYPE, payload);
         }
 
         @Override
@@ -139,7 +139,7 @@ public class SimpleInput extends Input<SimpleInput.Result> {
                 throw new InputException("unable to parse [" + TYPE + "] input result [payload] is a required field");
             }
 
-            return new Result(TYPE, payload);
+            return new Result(payload);
         }
     }
 

@@ -32,7 +32,7 @@ import org.elasticsearch.watcher.actions.email.service.*;
 import org.elasticsearch.watcher.support.Variables;
 import org.elasticsearch.watcher.support.template.Template;
 import org.elasticsearch.watcher.watch.Payload;
-import org.elasticsearch.watcher.watch.WatchExecutionContext;
+import org.elasticsearch.watcher.execution.WatchExecutionContext;
 
 import java.io.IOException;
 import java.util.Map;
@@ -98,8 +98,13 @@ public class EmailAction extends Action<EmailAction.Result> {
         }
 
         try {
-            EmailService.EmailSent sent = emailService.send(email.build(), auth, profile, account);
-            return new Result.Success(sent);
+            if (ctx.simulateAction(actionId)) {
+                return new Result.Simulated(email.build());
+            } else {
+                EmailService.EmailSent sent = emailService.send(email.build(), auth, profile, account);
+                return new Result.Success(sent);
+            }
+
         } catch (EmailException ee) {
             logger.error("could not send email [{}] for watch [{}]", ee, actionId, ctx.watch().name());
             return new Result.Failure("could not send email. error: " + ee.getMessage());
@@ -183,6 +188,7 @@ public class EmailAction extends Action<EmailAction.Result> {
         public static final ParseField ATTACH_PAYLOAD_FIELD = new ParseField("attach_payload");
         public static final ParseField EMAIL_FIELD = new ParseField("email");
         public static final ParseField REASON_FIELD = new ParseField("reason");
+        public static final ParseField SIMULATED_EMAIL_FIELD = new ParseField("simulated_email");
 
         private final Template.Parser templateParser;
         private final EmailService emailService;
@@ -280,6 +286,7 @@ public class EmailAction extends Action<EmailAction.Result> {
         public EmailAction.Result parseResult(XContentParser parser) throws IOException {
             Boolean success = null;
             Email email = null;
+            Email simulatedEmail = null;
             String account = null;
             String reason = null;
 
@@ -305,12 +312,18 @@ public class EmailAction extends Action<EmailAction.Result> {
                 } else if (token == XContentParser.Token.START_OBJECT) {
                     if (EMAIL_FIELD.match(currentFieldName)) {
                         email = Email.parse(parser);
+                    } else if (SIMULATED_EMAIL_FIELD.match(currentFieldName)) {
+                        simulatedEmail = Email.parse(parser);
                     } else {
                         throw new EmailException("could not parse email result. unexpected field [" + currentFieldName + "]");
                     }
                 } else {
                     throw new EmailException("could not parse email result. unexpected token [" + token + "]");
                 }
+            }
+
+            if (simulatedEmail != null) {
+                return new Result.Simulated(simulatedEmail);
             }
 
             if (success == null) {
@@ -338,8 +351,8 @@ public class EmailAction extends Action<EmailAction.Result> {
 
             @Override
             public XContentBuilder xContentBody(XContentBuilder builder, Params params) throws IOException {
-                return builder.field("account", sent.account())
-                        .field("email", sent.email());
+                return builder.field(Parser.ACCOUNT_FIELD.getPreferredName(), sent.account())
+                        .field(Parser.EMAIL_FIELD.getPreferredName(), sent.email());
             }
 
             public String account() {
@@ -366,7 +379,26 @@ public class EmailAction extends Action<EmailAction.Result> {
 
             @Override
             protected XContentBuilder xContentBody(XContentBuilder builder, Params params) throws IOException {
-                return builder.field("reason", reason);
+                return builder.field(Parser.REASON_FIELD.getPreferredName(), reason);
+            }
+        }
+
+        public static class Simulated extends Result {
+
+            private final Email email;
+
+            public Email email() {
+                return email;
+            }
+
+            public Simulated(Email email) {
+                super(TYPE, true);
+                this.email = email;
+            }
+
+            @Override
+            protected XContentBuilder xContentBody(XContentBuilder builder, Params params) throws IOException {
+                return builder.field(Parser.SIMULATED_EMAIL_FIELD.getPreferredName(), email);
             }
         }
     }

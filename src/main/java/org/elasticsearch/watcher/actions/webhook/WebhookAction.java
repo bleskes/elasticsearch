@@ -28,13 +28,13 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.watcher.actions.Action;
 import org.elasticsearch.watcher.actions.ActionException;
+import org.elasticsearch.watcher.execution.WatchExecutionContext;
 import org.elasticsearch.watcher.support.Variables;
 import org.elasticsearch.watcher.support.http.HttpClient;
 import org.elasticsearch.watcher.support.http.HttpRequest;
 import org.elasticsearch.watcher.support.http.HttpResponse;
 import org.elasticsearch.watcher.support.http.TemplatedHttpRequest;
 import org.elasticsearch.watcher.watch.Payload;
-import org.elasticsearch.watcher.watch.WatchExecutionContext;
 
 import java.io.IOException;
 import java.util.Map;
@@ -70,7 +70,12 @@ public class WebhookAction extends Action<WebhookAction.Result> {
 
         HttpRequest request = templatedHttpRequest.render(model);
         try {
+
+            if (ctx.simulateAction(actionId)) {
+                return new Result.Simulated(request);
+            }
             HttpResponse response = httpClient.execute(request);
+
             int status = response.status();
             if (status >= 300) {
                 logger.warn("received http status [{}] when connecting to [{}] [{}]", status, request.host(), request.path());
@@ -155,12 +160,31 @@ public class WebhookAction extends Action<WebhookAction.Result> {
                 return builder.field(WebhookAction.Parser.REASON_FIELD.getPreferredName(), reason);
             }
         }
+
+        public static class Simulated extends Result {
+            private final HttpRequest request;
+
+            public Simulated(HttpRequest request) {
+                super(TYPE, true);
+                this.request = request;
+            }
+
+            public HttpRequest request() {
+                return request;
+            }
+
+            @Override
+            protected XContentBuilder xContentBody(XContentBuilder builder, Params params) throws IOException {
+                return builder.field(Parser.SIMULATED_REQUEST_FIELD.getPreferredName(), request);
+            }
+        }
     }
 
 
     public static class Parser extends AbstractComponent implements Action.Parser<Result, WebhookAction> {
 
         public static final ParseField REQUEST_FIELD = new ParseField("request");
+        public static final ParseField SIMULATED_REQUEST_FIELD = new ParseField("simulated_request");
         public static final ParseField RESPONSE_FIELD = new ParseField("response");
         public static final ParseField REASON_FIELD = new ParseField("reason");
 
@@ -196,18 +220,22 @@ public class WebhookAction extends Action<WebhookAction.Result> {
 
         @Override
         public Result parseResult(XContentParser parser) throws IOException {
-            String currentFieldName = null;
-            XContentParser.Token token;
             Boolean success = null;
             String reason = null;
             HttpRequest request = null;
+            HttpRequest simulatedRequest = null;
             HttpResponse response = null;
+
+            String currentFieldName = null;
+            XContentParser.Token token;
             while ((token = parser.nextToken()) != XContentParser.Token.END_OBJECT) {
                 if (token == XContentParser.Token.FIELD_NAME) {
                     currentFieldName = parser.currentName();
                 } else if (token == XContentParser.Token.START_OBJECT) {
                     if (REQUEST_FIELD.match(currentFieldName)) {
                         request = requestParser.parse(parser);
+                    } else if (SIMULATED_REQUEST_FIELD.match(currentFieldName)) {
+                        simulatedRequest = requestParser.parse(parser);
                     } else if (RESPONSE_FIELD.match(currentFieldName)) {
                         response = HttpResponse.parse(parser);
                     } else {
@@ -232,6 +260,10 @@ public class WebhookAction extends Action<WebhookAction.Result> {
 
             if (success == null) {
                 throw new ActionException("could not parse webhook result. expected boolean field [success]");
+            }
+
+            if (simulatedRequest != null) {
+                return new Result.Simulated(simulatedRequest);
             }
 
             return (reason == null) ? new Result.Executed(request, response) : new Result.Failure(reason);

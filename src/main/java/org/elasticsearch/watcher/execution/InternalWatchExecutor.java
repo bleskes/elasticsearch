@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.watcher.history;
+package org.elasticsearch.watcher.execution;
 
 import org.elasticsearch.watcher.WatcherPlugin;
 import org.elasticsearch.common.inject.Inject;

@@ -1,0 +1,78 @@
+/*
+ * ELASTICSEARCH CONFIDENTIAL
+ * __________________
+ *
+ *  [2014] Elasticsearch Incorporated. All Rights Reserved.
+ *
+ * NOTICE:  All information contained herein is, and remains
+ * the property of Elasticsearch Incorporated and its suppliers,
+ * if any.  The intellectual and technical concepts contained
+ * herein are proprietary to Elasticsearch Incorporated
+ * and its suppliers and may be covered by U.S. and Foreign Patents,
+ * patents in process, and are protected by trade secret or copyright law.
+ * Dissemination of this information or reproduction of this material
+ * is strictly forbidden unless prior written permission is obtained
+ * from Elasticsearch Incorporated.
+ */
+
+package org.elasticsearch.watcher.trigger.manual;
+
+import org.elasticsearch.common.inject.Inject;
+import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.watcher.trigger.TriggerEngine;
+
+import java.io.IOException;
+import java.util.Collection;
+
+/**
+ */
+public class ManualTriggerEngine implements TriggerEngine<ManualTrigger,ManualTriggerEvent> {
+
+    static final String TYPE = "manual";
+
+    @Inject
+    public ManualTriggerEngine(){
+    }
+
+    @Override
+    public String type() {
+        return TYPE;
+    }
+
+    /**
+     * It's the responsibility of the trigger engine implementation to select the appropriate jobs
+     * from the given list of jobs
+     *
+     * @param jobs
+     */
+    @Override
+    public void start(Collection<Job> jobs) {
+    }
+
+    @Override
+    public void stop() {
+    }
+
+    @Override
+    public void register(Listener listener) {
+    }
+
+    @Override
+    public void add(Job job) {
+    }
+
+    @Override
+    public boolean remove(String jobName) {
+        return false;
+    }
+
+    @Override
+    public ManualTrigger parseTrigger(String context, XContentParser parser) throws IOException {
+        return ManualTrigger.parse(parser);
+    }
+
+    @Override
+    public ManualTriggerEvent parseTriggerEvent(String context, XContentParser parser) throws IOException {
+        return ManualTriggerEvent.parse(context, parser);
+    }
+}
