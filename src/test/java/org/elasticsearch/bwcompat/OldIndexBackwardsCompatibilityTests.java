@@ -50,6 +50,7 @@ import org.elasticsearch.search.sort.SortOrder;
 import org.elasticsearch.test.ElasticsearchIntegrationTest;
 import org.elasticsearch.test.hamcrest.ElasticsearchAssertions;
 import org.elasticsearch.test.index.merge.NoMergePolicyProvider;
+import org.elasticsearch.test.junit.annotations.TestLogging;
 import org.elasticsearch.test.rest.client.http.HttpRequestBuilder;
 import org.hamcrest.Matchers;
 import org.junit.AfterClass;
@@ -195,6 +196,7 @@ public class OldIndexBackwardsCompatibilityTests extends ElasticsearchIntegratio
     }
 
     @Seed("B15A828EB24A62C8")
+    @TestLogging("test.transport.tracer:TRACE,indices.recovery:TRACE")
     public void testOldIndexes() throws Exception {
         // Enable logging of all file deletions while we try to debug this tricky rare test failure (#9822):
         Loggers.getLogger("test.engine.lucene.iw.ifd").setLevel("TRACE");
