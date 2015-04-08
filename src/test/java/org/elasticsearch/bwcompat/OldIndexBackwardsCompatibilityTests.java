@@ -102,8 +102,8 @@ public class OldIndexBackwardsCompatibilityTests extends ElasticsearchIntegratio
                 .put(MergePolicyModule.MERGE_POLICY_TYPE_KEY, NoMergePolicyProvider.class) // disable merging so no segments will be upgraded
                 .put("gateway.type", "local") // this is important we need to recover from gateway
                         // speed up recoveries
-                .put(RecoverySettings.INDICES_RECOVERY_CONCURRENT_STREAMS, 3)
-                .put(RecoverySettings.INDICES_RECOVERY_CONCURRENT_SMALL_FILE_STREAMS, 2)
+                .put(RecoverySettings.INDICES_RECOVERY_CONCURRENT_STREAMS, 30)
+                .put(RecoverySettings.INDICES_RECOVERY_CONCURRENT_SMALL_FILE_STREAMS, 20)
                 .build();
     }
 
