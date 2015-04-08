@@ -45,7 +45,7 @@ import org.elasticsearch.watcher.watch.WatchModule;
 
 public class WatcherModule extends AbstractModule implements SpawnModules {
 
-    private final Settings settings;
+    protected final Settings settings;
 
     public WatcherModule(Settings settings) {
         this.settings = settings;
@@ -63,7 +63,7 @@ public class WatcherModule extends AbstractModule implements SpawnModules {
                 new WatcherClientModule(),
                 new TransformModule(),
                 new WatcherRestModule(),
-                new TriggerModule(),
+                new TriggerModule(settings),
                 new WatcherTransportModule(),
                 new ConditionModule(),
                 new InputModule(),

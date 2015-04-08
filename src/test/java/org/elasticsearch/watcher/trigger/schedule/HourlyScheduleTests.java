@@ -18,13 +18,13 @@
 package org.elasticsearch.watcher.trigger.schedule;
 
 import com.carrotsearch.randomizedtesting.annotations.Repeat;
-import org.elasticsearch.watcher.WatcherSettingsException;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.collect.Collections2;
 import org.elasticsearch.common.primitives.Ints;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
+import org.elasticsearch.watcher.WatcherSettingsException;
 import org.junit.Test;
 
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
@@ -38,7 +38,7 @@ public class HourlyScheduleTests extends ScheduleTestCase {
     @Test
     public void test_Default() throws Exception {
         HourlySchedule schedule = new HourlySchedule();
-        String[] crons = schedule.crons();
+        String[] crons = expressions(schedule);
         assertThat(crons, arrayWithSize(1));
         assertThat(crons, arrayContaining("0 0 * * * ?"));
     }
@@ -47,7 +47,7 @@ public class HourlyScheduleTests extends ScheduleTestCase {
     public void test_SingleMinute() throws Exception {
         int minute = validMinute();
         HourlySchedule schedule = new HourlySchedule(minute);
-        String[] crons = schedule.crons();
+        String[] crons = expressions(schedule);
         assertThat(crons, arrayWithSize(1));
         assertThat(crons, arrayContaining("0 " + minute + " * * * ?"));
     }
@@ -62,7 +62,7 @@ public class HourlyScheduleTests extends ScheduleTestCase {
         int[] minutes = validMinutes();
         String minutesStr = Ints.join(",", minutes);
         HourlySchedule schedule = new HourlySchedule(minutes);
-        String[] crons = schedule.crons();
+        String[] crons = expressions(schedule);
         assertThat(crons, arrayWithSize(1));
         assertThat(crons, arrayContaining("0 " + minutesStr + " * * * ?"));
     }

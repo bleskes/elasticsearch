@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.watcher.trigger.schedule.quartz;
+package org.elasticsearch.watcher.trigger.schedule.engine;
 
 import org.quartz.*;
 

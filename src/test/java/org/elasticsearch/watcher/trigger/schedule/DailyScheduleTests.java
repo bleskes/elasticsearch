@@ -18,12 +18,12 @@
 package org.elasticsearch.watcher.trigger.schedule;
 
 import com.carrotsearch.randomizedtesting.annotations.Repeat;
-import org.elasticsearch.watcher.WatcherSettingsException;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.primitives.Ints;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
+import org.elasticsearch.watcher.WatcherSettingsException;
 import org.elasticsearch.watcher.trigger.schedule.support.DayTimes;
 import org.junit.Test;
 
@@ -38,7 +38,7 @@ public class DailyScheduleTests extends ScheduleTestCase {
     @Test
     public void test_Default() throws Exception {
         DailySchedule schedule = new DailySchedule();
-        String[] crons = schedule.crons();
+        String[] crons = expressions(schedule.crons());
         assertThat(crons, arrayWithSize(1));
         assertThat(crons, arrayContaining("0 0 0 * * ?"));
     }
@@ -47,7 +47,7 @@ public class DailyScheduleTests extends ScheduleTestCase {
     public void test_SingleTime() throws Exception {
         DayTimes time = validDayTime();
         DailySchedule schedule = new DailySchedule(time);
-        String[] crons = schedule.crons();
+        String[] crons = expressions(schedule);
         assertThat(crons, arrayWithSize(1));
         assertThat(crons, arrayContaining("0 " + Ints.join(",", time.minute()) + " " + Ints.join(",", time.hour()) + " * * ?"));
     }
@@ -69,7 +69,7 @@ public class DailyScheduleTests extends ScheduleTestCase {
     public void test_MultipleTimes() throws Exception {
         DayTimes[] times = validDayTimes();
         DailySchedule schedule = new DailySchedule(times);
-        String[] crons = schedule.crons();
+        String[] crons = expressions(schedule);
         assertThat(crons, arrayWithSize(times.length));
         for (DayTimes time : times) {
             assertThat(crons, hasItemInArray("0 " + Ints.join(",", time.minute()) + " " + Ints.join(",", time.hour()) + " * * ?"));
