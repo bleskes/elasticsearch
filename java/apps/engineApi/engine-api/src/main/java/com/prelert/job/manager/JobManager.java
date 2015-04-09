@@ -58,6 +58,7 @@ import com.prelert.job.exceptions.TooManyJobsException;
 import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.persistence.none.NoneJobDataPersister;
+import com.prelert.job.process.DataLoadParams;
 import com.prelert.job.process.InterimResultsParams;
 import com.prelert.job.process.ProcessManager;
 import com.prelert.job.process.exceptions.ClosedJobException;
@@ -591,6 +592,7 @@ public class JobManager
      *
      * @param jobId
      * @param input
+     * @param params
      * @return
      * @throws NativeProcessRunException If there is an error starting the native
      * process
@@ -606,61 +608,18 @@ public class JobManager
      * @throws MalformedJsonException If JSON data is malformed and we cannot recover
      * @return Count of records, fields, bytes, etc written
      */
-    public DataCounts submitDataLoadJob(String jobId, InputStream input)
+    public DataCounts submitDataLoadJob(String jobId, InputStream input, DataLoadParams params)
     throws UnknownJobException, NativeProcessRunException, MissingFieldException,
         JsonParseException, JobInUseException, HighProportionOfBadTimestampsException,
         OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException
-    {
-        return submitDataLoadJob(jobId, input, false);
-    }
-
-    /**
-     * Passes data to the native process and requires its persistence.
-     * If the process is not running a new one is started.
-     *
-     * This is a blocking call that won't return until all the data has been
-     * written to the process. A new thread is launched to parse the process's
-     * output
-     *
-     * @param jobId
-     * @param input
-     * @return
-     * @throws NativeProcessRunException If there is an error starting the native
-     * process
-     * @throws UnknownJobException If the jobId is not recognised
-     * @throws MissingFieldException If a configured field is missing from
-     * the CSV header
-     * @throws JsonParseException
-     * @throws JobInUseException if the job cannot be written to because
-     * it is already handling data
-     * @throws HighProportionOfBadTimestampsException
-     * @throws OutOfOrderRecordsException
-     * @throws TooManyJobsException If the license is violated
-     * @throws MalformedJsonException If JSON data is malformed and we cannot recover
-     * @return Count of records, fields, bytes, etc written
-     */
-    public DataCounts submitDataLoadAndPersistJob(String jobId, InputStream input)
-    throws UnknownJobException, NativeProcessRunException, MissingFieldException,
-        JsonParseException, JobInUseException, HighProportionOfBadTimestampsException,
-        OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException
-    {
-        return submitDataLoadJob(jobId, input, true);
-    }
-
-    private  DataCounts submitDataLoadJob(String jobId, InputStream input, boolean shouldPersist)
-            throws UnknownJobException, NativeProcessRunException, MissingFieldException,
-            JsonParseException, JobInUseException, HighProportionOfBadTimestampsException,
-            OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException
     {
         checkTooManyJobs(jobId);
-        DataCounts stats = tryProcessingDataLoadJob(jobId, input, shouldPersist);
+        DataCounts stats = tryProcessingDataLoadJob(jobId, input, params);
         updateLastDataTime(jobId, new Date());
-
         return stats;
     }
 
-
-    private DataCounts tryProcessingDataLoadJob(String jobId, InputStream input, boolean shouldPersist)
+    private DataCounts tryProcessingDataLoadJob(String jobId, InputStream input, DataLoadParams params)
             throws UnknownJobException, MissingFieldException,
             JsonParseException, JobInUseException,
             HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
@@ -669,8 +628,7 @@ public class JobManager
         DataCounts stats;
         try
         {
-            stats = shouldPersist ? m_ProcessManager.processDataLoadAndPersistJob(jobId, input)
-                    : m_ProcessManager.processDataLoadJob(jobId, input);
+            stats = m_ProcessManager.processDataLoadJob(jobId, input, params);
         }
         catch (NativeProcessRunException ne)
         {

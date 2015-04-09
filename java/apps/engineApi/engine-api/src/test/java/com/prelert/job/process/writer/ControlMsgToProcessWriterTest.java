@@ -45,7 +45,9 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import com.prelert.job.AnalysisConfig;
+import com.prelert.job.process.DataLoadParams;
 import com.prelert.job.process.InterimResultsParams;
+import com.prelert.job.process.TimeRange;
 
 public class ControlMsgToProcessWriterTest
 {
@@ -67,13 +69,12 @@ public class ControlMsgToProcessWriterTest
         ControlMsgToProcessWriter writer = new ControlMsgToProcessWriter(m_LengthEncodedWriter,
                 m_AnalysisConfig);
 
-        writer.writeCalcInterimMessage(new InterimResultsParams(true, null, null));
+        writer.writeCalcInterimMessage(new InterimResultsParams(true, new TimeRange(null, null)));
 
         InOrder inOrder = inOrder(m_LengthEncodedWriter);
         inOrder.verify(m_LengthEncodedWriter).writeNumFields(4);
         inOrder.verify(m_LengthEncodedWriter, times(3)).writeField("");
         inOrder.verify(m_LengthEncodedWriter).writeField("i");
-        inOrder.verify(m_LengthEncodedWriter).flush();
         verifyNoMoreInteractions(m_LengthEncodedWriter);
     }
 
@@ -83,7 +84,7 @@ public class ControlMsgToProcessWriterTest
         ControlMsgToProcessWriter writer = new ControlMsgToProcessWriter(m_LengthEncodedWriter,
                 m_AnalysisConfig);
 
-        writer.writeCalcInterimMessage(new InterimResultsParams(false, null, null));
+        writer.writeCalcInterimMessage(new InterimResultsParams(false, new TimeRange(null, null)));
 
         verifyNoMoreInteractions(m_LengthEncodedWriter);
     }
@@ -94,13 +95,12 @@ public class ControlMsgToProcessWriterTest
         ControlMsgToProcessWriter writer = new ControlMsgToProcessWriter(m_LengthEncodedWriter,
                 m_AnalysisConfig);
 
-        writer.writeCalcInterimMessage(new InterimResultsParams(true, 120L, 180L));
+        writer.writeCalcInterimMessage(new InterimResultsParams(true, new TimeRange(120L, 180L)));
 
         InOrder inOrder = inOrder(m_LengthEncodedWriter);
         inOrder.verify(m_LengthEncodedWriter).writeNumFields(4);
         inOrder.verify(m_LengthEncodedWriter, times(3)).writeField("");
         inOrder.verify(m_LengthEncodedWriter).writeField("i120 180");
-        inOrder.verify(m_LengthEncodedWriter).flush();
         verifyNoMoreInteractions(m_LengthEncodedWriter);
     }
 
@@ -127,6 +127,21 @@ public class ControlMsgToProcessWriterTest
         inOrder.verify(m_LengthEncodedWriter).writeField(spaces.toString());
 
         inOrder.verify(m_LengthEncodedWriter).flush();
+        verifyNoMoreInteractions(m_LengthEncodedWriter);
+    }
+
+    @Test
+    public void testWriteResetBucketsMessage() throws IOException
+    {
+        ControlMsgToProcessWriter writer = new ControlMsgToProcessWriter(m_LengthEncodedWriter,
+                m_AnalysisConfig);
+
+        writer.writeResetBucketsMessage(new DataLoadParams(false, new TimeRange(0L, 600L)));
+
+        InOrder inOrder = inOrder(m_LengthEncodedWriter);
+        inOrder.verify(m_LengthEncodedWriter).writeNumFields(4);
+        inOrder.verify(m_LengthEncodedWriter, times(3)).writeField("");
+        inOrder.verify(m_LengthEncodedWriter).writeField("r0 600");
         verifyNoMoreInteractions(m_LengthEncodedWriter);
     }
 }

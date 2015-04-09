@@ -28,10 +28,17 @@
 package com.prelert.rs.resources;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import java.io.IOException;
+import java.io.InputStream;
+
+import javax.ws.rs.core.HttpHeaders;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -42,10 +49,16 @@ import org.mockito.ArgumentCaptor;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.JobDetails;
 import com.prelert.job.exceptions.JobInUseException;
+import com.prelert.job.exceptions.TooManyJobsException;
 import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.manager.JobManager;
+import com.prelert.job.process.DataLoadParams;
 import com.prelert.job.process.InterimResultsParams;
+import com.prelert.job.process.exceptions.MalformedJsonException;
+import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
+import com.prelert.job.status.HighProportionOfBadTimestampsException;
+import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.rs.data.SingleDocument;
 import com.prelert.rs.provider.RestApiException;
 
@@ -62,6 +75,143 @@ public class DataTest extends ServiceTest
     {
         m_Data = new Data();
         configureService(m_Data);
+    }
+
+    @Test
+    public void testStreamData() throws UnknownJobException, NativeProcessRunException,
+            MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException,
+            OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException, IOException
+    {
+        HttpHeaders httpHeaders = mock(HttpHeaders.class);
+        InputStream inputStream = mock(InputStream.class);
+
+        m_Data.streamData(httpHeaders, "foo", inputStream, "", "");
+
+        ArgumentCaptor<DataLoadParams> paramsCaptor = ArgumentCaptor.forClass(DataLoadParams.class);
+        verify(jobManager()).submitDataLoadJob(eq("foo"), eq(inputStream), paramsCaptor.capture());
+        DataLoadParams params = paramsCaptor.getValue();
+        assertFalse(params.isPersisting());
+        assertFalse(params.isResettingBuckets());
+        assertEquals("", params.getStart());
+        assertEquals("", params.getEnd());
+    }
+
+    @Test
+    public void testStreamData_GivenResetStartAndResetEndSpecified() throws UnknownJobException,
+            NativeProcessRunException, MissingFieldException, JobInUseException,
+            HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
+            TooManyJobsException, MalformedJsonException, IOException
+    {
+        HttpHeaders httpHeaders = mock(HttpHeaders.class);
+        InputStream inputStream = mock(InputStream.class);
+
+        m_Data.streamData(httpHeaders, "foo", inputStream, "1428591600", "1428592200");
+
+        ArgumentCaptor<DataLoadParams> paramsCaptor = ArgumentCaptor.forClass(DataLoadParams.class);
+        verify(jobManager()).submitDataLoadJob(eq("foo"), eq(inputStream), paramsCaptor.capture());
+        DataLoadParams params = paramsCaptor.getValue();
+        assertFalse(params.isPersisting());
+        assertTrue(params.isResettingBuckets());
+        assertEquals("1428591600", params.getStart());
+        assertEquals("1428592200", params.getEnd());
+    }
+
+    @Test
+    public void testStreamData_GivenOnlyResetStartSpecified() throws UnknownJobException,
+            NativeProcessRunException, MissingFieldException, JobInUseException,
+            HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
+            TooManyJobsException, MalformedJsonException, IOException
+    {
+        HttpHeaders httpHeaders = mock(HttpHeaders.class);
+        InputStream inputStream = mock(InputStream.class);
+
+        m_Data.streamData(httpHeaders, "foo", inputStream, "1428591600", "");
+
+        ArgumentCaptor<DataLoadParams> paramsCaptor = ArgumentCaptor.forClass(DataLoadParams.class);
+        verify(jobManager()).submitDataLoadJob(eq("foo"), eq(inputStream), paramsCaptor.capture());
+        DataLoadParams params = paramsCaptor.getValue();
+        assertFalse(params.isPersisting());
+        assertTrue(params.isResettingBuckets());
+        assertEquals("1428591600", params.getStart());
+        assertEquals("1428591601", params.getEnd());
+    }
+
+    @Test
+    public void testStreamData_GivenSameResetStartAndResetEndSpecified() throws UnknownJobException,
+            NativeProcessRunException, MissingFieldException, JobInUseException,
+            HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
+            TooManyJobsException, MalformedJsonException, IOException
+    {
+        HttpHeaders httpHeaders = mock(HttpHeaders.class);
+        InputStream inputStream = mock(InputStream.class);
+
+        m_Data.streamData(httpHeaders, "foo", inputStream, "1428591600", "1428591600");
+
+        ArgumentCaptor<DataLoadParams> paramsCaptor = ArgumentCaptor.forClass(DataLoadParams.class);
+        verify(jobManager()).submitDataLoadJob(eq("foo"), eq(inputStream), paramsCaptor.capture());
+        DataLoadParams params = paramsCaptor.getValue();
+        assertFalse(params.isPersisting());
+        assertTrue(params.isResettingBuckets());
+        assertEquals("1428591600", params.getStart());
+        assertEquals("1428591601", params.getEnd());
+    }
+
+    @Test
+    public void testStreamData_GivenResetEndIsBeforeResetStart() throws UnknownJobException,
+            NativeProcessRunException, MissingFieldException, JobInUseException,
+            HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
+            TooManyJobsException, MalformedJsonException, IOException
+    {
+        HttpHeaders httpHeaders = mock(HttpHeaders.class);
+        InputStream inputStream = mock(InputStream.class);
+        m_ExpectedException.expect(RestApiException.class);
+        m_ExpectedException.expectMessage("Invalid time range: end time is earlier than start time.");
+
+        m_Data.streamData(httpHeaders, "foo", inputStream, "1428591600", "1428591599");
+    }
+
+    @Test
+    public void testStreamData_GivenOnlyResetEndSpecified() throws UnknownJobException,
+            NativeProcessRunException, MissingFieldException, JobInUseException,
+            HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
+            TooManyJobsException, MalformedJsonException, IOException
+    {
+        HttpHeaders httpHeaders = mock(HttpHeaders.class);
+        InputStream inputStream = mock(InputStream.class);
+        m_ExpectedException.expect(RestApiException.class);
+        m_ExpectedException.expectMessage("Invalid reset range parameters.");
+
+        m_Data.streamData(httpHeaders, "foo", inputStream, "", "1428591599");
+    }
+
+    @Test
+    public void testStreamData_GivenInvalidResetStartSpecified() throws UnknownJobException,
+            NativeProcessRunException, MissingFieldException, JobInUseException,
+            HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
+            TooManyJobsException, MalformedJsonException, IOException
+    {
+        HttpHeaders httpHeaders = mock(HttpHeaders.class);
+        InputStream inputStream = mock(InputStream.class);
+        m_ExpectedException.expect(RestApiException.class);
+        m_ExpectedException.expectMessage("Query param 'resetStart' with value 'not a date' cannot"
+                + " be parsed as a date or converted to a number (epoch)");
+
+        m_Data.streamData(httpHeaders, "foo", inputStream, "not a date", "1428591599");
+    }
+
+    @Test
+    public void testStreamData_GivenInvalidResetEndSpecified() throws UnknownJobException,
+            NativeProcessRunException, MissingFieldException, JobInUseException,
+            HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
+            TooManyJobsException, MalformedJsonException, IOException
+    {
+        HttpHeaders httpHeaders = mock(HttpHeaders.class);
+        InputStream inputStream = mock(InputStream.class);
+        m_ExpectedException.expect(RestApiException.class);
+        m_ExpectedException.expectMessage("Query param 'resetEnd' with value 'not a date' cannot"
+                + " be parsed as a date or converted to a number (epoch)");
+
+        m_Data.streamData(httpHeaders, "foo", inputStream, "1428591599", "not a date");
     }
 
     @Test
@@ -99,7 +249,7 @@ public class DataTest extends ServiceTest
             throws UnknownJobException, NativeProcessRunException, JobInUseException
     {
         m_ExpectedException.expect(RestApiException.class);
-        m_ExpectedException.expectMessage("Invalid interim results parameters.");
+        m_ExpectedException.expectMessage("Invalid time range: end time is earlier than start time.");
 
         m_Data.flushUpload("foo", true, "2", "1");
     }

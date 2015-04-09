@@ -278,11 +278,12 @@ public abstract class ResourceWithJobManager
      *
      * If the date string cannot be parsed a {@link RestApiException} is thrown.
      *
-     * @param date
-     * @return The epoch time in milliseconds or 0 if the date is empty.
+     * @param paramName The name of the parameter being parsed
+     * @param date The value to be parsed
+     * @return The epoch time in milliseconds or 0 if the date is empty
      * @throws RestApiException if the date cannot be parsed
      */
-    protected long paramToEpochIfValidOrThrow(String date, Logger logger)
+    protected long paramToEpochIfValidOrThrow(String paramName, String date, Logger logger)
     {
         long epochStart = 0;
         if (date.isEmpty() == false)
@@ -290,7 +291,7 @@ public abstract class ResourceWithJobManager
             epochStart = paramToEpoch(date);
             if (epochStart == 0) // could not be parsed
             {
-                String msg = String.format(BAD_DATE_FORMAT_MSG, START_QUERY_PARAM, date);
+                String msg = String.format(BAD_DATE_FORMAT_MSG, paramName, date);
                 logger.info(msg);
                 throw new RestApiException(msg, ErrorCode.UNPARSEABLE_DATE_ARGUMENT,
                         Response.Status.BAD_REQUEST);

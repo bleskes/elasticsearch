@@ -31,19 +31,19 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-public class InterimResultsParamsTest
+public class TimeRangeTest
 {
     @Test
     public void testGetStart()
     {
-        assertEquals("", new InterimResultsParams(true, new TimeRange(null, null)).getStart());
-        assertEquals("42", new InterimResultsParams(true, new TimeRange(42L, null)).getStart());
+        assertEquals("", new TimeRange(null, null).getStart());
+        assertEquals("10", new TimeRange(10L, null).getStart());
     }
 
     @Test
     public void testGetEnd()
     {
-        assertEquals("", new InterimResultsParams(true, new TimeRange(null, null)).getEnd());
-        assertEquals("1", new InterimResultsParams(true, new TimeRange(null, 1L)).getEnd());
+        assertEquals("", new TimeRange(null, null).getEnd());
+        assertEquals("20", new TimeRange(null, 20L).getEnd());
     }
 }

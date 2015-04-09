@@ -27,17 +27,17 @@
 
 package com.prelert.job.process;
 
+import java.util.Objects;
+
 public class InterimResultsParams
 {
     private final boolean m_ShouldCalculate;
-    private final Long m_Start;
-    private final Long m_End;
+    private final TimeRange m_TimeRange;
 
-    public InterimResultsParams(boolean shouldCalculate, Long start, Long end)
+    public InterimResultsParams(boolean shouldCalculate, TimeRange timeRange)
     {
         m_ShouldCalculate = shouldCalculate;
-        m_Start = start;
-        m_End = end;
+        m_TimeRange = Objects.requireNonNull(timeRange);
     }
 
     public boolean shouldCalculate()
@@ -47,11 +47,11 @@ public class InterimResultsParams
 
     public String getStart()
     {
-        return m_Start == null ? "" : String.valueOf(m_Start);
+        return m_TimeRange.getStart();
     }
 
     public String getEnd()
     {
-        return m_End == null ? "" : String.valueOf(m_End);
+        return m_TimeRange.getEnd();
     }
 }

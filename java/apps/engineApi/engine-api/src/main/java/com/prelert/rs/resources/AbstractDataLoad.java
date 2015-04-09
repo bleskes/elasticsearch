@@ -46,7 +46,9 @@ import com.prelert.job.DataCounts;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.TooManyJobsException;
 import com.prelert.job.exceptions.UnknownJobException;
+import com.prelert.job.process.DataLoadParams;
 import com.prelert.job.process.InterimResultsParams;
+import com.prelert.job.process.TimeRange;
 import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
@@ -55,9 +57,7 @@ import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.rs.data.Acknowledgement;
 import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.provider.RestApiException;
-import com.prelert.rs.resources.data.AbstractDataStreamer;
 import com.prelert.rs.resources.data.DataStreamer;
-import com.prelert.rs.resources.data.DataStreamerAndPersister;
 
 
 public abstract class AbstractDataLoad extends ResourceWithJobManager
@@ -69,12 +69,20 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
      */
     public static final String CALC_INTERIM_PARAM = "calcInterim";
 
+    /** Parameter to specify start time of buckets to be reset */
+    private static final String RESET_START_PARAM = "resetStart";
+
+    /** Parameter to specify end time of buckets to be reset */
+    private static final String RESET_END_PARAM = "resetEnd";
+
     /**
      * Data upload endpoint.
      *
      * @param headers
      * @param jobId
      * @param input
+     * @param resetStart Optional parameter to specify start of range for bucket resetting
+     * @param resetEnd Optional parameter to specify end of range for bucket resetting
      * @return
      * @throws IOException
      * @throws UnknownJobException
@@ -92,21 +100,52 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
     @Consumes({MediaType.APPLICATION_FORM_URLENCODED, MediaType.APPLICATION_JSON,
         MediaType.APPLICATION_OCTET_STREAM})
     public Response streamData(@Context HttpHeaders headers,
-            @PathParam("jobId") String jobId, InputStream input)
+            @PathParam("jobId") String jobId, InputStream input,
+            @DefaultValue("") @QueryParam(RESET_START_PARAM) String resetStart,
+            @DefaultValue("") @QueryParam(RESET_END_PARAM) String resetEnd)
     throws IOException, UnknownJobException, NativeProcessRunException,
             MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException,
             OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException
     {
-        AbstractDataStreamer dataStreamer = createDataStreamer();
+        if (!isValidTimeRange(resetStart, resetEnd))
+        {
+            throw new RestApiException("Invalid reset range parameters.", ErrorCode.DATA_ERROR,
+                    Response.Status.BAD_REQUEST);
+        }
+        DataLoadParams params = new DataLoadParams(shouldPersist(),
+                createTimeRange(RESET_START_PARAM, resetStart, RESET_END_PARAM, resetEnd));
+
+        DataStreamer dataStreamer = new DataStreamer(jobManager());
         String contentEncoding = headers.getHeaderString(HttpHeaders.CONTENT_ENCODING);
-        DataCounts stats = dataStreamer.streamData(contentEncoding, jobId, input);
+        DataCounts stats = dataStreamer.streamData(contentEncoding, jobId, input, params);
         return Response.accepted().entity(stats).build();
     }
 
-    private AbstractDataStreamer createDataStreamer()
+    private boolean isValidTimeRange(String start, String end)
     {
-        return shouldPersist() ? new DataStreamerAndPersister(jobManager()) :
-                new DataStreamer(jobManager());
+        return !start.isEmpty() || (start.isEmpty() && end.isEmpty());
+    }
+
+    private TimeRange createTimeRange(String startParam, String start, String endParam, String end)
+    {
+        Long epochStart = null;
+        Long epochEnd = null;
+        if (!start.isEmpty())
+        {
+            epochStart = paramToEpochIfValidOrThrow(startParam, start, LOGGER) / 1000;
+            epochEnd = paramToEpochIfValidOrThrow(endParam, end, LOGGER) / 1000;
+            if (end.isEmpty() || epochEnd.equals(epochStart))
+            {
+                epochEnd = epochStart + 1;
+            }
+            if (epochEnd.longValue() < epochStart.longValue())
+            {
+                throw new RestApiException(
+                        "Invalid time range: end time is earlier than start time.",
+                        ErrorCode.DATA_ERROR, Response.Status.BAD_REQUEST);
+            }
+        }
+        return new TimeRange(epochStart, epochEnd);
     }
 
     /**
@@ -134,9 +173,11 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
                      " with " + CALC_INTERIM_PARAM + '=' + calcInterim);
         if (!areValidInterimResultsParams(calcInterim, start, end))
         {
-            throwInvalidInterimResultsParamRestApiException();
+            throw new RestApiException("Invalid interim results parameters.", ErrorCode.DATA_ERROR,
+                    Response.Status.BAD_REQUEST);
         }
-        jobManager().flushJob(jobId, createInterimResultsParams(calcInterim, start, end));
+        jobManager().flushJob(jobId, new InterimResultsParams(
+                calcInterim, createTimeRange(START_QUERY_PARAM, start, END_QUERY_PARAM, end)));
         return Response.ok().entity(new Acknowledgement()).build();
     }
 
@@ -146,34 +187,7 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
         {
             return start.isEmpty() && end.isEmpty();
         }
-        return !start.isEmpty() || (start.isEmpty() && end.isEmpty());
-    }
-
-    private void throwInvalidInterimResultsParamRestApiException()
-    {
-        throw new RestApiException("Invalid interim results parameters.", ErrorCode.DATA_ERROR,
-                Response.Status.BAD_REQUEST);
-    }
-
-    private InterimResultsParams createInterimResultsParams(boolean calcInterim, String start,
-            String end) throws UnknownJobException
-    {
-        Long epochStart = null;
-        Long epochEnd = null;
-        if (calcInterim && !start.isEmpty())
-        {
-            epochStart = paramToEpochIfValidOrThrow(start, LOGGER) / 1000;
-            epochEnd = paramToEpochIfValidOrThrow(end, LOGGER) / 1000;
-            if (end.isEmpty() || epochEnd.equals(epochStart))
-            {
-                epochEnd = epochStart + 1;
-            }
-            if (epochEnd.longValue() < epochStart.longValue())
-            {
-                throwInvalidInterimResultsParamRestApiException();
-            }
-        }
-        return new InterimResultsParams(calcInterim, epochStart, epochEnd);
+        return isValidTimeRange(start, end);
     }
 
     /**

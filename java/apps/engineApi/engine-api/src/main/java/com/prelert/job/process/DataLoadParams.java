@@ -27,23 +27,37 @@
 
 package com.prelert.job.process;
 
-import static org.junit.Assert.assertEquals;
+import java.util.Objects;
 
-import org.junit.Test;
-
-public class InterimResultsParamsTest
+public class DataLoadParams
 {
-    @Test
-    public void testGetStart()
+    private final boolean m_IsPersisting;
+    private final TimeRange m_ResetTimeRange;
+
+    public DataLoadParams(boolean isPersisting, TimeRange resetTimeRange)
     {
-        assertEquals("", new InterimResultsParams(true, new TimeRange(null, null)).getStart());
-        assertEquals("42", new InterimResultsParams(true, new TimeRange(42L, null)).getStart());
+        m_IsPersisting = isPersisting;
+        m_ResetTimeRange = Objects.requireNonNull(resetTimeRange);
     }
 
-    @Test
-    public void testGetEnd()
+    public boolean isPersisting()
     {
-        assertEquals("", new InterimResultsParams(true, new TimeRange(null, null)).getEnd());
-        assertEquals("1", new InterimResultsParams(true, new TimeRange(null, 1L)).getEnd());
+        return m_IsPersisting;
+    }
+
+    public boolean isResettingBuckets()
+    {
+        return !getStart().isEmpty();
+    }
+
+    public String getStart()
+    {
+        return m_ResetTimeRange.getStart();
+    }
+
+    public String getEnd()
+    {
+        return m_ResetTimeRange.getEnd();
     }
 }
+

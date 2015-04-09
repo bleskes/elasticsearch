@@ -56,6 +56,7 @@ import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.TooManyJobsException;
 import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.persistence.JobProvider;
+import com.prelert.job.process.DataLoadParams;
 import com.prelert.job.process.ProcessManager;
 import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;
@@ -104,7 +105,7 @@ public class JobManagerTest
         m_ExpectedException.expect(
                 ErrorCodeMatcher.<TooManyJobsException>hasErrorCode(ErrorCode.LICENSE_VIOLATION));
 
-        jobManager.submitDataLoadJob("foo", mock(InputStream.class));
+        jobManager.submitDataLoadJob("foo", mock(InputStream.class), mock(DataLoadParams.class));
     }
 
     @Test
@@ -128,7 +129,7 @@ public class JobManagerTest
         m_ExpectedException.expect(
                 ErrorCodeMatcher.<TooManyJobsException>hasErrorCode(ErrorCode.TOO_MANY_JOBS_RUNNING_CONCURRENTLY));
 
-        jobManager.submitDataLoadJob("foo", mock(InputStream.class));
+        jobManager.submitDataLoadJob("foo", mock(InputStream.class), mock(DataLoadParams.class));
     }
 
     @Test
@@ -153,7 +154,7 @@ public class JobManagerTest
         m_ExpectedException.expect(ErrorCodeMatcher
                 .<TooManyJobsException>hasErrorCode(ErrorCode.TOO_MANY_JOBS_RUNNING_CONCURRENTLY));
 
-        jobManager.submitDataLoadJob("foo", mock(InputStream.class));
+        jobManager.submitDataLoadJob("foo", mock(InputStream.class), mock(DataLoadParams.class));
     }
 
     @Test
@@ -178,7 +179,7 @@ public class JobManagerTest
         m_ExpectedException.expect(
                 ErrorCodeMatcher.<TooManyJobsException>hasErrorCode(ErrorCode.TOO_MANY_JOBS_RUNNING_CONCURRENTLY));
 
-        jobManager.submitDataLoadJob("foo", mock(InputStream.class));
+        jobManager.submitDataLoadJob("foo", mock(InputStream.class), mock(DataLoadParams.class));
     }
 
     @Test
@@ -189,15 +190,16 @@ public class JobManagerTest
             OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException
     {
         InputStream inputStream = mock(InputStream.class);
+        DataLoadParams params = mock(DataLoadParams.class);
         when(m_JobProvider.getJobDetails("foo")).thenReturn(
                 new JobDetails("foo", new JobConfiguration()));
         givenProcessInfo(5);
         when(m_ProcessManager.jobIsRunning("foo")).thenReturn(false);
         when(m_ProcessManager.numberOfRunningJobs()).thenReturn(0);
-        when(m_ProcessManager.processDataLoadJob("foo", inputStream)).thenReturn(new DataCounts());
+        when(m_ProcessManager.processDataLoadJob("foo", inputStream, params)).thenReturn(new DataCounts());
         JobManager jobManager = new JobManager(m_JobProvider, m_ProcessManager);
 
-        DataCounts stats = jobManager.submitDataLoadJob("foo", inputStream);
+        DataCounts stats = jobManager.submitDataLoadJob("foo", inputStream, params);
         assertNotNull(stats);
 
         ArgumentCaptor<Map> updateCaptor = ArgumentCaptor.forClass(Map.class);
