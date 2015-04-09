@@ -165,7 +165,8 @@ public class DataTest extends ServiceTest
         HttpHeaders httpHeaders = mock(HttpHeaders.class);
         InputStream inputStream = mock(InputStream.class);
         m_ExpectedException.expect(RestApiException.class);
-        m_ExpectedException.expectMessage("Invalid time range: end time is earlier than start time.");
+        m_ExpectedException.expectMessage(
+                "Invalid time range: end time '1428591599' is earlier than start time '1428591600'.");
 
         m_Data.streamData(httpHeaders, "foo", inputStream, "1428591600", "1428591599");
     }
@@ -179,7 +180,8 @@ public class DataTest extends ServiceTest
         HttpHeaders httpHeaders = mock(HttpHeaders.class);
         InputStream inputStream = mock(InputStream.class);
         m_ExpectedException.expect(RestApiException.class);
-        m_ExpectedException.expectMessage("Invalid reset range parameters.");
+        m_ExpectedException.expectMessage(
+                "Invalid reset range parameters: 'resetStart' has not been specified.");
 
         m_Data.streamData(httpHeaders, "foo", inputStream, "", "1428591599");
     }
@@ -219,7 +221,8 @@ public class DataTest extends ServiceTest
             throws UnknownJobException, NativeProcessRunException, JobInUseException
     {
         m_ExpectedException.expect(RestApiException.class);
-        m_ExpectedException.expectMessage("Invalid interim results parameters.");
+        m_ExpectedException.expectMessage(
+                "Invalid flush parameters: unexpected 'start' and/or 'end'.");
 
         m_Data.flushUpload("foo", false, "1", "");
     }
@@ -229,7 +232,8 @@ public class DataTest extends ServiceTest
             NativeProcessRunException, JobInUseException
     {
         m_ExpectedException.expect(RestApiException.class);
-        m_ExpectedException.expectMessage("Invalid interim results parameters.");
+        m_ExpectedException.expectMessage(
+                "Invalid flush parameters: unexpected 'start' and/or 'end'.");
 
         m_Data.flushUpload("foo", false, "", "1");
     }
@@ -239,7 +243,8 @@ public class DataTest extends ServiceTest
             throws UnknownJobException, NativeProcessRunException, JobInUseException
     {
         m_ExpectedException.expect(RestApiException.class);
-        m_ExpectedException.expectMessage("Invalid interim results parameters.");
+        m_ExpectedException.expectMessage(
+                "Invalid flush parameters: 'start' has not been specified.");
 
         m_Data.flushUpload("foo", true, "", "1");
     }
@@ -249,7 +254,8 @@ public class DataTest extends ServiceTest
             throws UnknownJobException, NativeProcessRunException, JobInUseException
     {
         m_ExpectedException.expect(RestApiException.class);
-        m_ExpectedException.expectMessage("Invalid time range: end time is earlier than start time.");
+        m_ExpectedException.expectMessage(
+                "Invalid time range: end time '1' is earlier than start time '2'.");
 
         m_Data.flushUpload("foo", true, "2", "1");
     }

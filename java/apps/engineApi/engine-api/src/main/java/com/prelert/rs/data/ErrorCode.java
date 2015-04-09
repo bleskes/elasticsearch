@@ -293,7 +293,22 @@ public enum ErrorCode
 	/**
 	 * The timeout argument is not a valid number or is a negative number
 	 */
-	INVALID_TIMEOUT_ARGUMENT(60105);
+	INVALID_TIMEOUT_ARGUMENT(60105),
+
+	/**
+	 * Parameters to flush end-point are invalid
+	 */
+	INVALID_FLUSH_PARAMS(60106),
+
+	/**
+	 * Reset range parameters to the data/dataload end-points are invalid
+	 */
+	INVALID_BUCKET_RESET_RANGE_PARAMS(60107),
+
+	/**
+	 * When time range is expected, the end date cannot be before the start date
+	 */
+	END_DATE_BEFORE_START_DATE(60108);
 
 
 	private long m_ErrorCode;

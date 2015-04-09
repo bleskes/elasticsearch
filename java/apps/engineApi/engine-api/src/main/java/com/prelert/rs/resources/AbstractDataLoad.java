@@ -109,11 +109,13 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
     {
         if (!isValidTimeRange(resetStart, resetEnd))
         {
-            throw new RestApiException("Invalid reset range parameters.", ErrorCode.DATA_ERROR,
+            String msg = String.format("Invalid reset range parameters: '%s' has not been specified.",
+                    RESET_START_PARAM);
+            throw new RestApiException(msg, ErrorCode.INVALID_BUCKET_RESET_RANGE_PARAMS,
                     Response.Status.BAD_REQUEST);
         }
-        DataLoadParams params = new DataLoadParams(shouldPersist(),
-                createTimeRange(RESET_START_PARAM, resetStart, RESET_END_PARAM, resetEnd));
+        TimeRange timeRange = createTimeRange(RESET_START_PARAM, resetStart, RESET_END_PARAM, resetEnd);
+        DataLoadParams params = new DataLoadParams(shouldPersist(), timeRange);
 
         DataStreamer dataStreamer = new DataStreamer(jobManager());
         String contentEncoding = headers.getHeaderString(HttpHeaders.CONTENT_ENCODING);
@@ -140,9 +142,10 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
             }
             if (epochEnd.longValue() < epochStart.longValue())
             {
-                throw new RestApiException(
-                        "Invalid time range: end time is earlier than start time.",
-                        ErrorCode.DATA_ERROR, Response.Status.BAD_REQUEST);
+                String msg = String.format("Invalid time range: end time '%s' is earlier than start"
+                        + " time '%s'.", end, start);
+                throw new RestApiException(msg, ErrorCode.END_DATE_BEFORE_START_DATE,
+                        Response.Status.BAD_REQUEST);
             }
         }
         return new TimeRange(epochStart, epochEnd);
@@ -173,11 +176,16 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
                      " with " + CALC_INTERIM_PARAM + '=' + calcInterim);
         if (!areValidInterimResultsParams(calcInterim, start, end))
         {
-            throw new RestApiException("Invalid interim results parameters.", ErrorCode.DATA_ERROR,
+            String msg = calcInterim ?
+                    String.format("Invalid flush parameters: '%s' has not been specified.",
+                            START_QUERY_PARAM) :
+                    String.format("Invalid flush parameters: unexpected '%s' and/or '%s'.",
+                            START_QUERY_PARAM, END_QUERY_PARAM);
+            throw new RestApiException(msg, ErrorCode.INVALID_FLUSH_PARAMS,
                     Response.Status.BAD_REQUEST);
         }
-        jobManager().flushJob(jobId, new InterimResultsParams(
-                calcInterim, createTimeRange(START_QUERY_PARAM, start, END_QUERY_PARAM, end)));
+        TimeRange timeRange = createTimeRange(START_QUERY_PARAM, start, END_QUERY_PARAM, end);
+        jobManager().flushJob(jobId, new InterimResultsParams(calcInterim, timeRange));
         return Response.ok().entity(new Acknowledgement()).build();
     }
 
