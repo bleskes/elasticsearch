@@ -78,7 +78,7 @@ import com.prelert.rs.data.SingleDocument;
 @Path("/jobs")
 public class Jobs extends ResourceWithJobManager
 {
-	private static final Logger LOGGER = Logger.getLogger(Jobs.class);
+    private static final Logger LOGGER = Logger.getLogger(Jobs.class);
 
 	/**
 	 * The name of this endpoint
@@ -89,6 +89,8 @@ public class Jobs extends ResourceWithJobManager
      * Message returned if deletion of a job fails
      */
 	public static final String DELETE_FAIL = "{\"acknowledged\":false}\n";
+
+    private static final String RESULTS = "results";
 
 	/**
 	 * Get all job details.
@@ -273,14 +275,21 @@ public class Jobs extends ResourceWithJobManager
     	job.setDataEndpoint(data);
 
     	URI buckets = m_UriInfo.getBaseUriBuilder()
-				.path("results")
+				.path(RESULTS)
 				.path(job.getId())
 				.path(Buckets.ENDPOINT)
 				.build();
     	job.setBucketsEndpoint(buckets);
 
+        URI categoryDefinitions = m_UriInfo.getBaseUriBuilder()
+                .path(RESULTS)
+                .path(job.getId())
+                .path(CategoryDefinitions.ENDPOINT)
+                .build();
+        job.setCategoryDefinitionsEndpoint(categoryDefinitions);
+
     	URI records = m_UriInfo.getBaseUriBuilder()
-				.path("results")
+				.path(RESULTS)
 				.path(job.getId())
 				.path(Records.ENDPOINT)
 				.build();

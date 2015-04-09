@@ -32,6 +32,7 @@ import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 import java.io.IOException;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
@@ -51,6 +52,7 @@ import com.prelert.job.quantiles.Quantiles;
 import com.prelert.rs.data.AnomalyCause;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
+import com.prelert.rs.data.CategoryDefinition;
 import com.prelert.rs.data.Detector;
 
 /**
@@ -184,6 +186,25 @@ public class ElasticsearchPersister implements JobResultsPersister
     }
 
 
+    @Override
+    public void persistCategoryDefinition(CategoryDefinition category)
+    {
+        XContentBuilder content = null;
+        try
+        {
+            content = serialiseCategoryDefinition(category);
+        }
+        catch (IOException e)
+        {
+            LOGGER.error("Error writing category definition", e);
+            return;
+        }
+        String categoryId = String.valueOf(category.getCategoryId());
+        m_Client.prepareIndex(m_JobId, CategoryDefinition.TYPE, categoryId)
+                .setSource(content)
+                .execute().actionGet();
+    }
+
     /**
      * The quantiles objects are written with one of two keys, such that
      * the latest quantiles will overwrite the previous ones.  For each ES index,
@@ -284,7 +305,6 @@ public class ElasticsearchPersister implements JobResultsPersister
         return true;
     }
 
-
     /**
      * Return the bucket as serialisable content
      * @param bucket
@@ -313,6 +333,17 @@ public class ElasticsearchPersister implements JobResultsPersister
         return builder;
     }
 
+    private XContentBuilder serialiseCategoryDefinition(CategoryDefinition category)
+            throws IOException
+    {
+        List<String> examples = category.getExamples();
+        return jsonBuilder().startObject()
+                .field(CategoryDefinition.CATEGORY_ID, category.getCategoryId())
+                .field(CategoryDefinition.TERMS, category.getTerms())
+                .field(CategoryDefinition.REGEX, category.getRegex())
+                .array(CategoryDefinition.EXAMPLES, examples.toArray(new Object[examples.size()]))
+                .endObject();
+    }
 
     /**
      * Return the quantiles as serialisable content
