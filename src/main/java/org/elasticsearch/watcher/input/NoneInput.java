@@ -17,6 +17,7 @@
 
 package org.elasticsearch.watcher.input;
 
+import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.watcher.watch.WatchExecutionContext;
 import org.elasticsearch.watcher.watch.Payload;
 import org.elasticsearch.common.collect.ImmutableMap;
@@ -85,6 +86,7 @@ public class NoneInput extends Input<NoneInput.Result> {
 
         private final NoneInput input;
 
+        @Inject
         public Parser(Settings settings) {
             super(settings);
             this.input = new NoneInput(logger);

@@ -35,7 +35,7 @@ public class WatcherStatsResponse extends ActionResponse {
     private long watchExecutionQueueSize;
     private long watchExecutionQueueMaxSize;
 
-    public WatcherStatsResponse() {
+    WatcherStatsResponse() {
     }
 
     /**

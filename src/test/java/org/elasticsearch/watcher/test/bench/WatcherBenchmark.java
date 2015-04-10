@@ -95,7 +95,7 @@ public class WatcherBenchmark {
                                         .source(new SearchSourceBuilder()))
                         )
                         .condition(scriptCondition("ctx.payload.hits.total > 0")));
-                putAlertRequest.setName(name);
+                putAlertRequest.setId(name);
                 watcherClient.putWatch(putAlertRequest).actionGet();
             }
 
@@ -140,7 +140,7 @@ public class WatcherBenchmark {
                         )
                         .condition(scriptCondition("1 == 1"))
                         .addAction(indexAction("_id", "index", "type")));
-                putAlertRequest.setName(name);
+                putAlertRequest.setId(name);
                 watcherClient.putWatch(putAlertRequest).actionGet();
             }
 
@@ -183,7 +183,7 @@ public class WatcherBenchmark {
                         .trigger(schedule(interval("5s")))
                         .input(httpInput(new TemplatedHttpRequest.SourceBuilder("localhost", 9200)))
                         .condition(scriptCondition("ctx.payload.tagline == \"You Know, for Search\"")));
-                putAlertRequest.setName(name);
+                putAlertRequest.setId(name);
                 watcherClient.putWatch(putAlertRequest).actionGet();
             }
 

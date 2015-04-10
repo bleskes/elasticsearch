@@ -35,19 +35,19 @@ import java.io.IOException;
  */
 public class PutWatchRequest extends MasterNodeOperationRequest<PutWatchRequest> {
 
-    private String name;
+    private String id;
     private BytesReference source;
     private boolean sourceUnsafe;
 
-    public PutWatchRequest() {
+    PutWatchRequest() {
     }
 
-    public PutWatchRequest(String name, WatchSourceBuilder source) {
-        this(name, source.buildAsBytes(XContentType.JSON), false);
+    public PutWatchRequest(String id, WatchSourceBuilder source) {
+        this(id, source.buildAsBytes(XContentType.JSON), false);
     }
 
-    public PutWatchRequest(String name, BytesReference source, boolean sourceUnsafe) {
-        this.name = name;
+    public PutWatchRequest(String id, BytesReference source, boolean sourceUnsafe) {
+        this.id = id;
         this.source = source;
         this.sourceUnsafe = sourceUnsafe;
     }
@@ -55,15 +55,15 @@ public class PutWatchRequest extends MasterNodeOperationRequest<PutWatchRequest>
     /**
      * @return The name that will be the ID of the indexed document
      */
-    public String getName() {
-        return name;
+    public String getId() {
+        return id;
     }
 
     /**
      * Set the watch name
      */
-    public void setName(String name) {
-        this.name = name;
+    public void setId(String id) {
+        this.id = id;
     }
 
     /**
@@ -76,14 +76,14 @@ public class PutWatchRequest extends MasterNodeOperationRequest<PutWatchRequest>
     /**
      * Set the source of the watch
      */
-    public void source(WatchSourceBuilder source) {
-        source(source.buildAsBytes(XContentType.JSON));
+    public void setSource(WatchSourceBuilder source) {
+        setSource(source.buildAsBytes(XContentType.JSON));
     }
 
     /**
      * Set the source of the watch
      */
-    public void source(BytesReference source) {
+    public void setSource(BytesReference source) {
         this.source = source;
         this.sourceUnsafe = false;
     }
@@ -91,12 +91,12 @@ public class PutWatchRequest extends MasterNodeOperationRequest<PutWatchRequest>
     /**
      * Set the source of the watch with boolean to control source safety
      */
-    public void source(BytesReference source, boolean sourceUnsafe) {
+    public void setSource(BytesReference source, boolean sourceUnsafe) {
         this.source = source;
         this.sourceUnsafe = sourceUnsafe;
     }
 
-    public void beforeLocalFork() {
+    void beforeLocalFork() {
         if (sourceUnsafe) {
             source = source.copyBytesArray();
             sourceUnsafe = false;
@@ -106,7 +106,7 @@ public class PutWatchRequest extends MasterNodeOperationRequest<PutWatchRequest>
     @Override
     public ActionRequestValidationException validate() {
         ActionRequestValidationException validationException = null;
-        if (name == null) {
+        if (id == null) {
             validationException = ValidateActions.addValidationError("watch name is missing", validationException);
         }
         if (source == null) {
@@ -118,7 +118,7 @@ public class PutWatchRequest extends MasterNodeOperationRequest<PutWatchRequest>
     @Override
     public void readFrom(StreamInput in) throws IOException {
         super.readFrom(in);
-        name = in.readString();
+        id = in.readString();
         source = in.readBytesReference();
         sourceUnsafe = false;
     }
@@ -126,7 +126,7 @@ public class PutWatchRequest extends MasterNodeOperationRequest<PutWatchRequest>
     @Override
     public void writeTo(StreamOutput out) throws IOException {
         super.writeTo(out);
-        out.writeString(name);
+        out.writeString(id);
         out.writeBytesReference(source);
     }
 

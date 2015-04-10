@@ -95,7 +95,7 @@ public class NoMasterNodeTests extends AbstractWatcherIntegrationTests {
         ensureLicenseEnabled();
 
         watcherClient().preparePutWatch("my-first-watch")
-                .source(watchSource)
+                .setSource(watchSource)
                 .get();
         assertWatchWithMinimumPerformedActionsCount("my-first-watch", 1);
 
@@ -119,11 +119,11 @@ public class NoMasterNodeTests extends AbstractWatcherIntegrationTests {
 
         // Delete the existing watch
         DeleteWatchResponse response = watcherClient().prepareDeleteWatch("my-first-watch").get();
-        assertThat(response.deleteResponse().isFound(), is(true));
+        assertThat(response.isFound(), is(true));
 
         // Add a new watch and wait for its condition to be met
         watcherClient().preparePutWatch("my-second-watch")
-                .source(watchSource)
+                .setSource(watchSource)
                 .get();
         assertWatchWithMinimumPerformedActionsCount("my-second-watch", 1);
     }
