@@ -26,7 +26,6 @@ import org.elasticsearch.shield.ShieldSettingsException;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
 import java.util.Locale;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
@@ -56,22 +55,23 @@ public enum Hasher {
             }
             if (hashStr.startsWith(PLAIN_PREFIX)) {
                 hashStr = hashStr.substring(PLAIN_PREFIX.length());
-                return text.equals(hashStr);
+                return SecuredString.constantTimeEquals(text, hashStr);
             }
             byte[] textBytes = CharArrays.toUtf8Bytes(text.internalChars());
             if (hashStr.startsWith(APR1_PREFIX)) {
-                return hashStr.compareTo(Md5Crypt.apr1Crypt(textBytes, hashStr)) == 0;
+                return SecuredString.constantTimeEquals(hashStr, Md5Crypt.apr1Crypt(textBytes, hashStr));
             }
             if (hashStr.startsWith(SHA1_PREFIX)) {
                 String passwd64 = Base64.encodeBase64String(DigestUtils.sha1(textBytes));
-                return hashStr.substring(SHA1_PREFIX.length()).compareTo(passwd64) == 0;
+                String hashNoPrefix = hashStr.substring(SHA1_PREFIX.length());
+                return SecuredString.constantTimeEquals(passwd64, hashNoPrefix);
             }
             if (hashStr.startsWith(SHA2_PREFIX_5) || hashStr.startsWith(SHA2_PREFIX_6)) {
-                return hashStr.compareTo(Sha2Crypt.sha256Crypt(textBytes, hashStr)) == 0;
+                return SecuredString.constantTimeEquals(hashStr, Sha2Crypt.sha256Crypt(textBytes, hashStr));
             }
             return CRYPT_SUPPORTED ?
-                    hashStr.compareTo(Crypt.crypt(textBytes, hashStr)) == 0 :  // crypt algo
-                    text.equals(hashStr);                                      // plain text
+                    SecuredString.constantTimeEquals(hashStr, Crypt.crypt(textBytes, hashStr)) :  // crypt algo
+                    SecuredString.constantTimeEquals(text, hashStr);                              // plain text
         }
     },
 
@@ -209,7 +209,7 @@ public enum Hasher {
                 return false;
             }
             byte[] textBytes = CharArrays.toUtf8Bytes(text.internalChars());
-            return hashStr.compareTo(Md5Crypt.apr1Crypt(textBytes, hashStr)) == 0;
+            return SecuredString.constantTimeEquals(hashStr, Md5Crypt.apr1Crypt(textBytes, hashStr));
         }
     },
 
@@ -233,7 +233,8 @@ public enum Hasher {
             MessageDigest md = SHA1Provider.sha1();
             md.update(textBytes);
             String passwd64 = Base64.encodeBase64String(md.digest());
-            return hashStr.substring(SHA1_PREFIX.length()).compareTo(passwd64) == 0;
+            String hashNoPrefix = hashStr.substring(SHA1_PREFIX.length());
+            return SecuredString.constantTimeEquals(hashNoPrefix, passwd64);
         }
     },
 
@@ -249,7 +250,7 @@ public enum Hasher {
             String hashStr = new String(hash);
             if (hashStr.startsWith(SHA2_PREFIX_5) || hashStr.startsWith(SHA2_PREFIX_6)) {
                 byte[] textBytes = CharArrays.toUtf8Bytes(text.internalChars());
-                return hashStr.compareTo(Sha2Crypt.sha256Crypt(textBytes, hashStr)) == 0;
+                return SecuredString.constantTimeEquals(hashStr, Sha2Crypt.sha256Crypt(textBytes, hashStr));
             }
             return false;
         }
@@ -274,7 +275,7 @@ public enum Hasher {
             MessageDigest md = MD5Provider.md5();
             md.update(CharArrays.toUtf8Bytes(text.internalChars()));
             String computedHashStr = Base64.encodeBase64String(md.digest());
-            return hashStr.equals(computedHashStr);
+            return SecuredString.constantTimeEquals(hashStr, computedHashStr);
         }
     },
 
@@ -305,7 +306,7 @@ public enum Hasher {
             md.update(CharArrays.toUtf8Bytes(text.internalChars()));
             md.update(new String(saltAndHash, 0, 8).getBytes(Charsets.UTF_8));
             String computedHash = Base64.encodeBase64String(md.digest());
-            return computedHash.equals(new String(saltAndHash, 8, saltAndHash.length - 8));
+            return SecuredString.constantTimeEquals(computedHash, new String(saltAndHash, 8, saltAndHash.length - 8));
         }
     },
 
@@ -317,7 +318,7 @@ public enum Hasher {
 
         @Override
         public boolean verify(SecuredString text, char[] hash) {
-            return Arrays.equals(text.internalChars(), hash);
+            return SecuredString.constantTimeEquals(text.internalChars(), hash);
         }
     };
 
