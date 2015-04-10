@@ -174,28 +174,32 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
     {
         LOGGER.debug("Post to flush data upload for job " + jobId +
                      " with " + CALC_INTERIM_PARAM + '=' + calcInterim);
-        if (!areValidInterimResultsParams(calcInterim, start, end))
-        {
-            String msg = calcInterim ?
-                    String.format("Invalid flush parameters: '%s' has not been specified.",
-                            START_QUERY_PARAM) :
-                    String.format("Invalid flush parameters: unexpected '%s' and/or '%s'.",
-                            START_QUERY_PARAM, END_QUERY_PARAM);
-            throw new RestApiException(msg, ErrorCode.INVALID_FLUSH_PARAMS,
-                    Response.Status.BAD_REQUEST);
-        }
+        checkValidFlushArgumentsCombination(calcInterim, start, end);
         TimeRange timeRange = createTimeRange(START_QUERY_PARAM, start, END_QUERY_PARAM, end);
         jobManager().flushJob(jobId, new InterimResultsParams(calcInterim, timeRange));
         return Response.ok().entity(new Acknowledgement()).build();
     }
 
-    private boolean areValidInterimResultsParams(boolean calcInterim, String start, String end)
+    private void checkValidFlushArgumentsCombination(boolean calcInterim, String start, String end)
     {
-        if (calcInterim == false)
+        if (calcInterim == false && (!start.isEmpty() || !end.isEmpty()))
         {
-            return start.isEmpty() && end.isEmpty();
+            String msg = String.format("Invalid flush parameters: unexpected '%s' and/or '%s'.",
+                    START_QUERY_PARAM, END_QUERY_PARAM);
+            throwInvalidFlushParamsException(msg);
         }
-        return isValidTimeRange(start, end);
+        if (!isValidTimeRange(start, end))
+        {
+            String msg = String.format("Invalid flush parameters: '%s' has not been specified.",
+                            START_QUERY_PARAM);
+            throwInvalidFlushParamsException(msg);
+        }
+    }
+
+    private void throwInvalidFlushParamsException(String msg)
+    {
+        throw new RestApiException(msg, ErrorCode.INVALID_FLUSH_PARAMS,
+                Response.Status.BAD_REQUEST);
     }
 
     /**
