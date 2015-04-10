@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -129,14 +129,11 @@ public class JobManager
     private int m_MaxDetectorsPerJob = -1;
 
     /**
-     * The limit on number of partitions per job.
-     * A negative limit means unlimited.
-     * Note that the Java code can really only do anything with this if it's
-     * zero, as it doesn't count the number of distinct values of the partition
-     * field.  However, if the limit is zero it can reject any configured
-     * partition field settings.
+     * The constraint on whether partition fields are allowed.
+     * See https://anomaly.atlassian.net/wiki/display/EN/Electronic+license+keys
+     * and bug 1034 in Bugzilla for background.
      */
-    private int m_MaxPartitionsPerJob = -1;
+    private boolean m_ArePartitionsAllowed = true;
 
     /**
      * constraints in the license key.
@@ -237,9 +234,7 @@ public class JobManager
                     ErrorCode.LICENSE_VIOLATION);
         }
 
-        // We can only validate the case of m_MaxPartitionsPerJob being zero in
-        // the Java code - anything more subtle has to be left to the C++
-        if (m_MaxPartitionsPerJob == 0 && jobConfig.getAnalysisConfig() != null)
+        if (!m_ArePartitionsAllowed && jobConfig.getAnalysisConfig() != null)
         {
             for (com.prelert.job.Detector detector :
                         jobConfig.getAnalysisConfig().getDetectors())
@@ -862,13 +857,17 @@ public class JobManager
             constraint = doc.get(PARTITIONS_LICENSE_CONSTRAINT);
             if (constraint != null)
             {
-                m_MaxPartitionsPerJob = constraint.asInt(-1);
+                int val = constraint.asInt(-1);
+                // See https://anomaly.atlassian.net/wiki/display/EN/Electronic+license+keys
+                // and bug 1034 in Bugzilla for the reason behind this
+                // seemingly weird condition.
+                m_ArePartitionsAllowed = (val < 0);
             }
             else
             {
-                m_MaxPartitionsPerJob = -1;
+                m_ArePartitionsAllowed = true;
             }
-            LOGGER.info("Max partitions per job = " + m_MaxPartitionsPerJob);
+            LOGGER.info("Are partitions allowed = " + m_ArePartitionsAllowed);
         }
         catch (IOException e)
         {
