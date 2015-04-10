@@ -52,6 +52,7 @@ public class ManualExecutionTests extends AbstractWatcherIntegrationTests {
     @Test
     @Repeat(iterations = 10)
     public void testExecuteWatch() throws Exception {
+        ensureWatcherStarted();
         boolean ignoreCondition = randomBoolean();
         boolean persistRecord = randomBoolean();
         boolean conditionAlwaysTrue = randomBoolean();
