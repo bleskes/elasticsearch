@@ -301,14 +301,21 @@ public enum ErrorCode
 	INVALID_FLUSH_PARAMS(60106),
 
 	/**
-	 * Reset range parameters to the data/dataload end-points are invalid
-	 */
-	INVALID_BUCKET_RESET_RANGE_PARAMS(60107),
-
-	/**
 	 * When time range is expected, the end date cannot be before the start date
 	 */
-	END_DATE_BEFORE_START_DATE(60108);
+	END_DATE_BEFORE_START_DATE(60107),
+
+	/**
+	 * Reset range parameters to the data/dataload end-points are invalid
+	 */
+	INVALID_BUCKET_RESET_RANGE_PARAMS(60108),
+
+	/**
+	 * Bucket reset has been requested but either no latency was specified
+	 * or at least one detector has a function that does not support bucket resetting.
+	 */
+	BUCKET_RESET_NOT_SUPPORTED(60109);
+
 
 
 	private long m_ErrorCode;

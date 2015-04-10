@@ -196,6 +196,14 @@ public class Detector
                 HIGH_NON_ZERO_COUNT, HIGH_NZC
             }));
 
+    private static final Set<String> NO_BUCKET_RESET_SUPPORTING_FUNCTIONS =
+            new HashSet<String>(Arrays.asList(
+                METRIC,
+                MEAN, AVG,
+                HIGH_MEAN, HIGH_AVG,
+                LOW_MEAN, LOW_AVG,
+                MIN,
+                MAX));
 
     /**
      * field names cannot contain any of these characters
@@ -318,6 +326,11 @@ public class Detector
     public String getExcludeFrequent()
     {
         return m_ExcludeFrequent;
+    }
+
+    public boolean isSupportingBucketResetting()
+    {
+        return m_Function != null && !NO_BUCKET_RESET_SUPPORTING_FUNCTIONS.contains(m_Function);
     }
 
     public void setExcludeFrequent(String v)

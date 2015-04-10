@@ -28,6 +28,7 @@ package com.prelert.rs.resources;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
@@ -42,7 +43,10 @@ import javax.ws.rs.core.Response;
 
 import org.apache.log4j.Logger;
 
+import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataCounts;
+import com.prelert.job.Detector;
+import com.prelert.job.JobDetails;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.TooManyJobsException;
 import com.prelert.job.exceptions.UnknownJobException;
@@ -56,6 +60,7 @@ import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.rs.data.Acknowledgement;
 import com.prelert.rs.data.ErrorCode;
+import com.prelert.rs.data.SingleDocument;
 import com.prelert.rs.provider.RestApiException;
 import com.prelert.rs.resources.data.DataStreamer;
 
@@ -107,6 +112,20 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
             MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException,
             OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException
     {
+        DataLoadParams params = createDataLoadParams(resetStart, resetEnd);
+        if (params.isResettingBuckets())
+        {
+            checkBucketResettingIsSupported(jobId);
+        }
+
+        DataStreamer dataStreamer = new DataStreamer(jobManager());
+        String contentEncoding = headers.getHeaderString(HttpHeaders.CONTENT_ENCODING);
+        DataCounts stats = dataStreamer.streamData(contentEncoding, jobId, input, params);
+        return Response.accepted().entity(stats).build();
+    }
+
+    private DataLoadParams createDataLoadParams(String resetStart, String resetEnd)
+    {
         if (!isValidTimeRange(resetStart, resetEnd))
         {
             String msg = String.format("Invalid reset range parameters: '%s' has not been specified.",
@@ -115,12 +134,7 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
                     Response.Status.BAD_REQUEST);
         }
         TimeRange timeRange = createTimeRange(RESET_START_PARAM, resetStart, RESET_END_PARAM, resetEnd);
-        DataLoadParams params = new DataLoadParams(shouldPersist(), timeRange);
-
-        DataStreamer dataStreamer = new DataStreamer(jobManager());
-        String contentEncoding = headers.getHeaderString(HttpHeaders.CONTENT_ENCODING);
-        DataCounts stats = dataStreamer.streamData(contentEncoding, jobId, input, params);
-        return Response.accepted().entity(stats).build();
+        return new DataLoadParams(shouldPersist(), timeRange);
     }
 
     private boolean isValidTimeRange(String start, String end)
@@ -149,6 +163,40 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
             }
         }
         return new TimeRange(epochStart, epochEnd);
+    }
+
+    private void checkBucketResettingIsSupported(String jobId) throws UnknownJobException
+    {
+        SingleDocument<JobDetails> job = jobManager().getJob(jobId);
+        AnalysisConfig config = job.getDocument().getAnalysisConfig();
+        checkLatencyIsNonZero(config.getLatency());
+        checkAllDetectorsHaveBucketResetSupportingFunctions(config.getDetectors());
+    }
+
+    private void checkLatencyIsNonZero(Long latency)
+    {
+        if (latency == null || latency.longValue() == 0)
+        {
+            throw new RestApiException(
+                    "Bucket resetting is not supported when no latency is configured.",
+                    ErrorCode.BUCKET_RESET_NOT_SUPPORTED, Response.Status.BAD_REQUEST);
+        }
+    }
+
+    private void checkAllDetectorsHaveBucketResetSupportingFunctions(List<Detector> detectors)
+    {
+        for (Detector detector : detectors)
+        {
+            if (!detector.isSupportingBucketResetting())
+            {
+                String function = detector.getFunction();
+                function = function == null ? "metric" : function;
+                String msg = String.format("At least one detector contains a function that does not"
+                        + " support bucket resetting: %s.", function);
+                throw new RestApiException(msg, ErrorCode.BUCKET_RESET_NOT_SUPPORTED,
+                        Response.Status.BAD_REQUEST);
+            }
+        }
     }
 
     /**
