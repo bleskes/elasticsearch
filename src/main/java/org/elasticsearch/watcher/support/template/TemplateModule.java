@@ -26,6 +26,7 @@ public class TemplateModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(Template.Parser.class).to(ScriptTemplate.Parser.class).asEagerSingleton();
+        bind(MustacheTemplateEngine.class).asEagerSingleton();
+        bind(TemplateEngine.class).to(MustacheTemplateEngine.class);
     }
 }

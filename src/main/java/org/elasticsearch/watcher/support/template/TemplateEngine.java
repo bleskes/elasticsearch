@@ -15,17 +15,15 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.watcher.client;
+package org.elasticsearch.watcher.support.template;
+
+import java.util.Map;
 
 /**
  *
  */
-public final class WatchSourceBuilders {
+public interface TemplateEngine {
 
-    private WatchSourceBuilders() {
-    }
-
-    public static WatchSourceBuilder watchBuilder() {
-        return new WatchSourceBuilder();
-    }
+    String render(Template template, Map<String, Object> model);
 }
+

@@ -22,7 +22,7 @@ import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.watcher.input.http.HttpInput;
 import org.elasticsearch.watcher.input.search.SearchInput;
 import org.elasticsearch.watcher.input.simple.SimpleInput;
-import org.elasticsearch.watcher.support.http.TemplatedHttpRequest;
+import org.elasticsearch.watcher.support.http.HttpRequestTemplate;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -51,7 +51,11 @@ public final class InputBuilders {
         return new SimpleInput.SourceBuilder(data);
     }
 
-    public static HttpInput.SourceBuilder httpInput(TemplatedHttpRequest.SourceBuilder requestSource) {
-        return new HttpInput.SourceBuilder(requestSource);
+    public static HttpInput.SourceBuilder httpInput(HttpRequestTemplate.Builder request) {
+        return httpInput(request.build());
+    }
+
+    public static HttpInput.SourceBuilder httpInput(HttpRequestTemplate request) {
+        return new HttpInput.SourceBuilder(request);
     }
 }

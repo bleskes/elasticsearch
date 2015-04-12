@@ -15,17 +15,20 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.watcher.client;
+package org.elasticsearch.watcher.actions.logging;
+
+import org.elasticsearch.watcher.actions.ActionException;
 
 /**
  *
  */
-public final class WatchSourceBuilders {
+public class LoggingActionException extends ActionException {
 
-    private WatchSourceBuilders() {
+    public LoggingActionException(String msg) {
+        super(msg);
     }
 
-    public static WatchSourceBuilder watchBuilder() {
-        return new WatchSourceBuilder();
+    public LoggingActionException(String msg, Throwable cause) {
+        super(msg, cause);
     }
 }

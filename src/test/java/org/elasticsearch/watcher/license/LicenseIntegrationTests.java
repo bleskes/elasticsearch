@@ -91,7 +91,7 @@ public class LicenseIntegrationTests extends AbstractWatcherIntegrationTests {
                 .trigger(schedule(interval("1s")))
                 .input(simpleInput())
                 .condition(alwaysTrueCondition())
-                .addAction(indexAction("_index", "idx", "type")))
+                .addAction("_index", indexAction("idx", "type")))
                 .execute().actionGet();
 
         assertThat(putWatchResponse.isCreated(), is(true));
@@ -124,7 +124,7 @@ public class LicenseIntegrationTests extends AbstractWatcherIntegrationTests {
                 .trigger(schedule(interval("10s")))
                 .input(simpleInput())
                 .condition(alwaysTrueCondition())
-                .addAction(indexAction("_index", "idx", "type")))
+                .addAction("_index", indexAction("idx", "type")))
                 .execute().actionGet();
 
         assertThat(putWatchResponse.isCreated(), is(true));
@@ -184,7 +184,7 @@ public class LicenseIntegrationTests extends AbstractWatcherIntegrationTests {
                     .trigger(schedule(interval("1s")))
                     .input(simpleInput())
                     .condition(alwaysTrueCondition())
-                    .addAction(indexAction("_index", "idx", "type")))
+                    .addAction("_index", indexAction("idx", "type")))
                     .execute().actionGet();
             fail("put watch API should NOT work when license is disabled");
         } catch (LicenseExpiredException lee) {
@@ -240,7 +240,7 @@ public class LicenseIntegrationTests extends AbstractWatcherIntegrationTests {
                 .trigger(schedule(interval("1s")))
                 .input(simpleInput())
                 .condition(alwaysTrueCondition())
-                .addAction(indexAction("_index", "idx", "type")))
+                .addAction("_index", indexAction("idx", "type")))
                 .execute().actionGet();
 
         assertThat(putWatchResponse, notNullValue());
