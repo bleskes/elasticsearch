@@ -107,8 +107,8 @@ public class Buckets extends ResourceWithJobManager
                 anomalySoreFilter, normalizedProbabilityFilter,
                 includeInterim ? "including" : "excluding"));
 
-        long epochStart = paramToEpochIfValidOrThrow(start, LOGGER);
-        long epochEnd = paramToEpochIfValidOrThrow(end, LOGGER);
+        long epochStart = paramToEpochIfValidOrThrow(START_QUERY_PARAM, start, LOGGER);
+        long epochEnd = paramToEpochIfValidOrThrow(END_QUERY_PARAM, end, LOGGER);
 
         JobManager manager = jobManager();
         Pagination<Bucket> buckets;

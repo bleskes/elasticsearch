@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -25,35 +25,39 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.exceptions;
+package com.prelert.rs.data;
 
-import com.prelert.rs.data.ErrorCode;
-import com.prelert.rs.data.HasErrorCode;
+import org.hamcrest.Description;
+import org.junit.internal.matchers.TypeSafeMatcher;
 
-/**
- * General job exception class with a specific error code and message.
- */
-public abstract class JobException extends Exception implements HasErrorCode
-{
-    private static final long serialVersionUID = -5289885963015348819L;
+public class ErrorCodeMatcher extends TypeSafeMatcher<HasErrorCode> {
 
-    private final ErrorCode m_ErrorCode;
+    private ErrorCode m_ExpectedErrorCode;
+    private ErrorCode m_ActualErrorCode;
 
-    public JobException(String message, ErrorCode errorCode)
+    public static ErrorCodeMatcher hasErrorCode(ErrorCode expected)
     {
-        super(message);
-        m_ErrorCode = errorCode;
+        return new ErrorCodeMatcher(expected);
     }
 
-    public JobException(String message, ErrorCode errorCode, Throwable cause)
+    private ErrorCodeMatcher(ErrorCode expectedErrorCode)
     {
-        super(message, cause);
-        m_ErrorCode = errorCode;
+        m_ExpectedErrorCode = expectedErrorCode;
     }
 
     @Override
-    public ErrorCode getErrorCode()
+    public void describeTo(Description description)
     {
-        return m_ErrorCode;
+        description.appendValue(m_ActualErrorCode)
+                .appendText(" was found instead of ")
+                .appendValue(m_ExpectedErrorCode);
     }
+
+    @Override
+    public boolean matchesSafely(HasErrorCode item)
+    {
+        m_ActualErrorCode = item.getErrorCode();
+        return m_ActualErrorCode.equals(m_ExpectedErrorCode);
+    }
+
 }

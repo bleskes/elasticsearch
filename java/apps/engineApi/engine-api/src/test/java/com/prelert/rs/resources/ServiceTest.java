@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -25,35 +25,41 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.exceptions;
+package com.prelert.rs.resources;
 
-import com.prelert.rs.data.ErrorCode;
-import com.prelert.rs.data.HasErrorCode;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.util.HashSet;
+import java.util.Set;
+
+import javax.ws.rs.core.Application;
+
+import com.prelert.job.manager.JobManager;
 
 /**
- * General job exception class with a specific error code and message.
+ * Test base class for testing the REST end-points.
  */
-public abstract class JobException extends Exception implements HasErrorCode
+public class ServiceTest
 {
-    private static final long serialVersionUID = -5289885963015348819L;
+    protected JobManager m_JobManager;
 
-    private final ErrorCode m_ErrorCode;
-
-    public JobException(String message, ErrorCode errorCode)
+    protected ServiceTest()
     {
-        super(message);
-        m_ErrorCode = errorCode;
+        m_JobManager = mock(JobManager.class);
     }
 
-    public JobException(String message, ErrorCode errorCode, Throwable cause)
+    protected void configureService(ResourceWithJobManager service)
     {
-        super(message, cause);
-        m_ErrorCode = errorCode;
+        Set<Object> singletons = new HashSet<>();
+        singletons.add(m_JobManager);
+        Application application = mock(Application.class);
+        when(application.getSingletons()).thenReturn(singletons);
+        service.setApplication(application);
     }
 
-    @Override
-    public ErrorCode getErrorCode()
+    protected JobManager jobManager()
     {
-        return m_ErrorCode;
+        return m_JobManager;
     }
 }

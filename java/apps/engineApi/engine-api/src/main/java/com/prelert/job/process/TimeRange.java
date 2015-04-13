@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -25,21 +25,26 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.rs.resources.data;
+package com.prelert.job.process;
 
-import com.prelert.job.manager.JobManager;
-
-public class DataStreamerAndPersister extends AbstractDataStreamer
+public class TimeRange
 {
+    private final Long m_Start;
+    private final Long m_End;
 
-    public DataStreamerAndPersister(JobManager jobManager)
+    public TimeRange(Long start, Long end)
     {
-        super(jobManager);
+        m_Start = start;
+        m_End = end;
     }
 
-    @Override
-    protected boolean shouldPersistJobData()
+    public String getStart()
     {
-        return true;
+        return m_Start == null ? "" : String.valueOf(m_Start);
+    }
+
+    public String getEnd()
+    {
+        return m_End == null ? "" : String.valueOf(m_End);
     }
 }

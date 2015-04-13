@@ -38,7 +38,7 @@ import com.fasterxml.jackson.core.io.JsonStringEncoder;
  *
  * @see ErrorCode
  */
-public class ApiError
+public class ApiError implements HasErrorCode
 {
 	private ErrorCode m_ErrorCode;
 	private String m_Message;
@@ -68,6 +68,7 @@ public class ApiError
 	 * @see ErrorCode
 	 * @return one of {@linkplain ErrorCode}
 	 */
+	@Override
 	public ErrorCode getErrorCode()
 	{
 		return m_ErrorCode;

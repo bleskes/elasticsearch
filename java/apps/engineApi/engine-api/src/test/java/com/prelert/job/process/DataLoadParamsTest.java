@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -25,35 +25,42 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.exceptions;
+package com.prelert.job.process;
 
-import com.prelert.rs.data.ErrorCode;
-import com.prelert.rs.data.HasErrorCode;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
-/**
- * General job exception class with a specific error code and message.
- */
-public abstract class JobException extends Exception implements HasErrorCode
+import org.junit.Test;
+
+public class DataLoadParamsTest
 {
-    private static final long serialVersionUID = -5289885963015348819L;
-
-    private final ErrorCode m_ErrorCode;
-
-    public JobException(String message, ErrorCode errorCode)
+    @Test
+    public void testGetStart()
     {
-        super(message);
-        m_ErrorCode = errorCode;
+        assertEquals("", new DataLoadParams(false, new TimeRange(null, null)).getStart());
+        assertEquals("3", new DataLoadParams(false, new TimeRange(3L, null)).getStart());
     }
 
-    public JobException(String message, ErrorCode errorCode, Throwable cause)
+    @Test
+    public void testGetEnd()
     {
-        super(message, cause);
-        m_ErrorCode = errorCode;
+        assertEquals("", new DataLoadParams(false, new TimeRange(null, null)).getEnd());
+        assertEquals("1", new DataLoadParams(false, new TimeRange(null, 1L)).getEnd());
     }
 
-    @Override
-    public ErrorCode getErrorCode()
+    @Test
+    public void testIsResettingBuckets()
     {
-        return m_ErrorCode;
+        assertFalse(new DataLoadParams(false, new TimeRange(null, null)).isResettingBuckets());
+        assertTrue(new DataLoadParams(false, new TimeRange(5L, null)).isResettingBuckets());
     }
+
+    @Test
+    public void testIsPersisting()
+    {
+        assertFalse(new DataLoadParams(false, new TimeRange(null, null)).isPersisting());
+        assertTrue(new DataLoadParams(true, new TimeRange(null, null)).isPersisting());
+    }
+
 }

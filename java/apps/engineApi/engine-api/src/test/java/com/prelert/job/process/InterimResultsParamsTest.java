@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -25,35 +25,25 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.exceptions;
+package com.prelert.job.process;
 
-import com.prelert.rs.data.ErrorCode;
-import com.prelert.rs.data.HasErrorCode;
+import static org.junit.Assert.assertEquals;
 
-/**
- * General job exception class with a specific error code and message.
- */
-public abstract class JobException extends Exception implements HasErrorCode
+import org.junit.Test;
+
+public class InterimResultsParamsTest
 {
-    private static final long serialVersionUID = -5289885963015348819L;
-
-    private final ErrorCode m_ErrorCode;
-
-    public JobException(String message, ErrorCode errorCode)
+    @Test
+    public void testGetStart()
     {
-        super(message);
-        m_ErrorCode = errorCode;
+        assertEquals("", new InterimResultsParams(true, new TimeRange(null, null)).getStart());
+        assertEquals("42", new InterimResultsParams(true, new TimeRange(42L, null)).getStart());
     }
 
-    public JobException(String message, ErrorCode errorCode, Throwable cause)
+    @Test
+    public void testGetEnd()
     {
-        super(message, cause);
-        m_ErrorCode = errorCode;
-    }
-
-    @Override
-    public ErrorCode getErrorCode()
-    {
-        return m_ErrorCode;
+        assertEquals("", new InterimResultsParams(true, new TimeRange(null, null)).getEnd());
+        assertEquals("1", new InterimResultsParams(true, new TimeRange(null, 1L)).getEnd());
     }
 }

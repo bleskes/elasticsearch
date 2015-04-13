@@ -28,6 +28,7 @@ package com.prelert.rs.resources;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
@@ -42,19 +43,26 @@ import javax.ws.rs.core.Response;
 
 import org.apache.log4j.Logger;
 
+import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataCounts;
+import com.prelert.job.Detector;
+import com.prelert.job.JobDetails;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.TooManyJobsException;
 import com.prelert.job.exceptions.UnknownJobException;
+import com.prelert.job.process.DataLoadParams;
+import com.prelert.job.process.InterimResultsParams;
+import com.prelert.job.process.TimeRange;
 import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.rs.data.Acknowledgement;
-import com.prelert.rs.resources.data.AbstractDataStreamer;
+import com.prelert.rs.data.ErrorCode;
+import com.prelert.rs.data.SingleDocument;
+import com.prelert.rs.provider.RestApiException;
 import com.prelert.rs.resources.data.DataStreamer;
-import com.prelert.rs.resources.data.DataStreamerAndPersister;
 
 
 public abstract class AbstractDataLoad extends ResourceWithJobManager
@@ -66,12 +74,20 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
      */
     public static final String CALC_INTERIM_PARAM = "calcInterim";
 
+    /** Parameter to specify start time of buckets to be reset */
+    private static final String RESET_START_PARAM = "resetStart";
+
+    /** Parameter to specify end time of buckets to be reset */
+    private static final String RESET_END_PARAM = "resetEnd";
+
     /**
      * Data upload endpoint.
      *
      * @param headers
      * @param jobId
      * @param input
+     * @param resetStart Optional parameter to specify start of range for bucket resetting
+     * @param resetEnd Optional parameter to specify end of range for bucket resetting
      * @return
      * @throws IOException
      * @throws UnknownJobException
@@ -89,21 +105,98 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
     @Consumes({MediaType.APPLICATION_FORM_URLENCODED, MediaType.APPLICATION_JSON,
         MediaType.APPLICATION_OCTET_STREAM})
     public Response streamData(@Context HttpHeaders headers,
-            @PathParam("jobId") String jobId, InputStream input)
+            @PathParam("jobId") String jobId, InputStream input,
+            @DefaultValue("") @QueryParam(RESET_START_PARAM) String resetStart,
+            @DefaultValue("") @QueryParam(RESET_END_PARAM) String resetEnd)
     throws IOException, UnknownJobException, NativeProcessRunException,
             MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException,
             OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException
     {
-        AbstractDataStreamer dataStreamer = createDataStreamer();
+        DataLoadParams params = createDataLoadParams(resetStart, resetEnd);
+        if (params.isResettingBuckets())
+        {
+            checkBucketResettingIsSupported(jobId);
+        }
+
+        DataStreamer dataStreamer = new DataStreamer(jobManager());
         String contentEncoding = headers.getHeaderString(HttpHeaders.CONTENT_ENCODING);
-        DataCounts stats = dataStreamer.streamData(contentEncoding, jobId, input);
+        DataCounts stats = dataStreamer.streamData(contentEncoding, jobId, input, params);
         return Response.accepted().entity(stats).build();
     }
 
-    private AbstractDataStreamer createDataStreamer()
+    private DataLoadParams createDataLoadParams(String resetStart, String resetEnd)
     {
-        return shouldPersist() ? new DataStreamerAndPersister(jobManager()) :
-                new DataStreamer(jobManager());
+        if (!isValidTimeRange(resetStart, resetEnd))
+        {
+            String msg = String.format("Invalid reset range parameters: '%s' has not been specified.",
+                    RESET_START_PARAM);
+            throw new RestApiException(msg, ErrorCode.INVALID_BUCKET_RESET_RANGE_PARAMS,
+                    Response.Status.BAD_REQUEST);
+        }
+        TimeRange timeRange = createTimeRange(RESET_START_PARAM, resetStart, RESET_END_PARAM, resetEnd);
+        return new DataLoadParams(shouldPersist(), timeRange);
+    }
+
+    private boolean isValidTimeRange(String start, String end)
+    {
+        return !start.isEmpty() || (start.isEmpty() && end.isEmpty());
+    }
+
+    private TimeRange createTimeRange(String startParam, String start, String endParam, String end)
+    {
+        Long epochStart = null;
+        Long epochEnd = null;
+        if (!start.isEmpty())
+        {
+            epochStart = paramToEpochIfValidOrThrow(startParam, start, LOGGER) / 1000;
+            epochEnd = paramToEpochIfValidOrThrow(endParam, end, LOGGER) / 1000;
+            if (end.isEmpty() || epochEnd.equals(epochStart))
+            {
+                epochEnd = epochStart + 1;
+            }
+            if (epochEnd.longValue() < epochStart.longValue())
+            {
+                String msg = String.format("Invalid time range: end time '%s' is earlier than start"
+                        + " time '%s'.", end, start);
+                throw new RestApiException(msg, ErrorCode.END_DATE_BEFORE_START_DATE,
+                        Response.Status.BAD_REQUEST);
+            }
+        }
+        return new TimeRange(epochStart, epochEnd);
+    }
+
+    private void checkBucketResettingIsSupported(String jobId) throws UnknownJobException
+    {
+        SingleDocument<JobDetails> job = jobManager().getJob(jobId);
+        AnalysisConfig config = job.getDocument().getAnalysisConfig();
+        checkLatencyIsNonZero(config.getLatency());
+        checkAllDetectorsHaveBucketResetSupportingFunctions(config.getDetectors());
+    }
+
+    private void checkLatencyIsNonZero(Long latency)
+    {
+        if (latency == null || latency.longValue() == 0)
+        {
+            throw new RestApiException(
+                    "Bucket resetting is not supported when no latency is configured.",
+                    ErrorCode.BUCKET_RESET_NOT_SUPPORTED, Response.Status.BAD_REQUEST);
+        }
+    }
+
+    private void checkAllDetectorsHaveBucketResetSupportingFunctions(List<Detector> detectors)
+    {
+        for (Detector detector : detectors)
+        {
+            if (!detector.isSupportingBucketResetting())
+            {
+                String function = detector.getFunction();
+                function = function == null ? "metric" : function;
+                String msg = String.format("At least one detector contains a function that does not"
+                        + " support bucket resetting: %s.", function);
+                throw new RestApiException(msg, ErrorCode.BUCKET_RESET_NOT_SUPPORTED,
+                        Response.Status.BAD_REQUEST);
+            }
+        }
     }
 
     /**
@@ -122,15 +215,40 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
     @Path("/{jobId}/flush")
     @POST
     public Response flushUpload(@PathParam("jobId") String jobId,
-            @DefaultValue("false") @QueryParam(CALC_INTERIM_PARAM) boolean calcInterim)
+            @DefaultValue("false") @QueryParam(CALC_INTERIM_PARAM) boolean calcInterim,
+            @DefaultValue("") @QueryParam(START_QUERY_PARAM) String start,
+            @DefaultValue("") @QueryParam(END_QUERY_PARAM) String end)
     throws UnknownJobException, NativeProcessRunException, JobInUseException
     {
         LOGGER.debug("Post to flush data upload for job " + jobId +
                      " with " + CALC_INTERIM_PARAM + '=' + calcInterim);
-        jobManager().flushJob(jobId, calcInterim);
+        checkValidFlushArgumentsCombination(calcInterim, start, end);
+        TimeRange timeRange = createTimeRange(START_QUERY_PARAM, start, END_QUERY_PARAM, end);
+        jobManager().flushJob(jobId, new InterimResultsParams(calcInterim, timeRange));
         return Response.ok().entity(new Acknowledgement()).build();
     }
 
+    private void checkValidFlushArgumentsCombination(boolean calcInterim, String start, String end)
+    {
+        if (calcInterim == false && (!start.isEmpty() || !end.isEmpty()))
+        {
+            String msg = String.format("Invalid flush parameters: unexpected '%s' and/or '%s'.",
+                    START_QUERY_PARAM, END_QUERY_PARAM);
+            throwInvalidFlushParamsException(msg);
+        }
+        if (!isValidTimeRange(start, end))
+        {
+            String msg = String.format("Invalid flush parameters: '%s' has not been specified.",
+                            START_QUERY_PARAM);
+            throwInvalidFlushParamsException(msg);
+        }
+    }
+
+    private void throwInvalidFlushParamsException(String msg)
+    {
+        throw new RestApiException(msg, ErrorCode.INVALID_FLUSH_PARAMS,
+                Response.Status.BAD_REQUEST);
+    }
 
     /**
      * Calling this endpoint indicates that data transfer is complete.

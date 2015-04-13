@@ -35,6 +35,8 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.prelert.job.AnalysisConfig;
+import com.prelert.job.process.DataLoadParams;
+import com.prelert.job.process.InterimResultsParams;
 
 /**
  * A writer for sending control messages to the C++ autodetect process.
@@ -56,6 +58,11 @@ public class ControlMsgToProcessWriter
      * This must match the code defined in the api::CAnomalyDetector C++ class.
      */
     private static final String INTERIM_MESSAGE_CODE = "i";
+
+    /**
+     * This must match the code defined in the api::CAnomalyDetector C++ class.
+     */
+    private static final String RESET_BUCKETS_MESSAGE_CODE = "r";
 
     /**
      * An number to uniquely identify each flush so that subsequent code can
@@ -80,14 +87,18 @@ public class ControlMsgToProcessWriter
     /**
      * Send an instruction to calculate interim results to the C++ autodetect
      * process.
+     * @param interimResultsParams Parameters indicating whether interim resuls should be written
+     * and for which buckets
      * @throws IOException
      */
-    public void writeCalcInterimMessage() throws IOException
+    public void writeCalcInterimMessage(InterimResultsParams interimResultsParams) throws IOException
     {
-        writeMessage(INTERIM_MESSAGE_CODE);
-        m_LengthEncodedWriter.flush();
+        if (interimResultsParams.shouldCalculate())
+        {
+            writeControlCodeFollowedByTimeRange(INTERIM_MESSAGE_CODE,
+                    interimResultsParams.getStart(), interimResultsParams.getEnd());
+        }
     }
-
 
     /**
      * Send a flush message to the C++ autodetect process.
@@ -111,6 +122,25 @@ public class ControlMsgToProcessWriter
         return flushId;
     }
 
+
+    public void writeResetBucketsMessage(DataLoadParams params) throws IOException
+    {
+        writeControlCodeFollowedByTimeRange(RESET_BUCKETS_MESSAGE_CODE, params.getStart(),
+                params.getEnd());
+    }
+
+    private void writeControlCodeFollowedByTimeRange(String code, String start, String end)
+            throws IOException
+    {
+        StringBuilder message = new StringBuilder(code);
+        if (start.isEmpty() == false)
+        {
+            message.append(start);
+            message.append(' ');
+            message.append(end);
+        }
+        writeMessage(message.toString());
+    }
 
     /**
      * Transform the supplied control message to length encoded values and
