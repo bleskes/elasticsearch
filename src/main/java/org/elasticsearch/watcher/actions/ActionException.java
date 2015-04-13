@@ -17,6 +17,7 @@
 
 package org.elasticsearch.watcher.actions;
 
+import org.elasticsearch.common.logging.support.LoggerMessageFormat;
 import org.elasticsearch.watcher.WatcherException;
 
 /**
@@ -24,11 +25,12 @@ import org.elasticsearch.watcher.WatcherException;
  */
 public class ActionException extends WatcherException {
 
-    public ActionException(String msg) {
-        super(msg);
+    public ActionException(String msg, Object... args) {
+        super(LoggerMessageFormat.format(msg, args));
     }
 
-    public ActionException(String msg, Throwable cause) {
-        super(msg, cause);
+    public ActionException(String msg, Throwable cause, Object... args) {
+        super(LoggerMessageFormat.format(msg, args), cause);
     }
+
 }

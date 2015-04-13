@@ -18,6 +18,7 @@
 package org.elasticsearch.watcher.condition;
 
 import org.elasticsearch.watcher.condition.script.ScriptCondition;
+import org.elasticsearch.watcher.condition.simple.AlwaysFalseCondition;
 import org.elasticsearch.watcher.condition.simple.AlwaysTrueCondition;
 
 /**
@@ -30,6 +31,10 @@ public final class ConditionBuilders {
 
     public static AlwaysTrueCondition.SourceBuilder alwaysTrueCondition() {
         return AlwaysTrueCondition.SourceBuilder.INSTANCE;
+    }
+
+    public static AlwaysFalseCondition.SourceBuilder alwaysFalseCondition() {
+        return AlwaysFalseCondition.SourceBuilder.INSTANCE;
     }
 
     public static ScriptCondition.SourceBuilder scriptCondition() {

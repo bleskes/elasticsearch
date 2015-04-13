@@ -18,7 +18,7 @@
 package org.elasticsearch.watcher.execution;
 
 import org.elasticsearch.common.joda.time.DateTime;
-import org.elasticsearch.watcher.actions.Actions;
+import org.elasticsearch.watcher.actions.ExecutableActions;
 import org.elasticsearch.watcher.actions.ActionWrapper;
 import org.elasticsearch.watcher.condition.Condition;
 import org.elasticsearch.watcher.input.Input;
@@ -37,7 +37,7 @@ import java.util.Map;
  */
 public abstract class WatchExecutionContext {
 
-    private final String id;
+    private final Wid id;
     private final Watch watch;
     private final DateTime executionTime;
     private final TriggerEvent triggerEvent;
@@ -54,7 +54,7 @@ public abstract class WatchExecutionContext {
         this.watch = watch;
         this.executionTime = executionTime;
         this.triggerEvent = triggerEvent;
-        this.id = generateId(watch.name(), triggerEvent.triggeredTime());
+        this.id = new Wid(watch.name(), watch.nonce(), executionTime);
     }
 
     /**
@@ -67,7 +67,7 @@ public abstract class WatchExecutionContext {
      */
     public abstract boolean recordInHistory();
 
-    public String id() {
+    public Wid id() {
         return id;
     }
 
@@ -131,15 +131,11 @@ public abstract class WatchExecutionContext {
         actionsResults.put(result.id(), result);
     }
 
-    public Actions.Results actionsResults() {
-        return new Actions.Results(actionsResults);
+    public ExecutableActions.Results actionsResults() {
+        return new ExecutableActions.Results(actionsResults);
     }
 
     public WatchExecution finish() {
         return new WatchExecution(this);
-    }
-
-    static String generateId(String name, DateTime time) {
-        return name + "#" + time.toDateTimeISO();
     }
 }

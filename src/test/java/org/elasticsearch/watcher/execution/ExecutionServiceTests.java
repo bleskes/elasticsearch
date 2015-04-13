@@ -24,8 +24,9 @@ import org.elasticsearch.common.joda.time.DateTimeZone;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.test.ElasticsearchTestCase;
 import org.elasticsearch.watcher.actions.Action;
+import org.elasticsearch.watcher.actions.ExecutableAction;
 import org.elasticsearch.watcher.actions.ActionWrapper;
-import org.elasticsearch.watcher.actions.Actions;
+import org.elasticsearch.watcher.actions.ExecutableActions;
 import org.elasticsearch.watcher.condition.Condition;
 import org.elasticsearch.watcher.condition.simple.AlwaysFalseCondition;
 import org.elasticsearch.watcher.condition.simple.AlwaysTrueCondition;
@@ -94,7 +95,7 @@ public class ExecutionServiceTests extends ElasticsearchTestCase {
         when(transform.apply(any(WatchExecutionContext.class), same(payload))).thenReturn(transformResult);
         ActionWrapper action = mock(ActionWrapper.class);
         when(action.execute(any(WatchExecutionContext.class))).thenReturn(watchActionResult);
-        Actions actions = new Actions(Arrays.asList(action));
+        ExecutableActions actions = new ExecutableActions(Arrays.asList(action));
 
         Watch.Status watchStatus = new Watch.Status();
         Watch watch = mock(Watch.class);
@@ -140,7 +141,7 @@ public class ExecutionServiceTests extends ElasticsearchTestCase {
         when(transform.apply(any(WatchExecutionContext.class), same(payload))).thenReturn(transformResult);
         ActionWrapper action = mock(ActionWrapper.class);
         when(action.execute(any(WatchExecutionContext.class))).thenReturn(actionResult);
-        Actions actions = new Actions(Arrays.asList(action));
+        ExecutableActions actions = new ExecutableActions(Arrays.asList(action));
 
         Watch.Status watchStatus = new Watch.Status();
         Watch watch = mock(Watch.class);
@@ -186,7 +187,7 @@ public class ExecutionServiceTests extends ElasticsearchTestCase {
         when(transform.apply(any(WatchExecutionContext.class), same(payload))).thenReturn(transformResult);
         ActionWrapper action = mock(ActionWrapper.class);
         when(action.execute(any(WatchExecutionContext.class))).thenReturn(actionResult);
-        Actions actions = new Actions(Arrays.asList(action));
+        ExecutableActions actions = new ExecutableActions(Arrays.asList(action));
 
         Watch.Status watchStatus = new Watch.Status();
         Watch watch = mock(Watch.class);

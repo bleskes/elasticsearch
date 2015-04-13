@@ -15,20 +15,21 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.watcher.actions.email;
+package org.elasticsearch.watcher.actions.webhook;
 
+import org.elasticsearch.common.logging.support.LoggerMessageFormat;
 import org.elasticsearch.watcher.actions.ActionException;
 
 /**
  *
  */
-public class EmailActionException extends ActionException {
+public class WebhookActionException extends ActionException {
 
-    public EmailActionException(String msg, Object... args) {
-        super(msg, args);
+    public WebhookActionException(String msg, Object... args) {
+        super(LoggerMessageFormat.format(msg, args));
     }
 
-    public EmailActionException(String msg, Throwable cause, Object... args) {
-        super(msg, cause, args);
+    public WebhookActionException(String msg, Throwable cause, Object... args) {
+        super(LoggerMessageFormat.format(msg, args), cause);
     }
 }

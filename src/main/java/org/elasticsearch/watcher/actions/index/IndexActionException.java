@@ -15,20 +15,20 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.watcher.actions.email;
+package org.elasticsearch.watcher.actions.index;
 
 import org.elasticsearch.watcher.actions.ActionException;
 
 /**
  *
  */
-public class EmailActionException extends ActionException {
+public class IndexActionException extends ActionException {
 
-    public EmailActionException(String msg, Object... args) {
+    public IndexActionException(String msg, Object... args) {
         super(msg, args);
     }
 
-    public EmailActionException(String msg, Throwable cause, Object... args) {
+    public IndexActionException(String msg, Throwable cause, Object... args) {
         super(msg, cause, args);
     }
 }

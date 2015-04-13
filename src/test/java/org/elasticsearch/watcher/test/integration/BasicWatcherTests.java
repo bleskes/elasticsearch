@@ -37,6 +37,7 @@ import org.elasticsearch.watcher.transport.actions.put.PutWatchResponse;
 import org.elasticsearch.watcher.trigger.schedule.IntervalSchedule;
 import org.elasticsearch.watcher.trigger.schedule.Schedules;
 import org.elasticsearch.watcher.watch.WatchStore;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Map;
@@ -77,7 +78,7 @@ public class BasicWatcherTests extends AbstractWatcherIntegrationTests {
                         .addAction("_logger", loggingAction("\n\n************\n" +
                                         "total hits: {{ctx.payload.hits.total}}\n" +
                                         "************\n")
-                                        .category("_category")))
+                                        .setCategory("_category")))
                 .get();
 
         if (timeWarped()) {

@@ -84,7 +84,7 @@ public interface Payload extends ToXContent {
 
         @Override
         public String toString() {
-            return "simple_input[" + Objects.toString(data) + "]";
+            return "simple[" + Objects.toString(data) + "]";
         }
     }
 

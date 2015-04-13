@@ -24,11 +24,11 @@ import org.elasticsearch.watcher.actions.ActionException;
  */
 public class LoggingActionException extends ActionException {
 
-    public LoggingActionException(String msg) {
-        super(msg);
+    public LoggingActionException(String msg, Object... args) {
+        super(msg, args);
     }
 
-    public LoggingActionException(String msg, Throwable cause) {
-        super(msg, cause);
+    public LoggingActionException(String msg, Throwable cause, Object... args) {
+        super(msg, cause, args);
     }
 }
