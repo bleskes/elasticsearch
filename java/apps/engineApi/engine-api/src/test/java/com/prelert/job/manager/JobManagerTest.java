@@ -214,5 +214,4 @@ public class JobManagerTest
         String info = String.format("{\"jobs\":\"%d\"}", maxLicenseJobs);
         when(m_ProcessManager.getInfo()).thenReturn(info);
     }
-
 }
