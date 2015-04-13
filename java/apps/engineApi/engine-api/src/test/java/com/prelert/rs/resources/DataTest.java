@@ -31,6 +31,7 @@ import static com.prelert.rs.data.ErrorCodeMatcher.hasErrorCode;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -50,6 +51,7 @@ import org.junit.rules.ExpectedException;
 import org.mockito.ArgumentCaptor;
 
 import com.prelert.job.AnalysisConfig;
+import com.prelert.job.DataCounts;
 import com.prelert.job.Detector;
 import com.prelert.job.JobDetails;
 import com.prelert.job.exceptions.JobInUseException;
@@ -103,6 +105,8 @@ public class DataTest extends ServiceTest
     {
         HttpHeaders httpHeaders = mock(HttpHeaders.class);
         InputStream inputStream = mock(InputStream.class);
+        when(jobManager().submitDataLoadJob(eq(JOB_ID), eq(inputStream), any(DataLoadParams.class)))
+                .thenReturn(new DataCounts());
 
         m_Data.streamData(httpHeaders, JOB_ID, inputStream, "", "");
 
@@ -123,6 +127,8 @@ public class DataTest extends ServiceTest
     {
         HttpHeaders httpHeaders = mock(HttpHeaders.class);
         InputStream inputStream = mock(InputStream.class);
+        when(jobManager().submitDataLoadJob(eq(JOB_ID), eq(inputStream), any(DataLoadParams.class)))
+                .thenReturn(new DataCounts());
         givenLatency(3600L);
         givenDetectorsWithFunctions("count");
 
@@ -197,6 +203,8 @@ public class DataTest extends ServiceTest
     {
         HttpHeaders httpHeaders = mock(HttpHeaders.class);
         InputStream inputStream = mock(InputStream.class);
+        when(jobManager().submitDataLoadJob(eq(JOB_ID), eq(inputStream), any(DataLoadParams.class)))
+                .thenReturn(new DataCounts());
         givenLatency(3600L);
         givenDetectorsWithFunctions("count");
 
@@ -219,6 +227,8 @@ public class DataTest extends ServiceTest
     {
         HttpHeaders httpHeaders = mock(HttpHeaders.class);
         InputStream inputStream = mock(InputStream.class);
+        when(jobManager().submitDataLoadJob(eq(JOB_ID), eq(inputStream), any(DataLoadParams.class)))
+                .thenReturn(new DataCounts());
         givenLatency(3600L);
         givenDetectorsWithFunctions("count");
 
