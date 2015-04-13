@@ -45,6 +45,7 @@ import com.prelert.job.transform.TransformConfig;
 import com.prelert.job.transform.TransformConfigurationException;
 import com.prelert.job.transform.TransformType;
 import com.prelert.rs.data.ErrorCode;
+import com.prelert.rs.data.ErrorCodeMatcher;
 
 /**
  * Test the {@link JobConfiguration#verify()} function for

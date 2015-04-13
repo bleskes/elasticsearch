@@ -27,7 +27,8 @@
 
 package com.prelert.job.transform;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,12 +40,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import com.prelert.job.ErrorCodeMatcher;
-import com.prelert.job.transform.TransformConfig;
-import com.prelert.job.transform.TransformConfigs;
-import com.prelert.job.transform.TransformConfigurationException;
-import com.prelert.job.transform.TransformType;
 import com.prelert.rs.data.ErrorCode;
+import com.prelert.rs.data.ErrorCodeMatcher;
 
 public class TransformConfigsTest
 {
