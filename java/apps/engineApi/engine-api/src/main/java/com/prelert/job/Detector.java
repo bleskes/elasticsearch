@@ -32,6 +32,7 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.prelert.job.exceptions.JobConfigurationException;
@@ -43,6 +44,7 @@ import com.prelert.rs.data.ErrorCode;
  * <code>fieldname</code> must be set and only one of <code>byFieldName</code>
  * and <code>overFieldName</code> should be set.
  */
+@JsonIgnoreProperties({"supportingBucketResetting"})
 @JsonInclude(Include.NON_NULL)
 public class Detector
 {
