@@ -35,8 +35,8 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.prelert.job.AnalysisConfig;
-import com.prelert.job.process.DataLoadParams;
-import com.prelert.job.process.InterimResultsParams;
+import com.prelert.job.process.params.DataLoadParams;
+import com.prelert.job.process.params.InterimResultsParams;
 
 /**
  * A writer for sending control messages to the C++ autodetect process.

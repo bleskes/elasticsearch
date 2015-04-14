@@ -25,25 +25,45 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.process;
+package com.prelert.job.process.params;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
-public class InterimResultsParamsTest
+import com.prelert.job.process.TimeRange;
+import com.prelert.job.process.params.DataLoadParams;
+
+public class DataLoadParamsTest
 {
     @Test
     public void testGetStart()
     {
-        assertEquals("", new InterimResultsParams(true, new TimeRange(null, null)).getStart());
-        assertEquals("42", new InterimResultsParams(true, new TimeRange(42L, null)).getStart());
+        assertEquals("", new DataLoadParams(false, new TimeRange(null, null)).getStart());
+        assertEquals("3", new DataLoadParams(false, new TimeRange(3L, null)).getStart());
     }
 
     @Test
     public void testGetEnd()
     {
-        assertEquals("", new InterimResultsParams(true, new TimeRange(null, null)).getEnd());
-        assertEquals("1", new InterimResultsParams(true, new TimeRange(null, 1L)).getEnd());
+        assertEquals("", new DataLoadParams(false, new TimeRange(null, null)).getEnd());
+        assertEquals("1", new DataLoadParams(false, new TimeRange(null, 1L)).getEnd());
     }
+
+    @Test
+    public void testIsResettingBuckets()
+    {
+        assertFalse(new DataLoadParams(false, new TimeRange(null, null)).isResettingBuckets());
+        assertTrue(new DataLoadParams(false, new TimeRange(5L, null)).isResettingBuckets());
+    }
+
+    @Test
+    public void testIsPersisting()
+    {
+        assertFalse(new DataLoadParams(false, new TimeRange(null, null)).isPersisting());
+        assertTrue(new DataLoadParams(true, new TimeRange(null, null)).isPersisting());
+    }
+
 }

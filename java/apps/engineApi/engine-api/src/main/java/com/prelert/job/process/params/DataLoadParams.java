@@ -25,42 +25,41 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.process;
+package com.prelert.job.process.params;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import java.util.Objects;
 
-import org.junit.Test;
+import com.prelert.job.process.TimeRange;
 
-public class DataLoadParamsTest
+public class DataLoadParams
 {
-    @Test
-    public void testGetStart()
+    private final boolean m_IsPersisting;
+    private final TimeRange m_ResetTimeRange;
+
+    public DataLoadParams(boolean isPersisting, TimeRange resetTimeRange)
     {
-        assertEquals("", new DataLoadParams(false, new TimeRange(null, null)).getStart());
-        assertEquals("3", new DataLoadParams(false, new TimeRange(3L, null)).getStart());
+        m_IsPersisting = isPersisting;
+        m_ResetTimeRange = Objects.requireNonNull(resetTimeRange);
     }
 
-    @Test
-    public void testGetEnd()
+    public boolean isPersisting()
     {
-        assertEquals("", new DataLoadParams(false, new TimeRange(null, null)).getEnd());
-        assertEquals("1", new DataLoadParams(false, new TimeRange(null, 1L)).getEnd());
+        return m_IsPersisting;
     }
 
-    @Test
-    public void testIsResettingBuckets()
+    public boolean isResettingBuckets()
     {
-        assertFalse(new DataLoadParams(false, new TimeRange(null, null)).isResettingBuckets());
-        assertTrue(new DataLoadParams(false, new TimeRange(5L, null)).isResettingBuckets());
+        return !getStart().isEmpty();
     }
 
-    @Test
-    public void testIsPersisting()
+    public String getStart()
     {
-        assertFalse(new DataLoadParams(false, new TimeRange(null, null)).isPersisting());
-        assertTrue(new DataLoadParams(true, new TimeRange(null, null)).isPersisting());
+        return m_ResetTimeRange.getStart();
     }
 
+    public String getEnd()
+    {
+        return m_ResetTimeRange.getEnd();
+    }
 }
+

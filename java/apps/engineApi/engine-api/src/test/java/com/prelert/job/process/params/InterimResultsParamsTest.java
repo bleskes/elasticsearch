@@ -25,33 +25,28 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.process;
+package com.prelert.job.process.params;
 
-import java.util.Objects;
+import static org.junit.Assert.assertEquals;
 
-public class InterimResultsParams
+import org.junit.Test;
+
+import com.prelert.job.process.TimeRange;
+import com.prelert.job.process.params.InterimResultsParams;
+
+public class InterimResultsParamsTest
 {
-    private final boolean m_ShouldCalculate;
-    private final TimeRange m_TimeRange;
-
-    public InterimResultsParams(boolean shouldCalculate, TimeRange timeRange)
+    @Test
+    public void testGetStart()
     {
-        m_ShouldCalculate = shouldCalculate;
-        m_TimeRange = Objects.requireNonNull(timeRange);
+        assertEquals("", new InterimResultsParams(true, new TimeRange(null, null)).getStart());
+        assertEquals("42", new InterimResultsParams(true, new TimeRange(42L, null)).getStart());
     }
 
-    public boolean shouldCalculate()
+    @Test
+    public void testGetEnd()
     {
-        return m_ShouldCalculate;
-    }
-
-    public String getStart()
-    {
-        return m_TimeRange.getStart();
-    }
-
-    public String getEnd()
-    {
-        return m_TimeRange.getEnd();
+        assertEquals("", new InterimResultsParams(true, new TimeRange(null, null)).getEnd());
+        assertEquals("1", new InterimResultsParams(true, new TimeRange(null, 1L)).getEnd());
     }
 }

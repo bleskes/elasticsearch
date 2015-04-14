@@ -25,39 +25,35 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.process;
+package com.prelert.job.process.params;
 
 import java.util.Objects;
 
-public class DataLoadParams
+import com.prelert.job.process.TimeRange;
+
+public class InterimResultsParams
 {
-    private final boolean m_IsPersisting;
-    private final TimeRange m_ResetTimeRange;
+    private final boolean m_ShouldCalculate;
+    private final TimeRange m_TimeRange;
 
-    public DataLoadParams(boolean isPersisting, TimeRange resetTimeRange)
+    public InterimResultsParams(boolean shouldCalculate, TimeRange timeRange)
     {
-        m_IsPersisting = isPersisting;
-        m_ResetTimeRange = Objects.requireNonNull(resetTimeRange);
+        m_ShouldCalculate = shouldCalculate;
+        m_TimeRange = Objects.requireNonNull(timeRange);
     }
 
-    public boolean isPersisting()
+    public boolean shouldCalculate()
     {
-        return m_IsPersisting;
-    }
-
-    public boolean isResettingBuckets()
-    {
-        return !getStart().isEmpty();
+        return m_ShouldCalculate;
     }
 
     public String getStart()
     {
-        return m_ResetTimeRange.getStart();
+        return m_TimeRange.getStart();
     }
 
     public String getEnd()
     {
-        return m_ResetTimeRange.getEnd();
+        return m_TimeRange.getEnd();
     }
 }
-

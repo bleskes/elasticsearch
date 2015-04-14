@@ -68,6 +68,8 @@ import com.prelert.job.process.exceptions.ClosedJobException;
 import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
+import com.prelert.job.process.params.DataLoadParams;
+import com.prelert.job.process.params.InterimResultsParams;
 import com.prelert.job.process.writer.ControlMsgToProcessWriter;
 import com.prelert.job.process.writer.DataToProcessWriter;
 import com.prelert.job.process.writer.DataToProcessWriterFactory;
