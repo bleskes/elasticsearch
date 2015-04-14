@@ -134,7 +134,7 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter
 
         JsonRecordReader recordReader = new JsonRecordReader(parser, m_InFieldIndexes, m_Logger);
         long inputFieldCount = recordReader.read(input, gotFields);
-        while (inputFieldCount > 0)
+        while (inputFieldCount >= 0)
         {
             Arrays.fill(record, "");
 

@@ -81,7 +81,7 @@ class JsonRecordReader
      * @param gotFields boolean array each element is true if that field
      * was read
      *
-     * @return The number of fields in the JSON doc
+     * @return The number of fields in the JSON doc or -1 if nothing was read
      * @throws IOException
      * @throws MalformedJsonException
      */
@@ -90,6 +90,7 @@ class JsonRecordReader
         Arrays.fill(gotFields, false);
         Arrays.fill(record, "");
         m_FieldCount = 0;
+        boolean readSomething = false;
         clearNestedLevel();
 
         JsonToken token = tryNextTokenOrReadToEndOnError();
@@ -99,6 +100,9 @@ class JsonRecordReader
             {
                 break;
             }
+
+            readSomething = true;
+
             if (token == JsonToken.END_OBJECT)
             {
                 m_NestedLevel--;
@@ -115,7 +119,14 @@ class JsonRecordReader
             token = tryNextTokenOrReadToEndOnError();
         }
 
-        return m_FieldCount;
+        if (readSomething)
+        {
+            return m_FieldCount;
+        }
+        else
+        {
+            return -1;
+        }
     }
 
     private void clearNestedLevel()

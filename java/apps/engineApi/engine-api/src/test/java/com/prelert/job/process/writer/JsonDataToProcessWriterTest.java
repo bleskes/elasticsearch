@@ -289,6 +289,44 @@ public class JsonDataToProcessWriterTest
         verify(m_DataPersister).flushRecords();
     }
 
+    @Test
+    public void testWrite_GivenJsonWithMissingFields()
+            throws MissingFieldException, HighProportionOfBadTimestampsException,
+            OutOfOrderRecordsException, IOException, MalformedJsonException
+    {
+        m_AnalysisConfig.setLatency(0L);
+
+        StringBuilder input = new StringBuilder();
+        input.append("{\"time\":\"1\", \"f1\":\"foo\", \"value\":\"1.0\"}");
+        input.append("{\"time\":\"2\", \"value\":\"2.0\"}");
+        input.append("{\"time\":\"3\", \"f1\":\"bar\"}");
+        input.append("{}");
+        input.append("{\"time\":\"4\", \"value\":\"3.0\"}");
+
+        InputStream inputStream = createInputStream(input.toString());
+        JsonDataToProcessWriter writer = createWriter();
+
+        writer.write(inputStream);
+        verify(m_StatusReporter, times(1)).startNewIncrementalCount();
+
+        List<String[]> expectedRecords = new ArrayList<>();
+        // The final field is the control field
+        expectedRecords.add(new String[] {"time", "value", "."});
+        expectedRecords.add(new String[] {"1", "1.0", ""});
+        expectedRecords.add(new String[] {"2", "2.0", ""});
+        expectedRecords.add(new String[] {"3", "", ""});
+        expectedRecords.add(new String[] {"4", "3.0", ""});
+        assertWrittenRecordsEqualTo(expectedRecords);
+
+        verify(m_StatusReporter, times(1)).reportMissingFields(1L);
+        verify(m_StatusReporter, times(3)).reportRecordWritten(1);
+        verify(m_StatusReporter, times(1)).reportRecordWritten(2);
+        verify(m_StatusReporter, times(1)).reportDateParseError(3);
+        verify(m_StatusReporter).finishReporting();
+        verify(m_DataPersister).flushRecords();
+    }
+
+
     private static InputStream createInputStream(String input)
     {
         return new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
