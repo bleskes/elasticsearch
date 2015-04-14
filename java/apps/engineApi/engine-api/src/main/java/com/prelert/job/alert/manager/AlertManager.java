@@ -179,7 +179,7 @@ public class AlertManager implements TimeoutHandler
 		}
 		catch (ClosedJobException e)
 		{
-			LOGGER.info("Error alerting on closed job " + jobId);
+			LOGGER.warn("Alerting on closed job " + jobId);
 			deregisterResponse(response);
 			response.resume(e);
 		}

@@ -168,6 +168,7 @@ public class CsvDataToProcessWriterTest
         input.append("3,foo,3.0\n");
         input.append("4,bar,4.0\n");
         input.append("2,bar,2.0\n");
+        input.append("\0");
         InputStream inputStream = createInputStream(input.toString());
         CsvDataToProcessWriter writer = createWriter();
 
@@ -187,6 +188,44 @@ public class CsvDataToProcessWriterTest
         verify(m_StatusReporter).finishReporting();
         verify(m_DataPersister).flushRecords();
     }
+
+    @Test
+    public void testWrite_NullByte()
+            throws MissingFieldException, HighProportionOfBadTimestampsException,
+            OutOfOrderRecordsException, IOException
+    {
+        m_AnalysisConfig.setLatency(0L);
+
+        StringBuilder input = new StringBuilder();
+        input.append("metric,value,time\n");
+        input.append("foo,4.0,1\n");
+        input.append("\0");   // the csv reader skips over this line
+        input.append("foo,5.0,2\n");
+        input.append("foo,3.0,3\n");
+        input.append("bar,4.0,4\n");
+        input.append("\0");
+        InputStream inputStream = createInputStream(input.toString());
+        CsvDataToProcessWriter writer = createWriter();
+
+        writer.write(inputStream);
+        verify(m_StatusReporter, times(1)).startNewIncrementalCount();
+
+        List<String[]> expectedRecords = new ArrayList<>();
+        // The final field is the control field
+        expectedRecords.add(new String[] {"time", "value", "."});
+        expectedRecords.add(new String[] {"1", "4.0", ""});
+        expectedRecords.add(new String[] {"2", "5.0", ""});
+        expectedRecords.add(new String[] {"3", "3.0", ""});
+        expectedRecords.add(new String[] {"4", "4.0", ""});
+        assertWrittenRecordsEqualTo(expectedRecords);
+
+        verify(m_StatusReporter, times(1)).reportMissingField();
+        verify(m_StatusReporter, times(4)).reportRecordWritten(2);
+        verify(m_StatusReporter, times(1)).reportDateParseError(2);
+        verify(m_StatusReporter).finishReporting();
+        verify(m_DataPersister).flushRecords();
+    }
+
 
     private static InputStream createInputStream(String input)
     {

@@ -111,6 +111,9 @@ class CsvDataToProcessWriter extends AbstractDataToProcessWriter
 
             buildTransformsAndWriteHeader(header);
 
+            //backing array for the input
+            String [] inputRecord = new String[header.length];
+
             int maxIndex = 0;
             for (Integer index : m_InFieldIndexes.values())
             {
@@ -156,7 +159,8 @@ class CsvDataToProcessWriter extends AbstractDataToProcessWriter
                     }
                 }
 
-                if (applyTransformsAndWrite(line.toArray(new String[0]) ,
+                Arrays.fill(inputRecord, "");
+                if (applyTransformsAndWrite(line.toArray(inputRecord) ,
                                         record, inputFieldCount))
                 {
                     ++recordsWritten;

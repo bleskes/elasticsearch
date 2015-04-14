@@ -51,7 +51,8 @@ public class CsvParserTest {
 	public void test() throws IOException
 	{
 		String data = "1422936876.262044869, 1422936876.262044869, 90, 2, 10.132.0.1, 0, 224.0.0.5, 0, 1, 1, 268435460, null, null, null, null, null, null, null, null, null, null, null\n"
-				+ "1422943772.875342698, 1422943772.875342698, 90, 2, 10.132.0.1, 0, 224.0.0.5, 0, 1, 1, 268435460,,,,,\0,\u0000,,,,,\u0000\n";
+				+ "1422943772.875342698, 1422943772.875342698, 90, 2, 10.132.0.1, 0, 224.0.0.5, 0, 1, 1, 268435460,,,,,\0,\u0000,,,,,\u0000\n"
+		        + "\0";
 		InputStream inputStream = new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
 
         CsvPreference csvPref = new CsvPreference.Builder(
@@ -64,13 +65,14 @@ public class CsvParserTest {
                 csvPref))
         {
             String[] header = csvReader.getHeader(true);
-            System.out.println(header.length);
+            Assert.assertEquals(22, header.length);
 
-            List<String> line;
-            while ((line = csvReader.read()) != null)
-            {
-            	Assert.assertEquals(22, line.size());
-            }
+            List<String> line = csvReader.read();
+         	Assert.assertEquals(22, line.size());
+
+            // last line is \0
+            line = csvReader.read();
+            Assert.assertEquals(1, line.size());
 
         }
 	}
