@@ -80,6 +80,8 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
     /** Parameter to specify end time of buckets to be reset */
     private static final String RESET_END_PARAM = "resetEnd";
 
+    private static final int MILLISECONDS_IN_SECOND = 1000;
+
     /**
      * Data upload endpoint.
      *
@@ -148,8 +150,8 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
         Long epochEnd = null;
         if (!start.isEmpty())
         {
-            epochStart = paramToEpochIfValidOrThrow(startParam, start, LOGGER) / 1000;
-            epochEnd = paramToEpochIfValidOrThrow(endParam, end, LOGGER) / 1000;
+            epochStart = paramToEpochIfValidOrThrow(startParam, start, LOGGER) / MILLISECONDS_IN_SECOND;
+            epochEnd = paramToEpochIfValidOrThrow(endParam, end, LOGGER) / MILLISECONDS_IN_SECOND;
             if (end.isEmpty() || epochEnd.equals(epochStart))
             {
                 epochEnd = epochStart + 1;

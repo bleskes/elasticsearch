@@ -60,7 +60,7 @@ import com.prelert.rs.streaminginterceptor.StreamingInterceptor;
 
 public class DataStreamer {
 
-    protected static final Logger LOGGER = Logger.getLogger(DataStreamer.class);
+    private static final Logger LOGGER = Logger.getLogger(DataStreamer.class);
 
     /**
      * Persisted data files are named with this date format
@@ -135,6 +135,7 @@ public class DataStreamer {
             }
             catch (ZipException ze)
             {
+                LOGGER.debug("Failed to decompress data file", ze);
                 throw new RestApiException("Content-Encoding = gzip "
                         + "but the data is not in gzip format",
                         ErrorCode.UNCOMPRESSED_DATA,
