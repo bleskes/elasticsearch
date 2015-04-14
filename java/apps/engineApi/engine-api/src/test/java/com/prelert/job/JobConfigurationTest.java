@@ -99,6 +99,20 @@ public class JobConfigurationTest
     }
 
     @Test
+    public void testCheckValidId_ControlChars() throws JobConfigurationException
+    {
+        JobConfiguration conf = new JobConfiguration();
+        conf.setReferenceJobId("ref");
+
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCode.PROHIBITIED_CHARACTER_IN_JOB_ID));
+
+        conf.setId("two\nlines");
+        conf.verify();
+    }
+
+    @Test
     public void jobConfigurationTest()
     throws JobConfigurationException
     {
