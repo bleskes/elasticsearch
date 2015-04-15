@@ -24,11 +24,11 @@ import org.elasticsearch.watcher.WatcherException;
  */
 public class ConditionException extends WatcherException {
 
-    public ConditionException(String msg) {
-        super(msg);
+    public ConditionException(String msg, Object... args) {
+        super(msg, args);
     }
 
-    public ConditionException(String msg, Throwable cause) {
-        super(msg, cause);
+    public ConditionException(String msg, Throwable cause, Object... args) {
+        super(msg, cause, args);
     }
 }

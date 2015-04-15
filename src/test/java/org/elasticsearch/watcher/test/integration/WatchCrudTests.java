@@ -31,7 +31,7 @@ import java.util.Map;
 
 import static org.elasticsearch.watcher.actions.ActionBuilders.loggingAction;
 import static org.elasticsearch.watcher.client.WatchSourceBuilders.watchBuilder;
-import static org.elasticsearch.watcher.condition.ConditionBuilders.alwaysTrueCondition;
+import static org.elasticsearch.watcher.condition.ConditionBuilders.alwaysCondition;
 import static org.elasticsearch.watcher.input.InputBuilders.simpleInput;
 import static org.elasticsearch.watcher.trigger.TriggerBuilders.schedule;
 import static org.elasticsearch.watcher.trigger.schedule.Schedules.interval;
@@ -53,7 +53,7 @@ public class WatchCrudTests extends AbstractWatcherIntegrationTests {
             source.input(simpleInput());
         }
         if (randomBoolean()) {
-            source.condition(alwaysTrueCondition());
+            source.condition(alwaysCondition());
         }
         if (randomBoolean()) {
             source.addAction("_action1", loggingAction("{{ctx.watch_id}}"));
@@ -71,7 +71,7 @@ public class WatchCrudTests extends AbstractWatcherIntegrationTests {
         ensureWatcherStarted();
         watcherClient().preparePutWatch("_name").setSource(watchBuilder()
                 .input(simpleInput())
-                .condition(alwaysTrueCondition())
+                .condition(alwaysCondition())
                 .addAction("_action1", loggingAction("{{ctx.watch_id}}")))
                 .get();
     }
@@ -82,7 +82,7 @@ public class WatchCrudTests extends AbstractWatcherIntegrationTests {
         PutWatchResponse putResponse = watcherClient().preparePutWatch("_name").setSource(watchBuilder()
                 .trigger(schedule(interval("5m")))
                 .input(simpleInput())
-                .condition(alwaysTrueCondition())
+                .condition(alwaysCondition())
                 .addAction("_action1", loggingAction("{{ctx.watch_id}}")))
                 .get();
 
@@ -123,7 +123,7 @@ public class WatchCrudTests extends AbstractWatcherIntegrationTests {
         PutWatchResponse putResponse = watcherClient().preparePutWatch("_name").setSource(watchBuilder()
                 .trigger(schedule(interval("5m")))
                 .input(simpleInput())
-                .condition(alwaysTrueCondition())
+                .condition(alwaysCondition())
                 .addAction("_action1", loggingAction("{{ctx.watch_id}}")))
                 .get();
 

@@ -48,7 +48,7 @@ import static org.elasticsearch.index.query.FilterBuilders.termFilter;
 import static org.elasticsearch.index.query.QueryBuilders.*;
 import static org.elasticsearch.watcher.actions.ActionBuilders.indexAction;
 import static org.elasticsearch.watcher.client.WatchSourceBuilders.watchBuilder;
-import static org.elasticsearch.watcher.condition.ConditionBuilders.alwaysTrueCondition;
+import static org.elasticsearch.watcher.condition.ConditionBuilders.alwaysCondition;
 import static org.elasticsearch.watcher.input.InputBuilders.simpleInput;
 import static org.elasticsearch.watcher.trigger.TriggerBuilders.schedule;
 import static org.elasticsearch.watcher.trigger.schedule.Schedules.interval;
@@ -90,7 +90,7 @@ public class LicenseIntegrationTests extends AbstractWatcherIntegrationTests {
         PutWatchResponse putWatchResponse = watcherClient().preparePutWatch(watchName).setSource(watchBuilder()
                 .trigger(schedule(interval("1s")))
                 .input(simpleInput())
-                .condition(alwaysTrueCondition())
+                .condition(alwaysCondition())
                 .addAction("_index", indexAction("idx", "type")))
                 .execute().actionGet();
 
@@ -123,7 +123,7 @@ public class LicenseIntegrationTests extends AbstractWatcherIntegrationTests {
         putWatchResponse = watcherClient().preparePutWatch(watchName).setSource(watchBuilder()
                 .trigger(schedule(interval("10s")))
                 .input(simpleInput())
-                .condition(alwaysTrueCondition())
+                .condition(alwaysCondition())
                 .addAction("_index", indexAction("idx", "type")))
                 .execute().actionGet();
 
@@ -183,7 +183,7 @@ public class LicenseIntegrationTests extends AbstractWatcherIntegrationTests {
             watcherClient().preparePutWatch(watchName).setSource(watchBuilder()
                     .trigger(schedule(interval("1s")))
                     .input(simpleInput())
-                    .condition(alwaysTrueCondition())
+                    .condition(alwaysCondition())
                     .addAction("_index", indexAction("idx", "type")))
                     .execute().actionGet();
             fail("put watch API should NOT work when license is disabled");
@@ -239,7 +239,7 @@ public class LicenseIntegrationTests extends AbstractWatcherIntegrationTests {
         putWatchResponse = watcherClient().preparePutWatch(watchName).setSource(watchBuilder()
                 .trigger(schedule(interval("1s")))
                 .input(simpleInput())
-                .condition(alwaysTrueCondition())
+                .condition(alwaysCondition())
                 .addAction("_index", indexAction("idx", "type")))
                 .execute().actionGet();
 

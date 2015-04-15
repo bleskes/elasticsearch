@@ -24,8 +24,8 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.watcher.WatcherException;
 import org.elasticsearch.watcher.actions.ActionRegistry;
-import org.elasticsearch.watcher.actions.ExecutableActions;
 import org.elasticsearch.watcher.actions.ActionWrapper;
+import org.elasticsearch.watcher.actions.ExecutableActions;
 import org.elasticsearch.watcher.condition.Condition;
 import org.elasticsearch.watcher.condition.ConditionRegistry;
 import org.elasticsearch.watcher.execution.WatchExecutionContext;
@@ -142,7 +142,7 @@ public class WatchExecution implements ToXContent {
                     if (INPUT_RESULT_FIELD.match(currentFieldName)) {
                         inputResult = inputRegistry.parseResult(parser);
                     } else if (CONDITION_RESULT_FIELD.match(currentFieldName)) {
-                        conditionResult = conditionRegistry.parseResult(parser);
+                        conditionResult = conditionRegistry.parseResult(wid.watchId(), parser);
                     } else if (Transform.Parser.TRANSFORM_RESULT_FIELD.match(currentFieldName)) {
                         transformResult = transformRegistry.parseResult(parser);
                     } else if (ACTIONS_RESULTS.match(currentFieldName)) {

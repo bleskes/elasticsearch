@@ -15,42 +15,20 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.watcher.condition;
+package org.elasticsearch.watcher.condition.never;
 
-import org.elasticsearch.common.ParseField;
-import org.elasticsearch.common.xcontent.ToXContent;
+import org.elasticsearch.watcher.condition.ConditionException;
 
 /**
  *
  */
-public interface Condition extends ToXContent {
+public class NeverConditionException extends ConditionException {
 
-    String type();
-
-    abstract class Result implements ToXContent {
-
-        private final String type;
-        private final boolean met;
-
-        public Result(String type, boolean met) {
-            this.type = type;
-            this.met = met;
-        }
-
-        public String type() {
-            return type;
-        }
-
-        public boolean met() { return met; }
-
+    public NeverConditionException(String msg, Object... args) {
+        super(msg, args);
     }
 
-    interface Builder<C extends Condition> {
-
-        C build();
-    }
-
-    interface Field {
-        ParseField MET = new ParseField("met");
+    public NeverConditionException(String msg, Throwable cause, Object... args) {
+        super(msg, cause, args);
     }
 }

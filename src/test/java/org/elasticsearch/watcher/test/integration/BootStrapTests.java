@@ -29,6 +29,7 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.test.junit.annotations.TestLogging;
 import org.elasticsearch.watcher.actions.ActionWrapper;
 import org.elasticsearch.watcher.actions.ExecutableActions;
+import org.elasticsearch.watcher.condition.script.ExecutableScriptCondition;
 import org.elasticsearch.watcher.condition.script.ScriptCondition;
 import org.elasticsearch.watcher.execution.Wid;
 import org.elasticsearch.watcher.history.HistoryStore;
@@ -48,7 +49,6 @@ import org.elasticsearch.watcher.trigger.schedule.ScheduleTriggerEvent;
 import org.elasticsearch.watcher.watch.Watch;
 import org.elasticsearch.watcher.watch.WatchService;
 import org.elasticsearch.watcher.watch.WatchStore;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -102,7 +102,7 @@ public class BootStrapTests extends AbstractWatcherIntegrationTests {
                 licenseService(),
                 new ScheduleTrigger(new CronSchedule("0/5 * * * * ? 2035")), //Set this into the future so we don't get any extra runs
                 new SearchInput(logger, scriptService(), ClientProxy.of(client()), searchRequest, null),
-                new ScriptCondition(logger, scriptService(), new Script("return true")),
+                new ExecutableScriptCondition(new ScriptCondition(new Script("return true")), logger, scriptService()),
                 new SearchTransform(logger, scriptService(), ClientProxy.of(client()), searchRequest),
                 new ExecutableActions(new ArrayList<ActionWrapper>()),
                 null, // metadata
@@ -165,7 +165,7 @@ public class BootStrapTests extends AbstractWatcherIntegrationTests {
                         new ScheduleTrigger(new CronSchedule("0/5 * * * * ? 2035")), //Set a cron schedule far into the future so this watch is never scheduled
                         new SearchInput(logger, scriptService(), ClientProxy.of(client()),
                                 searchRequest, null),
-                        new ScriptCondition(logger, scriptService(), new Script("return true")),
+                        new ExecutableScriptCondition(new ScriptCondition(new Script("return true")), logger, scriptService()),
                         new SearchTransform(logger, scriptService(), ClientProxy.of(client()), searchRequest),
                         new ExecutableActions(new ArrayList<ActionWrapper>()),
                         null, // metatdata
