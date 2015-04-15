@@ -93,6 +93,7 @@ public class ExecutionService extends AbstractComponent {
         }
         if (started.compareAndSet(false, true)) {
             logger.debug("starting execution service");
+            historyStore.start();
             executeRecords(records);
             logger.debug("started execution service");
         }
@@ -106,8 +107,10 @@ public class ExecutionService extends AbstractComponent {
             // this is a forceful shutdown that also interrupts the worker threads in the threadpool
             List<Runnable> cancelledTasks = new ArrayList<>();
             executor.queue().drainTo(cancelledTasks);
+            historyStore.stop();
             logger.debug("cancelled [{}] queued tasks", cancelledTasks.size());
             logger.debug("stopped execution service");
+
         }
     }
 
@@ -125,8 +128,13 @@ public class ExecutionService extends AbstractComponent {
 
     public WatchRecord execute(WatchExecutionContext ctx) throws IOException {
         WatchRecord watchRecord = new WatchRecord(ctx.id(), ctx.watch(), ctx.triggerEvent());
-        WatchExecution execution = executeInner(ctx);
-        watchRecord.seal(execution);
+        WatchLockService.Lock lock = watchLockService.acquire(ctx.watch().name());
+        try {
+            WatchExecution execution = executeInner(ctx);
+            watchRecord.seal(execution);
+        } finally {
+            lock.release();
+        }
         if (ctx.recordInHistory()) {
             historyStore.put(watchRecord);
         }
@@ -261,7 +269,9 @@ public class ExecutionService extends AbstractComponent {
 
         @Override
         public void run() {
+            logger.info("Running [{}] [{}]", ctx.watch().name(), ctx.id());
             if (!started.get()) {
+                logger.warn("Rejecting execution due to service is not started");
                 logger.debug("can't initiate watch execution as execution service is not started, ignoring it...");
                 return;
             }
@@ -276,20 +286,21 @@ public class ExecutionService extends AbstractComponent {
                 }
             } catch (Exception e) {
                 if (started()) {
-                    logger.warn("failed to execute watch [{}]", e, watchRecord.name());
+                    logger.warn("failed to execute watch [{}] [{}]", e, watchRecord.name(), ctx.id());
                     try {
                         watchRecord.update(WatchRecord.State.FAILED, e.getMessage());
                         if (ctx.recordInHistory()) {
                             historyStore.update(watchRecord);
                         }
                     } catch (Exception e2) {
-                        logger.error("failed to update watch record [{}] failure [{}]", e2, watchRecord, e.getMessage());
+                        logger.error("failed to update watch record [{}] failure [{}] for [{}] [{}]", e2, watchRecord, ctx.watch().name(), ctx.id(), e.getMessage());
                     }
                 } else {
                     logger.debug("failed to execute watch [{}] after shutdown", e, watchRecord);
                 }
             } finally {
                 lock.release();
+                logger.info("Finished [{}] [{}]", ctx.watch().name(), ctx.id());
             }
         }
 
@@ -310,7 +321,11 @@ public class ExecutionService extends AbstractComponent {
             try {
                 ExecutionService.this.executeWatch(watch, event);
             } catch (Exception e) {
-                logger.error("failed to execute watch [{}]", e, name);
+                if (started()) {
+                    logger.error("failed to execute watch from SchedulerListener [{}]", e, name);
+                } else {
+                    logger.error("failed to execute watch from SchedulerListener [{}] after shutdown", e, name);
+                }
             }
         }
     }

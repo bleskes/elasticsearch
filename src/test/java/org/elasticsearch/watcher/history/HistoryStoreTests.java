@@ -78,6 +78,7 @@ public class HistoryStoreTests extends ElasticsearchTestCase {
         templateUtils = mock(TemplateUtils.class);
         parser = mock(WatchRecord.Parser.class);
         historyStore = new HistoryStore(ImmutableSettings.EMPTY, clientProxy, templateUtils, parser);
+        historyStore.start();
     }
 
     @Test
