@@ -17,23 +17,21 @@
 
 package org.elasticsearch.watcher.support.clock;
 
-import org.elasticsearch.common.joda.time.DateTime;
-import org.elasticsearch.common.joda.time.DateTimeZone;
-import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.test.ElasticsearchTestCase;
+import org.junit.Test;
+
+import static org.elasticsearch.common.joda.time.DateTimeZone.UTC;
+import static org.hamcrest.Matchers.equalTo;
 
 /**
- *
  */
-public interface Clock {
+public class ClockTests extends ElasticsearchTestCase {
 
-    long millis();
-
-    long nanos();
-
-    DateTime now();
-
-    DateTime now(DateTimeZone timeZone);
-
-    TimeValue timeElapsedSince(DateTime time);
+    @Test
+    public void test_now_UTC() {
+        Clock clockMock = new ClockMock();
+        assertThat(clockMock.now(UTC).getZone(), equalTo(UTC));
+        assertThat(SystemClock.INSTANCE.now(UTC).getZone(), equalTo(UTC));
+    }
 
 }

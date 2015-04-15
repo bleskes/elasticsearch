@@ -32,7 +32,6 @@ import org.elasticsearch.cluster.routing.*;
 import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.joda.time.DateTime;
-import org.elasticsearch.common.joda.time.DateTimeZone;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.text.StringText;
@@ -55,6 +54,7 @@ import org.junit.Test;
 
 import java.util.Collection;
 
+import static org.elasticsearch.common.joda.time.DateTimeZone.UTC;
 import static org.elasticsearch.watcher.test.WatcherMatchers.indexRequest;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
@@ -88,8 +88,8 @@ public class HistoryStoreTests extends ElasticsearchTestCase {
         when(watch.condition()).thenReturn(new ExecutableAlwaysCondition(logger));
         when(watch.input()).thenReturn(null);
         when(watch.metadata()).thenReturn(null);
-        ScheduleTriggerEvent event = new ScheduleTriggerEvent(watch.id(), new DateTime(0, DateTimeZone.UTC), new DateTime(0, DateTimeZone.UTC));
-        Wid wid = new Wid("_name", 0, new DateTime(0, DateTimeZone.UTC));
+        ScheduleTriggerEvent event = new ScheduleTriggerEvent(watch.id(), new DateTime(0, UTC), new DateTime(0, UTC));
+        Wid wid = new Wid("_name", 0, new DateTime(0, UTC));
         WatchRecord watchRecord = new WatchRecord(wid, watch, event);
 
         IndexResponse indexResponse = mock(IndexResponse.class);
@@ -108,8 +108,8 @@ public class HistoryStoreTests extends ElasticsearchTestCase {
         when(watch.condition()).thenReturn(new ExecutableAlwaysCondition(logger));
         when(watch.input()).thenReturn(null);
         when(watch.metadata()).thenReturn(null);
-        ScheduleTriggerEvent event = new ScheduleTriggerEvent(watch.id(), new DateTime(0, DateTimeZone.UTC), new DateTime(0, DateTimeZone.UTC));
-        Wid wid = new Wid("_name", 0, new DateTime(0, DateTimeZone.UTC));
+        ScheduleTriggerEvent event = new ScheduleTriggerEvent(watch.id(), new DateTime(0, UTC), new DateTime(0, UTC));
+        Wid wid = new Wid("_name", 0, new DateTime(0, UTC));
         WatchRecord watchRecord = new WatchRecord(wid, watch, event);
         watchRecord.version(4l);
 
@@ -129,8 +129,8 @@ public class HistoryStoreTests extends ElasticsearchTestCase {
         when(watch.condition()).thenReturn(new ExecutableAlwaysCondition(logger));
         when(watch.input()).thenReturn(null);
         when(watch.metadata()).thenReturn(null);
-        ScheduleTriggerEvent event = new ScheduleTriggerEvent(watch.id(), new DateTime(0, DateTimeZone.UTC), new DateTime(0, DateTimeZone.UTC));
-        Wid wid = new Wid("_name", 0, new DateTime(0, DateTimeZone.UTC));
+        ScheduleTriggerEvent event = new ScheduleTriggerEvent(watch.id(), new DateTime(0, UTC), new DateTime(0, UTC));
+        Wid wid = new Wid("_name", 0, new DateTime(0, UTC));
         WatchRecord watchRecord = new WatchRecord(wid, watch, event);
 
         historyStore.stop();
@@ -149,8 +149,8 @@ public class HistoryStoreTests extends ElasticsearchTestCase {
         when(watch.condition()).thenReturn(new ExecutableAlwaysCondition(logger));
         when(watch.input()).thenReturn(null);
         when(watch.metadata()).thenReturn(null);
-        ScheduleTriggerEvent event = new ScheduleTriggerEvent(watch.id(), new DateTime(0, DateTimeZone.UTC), new DateTime(0, DateTimeZone.UTC));
-        Wid wid = new Wid("_name", 0, new DateTime(0, DateTimeZone.UTC));
+        ScheduleTriggerEvent event = new ScheduleTriggerEvent(watch.id(), new DateTime(0, UTC), new DateTime(0, UTC));
+        Wid wid = new Wid("_name", 0, new DateTime(0, UTC));
         WatchRecord watchRecord = new WatchRecord(wid, watch, event);
 
         historyStore.stop();
@@ -385,10 +385,10 @@ public class HistoryStoreTests extends ElasticsearchTestCase {
 
     @Test
     public void testIndexNameGeneration() {
-        assertThat(HistoryStore.getHistoryIndexNameForTime(new DateTime(0, DateTimeZone.UTC)), equalTo(".watch_history_1970-01-01"));
-        assertThat(HistoryStore.getHistoryIndexNameForTime(new DateTime(100000000000L, DateTimeZone.UTC)), equalTo(".watch_history_1973-03-03"));
-        assertThat(HistoryStore.getHistoryIndexNameForTime(new DateTime(1416582852000L, DateTimeZone.UTC)), equalTo(".watch_history_2014-11-21"));
-        assertThat(HistoryStore.getHistoryIndexNameForTime(new DateTime(2833165811000L, DateTimeZone.UTC)), equalTo(".watch_history_2059-10-12"));
+        assertThat(HistoryStore.getHistoryIndexNameForTime(new DateTime(0, UTC)), equalTo(".watch_history_1970-01-01"));
+        assertThat(HistoryStore.getHistoryIndexNameForTime(new DateTime(100000000000L, UTC)), equalTo(".watch_history_1973-03-03"));
+        assertThat(HistoryStore.getHistoryIndexNameForTime(new DateTime(1416582852000L, UTC)), equalTo(".watch_history_2014-11-21"));
+        assertThat(HistoryStore.getHistoryIndexNameForTime(new DateTime(2833165811000L, UTC)), equalTo(".watch_history_2059-10-12"));
     }
 
     private RefreshResponse mockRefreshResponse(int total, int successful) {

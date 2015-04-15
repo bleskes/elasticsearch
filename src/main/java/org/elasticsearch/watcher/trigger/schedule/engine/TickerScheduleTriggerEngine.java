@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 
+import static org.elasticsearch.common.joda.time.DateTimeZone.UTC;
 /**
  *
  */
@@ -89,8 +90,8 @@ public class TickerScheduleTriggerEngine extends ScheduleTriggerEngine {
         for (ActiveSchedule schedule : schedules.values()) {
             long scheduledTime = schedule.check(triggeredTime);
             if (scheduledTime > 0) {
-                logger.trace("triggered job [{}] at [{}] (scheduled time was [{}])", schedule.name, new DateTime(triggeredTime), new DateTime(scheduledTime));
-                events.add(new ScheduleTriggerEvent(schedule.name, new DateTime(triggeredTime), new DateTime(scheduledTime)));
+                logger.trace("triggered job [{}] at [{}] (scheduled time was [{}])", schedule.name, new DateTime(triggeredTime, UTC), new DateTime(scheduledTime, UTC));
+                events.add(new ScheduleTriggerEvent(schedule.name, new DateTime(triggeredTime, UTC), new DateTime(scheduledTime, UTC)));
                 if (events.size() >= 1000) {
                     notifyListeners(ImmutableList.copyOf(events));
                     events.clear();

@@ -18,6 +18,7 @@
 package org.elasticsearch.watcher.support.clock;
 
 import org.elasticsearch.common.joda.time.DateTime;
+import org.elasticsearch.common.joda.time.DateTimeZone;
 import org.elasticsearch.common.joda.time.Duration;
 import org.elasticsearch.common.unit.TimeValue;
 
@@ -43,6 +44,11 @@ public class ClockMock implements Clock {
     @Override
     public DateTime now() {
         return now;
+    }
+
+    @Override
+    public DateTime now(DateTimeZone timeZone) {
+        return now.toDateTime(timeZone);
     }
 
     @Override

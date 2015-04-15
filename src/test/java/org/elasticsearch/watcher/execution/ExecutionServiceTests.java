@@ -20,7 +20,6 @@ package org.elasticsearch.watcher.execution;
 
 import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.common.joda.time.DateTime;
-import org.elasticsearch.common.joda.time.DateTimeZone;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.test.ElasticsearchTestCase;
 import org.elasticsearch.watcher.actions.Action;
@@ -45,6 +44,7 @@ import org.junit.Test;
 
 import java.util.Arrays;
 
+import static org.elasticsearch.common.joda.time.DateTimeZone.UTC;
 import static org.hamcrest.Matchers.*;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.same;
@@ -106,7 +106,7 @@ public class ExecutionServiceTests extends ElasticsearchTestCase {
         when(watch.actions()).thenReturn(actions);
         when(watch.status()).thenReturn(watchStatus);
 
-        DateTime now = DateTime.now(DateTimeZone.UTC);
+        DateTime now = DateTime.now(UTC);
 
         ScheduleTriggerEvent event = new ScheduleTriggerEvent("_id", now, now);
         WatchExecutionContext context = new TriggeredExecutionContext(watch, now, event);
@@ -152,7 +152,7 @@ public class ExecutionServiceTests extends ElasticsearchTestCase {
         when(watch.actions()).thenReturn(actions);
         when(watch.status()).thenReturn(watchStatus);
 
-        DateTime now = DateTime.now(DateTimeZone.UTC);
+        DateTime now = DateTime.now(UTC);
 
         ScheduleTriggerEvent event = new ScheduleTriggerEvent("_id", now, now);
         WatchExecutionContext context = new TriggeredExecutionContext(watch, now, event);
@@ -198,7 +198,7 @@ public class ExecutionServiceTests extends ElasticsearchTestCase {
         when(watch.actions()).thenReturn(actions);
         when(watch.status()).thenReturn(watchStatus);
 
-        DateTime now = DateTime.now(DateTimeZone.UTC);
+        DateTime now = DateTime.now(UTC);
 
         ScheduleTriggerEvent event = new ScheduleTriggerEvent("_id", now, now);
         WatchExecutionContext context = new TriggeredExecutionContext(watch, now, event);
