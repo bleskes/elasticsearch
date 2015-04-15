@@ -159,7 +159,7 @@ public class ESUsersTool extends CliTool {
                 terminal.println("User [%s] already exists", username);
                 return ExitStatus.CODE_ERROR;
             }
-            Hasher hasher = Hasher.HTPASSWD;
+            Hasher hasher = Hasher.BCRYPT;
             users.put(username, hasher.hash(passwd));
             FileUserPasswdStore.writeFile(users, file);
 
@@ -301,7 +301,7 @@ public class ESUsersTool extends CliTool {
                 terminal.println("User [%s] doesn't exist", username);
                 return ExitStatus.NO_USER;
             }
-            Hasher hasher = Hasher.HTPASSWD;
+            Hasher hasher = Hasher.BCRYPT;
             users.put(username, hasher.hash(passwd));
             FileUserPasswdStore.writeFile(users, file);
             return ExitStatus.OK;

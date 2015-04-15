@@ -133,7 +133,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         String line = lines.get(0);
         assertThat(line, startsWith("user1:"));
         String hash = line.substring("user1:".length());
-        assertThat(Hasher.HTPASSWD.verify(SecuredStringTests.build("changeme"), hash.toCharArray()), is(true));
+        assertThat(Hasher.BCRYPT.verify(SecuredStringTests.build("changeme"), hash.toCharArray()), is(true));
 
         assertFileExists(userRolesFile);
         lines = Files.readAllLines(userRolesFile, Charsets.UTF_8);
@@ -168,7 +168,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         for (String line : lines) {
             if (line.startsWith("user1")) {
                 String hash = line.substring("user1:".length());
-                assertThat(Hasher.HTPASSWD.verify(SecuredStringTests.build("changeme"), hash.toCharArray()), is(true));
+                assertThat(Hasher.BCRYPT.verify(SecuredStringTests.build("changeme"), hash.toCharArray()), is(true));
             }
         }
 
@@ -369,7 +369,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         String line = lines.get(0);
         assertThat(line, startsWith("user1:"));
         String hash = line.substring("user1:".length());
-        assertThat(Hasher.HTPASSWD.verify(SecuredStringTests.build("changeme"), hash.toCharArray()), is(true));
+        assertThat(Hasher.BCRYPT.verify(SecuredStringTests.build("changeme"), hash.toCharArray()), is(true));
     }
 
     @Test

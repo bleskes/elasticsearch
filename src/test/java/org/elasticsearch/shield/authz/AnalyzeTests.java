@@ -17,6 +17,7 @@
 
 package org.elasticsearch.shield.authz;
 
+import org.elasticsearch.shield.authc.support.Hasher;
 import org.elasticsearch.shield.authc.support.SecuredString;
 import org.elasticsearch.test.ShieldIntegrationTest;
 import org.junit.Test;
@@ -27,11 +28,13 @@ import static org.hamcrest.CoreMatchers.containsString;
 
 public class AnalyzeTests extends ShieldIntegrationTest {
 
+    protected static final String USERS_PASSWD_HASHED = new String(Hasher.BCRYPT.hash(new SecuredString("test123".toCharArray())));
+
     @Override
     protected String configUsers() {
         return super.configUsers() +
-                "analyze_indices:{plain}test123\n" +
-                "analyze_cluster:{plain}test123\n";
+                "analyze_indices:" + USERS_PASSWD_HASHED + "\n" +
+                "analyze_cluster:" + USERS_PASSWD_HASHED + "\n";
     }
 
     @Override

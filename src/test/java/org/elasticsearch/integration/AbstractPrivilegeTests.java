@@ -22,6 +22,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.http.HttpServerTransport;
+import org.elasticsearch.shield.authc.support.Hasher;
 import org.elasticsearch.shield.authc.support.SecuredString;
 import org.elasticsearch.shield.authc.support.UsernamePasswordToken;
 import org.elasticsearch.test.ShieldIntegrationTest;
@@ -39,6 +40,8 @@ import static org.hamcrest.Matchers.*;
  * a helper class that contains a couple of HTTP helper methods
  */
 public abstract class AbstractPrivilegeTests extends ShieldIntegrationTest {
+
+    protected static final String USERS_PASSWD_HASHED = new String(Hasher.BCRYPT.hash(new SecuredString("passwd".toCharArray())));
 
     private CloseableHttpClient httpClient = HttpClients.createDefault();
 

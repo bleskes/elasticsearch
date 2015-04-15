@@ -40,7 +40,6 @@ public class HasherBenchmark {
         test(Hasher.SSHA256).print();
         test(Hasher.MD5).print();
         test(Hasher.SHA1).print();
-        test(Hasher.APR1).print();
         test(Hasher.BCRYPT4).print();
     }
 
