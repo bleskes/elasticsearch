@@ -27,7 +27,7 @@ import org.elasticsearch.discovery.MasterNotDiscoveredException;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.node.internal.InternalNode;
 import org.elasticsearch.shield.authc.esusers.ESUsersRealm;
-import org.elasticsearch.shield.signature.InternalSignatureService;
+import org.elasticsearch.shield.crypto.InternalCryptoService;
 import org.elasticsearch.test.ShieldIntegrationTest;
 import org.elasticsearch.test.ShieldSettingsSource;
 import org.elasticsearch.transport.Transport;
@@ -90,7 +90,7 @@ public class ServerTransportFilterIntegrationTests extends ShieldIntegrationTest
     @Test
     public void testThatConnectionToServerTypeConnectionWorks() {
         Settings dataNodeSettings = internalCluster().getDataNodeInstance(Settings.class);
-        String systemKeyFile = dataNodeSettings.get(InternalSignatureService.FILE_SETTING);
+        String systemKeyFile = dataNodeSettings.get(InternalCryptoService.FILE_SETTING);
 
         Transport transport = internalCluster().getDataNodeInstance(Transport.class);
         TransportAddress transportAddress = transport.boundAddress().publishAddress();
@@ -110,7 +110,7 @@ public class ServerTransportFilterIntegrationTests extends ShieldIntegrationTest
                 .put("shield.transport.ssl", sslTransportEnabled())
                 .put("shield.audit.enabled", false)
                 .put(InternalNode.HTTP_ENABLED, false)
-                .put(InternalSignatureService.FILE_SETTING, systemKeyFile)
+                .put(InternalCryptoService.FILE_SETTING, systemKeyFile)
                 .build();
         try (Node node = nodeBuilder().client(true).settings(nodeSettings).node()) {
             assertGreenClusterState(node.client());
@@ -120,7 +120,7 @@ public class ServerTransportFilterIntegrationTests extends ShieldIntegrationTest
     @Test
     public void testThatConnectionToClientTypeConnectionIsRejected() {
         Settings dataNodeSettings = internalCluster().getDataNodeInstance(Settings.class);
-        String systemKeyFile = dataNodeSettings.get(InternalSignatureService.FILE_SETTING);
+        String systemKeyFile = dataNodeSettings.get(InternalCryptoService.FILE_SETTING);
 
         File folder = createFolder(globalTempDir(), getClass().getSimpleName() + "-" + randomAsciiOfLength(10));
 
@@ -141,7 +141,7 @@ public class ServerTransportFilterIntegrationTests extends ShieldIntegrationTest
                 .put("shield.transport.ssl", sslTransportEnabled())
                 .put("shield.audit.enabled", false)
                 .put(InternalNode.HTTP_ENABLED, false)
-                .put(InternalSignatureService.FILE_SETTING, systemKeyFile)
+                .put(InternalCryptoService.FILE_SETTING, systemKeyFile)
                 .put("discovery.initial_state_timeout", "2s")
                 .build();
         try (Node node = nodeBuilder().client(true).settings(nodeSettings).build()) {

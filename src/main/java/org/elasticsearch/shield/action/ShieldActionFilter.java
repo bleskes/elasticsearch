@@ -38,8 +38,8 @@ import org.elasticsearch.shield.authz.AuthorizationService;
 import org.elasticsearch.shield.authz.Privilege;
 import org.elasticsearch.shield.license.LicenseEventsNotifier;
 import org.elasticsearch.shield.license.LicenseService;
-import org.elasticsearch.shield.signature.SignatureException;
-import org.elasticsearch.shield.signature.SignatureService;
+import org.elasticsearch.shield.crypto.SignatureException;
+import org.elasticsearch.shield.crypto.CryptoService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,19 +53,19 @@ public class ShieldActionFilter extends AbstractComponent implements ActionFilte
 
     private final AuthenticationService authcService;
     private final AuthorizationService authzService;
-    private final SignatureService signatureService;
+    private final CryptoService cryptoService;
     private final AuditTrail auditTrail;
     private final ShieldActionMapper actionMapper;
 
     private volatile boolean licenseEnabled = true;
 
     @Inject
-    public ShieldActionFilter(Settings settings, AuthenticationService authcService, AuthorizationService authzService, SignatureService signatureService,
+    public ShieldActionFilter(Settings settings, AuthenticationService authcService, AuthorizationService authzService, CryptoService cryptoService,
                               AuditTrail auditTrail, LicenseEventsNotifier licenseEventsNotifier, ShieldActionMapper actionMapper) {
         super(settings);
         this.authcService = authcService;
         this.authzService = authzService;
-        this.signatureService = signatureService;
+        this.cryptoService = cryptoService;
         this.auditTrail = auditTrail;
         this.actionMapper = actionMapper;
         licenseEventsNotifier.register(new LicenseEventsNotifier.Listener() {
@@ -134,7 +134,7 @@ public class ShieldActionFilter extends AbstractComponent implements ActionFilte
             if (request instanceof SearchScrollRequest) {
                 SearchScrollRequest scrollRequest = (SearchScrollRequest) request;
                 String scrollId = scrollRequest.scrollId();
-                scrollRequest.scrollId(signatureService.unsignAndVerify(scrollId));
+                scrollRequest.scrollId(cryptoService.unsignAndVerify(scrollId));
                 return request;
             }
 
@@ -145,7 +145,7 @@ public class ShieldActionFilter extends AbstractComponent implements ActionFilte
                     List<String> signedIds = clearScrollRequest.scrollIds();
                     List<String> unsignedIds = new ArrayList<>(signedIds.size());
                     for (String signedId : signedIds) {
-                        unsignedIds.add(signatureService.unsignAndVerify(signedId));
+                        unsignedIds.add(cryptoService.unsignAndVerify(signedId));
                     }
                     clearScrollRequest.scrollIds(unsignedIds);
                 }
@@ -165,8 +165,8 @@ public class ShieldActionFilter extends AbstractComponent implements ActionFilte
         if (response instanceof SearchResponse) {
             SearchResponse searchResponse = (SearchResponse) response;
             String scrollId = searchResponse.getScrollId();
-            if (scrollId != null && !signatureService.signed(scrollId)) {
-                searchResponse.scrollId(signatureService.sign(scrollId));
+            if (scrollId != null && !cryptoService.signed(scrollId)) {
+                searchResponse.scrollId(cryptoService.sign(scrollId));
             }
             return response;
         }
