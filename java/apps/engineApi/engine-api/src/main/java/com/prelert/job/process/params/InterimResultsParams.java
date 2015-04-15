@@ -29,8 +29,6 @@ package com.prelert.job.process.params;
 
 import java.util.Objects;
 
-import com.prelert.job.process.TimeRange;
-
 public class InterimResultsParams
 {
     private final boolean m_ShouldCalculate;

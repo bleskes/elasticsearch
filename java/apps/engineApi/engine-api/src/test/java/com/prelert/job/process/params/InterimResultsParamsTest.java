@@ -31,7 +31,6 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-import com.prelert.job.process.TimeRange;
 import com.prelert.job.process.params.InterimResultsParams;
 
 public class InterimResultsParamsTest

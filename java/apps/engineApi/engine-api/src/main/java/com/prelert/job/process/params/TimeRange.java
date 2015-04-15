@@ -25,25 +25,26 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.process;
+package com.prelert.job.process.params;
 
-import static org.junit.Assert.assertEquals;
-
-import org.junit.Test;
-
-public class TimeRangeTest
+public class TimeRange
 {
-    @Test
-    public void testGetStart()
+    private final Long m_Start;
+    private final Long m_End;
+
+    public TimeRange(Long start, Long end)
     {
-        assertEquals("", new TimeRange(null, null).getStart());
-        assertEquals("10", new TimeRange(10L, null).getStart());
+        m_Start = start;
+        m_End = end;
     }
 
-    @Test
-    public void testGetEnd()
+    public String getStart()
     {
-        assertEquals("", new TimeRange(null, null).getEnd());
-        assertEquals("20", new TimeRange(null, 20L).getEnd());
+        return m_Start == null ? "" : String.valueOf(m_Start);
+    }
+
+    public String getEnd()
+    {
+        return m_End == null ? "" : String.valueOf(m_End);
     }
 }

@@ -45,9 +45,9 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import com.prelert.job.AnalysisConfig;
-import com.prelert.job.process.TimeRange;
 import com.prelert.job.process.params.DataLoadParams;
 import com.prelert.job.process.params.InterimResultsParams;
+import com.prelert.job.process.params.TimeRange;
 
 public class ControlMsgToProcessWriterTest
 {

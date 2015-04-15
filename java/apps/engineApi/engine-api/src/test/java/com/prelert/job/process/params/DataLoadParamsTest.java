@@ -33,7 +33,6 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
-import com.prelert.job.process.TimeRange;
 import com.prelert.job.process.params.DataLoadParams;
 
 public class DataLoadParamsTest
