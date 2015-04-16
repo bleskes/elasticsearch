@@ -236,8 +236,9 @@ public class ProcessManager
         }
 
         ProcessAndDataDescription process = m_JobIdToProcessMap.get(jobId);
+        boolean isExistingProcess = process != null;
 
-        if (process == null)
+        if (!isExistingProcess)
         {
             // create the new process and restore its state
             // if it has been saved
@@ -266,10 +267,7 @@ public class ProcessManager
 
             if (params.isResettingBuckets())
             {
-                ControlMsgToProcessWriter writer = ControlMsgToProcessWriter.create(
-                        process.getProcess().getOutputStream(),
-                        process.getAnalysisConfig());
-                writer.writeResetBucketsMessage(params);
+                writeResetBucketsControlMessage(jobId, params, process, isExistingProcess);
             }
 
             stats = writeToJob(process.getDataDescription(), process.getAnalysisConfig(),
@@ -304,6 +302,24 @@ public class ProcessManager
         }
 
         return stats;
+    }
+
+
+    private void writeResetBucketsControlMessage(String jobId, DataLoadParams params,
+            ProcessAndDataDescription process, boolean isExistingProcess) throws IOException
+    {
+        if (isExistingProcess)
+        {
+            ControlMsgToProcessWriter writer = ControlMsgToProcessWriter.create(
+                    process.getProcess().getOutputStream(),
+                    process.getAnalysisConfig());
+            writer.writeResetBucketsMessage(params);
+        }
+        else
+        {
+            LOGGER.warn("Cannot reset buckets for job '" + jobId + "'. Buckets can only be reset "
+                    + "after first data has been sent to the process.");
+        }
     }
 
     /**
