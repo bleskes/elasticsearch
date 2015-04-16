@@ -105,7 +105,7 @@ public class EmailActionTests extends ElasticsearchTestCase {
         WatchExecutionContext ctx = mockExecutionContextBuilder("watch1")
                 .wid(wid)
                 .payload(payload)
-                .time(now)
+                .time("watch1", now)
                 .metadata(metadata)
                 .buildMock();
 

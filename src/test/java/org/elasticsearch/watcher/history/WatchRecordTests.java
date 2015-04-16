@@ -51,7 +51,7 @@ public class WatchRecordTests extends AbstractWatcherIntegrationTests {
     @Test
     public void testParser() throws Exception {
         Watch watch = WatcherTestUtils.createTestWatch("fired_test", scriptService(), httpClient(), noopEmailService(), logger);
-        ScheduleTriggerEvent event = new ScheduleTriggerEvent(DateTime.now(UTC), DateTime.now(UTC));
+        ScheduleTriggerEvent event = new ScheduleTriggerEvent(watch.name(), DateTime.now(UTC), DateTime.now(UTC));
         Wid wid = new Wid("_record", randomLong(), DateTime.now(UTC));
         WatchRecord watchRecord = new WatchRecord(wid, watch, event);
         XContentBuilder jsonBuilder = XContentFactory.jsonBuilder();
@@ -67,7 +67,7 @@ public class WatchRecordTests extends AbstractWatcherIntegrationTests {
     @Test
     public void testParser_WithSealedWatchRecord() throws Exception {
         Watch watch = WatcherTestUtils.createTestWatch("fired_test", scriptService(), httpClient(), noopEmailService(), logger);
-        ScheduleTriggerEvent event = new ScheduleTriggerEvent(DateTime.now(UTC), DateTime.now(UTC));
+        ScheduleTriggerEvent event = new ScheduleTriggerEvent(watch.name(), DateTime.now(UTC), DateTime.now(UTC));
         Wid wid = new Wid("_record", randomLong(), DateTime.now(UTC));
         WatchRecord watchRecord = new WatchRecord(wid, watch, event);
         WatchExecutionContext ctx = new TriggeredExecutionContext(watch, new DateTime(), event);
@@ -97,7 +97,7 @@ public class WatchRecordTests extends AbstractWatcherIntegrationTests {
     @Test
     public void testParser_WithSealedWatchRecord_WithScriptSearchCondition() throws Exception {
         Watch watch = WatcherTestUtils.createTestWatch("fired_test", scriptService(), httpClient(), noopEmailService(), logger);
-        ScheduleTriggerEvent event = new ScheduleTriggerEvent(DateTime.now(UTC), DateTime.now(UTC));
+        ScheduleTriggerEvent event = new ScheduleTriggerEvent(watch.name(), DateTime.now(UTC), DateTime.now(UTC));
         WatchExecutionContext ctx = new TriggeredExecutionContext( watch, new DateTime(), event);
         WatchRecord watchRecord = new WatchRecord(ctx.id(), watch, event);
         ctx.onActionResult(new ActionWrapper.Result("_email", new EmailAction.Result.Failure("failed to send because blah")));

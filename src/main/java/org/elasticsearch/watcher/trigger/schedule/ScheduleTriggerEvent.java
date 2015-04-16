@@ -36,8 +36,8 @@ public class ScheduleTriggerEvent extends TriggerEvent {
 
     private final DateTime scheduledTime;
 
-    public ScheduleTriggerEvent(DateTime triggeredTime, DateTime scheduledTime) {
-        super(triggeredTime);
+    public ScheduleTriggerEvent(String jobName, DateTime triggeredTime, DateTime scheduledTime) {
+        super(jobName, triggeredTime);
         this.scheduledTime = scheduledTime;
         data.put(SCHEDULED_TIME_FIELD.getPreferredName(), scheduledTime);
     }
@@ -54,12 +54,14 @@ public class ScheduleTriggerEvent extends TriggerEvent {
     @Override
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
         return builder.startObject()
+                .field(JOB_NAME_FIELD.getPreferredName(), jobName())
                 .field(TRIGGERED_TIME_FIELD.getPreferredName(), WatcherDateUtils.formatDate(triggeredTime))
                 .field(SCHEDULED_TIME_FIELD.getPreferredName(), WatcherDateUtils.formatDate(scheduledTime))
                 .endObject();
     }
 
     public static ScheduleTriggerEvent parse(String context, XContentParser parser) throws IOException {
+        String jobName = null;
         DateTime triggeredTime = null;
         DateTime scheduledTime = null;
 
@@ -70,7 +72,9 @@ public class ScheduleTriggerEvent extends TriggerEvent {
                 currentFieldName = parser.currentName();
             } else {
                 if (token == XContentParser.Token.VALUE_STRING) {
-                    if (TRIGGERED_TIME_FIELD.match(currentFieldName)) {
+                    if (JOB_NAME_FIELD.match(currentFieldName)) {
+                        jobName = parser.text();
+                    } else if (TRIGGERED_TIME_FIELD.match(currentFieldName)) {
                         triggeredTime = WatcherDateUtils.parseDate(parser.text());
                     } else if (SCHEDULED_TIME_FIELD.match(currentFieldName)) {
                         scheduledTime = WatcherDateUtils.parseDate(parser.text());
@@ -84,8 +88,8 @@ public class ScheduleTriggerEvent extends TriggerEvent {
         }
 
         // should never be, it's fully controlled internally (not coming from the user)
-        assert triggeredTime != null && scheduledTime != null;
-        return new ScheduleTriggerEvent(triggeredTime, scheduledTime);
+        assert jobName != null && triggeredTime != null && scheduledTime != null;
+        return new ScheduleTriggerEvent(jobName, triggeredTime, scheduledTime);
     }
 
     public static class ParseException extends WatcherException {

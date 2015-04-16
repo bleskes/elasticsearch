@@ -48,7 +48,7 @@ public class WatchExecutionContextMockBuilder {
         when(ctx.watch()).thenReturn(watch);
         payload(Collections.<String, Object>emptyMap());
         metadata(Collections.<String, Object>emptyMap());
-        time(DateTime.now(UTC));
+        time(watchId, DateTime.now(UTC));
     }
 
     public WatchExecutionContextMockBuilder wid(Wid wid) {
@@ -69,8 +69,8 @@ public class WatchExecutionContextMockBuilder {
         return this;
     }
 
-    public WatchExecutionContextMockBuilder time(DateTime time) {
-        return executionTime(time).triggerEvent(new ScheduleTriggerEvent(time, time));
+    public WatchExecutionContextMockBuilder time(String watchId, DateTime time) {
+        return executionTime(time).triggerEvent(new ScheduleTriggerEvent(watchId, time, time));
     }
 
     public WatchExecutionContextMockBuilder executionTime(DateTime time) {
