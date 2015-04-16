@@ -25,11 +25,9 @@ import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
-import org.elasticsearch.action.search.*;
-import org.elasticsearch.watcher.WatcherException;
-import org.elasticsearch.watcher.support.Callback;
-import org.elasticsearch.watcher.support.TemplateUtils;
-import org.elasticsearch.watcher.support.init.proxy.ClientProxy;
+import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.cluster.ClusterChangedEvent;
 import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.cluster.ClusterState;
@@ -45,6 +43,11 @@ import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.threadpool.ThreadPool;
+import org.elasticsearch.watcher.WatcherException;
+import org.elasticsearch.watcher.WatcherSettingsException;
+import org.elasticsearch.watcher.support.Callback;
+import org.elasticsearch.watcher.support.TemplateUtils;
+import org.elasticsearch.watcher.support.init.proxy.ClientProxy;
 
 import java.io.IOException;
 import java.util.concurrent.ConcurrentMap;
@@ -265,10 +268,15 @@ public class WatchStore extends AbstractComponent {
                 while (response.getHits().hits().length != 0) {
                     for (SearchHit hit : response.getHits()) {
                         String name = hit.getId();
-                        Watch watch = watchParser.parse(name, true, hit.getSourceRef());
-                        watch.status().version(hit.version());
-                        watches.put(name, watch);
-                        count++;
+                        try {
+                            Watch watch = watchParser.parse(name, true, hit.getSourceRef());
+                            watch.status().version(hit.version());
+                            watches.put(name, watch);
+                            count++;
+                        } catch (WatcherSettingsException wse) {
+                            logger.error("while loading watches, failed to parse [{}]", wse, name);
+                            throw wse;
+                        }
                     }
                     response = client.searchScroll(response.getScrollId(), scrollTimeout);
                 }
