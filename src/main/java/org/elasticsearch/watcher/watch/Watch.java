@@ -148,6 +148,7 @@ public class Watch implements TriggerEngine.Job, ToXContent {
         return nonceCounter.getAndIncrement();
     }
 
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -308,6 +309,8 @@ public class Watch implements TriggerEngine.Job, ToXContent {
         private DateTime lastExecuted;
         private AckStatus ackStatus;
 
+        private volatile boolean dirty = false;
+
         public Status() {
             this(-1, null, null, null, null, new AckStatus());
         }
@@ -365,6 +368,21 @@ public class Watch implements TriggerEngine.Job, ToXContent {
             return ackStatus;
         }
 
+        /**
+         * @param dirty if true this Watch.Status has been modified since it was read, if false we just wrote the updated watch
+         */
+        public void dirty(boolean dirty) {
+            this.dirty = dirty;
+        }
+
+        /**
+         * @return does this Watch.Status needs to be persisted to the index
+         */
+        public boolean dirty() {
+            return dirty;
+        }
+
+
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
@@ -407,9 +425,11 @@ public class Watch implements TriggerEngine.Job, ToXContent {
             lastChecked = timestamp;
             if (metCondition) {
                 lastMetCondition = timestamp;
+                dirty(true);
             } else if (ackStatus.state == AckStatus.State.ACKED) {
                 // didn't meet condition now after it met it in the past - we need to reset the ack state
                 ackStatus = new AckStatus(AckStatus.State.AWAITS_EXECUTION, timestamp);
+                dirty(true);
             }
         }
 
@@ -418,17 +438,22 @@ public class Watch implements TriggerEngine.Job, ToXContent {
          */
         public void onThrottle(DateTime timestamp, String reason) {
             lastThrottle = new Throttle(timestamp, reason);
+            dirty(true);
         }
 
         /**
          * Notified this status that the watch was executed. If the current state is {@link Watch.Status.AckStatus.State#AWAITS_EXECUTION}, it will change to
          * {@link Watch.Status.AckStatus.State#ACKABLE}.
+         * @return {@code true} if the state changed due to the execution {@code false} otherwise
          */
-        public void onExecution(DateTime timestamp) {
+        public boolean onExecution(DateTime timestamp) {
             lastExecuted = timestamp;
             if (ackStatus.state == AckStatus.State.AWAITS_EXECUTION) {
                 ackStatus = new AckStatus(AckStatus.State.ACKABLE, timestamp);
+                dirty(true);
+                return true;
             }
+            return false;
         }
 
         /**
@@ -441,6 +466,7 @@ public class Watch implements TriggerEngine.Job, ToXContent {
         boolean onAck(DateTime timestamp) {
             if (ackStatus.state == AckStatus.State.ACKABLE) {
                 ackStatus = new AckStatus(AckStatus.State.ACKED, timestamp);
+                dirty(true);
                 return true;
             }
             return false;

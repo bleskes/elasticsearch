@@ -62,7 +62,6 @@ import org.elasticsearch.watcher.support.WatcherUtils;
 import org.elasticsearch.watcher.support.clock.ClockMock;
 import org.elasticsearch.watcher.support.http.HttpClient;
 import org.elasticsearch.watcher.support.init.proxy.ScriptServiceProxy;
-import org.elasticsearch.watcher.support.template.Template;
 import org.elasticsearch.watcher.transport.actions.stats.WatcherStatsResponse;
 import org.elasticsearch.watcher.trigger.ScheduleTriggerEngineMock;
 import org.elasticsearch.watcher.trigger.TriggerService;
@@ -291,6 +290,10 @@ public abstract class AbstractWatcherIntegrationTests extends ElasticsearchInteg
 
     protected ExecutionService executionService() {
         return getInstanceFromMaster(ExecutionService.class);
+    }
+
+    protected WatchService watchService() {
+        return getInstanceFromMaster(WatchService.class);
     }
 
     protected TriggerService triggerService() {
