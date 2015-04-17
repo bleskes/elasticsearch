@@ -67,7 +67,11 @@ public class Detector
     public static final String LOW_NZC = "low_nzc";
     public static final String HIGH_NZC = "high_nzc";
     public static final String DISTINCT_COUNT = "distinct_count";
+    public static final String LOW_DISTINCT_COUNT = "low_distinct_count";
+    public static final String HIGH_DISTINCT_COUNT = "high_distinct_count";
     public static final String DC = "dc";
+    public static final String LDC = "ldc";
+    public static final String HDC = "hdc";
     public static final String RARE = "rare";
     public static final String FREQ_RARE = "freq_rare";
     public static final String INFO_CONTENT = "info_content";
@@ -101,6 +105,8 @@ public class Detector
                 LOW_NON_ZERO_COUNT, LOW_NZC,
                 HIGH_NON_ZERO_COUNT, HIGH_NZC,
                 DISTINCT_COUNT, DC,
+                LOW_DISTINCT_COUNT, LDC,
+                HIGH_DISTINCT_COUNT, HDC,
                 RARE,
                 FREQ_RARE,
                 INFO_CONTENT,
@@ -139,6 +145,8 @@ public class Detector
     public static final Set<String> FIELD_NAME_FUNCTIONS =
             new HashSet<String>(Arrays.<String>asList(new String [] {
                 DISTINCT_COUNT, DC,
+                LOW_DISTINCT_COUNT, LDC,
+                HIGH_DISTINCT_COUNT, HDC,
                 INFO_CONTENT,
                 LOW_INFO_CONTENT,
                 HIGH_INFO_CONTENT,
@@ -170,11 +178,7 @@ public class Detector
      */
     public static final Set<String> OVER_FIELD_NAME_FUNCTIONS =
             new HashSet<String>(Arrays.<String>asList(new String [] {
-                DISTINCT_COUNT, DC,
-                FREQ_RARE,
-                INFO_CONTENT,
-                LOW_INFO_CONTENT,
-                HIGH_INFO_CONTENT
+                FREQ_RARE
             }));
 
     /**
@@ -182,10 +186,6 @@ public class Detector
      */
     private static final Set<String> NO_BY_FIELD_NAME_FUNCTIONS =
             new HashSet<String>(Arrays.<String>asList(new String [] {
-                DISTINCT_COUNT, DC,
-                INFO_CONTENT,
-                LOW_INFO_CONTENT,
-                HIGH_INFO_CONTENT
             }));
 
     /**
@@ -469,7 +469,7 @@ public class Detector
             {
                 throw new JobConfigurationException(
                         String.format("The fieldName must be set when the "
-                                + " '%s' function is used", m_Function),
+                                + "'%s' function is used", m_Function),
                         ErrorCode.INVALID_FIELD_SELECTION);
             }
 
@@ -485,7 +485,7 @@ public class Detector
             {
                 throw new JobConfigurationException(
                         String.format("The byFieldName must be set when the "
-                                + " '%s' function is used", m_Function),
+                                + "'%s' function is used", m_Function),
                         ErrorCode.INVALID_FIELD_SELECTION);
             }
 
@@ -501,7 +501,7 @@ public class Detector
             {
                 throw new JobConfigurationException(
                         String.format("The overFieldName must be set when the "
-                                + " '%s' function is used", m_Function),
+                                + "'%s' function is used", m_Function),
                                 ErrorCode.INVALID_FIELD_SELECTION);
             }
 
