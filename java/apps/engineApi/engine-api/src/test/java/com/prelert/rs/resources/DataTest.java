@@ -178,24 +178,6 @@ public class DataTest extends ServiceTest
     }
 
     @Test
-    public void testStreamData_GivenDetectorWithFunctionMean() throws UnknownJobException,
-    NativeProcessRunException, MissingFieldException, JobInUseException,
-    HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
-    TooManyJobsException, MalformedJsonException, IOException
-    {
-        HttpHeaders httpHeaders = mock(HttpHeaders.class);
-        InputStream inputStream = mock(InputStream.class);
-        givenLatency(600L);
-        givenDetectorsWithFunctions("count", "mean");
-        m_ExpectedException.expect(RestApiException.class);
-        m_ExpectedException.expectMessage("At least one detector contains a function that does not"
-                + " support bucket resetting: mean.");
-        m_ExpectedException.expect(hasErrorCode(ErrorCode.BUCKET_RESET_NOT_SUPPORTED));
-
-        m_Data.streamData(httpHeaders, JOB_ID, inputStream, "1428591600", "");
-    }
-
-    @Test
     public void testStreamData_GivenOnlyResetStartSpecified() throws UnknownJobException,
             NativeProcessRunException, MissingFieldException, JobInUseException,
             HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
@@ -230,7 +212,7 @@ public class DataTest extends ServiceTest
         when(jobManager().submitDataLoadJob(eq(JOB_ID), eq(inputStream), any(DataLoadParams.class)))
                 .thenReturn(new DataCounts());
         givenLatency(3600L);
-        givenDetectorsWithFunctions("count");
+        givenDetectorsWithFunctions("mean");
 
         m_Data.streamData(httpHeaders, JOB_ID, inputStream, "1428591600", "1428591600");
 
