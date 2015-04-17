@@ -17,8 +17,6 @@
 
 package org.elasticsearch.watcher.watch;
 
-import org.elasticsearch.common.Strings;
-import org.elasticsearch.common.base.MoreObjects;
 import org.elasticsearch.common.collect.MapBuilder;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
@@ -26,6 +24,7 @@ import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.watcher.WatcherException;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -36,6 +35,8 @@ import static org.elasticsearch.watcher.support.WatcherUtils.responseToData;
  *
  */
 public interface Payload extends ToXContent {
+
+    Simple EMPTY = new Simple(Collections.<String, Object>emptyMap());
 
     Map<String, Object> data();
 

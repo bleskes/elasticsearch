@@ -15,20 +15,26 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.watcher.input;
 
-import org.elasticsearch.watcher.WatcherException;
+package org.elasticsearch.watcher.input.simple;
+
+import org.elasticsearch.common.logging.ESLogger;
+import org.elasticsearch.watcher.execution.WatchExecutionContext;
+import org.elasticsearch.watcher.input.ExecutableInput;
+
+import java.io.IOException;
 
 /**
- *
+ * This class just defines a simple xcontent map as an input
  */
-public class InputException extends WatcherException {
+public class ExecutableSimpleInput extends ExecutableInput<SimpleInput, SimpleInput.Result> {
 
-    public InputException(String msg, Object... args) {
-        super(msg, args);
+    public ExecutableSimpleInput(SimpleInput input, ESLogger logger) {
+        super(input, logger);
     }
 
-    public InputException(String msg, Throwable cause, Object... args) {
-        super(msg, cause, args);
+    @Override
+    public SimpleInput.Result execute(WatchExecutionContext ctx) throws IOException {
+        return new SimpleInput.Result(input.getPayload());
     }
 }

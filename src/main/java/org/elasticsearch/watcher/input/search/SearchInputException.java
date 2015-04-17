@@ -15,20 +15,20 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.watcher.input;
+package org.elasticsearch.watcher.input.search;
 
-import org.elasticsearch.watcher.WatcherException;
+import org.elasticsearch.watcher.input.InputException;
 
 /**
  *
  */
-public class InputException extends WatcherException {
+public class SearchInputException extends InputException {
 
-    public InputException(String msg, Object... args) {
+    public SearchInputException(String msg, Object... args) {
         super(msg, args);
     }
 
-    public InputException(String msg, Throwable cause, Object... args) {
+    public SearchInputException(String msg, Throwable cause, Object... args) {
         super(msg, cause, args);
     }
 }

@@ -15,20 +15,27 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.watcher.input;
+package org.elasticsearch.watcher.input.none;
 
-import org.elasticsearch.watcher.WatcherException;
+
+import org.elasticsearch.common.logging.ESLogger;
+import org.elasticsearch.watcher.execution.WatchExecutionContext;
+import org.elasticsearch.watcher.input.ExecutableInput;
+
+import java.io.IOException;
 
 /**
  *
  */
-public class InputException extends WatcherException {
+public class ExecutableNoneInput extends ExecutableInput<NoneInput, NoneInput.Result> {
 
-    public InputException(String msg, Object... args) {
-        super(msg, args);
+    public ExecutableNoneInput(ESLogger logger) {
+        super(NoneInput.INSTANCE, logger);
     }
 
-    public InputException(String msg, Throwable cause, Object... args) {
-        super(msg, cause, args);
+    @Override
+    public NoneInput.Result execute(WatchExecutionContext ctx) throws IOException {
+        return NoneInput.Result.INSTANCE;
     }
+
 }
