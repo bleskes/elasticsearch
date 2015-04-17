@@ -40,10 +40,16 @@ import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
+import org.elasticsearch.action.delete.DeleteRequestBuilder;
 import org.elasticsearch.action.index.IndexResponse;
+import org.elasticsearch.action.search.SearchRequestBuilder;
+import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.index.query.HasParentQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.script.ScriptService;
+import org.elasticsearch.search.SearchHit;
 
 import com.prelert.job.JobDetails;
 import com.prelert.job.ModelSizeStats;
@@ -133,8 +139,9 @@ public class ElasticsearchPersister implements JobResultsPersister
             {
                 LOGGER.warn(String.format("Bucket %s document has been overwritten",
                         bucket.getId()));
-            }
 
+                deleteRecords(bucket);
+            }
 
             for (Detector detector : bucket.getDetectors())
             {
@@ -184,7 +191,6 @@ public class ElasticsearchPersister implements JobResultsPersister
             LOGGER.error("Error writing bucket state", e);
         }
     }
-
 
     @Override
     public void persistCategoryDefinition(CategoryDefinition category)
@@ -331,6 +337,23 @@ public class ElasticsearchPersister implements JobResultsPersister
         builder.endObject();
 
         return builder;
+    }
+
+    private void deleteRecords(Bucket bucket)
+    {
+        HasParentQueryBuilder recordsQuery = QueryBuilders.hasParentQuery(Bucket.TYPE,
+                QueryBuilders.matchQuery(Bucket.ID, bucket.getId()));
+
+        SearchResponse searchResponse = new SearchRequestBuilder(m_Client)
+                .setIndices(m_JobId)
+                .setQuery(recordsQuery)
+                .execute().actionGet();
+
+        DeleteRequestBuilder deleteRequest = new DeleteRequestBuilder(m_Client, m_JobId);
+        for (SearchHit hit : searchResponse.getHits())
+        {
+            deleteRequest.setType(AnomalyRecord.TYPE).setId(hit.getId()).execute().actionGet();
+        }
     }
 
     private XContentBuilder serialiseCategoryDefinition(CategoryDefinition category)

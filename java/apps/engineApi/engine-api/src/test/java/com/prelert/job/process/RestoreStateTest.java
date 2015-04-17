@@ -56,6 +56,8 @@ import com.prelert.job.persistence.elasticsearch.ElasticsearchJobProvider;
 import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
+import com.prelert.job.process.params.DataLoadParams;
+import com.prelert.job.process.params.TimeRange;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.rs.data.Bucket;
@@ -138,16 +140,17 @@ public class RestoreStateTest
         {
             String input_part_1 = prelertSrcHome + "/gui/apps/autodetectAPI/test_data/flightcentre_forwards_1.csv";
             String input_part_2 = prelertSrcHome + "/gui/apps/autodetectAPI/test_data/flightcentre_forwards_2.csv";
+            DataLoadParams dataLoadParams = new DataLoadParams(false, new TimeRange(null, null));
 
             InputStream fs = new FileInputStream(new File(input_part_1));
-            jobManager.submitDataLoadJob(job.getId(), fs);
+            jobManager.submitDataLoadJob(job.getId(), fs, dataLoadParams);
             jobManager.finishJob(job.getId());
 
             Thread.sleep(2000);
 
             // now send the next part
             fs = new FileInputStream(new File(input_part_2));
-            jobManager.submitDataLoadJob(job.getId(), fs);
+            jobManager.submitDataLoadJob(job.getId(), fs, dataLoadParams);
             jobManager.finishJob(job.getId());
 
             Thread.sleep(1000);

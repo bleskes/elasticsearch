@@ -31,32 +31,39 @@ import javax.ws.rs.core.Response;
 
 import com.prelert.rs.data.ApiError;
 import com.prelert.rs.data.ErrorCode;
+import com.prelert.rs.data.HasErrorCode;
 
 /**
  * Overrides the default {@linkplain WebApplicationException}
  * response to include the error code and message
  */
-public class RestApiException extends WebApplicationException
+public class RestApiException extends WebApplicationException implements HasErrorCode
 {
-	private static final long serialVersionUID = -4162139513941557651L;
+    private static final long serialVersionUID = -4162139513941557651L;
 
-	private final ErrorCode m_ErrorCode;
-	private final Response.Status m_Status;
+    private final ErrorCode m_ErrorCode;
+    private final Response.Status m_Status;
 
-	public RestApiException(String msg, ErrorCode errorCode, Response.Status status)
-	{
-		super(msg);
-		m_ErrorCode = errorCode;
-		m_Status = status;
-	}
+    public RestApiException(String msg, ErrorCode errorCode, Response.Status status)
+    {
+        super(msg);
+        m_ErrorCode = errorCode;
+        m_Status = status;
+    }
 
-	@Override
-	public Response getResponse()
-	{
-		ApiError error = new ApiError(m_ErrorCode);
-		error.setMessage(this.getMessage());
+    @Override
+    public Response getResponse()
+    {
+        ApiError error = new ApiError(m_ErrorCode);
+        error.setMessage(this.getMessage());
 
-		return Response.status(m_Status)
-				.entity(error.toJson()).build();
-	}
+        return Response.status(m_Status)
+                .entity(error.toJson()).build();
+    }
+
+    @Override
+    public ErrorCode getErrorCode()
+    {
+        return m_ErrorCode;
+    }
 }

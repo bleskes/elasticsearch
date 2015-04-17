@@ -114,8 +114,8 @@ public class Alerts extends ResourceWithJobManager
                 + " start = '%s', end='%s'",
                 params.expand?"expanded ":"", params.skip, params.take, params.start, params.end));
 
-        long epochStart = paramToEpochIfValidOrThrow(params.start, LOGGER);
-        long epochEnd = paramToEpochIfValidOrThrow(params.end, LOGGER);
+        long epochStart = paramToEpochIfValidOrThrow(START_QUERY_PARAM, params.start, LOGGER);
+        long epochEnd = paramToEpochIfValidOrThrow(END_QUERY_PARAM, params.end, LOGGER);
 
         Pagination<Alert> alerts = new Pagination<>();
         //AlertManager manager = alertManager();

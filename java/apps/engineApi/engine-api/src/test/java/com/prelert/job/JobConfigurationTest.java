@@ -45,6 +45,7 @@ import com.prelert.job.transform.TransformConfig;
 import com.prelert.job.transform.TransformConfigurationException;
 import com.prelert.job.transform.TransformType;
 import com.prelert.rs.data.ErrorCode;
+import com.prelert.rs.data.ErrorCodeMatcher;
 
 /**
  * Test the {@link JobConfiguration#verify()} function for
@@ -94,6 +95,20 @@ public class JobConfigurationTest
                 ErrorCodeMatcher.hasErrorCode(ErrorCode.PROHIBITIED_CHARACTER_IN_JOB_ID));
 
         conf.setId("UPPERCASE");
+        conf.verify();
+    }
+
+    @Test
+    public void testCheckValidId_ControlChars() throws JobConfigurationException
+    {
+        JobConfiguration conf = new JobConfiguration();
+        conf.setReferenceJobId("ref");
+
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCode.PROHIBITIED_CHARACTER_IN_JOB_ID));
+
+        conf.setId("two\nlines");
         conf.verify();
     }
 

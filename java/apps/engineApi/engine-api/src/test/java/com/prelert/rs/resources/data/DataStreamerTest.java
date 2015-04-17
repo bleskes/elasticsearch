@@ -46,6 +46,7 @@ import com.prelert.job.manager.JobManager;
 import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
+import com.prelert.job.process.params.DataLoadParams;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 
@@ -74,13 +75,14 @@ public class DataStreamerTest
         JobManager jobManager = mock(JobManager.class);
         DataStreamer dataStreamer = new DataStreamer(jobManager);
         InputStream inputStream = mock(InputStream.class);
+        DataLoadParams params = mock(DataLoadParams.class);
 
-        when(jobManager.submitDataLoadJob("foo", inputStream)).thenReturn(
+        when(jobManager.submitDataLoadJob("foo", inputStream, params)).thenReturn(
                 new DataCounts());
 
-        dataStreamer.streamData(null, "foo", inputStream);
+        dataStreamer.streamData(null, "foo", inputStream, params);
 
-        verify(jobManager).submitDataLoadJob("foo", inputStream);
+        verify(jobManager).submitDataLoadJob("foo", inputStream, params);
         Mockito.verifyNoMoreInteractions(jobManager);
     }
 

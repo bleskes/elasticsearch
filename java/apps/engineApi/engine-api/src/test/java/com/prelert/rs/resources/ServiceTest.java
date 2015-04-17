@@ -25,47 +25,41 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job;
+package com.prelert.rs.resources;
 
-import org.hamcrest.Description;
-import org.junit.internal.matchers.TypeSafeMatcher;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
-import com.prelert.job.exceptions.JobException;
-import com.prelert.rs.data.ErrorCode;
+import java.util.HashSet;
+import java.util.Set;
+
+import javax.ws.rs.core.Application;
+
+import com.prelert.job.manager.JobManager;
 
 /**
- * Matcher class for job exceptions.
- * Checks the expected error code is returned
- * @param <E>
+ * Test base class for testing the REST end-points.
  */
-public class ErrorCodeMatcher <E extends JobException> extends TypeSafeMatcher<E>
+public class ServiceTest
 {
-    private ErrorCode m_ExpectedErrorCode;
-    private ErrorCode m_ActualErrorCode;
+    protected JobManager m_JobManager;
 
-    public static <E extends JobException> ErrorCodeMatcher<E> hasErrorCode(ErrorCode expected)
+    protected ServiceTest()
     {
-        return new ErrorCodeMatcher<E>(expected);
+        m_JobManager = mock(JobManager.class);
     }
 
-    private ErrorCodeMatcher(ErrorCode expectedErrorCode)
+    protected void configureService(ResourceWithJobManager service)
     {
-        m_ExpectedErrorCode = expectedErrorCode;
+        Set<Object> singletons = new HashSet<>();
+        singletons.add(m_JobManager);
+        Application application = mock(Application.class);
+        when(application.getSingletons()).thenReturn(singletons);
+        service.setApplication(application);
     }
 
-    @Override
-    public void describeTo(Description description)
+    protected JobManager jobManager()
     {
-        description.appendValue(m_ActualErrorCode)
-                .appendText(" was found instead of ")
-                .appendValue(m_ExpectedErrorCode);
+        return m_JobManager;
     }
-
-    @Override
-    public boolean matchesSafely(E item)
-    {
-        m_ActualErrorCode = item.getErrorCode();
-        return m_ActualErrorCode.equals(m_ExpectedErrorCode);
-    }
-
 }

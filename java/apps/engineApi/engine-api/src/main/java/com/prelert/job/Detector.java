@@ -32,6 +32,7 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.prelert.job.exceptions.JobConfigurationException;
@@ -43,6 +44,7 @@ import com.prelert.rs.data.ErrorCode;
  * <code>fieldname</code> must be set and only one of <code>byFieldName</code>
  * and <code>overFieldName</code> should be set.
  */
+@JsonIgnoreProperties({"supportingBucketResetting"})
 @JsonInclude(Include.NON_NULL)
 public class Detector
 {
@@ -196,6 +198,14 @@ public class Detector
                 HIGH_NON_ZERO_COUNT, HIGH_NZC
             }));
 
+    private static final Set<String> NO_BUCKET_RESET_SUPPORTING_FUNCTIONS =
+            new HashSet<String>(Arrays.asList(
+                METRIC,
+                MEAN, AVG,
+                HIGH_MEAN, HIGH_AVG,
+                LOW_MEAN, LOW_AVG,
+                MIN,
+                MAX));
 
     /**
      * field names cannot contain any of these characters
@@ -318,6 +328,11 @@ public class Detector
     public String getExcludeFrequent()
     {
         return m_ExcludeFrequent;
+    }
+
+    public boolean isSupportingBucketResetting()
+    {
+        return m_Function != null && !NO_BUCKET_RESET_SUPPORTING_FUNCTIONS.contains(m_Function);
     }
 
     public void setExcludeFrequent(String v)

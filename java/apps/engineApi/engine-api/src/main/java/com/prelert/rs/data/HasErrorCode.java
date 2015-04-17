@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -25,35 +25,9 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.exceptions;
+package com.prelert.rs.data;
 
-import com.prelert.rs.data.ErrorCode;
-import com.prelert.rs.data.HasErrorCode;
-
-/**
- * General job exception class with a specific error code and message.
- */
-public abstract class JobException extends Exception implements HasErrorCode
+public interface HasErrorCode
 {
-    private static final long serialVersionUID = -5289885963015348819L;
-
-    private final ErrorCode m_ErrorCode;
-
-    public JobException(String message, ErrorCode errorCode)
-    {
-        super(message);
-        m_ErrorCode = errorCode;
-    }
-
-    public JobException(String message, ErrorCode errorCode, Throwable cause)
-    {
-        super(message, cause);
-        m_ErrorCode = errorCode;
-    }
-
-    @Override
-    public ErrorCode getErrorCode()
-    {
-        return m_ErrorCode;
-    }
+    public ErrorCode getErrorCode();
 }

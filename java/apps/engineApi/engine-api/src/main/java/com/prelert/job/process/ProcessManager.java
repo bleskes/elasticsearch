@@ -68,6 +68,8 @@ import com.prelert.job.process.exceptions.ClosedJobException;
 import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
+import com.prelert.job.process.params.DataLoadParams;
+import com.prelert.job.process.params.InterimResultsParams;
 import com.prelert.job.process.writer.ControlMsgToProcessWriter;
 import com.prelert.job.process.writer.DataToProcessWriter;
 import com.prelert.job.process.writer.DataToProcessWriterFactory;
@@ -166,7 +168,7 @@ public class ProcessManager
         Runtime.getRuntime().addShutdownHook(shutdownHook);
     }
 
-       /**
+     /**
      * Passes data to the native process. There are 3 alternate cases handled
      * by this function
      * <ol>
@@ -176,7 +178,7 @@ public class ProcessManager
      * saved to the database. Create a new process and restore the persisted
      * state</li>
      * </ol>
-     * This is a blocking call that won't return untill all the data has been
+     * This is a blocking call that won't return until all the data has been
      * written to the process. A new thread is launched to parse the process's
      * output.
      * <br/>
@@ -188,6 +190,7 @@ public class ProcessManager
      *
      * @param jobId
      * @param input
+     * @param params
      * @return True if successful or false if the data can't be written because
      * it is already processing some data
      * @throws UnknownJobException
@@ -202,61 +205,18 @@ public class ProcessManager
      * @throws MalformedJsonException
      * @return Count of records, fields, bytes, etc written
      */
-    public DataCounts processDataLoadJob(String jobId, InputStream input)
+    public DataCounts processDataLoadJob(String jobId, InputStream input, DataLoadParams params)
     throws UnknownJobException, NativeProcessRunException, MissingFieldException,
         JsonParseException, JobInUseException, HighProportionOfBadTimestampsException,
         OutOfOrderRecordsException, MalformedJsonException
     {
-        return processDataLoadJob(jobId, input, m_DataPersisterFactory.newNoneDataPersister());
-    }
-
-    /**
-     * Persists the data and passes it to the native process. There are 3 alternate cases handled
-     * by this function
-     * <ol>
-     * <li>This is the first data sent to the job to create a new process</li>
-     * <li>The process has already been created and is still active</li>
-     * <li>The process was created and has expired with its internal state
-     * saved to the database. Create a new process and restore the persisted
-     * state</li>
-     * </ol>
-     * This is a blocking call that won't return untill all the data has been
-     * written to the process. A new thread is launched to parse the process's
-     * output.
-     * <br/>
-     * If there is an error due to the data being in the wrong format or some
-     * other runtime error a {@linkplain NativeProcessRunException} is thrown
-     * <br/>
-     * For CSV data if a configured field is missing from the header
-     * a {@linkplain MissingFieldException} is thrown
-     *
-     * @param jobId
-     * @param input
-     * @return True if successful or false if the data can't be written because
-     * it is already processing some data
-     * @throws UnknownJobException
-     * @throws NativeProcessRunException If there is a problem creating a new process
-     * @throws MissingFieldException If a configured field is missing from
-     * the CSV header
-     * @throws JsonParseException
-     * @throws JobInUseException if the data cannot be written to because
-     * the job is already handling data
-     * @throws HighProportionOfBadTimestampsException
-     * @throws OutOfOrderRecordsException
-     * @throws MalformedJsonException
-     * @return Count of records, fields, bytes, etc written
-     */
-    public DataCounts processDataLoadAndPersistJob(String jobId, InputStream input)
-    throws UnknownJobException, NativeProcessRunException, MissingFieldException,
-        JsonParseException, JobInUseException, HighProportionOfBadTimestampsException,
-        OutOfOrderRecordsException, MalformedJsonException
-    {
-        return processDataLoadJob(jobId, input,
-                m_DataPersisterFactory.newDataPersister(jobId, LOGGER));
+        JobDataPersister persister = params.isPersisting() ? m_DataPersisterFactory
+                .newDataPersister(jobId, LOGGER) : m_DataPersisterFactory.newNoneDataPersister();
+        return processDataLoadJob(jobId, input, persister, params);
     }
 
     private DataCounts processDataLoadJob(String jobId, InputStream input,
-            JobDataPersister jobDataPersister) throws UnknownJobException,
+            JobDataPersister jobDataPersister, DataLoadParams params) throws UnknownJobException,
             NativeProcessRunException, MissingFieldException, JsonParseException,
             JobInUseException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
             MalformedJsonException
@@ -276,8 +236,9 @@ public class ProcessManager
         }
 
         ProcessAndDataDescription process = m_JobIdToProcessMap.get(jobId);
+        boolean isExistingProcess = process != null;
 
-        if (process == null)
+        if (!isExistingProcess)
         {
             // create the new process and restore its state
             // if it has been saved
@@ -303,6 +264,11 @@ public class ProcessManager
         try
         {
             process.setInUse(true);
+
+            if (params.isResettingBuckets())
+            {
+                writeResetBucketsControlMessage(jobId, params, process, isExistingProcess);
+            }
 
             stats = writeToJob(process.getDataDescription(), process.getAnalysisConfig(),
                     process.getTransforms(), input, process.getProcess().getOutputStream(),
@@ -336,6 +302,24 @@ public class ProcessManager
         }
 
         return stats;
+    }
+
+
+    private void writeResetBucketsControlMessage(String jobId, DataLoadParams params,
+            ProcessAndDataDescription process, boolean isExistingProcess) throws IOException
+    {
+        if (isExistingProcess)
+        {
+            ControlMsgToProcessWriter writer = ControlMsgToProcessWriter.create(
+                    process.getProcess().getOutputStream(),
+                    process.getAnalysisConfig());
+            writer.writeResetBucketsMessage(params);
+        }
+        else
+        {
+            LOGGER.warn("Cannot reset buckets for job '" + jobId + "'. Buckets can only be reset "
+                    + "after first data has been sent to the process.");
+        }
     }
 
     /**
@@ -448,13 +432,13 @@ public class ProcessManager
      * sitting in buffers.
      *
      * @param jobId The job to flush
-     * @param calcInterim Should interim results be calculated based on the data
-     * up to the point of the flush?
+     * @param interimResultsParams Parameters about whether interim results calculation
+     * should occur and for which period of time
      * @throws NativeProcessRunException If the process has already terminated
      * @throws JobInUseException if the job cannot be closed because data is
      * being streamed to it
      */
-    public void flushJob(String jobId, boolean calcInterim)
+    public void flushJob(String jobId, InterimResultsParams interimResultsParams)
     throws NativeProcessRunException, JobInUseException
     {
         LOGGER.info("Flushing job " + jobId);
@@ -495,10 +479,7 @@ public class ProcessManager
                     process.getProcess().getOutputStream(),
                     process.getAnalysisConfig());
 
-            if (calcInterim)
-            {
-                writer.writeCalcInterimMessage();
-            }
+            writer.writeCalcInterimMessage(interimResultsParams);
             String flushId = writer.writeFlushMessage();
 
             // Check there wasn't an error in the transfer.

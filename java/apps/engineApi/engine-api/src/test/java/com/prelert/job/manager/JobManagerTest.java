@@ -48,7 +48,6 @@ import org.mockito.MockitoAnnotations;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.DataCounts;
-import com.prelert.job.ErrorCodeMatcher;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobStatus;
@@ -60,9 +59,11 @@ import com.prelert.job.process.ProcessManager;
 import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
+import com.prelert.job.process.params.DataLoadParams;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.rs.data.ErrorCode;
+import com.prelert.rs.data.ErrorCodeMatcher;
 
 public class JobManagerTest
 {
@@ -102,9 +103,9 @@ public class JobManagerTest
                 + "limits you to 2 concurrently running jobs. You must close a job before you "
                 + "can reactivate a closed one.");
         m_ExpectedException.expect(
-                ErrorCodeMatcher.<TooManyJobsException>hasErrorCode(ErrorCode.LICENSE_VIOLATION));
+                ErrorCodeMatcher.hasErrorCode(ErrorCode.LICENSE_VIOLATION));
 
-        jobManager.submitDataLoadJob("foo", mock(InputStream.class));
+        jobManager.submitDataLoadJob("foo", mock(InputStream.class), mock(DataLoadParams.class));
     }
 
     @Test
@@ -126,9 +127,9 @@ public class JobManagerTest
                 "of the number of CPU cores see this error code's help documentation " +
                 "for details of how to elevate the setting");
         m_ExpectedException.expect(
-                ErrorCodeMatcher.<TooManyJobsException>hasErrorCode(ErrorCode.TOO_MANY_JOBS_RUNNING_CONCURRENTLY));
+                ErrorCodeMatcher.hasErrorCode(ErrorCode.TOO_MANY_JOBS_RUNNING_CONCURRENTLY));
 
-        jobManager.submitDataLoadJob("foo", mock(InputStream.class));
+        jobManager.submitDataLoadJob("foo", mock(InputStream.class), mock(DataLoadParams.class));
     }
 
     @Test
@@ -151,9 +152,9 @@ public class JobManagerTest
                 "of the number of CPU cores see this error code's help documentation " +
                 "for details of how to elevate the setting");
         m_ExpectedException.expect(ErrorCodeMatcher
-                .<TooManyJobsException>hasErrorCode(ErrorCode.TOO_MANY_JOBS_RUNNING_CONCURRENTLY));
+                .hasErrorCode(ErrorCode.TOO_MANY_JOBS_RUNNING_CONCURRENTLY));
 
-        jobManager.submitDataLoadJob("foo", mock(InputStream.class));
+        jobManager.submitDataLoadJob("foo", mock(InputStream.class), mock(DataLoadParams.class));
     }
 
     @Test
@@ -176,9 +177,9 @@ public class JobManagerTest
                 "of the number of CPU cores see this error code's help documentation " +
                 "for details of how to elevate the setting");
         m_ExpectedException.expect(
-                ErrorCodeMatcher.<TooManyJobsException>hasErrorCode(ErrorCode.TOO_MANY_JOBS_RUNNING_CONCURRENTLY));
+                ErrorCodeMatcher.hasErrorCode(ErrorCode.TOO_MANY_JOBS_RUNNING_CONCURRENTLY));
 
-        jobManager.submitDataLoadJob("foo", mock(InputStream.class));
+        jobManager.submitDataLoadJob("foo", mock(InputStream.class), mock(DataLoadParams.class));
     }
 
     @Test
@@ -189,15 +190,16 @@ public class JobManagerTest
             OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException
     {
         InputStream inputStream = mock(InputStream.class);
+        DataLoadParams params = mock(DataLoadParams.class);
         when(m_JobProvider.getJobDetails("foo")).thenReturn(
                 new JobDetails("foo", new JobConfiguration()));
         givenProcessInfo(5);
         when(m_ProcessManager.jobIsRunning("foo")).thenReturn(false);
         when(m_ProcessManager.numberOfRunningJobs()).thenReturn(0);
-        when(m_ProcessManager.processDataLoadJob("foo", inputStream)).thenReturn(new DataCounts());
+        when(m_ProcessManager.processDataLoadJob("foo", inputStream, params)).thenReturn(new DataCounts());
         JobManager jobManager = new JobManager(m_JobProvider, m_ProcessManager);
 
-        DataCounts stats = jobManager.submitDataLoadJob("foo", inputStream);
+        DataCounts stats = jobManager.submitDataLoadJob("foo", inputStream, params);
         assertNotNull(stats);
 
         ArgumentCaptor<Map> updateCaptor = ArgumentCaptor.forClass(Map.class);
@@ -212,5 +214,4 @@ public class JobManagerTest
         String info = String.format("{\"jobs\":\"%d\"}", maxLicenseJobs);
         when(m_ProcessManager.getInfo()).thenReturn(info);
     }
-
 }

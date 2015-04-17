@@ -113,8 +113,8 @@ public class Records extends ResourceWithJobManager
                 normalizedProbabilityFilter, anomalySoreFilter,
                 includeInterim ? "including" : "excluding"));
 
-        long epochStartMs = paramToEpochIfValidOrThrow(start, LOGGER);
-        long epochEndMs = paramToEpochIfValidOrThrow(end, LOGGER);
+        long epochStartMs = paramToEpochIfValidOrThrow(START_QUERY_PARAM, start, LOGGER);
+        long epochEndMs = paramToEpochIfValidOrThrow(END_QUERY_PARAM, end, LOGGER);
 
         JobManager manager = jobManager();
         Pagination<AnomalyRecord> records;

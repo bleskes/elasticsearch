@@ -258,28 +258,26 @@ public class NormalizationTest implements Closeable
 
 
         /*
-         * We know there is one large anomaly in the farequote data
-         * with score 90+
+         * We know there is only one large anomaly in the farequote data
+         * with score 80+, and it spans two buckets
          */
         int highAnomalyScoreCount = 0;
         for (Bucket b : pagedBuckets)
         {
-            if (b.getAnomalyScore() >= 90.0)
+            if (b.getAnomalyScore() >= 80.0)
             {
                 highAnomalyScoreCount++;
             }
         }
-        test(highAnomalyScoreCount == 1);
+        test(highAnomalyScoreCount == 2);
 
         // The big anomaly spans buckets 771 and 772.  Which one of these has
         // the higher score may vary as the analytics are updated, but each
-        // should have a score of at least 70 and the sum of the scores should
-        // be greater than 165.
+        // should have a score of at least 80.
         double bucket771Score = pagedBuckets.get(770).getAnomalyScore();
         double bucket772Score = pagedBuckets.get(771).getAnomalyScore();
-        test(bucket771Score >= 70.0);
-        test(bucket772Score >= 70.0);
-        test(bucket771Score + bucket772Score >= 165.0);
+        test(bucket771Score >= 80.0);
+        test(bucket772Score >= 80.0);
 
         Pagination<Bucket> allBucketsExpanded = m_WebServiceClient.getBuckets(baseUrl,
                 jobId, true, 0l, 1500l, 0.0, 0.0);
@@ -424,25 +422,25 @@ public class NormalizationTest implements Closeable
 
 
         /*
-         * There should be one anomaly with unusual score of 90+
-         * and at least one with anomaly score 90+
+         * There should be at least two anomalies with unusual score of 80+
+         * and at least two with anomaly score 80+
          */
         int highAnomalyScoreCount = 0;
         int highUnusualScoreCount = 0;
         for (AnomalyRecord record : pagedRecords)
         {
-            if (record.getNormalizedProbability() >= 90.0)
+            if (record.getNormalizedProbability() >= 80.0)
             {
                 highUnusualScoreCount++;
             }
-            if (record.getAnomalyScore() >= 90.0)
+            if (record.getAnomalyScore() >= 80.0)
             {
                 highAnomalyScoreCount++;
             }
         }
 
-        test(highAnomalyScoreCount >= 1);
-        test(highUnusualScoreCount == 1);
+        test(highAnomalyScoreCount >= 2);
+        test(highUnusualScoreCount >= 2);
 
         /*
          * Test get records by date range with a time string

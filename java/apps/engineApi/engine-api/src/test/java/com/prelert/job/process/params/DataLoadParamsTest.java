@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -25,21 +25,44 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.rs.resources.data;
+package com.prelert.job.process.params;
 
-import com.prelert.job.manager.JobManager;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
-public class DataStreamerAndPersister extends AbstractDataStreamer
+import org.junit.Test;
+
+import com.prelert.job.process.params.DataLoadParams;
+
+public class DataLoadParamsTest
 {
-
-    public DataStreamerAndPersister(JobManager jobManager)
+    @Test
+    public void testGetStart()
     {
-        super(jobManager);
+        assertEquals("", new DataLoadParams(false, new TimeRange(null, null)).getStart());
+        assertEquals("3", new DataLoadParams(false, new TimeRange(3L, null)).getStart());
     }
 
-    @Override
-    protected boolean shouldPersistJobData()
+    @Test
+    public void testGetEnd()
     {
-        return true;
+        assertEquals("", new DataLoadParams(false, new TimeRange(null, null)).getEnd());
+        assertEquals("1", new DataLoadParams(false, new TimeRange(null, 1L)).getEnd());
     }
+
+    @Test
+    public void testIsResettingBuckets()
+    {
+        assertFalse(new DataLoadParams(false, new TimeRange(null, null)).isResettingBuckets());
+        assertTrue(new DataLoadParams(false, new TimeRange(5L, null)).isResettingBuckets());
+    }
+
+    @Test
+    public void testIsPersisting()
+    {
+        assertFalse(new DataLoadParams(false, new TimeRange(null, null)).isPersisting());
+        assertTrue(new DataLoadParams(true, new TimeRange(null, null)).isPersisting());
+    }
+
 }

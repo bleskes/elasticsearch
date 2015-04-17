@@ -28,6 +28,8 @@
 package com.prelert.job;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -673,6 +675,38 @@ public class DetectorTest
             // "metric" function for pre-summarised data trumps invalid characters
             Assert.assertEquals(ErrorCode.INVALID_FUNCTION, e.getErrorCode());
         }
+    }
+
+    @Test
+    public void testIsSupportingBucketResetting()
+    {
+        assertTrue(createDetectorWithFunction("distinct_count").isSupportingBucketResetting());
+        assertTrue(createDetectorWithFunction("dc").isSupportingBucketResetting());
+        assertTrue(createDetectorWithFunction("info_content").isSupportingBucketResetting());
+        assertTrue(createDetectorWithFunction("low_info_content").isSupportingBucketResetting());
+        assertTrue(createDetectorWithFunction("high_info_content").isSupportingBucketResetting());
+        assertTrue(createDetectorWithFunction("sum").isSupportingBucketResetting());
+        assertTrue(createDetectorWithFunction("low_sum").isSupportingBucketResetting());
+        assertTrue(createDetectorWithFunction("high_sum").isSupportingBucketResetting());
+        assertTrue(createDetectorWithFunction("non_null_sum").isSupportingBucketResetting());
+        assertTrue(createDetectorWithFunction("low_non_null_sum").isSupportingBucketResetting());
+        assertTrue(createDetectorWithFunction("high_non_null_sum").isSupportingBucketResetting());
+
+        assertFalse(createDetectorWithFunction(null).isSupportingBucketResetting());
+        assertFalse(createDetectorWithFunction("metric").isSupportingBucketResetting());
+        assertFalse(createDetectorWithFunction("mean").isSupportingBucketResetting());
+        assertFalse(createDetectorWithFunction("avg").isSupportingBucketResetting());
+        assertFalse(createDetectorWithFunction("low_mean").isSupportingBucketResetting());
+        assertFalse(createDetectorWithFunction("low_avg").isSupportingBucketResetting());
+        assertFalse(createDetectorWithFunction("high_mean").isSupportingBucketResetting());
+        assertFalse(createDetectorWithFunction("high_avg").isSupportingBucketResetting());
+    }
+
+    private static Detector createDetectorWithFunction(String function)
+    {
+        Detector detector = new Detector();
+        detector.setFunction(function);
+        return detector;
     }
 
     @Test

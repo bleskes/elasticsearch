@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -25,35 +25,26 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.exceptions;
+package com.prelert.job.process.params;
 
-import com.prelert.rs.data.ErrorCode;
-import com.prelert.rs.data.HasErrorCode;
-
-/**
- * General job exception class with a specific error code and message.
- */
-public abstract class JobException extends Exception implements HasErrorCode
+public class TimeRange
 {
-    private static final long serialVersionUID = -5289885963015348819L;
+    private final Long m_Start;
+    private final Long m_End;
 
-    private final ErrorCode m_ErrorCode;
-
-    public JobException(String message, ErrorCode errorCode)
+    public TimeRange(Long start, Long end)
     {
-        super(message);
-        m_ErrorCode = errorCode;
+        m_Start = start;
+        m_End = end;
     }
 
-    public JobException(String message, ErrorCode errorCode, Throwable cause)
+    public String getStart()
     {
-        super(message, cause);
-        m_ErrorCode = errorCode;
+        return m_Start == null ? "" : String.valueOf(m_Start);
     }
 
-    @Override
-    public ErrorCode getErrorCode()
+    public String getEnd()
     {
-        return m_ErrorCode;
+        return m_End == null ? "" : String.valueOf(m_End);
     }
 }

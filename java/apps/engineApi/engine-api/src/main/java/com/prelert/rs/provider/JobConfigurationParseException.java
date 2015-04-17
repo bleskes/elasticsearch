@@ -31,39 +31,46 @@ import javax.ws.rs.core.Response;
 
 import com.prelert.rs.data.ApiError;
 import com.prelert.rs.data.ErrorCode;
+import com.prelert.rs.data.HasErrorCode;
 
 /**
  * Represents an error in parsing the configuration for a new job.
  * Returns a 400 Bad Request status code and a message.
  */
-public class JobConfigurationParseException extends WebApplicationException
+public class JobConfigurationParseException extends WebApplicationException implements HasErrorCode
 {
-	private static final long serialVersionUID = -7189040309467301076L;
+    private static final long serialVersionUID = -7189040309467301076L;
 
-	private final ErrorCode m_ErrorCode;
+    private final ErrorCode m_ErrorCode;
 
-	public JobConfigurationParseException(String message, Throwable cause)
-	{
-		super(message, cause);
-		m_ErrorCode = ErrorCode.JOB_CONFIG_PARSE_ERROR;
-	}
+    public JobConfigurationParseException(String message, Throwable cause)
+    {
+        super(message, cause);
+        m_ErrorCode = ErrorCode.JOB_CONFIG_PARSE_ERROR;
+    }
 
 
-	public JobConfigurationParseException(String message, Throwable cause,
-			ErrorCode errorCode)
-	{
-		super(message, cause);
-		m_ErrorCode = errorCode;
-	}
+    public JobConfigurationParseException(String message, Throwable cause,
+            ErrorCode errorCode)
+    {
+        super(message, cause);
+        m_ErrorCode = errorCode;
+    }
 
-	@Override
-	public Response getResponse()
-	{
-		ApiError err = new ApiError(m_ErrorCode);
-		err.setMessage(this.getMessage());
-		err.setCause(this.getCause());
+    @Override
+    public Response getResponse()
+    {
+        ApiError err = new ApiError(m_ErrorCode);
+        err.setMessage(this.getMessage());
+        err.setCause(this.getCause());
 
-		return Response.status(Response.Status.BAD_REQUEST)
-				.entity(err.toJson()).build();
-	}
+        return Response.status(Response.Status.BAD_REQUEST)
+                .entity(err.toJson()).build();
+    }
+
+    @Override
+    public ErrorCode getErrorCode()
+    {
+        return m_ErrorCode;
+    }
 }
