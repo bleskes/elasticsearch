@@ -231,6 +231,7 @@ public class DetectorTest
         // some functions require a fieldname
         d.setFieldName("f");
         for (String f : new String[] { Detector.DISTINCT_COUNT, Detector.DC,
+                Detector.HIGH_DISTINCT_COUNT, Detector.HDC, Detector.LOW_DISTINCT_COUNT, Detector.LDC,
                 Detector.INFO_CONTENT, Detector.LOW_INFO_CONTENT, Detector.HIGH_INFO_CONTENT,
                 Detector.METRIC, Detector.MEAN, Detector.HIGH_MEAN, Detector.LOW_MEAN, Detector.AVG,
                 Detector.HIGH_AVG, Detector.LOW_AVG, Detector.MAX, Detector.MIN, Detector.SUM,
@@ -253,11 +254,6 @@ public class DetectorTest
 
         // these functions cannot have a field name
         difference = new HashSet<String>(Detector.ANALYSIS_FUNCTIONS);
-        difference.remove(Detector.DISTINCT_COUNT);
-        difference.remove(Detector.DC);
-        difference.remove(Detector.INFO_CONTENT);
-        difference.remove(Detector.LOW_INFO_CONTENT);
-        difference.remove(Detector.HIGH_INFO_CONTENT);
         difference.remove(Detector.METRIC);
         difference.remove(Detector.MEAN);
         difference.remove(Detector.LOW_MEAN);
@@ -273,6 +269,15 @@ public class DetectorTest
         difference.remove(Detector.NON_NULL_SUM);
         difference.remove(Detector.LOW_NON_NULL_SUM);
         difference.remove(Detector.HIGH_NON_NULL_SUM);
+        difference.remove(Detector.DISTINCT_COUNT);
+        difference.remove(Detector.HIGH_DISTINCT_COUNT);
+        difference.remove(Detector.LOW_DISTINCT_COUNT);
+        difference.remove(Detector.DC);
+        difference.remove(Detector.LDC);
+        difference.remove(Detector.HDC);
+        difference.remove(Detector.INFO_CONTENT);
+        difference.remove(Detector.LOW_INFO_CONTENT);
+        difference.remove(Detector.HIGH_INFO_CONTENT);
         for (String f : difference)
         {
             d.setFunction(f);
@@ -293,34 +298,12 @@ public class DetectorTest
             {
             }
         }
+        
+        d.setFieldName(null);
+        d.setByFieldName("b");
+        d.setOverFieldName(null);
 
-
-        // these functions cannot have a by field
-        d = new Detector();
-        d.setByFieldName("by");
-        for (String f : new String [] {Detector.DISTINCT_COUNT, Detector.DC,
-                Detector.INFO_CONTENT, Detector.LOW_INFO_CONTENT, Detector.HIGH_INFO_CONTENT})
-        {
-            d.setFunction(f);
-            try
-            {
-                d.verify(false);
-                Assert.fail("JobConfigurationException not thrown when expected");
-            }
-            catch (JobConfigurationException e)
-            {
-            }
-            try
-            {
-                d.verify(true);
-                Assert.fail("JobConfigurationException not thrown when expected");
-            }
-            catch (JobConfigurationException e)
-            {
-            }
-        }
-
-        // these can have an by field
+        // these can have a by field
         for (String f : new String [] {Detector.COUNT, Detector.HIGH_COUNT,
                 Detector.LOW_COUNT, Detector.RARE,
                 Detector.NON_ZERO_COUNT, Detector.NZC})
@@ -341,7 +324,9 @@ public class DetectorTest
         for (String f : new String[] { Detector.METRIC, Detector.MEAN, Detector.HIGH_MEAN,
                 Detector.LOW_MEAN, Detector.AVG, Detector.HIGH_AVG, Detector.LOW_AVG, Detector.MAX,
                 Detector.MIN, Detector.SUM, Detector.LOW_SUM, Detector.HIGH_SUM, Detector.NON_NULL_SUM,
-                Detector.LOW_NON_NULL_SUM, Detector.HIGH_NON_NULL_SUM })
+                Detector.LOW_NON_NULL_SUM, Detector.HIGH_NON_NULL_SUM, Detector.DISTINCT_COUNT, Detector.DC,
+                Detector.HIGH_DISTINCT_COUNT, Detector.HDC, Detector.LOW_DISTINCT_COUNT, Detector.LDC,
+                Detector.INFO_CONTENT, Detector.LOW_INFO_CONTENT, Detector.HIGH_INFO_CONTENT })
         {
             d.setFunction(f);
             d.verify(false);
@@ -682,6 +667,10 @@ public class DetectorTest
     {
         assertTrue(createDetectorWithFunction("distinct_count").isSupportingBucketResetting());
         assertTrue(createDetectorWithFunction("dc").isSupportingBucketResetting());
+        assertTrue(createDetectorWithFunction("high_distinct_count").isSupportingBucketResetting());
+        assertTrue(createDetectorWithFunction("hdc").isSupportingBucketResetting());
+        assertTrue(createDetectorWithFunction("low_distinct_count").isSupportingBucketResetting());
+        assertTrue(createDetectorWithFunction("ldc").isSupportingBucketResetting());
         assertTrue(createDetectorWithFunction("info_content").isSupportingBucketResetting());
         assertTrue(createDetectorWithFunction("low_info_content").isSupportingBucketResetting());
         assertTrue(createDetectorWithFunction("high_info_content").isSupportingBucketResetting());

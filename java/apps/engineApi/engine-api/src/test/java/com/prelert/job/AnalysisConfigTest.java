@@ -223,15 +223,7 @@ public class AnalysisConfigTest
         ac.verify();
 
         d.setByFieldName("by");
-        try
-        {
-            ac.verify();
-            Assert.assertTrue(false); // shouldn't get here
-        }
-        catch (JobConfigurationException e)
-        {
-            assertEquals(ErrorCode.INVALID_FIELD_SELECTION, e.getErrorCode());
-        }
+        ac.verify();
 
         d.setByFieldName(null);
         d.setFunction("made_up_function");
