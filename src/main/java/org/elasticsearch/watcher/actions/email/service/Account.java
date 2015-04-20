@@ -87,7 +87,7 @@ public class Account {
         if (profile == null) {
             profile = config.profile;
         }
-        transport.connect(config.smtp.host, config.smtp.port, user, new String(password));
+        transport.connect(config.smtp.host, config.smtp.port, user, password != null ? new String(password) : null);
         try {
 
             MimeMessage message = profile.toMimeMessage(email, session);
@@ -100,12 +100,10 @@ public class Account {
             }
             transport.sendMessage(message, message.getAllRecipients());
         } finally {
-            if (transport != null) {
-                try {
-                    transport.close();
-                } catch (MessagingException me) {
-                    logger.error("failed to close email transport for account [" + config.name + "]");
-                }
+            try {
+                transport.close();
+            } catch (MessagingException me) {
+                logger.error("failed to close email transport for account [" + config.name + "]");
             }
         }
         return email;
