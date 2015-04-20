@@ -486,6 +486,23 @@ public class EngineApiClient implements Closeable
         return streamingUpload(baseUrl, jobId, stream, compressed);
     }
 
+    /**
+     * Flush the job, ensuring that no previously uploaded data is waiting in
+     * buffers.
+     *
+     * @param baseUrl The base URL for the REST API including version number
+     * e.g <code>http://localhost:8080/engine/v1/</code>
+     * @param jobId The Job's unique Id
+     * @param calcInterim Should interim results for the selected buckets be calculated
+     * based on the partial data uploaded for it so far? Interim results will be calculated for
+     * all available buckets (most recent bucket plus latency buckets if latency was specified).
+     * @return True if successful
+     * @throws IOException
+     */
+    public boolean flushJob(String baseUrl, String jobId, boolean calcInterim) throws IOException
+    {
+        return flushJob(baseUrl, jobId, calcInterim, "", "");
+    }
 
     /**
      * Flush the job, ensuring that no previously uploaded data is waiting in
@@ -494,20 +511,21 @@ public class EngineApiClient implements Closeable
      * @param baseUrl The base URL for the REST API including version number
      * e.g <code>http://localhost:8080/engine/v1/</code>
      * @param jobId The Job's unique Id
-     * @param calcInterim Should interim results for the most recent bucket be
-     * calculated based on the partial data uploaded for it so far?
+     * @param calcInterim Should interim results for the selected buckets be calculated
+     * based on the partial data uploaded for it so far? If both {@code start} and {@code end} are
+     * empty, the default behaviour of calculating interim results for all available buckets
+     * (most recent bucket plus latency buckets if latency was specified) will be assumed.
+     * @param start The start of the time range to calculate interim results for (inclusive)
+     * @param end The end of the time range to calculate interim results for (exclusive)
      * @return True if successful
      * @throws IOException
      */
-    public boolean flushJob(String baseUrl, String jobId, boolean calcInterim)
-    throws IOException
+    public boolean flushJob(String baseUrl, String jobId, boolean calcInterim, String start,
+            String end) throws IOException
     {
         // Send flush message
-        String flushUrl = baseUrl + "/data/" + jobId + "/flush";
-        if (calcInterim)
-        {
-            flushUrl += "?calcInterim=true";
-        }
+        String flushUrl = String.format(baseUrl + "/data/%s/flush?calcInterim=%s&start=%s&end=%s",
+                jobId, calcInterim ? "true" : "false", start, end);
         LOGGER.debug("Flushing job " + flushUrl);
 
         HttpPost post = new HttpPost(flushUrl);

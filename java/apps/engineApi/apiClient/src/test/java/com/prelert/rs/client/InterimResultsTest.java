@@ -27,9 +27,13 @@
 
 package com.prelert.rs.client;
 
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -456,6 +460,39 @@ public class InterimResultsTest implements Closeable
         return true;
     }
 
+    public void verifyInterimResultsAreRecalculated() throws IOException
+    {
+        String start = "2013-01-30T16:00:00Z";
+        String end = "2013-01-30T16:10:00Z";
+        List<AnomalyRecord> interimResults = getInterimResultsOnly(start, end);
+        test(interimResults.size() == 0);
+
+        String input = "time,airline,responsetime,sourcetype\n";
+        input += "2013-01-30 16:08:00Z,AAL,50000.0,farequote\n";
+        BufferedInputStream inputStream = new BufferedInputStream(new ByteArrayInputStream(
+                input.getBytes(StandardCharsets.UTF_8)));
+        m_WebServiceClient.streamingUpload(API_BASE_URL, TEST_JOB_ID, inputStream, false);
+        m_WebServiceClient.flushJob(API_BASE_URL, TEST_JOB_ID, true, start, end);
+
+        interimResults = getInterimResultsOnly(start, end);
+        test(interimResults.size() == 1);
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX");
+        AnomalyRecord record = interimResults.get(0);
+        test(dateFormat.format(record.getTimestamp()).equals("2013-01-30T16:05:00Z"));
+    }
+
+    private List<AnomalyRecord> getInterimResultsOnly(String start, String end) throws IOException
+    {
+        Pagination<AnomalyRecord> page = m_WebServiceClient.getRecords(
+                API_BASE_URL, TEST_JOB_ID, 0L, 100L, start, end, true);
+        List<AnomalyRecord> records = page.getDocuments();
+        for (AnomalyRecord record : records)
+        {
+            test(record.isInterim());
+        }
+        return records;
+    }
+
     /**
      * Delete all the jobs in the list of job ids
      *
@@ -553,6 +590,7 @@ public class InterimResultsTest implements Closeable
         test.verifyFarequoteInterimRecords(baseUrl, farequoteJob, false);
         test.verifyFarequoteInterimRecords(baseUrl, farequoteJob, true);
 
+        test.verifyInterimResultsAreRecalculated();
         //==========================
         // Clean up test jobs
         InterimResultsTest.test(test.m_WebServiceClient.closeJob(baseUrl, farequoteJob) == true);
