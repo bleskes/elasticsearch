@@ -311,8 +311,7 @@ public enum ErrorCode
 	INVALID_BUCKET_RESET_RANGE_PARAMS(60108),
 
 	/**
-	 * Bucket reset has been requested but either no latency was specified
-	 * or at least one detector has a function that does not support bucket resetting.
+	 * Bucket reset has been requested but no latency was specified.
 	 */
 	BUCKET_RESET_NOT_SUPPORTED(60109);
 
