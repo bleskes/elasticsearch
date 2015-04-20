@@ -419,7 +419,32 @@ public class EngineApiClient implements Closeable
             InputStream inputStream, boolean compressed)
     throws IOException
     {
-        String postUrl = baseUrl + "/data/" + jobId;
+        return streamingUpload(baseUrl, jobId, inputStream, compressed, "", "");
+    }
+
+    /**
+     * Stream data from <code>inputStream</code> to the service.
+     * This is different to {@link #chunkedUpload(String, String, InputStream)}
+     * in that the entire stream is read and uploading at once without breaking
+     * the connection.
+     *
+     * @param baseUrl The base URL for the REST API including version number
+     * e.g <code>http://localhost:8080/engine/v1/</code>
+     * @param jobId The Job's unique Id
+     * @param inputStream The data to write to the web service
+     * @param compressed Is the data gzipped compressed?
+     * @param resetStart The start of the time range to reset buckets for (inclusive)
+     * @param resetEnd The end of the time range to reset buckets for (inclusive)
+     * @return DataCounts
+     * @throws IOException
+     * @see #chunkedUpload(String, String, InputStream)
+     */
+    public DataCounts streamingUpload(String baseUrl, String jobId,
+            InputStream inputStream, boolean compressed, String resetStart, String resetEnd)
+    throws IOException
+    {
+        String postUrl = String.format("%s/data/%s?resetStart=%s&resetEnd=%s", baseUrl, jobId,
+                resetStart, resetEnd);
         LOGGER.debug("Uploading data to " + postUrl);
 
         InputStreamEntity entity = new InputStreamEntity(inputStream);
@@ -484,6 +509,27 @@ public class EngineApiClient implements Closeable
         FileInputStream stream = new FileInputStream(dataFile);
 
         return streamingUpload(baseUrl, jobId, stream, compressed);
+    }
+
+    /**
+     * Upload the contents of <code>dataFile</code> to the server.
+     *
+     * @param baseUrl The base URL for the REST API including version number
+     * e.g <code>http://localhost:8080/engine/v1/</code>
+     * @param jobId The Job's Id
+     * @param dataFile Should match the data configuration format of the job
+     * @param compressed Is the data gzipped compressed?
+     * @param resetStart The start of the time range to reset buckets for (inclusive)
+     * @param resetEnd The end of the time range to reset buckets for (inclusive)
+     * @return
+     * @throws IOException
+     */
+    public DataCounts fileUpload(String baseUrl, String jobId, File dataFile, boolean compressed,
+            String resetStart, String resetEnd) throws IOException
+    {
+        FileInputStream stream = new FileInputStream(dataFile);
+
+        return streamingUpload(baseUrl, jobId, stream, compressed, resetStart, resetEnd);
     }
 
     /**
