@@ -70,10 +70,11 @@ public class ElasticsearchResultsReaderFactory implements ResultsReaderFactory
      */
     private class ReadAutoDetectOutput implements ResultsReader
     {
-        private String m_JobId;
-        private InputStream m_Stream;
-        private Logger m_Logger;
-        private AutoDetectResultsParser m_Parser;
+        private final String m_JobId;
+        private final InputStream m_Stream;
+        private final Logger m_Logger;
+        private final AutoDetectResultsParser m_Parser;
+        private final ElasticsearchJobRenormaliser m_Renormaliser;
 
         public ReadAutoDetectOutput(String jobId, InputStream stream, Logger logger)
         {
@@ -81,17 +82,17 @@ public class ElasticsearchResultsReaderFactory implements ResultsReaderFactory
             m_Stream = stream;
             m_Logger = logger;
             m_Parser = new AutoDetectResultsParser();
+            m_Renormaliser = new ElasticsearchJobRenormaliser(m_JobId, m_JobProvider);
         }
 
         @Override
         public void run()
         {
             ElasticsearchPersister persister = new ElasticsearchPersister(m_JobId, m_JobProvider.getClient());
-            ElasticsearchJobRenormaliser renormaliser = new ElasticsearchJobRenormaliser(m_JobId, m_JobProvider);
 
             try
             {
-                m_Parser.parseResults(m_Stream, persister, renormaliser, m_Logger);
+                m_Parser.parseResults(m_Stream, persister, m_Renormaliser, m_Logger);
             }
             catch (JsonParseException e)
             {
@@ -127,7 +128,7 @@ public class ElasticsearchResultsReaderFactory implements ResultsReaderFactory
 
                 // The renormaliser may have started another thread,
                 // so give it a chance to shut this down
-                renormaliser.shutdown(m_Logger);
+                m_Renormaliser.shutdown(m_Logger);
             }
 
             m_Logger.info("Parse results Complete");
@@ -150,6 +151,10 @@ public class ElasticsearchResultsReaderFactory implements ResultsReaderFactory
         throws InterruptedException
         {
             m_Parser.waitForFlushAcknowledgement(flushId);
+
+            // We also have to wait for the normaliser to become idle so that we block
+            // clients from querying results in the middle of normalisation.
+            m_Renormaliser.waitUntilIdle();
         }
     }
 }

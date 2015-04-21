@@ -74,13 +74,16 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
     /**
      * Queue of updated quantiles to be used for renormalisation
      */
-    private BlockingQueue<QuantileInfo> m_UpdatedQuantileQueue;
+    private final BlockingQueue<QuantileInfo> m_UpdatedQuantileQueue;
 
     /**
      * Thread to use so that quantile updates can run in parallel to the main
      * data processing of the job
      */
-    private Thread m_QuantileUpdateThread;
+    private final Thread m_QuantileUpdateThread;
+
+    /** Guarded by {@link #m_UpdatedQuantileQueue} */
+    private volatile boolean m_IsNormalisationInProgress;
 
     /**
      * Maximum number of buckets to renormalise at a time
@@ -99,6 +102,7 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
         m_JobId = jobId;
         m_JobProvider = jobProvider;
         m_BucketSpan = 0;
+
         // Queue limit of 50 means that renormalisation will eventually block
         // the main data processing of the job if it gets too far ahead
         m_UpdatedQuantileQueue = new ArrayBlockingQueue<>(50);
@@ -435,6 +439,44 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
         return m_BucketSpan;
     }
 
+    /**
+     * Blocks until the queue is empty and no normalisation is in progress.
+     */
+    public void waitUntilIdle()
+    {
+        synchronized (m_UpdatedQuantileQueue)
+        {
+            while (!m_UpdatedQuantileQueue.isEmpty() || m_IsNormalisationInProgress)
+            {
+                try
+                {
+                    wait();
+                }
+                catch (InterruptedException e)
+                {
+                    Thread.currentThread().interrupt();
+                    return;
+                }
+            }
+        }
+    }
+
+    private void setIdleAndNotify()
+    {
+        synchronized (m_UpdatedQuantileQueue)
+        {
+            m_IsNormalisationInProgress = false;
+            notifyAll();
+        }
+    }
+
+    private void setIsNormalisationInProgress()
+    {
+        synchronized (m_UpdatedQuantileQueue)
+        {
+            m_IsNormalisationInProgress = true;
+        }
+    }
 
     /**
      * Simple class to group information in the blocking queue
@@ -487,6 +529,7 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
 
                     // take() will block if the queue is empty
                     QuantileInfo info = ElasticsearchJobRenormaliser.this.m_UpdatedQuantileQueue.take();
+                    setIsNormalisationInProgress();
                     while (keepGoing && info != null)
                     {
                         lastLogger = info.m_Logger;
@@ -533,11 +576,18 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
                     lastLogger.info("Renormaliser thread about to refresh indexes");
                     ElasticsearchJobRenormaliser.this.m_JobProvider.getClient().admin().indices().refresh(
                             new RefreshRequest(ElasticsearchJobRenormaliser.this.m_JobId)).actionGet();
+
+                    if (m_UpdatedQuantileQueue.isEmpty())
+                    {
+                        setIdleAndNotify();
+                    }
                 }
+                setIdleAndNotify();
             }
             catch (InterruptedException e)
             {
                 Thread.currentThread().interrupt();
+                setIdleAndNotify();
                 // Thread will exit now
                 if (lastLogger != null)
                 {
