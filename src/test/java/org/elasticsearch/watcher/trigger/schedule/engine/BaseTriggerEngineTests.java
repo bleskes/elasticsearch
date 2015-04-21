@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.watcher.trigger.schedule.quartz;
+package org.elasticsearch.watcher.trigger.schedule.engine;
 
 import org.apache.lucene.util.LuceneTestCase.Slow;
 import org.elasticsearch.common.joda.time.DateTime;
@@ -25,18 +25,16 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.test.ElasticsearchTestCase;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.watcher.WatcherPlugin;
-import org.elasticsearch.watcher.support.clock.SystemClock;
 import org.elasticsearch.watcher.trigger.Trigger;
 import org.elasticsearch.watcher.trigger.TriggerEngine;
 import org.elasticsearch.watcher.trigger.TriggerEvent;
 import org.elasticsearch.watcher.trigger.schedule.Schedule;
-import org.elasticsearch.watcher.trigger.schedule.ScheduleRegistry;
 import org.elasticsearch.watcher.trigger.schedule.ScheduleTrigger;
-import org.elasticsearch.watcher.trigger.schedule.engine.QuartzScheduleTriggerEngine;
 import org.elasticsearch.watcher.trigger.schedule.support.DayOfWeek;
 import org.elasticsearch.watcher.trigger.schedule.support.WeekTimes;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -48,16 +46,16 @@ import java.util.concurrent.TimeUnit;
 
 import static org.elasticsearch.watcher.trigger.schedule.Schedules.*;
 import static org.hamcrest.Matchers.is;
-import static org.mockito.Mockito.mock;
 
 /**
  *
  */
 @Slow
-public class QuartzScheduleEngineTests extends ElasticsearchTestCase {
+@Ignore
+public abstract class BaseTriggerEngineTests extends ElasticsearchTestCase {
 
-    private ThreadPool threadPool;
-    private QuartzScheduleTriggerEngine engine;
+    protected ThreadPool threadPool;
+    private TriggerEngine engine;
 
     @Before
     public void init() throws Exception {
@@ -67,8 +65,10 @@ public class QuartzScheduleEngineTests extends ElasticsearchTestCase {
                 .put("name", "test")
                 .build();
         threadPool = new ThreadPool(settings, null);
-        engine = new QuartzScheduleTriggerEngine(ImmutableSettings.EMPTY, mock(ScheduleRegistry.class), threadPool, SystemClock.INSTANCE);
+        engine = createEngine();
     }
+
+    protected abstract TriggerEngine createEngine();
 
     @After
     public void cleanup() throws Exception {
@@ -82,7 +82,7 @@ public class QuartzScheduleEngineTests extends ElasticsearchTestCase {
         final CountDownLatch latch = new CountDownLatch(count);
         List<TriggerEngine.Job> jobs = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            jobs.add(new SimpleJob(String.valueOf(i), interval("3s")));
+            jobs.add(new SimpleJob(String.valueOf(i), interval("1s")));
         }
         final BitSet bits = new BitSet(count);
         engine.register(new TriggerEngine.Listener() {
@@ -102,7 +102,7 @@ public class QuartzScheduleEngineTests extends ElasticsearchTestCase {
             }
         });
         engine.start(jobs);
-        if (!latch.await(5, TimeUnit.SECONDS)) {
+        if (!latch.await(3 * count, TimeUnit.SECONDS)) {
             fail("waiting too long for all watches to be triggered");
         }
         engine.stop();
@@ -121,8 +121,8 @@ public class QuartzScheduleEngineTests extends ElasticsearchTestCase {
                 for (TriggerEvent event : events) {
                     assertThat(event.jobName(), is(name));
                     logger.info("triggered job on [{}]", new DateTime());
-                    latch.countDown();
                 }
+                latch.countDown();
             }
         });
         DateTime now = new DateTime(DateTimeZone.UTC);
@@ -171,7 +171,7 @@ public class QuartzScheduleEngineTests extends ElasticsearchTestCase {
         logger.info("scheduling hourly job [{}:{}]", hour, minute);
         logger.info("current date [{}]", now);
         engine.add(new SimpleJob(name, daily().at(hour, minute).build()));
-        // 30 sec is the default idle time of quartz
+        // 30 sec is the default idle time for the scheduler
         long secondsToWait = now.getSecondOfMinute() < 29 ? 62 - now.getSecondOfMinute() : 122 - now.getSecondOfMinute();
         logger.info("waiting at least [{}] seconds for response", secondsToWait);
         if (!latch.await(secondsToWait, TimeUnit.SECONDS)) {
@@ -191,8 +191,8 @@ public class QuartzScheduleEngineTests extends ElasticsearchTestCase {
                 for (TriggerEvent event : events) {
                     assertThat(event.jobName(), is(name));
                     logger.info("triggered job on [{}]", new DateTime());
-                    latch.countDown();
                 }
+                latch.countDown();
             }
         });
         DateTime now = new DateTime(DateTimeZone.UTC);
@@ -209,7 +209,7 @@ public class QuartzScheduleEngineTests extends ElasticsearchTestCase {
         logger.info("scheduling hourly job [{} {}:{}]", day, hour, minute);
         logger.info("current date [{}]", now);
         engine.add(new SimpleJob(name, weekly().time(WeekTimes.builder().on(day).at(hour, minute).build()).build()));
-        // 30 sec is the default idle time of quartz
+        // 30 sec is the default idle time for the scheduler
         long secondsToWait = now.getSecondOfMinute() < 29 ? 62 - now.getSecondOfMinute() : 122 - now.getSecondOfMinute();
         logger.info("waiting at least [{}] seconds for response", secondsToWait);
         if (!latch.await(secondsToWait, TimeUnit.SECONDS)) {
