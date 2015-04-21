@@ -169,8 +169,6 @@ class CsvDataToProcessWriter extends AbstractDataToProcessWriter
 
             // This function can throw
             m_StatusReporter.finishReporting();
-
-            m_RecordWriter.flush();
         }
         finally
         {
