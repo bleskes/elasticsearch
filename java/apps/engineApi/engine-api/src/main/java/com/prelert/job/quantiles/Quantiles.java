@@ -38,6 +38,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
+import com.google.common.base.Objects;
 import com.prelert.utils.json.AutoDetectParseException;
 import com.prelert.utils.json.FieldNameParser;
 
@@ -224,12 +225,8 @@ public class Quantiles
     @Override
     public int hashCode()
     {
-        final int prime = 31;
-        int result = (m_Kind == null) ? 0 : m_Kind.hashCode();
-        result = prime * result + ((m_State == null) ? 0 : m_State.hashCode());
-        return result;
+        return Objects.hashCode(m_Kind, m_State);
     }
-
 
     /**
      * Compare all the fields.
@@ -249,37 +246,8 @@ public class Quantiles
 
         Quantiles that = (Quantiles)other;
 
-        if (m_Kind == null)
-        {
-            if (that.m_Kind != null)
-            {
-                return false;
-            }
-        }
-        else
-        {
-            if (!m_Kind.equals(that.m_Kind))
-            {
-                return false;
-            }
-        }
-
-        if (m_State == null)
-        {
-            if (that.m_State != null)
-            {
-                return false;
-            }
-        }
-        else
-        {
-            if (!m_State.equals(that.m_State))
-            {
-                return false;
-            }
-        }
-
-        return true;
+        return Objects.equal(this.m_Kind, that.m_Kind) &&
+                Objects.equal(this.m_State, that.m_State);
     }
 }
 
