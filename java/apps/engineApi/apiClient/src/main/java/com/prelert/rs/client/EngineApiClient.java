@@ -443,8 +443,12 @@ public class EngineApiClient implements Closeable
             InputStream inputStream, boolean compressed, String resetStart, String resetEnd)
     throws IOException
     {
-        String postUrl = String.format("%s/data/%s?resetStart=%s&resetEnd=%s", baseUrl, jobId,
-                resetStart, resetEnd);
+        String postUrl = String.format("%s/data/%s", baseUrl, jobId);
+        if (!isNullOrEmpty(resetStart) || !isNullOrEmpty(resetEnd))
+        {
+            postUrl += String.format("?resetStart=%s&resetEnd=%s",
+                    nullToEmpty(resetStart), nullToEmpty(resetEnd));
+        }
         LOGGER.debug("Uploading data to " + postUrl);
 
         InputStreamEntity entity = new InputStreamEntity(inputStream);
@@ -490,7 +494,6 @@ public class EngineApiClient implements Closeable
             }
         }
     }
-
 
     /**
      * Upload the contents of <code>dataFile</code> to the server.
@@ -1823,5 +1826,15 @@ public class EngineApiClient implements Closeable
     public ApiError getLastError()
     {
         return m_LastError;
+    }
+
+    private static boolean isNullOrEmpty(String string)
+    {
+        return string == null || string.isEmpty();
+    }
+
+    private static String nullToEmpty(String string)
+    {
+        return string == null ? "" : string;
     }
 }
