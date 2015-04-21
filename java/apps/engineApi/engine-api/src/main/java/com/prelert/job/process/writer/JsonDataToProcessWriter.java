@@ -96,7 +96,7 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter
         try (JsonParser parser = new JsonFactory().createParser(countingStream))
         {
             writeJson(parser);
-            m_RecordWriter.flush();
+
             // this line can throw and will be propagated
             m_StatusReporter.finishReporting();
         }

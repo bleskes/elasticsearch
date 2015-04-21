@@ -808,10 +808,27 @@ public class ProcessManager
         BufferedOutputStream bufferedStream = new BufferedOutputStream(output);
         LengthEncodedWriter lengthEncodedWriter = new LengthEncodedWriter(bufferedStream);
 
-        DataToProcessWriter writer = new DataToProcessWriterFactory().create(lengthEncodedWriter,
-                dataDescription, analysisConfig, transforms, statusReporter, dataPersister, jobLogger);
+        try
+        {
+            DataToProcessWriter writer = new DataToProcessWriterFactory().create(lengthEncodedWriter,
+                    dataDescription, analysisConfig, transforms, statusReporter, dataPersister, jobLogger);
 
-        return writer.write(input);
+            return writer.write(input);
+        }
+        finally
+        {
+            // flush the writer but catch the exception so it
+            // does not suppress any exception thrown in the
+            // try block
+            try
+            {
+                lengthEncodedWriter.flush();
+            }
+            catch (IOException e)
+            {
+                jobLogger.warn("Exception flushing lengthEncodedWriter", e);
+            }
+        }
     }
 
 

@@ -27,9 +27,13 @@
 
 package com.prelert.rs.client;
 
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -44,9 +48,9 @@ import org.apache.log4j.PatternLayout;
 
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
+import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
-import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.Pagination;
@@ -67,7 +71,16 @@ public class InterimResultsTest implements Closeable
 {
     private static final Logger LOGGER = Logger.getLogger(JobsTest.class);
 
-    static final long FAREQUOTE_NUM_FINAL_BUCKETS = 770;
+    private static final long BUCKET_SPAN = 300;
+
+    private static final int LATENCY_BUCKETS = 2;
+
+    // Total number of buckets in data (this includes the current bucket at the end of the job)
+    static final long FAREQUOTE_NUM_TOTAL_BUCKETS = 771;
+
+    // That is the total number of buckets
+    static final long FAREQUOTE_NUM_BEFORE_INTERIM_RESULTS_BUCKETS =
+            FAREQUOTE_NUM_TOTAL_BUCKETS - LATENCY_BUCKETS - 1;
 
     static final String TEST_JOB_ID = "farequote-interim-test";
 
@@ -102,7 +115,8 @@ public class InterimResultsTest implements Closeable
         d.setByFieldName("airline");
 
         AnalysisConfig ac = new AnalysisConfig();
-        ac.setBucketSpan(300L);
+        ac.setBucketSpan(BUCKET_SPAN);
+        ac.setLatency(LATENCY_BUCKETS * BUCKET_SPAN);
         ac.setDetectors(Arrays.asList(d));
 
         DataDescription dd = new DataDescription();
@@ -144,7 +158,8 @@ public class InterimResultsTest implements Closeable
             boolean includeInterim)
     throws IOException
     {
-        long expectedBuckets = (includeInterim ? FAREQUOTE_NUM_FINAL_BUCKETS + 1 : FAREQUOTE_NUM_FINAL_BUCKETS);
+        long expectedBuckets = (includeInterim ? FAREQUOTE_NUM_TOTAL_BUCKETS :
+                FAREQUOTE_NUM_BEFORE_INTERIM_RESULTS_BUCKETS);
 
         Pagination<Bucket> allBuckets = m_WebServiceClient.getBuckets(baseUrl,
                 jobId, false, includeInterim, 0l, 1500l, 0.0, 0.0);
@@ -177,7 +192,7 @@ public class InterimResultsTest implements Closeable
 
             test(pagedBuckets.get(i).equals(allBuckets.getDocuments().get(i)));
 
-            if (i < FAREQUOTE_NUM_FINAL_BUCKETS)
+            if (i < FAREQUOTE_NUM_BEFORE_INTERIM_RESULTS_BUCKETS)
             {
                 test(pagedBuckets.get(i).isInterim() == null || pagedBuckets.get(i).isInterim() == false);
             }
@@ -216,7 +231,7 @@ public class InterimResultsTest implements Closeable
 
             test(pagedBuckets.get(i).equals(allBuckets.getDocuments().get(i)));
 
-            if (i < FAREQUOTE_NUM_FINAL_BUCKETS)
+            if (i < FAREQUOTE_NUM_BEFORE_INTERIM_RESULTS_BUCKETS)
             {
                 test(pagedBuckets.get(i).isInterim() == null || pagedBuckets.get(i).isInterim() == false);
             }
@@ -246,7 +261,7 @@ public class InterimResultsTest implements Closeable
             }
             else
             {
-                test(byDate.getDocuments().get(byDate.getDocumentCount() - 1).getEpoch() == 1359561900l);
+                test(byDate.getDocuments().get(byDate.getDocumentCount() - 1).getEpoch() == 1359561300l);
             }
 
             int startIndex = Collections.binarySearch(allBuckets.getDocuments(),
@@ -445,6 +460,38 @@ public class InterimResultsTest implements Closeable
         return true;
     }
 
+    public void verifyInterimResultsAreRecalculated() throws IOException
+    {
+        String start = "2013-01-30T16:00:00Z";
+        String end = "2013-01-30T16:10:00Z";
+        List<AnomalyRecord> interimResults = getInterimResultsOnly(start, end);
+        test(interimResults.size() == 0);
+
+        String input = "time,airline,responsetime,sourcetype\n";
+        input += "2013-01-30 16:08:00Z,AAL,50000.0,farequote\n";
+        BufferedInputStream inputStream = new BufferedInputStream(new ByteArrayInputStream(
+                input.getBytes(StandardCharsets.UTF_8)));
+        m_WebServiceClient.streamingUpload(API_BASE_URL, TEST_JOB_ID, inputStream, false);
+        m_WebServiceClient.flushJob(API_BASE_URL, TEST_JOB_ID, true, start, end);
+
+        interimResults = getInterimResultsOnly(start, end);
+        test(interimResults.size() == 1);
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX");
+        AnomalyRecord record = interimResults.get(0);
+        test(dateFormat.format(record.getTimestamp()).equals("2013-01-30T16:05:00Z"));
+    }
+
+    private List<AnomalyRecord> getInterimResultsOnly(String start, String end) throws IOException
+    {
+        Pagination<AnomalyRecord> page = m_WebServiceClient.getRecords(
+                API_BASE_URL, TEST_JOB_ID, 0L, 100L, start, end, true);
+        List<AnomalyRecord> records = page.getDocuments();
+        for (AnomalyRecord record : records)
+        {
+            test(record.isInterim());
+        }
+        return records;
+    }
 
     /**
      * Delete all the jobs in the list of job ids
@@ -537,15 +584,16 @@ public class InterimResultsTest implements Closeable
         test.m_WebServiceClient.fileUpload(baseUrl, farequoteJob,
                 fareQuotePartData, false);
         InterimResultsTest.test(test.m_WebServiceClient.flushJob(baseUrl, farequoteJob, true) == true);
-        InterimResultsTest.test(test.m_WebServiceClient.closeJob(baseUrl, farequoteJob) == true);
 
         test.verifyFarequoteInterimBuckets(baseUrl, farequoteJob, false);
         test.verifyFarequoteInterimBuckets(baseUrl, farequoteJob, true);
         test.verifyFarequoteInterimRecords(baseUrl, farequoteJob, false);
         test.verifyFarequoteInterimRecords(baseUrl, farequoteJob, true);
 
+        test.verifyInterimResultsAreRecalculated();
         //==========================
         // Clean up test jobs
+        InterimResultsTest.test(test.m_WebServiceClient.closeJob(baseUrl, farequoteJob) == true);
         test.deleteJobs(baseUrl, jobUrls);
 
         test.close();

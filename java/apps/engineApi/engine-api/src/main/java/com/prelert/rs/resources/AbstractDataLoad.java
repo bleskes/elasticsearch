@@ -28,7 +28,6 @@ package com.prelert.rs.resources;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.List;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
@@ -45,7 +44,6 @@ import org.apache.log4j.Logger;
 
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataCounts;
-import com.prelert.job.Detector;
 import com.prelert.job.JobDetails;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.TooManyJobsException;
@@ -172,7 +170,6 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
         SingleDocument<JobDetails> job = jobManager().getJob(jobId);
         AnalysisConfig config = job.getDocument().getAnalysisConfig();
         checkLatencyIsNonZero(config.getLatency());
-        checkAllDetectorsHaveBucketResetSupportingFunctions(config.getDetectors());
     }
 
     private void checkLatencyIsNonZero(Long latency)
@@ -182,22 +179,6 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
             throw new RestApiException(
                     "Bucket resetting is not supported when no latency is configured.",
                     ErrorCode.BUCKET_RESET_NOT_SUPPORTED, Response.Status.BAD_REQUEST);
-        }
-    }
-
-    private void checkAllDetectorsHaveBucketResetSupportingFunctions(List<Detector> detectors)
-    {
-        for (Detector detector : detectors)
-        {
-            if (!detector.isSupportingBucketResetting())
-            {
-                String function = detector.getFunction();
-                function = function == null ? "metric" : function;
-                String msg = String.format("At least one detector contains a function that does not"
-                        + " support bucket resetting: %s.", function);
-                throw new RestApiException(msg, ErrorCode.BUCKET_RESET_NOT_SUPPORTED,
-                        Response.Status.BAD_REQUEST);
-            }
         }
     }
 
