@@ -15,20 +15,20 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.watcher.transform;
+package org.elasticsearch.watcher.transform.script;
 
-import org.elasticsearch.watcher.WatcherException;
+import org.elasticsearch.watcher.transform.TransformException;
 
 /**
  *
  */
-public class TransformException extends WatcherException {
+public class ScriptTransformException extends TransformException {
 
-    public TransformException(String msg, Object... args) {
+    public ScriptTransformException(String msg, Object... args) {
         super(msg, args);
     }
 
-    public TransformException(String msg, Throwable cause, Object... args) {
+    public ScriptTransformException(String msg, Throwable cause, Object... args) {
         super(msg, cause, args);
     }
 }
