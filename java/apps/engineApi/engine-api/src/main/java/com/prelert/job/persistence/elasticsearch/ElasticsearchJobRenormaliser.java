@@ -82,7 +82,9 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
      */
     private final Thread m_QuantileUpdateThread;
 
-    /** Guarded by {@link #m_UpdatedQuantileQueue} */
+    private final Object m_WaitForIdleLock = new Object();
+
+    /** Guarded by {@link #m_WaitForIdleLock} */
     private volatile boolean m_IsNormalisationInProgress;
 
     /**
@@ -444,13 +446,13 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
      */
     public void waitUntilIdle()
     {
-        synchronized (m_UpdatedQuantileQueue)
+        synchronized (m_WaitForIdleLock)
         {
             while (!m_UpdatedQuantileQueue.isEmpty() || m_IsNormalisationInProgress)
             {
                 try
                 {
-                    wait();
+                    m_WaitForIdleLock.wait();
                 }
                 catch (InterruptedException e)
                 {
@@ -463,16 +465,16 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
 
     private void setIdleAndNotify()
     {
-        synchronized (m_UpdatedQuantileQueue)
+        synchronized (m_WaitForIdleLock)
         {
             m_IsNormalisationInProgress = false;
-            notifyAll();
+            m_WaitForIdleLock.notifyAll();
         }
     }
 
     private void setIsNormalisationInProgress()
     {
-        synchronized (m_UpdatedQuantileQueue)
+        synchronized (m_WaitForIdleLock)
         {
             m_IsNormalisationInProgress = true;
         }
