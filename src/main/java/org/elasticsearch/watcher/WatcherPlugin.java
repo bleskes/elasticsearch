@@ -28,7 +28,6 @@ import org.elasticsearch.watcher.actions.email.service.InternalEmailService;
 import org.elasticsearch.watcher.history.HistoryModule;
 import org.elasticsearch.watcher.license.LicenseService;
 import org.elasticsearch.watcher.support.init.InitializingService;
-import org.elasticsearch.watcher.trigger.schedule.ScheduleModule;
 
 import java.util.Collection;
 
@@ -81,7 +80,6 @@ public class WatcherPlugin extends AbstractPlugin {
             return ImmutableSettings.EMPTY;
         }
         Settings additionalSettings = settingsBuilder()
-                .put(ScheduleModule.additionalSettings(settings))
                 .put(HistoryModule.additionalSettings(settings))
                 .build();
 

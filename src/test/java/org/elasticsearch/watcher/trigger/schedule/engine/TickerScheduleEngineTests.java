@@ -30,6 +30,6 @@ public class TickerScheduleEngineTests extends BaseTriggerEngineTests {
 
     @Override
     protected TriggerEngine createEngine() {
-        return new TickerScheduleTriggerEngine(ImmutableSettings.EMPTY, mock(ScheduleRegistry.class), SystemClock.INSTANCE, threadPool);
+        return new TickerScheduleTriggerEngine(ImmutableSettings.EMPTY, mock(ScheduleRegistry.class), SystemClock.INSTANCE);
     }
 }
