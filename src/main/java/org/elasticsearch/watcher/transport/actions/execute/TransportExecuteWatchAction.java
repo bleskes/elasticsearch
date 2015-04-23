@@ -37,7 +37,6 @@ import org.elasticsearch.watcher.condition.always.AlwaysCondition;
 import org.elasticsearch.watcher.execution.ExecutionService;
 import org.elasticsearch.watcher.execution.ManualExecutionContext;
 import org.elasticsearch.watcher.history.WatchRecord;
-import org.elasticsearch.watcher.input.simple.ExecutableSimpleInput;
 import org.elasticsearch.watcher.input.simple.SimpleInput;
 import org.elasticsearch.watcher.license.LicenseService;
 import org.elasticsearch.watcher.support.clock.Clock;
@@ -101,7 +100,7 @@ public class TransportExecuteWatchAction extends WatcherTransportAction<ExecuteW
                 }
             }
             if (request.getTriggerData() != null) {
-                ctxBuilder.triggerEvent(new ManualTriggerEvent(watch.name(), executionTime, request.getTriggerData()));
+                ctxBuilder.triggerEvent(new ManualTriggerEvent(watch.id(), executionTime, request.getTriggerData()));
             }
             if (request.getAlternativeInput() != null) {
                 ctxBuilder.withInput(new SimpleInput.Result(new Payload.Simple(request.getAlternativeInput())));

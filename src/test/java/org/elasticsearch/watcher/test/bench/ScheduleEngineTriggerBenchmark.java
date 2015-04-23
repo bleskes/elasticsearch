@@ -155,7 +155,7 @@ public class ScheduleEngineTriggerBenchmark {
         }
 
         @Override
-        public String name() {
+        public String id() {
             return name;
         }
 

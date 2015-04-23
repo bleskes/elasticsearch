@@ -84,11 +84,11 @@ public class HistoryStoreTests extends ElasticsearchTestCase {
     @Test
     public void testPut() throws Exception {
         Watch watch = mock(Watch.class);
-        when(watch.name()).thenReturn("_name");
+        when(watch.id()).thenReturn("_name");
         when(watch.condition()).thenReturn(new ExecutableAlwaysCondition(logger));
         when(watch.input()).thenReturn(null);
         when(watch.metadata()).thenReturn(null);
-        ScheduleTriggerEvent event = new ScheduleTriggerEvent(watch.name(), new DateTime(0, DateTimeZone.UTC), new DateTime(0, DateTimeZone.UTC));
+        ScheduleTriggerEvent event = new ScheduleTriggerEvent(watch.id(), new DateTime(0, DateTimeZone.UTC), new DateTime(0, DateTimeZone.UTC));
         Wid wid = new Wid("_name", 0, new DateTime(0, DateTimeZone.UTC));
         WatchRecord watchRecord = new WatchRecord(wid, watch, event);
 
@@ -104,11 +104,11 @@ public class HistoryStoreTests extends ElasticsearchTestCase {
     @Test
     public void testUpdate() throws Exception {
         Watch watch = mock(Watch.class);
-        when(watch.name()).thenReturn("_name");
+        when(watch.id()).thenReturn("_name");
         when(watch.condition()).thenReturn(new ExecutableAlwaysCondition(logger));
         when(watch.input()).thenReturn(null);
         when(watch.metadata()).thenReturn(null);
-        ScheduleTriggerEvent event = new ScheduleTriggerEvent(watch.name(), new DateTime(0, DateTimeZone.UTC), new DateTime(0, DateTimeZone.UTC));
+        ScheduleTriggerEvent event = new ScheduleTriggerEvent(watch.id(), new DateTime(0, DateTimeZone.UTC), new DateTime(0, DateTimeZone.UTC));
         Wid wid = new Wid("_name", 0, new DateTime(0, DateTimeZone.UTC));
         WatchRecord watchRecord = new WatchRecord(wid, watch, event);
         watchRecord.version(4l);
@@ -125,11 +125,11 @@ public class HistoryStoreTests extends ElasticsearchTestCase {
     @Test(expected = HistoryException.class)
     public void testPut_stopped() {
         Watch watch = mock(Watch.class);
-        when(watch.name()).thenReturn("_name");
+        when(watch.id()).thenReturn("_name");
         when(watch.condition()).thenReturn(new ExecutableAlwaysCondition(logger));
         when(watch.input()).thenReturn(null);
         when(watch.metadata()).thenReturn(null);
-        ScheduleTriggerEvent event = new ScheduleTriggerEvent(watch.name(), new DateTime(0, DateTimeZone.UTC), new DateTime(0, DateTimeZone.UTC));
+        ScheduleTriggerEvent event = new ScheduleTriggerEvent(watch.id(), new DateTime(0, DateTimeZone.UTC), new DateTime(0, DateTimeZone.UTC));
         Wid wid = new Wid("_name", 0, new DateTime(0, DateTimeZone.UTC));
         WatchRecord watchRecord = new WatchRecord(wid, watch, event);
 
@@ -145,11 +145,11 @@ public class HistoryStoreTests extends ElasticsearchTestCase {
     @Test(expected = HistoryException.class)
     public void testUpdate_stopped() throws Exception {
         Watch watch = mock(Watch.class);
-        when(watch.name()).thenReturn("_name");
+        when(watch.id()).thenReturn("_name");
         when(watch.condition()).thenReturn(new ExecutableAlwaysCondition(logger));
         when(watch.input()).thenReturn(null);
         when(watch.metadata()).thenReturn(null);
-        ScheduleTriggerEvent event = new ScheduleTriggerEvent(watch.name(), new DateTime(0, DateTimeZone.UTC), new DateTime(0, DateTimeZone.UTC));
+        ScheduleTriggerEvent event = new ScheduleTriggerEvent(watch.id(), new DateTime(0, DateTimeZone.UTC), new DateTime(0, DateTimeZone.UTC));
         Wid wid = new Wid("_name", 0, new DateTime(0, DateTimeZone.UTC));
         WatchRecord watchRecord = new WatchRecord(wid, watch, event);
 

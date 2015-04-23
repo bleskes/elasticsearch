@@ -66,7 +66,7 @@ public class Watch implements TriggerEngine.Job, ToXContent {
     private final static TimeValue DEFAULT_THROTTLE_PERIOD = new TimeValue(5, TimeUnit.SECONDS);
     private final static String DEFAULT_THROTTLE_PERIOD_SETTING = "watcher.throttle.period.default_period";
 
-    private final String name;
+    private final String id;
     private final Trigger trigger;
     private final ExecutableInput input;
     private final ExecutableCondition condition;
@@ -83,9 +83,9 @@ public class Watch implements TriggerEngine.Job, ToXContent {
 
     private final transient AtomicLong nonceCounter = new AtomicLong();
 
-    public Watch(String name, Clock clock, LicenseService licenseService, Trigger trigger, ExecutableInput input, ExecutableCondition condition, @Nullable ExecutableTransform transform,
+    public Watch(String id, Clock clock, LicenseService licenseService, Trigger trigger, ExecutableInput input, ExecutableCondition condition, @Nullable ExecutableTransform transform,
                  ExecutableActions actions, @Nullable Map<String, Object> metadata, @Nullable TimeValue throttlePeriod, @Nullable Status status) {
-        this.name = name;
+        this.id = id;
         this.trigger = trigger;
         this.input = input;
         this.condition = condition;
@@ -97,8 +97,8 @@ public class Watch implements TriggerEngine.Job, ToXContent {
         throttler = new WatchThrottler(clock, throttlePeriod, licenseService);
     }
 
-    public String name() {
-        return name;
+    public String id() {
+        return id;
     }
 
     public Trigger trigger() {
@@ -159,12 +159,12 @@ public class Watch implements TriggerEngine.Job, ToXContent {
         if (o == null || getClass() != o.getClass()) return false;
 
         Watch watch = (Watch) o;
-        return watch.name.equals(name);
+        return watch.id.equals(id);
     }
 
     @Override
     public int hashCode() {
-        return name.hashCode();
+        return id.hashCode();
     }
 
     @Override
