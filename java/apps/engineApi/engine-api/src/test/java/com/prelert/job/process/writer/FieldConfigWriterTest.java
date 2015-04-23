@@ -49,8 +49,6 @@ import org.junit.Test;
 
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.Detector;
-import com.prelert.job.process.ProcessCtrl;
-import com.prelert.job.process.writer.FieldConfigWriter;
 
 public class FieldConfigWriterTest
 {
@@ -95,7 +93,7 @@ public class FieldConfigWriterTest
         StringReader reader = new StringReader(ba.toString("UTF-8"));
 
         Config iniConfig = new Config();
-        iniConfig.setLineSeparator(new String(new char [] {ProcessCtrl.NEW_LINE}));
+        iniConfig.setLineSeparator(new String(new char [] {WriterConstants.NEW_LINE}));
         iniConfig.setGlobalSection(true);
 
         Ini fieldConfig = new Ini();
