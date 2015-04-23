@@ -190,7 +190,7 @@ public class JobConfigurationTest
         jc.setAnalysisConfig(ac);
         jc.verify(); // ok
 
-        jc.setAnalysisLimits(new AnalysisLimits(-1));
+        jc.setAnalysisLimits(new AnalysisLimits(-1, null));
         try
         {
             jc.verify();
@@ -201,7 +201,7 @@ public class JobConfigurationTest
             Assert.assertEquals(ErrorCode.INVALID_VALUE, e.getErrorCode());
         }
 
-        jc.setAnalysisLimits(new AnalysisLimits(1000));
+        jc.setAnalysisLimits(new AnalysisLimits(1000, 4L));
         jc.verify();
 
         DataDescription dc = new DataDescription();

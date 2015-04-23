@@ -41,6 +41,8 @@ public class AnalysisLimitsWriter
      * The configuration fields used in limits.conf
      */
     private static final String MODEL_MEMORY_LIMIT_CONFIG_STR = "modelmemorylimit";
+    private static final String CATEGORIZATION_EXAMPLES_LIMIT_CONFIG_STR =
+            "categorizationexampleslimit";
 
     private final AnalysisLimits m_Limits;
     private final OutputStreamWriter m_Writer;
@@ -58,6 +60,12 @@ public class AnalysisLimitsWriter
         {
             contents.append(MODEL_MEMORY_LIMIT_CONFIG_STR + " = ")
                     .append(m_Limits.getModelMemoryLimit()).append(NEW_LINE);
+        }
+        if (m_Limits.getCategorizationExamplesLimit() != null)
+        {
+            contents.append(CATEGORIZATION_EXAMPLES_LIMIT_CONFIG_STR + " = ")
+                    .append(m_Limits.getCategorizationExamplesLimit())
+                    .append(NEW_LINE);
         }
 
         m_Writer.write(contents.toString());

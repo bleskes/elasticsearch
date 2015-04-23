@@ -27,30 +27,45 @@
 
 package com.prelert.job.process.writer;
 
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 import com.prelert.job.AnalysisLimits;
 
 public class AnalysisLimitsWriterTest
 {
+    @Mock private OutputStreamWriter m_Writer;
+
+    @Before
+    public void setUp()
+    {
+        MockitoAnnotations.initMocks(this);
+    }
+
+    @After
+    public void tearDown()
+    {
+        verifyNoMoreInteractions(m_Writer);
+    }
+
     @Test
     public void testWrite_GivenUnsetValues() throws IOException
     {
         AnalysisLimits limits = new AnalysisLimits();
-        OutputStreamWriter writer = mock(OutputStreamWriter.class);
-        AnalysisLimitsWriter analysisLimitsWriter = new AnalysisLimitsWriter(limits, writer);
+        AnalysisLimitsWriter analysisLimitsWriter = new AnalysisLimitsWriter(limits, m_Writer);
 
         analysisLimitsWriter.write();
 
-        verify(writer).write("[memory]\n");
-        verifyNoMoreInteractions(writer);
+        verify(m_Writer).write("[memory]\n");
     }
 
     @Test
@@ -58,12 +73,34 @@ public class AnalysisLimitsWriterTest
     {
         AnalysisLimits limits = new AnalysisLimits();
         limits.setModelMemoryLimit(10);
-        OutputStreamWriter writer = mock(OutputStreamWriter.class);
-        AnalysisLimitsWriter analysisLimitsWriter = new AnalysisLimitsWriter(limits, writer);
+        AnalysisLimitsWriter analysisLimitsWriter = new AnalysisLimitsWriter(limits, m_Writer);
 
         analysisLimitsWriter.write();
 
-        verify(writer).write("[memory]\nmodelmemorylimit = 10\n");
-        verifyNoMoreInteractions(writer);
+        verify(m_Writer).write("[memory]\nmodelmemorylimit = 10\n");
+    }
+
+    @Test
+    public void testWrite_GivenCategorizationExamplesLimitWasSet() throws IOException
+    {
+        AnalysisLimits limits = new AnalysisLimits();
+        limits.setCategorizationExamplesLimit(5L);
+        AnalysisLimitsWriter analysisLimitsWriter = new AnalysisLimitsWriter(limits, m_Writer);
+
+        analysisLimitsWriter.write();
+
+        verify(m_Writer).write("[memory]\ncategorizationexampleslimit = 5\n");
+    }
+
+    @Test
+    public void testWrite_GivenAllFieldsSet() throws IOException
+    {
+        AnalysisLimits limits = new AnalysisLimits(1024, 3L);
+        AnalysisLimitsWriter analysisLimitsWriter = new AnalysisLimitsWriter(limits, m_Writer);
+
+        analysisLimitsWriter.write();
+
+        verify(m_Writer).write(
+                "[memory]\nmodelmemorylimit = 1024\ncategorizationexampleslimit = 3\n");
     }
 }

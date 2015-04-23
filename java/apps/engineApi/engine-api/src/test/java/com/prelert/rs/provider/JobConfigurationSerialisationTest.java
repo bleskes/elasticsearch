@@ -27,7 +27,10 @@
 
 package com.prelert.rs.provider;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 
 import java.io.ByteArrayInputStream;
@@ -89,7 +92,7 @@ public class JobConfigurationSerialisationTest {
 				+ "\"detectors\":[{\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}] "
 				+ "},"
 				+ "\"dataDescription\":{\"fieldDelimiter\":\",\", \"timeField\":\"_time\", \"timeFormat\" : \"epoch\"},"
-				+ "\"analysisLimits\": {\"modelMemoryLimit\":2000}"
+				+ "\"analysisLimits\": {\"modelMemoryLimit\":2000, \"categorizationExamplesLimit\":3}"
 				+ "}";
 
 
@@ -120,7 +123,7 @@ public class JobConfigurationSerialisationTest {
 		assertEquals(ac, config.getAnalysisConfig());
 		assertEquals(dd, config.getDataDescription());
 
-		AnalysisLimits al = new AnalysisLimits(2000);
+		AnalysisLimits al = new AnalysisLimits(2000, 3L);
 		assertEquals(al, config.getAnalysisLimits());
 
 		assertNull(config.getTransforms());
@@ -167,7 +170,7 @@ public class JobConfigurationSerialisationTest {
 		assertEquals(ac, config.getAnalysisConfig());
 		assertEquals(dd, config.getDataDescription());
 
-		AnalysisLimits al = new AnalysisLimits(2000);
+		AnalysisLimits al = new AnalysisLimits(2000, null);
 		assertEquals(al, config.getAnalysisLimits());
 
 		TransformConfig tr = new TransformConfig();

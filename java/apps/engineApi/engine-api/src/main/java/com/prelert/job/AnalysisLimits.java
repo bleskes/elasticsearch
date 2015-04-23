@@ -29,6 +29,8 @@ package com.prelert.job;
 
 import java.util.Objects;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.prelert.job.exceptions.JobConfigurationException;
 import com.prelert.rs.data.ErrorCode;
 
@@ -37,24 +39,34 @@ import com.prelert.rs.data.ErrorCode;
  *
  * If an option has not been set it shouldn't be used so the default value is picked up instead.
  */
+@JsonInclude(Include.NON_NULL)
 public class AnalysisLimits
 {
     /**
      * Serialisation field names
      */
     public static final String MODEL_MEMORY_LIMIT = "modelMemoryLimit";
+    public static final String CATEGORIZATION_EXAMPLES_LIMIT = "categorizationExamplesLimit";
 
     /** It is initialised to 0. A value of 0 indicates it was not set. */
     private long m_ModelMemoryLimit;
 
+    /**
+     * It is initialised to <code>null</code>.
+     * A value of <code>null</code> indicates it was not set.
+     * */
+    private Long m_CategorizationExamplesLimit;
+
     public AnalysisLimits()
     {
         m_ModelMemoryLimit = 0;
+        m_CategorizationExamplesLimit = null;
     }
 
-    public AnalysisLimits(long modelMemoryLimit)
+    public AnalysisLimits(long modelMemoryLimit, Long categorizationExamplesLimit)
     {
         m_ModelMemoryLimit = modelMemoryLimit;
+        m_CategorizationExamplesLimit = categorizationExamplesLimit;
     }
 
     /**
@@ -75,6 +87,20 @@ public class AnalysisLimits
     }
 
     /**
+     * Gets the limit to the number of examples that are stored per category
+     * @return the limit or <code>null</code> if not set
+     */
+    public Long getCategorizationExamplesLimit()
+    {
+        return m_CategorizationExamplesLimit;
+    }
+
+    public void setCategorizationExamplesLimit(Long value)
+    {
+        m_CategorizationExamplesLimit = value;
+    }
+
+    /**
      * Overridden equality test
      */
     @Override
@@ -91,13 +117,15 @@ public class AnalysisLimits
         }
 
         AnalysisLimits that = (AnalysisLimits)other;
-        return this.m_ModelMemoryLimit == that.m_ModelMemoryLimit;
+        return this.m_ModelMemoryLimit == that.m_ModelMemoryLimit
+                && Objects.equals(this.m_CategorizationExamplesLimit,
+                        that.m_CategorizationExamplesLimit);
     }
 
     @Override
     public int hashCode()
     {
-        return Objects.hash(m_ModelMemoryLimit);
+        return Objects.hash(m_ModelMemoryLimit, m_CategorizationExamplesLimit);
     }
 
     /**
@@ -113,6 +141,12 @@ public class AnalysisLimits
         {
             throw new JobConfigurationException(
                     "Invalid Analysis limit modelMemoryLimit must be >= 0",
+                    ErrorCode.INVALID_VALUE);
+        }
+        if (m_CategorizationExamplesLimit != null && m_CategorizationExamplesLimit < 0)
+        {
+            throw new JobConfigurationException(
+                    "Invalid Analysis limit categorizationExamplesLimit must be >= 0",
                     ErrorCode.INVALID_VALUE);
         }
         return true;

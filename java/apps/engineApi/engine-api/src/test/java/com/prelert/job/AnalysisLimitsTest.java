@@ -27,7 +27,9 @@
 
 package com.prelert.job;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -35,6 +37,7 @@ import org.junit.rules.ExpectedException;
 
 import com.prelert.job.exceptions.JobConfigurationException;
 import com.prelert.rs.data.ErrorCode;
+import com.prelert.rs.data.ErrorCodeMatcher;
 
 public class AnalysisLimitsTest
 {
@@ -46,6 +49,8 @@ public class AnalysisLimitsTest
     {
         m_ExpectedException.expect(JobConfigurationException.class);
         m_ExpectedException.expectMessage("Invalid Analysis limit modelMemoryLimit must be >= 0");
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCode.INVALID_VALUE));
 
         AnalysisLimits limits = new AnalysisLimits();
         limits.setModelMemoryLimit(-1L);
@@ -53,48 +58,37 @@ public class AnalysisLimitsTest
         limits.verify();
     }
 
-
     @Test
-    public void testVerify_modelMemoryLimitThrowsException()
-    throws JobConfigurationException
+    public void testVerify_GivenNegativeCategorizationExamplesLimit()
+            throws JobConfigurationException
     {
-        AnalysisLimits ao = new AnalysisLimits(-1);
-        try
-        {
-            ao.verify();
-            fail("Verify should throw");
-        }
-        catch (JobConfigurationException e)
-        {
-            assertEquals(ErrorCode.INVALID_VALUE, e.getErrorCode());
-        }
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expectMessage(
+                "Invalid Analysis limit categorizationExamplesLimit must be >= 0");
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCode.INVALID_VALUE));
 
-        ao = new AnalysisLimits(300);
-        try
-        {
-            ao.verify();
-        }
-        catch (JobConfigurationException e)
-        {
-            fail("verify should not throw");
-        }
+        AnalysisLimits limits = new AnalysisLimits(1L, -1L);
+
+        limits.verify();
     }
 
     @Test
-    public void testVerify_GivenValidModeLMemoryLimit() throws JobConfigurationException
+    public void testVerify_GivenValid() throws JobConfigurationException
     {
-        AnalysisLimits limits = new AnalysisLimits();
-        limits.setModelMemoryLimit(0L);
+        AnalysisLimits limits = new AnalysisLimits(0L, 0L);
         assertTrue(limits.verify());
-        limits.setModelMemoryLimit(1L);
+        limits = new AnalysisLimits(1L, null);
+        assertTrue(limits.verify());
+        limits = new AnalysisLimits(1L, 1L);
         assertTrue(limits.verify());
     }
 
     @Test
     public void testEquals_GivenEqual()
     {
-        AnalysisLimits analysisLimits1 = new AnalysisLimits(10);
-        AnalysisLimits analysisLimits2 = new AnalysisLimits(10);
+        AnalysisLimits analysisLimits1 = new AnalysisLimits(10, 20L);
+        AnalysisLimits analysisLimits2 = new AnalysisLimits(10, 20L);
 
         assertTrue(analysisLimits1.equals(analysisLimits1));
         assertTrue(analysisLimits1.equals(analysisLimits2));
@@ -102,10 +96,30 @@ public class AnalysisLimitsTest
     }
 
     @Test
+    public void testEquals_GivenDifferentModelMemoryLimit()
+    {
+        AnalysisLimits analysisLimits1 = new AnalysisLimits(10, 20L);
+        AnalysisLimits analysisLimits2 = new AnalysisLimits(11, 20L);
+
+        assertFalse(analysisLimits1.equals(analysisLimits2));
+        assertFalse(analysisLimits2.equals(analysisLimits1));
+    }
+
+    @Test
+    public void testEquals_GivenDifferentCategorizationExamplesLimit()
+    {
+        AnalysisLimits analysisLimits1 = new AnalysisLimits(10, 20L);
+        AnalysisLimits analysisLimits2 = new AnalysisLimits(10, 21L);
+
+        assertFalse(analysisLimits1.equals(analysisLimits2));
+        assertFalse(analysisLimits2.equals(analysisLimits1));
+    }
+
+    @Test
     public void testHashCode_GivenEqual()
     {
-        AnalysisLimits analysisLimits1 = new AnalysisLimits(5555);
-        AnalysisLimits analysisLimits2 = new AnalysisLimits(5555);
+        AnalysisLimits analysisLimits1 = new AnalysisLimits(5555, 3L);
+        AnalysisLimits analysisLimits2 = new AnalysisLimits(5555, 3L);
 
         assertEquals(analysisLimits1.hashCode(), analysisLimits2.hashCode());
     }

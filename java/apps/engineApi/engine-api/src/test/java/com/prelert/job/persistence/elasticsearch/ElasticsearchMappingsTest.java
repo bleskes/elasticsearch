@@ -187,6 +187,10 @@ public class ElasticsearchMappingsTest
                         "          \"modelMemoryLimit\": {" +
                         "            \"type\": \"long\"," +
                         "            \"index\": \"no\"" +
+                        "          }," +
+                        "          \"categorizationExamplesLimit\": {" +
+                        "            \"type\": \"long\"," +
+                        "            \"index\": \"no\"" +
                         "          }" +
                         "        }" +
                         "      }," +
