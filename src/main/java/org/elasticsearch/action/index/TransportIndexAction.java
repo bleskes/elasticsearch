@@ -31,6 +31,7 @@ import org.elasticsearch.action.support.AutoCreateIndex;
 import org.elasticsearch.action.support.replication.TransportShardReplicationOperationAction;
 import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.cluster.ClusterState;
+import org.elasticsearch.cluster.ClusterStateObserver;
 import org.elasticsearch.cluster.action.index.MappingUpdatedAction;
 import org.elasticsearch.cluster.action.shard.ShardStateAction;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
@@ -41,8 +42,10 @@ import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.compress.CompressedString;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.IndexService;
 import org.elasticsearch.index.engine.Engine;
+import org.elasticsearch.index.engine.Engine.IndexingOperation;
 import org.elasticsearch.index.mapper.MapperService;
 import org.elasticsearch.index.mapper.Mapping;
 import org.elasticsearch.index.mapper.SourceToParse;
@@ -53,7 +56,9 @@ import org.elasticsearch.river.RiverIndexName;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
 
-import java.io.IOException;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Performs the index operation.
@@ -75,6 +80,8 @@ public class TransportIndexAction extends TransportShardReplicationOperationActi
 
     private final MappingUpdatedAction mappingUpdatedAction;
 
+    private final ClusterService clusterService;
+
     @Inject
     public TransportIndexAction(Settings settings, TransportService transportService, ClusterService clusterService,
                                 IndicesService indicesService, ThreadPool threadPool, ShardStateAction shardStateAction,
@@ -84,6 +91,7 @@ public class TransportIndexAction extends TransportShardReplicationOperationActi
         this.mappingUpdatedAction = mappingUpdatedAction;
         this.autoCreateIndex = new AutoCreateIndex(settings);
         this.allowIdGeneration = settings.getAsBoolean("action.allow_id_generation", true);
+        this.clusterService = clusterService;
     }
 
     @Override
@@ -259,37 +267,81 @@ public class TransportIndexAction extends TransportShardReplicationOperationActi
         return new Tuple<>(new IndexResponse(shardRequest.shardId.getIndex(), request.type(), request.id(), version, created), shardRequest.request);
     }
 
+    private <T extends IndexingOperation> T execute(final Callable<T> callable) throws Exception {
+        final ClusterStateObserver observer = new ClusterStateObserver(clusterService, null, logger);
+        T index = callable.call();
+        while (index.parsedDoc().dynamicMappingsUpdate() != null) {
+            // Index operations on replicas can only trigger dynamic mapping
+            // updates if cluster state replication is lagging compared to the
+            // primary, so let's wait until no dynamic mapping updates are
+            // triggered
+            final AtomicReference<T> indexRef = new AtomicReference<>();
+            final AtomicReference<Exception> errorRef = new AtomicReference<>();
+            final CountDownLatch latch = new CountDownLatch(1);
+            observer.waitForNextChange(new ClusterStateObserver.Listener() {
+
+                @Override
+                public void onTimeout(TimeValue timeout) {
+                    try {
+                        errorRef.set(new ElasticsearchIllegalStateException("Cannot happen since there is not timeout"));
+                    } finally {
+                        latch.countDown();
+                    }
+                }
+
+                @Override
+                public void onNewClusterState(ClusterState state) {
+                    try {
+                        indexRef.set(callable.call());
+                    } catch (Exception e) {
+                        errorRef.set(e);
+                    } finally {
+                        latch.countDown();
+                    }
+                }
+
+                @Override
+                public void onClusterServiceClose() {
+                    try {
+                        errorRef.set(new ElasticsearchIllegalStateException("Shard closing..."));
+                    } finally {
+                        latch.countDown();
+                    }
+                }
+
+            });
+            latch.await();
+            if (errorRef.get() != null) {
+                throw errorRef.get();
+            }
+            index = indexRef.get();
+            assert index != null;
+        }
+        return index;
+    }
+
     @Override
-    protected void shardOperationOnReplica(ReplicaOperationRequest shardRequest) throws IOException {
+    protected void shardOperationOnReplica(ReplicaOperationRequest shardRequest) throws Exception {
         IndexService indexService = indicesService.indexServiceSafe(shardRequest.shardId.getIndex());
-        IndexShard indexShard = indexService.shardSafe(shardRequest.shardId.id());
-        IndexRequest request = shardRequest.request;
-        SourceToParse sourceToParse = SourceToParse.source(SourceToParse.Origin.REPLICA, request.source()).type(request.type()).id(request.id())
+        final IndexShard indexShard = indexService.shardSafe(shardRequest.shardId.id());
+        final IndexRequest request = shardRequest.request;
+        final SourceToParse sourceToParse = SourceToParse.source(SourceToParse.Origin.REPLICA, request.source()).type(request.type()).id(request.id())
                 .routing(request.routing()).parent(request.parent()).timestamp(request.timestamp()).ttl(request.ttl());
         if (request.opType() == IndexRequest.OpType.INDEX) {
-            Engine.Index index = indexShard.prepareIndex(sourceToParse, request.version(), request.versionType(), Engine.Operation.Origin.REPLICA, request.canHaveDuplicates());
-            if (index.parsedDoc().dynamicMappingsUpdate() != null) {
-                if (indexService.index().name().equals(RiverIndexName.Conf.indexName(settings))) {
-                    // mappings updates on the _river are not validated synchronously so we can't
-                    // assume they are here when indexing on a replica
-                    indexService.mapperService().merge(request.type(), new CompressedString(index.parsedDoc().dynamicMappingsUpdate().toBytes()), true);
-                } else {
-                    throw new ElasticsearchIllegalStateException("Index operations on replicas should not trigger dynamic mappings updates: [" + index.parsedDoc().dynamicMappingsUpdate() + "]");
+            Engine.Index index = execute(new Callable<Engine.Index>() {
+                @Override
+                public Engine.Index call() throws Exception {
+                    return indexShard.prepareIndex(sourceToParse, request.version(), request.versionType(), Engine.Operation.Origin.REPLICA, request.canHaveDuplicates());
                 }
-            }
+            });
             indexShard.index(index);
         } else {
-            Engine.Create create = indexShard.prepareCreate(sourceToParse,
-                    request.version(), request.versionType(), Engine.Operation.Origin.REPLICA, request.canHaveDuplicates(), request.autoGeneratedId());
-            if (create.parsedDoc().dynamicMappingsUpdate() != null) {
-                if (indexService.index().name().equals(RiverIndexName.Conf.indexName(settings))) {
-                    // mappings updates on the _river are not validated synchronously so we can't
-                    // assume they are here when indexing on a replica
-                    indexService.mapperService().merge(request.type(), new CompressedString(create.parsedDoc().dynamicMappingsUpdate().toBytes()), true);
-                } else {
-                    throw new ElasticsearchIllegalStateException("Index operations on replicas should not trigger dynamic mappings updates: [" + create.parsedDoc().dynamicMappingsUpdate() + "]");
+            Engine.Create create = execute(new Callable<Engine.Create>() {
+                @Override
+                public Engine.Create call() throws Exception {
+                    return indexShard.prepareCreate(sourceToParse, request.version(), request.versionType(), Engine.Operation.Origin.REPLICA, request.canHaveDuplicates(), request.autoGeneratedId());
                 }
-            }
+            });
             indexShard.create(create);
         }
         if (request.refresh()) {
