@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -40,61 +40,61 @@ import com.prelert.rs.data.ErrorCode;
  */
 public class AnalysisLimits
 {
-	/**
-	 * Serialisation field names
-	 */
-	public static final String MODEL_MEMORY_LIMIT = "modelMemoryLimit";
+    /**
+     * Serialisation field names
+     */
+    public static final String MODEL_MEMORY_LIMIT = "modelMemoryLimit";
 
-	private long m_ModelMemoryLimit;
+    private long m_ModelMemoryLimit;
 
-	/**
-	 * Initialise values to 0.
-	 * If the values are 0 they haven't been set
-	 */
-	public AnalysisLimits()
-	{
-		m_ModelMemoryLimit = 0;
-	}
+    /**
+     * Initialise values to 0.
+     * If the values are 0 they haven't been set
+     */
+    public AnalysisLimits()
+    {
+        m_ModelMemoryLimit = 0;
+    }
 
-	public AnalysisLimits(long modelMemoryLimit)
-	{
-		m_ModelMemoryLimit = modelMemoryLimit;
-	}
+    public AnalysisLimits(long modelMemoryLimit)
+    {
+        m_ModelMemoryLimit = modelMemoryLimit;
+    }
 
-	/**
-	 * Maximum size of the model in MB before the anomaly detector
+    /**
+     * Maximum size of the model in MB before the anomaly detector
      * will drop new samples to prevent the model using any more
      * memory
-	 */
-	public long getModelMemoryLimit()
-	{
-		return m_ModelMemoryLimit;
-	}
+     */
+    public long getModelMemoryLimit()
+    {
+        return m_ModelMemoryLimit;
+    }
 
-	public void setModelMemoryLimit(long value)
-	{
-		m_ModelMemoryLimit = value;
-	}
+    public void setModelMemoryLimit(long value)
+    {
+        m_ModelMemoryLimit = value;
+    }
 
-	/**
-	 * Overridden equality test
-	 */
-	@Override
-	public boolean equals(Object other)
-	{
-		if (this == other)
-		{
-			return true;
-		}
+    /**
+     * Overridden equality test
+     */
+    @Override
+    public boolean equals(Object other)
+    {
+        if (this == other)
+        {
+            return true;
+        }
 
-		if (other instanceof AnalysisLimits == false)
-		{
-			return false;
-		}
+        if (other instanceof AnalysisLimits == false)
+        {
+            return false;
+        }
 
-		AnalysisLimits that = (AnalysisLimits)other;
-		return this.m_ModelMemoryLimit == that.m_ModelMemoryLimit;
-	}
+        AnalysisLimits that = (AnalysisLimits)other;
+        return this.m_ModelMemoryLimit == that.m_ModelMemoryLimit;
+    }
 
     @Override
     public int hashCode()
@@ -102,24 +102,24 @@ public class AnalysisLimits
         return Objects.hash(m_ModelMemoryLimit);
     }
 
-	/**
-	 * Empty implementation of verify.
-	 *
-	 * A value of 0 means use the default in autodetect.
-	 *
-	 * @return true
-	 * @throws JobConfigurationException
-	 */
-	public boolean verify()
-	throws JobConfigurationException
-	{
+    /**
+     * Empty implementation of verify.
+     *
+     * A value of 0 means use the default in autodetect.
+     *
+     * @return true
+     * @throws JobConfigurationException
+     */
+    public boolean verify()
+    throws JobConfigurationException
+    {
         if (m_ModelMemoryLimit < 0)
         {
             throw new JobConfigurationException(
                     "Invalid Analysis limit modelMemoryLimit must be >= 0",
                     ErrorCode.INVALID_VALUE);
         }
-		return true;
-	}
+        return true;
+    }
 
 }
