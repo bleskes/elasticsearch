@@ -44,7 +44,6 @@ import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.watcher.WatcherException;
-import org.elasticsearch.watcher.WatcherSettingsException;
 import org.elasticsearch.watcher.support.Callback;
 import org.elasticsearch.watcher.support.TemplateUtils;
 import org.elasticsearch.watcher.support.init.proxy.ClientProxy;
@@ -276,9 +275,9 @@ public class WatchStore extends AbstractComponent {
                             watch.status().version(hit.version());
                             watches.put(name, watch);
                             count++;
-                        } catch (WatcherSettingsException wse) {
-                            logger.error("while loading watches, failed to parse [{}]", wse, name);
-                            throw wse;
+                        } catch (WatcherException we) {
+                            logger.error("while loading watches, failed to parse [{}]", we, name);
+                            throw we;
                         }
                     }
                     response = client.searchScroll(response.getScrollId(), scrollTimeout);
