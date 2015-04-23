@@ -33,10 +33,9 @@ import com.prelert.job.exceptions.JobConfigurationException;
 import com.prelert.rs.data.ErrorCode;
 
 /**
- * Analysis limits for autodetect (max model memory size).
+ * Analysis limits for autodetect
  *
- * If an option has not been set it's value will be 0 in which case it
- * shouldn't be used so the default value is picked up instead.
+ * If an option has not been set it shouldn't be used so the default value is picked up instead.
  */
 public class AnalysisLimits
 {
@@ -45,12 +44,9 @@ public class AnalysisLimits
      */
     public static final String MODEL_MEMORY_LIMIT = "modelMemoryLimit";
 
+    /** It is initialised to 0. A value of 0 indicates it was not set. */
     private long m_ModelMemoryLimit;
 
-    /**
-     * Initialise values to 0.
-     * If the values are 0 they haven't been set
-     */
     public AnalysisLimits()
     {
         m_ModelMemoryLimit = 0;
@@ -65,6 +61,8 @@ public class AnalysisLimits
      * Maximum size of the model in MB before the anomaly detector
      * will drop new samples to prevent the model using any more
      * memory
+     *
+     * @return The set memory limit or 0 if not set
      */
     public long getModelMemoryLimit()
     {
@@ -103,12 +101,10 @@ public class AnalysisLimits
     }
 
     /**
-     * Empty implementation of verify.
+     * Verifies the analysis limits parameters were set to valid values
      *
-     * A value of 0 means use the default in autodetect.
-     *
-     * @return true
-     * @throws JobConfigurationException
+     * @return true when all values are valid
+     * @throws JobConfigurationException if some of the values are invalid
      */
     public boolean verify()
     throws JobConfigurationException

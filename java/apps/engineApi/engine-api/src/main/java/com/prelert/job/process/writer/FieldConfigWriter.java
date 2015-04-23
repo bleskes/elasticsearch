@@ -27,6 +27,8 @@
 
 package com.prelert.job.process.writer;
 
+import static com.prelert.job.process.writer.WriterConstants.NEW_LINE;
+
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.HashSet;
@@ -50,7 +52,6 @@ public class FieldConfigWriter
     private static final String DOT_EXCLUDE_FREQUENT = ".excludefrequent";
     private static final String EQUALS = " = ";
     private static final String HYPHEN = "-";
-    private static final char NEW_LINE = '\n';
 
     private final AnalysisConfig m_Config;
     private final OutputStreamWriter m_Writer;
