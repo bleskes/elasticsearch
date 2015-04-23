@@ -24,6 +24,7 @@ import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.test.ElasticsearchTestCase;
 import org.elasticsearch.watcher.WatcherException;
+import org.elasticsearch.watcher.WatcherService;
 import org.elasticsearch.watcher.execution.ExecutionService;
 import org.elasticsearch.watcher.trigger.Trigger;
 import org.elasticsearch.watcher.trigger.TriggerEngine;
@@ -45,7 +46,7 @@ public class WatchServiceTests extends ElasticsearchTestCase {
 
     private TriggerService triggerService;
     private WatchStore watchStore;
-    private WatchService watchService;
+    private WatcherService watcherService;
     private ExecutionService executionService;
     private WatchLockService watchLockService;
 
@@ -55,11 +56,11 @@ public class WatchServiceTests extends ElasticsearchTestCase {
         watchStore = mock(WatchStore.class);
         executionService =  mock(ExecutionService.class);
         watchLockService = mock(WatchLockService.class);
-        watchService = new WatchService(ImmutableSettings.EMPTY, triggerService, watchStore, executionService, watchLockService);
-        Field field = WatchService.class.getDeclaredField("state");
+        watcherService = new WatcherService(ImmutableSettings.EMPTY, triggerService, watchStore, executionService, watchLockService);
+        Field field = WatcherService.class.getDeclaredField("state");
         field.setAccessible(true);
-        AtomicReference<WatchService.State> state = (AtomicReference<WatchService.State>) field.get(watchService);
-        state.set(WatchService.State.STARTED);
+        AtomicReference<WatcherService.State> state = (AtomicReference<WatcherService.State>) field.get(watcherService);
+        state.set(WatcherService.State.STARTED);
     }
 
     @Test
@@ -73,7 +74,7 @@ public class WatchServiceTests extends ElasticsearchTestCase {
         WatchLockService.Lock lock = mock(WatchLockService.Lock.class);
         when(watchLockService.acquire(any(String.class))).thenReturn(lock);
         when(watchStore.put(any(String.class), any(BytesReference.class))).thenReturn(watchPut);
-        IndexResponse response = watchService.putWatch("_name", new BytesArray("{}"));
+        IndexResponse response = watcherService.putWatch("_name", new BytesArray("{}"));
         assertThat(response, sameInstance(indexResponse));
 
         verify(triggerService, times(1)).add(any(TriggerEngine.Job.class));
@@ -96,7 +97,7 @@ public class WatchServiceTests extends ElasticsearchTestCase {
         WatchLockService.Lock lock = mock(WatchLockService.Lock.class);
         when(watchLockService.acquire(any(String.class))).thenReturn(lock);
         when(watchStore.put(any(String.class), any(BytesReference.class))).thenReturn(watchPut);
-        IndexResponse response = watchService.putWatch("_name", new BytesArray("{}"));
+        IndexResponse response = watcherService.putWatch("_name", new BytesArray("{}"));
         assertThat(response, sameInstance(indexResponse));
 
         verifyZeroInteractions(triggerService);
@@ -112,7 +113,7 @@ public class WatchServiceTests extends ElasticsearchTestCase {
         when(deleteResponse.isFound()).thenReturn(true);
         when(expectedWatchDelete.deleteResponse()).thenReturn(deleteResponse);
         when(watchStore.delete("_name")).thenReturn(expectedWatchDelete);
-        WatchStore.WatchDelete watchDelete = watchService.deleteWatch("_name");
+        WatchStore.WatchDelete watchDelete = watcherService.deleteWatch("_name");
 
         assertThat(watchDelete, sameInstance(expectedWatchDelete));
         verify(triggerService, times(1)).remove("_name");
@@ -128,7 +129,7 @@ public class WatchServiceTests extends ElasticsearchTestCase {
         when(deleteResponse.isFound()).thenReturn(false);
         when(expectedWatchDelete.deleteResponse()).thenReturn(deleteResponse);
         when(watchStore.delete("_name")).thenReturn(expectedWatchDelete);
-        WatchStore.WatchDelete watchDelete = watchService.deleteWatch("_name");
+        WatchStore.WatchDelete watchDelete = watcherService.deleteWatch("_name");
 
         assertThat(watchDelete, sameInstance(expectedWatchDelete));
         verifyZeroInteractions(triggerService);
@@ -144,7 +145,7 @@ public class WatchServiceTests extends ElasticsearchTestCase {
         when(watch.status()).thenReturn(status);
         when(watchStore.get("_name")).thenReturn(watch);
 
-        Watch.Status result = watchService.ackWatch("_name");
+        Watch.Status result = watcherService.ackWatch("_name");
         assertThat(result, not(sameInstance(status)));
 
         verify(watchStore, times(1)).updateStatus(watch);
@@ -160,7 +161,7 @@ public class WatchServiceTests extends ElasticsearchTestCase {
         when(watch.status()).thenReturn(status);
         when(watchStore.get("_name")).thenReturn(watch);
 
-        Watch.Status result = watchService.ackWatch("_name");
+        Watch.Status result = watcherService.ackWatch("_name");
         assertThat(result, not(sameInstance(status)));
 
         verify(watchStore, never()).updateStatus(watch);
@@ -173,7 +174,7 @@ public class WatchServiceTests extends ElasticsearchTestCase {
         when(watchStore.get("_name")).thenReturn(null);
 
         try {
-            watchService.ackWatch("_name");
+            watcherService.ackWatch("_name");
             fail();
         } catch (WatcherException e) {
             // expected

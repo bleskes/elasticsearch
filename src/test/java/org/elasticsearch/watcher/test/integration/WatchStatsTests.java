@@ -19,7 +19,7 @@ package org.elasticsearch.watcher.test.integration;
 
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.watcher.WatcherBuild;
-import org.elasticsearch.watcher.watch.WatchService;
+import org.elasticsearch.watcher.WatcherService;
 import org.elasticsearch.watcher.WatcherVersion;
 import org.elasticsearch.watcher.client.WatcherClient;
 import org.elasticsearch.watcher.test.AbstractWatcherIntegrationTests;
@@ -51,7 +51,7 @@ public class WatchStatsTests extends AbstractWatcherIntegrationTests {
         WatcherStatsRequest watcherStatsRequest = watcherClient().prepareWatcherStats().request();
         WatcherStatsResponse response = watcherClient().watcherStats(watcherStatsRequest).actionGet();
 
-        assertThat(response.getWatchServiceState(), is(WatchService.State.STARTED));
+        assertThat(response.getWatchServiceState(), is(WatcherService.State.STARTED));
         assertThat(response.getExecutionQueueSize(), is(0L));
         assertThat(response.getWatchesCount(), is(0L));
         assertThat(response.getWatchExecutionQueueMaxSize(), is(timeWarped() ? 1L : 0L));
@@ -66,7 +66,7 @@ public class WatchStatsTests extends AbstractWatcherIntegrationTests {
         WatcherStatsRequest watcherStatsRequest = watcherClient.prepareWatcherStats().request();
         WatcherStatsResponse response = watcherClient.watcherStats(watcherStatsRequest).actionGet();
 
-        assertThat(response.getWatchServiceState(), equalTo(WatchService.State.STARTED));
+        assertThat(response.getWatchServiceState(), equalTo(WatcherService.State.STARTED));
 
         SearchRequest searchRequest = WatcherTestUtils.newInputSearchRequest("idx").source(searchSource().query(termQuery("field", "value")));
         BytesReference watchSource = createWatchSource("* * * * * ? *", searchRequest, "ctx.payload.hits.total == 1");
@@ -83,7 +83,7 @@ public class WatchStatsTests extends AbstractWatcherIntegrationTests {
 
         response = watcherClient().watcherStats(watcherStatsRequest).actionGet();
 
-        assertThat(response.getWatchServiceState(), is(WatchService.State.STARTED));
+        assertThat(response.getWatchServiceState(), is(WatcherService.State.STARTED));
         assertThat(response.getWatchesCount(), is(1L));
         assertThat(response.getWatchExecutionQueueMaxSize(), greaterThan(0L));
     }

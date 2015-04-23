@@ -24,7 +24,6 @@ import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.Strings;
-import org.elasticsearch.common.joda.time.DateTime;
 import org.elasticsearch.common.metrics.MeanMetric;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
@@ -47,7 +46,7 @@ import org.elasticsearch.watcher.client.WatchSourceBuilder;
 import org.elasticsearch.watcher.client.WatcherClient;
 import org.elasticsearch.watcher.history.HistoryStore;
 import org.elasticsearch.watcher.support.clock.Clock;
-import org.elasticsearch.watcher.watch.WatchService;
+import org.elasticsearch.watcher.WatcherService;
 import org.elasticsearch.watcher.watch.WatchStore;
 
 import java.io.IOException;
@@ -156,7 +155,7 @@ public class WatcherScheduleEngineBenchmark {
 
                     Clock clock = node.injector().getInstance(Clock.class);
                     WatcherClient watcherClient = node.injector().getInstance(WatcherClient.class);
-                    while (watcherClient.prepareWatcherStats().get().getWatchServiceState() != WatchService.State.STARTED) {
+                    while (watcherClient.prepareWatcherStats().get().getWatchServiceState() != WatcherService.State.STARTED) {
                         Thread.sleep(100);
                     }
                     long actualLoadedWatches = watcherClient.prepareWatcherStats().get().getWatchesCount();

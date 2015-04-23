@@ -34,7 +34,7 @@ import org.elasticsearch.transport.TransportService;
 import org.elasticsearch.watcher.license.LicenseService;
 import org.elasticsearch.watcher.transport.actions.WatcherTransportAction;
 import org.elasticsearch.watcher.watch.Watch;
-import org.elasticsearch.watcher.watch.WatchService;
+import org.elasticsearch.watcher.WatcherService;
 import org.elasticsearch.watcher.watch.WatchStore;
 
 import java.io.IOException;
@@ -44,13 +44,13 @@ import java.io.IOException;
  */
 public class TransportGetWatchAction extends WatcherTransportAction<GetWatchRequest, GetWatchResponse> {
 
-    private final WatchService watchService;
+    private final WatcherService watcherService;
 
     @Inject
     public TransportGetWatchAction(Settings settings, TransportService transportService, ClusterService clusterService,
-                                   ThreadPool threadPool, ActionFilters actionFilters, WatchService watchService, LicenseService licenseService) {
+                                   ThreadPool threadPool, ActionFilters actionFilters, WatcherService watcherService, LicenseService licenseService) {
         super(settings, GetWatchAction.NAME, transportService, clusterService, threadPool, actionFilters, licenseService);
-        this.watchService = watchService;
+        this.watcherService = watcherService;
     }
 
     @Override
@@ -71,7 +71,7 @@ public class TransportGetWatchAction extends WatcherTransportAction<GetWatchRequ
     @Override
     protected void masterOperation(GetWatchRequest request, ClusterState state, ActionListener<GetWatchResponse> listener) throws ElasticsearchException {
         try {
-            Watch watch = watchService.getWatch(request.getId());
+            Watch watch = watcherService.getWatch(request.getId());
             if (watch == null) {
                 listener.onResponse(new GetWatchResponse(request.getId(), -1, false, null));
                 return;
