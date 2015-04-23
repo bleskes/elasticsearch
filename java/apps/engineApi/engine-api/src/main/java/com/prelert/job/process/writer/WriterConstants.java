@@ -33,6 +33,7 @@ package com.prelert.job.process.writer;
 public final class WriterConstants
 {
     public static final char NEW_LINE = '\n';
+    public static final String EQUALS = " = ";
 
     private WriterConstants()
     {

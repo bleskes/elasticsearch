@@ -27,6 +27,7 @@
 
 package com.prelert.job.process.writer;
 
+import static com.prelert.job.process.writer.WriterConstants.EQUALS;
 import static com.prelert.job.process.writer.WriterConstants.NEW_LINE;
 
 import java.io.IOException;
@@ -58,12 +59,12 @@ public class AnalysisLimitsWriter
         StringBuilder contents = new StringBuilder("[memory]").append(NEW_LINE);
         if (m_Limits.getModelMemoryLimit() > 0)
         {
-            contents.append(MODEL_MEMORY_LIMIT_CONFIG_STR + " = ")
+            contents.append(MODEL_MEMORY_LIMIT_CONFIG_STR + EQUALS)
                     .append(m_Limits.getModelMemoryLimit()).append(NEW_LINE);
         }
         if (m_Limits.getCategorizationExamplesLimit() != null)
         {
-            contents.append(CATEGORIZATION_EXAMPLES_LIMIT_CONFIG_STR + " = ")
+            contents.append(CATEGORIZATION_EXAMPLES_LIMIT_CONFIG_STR + EQUALS)
                     .append(m_Limits.getCategorizationExamplesLimit())
                     .append(NEW_LINE);
         }
