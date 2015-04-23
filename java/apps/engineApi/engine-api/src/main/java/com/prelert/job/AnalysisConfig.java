@@ -227,6 +227,10 @@ public class AnalysisConfig
             addIfNotNull(fields, d.getOverFieldName());
             addIfNotNull(fields, d.getPartitionFieldName());
         }
+        for (String i : getInfluencers())
+        {
+            addIfNotNull(fields, i);
+        }
 
         // remove empty strings
         fields.remove("");
