@@ -49,6 +49,7 @@ import org.elasticsearch.index.IndexService;
 import org.elasticsearch.index.engine.DocumentAlreadyExistsException;
 import org.elasticsearch.index.engine.VersionConflictEngineException;
 import org.elasticsearch.index.shard.IndexShard;
+import org.elasticsearch.index.shard.IndexShardException;
 import org.elasticsearch.index.shard.ShardId;
 import org.elasticsearch.indices.IndicesService;
 import org.elasticsearch.node.NodeClosedException;
@@ -236,12 +237,77 @@ public abstract class TransportShardReplicationOperationAction<Request extends S
 
         @Override
         public void messageReceived(final ReplicaOperationRequest request, final TransportChannel channel) throws Exception {
+            new AsyncReplicaAction(request, channel).run();
             try {
-                shardOperationOnReplica(request);
             } catch (Throwable t) {
-                failReplicaIfNeeded(request.shardId.getIndex(), request.shardId.id(), t);
                 throw t;
             }
+        }
+    }
+
+    protected static class RetryOnReplicaException extends IndexShardException {
+
+        public RetryOnReplicaException(ShardId shardId, String msg) {
+            super(shardId, msg);
+        }
+
+        public RetryOnReplicaException(ShardId shardId, String msg, Throwable cause) {
+            super(shardId, msg, cause);
+        }
+    }
+
+    private final class AsyncReplicaAction extends AbstractRunnable {
+        private final ReplicaOperationRequest request;
+        private final TransportChannel channel;
+        // nocommit: remove timeout
+        private final ClusterStateObserver observer = new ClusterStateObserver(clusterService, TimeValue.timeValueMinutes(30), logger);
+
+
+        AsyncReplicaAction(ReplicaOperationRequest request, TransportChannel channel) {
+            this.request = request;
+            this.channel = channel;
+        }
+
+        @Override
+        public void onFailure(Throwable t) {
+            if (t instanceof RetryOnReplicaException) {
+                observer.waitForNextChange(new ClusterStateObserver.Listener() {
+                    @Override
+                    public void onNewClusterState(ClusterState state) {
+                        run();
+                    }
+
+                    @Override
+                    public void onClusterServiceClose() {
+                        responseWithFailure(new NodeClosedException(clusterService.localNode()));
+                    }
+
+                    @Override
+                    public void onTimeout(TimeValue timeout) {
+                        // not relevant.
+                    }
+                });
+            }
+            try {
+                failReplicaIfNeeded(request.shardId.getIndex(), request.shardId.id(), t);
+            } catch (Throwable unexpected) {
+                logger.error("{} unexpected error while failing replica", request.shardId, unexpected);
+            }
+            responseWithFailure(t);
+        }
+
+        protected void responseWithFailure(Throwable t) {
+            try {
+                channel.sendResponse(t);
+            } catch (IOException responseException) {
+                logger.warn("failed to send error message back to client for action [" + transportReplicaAction + "]", responseException);
+                logger.warn("actual Exception", t);
+            }
+        }
+
+        @Override
+        protected void doRun() throws Exception {
+            shardOperationOnReplica(request);
             channel.sendResponse(TransportResponse.Empty.INSTANCE);
         }
     }

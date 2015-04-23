@@ -328,12 +328,11 @@ public class TransportIndexAction extends TransportShardReplicationOperationActi
         final SourceToParse sourceToParse = SourceToParse.source(SourceToParse.Origin.REPLICA, request.source()).type(request.type()).id(request.id())
                 .routing(request.routing()).parent(request.parent()).timestamp(request.timestamp()).ttl(request.ttl());
         if (request.opType() == IndexRequest.OpType.INDEX) {
-            Engine.Index index = execute(new Callable<Engine.Index>() {
-                @Override
-                public Engine.Index call() throws Exception {
-                    return indexShard.prepareIndex(sourceToParse, request.version(), request.versionType(), Engine.Operation.Origin.REPLICA, request.canHaveDuplicates());
-                }
-            });
+            Engine.Index index = indexShard.prepareIndex(sourceToParse, request.version(), request.versionType(), Engine.Operation.Origin.REPLICA, request.canHaveDuplicates());
+            Mapping update = index.parsedDoc().dynamicMappingsUpdate();
+            if (update != null) {
+                throw new RetryOnReplicaException(shardRequest.shardId, "missing mapping MAKE VERBOSER");
+            }
             indexShard.index(index);
         } else {
             Engine.Create create = execute(new Callable<Engine.Create>() {
