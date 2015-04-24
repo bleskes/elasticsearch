@@ -105,6 +105,7 @@ public class HttpClient extends AbstractComponent {
             }
         }
         if (request.auth() != null) {
+            logger.debug("applying auth headers");
             request.auth().update(urlConnection);
         }
         urlConnection.setUseCaches(false);
