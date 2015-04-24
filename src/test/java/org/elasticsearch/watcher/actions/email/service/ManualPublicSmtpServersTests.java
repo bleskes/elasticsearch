@@ -24,6 +24,8 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.node.settings.NodeSettingsService;
+import org.elasticsearch.watcher.shield.WatcherSettingsFilter;
+import org.elasticsearch.watcher.support.secret.SecretService;
 import org.junit.Ignore;
 
 import java.io.IOException;
@@ -49,7 +51,6 @@ public class ManualPublicSmtpServersTests {
                     .put("watcher.actions.email.service.account.gmail.smtp.password", new String(terminal.readSecret("password: ")))
                     .put("watcher.actions.email.service.account.gmail.email_defaults.to", terminal.readText("to: "))
             );
-
         }
     }
 
@@ -143,7 +144,7 @@ public class ManualPublicSmtpServersTests {
 
     static InternalEmailService startEmailService(Settings.Builder builder) {
         Settings settings = builder.build();
-        InternalEmailService service = new InternalEmailService(settings, new NodeSettingsService(settings));
+        InternalEmailService service = new InternalEmailService(settings, new SecretService.PlainText(), new NodeSettingsService(settings), WatcherSettingsFilter.Noop.INSTANCE);
         service.start();
         return service;
     }

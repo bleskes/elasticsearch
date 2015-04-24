@@ -24,6 +24,8 @@ import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.node.settings.NodeSettingsService;
+import org.elasticsearch.watcher.shield.WatcherSettingsFilter;
+import org.elasticsearch.watcher.support.secret.SecretService;
 
 import javax.mail.MessagingException;
 
@@ -32,17 +34,21 @@ import javax.mail.MessagingException;
  */
 public class InternalEmailService extends AbstractLifecycleComponent<InternalEmailService> implements EmailService {
 
+    private final SecretService secretService;
+
     private volatile Accounts accounts;
 
     @Inject
-    public InternalEmailService(Settings settings, NodeSettingsService nodeSettingsService) {
+    public InternalEmailService(Settings settings, SecretService secretService, NodeSettingsService nodeSettingsService, WatcherSettingsFilter settingsFilter) {
         super(settings);
+        this.secretService = secretService;
         nodeSettingsService.addListener(new NodeSettingsService.Listener() {
             @Override
             public void onRefreshSettings(Settings settings) {
                 reset(settings);
             }
         });
+        settingsFilter.filterOut("watcher.actions.email.service.account.*.smtp.password");
     }
 
     @Override
@@ -91,7 +97,7 @@ public class InternalEmailService extends AbstractLifecycleComponent<InternalEma
     }
 
     protected Accounts createAccounts(Settings settings, ESLogger logger) {
-        return new Accounts(settings, logger);
+        return new Accounts(settings, secretService, logger);
     }
 
 }

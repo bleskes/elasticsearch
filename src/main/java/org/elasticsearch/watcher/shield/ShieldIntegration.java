@@ -22,6 +22,7 @@ import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.inject.Injector;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.shield.ShieldPlugin;
+import org.elasticsearch.shield.ShieldSettingsFilter;
 import org.elasticsearch.shield.ShieldVersion;
 import org.elasticsearch.shield.authc.AuthenticationService;
 import org.elasticsearch.transport.TransportMessage;
@@ -38,6 +39,7 @@ public class ShieldIntegration {
     private final boolean enabled;
     private final Object authcService;
     private final Object userHolder;
+    private final Object settingsFilter;
 
     @Inject
     public ShieldIntegration(Settings settings, Injector injector) {
@@ -45,6 +47,8 @@ public class ShieldIntegration {
         enabled = installed && ShieldPlugin.shieldEnabled(settings);
         authcService = enabled ? injector.getInstance(AuthenticationService.class) : null;
         userHolder = enabled ? injector.getInstance(WatcherUserHolder.class) : null;
+        settingsFilter = enabled ? injector.getInstance(ShieldSettingsFilter.class) : null;
+
     }
 
     public boolean installed() {
@@ -58,6 +62,12 @@ public class ShieldIntegration {
     public void bindWatcherUser(TransportMessage message) {
         if (authcService != null) {
             ((AuthenticationService) authcService).attachUserHeaderIfMissing(message, ((WatcherUserHolder) userHolder).user);
+        }
+    }
+
+    public void filterOutSettings(String... patterns) {
+        if (settingsFilter != null) {
+            ((ShieldSettingsFilter) settingsFilter).filterOut(patterns);
         }
     }
 
@@ -83,7 +93,7 @@ public class ShieldIntegration {
         }
     }
 
-    static boolean enabled(Settings settings) {
+    public static boolean enabled(Settings settings) {
         return installed(settings) && ShieldPlugin.shieldEnabled(settings);
     }
 

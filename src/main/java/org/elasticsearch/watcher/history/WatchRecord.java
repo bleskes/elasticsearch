@@ -145,9 +145,11 @@ public class WatchRecord implements ToXContent {
         builder.startObject();
         builder.field(Parser.WATCH_ID_FIELD.getPreferredName(), name);
         builder.startObject(Parser.TRIGGER_EVENT_FIELD.getPreferredName())
-                .field(triggerEvent.type(), triggerEvent)
+                .field(triggerEvent.type(), triggerEvent, params)
                 .endObject();
-        builder.startObject(Watch.Parser.CONDITION_FIELD.getPreferredName()).field(condition.type(), condition, params).endObject();
+        builder.startObject(Watch.Parser.CONDITION_FIELD.getPreferredName())
+                .field(condition.type(), condition, params)
+                .endObject();
         builder.field(Parser.STATE_FIELD.getPreferredName(), state.id());
 
         if (message != null) {
@@ -158,7 +160,7 @@ public class WatchRecord implements ToXContent {
         }
 
         if (execution != null) {
-            builder.field(Parser.WATCH_EXECUTION_FIELD.getPreferredName(), execution);
+            builder.field(Parser.WATCH_EXECUTION_FIELD.getPreferredName(), execution, params);
         }
 
         builder.endObject();

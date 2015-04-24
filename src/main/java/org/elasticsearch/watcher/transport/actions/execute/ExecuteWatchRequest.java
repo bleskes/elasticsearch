@@ -22,7 +22,6 @@ import org.elasticsearch.action.ValidateActions;
 import org.elasticsearch.action.support.master.MasterNodeOperationRequest;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.watcher.watch.WatchStore;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -211,6 +210,6 @@ public class ExecuteWatchRequest extends MasterNodeOperationRequest<ExecuteWatch
 
     @Override
     public String toString() {
-        return "execute {[" + WatchStore.INDEX + "][" + id + "]}";
+        return "execute[" + id + "]";
     }
 }

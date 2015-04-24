@@ -40,6 +40,7 @@ import org.elasticsearch.watcher.history.WatchRecord;
 import org.elasticsearch.watcher.input.simple.SimpleInput;
 import org.elasticsearch.watcher.license.LicenseService;
 import org.elasticsearch.watcher.support.clock.Clock;
+import org.elasticsearch.watcher.support.xcontent.WatcherParams;
 import org.elasticsearch.watcher.throttle.Throttler;
 import org.elasticsearch.watcher.transport.actions.WatcherTransportAction;
 import org.elasticsearch.watcher.trigger.manual.ManualTriggerEvent;
@@ -96,9 +97,7 @@ public class TransportExecuteWatchAction extends WatcherTransportAction<ExecuteW
             if (request.isSimulateAllActions()) {
                 ctxBuilder.simulateAllActions();
             } else {
-                for (String actionIdToSimulate : request.getSimulatedActionIds()){
-                    ctxBuilder.simulateActions(actionIdToSimulate);
-                }
+                ctxBuilder.simulateActions(request.getSimulatedActionIds().toArray(new String[request.getSimulatedActionIds().size()]));
             }
             if (request.getTriggerData() != null) {
                 ctxBuilder.triggerEvent(new ManualTriggerEvent(watch.id(), executionTime, request.getTriggerData()));
@@ -116,7 +115,7 @@ public class TransportExecuteWatchAction extends WatcherTransportAction<ExecuteW
 
             WatchRecord record = executionService.execute(ctxBuilder.build());
             XContentBuilder builder = XContentFactory.jsonBuilder();
-            record.toXContent(builder, ToXContent.EMPTY_PARAMS);
+            record.toXContent(builder, WatcherParams.builder().hideSecrets(true).build());
             ExecuteWatchResponse response = new ExecuteWatchResponse(builder.bytes());
             listener.onResponse(response);
         } catch (Exception e) {

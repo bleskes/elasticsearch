@@ -27,7 +27,8 @@ import org.elasticsearch.test.junit.annotations.TestLogging;
 import org.elasticsearch.watcher.client.WatcherClient;
 import org.elasticsearch.watcher.history.HistoryStore;
 import org.elasticsearch.watcher.support.http.HttpRequestTemplate;
-import org.elasticsearch.watcher.support.http.auth.BasicAuth;
+import org.elasticsearch.watcher.support.http.auth.basic.ApplicableBasicAuth;
+import org.elasticsearch.watcher.support.http.auth.basic.BasicAuth;
 import org.elasticsearch.watcher.support.template.Template;
 import org.elasticsearch.watcher.test.AbstractWatcherIntegrationTests;
 import org.elasticsearch.watcher.trigger.schedule.IntervalSchedule;
@@ -71,7 +72,7 @@ public class HttpInputIntegrationTest extends AbstractWatcherIntegrationTests {
                         .input(httpInput(HttpRequestTemplate.builder(address.getHostName(), address.getPort())
                                 .path("/index/_search")
                                 .body(jsonBuilder().startObject().field("size", 1).endObject())
-                                .auth(shieldEnabled() ? new BasicAuth("test", "changeme") : null)))
+                                .auth(shieldEnabled() ? new BasicAuth("test", "changeme".toCharArray()) : null)))
                         .condition(scriptCondition("ctx.payload.hits.total == 1"))
                         .addAction("_id", loggingAction("watch [{{ctx.watch_id}}] matched")))
                 .get();
@@ -92,7 +93,7 @@ public class HttpInputIntegrationTest extends AbstractWatcherIntegrationTests {
                         .trigger(schedule(interval("1s")))
                         .input(httpInput(HttpRequestTemplate.builder(address.getHostName(), address.getPort())
                                 .path("/_cluster/stats")
-                                .auth(shieldEnabled() ? new BasicAuth("test", "changeme") : null)))
+                                .auth(shieldEnabled() ? new BasicAuth("test", "changeme".toCharArray()) : null)))
                         .condition(scriptCondition("ctx.payload.nodes.count.total > 1"))
                         .addAction("_id", loggingAction("watch [{{ctx.watch_id}}] matched")))
                 .get();
@@ -121,7 +122,7 @@ public class HttpInputIntegrationTest extends AbstractWatcherIntegrationTests {
                 .path(new Template("/idx/_search"))
                 .body(body);
         if (shieldEnabled()) {
-            requestBuilder.auth(new BasicAuth("test", "changeme"));
+            requestBuilder.auth(new BasicAuth("test", "changeme".toCharArray()));
         }
 
         watcherClient.preparePutWatch("_name1")
