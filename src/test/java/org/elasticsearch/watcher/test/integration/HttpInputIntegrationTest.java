@@ -59,11 +59,6 @@ public class HttpInputIntegrationTest extends AbstractWatcherIntegrationTests {
                 .build();
     }
 
-    @Override
-    protected boolean enableShield() {
-        return false;
-    }
-
     @Test
     public void testHttpInput() throws Exception {
         createIndex("index");
