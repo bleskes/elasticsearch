@@ -260,7 +260,7 @@ public class JobsTest implements Closeable
 		test(ac.equals(job.getAnalysisConfig()));
 		test(dd.equals(job.getDataDescription()));
 
-		AnalysisLimits al = new AnalysisLimits(2000, 4L);
+		AnalysisLimits al = new AnalysisLimits(2000, null);
 		test(job.getAnalysisLimits().equals(al));
 
 		test(job.getDescription().equals("Flight Centre Job"));
