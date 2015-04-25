@@ -45,6 +45,7 @@ import org.apache.log4j.Logger;
 import com.prelert.job.AnalysisLimits;
 import com.prelert.job.DataDescription;
 import com.prelert.job.JobDetails;
+import com.prelert.job.process.writer.AnalysisLimitsWriter;
 import com.prelert.job.process.writer.FieldConfigWriter;
 import com.prelert.job.quantiles.QuantilesState;
 
@@ -199,20 +200,6 @@ public class ProcessCtrl
      * the autodetect program.  All quantiles files have this extension.
      */
     public static final String QUANTILES_FILE_EXTENSION = ".xml";
-
-    /*
-     * command line args
-     */
-    public static final String BY_ARG = "by";
-    public static final String OVER_ARG = "over";
-
-    public static final char NEW_LINE = '\n';
-
-    /*
-     * The configuration fields used in limits.conf
-     */
-    public static final String  MODEL_MEMORY_LIMIT_CONFIG_STR = "modelmemorylimit";
-
 
     /*
      * Normalisation input fields
@@ -622,31 +609,21 @@ public class ProcessCtrl
         return pb.start();
     }
 
-
     /**
      * Write the Prelert autodetect model options to <code>emptyConfFile</code>.
      *
      * @param emptyConfFile
      * @throws IOException
      */
-    private static void writeLimits(AnalysisLimits options, File emptyConfFile)
-    throws IOException
+    private static void writeLimits(AnalysisLimits options, File emptyConfFile) throws IOException
     {
-        StringBuilder contents = new StringBuilder("[memory]").append(NEW_LINE);
-        if (options.getModelMemoryLimit() > 0)
-        {
-            contents.append(MODEL_MEMORY_LIMIT_CONFIG_STR + " = ")
-                    .append(options.getModelMemoryLimit()).append(NEW_LINE);
-        }
-
         try (OutputStreamWriter osw = new OutputStreamWriter(
                 new FileOutputStream(emptyConfFile),
                 StandardCharsets.UTF_8))
         {
-            osw.write(contents.toString());
+            new AnalysisLimitsWriter(options, osw).write();
         }
     }
-
 
     /**
      * Return true if there is a file PRELERT_HOME/config/prelertmodel.conf

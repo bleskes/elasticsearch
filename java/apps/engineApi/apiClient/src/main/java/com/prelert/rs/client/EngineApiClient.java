@@ -68,6 +68,7 @@ import com.prelert.job.alert.Alert;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.ApiError;
 import com.prelert.rs.data.Bucket;
+import com.prelert.rs.data.CategoryDefinition;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
 
@@ -986,6 +987,32 @@ public class EngineApiClient implements Closeable
         return doc;
     }
 
+    public Pagination<CategoryDefinition> getCategoryDefinitions(String baseUrl, String jobId)
+            throws JsonMappingException, IOException
+    {
+        String url = baseUrl + "/results/" + jobId + "/categorydefinitions";
+        LOGGER.debug("GET category definitions " + url);
+        Pagination<CategoryDefinition> page = this.get(url,
+                new TypeReference<Pagination<CategoryDefinition>>() {});
+
+        if (page == null)
+        {
+            page = new Pagination<>();
+            page.setDocuments(Collections.<CategoryDefinition>emptyList());
+        }
+
+        return page;
+    }
+
+    public SingleDocument<CategoryDefinition> getCategoryDefinition(String baseUrl, String jobId,
+            String categoryId) throws JsonMappingException, IOException
+    {
+        String url = baseUrl + "/results/" + jobId + "/categorydefinitions/" + categoryId;
+        LOGGER.debug("GET category definition " + url);
+        SingleDocument<CategoryDefinition> doc = this.get(url,
+                new TypeReference<SingleDocument<CategoryDefinition>>() {});
+        return doc == null ? new SingleDocument<>() : doc;
+    }
 
     /**
      * Get the anomaly records for the job. The records aren't organised
