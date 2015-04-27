@@ -15,8 +15,11 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.watcher.throttle;
+package org.elasticsearch.watcher.actions.throttler;
 
+import org.elasticsearch.watcher.actions.ActionStatus;
+import org.elasticsearch.watcher.actions.ActionStatus.AckStatus;
+import org.elasticsearch.watcher.actions.throttler.Throttler;
 import org.elasticsearch.watcher.execution.WatchExecutionContext;
 
 import static org.elasticsearch.watcher.support.WatcherDateUtils.formatDate;
@@ -27,9 +30,11 @@ import static org.elasticsearch.watcher.support.WatcherDateUtils.formatDate;
 public class AckThrottler implements Throttler {
 
     @Override
-    public Result throttle(WatchExecutionContext ctx) {
-        if (ctx.watch().acked()) {
-            return Result.throttle("watch [" + ctx.watch().id() + "] was acked at [" + formatDate(ctx.watch().status().ackStatus().timestamp()) + "]");
+    public Result throttle(String actionId, WatchExecutionContext ctx) {
+        ActionStatus actionStatus = ctx.watch().status().actionStatus(actionId);
+        AckStatus ackStatus = actionStatus.ackStatus();
+        if (ackStatus.state() == AckStatus.State.ACKED) {
+            return Result.throttle("action [{}] was acked at [{}]", actionId, formatDate(ackStatus.timestamp()));
         }
         return Result.NO;
     }

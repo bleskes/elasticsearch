@@ -18,7 +18,6 @@
 package org.elasticsearch.watcher.actions;
 
 import org.elasticsearch.common.logging.ESLogger;
-import org.elasticsearch.common.logging.support.LoggerMessageFormat;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.watcher.execution.WatchExecutionContext;
@@ -28,7 +27,7 @@ import java.io.IOException;
 
 /**
  */
-public abstract class ExecutableAction<A extends Action, R extends Action.Result> implements ToXContent {
+public abstract class ExecutableAction<A extends Action> implements ToXContent {
 
     protected final A action;
     protected final ESLogger logger;
@@ -41,7 +40,7 @@ public abstract class ExecutableAction<A extends Action, R extends Action.Result
     /**
      * @return the type of this action
      */
-    public final String type() {
+    public String type() {
         return action.type();
     }
 
@@ -49,25 +48,7 @@ public abstract class ExecutableAction<A extends Action, R extends Action.Result
         return action;
     }
 
-    public R execute(String actionId, WatchExecutionContext context, Payload payload) throws IOException {
-        try {
-            return doExecute(actionId, context, payload);
-        } catch (Exception e){
-            logger.error("failed to execute [{}] action [{}/{}]", e, type(), context.id().value(), actionId);
-            return failure(LoggerMessageFormat.format("failed to execute [{}] action [{}/{}]. error: {}", (Object) type(), context.id().value(), actionId, e.getMessage()));
-        }
-    }
-
-    /**
-     * Executes the action. The implementation need not to worry about handling exception/errors as they're handled
-     * here by default. Of course, if the implementation wants to do that, it can... nothing stops you.
-     */
-    protected abstract R doExecute(String actionId, WatchExecutionContext context, Payload payload) throws Exception;
-
-    /**
-     * Returns an appropriate failure result that contains the given failure reason.
-     */
-    protected abstract R failure(String reason);
+    public abstract Action.Result execute(String actionId, WatchExecutionContext context, Payload payload) throws Exception;
 
     @Override
     public boolean equals(Object o) {

@@ -18,6 +18,7 @@
 package org.elasticsearch.watcher.actions.email;
 
 import org.elasticsearch.common.logging.ESLogger;
+import org.elasticsearch.watcher.actions.Action;
 import org.elasticsearch.watcher.actions.ExecutableAction;
 import org.elasticsearch.watcher.actions.email.service.Attachment;
 import org.elasticsearch.watcher.actions.email.service.Email;
@@ -32,7 +33,7 @@ import java.util.Map;
 
 /**
  */
-public class ExecutableEmailAction extends ExecutableAction<EmailAction, EmailAction.Result> {
+public class ExecutableEmailAction extends ExecutableAction<EmailAction> {
 
     final EmailService emailService;
     final TemplateEngine templateEngine;
@@ -43,7 +44,7 @@ public class ExecutableEmailAction extends ExecutableAction<EmailAction, EmailAc
         this.templateEngine = templateEngine;
     }
 
-    protected EmailAction.Result doExecute(String actionId, WatchExecutionContext ctx, Payload payload) throws Exception {
+    public Action.Result execute(String actionId, WatchExecutionContext ctx, Payload payload) throws Exception {
         Map<String, Object> model = Variables.createCtxModel(ctx, payload);
 
         Map<String, Attachment> attachments = new HashMap<>();
@@ -62,10 +63,5 @@ public class ExecutableEmailAction extends ExecutableAction<EmailAction, EmailAc
 
         EmailService.EmailSent sent = emailService.send(email.build(), action.getAuth(), action.getProfile(), action.getAccount());
         return new EmailAction.Result.Success(sent.account(), sent.email());
-    }
-
-    @Override
-    protected EmailAction.Result failure(String reason) {
-        return new EmailAction.Result.Failure(reason);
     }
 }

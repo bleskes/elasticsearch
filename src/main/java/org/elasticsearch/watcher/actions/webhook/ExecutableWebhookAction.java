@@ -19,6 +19,7 @@
 package org.elasticsearch.watcher.actions.webhook;
 
 import org.elasticsearch.common.logging.ESLogger;
+import org.elasticsearch.watcher.actions.Action;
 import org.elasticsearch.watcher.actions.ExecutableAction;
 import org.elasticsearch.watcher.execution.WatchExecutionContext;
 import org.elasticsearch.watcher.support.Variables;
@@ -28,12 +29,11 @@ import org.elasticsearch.watcher.support.http.HttpResponse;
 import org.elasticsearch.watcher.support.template.TemplateEngine;
 import org.elasticsearch.watcher.watch.Payload;
 
-import java.io.IOException;
 import java.util.Map;
 
 /**
  */
-public class ExecutableWebhookAction extends ExecutableAction<WebhookAction, WebhookAction.Result> {
+public class ExecutableWebhookAction extends ExecutableAction<WebhookAction> {
 
     private final HttpClient httpClient;
     private final TemplateEngine templateEngine;
@@ -45,7 +45,7 @@ public class ExecutableWebhookAction extends ExecutableAction<WebhookAction, Web
     }
 
     @Override
-    protected WebhookAction.Result doExecute(String actionId, WatchExecutionContext ctx, Payload payload) throws IOException {
+    public Action.Result execute(String actionId, WatchExecutionContext ctx, Payload payload) throws Exception {
         Map<String, Object> model = Variables.createCtxModel(ctx, payload);
 
         HttpRequest request = action.requestTemplate.render(templateEngine, model);
@@ -57,14 +57,10 @@ public class ExecutableWebhookAction extends ExecutableAction<WebhookAction, Web
         HttpResponse response = httpClient.execute(request);
 
         int status = response.status();
-        if (status >= 300) {
+        if (status >= 400) {
             logger.warn("received http status [{}] when connecting to watch action [{}/{}/{}]", status, ctx.watch().id(), type(), actionId);
+            return new WebhookAction.Result.Failure(request, response);
         }
-        return new WebhookAction.Result.Executed(request, response);
-    }
-
-    @Override
-    protected WebhookAction.Result failure(String reason) {
-        return new WebhookAction.Result.Failure(reason);
+        return new WebhookAction.Result.Success(request, response);
     }
 }

@@ -27,11 +27,11 @@ import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.watcher.trigger.TriggerEvent;
+import org.elasticsearch.watcher.execution.ActionExecutionMode;
 
 import java.io.IOException;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * An execute watch request to execute a watch by id
@@ -45,7 +45,7 @@ public class ExecuteWatchRequest extends MasterNodeOperationRequest<ExecuteWatch
     private Map<String, Object> alternativeInput = null;
     private BytesReference triggerSource = null;
     private String triggerType = null;
-    private Set<String> simulatedActionIds = new HashSet<>();
+    private Map<String, ActionExecutionMode> actionModes = new HashMap<>();
 
     ExecuteWatchRequest() {
     }
@@ -144,6 +144,7 @@ public class ExecuteWatchRequest extends MasterNodeOperationRequest<ExecuteWatch
     }
 
     /**
+<<<<<<< HEAD
      * @param triggerEvent the trigger event to use
      * @throws IOException
      */
@@ -161,25 +162,23 @@ public class ExecuteWatchRequest extends MasterNodeOperationRequest<ExecuteWatch
 
     /**
      * @return the trigger data to use
+=======
+     * @return  the execution modes for the actions. These modes determine the nature of the execution
+     *          of the watch actions while the watch is executing.
+>>>>>>> Action level throttling
      */
-    public Set<String> getSimulatedActionIds() {
-        return simulatedActionIds;
+    public Map<String, ActionExecutionMode> getActionModes() {
+        return actionModes;
     }
 
     /**
-     * @param simulatedActionIds a list of action ids to run in simulations for this execution
+     * Sets the action execution mode for the give action (identified by its id).
+     *
+     * @param actionId      the action id.
+     * @param actionMode    the execution mode of the action.
      */
-    public void addSimulatedActions(String ... simulatedActionIds) {
-        for (String simulatedActionId : simulatedActionIds) {
-            this.simulatedActionIds.add(simulatedActionId);
-        }
-    }
-
-    /**
-     * @return true if all actions should be simulated
-     */
-    public boolean isSimulateAllActions() {
-        return this.simulatedActionIds.contains("_all");
+    public void setActionMode(String actionId, ActionExecutionMode actionMode) {
+        actionModes.put(actionId, actionMode);
     }
 
     @Override
@@ -206,9 +205,10 @@ public class ExecuteWatchRequest extends MasterNodeOperationRequest<ExecuteWatch
         }
         triggerSource = in.readBytesReference();
         triggerType = in.readString();
-        long simulatedIdCount = in.readLong();
-        for(long i = 0; i < simulatedIdCount; ++i) {
-            simulatedActionIds.add(in.readString());
+        long actionModesCount = in.readLong();
+        actionModes = new HashMap<>();
+        for (int i = 0; i < actionModesCount; i++) {
+            actionModes.put(in.readString(), ActionExecutionMode.resolve(in.readByte()));
         }
     }
 
@@ -226,9 +226,10 @@ public class ExecuteWatchRequest extends MasterNodeOperationRequest<ExecuteWatch
         }
         out.writeBytesReference(triggerSource);
         out.writeString(triggerType);
-        out.writeLong(simulatedActionIds.size());
-        for (String simulatedId : simulatedActionIds) {
-            out.writeString(simulatedId);
+        out.writeLong(actionModes.size());
+        for (Map.Entry<String, ActionExecutionMode> entry : actionModes.entrySet()) {
+            out.writeString(entry.getKey());
+            out.writeByte(entry.getValue().id());
         }
     }
 

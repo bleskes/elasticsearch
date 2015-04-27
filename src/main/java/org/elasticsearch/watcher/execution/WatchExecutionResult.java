@@ -31,7 +31,6 @@ import org.elasticsearch.watcher.condition.ConditionRegistry;
 import org.elasticsearch.watcher.input.Input;
 import org.elasticsearch.watcher.input.InputRegistry;
 import org.elasticsearch.watcher.support.WatcherDateUtils;
-import org.elasticsearch.watcher.throttle.Throttler;
 import org.elasticsearch.watcher.transform.Transform;
 import org.elasticsearch.watcher.transform.TransformRegistry;
 
@@ -47,19 +46,17 @@ public class WatchExecutionResult implements ToXContent {
     private final DateTime executionTime;
     private final Input.Result inputResult;
     private final Condition.Result conditionResult;
-    private final Throttler.Result throttleResult;
     private final @Nullable Transform.Result transformResult;
     private final ExecutableActions.Results actionsResults;
 
     public WatchExecutionResult(WatchExecutionContext context) {
-        this(context.executionTime(), context.inputResult(), context.conditionResult(), context.throttleResult(), context.transformResult(), context.actionsResults());
+        this(context.executionTime(), context.inputResult(), context.conditionResult(), context.transformResult(), context.actionsResults());
     }
 
-    WatchExecutionResult(DateTime executionTime, Input.Result inputResult, Condition.Result conditionResult, Throttler.Result throttleResult, @Nullable Transform.Result transformResult, ExecutableActions.Results actionsResults) {
+    WatchExecutionResult(DateTime executionTime, Input.Result inputResult, Condition.Result conditionResult, @Nullable Transform.Result transformResult, ExecutableActions.Results actionsResults) {
         this.executionTime = executionTime;
         this.inputResult = inputResult;
         this.conditionResult = conditionResult;
-        this.throttleResult = throttleResult;
         this.transformResult = transformResult;
         this.actionsResults = actionsResults;
     }
@@ -74,10 +71,6 @@ public class WatchExecutionResult implements ToXContent {
 
     public Condition.Result conditionResult() {
         return conditionResult;
-    }
-
-    public Throttler.Result throttleResult() {
-        return throttleResult;
     }
 
     public Transform.Result transformResult() {
@@ -101,12 +94,6 @@ public class WatchExecutionResult implements ToXContent {
             builder.field(Field.CONDITION.getPreferredName());
             ConditionRegistry.writeResult(conditionResult, builder, params);
         }
-        if (throttleResult != null && throttleResult.throttle()) {
-            builder.field(Field.THROTTLED.getPreferredName(), throttleResult.throttle());
-            if (throttleResult.reason() != null) {
-                builder.field(Field.THROTTLE_REASON.getPreferredName(), throttleResult.reason());
-            }
-        }
         if (transformResult != null) {
             builder.startObject(Transform.Field.TRANSFORM.getPreferredName())
                     .field(transformResult.type(), transformResult, params)
@@ -122,8 +109,6 @@ public class WatchExecutionResult implements ToXContent {
         public static WatchExecutionResult parse(Wid wid, XContentParser parser, ConditionRegistry conditionRegistry, ActionRegistry actionRegistry,
                                            InputRegistry inputRegistry, TransformRegistry transformRegistry) throws IOException {
             DateTime executionTime = null;
-            boolean throttled = false;
-            String throttleReason = null;
             ExecutableActions.Results actionResults = null;
             Input.Result inputResult = null;
             Condition.Result conditionResult = null;
@@ -140,50 +125,29 @@ public class WatchExecutionResult implements ToXContent {
                     } catch (WatcherDateUtils.ParseException pe) {
                         throw new WatcherException("could not parse watch execution [{}]. failed to parse date field [{}]", pe, wid, currentFieldName);
                     }
-                } else if (token.isValue()) {
-                    if (Field.THROTTLE_REASON.match(currentFieldName)) {
-                        throttleReason = parser.text();
-                    } else if (Field.THROTTLED.match(currentFieldName)) {
-                        throttled = parser.booleanValue();
-                    } else {
-                        throw new WatcherException("could not parse watch execution [{}]. unexpected field [{}]", wid, currentFieldName);
-                    }
-                } else if (token == XContentParser.Token.START_ARRAY) {
-                    if (Field.ACTIONS.match(currentFieldName)) {
-                        actionResults = actionRegistry.parseResults(wid, parser);
-                    } else {
-                        throw new WatcherException("could not parse watch execution [{}]. unexpected field [{}]", wid, currentFieldName);
-                    }
-                } else if (token == XContentParser.Token.START_OBJECT) {
-                    if (Field.INPUT.match(currentFieldName)) {
-                        inputResult = inputRegistry.parseResult(wid.watchId(), parser);
-                    } else if (Field.CONDITION.match(currentFieldName)) {
-                        conditionResult = conditionRegistry.parseResult(wid.watchId(), parser);
-                    } else if (Transform.Field.TRANSFORM.match(currentFieldName)) {
-                        transformResult = transformRegistry.parseResult(wid.watchId(), parser);
-                    } else {
-                        throw new WatcherException("could not parse watch execution [{}]. unexpected field [{}]", wid, currentFieldName);
-                    }
+                } else if (Field.ACTIONS.match(currentFieldName)) {
+                    actionResults = actionRegistry.parseResults(wid, parser);
+                } else if (Field.INPUT.match(currentFieldName)) {
+                    inputResult = inputRegistry.parseResult(wid.watchId(), parser);
+                } else if (Field.CONDITION.match(currentFieldName)) {
+                    conditionResult = conditionRegistry.parseResult(wid.watchId(), parser);
+                } else if (Transform.Field.TRANSFORM.match(currentFieldName)) {
+                    transformResult = transformRegistry.parseResult(wid.watchId(), parser);
                 } else {
-                    throw new WatcherException("could not parse watch execution [{}]. unexpected token [{}]", wid, token);
+                    throw new WatcherException("could not parse watch execution [{}]. unexpected field [{}]", wid, currentFieldName);
                 }
             }
-
             if (executionTime == null) {
                 throw new WatcherException("could not parse watch execution [{}]. missing required date field [{}]", wid, Field.EXECUTION_TIME.getPreferredName());
             }
-
-            Throttler.Result throttleResult = throttled ? Throttler.Result.throttle(throttleReason) : Throttler.Result.NO;
-            return new WatchExecutionResult(executionTime, inputResult, conditionResult, throttleResult, transformResult, actionResults);
+            return new WatchExecutionResult(executionTime, inputResult, conditionResult, transformResult, actionResults);
         }
     }
-    
+
     interface Field {
         ParseField EXECUTION_TIME = new ParseField("execution_time");
         ParseField INPUT = new ParseField("input");
         ParseField CONDITION = new ParseField("condition");
         ParseField ACTIONS = new ParseField("actions");
-        ParseField THROTTLED = new ParseField("throttled");
-        ParseField THROTTLE_REASON = new ParseField("throttle_reason");
     }
 }

@@ -23,6 +23,7 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.client.Requests;
 import org.elasticsearch.common.bytes.BytesReference;
+import org.elasticsearch.common.collect.ImmutableMap;
 import org.elasticsearch.common.joda.time.DateTime;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
@@ -33,6 +34,7 @@ import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.common.xcontent.support.XContentMapValues;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.test.ElasticsearchIntegrationTest;
+import org.elasticsearch.watcher.actions.ActionStatus;
 import org.elasticsearch.watcher.actions.ActionWrapper;
 import org.elasticsearch.watcher.actions.ExecutableActions;
 import org.elasticsearch.watcher.condition.always.ExecutableAlwaysCondition;
@@ -40,9 +42,7 @@ import org.elasticsearch.watcher.execution.TriggeredExecutionContext;
 import org.elasticsearch.watcher.execution.WatchExecutionContext;
 import org.elasticsearch.watcher.input.simple.ExecutableSimpleInput;
 import org.elasticsearch.watcher.input.simple.SimpleInput;
-import org.elasticsearch.watcher.license.LicenseService;
 import org.elasticsearch.watcher.support.WatcherUtils;
-import org.elasticsearch.watcher.support.clock.ClockMock;
 import org.elasticsearch.watcher.support.init.proxy.ClientProxy;
 import org.elasticsearch.watcher.support.template.Template;
 import org.elasticsearch.watcher.transform.Transform;
@@ -52,6 +52,7 @@ import org.elasticsearch.watcher.trigger.schedule.ScheduleTrigger;
 import org.elasticsearch.watcher.trigger.schedule.ScheduleTriggerEvent;
 import org.elasticsearch.watcher.watch.Payload;
 import org.elasticsearch.watcher.watch.Watch;
+import org.elasticsearch.watcher.watch.WatchStatus;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -62,6 +63,7 @@ import java.util.Map;
 
 import static org.elasticsearch.common.joda.time.DateTimeZone.UTC;
 import static org.elasticsearch.common.settings.ImmutableSettings.settingsBuilder;
+import static org.elasticsearch.common.unit.TimeValue.timeValueSeconds;
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 import static org.elasticsearch.index.query.FilterBuilders.*;
 import static org.elasticsearch.index.query.QueryBuilders.*;
@@ -70,7 +72,6 @@ import static org.elasticsearch.test.ElasticsearchIntegrationTest.Scope.SUITE;
 import static org.elasticsearch.watcher.support.WatcherDateUtils.parseDate;
 import static org.elasticsearch.watcher.test.WatcherTestUtils.*;
 import static org.hamcrest.Matchers.*;
-import static org.mockito.Mockito.mock;
 
 /**
  *
@@ -412,18 +413,17 @@ public class SearchTransformTests extends ElasticsearchIntegrationTest {
 
         WatchExecutionContext ctx = new TriggeredExecutionContext(
                 new Watch("test-watch",
-                        new ClockMock(),
-                        mock(LicenseService.class),
                         new ScheduleTrigger(new IntervalSchedule(new IntervalSchedule.Interval(1, IntervalSchedule.Interval.Unit.MINUTES))),
                         new ExecutableSimpleInput(new SimpleInput(new Payload.Simple()), logger),
                         new ExecutableAlwaysCondition(logger),
                         null,
+                        null,
                         new ExecutableActions(new ArrayList<ActionWrapper>()),
                         null,
-                        null,
-                        new Watch.Status()),
+                        new WatchStatus(ImmutableMap.<String, ActionStatus>of())),
                 new DateTime(60000, UTC),
-                new ScheduleTriggerEvent("test-watch", new DateTime(60000, UTC), new DateTime(60000, UTC)));
+                new ScheduleTriggerEvent("test-watch", new DateTime(60000, UTC), new DateTime(60000, UTC)),
+                timeValueSeconds(5));
 
         return executableSearchTransform.execute(ctx, Payload.Simple.EMPTY);
     }

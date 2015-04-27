@@ -15,8 +15,10 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.watcher.throttle;
+package org.elasticsearch.watcher.actions.throttler;
 
+import org.elasticsearch.common.ParseField;
+import org.elasticsearch.common.logging.support.LoggerMessageFormat;
 import org.elasticsearch.watcher.execution.WatchExecutionContext;
 
 /**
@@ -24,16 +26,16 @@ import org.elasticsearch.watcher.execution.WatchExecutionContext;
  */
 public interface Throttler {
 
-    public static final Throttler NO_THROTTLE = new Throttler() {
+    Throttler NO_THROTTLE = new Throttler() {
         @Override
-        public Result throttle(WatchExecutionContext ctx) {
+        public Result throttle(String actionId, WatchExecutionContext ctx) {
             return Result.NO;
         }
     };
 
-    Result throttle(WatchExecutionContext ctx);
+    Result throttle(String actionId, WatchExecutionContext ctx);
 
-    static class Result {
+    class Result {
 
         public static final Result NO = new Result(false, null);
         
@@ -45,8 +47,8 @@ public interface Throttler {
             this.reason = reason;
         }
 
-        public static Result throttle(String reason) {
-            return new Result(true, reason);
+        public static Result throttle(String reason, Object... args) {
+            return new Result(true, LoggerMessageFormat.format(reason, args));
         }
 
         public boolean throttle() {
@@ -57,5 +59,9 @@ public interface Throttler {
             return reason;
         }
 
+    }
+
+    interface Field {
+        ParseField THROTTLE_PERIOD = new ParseField("throttle_period");
     }
 }
