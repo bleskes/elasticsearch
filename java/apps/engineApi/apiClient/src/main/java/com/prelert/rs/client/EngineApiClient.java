@@ -990,7 +990,14 @@ public class EngineApiClient implements Closeable
     public Pagination<CategoryDefinition> getCategoryDefinitions(String baseUrl, String jobId)
             throws JsonMappingException, IOException
     {
-        String url = baseUrl + "/results/" + jobId + "/categorydefinitions";
+        return getCategoryDefinitions(baseUrl, jobId, null, null);
+    }
+
+    public Pagination<CategoryDefinition> getCategoryDefinitions(String baseUrl, String jobId,
+            Long skip, Long take) throws JsonMappingException, IOException
+    {
+        String url = String.format("%s/results/%s/categorydefinitions?skip=%s&take=%s",
+                baseUrl, jobId, skip == null ? "" : skip, take == null ? "" : take);
         LOGGER.debug("GET category definitions " + url);
         Pagination<CategoryDefinition> page = this.get(url,
                 new TypeReference<Pagination<CategoryDefinition>>() {});
