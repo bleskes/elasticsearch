@@ -31,6 +31,8 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.http.client.ClientProtocolException;
 import org.apache.log4j.ConsoleAppender;
@@ -64,23 +66,26 @@ import com.prelert.rs.data.SingleDocument;
  */
 public class CategorizationTest implements Closeable
 {
-
     private static final Logger LOGGER = Logger.getLogger(CategorizationTest.class);
+
+    private static final String HIGHEST_ANOMALY_BUCKET_ID = "highestAnomalyBucketId";
+    private static final String HIGHEST_ANOMALY_CATEGORY_ID = "highestAnomalyCategoryId";
+    private static final String HIGHEST_ANOMALY_SCORE_THRESHOLD = "highestAnomalyScoreThreshold";
+    private static final String HIGHEST_RECORD_PROBABILITY_THRESHOLD =
+            "highestAnomalyRecordProbabilityThreshold";
 
     private static final long BUCKET_SPAN = 3600;
     private static final int EXPECTED_CATEGORIES = 49;
     private static final int DEFAULT_EXAMPLES_BY_CATEGORY_LIMIT = 4;
-    private static final String HIGHEST_ANOMALY_BUCKET_ID = "1284379200";
-    private static final double HIGHEST_ANOMALY_SCORE_THRESHOLD = 97.0;
-    private static final double HIGHEST_RECORD_PROB_THRESHOLD = 99.0;
-    private static final String HIGHEST_ANOMALY_CATEGORY_ID = "43";
 
-    private static final String TEST_JOB_DEFAULT_EXAMPLES_LIMIT_ID =
-            "categorization-test-default-examples-limit";
-    private static final String TEST_JOB_ZERO_EXAMPLES_LIMIT_ID =
-            "categorization-test-zero-examples-limit";
-    private static final String TEST_JOB_FIVE_EXAMPLES_LIMIT_ID =
-            "categorization-test-zero-examples-limit";
+    private static final String COUNT_DEFAULT_EXAMPLES_LIMIT_ID =
+            "categorization-test-count-default-examples-limit";
+    private static final String COUNT_ZERO_EXAMPLES_LIMIT_ID =
+            "categorization-test-count-zero-examples-limit";
+    private static final String COUNT_FIVE_EXAMPLES_LIMIT_ID =
+            "categorization-test-count-zero-examples-limit";
+    private static final String RARE_DEFAULT_EXAMPLES_LIMIT_ID =
+            "categorization-test-rare-default-examples-limit";
 
     /**
      * The default base Url used in the test
@@ -92,16 +97,21 @@ public class CategorizationTest implements Closeable
     private final String m_BaseUrl;
     private final String m_JobId;
     private Long m_ExamplesByCategoryLimit;
+    private final String m_Function;
+    private final Map<String, Object> m_ExpectedResults;
 
     /**
      * Creates a new http client call {@linkplain #close()} once finished
      */
-    public CategorizationTest(String testDataHome, String baseUrl, String jobId)
+    public CategorizationTest(String testDataHome, String baseUrl, String jobId, String function,
+            Map<String, Object> expectedResults)
     {
         m_WebServiceClient = new EngineApiClient();
         m_TestDataHome = testDataHome;
         m_BaseUrl = baseUrl;
         m_JobId = jobId;
+        m_Function = function;
+        m_ExpectedResults = expectedResults;
     }
 
     @Override
@@ -155,7 +165,7 @@ public class CategorizationTest implements Closeable
             IOException
     {
         Detector d = new Detector();
-        d.setFunction("count");
+        d.setFunction(m_Function);
         d.setByFieldName("prelertcategory");
 
         AnalysisLimits analysisLimits = new AnalysisLimits();
@@ -194,42 +204,50 @@ public class CategorizationTest implements Closeable
         Pagination<CategoryDefinition> categoryDefinitions = m_WebServiceClient
                 .getCategoryDefinitions(m_BaseUrl, m_JobId);
         test(categoryDefinitions.getHitCount() == EXPECTED_CATEGORIES);
+
+        long categoryId = 1;
         int maxExamplesSize = 0;
         for (CategoryDefinition def : categoryDefinitions.getDocuments())
         {
-            int examplesSize = def.getExamples().size();
-            maxExamplesSize = Math.max(maxExamplesSize, examplesSize);
+            SingleDocument<CategoryDefinition> doc = m_WebServiceClient.getCategoryDefinition(
+                    API_BASE_URL, m_JobId, String.valueOf(categoryId));
+            CategoryDefinition categoryDefinition = doc.getDocument();
+            test(categoryDefinition.getCategoryId() == categoryId);
+            test(categoryDefinition.getTerms().isEmpty() == false);
+            test(categoryDefinition.getRegex().isEmpty() == false);
+            if (m_ExamplesByCategoryLimit == null || m_ExamplesByCategoryLimit > 0)
+            {
+                int examplesSize = def.getExamples().size();
+                maxExamplesSize = Math.max(maxExamplesSize, examplesSize);
+                test(examplesSize > 0);
+            }
+            categoryId++;
         }
         test(maxExamplesSize == getExamplesByCategoryLimit());
-
-        SingleDocument<CategoryDefinition> doc = m_WebServiceClient
-                .getCategoryDefinition(API_BASE_URL, m_JobId, HIGHEST_ANOMALY_CATEGORY_ID);
-        CategoryDefinition categoryDefinition = doc.getDocument();
-        test(categoryDefinition.getCategoryId() == 43);
-        test(categoryDefinition.getTerms().isEmpty() == false);
-        test(categoryDefinition.getRegex().isEmpty() == false);
-        if (m_ExamplesByCategoryLimit == null || m_ExamplesByCategoryLimit > 0)
-        {
-            test(categoryDefinition.getExamples().size() > 0);
-        }
     }
 
     private void verifyHighestAnomaly() throws IOException
     {
         SingleDocument<Bucket> doc= m_WebServiceClient.getBucket(m_BaseUrl, m_JobId,
-                HIGHEST_ANOMALY_BUCKET_ID, true);
+                (String) m_ExpectedResults.get(HIGHEST_ANOMALY_BUCKET_ID), true);
         Bucket bucket = doc.getDocument();
-        test(bucket.getAnomalyScore() > HIGHEST_ANOMALY_SCORE_THRESHOLD);
+        test(bucket.getAnomalyScore() >= (double) m_ExpectedResults.get(HIGHEST_ANOMALY_SCORE_THRESHOLD));
         AnomalyRecord highestRecord = null;
         for (AnomalyRecord record : bucket.getRecords())
         {
-            if (record.getNormalizedProbability() > HIGHEST_RECORD_PROB_THRESHOLD)
+            test(record.getFunction().equals(m_Function));
+            if (record.getNormalizedProbability() >=
+                    (double) m_ExpectedResults.get(HIGHEST_RECORD_PROBABILITY_THRESHOLD))
             {
                 highestRecord = record;
             }
         }
         test(highestRecord != null);
-        test(highestRecord.getByFieldValue() == HIGHEST_ANOMALY_CATEGORY_ID);
+        if (m_ExpectedResults.containsKey(HIGHEST_ANOMALY_CATEGORY_ID))
+        {
+            test(highestRecord.getByFieldValue().equals(
+                    m_ExpectedResults.get(HIGHEST_ANOMALY_CATEGORY_ID)));
+        }
     }
 
     private void verifyPaginationWorks() throws IOException
@@ -304,18 +322,38 @@ public class CategorizationTest implements Closeable
             return;
         }
 
+        // Count tests with different examples limits
+        Map<String, Object> expectedResultsForCount = new HashMap<>();
+        expectedResultsForCount.put(HIGHEST_ANOMALY_BUCKET_ID, "1284379200");
+        expectedResultsForCount.put(HIGHEST_ANOMALY_SCORE_THRESHOLD, 97.0);
+        expectedResultsForCount.put(HIGHEST_RECORD_PROBABILITY_THRESHOLD, 99.0);
+        expectedResultsForCount.put(HIGHEST_ANOMALY_CATEGORY_ID, "43");
+
         CategorizationTest test = new CategorizationTest(prelertTestDataHome, baseUrl,
-                TEST_JOB_DEFAULT_EXAMPLES_LIMIT_ID);
+                COUNT_DEFAULT_EXAMPLES_LIMIT_ID, "count", expectedResultsForCount);
         test.execute();
         test.close();
 
-        test = new CategorizationTest(prelertTestDataHome, baseUrl, TEST_JOB_ZERO_EXAMPLES_LIMIT_ID);
+        test = new CategorizationTest(prelertTestDataHome, baseUrl,
+                COUNT_ZERO_EXAMPLES_LIMIT_ID, "count", expectedResultsForCount);
         test.setExamplesByCategoryLimit(0);
         test.execute();
         test.close();
 
-        test = new CategorizationTest(prelertTestDataHome, baseUrl, TEST_JOB_FIVE_EXAMPLES_LIMIT_ID);
+        test = new CategorizationTest(prelertTestDataHome, baseUrl,
+                COUNT_FIVE_EXAMPLES_LIMIT_ID, "count", expectedResultsForCount);
         test.setExamplesByCategoryLimit(5);
+        test.execute();
+        test.close();
+
+        // Rare tests with default examples limits
+        Map<String, Object> expectedResultsForRare = new HashMap<>();
+        expectedResultsForRare.put(HIGHEST_ANOMALY_BUCKET_ID, "1284379200");
+        expectedResultsForRare.put(HIGHEST_ANOMALY_SCORE_THRESHOLD, 97.0);
+        expectedResultsForRare.put(HIGHEST_RECORD_PROBABILITY_THRESHOLD, 0.0);
+
+        test = new CategorizationTest(prelertTestDataHome, baseUrl,
+                RARE_DEFAULT_EXAMPLES_LIMIT_ID, "rare", expectedResultsForRare);
         test.execute();
         test.close();
 
