@@ -33,7 +33,6 @@ import java.util.Set;
 import javax.ws.rs.core.Application;
 
 import com.prelert.job.alert.manager.AlertManager;
-import com.prelert.job.alert.persistence.elasticsearch.ElasticsearchAlertPersister;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.persistence.elasticsearch.ElasticsearchDataPersisterFactory;
 import com.prelert.job.persistence.elasticsearch.ElasticsearchJobProvider;
@@ -117,9 +116,7 @@ public class PrelertWebApp extends Application
 
 		m_JobManager = new JobManager(esJob, createProcessManager(esJob));
 
-		m_AlertManager = new AlertManager(
-				new ElasticsearchAlertPersister(esJob.getClient()),
-				esJob, m_JobManager);
+		m_AlertManager = new AlertManager(esJob, m_JobManager);
 
 
 		m_Singletons = new HashSet<>();

@@ -48,9 +48,9 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Appender;
+import org.apache.log4j.EnhancedPatternLayout;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.apache.log4j.PatternLayout;
 import org.apache.log4j.RollingFileAppender;
 
 import com.fasterxml.jackson.core.JsonParseException;
@@ -1084,8 +1084,9 @@ public class ProcessManager
                 Path logFile = FileSystems.getDefault().getPath(ProcessCtrl.LOG_DIR,
                         jobId, "engine_api.log");
                 RollingFileAppender fileAppender = new RollingFileAppender(
-                        new PatternLayout("%d{dd MMM yyyy HH:mm:ss zz} [%t] %-5p %c{3} - %m%n"),
-                        logFile.toString());
+                        new EnhancedPatternLayout(
+                                "%d{yyyy-MM-dd HH:mm:ss,SSS zz} [%t] %-5p %c{3} - %m%n"),
+                                logFile.toString());
 
                 fileAppender.setName(LOG_FILE_APPENDER_NAME);
                 fileAppender.setMaxFileSize("1MB");

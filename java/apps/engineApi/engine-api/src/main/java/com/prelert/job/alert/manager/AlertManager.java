@@ -42,7 +42,6 @@ import javax.ws.rs.core.UriBuilder;
 import org.apache.log4j.Logger;
 
 import com.prelert.job.alert.Alert;
-import com.prelert.job.alert.persistence.AlertPersister;
 import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.persistence.JobProvider;
@@ -70,8 +69,6 @@ public class AlertManager implements TimeoutHandler
 	private static final Logger LOGGER = Logger.getLogger(AlertManager.class);
 
 	private Map<AsyncResponse, AlertListener> m_AsyncRepsonses;
-	@SuppressWarnings("unused")
-	private AlertPersister m_AlertPersister;
 
 	private JobProvider m_JobProvider;
 	private JobManager m_JobManager;
@@ -123,30 +120,11 @@ public class AlertManager implements TimeoutHandler
 		}
 	}
 
-	/**
-	 *
-	 * @param alertPersister Knows how to save alerts
-	 */
-	public AlertManager(AlertPersister alertPersister, JobProvider jobProvider,
-			JobManager jobManager)
+	public AlertManager(JobProvider jobProvider, JobManager jobManager)
 	{
 		m_JobProvider = jobProvider;
-		m_AlertPersister = alertPersister;
 		m_JobManager = jobManager;
 		m_AsyncRepsonses = new HashMap<>();
-
-		/*
-		String lastAlertId = m_AlertPersister.lastAlertId();
-		try
-		{
-			long seq = Long.parseLong(lastAlertId);
-			LOGGER.info("Starting Alert Id sequence with value " + lastAlertId);
-		}
-		catch (NumberFormatException nfe)
-		{
-			LOGGER.info("New alert id sequence");
-		}
-		*/
 	}
 
 	/**
