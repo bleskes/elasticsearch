@@ -33,6 +33,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -64,12 +65,12 @@ import com.prelert.job.transform.TransformConfig;
 import com.prelert.job.transform.TransformConfigs;
 
 @RunWith(MockitoJUnitRunner.class)
-public class CsvDataToProcessWriterTest
+public class SingleLineDataToProcessWriterTest
 {
-
     @Mock private LengthEncodedWriter m_LengthEncodedWriter;
     private DataDescription m_DataDescription;
     private AnalysisConfig m_AnalysisConfig;
+    private List<TransformConfig> m_TransformConfigs;
     @Mock private StatusReporter m_StatusReporter;
     @Mock private JobDataPersister m_DataPersister;
     @Mock private Logger m_Logger;
@@ -93,137 +94,119 @@ public class CsvDataToProcessWriterTest
 
         m_DataDescription = new DataDescription();
         m_DataDescription.setFieldDelimiter(',');
-        m_DataDescription.setFormat(DataFormat.DELINEATED);
-        m_DataDescription.setTimeFormat(DataDescription.EPOCH);
+        m_DataDescription.setFormat(DataFormat.SINGLE_LINE);
+        m_DataDescription.setTimeFormat(DataDescription.FORMAT);
+        m_DataDescription.setTimeFormat("yyyy-MM-dd HH:mm:ssX");
 
         m_AnalysisConfig = new AnalysisConfig();
         Detector detector = new Detector();
-        detector.setFieldName("value");
+        detector.setFunction("count");
+        detector.setByFieldName("message");
         m_AnalysisConfig.setDetectors(Arrays.asList(detector));
+
+        m_TransformConfigs = new ArrayList<>();
     }
 
     @Test
-    public void testWrite_GivenTimeFormatIsEpochAndDataIsValid() throws MissingFieldException,
+    public void testWrite_GivenDataIsValid() throws MissingFieldException,
+            HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException
+    {
+        TransformConfig transformConfig = new TransformConfig();
+        transformConfig.setInputs(Arrays.asList("raw"));
+        transformConfig.setOutputs(Arrays.asList("time", "message"));
+        transformConfig.setTransform("extract");
+        transformConfig.setArguments(Arrays.asList("(.{20}) (.*)"));
+        m_TransformConfigs.add(transformConfig);
+
+        StringBuilder input = new StringBuilder();
+        input.append("2015-04-29 10:00:00Z This is message 1\n");
+        input.append("2015-04-29 11:00:00Z This is message 2\r");
+        input.append("2015-04-29 12:00:00Z This is message 3\r\n");
+        InputStream inputStream = createInputStream(input.toString());
+        SingleLineDataToProcessWriter writer = createWriter();
+
+        writer.write(inputStream);
+        verify(m_StatusReporter, times(1)).startNewIncrementalCount();
+        verify(m_StatusReporter, times(1)).setAnalysedFieldsPerRecord(1);
+        verify(m_StatusReporter, times(3)).reportRecordWritten(1);
+        verify(m_StatusReporter, times(1)).incrementalStats();
+
+        List<String[]> expectedRecords = new ArrayList<>();
+        // The final field is the control field
+        expectedRecords.add(new String[] {"time", "message", "."});
+        expectedRecords.add(new String[] {"1430301600", "This is message 1", ""});
+        expectedRecords.add(new String[] {"1430305200", "This is message 2", ""});
+        expectedRecords.add(new String[] {"1430308800", "This is message 3", ""});
+        assertWrittenRecordsEqualTo(expectedRecords);
+
+        verify(m_StatusReporter).finishReporting();
+        verify(m_DataPersister).flushRecords();
+        verifyNoMoreInteractions(m_StatusReporter);
+    }
+
+    @Test
+    public void testWrite_GivenDataContainsInvalidRecords() throws MissingFieldException,
+            HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException
+    {
+        TransformConfig transformConfig = new TransformConfig();
+        transformConfig.setInputs(Arrays.asList("raw"));
+        transformConfig.setOutputs(Arrays.asList("time", "message"));
+        transformConfig.setTransform("extract");
+        transformConfig.setArguments(Arrays.asList("(.{20}) (.*)"));
+        m_TransformConfigs.add(transformConfig);
+
+        StringBuilder input = new StringBuilder();
+        input.append("2015-04-29 10:00:00Z This is message 1\n");
+        input.append("No transform\n");
+        input.append("Transform can apply but no date to be parsed\n");
+        input.append("\n");
+        input.append("2015-04-29 12:00:00Z This is message 3\n");
+        InputStream inputStream = createInputStream(input.toString());
+        SingleLineDataToProcessWriter writer = createWriter();
+
+        writer.write(inputStream);
+        verify(m_StatusReporter, times(1)).startNewIncrementalCount();
+        verify(m_StatusReporter, times(1)).setAnalysedFieldsPerRecord(1);
+        verify(m_StatusReporter, times(2)).reportRecordWritten(1);
+        verify(m_StatusReporter, times(2)).reportFailedTransform();
+        verify(m_StatusReporter, times(3)).reportDateParseError(1);
+        verify(m_StatusReporter, times(1)).incrementalStats();
+
+        List<String[]> expectedRecords = new ArrayList<>();
+        // The final field is the control field
+        expectedRecords.add(new String[] {"time", "message", "."});
+        expectedRecords.add(new String[] {"1430301600", "This is message 1", ""});
+        expectedRecords.add(new String[] {"1430308800", "This is message 3", ""});
+        assertWrittenRecordsEqualTo(expectedRecords);
+
+        verify(m_StatusReporter).finishReporting();
+        verify(m_DataPersister).flushRecords();
+        verifyNoMoreInteractions(m_StatusReporter);
+    }
+
+    @Test
+    public void testWrite_GivenNoTransforms() throws MissingFieldException,
             HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException
     {
         StringBuilder input = new StringBuilder();
-        input.append("time,metric,value\n");
-        input.append("1,foo,1.0\n");
-        input.append("2,bar,2.0\n");
+        input.append("2015-04-29 10:00:00Z This is message 1\n");
         InputStream inputStream = createInputStream(input.toString());
-        CsvDataToProcessWriter writer = createWriter();
+        SingleLineDataToProcessWriter writer = createWriter();
 
         writer.write(inputStream);
         verify(m_StatusReporter, times(1)).startNewIncrementalCount();
+        verify(m_StatusReporter, times(1)).setAnalysedFieldsPerRecord(1);
+        verify(m_StatusReporter, times(1)).reportDateParseError(0);
+        verify(m_StatusReporter, times(1)).incrementalStats();
 
         List<String[]> expectedRecords = new ArrayList<>();
         // The final field is the control field
-        expectedRecords.add(new String[] {"time", "value", "."});
-        expectedRecords.add(new String[] {"1", "1.0", ""});
-        expectedRecords.add(new String[] {"2", "2.0", ""});
+        expectedRecords.add(new String[] {"time", "message", "."});
         assertWrittenRecordsEqualTo(expectedRecords);
 
         verify(m_StatusReporter).finishReporting();
         verify(m_DataPersister).flushRecords();
-    }
-
-    @Test
-    public void testWrite_GivenTimeFormatIsEpochAndTimestampsAreOutOfOrder()
-            throws MissingFieldException, HighProportionOfBadTimestampsException,
-            OutOfOrderRecordsException, IOException
-    {
-        StringBuilder input = new StringBuilder();
-        input.append("time,metric,value\n");
-        input.append("3,foo,3.0\n");
-        input.append("1,bar,2.0\n");
-        input.append("2,bar,2.0\n");
-        InputStream inputStream = createInputStream(input.toString());
-        CsvDataToProcessWriter writer = createWriter();
-
-        writer.write(inputStream);
-        verify(m_StatusReporter, times(1)).startNewIncrementalCount();
-
-        List<String[]> expectedRecords = new ArrayList<>();
-        // The final field is the control field
-        expectedRecords.add(new String[] {"time", "value", "."});
-        expectedRecords.add(new String[] {"3", "3.0", ""});
-        assertWrittenRecordsEqualTo(expectedRecords);
-
-        verify(m_StatusReporter, times(2)).reportOutOfOrderRecord(2);
-        verify(m_StatusReporter).finishReporting();
-        verify(m_DataPersister).flushRecords();
-    }
-
-    @Test
-    public void testWrite_GivenTimeFormatIsEpochAndSomeTimestampsWithinLatencySomeOutOfOrder()
-            throws MissingFieldException, HighProportionOfBadTimestampsException,
-            OutOfOrderRecordsException, IOException
-    {
-        m_AnalysisConfig.setLatency(2L);
-
-        StringBuilder input = new StringBuilder();
-        input.append("time,metric,value\n");
-        input.append("4,foo,4.0\n");
-        input.append("5,foo,5.0\n");
-        input.append("3,foo,3.0\n");
-        input.append("4,bar,4.0\n");
-        input.append("2,bar,2.0\n");
-        input.append("\0");
-        InputStream inputStream = createInputStream(input.toString());
-        CsvDataToProcessWriter writer = createWriter();
-
-        writer.write(inputStream);
-        verify(m_StatusReporter, times(1)).startNewIncrementalCount();
-
-        List<String[]> expectedRecords = new ArrayList<>();
-        // The final field is the control field
-        expectedRecords.add(new String[] {"time", "value", "."});
-        expectedRecords.add(new String[] {"4", "4.0", ""});
-        expectedRecords.add(new String[] {"5", "5.0", ""});
-        expectedRecords.add(new String[] {"3", "3.0", ""});
-        expectedRecords.add(new String[] {"4", "4.0", ""});
-        assertWrittenRecordsEqualTo(expectedRecords);
-
-        verify(m_StatusReporter, times(1)).reportOutOfOrderRecord(2);
-        verify(m_StatusReporter).finishReporting();
-        verify(m_DataPersister).flushRecords();
-    }
-
-    @Test
-    public void testWrite_NullByte()
-            throws MissingFieldException, HighProportionOfBadTimestampsException,
-            OutOfOrderRecordsException, IOException
-    {
-        m_AnalysisConfig.setLatency(0L);
-
-        StringBuilder input = new StringBuilder();
-        input.append("metric,value,time\n");
-        input.append("foo,4.0,1\n");
-        input.append("\0");   // the csv reader skips over this line
-        input.append("foo,5.0,2\n");
-        input.append("foo,3.0,3\n");
-        input.append("bar,4.0,4\n");
-        input.append("\0");
-        InputStream inputStream = createInputStream(input.toString());
-        CsvDataToProcessWriter writer = createWriter();
-
-        writer.write(inputStream);
-        verify(m_StatusReporter, times(1)).startNewIncrementalCount();
-
-        List<String[]> expectedRecords = new ArrayList<>();
-        // The final field is the control field
-        expectedRecords.add(new String[] {"time", "value", "."});
-        expectedRecords.add(new String[] {"1", "4.0", ""});
-        expectedRecords.add(new String[] {"2", "5.0", ""});
-        expectedRecords.add(new String[] {"3", "3.0", ""});
-        expectedRecords.add(new String[] {"4", "4.0", ""});
-        assertWrittenRecordsEqualTo(expectedRecords);
-
-        verify(m_StatusReporter, times(1)).reportMissingField();
-        verify(m_StatusReporter, times(4)).reportRecordWritten(2);
-        verify(m_StatusReporter, times(1)).reportDateParseError(2);
-        verify(m_StatusReporter).finishReporting();
-        verify(m_DataPersister).flushRecords();
+        verifyNoMoreInteractions(m_StatusReporter);
     }
 
     private static InputStream createInputStream(String input)
@@ -231,11 +214,11 @@ public class CsvDataToProcessWriterTest
         return new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
     }
 
-    private CsvDataToProcessWriter createWriter()
+    private SingleLineDataToProcessWriter createWriter()
     {
-        return new CsvDataToProcessWriter(m_LengthEncodedWriter, m_DataDescription,
-                m_AnalysisConfig, new TransformConfigs(Arrays.<TransformConfig>asList()),
-                m_StatusReporter, m_DataPersister, m_Logger);
+        return new SingleLineDataToProcessWriter(m_LengthEncodedWriter, m_DataDescription,
+                m_AnalysisConfig, new TransformConfigs(m_TransformConfigs), m_StatusReporter,
+                m_DataPersister, m_Logger);
     }
 
     private void assertWrittenRecordsEqualTo(List<String[]> expectedRecords)

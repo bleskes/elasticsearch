@@ -58,7 +58,7 @@ public class DataDescription
      */
     public enum DataFormat
     {
-        JSON, DELINEATED;
+        JSON, DELINEATED, SINGLE_LINE;
 
         /**
          * Case-insensitive from string method.
