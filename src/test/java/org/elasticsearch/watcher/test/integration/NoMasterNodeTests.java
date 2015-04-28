@@ -240,6 +240,7 @@ public class NoMasterNodeTests extends AbstractWatcherIntegrationTests {
     private void startElectedMasterNodeAndWait() throws Exception {
         internalTestCluster().startNode();
         ensureWatcherStarted(false);
+        ensureWatcherOnlyRunningOnce();
     }
 
 }

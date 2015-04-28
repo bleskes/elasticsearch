@@ -82,6 +82,11 @@ public class LicenseIntegrationTests extends AbstractWatcherIntegrationTests {
         return true;
     }
 
+    @Override
+    protected boolean checkWatcherRunningOnlyOnce() {
+        return false;
+    }
+
     @Test
     public void testEnableDisableBehaviour() throws Exception {
 
