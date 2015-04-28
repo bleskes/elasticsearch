@@ -304,7 +304,7 @@ public class JobConfiguration
         for (TransformConfig tc : m_Transforms)
         {
             // if the type has no default outputs it doesn't need an output
-            boolean usesAnOutput = tc.type().defaultOutputNames().size() == 0;
+            boolean usesAnOutput = tc.type().defaultOutputNames().isEmpty();
             for (String outputName : tc.getOutputs())
             {
                 if (usedFields.contains(outputName))
