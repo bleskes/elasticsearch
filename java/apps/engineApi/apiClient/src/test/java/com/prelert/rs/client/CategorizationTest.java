@@ -130,6 +130,7 @@ public class CategorizationTest implements Closeable
         setUp();
         verifyCategoryDefinitions();
         verifyHighestAnomaly();
+        verifyPaginationWorks();
         deleteJob();
     }
 
@@ -229,6 +230,17 @@ public class CategorizationTest implements Closeable
         }
         test(highestRecord != null);
         test(highestRecord.getByFieldValue() == HIGHEST_ANOMALY_CATEGORY_ID);
+    }
+
+    private void verifyPaginationWorks() throws IOException
+    {
+        Pagination<CategoryDefinition> categoryDefinitions = m_WebServiceClient
+                .getCategoryDefinitions(m_BaseUrl, m_JobId, 0L, 25L);
+        test(categoryDefinitions.isAllResults() == false);
+        test(categoryDefinitions.getPreviousPage() == null);
+        String expectedNextPageUri =
+                m_BaseUrl + "/results/" + m_JobId + "/categorydefinitions?skip=25&take=25";
+        test(expectedNextPageUri.equals(categoryDefinitions.getNextPage().toString()));
     }
 
     private void deleteJob() throws IOException

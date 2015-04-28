@@ -129,7 +129,7 @@ public class CategoryDefinitions extends ResourceWithJobManager
         }
         else
         {
-            LOGGER.debug(String.format("Cannot find categroy definition %s for job %s",
+            LOGGER.debug(String.format("Cannot find category definition %s for job %s",
                     categoryId, jobId));
 
             return Response.status(Response.Status.NOT_FOUND).entity(category).build();
