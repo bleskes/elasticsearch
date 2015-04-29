@@ -137,6 +137,10 @@ public class ExecutionService extends AbstractComponent {
         }
 
         logger.debug("saving watch records [{}]", records.size());
+        if (records.size() == 0) {
+            return;
+        }
+
         if (records.size() == 1) {
             final WatchRecord watchRecord = records.getFirst();
             final TriggeredExecutionContext ctx = contexts.getFirst();
@@ -198,6 +202,10 @@ public class ExecutionService extends AbstractComponent {
         }
 
         logger.debug("saving watch records [{}]", records.size());
+        if (records.size() == 0) {
+            return;
+        }
+
         if (records.size() == 1) {
             final WatchRecord watchRecord = records.getFirst();
             final TriggeredExecutionContext ctx = contexts.getFirst();
