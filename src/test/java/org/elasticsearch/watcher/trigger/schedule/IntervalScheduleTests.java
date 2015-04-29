@@ -26,8 +26,7 @@ import org.elasticsearch.test.ElasticsearchTestCase;
 import org.junit.Test;
 
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.*;
 
 /**
  *
@@ -36,7 +35,7 @@ public class IntervalScheduleTests extends ElasticsearchTestCase {
 
     @Test
     public void testParse_Number() throws Exception {
-        long value = (long) randomInt();
+        long value = (long) randomIntBetween(0, Integer.MAX_VALUE);
         XContentBuilder builder = jsonBuilder().value(value);
         BytesReference bytes = builder.bytes();
         XContentParser parser = JsonXContent.jsonXContent.createParser(bytes);
@@ -44,6 +43,21 @@ public class IntervalScheduleTests extends ElasticsearchTestCase {
         IntervalSchedule schedule = new IntervalSchedule.Parser().parse(parser);
         assertThat(schedule, notNullValue());
         assertThat(schedule.interval().seconds(), is(value));
+    }
+
+    @Test
+    public void testParse_NegativeNumber() throws Exception {
+        long value = (long) randomIntBetween(Integer.MIN_VALUE, 0);
+        XContentBuilder builder = jsonBuilder().value(value);
+        BytesReference bytes = builder.bytes();
+        XContentParser parser = JsonXContent.jsonXContent.createParser(bytes);
+        parser.nextToken(); // advancing to the start object
+        try {
+            new IntervalSchedule.Parser().parse(parser);
+            fail("exception expected, because interval is negative");
+        } catch (ScheduleTriggerException e) {
+            assertThat(e.getMessage(), containsString("interval can't be lower than 1000 ms, but"));
+        }
     }
 
     @Test

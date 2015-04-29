@@ -15,20 +15,17 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.watcher.trigger;
+package org.elasticsearch.watcher.trigger.schedule;
 
-import org.elasticsearch.watcher.WatcherException;
+import org.elasticsearch.watcher.trigger.TriggerException;
 
-/**
- *
- */
-public class TriggerException extends WatcherException {
+public class ScheduleTriggerException extends TriggerException {
 
-    public TriggerException(String msg, Object... args) {
+    public ScheduleTriggerException(String msg, Object... args) {
         super(msg, args);
     }
 
-    public TriggerException(String msg, Throwable cause, Object... args) {
+    public ScheduleTriggerException(String msg, Throwable cause, Object... args) {
         super(msg, cause, args);
     }
 }
