@@ -450,6 +450,19 @@ public class EngineApiClient implements Closeable
             postUrl += String.format("?resetStart=%s&resetEnd=%s",
                     nullToEmpty(resetStart), nullToEmpty(resetEnd));
         }
+        return uploadStream(inputStream, postUrl, compressed, new DataCounts(),
+                content -> m_JsonMapper.readValue(content, new TypeReference<DataCounts>() {}));
+    }
+
+    private interface FunctionThatThrowsIoException<T, R>
+    {
+        R apply(T input) throws IOException;
+    }
+
+    private <T> T uploadStream(InputStream inputStream, String postUrl, boolean compressed,
+            T defaultReturnValue, FunctionThatThrowsIoException<String, T> convertContentFunction)
+    throws IOException
+    {
         LOGGER.debug("Uploading data to " + postUrl);
 
         InputStreamEntity entity = new InputStreamEntity(inputStream);
@@ -486,13 +499,9 @@ public class EngineApiClient implements Closeable
                 {
                     m_LastError = null;
                 }
-
-                return new DataCounts();
+                return defaultReturnValue;
             }
-            else
-            {
-                return m_JsonMapper.readValue(content, new TypeReference<DataCounts>() {} );
-            }
+            return convertContentFunction.apply(content);
         }
     }
 
@@ -1399,6 +1408,22 @@ public class EngineApiClient implements Closeable
         return null;
     }
 
+    /**
+     * Stream data from <code>inputStream</code> to the preview service.
+     *
+     * @param baseUrl The base URL for the REST API including version number
+     * e.g <code>http://localhost:8080/engine/v1/</code>
+     * @param jobId The Job's unique Id
+     * @param inputStream The data to write to the web service
+     * @return String The preview result
+     * @throws IOException
+     */
+    public String previewUpload(String baseUrl, String jobId, InputStream inputStream)
+    throws IOException
+    {
+        String postUrl = String.format("%s/preview/%s", baseUrl, jobId);
+        return uploadStream(inputStream, postUrl, false, "", content -> content);
+    }
 
     /**
      * Get the last 10 lines of the job's latest log file
