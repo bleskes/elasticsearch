@@ -640,7 +640,7 @@ public class JobManager
         return stats;
     }
 
-    public String preveiwTransforms(String jobId, InputStream input)
+    public String previewTransforms(String jobId, InputStream input)
     throws JsonParseException, MissingFieldException, HighProportionOfBadTimestampsException,
     OutOfOrderRecordsException, MalformedJsonException, IOException, UnknownJobException
     {
