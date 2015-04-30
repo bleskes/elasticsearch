@@ -124,7 +124,7 @@ public enum TransformType
         {
             String msg = String.format("Transform type %s must be defined with %d arguments",
                                             tc.getTransform(), m_InitArgumentCount);
-            throw new TransformConfigurationException(msg, ErrorCode.TRANSFORM_MISSING_INITAILISER_ARGUMENT);
+            throw new TransformConfigurationException(msg, ErrorCode.TRANSFORM_MISSING_INITIALISER_ARGUMENT);
         }
 
         if (m_Arity == Names.VARIADIC_ARGS)

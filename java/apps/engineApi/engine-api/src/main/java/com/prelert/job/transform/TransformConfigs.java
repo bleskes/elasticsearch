@@ -32,12 +32,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.prelert.job.verification.Verifiable;
 import com.prelert.rs.data.ErrorCode;
 
 /**
  * Utility class for methods involving arrays of transforms
  */
-public class TransformConfigs
+public class TransformConfigs implements Verifiable
 {
     private List<TransformConfig> m_Transforms;
 
@@ -83,8 +84,8 @@ public class TransformConfigs
         return fields;
     }
 
-    public boolean verify()
-    throws TransformConfigurationException
+    @Override
+    public boolean verify() throws TransformConfigurationException
     {
         String duplicatedName = outputNamesAreUnique();
         if (duplicatedName != null)

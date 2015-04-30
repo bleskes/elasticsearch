@@ -89,7 +89,7 @@ public class Preview extends ResourceWithJobManager
     {
         LOGGER.debug("Preview data to job '" + jobId + "'");
 
-        String processedText = jobManager().preveiwTransforms(jobId, input);
+        String processedText = jobManager().previewTransforms(jobId, input);
         return Response.accepted().entity(processedText).build();
     }
 }

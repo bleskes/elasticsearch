@@ -37,6 +37,7 @@ import java.util.TreeSet;
 import java.util.function.Function;
 
 import com.prelert.job.exceptions.JobConfigurationException;
+import com.prelert.job.verification.Verifiable;
 import com.prelert.rs.data.ErrorCode;
 
 /**
@@ -50,7 +51,7 @@ import com.prelert.rs.data.ErrorCode;
  * Object wrappers are used around integral types & booleans so they can take
  * <code>null</code> values.
  */
-public class AnalysisConfig
+public class AnalysisConfig implements Verifiable
 {
     /**
      * Serialisation names
@@ -317,10 +318,8 @@ public class AnalysisConfig
      * <li>Check there is at least one detector configured</li>
      * <li>Check all the detectors are configured correctly</li>
      * </ol>
-     *
-     * @return true
-     * @throws JobConfigurationException
      */
+    @Override
     public boolean verify() throws JobConfigurationException
     {
         checkFieldIsNotNegativeIfSpecified("BucketSpan", m_BucketSpan);

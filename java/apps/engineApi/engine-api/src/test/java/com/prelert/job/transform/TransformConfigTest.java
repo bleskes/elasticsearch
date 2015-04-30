@@ -187,7 +187,7 @@ public class TransformConfigTest
 			}
 			catch (TransformConfigurationException e)
 			{
-				assertEquals(ErrorCode.TRANSFORM_MISSING_INITAILISER_ARGUMENT, e.getErrorCode());
+				assertEquals(ErrorCode.TRANSFORM_MISSING_INITIALISER_ARGUMENT, e.getErrorCode());
 			}
 
 			initArgs = new ArrayList<>();

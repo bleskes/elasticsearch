@@ -31,7 +31,6 @@ import org.apache.log4j.Logger;
 
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
-import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.persistence.JobDataPersister;
 import com.prelert.job.status.StatusReporter;
 import com.prelert.job.transform.TransformConfigs;
@@ -55,10 +54,19 @@ public class DataToProcessWriterFactory
             DataDescription dataDescription, AnalysisConfig analysisConfig, TransformConfigs transforms,
             StatusReporter statusReporter, JobDataPersister jobDataPersister, Logger logger)
     {
-        return (dataDescription.getFormat() == DataFormat.JSON) ?
-                new JsonDataToProcessWriter(writer, dataDescription, analysisConfig,
-                        transforms, statusReporter, jobDataPersister, logger) :
-                new CsvDataToProcessWriter(writer, dataDescription, analysisConfig,
+        switch (dataDescription.getFormat())
+        {
+            case JSON:
+                return new JsonDataToProcessWriter(writer, dataDescription, analysisConfig,
                         transforms, statusReporter, jobDataPersister, logger);
+            case DELINEATED:
+                return new CsvDataToProcessWriter(writer, dataDescription, analysisConfig,
+                        transforms, statusReporter, jobDataPersister, logger);
+            case SINGLE_LINE:
+                return new SingleLineDataToProcessWriter(writer, dataDescription, analysisConfig,
+                        transforms, statusReporter, jobDataPersister, logger);
+            default:
+                throw new IllegalArgumentException();
+        }
     }
 }

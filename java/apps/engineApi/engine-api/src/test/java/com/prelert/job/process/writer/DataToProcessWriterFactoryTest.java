@@ -45,19 +45,13 @@ import com.prelert.job.transform.TransformConfigs;
 @RunWith(MockitoJUnitRunner.class)
 public class DataToProcessWriterFactoryTest
 {
-
     @Test
     public void testCreate_GivenDataFormatIsJson()
     {
         DataDescription dataDescription = new DataDescription();
         dataDescription.setFormat(DataFormat.JSON);
 
-        DataToProcessWriterFactory factory = new DataToProcessWriterFactory();
-        DataToProcessWriter writer = factory.create(mock(LengthEncodedWriter.class), dataDescription,
-                mock(AnalysisConfig.class), mock(TransformConfigs.class), mock(StatusReporter.class),
-                mock(JobDataPersister.class), mock(Logger.class));
-
-        assertTrue(writer instanceof JsonDataToProcessWriter);
+        assertTrue(createWriter(dataDescription) instanceof JsonDataToProcessWriter);
     }
 
     @Test
@@ -66,12 +60,23 @@ public class DataToProcessWriterFactoryTest
         DataDescription dataDescription = new DataDescription();
         dataDescription.setFormat(DataFormat.DELINEATED);
 
-        DataToProcessWriterFactory factory = new DataToProcessWriterFactory();
-        DataToProcessWriter writer = factory.create(mock(LengthEncodedWriter.class), dataDescription,
-                mock(AnalysisConfig.class), mock(TransformConfigs.class), mock(StatusReporter.class),
-                mock(JobDataPersister.class), mock(Logger.class));
-
-        assertTrue(writer instanceof CsvDataToProcessWriter);
+        assertTrue(createWriter(dataDescription) instanceof CsvDataToProcessWriter);
     }
 
+    @Test
+    public void testCreate_GivenDataFormatIsSingleLine()
+    {
+        DataDescription dataDescription = new DataDescription();
+        dataDescription.setFormat(DataFormat.SINGLE_LINE);
+
+        assertTrue(createWriter(dataDescription) instanceof SingleLineDataToProcessWriter);
+    }
+
+    private static DataToProcessWriter createWriter(DataDescription dataDescription)
+    {
+        DataToProcessWriterFactory factory = new DataToProcessWriterFactory();
+        return factory.create(mock(LengthEncodedWriter.class), dataDescription,
+                mock(AnalysisConfig.class), mock(TransformConfigs.class),
+                mock(StatusReporter.class), mock(JobDataPersister.class), mock(Logger.class));
+    }
 }

@@ -54,7 +54,7 @@ import com.prelert.job.transform.TransformConfigs;
 /**
  * A writer for transforming and piping CSV data from an
  * inputstream to outputstream.
- * The data writtin to output is length encoded each record
+ * The data written to output is length encoded each record
  * consists of number of fields followed by length/value pairs.
  * See CLengthEncodedInputParser.h in the C++ code for a more
  * detailed description.
