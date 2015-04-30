@@ -31,10 +31,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+import com.prelert.job.verification.Verifiable;
+
 /**
  * Represents an API data transform
  */
-public class TransformConfig
+public class TransformConfig implements Verifiable
 {
     // Serialisation strings
     public static final String TYPE = "transform";
@@ -122,6 +124,7 @@ public class TransformConfig
         return m_Type;
     }
 
+    @Override
     public boolean verify() throws TransformConfigurationException
     {
         return type().verify(this);

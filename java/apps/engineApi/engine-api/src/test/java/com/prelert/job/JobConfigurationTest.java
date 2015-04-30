@@ -31,6 +31,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -40,6 +41,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.exceptions.JobConfigurationException;
 import com.prelert.job.transform.TransformConfig;
 import com.prelert.job.transform.TransformConfigurationException;
@@ -368,6 +370,57 @@ public class JobConfigurationTest
         jc.setTransforms(Arrays.asList(tc));
 
         jc.verify();
+    }
+
+    @Test
+    public void testVerify_GivenDataFormatIsSingleLineAndNullTransforms()
+            throws JobConfigurationException
+    {
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expectMessage(
+                "When the data format is SINGLE_LINE, transforms are required.");
+        m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(
+                ErrorCode.DATA_FORMAT_IS_SINGLE_LINE_BUT_NO_TRANSFORMS));
+
+        JobConfiguration config = buildJobConfigurationNoTransforms();
+        config.getDataDescription().setFormat(DataFormat.SINGLE_LINE);
+
+        config.verify();
+    }
+
+    @Test
+    public void testVerify_GivenDataFormatIsSingleLineAndEmptyTransforms()
+            throws JobConfigurationException
+    {
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expectMessage(
+                "When the data format is SINGLE_LINE, transforms are required.");
+        m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(
+                ErrorCode.DATA_FORMAT_IS_SINGLE_LINE_BUT_NO_TRANSFORMS));
+
+        JobConfiguration config = buildJobConfigurationNoTransforms();
+        config.setTransforms(new ArrayList<>());
+        config.getDataDescription().setFormat(DataFormat.SINGLE_LINE);
+
+        config.verify();
+    }
+
+    @Test
+    public void testVerify_GivenDataFormatIsSingleLineAndNonEmptyTransforms()
+            throws JobConfigurationException
+    {
+        ArrayList<TransformConfig> transforms = new ArrayList<>();
+        TransformConfig transform = new TransformConfig();
+        transform.setTransform("extract");
+        transform.setArguments(Arrays.asList(""));
+        transform.setInputs(Arrays.asList("raw"));
+        transform.setOutputs(Arrays.asList("time"));
+        transforms.add(transform);
+        JobConfiguration config = buildJobConfigurationNoTransforms();
+        config.setTransforms(transforms);
+        config.getDataDescription().setFormat(DataFormat.SINGLE_LINE);
+
+        config.verify();
     }
 
     private JobConfiguration buildJobConfigurationNoTransforms()

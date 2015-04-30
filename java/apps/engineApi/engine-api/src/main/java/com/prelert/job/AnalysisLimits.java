@@ -32,6 +32,7 @@ import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.prelert.job.exceptions.JobConfigurationException;
+import com.prelert.job.verification.Verifiable;
 import com.prelert.rs.data.ErrorCode;
 
 /**
@@ -40,7 +41,7 @@ import com.prelert.rs.data.ErrorCode;
  * If an option has not been set it shouldn't be used so the default value is picked up instead.
  */
 @JsonInclude(Include.NON_NULL)
-public class AnalysisLimits
+public class AnalysisLimits implements Verifiable
 {
     /**
      * Serialisation field names
@@ -128,14 +129,8 @@ public class AnalysisLimits
         return Objects.hash(m_ModelMemoryLimit, m_CategorizationExamplesLimit);
     }
 
-    /**
-     * Verifies the analysis limits parameters were set to valid values
-     *
-     * @return true when all values are valid
-     * @throws JobConfigurationException if some of the values are invalid
-     */
-    public boolean verify()
-    throws JobConfigurationException
+    @Override
+    public boolean verify() throws JobConfigurationException
     {
         if (m_ModelMemoryLimit < 0)
         {

@@ -35,6 +35,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.prelert.job.exceptions.JobConfigurationException;
+import com.prelert.job.verification.Verifiable;
 import com.prelert.rs.data.ErrorCode;
 
 /**
@@ -51,7 +52,7 @@ import com.prelert.rs.data.ErrorCode;
  */
 @JsonIgnoreProperties({"transformTime", "epochMs"})
 @JsonInclude(Include.NON_NULL)
-public class DataDescription
+public class DataDescription implements Verifiable
 {
     /**
      * Enum of the acceptable data formats.
@@ -296,11 +297,8 @@ public class DataDescription
      * {@value #EPOCH_MS} or a valid format string</li>
      * <li></li>
      * </ol>
-     * @return true
-     * @throws JobConfigurationException
      */
-    public boolean verify()
-    throws JobConfigurationException
+    public boolean verify() throws JobConfigurationException
     {
         if (m_TimeFormat != null && m_TimeFormat.isEmpty() == false)
         {
