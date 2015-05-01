@@ -59,7 +59,13 @@ public class DataDescription implements Verifiable
      */
     public enum DataFormat
     {
-        JSON, DELINEATED, SINGLE_LINE;
+        JSON, DELIMITED, SINGLE_LINE;
+
+        /**
+         * Delimited used to be called delineated. We keep supporting that for backwards
+         * compatibility.
+         */
+        private static final String DEPRECATED_DELINEATED = "DELINEATED";
 
         /**
          * Case-insensitive from string method.
@@ -71,7 +77,9 @@ public class DataDescription implements Verifiable
         @JsonCreator
         public static DataFormat forString(String value)
         {
-            return DataFormat.valueOf(value.toUpperCase());
+            String valueUpperCase = value.toUpperCase();
+            return DEPRECATED_DELINEATED.equals(valueUpperCase) ? DELIMITED : DataFormat
+                    .valueOf(valueUpperCase);
         }
     }
 
@@ -137,7 +145,7 @@ public class DataDescription implements Verifiable
 
     public DataDescription()
     {
-        m_DataFormat = DataFormat.DELINEATED;
+        m_DataFormat = DataFormat.DELIMITED;
         m_TimeFieldName = DEFAULT_TIME_FIELD;
         m_TimeFormat = EPOCH;
         m_FieldDelimiter = DEFAULT_DELIMITER;
@@ -146,7 +154,7 @@ public class DataDescription implements Verifiable
 
     /**
      * The format of the data to be processed.
-     * Defaults to {@link DataDescription.DataFormat#DELINEATED}
+     * Defaults to {@link DataDescription.DataFormat#DELIMITED}
      * @return The data format
      */
     public DataFormat getFormat()
@@ -193,7 +201,7 @@ public class DataDescription implements Verifiable
     /**
      * If the data is in a delineated format with a header e.g. csv or tsv
      * this is the delimiter character used. This is only applicable if
-     * {@linkplain #getFormat()} is {@link DataDescription.DataFormat#DELINEATED}.
+     * {@linkplain #getFormat()} is {@link DataDescription.DataFormat#DELIMITED}.
      * The default value is {@value #DEFAULT_DELIMITER}
      *
      * @return A char

@@ -221,7 +221,7 @@ public class CsvDataTransformTest
         }
 
         DataDescription dd = new DataDescription();
-        dd.setFormat(DataFormat.DELINEATED);
+        dd.setFormat(DataFormat.DELIMITED);
         dd.setFieldDelimiter(',');
         dd.setQuoteCharacter('?');
 
@@ -336,7 +336,7 @@ public class CsvDataTransformTest
         }
 
         DataDescription dd = new DataDescription();
-        dd.setFormat(DataFormat.DELINEATED);
+        dd.setFormat(DataFormat.DELIMITED);
         dd.setFieldDelimiter(',');
         dd.setTimeField("date");
         dd.setTimeFormat("yyyy-MM-dd HH:mm:ss");
@@ -453,7 +453,7 @@ public class CsvDataTransformTest
         ac.setDetectors(Arrays.asList(d));
 
         DataDescription dd = new DataDescription();
-        dd.setFormat(DataFormat.DELINEATED);
+        dd.setFormat(DataFormat.DELIMITED);
         dd.setFieldDelimiter(',');
 
         // data is written in the order of the required fields
@@ -564,7 +564,7 @@ public class CsvDataTransformTest
 
 
         DataDescription dd = new DataDescription();
-        dd.setFormat(DataFormat.DELINEATED);
+        dd.setFormat(DataFormat.DELIMITED);
         dd.setFieldDelimiter(',');
 
         // can create with null
@@ -649,7 +649,7 @@ public class CsvDataTransformTest
                 "DJA,1200,flightcentre,MAN,1350824404,none";
 
         DataDescription dd = new DataDescription();
-        dd.setFormat(DataFormat.DELINEATED);
+        dd.setFormat(DataFormat.DELIMITED);
         dd.setFieldDelimiter(',');
 
         AnalysisConfig ac = new AnalysisConfig();
@@ -784,7 +784,7 @@ public class CsvDataTransformTest
             ac.setDetectors(Arrays.asList(d));
 
             DataDescription dd = new DataDescription();
-            dd.setFormat(DataFormat.DELINEATED);
+            dd.setFormat(DataFormat.DELIMITED);
             dd.setFieldDelimiter(',');
             if (loop == 2)
             {
@@ -917,7 +917,7 @@ public class CsvDataTransformTest
             ac.setDetectors(Arrays.asList(d));
 
             DataDescription dd = new DataDescription();
-            dd.setFormat(DataFormat.DELINEATED);
+            dd.setFormat(DataFormat.DELIMITED);
             dd.setTimeField("_time");
             dd.setFieldDelimiter(',');
             if (loop == 0)

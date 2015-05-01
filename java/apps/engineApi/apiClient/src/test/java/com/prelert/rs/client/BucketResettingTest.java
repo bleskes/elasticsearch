@@ -109,7 +109,7 @@ public class BucketResettingTest implements Closeable
         ac.setDetectors(Arrays.asList(d));
 
         DataDescription dd = new DataDescription();
-        dd.setFormat(DataFormat.DELINEATED);
+        dd.setFormat(DataFormat.DELIMITED);
         dd.setFieldDelimiter(',');
         dd.setTimeField("time");
         dd.setTimeFormat("yyyy-MM-dd HH:mm:ssX");
