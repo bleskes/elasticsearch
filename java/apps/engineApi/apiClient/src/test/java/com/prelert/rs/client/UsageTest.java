@@ -115,7 +115,7 @@ public class UsageTest implements Closeable
 		}
 		else
 		{
-			dd.setFormat(DataFormat.DELINEATED);
+			dd.setFormat(DataFormat.DELIMITED);
 			dd.setFieldDelimiter(',');
 			dd.setTimeField("_time");
 			dd.setTimeFormat("epoch");

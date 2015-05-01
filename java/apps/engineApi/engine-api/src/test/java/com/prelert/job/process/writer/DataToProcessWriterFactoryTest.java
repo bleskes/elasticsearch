@@ -58,7 +58,7 @@ public class DataToProcessWriterFactoryTest
     public void testCreate_GivenDataFormatIsCsv()
     {
         DataDescription dataDescription = new DataDescription();
-        dataDescription.setFormat(DataFormat.DELINEATED);
+        dataDescription.setFormat(DataFormat.DELIMITED);
 
         assertTrue(createWriter(dataDescription) instanceof CsvDataToProcessWriter);
     }

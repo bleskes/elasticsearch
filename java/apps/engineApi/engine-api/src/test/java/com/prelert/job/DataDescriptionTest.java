@@ -45,6 +45,21 @@ public class DataDescriptionTest
     public ExpectedException m_ExpectedException = ExpectedException.none();
 
     @Test
+    public void testDataFormatForString()
+    {
+        assertEquals(DataFormat.DELIMITED, DataFormat.forString("delineated"));
+        assertEquals(DataFormat.DELIMITED, DataFormat.forString("DELINEATED"));
+        assertEquals(DataFormat.DELIMITED, DataFormat.forString("delimited"));
+        assertEquals(DataFormat.DELIMITED, DataFormat.forString("DELIMITED"));
+
+        assertEquals(DataFormat.JSON, DataFormat.forString("json"));
+        assertEquals(DataFormat.JSON, DataFormat.forString("JSON"));
+
+        assertEquals(DataFormat.SINGLE_LINE, DataFormat.forString("single_line"));
+        assertEquals(DataFormat.SINGLE_LINE, DataFormat.forString("SINGLE_LINE"));
+    }
+
+    @Test
     public void testVerify_GivenNullTimeFormat() throws JobConfigurationException
     {
         DataDescription description = new DataDescription();
@@ -157,7 +172,7 @@ public class DataDescriptionTest
         description1.setFieldDelimiter(',');
 
         DataDescription description2 = new DataDescription();
-        description2.setFormat(DataFormat.DELINEATED);
+        description2.setFormat(DataFormat.DELIMITED);
         description2.setQuoteCharacter('"');
         description2.setTimeField("timestamp");
         description2.setTimeFormat("epoch");

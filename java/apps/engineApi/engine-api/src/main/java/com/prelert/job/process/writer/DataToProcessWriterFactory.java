@@ -59,7 +59,7 @@ public class DataToProcessWriterFactory
             case JSON:
                 return new JsonDataToProcessWriter(writer, dataDescription, analysisConfig,
                         transforms, statusReporter, jobDataPersister, logger);
-            case DELINEATED:
+            case DELIMITED:
                 return new CsvDataToProcessWriter(writer, dataDescription, analysisConfig,
                         transforms, statusReporter, jobDataPersister, logger);
             case SINGLE_LINE:

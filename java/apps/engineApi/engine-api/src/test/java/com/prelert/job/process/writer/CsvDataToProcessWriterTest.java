@@ -93,7 +93,7 @@ public class CsvDataToProcessWriterTest
 
         m_DataDescription = new DataDescription();
         m_DataDescription.setFieldDelimiter(',');
-        m_DataDescription.setFormat(DataFormat.DELINEATED);
+        m_DataDescription.setFormat(DataFormat.DELIMITED);
         m_DataDescription.setTimeFormat(DataDescription.EPOCH);
 
         m_AnalysisConfig = new AnalysisConfig();

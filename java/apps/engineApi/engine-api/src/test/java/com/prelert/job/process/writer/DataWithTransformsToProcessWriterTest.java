@@ -157,7 +157,7 @@ public class DataWithTransformsToProcessWriterTest
     {
         DataDescription dd = new DataDescription();
         dd.setFieldDelimiter(',');
-        dd.setFormat(doCsv ? DataFormat.DELINEATED : DataFormat.JSON);
+        dd.setFormat(doCsv ? DataFormat.DELIMITED : DataFormat.JSON);
         dd.setTimeFormat(DataDescription.EPOCH);
 
         AnalysisConfig ac = new AnalysisConfig();
