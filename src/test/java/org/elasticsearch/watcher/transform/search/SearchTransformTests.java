@@ -15,45 +15,72 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.watcher.transform;
+package org.elasticsearch.watcher.transform.search;
 
+import org.elasticsearch.action.indexedscripts.put.PutIndexedScriptRequest;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.client.Requests;
 import org.elasticsearch.common.bytes.BytesReference;
+import org.elasticsearch.common.joda.time.DateTime;
 import org.elasticsearch.common.settings.ImmutableSettings;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
+import org.elasticsearch.common.xcontent.support.XContentMapValues;
 import org.elasticsearch.script.ScriptService;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.watcher.actions.ActionWrapper;
+import org.elasticsearch.watcher.actions.ExecutableActions;
+import org.elasticsearch.watcher.condition.always.ExecutableAlwaysCondition;
+import org.elasticsearch.watcher.execution.TriggeredExecutionContext;
 import org.elasticsearch.watcher.execution.WatchExecutionContext;
+import org.elasticsearch.watcher.input.simple.ExecutableSimpleInput;
+import org.elasticsearch.watcher.input.simple.SimpleInput;
+import org.elasticsearch.watcher.license.LicenseService;
+import org.elasticsearch.watcher.support.WatcherUtils;
+import org.elasticsearch.watcher.support.clock.ClockMock;
 import org.elasticsearch.watcher.support.init.proxy.ClientProxy;
 import org.elasticsearch.watcher.test.AbstractWatcherIntegrationTests;
-import org.elasticsearch.watcher.transform.search.ExecutableSearchTransform;
-import org.elasticsearch.watcher.transform.search.SearchTransform;
-import org.elasticsearch.watcher.transform.search.SearchTransformFactory;
+import org.elasticsearch.watcher.transform.Transform;
+import org.elasticsearch.watcher.trigger.schedule.IntervalSchedule;
+import org.elasticsearch.watcher.trigger.schedule.ScheduleTrigger;
 import org.elasticsearch.watcher.trigger.schedule.ScheduleTriggerEvent;
 import org.elasticsearch.watcher.watch.Payload;
+import org.elasticsearch.watcher.watch.Watch;
 import org.junit.Test;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.elasticsearch.common.joda.time.DateTimeZone.UTC;
+import static org.elasticsearch.common.settings.ImmutableSettings.settingsBuilder;
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 import static org.elasticsearch.index.query.FilterBuilders.*;
-import static org.elasticsearch.index.query.QueryBuilders.filteredQuery;
-import static org.elasticsearch.index.query.QueryBuilders.matchAllQuery;
+import static org.elasticsearch.index.query.QueryBuilders.*;
 import static org.elasticsearch.search.builder.SearchSourceBuilder.searchSource;
 import static org.elasticsearch.watcher.support.WatcherDateUtils.parseDate;
 import static org.elasticsearch.watcher.test.WatcherTestUtils.*;
 import static org.hamcrest.Matchers.*;
+import static org.mockito.Mockito.mock;
 
 /**
  *
  */
 public class SearchTransformTests extends AbstractWatcherIntegrationTests {
+
+    @Override
+    public Settings nodeSettings(int nodeOrdinal) {
+        //Set path so ScriptService will pick up the test scripts
+        return settingsBuilder().put(super.nodeSettings(nodeOrdinal))
+                .put("path.conf", this.getResource("config").getPath()).build();
+    }
 
     @Test
     public void testApply() throws Exception {
@@ -209,6 +236,171 @@ public class SearchTransformTests extends AbstractWatcherIntegrationTests {
         }
         assertThat(executable.transform().getRequest().source().toBytes(), equalTo(source.toBytes()));
     }
+
+    @Test
+    public void testSearch_InlineTemplate() throws Exception {
+        final String templateQuery = "{\"query\":{\"filtered\":{\"query\":{\"match\":{\"event_type\":{\"query\":\"a\"," +
+                "\"type\":\"boolean\"}}},\"filter\":{\"range\":{\"_timestamp\":" +
+                "{\"from\":\"{{ctx.trigger.scheduled_time}}||-{{seconds_param}}\",\"to\":\"{{ctx.trigger.scheduled_time}}\"," +
+                "\"include_lower\":true,\"include_upper\":true}}}}}}";
+
+        final String expectedQuery = "{\"query\":{\"filtered\":{\"query\":{\"match\":{\"event_type\":" +
+                "{\"query\":\"a\",\"type\":\"boolean\"}}},\"filter\":{\"range\":{\"_timestamp\":{\"from\":\"1970-01-01T00:01:00.000Z||-30s\"," +
+                "\"to\":\"1970-01-01T00:01:00.000Z\",\"include_lower\":true,\"include_upper\":true}}}}}}";
+
+        ScriptService.ScriptType scriptType = ScriptService.ScriptType.INLINE;
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("seconds_param", "30s");
+
+        SearchRequest request = client()
+                .prepareSearch()
+                .setSearchType(ExecutableSearchTransform.DEFAULT_SEARCH_TYPE)
+                .setIndices("test-search-index")
+                .setTemplateSource(templateQuery)
+                .setTemplateParams(params)
+                .setTemplateType(scriptType)
+                .request();
+
+
+        SearchTransform.Result executedResult = executeSearchTransform(request);
+
+        assertThat(executedResult.executedRequest().source().toUtf8(), equalTo(expectedQuery));
+    }
+
+    @Test
+    public void testSearch_IndexedTemplate() throws Exception {
+        final String templateQuery = "{\"query\":{\"filtered\":{\"query\":{\"match\":{\"event_type\":{\"query\":\"a\"," +
+                "\"type\":\"boolean\"}}},\"filter\":{\"range\":{\"_timestamp\":" +
+                "{\"from\":\"{{ctx.trigger.scheduled_time}}||-{{seconds_param}}\",\"to\":\"{{ctx.trigger.scheduled_time}}\"," +
+                "\"include_lower\":true,\"include_upper\":true}}}}}}";
+
+        PutIndexedScriptRequest indexedScriptRequest = client().preparePutIndexedScript("mustache","test-script", templateQuery).request();
+        assertThat(client().putIndexedScript(indexedScriptRequest).actionGet().isCreated(), is(true));
+
+        ScriptService.ScriptType scriptType = ScriptService.ScriptType.INDEXED;
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("seconds_param", "30s");
+
+        SearchRequest request = client()
+                .prepareSearch()
+                .setSearchType(ExecutableSearchTransform.DEFAULT_SEARCH_TYPE)
+                .setIndices("test-search-index")
+                .setTemplateName("test-script")
+                .setTemplateParams(params)
+                .setTemplateType(scriptType)
+                .request();
+
+        SearchTransform.Result result = executeSearchTransform(request);
+        assertNotNull(result.executedRequest());
+    }
+
+    @Test
+    public void testSearch_OndiskTemplate() throws Exception {
+        ScriptService.ScriptType scriptType = ScriptService.ScriptType.FILE;
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("seconds_param", "30s");
+
+        SearchRequest request = client()
+                .prepareSearch()
+                .setSearchType(ExecutableSearchTransform.DEFAULT_SEARCH_TYPE)
+                .setIndices("test-search-index")
+                .setTemplateName("test_disk_template")
+                .setTemplateParams(params)
+                .setTemplateType(scriptType)
+                .request();
+
+        SearchTransform.Result result = executeSearchTransform(request);
+        assertNotNull(result.executedRequest());
+    }
+
+
+    @Test
+    public void testDifferentSearchType() throws Exception {
+        SearchSourceBuilder searchSourceBuilder = searchSource().query(
+                filteredQuery(matchQuery("event_type", "a"), rangeFilter("_timestamp").from("{{ctx.trigger.scheduled_time}}||-30s").to("{{ctx.trigger.triggered_time}}"))
+        );
+        SearchType searchType = randomFrom(SearchType.values());
+        SearchRequest request = client()
+                .prepareSearch()
+                .setSearchType(searchType)
+                .setIndices("test-search-index")
+                .request()
+                .source(searchSourceBuilder);
+
+        SearchTransform.Result result = executeSearchTransform(request);
+
+        assertThat((Integer) XContentMapValues.extractValue("hits.total", result.payload().data()), equalTo(0));
+        assertNotNull(result.executedRequest());
+        assertEquals(result.executedRequest().searchType(), searchType);
+        assertArrayEquals(result.executedRequest().indices(), request.indices());
+        assertEquals(result.executedRequest().indicesOptions(), request.indicesOptions());
+    }
+
+    @Test
+    public void testResultParser() throws Exception {
+        Map<String, Object> data = new HashMap<>();
+        data.put("foo", "bar");
+        data.put("baz", new ArrayList<String>() );
+
+        SearchSourceBuilder searchSourceBuilder = searchSource().query(
+                filteredQuery(matchQuery("event_type", "a"), rangeFilter("_timestamp").from("{{ctx.triggered.scheduled_time}}||-30s").to("{{ctx.triggered.triggered_time}}")));
+        SearchRequest request = client()
+                .prepareSearch()
+                .setSearchType(ExecutableSearchTransform.DEFAULT_SEARCH_TYPE)
+                .request()
+                .source(searchSourceBuilder);
+
+        XContentBuilder jsonBuilder = jsonBuilder();
+        jsonBuilder.startObject();
+        jsonBuilder.field(SearchTransform.Field.PAYLOAD.getPreferredName(), data);
+        jsonBuilder.field(SearchTransform.Field.EXECUTED_REQUEST.getPreferredName());
+        WatcherUtils.writeSearchRequest(request, jsonBuilder, ToXContent.EMPTY_PARAMS);
+        jsonBuilder.endObject();
+
+        SearchTransformFactory factory = new SearchTransformFactory(settingsBuilder().build(),
+                scriptService(),
+                ClientProxy.of(client()));
+
+        XContentParser parser = JsonXContent.jsonXContent.createParser(jsonBuilder.bytes());
+        parser.nextToken();
+        SearchTransform.Result result = factory.parseResult("_id", parser);
+
+        assertEquals(SearchTransform.TYPE, result.type());
+        assertEquals(result.payload().data().get("foo"), "bar");
+        List baz = (List)result.payload().data().get("baz");
+        assertTrue(baz.isEmpty());
+        assertNotNull(result.executedRequest());
+    }
+
+
+    private SearchTransform.Result executeSearchTransform(SearchRequest request) throws IOException {
+        createIndex("test-search-index");
+        ensureGreen("test-search-index");
+
+        SearchTransform searchTransform = new SearchTransform(request);
+        ExecutableSearchTransform executableSearchTransform = new ExecutableSearchTransform(searchTransform, logger, scriptService(), ClientProxy.of(client()));
+
+        WatchExecutionContext ctx = new TriggeredExecutionContext(
+                new Watch("test-watch",
+                        new ClockMock(),
+                        mock(LicenseService.class),
+                        new ScheduleTrigger(new IntervalSchedule(new IntervalSchedule.Interval(1, IntervalSchedule.Interval.Unit.MINUTES))),
+                        new ExecutableSimpleInput(new SimpleInput(new Payload.Simple()), logger),
+                        new ExecutableAlwaysCondition(logger),
+                        null,
+                        new ExecutableActions(new ArrayList<ActionWrapper>()),
+                        null,
+                        null,
+                        new Watch.Status()),
+                new DateTime(60000, UTC),
+                new ScheduleTriggerEvent("test-watch", new DateTime(60000, UTC), new DateTime(60000, UTC)));
+
+        return executableSearchTransform.execute(ctx, Payload.Simple.EMPTY);
+    }
+
 
     private static Map<String, Object> doc(String date, String value) {
         Map<String, Object> doc = new HashMap<>();
