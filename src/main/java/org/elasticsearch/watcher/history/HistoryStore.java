@@ -43,7 +43,6 @@ import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
-import org.elasticsearch.watcher.WatcherException;
 import org.elasticsearch.watcher.support.TemplateUtils;
 import org.elasticsearch.watcher.support.init.proxy.ClientProxy;
 
@@ -295,9 +294,8 @@ public class HistoryStore extends AbstractComponent {
                             assert record.state() == recordState;
                             logger.debug("loaded watch record [{}/{}/{}]", sh.index(), sh.type(), sh.id());
                             records.add(record);
-                        } catch (WatcherException we) {
-                            logger.error("while loading records, failed to parse watch record [{}]", we, id);
-                            throw we;
+                        } catch (Exception e) {
+                            logger.error("couldn't load watch record [{}], ignoring it...", e, id);
                         }
                     }
                     response = client.searchScroll(response.getScrollId(), scrollTimeout);
