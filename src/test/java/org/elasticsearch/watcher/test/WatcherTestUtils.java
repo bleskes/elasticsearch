@@ -18,6 +18,7 @@
 package org.elasticsearch.watcher.test;
 
 import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.collect.ImmutableMap;
@@ -80,6 +81,7 @@ import java.util.*;
 
 import static org.elasticsearch.index.query.QueryBuilders.matchAllQuery;
 import static org.elasticsearch.search.builder.SearchSourceBuilder.searchSource;
+import static org.elasticsearch.test.ElasticsearchTestCase.randomFrom;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -221,6 +223,14 @@ public final class WatcherTestUtils {
         engineServiceSet.add(groovyScriptEngineService);
         NodeSettingsService nodeSettingsService = new NodeSettingsService(settings);
         return ScriptServiceProxy.of(new ScriptService(settings, new Environment(), engineServiceSet, new ResourceWatcherService(settings, tp), nodeSettingsService));
+    }
+
+
+    public static SearchType getRandomSupportedSearchType() {
+        Set<SearchType> searchTypes = new HashSet<>();
+        searchTypes.addAll(Arrays.asList(SearchType.values()));
+        searchTypes.remove(SearchType.SCAN);
+        return randomFrom(searchTypes.toArray(new SearchType[searchTypes.size()]));
     }
 
 }
