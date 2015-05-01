@@ -106,7 +106,7 @@ public class SingleLineDataToProcessWriter extends AbstractDataToProcessWriter
             m_JobDataPersister.flushRecords();
         }
 
-        m_Logger.debug(String.format("Transferred %d of %d CSV records to autodetect.",
+        m_Logger.debug(String.format("Transferred %d of %d raw records to autodetect.",
                 recordsWritten, lineCount));
 
         return m_StatusReporter.incrementalStats();
