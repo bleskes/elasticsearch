@@ -40,6 +40,7 @@ public class WatcherRestModule extends AbstractModule implements PreProcessModul
             restModule.addRestAction(RestWatchServiceAction.class);
             restModule.addRestAction(RestAckWatchAction.class);
             restModule.addRestAction(RestExecuteWatchAction.class);
+            restModule.addRestAction(RestHijackOperationAction.class);
         }
     }
 
