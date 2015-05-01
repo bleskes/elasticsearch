@@ -22,6 +22,7 @@ import org.elasticsearch.action.ValidateActions;
 import org.elasticsearch.action.support.master.MasterNodeOperationRequest;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.unit.TimeValue;
 
 import java.io.IOException;
 
@@ -30,13 +31,17 @@ import java.io.IOException;
  */
 public class AckWatchRequest extends MasterNodeOperationRequest<AckWatchRequest> {
 
+    private static final TimeValue DEFAULT_TIMEOUT = TimeValue.timeValueSeconds(10);
+
     private String id;
 
     public AckWatchRequest() {
+        this(null);
     }
 
     public AckWatchRequest(String id) {
         this.id = id;
+        masterNodeTimeout(DEFAULT_TIMEOUT);
     }
 
     /**

@@ -41,7 +41,7 @@ import java.io.IOException;
 /**
 *
 */
-public class WatchExecution implements ToXContent {
+public class WatchExecutionResult implements ToXContent {
 
     private final Input.Result inputResult;
     private final Condition.Result conditionResult;
@@ -49,11 +49,11 @@ public class WatchExecution implements ToXContent {
     private final @Nullable Transform.Result transformResult;
     private final ExecutableActions.Results actionsResults;
 
-    public WatchExecution(WatchExecutionContext context) {
+    public WatchExecutionResult(WatchExecutionContext context) {
         this(context.inputResult(), context.conditionResult(), context.throttleResult(), context.transformResult(), context.actionsResults());
     }
 
-    WatchExecution(Input.Result inputResult, Condition.Result conditionResult, Throttler.Result throttleResult, @Nullable Transform.Result transformResult, ExecutableActions.Results actionsResults) {
+    WatchExecutionResult(Input.Result inputResult, Condition.Result conditionResult, Throttler.Result throttleResult, @Nullable Transform.Result transformResult, ExecutableActions.Results actionsResults) {
         this.inputResult = inputResult;
         this.conditionResult = conditionResult;
         this.throttleResult = throttleResult;
@@ -122,7 +122,7 @@ public class WatchExecution implements ToXContent {
         public static final ParseField THROTTLED = new ParseField("throttled");
         public static final ParseField THROTTLE_REASON = new ParseField("throttle_reason");
 
-        public static WatchExecution parse(Wid wid, XContentParser parser, ConditionRegistry conditionRegistry, ActionRegistry actionRegistry,
+        public static WatchExecutionResult parse(Wid wid, XContentParser parser, ConditionRegistry conditionRegistry, ActionRegistry actionRegistry,
                                            InputRegistry inputRegistry, TransformRegistry transformRegistry) throws IOException {
             boolean throttled = false;
             String throttleReason = null;
@@ -162,7 +162,7 @@ public class WatchExecution implements ToXContent {
             }
 
             Throttler.Result throttleResult = throttled ? Throttler.Result.throttle(throttleReason) : Throttler.Result.NO;
-            return new WatchExecution(inputResult, conditionResult, throttleResult, transformResult, actionResults);
+            return new WatchExecutionResult(inputResult, conditionResult, throttleResult, transformResult, actionResults);
 
         }
     }
