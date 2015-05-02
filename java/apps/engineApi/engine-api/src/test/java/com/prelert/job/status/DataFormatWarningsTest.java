@@ -405,7 +405,7 @@ public class DataFormatWarningsTest
 					new ByteArrayInputStream(sb.toString().getBytes(StandardCharsets.UTF_8));
 
 			DataDescription dd = new DataDescription();
-			dd.setFormat(DataFormat.DELINEATED);
+			dd.setFormat(DataFormat.DELIMITED);
 			dd.setTimeField("time");
 			dd.setFieldDelimiter(',');
 			dd.setTimeFormat(apiDateFormat);

@@ -161,7 +161,12 @@ public enum ErrorCode
      * Some transforms such as Regex require an argument when
      * first constructed
      */
-    TRANSFORM_MISSING_INITAILISER_ARGUMENT(10206),
+    TRANSFORM_MISSING_INITIALISER_ARGUMENT(10206),
+
+    /**
+     * When the data format is single line, transforms are required.
+     */
+    DATA_FORMAT_IS_SINGLE_LINE_BUT_NO_TRANSFORMS(10207),
 
 
 	// Data store errors

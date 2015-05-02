@@ -355,7 +355,7 @@ public class JobsTest implements Closeable
 		ac.setDetectors(Arrays.asList(d));
 
 		DataDescription dd = new DataDescription();
-		dd.setFormat(DataFormat.DELINEATED);
+		dd.setFormat(DataFormat.DELIMITED);
 		dd.setFieldDelimiter(',');
 		dd.setTimeField("_time");
 		dd.setTimeFormat("epoch_ms");

@@ -35,6 +35,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.prelert.job.exceptions.JobConfigurationException;
+import com.prelert.job.verification.Verifiable;
 import com.prelert.rs.data.ErrorCode;
 
 /**
@@ -51,14 +52,20 @@ import com.prelert.rs.data.ErrorCode;
  */
 @JsonIgnoreProperties({"transformTime", "epochMs"})
 @JsonInclude(Include.NON_NULL)
-public class DataDescription
+public class DataDescription implements Verifiable
 {
     /**
      * Enum of the acceptable data formats.
      */
     public enum DataFormat
     {
-        JSON, DELINEATED;
+        JSON, DELIMITED, SINGLE_LINE;
+
+        /**
+         * Delimited used to be called delineated. We keep supporting that for backwards
+         * compatibility.
+         */
+        private static final String DEPRECATED_DELINEATED = "DELINEATED";
 
         /**
          * Case-insensitive from string method.
@@ -70,7 +77,9 @@ public class DataDescription
         @JsonCreator
         public static DataFormat forString(String value)
         {
-            return DataFormat.valueOf(value.toUpperCase());
+            String valueUpperCase = value.toUpperCase();
+            return DEPRECATED_DELINEATED.equals(valueUpperCase) ? DELIMITED : DataFormat
+                    .valueOf(valueUpperCase);
         }
     }
 
@@ -136,7 +145,7 @@ public class DataDescription
 
     public DataDescription()
     {
-        m_DataFormat = DataFormat.DELINEATED;
+        m_DataFormat = DataFormat.DELIMITED;
         m_TimeFieldName = DEFAULT_TIME_FIELD;
         m_TimeFormat = EPOCH;
         m_FieldDelimiter = DEFAULT_DELIMITER;
@@ -145,7 +154,7 @@ public class DataDescription
 
     /**
      * The format of the data to be processed.
-     * Defaults to {@link DataDescription.DataFormat#DELINEATED}
+     * Defaults to {@link DataDescription.DataFormat#DELIMITED}
      * @return The data format
      */
     public DataFormat getFormat()
@@ -192,7 +201,7 @@ public class DataDescription
     /**
      * If the data is in a delineated format with a header e.g. csv or tsv
      * this is the delimiter character used. This is only applicable if
-     * {@linkplain #getFormat()} is {@link DataDescription.DataFormat#DELINEATED}.
+     * {@linkplain #getFormat()} is {@link DataDescription.DataFormat#DELIMITED}.
      * The default value is {@value #DEFAULT_DELIMITER}
      *
      * @return A char
@@ -296,11 +305,8 @@ public class DataDescription
      * {@value #EPOCH_MS} or a valid format string</li>
      * <li></li>
      * </ol>
-     * @return true
-     * @throws JobConfigurationException
      */
-    public boolean verify()
-    throws JobConfigurationException
+    public boolean verify() throws JobConfigurationException
     {
         if (m_TimeFormat != null && m_TimeFormat.isEmpty() == false)
         {

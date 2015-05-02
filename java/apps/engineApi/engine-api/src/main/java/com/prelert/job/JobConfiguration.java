@@ -32,10 +32,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.exceptions.JobConfigurationException;
 import com.prelert.job.transform.TransformConfig;
 import com.prelert.job.transform.TransformConfigs;
 import com.prelert.job.transform.TransformConfigurationException;
+import com.prelert.job.verification.Verifiable;
 import com.prelert.rs.data.ErrorCode;
 
 /**
@@ -47,7 +49,7 @@ import com.prelert.rs.data.ErrorCode;
  * are used around integral types & booleans so they can take <code>null</code>
  * values.
  */
-public class JobConfiguration
+public class JobConfiguration implements Verifiable
 {
     /**
      * Characters that cannot be in a job id: '\\', '/', '*', '?', '"', '<', '>', '|', ' ', ','
@@ -228,39 +230,22 @@ public class JobConfiguration
      * <li>The job is cannot be longer than {@link MAX_JOB_ID_LENGTH }</li>
      * <li></li>
      * </ol>
-     *
-     * @return true
-     * @throws JobConfigurationException
      */
     public boolean verify()
     throws JobConfigurationException
     {
-        if (m_AnalysisConfig == null && m_ReferenceJobId == null)
-        {
-            throw new JobConfigurationException("Either an an AnalysisConfig or "
-                    + " job reference id must be set",
-                    ErrorCode.INCOMPLETE_CONFIGURATION);
-        }
-
-        if (m_AnalysisConfig != null)
-        {
-            m_AnalysisConfig.verify();
-        }
-        if (m_AnalysisLimits != null)
-        {
-            m_AnalysisLimits.verify();
-        }
-
-        if (m_DataDescription != null)
-        {
-            m_DataDescription.verify();
-        }
+        checkEitherAnalysisConfigOrJobReferenceIdPresent();
+        verifyIfNotNull(m_AnalysisConfig);
+        verifyIfNotNull(m_AnalysisLimits);
+        verifyIfNotNull(m_DataDescription);
 
         if (m_Transforms != null)
         {
             new TransformConfigs(m_Transforms).verify();
             checkTransformOutputIsUsed();
         }
+
+        checkAtLeastOneTransformIfDataFormatIsSingleLine();
 
         if (m_Timeout != null && m_Timeout < 0)
         {
@@ -275,6 +260,25 @@ public class JobConfiguration
         }
 
         return true;
+    }
+
+    private void checkEitherAnalysisConfigOrJobReferenceIdPresent()
+            throws JobConfigurationException
+    {
+        if (m_AnalysisConfig == null && m_ReferenceJobId == null)
+        {
+            throw new JobConfigurationException("Either an an AnalysisConfig or "
+                    + " job reference id must be set",
+                    ErrorCode.INCOMPLETE_CONFIGURATION);
+        }
+    }
+
+    private static void verifyIfNotNull(Verifiable verifiable) throws JobConfigurationException
+    {
+        if (verifiable != null)
+        {
+            verifiable.verify();
+        }
     }
 
     /**
@@ -339,6 +343,20 @@ public class JobConfiguration
         }
 
         return false;
+    }
+
+    private void checkAtLeastOneTransformIfDataFormatIsSingleLine() throws JobConfigurationException
+    {
+        if (m_DataDescription != null && m_DataDescription.getFormat() == DataFormat.SINGLE_LINE)
+        {
+            if (m_Transforms == null || m_Transforms.isEmpty())
+            {
+                String msg = String.format("When the data format is %s, transforms are required.",
+                        DataFormat.SINGLE_LINE.toString());
+                throw new JobConfigurationException(msg,
+                        ErrorCode.DATA_FORMAT_IS_SINGLE_LINE_BUT_NO_TRANSFORMS);
+            }
+        }
     }
 
     private void checkValidId() throws JobConfigurationException
