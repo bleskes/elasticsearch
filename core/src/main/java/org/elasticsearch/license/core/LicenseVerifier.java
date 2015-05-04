@@ -26,7 +26,6 @@ import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.license.core.shaded.CryptUtils;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -127,8 +126,8 @@ public class LicenseVerifier {
     }
 
     private static byte[] getPublicKeyContentFromResource(String resource) {
-        try (InputStream inputStream = LicenseVerifier.class.getResourceAsStream(resource)) {
-            return Streams.copyToByteArray(inputStream);
+        try {
+            return Streams.copyToBytesFromClasspath(resource);
         } catch (IOException ex) {
             throw new IllegalStateException(ex);
         }

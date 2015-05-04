@@ -19,10 +19,6 @@ package org.elasticsearch.license.plugin.action.get;
 
 import org.elasticsearch.action.ActionRequestValidationException;
 import org.elasticsearch.action.support.master.MasterNodeReadOperationRequest;
-import org.elasticsearch.common.io.stream.StreamInput;
-import org.elasticsearch.common.io.stream.StreamOutput;
-
-import java.io.IOException;
 
 
 public class GetLicenseRequest extends MasterNodeReadOperationRequest<GetLicenseRequest> {
@@ -33,17 +29,5 @@ public class GetLicenseRequest extends MasterNodeReadOperationRequest<GetLicense
     @Override
     public ActionRequestValidationException validate() {
         return null;
-    }
-
-    @Override
-    public void readFrom(StreamInput in) throws IOException {
-        super.readFrom(in);
-        readLocal(in);
-    }
-
-    @Override
-    public void writeTo(StreamOutput out) throws IOException {
-        super.writeTo(out);
-        writeLocal(out);
     }
 }

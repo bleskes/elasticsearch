@@ -17,8 +17,6 @@
  */
 package org.elasticsearch.license.plugin.core;
 
-import org.elasticsearch.ElasticsearchIllegalStateException;
-
 public enum LicensesStatus {
     VALID((byte) 0),
     INVALID((byte) 1),
@@ -42,7 +40,7 @@ public enum LicensesStatus {
         } else if (id == 2) {
             return EXPIRED;
         } else {
-            throw new ElasticsearchIllegalStateException("no valid LicensesStatus for id=" + id);
+            throw new IllegalStateException("no valid LicensesStatus for id=" + id);
         }
     }
 }

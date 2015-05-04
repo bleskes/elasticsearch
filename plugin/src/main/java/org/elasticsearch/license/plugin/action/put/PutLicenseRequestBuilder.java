@@ -17,9 +17,8 @@
  */
 package org.elasticsearch.license.plugin.action.put;
 
-import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.support.master.AcknowledgedRequestBuilder;
-import org.elasticsearch.client.ClusterAdminClient;
+import org.elasticsearch.client.ElasticsearchClient;
 import org.elasticsearch.license.core.License;
 
 import java.util.List;
@@ -27,15 +26,15 @@ import java.util.List;
 /**
  * Register license request builder
  */
-public class PutLicenseRequestBuilder extends AcknowledgedRequestBuilder<PutLicenseRequest, PutLicenseResponse, PutLicenseRequestBuilder, ClusterAdminClient> {
+public class PutLicenseRequestBuilder extends AcknowledgedRequestBuilder<PutLicenseRequest, PutLicenseResponse, PutLicenseRequestBuilder> {
 
     /**
      * Constructs register license request
      *
-     * @param clusterAdminClient cluster admin client
+     * @param client elasticsearch client
      */
-    public PutLicenseRequestBuilder(ClusterAdminClient clusterAdminClient) {
-        super(clusterAdminClient, new PutLicenseRequest());
+    public PutLicenseRequestBuilder(ElasticsearchClient client, PutLicenseAction action) {
+        super(client, action, new PutLicenseRequest());
     }
 
     /**
@@ -52,10 +51,5 @@ public class PutLicenseRequestBuilder extends AcknowledgedRequestBuilder<PutLice
     public PutLicenseRequestBuilder setLicense(String licenseSource) {
         request.licenses(licenseSource);
         return this;
-    }
-
-    @Override
-    protected void doExecute(ActionListener<PutLicenseResponse> listener) {
-        client.execute(PutLicenseAction.INSTANCE, request, listener);
     }
 }

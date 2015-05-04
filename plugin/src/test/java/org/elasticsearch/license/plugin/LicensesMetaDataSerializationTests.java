@@ -43,7 +43,7 @@ public class LicensesMetaDataSerializationTests extends ElasticsearchTestCase {
         LicensesMetaData licensesMetaData = new LicensesMetaData(Arrays.asList(license), new ArrayList<License>());
         XContentBuilder builder = XContentFactory.jsonBuilder();
         builder.startObject("licensesMetaData");
-        LicensesMetaData.FACTORY.toXContent(licensesMetaData, builder, ToXContent.EMPTY_PARAMS);
+        licensesMetaData.toXContent(builder, ToXContent.EMPTY_PARAMS);
         builder.endObject();
         byte[] serializedBytes = builder.bytes().toBytes();
 
@@ -64,7 +64,7 @@ public class LicensesMetaDataSerializationTests extends ElasticsearchTestCase {
         LicensesMetaData licensesMetaData = new LicensesMetaData(licenses, new ArrayList<License>());
         XContentBuilder builder = XContentFactory.jsonBuilder();
         builder.startObject("licensesMetaData");
-        LicensesMetaData.FACTORY.toXContent(licensesMetaData, builder, ToXContent.EMPTY_PARAMS);
+        licensesMetaData.toXContent(builder, ToXContent.EMPTY_PARAMS);
         builder.endObject();
         byte[] serializedBytes = builder.bytes().toBytes();
 
@@ -87,7 +87,7 @@ public class LicensesMetaDataSerializationTests extends ElasticsearchTestCase {
         LicensesMetaData licensesMetaData = new LicensesMetaData(new ArrayList<License>(), Arrays.asList(trialLicense));
         XContentBuilder builder = XContentFactory.jsonBuilder();
         builder.startObject("licensesMetaData");
-        LicensesMetaData.FACTORY.toXContent(licensesMetaData, builder, ToXContent.EMPTY_PARAMS);
+        licensesMetaData.toXContent(builder, ToXContent.EMPTY_PARAMS);
         builder.endObject();
         byte[] serializedBytes = builder.bytes().toBytes();
 
@@ -113,7 +113,7 @@ public class LicensesMetaDataSerializationTests extends ElasticsearchTestCase {
         LicensesMetaData licensesMetaData = new LicensesMetaData(new ArrayList<License>(), trialLicenses);
         XContentBuilder builder = XContentFactory.jsonBuilder();
         builder.startObject("licensesMetaData");
-        LicensesMetaData.FACTORY.toXContent(licensesMetaData, builder, ToXContent.EMPTY_PARAMS);
+        licensesMetaData.toXContent(builder, ToXContent.EMPTY_PARAMS);
         builder.endObject();
         byte[] serializedBytes = builder.bytes().toBytes();
 
@@ -143,7 +143,7 @@ public class LicensesMetaDataSerializationTests extends ElasticsearchTestCase {
         LicensesMetaData licensesMetaData = new LicensesMetaData(licenses, trialLicenses);
         XContentBuilder builder = XContentFactory.jsonBuilder();
         builder.startObject("licensesMetaData");
-        LicensesMetaData.FACTORY.toXContent(licensesMetaData, builder, ToXContent.EMPTY_PARAMS);
+        licensesMetaData.toXContent(builder, ToXContent.EMPTY_PARAMS);
         builder.endObject();
         byte[] serializedBytes = builder.bytes().toBytes();
 
@@ -159,7 +159,7 @@ public class LicensesMetaDataSerializationTests extends ElasticsearchTestCase {
         final XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
         parser.nextToken(); // consume null
         parser.nextToken(); // consume "licensesMetaData"
-        LicensesMetaData licensesMetaDataFromXContent = LicensesMetaData.FACTORY.fromXContent(parser);
+        LicensesMetaData licensesMetaDataFromXContent = LicensesMetaData.PROTO.fromXContent(parser);
         parser.nextToken(); // consume endObject
         assertThat(parser.nextToken(), nullValue());
         return licensesMetaDataFromXContent;
