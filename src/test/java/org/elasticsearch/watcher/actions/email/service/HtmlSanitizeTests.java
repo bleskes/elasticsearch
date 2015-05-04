@@ -21,7 +21,9 @@ import org.elasticsearch.common.collect.ImmutableMap;
 import org.elasticsearch.test.ElasticsearchTestCase;
 import org.junit.Test;
 
+import static org.elasticsearch.watcher.actions.email.service.EmailTemplate.sanitizeHtml;
 import static org.hamcrest.Matchers.equalTo;
+
 
 /**
  */
@@ -33,7 +35,7 @@ public class HtmlSanitizeTests extends ElasticsearchTestCase {
                 "onclick=\"document.getElementById('demo').innerHTML = Date()\">" +
                 "Click me to display Date and Time.</button>";
         byte[] bytes = new byte[0];
-        String sanitizedHtml = Profile.sanitizeHtml(ImmutableMap.of("foo", (Attachment) new Attachment.Bytes("foo", bytes, "")), badHtml);
+        String sanitizedHtml = sanitizeHtml(ImmutableMap.of("foo", (Attachment) new Attachment.Bytes("foo", bytes, "")), badHtml);
         assertThat(sanitizedHtml, equalTo("Click me to display Date and Time."));
     }
 
@@ -41,7 +43,7 @@ public class HtmlSanitizeTests extends ElasticsearchTestCase {
     public void test_HtmlSanitizer_Nonattachment_img() {
         String badHtml = "<img src=\"http://test.com/nastyimage.jpg\"/>This is a bad image";
         byte[] bytes = new byte[0];
-        String sanitizedHtml = Profile.sanitizeHtml(ImmutableMap.of("foo", (Attachment) new Attachment.Bytes("foo", bytes, "")), badHtml);
+        String sanitizedHtml = sanitizeHtml(ImmutableMap.of("foo", (Attachment) new Attachment.Bytes("foo", bytes, "")), badHtml);
         assertThat(sanitizedHtml, equalTo("This is a bad image"));
     }
 
@@ -49,7 +51,7 @@ public class HtmlSanitizeTests extends ElasticsearchTestCase {
     public void test_HtmlSanitizer_Goodattachment_img() {
         String goodHtml = "<img src=\"cid:foo\" />This is a good image";
         byte[] bytes = new byte[0];
-        String sanitizedHtml = Profile.sanitizeHtml(ImmutableMap.of("foo", (Attachment) new Attachment.Bytes("foo", bytes, "")), goodHtml);
+        String sanitizedHtml = sanitizeHtml(ImmutableMap.of("foo", (Attachment) new Attachment.Bytes("foo", bytes, "")), goodHtml);
         assertThat(sanitizedHtml, equalTo(goodHtml));
     }
 
@@ -57,7 +59,7 @@ public class HtmlSanitizeTests extends ElasticsearchTestCase {
     public void test_HtmlSanitizer_table() {
         String goodHtml = "<table><tr><td>cell1</td><td>cell2</td></tr></table>";
         byte[] bytes = new byte[0];
-        String sanitizedHtml = Profile.sanitizeHtml(ImmutableMap.of("foo", (Attachment) new Attachment.Bytes("foo", bytes, "")), goodHtml);
+        String sanitizedHtml = sanitizeHtml(ImmutableMap.of("foo", (Attachment) new Attachment.Bytes("foo", bytes, "")), goodHtml);
         assertThat(sanitizedHtml, equalTo(goodHtml));
 
     }
@@ -66,7 +68,7 @@ public class HtmlSanitizeTests extends ElasticsearchTestCase {
     public void test_HtmlSanitizer_Badattachment_img() {
         String goodHtml = "<img src=\"cid:bad\" />This is a bad image";
         byte[] bytes = new byte[0];
-        String sanitizedHtml = Profile.sanitizeHtml(ImmutableMap.of("foo", (Attachment) new Attachment.Bytes("foo", bytes, "")), goodHtml);
+        String sanitizedHtml = sanitizeHtml(ImmutableMap.of("foo", (Attachment) new Attachment.Bytes("foo", bytes, "")), goodHtml);
         assertThat(sanitizedHtml, equalTo("This is a bad image"));
     }
 
@@ -74,7 +76,7 @@ public class HtmlSanitizeTests extends ElasticsearchTestCase {
     public void test_HtmlSanitizer_Script() {
         String badHtml = "<script>doSomethingNefarious()</script>This was a dangerous script";
         byte[] bytes = new byte[0];
-        String sanitizedHtml = Profile.sanitizeHtml(ImmutableMap.of("foo", (Attachment) new Attachment.Bytes("foo", bytes, "")), badHtml);
+        String sanitizedHtml = sanitizeHtml(ImmutableMap.of("foo", (Attachment) new Attachment.Bytes("foo", bytes, "")), badHtml);
         assertThat(sanitizedHtml, equalTo("This was a dangerous script"));
     }
 
@@ -82,7 +84,7 @@ public class HtmlSanitizeTests extends ElasticsearchTestCase {
     public void test_HtmlSanitizer_FullHtmlWithMetaString() {
         String needsSanitation = "<html><head></head><body><h1>Hello {{ctx.metadata.name}}</h1> meta <a href='https://www.google.com/search?q={{ctx.metadata.name}}'>Testlink</a>meta</body></html>";
         byte[] bytes = new byte[0];
-        String sanitizedHtml = Profile.sanitizeHtml(ImmutableMap.of("foo", (Attachment) new Attachment.Bytes("foo", bytes, "")), needsSanitation);
+        String sanitizedHtml = sanitizeHtml(ImmutableMap.of("foo", (Attachment) new Attachment.Bytes("foo", bytes, "")), needsSanitation);
         assertThat(sanitizedHtml, equalTo("<head></head><body><h1>Hello {{ctx.metadata.name}}</h1> meta <a href=\"https://www.google.com/search?q&#61;{{ctx.metadata.name}}\" rel=\"nofollow\">Testlink</a>meta</body>"));
     }
 
