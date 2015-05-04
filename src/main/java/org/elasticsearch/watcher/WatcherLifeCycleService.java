@@ -26,7 +26,6 @@ import org.elasticsearch.common.component.LifecycleListener;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.gateway.GatewayService;
-import org.elasticsearch.indices.IndicesService;
 import org.elasticsearch.threadpool.ThreadPool;
 
 /**
@@ -41,7 +40,7 @@ public class WatcherLifeCycleService extends AbstractComponent implements Cluste
     private volatile boolean manuallyStopped;
 
     @Inject
-    public WatcherLifeCycleService(Settings settings, ClusterService clusterService, IndicesService indicesService, ThreadPool threadPool, WatcherService watcherService) {
+    public WatcherLifeCycleService(Settings settings, ClusterService clusterService, ThreadPool threadPool, WatcherService watcherService) {
         super(settings);
         this.clusterService = clusterService;
         this.threadPool = threadPool;
@@ -49,7 +48,7 @@ public class WatcherLifeCycleService extends AbstractComponent implements Cluste
         clusterService.add(this);
         // Close if the indices service is being stopped, so we don't run into search failures (locally) that will
         // happen because we're shutting down and an watch is scheduled.
-        indicesService.addLifecycleListener(new LifecycleListener() {
+        clusterService.addLifecycleListener(new LifecycleListener() {
             @Override
             public void beforeStop() {
                 stop(false);
