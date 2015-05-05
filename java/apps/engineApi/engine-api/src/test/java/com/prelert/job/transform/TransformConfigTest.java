@@ -88,7 +88,7 @@ public class TransformConfigTest
             }
 
 			List<String> initArgs = new ArrayList<>();
-			for (int arg = 0; arg < type.initArgumentCount(); ++arg)
+			for (int arg = 0; arg < type.argumentCount(); ++arg)
 			{
 			    initArgs.add(Integer.toString(arg));
 			}
@@ -166,11 +166,15 @@ public class TransformConfigTest
 
 
 
-
+            // set the wrong number of arguments
 			int initArgCount = 0;
-			if (type.initArgumentCount() == 0)
+			if (type.argumentCount() == 0 && type.optionalArgumentCount() == 0)
 			{
 			    initArgCount = 1;
+			}
+			else if (type.optionalArgumentCount() > 0)
+			{
+			    initArgCount = type.argumentCount() + type.optionalArgumentCount() + 1;
 			}
 
 			List<String> initArgs = new ArrayList<>();
@@ -187,11 +191,11 @@ public class TransformConfigTest
 			}
 			catch (TransformConfigurationException e)
 			{
-				assertEquals(ErrorCode.TRANSFORM_MISSING_INITIALISER_ARGUMENT, e.getErrorCode());
+				assertEquals(ErrorCode.TRANSFORM_INVALID_ARGUMENT_COUNT, e.getErrorCode());
 			}
 
 			initArgs = new ArrayList<>();
-			for (int i=0; i<type.initArgumentCount(); i++)
+			for (int i=0; i<type.argumentCount(); i++)
 			{
 			    initArgs.add(Integer.toString(i));
 			}
@@ -222,7 +226,7 @@ public class TransformConfigTest
 	        tr.setTransform(type.toString());
 
 	        List<String> initArgs = new ArrayList<>();
-	        for (int i=0; i<type.initArgumentCount(); i++)
+	        for (int i=0; i<type.argumentCount(); i++)
 	        {
 	            initArgs.add(Integer.toString(i));
 	        }

@@ -60,6 +60,24 @@ public class ConcatTest
 	}
 
 	@Test
+    public void testWithDelimiter() throws TransformException
+    {
+        List<TransformIndex> readIndicies = createIndexArray(new TransformIndex(0, 1), new TransformIndex(0, 2), new TransformIndex(0, 4));
+        List<TransformIndex> writeIndicies = createIndexArray(new TransformIndex(2, 1));
+
+        Concat concat = new Concat("--", readIndicies, writeIndicies, mock(Logger.class));
+
+        String [] input = {"a", "b", "c", "d", "e"};
+        String [] scratch = {};
+        String [] output = new String [2];
+        String [][] readWriteArea = {input, scratch, output};
+
+        assertEquals(TransformResult.OK, concat.transform(readWriteArea));
+        assertNull(output[0]);
+        assertEquals("b--c--e", output[1]);
+    }
+
+	@Test
 	public void testZeroInputs() throws TransformException
 	{
         List<TransformIndex> readIndicies = createIndexArray();

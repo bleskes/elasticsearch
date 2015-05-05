@@ -78,6 +78,35 @@ public class TransformFactoryTest {
 	}
 
 	@Test
+	public void testConcatWithOptionalArgs() throws TransformConfigurationException
+	{
+	    TransformConfig conf = new TransformConfig();
+	    conf.setTransform(TransformType.CONCAT.prettyName());
+	    conf.setInputs(Arrays.asList("field1", "field2"));
+	    conf.setOutputs(Arrays.asList("concatted"));
+
+	    Map<String, Integer> inputMap = new HashMap<>();
+	    inputMap.put("field1", 5);
+	    inputMap.put("field2", 3);
+
+	    Map<String, Integer> scratchMap = new HashMap<>();
+
+	    Map<String, Integer> outputMap = new HashMap<>();
+	    outputMap.put("concatted", 2);
+
+	    Transform tr = new TransformFactory().create(conf, inputMap, scratchMap,
+	            outputMap, mock(Logger.class));
+	    assertTrue(tr instanceof Concat);
+	    assertEquals(null, ((Concat)tr).getDelimiter());
+
+	    conf.setArguments(Arrays.asList("delimiter"));
+	    tr = new TransformFactory().create(conf, inputMap, scratchMap,
+	            outputMap, mock(Logger.class));
+	    assertTrue(tr instanceof Concat);
+	    assertEquals("delimiter", ((Concat)tr).getDelimiter());
+	}
+
+	@Test
 	public void testAllTypesCreated() throws TransformConfigurationException
 	{
 		EnumSet<TransformType> all = EnumSet.allOf(TransformType.class);
@@ -94,7 +123,7 @@ public class TransformFactoryTest {
 			conf.setTransform(type.prettyName());
 
 			List<String> args = new ArrayList<>();
-			for (int i=0; i<type.initArgumentCount(); i++)
+			for (int i=0; i<type.argumentCount(); i++)
 			{
 			    args.add(Integer.toString(i));
 			}

@@ -28,6 +28,7 @@
 package com.prelert.transforms;
 
 import java.util.List;
+import java.util.StringJoiner;
 
 import org.apache.log4j.Logger;
 
@@ -37,9 +38,22 @@ import org.apache.log4j.Logger;
  */
 public class Concat extends Transform
 {
+    private String m_Delimiter = null;
+
     public Concat(List<TransformIndex> readIndicies, List<TransformIndex> writeIndicies, Logger logger)
     {
         super(readIndicies, writeIndicies, logger);
+    }
+
+    public Concat(String join, List<TransformIndex> readIndicies, List<TransformIndex> writeIndicies, Logger logger)
+    {
+        super(readIndicies, writeIndicies, logger);
+        m_Delimiter = join;
+    }
+
+    public String getDelimiter()
+    {
+        return m_Delimiter;
     }
 
     /**
@@ -54,15 +68,30 @@ public class Concat extends Transform
             return TransformResult.FAIL;
         }
 
-        StringBuilder builder = new StringBuilder();
-
-        for (TransformIndex i : m_ReadIndicies)
-        {
-            builder.append(readWriteArea[i.array][i.index]);
-        }
-
         TransformIndex writeIndex = m_WriteIndicies.get(0);
-        readWriteArea[writeIndex.array][writeIndex.index] = builder.toString();
+
+        if (m_Delimiter != null)
+        {
+            StringJoiner joiner = new StringJoiner(m_Delimiter);
+
+            for (TransformIndex i : m_ReadIndicies)
+            {
+                joiner.add(readWriteArea[i.array][i.index]);
+            }
+
+            readWriteArea[writeIndex.array][writeIndex.index] = joiner.toString();
+        }
+        else
+        {
+            StringBuilder builder = new StringBuilder();
+
+            for (TransformIndex i : m_ReadIndicies)
+            {
+                builder.append(readWriteArea[i.array][i.index]);
+            }
+
+            readWriteArea[writeIndex.array][writeIndex.index] = builder.toString();
+        }
 
         return TransformResult.OK;
     }

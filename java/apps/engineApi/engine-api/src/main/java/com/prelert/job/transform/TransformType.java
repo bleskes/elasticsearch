@@ -41,11 +41,11 @@ import com.prelert.rs.data.ErrorCode;
  */
 public enum TransformType
 {
-    DOMAIN_SPLIT(Names.DOMAIN_SPLIT_NAME, 1, 0, Arrays.asList("subDomain", "hrd")),
-    CONCAT(Names.CONCAT, Names.VARIADIC_ARGS, 0, Arrays.asList("concat")),
-    REGEX_EXTRACT(Names.EXTRACT, 1, 1, Arrays.asList("")),
-    REGEX_SPLIT(Names.SPLIT, 1, 1, Arrays.asList("")),
-    EXCLUDE_FILTER(Names.EXCLUDE_FILTER, 1, 1, Arrays.asList());
+    DOMAIN_SPLIT(Names.DOMAIN_SPLIT_NAME, 1, 0, 0, Arrays.asList("subDomain", "hrd")),
+    CONCAT(Names.CONCAT, Names.VARIADIC_ARGS, 0, 1, Arrays.asList("concat")),
+    REGEX_EXTRACT(Names.EXTRACT, 1, 1, 0, Arrays.asList("")),
+    REGEX_SPLIT(Names.SPLIT, 1, 1, 0, Arrays.asList("")),
+    EXCLUDE_FILTER(Names.EXCLUDE_FILTER, 1, 1, 0, Arrays.asList());
 
     /**
      * Enums cannot use static fields in their constructors as the
@@ -69,20 +69,23 @@ public enum TransformType
     }
 
     private final int m_Arity;
-    private final int m_InitArgumentCount;
+    private final int m_ArgumentCount;
+    private final int m_OptionalArgumentCount;
     private final String m_PrettyName;
     private final List<String> m_DefaultOutputNames;
 
     private TransformType(String prettyName, int arity, int requiredArgumentCount,
-                        List<String> defaultOutputNames)
+                        int optionalArgumentCount, List<String> defaultOutputNames)
     {
         m_Arity = arity;
-        m_InitArgumentCount = requiredArgumentCount;
+        m_ArgumentCount = requiredArgumentCount;
+        m_OptionalArgumentCount = optionalArgumentCount;
         m_PrettyName = prettyName;
         m_DefaultOutputNames = defaultOutputNames;
     }
 
     /**
+     * The number of inputs the transform expects.
      * Arity of -1 means the function is variadic e.g. concat
      * @return
      */
@@ -92,14 +95,25 @@ public enum TransformType
     }
 
     /**
-     * The number of non-input arguments required by the transform
+     * The number of arguments required by the transform
      * when it is created.
      * e.g. RegexExtract requires 1 argument that is the actual regex
      * @return
      */
-    public int initArgumentCount()
+    public int argumentCount()
     {
-        return m_InitArgumentCount;
+        return m_ArgumentCount;
+    }
+
+    /**
+     * The number of optional arguments the transform has.
+     * Certain transforms have an optional argument
+     * e.g. concat can take an optional delimiter.
+     * @return
+     */
+    public int optionalArgumentCount()
+    {
+        return m_OptionalArgumentCount;
     }
 
     public String prettyName()
@@ -120,11 +134,17 @@ public enum TransformType
             throw new TransformConfigurationException(msg, ErrorCode.INCORRECT_TRANSFORM_INPUT_COUNT);
         }
 
-        if (m_InitArgumentCount != tc.getArguments().size())
+        if (tc.getArguments().size() < m_ArgumentCount)
         {
-            String msg = String.format("Transform type %s must be defined with %d arguments",
-                                            tc.getTransform(), m_InitArgumentCount);
-            throw new TransformConfigurationException(msg, ErrorCode.TRANSFORM_MISSING_INITIALISER_ARGUMENT);
+            String msg = String.format("Transform type %s must be defined with at least %d arguments",
+                    tc.getTransform(), m_ArgumentCount);
+            throw new TransformConfigurationException(msg, ErrorCode.TRANSFORM_INVALID_ARGUMENT_COUNT);
+        }
+        else if (tc.getArguments().size() > m_ArgumentCount + m_OptionalArgumentCount)
+        {
+            String msg = String.format("Transform type %s must be defined with at most %d arguments",
+                    tc.getTransform(), m_ArgumentCount + m_OptionalArgumentCount);
+            throw new TransformConfigurationException(msg, ErrorCode.TRANSFORM_INVALID_ARGUMENT_COUNT);
         }
 
         if (m_Arity == Names.VARIADIC_ARGS)
