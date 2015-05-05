@@ -154,7 +154,7 @@ latest job. For example:
     },
     "analysisLimits" : null,
     "dataDescription" : {
-      "format" : "DELINEATED",
+      "format" : "DELIMITED",
       "fieldDelimiter" : ",",
       "timeField" : "time",
       "quoteCharacter" : "\"",
