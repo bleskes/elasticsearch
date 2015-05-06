@@ -20,6 +20,7 @@ package org.elasticsearch.watcher.trigger.manual;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.watcher.trigger.TriggerEngine;
+import org.elasticsearch.watcher.trigger.TriggerService;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -72,7 +73,7 @@ public class ManualTriggerEngine implements TriggerEngine<ManualTrigger,ManualTr
     }
 
     @Override
-    public ManualTriggerEvent parseTriggerEvent(String context, XContentParser parser) throws IOException {
-        return ManualTriggerEvent.parse(context, parser);
+    public ManualTriggerEvent parseTriggerEvent(TriggerService service, String watchId, String context, XContentParser parser) throws IOException {
+        return ManualTriggerEvent.parse(service, watchId, context, parser);
     }
 }
