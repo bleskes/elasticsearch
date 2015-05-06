@@ -98,7 +98,7 @@ public class BasicWatcherTests extends AbstractWatcherIntegrationTests {
 
         GetWatchResponse getWatchResponse = watcherClient().prepareGetWatch().setId("_name").get();
         assertThat(getWatchResponse.isFound(), is(true));
-        assertThat(getWatchResponse.getSource().length(), greaterThan(0));
+        assertThat(getWatchResponse.getSource(), notNullValue());
     }
 
     @Test

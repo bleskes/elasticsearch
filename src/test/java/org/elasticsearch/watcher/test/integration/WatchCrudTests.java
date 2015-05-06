@@ -25,6 +25,7 @@ import org.elasticsearch.watcher.transport.actions.delete.DeleteWatchResponse;
 import org.elasticsearch.watcher.transport.actions.get.GetWatchRequest;
 import org.elasticsearch.watcher.transport.actions.get.GetWatchResponse;
 import org.elasticsearch.watcher.transport.actions.put.PutWatchResponse;
+import org.elasticsearch.watcher.support.xcontent.XContentSource;
 import org.junit.Test;
 
 import java.util.Map;
@@ -94,7 +95,7 @@ public class WatchCrudTests extends AbstractWatcherIntegrationTests {
         assertThat(getResponse.isFound(), is(true));
         assertThat(getResponse.getId(), is("_name"));
         assertThat(getResponse.getVersion(), is(putResponse.getVersion()));
-        Map<String, Object> source = getResponse.getSourceAsMap();
+        Map<String, Object> source = getResponse.getSource().getAsMap();
         assertThat(source, notNullValue());
         assertThat(source, hasKey("trigger"));
         assertThat(source, hasKey("input"));
@@ -113,7 +114,7 @@ public class WatchCrudTests extends AbstractWatcherIntegrationTests {
         assertThat(getResponse.getVersion(), is(-1L));
         assertThat(getResponse.isFound(), is(false));
         assertThat(getResponse.getSource(), nullValue());
-        Map<String, Object> source = getResponse.getSourceAsMap();
+        XContentSource source = getResponse.getSource();
         assertThat(source, nullValue());
     }
 
