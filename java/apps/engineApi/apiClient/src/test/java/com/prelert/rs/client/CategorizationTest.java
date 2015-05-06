@@ -324,7 +324,7 @@ public class CategorizationTest implements Closeable
 
         // Count tests with different examples limits
         Map<String, Object> expectedResultsForCount = new HashMap<>();
-        expectedResultsForCount.put(HIGHEST_ANOMALY_BUCKET_ID, "1284379200");
+        expectedResultsForCount.put(HIGHEST_ANOMALY_BUCKET_ID, "1428926400");
         expectedResultsForCount.put(HIGHEST_ANOMALY_SCORE_THRESHOLD, 97.0);
         expectedResultsForCount.put(HIGHEST_RECORD_PROBABILITY_THRESHOLD, 99.0);
         expectedResultsForCount.put(HIGHEST_ANOMALY_CATEGORY_ID, "43");
@@ -348,7 +348,7 @@ public class CategorizationTest implements Closeable
 
         // Rare tests with default examples limits
         Map<String, Object> expectedResultsForRare = new HashMap<>();
-        expectedResultsForRare.put(HIGHEST_ANOMALY_BUCKET_ID, "1284379200");
+        expectedResultsForRare.put(HIGHEST_ANOMALY_BUCKET_ID, "1428926400");
         expectedResultsForRare.put(HIGHEST_ANOMALY_SCORE_THRESHOLD, 97.0);
         expectedResultsForRare.put(HIGHEST_RECORD_PROBABILITY_THRESHOLD, 0.0);
 
