@@ -28,7 +28,7 @@ import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.test.junit.annotations.TestLogging;
-import org.elasticsearch.watcher.WatcherService;
+import org.elasticsearch.watcher.WatcherState;
 import org.elasticsearch.watcher.client.WatchSourceBuilder;
 import org.elasticsearch.watcher.condition.Condition;
 import org.elasticsearch.watcher.condition.always.AlwaysCondition;
@@ -129,7 +129,7 @@ public class BootStrapTests extends AbstractWatcherIntegrationTests {
         startWatcher();
 
         WatcherStatsResponse response = watcherClient().prepareWatcherStats().get();
-        assertThat(response.getWatchServiceState(), equalTo(WatcherService.State.STARTED));
+        assertThat(response.getWatchServiceState(), equalTo(WatcherState.STARTED));
         // Only the valid watch should been loaded
         assertThat(response.getWatchesCount(), equalTo(1l));
         assertThat(watcherClient().prepareGetWatch("_id0").get().getId(), Matchers.equalTo("_id0"));
@@ -217,7 +217,7 @@ public class BootStrapTests extends AbstractWatcherIntegrationTests {
         startWatcher();
 
         WatcherStatsResponse response = watcherClient().prepareWatcherStats().get();
-        assertThat(response.getWatchServiceState(), equalTo(WatcherService.State.STARTED));
+        assertThat(response.getWatchServiceState(), equalTo(WatcherState.STARTED));
         assertThat(response.getWatchesCount(), equalTo(1l));
     }
 
@@ -279,7 +279,7 @@ public class BootStrapTests extends AbstractWatcherIntegrationTests {
         startWatcher();
 
         WatcherStatsResponse response = watcherClient().prepareWatcherStats().get();
-        assertThat(response.getWatchServiceState(), equalTo(WatcherService.State.STARTED));
+        assertThat(response.getWatchServiceState(), equalTo(WatcherState.STARTED));
         assertThat(response.getWatchesCount(), equalTo((long) numWatches));
     }
 
@@ -288,7 +288,7 @@ public class BootStrapTests extends AbstractWatcherIntegrationTests {
     public void testWatchRecordLoading() throws Exception {
         createIndex("output");
         WatcherStatsResponse response = watcherClient().prepareWatcherStats().get();
-        assertThat(response.getWatchServiceState(), equalTo(WatcherService.State.STARTED));
+        assertThat(response.getWatchServiceState(), equalTo(WatcherState.STARTED));
         assertThat(response.getWatchesCount(), equalTo(0L));
 
         String watchId = "_id";
@@ -325,7 +325,7 @@ public class BootStrapTests extends AbstractWatcherIntegrationTests {
                 // We need to wait until all the records are processed from the internal execution queue, only then we can assert
                 // that numRecords watch records have been processed as part of starting up.
                 WatcherStatsResponse response = watcherClient().prepareWatcherStats().get();
-                assertThat(response.getWatchServiceState(), equalTo(WatcherService.State.STARTED));
+                assertThat(response.getWatchServiceState(), equalTo(WatcherState.STARTED));
                 assertThat(response.getExecutionQueueSize(), equalTo(0l));
 
                 // but even then since the execution of the watch record is async it may take a little bit before
@@ -341,7 +341,7 @@ public class BootStrapTests extends AbstractWatcherIntegrationTests {
     public void testMixedWatchRecordLoading() throws Exception {
         createIndex("output");
         WatcherStatsResponse response = watcherClient().prepareWatcherStats().get();
-        assertThat(response.getWatchServiceState(), equalTo(WatcherService.State.STARTED));
+        assertThat(response.getWatchServiceState(), equalTo(WatcherState.STARTED));
         assertThat(response.getWatchesCount(), equalTo(0L));
 
         String watchId = "_id";
@@ -396,7 +396,7 @@ public class BootStrapTests extends AbstractWatcherIntegrationTests {
                 // We need to wait until all the records are processed from the internal execution queue, only then we can assert
                 // that numRecords watch records have been processed as part of starting up.
                 WatcherStatsResponse response = watcherClient().prepareWatcherStats().get();
-                assertThat(response.getWatchServiceState(), equalTo(WatcherService.State.STARTED));
+                assertThat(response.getWatchServiceState(), equalTo(WatcherState.STARTED));
                 assertThat(response.getExecutionQueueSize(), equalTo(0l));
 
                 // but even then since the execution of the watch record is async it may take a little bit before
@@ -454,7 +454,7 @@ public class BootStrapTests extends AbstractWatcherIntegrationTests {
         startWatcher();
         WatcherStatsResponse response = watcherClient().prepareWatcherStats().get();
 
-        assertThat(response.getWatchServiceState(), equalTo(WatcherService.State.STARTED));
+        assertThat(response.getWatchServiceState(), equalTo(WatcherState.STARTED));
         final long totalHistoryEntries = numberOfWatchRecordsPerIndex * numberOfWatchHistoryIndices;
 
         assertBusy(new Runnable() {
