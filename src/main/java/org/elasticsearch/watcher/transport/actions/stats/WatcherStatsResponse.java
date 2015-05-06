@@ -31,7 +31,7 @@ public class WatcherStatsResponse extends ActionResponse {
     private WatcherVersion version;
     private WatcherBuild build;
     private long watchesCount;
-    private WatcherState watchServiceState;
+    private WatcherState watcherState;
     private long watchExecutionQueueSize;
     private long watchExecutionQueueMaxSize;
 
@@ -74,12 +74,12 @@ public class WatcherStatsResponse extends ActionResponse {
     /**
      * @return The state of the watch service.
      */
-    public WatcherState getWatchServiceState() {
-        return watchServiceState;
+    public WatcherState getWatcherState() {
+        return watcherState;
     }
 
-    void setWatchServiceState(WatcherState watcherServiceState) {
-        this.watchServiceState = watcherServiceState;
+    void setWatcherState(WatcherState watcherServiceState) {
+        this.watcherState = watcherServiceState;
     }
 
     /**
@@ -110,7 +110,7 @@ public class WatcherStatsResponse extends ActionResponse {
         watchesCount = in.readLong();
         watchExecutionQueueSize = in.readLong();
         watchExecutionQueueMaxSize = in.readLong();
-        watchServiceState = WatcherState.fromId(in.readByte());
+        watcherState = WatcherState.fromId(in.readByte());
         version = WatcherVersion.readVersion(in);
         build = WatcherBuild.readBuild(in);
     }
@@ -121,7 +121,7 @@ public class WatcherStatsResponse extends ActionResponse {
         out.writeLong(watchesCount);
         out.writeLong(watchExecutionQueueSize);
         out.writeLong(watchExecutionQueueMaxSize);
-        out.writeByte(watchServiceState.getId());
+        out.writeByte(watcherState.getId());
         WatcherVersion.writeVersion(version, out);
         WatcherBuild.writeBuild(build, out);
     }
