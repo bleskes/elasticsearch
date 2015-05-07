@@ -90,7 +90,7 @@ public class CronSchedule extends CronnableSchedule {
         private String expression;
 
         public ValidationException(String expression, Cron.ParseException cause) {
-            super("invalid cron expression [" + expression + "]. " + cause.getMessage());
+            super("invalid cron expression [{}]", cause, expression);
             this.expression = expression;
         }
     }
