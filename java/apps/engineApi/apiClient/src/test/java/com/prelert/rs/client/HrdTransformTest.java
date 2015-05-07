@@ -68,14 +68,16 @@ public class HrdTransformTest implements Closeable
      */
     public static final String API_BASE_URL = "http://localhost:8080/engine/v1";
 
-    private EngineApiClient m_WebServiceClient;
+    private final EngineApiClient m_WebServiceClient;
+    private final String m_BaseUrl;
 
     /**
      * Creates a new http client call {@linkplain #close()} once finished
      */
-    public HrdTransformTest()
+    public HrdTransformTest(String baseUrl)
     {
-        m_WebServiceClient = new EngineApiClient();
+        m_WebServiceClient = new EngineApiClient(baseUrl);
+        m_BaseUrl = baseUrl;
     }
 
     @Override
@@ -84,7 +86,7 @@ public class HrdTransformTest implements Closeable
         m_WebServiceClient.close();
     }
 
-    public void createMaxBytesOverHrdJob(String baseUrl) throws ClientProtocolException, IOException
+    public void createMaxBytesOverHrdJob() throws ClientProtocolException, IOException
     {
         final String JOB_CONFIG = "{\"id\":\"" + MAX_BYTES_OVER_HRD_JOB + "\","
                 + "\"analysisConfig\" : {"
@@ -95,9 +97,9 @@ public class HrdTransformTest implements Closeable
                         + "\"timeFormat\":\"yyyy-MM-ddHH:mm:ss.SSS z\"} }";
 
 
-        m_WebServiceClient.deleteJob(baseUrl, MAX_BYTES_OVER_HRD_JOB);
+        m_WebServiceClient.deleteJob(MAX_BYTES_OVER_HRD_JOB);
 
-        String jobId = m_WebServiceClient.createJob(baseUrl, JOB_CONFIG);
+        String jobId = m_WebServiceClient.createJob(JOB_CONFIG);
         if (jobId == null || jobId.isEmpty())
         {
             LOGGER.error(m_WebServiceClient.getLastError().toJson());
@@ -107,7 +109,7 @@ public class HrdTransformTest implements Closeable
         test(jobId.equals(MAX_BYTES_OVER_HRD_JOB));
 
         // get job by location, verify
-        SingleDocument<JobDetails> doc = m_WebServiceClient.getJob(baseUrl, jobId);
+        SingleDocument<JobDetails> doc = m_WebServiceClient.getJob(jobId);
         if (doc.isExists() == false)
         {
             LOGGER.error("No Job at URL " + jobId);
@@ -124,7 +126,7 @@ public class HrdTransformTest implements Closeable
 
     }
 
-    public void createInfoContentOverHrdJob(String baseUrl) throws ClientProtocolException, IOException
+    public void createInfoContentOverHrdJob() throws ClientProtocolException, IOException
     {
         final String TRANSFORM_JOB_CONFIG = "{\"id\":\"" + INFO_CONTENT_OVER_HRD_JOB + "\","
                 + "\"analysisConfig\" : {"
@@ -135,9 +137,9 @@ public class HrdTransformTest implements Closeable
                     + "\"timeFormat\":\"yyyy-MM-ddHH:mm:ss.SSS z\"} }";
 
 
-        m_WebServiceClient.deleteJob(baseUrl, INFO_CONTENT_OVER_HRD_JOB);
+        m_WebServiceClient.deleteJob(INFO_CONTENT_OVER_HRD_JOB);
 
-        String jobId = m_WebServiceClient.createJob(baseUrl, TRANSFORM_JOB_CONFIG);
+        String jobId = m_WebServiceClient.createJob(TRANSFORM_JOB_CONFIG);
         if (jobId == null || jobId.isEmpty())
         {
             LOGGER.error(m_WebServiceClient.getLastError().toJson());
@@ -147,7 +149,7 @@ public class HrdTransformTest implements Closeable
         test(jobId.equals(INFO_CONTENT_OVER_HRD_JOB));
 
         // get job by location, verify
-        SingleDocument<JobDetails> doc = m_WebServiceClient.getJob(baseUrl, jobId);
+        SingleDocument<JobDetails> doc = m_WebServiceClient.getJob(jobId);
         if (doc.isExists() == false)
         {
             LOGGER.error("No Job at URL " + jobId);
@@ -173,15 +175,15 @@ public class HrdTransformTest implements Closeable
      * @param compressed Is the data gzipped compressed?
      * @throws IOException
      */
-    public void uploadData(String baseUrl, String jobId, File dataFile, boolean compressed)
+    public void uploadData(String jobId, File dataFile, boolean compressed)
     throws IOException
     {
         FileInputStream stream = new FileInputStream(dataFile);
-        DataCounts counts = m_WebServiceClient.streamingUpload(baseUrl, jobId, stream, compressed);
+        DataCounts counts = m_WebServiceClient.streamingUpload(jobId, stream, compressed);
         test(counts.getProcessedRecordCount() > 0);
         test(counts.getInvalidDateCount() == 0);
 
-        SingleDocument<JobDetails> job = m_WebServiceClient.getJob(baseUrl, jobId);
+        SingleDocument<JobDetails> job = m_WebServiceClient.getJob(jobId);
         test(job.isExists());
         test(job.getDocument().getStatus() == JobStatus.RUNNING);
     }
@@ -195,13 +197,13 @@ public class HrdTransformTest implements Closeable
      * @return
      * @throws IOException
      */
-    public boolean closeJob(String baseUrl, String jobId)
+    public boolean closeJob(String jobId)
     throws IOException
     {
-        boolean closed = m_WebServiceClient.closeJob(baseUrl, jobId);
+        boolean closed = m_WebServiceClient.closeJob(jobId);
         test(closed);
 
-        SingleDocument<JobDetails> job = m_WebServiceClient.getJob(baseUrl, jobId);
+        SingleDocument<JobDetails> job = m_WebServiceClient.getJob(jobId);
         test(job.isExists());
         test(job.getDocument().getStatus() == JobStatus.CLOSED);
 
@@ -213,15 +215,16 @@ public class HrdTransformTest implements Closeable
      * over field value looks like an top level domain i.e. it
      * ends in .com, .net, etc
      *
-     * @param baseUrl
      * @param jobId
      * @return
      * @throws IOException
      */
-    public boolean checkOverFieldValuesAreTopLevelDomains(String baseUrl, String jobId) throws IOException
+    public boolean checkOverFieldValuesAreTopLevelDomains(String jobId) throws IOException
     {
-        Pagination<AnomalyRecord> records = m_WebServiceClient.getRecords(baseUrl, jobId,
-                0l, 50l, null, null, AnomalyRecord.NORMALIZED_PROBABILITY, true, null, null);
+        Pagination<AnomalyRecord> records = m_WebServiceClient.prepareGetRecords(jobId)
+                        .take(50)
+                        .sortField(AnomalyRecord.NORMALIZED_PROBABILITY)
+                        .descending(true).get();
 
         test(records.getDocumentCount() > 0);
 
@@ -289,19 +292,19 @@ public class HrdTransformTest implements Closeable
         File splitDateTimeDataFile = new File(prelertTestDataHome +
                 "/engine_api_integration_test/transforms/hrd/hrd_test.csv");
 
-        try (HrdTransformTest transformTest = new HrdTransformTest())
+        try (HrdTransformTest transformTest = new HrdTransformTest(baseUrl))
         {
-            transformTest.createMaxBytesOverHrdJob(baseUrl);
-            transformTest.uploadData(baseUrl, MAX_BYTES_OVER_HRD_JOB, splitMetricDataFile, false);
-            transformTest.closeJob(baseUrl, MAX_BYTES_OVER_HRD_JOB);
+            transformTest.createMaxBytesOverHrdJob();
+            transformTest.uploadData(MAX_BYTES_OVER_HRD_JOB, splitMetricDataFile, false);
+            transformTest.closeJob(MAX_BYTES_OVER_HRD_JOB);
 
-            transformTest.checkOverFieldValuesAreTopLevelDomains(baseUrl, MAX_BYTES_OVER_HRD_JOB);
+            transformTest.checkOverFieldValuesAreTopLevelDomains(MAX_BYTES_OVER_HRD_JOB);
 
-            transformTest.createInfoContentOverHrdJob(baseUrl);
-            transformTest.uploadData(baseUrl, INFO_CONTENT_OVER_HRD_JOB, splitDateTimeDataFile, false);
-            transformTest.closeJob(baseUrl, INFO_CONTENT_OVER_HRD_JOB);
+            transformTest.createInfoContentOverHrdJob();
+            transformTest.uploadData(INFO_CONTENT_OVER_HRD_JOB, splitDateTimeDataFile, false);
+            transformTest.closeJob(INFO_CONTENT_OVER_HRD_JOB);
 
-            transformTest.checkOverFieldValuesAreTopLevelDomains(baseUrl, INFO_CONTENT_OVER_HRD_JOB);
+            transformTest.checkOverFieldValuesAreTopLevelDomains(INFO_CONTENT_OVER_HRD_JOB);
         }
 
         LOGGER.info("All tests passed Ok");

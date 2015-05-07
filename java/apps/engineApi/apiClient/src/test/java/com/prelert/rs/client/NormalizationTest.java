@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -45,9 +45,9 @@ import org.apache.log4j.PatternLayout;
 
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
+import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
-import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.Pagination;
@@ -79,16 +79,17 @@ public class NormalizationTest implements Closeable
      */
     public static final String API_BASE_URL = "http://localhost:8080/engine/v1";
 
-    private EngineApiClient m_WebServiceClient;
-
+    private final EngineApiClient m_WebServiceClient;
+    private final String m_BaseUrl;
 
 
     /**
      * Creates a new http client call {@linkplain #close()} once finished
      */
-    public NormalizationTest()
+    public NormalizationTest(String baseUrl)
     {
-        m_WebServiceClient = new EngineApiClient();
+        m_WebServiceClient = new EngineApiClient(baseUrl);
+        m_BaseUrl = baseUrl;
     }
 
     @Override
@@ -98,7 +99,7 @@ public class NormalizationTest implements Closeable
     }
 
 
-    public String createFarequoteJob(String apiUrl)
+    public String createFarequoteJob()
     throws ClientProtocolException, IOException
     {
         Detector d = new Detector();
@@ -120,7 +121,7 @@ public class NormalizationTest implements Closeable
         config.setId(TEST_JOB_ID);
         config.setDataDescription(dd);
 
-        String jobId = m_WebServiceClient.createJob(apiUrl, config);
+        String jobId = m_WebServiceClient.createJob(config);
         if (jobId == null || jobId.isEmpty())
         {
             LOGGER.error("No Job Id returned by create job");
@@ -130,8 +131,6 @@ public class NormalizationTest implements Closeable
 
         return jobId;
     }
-
-
 
     /**
      * Test the system change normalisation for the farequote
@@ -145,16 +144,14 @@ public class NormalizationTest implements Closeable
      * </ol>
      *
      *
-     * @param baseUrl
      * @param jobId
      * @return
      * @throws IOException
      */
-    public boolean verifyFarequoteNormalisedBuckets(String baseUrl, String jobId)
+    public boolean verifyFarequoteNormalisedBuckets(String jobId)
     throws IOException
     {
-        Pagination<Bucket> allBuckets = m_WebServiceClient.getBuckets(baseUrl,
-                jobId, false, 0l, 1500l, 0.0, 0.0);
+        Pagination<Bucket> allBuckets = m_WebServiceClient.prepareGetBuckets(jobId).take(1500).get();
         test(allBuckets.getDocumentCount() == FAREQUOTE_NUM_BUCKETS);
         test(allBuckets.getHitCount() == FAREQUOTE_NUM_BUCKETS);
 
@@ -167,8 +164,8 @@ public class NormalizationTest implements Closeable
         long skip = 0, take = 100;
         while (skip < FAREQUOTE_NUM_BUCKETS)
         {
-            Pagination<Bucket> buckets = m_WebServiceClient.getBuckets(baseUrl,
-                    jobId, false, skip, take, 0.0, 0.0);
+            Pagination<Bucket> buckets = m_WebServiceClient.prepareGetBuckets(jobId).skip(skip)
+                    .take(take).get();
             pagedBuckets.addAll(buckets.getDocuments());
 
             skip += take;
@@ -194,11 +191,11 @@ public class NormalizationTest implements Closeable
         skip = 0; take = 140;
         while (skip < allBuckets.getHitCount())
         {
-            Pagination<Bucket> buckets = m_WebServiceClient.getBuckets(baseUrl,
-                    jobId, false, skip, take,
-                    allBuckets.getDocuments().get(0).getEpoch(),
-                    allBuckets.getDocuments().get((int)allBuckets.getHitCount()-1).getEpoch() +1,
-                    0.0, 0.0);
+            Pagination<Bucket> buckets = m_WebServiceClient.prepareGetBuckets(jobId)
+                    .skip(skip).take(take)
+                    .start(allBuckets.getDocuments().get(0).getEpoch())
+                    .end(allBuckets.getDocuments().get((int)allBuckets.getHitCount()-1).getEpoch() +1)
+                    .get();
 
             pagedBuckets.addAll(buckets.getDocuments());
 
@@ -225,10 +222,10 @@ public class NormalizationTest implements Closeable
 
         for (int i=0; i<startDateFormats.length; i++)
         {
-            Pagination<Bucket> byDate = m_WebServiceClient.getBuckets(
-                    baseUrl, jobId, false, 0l, 1000l,
-                    startDateFormats[i], endDateFormats[i],
-                    0.0, 0.0);
+            Pagination<Bucket> byDate = m_WebServiceClient.prepareGetBuckets(jobId)
+                    .take(1000)
+                    .start(startDateFormats[i])
+                    .end(endDateFormats[i]).get();
 
             test(byDate.getDocuments().get(0).getEpoch() == 1359558600l);
             test(byDate.getDocuments().get(byDate.getDocumentCount() -1).getEpoch() == 1359669900l);
@@ -279,9 +276,8 @@ public class NormalizationTest implements Closeable
         test(bucket771Score >= 80.0);
         test(bucket772Score >= 80.0);
 
-        Pagination<Bucket> allBucketsExpanded = m_WebServiceClient.getBuckets(baseUrl,
-                jobId, true, 0l, 1500l, 0.0, 0.0);
-
+        Pagination<Bucket> allBucketsExpanded = m_WebServiceClient.prepareGetBuckets(jobId)
+                .expand(true).take(1500).get();
 
         /*
          * The bucket unusual score is the max unusual score
@@ -310,8 +306,8 @@ public class NormalizationTest implements Closeable
         int count = 30;
         for (Bucket bucket: allBucketsExpanded.getDocuments())
         {
-            SingleDocument<Bucket> bucketDoc = m_WebServiceClient.getBucket(
-                    baseUrl, jobId, bucket.getId(), true);
+            SingleDocument<Bucket> bucketDoc = m_WebServiceClient
+                    .prepareGetBucket(jobId, bucket.getId()).expand(true).get();
 
             List<AnomalyRecord> records = bucketDoc.getDocument().getRecords();
 
@@ -350,8 +346,8 @@ public class NormalizationTest implements Closeable
     public boolean verifyFarequoteNormalisedRecords(String baseUrl, String jobId)
     throws IOException
     {
-        Pagination<AnomalyRecord> allRecords = m_WebServiceClient.getRecords(
-                baseUrl, jobId, 0l, 3000l);
+        Pagination<AnomalyRecord> allRecords = m_WebServiceClient.prepareGetRecords(jobId)
+                .take(3000).get();
 
         /*
          * Test that getting all the results at once is the same as
@@ -360,14 +356,14 @@ public class NormalizationTest implements Closeable
         List<AnomalyRecord> pagedRecords = new ArrayList<>();
         long skip = 0, take = 1000;
 
-        Pagination<AnomalyRecord> page = m_WebServiceClient.getRecords(
-                baseUrl, jobId, skip, take);
+        Pagination<AnomalyRecord> page = m_WebServiceClient.prepareGetRecords(jobId).skip(skip)
+                .take(take).get();
         skip += take;
         pagedRecords.addAll(page.getDocuments());
 
         while (skip < page.getHitCount())
         {
-            page = m_WebServiceClient.getRecords(baseUrl, jobId, skip, take);
+            page = m_WebServiceClient.prepareGetRecords(jobId).skip(skip).take(take).get();
             skip += take;
             pagedRecords.addAll(page.getDocuments());
         }
@@ -386,25 +382,24 @@ public class NormalizationTest implements Closeable
          */
 
         // need start and end dates first
-        Pagination<Bucket> allBuckets = m_WebServiceClient.getBuckets(baseUrl,
-                jobId, true, 0l, 3000l, 0.0, 0.0);
+        Pagination<Bucket> allBuckets = m_WebServiceClient.prepareGetBuckets(jobId).expand(true)
+                .take(3000).get();
         long startDate = allBuckets.getDocuments().get(0).getEpoch();
         long endDate = allBuckets.getDocuments().get(allBuckets.getDocumentCount()-1).getEpoch() + 1;
 
         pagedRecords = new ArrayList<>();
         skip = 0; take = 200;
 
-        page = m_WebServiceClient.getRecords(
-                baseUrl, jobId, skip, take,
-                startDate, endDate);
+
+        page = m_WebServiceClient.prepareGetRecords(jobId).skip(skip).take(take).start(startDate)
+                .end(endDate).get();
         skip += take;
         pagedRecords.addAll(page.getDocuments());
 
         while (skip < page.getHitCount())
         {
-            page = m_WebServiceClient.getRecords(
-                    baseUrl, jobId, skip, take,
-                    startDate, endDate);
+            page = m_WebServiceClient.prepareGetRecords(jobId).skip(skip).take(take)
+                    .start(startDate).end(endDate).get();
 
             skip += take;
             pagedRecords.addAll(page.getDocuments());
@@ -449,9 +444,10 @@ public class NormalizationTest implements Closeable
         String [] endDateFormats = new String[] {"2013-01-31T22:10:00.000+0000", "1359670200"};
         for (int i=0; i<startDateFormats.length; i++)
         {
-            Pagination<AnomalyRecord> byDate = m_WebServiceClient.getRecords(
-                    baseUrl, jobId, 0l, 2000l,
-                    startDateFormats[i], endDateFormats[i]);
+            Pagination<AnomalyRecord> byDate = m_WebServiceClient.prepareGetRecords(jobId)
+                            .take(2000)
+                            .start(startDateFormats[i])
+                            .end(endDateFormats[i]).get();
 
             Collections.sort(byDate.getDocuments(), new Comparator<AnomalyRecord>() {
 
@@ -475,23 +471,21 @@ public class NormalizationTest implements Closeable
     /**
      * Delete all the jobs in the list of job ids
      *
-     * @param baseUrl The URL of the REST API i.e. an URL like
-     *     <code>http://prelert-host:8080/engine/version/</code>
      * @param jobIds The list of ids of the jobs to delete
      * @throws IOException
      * @throws InterruptedException
      */
-    public void deleteJobs(String baseUrl, List<String> jobIds)
+    public void deleteJobs(List<String> jobIds)
     throws IOException, InterruptedException
     {
         for (String jobId : jobIds)
         {
             LOGGER.debug("Deleting job " + jobId);
 
-            boolean success = m_WebServiceClient.deleteJob(baseUrl, jobId);
+            boolean success = m_WebServiceClient.deleteJob(jobId);
             if (success == false)
             {
-                LOGGER.error("Error deleting job " + baseUrl + "/" + jobId);
+                LOGGER.error("Error deleting job " + m_BaseUrl + "/" + jobId);
             }
         }
     }
@@ -549,28 +543,28 @@ public class NormalizationTest implements Closeable
 
         String farequoteJob = TEST_JOB_ID;
 
-        NormalizationTest test = new NormalizationTest();
+        NormalizationTest test = new NormalizationTest(baseUrl);
         List<String> jobUrls = new ArrayList<>();
 
         // Always delete the test job first in case it is hanging around
         // from a previous run
-        test.m_WebServiceClient.deleteJob(baseUrl, farequoteJob);
+        test.m_WebServiceClient.deleteJob(farequoteJob);
         jobUrls.add(farequoteJob);
 
         File fareQuoteData = new File(prelertTestDataHome +
                 "/engine_api_integration_test/farequote.csv");
         // Farequote test
-        test.createFarequoteJob(baseUrl);
-        test.m_WebServiceClient.fileUpload(baseUrl, farequoteJob,
+        test.createFarequoteJob();
+        test.m_WebServiceClient.fileUpload(farequoteJob,
                 fareQuoteData, false);
-        test.m_WebServiceClient.closeJob(baseUrl, farequoteJob);
+        test.m_WebServiceClient.closeJob(farequoteJob);
 
-        test.verifyFarequoteNormalisedBuckets(baseUrl, farequoteJob);
+        test.verifyFarequoteNormalisedBuckets(farequoteJob);
 
 
         //==========================
         // Clean up test jobs
-        test.deleteJobs(baseUrl, jobUrls);
+        test.deleteJobs(jobUrls);
 
         test.close();
 

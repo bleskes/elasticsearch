@@ -89,15 +89,17 @@ public class InterimResultsTest implements Closeable
      */
     public static final String API_BASE_URL = "http://localhost:8080/engine/v1";
 
-    private EngineApiClient m_WebServiceClient;
+    private final EngineApiClient m_WebServiceClient;
+    private final String m_BaseUrl;
 
 
     /**
      * Creates a new http client call {@linkplain #close()} once finished
      */
-    public InterimResultsTest()
+    public InterimResultsTest(String baseUrl)
     {
-        m_WebServiceClient = new EngineApiClient();
+        m_WebServiceClient = new EngineApiClient(baseUrl);
+        m_BaseUrl = baseUrl;
     }
 
     @Override
@@ -107,7 +109,7 @@ public class InterimResultsTest implements Closeable
     }
 
 
-    public String createFarequoteJob(String apiUrl)
+    public String createFarequoteJob()
     throws ClientProtocolException, IOException
     {
         Detector d = new Detector();
@@ -130,7 +132,7 @@ public class InterimResultsTest implements Closeable
         config.setId(TEST_JOB_ID);
         config.setDataDescription(dd);
 
-        String jobId = m_WebServiceClient.createJob(apiUrl, config);
+        String jobId = m_WebServiceClient.createJob(config);
         if (jobId == null || jobId.isEmpty())
         {
             LOGGER.error("No Job Id returned by create job");
@@ -148,21 +150,19 @@ public class InterimResultsTest implements Closeable
      * <li>There should not be any results for 16:10 on 30th January 2013</li>
      * </ol>
      *
-     * @param baseUrl
      * @param jobId
      * @param includeInterim
      * @return
      * @throws IOException
      */
-    public boolean verifyFarequoteInterimBuckets(String baseUrl, String jobId,
-            boolean includeInterim)
+    public boolean verifyFarequoteInterimBuckets(String jobId, boolean includeInterim)
     throws IOException
     {
         long expectedBuckets = (includeInterim ? FAREQUOTE_NUM_TOTAL_BUCKETS :
                 FAREQUOTE_NUM_BEFORE_INTERIM_RESULTS_BUCKETS);
 
-        Pagination<Bucket> allBuckets = m_WebServiceClient.getBuckets(baseUrl,
-                jobId, false, includeInterim, 0l, 1500l, 0.0, 0.0);
+        Pagination<Bucket> allBuckets = m_WebServiceClient.prepareGetBuckets(jobId)
+                .includeInterim(includeInterim).take(1500).get();
         test(allBuckets.getDocumentCount() == expectedBuckets);
         test(allBuckets.getHitCount() == expectedBuckets);
 
@@ -174,8 +174,8 @@ public class InterimResultsTest implements Closeable
         long skip = 0, take = 100;
         while (skip < expectedBuckets)
         {
-            Pagination<Bucket> buckets = m_WebServiceClient.getBuckets(baseUrl,
-                    jobId, false, includeInterim, skip, take, 0.0, 0.0);
+            Pagination<Bucket> buckets = m_WebServiceClient.prepareGetBuckets(jobId)
+                    .includeInterim(includeInterim).skip(skip).take(take).get();
             pagedBuckets.addAll(buckets.getDocuments());
 
             skip += take;
@@ -209,11 +209,13 @@ public class InterimResultsTest implements Closeable
         skip = 0; take = 140;
         while (skip < allBuckets.getHitCount())
         {
-            Pagination<Bucket> buckets = m_WebServiceClient.getBuckets(baseUrl,
-                    jobId, false, includeInterim, skip, take,
-                    allBuckets.getDocuments().get(0).getEpoch(),
-                    allBuckets.getDocuments().get((int)allBuckets.getHitCount() - 1).getEpoch() + 1,
-                    0.0, 0.0);
+            Pagination<Bucket> buckets = m_WebServiceClient.prepareGetBuckets(jobId)
+                    .includeInterim(includeInterim)
+                    .skip(skip)
+                    .take(take)
+                    .start(allBuckets.getDocuments().get(0).getEpoch())
+                    .end(allBuckets.getDocuments().get((int)allBuckets.getHitCount() - 1).getEpoch() + 1)
+                    .get();
 
             pagedBuckets.addAll(buckets.getDocuments());
 
@@ -249,10 +251,12 @@ public class InterimResultsTest implements Closeable
 
         for (int i = 0; i < startDateFormats.length; i++)
         {
-            Pagination<Bucket> byDate = m_WebServiceClient.getBuckets(
-                    baseUrl, jobId, false, includeInterim, 0l, 1000l,
-                    startDateFormats[i], endDateFormats[i],
-                    0.0, 0.0);
+            Pagination<Bucket> byDate = m_WebServiceClient.prepareGetBuckets(jobId)
+                    .includeInterim(includeInterim)
+                    .take(1000)
+                    .start(startDateFormats[i])
+                    .end(endDateFormats[i])
+                    .get();
 
             test(byDate.getDocuments().get(0).getEpoch() == 1359436200l);
             if (includeInterim)
@@ -295,8 +299,10 @@ public class InterimResultsTest implements Closeable
             test(pagedBuckets.get(770).getAnomalyScore() >= 60.0);
         }
 
-        Pagination<Bucket> allBucketsExpanded = m_WebServiceClient.getBuckets(baseUrl,
-                jobId, true, includeInterim, 0l, 1500l, 0.0, 0.0);
+        Pagination<Bucket> allBucketsExpanded = m_WebServiceClient.prepareGetBuckets(jobId)
+                .expand(true)
+                .includeInterim(includeInterim)
+                .take(1500).get();
 
         /*
          * The bucket unusual score is the max unusual score
@@ -329,8 +335,10 @@ public class InterimResultsTest implements Closeable
                 continue;
             }
 
-            SingleDocument<Bucket> bucketDoc = m_WebServiceClient.getBucket(
-                    baseUrl, jobId, bucket.getId(), true, includeInterim);
+            SingleDocument<Bucket> bucketDoc =
+                    m_WebServiceClient.prepareGetBucket(jobId, bucket.getId())
+                            .expand(true)
+                            .includeInterim(includeInterim).get();
 
             List<AnomalyRecord> records = bucketDoc.getDocument().getRecords();
 
@@ -354,18 +362,16 @@ public class InterimResultsTest implements Closeable
      * Get records via the 'records' end point and check that interim
      * results are included if and only if requested.
      *
-     * @param baseUrl
      * @param jobId
      * @param includeInterim
      * @return
      * @throws IOException
      */
-    public boolean verifyFarequoteInterimRecords(String baseUrl, String jobId,
-            boolean includeInterim)
+    public boolean verifyFarequoteInterimRecords(String jobId, boolean includeInterim)
     throws IOException
     {
-        Pagination<AnomalyRecord> allRecords = m_WebServiceClient.getRecords(
-                baseUrl, jobId, 0l, 3000l, includeInterim);
+        Pagination<AnomalyRecord> allRecords = m_WebServiceClient.prepareGetRecords(jobId)
+                .take(3000).includeInterim(includeInterim).get();
 
         /*
          * Test that getting all the results at once is the same as
@@ -374,16 +380,15 @@ public class InterimResultsTest implements Closeable
         List<AnomalyRecord> pagedRecords = new ArrayList<>();
         long skip = 0, take = 1000;
 
-        Pagination<AnomalyRecord> page = m_WebServiceClient.getRecords(
-                baseUrl, jobId, skip, take, includeInterim);
+        Pagination<AnomalyRecord> page = m_WebServiceClient.prepareGetRecords(jobId)
+                .skip(skip).take(take).includeInterim(includeInterim).get();
         skip += take;
         pagedRecords.addAll(page.getDocuments());
 
         while (skip < page.getHitCount())
         {
-            page = m_WebServiceClient.getRecords(baseUrl, jobId, skip, take, includeInterim);
-            skip += take;
-            pagedRecords.addAll(page.getDocuments());
+            page = m_WebServiceClient.prepareGetRecords(jobId).skip(skip).take(take)
+                    .includeInterim(includeInterim).get();
         }
 
         int recordIndex = 0;
@@ -400,25 +405,25 @@ public class InterimResultsTest implements Closeable
          */
 
         // need start and end dates first
-        Pagination<Bucket> allBuckets = m_WebServiceClient.getBuckets(baseUrl,
-                jobId, true, includeInterim, 0l, 3000l, 0.0, 0.0);
+        Pagination<Bucket> allBuckets = m_WebServiceClient.prepareGetBuckets(jobId)
+                .expand(true)
+                .includeInterim(includeInterim)
+                .take(3000).get();
         long startDate = allBuckets.getDocuments().get(0).getEpoch();
         long endDate = allBuckets.getDocuments().get(allBuckets.getDocumentCount() - 1).getEpoch() + 1;
 
         pagedRecords = new ArrayList<>();
         skip = 0; take = 200;
 
-        page = m_WebServiceClient.getRecords(
-                baseUrl, jobId, skip, take,
-                startDate, endDate, includeInterim);
+        page = m_WebServiceClient.prepareGetRecords(jobId).skip(skip).take(take).start(startDate)
+                .end(endDate).includeInterim(includeInterim).get();
         skip += take;
         pagedRecords.addAll(page.getDocuments());
 
         while (skip < page.getHitCount())
         {
-            page = m_WebServiceClient.getRecords(
-                    baseUrl, jobId, skip, take,
-                    startDate, endDate, includeInterim);
+            page = m_WebServiceClient.prepareGetRecords(jobId).skip(skip).take(take)
+                    .start(startDate).end(endDate).includeInterim(includeInterim).get();
 
             skip += take;
             pagedRecords.addAll(page.getDocuments());
@@ -471,8 +476,8 @@ public class InterimResultsTest implements Closeable
         input += "2013-01-30 16:08:00Z,AAL,50000.0,farequote\n";
         BufferedInputStream inputStream = new BufferedInputStream(new ByteArrayInputStream(
                 input.getBytes(StandardCharsets.UTF_8)));
-        m_WebServiceClient.streamingUpload(API_BASE_URL, TEST_JOB_ID, inputStream, false);
-        m_WebServiceClient.flushJob(API_BASE_URL, TEST_JOB_ID, true, start, end);
+        m_WebServiceClient.streamingUpload(TEST_JOB_ID, inputStream, false);
+        m_WebServiceClient.flushJob(TEST_JOB_ID, true, start, end);
 
         interimResults = getInterimResultsOnly(start, end);
         test(interimResults.size() == 1);
@@ -483,8 +488,8 @@ public class InterimResultsTest implements Closeable
 
     private List<AnomalyRecord> getInterimResultsOnly(String start, String end) throws IOException
     {
-        Pagination<AnomalyRecord> page = m_WebServiceClient.getRecords(
-                API_BASE_URL, TEST_JOB_ID, 0L, 100L, start, end, true);
+        Pagination<AnomalyRecord> page = m_WebServiceClient.prepareGetRecords(TEST_JOB_ID)
+                .start(start).end(end).includeInterim(true).get();
         List<AnomalyRecord> records = page.getDocuments();
         for (AnomalyRecord record : records)
         {
@@ -496,27 +501,24 @@ public class InterimResultsTest implements Closeable
     /**
      * Delete all the jobs in the list of job ids
      *
-     * @param baseUrl The URL of the REST API i.e. an URL like
-     *     <code>http://prelert-host:8080/engine/version/</code>
      * @param jobIds The list of ids of the jobs to delete
      * @throws IOException
      * @throws InterruptedException
      */
-    public void deleteJobs(String baseUrl, List<String> jobIds)
+    public void deleteJobs(List<String> jobIds)
     throws IOException, InterruptedException
     {
         for (String jobId : jobIds)
         {
             LOGGER.debug("Deleting job " + jobId);
 
-            boolean success = m_WebServiceClient.deleteJob(baseUrl, jobId);
+            boolean success = m_WebServiceClient.deleteJob(jobId);
             if (success == false)
             {
-                LOGGER.error("Error deleting job " + baseUrl + "/" + jobId);
+                LOGGER.error("Error deleting job " + m_BaseUrl + "/" + jobId);
             }
         }
     }
-
 
     /**
      * Throws an IllegalStateException if <code>condition</code> is false.
@@ -569,32 +571,32 @@ public class InterimResultsTest implements Closeable
 
         String farequoteJob = TEST_JOB_ID;
 
-        InterimResultsTest test = new InterimResultsTest();
+        InterimResultsTest test = new InterimResultsTest(baseUrl);
         List<String> jobUrls = new ArrayList<>();
 
         // Always delete the test job first in case it is hanging around
         // from a previous run
-        test.m_WebServiceClient.deleteJob(baseUrl, farequoteJob);
+        test.m_WebServiceClient.deleteJob(farequoteJob);
         jobUrls.add(farequoteJob);
 
         File fareQuotePartData = new File(prelertTestDataHome +
                 "/engine_api_integration_test/farequote_part.csv");
         // Farequote test
-        test.createFarequoteJob(baseUrl);
-        test.m_WebServiceClient.fileUpload(baseUrl, farequoteJob,
+        test.createFarequoteJob();
+        test.m_WebServiceClient.fileUpload(farequoteJob,
                 fareQuotePartData, false);
-        InterimResultsTest.test(test.m_WebServiceClient.flushJob(baseUrl, farequoteJob, true) == true);
+        InterimResultsTest.test(test.m_WebServiceClient.flushJob(farequoteJob, true) == true);
 
-        test.verifyFarequoteInterimBuckets(baseUrl, farequoteJob, false);
-        test.verifyFarequoteInterimBuckets(baseUrl, farequoteJob, true);
-        test.verifyFarequoteInterimRecords(baseUrl, farequoteJob, false);
-        test.verifyFarequoteInterimRecords(baseUrl, farequoteJob, true);
+        test.verifyFarequoteInterimBuckets(farequoteJob, false);
+        test.verifyFarequoteInterimBuckets(farequoteJob, true);
+        test.verifyFarequoteInterimRecords(farequoteJob, false);
+        test.verifyFarequoteInterimRecords(farequoteJob, true);
 
         test.verifyInterimResultsAreRecalculated();
         //==========================
         // Clean up test jobs
-        InterimResultsTest.test(test.m_WebServiceClient.closeJob(baseUrl, farequoteJob) == true);
-        test.deleteJobs(baseUrl, jobUrls);
+        InterimResultsTest.test(test.m_WebServiceClient.closeJob(farequoteJob) == true);
+        test.deleteJobs(jobUrls);
 
         test.close();
 

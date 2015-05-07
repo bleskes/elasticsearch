@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -59,15 +59,12 @@ public class BadRecordsTest implements Closeable
 
 	private EngineApiClient m_EngineApiClient;
 
-	private String m_BaseUrl;
-
 	/**
 	 * Creates a new http client call {@linkplain #close()} once finished
 	 */
 	public BadRecordsTest(String baseUrl)
 	{
-		m_BaseUrl = baseUrl;
-		m_EngineApiClient = new EngineApiClient();
+		m_EngineApiClient = new EngineApiClient(baseUrl);
 	}
 
 	@Override
@@ -95,11 +92,11 @@ public class BadRecordsTest implements Closeable
 
 		JobConfiguration jc = producer.getJobConfiguration();
 		jc.setDescription("Bad dates test");
-		String jobId = m_EngineApiClient.createJob(m_BaseUrl, jc);
+		String jobId = m_EngineApiClient.createJob(jc);
 
 		producerThread.start();
 
-		DataCounts counts = m_EngineApiClient.streamingUpload(m_BaseUrl, jobId, inputStream, false);
+		DataCounts counts = m_EngineApiClient.streamingUpload(jobId, inputStream, false);
 
 		ApiError error = m_EngineApiClient.getLastError();
 		test(error != null);
@@ -110,7 +107,7 @@ public class BadRecordsTest implements Closeable
 		LOGGER.info(error);
 
 
-		m_EngineApiClient.closeJob(m_BaseUrl, jobId);
+		m_EngineApiClient.closeJob(jobId);
 
 		try
 		{
@@ -143,11 +140,11 @@ public class BadRecordsTest implements Closeable
 
 		JobConfiguration jc = producer.getJobConfiguration();
 		jc.setDescription("Out of order records test");
-		String jobId = m_EngineApiClient.createJob(m_BaseUrl, jc);
+		String jobId = m_EngineApiClient.createJob(jc);
 
 		producerThread.start();
 
-		DataCounts counts = m_EngineApiClient.streamingUpload(m_BaseUrl, jobId, inputStream, false);
+		DataCounts counts = m_EngineApiClient.streamingUpload(jobId, inputStream, false);
 
 		ApiError error = m_EngineApiClient.getLastError();
 		test(error != null);
@@ -158,7 +155,7 @@ public class BadRecordsTest implements Closeable
 		test(counts.getMissingFieldCount() == 0);
 
 
-		m_EngineApiClient.closeJob(m_BaseUrl, jobId);
+		m_EngineApiClient.closeJob(jobId);
 
 		try
 		{
