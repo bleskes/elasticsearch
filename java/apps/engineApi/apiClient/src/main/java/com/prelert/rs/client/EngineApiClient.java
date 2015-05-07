@@ -741,9 +741,8 @@ public class EngineApiClient implements Closeable
 
 
         HttpGet get = new HttpGet(url);
-        CloseableHttpResponse response = m_HttpClient.execute(get);
 
-        try
+        try (CloseableHttpResponse response = m_HttpClient.execute(get))
         {
             HttpEntity entity = response.getEntity();
             String content = EntityUtils.toString(entity);
@@ -766,10 +765,6 @@ public class EngineApiClient implements Closeable
                 m_LastError = m_JsonMapper.readValue(content,
                         new TypeReference<ApiError>() {} );
             }
-        }
-        finally
-        {
-            response.close();
         }
 
         return null;
@@ -880,8 +875,7 @@ public class EngineApiClient implements Closeable
 
                 LOGGER.error(msg);
 
-                m_LastError = m_JsonMapper.readValue(content,
-                        new TypeReference<ApiError>() {} );
+                m_LastError = m_JsonMapper.readValue(content, new TypeReference<ApiError>() {});
 
                 return "";
             }
@@ -1038,9 +1032,7 @@ public class EngineApiClient implements Closeable
     private <T> T get(HttpGet get, TypeReference<T> typeRef)
     throws JsonParseException, JsonMappingException, IOException
     {
-        CloseableHttpResponse response = m_HttpClient.execute(get);
-
-        try
+        try (CloseableHttpResponse response = m_HttpClient.execute(get))
         {
             HttpEntity entity = response.getEntity();
             String content = EntityUtils.toString(entity);
@@ -1067,10 +1059,6 @@ public class EngineApiClient implements Closeable
                 m_LastError = m_JsonMapper.readValue(content,
                         new TypeReference<ApiError>() {} );
             }
-        }
-        finally
-        {
-            response.close();
         }
 
         return null;
