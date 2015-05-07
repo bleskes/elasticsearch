@@ -423,7 +423,7 @@ public class Bucket
 
         // m_HadBigNormalisedUpdate is deliberately excluded from the test
         boolean equals =
-                (this.m_Timestamp.equals(that.m_Timestamp)) &&
+                Objects.equals(this.m_Timestamp, that.m_Timestamp) &&
                 (this.m_EventCount == that.m_EventCount) &&
                 (this.m_RawAnomalyScore == that.m_RawAnomalyScore) &&
                 (this.m_AnomalyScore == that.m_AnomalyScore) &&
