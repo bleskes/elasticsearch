@@ -523,45 +523,23 @@ public class AnomalyRecord
         // from the data store
 
         // m_HadBigNormalisedUpdate is also deliberately excluded from the test
-        boolean equal = this.m_Probability == that.m_Probability &&
-                this.m_AnomalyScore == that.m_AnomalyScore &&
-                this.m_NormalizedProbability == that.m_NormalizedProbability &&
-                Objects.equals(this.m_Typical, that.m_Typical) &&
-                Objects.equals(this.m_Actual, that.m_Actual) &&
-                Objects.equals(this.m_Function, that.m_Function) &&
-                Objects.equals(this.m_FieldName, that.m_FieldName) &&
-                Objects.equals(this.m_ByFieldName, that.m_ByFieldName) &&
-                Objects.equals(this.m_ByFieldValue, that.m_ByFieldValue) &&
-                Objects.equals(this.m_PartitionFieldName, that.m_PartitionFieldName) &&
-                Objects.equals(this.m_PartitionFieldValue, that.m_PartitionFieldValue) &&
-                Objects.equals(this.m_OverFieldName, that.m_OverFieldName) &&
-                Objects.equals(this.m_OverFieldValue, that.m_OverFieldValue) &&
-                Objects.equals(this.m_Timestamp, that.m_Timestamp) &&
-                Objects.equals(this.m_Parent, that.m_Parent) &&
-                Objects.equals(this.m_IsInterim, that.m_IsInterim);
-
-        if (this.m_Causes == null && that.m_Causes == null)
-        {
-            equal &= true;
-        }
-        else if (this.m_Causes != null && that.m_Causes != null)
-        {
-            equal &= this.m_Causes.size() == that.m_Causes.size();
-            if (equal)
-            {
-                for (int i=0; i<this.m_Causes.size(); i++)
-                {
-                    equal &= this.m_Causes.get(i).equals(that.m_Causes.get(i));
-                }
-            }
-        }
-        else
-        {
-            // one null the other not
-            equal = false;
-        }
-
-        return equal;
+        return this.m_Probability == that.m_Probability
+                && this.m_AnomalyScore == that.m_AnomalyScore
+                && this.m_NormalizedProbability == that.m_NormalizedProbability
+                && Objects.equals(this.m_Typical, that.m_Typical)
+                && Objects.equals(this.m_Actual, that.m_Actual)
+                && Objects.equals(this.m_Function, that.m_Function)
+                && Objects.equals(this.m_FieldName, that.m_FieldName)
+                && Objects.equals(this.m_ByFieldName, that.m_ByFieldName)
+                && Objects.equals(this.m_ByFieldValue, that.m_ByFieldValue)
+                && Objects.equals(this.m_PartitionFieldName, that.m_PartitionFieldName)
+                && Objects.equals(this.m_PartitionFieldValue, that.m_PartitionFieldValue)
+                && Objects.equals(this.m_OverFieldName, that.m_OverFieldName)
+                && Objects.equals(this.m_OverFieldValue, that.m_OverFieldValue)
+                && Objects.equals(this.m_Timestamp, that.m_Timestamp)
+                && Objects.equals(this.m_Parent, that.m_Parent)
+                && Objects.equals(this.m_IsInterim, that.m_IsInterim)
+                && Objects.equals(this.m_Causes, that.m_Causes);
     }
 
 
