@@ -422,51 +422,15 @@ public class Bucket
         Bucket that = (Bucket)other;
 
         // m_HadBigNormalisedUpdate is deliberately excluded from the test
-        boolean equals =
-                Objects.equals(this.m_Timestamp, that.m_Timestamp) &&
-                (this.m_EventCount == that.m_EventCount) &&
-                (this.m_RawAnomalyScore == that.m_RawAnomalyScore) &&
-                (this.m_AnomalyScore == that.m_AnomalyScore) &&
-                (this.m_MaxNormalizedProbability == that.m_MaxNormalizedProbability) &&
-                (this.m_RecordCount == that.m_RecordCount);
-
         // don't bother testing detectors
-        if (this.m_Records == null && that.m_Records == null)
-        {
-            equals &= true;
-        }
-        else if (this.m_Records != null && that.m_Records != null)
-        {
-            equals &= this.m_Records.size() == that.m_Records.size();
-            if (equals)
-            {
-                for (int i=0; i<this.m_Records.size(); i++)
-                {
-                    equals &= this.m_Records.get(i).equals(that.m_Records.get(i));
-                }
-            }
-        }
-        else
-        {
-            // one null the other not
-            equals = false;
-        }
-
-        if (this.m_IsInterim == null && that.m_IsInterim == null)
-        {
-            equals &= true;
-        }
-        else if (this.m_IsInterim != null && that.m_IsInterim != null)
-        {
-            equals &= (this.m_IsInterim == that.m_IsInterim);
-        }
-        else
-        {
-            // one null the other not
-            equals = false;
-        }
-
-        return equals;
+        return Objects.equals(this.m_Timestamp, that.m_Timestamp)
+                && (this.m_EventCount == that.m_EventCount)
+                && (this.m_RawAnomalyScore == that.m_RawAnomalyScore)
+                && (this.m_AnomalyScore == that.m_AnomalyScore)
+                && (this.m_MaxNormalizedProbability == that.m_MaxNormalizedProbability)
+                && (this.m_RecordCount == that.m_RecordCount)
+                && Objects.equals(this.m_Records, that.m_Records)
+                && Objects.equals(this.m_IsInterim, that.m_IsInterim);
     }
 
 
