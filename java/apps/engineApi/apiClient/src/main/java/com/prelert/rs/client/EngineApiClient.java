@@ -34,7 +34,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.net.URLEncoder;
 import java.util.Collections;
 import java.util.Map;
 import java.util.zip.ZipInputStream;
@@ -65,9 +64,7 @@ import com.prelert.job.DataCounts;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
 import com.prelert.job.alert.Alert;
-import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.ApiError;
-import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.CategoryDefinition;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
@@ -84,18 +81,21 @@ public class EngineApiClient implements Closeable
 {
     private static final Logger LOGGER = Logger.getLogger(EngineApiClient.class);
 
-    private ObjectMapper m_JsonMapper;
-
-    private CloseableHttpClient m_HttpClient;
-
+    private final String m_BaseUrl;
+    private final ObjectMapper m_JsonMapper;
+    private final CloseableHttpClient m_HttpClient;
     private ApiError m_LastError;
 
     /**
      * Creates a new http client and Json object mapper.
      * Call {@linkplain #close()} once finished
+     *
+     * @param baseUrl The base URL for the REST API including version number
+     * e.g <code>http://localhost:8080/engine/v1/</code>
      */
-    public EngineApiClient()
+    public EngineApiClient(String baseUrl)
     {
+        m_BaseUrl = baseUrl;
         m_HttpClient = HttpClients.createDefault();
         m_JsonMapper = new ObjectMapper();
         m_JsonMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
@@ -113,15 +113,13 @@ public class EngineApiClient implements Closeable
     /**
      * Get details of all the jobs in database
      *
-     * @param baseUrl The base URL for the REST API including version number
-     * e.g <code>http://localhost:8080/engine/v1/</code>
      * @return The {@link Pagination} object containing a list of {@link JobDetails jobs}
      * @throws IOException
      */
-    public Pagination<JobDetails> getJobs(String baseUrl)
+    public Pagination<JobDetails> getJobs()
     throws IOException
     {
-        String url = baseUrl + "/jobs";
+        String url = m_BaseUrl + "/jobs";
         LOGGER.debug("GET jobs: " + url);
 
         Pagination<JobDetails> page = this.get(url,
@@ -139,18 +137,16 @@ public class EngineApiClient implements Closeable
     /**
      * Get the individual job on the provided URL
      *
-     * @param baseUrl The base URL for the REST API including version number
-     * e.g <code>http://localhost:8080/engine/v1/</code>
      * @param jobId The Job's unique Id
      *
      * @return If the job exists a {@link com.prelert.rs.data.SingleDocument SingleDocument}
      * containing the {@link JobDetails job} is returned else the SingleDocument is empty
      * @throws IOException
      */
-    public SingleDocument<JobDetails> getJob(String baseUrl, String jobId)
+    public SingleDocument<JobDetails> getJob(String jobId)
     throws IOException
     {
-        String url = baseUrl + "/jobs/" + jobId;
+        String url = m_BaseUrl + "/jobs/" + jobId;
         LOGGER.debug("GET job: " + url);
 
         SingleDocument<JobDetails> doc = this.get(url,
@@ -168,20 +164,18 @@ public class EngineApiClient implements Closeable
      * Create a new Job from the <code>JobConfiguration</code> object.
      * <br>
      * Internally this function converts <code>jobConfig</code> to a JSON
-     * string and calls {@link #createJob(String, String)}
+     * string and calls {@link #createJob(String)}
      *
-     * @param baseUrl The base URL for the REST API including version number
-     * e.g <code>http://localhost:8080/engine/v1/</code>
      * @param jobConfig
      * @return The new job's Id or an empty string if there was an error
      * @throws ClientProtocolException
      * @throws IOException
      */
-    public String createJob(String baseUrl, JobConfiguration jobConfig)
+    public String createJob(JobConfiguration jobConfig)
     throws ClientProtocolException, IOException
     {
         String payLoad = m_JsonMapper.writeValueAsString(jobConfig);
-        return createJob(baseUrl, payLoad);
+        return createJob(payLoad);
     }
 
 
@@ -189,18 +183,16 @@ public class EngineApiClient implements Closeable
      * Create a new job with the configuration in <code>createJobPayload</code>
      * and return the newly created job's Id
      *
-     * @param baseUrl The base URL for the REST API including version number
-     * e.g <code>http://localhost:8080/engine/v1/</code>
      * @param createJobPayload The Json configuration for the new job
      * @return The new job's Id or an empty string if there was an error
      *
      * @throws ClientProtocolException
      * @throws IOException
      */
-    public String createJob(String baseUrl, String createJobPayload)
+    public String createJob(String createJobPayload)
     throws ClientProtocolException, IOException
     {
-        String url = baseUrl + "/jobs";
+        String url = m_BaseUrl + "/jobs";
         LOGGER.debug("Create job: " + url);
 
         HttpPost post = new HttpPost(url);
@@ -255,19 +247,16 @@ public class EngineApiClient implements Closeable
      * PUTS the description parameter to the job and sets it as
      * the job's new description field
      *
-     * @param baseUrl The base URL for the REST API including version number
-     * e.g <code>http://localhost:8080/engine/v1/</code>
      * @param jobId The job's unique ID
      * @param description New description field
      *
      * @return True
      * @throws IOException
      */
-    public boolean setJobDescription(String baseUrl, String jobId,
-            String description)
+    public boolean setJobDescription(String jobId, String description)
     throws IOException
     {
-        String url = baseUrl + "/jobs/" + jobId + "/description";
+        String url = m_BaseUrl + "/jobs/" + jobId + "/description";
         LOGGER.debug("PUT job description: " + url);
 
         HttpPut put = new HttpPut(url);
@@ -315,17 +304,15 @@ public class EngineApiClient implements Closeable
     /**
      * Delete an individual job
      *
-     * @param baseUrl The base URL for the REST API including version number
-     * e.g <code>http://localhost:8080/engine/v1/</code>
      * @param jobId The Job's unique Id
      * @return If the job existed and was deleted return true else false
      * @throws ClientProtocolException
      * @throws IOException
      */
-    public boolean deleteJob(String baseUrl, String jobId)
+    public boolean deleteJob(String jobId)
     throws ClientProtocolException, IOException
     {
-        String url = baseUrl + "/jobs/" + jobId;
+        String url = m_BaseUrl + "/jobs/" + jobId;
         LOGGER.debug("DELETE job: " + url);
 
         HttpDelete delete = new HttpDelete(url);
@@ -340,19 +327,16 @@ public class EngineApiClient implements Closeable
      * boundaries it is send in fixed size blocks. The API will manage
      * reconstructing the records from the chunks.
      *
-     * @param baseUrl The base URL for the REST API including version number
-     * e.g <code>http://localhost:8080/engine/v1/</code>
      * @param jobId The Job's unique Id
      * @param inputStream The data to write to the web service
      * @return
      * @throws IOException
-     * @see #streamingUpload(String, String, InputStream, boolean)
+     * @see #streamingUpload(String, InputStream, boolean)
      */
-    public DataCounts chunkedUpload(String baseUrl, String jobId,
-            InputStream inputStream)
+    public DataCounts chunkedUpload(String jobId, InputStream inputStream)
     throws IOException
     {
-        String postUrl = baseUrl + "/data/" + jobId;
+        String postUrl = m_BaseUrl + "/data/" + jobId;
         LOGGER.debug("Uploading chunked data to " + postUrl);
 
         final int BUFF_SIZE = 4096 * 1024;
@@ -403,34 +387,29 @@ public class EngineApiClient implements Closeable
 
     /**
      * Stream data from <code>inputStream</code> to the service.
-     * This is different to {@link #chunkedUpload(String, String, InputStream)}
+     * This is different to {@link #chunkedUpload(String, InputStream)}
      * in that the entire stream is read and uploading at once without breaking
      * the connection.
      *
-     * @param baseUrl The base URL for the REST API including version number
-     * e.g <code>http://localhost:8080/engine/v1/</code>
      * @param jobId The Job's unique Id
      * @param inputStream The data to write to the web service
      * @param compressed Is the data gzipped compressed?
      * @return DataCounts
      * @throws IOException
-     * @see #chunkedUpload(String, String, InputStream)
+     * @see #chunkedUpload(String, InputStream)
      */
-    public DataCounts streamingUpload(String baseUrl, String jobId,
-            InputStream inputStream, boolean compressed)
+    public DataCounts streamingUpload(String jobId, InputStream inputStream, boolean compressed)
     throws IOException
     {
-        return streamingUpload(baseUrl, jobId, inputStream, compressed, "", "");
+        return streamingUpload(jobId, inputStream, compressed, "", "");
     }
 
     /**
      * Stream data from <code>inputStream</code> to the service.
-     * This is different to {@link #chunkedUpload(String, String, InputStream)}
+     * This is different to {@link #chunkedUpload(String, InputStream)}
      * in that the entire stream is read and uploading at once without breaking
      * the connection.
      *
-     * @param baseUrl The base URL for the REST API including version number
-     * e.g <code>http://localhost:8080/engine/v1/</code>
      * @param jobId The Job's unique Id
      * @param inputStream The data to write to the web service
      * @param compressed Is the data gzipped compressed?
@@ -438,13 +417,13 @@ public class EngineApiClient implements Closeable
      * @param resetEnd The end of the time range to reset buckets for (inclusive)
      * @return DataCounts
      * @throws IOException
-     * @see #chunkedUpload(String, String, InputStream)
+     * @see #chunkedUpload(String, InputStream)
      */
-    public DataCounts streamingUpload(String baseUrl, String jobId,
-            InputStream inputStream, boolean compressed, String resetStart, String resetEnd)
+    public DataCounts streamingUpload(String jobId, InputStream inputStream, boolean compressed,
+            String resetStart, String resetEnd)
     throws IOException
     {
-        String postUrl = String.format("%s/data/%s", baseUrl, jobId);
+        String postUrl = String.format("%s/data/%s", m_BaseUrl, jobId);
         if (!isNullOrEmpty(resetStart) || !isNullOrEmpty(resetEnd))
         {
             postUrl += String.format("?resetStart=%s&resetEnd=%s",
@@ -508,27 +487,23 @@ public class EngineApiClient implements Closeable
     /**
      * Upload the contents of <code>dataFile</code> to the server.
      *
-     * @param baseUrl The base URL for the REST API including version number
-     * e.g <code>http://localhost:8080/engine/v1/</code>
      * @param jobId The Job's Id
      * @param dataFile Should match the data configuration format of the job
      * @param compressed Is the data gzipped compressed?
      * @return
      * @throws IOException
      */
-    public DataCounts fileUpload(String baseUrl, String jobId, File dataFile, boolean compressed)
+    public DataCounts fileUpload(String jobId, File dataFile, boolean compressed)
     throws IOException
     {
         FileInputStream stream = new FileInputStream(dataFile);
 
-        return streamingUpload(baseUrl, jobId, stream, compressed);
+        return streamingUpload(jobId, stream, compressed);
     }
 
     /**
      * Upload the contents of <code>dataFile</code> to the server.
      *
-     * @param baseUrl The base URL for the REST API including version number
-     * e.g <code>http://localhost:8080/engine/v1/</code>
      * @param jobId The Job's Id
      * @param dataFile Should match the data configuration format of the job
      * @param compressed Is the data gzipped compressed?
@@ -537,20 +512,18 @@ public class EngineApiClient implements Closeable
      * @return
      * @throws IOException
      */
-    public DataCounts fileUpload(String baseUrl, String jobId, File dataFile, boolean compressed,
+    public DataCounts fileUpload(String jobId, File dataFile, boolean compressed,
             String resetStart, String resetEnd) throws IOException
     {
         FileInputStream stream = new FileInputStream(dataFile);
 
-        return streamingUpload(baseUrl, jobId, stream, compressed, resetStart, resetEnd);
+        return streamingUpload(jobId, stream, compressed, resetStart, resetEnd);
     }
 
     /**
      * Flush the job, ensuring that no previously uploaded data is waiting in
      * buffers.
      *
-     * @param baseUrl The base URL for the REST API including version number
-     * e.g <code>http://localhost:8080/engine/v1/</code>
      * @param jobId The Job's unique Id
      * @param calcInterim Should interim results for the selected buckets be calculated
      * based on the partial data uploaded for it so far? Interim results will be calculated for
@@ -558,17 +531,15 @@ public class EngineApiClient implements Closeable
      * @return True if successful
      * @throws IOException
      */
-    public boolean flushJob(String baseUrl, String jobId, boolean calcInterim) throws IOException
+    public boolean flushJob(String jobId, boolean calcInterim) throws IOException
     {
-        return flushJob(baseUrl, jobId, calcInterim, "", "");
+        return flushJob(jobId, calcInterim, "", "");
     }
 
     /**
      * Flush the job, ensuring that no previously uploaded data is waiting in
      * buffers.
      *
-     * @param baseUrl The base URL for the REST API including version number
-     * e.g <code>http://localhost:8080/engine/v1/</code>
      * @param jobId The Job's unique Id
      * @param calcInterim Should interim results for the selected buckets be calculated
      * based on the partial data uploaded for it so far? If both {@code start} and {@code end} are
@@ -579,11 +550,11 @@ public class EngineApiClient implements Closeable
      * @return True if successful
      * @throws IOException
      */
-    public boolean flushJob(String baseUrl, String jobId, boolean calcInterim, String start,
-            String end) throws IOException
+    public boolean flushJob(String jobId, boolean calcInterim, String start, String end)
+            throws IOException
     {
         // Send flush message
-        String flushUrl = String.format(baseUrl + "/data/%s/flush?calcInterim=%s&start=%s&end=%s",
+        String flushUrl = String.format(m_BaseUrl + "/data/%s/flush?calcInterim=%s&start=%s&end=%s",
                 jobId, calcInterim ? "true" : "false", start, end);
         LOGGER.debug("Flushing job " + flushUrl);
 
@@ -621,17 +592,15 @@ public class EngineApiClient implements Closeable
     /**
      * Finish the job after all the data has been uploaded
      *
-     * @param baseUrl The base URL for the REST API including version number
-     * e.g <code>http://localhost:8080/engine/v1/</code>
      * @param jobId The Job's unique Id
      * @return True if successful
      * @throws IOException
      */
-    public boolean closeJob(String baseUrl, String jobId)
+    public boolean closeJob(String jobId)
     throws IOException
     {
         // Send finish message
-        String closeUrl = baseUrl + "/data/" + jobId + "/close";
+        String closeUrl = m_BaseUrl + "/data/" + jobId + "/close";
         LOGGER.debug("Closing job " + closeUrl);
 
         HttpPost post = new HttpPost(closeUrl);
@@ -664,669 +633,69 @@ public class EngineApiClient implements Closeable
         return true;
     }
 
-
     /**
-     * Get the bucket results for a particular job.
-     * Calls {@link #getBuckets(String, String, boolean, Long, Long, Double, Double)}
-     * with the skip and take parameters set to <code>null</code>
+     * Returns a {@link BucketsRequestBuilder} for the given job through which
+     * the request can be configured and executed
      *
-     * @param baseUrl The base URL for the REST API including version number
-     * e.g <code>http://localhost:8080/engine/v1/</code>
-     * @param jobId The Job's unique Id
-     * @param expand If true include the anomaly records for the bucket
+     * @param jobId The jobId for which buckets are requested
      *
-     * @return A {@link Pagination} object containing a list of {@link Bucket buckets}
-     * @throws IOException
+     * @return A {@link BucketsRequestBuilder}
      */
-    public Pagination<Bucket> getBuckets(String baseUrl, String jobId, boolean expand)
-    throws IOException
+    public BucketsRequestBuilder prepareGetBuckets(String jobId)
     {
-        return getBuckets(baseUrl, jobId, expand, false, null, null, null, null);
+        return new BucketsRequestBuilder(this, jobId);
     }
 
     /**
-     * Get the bucket results for a particular job.
-     * Calls {@link #getBuckets(String, String, boolean, Long, Long, Double, Double)}
-     * with the skip and take parameters set to <code>null</code>
+     * Returns a {@link BucketRequestBuilder} for the given job through which
+     * the request can be configured and executed
      *
-     * @param baseUrl The base URL for the REST API including version number
-     * e.g <code>http://localhost:8080/engine/v1/</code>
-     * @param jobId The Job's unique Id
-     * @param expand If true include the anomaly records for the bucket
-     * @param isInterim Include interim results
+     * @param jobId The jobId for which a bucket is requested
      *
-     * @return A {@link Pagination} object containing a list of {@link Bucket buckets}
-     * @throws IOException
+     * @return A {@link BucketRequestBuilder}
      */
-    public Pagination<Bucket> getBuckets(String baseUrl, String jobId, boolean expand,
-            boolean isInterim)
-    throws IOException
+    public BucketRequestBuilder prepareGetBucket(String jobId, String bucketId)
     {
-        return getBuckets(baseUrl, jobId, expand, isInterim, null, null, null, null);
+        return new BucketRequestBuilder(this, jobId, bucketId);
     }
 
     /**
-     * Get the bucket results for a particular job and optionally filter by
-     * anomaly or unusual score.
+     * Returns a {@link CategoryDefinitionsRequestBuilder} for the given job through which
+     * the request can be configured and executed
      *
-     * Calls {@link #getBuckets(String, String, boolean, boolean, Long, Long, Double, Double)}
-     * with the skip and take parameters set to <code>null</code>
+     * @param jobId The jobId for which category definitions are requested
      *
-     * @param baseUrl The base URL for the REST API including version number
-     * e.g <code>http://localhost:8080/engine/v1/</code>
-     * @param jobId The Job's unique Id
-     * @param expand If true include the anomaly records for the bucket
-     * @param anomalyScoreThreshold Return only buckets with an anomalyScore &gt;=
-     * this value. If <code>null</code> then ignored
-     * @param normalizedProbabilityThreshold Return only buckets with a maxNormalizedProbability
-     * &gt;= this value. If <code>null</code> then ignored
-     *
-     * @return A {@link Pagination} object containing a list of {@link Bucket buckets}
-     * @throws IOException
+     * @return A {@link CategoryDefinitionsRequestBuilder}
      */
-    public Pagination<Bucket> getBuckets(String baseUrl, String jobId,
-            boolean expand, Double anomalyScoreThreshold, Double normalizedProbabilityThreshold)
-    throws IOException
+    public CategoryDefinitionsRequestBuilder prepareGetCategoryDefinitions(String jobId)
     {
-        return getBuckets(baseUrl, jobId, expand, false, null, null,
-                anomalyScoreThreshold, normalizedProbabilityThreshold);
+        return new CategoryDefinitionsRequestBuilder(this, jobId);
     }
 
     /**
-     * Get the bucket results for a particular job and optionally filter by
-     * anomaly or unusual score.
+     * Returns a single document with the category definition that was requested
      *
-     * Calls {@link #getBuckets(String, String, boolean, boolean, Long, Long, Double, Double)}
-     * with the skip and take parameters set to <code>null</code>
-     *
-     * @param baseUrl The base URL for the REST API including version number
-     * e.g <code>http://localhost:8080/engine/v1/</code>
-     * @param jobId The Job's unique Id
-     * @param expand If true include the anomaly records for the bucket
-     * @param anomalyScoreThreshold Return only buckets with an anomalyScore &gt;=
-     * this value. If <code>null</code> then ignored
-     * @param normalizedProbabilityThreshold Return only buckets with a maxNormalizedProbability
-     * &gt;= this value. If <code>null</code> then ignored
-     *
-     * @return A {@link Pagination} object containing a list of {@link Bucket buckets}
+     * @return A {@link SingleDocument} object containing the requested {@link CategoryDefinition}
+     * object
      * @throws IOException
      */
-    public Pagination<Bucket> getBuckets(String baseUrl, String jobId, boolean expand,
-            boolean includeInterim, Double anomalyScoreThreshold, Double normalizedProbabilityThreshold)
-    throws IOException
-    {
-        return getBuckets(baseUrl, jobId, expand, includeInterim, null, null,
-                anomalyScoreThreshold, normalizedProbabilityThreshold);
-    }
-
-    /**
-     * Get the bucket results for a particular job with paging parameters.
-     *
-     * @param baseUrl The base URL for the REST API including version number
-     * e.g <code>http://localhost:8080/engine/v1/</code>
-     * @param jobId The Job's unique Id
-     * @param expand If true include the anomaly records for the bucket
-     * @param skip The number of buckets to skip
-     * @param take The max number of buckets to request.
-     * @param anomalyScoreThreshold Return only buckets with an anomalyScore &gt;=
-     * this value. If <code>null</code> then ignored
-     * @param normalizedProbabilityThreshold Return only buckets with a maxNormalizedProbability
-     * &gt;= this value. If <code>null</code> then ignored
-     *
-     * @return A {@link Pagination} object containing a list of {@link Bucket buckets}
-     * @throws IOException
-     */
-    public Pagination<Bucket> getBuckets(String baseUrl, String jobId,
-            boolean expand, Long skip, Long take,
-            Double anomalyScoreThreshold, Double normalizedProbabilityThreshold)
-    throws IOException
-    {
-        return this.<String>getBuckets(baseUrl, jobId, expand, false, skip, take,
-                null, null, anomalyScoreThreshold, normalizedProbabilityThreshold);
-    }
-
-    /**
-     * Get the bucket results for a particular job with paging parameters.
-     *
-     * @param baseUrl The base URL for the REST API including version number
-     * e.g <code>http://localhost:8080/engine/v1/</code>
-     * @param jobId The Job's unique Id
-     * @param expand If true include the anomaly records for the bucket
-     * @param includeInterim Include interim results
-     * @param skip The number of buckets to skip
-     * @param take The max number of buckets to request.
-     * @param anomalyScoreThreshold Return only buckets with an anomalyScore &gt;=
-     * this value. If <code>null</code> then ignored
-     * @param normalizedProbabilityThreshold Return only buckets with a maxNormalizedProbability
-     * &gt;= this value. If <code>null</code> then ignored
-     *
-     * @return A {@link Pagination} object containing a list of {@link Bucket buckets}
-     * @throws IOException
-     */
-    public Pagination<Bucket> getBuckets(String baseUrl, String jobId,
-            boolean expand, boolean includeInterim, Long skip, Long take,
-            Double anomalyScoreThreshold, Double normalizedProbabilityThreshold)
-    throws IOException
-    {
-        return this.<String>getBuckets(baseUrl, jobId, expand, includeInterim, skip, take,
-                null, null, anomalyScoreThreshold, normalizedProbabilityThreshold);
-    }
-
-    /**
-     * Get the bucket results filtered between the start and end dates.
-     * The arguments are optional only one of start/end needs be set
-     *
-     * @param baseUrl The base URL for the REST API including version number
-     * e.g <code>http://localhost:8080/engine/v1/</code>
-     * @param jobId The Job's unique Id
-     * @param expand If true include the anomaly records for the bucket
-     * @param skip The number of buckets to skip. If <code>null</code> then ignored
-     * @param take The max number of buckets to request. If <code>null</code> then ignored
-     * @param start The start date filter as either a Long (seconds from epoch)
-     * or an ISO 8601 date String. If <code>null</code> then ignored
-     * @param end The end date filter as either a Long (seconds from epoch)
-     * or an ISO 8601 date String. If <code>null</code> then ignored
-     * @param anomalyScoreThreshold Return only buckets with an anomalyScore &gt;=
-     * this value. If <code>null</code> then ignored
-     * @param normalizedProbabilityThreshold Return only buckets with a maxNormalizedProbability
-     * &gt;= this value. If <code>null</code> then ignored
-     *
-     * @return A {@link Pagination} object containing a list of {@link Bucket buckets}
-     * @throws IOException
-     */
-    public <T> Pagination<Bucket> getBuckets(String baseUrl, String jobId,
-            boolean expand, Long skip, Long take, T start, T end,
-            Double anomalyScoreThreshold, Double normalizedProbabilityThreshold)
-    throws IOException
-    {
-        return this.getBuckets(baseUrl, jobId, expand, false, skip, take,
-                start, end, anomalyScoreThreshold, normalizedProbabilityThreshold);
-    }
-
-    /**
-     * Get the bucket results filtered between the start and end dates.
-     * The arguments are optional only one of start/end needs be set
-     *
-     * @param baseUrl The base URL for the REST API including version number
-     * e.g <code>http://localhost:8080/engine/v1/</code>
-     * @param jobId The Job's unique Id
-     * @param expand If true include the anomaly records for the bucket
-     * @param includeInterim Include interim results
-     * @param skip The number of buckets to skip. If <code>null</code> then ignored
-     * @param take The max number of buckets to request. If <code>null</code> then ignored
-     * @param start The start date filter as either a Long (seconds from epoch)
-     * or an ISO 8601 date String. If <code>null</code> then ignored
-     * @param end The end date filter as either a Long (seconds from epoch)
-     * or an ISO 8601 date String. If <code>null</code> then ignored
-     * @param anomalyScoreThreshold Return only buckets with an anomalyScore &gt;=
-     * this value. If <code>null</code> then ignored
-     * @param normalizedProbabilityThreshold Return only buckets with a maxNormalizedProbability
-     * &gt;= this value. If <code>null</code> then ignored
-     *
-     * @return A {@link Pagination} object containing a list of {@link Bucket buckets}
-     * @throws IOException
-     */
-    public <T> Pagination<Bucket> getBuckets(String baseUrl, String jobId,
-            boolean expand, boolean includeInterim,
-            Long skip, Long take, T start, T end,
-            Double anomalyScoreThreshold, Double normalizedProbabilityThreshold)
-    throws IOException
-    {
-        String url = baseUrl + "/results/" + jobId + "/buckets/";
-        char queryChar = '?';
-        if (expand)
-        {
-            url += queryChar + "expand=true";
-            queryChar = '&';
-        }
-        if (includeInterim)
-        {
-            url += queryChar + "includeInterim=true";
-            queryChar = '&';
-        }
-        if (skip != null)
-        {
-            url += queryChar + "skip=" + skip;
-            queryChar = '&';
-        }
-        if (take != null)
-        {
-            url += queryChar + "take=" + take;
-            queryChar = '&';
-        }
-        if (start != null)
-        {
-            url += queryChar + "start=" + URLEncoder.encode(start.toString(), "UTF-8");
-            queryChar = '&';
-        }
-        if (end != null)
-        {
-            url += queryChar + "end=" + URLEncoder.encode(end.toString(), "UTF-8");
-            queryChar = '&';
-        }
-        if (anomalyScoreThreshold != null)
-        {
-            url += queryChar + "anomalyScore=" + anomalyScoreThreshold;
-            queryChar = '&';
-        }
-        if (normalizedProbabilityThreshold != null)
-        {
-            url += queryChar + "maxNormalizedProbability=" + normalizedProbabilityThreshold;
-            queryChar = '&';
-        }
-
-        LOGGER.debug("GET buckets " + url);
-
-        Pagination<Bucket> page = this.get(url,
-                new TypeReference<Pagination<Bucket>>() {});
-
-        // else return empty page
-        if (page == null)
-        {
-            page = new Pagination<>();
-            page.setDocuments(Collections.<Bucket>emptyList());
-        }
-
-        return page;
-    }
-
-
-    /**
-     * Get a single bucket for a particular job and bucket Id
-     *
-     * @param baseUrl The base URL for the REST API including version number
-     * e.g <code>http://localhost:8080/engine/v1/</code>
-     * @param jobId The Job's unique Id
-     * @param bucketId The bucket to get
-     * @param expand If true include the anomaly records for the bucket
-     *
-     * @return A {@link SingleDocument} object containing the requested
-     * {@link Bucket} or an empty {@link SingleDocument} if it does not exist
-     * @throws IOException
-     */
-    public SingleDocument<Bucket> getBucket(String baseUrl, String jobId,
-            String bucketId, boolean expand)
-    throws JsonMappingException, IOException
-    {
-        return getBucket(baseUrl, jobId, bucketId, expand, false);
-    }
-
-
-    /**
-     * Get a single bucket for a particular job and bucket Id
-     *
-     * @param baseUrl The base URL for the REST API including version number
-     * e.g <code>http://localhost:8080/engine/v1/</code>
-     * @param jobId The Job's unique Id
-     * @param bucketId The bucket to get
-     * @param expand If true include the anomaly records for the bucket
-     * @param includeInterim Include interim results
-     *
-     * @return A {@link SingleDocument} object containing the requested
-     * {@link Bucket} or an empty {@link SingleDocument} if it does not exist
-     * @throws IOException
-     */
-    public SingleDocument<Bucket> getBucket(String baseUrl, String jobId,
-            String bucketId, boolean expand, boolean includeInterim)
-    throws JsonMappingException, IOException
-    {
-        String url = baseUrl + "/results/" + jobId + "/buckets/" + bucketId;
-        char queryChar = '?';
-        if (expand)
-        {
-            url += queryChar + "expand=true";
-            queryChar = '&';
-        }
-        if (includeInterim)
-        {
-            url += queryChar + "includeInterim=true";
-            queryChar = '&';
-        }
-
-        LOGGER.debug("GET bucket " + url);
-
-        SingleDocument<Bucket> doc = this.get(url,
-                new TypeReference<SingleDocument<Bucket>>() {});
-
-        // else return empty doc
-        if (doc == null)
-        {
-            doc = new SingleDocument<>();
-        }
-        return doc;
-    }
-
-    public Pagination<CategoryDefinition> getCategoryDefinitions(String baseUrl, String jobId)
+    public SingleDocument<CategoryDefinition> getCategoryDefinition(String jobId, String categoryId)
             throws JsonMappingException, IOException
     {
-        return getCategoryDefinitions(baseUrl, jobId, null, null);
-    }
-
-    public Pagination<CategoryDefinition> getCategoryDefinitions(String baseUrl, String jobId,
-            Long skip, Long take) throws JsonMappingException, IOException
-    {
-        String url = String.format("%s/results/%s/categorydefinitions?skip=%s&take=%s",
-                baseUrl, jobId, skip == null ? "" : skip, take == null ? "" : take);
-        LOGGER.debug("GET category definitions " + url);
-        Pagination<CategoryDefinition> page = this.get(url,
-                new TypeReference<Pagination<CategoryDefinition>>() {});
-
-        if (page == null)
-        {
-            page = new Pagination<>();
-            page.setDocuments(Collections.<CategoryDefinition>emptyList());
-        }
-
-        return page;
-    }
-
-    public SingleDocument<CategoryDefinition> getCategoryDefinition(String baseUrl, String jobId,
-            String categoryId) throws JsonMappingException, IOException
-    {
-        String url = baseUrl + "/results/" + jobId + "/categorydefinitions/" + categoryId;
-        LOGGER.debug("GET category definition " + url);
-        SingleDocument<CategoryDefinition> doc = this.get(url,
-                new TypeReference<SingleDocument<CategoryDefinition>>() {});
-        return doc == null ? new SingleDocument<>() : doc;
+        return new CategoryDefinitionRequestBuilder(this, jobId, categoryId).get();
     }
 
     /**
-     * Get the anomaly records for the job. The records aren't organised
-     * by bucket
+     * Returns a {@link RecordsRequestBuilder} for the given job through which
+     * the request can be configured and executed
      *
-     * Calls {@link #getRecords(String, String, Long, Long)} with the
-     * skip and take parameters set to <code>null</code>
+     * @param jobId The jobId for which records are requested
      *
-     * @param baseUrl The base URL for the REST API including version number
-     * e.g <code>http://localhost:8080/engine/v1/</code>
-     * @param jobId The Job's unique Id
-     *
-     * @return A {@link Pagination} object containing a list of
-     * {@link AnomalyRecord anomaly records}
-     * @throws IOException
+     * @return A {@link RecordsRequestBuilder}
      */
-    public Pagination<AnomalyRecord> getRecords(String baseUrl, String jobId)
-    throws IOException
+    public RecordsRequestBuilder prepareGetRecords(String jobId)
     {
-        return this.<String>getRecords(baseUrl, jobId, null, null, null, null,
-                false, null, null, null, null);
-    }
-
-    /**
-     * Get the anomaly records for the job. The records aren't organised
-     * by bucket
-     *
-     * Calls {@link #getRecords(String, String, Long, Long)} with the
-     * skip and take parameters set to <code>null</code>
-     *
-     * @param baseUrl The base URL for the REST API including version number
-     * e.g <code>http://localhost:8080/engine/v1/</code>
-     * @param jobId The Job's unique Id
-     * @param includeInterim Include interim results
-     *
-     * @return A {@link Pagination} object containing a list of
-     * {@link AnomalyRecord anomaly records}
-     * @throws IOException
-     */
-    public Pagination<AnomalyRecord> getRecords(String baseUrl, String jobId,
-            boolean includeInterim)
-    throws IOException
-    {
-        return this.<String>getRecords(baseUrl, jobId, null, null, null, null,
-                includeInterim, null, null, null, null);
-    }
-
-    /**
-     * Get the anomaly records for the job with skip and take parameters.
-     * The records aren't organised by bucket
-     *
-     * Calls {@link #getRecords(String, String, Long, Long)} with the
-     * skip and take parameters set to <code>null</code>
-     *
-     * @param baseUrl The base URL for the REST API including version number
-     * e.g <code>http://localhost:8080/engine/v1/</code>
-     * @param jobId The Job's unique Id
-     * @param skip The number of records to skip
-     * @param take The max number of records to request.
-     * @return A {@link Pagination} object containing a list of
-     * {@link AnomalyRecord anomaly records}
-     * @throws IOException
-     */
-    public Pagination<AnomalyRecord> getRecords(String baseUrl, String jobId,
-                    Long skip, Long take)
-    throws IOException
-    {
-        return this.<String>getRecords(baseUrl, jobId, skip, take, null, null,
-                false, null, null, null, null);
-    }
-
-    /**
-     * Get the anomaly records for the job with skip and take parameters.
-     * The records aren't organised by bucket
-     *
-     * Calls {@link #getRecords(String, String, Long, Long)} with the
-     * skip and take parameters set to <code>null</code>
-     *
-     * @param baseUrl The base URL for the REST API including version number
-     * e.g <code>http://localhost:8080/engine/v1/</code>
-     * @param jobId The Job's unique Id
-     * @param skip The number of records to skip
-     * @param take The max number of records to request.
-     * @param includeInterim Include interim results
-     * @return A {@link Pagination} object containing a list of
-     * {@link AnomalyRecord anomaly records}
-     * @throws IOException
-     */
-    public Pagination<AnomalyRecord> getRecords(String baseUrl, String jobId,
-                    Long skip, Long take, boolean includeInterim)
-    throws IOException
-    {
-        return this.<String>getRecords(baseUrl, jobId, skip, take, null, null,
-                includeInterim, null, null, null, null);
-    }
-
-
-    /**
-     * Get the anomaly records for the job with skip and take parameters.
-     * The records aren't organised by bucket
-     *
-     * Calls {@link #getRecords(String, String, Long, Long)} with the
-     * skip and take parameters set to <code>null</code>
-     *
-     * @param baseUrl The base URL for the REST API including version number
-     * e.g <code>http://localhost:8080/engine/v1/</code>
-     * @param jobId The Job's unique Id
-     * @param skip The number of records to skip
-     * @param take The max number of records to request.
-     * @param start The start date filter as either a Long (seconds from epoch)
-     * or an ISO 8601 date String. If <code>null</code> then ignored
-     * @param end The end date filter as either a Long (seconds from epoch)
-     * or an ISO 8601 date String. If <code>null</code> then ignored
-     *
-     * @return A {@link Pagination} object containing a list of
-     * {@link AnomalyRecord anomaly records}
-     * @throws IOException
-     */
-    public <T> Pagination<AnomalyRecord> getRecords(String baseUrl, String jobId,
-                    Long skip, Long take, T start, T end)
-    throws IOException
-    {
-        return this.<T>getRecords(baseUrl, jobId, skip, take, start, end, false,
-                null, null, null, null);
-    }
-
-    /**
-     * Get the anomaly records for the job with skip and take parameters.
-     * The records aren't organised by bucket
-     *
-     * Calls {@link #getRecords(String, String, Long, Long)} with the
-     * skip and take parameters set to <code>null</code>
-     *
-     * @param baseUrl The base URL for the REST API including version number
-     * e.g <code>http://localhost:8080/engine/v1/</code>
-     * @param jobId The Job's unique Id
-     * @param skip The number of records to skip
-     * @param take The max number of records to request.
-     * @param start The start date filter as either a Long (seconds from epoch)
-     * or an ISO 8601 date String. If <code>null</code> then ignored
-     * @param end The end date filter as either a Long (seconds from epoch)
-     * or an ISO 8601 date String. If <code>null</code> then ignored
-     * @param includeInterim Include interim results
-     *
-     * @return A {@link Pagination} object containing a list of
-     * {@link AnomalyRecord anomaly records}
-     * @throws IOException
-     */
-    public <T> Pagination<AnomalyRecord> getRecords(String baseUrl, String jobId,
-                    Long skip, Long take, T start, T end, boolean includeInterim)
-    throws IOException
-    {
-        return this.<T>getRecords(baseUrl, jobId, skip, take, start, end,
-                includeInterim, null, null, null, null);
-    }
-
-
-    /**
-     * Get the anomaly records for the job between the start and
-     * end dates with skip and take parameters sorted by field
-     * and optionally filtered by score. Only one of
-     * <code>anomalyScoreFilterValue</code> and <code>normalizedProbabilityFilterValue</code>
-     * should be specified it is an error if both are set
-     *
-     * The records aren't grouped by bucket
-     *
-     *
-     * @param baseUrl The base URL for the REST API including version number
-     * e.g <code>http://localhost:8080/engine/v1/</code>
-     * @param jobId The Job's unique Id
-     * @param skip The number of records to skip
-     * @param take The max number of records to request.
-     * @param start The start date filter as either a Long (seconds from epoch)
-     * or an ISO 8601 date String. If <code>null</code> then ignored
-     * @param end The end date filter as either a Long (seconds from epoch)
-     * or an ISO 8601 date String. If <code>null</code> then ignored
-     * @param sortField The field to sort the results by, ignored if <code>null</code>
-     * @param sortDescending If sort_field is not <code>null</code> then sort
-     * records in descending order if true else sort ascending
-     * @param anomalyScoreFilterValue If not <code>null</code> return only the
-     * records with an anomalyScore &gt;= anomalyScoreFilterValue
-     * @param normalizedProbabilityFilterValue If not <code>null</code> return only the
-     * records with a normalizedProbability &gt;= normalizedProbabilityFilterValue
-     *
-     * @return A {@link Pagination} object containing a list of
-     * {@link AnomalyRecord anomaly records}
-     * @throws IOException
-     */
-    public <T> Pagination<AnomalyRecord> getRecords(String baseUrl, String jobId,
-            Long skip, Long take, T start, T end,
-            String sortField, Boolean sortDescending,
-            Double anomalyScoreFilterValue, Double normalizedProbabilityFilterValue)
-    throws IOException
-    {
-        return this.<T>getRecords(baseUrl, jobId, skip, take, start, end,
-                false, sortField, sortDescending,
-                anomalyScoreFilterValue, normalizedProbabilityFilterValue);
-    }
-
-    /**
-     * Get the anomaly records for the job between the start and
-     * end dates with skip and take parameters sorted by field
-     * and optionally filtered by score. Only one of
-     * <code>anomalyScoreFilterValue</code> and <code>normalizedProbabilityFilterValue</code>
-     * should be specified it is an error if both are set
-     *
-     * The records aren't grouped by bucket
-     *
-     *
-     * @param baseUrl The base URL for the REST API including version number
-     * e.g <code>http://localhost:8080/engine/v1/</code>
-     * @param jobId The Job's unique Id
-     * @param skip The number of records to skip
-     * @param take The max number of records to request.
-     * @param start The start date filter as either a Long (seconds from epoch)
-     * or an ISO 8601 date String. If <code>null</code> then ignored
-     * @param end The end date filter as either a Long (seconds from epoch)
-     * or an ISO 8601 date String. If <code>null</code> then ignored
-     * @param includeInterim Include interim results
-     * @param sortField The field to sort the results by, ignored if <code>null</code>
-     * @param sortDescending If sort_field is not <code>null</code> then sort
-     * records in descending order if true else sort ascending
-     * @param anomalyScoreFilterValue If not <code>null</code> return only the
-     * records with an anomalyScore &gt;= anomalyScoreFilterValue
-     * @param normalizedProbabilityFilterValue If not <code>null</code> return only the
-     * records with a normalizedProbability &gt;= normalizedProbabilityFilterValue
-     *
-     * @return A {@link Pagination} object containing a list of
-     * {@link AnomalyRecord anomaly records}
-     * @throws IOException
-     */
-    public <T> Pagination<AnomalyRecord> getRecords(String baseUrl, String jobId,
-            Long skip, Long take, T start, T end, boolean includeInterim,
-            String sortField, Boolean sortDescending,
-            Double anomalyScoreFilterValue, Double normalizedProbabilityFilterValue)
-    throws IOException
-    {
-        String url = baseUrl + "/results/" + jobId + "/records/";
-        char queryChar = '?';
-
-        if (skip != null)
-        {
-            url += queryChar + "skip=" + skip;
-            queryChar = '&';
-        }
-        if (take != null)
-        {
-            url += queryChar + "take=" + take;
-            queryChar = '&';
-        }
-        if (start != null)
-        {
-            url += queryChar + "start=" + URLEncoder.encode(start.toString(), "UTF-8");
-            queryChar = '&';
-        }
-        if (end != null)
-        {
-            url += queryChar + "end=" + URLEncoder.encode(end.toString(), "UTF-8");
-            queryChar = '&';
-        }
-        if (includeInterim)
-        {
-            url += queryChar + "includeInterim=true";
-            queryChar = '&';
-        }
-        if (sortField != null)
-        {
-            url += queryChar + "sort=" + URLEncoder.encode(sortField, "UTF-8");
-            queryChar = '&';
-        }
-        if (sortDescending != null && sortDescending == false)
-        {
-            url += queryChar + "desc=false";
-            queryChar = '&';
-        }
-        if (anomalyScoreFilterValue != null)
-        {
-            url += queryChar + "anomalyScore=" + anomalyScoreFilterValue.toString();
-            queryChar = '&';
-        }
-        if (normalizedProbabilityFilterValue != null)
-        {
-            url += queryChar + "normalizedProbability=" + normalizedProbabilityFilterValue.toString();
-            queryChar = '&';
-        }
-
-
-        LOGGER.debug("GET records " + url);
-
-        Pagination<AnomalyRecord> page = this.get(url,
-                new TypeReference<Pagination<AnomalyRecord>>() {});
-
-        if (page == null)
-        {
-            page = new Pagination<>();
-            page.setDocuments(Collections.<AnomalyRecord>emptyList());
-        }
-        return page;
+        return new RecordsRequestBuilder(this, jobId);
     }
 
     /**
@@ -1334,9 +703,7 @@ public class EngineApiClient implements Closeable
      * timeout period expires.
      * If <code>timeout</code> is not null then wait <code>timeout</code> seconds
      *
-     * @param baseUrl The base URL for the REST API including version number
      * @param jobId The job id
-     * e.g <code>http://localhost:8080/engine/v1/</code>
      * @param timeout Timeout the request after this many seconds.
      * If <code>null</code> then use the default.
      * @param anomalyScoreThreshold Alert if a record has an anomalyScore threshold
@@ -1349,11 +716,11 @@ public class EngineApiClient implements Closeable
      * @throws JsonMappingException
      * @throws IOException
      */
-    public Alert pollJobAlert(String baseUrl, String jobId, Integer timeout,
-            Double anomalyScoreThreshold, Double maxNormalizedProbability)
+    public Alert pollJobAlert(String jobId, Integer timeout, Double anomalyScoreThreshold,
+            Double maxNormalizedProbability)
     throws JsonParseException, JsonMappingException, IOException
     {
-        String url = baseUrl + "/alerts_longpoll/" + jobId;
+        String url = m_BaseUrl + "/alerts_longpoll/" + jobId;
         char queryChar = '?';
         if (timeout != null)
         {
@@ -1374,9 +741,8 @@ public class EngineApiClient implements Closeable
 
 
         HttpGet get = new HttpGet(url);
-        CloseableHttpResponse response = m_HttpClient.execute(get);
 
-        try
+        try (CloseableHttpResponse response = m_HttpClient.execute(get))
         {
             HttpEntity entity = response.getEntity();
             String content = EntityUtils.toString(entity);
@@ -1400,10 +766,6 @@ public class EngineApiClient implements Closeable
                         new TypeReference<ApiError>() {} );
             }
         }
-        finally
-        {
-            response.close();
-        }
 
         return null;
     }
@@ -1411,53 +773,47 @@ public class EngineApiClient implements Closeable
     /**
      * Stream data from <code>inputStream</code> to the preview service.
      *
-     * @param baseUrl The base URL for the REST API including version number
-     * e.g <code>http://localhost:8080/engine/v1/</code>
      * @param jobId The Job's unique Id
      * @param inputStream The data to write to the web service
      * @return String The preview result
      * @throws IOException
      */
-    public String previewUpload(String baseUrl, String jobId, InputStream inputStream)
+    public String previewUpload(String jobId, InputStream inputStream)
     throws IOException
     {
-        String postUrl = String.format("%s/preview/%s", baseUrl, jobId);
+        String postUrl = String.format("%s/preview/%s", m_BaseUrl, jobId);
         return uploadStream(inputStream, postUrl, false, "", content -> content);
     }
 
     /**
      * Get the last 10 lines of the job's latest log file
      *
-     * @param baseUrl The base URL for the REST API including version number
-     * e.g <code>http://localhost:8080/engine/v1/</code>
      * @param jobId The Job's unique Id
      * @return The last 10 lines of the last log file
      * @throws ClientProtocolException
      * @throws IOException
      */
-    public String tailLog(String baseUrl, String jobId)
+    public String tailLog(String jobId)
     throws ClientProtocolException, IOException
     {
-        return tailLog(baseUrl, jobId, 10);
+        return tailLog(jobId, 10);
     }
 
     /**
      * Tails the last <code>lineCount</code> lines from the job's
      * last log file. This tails the autodetect process log file.
      *
-     * @param baseUrl The base URL for the REST API including version number
-     * e.g <code>http://localhost:8080/engine/v1/</code>
      * @param jobId The Job's unique Id
      * @param lineCount The number of lines to return
      * @return The last <code>lineCount</code> lines of the log file
      * @throws ClientProtocolException
      * @throws IOException
      */
-    public String tailLog(String baseUrl, String jobId, int lineCount)
+    public String tailLog(String jobId, int lineCount)
     throws ClientProtocolException, IOException
     {
         String url = String.format("%s/logs/%s/tail?lines=%d",
-                baseUrl, jobId, lineCount);
+                m_BaseUrl, jobId, lineCount);
 
         LOGGER.debug("GET tail log " + url);
 
@@ -1468,8 +824,6 @@ public class EngineApiClient implements Closeable
     /**
      * Tails the last <code>lineCount</code> lines from the named log file.
      *
-     * @param baseUrl The base URL for the REST API including version number
-     * e.g <code>http://localhost:8080/engine/v1/</code>
      * @param jobId The Job's unique Id
      * @param logfileName the name of the log file without the '.log' suffix.
      * @param lineCount The number of lines to return
@@ -1477,11 +831,11 @@ public class EngineApiClient implements Closeable
      * @throws ClientProtocolException
      * @throws IOException
      */
-    public String tailLog(String baseUrl, String jobId, String logfileName, int lineCount)
+    public String tailLog(String jobId, String logfileName, int lineCount)
     throws ClientProtocolException, IOException
     {
         String url = String.format("%s/logs/%s/%s/tail?lines=%d",
-                baseUrl, jobId, logfileName, lineCount);
+                m_BaseUrl, jobId, logfileName, lineCount);
 
         LOGGER.debug("GET tail log " + url);
 
@@ -1521,8 +875,7 @@ public class EngineApiClient implements Closeable
 
                 LOGGER.error(msg);
 
-                m_LastError = m_JsonMapper.readValue(content,
-                        new TypeReference<ApiError>() {} );
+                m_LastError = m_JsonMapper.readValue(content, new TypeReference<ApiError>() {});
 
                 return "";
             }
@@ -1535,19 +888,17 @@ public class EngineApiClient implements Closeable
      * The autodetect process writes a log file named after the job id (&lt;job_id&gt;.log)
      * while the Java component logs to engine_api.log.
      *
-     * @param baseUrl The base URL for the REST API including version number
-     * e.g <code>http://localhost:8080/engine/v1/</code>
      * @param jobId The Job's unique Id
      * @param logfileName the name of the log file without the '.log' suffix.
      * @return
      * @throws ClientProtocolException
      * @throws IOException
      */
-    public String downloadLog(String baseUrl, String jobId, String logfileName)
+    public String downloadLog(String jobId, String logfileName)
     throws ClientProtocolException, IOException
     {
         String url = String.format("%s/logs/%s/%s",
-                baseUrl, jobId, logfileName);
+                m_BaseUrl, jobId, logfileName);
 
         LOGGER.debug("GET log file " + url);
 
@@ -1562,8 +913,6 @@ public class EngineApiClient implements Closeable
      * this method, otherwise all subsequent client/server communications
      * will be blocked.</b>
      *
-     * @param baseUrl The base URL for the REST API including version number
-     * e.g <code>http://localhost:8080/engine/v1/</code>
      * @param jobId The Job's unique Id
      * @return A ZipInputStream for the log files. If the inputstream is
      * empty an error may have occurred.  The caller MUST close this
@@ -1571,10 +920,10 @@ public class EngineApiClient implements Closeable
      * @throws ClientProtocolException
      * @throws IOException
      */
-    public ZipInputStream downloadAllLogs(String baseUrl, String jobId)
+    public ZipInputStream downloadAllLogs(String jobId)
     throws ClientProtocolException, IOException
     {
-        String url = String.format("%s/logs/%s", baseUrl, jobId);
+        String url = String.format("%s/logs/%s", m_BaseUrl, jobId);
 
         LOGGER.debug("GET download logs " + url);
 
@@ -1683,9 +1032,7 @@ public class EngineApiClient implements Closeable
     private <T> T get(HttpGet get, TypeReference<T> typeRef)
     throws JsonParseException, JsonMappingException, IOException
     {
-        CloseableHttpResponse response = m_HttpClient.execute(get);
-
-        try
+        try (CloseableHttpResponse response = m_HttpClient.execute(get))
         {
             HttpEntity entity = response.getEntity();
             String content = EntityUtils.toString(entity);
@@ -1713,14 +1060,9 @@ public class EngineApiClient implements Closeable
                         new TypeReference<ApiError>() {} );
             }
         }
-        finally
-        {
-            response.close();
-        }
 
         return null;
     }
-
 
     /**
      * Get the last error message
@@ -1729,6 +1071,11 @@ public class EngineApiClient implements Closeable
     public ApiError getLastError()
     {
         return m_LastError;
+    }
+
+    public String getBaseUrl()
+    {
+        return m_BaseUrl;
     }
 
     private static boolean isNullOrEmpty(String string)

@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -94,15 +94,15 @@ public class StreamFile
 
 		FileInputStream fs = new FileInputStream(new File(filename));
 
-		try (EngineApiClient engineApiClient = new EngineApiClient())
+		try (EngineApiClient engineApiClient = new EngineApiClient(baseUrl))
 		{
 			long start = System.currentTimeMillis();
 
-			DataCounts uploaded = engineApiClient.streamingUpload(baseUrl, jobId, fs, compressed);
+			DataCounts uploaded = engineApiClient.streamingUpload(jobId, fs, compressed);
 
 			if (close)
 			{
-				engineApiClient.closeJob(baseUrl, jobId);
+				engineApiClient.closeJob(jobId);
 			}
 
 			long end = System.currentTimeMillis();

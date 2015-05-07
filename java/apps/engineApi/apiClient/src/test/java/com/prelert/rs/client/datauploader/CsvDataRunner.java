@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -48,43 +48,42 @@ import com.prelert.rs.client.EngineApiClient;
 public class CsvDataRunner implements Runnable
 {
 	private static final Logger LOGGER = Logger.getLogger(CsvDataRunner.class);
-	
+
 	/**
 	 * Job configuration as a format string.
 	 * The bucketSpan value should be replaced
 	 */
 	public static final String JOB_CONFIG_TEMPLATE = "{\"analysisConfig\" : {"
-			+ "\"bucketSpan\":%d,"  
-			+ "\"detectors\" :" 
+			+ "\"bucketSpan\":%d,"
+			+ "\"detectors\" :"
 			+ "[{\"function\":\"metric\",\"fieldName\":\"metric_value\",\"byFieldName\":\"metric_field\"}] },"
 			+ "\"dataDescription\":{\"fieldDelimiter\":\",\"} }}";
-	
-	
+
+
 	public static final String HEADER = "time,metric_field,metric_value";
-	
+
 	public static final long DEFAULT_NUMBER_TIME_SERIES = 100000;
 	public static final long DEFAULT_TIME_SERIES_POINT_INTERVAL_SECS = 15;
 	public static final long DEFAULT_NUMBER_ITERATIONS = 100;
 	public static final long DEFAULT_BUCKETSPAN_SECS = 300;
-	
+
 
 	private EngineApiClient m_ApiClient;
-	private String m_BaseUrl;
-	
+
 	private String m_JobId;
-	
+
 	// members are final as read by multiple threads
 	final private long m_NumTimeSeries;
 	final private long m_NumIterations;
 	final private long m_PointIntervalSecs;
 	final private long m_BucketSpan;
-	
+
 	volatile private boolean m_Stop;
 
 
 	/**
 	 * Create the data generator with default settings.
-	 * 
+	 *
 	 * @param baseUrl REST API url e.g. <code>http://localhost:8080/engine/version/</code>
 	 */
 	public CsvDataRunner(String baseUrl)
@@ -93,15 +92,14 @@ public class CsvDataRunner implements Runnable
 				DEFAULT_TIME_SERIES_POINT_INTERVAL_SECS, DEFAULT_BUCKETSPAN_SECS);
 	}
 
-
 	/**
-	 * 
+	 *
 	 * @param baseUrl REST API url e.g. <code>http://localhost:8080/engine/version/</code>
 	 * @param numberTimeSeries Number of time series to create
-	 * @param numIterations A value <= 0 means there is no limit and the thread 
-	 * will run indefinitely 
-	 * @param pointIntervalSecs The time between writing each new data point 
-	 * for each time series. 
+	 * @param numIterations A value <= 0 means there is no limit and the thread
+	 * will run indefinitely
+	 * @param pointIntervalSecs The time between writing each new data point
+	 * for each time series.
 	 * @param bucketSpanSecs The job bucketSpan
 	 */
 	public CsvDataRunner(String baseUrl, long numberTimeSeries, long numIterations,
@@ -111,23 +109,22 @@ public class CsvDataRunner implements Runnable
 		m_NumIterations = numIterations;
 		m_PointIntervalSecs = pointIntervalSecs;
 		m_BucketSpan = bucketSpanSecs;
-		
-		m_ApiClient = new EngineApiClient();
-		m_BaseUrl = baseUrl;
-		
+
+		m_ApiClient = new EngineApiClient(baseUrl);
+
 		m_Stop = false;
 	}
 
-	
-	public String createJob() 
+
+	public String createJob()
 	throws ClientProtocolException, IOException
 	{
 		String jobConfig = String.format(JOB_CONFIG_TEMPLATE, m_BucketSpan);
-		m_JobId = m_ApiClient.createJob(m_BaseUrl, jobConfig);
-		
+		m_JobId = m_ApiClient.createJob(jobConfig);
+
 		return m_JobId;
 	}
-	
+
 	/**
 	 * Stop the thread running (eventually)
 	 */
@@ -138,10 +135,10 @@ public class CsvDataRunner implements Runnable
 
 	@Override
 	public void run()
-	{		
+	{
 		if (m_JobId == null)
 		{
-			String msg = "Job must be created before the thread is started " 
+			String msg = "Job must be created before the thread is started "
 					+ "call createJob() first";
 			LOGGER.error(msg);
 			throw new IllegalStateException(msg);
@@ -156,7 +153,7 @@ public class CsvDataRunner implements Runnable
 		producerThread.start();
 
 		try {
-			m_ApiClient.streamingUpload(m_BaseUrl, m_JobId, inputStream, false);
+			m_ApiClient.streamingUpload(m_JobId, inputStream, false);
 		} catch (IOException e) {
 			LOGGER.error("Error streaming data", e);
 		}
@@ -166,7 +163,7 @@ public class CsvDataRunner implements Runnable
 		{
 			producerThread.join();
 		}
-		catch (InterruptedException e) 
+		catch (InterruptedException e)
 		{
 			LOGGER.error("Interupted joining producer thread", e);
 		}
@@ -174,11 +171,11 @@ public class CsvDataRunner implements Runnable
 
 	/**
 	 * Producer thread.
-	 * Writes to a PipedOuptstream connected to the PipedInputStream 
+	 * Writes to a PipedOuptstream connected to the PipedInputStream
 	 * passed in the constructor
 	 */
 	private class SoakTestProducer implements Runnable
-	{		
+	{
 		private PipedOutputStream m_OutputStream;
 
 		public SoakTestProducer(PipedInputStream sink)
@@ -196,14 +193,14 @@ public class CsvDataRunner implements Runnable
 
 		@Override
 		public void run()
-		{					
-			// HACK wait for the parent thread to open the connection 
+		{
+			// HACK wait for the parent thread to open the connection
 			// before writing
-			try 
+			try
 			{
 				Thread.sleep(1000);
 			}
-			catch (InterruptedException e1) 
+			catch (InterruptedException e1)
 			{
 				LOGGER.error("Producer interruputed pausing before write start");
 			}
@@ -220,7 +217,7 @@ public class CsvDataRunner implements Runnable
 					{
 						break;
 					}
-					
+
 					long iterStartMs = System.currentTimeMillis();
 					long epoch = iterStartMs / 1000;
 
@@ -228,12 +225,12 @@ public class CsvDataRunner implements Runnable
 					long timeSeriesCount = 0;
 					while (++timeSeriesCount <= m_NumTimeSeries)
 					{
-						writeTimeSeriesRow(timeSeriesCount, epoch);					
+						writeTimeSeriesRow(timeSeriesCount, epoch);
 					}
 
 
 					long iterEndMs = System.currentTimeMillis();
-					LOGGER.info(String.format("%d metrics uploaded in  %d ms", 
+					LOGGER.info(String.format("%d metrics uploaded in  %d ms",
 							m_NumTimeSeries, iterEndMs - iterStartMs));
 
 
@@ -251,23 +248,23 @@ public class CsvDataRunner implements Runnable
 						{
 							Thread.sleep(sleepTime);
 						}
-						catch (InterruptedException e) 
+						catch (InterruptedException e)
 						{
 							LOGGER.info("Producer interrupted while sleeping");
 							break;
 						}
 					}
-					
-					
-					synchronized (CsvDataRunner.this) 
+
+
+					synchronized (CsvDataRunner.this)
 					{
 						CsvDataRunner.this.notify();
 					}
 				}
 			}
-			finally 
-			{				
-				try 
+			finally
+			{
+				try
 				{
 					m_OutputStream.close();
 				}
@@ -281,12 +278,12 @@ public class CsvDataRunner implements Runnable
 
 		private void writeHeader()
 		{
-			try 
+			try
 			{
 				m_OutputStream.write(HEADER.getBytes(StandardCharsets.UTF_8));
 				m_OutputStream.write(10); // newline char
-			} 
-			catch (IOException e) 
+			}
+			catch (IOException e)
 			{
 				LOGGER.error("Error writing csv header", e);
 			}
@@ -303,15 +300,15 @@ public class CsvDataRunner implements Runnable
 			int value = ThreadLocalRandom.current().nextInt(512);
 
 			String row = String.format("%d,%s,%d", epoch, timeSeries, value);
-			try 
+			try
 			{
 				m_OutputStream.write(row.getBytes(StandardCharsets.UTF_8));
 				m_OutputStream.write(10); // newline char
-			} 
-			catch (IOException e) 
+			}
+			catch (IOException e)
 			{
 				LOGGER.error("Error writing csv row", e);
-			}			
+			}
 		}
 
 	}

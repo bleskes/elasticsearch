@@ -106,7 +106,7 @@ public class CategorizationTest implements Closeable
     public CategorizationTest(String testDataHome, String baseUrl, String jobId, String function,
             Map<String, Object> expectedResults)
     {
-        m_WebServiceClient = new EngineApiClient();
+        m_WebServiceClient = new EngineApiClient(baseUrl);
         m_TestDataHome = testDataHome;
         m_BaseUrl = baseUrl;
         m_JobId = jobId;
@@ -146,23 +146,22 @@ public class CategorizationTest implements Closeable
 
     private void setUp() throws IOException
     {
-        createCategorizationJob(m_BaseUrl);
+        createCategorizationJob();
 
         // We upload the data split in two parts. By closing the job after the first part,
         // we also test the persistence of the categorizer.
 
         File data = new File(m_TestDataHome +
                 "/engine_api_integration_test/categorization/part1.csv");
-        m_WebServiceClient.fileUpload(m_BaseUrl, m_JobId, data, false);
-        test(m_WebServiceClient.closeJob(m_BaseUrl, m_JobId) == true);
+        m_WebServiceClient.fileUpload(m_JobId, data, false);
+        test(m_WebServiceClient.closeJob(m_JobId) == true);
         data = new File(m_TestDataHome +
                 "/engine_api_integration_test/categorization/part2.csv");
-        m_WebServiceClient.fileUpload(m_BaseUrl, m_JobId, data, false);
-        test(m_WebServiceClient.closeJob(m_BaseUrl, m_JobId) == true);
+        m_WebServiceClient.fileUpload(m_JobId, data, false);
+        test(m_WebServiceClient.closeJob(m_JobId) == true);
     }
 
-    private String createCategorizationJob(String apiUrl) throws ClientProtocolException,
-            IOException
+    private String createCategorizationJob() throws ClientProtocolException, IOException
     {
         Detector d = new Detector();
         d.setFunction(m_Function);
@@ -188,7 +187,7 @@ public class CategorizationTest implements Closeable
         config.setDataDescription(dd);
         config.setAnalysisLimits(analysisLimits);
 
-        String jobId = m_WebServiceClient.createJob(apiUrl, config);
+        String jobId = m_WebServiceClient.createJob(config);
         if (jobId == null || jobId.isEmpty())
         {
             LOGGER.error("No Job Id returned by create job");
@@ -202,7 +201,7 @@ public class CategorizationTest implements Closeable
     private void verifyCategoryDefinitions() throws IOException
     {
         Pagination<CategoryDefinition> categoryDefinitions = m_WebServiceClient
-                .getCategoryDefinitions(m_BaseUrl, m_JobId);
+                .prepareGetCategoryDefinitions(m_JobId).get();
         test(categoryDefinitions.getHitCount() == EXPECTED_CATEGORIES);
 
         long categoryId = 1;
@@ -210,7 +209,7 @@ public class CategorizationTest implements Closeable
         for (CategoryDefinition def : categoryDefinitions.getDocuments())
         {
             SingleDocument<CategoryDefinition> doc = m_WebServiceClient.getCategoryDefinition(
-                    API_BASE_URL, m_JobId, String.valueOf(categoryId));
+                    m_JobId, String.valueOf(categoryId));
             CategoryDefinition categoryDefinition = doc.getDocument();
             test(categoryDefinition.getCategoryId() == categoryId);
             test(categoryDefinition.getTerms().isEmpty() == false);
@@ -228,8 +227,9 @@ public class CategorizationTest implements Closeable
 
     private void verifyHighestAnomaly() throws IOException
     {
-        SingleDocument<Bucket> doc= m_WebServiceClient.getBucket(m_BaseUrl, m_JobId,
-                (String) m_ExpectedResults.get(HIGHEST_ANOMALY_BUCKET_ID), true);
+        SingleDocument<Bucket> doc = m_WebServiceClient.prepareGetBucket(
+                m_JobId, (String) m_ExpectedResults.get(HIGHEST_ANOMALY_BUCKET_ID))
+                .expand(true).get();
         Bucket bucket = doc.getDocument();
         test(bucket.getAnomalyScore() >= (double) m_ExpectedResults.get(HIGHEST_ANOMALY_SCORE_THRESHOLD));
         AnomalyRecord highestRecord = null;
@@ -253,7 +253,7 @@ public class CategorizationTest implements Closeable
     private void verifyPaginationWorks() throws IOException
     {
         Pagination<CategoryDefinition> categoryDefinitions = m_WebServiceClient
-                .getCategoryDefinitions(m_BaseUrl, m_JobId, 0L, 25L);
+                .prepareGetCategoryDefinitions(m_JobId).take(25).get();
         test(categoryDefinitions.isAllResults() == false);
         test(categoryDefinitions.getPreviousPage() == null);
         String expectedNextPageUri =
@@ -265,7 +265,7 @@ public class CategorizationTest implements Closeable
     {
         LOGGER.debug("Deleting job " + m_JobId);
 
-        boolean success = m_WebServiceClient.deleteJob(m_BaseUrl, m_JobId);
+        boolean success = m_WebServiceClient.deleteJob(m_JobId);
         if (success == false)
         {
             LOGGER.error("Error deleting job " + m_BaseUrl + "/" + m_JobId);

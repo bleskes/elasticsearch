@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -45,9 +45,9 @@ import org.apache.log4j.PatternLayout;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataCounts;
 import com.prelert.job.DataDescription;
+import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
-import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.JobDetails;
 import com.prelert.rs.data.SingleDocument;
 
@@ -81,9 +81,9 @@ public class UsageTest implements Closeable
 
 	private EngineApiClient m_WebServiceClient;
 
-	public UsageTest()
+	public UsageTest(String baseUrl)
 	{
-		m_WebServiceClient = new EngineApiClient();
+		m_WebServiceClient = new EngineApiClient(baseUrl);
 	}
 
 	@Override
@@ -94,8 +94,7 @@ public class UsageTest implements Closeable
 
 
 
-	private String runFarequoteJob(String apiUrl, File dataFile, boolean isJson,
-			boolean compressed)
+	private String runFarequoteJob(File dataFile, boolean isJson, boolean compressed)
 	throws ClientProtocolException, IOException
 	{
 		Detector d = new Detector();
@@ -126,7 +125,7 @@ public class UsageTest implements Closeable
 		config.setDescription("Farequote usage test");
 		config.setDataDescription(dd);
 
-		String jobId = m_WebServiceClient.createJob(apiUrl, config);
+		String jobId = m_WebServiceClient.createJob(config);
 		if (jobId == null || jobId.isEmpty())
 		{
 			LOGGER.error("No Job Id returned by create job");
@@ -134,7 +133,7 @@ public class UsageTest implements Closeable
 			test(jobId != null && jobId.isEmpty() == false);
 		}
 
-		DataCounts counts = m_WebServiceClient.fileUpload(apiUrl, jobId, dataFile, compressed);
+		DataCounts counts = m_WebServiceClient.fileUpload(jobId, dataFile, compressed);
 		if (counts.getInputRecordCount() == 0)
 		{
 			LOGGER.error(m_WebServiceClient.getLastError().toJson());
@@ -143,15 +142,15 @@ public class UsageTest implements Closeable
 
 		validateFlightCentreCounts(counts, isJson, compressed, false);
 
-		m_WebServiceClient.closeJob(apiUrl, jobId);
+		m_WebServiceClient.closeJob(jobId);
 
 
 		return jobId;
 	}
 
-	private DataCounts jobDataCounts(String apiUrl, String jobId) throws IOException
+	private DataCounts jobDataCounts(String jobId) throws IOException
 	{
-	    SingleDocument<JobDetails> job =  m_WebServiceClient.getJob(apiUrl, jobId);
+	    SingleDocument<JobDetails> job =  m_WebServiceClient.getJob(jobId);
 	    test(job.isExists());
 
 	    return job.getDocument().getCounts();
@@ -248,7 +247,7 @@ public class UsageTest implements Closeable
 		File flightCentreDataJson = new File(prelertTestDataHome +
 				"/engine_api_integration_test/flightcentre.json");
 
-		try (UsageTest test = new UsageTest())
+		try (UsageTest test = new UsageTest(baseUrl))
 		{
 			List<String> jobs = new ArrayList<>();
 
@@ -257,19 +256,19 @@ public class UsageTest implements Closeable
 			boolean compareBuckets = true;
 			String jobId;
 
-			jobId = test.runFarequoteJob(baseUrl, flightCentreDataCsv, isJson, isCompressed);
-			DataCounts counts = test.jobDataCounts(baseUrl, jobId);
+			jobId = test.runFarequoteJob(flightCentreDataCsv, isJson, isCompressed);
+			DataCounts counts = test.jobDataCounts(jobId);
 			test.validateFlightCentreCounts(counts, isJson, isCompressed, compareBuckets);
 
 			isCompressed = true;
-			jobId = test.runFarequoteJob(baseUrl, flightCenterDataCsvGzip, isJson, isCompressed);
-			counts = test.jobDataCounts(baseUrl, jobId);
+			jobId = test.runFarequoteJob(flightCenterDataCsvGzip, isJson, isCompressed);
+			counts = test.jobDataCounts(jobId);
 			test.validateFlightCentreCounts(counts, isJson, isCompressed, compareBuckets);
 
 			isJson = true;
 			isCompressed = false;
-			jobId = test.runFarequoteJob(baseUrl, flightCentreDataJson, isJson, isCompressed);
-			counts = test.jobDataCounts(baseUrl, jobId);
+			jobId = test.runFarequoteJob(flightCentreDataJson, isJson, isCompressed);
+			counts = test.jobDataCounts(jobId);
 			test.validateFlightCentreCounts(counts, isJson, isCompressed, compareBuckets);
 
 			jobs.add(jobId);
@@ -278,7 +277,7 @@ public class UsageTest implements Closeable
 
 			for (String id : jobs)
 			{
-				test.m_WebServiceClient.deleteJob(baseUrl, id);
+				test.m_WebServiceClient.deleteJob(id);
 			}
 		}
 

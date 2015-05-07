@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -92,7 +92,6 @@ public class JsonDataRunner implements Runnable
 
 
 	private EngineApiClient m_ApiClient;
-	private String m_BaseUrl;
 
 	private String m_JobId;
 
@@ -135,8 +134,7 @@ public class JsonDataRunner implements Runnable
 		m_PointIntervalSecs = pointIntervalSecs;
 		m_BucketSpan = bucketSpanSecs;
 
-		m_ApiClient = new EngineApiClient();
-		m_BaseUrl = baseUrl;
+		m_ApiClient = new EngineApiClient(baseUrl);
 
 		m_Stop = false;
 	}
@@ -146,7 +144,7 @@ public class JsonDataRunner implements Runnable
 	throws ClientProtocolException, IOException
 	{
 		String jobConfig = String.format(JOB_CONFIG_TEMPLATE, m_BucketSpan);
-		m_JobId = m_ApiClient.createJob(m_BaseUrl, jobConfig);
+		m_JobId = m_ApiClient.createJob(jobConfig);
 
 		return m_JobId;
 	}
@@ -155,10 +153,10 @@ public class JsonDataRunner implements Runnable
 	public String createJob(String jobName)
 	throws ClientProtocolException, IOException
 	{
-		m_ApiClient.deleteJob(m_BaseUrl, jobName);
+		m_ApiClient.deleteJob(jobName);
 
 		String jobConfig = String.format(JOB_CONFIG_WITH_ID_TEMPLATE, jobName, m_BucketSpan);
-		m_JobId = m_ApiClient.createJob(m_BaseUrl, jobConfig);
+		m_JobId = m_ApiClient.createJob(jobConfig);
 
 		return m_JobId;
 	}
@@ -192,7 +190,7 @@ public class JsonDataRunner implements Runnable
 
 		try
 		{
-			m_ApiClient.streamingUpload(m_BaseUrl, m_JobId, inputStream, false);
+			m_ApiClient.streamingUpload(m_JobId, inputStream, false);
 
 			ApiError error = m_ApiClient.getLastError();
 			if (error != null)
