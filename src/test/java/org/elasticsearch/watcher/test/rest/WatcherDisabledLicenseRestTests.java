@@ -26,6 +26,7 @@ import org.elasticsearch.shield.ShieldPlugin;
 import org.elasticsearch.test.rest.RestTestCandidate;
 import org.elasticsearch.watcher.WatcherPlugin;
 import org.elasticsearch.watcher.license.LicenseIntegrationTests;
+import org.elasticsearch.watcher.license.LicenseIntegrationTests.MockLicenseService;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -35,7 +36,6 @@ import static org.hamcrest.Matchers.is;
 /**
  */
 public class WatcherDisabledLicenseRestTests extends WatcherRestTests {
-
 
     @Override
     protected Settings nodeSettings(int nodeOrdinal) {
@@ -53,7 +53,6 @@ public class WatcherDisabledLicenseRestTests extends WatcherRestTests {
     protected Class<? extends Plugin> licensePluginClass() {
         return LicenseIntegrationTests.MockLicensePlugin.class;
     }
-
 
     public WatcherDisabledLicenseRestTests(@Name("yaml") RestTestCandidate testCandidate) {
         super(testCandidate);
@@ -76,7 +75,7 @@ public class WatcherDisabledLicenseRestTests extends WatcherRestTests {
     }
 
     public static void disableLicensing() {
-        for (LicenseIntegrationTests.MockLicenseService service : internalCluster().getInstances(LicenseIntegrationTests.MockLicenseService.class)) {
+        for (MockLicenseService service : internalCluster().getInstances(MockLicenseService.class)) {
             service.disable();
         }
     }

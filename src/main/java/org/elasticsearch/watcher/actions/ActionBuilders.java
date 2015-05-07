@@ -54,7 +54,11 @@ public final class ActionBuilders {
     }
 
     public static LoggingAction.Builder loggingAction(String text) {
-        return loggingAction(new Template(text));
+        return loggingAction(Template.inline(text));
+    }
+
+    public static LoggingAction.Builder loggingAction(Template.Builder text) {
+        return loggingAction(text.build());
     }
 
     public static LoggingAction.Builder loggingAction(Template text) {

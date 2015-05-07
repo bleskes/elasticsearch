@@ -105,8 +105,8 @@ public class WebhookHttpsIntegrationTests extends AbstractWatcherIntegrationTest
         webServer.enqueue(new MockResponse().setResponseCode(200).setBody("body"));
         HttpRequestTemplate.Builder builder = HttpRequestTemplate.builder("localhost", webPort)
                 .scheme(Scheme.HTTPS)
-                .path(Template.builder("/test/{{ctx.watch_id}}").build())
-                .body(Template.builder("{{ctx.payload}}").build());
+                .path(Template.inline("/test/{{ctx.watch_id}}").build())
+                .body(Template.inline("{{ctx.payload}}").build());
 
         watcherClient().preparePutWatch("_id")
                 .setSource(watchBuilder()
@@ -140,8 +140,8 @@ public class WebhookHttpsIntegrationTests extends AbstractWatcherIntegrationTest
         HttpRequestTemplate.Builder builder = HttpRequestTemplate.builder("localhost", webPort)
                 .scheme(Scheme.HTTPS)
                 .auth(new BasicAuth("_username", "_password".toCharArray()))
-                .path(Template.builder("/test/{{ctx.watch_id}}").build())
-                .body(Template.builder("{{ctx.payload}}").build());
+                .path(Template.inline("/test/{{ctx.watch_id}}").build())
+                .body(Template.inline("{{ctx.payload}}").build());
 
         watcherClient().preparePutWatch("_id")
                 .setSource(watchBuilder()
