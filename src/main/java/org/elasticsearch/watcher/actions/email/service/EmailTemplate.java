@@ -100,7 +100,7 @@ public class EmailTemplate implements ToXContent {
         return sanitizeHtmlBody;
     }
 
-    public Email.Builder render(TemplateEngine engine, Map<String, Object> model, Map<String, Attachment> attachmentsMap) throws AddressException {
+    public Email.Builder render(TemplateEngine engine, Map<String, Object> model, Map<String, Attachment> attachments) throws AddressException {
         Email.Builder builder = Email.builder();
         if (from != null) {
             builder.from(engine.render(from, model));
@@ -130,10 +130,15 @@ public class EmailTemplate implements ToXContent {
         if (textBody != null) {
             builder.textBody(engine.render(textBody, model));
         }
+        if (attachments != null) {
+            for (Attachment attachment : attachments.values()) {
+                builder.attach(attachment);
+            }
+        }
         if (htmlBody != null) {
             String renderedHtml = engine.render(htmlBody, model);
             if (sanitizeHtmlBody && htmlBody != null) {
-                renderedHtml = sanitizeHtml(attachmentsMap, renderedHtml);
+                renderedHtml = sanitizeHtml(renderedHtml, attachments);
             }
             builder.htmlBody(renderedHtml);
         }
@@ -469,7 +474,7 @@ public class EmailTemplate implements ToXContent {
         }
     }
 
-    static String sanitizeHtml(final Map<String, Attachment> attachments, String html){
+    static String sanitizeHtml(String html, final Map<String, Attachment> attachments){
         ElementPolicy onlyCIDImgPolicy = new AttachementVerifyElementPolicy(attachments);
         PolicyFactory policy = Sanitizers.FORMATTING
                 .and(new HtmlPolicyBuilder()

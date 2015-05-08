@@ -230,7 +230,6 @@ public class Email implements ToXContent {
         private String htmlBody;
         private ImmutableMap.Builder<String, Attachment> attachments = ImmutableMap.builder();
         private ImmutableMap.Builder<String, Inline> inlines = ImmutableMap.builder();
-        private boolean sanitizeHtmlBody = true;
 
         private Builder() {
         }
@@ -249,8 +248,6 @@ public class Email implements ToXContent {
             htmlBody = email.htmlBody;
             attachments.putAll(email.attachments);
             inlines.putAll(email.inlines);
-            //The builder will already have sanitized the html when the email was built originally so don't double sanitize
-            sanitizeHtmlBody = false;
             return this;
         }
 
