@@ -28,7 +28,7 @@
 package com.prelert.rs.client;
 
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -46,7 +46,7 @@ public class CategoryDefinitionsRequestBuilder extends BaseJobRequestBuilder<Cat
     public CategoryDefinitionsRequestBuilder(EngineApiClient client, String jobId)
     {
         super(client, jobId);
-        m_Params = new HashMap<>();
+        m_Params = new LinkedHashMap<>();
     }
 
     /**
