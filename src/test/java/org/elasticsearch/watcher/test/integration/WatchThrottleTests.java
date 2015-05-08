@@ -117,7 +117,7 @@ public class WatchThrottleTests extends AbstractWatcherIntegrationTests {
         assertThat(parsedWatch.status().ackStatus().state(), is(Watch.Status.AckStatus.State.AWAITS_EXECUTION));
 
         long throttledCount = docCount(HistoryStore.INDEX_PREFIX + "*", null,
-                matchQuery(WatchRecord.Parser.STATE_FIELD.getPreferredName(), WatchRecord.State.THROTTLED.id()));
+                matchQuery(WatchRecord.Field.STATE.getPreferredName(), WatchRecord.State.THROTTLED.id()));
         assertThat(throttledCount, greaterThan(0L));
     }
 
@@ -179,7 +179,7 @@ public class WatchThrottleTests extends AbstractWatcherIntegrationTests {
             assertThat(actionsCount, is(2L));
 
             long throttledCount = docCount(HistoryStore.INDEX_PREFIX + "*", null,
-                    matchQuery(WatchRecord.Parser.STATE_FIELD.getPreferredName(), WatchRecord.State.THROTTLED.id()));
+                    matchQuery(WatchRecord.Field.STATE.getPreferredName(), WatchRecord.State.THROTTLED.id()));
             assertThat(throttledCount, is(1L));
 
         } else {
@@ -203,7 +203,7 @@ public class WatchThrottleTests extends AbstractWatcherIntegrationTests {
                     assertThat(actionsCount, is(1L));
 
                     long throttledCount = docCount(HistoryStore.INDEX_PREFIX + "*", null,
-                            matchQuery(WatchRecord.Parser.STATE_FIELD.getPreferredName(), WatchRecord.State.THROTTLED.id()));
+                            matchQuery(WatchRecord.Field.STATE.getPreferredName(), WatchRecord.State.THROTTLED.id()));
                     assertThat(throttledCount, greaterThanOrEqualTo(1L));
                 }
             }, 5, TimeUnit.SECONDS);
@@ -320,7 +320,7 @@ public class WatchThrottleTests extends AbstractWatcherIntegrationTests {
                 assertThat(actionsCount, is(2L));
 
                 long throttledCount = docCount(HistoryStore.INDEX_PREFIX + "*", null,
-                        matchQuery(WatchRecord.Parser.STATE_FIELD.getPreferredName(), WatchRecord.State.THROTTLED.id()));
+                        matchQuery(WatchRecord.Field.STATE.getPreferredName(), WatchRecord.State.THROTTLED.id()));
                 assertThat(throttledCount, is(1L));
             }
         }
