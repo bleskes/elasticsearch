@@ -25,7 +25,7 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.rs.client;
+package com.prelert.rs.client.integrationtests;
 
 import java.io.Closeable;
 import java.io.File;
@@ -43,6 +43,7 @@ import com.prelert.job.DataCounts;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobStatus;
 import com.prelert.job.transform.TransformConfig;
+import com.prelert.rs.client.EngineApiClient;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
