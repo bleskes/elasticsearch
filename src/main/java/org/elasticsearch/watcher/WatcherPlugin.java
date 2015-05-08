@@ -36,13 +36,16 @@ import static org.elasticsearch.common.settings.ImmutableSettings.settingsBuilde
 public class WatcherPlugin extends AbstractPlugin {
 
     public static final String NAME = "watcher";
+    public static final String ENABLED_SETTING = NAME + ".enabled";
 
     private final Settings settings;
     private final boolean transportClient;
+    protected final boolean enabled;
 
     public WatcherPlugin(Settings settings) {
         this.settings = settings;
         transportClient = "transport".equals(settings.get(Client.CLIENT_TYPE_SETTING));
+        enabled = watcherEnabled(settings);
     }
 
     @Override public String name() {
@@ -55,6 +58,9 @@ public class WatcherPlugin extends AbstractPlugin {
 
     @Override
     public Collection<Class<? extends Module>> modules() {
+        if (!enabled) {
+            return ImmutableList.of();
+        }
         return transportClient ?
                 ImmutableList.<Class<? extends Module>>of(TransportClientWatcherModule.class) :
                 ImmutableList.<Class<? extends Module>>of(WatcherModule.class);
@@ -62,7 +68,7 @@ public class WatcherPlugin extends AbstractPlugin {
 
     @Override
     public Collection<Class<? extends LifecycleComponent>> services() {
-        if (transportClient) {
+        if (!enabled || transportClient) {
             return ImmutableList.of();
         }
         return ImmutableList.<Class<? extends LifecycleComponent>>of(
@@ -76,7 +82,7 @@ public class WatcherPlugin extends AbstractPlugin {
 
     @Override
     public Settings additionalSettings() {
-        if (transportClient) {
+        if (!enabled || transportClient) {
             return ImmutableSettings.EMPTY;
         }
         Settings additionalSettings = settingsBuilder()
@@ -84,6 +90,10 @@ public class WatcherPlugin extends AbstractPlugin {
                 .build();
 
         return additionalSettings;
+    }
+
+    public static boolean watcherEnabled(Settings settings) {
+        return settings.getAsBoolean(ENABLED_SETTING, true);
     }
 
 }

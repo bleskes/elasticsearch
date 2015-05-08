@@ -51,6 +51,9 @@ public class TimeWarpedWatcherPlugin extends WatcherPlugin {
 
     @Override
     public Collection<Class<? extends Module>> modules() {
+        if (!enabled) {
+            return super.modules();
+        }
         return ImmutableList.<Class<? extends Module>>of(WatcherModule.class);
     }
 
