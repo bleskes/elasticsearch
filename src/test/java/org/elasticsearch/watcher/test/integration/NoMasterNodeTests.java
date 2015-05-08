@@ -64,6 +64,7 @@ import static org.hamcrest.core.Is.is;
 /**
  */
 @Slow
+@TestLogging("watcher:TRACE,cluster.service:TRACE,indices.recovery:TRACE,indices.cluster:TRACE")
 @ClusterScope(scope = TEST, numClientNodes = 0, transportClientRatio = 0, randomDynamicTemplates = false, numDataNodes = 0)
 public class NoMasterNodeTests extends AbstractWatcherIntegrationTests {
 
@@ -191,7 +192,6 @@ public class NoMasterNodeTests extends AbstractWatcherIntegrationTests {
     }
 
     @Test
-    @TestLogging("watcher:TRACE,cluster.service:TRACE,indices.recovery:TRACE,indices.cluster:TRACE")
     public void testMultipleFailures() throws Exception {
         int numberOfFailures = scaledRandomIntBetween(2, 9);
         int numberOfWatches = scaledRandomIntBetween(numberOfFailures, 12);
