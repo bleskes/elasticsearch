@@ -25,7 +25,7 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.rs.client;
+package com.prelert.rs.client.integrationtests;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -39,6 +39,7 @@ import org.apache.log4j.PatternLayout;
 
 import com.prelert.job.DataCounts;
 import com.prelert.job.JobConfiguration;
+import com.prelert.rs.client.EngineApiClient;
 import com.prelert.rs.data.ApiError;
 import com.prelert.rs.data.ErrorCode;
 
