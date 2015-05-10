@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -24,7 +24,7 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.rs.client;
+package com.prelert.rs.client.integrationtests;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -41,6 +41,7 @@ import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
 import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
+import com.prelert.rs.client.EngineApiClient;
 import com.prelert.rs.data.ApiError;
 
 /**
@@ -100,12 +101,12 @@ public class JobCreateTest
 		@Override
 		public void run()
 		{
-			try (EngineApiClient client = new EngineApiClient())
+			try (EngineApiClient client = new EngineApiClient(s_ApiBaseUrl))
 			{
 				for (int i=0; i<m_NumJobs; i++)
 				{
-					String jobId = client.createJob(s_ApiBaseUrl, m_JobConfig);
-					if (jobId == null | jobId.isEmpty())
+					String jobId = client.createJob(m_JobConfig);
+					if (jobId == null || jobId.isEmpty())
 					{
 						ApiError error = client.getLastError();
 						throw new IllegalStateException("Error creating job\n" + error.toJson());
@@ -114,7 +115,7 @@ public class JobCreateTest
 
 					//if (i % 5 == 0)
 					{
-						client.getJobs(s_ApiBaseUrl);
+						client.getJobs();
 						ApiError error = client.getLastError();
 						if (error != null)
 						{
@@ -184,13 +185,13 @@ public class JobCreateTest
 		}
 
 		// now clean up the jobs
-		try (EngineApiClient client = new EngineApiClient())
+		try (EngineApiClient client = new EngineApiClient(s_ApiBaseUrl))
 		{
 			for (JobCreator creator : jobCreators)
 			{
 				for (String jobId : creator.m_JobIds)
 				{
-					client.deleteJob(s_ApiBaseUrl, jobId);
+					client.deleteJob(jobId);
 					ApiError error = client.getLastError();
 					if (error != null)
 					{

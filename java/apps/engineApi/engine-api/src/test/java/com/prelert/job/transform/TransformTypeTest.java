@@ -92,6 +92,23 @@ public class TransformTypeTest
 
     }
 
+    @Test
+    public void testVerify_OptionalArguments()
+    throws TransformConfigurationException
+    {
+        // Concat can take an optional delimiter
+        TransformConfig conf = new TransformConfig();
+        conf.setTransform(TransformType.CONCAT.prettyName());
+        conf.setInputs(Arrays.asList("a", "b", "c"));
+        assertTrue(conf.verify());
+
+        conf.setArguments(Arrays.asList("delimiter"));
+        assertTrue(conf.verify());
+
+        conf.setArguments(Arrays.asList("delimiter", "invalidarg"));
+        tryVerify(TransformType.CONCAT, conf);
+    }
+
     private void tryVerify(TransformType type, TransformConfig conf)
     {
         try

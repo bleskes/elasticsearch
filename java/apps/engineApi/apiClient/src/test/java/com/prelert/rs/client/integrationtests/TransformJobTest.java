@@ -25,7 +25,7 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.rs.client;
+package com.prelert.rs.client.integrationtests;
 
 import java.io.Closeable;
 import java.io.File;
@@ -48,6 +48,7 @@ import com.prelert.job.Detector;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobStatus;
 import com.prelert.job.transform.TransformConfig;
+import com.prelert.rs.client.EngineApiClient;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
@@ -82,9 +83,9 @@ public class TransformJobTest implements Closeable
 	/**
 	 * Creates a new http client call {@linkplain #close()} once finished
 	 */
-	public TransformJobTest()
+	public TransformJobTest(String baseUrl)
 	{
-		m_WebServiceClient = new EngineApiClient();
+		m_WebServiceClient = new EngineApiClient(baseUrl);
 	}
 
 	@Override
@@ -93,7 +94,7 @@ public class TransformJobTest implements Closeable
 		m_WebServiceClient.close();
 	}
 
-	public void createDateConcatJob(String baseUrl) throws ClientProtocolException, IOException
+	public void createDateConcatJob() throws ClientProtocolException, IOException
     {
         final String JOB_CONFIG = "{\"id\":\"concat-date-test\","
                 + "\"description\":\"Transform Job\","
@@ -104,9 +105,9 @@ public class TransformJobTest implements Closeable
                 + "\"timeFormat\":\"yyyy-MM-ddHH:mm:ssX\"} }";
 
 
-        m_WebServiceClient.deleteJob(baseUrl, CONCAT_DATE_JOB);
+        m_WebServiceClient.deleteJob(CONCAT_DATE_JOB);
 
-        String jobId = m_WebServiceClient.createJob(baseUrl, JOB_CONFIG);
+        String jobId = m_WebServiceClient.createJob(JOB_CONFIG);
         if (jobId == null || jobId.isEmpty())
         {
             LOGGER.error(m_WebServiceClient.getLastError().toJson());
@@ -116,7 +117,7 @@ public class TransformJobTest implements Closeable
         test(jobId.equals(CONCAT_DATE_JOB));
 
         // get job by location, verify
-        SingleDocument<JobDetails> doc = m_WebServiceClient.getJob(baseUrl, jobId);
+        SingleDocument<JobDetails> doc = m_WebServiceClient.getJob(jobId);
         if (doc.isExists() == false)
         {
             LOGGER.error("No Job at URL " + jobId);
@@ -133,7 +134,7 @@ public class TransformJobTest implements Closeable
 
     }
 
-	public void createSplitMetricJob(String baseUrl) throws ClientProtocolException, IOException
+	public void createSplitMetricJob() throws ClientProtocolException, IOException
 	{
 		final String TRANSFORM_JOB_CONFIG = "{\"id\":\"concat-metricname-test\","
 				+ "\"description\":\"Transform Job\","
@@ -143,9 +144,9 @@ public class TransformJobTest implements Closeable
 				+ "\"dataDescription\":{\"fieldDelimiter\":\",\", \"timeField\":\"timestamp\", "
 				+ "\"timeFormat\":\"epoch\"} }}";
 
-		m_WebServiceClient.deleteJob(baseUrl, CONCAT_METRIC_JOB);
+		m_WebServiceClient.deleteJob(CONCAT_METRIC_JOB);
 
-		String jobId = m_WebServiceClient.createJob(baseUrl, TRANSFORM_JOB_CONFIG);
+		String jobId = m_WebServiceClient.createJob(TRANSFORM_JOB_CONFIG);
 		if (jobId == null || jobId.isEmpty())
 		{
 			LOGGER.error(m_WebServiceClient.getLastError().toJson());
@@ -155,7 +156,7 @@ public class TransformJobTest implements Closeable
 		test(jobId.equals(CONCAT_METRIC_JOB));
 
 		// get job by location, verify
-		SingleDocument<JobDetails> doc = m_WebServiceClient.getJob(baseUrl, jobId);
+		SingleDocument<JobDetails> doc = m_WebServiceClient.getJob(jobId);
 		if (doc.isExists() == false)
 		{
 			LOGGER.error("No Job at URL " + jobId);
@@ -193,22 +194,20 @@ public class TransformJobTest implements Closeable
 	/**
      * Upload the contents of <code>dataFile</code> to the server.
      *
-     * @param baseUrl The URL of the REST API i.e. an URL like
-     *  <code>http://prelert-host:8080/engine/version/</code>
      * @param jobId The Job's Id
      * @param dataFile Should match the data configuration format of the job
      * @param compressed Is the data gzipped compressed?
      * @throws IOException
      */
-    public void uploadData(String baseUrl, String jobId, File dataFile, boolean compressed)
+    public void uploadData(String jobId, File dataFile, boolean compressed)
     throws IOException
     {
         FileInputStream stream = new FileInputStream(dataFile);
-        DataCounts counts = m_WebServiceClient.streamingUpload(baseUrl, jobId, stream, compressed);
+        DataCounts counts = m_WebServiceClient.streamingUpload(jobId, stream, compressed);
         test(counts.getProcessedRecordCount() > 0);
         test(counts.getInvalidDateCount() == 0);
 
-        SingleDocument<JobDetails> job = m_WebServiceClient.getJob(baseUrl, jobId);
+        SingleDocument<JobDetails> job = m_WebServiceClient.getJob(jobId);
         test(job.isExists());
         test(job.getDocument().getStatus() == JobStatus.RUNNING);
     }
@@ -216,19 +215,17 @@ public class TransformJobTest implements Closeable
     /**
      * Finish the job (as all data has been uploaded).
      *
-     * @param baseUrl The URL of the REST API i.e. an URL like
-     *  <code>http://prelert-host:8080/engine/version/</code>
      * @param jobId The Job's Id
      * @return
      * @throws IOException
      */
-    public boolean closeJob(String baseUrl, String jobId)
+    public boolean closeJob(String jobId)
     throws IOException
     {
-        boolean closed = m_WebServiceClient.closeJob(baseUrl, jobId);
+        boolean closed = m_WebServiceClient.closeJob(jobId);
         test(closed);
 
-        SingleDocument<JobDetails> job = m_WebServiceClient.getJob(baseUrl, jobId);
+        SingleDocument<JobDetails> job = m_WebServiceClient.getJob(jobId);
         test(job.isExists());
         test(job.getDocument().getStatus() == JobStatus.CLOSED);
 
@@ -247,8 +244,10 @@ public class TransformJobTest implements Closeable
      */
     public boolean checkRecordsHaveConcattedField(String baseUrl, String jobId) throws IOException
     {
-        Pagination<AnomalyRecord> records = m_WebServiceClient.getRecords(baseUrl, jobId,
-                0l, 50l, null, null, AnomalyRecord.NORMALIZED_PROBABILITY, true, null, null);
+        Pagination<AnomalyRecord> records = m_WebServiceClient.prepareGetRecords(jobId)
+                        .take(50)
+                        .sortField(AnomalyRecord.NORMALIZED_PROBABILITY)
+                        .descending(true).get();
 
         test(records.getDocumentCount() > 0);
 
@@ -308,16 +307,16 @@ public class TransformJobTest implements Closeable
         File splitDateTimeDataFile = new File(prelertTestDataHome +
                 "/engine_api_integration_test/transforms/split_date_time.csv");
 
-		try (TransformJobTest transformTest = new TransformJobTest())
+		try (TransformJobTest transformTest = new TransformJobTest(baseUrl))
 		{
-			transformTest.createSplitMetricJob(baseUrl);
-			transformTest.uploadData(baseUrl, CONCAT_METRIC_JOB, splitMetricDataFile, false);
-			transformTest.closeJob(baseUrl, CONCAT_METRIC_JOB);
+			transformTest.createSplitMetricJob();
+			transformTest.uploadData(CONCAT_METRIC_JOB, splitMetricDataFile, false);
+			transformTest.closeJob(CONCAT_METRIC_JOB);
 			transformTest.checkRecordsHaveConcattedField(baseUrl, CONCAT_METRIC_JOB);
 
-            transformTest.createDateConcatJob(baseUrl);
-            transformTest.uploadData(baseUrl, CONCAT_DATE_JOB, splitDateTimeDataFile, false);
-            transformTest.closeJob(baseUrl, CONCAT_DATE_JOB);
+            transformTest.createDateConcatJob();
+            transformTest.uploadData(CONCAT_DATE_JOB, splitDateTimeDataFile, false);
+            transformTest.closeJob(CONCAT_DATE_JOB);
 		}
 
 		LOGGER.info("All tests passed Ok");

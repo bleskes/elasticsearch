@@ -25,75 +25,57 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.transforms;
+package com.prelert.rs.client;
 
-import java.util.List;
-import java.util.StringJoiner;
+import java.io.IOException;
+import java.util.Collections;
 
 import org.apache.log4j.Logger;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.prelert.rs.data.Pagination;
+import com.prelert.rs.data.SingleDocument;
 
-/**
- * Concatenate input fields
- */
-public class Concat extends Transform
+class HttpGetRequester<T>
 {
-    private String m_Delimiter = null;
+    private static final Logger LOGGER = Logger.getLogger(HttpGetRequester.class);
 
-    public Concat(List<TransformIndex> readIndicies, List<TransformIndex> writeIndicies, Logger logger)
+    private final EngineApiClient m_Client;
+
+    public HttpGetRequester(EngineApiClient client)
     {
-        super(readIndicies, writeIndicies, logger);
+        m_Client = client;
     }
 
-    public Concat(String join, List<TransformIndex> readIndicies, List<TransformIndex> writeIndicies, Logger logger)
+    protected Pagination<T> getPage(String fullUrl, TypeReference<Pagination<T>> typeRef)
+            throws IOException
     {
-        super(readIndicies, writeIndicies, logger);
-        m_Delimiter = join;
-    }
+        LOGGER.debug("GET " + fullUrl);
 
-    public String getDelimiter()
-    {
-        return m_Delimiter;
-    }
+        Pagination<T> page = m_Client.get(fullUrl, typeRef);
 
-    /**
-     * Concat has only 1 output field
-     */
-    @Override
-    public TransformResult transform(String[][] readWriteArea)
-    throws TransformException
-    {
-        if (m_WriteIndicies.isEmpty())
+        // else return empty page
+        if (page == null)
         {
-            return TransformResult.FAIL;
+            page = new Pagination<>();
+            page.setDocuments(Collections.emptyList());
         }
 
-        TransformIndex writeIndex = m_WriteIndicies.get(0);
-
-        if (m_Delimiter != null)
-        {
-            StringJoiner joiner = new StringJoiner(m_Delimiter);
-
-            for (TransformIndex i : m_ReadIndicies)
-            {
-                joiner.add(readWriteArea[i.array][i.index]);
-            }
-
-            readWriteArea[writeIndex.array][writeIndex.index] = joiner.toString();
-        }
-        else
-        {
-            StringBuilder builder = new StringBuilder();
-
-            for (TransformIndex i : m_ReadIndicies)
-            {
-                builder.append(readWriteArea[i.array][i.index]);
-            }
-
-            readWriteArea[writeIndex.array][writeIndex.index] = builder.toString();
-        }
-
-        return TransformResult.OK;
+        return page;
     }
 
+    protected SingleDocument<T> getSingleDocument(String fullUrl,
+            TypeReference<SingleDocument<T>> typeRef) throws IOException
+    {
+        LOGGER.debug("GET " + fullUrl);
+
+        SingleDocument<T> doc = m_Client.get(fullUrl, typeRef);
+
+        // else return empty doc
+        if (doc == null)
+        {
+            doc = new SingleDocument<>();
+        }
+        return doc;
+    }
 }

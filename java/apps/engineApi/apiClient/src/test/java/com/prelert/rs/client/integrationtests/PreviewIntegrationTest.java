@@ -25,7 +25,7 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.rs.client;
+package com.prelert.rs.client.integrationtests;
 
 import java.io.Closeable;
 import java.io.File;
@@ -46,6 +46,7 @@ import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.transform.TransformConfig;
+import com.prelert.rs.client.EngineApiClient;
 import com.prelert.transforms.RegexExtract;
 
 
@@ -87,7 +88,7 @@ public class PreviewIntegrationTest implements Closeable
      */
     public PreviewIntegrationTest(String testDataHome, String baseUrl, String jobId)
     {
-        m_WebServiceClient = new EngineApiClient();
+        m_WebServiceClient = new EngineApiClient(baseUrl);
         m_TestDataHome = testDataHome;
         m_BaseUrl = baseUrl;
         m_JobId = jobId;
@@ -105,11 +106,11 @@ public class PreviewIntegrationTest implements Closeable
         // from a previous run
         deleteJob();
 
-        createSingleLineWithTransformsJob(m_BaseUrl);
+        createSingleLineWithTransformsJob();
 
         File data = new File(m_TestDataHome +
                 "/engine_api_integration_test/preview/input.log");
-        String preview = m_WebServiceClient.previewUpload(m_BaseUrl, m_JobId, new FileInputStream(
+        String preview = m_WebServiceClient.previewUpload(m_JobId, new FileInputStream(
                 data));
         File previewResult = new File(m_TestDataHome
                 + "/engine_api_integration_test/preview/previewResult.txt");
@@ -120,7 +121,7 @@ public class PreviewIntegrationTest implements Closeable
         deleteJob();
     }
 
-    private String createSingleLineWithTransformsJob(String apiUrl) throws ClientProtocolException,
+    private String createSingleLineWithTransformsJob() throws ClientProtocolException,
             IOException
     {
         Detector d = new Detector();
@@ -148,7 +149,7 @@ public class PreviewIntegrationTest implements Closeable
         config.setDataDescription(dd);
         config.setTransforms(Arrays.asList(transform));
 
-        String jobId = m_WebServiceClient.createJob(apiUrl, config);
+        String jobId = m_WebServiceClient.createJob(config);
         if (jobId == null || jobId.isEmpty())
         {
             LOGGER.error("No Job Id returned by create job");
@@ -163,7 +164,7 @@ public class PreviewIntegrationTest implements Closeable
     {
         LOGGER.debug("Deleting job " + m_JobId);
 
-        boolean success = m_WebServiceClient.deleteJob(m_BaseUrl, m_JobId);
+        boolean success = m_WebServiceClient.deleteJob(m_JobId);
         if (success == false)
         {
             LOGGER.error("Error deleting job " + m_BaseUrl + "/" + m_JobId);

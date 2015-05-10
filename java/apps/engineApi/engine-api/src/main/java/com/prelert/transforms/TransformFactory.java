@@ -123,7 +123,15 @@ public class TransformFactory
 			case DOMAIN_SPLIT:
 				return new HighestRegisteredDomain(readIndicies, writeIndicies, logger);
 			case CONCAT:
-				return new Concat(readIndicies, writeIndicies, logger);
+			    if (transformConfig.getArguments().size() > 0)
+			    {
+			        return new Concat(transformConfig.getArguments().get(0),
+			                            readIndicies, writeIndicies, logger);
+			    }
+			    else
+			    {
+			        return new Concat(readIndicies, writeIndicies, logger);
+			    }
 			case REGEX_EXTRACT:
 			    return new RegexExtract(transformConfig.getArguments().get(0), readIndicies,
 			                                writeIndicies, logger);

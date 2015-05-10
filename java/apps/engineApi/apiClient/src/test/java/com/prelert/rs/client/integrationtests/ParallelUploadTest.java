@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -25,7 +25,7 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.rs.client;
+package com.prelert.rs.client.integrationtests;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
@@ -39,6 +39,7 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 
 import com.prelert.job.DataCounts;
+import com.prelert.rs.client.EngineApiClient;
 import com.prelert.rs.client.datauploader.CsvDataRunner;
 import com.prelert.rs.data.ApiError;
 import com.prelert.rs.data.ErrorCode;
@@ -99,10 +100,10 @@ public class ParallelUploadTest
 			}
 		}
 
-		try (EngineApiClient client = new EngineApiClient())
+		try (EngineApiClient client = new EngineApiClient(url))
 		{
 			// cannot close a job when another process is writing to it
-			boolean closed = client.closeJob(url, jobId);
+			boolean closed = client.closeJob(jobId);
 			if (closed)
 			{
 				throw new IllegalStateException("Error closed job while writing to it");
@@ -118,7 +119,7 @@ public class ParallelUploadTest
 			// cannot write to the job when another process is writing to it
 			String data = CsvDataRunner.HEADER + "\n1000,metric,100\n";
 			InputStream is = new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
-			DataCounts counts = client.streamingUpload(url, jobId, is, false);
+			DataCounts counts = client.streamingUpload(jobId, is, false);
 
 			if (counts.getProcessedRecordCount() > 0)
 			{
@@ -133,7 +134,7 @@ public class ParallelUploadTest
 
 
 			// cannot delete a job when another process is writing to it
-			boolean deleted = client.deleteJob(url, jobId);
+			boolean deleted = client.deleteJob(jobId);
 			if (deleted)
 			{
 				throw new IllegalStateException("Error deleted job while writing to it");

@@ -107,6 +107,11 @@ class CsvDataToProcessWriter extends AbstractDataToProcessWriter
                 csvPref))
         {
             String[] header = csvReader.getHeader(true);
+            if (header == null) // null if EoF
+            {
+                return new DataCounts();
+            }
+
             long inputFieldCount = Math.max(header.length -1, 0); // time field doesn't count
 
             buildTransformsAndWriteHeader(header);

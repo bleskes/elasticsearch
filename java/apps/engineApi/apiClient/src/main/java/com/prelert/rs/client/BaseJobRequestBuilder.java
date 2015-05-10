@@ -25,75 +25,54 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.transforms;
+package com.prelert.rs.client;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.StringJoiner;
 
-import org.apache.log4j.Logger;
-
-
-/**
- * Concatenate input fields
- */
-public class Concat extends Transform
+class BaseJobRequestBuilder<T>
 {
-    private String m_Delimiter = null;
-
-    public Concat(List<TransformIndex> readIndicies, List<TransformIndex> writeIndicies, Logger logger)
-    {
-        super(readIndicies, writeIndicies, logger);
-    }
-
-    public Concat(String join, List<TransformIndex> readIndicies, List<TransformIndex> writeIndicies, Logger logger)
-    {
-        super(readIndicies, writeIndicies, logger);
-        m_Delimiter = join;
-    }
-
-    public String getDelimiter()
-    {
-        return m_Delimiter;
-    }
+    private final EngineApiClient m_Client;
+    private final String m_JobId;
 
     /**
-     * Concat has only 1 output field
+     * @param client The Engine API client
+     * @param jobId The Job's unique Id
      */
-    @Override
-    public TransformResult transform(String[][] readWriteArea)
-    throws TransformException
+    public BaseJobRequestBuilder(EngineApiClient client, String jobId)
     {
-        if (m_WriteIndicies.isEmpty())
-        {
-            return TransformResult.FAIL;
-        }
-
-        TransformIndex writeIndex = m_WriteIndicies.get(0);
-
-        if (m_Delimiter != null)
-        {
-            StringJoiner joiner = new StringJoiner(m_Delimiter);
-
-            for (TransformIndex i : m_ReadIndicies)
-            {
-                joiner.add(readWriteArea[i.array][i.index]);
-            }
-
-            readWriteArea[writeIndex.array][writeIndex.index] = joiner.toString();
-        }
-        else
-        {
-            StringBuilder builder = new StringBuilder();
-
-            for (TransformIndex i : m_ReadIndicies)
-            {
-                builder.append(readWriteArea[i.array][i.index]);
-            }
-
-            readWriteArea[writeIndex.array][writeIndex.index] = builder.toString();
-        }
-
-        return TransformResult.OK;
+        m_Client = client;
+        m_JobId = jobId;
     }
 
+    protected String baseUrl()
+    {
+        return m_Client.getBaseUrl();
+    }
+
+    protected String jobId()
+    {
+        return m_JobId;
+    }
+
+    protected HttpGetRequester<T> createHttpGetRequester()
+    {
+        return new HttpGetRequester<>(m_Client);
+    }
+
+    protected static void appendParams(Map<String, String> params, StringBuilder url)
+    {
+        if (!params.isEmpty())
+        {
+            List<String> paramPairs = new ArrayList<>();
+            params.forEach((key, value) -> paramPairs.add(key + "=" + value));
+            url.append('?');
+
+            StringJoiner joiner = new StringJoiner("&");
+            paramPairs.forEach(pair -> joiner.add(pair));
+            url.append(joiner.toString());
+        }
+    }
 }

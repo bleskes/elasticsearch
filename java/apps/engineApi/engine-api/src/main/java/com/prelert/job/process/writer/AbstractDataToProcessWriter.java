@@ -497,7 +497,7 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
         requiredFields.removeAll(inputFields);
         requiredFields.removeAll(outputFields);
 
-        // date time is a output of a transform AND an output field
+        // date time is a output of a transform AND the input to the date time transform
         // so add it back into the scratch area
         if (dateTimeFieldIsTransformOutput)
         {

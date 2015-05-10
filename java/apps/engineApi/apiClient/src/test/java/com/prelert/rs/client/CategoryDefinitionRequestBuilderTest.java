@@ -25,75 +25,60 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.transforms;
+package com.prelert.rs.client;
 
-import java.util.List;
-import java.util.StringJoiner;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-import org.apache.log4j.Logger;
+import java.io.IOException;
 
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
-/**
- * Concatenate input fields
- */
-public class Concat extends Transform
+public class CategoryDefinitionRequestBuilderTest
 {
-    private String m_Delimiter = null;
+    private static final String BASE_URL = "http://localhost:8080";
 
-    public Concat(List<TransformIndex> readIndicies, List<TransformIndex> writeIndicies, Logger logger)
+    @Mock private EngineApiClient m_Client;
+
+    @Before
+    public void setUp()
     {
-        super(readIndicies, writeIndicies, logger);
+        MockitoAnnotations.initMocks(this);
+        when(m_Client.getBaseUrl()).thenReturn(BASE_URL);
     }
 
-    public Concat(String join, List<TransformIndex> readIndicies, List<TransformIndex> writeIndicies, Logger logger)
+    @Test
+    public void testGet_GivenDefaultParameters() throws IOException
     {
-        super(readIndicies, writeIndicies, logger);
-        m_Delimiter = join;
+        new CategoryDefinitionsRequestBuilder(m_Client, "foo").get();
+        verify(m_Client).get(eq(BASE_URL + "/results/foo/categorydefinitions"), any());
     }
 
-    public String getDelimiter()
+    @Test
+    public void testGet_GivenSkip() throws IOException
     {
-        return m_Delimiter;
+        new CategoryDefinitionsRequestBuilder(m_Client, "foo").skip(200).get();
+        verify(m_Client).get(eq(BASE_URL + "/results/foo/categorydefinitions?skip=200"), any());
     }
 
-    /**
-     * Concat has only 1 output field
-     */
-    @Override
-    public TransformResult transform(String[][] readWriteArea)
-    throws TransformException
+    @Test
+    public void testGet_GivenTake() throws IOException
     {
-        if (m_WriteIndicies.isEmpty())
-        {
-            return TransformResult.FAIL;
-        }
-
-        TransformIndex writeIndex = m_WriteIndicies.get(0);
-
-        if (m_Delimiter != null)
-        {
-            StringJoiner joiner = new StringJoiner(m_Delimiter);
-
-            for (TransformIndex i : m_ReadIndicies)
-            {
-                joiner.add(readWriteArea[i.array][i.index]);
-            }
-
-            readWriteArea[writeIndex.array][writeIndex.index] = joiner.toString();
-        }
-        else
-        {
-            StringBuilder builder = new StringBuilder();
-
-            for (TransformIndex i : m_ReadIndicies)
-            {
-                builder.append(readWriteArea[i.array][i.index]);
-            }
-
-            readWriteArea[writeIndex.array][writeIndex.index] = builder.toString();
-        }
-
-        return TransformResult.OK;
+        new CategoryDefinitionsRequestBuilder(m_Client, "foo").take(1000).get();
+        verify(m_Client).get(eq(BASE_URL + "/results/foo/categorydefinitions?take=1000"), any());
     }
 
+    @Test
+    public void testGet_GivenMultipleParameters() throws IOException
+    {
+        new CategoryDefinitionsRequestBuilder(m_Client, "foo").skip(0).take(1000).get();
+        verify(m_Client).get(
+                eq(BASE_URL + "/results/foo/categorydefinitions?skip=0&take=1000"),
+                any());
+    }
 }
