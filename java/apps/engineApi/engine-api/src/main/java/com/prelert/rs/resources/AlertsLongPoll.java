@@ -117,16 +117,15 @@ public class AlertsLongPoll extends ResourceWithJobManager
         StringBuilder msg = new StringBuilder();
         msg.append("long poll alerts for job ");
         msg.append(jobId);
-        msg.append(", ");
         if (anomalyScore != null)
         {
-            msg.append("anomalyScore >= ");
+            msg.append(", anomalyScore >= ");
             msg.append(anomalyScore);
             msg.append(" ");
         }
         if (normalizedProbability != null)
         {
-            msg.append("normalized prob >= ");
+            msg.append(", normalized prob >= ");
             msg.append(normalizedProbability);
         }
         LOGGER.debug(msg.toString());
