@@ -355,6 +355,12 @@ public abstract class ResourceWithJobManager
         m_RestApplication = application;
     }
 
+    @VisibleForTesting
+    protected void setUriInfo(UriInfo uriInfo)
+    {
+        m_UriInfo = uriInfo;
+    }
+
     /**
      * Simple class to pair key, value strings
      */
