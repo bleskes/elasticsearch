@@ -97,7 +97,7 @@ class AlertListener extends AlertObserver
         {
             for (AnomalyRecord r : detector.getRecords())
             {
-                if (r.getNormalizedProbability() > getNormalisedProbThreshold())
+                if (r.getNormalizedProbability() >= getNormalisedProbThreshold())
                 {
                     records.add(r);
                 }
