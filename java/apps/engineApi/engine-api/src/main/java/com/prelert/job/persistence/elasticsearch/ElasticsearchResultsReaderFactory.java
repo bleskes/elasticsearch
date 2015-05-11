@@ -32,9 +32,9 @@ import java.io.InputStream;
 import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.core.JsonParseException;
+import com.prelert.job.alert.AlertObserver;
 import com.prelert.job.process.ResultsReader;
 import com.prelert.job.process.ResultsReaderFactory;
-import com.prelert.rs.data.parsing.AlertObserver;
 import com.prelert.rs.data.parsing.AutoDetectResultsParser;
 import com.prelert.utils.json.AutoDetectParseException;
 

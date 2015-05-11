@@ -24,7 +24,7 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.rs.data.parsing;
+package com.prelert.job.alert;
 
 import com.prelert.rs.data.Bucket;
 
