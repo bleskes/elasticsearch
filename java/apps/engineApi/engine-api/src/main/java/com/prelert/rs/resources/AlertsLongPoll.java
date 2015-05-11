@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -52,66 +52,66 @@ import com.prelert.rs.provider.RestApiException;
 @Path("/alerts_longpoll")
 public class AlertsLongPoll extends ResourceWithJobManager
 {
-	private static final Logger LOGGER = Logger.getLogger(AlertsLongPoll.class);
+    private static final Logger LOGGER = Logger.getLogger(AlertsLongPoll.class);
 
-	/**
-	 * The name of this endpoint
-	 */
-	public static final String ENDPOINT = "alerts_longpoll";
+    /**
+     * The name of this endpoint
+     */
+    public static final String ENDPOINT = "alerts_longpoll";
 
-	/**
-	 * The timeout query parameter
-	 */
-	public static final String TIMEOUT = "timeout";
-	/**
-	 * The alert cursor query parameter
-	 */
-	public static final String SCORE = "score";
-	public static final String PROBABILITY = "probability";
+    /**
+     * The timeout query parameter
+     */
+    public static final String TIMEOUT = "timeout";
+    /**
+     * The alert cursor query parameter
+     */
+    public static final String SCORE = "score";
+    public static final String PROBABILITY = "probability";
 
 
-	@GET
-	@Path("/{jobId}")
-	@Produces(MediaType.APPLICATION_JSON)
-	public void pollJob(
-			@PathParam("jobId") String jobId,
-			@DefaultValue("90") @QueryParam(TIMEOUT) int timeout,
-			@DefaultValue("100.0") @QueryParam(SCORE) double anomalyScoreThreshold,
-			@DefaultValue("100.0") @QueryParam(PROBABILITY) double normalizedProbabiltyThreshold,
-			@Suspended final AsyncResponse asyncResponse)
+    @GET
+    @Path("/{jobId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public void pollJob(
+            @PathParam("jobId") String jobId,
+            @DefaultValue("90") @QueryParam(TIMEOUT) int timeout,
+            @DefaultValue("100.0") @QueryParam(SCORE) double anomalyScoreThreshold,
+            @DefaultValue("100.0") @QueryParam(PROBABILITY) double normalizedProbabiltyThreshold,
+            @Suspended final AsyncResponse asyncResponse)
     throws InterruptedException, UnknownJobException
-	{
-		LOGGER.debug(String.format("long poll alerts for job %s, anomalyScore >= %f "
-				+ "normalized prob >= %f", jobId, anomalyScoreThreshold,
-				normalizedProbabiltyThreshold));
+    {
+        LOGGER.debug(String.format("long poll alerts for job %s, anomalyScore >= %f "
+                + "normalized prob >= %f", jobId, anomalyScoreThreshold,
+                normalizedProbabiltyThreshold));
 
-		if ((anomalyScoreThreshold < 0 || anomalyScoreThreshold > 100.0)
-				|| (normalizedProbabiltyThreshold < 0 || normalizedProbabiltyThreshold > 100.0))
-		{
-			String msg = String.format("Invalid alert parameters. %s (%.2f) and %s (%.2f) must "
-					+ "be in the range 0-100", SCORE, anomalyScoreThreshold,
-					PROBABILITY, normalizedProbabiltyThreshold);
-			LOGGER.info(msg);
-			throw new RestApiException(msg, ErrorCode.INVALID_THRESHOLD_ARGUMENT, Response.Status.BAD_REQUEST);
-		}
+        if ((anomalyScoreThreshold < 0 || anomalyScoreThreshold > 100.0)
+                || (normalizedProbabiltyThreshold < 0 || normalizedProbabiltyThreshold > 100.0))
+        {
+            String msg = String.format("Invalid alert parameters. %s (%.2f) and %s (%.2f) must "
+                    + "be in the range 0-100", SCORE, anomalyScoreThreshold,
+                    PROBABILITY, normalizedProbabiltyThreshold);
+            LOGGER.info(msg);
+            throw new RestApiException(msg, ErrorCode.INVALID_THRESHOLD_ARGUMENT, Response.Status.BAD_REQUEST);
+        }
 
-		if (anomalyScoreThreshold >= 100.0 && normalizedProbabiltyThreshold >= 100.0)
-		{
-			String msg = String.format("No alerts will be generated if both threshold parameters are 100");
-			LOGGER.info(msg);
-			throw new RestApiException(msg, ErrorCode.INVALID_THRESHOLD_ARGUMENT, Response.Status.BAD_REQUEST);
-		}
+        if (anomalyScoreThreshold >= 100.0 && normalizedProbabiltyThreshold >= 100.0)
+        {
+            String msg = String.format("No alerts will be generated if both threshold parameters are 100");
+            LOGGER.info(msg);
+            throw new RestApiException(msg, ErrorCode.INVALID_THRESHOLD_ARGUMENT, Response.Status.BAD_REQUEST);
+        }
 
-		if (timeout <= 0)
-		{
-			String msg = String.format("Invalid timeout parameter. Timeout must be > 0");
-			LOGGER.info(msg);
-			throw new RestApiException(msg, ErrorCode.INVALID_TIMEOUT_ARGUMENT, Response.Status.BAD_REQUEST);
-		}
+        if (timeout <= 0)
+        {
+            String msg = String.format("Invalid timeout parameter. Timeout must be > 0");
+            LOGGER.info(msg);
+            throw new RestApiException(msg, ErrorCode.INVALID_TIMEOUT_ARGUMENT, Response.Status.BAD_REQUEST);
+        }
 
-		AlertManager alertManager = alertManager();
-		alertManager.registerRequest(asyncResponse, jobId, m_UriInfo.getBaseUri(),
-				timeout, anomalyScoreThreshold, normalizedProbabiltyThreshold);
-	}
+        AlertManager alertManager = alertManager();
+        alertManager.registerRequest(asyncResponse, jobId, m_UriInfo.getBaseUri(),
+                timeout, anomalyScoreThreshold, normalizedProbabiltyThreshold);
+    }
 
 }
