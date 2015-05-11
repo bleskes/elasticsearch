@@ -76,28 +76,26 @@ public class AlertsLongPoll extends ResourceWithJobManager
     public void pollJob(
             @PathParam("jobId") String jobId,
             @DefaultValue("90") @QueryParam(TIMEOUT) int timeout,
-            @DefaultValue("100.0") @QueryParam(SCORE) double anomalyScoreThreshold,
-            @DefaultValue("100.0") @QueryParam(PROBABILITY) double normalizedProbabiltyThreshold,
+            @QueryParam(SCORE) Double anomalyScoreThreshold,
+            @QueryParam(PROBABILITY) Double normalizedProbabiltyThreshold,
             @Suspended final AsyncResponse asyncResponse)
     throws InterruptedException, UnknownJobException
     {
-        LOGGER.debug(String.format("long poll alerts for job %s, anomalyScore >= %f "
-                + "normalized prob >= %f", jobId, anomalyScoreThreshold,
-                normalizedProbabiltyThreshold));
+        logEndpointCall(jobId, anomalyScoreThreshold, normalizedProbabiltyThreshold);
 
-        if ((anomalyScoreThreshold < 0 || anomalyScoreThreshold > 100.0)
-                || (normalizedProbabiltyThreshold < 0 || normalizedProbabiltyThreshold > 100.0))
+        if (anomalyScoreThreshold == null && normalizedProbabiltyThreshold == null)
         {
-            String msg = String.format("Invalid alert parameters. %s (%.2f) and %s (%.2f) must "
-                    + "be in the range 0-100", SCORE, anomalyScoreThreshold,
-                    PROBABILITY, normalizedProbabiltyThreshold);
+            String msg = String.format("At least one of " + SCORE + " or " + PROBABILITY
+                    + " must be specified.");
             LOGGER.info(msg);
             throw new RestApiException(msg, ErrorCode.INVALID_THRESHOLD_ARGUMENT, Response.Status.BAD_REQUEST);
         }
 
-        if (anomalyScoreThreshold >= 100.0 && normalizedProbabiltyThreshold >= 100.0)
+        if (!isWithinRange0To100(anomalyScoreThreshold)
+                || !isWithinRange0To100(normalizedProbabiltyThreshold))
         {
-            String msg = String.format("No alerts will be generated if both threshold parameters are 100");
+            String msg = createThresholdOutOfRangeMsg(anomalyScoreThreshold,
+                    normalizedProbabiltyThreshold);
             LOGGER.info(msg);
             throw new RestApiException(msg, ErrorCode.INVALID_THRESHOLD_ARGUMENT, Response.Status.BAD_REQUEST);
         }
@@ -114,4 +112,54 @@ public class AlertsLongPoll extends ResourceWithJobManager
                 timeout, anomalyScoreThreshold, normalizedProbabiltyThreshold);
     }
 
+    private void logEndpointCall(String jobId, Double anomalyScore, Double normalizedProbability)
+    {
+        StringBuilder msg = new StringBuilder();
+        msg.append("long poll alerts for job ");
+        msg.append(jobId);
+        msg.append(", ");
+        if (anomalyScore != null)
+        {
+            msg.append("anomalyScore >= ");
+            msg.append(anomalyScore);
+            msg.append(" ");
+        }
+        if (normalizedProbability != null)
+        {
+            msg.append("normalized prob >= ");
+            msg.append(normalizedProbability);
+        }
+        LOGGER.debug(msg.toString());
+    }
+
+    private static boolean isWithinRange0To100(Double value)
+    {
+        return value == null ? true : value >= 0.0 && value <= 100.0;
+    }
+
+    private static String createThresholdOutOfRangeMsg(Double anomalyScore,
+            Double normalizedProbability)
+    {
+        StringBuilder msg = new StringBuilder("Invalid alert parameters. ");
+        if (anomalyScore != null)
+        {
+            msg.append(SCORE);
+            msg.append(" (");
+            msg.append(anomalyScore);
+            msg.append(")");
+            if (normalizedProbability != null)
+            {
+                msg.append(" and ");
+            }
+        }
+        if (normalizedProbability != null)
+        {
+            msg.append(PROBABILITY);
+            msg.append(" (");
+            msg.append(normalizedProbability);
+            msg.append(")");
+        }
+        msg.append(" must be in the range 0-100");
+        return msg.toString();
+    }
 }

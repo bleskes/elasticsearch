@@ -82,7 +82,7 @@ public class AlertManager implements TimeoutHandler
      * @throws UnknownJobException
      */
     public void registerRequest(AsyncResponse response, String jobId, URI baseUri,
-            long timeoutSecs, double anomalyScoreThreshold, double normalizedProbabiltyThreshold)
+            long timeoutSecs, Double anomalyScoreThreshold, Double normalizedProbabiltyThreshold)
     throws UnknownJobException
     {
         m_JobProvider.jobExists(jobId);

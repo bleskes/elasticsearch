@@ -35,10 +35,13 @@ import com.prelert.rs.data.Bucket;
  */
 public abstract class AlertObserver
 {
-    private final double m_AnomalyThreshold;
-    private final double m_NormalisedThreshold;
+    /** If null, it means it was not specified. */
+    private final Double m_AnomalyThreshold;
 
-    public AlertObserver(double normlizedProbThreshold, double anomalyThreshold)
+    /** If null, it means it was not specified. */
+    private final Double m_NormalisedThreshold;
+
+    public AlertObserver(Double normlizedProbThreshold, Double anomalyThreshold)
     {
         m_AnomalyThreshold = anomalyThreshold;
         m_NormalisedThreshold = normlizedProbThreshold;
@@ -53,13 +56,18 @@ public abstract class AlertObserver
      */
     public boolean evaluate(double anomalyScore, double normalisedProb)
     {
-        return normalisedProb >= m_NormalisedThreshold ||
-                anomalyScore  >= m_AnomalyThreshold;
+        return isGreaterOrEqual(normalisedProb, m_NormalisedThreshold)
+                || isGreaterOrEqual(anomalyScore, m_AnomalyThreshold);
+    }
+
+    private static boolean isGreaterOrEqual(double value, Double threshold)
+    {
+        return threshold == null ? false : value >= threshold;
     }
 
     public boolean isAnomalyScoreAlert(double anomalyScore)
     {
-        return anomalyScore >= m_AnomalyThreshold;
+        return isGreaterOrEqual(anomalyScore, m_AnomalyThreshold);
     }
 
     /**
@@ -69,14 +77,8 @@ public abstract class AlertObserver
      */
     public abstract void fire(Bucket bucket);
 
-
-    public double getAnomalyThreshold()
-    {
-        return m_AnomalyThreshold;
-    }
-
     public double getNormalisedProbThreshold()
     {
-        return m_NormalisedThreshold;
+        return m_NormalisedThreshold == null ? 101.0 : m_NormalisedThreshold;
     }
 }

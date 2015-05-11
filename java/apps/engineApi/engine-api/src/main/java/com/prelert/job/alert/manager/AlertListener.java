@@ -54,7 +54,7 @@ class AlertListener extends AlertObserver
     private final URI m_BaseUri;
 
     public AlertListener(AsyncResponse response, AlertManager manager, String jobId,
-            double anomalyScoreThreshold, double normalizedProbabiltyThreshold,
+            Double anomalyScoreThreshold, Double normalizedProbabiltyThreshold,
             URI baseUri)
     {
         super(normalizedProbabiltyThreshold, anomalyScoreThreshold);

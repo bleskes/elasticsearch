@@ -68,12 +68,25 @@ public class AlertsLongPollTest extends ServiceTest
     }
 
     @Test
-    public void testPollJob_GivenAnomalyScoreLessThanZero() throws UnknownJobException,
-            InterruptedException
+    public void testPollJob_GivenAnomalyScoreLessThanZero()
+            throws UnknownJobException, InterruptedException
     {
         m_ExpectedException.expect(RestApiException.class);
         m_ExpectedException.expectMessage("Invalid alert parameters."
-                + " score (-0.01) and probability (60.00) must be in the range 0-100");
+                + " score (-0.01) must be in the range 0-100");
+        m_ExpectedException.expect(
+
+                ErrorCodeMatcher.hasErrorCode(ErrorCode.INVALID_THRESHOLD_ARGUMENT));
+        m_Alerts.pollJob(JOB_ID, 90, -0.01, null, mock(AsyncResponse.class));
+    }
+
+    @Test
+    public void testPollJob_GivenAnomalyScoreLessThanZeroAndValidNormalizedProbability()
+            throws UnknownJobException, InterruptedException
+    {
+        m_ExpectedException.expect(RestApiException.class);
+        m_ExpectedException.expectMessage("Invalid alert parameters."
+                + " score (-0.01) and probability (60.0) must be in the range 0-100");
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCode.INVALID_THRESHOLD_ARGUMENT));
 
@@ -81,12 +94,12 @@ public class AlertsLongPollTest extends ServiceTest
     }
 
     @Test
-    public void testPollJob_GivenAnomalyScoreGreaterThan100() throws UnknownJobException,
-            InterruptedException
+    public void testPollJob_GivenAnomalyScoreGreaterThan100AndValidNormalizedProbability()
+            throws UnknownJobException, InterruptedException
     {
         m_ExpectedException.expect(RestApiException.class);
         m_ExpectedException.expectMessage("Invalid alert parameters."
-                + " score (101.00) and probability (60.00) must be in the range 0-100");
+                + " score (101.0) and probability (60.0) must be in the range 0-100");
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCode.INVALID_THRESHOLD_ARGUMENT));
 
@@ -94,12 +107,25 @@ public class AlertsLongPollTest extends ServiceTest
     }
 
     @Test
-    public void testPollJob_GivenNormalizedProbabilityLessThanZero() throws UnknownJobException,
-            InterruptedException
+    public void testPollJob_GivenNormalizedProbabilityLessThanZero()
+            throws UnknownJobException, InterruptedException
     {
         m_ExpectedException.expect(RestApiException.class);
         m_ExpectedException.expectMessage("Invalid alert parameters."
-                + " score (90.00) and probability (-0.01) must be in the range 0-100");
+                + " probability (-0.01) must be in the range 0-100");
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCode.INVALID_THRESHOLD_ARGUMENT));
+
+        m_Alerts.pollJob(JOB_ID, 90, null, -0.01, mock(AsyncResponse.class));
+    }
+
+    @Test
+    public void testPollJob_GivenValidAnomalyScoreAndNormalizedProbabilityLessThanZero()
+            throws UnknownJobException, InterruptedException
+    {
+        m_ExpectedException.expect(RestApiException.class);
+        m_ExpectedException.expectMessage("Invalid alert parameters."
+                + " score (90.0) and probability (-0.01) must be in the range 0-100");
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCode.INVALID_THRESHOLD_ARGUMENT));
 
@@ -107,12 +133,12 @@ public class AlertsLongPollTest extends ServiceTest
     }
 
     @Test
-    public void testPollJob_GivenNormalizedProbabilityGreaterThan100() throws UnknownJobException,
-            InterruptedException
+    public void testPollJob_GivenValidAnomalyScoreAndNormalizedProbabilityGreaterThan100()
+            throws UnknownJobException, InterruptedException
     {
         m_ExpectedException.expect(RestApiException.class);
         m_ExpectedException.expectMessage("Invalid alert parameters."
-                + " score (95.00) and probability (101.00) must be in the range 0-100");
+                + " score (95.0) and probability (101.0) must be in the range 0-100");
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCode.INVALID_THRESHOLD_ARGUMENT));
 
@@ -120,16 +146,16 @@ public class AlertsLongPollTest extends ServiceTest
     }
 
     @Test
-    public void testPollJob_GivenScoreAndProbabilityAre100() throws UnknownJobException,
+    public void testPollJob_GivenScoreAndProbabilityAreNotSet() throws UnknownJobException,
             InterruptedException
     {
         m_ExpectedException.expect(RestApiException.class);
         m_ExpectedException.expectMessage(
-                "No alerts will be generated if both threshold parameters are 100");
+                "At least one of score or probability must be specified");
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCode.INVALID_THRESHOLD_ARGUMENT));
 
-        m_Alerts.pollJob(JOB_ID, 90, 100.0, 100.0, mock(AsyncResponse.class));
+        m_Alerts.pollJob(JOB_ID, 90, null, null, mock(AsyncResponse.class));
     }
 
     @Test

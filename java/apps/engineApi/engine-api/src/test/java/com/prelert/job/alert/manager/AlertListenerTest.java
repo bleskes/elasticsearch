@@ -27,6 +27,7 @@
 
 package com.prelert.job.alert.manager;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -46,6 +47,8 @@ import com.prelert.job.persistence.JobProvider;
 
 public class AlertListenerTest
 {
+    private static final double ERROR = 0.0000001;
+
     private static final URI BASE_URI = UriBuilder.fromUri("http://testing").build();
 
     @Mock private JobProvider m_JobProvider;
@@ -64,7 +67,10 @@ public class AlertListenerTest
     {
         AlertListener alertListener = new AlertListener(mock(AsyncResponse.class), m_AlertManager,
                 "foo", 80.0, 50.0, BASE_URI);
+        assertTrue(alertListener.evaluate(80.0, 40.0));
 
+        alertListener = new AlertListener(mock(AsyncResponse.class), m_AlertManager,
+                "foo", 80.0, null, BASE_URI);
         assertTrue(alertListener.evaluate(80.0, 40.0));
     }
 
@@ -73,7 +79,10 @@ public class AlertListenerTest
     {
         AlertListener alertListener = new AlertListener(mock(AsyncResponse.class), m_AlertManager,
                 "foo", 80.0, 50.0, BASE_URI);
+        assertTrue(alertListener.evaluate(80.1, 40.0));
 
+        alertListener = new AlertListener(mock(AsyncResponse.class), m_AlertManager,
+                "foo", 80.0, null, BASE_URI);
         assertTrue(alertListener.evaluate(80.1, 40.0));
     }
 
@@ -82,7 +91,10 @@ public class AlertListenerTest
     {
         AlertListener alertListener = new AlertListener(mock(AsyncResponse.class), m_AlertManager,
                 "foo", 40.0, 60.0, BASE_URI);
+        assertTrue(alertListener.evaluate(30.0, 60.0));
 
+        alertListener = new AlertListener(mock(AsyncResponse.class), m_AlertManager,
+                "foo", null, 60.0, BASE_URI);
         assertTrue(alertListener.evaluate(30.0, 60.0));
     }
 
@@ -91,7 +103,10 @@ public class AlertListenerTest
     {
         AlertListener alertListener = new AlertListener(mock(AsyncResponse.class), m_AlertManager,
                 "foo", 40.0, 60.0, BASE_URI);
+        assertTrue(alertListener.evaluate(30.0, 60.1));
 
+        alertListener = new AlertListener(mock(AsyncResponse.class), m_AlertManager,
+                "foo", null, 60.0, BASE_URI);
         assertTrue(alertListener.evaluate(30.0, 60.1));
     }
 
@@ -111,5 +126,46 @@ public class AlertListenerTest
                 "foo", 40.0, 60.0, BASE_URI);
 
         assertFalse(alertListener.evaluate(30.0, 50.0));
+    }
+
+    @Test
+    public void testEvaluate_GivenScoreAndProbabilityAreNotSet()
+    {
+        AlertListener alertListener = new AlertListener(mock(AsyncResponse.class), m_AlertManager,
+                "foo", null, null, BASE_URI);
+
+        assertFalse(alertListener.evaluate(30.0, 50.0));
+    }
+
+    @Test
+    public void testIsAnomalyScoreAlert()
+    {
+        AlertListener alertListener = new AlertListener(mock(AsyncResponse.class), m_AlertManager,
+                "foo", 50.0, null, BASE_URI);
+        assertTrue(alertListener.isAnomalyScoreAlert(51.0));
+
+        alertListener = new AlertListener(mock(AsyncResponse.class), m_AlertManager,
+                "foo", 50.0, 40.0, BASE_URI);
+        assertTrue(alertListener.isAnomalyScoreAlert(51.0));
+
+        alertListener = new AlertListener(mock(AsyncResponse.class), m_AlertManager,
+                "foo", 50.0, 40.0, BASE_URI);
+        assertFalse(alertListener.isAnomalyScoreAlert(49.0));
+
+        alertListener = new AlertListener(mock(AsyncResponse.class), m_AlertManager,
+                "foo", null, 40.0, BASE_URI);
+        assertFalse(alertListener.isAnomalyScoreAlert(49.0));
+    }
+
+    @Test
+    public void testGetNormalizedProbThreshold()
+    {
+        AlertListener alertListener = new AlertListener(mock(AsyncResponse.class), m_AlertManager,
+                "foo", null, null, BASE_URI);
+        assertEquals(101.0, alertListener.getNormalisedProbThreshold(), ERROR);
+
+        alertListener = new AlertListener(mock(AsyncResponse.class), m_AlertManager,
+                "foo", null, 23.4, BASE_URI);
+        assertEquals(23.4, alertListener.getNormalisedProbThreshold(), ERROR);
     }
 }
