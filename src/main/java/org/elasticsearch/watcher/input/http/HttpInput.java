@@ -117,27 +117,27 @@ public class HttpInput implements Input {
 
     public static class Result extends Input.Result {
 
-        private final HttpRequest sentRequest;
-        private final int httpStatus;
+        private final HttpRequest request;
+        private final int status;
 
-        public Result(Payload payload, HttpRequest sentRequest, int httpStatus) {
+        public Result(Payload payload, HttpRequest request, int status) {
             super(TYPE, payload);
-            this.sentRequest =sentRequest;
-            this.httpStatus = httpStatus;
+            this.request = request;
+            this.status = status;
         }
 
-        public HttpRequest sentRequest() {
-            return sentRequest;
+        public HttpRequest request() {
+            return request;
         }
 
-        public int statusCode() {
-            return httpStatus;
+        public int status() {
+            return status;
         }
 
         @Override
         protected XContentBuilder toXContentBody(XContentBuilder builder, Params params) throws IOException {
-            return builder.field(Field.SENT_REQUEST.getPreferredName(), sentRequest, params)
-                    .field(Field.HTTP_STATUS.getPreferredName(), httpStatus);
+            return builder.field(Field.REQUEST.getPreferredName(), request, params)
+                    .field(Field.STATUS.getPreferredName(), status);
         }
 
         public static Result parse(String watchId, XContentParser parser, HttpRequest.Parser requestParser) throws IOException {
@@ -150,11 +150,11 @@ public class HttpInput implements Input {
             while ((token = parser.nextToken()) != XContentParser.Token.END_OBJECT) {
                 if (token == XContentParser.Token.FIELD_NAME) {
                     currentFieldName = parser.currentName();
-                } else if (Field.SENT_REQUEST.match(currentFieldName)) {
+                } else if (Field.REQUEST.match(currentFieldName)) {
                     try {
                         sentRequest = requestParser.parse(parser);
                     } catch (HttpRequest.Parser.ParseException pe) {
-                        throw new HttpInputException("could not parse [{}] input result for watch [{}]. failed parsing [{}] field", pe, TYPE, watchId, Field.SENT_REQUEST.getPreferredName());
+                        throw new HttpInputException("could not parse [{}] input result for watch [{}]. failed parsing [{}] field", pe, TYPE, watchId, Field.REQUEST.getPreferredName());
                     }
                 } else if (token == XContentParser.Token.START_OBJECT) {
                     if (Field.PAYLOAD.match(currentFieldName)) {
@@ -163,7 +163,7 @@ public class HttpInput implements Input {
                         throw new HttpInputException("could not parse [{}] input result for watch [{}]. unexpected object field [{}]", TYPE, watchId, currentFieldName);
                     }
                 } else if (token == XContentParser.Token.VALUE_NUMBER) {
-                    if (Field.HTTP_STATUS.match(currentFieldName)) {
+                    if (Field.STATUS.match(currentFieldName)) {
                         httpStatus = parser.intValue();
                     } else {
                         throw new HttpInputException("could not parse [{}] input result for watch [{}]. unexpected numeric field [{}]", TYPE, watchId, currentFieldName);
@@ -174,11 +174,11 @@ public class HttpInput implements Input {
             }
 
             if (sentRequest == null) {
-                throw new HttpInputException("could not parse [{}] input result for watch [{}]. missing required [{}] field", TYPE, watchId, Field.SENT_REQUEST.getPreferredName());
+                throw new HttpInputException("could not parse [{}] input result for watch [{}]. missing required [{}] field", TYPE, watchId, Field.REQUEST.getPreferredName());
             }
 
             if (httpStatus < 0) {
-                throw new HttpInputException("could not parse [{}] input result for watch [{}]. missing required [{}] field", TYPE, watchId, Field.HTTP_STATUS.getPreferredName());
+                throw new HttpInputException("could not parse [{}] input result for watch [{}]. missing required [{}] field", TYPE, watchId, Field.STATUS.getPreferredName());
             }
 
             return new HttpInput.Result(payload, sentRequest, httpStatus);
@@ -213,8 +213,7 @@ public class HttpInput implements Input {
 
     interface Field extends Input.Field {
         ParseField REQUEST = new ParseField("request");
-        ParseField SENT_REQUEST = new ParseField("sent_request");
         ParseField EXTRACT = new ParseField("extract");
-        ParseField HTTP_STATUS = new ParseField("http_status");
+        ParseField STATUS = new ParseField("status");
     }
 }
