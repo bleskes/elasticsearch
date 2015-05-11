@@ -89,7 +89,7 @@ public class WebhookActionTests extends ElasticsearchTestCase {
 
 
     @Before
-    public void init() throws IOException {
+    public void init() throws Exception {
         tp = new ThreadPool(ThreadPool.Names.SAME);
         Settings settings = ImmutableSettings.EMPTY;
         scriptService = WatcherTestUtils.getScriptServiceProxy(tp);
