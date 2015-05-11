@@ -51,6 +51,7 @@ import com.prelert.job.DataCounts;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobStatus;
+import com.prelert.job.alert.AlertObserver;
 import com.prelert.job.exceptions.JobConfigurationException;
 import com.prelert.job.exceptions.JobIdAlreadyExistsException;
 import com.prelert.job.exceptions.JobInUseException;
@@ -76,7 +77,6 @@ import com.prelert.rs.data.CategoryDefinition;
 import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
-import com.prelert.rs.data.parsing.AlertObserver;
 
 
 /**

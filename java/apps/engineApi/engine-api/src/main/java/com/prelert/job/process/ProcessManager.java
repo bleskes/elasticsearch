@@ -59,6 +59,7 @@ import com.prelert.job.DataCounts;
 import com.prelert.job.DataDescription;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobStatus;
+import com.prelert.job.alert.AlertObserver;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.persistence.DataPersisterFactory;
@@ -83,7 +84,6 @@ import com.prelert.job.status.StatusReporterFactory;
 import com.prelert.job.transform.TransformConfigs;
 import com.prelert.job.usage.UsageReporterFactory;
 import com.prelert.rs.data.ErrorCode;
-import com.prelert.rs.data.parsing.AlertObserver;
 
 /**
  * Manages the native processes channelling data to them and parsing the

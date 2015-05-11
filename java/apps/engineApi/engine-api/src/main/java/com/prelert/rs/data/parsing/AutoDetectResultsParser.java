@@ -43,6 +43,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.prelert.job.FlushAcknowledgement;
 import com.prelert.job.ModelSizeStats;
+import com.prelert.job.alert.AlertObserver;
 import com.prelert.job.persistence.JobRenormaliser;
 import com.prelert.job.persistence.JobResultsPersister;
 import com.prelert.job.quantiles.Quantiles;
@@ -338,8 +339,7 @@ public class AutoDetectResultsParser
             {
                 AlertObserver ao = iter.next();
 
-                if (ao.evaluate(bucket.getMaxNormalizedProbability(),
-                        bucket.getAnomalyScore()))
+                if (ao.evaluate(bucket.getAnomalyScore(), bucket.getMaxNormalizedProbability()))
                 {
                     observersToFire.add(ao);
                     iter.remove();
