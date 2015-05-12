@@ -27,7 +27,6 @@
 
 package com.prelert.job.persistence;
 
-import org.apache.log4j.Logger;
 
 /**
  * Abstract Factory method for creating new {@link JobDataPersister}
@@ -36,6 +35,6 @@ import org.apache.log4j.Logger;
 public interface DataPersisterFactory
 {
     JobDataPersister newNoneDataPersister();
-    JobDataPersister newDataPersister(String jobId, Logger logger);
+    JobDataPersister newDataPersister(String jobId);
 }
 

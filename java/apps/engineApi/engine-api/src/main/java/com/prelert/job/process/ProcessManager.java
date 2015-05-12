@@ -211,7 +211,7 @@ public class ProcessManager
         OutOfOrderRecordsException, MalformedJsonException
     {
         JobDataPersister persister = params.isPersisting() ? m_DataPersisterFactory
-                .newDataPersister(jobId, LOGGER) : m_DataPersisterFactory.newNoneDataPersister();
+                .newDataPersister(jobId) : m_DataPersisterFactory.newNoneDataPersister();
         return processDataLoadJob(jobId, input, persister, params);
     }
 
@@ -1159,6 +1159,6 @@ public class ProcessManager
 
     public void deletePersistedData(String jobId)
     {
-        m_DataPersisterFactory.newDataPersister(jobId, LOGGER).deleteData();
+        m_DataPersisterFactory.newDataPersister(jobId).deleteData();
     }
 }
