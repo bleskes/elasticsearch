@@ -822,7 +822,10 @@ public class ProcessManager
             // exception so it does not suppress any exception thrown in the try block
             tryFinishReporting(statusReporter, jobLogger);
 
-            throw new DataUploadException(statusReporter.incrementalStats(), e);
+            DataUploadException dataUploadException = new DataUploadException(
+                    statusReporter.incrementalStats(), e);
+            LOGGER.error(dataUploadException.getMessage(), e);
+            throw dataUploadException;
         }
         finally
         {
