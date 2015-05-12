@@ -60,6 +60,7 @@ import com.prelert.job.DataDescription;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobStatus;
 import com.prelert.job.alert.AlertObserver;
+import com.prelert.job.exceptions.DataUploadException;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.persistence.DataPersisterFactory;
@@ -815,22 +816,45 @@ public class ProcessManager
 
             return writer.write(input);
         }
+        catch (RuntimeException e)
+        {
+            // finish reporting status to persist stats but catch any
+            // exception so it does not suppress any exception thrown in the try block
+            tryFinishReporting(statusReporter, jobLogger);
+
+            throw new DataUploadException(statusReporter.incrementalStats(), e);
+        }
         finally
         {
-            // flush the writer but catch the exception so it
-            // does not suppress any exception thrown in the
-            // try block
-            try
-            {
-                lengthEncodedWriter.flush();
-            }
-            catch (IOException e)
-            {
-                jobLogger.warn("Exception flushing lengthEncodedWriter", e);
-            }
+            // flush the writer but catch any exception so it does not suppress
+            // any exception thrown in the try block
+            tryFlushingWriter(lengthEncodedWriter, jobLogger);
         }
     }
 
+    private static void tryFinishReporting(StatusReporter statusReporter, Logger jobLogger)
+    {
+        try
+        {
+            statusReporter.finishReporting();
+        }
+        catch (Exception statusReporterException)
+        {
+            jobLogger.warn("Exception while trying to finish reporting", statusReporterException);
+        }
+    }
+
+    private static void tryFlushingWriter(LengthEncodedWriter lengthEncodedWriter, Logger jobLogger)
+    {
+        try
+        {
+            lengthEncodedWriter.flush();
+        }
+        catch (IOException e)
+        {
+            jobLogger.warn("Exception flushing lengthEncodedWriter", e);
+        }
+    }
 
     /**
      * Add the timeout schedule for <code>jobId</code>.
