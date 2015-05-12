@@ -77,6 +77,11 @@ public class TransportWatcherStatsAction extends WatcherTransportAction<WatcherS
         statsResponse.setWatchExecutionQueueMaxSize(executionService.largestQueueSize());
         statsResponse.setVersion(WatcherVersion.CURRENT);
         statsResponse.setBuild(WatcherBuild.CURRENT);
+
+        if (request.includeCurrentWatches()) {
+            statsResponse.setSnapshots(executionService.currentExecutions());
+        }
+
         listener.onResponse(statsResponse);
     }
 
