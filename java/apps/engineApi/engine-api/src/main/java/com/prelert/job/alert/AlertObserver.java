@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -24,7 +24,7 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.rs.data.parsing;
+package com.prelert.job.alert;
 
 import com.prelert.rs.data.Bucket;
 
@@ -35,58 +35,50 @@ import com.prelert.rs.data.Bucket;
  */
 public abstract class AlertObserver
 {
-	private double m_AnomalyThreshold;
-	private double m_NormalisedThreshold;
+    /** If null, it means it was not specified. */
+    private final Double m_AnomalyThreshold;
 
-	public AlertObserver(double normlizedProbThreshold, double anomalyThreshold)
-	{
-		m_AnomalyThreshold = anomalyThreshold;
-		m_NormalisedThreshold = normlizedProbThreshold;
-	}
+    /** If null, it means it was not specified. */
+    private final Double m_NormalisedThreshold;
 
-	/**
-	 * Return true if the alert should be fired for these values.
-	 *
-	 * @param normalisedProb
-	 * @param anomalyScore
-	 * @return
-	 */
-	public boolean evaluate(double normalisedProb, double anomalyScore)
-	{
-		return normalisedProb >= m_NormalisedThreshold ||
-				anomalyScore  >= m_AnomalyThreshold;
-	}
+    public AlertObserver(Double normlizedProbThreshold, Double anomalyThreshold)
+    {
+        m_AnomalyThreshold = anomalyThreshold;
+        m_NormalisedThreshold = normlizedProbThreshold;
+    }
 
-	public boolean isAnomalyScoreAlert(double anomalyScore)
-	{
-		return anomalyScore >= m_AnomalyThreshold;
-	}
+    /**
+     * Return true if the alert should be fired for these values.
+     *
+     * @param anomalyScore
+     * @param normalisedProb
+     * @return
+     */
+    public boolean evaluate(double anomalyScore, double normalisedProb)
+    {
+        return isGreaterOrEqual(normalisedProb, m_NormalisedThreshold)
+                || isGreaterOrEqual(anomalyScore, m_AnomalyThreshold);
+    }
 
-	/**
-	 * Fire the alert with the bucket the alert came from
-	 *
-	 * @param bucket
-	 */
-	public abstract void fire(Bucket bucket);
+    private static boolean isGreaterOrEqual(double value, Double threshold)
+    {
+        return threshold == null ? false : value >= threshold;
+    }
 
+    public boolean isAnomalyScoreAlert(double anomalyScore)
+    {
+        return isGreaterOrEqual(anomalyScore, m_AnomalyThreshold);
+    }
 
-	public double getAnomalyThreshold()
-	{
-		return m_AnomalyThreshold;
-	}
+    /**
+     * Fire the alert with the bucket the alert came from
+     *
+     * @param bucket
+     */
+    public abstract void fire(Bucket bucket);
 
-	public void setAnomalyThreshold(double anomalyThreshold)
-	{
-		m_AnomalyThreshold = anomalyThreshold;
-	}
-
-	public double getNormalisedProbThreshold()
-	{
-		return m_NormalisedThreshold;
-	}
-
-	public void setNormalisedProbThreshold(double normalisedThreshold)
-	{
-		m_NormalisedThreshold = normalisedThreshold;
-	}
+    public double getNormalisedProbThreshold()
+    {
+        return m_NormalisedThreshold == null ? 101.0 : m_NormalisedThreshold;
+    }
 }

@@ -49,6 +49,7 @@ import org.junit.Test;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.ModelSizeStats;
+import com.prelert.job.alert.AlertObserver;
 import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.persistence.JobRenormaliser;
 import com.prelert.job.persistence.JobResultsPersister;

@@ -30,11 +30,16 @@ package com.prelert.rs.resources;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.net.URI;
 import java.util.HashSet;
 import java.util.Set;
 
 import javax.ws.rs.core.Application;
+import javax.ws.rs.core.UriInfo;
 
+import org.glassfish.jersey.uri.internal.JerseyUriBuilder;
+
+import com.prelert.job.alert.manager.AlertManager;
 import com.prelert.job.manager.JobManager;
 
 /**
@@ -42,24 +47,38 @@ import com.prelert.job.manager.JobManager;
  */
 public class ServiceTest
 {
-    protected JobManager m_JobManager;
+    protected static final URI BASE_URI = new JerseyUriBuilder().uri("http://localhost/test").build();
+
+    protected final JobManager m_JobManager;
+    protected final AlertManager m_AlertManager;
+    protected final UriInfo m_UriInfo;
 
     protected ServiceTest()
     {
         m_JobManager = mock(JobManager.class);
+        m_AlertManager = mock(AlertManager.class);
+        m_UriInfo = mock(UriInfo.class);
+        when(m_UriInfo.getBaseUri()).thenReturn(BASE_URI);
     }
 
     protected void configureService(ResourceWithJobManager service)
     {
         Set<Object> singletons = new HashSet<>();
         singletons.add(m_JobManager);
+        singletons.add(m_AlertManager);
         Application application = mock(Application.class);
         when(application.getSingletons()).thenReturn(singletons);
         service.setApplication(application);
+        service.setUriInfo(m_UriInfo);
     }
 
     protected JobManager jobManager()
     {
         return m_JobManager;
+    }
+
+    protected AlertManager alertManager()
+    {
+        return m_AlertManager;
     }
 }
