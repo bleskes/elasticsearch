@@ -54,6 +54,8 @@ public abstract class WatchExecutionContext {
 
     private volatile ExecutionPhase executionPhase = ExecutionPhase.AWAITS_EXECUTION;
 
+    private long actualExecutionStartMs;
+
     public WatchExecutionContext(Watch watch, DateTime executionTime, TriggerEvent triggerEvent, TimeValue defaultThrottlePeriod) {
         this.id = new Wid(watch.id(), watch.nonce(), executionTime);
         this.watch = watch;
@@ -183,12 +185,18 @@ public abstract class WatchExecutionContext {
         return new ExecutableActions.Results(actionsResults);
     }
 
+    public void start() {
+        actualExecutionStartMs = System.currentTimeMillis();
+    }
+
     public WatchExecutionResult finish() {
         executionPhase = ExecutionPhase.FINISHED;
-        return new WatchExecutionResult(this);
+        long executionFinishMs = System.currentTimeMillis();
+        return new WatchExecutionResult(this, executionFinishMs - actualExecutionStartMs);
     }
 
     public WatchExecutionSnapshot createSnapshot(Thread executionThread) {
         return new WatchExecutionSnapshot(this, executionThread.getStackTrace());
     }
+
 }

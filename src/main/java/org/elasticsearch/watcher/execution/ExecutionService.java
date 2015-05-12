@@ -284,6 +284,7 @@ public class ExecutionService extends AbstractComponent {
     }
 
     WatchExecutionResult executeInner(WatchExecutionContext ctx) throws IOException {
+        ctx.start();
         Watch watch = ctx.watch();
         ctx.beforeInput();
         Input.Result inputResult = ctx.inputResult();
