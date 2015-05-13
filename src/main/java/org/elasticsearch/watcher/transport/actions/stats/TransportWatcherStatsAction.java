@@ -54,7 +54,8 @@ public class TransportWatcherStatsAction extends WatcherTransportAction<WatcherS
 
     @Override
     protected String executor() {
-        return ThreadPool.Names.MANAGEMENT;
+        // cheap operation, no need to fork into another thread
+        return ThreadPool.Names.SAME;
     }
 
     @Override
