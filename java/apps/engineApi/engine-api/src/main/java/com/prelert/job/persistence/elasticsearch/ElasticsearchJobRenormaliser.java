@@ -46,8 +46,10 @@ import com.prelert.job.AnalysisConfig;
 import com.prelert.job.JobDetails;
 import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.normalisation.Normaliser;
+import com.prelert.job.normalisation.NormaliserProcessFactory;
 import com.prelert.job.persistence.JobRenormaliser;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
+import com.prelert.job.quantiles.Quantiles;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.Pagination;
@@ -148,14 +150,14 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
      * @param logger
      */
     @Override
-    public synchronized void updateBucketSysChange(String sysChangeState,
-                                        Date endTime, Logger logger)
+    public synchronized void renormalise(Quantiles quantiles, Logger logger)
     {
         if (m_QuantileUpdateThread.isAlive())
         {
-            long endBucketEpochMS = (endTime == null ? new Date() : endTime).getTime();
-            m_UpdatedQuantileQueue.add(new QuantileInfo(QuantileInfo.InfoType.SYS_CHANGE,
-                    sysChangeState, endBucketEpochMS, logger));
+            Date timestamp = quantiles.getTimestamp();
+            long endBucketEpochMS = (timestamp == null ? new Date() : timestamp).getTime();
+            m_UpdatedQuantileQueue.add(new QuantileInfo(QuantileInfo.InfoType.RENORMALISATION,
+                    quantiles.getState(), endBucketEpochMS, logger));
         }
         else
         {
@@ -164,20 +166,18 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
         }
     }
 
-
     /**
      * Update the anomaly score field on all previously persisted buckets
      * and all contained records
-     * @param sysChangeState
+     * @param quantilesState
      * @param endBucketEpochMs
      * @param logger
      */
-    private void doSysChangeUpdate(String sysChangeState,
-                                    long endBucketEpochMs, Logger logger)
+    private void updateScores(String quantilesState, long endBucketEpochMs, Logger logger)
     {
         try
         {
-            Normaliser normaliser = new Normaliser(m_JobId, m_JobProvider, logger);
+            Normaliser normaliser = new Normaliser(m_JobId, new NormaliserProcessFactory(), logger);
             int[] counts = { 0, 0 };
             int skip = 0;
             Pagination<Bucket> page = m_JobProvider.buckets(m_JobId, true, false,
@@ -195,12 +195,11 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
                 }
 
                 List<Bucket> normalisedBuckets =
-                        normaliser.normaliseForSystemChange(getJobBucketSpan(logger),
-                                                        buckets, sysChangeState);
+                        normaliser.normalise(getJobBucketSpan(logger), buckets, quantilesState);
 
                 for (Bucket bucket : normalisedBuckets)
                 {
-                    updateSingleBucket(bucket, true, false, logger, counts);
+                    updateSingleBucket(bucket, logger, counts);
                 }
 
                 skip += MAX_BUCKETS_PER_PAGE;
@@ -226,106 +225,15 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
         }
     }
 
-
-    /**
-     * Update the unsual score field on all previously persisted buckets
-     * and all contained records
-     * @param unusualBehaviourState
-     * @param endTime
-     * @param logger
-     */
-    @Override
-    public synchronized void updateBucketUnusualBehaviour(String unusualBehaviourState,
-                                            Date endTime, Logger logger)
-    {
-        if (m_QuantileUpdateThread.isAlive())
-        {
-            long endBucketEpochMs = (endTime == null ? new Date() : endTime).getTime();
-            m_UpdatedQuantileQueue.add(new QuantileInfo(QuantileInfo.InfoType.UNUSUAL,
-                    unusualBehaviourState, endBucketEpochMs, logger));
-        }
-        else
-        {
-            logger.error("Cannot renormalise for unusual behaviour " +
-                        "- update thread no longer running");
-        }
-    }
-
-
-    /**
-     * Update the unsual score field on all previously persisted buckets
-     * and all contained records
-     * @param unusualBehaviourState
-     * @param endBucketEpochMs
-     * @param logger
-     */
-    private void doUnusualBehaviourUpdate(String unusualBehaviourState,
-                                            long endBucketEpochMs, Logger logger)
-    {
-        try
-        {
-            Normaliser normaliser = new Normaliser(m_JobId, m_JobProvider, logger);
-            int[] counts = { 0, 0 };
-            int skip = 0;
-            Pagination<Bucket> page = m_JobProvider.buckets(m_JobId, true, false,
-                        skip, MAX_BUCKETS_PER_PAGE, 0, endBucketEpochMs, 0.0, 0.0);
-            while (page.getHitCount() > skip)
-            {
-                List<Bucket> buckets = page.getDocuments();
-                if (buckets == null)
-                {
-                    logger.warn("No buckets to renormalise for job " +
-                                m_JobId + " with skip " + skip + " and hit count " +
-                                page.getHitCount());
-                    break;
-                }
-
-                List<Bucket> normalisedBuckets =
-                        normaliser.normaliseForUnusualBehaviour(getJobBucketSpan(logger),
-                                                        buckets, unusualBehaviourState);
-
-                for (Bucket bucket : normalisedBuckets)
-                {
-                    updateSingleBucket(bucket, false, true, logger, counts);
-                }
-
-                skip += MAX_BUCKETS_PER_PAGE;
-                if (page.getHitCount() > skip)
-                {
-                    page = m_JobProvider.buckets(m_JobId, true, false,
-                            skip, MAX_BUCKETS_PER_PAGE, 0, endBucketEpochMs, 0.0, 0.0);
-                }
-            }
-
-            logger.info("Unusual behaviour normalisation resulted in: " +
-                        counts[0] + " updates, " +
-                        counts[1] + " no-ops");
-        }
-        catch (UnknownJobException uje)
-        {
-            logger.error("Inconsistency - job " + m_JobId +
-                            " unknown during unusual behaviour renormalisation", uje);
-        }
-        catch (NativeProcessRunException npe)
-        {
-            logger.error("Failed to renormalise for unusual behaviour", npe);
-        }
-    }
-
-
     /**
      * Update the anomaly score and unsual score fields on the bucket provided
      * and all contained records
      * @param bucket
-     * @param updateSysChange
-     * @param updateUnusual
      * @param logger
      * @param counts Element 0 will be incremented if we update a document and
      * element 1 if we don't
      */
-    private void updateSingleBucket(Bucket bucket,
-            boolean updateSysChange, boolean updateUnusual,
-            Logger logger, int[] counts)
+    private void updateSingleBucket(Bucket bucket, Logger logger, int[] counts)
     {
         try
         {
@@ -336,14 +244,8 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
                 if (bucket.hadBigNormalisedUpdate())
                 {
                     Map<String, Object> map = new TreeMap<>();
-                    if (updateSysChange)
-                    {
-                        map.put(Bucket.ANOMALY_SCORE, bucket.getAnomalyScore());
-                    }
-                    if (updateUnusual)
-                    {
-                        map.put(Bucket.MAX_NORMALIZED_PROBABILITY, bucket.getMaxNormalizedProbability());
-                    }
+                    map.put(Bucket.ANOMALY_SCORE, bucket.getAnomalyScore());
+                    map.put(Bucket.MAX_NORMALIZED_PROBABILITY, bucket.getMaxNormalizedProbability());
 
                     m_JobProvider.getClient().prepareUpdate(m_JobId, Bucket.TYPE, bucketId)
                             .setDoc(map)
@@ -373,14 +275,8 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
                     if (record.hadBigNormalisedUpdate())
                     {
                         Map<String, Object> map = new TreeMap<>();
-                        if (updateSysChange)
-                        {
                             map.put(AnomalyRecord.ANOMALY_SCORE, record.getAnomalyScore());
-                        }
-                        if (updateUnusual)
-                        {
                             map.put(AnomalyRecord.NORMALIZED_PROBABILITY, record.getNormalizedProbability());
-                        }
 
                         bulkRequest.add(m_JobProvider.getClient()
                                 .prepareUpdate(m_JobId, AnomalyRecord.TYPE, recordId)
@@ -485,15 +381,14 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
      */
     private static class QuantileInfo
     {
-        public enum InfoType { END, SYS_CHANGE, UNUSUAL }
+        public enum InfoType { END, RENORMALISATION }
 
         public final InfoType m_Type;
         public final String m_State;
         public final long m_EndBucketEpochMs;
         public final Logger m_Logger;
 
-        public QuantileInfo(InfoType type, String state,
-                            long endBucketEpochMs, Logger logger)
+        private QuantileInfo(InfoType type, String state, long endBucketEpochMs, Logger logger)
         {
             m_Type = type;
             m_State = state;
@@ -526,8 +421,7 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
                 boolean keepGoing = true;
                 while (keepGoing)
                 {
-                    QuantileInfo latestSysChangeInfo = null;
-                    QuantileInfo latestUnusualInfo = null;
+                    QuantileInfo latestInfo = null;
 
                     // take() will block if the queue is empty
                     QuantileInfo info = ElasticsearchJobRenormaliser.this.m_UpdatedQuantileQueue.take();
@@ -541,34 +435,24 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
                                 keepGoing = false;
                                 lastLogger.info("Normaliser thread received end instruction");
                                 break;
-                            case SYS_CHANGE:
-                                if (latestSysChangeInfo != null)
+                            case RENORMALISATION:
+                                if (latestInfo != null)
                                 {
-                                    lastLogger.info("System change quantiles superseded before processing");
+                                    lastLogger.info("Quantiles update superseded before processing");
                                 }
-                                latestSysChangeInfo = info;
+                                latestInfo = info;
                                 break;
-                            case UNUSUAL:
-                                if (latestUnusualInfo != null)
-                                {
-                                    lastLogger.info("Unusual behaviour quantiles superseded before processing");
-                                }
-                                latestUnusualInfo = info;
-                                break;
+                            default:
+                                throw new IllegalStateException();
                         }
                         // poll() will return null if the queue is empty
                         info = ElasticsearchJobRenormaliser.this.m_UpdatedQuantileQueue.poll();
                     }
 
-                    if (latestSysChangeInfo != null)
+                    if (latestInfo != null)
                     {
-                        ElasticsearchJobRenormaliser.this.doSysChangeUpdate(latestSysChangeInfo.m_State,
-                                latestSysChangeInfo.m_EndBucketEpochMs, latestSysChangeInfo.m_Logger);
-                    }
-                    if (latestUnusualInfo != null)
-                    {
-                        ElasticsearchJobRenormaliser.this.doUnusualBehaviourUpdate(latestUnusualInfo.m_State,
-                                latestUnusualInfo.m_EndBucketEpochMs, latestUnusualInfo.m_Logger);
+                        ElasticsearchJobRenormaliser.this.updateScores(latestInfo.m_State,
+                                latestInfo.m_EndBucketEpochMs, latestInfo.m_Logger);
                     }
 
                     // Refresh the indexes so that normalised results are

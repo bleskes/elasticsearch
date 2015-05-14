@@ -36,6 +36,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -46,9 +47,6 @@ import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
 import org.elasticsearch.action.get.GetResponse;
-import org.elasticsearch.action.get.MultiGetItemResponse;
-import org.elasticsearch.action.get.MultiGetRequestBuilder;
-import org.elasticsearch.action.get.MultiGetResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
@@ -81,7 +79,6 @@ import com.prelert.job.exceptions.JobIdAlreadyExistsException;
 import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.quantiles.Quantiles;
-import com.prelert.job.quantiles.QuantilesState;
 import com.prelert.job.usage.Usage;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
@@ -119,20 +116,19 @@ public class ElasticsearchJobProvider implements JobProvider
 
     private final ObjectMapper m_ObjectMapper;
 
-    public ElasticsearchJobProvider(String elasticSearchClusterName)
+    public static ElasticsearchJobProvider create(String elasticSearchClusterName, String portRange)
     {
-        this(elasticSearchClusterName, null);
-    }
-
-    public ElasticsearchJobProvider(String elasticSearchClusterName,
-            String portRange)
-    {
-        m_Node = nodeBuilder()
+        Node node = nodeBuilder()
                 .settings(buildSettings(portRange))
                 .client(true)
                 .clusterName(elasticSearchClusterName).node();
+        return new ElasticsearchJobProvider(node, node.client());
+    }
 
-        m_Client = m_Node.client();
+    public ElasticsearchJobProvider(Node node, Client client)
+    {
+        m_Node = Objects.requireNonNull(node);
+        m_Client = Objects.requireNonNull(client);
 
         m_ObjectMapper = new ObjectMapper();
         m_ObjectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
@@ -140,8 +136,8 @@ public class ElasticsearchJobProvider implements JobProvider
 
         createUsageMeteringIndex();
 
-        LOGGER.info("Connecting to Elasticsearch cluster '"
-                + elasticSearchClusterName + "'");
+        LOGGER.info("Connecting to Elasticsearch cluster '" + m_Node.settings().get("cluster.name")
+                + "'");
     }
 
     /**
@@ -149,7 +145,7 @@ public class ElasticsearchJobProvider implements JobProvider
      * attempt multicast discovery and to only look for another node to connect
      * to on the local machine.
      */
-    private Settings buildSettings(String portRange)
+    private static Settings buildSettings(String portRange)
     {
         // Multicast discovery is expected to be disabled on the Elasticsearch
         // data node, so disable it for this embedded node too and tell it to
@@ -1063,42 +1059,20 @@ public class ElasticsearchJobProvider implements JobProvider
 
 
     @Override
-    public QuantilesState getQuantilesState(String jobId)
+    public Quantiles getQuantiles(String jobId)
     throws UnknownJobException
     {
-        QuantilesState quantilesState = new QuantilesState();
-
-        MultiGetRequestBuilder multiGetRequestBuilder = m_Client.prepareMultiGet()
-                .add(jobId, Quantiles.TYPE, QuantilesState.SYS_CHANGE_QUANTILES_KIND)
-                .add(jobId, Quantiles.TYPE, QuantilesState.UNUSUAL_QUANTILES_KIND);
-
         try
         {
-            MultiGetResponse multiGetResponse = multiGetRequestBuilder.get();
-
-            for (MultiGetItemResponse response : multiGetResponse.getResponses())
+            GetResponse response = m_Client.prepareGet(
+                    jobId, Quantiles.TYPE, Quantiles.QUANTILES_ID).get();
+            if (!response.isExists())
             {
-                String kind = response.getId();
-                if (response.isFailed() || !response.getResponse().isExists())
-                {
-                    LOGGER.info("There are currently no " + kind +
-                                    " quantiles for job " + jobId);
-                }
-                else
-                {
-                    Object state = response.getResponse().getSource().get(Quantiles.QUANTILE_STATE);
-                    if (state == null)
-                    {
-                        LOGGER.error("Inconsistency - no " + Quantiles.QUANTILE_STATE +
-                                        " field in " + kind +
-                                        " quantiles for job " + jobId);
-                    }
-                    else
-                    {
-                        quantilesState.setQuantilesState(kind, state.toString());
-                    }
-                }
+                LOGGER.info("There are currently no quantiles for job " + jobId);
+                return new Quantiles();
             }
+            return checkQuantilesVersion(jobId, response) ? createQuantiles(jobId, response)
+                    : new Quantiles();
         }
         catch (IndexMissingException e)
         {
@@ -1106,7 +1080,35 @@ public class ElasticsearchJobProvider implements JobProvider
             throw new UnknownJobException(jobId,
                     "Cannot read persisted quantiles", ErrorCode.MISSING_JOB_ERROR);
         }
-        return quantilesState;
+    }
+
+    private boolean checkQuantilesVersion(String jobId, GetResponse response)
+    {
+        Object version = response.getSource().get(Quantiles.VERSION);
+        if (!Quantiles.CURRENT_VERSION.equals(version.toString()))
+        {
+            LOGGER.warn(
+                    "Cannot restore quantiles: version of quantiles for job " + jobId + " is older "
+                            + "than the current one. New quantiles will be used instead.");
+            return false;
+        }
+        return true;
+    }
+
+    private static Quantiles createQuantiles(String jobId, GetResponse response)
+    {
+        Quantiles quantiles = new Quantiles();
+        Object state = response.getSource().get(Quantiles.QUANTILE_STATE);
+        if (state == null)
+        {
+            LOGGER.error("Inconsistency - no " + Quantiles.QUANTILE_STATE
+                    + " field in quantiles for job " + jobId);
+        }
+        else
+        {
+            quantiles.setState(state.toString());
+        }
+        return quantiles;
     }
 
 

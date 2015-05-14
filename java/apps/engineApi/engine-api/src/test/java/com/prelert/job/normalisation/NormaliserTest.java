@@ -29,6 +29,7 @@ package com.prelert.job.normalisation;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -39,25 +40,27 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import com.prelert.job.exceptions.UnknownJobException;
-import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.process.writer.LengthEncodedWriter;
-import com.prelert.job.quantiles.QuantilesState;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
 
 public class NormaliserTest
 {
     private static final double ERROR = 0.01;
+    private static final String JOB_ID = "foo";
 
-    @Mock private JobProvider m_JobProvider;
+    @Rule public ExpectedException m_ExpectedException = ExpectedException.none();
+
     @Mock private NormaliserProcessFactory m_ProcessFactory;
     @Mock private NormaliserProcess m_Process;
     @Mock private Logger m_Logger;
@@ -68,120 +71,80 @@ public class NormaliserTest
     public void setUp()
     {
         MockitoAnnotations.initMocks(this);
+        m_Normaliser = new Normaliser(JOB_ID, m_ProcessFactory, m_Logger);
     }
 
     @Test
-    public void testNormaliseForSystemChange() throws NativeProcessRunException,
+    public void testNormalise_GivenExceptionUponCreatingNormaliserProcess() throws IOException,
+            NativeProcessRunException, UnknownJobException
+    {
+        doThrow(new IOException()).when(m_ProcessFactory).create(JOB_ID, "", 10, m_Logger);
+
+        m_ExpectedException.expect(NativeProcessRunException.class);
+        m_ExpectedException.expectMessage("Failed to start normalisation process for job foo");
+        m_Normaliser.normalise(10, new ArrayList<>(), "");
+    }
+
+    @Test
+    public void testNormalise() throws NativeProcessRunException,
             UnknownJobException, IOException
     {
         LengthEncodedWriter writer = mock(LengthEncodedWriter.class);
         when(m_Process.createProcessWriter()).thenReturn(writer);
 
-        String normalisedResults =
-                "{\"anomalyScore\":\"11.0\"}{\"anomalyScore\":\"12.0\"}{\"anomalyScore\":\"13.0\"}";
+        double[] rawScoresPerBucket = {1.0, 2.0, 3.0};
+        double[] probabilityPerRecord = {0.05, 0.03, 0.03, 0.05, 0.01, 0.02};
+
+        // The normalised results are (10 + raw score) for buckets and (100 * prob) for records
+        String normalisedResults = "{\"normalizedScore\":\"11.0\"}"  // Bucket 1
+                + "{\"normalizedScore\":\"5.0\"}"                   // Bucket 1, Record 1
+                + "{\"normalizedScore\":\"3.0\"}"                   // Bucket 1, Record 2
+                + "{\"normalizedScore\":\"12.0\"}"                   // Bucket 2
+                + "{\"normalizedScore\":\"3.0\"}"                   // Bucket 2, Record 1
+                + "{\"normalizedScore\":\"5.0\"}"                   // Bucket 2, Record 2
+                + "{\"normalizedScore\":\"13.0\"}"                   // Bucket 3
+                + "{\"normalizedScore\":\"1.0\"}"                   // Bucket 3, Record 1
+                + "{\"normalizedScore\":\"2.0\"}";                  // Bucket 3, Record 2
+
         ByteArrayInputStream inputStream = new ByteArrayInputStream(normalisedResults.getBytes());
         when(m_Process.createNormalisedResultsParser(m_Logger)).thenReturn(
                 new NormalisedResultsParser(inputStream, m_Logger));
 
-        when(m_ProcessFactory.create("foo", null, null, 10, m_Logger)).thenReturn(m_Process);
-        when(m_JobProvider.getQuantilesState("foo")).thenReturn(new QuantilesState());
+        when(m_ProcessFactory.create(JOB_ID, "quantilesState", 10, m_Logger)).thenReturn(m_Process);
 
-        double[] rawScoresPerBucket = {1.0, 2.0, 3.0};
-        double[] probabilityPerRecord = {0.01, 0.01, 0.01, 0.01, 0.01, 0.01};
         List<Bucket> buckets = createBuckets(rawScoresPerBucket, probabilityPerRecord);
 
-        m_Normaliser = new Normaliser("foo", m_JobProvider, m_ProcessFactory, m_Logger);
-
-        List<Bucket> normalisedBuckets = m_Normaliser.normaliseForSystemChange(10, buckets);
+        List<Bucket> normalisedBuckets = m_Normaliser.normalise(10, buckets, "quantilesState");
 
         assertEquals(buckets, normalisedBuckets);
 
         InOrder inOrder = Mockito.inOrder(m_Process, writer);
-        inOrder.verify(writer).writeNumFields(1);
-        inOrder.verify(writer).writeField("rawAnomalyScore");
-        inOrder.verify(writer).writeNumFields(1);
-        inOrder.verify(writer).writeField("1.0");
-        inOrder.verify(writer).writeNumFields(1);
-        inOrder.verify(writer).writeField("2.0");
-        inOrder.verify(writer).writeNumFields(1);
-        inOrder.verify(writer).writeField("3.0");
+        inOrder.verify(writer).writeRecord(new String[] {"level", "partitionFieldName", "personFieldName", "rawScore"});
+        inOrder.verify(writer).writeRecord(new String[] {"root", "", "", "1.0"});
+        inOrder.verify(writer).writeRecord(new String[] {"leaf", "", "", "0.05"});
+        inOrder.verify(writer).writeRecord(new String[] {"leaf", "", "", "0.03"});
+        inOrder.verify(writer).writeRecord(new String[] {"root", "", "", "2.0"});
+        inOrder.verify(writer).writeRecord(new String[] {"leaf", "", "", "0.03"});
+        inOrder.verify(writer).writeRecord(new String[] {"leaf", "", "", "0.05"});
+        inOrder.verify(writer).writeRecord(new String[] {"root", "", "", "3.0"});
+        inOrder.verify(writer).writeRecord(new String[] {"leaf", "", "", "0.01"});
+        inOrder.verify(writer).writeRecord(new String[] {"leaf", "", "", "0.02"});
         inOrder.verify(m_Process).closeOutputStream();
 
-        for (int i = 0; i < buckets.size(); i++)
+        for (int bucketIndex = 0; bucketIndex < buckets.size(); bucketIndex++)
         {
-            Bucket bucket = buckets.get(i);
-            assertEquals(10 + rawScoresPerBucket[i], bucket.getAnomalyScore(), ERROR);
-            for (AnomalyRecord record : bucket.getRecords())
+            Bucket bucket = buckets.get(bucketIndex);
+            assertEquals(10 + rawScoresPerBucket[bucketIndex], bucket.getAnomalyScore(), ERROR);
+
+            for (int i = 0; i < bucket.getRecords().size(); i++)
             {
-                assertEquals(10 + rawScoresPerBucket[i], record.getAnomalyScore(), ERROR);
+                AnomalyRecord record = bucket.getRecords().get(i);
+                int recordIndex = (bucketIndex * 2) + i;
+
+                assertEquals(10 + rawScoresPerBucket[bucketIndex], record.getAnomalyScore(), ERROR);
+                assertEquals(100 * probabilityPerRecord[recordIndex], record.getNormalizedProbability(), ERROR);
             }
         }
-    }
-
-    @Test
-    public void testNormaliseForUnusualBehaviour() throws NativeProcessRunException,
-            UnknownJobException, IOException
-    {
-        LengthEncodedWriter writer = mock(LengthEncodedWriter.class);
-        when(m_Process.createProcessWriter()).thenReturn(writer);
-
-        String normalisedResults ="{\"normalizedProbability\":\"0.15\"}" +
-                "{\"normalizedProbability\":\"0.13\"}" +
-                "{\"normalizedProbability\":\"0.13\"}" +
-                "{\"normalizedProbability\":\"0.15\"}" +
-                "{\"normalizedProbability\":\"0.11\"}" +
-                "{\"normalizedProbability\":\"0.11\"}";
-        ByteArrayInputStream inputStream = new ByteArrayInputStream(normalisedResults.getBytes());
-        when(m_Process.createNormalisedResultsParser(m_Logger)).thenReturn(
-                new NormalisedResultsParser(inputStream, m_Logger));
-
-        when(m_ProcessFactory.create("foo", null, null, 10, m_Logger)).thenReturn(m_Process);
-        when(m_JobProvider.getQuantilesState("foo")).thenReturn(new QuantilesState());
-
-        double[] rawScoresPerBucket = {1.0, 2.0, 3.0};
-        double[] probabilityPerRecord = {0.05, 0.03, 0.03, 0.05, 0.01, 0.01};
-        List<Bucket> buckets = createBuckets(rawScoresPerBucket, probabilityPerRecord);
-
-        m_Normaliser = new Normaliser("foo", m_JobProvider, m_ProcessFactory, m_Logger);
-
-        List<Bucket> normalisedBuckets = m_Normaliser.normaliseForUnusualBehaviour(10, buckets);
-
-        assertEquals(buckets, normalisedBuckets);
-
-        InOrder inOrder = Mockito.inOrder(m_Process, writer);
-        inOrder.verify(writer).writeNumFields(1);
-        inOrder.verify(writer).writeField("probability");
-        inOrder.verify(writer).writeNumFields(1);
-        inOrder.verify(writer).writeField("0.05");
-        inOrder.verify(writer).writeNumFields(1);
-        inOrder.verify(writer).writeField("0.03");
-        inOrder.verify(writer).writeNumFields(1);
-        inOrder.verify(writer).writeField("0.03");
-        inOrder.verify(writer).writeNumFields(1);
-        inOrder.verify(writer).writeField("0.05");
-        inOrder.verify(writer).writeNumFields(1);
-        inOrder.verify(writer).writeField("0.01");
-        inOrder.verify(writer).writeNumFields(1);
-        inOrder.verify(writer).writeField("0.01");
-        inOrder.verify(m_Process).closeOutputStream();
-
-        Bucket bucket1 = buckets.get(0);
-        assertEquals(0.15, bucket1.getMaxNormalizedProbability(), ERROR);
-        List<AnomalyRecord> bucket1Records = bucket1.getRecords();
-        assertEquals(0.15, bucket1Records.get(0).getNormalizedProbability(), ERROR);
-        assertEquals(0.13, bucket1Records.get(1).getNormalizedProbability(), ERROR);
-
-        Bucket bucket2 = buckets.get(1);
-        assertEquals(0.15, bucket2.getMaxNormalizedProbability(), ERROR);
-        List<AnomalyRecord> bucket2Records = bucket2.getRecords();
-        assertEquals(0.13, bucket2Records.get(0).getNormalizedProbability(), ERROR);
-        assertEquals(0.15, bucket2Records.get(1).getNormalizedProbability(), ERROR);
-
-        Bucket bucket3 = buckets.get(2);
-        assertEquals(0.11, bucket3.getMaxNormalizedProbability(), ERROR);
-        List<AnomalyRecord> bucket3Records = bucket3.getRecords();
-        assertEquals(0.11, bucket3Records.get(0).getNormalizedProbability(), ERROR);
-        assertEquals(0.11, bucket3Records.get(1).getNormalizedProbability(), ERROR);
     }
 
     private static List<Bucket> createBuckets(double[] anomalyScorePerBucket,

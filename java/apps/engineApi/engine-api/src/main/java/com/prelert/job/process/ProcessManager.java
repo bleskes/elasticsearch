@@ -77,7 +77,7 @@ import com.prelert.job.process.writer.DataToProcessWriter;
 import com.prelert.job.process.writer.DataToProcessWriterFactory;
 import com.prelert.job.process.writer.LengthEncodedWriter;
 import com.prelert.job.process.writer.RecordWriter;
-import com.prelert.job.quantiles.QuantilesState;
+import com.prelert.job.quantiles.Quantiles;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.job.status.StatusReporter;
@@ -382,10 +382,10 @@ public class ProcessManager
 
         Logger logger = createLogger(job.getId());
 
-        QuantilesState quantilesState = null;
+        Quantiles quantiles = null;
         if (restoreState)
         {
-            quantilesState = m_JobProvider.getQuantilesState(jobId);
+            quantiles = m_JobProvider.getQuantiles(jobId);
         }
 
         Process nativeProcess = null;
@@ -394,7 +394,7 @@ public class ProcessManager
         {
             // if state is null or empty it will be ignored
             // else it is used to restore the quantiles
-            nativeProcess = ProcessCtrl.buildAutoDetect(job, quantilesState, logger, filesToDelete);
+            nativeProcess = ProcessCtrl.buildAutoDetect(job, quantiles, logger, filesToDelete);
         }
         catch (IOException e)
         {

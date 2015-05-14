@@ -379,6 +379,7 @@ public class ElasticsearchPersister implements JobResultsPersister
     {
         return jsonBuilder().startObject()
                 .field(Quantiles.ID, quantiles.getId())
+                .field(Quantiles.VERSION, quantiles.getVersion())
                 .field(Quantiles.QUANTILE_STATE, quantiles.getState())
                 .endObject();
     }

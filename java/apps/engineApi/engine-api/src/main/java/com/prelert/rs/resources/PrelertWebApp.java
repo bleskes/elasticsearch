@@ -113,7 +113,7 @@ public class PrelertWebApp extends Application
 		String portRange = System.getProperty(ES_TRANSPORT_PORT_RANGE);
 
 
-		ElasticsearchJobProvider esJob = new ElasticsearchJobProvider(
+		ElasticsearchJobProvider esJob = ElasticsearchJobProvider.create(
 				elasticSearchClusterName, portRange);
 
 		m_JobManager = new JobManager(esJob, createProcessManager(esJob));

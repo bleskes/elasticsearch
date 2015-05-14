@@ -53,41 +53,22 @@ public class QuantilesTest
     public void testEquals_GivenEqualQuantilesObject()
     {
         Quantiles quantiles1 = new Quantiles();
-        quantiles1.setKind("foo");
-        quantiles1.setState("bar");
+        quantiles1.setState("foo");
 
         Quantiles quantiles2 = new Quantiles();
-        quantiles2.setKind("foo");
-        quantiles2.setState("bar");
+        quantiles2.setState("foo");
 
         assertTrue(quantiles1.equals(quantiles2));
         assertTrue(quantiles2.equals(quantiles1));
     }
 
     @Test
-    public void testEquals_GivenDifferentKind()
-    {
-        Quantiles quantiles1 = new Quantiles();
-        quantiles1.setKind("foo1");
-        quantiles1.setState("bar");
-
-        Quantiles quantiles2 = new Quantiles();
-        quantiles2.setKind("foo2");
-        quantiles2.setState("bar");
-
-        assertFalse(quantiles1.equals(quantiles2));
-        assertFalse(quantiles2.equals(quantiles1));
-    }
-
-    @Test
     public void testEquals_GivenDifferentState()
     {
         Quantiles quantiles1 = new Quantiles();
-        quantiles1.setKind("foo");
         quantiles1.setState("bar1");
 
         Quantiles quantiles2 = new Quantiles();
-        quantiles2.setKind("foo");
         quantiles2.setState("bar2");
 
         assertFalse(quantiles1.equals(quantiles2));
@@ -98,12 +79,10 @@ public class QuantilesTest
     public void testHashCode_GivenEqualObject()
     {
         Quantiles quantiles1 = new Quantiles();
-        quantiles1.setKind("foo");
-        quantiles1.setState("bar");
+        quantiles1.setState("foo");
 
         Quantiles quantiles2 = new Quantiles();
-        quantiles2.setKind("foo");
-        quantiles2.setState("bar");
+        quantiles2.setState("foo");
 
         assertEquals(quantiles1.hashCode(), quantiles2.hashCode());
     }
