@@ -87,6 +87,7 @@ public class ChainTransformTests extends ElasticsearchTestCase {
                 .startObject().startObject("named").field("name", "name1").endObject().endObject()
                 .startObject().startObject("named").field("name", "name2").endObject().endObject()
                 .startObject().startObject("named").field("name", "name3").endObject().endObject()
+                .startObject().field("named", "name4").endObject()
                 .endArray();
 
         XContentParser parser = JsonXContent.jsonXContent.createParser(builder.bytes());
@@ -94,7 +95,7 @@ public class ChainTransformTests extends ElasticsearchTestCase {
         ExecutableChainTransform executable = transformParser.parseExecutable("_id", parser);
         assertThat(executable, notNullValue());
         assertThat(executable.transform().getTransforms(), notNullValue());
-        assertThat(executable.transform().getTransforms(), hasSize(3));
+        assertThat(executable.transform().getTransforms(), hasSize(4));
         for (int i = 0; i < executable.transform().getTransforms().size(); i++) {
             assertThat(executable.executableTransforms().get(i), instanceOf(NamedExecutableTransform.class));
             assertThat(((NamedExecutableTransform) executable.executableTransforms().get(i)).transform().name, is("name" + (i + 1)));
@@ -169,6 +170,9 @@ public class ChainTransformTests extends ElasticsearchTestCase {
 
             @Override
             public Transform parseTransform(String watchId, XContentParser parser) throws IOException {
+                if (parser.currentToken() == XContentParser.Token.VALUE_STRING) {
+                    return new Transform(parser.text());
+                }
                 assert parser.currentToken() == XContentParser.Token.START_OBJECT;
                 XContentParser.Token token = parser.nextToken();
                 assert token == XContentParser.Token.FIELD_NAME; // the "name" field
@@ -198,6 +202,5 @@ public class ChainTransformTests extends ElasticsearchTestCase {
                 return new NamedExecutableTransform(transform);
             }
         }
-
     }
 }
