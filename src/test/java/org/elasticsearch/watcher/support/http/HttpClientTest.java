@@ -26,6 +26,8 @@ import org.elasticsearch.common.base.Charsets;
 import org.elasticsearch.common.collect.ImmutableMap;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.test.ElasticsearchTestCase;
+import org.elasticsearch.test.junit.annotations.Network;
+import org.elasticsearch.test.rest.client.http.HttpRequestBuilder;
 import org.elasticsearch.watcher.support.http.auth.HttpAuthFactory;
 import org.elasticsearch.watcher.support.http.auth.HttpAuthRegistry;
 import org.elasticsearch.watcher.support.http.auth.basic.BasicAuth;
@@ -40,6 +42,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 
@@ -62,7 +65,7 @@ public class HttpClientTest extends ElasticsearchTestCase {
             try {
                 webServer = new MockWebServer();
                 webServer.start(webPort);
-                httpClient = new HttpClient(ImmutableSettings.EMPTY, authRegistry);
+                httpClient = new HttpClient(ImmutableSettings.EMPTY, authRegistry).start();
                 return;
             } catch (BindException be) {
                 logger.warn("port [{}] was already in use trying next port", webPort);
@@ -151,7 +154,7 @@ public class HttpClientTest extends ElasticsearchTestCase {
                 ImmutableSettings.builder()
                         .put(HttpClient.SETTINGS_SSL_TRUSTSTORE, resource.toString())
                         .put(HttpClient.SETTINGS_SSL_TRUSTSTORE_PASSWORD, "testnode")
-                        .build(), authRegistry);
+                        .build(), authRegistry).start();
         webServer.useHttps(httpClient.getSslSocketFactory(), false);
 
         webServer.enqueue(new MockResponse().setResponseCode(200).setBody("body"));
@@ -181,5 +184,16 @@ public class HttpClientTest extends ElasticsearchTestCase {
         assertThat(response.body(), nullValue());
     }
 
+    @Test
+    @Network
+    public void testHttpsWithoutTruststore() throws Exception {
+        HttpClient httpClient = new HttpClient(ImmutableSettings.EMPTY, authRegistry).start();
+        // Known server with a valid cert from a commercial CA
+        HttpRequest.Builder request = HttpRequest.builder("www.elastic.co", 443).scheme(Scheme.HTTPS);
+        HttpResponse response = httpClient.execute(request.build());
+        assertThat(response.status(), equalTo(200));
+        assertThat(response.hasContent(), is(true));
+        assertThat(response.body(), notNullValue());
+    }
 
 }
