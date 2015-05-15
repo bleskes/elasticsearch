@@ -30,7 +30,7 @@ package com.prelert.rs.provider;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 
-import com.prelert.job.exceptions.DataUploadException;
+import com.prelert.job.process.exceptions.DataUploadException;
 import com.prelert.rs.data.ApiError;
 import com.prelert.rs.data.ErrorCode;
 
