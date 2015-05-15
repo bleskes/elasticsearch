@@ -25,7 +25,7 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.exceptions;
+package com.prelert.job.process.exceptions;
 
 import com.prelert.job.DataCounts;
 
