@@ -48,7 +48,7 @@ public abstract class InputFactory<I extends Input, R extends Input.Result, E ex
      */
     public abstract E createExecutable(I input);
 
-    public ExecutableInput parseExecutable(String watchId, XContentParser parser) throws IOException {
+    public E parseExecutable(String watchId, XContentParser parser) throws IOException {
         I input = parseInput(watchId, parser);
         return createExecutable(input);
     }

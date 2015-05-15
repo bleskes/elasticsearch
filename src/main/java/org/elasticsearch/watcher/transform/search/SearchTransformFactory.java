@@ -21,6 +21,7 @@ import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.watcher.support.DynamicIndexName;
 import org.elasticsearch.watcher.support.init.proxy.ClientProxy;
 import org.elasticsearch.watcher.transform.TransformFactory;
 
@@ -32,11 +33,14 @@ import java.io.IOException;
 public class SearchTransformFactory extends TransformFactory<SearchTransform, SearchTransform.Result, ExecutableSearchTransform> {
 
     protected final ClientProxy client;
+    protected final DynamicIndexName.Parser indexNameParser;
 
     @Inject
     public SearchTransformFactory(Settings settings, ClientProxy client) {
         super(Loggers.getLogger(ExecutableSearchTransform.class, settings));
         this.client = client;
+        String defaultDateFormat = DynamicIndexName.defaultDateFormat(settings, "watcher.transform.search");
+        this.indexNameParser = new DynamicIndexName.Parser(defaultDateFormat);
     }
 
     @Override
@@ -51,6 +55,6 @@ public class SearchTransformFactory extends TransformFactory<SearchTransform, Se
 
     @Override
     public ExecutableSearchTransform createExecutable(SearchTransform transform) {
-        return new ExecutableSearchTransform(transform, transformLogger, client);
+        return new ExecutableSearchTransform(transform, transformLogger, client, indexNameParser);
     }
 }
