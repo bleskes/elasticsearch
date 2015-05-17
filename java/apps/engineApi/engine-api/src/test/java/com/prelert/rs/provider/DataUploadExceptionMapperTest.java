@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -24,69 +24,40 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.rs.data.parsing;
 
-import com.prelert.rs.data.Bucket;
+package com.prelert.rs.provider;
 
-/**
- * The observer class for alerting
- *
- * Abstract class, concrete sub-classes should implement {@linkplain #fire(Bucket)}
- */
-public abstract class AlertObserver
+import static org.junit.Assert.assertEquals;
+
+import javax.ws.rs.core.Response;
+
+import org.junit.Test;
+
+import com.prelert.job.DataCounts;
+import com.prelert.job.process.exceptions.DataUploadException;
+
+public class DataUploadExceptionMapperTest
 {
-	private double m_AnomalyThreshold;
-	private double m_NormalisedThreshold;
+    @Test
+    public void testToResponse()
+    {
+        DataCounts dataCounts = new DataCounts();
+        dataCounts.setProcessedRecordCount(3000);
+        dataCounts.setInvalidDateCount(3);
+        dataCounts.setMissingFieldCount(5);
+        dataCounts.setOutOfOrderTimeStampCount(1);
+        DataUploadException dataUploadException = new DataUploadException(dataCounts,
+                new IllegalArgumentException("foo"));
 
-	public AlertObserver(double normlizedProbThreshold, double anomalyThreshold)
-	{
-		m_AnomalyThreshold = anomalyThreshold;
-		m_NormalisedThreshold = normlizedProbThreshold;
-	}
+        Response response = new DataUploadExceptionMapper().toResponse(dataUploadException);
 
-	/**
-	 * Return true if the alert should be fired for these values.
-	 *
-	 * @param normalisedProb
-	 * @param anomalyScore
-	 * @return
-	 */
-	public boolean evaluate(double normalisedProb, double anomalyScore)
-	{
-		return normalisedProb >= m_NormalisedThreshold ||
-				anomalyScore  >= m_AnomalyThreshold;
-	}
-
-	public boolean isAnomalyScoreAlert(double anomalyScore)
-	{
-		return anomalyScore >= m_AnomalyThreshold;
-	}
-
-	/**
-	 * Fire the alert with the bucket the alert came from
-	 *
-	 * @param bucket
-	 */
-	public abstract void fire(Bucket bucket);
-
-
-	public double getAnomalyThreshold()
-	{
-		return m_AnomalyThreshold;
-	}
-
-	public void setAnomalyThreshold(double anomalyThreshold)
-	{
-		m_AnomalyThreshold = anomalyThreshold;
-	}
-
-	public double getNormalisedProbThreshold()
-	{
-		return m_NormalisedThreshold;
-	}
-
-	public void setNormalisedProbThreshold(double normalisedThreshold)
-	{
-		m_NormalisedThreshold = normalisedThreshold;
-	}
+        String expected = "";
+        expected += "{\n";
+        expected += "  \"message\" : \"An error occurred after processing 3004 records. "
+                + "(invalidDateCount = 3, missingFieldCount = 5, outOfOrderTimeStampCount = 1)\",\n";
+        expected += "  \"errorCode\" : 30001,\n";
+        expected += "  \"cause\" : \"java.lang.IllegalArgumentException: foo\"\n";
+        expected += "}\n";
+        assertEquals(expected, response.getEntity());
+    }
 }

@@ -59,12 +59,14 @@ import com.prelert.job.DataCounts;
 import com.prelert.job.DataDescription;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobStatus;
+import com.prelert.job.alert.AlertObserver;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.persistence.DataPersisterFactory;
 import com.prelert.job.persistence.JobDataPersister;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.process.exceptions.ClosedJobException;
+import com.prelert.job.process.exceptions.DataUploadException;
 import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
@@ -83,7 +85,6 @@ import com.prelert.job.status.StatusReporterFactory;
 import com.prelert.job.transform.TransformConfigs;
 import com.prelert.job.usage.UsageReporterFactory;
 import com.prelert.rs.data.ErrorCode;
-import com.prelert.rs.data.parsing.AlertObserver;
 
 /**
  * Manages the native processes channelling data to them and parsing the
@@ -211,7 +212,7 @@ public class ProcessManager
         OutOfOrderRecordsException, MalformedJsonException
     {
         JobDataPersister persister = params.isPersisting() ? m_DataPersisterFactory
-                .newDataPersister(jobId, LOGGER) : m_DataPersisterFactory.newNoneDataPersister();
+                .newDataPersister(jobId) : m_DataPersisterFactory.newNoneDataPersister();
         return processDataLoadJob(jobId, input, persister, params);
     }
 
@@ -815,22 +816,48 @@ public class ProcessManager
 
             return writer.write(input);
         }
+        catch (RuntimeException e)
+        {
+            // finish reporting status to persist stats but catch any
+            // exception so it does not suppress any exception thrown in the try block
+            tryFinishReporting(statusReporter, jobLogger);
+
+            DataUploadException dataUploadException = new DataUploadException(
+                    statusReporter.incrementalStats(), e);
+            LOGGER.error(dataUploadException.getMessage(), e);
+            throw dataUploadException;
+        }
         finally
         {
-            // flush the writer but catch the exception so it
-            // does not suppress any exception thrown in the
-            // try block
-            try
-            {
-                lengthEncodedWriter.flush();
-            }
-            catch (IOException e)
-            {
-                jobLogger.warn("Exception flushing lengthEncodedWriter", e);
-            }
+            // flush the writer but catch any exception so it does not suppress
+            // any exception thrown in the try block
+            tryFlushingWriter(lengthEncodedWriter, jobLogger);
         }
     }
 
+    private static void tryFinishReporting(StatusReporter statusReporter, Logger jobLogger)
+    {
+        try
+        {
+            statusReporter.finishReporting();
+        }
+        catch (Exception statusReporterException)
+        {
+            jobLogger.warn("Exception while trying to finish reporting", statusReporterException);
+        }
+    }
+
+    private static void tryFlushingWriter(LengthEncodedWriter lengthEncodedWriter, Logger jobLogger)
+    {
+        try
+        {
+            lengthEncodedWriter.flush();
+        }
+        catch (IOException e)
+        {
+            jobLogger.warn("Exception flushing lengthEncodedWriter", e);
+        }
+    }
 
     /**
      * Add the timeout schedule for <code>jobId</code>.
@@ -1159,6 +1186,6 @@ public class ProcessManager
 
     public void deletePersistedData(String jobId)
     {
-        m_DataPersisterFactory.newDataPersister(jobId, LOGGER).deleteData();
+        m_DataPersisterFactory.newDataPersister(jobId).deleteData();
     }
 }

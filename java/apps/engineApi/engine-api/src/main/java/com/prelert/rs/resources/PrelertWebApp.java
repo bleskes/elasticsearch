@@ -43,6 +43,7 @@ import com.prelert.job.usage.elasticsearch.ElasticsearchUsageReporterFactory;
 import com.prelert.rs.provider.AcknowledgementWriter;
 import com.prelert.rs.provider.AlertMessageBodyWriter;
 import com.prelert.rs.provider.DataCountsWriter;
+import com.prelert.rs.provider.DataUploadExceptionMapper;
 import com.prelert.rs.provider.ElasticsearchExceptionMapper;
 import com.prelert.rs.provider.JobConfigurationMessageBodyReader;
 import com.prelert.rs.provider.JobExceptionMapper;
@@ -101,6 +102,7 @@ public class PrelertWebApp extends Application
 		m_ResourceClasses.add(ElasticsearchExceptionMapper.class);
 		m_ResourceClasses.add(NativeProcessRunExceptionMapper.class);
 		m_ResourceClasses.add(JobExceptionMapper.class);
+		m_ResourceClasses.add(DataUploadExceptionMapper.class);
 
 
 		String elasticSearchClusterName = System.getProperty(ES_CLUSTER_NAME_PROP);

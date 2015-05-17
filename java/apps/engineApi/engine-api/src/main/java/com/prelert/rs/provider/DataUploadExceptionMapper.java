@@ -25,32 +25,26 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.persistence.elasticsearch;
+package com.prelert.rs.provider;
 
-import org.elasticsearch.client.Client;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.ext.ExceptionMapper;
 
-import com.prelert.job.persistence.DataPersisterFactory;
-import com.prelert.job.persistence.JobDataPersister;
-import com.prelert.job.persistence.none.NoneJobDataPersister;
+import com.prelert.job.process.exceptions.DataUploadException;
+import com.prelert.rs.data.ApiError;
+import com.prelert.rs.data.ErrorCode;
 
-public class ElasticsearchDataPersisterFactory implements DataPersisterFactory
+/**
+ * Exception -> Response mapper for {@linkplain DataUploadException}.
+ */
+public class DataUploadExceptionMapper implements ExceptionMapper<DataUploadException>
 {
-
-    private Client m_Client;
-
-    public ElasticsearchDataPersisterFactory(Client client)
-    {
-        m_Client = client;
-    }
-
     @Override
-    public JobDataPersister newDataPersister(String jobId)
+    public Response toResponse(DataUploadException e)
     {
-        return new ElasticsearchJobDataPersister(jobId, m_Client);
-    }
-
-    @Override
-    public JobDataPersister newNoneDataPersister() {
-        return new NoneJobDataPersister();
+        ApiError error = new ApiError(ErrorCode.DATA_ERROR);
+        error.setCause(e.getCause());
+        error.setMessage(e.getMessage());
+        return Response.serverError().entity(error.toJson()).build();
     }
 }

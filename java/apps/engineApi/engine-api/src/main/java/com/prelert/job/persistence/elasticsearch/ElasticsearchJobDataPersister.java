@@ -47,28 +47,25 @@ import com.prelert.job.persistence.JobDataPersister;
  */
 public class ElasticsearchJobDataPersister extends JobDataPersister
 {
-    public static final String PERSISTED_RECORD_TYPE = "saved-data";
+    private static final Logger LOGGER = Logger.getLogger(ElasticsearchJobDataPersister.class);
+
+    private static final String PERSISTED_RECORD_TYPE = "saved-data";
 
     public static final String TYPE = "saved-data";
 
     private static final int DOC_BUFFER_SIZE = 1000;
 
-    private Client m_Client;
-    private String m_IndexName;
+    private final Client m_Client;
+    private final String m_IndexName;
 
-
-
-    private String [][] m_BufferedRecords;
-    private long [] m_Epochs;
+    private final String [][] m_BufferedRecords;
+    private final long [] m_Epochs;
     private int m_BufferedRecordCount;
 
-    private Logger m_Logger;
-
-    public ElasticsearchJobDataPersister(String jobId, Client client, Logger logger)
+    public ElasticsearchJobDataPersister(String jobId, Client client)
     {
         m_IndexName = jobId + "_raw";
         m_Client = client;
-        m_Logger = logger;
 
         m_BufferedRecords = new String [DOC_BUFFER_SIZE][];
         m_Epochs = new long [DOC_BUFFER_SIZE];
@@ -82,7 +79,7 @@ public class ElasticsearchJobDataPersister extends JobDataPersister
     public void persistRecord(long epoch, String [] record)
     {
         if (isIndexExisting() == false) {
-            m_Logger.info("Data will be persisted in the index " + m_IndexName);
+            LOGGER.info("Data will be persisted in the index " + m_IndexName);
             createIndex();
         }
 
@@ -96,9 +93,9 @@ public class ElasticsearchJobDataPersister extends JobDataPersister
 
         if (m_BufferedRecordCount == DOC_BUFFER_SIZE)
         {
-        	try
+            try
             {
-        		writeDocs();
+                writeDocs();
             }
             finally
             {
@@ -121,7 +118,7 @@ public class ElasticsearchJobDataPersister extends JobDataPersister
         }
         catch (IOException e)
         {
-            m_Logger.error("Error creating the raw data index " + m_IndexName, e);
+            LOGGER.error("Error creating the raw data index " + m_IndexName, e);
         }
     }
 
@@ -147,69 +144,67 @@ public class ElasticsearchJobDataPersister extends JobDataPersister
 
         for (int count=0; count<m_BufferedRecordCount; count++)
         {
-        	try
-        	{
-        		XContentBuilder jsonBuilder = XContentFactory.jsonBuilder();
+            try
+            {
+                XContentBuilder jsonBuilder = XContentFactory.jsonBuilder();
 
-        		String [] bufferedRecord = m_BufferedRecords[count];
-        		// epoch in ms
-        		jsonBuilder.startObject().field("epoch", m_Epochs[count] * 1000);
-
-
-        		for (int i=0; i<m_FieldNames.length; i++)
-        		{
-        			try
-        			{
-        				jsonBuilder.field(m_FieldNames[i], Double.parseDouble(bufferedRecord[m_FieldMappings[i]]));
-        			}
-        			catch (NumberFormatException e)
-        			{
-        				jsonBuilder.field(m_FieldNames[i], bufferedRecord[m_FieldMappings[i]]);
-        			}
-        		}
-
-        		jsonBuilder.startArray(BY_FIELDS);
-        		for (int i=0; i<m_ByFieldMappings.length; i++)
-        		{
-        			jsonBuilder.value(bufferedRecord[m_ByFieldMappings[i]]);
-        		}
-        		jsonBuilder.endArray();
-
-        		jsonBuilder.startArray(OVER_FIELDS);
-        		for (int i=0; i<m_OverFieldMappings.length; i++)
-        		{
-        			jsonBuilder.value(bufferedRecord[m_OverFieldMappings[i]]);
-        		}
-        		jsonBuilder.endArray();
-
-        		jsonBuilder.startArray(PARTITION_FIELDS);
-        		for (int i=0; i<m_PartitionFieldMappings.length; i++)
-        		{
-        			jsonBuilder.value(bufferedRecord[m_PartitionFieldMappings[i]]);
-        		}
-        		jsonBuilder.endArray();
-
-        		jsonBuilder.endObject();
+                String [] bufferedRecord = m_BufferedRecords[count];
+                // epoch in ms
+                jsonBuilder.startObject().field("epoch", m_Epochs[count] * 1000);
 
 
-        		bulkRequest.add(m_Client.prepareIndex(m_IndexName, PERSISTED_RECORD_TYPE)
-        				.setSource(jsonBuilder));
+                for (int i=0; i<m_FieldNames.length; i++)
+                {
+                    try
+                    {
+                        jsonBuilder.field(m_FieldNames[i], Double.parseDouble(bufferedRecord[m_FieldMappings[i]]));
+                    }
+                    catch (NumberFormatException e)
+                    {
+                        jsonBuilder.field(m_FieldNames[i], bufferedRecord[m_FieldMappings[i]]);
+                    }
+                }
 
-        		m_BufferedRecords[count] = null; // free mem
+                jsonBuilder.startArray(BY_FIELDS);
+                for (int i=0; i<m_ByFieldMappings.length; i++)
+                {
+                    jsonBuilder.value(bufferedRecord[m_ByFieldMappings[i]]);
+                }
+                jsonBuilder.endArray();
 
-        	}
-        	catch (IOException e)
-        	{
-        		m_Logger.error("Error creating json builder", e);
-        	}
+                jsonBuilder.startArray(OVER_FIELDS);
+                for (int i=0; i<m_OverFieldMappings.length; i++)
+                {
+                    jsonBuilder.value(bufferedRecord[m_OverFieldMappings[i]]);
+                }
+                jsonBuilder.endArray();
+
+                jsonBuilder.startArray(PARTITION_FIELDS);
+                for (int i=0; i<m_PartitionFieldMappings.length; i++)
+                {
+                    jsonBuilder.value(bufferedRecord[m_PartitionFieldMappings[i]]);
+                }
+                jsonBuilder.endArray();
+
+                jsonBuilder.endObject();
+
+
+                bulkRequest.add(m_Client.prepareIndex(m_IndexName, PERSISTED_RECORD_TYPE)
+                        .setSource(jsonBuilder));
+
+                m_BufferedRecords[count] = null; // free mem
+
+            }
+            catch (IOException e)
+            {
+                LOGGER.error("Error creating json builder", e);
+            }
         }
-
-
 
         BulkResponse bulkResponse = bulkRequest.execute().actionGet();
         if (bulkResponse.hasFailures())
         {
-            m_Logger.error("Errors writing raw job data: " +
+            LOGGER.error("Errors writing raw job data: " +
                     bulkResponse.buildFailureMessage());
         }
     }
@@ -221,7 +216,7 @@ public class ElasticsearchJobDataPersister extends JobDataPersister
         {
             return false;
         }
-        m_Logger.debug("Deleting the raw data index " + m_IndexName);
+        LOGGER.debug("Deleting the raw data index " + m_IndexName);
 
         // we don't care about errors here as the
         // the index may not exist anyway
@@ -234,7 +229,7 @@ public class ElasticsearchJobDataPersister extends JobDataPersister
         }
         catch (InterruptedException|ExecutionException e)
         {
-            m_Logger.warn("Error deleting the raw data index", e);
+            LOGGER.warn("Error deleting the raw data index", e);
             return false;
         }
     }

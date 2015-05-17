@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -25,32 +25,30 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.persistence.elasticsearch;
+package com.prelert.job.process.exceptions;
 
-import org.elasticsearch.client.Client;
+import com.prelert.job.DataCounts;
 
-import com.prelert.job.persistence.DataPersisterFactory;
-import com.prelert.job.persistence.JobDataPersister;
-import com.prelert.job.persistence.none.NoneJobDataPersister;
-
-public class ElasticsearchDataPersisterFactory implements DataPersisterFactory
+/**
+ * This exception is meant to be a wrapper around RuntimeExceptions
+ * that may be thrown during data upload. The exception message
+ * provides info of the status of the upload up until the point
+ * it failed in order to facilitate users to recover.
+ */
+public class DataUploadException extends RuntimeException
 {
+    private static final long serialVersionUID = 1L;
 
-    private Client m_Client;
+    private static final String MSG_FORMAT = "An error occurred after processing %d records. "
+            + "(invalidDateCount = %d, missingFieldCount = %d, outOfOrderTimeStampCount = %d)";
 
-    public ElasticsearchDataPersisterFactory(Client client)
+    public DataUploadException(DataCounts dataCounts, Throwable cause)
     {
-        m_Client = client;
-    }
-
-    @Override
-    public JobDataPersister newDataPersister(String jobId)
-    {
-        return new ElasticsearchJobDataPersister(jobId, m_Client);
-    }
-
-    @Override
-    public JobDataPersister newNoneDataPersister() {
-        return new NoneJobDataPersister();
+        super(String.format(MSG_FORMAT,
+                dataCounts.getInputRecordCount(),
+                dataCounts.getInvalidDateCount(),
+                dataCounts.getMissingFieldCount(),
+                dataCounts.getOutOfOrderTimeStampCount()),
+                cause);
     }
 }

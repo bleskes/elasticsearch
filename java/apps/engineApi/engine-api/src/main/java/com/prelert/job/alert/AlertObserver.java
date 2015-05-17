@@ -24,61 +24,61 @@
  *                                                          *
  *                                                          *
  ************************************************************/
+package com.prelert.job.alert;
 
-package com.prelert.rs.resources;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-import java.net.URI;
-import java.util.HashSet;
-import java.util.Set;
-
-import javax.ws.rs.core.Application;
-import javax.ws.rs.core.UriInfo;
-
-import org.glassfish.jersey.uri.internal.JerseyUriBuilder;
-
-import com.prelert.job.alert.manager.AlertManager;
-import com.prelert.job.manager.JobManager;
+import com.prelert.rs.data.Bucket;
 
 /**
- * Test base class for testing the REST end-points.
+ * The observer class for alerting
+ *
+ * Abstract class, concrete sub-classes should implement {@linkplain #fire(Bucket)}
  */
-public class ServiceTest
+public abstract class AlertObserver
 {
-    protected static final URI BASE_URI = new JerseyUriBuilder().uri("http://localhost/test").build();
+    /** If null, it means it was not specified. */
+    private final Double m_AnomalyThreshold;
 
-    protected final JobManager m_JobManager;
-    protected final AlertManager m_AlertManager;
-    protected final UriInfo m_UriInfo;
+    /** If null, it means it was not specified. */
+    private final Double m_NormalisedThreshold;
 
-    protected ServiceTest()
+    public AlertObserver(Double normlizedProbThreshold, Double anomalyThreshold)
     {
-        m_JobManager = mock(JobManager.class);
-        m_AlertManager = mock(AlertManager.class);
-        m_UriInfo = mock(UriInfo.class);
-        when(m_UriInfo.getBaseUri()).thenReturn(BASE_URI);
+        m_AnomalyThreshold = anomalyThreshold;
+        m_NormalisedThreshold = normlizedProbThreshold;
     }
 
-    protected void configureService(ResourceWithJobManager service)
+    /**
+     * Return true if the alert should be fired for these values.
+     *
+     * @param anomalyScore
+     * @param normalisedProb
+     * @return
+     */
+    public boolean evaluate(double anomalyScore, double normalisedProb)
     {
-        Set<Object> singletons = new HashSet<>();
-        singletons.add(m_JobManager);
-        singletons.add(m_AlertManager);
-        Application application = mock(Application.class);
-        when(application.getSingletons()).thenReturn(singletons);
-        service.setApplication(application);
-        service.setUriInfo(m_UriInfo);
+        return isGreaterOrEqual(normalisedProb, m_NormalisedThreshold)
+                || isGreaterOrEqual(anomalyScore, m_AnomalyThreshold);
     }
 
-    protected JobManager jobManager()
+    private static boolean isGreaterOrEqual(double value, Double threshold)
     {
-        return m_JobManager;
+        return threshold == null ? false : value >= threshold;
     }
 
-    protected AlertManager alertManager()
+    public boolean isAnomalyScoreAlert(double anomalyScore)
     {
-        return m_AlertManager;
+        return isGreaterOrEqual(anomalyScore, m_AnomalyThreshold);
+    }
+
+    /**
+     * Fire the alert with the bucket the alert came from
+     *
+     * @param bucket
+     */
+    public abstract void fire(Bucket bucket);
+
+    public double getNormalisedProbThreshold()
+    {
+        return m_NormalisedThreshold == null ? 101.0 : m_NormalisedThreshold;
     }
 }

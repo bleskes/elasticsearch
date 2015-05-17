@@ -30,7 +30,6 @@ package com.prelert.job.persistence.elasticsearch;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 
-import org.apache.log4j.Logger;
 import org.elasticsearch.client.Client;
 import org.junit.Test;
 
@@ -46,7 +45,7 @@ public class ElasticsearchDataPersisterFactoryTest
         Client client = mock(Client.class);
         ElasticsearchDataPersisterFactory factory = new ElasticsearchDataPersisterFactory(client);
 
-        JobDataPersister persister = factory.newDataPersister("foo", mock(Logger.class));
+        JobDataPersister persister = factory.newDataPersister("foo");
 
         assertTrue(persister instanceof ElasticsearchJobDataPersister);
     }

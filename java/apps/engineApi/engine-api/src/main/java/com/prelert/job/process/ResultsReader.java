@@ -27,7 +27,7 @@
 
 package com.prelert.job.process;
 
-import com.prelert.rs.data.parsing.AlertObserver;
+import com.prelert.job.alert.AlertObserver;
 
 /**
  * A runnable class that reads the autodetect results.
