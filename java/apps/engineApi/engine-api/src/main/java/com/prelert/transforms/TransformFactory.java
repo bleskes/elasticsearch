@@ -141,6 +141,10 @@ public class TransformFactory
             case EXCLUDE_FILTER:
                 return new ExcludeFilter(transformConfig.getArguments().get(0), readIndicies,
                                             writeIndicies, logger);
+            case EXCLUDE_FILTER_NUMERIC:
+                return new ExcludeFilterNumeric(transformConfig.getArguments(), readIndicies,
+                                            writeIndicies, logger);
+
 			default:
 				// This code will never be hit it's to
 				// keep the compiler happy.

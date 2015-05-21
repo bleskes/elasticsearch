@@ -94,9 +94,6 @@ public class TransformConfigs implements Verifiable
              throw new TransformConfigurationException(msg, ErrorCode.DUPLICATED_TRANSFORM_OUTPUT_NAME);
         }
 
-        // TODO check inputs/outputs are used
-
-
         // Check for circular dependencies
         int index = TransformConfigs.checkForCircularDependencies(m_Transforms);
         if (index >= 0)

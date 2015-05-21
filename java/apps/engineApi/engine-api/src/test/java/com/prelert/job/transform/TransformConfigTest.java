@@ -42,6 +42,7 @@ import com.prelert.job.transform.TransformConfig;
 import com.prelert.job.transform.TransformConfigurationException;
 import com.prelert.job.transform.TransformType;
 import com.prelert.rs.data.ErrorCode;
+import com.prelert.transforms.Operation;
 
 
 public class TransformConfigTest
@@ -88,9 +89,18 @@ public class TransformConfigTest
             }
 
             List<String> initArgs = new ArrayList<>();
-            for (int arg = 0; arg < type.argumentCount(); ++arg)
+            if (type == TransformType.EXCLUDE_FILTER_NUMERIC)
             {
-                initArgs.add(Integer.toString(arg));
+                // this one needs specific arguments that are verified
+                initArgs.add(Operation.EQ.toString());
+                initArgs.add("100");
+            }
+            else
+            {
+                for (int arg = 0; arg < type.argumentCount(); ++arg)
+                {
+                    initArgs.add(Integer.toString(arg));
+                }
             }
 
             TransformConfig tr = new TransformConfig();

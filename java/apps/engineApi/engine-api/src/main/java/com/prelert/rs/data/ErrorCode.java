@@ -174,6 +174,11 @@ public enum ErrorCode
      */
     DATA_FORMAT_IS_SINGLE_LINE_BUT_NO_TRANSFORMS(10207),
 
+    /**
+     * The argument(s) supplied to the transform are invalid
+     */
+    TRANSFORM_INVALID_ARGUMENT(10208),
+
 
 	// Data store errors
 	/**

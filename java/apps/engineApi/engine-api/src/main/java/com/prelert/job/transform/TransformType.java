@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.prelert.rs.data.ErrorCode;
+import com.prelert.transforms.ExcludeFilterNumeric;
 
 /**
  * Enum type representing the different transform functions
@@ -45,7 +46,16 @@ public enum TransformType
     CONCAT(Names.CONCAT, Names.VARIADIC_ARGS, 0, 1, Arrays.asList("concat")),
     REGEX_EXTRACT(Names.EXTRACT, 1, 1, 0, Arrays.asList("")),
     REGEX_SPLIT(Names.SPLIT, 1, 1, 0, Arrays.asList("")),
-    EXCLUDE_FILTER(Names.EXCLUDE_FILTER, 1, 1, 0, Arrays.asList());
+    EXCLUDE_FILTER(Names.EXCLUDE_FILTER, 1, 1, 0, Arrays.asList()),
+    EXCLUDE_FILTER_NUMERIC(Names.EXCLUDE_FILTER_NUMERIC, 1, 2, 0, Arrays.asList())
+    {
+        @Override
+        public boolean verifyArguments(List<String> args)
+        throws TransformConfigurationException
+        {
+            return ExcludeFilterNumeric.verifyArguments(args);
+        }
+    };
 
     /**
      * Enums cannot use static fields in their constructors as the
@@ -60,6 +70,7 @@ public enum TransformType
         public static final String EXTRACT = "extract";
         public static final String SPLIT = "split";
         public static final String EXCLUDE_FILTER = "exclude_filter";
+        public static final String EXCLUDE_FILTER_NUMERIC = "exclude_filter_number";
 
         private static final int VARIADIC_ARGS = -1;
 
@@ -167,6 +178,18 @@ public enum TransformType
             throw new TransformConfigurationException(msg, ErrorCode.INCORRECT_TRANSFORM_INPUT_COUNT);
         }
 
+        return verifyArguments(tc.getArguments());
+    }
+
+    /**
+     * The default implementation accepts any args transforms that
+     * have meaningful arguments should override this
+     * @param args
+     * @return
+     */
+    public boolean verifyArguments(List<String> args)
+    throws TransformConfigurationException
+    {
         return true;
     }
 
