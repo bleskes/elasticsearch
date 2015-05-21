@@ -44,6 +44,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public enum ErrorCode
 {
+    /**
+     * Represents unknown errors typically those cause by
+     * internal server errors
+     */
+    UNKNOWN_ERROR(0),
+
 	// job create errors
 	/**
 	 * The JSON configuration supplied to create a job
