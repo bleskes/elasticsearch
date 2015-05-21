@@ -26,6 +26,7 @@ import org.elasticsearch.watcher.WatcherState;
 import org.elasticsearch.watcher.WatcherVersion;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.watcher.execution.QueuedWatch;
 import org.elasticsearch.watcher.execution.WatchExecutionSnapshot;
 
 import java.io.IOException;
@@ -43,6 +44,7 @@ public class WatcherStatsResponse extends ActionResponse implements ToXContent {
     private long watchExecutionQueueMaxSize;
 
     private List<WatchExecutionSnapshot> snapshots;
+    private List<QueuedWatch> queuedWatches;
 
     WatcherStatsResponse() {
     }
@@ -122,6 +124,15 @@ public class WatcherStatsResponse extends ActionResponse implements ToXContent {
         this.snapshots = snapshots;
     }
 
+    @Nullable
+    public List<QueuedWatch> getQueuedWatches() {
+        return queuedWatches;
+    }
+
+    public void setQueuedWatches(List<QueuedWatch> queuedWatches) {
+        this.queuedWatches = queuedWatches;
+    }
+
     @Override
     public void readFrom(StreamInput in) throws IOException {
         super.readFrom(in);
@@ -137,6 +148,13 @@ public class WatcherStatsResponse extends ActionResponse implements ToXContent {
             snapshots = new ArrayList<>(size);
             for (int i = 0; i < size; i++) {
                 snapshots.add(new WatchExecutionSnapshot(in));
+            }
+        }
+        if (in.readBoolean()) {
+            int size = in.readVInt();
+            queuedWatches = new ArrayList<>(size);
+            for (int i = 0; i < size; i++) {
+                queuedWatches.add(new QueuedWatch(in));
             }
         }
     }
@@ -160,6 +178,15 @@ public class WatcherStatsResponse extends ActionResponse implements ToXContent {
         } else {
             out.writeBoolean(false);
         }
+        if (queuedWatches != null) {
+            out.writeBoolean(true);
+            out.writeVInt(queuedWatches.size());
+            for (QueuedWatch pending : this.queuedWatches) {
+                pending.writeTo(out);
+            }
+        } else {
+            out.writeBoolean(false);
+        }
     }
 
     @Override
@@ -176,6 +203,13 @@ public class WatcherStatsResponse extends ActionResponse implements ToXContent {
             builder.startArray("current_watches");
             for (WatchExecutionSnapshot snapshot : snapshots) {
                 snapshot.toXContent(builder, params);
+            }
+            builder.endArray();
+        }
+        if (queuedWatches != null) {
+            builder.startArray("queued_watches");
+            for (QueuedWatch queuedWatch : queuedWatches) {
+                queuedWatch.toXContent(builder, params);
             }
             builder.endArray();
         }
