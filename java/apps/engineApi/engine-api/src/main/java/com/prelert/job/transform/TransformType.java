@@ -70,7 +70,7 @@ public enum TransformType
         public static final String EXTRACT = "extract";
         public static final String SPLIT = "split";
         public static final String EXCLUDE_FILTER = "exclude_filter";
-        public static final String EXCLUDE_FILTER_NUMERIC = "exclude_filter_number";
+        public static final String EXCLUDE_FILTER_NUMERIC = "exclude_filter_numeric";
 
         private static final int VARIADIC_ARGS = -1;
 
