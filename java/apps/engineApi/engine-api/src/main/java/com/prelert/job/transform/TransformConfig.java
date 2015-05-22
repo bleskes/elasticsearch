@@ -32,12 +32,14 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.prelert.job.transform.condition.Condition;
 import com.prelert.job.verification.Verifiable;
 
 /**
  * Represents an API data transform
  */
+@JsonIgnoreProperties({"condition"})
 public class TransformConfig implements Verifiable
 {
     // Serialisation strings
@@ -122,7 +124,7 @@ public class TransformConfig implements Verifiable
         {
             TransformType type = type();
 
-            if (type.hasCondition())
+            if (type.hasCondition() && Condition.verifyArguments(m_Arguments))
             {
                 return Optional.of(new Condition(m_Arguments));
             }
