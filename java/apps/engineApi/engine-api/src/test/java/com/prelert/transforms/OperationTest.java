@@ -31,6 +31,7 @@ import static org.junit.Assert.*;
 import org.junit.Test;
 
 import com.prelert.job.transform.TransformConfigurationException;
+import com.prelert.job.transform.condition.Operation;
 
 public class OperationTest {
 

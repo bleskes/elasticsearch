@@ -32,8 +32,8 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
+import com.prelert.job.transform.condition.Condition;
 import com.prelert.rs.data.ErrorCode;
-import com.prelert.transforms.ExcludeFilterNumeric;
 
 /**
  * Enum type representing the different transform functions
@@ -47,13 +47,13 @@ public enum TransformType
     REGEX_EXTRACT(Names.EXTRACT, 1, 1, 0, Arrays.asList("")),
     REGEX_SPLIT(Names.SPLIT, 1, 1, 0, Arrays.asList("")),
     EXCLUDE_FILTER(Names.EXCLUDE_FILTER, 1, 1, 0, Arrays.asList()),
-    EXCLUDE_FILTER_NUMERIC(Names.EXCLUDE_FILTER_NUMERIC, 1, 2, 0, Arrays.asList())
+    EXCLUDE_FILTER_NUMERIC(Names.EXCLUDE_FILTER_NUMERIC, 1, 2, 0, Arrays.asList(), true)
     {
         @Override
-        public boolean verifyArguments(List<String> args)
+        protected boolean verifyArguments(List<String> args)
         throws TransformConfigurationException
         {
-            return ExcludeFilterNumeric.verifyArguments(args);
+            return Condition.verifyArguments(args);
         }
     };
 
@@ -84,6 +84,7 @@ public enum TransformType
     private final int m_OptionalArgumentCount;
     private final String m_PrettyName;
     private final List<String> m_DefaultOutputNames;
+    private final boolean m_HasCondition;
 
     private TransformType(String prettyName, int arity, int requiredArgumentCount,
                         int optionalArgumentCount, List<String> defaultOutputNames)
@@ -93,6 +94,18 @@ public enum TransformType
         m_OptionalArgumentCount = optionalArgumentCount;
         m_PrettyName = prettyName;
         m_DefaultOutputNames = defaultOutputNames;
+        m_HasCondition = false;
+    }
+
+    private TransformType(String prettyName, int arity, int requiredArgumentCount,
+            int optionalArgumentCount, List<String> defaultOutputNames, boolean hasCondition)
+    {
+        m_Arity = arity;
+        m_ArgumentCount = requiredArgumentCount;
+        m_OptionalArgumentCount = optionalArgumentCount;
+        m_PrettyName = prettyName;
+        m_DefaultOutputNames = defaultOutputNames;
+        m_HasCondition = hasCondition;
     }
 
     /**
@@ -135,6 +148,11 @@ public enum TransformType
     public List<String> defaultOutputNames()
     {
         return m_DefaultOutputNames;
+    }
+
+    public boolean hasCondition()
+    {
+        return m_HasCondition;
     }
 
     public boolean verify(TransformConfig tc) throws TransformConfigurationException
@@ -187,7 +205,7 @@ public enum TransformType
      * @param args
      * @return
      */
-    public boolean verifyArguments(List<String> args)
+    protected boolean verifyArguments(List<String> args)
     throws TransformConfigurationException
     {
         return true;

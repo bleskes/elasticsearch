@@ -44,6 +44,7 @@ import org.junit.Test;
 import com.prelert.job.transform.TransformConfig;
 import com.prelert.job.transform.TransformConfigurationException;
 import com.prelert.job.transform.TransformType;
+import com.prelert.job.transform.condition.Operation;
 import com.prelert.transforms.Transform.TransformIndex;
 
 public class TransformFactoryTest {
@@ -122,17 +123,57 @@ public class TransformFactoryTest {
 			conf.setOutputs(new ArrayList<String>());
 			conf.setTransform(type.prettyName());
 
-			List<String> args = new ArrayList<>();
-			for (int i=0; i<type.argumentCount(); i++)
+			if (type.hasCondition())
 			{
-			    args.add(Integer.toString(i));
+			    conf.setArguments(Arrays.asList("gt", "100"));
 			}
-			conf.setArguments(args);
+			else
+			{
+			    List<String> args = new ArrayList<>();
+			    for (int i=0; i<type.argumentCount(); i++)
+			    {
+			        args.add(Integer.toString(i));
+			    }
+			    conf.setArguments(args);
+			}
+
+
 
 			// throws IllegalArgumentException if it doesn't handle the type
 			new TransformFactory().create(conf, inputIndicies, scratchMap,
 			                    outputIndicies, mock(Logger.class));
 		}
+	}
+
+	@Test
+	public void testExcludeFilterNumericWithoutCondition() throws TransformConfigurationException
+	{
+	    Map<String, Integer> inputIndicies = new HashMap<>();
+	    Map<String, Integer> scratchMap = new HashMap<>();
+	    Map<String, Integer> outputIndicies = new HashMap<>();
+
+
+        TransformConfig conf = new TransformConfig();
+        conf.setInputs(new ArrayList<String>());
+        conf.setOutputs(new ArrayList<String>());
+        conf.setTransform(TransformType.EXCLUDE_FILTER_NUMERIC.prettyName());
+
+
+        ExcludeFilterNumeric transform =
+                (ExcludeFilterNumeric) new TransformFactory().create(conf, inputIndicies,
+                                scratchMap, outputIndicies, mock(Logger.class));
+
+        assertEquals(Operation.LT, transform.getCondition().getOp());
+        assertEquals(0.0, transform.getCondition().getFilterValue(), 0.00001);
+
+        conf.setArguments(Arrays.asList("eq", "100"));
+
+        transform =
+                (ExcludeFilterNumeric) new TransformFactory().create(conf, inputIndicies,
+                                scratchMap, outputIndicies, mock(Logger.class));
+
+        assertEquals(Operation.EQ, transform.getCondition().getOp());
+        assertEquals(100.0, transform.getCondition().getFilterValue(), 0.00001);
 	}
 
 }

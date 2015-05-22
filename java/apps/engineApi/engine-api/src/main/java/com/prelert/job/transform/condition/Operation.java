@@ -24,7 +24,7 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.transforms;
+package com.prelert.job.transform.condition;
 
 import java.util.EnumSet;
 import java.util.Set;
@@ -81,6 +81,11 @@ public enum Operation
     public boolean test(double lhs, double rhs)
     {
         return false;
+    }
+
+    public boolean expectsANumericArgument()
+    {
+        return true;
     }
 
     public static Operation fromString(String name) throws TransformConfigurationException

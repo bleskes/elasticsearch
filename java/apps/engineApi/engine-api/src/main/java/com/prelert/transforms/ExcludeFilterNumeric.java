@@ -30,8 +30,9 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
-import com.prelert.job.transform.TransformConfigurationException;
-import com.prelert.rs.data.ErrorCode;
+import com.prelert.job.transform.condition.Condition;
+import com.prelert.job.transform.condition.Operation;
+
 
 /**
  * Parses a numeric value from a field and compares it against a hard
@@ -39,131 +40,38 @@ import com.prelert.rs.data.ErrorCode;
  */
 public class ExcludeFilterNumeric extends Transform
 {
-    private Operation m_Op = Operation.LT;
-
-    private double m_FilterValue = 0.0;
+    private Condition m_Condition;
 
     /**
-     * The args input should have been verified by now but if they are not
+     * The condition should have been verified by now but if they are not
      * valid then the default of < (less than) and filter of 0.0 are used
      * meaning that no values are excluded.
      *
-     * @param args
+     * @param condition
      * @param readIndicies
      * @param writeIndicies
      * @param logger
      */
-    public ExcludeFilterNumeric(List<String> args, List<TransformIndex> readIndicies,
+    public ExcludeFilterNumeric(Condition condition, List<TransformIndex> readIndicies,
             List<TransformIndex> writeIndicies, Logger logger)
     {
         super(readIndicies, writeIndicies, logger);
-        parseArgs(args);
+        m_Condition = condition;
     }
 
-    public static boolean verifyArguments(List<String> args)
-    throws TransformConfigurationException
+    /**
+     * If no condition then the default is < (less than) and filter
+     * value of 0.0 are used meaning that only -ve values are excluded.
+     *
+     * @param readIndicies
+     * @param writeIndicies
+     * @param logger
+     */
+    public ExcludeFilterNumeric(List<TransformIndex> readIndicies,
+            List<TransformIndex> writeIndicies, Logger logger)
     {
-        if (args.size() < 2)
-        {
-            throw new TransformConfigurationException(
-                    "Not enough arguments for the ExcludeFilterNumeric transform",
-                    ErrorCode.TRANSFORM_INVALID_ARGUMENT_COUNT);
-        }
-
-        try
-        {
-            Operation.fromString(args.get(0));
-            try
-            {
-                Double.parseDouble(args.get(1));
-            }
-            catch (NumberFormatException nfe)
-            {
-                throw new TransformConfigurationException(
-                        "Cannot parse filter value from string " + args.get(1),
-                        ErrorCode.TRANSFORM_INVALID_ARGUMENT);
-            }
-        }
-        catch (TransformConfigurationException tce)
-        {
-            try
-            {
-                // try parsing as number
-                Double.parseDouble(args.get(0));
-                try
-                {
-                    // maybe the op is the second argument
-                    Operation.fromString(args.get(1));
-                }
-                catch (TransformConfigurationException tce2)
-                {
-                    // give up
-                    throw new TransformConfigurationException("Cannot extract a comparison operator" +
-                                "from " + args.get(0) + " or " + args.get(1),
-                                ErrorCode.TRANSFORM_INVALID_ARGUMENT);
-                }
-            }
-            catch (NumberFormatException nfe)
-            {
-                // give up
-                throw new TransformConfigurationException(
-                        "Cannot extract a comparison operation or filter value from " + args.get(0),
-                        ErrorCode.TRANSFORM_INVALID_ARGUMENT);
-            }
-        }
-
-        return true;
-    }
-
-
-    private void parseArgs(List<String> args)
-    {
-        final String defaults = "Using default operator less than and filter value 0.0";
-        if (args.size() < 2)
-        {
-            m_Logger.warn("Not enough arguments for the ExcludeFilterNumeric transform, "
-                    +   defaults);
-            return;
-        }
-
-        try
-        {
-            m_Op = Operation.fromString(args.get(0));
-            try
-            {
-                m_FilterValue = Double.parseDouble(args.get(1));
-            }
-            catch (NumberFormatException nfe)
-            {
-                m_Logger.warn("Cannot parse filter value from string " + args.get(1) +
-                        ". Using default of " + m_FilterValue);
-            }
-        }
-        catch (TransformConfigurationException tce)
-        {
-            try
-            {
-                // try parsing as number
-                m_FilterValue = Double.parseDouble(args.get(0));
-                try
-                {
-                    // maybe the op is the second argument
-                    m_Op = Operation.fromString(args.get(1));
-                }
-                catch (TransformConfigurationException tce2)
-                {
-                    // give up
-                    m_Logger.warn("Cannot extract a comparison operator" +
-                                "from " + args.get(0) + " or " + args.get(1) + ". " + defaults);
-                }
-            }
-            catch (NumberFormatException nfe)
-            {
-                // give up
-                m_Logger.warn("Cannot extract a comparison operation or filter value " +
-                            "from " + args.get(0) + ". " + defaults);
-            }
-        }
+        super(readIndicies, writeIndicies, logger);
+        m_Condition = new Condition(Operation.LT, 0.0);
     }
 
     /**
@@ -182,7 +90,7 @@ public class ExcludeFilterNumeric extends Transform
             {
                 double value = Double.parseDouble(field);
 
-                if (m_Op.test(value, m_FilterValue))
+                if (m_Condition.getOp().test(value, m_Condition.getFilterValue()))
                 {
                     result = TransformResult.FATAL_FAIL;
                     break;
@@ -197,13 +105,8 @@ public class ExcludeFilterNumeric extends Transform
         return result;
     }
 
-    public Operation getOp()
+    public Condition getCondition()
     {
-        return m_Op;
-    }
-
-    public double getFilterValue()
-    {
-        return m_FilterValue;
+        return m_Condition;
     }
 }
