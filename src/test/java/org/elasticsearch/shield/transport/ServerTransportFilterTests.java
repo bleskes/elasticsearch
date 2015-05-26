@@ -25,6 +25,8 @@ import org.elasticsearch.shield.authz.AuthorizationException;
 import org.elasticsearch.shield.authz.AuthorizationService;
 import org.elasticsearch.test.ElasticsearchTestCase;
 import org.elasticsearch.transport.TransportRequest;
+import org.elasticsearch.transport.netty.NettyTransport;
+import org.elasticsearch.transport.netty.NettyTransportChannel;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -39,12 +41,15 @@ public class ServerTransportFilterTests extends ElasticsearchTestCase {
     private AuthenticationService authcService;
     private AuthorizationService authzService;
     private ServerTransportFilter filter;
+    private NettyTransportChannel channel;
 
     @Before
     public void init() throws Exception {
         authcService = mock(AuthenticationService.class);
         authzService = mock(AuthorizationService.class);
-        filter = new ServerTransportFilter.NodeProfile(authcService, authzService, new ShieldActionMapper());
+        channel = mock(NettyTransportChannel.class);
+        when(channel.getProfileName()).thenReturn(NettyTransport.DEFAULT_PROFILE);
+        filter = new ServerTransportFilter.NodeProfile(authcService, authzService, new ShieldActionMapper(), false);
     }
 
     @Test
@@ -52,7 +57,7 @@ public class ServerTransportFilterTests extends ElasticsearchTestCase {
         TransportRequest request = mock(TransportRequest.class);
         User user = mock(User.class);
         when(authcService.authenticate("_action", request, null)).thenReturn(user);
-        filter.inbound("_action", request);
+        filter.inbound("_action", request, channel);
         verify(authzService).authorize(user, "_action", request);
     }
 
@@ -61,7 +66,7 @@ public class ServerTransportFilterTests extends ElasticsearchTestCase {
         TransportRequest request = mock(TransportRequest.class);
         doThrow(new AuthenticationException("authc failed")).when(authcService).authenticate("_action", request, null);
         try {
-            filter.inbound("_action", request);
+            filter.inbound("_action", request, channel);
             fail("expected filter inbound to throw an authentication exception on authentication error");
         } catch (AuthenticationException e) {
             assertThat(e.getMessage(), equalTo("authc failed"));
@@ -76,7 +81,7 @@ public class ServerTransportFilterTests extends ElasticsearchTestCase {
         when(authcService.authenticate("_action", request, null)).thenReturn(user);
         doThrow(new AuthorizationException("authz failed")).when(authzService).authorize(user, "_action", request);
         try {
-            filter.inbound("_action", request);
+            filter.inbound("_action", request, channel);
             fail("expected filter inbound to throw an authorization exception on authorization error");
         } catch (AuthorizationException e) {
             assertThat(e.getMessage(), equalTo("authz failed"));

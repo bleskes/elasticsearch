@@ -22,7 +22,6 @@ import org.elasticsearch.common.collect.ImmutableList;
 import org.elasticsearch.common.collect.ImmutableMap;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.ESLoggerFactory;
-import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.shield.ShieldException;
@@ -39,10 +38,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.BufferedWriter;
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.Map;
@@ -64,8 +62,9 @@ public class FileUserPasswdStoreTests extends ElasticsearchTestCase {
 
     @Before
     public void init() {
-        settings = ImmutableSettings.builder()
+        settings = Settings.builder()
                 .put("watcher.interval.high", "2s")
+                .put("path.home", createTempDir())
                 .build();
         env = new Environment(settings);
         threadPool = new ThreadPool("test");
@@ -79,12 +78,12 @@ public class FileUserPasswdStoreTests extends ElasticsearchTestCase {
     @Test
     public void testStore_ConfiguredWithUnreadableFile() throws Exception {
 
-        Path file = newTempFile().toPath();
+        Path file = createTempFile();
 
         // writing in utf_16 should cause a parsing error as we try to read the file in utf_8
         Files.write(file, ImmutableList.of("aldlfkjldjdflkjd"), Charsets.UTF_16);
 
-        Settings esusersSettings = ImmutableSettings.builder()
+        Settings esusersSettings = Settings.builder()
                 .put("files.users", file.toAbsolutePath())
                 .build();
 
@@ -96,11 +95,11 @@ public class FileUserPasswdStoreTests extends ElasticsearchTestCase {
 
     @Test
     public void testStore_AutoReload() throws Exception {
-        Path users = Paths.get(getClass().getResource("users").toURI());
-        Path tmp = Files.createTempFile(null, null);
-        Files.copy(users, Files.newOutputStream(tmp));
+        Path users = getDataPath("users");
+        Path tmp = createTempFile();
+        Files.copy(users, tmp, StandardCopyOption.REPLACE_EXISTING);
 
-        Settings esusersSettings = ImmutableSettings.builder()
+        Settings esusersSettings = Settings.builder()
                 .put("files.users", tmp.toAbsolutePath())
                 .build();
 
@@ -135,11 +134,11 @@ public class FileUserPasswdStoreTests extends ElasticsearchTestCase {
 
     @Test
     public void testStore_AutoReload_WithParseFailures() throws Exception {
-        Path users = Paths.get(getClass().getResource("users").toURI());
-        Path tmp = Files.createTempFile(null, null);
-        Files.copy(users, Files.newOutputStream(tmp));
+        Path users = getDataPath("users");
+        Path tmp = createTempFile();
+        Files.copy(users, tmp, StandardCopyOption.REPLACE_EXISTING);
 
-        Settings esusersSettings = ImmutableSettings.builder()
+        Settings esusersSettings = Settings.builder()
                 .put("files.users", tmp.toAbsolutePath())
                 .build();
 
@@ -171,7 +170,7 @@ public class FileUserPasswdStoreTests extends ElasticsearchTestCase {
 
     @Test
     public void testParseFile() throws Exception {
-        Path path = Paths.get(getClass().getResource("users").toURI());
+        Path path = getDataPath("users");
         Map<String, char[]> users = FileUserPasswdStore.parseFile(path, null);
         assertThat(users, notNullValue());
         assertThat(users.size(), is(6));
@@ -191,31 +190,31 @@ public class FileUserPasswdStoreTests extends ElasticsearchTestCase {
 
     @Test
     public void testParseFile_Empty() throws Exception {
-        File empty = newTempFile();
+        Path empty = createTempFile();
         ESLogger log = ESLoggerFactory.getLogger("test");
         log = spy(log);
-        ImmutableMap<String, char[]> users = FileUserPasswdStore.parseFile(empty.toPath(), log);
+        ImmutableMap<String, char[]> users = FileUserPasswdStore.parseFile(empty, log);
         assertThat(users.isEmpty(), is(true));
-        verify(log, times(1)).warn(contains("no users found"), eq(empty.toPath().toAbsolutePath()));
+        verify(log, times(1)).warn(contains("no users found"), eq(empty));
     }
 
     @Test
     public void testParseFile_WhenFileDoesNotExist() throws Exception {
-        File file = new File(randomAsciiOfLength(10));
+        Path file = createTempDir().resolve(randomAsciiOfLength(10));
         CapturingLogger logger = new CapturingLogger(CapturingLogger.Level.INFO);
-        Map<String, char[]> users = FileUserPasswdStore.parseFile(file.toPath(), logger);
+        Map<String, char[]> users = FileUserPasswdStore.parseFile(file, logger);
         assertThat(users, notNullValue());
         assertThat(users.isEmpty(), is(true));
     }
 
     @Test
     public void testParseFile_WhenCannotReadFile() throws Exception {
-        File file = newTempFile();
+        Path file = createTempFile();
         // writing in utf_16 should cause a parsing error as we try to read the file in utf_8
-        Files.write(file.toPath(), ImmutableList.of("aldlfkjldjdflkjd"), Charsets.UTF_16);
+        Files.write(file, ImmutableList.of("aldlfkjldjdflkjd"), Charsets.UTF_16);
         CapturingLogger logger = new CapturingLogger(CapturingLogger.Level.INFO);
         try {
-            FileUserPasswdStore.parseFile(file.toPath(), logger);
+            FileUserPasswdStore.parseFile(file, logger);
             fail("expected a parse failure");
         } catch (ShieldException se) {
             this.logger.info("expected", se);
@@ -224,20 +223,20 @@ public class FileUserPasswdStoreTests extends ElasticsearchTestCase {
 
     @Test
     public void testParseFile_InvalidLineDoesNotResultInLoggerNPE() throws Exception {
-        File file = newTempFile();
-        com.google.common.io.Files.write("NotValidUsername=Password\nuser:pass".getBytes(org.elasticsearch.common.base.Charsets.UTF_8), file);
-        Map<String, char[]> users = FileUserPasswdStore.parseFile(file.toPath(), null);
+        Path file = createTempFile();
+        Files.write(file, ImmutableList.of("NotValidUsername=Password", "user:pass"), Charsets.UTF_8);
+        Map<String, char[]> users = FileUserPasswdStore.parseFile(file, null);
         assertThat(users, notNullValue());
         assertThat(users.keySet(), hasSize(1));
     }
 
     @Test
     public void testParseFileLenient_WhenCannotReadFile() throws Exception {
-        File file = newTempFile();
+        Path file = createTempFile();
         // writing in utf_16 should cause a parsing error as we try to read the file in utf_8
-        Files.write(file.toPath(), ImmutableList.of("aldlfkjldjdflkjd"), Charsets.UTF_16);
+        Files.write(file, ImmutableList.of("aldlfkjldjdflkjd"), Charsets.UTF_16);
         CapturingLogger logger = new CapturingLogger(CapturingLogger.Level.INFO);
-        Map<String, char[]> users = FileUserPasswdStore.parseFileLenient(file.toPath(), logger);
+        Map<String, char[]> users = FileUserPasswdStore.parseFileLenient(file, logger);
         assertThat(users, notNullValue());
         assertThat(users.isEmpty(), is(true));
         List<CapturingLogger.Msg> msgs = logger.output(CapturingLogger.Level.ERROR);

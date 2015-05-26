@@ -18,11 +18,14 @@
 package org.elasticsearch.shield.authc.ldap.support;
 
 import com.unboundid.ldap.sdk.*;
+
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.shield.authc.ldap.ShieldLdapException;
 
 import javax.naming.ldap.Rdn;
+
 import java.text.MessageFormat;
+import java.util.Locale;
 
 public final class LdapUtils {
 
@@ -101,7 +104,7 @@ public final class LdapUtils {
     }
 
     public static Filter createFilter(String filterTemplate, String... arguments) throws LDAPException {
-        return Filter.create(MessageFormat.format(filterTemplate, (Object[]) encodeFilterValues(arguments)));
+        return Filter.create(new MessageFormat(filterTemplate, Locale.ROOT).format((Object[]) encodeFilterValues(arguments), new StringBuffer(), null).toString());
     }
 
     static String[] encodeFilterValues(String... arguments) {

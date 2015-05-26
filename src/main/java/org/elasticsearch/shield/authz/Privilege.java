@@ -21,7 +21,6 @@ import dk.brics.automaton.Automaton;
 import dk.brics.automaton.BasicAutomata;
 import dk.brics.automaton.BasicOperations;
 import org.elasticsearch.ElasticsearchException;
-import org.elasticsearch.ElasticsearchIllegalArgumentException;
 import org.elasticsearch.action.admin.indices.create.CreateIndexAction;
 import org.elasticsearch.action.get.GetAction;
 import org.elasticsearch.action.get.MultiGetAction;
@@ -104,7 +103,8 @@ public abstract class Privilege<P extends Privilege<P>> {
                 "internal:*",
                 "indices:monitor/*", // added for marvel
                 "cluster:monitor/*",  // added for marvel
-                "cluster:admin/reroute" // added for DiskThresholdDecider.DiskListener
+                "cluster:admin/reroute", // added for DiskThresholdDecider.DiskListener
+                "indices:admin/mapping/put" // ES 2.0 MappingUpdatedAction - updateMappingOnMasterSynchronously
         ));
 
         private System() {
@@ -256,7 +256,7 @@ public abstract class Privilege<P extends Privilege<P>> {
             try {
                 return cache.getUnchecked(name);
             } catch (UncheckedExecutionException e) {
-                throw (ElasticsearchException) e.getCause();
+                throw (RuntimeException) e.getCause();
             }
         }
 
@@ -278,7 +278,7 @@ public abstract class Privilege<P extends Privilege<P>> {
                     return index;
                 }
             }
-            throw new ElasticsearchIllegalArgumentException("unknown index privilege [" + name + "]. a privilege must be either " +
+            throw new IllegalArgumentException("unknown index privilege [" + name + "]. a privilege must be either " +
                     "one of the predefined fixed indices privileges [" + Strings.collectionToCommaDelimitedString(values) +
                     "] or a pattern over one of the available index actions");
         }
@@ -362,7 +362,7 @@ public abstract class Privilege<P extends Privilege<P>> {
             try {
                 return cache.getUnchecked(name);
             } catch (UncheckedExecutionException e) {
-                throw (ElasticsearchException) e.getCause();
+                throw (RuntimeException) e.getCause();
             }
         }
 
@@ -376,7 +376,7 @@ public abstract class Privilege<P extends Privilege<P>> {
                     return cluster;
                 }
             }
-            throw new ElasticsearchIllegalArgumentException("unknown cluster privilege [" + name + "]. a privilege must be either " +
+            throw new IllegalArgumentException("unknown cluster privilege [" + name + "]. a privilege must be either " +
                     "one of the predefined fixed cluster privileges [" + Strings.collectionToCommaDelimitedString(values) +
                     "] or a pattern over one of the available cluster actions");
         }

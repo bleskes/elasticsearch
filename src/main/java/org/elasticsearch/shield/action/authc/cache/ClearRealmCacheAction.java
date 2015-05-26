@@ -17,13 +17,14 @@
 
 package org.elasticsearch.shield.action.authc.cache;
 
-import org.elasticsearch.action.admin.cluster.ClusterAction;
+import org.elasticsearch.action.Action;
 import org.elasticsearch.client.ClusterAdminClient;
+import org.elasticsearch.client.ElasticsearchClient;
 
 /**
  *
  */
-public class ClearRealmCacheAction extends ClusterAction<ClearRealmCacheRequest, ClearRealmCacheResponse, ClearRealmCacheRequestBuilder> {
+public class ClearRealmCacheAction extends Action<ClearRealmCacheRequest, ClearRealmCacheResponse, ClearRealmCacheRequestBuilder> {
 
     public static final ClearRealmCacheAction INSTANCE = new ClearRealmCacheAction();
     public static final String NAME = "cluster:admin/shield/realm/cache/clear";
@@ -33,8 +34,8 @@ public class ClearRealmCacheAction extends ClusterAction<ClearRealmCacheRequest,
     }
 
     @Override
-    public ClearRealmCacheRequestBuilder newRequestBuilder(ClusterAdminClient client) {
-        return new ClearRealmCacheRequestBuilder(client);
+    public ClearRealmCacheRequestBuilder newRequestBuilder(ElasticsearchClient client) {
+        return new ClearRealmCacheRequestBuilder(client, this);
     }
 
     @Override

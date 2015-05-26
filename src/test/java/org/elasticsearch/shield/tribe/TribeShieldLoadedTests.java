@@ -18,7 +18,7 @@
 package org.elasticsearch.shield.tribe;
 
 import org.apache.lucene.util.LuceneTestCase;
-import org.elasticsearch.common.settings.ImmutableSettings;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.license.plugin.LicensePlugin;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.node.NodeBuilder;
@@ -39,22 +39,18 @@ public class TribeShieldLoadedTests extends ElasticsearchTestCase {
     @Test
     public void testShieldLoadedOnBothTribeNodeAndClients() {
         //all good if the plugin is loaded on both tribe node and tribe clients, no matter how it gets loaded (manually or from classpath)
-        ImmutableSettings.Builder builder = defaultSettings();
+        Settings.Builder builder = defaultSettings();
         if (randomBoolean()) {
-            builder.put("plugins." + PluginsService.LOAD_PLUGIN_FROM_CLASSPATH, false)
+            builder.put(PluginsService.LOAD_PLUGIN_FROM_CLASSPATH, false)
                     .put("plugin.types", ShieldPlugin.class.getName() + "," + LicensePlugin.class.getName());
         }
         if (randomBoolean()) {
-            builder.put("tribe.t1.plugins." + PluginsService.LOAD_PLUGIN_FROM_CLASSPATH, false)
+            builder.put("tribe.t1." + PluginsService.LOAD_PLUGIN_FROM_CLASSPATH, false)
                     .put("tribe.t1.plugin.types", ShieldPlugin.class.getName() + "," + LicensePlugin.class.getName());
         }
 
-        Node node = null;
-        try {
-            node = NodeBuilder.nodeBuilder().settings(builder.build()).build();
+        try (Node node = NodeBuilder.nodeBuilder().settings(builder.build()).build()) {
             node.start();
-        } finally {
-            stop(node);
         }
     }
 
@@ -63,7 +59,7 @@ public class TribeShieldLoadedTests extends ElasticsearchTestCase {
     @Test
     public void testShieldLoadedOnTribeNodeOnly() {
         //startup failure if any of the tribe clients doesn't have shield installed
-        ImmutableSettings.Builder builder = defaultSettings();
+        Settings.Builder builder = defaultSettings();
         if (randomBoolean()) {
             builder.put("plugins." + PluginsService.LOAD_PLUGIN_FROM_CLASSPATH, false)
                     .put("plugin.types", ShieldPlugin.class.getName() + "," + LicensePlugin.class.getName());
@@ -83,7 +79,7 @@ public class TribeShieldLoadedTests extends ElasticsearchTestCase {
     @Test
     public void testShieldMustBeLoadedOnAllTribes() {
         //startup failure if any of the tribe clients doesn't have shield installed
-        ImmutableSettings.Builder builder = addTribeSettings(defaultSettings(), "t2");
+        Settings.Builder builder = addTribeSettings(defaultSettings(), "t2");
         if (randomBoolean()) {
             builder.put("plugins." + PluginsService.LOAD_PLUGIN_FROM_CLASSPATH, false)
                     .put("plugin.types", ShieldPlugin.class.getName() + "," + LicensePlugin.class.getName());
@@ -102,23 +98,13 @@ public class TribeShieldLoadedTests extends ElasticsearchTestCase {
         }
     }
 
-    private static void stop(Node node) {
-        if (node != null) {
-            try {
-                node.stop();
-            } catch(Throwable t) {
-                //ignore
-            } finally {
-                node.close();
-            }
-        }
+    private static Settings.Builder defaultSettings() {
+        return addTribeSettings(Settings.builder()
+                .put("node.name", "tribe_node")
+                .put("path.home", createTempDir()), "t1");
     }
 
-    private static ImmutableSettings.Builder defaultSettings() {
-        return addTribeSettings(ImmutableSettings.builder().put("node.name", "tribe_node"), "t1");
-    }
-
-    private static ImmutableSettings.Builder addTribeSettings(ImmutableSettings.Builder settingsBuilder, String tribe) {
+    private static Settings.Builder addTribeSettings(Settings.Builder settingsBuilder, String tribe) {
         String tribePrefix = "tribe." + tribe + ".";
         return settingsBuilder.put(tribePrefix + "cluster.name", "non_existing_cluster")
                 .put(tribePrefix + "discovery.type", "local")

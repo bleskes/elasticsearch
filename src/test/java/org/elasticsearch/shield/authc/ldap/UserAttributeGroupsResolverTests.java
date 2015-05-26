@@ -21,9 +21,9 @@ import com.unboundid.ldap.sdk.LDAPConnection;
 import com.unboundid.ldap.sdk.LDAPConnectionOptions;
 import com.unboundid.ldap.sdk.LDAPURL;
 import org.elasticsearch.common.primitives.Ints;
-import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.env.Environment;
 import org.elasticsearch.shield.authc.activedirectory.ActiveDirectorySessionFactoryTests;
 import org.elasticsearch.shield.authc.ldap.support.SessionFactory;
 import org.elasticsearch.shield.ssl.ClientSSLService;
@@ -35,7 +35,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 
 import static org.hamcrest.Matchers.*;
@@ -48,12 +47,13 @@ public class UserAttributeGroupsResolverTests extends ElasticsearchTestCase {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        Path keystore = Paths.get(UserAttributeGroupsResolverTests.class.getResource("../ldap/support/ldaptrust.jks").toURI()).toAbsolutePath();
+        Path keystore = getDataPath("../ldap/support/ldaptrust.jks");
+        Environment env = new Environment(Settings.builder().put("path.home", createTempDir()).build());
 
-        ClientSSLService clientSSLService = new ClientSSLService(ImmutableSettings.builder()
+        ClientSSLService clientSSLService = new ClientSSLService(Settings.builder()
                 .put("shield.ssl.keystore.path", keystore)
                 .put("shield.ssl.keystore.password", "changeit")
-                .build());
+                .build(), env);
 
         LDAPURL ldapurl = new LDAPURL(ActiveDirectorySessionFactoryTests.AD_LDAP_URL);
         LDAPConnectionOptions options = new LDAPConnectionOptions();
@@ -74,7 +74,7 @@ public class UserAttributeGroupsResolverTests extends ElasticsearchTestCase {
     @Test
     public void testResolve() throws Exception {
         //falling back on the 'memberOf' attribute
-        UserAttributeGroupsResolver resolver = new UserAttributeGroupsResolver(ImmutableSettings.EMPTY);
+        UserAttributeGroupsResolver resolver = new UserAttributeGroupsResolver(Settings.EMPTY);
         List<String> groups = resolver.resolve(ldapConnection, BRUCE_BANNER_DN, TimeValue.timeValueSeconds(20), NoOpLogger.INSTANCE);
         assertThat(groups, containsInAnyOrder(
                 containsString("Avengers"),
@@ -85,7 +85,7 @@ public class UserAttributeGroupsResolverTests extends ElasticsearchTestCase {
 
     @Test
     public void testResolveCustomGroupAttribute() throws Exception {
-        Settings settings = ImmutableSettings.builder()
+        Settings settings = Settings.builder()
                 .put("user_group_attribute", "seeAlso")
                 .build();
         UserAttributeGroupsResolver resolver = new UserAttributeGroupsResolver(settings);
@@ -95,7 +95,7 @@ public class UserAttributeGroupsResolverTests extends ElasticsearchTestCase {
 
     @Test
     public void testResolveInvalidGroupAttribute() throws Exception {
-        Settings settings = ImmutableSettings.builder()
+        Settings settings = Settings.builder()
                 .put("user_group_attribute", "doesntExist")
                 .build();
         UserAttributeGroupsResolver resolver = new UserAttributeGroupsResolver(settings);

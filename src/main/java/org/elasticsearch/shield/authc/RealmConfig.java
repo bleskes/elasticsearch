@@ -19,7 +19,6 @@ package org.elasticsearch.shield.authc;
 
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
-import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
 
@@ -36,12 +35,8 @@ public class RealmConfig {
     private final Environment env;
     private final Settings globalSettings;
 
-    public RealmConfig(String name) {
-        this(name, ImmutableSettings.EMPTY);
-    }
-
-    public RealmConfig(String name, Settings settings) {
-        this(name, settings, ImmutableSettings.EMPTY, new Environment(ImmutableSettings.EMPTY));
+    public RealmConfig(String name, Settings settings, Settings globalSettings) {
+        this(name, settings, globalSettings, new Environment(globalSettings));
     }
 
     public RealmConfig(String name, Settings settings, Settings globalSettings, Environment env) {

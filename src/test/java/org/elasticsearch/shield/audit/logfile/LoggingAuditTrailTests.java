@@ -23,7 +23,6 @@ import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.network.NetworkUtils;
-import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.transport.LocalTransportAddress;
@@ -117,7 +116,7 @@ public class LoggingAuditTrailTests extends ElasticsearchTestCase {
 
     @Before
     public void init() throws Exception {
-        settings = ImmutableSettings.builder()
+        settings = Settings.builder()
                 .put("shield.audit.logfile.prefix.emit_node_host_address", randomBoolean())
                 .put("shield.audit.logfile.prefix.emit_node_host_name", randomBoolean())
                 .put("shield.audit.logfile.prefix.emit_node_name", randomBoolean())

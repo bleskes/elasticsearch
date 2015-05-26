@@ -110,7 +110,7 @@ public class IndexAliasesTests extends ShieldIntegrationTest {
                     .putHeader(BASIC_AUTH_HEADER, basicAuthHeaderValue("create_only", new SecuredString("test123".toCharArray()))).get();
             fail("add alias should have failed due to missing manage_aliases privileges");
         } catch(IndexMissingException e) {
-             assertThat(e.getMessage(), containsString("[test_*]"));
+             assertThat(e.toString(), containsString("[test_*]"));
         }
     }
 
@@ -142,7 +142,7 @@ public class IndexAliasesTests extends ShieldIntegrationTest {
                     .putHeader(BASIC_AUTH_HEADER, basicAuthHeaderValue("create_only", new SecuredString("test123".toCharArray()))).get();
             fail("remove alias should have failed due to missing manage_aliases privileges");
         } catch(IndexMissingException e) {
-            assertThat(e.getMessage(), containsString("[alias_*"));
+            assertThat(e.toString(), containsString("[alias_*"));
         }
 
         try {
@@ -150,7 +150,7 @@ public class IndexAliasesTests extends ShieldIntegrationTest {
                     .putHeader(BASIC_AUTH_HEADER, basicAuthHeaderValue("create_only", new SecuredString("test123".toCharArray()))).get();
             fail("remove alias should have failed due to missing manage_aliases privileges");
         } catch(IndexMissingException e) {
-            assertThat(e.getMessage(), containsString("[_all]"));
+            assertThat(e.toString(), containsString("[_all]"));
         }
     }
 
@@ -170,7 +170,7 @@ public class IndexAliasesTests extends ShieldIntegrationTest {
                     .putHeader(BASIC_AUTH_HEADER, basicAuthHeaderValue("create_only", new SecuredString("test123".toCharArray()))).get();
             fail("get alias should have failed due to missing manage_aliases privileges");
         } catch(IndexMissingException e) {
-            assertThat(e.getMessage(), containsString("[_all]"));
+            assertThat(e.toString(), containsString("[_all]"));
         }
 
         try {
@@ -178,7 +178,7 @@ public class IndexAliasesTests extends ShieldIntegrationTest {
                     .putHeader(BASIC_AUTH_HEADER, basicAuthHeaderValue("create_only", new SecuredString("test123".toCharArray()))).get();
             fail("get alias should have failed due to missing manage_aliases privileges");
         } catch(IndexMissingException e) {
-            assertThat(e.getMessage(), containsString("[_all]"));
+            assertThat(e.toString(), containsString("[_all]"));
         }
 
         try {
@@ -186,7 +186,7 @@ public class IndexAliasesTests extends ShieldIntegrationTest {
                     .putHeader(BASIC_AUTH_HEADER, basicAuthHeaderValue("create_only", new SecuredString("test123".toCharArray()))).get();
             fail("get alias should have failed due to missing manage_aliases privileges");
         } catch(IndexMissingException e) {
-            assertThat(e.getMessage(), containsString("[test_*]"));
+            assertThat(e.toString(), containsString("[test_*]"));
         }
 
         try {
@@ -194,7 +194,7 @@ public class IndexAliasesTests extends ShieldIntegrationTest {
                     .putHeader(BASIC_AUTH_HEADER, basicAuthHeaderValue("create_only", new SecuredString("test123".toCharArray()))).get();
             fail("get alias should have failed due to missing manage_aliases privileges");
         } catch(IndexMissingException e) {
-            assertThat(e.getMessage(), containsString("[_all]"));
+            assertThat(e.toString(), containsString("[_all]"));
         }
     }
 
@@ -262,7 +262,7 @@ public class IndexAliasesTests extends ShieldIntegrationTest {
                     .putHeader(BASIC_AUTH_HEADER, basicAuthHeaderValue("create_test_aliases_test", new SecuredString("test123".toCharArray()))).get();
             fail("remove alias should have failed due to no existing matching aliases to expand test_alias_* to");
         } catch(IndexMissingException e) {
-            assertThat(e.getMessage(), containsString("[test_alias_*]"));
+            assertThat(e.toString(), containsString("[test_alias_*]"));
         }
 
         try {
@@ -271,7 +271,7 @@ public class IndexAliasesTests extends ShieldIntegrationTest {
                     .putHeader(BASIC_AUTH_HEADER, basicAuthHeaderValue("create_test_aliases_test", new SecuredString("test123".toCharArray()))).get();
             fail("remove alias should have failed due to no existing matching aliases to expand _all to");
         } catch(IndexMissingException e) {
-            assertThat(e.getMessage(), containsString("[_all]"));
+            assertThat(e.toString(), containsString("[_all]"));
         }
 
         try {
@@ -389,7 +389,7 @@ public class IndexAliasesTests extends ShieldIntegrationTest {
                     .putHeader(BASIC_AUTH_HEADER, basicAuthHeaderValue("create_test_aliases_alias", new SecuredString("test123".toCharArray()))).get();
             fail("add alias should have failed due to missing manage_aliases privileges on test_1");
         } catch(IndexMissingException e) {
-            assertThat(e.getMessage(), containsString("[test_*]"));
+            assertThat(e.toString(), containsString("[test_*]"));
         }
     }
 
@@ -442,7 +442,7 @@ public class IndexAliasesTests extends ShieldIntegrationTest {
                     .putHeader(BASIC_AUTH_HEADER, basicAuthHeaderValue("create_test_aliases_alias", new SecuredString("test123".toCharArray()))).get();
             fail("remove alias should have failed due to missing manage_aliases privileges on test_*");
         } catch(IndexMissingException e) {
-            assertThat(e.getMessage(), containsString("[test_*]"));
+            assertThat(e.toString(), containsString("[test_*]"));
         }
     }
 
@@ -467,7 +467,7 @@ public class IndexAliasesTests extends ShieldIntegrationTest {
                     .putHeader(BASIC_AUTH_HEADER, basicAuthHeaderValue("create_test_aliases_alias", new SecuredString("test123".toCharArray()))).get();
             fail("get alias should have failed due to missing manage_aliases privileges on test_*");
         } catch(IndexMissingException e) {
-            assertThat(e.getMessage(), containsString("[test_*]"));
+            assertThat(e.toString(), containsString("[test_*]"));
         }
 
         try {
@@ -476,7 +476,7 @@ public class IndexAliasesTests extends ShieldIntegrationTest {
                     .putHeader(BASIC_AUTH_HEADER, basicAuthHeaderValue("create_test_aliases_alias", new SecuredString("test123".toCharArray()))).get();
             fail("get alias should have failed due to missing manage_aliases privileges on any index");
         } catch(IndexMissingException e) {
-            assertThat(e.getMessage(), containsString("[_all]"));
+            assertThat(e.toString(), containsString("[_all]"));
         }
 
         try {
@@ -485,7 +485,7 @@ public class IndexAliasesTests extends ShieldIntegrationTest {
                     .putHeader(BASIC_AUTH_HEADER, basicAuthHeaderValue("create_test_aliases_alias", new SecuredString("test123".toCharArray()))).get();
             fail("get alias should have failed due to missing manage_aliases privileges on test_1");
         } catch(IndexMissingException e) {
-            assertThat(e.getMessage(), containsString("[test_*]"));
+            assertThat(e.toString(), containsString("[test_*]"));
         }
 
         try {
@@ -494,7 +494,7 @@ public class IndexAliasesTests extends ShieldIntegrationTest {
                     .putHeader(BASIC_AUTH_HEADER, basicAuthHeaderValue("create_test_aliases_alias", new SecuredString("test123".toCharArray()))).get();
             fail("get alias should have failed due to missing manage_aliases privileges on test_1");
         } catch(IndexMissingException e) {
-            assertThat(e.getMessage(), containsString("[_all]"));
+            assertThat(e.toString(), containsString("[_all]"));
         }
 
         try {
@@ -503,7 +503,7 @@ public class IndexAliasesTests extends ShieldIntegrationTest {
                     .putHeader(BASIC_AUTH_HEADER, basicAuthHeaderValue("create_test_aliases_alias", new SecuredString("test123".toCharArray()))).get();
             fail("get alias should have failed due to missing manage_aliases privileges on test_1");
         } catch(IndexMissingException e) {
-            assertThat(e.getMessage(), containsString("[_all]"));
+            assertThat(e.toString(), containsString("[_all]"));
         }
 
         try {
@@ -512,7 +512,7 @@ public class IndexAliasesTests extends ShieldIntegrationTest {
                     .putHeader(BASIC_AUTH_HEADER, basicAuthHeaderValue("create_test_aliases_alias", new SecuredString("test123".toCharArray()))).get();
             fail("get alias should have failed due to missing manage_aliases privileges on test_1");
         } catch(IndexMissingException e) {
-            assertThat(e.getMessage(), containsString("[_all]"));
+            assertThat(e.toString(), containsString("[_all]"));
         }
     }
 
@@ -571,7 +571,7 @@ public class IndexAliasesTests extends ShieldIntegrationTest {
                     .putHeader(BASIC_AUTH_HEADER, basicAuthHeaderValue("create_test_aliases_test_alias", new SecuredString("test123".toCharArray()))).get();
             fail("remove alias should have failed due to no existing aliases matching _all");
         } catch(IndexMissingException e) {
-            assertThat(e.getMessage(), containsString("[_all]"));
+            assertThat(e.toString(), containsString("[_all]"));
         }
     }
 

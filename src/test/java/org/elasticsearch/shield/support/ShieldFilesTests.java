@@ -43,7 +43,7 @@ public class ShieldFilesTests extends ElasticsearchTestCase {
 
     @Test
     public void testThatOriginalPermissionsAreKept() throws Exception {
-        Path path = newTempFile().toPath();
+        Path path = createTempFile();
 
         // no posix file permissions, nothing to test, done here
         boolean supportsPosixPermissions = Files.getFileStore(path).supportsFileAttributeView(PosixFileAttributeView.class);

@@ -19,7 +19,6 @@ package org.elasticsearch.shield;
 
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.http.HttpServerTransport;
 import org.elasticsearch.shield.authc.support.SecuredString;
@@ -41,7 +40,7 @@ public class ShieldPluginTests extends ShieldIntegrationTest {
 
     @Override
     public Settings nodeSettings(int nodeOrdinal) {
-        return ImmutableSettings.builder()
+        return Settings.builder()
                 .put(super.nodeSettings(nodeOrdinal))
                 .put("http.enabled", true) //This test requires HTTP
                 .build();
