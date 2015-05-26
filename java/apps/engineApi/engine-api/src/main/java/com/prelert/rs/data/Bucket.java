@@ -338,17 +338,7 @@ public class Bucket
             switch (fieldName)
             {
             case TIMESTAMP:
-                if (token == JsonToken.VALUE_NUMBER_INT)
-                {
-                    // convert seconds to ms
-                    long val = m_Parser.getLongValue() * 1000;
-                    bucket.setTimestamp(new Date(val));
-                }
-                else
-                {
-                    LOGGER.warn("Cannot parse " + TIMESTAMP + " : " + m_Parser.getText()
-                                    + " as a long");
-                }
+                parseTimestamp(bucket, token);
                 break;
             case RAW_ANOMALY_SCORE:
                 bucket.setRawAnomalyScore(parseAsDoubleOrZero(token, fieldName));
@@ -369,26 +359,47 @@ public class Bucket
                 bucket.setInterim(parseAsBooleanOrNull(token, fieldName));
                 break;
             case DETECTORS:
-                if (token != JsonToken.START_ARRAY)
-                {
-                    String msg = "Invalid value Expecting an array of detectors";
-                    LOGGER.warn(msg);
-                    throw new AutoDetectParseException(msg);
-                }
-
-                token = m_Parser.nextToken();
-                while (token != JsonToken.END_ARRAY)
-                {
-                    Detector detector = Detector.parseJson(m_Parser);
-                    bucket.addDetector(detector);
-
-                    token = m_Parser.nextToken();
-                }
+                parseDetectors(token, bucket);
                 break;
             default:
                 LOGGER.warn(String.format("Parse error unknown field in Bucket %s:%s",
                         fieldName, token.asString()));
                 break;
+            }
+        }
+
+        private void parseTimestamp(Bucket bucket, JsonToken token) throws IOException
+        {
+            if (token == JsonToken.VALUE_NUMBER_INT)
+            {
+                // convert seconds to ms
+                long val = m_Parser.getLongValue() * 1000;
+                bucket.setTimestamp(new Date(val));
+            }
+            else
+            {
+                LOGGER.warn("Cannot parse " + TIMESTAMP + " : " + m_Parser.getText()
+                                + " as a long");
+            }
+        }
+
+        private void parseDetectors(JsonToken token, Bucket bucket)
+                throws AutoDetectParseException, IOException, JsonParseException
+        {
+            if (token != JsonToken.START_ARRAY)
+            {
+                String msg = "Invalid value Expecting an array of detectors";
+                LOGGER.warn(msg);
+                throw new AutoDetectParseException(msg);
+            }
+
+            token = m_Parser.nextToken();
+            while (token != JsonToken.END_ARRAY)
+            {
+                Detector detector = Detector.parseJson(m_Parser);
+                bucket.addDetector(detector);
+
+                token = m_Parser.nextToken();
             }
         }
     }
