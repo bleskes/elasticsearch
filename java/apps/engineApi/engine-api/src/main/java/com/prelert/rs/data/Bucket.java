@@ -338,17 +338,7 @@ public class Bucket
             switch (fieldName)
             {
             case TIMESTAMP:
-                if (token == JsonToken.VALUE_NUMBER_INT)
-                {
-                    // convert seconds to ms
-                    long val = m_Parser.getLongValue() * 1000;
-                    bucket.setTimestamp(new Date(val));
-                }
-                else
-                {
-                    LOGGER.warn("Cannot parse " + TIMESTAMP + " : " + m_Parser.getText()
-                                    + " as a long");
-                }
+                parseTimestamp(bucket, token);
                 break;
             case RAW_ANOMALY_SCORE:
                 bucket.setRawAnomalyScore(parseAsDoubleOrZero(token, fieldName));
@@ -375,6 +365,21 @@ public class Bucket
                 LOGGER.warn(String.format("Parse error unknown field in Bucket %s:%s",
                         fieldName, token.asString()));
                 break;
+            }
+        }
+
+        private void parseTimestamp(Bucket bucket, JsonToken token) throws IOException
+        {
+            if (token == JsonToken.VALUE_NUMBER_INT)
+            {
+                // convert seconds to ms
+                long val = m_Parser.getLongValue() * 1000;
+                bucket.setTimestamp(new Date(val));
+            }
+            else
+            {
+                LOGGER.warn("Cannot parse " + TIMESTAMP + " : " + m_Parser.getText()
+                                + " as a long");
             }
         }
 
