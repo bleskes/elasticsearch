@@ -17,12 +17,12 @@
  */
 package org.elasticsearch.license.plugin;
 
-import org.elasticsearch.common.settings.ImmutableSettings;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.license.plugin.consumer.EagerLicenseRegistrationConsumerPlugin;
 
 public class LicensesEagerConsumerPluginIntegrationTests extends AbstractLicensesConsumerPluginIntegrationTests {
 
     public LicensesEagerConsumerPluginIntegrationTests() {
-        super(new EagerLicenseRegistrationConsumerPlugin(ImmutableSettings.EMPTY));
+        super(new EagerLicenseRegistrationConsumerPlugin(Settings.EMPTY));
     }
 }
