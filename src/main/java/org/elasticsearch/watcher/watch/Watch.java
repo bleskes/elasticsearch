@@ -63,6 +63,8 @@ import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
 public class Watch implements TriggerEngine.Job, ToXContent {
 
+    public static final String ALL_ACTIONS_ID = "_all";
+
     private final String id;
     private final Trigger trigger;
     private final ExecutableInput input;
@@ -131,6 +133,7 @@ public class Watch implements TriggerEngine.Job, ToXContent {
     public void version(long version) {
         this.version = version;
     }
+
     /**
      * Acks this watch.
      *

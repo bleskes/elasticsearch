@@ -26,6 +26,7 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.watcher.support.Validation;
 import org.elasticsearch.watcher.trigger.TriggerEvent;
 import org.elasticsearch.watcher.execution.ActionExecutionMode;
 
@@ -128,13 +129,6 @@ public class ExecuteWatchRequest extends MasterNodeOperationRequest<ExecuteWatch
     }
 
     /**
-     * @return the trigger to use
-     */
-    public BytesReference getTriggerSource() {
-        return triggerSource;
-    }
-
-    /**
      * @param triggerType the type of trigger to use
      * @param triggerSource the trigger source to use
      */
@@ -144,7 +138,6 @@ public class ExecuteWatchRequest extends MasterNodeOperationRequest<ExecuteWatch
     }
 
     /**
-<<<<<<< HEAD
      * @param triggerEvent the trigger event to use
      * @throws IOException
      */
@@ -159,13 +152,18 @@ public class ExecuteWatchRequest extends MasterNodeOperationRequest<ExecuteWatch
      */
     public String getTriggerType() { return triggerType; }
 
+    /**
+     * @return the trigger to use
+     */
+    public BytesReference getTriggerSource() {
+        return triggerSource;
+    }
+
 
     /**
-     * @return the trigger data to use
-=======
+     *
      * @return  the execution modes for the actions. These modes determine the nature of the execution
      *          of the watch actions while the watch is executing.
->>>>>>> Action level throttling
      */
     public Map<String, ActionExecutionMode> getActionModes() {
         return actionModes;
@@ -186,6 +184,16 @@ public class ExecuteWatchRequest extends MasterNodeOperationRequest<ExecuteWatch
         ActionRequestValidationException validationException = null;
         if (id == null){
             validationException = ValidateActions.addValidationError("watch id is missing", validationException);
+        }
+        Validation.Error error = Validation.watchId(id);
+        if (error != null) {
+            validationException = ValidateActions.addValidationError(error.message(), validationException);
+        }
+        for (Map.Entry<String, ActionExecutionMode> modes : actionModes.entrySet()) {
+            error = Validation.actionId(modes.getKey());
+            if (error != null) {
+                validationException = ValidateActions.addValidationError(error.message(), validationException);
+            }
         }
         if (triggerSource == null || triggerType == null) {
             validationException = ValidateActions.addValidationError("trigger event is missing", validationException);
