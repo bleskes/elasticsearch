@@ -34,7 +34,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.List;
 
 import org.apache.http.client.ClientProtocolException;
@@ -52,7 +51,6 @@ import com.prelert.rs.client.EngineApiClient;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.Pagination;
-import com.prelert.rs.data.SingleDocument;
 
 
 /**
@@ -69,7 +67,7 @@ import com.prelert.rs.data.SingleDocument;
  */
 public class NormalizationTest implements Closeable
 {
-    private static final Logger LOGGER = Logger.getLogger(JobsTest.class);
+    private static final Logger LOGGER = Logger.getLogger(NormalizationTest.class);
 
     static final long FAREQUOTE_NUM_BUCKETS = 1439;
 
@@ -99,9 +97,7 @@ public class NormalizationTest implements Closeable
         m_WebServiceClient.close();
     }
 
-
-    public String createFarequoteJob()
-    throws ClientProtocolException, IOException
+    public String createFarequoteJob() throws ClientProtocolException, IOException
     {
         Detector d = new Detector();
         d.setFieldName("responsetime");
@@ -254,7 +250,6 @@ public class NormalizationTest implements Closeable
             }
         }
 
-
         /*
          * We know there is only one large anomaly in the farequote data
          * with score 80+, and it spans two buckets
@@ -290,50 +285,15 @@ public class NormalizationTest implements Closeable
             double bucketMax = 0.0;
             for (AnomalyRecord r : bucket.getRecords())
             {
-                bucketMax = Math.max(r.getNormalizedProbability(), bucketMax);
-            }
-
-            test(bucketMax == bucket.getMaxNormalizedProbability());
-        }
-
-
-
-        /*
-         * Check the bucket unusual score is equal to the max unusual
-         * record score in the bucket and every record in the bucket has
-         * the same anomaly score as the bucket.
-         */
-        // the test takes ages to go through every bucket, don't do all for now
-        int count = 30;
-        for (Bucket bucket: allBucketsExpanded.getDocuments())
-        {
-            SingleDocument<Bucket> bucketDoc = m_WebServiceClient
-                    .prepareGetBucket(jobId, bucket.getId()).expand(true).get();
-
-            List<AnomalyRecord> records = bucketDoc.getDocument().getRecords();
-
-            double bucketMax = 0.0;
-            for (AnomalyRecord r : records)
-            {
-                bucketMax = Math.max(r.getNormalizedProbability(), bucketMax);
-
                 test(r.getAnomalyScore() == bucket.getAnomalyScore());
+                bucketMax = Math.max(r.getNormalizedProbability(), bucketMax);
             }
 
             test(bucketMax == bucket.getMaxNormalizedProbability());
-
-            if (count-- < 0)
-            {
-                break;
-            }
         }
-
 
         return true;
     }
-
-
-
 
     /**
      * Get records via the 'records' end point and check the normalised
@@ -344,7 +304,7 @@ public class NormalizationTest implements Closeable
      * @return
      * @throws IOException
      */
-    public boolean verifyFarequoteNormalisedRecords(String baseUrl, String jobId)
+    public boolean verifyFarequoteNormalisedRecords(String jobId)
     throws IOException
     {
         Pagination<AnomalyRecord> allRecords = m_WebServiceClient.prepareGetRecords(jobId)
@@ -437,33 +397,6 @@ public class NormalizationTest implements Closeable
 
         test(highAnomalyScoreCount >= 2);
         test(highUnusualScoreCount >= 2);
-
-        /*
-         * Test get records by date range with a time string
-         */
-        String [] startDateFormats = new String[] {"2013-01-30T15:10:00Z", "1359558600"};
-        String [] endDateFormats = new String[] {"2013-01-31T22:10:00.000+0000", "1359670200"};
-        for (int i=0; i<startDateFormats.length; i++)
-        {
-            Pagination<AnomalyRecord> byDate = m_WebServiceClient.prepareGetRecords(jobId)
-                            .take(2000)
-                            .start(startDateFormats[i])
-                            .end(endDateFormats[i]).get();
-
-            Collections.sort(byDate.getDocuments(), new Comparator<AnomalyRecord>() {
-
-                @Override
-                public int compare(AnomalyRecord o1, AnomalyRecord o2)
-                {
-                    return o1.getTimestamp().compareTo(o2.getTimestamp());
-                }
-            });
-
-            // must be equal or after start date and before the end date
-            test(byDate.getDocuments().get(0).getTimestamp().compareTo(new Date(1359558600000l)) >= 0);
-            test(byDate.getDocuments().get(byDate.getDocumentCount() -1)
-                    .getTimestamp().compareTo(new Date(1359670200000l)) < 0);
-        }
 
         return true;
     }
@@ -561,6 +494,7 @@ public class NormalizationTest implements Closeable
         test.m_WebServiceClient.closeJob(farequoteJob);
 
         test.verifyFarequoteNormalisedBuckets(farequoteJob);
+        test.verifyFarequoteNormalisedRecords(farequoteJob);
 
 
         //==========================

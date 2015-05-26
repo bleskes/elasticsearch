@@ -70,7 +70,7 @@ import com.prelert.rs.data.SingleDocument;
  */
 public class InterimResultsTest implements Closeable
 {
-    private static final Logger LOGGER = Logger.getLogger(JobsTest.class);
+    private static final Logger LOGGER = Logger.getLogger(InterimResultsTest.class);
 
     private static final long BUCKET_SPAN = 300;
 
