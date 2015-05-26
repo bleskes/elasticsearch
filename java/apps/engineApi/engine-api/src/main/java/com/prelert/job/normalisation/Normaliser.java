@@ -166,7 +166,12 @@ public class Normaliser
             bucket.resetBigNormalisedUpdateFlag();
 
             double anomalyScore = scoresIter.next().getNormalizedScore();
-            bucket.setAnomalyScore(anomalyScore);
+            boolean anomalyScoreHadBigUpdate = isBigUpdate(bucket.getAnomalyScore(), anomalyScore);
+            if (anomalyScoreHadBigUpdate)
+            {
+                bucket.setAnomalyScore(anomalyScore);
+                bucket.raiseBigNormalisedUpdateFlag();
+            }
 
             double maxNormalizedProbability = 0.0;
             for (AnomalyRecord record : bucket.getRecords())
@@ -177,21 +182,25 @@ public class Normaliser
                     m_Logger.error(msg);
                     throw new NativeProcessRunException(msg, ErrorCode.NATIVE_PROCESS_ERROR);
                 }
-                double preNormalizedProbability = record.getNormalizedProbability();
                 record.resetBigNormalisedUpdateFlag();
-                record.setAnomalyScore(anomalyScore);
-
-                NormalisedResult recordNormalisedResult = scoresIter.next();
-
-                record.setNormalizedProbability(recordNormalisedResult.getNormalizedScore());
-                if (record.hadBigNormalisedUpdate() && !bucket.hadBigNormalisedUpdate())
+                if (anomalyScoreHadBigUpdate)
                 {
-                    bucket.raiseBigNormalisedUpdateFlag();
+                    record.setAnomalyScore(anomalyScore);
+                    record.raiseBigNormalisedUpdateFlag();
                 }
 
-                maxNormalizedProbability = (record.hadBigNormalisedUpdate()) ?
-                        Math.max(maxNormalizedProbability, recordNormalisedResult.getNormalizedScore())
-                        : Math.max(maxNormalizedProbability, preNormalizedProbability);
+                NormalisedResult recordNormalisedResult = scoresIter.next();
+                double normalizedProbability = recordNormalisedResult.getNormalizedScore();
+                boolean normalizedProbabilityHadBigUpdate =
+                        isBigUpdate(record.getNormalizedProbability(), normalizedProbability);
+                if (normalizedProbabilityHadBigUpdate)
+                {
+                    record.setNormalizedProbability(normalizedProbability);
+                    record.raiseBigNormalisedUpdateFlag();
+                    bucket.raiseBigNormalisedUpdateFlag();
+                }
+                maxNormalizedProbability =
+                        Math.max(maxNormalizedProbability, record.getNormalizedProbability());
             }
 
             bucket.setMaxNormalizedProbability(maxNormalizedProbability);
@@ -228,5 +237,40 @@ public class Normaliser
     {
         String over = record.getOverFieldName();
         return over != null ? over : record.getByFieldName();
+    }
+
+    /**
+     * Encapsulate the logic for deciding whether a change to a normalised score
+     * is "big".
+     *
+     * Current logic is that a big change is a change of at least 1 or more than
+     * than 50% of the higher of the two values.
+     *
+     * @param oldVal The old value of the normalised score
+     * @param newVal The new value of the normalised score
+     * @return true if the update is considered "big"
+     */
+    private static boolean isBigUpdate(double oldVal, double newVal)
+    {
+        if (Math.abs(oldVal - newVal) >= 1.0)
+        {
+            return true;
+        }
+        if (oldVal > newVal)
+        {
+            if (oldVal * 0.5 > newVal)
+            {
+                return true;
+            }
+        }
+        else
+        {
+            if (newVal * 0.5 > oldVal)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

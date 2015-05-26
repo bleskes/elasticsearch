@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -106,7 +106,6 @@ public class Bucket
         return Long.toString(getEpoch()).intern();
     }
 
-
     /**
      * Set the ID and derive the timestamp from it.  It MUST be
      * a number that corresponds to the bucket's timestamp in seconds
@@ -124,7 +123,6 @@ public class Bucket
             LOGGER.error("Could not parse ID " + id + " as a long");
         }
     }
-
 
     /**
      * Timestamp expressed in seconds since the epoch (rather than Java's
@@ -156,7 +154,6 @@ public class Bucket
         m_RawAnomalyScore = rawAnomalyScore;
     }
 
-
     public double getAnomalyScore()
     {
         return m_AnomalyScore;
@@ -164,7 +161,6 @@ public class Bucket
 
     public void setAnomalyScore(double anomalyScore)
     {
-        m_HadBigNormalisedUpdate |= AnomalyRecord.isBigUpdate(m_AnomalyScore, anomalyScore);
         m_AnomalyScore = anomalyScore;
     }
 
@@ -175,10 +171,8 @@ public class Bucket
 
     public void setMaxNormalizedProbability(double maxNormalizedProbability)
     {
-        m_HadBigNormalisedUpdate |= AnomalyRecord.isBigUpdate(m_MaxNormalizedProbability, maxNormalizedProbability);
         m_MaxNormalizedProbability = maxNormalizedProbability;
     }
-
 
     public int getRecordCount()
     {
