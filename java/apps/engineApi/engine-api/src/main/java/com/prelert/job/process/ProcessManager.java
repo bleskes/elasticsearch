@@ -570,12 +570,9 @@ public class ProcessManager
 
         // cancel any time out futures
         ScheduledFuture<?> future = m_JobIdToTimeoutFuture.get(jobId);
-        if (future != null)
+        if (future != null && future.cancel(false) == false)
         {
-            if (future.cancel(false) == false)
-            {
-                LOGGER.warn("Failed to cancel future in finishJob()");
-            }
+            LOGGER.warn("Failed to cancel future in finishJob()");
         }
         else
         {
