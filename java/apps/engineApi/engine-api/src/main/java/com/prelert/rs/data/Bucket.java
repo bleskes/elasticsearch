@@ -369,26 +369,32 @@ public class Bucket
                 bucket.setInterim(parseAsBooleanOrNull(token, fieldName));
                 break;
             case DETECTORS:
-                if (token != JsonToken.START_ARRAY)
-                {
-                    String msg = "Invalid value Expecting an array of detectors";
-                    LOGGER.warn(msg);
-                    throw new AutoDetectParseException(msg);
-                }
-
-                token = m_Parser.nextToken();
-                while (token != JsonToken.END_ARRAY)
-                {
-                    Detector detector = Detector.parseJson(m_Parser);
-                    bucket.addDetector(detector);
-
-                    token = m_Parser.nextToken();
-                }
+                parseDetectors(token, bucket);
                 break;
             default:
                 LOGGER.warn(String.format("Parse error unknown field in Bucket %s:%s",
                         fieldName, token.asString()));
                 break;
+            }
+        }
+
+        private void parseDetectors(JsonToken token, Bucket bucket)
+                throws AutoDetectParseException, IOException, JsonParseException
+        {
+            if (token != JsonToken.START_ARRAY)
+            {
+                String msg = "Invalid value Expecting an array of detectors";
+                LOGGER.warn(msg);
+                throw new AutoDetectParseException(msg);
+            }
+
+            token = m_Parser.nextToken();
+            while (token != JsonToken.END_ARRAY)
+            {
+                Detector detector = Detector.parseJson(m_Parser);
+                bucket.addDetector(detector);
+
+                token = m_Parser.nextToken();
             }
         }
     }
