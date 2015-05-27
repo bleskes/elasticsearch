@@ -29,32 +29,34 @@ package com.prelert.job.quantiles;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.Objects;
 
 import org.apache.log4j.Logger;
+import org.elasticsearch.common.base.Strings;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
-import com.google.common.base.Objects;
 import com.prelert.utils.json.AutoDetectParseException;
 import com.prelert.utils.json.FieldNameParser;
 
 /**
  * Quantiles Result POJO
  */
-@JsonIgnoreProperties({"kind"})
 @JsonInclude(Include.NON_NULL)
 public class Quantiles
 {
+    public static final String QUANTILES_ID = "hierarchical";
+    public static final String CURRENT_VERSION = "1";
+
     /**
      * Field Names
      */
     public static final String ID = "id";
+    public static final String VERSION = "version";
     public static final String TIMESTAMP = "timestamp";
-    public static final String QUANTILE_KIND = "quantileKind";
     public static final String QUANTILE_STATE = "quantileState";
 
     /**
@@ -65,68 +67,37 @@ public class Quantiles
     private static final Logger LOGGER = Logger.getLogger(Quantiles.class);
 
     private Date m_Timestamp;
-
-    /**
-     * The kind of quantiles is also the Elasticsearch ID, so m_Kind is used for
-     * both
-     */
-    private String m_Kind;
     private String m_State;
 
+    public String getId()
+    {
+        return QUANTILES_ID;
+    }
+
+    public String getVersion()
+    {
+        return CURRENT_VERSION;
+    }
 
     public Date getTimestamp()
     {
         return m_Timestamp;
     }
 
-
     public void setTimestamp(Date timestamp)
     {
         m_Timestamp = timestamp;
     }
 
-
-    /**
-     * The ID is the kind of quantiles
-     */
-    public String getId()
-    {
-        return m_Kind;
-    }
-
-
-    /**
-     * The ID is the kind of quantiles
-     */
-    public void setId(String id)
-    {
-        m_Kind = id;
-    }
-
-
-    public String getKind()
-    {
-        return m_Kind;
-    }
-
-
-    public void setKind(String kind)
-    {
-        m_Kind = kind;
-    }
-
-
     public String getState()
     {
-        return m_State;
+        return Strings.nullToEmpty(m_State);
     }
-
 
     public void setState(String state)
     {
         m_State = state;
     }
-
 
     /**
      * Create a new <code>Quantiles</code> and populate it from the JSON parser.
@@ -208,9 +179,6 @@ public class Quantiles
                                     + " as a long");
                 }
                 break;
-            case QUANTILE_KIND:
-                quantiles.setKind(parseAsStringOrNull(token, fieldName));
-                break;
             case QUANTILE_STATE:
                 quantiles.setState(parseAsStringOrNull(token, fieldName));
                 break;
@@ -225,7 +193,7 @@ public class Quantiles
     @Override
     public int hashCode()
     {
-        return Objects.hashCode(m_Kind, m_State);
+        return Objects.hashCode(m_State);
     }
 
     /**
@@ -244,10 +212,9 @@ public class Quantiles
             return false;
         }
 
-        Quantiles that = (Quantiles)other;
+        Quantiles that = (Quantiles) other;
 
-        return Objects.equal(this.m_Kind, that.m_Kind) &&
-                Objects.equal(this.m_State, that.m_State);
+        return Objects.equals(this.m_State, that.m_State);
     }
 }
 

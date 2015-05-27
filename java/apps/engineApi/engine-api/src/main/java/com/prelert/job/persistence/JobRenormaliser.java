@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -27,9 +27,9 @@
 
 package com.prelert.job.persistence;
 
-import java.util.Date;
-
 import org.apache.log4j.Logger;
+
+import com.prelert.job.quantiles.Quantiles;
 
 
 /**
@@ -39,25 +39,12 @@ import org.apache.log4j.Logger;
  */
 public interface JobRenormaliser
 {
-	/**
-	 * Update the anomaly score field on all previously persisted buckets
-	 * and all contained records
-	 * @param sysChangeState
-	 * @param endTime
-	 * @param logger
-	 */
-	public void updateBucketSysChange(String sysChangeState,
-										Date endTime, Logger logger);
-
-
-	/**
-	 * Update the unsual score field on all previously persisted buckets
-	 * and all contained records
-	 * @param unusualBehaviourState
-	 * @param endTime
-	 * @param logger
-	 */
-	public void updateBucketUnusualBehaviour(String unusualBehaviourState,
-											Date endTime, Logger logger);
+    /**
+     * Update the anomaly score field on all previously persisted buckets
+     * and all contained records
+     * @param quantiles
+     * @param logger
+     */
+    public void renormalise(Quantiles quantiles, Logger logger);
 };
 

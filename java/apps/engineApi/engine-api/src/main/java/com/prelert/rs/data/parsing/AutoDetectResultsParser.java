@@ -47,7 +47,6 @@ import com.prelert.job.alert.AlertObserver;
 import com.prelert.job.persistence.JobRenormaliser;
 import com.prelert.job.persistence.JobResultsPersister;
 import com.prelert.job.quantiles.Quantiles;
-import com.prelert.job.quantiles.QuantilesState;
 import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.CategoryDefinition;
 import com.prelert.utils.json.AutoDetectParseException;
@@ -238,15 +237,13 @@ public class AutoDetectResultsParser
 
                         logger.debug("Bucket number " + ++bucketCount + " parsed from output");
                         break;
-                    case Quantiles.QUANTILE_KIND:
                     case Quantiles.QUANTILE_STATE:
                         Quantiles quantiles = Quantiles.parseJsonAfterStartObject(parser);
                         persister.persistQuantiles(quantiles);
 
                         logger.debug("Quantiles parsed from output - will " +
-                                    "trigger renormalisation of " +
-                                    quantiles.getKind() + " scores");
-                        triggerRenormalisation(quantiles, renormaliser, logger);
+                                    "trigger renormalisation of scores");
+                        renormaliser.renormalise(quantiles, logger);
                         break;
                     case ModelSizeStats.TYPE:
                         ModelSizeStats modelSizeStats = ModelSizeStats.parseJsonAfterStartObject(parser);
@@ -300,25 +297,6 @@ public class AutoDetectResultsParser
         // commit data to the datastore
         persister.commitWrites();
     }
-
-
-    private void triggerRenormalisation(Quantiles quantiles,
-            JobRenormaliser renormaliser, Logger logger)
-    {
-        if (QuantilesState.SYS_CHANGE_QUANTILES_KIND.equals(quantiles.getKind()))
-        {
-            renormaliser.updateBucketSysChange(quantiles.getState(), quantiles.getTimestamp(), logger);
-        }
-        else if (QuantilesState.UNUSUAL_QUANTILES_KIND.equals(quantiles.getKind()))
-        {
-            renormaliser.updateBucketUnusualBehaviour(quantiles.getState(), quantiles.getTimestamp(), logger);
-        }
-        else
-        {
-            logger.error("Unexpected kind of quantiles: " + quantiles.getKind());
-        }
-    }
-
 
     private void notifyObservers(Bucket bucket)
     {

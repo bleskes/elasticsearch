@@ -28,7 +28,6 @@
 package com.prelert.job.normalisation;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.verify;
 
 import java.io.ByteArrayInputStream;
@@ -65,22 +64,6 @@ public class NormalisedResultTest
     }
 
     @Test
-    public void testCopyConstructor()
-    {
-        NormalisedResult original = new NormalisedResult();
-        original.setId("foo");
-        original.setRawAnomalyScore(42.0);
-        original.setNormalizedSysChangeScore(43.0);
-        original.setNormalizedProbability(0.01);
-
-        NormalisedResult copy = new NormalisedResult(original);
-        assertEquals("foo", copy.getId());
-        assertEquals(42.0, copy.getRawAnomalyScore(), ERROR);
-        assertEquals(43.0, copy.getNormalizedSysChangeScore(), ERROR);
-        assertEquals(0.01, copy.getNormalizedProbability(), ERROR);
-    }
-
-    @Test
     public void testParseJson_GivenEmptyInput() throws JsonParseException, IOException
     {
         String input = "";
@@ -88,10 +71,8 @@ public class NormalisedResultTest
 
         NormalisedResult normalisedResult = NormalisedResult.parseJson(parser, m_Logger);
 
-        assertEquals(0.0, normalisedResult.getRawAnomalyScore(), ERROR);
-        assertEquals(0.0, normalisedResult.getNormalizedProbability(), ERROR);
-        assertEquals(0.0, normalisedResult.getNormalizedSysChangeScore(), ERROR);
-        assertNull(normalisedResult.getId());
+        assertEquals(0.0, normalisedResult.getRawScore(), ERROR);
+        assertEquals(0.0, normalisedResult.getNormalizedScore(), ERROR);
     }
 
     @Test
@@ -102,10 +83,8 @@ public class NormalisedResultTest
 
         NormalisedResult normalisedResult = NormalisedResult.parseJson(parser, m_Logger);
 
-        assertEquals(0.0, normalisedResult.getRawAnomalyScore(), ERROR);
-        assertEquals(0.0, normalisedResult.getNormalizedProbability(), ERROR);
-        assertEquals(0.0, normalisedResult.getNormalizedSysChangeScore(), ERROR);
-        assertNull(normalisedResult.getId());
+        assertEquals(0.0, normalisedResult.getRawScore(), ERROR);
+        assertEquals(0.0, normalisedResult.getNormalizedScore(), ERROR);
     }
 
     @Test
@@ -116,25 +95,21 @@ public class NormalisedResultTest
 
         NormalisedResult normalisedResult = NormalisedResult.parseJson(parser, m_Logger);
 
-        assertEquals(0.0, normalisedResult.getRawAnomalyScore(), ERROR);
-        assertEquals(0.0, normalisedResult.getNormalizedProbability(), ERROR);
-        assertEquals(0.0, normalisedResult.getNormalizedSysChangeScore(), ERROR);
-        assertNull(normalisedResult.getId());
+        assertEquals(0.0, normalisedResult.getRawScore(), ERROR);
+        assertEquals(0.0, normalisedResult.getNormalizedScore(), ERROR);
         verify(m_Logger).trace("Parsed unknown field in NormalisedResult foo:0.0");
     }
 
     @Test
-    public void testParseJson_GivenList() throws JsonParseException, IOException
+    public void testParseJson_GivenEmptyList() throws JsonParseException, IOException
     {
         String input = "[]";
         JsonParser parser = createJsonParser(input);
 
         NormalisedResult normalisedResult = NormalisedResult.parseJson(parser, m_Logger);
 
-        assertEquals(0.0, normalisedResult.getRawAnomalyScore(), ERROR);
-        assertEquals(0.0, normalisedResult.getNormalizedProbability(), ERROR);
-        assertEquals(0.0, normalisedResult.getNormalizedSysChangeScore(), ERROR);
-        assertNull(normalisedResult.getId());
+        assertEquals(0.0, normalisedResult.getRawScore(), ERROR);
+        assertEquals(0.0, normalisedResult.getNormalizedScore(), ERROR);
         verify(m_Logger).warn(
                 "Parsing error: Only simple fields expected in NormalisedResult not START_ARRAY");
         verify(m_Logger).warn(
@@ -144,166 +119,99 @@ public class NormalisedResultTest
     @Test
     public void testParseJson_GivenValidNormalisationResult() throws JsonParseException, IOException
     {
-        String input = "{\"rawAnomalyScore\":\"42.0\","
-                + "\"normalizedProbability\":\"0.01\","
-                + "\"anomalyScore\":\"43.0\","
-                + "\"id\":\"foo\""
-                + "}";
+        String input = "{\"rawScore\":\"42.0\", \"normalizedScore\":\"0.01\"}";
         JsonParser parser = createJsonParser(input);
 
         NormalisedResult normalisedResult = NormalisedResult.parseJson(parser, m_Logger);
 
-        assertEquals(42.0, normalisedResult.getRawAnomalyScore(), ERROR);
-        assertEquals(0.01, normalisedResult.getNormalizedProbability(), ERROR);
-        assertEquals(43.0, normalisedResult.getNormalizedSysChangeScore(), ERROR);
-        assertEquals("foo", normalisedResult.getId());
+        assertEquals(42.0, normalisedResult.getRawScore(), ERROR);
+        assertEquals(0.01, normalisedResult.getNormalizedScore(), ERROR);
     }
 
     @Test
-    public void testParseJson_GivenRawAnomalyScoreIsNotNumber() throws JsonParseException,
+    public void testParseJson_GivenRawScoreIsNotNumber() throws JsonParseException,
             IOException
     {
-        String input = "{\"rawAnomalyScore\":\"invalid\"}";
+        String input = "{\"rawScore\":\"invalid\"}";
         JsonParser parser = createJsonParser(input);
 
         NormalisedResult normalisedResult = NormalisedResult.parseJson(parser, m_Logger);
 
-        assertEquals(0.0, normalisedResult.getRawAnomalyScore(), ERROR);
-        assertEquals(0.0, normalisedResult.getNormalizedProbability(), ERROR);
-        assertEquals(0.0, normalisedResult.getNormalizedSysChangeScore(), ERROR);
-        assertNull(normalisedResult.getId());
-        verify(m_Logger).warn("Cannot parse rawAnomalyScore : invalid as a double");
+        assertEquals(0.0, normalisedResult.getRawScore(), ERROR);
+        assertEquals(0.0, normalisedResult.getNormalizedScore(), ERROR);
+        verify(m_Logger).warn("Cannot parse rawScore : invalid as a double");
     }
 
     @Test
-    public void testParseJson_GivenRawAnomalyScoreIsNotFollowedByValueString()
+    public void testParseJson_GivenRawScoreIsNotFollowedByValueString()
             throws JsonParseException, IOException
     {
-        String input = "{\"rawAnomalyScore\":[]}";
+        String input = "{\"rawScore\":[]}";
         JsonParser parser = createJsonParser(input);
 
         NormalisedResult normalisedResult = NormalisedResult.parseJson(parser, m_Logger);
 
-        assertEquals(0.0, normalisedResult.getRawAnomalyScore(), ERROR);
-        assertEquals(0.0, normalisedResult.getNormalizedProbability(), ERROR);
-        assertEquals(0.0, normalisedResult.getNormalizedSysChangeScore(), ERROR);
-        assertNull(normalisedResult.getId());
-        verify(m_Logger).warn("Cannot parse rawAnomalyScore : [ as a double");
+        assertEquals(0.0, normalisedResult.getRawScore(), ERROR);
+        assertEquals(0.0, normalisedResult.getNormalizedScore(), ERROR);
+        verify(m_Logger).warn("Cannot parse rawScore : [ as a double");
         verify(m_Logger).warn(
                 "Parsing error: Only simple fields expected in NormalisedResult not END_ARRAY");
     }
 
     @Test
-    public void testParseJson_GivenRawAnomalyScoreIsFollowedEmptyValue() throws JsonParseException,
+    public void testParseJson_GivenRawScoreIsFollowedEmptyValue() throws JsonParseException,
             IOException
     {
-        String input = "{\"rawAnomalyScore\":\"\"}";
+        String input = "{\"rawScore\":\"\"}";
         JsonParser parser = createJsonParser(input);
 
         NormalisedResult normalisedResult = NormalisedResult.parseJson(parser, m_Logger);
 
-        assertEquals(0.0, normalisedResult.getRawAnomalyScore(), ERROR);
-        assertEquals(0.0, normalisedResult.getNormalizedProbability(), ERROR);
-        assertEquals(0.0, normalisedResult.getNormalizedSysChangeScore(), ERROR);
-        assertNull(normalisedResult.getId());
+        assertEquals(0.0, normalisedResult.getRawScore(), ERROR);
+        assertEquals(0.0, normalisedResult.getNormalizedScore(), ERROR);
     }
 
     @Test
-    public void testParseJson_GivenNormalisedProbabilityIsNotNumber() throws JsonParseException,
+    public void testParseJson_GivenNormalisedScoreIsNotNumber() throws JsonParseException,
             IOException
     {
-        String input = "{\"normalizedProbability\":\"invalid\"}";
+        String input = "{\"normalizedScore\":\"invalid\"}";
         JsonParser parser = createJsonParser(input);
 
         NormalisedResult normalisedResult = NormalisedResult.parseJson(parser, m_Logger);
 
-        assertEquals(0.0, normalisedResult.getRawAnomalyScore(), ERROR);
-        assertEquals(0.0, normalisedResult.getNormalizedProbability(), ERROR);
-        assertEquals(0.0, normalisedResult.getNormalizedSysChangeScore(), ERROR);
-        assertNull(normalisedResult.getId());
-        verify(m_Logger).warn("Cannot parse normalizedProbability : invalid as a double");
+        assertEquals(0.0, normalisedResult.getRawScore(), ERROR);
+        assertEquals(0.0, normalisedResult.getNormalizedScore(), ERROR);
+        verify(m_Logger).warn("Cannot parse normalizedScore : invalid as a double");
     }
 
     @Test
-    public void testParseJson_GivenNormalisedProbabilityIsNotFollowedByValueString()
+    public void testParseJson_GivenNormalisedScoreIsNotFollowedByValueString()
             throws JsonParseException, IOException
     {
-        String input = "{\"normalizedProbability\":[]}";
+        String input = "{\"normalizedScore\":[]}";
         JsonParser parser = createJsonParser(input);
 
         NormalisedResult normalisedResult = NormalisedResult.parseJson(parser, m_Logger);
 
-        assertEquals(0.0, normalisedResult.getRawAnomalyScore(), ERROR);
-        assertEquals(0.0, normalisedResult.getNormalizedProbability(), ERROR);
-        assertEquals(0.0, normalisedResult.getNormalizedSysChangeScore(), ERROR);
-        assertNull(normalisedResult.getId());
-        verify(m_Logger).warn("Cannot parse normalizedProbability : [ as a double");
+        assertEquals(0.0, normalisedResult.getRawScore(), ERROR);
+        assertEquals(0.0, normalisedResult.getNormalizedScore(), ERROR);
+        verify(m_Logger).warn("Cannot parse normalizedScore : [ as a double");
         verify(m_Logger).warn(
                 "Parsing error: Only simple fields expected in NormalisedResult not END_ARRAY");
     }
 
     @Test
-    public void testParseJson_GivenNormalisedProbabilityIsFollowedEmptyValue()
+    public void testParseJson_GivenNormalisedScoreIsFollowedEmptyValue()
             throws JsonParseException, IOException
     {
-        String input = "{\"normalizedProbability\":\"\"}";
+        String input = "{\"normalizedScore\":\"\"}";
         JsonParser parser = createJsonParser(input);
 
         NormalisedResult normalisedResult = NormalisedResult.parseJson(parser, m_Logger);
 
-        assertEquals(0.0, normalisedResult.getRawAnomalyScore(), ERROR);
-        assertEquals(0.0, normalisedResult.getNormalizedProbability(), ERROR);
-        assertEquals(0.0, normalisedResult.getNormalizedSysChangeScore(), ERROR);
-        assertNull(normalisedResult.getId());
-    }
-
-    @Test
-    public void testParseJson_GivenAnomalyScoreIsNotNumber() throws JsonParseException,
-            IOException
-    {
-        String input = "{\"anomalyScore\":\"invalid\"}";
-        JsonParser parser = createJsonParser(input);
-
-        NormalisedResult normalisedResult = NormalisedResult.parseJson(parser, m_Logger);
-
-        assertEquals(0.0, normalisedResult.getRawAnomalyScore(), ERROR);
-        assertEquals(0.0, normalisedResult.getNormalizedProbability(), ERROR);
-        assertEquals(0.0, normalisedResult.getNormalizedSysChangeScore(), ERROR);
-        assertNull(normalisedResult.getId());
-        verify(m_Logger).warn("Cannot parse anomalyScore : invalid as a double");
-    }
-
-    @Test
-    public void testParseJson_GivenAnomalyScoreIsNotFollowedByValueString()
-            throws JsonParseException, IOException
-    {
-        String input = "{\"anomalyScore\":[]}";
-        JsonParser parser = createJsonParser(input);
-
-        NormalisedResult normalisedResult = NormalisedResult.parseJson(parser, m_Logger);
-
-        assertEquals(0.0, normalisedResult.getRawAnomalyScore(), ERROR);
-        assertEquals(0.0, normalisedResult.getNormalizedProbability(), ERROR);
-        assertEquals(0.0, normalisedResult.getNormalizedSysChangeScore(), ERROR);
-        assertNull(normalisedResult.getId());
-        verify(m_Logger).warn("Cannot parse anomalyScore : [ as a double");
-        verify(m_Logger).warn(
-                "Parsing error: Only simple fields expected in NormalisedResult not END_ARRAY");
-    }
-
-    @Test
-    public void testParseJson_GivenAnomalyScoreIsFollowedEmptyValue() throws JsonParseException,
-            IOException
-    {
-        String input = "{\"anomalyScore\":\"\"}";
-        JsonParser parser = createJsonParser(input);
-
-        NormalisedResult normalisedResult = NormalisedResult.parseJson(parser, m_Logger);
-
-        assertEquals(0.0, normalisedResult.getRawAnomalyScore(), ERROR);
-        assertEquals(0.0, normalisedResult.getNormalizedProbability(), ERROR);
-        assertEquals(0.0, normalisedResult.getNormalizedSysChangeScore(), ERROR);
-        assertNull(normalisedResult.getId());
+        assertEquals(0.0, normalisedResult.getRawScore(), ERROR);
+        assertEquals(0.0, normalisedResult.getNormalizedScore(), ERROR);
     }
 
     private static final JsonParser createJsonParser(String input) throws JsonParseException,
