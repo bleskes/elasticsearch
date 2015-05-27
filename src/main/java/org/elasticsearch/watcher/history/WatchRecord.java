@@ -209,7 +209,7 @@ public class WatchRecord implements ToXContent {
             try {
                 return valueOf(id.toUpperCase(Locale.ROOT));
             } catch (IllegalArgumentException iae) {
-                throw new WatcherSettingsException("unknown watch record state [" + id + "]");
+                throw new WatcherSettingsException("unknown watch record state [{}]", id);
             }
         }
 

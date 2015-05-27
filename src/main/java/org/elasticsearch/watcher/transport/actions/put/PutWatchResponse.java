@@ -61,7 +61,6 @@ public class PutWatchResponse extends ActionResponse {
         out.writeBoolean(created);
     }
 
-
     @Override
     public void readFrom(StreamInput in) throws IOException {
         super.readFrom(in);

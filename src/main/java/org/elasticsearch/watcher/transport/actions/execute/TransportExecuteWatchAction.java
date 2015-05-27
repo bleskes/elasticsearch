@@ -93,7 +93,7 @@ public class TransportExecuteWatchAction extends WatcherTransportAction<ExecuteW
         try {
             Watch watch = watchStore.get(request.getId());
             if (watch == null) {
-                throw new WatcherException("watch [" + request.getId() + "] does not exist");
+                throw new WatcherException("watch [{}] does not exist", request.getId());
             }
 
             TriggerEvent triggerEvent = triggerService.parseTriggerEvent(watch.id(), watch.id() + "_manual_execution", request.getTriggerType(), request.getTriggerSource());
@@ -115,7 +115,7 @@ public class TransportExecuteWatchAction extends WatcherTransportAction<ExecuteW
             WatchRecord record = executionService.execute(ctxBuilder.build());
             XContentBuilder builder = XContentFactory.jsonBuilder();
             record.toXContent(builder, WatcherParams.builder().hideSecrets(true).build());
-            ExecuteWatchResponse response = new ExecuteWatchResponse(builder.bytes());
+            ExecuteWatchResponse response = new ExecuteWatchResponse(record.id().value(), builder.bytes());
             listener.onResponse(response);
         } catch (Exception e) {
             logger.error("failed to execute [{}]", e, request.getId());
