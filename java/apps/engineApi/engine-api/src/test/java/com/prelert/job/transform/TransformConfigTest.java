@@ -40,10 +40,10 @@ import org.junit.Test;
 
 import com.prelert.job.exceptions.JobConfigurationException;
 import com.prelert.job.transform.TransformConfig;
-import com.prelert.job.transform.TransformConfigurationException;
 import com.prelert.job.transform.TransformType;
 import com.prelert.job.transform.condition.Condition;
 import com.prelert.job.transform.condition.Operation;
+import com.prelert.job.transform.exceptions.TransformConfigurationException;
 import com.prelert.rs.data.ErrorCode;
 
 

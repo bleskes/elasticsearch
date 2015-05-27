@@ -36,8 +36,8 @@ import java.util.Set;
 import org.junit.Test;
 
 import com.prelert.job.transform.TransformConfig;
-import com.prelert.job.transform.TransformConfigurationException;
 import com.prelert.job.transform.TransformType;
+import com.prelert.job.transform.exceptions.TransformConfigurationException;
 import com.prelert.rs.data.ErrorCode;
 
 public class TransformTypeTest

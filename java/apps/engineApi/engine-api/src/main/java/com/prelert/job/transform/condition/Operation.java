@@ -29,7 +29,7 @@ package com.prelert.job.transform.condition;
 import java.util.EnumSet;
 import java.util.Set;
 
-import com.prelert.job.transform.TransformConfigurationException;
+import com.prelert.job.transform.exceptions.TransformConfigurationException;
 import com.prelert.rs.data.ErrorCode;
 
 /**
