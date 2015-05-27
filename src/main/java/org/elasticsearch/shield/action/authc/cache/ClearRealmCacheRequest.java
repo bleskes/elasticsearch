@@ -17,8 +17,8 @@
 
 package org.elasticsearch.shield.action.authc.cache;
 
-import org.elasticsearch.action.support.nodes.NodeOperationRequest;
-import org.elasticsearch.action.support.nodes.NodesOperationRequest;
+import org.elasticsearch.action.support.nodes.BaseNodeRequest;
+import org.elasticsearch.action.support.nodes.BaseNodesRequest;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 
@@ -27,7 +27,7 @@ import java.io.IOException;
 /**
  *
  */
-public class ClearRealmCacheRequest extends NodesOperationRequest<ClearRealmCacheRequest> {
+public class ClearRealmCacheRequest extends BaseNodesRequest<ClearRealmCacheRequest> {
 
     String[] realms;
     String[] usernames;
@@ -96,7 +96,7 @@ public class ClearRealmCacheRequest extends NodesOperationRequest<ClearRealmCach
         out.writeStringArrayNullable(usernames);
     }
 
-    static class Node extends NodeOperationRequest {
+    static class Node extends BaseNodeRequest {
 
         String[] realms;
         String[] usernames;
