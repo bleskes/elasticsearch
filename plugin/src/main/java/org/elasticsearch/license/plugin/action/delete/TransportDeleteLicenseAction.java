@@ -20,7 +20,7 @@ package org.elasticsearch.license.plugin.action.delete;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.support.ActionFilters;
-import org.elasticsearch.action.support.master.TransportMasterNodeOperationAction;
+import org.elasticsearch.action.support.master.TransportMasterNodeAction;
 import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.ack.ClusterStateUpdateResponse;
@@ -34,7 +34,7 @@ import org.elasticsearch.transport.TransportService;
 
 import static org.elasticsearch.license.plugin.core.LicensesService.DeleteLicenseRequestHolder;
 
-public class TransportDeleteLicenseAction extends TransportMasterNodeOperationAction<DeleteLicenseRequest, DeleteLicenseResponse> {
+public class TransportDeleteLicenseAction extends TransportMasterNodeAction<DeleteLicenseRequest, DeleteLicenseResponse> {
 
     private final LicensesManagerService licensesManagerService;
 

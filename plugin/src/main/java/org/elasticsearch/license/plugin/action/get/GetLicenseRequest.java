@@ -18,10 +18,10 @@
 package org.elasticsearch.license.plugin.action.get;
 
 import org.elasticsearch.action.ActionRequestValidationException;
-import org.elasticsearch.action.support.master.MasterNodeReadOperationRequest;
+import org.elasticsearch.action.support.master.MasterNodeReadRequest;
 
 
-public class GetLicenseRequest extends MasterNodeReadOperationRequest<GetLicenseRequest> {
+public class GetLicenseRequest extends MasterNodeReadRequest<GetLicenseRequest> {
 
     public GetLicenseRequest() {
     }
