@@ -17,7 +17,6 @@
 
 package org.elasticsearch.watcher.trigger.schedule;
 
-import org.elasticsearch.watcher.WatcherSettingsException;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
@@ -72,7 +71,7 @@ public class IntervalScheduleTests extends ElasticsearchTestCase {
         assertThat(schedule.interval(), is(value));
     }
 
-    @Test(expected = WatcherSettingsException.class)
+    @Test(expected = ScheduleTriggerException.class)
     public void testParse_Invalid_String() throws Exception {
         XContentBuilder builder = jsonBuilder().value("43S");
         BytesReference bytes = builder.bytes();
@@ -81,7 +80,7 @@ public class IntervalScheduleTests extends ElasticsearchTestCase {
         new IntervalSchedule.Parser().parse(parser);
     }
 
-    @Test(expected = WatcherSettingsException.class)
+    @Test(expected = ScheduleTriggerException.class)
     public void testParse_Invalid_Object() throws Exception {
         XContentBuilder builder = jsonBuilder().startObject().endObject();
         BytesReference bytes = builder.bytes();

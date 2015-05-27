@@ -29,7 +29,6 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.test.junit.annotations.TestLogging;
 import org.elasticsearch.watcher.WatcherException;
-import org.elasticsearch.watcher.WatcherSettingsException;
 import org.elasticsearch.watcher.client.WatchSourceBuilder;
 import org.elasticsearch.watcher.client.WatcherClient;
 import org.elasticsearch.watcher.condition.ConditionBuilders;
@@ -404,7 +403,7 @@ public class BasicWatcherTests extends AbstractWatcherIntegrationTests {
                             .addAction("_logger", loggingAction("executed!")))
                     .get();
             fail("put watch should have failed");
-        } catch (WatcherSettingsException e) {
+        } catch (ScheduleTriggerException e) {
             assertThat(e.getMessage(), equalTo("invalid hourly minute [-10]. minute must be between 0 and 59 incl."));
         }
 
@@ -417,7 +416,7 @@ public class BasicWatcherTests extends AbstractWatcherIntegrationTests {
                             .addAction("_logger", loggingAction("executed!")))
                     .get();
             fail("put watch should have failed");
-        } catch (WatcherSettingsException e) {
+        } catch (ScheduleTriggerException e) {
             assertThat(e.getMessage(), equalTo("invalid time [0-10:00]. invalid time hour value [-10]. time hours must be between 0 and 23 incl."));
         }
 
@@ -430,7 +429,7 @@ public class BasicWatcherTests extends AbstractWatcherIntegrationTests {
                                     .addAction("_logger", loggingAction("executed!")))
                             .get();
             fail("put watch should have failed");
-        } catch (WatcherSettingsException e) {
+        } catch (ScheduleTriggerException e) {
             assertThat(e.getMessage(), equalTo("invalid time [0-10:00]. invalid time hour value [-10]. time hours must be between 0 and 23 incl."));
         }
 
@@ -443,7 +442,7 @@ public class BasicWatcherTests extends AbstractWatcherIntegrationTests {
                             .addAction("_logger", loggingAction("executed!")))
                     .get();
             fail("put watch should have failed");
-        } catch (WatcherSettingsException e) {
+        } catch (ScheduleTriggerException e) {
             assertThat(e.getMessage(), equalTo("invalid time [0-10:00]. invalid time hour value [-10]. time hours must be between 0 and 23 incl."));
         }
     }

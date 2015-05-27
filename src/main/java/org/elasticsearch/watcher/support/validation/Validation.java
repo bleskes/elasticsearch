@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.watcher.support;
+package org.elasticsearch.watcher.support.validation;
 
 import org.elasticsearch.common.logging.support.LoggerMessageFormat;
 

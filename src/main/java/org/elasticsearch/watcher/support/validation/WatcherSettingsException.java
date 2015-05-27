@@ -15,19 +15,27 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.watcher;
+package org.elasticsearch.watcher.support.validation;
+
+import org.elasticsearch.watcher.WatcherException;
 
 /**
  *
  */
 public class WatcherSettingsException extends WatcherException {
 
-    public WatcherSettingsException(String msg, Object... args) {
-        super(msg, args);
+    public WatcherSettingsException() {
+        super("invalid settings");
     }
 
-    public WatcherSettingsException(String msg, Throwable cause, Object... args) {
-        super(msg, cause, args);
+    public void addError(String error) {
+        addSuppressed(new InvalidSettingException(error));
     }
 
+    static class InvalidSettingException extends WatcherException {
+
+        public InvalidSettingException(String error) {
+            super(error);
+        }
+    }
 }
