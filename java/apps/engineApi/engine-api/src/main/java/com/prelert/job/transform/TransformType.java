@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.prelert.job.transform.condition.Condition;
+import com.prelert.job.transform.exceptions.TransformConfigurationException;
 import com.prelert.rs.data.ErrorCode;
 
 /**

@@ -30,7 +30,7 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
-import com.prelert.job.transform.TransformConfigurationException;
+import com.prelert.job.transform.exceptions.TransformConfigurationException;
 import com.prelert.rs.data.ErrorCode;
 
 /**

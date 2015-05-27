@@ -32,7 +32,7 @@ import java.util.Arrays;
 
 import org.junit.Test;
 
-import com.prelert.job.transform.TransformConfigurationException;
+import com.prelert.job.transform.exceptions.TransformConfigurationException;
 import com.prelert.rs.data.ErrorCode;
 
 public class ConditionTest
