@@ -19,7 +19,6 @@ package org.elasticsearch.watcher.actions;
 
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.watcher.execution.Wid;
 
 import java.io.IOException;
 
@@ -40,8 +39,6 @@ public abstract class ActionFactory<A extends Action, E extends ExecutableAction
     public abstract String type();
 
     public abstract A parseAction(String watchId, String actionId, XContentParser parser) throws IOException;
-
-    public abstract Action.Result parseResult(Wid wid, String actionId, XContentParser parser) throws IOException;
 
     public abstract E createExecutable(A action);
 

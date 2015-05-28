@@ -17,7 +17,6 @@
 
 package org.elasticsearch.watcher.support.init.proxy;
 
-import org.elasticsearch.action.ActionFuture;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
 import org.elasticsearch.action.admin.indices.refresh.RefreshResponse;
@@ -30,6 +29,8 @@ import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.*;
+import org.elasticsearch.action.update.UpdateRequest;
+import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.AdminClient;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.inject.Inject;
@@ -75,6 +76,10 @@ public class ClientProxy implements InitializingService.Initializable {
         return client.index(preProcess(request)).actionGet();
     }
 
+    public UpdateResponse update(UpdateRequest request) {
+        return client.update(preProcess(request)).actionGet();
+    }
+
     public BulkResponse bulk(BulkRequest request) {
         request.listenerThreaded(true);
         return client.bulk(preProcess(request)).actionGet();
@@ -90,8 +95,8 @@ public class ClientProxy implements InitializingService.Initializable {
         client.bulk(preProcess(request), listener);
     }
 
-    public ActionFuture<DeleteResponse> delete(DeleteRequest request) {
-        return client.delete(preProcess(request));
+    public DeleteResponse delete(DeleteRequest request) {
+        return client.delete(preProcess(request)).actionGet();
     }
 
     public SearchResponse search(SearchRequest request) {

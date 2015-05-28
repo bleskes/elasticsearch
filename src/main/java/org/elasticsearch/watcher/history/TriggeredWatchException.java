@@ -17,25 +17,16 @@
 
 package org.elasticsearch.watcher.history;
 
-import org.elasticsearch.common.inject.AbstractModule;
-import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.watcher.execution.InternalWatchExecutor;
+import org.elasticsearch.watcher.WatcherException;
 
-/**
- */
-public class HistoryModule extends AbstractModule {
+public class TriggeredWatchException extends WatcherException {
 
-
-    public HistoryModule() {
+    public TriggeredWatchException(String msg, Object... args) {
+        super(msg, args);
     }
 
-
-    @Override
-    protected void configure() {
-        bind(HistoryStore.class).asEagerSingleton();
+    public TriggeredWatchException(String msg, Throwable cause, Object... args) {
+        super(msg, cause, args);
     }
 
-    public static Settings additionalSettings(Settings nodeSettings) {
-        return InternalWatchExecutor.additionalSettings(nodeSettings);
-    }
 }

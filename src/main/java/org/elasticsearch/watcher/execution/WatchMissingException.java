@@ -15,27 +15,17 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.watcher.history;
+package org.elasticsearch.watcher.execution;
 
-import org.elasticsearch.common.inject.AbstractModule;
-import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.watcher.execution.InternalWatchExecutor;
+import org.elasticsearch.watcher.WatcherException;
 
-/**
- */
-public class HistoryModule extends AbstractModule {
+public class WatchMissingException extends WatcherException {
 
-
-    public HistoryModule() {
+    public WatchMissingException(String msg, Object... args) {
+        super(msg, args);
     }
 
-
-    @Override
-    protected void configure() {
-        bind(HistoryStore.class).asEagerSingleton();
-    }
-
-    public static Settings additionalSettings(Settings nodeSettings) {
-        return InternalWatchExecutor.additionalSettings(nodeSettings);
+    public WatchMissingException(String msg, Throwable cause, Object... args) {
+        super(msg, cause, args);
     }
 }

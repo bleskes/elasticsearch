@@ -15,27 +15,35 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.watcher.history;
+package org.elasticsearch.watcher.execution;
 
-import org.elasticsearch.common.inject.AbstractModule;
-import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.watcher.execution.InternalWatchExecutor;
+import org.elasticsearch.watcher.WatcherException;
 
-/**
- */
-public class HistoryModule extends AbstractModule {
+import java.util.Locale;
 
+public enum ExecutionState {
 
-    public HistoryModule() {
+    EXECUTION_NOT_NEEDED,
+    THROTTLED,
+    EXECUTED,
+    FAILED,
+    DELETED_WHILE_QUEUED;
+
+    public String id() {
+        return name().toLowerCase(Locale.ROOT);
     }
 
+    public static ExecutionState resolve(String id) {
+        try {
+            return valueOf(id.toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException iae) {
+            throw new WatcherException("unknown execution state [{}]", id);
+        }
+    }
 
     @Override
-    protected void configure() {
-        bind(HistoryStore.class).asEagerSingleton();
+    public String toString() {
+        return id();
     }
 
-    public static Settings additionalSettings(Settings nodeSettings) {
-        return InternalWatchExecutor.additionalSettings(nodeSettings);
-    }
 }
