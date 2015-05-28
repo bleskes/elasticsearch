@@ -18,7 +18,6 @@
  */
 package org.elasticsearch.test.transport;
 
-import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.common.component.Lifecycle;
 import org.elasticsearch.common.component.LifecycleListener;
@@ -76,9 +75,11 @@ public class CapturingTransport implements Transport {
         return map;
     }
 
-    /** clears captured requests */
-    public void clear() {
-        capturedRequests.clear();
+    /** clears captured requests and return them */
+    public CapturedRequest[] clear() {
+        ArrayList<CapturedRequest> list = new ArrayList<>();
+        capturedRequests.drainTo(list);
+        return list.toArray(new CapturedRequest[list.size()]);
     }
 
     /** simulate a response for the given requestId */

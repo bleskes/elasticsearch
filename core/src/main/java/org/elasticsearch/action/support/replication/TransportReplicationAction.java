@@ -51,6 +51,7 @@ import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.util.concurrent.AbstractRunnable;
 import org.elasticsearch.common.util.concurrent.ConcurrentCollections;
 import org.elasticsearch.index.IndexService;
+import org.elasticsearch.index.IndexShardMissingException;
 import org.elasticsearch.index.engine.DocumentAlreadyExistsException;
 import org.elasticsearch.index.engine.Engine;
 import org.elasticsearch.index.engine.VersionConflictEngineException;
@@ -873,15 +874,15 @@ public abstract class TransportReplicationAction<Request extends ReplicationRequ
         void performOnReplica(final ShardRouting shard, final String nodeId) {
             // if we don't have that node, it means that it might have failed and will be created again, in
             // this case, we don't have to do the operation, and just let it failover
-            if (!observer.observedState().nodes().nodeExists(nodeId)) {
-                onReplicaFailure(nodeId, null);
+            final DiscoveryNode node = observer.observedState().nodes().get(nodeId);
+            if (node == null) {
+                onReplicaFailure(shard, null, new IndexShardMissingException(shard.shardId()));
                 return;
             }
 
             replicaRequest.internalShardId = shardIt.shardId();
 
             if (!nodeId.equals(observer.observedState().nodes().localNodeId())) {
-                final DiscoveryNode node = observer.observedState().nodes().get(nodeId);
                 transportService.sendRequest(node, transportReplicaAction, replicaRequest,
                         transportOptions, new EmptyTransportResponseHandler(ThreadPool.Names.SAME) {
                             @Override
@@ -891,13 +892,7 @@ public abstract class TransportReplicationAction<Request extends ReplicationRequ
 
                             @Override
                             public void handleException(TransportException exp) {
-                                onReplicaFailure(nodeId, exp);
-                                logger.trace("[{}] transport failure during replica request [{}] ", exp, node, replicaRequest);
-                                if (ignoreReplicaException(exp) == false) {
-                                    logger.warn("failed to perform " + actionName + " on remote replica " + node + shardIt.shardId(), exp);
-                                    shardStateAction.shardFailed(shard, indexMetaData.getUUID(),
-                                            "Failed to perform [" + actionName + "] on replica, message [" + ExceptionsHelper.detailedMessage(exp) + "]");
-                                }
+                                onReplicaFailure(shard, node, exp);
                             }
 
                         });
@@ -911,7 +906,7 @@ public abstract class TransportReplicationAction<Request extends ReplicationRequ
                                     shardOperationOnReplica(shard.shardId(), replicaRequest);
                                     onReplicaSuccess();
                                 } catch (Throwable e) {
-                                    onReplicaFailure(nodeId, e);
+                                    onReplicaFailure(shard, node, e);
                                     failReplicaIfNeeded(shard.index(), shard.id(), e);
                                 }
                             }
@@ -924,12 +919,12 @@ public abstract class TransportReplicationAction<Request extends ReplicationRequ
 
                             @Override
                             public void onFailure(Throwable t) {
-                                onReplicaFailure(nodeId, t);
+                                onReplicaFailure(shard, node, t);
                             }
                         });
                     } catch (Throwable e) {
                         failReplicaIfNeeded(shard.index(), shard.id(), e);
-                        onReplicaFailure(nodeId, e);
+                        onReplicaFailure(shard, node, e);
                     }
                 } else {
                     try {
@@ -937,18 +932,38 @@ public abstract class TransportReplicationAction<Request extends ReplicationRequ
                         onReplicaSuccess();
                     } catch (Throwable e) {
                         failReplicaIfNeeded(shard.index(), shard.id(), e);
-                        onReplicaFailure(nodeId, e);
+                        onReplicaFailure(shard, node, e);
                     }
                 }
             }
         }
 
 
-        void onReplicaFailure(String nodeId, @Nullable Throwable e) {
+        void onReplicaFailure(final ShardRouting shard, @Nullable final DiscoveryNode node, final Throwable e) {
             // Only version conflict should be ignored from being put into the _shards header?
-            if (e != null && ignoreReplicaException(e) == false) {
-                shardReplicaFailures.put(nodeId, e);
+            if (node == null || ignoreReplicaException(e)) {
+                onAckedReplicaFailure(shard, node, e);
+            } else {
+                shardReplicaFailures.put(node.id(), e);
+                logger.warn("failed to perform " + actionName + " on remote replica " + node + shardIt.shardId(), e);
+                final String reason = "Failed to perform [" + actionName + "] on replica, message [" + ExceptionsHelper.detailedMessage(e) + "]";
+                shardStateAction.shardFailed(shard, indexMetaData.getUUID(),
+                        reason,
+                        new ActionListener<TransportResponse.Empty>() {
+                            @Override
+                            public void onResponse(TransportResponse.Empty empty) {
+                                onAckedReplicaFailure(shard, node, e);
+                            }
+
+                            @Override
+                            public void onFailure(Throwable e) {
+                                // nocommit - what here?
+                            }
+                        });
             }
+        }
+
+        void onAckedReplicaFailure(ShardRouting shard, @Nullable DiscoveryNode node, Throwable e) {
             decPendingAndFinishIfNeeded();
         }
 
@@ -1042,8 +1057,10 @@ public abstract class TransportReplicationAction<Request extends ReplicationRequ
         }
     }
 
-    /** Utility method to create either an index or a create operation depending
-     *  on the {@link OpType} of the request. */
+    /**
+     * Utility method to create either an index or a create operation depending
+     * on the {@link OpType} of the request.
+     */
     private final Engine.IndexingOperation prepareIndexOperationOnPrimary(BulkShardRequest shardRequest, IndexRequest request, IndexShard indexShard) {
         SourceToParse sourceToParse = SourceToParse.source(SourceToParse.Origin.PRIMARY, request.source()).type(request.type()).id(request.id())
                 .routing(request.routing()).parent(request.parent()).timestamp(request.timestamp()).ttl(request.ttl());
@@ -1060,8 +1077,10 @@ public abstract class TransportReplicationAction<Request extends ReplicationRequ
         }
     }
 
-    /** Execute the given {@link IndexRequest} on a primary shard, throwing a
-     *  {@link RetryOnPrimaryException} if the operation needs to be re-tried. */
+    /**
+     * Execute the given {@link IndexRequest} on a primary shard, throwing a
+     * {@link RetryOnPrimaryException} if the operation needs to be re-tried.
+     */
     protected final WriteResult<IndexResponse> executeIndexRequestOnPrimary(BulkShardRequest shardRequest, IndexRequest request, IndexShard indexShard) throws Throwable {
         Engine.IndexingOperation operation = prepareIndexOperationOnPrimary(shardRequest, request, indexShard);
         Mapping update = operation.parsedDoc().dynamicMappingsUpdate();

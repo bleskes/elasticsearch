@@ -476,19 +476,29 @@ public class ShardReplicationTests extends ElasticsearchTestCase {
                 if (randomBoolean()) {
                     t = new CorruptIndexException("simulated", (String) null);
                     criticalFailures++;
+                    // should cause a failed shard to be sent..
                 } else {
+                    pending--;
                     t = new IndexShardNotStartedException(shardId, IndexShardState.RECOVERING);
                 }
                 logger.debug("--> simulating failure on {} with [{}]", capturedRequest.node, t.getClass().getSimpleName());
                 transport.handleResponse(capturedRequest.requestId, t);
             } else {
                 successfull++;
+                pending--;
                 transport.handleResponse(capturedRequest.requestId, TransportResponse.Empty.INSTANCE);
             }
-            pending--;
             assertThat(replicationPhase.pending(), equalTo(pending));
             assertThat(replicationPhase.successful(), equalTo(successfull));
         }
+        // send responses for failures
+        final CapturingTransport.CapturedRequest[] shardFailedRequests = transport.capturedRequests();
+        for (CapturingTransport.CapturedRequest capturedRequest : shardFailedRequests) {
+            transport.handleResponse(capturedRequest.requestId, TransportResponse.Empty.INSTANCE);
+            pending--;
+            assertThat(replicationPhase.pending(), equalTo(pending));
+        }
+
         assertThat(listener.isDone(), equalTo(true));
         Response response = listener.get();
         final ActionWriteResponse.ShardInfo shardInfo = response.getShardInfo();
@@ -563,18 +573,23 @@ public class ShardReplicationTests extends ElasticsearchTestCase {
         TransportReplicationAction<Request, Request, Response>.PrimaryPhase primaryPhase = action.new PrimaryPhase(request, listener);
         primaryPhase.run();
         assertIndexShardCounter(2);
-        assertThat(transport.capturedRequests().length, equalTo(1));
+        CapturingTransport.CapturedRequest[] capturedRequests = transport.clear();
+        assertThat(capturedRequests.length, equalTo(1));
         // try once with successful response
-        transport.handleResponse(transport.capturedRequests()[0].requestId, TransportResponse.Empty.INSTANCE);
+        transport.handleResponse(capturedRequests[0].requestId, TransportResponse.Empty.INSTANCE);
         assertIndexShardCounter(1);
-        transport.clear();
         request = new Request(shardId).timeout("100ms");
         primaryPhase = action.new PrimaryPhase(request, listener);
         primaryPhase.run();
         assertIndexShardCounter(2);
-        assertThat(transport.capturedRequests().length, equalTo(1));
+        capturedRequests = transport.clear();
+        assertThat(capturedRequests.length, equalTo(1));
         // try with failure response
-        transport.handleResponse(transport.capturedRequests()[0].requestId, new CorruptIndexException("simulated", (String) null));
+        transport.handleResponse(capturedRequests[0].requestId, new CorruptIndexException("simulated", (String) null));
+        assertIndexShardCounter(2);
+        // get failed shard request and respond
+        capturedRequests = transport.clear();
+        transport.handleResponse(capturedRequests[0].requestId, new TransportResponse.Empty());
         assertIndexShardCounter(1);
     }
 
