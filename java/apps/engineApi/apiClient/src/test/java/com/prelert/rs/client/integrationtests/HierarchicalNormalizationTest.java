@@ -173,13 +173,13 @@ public class HierarchicalNormalizationTest implements Closeable
         test(records.size() == 2);
 
         AnomalyRecord record1 = records.get(0);
-        test(record1.getNormalizedProbability() > 90.0);
-        test(record1.getAnomalyScore() > 80.0);
+        test(record1.getNormalizedProbability() > 97.0);
+        test(record1.getAnomalyScore() > 82.0);
         test(record1.getPartitionFieldName().equals("instance"));
         test(record1.getPartitionFieldValue().equals("US-1"));
 
         AnomalyRecord record2 = records.get(1);
-        test(record2.getNormalizedProbability() > 80.0);
+        test(record2.getNormalizedProbability() > 82.0);
         test(record2.getAnomalyScore() == record1.getAnomalyScore());
         test(record2.getPartitionFieldName().equals("region"));
         test(record2.getPartitionFieldValue().equals("Europe"));
@@ -201,16 +201,16 @@ public class HierarchicalNormalizationTest implements Closeable
         test(records.size() == 2);
 
         AnomalyRecord record1 = records.get(0);
-        test(record1.getNormalizedProbability() > 95.0);
-        test(record1.getAnomalyScore() > 80.0);
-        test(record1.getByFieldName().equals("region"));
-        test(record1.getByFieldValue().equals("Europe"));
+        test(record1.getNormalizedProbability() > 97.0);
+        test(record1.getAnomalyScore() > 82.0);
+        test(record1.getByFieldName().equals("instance"));
+        test(record1.getByFieldValue().equals("US-1"));
 
         AnomalyRecord record2 = records.get(1);
-        test(record2.getNormalizedProbability() > 85.0);
+        test(record2.getNormalizedProbability() > 97.0);
         test(record2.getAnomalyScore() == record1.getAnomalyScore());
-        test(record2.getByFieldName().equals("instance"));
-        test(record2.getByFieldValue().equals("US-1"));
+        test(record2.getByFieldName().equals("region"));
+        test(record2.getByFieldValue().equals("Europe"));
 
         return true;
     }
