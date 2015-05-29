@@ -369,8 +369,7 @@ public class IndexPrivilegeTests extends AbstractPrivilegeTests {
                     assertAccessIsAllowed(user, "GET", "/" + index + "/_analyze", null, analyzeParams);
                     assertAccessIsAllowed(user, "POST", "/" + index + "/_flush");
                     assertAccessIsAllowed(user, "POST", "/" + index + "/_optimize");
-                    ImmutableMap<String, String> params = ImmutableMap.of("wait_for_completion", "true");
-                    assertAccessIsAllowed(user, "POST", "/" + index + "/_upgrade", null, params);
+                    assertAccessIsAllowed(user, "POST", "/" + index + "/_upgrade", null);
                     assertAccessIsAllowed(user, "POST", "/" + index + "/_close");
                     assertAccessIsAllowed(user, "POST", "/" + index + "/_open");
                     assertAccessIsAllowed(user, "POST", "/" + index + "/_cache/clear");
@@ -391,8 +390,7 @@ public class IndexPrivilegeTests extends AbstractPrivilegeTests {
                     assertAccessIsDenied(user, "GET", "/" + index + "/_analyze", null, analyzeParams);
                     assertAccessIsDenied(user, "POST", "/" + index + "/_flush");
                     assertAccessIsDenied(user, "POST", "/" + index + "/_optimize");
-                    ImmutableMap<String, String> params = ImmutableMap.of("wait_for_completion", "true");
-                    assertAccessIsDenied(user, "POST", "/" + index + "/_upgrade", null, params);
+                    assertAccessIsDenied(user, "POST", "/" + index + "/_upgrade", null);
                     assertAccessIsDenied(user, "POST", "/" + index + "/_close");
                     assertAccessIsDenied(user, "POST", "/" + index + "/_open");
                     assertAccessIsDenied(user, "POST", "/" + index + "/_cache/clear");
