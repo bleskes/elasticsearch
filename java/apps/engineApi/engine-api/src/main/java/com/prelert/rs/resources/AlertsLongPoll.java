@@ -81,10 +81,7 @@ public class AlertsLongPoll extends ResourceWithJobManager
             @Suspended final AsyncResponse asyncResponse)
     throws InterruptedException, UnknownJobException
     {
-        // Disable logging here due to the fact that repeated use of this endpoint
-        // floods the log with this message. Any other solution to this problem seems
-        // to be over-engineering. Users can be advised to log on their side.
-        // logEndpointCall(jobId, anomalyScoreThreshold, normalizedProbabiltyThreshold);
+        logEndpointCall(jobId, anomalyScoreThreshold, normalizedProbabiltyThreshold);
 
         if (anomalyScoreThreshold == null && normalizedProbabiltyThreshold == null)
         {
@@ -115,24 +112,24 @@ public class AlertsLongPoll extends ResourceWithJobManager
                 timeout, anomalyScoreThreshold, normalizedProbabiltyThreshold);
     }
 
-//    private void logEndpointCall(String jobId, Double anomalyScore, Double normalizedProbability)
-//    {
-//        StringBuilder msg = new StringBuilder();
-//        msg.append("long poll alerts for job ");
-//        msg.append(jobId);
-//        if (anomalyScore != null)
-//        {
-//            msg.append(", anomalyScore >= ");
-//            msg.append(anomalyScore);
-//            msg.append(" ");
-//        }
-//        if (normalizedProbability != null)
-//        {
-//            msg.append(", normalized prob >= ");
-//            msg.append(normalizedProbability);
-//        }
-//        LOGGER.debug(msg.toString());
-//    }
+    private void logEndpointCall(String jobId, Double anomalyScore, Double normalizedProbability)
+    {
+        StringBuilder msg = new StringBuilder();
+        msg.append("long poll alerts for job ");
+        msg.append(jobId);
+        if (anomalyScore != null)
+        {
+            msg.append(", anomalyScore >= ");
+            msg.append(anomalyScore);
+            msg.append(" ");
+        }
+        if (normalizedProbability != null)
+        {
+            msg.append(", normalized prob >= ");
+            msg.append(normalizedProbability);
+        }
+        LOGGER.debug(msg.toString());
+    }
 
     private static boolean isWithinRange0To100(Double value)
     {
