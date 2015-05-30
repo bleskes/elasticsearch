@@ -38,72 +38,35 @@ import com.fasterxml.jackson.core.JsonToken;
 /**
  * Store the output of the normaliser process
  *
- * {"rawAnomalyScore":"0.0","normalizedProbability":"","anomalyScore":"0"}
+ * {"rawScore":"0.0","normalizedScore":"0"}
  *
  */
 public class NormalisedResult
 {
-    public static final String RAW_ANOMALY_SCORE = "rawAnomalyScore";
-    public static final String NORMALIZED_PROBABILITY = "normalizedProbability";
-    public static final String SYS_CHANGE_SCORE = "anomalyScore";
-    public static final String ID = "id";
+    public static final String RAW_SCORE = "rawScore";
+    public static final String NORMALIZED_SCORE = "normalizedScore";
 
-    private double m_RawAnomalyScore;
-    private double m_NormalizedProbability;
-    private double m_NormalizedSysChangeScore;
-    private String m_Id;
+    private double m_RawScore;
+    private double m_NormalizedScore;
 
-    public NormalisedResult()
+    public double getRawScore()
     {
-
+        return m_RawScore;
     }
 
-    public NormalisedResult(NormalisedResult other)
+    public void setRawScore(double rawScore)
     {
-        m_RawAnomalyScore = other.m_RawAnomalyScore;
-        m_NormalizedSysChangeScore = other.m_NormalizedSysChangeScore;
-        m_NormalizedProbability = other.m_NormalizedProbability;
-        m_Id = other.m_Id;
+        this.m_RawScore = rawScore;
     }
 
-    public double getRawAnomalyScore()
+    public double getNormalizedScore()
     {
-        return m_RawAnomalyScore;
+        return m_NormalizedScore;
     }
 
-    public void setRawAnomalyScore(double rawAnomalyScore)
+    public void setNormalizedScore(double normalizedScore)
     {
-        this.m_RawAnomalyScore = rawAnomalyScore;
-    }
-
-    public double getNormalizedProbability()
-    {
-        return m_NormalizedProbability;
-    }
-
-    public void setNormalizedProbability(double normalizedProbability)
-    {
-        this.m_NormalizedProbability = normalizedProbability;
-    }
-
-    public double getNormalizedSysChangeScore()
-    {
-        return m_NormalizedSysChangeScore;
-    }
-
-    public void setNormalizedSysChangeScore(double normalizedSysChangeScore)
-    {
-        this.m_NormalizedSysChangeScore = normalizedSysChangeScore;
-    }
-
-    public String getId()
-    {
-        return m_Id;
-    }
-
-    public void setId(String id)
-    {
-        m_Id = id;
+        this.m_NormalizedScore = normalizedScore;
     }
 
     public static NormalisedResult parseJson(JsonParser parser, Logger logger)
@@ -140,20 +103,13 @@ public class NormalisedResult
     {
         switch (fieldName)
         {
-            case RAW_ANOMALY_SCORE:
-                result.setRawAnomalyScore(parseStringValueAsDoubleOrZero(token, parser,
-                        RAW_ANOMALY_SCORE, logger));
+            case RAW_SCORE:
+                result.setRawScore(parseStringValueAsDoubleOrZero(token, parser,
+                        RAW_SCORE, logger));
                 break;
-            case SYS_CHANGE_SCORE:
-                result.setNormalizedSysChangeScore(parseStringValueAsDoubleOrZero(token, parser,
-                        SYS_CHANGE_SCORE, logger));
-                break;
-            case NORMALIZED_PROBABILITY:
-                result.setNormalizedProbability(parseStringValueAsDoubleOrZero(token, parser,
-                        NORMALIZED_PROBABILITY, logger));
-                break;
-            case ID:
-                result.setId(parser.getValueAsString());
+            case NORMALIZED_SCORE:
+                result.setNormalizedScore(parseStringValueAsDoubleOrZero(token, parser,
+                        NORMALIZED_SCORE, logger));
                 break;
             default:
                 logger.trace(String.format(

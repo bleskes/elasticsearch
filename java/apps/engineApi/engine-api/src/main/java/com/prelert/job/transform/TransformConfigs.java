@@ -32,6 +32,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.prelert.job.transform.exceptions.TransformConfigurationException;
 import com.prelert.job.verification.Verifiable;
 import com.prelert.rs.data.ErrorCode;
 
@@ -93,9 +94,6 @@ public class TransformConfigs implements Verifiable
             String msg = String.format("Transform output name %s is used more than once", duplicatedName);
              throw new TransformConfigurationException(msg, ErrorCode.DUPLICATED_TRANSFORM_OUTPUT_NAME);
         }
-
-        // TODO check inputs/outputs are used
-
 
         // Check for circular dependencies
         int index = TransformConfigs.checkForCircularDependencies(m_Transforms);

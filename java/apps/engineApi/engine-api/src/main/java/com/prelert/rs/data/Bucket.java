@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -106,7 +106,6 @@ public class Bucket
         return Long.toString(getEpoch()).intern();
     }
 
-
     /**
      * Set the ID and derive the timestamp from it.  It MUST be
      * a number that corresponds to the bucket's timestamp in seconds
@@ -124,7 +123,6 @@ public class Bucket
             LOGGER.error("Could not parse ID " + id + " as a long");
         }
     }
-
 
     /**
      * Timestamp expressed in seconds since the epoch (rather than Java's
@@ -156,7 +154,6 @@ public class Bucket
         m_RawAnomalyScore = rawAnomalyScore;
     }
 
-
     public double getAnomalyScore()
     {
         return m_AnomalyScore;
@@ -164,7 +161,6 @@ public class Bucket
 
     public void setAnomalyScore(double anomalyScore)
     {
-        m_HadBigNormalisedUpdate |= AnomalyRecord.isBigUpdate(m_AnomalyScore, anomalyScore);
         m_AnomalyScore = anomalyScore;
     }
 
@@ -175,10 +171,8 @@ public class Bucket
 
     public void setMaxNormalizedProbability(double maxNormalizedProbability)
     {
-        m_HadBigNormalisedUpdate |= AnomalyRecord.isBigUpdate(m_MaxNormalizedProbability, maxNormalizedProbability);
         m_MaxNormalizedProbability = maxNormalizedProbability;
     }
-
 
     public int getRecordCount()
     {
@@ -338,17 +332,7 @@ public class Bucket
             switch (fieldName)
             {
             case TIMESTAMP:
-                if (token == JsonToken.VALUE_NUMBER_INT)
-                {
-                    // convert seconds to ms
-                    long val = m_Parser.getLongValue() * 1000;
-                    bucket.setTimestamp(new Date(val));
-                }
-                else
-                {
-                    LOGGER.warn("Cannot parse " + TIMESTAMP + " : " + m_Parser.getText()
-                                    + " as a long");
-                }
+                parseTimestamp(bucket, token);
                 break;
             case RAW_ANOMALY_SCORE:
                 bucket.setRawAnomalyScore(parseAsDoubleOrZero(token, fieldName));
@@ -369,26 +353,47 @@ public class Bucket
                 bucket.setInterim(parseAsBooleanOrNull(token, fieldName));
                 break;
             case DETECTORS:
-                if (token != JsonToken.START_ARRAY)
-                {
-                    String msg = "Invalid value Expecting an array of detectors";
-                    LOGGER.warn(msg);
-                    throw new AutoDetectParseException(msg);
-                }
-
-                token = m_Parser.nextToken();
-                while (token != JsonToken.END_ARRAY)
-                {
-                    Detector detector = Detector.parseJson(m_Parser);
-                    bucket.addDetector(detector);
-
-                    token = m_Parser.nextToken();
-                }
+                parseDetectors(token, bucket);
                 break;
             default:
                 LOGGER.warn(String.format("Parse error unknown field in Bucket %s:%s",
                         fieldName, token.asString()));
                 break;
+            }
+        }
+
+        private void parseTimestamp(Bucket bucket, JsonToken token) throws IOException
+        {
+            if (token == JsonToken.VALUE_NUMBER_INT)
+            {
+                // convert seconds to ms
+                long val = m_Parser.getLongValue() * 1000;
+                bucket.setTimestamp(new Date(val));
+            }
+            else
+            {
+                LOGGER.warn("Cannot parse " + TIMESTAMP + " : " + m_Parser.getText()
+                                + " as a long");
+            }
+        }
+
+        private void parseDetectors(JsonToken token, Bucket bucket)
+                throws AutoDetectParseException, IOException, JsonParseException
+        {
+            if (token != JsonToken.START_ARRAY)
+            {
+                String msg = "Invalid value Expecting an array of detectors";
+                LOGGER.warn(msg);
+                throw new AutoDetectParseException(msg);
+            }
+
+            token = m_Parser.nextToken();
+            while (token != JsonToken.END_ARRAY)
+            {
+                Detector detector = Detector.parseJson(m_Parser);
+                bucket.addDetector(detector);
+
+                token = m_Parser.nextToken();
             }
         }
     }

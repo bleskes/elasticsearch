@@ -33,14 +33,17 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.junit.Test;
 
 import com.prelert.job.exceptions.JobConfigurationException;
 import com.prelert.job.transform.TransformConfig;
-import com.prelert.job.transform.TransformConfigurationException;
 import com.prelert.job.transform.TransformType;
+import com.prelert.job.transform.condition.Condition;
+import com.prelert.job.transform.condition.Operation;
+import com.prelert.job.transform.exceptions.TransformConfigurationException;
 import com.prelert.rs.data.ErrorCode;
 
 
@@ -88,9 +91,18 @@ public class TransformConfigTest
             }
 
             List<String> initArgs = new ArrayList<>();
-            for (int arg = 0; arg < type.argumentCount(); ++arg)
+            if (type == TransformType.EXCLUDE_FILTER_NUMERIC)
             {
-                initArgs.add(Integer.toString(arg));
+                // this one needs specific arguments that are verified
+                initArgs.add(Operation.EQ.toString());
+                initArgs.add("100");
+            }
+            else
+            {
+                for (int arg = 0; arg < type.argumentCount(); ++arg)
+                {
+                    initArgs.add(Integer.toString(arg));
+                }
             }
 
             TransformConfig tr = new TransformConfig();
@@ -140,7 +152,7 @@ public class TransformConfigTest
      * creating a transform with the wrong number of inputs should throw
      */
     @Test
-    public void testValidTransformVerifyThrows()
+    public void testInvalidTransformVerifyThrows()
     {
         Set<TransformType> types = EnumSet.allOf(TransformType.class);
 
@@ -163,8 +175,6 @@ public class TransformConfigTest
             {
                 inputs.add(Integer.toString(arg));
             }
-
-
 
             // set the wrong number of arguments
             int initArgCount = 0;
@@ -243,6 +253,61 @@ public class TransformConfigTest
             }
 
         }
+    }
+
+    @Test
+    public void testVerify_typeHasCondition() throws TransformConfigurationException
+    {
+        TransformConfig tr = new TransformConfig();
+        tr.setTransform(TransformType.EXCLUDE_FILTER_NUMERIC.prettyName());
+        tr.setInputs(Arrays.asList("in"));
+        tr.setOutputs(Arrays.asList("out"));
+
+        try
+        {
+            tr.verify();
+            fail("exclude filter numeric transform without arguments " +
+                    "should throw an TransformConfigurationException");
+        }
+        catch (TransformConfigurationException e)
+        {
+            assertEquals(ErrorCode.TRANSFORM_INVALID_ARGUMENT_COUNT, e.getErrorCode());
+        }
+
+        // can't parse args
+        tr.setArguments(Arrays.asList("bad-arg1", "bad-arg2"));
+        try
+        {
+            tr.verify();
+            fail("exclude filter numeric transform with bad arguments " +
+                    "should throw an TransformConfigurationException");
+        }
+        catch (TransformConfigurationException e)
+        {
+            assertEquals(ErrorCode.TRANSFORM_INVALID_ARGUMENT, e.getErrorCode());
+        }
+
+        // too many args
+        tr.setArguments(Arrays.asList("100.0", "lte", "bad-extra-arg"));
+        try
+        {
+            tr.verify();
+            fail("exclude filter numeric transform with bad arguments " +
+                    "should throw an TransformConfigurationException");
+        }
+        catch (TransformConfigurationException e)
+        {
+            assertEquals(ErrorCode.TRANSFORM_INVALID_ARGUMENT_COUNT, e.getErrorCode());
+        }
+
+        // this works
+        tr.setArguments(Arrays.asList("100.0", "lte"));
+        tr.verify();
+
+        Optional<Condition> cond = tr.getCondition();
+        assertTrue(cond.isPresent());
+        assertEquals(Operation.LTE, cond.get().getOp());
+        assertEquals(100.0, cond.get().getFilterValue(), 0.0000001);
     }
 
 }

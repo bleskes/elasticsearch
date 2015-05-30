@@ -32,6 +32,8 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
+import com.prelert.job.transform.condition.Condition;
+import com.prelert.job.transform.exceptions.TransformConfigurationException;
 import com.prelert.rs.data.ErrorCode;
 
 /**
@@ -45,7 +47,16 @@ public enum TransformType
     CONCAT(Names.CONCAT, Names.VARIADIC_ARGS, 0, 1, Arrays.asList("concat")),
     REGEX_EXTRACT(Names.EXTRACT, 1, 1, 0, Arrays.asList("")),
     REGEX_SPLIT(Names.SPLIT, 1, 1, 0, Arrays.asList("")),
-    EXCLUDE_FILTER(Names.EXCLUDE_FILTER, 1, 1, 0, Arrays.asList());
+    EXCLUDE_FILTER(Names.EXCLUDE_FILTER, 1, 1, 0, Arrays.asList()),
+    EXCLUDE_FILTER_NUMERIC(Names.EXCLUDE_FILTER_NUMERIC, 1, 2, 0, Arrays.asList(), true)
+    {
+        @Override
+        protected boolean verifyArguments(List<String> args)
+        throws TransformConfigurationException
+        {
+            return Condition.verifyArguments(args);
+        }
+    };
 
     /**
      * Enums cannot use static fields in their constructors as the
@@ -60,6 +71,7 @@ public enum TransformType
         public static final String EXTRACT = "extract";
         public static final String SPLIT = "split";
         public static final String EXCLUDE_FILTER = "exclude_filter";
+        public static final String EXCLUDE_FILTER_NUMERIC = "exclude_filter_numeric";
 
         private static final int VARIADIC_ARGS = -1;
 
@@ -73,6 +85,7 @@ public enum TransformType
     private final int m_OptionalArgumentCount;
     private final String m_PrettyName;
     private final List<String> m_DefaultOutputNames;
+    private final boolean m_HasCondition;
 
     private TransformType(String prettyName, int arity, int requiredArgumentCount,
                         int optionalArgumentCount, List<String> defaultOutputNames)
@@ -82,6 +95,18 @@ public enum TransformType
         m_OptionalArgumentCount = optionalArgumentCount;
         m_PrettyName = prettyName;
         m_DefaultOutputNames = defaultOutputNames;
+        m_HasCondition = false;
+    }
+
+    private TransformType(String prettyName, int arity, int requiredArgumentCount,
+            int optionalArgumentCount, List<String> defaultOutputNames, boolean hasCondition)
+    {
+        m_Arity = arity;
+        m_ArgumentCount = requiredArgumentCount;
+        m_OptionalArgumentCount = optionalArgumentCount;
+        m_PrettyName = prettyName;
+        m_DefaultOutputNames = defaultOutputNames;
+        m_HasCondition = hasCondition;
     }
 
     /**
@@ -126,6 +151,11 @@ public enum TransformType
         return m_DefaultOutputNames;
     }
 
+    public boolean hasCondition()
+    {
+        return m_HasCondition;
+    }
+
     public boolean verify(TransformConfig tc) throws TransformConfigurationException
     {
         if (tc.getInputs() == null)
@@ -167,6 +197,18 @@ public enum TransformType
             throw new TransformConfigurationException(msg, ErrorCode.INCORRECT_TRANSFORM_INPUT_COUNT);
         }
 
+        return verifyArguments(tc.getArguments());
+    }
+
+    /**
+     * The default implementation accepts any args transforms that
+     * have meaningful arguments should override this
+     * @param args
+     * @return
+     */
+    protected boolean verifyArguments(List<String> args)
+    throws TransformConfigurationException
+    {
         return true;
     }
 

@@ -39,6 +39,7 @@ import java.util.Map;
 import java.util.zip.ZipInputStream;
 
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpStatus;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
@@ -206,7 +207,7 @@ public class EngineApiClient implements Closeable
             HttpEntity responseEntity = response.getEntity();
             String content = EntityUtils.toString(responseEntity);
 
-            if (response.getStatusLine().getStatusCode() == 201)
+            if (response.getStatusLine().getStatusCode() == HttpStatus.SC_CREATED)
             {
 
                 Map<String, String> msg = m_JsonMapper.readValue(content,
@@ -276,7 +277,7 @@ public class EngineApiClient implements Closeable
     {
         try (CloseableHttpResponse response = m_HttpClient.execute(httpRequest))
         {
-            if (response.getStatusLine().getStatusCode() == 200)
+            if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK)
             {
                 m_LastError = null;
                 return true;
@@ -360,7 +361,7 @@ public class EngineApiClient implements Closeable
 
                 String content = EntityUtils.toString(response.getEntity());
 
-                if (response.getStatusLine().getStatusCode() != 202)
+                if (response.getStatusLine().getStatusCode() != HttpStatus.SC_ACCEPTED)
                 {
                     String msg = String.format(
                             "Upload of chunk %d failed, status code = %d. "
@@ -459,7 +460,7 @@ public class EngineApiClient implements Closeable
         {
             String content = EntityUtils.toString(response.getEntity());
 
-            if (response.getStatusLine().getStatusCode() != 202)
+            if (response.getStatusLine().getStatusCode() != HttpStatus.SC_ACCEPTED)
             {
                 String msg = String.format(
                         "Streaming upload failed, status code = %d. "
@@ -563,7 +564,7 @@ public class EngineApiClient implements Closeable
         {
             String content = EntityUtils.toString(response.getEntity());
 
-            if (response.getStatusLine().getStatusCode() != 200)
+            if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK)
             {
                 String msg = String.format(
                         "Error flushing job %s, status code = %d. "
@@ -608,7 +609,7 @@ public class EngineApiClient implements Closeable
         {
             String content = EntityUtils.toString(response.getEntity());
 
-            if (response.getStatusLine().getStatusCode() != 202)
+            if (response.getStatusLine().getStatusCode() != HttpStatus.SC_ACCEPTED)
             {
                 String msg = String.format(
                         "Error closing job %s, status code = %d. "
@@ -747,7 +748,7 @@ public class EngineApiClient implements Closeable
             HttpEntity entity = response.getEntity();
             String content = EntityUtils.toString(entity);
 
-            if (response.getStatusLine().getStatusCode() == 200)
+            if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK)
             {
                 Alert alert = m_JsonMapper.readValue(content, Alert.class);
                 m_LastError = null;
@@ -860,7 +861,7 @@ public class EngineApiClient implements Closeable
         {
             String content = EntityUtils.toString(response.getEntity());
 
-            if (response.getStatusLine().getStatusCode() == 200)
+            if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK)
             {
                 m_LastError = null;
                 return content;
@@ -932,7 +933,7 @@ public class EngineApiClient implements Closeable
         CloseableHttpResponse response = m_HttpClient.execute(get);
         try
         {
-            if (response.getStatusLine().getStatusCode() == 200)
+            if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK)
             {
                 ZipInputStream result = new ZipInputStream(response.getEntity().getContent());
                 // In this case we DON'T want the response to be automatically
@@ -1038,8 +1039,8 @@ public class EngineApiClient implements Closeable
             String content = EntityUtils.toString(entity);
 
             // 404 errors return empty paging docs so still read them
-            if (response.getStatusLine().getStatusCode() == 200 ||
-                response.getStatusLine().getStatusCode() == 404)
+            if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK ||
+                response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND)
 
             {
                 T docs = m_JsonMapper.readValue(content, typeRef);

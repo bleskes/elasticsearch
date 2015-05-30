@@ -77,7 +77,7 @@ import com.prelert.job.process.writer.DataToProcessWriter;
 import com.prelert.job.process.writer.DataToProcessWriterFactory;
 import com.prelert.job.process.writer.LengthEncodedWriter;
 import com.prelert.job.process.writer.RecordWriter;
-import com.prelert.job.quantiles.QuantilesState;
+import com.prelert.job.quantiles.Quantiles;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.job.status.StatusReporter;
@@ -382,10 +382,10 @@ public class ProcessManager
 
         Logger logger = createLogger(job.getId());
 
-        QuantilesState quantilesState = null;
+        Quantiles quantiles = null;
         if (restoreState)
         {
-            quantilesState = m_JobProvider.getQuantilesState(jobId);
+            quantiles = m_JobProvider.getQuantiles(jobId);
         }
 
         Process nativeProcess = null;
@@ -394,7 +394,7 @@ public class ProcessManager
         {
             // if state is null or empty it will be ignored
             // else it is used to restore the quantiles
-            nativeProcess = ProcessCtrl.buildAutoDetect(job, quantilesState, logger, filesToDelete);
+            nativeProcess = ProcessCtrl.buildAutoDetect(job, quantiles, logger, filesToDelete);
         }
         catch (IOException e)
         {
@@ -570,12 +570,9 @@ public class ProcessManager
 
         // cancel any time out futures
         ScheduledFuture<?> future = m_JobIdToTimeoutFuture.get(jobId);
-        if (future != null)
+        if (future != null && future.cancel(false) == false)
         {
-            if (future.cancel(false) == false)
-            {
-                LOGGER.warn("Failed to cancel future in finishJob()");
-            }
+            LOGGER.warn("Failed to cancel future in finishJob()");
         }
         else
         {
@@ -590,57 +587,7 @@ public class ProcessManager
             if (processStillRunning(process))
             {
                 m_JobIdToProcessMap.remove(jobId);
-                try
-                {
-                    // closing its input causes the process to exit
-                    process.getProcess().getOutputStream().close();
-
-                    // wait for the process to exit
-                    int exitValue = process.getProcess().waitFor();
-
-                    // wait for the results parsing and write to to the datastore
-                    process.joinParserThread();
-
-                    process.deleteAssociatedFiles();
-
-                    setJobFinishedTimeAndStatus(jobId, process.getLogger(), JobStatus.CLOSED);
-
-                    String msg = String.format("Process returned with value %d.", exitValue);
-                    if (exitValue != 0)
-                    {
-                        process.getLogger().error(msg);
-
-                        // Read any error output from the process
-                        StringBuilder sb = new StringBuilder();
-                        readProcessErrorOutput(process, sb);
-                        process.getLogger().error(sb);
-
-                        // free the logger resources
-                        closeLogger(process.getLogger());
-
-                        throw new NativeProcessRunException(sb.toString(),
-                                ErrorCode.NATIVE_PROCESS_ERROR);
-                    }
-                    else
-                    {
-                        process.getLogger().info(msg);
-                    }
-
-                    // free the logger resources
-                    closeLogger(process.getLogger());
-                }
-                catch (IOException | InterruptedException e)
-                {
-                    String msg = "Exception closing the running native process";
-                    LOGGER.warn(msg);
-                    process.getLogger().warn(msg, e);
-
-                    setJobFinishedTimeAndStatus(jobId, process.getLogger(), JobStatus.FAILED);
-
-                    // free the logger resources
-                    closeLogger(process.getLogger());
-                }
-
+                terminateProcess(jobId, process);
             }
         }
         catch (NativeProcessRunException npre)
@@ -673,6 +620,60 @@ public class ProcessManager
         return ProcessStatus.COMPLETED;
     }
 
+    private void terminateProcess(String jobId, ProcessAndDataDescription process)
+            throws NativeProcessRunException
+    {
+        try
+        {
+            // closing its input causes the process to exit
+            process.getProcess().getOutputStream().close();
+
+            // wait for the process to exit
+            int exitValue = process.getProcess().waitFor();
+
+            // wait for the results parsing and write to to the datastore
+            process.joinParserThread();
+
+            process.deleteAssociatedFiles();
+
+            setJobFinishedTimeAndStatus(jobId, process.getLogger(), JobStatus.CLOSED);
+
+            String msg = String.format("Process returned with value %d.", exitValue);
+            if (exitValue != 0)
+            {
+                process.getLogger().error(msg);
+
+                // Read any error output from the process
+                StringBuilder sb = new StringBuilder();
+                readProcessErrorOutput(process, sb);
+                process.getLogger().error(sb);
+
+                // free the logger resources
+                closeLogger(process.getLogger());
+
+                throw new NativeProcessRunException(sb.toString(),
+                        ErrorCode.NATIVE_PROCESS_ERROR);
+            }
+            else
+            {
+                process.getLogger().info(msg);
+            }
+
+            // free the logger resources
+            closeLogger(process.getLogger());
+        }
+        catch (IOException | InterruptedException e)
+        {
+            String msg = "Exception closing the running native process";
+            LOGGER.warn(msg);
+            process.getLogger().warn(msg, e);
+
+            setJobFinishedTimeAndStatus(jobId, process.getLogger(), JobStatus.FAILED);
+
+            // free the logger resources
+            closeLogger(process.getLogger());
+        }
+    }
 
     /**
      * Checks if the native process is still running. If the process has

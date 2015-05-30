@@ -24,34 +24,48 @@
  *                                                          *
  *                                                          *
  ************************************************************/
+package com.prelert.transforms;
 
-package com.prelert.job.transform;
+import static org.junit.Assert.*;
 
-import com.prelert.job.exceptions.JobConfigurationException;
-import com.prelert.rs.data.ErrorCode;
+import org.junit.Test;
 
-/**
- * Represents the invalid configuration of a transform.
- */
-public class TransformConfigurationException extends JobConfigurationException
-{
-	private static final long serialVersionUID = -8930949236695246267L;
+import com.prelert.job.transform.condition.Operation;
+import com.prelert.job.transform.exceptions.TransformConfigurationException;
 
+public class OperationTest {
 
-	/**
-	 * Create a new TransformConfigurationException.
-	 *
-	 * @param message Details of error explaining the context
-	 * @param errorCode See {@linkplain com.prelert.rs.data.ErrorCode}
-	 */
-	public TransformConfigurationException(String message, ErrorCode errorCode)
-	{
-		super(message, errorCode);
-	}
+    @Test
+    public void testFromString() throws TransformConfigurationException
+    {
+        assertEquals(Operation.fromString("gt"), Operation.GT);
+        assertEquals(Operation.fromString("Gt"), Operation.GT);
+        assertEquals(Operation.fromString("EQ"), Operation.EQ);
+        assertEquals(Operation.fromString("eq"), Operation.EQ);
+        assertEquals(Operation.fromString("lte"), Operation.LTE);
+        assertEquals(Operation.fromString("lt"), Operation.LT);
+        assertEquals(Operation.fromString("GTE"), Operation.GTE);
+    }
 
-	public TransformConfigurationException(String message, ErrorCode errorCode, Throwable cause)
-	{
-		super(message, errorCode, cause);
-	}
+    @Test
+    public void testTest()
+    {
+        assertTrue(Operation.GT.test(1.0, 0.0));
+        assertFalse(Operation.GT.test(0.0, 1.0));
+
+        assertTrue(Operation.GTE.test(1.0, 0.0));
+        assertTrue(Operation.GTE.test(1.0, 1.0));
+        assertFalse(Operation.GTE.test(0.0, 1.0));
+
+        assertTrue(Operation.EQ.test(0.0, 0.0));
+        assertFalse(Operation.EQ.test(1.0, 0.0));
+
+        assertTrue(Operation.LT.test(0.0, 1.0));
+        assertFalse(Operation.LT.test(0.0, 0.0));
+
+        assertTrue(Operation.LTE.test(0.0, 1.0));
+        assertTrue(Operation.LTE.test(1.0, 1.0));
+        assertFalse(Operation.LTE.test(1.0, 0.0));
+    }
 
 }

@@ -193,7 +193,6 @@ public class AnomalyRecord
         return getId();
     }
 
-
     public double getAnomalyScore()
     {
         return m_AnomalyScore;
@@ -201,7 +200,6 @@ public class AnomalyRecord
 
     public void setAnomalyScore(double anomalyScore)
     {
-        m_HadBigNormalisedUpdate |= isBigUpdate(m_AnomalyScore, anomalyScore);
         m_AnomalyScore = anomalyScore;
     }
 
@@ -212,10 +210,8 @@ public class AnomalyRecord
 
     public void setNormalizedProbability(double normalizedProbability)
     {
-        m_HadBigNormalisedUpdate |= isBigUpdate(m_NormalizedProbability, normalizedProbability);
         m_NormalizedProbability = normalizedProbability;
     }
-
 
     public Date getTimestamp()
     {
@@ -542,51 +538,18 @@ public class AnomalyRecord
                 && Objects.equals(this.m_Causes, that.m_Causes);
     }
 
-
     public boolean hadBigNormalisedUpdate()
     {
         return m_HadBigNormalisedUpdate;
     }
-
 
     public void resetBigNormalisedUpdateFlag()
     {
         m_HadBigNormalisedUpdate = false;
     }
 
-
-    /**
-     * Encapsulate the logic for deciding whether a change to a normalised score
-     * is "big".
-     *
-     * Current logic is that a big change is a change of at least 1 or more than
-     * than 50% of the higher of the two values.
-     *
-     * @param oldVal The old value of the normalised score
-     * @param newVal The new value of the normalised score
-     * @return true if the update is considered "big"
-     */
-    static boolean isBigUpdate(double oldVal, double newVal)
+    public void raiseBigNormalisedUpdateFlag()
     {
-        if (Math.abs(oldVal - newVal) >= 1.0)
-        {
-            return true;
-        }
-        if (oldVal > newVal)
-        {
-            if (oldVal * 0.5 > newVal)
-            {
-                return true;
-            }
-        }
-        else
-        {
-            if (newVal * 0.5 > oldVal)
-            {
-                return true;
-            }
-        }
-
-        return false;
+        m_HadBigNormalisedUpdate = true;
     }
 }

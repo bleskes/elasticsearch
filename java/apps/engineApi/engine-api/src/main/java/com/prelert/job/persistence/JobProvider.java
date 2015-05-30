@@ -28,13 +28,13 @@
 package com.prelert.job.persistence;
 
 import com.prelert.job.exceptions.UnknownJobException;
-import com.prelert.job.quantiles.QuantilesState;
+import com.prelert.job.quantiles.Quantiles;
 
 public interface JobProvider extends JobDetailsProvider, JobResultsProvider
 {
 	/**
 	 * Get the persisted quantiles state for the job
 	 */
-	public QuantilesState getQuantilesState(String jobId)
+	public Quantiles getQuantiles(String jobId)
 	throws UnknownJobException;
 }

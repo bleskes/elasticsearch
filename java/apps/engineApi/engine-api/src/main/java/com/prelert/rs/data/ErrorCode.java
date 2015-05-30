@@ -44,6 +44,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public enum ErrorCode
 {
+    /**
+     * Represents unknown errors typically those cause by
+     * internal server errors
+     */
+    UNKNOWN_ERROR(0),
+
 	// job create errors
 	/**
 	 * The JSON configuration supplied to create a job
@@ -167,6 +173,11 @@ public enum ErrorCode
      * When the data format is single line, transforms are required.
      */
     DATA_FORMAT_IS_SINGLE_LINE_BUT_NO_TRANSFORMS(10207),
+
+    /**
+     * The argument(s) supplied to the transform are invalid
+     */
+    TRANSFORM_INVALID_ARGUMENT(10208),
 
 
 	// Data store errors

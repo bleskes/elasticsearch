@@ -47,7 +47,7 @@ import com.prelert.job.DataDescription;
 import com.prelert.job.JobDetails;
 import com.prelert.job.process.writer.AnalysisLimitsWriter;
 import com.prelert.job.process.writer.FieldConfigWriter;
-import com.prelert.job.quantiles.QuantilesState;
+import com.prelert.job.quantiles.Quantiles;
 
 
 /**
@@ -163,8 +163,7 @@ public class ProcessCtrl
     public static final String DELETE_STATE_FILES_ARG = "--deleteStateFiles";
     public static final String LENGTH_ENCODED_INPUT_ARG = "--lengthEncodedInput";
     public static final String MODEL_CONFIG_ARG = "--modelconfig=";
-    public static final String SYS_STATE_CHANGE_ARG = "--sysChangeState=";
-    public static final String UNUSUAL_STATE_ARG = "--unusualState=";
+    public static final String QUANTILES_STATE_PATH_ARG = "--quantilesState=";
 
     /*
      * Arguments used by prelert_autodetect_api
@@ -199,13 +198,7 @@ public class ProcessCtrl
      * Persisted quantiles are written to disk so they can be read by
      * the autodetect program.  All quantiles files have this extension.
      */
-    public static final String QUANTILES_FILE_EXTENSION = ".xml";
-
-    /*
-     * Normalisation input fields
-     */
-    public static final String PROBABILITY = "probability";
-    public static final String RAW_ANOMALY_SCORE = "rawAnomalyScore";
+    private static final String QUANTILES_FILE_EXTENSION = ".json";
 
     /**
      * System property storing the flag that disables model persistence
@@ -441,7 +434,7 @@ public class ProcessCtrl
      * program from the PRELERT_HOME/bin directory.
      *
      * @param job The job configuration
-     * @param quantilesState if <code>null</code> this parameter is
+     * @param quantiles if <code>null</code> this parameter is
      * ignored else the quantiles' state is restored from this object
      * @param logger The job's logger
      * @param filesToDelete This method will append File objects that need to be
@@ -450,8 +443,8 @@ public class ProcessCtrl
      * @return A Java Process object
      * @throws IOException
      */
-    public static Process buildAutoDetect(JobDetails job,
-            QuantilesState quantilesState, Logger logger, List<File> filesToDelete)
+    public static Process buildAutoDetect(JobDetails job, Quantiles quantiles, Logger logger,
+            List<File> filesToDelete)
     throws IOException
     {
         logger.info("PRELERT_HOME is set to " + PRELERT_HOME);
@@ -533,34 +526,16 @@ public class ProcessCtrl
         command.add(timeFieldArg);
 
         // Restoring the quantiles
-        if (quantilesState != null && !quantilesState.getQuantilesKinds().isEmpty())
+        if (quantiles != null && !quantiles.getState().isEmpty())
         {
             logger.info("Restoring quantiles for job '" + job.getId() + "'");
 
-            String sysChangeState = quantilesState.getQuantilesState(QuantilesState.SYS_CHANGE_QUANTILES_KIND);
-            if (sysChangeState != null)
-            {
-                Path sysChangeStateFilePath = writeNormaliserInitState(job.getId(),
-                        sysChangeState);
+            Path normalisersStateFilePath =
+                    writeNormaliserInitState(job.getId(), quantiles.getState());
 
-                String stateFileArg = SYS_STATE_CHANGE_ARG + sysChangeStateFilePath;
-                command.add(stateFileArg);
-            }
-
-            String unusualBehaviourState = quantilesState.getQuantilesState(QuantilesState.UNUSUAL_QUANTILES_KIND);
-            if (unusualBehaviourState != null)
-            {
-                Path unusualStateFilePath = writeNormaliserInitState(job.getId(),
-                        unusualBehaviourState);
-
-                String stateFileArg = UNUSUAL_STATE_ARG + unusualStateFilePath;
-                command.add(stateFileArg);
-            }
-
-            if (sysChangeState != null || unusualBehaviourState != null)
-            {
-                command.add(DELETE_STATE_FILES_ARG);
-            }
+            String quantilesStateFileArg = QUANTILES_STATE_PATH_ARG + normalisersStateFilePath;
+            command.add(quantilesStateFileArg);
+            command.add(DELETE_STATE_FILES_ARG);
         }
 
         // Supply a URL for persisting/restoring model state unless model
@@ -642,15 +617,13 @@ public class ProcessCtrl
      * is not used.
      *
      * @param jobId
-     * @param sysChangeState Set to <code>null</code> to be ignored
-     * @param unusualBehaviourState Set to <code>null</code> to be ignored
+     * @param quantilesState Set to <code>null</code> to be ignored
      * @param bucketSpan If <code>null</code> then use the program default
      * @param logger
      * @return
      * @throws IOException
      */
-    public static Process buildNormaliser(String jobId,
-            String sysChangeState, String unusualBehaviourState,
+    public static Process buildNormaliser(String jobId, String quantilesState,
             Integer bucketSpan, Logger logger)
     throws IOException
     {
@@ -659,26 +632,12 @@ public class ProcessCtrl
         List<String> command = new ArrayList<>();
         command.add(NORMALIZE_PATH);
 
-        if (sysChangeState != null)
+        if (quantilesState != null)
         {
-            Path sysChangeStateFilePath = writeNormaliserInitState(jobId,
-                    sysChangeState);
+            Path quantilesStateFilePath = writeNormaliserInitState(jobId, quantilesState);
 
-            String stateFileArg = SYS_STATE_CHANGE_ARG + sysChangeStateFilePath;
+            String stateFileArg = QUANTILES_STATE_PATH_ARG + quantilesStateFilePath;
             command.add(stateFileArg);
-        }
-
-        if (unusualBehaviourState != null)
-        {
-            Path unusualStateFilePath = writeNormaliserInitState(jobId,
-                    unusualBehaviourState);
-
-            String stateFileArg = UNUSUAL_STATE_ARG + unusualStateFilePath;
-            command.add(stateFileArg);
-        }
-
-        if (sysChangeState != null || unusualBehaviourState != null)
-        {
             command.add(DELETE_STATE_FILES_ARG);
         }
 

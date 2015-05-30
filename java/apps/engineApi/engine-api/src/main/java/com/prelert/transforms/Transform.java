@@ -120,7 +120,7 @@ public abstract class Transform
      * The indicies for the inputs
      * @return
      */
-    public List<TransformIndex> getReadIndicies()
+    public final List<TransformIndex> getReadIndicies()
     {
         return m_ReadIndicies;
     }
@@ -129,7 +129,7 @@ public abstract class Transform
      * The write output indicies
      * @return
      */
-    public List<TransformIndex> getWriteIndicies()
+    public final List<TransformIndex> getWriteIndicies()
     {
         return m_WriteIndicies;
     }

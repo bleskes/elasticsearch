@@ -34,8 +34,8 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 
 import com.prelert.job.transform.TransformConfig;
-import com.prelert.job.transform.TransformConfigurationException;
 import com.prelert.job.transform.TransformType;
+import com.prelert.job.transform.exceptions.TransformConfigurationException;
 import com.prelert.transforms.Transform.TransformIndex;
 
 /**
@@ -141,6 +141,17 @@ public class TransformFactory
             case EXCLUDE_FILTER:
                 return new ExcludeFilter(transformConfig.getArguments().get(0), readIndicies,
                                             writeIndicies, logger);
+            case EXCLUDE_FILTER_NUMERIC:
+                if (transformConfig.getCondition().isPresent())
+                {
+                    return new ExcludeFilterNumeric(transformConfig.getCondition().get(),
+                                                readIndicies, writeIndicies, logger);
+                }
+                else
+                {
+                    return new ExcludeFilterNumeric(readIndicies, writeIndicies, logger);
+                }
+
 			default:
 				// This code will never be hit it's to
 				// keep the compiler happy.

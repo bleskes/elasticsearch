@@ -46,87 +46,87 @@ import com.fasterxml.jackson.core.JsonToken;
  */
 public class NormalisedResultsParser implements Runnable
 {
-	private List<NormalisedResult> m_Results;
-	private InputStream m_InputStream;
-	private Logger m_Logger;
+    private List<NormalisedResult> m_Results;
+    private InputStream m_InputStream;
+    private Logger m_Logger;
 
-	public NormalisedResultsParser(InputStream inputStream, Logger logger)
-	{
-		m_InputStream = inputStream;
-		m_Logger = logger;
-		m_Results = new ArrayList<NormalisedResult>();
-	}
+    public NormalisedResultsParser(InputStream inputStream, Logger logger)
+    {
+        m_InputStream = inputStream;
+        m_Logger = logger;
+        m_Results = new ArrayList<NormalisedResult>();
+    }
 
-	@Override
-	public void run()
-	{
-		try
-		{
-			//printResults();
-			parseResults();
-		}
-		catch (JsonParseException e)
-		{
-			m_Logger.warn("Error parsing normalise output", e);
-		}
-		catch (IOException e)
-		{
-			m_Logger.warn("Error reading normalise output", e);
-		}
+    @Override
+    public void run()
+    {
+        try
+        {
+            //printResults();
+            parseResults();
+        }
+        catch (JsonParseException e)
+        {
+            m_Logger.warn("Error parsing normalise output", e);
+        }
+        catch (IOException e)
+        {
+            m_Logger.warn("Error reading normalise output", e);
+        }
 
-	}
-
-
-	public List<NormalisedResult> getNormalisedResults()
-	{
-		return m_Results;
-	}
+    }
 
 
-	/**
-	 * Debugging print normalise output
-	 * @throws IOException
-	 */
-	@SuppressWarnings("unused")
-	private void printResults() throws IOException
-	{
-		BufferedReader in = new BufferedReader(
-				new InputStreamReader(m_InputStream,
-				StandardCharsets.UTF_8));
-
-		String line = null;
-		while((line = in.readLine()) != null)
-		{
-		    System.out.println(line);
-		}
-	}
-
-	private void parseResults()
-	throws JsonParseException, IOException
-	{
-		JsonParser parser = new JsonFactory().createParser(m_InputStream);
-		parser.configure(JsonParser.Feature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER, true);
+    public List<NormalisedResult> getNormalisedResults()
+    {
+        return m_Results;
+    }
 
 
-		JsonToken token = parser.nextToken();
-		if (token == null)
-		{
-			m_Logger.info("Zero results read from the normalizer");
-			return;
-		}
+    /**
+     * Debugging print normalise output
+     * @throws IOException
+     */
+    @SuppressWarnings("unused")
+    private void printResults() throws IOException
+    {
+        BufferedReader in = new BufferedReader(
+                new InputStreamReader(m_InputStream,
+                StandardCharsets.UTF_8));
 
-		// Parse the results from the stream
-		int resultCount = 0;
-		while (token != null)
-		{
-			NormalisedResult result = NormalisedResult.parseJson(parser, m_Logger);
-			m_Results.add(result);
-			resultCount++;
+        String line = null;
+        while((line = in.readLine()) != null)
+        {
+            System.out.println(line);
+        }
+    }
 
-			token = parser.nextToken();
-		}
+    private void parseResults()
+    throws JsonParseException, IOException
+    {
+        JsonParser parser = new JsonFactory().createParser(m_InputStream);
+        parser.configure(JsonParser.Feature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER, true);
 
-		m_Logger.info(resultCount + " records parsed from output");
-	}
+
+        JsonToken token = parser.nextToken();
+        if (token == null)
+        {
+            m_Logger.info("Zero results read from the normalizer");
+            return;
+        }
+
+        // Parse the results from the stream
+        int resultCount = 0;
+        while (token != null)
+        {
+            NormalisedResult result = NormalisedResult.parseJson(parser, m_Logger);
+            m_Results.add(result);
+            resultCount++;
+
+            token = parser.nextToken();
+        }
+
+        m_Logger.info(resultCount + " records parsed from output");
+    }
 
 }

@@ -30,12 +30,17 @@ package com.prelert.job.transform;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.prelert.job.transform.condition.Condition;
+import com.prelert.job.transform.exceptions.TransformConfigurationException;
 import com.prelert.job.verification.Verifiable;
 
 /**
  * Represents an API data transform
  */
+@JsonIgnoreProperties({"condition"})
 public class TransformConfig implements Verifiable
 {
     // Serialisation strings
@@ -107,6 +112,33 @@ public class TransformConfig implements Verifiable
     public void setOutputs(List<String> outputs)
     {
         m_Outputs = outputs;
+    }
+
+    /**
+     * The condition object which may or may not be defined for this
+     * transform
+     * @return
+     */
+    public Optional<Condition> getCondition()
+    {
+        try
+        {
+            TransformType type = type();
+
+            if (type.hasCondition() && Condition.verifyArguments(m_Arguments))
+            {
+                return Optional.of(new Condition(m_Arguments));
+            }
+            else
+            {
+                return Optional.<Condition>empty();
+            }
+        }
+        catch (TransformConfigurationException e)
+        {
+            return Optional.<Condition>empty();
+        }
+
     }
 
     /**

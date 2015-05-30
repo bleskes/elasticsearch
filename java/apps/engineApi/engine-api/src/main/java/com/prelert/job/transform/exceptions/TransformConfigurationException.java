@@ -25,65 +25,33 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.quantiles;
+package com.prelert.job.transform.exceptions;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import com.prelert.job.exceptions.JobConfigurationException;
+import com.prelert.rs.data.ErrorCode;
 
-import org.junit.Test;
-
-public class QuantilesTest
+/**
+ * Represents the invalid configuration of a transform.
+ */
+public class TransformConfigurationException extends JobConfigurationException
 {
-    @Test
-    public void testEquals_GivenSameObject()
-    {
-        Quantiles quantiles = new Quantiles();
-        assertTrue(quantiles.equals(quantiles));
-    }
+	private static final long serialVersionUID = -8930949236695246267L;
 
-    @Test
-    public void testEquals_GivenDifferentClassObject()
-    {
-        Quantiles quantiles = new Quantiles();
-        assertFalse(quantiles.equals("not a quantiles object"));
-    }
 
-    @Test
-    public void testEquals_GivenEqualQuantilesObject()
-    {
-        Quantiles quantiles1 = new Quantiles();
-        quantiles1.setState("foo");
+	/**
+	 * Create a new TransformConfigurationException.
+	 *
+	 * @param message Details of error explaining the context
+	 * @param errorCode See {@linkplain com.prelert.rs.data.ErrorCode}
+	 */
+	public TransformConfigurationException(String message, ErrorCode errorCode)
+	{
+		super(message, errorCode);
+	}
 
-        Quantiles quantiles2 = new Quantiles();
-        quantiles2.setState("foo");
+	public TransformConfigurationException(String message, ErrorCode errorCode, Throwable cause)
+	{
+		super(message, errorCode, cause);
+	}
 
-        assertTrue(quantiles1.equals(quantiles2));
-        assertTrue(quantiles2.equals(quantiles1));
-    }
-
-    @Test
-    public void testEquals_GivenDifferentState()
-    {
-        Quantiles quantiles1 = new Quantiles();
-        quantiles1.setState("bar1");
-
-        Quantiles quantiles2 = new Quantiles();
-        quantiles2.setState("bar2");
-
-        assertFalse(quantiles1.equals(quantiles2));
-        assertFalse(quantiles2.equals(quantiles1));
-    }
-
-    @Test
-    public void testHashCode_GivenEqualObject()
-    {
-        Quantiles quantiles1 = new Quantiles();
-        quantiles1.setState("foo");
-
-        Quantiles quantiles2 = new Quantiles();
-        quantiles2.setState("foo");
-
-        assertEquals(quantiles1.hashCode(), quantiles2.hashCode());
-    }
 }
