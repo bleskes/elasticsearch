@@ -34,7 +34,17 @@ public interface Action extends ToXContent {
 
     abstract class Result implements ToXContent {
 
-        public enum Status { SUCCESS, FAILURE, THROTTLED, SIMULATED }
+        public enum Status implements ToXContent {
+            SUCCESS,
+            FAILURE,
+            THROTTLED,
+            SIMULATED;
+
+            @Override
+            public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
+                return builder.value(name().toLowerCase(Locale.ROOT));
+            }
+        }
 
         protected final String type;
         protected final Status status;
@@ -52,16 +62,6 @@ public interface Action extends ToXContent {
             return status;
         }
 
-        @Override
-        public final XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
-            builder.startObject();
-            builder.field(Field.STATUS.getPreferredName(), status.name().toLowerCase(Locale.ROOT));
-            xContentBody(builder, params);
-            return builder.endObject();
-        }
-
-        protected abstract XContentBuilder xContentBody(XContentBuilder builder, Params params) throws IOException;
-
         public static class Failure extends Result {
 
             private final String reason;
@@ -76,7 +76,7 @@ public interface Action extends ToXContent {
             }
 
             @Override
-            protected XContentBuilder xContentBody(XContentBuilder builder, Params params) throws IOException {
+            public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
                 return builder.field(Field.REASON.getPreferredName(), reason);
             }
         }
@@ -95,7 +95,7 @@ public interface Action extends ToXContent {
             }
 
             @Override
-            protected XContentBuilder xContentBody(XContentBuilder builder, Params params) throws IOException {
+            public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
                 return builder.field(Field.REASON.getPreferredName(), reason);
             }
         }
