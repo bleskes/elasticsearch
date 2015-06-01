@@ -27,8 +27,6 @@
 
 package com.prelert.rs.data;
 
-import org.omg.CORBA.UNKNOWN;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
