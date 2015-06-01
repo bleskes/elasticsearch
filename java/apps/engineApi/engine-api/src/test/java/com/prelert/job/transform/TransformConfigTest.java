@@ -33,7 +33,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 import org.junit.Test;
@@ -42,7 +41,7 @@ import com.prelert.job.exceptions.JobConfigurationException;
 import com.prelert.job.transform.TransformConfig;
 import com.prelert.job.transform.TransformType;
 import com.prelert.job.transform.condition.Condition;
-import com.prelert.job.transform.condition.Operation;
+import com.prelert.job.transform.condition.Operator;
 import com.prelert.job.transform.exceptions.TransformConfigurationException;
 import com.prelert.rs.data.ErrorCode;
 
@@ -91,24 +90,22 @@ public class TransformConfigTest
             }
 
             List<String> initArgs = new ArrayList<>();
-            if (type == TransformType.EXCLUDE_FILTER_NUMERIC)
+            for (int arg = 0; arg < type.argumentCount(); ++arg)
             {
-                // this one needs specific arguments that are verified
-                initArgs.add(Operation.EQ.toString());
-                initArgs.add("100");
+                initArgs.add(Integer.toString(arg));
             }
-            else
+
+            Condition condition = null;
+            if (type.hasCondition())
             {
-                for (int arg = 0; arg < type.argumentCount(); ++arg)
-                {
-                    initArgs.add(Integer.toString(arg));
-                }
+                condition = new Condition(Operator.EQ, "100");
             }
 
             TransformConfig tr = new TransformConfig();
             tr.setTransform(type.toString());
             tr.setInputs(inputs);
             tr.setArguments(initArgs);
+            tr.setCondition(condition);
 
             tr.verify();
             assertEquals(type, tr.type());
@@ -259,32 +256,19 @@ public class TransformConfigTest
     public void testVerify_typeHasCondition() throws TransformConfigurationException
     {
         TransformConfig tr = new TransformConfig();
-        tr.setTransform(TransformType.EXCLUDE_FILTER_NUMERIC.prettyName());
+        tr.setTransform(TransformType.EXCLUDE.prettyName());
         tr.setInputs(Arrays.asList("in"));
         tr.setOutputs(Arrays.asList("out"));
 
         try
         {
             tr.verify();
-            fail("exclude filter numeric transform without arguments " +
+            fail("exclude filter without condition " +
                     "should throw an TransformConfigurationException");
         }
         catch (TransformConfigurationException e)
         {
-            assertEquals(ErrorCode.TRANSFORM_INVALID_ARGUMENT_COUNT, e.getErrorCode());
-        }
-
-        // can't parse args
-        tr.setArguments(Arrays.asList("bad-arg1", "bad-arg2"));
-        try
-        {
-            tr.verify();
-            fail("exclude filter numeric transform with bad arguments " +
-                    "should throw an TransformConfigurationException");
-        }
-        catch (TransformConfigurationException e)
-        {
-            assertEquals(ErrorCode.TRANSFORM_INVALID_ARGUMENT, e.getErrorCode());
+            assertEquals(ErrorCode.TRANSFORM_REQUIRES_CONDITION, e.getErrorCode());
         }
 
         // too many args
@@ -292,7 +276,7 @@ public class TransformConfigTest
         try
         {
             tr.verify();
-            fail("exclude filter numeric transform with bad arguments " +
+            fail("exclude with bad arguments " +
                     "should throw an TransformConfigurationException");
         }
         catch (TransformConfigurationException e)
@@ -301,13 +285,12 @@ public class TransformConfigTest
         }
 
         // this works
-        tr.setArguments(Arrays.asList("100.0", "lte"));
-        tr.verify();
+        tr.setCondition(new Condition(Operator.LTE, "20.00001"));
 
-        Optional<Condition> cond = tr.getCondition();
-        assertTrue(cond.isPresent());
-        assertEquals(Operation.LTE, cond.get().getOp());
-        assertEquals(100.0, cond.get().getFilterValue(), 0.0000001);
+        Condition cond = tr.getCondition();
+        assertNotNull(cond);
+        assertEquals(Operator.LTE, cond.getOperator());
+        assertEquals("20.00001", cond.getValue());
     }
 
 }

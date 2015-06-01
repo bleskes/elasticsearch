@@ -37,8 +37,9 @@ import org.junit.Test;
 
 import com.prelert.job.transform.TransformConfig;
 import com.prelert.job.transform.TransformType;
+import com.prelert.job.transform.condition.Condition;
+import com.prelert.job.transform.condition.Operator;
 import com.prelert.job.transform.exceptions.TransformConfigurationException;
-import com.prelert.rs.data.ErrorCode;
 
 public class TransformTypeTest
 {
@@ -49,6 +50,8 @@ public class TransformTypeTest
 
         for (TransformType type : all)
         {
+            assertEquals(type.prettyName(), type.toString());
+
             TransformType created = TransformType.fromString(type.prettyName());
             assertEquals(type, created);
         }
@@ -76,10 +79,10 @@ public class TransformTypeTest
         assertTrue(TransformType.DOMAIN_SPLIT.verify(conf));
 
         conf = new TransformConfig();
-        conf.setTransform(TransformType.EXCLUDE_FILTER_NUMERIC.prettyName());
+        conf.setTransform(TransformType.EXCLUDE.prettyName());
         conf.setInputs(Arrays.asList("f1"));
-        conf.setArguments(Arrays.asList("gte", "100"));
-        assertTrue(TransformType.EXCLUDE_FILTER_NUMERIC.verify(conf));
+        conf.setCondition(new Condition(Operator.GTE, "100"));
+        assertTrue(TransformType.EXCLUDE.verify(conf));
     }
 
     @Test
@@ -128,34 +131,4 @@ public class TransformTypeTest
 
         }
     }
-
-    @Test
-    public void testVerify_Arguments() throws TransformConfigurationException
-    {
-        Set<TransformType> types = EnumSet.allOf(TransformType.class);
-
-        for (TransformType type : types)
-        {
-            if (type != TransformType.EXCLUDE_FILTER_NUMERIC)
-            {
-                assertTrue(type.verifyArguments(Arrays.asList("")));
-            }
-            else
-            {
-                assertTrue(type.verifyArguments(Arrays.asList("gt", "100.0")));
-            }
-        }
-
-        try
-        {
-            TransformType.EXCLUDE_FILTER_NUMERIC.verifyArguments(Arrays.asList(""));
-            fail();
-        }
-        catch (TransformConfigurationException e)
-        {
-            assertEquals(ErrorCode.TRANSFORM_INVALID_ARGUMENT_COUNT, e.getErrorCode());
-        }
-    }
-
-
 }

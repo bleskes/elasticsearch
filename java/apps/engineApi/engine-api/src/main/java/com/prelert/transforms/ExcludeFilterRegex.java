@@ -27,71 +27,30 @@
 package com.prelert.transforms;
 
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
 
 import com.prelert.job.transform.condition.Condition;
-import com.prelert.job.transform.condition.Operator;
-
 
 /**
- * Parses a numeric value from a field and compares it against a hard
- * value using a certain {@link Operator}
+ * Matches a field against a regex
  */
-public class ExcludeFilterNumeric extends ExcludeFilter
+public class ExcludeFilterRegex extends ExcludeFilter
 {
-    private double m_FilterValue;
+    private final Pattern m_Pattern;
 
-    /**
-     * The condition should have been verified by now but if they are not
-     * valid then the default of < (less than) and filter of 0.0 are used
-     * meaning that no values are excluded.
-     *
-     * @param condition
-     * @param readIndicies
-     * @param writeIndicies
-     * @param logger
-     */
-    public ExcludeFilterNumeric(Condition condition, List<TransformIndex> readIndicies,
+    public ExcludeFilterRegex(Condition condition, List<TransformIndex> readIndicies,
             List<TransformIndex> writeIndicies, Logger logger)
     {
         super(condition, readIndicies, writeIndicies, logger);
 
-        parseFilterValue(getCondition().getValue());
+        m_Pattern = Pattern.compile(getCondition().getValue());
     }
 
     /**
-     * If no condition then the default is < (less than) and filter
-     * value of 0.0 are used meaning that only -ve values are excluded.
-     *
-     * @param readIndicies
-     * @param writeIndicies
-     * @param logger
-     */
-    public ExcludeFilterNumeric(List<TransformIndex> readIndicies,
-            List<TransformIndex> writeIndicies, Logger logger)
-    {
-        super(new Condition(Operator.LT, "0.0"),
-                    readIndicies, writeIndicies, logger);
-        m_FilterValue = 0.0;
-    }
-
-    private void parseFilterValue(String fieldValue)
-    {
-        m_FilterValue = 0.0;
-        try
-        {
-            m_FilterValue = Double.parseDouble(fieldValue);
-        }
-        catch (NumberFormatException e)
-        {
-            m_Logger.warn("Exclude transform cannot parse a number from field '" +
-                            fieldValue + "'. Using default 0.0");
-        }
-    }
-
-    /**
-     * Returns {@link TransformResult#FATAL_FAIL} if the value should be excluded
+     * Returns {@link TransformResult#FATAL_FAIL} if the record matches the regex
      */
     @Override
     public TransformResult transform(String[][] readWriteArea)
@@ -101,28 +60,16 @@ public class ExcludeFilterNumeric extends ExcludeFilter
         for (TransformIndex readIndex : m_ReadIndicies)
         {
             String field = readWriteArea[readIndex.array][readIndex.index];
+            Matcher match = m_Pattern.matcher(field);
 
-            try
+            if (match.matches())
             {
-                double value = Double.parseDouble(field);
-
-                if (getCondition().getOperator().test(value, m_FilterValue))
-                {
-                    result = TransformResult.FATAL_FAIL;
-                    break;
-                }
-            }
-            catch (NumberFormatException e)
-            {
-
+                result = TransformResult.FATAL_FAIL;
+                break;
             }
         }
 
         return result;
     }
 
-    public double filterValue()
-    {
-        return m_FilterValue;
-    }
 }

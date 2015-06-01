@@ -37,7 +37,7 @@ import org.apache.log4j.Logger;
 import org.junit.Test;
 
 import com.prelert.job.transform.condition.Condition;
-import com.prelert.job.transform.condition.Operation;
+import com.prelert.job.transform.condition.Operator;
 import com.prelert.transforms.Transform.TransformIndex;
 import com.prelert.transforms.Transform.TransformResult;
 
@@ -47,7 +47,7 @@ public class ExcludeFilterNumericTest
     public void testEq()
     throws TransformException
     {
-        ExcludeFilterNumeric transform = createTransform(Operation.EQ, 5.0);
+        ExcludeFilterNumeric transform = createTransform(Operator.EQ, "5.0");
 
         String [] input = {"5"};
         String [] scratch = {};
@@ -64,7 +64,7 @@ public class ExcludeFilterNumericTest
     public void testGT()
     throws TransformException
     {
-        ExcludeFilterNumeric transform = createTransform(Operation.GT, 10.000);
+        ExcludeFilterNumeric transform = createTransform(Operator.GT, "10.000");
 
         String [] input = {"100"};
         String [] scratch = {};
@@ -81,7 +81,7 @@ public class ExcludeFilterNumericTest
     public void testGTE()
     throws TransformException
     {
-        ExcludeFilterNumeric transform = createTransform(Operation.GTE, 10.000);
+        ExcludeFilterNumeric transform = createTransform(Operator.GTE, "10.000");
 
         String [] input = {"100"};
         String [] scratch = {};
@@ -101,7 +101,7 @@ public class ExcludeFilterNumericTest
     public void testLT()
     throws TransformException
     {
-        ExcludeFilterNumeric transform = createTransform(Operation.LT, 2000);
+        ExcludeFilterNumeric transform = createTransform(Operator.LT, "2000");
 
         String [] input = {"100.2"};
         String [] scratch = {};
@@ -118,7 +118,7 @@ public class ExcludeFilterNumericTest
     public void testLTE()
     throws TransformException
     {
-        ExcludeFilterNumeric transform = createTransform(Operation.LTE, 2000);
+        ExcludeFilterNumeric transform = createTransform(Operator.LTE, "2000");
 
         String [] input = {"100.2"};
         String [] scratch = {};
@@ -134,7 +134,7 @@ public class ExcludeFilterNumericTest
         assertEquals(TransformResult.OK, transform.transform(readWriteArea));
     }
 
-    private ExcludeFilterNumeric createTransform(Operation op, double filterValue)
+    private ExcludeFilterNumeric createTransform(Operator op, String filterValue)
     {
         Condition condition = new Condition(op, filterValue);
         List<TransformIndex> readIndicies = createIndexArray(new TransformIndex(0, 0));

@@ -27,6 +27,8 @@
 
 package com.prelert.rs.data;
 
+import org.omg.CORBA.UNKNOWN;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -175,10 +177,19 @@ public enum ErrorCode
     DATA_FORMAT_IS_SINGLE_LINE_BUT_NO_TRANSFORMS(10207),
 
     /**
-     * The argument(s) supplied to the transform are invalid
+     * The transform must have a valid condition
      */
-    TRANSFORM_INVALID_ARGUMENT(10208),
+    TRANSFORM_REQUIRES_CONDITION(10208),
 
+    /**
+     * Condition operator is not recognised
+     */
+    UNKNOWN_OPERATOR(10209),
+
+    /**
+     * Invalid condition argument
+     */
+    CONDITION_INVALID_ARGUMENT(10210),
 
 	// Data store errors
 	/**

@@ -45,6 +45,8 @@ import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.exceptions.JobConfigurationException;
 import com.prelert.job.transform.TransformConfig;
 import com.prelert.job.transform.TransformType;
+import com.prelert.job.transform.condition.Condition;
+import com.prelert.job.transform.condition.Operator;
 import com.prelert.job.transform.exceptions.TransformConfigurationException;
 import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.ErrorCodeMatcher;
@@ -363,8 +365,8 @@ public class JobConfigurationTest
 
         // The exclude filter has no output
         TransformConfig tc = new TransformConfig();
-        tc.setTransform(TransformType.Names.EXCLUDE_FILTER);
-        tc.setArguments(Arrays.asList("whitelisted_host"));
+        tc.setTransform(TransformType.Names.EXCLUDE);
+        tc.setCondition(new Condition(Operator.MATCH, "whitelisted_host"));
         tc.setInputs(Arrays.asList("dns"));
 
         jc.setTransforms(Arrays.asList(tc));

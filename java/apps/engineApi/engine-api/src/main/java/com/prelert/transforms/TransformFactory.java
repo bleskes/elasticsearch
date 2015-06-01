@@ -138,18 +138,16 @@ public class TransformFactory
             case REGEX_SPLIT:
                 return new RegexSplit(transformConfig.getArguments().get(0), readIndicies,
                                             writeIndicies, logger);
-            case EXCLUDE_FILTER:
-                return new ExcludeFilter(transformConfig.getArguments().get(0), readIndicies,
-                                            writeIndicies, logger);
-            case EXCLUDE_FILTER_NUMERIC:
-                if (transformConfig.getCondition().isPresent())
+            case EXCLUDE:
+                if (transformConfig.getCondition().getOperator().expectsANumericArgument())
                 {
-                    return new ExcludeFilterNumeric(transformConfig.getCondition().get(),
-                                                readIndicies, writeIndicies, logger);
+                    return new ExcludeFilterNumeric(transformConfig.getCondition(),
+                            readIndicies, writeIndicies, logger);
                 }
                 else
                 {
-                    return new ExcludeFilterNumeric(readIndicies, writeIndicies, logger);
+                    return new ExcludeFilterRegex(transformConfig.getCondition(), readIndicies,
+                                            writeIndicies, logger);
                 }
 
 			default:

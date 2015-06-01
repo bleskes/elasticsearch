@@ -28,14 +28,17 @@ package com.prelert.job.transform.condition;
 
 import java.util.EnumSet;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.prelert.job.transform.exceptions.TransformConfigurationException;
 import com.prelert.rs.data.ErrorCode;
 
 /**
  * Enum representing logical comparisons on doubles
  */
-public enum Operation
+public enum Operator
 {
     EQ
     {
@@ -76,24 +79,47 @@ public enum Operation
         {
             return Double.compare(lhs, rhs) <= 0;
         }
-    };
+    },
+    MATCH
+    {
+        @Override
+        public boolean match(Pattern pattern, String field)
+        {
+            Matcher match = pattern.matcher(field);
+            return match.matches();
+        }
+
+        @Override
+        public boolean expectsANumericArgument()
+        {
+            return false;
+        }
+    },
+    NONE;
 
     public boolean test(double lhs, double rhs)
     {
         return false;
     }
 
+    public boolean match(Pattern pattern, String field)
+    {
+        return false;
+    }
+
+
     public boolean expectsANumericArgument()
     {
         return true;
     }
 
-    public static Operation fromString(String name) throws TransformConfigurationException
+    @JsonCreator
+    public static Operator fromString(String name) throws TransformConfigurationException
     {
-        Set<Operation> all = EnumSet.allOf(Operation.class);
+        Set<Operator> all = EnumSet.allOf(Operator.class);
 
         String ucName = name.toUpperCase();
-        for (Operation type : all)
+        for (Operator type : all)
         {
             if (type.toString().equals(ucName))
             {
@@ -102,8 +128,8 @@ public enum Operation
         }
 
         throw new TransformConfigurationException(
-                                "Unknown operation '" + name + "'",
-                                ErrorCode.UNKNOWN_TRANSFORM);
+                                "Unknown operator '" + name + "'",
+                                ErrorCode.UNKNOWN_OPERATOR);
     }
 
  };

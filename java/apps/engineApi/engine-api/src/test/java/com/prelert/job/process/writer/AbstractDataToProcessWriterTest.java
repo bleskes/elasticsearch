@@ -59,6 +59,8 @@ import com.prelert.job.status.StatusReporter;
 import com.prelert.job.transform.TransformConfig;
 import com.prelert.job.transform.TransformConfigs;
 import com.prelert.job.transform.TransformType;
+import com.prelert.job.transform.condition.Condition;
+import com.prelert.job.transform.condition.Operator;
 import com.prelert.transforms.Concat;
 import com.prelert.transforms.HighestRegisteredDomain;
 import com.prelert.transforms.Transform;
@@ -422,8 +424,8 @@ public class AbstractDataToProcessWriterTest
 
         TransformConfig excludeConfig = new TransformConfig();
         excludeConfig.setInputs(Arrays.asList("metric"));
-        excludeConfig.setArguments(Arrays.asList("metricA"));
-        excludeConfig.setTransform(TransformType.Names.EXCLUDE_FILTER);
+        excludeConfig.setCondition(new Condition(Operator.MATCH, "metricA"));
+        excludeConfig.setTransform(TransformType.EXCLUDE.prettyName());
 
         TransformConfigs transforms = new TransformConfigs(Arrays.asList(excludeConfig));
 

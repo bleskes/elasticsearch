@@ -32,7 +32,6 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
-import com.prelert.job.transform.condition.Condition;
 import com.prelert.job.transform.exceptions.TransformConfigurationException;
 import com.prelert.rs.data.ErrorCode;
 
@@ -47,16 +46,7 @@ public enum TransformType
     CONCAT(Names.CONCAT, Names.VARIADIC_ARGS, 0, 1, Arrays.asList("concat")),
     REGEX_EXTRACT(Names.EXTRACT, 1, 1, 0, Arrays.asList("")),
     REGEX_SPLIT(Names.SPLIT, 1, 1, 0, Arrays.asList("")),
-    EXCLUDE_FILTER(Names.EXCLUDE_FILTER, 1, 1, 0, Arrays.asList()),
-    EXCLUDE_FILTER_NUMERIC(Names.EXCLUDE_FILTER_NUMERIC, 1, 2, 0, Arrays.asList(), true)
-    {
-        @Override
-        protected boolean verifyArguments(List<String> args)
-        throws TransformConfigurationException
-        {
-            return Condition.verifyArguments(args);
-        }
-    };
+    EXCLUDE(Names.EXCLUDE, 1, 0, 0, Arrays.asList(), true);
 
     /**
      * Enums cannot use static fields in their constructors as the
@@ -70,8 +60,7 @@ public enum TransformType
         public static final String CONCAT = "concat";
         public static final String EXTRACT = "extract";
         public static final String SPLIT = "split";
-        public static final String EXCLUDE_FILTER = "exclude_filter";
-        public static final String EXCLUDE_FILTER_NUMERIC = "exclude_filter_numeric";
+        public static final String EXCLUDE = "exclude";
 
         private static final int VARIADIC_ARGS = -1;
 
@@ -197,20 +186,9 @@ public enum TransformType
             throw new TransformConfigurationException(msg, ErrorCode.INCORRECT_TRANSFORM_INPUT_COUNT);
         }
 
-        return verifyArguments(tc.getArguments());
-    }
-
-    /**
-     * The default implementation accepts any args transforms that
-     * have meaningful arguments should override this
-     * @param args
-     * @return
-     */
-    protected boolean verifyArguments(List<String> args)
-    throws TransformConfigurationException
-    {
         return true;
     }
+
 
     @Override
     public String toString()

@@ -35,6 +35,8 @@ import java.util.List;
 import org.apache.log4j.Logger;
 import org.junit.Test;
 
+import com.prelert.job.transform.condition.Condition;
+import com.prelert.job.transform.condition.Operator;
 import com.prelert.transforms.Transform.TransformIndex;
 import com.prelert.transforms.Transform.TransformResult;
 
@@ -46,9 +48,9 @@ public class ExcludeFilterTest
         List<TransformIndex> readIndicies = createIndexArray(new TransformIndex(0, 0));
         List<TransformIndex> writeIndicies = createIndexArray();
 
-        String regex = "cat";
+        Condition cond = new Condition(Operator.MATCH, "cat");
 
-        ExcludeFilter transform = new ExcludeFilter(regex, readIndicies, writeIndicies, mock(Logger.class));
+        ExcludeFilterRegex transform = new ExcludeFilterRegex(cond, readIndicies, writeIndicies, mock(Logger.class));
 
         String [] input = {"cat"};
         String [] scratch = {};
@@ -64,9 +66,9 @@ public class ExcludeFilterTest
         List<TransformIndex> readIndicies = createIndexArray(new TransformIndex(0, 0));
         List<TransformIndex> writeIndicies = createIndexArray();
 
-        String regex = "boat";
+        Condition cond = new Condition(Operator.MATCH, "boat");
 
-        ExcludeFilter transform = new ExcludeFilter(regex, readIndicies, writeIndicies, mock(Logger.class));
+        ExcludeFilterRegex transform = new ExcludeFilterRegex(cond, readIndicies, writeIndicies, mock(Logger.class));
 
         String [] input = {"cat"};
         String [] scratch = {};
@@ -82,9 +84,9 @@ public class ExcludeFilterTest
         List<TransformIndex> readIndicies = createIndexArray(new TransformIndex(0, 0));
         List<TransformIndex> writeIndicies = createIndexArray();
 
-        String regex = "metric[0-9]+";
+        Condition cond = new Condition(Operator.MATCH, "metric[0-9]+");
 
-        ExcludeFilter transform = new ExcludeFilter(regex, readIndicies, writeIndicies, mock(Logger.class));
+        ExcludeFilterRegex transform = new ExcludeFilterRegex(cond, readIndicies, writeIndicies, mock(Logger.class));
         String [] input = {"metric01"};
         String [] scratch = {};
         String [] output = new String [3];
@@ -105,9 +107,9 @@ public class ExcludeFilterTest
                                                             new TransformIndex(0, 2));
         List<TransformIndex> writeIndicies = createIndexArray();
 
-        String regex = "boat";
+        Condition cond = new Condition(Operator.MATCH, "boat");
 
-        ExcludeFilter transform = new ExcludeFilter(regex, readIndicies, writeIndicies, mock(Logger.class));
+        ExcludeFilterRegex transform = new ExcludeFilterRegex(cond, readIndicies, writeIndicies, mock(Logger.class));
 
         String [] input = {"cat", "hat", "boat"};
         String [] scratch = {};
