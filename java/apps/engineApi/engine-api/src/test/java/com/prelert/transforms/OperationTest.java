@@ -28,9 +28,11 @@ package com.prelert.transforms;
 
 import static org.junit.Assert.*;
 
+import java.util.regex.Pattern;
+
 import org.junit.Test;
 
-import com.prelert.job.transform.condition.Operation;
+import com.prelert.job.transform.condition.Operator;
 import com.prelert.job.transform.exceptions.TransformConfigurationException;
 
 public class OperationTest {
@@ -38,34 +40,54 @@ public class OperationTest {
     @Test
     public void testFromString() throws TransformConfigurationException
     {
-        assertEquals(Operation.fromString("gt"), Operation.GT);
-        assertEquals(Operation.fromString("Gt"), Operation.GT);
-        assertEquals(Operation.fromString("EQ"), Operation.EQ);
-        assertEquals(Operation.fromString("eq"), Operation.EQ);
-        assertEquals(Operation.fromString("lte"), Operation.LTE);
-        assertEquals(Operation.fromString("lt"), Operation.LT);
-        assertEquals(Operation.fromString("GTE"), Operation.GTE);
+        assertEquals(Operator.fromString("gt"), Operator.GT);
+        assertEquals(Operator.fromString("Gt"), Operator.GT);
+        assertEquals(Operator.fromString("EQ"), Operator.EQ);
+        assertEquals(Operator.fromString("eq"), Operator.EQ);
+        assertEquals(Operator.fromString("lte"), Operator.LTE);
+        assertEquals(Operator.fromString("lt"), Operator.LT);
+        assertEquals(Operator.fromString("GTE"), Operator.GTE);
+        assertEquals(Operator.fromString("Match"), Operator.MATCH);
     }
 
     @Test
     public void testTest()
     {
-        assertTrue(Operation.GT.test(1.0, 0.0));
-        assertFalse(Operation.GT.test(0.0, 1.0));
+        assertTrue(Operator.GT.expectsANumericArgument());
+        assertTrue(Operator.GT.test(1.0, 0.0));
+        assertFalse(Operator.GT.test(0.0, 1.0));
 
-        assertTrue(Operation.GTE.test(1.0, 0.0));
-        assertTrue(Operation.GTE.test(1.0, 1.0));
-        assertFalse(Operation.GTE.test(0.0, 1.0));
+        assertTrue(Operator.GTE.expectsANumericArgument());
+        assertTrue(Operator.GTE.test(1.0, 0.0));
+        assertTrue(Operator.GTE.test(1.0, 1.0));
+        assertFalse(Operator.GTE.test(0.0, 1.0));
 
-        assertTrue(Operation.EQ.test(0.0, 0.0));
-        assertFalse(Operation.EQ.test(1.0, 0.0));
+        assertTrue(Operator.EQ.expectsANumericArgument());
+        assertTrue(Operator.EQ.test(0.0, 0.0));
+        assertFalse(Operator.EQ.test(1.0, 0.0));
 
-        assertTrue(Operation.LT.test(0.0, 1.0));
-        assertFalse(Operation.LT.test(0.0, 0.0));
+        assertTrue(Operator.LT.expectsANumericArgument());
+        assertTrue(Operator.LT.test(0.0, 1.0));
+        assertFalse(Operator.LT.test(0.0, 0.0));
 
-        assertTrue(Operation.LTE.test(0.0, 1.0));
-        assertTrue(Operation.LTE.test(1.0, 1.0));
-        assertFalse(Operation.LTE.test(1.0, 0.0));
+        assertTrue(Operator.LTE.expectsANumericArgument());
+        assertTrue(Operator.LTE.test(0.0, 1.0));
+        assertTrue(Operator.LTE.test(1.0, 1.0));
+        assertFalse(Operator.LTE.test(1.0, 0.0));
     }
+
+    @Test
+    public void testMatch()
+    {
+        assertFalse(Operator.MATCH.expectsANumericArgument());
+        assertFalse(Operator.MATCH.test(0.0, 1.0));
+
+        Pattern pattern = Pattern.compile("^aa.*");
+
+        assertTrue(Operator.MATCH.match(pattern, "aaaaa"));
+        assertFalse(Operator.MATCH.match(pattern, "bbaaa"));
+    }
+
+
 
 }

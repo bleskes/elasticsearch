@@ -26,9 +26,7 @@
  ************************************************************/
 package com.prelert.job.transform.condition;
 
-import java.util.List;
-
-import org.apache.log4j.Logger;
+import java.util.Objects;
 
 import com.prelert.job.transform.exceptions.TransformConfigurationException;
 import com.prelert.rs.data.ErrorCode;
@@ -38,148 +36,107 @@ import com.prelert.rs.data.ErrorCode;
  * Some transforms should only be applied if a condition
  * is met. One example is exclude a record if a value is
  * greater than some numeric constant.
- * The {@linkplain Operation} enum defines the available
+ * The {@linkplain Operator} enum defines the available
  * comparisons a condition can use.
  */
 public class Condition
 {
-    private static final Logger LOGGER = Logger.getLogger(Condition.class);
-    private Operation m_Op;
-    private Double    m_FilterValue;
+    private Operator m_Op;
+    private String    m_FilterValue;
 
     /**
-     * If the args can't be parsed Operation defaults to
-     * {@linkplain Operation#LT} and filter value to 0.0
-     * @param args
+     * Operation defaults to {@linkplain Operator#NONE}
+     * and the filter is an empty string
+     * @param
      */
-    public Condition(List<String> args)
+    public Condition()
     {
-        m_Op = Operation.LT;
-        m_FilterValue = 0.0;
-        parseArgs(args);
+        m_Op = Operator.NONE;
+        m_FilterValue = "";
     }
 
-    public Condition(Operation op, double filterValue)
+    public Condition(Operator op, String filterString)
     {
         m_Op = op;
-        m_FilterValue = filterValue;
+        m_FilterValue = filterString;
     }
 
-    public static boolean verifyArguments(List<String> args)
+    public boolean verify()
     throws TransformConfigurationException
     {
-        if (args.size() < 2)
+        if (m_Op == Operator.NONE)
         {
-            throw new TransformConfigurationException(
-                    "Not enough arguments to create a condition",
-                    ErrorCode.TRANSFORM_INVALID_ARGUMENT_COUNT);
+            throw new TransformConfigurationException("Invalid operator for condition",
+                        ErrorCode.CONDITION_INVALID_ARGUMENT);
         }
 
-        try
+        if (m_Op.expectsANumericArgument())
         {
-            Operation.fromString(args.get(0));
             try
             {
-                Double.parseDouble(args.get(1));
+                Double.parseDouble(m_FilterValue);
             }
             catch (NumberFormatException nfe)
             {
                 throw new TransformConfigurationException(
-                        "Cannot parse a double from string " + args.get(1),
-                        ErrorCode.TRANSFORM_INVALID_ARGUMENT);
-            }
-        }
-        catch (TransformConfigurationException tce)
-        {
-            try
-            {
-                // try parsing as number
-                Double.parseDouble(args.get(0));
-                try
-                {
-                    // maybe the op is the second argument
-                    Operation.fromString(args.get(1));
-                }
-                catch (TransformConfigurationException tce2)
-                {
-                    // give up
-                    throw new TransformConfigurationException("Cannot extract a comparison operator" +
-                                "from " + args.get(0) + " or " + args.get(1),
-                                ErrorCode.TRANSFORM_INVALID_ARGUMENT);
-                }
-            }
-            catch (NumberFormatException nfe)
-            {
-                // give up
-                throw new TransformConfigurationException(
-                        "Cannot extract a comparison operator or filter value from " + args.get(0),
-                        ErrorCode.TRANSFORM_INVALID_ARGUMENT);
+                        "Invalid condition value: cannot parse a double from string '" + m_FilterValue + "'",
+                        ErrorCode.CONDITION_INVALID_ARGUMENT);
             }
         }
 
         return true;
     }
 
-
-    private void parseArgs(List<String> args)
-    {
-        final String defaults = "Using default operator less than and filter value 0.0";
-        if (args.size() < 2)
-        {
-            LOGGER.warn("Not enough arguments for the ExcludeFilterNumeric transform, "
-                    +   defaults);
-            return;
-        }
-
-        try
-        {
-            m_Op = Operation.fromString(args.get(0));
-            try
-            {
-                m_FilterValue = Double.parseDouble(args.get(1));
-            }
-            catch (NumberFormatException nfe)
-            {
-                LOGGER.warn("Cannot parse filter value from string " + args.get(1) +
-                        ". Using default of " + m_FilterValue);
-            }
-        }
-        catch (TransformConfigurationException tce)
-        {
-            try
-            {
-                // try parsing as number
-                m_FilterValue = Double.parseDouble(args.get(0));
-                try
-                {
-                    // maybe the op is the second argument
-                    m_Op = Operation.fromString(args.get(1));
-                }
-                catch (TransformConfigurationException tce2)
-                {
-                    // give up
-                    LOGGER.warn("Cannot extract a comparison operator" +
-                                "from " + args.get(0) + " or " + args.get(1) + ". " + defaults);
-                }
-            }
-            catch (NumberFormatException nfe)
-            {
-                // give up
-                LOGGER.warn("Cannot extract a comparison operation or filter value " +
-                            "from " + args.get(0) + ". " + defaults);
-            }
-        }
-    }
-
-
-    public Operation getOp()
+    public Operator getOperator()
     {
         return m_Op;
     }
 
-    public Double getFilterValue()
+    public void setOperator(Operator op)
+    {
+        m_Op = op;
+    }
+
+    public String getValue()
     {
         return m_FilterValue;
     }
 
+    public void setValue(String value)
+    {
+        m_FilterValue = value;
+    }
+
+    @Override
+    public int hashCode()
+    {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result
+                + ((m_FilterValue == null) ? 0 : m_FilterValue.hashCode());
+        result = prime * result + ((m_Op == null) ? 0 : m_Op.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (this == obj)
+        {
+            return true;
+        }
+        if (obj == null)
+        {
+            return false;
+        }
+
+        if (getClass() != obj.getClass())
+        {
+            return false;
+        }
+
+        Condition other = (Condition) obj;
+        return Objects.equals(this.m_Op, other.m_Op) &&
+                    Objects.equals(this.m_FilterValue, other.m_FilterValue);
+    }
 }

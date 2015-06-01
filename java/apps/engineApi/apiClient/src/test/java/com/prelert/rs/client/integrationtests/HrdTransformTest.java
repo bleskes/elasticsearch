@@ -70,7 +70,6 @@ public class HrdTransformTest implements Closeable
     public static final String API_BASE_URL = "http://localhost:8080/engine/v1";
 
     private final EngineApiClient m_WebServiceClient;
-    private final String m_BaseUrl;
 
     /**
      * Creates a new http client call {@linkplain #close()} once finished
@@ -78,7 +77,6 @@ public class HrdTransformTest implements Closeable
     public HrdTransformTest(String baseUrl)
     {
         m_WebServiceClient = new EngineApiClient(baseUrl);
-        m_BaseUrl = baseUrl;
     }
 
     @Override

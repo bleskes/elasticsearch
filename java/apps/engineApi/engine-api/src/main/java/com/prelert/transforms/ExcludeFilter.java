@@ -27,47 +27,37 @@
 package com.prelert.transforms;
 
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
 
-/**
- * Matches a field against a regex
- */
-public class ExcludeFilter extends Transform
-{
-    private final Pattern m_Pattern;
+import com.prelert.job.transform.condition.Condition;
 
-    public ExcludeFilter(String regex, List<TransformIndex> readIndicies,
+
+/**
+ * Abstract base class for exclude filters
+ */
+abstract public class ExcludeFilter extends Transform
+{
+    private final Condition m_Condition;
+
+    /**
+     * The condition should have been verified by now and it <i>must</i>
+     * have a valid value & operator
+     *
+     * @param condition
+     * @param readIndicies
+     * @param writeIndicies
+     * @param logger
+     */
+    public ExcludeFilter(Condition condition, List<TransformIndex> readIndicies,
             List<TransformIndex> writeIndicies, Logger logger)
     {
         super(readIndicies, writeIndicies, logger);
-
-        m_Pattern = Pattern.compile(regex);
+        m_Condition = condition;
     }
 
-    /**
-     * Returns {@link TransformResult#FATAL_FAIL} if the record matches the regex
-     */
-    @Override
-    public TransformResult transform(String[][] readWriteArea)
-    throws TransformException
+    public Condition getCondition()
     {
-        TransformResult result = TransformResult.OK;
-        for (TransformIndex readIndex : m_ReadIndicies)
-        {
-            String field = readWriteArea[readIndex.array][readIndex.index];
-            Matcher match = m_Pattern.matcher(field);
-
-            if (match.matches())
-            {
-                result = TransformResult.FATAL_FAIL;
-                break;
-            }
-        }
-
-        return result;
+        return m_Condition;
     }
-
 }

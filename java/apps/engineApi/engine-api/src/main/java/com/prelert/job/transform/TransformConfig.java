@@ -30,17 +30,18 @@ package com.prelert.job.transform;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.prelert.job.transform.condition.Condition;
 import com.prelert.job.transform.exceptions.TransformConfigurationException;
 import com.prelert.job.verification.Verifiable;
+import com.prelert.rs.data.ErrorCode;
 
 /**
  * Represents an API data transform
  */
-@JsonIgnoreProperties({"condition"})
+@JsonInclude(Include.NON_NULL)
 public class TransformConfig implements Verifiable
 {
     // Serialisation strings
@@ -56,6 +57,8 @@ public class TransformConfig implements Verifiable
     private List<String> m_Arguments;
     private List<String> m_Outputs;
     private TransformType m_Type;
+    private Condition m_Condition;
+
 
     public TransformConfig()
     {
@@ -117,28 +120,16 @@ public class TransformConfig implements Verifiable
     /**
      * The condition object which may or may not be defined for this
      * transform
-     * @return
+     * @return May be <code>null</code>
      */
-    public Optional<Condition> getCondition()
+    public Condition getCondition()
     {
-        try
-        {
-            TransformType type = type();
+        return m_Condition;
+    }
 
-            if (type.hasCondition() && Condition.verifyArguments(m_Arguments))
-            {
-                return Optional.of(new Condition(m_Arguments));
-            }
-            else
-            {
-                return Optional.<Condition>empty();
-            }
-        }
-        catch (TransformConfigurationException e)
-        {
-            return Optional.<Condition>empty();
-        }
-
+    public void setCondition(Condition condition)
+    {
+        m_Condition = condition;
     }
 
     /**
@@ -159,7 +150,22 @@ public class TransformConfig implements Verifiable
     @Override
     public boolean verify() throws TransformConfigurationException
     {
-        return type().verify(this);
+        TransformType type = type();
+
+        boolean verified = type.verify(this);
+        if (verified && type.hasCondition())
+        {
+            if (m_Condition == null)
+            {
+                throw new TransformConfigurationException(
+                        "A condition must be defined for transform " + type.prettyName(),
+                        ErrorCode.TRANSFORM_REQUIRES_CONDITION);
+            }
+
+            verified = m_Condition.verify();
+        }
+
+        return verified;
     }
 
     @Override
@@ -197,6 +203,7 @@ public class TransformConfig implements Verifiable
                 && Objects.equals(this.m_Name, other.m_Name)
                 && Objects.equals(this.m_Inputs, other.m_Inputs)
                 && Objects.equals(this.m_Outputs, other.m_Outputs)
-                && Objects.equals(this.m_Arguments, other.m_Arguments);
+                && Objects.equals(this.m_Arguments, other.m_Arguments)
+                && Objects.equals(this.m_Condition, other.m_Condition);
     }
 }

@@ -53,6 +53,8 @@ import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
 import com.prelert.job.transform.TransformConfig;
+import com.prelert.job.transform.condition.Condition;
+import com.prelert.job.transform.condition.Operator;
 
 public class JobConfigurationSerialisationTest {
 
@@ -182,6 +184,59 @@ public class JobConfigurationSerialisationTest {
 		assertEquals(Arrays.asList(tr), config.getTransforms());
 	}
 
+    @Test
+    public void testReadConfig_transformHasCondition() throws IOException
+    {
+        final String FLIGHT_CENTRE_JOB_CONFIG = "{\"id\":\"flightcentre-csv\","
+                + "\"description\":\"Flight Centre Job\","
+                + "\"analysisConfig\" : {"
+                + "\"bucketSpan\":3600,"
+                + "\"detectors\":[{\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}] },"
+                + "\"transforms\":[{\"transform\":\"exclude\", \"inputs\":\"field1\", \"condition\":"
+                    + "{\"operator\":\"match\", \"value\":\".*\"}}],"
+                + "\"dataDescription\":{\"fieldDelimiter\":\",\", \"timeField\":\"_time\", \"timeFormat\" : \"epoch\"},"
+                + "\"analysisLimits\": {\"modelMemoryLimit\":2000}"
+                + "}";
+
+
+        JobConfigurationMessageBodyReader reader = new JobConfigurationMessageBodyReader();
+
+        JobConfiguration config = reader.readFrom(JobConfiguration.class, mock(Type.class),
+                                                new Annotation [] {},
+                                                MediaType.APPLICATION_JSON_TYPE,
+                                                new MultivaluedHashMap<String, String>(),
+                                        new ByteArrayInputStream(FLIGHT_CENTRE_JOB_CONFIG.getBytes("UTF-8")));
+
+
+        Detector d = new Detector();
+        d.setFieldName("responsetime");
+        d.setByFieldName("airline");
+
+        AnalysisConfig ac = new AnalysisConfig();
+        ac.setBucketSpan(3600L);
+        ac.setDetectors(Arrays.asList(d));
+
+        DataDescription dd = new DataDescription();
+        dd.setFieldDelimiter(',');
+        dd.setTimeField("_time");
+
+        assertEquals("flightcentre-csv", config.getId());
+        assertEquals("Flight Centre Job", config.getDescription());
+
+        assertEquals(ac, config.getAnalysisConfig());
+        assertEquals(dd, config.getDataDescription());
+
+        AnalysisLimits al = new AnalysisLimits(2000, null);
+        assertEquals(al, config.getAnalysisLimits());
+
+        TransformConfig tr = new TransformConfig();
+        tr.setTransform("exclude");
+        tr.setCondition(new Condition(Operator.MATCH, ".*"));
+        tr.setInputs(Arrays.asList("field1"));
+
+        assertEquals(1, config.getTransforms().size());
+        assertEquals(Arrays.asList(tr), config.getTransforms());
+    }
 
 	@Test
 	public void testReadConfigWithArrayOfTransformInputs() throws IOException
