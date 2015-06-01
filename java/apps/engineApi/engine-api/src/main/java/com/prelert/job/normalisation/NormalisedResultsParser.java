@@ -65,23 +65,16 @@ public class NormalisedResultsParser implements Runnable
             //printResults();
             parseResults();
         }
-        catch (JsonParseException e)
-        {
-            m_Logger.warn("Error parsing normalise output", e);
-        }
         catch (IOException e)
         {
             m_Logger.warn("Error reading normalise output", e);
         }
-
     }
-
 
     public List<NormalisedResult> getNormalisedResults()
     {
         return m_Results;
     }
-
 
     /**
      * Debugging print normalise output
@@ -101,8 +94,7 @@ public class NormalisedResultsParser implements Runnable
         }
     }
 
-    private void parseResults()
-    throws JsonParseException, IOException
+    private void parseResults() throws JsonParseException, IOException
     {
         JsonParser parser = new JsonFactory().createParser(m_InputStream);
         parser.configure(JsonParser.Feature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER, true);
