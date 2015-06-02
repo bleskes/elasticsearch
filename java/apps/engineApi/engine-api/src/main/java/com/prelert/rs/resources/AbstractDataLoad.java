@@ -28,6 +28,13 @@ package com.prelert.rs.resources;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
@@ -45,6 +52,9 @@ import org.apache.log4j.Logger;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataCounts;
 import com.prelert.job.JobDetails;
+import com.prelert.job.data.DataStreamer;
+import com.prelert.job.data.DataStreamerThread;
+import com.prelert.job.data.InputStreamDuplicator;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.TooManyJobsException;
 import com.prelert.job.exceptions.UnknownJobException;
@@ -60,7 +70,6 @@ import com.prelert.rs.data.Acknowledgement;
 import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.SingleDocument;
 import com.prelert.rs.provider.RestApiException;
-import com.prelert.rs.resources.data.DataStreamer;
 
 
 public abstract class AbstractDataLoad extends ResourceWithJobManager
@@ -79,6 +88,8 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
     private static final String RESET_END_PARAM = "resetEnd";
 
     private static final int MILLISECONDS_IN_SECOND = 1000;
+
+    private static final String JOB_SEPARATOR = ",";
 
     /**
      * Data upload endpoint.
@@ -112,17 +123,69 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
             MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException,
             OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException
     {
+        LOGGER.debug("Post data to job(s) " + jobId);
+
         DataLoadParams params = createDataLoadParams(resetStart, resetEnd);
+        String contentEncoding = headers.getHeaderString(HttpHeaders.CONTENT_ENCODING);
         if (params.isResettingBuckets())
         {
             checkBucketResettingIsSupported(jobId);
         }
 
-        DataStreamer dataStreamer = new DataStreamer(jobManager());
-        String contentEncoding = headers.getHeaderString(HttpHeaders.CONTENT_ENCODING);
-        DataCounts stats = dataStreamer.streamData(contentEncoding, jobId, input, params);
-        return Response.accepted().entity(stats).build();
+        String [] jobIds = jobId.split(JOB_SEPARATOR);
+        if (jobIds.length == 1)
+        {
+            DataStreamer dataStreamer = new DataStreamer(jobManager());
+            DataCounts stats = dataStreamer.streamData(contentEncoding, jobId, input, params);
+            return Response.accepted().entity(stats).build();
+        }
+        else
+        {
+            return streamToMultipleJobs(jobIds, params, contentEncoding, input);
+        }
     }
+
+
+    private Response streamToMultipleJobs(String [] jobIds, DataLoadParams params,
+                                            String encoding, InputStream input) throws IOException
+    {
+        // remove duplicates
+        Set<String> idSet = new HashSet<>(Arrays.asList(jobIds));
+
+        InputStreamDuplicator duplicator = new InputStreamDuplicator(input);
+
+        List<DataStreamerThread> threads = new ArrayList<>();
+        for (String job : idSet)
+        {
+            PipedInputStream pipedIn = new PipedInputStream();
+            PipedOutputStream pipedOut = new PipedOutputStream(pipedIn);
+            duplicator.addOutput(pipedOut);
+
+            DataStreamer dataStreamer = new DataStreamer(jobManager());
+            DataStreamerThread thread = new DataStreamerThread(dataStreamer, job, encoding,
+                                                                params, pipedIn);
+            threads.add(thread);
+            thread.start();
+        }
+
+        duplicator.run();
+
+        for (DataStreamerThread thread : threads)
+        {
+            try
+            {
+                thread.join();
+            }
+            catch (InterruptedException e)
+            {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+
+        return Response.accepted().entity(new DataCounts()).build();
+    }
+
 
     private DataLoadParams createDataLoadParams(String resetStart, String resetEnd)
     {

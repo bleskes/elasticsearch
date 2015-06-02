@@ -25,7 +25,7 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.rs.resources.data;
+package com.prelert.job.data;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -56,7 +56,6 @@ import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.provider.RestApiException;
-import com.prelert.rs.streaminginterceptor.StreamingInterceptor;
 
 public class DataStreamer {
 

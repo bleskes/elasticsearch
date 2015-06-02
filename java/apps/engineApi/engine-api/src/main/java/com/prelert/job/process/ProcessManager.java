@@ -336,7 +336,7 @@ public class ProcessManager
 
     /**
      * Return true if the job's autodetect process is running.
-     *
+     * Is thread safe as uses a concurrent map.
      * @param jobId
      * @return
      */
