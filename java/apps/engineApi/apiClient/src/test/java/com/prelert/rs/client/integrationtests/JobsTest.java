@@ -267,6 +267,8 @@ public class JobsTest implements Closeable
         test(job.getRecordsEndpoint().toString().equals(m_BaseUrl + "/results/" + jobId + "/records"));
         test(job.getBucketsEndpoint().toString().equals(m_BaseUrl + "/results/" + jobId + "/buckets"));
         test(job.getDataEndpoint().toString().equals(m_BaseUrl + "/data/" + jobId));
+        test(job.getCategoryDefinitionsEndpoint().toString().equals(m_BaseUrl + "/results/"+ jobId + "/categorydefinitions"));
+        test(job.getAlertsLongPollEndpoint().toString().equals(m_BaseUrl + "/alerts_longpoll/" + jobId));
 
         test(job.getLastDataTime() == null);
         test(job.getFinishedTime() == null);
