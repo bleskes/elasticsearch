@@ -548,37 +548,8 @@ public class ElasticsearchJobProvider implements JobProvider
             double anomalyScoreThreshold, double normalizedProbabilityThreshold)
     throws UnknownJobException
     {
-        FilterBuilder fb = null;
-
-        if (anomalyScoreThreshold > 0.0)
-        {
-            RangeFilterBuilder scoreFilter = FilterBuilders.rangeFilter(Bucket.ANOMALY_SCORE);
-            scoreFilter.gte(anomalyScoreThreshold);
-            fb = scoreFilter;
-        }
-        if (normalizedProbabilityThreshold > 0.0)
-        {
-            RangeFilterBuilder scoreFilter = FilterBuilders.rangeFilter(Bucket.MAX_NORMALIZED_PROBABILITY);
-            scoreFilter.gte(normalizedProbabilityThreshold);
-
-            if (fb == null)
-            {
-                fb = scoreFilter;
-            }
-            else
-            {
-                fb = FilterBuilders.andFilter(scoreFilter, fb);
-            }
-        }
-
-        fb = andWithInterimFilter(includeInterim, Bucket.IS_INTERIM, fb);
-
-        if (fb == null)
-        {
-            fb = FilterBuilders.matchAllFilter();
-        }
-
-        return buckets(jobId, expand, includeInterim, skip, take, fb);
+        return buckets(jobId, expand, includeInterim, skip, take, 0, 0, anomalyScoreThreshold,
+                normalizedProbabilityThreshold);
     }
 
     @Override
@@ -606,20 +577,12 @@ public class ElasticsearchJobProvider implements JobProvider
             fb = timeRange;
         }
 
-
         if (anomalyScoreThreshold > 0.0)
         {
             RangeFilterBuilder scoreFilter = FilterBuilders.rangeFilter(Bucket.ANOMALY_SCORE);
             scoreFilter.gte(anomalyScoreThreshold);
 
-            if (fb == null)
-            {
-                fb = scoreFilter;
-            }
-            else
-            {
-                fb = FilterBuilders.andFilter(scoreFilter, fb);
-            }
+            fb = (fb == null) ? scoreFilter : FilterBuilders.andFilter(scoreFilter, fb);
         }
 
         if (normalizedProbabilityThreshold > 0.0)
@@ -627,17 +590,15 @@ public class ElasticsearchJobProvider implements JobProvider
             RangeFilterBuilder scoreFilter = FilterBuilders.rangeFilter(Bucket.MAX_NORMALIZED_PROBABILITY);
             scoreFilter.gte(normalizedProbabilityThreshold);
 
-            if (fb == null)
-            {
-                fb = scoreFilter;
-            }
-            else
-            {
-                fb = FilterBuilders.andFilter(scoreFilter, fb);
-            }
+            fb = (fb == null) ? scoreFilter : FilterBuilders.andFilter(scoreFilter, fb);
         }
 
         fb = andWithInterimFilter(includeInterim, Bucket.IS_INTERIM, fb);
+
+        if (fb == null)
+        {
+            fb = FilterBuilders.matchAllFilter();
+        }
 
         return buckets(jobId, expand, includeInterim, skip, take, fb);
     }
@@ -864,6 +825,16 @@ public class ElasticsearchJobProvider implements JobProvider
 
     @Override
     public Pagination<AnomalyRecord> records(String jobId,
+            int skip, int take, boolean includeInterim, String sortField, boolean descending,
+            double anomalyScoreThreshold, double normalizedProbabilityThreshold)
+    throws UnknownJobException
+    {
+        return records(jobId, skip, take, 0, 0, includeInterim, sortField, descending,
+                anomalyScoreThreshold, normalizedProbabilityThreshold);
+    }
+
+    @Override
+    public Pagination<AnomalyRecord> records(String jobId,
             int skip, int take, long startEpochMs, long endEpochMs,
             boolean includeInterim, String sortField, boolean descending,
             double anomalyScoreThreshold, double normalizedProbabilityThreshold)
@@ -893,14 +864,7 @@ public class ElasticsearchJobProvider implements JobProvider
             RangeFilterBuilder scoreFilter = FilterBuilders.rangeFilter(AnomalyRecord.ANOMALY_SCORE);
             scoreFilter.gte(anomalyScoreThreshold);
 
-            if (fb == null)
-            {
-                fb = scoreFilter;
-            }
-            else
-            {
-                fb = FilterBuilders.andFilter(scoreFilter, fb);
-            }
+            fb = (fb == null) ? scoreFilter : FilterBuilders.andFilter(scoreFilter, fb);
         }
 
         if (normalizedProbabilityThreshold > 0.0)
@@ -908,47 +872,7 @@ public class ElasticsearchJobProvider implements JobProvider
             RangeFilterBuilder scoreFilter = FilterBuilders.rangeFilter(AnomalyRecord.NORMALIZED_PROBABILITY);
             scoreFilter.gte(normalizedProbabilityThreshold);
 
-            if (fb == null)
-            {
-                fb = scoreFilter;
-            }
-            else
-            {
-                fb = FilterBuilders.andFilter(scoreFilter, fb);
-            }
-        }
-
-
-        return records(jobId, skip, take, fb, sortField, descending);
-    }
-
-    @Override
-    public Pagination<AnomalyRecord> records(String jobId,
-            int skip, int take, boolean includeInterim, String sortField, boolean descending,
-            double anomalyScoreThreshold, double normalizedProbabilityThreshold)
-    throws UnknownJobException
-    {
-        FilterBuilder fb = null;
-
-        if (anomalyScoreThreshold > 0.0)
-        {
-            RangeFilterBuilder scoreFilter = FilterBuilders.rangeFilter(AnomalyRecord.ANOMALY_SCORE);
-            scoreFilter.gte(anomalyScoreThreshold);
-            fb = scoreFilter;
-        }
-        if (normalizedProbabilityThreshold > 0.0)
-        {
-            RangeFilterBuilder scoreFilter = FilterBuilders.rangeFilter(AnomalyRecord.NORMALIZED_PROBABILITY);
-            scoreFilter.gte(normalizedProbabilityThreshold);
-
-            if (fb == null)
-            {
-                fb = scoreFilter;
-            }
-            else
-            {
-                fb = FilterBuilders.andFilter(scoreFilter, fb);
-            }
+            fb = (fb == null) ? scoreFilter : FilterBuilders.andFilter(scoreFilter, fb);
         }
 
         fb = andWithInterimFilter(includeInterim, AnomalyRecord.IS_INTERIM, fb);
@@ -960,7 +884,6 @@ public class ElasticsearchJobProvider implements JobProvider
 
         return records(jobId, skip, take, fb, sortField, descending);
     }
-
 
     private Pagination<AnomalyRecord> records(String jobId,
             int skip, int take, FilterBuilder recordFilter,
