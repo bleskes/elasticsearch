@@ -28,6 +28,7 @@
 package com.prelert.rs.data;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -145,6 +146,29 @@ public class AnomalyRecordTest
         assertEquals(2, anomalyRecord.getCauses().size());
 
         assertEquals(JsonToken.END_OBJECT, parser.getCurrentToken());
+    }
+
+    @Test
+    public void testResetBigNormalisedUpdateFlag()
+    {
+        AnomalyRecord record = new AnomalyRecord();
+        record.raiseBigNormalisedUpdateFlag();
+        assertTrue(record.hadBigNormalisedUpdate());
+
+        record.resetBigNormalisedUpdateFlag();
+
+        assertFalse(record.hadBigNormalisedUpdate());
+    }
+
+    @Test
+    public void testRaiseBigNormalisedUpdateFlag()
+    {
+        AnomalyRecord record = new AnomalyRecord();
+        assertFalse(record.hadBigNormalisedUpdate());
+
+        record.raiseBigNormalisedUpdateFlag();
+
+        assertTrue(record.hadBigNormalisedUpdate());
     }
 
     private static final JsonParser createJsonParser(String input) throws JsonParseException,

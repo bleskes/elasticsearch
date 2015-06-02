@@ -35,9 +35,12 @@ import java.util.HashSet;
 import java.util.Set;
 
 import javax.ws.rs.core.Application;
+import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
 import org.glassfish.jersey.uri.internal.JerseyUriBuilder;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 import com.prelert.job.alert.manager.AlertManager;
 import com.prelert.job.manager.JobManager;
@@ -59,6 +62,14 @@ public class ServiceTest
         m_AlertManager = mock(AlertManager.class);
         m_UriInfo = mock(UriInfo.class);
         when(m_UriInfo.getBaseUri()).thenReturn(BASE_URI);
+        when(m_UriInfo.getBaseUriBuilder()).thenAnswer(new Answer<UriBuilder>()
+        {
+            @Override
+            public UriBuilder answer(InvocationOnMock invocation) throws Throwable
+            {
+                return UriBuilder.fromUri(BASE_URI);
+            }
+        });
     }
 
     protected void configureService(ResourceWithJobManager service)
