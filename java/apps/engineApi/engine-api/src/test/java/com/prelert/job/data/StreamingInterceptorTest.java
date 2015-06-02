@@ -25,7 +25,7 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.rs.streaminginterceptor;
+package com.prelert.job.data;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -40,6 +40,8 @@ import java.util.zip.GZIPInputStream;
 
 import org.junit.Assert;
 import org.junit.Test;
+
+import com.prelert.job.data.StreamingInterceptor;
 
 public class StreamingInterceptorTest 
 {
