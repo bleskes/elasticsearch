@@ -58,8 +58,6 @@ import org.elasticsearch.index.engine.VersionConflictEngineException;
 import org.elasticsearch.index.get.GetField;
 import org.elasticsearch.index.query.FilterBuilder;
 import org.elasticsearch.index.query.FilterBuilders;
-import org.elasticsearch.index.query.RangeFilterBuilder;
-import org.elasticsearch.index.query.TermFilterBuilder;
 import org.elasticsearch.indices.IndexMissingException;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.search.SearchHit;
@@ -558,84 +556,13 @@ public class ElasticsearchJobProvider implements JobProvider
             double anomalyScoreThreshold, double normalizedProbabilityThreshold)
     throws UnknownJobException
     {
-        FilterBuilder fb = createFilterBuilder(Bucket.IS_INTERIM, includeInterim, startEpochMs,
-                endEpochMs, Bucket.ANOMALY_SCORE, anomalyScoreThreshold,
-                Bucket.MAX_NORMALIZED_PROBABILITY, normalizedProbabilityThreshold);
+        FilterBuilder fb = new BucketsAndRecordsFilterBuilder()
+                .timeRange(startEpochMs, endEpochMs)
+                .score(Bucket.ANOMALY_SCORE, anomalyScoreThreshold)
+                .score(Bucket.MAX_NORMALIZED_PROBABILITY, normalizedProbabilityThreshold)
+                .interim(Bucket.IS_INTERIM, includeInterim)
+                .build();
         return buckets(jobId, expand, includeInterim, skip, take, fb);
-    }
-
-    private FilterBuilder createFilterBuilder(String interimFieldName, boolean includeInterim,
-            long startEpochMs, long endEpochMs, String anomalyScoreField,
-            double anomalyScoreThreshold, String normalizedProbabilityField,
-            double normalizedProbabilityThreshold)
-    {
-        FilterBuilder fb = null;
-
-        if (startEpochMs > 0 || endEpochMs > 0)
-        {
-            // HACK for the timestamps being @timestamp in the database
-            RangeFilterBuilder timeRange = FilterBuilders.rangeFilter(ElasticsearchMappings.ES_TIMESTAMP);
-
-            if (startEpochMs > 0)
-            {
-                timeRange.gte(startEpochMs);
-            }
-            if (endEpochMs > 0)
-            {
-                timeRange.lt(endEpochMs);
-            }
-
-            fb = timeRange;
-        }
-
-        if (anomalyScoreThreshold > 0.0)
-        {
-            RangeFilterBuilder scoreFilter = FilterBuilders.rangeFilter(anomalyScoreField);
-            scoreFilter.gte(anomalyScoreThreshold);
-
-            fb = (fb == null) ? scoreFilter : FilterBuilders.andFilter(scoreFilter, fb);
-        }
-
-        if (normalizedProbabilityThreshold > 0.0)
-        {
-            RangeFilterBuilder scoreFilter = FilterBuilders.rangeFilter(normalizedProbabilityField);
-            scoreFilter.gte(normalizedProbabilityThreshold);
-
-            fb = (fb == null) ? scoreFilter : FilterBuilders.andFilter(scoreFilter, fb);
-        }
-
-        fb = andWithInterimFilter(includeInterim, interimFieldName, fb);
-
-        if (fb == null)
-        {
-            fb = FilterBuilders.matchAllFilter();
-        }
-        return fb;
-    }
-
-    private FilterBuilder andWithInterimFilter(boolean includeInterim,
-            String fieldName, FilterBuilder fb)
-    {
-        if (includeInterim)
-        {
-            // Including interim results does not stop final results being
-            // shown, so including interim results means no filtering on the
-            // isInterim field
-            return fb;
-        }
-
-        // Implemented as "NOT isInterim == true" so that not present and null
-        // are equivalent to false.  This improves backwards compatibility.
-        // Also, note how for a boolean field, unlike numeric term filters, the
-        // term value is supplied as a string.
-        TermFilterBuilder interimFilter = FilterBuilders.termFilter(fieldName,
-                Boolean.TRUE.toString());
-        FilterBuilder notInterimFilter = FilterBuilders.notFilter(interimFilter);
-        if (fb == null)
-        {
-            return notInterimFilter;
-        }
-        return FilterBuilders.andFilter(notInterimFilter, fb);
     }
 
     private Pagination<Bucket> buckets(String jobId,
@@ -776,7 +703,8 @@ public class ElasticsearchJobProvider implements JobProvider
         FilterBuilder recordFilter = FilterBuilders.hasParentFilter(Bucket.TYPE,
                                 FilterBuilders.termFilter(Bucket.ID, bucketId));
 
-        recordFilter = andWithInterimFilter(includeInterim, AnomalyRecord.IS_INTERIM, recordFilter);
+        recordFilter = new BucketsAndRecordsFilterBuilder(recordFilter).interim(
+                AnomalyRecord.IS_INTERIM, includeInterim).build();
 
         SortBuilder sb = null;
         if (sortField != null)
@@ -875,9 +803,12 @@ public class ElasticsearchJobProvider implements JobProvider
             double anomalyScoreThreshold, double normalizedProbabilityThreshold)
     throws UnknownJobException
     {
-        FilterBuilder fb = createFilterBuilder(AnomalyRecord.IS_INTERIM, includeInterim,
-                startEpochMs, endEpochMs, AnomalyRecord.ANOMALY_SCORE, anomalyScoreThreshold,
-                AnomalyRecord.NORMALIZED_PROBABILITY, normalizedProbabilityThreshold);
+        FilterBuilder fb = new BucketsAndRecordsFilterBuilder()
+                .timeRange(startEpochMs, endEpochMs)
+                .score(AnomalyRecord.ANOMALY_SCORE, anomalyScoreThreshold)
+                .score(AnomalyRecord.NORMALIZED_PROBABILITY, normalizedProbabilityThreshold)
+                .interim(AnomalyRecord.IS_INTERIM, includeInterim)
+                .build();
         return records(jobId, skip, take, fb, sortField, descending);
     }
 
