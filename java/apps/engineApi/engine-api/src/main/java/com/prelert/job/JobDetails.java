@@ -91,6 +91,7 @@ public class JobDetails
 	private URI m_CategoryDefinitionsEndpoint;
 	private URI m_RecordsEndpoint;
 	private URI m_LogsEndpoint;
+	private URI m_AlertsLongPollEndpoint;
 
 
 	/**
@@ -468,6 +469,24 @@ public class JobDetails
 	}
 
 	/**
+     * This Job's alert long poll endpoint
+     *
+     * @return The Job's logs URI
+     */
+    public URI getAlertsLongPollEndpoint()
+    {
+        return m_AlertsLongPollEndpoint;
+    }
+
+    /**
+     * Set this Job's alert long poll endpoint
+     */
+    public void setAlertsLongPollEndpoint(URI value)
+    {
+        m_AlertsLongPollEndpoint = value;
+    }
+
+    /**
 	 * Processed records count
 	 * @return
 	 */
@@ -538,6 +557,7 @@ public class JobDetails
 				Objects.equals(this.m_DataEndpoint, that.m_DataEndpoint) &&
 				Objects.equals(this.m_CategoryDefinitionsEndpoint, that.m_CategoryDefinitionsEndpoint) &&
 				Objects.equals(this.m_BucketsEndpoint, that.m_BucketsEndpoint) &&
+				Objects.equals(this.m_AlertsLongPollEndpoint, that.m_AlertsLongPollEndpoint) &&
 				Objects.equals(this.m_RecordsEndpoint, that.m_RecordsEndpoint);
 	}
 
@@ -548,6 +568,6 @@ public class JobDetails
                 m_FinishedTime, m_LastDataTime, m_Timeout,
                 m_AnalysisConfig, m_AnalysisLimits, m_DataDescription, m_ModelSizeStats,
                 m_Transforms, m_Counts, m_Location, m_DataEndpoint, m_CategoryDefinitionsEndpoint,
-                m_BucketsEndpoint, m_RecordsEndpoint);
+                m_BucketsEndpoint, m_RecordsEndpoint, m_AlertsLongPollEndpoint);
     }
 }
