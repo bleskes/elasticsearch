@@ -434,6 +434,7 @@ public class EngineApiClient implements Closeable
                 content -> m_JsonMapper.readValue(content, new TypeReference<DataCounts>() {}));
     }
 
+    @FunctionalInterface
     private interface FunctionThatThrowsIoException<T, R>
     {
         R apply(T input) throws IOException;
