@@ -29,8 +29,10 @@ package com.prelert.job.persistence.elasticsearch;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -65,6 +67,18 @@ public class ElasticsearchJobProviderTest
         when(settings.get("cluster.name")).thenReturn("nodeName");
         when(m_Node.settings()).thenReturn(settings);
 
+    }
+
+    @Test
+    public void testClose() throws InterruptedException, ExecutionException, IOException
+    {
+        MockClientBuilder clientBuilder = new MockClientBuilder()
+                .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true);
+        ElasticsearchJobProvider provider = createProvider(clientBuilder.build());
+
+        provider.close();
+
+        verify(m_Node).close();
     }
 
     @Test
