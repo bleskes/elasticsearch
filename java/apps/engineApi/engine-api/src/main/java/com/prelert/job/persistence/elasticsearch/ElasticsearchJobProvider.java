@@ -559,12 +559,14 @@ public class ElasticsearchJobProvider implements JobProvider
     throws UnknownJobException
     {
         FilterBuilder fb = createFilterBuilder(Bucket.IS_INTERIM, includeInterim, startEpochMs,
-                endEpochMs, anomalyScoreThreshold, normalizedProbabilityThreshold);
+                endEpochMs, Bucket.ANOMALY_SCORE, anomalyScoreThreshold,
+                Bucket.MAX_NORMALIZED_PROBABILITY, normalizedProbabilityThreshold);
         return buckets(jobId, expand, includeInterim, skip, take, fb);
     }
 
     private FilterBuilder createFilterBuilder(String interimFieldName, boolean includeInterim,
-            long startEpochMs, long endEpochMs, double anomalyScoreThreshold,
+            long startEpochMs, long endEpochMs, String anomalyScoreField,
+            double anomalyScoreThreshold, String normalizedProbabilityField,
             double normalizedProbabilityThreshold)
     {
         FilterBuilder fb = null;
@@ -588,7 +590,7 @@ public class ElasticsearchJobProvider implements JobProvider
 
         if (anomalyScoreThreshold > 0.0)
         {
-            RangeFilterBuilder scoreFilter = FilterBuilders.rangeFilter(Bucket.ANOMALY_SCORE);
+            RangeFilterBuilder scoreFilter = FilterBuilders.rangeFilter(anomalyScoreField);
             scoreFilter.gte(anomalyScoreThreshold);
 
             fb = (fb == null) ? scoreFilter : FilterBuilders.andFilter(scoreFilter, fb);
@@ -596,7 +598,7 @@ public class ElasticsearchJobProvider implements JobProvider
 
         if (normalizedProbabilityThreshold > 0.0)
         {
-            RangeFilterBuilder scoreFilter = FilterBuilders.rangeFilter(Bucket.MAX_NORMALIZED_PROBABILITY);
+            RangeFilterBuilder scoreFilter = FilterBuilders.rangeFilter(normalizedProbabilityField);
             scoreFilter.gte(normalizedProbabilityThreshold);
 
             fb = (fb == null) ? scoreFilter : FilterBuilders.andFilter(scoreFilter, fb);
@@ -621,7 +623,7 @@ public class ElasticsearchJobProvider implements JobProvider
             // isInterim field
             return fb;
         }
-    
+
         // Implemented as "NOT isInterim == true" so that not present and null
         // are equivalent to false.  This improves backwards compatibility.
         // Also, note how for a boolean field, unlike numeric term filters, the
@@ -874,7 +876,8 @@ public class ElasticsearchJobProvider implements JobProvider
     throws UnknownJobException
     {
         FilterBuilder fb = createFilterBuilder(AnomalyRecord.IS_INTERIM, includeInterim,
-                startEpochMs, endEpochMs, anomalyScoreThreshold, normalizedProbabilityThreshold);
+                startEpochMs, endEpochMs, AnomalyRecord.ANOMALY_SCORE, anomalyScoreThreshold,
+                AnomalyRecord.NORMALIZED_PROBABILITY, normalizedProbabilityThreshold);
         return records(jobId, skip, take, fb, sortField, descending);
     }
 
