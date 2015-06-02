@@ -112,10 +112,12 @@ public class StatusReporterTest
         reporter.setAnalysedFieldsPerRecord(3);
 
         reporter.reportRecordWritten(5);
+        reporter.reportFailedTransform();
         assertEquals(1, reporter.incrementalStats().getInputRecordCount());
         assertEquals(5, reporter.incrementalStats().getInputFieldCount());
         assertEquals(1, reporter.incrementalStats().getProcessedRecordCount());
         assertEquals(3, reporter.incrementalStats().getProcessedFieldCount());
+        assertEquals(1, reporter.incrementalStats().getFailedTransformCount());
 
         assertEquals(reporter.incrementalStats(), reporter.runningTotalStats());
 

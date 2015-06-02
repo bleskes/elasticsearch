@@ -86,4 +86,18 @@ public class ConditionTest
             assertEquals(expected, e.getErrorCode());
         }
     }
+
+    @Test
+    public void testHashCodeAndEquals()
+    {
+        Condition cond1 = new Condition(Operator.MATCH, "regex");
+        Condition cond2 = new Condition(Operator.MATCH, "regex");
+
+        assertEquals(cond1, cond2);
+        assertEquals(cond1.hashCode(), cond2.hashCode());
+
+        cond2.setOperator(Operator.EQ);
+        assertFalse(cond1.equals(cond2));
+        assertFalse(cond1.hashCode() == cond2.hashCode());
+    }
 }
