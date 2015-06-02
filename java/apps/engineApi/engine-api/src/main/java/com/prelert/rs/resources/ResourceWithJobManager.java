@@ -241,7 +241,7 @@ public abstract class ResourceWithJobManager
                     uriBuilder.queryParam(pair.getKey(), pair.getValue());
                 }
 
-                 URI nextUri = uriBuilder.build();
+                URI nextUri = uriBuilder.build();
 
                 page.setNextPage(nextUri);
             }
