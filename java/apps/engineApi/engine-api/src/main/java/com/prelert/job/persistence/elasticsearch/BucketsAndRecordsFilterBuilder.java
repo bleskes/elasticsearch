@@ -39,7 +39,7 @@ import org.elasticsearch.index.query.TermFilterBuilder;
  * This builder facilitates the creation of a {@link FilterBuilder} with common
  * characteristics to both buckets and records.
  */
-public class BucketsAndRecordsFilterBuilder
+class BucketsAndRecordsFilterBuilder
 {
     private final List<FilterBuilder> m_FilterBuilders = new ArrayList<>();
 
