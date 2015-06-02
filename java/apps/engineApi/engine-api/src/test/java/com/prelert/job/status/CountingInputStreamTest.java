@@ -69,6 +69,7 @@ public class CountingInputStreamTest
 		}
 	}
 
+	@Test
 	public void testRead_WithBuffer() throws IOException
 	{
 	    final String TEXT = "To the man who only has a hammer,"
@@ -99,6 +100,7 @@ public class CountingInputStreamTest
 		}
 	}
 
+	@Test
     public void testRead_WithTinyBuffer() throws IOException
     {
         final String TEXT = "To the man who only has a hammer,"
