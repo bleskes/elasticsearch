@@ -180,6 +180,8 @@ public class JobsTest extends ServiceTest
         assertEquals(createUri("http://localhost/test/results/" + jobId + "/records"),
                 job.getRecordsEndpoint());
         assertEquals(createUri("http://localhost/test/logs/" + jobId), job.getLogsEndpoint());
+        assertEquals(createUri("http://localhost/test/alerts_longpoll/" + jobId),
+                            job.getAlertsLongPollEndpoint());
     }
 
     private static URI createUri(String url)
