@@ -69,7 +69,7 @@ public class InputStreamDuplicatorTest
         duplicator.addOutput(out2);
         duplicator.addOutput(out3);
 
-        duplicator.run();
+        duplicator.duplicate();
 
         assertEquals(TEXT, out1.toString(StandardCharsets.UTF_8.name()));
         assertEquals(TEXT, out2.toString(StandardCharsets.UTF_8.name()));
@@ -95,7 +95,7 @@ public class InputStreamDuplicatorTest
         duplicator.addOutput(out2);
         duplicator.addOutput(mockOut);
 
-        duplicator.run();
+        duplicator.duplicate();
 
         assertEquals(TEXT, out1.toString(StandardCharsets.UTF_8.name()));
         assertEquals(TEXT, out2.toString(StandardCharsets.UTF_8.name()));

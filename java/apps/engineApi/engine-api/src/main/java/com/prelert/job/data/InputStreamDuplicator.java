@@ -40,11 +40,13 @@ import org.apache.log4j.Logger;
  * to multiple OutputStreams.
  * Their is not thread safety on this class the method
  * {@linkplain #addOutput(OutputStream)} should not be
- * called after {@linkplain #run()} has started
+ * called after {@linkplain #duplicate()} has started
  */
-public class InputStreamDuplicator implements Runnable
+public class InputStreamDuplicator
 {
     private static final Logger LOGGER = Logger.getLogger(InputStreamDuplicator.class);
+
+    private static final int BUFFER_SIZE = 131072; // 128K
 
     private InputStream m_Input;
     private List<OutputStream> m_Outputs;
@@ -66,32 +68,16 @@ public class InputStreamDuplicator implements Runnable
     }
 
 
-    @Override
-    public void run()
+    public void duplicate()
     {
         int n;
-        byte[] buffer = new byte[131072]; // 128kB
+        byte[] buffer = new byte[BUFFER_SIZE];
         try
         {
             while ((n = m_Input.read(buffer)) > -1)
             {
-                Iterator<OutputStream> iter = m_Outputs.iterator();
-                while (iter.hasNext())
-                {
-                    OutputStream os = iter.next();
-                    try
-                    {
-                        os.write(buffer, 0, n);
-                    }
-                    catch (IOException e)
-                    {
-                        LOGGER.error("Exception writing duplicate stream. " +
-                                    "No more data will be written to the stream", e);
-                        iter.remove();
-                    }
-                }
+                writeToOutputs(buffer, n);
             }
-
 
             // close streams
             Iterator<OutputStream> iter = m_Outputs.iterator();
@@ -102,10 +88,31 @@ public class InputStreamDuplicator implements Runnable
         }
         catch (IOException e)
         {
-            LOGGER.warn("");
+            LOGGER.warn("IOException reading input", e);
         }
 
         LOGGER.info("Duplicate write stream finished");
     }
 
+    private void writeToOutputs(byte[] buffer, int byteCount)
+    {
+        Iterator<OutputStream> iter = m_Outputs.iterator();
+        while (iter.hasNext())
+        {
+            OutputStream os = iter.next();
+            try
+            {
+                os.write(buffer, 0, byteCount);
+            }
+            catch (IOException e)
+            {
+                LOGGER.error("Exception writing duplicate stream. " +
+                            "No more data will be written to the stream", e);
+                iter.remove();
+            }
+        }
+    }
+
 }
+
+
