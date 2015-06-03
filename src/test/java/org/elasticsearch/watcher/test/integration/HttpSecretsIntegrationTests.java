@@ -27,6 +27,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.support.XContentMapValues;
 import org.elasticsearch.watcher.WatcherException;
 import org.elasticsearch.watcher.client.WatcherClient;
+import org.elasticsearch.watcher.execution.ActionExecutionMode;
 import org.elasticsearch.watcher.shield.ShieldSecretService;
 import org.elasticsearch.watcher.support.http.HttpRequestTemplate;
 import org.elasticsearch.watcher.support.http.auth.basic.ApplicableBasicAuth;
@@ -159,8 +160,8 @@ public class HttpSecretsIntegrationTests extends AbstractWatcherIntegrationTests
         TriggerEvent triggerEvent = new ScheduleTriggerEvent(new DateTime(UTC), new DateTime(UTC));
         ExecuteWatchResponse executeResponse = watcherClient.prepareExecuteWatch("_id")
                 .setRecordExecution(false)
-                .setIgnoreThrottle(true)
                 .setTriggerEvent(triggerEvent)
+                .setActionMode("_all", ActionExecutionMode.FORCE_EXECUTE)
                 .get();
         assertThat(executeResponse, notNullValue());
         contentSource = executeResponse.getRecordSource();
@@ -231,7 +232,7 @@ public class HttpSecretsIntegrationTests extends AbstractWatcherIntegrationTests
         TriggerEvent triggerEvent = new ScheduleTriggerEvent(new DateTime(UTC), new DateTime(UTC));
         ExecuteWatchResponse executeResponse = watcherClient.prepareExecuteWatch("_id")
                 .setRecordExecution(false)
-                .setIgnoreThrottle(true)
+                .setActionMode("_all", ActionExecutionMode.FORCE_EXECUTE)
                 .setTriggerEvent(triggerEvent)
                 .get();
         assertThat(executeResponse, notNullValue());

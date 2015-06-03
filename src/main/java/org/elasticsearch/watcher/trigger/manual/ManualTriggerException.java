@@ -15,27 +15,20 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.watcher.support.clock;
+package org.elasticsearch.watcher.trigger.manual;
 
-import org.elasticsearch.common.joda.time.DateTime;
-import org.elasticsearch.common.joda.time.DateTimeZone;
-import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.watcher.trigger.TriggerException;
 
 /**
  *
  */
-public interface Clock {
+public class ManualTriggerException extends TriggerException {
 
-    long millis();
+    public ManualTriggerException(String msg, Object... args) {
+        super(msg, args);
+    }
 
-    long nanos();
-
-    DateTime now();
-
-    DateTime nowUTC();
-
-    DateTime now(DateTimeZone timeZone);
-
-    TimeValue timeElapsedSince(DateTime time);
-
+    public ManualTriggerException(String msg, Throwable cause, Object... args) {
+        super(msg, cause, args);
+    }
 }

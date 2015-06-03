@@ -45,6 +45,19 @@ public class WatcherDateTimeUtils {
     private WatcherDateTimeUtils() {
     }
 
+    public static DateTime convertToDate(Object value, Clock clock) {
+        if (value instanceof DateTime) {
+            return (DateTime) value;
+        }
+        if (value instanceof String) {
+            return parseDateMath((String) value, DateTimeZone.UTC, clock);
+        }
+        if (value instanceof Number) {
+            return new DateTime(((Number) value).longValue(), DateTimeZone.UTC);
+        }
+        return null;
+    }
+
     public static DateTime parseDate(String dateAsText) {
         return parseDate(dateAsText, null);
     }
@@ -166,6 +179,7 @@ public class WatcherDateTimeUtils {
     }
 
     private static class ClockNowCallable implements Callable<Long> {
+
         private final Clock clock;
 
         ClockNowCallable(Clock clock){
