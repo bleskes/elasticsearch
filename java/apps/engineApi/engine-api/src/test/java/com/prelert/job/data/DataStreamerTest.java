@@ -27,17 +27,26 @@
 
 package com.prelert.job.data;
 
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
+import java.nio.charset.StandardCharsets;
+import java.security.DigestInputStream;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.DataCounts;
 import com.prelert.job.data.DataStreamer;
 import com.prelert.job.exceptions.JobInUseException;
@@ -50,6 +59,8 @@ import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.process.params.DataLoadParams;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
+import com.prelert.rs.data.ErrorCode;
+import com.prelert.rs.provider.RestApiException;
 
 public class DataStreamerTest
 {
@@ -85,6 +96,65 @@ public class DataStreamerTest
 
         verify(jobManager).submitDataLoadJob("foo", inputStream, params);
         Mockito.verifyNoMoreInteractions(jobManager);
+    }
+
+
+    @Test
+    public void testStreamData_ExpectsGzipButNotCompressed()
+    throws JsonParseException, UnknownJobException, NativeProcessRunException,
+            MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException,
+            OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException,
+            IOException
+    {
+        JobManager jobManager = mock(JobManager.class);
+        DataStreamer dataStreamer = new DataStreamer(jobManager);
+        InputStream inputStream = mock(InputStream.class);
+        DataLoadParams params = mock(DataLoadParams.class);
+
+        try
+        {
+            dataStreamer.streamData("gzip", "foo", inputStream, params);
+            fail("content encoding : gzip with uncompressed data should throw");
+        }
+        catch (RestApiException e)
+        {
+            assertEquals(ErrorCode.UNCOMPRESSED_DATA, e.getErrorCode());
+        }
+    }
+
+    @Test
+    public void testStreamData_ExpectsGzipUsesGZipStream()
+    throws JsonParseException, UnknownJobException, NativeProcessRunException,
+            MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException,
+            OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException,
+            IOException
+    {
+        PipedInputStream pipedIn = new PipedInputStream();
+        PipedOutputStream pipedOut = new PipedOutputStream(pipedIn);
+        try (GZIPOutputStream gzip = new GZIPOutputStream(pipedOut))
+        {
+            gzip.write("Hello World compressed".getBytes(StandardCharsets.UTF_8));
+
+            JobManager jobManager = mock(JobManager.class);
+            DataStreamer dataStreamer = new DataStreamer(jobManager);
+            DataLoadParams params = mock(DataLoadParams.class);
+
+            when(jobManager.submitDataLoadJob(Mockito.anyString(),
+                                            Mockito.any(InputStream.class),
+                                            Mockito.any(DataLoadParams.class)))
+                          .thenReturn(new DataCounts());
+
+            dataStreamer.streamData("gzip", "foo", pipedIn, params);
+
+            // submitDataLoadJob should be called with a GZIPInputStream
+            ArgumentCaptor<InputStream> streamArg = ArgumentCaptor.forClass(InputStream.class);
+
+            verify(jobManager).submitDataLoadJob(Mockito.anyString(),
+                                                streamArg.capture(),
+                                                Mockito.any(DataLoadParams.class));
+
+            assertTrue(streamArg.getValue() instanceof GZIPInputStream);
+        }
     }
 
     private void givenNoPersistBaseDir()

@@ -57,8 +57,8 @@ import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.provider.RestApiException;
 
-public class DataStreamer {
-
+public class DataStreamer
+{
     private static final Logger LOGGER = Logger.getLogger(DataStreamer.class);
 
     /**

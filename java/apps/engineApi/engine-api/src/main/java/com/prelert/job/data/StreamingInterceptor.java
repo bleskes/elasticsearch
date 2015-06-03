@@ -49,87 +49,89 @@ import org.apache.log4j.Logger;
  */
 public class StreamingInterceptor
 {
-	private static final Logger LOGGER = Logger.getLogger(StreamingInterceptor.class);
+    private static final Logger LOGGER = Logger.getLogger(StreamingInterceptor.class);
 
-	private Path m_FileSink;
-	private PipedOutputStream m_OutputStream;
+    private static final int BUFFER_SIZE = 131072; // 128K
 
-	/**
-	 * The file to write the intercepted data to
-	 * @param sink
-	 */
-	public StreamingInterceptor(Path fileSink)
-	{
-		m_FileSink = fileSink;
-	}
+    private Path m_FileSink;
+    private PipedOutputStream m_OutputStream;
 
-	/**
-	 * Create the InputStream data will be made available on when
-	 * {@link StreamingInterceptor#pump(InputStream)} is called.
-	 * @return
-	 */
-	public InputStream createStream()
-	{
-		PipedInputStream is = new PipedInputStream();
+    /**
+     * The file to write the intercepted data to
+     * @param sink
+     */
+    public StreamingInterceptor(Path fileSink)
+    {
+        m_FileSink = fileSink;
+    }
 
-		try
-		{
-			m_OutputStream = new PipedOutputStream(is);
-		}
-		catch (IOException e)
-		{
-			LOGGER.error("Failed to create stream", e);
-		}
+    /**
+     * Create the InputStream data will be made available on when
+     * {@link StreamingInterceptor#pump(InputStream)} is called.
+     * @return
+     */
+    public InputStream createStream()
+    {
+        PipedInputStream is = new PipedInputStream();
 
-		return is;
-	}
+        try
+        {
+            m_OutputStream = new PipedOutputStream(is);
+        }
+        catch (IOException e)
+        {
+            LOGGER.error("Failed to create stream", e);
+        }
 
-	/**
-	 * Read from input and write a copy gzipped to disk then write to
-	 * an {@link PipedOutputStream} connected to the {@link InputStream}
-	 * returned by {@link #createStream()}
-	 * @param input
-	 */
-	public void pump(InputStream input)
-	{
-		if (m_OutputStream == null)
-		{
-			throw new IllegalStateException("StreamingInterceptor cannot run the "
-					+ "pump(InputStream) method before createStream() has been called");
-		}
+        return is;
+    }
+
+    /**
+     * Read from input and write a copy gzipped to disk then write to
+     * an {@link PipedOutputStream} connected to the {@link InputStream}
+     * returned by {@link #createStream()}
+     * @param input
+     */
+    public void pump(InputStream input)
+    {
+        if (m_OutputStream == null)
+        {
+            throw new IllegalStateException("StreamingInterceptor cannot run the "
+                    + "pump(InputStream) method before createStream() has been called");
+        }
 
 
 
-		try (OutputStream fileOutput = new GZIPOutputStream(
-				new BufferedOutputStream(Files.newOutputStream(m_FileSink))))
-		{
-			int n;
+        try (OutputStream fileOutput = new GZIPOutputStream(
+                new BufferedOutputStream(Files.newOutputStream(m_FileSink))))
+                {
+            int n;
 
-			byte[] buffer = new byte[131072]; // 128kB
-			while ((n = input.read(buffer)) > -1)
-			{
-				fileOutput.write(buffer, 0, n);
-				m_OutputStream.write(buffer, 0, n);
-			}
-		}
-		catch (FileNotFoundException e)
-		{
-			LOGGER.error("File not found", e);
-		}
-		catch (IOException e)
-		{
-			LOGGER.error("IoException in pump()", e);
-		}
-		finally
-		{
-			try
-			{
-				m_OutputStream.close();
-			}
-			catch (IOException e)
-			{
-				LOGGER.error("Exception closing the PipedOutputStream", e);
-			}
-		}
-	}
+            byte[] buffer = new byte[BUFFER_SIZE];
+            while ((n = input.read(buffer)) > -1)
+            {
+                fileOutput.write(buffer, 0, n);
+                m_OutputStream.write(buffer, 0, n);
+            }
+                }
+        catch (FileNotFoundException e)
+        {
+            LOGGER.error("File not found", e);
+        }
+        catch (IOException e)
+        {
+            LOGGER.error("IoException in pump()", e);
+        }
+        finally
+        {
+            try
+            {
+                m_OutputStream.close();
+            }
+            catch (IOException e)
+            {
+                LOGGER.error("Exception closing the PipedOutputStream", e);
+            }
+        }
+    }
 }
