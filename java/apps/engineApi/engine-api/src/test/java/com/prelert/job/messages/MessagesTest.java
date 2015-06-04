@@ -27,7 +27,8 @@
 
 package com.prelert.job.messages;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -43,7 +44,7 @@ public class MessagesTest {
     public void testAllStringsAreInTheResourceBundle()
     throws IllegalArgumentException, IllegalAccessException
     {
-        ResourceBundle bundle = ResourceBundle.getBundle(Messages.BUNDLE_NAME);
+        ResourceBundle bundle = Messages.load();
 
         // get all the public string constants
         // excluding BUNDLE_NAME
