@@ -365,7 +365,7 @@ public class JobConfigurationTest
 
         // The exclude filter has no output
         TransformConfig tc = new TransformConfig();
-        tc.setTransform(TransformType.Names.EXCLUDE);
+        tc.setTransform(TransformType.Names.EXCLUDE_NAME);
         tc.setCondition(new Condition(Operator.MATCH, "whitelisted_host"));
         tc.setInputs(Arrays.asList("dns"));
 

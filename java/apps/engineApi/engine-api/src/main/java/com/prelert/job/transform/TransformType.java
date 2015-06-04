@@ -43,10 +43,10 @@ import com.prelert.rs.data.ErrorCode;
 public enum TransformType
 {
     DOMAIN_SPLIT(Names.DOMAIN_SPLIT_NAME, 1, 0, 0, Arrays.asList("subDomain", "hrd")),
-    CONCAT(Names.CONCAT, Names.VARIADIC_ARGS, 0, 1, Arrays.asList("concat")),
-    REGEX_EXTRACT(Names.EXTRACT, 1, 1, 0, Arrays.asList("")),
-    REGEX_SPLIT(Names.SPLIT, 1, 1, 0, Arrays.asList("")),
-    EXCLUDE(Names.EXCLUDE, 1, 0, 0, Arrays.asList(), true);
+    CONCAT(Names.CONCAT_NAME, Names.VARIADIC_ARGS, 0, 1, Arrays.asList("concat")),
+    REGEX_EXTRACT(Names.EXTRACT_NAME, 1, 1, 0, Arrays.asList("")),
+    REGEX_SPLIT(Names.SPLIT_NAME, 1, 1, 0, Arrays.asList("")),
+    EXCLUDE(Names.EXCLUDE_NAME, 1, 0, 0, Arrays.asList(), true);
 
     /**
      * Enums cannot use static fields in their constructors as the
@@ -57,10 +57,10 @@ public enum TransformType
     public class Names
     {
         public static final String DOMAIN_SPLIT_NAME = "domain_split";
-        public static final String CONCAT = "concat";
-        public static final String EXTRACT = "extract";
-        public static final String SPLIT = "split";
-        public static final String EXCLUDE = "exclude";
+        public static final String CONCAT_NAME = "concat";
+        public static final String EXTRACT_NAME = "extract";
+        public static final String SPLIT_NAME = "split";
+        public static final String EXCLUDE_NAME = "exclude";
 
         private static final int VARIADIC_ARGS = -1;
 

@@ -27,7 +27,9 @@
 
 package com.prelert.job.transform;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,8 +40,6 @@ import java.util.Set;
 import org.junit.Test;
 
 import com.prelert.job.exceptions.JobConfigurationException;
-import com.prelert.job.transform.TransformConfig;
-import com.prelert.job.transform.TransformType;
 import com.prelert.job.transform.condition.Condition;
 import com.prelert.job.transform.condition.Operator;
 import com.prelert.job.transform.exceptions.TransformConfigurationException;
@@ -119,7 +119,7 @@ public class TransformConfigTest
         List<String> inputs = new ArrayList<>();
 
         TransformConfig tr = new TransformConfig();
-        tr.setTransform(TransformType.Names.CONCAT);
+        tr.setTransform(TransformType.Names.CONCAT_NAME);
         assertEquals(TransformType.CONCAT, tr.type());
 
         tr.setInputs(inputs);
