@@ -46,7 +46,9 @@ public enum TransformType
     CONCAT(Names.CONCAT_NAME, Names.VARIADIC_ARGS, 0, 1, Arrays.asList("concat")),
     REGEX_EXTRACT(Names.EXTRACT_NAME, 1, 1, 0, Arrays.asList("")),
     REGEX_SPLIT(Names.SPLIT_NAME, 1, 1, 0, Arrays.asList("")),
-    EXCLUDE(Names.EXCLUDE_NAME, 1, 0, 0, Arrays.asList(), true);
+    EXCLUDE(Names.EXCLUDE_NAME, 1, 0, 0, Arrays.asList(), true),
+    LOWERCASE(Names.LOWERCASE_NAME, 1, 0, 0, Arrays.asList("lowercase")),
+    UPPERCASE(Names.UPPERCASE_NAME, 1, 0, 0, Arrays.asList("uppercase"));
 
     /**
      * Enums cannot use static fields in their constructors as the
@@ -61,6 +63,8 @@ public enum TransformType
         public static final String EXTRACT_NAME = "extract";
         public static final String SPLIT_NAME = "split";
         public static final String EXCLUDE_NAME = "exclude";
+        public static final String LOWERCASE_NAME = "lowercase";
+        public static final String UPPERCASE_NAME = "uppercase";
 
         private static final int VARIADIC_ARGS = -1;
 

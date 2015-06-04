@@ -149,7 +149,10 @@ public class TransformFactory
                     return new ExcludeFilterRegex(transformConfig.getCondition(), readIndicies,
                                             writeIndicies, logger);
                 }
-
+            case LOWERCASE:
+                return CaseTransform.createLowerCase(readIndicies, writeIndicies, logger);
+            case UPPERCASE:
+                return CaseTransform.createUpperCase(readIndicies, writeIndicies, logger);
             default:
                 // This code will never be hit it's to
                 // keep the compiler happy.
