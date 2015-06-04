@@ -42,6 +42,7 @@ import org.apache.log4j.Logger;
 
 import com.prelert.job.alert.manager.AlertManager;
 import com.prelert.job.exceptions.UnknownJobException;
+import com.prelert.job.messages.Messages;
 import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.provider.RestApiException;
 
@@ -85,8 +86,7 @@ public class AlertsLongPoll extends ResourceWithJobManager
 
         if (anomalyScoreThreshold == null && normalizedProbabiltyThreshold == null)
         {
-            String msg = String.format("At least one of " + SCORE + " or " + PROBABILITY
-                    + " must be specified.");
+            String msg = Messages.getMessage(Messages.REST_ALERT_MISSING_ARGUMENT);
             LOGGER.info(msg);
             throw new RestApiException(msg, ErrorCode.INVALID_THRESHOLD_ARGUMENT, Response.Status.BAD_REQUEST);
         }
@@ -94,15 +94,17 @@ public class AlertsLongPoll extends ResourceWithJobManager
         if (!isWithinRange0To100(anomalyScoreThreshold)
                 || !isWithinRange0To100(normalizedProbabiltyThreshold))
         {
-            String msg = createThresholdOutOfRangeMsg(anomalyScoreThreshold,
+            String error = createThresholdOutOfRangeMsg(anomalyScoreThreshold,
                     normalizedProbabiltyThreshold);
+
+            String msg = Messages.getMessage(Messages.REST_ALERT_INVALID_THRESHOLD, error);
             LOGGER.info(msg);
             throw new RestApiException(msg, ErrorCode.INVALID_THRESHOLD_ARGUMENT, Response.Status.BAD_REQUEST);
         }
 
         if (timeout <= 0)
         {
-            String msg = String.format("Invalid timeout parameter. Timeout must be > 0");
+            String msg = Messages.getMessage(Messages.REST_ALERT_INVALID_TIMEOUT);
             LOGGER.info(msg);
             throw new RestApiException(msg, ErrorCode.INVALID_TIMEOUT_ARGUMENT, Response.Status.BAD_REQUEST);
         }
@@ -139,7 +141,7 @@ public class AlertsLongPoll extends ResourceWithJobManager
     private static String createThresholdOutOfRangeMsg(Double anomalyScore,
             Double normalizedProbability)
     {
-        StringBuilder msg = new StringBuilder("Invalid alert parameters. ");
+        StringBuilder msg = new StringBuilder();
         if (anomalyScore != null)
         {
             msg.append(SCORE);
@@ -158,7 +160,6 @@ public class AlertsLongPoll extends ResourceWithJobManager
             msg.append(normalizedProbability);
             msg.append(")");
         }
-        msg.append(" must be in the range 0-100");
         return msg.toString();
     }
 }

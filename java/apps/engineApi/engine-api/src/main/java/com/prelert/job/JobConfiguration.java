@@ -27,13 +27,13 @@
 
 package com.prelert.job;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.exceptions.JobConfigurationException;
+import com.prelert.job.messages.Messages;
 import com.prelert.job.transform.TransformConfig;
 import com.prelert.job.transform.TransformConfigs;
 import com.prelert.job.transform.exceptions.TransformConfigurationException;
@@ -51,16 +51,32 @@ import com.prelert.rs.data.ErrorCode;
  */
 public class JobConfiguration implements Verifiable
 {
+    private static final int MAX_JOB_ID_LENGTH = 64;
+
     /**
      * Characters that cannot be in a job id: '\\', '/', '*', '?', '"', '<', '>', '|', ' ', ','
      */
-    private static final Set<Character> PROHIBITED_JOB_ID_CHARACTERS =
-            new HashSet<>(Arrays.asList('\\', '/', '*', '?', '"', '<', '>', '|', ' ', ',' ));
+    private static final Set<Character> PROHIBITED_JOB_ID_CHARACTERS_SET;
+    private static final String PROHIBITED_JOB_ID_CHARACTERS;
+    static
+    {
+        // frustrating work around to initialise both the set
+        // and string from the same chars
+
+        char [] prohibited = {'\\', '/', '*', '?', '"', '<', '>', '|', ' ', ','};
+        PROHIBITED_JOB_ID_CHARACTERS = new String(prohibited);
+
+        PROHIBITED_JOB_ID_CHARACTERS_SET = new HashSet<Character>();
+        for (char ch : prohibited)
+        {
+            PROHIBITED_JOB_ID_CHARACTERS_SET.add(ch);
+        }
+
 
     /**
      * Max number of chars in a job id
      */
-    private static final int MAX_JOB_ID_LENGTH = 64;
+    }
 
     private String m_ID;
     private String m_Description;
@@ -74,7 +90,6 @@ public class JobConfiguration implements Verifiable
 
     public JobConfiguration()
     {
-
     }
 
     public JobConfiguration(String jobReferenceId)
@@ -226,11 +241,12 @@ public class JobConfiguration implements Verifiable
      * <li>Verify {@link TransformConfigs#verify() Transforms}</li>
      * <li>Check timeout is a +ve number</li>
      * <li>The job ID cannot contain any upper case characters, control
-     * characters or any characters in {@link #PROHIBITED_JOB_ID_CHARACTERS}</li>
+     * characters or any characters in {@link #PROHIBITED_JOB_ID_CHARACTERS_SET}</li>
      * <li>The job is cannot be longer than {@link MAX_JOB_ID_LENGTH }</li>
      * <li></li>
      * </ol>
      */
+    @Override
     public boolean verify()
     throws JobConfigurationException
     {
@@ -249,8 +265,9 @@ public class JobConfiguration implements Verifiable
 
         if (m_Timeout != null && m_Timeout < 0)
         {
-            throw new JobConfigurationException("Timeout can not be a negative "
-                    + "number. Value = " + m_Timeout,
+            throw new JobConfigurationException(
+                    Messages.getMessage(Messages.JOB_CONFIG_NEGATIVE_FIELD_VALUE,
+                            "timeout", m_Timeout),
                     ErrorCode.INVALID_VALUE);
         }
 
@@ -267,8 +284,8 @@ public class JobConfiguration implements Verifiable
     {
         if (m_AnalysisConfig == null && m_ReferenceJobId == null)
         {
-            throw new JobConfigurationException("Either an an AnalysisConfig or "
-                    + " job reference id must be set",
+            throw new JobConfigurationException(
+                    Messages.getMessage(Messages.JOB_CONFIG_MISSING_ANALYSISCONFIG),
                     ErrorCode.INCOMPLETE_CONFIGURATION);
         }
     }
@@ -351,8 +368,10 @@ public class JobConfiguration implements Verifiable
         {
             if (m_Transforms == null || m_Transforms.isEmpty())
             {
-                String msg = String.format("When the data format is %s, transforms are required.",
-                        DataFormat.SINGLE_LINE.toString());
+                String msg = Messages.getMessage(
+                                Messages.JOB_CONFIG_DATAFORMAT_REQUIRES_TRANSFORM,
+                                DataFormat.SINGLE_LINE);
+
                 throw new JobConfigurationException(msg,
                         ErrorCode.DATA_FORMAT_IS_SINGLE_LINE_BUT_NO_TRANSFORMS);
             }
@@ -364,18 +383,17 @@ public class JobConfiguration implements Verifiable
         if (m_ID.length() > MAX_JOB_ID_LENGTH)
         {
             throw new JobConfigurationException(
-                    "The job id cannot contain more than " + MAX_JOB_ID_LENGTH + " characters.",
+                    Messages.getMessage(Messages.JOB_CONFIG_ID_TOO_LONG, MAX_JOB_ID_LENGTH),
                     ErrorCode.JOB_ID_TOO_LONG);
         }
 
-        for (Character ch : PROHIBITED_JOB_ID_CHARACTERS)
+        for (Character ch : PROHIBITED_JOB_ID_CHARACTERS_SET)
         {
             if (m_ID.indexOf(ch) >= 0)
             {
                 throw new JobConfigurationException(
-                        "The job id contains the prohibited character '" + ch + "'. "
-                        + "The id cannot contain any of the following characters: "
-                        + "[\\, /, *, ?, \", <, >, |,  , ,]",
+                        Messages.getMessage(Messages.JOB_CONFIG_INVALID_JOBID_CHARS,
+                                ch, PROHIBITED_JOB_ID_CHARACTERS),
                         ErrorCode.PROHIBITIED_CHARACTER_IN_JOB_ID);
             }
         }
@@ -385,13 +403,13 @@ public class JobConfiguration implements Verifiable
             if (Character.isUpperCase(c))
             {
                 throw new JobConfigurationException(
-                        "The job id cannot contain any uppercase characters",
+                        Messages.getMessage(Messages.JOB_CONFIG_ID_CONTAINS_UPPERCASE_CHARS),
                         ErrorCode.PROHIBITIED_CHARACTER_IN_JOB_ID);
             }
             if (Character.isISOControl(c))
             {
                 throw new JobConfigurationException(
-                        "The job id cannot contain any control characters",
+                        Messages.getMessage(Messages.JOB_CONFIG_ID_CONTAINS_CONTROL_CHARS),
                         ErrorCode.PROHIBITIED_CHARACTER_IN_JOB_ID);
             }
         }

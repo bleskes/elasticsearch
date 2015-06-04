@@ -58,6 +58,7 @@ import com.prelert.job.data.InputStreamDuplicator;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.TooManyJobsException;
 import com.prelert.job.exceptions.UnknownJobException;
+import com.prelert.job.messages.Messages;
 import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
@@ -168,7 +169,7 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
             thread.start();
         }
 
-        duplicator.run();
+        duplicator.duplicate();
 
         for (DataStreamerThread thread : threads)
         {
@@ -178,8 +179,7 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
             }
             catch (InterruptedException e)
             {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+                LOGGER.warn("Interrupted joining DataStreamerThread", e);
             }
         }
 
@@ -191,8 +191,8 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
     {
         if (!isValidTimeRange(resetStart, resetEnd))
         {
-            String msg = String.format("Invalid reset range parameters: '%s' has not been specified.",
-                    RESET_START_PARAM);
+            String msg = Messages.getMessage(Messages.REST_INVALID_RESET_PARAMS, RESET_START_PARAM);
+            LOGGER.info(msg);
             throw new RestApiException(msg, ErrorCode.INVALID_BUCKET_RESET_RANGE_PARAMS,
                     Response.Status.BAD_REQUEST);
         }
@@ -219,8 +219,8 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
             }
             if (epochEnd.longValue() < epochStart.longValue())
             {
-                String msg = String.format("Invalid time range: end time '%s' is earlier than start"
-                        + " time '%s'.", end, start);
+                String msg = Messages.getMessage(Messages.REST_START_AFTER_END, end, start);
+                LOGGER.info(msg);
                 throw new RestApiException(msg, ErrorCode.END_DATE_BEFORE_START_DATE,
                         Response.Status.BAD_REQUEST);
             }
@@ -239,8 +239,9 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
     {
         if (latency == null || latency.longValue() == 0)
         {
-            throw new RestApiException(
-                    "Bucket resetting is not supported when no latency is configured.",
+            String message = Messages.getMessage(Messages.REST_RESET_BUCKET_NO_LATENCY);
+            LOGGER.info(message);
+            throw new RestApiException(message,
                     ErrorCode.BUCKET_RESET_NOT_SUPPORTED, Response.Status.BAD_REQUEST);
         }
     }
@@ -278,20 +279,21 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
     {
         if (calcInterim == false && (!start.isEmpty() || !end.isEmpty()))
         {
-            String msg = String.format("Invalid flush parameters: unexpected '%s' and/or '%s'.",
-                    START_QUERY_PARAM, END_QUERY_PARAM);
+            String msg = Messages.getMessage(Messages.REST_INVALID_FLUSH_PARAMS_UNEXPECTED,
+                                START_QUERY_PARAM, END_QUERY_PARAM);
             throwInvalidFlushParamsException(msg);
         }
         if (!isValidTimeRange(start, end))
         {
-            String msg = String.format("Invalid flush parameters: '%s' has not been specified.",
-                            START_QUERY_PARAM);
+            String msg = Messages.getMessage(Messages.REST_INVALID_FLUSH_PARAMS_MISSING,
+                                            START_QUERY_PARAM);
             throwInvalidFlushParamsException(msg);
         }
     }
 
     private void throwInvalidFlushParamsException(String msg)
     {
+        LOGGER.info(msg);
         throw new RestApiException(msg, ErrorCode.INVALID_FLUSH_PARAMS,
                 Response.Status.BAD_REQUEST);
     }

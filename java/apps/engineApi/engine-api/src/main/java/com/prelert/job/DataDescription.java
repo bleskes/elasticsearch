@@ -35,6 +35,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.prelert.job.exceptions.JobConfigurationException;
+import com.prelert.job.messages.Messages;
 import com.prelert.job.verification.Verifiable;
 import com.prelert.rs.data.ErrorCode;
 
@@ -306,6 +307,7 @@ public class DataDescription implements Verifiable
      * <li></li>
      * </ol>
      */
+    @Override
     public boolean verify() throws JobConfigurationException
     {
         if (m_TimeFormat != null && m_TimeFormat.isEmpty() == false)
@@ -321,9 +323,9 @@ public class DataDescription implements Verifiable
             }
             catch (IllegalArgumentException e)
             {
-                throw new JobConfigurationException(
-                        "Invalid Time format string '" + m_TimeFormat + "'",
-                        ErrorCode.INVALID_DATE_FORMAT, e);
+                String message = Messages.getMessage(Messages.JOB_CONFIG_INVALID_TIMEFORMAT,
+                                                    m_TimeFormat);
+                throw new JobConfigurationException(message,  ErrorCode.INVALID_DATE_FORMAT, e);
             }
         }
 

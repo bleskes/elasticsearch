@@ -26,6 +26,7 @@
  ************************************************************/
 package com.prelert.job.exceptions;
 
+import com.prelert.job.messages.Messages;
 import com.prelert.rs.data.ErrorCode;
 
 /**
@@ -45,7 +46,7 @@ public class UnknownJobException extends JobException
 	 */
 	public UnknownJobException(String jobId)
 	{
-		super("No job with id '" + jobId + "'", ErrorCode.MISSING_JOB_ERROR);
+		super(Messages.getMessage(Messages.JOB_UNKNOWN_ID, jobId), ErrorCode.MISSING_JOB_ERROR);
 		m_JobId = jobId;
 	}
 

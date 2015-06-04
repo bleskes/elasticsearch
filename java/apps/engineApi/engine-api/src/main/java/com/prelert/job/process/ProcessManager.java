@@ -62,6 +62,7 @@ import com.prelert.job.JobStatus;
 import com.prelert.job.alert.AlertObserver;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.UnknownJobException;
+import com.prelert.job.messages.Messages;
 import com.prelert.job.persistence.DataPersisterFactory;
 import com.prelert.job.persistence.JobDataPersister;
 import com.prelert.job.persistence.JobProvider;
@@ -250,9 +251,7 @@ public class ProcessManager
         // We can't write data if someone is already writing to the process.
         if (process.isInUse())
         {
-            String msg = String.format("Another connection is writing to job "
-                    + "%s. Jobs will only accept data from one connection at a time",
-                    jobId);
+            String msg = Messages.getMessage(Messages.JOB_DATA_CONCURRENT_USE_UPLOAD, jobId);
             LOGGER.warn(msg);
             throw new JobInUseException(jobId, msg, ErrorCode.NATIVE_PROCESS_CONCURRENT_USE_ERROR);
         }
@@ -459,12 +458,9 @@ public class ProcessManager
 
         if (process.isInUse())
         {
-            LOGGER.error("Cannot flush job while it is reading data");
-            process.getLogger().error("Cannot flush job while it is reading data");
-
-            String msg = String.format("Cannot flush job %s while the job is actively "
-                    + "processing data", jobId);
-            LOGGER.error(msg);
+            String msg = Messages.getMessage(Messages.JOB_DATA_CONCURRENT_USE_FLUSH, jobId);
+            LOGGER.info(msg);
+            process.getLogger().info(msg);
             throw new JobInUseException(jobId, msg, ErrorCode.NATIVE_PROCESS_CONCURRENT_USE_ERROR);
         }
 
@@ -558,12 +554,9 @@ public class ProcessManager
 
         if (process.isInUse())
         {
-            LOGGER.error("Cannot finish job while it is reading data");
-            process.getLogger().error("Cannot finish job while it is reading data");
-
-            String msg = String.format("Cannot close job %s while the job is actively "
-                    + "processing data", jobId);
-            LOGGER.error(msg);
+            String msg = Messages.getMessage(Messages.JOB_DATA_CONCURRENT_USE_CLOSE, jobId);
+            LOGGER.info(msg);
+            process.getLogger().info(msg);
             throw new JobInUseException(jobId, msg, ErrorCode.NATIVE_PROCESS_CONCURRENT_USE_ERROR);
         }
 

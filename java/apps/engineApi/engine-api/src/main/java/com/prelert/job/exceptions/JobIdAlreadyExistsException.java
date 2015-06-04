@@ -27,6 +27,7 @@
 
 package com.prelert.job.exceptions;
 
+import com.prelert.job.messages.Messages;
 import com.prelert.rs.data.ErrorCode;
 
 
@@ -47,8 +48,8 @@ public class JobIdAlreadyExistsException extends JobException
 	 */
 	public JobIdAlreadyExistsException(String jobId)
 	{
-		super("The job cannot be created with the Id '" + jobId
-				+ "'. The Id is already used.", ErrorCode.JOB_ID_TAKEN);
+		super(Messages.getMessage(Messages.JOB_CONFIG_ID_ALREADY_TAKEN, jobId),
+		            ErrorCode.JOB_ID_TAKEN);
 		m_JobId = jobId;
 	}
 

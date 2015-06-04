@@ -29,6 +29,7 @@ package com.prelert.jetty;
 
 import java.io.File;
 import java.util.EnumSet;
+import java.util.ResourceBundle;
 
 import javax.servlet.DispatcherType;
 
@@ -42,6 +43,8 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.glassfish.jersey.servlet.ServletProperties;
+
+import com.prelert.job.messages.Messages;
 
 /**
  * Instantiate and configure an embedded Jetty Server in Java.
@@ -89,6 +92,8 @@ public class ServerMain
 	public static void main(String[] args)
 	throws Exception
 	{
+
+
 		int jettyPort = JETTY_PORT;
 		try
 		{
@@ -119,6 +124,9 @@ public class ServerMain
 							" of current directory");
 			jettyHome = ".";
 		}
+
+		// load the resources here so they are cached
+		ResourceBundle.getBundle(Messages.BUNDLE_NAME);
 
 		ms_Server = new Server(jettyPort);
 

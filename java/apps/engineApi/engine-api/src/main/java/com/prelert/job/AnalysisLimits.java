@@ -32,6 +32,7 @@ import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.prelert.job.exceptions.JobConfigurationException;
+import com.prelert.job.messages.Messages;
 import com.prelert.job.verification.Verifiable;
 import com.prelert.rs.data.ErrorCode;
 
@@ -134,15 +135,15 @@ public class AnalysisLimits implements Verifiable
     {
         if (m_ModelMemoryLimit < 0)
         {
-            throw new JobConfigurationException(
-                    "Invalid Analysis limit modelMemoryLimit must be >= 0",
-                    ErrorCode.INVALID_VALUE);
+            String msg = Messages.getMessage(Messages.JOB_CONFIG_NEGATIVE_FIELD_VALUE,
+                                                MODEL_MEMORY_LIMIT, m_ModelMemoryLimit);
+            throw new JobConfigurationException(msg, ErrorCode.INVALID_VALUE);
         }
         if (m_CategorizationExamplesLimit != null && m_CategorizationExamplesLimit < 0)
         {
-            throw new JobConfigurationException(
-                    "Invalid Analysis limit categorizationExamplesLimit must be >= 0",
-                    ErrorCode.INVALID_VALUE);
+            String msg = Messages.getMessage(Messages.JOB_CONFIG_NEGATIVE_FIELD_VALUE,
+                    CATEGORIZATION_EXAMPLES_LIMIT, m_CategorizationExamplesLimit);
+            throw new JobConfigurationException(msg, ErrorCode.INVALID_VALUE);
         }
         return true;
     }

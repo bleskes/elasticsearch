@@ -48,6 +48,7 @@ import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.TooManyJobsException;
 import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.manager.JobManager;
+import com.prelert.job.messages.Messages;
 import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
@@ -135,8 +136,7 @@ public class DataStreamer
             catch (ZipException ze)
             {
                 LOGGER.debug("Failed to decompress data file", ze);
-                throw new RestApiException("Content-Encoding = gzip "
-                        + "but the data is not in gzip format",
+                throw new RestApiException(Messages.getMessage(Messages.REST_GZIP_ERROR),
                         ErrorCode.UNCOMPRESSED_DATA,
                         Response.Status.BAD_REQUEST);
             }
