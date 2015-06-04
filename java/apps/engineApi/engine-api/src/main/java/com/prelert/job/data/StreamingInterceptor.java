@@ -25,7 +25,7 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.rs.streaminginterceptor;
+package com.prelert.job.data;
 
 import java.io.BufferedOutputStream;
 import java.io.FileNotFoundException;
@@ -103,8 +103,7 @@ public class StreamingInterceptor
 		try (OutputStream fileOutput = new GZIPOutputStream(
 				new BufferedOutputStream(Files.newOutputStream(m_FileSink))))
 		{
-
-				int n;
+			int n;
 
 			byte[] buffer = new byte[131072]; // 128kB
 			while ((n = input.read(buffer)) > -1)

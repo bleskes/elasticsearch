@@ -91,6 +91,7 @@ public class JobDetails
 	private URI m_CategoryDefinitionsEndpoint;
 	private URI m_RecordsEndpoint;
 	private URI m_LogsEndpoint;
+	private URI m_AlertsLongPollEndpoint;
 
 
 	/**
@@ -468,6 +469,24 @@ public class JobDetails
 	}
 
 	/**
+     * This Job's alert long poll endpoint
+     *
+     * @return The Job's logs URI
+     */
+    public URI getAlertsLongPollEndpoint()
+    {
+        return m_AlertsLongPollEndpoint;
+    }
+
+    /**
+     * Set this Job's alert long poll endpoint
+     */
+    public void setAlertsLongPollEndpoint(URI value)
+    {
+        m_AlertsLongPollEndpoint = value;
+    }
+
+    /**
 	 * Processed records count
 	 * @return
 	 */
@@ -527,14 +546,18 @@ public class JobDetails
 				Objects.equals(this.m_CreateTime, that.m_CreateTime) &&
 				Objects.equals(this.m_FinishedTime, that.m_FinishedTime) &&
 				Objects.equals(this.m_LastDataTime, that.m_LastDataTime) &&
-				this.m_Counts.equals(that.m_Counts) &&
 				(this.m_Timeout == that.m_Timeout) &&
 				Objects.equals(this.m_AnalysisConfig, that.m_AnalysisConfig) &&
 				Objects.equals(this.m_AnalysisLimits, that.m_AnalysisLimits) &&
 				Objects.equals(this.m_DataDescription, that.m_DataDescription) &&
+				Objects.equals(this.m_ModelSizeStats, that.m_ModelSizeStats) &&
+				Objects.equals(this.m_Transforms, that.m_Transforms) &&
+				Objects.equals(this.m_Counts, that.m_Counts) &&
 				Objects.equals(this.m_Location, that.m_Location) &&
 				Objects.equals(this.m_DataEndpoint, that.m_DataEndpoint) &&
+				Objects.equals(this.m_CategoryDefinitionsEndpoint, that.m_CategoryDefinitionsEndpoint) &&
 				Objects.equals(this.m_BucketsEndpoint, that.m_BucketsEndpoint) &&
+				Objects.equals(this.m_AlertsLongPollEndpoint, that.m_AlertsLongPollEndpoint) &&
 				Objects.equals(this.m_RecordsEndpoint, that.m_RecordsEndpoint);
 	}
 
@@ -542,8 +565,9 @@ public class JobDetails
     public int hashCode()
     {
         return Objects.hash(m_JobId, m_Description, m_Status, m_CreateTime,
-                m_FinishedTime, m_LastDataTime, m_Counts, m_Timeout,
-                m_AnalysisConfig, m_AnalysisLimits, m_DataDescription,
-                m_Location, m_DataEndpoint, m_BucketsEndpoint, m_RecordsEndpoint);
+                m_FinishedTime, m_LastDataTime, m_Timeout,
+                m_AnalysisConfig, m_AnalysisLimits, m_DataDescription, m_ModelSizeStats,
+                m_Transforms, m_Counts, m_Location, m_DataEndpoint, m_CategoryDefinitionsEndpoint,
+                m_BucketsEndpoint, m_RecordsEndpoint, m_AlertsLongPollEndpoint);
     }
 }

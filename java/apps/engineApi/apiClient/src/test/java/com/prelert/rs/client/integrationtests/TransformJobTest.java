@@ -131,7 +131,6 @@ public class TransformJobTest implements Closeable
 
         test(job.getTransforms().size() == 1);
         test(tr.equals(job.getTransforms().get(0)));
-
     }
 
 	public void createSplitMetricJob() throws ClientProtocolException, IOException

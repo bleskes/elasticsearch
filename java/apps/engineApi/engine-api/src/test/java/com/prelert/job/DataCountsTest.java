@@ -138,6 +138,27 @@ public class DataCountsTest
         assertEquals(25, counts.getProcessedFieldCount());
     }
 
+    @Test
+    public void testEquals()
+    {
+        DataCounts counts1 = new DataCounts();
+        counts1.setBucketCount(3L);
+        counts1.setFailedTransformCount(15L);
+        counts1.setInputBytes(2000L);
+        counts1.setInputFieldCount(300);
+        counts1.setInvalidDateCount(6L);
+        counts1.setMissingFieldCount(65L);
+        counts1.setOutOfOrderTimeStampCount(40);
+        counts1.setProcessedFieldCount(5000);
+        counts1.setProcessedRecordCount(10);
+
+        DataCounts counts2 = new DataCounts(counts1);
+
+        assertEquals(counts1, counts2);
+        counts2.setInvalidDateCount(8000L);
+        assertFalse(counts1.equals(counts2));
+    }
+
     private void testAllFieldsEqualZero(DataCounts stats)
     throws IntrospectionException, IllegalAccessException, IllegalArgumentException, InvocationTargetException
     {

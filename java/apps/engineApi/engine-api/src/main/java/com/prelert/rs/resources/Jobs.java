@@ -301,5 +301,10 @@ public class Jobs extends ResourceWithJobManager
 				.build();
     	job.setLogsEndpoint(logs);
 
+    	URI longpoll = m_UriInfo.getBaseUriBuilder()
+                .path(AlertsLongPoll.ENDPOINT)
+                .path(job.getId())
+                .build();
+        job.setAlertsLongPollEndpoint(longpoll);
     }
 }
