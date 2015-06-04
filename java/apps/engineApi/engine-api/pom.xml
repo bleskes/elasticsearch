@@ -3,7 +3,7 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <!-- 
+  <!--
     The Engine REST API
   -->
 
@@ -22,9 +22,9 @@
 
   <dependencies>
     <!-- provided jars -->
-    <dependency>     
+    <dependency>
       <groupId>org.elasticsearch</groupId>
-      <artifactId>elasticsearch</artifactId>    
+      <artifactId>elasticsearch</artifactId>
       <scope>provided</scope>
     </dependency>
 
@@ -33,40 +33,46 @@
       <groupId>org.glassfish.jersey.core</groupId>
       <artifactId>jersey-client</artifactId>
       <version>2.5.1</version>
-    </dependency> 
+    </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-core</artifactId>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-annotations</artifactId>      
+      <artifactId>jackson-annotations</artifactId>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-databind</artifactId>      
-    </dependency>   
+      <artifactId>jackson-databind</artifactId>
+    </dependency>
     <dependency>
       <groupId>net.sf.supercsv</groupId>
       <artifactId>super-csv</artifactId>
       <version>2.1.0</version>
-    </dependency>   
+    </dependency>
     <dependency>
       <groupId>org.apache.directory.studio</groupId>
       <artifactId>org.apache.commons.lang</artifactId>
       <version>2.6</version>
     </dependency>
-    
+
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
       <version>18.0</version>
     </dependency>
-    
+
   </dependencies>
 
 
   <build>
+    <testResources>
+      <testResource>
+        <directory>${project.basedir}/../config</directory>
+      </testResource>
+    </testResources>
+
     <plugins>
       <!-- install dependencies -->
       <plugin>
@@ -110,7 +116,7 @@
               </artifactItems>
               <stripVersion>true</stripVersion>
             </configuration>
-          </execution>          
+          </execution>
 
         </executions>
       </plugin>
@@ -128,7 +134,7 @@
           <dependencyLocationsEnabled>false</dependencyLocationsEnabled>
         </configuration>
       </plugin>
-      
+
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>findbugs-maven-plugin</artifactId>
