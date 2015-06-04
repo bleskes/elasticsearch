@@ -82,8 +82,6 @@ public class Messages
     public static final String JOB_DATA_CONCURRENT_USE_FLUSH = "job.data.concurrent.use.flush";
     public static final String JOB_DATA_CONCURRENT_USE_UPLOAD = "job.data.concurrent.use.upload";
 
-
-    public static final String JOB_MISSING = "job.missing";
     public static final String JOB_MISSING_QUANTILES = "job.missing.quantiles";
     public static final String JOB_UNKNOWN_ID = "job.unknown.id";
     public static final String JOB_UNKNOWN_REFERENCE = "job.unknown.reference";
