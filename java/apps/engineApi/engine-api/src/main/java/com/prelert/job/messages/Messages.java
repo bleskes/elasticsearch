@@ -125,12 +125,9 @@ public class Messages
      */
     public static String getMessage(String key, Object...args)
     {
-        String msg = ResourceBundle.getBundle(Messages.BUNDLE_NAME).getString(key);
-
-        String fmt = MessageFormat.format(msg,
-                        args[0]);
-
-        return fmt;
+        return MessageFormat.format(
+                        ResourceBundle.getBundle(Messages.BUNDLE_NAME).getString(key),
+                        args);
     }
 
 

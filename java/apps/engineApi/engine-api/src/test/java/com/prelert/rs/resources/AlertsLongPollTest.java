@@ -151,7 +151,7 @@ public class AlertsLongPollTest extends ServiceTest
     {
         m_ExpectedException.expect(RestApiException.class);
         m_ExpectedException.expectMessage(
-                "At least one of score or probability must be specified");
+                "Missing argument: either 'score' or 'probability' must be specified");
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCode.INVALID_THRESHOLD_ARGUMENT));
 

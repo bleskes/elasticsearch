@@ -101,7 +101,9 @@ public class JobManagerTest
         m_ExpectedException.expect(TooManyJobsException.class);
         m_ExpectedException.expectMessage("Cannot reactivate job with id 'foo' - your license "
                 + "limits you to 2 concurrently running jobs. You must close a job before you "
-                + "can reactivate a closed one.");
+                + "can reactivate another.");
+
+
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCode.LICENSE_VIOLATION));
 
@@ -122,8 +124,8 @@ public class JobManagerTest
         JobManager jobManager = new JobManager(m_JobProvider, m_ProcessManager);
 
         m_ExpectedException.expect(TooManyJobsException.class);
-        m_ExpectedException.expectMessage("Cannot reactivate job with id 'foo'. " +
-                "The maximum numuber of concurrently running jobs is limited as a function " +
+        m_ExpectedException.expectMessage("Cannot start job with id 'foo'. " +
+                "The maximum number of concurrently running jobs is limited as a function " +
                 "of the number of CPU cores see this error code's help documentation " +
                 "for details of how to elevate the setting");
         m_ExpectedException.expect(
@@ -147,8 +149,8 @@ public class JobManagerTest
         JobManager jobManager = new JobManager(m_JobProvider, m_ProcessManager);
 
         m_ExpectedException.expect(TooManyJobsException.class);
-        m_ExpectedException.expectMessage("Cannot reactivate job with id 'foo'. " +
-                "The maximum numuber of concurrently running jobs is limited as a function " +
+        m_ExpectedException.expectMessage("Cannot start job with id 'foo'. " +
+                "The maximum number of concurrently running jobs is limited as a function " +
                 "of the number of CPU cores see this error code's help documentation " +
                 "for details of how to elevate the setting");
         m_ExpectedException.expect(ErrorCodeMatcher
@@ -172,8 +174,8 @@ public class JobManagerTest
         JobManager jobManager = new JobManager(m_JobProvider, m_ProcessManager);
 
         m_ExpectedException.expect(TooManyJobsException.class);
-        m_ExpectedException.expectMessage("Cannot reactivate job with id 'foo'. " +
-                "The maximum numuber of concurrently running jobs is limited as a function " +
+        m_ExpectedException.expectMessage("Cannot start job with id 'foo'. " +
+                "The maximum number of concurrently running jobs is limited as a function " +
                 "of the number of CPU cores see this error code's help documentation " +
                 "for details of how to elevate the setting");
         m_ExpectedException.expect(
