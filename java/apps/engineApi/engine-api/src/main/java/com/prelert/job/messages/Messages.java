@@ -38,7 +38,7 @@ public class Messages
      * The base name of the bundle without the .properties extension
      * or locale
      */
-    public static final String BUNDLE_NAME = "prelert_messages";
+    private static final String BUNDLE_NAME = "com.prelert.job.messages.prelert_messages";
 
 
     public static final String CPU_LIMIT_JOB = "cpu.limit.jobs";
@@ -97,11 +97,10 @@ public class Messages
     public static final String REST_ALERT_INVALID_TIMEOUT = "rest.alert.invalid.timeout";
     public static final String REST_ALERT_INVALID_THRESHOLD = "rest.alert.invalid.threshold";
 
-
-
-
-
-
+    public static ResourceBundle load()
+    {
+        return ResourceBundle.getBundle(Messages.BUNDLE_NAME);
+    }
 
     /**
      * Look up the message string from the resource bundle.
@@ -111,7 +110,7 @@ public class Messages
      */
     public static String getMessage(String key)
     {
-        return ResourceBundle.getBundle(Messages.BUNDLE_NAME).getString(key);
+        return load().getString(key);
     }
 
     /**
@@ -123,10 +122,6 @@ public class Messages
      */
     public static String getMessage(String key, Object...args)
     {
-        return MessageFormat.format(
-                        ResourceBundle.getBundle(Messages.BUNDLE_NAME).getString(key),
-                        args);
+        return MessageFormat.format(load().getString(key), args);
     }
-
-
 }

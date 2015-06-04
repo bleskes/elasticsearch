@@ -29,7 +29,6 @@ package com.prelert.jetty;
 
 import java.io.File;
 import java.util.EnumSet;
-import java.util.ResourceBundle;
 
 import javax.servlet.DispatcherType;
 
@@ -126,7 +125,7 @@ public class ServerMain
 		}
 
 		// load the resources here so they are cached
-		ResourceBundle.getBundle(Messages.BUNDLE_NAME);
+		Messages.load();
 
 		ms_Server = new Server(jettyPort);
 
