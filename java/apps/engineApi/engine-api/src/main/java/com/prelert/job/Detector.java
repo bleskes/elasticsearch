@@ -35,6 +35,7 @@ import java.util.Set;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.prelert.job.exceptions.JobConfigurationException;
+import com.prelert.job.messages.Messages;
 import com.prelert.rs.data.ErrorCode;
 
 
@@ -394,29 +395,31 @@ public class Detector
         {
             if (emptyFunction)
             {
-                throw new JobConfigurationException("One of fieldName, "
-                        + "byFieldName, overFieldName or function must be set",
+                throw new JobConfigurationException(
+                        Messages.getMessage(Messages.JOB_CONFIG_NO_ANALYSIS_FIELD),
                         ErrorCode.INVALID_FIELD_SELECTION);
             }
 
             if (!COUNT_WITHOUT_FIELD_FUNCTIONS.contains(m_Function))
             {
-                throw new JobConfigurationException("Unless the function is 'count'"
-                        + " one of fieldName, byFieldName or overFieldName must be set",
+                throw new JobConfigurationException(
+                        Messages.getMessage(Messages.JOB_CONFIG_NO_ANALYSIS_FIELD_NOT_COUNT),
                         ErrorCode.INVALID_FIELD_SELECTION);
             }
         }
 
         if (!emptyFunction && ANALYSIS_FUNCTIONS.contains(m_Function) == false)
         {
-            throw new JobConfigurationException("Unknown function '" + m_Function + "'",
+            throw new JobConfigurationException(
+                    Messages.getMessage(Messages.JOB_CONFIG_UNKNOWN_FUNCTION, m_Function),
                     ErrorCode.UNKNOWN_FUNCTION);
         }
 
         if (isSummarised && (emptyFunction || m_Function.equals(METRIC)))
         {
-            throw new JobConfigurationException("The '" + METRIC + "' function "
-                    + "cannot be used in jobs that will take pre-summarized input",
+            throw new JobConfigurationException(
+                    Messages.getMessage(Messages.JOB_CONFIG_FUNCTION_INCOMPATIBLE_PRESUMMARIZED,
+                               METRIC),
                     ErrorCode.INVALID_FUNCTION);
         }
 
@@ -433,16 +436,14 @@ public class Detector
         if (!emptyByField && emptyField && emptyFunction)
         {
             throw new JobConfigurationException(
-                    "byFieldName must be used in "
-                            + "conjunction with fieldName or function",
+                            Messages.getMessage(Messages.JOB_CONFIG_BYFIELD_NEEDS_ANOTHER),
                             ErrorCode.INVALID_FIELD_SELECTION);
         }
 
         if (!emptyOverField && emptyField && emptyFunction)
         {
             throw new JobConfigurationException(
-                    "overFieldName must be used in "
-                            + "conjunction with fieldName or function",
+                            Messages.getMessage(Messages.JOB_CONFIG_OVERFIELD_NEEDS_ANOTHER),
                             ErrorCode.INVALID_FIELD_SELECTION);
         }
 
@@ -452,15 +453,15 @@ public class Detector
             if (FIELD_NAME_FUNCTIONS.contains(m_Function) && emptyField)
             {
                 throw new JobConfigurationException(
-                        String.format("The fieldName must be set when the "
-                                + "'%s' function is used", m_Function),
+                        Messages.getMessage(Messages.JOB_CONFIG_FUNCTION_REQUIRES_FIELDNAME,
+                                m_Function),
                         ErrorCode.INVALID_FIELD_SELECTION);
             }
 
             if (!emptyField && (FIELD_NAME_FUNCTIONS.contains(m_Function) == false))
             {
                 throw new JobConfigurationException(
-                        String.format("fieldName cannot be used with function '%s'",
+                        Messages.getMessage(Messages.JOB_CONFIG_FIELDNAME_INCOMPATIBLE_FUNCTION,
                                 m_Function),
                         ErrorCode.INVALID_FIELD_SELECTION);
             }
@@ -468,15 +469,15 @@ public class Detector
             if (BY_FIELD_NAME_FUNCTIONS.contains(m_Function) && emptyByField)
             {
                 throw new JobConfigurationException(
-                        String.format("The byFieldName must be set when the "
-                                + "'%s' function is used", m_Function),
+                        Messages.getMessage(Messages.JOB_CONFIG_FUNCTION_REQUIRES_BYFIELD,
+                                m_Function),
                         ErrorCode.INVALID_FIELD_SELECTION);
             }
 
             if (!emptyByField && NO_BY_FIELD_NAME_FUNCTIONS.contains(m_Function))
             {
                 throw new JobConfigurationException(
-                        String.format("byFieldName cannot be used with function '%s'",
+                            Messages.getMessage(Messages.JOB_CONFIG_BYFIELD_INCOMPATIBLE_FUNCTION,
                                 m_Function),
                         ErrorCode.INVALID_FIELD_SELECTION);
             }
@@ -484,15 +485,15 @@ public class Detector
             if (emptyOverField && OVER_FIELD_NAME_FUNCTIONS.contains(m_Function))
             {
                 throw new JobConfigurationException(
-                        String.format("The overFieldName must be set when the "
-                                + "'%s' function is used", m_Function),
-                                ErrorCode.INVALID_FIELD_SELECTION);
+                        Messages.getMessage(Messages.JOB_CONFIG_FUNCTION_REQUIRES_OVERFIELD,
+                                m_Function),
+                        ErrorCode.INVALID_FIELD_SELECTION);
             }
 
             if (!emptyOverField && NO_OVER_FIELD_NAME_FUNCTIONS.contains(m_Function))
             {
                 throw new JobConfigurationException(
-                        String.format("overFieldName cannot be used with function '%s'",
+                        Messages.getMessage(Messages.JOB_CONFIG_OVERFIELD_INCOMPATIBLE_FUNCTION,
                                 m_Function),
                         ErrorCode.INVALID_FIELD_SELECTION);
             }
@@ -526,9 +527,8 @@ public class Detector
                 if (field.indexOf(ch) >= 0)
                 {
                     throw new JobConfigurationException(
-                            "Invalid fieldname '" + field + "'. " +
-                            "Fieldnames including over, by and partition fields cannot " +
-                            "contain any of these characters: " + PROHIBITED,
+                            Messages.getMessage(Messages.JOB_CONFIG_INVALID_FIELDNAME_CHARS,
+                                    field, PROHIBITED),
                             ErrorCode.PROHIBITIED_CHARACTER_IN_FIELD_NAME);
                 }
             }

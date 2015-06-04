@@ -75,6 +75,7 @@ import com.prelert.job.ModelSizeStats;
 import com.prelert.job.ModelState;
 import com.prelert.job.exceptions.JobIdAlreadyExistsException;
 import com.prelert.job.exceptions.UnknownJobException;
+import com.prelert.job.messages.Messages;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.quantiles.Quantiles;
 import com.prelert.job.usage.Usage;
@@ -225,17 +226,15 @@ public class ElasticsearchJobProvider implements JobProvider
             {
                 String msg = "No job document with id " + jobId;
                 LOGGER.warn(msg);
-                throw new UnknownJobException(jobId, msg,
-                        ErrorCode.MISSING_JOB_ERROR);
+                throw new UnknownJobException(jobId);
             }
         }
         catch (IndexMissingException e)
         {
             // the job does not exist
-            String msg = "Missing Index no job with id " + jobId;
+            String msg = "Missing Index: no job with id " + jobId;
             LOGGER.warn(msg);
-            throw new UnknownJobException(jobId, "No known job with id '" + jobId + "'",
-                    ErrorCode.MISSING_JOB_ERROR);
+            throw new UnknownJobException(jobId);
         }
 
         return true;
@@ -272,8 +271,7 @@ public class ElasticsearchJobProvider implements JobProvider
             {
                 String msg = "No details for job with id " + jobId;
                 LOGGER.warn(msg);
-                throw new UnknownJobException(jobId, msg,
-                        ErrorCode.MISSING_JOB_ERROR);
+                throw new UnknownJobException(jobId);
             }
             JobDetails details = m_ObjectMapper.convertValue(response.getSource(), JobDetails.class);
 
@@ -299,8 +297,7 @@ public class ElasticsearchJobProvider implements JobProvider
             // the job does not exist
             String msg = "Missing Index no job with id " + jobId;
             LOGGER.warn(msg);
-            throw new UnknownJobException(jobId, "No known job with id '" + jobId + "'",
-                    ErrorCode.MISSING_JOB_ERROR);
+            throw new UnknownJobException(jobId);
         }
     }
 
@@ -524,14 +521,14 @@ public class ElasticsearchJobProvider implements JobProvider
         {
             if (e.getCause() instanceof IndexMissingException)
             {
-                String msg = String.format("Cannot delete job - no index with id '%s' in the database", jobId);
+                String msg = Messages.getMessage(Messages.DATASTORE_ERROR_DELETING_MISSING_INDEX, jobId);
                 LOGGER.warn(msg);
                 throw new UnknownJobException(jobId, msg,
                         ErrorCode.MISSING_JOB_ERROR);
             }
             else
             {
-                String msg = "Error deleting index " + jobId;
+                String msg = Messages.getMessage(Messages.DATASTORE_ERROR_DELETING, jobId);
                 LOGGER.error(msg);
                 throw new UnknownJobException(jobId, msg,
                         ErrorCode.DATA_STORE_ERROR, e.getCause());
@@ -926,9 +923,9 @@ public class ElasticsearchJobProvider implements JobProvider
         }
         catch (IndexMissingException e)
         {
-            LOGGER.error("Unknown job '" + jobId + "'. Cannot read persisted state");
-            throw new UnknownJobException(jobId,
-                    "Cannot read persisted quantiles", ErrorCode.MISSING_JOB_ERROR);
+            String message = Messages.getMessage(Messages.JOB_MISSING_QUANTILES, jobId);
+            LOGGER.error(message);
+            throw new UnknownJobException(jobId, message, ErrorCode.MISSING_JOB_ERROR);
         }
     }
 

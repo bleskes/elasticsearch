@@ -36,7 +36,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -46,6 +45,7 @@ import java.util.zip.ZipOutputStream;
 import org.apache.log4j.Logger;
 
 import com.prelert.job.exceptions.UnknownJobException;
+import com.prelert.job.messages.Messages;
 import com.prelert.job.process.ProcessCtrl;
 import com.prelert.rs.data.ErrorCode;
 
@@ -107,19 +107,11 @@ public class JobLogs
         {
             return file(filePath);
         }
-        catch (NoSuchFileException e)
-        {
-            String msg = "Cannot find log file " + filePath;
-            LOGGER.warn(msg);
-            throw new UnknownJobException(jobId, msg,
-                    ErrorCode.MISSING_LOG_FILE);
-        }
         catch (IOException e)
         {
-            String msg = "Cannot read log file " + filePath;
-            LOGGER.warn(msg, e);
-            throw new UnknownJobException(jobId, msg,
-                    ErrorCode.MISSING_LOG_FILE);
+            String msg = Messages.getMessage(Messages.LOGFILE_MISSING, filePath);
+            LOGGER.warn(msg);
+            throw new UnknownJobException(jobId, msg, ErrorCode.MISSING_LOG_FILE);
         }
     }
 
@@ -310,10 +302,9 @@ public class JobLogs
         }
         catch (FileNotFoundException e)
         {
-            String msg = "Cannot find log file " + file;
+            String msg = Messages.getMessage(Messages.LOGFILE_MISSING, file);
             LOGGER.warn(msg);
-            throw new UnknownJobException(jobId, msg,
-                     ErrorCode.MISSING_LOG_FILE, e);
+            throw new UnknownJobException(jobId, msg, ErrorCode.MISSING_LOG_FILE);
         }
         catch (IOException e)
         {
@@ -356,7 +347,7 @@ public class JobLogs
 
         if (listOfFiles == null)
         {
-            String msg = "Cannot open log file directory " + logDirectory;
+            String msg = Messages.getMessage(Messages.LOGFILE_MISSING_DIRECTORY, logDirectory);
             LOGGER.error(msg);
             throw new UnknownJobException(jobId, msg, ErrorCode.CANNOT_OPEN_DIRECTORY);
         }

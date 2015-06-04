@@ -37,6 +37,7 @@ import java.util.TreeSet;
 import java.util.function.Function;
 
 import com.prelert.job.exceptions.JobConfigurationException;
+import com.prelert.job.messages.Messages;
 import com.prelert.job.verification.Verifiable;
 import com.prelert.rs.data.ErrorCode;
 
@@ -338,7 +339,8 @@ public class AnalysisConfig implements Verifiable
     {
         if (value != null && value < 0)
         {
-            String msg = String.format("%s cannot be < 0. Value = %d", fieldName, value);
+            String msg = Messages.getMessage(Messages.JOB_CONFIG_NEGATIVE_FIELD_VALUE,
+                                                fieldName, value);
             throw new JobConfigurationException(msg, ErrorCode.INVALID_VALUE);
         }
     }
@@ -347,7 +349,8 @@ public class AnalysisConfig implements Verifiable
     {
         if (m_Detectors.isEmpty())
         {
-            throw new JobConfigurationException("No detectors configured",
+            throw new JobConfigurationException(
+                    Messages.getMessage(Messages.JOB_CONFIG_NO_DETECTORS),
                     ErrorCode.INCOMPLETE_CONFIGURATION);
         }
 

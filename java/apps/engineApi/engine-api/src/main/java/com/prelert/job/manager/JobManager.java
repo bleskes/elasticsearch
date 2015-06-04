@@ -57,6 +57,7 @@ import com.prelert.job.exceptions.JobIdAlreadyExistsException;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.TooManyJobsException;
 import com.prelert.job.exceptions.UnknownJobException;
+import com.prelert.job.messages.Messages;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.persistence.none.NoneJobDataPersister;
 import com.prelert.job.process.ProcessManager;
@@ -227,13 +228,14 @@ public class JobManager
             jobConfig.getAnalysisConfig() != null &&
             jobConfig.getAnalysisConfig().getDetectors().size() > m_MaxDetectorsPerJob)
         {
-            throw new JobConfigurationException(
-                    "Cannot create new job - your license limits you to " +
-                    m_MaxDetectorsPerJob +
-                    (m_MaxDetectorsPerJob == 1 ? " detector" : " detectors") +
-                    " per job, but you have configured " +
-                    jobConfig.getAnalysisConfig().getDetectors().size(),
-                    ErrorCode.LICENSE_VIOLATION);
+
+            String message = Messages.getMessage(
+                                Messages.LICENSE_LIMIT_DETECTORS,
+                                m_MaxDetectorsPerJob,
+                                jobConfig.getAnalysisConfig().getDetectors().size());
+
+            LOGGER.info(message);
+            throw new JobConfigurationException(message, ErrorCode.LICENSE_VIOLATION);
         }
 
         if (!m_ArePartitionsAllowed && jobConfig.getAnalysisConfig() != null)
@@ -245,10 +247,9 @@ public class JobManager
                 if (partitionFieldName != null &&
                     partitionFieldName.length() > 0)
                 {
-                    throw new JobConfigurationException(
-                            "Cannot create new job - your license disallows" +
-                            " partition fields, but you have configured one.",
-                            ErrorCode.LICENSE_VIOLATION);
+                    String message = Messages.getMessage(Messages.LICENSE_LIMIT_PARTITIONS);
+                    LOGGER.info(message);
+                    throw new JobConfigurationException(message, ErrorCode.LICENSE_VIOLATION);
                 }
             }
         }
@@ -285,12 +286,10 @@ public class JobManager
     {
         if (areMoreJobsRunningThanLicenseLimit())
         {
-            throw new TooManyJobsException(m_LicenseJobLimit,
-                    "Cannot create new job - your license limits you to " +
-                    m_LicenseJobLimit + " concurrently running " +
-                    (m_LicenseJobLimit == 1 ? "job" : "jobs") +
-                    ".  You must close a job before you can create a new one.",
-                    ErrorCode.LICENSE_VIOLATION);
+            String message = Messages.getMessage(Messages.LICENSE_LIMIT_JOBS, m_LicenseJobLimit);
+
+            LOGGER.info(message);
+            throw new TooManyJobsException(m_LicenseJobLimit, message, ErrorCode.LICENSE_VIOLATION);
         }
     }
 
@@ -672,11 +671,10 @@ public class JobManager
     {
         if (m_ProcessManager.numberOfRunningJobs() >= m_MaxAllowedJobs)
         {
-            throw new TooManyJobsException(m_MaxAllowedJobs,
-                    "Cannot reactivate job with id '" + jobId +
-                    "'. The maximum numuber of concurrently running jobs is limited as a function " +
-                    "of the number of CPU cores see this error code's help documentation " +
-                    "for details of how to elevate the setting",
+            String message = Messages.getMessage(Messages.CPU_LIMIT_JOB, jobId);
+
+            LOGGER.info(message);
+            throw new TooManyJobsException(m_MaxAllowedJobs, message,
                     ErrorCode.TOO_MANY_JOBS_RUNNING_CONCURRENTLY);
         }
     }
@@ -686,12 +684,11 @@ public class JobManager
     {
         if (areMoreJobsRunningThanLicenseLimit())
         {
-            throw new TooManyJobsException(m_LicenseJobLimit,
-                    "Cannot reactivate job with id '" + jobId +
-                    "' - your license limits you to " + m_LicenseJobLimit +
-                    " concurrently running jobs. You must close a job before" +
-                    " you can reactivate a closed one.",
-                    ErrorCode.LICENSE_VIOLATION);
+            String message = Messages.getMessage(Messages.LICENSE_LIMIT_JOBS_REACTIVATE,
+                                        jobId, m_LicenseJobLimit);
+
+            LOGGER.info(message);
+            throw new TooManyJobsException(m_LicenseJobLimit, message, ErrorCode.LICENSE_VIOLATION);
         }
     }
 
@@ -757,9 +754,10 @@ public class JobManager
         }
         catch (UnknownJobException e)
         {
-            throw new UnknownJobException(refId, "Missing Job: Cannot find "
-                    + "referenced job with id '" + refId + "'",
-                    ErrorCode.UNKNOWN_JOB_REFERENCE);
+            String message = Messages.getMessage(Messages.JOB_UNKNOWN_REFERENCE, refId);
+
+            LOGGER.info(message);
+            throw new UnknownJobException(refId, message, ErrorCode.UNKNOWN_JOB_REFERENCE);
 
         }
     }
