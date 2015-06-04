@@ -17,6 +17,7 @@
 
 package org.elasticsearch.shield.authc.pki;
 
+import org.elasticsearch.common.base.Strings;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.settings.Settings;
@@ -51,6 +52,7 @@ public class PkiRealm extends Realm<X509AuthenticationToken> {
 
     public static final String PKI_CERT_HEADER_NAME = "__SHIELD_CLIENT_CERTIFICATE";
     public static final String TYPE = "pki";
+    public static final String DEFAULT_USERNAME_PATTERN = "CN=(.*?)(?:,|$)";
 
     // For client based cert validation, the auth type must be specified but UNKNOWN is an acceptable value
     public static final String AUTH_TYPE = "UNKNOWN";
@@ -62,7 +64,7 @@ public class PkiRealm extends Realm<X509AuthenticationToken> {
     public PkiRealm(RealmConfig config, DnRoleMapper roleMapper) {
         super(TYPE, config);
         this.trustManagers = trustManagers(config.settings(), config.env());
-        this.principalPattern = Pattern.compile(config.settings().get("username_pattern", "CN=(.*?),"), Pattern.CASE_INSENSITIVE);
+        this.principalPattern = Pattern.compile(config.settings().get("username_pattern", DEFAULT_USERNAME_PATTERN), Pattern.CASE_INSENSITIVE);
         this.roleMapper = roleMapper;
         checkSSLEnabled(config, logger);
     }
@@ -103,7 +105,7 @@ public class PkiRealm extends Realm<X509AuthenticationToken> {
             return null;
         }
 
-        String dn = certificates[0].getSubjectX500Principal().getName();
+        String dn = certificates[0].getSubjectX500Principal().toString();
         Matcher matcher = principalPattern.matcher(dn);
         if (!matcher.find()) {
             if (logger.isDebugEnabled()) {
@@ -113,6 +115,12 @@ public class PkiRealm extends Realm<X509AuthenticationToken> {
         }
 
         String principal = matcher.group(1);
+        if (Strings.isNullOrEmpty(principal)) {
+            if (logger.isDebugEnabled()) {
+                logger.debug("certificate authentication succeeded for [{}] but extracted principal was empty", dn);
+            }
+            return null;
+        }
         return new X509AuthenticationToken(certificates, principal, dn);
     }
 
