@@ -27,39 +27,25 @@
 
 package com.prelert.transforms;
 
-import static com.prelert.transforms.TransformTestUtils.createIndexArray;
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.mock;
-
+import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
-import org.junit.Test;
-
 import com.prelert.transforms.Transform.TransformIndex;
-import com.prelert.transforms.Transform.TransformResult;
 
-public class RegexExtractTest {
-
-    @Test
-    public void testTransform() throws TransformException
+public final class TransformTestUtils
+{
+    private TransformTestUtils()
     {
-        List<TransformIndex> readIndicies = createIndexArray(new TransformIndex(0, 0));
-        List<TransformIndex> writeIndicies = createIndexArray(new TransformIndex(2, 0),
-                new TransformIndex(2, 1), new TransformIndex(2, 2));
+    }
 
-        String regex = "Tag=\"Windfarm ([0-9]+)\\.Turbine ([0-9]+)\\.(.*)\"";
+    public static List<TransformIndex> createIndexArray(TransformIndex...indexs)
+    {
+        List<TransformIndex> result = new ArrayList<Transform.TransformIndex>();
+        for (TransformIndex i : indexs)
+        {
+            result.add(i);
+        }
 
-        RegexExtract transform = new RegexExtract(regex, readIndicies, writeIndicies, mock(Logger.class));
-
-        String [] input = {"Tag=\"Windfarm 04.Turbine 06.Temperature\""};
-        String [] scratch = {};
-        String [] output = new String [3];
-        String [][] readWriteArea = {input, scratch, output};
-
-        assertEquals(TransformResult.OK, transform.transform(readWriteArea));
-        assertEquals("04", output[0]);
-        assertEquals("06", output[1]);
-        assertEquals("Temperature", output[2]);
+        return result;
     }
 }

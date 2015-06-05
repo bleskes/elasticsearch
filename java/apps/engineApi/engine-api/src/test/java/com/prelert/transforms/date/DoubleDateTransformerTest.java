@@ -27,10 +27,10 @@
 
 package com.prelert.transforms.date;
 
+import static com.prelert.transforms.TransformTestUtils.createIndexArray;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.log4j.Logger;
@@ -38,7 +38,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import com.prelert.transforms.Transform;
 import com.prelert.transforms.Transform.TransformIndex;
 import com.prelert.transforms.TransformException;
 
@@ -122,16 +121,5 @@ public class DoubleDateTransformerTest
         String [][] readWriteArea = {input, scratch, output};
 
         transformer.transform(readWriteArea);
-    }
-
-    private List<TransformIndex> createIndexArray(TransformIndex...indexs)
-    {
-        List<TransformIndex> result = new ArrayList<Transform.TransformIndex>();
-        for (TransformIndex i : indexs)
-        {
-            result.add(i);
-        }
-
-        return result;
     }
 }

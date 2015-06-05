@@ -27,10 +27,11 @@
 
 package com.prelert.transforms;
 
-import static org.junit.Assert.*;
+import static com.prelert.transforms.TransformTestUtils.createIndexArray;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.log4j.Logger;
@@ -76,17 +77,4 @@ public class RegexSplitTest {
         assertEquals(TransformResult.OK, transform.transform(readWriteArea));
         assertArrayEquals(readWriteArea[2], new String[]{""});
     }
-
-
-    private List<TransformIndex> createIndexArray(TransformIndex...indexs)
-    {
-        List<TransformIndex> result = new ArrayList<Transform.TransformIndex>();
-        for (TransformIndex i : indexs)
-        {
-            result.add(i);
-        }
-
-        return result;
-    }
-
 }
