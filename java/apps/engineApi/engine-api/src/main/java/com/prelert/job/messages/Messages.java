@@ -32,7 +32,7 @@ import java.util.ResourceBundle;
 /**
  * Defines the keys for all the message strings
  */
-public class Messages
+public final class Messages
 {
     /**
      * The base name of the bundle without the .properties extension
@@ -96,6 +96,10 @@ public class Messages
     public static final String REST_ALERT_MISSING_ARGUMENT = "rest.alert.missing.argument";
     public static final String REST_ALERT_INVALID_TIMEOUT = "rest.alert.invalid.timeout";
     public static final String REST_ALERT_INVALID_THRESHOLD = "rest.alert.invalid.threshold";
+
+    private Messages()
+    {
+    }
 
     public static ResourceBundle load()
     {
