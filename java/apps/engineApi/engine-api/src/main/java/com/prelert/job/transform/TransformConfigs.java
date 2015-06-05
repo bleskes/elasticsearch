@@ -88,6 +88,11 @@ public class TransformConfigs implements Verifiable
     @Override
     public boolean verify() throws TransformConfigurationException
     {
+        for (TransformConfig tr : m_Transforms)
+        {
+            tr.verify();
+        }
+
         String duplicatedName = outputNamesAreUnique();
         if (duplicatedName != null)
         {
@@ -103,12 +108,6 @@ public class TransformConfigs implements Verifiable
             String msg = String.format("Transform type %s with inputs %s has a circular dependency",
                                         tc.type(), tc.getInputs());
             throw new TransformConfigurationException(msg, ErrorCode.TRANSFORM_HAS_CIRCULAR_DEPENDENCY);
-        }
-
-
-        for (TransformConfig tr : m_Transforms)
-        {
-            tr.verify();
         }
 
         return true;
