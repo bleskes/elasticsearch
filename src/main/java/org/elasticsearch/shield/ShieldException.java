@@ -18,7 +18,6 @@
 package org.elasticsearch.shield;
 
 import org.elasticsearch.ElasticsearchException;
-
 import org.elasticsearch.common.collect.Tuple;
 
 /**

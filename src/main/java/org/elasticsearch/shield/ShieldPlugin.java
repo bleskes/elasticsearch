@@ -17,10 +17,10 @@
 
 package org.elasticsearch.shield;
 
+import com.google.common.collect.ImmutableList;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.support.Headers;
 import org.elasticsearch.cluster.settings.ClusterDynamicSettingsModule;
-import org.elasticsearch.common.collect.ImmutableList;
 import org.elasticsearch.common.component.LifecycleComponent;
 import org.elasticsearch.common.inject.Module;
 import org.elasticsearch.common.settings.Settings;
@@ -31,8 +31,8 @@ import org.elasticsearch.shield.authc.Realms;
 import org.elasticsearch.shield.authc.support.SecuredString;
 import org.elasticsearch.shield.authc.support.UsernamePasswordToken;
 import org.elasticsearch.shield.authz.store.FileRolesStore;
-import org.elasticsearch.shield.license.LicenseService;
 import org.elasticsearch.shield.crypto.InternalCryptoService;
+import org.elasticsearch.shield.license.LicenseService;
 import org.elasticsearch.shield.transport.filter.IPFilter;
 
 import java.nio.file.Path;

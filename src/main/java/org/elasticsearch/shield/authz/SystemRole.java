@@ -17,7 +17,7 @@
 
 package org.elasticsearch.shield.authz;
 
-import org.elasticsearch.common.base.Predicate;
+import com.google.common.base.Predicate;
 
 /**
  *

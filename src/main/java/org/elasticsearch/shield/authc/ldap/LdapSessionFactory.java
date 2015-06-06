@@ -18,7 +18,6 @@
 package org.elasticsearch.shield.authc.ldap;
 
 import com.unboundid.ldap.sdk.*;
-
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.shield.ShieldSettingsException;
 import org.elasticsearch.shield.authc.RealmConfig;
@@ -29,7 +28,6 @@ import org.elasticsearch.shield.authc.support.SecuredString;
 import org.elasticsearch.shield.ssl.ClientSSLService;
 
 import javax.net.SocketFactory;
-
 import java.text.MessageFormat;
 import java.util.Locale;
 

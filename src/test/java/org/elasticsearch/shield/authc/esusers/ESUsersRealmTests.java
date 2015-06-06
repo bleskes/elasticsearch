@@ -18,6 +18,7 @@
 package org.elasticsearch.shield.authc.esusers;
 
 import com.carrotsearch.randomizedtesting.annotations.Repeat;
+import com.google.common.collect.ImmutableSet;
 import org.elasticsearch.action.Action;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.ActionRequest;
@@ -27,7 +28,6 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.client.ClusterAdminClient;
 import org.elasticsearch.client.IndicesAdminClient;
 import org.elasticsearch.client.support.Headers;
-import org.elasticsearch.common.collect.ImmutableSet;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.rest.BaseRestHandler;
