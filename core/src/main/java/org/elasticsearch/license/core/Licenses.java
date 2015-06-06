@@ -17,8 +17,8 @@
  */
 package org.elasticsearch.license.core;
 
+import com.google.common.collect.ImmutableMap;
 import org.elasticsearch.ElasticsearchParseException;
-import org.elasticsearch.common.collect.ImmutableMap;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.xcontent.*;
