@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.watcher.execution;
+package org.elasticsearch.watcher.watch;
 
 import org.elasticsearch.watcher.WatcherException;
 

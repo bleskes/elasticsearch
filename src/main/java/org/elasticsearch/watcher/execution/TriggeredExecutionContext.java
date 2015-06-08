@@ -31,6 +31,11 @@ public class TriggeredExecutionContext extends WatchExecutionContext {
     }
 
     @Override
+    public boolean knownWatch() {
+        return true;
+    }
+
+    @Override
     public final boolean simulateAction(String actionId) {
         return false;
     }
