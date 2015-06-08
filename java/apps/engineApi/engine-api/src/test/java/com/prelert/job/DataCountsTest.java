@@ -27,7 +27,9 @@
 
 package com.prelert.job;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
@@ -42,8 +44,8 @@ public class DataCountsTest
     @Test
     public void testCountsEquals_GivenEqualCounts()
     {
-        DataCounts counts1 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9);
-        DataCounts counts2 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9);
+        DataCounts counts1 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+        DataCounts counts2 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
 
         assertTrue(counts1.equals(counts2));
         assertTrue(counts2.equals(counts1));
@@ -52,8 +54,8 @@ public class DataCountsTest
     @Test
     public void testCountsHashCode_GivenEqualCounts()
     {
-        DataCounts counts1 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9);
-        DataCounts counts2 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9);
+        DataCounts counts1 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+        DataCounts counts2 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
 
         assertEquals(counts1.hashCode(), counts2.hashCode());
     }
@@ -61,7 +63,7 @@ public class DataCountsTest
     @Test
     public void testCountsCopyConstructor()
     {
-        DataCounts counts1 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9);
+        DataCounts counts1 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
         DataCounts counts2 = new DataCounts(counts1);
 
         assertEquals(counts1.hashCode(), counts2.hashCode());
@@ -78,7 +80,7 @@ public class DataCountsTest
     public void testCountCopyCreatedFieldsNotZero()
     throws IntrospectionException, IllegalAccessException, IllegalArgumentException, InvocationTargetException
     {
-        DataCounts counts1 = createCounts(1, 200, 400, 3, 4, 5, 6, 7, 8);
+        DataCounts counts1 = createCounts(1, 200, 400, 3, 4, 5, 6, 7, 8, 9);
         testAllFieldsGreaterThanZero(counts1);
 
         DataCounts counts2 = new DataCounts(counts1);
@@ -151,6 +153,7 @@ public class DataCountsTest
         counts1.setOutOfOrderTimeStampCount(40);
         counts1.setProcessedFieldCount(5000);
         counts1.setProcessedRecordCount(10);
+        counts1.setLatestRecordTime(1435000000);
 
         DataCounts counts2 = new DataCounts(counts1);
 
@@ -188,7 +191,7 @@ public class DataCountsTest
             long processedRecordCount, long processedFieldCount,
             long inputBytes, long inputFieldCount,
             long invalidDateCount, long missingFieldCount,
-            long outOfOrderTimeStampCount, long failedTransformCount)
+            long outOfOrderTimeStampCount, long failedTransformCount, long latestRecordTime)
     {
         DataCounts counts = new DataCounts();
         counts.setBucketCount(bucketCount);
@@ -200,6 +203,7 @@ public class DataCountsTest
         counts.setMissingFieldCount(missingFieldCount);
         counts.setOutOfOrderTimeStampCount(outOfOrderTimeStampCount);
         counts.setFailedTransformCount(failedTransformCount);
+        counts.setLatestRecordTime(latestRecordTime);
         return counts;
     }
 

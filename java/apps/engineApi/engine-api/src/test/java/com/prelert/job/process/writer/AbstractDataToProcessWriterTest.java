@@ -31,6 +31,8 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.anyLong;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -447,9 +449,9 @@ public class AbstractDataToProcessWriterTest
 
         assertFalse(writer.applyTransformsAndWrite(input, output, 3));
 
-        verify(m_LengthEncodedWriter, times(0)).writeRecord(output);
-        verify(m_StatusReporter, times(0)).reportRecordWritten(3);
-        verify(m_DataPersister, times(0)).persistRecord(1, output);
+        verify(m_LengthEncodedWriter, never()).writeRecord(output);
+        verify(m_StatusReporter, never()).reportRecordWritten(anyLong(), anyLong());
+        verify(m_DataPersister, never()).persistRecord(1, output);
 
         // this is ok
         input = new String [] {"2", "metricB", "0"};
@@ -457,7 +459,7 @@ public class AbstractDataToProcessWriterTest
         assertTrue(writer.applyTransformsAndWrite(input, output, 3));
 
         verify(m_LengthEncodedWriter, times(1)).writeRecord(expectedOutput);
-        verify(m_StatusReporter, times(1)).reportRecordWritten(3);
+        verify(m_StatusReporter, times(1)).reportRecordWritten(3, 2);
         verify(m_DataPersister, times(1)).persistRecord(2, expectedOutput);
     }
 

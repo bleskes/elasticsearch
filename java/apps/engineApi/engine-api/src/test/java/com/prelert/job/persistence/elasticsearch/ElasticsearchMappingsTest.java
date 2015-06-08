@@ -95,6 +95,9 @@ public class ElasticsearchMappingsTest
                         "          }," +
                         "          \"failedTransformCount\": {" +
                         "            \"type\": \"long\"" +
+                        "          }," +
+                        "          \"latestRecordTime\": {" +
+                        "            \"type\": \"long\"" +
                         "          }" +
                         "        }" +
                         "      }," +
