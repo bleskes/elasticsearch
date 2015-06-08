@@ -26,6 +26,8 @@
  ************************************************************/
 package com.prelert.rs.data;
 
+import java.util.Objects;
+
 import com.fasterxml.jackson.core.io.JsonStringEncoder;
 
 
@@ -40,7 +42,7 @@ import com.fasterxml.jackson.core.io.JsonStringEncoder;
  */
 public class ApiError implements HasErrorCode
 {
-	private ErrorCode m_ErrorCode;
+    private ErrorCode m_ErrorCode;
 	private String m_Message;
 	private Throwable m_Cause;
 
@@ -161,4 +163,38 @@ public class ApiError implements HasErrorCode
 
 		return builder.toString();
 	}
+
+    @Override
+    public int hashCode()
+    {
+        return this.toJson().hashCode();
+    }
+
+
+    /**
+     * Throwable does not implement toString() so as the method is mainly
+     * for testing compare the toJson() result
+     */
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (this == obj)
+        {
+            return true;
+        }
+
+        if (obj == null)
+        {
+            return false;
+        }
+
+        if (getClass() != obj.getClass())
+        {
+            return false;
+        }
+
+        ApiError other = (ApiError) obj;
+
+        return Objects.equals(this.toJson(), other.toJson());
+    }
 }

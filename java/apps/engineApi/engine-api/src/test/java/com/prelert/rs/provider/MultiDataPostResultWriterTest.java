@@ -24,7 +24,6 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-
 package com.prelert.rs.provider;
 
 import static org.junit.Assert.*;
@@ -45,28 +44,32 @@ import org.junit.Test;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.prelert.job.DataCounts;
+import com.prelert.rs.data.ApiError;
+import com.prelert.rs.data.DataPostResult;
+import com.prelert.rs.data.ErrorCode;
+import com.prelert.rs.data.MultiDataPostResult;
 
-public class DataCountsWriterTest
+public class MultiDataPostResultWriterTest
 {
     @Test
     public void testIsWritable()
     {
-        DataCountsWriter writer = new DataCountsWriter();
+        MultiDataPostResultWriter writer = new MultiDataPostResultWriter();
 
         assertFalse(writer.isWriteable(String.class, mock(Type.class), null, null));
         assertTrue(writer.isWriteable(
-                DataCounts.class, mock(ParameterizedType.class), null, null));
+                MultiDataPostResult.class, mock(ParameterizedType.class), null, null));
     }
 
     @Test
     public void testSerialise() throws WebApplicationException, IOException
     {
-        DataCounts counts = createCounts();
-        DataCountsWriter writer = new DataCountsWriter();
+        MultiDataPostResult result = createResults();
+        MultiDataPostResultWriter writer = new MultiDataPostResultWriter();
 
         ByteArrayOutputStream output = new ByteArrayOutputStream();
 
-        writer.writeTo(counts, DataCounts.class, mock(Type.class),
+        writer.writeTo(result, MultiDataPostResult.class, mock(Type.class),
                 new Annotation[] {}, MediaType.APPLICATION_JSON_TYPE,
                 new MultivaluedHashMap<String, Object>(),
                 output);
@@ -74,46 +77,31 @@ public class DataCountsWriterTest
         String content = new String(output.toByteArray());
 
         ObjectMapper jsonMapper = new ObjectMapper();
-        DataCounts out = jsonMapper.readValue(content, new TypeReference<DataCounts>() {} );
+        MultiDataPostResult out = jsonMapper.readValue(content, new TypeReference<MultiDataPostResult>() {} );
 
-        assertEquals(counts, out);
+        assertEquals(result, out);
     }
 
-    @Test
-    public void testCalculatedFieldsAreSerialised() throws WebApplicationException, IOException
+
+    private MultiDataPostResult createResults()
     {
-        DataCounts counts = createCounts();
-        DataCountsWriter writer = new DataCountsWriter();
+        MultiDataPostResult results = new MultiDataPostResult();
 
-        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        DataPostResult result = new DataPostResult();
+        DataCounts dc = new DataCounts();
+        dc.setInputBytes(1000L);
+        result.setJobId("foo");
+        result.setDataCounts(dc);
+        results.addResult(result);
 
-        writer.writeTo(counts, DataCounts.class, mock(Type.class),
-                new Annotation[] {}, MediaType.APPLICATION_JSON_TYPE,
-                new MultivaluedHashMap<String, Object>(),
-                output);
+        DataPostResult errorResult = new DataPostResult();
+        ApiError error = new ApiError(ErrorCode.BUCKET_RESET_NOT_SUPPORTED);
+        error.setMessage("bar");
+        errorResult.setJobId("foo");
+        errorResult.setError(error);
+        results.addResult(errorResult);
 
-        String content = new String(output.toByteArray());
-
-        // check this calculated fields are serialised
-        assertTrue(content.contains("inputRecordCount"));
-        assertTrue(content.contains("processedFieldCount"));
-
-        // this field should not be serialised
-        assertFalse(content.contains("analysedFieldsPerRecord"));
+        return results;
     }
 
-    private DataCounts createCounts()
-    {
-        DataCounts count = new DataCounts();
-        count.setBucketCount(20L);
-        count.setFailedTransformCount(2);
-        count.setInputBytes(100);
-        count.setInputFieldCount(21);
-        count.setInvalidDateCount(3);
-        count.setMissingFieldCount(1);
-        count.setOutOfOrderTimeStampCount(4);
-        count.setProcessedRecordCount(6);
-
-        return count;
-    }
 }
