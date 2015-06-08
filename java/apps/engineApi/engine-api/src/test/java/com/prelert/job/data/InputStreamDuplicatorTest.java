@@ -29,18 +29,20 @@ package com.prelert.job.data;
 
 import static org.junit.Assert.*;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-
-import static org.mockito.Mockito.mock;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.Test;
-import org.mockito.Mockito;
 
+/**
+ * The duplicated streams must be read in separate
+ * threads for the duplicator to work
+ */
 public class InputStreamDuplicatorTest
 {
     private static final String TEXT = "It is a truth universally acknowledged, that a single man in possession of a good fortune, must be in want of a wife. " +
@@ -54,51 +56,130 @@ public class InputStreamDuplicatorTest
             "from the north of England; that he came down on Monday in a chaise and four to see the place, and was so much delighted with it, " +
             "that he agreed with Mr. Morris immediately; that he is to take possession before Michaelmas, and some of his servants are to be in" +
             " the house by the end of next week.";
+
+    private class ReadTask implements Runnable
+    {
+        String text = "";
+        BufferedReader reader;
+
+        ReadTask(BufferedReader reader)
+        {
+            this.reader = reader;
+        }
+
+        @Override
+        public void run()
+        {
+            try
+            {
+                String line = reader.readLine();
+                while (line != null)
+                {
+                    text += line;
+                    line = reader.readLine();
+                }
+            }
+            catch (IOException e)
+            {
+
+            }
+        }
+    }
+
+
     @Test
     public void testDuplicate()
-    throws UnsupportedEncodingException
+    throws InterruptedException, IOException
     {
         ByteArrayInputStream input = new ByteArrayInputStream(TEXT.getBytes(StandardCharsets.UTF_8));
-
-        ByteArrayOutputStream out1 = new ByteArrayOutputStream();
-        ByteArrayOutputStream out2 = new ByteArrayOutputStream();
-        ByteArrayOutputStream out3 = new ByteArrayOutputStream();
-
         InputStreamDuplicator duplicator = new InputStreamDuplicator(input);
-        duplicator.addOutput(out1);
-        duplicator.addOutput(out2);
-        duplicator.addOutput(out3);
 
-        duplicator.duplicate();
 
-        assertEquals(TEXT, out1.toString(StandardCharsets.UTF_8.name()));
-        assertEquals(TEXT, out2.toString(StandardCharsets.UTF_8.name()));
-        assertEquals(TEXT, out3.toString(StandardCharsets.UTF_8.name()));
+        List<ReadTask> tasks = new ArrayList<>();
+        List<Thread> threads = new ArrayList<Thread>();
+        for (int i=0; i<3; i++)
+        {
+           BufferedReader reader = new BufferedReader(
+                                new InputStreamReader(duplicator.createDuplicateStream(),
+                                        StandardCharsets.UTF_8));
+
+           ReadTask task = new ReadTask(reader);
+           tasks.add(task);
+           threads.add(new Thread(task));
+        }
+
+        new Thread(() -> duplicator.duplicate()).start();
+
+        for (Thread th : threads)
+        {
+            th.start();
+        }
+
+        for (Thread th : threads)
+        {
+            th.join();
+        }
+
+        for (ReadTask task : tasks)
+        {
+            assertEquals(TEXT, task.text);
+        }
     }
 
     @Test
     public void testDuplicate_StreamThrowsIOException()
-    throws IOException
+    throws IOException, InterruptedException
     {
         ByteArrayInputStream input = new ByteArrayInputStream(TEXT.getBytes(StandardCharsets.UTF_8));
-
-        ByteArrayOutputStream out1 = new ByteArrayOutputStream();
-        ByteArrayOutputStream out2 = new ByteArrayOutputStream();
-
-        // mock object throws IOException when write is called
-        OutputStream mockOut = mock(OutputStream.class);
-        Mockito.doThrow(new IOException()).when(mockOut).write(Mockito.any(byte[].class),
-                                    Mockito.anyInt(), Mockito.anyInt());
-
         InputStreamDuplicator duplicator = new InputStreamDuplicator(input);
-        duplicator.addOutput(out1);
-        duplicator.addOutput(out2);
-        duplicator.addOutput(mockOut);
 
-        duplicator.duplicate();
 
-        assertEquals(TEXT, out1.toString(StandardCharsets.UTF_8.name()));
-        assertEquals(TEXT, out2.toString(StandardCharsets.UTF_8.name()));
+        List<ReadTask> tasks = new ArrayList<>();
+        List<Thread> threads = new ArrayList<Thread>();
+        for (int i=0; i<3; i++)
+        {
+           BufferedReader reader = new BufferedReader(
+                                new InputStreamReader(duplicator.createDuplicateStream(),
+                                        StandardCharsets.UTF_8));
+
+           ReadTask task = new ReadTask(reader);
+           tasks.add(task);
+           threads.add(new Thread(task));
+        }
+
+
+        BufferedReader badReader = new BufferedReader(
+                new InputStreamReader(duplicator.createDuplicateStream(),
+                        StandardCharsets.UTF_8));
+
+        // Closing this reader stream will cause an IOException
+        // when the other end of the pipe is written too
+        badReader.close();
+        ReadTask badTask = new ReadTask(badReader);
+        Thread badThread = new Thread(badTask);
+        badThread.start();
+
+        new Thread(() -> duplicator.duplicate()).start();
+
+        for (Thread th : threads)
+        {
+            th.start();
+        }
+
+
+        for (Thread th : threads)
+        {
+            th.join();
+        }
+
+        badThread.join();
+
+        for (ReadTask task : tasks)
+        {
+            assertEquals(TEXT, task.text);
+        }
+
+        assertEquals("", badTask.text);
     }
 
 }

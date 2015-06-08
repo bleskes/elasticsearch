@@ -29,6 +29,8 @@ package com.prelert.job.data;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -38,8 +40,13 @@ import org.apache.log4j.Logger;
 /**
  * Reads from a single InputStream and writes the data
  * to multiple OutputStreams.
- * Their is not thread safety on this class the method
- * {@linkplain #addOutput(OutputStream)} should not be
+ * IMPORTANT: All outputs must be read in separate threads,
+ * if the output isn't read the duplicate function will block
+ * when the stream buffer fills up. If a single output isn't
+ * being read none of the others will be.
+ *
+ * This is not a thread safe on class the method
+ * {@linkplain #createDuplicateStream()} should not be
  * called after {@linkplain #duplicate()} has started
  */
 public class InputStreamDuplicator
@@ -58,16 +65,25 @@ public class InputStreamDuplicator
     }
 
     /**
-     * Add an output stream.
-     * This method should not be called after {@linkplain #run()} has started
+     * Create an input stream that the duplicate data is read from
+     * This method should not be called after {@linkplain #duplicate()}
+     * has started
      * @param output
+     * @throws IOException
      */
-    public void addOutput(OutputStream output)
+    public InputStream createDuplicateStream() throws IOException
     {
-        m_Outputs.add(output);
+        PipedInputStream pipedIn = new PipedInputStream();
+        PipedOutputStream pipedOut = new PipedOutputStream(pipedIn);
+        m_Outputs.add(pipedOut);
+        return pipedIn;
     }
 
 
+    /**
+     * Read the input and write to outputs.
+     * Runs until all the input has been read
+     */
     public void duplicate()
     {
         int n;
