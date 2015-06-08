@@ -27,22 +27,28 @@
 
 package com.prelert.job.transform;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Set;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
-import com.prelert.job.transform.TransformConfig;
-import com.prelert.job.transform.TransformType;
 import com.prelert.job.transform.condition.Condition;
 import com.prelert.job.transform.condition.Operator;
 import com.prelert.job.transform.exceptions.TransformConfigurationException;
+import com.prelert.rs.data.ErrorCode;
+import com.prelert.rs.data.ErrorCodeMatcher;
 
 public class TransformTypeTest
 {
+    @Rule public ExpectedException m_ExpectedException = ExpectedException.none();
+
     @Test
     public void testFromString() throws TransformConfigurationException
     {
@@ -86,49 +92,127 @@ public class TransformTypeTest
     }
 
     @Test
-    public void testVerify_wrongNumberInputArgs()
+    public void testVerify_GivenNullInputs() throws TransformConfigurationException
     {
+        m_ExpectedException.expect(TransformConfigurationException.class);
+        m_ExpectedException.expectMessage("Transform type concat expected [1‥+∞) input(s), got 0");
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCode.TRANSFORM_INVALID_INPUT_COUNT));
+
         TransformConfig conf = new TransformConfig();
         conf.setTransform(TransformType.CONCAT.prettyName());
-        tryVerify(TransformType.CONCAT, conf);
+        conf.setInputs(null);
 
-        conf.setInputs(Arrays.asList());
-        tryVerify(TransformType.CONCAT, conf);
+        TransformType.CONCAT.verify(conf);
+    }
 
-        conf = new TransformConfig();
-        conf.setTransform(TransformType.DOMAIN_SPLIT.prettyName());
+    @Test
+    public void testVerify_GivenEmptyInputs() throws TransformConfigurationException
+    {
+        m_ExpectedException.expect(TransformConfigurationException.class);
+        m_ExpectedException.expectMessage("Transform type concat expected [1‥+∞) input(s), got 0");
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCode.TRANSFORM_INVALID_INPUT_COUNT));
+
+        TransformConfig conf = new TransformConfig();
+        conf.setTransform(TransformType.CONCAT.prettyName());
         conf.setInputs(Arrays.asList());
-        tryVerify(TransformType.DOMAIN_SPLIT, conf);
+
+        TransformType.CONCAT.verify(conf);
 
     }
 
     @Test
-    public void testVerify_OptionalArguments()
-    throws TransformConfigurationException
+    public void testVerify_GivenInputsDoesNotMatchArrity() throws TransformConfigurationException
     {
-        // Concat can take an optional delimiter
+        m_ExpectedException.expect(TransformConfigurationException.class);
+        m_ExpectedException.expectMessage("Transform type domain_split expected 1 input(s), got 2");
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCode.TRANSFORM_INVALID_INPUT_COUNT));
+
+        TransformConfig conf = new TransformConfig();
+        conf.setTransform(TransformType.DOMAIN_SPLIT.prettyName());
+        conf.setInputs(Arrays.asList("foo", "bar"));
+        TransformType.DOMAIN_SPLIT.verify(conf);
+    }
+
+    @Test
+    public void testVerify_GivenNoOptionalArguments() throws TransformConfigurationException
+    {
         TransformConfig conf = new TransformConfig();
         conf.setTransform(TransformType.CONCAT.prettyName());
         conf.setInputs(Arrays.asList("a", "b", "c"));
-        assertTrue(conf.verify());
 
-        conf.setArguments(Arrays.asList("delimiter"));
-        assertTrue(conf.verify());
-
-        conf.setArguments(Arrays.asList("delimiter", "invalidarg"));
-        tryVerify(TransformType.CONCAT, conf);
+        assertTrue(TransformType.CONCAT.verify(conf));
     }
 
-    private void tryVerify(TransformType type, TransformConfig conf)
+    @Test
+    public void testVerify_GivenOneOptionalArgumentWhenOneIsSupported()
+            throws TransformConfigurationException
     {
-        try
-        {
-            type.verify(conf);
-            fail("verify should throw");
-        }
-        catch (TransformConfigurationException e)
-        {
+        TransformConfig conf = new TransformConfig();
+        conf.setTransform(TransformType.CONCAT.prettyName());
+        conf.setInputs(Arrays.asList("a", "b", "c"));
+        conf.setArguments(Arrays.asList("delimiter"));
 
-        }
+        assertTrue(TransformType.CONCAT.verify(conf));
+    }
+
+    @Test
+    public void testVerify_GivenTwoOptionalArgumentsWhenOneIsSupported()
+            throws TransformConfigurationException
+    {
+        m_ExpectedException.expect(TransformConfigurationException.class);
+        m_ExpectedException.expectMessage(
+                "Transform type concat expected [0‥1] argument(s), got 2");
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCode.TRANSFORM_INVALID_ARGUMENT_COUNT));
+
+        TransformConfig conf = new TransformConfig();
+        conf.setTransform(TransformType.CONCAT.prettyName());
+        conf.setInputs(Arrays.asList("a", "b", "c"));
+        conf.setArguments(Arrays.asList("delimiter", "invalidarg"));
+
+        TransformType.CONCAT.verify(conf);
+    }
+
+    @Test
+    public void testVerify_GivenNullOutputs() throws TransformConfigurationException
+    {
+        TransformConfig conf = new TransformConfig();
+        conf.setTransform(TransformType.LOWERCASE.prettyName());
+        conf.setInputs(Arrays.asList("a"));
+        conf.setOutputs(null);
+
+        assertEquals(Arrays.asList("lowercase"), conf.getOutputs());
+        assertTrue(TransformType.LOWERCASE.verify(conf));
+    }
+
+    @Test
+    public void testVerify_GivenEmptyOutputs() throws TransformConfigurationException
+    {
+        TransformConfig conf = new TransformConfig();
+        conf.setTransform(TransformType.LOWERCASE.prettyName());
+        conf.setInputs(Arrays.asList("a"));
+        conf.setOutputs(Collections.emptyList());
+
+        assertEquals(Arrays.asList("lowercase"), conf.getOutputs());
+        assertTrue(TransformType.LOWERCASE.verify(conf));
+    }
+
+    @Test
+    public void testVerify_GivenTwoOutputsWhenOneIsExpected() throws TransformConfigurationException
+    {
+        m_ExpectedException.expect(TransformConfigurationException.class);
+        m_ExpectedException.expectMessage("Transform type lowercase expected 1 output(s), got 2");
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCode.TRANSFORM_INVALID_OUTPUT_COUNT));
+
+        TransformConfig conf = new TransformConfig();
+        conf.setTransform(TransformType.LOWERCASE.prettyName());
+        conf.setInputs(Arrays.asList("a"));
+        conf.setOutputs(Arrays.asList("one", "two"));
+
+        assertTrue(TransformType.LOWERCASE.verify(conf));
     }
 }
