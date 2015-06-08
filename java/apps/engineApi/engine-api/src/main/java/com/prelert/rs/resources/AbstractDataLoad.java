@@ -54,6 +54,7 @@ import com.prelert.job.JobDetails;
 import com.prelert.job.data.DataStreamer;
 import com.prelert.job.data.DataStreamerThread;
 import com.prelert.job.data.InputStreamDuplicator;
+import com.prelert.job.exceptions.JobException;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.TooManyJobsException;
 import com.prelert.job.exceptions.UnknownJobException;
@@ -67,7 +68,10 @@ import com.prelert.job.process.params.TimeRange;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.rs.data.Acknowledgement;
+import com.prelert.rs.data.ApiError;
+import com.prelert.rs.data.DataPostResult;
 import com.prelert.rs.data.ErrorCode;
+import com.prelert.rs.data.MultiDataPostResult;
 import com.prelert.rs.data.SingleDocument;
 import com.prelert.rs.provider.RestApiException;
 
@@ -150,7 +154,7 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
     private Response streamToMultipleJobs(String [] jobIds, DataLoadParams params,
                                             String encoding, InputStream input) throws IOException
     {
-        // remove duplicates
+        // remove duplicate job ids
         Set<String> idSet = new HashSet<>(Arrays.asList(jobIds));
 
         InputStreamDuplicator duplicator = new InputStreamDuplicator(input);
@@ -181,9 +185,43 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
             }
         }
 
-        return Response.accepted().entity(new DataCounts()).build();
+        MultiDataPostResult results = new MultiDataPostResult();
+        for (DataStreamerThread thread : threads)
+        {
+            results.addResult(toDataPostResult(thread));
+        }
+
+        return Response.accepted().entity(results).build();
     }
 
+    private DataPostResult toDataPostResult(DataStreamerThread th)
+    {
+        if (th.getDataCounts() != null)
+        {
+            return new DataPostResult(th.getJobId(), th.getDataCounts());
+        }
+        else if (th.getJobException().isPresent())
+        {
+            JobException e = th.getJobException().get();
+            ApiError error = new ApiError(e.getErrorCode());
+            error.setMessage(e.getMessage());
+            error.setCause(e.getCause());
+
+            return new DataPostResult(th.getJobId(), error);
+        }
+        else
+        {
+            ApiError error = new ApiError();
+            if (th.getIOException().isPresent())
+            {
+                IOException e = th.getIOException().get();
+                error.setMessage(e.getMessage());
+                error.setCause(e.getCause());
+            }
+
+            return new DataPostResult(th.getJobId(), error);
+        }
+    }
 
     private DataLoadParams createDataLoadParams(String resetStart, String resetEnd)
     {

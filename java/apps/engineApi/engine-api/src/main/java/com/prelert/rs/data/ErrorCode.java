@@ -29,6 +29,8 @@ package com.prelert.rs.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonValue;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 /**
  * Static error codes returned in response to internal errors in the API.
@@ -42,6 +44,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * <li>60XXX Codes are related to errors from the REST API</li>
  * </ul>
  */
+
 public enum ErrorCode
 {
     /**
@@ -357,6 +360,7 @@ public enum ErrorCode
 		m_ValueString = Long.toString(code);
 	}
 
+	@JsonValue
 	public long getValue()
 	{
 		return m_ErrorCode;

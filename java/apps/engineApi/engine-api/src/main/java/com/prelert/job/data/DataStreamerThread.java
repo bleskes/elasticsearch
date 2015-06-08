@@ -106,4 +106,9 @@ public class DataStreamerThread extends Thread
     {
         return Optional.<IOException>ofNullable(m_IOException);
     }
+
+    public String getJobId()
+    {
+        return m_JobId;
+    }
 }

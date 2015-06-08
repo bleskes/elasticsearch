@@ -55,8 +55,8 @@ public class InputStreamDuplicator
 
     private static final int BUFFER_SIZE = 131072; // 128K
 
-    private InputStream m_Input;
-    private List<OutputStream> m_Outputs;
+    private final InputStream m_Input;
+    private final List<OutputStream> m_Outputs;
 
     public InputStreamDuplicator(InputStream input)
     {
