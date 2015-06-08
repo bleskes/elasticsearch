@@ -32,6 +32,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.prelert.job.messages.Messages;
 import com.prelert.job.transform.exceptions.TransformConfigurationException;
 import com.prelert.rs.data.ErrorCode;
 
@@ -128,8 +129,8 @@ public enum Operator
         }
 
         throw new TransformConfigurationException(
-                                "Unknown operator '" + name + "'",
-                                ErrorCode.UNKNOWN_OPERATOR);
+                Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_CONDITION_UNKNOWN_OPERATOR, name),
+                ErrorCode.UNKNOWN_OPERATOR);
     }
 
  };
