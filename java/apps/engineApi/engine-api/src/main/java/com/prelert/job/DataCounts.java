@@ -30,7 +30,6 @@ package com.prelert.job;
 import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -49,7 +48,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 
 @JsonInclude(Include.NON_NULL)
-@JsonIgnoreProperties({"analysedFieldsPerRecord"})
 public class DataCounts
 {
     public static final String BUCKET_COUNT = "bucketCount";
