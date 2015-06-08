@@ -41,6 +41,7 @@ import javax.ws.rs.DefaultValue;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
@@ -116,6 +117,7 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
     @Path("/{jobId}")
     @Consumes({MediaType.APPLICATION_FORM_URLENCODED, MediaType.APPLICATION_JSON,
         MediaType.APPLICATION_OCTET_STREAM})
+    @Produces(MediaType.APPLICATION_JSON)
     public Response streamData(@Context HttpHeaders headers,
             @PathParam("jobId") String jobId, InputStream input,
             @DefaultValue("") @QueryParam(RESET_START_PARAM) String resetStart,
@@ -261,6 +263,7 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
      */
     @Path("/{jobId}/flush")
     @POST
+    @Produces(MediaType.APPLICATION_JSON)
     public Response flushUpload(@PathParam("jobId") String jobId,
             @DefaultValue("false") @QueryParam(CALC_INTERIM_PARAM) boolean calcInterim,
             @DefaultValue("") @QueryParam(START_QUERY_PARAM) String start,
@@ -309,6 +312,7 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
      */
     @Path("/{jobId}/close")
     @POST
+    @Produces(MediaType.APPLICATION_JSON)
     public Response commitUpload(@PathParam("jobId") String jobId)
     throws UnknownJobException, NativeProcessRunException, JobInUseException
     {
