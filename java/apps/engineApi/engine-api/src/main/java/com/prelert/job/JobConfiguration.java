@@ -339,11 +339,9 @@ public class JobConfiguration implements Verifiable
             {
                 if (tc.getOutputs().contains(m_AnalysisConfig.getSummaryCountFieldName()))
                 {
-                    String msg = String.format("Transform '%s' has a output with the same name as the "
-                            + "summary count field. Transform outputs cannot be used the summary count "
-                            + "field please review your configuration",
-                                tc.type().prettyName());
-
+                    String msg = Messages.getMessage(
+                            Messages.JOB_CONFIG_TRANSFORM_DUPLICATED_OUTPUT_NAME,
+                            tc.type().prettyName());
                     throw new TransformConfigurationException(msg, ErrorCode.DUPLICATED_TRANSFORM_OUTPUT_NAME);
 
                 }
@@ -351,10 +349,8 @@ public class JobConfiguration implements Verifiable
 
             if (!usesAnOutput)
             {
-                String msg = String.format("None of the outputs of transform '%s' are used."
-                                            + " Please review your configuration",
-                                                tc.type().prettyName());
-
+                String msg = Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_OUTPUTS_UNUSED,
+                        tc.type().prettyName());
                 throw new TransformConfigurationException(msg, ErrorCode.TRANSFORM_OUTPUTS_UNUSED);
             }
         }

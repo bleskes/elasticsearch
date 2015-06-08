@@ -168,7 +168,7 @@ public class DataWithTransformsToProcessWriterTest
 
         TransformConfig tc = new TransformConfig();
         tc.setInputs(Arrays.asList("host", "metric"));
-        tc.setTransform(TransformType.Names.CONCAT);
+        tc.setTransform(TransformType.Names.CONCAT_NAME);
 
         TransformConfigs tcs = new TransformConfigs(Arrays.asList(tc));
 

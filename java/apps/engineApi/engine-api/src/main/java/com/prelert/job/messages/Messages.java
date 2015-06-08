@@ -76,6 +76,18 @@ public final class Messages
     public static final String JOB_CONFIG_NO_DETECTORS = "job.config.no.detectors";
     public static final String JOB_CONFIG_OVERFIELD_INCOMPATIBLE_FUNCTION = "job.config.overField.incompatible.function";
     public static final String JOB_CONFIG_OVERFIELD_NEEDS_ANOTHER = "job.config.overField.needs.another";
+    public static final String JOB_CONFIG_TRANSFORM_CIRCULAR_DEPENDENCY = "job.config.transform.circular.dependency";
+    public static final String JOB_CONFIG_TRANSFORM_CONDITION_INVALID_OPERATOR = "job.config.transform.condition.invalid.operator";
+    public static final String JOB_CONFIG_TRANSFORM_CONDITION_INVALID_VALUE = "job.config.transform.condition.invalid.value";
+    public static final String JOB_CONFIG_TRANSFORM_CONDITION_REQUIRED = "job.config.transform.condition.required";
+    public static final String JOB_CONFIG_TRANSFORM_CONDITION_UNKNOWN_OPERATOR = "job.config.transform.condition.unknown.operator";
+    public static final String JOB_CONFIG_TRANSFORM_DUPLICATED_OUTPUT_NAME = "job.config.transform.duplicated.output.name";
+    public static final String JOB_CONFIG_TRANSFORM_INVALID_ARGUMENT_COUNT = "job.config.transform.invalid.argument.count";
+    public static final String JOB_CONFIG_TRANSFORM_INVALID_INPUT_COUNT = "job.config.transform.invalid.input.count";
+    public static final String JOB_CONFIG_TRANSFORM_INVALID_OUTPUT_COUNT = "job.config.transform.invalid.output.count";
+    public static final String JOB_CONFIG_TRANSFORM_OUTPUTS_UNUSED = "job.config.transform.outputs.unused";
+    public static final String JOB_CONFIG_TRANSFORM_OUTPUT_NAME_USED_MORE_THAN_ONCE = "job.config.transform.output.name.used.more.than.once";
+    public static final String JOB_CONFIG_TRANSFORM_UNKNOWN_TYPE = "job.config.transform.unknown.type";
     public static final String JOB_CONFIG_UNKNOWN_FUNCTION = "job.config.unknown.function";
 
     public static final String JOB_DATA_CONCURRENT_USE_CLOSE = "job.data.concurrent.use.close";

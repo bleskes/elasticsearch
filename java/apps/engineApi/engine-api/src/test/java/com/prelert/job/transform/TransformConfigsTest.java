@@ -98,6 +98,18 @@ public class TransformConfigsTest
         new TransformConfigs(transforms).verify();
     }
 
+    @Test
+    public void testVerify_GivenNullInputs() throws TransformConfigurationException
+    {
+        m_ExpectedException.expect(TransformConfigurationException.class);
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCode.TRANSFORM_INVALID_INPUT_COUNT));
+
+        List<TransformConfig> transforms = new ArrayList<>();
+        transforms.add(createConcatTransform(null, Arrays.asList()));
+
+        new TransformConfigs(transforms).verify();
+    }
 
     @Test
     public void testVerify_Ok()

@@ -26,15 +26,22 @@
  ************************************************************/
 package com.prelert.job.transform.condition;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import com.prelert.job.transform.exceptions.TransformConfigurationException;
 import com.prelert.rs.data.ErrorCode;
+import com.prelert.rs.data.ErrorCodeMatcher;
 
 public class ConditionTest
 {
+    @Rule public ExpectedException m_ExpectedException = ExpectedException.none();
+
     @Test
     public void testVerifyArgsNumericArgs()
     throws TransformConfigurationException
@@ -46,19 +53,43 @@ public class ConditionTest
     }
 
     @Test
-    public void testVerifyArgsThrows()
+    public void testVerify_GivenUnsetOperator() throws TransformConfigurationException
     {
-        Condition c = new Condition();
-        tryVerifyArgsCheckErrorCode(c, ErrorCode.CONDITION_INVALID_ARGUMENT);
-        c.setOperator(Operator.NONE);
-        tryVerifyArgsCheckErrorCode(c, ErrorCode.CONDITION_INVALID_ARGUMENT);
+        m_ExpectedException.expect(TransformConfigurationException.class);
+        m_ExpectedException.expectMessage("Invalid operator for condition");
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCode.CONDITION_INVALID_ARGUMENT));
 
-        c.setOperator(Operator.LT);
-        tryVerifyArgsCheckErrorCode(c, ErrorCode.CONDITION_INVALID_ARGUMENT);
-        c.setValue("");
-        tryVerifyArgsCheckErrorCode(c, ErrorCode.CONDITION_INVALID_ARGUMENT);
+        new Condition().verify();
     }
 
+    @Test
+    public void testVerify_GivenOperatorIsNone() throws TransformConfigurationException
+    {
+        m_ExpectedException.expect(TransformConfigurationException.class);
+        m_ExpectedException.expectMessage("Invalid operator for condition");
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCode.CONDITION_INVALID_ARGUMENT));
+
+        Condition condition = new Condition();
+        condition.setOperator(Operator.NONE);
+        condition.verify();
+    }
+
+    @Test
+    public void testVerify_GivenEmptyValue() throws TransformConfigurationException
+    {
+        m_ExpectedException.expect(TransformConfigurationException.class);
+        m_ExpectedException.expectMessage(
+                "Invalid condition value: cannot parse a double from string ''");
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCode.CONDITION_INVALID_ARGUMENT));
+
+        Condition condition = new Condition();
+        condition.setOperator(Operator.LT);
+        condition.setValue("");
+        condition.verify();
+    }
 
     @Test
     public void testSetValues()
@@ -72,19 +103,6 @@ public class ConditionTest
         cond = new Condition(Operator.EQ, "astring");
         assertEquals(Operator.EQ, cond.getOperator());
         assertEquals("astring", cond.getValue());
-    }
-
-    private void tryVerifyArgsCheckErrorCode(Condition condition, ErrorCode expected)
-    {
-        try
-        {
-            condition.verify();
-            fail(); // should throw
-        }
-        catch (TransformConfigurationException e)
-        {
-            assertEquals(expected, e.getErrorCode());
-        }
     }
 
     @Test

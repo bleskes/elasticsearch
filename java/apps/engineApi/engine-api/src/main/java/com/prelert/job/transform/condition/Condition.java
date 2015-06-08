@@ -28,6 +28,8 @@ package com.prelert.job.transform.condition;
 
 import java.util.Objects;
 
+import com.prelert.job.messages.Messages;
+import com.prelert.job.transform.TransformType;
 import com.prelert.job.transform.exceptions.TransformConfigurationException;
 import com.prelert.rs.data.ErrorCode;
 
@@ -42,7 +44,7 @@ import com.prelert.rs.data.ErrorCode;
 public class Condition
 {
     private Operator m_Op;
-    private String    m_FilterValue;
+    private String m_FilterValue;
 
     /**
      * Operation defaults to {@linkplain Operator#NONE}
@@ -66,8 +68,9 @@ public class Condition
     {
         if (m_Op == Operator.NONE)
         {
-            throw new TransformConfigurationException("Invalid operator for condition",
-                        ErrorCode.CONDITION_INVALID_ARGUMENT);
+            throw new TransformConfigurationException(
+                    Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_CONDITION_INVALID_OPERATOR),
+                    ErrorCode.CONDITION_INVALID_ARGUMENT);
         }
 
         if (m_Op.expectsANumericArgument())
@@ -78,9 +81,9 @@ public class Condition
             }
             catch (NumberFormatException nfe)
             {
-                throw new TransformConfigurationException(
-                        "Invalid condition value: cannot parse a double from string '" + m_FilterValue + "'",
-                        ErrorCode.CONDITION_INVALID_ARGUMENT);
+                String msg = Messages.getMessage(
+                        Messages.JOB_CONFIG_TRANSFORM_CONDITION_INVALID_VALUE, m_FilterValue);
+                throw new TransformConfigurationException(msg, ErrorCode.CONDITION_INVALID_ARGUMENT);
             }
         }
 

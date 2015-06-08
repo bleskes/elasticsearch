@@ -27,8 +27,12 @@
 
 package com.prelert.job.process.writer;
 
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -98,7 +102,7 @@ public class AbstractDataToProcessWriterTest
         TransformConfig tc = new TransformConfig();
         tc.setInputs(Arrays.asList("host", "metric"));
         tc.setOutputs(Arrays.asList("host-metric"));
-        tc.setTransform(TransformType.Names.CONCAT);
+        tc.setTransform(TransformType.Names.CONCAT_NAME);
 
         TransformConfigs transforms = new TransformConfigs(Arrays.asList(tc));
 
@@ -360,7 +364,7 @@ public class AbstractDataToProcessWriterTest
         TransformConfig concatTc = new TransformConfig();
         concatTc.setInputs(Arrays.asList("date", "time"));
         concatTc.setOutputs(Arrays.asList("datetime"));
-        concatTc.setTransform(TransformType.Names.CONCAT);
+        concatTc.setTransform(TransformType.Names.CONCAT_NAME);
 
         TransformConfig hrdTc = new TransformConfig();
         hrdTc.setInputs(Arrays.asList("domain"));
