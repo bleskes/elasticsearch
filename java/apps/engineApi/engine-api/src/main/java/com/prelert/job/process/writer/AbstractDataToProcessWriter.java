@@ -102,7 +102,7 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
 
         m_PostDateTransforms = new ArrayList<>();
         m_DateInputTransforms = new ArrayList<>();
-        m_LatestEpoch = 0;
+        m_LatestEpoch = statusReporter.getLatestRecordTime();
 
         m_ReadWriteArea = new String[3][];
     }
@@ -300,8 +300,6 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
             m_StatusReporter.reportOutOfOrderRecord(m_InFieldIndexes.size());
             return false;
         }
-        m_LatestEpoch = Math.max(m_LatestEpoch, epoch);
-
 
         // Now do the rest of the transforms
         if (!applyTransforms(m_PostDateTransforms))
@@ -309,9 +307,11 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
             return false;
         }
 
+        m_LatestEpoch = Math.max(m_LatestEpoch, epoch);
+
         m_RecordWriter.writeRecord(output);
         m_JobDataPersister.persistRecord(epoch, output);
-        m_StatusReporter.reportRecordWritten(numberOfFieldsRead);
+        m_StatusReporter.reportRecordWritten(numberOfFieldsRead, m_LatestEpoch);
 
         return true;
     }

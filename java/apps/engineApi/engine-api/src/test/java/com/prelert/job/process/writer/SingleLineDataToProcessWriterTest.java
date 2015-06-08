@@ -126,9 +126,12 @@ public class SingleLineDataToProcessWriterTest
         SingleLineDataToProcessWriter writer = createWriter();
 
         writer.write(inputStream);
+        verify(m_StatusReporter, times(1)).getLatestRecordTime();
         verify(m_StatusReporter, times(1)).startNewIncrementalCount();
         verify(m_StatusReporter, times(1)).setAnalysedFieldsPerRecord(1);
-        verify(m_StatusReporter, times(3)).reportRecordWritten(1);
+        verify(m_StatusReporter, times(1)).reportRecordWritten(1, 1430301600);
+        verify(m_StatusReporter, times(1)).reportRecordWritten(1, 1430305200);
+        verify(m_StatusReporter, times(1)).reportRecordWritten(1, 1430308800);
         verify(m_StatusReporter, times(1)).incrementalStats();
 
         List<String[]> expectedRecords = new ArrayList<>();
@@ -165,9 +168,11 @@ public class SingleLineDataToProcessWriterTest
         SingleLineDataToProcessWriter writer = createWriter();
 
         writer.write(inputStream);
+        verify(m_StatusReporter, times(1)).getLatestRecordTime();
         verify(m_StatusReporter, times(1)).startNewIncrementalCount();
         verify(m_StatusReporter, times(1)).setAnalysedFieldsPerRecord(1);
-        verify(m_StatusReporter, times(2)).reportRecordWritten(1);
+        verify(m_StatusReporter, times(1)).reportRecordWritten(1, 1430301600);
+        verify(m_StatusReporter, times(1)).reportRecordWritten(1, 1430308800);
         verify(m_StatusReporter, times(2)).reportFailedTransform();
         verify(m_StatusReporter, times(3)).reportDateParseError(1);
         verify(m_StatusReporter, times(1)).incrementalStats();
@@ -204,6 +209,7 @@ public class SingleLineDataToProcessWriterTest
         expectedRecords.add(new String[] {"time", "message", "."});
         assertWrittenRecordsEqualTo(expectedRecords);
 
+        verify(m_StatusReporter).getLatestRecordTime();
         verify(m_StatusReporter).finishReporting();
         verify(m_DataPersister).flushRecords();
         verifyNoMoreInteractions(m_StatusReporter);

@@ -102,6 +102,7 @@ public class ElasticsearchStatusReporter extends StatusReporter
             updates.put(DataCounts.MISSING_FIELD_COUNT, getMissingFieldErrorCount());
             updates.put(DataCounts.OUT_OF_ORDER_TIME_COUNT, getOutOfOrderRecordCount());
             updates.put(DataCounts.FAILED_TRANSFORM_COUNT, getFailedTransformCount());
+            updates.put(DataCounts.LATEST_RECORD_TIME, getLatestRecordTime());
 
             Map<String, Object> counts = new HashMap<>();
             counts.put(JobDetails.COUNTS, updates);

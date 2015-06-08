@@ -30,9 +30,12 @@ package com.prelert.job.process.writer;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyLong;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -155,6 +158,34 @@ public class CsvDataToProcessWriterTest
     }
 
     @Test
+    public void testWrite_GivenTimeFormatIsEpochAndAllRecordsAreOutOfOrder()
+            throws MissingFieldException, HighProportionOfBadTimestampsException,
+            OutOfOrderRecordsException, IOException
+    {
+        StringBuilder input = new StringBuilder();
+        input.append("time,metric,value\n");
+        input.append("1,foo,1.0\n");
+        input.append("2,bar,2.0\n");
+        InputStream inputStream = createInputStream(input.toString());
+
+        when(m_StatusReporter.getLatestRecordTime()).thenReturn(5L);
+        CsvDataToProcessWriter writer = createWriter();
+
+        writer.write(inputStream);
+        verify(m_StatusReporter, times(1)).startNewIncrementalCount();
+
+        List<String[]> expectedRecords = new ArrayList<>();
+        // The final field is the control field
+        expectedRecords.add(new String[] {"time", "value", "."});
+        assertWrittenRecordsEqualTo(expectedRecords);
+
+        verify(m_StatusReporter, times(2)).reportOutOfOrderRecord(2);
+        verify(m_StatusReporter, never()).reportRecordWritten(anyLong(), anyLong());
+        verify(m_StatusReporter).finishReporting();
+        verify(m_DataPersister).flushRecords();
+    }
+
+    @Test
     public void testWrite_GivenTimeFormatIsEpochAndSomeTimestampsWithinLatencySomeOutOfOrder()
             throws MissingFieldException, HighProportionOfBadTimestampsException,
             OutOfOrderRecordsException, IOException
@@ -220,7 +251,10 @@ public class CsvDataToProcessWriterTest
         assertWrittenRecordsEqualTo(expectedRecords);
 
         verify(m_StatusReporter, times(1)).reportMissingField();
-        verify(m_StatusReporter, times(4)).reportRecordWritten(2);
+        verify(m_StatusReporter, times(1)).reportRecordWritten(2, 1);
+        verify(m_StatusReporter, times(1)).reportRecordWritten(2, 2);
+        verify(m_StatusReporter, times(1)).reportRecordWritten(2, 3);
+        verify(m_StatusReporter, times(1)).reportRecordWritten(2, 4);
         verify(m_StatusReporter, times(1)).reportDateParseError(2);
         verify(m_StatusReporter).finishReporting();
         verify(m_DataPersister).flushRecords();

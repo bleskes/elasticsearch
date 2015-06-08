@@ -60,6 +60,7 @@ public class DataCounts
     public static final String MISSING_FIELD_COUNT = "missingFieldCount";
     public static final String OUT_OF_ORDER_TIME_COUNT = "outOfOrderTimeStampCount";
     public static final String FAILED_TRANSFORM_COUNT = "failedTransformCount";
+    public static final String LATEST_RECORD_TIME = "latestRecordTime";
 
 
     private Long m_BucketCount;
@@ -71,6 +72,7 @@ public class DataCounts
     private long m_MissingFieldCount;
     private long m_OutOfOrderTimeStampCount;
     private long m_FailedTransformCount;
+    private long m_LatestRecordTime;
 
     public DataCounts()
     {
@@ -88,6 +90,7 @@ public class DataCounts
         m_MissingFieldCount = lhs.m_MissingFieldCount;
         m_OutOfOrderTimeStampCount = lhs.m_OutOfOrderTimeStampCount;
         m_FailedTransformCount = lhs.m_FailedTransformCount;
+        m_LatestRecordTime = lhs.m_LatestRecordTime;
     }
 
 
@@ -301,6 +304,19 @@ public class DataCounts
         this.m_FailedTransformCount = failedTransformCount;
     }
 
+    /**
+     * The time as Epoch of the latest record seen.
+     * @return Latest record time as Epoch (seconds).
+     */
+    public long getLatestRecordTime()
+    {
+        return m_LatestRecordTime;
+    }
+
+    public void setLatestRecordTime(long latestRecordTime)
+    {
+        m_LatestRecordTime = latestRecordTime;
+    }
 
     public void incrementFailedTransformCount(long additional)
     {
@@ -334,7 +350,8 @@ public class DataCounts
                 this.m_InvalidDateCount == that.m_InvalidDateCount &&
                 this.m_MissingFieldCount == that.m_MissingFieldCount &&
                 this.m_OutOfOrderTimeStampCount == that.m_OutOfOrderTimeStampCount &&
-                this.m_FailedTransformCount == that.m_FailedTransformCount;
+                this.m_FailedTransformCount == that.m_FailedTransformCount &&
+                this.m_LatestRecordTime == that.m_LatestRecordTime;
     }
 
     @Override
@@ -342,6 +359,6 @@ public class DataCounts
     {
         return Objects.hash(m_BucketCount, m_ProcessedRecordCount, m_ProcessedFieldCount,
                 m_InputBytes, m_InputFieldCount, m_InvalidDateCount, m_MissingFieldCount,
-                m_OutOfOrderTimeStampCount, m_FailedTransformCount);
+                m_OutOfOrderTimeStampCount, m_FailedTransformCount, m_LatestRecordTime);
     }
 }

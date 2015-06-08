@@ -27,7 +27,8 @@
 
 package com.prelert.job.status;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.mock;
 
 import java.beans.IntrospectionException;
@@ -111,13 +112,14 @@ public class StatusReporterTest
 
         reporter.setAnalysedFieldsPerRecord(3);
 
-        reporter.reportRecordWritten(5);
+        reporter.reportRecordWritten(5, 1000);
         reporter.reportFailedTransform();
         assertEquals(1, reporter.incrementalStats().getInputRecordCount());
         assertEquals(5, reporter.incrementalStats().getInputFieldCount());
         assertEquals(1, reporter.incrementalStats().getProcessedRecordCount());
         assertEquals(3, reporter.incrementalStats().getProcessedFieldCount());
         assertEquals(1, reporter.incrementalStats().getFailedTransformCount());
+        assertEquals(1000, reporter.incrementalStats().getLatestRecordTime());
 
         assertEquals(reporter.incrementalStats(), reporter.runningTotalStats());
 
@@ -134,18 +136,20 @@ public class StatusReporterTest
         DummyStatusReporter reporter = new DummyStatusReporter(mock(UsageReporter.class));
         reporter.setAnalysedFieldsPerRecord(3);
 
-        reporter.reportRecordWritten(5);
+        reporter.reportRecordWritten(5, 2000);
         assertEquals(1, reporter.incrementalStats().getInputRecordCount());
         assertEquals(5, reporter.incrementalStats().getInputFieldCount());
         assertEquals(1, reporter.incrementalStats().getProcessedRecordCount());
         assertEquals(3, reporter.incrementalStats().getProcessedFieldCount());
+        assertEquals(2000, reporter.incrementalStats().getLatestRecordTime());
 
-        reporter.reportRecordWritten(5);
+        reporter.reportRecordWritten(5, 3000);
         reporter.reportMissingField();
         assertEquals(2, reporter.incrementalStats().getInputRecordCount());
         assertEquals(10, reporter.incrementalStats().getInputFieldCount());
         assertEquals(2, reporter.incrementalStats().getProcessedRecordCount());
         assertEquals(5, reporter.incrementalStats().getProcessedFieldCount());
+        assertEquals(3000, reporter.incrementalStats().getLatestRecordTime());
 
         assertEquals(reporter.incrementalStats(), reporter.runningTotalStats());
     }
@@ -156,11 +160,6 @@ public class StatusReporterTest
         for(PropertyDescriptor propertyDescriptor :
             Introspector.getBeanInfo(DataCounts.class, Object.class).getPropertyDescriptors())
         {
-            if (propertyDescriptor.getDisplayName().equals("analysedFieldsPerRecord"))
-            {
-                continue;
-            }
-
             assertEquals(new Long(0), propertyDescriptor.getReadMethod().invoke(stats));
         }
     }

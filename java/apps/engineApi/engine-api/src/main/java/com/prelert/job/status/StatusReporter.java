@@ -124,20 +124,23 @@ public abstract class StatusReporter
      * @param inputFieldCount Number of fields in the record.
      * Note this is not the number of processed fields (by field etc)
      * but the actual number of fields in the record
+     * @param latestRecordTime The time of the latest record written
      *
      * @throws HighProportionOfBadTimestampsException
      * @throws OutOfOrderRecordsException
      */
-    public void reportRecordWritten(long inputFieldCount)
+    public void reportRecordWritten(long inputFieldCount, long latestRecordTime)
     throws HighProportionOfBadTimestampsException, OutOfOrderRecordsException
     {
         m_UsageReporter.addFieldsRecordsRead(inputFieldCount);
 
         m_TotalRecordStats.incrementInputFieldCount(inputFieldCount);
         m_TotalRecordStats.incrementProcessedRecordCount(1);
+        m_TotalRecordStats.setLatestRecordTime(latestRecordTime);
 
         m_IncrementalRecordStats.incrementInputFieldCount(inputFieldCount);
         m_IncrementalRecordStats.incrementProcessedRecordCount(1);
+        m_IncrementalRecordStats.setLatestRecordTime(latestRecordTime);
 
         // report at various boundaries
         long totalRecords = getInputRecordCount() ;
@@ -262,6 +265,11 @@ public abstract class StatusReporter
     public long getFailedTransformCount()
     {
         return m_TotalRecordStats.getFailedTransformCount();
+    }
+
+    public long getLatestRecordTime()
+    {
+        return m_TotalRecordStats.getLatestRecordTime();
     }
 
     public long getProcessedFieldCount()
