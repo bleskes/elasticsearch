@@ -49,6 +49,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -101,7 +102,7 @@ public class PublishClusterStateAction extends AbstractComponent {
             }
             nodesToPublishTo.add(node);
         }
-        publish(clusterChangedEvent, nodesToPublishTo, minMasterNodes, new AckClusterStatePublishResponseHandler(nodesToPublishTo, ackListener));
+        publish(clusterChangedEvent, minMasterNodes, nodesToPublishTo, new AckClusterStatePublishResponseHandler(nodesToPublishTo, ackListener));
     }
 
     private void publish(final ClusterChangedEvent clusterChangedEvent, int minMasterNodes, final Set<DiscoveryNode> nodesToPublishTo,
@@ -352,34 +353,82 @@ public class PublishClusterStateAction extends AbstractComponent {
         }
     }
 
+
+    class PublishControler {
+
+        private final ClusterState clusterState;
+        private final TimeValue publishTimeout;
+        int neededMastersToCommit;
+        int pendingMasterNodes;
+        final ArrayList<DiscoveryNode> publishAckedBeforeCommit = new ArrayList<>();
+        final AtomicBoolean operationTimedOut = new AtomicBoolean();
+        final CountDownLatch comittedOrFailed = new CountDownLatch(1);
+
+        private PublishControler(ClusterState clusterState, int minMasterNodes, int totalMasterNodes, TimeValue publishTimeout) {
+            this.clusterState = clusterState;
+            this.publishTimeout = publishTimeout;
+            this.neededMastersToCommit = Math.max(0, minMasterNodes - 1); // we are one of the master nodes
+            this.pendingMasterNodes = totalMasterNodes - 1;
+        }
+
+        synchronized public void onNodePublishAck(DiscoveryNode node) {
+
+        }
+
+        synchronized public void onNodePulishFailed(DiscoveryNode node, Throwable t) {
+
+        }
+
+        synchronized public void onNodeCommitAck(DiscoveryNode node) {
+
+        }
+
+    }
+
+    class CommitControler {
+
+    }
+
     private class PublishCommitListener {
         private final ClusterState clusterState;
         private final TimeValue publishTimeout;
         final BlockingClusterStatePublishResponseHandler responseHandler;
         int neededMastersToCommit;
+        final int pendingMasterNodes;
         final ArrayList<DiscoveryNode> publishAckedBeforeCommit = new ArrayList<>();
         final AtomicBoolean operationTimedOut = new AtomicBoolean();
+        final CountDownLatch completed
 
-        private PublishCommitListener(ClusterState clusterState, int minMasterNodes, TimeValue publishTimeout,
+        private PublishCommitListener(ClusterState clusterState, int minMasterNodes, int totalMasterNodes, TimeValue publishTimeout,
                                       BlockingClusterStatePublishResponseHandler responseHandler) {
             this.clusterState = clusterState;
             this.publishTimeout = publishTimeout;
             this.responseHandler = responseHandler;
             this.neededMastersToCommit = Math.max(0, minMasterNodes - 1); // we are one of the master nodes
+            this.pendingMasterNodes = totalMasterNodes - 1;
         }
 
         public synchronized void onNodeAckedPublish(DiscoveryNode node) {
             if (neededMastersToCommit > 0) {
                 publishAckedBeforeCommit.add(node);
-                if (node.isMasterNode() && --neededMastersToCommit == 0) {
-                    for (DiscoveryNode nodeToCommit : publishAckedBeforeCommit) {
-                        sendCommit(nodeToCommit);
-                    }
-                    publishAckedBeforeCommit.clear();
-                }
+                handleMasterNode(node);
             } else {
                 sendCommit(node);
             }
+        }
+
+        private void handleMasterNode(DiscoveryNode node) {
+            if (node.isMasterNode() && --neededMastersToCommit == 0) {
+                logger.trace("committing version [{}]", clusterState.version());
+                for (DiscoveryNode nodeToCommit : publishAckedBeforeCommit) {
+                    sendCommit(nodeToCommit);
+                }
+                publishAckedBeforeCommit.clear();
+            }
+        }
+
+        public synchronized void onNodeFailure(DiscoveryNode node) {
+
         }
 
         public void markAsTimedOut() {
