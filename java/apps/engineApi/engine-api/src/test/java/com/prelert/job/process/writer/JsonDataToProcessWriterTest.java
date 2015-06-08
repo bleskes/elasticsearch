@@ -319,8 +319,10 @@ public class JsonDataToProcessWriterTest
         assertWrittenRecordsEqualTo(expectedRecords);
 
         verify(m_StatusReporter, times(1)).reportMissingFields(1L);
-        verify(m_StatusReporter, times(3)).reportRecordWritten(1);
-        verify(m_StatusReporter, times(1)).reportRecordWritten(2);
+        verify(m_StatusReporter, times(1)).reportRecordWritten(2, 1);
+        verify(m_StatusReporter, times(1)).reportRecordWritten(1, 2);
+        verify(m_StatusReporter, times(1)).reportRecordWritten(1, 3);
+        verify(m_StatusReporter, times(1)).reportRecordWritten(1, 4);
         verify(m_StatusReporter, times(1)).reportDateParseError(3);
         verify(m_StatusReporter).finishReporting();
         verify(m_DataPersister).flushRecords();
