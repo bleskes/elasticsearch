@@ -33,6 +33,7 @@ import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.prelert.job.messages.Messages;
 import com.prelert.job.transform.condition.Condition;
 import com.prelert.job.transform.exceptions.TransformConfigurationException;
 import com.prelert.job.verification.Verifiable;
@@ -158,7 +159,8 @@ public class TransformConfig implements Verifiable
             if (m_Condition == null)
             {
                 throw new TransformConfigurationException(
-                        "A condition must be defined for transform " + type.prettyName(),
+                        Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_CONDITION_REQUIRED,
+                                type.prettyName()),
                         ErrorCode.TRANSFORM_REQUIRES_CONDITION);
             }
 

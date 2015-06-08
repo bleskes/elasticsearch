@@ -35,23 +35,16 @@ import com.prelert.rs.data.ErrorCode;
  */
 public class TransformConfigurationException extends JobConfigurationException
 {
-	private static final long serialVersionUID = -8930949236695246267L;
+    private static final long serialVersionUID = -8930949236695246267L;
 
-
-	/**
-	 * Create a new TransformConfigurationException.
-	 *
-	 * @param message Details of error explaining the context
-	 * @param errorCode See {@linkplain com.prelert.rs.data.ErrorCode}
-	 */
-	public TransformConfigurationException(String message, ErrorCode errorCode)
-	{
-		super(message, errorCode);
-	}
-
-	public TransformConfigurationException(String message, ErrorCode errorCode, Throwable cause)
-	{
-		super(message, errorCode, cause);
-	}
-
+    /**
+     * Create a new TransformConfigurationException.
+     *
+     * @param message Details of error explaining the context
+     * @param errorCode See {@linkplain com.prelert.rs.data.ErrorCode}
+     */
+    public TransformConfigurationException(String message, ErrorCode errorCode)
+    {
+        super(message, errorCode);
+    }
 }
