@@ -150,9 +150,11 @@ public class TransformFactory
                                             writeIndicies, logger);
                 }
             case LOWERCASE:
-                return CaseTransform.createLowerCase(readIndicies, writeIndicies, logger);
+                return StringTransform.createLowerCase(readIndicies, writeIndicies, logger);
             case UPPERCASE:
-                return CaseTransform.createUpperCase(readIndicies, writeIndicies, logger);
+                return StringTransform.createUpperCase(readIndicies, writeIndicies, logger);
+            case TRIM:
+                return StringTransform.createTrim(readIndicies, writeIndicies, logger);
             default:
                 // This code will never be hit it's to
                 // keep the compiler happy.

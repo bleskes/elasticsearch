@@ -34,23 +34,29 @@ import org.apache.log4j.Logger;
 
 import com.google.common.base.Preconditions;
 
-public class CaseTransform extends Transform
+public class StringTransform extends Transform
 {
     private final Function<String, String> m_ConvertFunction;
 
-    public static CaseTransform createLowerCase(List<TransformIndex> readIndicies,
+    public static StringTransform createLowerCase(List<TransformIndex> readIndicies,
             List<TransformIndex> writeIndicies, Logger logger)
     {
-        return new CaseTransform(s -> s.toLowerCase(), readIndicies, writeIndicies, logger);
+        return new StringTransform(s -> s.toLowerCase(), readIndicies, writeIndicies, logger);
     }
 
-    public static CaseTransform createUpperCase(List<TransformIndex> readIndicies,
+    public static StringTransform createUpperCase(List<TransformIndex> readIndicies,
             List<TransformIndex> writeIndicies, Logger logger)
     {
-        return new CaseTransform(s -> s.toUpperCase(), readIndicies, writeIndicies, logger);
+        return new StringTransform(s -> s.toUpperCase(), readIndicies, writeIndicies, logger);
     }
 
-    private CaseTransform(Function<String, String> convertFunction,
+    public static StringTransform createTrim(List<TransformIndex> readIndicies,
+            List<TransformIndex> writeIndicies, Logger logger)
+    {
+        return new StringTransform(s -> s.trim(), readIndicies, writeIndicies, logger);
+    }
+
+    private StringTransform(Function<String, String> convertFunction,
             List<TransformIndex> readIndicies, List<TransformIndex> writeIndicies, Logger logger)
     {
         super(readIndicies, writeIndicies, logger);

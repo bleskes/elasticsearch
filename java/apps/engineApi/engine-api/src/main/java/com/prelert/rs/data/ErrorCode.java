@@ -145,7 +145,7 @@ public enum ErrorCode
 	/**
 	 * The transform does not have the correct number of inputs
 	 */
-	INCORRECT_TRANSFORM_INPUT_COUNT(10202),
+	TRANSFORM_INVALID_INPUT_COUNT(10202),
 
     /**
      * If none of the outputs of a particular transform are used
@@ -188,6 +188,12 @@ public enum ErrorCode
      * Invalid condition argument
      */
     CONDITION_INVALID_ARGUMENT(10210),
+
+    /**
+     * Some transforms such as Regex require an argument when
+     * first constructed
+     */
+    TRANSFORM_INVALID_OUTPUT_COUNT(10211),
 
 	// Data store errors
 	/**

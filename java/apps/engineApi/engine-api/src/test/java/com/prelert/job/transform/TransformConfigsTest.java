@@ -103,7 +103,7 @@ public class TransformConfigsTest
     {
         m_ExpectedException.expect(TransformConfigurationException.class);
         m_ExpectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCode.INCORRECT_TRANSFORM_INPUT_COUNT));
+                ErrorCodeMatcher.hasErrorCode(ErrorCode.TRANSFORM_INVALID_INPUT_COUNT));
 
         List<TransformConfig> transforms = new ArrayList<>();
         transforms.add(createConcatTransform(null, Arrays.asList()));
