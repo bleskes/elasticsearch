@@ -28,8 +28,6 @@ package com.prelert.rs.resources;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -160,13 +158,11 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
         List<DataStreamerThread> threads = new ArrayList<>();
         for (String job : idSet)
         {
-            PipedInputStream pipedIn = new PipedInputStream();
-            PipedOutputStream pipedOut = new PipedOutputStream(pipedIn);
-            duplicator.addOutput(pipedOut);
+            InputStream duplicateInput = duplicator.createDuplicateStream();
 
             DataStreamer dataStreamer = new DataStreamer(jobManager());
             DataStreamerThread thread = new DataStreamerThread(dataStreamer, job, encoding,
-                                                                params, pipedIn);
+                                                                params, duplicateInput);
             threads.add(thread);
             thread.start();
         }
