@@ -32,6 +32,8 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
+import com.google.common.collect.Range;
+import com.prelert.job.messages.Messages;
 import com.prelert.job.transform.exceptions.TransformConfigurationException;
 import com.prelert.rs.data.ErrorCode;
 
@@ -42,13 +44,23 @@ import com.prelert.rs.data.ErrorCode;
  */
 public enum TransformType
 {
-    DOMAIN_SPLIT(Names.DOMAIN_SPLIT_NAME, 1, 0, 0, Arrays.asList("subDomain", "hrd")),
-    CONCAT(Names.CONCAT_NAME, Names.VARIADIC_ARGS, 0, 1, Arrays.asList("concat")),
-    REGEX_EXTRACT(Names.EXTRACT_NAME, 1, 1, 0, Arrays.asList("")),
-    REGEX_SPLIT(Names.SPLIT_NAME, 1, 1, 0, Arrays.asList("")),
-    EXCLUDE(Names.EXCLUDE_NAME, 1, 0, 0, Arrays.asList(), true),
-    LOWERCASE(Names.LOWERCASE_NAME, 1, 0, 0, Arrays.asList("lowercase")),
-    UPPERCASE(Names.UPPERCASE_NAME, 1, 0, 0, Arrays.asList("uppercase"));
+    // Name, arity, arguments, outputs, default output names, has condition
+    DOMAIN_SPLIT(Names.DOMAIN_SPLIT_NAME, Range.singleton(1), Range.singleton(0),
+            Range.closed(1, 2), Arrays.asList("subDomain", "hrd")),
+    CONCAT(Names.CONCAT_NAME, Range.atLeast(1), Range.closed(0, 1), Range.singleton(1),
+            Arrays.asList("concat")),
+    REGEX_EXTRACT(Names.EXTRACT_NAME, Range.singleton(1), Range.singleton(1), Range.atLeast(1),
+            Arrays.asList("extract")),
+    REGEX_SPLIT(Names.SPLIT_NAME, Range.singleton(1), Range.singleton(1), Range.atLeast(1),
+            Arrays.asList("split")),
+    EXCLUDE(Names.EXCLUDE_NAME, Range.atLeast(1), Range.singleton(0), Range.singleton(0),
+            Arrays.asList(), true),
+    LOWERCASE(Names.LOWERCASE_NAME, Range.singleton(1), Range.singleton(0), Range.singleton(1),
+            Arrays.asList("lowercase")),
+    UPPERCASE(Names.UPPERCASE_NAME, Range.singleton(1), Range.singleton(0), Range.singleton(1),
+            Arrays.asList("uppercase")),
+    TRIM(Names.TRIM_NAME, Range.singleton(1), Range.singleton(0), Range.singleton(1),
+            Arrays.asList("trim"));
 
     /**
      * Enums cannot use static fields in their constructors as the
@@ -65,73 +77,64 @@ public enum TransformType
         public static final String EXCLUDE_NAME = "exclude";
         public static final String LOWERCASE_NAME = "lowercase";
         public static final String UPPERCASE_NAME = "uppercase";
-
-        private static final int VARIADIC_ARGS = -1;
+        public static final String TRIM_NAME = "trim";
 
         private Names()
         {
         }
     }
 
-    private final int m_Arity;
-    private final int m_ArgumentCount;
-    private final int m_OptionalArgumentCount;
+    private final Range<Integer> m_ArityRange;
+    private final Range<Integer> m_ArgumentsRange;
+    private final Range<Integer> m_OutputsRange;
     private final String m_PrettyName;
     private final List<String> m_DefaultOutputNames;
     private final boolean m_HasCondition;
 
-    private TransformType(String prettyName, int arity, int requiredArgumentCount,
-                        int optionalArgumentCount, List<String> defaultOutputNames)
+    private TransformType(String prettyName, Range<Integer> arityRange,
+            Range<Integer> argumentsRange, Range<Integer> outputsRange,
+            List<String> defaultOutputNames)
     {
-        m_Arity = arity;
-        m_ArgumentCount = requiredArgumentCount;
-        m_OptionalArgumentCount = optionalArgumentCount;
-        m_PrettyName = prettyName;
-        m_DefaultOutputNames = defaultOutputNames;
-        m_HasCondition = false;
+        this(prettyName, arityRange, argumentsRange, outputsRange, defaultOutputNames, false);
     }
 
-    private TransformType(String prettyName, int arity, int requiredArgumentCount,
-            int optionalArgumentCount, List<String> defaultOutputNames, boolean hasCondition)
+    private TransformType(String prettyName, Range<Integer> arityRange,
+            Range<Integer> argumentsRange, Range<Integer> outputsRange,
+            List<String> defaultOutputNames, boolean hasCondition)
     {
-        m_Arity = arity;
-        m_ArgumentCount = requiredArgumentCount;
-        m_OptionalArgumentCount = optionalArgumentCount;
+        m_ArityRange = arityRange;
+        m_ArgumentsRange = argumentsRange;
+        m_OutputsRange = outputsRange;
         m_PrettyName = prettyName;
         m_DefaultOutputNames = defaultOutputNames;
         m_HasCondition = hasCondition;
     }
 
     /**
-     * The number of inputs the transform expects.
-     * Arity of -1 means the function is variadic e.g. concat
+     * The count range of inputs the transform expects.
      * @return
      */
-    public int arity()
+    public Range<Integer> arityRange()
     {
-        return m_Arity;
+        return m_ArityRange;
     }
 
     /**
-     * The number of arguments required by the transform
-     * when it is created.
-     * e.g. RegexExtract requires 1 argument that is the actual regex
+     * The count range of arguments the transform expects.
      * @return
      */
-    public int argumentCount()
+    public Range<Integer> argumentsRange()
     {
-        return m_ArgumentCount;
+        return m_ArgumentsRange;
     }
 
     /**
-     * The number of optional arguments the transform has.
-     * Certain transforms have an optional argument
-     * e.g. concat can take an optional delimiter.
+     * The count range of outputs the transform expects.
      * @return
      */
-    public int optionalArgumentCount()
+    public Range<Integer> outputsRange()
     {
-        return m_OptionalArgumentCount;
+        return m_OutputsRange;
     }
 
     public String prettyName()
@@ -151,48 +154,57 @@ public enum TransformType
 
     public boolean verify(TransformConfig tc) throws TransformConfigurationException
     {
-        if (tc.getInputs() == null)
-        {
-            String msg = "Function arity error: no inputs defined";
-            throw new TransformConfigurationException(msg, ErrorCode.INCORRECT_TRANSFORM_INPUT_COUNT);
-        }
-
-        if (tc.getArguments().size() < m_ArgumentCount)
-        {
-            String msg = String.format("Transform type %s must be defined with at least %d arguments",
-                    tc.getTransform(), m_ArgumentCount);
-            throw new TransformConfigurationException(msg, ErrorCode.TRANSFORM_INVALID_ARGUMENT_COUNT);
-        }
-        else if (tc.getArguments().size() > m_ArgumentCount + m_OptionalArgumentCount)
-        {
-            String msg = String.format("Transform type %s must be defined with at most %d arguments",
-                    tc.getTransform(), m_ArgumentCount + m_OptionalArgumentCount);
-            throw new TransformConfigurationException(msg, ErrorCode.TRANSFORM_INVALID_ARGUMENT_COUNT);
-        }
-
-        if (m_Arity == Names.VARIADIC_ARGS)
-        {
-            if (!tc.getInputs().isEmpty())
-            {
-                return true;
-            }
-            else
-            {
-                String msg = "Function arity error: expected at least one argument, got 0";
-                throw new TransformConfigurationException(msg, ErrorCode.INCORRECT_TRANSFORM_INPUT_COUNT);
-            }
-        }
-
-        if (tc.getInputs().size() != m_Arity)
-        {
-            String msg = "Function arity error: expected " + m_Arity + " arguments, got "
-                        + tc.getInputs().size();
-            throw new TransformConfigurationException(msg, ErrorCode.INCORRECT_TRANSFORM_INPUT_COUNT);
-        }
-
+        checkInputs(tc);
+        checkArguments(tc);
+        checkOutputs(tc);
         return true;
     }
 
+    private void checkInputs(TransformConfig tc) throws TransformConfigurationException
+    {
+        List<String> inputs = tc.getInputs();
+        int inputsSize = (inputs == null) ? 0 : inputs.size();
+        if (!m_ArityRange.contains(inputsSize))
+        {
+            String msg = Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_INVALID_INPUT_COUNT,
+                    tc.getTransform(), rangeAsString(m_ArityRange), inputsSize);
+            throw new TransformConfigurationException(msg, ErrorCode.TRANSFORM_INVALID_INPUT_COUNT);
+        }
+    }
+
+    private void checkArguments(TransformConfig tc) throws TransformConfigurationException
+    {
+        List<String> arguments = tc.getArguments();
+        int argumentsSize = (arguments == null) ? 0 : arguments.size();
+        if (!m_ArgumentsRange.contains(argumentsSize))
+        {
+            String msg = Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_INVALID_ARGUMENT_COUNT,
+                    tc.getTransform(), rangeAsString(m_ArgumentsRange), argumentsSize);
+            throw new TransformConfigurationException(msg, ErrorCode.TRANSFORM_INVALID_ARGUMENT_COUNT);
+        }
+    }
+
+    private void checkOutputs(TransformConfig tc) throws TransformConfigurationException
+    {
+        List<String> outputs = tc.getOutputs();
+        int outputsSize = (outputs == null) ? 0 : outputs.size();
+        if (!m_OutputsRange.contains(outputsSize))
+        {
+            String msg = Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_INVALID_OUTPUT_COUNT,
+                    tc.getTransform(), rangeAsString(m_OutputsRange), outputsSize);
+            throw new TransformConfigurationException(msg, ErrorCode.TRANSFORM_INVALID_OUTPUT_COUNT);
+        }
+    }
+
+    private static String rangeAsString(Range<Integer> range)
+    {
+        if (range.hasLowerBound() && range.hasUpperBound()
+                && range.lowerEndpoint() == range.upperEndpoint())
+        {
+            return String.valueOf(range.lowerEndpoint());
+        }
+        return range.toString();
+    }
 
     @Override
     public String toString()
@@ -222,8 +234,8 @@ public enum TransformType
         }
 
         throw new TransformConfigurationException(
-                                "Unknown TransformType '" + prettyName + "'",
-                                ErrorCode.UNKNOWN_TRANSFORM);
+                Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_UNKNOWN_TYPE, prettyName),
+                ErrorCode.UNKNOWN_TRANSFORM);
     }
 
 }

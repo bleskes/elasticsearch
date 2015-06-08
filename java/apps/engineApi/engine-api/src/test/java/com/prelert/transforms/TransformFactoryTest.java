@@ -50,108 +50,91 @@ import com.prelert.transforms.Transform.TransformIndex;
 
 public class TransformFactoryTest {
 
-	@Test
-	public void testIndiciesMapping() throws TransformConfigurationException
-	{
-		TransformConfig conf = new TransformConfig();
-		conf.setInputs(Arrays.asList("field1", "field2"));
-		conf.setOutputs(Arrays.asList("concatted"));
-		conf.setTransform(TransformType.CONCAT.prettyName());
+    @Test
+    public void testIndiciesMapping() throws TransformConfigurationException
+    {
+        TransformConfig conf = new TransformConfig();
+        conf.setInputs(Arrays.asList("field1", "field2"));
+        conf.setOutputs(Arrays.asList("concatted"));
+        conf.setTransform(TransformType.CONCAT.prettyName());
 
-		Map<String, Integer> inputMap = new HashMap<>();
-		inputMap.put("field1", 5);
-		inputMap.put("field2", 3);
+        Map<String, Integer> inputMap = new HashMap<>();
+        inputMap.put("field1", 5);
+        inputMap.put("field2", 3);
 
-		Map<String, Integer> scratchMap = new HashMap<>();
+        Map<String, Integer> scratchMap = new HashMap<>();
 
-		Map<String, Integer> outputMap = new HashMap<>();
-		outputMap.put("concatted", 2);
+        Map<String, Integer> outputMap = new HashMap<>();
+        outputMap.put("concatted", 2);
 
-		Transform tr = new TransformFactory().create(conf, inputMap, scratchMap,
-		                                    outputMap, mock(Logger.class));
-		assertTrue(tr instanceof Concat);
+        Transform tr = new TransformFactory().create(conf, inputMap, scratchMap,
+                                            outputMap, mock(Logger.class));
+        assertTrue(tr instanceof Concat);
 
-		List<TransformIndex> inputIndicies = tr.getReadIndicies();
-		assertEquals(inputIndicies.get(0), new TransformIndex(0, 5));
-		assertEquals(inputIndicies.get(1), new TransformIndex(0, 3));
+        List<TransformIndex> inputIndicies = tr.getReadIndicies();
+        assertEquals(inputIndicies.get(0), new TransformIndex(0, 5));
+        assertEquals(inputIndicies.get(1), new TransformIndex(0, 3));
 
-		List<TransformIndex> outputIndicies = tr.getWriteIndicies();
-		assertEquals(outputIndicies.get(0), new TransformIndex(2, 2));
-	}
+        List<TransformIndex> outputIndicies = tr.getWriteIndicies();
+        assertEquals(outputIndicies.get(0), new TransformIndex(2, 2));
+    }
 
-	@Test
-	public void testConcatWithOptionalArgs() throws TransformConfigurationException
-	{
-	    TransformConfig conf = new TransformConfig();
-	    conf.setTransform(TransformType.CONCAT.prettyName());
-	    conf.setInputs(Arrays.asList("field1", "field2"));
-	    conf.setOutputs(Arrays.asList("concatted"));
+    @Test
+    public void testConcatWithOptionalArgs() throws TransformConfigurationException
+    {
+        TransformConfig conf = new TransformConfig();
+        conf.setTransform(TransformType.CONCAT.prettyName());
+        conf.setInputs(Arrays.asList("field1", "field2"));
+        conf.setOutputs(Arrays.asList("concatted"));
 
-	    Map<String, Integer> inputMap = new HashMap<>();
-	    inputMap.put("field1", 5);
-	    inputMap.put("field2", 3);
+        Map<String, Integer> inputMap = new HashMap<>();
+        inputMap.put("field1", 5);
+        inputMap.put("field2", 3);
 
-	    Map<String, Integer> scratchMap = new HashMap<>();
+        Map<String, Integer> scratchMap = new HashMap<>();
 
-	    Map<String, Integer> outputMap = new HashMap<>();
-	    outputMap.put("concatted", 2);
+        Map<String, Integer> outputMap = new HashMap<>();
+        outputMap.put("concatted", 2);
 
-	    Transform tr = new TransformFactory().create(conf, inputMap, scratchMap,
-	            outputMap, mock(Logger.class));
-	    assertTrue(tr instanceof Concat);
-	    assertEquals(null, ((Concat)tr).getDelimiter());
+        Transform tr = new TransformFactory().create(conf, inputMap, scratchMap,
+                outputMap, mock(Logger.class));
+        assertTrue(tr instanceof Concat);
+        assertEquals(null, ((Concat)tr).getDelimiter());
 
-	    conf.setArguments(Arrays.asList("delimiter"));
-	    tr = new TransformFactory().create(conf, inputMap, scratchMap,
-	            outputMap, mock(Logger.class));
-	    assertTrue(tr instanceof Concat);
-	    assertEquals("delimiter", ((Concat)tr).getDelimiter());
-	}
+        conf.setArguments(Arrays.asList("delimiter"));
+        tr = new TransformFactory().create(conf, inputMap, scratchMap,
+                outputMap, mock(Logger.class));
+        assertTrue(tr instanceof Concat);
+        assertEquals("delimiter", ((Concat)tr).getDelimiter());
+    }
 
-	@Test
-	public void testAllTypesCreated() throws TransformConfigurationException
-	{
-		EnumSet<TransformType> all = EnumSet.allOf(TransformType.class);
+    @Test
+    public void testAllTypesCreated() throws TransformConfigurationException
+    {
+        EnumSet<TransformType> all = EnumSet.allOf(TransformType.class);
 
-		Map<String, Integer> inputIndicies = new HashMap<>();
-		Map<String, Integer> scratchMap = new HashMap<>();
-		Map<String, Integer> outputIndicies = new HashMap<>();
+        Map<String, Integer> inputIndicies = new HashMap<>();
+        Map<String, Integer> scratchMap = new HashMap<>();
+        Map<String, Integer> outputIndicies = new HashMap<>();
 
-		for (TransformType type : all)
-		{
-			TransformConfig conf = new TransformConfig();
-			conf.setInputs(new ArrayList<String>());
-			conf.setOutputs(new ArrayList<String>());
-			conf.setTransform(type.prettyName());
+        for (TransformType type : all)
+        {
+            TransformConfig conf = TransformTestUtils.createValidTransform(type);
+            conf.getInputs().stream().forEach(input -> inputIndicies.put(input, 0));
+            conf.getOutputs().stream().forEach(output -> outputIndicies.put(output, 0));
 
-			if (type.hasCondition())
-			{
-			    conf.setCondition(new Condition(Operator.GT, "100"));
-			}
-			else
-			{
-			    List<String> args = new ArrayList<>();
-			    for (int i=0; i<type.argumentCount(); i++)
-			    {
-			        args.add(Integer.toString(i));
-			    }
-			    conf.setArguments(args);
-			}
+            // throws IllegalArgumentException if it doesn't handle the type
+            new TransformFactory().create(conf, inputIndicies, scratchMap,
+                                outputIndicies, mock(Logger.class));
+        }
+    }
 
-
-
-			// throws IllegalArgumentException if it doesn't handle the type
-			new TransformFactory().create(conf, inputIndicies, scratchMap,
-			                    outputIndicies, mock(Logger.class));
-		}
-	}
-
-	@Test
-	public void testExcludeTransformsCreated() throws TransformConfigurationException
-	{
-	    Map<String, Integer> inputIndicies = new HashMap<>();
-	    Map<String, Integer> scratchMap = new HashMap<>();
-	    Map<String, Integer> outputIndicies = new HashMap<>();
+    @Test
+    public void testExcludeTransformsCreated() throws TransformConfigurationException
+    {
+        Map<String, Integer> inputIndicies = new HashMap<>();
+        Map<String, Integer> scratchMap = new HashMap<>();
+        Map<String, Integer> outputIndicies = new HashMap<>();
 
 
         TransformConfig conf = new TransformConfig();
@@ -176,6 +159,6 @@ public class TransformFactoryTest {
 
         assertEquals(Operator.MATCH, regexTransform.getCondition().getOperator());
         assertEquals("aaaaa", regexTransform.getCondition().getValue());
-	}
+    }
 
 }

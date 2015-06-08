@@ -30,6 +30,11 @@ package com.prelert.transforms;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.common.collect.Range;
+import com.prelert.job.transform.TransformConfig;
+import com.prelert.job.transform.TransformType;
+import com.prelert.job.transform.condition.Condition;
+import com.prelert.job.transform.condition.Operator;
 import com.prelert.transforms.Transform.TransformIndex;
 
 public final class TransformTestUtils
@@ -47,5 +52,42 @@ public final class TransformTestUtils
         }
 
         return result;
+    }
+
+    public static TransformConfig createValidTransform(TransformType type)
+    {
+        List<String> inputs = createValidArgs(type.arityRange());
+        List<String> args = createValidArgs(type.argumentsRange());
+        List<String> outputs = createValidArgs(type.outputsRange());
+
+        Condition condition = null;
+        if (type.hasCondition())
+        {
+            condition = new Condition(Operator.EQ, "100");
+        }
+
+        TransformConfig tr = new TransformConfig();
+        tr.setTransform(type.toString());
+        tr.setInputs(inputs);
+        tr.setArguments(args);
+        tr.setOutputs(outputs);
+        tr.setCondition(condition);
+        return tr;
+    }
+
+    private static List<String> createValidArgs(Range<Integer> range)
+    {
+        List<String> args = new ArrayList<>();
+        int validCount = getValidCount(range);
+        for (int arg = 0; arg < validCount; ++arg)
+        {
+            args.add(Integer.toString(arg));
+        }
+        return args;
+    }
+
+    private static int getValidCount(Range<Integer> range)
+    {
+        return range.hasUpperBound() ? range.upperEndpoint() : range.lowerEndpoint();
     }
 }
