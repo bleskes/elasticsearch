@@ -31,7 +31,6 @@ import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.prelert.job.DataCounts;
 
 /**
  * The result of a data upload is either an error

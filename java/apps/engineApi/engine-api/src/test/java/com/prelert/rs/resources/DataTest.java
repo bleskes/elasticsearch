@@ -51,7 +51,6 @@ import org.junit.rules.ExpectedException;
 import org.mockito.ArgumentCaptor;
 
 import com.prelert.job.AnalysisConfig;
-import com.prelert.job.DataCounts;
 import com.prelert.job.Detector;
 import com.prelert.job.JobDetails;
 import com.prelert.job.exceptions.JobInUseException;
@@ -65,6 +64,7 @@ import com.prelert.job.process.params.DataLoadParams;
 import com.prelert.job.process.params.InterimResultsParams;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
+import com.prelert.rs.data.DataCounts;
 import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.SingleDocument;
 import com.prelert.rs.provider.RestApiException;

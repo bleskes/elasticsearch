@@ -39,12 +39,12 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 
-import com.prelert.job.DataCounts;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobStatus;
 import com.prelert.job.transform.TransformConfig;
 import com.prelert.rs.client.EngineApiClient;
 import com.prelert.rs.data.AnomalyRecord;
+import com.prelert.rs.data.DataCounts;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
 

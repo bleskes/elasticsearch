@@ -33,8 +33,8 @@ import javax.ws.rs.core.Response;
 
 import org.junit.Test;
 
-import com.prelert.job.DataCounts;
 import com.prelert.job.process.exceptions.DataUploadException;
+import com.prelert.rs.data.DataCounts;
 
 public class DataUploadExceptionMapperTest
 {
