@@ -695,18 +695,36 @@ public class JobsTest implements Closeable
      * @param compressed Is the data gzipped compressed?
      * @throws IOException
      */
-    public void uploadData(String jobId, File dataFile, boolean compressed)
+    public void uploadDataAndTestRecordsWereProcessed(String jobId, File dataFile, boolean compressed)
     throws IOException
+    {
+        uploadData(jobId, dataFile, compressed, true);
+    }
+
+    public void uploadDataAndTestNoRecordsWereProcessed(String jobId, File dataFile, boolean compressed)
+    throws IOException
+    {
+        uploadData(jobId, dataFile, compressed, false);
+    }
+
+    private void uploadData(String jobId, File dataFile, boolean compressed,
+            boolean shouldProcessRecords) throws IOException
     {
         FileInputStream stream = new FileInputStream(dataFile);
         DataCounts counts = m_WebServiceClient.streamingUpload(jobId, stream, compressed);
-        test(counts.getProcessedRecordCount() > 0);
+        if (shouldProcessRecords)
+        {
+            test(counts.getProcessedRecordCount() > 0);
+        }
+        else
+        {
+            test(counts.getProcessedRecordCount() == 0);
+        }
 
         SingleDocument<JobDetails> job = m_WebServiceClient.getJob(jobId);
         test(job.isExists());
         test(job.getDocument().getStatus() == JobStatus.RUNNING);
     }
-
 
     /**
      * Finish the job (as all data has been uploaded).
@@ -1670,7 +1688,7 @@ public class JobsTest implements Closeable
         test.getJobsTest();
 
         test.testSetDescription(flightCentreJobId);
-        test.uploadData(flightCentreJobId, flightCentreData, true);
+        test.uploadDataAndTestRecordsWereProcessed(flightCentreJobId, flightCentreData, true);
         test.closeJob(flightCentreJobId);
         test.testReadLogFiles(flightCentreJobId);
         test.verifyJobResults(flightCentreJobId, 100, FLIGHT_CENTRE_NUM_BUCKETS,
@@ -1684,7 +1702,7 @@ public class JobsTest implements Closeable
         //
         String flightCentreJsonJobId = test.createFlightCentreJsonJobTest();
         test.getJobsTest();
-        test.uploadData(flightCentreJsonJobId, flightCentreJsonData, false);
+        test.uploadDataAndTestRecordsWereProcessed(flightCentreJsonJobId, flightCentreJsonData, false);
         test.closeJob(flightCentreJsonJobId);
         test.testReadLogFiles(flightCentreJsonJobId);
         test.testSetDescription(flightCentreJsonJobId);
@@ -1724,7 +1742,7 @@ public class JobsTest implements Closeable
         test(job.getId().equals(farequoteTimeFormatJobId));
         String refJobId = test.createJobFromFareQuoteTimeFormatRefId(job.getId());
         test.getJobsTest();
-        test.uploadData(refJobId, fareQuoteData, false);
+        test.uploadDataAndTestRecordsWereProcessed(refJobId, fareQuoteData, false);
         test.closeJob(refJobId);
         test.verifyJobResults(refJobId, 150, FARE_QUOTE_NUM_BUCKETS,
                 300, FARE_QUOTE_NUM_EVENTS);
@@ -1740,21 +1758,20 @@ public class JobsTest implements Closeable
         // timestamp in ms from the epoch for both csv and json
         //
         String jobId = test.createFlightCentreMsCsvFormatJobTest(baseUrl, "flightcentre-epoch-ms");
-         jobUrls.add(jobId);
-         test.getJobsTest();
-         test.uploadData(jobId, flightCentreMsData, false);
-         test.closeJob(jobId);
-         test.verifyJobResults(jobId, 150, FLIGHT_CENTRE_NUM_BUCKETS,
+        jobUrls.add(jobId);
+        test.getJobsTest();
+        test.uploadDataAndTestRecordsWereProcessed(jobId, flightCentreMsData, false);
+        test.closeJob(jobId);
+        test.verifyJobResults(jobId, 150, FLIGHT_CENTRE_NUM_BUCKETS,
                 3600, FLIGHT_CENTRE_NUM_EVENTS);
-         test.testReadLogFiles(jobId);
-        test.testBucketDateFilters(jobId, new Date(1350824400000L),
-                new Date(1350913371000L));
+        test.testReadLogFiles(jobId);
+        test.testBucketDateFilters(jobId, new Date(1350824400000L), new Date(1350913371000L));
 
-         jobId = test.createFlightCentreMsJsonFormatJobTest();
-         jobUrls.add(jobId);
-         test.getJobsTest();
-         test.uploadData(jobId, flightCentreMsJsonData, false);
-         test.closeJob(jobId);
+        jobId = test.createFlightCentreMsJsonFormatJobTest();
+        jobUrls.add(jobId);
+        test.getJobsTest();
+        test.uploadDataAndTestRecordsWereProcessed(jobId, flightCentreMsJsonData, false);
+        test.closeJob(jobId);
         test.verifyJobResults(jobId, 150, FLIGHT_CENTRE_NUM_BUCKETS,
                 3600, FLIGHT_CENTRE_NUM_EVENTS);
 
@@ -1773,8 +1790,8 @@ public class JobsTest implements Closeable
         String doubleUploadTest = test.createFareQuoteTimeFormatJobTest();
         jobUrls.add(doubleUploadTest);
 
-        test.uploadData(doubleUploadTest, fareQuoteData, false);
-        test.uploadData(doubleUploadTest, fareQuoteData, false);
+        test.uploadDataAndTestRecordsWereProcessed(doubleUploadTest, fareQuoteData, false);
+        test.uploadDataAndTestNoRecordsWereProcessed(doubleUploadTest, fareQuoteData, false);
 
         test.closeJob(doubleUploadTest);
         test.verifyJobResults(doubleUploadTest, 150, FARE_QUOTE_NUM_BUCKETS,
