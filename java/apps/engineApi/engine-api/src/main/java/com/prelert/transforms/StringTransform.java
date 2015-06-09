@@ -38,24 +38,6 @@ public class StringTransform extends Transform
 {
     private final Function<String, String> m_ConvertFunction;
 
-    public static StringTransform createLowerCase(List<TransformIndex> readIndicies,
-            List<TransformIndex> writeIndicies, Logger logger)
-    {
-        return new StringTransform(s -> s.toLowerCase(), readIndicies, writeIndicies, logger);
-    }
-
-    public static StringTransform createUpperCase(List<TransformIndex> readIndicies,
-            List<TransformIndex> writeIndicies, Logger logger)
-    {
-        return new StringTransform(s -> s.toUpperCase(), readIndicies, writeIndicies, logger);
-    }
-
-    public static StringTransform createTrim(List<TransformIndex> readIndicies,
-            List<TransformIndex> writeIndicies, Logger logger)
-    {
-        return new StringTransform(s -> s.trim(), readIndicies, writeIndicies, logger);
-    }
-
     private StringTransform(Function<String, String> convertFunction,
             List<TransformIndex> readIndicies, List<TransformIndex> writeIndicies, Logger logger)
     {
@@ -73,5 +55,23 @@ public class StringTransform extends Transform
         String input = readWriteArea[readIndex.array][readIndex.index];
         readWriteArea[writeIndex.array][writeIndex.index] = m_ConvertFunction.apply(input);
         return TransformResult.OK;
+    }
+
+    public static StringTransform createLowerCase(List<TransformIndex> readIndicies,
+            List<TransformIndex> writeIndicies, Logger logger)
+    {
+        return new StringTransform(s -> s.toLowerCase(), readIndicies, writeIndicies, logger);
+    }
+
+    public static StringTransform createUpperCase(List<TransformIndex> readIndicies,
+            List<TransformIndex> writeIndicies, Logger logger)
+    {
+        return new StringTransform(s -> s.toUpperCase(), readIndicies, writeIndicies, logger);
+    }
+
+    public static StringTransform createTrim(List<TransformIndex> readIndicies,
+            List<TransformIndex> writeIndicies, Logger logger)
+    {
+        return new StringTransform(s -> s.trim(), readIndicies, writeIndicies, logger);
     }
 }

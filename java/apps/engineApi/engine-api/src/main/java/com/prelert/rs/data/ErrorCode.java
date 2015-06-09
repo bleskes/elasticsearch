@@ -30,7 +30,6 @@ package com.prelert.rs.data;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 /**
  * Static error codes returned in response to internal errors in the API.

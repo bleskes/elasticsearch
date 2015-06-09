@@ -38,11 +38,11 @@ import com.prelert.job.process.params.DataLoadParams;
 public class DataStreamerThread extends Thread
 {
     private DataCounts m_Stats;
-    final private String m_JobId;
-    final private String  m_ContentEncoding;
-    final private DataLoadParams m_Params;
-    final private InputStream m_Input;
-    final private DataStreamer m_DataStreamer;
+    private final String m_JobId;
+    private final String  m_ContentEncoding;
+    private final DataLoadParams m_Params;
+    private final InputStream m_Input;
+    private final DataStreamer m_DataStreamer;
     private JobException m_JobException;
     private IOException m_IOException;
 
