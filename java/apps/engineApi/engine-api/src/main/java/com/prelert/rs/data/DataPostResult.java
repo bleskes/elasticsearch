@@ -98,13 +98,7 @@ public class DataPostResult
     @Override
     public int hashCode()
     {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result
-                + ((m_DataCounts == null) ? 0 : m_DataCounts.hashCode());
-        result = prime * result + ((m_Error == null) ? 0 : m_Error.hashCode());
-        result = prime * result + ((m_JobId == null) ? 0 : m_JobId.hashCode());
-        return result;
+        return Objects.hash(m_DataCounts, m_Error, m_JobId);
     }
 
     @Override
