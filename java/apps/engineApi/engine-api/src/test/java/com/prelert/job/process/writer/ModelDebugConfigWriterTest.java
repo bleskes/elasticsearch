@@ -25,41 +25,58 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.process.params;
+package com.prelert.job.process.writer;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
-public class DataLoadParamsTest
+import com.prelert.job.process.params.ModelDebugConfig;
+
+public class ModelDebugConfigWriterTest
 {
-    @Test
-    public void testGetStart()
+    @Mock private OutputStreamWriter m_Writer;
+
+    @Before
+    public void setUp()
     {
-        assertEquals("", new DataLoadParams(false, new TimeRange(null, null)).getStart());
-        assertEquals("3", new DataLoadParams(false, new TimeRange(3L, null)).getStart());
+        MockitoAnnotations.initMocks(this);
+    }
+
+    @After
+    public void tearDown()
+    {
+        verifyNoMoreInteractions(m_Writer);
     }
 
     @Test
-    public void testGetEnd()
+    public void testWrite_GivenEmptyConfig() throws IOException
     {
-        assertEquals("", new DataLoadParams(false, new TimeRange(null, null)).getEnd());
-        assertEquals("1", new DataLoadParams(false, new TimeRange(null, 1L)).getEnd());
+        ModelDebugConfig modelDebugConfig = new ModelDebugConfig();
+        ModelDebugConfigWriter writer = new ModelDebugConfigWriter(modelDebugConfig, m_Writer);
+
+        writer.write();
+
+        verify(m_Writer).write("boundspercentile = null\nterms = \n");
     }
 
     @Test
-    public void testIsResettingBuckets()
+    public void testWrite_GivenFullConfig() throws IOException
     {
-        assertFalse(new DataLoadParams(false, new TimeRange(null, null)).isResettingBuckets());
-        assertTrue(new DataLoadParams(false, new TimeRange(5L, null)).isResettingBuckets());
+        ModelDebugConfig modelDebugConfig = new ModelDebugConfig(65.0, "foo,bar");
+        ModelDebugConfigWriter writer = new ModelDebugConfigWriter(modelDebugConfig, m_Writer);
+
+        writer.write();
+
+        verify(m_Writer).write("boundspercentile = 65.0\nterms = foo,bar\n");
     }
 
-    @Test
-    public void testIsPersisting()
-    {
-        assertFalse(new DataLoadParams(false, new TimeRange(null, null)).isPersisting());
-        assertTrue(new DataLoadParams(true, new TimeRange(null, null)).isPersisting());
-    }
 }

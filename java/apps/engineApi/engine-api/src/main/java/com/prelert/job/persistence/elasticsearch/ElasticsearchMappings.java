@@ -42,6 +42,7 @@ import com.prelert.job.Detector;
 import com.prelert.job.JobDetails;
 import com.prelert.job.ModelSizeStats;
 import com.prelert.job.ModelState;
+import com.prelert.job.process.params.ModelDebugConfig;
 import com.prelert.job.quantiles.Quantiles;
 import com.prelert.job.results.AnomalyCause;
 import com.prelert.job.results.AnomalyRecord;
@@ -268,6 +269,17 @@ public class ElasticsearchMappings
                                 .endObject()
                                 .startObject(TransformConfig.OUTPUTS)
                                     .field(TYPE, STRING).field(INDEX, NOT_ANALYZED)
+                                .endObject()
+                            .endObject()
+                        .endObject()
+                        .startObject(JobDetails.MODEL_DEBUG_CONFIG)
+                            .field(TYPE, OBJECT)
+                            .startObject(PROPERTIES)
+                                .startObject(ModelDebugConfig.BOUNDS_PERCENTILE)
+                                    .field(TYPE, "double").field(INDEX, NO)
+                                .endObject()
+                                .startObject(ModelDebugConfig.TERMS)
+                                    .field(TYPE, STRING).field(INDEX, NO)
                                 .endObject()
                             .endObject()
                         .endObject()
@@ -533,7 +545,6 @@ public class ElasticsearchMappings
                 .endObject()
             .endObject();
     }
-
 
     /**
      * Create the Elasticsearch mapping for {@linkplain ModelState}.

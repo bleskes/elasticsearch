@@ -305,7 +305,6 @@ public class ProcessManager
         return stats;
     }
 
-
     private void writeResetBucketsControlMessage(String jobId, DataLoadParams params,
             ProcessAndDataDescription process, boolean isExistingProcess) throws IOException
     {

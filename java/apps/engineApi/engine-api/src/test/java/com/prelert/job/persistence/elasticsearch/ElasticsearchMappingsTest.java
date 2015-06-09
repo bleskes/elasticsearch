@@ -242,6 +242,19 @@ public class ElasticsearchMappingsTest
                         "            \"index\": \"not_analyzed\"" +
                         "          }" +
                         "        }" +
+                        "      }," +
+                        "      \"modelDebugConfig\": {" +
+                        "        \"type\": \"object\"," +
+                        "        \"properties\": {" +
+                        "          \"boundsPercentile\": {" +
+                        "            \"type\": \"double\"," +
+                        "            \"index\": \"no\"" +
+                        "          }," +
+                        "          \"terms\": {" +
+                        "            \"type\": \"string\"," +
+                        "            \"index\": \"no\"" +
+                        "          }" +
+                        "        }" +
                         "      }" +
                         "    }," +
                         "    \"_all\": {" +

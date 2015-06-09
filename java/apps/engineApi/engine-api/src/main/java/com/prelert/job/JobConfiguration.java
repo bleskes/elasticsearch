@@ -35,6 +35,7 @@ import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobConfigurationException;
 import com.prelert.job.messages.Messages;
+import com.prelert.job.process.params.ModelDebugConfig;
 import com.prelert.job.transform.TransformConfig;
 import com.prelert.job.transform.TransformConfigs;
 import com.prelert.job.transform.exceptions.TransformConfigurationException;
@@ -87,6 +88,7 @@ public class JobConfiguration implements Verifiable
     private DataDescription m_DataDescription;
     private String m_ReferenceJobId;
     private Long m_Timeout;
+    private ModelDebugConfig m_ModelDebugConfig;
 
     public JobConfiguration()
     {
@@ -229,6 +231,16 @@ public class JobConfiguration implements Verifiable
         m_DataDescription = description;
     }
 
+    public void setModelDebugConfig(ModelDebugConfig modelDebugConfig)
+    {
+        m_ModelDebugConfig = modelDebugConfig;
+    }
+
+    public ModelDebugConfig getModelDebugConfig()
+    {
+        return m_ModelDebugConfig;
+    }
+
     /**
      * Checks the job configuration settings and throws an exception
      * if any values are invalid
@@ -275,6 +287,8 @@ public class JobConfiguration implements Verifiable
         {
             checkValidId();
         }
+
+        verifyIfNotNull(m_ModelDebugConfig);
 
         return true;
     }

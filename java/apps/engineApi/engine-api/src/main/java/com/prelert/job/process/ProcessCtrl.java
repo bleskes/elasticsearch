@@ -45,8 +45,10 @@ import org.apache.log4j.Logger;
 import com.prelert.job.AnalysisLimits;
 import com.prelert.job.DataDescription;
 import com.prelert.job.JobDetails;
+import com.prelert.job.process.params.ModelDebugConfig;
 import com.prelert.job.process.writer.AnalysisLimitsWriter;
 import com.prelert.job.process.writer.FieldConfigWriter;
+import com.prelert.job.process.writer.ModelDebugConfigWriter;
 import com.prelert.job.quantiles.Quantiles;
 
 
@@ -175,6 +177,7 @@ public class ProcessCtrl
     public static final String LIMIT_CONFIG_ARG = "--limitconfig=";
     public static final String LATENCY_ARG = "--latency=";
     public static final String MAX_ANOMALY_RECORDS_ARG = "--maxAnomalyRecords=500";
+    public static final String MODEL_DEBUG_CONFIG_ARG = "--modeldebugconfig=";
     public static final String PERIOD_ARG = "--period=";
     public static final String PERSIST_INTERVAL_ARG = "--persistInterval=10800"; // 3 hours
     public static final String PERSIST_URL_BASE_ARG = "--persistUrlBase=";
@@ -490,6 +493,15 @@ public class ProcessCtrl
             command.add(limits);
         }
 
+        if (job.getModelDebugConfig() != null && job.getModelDebugConfig().isEnabled())
+        {
+            File modelDebugConfigFile = File.createTempFile("modeldebugconfig", ".conf");
+            filesToDelete.add(modelDebugConfigFile);
+            writeModelDebugConfig(job.getModelDebugConfig(), modelDebugConfigFile);
+            String modelDebugConfig = MODEL_DEBUG_CONFIG_ARG + modelDebugConfigFile.toString();
+            command.add(modelDebugConfig);
+        }
+
         if (modelConfigFilePresent())
         {
             String modelConfigFile = new File(CONFIG_DIR, PRELERT_MODEL_CONF).toString();
@@ -597,6 +609,17 @@ public class ProcessCtrl
                 StandardCharsets.UTF_8))
         {
             new AnalysisLimitsWriter(options, osw).write();
+        }
+    }
+
+    private static void writeModelDebugConfig(ModelDebugConfig config, File emptyConfFile)
+            throws IOException
+    {
+        try (OutputStreamWriter osw = new OutputStreamWriter(
+                new FileOutputStream(emptyConfFile),
+                StandardCharsets.UTF_8))
+        {
+            new ModelDebugConfigWriter(config, osw).write();
         }
     }
 

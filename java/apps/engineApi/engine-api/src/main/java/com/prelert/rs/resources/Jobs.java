@@ -56,6 +56,7 @@ import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.logs.JobLogs;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
+import com.prelert.job.process.params.ModelDebugConfig;
 import com.prelert.rs.data.Acknowledgement;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
@@ -217,6 +218,30 @@ public class Jobs extends ResourceWithJobManager
 		return Response.ok().build();
     }
 
+    @PUT
+    @Path("/{jobId}/modelDebug")
+    public Response setModelDebugConfig(@PathParam("jobId") String jobId,
+            @QueryParam(ModelDebugConfig.BOUNDS_PERCENTILE) Double boundsPercentile,
+            @QueryParam(ModelDebugConfig.TERMS) String terms)
+            throws JobConfigurationException, UnknownJobException
+    {
+        LOGGER.debug("Setting model debug config");
+
+        ModelDebugConfig modelDebugConfig = new ModelDebugConfig(boundsPercentile, terms);
+        modelDebugConfig.verify();
+        jobManager().setModelDebugConfig(jobId, modelDebugConfig);
+        return Response.ok().build();
+    }
+
+    @DELETE
+    @Path("/{jobId}/modelDebug")
+    public Response deleteModelDebugConfig(@PathParam("jobId") String jobId)
+            throws UnknownJobException
+    {
+        LOGGER.debug("Deleting model debug config");
+        jobManager().setModelDebugConfig(jobId, null);
+        return Response.ok().build();
+    }
 
     /**
      * Delete the job.

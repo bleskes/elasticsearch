@@ -68,6 +68,7 @@ import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.process.params.DataLoadParams;
 import com.prelert.job.process.params.InterimResultsParams;
+import com.prelert.job.process.params.ModelDebugConfig;
 import com.prelert.job.process.writer.CsvRecordWriter;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
@@ -486,6 +487,24 @@ public class JobManager
     {
         Map<String, Object> update = new HashMap<>();
         update.put(JobDetails.DESCRIPTION, description);
+        m_JobProvider.updateJob(jobId, update);
+    }
+
+    public void setModelDebugConfig(String jobId, ModelDebugConfig modelDebugConfig)
+            throws UnknownJobException
+    {
+        Map<String, Object> update = new HashMap<>();
+        if (modelDebugConfig != null)
+        {
+            Map<String, Object> objectMap = new HashMap<>();
+            objectMap.put(ModelDebugConfig.BOUNDS_PERCENTILE, modelDebugConfig.getBoundsPercentile());
+            objectMap.put(ModelDebugConfig.TERMS, modelDebugConfig.getTerms());
+            update.put(JobDetails.MODEL_DEBUG_CONFIG, objectMap);
+        }
+        else
+        {
+            update.put(JobDetails.MODEL_DEBUG_CONFIG, null);
+        }
         m_JobProvider.updateJob(jobId, update);
     }
 

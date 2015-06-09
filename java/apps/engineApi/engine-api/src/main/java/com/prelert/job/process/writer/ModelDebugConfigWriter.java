@@ -25,41 +25,46 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.process.params;
+package com.prelert.job.process.writer;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static com.prelert.job.process.writer.WriterConstants.EQUALS;
+import static com.prelert.job.process.writer.WriterConstants.NEW_LINE;
 
-import org.junit.Test;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.util.Objects;
 
-public class DataLoadParamsTest
+import org.elasticsearch.common.base.Strings;
+
+import com.prelert.job.process.params.ModelDebugConfig;
+
+public class ModelDebugConfigWriter
 {
-    @Test
-    public void testGetStart()
+    private static final String BOUNDS_PERCENTILE_STR = "boundspercentile";
+    private static final String TERMS_STR = "terms";
+
+    private final ModelDebugConfig m_ModelDebugConfig;
+    private final OutputStreamWriter m_Writer;
+
+    public ModelDebugConfigWriter(ModelDebugConfig modelDebugConfig, OutputStreamWriter writer)
     {
-        assertEquals("", new DataLoadParams(false, new TimeRange(null, null)).getStart());
-        assertEquals("3", new DataLoadParams(false, new TimeRange(3L, null)).getStart());
+        m_ModelDebugConfig = Objects.requireNonNull(modelDebugConfig);
+        m_Writer = Objects.requireNonNull(writer);
     }
 
-    @Test
-    public void testGetEnd()
+    public void write() throws IOException
     {
-        assertEquals("", new DataLoadParams(false, new TimeRange(null, null)).getEnd());
-        assertEquals("1", new DataLoadParams(false, new TimeRange(null, 1L)).getEnd());
-    }
+        StringBuilder contents = new StringBuilder();
+        contents.append(BOUNDS_PERCENTILE_STR)
+                .append(EQUALS)
+                .append(m_ModelDebugConfig.getBoundsPercentile())
+                .append(NEW_LINE);
 
-    @Test
-    public void testIsResettingBuckets()
-    {
-        assertFalse(new DataLoadParams(false, new TimeRange(null, null)).isResettingBuckets());
-        assertTrue(new DataLoadParams(false, new TimeRange(5L, null)).isResettingBuckets());
-    }
+        contents.append(TERMS_STR)
+                .append(EQUALS)
+                .append(Strings.nullToEmpty(m_ModelDebugConfig.getTerms()))
+                .append(NEW_LINE);
 
-    @Test
-    public void testIsPersisting()
-    {
-        assertFalse(new DataLoadParams(false, new TimeRange(null, null)).isPersisting());
-        assertTrue(new DataLoadParams(true, new TimeRange(null, null)).isPersisting());
+        m_Writer.write(contents.toString());
     }
 }

@@ -29,6 +29,7 @@ package com.prelert.job.manager;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -43,6 +44,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -62,6 +64,7 @@ import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.process.params.DataLoadParams;
+import com.prelert.job.process.params.ModelDebugConfig;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 
@@ -69,6 +72,9 @@ public class JobManagerTest
 {
     @Rule
     public ExpectedException m_ExpectedException = ExpectedException.none();
+
+    @Captor
+    private ArgumentCaptor<Map<String, Object>> m_JobUpdateCaptor;
 
     @Mock private JobProvider m_JobProvider;
     @Mock private ProcessManager m_ProcessManager;
@@ -209,6 +215,36 @@ public class JobManagerTest
         Map updates = updateCaptor.getValue();
         assertEquals(JobStatus.RUNNING, updates.get(JobDetails.STATUS));
         assertNotNull(updates.get(JobDetails.LAST_DATA_TIME));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testSetModelDebugConfig_GivenConfig() throws UnknownJobException
+    {
+        givenProcessInfo(5);
+        ModelDebugConfig config = new ModelDebugConfig(85.0, "bar");
+        JobManager jobManager = new JobManager(m_JobProvider, m_ProcessManager);
+
+        jobManager.setModelDebugConfig("foo", config);
+
+        verify(m_JobProvider).updateJob(eq("foo"), m_JobUpdateCaptor.capture());
+        Map<String, Object> jobUpdate = m_JobUpdateCaptor.getValue();
+        Map<String, Object> configUpdate = (Map<String, Object>) jobUpdate.get("modelDebugConfig");
+        assertEquals(85.0, configUpdate.get("boundsPercentile"));
+        assertEquals("bar", configUpdate.get("terms"));
+    }
+
+    @Test
+    public void testSetModelDebugConfig_GivenNull() throws UnknownJobException
+    {
+        givenProcessInfo(5);
+        JobManager jobManager = new JobManager(m_JobProvider, m_ProcessManager);
+
+        jobManager.setModelDebugConfig("foo", null);
+
+        verify(m_JobProvider).updateJob(eq("foo"), m_JobUpdateCaptor.capture());
+        Map<String, Object> jobUpdate = m_JobUpdateCaptor.getValue();
+        assertNull(jobUpdate.get("modelDebugConfig"));
     }
 
     private void givenProcessInfo(int maxLicenseJobs)
