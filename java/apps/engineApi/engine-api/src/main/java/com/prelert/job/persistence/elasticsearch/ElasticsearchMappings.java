@@ -36,7 +36,6 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.AnalysisLimits;
 import com.prelert.job.CategorizerState;
-import com.prelert.job.DataCounts;
 import com.prelert.job.DataDescription;
 import com.prelert.job.Detector;
 import com.prelert.job.JobDetails;
@@ -49,6 +48,7 @@ import com.prelert.rs.data.AnomalyCause;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.CategoryDefinition;
+import com.prelert.rs.data.DataCounts;
 
 /**
  * Static methods to create Elasticsearch mappings for the autodetect

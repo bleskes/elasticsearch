@@ -49,7 +49,6 @@ import javax.ws.rs.core.Response;
 import org.apache.log4j.Logger;
 
 import com.prelert.job.AnalysisConfig;
-import com.prelert.job.DataCounts;
 import com.prelert.job.JobDetails;
 import com.prelert.job.data.DataStreamer;
 import com.prelert.job.data.DataStreamerThread;
@@ -69,6 +68,7 @@ import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.rs.data.Acknowledgement;
 import com.prelert.rs.data.ApiError;
+import com.prelert.rs.data.DataCounts;
 import com.prelert.rs.data.DataPostResult;
 import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.MultiDataPostResult;

@@ -27,9 +27,9 @@
  ************************************************************/
 package com.prelert.job.status;
 
-import com.prelert.job.DataCounts;
 import com.prelert.job.status.StatusReporter;
 import com.prelert.job.usage.UsageReporter;
+import com.prelert.rs.data.DataCounts;
 
 /**
  * Dummy StatusReporter for testing abstract class

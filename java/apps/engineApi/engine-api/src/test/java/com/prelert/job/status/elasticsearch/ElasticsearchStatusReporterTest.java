@@ -43,9 +43,9 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import com.prelert.job.DataCounts;
 import com.prelert.job.JobDetails;
 import com.prelert.job.usage.UsageReporter;
+import com.prelert.rs.data.DataCounts;
 
 public class ElasticsearchStatusReporterTest
 {

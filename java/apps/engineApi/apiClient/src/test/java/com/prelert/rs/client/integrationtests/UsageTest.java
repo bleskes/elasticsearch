@@ -43,13 +43,13 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 
 import com.prelert.job.AnalysisConfig;
-import com.prelert.job.DataCounts;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
 import com.prelert.rs.client.EngineApiClient;
+import com.prelert.rs.data.DataCounts;
 import com.prelert.rs.data.SingleDocument;
 
 

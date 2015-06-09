@@ -28,8 +28,8 @@ package com.prelert.job.status;
 
 import org.apache.log4j.Logger;
 
-import com.prelert.job.DataCounts;
 import com.prelert.job.usage.UsageReporter;
+import com.prelert.rs.data.DataCounts;
 
 /**
  * Abstract status reporter for tracking all the good/bad

@@ -43,8 +43,8 @@ import org.junit.Test;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.prelert.job.DataCounts;
 import com.prelert.rs.data.ApiError;
+import com.prelert.rs.data.DataCounts;
 import com.prelert.rs.data.DataPostResult;
 import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.MultiDataPostResult;

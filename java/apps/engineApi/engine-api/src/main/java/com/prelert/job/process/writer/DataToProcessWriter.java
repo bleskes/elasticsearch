@@ -31,10 +31,10 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import com.prelert.job.process.exceptions.MalformedJsonException;
-import com.prelert.job.DataCounts;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
+import com.prelert.rs.data.DataCounts;
 
 /**
  * A writer for transforming and piping data from an
