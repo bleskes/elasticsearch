@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.watcher.test.integration;
+package org.elasticsearch.watcher.transform;
 
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
@@ -28,7 +28,6 @@ import org.elasticsearch.watcher.transport.actions.put.PutWatchResponse;
 import org.junit.Test;
 
 import java.net.URISyntaxException;
-import java.util.Map;
 
 import static org.elasticsearch.common.settings.ImmutableSettings.settingsBuilder;
 import static org.elasticsearch.index.query.QueryBuilders.matchAllQuery;
@@ -46,14 +45,14 @@ import static org.hamcrest.Matchers.*;
 
 /**
  */
-public class TransformSearchTests extends AbstractWatcherIntegrationTests {
+public class TransformIntegrationTests extends AbstractWatcherIntegrationTests {
 
     @Override
     public Settings nodeSettings(int nodeOrdinal) {
         //Set path so ScriptService will pick up the test scripts
         try {
             return settingsBuilder().put(super.nodeSettings(nodeOrdinal))
-                    .put("path.conf", TransformSearchTests.class.getResource("/config").toURI().getPath()).build();
+                    .put("path.conf", TransformIntegrationTests.class.getResource("/config").toURI().getPath()).build();
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         }

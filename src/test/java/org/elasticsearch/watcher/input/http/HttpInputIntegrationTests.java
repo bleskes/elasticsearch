@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.watcher.test.integration;
+package org.elasticsearch.watcher.input.http;
 
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.support.IndicesOptions;
@@ -48,7 +48,7 @@ import static org.elasticsearch.watcher.trigger.TriggerBuilders.schedule;
 import static org.elasticsearch.watcher.trigger.schedule.Schedules.interval;
 import static org.hamcrest.Matchers.equalTo;
 
-public class HttpInputIntegrationTest extends AbstractWatcherIntegrationTests {
+public class HttpInputIntegrationTests extends AbstractWatcherIntegrationTests {
 
     @Override
     protected Settings nodeSettings(int nodeOrdinal) {

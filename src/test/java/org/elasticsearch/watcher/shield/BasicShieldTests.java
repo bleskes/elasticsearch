@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.watcher.test.integration;
+package org.elasticsearch.watcher.shield;
 
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.joda.time.DateTime;

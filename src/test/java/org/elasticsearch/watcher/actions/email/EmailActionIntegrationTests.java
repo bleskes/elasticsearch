@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.watcher.test.integration;
+package org.elasticsearch.watcher.actions.email;
 
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.common.settings.ImmutableSettings;

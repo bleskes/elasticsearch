@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.watcher.test.integration;
+package org.elasticsearch.watcher.history;
 
 import org.elasticsearch.action.admin.indices.template.get.GetIndexTemplatesResponse;
 import org.elasticsearch.common.settings.ImmutableSettings;
@@ -32,7 +32,7 @@ import static org.hamcrest.core.Is.is;
 /**
  */
 @ElasticsearchIntegrationTest.ClusterScope(scope = TEST, numClientNodes = 0, transportClientRatio = 0, randomDynamicTemplates = false, numDataNodes = 1)
-public class HistoryStoreSettingsTest extends AbstractWatcherIntegrationTests {
+public class HistoryStoreSettingsTests extends AbstractWatcherIntegrationTests {
 
     @Test
     public void testChangeSettings() throws Exception {

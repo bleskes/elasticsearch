@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.watcher.test.integration;
+package org.elasticsearch.watcher.transport.action.stats;
 
 import org.apache.lucene.util.LuceneTestCase;
 import org.elasticsearch.common.joda.time.DateTime;

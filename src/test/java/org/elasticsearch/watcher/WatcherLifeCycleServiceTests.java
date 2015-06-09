@@ -36,7 +36,7 @@ import static org.mockito.Mockito.*;
 
 /**
  */
-public class WatcherLifeCycleServiceTest extends ElasticsearchTestCase {
+public class WatcherLifeCycleServiceTests extends ElasticsearchTestCase {
 
     private WatcherService watcherService;
     private WatcherLifeCycleService lifeCycleService;
