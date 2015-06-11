@@ -27,8 +27,8 @@
 
 package com.prelert.job.process.exceptions;
 
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobException;
-import com.prelert.rs.data.ErrorCode;
 
 /**
  * Exception thrown when there is an error running
@@ -44,15 +44,15 @@ public class NativeProcessRunException extends JobException
 	 */
 	public NativeProcessRunException(String message)
 	{
-		super(message, ErrorCode.NATIVE_PROCESS_ERROR);
+		super(message, ErrorCodes.NATIVE_PROCESS_ERROR);
 	}
 
-	public NativeProcessRunException(String message, ErrorCode errorCode)
+	public NativeProcessRunException(String message, ErrorCodes errorCode)
 	{
 		super(message, errorCode);
 	}
 
-	public NativeProcessRunException(String message, ErrorCode errorCode, Throwable cause)
+	public NativeProcessRunException(String message, ErrorCodes errorCode, Throwable cause)
 	{
 		super(message, errorCode, cause);
 	}

@@ -44,10 +44,10 @@ import java.util.zip.ZipOutputStream;
 
 import org.apache.log4j.Logger;
 
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.process.ProcessCtrl;
-import com.prelert.rs.data.ErrorCode;
 
 /**
  * Read/Tail the logs
@@ -111,7 +111,7 @@ public class JobLogs
         {
             String msg = Messages.getMessage(Messages.LOGFILE_MISSING, filePath);
             LOGGER.warn(msg);
-            throw new UnknownJobException(jobId, msg, ErrorCode.MISSING_LOG_FILE);
+            throw new UnknownJobException(jobId, msg, ErrorCodes.MISSING_LOG_FILE);
         }
     }
 
@@ -304,7 +304,7 @@ public class JobLogs
         {
             String msg = Messages.getMessage(Messages.LOGFILE_MISSING, file);
             LOGGER.warn(msg);
-            throw new UnknownJobException(jobId, msg, ErrorCode.MISSING_LOG_FILE);
+            throw new UnknownJobException(jobId, msg, ErrorCodes.MISSING_LOG_FILE);
         }
         catch (IOException e)
         {
@@ -349,7 +349,7 @@ public class JobLogs
         {
             String msg = Messages.getMessage(Messages.LOGFILE_MISSING_DIRECTORY, logDirectory);
             LOGGER.error(msg);
-            throw new UnknownJobException(jobId, msg, ErrorCode.CANNOT_OPEN_DIRECTORY);
+            throw new UnknownJobException(jobId, msg, ErrorCodes.CANNOT_OPEN_DIRECTORY);
         }
 
         ByteArrayOutputStream byteos = new ByteArrayOutputStream();

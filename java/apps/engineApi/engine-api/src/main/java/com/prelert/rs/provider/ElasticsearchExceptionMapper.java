@@ -32,8 +32,8 @@ import javax.ws.rs.ext.ExceptionMapper;
 
 import org.elasticsearch.ElasticsearchException;
 
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.rs.data.ApiError;
-import com.prelert.rs.data.ErrorCode;
 
 
 /**
@@ -47,7 +47,7 @@ public class ElasticsearchExceptionMapper implements ExceptionMapper<Elasticsear
 	@Override
 	public Response toResponse(ElasticsearchException e)
 	{
-		ApiError error = new ApiError(ErrorCode.DATA_STORE_ERROR);
+		ApiError error = new ApiError(ErrorCodes.DATA_STORE_ERROR);
 		error.setMessage("Error in Elasticsearch: = " + e.getDetailedMessage());
 		error.setCause(e);
 			

@@ -26,7 +26,7 @@
  ************************************************************/
 package com.prelert.job.exceptions;
 
-import com.prelert.rs.data.ErrorCode;
+import com.prelert.job.errorcodes.ErrorCodes;
 
 /**
  * This exception is thrown is an operation is attempted on a job
@@ -44,9 +44,9 @@ public class JobInUseException extends JobException
 	 * @param jobId The Id of the job some operation was attempted on.
 	 * @param message Details of error explaining the context
 	 * @param The error code
-	 * @see ErrorCode
+	 * @see ErrorCodes
 	 */
-	public JobInUseException(String jobId, String message, ErrorCode errorCode)
+	public JobInUseException(String jobId, String message, ErrorCodes errorCode)
 	{
 		super(message, errorCode);
 		m_JobId = jobId;

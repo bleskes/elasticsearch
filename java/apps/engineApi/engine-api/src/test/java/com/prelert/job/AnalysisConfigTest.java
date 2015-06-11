@@ -41,8 +41,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobConfigurationException;
-import com.prelert.rs.data.ErrorCode;
 
 /**
  * Tests the configured fields in the analysis are correct
@@ -196,7 +196,7 @@ public class AnalysisConfigTest
         }
         catch (JobConfigurationException e)
         {
-            assertEquals(ErrorCode.INVALID_FIELD_SELECTION, e.getErrorCode());
+            assertEquals(ErrorCodes.INVALID_FIELD_SELECTION, e.getErrorCode());
         }
 
         // count works with no fields
@@ -211,7 +211,7 @@ public class AnalysisConfigTest
         }
         catch (JobConfigurationException e)
         {
-            assertEquals(ErrorCode.INVALID_FIELD_SELECTION, e.getErrorCode());
+            assertEquals(ErrorCodes.INVALID_FIELD_SELECTION, e.getErrorCode());
         }
 
         // should work now
@@ -234,7 +234,7 @@ public class AnalysisConfigTest
         }
         catch (JobConfigurationException e)
         {
-            assertEquals(ErrorCode.UNKNOWN_FUNCTION, e.getErrorCode());
+            assertEquals(ErrorCodes.UNKNOWN_FUNCTION, e.getErrorCode());
         }
 
         ac.setBatchSpan(-1L);
@@ -245,7 +245,7 @@ public class AnalysisConfigTest
         }
         catch (JobConfigurationException e)
         {
-            assertEquals(ErrorCode.INVALID_VALUE, e.getErrorCode());
+            assertEquals(ErrorCodes.INVALID_VALUE, e.getErrorCode());
         }
 
         ac = new AnalysisConfig();
@@ -257,7 +257,7 @@ public class AnalysisConfigTest
         }
         catch (JobConfigurationException e)
         {
-            assertEquals(ErrorCode.INVALID_VALUE, e.getErrorCode());
+            assertEquals(ErrorCodes.INVALID_VALUE, e.getErrorCode());
         }
 
         ac = new AnalysisConfig();
@@ -269,7 +269,7 @@ public class AnalysisConfigTest
         }
         catch (JobConfigurationException e)
         {
-            assertEquals(ErrorCode.INVALID_VALUE, e.getErrorCode());
+            assertEquals(ErrorCodes.INVALID_VALUE, e.getErrorCode());
         }
 
         ac = new AnalysisConfig();
@@ -281,7 +281,7 @@ public class AnalysisConfigTest
         }
         catch (JobConfigurationException e)
         {
-            assertEquals(ErrorCode.INVALID_VALUE, e.getErrorCode());
+            assertEquals(ErrorCodes.INVALID_VALUE, e.getErrorCode());
         }
     }
 

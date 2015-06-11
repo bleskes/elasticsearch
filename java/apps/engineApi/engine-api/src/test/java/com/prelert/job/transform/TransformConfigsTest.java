@@ -40,8 +40,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.transform.exceptions.TransformConfigurationException;
-import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.ErrorCodeMatcher;
 
 public class TransformConfigsTest
@@ -78,7 +78,7 @@ public class TransformConfigsTest
 
         m_ExpectedException.expect(TransformConfigurationException.class);
         m_ExpectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCode.TRANSFORM_HAS_CIRCULAR_DEPENDENCY));
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.TRANSFORM_HAS_CIRCULAR_DEPENDENCY));
 
         new TransformConfigs(transforms).verify();
     }
@@ -93,7 +93,7 @@ public class TransformConfigsTest
 
         m_ExpectedException.expect(TransformConfigurationException.class);
         m_ExpectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCode.DUPLICATED_TRANSFORM_OUTPUT_NAME));
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.DUPLICATED_TRANSFORM_OUTPUT_NAME));
 
         new TransformConfigs(transforms).verify();
     }
@@ -103,7 +103,7 @@ public class TransformConfigsTest
     {
         m_ExpectedException.expect(TransformConfigurationException.class);
         m_ExpectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCode.TRANSFORM_INVALID_INPUT_COUNT));
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.TRANSFORM_INVALID_INPUT_COUNT));
 
         List<TransformConfig> transforms = new ArrayList<>();
         transforms.add(createConcatTransform(null, Arrays.asList()));

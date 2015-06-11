@@ -27,8 +27,8 @@
 
 package com.prelert.job.process.exceptions;
 
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobException;
-import com.prelert.rs.data.ErrorCode;
 
 public class MalformedJsonException extends JobException
 {
@@ -36,6 +36,6 @@ public class MalformedJsonException extends JobException
 
     public MalformedJsonException(Throwable cause)
     {
-        super("The input JSON data is malformed.", ErrorCode.MALFORMED_JSON, cause);
+        super("The input JSON data is malformed.", ErrorCodes.MALFORMED_JSON, cause);
     }
 }

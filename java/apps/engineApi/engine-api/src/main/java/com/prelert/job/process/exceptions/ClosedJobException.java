@@ -27,8 +27,8 @@
 
 package com.prelert.job.process.exceptions;
 
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobException;
-import com.prelert.rs.data.ErrorCode;
 
 /**
  * Exception thrown when a job is expected to be running
@@ -42,7 +42,7 @@ public class ClosedJobException extends JobException
 
 	public ClosedJobException(String message, String jobId)
 	{
-		super(message, ErrorCode.JOB_NOT_RUNNING);
+		super(message, ErrorCodes.JOB_NOT_RUNNING);
 		m_JobId = jobId;
 	}
 

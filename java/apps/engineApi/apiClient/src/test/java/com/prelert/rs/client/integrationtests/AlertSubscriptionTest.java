@@ -58,11 +58,11 @@ import com.prelert.job.DataDescription;
 import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.alert.Alert;
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.rs.client.EngineApiClient;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.ApiError;
 import com.prelert.rs.data.Bucket;
-import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.SingleDocument;
 
 
@@ -286,7 +286,7 @@ public class AlertSubscriptionTest
 				while (alert == null && m_Client.getLastError() != null)
 				{
 					ApiError err = m_Client.getLastError();
-					test(err.getErrorCode() == ErrorCode.JOB_NOT_RUNNING);
+					test(err.getErrorCode() == ErrorCodes.JOB_NOT_RUNNING);
 
                     alert = m_Client.pollJobAlert(m_JobId, TIMEOUT, m_ScoreThreshold,
                             m_ProbabiltyThreshold);
@@ -497,19 +497,19 @@ public class AlertSubscriptionTest
 		test(alert == null);
 		ApiError error = client.getLastError();
 		test(error != null);
-		test(error.getErrorCode() == ErrorCode.INVALID_THRESHOLD_ARGUMENT);
+		test(error.getErrorCode() == ErrorCodes.INVALID_THRESHOLD_ARGUMENT);
 
 		alert = client.pollJobAlert("non-existing-job", 5, 10.0, null);
 		test(alert == null);
 		error = client.getLastError();
 		test(error != null);
-		test(error.getErrorCode() == ErrorCode.MISSING_JOB_ERROR);
+		test(error.getErrorCode() == ErrorCodes.MISSING_JOB_ERROR);
 
 		alert = client.pollJobAlert(ALERTING_JOB_1, 5, 10.0, null);
 		test(alert == null);
 		error = client.getLastError();
 		test(error != null);
-		test(error.getErrorCode() == ErrorCode.JOB_NOT_RUNNING);
+		test(error.getErrorCode() == ErrorCodes.JOB_NOT_RUNNING);
 
 		boolean passed = true;
 		for (String jobId : JOB_IDS)

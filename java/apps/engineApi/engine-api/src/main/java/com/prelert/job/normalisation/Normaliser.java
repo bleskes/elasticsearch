@@ -34,12 +34,12 @@ import java.util.List;
 import org.apache.log4j.Logger;
 
 import com.google.common.base.Strings;
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.process.writer.LengthEncodedWriter;
 import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
-import com.prelert.rs.data.ErrorCode;
 
 /**
  * Normalises bucket scores and anomaly records for either
@@ -180,7 +180,7 @@ public class Normaliser
                 {
                     String msg = "Error iterating normalised results";
                     m_Logger.error(msg);
-                    throw new NativeProcessRunException(msg, ErrorCode.NATIVE_PROCESS_ERROR);
+                    throw new NativeProcessRunException(msg, ErrorCodes.NATIVE_PROCESS_ERROR);
                 }
                 record.resetBigNormalisedUpdateFlag();
                 if (anomalyScoreHadBigUpdate)
@@ -229,7 +229,7 @@ public class Normaliser
             String msg = "Failed to start normalisation process for job " + m_JobId;
             m_Logger.error(msg, e);
             throw new NativeProcessRunException(msg,
-                    ErrorCode.NATIVE_PROCESS_START_ERROR, e);
+                    ErrorCodes.NATIVE_PROCESS_START_ERROR, e);
         }
     }
 

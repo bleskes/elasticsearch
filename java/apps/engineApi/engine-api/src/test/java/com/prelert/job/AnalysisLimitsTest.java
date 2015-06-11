@@ -35,8 +35,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobConfigurationException;
-import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.ErrorCodeMatcher;
 
 public class AnalysisLimitsTest
@@ -50,7 +50,7 @@ public class AnalysisLimitsTest
         m_ExpectedException.expect(JobConfigurationException.class);
         m_ExpectedException.expectMessage("modelMemoryLimit cannot be < 0. Value = -1");
         m_ExpectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCode.INVALID_VALUE));
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
 
         AnalysisLimits limits = new AnalysisLimits();
         limits.setModelMemoryLimit(-1L);
@@ -66,7 +66,7 @@ public class AnalysisLimitsTest
         m_ExpectedException.expectMessage(
                 "categorizationExamplesLimit cannot be < 0. Value = -1");
         m_ExpectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCode.INVALID_VALUE));
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
 
         AnalysisLimits limits = new AnalysisLimits(1L, -1L);
 

@@ -26,8 +26,8 @@
  ************************************************************/
 package com.prelert.job.status;
 
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobException;
-import com.prelert.rs.data.ErrorCode;
 
 /**
  * If the timestamp field of a record cannot be read or the
@@ -48,7 +48,7 @@ public class HighProportionOfBadTimestampsException extends JobException
 		super(String.format("A high proportion of records have a timestamp "
 					+ "that cannot be interpreted (%d of %d).",
 					numberBadRecords, totalNumberRecords),
-				ErrorCode.TOO_MANY_BAD_DATES);
+				ErrorCodes.TOO_MANY_BAD_DATES);
 
 		m_NumberBad = numberBadRecords;
 		m_TotalNumber = totalNumberRecords;

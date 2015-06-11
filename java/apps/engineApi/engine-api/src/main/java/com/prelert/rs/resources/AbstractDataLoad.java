@@ -53,6 +53,7 @@ import com.prelert.job.JobDetails;
 import com.prelert.job.data.DataStreamer;
 import com.prelert.job.data.DataStreamerThread;
 import com.prelert.job.data.InputStreamDuplicator;
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobException;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.TooManyJobsException;
@@ -70,7 +71,6 @@ import com.prelert.rs.data.Acknowledgement;
 import com.prelert.rs.data.ApiError;
 import com.prelert.rs.data.DataCounts;
 import com.prelert.rs.data.DataPostResult;
-import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.MultiDataPostResult;
 import com.prelert.rs.data.SingleDocument;
 import com.prelert.rs.provider.RestApiException;
@@ -229,7 +229,7 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
         {
             String msg = Messages.getMessage(Messages.REST_INVALID_RESET_PARAMS, RESET_START_PARAM);
             LOGGER.info(msg);
-            throw new RestApiException(msg, ErrorCode.INVALID_BUCKET_RESET_RANGE_PARAMS,
+            throw new RestApiException(msg, ErrorCodes.INVALID_BUCKET_RESET_RANGE_PARAMS,
                     Response.Status.BAD_REQUEST);
         }
         TimeRange timeRange = createTimeRange(RESET_START_PARAM, resetStart, RESET_END_PARAM, resetEnd);
@@ -257,7 +257,7 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
             {
                 String msg = Messages.getMessage(Messages.REST_START_AFTER_END, end, start);
                 LOGGER.info(msg);
-                throw new RestApiException(msg, ErrorCode.END_DATE_BEFORE_START_DATE,
+                throw new RestApiException(msg, ErrorCodes.END_DATE_BEFORE_START_DATE,
                         Response.Status.BAD_REQUEST);
             }
         }
@@ -278,7 +278,7 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
             String message = Messages.getMessage(Messages.REST_RESET_BUCKET_NO_LATENCY);
             LOGGER.info(message);
             throw new RestApiException(message,
-                    ErrorCode.BUCKET_RESET_NOT_SUPPORTED, Response.Status.BAD_REQUEST);
+                    ErrorCodes.BUCKET_RESET_NOT_SUPPORTED, Response.Status.BAD_REQUEST);
         }
     }
 
@@ -331,7 +331,7 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
     private void throwInvalidFlushParamsException(String msg)
     {
         LOGGER.info(msg);
-        throw new RestApiException(msg, ErrorCode.INVALID_FLUSH_PARAMS,
+        throw new RestApiException(msg, ErrorCodes.INVALID_FLUSH_PARAMS,
                 Response.Status.BAD_REQUEST);
     }
 

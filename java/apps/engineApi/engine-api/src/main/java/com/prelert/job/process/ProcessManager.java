@@ -59,6 +59,7 @@ import com.prelert.job.DataDescription;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobStatus;
 import com.prelert.job.alert.AlertObserver;
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.messages.Messages;
@@ -85,7 +86,6 @@ import com.prelert.job.status.StatusReporterFactory;
 import com.prelert.job.transform.TransformConfigs;
 import com.prelert.job.usage.UsageReporterFactory;
 import com.prelert.rs.data.DataCounts;
-import com.prelert.rs.data.ErrorCode;
 
 /**
  * Manages the native processes channelling data to them and parsing the
@@ -253,7 +253,7 @@ public class ProcessManager
         {
             String msg = Messages.getMessage(Messages.JOB_DATA_CONCURRENT_USE_UPLOAD, jobId);
             LOGGER.warn(msg);
-            throw new JobInUseException(jobId, msg, ErrorCode.NATIVE_PROCESS_CONCURRENT_USE_ERROR);
+            throw new JobInUseException(jobId, msg, ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR);
         }
 
         // check the process is running, throws if not
@@ -290,7 +290,7 @@ public class ProcessManager
             process.getLogger().error(sb);
 
             throw new NativeProcessRunException(sb.toString(),
-                    ErrorCode.NATIVE_PROCESS_WRITE_ERROR);
+                    ErrorCodes.NATIVE_PROCESS_WRITE_ERROR);
         }
         finally
         {
@@ -401,7 +401,7 @@ public class ProcessManager
             LOGGER.error(msg);
             logger.error(msg, e);
             throw new NativeProcessRunException(msg,
-                    ErrorCode.NATIVE_PROCESS_START_ERROR, e);
+                    ErrorCodes.NATIVE_PROCESS_START_ERROR, e);
         }
 
 
@@ -461,7 +461,7 @@ public class ProcessManager
             String msg = Messages.getMessage(Messages.JOB_DATA_CONCURRENT_USE_FLUSH, jobId);
             LOGGER.info(msg);
             process.getLogger().info(msg);
-            throw new JobInUseException(jobId, msg, ErrorCode.NATIVE_PROCESS_CONCURRENT_USE_ERROR);
+            throw new JobInUseException(jobId, msg, ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR);
         }
 
         // Check the process is running, throws if not
@@ -493,7 +493,7 @@ public class ProcessManager
             process.getLogger().error(msg);
 
             throw new NativeProcessRunException(msg,
-                    ErrorCode.NATIVE_PROCESS_FLUSH_INTERRUPTED);
+                    ErrorCodes.NATIVE_PROCESS_FLUSH_INTERRUPTED);
         }
         catch (IOException ioe)
         {
@@ -505,7 +505,7 @@ public class ProcessManager
             process.getLogger().error(sb);
 
             throw new NativeProcessRunException(sb.toString(),
-                    ErrorCode.NATIVE_PROCESS_WRITE_ERROR);
+                    ErrorCodes.NATIVE_PROCESS_WRITE_ERROR);
         }
         finally
         {
@@ -557,7 +557,7 @@ public class ProcessManager
             String msg = Messages.getMessage(Messages.JOB_DATA_CONCURRENT_USE_CLOSE, jobId);
             LOGGER.info(msg);
             process.getLogger().info(msg);
-            throw new JobInUseException(jobId, msg, ErrorCode.NATIVE_PROCESS_CONCURRENT_USE_ERROR);
+            throw new JobInUseException(jobId, msg, ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR);
         }
 
 
@@ -645,7 +645,7 @@ public class ProcessManager
                 closeLogger(process.getLogger());
 
                 throw new NativeProcessRunException(sb.toString(),
-                        ErrorCode.NATIVE_PROCESS_ERROR);
+                        ErrorCodes.NATIVE_PROCESS_ERROR);
             }
             else
             {
@@ -700,7 +700,7 @@ public class ProcessManager
             process.getLogger().warn(sb);
 
             throw new NativeProcessRunException(sb.toString(),
-                    ErrorCode.NATIVE_PROCESS_ERROR);
+                    ErrorCodes.NATIVE_PROCESS_ERROR);
         }
         catch (IllegalThreadStateException e)
         {

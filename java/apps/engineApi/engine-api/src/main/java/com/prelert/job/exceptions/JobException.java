@@ -27,8 +27,8 @@
 
 package com.prelert.job.exceptions;
 
-import com.prelert.rs.data.ErrorCode;
-import com.prelert.rs.data.HasErrorCode;
+import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.errorcodes.HasErrorCode;
 
 /**
  * General job exception class with a specific error code and message.
@@ -37,22 +37,22 @@ public abstract class JobException extends Exception implements HasErrorCode
 {
     private static final long serialVersionUID = -5289885963015348819L;
 
-    private final ErrorCode m_ErrorCode;
+    private final ErrorCodes m_ErrorCode;
 
-    public JobException(String message, ErrorCode errorCode)
+    public JobException(String message, ErrorCodes errorCode)
     {
         super(message);
         m_ErrorCode = errorCode;
     }
 
-    public JobException(String message, ErrorCode errorCode, Throwable cause)
+    public JobException(String message, ErrorCodes errorCode, Throwable cause)
     {
         super(message, cause);
         m_ErrorCode = errorCode;
     }
 
     @Override
-    public ErrorCode getErrorCode()
+    public ErrorCodes getErrorCode()
     {
         return m_ErrorCode;
     }

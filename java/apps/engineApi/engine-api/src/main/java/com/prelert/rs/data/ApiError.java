@@ -29,6 +29,8 @@ package com.prelert.rs.data;
 import java.util.Objects;
 
 import com.fasterxml.jackson.core.io.JsonStringEncoder;
+import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.errorcodes.HasErrorCode;
 
 
 /**
@@ -38,11 +40,11 @@ import com.fasterxml.jackson.core.io.JsonStringEncoder;
  * a Java Exception {@linkplain #getCause()} will return that
  * Exception else it returns <code>null</code>.
  *
- * @see ErrorCode
+ * @see ErrorCodes
  */
 public class ApiError implements HasErrorCode
 {
-    private ErrorCode m_ErrorCode;
+    private ErrorCodes m_ErrorCode;
 	private String m_Message;
 	private Throwable m_Cause;
 
@@ -58,30 +60,30 @@ public class ApiError implements HasErrorCode
 	 * Create a new ApiError from one of the list of error codes.
 	 *
 	 * @param errorCode
-	 * @see ErrorCode
+	 * @see ErrorCodes
 	 */
-	public ApiError(ErrorCode errorCode)
+	public ApiError(ErrorCodes errorCode)
 	{
 		m_ErrorCode = errorCode;
 	}
 
 	/**
 	 * The error code
-	 * @see ErrorCode
-	 * @return one of {@linkplain ErrorCode}
+	 * @see ErrorCodes
+	 * @return one of {@linkplain ErrorCodes}
 	 */
 	@Override
-	public ErrorCode getErrorCode()
+	public ErrorCodes getErrorCode()
 	{
 		return m_ErrorCode;
 	}
 
 	/**
 	 * Set the error code.
-	 * @see ErrorCode
+	 * @see ErrorCodes
 	 * @param value
 	 */
-	public void setErrorCode(ErrorCode value)
+	public void setErrorCode(ErrorCodes value)
 	{
 		m_ErrorCode = value;
 	}

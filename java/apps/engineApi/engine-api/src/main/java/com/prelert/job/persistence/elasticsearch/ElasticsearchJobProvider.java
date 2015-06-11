@@ -73,6 +73,7 @@ import com.prelert.job.JobDetails;
 import com.prelert.job.JobStatus;
 import com.prelert.job.ModelSizeStats;
 import com.prelert.job.ModelState;
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobIdAlreadyExistsException;
 import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.messages.Messages;
@@ -83,7 +84,6 @@ import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.CategoryDefinition;
 import com.prelert.rs.data.Detector;
-import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
 
@@ -524,14 +524,14 @@ public class ElasticsearchJobProvider implements JobProvider
                 String msg = Messages.getMessage(Messages.DATASTORE_ERROR_DELETING_MISSING_INDEX, jobId);
                 LOGGER.warn(msg);
                 throw new UnknownJobException(jobId, msg,
-                        ErrorCode.MISSING_JOB_ERROR);
+                        ErrorCodes.MISSING_JOB_ERROR);
             }
             else
             {
                 String msg = Messages.getMessage(Messages.DATASTORE_ERROR_DELETING, jobId);
                 LOGGER.error(msg);
                 throw new UnknownJobException(jobId, msg,
-                        ErrorCode.DATA_STORE_ERROR, e.getCause());
+                        ErrorCodes.DATA_STORE_ERROR, e.getCause());
             }
         }
     }
@@ -925,7 +925,7 @@ public class ElasticsearchJobProvider implements JobProvider
         {
             String message = Messages.getMessage(Messages.JOB_MISSING_QUANTILES, jobId);
             LOGGER.error(message);
-            throw new UnknownJobException(jobId, message, ErrorCode.MISSING_JOB_ERROR);
+            throw new UnknownJobException(jobId, message, ErrorCodes.MISSING_JOB_ERROR);
         }
     }
 

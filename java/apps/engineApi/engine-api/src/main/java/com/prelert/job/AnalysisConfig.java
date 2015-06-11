@@ -36,10 +36,10 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Function;
 
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobConfigurationException;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.verification.Verifiable;
-import com.prelert.rs.data.ErrorCode;
 
 /**
  * Autodetect analysis configuration options describes which fields are
@@ -341,7 +341,7 @@ public class AnalysisConfig implements Verifiable
         {
             String msg = Messages.getMessage(Messages.JOB_CONFIG_NEGATIVE_FIELD_VALUE,
                                                 fieldName, value);
-            throw new JobConfigurationException(msg, ErrorCode.INVALID_VALUE);
+            throw new JobConfigurationException(msg, ErrorCodes.INVALID_VALUE);
         }
     }
 
@@ -351,7 +351,7 @@ public class AnalysisConfig implements Verifiable
         {
             throw new JobConfigurationException(
                     Messages.getMessage(Messages.JOB_CONFIG_NO_DETECTORS),
-                    ErrorCode.INCOMPLETE_CONFIGURATION);
+                    ErrorCodes.INCOMPLETE_CONFIGURATION);
         }
 
         boolean isSummarised = m_SummaryCountFieldName != null && !m_SummaryCountFieldName.isEmpty();

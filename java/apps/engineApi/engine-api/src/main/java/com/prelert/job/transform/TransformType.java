@@ -33,9 +33,9 @@ import java.util.List;
 import java.util.Set;
 
 import com.google.common.collect.Range;
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.transform.exceptions.TransformConfigurationException;
-import com.prelert.rs.data.ErrorCode;
 
 /**
  * Enum type representing the different transform functions
@@ -168,7 +168,7 @@ public enum TransformType
         {
             String msg = Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_INVALID_INPUT_COUNT,
                     tc.getTransform(), rangeAsString(m_ArityRange), inputsSize);
-            throw new TransformConfigurationException(msg, ErrorCode.TRANSFORM_INVALID_INPUT_COUNT);
+            throw new TransformConfigurationException(msg, ErrorCodes.TRANSFORM_INVALID_INPUT_COUNT);
         }
     }
 
@@ -180,7 +180,7 @@ public enum TransformType
         {
             String msg = Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_INVALID_ARGUMENT_COUNT,
                     tc.getTransform(), rangeAsString(m_ArgumentsRange), argumentsSize);
-            throw new TransformConfigurationException(msg, ErrorCode.TRANSFORM_INVALID_ARGUMENT_COUNT);
+            throw new TransformConfigurationException(msg, ErrorCodes.TRANSFORM_INVALID_ARGUMENT_COUNT);
         }
     }
 
@@ -192,7 +192,7 @@ public enum TransformType
         {
             String msg = Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_INVALID_OUTPUT_COUNT,
                     tc.getTransform(), rangeAsString(m_OutputsRange), outputsSize);
-            throw new TransformConfigurationException(msg, ErrorCode.TRANSFORM_INVALID_OUTPUT_COUNT);
+            throw new TransformConfigurationException(msg, ErrorCodes.TRANSFORM_INVALID_OUTPUT_COUNT);
         }
     }
 
@@ -235,7 +235,7 @@ public enum TransformType
 
         throw new TransformConfigurationException(
                 Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_UNKNOWN_TYPE, prettyName),
-                ErrorCode.UNKNOWN_TRANSFORM);
+                ErrorCodes.UNKNOWN_TRANSFORM);
     }
 
 }

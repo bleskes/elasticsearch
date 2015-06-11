@@ -42,13 +42,13 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import com.prelert.job.DataDescription.DataFormat;
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobConfigurationException;
 import com.prelert.job.transform.TransformConfig;
 import com.prelert.job.transform.TransformType;
 import com.prelert.job.transform.condition.Condition;
 import com.prelert.job.transform.condition.Operator;
 import com.prelert.job.transform.exceptions.TransformConfigurationException;
-import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.ErrorCodeMatcher;
 
 /**
@@ -69,7 +69,7 @@ public class JobConfigurationTest
 
         m_ExpectedException.expect(JobConfigurationException.class);
         m_ExpectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCode.JOB_ID_TOO_LONG));
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.JOB_ID_TOO_LONG));
 
         conf.verify();
     }
@@ -83,7 +83,7 @@ public class JobConfigurationTest
 
         m_ExpectedException.expect(JobConfigurationException.class);
         m_ExpectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCode.PROHIBITIED_CHARACTER_IN_JOB_ID));
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.PROHIBITIED_CHARACTER_IN_JOB_ID));
 
         conf.verify();
     }
@@ -96,7 +96,7 @@ public class JobConfigurationTest
 
         m_ExpectedException.expect(JobConfigurationException.class);
         m_ExpectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCode.PROHIBITIED_CHARACTER_IN_JOB_ID));
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.PROHIBITIED_CHARACTER_IN_JOB_ID));
 
         conf.setId("UPPERCASE");
         conf.verify();
@@ -110,7 +110,7 @@ public class JobConfigurationTest
 
         m_ExpectedException.expect(JobConfigurationException.class);
         m_ExpectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCode.PROHIBITIED_CHARACTER_IN_JOB_ID));
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.PROHIBITIED_CHARACTER_IN_JOB_ID));
 
         conf.setId("two\nlines");
         conf.verify();
@@ -128,7 +128,7 @@ public class JobConfigurationTest
         }
         catch (JobConfigurationException e)
         {
-            Assert.assertTrue(e.getErrorCode() == ErrorCode.INCOMPLETE_CONFIGURATION);
+            Assert.assertTrue(e.getErrorCode() == ErrorCodes.INCOMPLETE_CONFIGURATION);
         }
 
         jc.setReferenceJobId("ref_id");
@@ -142,7 +142,7 @@ public class JobConfigurationTest
         }
         catch (JobConfigurationException e)
         {
-            Assert.assertTrue(e.getErrorCode() == ErrorCode.PROHIBITIED_CHARACTER_IN_JOB_ID);
+            Assert.assertTrue(e.getErrorCode() == ErrorCodes.PROHIBITIED_CHARACTER_IN_JOB_ID);
         }
 
 
@@ -154,7 +154,7 @@ public class JobConfigurationTest
         }
         catch (JobConfigurationException e)
         {
-            Assert.assertTrue(e.getErrorCode() == ErrorCode.PROHIBITIED_CHARACTER_IN_JOB_ID);
+            Assert.assertTrue(e.getErrorCode() == ErrorCodes.PROHIBITIED_CHARACTER_IN_JOB_ID);
         }
 
         jc.setId("a very  very very very very very very very very very very very very very very very very very very very long id");
@@ -165,7 +165,7 @@ public class JobConfigurationTest
         }
         catch (JobConfigurationException e)
         {
-            Assert.assertTrue(e.getErrorCode() == ErrorCode.JOB_ID_TOO_LONG);
+            Assert.assertTrue(e.getErrorCode() == ErrorCodes.JOB_ID_TOO_LONG);
         }
 
 
@@ -179,7 +179,7 @@ public class JobConfigurationTest
         }
         catch (JobConfigurationException e)
         {
-            Assert.assertTrue(e.getErrorCode() == ErrorCode.INCOMPLETE_CONFIGURATION);
+            Assert.assertTrue(e.getErrorCode() == ErrorCodes.INCOMPLETE_CONFIGURATION);
         }
 
 
@@ -202,7 +202,7 @@ public class JobConfigurationTest
         }
         catch (JobConfigurationException e)
         {
-            Assert.assertEquals(ErrorCode.INVALID_VALUE, e.getErrorCode());
+            Assert.assertEquals(ErrorCodes.INVALID_VALUE, e.getErrorCode());
         }
 
         jc.setAnalysisLimits(new AnalysisLimits(1000, 4L));
@@ -219,7 +219,7 @@ public class JobConfigurationTest
         }
         catch (JobConfigurationException e)
         {
-            Assert.assertEquals(ErrorCode.INVALID_DATE_FORMAT, e.getErrorCode());
+            Assert.assertEquals(ErrorCodes.INVALID_DATE_FORMAT, e.getErrorCode());
         }
 
 
@@ -234,7 +234,7 @@ public class JobConfigurationTest
         }
         catch (JobConfigurationException e)
         {
-            Assert.assertEquals(ErrorCode.INVALID_VALUE, e.getErrorCode());
+            Assert.assertEquals(ErrorCodes.INVALID_VALUE, e.getErrorCode());
         }
 
         jc.setTimeout(300L);
@@ -320,7 +320,7 @@ public class JobConfigurationTest
         catch (JobConfigurationException e)
         {
             assertTrue(e instanceof TransformConfigurationException);
-            assertEquals(e.getErrorCode(), ErrorCode.TRANSFORM_OUTPUTS_UNUSED);
+            assertEquals(e.getErrorCode(), ErrorCodes.TRANSFORM_OUTPUTS_UNUSED);
         }
 
 
@@ -349,7 +349,7 @@ public class JobConfigurationTest
         catch (JobConfigurationException e)
         {
             assertTrue(e instanceof TransformConfigurationException);
-            assertEquals(e.getErrorCode(), ErrorCode.DUPLICATED_TRANSFORM_OUTPUT_NAME);
+            assertEquals(e.getErrorCode(), ErrorCodes.DUPLICATED_TRANSFORM_OUTPUT_NAME);
         }
 
         jc.getAnalysisConfig().getDetectors().get(0).setFieldName(TransformType.DOMAIN_SPLIT.defaultOutputNames().get(0));
@@ -382,7 +382,7 @@ public class JobConfigurationTest
         m_ExpectedException.expectMessage(
                 "When the data format is SINGLE_LINE, transforms are required.");
         m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(
-                ErrorCode.DATA_FORMAT_IS_SINGLE_LINE_BUT_NO_TRANSFORMS));
+                ErrorCodes.DATA_FORMAT_IS_SINGLE_LINE_BUT_NO_TRANSFORMS));
 
         JobConfiguration config = buildJobConfigurationNoTransforms();
         config.getDataDescription().setFormat(DataFormat.SINGLE_LINE);
@@ -398,7 +398,7 @@ public class JobConfigurationTest
         m_ExpectedException.expectMessage(
                 "When the data format is SINGLE_LINE, transforms are required.");
         m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(
-                ErrorCode.DATA_FORMAT_IS_SINGLE_LINE_BUT_NO_TRANSFORMS));
+                ErrorCodes.DATA_FORMAT_IS_SINGLE_LINE_BUT_NO_TRANSFORMS));
 
         JobConfiguration config = buildJobConfigurationNoTransforms();
         config.setTransforms(new ArrayList<>());

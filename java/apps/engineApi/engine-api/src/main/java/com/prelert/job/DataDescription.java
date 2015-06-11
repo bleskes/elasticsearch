@@ -34,10 +34,10 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobConfigurationException;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.verification.Verifiable;
-import com.prelert.rs.data.ErrorCode;
 
 /**
  * Describes the format of the data used in the job and how it should
@@ -325,7 +325,7 @@ public class DataDescription implements Verifiable
             {
                 String message = Messages.getMessage(Messages.JOB_CONFIG_INVALID_TIMEFORMAT,
                                                     m_TimeFormat);
-                throw new JobConfigurationException(message,  ErrorCode.INVALID_DATE_FORMAT, e);
+                throw new JobConfigurationException(message,  ErrorCodes.INVALID_DATE_FORMAT, e);
             }
         }
 
