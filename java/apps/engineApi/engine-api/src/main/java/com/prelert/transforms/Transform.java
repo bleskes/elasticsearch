@@ -87,11 +87,8 @@ public abstract class Transform
                 return false;
             }
             TransformIndex other = (TransformIndex) obj;
-            if (array != other.array || index != other.index)
-            {
-                return false;
-            }
-            return true;
+            return Objects.equals(this.array, other.array)
+                    && Objects.equals(this.index, other.index);
         }
     }
 
