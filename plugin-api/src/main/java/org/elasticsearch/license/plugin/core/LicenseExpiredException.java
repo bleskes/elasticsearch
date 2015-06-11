@@ -15,19 +15,30 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Elasticsearch Incorporated.
  */
-package org.elasticsearch.license.plugin;
 
-import org.elasticsearch.common.inject.AbstractModule;
-import org.elasticsearch.common.inject.Scopes;
-import org.elasticsearch.license.core.LicenseVerifier;
-import org.elasticsearch.license.plugin.core.LicensesClientService;
-import org.elasticsearch.license.plugin.core.LicensesService;
+package org.elasticsearch.license.plugin.core;
 
-public class LicenseModule extends AbstractModule {
+import org.elasticsearch.ElasticsearchException;
+import org.elasticsearch.rest.RestStatus;
+
+/**
+ * Exception to be thrown when a feature action requires a valid license
+ */
+public class LicenseExpiredException extends ElasticsearchException {
+
+    private final String feature;
+
+    public LicenseExpiredException(String feature) {
+        super("license expired for feature [" + feature + "]");
+        this.feature = feature;
+    }
+
     @Override
-    protected void configure() {
-        bind(LicenseVerifier.class).in(Scopes.SINGLETON);
-        bind(LicensesService.class).in(Scopes.SINGLETON);
-        bind(LicensesClientService.class).to(LicensesService.class).in(Scopes.SINGLETON);
+    public RestStatus status() {
+        return RestStatus.UNAUTHORIZED;
+    }
+
+    public String feature() {
+        return feature;
     }
 }
