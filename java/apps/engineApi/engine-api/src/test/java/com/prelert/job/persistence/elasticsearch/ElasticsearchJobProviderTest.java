@@ -48,10 +48,10 @@ import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.quantiles.Quantiles;
-import com.prelert.rs.data.ErrorCodeMatcher;
 
 public class ElasticsearchJobProviderTest
 {

@@ -25,7 +25,7 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.rs.data.parsing;
+package com.prelert.job.process.results;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -63,7 +63,7 @@ import com.prelert.utils.json.AutoDetectParseException;
 /**
  * Tests for parsing the JSON output of autodetect_api
  */
-public class ResultsParsingTest
+public class AutoDetectResultsParserTest
 {
     public static final String METRIC_OUTPUT_SAMPLE = "[{\"timestamp\":1359450000,\"detectors\":[],\"rawAnomalyScore\":0, \"maxNormalizedProbability\":0,\"anomalyScore\":0,\"recordCount\":0,\"eventCount\":806}" +
             ",{\"quantileState\":[\"normaliser 1.1\", \"normaliser 2.1\"]}" +
@@ -231,7 +231,7 @@ public class ResultsParsingTest
     AutoDetectParseException, UnknownJobException
     {
         BasicConfigurator.configure();
-        Logger logger = Logger.getLogger(ResultsParsingTest.class);
+        Logger logger = Logger.getLogger(AutoDetectResultsParserTest.class);
 
         InputStream inputStream = new ByteArrayInputStream(METRIC_OUTPUT_SAMPLE.getBytes(StandardCharsets.UTF_8));
         ResultsPersister persister = new ResultsPersister();
@@ -337,7 +337,7 @@ public class ResultsParsingTest
     AutoDetectParseException, UnknownJobException
     {
         BasicConfigurator.configure();
-        Logger logger = Logger.getLogger(ResultsParsingTest.class);
+        Logger logger = Logger.getLogger(AutoDetectResultsParserTest.class);
 
         InputStream inputStream = new ByteArrayInputStream(POPULATION_OUTPUT_SAMPLE.getBytes(StandardCharsets.UTF_8));
         ResultsPersister persister = new ResultsPersister();
@@ -415,7 +415,7 @@ public class ResultsParsingTest
     throws JsonParseException, IOException, AutoDetectParseException
     {
         BasicConfigurator.configure();
-        Logger logger = Logger.getLogger(ResultsParsingTest.class);
+        Logger logger = Logger.getLogger(AutoDetectResultsParserTest.class);
 
         // 1. normalised prob threshold
         InputStream inputStream = new ByteArrayInputStream(METRIC_OUTPUT_SAMPLE.getBytes(StandardCharsets.UTF_8));
