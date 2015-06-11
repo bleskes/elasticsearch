@@ -30,9 +30,9 @@ package com.prelert.job.persistence;
 import java.io.Closeable;
 
 import com.prelert.job.exceptions.UnknownJobException;
-import com.prelert.rs.data.AnomalyRecord;
-import com.prelert.rs.data.Bucket;
-import com.prelert.rs.data.CategoryDefinition;
+import com.prelert.job.results.AnomalyRecord;
+import com.prelert.job.results.Bucket;
+import com.prelert.job.results.CategoryDefinition;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
 

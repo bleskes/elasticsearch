@@ -55,9 +55,9 @@ import com.prelert.job.persistence.JobRenormaliser;
 import com.prelert.job.persistence.JobResultsPersister;
 import com.prelert.job.process.results.AutoDetectResultsParser;
 import com.prelert.job.quantiles.Quantiles;
-import com.prelert.rs.data.Bucket;
-import com.prelert.rs.data.CategoryDefinition;
-import com.prelert.rs.data.Detector;
+import com.prelert.job.results.Bucket;
+import com.prelert.job.results.CategoryDefinition;
+import com.prelert.job.results.Detector;
 import com.prelert.utils.json.AutoDetectParseException;
 
 /**
@@ -281,7 +281,7 @@ public class AutoDetectResultsParserTest
         assertEquals(buckets.get(1).getEventCount(), 820);
         assertEquals(0.0140005, buckets.get(1).getRawAnomalyScore(), 0.000001);
 
-        com.prelert.rs.data.Detector detector = buckets.get(1).getDetectors().get(0);
+        com.prelert.job.results.Detector detector = buckets.get(1).getDetectors().get(0);
 
         assertEquals("individual metric/responsetime/airline", detector.getName());
         assertEquals(4, detector.getRecords().size());
@@ -373,7 +373,7 @@ public class AutoDetectResultsParserTest
         assertEquals(buckets.get(0).getEventCount(), 1235);
         assertEquals(1.30397, buckets.get(0).getRawAnomalyScore(), 0.000001);
 
-        com.prelert.rs.data.Detector detector = buckets.get(0).getDetectors().get(0);
+        com.prelert.job.results.Detector detector = buckets.get(0).getDetectors().get(0);
 
         assertEquals("population metric maximum/0/sum_cs_bytes_//cs_host/", detector.getName());
         assertEquals(4, detector.getRecords().size());

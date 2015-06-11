@@ -55,11 +55,11 @@ import com.prelert.job.JobDetails;
 import com.prelert.job.ModelSizeStats;
 import com.prelert.job.persistence.JobResultsPersister;
 import com.prelert.job.quantiles.Quantiles;
-import com.prelert.rs.data.AnomalyCause;
-import com.prelert.rs.data.AnomalyRecord;
-import com.prelert.rs.data.Bucket;
-import com.prelert.rs.data.CategoryDefinition;
-import com.prelert.rs.data.Detector;
+import com.prelert.job.results.AnomalyCause;
+import com.prelert.job.results.AnomalyRecord;
+import com.prelert.job.results.Bucket;
+import com.prelert.job.results.CategoryDefinition;
+import com.prelert.job.results.Detector;
 
 /**
  * Saves result Buckets and Quantiles to Elasticsearch<br/>

@@ -25,13 +25,15 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.rs.data;
+package com.prelert.job.results;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
+
+import com.prelert.job.results.AnomalyCause;
 
 public class AnomalyCauseTest
 {

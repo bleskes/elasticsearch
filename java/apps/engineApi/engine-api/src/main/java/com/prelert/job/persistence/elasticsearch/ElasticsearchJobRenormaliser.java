@@ -50,8 +50,8 @@ import com.prelert.job.normalisation.NormaliserProcessFactory;
 import com.prelert.job.persistence.JobRenormaliser;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.quantiles.Quantiles;
-import com.prelert.rs.data.AnomalyRecord;
-import com.prelert.rs.data.Bucket;
+import com.prelert.job.results.AnomalyRecord;
+import com.prelert.job.results.Bucket;
 import com.prelert.rs.data.Pagination;
 
 

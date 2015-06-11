@@ -32,7 +32,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.prelert.rs.data.Bucket;
+import com.prelert.job.results.Bucket;
 import com.prelert.rs.data.SingleDocument;
 import com.prelert.rs.resources.Buckets;
 

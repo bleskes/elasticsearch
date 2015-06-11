@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.Objects;
 
 import com.prelert.job.transform.TransformConfig;
-import com.prelert.rs.data.DataCounts;
 
 /**
  * This class represents a configured and created Job. The creation time is

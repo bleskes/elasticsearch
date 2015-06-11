@@ -61,12 +61,12 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.prelert.job.DataCounts;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
 import com.prelert.job.alert.Alert;
+import com.prelert.job.results.CategoryDefinition;
 import com.prelert.rs.data.ApiError;
-import com.prelert.rs.data.CategoryDefinition;
-import com.prelert.rs.data.DataCounts;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
 

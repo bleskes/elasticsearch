@@ -36,19 +36,19 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.AnalysisLimits;
 import com.prelert.job.CategorizerState;
+import com.prelert.job.DataCounts;
 import com.prelert.job.DataDescription;
 import com.prelert.job.Detector;
 import com.prelert.job.JobDetails;
 import com.prelert.job.ModelSizeStats;
 import com.prelert.job.ModelState;
 import com.prelert.job.quantiles.Quantiles;
+import com.prelert.job.results.AnomalyCause;
+import com.prelert.job.results.AnomalyRecord;
+import com.prelert.job.results.Bucket;
+import com.prelert.job.results.CategoryDefinition;
 import com.prelert.job.transform.TransformConfig;
 import com.prelert.job.usage.Usage;
-import com.prelert.rs.data.AnomalyCause;
-import com.prelert.rs.data.AnomalyRecord;
-import com.prelert.rs.data.Bucket;
-import com.prelert.rs.data.CategoryDefinition;
-import com.prelert.rs.data.DataCounts;
 
 /**
  * Static methods to create Elasticsearch mappings for the autodetect
@@ -65,7 +65,7 @@ public class ElasticsearchMappings
 
     /**
      * Name of the field used to store the timestamp in Elasticsearch.
-     * Note the field name is different to {@link com.prelert.rs.data.Bucket#TIMESTAMP} used by the
+     * Note the field name is different to {@link com.prelert.job.results.Bucket#TIMESTAMP} used by the
      * API Bucket Resource, and is chosen for consistency with the default field name used by
      * Logstash and Kibana.
      */
@@ -281,7 +281,7 @@ public class ElasticsearchMappings
 
 
     /**
-     * Create the Elasticsearch mapping for {@linkplain com.prelert.rs.data.Bucket}.
+     * Create the Elasticsearch mapping for {@linkplain com.prelert.job.results.Bucket}.
      * The '_all' field is disabled as the document isn't meant to be searched.
      *
      * @return
@@ -366,7 +366,7 @@ public class ElasticsearchMappings
     }
 
     /**
-     * Create the Elasticsearch mapping for {@linkplain com.prelert.rs.data.Detector}.
+     * Create the Elasticsearch mapping for {@linkplain com.prelert.job.results.Detector}.
      * The '_all' field is disabled as the document isn't meant to be searched.
      *
      * @return
@@ -377,12 +377,12 @@ public class ElasticsearchMappings
     {
         return jsonBuilder()
             .startObject()
-                .startObject(com.prelert.rs.data.Detector.TYPE)
+                .startObject(com.prelert.job.results.Detector.TYPE)
                     .startObject("_all")
                         .field("enabled", false)
                     .endObject()
                     .startObject(PROPERTIES)
-                        .startObject(com.prelert.rs.data.Detector.NAME)
+                        .startObject(com.prelert.job.results.Detector.NAME)
                             .field(TYPE, STRING).field(INDEX, NOT_ANALYZED)
                         .endObject()
                     .endObject()
@@ -392,9 +392,9 @@ public class ElasticsearchMappings
 
 
     /**
-     * Create the Elasticsearch mapping for {@linkplain com.prelert.rs.data.Detector}.
+     * Create the Elasticsearch mapping for {@linkplain com.prelert.job.results.Detector}.
      * The '_all' field is disabled as the document isn't meant to be searched.
-     * Records have a _parent mapping to a {@linkplain com.prelert.rs.data.Bucket}.
+     * Records have a _parent mapping to a {@linkplain com.prelert.job.results.Bucket}.
      *
      * @return
      * @throws IOException

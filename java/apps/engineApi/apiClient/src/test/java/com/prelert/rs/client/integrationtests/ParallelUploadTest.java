@@ -38,11 +38,11 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 
+import com.prelert.job.DataCounts;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.rs.client.EngineApiClient;
 import com.prelert.rs.client.datauploader.CsvDataRunner;
 import com.prelert.rs.data.ApiError;
-import com.prelert.rs.data.DataCounts;
 
 /**
  * This program tests the case where multiple processes try to write

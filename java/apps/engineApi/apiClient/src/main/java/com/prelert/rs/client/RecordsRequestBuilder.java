@@ -34,7 +34,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.prelert.rs.data.AnomalyRecord;
+import com.prelert.job.results.AnomalyRecord;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.resources.Records;
 

@@ -43,7 +43,7 @@ import org.junit.rules.ExpectedException;
 
 import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
-import com.prelert.rs.data.Bucket;
+import com.prelert.job.results.Bucket;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
 

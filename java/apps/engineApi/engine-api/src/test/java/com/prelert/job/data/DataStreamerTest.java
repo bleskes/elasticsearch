@@ -46,6 +46,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
 import com.fasterxml.jackson.core.JsonParseException;
+import com.prelert.job.DataCounts;
 import com.prelert.job.data.DataStreamer;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobInUseException;
@@ -58,7 +59,6 @@ import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.process.params.DataLoadParams;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
-import com.prelert.rs.data.DataCounts;
 import com.prelert.rs.provider.RestApiException;
 
 public class DataStreamerTest

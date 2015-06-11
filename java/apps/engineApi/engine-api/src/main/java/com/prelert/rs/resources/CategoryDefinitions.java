@@ -42,7 +42,7 @@ import org.apache.log4j.Logger;
 
 import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.manager.JobManager;
-import com.prelert.rs.data.CategoryDefinition;
+import com.prelert.job.results.CategoryDefinition;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
 

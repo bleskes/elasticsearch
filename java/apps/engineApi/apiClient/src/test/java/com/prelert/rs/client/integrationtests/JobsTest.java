@@ -56,15 +56,15 @@ import com.prelert.job.AnalysisLimits;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.results.AnomalyRecord;
+import com.prelert.job.results.Bucket;
+import com.prelert.job.DataCounts;
 import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobStatus;
 import com.prelert.rs.client.EngineApiClient;
-import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.ApiError;
-import com.prelert.rs.data.Bucket;
-import com.prelert.rs.data.DataCounts;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
 

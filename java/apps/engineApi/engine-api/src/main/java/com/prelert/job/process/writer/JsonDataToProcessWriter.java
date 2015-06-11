@@ -38,6 +38,7 @@ import org.apache.log4j.Logger;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.prelert.job.AnalysisConfig;
+import com.prelert.job.DataCounts;
 import com.prelert.job.DataDescription;
 import com.prelert.job.persistence.JobDataPersister;
 import com.prelert.job.process.exceptions.MalformedJsonException;
@@ -47,7 +48,6 @@ import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.job.status.StatusReporter;
 import com.prelert.job.transform.TransformConfigs;
-import com.prelert.rs.data.DataCounts;
 
 /**
  * A writer for transforming and piping JSON data from an

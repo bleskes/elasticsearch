@@ -38,8 +38,8 @@ import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.process.writer.LengthEncodedWriter;
-import com.prelert.rs.data.AnomalyRecord;
-import com.prelert.rs.data.Bucket;
+import com.prelert.job.results.AnomalyRecord;
+import com.prelert.job.results.Bucket;
 
 /**
  * Normalises bucket scores and anomaly records for either

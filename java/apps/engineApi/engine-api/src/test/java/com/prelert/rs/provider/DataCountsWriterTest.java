@@ -44,7 +44,7 @@ import org.junit.Test;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.prelert.rs.data.DataCounts;
+import com.prelert.job.DataCounts;
 
 public class DataCountsWriterTest
 {

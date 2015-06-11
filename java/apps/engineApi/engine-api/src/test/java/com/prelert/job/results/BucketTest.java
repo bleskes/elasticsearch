@@ -25,7 +25,7 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.rs.data;
+package com.prelert.job.results;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -34,6 +34,10 @@ import java.util.Arrays;
 import java.util.Date;
 
 import org.junit.Test;
+
+import com.prelert.job.results.AnomalyRecord;
+import com.prelert.job.results.Bucket;
+import com.prelert.job.results.Detector;
 
 public class BucketTest
 {

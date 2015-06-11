@@ -29,8 +29,8 @@ package com.prelert.job.persistence;
 
 import com.prelert.job.ModelSizeStats;
 import com.prelert.job.quantiles.Quantiles;
-import com.prelert.rs.data.Bucket;
-import com.prelert.rs.data.CategoryDefinition;
+import com.prelert.job.results.Bucket;
+import com.prelert.job.results.CategoryDefinition;
 
 /**
  * Interface for classes that persist {@linkplain Bucket Buckets} and

@@ -47,8 +47,8 @@ import com.prelert.job.alert.AlertObserver;
 import com.prelert.job.persistence.JobRenormaliser;
 import com.prelert.job.persistence.JobResultsPersister;
 import com.prelert.job.quantiles.Quantiles;
-import com.prelert.rs.data.Bucket;
-import com.prelert.rs.data.CategoryDefinition;
+import com.prelert.job.results.Bucket;
+import com.prelert.job.results.CategoryDefinition;
 import com.prelert.utils.json.AutoDetectParseException;
 
 /**

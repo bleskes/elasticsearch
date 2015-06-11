@@ -52,8 +52,8 @@ import org.mockito.MockitoAnnotations;
 import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.process.writer.LengthEncodedWriter;
-import com.prelert.rs.data.AnomalyRecord;
-import com.prelert.rs.data.Bucket;
+import com.prelert.job.results.AnomalyRecord;
+import com.prelert.job.results.Bucket;
 
 public class NormaliserTest
 {

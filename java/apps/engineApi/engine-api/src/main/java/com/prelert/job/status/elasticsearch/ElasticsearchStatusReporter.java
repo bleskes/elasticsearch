@@ -37,10 +37,10 @@ import org.elasticsearch.action.update.UpdateRequestBuilder;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.indices.IndexMissingException;
 
+import com.prelert.job.DataCounts;
 import com.prelert.job.JobDetails;
 import com.prelert.job.status.StatusReporter;
 import com.prelert.job.usage.UsageReporter;
-import com.prelert.rs.data.DataCounts;
 
 
 /**

@@ -30,7 +30,7 @@ package com.prelert.rs.client;
 import java.io.IOException;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.prelert.rs.data.CategoryDefinition;
+import com.prelert.job.results.CategoryDefinition;
 import com.prelert.rs.data.SingleDocument;
 
 public class CategoryDefinitionRequestBuilder extends BaseJobRequestBuilder<CategoryDefinition>
