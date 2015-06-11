@@ -38,11 +38,14 @@ import org.apache.log4j.Logger;
  */
 public class Concat extends Transform
 {
-    private String m_Delimiter = null;
+    private final static String EMPTY_STRING = "";
+
+    private final String m_Delimiter;
 
     public Concat(List<TransformIndex> readIndicies, List<TransformIndex> writeIndicies, Logger logger)
     {
         super(readIndicies, writeIndicies, logger);
+        m_Delimiter = EMPTY_STRING;
     }
 
     public Concat(String join, List<TransformIndex> readIndicies, List<TransformIndex> writeIndicies, Logger logger)
@@ -70,30 +73,13 @@ public class Concat extends Transform
 
         TransformIndex writeIndex = m_WriteIndicies.get(0);
 
-        if (m_Delimiter != null)
+        StringJoiner joiner = new StringJoiner(m_Delimiter);
+        for (TransformIndex i : m_ReadIndicies)
         {
-            StringJoiner joiner = new StringJoiner(m_Delimiter);
-
-            for (TransformIndex i : m_ReadIndicies)
-            {
-                joiner.add(readWriteArea[i.array][i.index]);
-            }
-
-            readWriteArea[writeIndex.array][writeIndex.index] = joiner.toString();
+            joiner.add(readWriteArea[i.array][i.index]);
         }
-        else
-        {
-            StringBuilder builder = new StringBuilder();
-
-            for (TransformIndex i : m_ReadIndicies)
-            {
-                builder.append(readWriteArea[i.array][i.index]);
-            }
-
-            readWriteArea[writeIndex.array][writeIndex.index] = builder.toString();
-        }
+        readWriteArea[writeIndex.array][writeIndex.index] = joiner.toString();
 
         return TransformResult.OK;
     }
-
 }
