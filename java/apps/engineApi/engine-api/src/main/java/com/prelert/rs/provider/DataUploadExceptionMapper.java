@@ -30,9 +30,9 @@ package com.prelert.rs.provider;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.process.exceptions.DataUploadException;
 import com.prelert.rs.data.ApiError;
-import com.prelert.rs.data.ErrorCode;
 
 /**
  * Exception -> Response mapper for {@linkplain DataUploadException}.
@@ -42,7 +42,7 @@ public class DataUploadExceptionMapper implements ExceptionMapper<DataUploadExce
     @Override
     public Response toResponse(DataUploadException e)
     {
-        ApiError error = new ApiError(ErrorCode.DATA_ERROR);
+        ApiError error = new ApiError(ErrorCodes.DATA_ERROR);
         error.setCause(e.getCause());
         error.setMessage(e.getMessage());
         return Response.serverError().entity(error.toJson()).build();

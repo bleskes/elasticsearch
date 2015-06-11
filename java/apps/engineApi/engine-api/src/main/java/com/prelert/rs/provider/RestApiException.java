@@ -29,9 +29,9 @@ package com.prelert.rs.provider;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
+import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.errorcodes.HasErrorCode;
 import com.prelert.rs.data.ApiError;
-import com.prelert.rs.data.ErrorCode;
-import com.prelert.rs.data.HasErrorCode;
 
 /**
  * Overrides the default {@linkplain WebApplicationException}
@@ -41,10 +41,10 @@ public class RestApiException extends WebApplicationException implements HasErro
 {
     private static final long serialVersionUID = -4162139513941557651L;
 
-    private final ErrorCode m_ErrorCode;
+    private final ErrorCodes m_ErrorCode;
     private final Response.Status m_Status;
 
-    public RestApiException(String msg, ErrorCode errorCode, Response.Status status)
+    public RestApiException(String msg, ErrorCodes errorCode, Response.Status status)
     {
         super(msg);
         m_ErrorCode = errorCode;
@@ -62,7 +62,7 @@ public class RestApiException extends WebApplicationException implements HasErro
     }
 
     @Override
-    public ErrorCode getErrorCode()
+    public ErrorCodes getErrorCode()
     {
         return m_ErrorCode;
     }

@@ -30,6 +30,8 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
+import com.prelert.job.errorcodes.ErrorCodes;
+
 public class DataPostResultTest
 {
     @Test
@@ -43,7 +45,7 @@ public class DataPostResultTest
 
         assertFalse(dp.equals(new DataPostResult("bar", dc)));
 
-        ApiError error = new ApiError(ErrorCode.UNCOMPRESSED_DATA);
+        ApiError error = new ApiError(ErrorCodes.UNCOMPRESSED_DATA);
         DataPostResult errorDp = new DataPostResult("foo", error);
 
         assertFalse(dp.equals(errorDp));

@@ -27,7 +27,7 @@
  ************************************************************/
 package com.prelert.job.exceptions;
 
-import com.prelert.rs.data.ErrorCode;
+import com.prelert.job.errorcodes.ErrorCodes;
 
 /**
  * Represents the invalid configuration of a job.
@@ -40,14 +40,14 @@ public class JobConfigurationException extends JobException
 	 * Create a new JobConfigurationException.
 	 *
 	 * @param message Details of error explaining the context
-	 * @param errorCode See {@linkplain com.prelert.rs.data.ErrorCode}
+	 * @param errorCode See {@linkplain com.prelert.job.errorcodes.ErrorCodes}
 	 */
-	public JobConfigurationException(String message, ErrorCode errorCode)
+	public JobConfigurationException(String message, ErrorCodes errorCode)
 	{
 		super(message, errorCode);
 	}
 
-	public JobConfigurationException(String message, ErrorCode errorCode, Throwable cause)
+	public JobConfigurationException(String message, ErrorCodes errorCode, Throwable cause)
 	{
 		super(message, errorCode, cause);
 	}

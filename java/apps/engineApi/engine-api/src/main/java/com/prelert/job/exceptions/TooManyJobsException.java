@@ -26,7 +26,7 @@
  ************************************************************/
 package com.prelert.job.exceptions;
 
-import com.prelert.rs.data.ErrorCode;
+import com.prelert.job.errorcodes.ErrorCodes;
 
 /**
  * This type of exception represents an error where an operation
@@ -45,14 +45,14 @@ public class TooManyJobsException extends JobException
 	 * @param message Details of error explaining the context
 	 * @param errorCode
 	 */
-	public TooManyJobsException(int limit, String message, ErrorCode errorCode)
+	public TooManyJobsException(int limit, String message, ErrorCodes errorCode)
 	{
 		super(message, errorCode);
 		m_Limit = limit;
 	}
 
 
-	public TooManyJobsException(int limit, String message, ErrorCode errorCode,
+	public TooManyJobsException(int limit, String message, ErrorCodes errorCode,
 			Throwable cause)
 	{
 		super(message, errorCode, cause);

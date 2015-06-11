@@ -37,8 +37,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.UnknownJobException;
-import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.ErrorCodeMatcher;
 import com.prelert.rs.provider.RestApiException;
 
@@ -76,7 +76,7 @@ public class AlertsLongPollTest extends ServiceTest
                 + " score (-0.01) must be in the range 0-100");
         m_ExpectedException.expect(
 
-                ErrorCodeMatcher.hasErrorCode(ErrorCode.INVALID_THRESHOLD_ARGUMENT));
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_THRESHOLD_ARGUMENT));
         m_Alerts.pollJob(JOB_ID, 90, -0.01, null, mock(AsyncResponse.class));
     }
 
@@ -88,7 +88,7 @@ public class AlertsLongPollTest extends ServiceTest
         m_ExpectedException.expectMessage("Invalid alert parameters."
                 + " score (-0.01) and probability (60.0) must be in the range 0-100");
         m_ExpectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCode.INVALID_THRESHOLD_ARGUMENT));
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_THRESHOLD_ARGUMENT));
 
         m_Alerts.pollJob(JOB_ID, 90, -0.01, 60.0, mock(AsyncResponse.class));
     }
@@ -101,7 +101,7 @@ public class AlertsLongPollTest extends ServiceTest
         m_ExpectedException.expectMessage("Invalid alert parameters."
                 + " score (101.0) and probability (60.0) must be in the range 0-100");
         m_ExpectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCode.INVALID_THRESHOLD_ARGUMENT));
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_THRESHOLD_ARGUMENT));
 
         m_Alerts.pollJob(JOB_ID, 90, 101.0, 60.0, mock(AsyncResponse.class));
     }
@@ -114,7 +114,7 @@ public class AlertsLongPollTest extends ServiceTest
         m_ExpectedException.expectMessage("Invalid alert parameters."
                 + " probability (-0.01) must be in the range 0-100");
         m_ExpectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCode.INVALID_THRESHOLD_ARGUMENT));
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_THRESHOLD_ARGUMENT));
 
         m_Alerts.pollJob(JOB_ID, 90, null, -0.01, mock(AsyncResponse.class));
     }
@@ -127,7 +127,7 @@ public class AlertsLongPollTest extends ServiceTest
         m_ExpectedException.expectMessage("Invalid alert parameters."
                 + " score (90.0) and probability (-0.01) must be in the range 0-100");
         m_ExpectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCode.INVALID_THRESHOLD_ARGUMENT));
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_THRESHOLD_ARGUMENT));
 
         m_Alerts.pollJob(JOB_ID, 90, 90.0, -0.01, mock(AsyncResponse.class));
     }
@@ -140,7 +140,7 @@ public class AlertsLongPollTest extends ServiceTest
         m_ExpectedException.expectMessage("Invalid alert parameters."
                 + " score (95.0) and probability (101.0) must be in the range 0-100");
         m_ExpectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCode.INVALID_THRESHOLD_ARGUMENT));
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_THRESHOLD_ARGUMENT));
 
         m_Alerts.pollJob(JOB_ID, 90, 95.0, 101.0, mock(AsyncResponse.class));
     }
@@ -153,7 +153,7 @@ public class AlertsLongPollTest extends ServiceTest
         m_ExpectedException.expectMessage(
                 "Missing argument: either 'score' or 'probability' must be specified");
         m_ExpectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCode.INVALID_THRESHOLD_ARGUMENT));
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_THRESHOLD_ARGUMENT));
 
         m_Alerts.pollJob(JOB_ID, 90, null, null, mock(AsyncResponse.class));
     }
@@ -165,7 +165,7 @@ public class AlertsLongPollTest extends ServiceTest
         m_ExpectedException.expect(RestApiException.class);
         m_ExpectedException.expectMessage("Invalid timeout parameter. Timeout must be > 0");
         m_ExpectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCode.INVALID_TIMEOUT_ARGUMENT));
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_TIMEOUT_ARGUMENT));
 
         m_Alerts.pollJob(JOB_ID, -1, 10.0, 10.0, mock(AsyncResponse.class));
     }

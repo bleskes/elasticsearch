@@ -39,10 +39,10 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.transform.condition.Condition;
 import com.prelert.job.transform.condition.Operator;
 import com.prelert.job.transform.exceptions.TransformConfigurationException;
-import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.ErrorCodeMatcher;
 
 public class TransformTypeTest
@@ -97,7 +97,7 @@ public class TransformTypeTest
         m_ExpectedException.expect(TransformConfigurationException.class);
         m_ExpectedException.expectMessage("Transform type concat expected [1‥+∞) input(s), got 0");
         m_ExpectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCode.TRANSFORM_INVALID_INPUT_COUNT));
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.TRANSFORM_INVALID_INPUT_COUNT));
 
         TransformConfig conf = new TransformConfig();
         conf.setTransform(TransformType.CONCAT.prettyName());
@@ -112,7 +112,7 @@ public class TransformTypeTest
         m_ExpectedException.expect(TransformConfigurationException.class);
         m_ExpectedException.expectMessage("Transform type concat expected [1‥+∞) input(s), got 0");
         m_ExpectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCode.TRANSFORM_INVALID_INPUT_COUNT));
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.TRANSFORM_INVALID_INPUT_COUNT));
 
         TransformConfig conf = new TransformConfig();
         conf.setTransform(TransformType.CONCAT.prettyName());
@@ -128,7 +128,7 @@ public class TransformTypeTest
         m_ExpectedException.expect(TransformConfigurationException.class);
         m_ExpectedException.expectMessage("Transform type domain_split expected 1 input(s), got 2");
         m_ExpectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCode.TRANSFORM_INVALID_INPUT_COUNT));
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.TRANSFORM_INVALID_INPUT_COUNT));
 
         TransformConfig conf = new TransformConfig();
         conf.setTransform(TransformType.DOMAIN_SPLIT.prettyName());
@@ -166,7 +166,7 @@ public class TransformTypeTest
         m_ExpectedException.expectMessage(
                 "Transform type concat expected [0‥1] argument(s), got 2");
         m_ExpectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCode.TRANSFORM_INVALID_ARGUMENT_COUNT));
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.TRANSFORM_INVALID_ARGUMENT_COUNT));
 
         TransformConfig conf = new TransformConfig();
         conf.setTransform(TransformType.CONCAT.prettyName());
@@ -206,7 +206,7 @@ public class TransformTypeTest
         m_ExpectedException.expect(TransformConfigurationException.class);
         m_ExpectedException.expectMessage("Transform type lowercase expected 1 output(s), got 2");
         m_ExpectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCode.TRANSFORM_INVALID_OUTPUT_COUNT));
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.TRANSFORM_INVALID_OUTPUT_COUNT));
 
         TransformConfig conf = new TransformConfig();
         conf.setTransform(TransformType.LOWERCASE.prettyName());

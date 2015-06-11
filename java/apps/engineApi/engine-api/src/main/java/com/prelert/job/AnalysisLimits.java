@@ -31,10 +31,10 @@ import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobConfigurationException;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.verification.Verifiable;
-import com.prelert.rs.data.ErrorCode;
 
 /**
  * Analysis limits for autodetect
@@ -137,13 +137,13 @@ public class AnalysisLimits implements Verifiable
         {
             String msg = Messages.getMessage(Messages.JOB_CONFIG_NEGATIVE_FIELD_VALUE,
                                                 MODEL_MEMORY_LIMIT, m_ModelMemoryLimit);
-            throw new JobConfigurationException(msg, ErrorCode.INVALID_VALUE);
+            throw new JobConfigurationException(msg, ErrorCodes.INVALID_VALUE);
         }
         if (m_CategorizationExamplesLimit != null && m_CategorizationExamplesLimit < 0)
         {
             String msg = Messages.getMessage(Messages.JOB_CONFIG_NEGATIVE_FIELD_VALUE,
                     CATEGORIZATION_EXAMPLES_LIMIT, m_CategorizationExamplesLimit);
-            throw new JobConfigurationException(msg, ErrorCode.INVALID_VALUE);
+            throw new JobConfigurationException(msg, ErrorCodes.INVALID_VALUE);
         }
         return true;
     }

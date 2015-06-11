@@ -55,6 +55,7 @@ import com.prelert.job.AnalysisConfig;
 import com.prelert.job.AnalysisLimits;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
@@ -64,7 +65,6 @@ import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.ApiError;
 import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.DataCounts;
-import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
 
@@ -1601,7 +1601,7 @@ public class JobsTest implements Closeable
             boolean success = m_WebServiceClient.deleteJob(jobId);
             test(success == false);
             ApiError error = m_WebServiceClient.getLastError();
-            test(error.getErrorCode() == ErrorCode.MISSING_JOB_ERROR);
+            test(error.getErrorCode() == ErrorCodes.MISSING_JOB_ERROR);
         }
     }
 

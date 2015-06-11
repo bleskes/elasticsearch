@@ -50,6 +50,7 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobStatus;
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.TooManyJobsException;
 import com.prelert.job.exceptions.UnknownJobException;
@@ -62,7 +63,6 @@ import com.prelert.job.process.params.DataLoadParams;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.rs.data.DataCounts;
-import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.ErrorCodeMatcher;
 
 public class JobManagerTest
@@ -105,7 +105,7 @@ public class JobManagerTest
 
 
         m_ExpectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCode.LICENSE_VIOLATION));
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.LICENSE_VIOLATION));
 
         jobManager.submitDataLoadJob("foo", mock(InputStream.class), mock(DataLoadParams.class));
     }
@@ -129,7 +129,7 @@ public class JobManagerTest
                 "of the number of CPU cores see this error code's help documentation " +
                 "for details of how to elevate the setting");
         m_ExpectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCode.TOO_MANY_JOBS_RUNNING_CONCURRENTLY));
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.TOO_MANY_JOBS_RUNNING_CONCURRENTLY));
 
         jobManager.submitDataLoadJob("foo", mock(InputStream.class), mock(DataLoadParams.class));
     }
@@ -154,7 +154,7 @@ public class JobManagerTest
                 "of the number of CPU cores see this error code's help documentation " +
                 "for details of how to elevate the setting");
         m_ExpectedException.expect(ErrorCodeMatcher
-                .hasErrorCode(ErrorCode.TOO_MANY_JOBS_RUNNING_CONCURRENTLY));
+                .hasErrorCode(ErrorCodes.TOO_MANY_JOBS_RUNNING_CONCURRENTLY));
 
         jobManager.submitDataLoadJob("foo", mock(InputStream.class), mock(DataLoadParams.class));
     }
@@ -179,7 +179,7 @@ public class JobManagerTest
                 "of the number of CPU cores see this error code's help documentation " +
                 "for details of how to elevate the setting");
         m_ExpectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCode.TOO_MANY_JOBS_RUNNING_CONCURRENTLY));
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.TOO_MANY_JOBS_RUNNING_CONCURRENTLY));
 
         jobManager.submitDataLoadJob("foo", mock(InputStream.class), mock(DataLoadParams.class));
     }

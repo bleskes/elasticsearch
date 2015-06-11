@@ -46,8 +46,8 @@ import org.apache.log4j.Logger;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.prelert.job.alert.manager.AlertManager;
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.manager.JobManager;
-import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.provider.RestApiException;
 
@@ -293,7 +293,7 @@ public abstract class ResourceWithJobManager
             {
                 String msg = String.format(BAD_DATE_FORMAT_MSG, paramName, date);
                 logger.info(msg);
-                throw new RestApiException(msg, ErrorCode.UNPARSEABLE_DATE_ARGUMENT,
+                throw new RestApiException(msg, ErrorCodes.UNPARSEABLE_DATE_ARGUMENT,
                         Response.Status.BAD_REQUEST);
             }
         }

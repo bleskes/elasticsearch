@@ -47,6 +47,7 @@ import org.mockito.Mockito;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.data.DataStreamer;
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.TooManyJobsException;
 import com.prelert.job.exceptions.UnknownJobException;
@@ -58,7 +59,6 @@ import com.prelert.job.process.params.DataLoadParams;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.rs.data.DataCounts;
-import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.provider.RestApiException;
 
 public class DataStreamerTest
@@ -117,7 +117,7 @@ public class DataStreamerTest
         }
         catch (RestApiException e)
         {
-            assertEquals(ErrorCode.UNCOMPRESSED_DATA, e.getErrorCode());
+            assertEquals(ErrorCodes.UNCOMPRESSED_DATA, e.getErrorCode());
         }
     }
 

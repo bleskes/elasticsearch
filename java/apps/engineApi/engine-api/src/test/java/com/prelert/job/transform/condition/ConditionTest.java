@@ -34,8 +34,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.transform.exceptions.TransformConfigurationException;
-import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.ErrorCodeMatcher;
 
 public class ConditionTest
@@ -58,7 +58,7 @@ public class ConditionTest
         m_ExpectedException.expect(TransformConfigurationException.class);
         m_ExpectedException.expectMessage("Invalid operator for condition");
         m_ExpectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCode.CONDITION_INVALID_ARGUMENT));
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.CONDITION_INVALID_ARGUMENT));
 
         new Condition().verify();
     }
@@ -69,7 +69,7 @@ public class ConditionTest
         m_ExpectedException.expect(TransformConfigurationException.class);
         m_ExpectedException.expectMessage("Invalid operator for condition");
         m_ExpectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCode.CONDITION_INVALID_ARGUMENT));
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.CONDITION_INVALID_ARGUMENT));
 
         Condition condition = new Condition();
         condition.setOperator(Operator.NONE);
@@ -83,7 +83,7 @@ public class ConditionTest
         m_ExpectedException.expectMessage(
                 "Invalid condition value: cannot parse a double from string ''");
         m_ExpectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCode.CONDITION_INVALID_ARGUMENT));
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.CONDITION_INVALID_ARGUMENT));
 
         Condition condition = new Condition();
         condition.setOperator(Operator.LT);

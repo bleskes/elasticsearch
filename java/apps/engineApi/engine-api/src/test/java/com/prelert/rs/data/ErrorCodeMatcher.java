@@ -30,17 +30,20 @@ package com.prelert.rs.data;
 import org.hamcrest.Description;
 import org.junit.internal.matchers.TypeSafeMatcher;
 
+import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.errorcodes.HasErrorCode;
+
 public class ErrorCodeMatcher extends TypeSafeMatcher<HasErrorCode> {
 
-    private ErrorCode m_ExpectedErrorCode;
-    private ErrorCode m_ActualErrorCode;
+    private ErrorCodes m_ExpectedErrorCode;
+    private ErrorCodes m_ActualErrorCode;
 
-    public static ErrorCodeMatcher hasErrorCode(ErrorCode expected)
+    public static ErrorCodeMatcher hasErrorCode(ErrorCodes expected)
     {
         return new ErrorCodeMatcher(expected);
     }
 
-    private ErrorCodeMatcher(ErrorCode expectedErrorCode)
+    private ErrorCodeMatcher(ErrorCodes expectedErrorCode)
     {
         m_ExpectedErrorCode = expectedErrorCode;
     }

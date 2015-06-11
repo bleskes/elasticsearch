@@ -29,9 +29,9 @@ package com.prelert.rs.provider;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
+import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.errorcodes.HasErrorCode;
 import com.prelert.rs.data.ApiError;
-import com.prelert.rs.data.ErrorCode;
-import com.prelert.rs.data.HasErrorCode;
 
 /**
  * Represents an error in parsing the configuration for a new job.
@@ -41,17 +41,17 @@ public class JobConfigurationParseException extends WebApplicationException impl
 {
     private static final long serialVersionUID = -7189040309467301076L;
 
-    private final ErrorCode m_ErrorCode;
+    private final ErrorCodes m_ErrorCode;
 
     public JobConfigurationParseException(String message, Throwable cause)
     {
         super(message, cause);
-        m_ErrorCode = ErrorCode.JOB_CONFIG_PARSE_ERROR;
+        m_ErrorCode = ErrorCodes.JOB_CONFIG_PARSE_ERROR;
     }
 
 
     public JobConfigurationParseException(String message, Throwable cause,
-            ErrorCode errorCode)
+            ErrorCodes errorCode)
     {
         super(message, cause);
         m_ErrorCode = errorCode;
@@ -69,7 +69,7 @@ public class JobConfigurationParseException extends WebApplicationException impl
     }
 
     @Override
-    public ErrorCode getErrorCode()
+    public ErrorCodes getErrorCode()
     {
         return m_ErrorCode;
     }

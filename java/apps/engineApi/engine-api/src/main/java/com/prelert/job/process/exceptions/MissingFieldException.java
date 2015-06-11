@@ -26,8 +26,8 @@
  ************************************************************/
 package com.prelert.job.process.exceptions;
 
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobException;
-import com.prelert.rs.data.ErrorCode;
 
 /**
  * Represents the case where a job has been configured to use
@@ -41,7 +41,7 @@ public class MissingFieldException extends JobException
 
 	public MissingFieldException(String fieldName, String message)
 	{
-		super(message, ErrorCode.MISSING_FIELD);
+		super(message, ErrorCodes.MISSING_FIELD);
 		m_MissingFieldName = fieldName;
 	}
 

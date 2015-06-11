@@ -36,8 +36,8 @@ import junit.framework.Assert;
 
 import org.junit.Test;
 
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobConfigurationException;
-import com.prelert.rs.data.ErrorCode;
 
 /**
  * Test the valid detector/functions/field combinations i.e. the
@@ -488,7 +488,7 @@ public class DetectorTest
         }
         catch (JobConfigurationException e)
         {
-            Assert.assertEquals(ErrorCode.PROHIBITIED_CHARACTER_IN_FIELD_NAME, e.getErrorCode());
+            Assert.assertEquals(ErrorCodes.PROHIBITIED_CHARACTER_IN_FIELD_NAME, e.getErrorCode());
         }
         try
         {
@@ -498,7 +498,7 @@ public class DetectorTest
         catch (JobConfigurationException e)
         {
             // "metric" function for pre-summarised data trumps invalid characters
-            Assert.assertEquals(ErrorCode.INVALID_FUNCTION, e.getErrorCode());
+            Assert.assertEquals(ErrorCodes.INVALID_FUNCTION, e.getErrorCode());
         }
 
         d = new Detector();
@@ -511,7 +511,7 @@ public class DetectorTest
         }
         catch (JobConfigurationException e)
         {
-            Assert.assertEquals(ErrorCode.PROHIBITIED_CHARACTER_IN_FIELD_NAME, e.getErrorCode());
+            Assert.assertEquals(ErrorCodes.PROHIBITIED_CHARACTER_IN_FIELD_NAME, e.getErrorCode());
         }
         try
         {
@@ -521,7 +521,7 @@ public class DetectorTest
         catch (JobConfigurationException e)
         {
             // "metric" function for pre-summarised data trumps invalid characters
-            Assert.assertEquals(ErrorCode.INVALID_FUNCTION, e.getErrorCode());
+            Assert.assertEquals(ErrorCodes.INVALID_FUNCTION, e.getErrorCode());
         }
 
         d = new Detector();
@@ -534,7 +534,7 @@ public class DetectorTest
         }
         catch (JobConfigurationException e)
         {
-            Assert.assertEquals(ErrorCode.PROHIBITIED_CHARACTER_IN_FIELD_NAME, e.getErrorCode());
+            Assert.assertEquals(ErrorCodes.PROHIBITIED_CHARACTER_IN_FIELD_NAME, e.getErrorCode());
         }
         try
         {
@@ -544,7 +544,7 @@ public class DetectorTest
         catch (JobConfigurationException e)
         {
             // "metric" function for pre-summarised data trumps invalid characters
-            Assert.assertEquals(ErrorCode.INVALID_FUNCTION, e.getErrorCode());
+            Assert.assertEquals(ErrorCodes.INVALID_FUNCTION, e.getErrorCode());
         }
 
         d.setOverFieldName("over");
@@ -556,7 +556,7 @@ public class DetectorTest
         }
         catch (JobConfigurationException e)
         {
-            Assert.assertEquals(ErrorCode.PROHIBITIED_CHARACTER_IN_FIELD_NAME, e.getErrorCode());
+            Assert.assertEquals(ErrorCodes.PROHIBITIED_CHARACTER_IN_FIELD_NAME, e.getErrorCode());
         }
         try
         {
@@ -566,7 +566,7 @@ public class DetectorTest
         catch (JobConfigurationException e)
         {
             // "metric" function for pre-summarised data trumps invalid characters
-            Assert.assertEquals(ErrorCode.INVALID_FUNCTION, e.getErrorCode());
+            Assert.assertEquals(ErrorCodes.INVALID_FUNCTION, e.getErrorCode());
         }
 
         d = new Detector();
@@ -578,7 +578,7 @@ public class DetectorTest
         }
         catch (JobConfigurationException e)
         {
-            Assert.assertEquals(ErrorCode.PROHIBITIED_CHARACTER_IN_FIELD_NAME, e.getErrorCode());
+            Assert.assertEquals(ErrorCodes.PROHIBITIED_CHARACTER_IN_FIELD_NAME, e.getErrorCode());
         }
         try
         {
@@ -588,7 +588,7 @@ public class DetectorTest
         catch (JobConfigurationException e)
         {
             // "metric" function for pre-summarised data trumps invalid characters
-            Assert.assertEquals(ErrorCode.INVALID_FUNCTION, e.getErrorCode());
+            Assert.assertEquals(ErrorCodes.INVALID_FUNCTION, e.getErrorCode());
         }
 
         d = new Detector();
@@ -600,7 +600,7 @@ public class DetectorTest
         }
         catch (JobConfigurationException e)
         {
-            Assert.assertEquals(ErrorCode.PROHIBITIED_CHARACTER_IN_FIELD_NAME, e.getErrorCode());
+            Assert.assertEquals(ErrorCodes.PROHIBITIED_CHARACTER_IN_FIELD_NAME, e.getErrorCode());
         }
         try
         {
@@ -610,7 +610,7 @@ public class DetectorTest
         catch (JobConfigurationException e)
         {
             // "metric" function for pre-summarised data trumps invalid characters
-            Assert.assertEquals(ErrorCode.INVALID_FUNCTION, e.getErrorCode());
+            Assert.assertEquals(ErrorCodes.INVALID_FUNCTION, e.getErrorCode());
         }
 
         d = new Detector();
@@ -623,7 +623,7 @@ public class DetectorTest
         }
         catch (JobConfigurationException e)
         {
-            Assert.assertEquals(ErrorCode.PROHIBITIED_CHARACTER_IN_FIELD_NAME, e.getErrorCode());
+            Assert.assertEquals(ErrorCodes.PROHIBITIED_CHARACTER_IN_FIELD_NAME, e.getErrorCode());
         }
         try
         {
@@ -633,7 +633,7 @@ public class DetectorTest
         catch (JobConfigurationException e)
         {
             // "metric" function for pre-summarised data trumps invalid characters
-            Assert.assertEquals(ErrorCode.INVALID_FUNCTION, e.getErrorCode());
+            Assert.assertEquals(ErrorCodes.INVALID_FUNCTION, e.getErrorCode());
         }
 
         d = new Detector();
@@ -646,7 +646,7 @@ public class DetectorTest
         }
         catch (JobConfigurationException e)
         {
-            Assert.assertEquals(ErrorCode.PROHIBITIED_CHARACTER_IN_FIELD_NAME, e.getErrorCode());
+            Assert.assertEquals(ErrorCodes.PROHIBITIED_CHARACTER_IN_FIELD_NAME, e.getErrorCode());
         }
         try
         {
@@ -656,7 +656,7 @@ public class DetectorTest
         catch (JobConfigurationException e)
         {
             // "metric" function for pre-summarised data trumps invalid characters
-            Assert.assertEquals(ErrorCode.INVALID_FUNCTION, e.getErrorCode());
+            Assert.assertEquals(ErrorCodes.INVALID_FUNCTION, e.getErrorCode());
         }
     }
 

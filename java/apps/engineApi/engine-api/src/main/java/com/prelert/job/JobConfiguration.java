@@ -32,13 +32,13 @@ import java.util.List;
 import java.util.Set;
 
 import com.prelert.job.DataDescription.DataFormat;
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobConfigurationException;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.transform.TransformConfig;
 import com.prelert.job.transform.TransformConfigs;
 import com.prelert.job.transform.exceptions.TransformConfigurationException;
 import com.prelert.job.verification.Verifiable;
-import com.prelert.rs.data.ErrorCode;
 
 /**
  * This class encapsulates all the data required to create a new job it
@@ -268,7 +268,7 @@ public class JobConfiguration implements Verifiable
             throw new JobConfigurationException(
                     Messages.getMessage(Messages.JOB_CONFIG_NEGATIVE_FIELD_VALUE,
                             "timeout", m_Timeout),
-                    ErrorCode.INVALID_VALUE);
+                    ErrorCodes.INVALID_VALUE);
         }
 
         if (m_ID != null && m_ID.isEmpty() == false)
@@ -286,7 +286,7 @@ public class JobConfiguration implements Verifiable
         {
             throw new JobConfigurationException(
                     Messages.getMessage(Messages.JOB_CONFIG_MISSING_ANALYSISCONFIG),
-                    ErrorCode.INCOMPLETE_CONFIGURATION);
+                    ErrorCodes.INCOMPLETE_CONFIGURATION);
         }
     }
 
@@ -342,7 +342,7 @@ public class JobConfiguration implements Verifiable
                     String msg = Messages.getMessage(
                             Messages.JOB_CONFIG_TRANSFORM_DUPLICATED_OUTPUT_NAME,
                             tc.type().prettyName());
-                    throw new TransformConfigurationException(msg, ErrorCode.DUPLICATED_TRANSFORM_OUTPUT_NAME);
+                    throw new TransformConfigurationException(msg, ErrorCodes.DUPLICATED_TRANSFORM_OUTPUT_NAME);
 
                 }
             }
@@ -351,7 +351,7 @@ public class JobConfiguration implements Verifiable
             {
                 String msg = Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_OUTPUTS_UNUSED,
                         tc.type().prettyName());
-                throw new TransformConfigurationException(msg, ErrorCode.TRANSFORM_OUTPUTS_UNUSED);
+                throw new TransformConfigurationException(msg, ErrorCodes.TRANSFORM_OUTPUTS_UNUSED);
             }
         }
 
@@ -369,7 +369,7 @@ public class JobConfiguration implements Verifiable
                                 DataFormat.SINGLE_LINE);
 
                 throw new JobConfigurationException(msg,
-                        ErrorCode.DATA_FORMAT_IS_SINGLE_LINE_BUT_NO_TRANSFORMS);
+                        ErrorCodes.DATA_FORMAT_IS_SINGLE_LINE_BUT_NO_TRANSFORMS);
             }
         }
     }
@@ -380,7 +380,7 @@ public class JobConfiguration implements Verifiable
         {
             throw new JobConfigurationException(
                     Messages.getMessage(Messages.JOB_CONFIG_ID_TOO_LONG, MAX_JOB_ID_LENGTH),
-                    ErrorCode.JOB_ID_TOO_LONG);
+                    ErrorCodes.JOB_ID_TOO_LONG);
         }
 
         for (Character ch : PROHIBITED_JOB_ID_CHARACTERS_SET)
@@ -390,7 +390,7 @@ public class JobConfiguration implements Verifiable
                 throw new JobConfigurationException(
                         Messages.getMessage(Messages.JOB_CONFIG_INVALID_JOBID_CHARS,
                                 ch, PROHIBITED_JOB_ID_CHARACTERS),
-                        ErrorCode.PROHIBITIED_CHARACTER_IN_JOB_ID);
+                        ErrorCodes.PROHIBITIED_CHARACTER_IN_JOB_ID);
             }
         }
 
@@ -400,13 +400,13 @@ public class JobConfiguration implements Verifiable
             {
                 throw new JobConfigurationException(
                         Messages.getMessage(Messages.JOB_CONFIG_ID_CONTAINS_UPPERCASE_CHARS),
-                        ErrorCode.PROHIBITIED_CHARACTER_IN_JOB_ID);
+                        ErrorCodes.PROHIBITIED_CHARACTER_IN_JOB_ID);
             }
             if (Character.isISOControl(c))
             {
                 throw new JobConfigurationException(
                         Messages.getMessage(Messages.JOB_CONFIG_ID_CONTAINS_CONTROL_CHARS),
-                        ErrorCode.PROHIBITIED_CHARACTER_IN_JOB_ID);
+                        ErrorCodes.PROHIBITIED_CHARACTER_IN_JOB_ID);
             }
         }
     }

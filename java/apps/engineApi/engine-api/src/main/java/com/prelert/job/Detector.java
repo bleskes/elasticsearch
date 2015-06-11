@@ -34,9 +34,9 @@ import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobConfigurationException;
 import com.prelert.job.messages.Messages;
-import com.prelert.rs.data.ErrorCode;
 
 
 /**
@@ -397,14 +397,14 @@ public class Detector
             {
                 throw new JobConfigurationException(
                         Messages.getMessage(Messages.JOB_CONFIG_NO_ANALYSIS_FIELD),
-                        ErrorCode.INVALID_FIELD_SELECTION);
+                        ErrorCodes.INVALID_FIELD_SELECTION);
             }
 
             if (!COUNT_WITHOUT_FIELD_FUNCTIONS.contains(m_Function))
             {
                 throw new JobConfigurationException(
                         Messages.getMessage(Messages.JOB_CONFIG_NO_ANALYSIS_FIELD_NOT_COUNT),
-                        ErrorCode.INVALID_FIELD_SELECTION);
+                        ErrorCodes.INVALID_FIELD_SELECTION);
             }
         }
 
@@ -412,7 +412,7 @@ public class Detector
         {
             throw new JobConfigurationException(
                     Messages.getMessage(Messages.JOB_CONFIG_UNKNOWN_FUNCTION, m_Function),
-                    ErrorCode.UNKNOWN_FUNCTION);
+                    ErrorCodes.UNKNOWN_FUNCTION);
         }
 
         if (isSummarised && (emptyFunction || m_Function.equals(METRIC)))
@@ -420,7 +420,7 @@ public class Detector
             throw new JobConfigurationException(
                     Messages.getMessage(Messages.JOB_CONFIG_FUNCTION_INCOMPATIBLE_PRESUMMARIZED,
                                METRIC),
-                    ErrorCode.INVALID_FUNCTION);
+                    ErrorCodes.INVALID_FUNCTION);
         }
 
         // If function is not set but the fieldname happens
@@ -437,14 +437,14 @@ public class Detector
         {
             throw new JobConfigurationException(
                             Messages.getMessage(Messages.JOB_CONFIG_BYFIELD_NEEDS_ANOTHER),
-                            ErrorCode.INVALID_FIELD_SELECTION);
+                            ErrorCodes.INVALID_FIELD_SELECTION);
         }
 
         if (!emptyOverField && emptyField && emptyFunction)
         {
             throw new JobConfigurationException(
                             Messages.getMessage(Messages.JOB_CONFIG_OVERFIELD_NEEDS_ANOTHER),
-                            ErrorCode.INVALID_FIELD_SELECTION);
+                            ErrorCodes.INVALID_FIELD_SELECTION);
         }
 
         // check functions have required fields
@@ -455,7 +455,7 @@ public class Detector
                 throw new JobConfigurationException(
                         Messages.getMessage(Messages.JOB_CONFIG_FUNCTION_REQUIRES_FIELDNAME,
                                 m_Function),
-                        ErrorCode.INVALID_FIELD_SELECTION);
+                        ErrorCodes.INVALID_FIELD_SELECTION);
             }
 
             if (!emptyField && (FIELD_NAME_FUNCTIONS.contains(m_Function) == false))
@@ -463,7 +463,7 @@ public class Detector
                 throw new JobConfigurationException(
                         Messages.getMessage(Messages.JOB_CONFIG_FIELDNAME_INCOMPATIBLE_FUNCTION,
                                 m_Function),
-                        ErrorCode.INVALID_FIELD_SELECTION);
+                        ErrorCodes.INVALID_FIELD_SELECTION);
             }
 
             if (BY_FIELD_NAME_FUNCTIONS.contains(m_Function) && emptyByField)
@@ -471,7 +471,7 @@ public class Detector
                 throw new JobConfigurationException(
                         Messages.getMessage(Messages.JOB_CONFIG_FUNCTION_REQUIRES_BYFIELD,
                                 m_Function),
-                        ErrorCode.INVALID_FIELD_SELECTION);
+                        ErrorCodes.INVALID_FIELD_SELECTION);
             }
 
             if (!emptyByField && NO_BY_FIELD_NAME_FUNCTIONS.contains(m_Function))
@@ -479,7 +479,7 @@ public class Detector
                 throw new JobConfigurationException(
                             Messages.getMessage(Messages.JOB_CONFIG_BYFIELD_INCOMPATIBLE_FUNCTION,
                                 m_Function),
-                        ErrorCode.INVALID_FIELD_SELECTION);
+                        ErrorCodes.INVALID_FIELD_SELECTION);
             }
 
             if (emptyOverField && OVER_FIELD_NAME_FUNCTIONS.contains(m_Function))
@@ -487,7 +487,7 @@ public class Detector
                 throw new JobConfigurationException(
                         Messages.getMessage(Messages.JOB_CONFIG_FUNCTION_REQUIRES_OVERFIELD,
                                 m_Function),
-                        ErrorCode.INVALID_FIELD_SELECTION);
+                        ErrorCodes.INVALID_FIELD_SELECTION);
             }
 
             if (!emptyOverField && NO_OVER_FIELD_NAME_FUNCTIONS.contains(m_Function))
@@ -495,7 +495,7 @@ public class Detector
                 throw new JobConfigurationException(
                         Messages.getMessage(Messages.JOB_CONFIG_OVERFIELD_INCOMPATIBLE_FUNCTION,
                                 m_Function),
-                        ErrorCode.INVALID_FIELD_SELECTION);
+                        ErrorCodes.INVALID_FIELD_SELECTION);
             }
 
         }
@@ -529,7 +529,7 @@ public class Detector
                     throw new JobConfigurationException(
                             Messages.getMessage(Messages.JOB_CONFIG_INVALID_FIELDNAME_CHARS,
                                     field, PROHIBITED),
-                            ErrorCode.PROHIBITIED_CHARACTER_IN_FIELD_NAME);
+                            ErrorCodes.PROHIBITIED_CHARACTER_IN_FIELD_NAME);
                 }
             }
         }

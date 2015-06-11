@@ -28,10 +28,10 @@ package com.prelert.job.transform.condition;
 
 import java.util.Objects;
 
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.transform.TransformType;
 import com.prelert.job.transform.exceptions.TransformConfigurationException;
-import com.prelert.rs.data.ErrorCode;
 
 /**
  * A {@linkplain TransformType} condition.
@@ -70,7 +70,7 @@ public class Condition
         {
             throw new TransformConfigurationException(
                     Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_CONDITION_INVALID_OPERATOR),
-                    ErrorCode.CONDITION_INVALID_ARGUMENT);
+                    ErrorCodes.CONDITION_INVALID_ARGUMENT);
         }
 
         if (m_Op.expectsANumericArgument())
@@ -83,7 +83,7 @@ public class Condition
             {
                 String msg = Messages.getMessage(
                         Messages.JOB_CONFIG_TRANSFORM_CONDITION_INVALID_VALUE, m_FilterValue);
-                throw new TransformConfigurationException(msg, ErrorCode.CONDITION_INVALID_ARGUMENT);
+                throw new TransformConfigurationException(msg, ErrorCodes.CONDITION_INVALID_ARGUMENT);
             }
         }
 

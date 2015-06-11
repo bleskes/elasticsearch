@@ -38,11 +38,11 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.rs.client.EngineApiClient;
 import com.prelert.rs.client.datauploader.CsvDataRunner;
 import com.prelert.rs.data.ApiError;
 import com.prelert.rs.data.DataCounts;
-import com.prelert.rs.data.ErrorCode;
 
 /**
  * This program tests the case where multiple processes try to write
@@ -111,7 +111,7 @@ public class ParallelUploadTest
 
 			ApiError apiError = client.getLastError();
 
-			if (apiError.getErrorCode() != ErrorCode.NATIVE_PROCESS_CONCURRENT_USE_ERROR)
+			if (apiError.getErrorCode() != ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR)
 			{
 				throw new IllegalStateException("Closing Job: Error code should be job in use error");
 			}
@@ -127,7 +127,7 @@ public class ParallelUploadTest
 			}
 
 			apiError = client.getLastError();
-			if (apiError.getErrorCode() != ErrorCode.NATIVE_PROCESS_CONCURRENT_USE_ERROR)
+			if (apiError.getErrorCode() != ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR)
 			{
 				throw new IllegalStateException("Writing data: Error code should be job in use error");
 			}
@@ -142,7 +142,7 @@ public class ParallelUploadTest
 
 			apiError = client.getLastError();
 
-			if (apiError.getErrorCode() != ErrorCode.NATIVE_PROCESS_CONCURRENT_USE_ERROR)
+			if (apiError.getErrorCode() != ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR)
 			{
 				throw new IllegalStateException("Deleting Job: Error code should be job in use error");
 			}

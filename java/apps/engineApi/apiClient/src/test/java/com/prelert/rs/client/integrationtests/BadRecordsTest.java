@@ -38,10 +38,10 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 
 import com.prelert.job.JobConfiguration;
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.rs.client.EngineApiClient;
 import com.prelert.rs.data.ApiError;
 import com.prelert.rs.data.DataCounts;
-import com.prelert.rs.data.ErrorCode;
 
 
 /**
@@ -77,7 +77,7 @@ public class BadRecordsTest implements Closeable
 
 	/**
 	 * Generate records with unparsable dates the streaming client
-	 * should return {@link ErrorCode#TOO_MANY_BAD_DATES} error.
+	 * should return {@link ErrorCodes#TOO_MANY_BAD_DATES} error.
 	 *
 	 * @throws ClientProtocolException
 	 * @throws IOException
@@ -101,7 +101,7 @@ public class BadRecordsTest implements Closeable
 
 		ApiError error = m_EngineApiClient.getLastError();
 		test(error != null);
-		test(error.getErrorCode() == ErrorCode.TOO_MANY_BAD_DATES);
+		test(error.getErrorCode() == ErrorCodes.TOO_MANY_BAD_DATES);
 
 		test(counts.getOutOfOrderTimeStampCount() == 0);
         test(counts.getMissingFieldCount() == 0);
@@ -125,7 +125,7 @@ public class BadRecordsTest implements Closeable
 	 * Generate records with that are not in ascending time order.
 	 *
 	 * The client should return with
-	 * {@link ErrorCode#TOO_MANY_OUT_OF_ORDER_RECORDS} error.
+	 * {@link ErrorCodes#TOO_MANY_OUT_OF_ORDER_RECORDS} error.
 	 *
 	 * @throws ClientProtocolException
 	 * @throws IOException
@@ -149,7 +149,7 @@ public class BadRecordsTest implements Closeable
 
 		ApiError error = m_EngineApiClient.getLastError();
 		test(error != null);
-		test(error.getErrorCode() == ErrorCode.TOO_MANY_OUT_OF_ORDER_RECORDS);
+		test(error.getErrorCode() == ErrorCodes.TOO_MANY_OUT_OF_ORDER_RECORDS);
 		LOGGER.info(error);
 
 		test(counts.getInvalidDateCount() == 0);

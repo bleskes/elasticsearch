@@ -32,10 +32,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.transform.exceptions.TransformConfigurationException;
 import com.prelert.job.verification.Verifiable;
-import com.prelert.rs.data.ErrorCode;
 
 /**
  * Utility class for methods involving arrays of transforms
@@ -99,7 +99,7 @@ public class TransformConfigs implements Verifiable
         {
             String msg = Messages.getMessage(
                     Messages.JOB_CONFIG_TRANSFORM_OUTPUT_NAME_USED_MORE_THAN_ONCE, duplicatedName);
-             throw new TransformConfigurationException(msg, ErrorCode.DUPLICATED_TRANSFORM_OUTPUT_NAME);
+             throw new TransformConfigurationException(msg, ErrorCodes.DUPLICATED_TRANSFORM_OUTPUT_NAME);
         }
 
         // Check for circular dependencies
@@ -109,7 +109,7 @@ public class TransformConfigs implements Verifiable
             TransformConfig tc = m_Transforms.get(index);
             String msg = Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_CIRCULAR_DEPENDENCY,
                     tc.type(), tc.getInputs());
-            throw new TransformConfigurationException(msg, ErrorCode.TRANSFORM_HAS_CIRCULAR_DEPENDENCY);
+            throw new TransformConfigurationException(msg, ErrorCodes.TRANSFORM_HAS_CIRCULAR_DEPENDENCY);
         }
 
         return true;

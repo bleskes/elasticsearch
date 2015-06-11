@@ -51,6 +51,7 @@ import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobStatus;
 import com.prelert.job.alert.AlertObserver;
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobConfigurationException;
 import com.prelert.job.exceptions.JobIdAlreadyExistsException;
 import com.prelert.job.exceptions.JobInUseException;
@@ -75,7 +76,6 @@ import com.prelert.rs.data.AnomalyRecord;
 import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.CategoryDefinition;
 import com.prelert.rs.data.DataCounts;
-import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
 
@@ -235,7 +235,7 @@ public class JobManager
                                 jobConfig.getAnalysisConfig().getDetectors().size());
 
             LOGGER.info(message);
-            throw new JobConfigurationException(message, ErrorCode.LICENSE_VIOLATION);
+            throw new JobConfigurationException(message, ErrorCodes.LICENSE_VIOLATION);
         }
 
         if (!m_ArePartitionsAllowed && jobConfig.getAnalysisConfig() != null)
@@ -249,7 +249,7 @@ public class JobManager
                 {
                     String message = Messages.getMessage(Messages.LICENSE_LIMIT_PARTITIONS);
                     LOGGER.info(message);
-                    throw new JobConfigurationException(message, ErrorCode.LICENSE_VIOLATION);
+                    throw new JobConfigurationException(message, ErrorCodes.LICENSE_VIOLATION);
                 }
             }
         }
@@ -289,7 +289,7 @@ public class JobManager
             String message = Messages.getMessage(Messages.LICENSE_LIMIT_JOBS, m_LicenseJobLimit);
 
             LOGGER.info(message);
-            throw new TooManyJobsException(m_LicenseJobLimit, message, ErrorCode.LICENSE_VIOLATION);
+            throw new TooManyJobsException(m_LicenseJobLimit, message, ErrorCodes.LICENSE_VIOLATION);
         }
     }
 
@@ -675,7 +675,7 @@ public class JobManager
 
             LOGGER.info(message);
             throw new TooManyJobsException(m_MaxAllowedJobs, message,
-                    ErrorCode.TOO_MANY_JOBS_RUNNING_CONCURRENTLY);
+                    ErrorCodes.TOO_MANY_JOBS_RUNNING_CONCURRENTLY);
         }
     }
 
@@ -688,7 +688,7 @@ public class JobManager
                                         jobId, m_LicenseJobLimit);
 
             LOGGER.info(message);
-            throw new TooManyJobsException(m_LicenseJobLimit, message, ErrorCode.LICENSE_VIOLATION);
+            throw new TooManyJobsException(m_LicenseJobLimit, message, ErrorCodes.LICENSE_VIOLATION);
         }
     }
 
@@ -757,7 +757,7 @@ public class JobManager
             String message = Messages.getMessage(Messages.JOB_UNKNOWN_REFERENCE, refId);
 
             LOGGER.info(message);
-            throw new UnknownJobException(refId, message, ErrorCode.UNKNOWN_JOB_REFERENCE);
+            throw new UnknownJobException(refId, message, ErrorCodes.UNKNOWN_JOB_REFERENCE);
 
         }
     }

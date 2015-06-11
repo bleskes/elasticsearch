@@ -33,11 +33,11 @@ import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.transform.condition.Condition;
 import com.prelert.job.transform.exceptions.TransformConfigurationException;
 import com.prelert.job.verification.Verifiable;
-import com.prelert.rs.data.ErrorCode;
 
 /**
  * Represents an API data transform
@@ -161,7 +161,7 @@ public class TransformConfig implements Verifiable
                 throw new TransformConfigurationException(
                         Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_CONDITION_REQUIRED,
                                 type.prettyName()),
-                        ErrorCode.TRANSFORM_REQUIRES_CONDITION);
+                        ErrorCodes.TRANSFORM_REQUIRES_CONDITION);
             }
 
             verified = m_Condition.verify();

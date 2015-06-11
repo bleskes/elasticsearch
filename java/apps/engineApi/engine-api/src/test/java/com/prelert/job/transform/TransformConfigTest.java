@@ -41,11 +41,11 @@ import java.util.Set;
 import org.junit.Test;
 
 import com.google.common.collect.Range;
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobConfigurationException;
 import com.prelert.job.transform.condition.Condition;
 import com.prelert.job.transform.condition.Operator;
 import com.prelert.job.transform.exceptions.TransformConfigurationException;
-import com.prelert.rs.data.ErrorCode;
 import com.prelert.transforms.TransformTestUtils;
 
 
@@ -67,7 +67,7 @@ public class TransformConfigTest
         }
         catch (TransformConfigurationException e)
         {
-            assertEquals(ErrorCode.UNKNOWN_TRANSFORM, e.getErrorCode());
+            assertEquals(ErrorCodes.UNKNOWN_TRANSFORM, e.getErrorCode());
         }
     }
 
@@ -140,7 +140,7 @@ public class TransformConfigTest
             }
             catch (TransformConfigurationException e)
             {
-                assertEquals(ErrorCode.TRANSFORM_INVALID_INPUT_COUNT, e.getErrorCode());
+                assertEquals(ErrorCodes.TRANSFORM_INVALID_INPUT_COUNT, e.getErrorCode());
             }
         }
     }
@@ -171,7 +171,7 @@ public class TransformConfigTest
             }
             catch (TransformConfigurationException e)
             {
-                assertEquals(ErrorCode.TRANSFORM_INVALID_ARGUMENT_COUNT, e.getErrorCode());
+                assertEquals(ErrorCodes.TRANSFORM_INVALID_ARGUMENT_COUNT, e.getErrorCode());
             }
         }
     }
@@ -211,7 +211,7 @@ public class TransformConfigTest
             }
             catch (TransformConfigurationException e)
             {
-                assertEquals(ErrorCode.TRANSFORM_INVALID_OUTPUT_COUNT, e.getErrorCode());
+                assertEquals(ErrorCodes.TRANSFORM_INVALID_OUTPUT_COUNT, e.getErrorCode());
             }
         }
     }
@@ -233,7 +233,7 @@ public class TransformConfigTest
             }
             catch (TransformConfigurationException e)
             {
-                assertEquals(ErrorCode.TRANSFORM_INVALID_INPUT_COUNT, e.getErrorCode());
+                assertEquals(ErrorCodes.TRANSFORM_INVALID_INPUT_COUNT, e.getErrorCode());
             }
 
         }
@@ -254,7 +254,7 @@ public class TransformConfigTest
         }
         catch (TransformConfigurationException e)
         {
-            assertEquals(ErrorCode.TRANSFORM_REQUIRES_CONDITION, e.getErrorCode());
+            assertEquals(ErrorCodes.TRANSFORM_REQUIRES_CONDITION, e.getErrorCode());
         }
 
         // too many args
@@ -267,7 +267,7 @@ public class TransformConfigTest
         }
         catch (TransformConfigurationException e)
         {
-            assertEquals(ErrorCode.TRANSFORM_INVALID_ARGUMENT_COUNT, e.getErrorCode());
+            assertEquals(ErrorCodes.TRANSFORM_INVALID_ARGUMENT_COUNT, e.getErrorCode());
         }
 
         // this works

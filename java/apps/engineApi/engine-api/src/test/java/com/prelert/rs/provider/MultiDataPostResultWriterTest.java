@@ -43,10 +43,10 @@ import org.junit.Test;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.rs.data.ApiError;
 import com.prelert.rs.data.DataCounts;
 import com.prelert.rs.data.DataPostResult;
-import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.MultiDataPostResult;
 
 public class MultiDataPostResultWriterTest
@@ -95,7 +95,7 @@ public class MultiDataPostResultWriterTest
         results.addResult(result);
 
         DataPostResult errorResult = new DataPostResult();
-        ApiError error = new ApiError(ErrorCode.BUCKET_RESET_NOT_SUPPORTED);
+        ApiError error = new ApiError(ErrorCodes.BUCKET_RESET_NOT_SUPPORTED);
         error.setMessage("bar");
         errorResult.setJobId("foo");
         errorResult.setError(error);

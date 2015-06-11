@@ -26,8 +26,8 @@
  ************************************************************/
 package com.prelert.job.exceptions;
 
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.messages.Messages;
-import com.prelert.rs.data.ErrorCode;
 
 /**
  * This type of exception represents an error where
@@ -46,7 +46,7 @@ public class UnknownJobException extends JobException
 	 */
 	public UnknownJobException(String jobId)
 	{
-		super(Messages.getMessage(Messages.JOB_UNKNOWN_ID, jobId), ErrorCode.MISSING_JOB_ERROR);
+		super(Messages.getMessage(Messages.JOB_UNKNOWN_ID, jobId), ErrorCodes.MISSING_JOB_ERROR);
 		m_JobId = jobId;
 	}
 
@@ -57,13 +57,13 @@ public class UnknownJobException extends JobException
 	 * @param message Details of error explaining the context
 	 * @param errorCode
 	 */
-	public UnknownJobException(String jobId, String message, ErrorCode errorCode)
+	public UnknownJobException(String jobId, String message, ErrorCodes errorCode)
 	{
 		super(message, errorCode);
 		m_JobId = jobId;
 	}
 
-	public UnknownJobException(String jobId, String message, ErrorCode errorCode,
+	public UnknownJobException(String jobId, String message, ErrorCodes errorCode,
 			Throwable cause)
 	{
 		super(message, errorCode, cause);

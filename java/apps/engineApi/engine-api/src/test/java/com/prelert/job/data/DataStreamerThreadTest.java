@@ -35,6 +35,7 @@ import java.io.InputStream;
 
 import org.junit.Test;
 
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.TooManyJobsException;
 import com.prelert.job.exceptions.UnknownJobException;
@@ -46,7 +47,6 @@ import com.prelert.job.process.params.DataLoadParams;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.rs.data.DataCounts;
-import com.prelert.rs.data.ErrorCode;
 
 public class DataStreamerThreadTest
 {
@@ -101,7 +101,7 @@ public class DataStreamerThreadTest
         assertFalse(th.getIOException().isPresent());
         assertTrue(th.getJobException().isPresent());
 
-        assertEquals(ErrorCode.MISSING_JOB_ERROR, th.getJobException().get().getErrorCode());
+        assertEquals(ErrorCodes.MISSING_JOB_ERROR, th.getJobException().get().getErrorCode());
 
         String msg = Messages.getMessage(Messages.JOB_UNKNOWN_ID, "foo");
         assertEquals(msg, th.getJobException().get().getMessage());

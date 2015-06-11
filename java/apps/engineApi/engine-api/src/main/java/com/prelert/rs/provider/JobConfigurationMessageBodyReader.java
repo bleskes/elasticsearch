@@ -45,8 +45,8 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.prelert.job.JobConfiguration;
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobConfigurationException;
-import com.prelert.rs.data.ErrorCode;
 
 /**
  * JobConfiguration entity provider.
@@ -93,7 +93,7 @@ public class JobConfigurationMessageBodyReader implements MessageBodyReader<JobC
           {
               throw new JobConfigurationParseException(
                          "JSON parse error reading the job configuration", e,
-                         ErrorCode.JOB_CONFIG_PARSE_ERROR);
+                         ErrorCodes.JOB_CONFIG_PARSE_ERROR);
           }
           catch (JsonMappingException e)
           {
@@ -107,7 +107,7 @@ public class JobConfigurationMessageBodyReader implements MessageBodyReader<JobC
               {
                   throw new JobConfigurationParseException(
                          "JSON mapping error reading the job configuration", e,
-                         ErrorCode.JOB_CONFIG_UNKNOWN_FIELD_ERROR);
+                         ErrorCodes.JOB_CONFIG_UNKNOWN_FIELD_ERROR);
               }
           }
      }

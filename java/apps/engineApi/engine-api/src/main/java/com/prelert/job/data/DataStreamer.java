@@ -43,6 +43,7 @@ import javax.ws.rs.core.Response;
 import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.core.JsonParseException;
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.TooManyJobsException;
 import com.prelert.job.exceptions.UnknownJobException;
@@ -55,7 +56,6 @@ import com.prelert.job.process.params.DataLoadParams;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.rs.data.DataCounts;
-import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.provider.RestApiException;
 
 public class DataStreamer
@@ -137,7 +137,7 @@ public class DataStreamer
             {
                 LOGGER.debug("Failed to decompress data file", ze);
                 throw new RestApiException(Messages.getMessage(Messages.REST_GZIP_ERROR),
-                        ErrorCode.UNCOMPRESSED_DATA,
+                        ErrorCodes.UNCOMPRESSED_DATA,
                         Response.Status.BAD_REQUEST);
             }
         }

@@ -41,9 +41,9 @@ import javax.ws.rs.core.Response;
 import org.apache.log4j.Logger;
 
 import com.prelert.job.alert.manager.AlertManager;
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.messages.Messages;
-import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.provider.RestApiException;
 
 /**
@@ -88,7 +88,7 @@ public class AlertsLongPoll extends ResourceWithJobManager
         {
             String msg = Messages.getMessage(Messages.REST_ALERT_MISSING_ARGUMENT);
             LOGGER.info(msg);
-            throw new RestApiException(msg, ErrorCode.INVALID_THRESHOLD_ARGUMENT, Response.Status.BAD_REQUEST);
+            throw new RestApiException(msg, ErrorCodes.INVALID_THRESHOLD_ARGUMENT, Response.Status.BAD_REQUEST);
         }
 
         if (!isWithinRange0To100(anomalyScoreThreshold)
@@ -99,14 +99,14 @@ public class AlertsLongPoll extends ResourceWithJobManager
 
             String msg = Messages.getMessage(Messages.REST_ALERT_INVALID_THRESHOLD, error);
             LOGGER.info(msg);
-            throw new RestApiException(msg, ErrorCode.INVALID_THRESHOLD_ARGUMENT, Response.Status.BAD_REQUEST);
+            throw new RestApiException(msg, ErrorCodes.INVALID_THRESHOLD_ARGUMENT, Response.Status.BAD_REQUEST);
         }
 
         if (timeout <= 0)
         {
             String msg = Messages.getMessage(Messages.REST_ALERT_INVALID_TIMEOUT);
             LOGGER.info(msg);
-            throw new RestApiException(msg, ErrorCode.INVALID_TIMEOUT_ARGUMENT, Response.Status.BAD_REQUEST);
+            throw new RestApiException(msg, ErrorCodes.INVALID_TIMEOUT_ARGUMENT, Response.Status.BAD_REQUEST);
         }
 
         AlertManager alertManager = alertManager();

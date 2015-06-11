@@ -27,8 +27,8 @@
 
 package com.prelert.job.transform.exceptions;
 
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobConfigurationException;
-import com.prelert.rs.data.ErrorCode;
 
 /**
  * Represents the invalid configuration of a transform.
@@ -41,9 +41,9 @@ public class TransformConfigurationException extends JobConfigurationException
      * Create a new TransformConfigurationException.
      *
      * @param message Details of error explaining the context
-     * @param errorCode See {@linkplain com.prelert.rs.data.ErrorCode}
+     * @param errorCode See {@linkplain com.prelert.job.errorcodes.ErrorCodes}
      */
-    public TransformConfigurationException(String message, ErrorCode errorCode)
+    public TransformConfigurationException(String message, ErrorCodes errorCode)
     {
         super(message, errorCode);
     }

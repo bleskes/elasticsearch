@@ -27,8 +27,8 @@
 
 package com.prelert.job.exceptions;
 
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.messages.Messages;
-import com.prelert.rs.data.ErrorCode;
 
 
 /**
@@ -49,7 +49,7 @@ public class JobIdAlreadyExistsException extends JobException
 	public JobIdAlreadyExistsException(String jobId)
 	{
 		super(Messages.getMessage(Messages.JOB_CONFIG_ID_ALREADY_TAKEN, jobId),
-		            ErrorCode.JOB_ID_TAKEN);
+		            ErrorCodes.JOB_ID_TAKEN);
 		m_JobId = jobId;
 	}
 

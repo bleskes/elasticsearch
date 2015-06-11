@@ -31,6 +31,8 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
+import com.prelert.job.errorcodes.ErrorCodes;
+
 public class ApiErrorTest
 {
     @Test
@@ -45,7 +47,7 @@ public class ApiErrorTest
     public void testToJson_GivenFullyPopulatedApiError()
     {
         ApiError apiError = new ApiError();
-        apiError.setErrorCode(ErrorCode.DATA_ERROR);
+        apiError.setErrorCode(ErrorCodes.DATA_ERROR);
         apiError.setMessage("Some message");
         apiError.setCause(new RuntimeException("Cause message"));
 

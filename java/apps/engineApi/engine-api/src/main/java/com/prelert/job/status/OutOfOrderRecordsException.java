@@ -26,8 +26,8 @@
  ************************************************************/
 package com.prelert.job.status;
 
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobException;
-import com.prelert.rs.data.ErrorCode;
 
 /**
  *  Records sent to autodetect should be in ascending chronological
@@ -48,7 +48,7 @@ public class OutOfOrderRecordsException extends JobException
 		super(String.format("A high proportion of records are not in ascending "
 						+ "chronological order (%d of %d) and/or not within latency.",
 						numberBadRecords, totalNumberRecords),
-			ErrorCode.TOO_MANY_OUT_OF_ORDER_RECORDS);
+			ErrorCodes.TOO_MANY_OUT_OF_ORDER_RECORDS);
 
 		m_NumberBad = numberBadRecords;
 		m_TotalNumber = totalNumberRecords;

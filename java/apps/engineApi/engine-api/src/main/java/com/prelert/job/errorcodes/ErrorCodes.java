@@ -25,7 +25,7 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.rs.data;
+package com.prelert.job.errorcodes;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -44,7 +44,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
  * </ul>
  */
 
-public enum ErrorCode
+public enum ErrorCodes
 {
     /**
      * Represents unknown errors typically those cause by
@@ -353,7 +353,7 @@ public enum ErrorCode
 	private long m_ErrorCode;
 	private String m_ValueString;
 
-	private ErrorCode(long code)
+	private ErrorCodes(long code)
 	{
 		m_ErrorCode = code;
 		m_ValueString = Long.toString(code);
@@ -371,9 +371,9 @@ public enum ErrorCode
 	}
 
 	@JsonCreator
-	public static ErrorCode fromCode(@JsonProperty("errorCode") long errorCode)
+	public static ErrorCodes fromCode(@JsonProperty("errorCode") long errorCode)
 	{
-		for (ErrorCode e : ErrorCode.values())
+		for (ErrorCodes e : ErrorCodes.values())
 		{
 			if (errorCode == e.getValue())
 			{

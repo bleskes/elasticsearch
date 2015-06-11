@@ -53,6 +53,7 @@ import org.mockito.ArgumentCaptor;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.Detector;
 import com.prelert.job.JobDetails;
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.TooManyJobsException;
 import com.prelert.job.exceptions.UnknownJobException;
@@ -65,7 +66,6 @@ import com.prelert.job.process.params.InterimResultsParams;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.rs.data.DataCounts;
-import com.prelert.rs.data.ErrorCode;
 import com.prelert.rs.data.SingleDocument;
 import com.prelert.rs.provider.RestApiException;
 
@@ -155,7 +155,7 @@ public class DataTest extends ServiceTest
         m_ExpectedException.expect(RestApiException.class);
         m_ExpectedException.expectMessage(
                 "Bucket resetting is not supported when no latency is configured.");
-        m_ExpectedException.expect(hasErrorCode(ErrorCode.BUCKET_RESET_NOT_SUPPORTED));
+        m_ExpectedException.expect(hasErrorCode(ErrorCodes.BUCKET_RESET_NOT_SUPPORTED));
 
         m_Data.streamData(httpHeaders, JOB_ID, inputStream, "1428591600", "");
     }
@@ -172,7 +172,7 @@ public class DataTest extends ServiceTest
         m_ExpectedException.expect(RestApiException.class);
         m_ExpectedException.expectMessage(
                 "Bucket resetting is not supported when no latency is configured.");
-        m_ExpectedException.expect(hasErrorCode(ErrorCode.BUCKET_RESET_NOT_SUPPORTED));
+        m_ExpectedException.expect(hasErrorCode(ErrorCodes.BUCKET_RESET_NOT_SUPPORTED));
 
         m_Data.streamData(httpHeaders, JOB_ID, inputStream, "1428591600", "");
     }
@@ -236,7 +236,7 @@ public class DataTest extends ServiceTest
         m_ExpectedException.expect(RestApiException.class);
         m_ExpectedException.expectMessage(
                 "Invalid time range: end time '1428591599' is earlier than start time '1428591600'.");
-        m_ExpectedException.expect(hasErrorCode(ErrorCode.END_DATE_BEFORE_START_DATE));
+        m_ExpectedException.expect(hasErrorCode(ErrorCodes.END_DATE_BEFORE_START_DATE));
 
         m_Data.streamData(httpHeaders, JOB_ID, inputStream, "1428591600", "1428591599");
     }
@@ -252,7 +252,7 @@ public class DataTest extends ServiceTest
         m_ExpectedException.expect(RestApiException.class);
         m_ExpectedException.expectMessage(
                 "Invalid reset range parameters: 'resetStart' has not been specified.");
-        m_ExpectedException.expect(hasErrorCode(ErrorCode.INVALID_BUCKET_RESET_RANGE_PARAMS));
+        m_ExpectedException.expect(hasErrorCode(ErrorCodes.INVALID_BUCKET_RESET_RANGE_PARAMS));
 
         m_Data.streamData(httpHeaders, JOB_ID, inputStream, "", "1428591599");
     }
@@ -268,7 +268,7 @@ public class DataTest extends ServiceTest
         m_ExpectedException.expect(RestApiException.class);
         m_ExpectedException.expectMessage("Query param 'resetStart' with value 'not a date' cannot"
                 + " be parsed as a date or converted to a number (epoch)");
-        m_ExpectedException.expect(hasErrorCode(ErrorCode.UNPARSEABLE_DATE_ARGUMENT));
+        m_ExpectedException.expect(hasErrorCode(ErrorCodes.UNPARSEABLE_DATE_ARGUMENT));
 
         m_Data.streamData(httpHeaders, JOB_ID, inputStream, "not a date", "1428591599");
     }
@@ -284,7 +284,7 @@ public class DataTest extends ServiceTest
         m_ExpectedException.expect(RestApiException.class);
         m_ExpectedException.expectMessage("Query param 'resetEnd' with value 'not a date' cannot"
                 + " be parsed as a date or converted to a number (epoch)");
-        m_ExpectedException.expect(hasErrorCode(ErrorCode.UNPARSEABLE_DATE_ARGUMENT));
+        m_ExpectedException.expect(hasErrorCode(ErrorCodes.UNPARSEABLE_DATE_ARGUMENT));
 
         m_Data.streamData(httpHeaders, JOB_ID, inputStream, "1428591599", "not a date");
     }
@@ -296,7 +296,7 @@ public class DataTest extends ServiceTest
         m_ExpectedException.expect(RestApiException.class);
         m_ExpectedException.expectMessage(
                 "Invalid flush parameters: unexpected 'start' and/or 'end'.");
-        m_ExpectedException.expect(hasErrorCode(ErrorCode.INVALID_FLUSH_PARAMS));
+        m_ExpectedException.expect(hasErrorCode(ErrorCodes.INVALID_FLUSH_PARAMS));
 
         m_Data.flushUpload(JOB_ID, false, "1", "");
     }
@@ -308,7 +308,7 @@ public class DataTest extends ServiceTest
         m_ExpectedException.expect(RestApiException.class);
         m_ExpectedException.expectMessage(
                 "Invalid flush parameters: unexpected 'start' and/or 'end'.");
-        m_ExpectedException.expect(hasErrorCode(ErrorCode.INVALID_FLUSH_PARAMS));
+        m_ExpectedException.expect(hasErrorCode(ErrorCodes.INVALID_FLUSH_PARAMS));
 
         m_Data.flushUpload(JOB_ID, false, "", "1");
     }
@@ -320,7 +320,7 @@ public class DataTest extends ServiceTest
         m_ExpectedException.expect(RestApiException.class);
         m_ExpectedException.expectMessage(
                 "Invalid flush parameters: 'start' has not been specified.");
-        m_ExpectedException.expect(hasErrorCode(ErrorCode.INVALID_FLUSH_PARAMS));
+        m_ExpectedException.expect(hasErrorCode(ErrorCodes.INVALID_FLUSH_PARAMS));
 
         m_Data.flushUpload(JOB_ID, true, "", "1");
     }
@@ -332,7 +332,7 @@ public class DataTest extends ServiceTest
         m_ExpectedException.expect(RestApiException.class);
         m_ExpectedException.expectMessage(
                 "Invalid time range: end time '1' is earlier than start time '2'.");
-        m_ExpectedException.expect(hasErrorCode(ErrorCode.END_DATE_BEFORE_START_DATE));
+        m_ExpectedException.expect(hasErrorCode(ErrorCodes.END_DATE_BEFORE_START_DATE));
 
         m_Data.flushUpload(JOB_ID, true, "2", "1");
     }
