@@ -53,6 +53,7 @@ import com.prelert.job.alert.AlertObserver;
 import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.persistence.JobRenormaliser;
 import com.prelert.job.persistence.JobResultsPersister;
+import com.prelert.job.process.results.AutoDetectResultsParser;
 import com.prelert.job.quantiles.Quantiles;
 import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.CategoryDefinition;

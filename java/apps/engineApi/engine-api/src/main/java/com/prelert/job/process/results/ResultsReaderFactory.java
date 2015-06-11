@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -24,20 +24,20 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.process;
+package com.prelert.job.process.results;
 
 import java.io.InputStream;
 
 import org.apache.log4j.Logger;
 
 /**
- * Factory method for creating new Runnable objects to parse the 
+ * Factory method for creating new Runnable objects to parse the
  * autodetect output.
  */
-public interface ResultsReaderFactory 
+public interface ResultsReaderFactory
 {
 	/**
-	 * 
+	 *
 	 * @param jobId
 	 * @param autoDetectOutput
 	 * @param logger Job specific logger

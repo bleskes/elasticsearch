@@ -25,9 +25,10 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.rs.data;
+package com.prelert.job.errorcodes;
+
 
 public interface HasErrorCode
 {
-    public ErrorCode getErrorCode();
+    public ErrorCodes getErrorCode();
 }
