@@ -71,6 +71,7 @@ public class CsvDataToProcessWriterTest
 {
 
     @Mock private LengthEncodedWriter m_LengthEncodedWriter;
+    private List<TransformConfig> m_Transforms;
     private DataDescription m_DataDescription;
     private AnalysisConfig m_AnalysisConfig;
     @Mock private StatusReporter m_StatusReporter;
@@ -93,6 +94,8 @@ public class CsvDataToProcessWriterTest
                 return null;
             }
         }).when(m_LengthEncodedWriter).writeRecord(any(String[].class));
+
+        m_Transforms = new ArrayList<>();
 
         m_DataDescription = new DataDescription();
         m_DataDescription.setFieldDelimiter(',');
@@ -124,6 +127,39 @@ public class CsvDataToProcessWriterTest
         expectedRecords.add(new String[] {"time", "value", "."});
         expectedRecords.add(new String[] {"1", "1.0", ""});
         expectedRecords.add(new String[] {"2", "2.0", ""});
+        assertWrittenRecordsEqualTo(expectedRecords);
+
+        verify(m_StatusReporter).finishReporting();
+        verify(m_DataPersister).flushRecords();
+    }
+
+    @Test
+    public void testWrite_GivenTransformAndEmptyField() throws MissingFieldException,
+            HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException
+    {
+        TransformConfig transform = new TransformConfig();
+        transform.setTransform("uppercase");
+        transform.setInputs(Arrays.asList("value"));
+        transform.setOutputs(Arrays.asList("transformed"));
+        m_Transforms.add(transform);
+
+        m_AnalysisConfig.getDetectors().get(0).setFieldName("transformed");
+
+        StringBuilder input = new StringBuilder();
+        input.append("time,metric,value\n");
+        input.append("1,,foo\n");
+        input.append("2,,\n");
+        InputStream inputStream = createInputStream(input.toString());
+        CsvDataToProcessWriter writer = createWriter();
+
+        writer.write(inputStream);
+        verify(m_StatusReporter, times(1)).startNewIncrementalCount();
+
+        List<String[]> expectedRecords = new ArrayList<>();
+        // The final field is the control field
+        expectedRecords.add(new String[] {"time", "transformed", "."});
+        expectedRecords.add(new String[] {"1", "FOO", ""});
+        expectedRecords.add(new String[] {"2", "", ""});
         assertWrittenRecordsEqualTo(expectedRecords);
 
         verify(m_StatusReporter).finishReporting();
@@ -268,7 +304,7 @@ public class CsvDataToProcessWriterTest
     private CsvDataToProcessWriter createWriter()
     {
         return new CsvDataToProcessWriter(m_LengthEncodedWriter, m_DataDescription,
-                m_AnalysisConfig, new TransformConfigs(Arrays.<TransformConfig>asList()),
+                m_AnalysisConfig, new TransformConfigs(m_Transforms),
                 m_StatusReporter, m_DataPersister, m_Logger);
     }
 

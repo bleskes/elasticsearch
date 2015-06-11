@@ -164,9 +164,8 @@ class CsvDataToProcessWriter extends AbstractDataToProcessWriter
                     }
                 }
 
-                Arrays.fill(inputRecord, "");
-                if (applyTransformsAndWrite(line.toArray(inputRecord) ,
-                                        record, inputFieldCount))
+                fillRecordFromLine(line, inputRecord);
+                if (applyTransformsAndWrite(inputRecord, record, inputFieldCount))
                 {
                     ++recordsWritten;
                 }
@@ -186,6 +185,19 @@ class CsvDataToProcessWriter extends AbstractDataToProcessWriter
                 recordsWritten, lineCount));
 
         return m_StatusReporter.incrementalStats();
+    }
+
+    private static void fillRecordFromLine(List<String> line, String[] record)
+    {
+        Arrays.fill(record, "");
+        for (int i = 0; i < Math.min(line.size(), record.length); i++)
+        {
+            String value = line.get(i);
+            if (value != null)
+            {
+                record[i] = value;
+            }
+        }
     }
 
     @Override
