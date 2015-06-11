@@ -35,6 +35,7 @@ import java.io.InputStream;
 
 import org.junit.Test;
 
+import com.prelert.job.DataCounts;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.TooManyJobsException;
@@ -46,7 +47,6 @@ import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.process.params.DataLoadParams;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
-import com.prelert.rs.data.DataCounts;
 
 public class DataStreamerThreadTest
 {

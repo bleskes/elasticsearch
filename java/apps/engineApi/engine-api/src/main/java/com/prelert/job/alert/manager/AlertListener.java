@@ -39,9 +39,9 @@ import org.apache.log4j.Logger;
 
 import com.prelert.job.alert.Alert;
 import com.prelert.job.alert.AlertObserver;
-import com.prelert.rs.data.AnomalyRecord;
-import com.prelert.rs.data.Bucket;
-import com.prelert.rs.data.Detector;
+import com.prelert.job.results.AnomalyRecord;
+import com.prelert.job.results.Bucket;
+import com.prelert.job.results.Detector;
 import com.prelert.rs.resources.Buckets;
 
 class AlertListener extends AlertObserver

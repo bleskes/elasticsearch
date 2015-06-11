@@ -39,7 +39,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.prelert.job.exceptions.UnknownJobException;
-import com.prelert.rs.data.CategoryDefinition;
+import com.prelert.job.results.CategoryDefinition;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
 

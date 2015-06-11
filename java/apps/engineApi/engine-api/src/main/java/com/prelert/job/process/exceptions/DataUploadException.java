@@ -27,7 +27,7 @@
 
 package com.prelert.job.process.exceptions;
 
-import com.prelert.rs.data.DataCounts;
+import com.prelert.job.DataCounts;
 
 /**
  * This exception is meant to be a wrapper around RuntimeExceptions

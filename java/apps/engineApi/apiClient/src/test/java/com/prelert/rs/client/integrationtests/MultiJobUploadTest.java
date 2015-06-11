@@ -47,9 +47,9 @@ import com.prelert.job.DataDescription;
 import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.DataDescription.DataFormat;
+import com.prelert.job.results.AnomalyRecord;
+import com.prelert.job.results.Bucket;
 import com.prelert.rs.client.EngineApiClient;
-import com.prelert.rs.data.AnomalyRecord;
-import com.prelert.rs.data.Bucket;
 import com.prelert.rs.data.Pagination;
 
 /**

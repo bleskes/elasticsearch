@@ -25,7 +25,7 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.rs.data;
+package com.prelert.job.results;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -41,6 +41,7 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
+import com.prelert.job.results.CategoryDefinition;
 import com.prelert.utils.json.AutoDetectParseException;
 
 public class CategoryDefinitionTest

@@ -31,9 +31,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
 
+import com.prelert.job.DataCounts;
 import com.prelert.job.exceptions.JobException;
 import com.prelert.job.process.params.DataLoadParams;
-import com.prelert.rs.data.DataCounts;
 
 public class DataStreamerThread extends Thread
 {

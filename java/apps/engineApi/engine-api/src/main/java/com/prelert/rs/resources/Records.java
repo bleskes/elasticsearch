@@ -44,8 +44,8 @@ import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.persistence.elasticsearch.ElasticsearchMappings;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
-import com.prelert.rs.data.AnomalyRecord;
-import com.prelert.rs.data.Bucket;
+import com.prelert.job.results.AnomalyRecord;
+import com.prelert.job.results.Bucket;
 import com.prelert.rs.data.Pagination;
 
 /**

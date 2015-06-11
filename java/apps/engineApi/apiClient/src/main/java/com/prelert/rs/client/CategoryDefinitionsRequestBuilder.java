@@ -32,7 +32,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.prelert.rs.data.CategoryDefinition;
+import com.prelert.job.results.CategoryDefinition;
 import com.prelert.rs.data.Pagination;
 
 public class CategoryDefinitionsRequestBuilder extends BaseJobRequestBuilder<CategoryDefinition>

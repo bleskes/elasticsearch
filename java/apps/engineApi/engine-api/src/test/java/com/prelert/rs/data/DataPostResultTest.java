@@ -30,6 +30,7 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
+import com.prelert.job.DataCounts;
 import com.prelert.job.errorcodes.ErrorCodes;
 
 public class DataPostResultTest

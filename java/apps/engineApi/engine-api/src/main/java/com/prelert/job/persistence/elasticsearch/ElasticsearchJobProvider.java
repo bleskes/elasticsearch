@@ -79,11 +79,11 @@ import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.quantiles.Quantiles;
+import com.prelert.job.results.AnomalyRecord;
+import com.prelert.job.results.Bucket;
+import com.prelert.job.results.CategoryDefinition;
+import com.prelert.job.results.Detector;
 import com.prelert.job.usage.Usage;
-import com.prelert.rs.data.AnomalyRecord;
-import com.prelert.rs.data.Bucket;
-import com.prelert.rs.data.CategoryDefinition;
-import com.prelert.rs.data.Detector;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
 

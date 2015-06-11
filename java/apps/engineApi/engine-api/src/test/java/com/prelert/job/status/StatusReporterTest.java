@@ -38,8 +38,8 @@ import java.lang.reflect.InvocationTargetException;
 
 import org.junit.Test;
 
+import com.prelert.job.DataCounts;
 import com.prelert.job.usage.UsageReporter;
-import com.prelert.rs.data.DataCounts;
 
 public class StatusReporterTest
 {

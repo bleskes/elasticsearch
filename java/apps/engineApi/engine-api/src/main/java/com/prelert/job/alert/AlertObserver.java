@@ -26,7 +26,7 @@
  ************************************************************/
 package com.prelert.job.alert;
 
-import com.prelert.rs.data.Bucket;
+import com.prelert.job.results.Bucket;
 
 /**
  * The observer class for alerting

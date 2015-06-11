@@ -55,6 +55,7 @@ import org.apache.log4j.RollingFileAppender;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.AnalysisConfig;
+import com.prelert.job.DataCounts;
 import com.prelert.job.DataDescription;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobStatus;
@@ -86,7 +87,6 @@ import com.prelert.job.status.StatusReporter;
 import com.prelert.job.status.StatusReporterFactory;
 import com.prelert.job.transform.TransformConfigs;
 import com.prelert.job.usage.UsageReporterFactory;
-import com.prelert.rs.data.DataCounts;
 
 /**
  * Manages the native processes channelling data to them and parsing the

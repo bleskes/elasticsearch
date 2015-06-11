@@ -33,7 +33,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
-import com.prelert.rs.data.DataCounts;
+import com.prelert.job.DataCounts;
 
 /**
  * Simple program to upload a file to the Prelert Engine API.

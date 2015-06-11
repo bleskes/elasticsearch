@@ -25,7 +25,7 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.rs.data;
+package com.prelert.job.results;
 
 
 import java.io.IOException;
