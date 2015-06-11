@@ -99,7 +99,7 @@ public class TransformFactoryTest {
         Transform tr = new TransformFactory().create(conf, inputMap, scratchMap,
                 outputMap, mock(Logger.class));
         assertTrue(tr instanceof Concat);
-        assertEquals(null, ((Concat)tr).getDelimiter());
+        assertEquals("", ((Concat)tr).getDelimiter());
 
         conf.setArguments(Arrays.asList("delimiter"));
         tr = new TransformFactory().create(conf, inputMap, scratchMap,
