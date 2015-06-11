@@ -52,8 +52,6 @@ public abstract class Transform
      */
     public enum TransformResult {OK, FAIL, FATAL_FAIL};
 
-    protected final Logger m_Logger;
-
     public static class TransformIndex
     {
         public final int array;
@@ -92,8 +90,9 @@ public abstract class Transform
         }
     }
 
-    protected List<TransformIndex> m_ReadIndicies;
-    protected List<TransformIndex> m_WriteIndicies;
+    protected final Logger m_Logger;
+    protected final List<TransformIndex> m_ReadIndicies;
+    protected final List<TransformIndex> m_WriteIndicies;
 
     /**
      *
