@@ -240,6 +240,7 @@ public class PublishClusterStateAction extends AbstractComponent {
 
     private void sendCommitToNode(final DiscoveryNode node, final ClusterState clusterState, final BlockingClusterStatePublishResponseHandler publishResponseHandler) {
         try {
+            logger.trace("sending commit for cluster state (uuid: [{}], version [{}]) to [{}]", clusterState.uuid(), clusterState.version(), node);
             TransportRequestOptions options = TransportRequestOptions.options().withType(TransportRequestOptions.Type.STATE).withCompress(false);
             // no need to put a timeout on the options here, because we want the response to eventually be received
             // and not log an error if it arrives after the timeout
@@ -448,7 +449,7 @@ public class PublishClusterStateAction extends AbstractComponent {
             if (neededMastersToCommit == 0) {
                 logger.trace("committing version [{}]", clusterState.version());
                 for (DiscoveryNode nodeToCommit : publishAckedBeforeCommit) {
-                    sendCommitToNode(node, clusterState, publishResponseHandler);
+                    sendCommitToNode(nodeToCommit, clusterState, publishResponseHandler);
                 }
                 publishAckedBeforeCommit.clear();
                 boolean success = committed.compareAndSet(false, true);

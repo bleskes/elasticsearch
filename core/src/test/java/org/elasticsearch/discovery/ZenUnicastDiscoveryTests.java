@@ -27,6 +27,7 @@ import org.elasticsearch.test.ElasticsearchIntegrationTest;
 import org.elasticsearch.test.ElasticsearchIntegrationTest.ClusterScope;
 import org.elasticsearch.test.ElasticsearchIntegrationTest.Scope;
 import org.elasticsearch.test.discovery.ClusterDiscoveryConfiguration;
+import org.elasticsearch.test.junit.annotations.TestLogging;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -78,6 +79,7 @@ public class ZenUnicastDiscoveryTests extends ElasticsearchIntegrationTest {
     // Without the 'include temporalResponses responses to nodesToConnect' improvement in UnicastZenPing#sendPings this
     // test fails, because 2 nodes elect themselves as master and the health request times out b/c waiting_for_nodes=N
     // can't be satisfied.
+    @TestLogging("discovery:TRACE")
     public void testMinimumMasterNodes() throws Exception {
         int currentNumNodes = randomIntBetween(3, 5);
         final int min_master_nodes = currentNumNodes / 2 + 1;
