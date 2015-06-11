@@ -200,7 +200,7 @@ public class JobLogs
             RandomAccessFile logFile = new RandomAccessFile(file, "r");
             try
             {
-                // got to where we think the last N lines will start
+                // go to where we think the last N lines will start
                 long seek = Math.max(logFile.length() - (nLines * expectedLineSize), 0);
                 logFile.seek(seek);
 
