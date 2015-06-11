@@ -544,7 +544,7 @@ public class ClusterStateDiffPublishingTests extends ElasticsearchTestCase {
     public AssertingAckListener publishStateDiff(PublishClusterStateAction action, ClusterState state, ClusterState previousState) throws InterruptedException {
         AssertingAckListener assertingAckListener = new AssertingAckListener(state.nodes().getSize() - 1);
         ClusterChangedEvent changedEvent = new ClusterChangedEvent("test update", state, previousState);
-        action.publish(changedEvent, assertingAckListener);
+        action.publish(changedEvent, -1, assertingAckListener);
         return assertingAckListener;
     }
 

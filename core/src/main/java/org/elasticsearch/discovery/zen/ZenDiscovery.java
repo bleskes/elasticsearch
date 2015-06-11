@@ -335,7 +335,24 @@ public class ZenDiscovery extends AbstractLifecycleComponent<Discovery> implemen
             throw new IllegalStateException("Shouldn't publish state when not master");
         }
         nodesFD.updateNodesAndPing(clusterChangedEvent.state());
-        publishClusterState.publish(clusterChangedEvent, ackListener);
+        try {
+            publishClusterState.publish(clusterChangedEvent, electMaster.minimumMasterNodes(), ackListener);
+        } catch (PublishClusterStateAction.FailedToCommitException t) {
+            logger.warn("failed to publish [{}] (not enough nodes acknowledged, min master nodes [{}])", clusterChangedEvent.state().version(), electMaster.minimumMasterNodes());
+            clusterService.submitStateUpdateTask("zen-disco-failed-to-publish", Priority.IMMEDIATE, new ClusterStateUpdateTask() {
+                @Override
+                public ClusterState execute(ClusterState currentState) {
+                    return rejoin(currentState, "failed to publish to min_master_nodes");
+                }
+
+                @Override
+                public void onFailure(String source, Throwable t) {
+                    logger.error("unexpected failure during [{}]", t, source);
+                }
+
+            });
+            throw t;
+        }
     }
 
     /**
