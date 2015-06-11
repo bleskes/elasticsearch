@@ -33,9 +33,9 @@ import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.alert.AlertObserver;
-import com.prelert.job.process.ResultsReader;
-import com.prelert.job.process.ResultsReaderFactory;
-import com.prelert.rs.data.parsing.AutoDetectResultsParser;
+import com.prelert.job.process.results.AutoDetectResultsParser;
+import com.prelert.job.process.results.ResultsReader;
+import com.prelert.job.process.results.ResultsReaderFactory;
 import com.prelert.utils.json.AutoDetectParseException;
 
 /**
