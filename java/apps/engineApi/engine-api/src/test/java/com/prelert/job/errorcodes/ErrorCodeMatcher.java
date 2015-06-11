@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -25,37 +25,42 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.rs.data;
+package com.prelert.job.errorcodes;
 
-import java.util.HashSet;
-import java.util.Set;
-
-import junit.framework.Assert;
-
-import org.junit.Test;
+import org.hamcrest.Description;
+import org.junit.internal.matchers.TypeSafeMatcher;
 
 import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.errorcodes.HasErrorCode;
 
-/**
- * This test ensures that all the error values in {@linkplain ErrorCodes}
- * are unique so no 2 conditions can return the same error code.
- * This tests is designed to catch copy/paste errors.  
- */
-public class ErrorCodesTest 
-{
-	@Test
-	public void errorCodesUnique() 
-	throws IllegalArgumentException, IllegalAccessException
-	{
-		ErrorCodes[] values = ErrorCodes.class.getEnumConstants();
-		
-		Set<Long> errorValueSet = new HashSet<>();
+public class ErrorCodeMatcher extends TypeSafeMatcher<HasErrorCode> {
 
-		for (ErrorCodes value : values) 
-		{
-			errorValueSet.add(value.getValue());
-		}
-				
-		Assert.assertEquals(values.length, errorValueSet.size());
-	}
+    private ErrorCodes m_ExpectedErrorCode;
+    private ErrorCodes m_ActualErrorCode;
+
+    public static ErrorCodeMatcher hasErrorCode(ErrorCodes expected)
+    {
+        return new ErrorCodeMatcher(expected);
+    }
+
+    private ErrorCodeMatcher(ErrorCodes expectedErrorCode)
+    {
+        m_ExpectedErrorCode = expectedErrorCode;
+    }
+
+    @Override
+    public void describeTo(Description description)
+    {
+        description.appendValue(m_ActualErrorCode)
+                .appendText(" was found instead of ")
+                .appendValue(m_ExpectedErrorCode);
+    }
+
+    @Override
+    public boolean matchesSafely(HasErrorCode item)
+    {
+        m_ActualErrorCode = item.getErrorCode();
+        return m_ActualErrorCode.equals(m_ExpectedErrorCode);
+    }
+
 }

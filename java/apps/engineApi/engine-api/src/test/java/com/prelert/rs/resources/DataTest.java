@@ -27,7 +27,7 @@
 
 package com.prelert.rs.resources;
 
-import static com.prelert.rs.data.ErrorCodeMatcher.hasErrorCode;
+import static com.prelert.job.errorcodes.ErrorCodeMatcher.hasErrorCode;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
