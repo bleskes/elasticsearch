@@ -63,6 +63,12 @@ public class Logs extends ResourceWithJobManager
     public static final String ENDPOINT = "logs";
 
     /**
+     * Never tail more than this many lines in case the
+     * input parameter asks for a ridculous amount
+     */
+    public static final int MAX_TAIL_LINES = 10000;
+
+    /**
      * Get the contents of the log directory zipped.
      * This is the same as {@link #zipLogFiles(String)}
      *
@@ -179,7 +185,9 @@ public class Logs extends ResourceWithJobManager
             @DefaultValue("10") @QueryParam("lines") int lines)
     throws UnknownJobException
     {
-        LOGGER.debug("Tail log file '" + filename + "' for job '" + jobId + "'");
+        lines = Math.min(lines, MAX_TAIL_LINES);
+        LOGGER.debug(String.format("Tail %d lines from log file %s for job %s",
+                        lines, filename, jobId));
 
         JobLogs logs = new JobLogs();
         return logs.tail(jobId, filename, lines);
