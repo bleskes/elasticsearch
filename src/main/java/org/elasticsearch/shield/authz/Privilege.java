@@ -115,10 +115,6 @@ public abstract class Privilege<P extends Privilege<P>> {
             return PREDICATE;
         }
 
-        public Predicate<String> internalActionPredicate() {
-            return INTERNAL_PREDICATE;
-        }
-
         @Override
         public boolean implies(System other) {
             return true;
