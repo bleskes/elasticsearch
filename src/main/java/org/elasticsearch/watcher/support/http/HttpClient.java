@@ -26,6 +26,7 @@ import org.elasticsearch.common.collect.ImmutableMap;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.io.Streams;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.watcher.support.http.auth.ApplicableHttpAuth;
 import org.elasticsearch.watcher.support.http.auth.HttpAuthRegistry;
 
@@ -67,6 +68,8 @@ public class HttpClient extends AbstractLifecycleComponent<HttpClient> {
     static final String SETTINGS_SSL_SHIELD_TRUSTSTORE_ALGORITHM = SETTINGS_SSL_SHIELD_PREFIX + "truststore.algorithm";
 
     private final HttpAuthRegistry httpAuthRegistry;
+    private final TimeValue defaultConnectionTimeout;
+    private final TimeValue defaultReadTimeout;
 
     private SSLSocketFactory sslSocketFactory;
 
@@ -74,6 +77,8 @@ public class HttpClient extends AbstractLifecycleComponent<HttpClient> {
     public HttpClient(Settings settings, HttpAuthRegistry httpAuthRegistry) {
         super(settings);
         this.httpAuthRegistry = httpAuthRegistry;
+        defaultConnectionTimeout = settings.getAsTime("watcher.http.default_connection_timeout", TimeValue.timeValueSeconds(10));
+        defaultReadTimeout = settings.getAsTime("watcher.http.default_read_timeout", TimeValue.timeValueSeconds(10));
     }
 
     @Override
@@ -154,6 +159,13 @@ public class HttpClient extends AbstractLifecycleComponent<HttpClient> {
             urlConnection.getOutputStream().write(bytes);
             urlConnection.getOutputStream().close();
         }
+
+        TimeValue connectionTimeout = request.connectionTimeout != null ? request.connectionTimeout : defaultConnectionTimeout;
+        urlConnection.setConnectTimeout((int) connectionTimeout.millis());
+
+        TimeValue readTimeout = request.readTimeout != null ? request.readTimeout : defaultReadTimeout;
+        urlConnection.setReadTimeout((int) readTimeout.millis());
+
         urlConnection.connect();
 
         final int statusCode = urlConnection.getResponseCode();
