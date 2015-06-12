@@ -34,7 +34,6 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.license.core.License;
 import org.elasticsearch.license.plugin.core.LicenseExpiredException;
 import org.elasticsearch.license.plugin.core.LicensesClientService;
-import org.elasticsearch.license.plugin.core.LicensesService;
 import org.elasticsearch.plugins.AbstractPlugin;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.shield.license.LicenseService;
@@ -243,7 +242,7 @@ public class LicensingTests extends ShieldIntegrationTest {
         }
 
         @Override
-        public void register(String s, LicensesService.TrialLicenseOptions trialLicenseOptions, Collection<LicensesService.ExpirationCallback> collection, Listener listener) {
+        public void register(String s, LicensesClientService.TrialLicenseOptions trialLicenseOptions, Collection<LicensesClientService.ExpirationCallback> collection, Listener listener) {
             listeners.add(listener);
             enable();
         }
