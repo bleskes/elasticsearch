@@ -80,6 +80,23 @@ public class DiscoveryWithServiceDisruptionsTests extends ElasticsearchIntegrati
 
     private ClusterDiscoveryConfiguration discoveryConfig;
 
+    @Override
+    protected void beforeIndexDeletion() {
+        try {
+            // som test may leave inflight ops. We should wait.
+            assertBusy(new Runnable() {
+                @Override
+                public void run() {
+                    DiscoveryWithServiceDisruptionsTests.super.beforeIndexDeletion();
+                }
+            });
+        } catch (Exception e) {
+            if (e instanceof RuntimeException) {
+                throw (RuntimeException) e;
+            }
+            throw new RuntimeException("unexpeted error", e);
+        }
+    }
 
     @Override
     protected Settings nodeSettings(int nodeOrdinal) {
