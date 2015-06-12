@@ -1,0 +1,15 @@
+<div class="marvel-overview" ng-controller="overview">
+  <marvel-nav></marvel-nav>
+  <marvel-cluster-status status="yellow"></marvel-cluster-status>
+  <div class="metrics">
+    <div><marvel-chart title="Indexing Rate" total="200" unit="rps"/></div>
+    <div><marvel-chart title="Query Latency" total="1349" unit="ms"/></div>
+    <div><marvel-chart title="Search Rate" total="59" unit="rps"/></div>
+  </div>
+  <div class="metrics">
+    <div><marvel-issues issues="issues.cluster" title="Cluster"/></div>
+    <div><marvel-issues issues="issues.nodes" title="Nodes" link="#/marvel/nodes"/></div>
+    <div><marvel-issues issues="issues.indices" title="Indices" link="#/marvel/indices"/></div>
+  </div>
+  <marvel-shard-activity/>
+</div>

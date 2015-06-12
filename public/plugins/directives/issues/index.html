@@ -1,0 +1,5 @@
+<a class="pull-right" ng-if="link" href="{{link}}">View {{title}} <i class="fa fa-chevron-right"></i></a>
+<h3>{{title}} Issues <span class="count">Displaying 5 of 10 issues</span></h3>
+<ul class="list-unstyled">
+  <li ng-repeat="issue in issues"><i class="fa" ng-class="{ 'fa-fire': issue.status === 'red', 'fa-warning': issue.status === 'yellow' }"></i> <strong>{{issue.field}}</strong> {{issue.message}}</li>
+</ul>

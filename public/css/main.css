@@ -1,0 +1,169 @@
+.metrics {
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  border-bottom: 1px solid #EEE;
+}
+.metrics > div {
+  -webkit-flex: 1 1 33.3%;
+      -ms-flex: 1 1 33.3%;
+          flex: 1 1 33.3%;
+  padding: 20px;
+}
+.metrics > div:first-child {
+  border-right: 1px solid #EEE;
+}
+.metrics > div:last-child {
+  border-left: 1px solid #EEE;
+}
+marvel-cluster-status > div {
+  font-family: HelveticaNeue;
+  font-size: 14px;
+  color: #000000;
+  line-height: 16px;
+  background-image: linear-gradient(90deg, #79d415 0%, #00942b 100%);
+  padding: 20px;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+}
+marvel-cluster-status > div.red {
+  background-image: linear-gradient(90deg, #f60006 0%, #ff0007 63%, #a30000 100%);
+}
+marvel-cluster-status > div.yellow {
+  background-image: linear-gradient(90deg, #fcec30 0%, #bf6f00 100%);
+}
+marvel-cluster-status > div > div {
+  -webkit-flex: 1 1 auto;
+      -ms-flex: 1 1 auto;
+          flex: 1 1 auto;
+}
+marvel-chart h4 {
+  text-align: right;
+  margin-bottom: 0;
+}
+marvel-chart h2 {
+  font-weight: bold;
+  text-align: right;
+  margin-top: 0;
+}
+marvel-chart .chart {
+  min-height: 200px;
+  background-color: #EEE;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+}
+marvel-chart .chart > div {
+  color: #CCC;
+  font-size: 17px;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-justify-content: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  -webkit-align-items: center;
+      -ms-flex-align: center;
+          align-items: center;
+  -webkit-flex: 1 1 auto;
+      -ms-flex: 1 1 auto;
+          flex: 1 1 auto;
+}
+marvel-issues h3 {
+  margin-top: 0;
+}
+marvel-issues h3 .count {
+  font-size: 0.6em;
+}
+marvel-issues .fa-fire {
+  color: #F60006;
+}
+marvel-issues .fa-warning {
+  color: #F5A623;
+}
+marvel-issues li {
+  padding-bottom: 5px;
+}
+marvel-shard-activity {
+  display: block;
+  padding: 20px;
+}
+marvel-shard-activity tr.red td {
+  background-color: rgba(255, 0, 0, 0.2);
+}
+marvel-shard-activity tr.yellow td {
+  background: rgba(245, 166, 35, 0.2);
+}
+marvel-shard-activity td {
+  vertical-align: middle !important;
+}
+marvel-shard-activity p {
+  margin: 0;
+}
+marvel-shard-activity table {
+  border-bottom: 2px solid #ecf0f1;
+}
+marvel-shard-activity h5 {
+  font-size: 20px;
+  font-weight: bold;
+  margin: 0;
+}
+marvel-shard-activity h6 {
+  font-size: 20px;
+  margin: 0;
+}
+marvel-shard-activity .source-dest > div {
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+}
+marvel-shard-activity .source-dest > div > div {
+  -webkit-flex: 1 1 auto;
+      -ms-flex: 1 1 auto;
+          flex: 1 1 auto;
+  -webkit-align-items: center;
+      -ms-flex-align: center;
+          align-items: center;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+}
+marvel-index-listing {
+  display: block;
+  padding: 20px;
+}
+marvel-index-listing table {
+  border-bottom: 2px solid #ecf0f1;
+}
+marvel-index-listing td,
+marvel-index-listing th {
+  text-align: right;
+}
+marvel-index-listing td:first-child,
+marvel-index-listing th:first-child {
+  text-align: left;
+}
+marvel-index-listing td {
+  font-size: 16px;
+}
+marvel-index-listing .pagination {
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+}
+marvel-index-listing .pagination ul {
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-flex: 1 1 auto;
+      -ms-flex: 1 1 auto;
+          flex: 1 1 auto;
+  -webkit-justify-content: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+}
+marvel-index-listing .pagination li {
+  padding: 0 5px;
+  display: inline-block;
+}

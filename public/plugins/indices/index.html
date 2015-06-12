@@ -1,0 +1,11 @@
+<div class="marvel-indices" ng-controller="indices">
+  <marvel-nav></marvel-nav>
+  <marvel-cluster-status status="yellow"></marvel-cluster-status>
+  <div class="metrics">
+    <div><marvel-chart title="Indexing Rate" total="200" unit="rps"/></div>
+    <div><marvel-chart title="Search Rate" total="59" unit="rps"/></div>
+    <div><marvel-chart title="Documents" total="1.53" unit="m"/></div>
+  </div>
+  <marvel-index-listing/>
+</div>
+
