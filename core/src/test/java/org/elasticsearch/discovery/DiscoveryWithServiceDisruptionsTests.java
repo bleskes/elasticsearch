@@ -462,7 +462,7 @@ public class DiscoveryWithServiceDisruptionsTests extends ElasticsearchIntegrati
                                     id = "id_" + Integer.toString(idGenerator.incrementAndGet());
                                     int shard = ((InternalTestCluster) cluster()).getInstance(DjbHashFunction.class).hash(id) % numPrimaries;
                                     logger.trace("[{}] indexing id [{}] through node [{}] targeting shard [{}]", name, id, node, shard);
-                                    IndexResponse response = client.prepareIndex("test", "type", id).setSource("{}").get("10s");
+                                    IndexResponse response = client.prepareIndex("test", "type", id).setSource("{}").get("1s");
                                     assertThat(response.getVersion(), equalTo(1l));
                                     ackedDocs.put(id, node);
                                     logger.trace("[{}] indexed id [{}] through node [{}]", name, id, node);
@@ -581,7 +581,7 @@ public class DiscoveryWithServiceDisruptionsTests extends ElasticsearchIntegrati
         // restore GC
         masterNodeDisruption.stopDisrupting();
         ensureStableCluster(3, new TimeValue(DISRUPTION_HEALING_OVERHEAD.millis() + masterNodeDisruption.expectedTimeToHeal().millis()),
-                oldNonMasterNodes.get(0));
+                oldNonMasterNodes.get(0), false);
 
         // make sure all nodes agree on master
         String newMaster = internalCluster().getMasterName();
@@ -976,18 +976,18 @@ public class DiscoveryWithServiceDisruptionsTests extends ElasticsearchIntegrati
     }
 
     private void ensureStableCluster(int nodeCount) {
-        ensureStableCluster(nodeCount, TimeValue.timeValueSeconds(30), null);
+        ensureStableCluster(nodeCount, TimeValue.timeValueSeconds(30), null, true);
     }
 
     private void ensureStableCluster(int nodeCount, TimeValue timeValue) {
-        ensureStableCluster(nodeCount, timeValue, null);
+        ensureStableCluster(nodeCount, timeValue, null, true);
     }
 
     private void ensureStableCluster(int nodeCount, @Nullable String viaNode) {
-        ensureStableCluster(nodeCount, TimeValue.timeValueSeconds(30), viaNode);
+        ensureStableCluster(nodeCount, TimeValue.timeValueSeconds(30), viaNode, true);
     }
 
-    private void ensureStableCluster(int nodeCount, TimeValue timeValue, @Nullable String viaNode) {
+    private void ensureStableCluster(int nodeCount, TimeValue timeValue, @Nullable String viaNode, boolean validateOtherNodes) {
         if (viaNode == null) {
             viaNode = randomFrom(internalCluster().getNodeNames());
         }
@@ -1004,6 +1004,14 @@ public class DiscoveryWithServiceDisruptionsTests extends ElasticsearchIntegrati
                     + stateResponse.getState().prettyPrint());
         }
         assertThat(clusterHealthResponse.isTimedOut(), is(false));
+        if (validateOtherNodes) {
+            for (String otherNode : internalCluster().getNodeNames()) {
+                if (otherNode.equals(viaNode)) {
+                    continue;
+                }
+                ensureStableCluster(nodeCount, timeValue, otherNode, false);
+            }
+        }
     }
 
     private ClusterState getNodeClusterState(String node) {
