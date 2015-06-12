@@ -744,7 +744,7 @@ public class ShardReplicationTests extends ElasticsearchTestCase {
         }
 
         @Override
-        protected Releasable getIndexShardOperationsCounter(ShardId shardId) {
+        protected Releasable getIndexShardOperationsCounter(ShardId shardId, Object operation) {
             return getOrCreateIndexShardOperationsCounter();
         }
     }

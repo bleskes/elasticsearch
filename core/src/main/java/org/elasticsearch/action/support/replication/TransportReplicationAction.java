@@ -42,6 +42,7 @@ import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.routing.*;
 import org.elasticsearch.common.Nullable;
+import org.elasticsearch.common.collect.HppcMaps;
 import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.lease.Releasable;
@@ -307,7 +308,7 @@ public abstract class TransportReplicationAction<Request extends ReplicationRequ
 
         @Override
         protected void doRun() throws Exception {
-            try (Releasable shardReference = getIndexShardOperationsCounter(request.internalShardId)) {
+            try (Releasable shardReference = getIndexShardOperationsCounter(request.internalShardId, request)) {
                 shardOperationOnReplica(request.internalShardId, request);
             }
             channel.sendResponse(TransportResponse.Empty.INSTANCE);
@@ -541,7 +542,7 @@ public abstract class TransportReplicationAction<Request extends ReplicationRequ
         void finishAsFailed(Throwable failure) {
             if (finished.compareAndSet(false, true)) {
                 Releasables.close(indexShardReference);
-                logger.trace("operation failed", failure);
+                logger.trace("operation failed [{}]", failure, internalRequest.request());
                 listener.onFailure(failure);
             } else {
                 assert false : "finishAsFailed called but operation is already finished";
@@ -578,10 +579,10 @@ public abstract class TransportReplicationAction<Request extends ReplicationRequ
             }
             final ReplicationPhase replicationPhase;
             try {
-                indexShardReference = getIndexShardOperationsCounter(primary.shardId());
+                indexShardReference = getIndexShardOperationsCounter(primary.shardId(), internalRequest.request());
                 PrimaryOperationRequest por = new PrimaryOperationRequest(primary.id(), internalRequest.concreteIndex(), internalRequest.request());
                 Tuple<Response, ReplicaRequest> primaryResponse = shardOperationOnPrimary(observer.observedState(), por);
-                logger.trace("operation completed on primary [{}]", primary);
+                logger.trace("operation [{}] completed on primary [{}]", internalRequest.request, primary);
                 replicationPhase = new ReplicationPhase(shardsIt, primaryResponse.v2(), primaryResponse.v1(), observer, primary, internalRequest, listener, indexShardReference);
             } catch (Throwable e) {
                 internalRequest.request.setCanHaveDuplicates();
@@ -666,10 +667,10 @@ public abstract class TransportReplicationAction<Request extends ReplicationRequ
 
     }
 
-    protected Releasable getIndexShardOperationsCounter(ShardId shardId) {
+    protected Releasable getIndexShardOperationsCounter(ShardId shardId, Object request) {
         IndexService indexService = indicesService.indexServiceSafe(shardId.index().getName());
         IndexShard indexShard = indexService.shardSafe(shardId.id());
-        return new IndexShardReference(indexShard);
+        return new IndexShardReference(indexShard, request);
     }
 
     private void failReplicaIfNeeded(String index, int shardId, Throwable t) {
@@ -958,6 +959,7 @@ public abstract class TransportReplicationAction<Request extends ReplicationRequ
                             @Override
                             public void onFailure(Throwable e) {
                                 // nocommit - what here?
+                                logger.warn("failed to fail shard [{}] after failure with [{}]", e, shard, replicaRequest);
                             }
                         });
             }
@@ -1043,16 +1045,18 @@ public abstract class TransportReplicationAction<Request extends ReplicationRequ
 
         final private IndexShard counter;
         private final AtomicBoolean closed = new AtomicBoolean(false);
+        private final Object operation;
 
-        IndexShardReference(IndexShard counter) {
-            counter.incrementOperationCounter();
+        IndexShardReference(IndexShard counter, Object operation) {
+            counter.incrementOperationCounter(operation);
             this.counter = counter;
+            this.operation = operation;
         }
 
         @Override
         public void close() {
             if (closed.compareAndSet(false, true)) {
-                counter.decrementOperationCounter();
+                counter.decrementOperationCounter(operation);
             }
         }
     }

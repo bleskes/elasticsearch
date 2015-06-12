@@ -52,6 +52,7 @@ import static org.elasticsearch.common.settings.Settings.settingsBuilder;
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertAcked;
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertNoFailures;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.nullValue;
 
 /**
  * Simple unit-test IndexShard related operations.
@@ -261,7 +262,7 @@ public class IndexShardTests extends ElasticsearchSingleNodeTest {
         client().admin().indices().prepareDelete("test").get();
         assertThat(indexShard.getOperationsCount(), equalTo(0));
         try {
-            indexShard.incrementOperationCounter();
+            indexShard.incrementOperationCounter(null);
             fail("we should not be able to increment anymore");
         } catch (IndexShardClosedException e) {
             // expected
@@ -276,12 +277,12 @@ public class IndexShardTests extends ElasticsearchSingleNodeTest {
         IndexService indexService = indicesService.indexServiceSafe("test");
         IndexShard indexShard = indexService.shard(0);
         assertEquals(0, indexShard.getOperationsCount());
-        indexShard.incrementOperationCounter();
+        indexShard.incrementOperationCounter(null);
         assertEquals(1, indexShard.getOperationsCount());
-        indexShard.incrementOperationCounter();
+        indexShard.incrementOperationCounter(null);
         assertEquals(2, indexShard.getOperationsCount());
-        indexShard.decrementOperationCounter();
-        indexShard.decrementOperationCounter();
+        indexShard.decrementOperationCounter(null);
+        indexShard.decrementOperationCounter(null);
         assertEquals(0, indexShard.getOperationsCount());
     }
 

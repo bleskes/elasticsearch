@@ -430,7 +430,7 @@ public class DiscoveryWithServiceDisruptionsTests extends ElasticsearchIntegrati
      */
     @Test
     // NOTE: nocommit if you remove the awaitFix, make sure to port the test to the 1.x branch
-    @TestLogging("action.index:TRACE,action.get:TRACE,discovery:TRACE,cluster.service:TRACE,indices.recovery:TRACE,indices.cluster:TRACE")
+    @TestLogging("index.shard:TRACE,action.index:TRACE,action.get:TRACE,discovery:TRACE,cluster.service:TRACE,indices.recovery:TRACE,indices.cluster:TRACE")
     public void testAckedIndexing() throws Exception {
         // TODO: add node count randomizaion
         final List<String> nodes = startCluster(3);

@@ -1384,12 +1384,14 @@ public class IndexShard extends AbstractIndexShardComponent {
         }
     }
 
-    public void incrementOperationCounter() {
+    public void incrementOperationCounter(Object operation) {
         indexShardOperationCounter.incRef();
+        logger.trace("incremented counter for [{}]", operation);
     }
 
-    public void decrementOperationCounter() {
+    public void decrementOperationCounter(Object operation) {
         indexShardOperationCounter.decRef();
+        logger.trace("decremented counter for [{}]", operation);
     }
 
     public int getOperationsCount() {

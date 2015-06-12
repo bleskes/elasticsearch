@@ -109,7 +109,7 @@ public class SyncedFlushSingleNodeTest extends ElasticsearchSingleNodeTest {
 
         SyncedFlushService flushService = getInstanceFromNode(SyncedFlushService.class);
         final ShardId shardId = shard.shardId();
-        shard.incrementOperationCounter();
+        shard.incrementOperationCounter("op");
         try {
             SyncedFlushUtil.LatchedListener<ShardsSyncedFlushResult> listener = new SyncedFlushUtil.LatchedListener<>();
             flushService.attemptSyncedFlush(shardId, listener);
@@ -121,7 +121,7 @@ public class SyncedFlushSingleNodeTest extends ElasticsearchSingleNodeTest {
             assertNotEquals(0, syncedFlushResult.totalShards());
             assertEquals("[1] ongoing operations on primary", syncedFlushResult.failureReason());
         } finally {
-            shard.decrementOperationCounter();
+            shard.decrementOperationCounter("op");
         }
     }
 
