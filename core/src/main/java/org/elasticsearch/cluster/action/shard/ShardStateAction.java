@@ -208,7 +208,7 @@ public class ShardStateAction extends AbstractComponent {
                 });
     }
 
-    private void handleShardFailureOnMaster(final ShardRoutingEntry shardRoutingEntry) {
+    private void handleShardFailureOnMaster(final ShardRoutingEntry shardRoutingEntry, final ActionListener<TransportResponse> listener) {
         logger.warn("{} received shard failed for {}", shardRoutingEntry.shardRouting.shardId(), shardRoutingEntry);
         failedShardQueue.add(shardRoutingEntry);
         clusterService.submitStateUpdateTask("shard-failed (" + shardRoutingEntry.shardRouting + "), reason [" + shardRoutingEntry.reason + "]", Priority.HIGH, new ProcessedClusterStateUpdateTask() {
@@ -259,6 +259,7 @@ public class ShardStateAction extends AbstractComponent {
             @Override
             public void onFailure(String source, Throwable t) {
                 logger.error("unexpected failure during [{}]", t, source);
+                listener.onFailure(t);
             }
 
             @Override
@@ -267,6 +268,7 @@ public class ShardStateAction extends AbstractComponent {
                     logger.trace("unassigned shards after shard failures. scheduling a reroute.");
                     routingService.reroute("unassigned shards after shard failures, scheduling a reroute");
                 }
+                listener.onResponse(TransportResponse.Empty.INSTANCE);
             }
         });
     }
@@ -372,10 +374,31 @@ public class ShardStateAction extends AbstractComponent {
     private class ShardFailedTransportHandler implements TransportRequestHandler<ShardRoutingEntry> {
 
         @Override
-        public void messageReceived(ShardRoutingEntry request, TransportChannel channel) throws Exception {
-            // nocommit: pass a listener to handleShardFailureOnMaster
-            handleShardFailureOnMaster(request);
-            channel.sendResponse(TransportResponse.Empty.INSTANCE);
+        public void messageReceived(final ShardRoutingEntry request, final TransportChannel channel) throws Exception {
+            // nocommit:  nice listener? how to deal with failures to respond...
+            handleShardFailureOnMaster(request, new ActionListener<TransportResponse>() {
+                @Override
+                public void onResponse(TransportResponse response) {
+                    try {
+                        channel.sendResponse(response);
+                    } catch (IOException e) {
+                        sendFailure(e);
+                    }
+                }
+
+                protected void sendFailure(Throwable e) {
+                    try {
+                        channel.sendResponse(e);
+                    } catch (IOException sendingFailure) {
+                        logger.warn("failed to respond to shard failed {} with {}", sendingFailure, request, e);
+                    }
+                }
+
+                @Override
+                public void onFailure(Throwable e) {
+                    sendFailure(e);
+                }
+            });
         }
     }
 
