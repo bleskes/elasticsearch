@@ -418,7 +418,7 @@ public class ZenDiscovery extends AbstractLifecycleComponent<Discovery> implemen
                     @Override
                     public ClusterState execute(ClusterState currentState) throws Exception {
                         restartJoin();
-                        return null;
+                        return currentState;
                     }
 
                     private void restartJoin() {

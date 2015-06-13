@@ -31,7 +31,6 @@ import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.util.concurrent.ConcurrentCollections;
-import org.elasticsearch.discovery.DiscoveryService;
 import org.elasticsearch.discovery.DiscoverySettings;
 import org.elasticsearch.discovery.zen.membership.MembershipAction;
 
@@ -87,9 +86,10 @@ public abstract class NodeJoinController {
 
         public boolean waitToBeElectedAsMaster(TimeValue timeValue) {
             try {
-                electedAsMaster.await(timeValue.millis(), TimeUnit.MILLISECONDS);
-                assert done.get() : "elected as master but not done";
-                return true;
+                if (electedAsMaster.await(timeValue.millis(), TimeUnit.MILLISECONDS)) {
+                    assert done.get() : "elected as master but not done";
+                    return true;
+                }
             } catch (InterruptedException e) {
 
             }
@@ -99,7 +99,7 @@ public abstract class NodeJoinController {
                 return true;
             }
             // fail all the accumulated joins
-            clusterService.submitStateUpdateTask("zen-disco-join(timed out waiting for joins)", Priority.URGENT, new ProcessJoinsTask());
+            clusterService.submitStateUpdateTask("zen-disco-join(failing pending joins after timeout)", Priority.URGENT, new ProcessJoinsTask());
             return false;
         }
 
