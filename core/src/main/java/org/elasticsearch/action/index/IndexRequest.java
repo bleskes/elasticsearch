@@ -114,7 +114,7 @@ public class IndexRequest extends ReplicationRequest<IndexRequest> implements Do
 
         public static OpType fromString(String sOpType) {
             String lowersOpType = sOpType.toLowerCase(Locale.ROOT);
-            switch(lowersOpType){
+            switch (lowersOpType) {
                 case "create":
                     return OpType.CREATE;
                 case "index":
@@ -688,6 +688,9 @@ public class IndexRequest extends ReplicationRequest<IndexRequest> implements Do
         String sSource = "_na_";
         try {
             sSource = XContentHelper.convertToJson(source, false);
+            if (sSource.length() > 50) {
+                sSource = sSource.substring(0, 47) + "...";
+            }
         } catch (Exception e) {
             // ignore
         }

@@ -735,7 +735,8 @@ public abstract class TransportReplicationAction<Request extends ReplicationRequ
 
             int numberOfUnassignedOrShadowReplicas = 0;
             int numberOfPendingShardInstances = 0;
-            if (observer.observedState() != newState) {
+            // nocommit: double think this no master handling..
+            if (observer.observedState() != newState && newState.nodes().masterNodeId() != null) {
                 observer.reset(newState);
                 shardIt = shards(newState, internalRequest);
                 while ((shard = shardIt.nextOrNull()) != null) {
@@ -877,6 +878,7 @@ public abstract class TransportReplicationAction<Request extends ReplicationRequ
             // this case, we don't have to do the operation, and just let it failover
             final DiscoveryNode node = observer.observedState().nodes().get(nodeId);
             if (node == null) {
+                // nocommit: this failure is no good, we should wait for a cluster state which is consistent...
                 onReplicaFailure(shard, null, new IndexShardMissingException(shard.shardId()));
                 return;
             }
@@ -958,8 +960,9 @@ public abstract class TransportReplicationAction<Request extends ReplicationRequ
 
                             @Override
                             public void onFailure(Throwable e) {
-                                // nocommit - what here?
-                                logger.warn("failed to fail shard [{}] after failure with [{}]", e, shard, replicaRequest);
+                                logger.debug("unexpected failure while failing shard [{}] (request [{}])", e, shard, replicaRequest);
+                                // nocommit - thinks this carefully
+                                forceFinishAsFailed(e);
                             }
                         });
             }
