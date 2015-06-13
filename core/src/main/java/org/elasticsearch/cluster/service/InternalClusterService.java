@@ -477,6 +477,7 @@ public class InternalClusterService extends AbstractLifecycleComponent<ClusterSe
                         discoveryService.publish(clusterChangedEvent, ackListener);
                     } catch (Throwable t) {
                         updateTask.onFailure(source, t);
+                        return;
                     }
                 }
 
