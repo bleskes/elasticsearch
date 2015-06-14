@@ -22,6 +22,7 @@ import org.elasticsearch.common.inject.multibindings.MapBinder;
 import org.elasticsearch.watcher.actions.email.EmailAction;
 import org.elasticsearch.watcher.actions.email.EmailActionFactory;
 import org.elasticsearch.watcher.actions.email.service.EmailService;
+import org.elasticsearch.watcher.actions.email.service.HtmlSanitizer;
 import org.elasticsearch.watcher.actions.email.service.InternalEmailService;
 import org.elasticsearch.watcher.actions.index.IndexAction;
 import org.elasticsearch.watcher.actions.index.IndexActionFactory;
@@ -66,6 +67,7 @@ public class ActionModule extends AbstractModule {
         }
 
         bind(ActionRegistry.class).asEagerSingleton();
+        bind(HtmlSanitizer.class).asEagerSingleton();
         bind(EmailService.class).to(InternalEmailService.class).asEagerSingleton();
     }
 
