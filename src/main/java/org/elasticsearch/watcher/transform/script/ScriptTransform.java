@@ -86,6 +86,10 @@ public class ScriptTransform implements Transform {
             super(TYPE, payload);
         }
 
+        public Result(Exception e) {
+            super(TYPE, e);
+        }
+
         @Override
         protected XContentBuilder typeXContent(XContentBuilder builder, Params params) throws IOException {
             return builder;

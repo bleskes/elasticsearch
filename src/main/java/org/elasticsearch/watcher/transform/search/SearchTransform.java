@@ -18,6 +18,7 @@
 package org.elasticsearch.watcher.transform.search;
 
 import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
@@ -86,10 +87,15 @@ public class SearchTransform implements Transform {
 
     public static class Result extends Transform.Result {
 
-        private final SearchRequest request;
+        private final @Nullable SearchRequest request;
 
         public Result(SearchRequest request, Payload payload) {
             super(TYPE, payload);
+            this.request = request;
+        }
+
+        public Result(SearchRequest request, Exception e) {
+            super(TYPE, e);
             this.request = request;
         }
 
@@ -99,10 +105,13 @@ public class SearchTransform implements Transform {
 
         @Override
         protected XContentBuilder typeXContent(XContentBuilder builder, Params params) throws IOException {
-            builder.startObject(type);
-            builder.field(Field.REQUEST.getPreferredName());
-            WatcherUtils.writeSearchRequest(request, builder, params);
-            return builder.endObject();
+            if (request != null) {
+                builder.startObject(type);
+                builder.field(Field.REQUEST.getPreferredName());
+                WatcherUtils.writeSearchRequest(request, builder, params);
+                builder.endObject();
+            }
+            return builder;
         }
     }
 
