@@ -50,7 +50,7 @@ public class ScheduleRegistryTests extends ScheduleTestCase {
         registry = new ScheduleRegistry(parsers);
     }
 
-    @Test @Repeat(iterations = 20)
+    @Test
     public void testParser_Interval() throws Exception {
         IntervalSchedule interval = randomIntervalSchedule();
         XContentBuilder builder = jsonBuilder()
@@ -66,7 +66,7 @@ public class ScheduleRegistryTests extends ScheduleTestCase {
         assertThat((IntervalSchedule) schedule, is(interval));
     }
 
-    @Test @Repeat(iterations = 20)
+    @Test
     public void testParse_Cron() throws Exception {
         Object cron = randomBoolean() ?
                 Schedules.cron("* 0/5 * * * ?") :
@@ -84,7 +84,7 @@ public class ScheduleRegistryTests extends ScheduleTestCase {
         assertThat(schedule, is(cron));
     }
 
-    @Test @Repeat(iterations = 20)
+    @Test
     public void testParse_Hourly() throws Exception {
         HourlySchedule hourly = randomHourlySchedule();
         XContentBuilder builder = jsonBuilder()
@@ -100,7 +100,7 @@ public class ScheduleRegistryTests extends ScheduleTestCase {
         assertThat((HourlySchedule) schedule, equalTo(hourly));
     }
 
-    @Test @Repeat(iterations = 20)
+    @Test
     public void testParse_Daily() throws Exception {
         DailySchedule daily = randomDailySchedule();
         XContentBuilder builder = jsonBuilder()
@@ -116,7 +116,7 @@ public class ScheduleRegistryTests extends ScheduleTestCase {
         assertThat((DailySchedule) schedule, equalTo(daily));
     }
 
-    @Test @Repeat(iterations = 20)
+    @Test
     public void testParse_Weekly() throws Exception {
         WeeklySchedule weekly = randomWeeklySchedule();
         XContentBuilder builder = jsonBuilder()
@@ -132,7 +132,7 @@ public class ScheduleRegistryTests extends ScheduleTestCase {
         assertThat((WeeklySchedule) schedule, equalTo(weekly));
     }
 
-    @Test @Repeat(iterations = 20)
+    @Test
     public void testParse_Monthly() throws Exception {
         MonthlySchedule monthly = randomMonthlySchedule();
         XContentBuilder builder = jsonBuilder()

@@ -144,7 +144,7 @@ public class WatchAckTests extends AbstractWatcherIntegrationTests {
         assertThat(throttledCount, greaterThan(0L));
     }
 
-    @Test @Repeat(iterations = 5)
+    @Test
     public void testAck_AllActions() throws Exception {
         WatcherClient watcherClient = watcherClient();
         IndexResponse eventIndexResponse = indexTestDoc();
@@ -226,7 +226,6 @@ public class WatchAckTests extends AbstractWatcherIntegrationTests {
     }
 
     @Test
-    @Repeat(iterations = 2)
     public void testAck_WithRestart() throws Exception {
         WatcherClient watcherClient = watcherClient();
         indexTestDoc();

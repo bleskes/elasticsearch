@@ -43,7 +43,7 @@ public class MonthlyScheduleTests extends ScheduleTestCase {
         assertThat(crons, arrayContaining("0 0 0 1 * ?"));
     }
 
-    @Test @Repeat(iterations = 20)
+    @Test
     public void test_SingleTime() throws Exception {
         MonthTimes time = validMonthTime();
         MonthlySchedule schedule = new MonthlySchedule(time);
@@ -58,7 +58,7 @@ public class MonthlyScheduleTests extends ScheduleTestCase {
         }
     }
 
-    @Test @Repeat(iterations = 20)
+    @Test
     public void test_MultipleTimes() throws Exception {
         MonthTimes[] times = validMonthTimes();
         MonthlySchedule schedule = new MonthlySchedule(times);
@@ -79,7 +79,7 @@ public class MonthlyScheduleTests extends ScheduleTestCase {
         }
     }
 
-    @Test @Repeat(iterations = 20)
+    @Test
     public void testParser_Empty() throws Exception {
         XContentBuilder builder = jsonBuilder().startObject().endObject();
         BytesReference bytes = builder.bytes();
@@ -91,7 +91,7 @@ public class MonthlyScheduleTests extends ScheduleTestCase {
         assertThat(schedule.times()[0], is(new MonthTimes()));
     }
 
-    @Test @Repeat(iterations = 20)
+    @Test
     public void testParser_SingleTime() throws Exception {
         DayTimes time = validDayTime();
         Object day = randomDayOfMonth();
@@ -115,7 +115,7 @@ public class MonthlyScheduleTests extends ScheduleTestCase {
         assertThat(schedule.times()[0].times(), hasItemInArray(time));
     }
 
-    @Test(expected = ScheduleTriggerException.class) @Repeat(iterations = 20)
+    @Test(expected = ScheduleTriggerException.class)
     public void testParser_SingleTime_Invalid() throws Exception {
         HourAndMinute time = invalidDayTime();
         XContentBuilder builder = jsonBuilder()
@@ -132,7 +132,7 @@ public class MonthlyScheduleTests extends ScheduleTestCase {
         new MonthlySchedule.Parser().parse(parser);
     }
 
-    @Test @Repeat(iterations = 20)
+    @Test
     public void testParser_MultipleTimes() throws Exception {
         MonthTimes[] times = validMonthTimes();
         XContentBuilder builder = jsonBuilder().value(times);
@@ -147,7 +147,7 @@ public class MonthlyScheduleTests extends ScheduleTestCase {
         }
     }
 
-    @Test(expected = ScheduleTriggerException.class) @Repeat(iterations = 20)
+    @Test(expected = ScheduleTriggerException.class)
     public void testParser_MultipleTimes_Invalid() throws Exception {
         HourAndMinute[] times = invalidDayTimes();
         XContentBuilder builder = jsonBuilder()

@@ -67,7 +67,7 @@ import static org.hamcrest.Matchers.greaterThan;
  */
 public class ActionThrottleTests extends AbstractWatcherIntegrationTests {
 
-    @Test @Slow @Repeat(iterations = 10)
+    @Test @Slow
     public void testSingleActionAckThrottle() throws Exception {
         boolean useClientForAcking = randomBoolean();
 
@@ -107,7 +107,7 @@ public class ActionThrottleTests extends AbstractWatcherIntegrationTests {
         }
     }
 
-    @Test @Slow @Repeat(iterations = 10)
+    @Test @Slow
     public void testRandomMultiActionAckThrottle() throws Exception {
         boolean useClientForAcking = randomBoolean();
 
@@ -267,7 +267,7 @@ public class ActionThrottleTests extends AbstractWatcherIntegrationTests {
         }, 6, TimeUnit.SECONDS);
     }
 
-    @Test @Slow @Repeat(iterations = 20)
+    @Test @Slow
     public void testWatchThrottlePeriod() throws Exception {
         WatchSourceBuilder watchSourceBuilder = watchBuilder()
                 .trigger(schedule(interval("60m")))

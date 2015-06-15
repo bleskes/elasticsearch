@@ -63,7 +63,7 @@ public class TimeThrottleIntegrationTests extends AbstractWatcherIntegrationTest
 
 
     @Test
-    @Repeat(iterations = 10)
+
     public void testTimeThrottle() throws Exception {
         WatcherClient watcherClient = watcherClient();
         indexTestDoc();
@@ -138,7 +138,7 @@ public class TimeThrottleIntegrationTests extends AbstractWatcherIntegrationTest
         }
     }
 
-    @Test @Repeat(iterations = 10)
+    @Test
     public void testTimeThrottle_Defaults() throws Exception {
         WatcherClient watcherClient = watcherClient();
         indexTestDoc();

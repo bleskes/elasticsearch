@@ -49,7 +49,7 @@ public class XMustacheTests extends ElasticsearchTestCase {
         engine = new XMustacheScriptEngineService(Settings.EMPTY);
     }
 
-    @Test @Repeat(iterations = 10)
+    @Test
     public void testArrayAccess() throws Exception {
         String template = "{{data.0}} {{data.1}}";
         Object mustache = engine.compile(template);
@@ -66,7 +66,7 @@ public class XMustacheTests extends ElasticsearchTestCase {
         assertThat(bytes.toUtf8(), equalTo("foo bar"));
     }
 
-    @Test @Repeat(iterations = 10)
+    @Test
     public void testArrayInArrayAccess() throws Exception {
         String template = "{{data.0.0}} {{data.0.1}}";
         Object mustache = engine.compile(template);
@@ -84,7 +84,7 @@ public class XMustacheTests extends ElasticsearchTestCase {
         assertThat(bytes.toUtf8(), equalTo("foo bar"));
     }
 
-    @Test @Repeat(iterations = 10)
+    @Test
     public void testMapInArrayAccess() throws Exception {
         String template = "{{data.0.key}} {{data.1.key}}";
         Object mustache = engine.compile(template);
@@ -101,7 +101,7 @@ public class XMustacheTests extends ElasticsearchTestCase {
         assertThat(bytes.toUtf8(), equalTo("foo bar"));
     }
 
-    @Test @Repeat(iterations = 10)
+    @Test
     public void testEscaping() throws Exception {
         XContentType contentType = randomFrom(XContentType.values());
         if (rarely()) {

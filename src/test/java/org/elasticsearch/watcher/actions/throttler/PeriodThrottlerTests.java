@@ -40,7 +40,7 @@ import static org.mockito.Mockito.when;
  */
 public class PeriodThrottlerTests extends ElasticsearchTestCase {
 
-    @Test @Repeat(iterations = 10)
+    @Test
     public void testBelowPeriod_Successful() throws Exception {
         PeriodType periodType = randomFrom(PeriodType.millis(), PeriodType.seconds(), PeriodType.minutes());
         TimeValue period = TimeValue.timeValueSeconds(randomIntBetween(2, 5));
@@ -60,7 +60,7 @@ public class PeriodThrottlerTests extends ElasticsearchTestCase {
         assertThat(result.reason(), startsWith("throttling interval is set to [" + period.format(periodType) + "]"));
     }
 
-    @Test @Repeat(iterations = 10)
+    @Test
     public void testAbovePeriod() throws Exception {
         PeriodType periodType = randomFrom(PeriodType.millis(), PeriodType.seconds(), PeriodType.minutes());
         TimeValue period = TimeValue.timeValueSeconds(randomIntBetween(2, 5));
