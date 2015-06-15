@@ -97,7 +97,7 @@ public class TransportDeleteAction extends TransportReplicationAction<DeleteRequ
     }
 
     @Override
-    protected void resolveRequest(final ClusterState state, final InternalRequest request, final ActionListener<DeleteResponse> listener) {
+    protected void resolveRequest(final ClusterState state, final InternalPrimaryRequest request, final ActionListener<DeleteResponse> listener) {
         request.request().routing(state.metaData().resolveIndexRouting(request.request().routing(), request.request().index()));
         if (state.metaData().hasIndex(request.concreteIndex())) {
             // check if routing is required, if so, do a broadcast delete
@@ -157,7 +157,7 @@ public class TransportDeleteAction extends TransportReplicationAction<DeleteRequ
     }
 
     @Override
-    protected ShardIterator shards(ClusterState clusterState, InternalRequest request) {
+    protected ShardIterator shards(ClusterState clusterState, InternalPrimaryRequest request) {
         return clusterService.operationRouting()
                 .deleteShards(clusterService.state(), request.concreteIndex(), request.request().type(), request.request().id(), request.request().routing());
     }

@@ -24,6 +24,9 @@ import org.elasticsearch.action.ActionRequestValidationException;
 import org.elasticsearch.action.IndicesRequest;
 import org.elasticsearch.action.WriteConsistencyLevel;
 import org.elasticsearch.action.support.IndicesOptions;
+import org.elasticsearch.cluster.routing.MutableShardRouting;
+import org.elasticsearch.cluster.routing.ShardRouting;
+import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.unit.TimeValue;
@@ -49,6 +52,12 @@ public abstract class ReplicationRequest<T extends ReplicationRequest> extends A
     private boolean threadedOperation = true;
     private WriteConsistencyLevel consistencyLevel = WriteConsistencyLevel.DEFAULT;
     private volatile boolean canHaveDuplicates = false;
+
+
+    @Nullable
+    // the primary routing is set only when sending to replicas
+    // nocommit: can we find another home for this?
+    private ShardRouting primaryRouting;
 
     protected ReplicationRequest() {
 
@@ -161,6 +170,15 @@ public abstract class ReplicationRequest<T extends ReplicationRequest> extends A
         return (T) this;
     }
 
+    // package private
+    void setPrimaryRouting(ShardRouting primaryRouting) {
+        this.primaryRouting = primaryRouting;
+    }
+
+    ShardRouting getPrimaryRouting() {
+        return primaryRouting;
+    }
+
     @Override
     public ActionRequestValidationException validate() {
         ActionRequestValidationException validationException = null;
@@ -180,6 +198,11 @@ public abstract class ReplicationRequest<T extends ReplicationRequest> extends A
         timeout = TimeValue.readTimeValue(in);
         index = in.readString();
         canHaveDuplicates = in.readBoolean();
+        if (in.readBoolean()) {
+            primaryRouting = MutableShardRouting.readShardRoutingEntry(in);
+        } else {
+            primaryRouting = null;
+        }
         // no need to serialize threaded* parameters, since they only matter locally
     }
 
@@ -191,5 +214,6 @@ public abstract class ReplicationRequest<T extends ReplicationRequest> extends A
         timeout.writeTo(out);
         out.writeString(index);
         out.writeBoolean(canHaveDuplicates);
+        out.writeOptionalStreamable(primaryRouting);
     }
 }

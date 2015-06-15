@@ -449,14 +449,14 @@ public class ShardReplicationTests extends ElasticsearchTestCase {
 
         logger.debug("expecting [{}] assigned replicas, [{}] total shards. using state: \n{}", assignedReplicas, totalShards, clusterService.state().prettyPrint());
 
-        final TransportReplicationAction<Request, Request, Response>.InternalRequest internalRequest = action.new InternalRequest(request);
-        internalRequest.concreteIndex(shardId.index().name());
+        final TransportReplicationAction.InternalPrimaryRequest primaryRequest = action.new InternalPrimaryRequest(request);
+        primaryRequest.concreteIndex(shardId.index().name());
         Releasable reference = getOrCreateIndexShardOperationsCounter();
         assertIndexShardCounter(2);
         TransportReplicationAction<Request, Request, Response>.ReplicationPhase replicationPhase =
                 action.new ReplicationPhase(shardIt, request,
                         new Response(), new ClusterStateObserver(clusterService, logger),
-                        primaryShard, internalRequest, listener, reference);
+                        primaryShard, primaryRequest, listener, reference);
 
         assertThat(replicationPhase.totalShards(), equalTo(totalShards));
         assertThat(replicationPhase.pending(), equalTo(assignedReplicas));
@@ -729,7 +729,7 @@ public class ShardReplicationTests extends ElasticsearchTestCase {
         }
 
         @Override
-        protected ShardIterator shards(ClusterState clusterState, InternalRequest request) {
+        protected ShardIterator shards(ClusterState clusterState, InternalPrimaryRequest request) {
             return clusterState.getRoutingTable().index(request.concreteIndex()).shard(request.request().shardId).shardsIt();
         }
 
