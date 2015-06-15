@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -40,7 +40,7 @@ import com.prelert.job.exceptions.UnknownJobException;
 /**
  * Tests the tail file functions in {@link com.prelert.job.logs.JobLogs}
  */
-public class LogTailTest 
+public class LogTailTest
 {
 	public static final String [] LOG_CONTENTS = new String [] {
 			"2014-02-03 16:47:24,665 GMT DEBUG [3506] CLogger.cc@385 Logger re-initialised using properties file /Source/prelert_home/config/log4cxx.properties\n"
@@ -66,7 +66,7 @@ public class LogTailTest
 		};
 
 	@Test
-	public void testTailFile() 
+	public void testTailFile()
 	throws IOException, UnknownJobException
 	{
 		// write the log to temp file
@@ -74,71 +74,97 @@ public class LogTailTest
 		FileWriter fw = new FileWriter(tmpLogFile);
 		for (String ln : LOG_CONTENTS)
 		{
-			fw.append(ln);			
+			fw.append(ln);
 		}
 		fw.close();
-		
-		JobLogs jobLogs = new JobLogs(); 
-		String lastTenLines = jobLogs.tail(tmpLogFile, "SomeTestJob", 10, 
+
+		JobLogs jobLogs = new JobLogs();
+		String lastTenLines = jobLogs.tail(tmpLogFile, "SomeTestJob", 10,
 				JobLogs.EXPECTED_LINE_LENGTH);
-		
+
 		// get the last 10 lines
 		String [] lines = lastTenLines.split("\n");
 		assertEquals(lines.length, 10);
 		verifyLinesEqual(LOG_CONTENTS.length - lines.length, lines.length, lines);
-		
+
 		// ask for more lines than will be returned
-		String allLines = jobLogs.tail(tmpLogFile, "SomeTestJob", 100, 
+		String allLines = jobLogs.tail(tmpLogFile, "SomeTestJob", 100,
 				JobLogs.EXPECTED_LINE_LENGTH);
-		
+
 		lines = allLines.split("\n");
-		assertEquals(lines.length, LOG_CONTENTS.length);		
+		assertEquals(lines.length, LOG_CONTENTS.length);
 		verifyLinesEqual(LOG_CONTENTS.length - lines.length, lines.length, lines);
-		
+
 		// use a small expected line length so it has to jump back further
 		// into the file after the initial starting pos guess is wrong.
 		String last12Lines = jobLogs.tail(tmpLogFile, "SomeTestJob", 12, 100);
-		
+
 		lines = last12Lines.split("\n");
-		assertEquals(lines.length, 12);	
+		assertEquals(lines.length, 12);
 		verifyLinesEqual(LOG_CONTENTS.length - lines.length, lines.length, lines);
-		
+
 		// use a small expected line length and ask for more lines than will be returned
 		allLines = jobLogs.tail(tmpLogFile, "SomeTestJob", 100, 20);
-		
-		lines = allLines.split("\n");		
-		assertEquals(lines.length, LOG_CONTENTS.length);		
+
+		lines = allLines.split("\n");
+		assertEquals(lines.length, LOG_CONTENTS.length);
 		verifyLinesEqual(LOG_CONTENTS.length - lines.length, lines.length, lines);
-		
+
 		// Get last 10 lines with a tiny expected line length
-		lastTenLines = jobLogs.tail(tmpLogFile, "SomeTestJob", 10, 20);		
-		lines = lastTenLines.split("\n");		
-		assertEquals(lines.length, 10);			
+		lastTenLines = jobLogs.tail(tmpLogFile, "SomeTestJob", 10, 20);
+		lines = lastTenLines.split("\n");
+		assertEquals(lines.length, 10);
 		verifyLinesEqual(LOG_CONTENTS.length - lines.length, lines.length, lines);
-			
+
 		// Get last 5 lines with a tiny expected line length
-		String lastFiveLines = jobLogs.tail(tmpLogFile, "SomeTestJob", 5, 20);		
-		lines = lastFiveLines.split("\n");		
-		assertEquals(lines.length, 5);				
+		String lastFiveLines = jobLogs.tail(tmpLogFile, "SomeTestJob", 5, 20);
+		lines = lastFiveLines.split("\n");
+		assertEquals(lines.length, 5);
 		verifyLinesEqual(LOG_CONTENTS.length - lines.length, lines.length, lines);
-		
-		
+
+
 		// Get last 5 lines with an overly large expected line length
-		lastFiveLines = jobLogs.tail(tmpLogFile, "SomeTestJob", 5, 10000);		
-		lines = lastFiveLines.split("\n");		
-		assertEquals(lines.length, 5);		
+		lastFiveLines = jobLogs.tail(tmpLogFile, "SomeTestJob", 5, 10000);
+		lines = lastFiveLines.split("\n");
+		assertEquals(lines.length, 5);
 		verifyLinesEqual(LOG_CONTENTS.length - lines.length, lines.length, lines);
 
 		// Get all lines with an overly large expected line length
-		allLines = jobLogs.tail(tmpLogFile, "SomeTestJob", 100, 10000);		
-		lines = allLines.split("\n");		
-		assertEquals(lines.length, LOG_CONTENTS.length);		
+		allLines = jobLogs.tail(tmpLogFile, "SomeTestJob", 100, 10000);
+		lines = allLines.split("\n");
+		assertEquals(lines.length, LOG_CONTENTS.length);
 		verifyLinesEqual(LOG_CONTENTS.length - lines.length, lines.length, lines);
 
 		// clean up
 		tmpLogFile.delete();
 	}
-	
+
+	@Test
+	public void testTailWithVeryLargeNumberOfLines()
+	throws IOException, UnknownJobException
+	{
+        // write the log to temp file
+        File tmpLogFile = File.createTempFile("tmp", ".log");
+        FileWriter fw = new FileWriter(tmpLogFile);
+        for (String ln : LOG_CONTENTS)
+        {
+            fw.append(ln);
+        }
+        fw.close();
+
+        JobLogs jobLogs = new JobLogs();
+        String allLines = jobLogs.tail(tmpLogFile, "SomeTestJob", 500000,
+                JobLogs.EXPECTED_LINE_LENGTH);
+
+        String lines [] = allLines.split("\n");
+        assertEquals(lines.length, LOG_CONTENTS.length);
+        verifyLinesEqual(LOG_CONTENTS.length - lines.length, lines.length, lines);
+
+
+        // clean up
+        tmpLogFile.delete();
+	}
+
 	@Test
 	public void testReadEntireFile() throws IOException
 	{
@@ -147,21 +173,21 @@ public class LogTailTest
 		FileWriter fw = new FileWriter(tmpLogFile);
 		for (String ln : LOG_CONTENTS)
 		{
-			fw.append(ln);			
+			fw.append(ln);
 		}
 		fw.close();
-		
-		
-		JobLogs jobLogs = new JobLogs(); 
-		String allLines = jobLogs.file(tmpLogFile.toPath());		
-		String [] lines = allLines.split("\n");		
-		assertEquals(lines.length, LOG_CONTENTS.length);		
+
+
+		JobLogs jobLogs = new JobLogs();
+		String allLines = jobLogs.file(tmpLogFile.toPath());
+		String [] lines = allLines.split("\n");
+		assertEquals(lines.length, LOG_CONTENTS.length);
 		verifyLinesEqual(LOG_CONTENTS.length - lines.length, lines.length, lines);
-		
+
 		// clean up
-		tmpLogFile.delete();		
+		tmpLogFile.delete();
 	}
-	
+
 	private void verifyLinesEqual(int offset, int count, String [] lines)
 	{
 		for (int i=0; i<count; i++)
