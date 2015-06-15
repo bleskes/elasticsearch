@@ -19,6 +19,7 @@ package org.elasticsearch.watcher.support.secret;
 
 import org.apache.lucene.util.BytesRef;
 import org.elasticsearch.ElasticsearchException;
+import org.elasticsearch.common.xcontent.XContentLocation;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.XContentType;
 
@@ -123,16 +124,6 @@ public class SensitiveXContentParser implements XContentParser {
     @Override
     public BytesRef utf8Bytes() throws IOException {
         return parser.utf8Bytes();
-    }
-
-    @Override @Deprecated
-    public BytesRef bytesOrNull() throws IOException {
-        return parser.bytesOrNull();
-    }
-
-    @Override @Deprecated
-    public BytesRef bytes() throws IOException {
-        return parser.bytes();
     }
 
     @Override
@@ -243,6 +234,11 @@ public class SensitiveXContentParser implements XContentParser {
     @Override
     public byte[] binaryValue() throws IOException {
         return parser.binaryValue();
+    }
+
+    @Override
+    public XContentLocation getTokenLocation() {
+        return parser.getTokenLocation();
     }
 
     @Override

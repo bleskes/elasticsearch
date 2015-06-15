@@ -17,7 +17,7 @@
 
 package org.elasticsearch.watcher.trigger.schedule.engine;
 
-import org.elasticsearch.common.settings.ImmutableSettings;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.watcher.support.clock.SystemClock;
 import org.elasticsearch.watcher.trigger.TriggerEngine;
 import org.elasticsearch.watcher.trigger.schedule.ScheduleRegistry;
@@ -30,6 +30,6 @@ public class TickerScheduleEngineTests extends BaseTriggerEngineTests {
 
     @Override
     protected TriggerEngine createEngine() {
-        return new TickerScheduleTriggerEngine(ImmutableSettings.EMPTY, mock(ScheduleRegistry.class), SystemClock.INSTANCE);
+        return new TickerScheduleTriggerEngine(Settings.EMPTY, mock(ScheduleRegistry.class), SystemClock.INSTANCE);
     }
 }

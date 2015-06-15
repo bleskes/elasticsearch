@@ -18,19 +18,18 @@
 package org.elasticsearch.watcher.condition.compare;
 
 import org.elasticsearch.common.ParseField;
-import org.elasticsearch.common.joda.time.DateTime;
+import org.joda.time.DateTime;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.watcher.condition.Condition;
 import org.elasticsearch.watcher.support.WatcherDateTimeUtils;
 import org.elasticsearch.watcher.support.xcontent.WatcherXContentUtils;
+import org.joda.time.DateTimeZone;
 
 import java.io.IOException;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-
-import static org.elasticsearch.common.joda.time.DateTimeZone.UTC;
 
 /**
  *
@@ -266,7 +265,7 @@ public class CompareCondition implements Condition {
                         return null;
                     }
                 } else if (v1 instanceof Number){
-                    v1 = new DateTime(((Number) v1).longValue(), UTC);
+                    v1 = new DateTime(((Number) v1).longValue(), DateTimeZone.UTC);
                 } else {
                     // cannot convert to date...
                     return null;

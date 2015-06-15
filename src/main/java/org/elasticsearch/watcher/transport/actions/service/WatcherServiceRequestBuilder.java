@@ -19,15 +19,16 @@ package org.elasticsearch.watcher.transport.actions.service;
 
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.support.master.MasterNodeOperationRequestBuilder;
+import org.elasticsearch.client.ElasticsearchClient;
 import org.elasticsearch.watcher.client.WatcherClient;
 import org.elasticsearch.client.Client;
 
 /**
  */
-public class WatcherServiceRequestBuilder extends MasterNodeOperationRequestBuilder<WatcherServiceRequest, WatcherServiceResponse, WatcherServiceRequestBuilder, Client> {
+public class WatcherServiceRequestBuilder extends MasterNodeOperationRequestBuilder<WatcherServiceRequest, WatcherServiceResponse, WatcherServiceRequestBuilder> {
 
-    public WatcherServiceRequestBuilder(Client client) {
-        super(client, new WatcherServiceRequest());
+    public WatcherServiceRequestBuilder(ElasticsearchClient client) {
+        super(client, WatcherServiceAction.INSTANCE, new WatcherServiceRequest());
     }
 
     /**
@@ -52,10 +53,5 @@ public class WatcherServiceRequestBuilder extends MasterNodeOperationRequestBuil
     public WatcherServiceRequestBuilder restart() {
         request.restart();
         return this;
-    }
-
-    @Override
-    protected void doExecute(ActionListener<WatcherServiceResponse> listener) {
-        new WatcherClient(client).watcherService(request, listener);
     }
 }

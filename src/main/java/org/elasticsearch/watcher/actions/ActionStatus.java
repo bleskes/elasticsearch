@@ -21,16 +21,16 @@ import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.common.joda.time.DateTime;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.watcher.WatcherException;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 
 import java.io.IOException;
 import java.util.Locale;
 
-import static org.elasticsearch.common.joda.time.DateTimeZone.UTC;
 import static org.elasticsearch.watcher.support.WatcherDateTimeUtils.dateTimeFormatter;
 
 /**
@@ -231,7 +231,7 @@ public class ActionStatus implements ToXContent {
         private final State state;
 
         public AckStatus(DateTime timestamp, State state) {
-            this.timestamp = timestamp.toDateTime(UTC);
+            this.timestamp = timestamp.toDateTime(DateTimeZone.UTC);
             this.state = state;
         }
 
@@ -301,7 +301,7 @@ public class ActionStatus implements ToXContent {
         }
 
         static AckStatus readFrom(StreamInput in) throws IOException {
-            DateTime timestamp = new DateTime(in.readLong(), UTC);
+            DateTime timestamp = new DateTime(in.readLong(), DateTimeZone.UTC);
             State state = State.resolve(in.readByte());
             return new AckStatus(timestamp, state);
         }
@@ -322,7 +322,7 @@ public class ActionStatus implements ToXContent {
         private final String reason;
 
         private Execution(DateTime timestamp, boolean successful, String reason) {
-            this.timestamp = timestamp.toDateTime(UTC);
+            this.timestamp = timestamp.toDateTime(DateTimeZone.UTC);
             this.successful = successful;
             this.reason = reason;
         }
@@ -415,12 +415,12 @@ public class ActionStatus implements ToXContent {
         }
 
         public static Execution readFrom(StreamInput in) throws IOException {
-            DateTime timestamp = new DateTime(in.readLong(), UTC);
+            DateTime timestamp = new DateTime(in.readLong(), DateTimeZone.UTC);
             boolean successful = in.readBoolean();
             if (successful) {
                 return successful(timestamp);
             }
-            return failure(timestamp, in.readSharedString());
+            return failure(timestamp, in.readString());
         }
     }
 
@@ -430,7 +430,7 @@ public class ActionStatus implements ToXContent {
         private final String reason;
 
         public Throttle(DateTime timestamp, String reason) {
-            this.timestamp = timestamp.toDateTime(UTC);
+            this.timestamp = timestamp.toDateTime(DateTimeZone.UTC);
             this.reason = reason;
         }
 
@@ -500,7 +500,7 @@ public class ActionStatus implements ToXContent {
         }
 
         static Throttle readFrom(StreamInput in) throws IOException {
-            DateTime timestamp = new DateTime(in.readLong(), UTC);
+            DateTime timestamp = new DateTime(in.readLong(), DateTimeZone.UTC);
             return new Throttle(timestamp, in.readString());
         }
     }

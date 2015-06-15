@@ -19,7 +19,7 @@ package org.elasticsearch.watcher.transport.actions.service;
 
 import org.elasticsearch.action.ActionRequestValidationException;
 import org.elasticsearch.action.ValidateActions;
-import org.elasticsearch.action.support.master.MasterNodeOperationRequest;
+import org.elasticsearch.action.support.master.MasterNodeRequest;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 
@@ -28,7 +28,7 @@ import java.util.Locale;
 
 /**
  */
-public class WatcherServiceRequest extends MasterNodeOperationRequest<WatcherServiceRequest> {
+public class WatcherServiceRequest extends MasterNodeRequest<WatcherServiceRequest> {
 
     enum Command { START, STOP, RESTART }
 

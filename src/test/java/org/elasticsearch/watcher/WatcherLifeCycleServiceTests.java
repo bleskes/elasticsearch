@@ -17,14 +17,14 @@
 
 package org.elasticsearch.watcher;
 
+import com.google.common.util.concurrent.MoreExecutors;
 import org.elasticsearch.cluster.ClusterChangedEvent;
 import org.elasticsearch.cluster.ClusterName;
 import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.block.ClusterBlocks;
 import org.elasticsearch.cluster.node.DiscoveryNodes;
-import org.elasticsearch.common.settings.ImmutableSettings;
-import org.elasticsearch.common.util.concurrent.MoreExecutors;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.gateway.GatewayService;
 import org.elasticsearch.test.ElasticsearchTestCase;
 import org.elasticsearch.threadpool.ThreadPool;
@@ -47,7 +47,7 @@ public class WatcherLifeCycleServiceTests extends ElasticsearchTestCase {
         when(threadPool.executor(anyString())).thenReturn(MoreExecutors.newDirectExecutorService());
         watcherService = mock(WatcherService.class);
         ClusterService clusterService = mock(ClusterService.class);
-        lifeCycleService = new WatcherLifeCycleService(ImmutableSettings.EMPTY, clusterService, threadPool, watcherService);
+        lifeCycleService = new WatcherLifeCycleService(Settings.EMPTY, clusterService, threadPool, watcherService);
     }
 
     @Test

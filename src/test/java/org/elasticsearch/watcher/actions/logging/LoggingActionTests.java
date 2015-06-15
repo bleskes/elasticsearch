@@ -18,10 +18,9 @@
 package org.elasticsearch.watcher.actions.logging;
 
 import com.carrotsearch.randomizedtesting.annotations.Repeat;
-import org.elasticsearch.common.collect.ImmutableMap;
-import org.elasticsearch.common.joda.time.DateTime;
+import com.google.common.collect.ImmutableMap;
+import org.joda.time.DateTime;
 import org.elasticsearch.common.logging.ESLogger;
-import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
@@ -41,7 +40,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.Map;
 
-import static org.elasticsearch.common.joda.time.DateTimeZone.UTC;
+import static org.joda.time.DateTimeZone.UTC;
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 import static org.elasticsearch.watcher.actions.ActionBuilders.loggingAction;
 import static org.hamcrest.CoreMatchers.instanceOf;
@@ -106,7 +105,7 @@ public class LoggingActionTests extends ElasticsearchTestCase {
 
     @Test @Repeat(iterations = 10)
     public void testParser() throws Exception {
-        Settings settings = ImmutableSettings.EMPTY;
+        Settings settings = Settings.EMPTY;
         LoggingActionFactory parser = new LoggingActionFactory(settings, engine);
 
         String text = randomAsciiOfLength(10);
@@ -141,7 +140,7 @@ public class LoggingActionTests extends ElasticsearchTestCase {
 
     @Test @Repeat(iterations = 10)
     public void testParser_SelfGenerated() throws Exception {
-        Settings settings = ImmutableSettings.EMPTY;
+        Settings settings = Settings.EMPTY;
         LoggingActionFactory parser = new LoggingActionFactory(settings, engine);
 
         String text = randomAsciiOfLength(10);
@@ -162,7 +161,7 @@ public class LoggingActionTests extends ElasticsearchTestCase {
 
     @Test @Repeat(iterations = 10)
     public void testParser_Builder() throws Exception {
-        Settings settings = ImmutableSettings.EMPTY;
+        Settings settings = Settings.EMPTY;
         LoggingActionFactory parser = new LoggingActionFactory(settings, engine);
 
         String text = randomAsciiOfLength(10);
@@ -189,7 +188,7 @@ public class LoggingActionTests extends ElasticsearchTestCase {
 
     @Test(expected = ActionException.class)
     public void testParser_Failure() throws Exception {
-        Settings settings = ImmutableSettings.EMPTY;
+        Settings settings = Settings.EMPTY;
         LoggingActionFactory parser = new LoggingActionFactory(settings, engine);
 
         XContentBuilder builder = jsonBuilder()

@@ -23,6 +23,7 @@ import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.compress.CompressedStreamInput;
 import org.elasticsearch.common.compress.Compressor;
 import org.elasticsearch.common.compress.CompressorFactory;
+import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.XContentType;
@@ -45,9 +46,8 @@ public class WatcherXContentUtils {
             XContentType contentType;
             Compressor compressor = CompressorFactory.compressor(bytes);
             if (compressor != null) {
-                CompressedStreamInput compressedStreamInput = compressor.streamInput(bytes.streamInput());
+                StreamInput compressedStreamInput = compressor.streamInput(bytes.streamInput());
                 contentType = XContentFactory.xContentType(compressedStreamInput);
-                compressedStreamInput.resetToBufferStart();
                 parser = XContentFactory.xContent(contentType).createParser(compressedStreamInput);
             } else {
                 contentType = XContentFactory.xContentType(bytes);

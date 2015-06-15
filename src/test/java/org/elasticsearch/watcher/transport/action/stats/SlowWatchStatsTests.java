@@ -18,8 +18,8 @@
 package org.elasticsearch.watcher.transport.action.stats;
 
 import org.apache.lucene.util.LuceneTestCase;
-import org.elasticsearch.common.joda.time.DateTime;
-import org.elasticsearch.common.settings.ImmutableSettings;
+import org.joda.time.DateTime;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.concurrent.EsExecutors;
 import org.elasticsearch.test.ElasticsearchIntegrationTest;
@@ -54,7 +54,7 @@ public class SlowWatchStatsTests extends AbstractWatcherIntegrationTests {
 
     @Override
     protected Settings nodeSettings(int nodeOrdinal) {
-        return ImmutableSettings.builder()
+        return Settings.builder()
                 .put(super.nodeSettings(nodeOrdinal))
                 // So it is predictable how many slow watches we need to add to accumulate pending watches
                 .put(EsExecutors.PROCESSORS, "1")

@@ -17,7 +17,7 @@
 
 package org.elasticsearch.watcher.support;
 
-import org.elasticsearch.common.settings.ImmutableSettings;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.settings.Settings;
 
 /**
@@ -30,7 +30,7 @@ public abstract class ThreadPoolSettingsBuilder<B extends ThreadPoolSettingsBuil
     }
 
     protected final String name;
-    private final ImmutableSettings.Builder builder = ImmutableSettings.builder();
+    private final Settings.Builder builder = Settings.builder();
 
     protected ThreadPoolSettingsBuilder(String name, String type) {
         this.name = name;

@@ -20,9 +20,9 @@ package org.elasticsearch.watcher.actions.index;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
-import org.elasticsearch.common.joda.time.DateTime;
+import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
+import org.joda.time.DateTime;
 import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogram;
 import org.elasticsearch.search.sort.SortOrder;
 import org.elasticsearch.watcher.history.HistoryStore;
 import org.elasticsearch.watcher.support.WatcherDateTimeUtils;
@@ -30,9 +30,9 @@ import org.elasticsearch.watcher.test.AbstractWatcherIntegrationTests;
 import org.elasticsearch.watcher.transport.actions.execute.ExecuteWatchResponse;
 import org.elasticsearch.watcher.transport.actions.put.PutWatchResponse;
 import org.elasticsearch.watcher.trigger.schedule.ScheduleTriggerEvent;
+import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
-import static org.elasticsearch.common.joda.time.DateTimeZone.UTC;
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 import static org.elasticsearch.index.query.QueryBuilders.matchQuery;
 import static org.elasticsearch.search.aggregations.AggregationBuilders.dateHistogram;
@@ -61,7 +61,7 @@ public class IndexActionIntegrationTests extends AbstractWatcherIntegrationTests
 
         assertThat(putWatchResponse.isCreated(), is(true));
 
-        DateTime now = timeWarped() ? timeWarp().clock().now(UTC) : DateTime.now(UTC);
+        DateTime now = timeWarped() ? timeWarp().clock().now(DateTimeZone.UTC) : DateTime.now(DateTimeZone.UTC);
 
         ExecuteWatchResponse executeWatchResponse = watcherClient().prepareExecuteWatch("_id")
                 .setTriggerEvent(new ScheduleTriggerEvent(now, now))
@@ -98,7 +98,7 @@ public class IndexActionIntegrationTests extends AbstractWatcherIntegrationTests
 
         assertThat(putWatchResponse.isCreated(), is(true));
 
-        DateTime now = timeWarped() ? timeWarp().clock().now(UTC) : DateTime.now(UTC);
+        DateTime now = timeWarped() ? timeWarp().clock().now(DateTimeZone.UTC) : DateTime.now(DateTimeZone.UTC);
 
         ExecuteWatchResponse executeWatchResponse = watcherClient().prepareExecuteWatch("_id")
                 .setTriggerEvent(new ScheduleTriggerEvent(now, now))
@@ -134,7 +134,7 @@ public class IndexActionIntegrationTests extends AbstractWatcherIntegrationTests
 
         assertThat(putWatchResponse.isCreated(), is(true));
 
-        DateTime now = timeWarped() ? timeWarp().clock().now(UTC) : DateTime.now(UTC);
+        DateTime now = timeWarped() ? timeWarp().clock().now(DateTimeZone.UTC) : DateTime.now(DateTimeZone.UTC);
 
         ExecuteWatchResponse executeWatchResponse = watcherClient().prepareExecuteWatch("_id")
                 .setTriggerEvent(new ScheduleTriggerEvent(now, now))
@@ -155,7 +155,7 @@ public class IndexActionIntegrationTests extends AbstractWatcherIntegrationTests
 
     @Test
     public void testIndexAggsBucketsAsDocuments() throws Exception {
-        DateTime now = timeWarped() ? timeWarp().clock().now(UTC) : DateTime.now(UTC);
+        DateTime now = timeWarped() ? timeWarp().clock().now(DateTimeZone.UTC) : DateTime.now(DateTimeZone.UTC);
         long bucketCount = (long) randomIntBetween(2, 5);
         for (int i = 0; i < bucketCount; i++) {
             index("idx", "type", jsonBuilder().startObject()
@@ -174,7 +174,7 @@ public class IndexActionIntegrationTests extends AbstractWatcherIntegrationTests
                         .source(searchSource()
                                 .aggregation(dateHistogram("trend")
                                         .field("timestamp")
-                                        .interval(DateHistogram.Interval.DAY)))))
+                                        .interval(DateHistogramInterval.DAY)))))
                 .addAction("index-buckets",
 
                         // this transform takes the bucket list and assigns it to `_doc`

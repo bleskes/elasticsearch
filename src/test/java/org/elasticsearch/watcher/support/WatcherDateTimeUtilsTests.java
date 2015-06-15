@@ -18,7 +18,7 @@
 package org.elasticsearch.watcher.support;
 
 import com.carrotsearch.randomizedtesting.annotations.Repeat;
-import org.elasticsearch.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.test.ElasticsearchTestCase;
@@ -48,7 +48,7 @@ public class WatcherDateTimeUtilsTests extends ElasticsearchTestCase {
         parser.nextToken(); // field name
         parser.nextToken(); // value
 
-        TimeValue parsed = WatcherDateTimeUtils.parseTimeValue(parser, null);
+        TimeValue parsed = WatcherDateTimeUtils.parseTimeValue(parser, null, "test");
         assertThat(parsed, notNullValue());
         assertThat(parsed.millis(), is(value.millis()));
     }
@@ -62,7 +62,7 @@ public class WatcherDateTimeUtilsTests extends ElasticsearchTestCase {
         parser.nextToken(); // field name
         parser.nextToken(); // value
 
-        WatcherDateTimeUtils.parseTimeValue(parser, null);
+        WatcherDateTimeUtils.parseTimeValue(parser, null, "test");
     }
 
     @Test @Repeat(iterations = 10)
@@ -82,7 +82,7 @@ public class WatcherDateTimeUtilsTests extends ElasticsearchTestCase {
         parser.nextToken(); // field name
         parser.nextToken(); // value
 
-        TimeValue parsed = WatcherDateTimeUtils.parseTimeValue(parser, null);
+        TimeValue parsed = WatcherDateTimeUtils.parseTimeValue(parser, null, "test");
         assertThat(parsed, notNullValue());
         assertThat(parsed.millis(), is(values.get(key).millis()));
     }
@@ -104,7 +104,7 @@ public class WatcherDateTimeUtilsTests extends ElasticsearchTestCase {
         parser.nextToken(); // field name
         parser.nextToken(); // value
 
-        WatcherDateTimeUtils.parseTimeValue(parser, null);
+        WatcherDateTimeUtils.parseTimeValue(parser, null, "test");
     }
 
     @Test
@@ -114,7 +114,7 @@ public class WatcherDateTimeUtilsTests extends ElasticsearchTestCase {
         parser.nextToken(); // field name
         parser.nextToken(); // value
 
-        TimeValue parsed = WatcherDateTimeUtils.parseTimeValue(parser, null);
+        TimeValue parsed = WatcherDateTimeUtils.parseTimeValue(parser, null, "test");
         assertThat(parsed, nullValue());
     }
 
@@ -127,7 +127,7 @@ public class WatcherDateTimeUtilsTests extends ElasticsearchTestCase {
 
         TimeValue defaultValue = new TimeValue(randomInt(100), randomFrom(TimeUnit.values()));
 
-        TimeValue parsed = WatcherDateTimeUtils.parseTimeValue(parser, defaultValue);
+        TimeValue parsed = WatcherDateTimeUtils.parseTimeValue(parser, defaultValue, "test");
         assertThat(parsed, notNullValue());
         assertThat(parsed, sameInstance(defaultValue));
     }
