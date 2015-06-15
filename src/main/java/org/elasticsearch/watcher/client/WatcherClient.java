@@ -58,7 +58,7 @@ public class WatcherClient {
     private final ElasticsearchClient client;
 
     @Inject
-    public WatcherClient(ElasticsearchClient client) {
+    public WatcherClient(Client client) {
         this.client = client;
     }
 
