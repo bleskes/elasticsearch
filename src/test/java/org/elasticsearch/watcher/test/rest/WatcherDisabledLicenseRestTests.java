@@ -32,6 +32,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 
 /**
@@ -39,19 +40,6 @@ import static org.hamcrest.Matchers.is;
 public class WatcherDisabledLicenseRestTests extends WatcherRestTests {
 
     @Override
-    protected Settings nodeSettings(int nodeOrdinal) {
-        Settings.Builder builder = Settings.builder()
-                .put(super.nodeSettings(nodeOrdinal))
-                .put("scroll.size", randomIntBetween(1, 100))
-                .put("plugin.types",
-                        WatcherPlugin.class.getName() + "," +
-                                (shieldEnabled ? ShieldPlugin.class.getName() + "," : "") +
-                                licensePluginClass().getName())
-                .put(PluginsService.LOAD_PLUGIN_FROM_CLASSPATH, false)
-                .put(ShieldSettings.settings(shieldEnabled));
-        return builder.build();
-    }
-
     protected Class<? extends Plugin> licensePluginClass() {
         return LicenseIntegrationTests.MockLicensePlugin.class;
     }
@@ -71,8 +59,13 @@ public class WatcherDisabledLicenseRestTests extends WatcherRestTests {
                 //This was a test testing the "hijacked" methods
                 return;
             }
-            assertThat(ae.getMessage().contains("401 Unauthorized"), is(true));
-            assertThat(ae.getMessage().contains(LicenseExpiredException.class.getSimpleName()), is(true));
+            if (shieldEnabled) {
+                assertThat(ae.getMessage(), containsString("returned [403 Forbidden]"));
+                assertThat(ae.getMessage(), containsString("is unauthorized for user [admin]"));
+            } else {
+                assertThat(ae.getMessage(), containsString("unauthorized"));
+                assertThat(ae.getMessage(), containsString(LicenseExpiredException.class.getSimpleName()));
+            }
         }
     }
 

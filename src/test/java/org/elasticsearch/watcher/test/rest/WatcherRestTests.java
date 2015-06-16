@@ -20,9 +20,11 @@ package org.elasticsearch.watcher.test.rest;
 import com.carrotsearch.randomizedtesting.annotations.Name;
 import com.carrotsearch.randomizedtesting.annotations.ParametersFactory;
 import org.elasticsearch.client.support.Headers;
+import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.license.plugin.LicensePlugin;
 import org.elasticsearch.node.Node;
+import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.plugins.PluginsService;
 import org.elasticsearch.shield.ShieldPlugin;
 import org.elasticsearch.shield.authc.esusers.ESUsersRealm;
@@ -34,6 +36,7 @@ import org.elasticsearch.test.rest.ElasticsearchRestTestCase;
 import org.elasticsearch.test.rest.RestTestCandidate;
 import org.elasticsearch.test.rest.parser.RestTestParseException;
 import org.elasticsearch.watcher.WatcherPlugin;
+import org.elasticsearch.watcher.license.LicenseIntegrationTests;
 import org.elasticsearch.watcher.test.AbstractWatcherIntegrationTests;
 
 import java.io.IOException;
@@ -49,7 +52,7 @@ import static org.elasticsearch.test.ElasticsearchIntegrationTest.Scope.SUITE;
 @TestLogging("_root:DEBUG")
 public class WatcherRestTests extends ElasticsearchRestTestCase {
 
-    final boolean shieldEnabled = randomBoolean();
+    final boolean shieldEnabled = enableShield();
 
     public WatcherRestTests(@Name("yaml") RestTestCandidate testCandidate) {
         super(testCandidate);
@@ -60,6 +63,10 @@ public class WatcherRestTests extends ElasticsearchRestTestCase {
         return ElasticsearchRestTestCase.createParameters(0, 1);
     }
 
+    protected boolean enableShield() {
+        return randomBoolean();
+    }
+
     @Override
     protected Settings nodeSettings(int nodeOrdinal) {
         return Settings.builder()
@@ -67,12 +74,17 @@ public class WatcherRestTests extends ElasticsearchRestTestCase {
                 .put("scroll.size", randomIntBetween(1, 100))
                 .put("plugin.types", WatcherPlugin.class.getName() + ","
                         + (shieldEnabled ? ShieldPlugin.class.getName() + "," : "")
-                        + "," + LicensePlugin.class.getName())
+                        + "," + licensePluginClass().getName())
                 .put(Node.HTTP_ENABLED, true)
                 .put(ShieldSettings.settings(shieldEnabled))
                 .put(PluginsService.LOAD_PLUGIN_FROM_CLASSPATH, false)
         .build();
     }
+
+    protected Class<? extends Plugin> licensePluginClass() {
+        return LicensePlugin.class;
+    }
+
 
     /**
      * Used to obtain settings for the REST client that is used to send REST requests.
@@ -120,12 +132,15 @@ public class WatcherRestTests extends ElasticsearchRestTestCase {
 
         public static final String IP_FILTER = "allow: all\n";
 
-        private static final String TEST_PASSWORD =  "changeme";
+        public static final String TEST_USERNAME = "test";
+        public static final String TEST_PASSWORD = "changeme";
         private static final String TEST_PASSWORD_HASHED =  new String(Hasher.BCRYPT.hash(new SecuredString(TEST_PASSWORD.toCharArray())));
 
-        public static final String USERS = "test:{plain}changeme\n" +
-                "admin: " + TEST_PASSWORD_HASHED + "\n" +
-                "monitor:" + TEST_PASSWORD_HASHED;
+        public static final String USERS =
+                "transport_client:" + TEST_PASSWORD_HASHED + "\n" +
+                        TEST_USERNAME + ":" + TEST_PASSWORD_HASHED + "\n" +
+                        "admin:" + TEST_PASSWORD_HASHED + "\n" +
+                        "monitor:" + TEST_PASSWORD_HASHED;
 
         public static final String USER_ROLES = "test:test\n" +
                 "admin:admin\n" +
@@ -138,7 +153,7 @@ public class WatcherRestTests extends ElasticsearchRestTestCase {
                 "    '*': all\n" +
                 "\n" +
                 "admin:\n" +
-                "  cluster: manage_watcher, cluster:monitor/nodes/info, cluster:monitor/state, cluster:monitor/nodes/liveness, cluster:monitor/health, cluster:admin/repository/delete\n" +
+                "  cluster: manage_watcher, cluster:monitor/nodes/info, cluster:monitor/state, cluster:monitor/nodes/liveness, cluster:monitor/health, cluster:admin/repository/delete, indices:admin/template/put, indices:admin/template/get\n" +
                 "  indices:\n" +
                 "    '*': all, indices:admin/template/delete\n" +
                 "\n" +
