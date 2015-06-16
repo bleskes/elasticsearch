@@ -33,7 +33,7 @@ public class ExecutableNeverCondition extends ExecutableCondition<NeverCondition
     }
 
     @Override
-    public NeverCondition.Result execute(WatchExecutionContext ctx) throws IOException {
+    public NeverCondition.Result execute(WatchExecutionContext ctx) {
         return NeverCondition.Result.INSTANCE;
     }
 

@@ -17,7 +17,6 @@
 
 package org.elasticsearch.watcher.actions.email;
 
-import com.carrotsearch.randomizedtesting.annotations.Repeat;
 import org.elasticsearch.common.bytes.BytesReference;
 import com.google.common.collect.ImmutableMap;
 import org.elasticsearch.common.collect.MapBuilder;
@@ -69,6 +68,7 @@ public class EmailActionTests extends ElasticsearchTestCase {
             }
         };
         TemplateEngine engine = mock(TemplateEngine.class);
+        HtmlSanitizer htmlSanitizer = mock(HtmlSanitizer.class);
 
         EmailTemplate.Builder emailBuilder = EmailTemplate.builder();
         Template subject = null;
@@ -84,7 +84,7 @@ public class EmailActionTests extends ElasticsearchTestCase {
         Template htmlBody = null;
         if (randomBoolean()) {
             htmlBody = Template.inline("_html_body").build();
-            emailBuilder.htmlBody(htmlBody, true);
+            emailBuilder.htmlBody(htmlBody);
         }
         EmailTemplate email = emailBuilder.build();
 
@@ -94,7 +94,7 @@ public class EmailActionTests extends ElasticsearchTestCase {
         DataAttachment dataAttachment = randomDataAttachment();
 
         EmailAction action = new EmailAction(email, account, auth, profile, dataAttachment);
-        ExecutableEmailAction executable = new ExecutableEmailAction(action, logger, service, engine);
+        ExecutableEmailAction executable = new ExecutableEmailAction(action, logger, service, engine, htmlSanitizer);
 
         Map<String, Object> data = new HashMap<>();
         Payload payload = new Payload.Simple(data);
@@ -132,6 +132,7 @@ public class EmailActionTests extends ElasticsearchTestCase {
             when(engine.render(textBody, expectedModel)).thenReturn(textBody.getTemplate());
         }
         if (htmlBody != null) {
+            when(htmlSanitizer.sanitize(htmlBody.getTemplate())).thenReturn(htmlBody.getTemplate());
             when(engine.render(htmlBody, expectedModel)).thenReturn(htmlBody.getTemplate());
         }
 
@@ -154,6 +155,7 @@ public class EmailActionTests extends ElasticsearchTestCase {
     @Test
     public void testParser() throws Exception {
         TemplateEngine engine = mock(TemplateEngine.class);
+        HtmlSanitizer htmlSanitizer = mock(HtmlSanitizer.class);
         EmailService emailService = mock(EmailService.class);
         Profile profile = randomFrom(Profile.values());
         Email.Priority priority = randomFrom(Email.Priority.values());
@@ -253,7 +255,7 @@ public class EmailActionTests extends ElasticsearchTestCase {
         XContentParser parser = JsonXContent.jsonXContent.createParser(bytes);
         parser.nextToken();
 
-        ExecutableEmailAction executable = new EmailActionFactory(Settings.EMPTY, emailService, engine)
+        ExecutableEmailAction executable = new EmailActionFactory(Settings.EMPTY, emailService, engine, htmlSanitizer)
                 .parseExecutable(randomAsciiOfLength(8), randomAsciiOfLength(3), parser);
 
         assertThat(executable, notNullValue());
@@ -301,6 +303,7 @@ public class EmailActionTests extends ElasticsearchTestCase {
     public void testParser_SelfGenerated() throws Exception {
         EmailService service = mock(EmailService.class);
         TemplateEngine engine = mock(TemplateEngine.class);
+        HtmlSanitizer htmlSanitizer = mock(HtmlSanitizer.class);
         EmailTemplate.Builder emailTemplate = EmailTemplate.builder();
         if (randomBoolean()) {
             emailTemplate.from("from@domain");
@@ -324,7 +327,7 @@ public class EmailActionTests extends ElasticsearchTestCase {
             emailTemplate.textBody("_text_body");
         }
         if (randomBoolean()) {
-            emailTemplate.htmlBody("_html_body", randomBoolean());
+            emailTemplate.htmlBody("_html_body");
         }
         EmailTemplate email = emailTemplate.build();
         Authentication auth = randomBoolean() ? null : new Authentication("_user", new Secret("_passwd".toCharArray()));
@@ -333,7 +336,7 @@ public class EmailActionTests extends ElasticsearchTestCase {
         DataAttachment dataAttachment = randomDataAttachment();
 
         EmailAction action = new EmailAction(email, account, auth, profile, dataAttachment);
-        ExecutableEmailAction executable = new ExecutableEmailAction(action, logger, service, engine);
+        ExecutableEmailAction executable = new ExecutableEmailAction(action, logger, service, engine, htmlSanitizer);
 
         boolean hideSecrets = randomBoolean();
         ToXContent.Params params = WatcherParams.builder().hideSecrets(hideSecrets).build();
@@ -344,7 +347,7 @@ public class EmailActionTests extends ElasticsearchTestCase {
         logger.info(bytes.toUtf8());
         XContentParser parser = JsonXContent.jsonXContent.createParser(bytes);
         parser.nextToken();
-        ExecutableEmailAction parsed = new EmailActionFactory(Settings.EMPTY, service, engine)
+        ExecutableEmailAction parsed = new EmailActionFactory(Settings.EMPTY, service, engine, htmlSanitizer)
                 .parseExecutable(randomAsciiOfLength(4), randomAsciiOfLength(10), parser);
 
         if (!hideSecrets) {
@@ -369,10 +372,11 @@ public class EmailActionTests extends ElasticsearchTestCase {
     public void testParser_Invalid() throws Exception {
         EmailService emailService = mock(EmailService.class);
         TemplateEngine engine = mock(TemplateEngine.class);
+        HtmlSanitizer htmlSanitizer = mock(HtmlSanitizer.class);
         XContentBuilder builder = jsonBuilder().startObject().field("unknown_field", "value");
         XContentParser parser = JsonXContent.jsonXContent.createParser(builder.bytes());
         parser.nextToken();
-        new EmailActionFactory(Settings.EMPTY, emailService, engine)
+        new EmailActionFactory(Settings.EMPTY, emailService, engine, htmlSanitizer)
                 .parseExecutable(randomAsciiOfLength(3), randomAsciiOfLength(7), parser);
     }
 

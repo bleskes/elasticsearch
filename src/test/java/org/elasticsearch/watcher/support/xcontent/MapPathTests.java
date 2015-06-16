@@ -17,7 +17,6 @@
 
 package org.elasticsearch.watcher.support.xcontent;
 
-import com.carrotsearch.randomizedtesting.annotations.Repeat;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.elasticsearch.test.ElasticsearchTestCase;

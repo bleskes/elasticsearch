@@ -27,8 +27,6 @@ import org.elasticsearch.watcher.support.init.proxy.ClientProxy;
 import org.elasticsearch.watcher.transform.ExecutableTransform;
 import org.elasticsearch.watcher.watch.Payload;
 
-import java.io.IOException;
-
 /**
  *
  */
@@ -44,10 +42,16 @@ public class ExecutableSearchTransform extends ExecutableTransform<SearchTransfo
     }
 
     @Override
-    public SearchTransform.Result execute(WatchExecutionContext ctx, Payload payload) throws IOException {
-        SearchRequest req = WatcherUtils.createSearchRequestFromPrototype(transform.request, ctx, payload);
-        SearchResponse resp = client.search(req);
-        return new SearchTransform.Result(req, new Payload.XContent(resp));
+    public SearchTransform.Result execute(WatchExecutionContext ctx, Payload payload) {
+        SearchRequest request = null;
+        try {
+            request = WatcherUtils.createSearchRequestFromPrototype(transform.request, ctx, payload);
+            SearchResponse resp = client.search(request);
+            return new SearchTransform.Result(request, new Payload.XContent(resp));
+        } catch (Exception e) {
+            logger.error("failed to execute [{}] transform for [{}]", e, SearchTransform.TYPE, ctx.id());
+            return new SearchTransform.Result(request, e);
+        }
     }
 
 }

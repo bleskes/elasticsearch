@@ -48,6 +48,13 @@ public abstract class ExecutableAction<A extends Action> implements ToXContent {
         return action;
     }
 
+    /**
+     * yack... needed to expose that for testing purposes
+     */
+    public ESLogger logger() {
+        return logger;
+    }
+
     public abstract Action.Result execute(String actionId, WatchExecutionContext context, Payload payload) throws Exception;
 
     @Override

@@ -17,7 +17,7 @@
 
 package org.elasticsearch.watcher.support;
 
-import com.carrotsearch.randomizedtesting.annotations.Repeat;
+
 import com.google.common.collect.ImmutableMap;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentParser;

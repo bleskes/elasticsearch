@@ -17,7 +17,7 @@
 
 package org.elasticsearch.watcher.support.template;
 
-import com.carrotsearch.randomizedtesting.annotations.Repeat;
+
 import org.elasticsearch.common.bytes.BytesReference;
 import com.google.common.collect.ImmutableMap;
 import org.elasticsearch.common.settings.Settings;
@@ -98,7 +98,7 @@ public class TemplateTests extends ElasticsearchTestCase {
         assertThat(engine.render(template, model), is("rendered_text"));
     }
 
-    @Test @Repeat(iterations = 5)
+    @Test
     public void testParser() throws Exception {
         ScriptType type = randomScriptType();
         Template template = templateBuilder(type, "_template").params(ImmutableMap.<String, Object>of("param_key", "param_val")).build();

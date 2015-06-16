@@ -17,7 +17,6 @@
 
 package org.elasticsearch.watcher.actions.throttler;
 
-import com.carrotsearch.randomizedtesting.annotations.Repeat;
 import org.joda.time.DateTime;
 import org.joda.time.PeriodType;
 import org.elasticsearch.common.unit.TimeValue;
