@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -34,38 +34,38 @@ import com.prelert.job.errorcodes.ErrorCodes;
  */
 public class TooManyJobsException extends JobException
 {
-	private static final long serialVersionUID = 8503362038035845948L;
+    private static final long serialVersionUID = 8503362038035845948L;
 
-	private final int m_Limit;
+    private final int m_Limit;
 
-	/**
-	 * Create a new TooManyJobsException with an error code
-	 *
-	 * @param limit The limit on the number of jobs
-	 * @param message Details of error explaining the context
-	 * @param errorCode
-	 */
-	public TooManyJobsException(int limit, String message, ErrorCodes errorCode)
-	{
-		super(message, errorCode);
-		m_Limit = limit;
-	}
-
-
-	public TooManyJobsException(int limit, String message, ErrorCodes errorCode,
-			Throwable cause)
-	{
-		super(message, errorCode, cause);
-		m_Limit = limit;
-	}
+    /**
+     * Create a new TooManyJobsException with an error code
+     *
+     * @param limit The limit on the number of jobs
+     * @param message Details of error explaining the context
+     * @param errorCode
+     */
+    public TooManyJobsException(int limit, String message, ErrorCodes errorCode)
+    {
+        super(message, errorCode);
+        m_Limit = limit;
+    }
 
 
-	/**
-	 * Get the limit on the number of concurrently running jobs.
-	 * @return
-	 */
-	public int getLimit()
-	{
-		return m_Limit;
-	}
+    public TooManyJobsException(int limit, String message, ErrorCodes errorCode,
+            Throwable cause)
+    {
+        super(message, errorCode, cause);
+        m_Limit = limit;
+    }
+
+
+    /**
+     * Get the limit on the number of concurrently running jobs.
+     * @return
+     */
+    public int getLimit()
+    {
+        return m_Limit;
+    }
 }
