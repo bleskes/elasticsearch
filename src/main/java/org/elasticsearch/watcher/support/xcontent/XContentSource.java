@@ -34,7 +34,6 @@ import java.util.Map;
 public class XContentSource implements ToXContent {
 
     private final BytesReference bytes;
-
     private XContentType contentType;
     private Object data;
 
@@ -43,6 +42,7 @@ public class XContentSource implements ToXContent {
      */
     public XContentSource(BytesReference bytes) throws ElasticsearchParseException {
         this.bytes = bytes;
+        assert XContentFactory.xContentType(bytes) != null;
     }
 
     /**
@@ -93,10 +93,16 @@ public class XContentSource implements ToXContent {
     @Override
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
         XContentType xContentType = contentType();
-        XContentParser parser = xContentType.xContent().createParser(bytes);
-        parser.nextToken();
-        XContentHelper.copyCurrentStructure(builder.generator(), parser);
-        return builder;
+        try (XContentParser parser = xContentType.xContent().createParser(bytes)) {
+            parser.nextToken();
+            XContentHelper.copyCurrentStructure(builder.generator(), parser);
+            return builder;
+        }
+    }
+
+    public XContentParser parser() throws IOException {
+        XContentType xContentType = contentType();
+        return xContentType.xContent().createParser(bytes);
     }
 
     public static XContentSource readFrom(StreamInput in) throws IOException {
