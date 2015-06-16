@@ -78,11 +78,6 @@ public class ElasticsearchJobDataPersister extends JobDataPersister
     @Override
     public void persistRecord(long epoch, String [] record)
     {
-        if (isIndexExisting() == false) {
-            LOGGER.info("Data will be persisted in the index " + m_IndexName);
-            createIndex();
-        }
-
         String [] copy = new String[record.length];
         System.arraycopy(record, 0, copy, 0, record.length);
         m_BufferedRecords[m_BufferedRecordCount] = copy;
@@ -93,6 +88,12 @@ public class ElasticsearchJobDataPersister extends JobDataPersister
 
         if (m_BufferedRecordCount == DOC_BUFFER_SIZE)
         {
+            // Checking whether the index exists can be quite expensive.
+            if (isIndexExisting() == false) {
+                LOGGER.info("Data will be persisted in the index " + m_IndexName);
+                createIndex();
+            }
+
             try
             {
                 writeDocs();
