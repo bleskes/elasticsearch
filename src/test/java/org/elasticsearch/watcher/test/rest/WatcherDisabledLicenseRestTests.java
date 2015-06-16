@@ -22,6 +22,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.license.plugin.core.LicenseExpiredException;
 import org.elasticsearch.plugins.Plugin;
+import org.elasticsearch.plugins.PluginsService;
 import org.elasticsearch.shield.ShieldPlugin;
 import org.elasticsearch.test.rest.RestTestCandidate;
 import org.elasticsearch.watcher.WatcherPlugin;
@@ -46,6 +47,7 @@ public class WatcherDisabledLicenseRestTests extends WatcherRestTests {
                         WatcherPlugin.class.getName() + "," +
                                 (shieldEnabled ? ShieldPlugin.class.getName() + "," : "") +
                                 licensePluginClass().getName())
+                .put(PluginsService.LOAD_PLUGIN_FROM_CLASSPATH, false)
                 .put(ShieldSettings.settings(shieldEnabled));
         return builder.build();
     }
