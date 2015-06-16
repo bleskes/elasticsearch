@@ -72,7 +72,7 @@ public class WatcherDateTimeUtilsTests extends ElasticsearchTestCase {
                 .put(value + "s", TimeValue.timeValueSeconds(value))
                 .put(value + "m", TimeValue.timeValueMinutes(value))
                 .put(value + "h", TimeValue.timeValueHours(value))
-                .put(value + "", TimeValue.timeValueMillis(value))
+               // .put(value + "", TimeValue.timeValueMillis(value)) nocommit this is not allowed in 2.0 anymore - we need to upgrade those settings?
                 .build();
 
         String key = randomFrom(values.keySet().toArray(new String[values.size()]));
@@ -94,7 +94,7 @@ public class WatcherDateTimeUtilsTests extends ElasticsearchTestCase {
                 .put(value + "s", TimeValue.timeValueSeconds(value))
                 .put(value + "m", TimeValue.timeValueMinutes(value))
                 .put(value + "h", TimeValue.timeValueHours(value))
-                .put(value + "", TimeValue.timeValueMillis(value))
+                //.put(value + "", TimeValue.timeValueMillis(value)) nocommit this is not allowed in 2.0 anymore - we need to upgrade those settings?
                 .build();
 
         String key = randomFrom(values.keySet().toArray(new String[values.size()]));

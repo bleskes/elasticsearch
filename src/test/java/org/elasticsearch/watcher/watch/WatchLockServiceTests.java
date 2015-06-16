@@ -63,7 +63,7 @@ public class WatchLockServiceTests extends ElasticsearchTestCase {
         try {
             lockService.acquire("_name");
             fail("exception expected");
-        } catch (IllegalStateException e) {
+        } catch (IllegalArgumentException e) {
             assertThat(e.getMessage(), containsString("Lock already acquired"));
         }
         lock1.release();
