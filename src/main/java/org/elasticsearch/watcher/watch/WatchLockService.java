@@ -23,6 +23,7 @@ import org.joda.time.PeriodType;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.watcher.WatcherException;
+import org.elasticsearch.watcher.support.WatcherInactiveException;
 import org.elasticsearch.watcher.support.concurrent.FairKeyedLock;
 
 import java.util.concurrent.TimeUnit;
@@ -53,7 +54,7 @@ public class WatchLockService extends AbstractComponent {
 
     public Lock acquire(String name) {
         if (!running.get()) {
-            throw new IllegalStateException("not started");
+            throw new WatcherInactiveException("not started");
         }
 
         watchLocks.acquire(name);
@@ -62,7 +63,7 @@ public class WatchLockService extends AbstractComponent {
 
     public Lock tryAcquire(String name, TimeValue timeout) {
         if (!running.get()) {
-            throw new IllegalStateException("not started");
+            throw new WatcherInactiveException("not started");
         }
         try {
             if (!watchLocks.tryAcquire(name, timeout.millis(), TimeUnit.MILLISECONDS)) {

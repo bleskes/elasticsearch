@@ -31,6 +31,7 @@ import org.elasticsearch.watcher.condition.Condition;
 import org.elasticsearch.watcher.history.HistoryStore;
 import org.elasticsearch.watcher.history.WatchRecord;
 import org.elasticsearch.watcher.input.Input;
+import org.elasticsearch.watcher.support.WatcherInactiveException;
 import org.elasticsearch.watcher.support.clock.Clock;
 import org.elasticsearch.watcher.support.validation.WatcherSettingsValidation;
 import org.elasticsearch.watcher.trigger.TriggerEvent;
@@ -248,9 +249,7 @@ public class ExecutionService extends AbstractComponent {
             logger.trace("acquired lock for [{}] -- [{}]", ctx.id(), System.identityHashCode(lock));
         }
         try {
-
             currentExecutions.put(ctx.watch().id(), new WatchExecution(ctx, Thread.currentThread()));
-
             if (ctx.knownWatch() && watchStore.get(ctx.watch().id()) == null) {
                 // fail fast if we are trying to execute a deleted watch
                 String message = "unable to find watch for record [" + ctx.id() + "], perhaps it has been deleted, ignoring...";
@@ -263,14 +262,12 @@ public class ExecutionService extends AbstractComponent {
                     watchStore.updateStatus(ctx.watch());
                 }
             }
-
         } catch (Exception e) {
             String detailedMessage = ExceptionsHelper.detailedMessage(e);
             logger.warn("failed to execute watch [{}], failure [{}]", ctx.id(), detailedMessage);
             record = ctx.abortFailedExecution(detailedMessage);
 
         } finally {
-
             if (ctx.knownWatch() && record != null && ctx.recordExecution()) {
                 try {
                     historyStore.put(record);
@@ -278,13 +275,11 @@ public class ExecutionService extends AbstractComponent {
                     logger.error("failed to update watch record [{}]", e, ctx.id());
                 }
             }
-
             try {
                 triggeredWatchStore.delete(ctx.id());
             } catch (Exception e) {
                 logger.error("failed to delete triggered watch [{}]", e, ctx.id());
             }
-
             currentExecutions.remove(ctx.watch().id());
             if (logger.isTraceEnabled()) {
                 logger.trace("releasing lock for [{}] -- [{}]", ctx.id(), System.identityHashCode(lock));
@@ -292,7 +287,6 @@ public class ExecutionService extends AbstractComponent {
             lock.release();
             logger.trace("finished [{}]/[{}]", ctx.watch().id(), ctx.id());
         }
-
         return record;
     }
 
@@ -386,7 +380,15 @@ public class ExecutionService extends AbstractComponent {
 
         @Override
         public void run() {
-            execute(ctx);
+            try {
+                execute(ctx);
+            } catch (WatcherInactiveException e) {
+                // When can end up here when acquiring the lock or adding a watch to the current executions while shutting down.
+                // Once we a watch is added to the current executions we shouldn't end up here.
+                logger.debug("could not execute watch [{}]/[{}]. watcher is not active", e, ctx.watch().id(), ctx.id());
+            } catch (Exception e) {
+                logger.error("could not execute watch [{}]/[{}]", e, ctx.watch().id(), ctx.id());
+            }
         }
     }
 
