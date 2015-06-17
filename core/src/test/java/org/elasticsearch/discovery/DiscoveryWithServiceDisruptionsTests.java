@@ -1002,7 +1002,7 @@ public class DiscoveryWithServiceDisruptionsTests extends ElasticsearchIntegrati
     }
 
     private void ensureStableCluster(int nodeCount, @Nullable String viaNode) {
-        ensureStableCluster(nodeCount, TimeValue.timeValueSeconds(30), viaNode, true);
+        ensureStableCluster(nodeCount, TimeValue.timeValueSeconds(30), viaNode, viaNode == null);
     }
 
     private void ensureStableCluster(int nodeCount, TimeValue timeValue, @Nullable String viaNode, boolean validateOtherNodes) {
