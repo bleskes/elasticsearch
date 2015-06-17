@@ -17,6 +17,7 @@
 
 package org.elasticsearch.watcher.support.xcontent;
 
+import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.collect.Tuple;
@@ -34,15 +35,22 @@ import java.util.Map;
 public class XContentSource implements ToXContent {
 
     private final BytesReference bytes;
-    private XContentType contentType;
+    private final XContentType contentType;
     private Object data;
 
     /**
      * Constructs a new XContentSource out of the given bytes reference.
      */
-    public XContentSource(BytesReference bytes) throws ElasticsearchParseException {
+    public XContentSource(BytesReference bytes, XContentType xContentType) throws ElasticsearchParseException {
+        if (xContentType == null) {
+            throw new IllegalArgumentException("xContentType must not be null");
+        }
         this.bytes = bytes;
-        assert XContentFactory.xContentType(bytes) != null;
+        this.contentType = xContentType;
+    }
+
+    public XContentSource(BytesReference bytes) {
+        this(bytes, XContentFactory.xContentType(bytes));
     }
 
     /**
@@ -92,8 +100,7 @@ public class XContentSource implements ToXContent {
 
     @Override
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
-        XContentType xContentType = contentType();
-        try (XContentParser parser = xContentType.xContent().createParser(bytes)) {
+        try (XContentParser parser = parser()) {
             parser.nextToken();
             XContentHelper.copyCurrentStructure(builder.generator(), parser);
             return builder;
@@ -101,30 +108,25 @@ public class XContentSource implements ToXContent {
     }
 
     public XContentParser parser() throws IOException {
-        XContentType xContentType = contentType();
-        return xContentType.xContent().createParser(bytes);
+        return contentType.xContent().createParser(bytes);
     }
 
     public static XContentSource readFrom(StreamInput in) throws IOException {
-        return new XContentSource(in.readBytesReference());
+        return new XContentSource(in.readBytesReference(), XContentType.readFrom(in));
     }
 
     public static void writeTo(XContentSource source, StreamOutput out) throws IOException {
         out.writeBytesReference(source.bytes);
-    }
-
-    private XContentType contentType() {
-        if (contentType == null) {
-            contentType = XContentFactory.xContentType(bytes);
-        }
-        return contentType;
+        XContentType.writeTo(source.contentType, out);
     }
 
     private Object data() {
         if (data == null) {
-            Tuple<XContentType, Object> tuple = WatcherXContentUtils.convertToObject(bytes);
-            this.contentType = tuple.v1();
-            this.data = tuple.v2();
+            try (XContentParser parser = parser()) {
+                data = WatcherXContentUtils.readValue(parser, parser.nextToken());
+            } catch (IOException ex) {
+                throw new ElasticsearchException("failed to read value", ex);
+            }
         }
         return data;
     }
