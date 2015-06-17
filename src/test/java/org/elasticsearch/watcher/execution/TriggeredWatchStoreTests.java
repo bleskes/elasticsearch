@@ -17,6 +17,7 @@
 
 package org.elasticsearch.watcher.execution;
 
+import org.elasticsearch.Version;
 import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
 import org.elasticsearch.action.admin.indices.refresh.RefreshResponse;
 import org.elasticsearch.action.search.ClearScrollResponse;
@@ -29,7 +30,6 @@ import org.elasticsearch.cluster.metadata.MetaData;
 import org.elasticsearch.cluster.routing.*;
 import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.bytes.BytesReference;
-import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.text.StringText;
 import org.elasticsearch.common.unit.TimeValue;
@@ -39,8 +39,6 @@ import org.elasticsearch.search.internal.InternalSearchHit;
 import org.elasticsearch.search.internal.InternalSearchHits;
 import org.elasticsearch.search.internal.InternalSearchResponse;
 import org.elasticsearch.test.ElasticsearchTestCase;
-import org.elasticsearch.watcher.execution.TriggeredWatch;
-import org.elasticsearch.watcher.execution.TriggeredWatchStore;
 import org.elasticsearch.watcher.history.TriggeredWatchException;
 import org.elasticsearch.watcher.support.TemplateUtils;
 import org.elasticsearch.watcher.support.init.proxy.ClientProxy;
@@ -69,7 +67,7 @@ public class TriggeredWatchStoreTests extends ElasticsearchTestCase {
         clientProxy = mock(ClientProxy.class);
         TemplateUtils templateUtils = mock(TemplateUtils.class);
         parser = mock(TriggeredWatch.Parser.class);
-        triggeredWatchStore = new TriggeredWatchStore(ImmutableSettings.EMPTY, clientProxy, templateUtils, parser);
+        triggeredWatchStore = new TriggeredWatchStore(Settings.EMPTY, clientProxy, templateUtils, parser);
         triggeredWatchStore.start();
         verify(templateUtils, times(1)).putTemplate(same(TriggeredWatchStore.INDEX_TEMPLATE_NAME), any(Settings.class));
     }
@@ -98,7 +96,7 @@ public class TriggeredWatchStoreTests extends ElasticsearchTestCase {
         String indexName = TriggeredWatchStore.INDEX_NAME;
         int numShards = 2 + randomInt(2);
         int numStartedShards = 1;
-        Settings settings = ImmutableSettings.builder()
+        Settings settings = settings(Version.CURRENT)
                 .put(IndexMetaData.SETTING_NUMBER_OF_SHARDS, numShards)
                 .put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, 1)
                 .build();
@@ -112,7 +110,7 @@ public class TriggeredWatchStoreTests extends ElasticsearchTestCase {
                 state = ShardRoutingState.UNASSIGNED;
             }
             indexRoutingTableBuilder.addIndexShard(new IndexShardRoutingTable.Builder(new ShardId(indexName, 0), false)
-                    .addShard(new ImmutableShardRouting(indexName, 0, "_node_id", null, true, state, 1))
+                    .addShard(new ImmutableShardRouting(indexName, 0, "_node_id", null, null, true, state, 1, new UnassignedInfo(UnassignedInfo.Reason.INDEX_CREATED, "")))
                     .build());
             indexRoutingTableBuilder.addReplica();
         }
@@ -140,7 +138,7 @@ public class TriggeredWatchStoreTests extends ElasticsearchTestCase {
         RoutingTable.Builder routingTableBuilder = RoutingTable.builder();
         MetaData.Builder metaDateBuilder = MetaData.builder();
         String indexName = TriggeredWatchStore.INDEX_NAME;
-        Settings settings = ImmutableSettings.builder()
+        Settings settings = settings(Version.CURRENT)
                 .put(IndexMetaData.SETTING_NUMBER_OF_SHARDS, 1)
                 .put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, 1)
                 .build();
@@ -175,7 +173,7 @@ public class TriggeredWatchStoreTests extends ElasticsearchTestCase {
         RoutingTable.Builder routingTableBuilder = RoutingTable.builder();
         MetaData.Builder metaDateBuilder = MetaData.builder();
         String indexName = TriggeredWatchStore.INDEX_NAME;
-        Settings settings = ImmutableSettings.builder()
+        Settings settings = settings(Version.CURRENT)
                 .put(IndexMetaData.SETTING_NUMBER_OF_SHARDS, 1)
                 .put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, 1)
                 .build();
@@ -219,7 +217,7 @@ public class TriggeredWatchStoreTests extends ElasticsearchTestCase {
         RoutingTable.Builder routingTableBuilder = RoutingTable.builder();
         MetaData.Builder metaDateBuilder = MetaData.builder();
         String indexName = TriggeredWatchStore.INDEX_NAME;
-        Settings settings = ImmutableSettings.builder()
+        Settings settings = settings(Version.CURRENT)
                 .put(IndexMetaData.SETTING_NUMBER_OF_SHARDS, 1)
                 .put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, 1)
                 .build();
@@ -262,7 +260,7 @@ public class TriggeredWatchStoreTests extends ElasticsearchTestCase {
         RoutingTable.Builder routingTableBuilder = RoutingTable.builder();
         MetaData.Builder metaDateBuilder = MetaData.builder();
         String indexName = TriggeredWatchStore.INDEX_NAME;
-        Settings settings = ImmutableSettings.builder()
+        Settings settings = settings(Version.CURRENT)
                 .put(IndexMetaData.SETTING_NUMBER_OF_SHARDS, 1)
                 .put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, 1)
                 .build();

@@ -17,10 +17,8 @@
 
 package org.elasticsearch.watcher.execution;
 
-import com.carrotsearch.randomizedtesting.annotations.Repeat;
-import org.apache.lucene.util.LuceneTestCase.Slow;
+import org.joda.time.DateTime;
 import org.elasticsearch.action.ActionRequestValidationException;
-import org.elasticsearch.common.joda.time.DateTime;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.watcher.WatcherException;
@@ -48,6 +46,7 @@ import org.elasticsearch.watcher.trigger.manual.ManualTriggerEvent;
 import org.elasticsearch.watcher.trigger.schedule.ScheduleTriggerEvent;
 import org.elasticsearch.watcher.watch.Payload;
 import org.elasticsearch.watcher.watch.Watch;
+import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -57,7 +56,6 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import static org.elasticsearch.common.joda.time.DateTimeZone.UTC;
 import static org.elasticsearch.common.unit.TimeValue.timeValueSeconds;
 import static org.elasticsearch.index.query.QueryBuilders.matchAllQuery;
 import static org.elasticsearch.watcher.actions.ActionBuilders.loggingAction;
@@ -76,7 +74,7 @@ public class ManualExecutionTests extends AbstractWatcherIntegrationTests {
         return false;
     }
 
-    @Test @Repeat(iterations = 10)
+    @Test
     public void testExecuteWatch() throws Exception {
         boolean ignoreCondition = randomBoolean();
         boolean recordExecution = randomBoolean();
@@ -91,7 +89,7 @@ public class ManualExecutionTests extends AbstractWatcherIntegrationTests {
 
         ManualExecutionContext.Builder ctxBuilder;
         Watch parsedWatch = null;
-        ManualTriggerEvent triggerEvent = new ManualTriggerEvent("_id", new ScheduleTriggerEvent(new DateTime(UTC), new DateTime(UTC)));
+        ManualTriggerEvent triggerEvent = new ManualTriggerEvent("_id", new ScheduleTriggerEvent(new DateTime(DateTimeZone.UTC), new DateTime(DateTimeZone.UTC)));
         if (recordExecution) {
             PutWatchResponse putWatchResponse = watcherClient().putWatch(new PutWatchRequest("_id", watchBuilder)).actionGet();
             assertThat(putWatchResponse.getVersion(), greaterThan(0L));
@@ -162,7 +160,6 @@ public class ManualExecutionTests extends AbstractWatcherIntegrationTests {
     }
 
     @Test
-    @Repeat(iterations = 5)
     public void testExecutionWithInlineWatch() throws Exception {
         WatchSourceBuilder watchBuilder = watchBuilder()
                 .trigger(schedule(cron("0 0 0 1 * ? 2099")))
@@ -176,7 +173,7 @@ public class ManualExecutionTests extends AbstractWatcherIntegrationTests {
             builder.setRecordExecution(false);
         }
         if (randomBoolean()) {
-            builder.setTriggerEvent(new ScheduleTriggerEvent(new DateTime(UTC), new DateTime(UTC)));
+            builder.setTriggerEvent(new ScheduleTriggerEvent(new DateTime(DateTimeZone.UTC), new DateTime(DateTimeZone.UTC)));
         }
 
         ExecuteWatchResponse executeWatchResponse = builder.get();
@@ -198,7 +195,7 @@ public class ManualExecutionTests extends AbstractWatcherIntegrationTests {
             watcherClient().prepareExecuteWatch()
                     .setWatchSource(watchBuilder)
                     .setRecordExecution(true)
-                    .setTriggerEvent(new ScheduleTriggerEvent(new DateTime(UTC), new DateTime(UTC)))
+                    .setTriggerEvent(new ScheduleTriggerEvent(new DateTime(DateTimeZone.UTC), new DateTime(DateTimeZone.UTC)))
                     .get();
             fail();
         } catch (ActionRequestValidationException e) {
@@ -219,7 +216,7 @@ public class ManualExecutionTests extends AbstractWatcherIntegrationTests {
                     .setId("_id")
                     .setWatchSource(watchBuilder)
                     .setRecordExecution(false)
-                    .setTriggerEvent(new ScheduleTriggerEvent(new DateTime(UTC), new DateTime(UTC)))
+                    .setTriggerEvent(new ScheduleTriggerEvent(new DateTime(DateTimeZone.UTC), new DateTime(DateTimeZone.UTC)))
                     .get();
             fail();
         } catch (ActionRequestValidationException e) {
@@ -244,7 +241,7 @@ public class ManualExecutionTests extends AbstractWatcherIntegrationTests {
         Map<String, Object> map2 = new HashMap<>();
         map2.put("foo", map1);
 
-        ManualTriggerEvent triggerEvent = new ManualTriggerEvent("_id", new ScheduleTriggerEvent(new DateTime(UTC), new DateTime(UTC)));
+        ManualTriggerEvent triggerEvent = new ManualTriggerEvent("_id", new ScheduleTriggerEvent(new DateTime(DateTimeZone.UTC), new DateTime(DateTimeZone.UTC)));
         ManualExecutionContext.Builder ctxBuilder1 = ManualExecutionContext.builder(watchService().getWatch("_id"), true, triggerEvent, timeValueSeconds(5));
         ctxBuilder1.actionMode("_all", ActionExecutionMode.SIMULATE);
 
@@ -275,7 +272,7 @@ public class ManualExecutionTests extends AbstractWatcherIntegrationTests {
                 .addAction("log", loggingAction("foobar"));
         watcherClient().putWatch(new PutWatchRequest("_id", watchBuilder)).actionGet();
 
-        TriggerEvent triggerEvent = new ScheduleTriggerEvent(new DateTime(UTC), new DateTime(UTC));
+        TriggerEvent triggerEvent = new ScheduleTriggerEvent(new DateTime(DateTimeZone.UTC), new DateTime(DateTimeZone.UTC));
 
         Wid wid = new Wid("_watchId",1,new DateTime());
 
@@ -323,7 +320,7 @@ public class ManualExecutionTests extends AbstractWatcherIntegrationTests {
                 .addAction("log", loggingAction("foobar"));
 
         Watch watch = watchParser().parse("_id", false, watchBuilder.buildAsBytes(XContentType.JSON));
-        ManualExecutionContext.Builder ctxBuilder = ManualExecutionContext.builder(watch, false, new ManualTriggerEvent("_id", new ScheduleTriggerEvent(new DateTime(UTC), new DateTime(UTC))), new TimeValue(1, TimeUnit.HOURS));
+        ManualExecutionContext.Builder ctxBuilder = ManualExecutionContext.builder(watch, false, new ManualTriggerEvent("_id", new ScheduleTriggerEvent(new DateTime(DateTimeZone.UTC), new DateTime(DateTimeZone.UTC))), new TimeValue(1, TimeUnit.HOURS));
         WatchRecord record = executionService().execute(ctxBuilder.build());
         assertThat(record.result().executionDurationMs(), greaterThanOrEqualTo(100L));
     }
@@ -383,7 +380,7 @@ public class ManualExecutionTests extends AbstractWatcherIntegrationTests {
             this.executionService = executionService;
             this.watchId = watchId;
             this.startLatch = startLatch;
-            ManualTriggerEvent triggerEvent = new ManualTriggerEvent(watchId, new ScheduleTriggerEvent(new DateTime(UTC), new DateTime(UTC)));
+            ManualTriggerEvent triggerEvent = new ManualTriggerEvent(watchId, new ScheduleTriggerEvent(new DateTime(DateTimeZone.UTC), new DateTime(DateTimeZone.UTC)));
             ctxBuilder = ManualExecutionContext.builder(watcherService.getWatch(watchId), true, triggerEvent, timeValueSeconds(5));
             ctxBuilder.recordExecution(true);
             ctxBuilder.actionMode("_all", ActionExecutionMode.FORCE_EXECUTE);

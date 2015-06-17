@@ -18,7 +18,6 @@
 package org.elasticsearch.watcher.transport.actions.service;
 
 import org.elasticsearch.ElasticsearchException;
-import org.elasticsearch.ElasticsearchIllegalArgumentException;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.cluster.ClusterService;
@@ -41,7 +40,7 @@ public class TransportWatcherServiceAction extends WatcherTransportAction<Watche
 
     @Inject
     public TransportWatcherServiceAction(Settings settings, TransportService transportService, ClusterService clusterService, ThreadPool threadPool, ActionFilters actionFilters, WatcherLifeCycleService lifeCycleService, LicenseService licenseService) {
-        super(settings, WatcherServiceAction.NAME, transportService, clusterService, threadPool, actionFilters, licenseService);
+        super(settings, WatcherServiceAction.NAME, transportService, clusterService, threadPool, actionFilters, licenseService, WatcherServiceRequest.class);
         this.lifeCycleService = lifeCycleService;
     }
 
@@ -51,11 +50,6 @@ public class TransportWatcherServiceAction extends WatcherTransportAction<Watche
         // but we can't use SAME TP here, because certain parts of the start process can't be executed on a transport thread.
         // ( put template, or anything client related with #actionGet() )
         return ThreadPool.Names.MANAGEMENT;
-    }
-
-    @Override
-    protected WatcherServiceRequest newRequest() {
-        return new WatcherServiceRequest();
     }
 
     @Override
@@ -77,7 +71,7 @@ public class TransportWatcherServiceAction extends WatcherTransportAction<Watche
                 lifeCycleService.start();
                 break;
             default:
-                listener.onFailure(new ElasticsearchIllegalArgumentException("Command [" + request.getCommand() + "] is undefined"));
+                listener.onFailure(new IllegalArgumentException("Command [" + request.getCommand() + "] is undefined"));
                 return;
         }
         listener.onResponse(new WatcherServiceResponse(true));
@@ -85,6 +79,6 @@ public class TransportWatcherServiceAction extends WatcherTransportAction<Watche
 
     @Override
     protected ClusterBlockException checkBlock(WatcherServiceRequest request, ClusterState state) {
-        return state.blocks().globalBlockedException(ClusterBlockLevel.METADATA);
+        return state.blocks().globalBlockedException(ClusterBlockLevel.METADATA_WRITE);
     }
 }

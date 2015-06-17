@@ -19,7 +19,7 @@ package org.elasticsearch.watcher.actions.throttler;
 
 import org.apache.lucene.util.LuceneTestCase.Slow;
 import org.elasticsearch.ElasticsearchException;
-import org.elasticsearch.common.joda.time.DateTime;
+import org.joda.time.DateTime;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.watcher.actions.Action;
 import org.elasticsearch.watcher.actions.ActionWrapper;
@@ -46,6 +46,7 @@ import org.elasticsearch.watcher.trigger.manual.ManualTriggerEvent;
 import org.elasticsearch.watcher.trigger.schedule.IntervalSchedule;
 import org.elasticsearch.watcher.trigger.schedule.ScheduleTrigger;
 import org.elasticsearch.watcher.trigger.schedule.ScheduleTriggerEvent;
+import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -54,7 +55,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import static org.elasticsearch.common.joda.time.DateTimeZone.UTC;
 import static org.elasticsearch.watcher.actions.ActionBuilders.loggingAction;
 import static org.elasticsearch.watcher.actions.ActionBuilders.webhookAction;
 import static org.elasticsearch.watcher.client.WatchSourceBuilders.watchBuilder;
@@ -169,7 +169,7 @@ public class ActionThrottleTests extends AbstractWatcherIntegrationTests {
         assertThat(watcherClient().getWatch(new GetWatchRequest("_id")).actionGet().isFound(), equalTo(true));
 
         if (timeWarped()) {
-            timeWarp().clock().setTime(new DateTime(UTC));
+            timeWarp().clock().setTime(new DateTime(DateTimeZone.UTC));
         }
 
         ManualExecutionContext ctx = getManualExecutionContext(new TimeValue(0, TimeUnit.SECONDS));
@@ -219,11 +219,11 @@ public class ActionThrottleTests extends AbstractWatcherIntegrationTests {
         refresh();
 
         if (timeWarped()) {
-            timeWarp().clock().setTime(new DateTime(UTC));
+            timeWarp().clock().setTime(new DateTime(DateTimeZone.UTC));
         }
 
         ExecuteWatchResponse executeWatchResponse = watcherClient().prepareExecuteWatch("_id")
-                .setTriggerEvent(new ManualTriggerEvent("execute_id", new ScheduleTriggerEvent(new DateTime(UTC), new DateTime(UTC))))
+                .setTriggerEvent(new ManualTriggerEvent("execute_id", new ScheduleTriggerEvent(new DateTime(DateTimeZone.UTC), new DateTime(DateTimeZone.UTC))))
                 .setActionMode("default_global_throttle", ActionExecutionMode.SIMULATE)
                 .setRecordExecution(true)
                 .get();
@@ -236,7 +236,7 @@ public class ActionThrottleTests extends AbstractWatcherIntegrationTests {
         }
 
         executeWatchResponse = watcherClient().prepareExecuteWatch("_id")
-                .setTriggerEvent(new ManualTriggerEvent("execute_id", new ScheduleTriggerEvent(new DateTime(UTC), new DateTime(UTC))))
+                .setTriggerEvent(new ManualTriggerEvent("execute_id", new ScheduleTriggerEvent(new DateTime(DateTimeZone.UTC), new DateTime(DateTimeZone.UTC))))
                 .setActionMode("default_global_throttle", ActionExecutionMode.SIMULATE)
                 .setRecordExecution(true)
                 .get();
@@ -253,7 +253,7 @@ public class ActionThrottleTests extends AbstractWatcherIntegrationTests {
             public void run() {
                 try {
                     ExecuteWatchResponse executeWatchResponse = watcherClient().prepareExecuteWatch("_id")
-                            .setTriggerEvent(new ManualTriggerEvent("execute_id", new ScheduleTriggerEvent(new DateTime(UTC), new DateTime(UTC))))
+                            .setTriggerEvent(new ManualTriggerEvent("execute_id", new ScheduleTriggerEvent(new DateTime(DateTimeZone.UTC), new DateTime(DateTimeZone.UTC))))
                             .setActionMode("default_global_throttle", ActionExecutionMode.SIMULATE)
                             .setRecordExecution(true)
                             .get();
@@ -281,11 +281,11 @@ public class ActionThrottleTests extends AbstractWatcherIntegrationTests {
         refresh();
 
         if (timeWarped()) {
-            timeWarp().clock().setTime(new DateTime(UTC));
+            timeWarp().clock().setTime(new DateTime(DateTimeZone.UTC));
         }
 
         ExecuteWatchResponse executeWatchResponse = watcherClient().prepareExecuteWatch("_id")
-                .setTriggerEvent(new ManualTriggerEvent("execute_id", new ScheduleTriggerEvent(new DateTime(UTC), new DateTime(UTC))))
+                .setTriggerEvent(new ManualTriggerEvent("execute_id", new ScheduleTriggerEvent(new DateTime(DateTimeZone.UTC), new DateTime(DateTimeZone.UTC))))
                 .setActionMode("default_global_throttle", ActionExecutionMode.SIMULATE)
                 .setRecordExecution(true)
                 .get();
@@ -298,7 +298,7 @@ public class ActionThrottleTests extends AbstractWatcherIntegrationTests {
         }
 
         executeWatchResponse = watcherClient().prepareExecuteWatch("_id")
-                .setTriggerEvent(new ManualTriggerEvent("execute_id", new ScheduleTriggerEvent(new DateTime(UTC), new DateTime(UTC))))
+                .setTriggerEvent(new ManualTriggerEvent("execute_id", new ScheduleTriggerEvent(new DateTime(DateTimeZone.UTC), new DateTime(DateTimeZone.UTC))))
                 .setActionMode("default_global_throttle", ActionExecutionMode.SIMULATE)
                 .setRecordExecution(true)
                 .get();
@@ -315,7 +315,7 @@ public class ActionThrottleTests extends AbstractWatcherIntegrationTests {
                 try {
                     //Since the default throttle period is 5 seconds but we have overridden the period in the watch this should trigger
                     ExecuteWatchResponse executeWatchResponse = watcherClient().prepareExecuteWatch("_id")
-                            .setTriggerEvent(new ManualTriggerEvent("execute_id", new ScheduleTriggerEvent(new DateTime(UTC), new DateTime(UTC))))
+                            .setTriggerEvent(new ManualTriggerEvent("execute_id", new ScheduleTriggerEvent(new DateTime(DateTimeZone.UTC), new DateTime(DateTimeZone.UTC))))
                             .setActionMode("default_global_throttle", ActionExecutionMode.SIMULATE)
                             .setRecordExecution(true)
                             .get();
@@ -337,23 +337,23 @@ public class ActionThrottleTests extends AbstractWatcherIntegrationTests {
                 .trigger(new ScheduleTrigger(new IntervalSchedule(new IntervalSchedule.Interval(60, IntervalSchedule.Interval.Unit.MINUTES))))
                 .defaultThrottlePeriod(throttlePeriod)
                 .addAction("logging", loggingAction("test out"))
-                .addAction("failing_hook", webhookAction(HttpRequestTemplate.builder("unknown.foo", 80))))
+                .addAction("failing_hook", webhookAction(HttpRequestTemplate.builder("http://127.0.0.1/foobar", 80)))) // no DNS resolution here please
                 .get();
         assertThat(putWatchResponse.getVersion(), greaterThan(0L));
         refresh();
 
-        ManualTriggerEvent triggerEvent = new ManualTriggerEvent("_id", new ScheduleTriggerEvent(new DateTime(UTC), new DateTime(UTC)));
+        ManualTriggerEvent triggerEvent = new ManualTriggerEvent("_id", new ScheduleTriggerEvent(new DateTime(DateTimeZone.UTC), new DateTime(DateTimeZone.UTC)));
         ManualExecutionContext.Builder ctxBuilder = ManualExecutionContext.builder(watchService().getWatch("_id"), true, triggerEvent, throttlePeriod);
         ctxBuilder.recordExecution(true);
 
         ManualExecutionContext ctx = ctxBuilder.build();
         WatchRecord watchRecord = executionService().execute(ctx);
 
+        assertThat(watchRecord.state(), equalTo(ExecutionState.EXECUTED));
         assertThat(watchRecord.result().actionsResults().get("logging").action().status(), equalTo(Action.Result.Status.SUCCESS));
         assertThat(watchRecord.result().actionsResults().get("failing_hook").action().status(), equalTo(Action.Result.Status.FAILURE));
-        assertThat(watchRecord.state(), equalTo(ExecutionState.EXECUTED));
 
-        triggerEvent = new ManualTriggerEvent("_id", new ScheduleTriggerEvent(new DateTime(UTC), new DateTime(UTC)));
+        triggerEvent = new ManualTriggerEvent("_id", new ScheduleTriggerEvent(new DateTime(DateTimeZone.UTC), new DateTime(DateTimeZone.UTC)));
         ctxBuilder = ManualExecutionContext.builder(watchService().getWatch("_id"), true, triggerEvent, throttlePeriod);
         ctxBuilder.recordExecution(true);
 
@@ -370,7 +370,7 @@ public class ActionThrottleTests extends AbstractWatcherIntegrationTests {
     }
 
     private ManualExecutionContext getManualExecutionContext(TimeValue throttlePeriod) {
-        ManualTriggerEvent triggerEvent = new ManualTriggerEvent("_id", new ScheduleTriggerEvent(new DateTime(UTC), new DateTime(UTC)));
+        ManualTriggerEvent triggerEvent = new ManualTriggerEvent("_id", new ScheduleTriggerEvent(new DateTime(DateTimeZone.UTC), new DateTime(DateTimeZone.UTC)));
         return ManualExecutionContext.builder(watchService().getWatch("_id"), true, triggerEvent, throttlePeriod)
                 .executionTime(timeWarped() ? timeWarp().clock().nowUTC() : SystemClock.INSTANCE.nowUTC())
                 .allActionsMode(ActionExecutionMode.SIMULATE)

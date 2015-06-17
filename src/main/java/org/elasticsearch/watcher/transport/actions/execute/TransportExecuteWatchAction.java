@@ -25,7 +25,7 @@ import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.block.ClusterBlockException;
 import org.elasticsearch.cluster.block.ClusterBlockLevel;
 import org.elasticsearch.common.inject.Inject;
-import org.elasticsearch.common.joda.time.DateTime;
+import org.joda.time.DateTime;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
@@ -48,10 +48,10 @@ import org.elasticsearch.watcher.trigger.manual.ManualTriggerEvent;
 import org.elasticsearch.watcher.watch.Payload;
 import org.elasticsearch.watcher.watch.Watch;
 import org.elasticsearch.watcher.watch.WatchStore;
+import org.joda.time.DateTimeZone;
 
 import java.util.Map;
 
-import static org.elasticsearch.common.joda.time.DateTimeZone.UTC;
 /**
  * Performs the watch execution operation.
  */
@@ -68,7 +68,7 @@ public class TransportExecuteWatchAction extends WatcherTransportAction<ExecuteW
                                        ThreadPool threadPool, ActionFilters actionFilters, ExecutionService executionService,
                                        Clock clock, LicenseService licenseService, WatchStore watchStore, TriggerService triggerService,
                                        Watch.Parser watchParser) {
-        super(settings, ExecuteWatchAction.NAME, transportService, clusterService, threadPool, actionFilters, licenseService);
+        super(settings, ExecuteWatchAction.NAME, transportService, clusterService, threadPool, actionFilters, licenseService, ExecuteWatchRequest.class);
         this.executionService = executionService;
         this.watchStore = watchStore;
         this.clock = clock;
@@ -79,11 +79,6 @@ public class TransportExecuteWatchAction extends WatcherTransportAction<ExecuteW
     @Override
     protected String executor() {
         return ThreadPool.Names.MANAGEMENT;
-    }
-
-    @Override
-    protected ExecuteWatchRequest newRequest() {
-        return new ExecuteWatchRequest();
     }
 
     @Override
@@ -115,7 +110,7 @@ public class TransportExecuteWatchAction extends WatcherTransportAction<ExecuteW
 
             ManualExecutionContext.Builder ctxBuilder = ManualExecutionContext.builder(watch, knownWatch, new ManualTriggerEvent(triggerEvent.jobName(), triggerEvent), executionService.defaultThrottlePeriod());
 
-            DateTime executionTime = clock.now(UTC);
+            DateTime executionTime = clock.now(DateTimeZone.UTC);
             ctxBuilder.executionTime(executionTime);
             for (Map.Entry<String, ActionExecutionMode> entry : request.getActionModes().entrySet()) {
                 ctxBuilder.actionMode(entry.getKey(), entry.getValue());

@@ -17,7 +17,7 @@
 
 package org.elasticsearch.watcher.condition.always;
 
-import org.elasticsearch.common.settings.ImmutableSettings;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
@@ -40,7 +40,7 @@ public class AlwaysConditionTests extends ElasticsearchTestCase {
 
     @Test
     public void testParser_Valid() throws Exception {
-        AlwaysConditionFactory factory = new AlwaysConditionFactory(ImmutableSettings.settingsBuilder().build());
+        AlwaysConditionFactory factory = new AlwaysConditionFactory(Settings.settingsBuilder().build());
         XContentBuilder builder = jsonBuilder();
         builder.startObject();
         builder.endObject();
@@ -53,7 +53,7 @@ public class AlwaysConditionTests extends ElasticsearchTestCase {
 
     @Test(expected = AlwaysConditionException.class)
     public void testParser_Invalid() throws Exception {
-        ConditionFactory factor = new AlwaysConditionFactory(ImmutableSettings.settingsBuilder().build());
+        ConditionFactory factor = new AlwaysConditionFactory(Settings.settingsBuilder().build());
         XContentBuilder builder = jsonBuilder()
                 .startObject()
                 .field("foo", "bar")

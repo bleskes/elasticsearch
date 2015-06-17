@@ -17,9 +17,8 @@
 
 package org.elasticsearch.watcher.actions.email.service;
 
-import com.carrotsearch.randomizedtesting.annotations.Repeat;
-import org.elasticsearch.common.collect.ImmutableMap;
-import org.elasticsearch.common.joda.time.DateTime;
+import com.google.common.collect.ImmutableMap;
+import org.joda.time.DateTime;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
@@ -37,7 +36,7 @@ import static org.hamcrest.Matchers.equalTo;
  */
 public class EmailTest extends ElasticsearchTestCase {
 
-    @Test @Repeat(iterations = 100)
+    @Test
     public void testEmail_Parser_SelfGenerated() throws Exception {
         String id = "test-id";
         Email.Address from = randomFrom(new Email.Address("from@from.com"), null);

@@ -17,6 +17,7 @@
 
 package org.elasticsearch.watcher.actions.email.service;
 
+import org.elasticsearch.common.SuppressForbidden;
 import org.elasticsearch.watcher.actions.email.service.support.BodyPartSource;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
@@ -83,10 +84,12 @@ public abstract class Attachment extends BodyPartSource {
             this(id, path.getFileName().toString(), path, contentType);
         }
 
+        @SuppressForbidden(reason = "uses toFile")
         public File(String id, String name, Path path) {
             this(id, name, path, fileTypeMap.getContentType(path.toFile()));
         }
 
+        @SuppressForbidden(reason = "uses toFile")
         public File(String id, String name, Path path, String contentType) {
             super(id, name, contentType);
             this.path = path;

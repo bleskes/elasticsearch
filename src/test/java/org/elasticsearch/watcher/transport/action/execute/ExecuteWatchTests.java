@@ -17,11 +17,10 @@
 
 package org.elasticsearch.watcher.transport.action.execute;
 
-import com.carrotsearch.randomizedtesting.annotations.Repeat;
 import org.elasticsearch.action.ActionRequestValidationException;
-import org.elasticsearch.common.collect.ImmutableMap;
-import org.elasticsearch.common.joda.time.DateTime;
-import org.elasticsearch.common.joda.time.DateTimeZone;
+import com.google.common.collect.ImmutableMap;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.watcher.actions.ActionStatus;
 import org.elasticsearch.watcher.client.WatcherClient;
@@ -119,7 +118,7 @@ public class ExecuteWatchTests extends AbstractWatcherIntegrationTests {
         assertValue(record, "result.actions.0.logging.logged_text", is("_text"));
     }
 
-    @Test @Repeat(iterations = 5)
+    @Test
     public void testExecute_CustomTriggerData() throws Exception {
         WatcherClient watcherClient = watcherClient();
 
@@ -265,7 +264,7 @@ public class ExecuteWatchTests extends AbstractWatcherIntegrationTests {
         assertValue(record, "result.actions.0.logging.logged_text", is("_text"));
     }
 
-    @Test @Repeat(iterations = 20)
+    @Test
     public void testExecute_ActionMode() throws Exception {
         final WatcherClient watcherClient = watcherClient();
 

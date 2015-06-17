@@ -17,10 +17,11 @@
 
 package org.elasticsearch.watcher.test;
 
-import org.elasticsearch.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList;
 import org.elasticsearch.common.inject.Module;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.script.ScriptModule;
 import org.elasticsearch.watcher.WatcherPlugin;
 import org.elasticsearch.watcher.execution.ExecutionModule;
 import org.elasticsearch.watcher.execution.SyncTriggerListener;
@@ -28,6 +29,7 @@ import org.elasticsearch.watcher.execution.WatchExecutor;
 import org.elasticsearch.watcher.support.clock.Clock;
 import org.elasticsearch.watcher.support.clock.ClockMock;
 import org.elasticsearch.watcher.support.clock.ClockModule;
+import org.elasticsearch.watcher.support.init.proxy.ScriptServiceProxy;
 import org.elasticsearch.watcher.trigger.ScheduleTriggerEngineMock;
 import org.elasticsearch.watcher.trigger.TriggerModule;
 import org.elasticsearch.watcher.trigger.manual.ManualTriggerEngine;
@@ -139,4 +141,9 @@ public class TimeWarpedWatcherPlugin extends WatcherPlugin {
             }
         }
     }
+
+    public void onModule(ScriptModule module) {
+        module.registerScriptContext(ScriptServiceProxy.INSTANCE);
+    }
+
 }

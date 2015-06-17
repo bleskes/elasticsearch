@@ -17,9 +17,8 @@
 
 package org.elasticsearch.watcher.actions.throttler;
 
-import com.carrotsearch.randomizedtesting.annotations.Repeat;
-import org.elasticsearch.common.joda.time.DateTime;
-import org.elasticsearch.common.joda.time.PeriodType;
+import org.joda.time.DateTime;
+import org.joda.time.PeriodType;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.test.ElasticsearchTestCase;
 import org.elasticsearch.watcher.actions.ActionStatus;
@@ -40,7 +39,7 @@ import static org.mockito.Mockito.when;
  */
 public class PeriodThrottlerTests extends ElasticsearchTestCase {
 
-    @Test @Repeat(iterations = 10)
+    @Test
     public void testBelowPeriod_Successful() throws Exception {
         PeriodType periodType = randomFrom(PeriodType.millis(), PeriodType.seconds(), PeriodType.minutes());
         TimeValue period = TimeValue.timeValueSeconds(randomIntBetween(2, 5));
@@ -60,7 +59,7 @@ public class PeriodThrottlerTests extends ElasticsearchTestCase {
         assertThat(result.reason(), startsWith("throttling interval is set to [" + period.format(periodType) + "]"));
     }
 
-    @Test @Repeat(iterations = 10)
+    @Test
     public void testAbovePeriod() throws Exception {
         PeriodType periodType = randomFrom(PeriodType.millis(), PeriodType.seconds(), PeriodType.minutes());
         TimeValue period = TimeValue.timeValueSeconds(randomIntBetween(2, 5));
