@@ -45,6 +45,9 @@ import org.elasticsearch.test.ShieldIntegrationTest;
 import org.elasticsearch.transport.TransportInfo;
 import org.elasticsearch.transport.TransportMessage;
 import org.elasticsearch.transport.TransportRequest;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.format.ISODateTimeFormat;
 import org.junit.After;
 import org.junit.Test;
 
@@ -70,7 +73,6 @@ public class IndexAuditTrailTests extends ShieldIntegrationTest {
 
     private static final IndexAuditUserHolder user = new IndexAuditUserHolder(IndexAuditTrail.INDEX_NAME_PREFIX);
 
-    private IndexNameResolver resolver = new IndexNameResolver();
     private IndexNameResolver.Rollover rollover;
     private IndexAuditTrail auditor;
     private boolean remoteIndexing = false;
@@ -554,7 +556,9 @@ public class IndexAuditTrailTests extends ShieldIntegrationTest {
     }
 
     private void assertAuditMessage(SearchHit hit, String layer, String type) {
-        assertThat((Long) hit.field("@timestamp").getValue(), lessThan(System.currentTimeMillis()));
+        assertThat(hit.field("@timestamp").getValue(), notNullValue());
+        DateTime dateTime = ISODateTimeFormat.dateTimeParser().withZoneUTC().parseDateTime((String) hit.field("@timestamp").getValue());
+        assertThat(dateTime.isBefore(DateTime.now(DateTimeZone.UTC)), is(true));
 
         assertThat(clusterService().localNode().getHostName(), equalTo(hit.field("node_host_name").getValue()));
         assertThat(clusterService().localNode().getHostAddress(), equalTo(hit.field("node_host_address").getValue()));
@@ -674,7 +678,7 @@ public class IndexAuditTrailTests extends ShieldIntegrationTest {
     }
 
     private String resolveIndexName() {
-        return resolver.resolve(IndexAuditTrail.INDEX_NAME_PREFIX, System.currentTimeMillis(), rollover);
+        return IndexNameResolver.resolve(IndexAuditTrail.INDEX_NAME_PREFIX, DateTime.now(DateTimeZone.UTC), rollover);
     }
 
     static String remoteHostAddress() throws Exception {
