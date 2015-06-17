@@ -25,6 +25,7 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.watcher.watch.Payload;
 
 import java.io.IOException;
+import java.util.Locale;
 
 /**
  *
@@ -80,7 +81,7 @@ public interface Transform extends ToXContent {
         public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
             builder.startObject();
             builder.field(Field.TYPE.getPreferredName(), type);
-            builder.field(Field.STATUS.getPreferredName(), status);
+            builder.field(Field.STATUS.getPreferredName(), status.name().toLowerCase(Locale.ROOT));
             switch (status) {
                 case SUCCESS:
                     assert reason == null;

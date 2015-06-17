@@ -49,6 +49,8 @@ public class ExecuteWatchRequest extends MasterNodeReadRequest<ExecuteWatchReque
     private Map<String, ActionExecutionMode> actionModes = new HashMap<>();
     private BytesReference watchSource;
 
+    private boolean debug = false;
+
     ExecuteWatchRequest() {
     }
 
@@ -160,7 +162,6 @@ public class ExecuteWatchRequest extends MasterNodeReadRequest<ExecuteWatchReque
     }
 
     /**
-     *
      * @return  the execution modes for the actions. These modes determine the nature of the execution
      *          of the watch actions while the watch is executing.
      */
@@ -176,6 +177,22 @@ public class ExecuteWatchRequest extends MasterNodeReadRequest<ExecuteWatchReque
      */
     public void setActionMode(String actionId, ActionExecutionMode actionMode) {
         actionModes.put(actionId, actionMode);
+    }
+
+    /**
+     * @return whether the watch should execute in debug mode. In debug mode the execution {@code vars}
+     *         will be returned as part of the watch record.
+     */
+    public boolean isDebug() {
+        return debug;
+    }
+
+    /**
+     * @param debug indicates whether the watch should execute in debug mode. In debug mode the
+     *              returned watch record will hold the execution {@code vars}
+     */
+    public void setDebug(boolean debug) {
+        this.debug = debug;
     }
 
     @Override
@@ -225,6 +242,7 @@ public class ExecuteWatchRequest extends MasterNodeReadRequest<ExecuteWatchReque
         if (in.readBoolean()) {
             watchSource = in.readBytesReference();
         }
+        debug = in.readBoolean();
     }
 
 
@@ -251,6 +269,7 @@ public class ExecuteWatchRequest extends MasterNodeReadRequest<ExecuteWatchReque
         if (watchSource != null) {
             out.writeBytesReference(watchSource);
         }
+        out.writeBoolean(debug);
     }
 
     @Override

@@ -39,6 +39,7 @@ import org.elasticsearch.watcher.watch.Payload;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -122,6 +123,7 @@ public class EmailActionTests extends ElasticsearchTestCase {
                                 .put("triggered_time", now)
                                 .put("scheduled_time", now)
                                 .build())
+                        .put("vars", Collections.emptyMap())
                         .build())
                 .build();
 
