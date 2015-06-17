@@ -1,0 +1,37 @@
+<marvel-nav></marvel-nav>
+<marvel-cluster-status status="yellow"></marvel-cluster-status>
+<div class="marvel-settings container-fluid" ng-controller="settings">
+  <div class="row">
+    <div class="col-xs-12"><h1>Settings</h1></div>
+  </div>
+  <form>
+    <div class="row" ng-repeat="metric in metrics">
+      <div class="col-xs-12">
+        <div class="row">
+          <h4>{{ metric.label }}</h4>
+          <p class="description">{{ metric.description }}</p>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-xs-4">
+          <div class="form-group">
+            <label>Warning Threshold</label>
+            <input type="text" class="form-control" placeholder="{{metric.defaults.warning}}">
+          </div>
+        </div>
+        <div class="col-xs-4">
+          <div class="form-group">
+            <label>Critical Threshold</label>
+            <input type="text" class="form-control" placeholder="{{metric.defaults.critical}}">
+          </div>
+        </div>
+        <div class="col-xs-4">
+          <div class="form-group">
+            <label>Time Period (in milliseconds)</label>
+            <input type="text" class="form-control" placeholder="{{metric.defaults.interval}}">
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>

@@ -12,7 +12,7 @@ define(function (require) {
           { id: 'overview', display: 'Overview', url: '#/marvel' },
           { id: 'indices', display: 'Indices', url: '#/marvel/indices' },
           { id: 'nodes', display: 'Nodes', url: '#/marvel/nodes' },
-          { id: 'settings', display: 'Settings', url: '#/marvel/nodes' }
+          { id: 'settings', display: 'Settings', url: '#/marvel/settings' }
         ];
         $scope.sections = _.each($scope.sections, function (section) {
           section.class = (section.url === '#' + path)? 'active' : '';

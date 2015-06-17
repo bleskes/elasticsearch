@@ -167,3 +167,9 @@ marvel-index-listing .pagination li {
   padding: 0 5px;
   display: inline-block;
 }
+.marvel-settings form > .row {
+  border-bottom: 1px solid #EEE;
+}
+.marvel-settings form > .row:first-child {
+  border-top: 1px solid #EEE;
+}
