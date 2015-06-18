@@ -431,7 +431,7 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail {
     }
 
     private Message message(String type, @Nullable String action, @Nullable String principal,
-                            @Nullable String realm, @Nullable String indices, TransportMessage message) throws Exception {
+                            @Nullable String realm, @Nullable String[] indices, TransportMessage message) throws Exception {
 
         Message msg = new Message().start();
         common("transport", type, msg.builder);
@@ -447,7 +447,7 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail {
             msg.builder.field(Field.REALM, realm);
         }
         if (indices != null) {
-            msg.builder.field(Field.INDICES, indices);
+            msg.builder.array(Field.INDICES, indices);
         }
         if (logger.isDebugEnabled()) {
             msg.builder.field(Field.REQUEST, message.getClass().getSimpleName());
@@ -457,7 +457,7 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail {
     }
 
     private Message message(String type, @Nullable String action, @Nullable String principal,
-                            @Nullable String realm, @Nullable String indices, RestRequest request) throws Exception {
+                            @Nullable String realm, @Nullable String[] indices, RestRequest request) throws Exception {
 
         Message msg = new Message().start();
         common("rest", type, msg.builder);
@@ -472,7 +472,7 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail {
             msg.builder.field(Field.REALM, realm);
         }
         if (indices != null) {
-            msg.builder.field(Field.INDICES, indices);
+            msg.builder.array(Field.INDICES, indices);
         }
         if (logger.isDebugEnabled()) {
             msg.builder.field(Field.REQUEST_BODY, restRequestContent(request));
