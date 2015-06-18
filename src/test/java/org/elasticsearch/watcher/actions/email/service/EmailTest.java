@@ -25,6 +25,7 @@ import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.test.ElasticsearchTestCase;
+import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -47,7 +48,7 @@ public class EmailTest extends ElasticsearchTestCase {
         Email.AddressList possibleList = new Email.AddressList(addresses);
         Email.AddressList replyTo = randomFrom(possibleList, null);
         Email.Priority priority = randomFrom(Email.Priority.values());
-        DateTime sentDate = new DateTime(randomInt());
+        DateTime sentDate = new DateTime(randomInt(), DateTimeZone.getDefault());
         Email.AddressList to = randomFrom(possibleList, null);
         Email.AddressList cc = randomFrom(possibleList, null);
         Email.AddressList bcc = randomFrom(possibleList, null);

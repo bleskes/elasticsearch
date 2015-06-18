@@ -22,6 +22,7 @@ import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.common.bytes.BytesReference;
+import org.elasticsearch.watcher.support.clock.SystemClock;
 import org.joda.time.DateTime;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.ToXContent;
@@ -449,7 +450,7 @@ public class BasicWatcherTests extends AbstractWatcherIntegrationTests {
     private void testConditionSearch(SearchRequest request) throws Exception {
         if (timeWarped()) {
             // reset, so we don't miss event docs when we filter over the _timestamp field.
-            timeWarp().clock().setTime(new DateTime());
+            timeWarp().clock().setTime(SystemClock.INSTANCE.now());
         }
 
         String watchName = "_name";
@@ -462,7 +463,7 @@ public class BasicWatcherTests extends AbstractWatcherIntegrationTests {
                         .condition(ConditionBuilders.scriptCondition("return ctx.payload.hits.total >= 3")))
                 .get();
 
-        logger.info("created watch [{}] at [{}]", watchName, DateTime.now());
+        logger.info("created watch [{}] at [{}]", watchName, SystemClock.INSTANCE.now());
 
         client().prepareIndex("events", "event")
                 .setCreate(true)
