@@ -36,6 +36,8 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Function;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobConfigurationException;
 import com.prelert.job.messages.Messages;
@@ -52,6 +54,7 @@ import com.prelert.job.verification.Verifiable;
  * Object wrappers are used around integral types & booleans so they can take
  * <code>null</code> values.
  */
+@JsonInclude(Include.NON_NULL)
 public class AnalysisConfig implements Verifiable
 {
     /**

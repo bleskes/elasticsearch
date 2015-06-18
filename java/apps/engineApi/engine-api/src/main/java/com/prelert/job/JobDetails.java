@@ -31,6 +31,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.prelert.job.process.params.ModelDebugConfig;
 import com.prelert.job.transform.TransformConfig;
 
@@ -42,6 +44,7 @@ import com.prelert.job.transform.TransformConfig;
  * respectively. If the job was created to read data from a list of files
  * FileUrls will be a non-empty list else the expects data to be streamed to it.
  */
+@JsonInclude(Include.NON_NULL)
 public class JobDetails
 {
     public static final long DEFAULT_TIMEOUT = 600;
