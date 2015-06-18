@@ -18,6 +18,7 @@
 package org.elasticsearch.shield.audit.index;
 
 import com.google.common.base.Predicate;
+import org.elasticsearch.action.admin.indices.template.get.GetIndexTemplatesResponse;
 import org.elasticsearch.action.exists.ExistsResponse;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.shield.audit.logfile.LoggingAuditTrail;
@@ -27,6 +28,8 @@ import org.elasticsearch.test.ShieldIntegrationTest;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
+
+import static org.hamcrest.Matchers.*;
 
 @ClusterScope(scope = Scope.TEST, randomDynamicTemplates = false)
 public class IndexAuditTrailEnabledTests extends ShieldIntegrationTest {
@@ -56,7 +59,12 @@ public class IndexAuditTrailEnabledTests extends ShieldIntegrationTest {
     }
 
     @Test
-    public void testIndexAuditTrailIndexExists() throws Exception {
+    public void testAuditTrailIndexAndTemplateExists() throws Exception {
+        GetIndexTemplatesResponse response = client().admin().indices().prepareGetTemplates(IndexAuditTrail.INDEX_TEMPLATE_NAME).execute().actionGet();
+        assertThat(response.getIndexTemplates().size(), is(1));
+        assertThat(response.getIndexTemplates().get(0).name(), is(IndexAuditTrail.INDEX_TEMPLATE_NAME));
+
+        // Wait for the index to be created since we have our own startup
         awaitIndexCreation();
     }
 

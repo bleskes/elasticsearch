@@ -100,7 +100,7 @@ public class ShieldClearScrollTests extends ShieldIntegrationTest {
     public void testThatClearingAllScrollIdsWorks() throws Exception {
         String shieldUser = "allowed_user:change_me";
         String basicAuth = basicAuthHeaderValue("allowed_user", new SecuredString("change_me".toCharArray()));
-        ClearScrollResponse clearScrollResponse = internalCluster().transportClient().prepareClearScroll()
+        ClearScrollResponse clearScrollResponse = internalTestCluster().transportClient().prepareClearScroll()
             .putHeader("shield.user", shieldUser)
             .putHeader("Authorization", basicAuth)
             .addScrollId("_all").get();
@@ -114,7 +114,7 @@ public class ShieldClearScrollTests extends ShieldIntegrationTest {
         String shieldUser = "denied_user:change_me";
         String basicAuth = basicAuthHeaderValue("denied_user", new SecuredString("change_me".toCharArray()));
 
-        assertThrows(internalCluster().transportClient().prepareClearScroll()
+        assertThrows(internalTestCluster().transportClient().prepareClearScroll()
                 .putHeader("shield.user", shieldUser)
                 .putHeader("Authorization", basicAuth)
                 .addScrollId("_all"), AuthorizationException.class, "action [cluster:admin/indices/scroll/clear_all] is unauthorized for user [denied_user]");

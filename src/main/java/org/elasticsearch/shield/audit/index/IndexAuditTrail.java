@@ -43,6 +43,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.common.util.concurrent.EsExecutors;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentBuilderString;
 import org.elasticsearch.common.xcontent.XContentFactory;
@@ -67,7 +68,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.*;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.elasticsearch.shield.audit.AuditUtil.indices;
@@ -82,14 +83,16 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail {
 
     public static final int DEFAULT_BULK_SIZE = 1000;
     public static final int MAX_BULK_SIZE = 10000;
+    public static final int DEFAULT_MAX_QUEUE_SIZE = 1000;
     public static final TimeValue DEFAULT_FLUSH_INTERVAL = TimeValue.timeValueSeconds(1);
     public static final IndexNameResolver.Rollover DEFAULT_ROLLOVER = IndexNameResolver.Rollover.DAILY;
     public static final String NAME = "index";
     public static final String INDEX_NAME_PREFIX = ".shield_audit_log";
     public static final String DOC_TYPE = "event";
     public static final String ROLLOVER_SETTING = "shield.audit.index.rollover";
+    public static final String QUEUE_SIZE_SETTING = "shield.audit.index.queue_max_size";
+    public static final String INDEX_TEMPLATE_NAME = "shield_audit_log";
 
-    static final String INDEX_TEMPLATE_NAME = "shield_audit_log";
     static final String[] DEFAULT_EVENT_INCLUDES = new String[] {
             ACCESS_DENIED.toString(),
             ACCESS_GRANTED.toString(),
@@ -102,12 +105,14 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail {
 
     private static final ImmutableSet<String> forbiddenIndexSettings = ImmutableSet.of("index.mapper.dynamic");
 
-    private final AtomicReference<State> state = new AtomicReference<>(State.STOPPED);
+    private final AtomicReference<State> state = new AtomicReference<>(State.INITIALIZED);
     private final String nodeName;
     private final IndexAuditUserHolder auditUser;
     private final Provider<Client> clientProvider;
     private final AuthenticationService authenticationService;
     private final Environment environment;
+    private final LinkedBlockingQueue<Message> eventQueue;
+    private final QueueConsumer queueConsumer;
 
     private BulkProcessor bulkProcessor;
     private Client client;
@@ -115,7 +120,6 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail {
     private IndexNameResolver.Rollover rollover;
     private String nodeHostName;
     private String nodeHostAddress;
-    private ConcurrentLinkedQueue<Message> eventQueue = new ConcurrentLinkedQueue<>();
     private EnumSet<IndexAuditLevel> events;
 
     @Override
@@ -133,6 +137,14 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail {
         this.clientProvider = clientProvider;
         this.environment = environment;
         this.nodeName = settings.get("name");
+        this.queueConsumer = new QueueConsumer(EsExecutors.threadName(settings, "audit-queue-consumer"));
+
+        int maxQueueSize = settings.getAsInt(QUEUE_SIZE_SETTING, DEFAULT_MAX_QUEUE_SIZE);
+        if (maxQueueSize <= 0) {
+            logger.warn("invalid value [{}] for setting [{}]. using default value [{}]", maxQueueSize, QUEUE_SIZE_SETTING, DEFAULT_MAX_QUEUE_SIZE);
+            maxQueueSize = DEFAULT_MAX_QUEUE_SIZE;
+        }
+        this.eventQueue = new LinkedBlockingQueue<>(maxQueueSize);
 
         // we have to initialize this here since we use rollover in determining if we can start...
         try {
@@ -213,7 +225,7 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail {
      * @param master flag indicating if the current node is master
      */
     public void start(boolean master) {
-        if (state.compareAndSet(State.STOPPED, State.STARTING)) {
+        if (state.compareAndSet(State.INITIALIZED, State.STARTING)) {
             String hostname = "n/a";
             String hostaddr = "n/a";
             try {
@@ -230,14 +242,15 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail {
                 putTemplate(customAuditIndexSettings(settings));
             }
             initializeBulkProcessor();
+            queueConsumer.start();
             state.set(State.STARTED);
-            drainQueue();
         }
     }
 
     public void stop() {
         if (state.compareAndSet(State.STARTED, State.STOPPING)) {
             try {
+                queueConsumer.interrupt();
                 bulkProcessor.flush();
             } finally {
                 state.set(State.STOPPED);
@@ -265,7 +278,7 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail {
     public void anonymousAccessDenied(String action, TransportMessage<?> message) {
         if (events.contains(ANONYMOUS_ACCESS_DENIED)) {
             try {
-                submit(message("anonymous_access_denied", action, null, null, indices(message), message));
+                enqueue(message("anonymous_access_denied", action, null, null, indices(message), message));
             } catch (Exception e) {
                 logger.warn("failed to index audit event: [anonymous_access_denied]", e);
             }
@@ -276,7 +289,7 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail {
     public void anonymousAccessDenied(RestRequest request) {
         if (events.contains(ANONYMOUS_ACCESS_DENIED)) {
             try {
-                submit(message("anonymous_access_denied", null, null, null, null, request));
+                enqueue(message("anonymous_access_denied", null, null, null, null, request));
             } catch (Exception e) {
                 logger.warn("failed to index audit event: [anonymous_access_denied]", e);
             }
@@ -287,7 +300,7 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail {
     public void authenticationFailed(String action, TransportMessage<?> message) {
         if (events.contains(AUTHENTICATION_FAILED)) {
             try {
-                submit(message("authentication_failed", action, null, null, indices(message), message));
+                enqueue(message("authentication_failed", action, null, null, indices(message), message));
             } catch (Exception e) {
                 logger.warn("failed to index audit event: [authentication_failed]", e);
             }
@@ -298,7 +311,7 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail {
     public void authenticationFailed(RestRequest request) {
         if (events.contains(AUTHENTICATION_FAILED)) {
             try {
-                submit(message("authentication_failed", null, null, null, null, request));
+                enqueue(message("authentication_failed", null, null, null, null, request));
             } catch (Exception e) {
                 logger.warn("failed to index audit event: [authentication_failed]", e);
             }
@@ -310,7 +323,7 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail {
         if (events.contains(AUTHENTICATION_FAILED)) {
             if (!principalIsAuditor(token.principal())) {
                 try {
-                    submit(message("authentication_failed", action, token.principal(), null, indices(message), message));
+                    enqueue(message("authentication_failed", action, token.principal(), null, indices(message), message));
                 } catch (Exception e) {
                     logger.warn("failed to index audit event: [authentication_failed]", e);
                 }
@@ -323,7 +336,7 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail {
         if (events.contains(AUTHENTICATION_FAILED)) {
             if (!principalIsAuditor(token.principal())) {
                 try {
-                    submit(message("authentication_failed", null, token.principal(), null, null, request));
+                    enqueue(message("authentication_failed", null, token.principal(), null, null, request));
                 } catch (Exception e) {
                     logger.warn("failed to index audit event: [authentication_failed]", e);
                 }
@@ -336,7 +349,7 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail {
         if (events.contains(AUTHENTICATION_FAILED)) {
             if (!principalIsAuditor(token.principal())) {
                 try {
-                    submit(message("authentication_failed", action, token.principal(), realm, indices(message), message));
+                    enqueue(message("authentication_failed", action, token.principal(), realm, indices(message), message));
                 } catch (Exception e) {
                     logger.warn("failed to index audit event: [authentication_failed]", e);
                 }
@@ -349,7 +362,7 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail {
         if (events.contains(AUTHENTICATION_FAILED)) {
             if (!principalIsAuditor(token.principal())) {
                 try {
-                    submit(message("authentication_failed", null, token.principal(), realm, null, request));
+                    enqueue(message("authentication_failed", null, token.principal(), realm, null, request));
                 } catch (Exception e) {
                     logger.warn("failed to index audit event: [authentication_failed]", e);
                 }
@@ -364,14 +377,14 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail {
             if (user.isSystem() && Privilege.SYSTEM.predicate().apply(action)) {
                 if (events.contains(SYSTEM_ACCESS_GRANTED)) {
                     try {
-                        submit(message("access_granted", action, user.principal(), null, indices(message), message));
+                        enqueue(message("access_granted", action, user.principal(), null, indices(message), message));
                     } catch (Exception e) {
                         logger.warn("failed to index audit event: [access_granted]", e);
                     }
                 }
             } else if (events.contains(ACCESS_GRANTED)) {
                 try {
-                    submit(message("access_granted", action, user.principal(), null, indices(message), message));
+                    enqueue(message("access_granted", action, user.principal(), null, indices(message), message));
                 } catch (Exception e) {
                     logger.warn("failed to index audit event: [access_granted]", e);
                 }
@@ -384,7 +397,7 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail {
         if (events.contains(ACCESS_DENIED)) {
             if (!principalIsAuditor(user.principal())) {
                 try {
-                    submit(message("access_denied", action, user.principal(), null, indices(message), message));
+                    enqueue(message("access_denied", action, user.principal(), null, indices(message), message));
                 } catch (Exception e) {
                     logger.warn("failed to index audit event: [access_denied]", e);
                 }
@@ -397,7 +410,7 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail {
         if (events.contains(TAMPERED_REQUEST)) {
             if (!principalIsAuditor(user.principal())) {
                 try {
-                    submit(message("tampered_request", action, user.principal(), null, indices(request), request));
+                    enqueue(message("tampered_request", action, user.principal(), null, indices(request), request));
                 } catch (Exception e) {
                     logger.warn("failed to index audit event: [tampered_request]", e);
                 }
@@ -409,7 +422,7 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail {
     public void connectionGranted(InetAddress inetAddress, String profile, ShieldIpFilterRule rule) {
         if (events.contains(CONNECTION_GRANTED)) {
             try {
-                submit(message("ip_filter", "connection_granted", inetAddress, profile, rule));
+                enqueue(message("ip_filter", "connection_granted", inetAddress, profile, rule));
             } catch (Exception e) {
                 logger.warn("failed to index audit event: [connection_granted]", e);
             }
@@ -420,7 +433,7 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail {
     public void connectionDenied(InetAddress inetAddress, String profile, ShieldIpFilterRule rule) {
         if (events.contains(CONNECTION_DENIED)) {
             try {
-                submit(message("ip_filter", "connection_denied", inetAddress, profile, rule));
+                enqueue(message("ip_filter", "connection_denied", inetAddress, profile, rule));
             } catch (Exception e) {
                 logger.warn("failed to index audit event: [connection_denied]", e);
             }
@@ -533,17 +546,14 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail {
         return builder;
     }
 
-    void submit(Message message) {
-        if (state.get() != State.STARTED) {
-            eventQueue.add(message);
-            return;
+    void enqueue(Message message) {
+        State currentState = state();
+        if (currentState != State.STOPPING && currentState != State.STOPPED) {
+            boolean accepted = eventQueue.offer(message);
+            if (!accepted) {
+                throw new ShieldException("queue is full, bulk processor may have stopped indexing");
+            }
         }
-
-        IndexRequest indexRequest = client.prepareIndex()
-                .setIndex(resolve(INDEX_NAME_PREFIX, message.timestamp, rollover))
-                .setType(DOC_TYPE).setSource(message.builder).request();
-        authenticationService.attachUserHeaderIfMissing(indexRequest, auditUser.user());
-        bulkProcessor.add(indexRequest);
     }
 
     private void initializeClient() {
@@ -670,11 +680,34 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail {
                 .build();
     }
 
-    private void drainQueue() {
-        Message message = eventQueue.poll();
-        while (message != null) {
-            submit(message);
-            message = eventQueue.poll();
+    private class QueueConsumer extends Thread {
+
+        volatile boolean running = true;
+
+        QueueConsumer(String name) {
+            super(name);
+            setDaemon(true);
+        }
+
+        @Override
+        public void run() {
+            while (running) {
+                try {
+                    Message message = eventQueue.take();
+                    IndexRequest indexRequest = client.prepareIndex()
+                            .setIndex(resolve(INDEX_NAME_PREFIX, message.timestamp, rollover))
+                            .setType(DOC_TYPE).setSource(message.builder).request();
+                    authenticationService.attachUserHeaderIfMissing(indexRequest, auditUser.user());
+                    bulkProcessor.add(indexRequest);
+                } catch (InterruptedException e) {
+                    logger.debug("index audit queue consumer interrupted", e);
+                    running = false;
+                    return;
+                } catch (Exception e) {
+                    // log the exception and keep going
+                    logger.warn("failed to index audit message from queue", e);
+                }
+            }
         }
     }
 
@@ -721,9 +754,10 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail {
     }
 
     public enum State {
-        STOPPED,
+        INITIALIZED,
         STARTING,
         STARTED,
-        STOPPING
+        STOPPING,
+        STOPPED
     }
 }

@@ -96,7 +96,7 @@ public class SslMultiPortTests extends ShieldIntegrationTest {
     private TransportClient createTransportClient(Settings additionalSettings) {
         Settings settings = settingsBuilder().put(transportClientSettings())
                 .put("name", "programmatic_transport_client")
-                .put("cluster.name", internalCluster().getClusterName())
+                .put("cluster.name", internalTestCluster().getClusterName())
                 .put("path.home", createTempDir())
                 .put(additionalSettings)
                 .build();
@@ -109,7 +109,7 @@ public class SslMultiPortTests extends ShieldIntegrationTest {
      */
     @Test
     public void testThatStandardTransportClientCanConnectToDefaultProfile() throws Exception {
-        assertGreenClusterState(internalCluster().transportClient());
+        assertGreenClusterState(internalTestCluster().transportClient());
     }
 
     /**
@@ -194,7 +194,7 @@ public class SslMultiPortTests extends ShieldIntegrationTest {
     public void testThatProfileTransportClientCannotConnectToDefaultProfile() throws Exception {
         Settings settings = ShieldSettingsSource.getSSLSettingsForStore("/org/elasticsearch/shield/transport/ssl/certs/simple/testclient-client-profile.jks", "testclient-client-profile");
         try (TransportClient transportClient = createTransportClient(settings)) {
-            TransportAddress transportAddress = internalCluster().getInstance(Transport.class).boundAddress().boundAddress();
+            TransportAddress transportAddress = internalTestCluster().getInstance(Transport.class).boundAddress().boundAddress();
             transportClient.addTransportAddress(transportAddress);
             transportClient.admin().cluster().prepareHealth().get();
         }
@@ -221,7 +221,7 @@ public class SslMultiPortTests extends ShieldIntegrationTest {
     public void testThatTransportClientCanConnectToNoSslProfile() throws Exception {
         Settings settings = settingsBuilder()
                 .put("shield.user", DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
-                .put("cluster.name", internalCluster().getClusterName())
+                .put("cluster.name", internalTestCluster().getClusterName())
                 .put("path.home", createTempDir())
                 .build();
         try (TransportClient transportClient = TransportClient.builder().settings(settings).loadConfigSettings(false).build()) {
@@ -238,11 +238,11 @@ public class SslMultiPortTests extends ShieldIntegrationTest {
     public void testThatTransportClientCannotConnectToDefaultProfile() throws Exception {
         Settings settings = settingsBuilder()
                 .put("shield.user", DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
-                .put("cluster.name", internalCluster().getClusterName())
+                .put("cluster.name", internalTestCluster().getClusterName())
                 .put("path.home", createTempDir())
                 .build();
         try (TransportClient transportClient = TransportClient.builder().settings(settings).loadConfigSettings(false).build()) {
-            transportClient.addTransportAddress(internalCluster().getInstance(Transport.class).boundAddress().boundAddress());
+            transportClient.addTransportAddress(internalTestCluster().getInstance(Transport.class).boundAddress().boundAddress());
             assertGreenClusterState(transportClient);
         }
     }
@@ -255,7 +255,7 @@ public class SslMultiPortTests extends ShieldIntegrationTest {
     public void testThatTransportClientCannotConnectToClientProfile() throws Exception {
         Settings settings = settingsBuilder()
                 .put("shield.user", DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
-                .put("cluster.name", internalCluster().getClusterName())
+                .put("cluster.name", internalTestCluster().getClusterName())
                 .put("path.home", createTempDir())
                 .build();
         try (TransportClient transportClient = TransportClient.builder().settings(settings).loadConfigSettings(false).build()) {
@@ -272,7 +272,7 @@ public class SslMultiPortTests extends ShieldIntegrationTest {
     public void testThatTransportClientCannotConnectToNoClientAuthProfile() throws Exception {
         Settings settings = settingsBuilder()
                 .put("shield.user", DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
-                .put("cluster.name", internalCluster().getClusterName())
+                .put("cluster.name", internalTestCluster().getClusterName())
                 .put("path.home", createTempDir())
                 .build();
         try (TransportClient transportClient = TransportClient.builder().settings(settings).loadConfigSettings(false).build()) {
@@ -290,7 +290,7 @@ public class SslMultiPortTests extends ShieldIntegrationTest {
     public void testThatTransportClientWithOnlyTruststoreCanConnectToNoClientAuthProfile() throws Exception {
         Settings settings = settingsBuilder()
                 .put("shield.user", DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
-                .put("cluster.name", internalCluster().getClusterName())
+                .put("cluster.name", internalTestCluster().getClusterName())
                 .put("shield.transport.ssl", true)
                 .put("shield.ssl.truststore.path", getDataPath("/org/elasticsearch/shield/transport/ssl/certs/simple/truststore-testnode-only.jks"))
                 .put("shield.ssl.truststore.password", "truststore-testnode-only")
@@ -312,7 +312,7 @@ public class SslMultiPortTests extends ShieldIntegrationTest {
     public void testThatTransportClientWithOnlyTruststoreCannotConnectToClientProfile() throws Exception {
         Settings settings = settingsBuilder()
                 .put("shield.user", DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
-                .put("cluster.name", internalCluster().getClusterName())
+                .put("cluster.name", internalTestCluster().getClusterName())
                 .put("shield.transport.ssl", true)
                 .put("shield.ssl.truststore.path", getDataPath("/org/elasticsearch/shield/transport/ssl/certs/simple/truststore-testnode-only.jks"))
                 .put("shield.ssl.truststore.password", "truststore-testnode-only")
@@ -334,14 +334,14 @@ public class SslMultiPortTests extends ShieldIntegrationTest {
     public void testThatTransportClientWithOnlyTruststoreCannotConnectToDefaultProfile() throws Exception {
         Settings settings = settingsBuilder()
                 .put("shield.user", DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
-                .put("cluster.name", internalCluster().getClusterName())
+                .put("cluster.name", internalTestCluster().getClusterName())
                 .put("shield.transport.ssl", true)
                 .put("shield.ssl.truststore.path", getDataPath("/org/elasticsearch/shield/transport/ssl/certs/simple/truststore-testnode-only.jks"))
                 .put("shield.ssl.truststore.password", "truststore-testnode-only")
                 .put("path.home", createTempDir())
                 .build();
         try (TransportClient transportClient = TransportClient.builder().settings(settings).loadConfigSettings(false).build()) {
-            transportClient.addTransportAddress(internalCluster().getInstance(Transport.class).boundAddress().boundAddress());
+            transportClient.addTransportAddress(internalTestCluster().getInstance(Transport.class).boundAddress().boundAddress());
                     assertGreenClusterState(transportClient);
         }
     }
@@ -355,7 +355,7 @@ public class SslMultiPortTests extends ShieldIntegrationTest {
     public void testThatTransportClientWithOnlyTruststoreCannotConnectToNoSslProfile() throws Exception {
         Settings settings = settingsBuilder()
                 .put("shield.user", DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
-                .put("cluster.name", internalCluster().getClusterName())
+                .put("cluster.name", internalTestCluster().getClusterName())
                 .put("shield.transport.ssl", true)
                 .put("shield.ssl.truststore.path", getDataPath("/org/elasticsearch/shield/transport/ssl/certs/simple/truststore-testnode-only.jks"))
                 .put("shield.ssl.truststore.password", "truststore-testnode-only")
@@ -376,12 +376,12 @@ public class SslMultiPortTests extends ShieldIntegrationTest {
     public void testThatSSLTransportClientWithNoTruststoreCannotConnectToDefaultProfile() throws Exception {
         Settings settings = settingsBuilder()
                 .put("shield.user", DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
-                .put("cluster.name", internalCluster().getClusterName())
+                .put("cluster.name", internalTestCluster().getClusterName())
                 .put("shield.transport.ssl", true)
                 .put("path.home", createTempDir())
                 .build();
         try (TransportClient transportClient = TransportClient.builder().settings(settings).loadConfigSettings(false).build()) {
-            transportClient.addTransportAddress(internalCluster().getInstance(Transport.class).boundAddress().boundAddress());
+            transportClient.addTransportAddress(internalTestCluster().getInstance(Transport.class).boundAddress().boundAddress());
             assertGreenClusterState(transportClient);
         }
     }
@@ -395,7 +395,7 @@ public class SslMultiPortTests extends ShieldIntegrationTest {
     public void testThatSSLTransportClientWithNoTruststoreCannotConnectToClientProfile() throws Exception {
         Settings settings = settingsBuilder()
                 .put("shield.user", DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
-                .put("cluster.name", internalCluster().getClusterName())
+                .put("cluster.name", internalTestCluster().getClusterName())
                 .put("shield.transport.ssl", true)
                 .put("path.home", createTempDir())
                 .build();
@@ -414,7 +414,7 @@ public class SslMultiPortTests extends ShieldIntegrationTest {
     public void testThatSSLTransportClientWithNoTruststoreCannotConnectToNoClientAuthProfile() throws Exception {
         Settings settings = settingsBuilder()
                 .put("shield.user", DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
-                .put("cluster.name", internalCluster().getClusterName())
+                .put("cluster.name", internalTestCluster().getClusterName())
                 .put("shield.transport.ssl", true)
                 .put("path.home", createTempDir())
                 .build();
@@ -433,7 +433,7 @@ public class SslMultiPortTests extends ShieldIntegrationTest {
     public void testThatSSLTransportClientWithNoTruststoreCannotConnectToNoSslProfile() throws Exception {
         Settings settings = settingsBuilder()
                 .put("shield.user", DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
-                .put("cluster.name", internalCluster().getClusterName())
+                .put("cluster.name", internalTestCluster().getClusterName())
                 .put("shield.transport.ssl", true)
                 .put("path.home", createTempDir())
                 .build();
@@ -444,7 +444,7 @@ public class SslMultiPortTests extends ShieldIntegrationTest {
     }
 
     private static int getProfilePort(String profile) {
-        TransportAddress transportAddress = internalCluster().getInstance(Transport.class).profileBoundAddresses().get(profile).boundAddress();
+        TransportAddress transportAddress = internalTestCluster().getInstance(Transport.class).profileBoundAddresses().get(profile).boundAddress();
         assert transportAddress instanceof InetSocketTransportAddress;
         return ((InetSocketTransportAddress)transportAddress).address().getPort();
     }

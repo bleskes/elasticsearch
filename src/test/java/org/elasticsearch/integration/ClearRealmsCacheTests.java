@@ -141,7 +141,7 @@ public class ClearRealmsCacheTests extends ShieldIntegrationTest {
         }
 
         List<Realm> realms = new ArrayList<>();
-        for (Realms nodeRealms : internalCluster().getInstances(Realms.class)) {
+        for (Realms nodeRealms : internalTestCluster().getInstances(Realms.class)) {
             realms.add(nodeRealms.realm("esusers"));
         }
 
@@ -178,7 +178,7 @@ public class ClearRealmsCacheTests extends ShieldIntegrationTest {
         client.authc().clearRealmCache(scenario.createRequest(), new ActionListener<ClearRealmCacheResponse>() {
             @Override
             public void onResponse(ClearRealmCacheResponse response) {
-                assertThat(response.getNodes().length, equalTo(internalCluster().getNodeNames().length));
+                assertThat(response.getNodes().length, equalTo(internalTestCluster().getNodeNames().length));
                 latch.countDown();
             }
 
