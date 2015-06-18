@@ -17,10 +17,8 @@
 
 package org.elasticsearch.shield.audit.logfile;
 
-import com.carrotsearch.randomizedtesting.annotations.Repeat;
 import org.elasticsearch.action.IndicesRequest;
 import org.elasticsearch.action.support.IndicesOptions;
-import org.elasticsearch.common.SuppressForbidden;
 import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.network.NetworkUtils;
@@ -53,8 +51,6 @@ import static org.mockito.Mockito.when;
 /**
  *
  */
-@SuppressForbidden(reason = "this test should repeat")
-@Repeat(iterations = 10)
 public class LoggingAuditTrailTests extends ElasticsearchTestCase {
 
     private static enum RestContent {
@@ -495,8 +491,7 @@ public class LoggingAuditTrailTests extends ElasticsearchTestCase {
         }
     }
 
-    @SuppressForbidden(reason = "this test should repeat")
-    @Test @Repeat(iterations = 10)
+    @Test
     public void testOriginAttributes() throws Exception {
         MockMessage message = new MockMessage();
         String text = LoggingAuditTrail.originAttributes(message);
