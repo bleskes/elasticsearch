@@ -140,19 +140,14 @@ latest job. For example:
   "documents" : [ {
     "location" : "http://localhost:8080/engine/v1/jobs/farequote",
     "id" : "farequote",
-    "description" : null,
     "analysisConfig" : {
       "detectors" : [ {
         "fieldName" : "responsetime",
         "function" : "metric",
         "byFieldName" : "airline"
       } ],
-      "period" : null,
-      "bucketSpan" : 3600,
-      "batchSpan" : null
-      "summaryCountFieldName" : null
+      "bucketSpan" : 3600
     },
-    "analysisLimits" : null,
     "dataDescription" : {
       "format" : "DELIMITED",
       "fieldDelimiter" : ",",
@@ -173,9 +168,7 @@ latest job. For example:
       "outOfOrderTimeStampCount" : 0,
       "processedDataPointCount" : 0
     },
-    "createTime" : "2014-08-22T12:49:52.287+0000",
-    "finishedTime" : null,
-    "lastDataTime" : null
+    "createTime" : "2014-08-22T12:49:52.287+0000"
   } ]
 }
 
