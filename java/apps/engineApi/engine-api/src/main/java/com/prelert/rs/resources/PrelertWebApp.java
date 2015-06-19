@@ -47,6 +47,7 @@ import com.prelert.rs.provider.DataUploadExceptionMapper;
 import com.prelert.rs.provider.ElasticsearchExceptionMapper;
 import com.prelert.rs.provider.JobConfigurationMessageBodyReader;
 import com.prelert.rs.provider.JobExceptionMapper;
+import com.prelert.rs.provider.MultiDataPostResultWriter;
 import com.prelert.rs.provider.NativeProcessRunExceptionMapper;
 import com.prelert.rs.provider.PaginationWriter;
 import com.prelert.rs.provider.SingleDocumentWriter;
@@ -94,6 +95,7 @@ public class PrelertWebApp extends Application
 		m_ResourceClasses.add(AlertMessageBodyWriter.class);
 		m_ResourceClasses.add(DataCountsWriter.class);
 		m_ResourceClasses.add(JobConfigurationMessageBodyReader.class);
+		m_ResourceClasses.add(MultiDataPostResultWriter.class);
 		m_ResourceClasses.add(PaginationWriter.class);
 		m_ResourceClasses.add(SingleDocumentWriter.class);
 

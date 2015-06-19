@@ -35,7 +35,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.StringJoiner;
 import java.util.zip.ZipInputStream;
 
 import org.apache.http.HttpEntity;
@@ -67,6 +69,7 @@ import com.prelert.job.JobDetails;
 import com.prelert.job.alert.Alert;
 import com.prelert.job.results.CategoryDefinition;
 import com.prelert.rs.data.ApiError;
+import com.prelert.rs.data.MultiDataPostResult;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
 
@@ -433,6 +436,34 @@ public class EngineApiClient implements Closeable
         return uploadStream(inputStream, postUrl, compressed, new DataCounts(),
                 content -> m_JsonMapper.readValue(content, new TypeReference<DataCounts>() {}));
     }
+
+
+    /**
+     * Read data from <code>inputStream</code> and upload to multiple jobs
+     * simultaneously.
+     *
+     * @param jobIds The list of jobs to send the data to
+     * @param inputStream The data to write to the web service
+     * @param compressed Is the data gzipped compressed?
+     * @return A list of processed data counts/errors.
+     * @throws IOException
+     */
+    public MultiDataPostResult multipleUpload(List<String> jobIds, InputStream inputStream,
+                                            boolean compressed)
+    throws IOException
+    {
+        StringJoiner joiner = new StringJoiner(",");
+        for (String id : jobIds)
+        {
+            joiner.add(id);
+        }
+
+        String postUrl = String.format("%s/data/%s", m_BaseUrl, joiner.toString());
+
+        return uploadStream(inputStream, postUrl, compressed, new MultiDataPostResult(),
+                content -> m_JsonMapper.readValue(content, new TypeReference<MultiDataPostResult>() {}));
+    }
+
 
     @FunctionalInterface
     private interface FunctionThatThrowsIoException<T, R>

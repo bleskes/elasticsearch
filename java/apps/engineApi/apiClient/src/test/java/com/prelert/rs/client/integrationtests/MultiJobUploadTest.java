@@ -34,7 +34,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.StringJoiner;
 
 import org.apache.http.client.ClientProtocolException;
 import org.apache.log4j.ConsoleAppender;
@@ -50,6 +49,8 @@ import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
 import com.prelert.rs.client.EngineApiClient;
+import com.prelert.rs.data.DataPostResult;
+import com.prelert.rs.data.MultiDataPostResult;
 import com.prelert.rs.data.Pagination;
 
 /**
@@ -111,14 +112,20 @@ public class MultiJobUploadTest
     private void uploadData(List<String> jobs, File dataFile)
     throws IOException
     {
-        StringJoiner joiner = new StringJoiner(",");
-        for (String id : jobs)
-        {
-            joiner.add(id);
-        }
-
         FileInputStream stream = new FileInputStream(dataFile);
-        m_WebServiceClient.streamingUpload(joiner.toString(), stream, false);
+        MultiDataPostResult results = m_WebServiceClient.multipleUpload(jobs, stream, false);
+
+        test(m_WebServiceClient.getLastError() == null);
+
+        test(results.getResults().size() == jobs.size());
+        test(results.getResults().size() > 0);
+
+        test(results.getResults().get(0).getDataCounts().getInputRecordCount() > 0);
+        for (DataPostResult result : results.getResults())
+        {
+            test(jobs.contains(result.getJobId()));
+            test(result.getError() == null);
+        }
     }
 
     private void compareBuckets(List<String> jobs)
