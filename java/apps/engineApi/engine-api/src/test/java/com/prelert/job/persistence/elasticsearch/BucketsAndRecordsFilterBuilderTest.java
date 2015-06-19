@@ -46,7 +46,7 @@ public class BucketsAndRecordsFilterBuilderTest
     @Test
     public void testBuild_GivenFilterInCtorButNoAdditionalFilters()
     {
-        FilterBuilder originalFilter = FilterBuilders.limitFilter(42);
+        FilterBuilder originalFilter = FilterBuilders.existsFilter("someField") ;
         FilterBuilder fb = new BucketsAndRecordsFilterBuilder(originalFilter).build();
 
         assertEquals(originalFilter.toString(), fb.toString());
@@ -175,7 +175,7 @@ public class BucketsAndRecordsFilterBuilderTest
     @Test
     public void testBuild_GivenCombination()
     {
-        FilterBuilder originalFilter = FilterBuilders.limitFilter(42);
+        FilterBuilder originalFilter = FilterBuilders.existsFilter("someField");
         FilterBuilder timeFilter = FilterBuilders
                 .rangeFilter(ElasticsearchMappings.ES_TIMESTAMP)
                 .gte(1000)
