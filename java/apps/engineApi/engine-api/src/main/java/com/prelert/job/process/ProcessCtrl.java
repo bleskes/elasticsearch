@@ -185,6 +185,7 @@ public class ProcessCtrl
     public static final String TIME_FIELD_ARG = "--timefield=";
     public static final String VERSION_ARG = "--version";
 
+    private static final String CONF_EXTENSION = ".conf";
 
     /**
      * Name of the model config file
@@ -486,7 +487,7 @@ public class ProcessCtrl
 
         if (job.getAnalysisLimits() != null)
         {
-            File limitConfigFile = File.createTempFile("limitconfig", ".conf");
+            File limitConfigFile = File.createTempFile("limitconfig", CONF_EXTENSION);
             filesToDelete.add(limitConfigFile);
             writeLimits(job.getAnalysisLimits(), limitConfigFile);
             String limits = LIMIT_CONFIG_ARG + limitConfigFile.toString();
@@ -495,7 +496,7 @@ public class ProcessCtrl
 
         if (job.getModelDebugConfig() != null && job.getModelDebugConfig().isEnabled())
         {
-            File modelDebugConfigFile = File.createTempFile("modeldebugconfig", ".conf");
+            File modelDebugConfigFile = File.createTempFile("modeldebugconfig", CONF_EXTENSION);
             filesToDelete.add(modelDebugConfigFile);
             writeModelDebugConfig(job.getModelDebugConfig(), modelDebugConfigFile);
             String modelDebugConfig = MODEL_DEBUG_CONFIG_ARG + modelDebugConfigFile.toString();
@@ -575,7 +576,7 @@ public class ProcessCtrl
         if (job.getAnalysisConfig() != null)
         {
             // write to a temporary field config file
-            File fieldConfigFile = File.createTempFile("fieldconfig", ".conf");
+            File fieldConfigFile = File.createTempFile("fieldconfig", CONF_EXTENSION);
             filesToDelete.add(fieldConfigFile);
             try (OutputStreamWriter osw = new OutputStreamWriter(
                     new FileOutputStream(fieldConfigFile),
