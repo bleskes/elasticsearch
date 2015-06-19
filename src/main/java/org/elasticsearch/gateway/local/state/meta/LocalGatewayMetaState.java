@@ -52,7 +52,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
-import java.util.regex.Pattern;
 
 /**
  *
@@ -356,7 +355,7 @@ public class LocalGatewayMetaState extends AbstractComponent implements ClusterS
     private void writeIndex(String reason, IndexMetaData indexMetaData, @Nullable IndexMetaData previousIndexMetaData) throws Exception {
         logger.trace("[{}] writing state, reason [{}]", indexMetaData.index(), reason);
         try {
-            indexStateFormat.write(indexMetaData, indexMetaData.version(),
+            indexStateFormat.write(logger, indexMetaData, indexMetaData.version(),
                     nodeEnv.indexLocations(new Index(indexMetaData.index())));
         } catch (Throwable ex) {
             logger.warn("[{}]: failed to write index state", ex, indexMetaData.index());
@@ -367,7 +366,7 @@ public class LocalGatewayMetaState extends AbstractComponent implements ClusterS
     private void writeGlobalState(String reason, MetaData metaData) throws Exception {
         logger.trace("{} writing state, reason [{}]", GLOBAL_STATE_LOG_TYPE, reason);
         try {
-            globalStateFormat.write(metaData, metaData.version(), nodeEnv.nodeDataLocations());
+            globalStateFormat.write(logger, metaData, metaData.version(), nodeEnv.nodeDataLocations());
         } catch (Throwable ex) {
             logger.warn("{}: failed to write global state", ex, GLOBAL_STATE_LOG_TYPE);
             throw new IOException("failed to write global state", ex);

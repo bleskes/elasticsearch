@@ -32,13 +32,15 @@ import org.elasticsearch.common.io.Streams;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.lucene.store.InputStreamIndexInput;
 import org.elasticsearch.common.xcontent.*;
-import org.elasticsearch.gateway.local.state.meta.CorruptStateException;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -89,7 +91,7 @@ public abstract class MetaDataStateFormat<T> {
      * @param locations the locations where the state should be written to.
      * @throws IOException if an IOException occurs
      */
-    public final void write(final T state, final long version, final File... locations) throws IOException {
+    public final void write(ESLogger logger, final T state, final long version, final File... locations) throws IOException {
         Preconditions.checkArgument(locations != null, "Locations must not be null");
         Preconditions.checkArgument(locations.length > 0, "One or more locations required");
         final long maxStateId = findMaxStateId(prefix, locations)+1;
@@ -122,6 +124,7 @@ public abstract class MetaDataStateFormat<T> {
             IOUtils.fsync(tmpStatePath.toFile(), false); // fsync the state file
             Files.move(tmpStatePath, finalStatePath, StandardCopyOption.ATOMIC_MOVE);
             IOUtils.fsync(stateLocation.toFile(), true);
+            logger.trace("wrote state file to [{}]", stateLocation);
             for (int i = 1; i < locations.length; i++) {
                 stateLocation = Paths.get(locations[i].getPath(), STATE_DIR_NAME);
                 Files.createDirectories(stateLocation);
@@ -131,6 +134,7 @@ public abstract class MetaDataStateFormat<T> {
                     Files.copy(finalStatePath, tmpPath);
                     Files.move(tmpPath, finalPath, StandardCopyOption.ATOMIC_MOVE); // we are on the same FileSystem / Partition here we can do an atomic move
                     IOUtils.fsync(stateLocation.toFile(), true); // we just fsync the dir here..
+                    logger.trace("wrote state file to [{}]", finalPath);
                 } finally {
                     Files.deleteIfExists(tmpPath);
                 }
@@ -241,12 +245,14 @@ public abstract class MetaDataStateFormat<T> {
         if (dataLocations != null) { // select all eligable files first
             for (File dataLocation : dataLocations) {
                 File stateDir = new File(dataLocation, MetaDataStateFormat.STATE_DIR_NAME);
+                logger.trace("looking for state files in [{}]", stateDir);
                 // now, iterate over the current versions, and find latest one
                 File[] stateFiles = stateDir.listFiles();
                 if (stateFiles == null) {
                     continue;
                 }
                 for (File stateFile : stateFiles) {
+                    logger.trace("evaluating potential state file [{}]", stateFile);
                     final Matcher matcher = stateFilePattern.matcher(stateFile.getName());
                     if (matcher.matches()) {
                         final long version = Long.parseLong(matcher.group(1));

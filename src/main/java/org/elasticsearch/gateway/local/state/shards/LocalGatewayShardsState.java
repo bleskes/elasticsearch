@@ -30,17 +30,22 @@ import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.io.Streams;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
-import org.elasticsearch.common.xcontent.*;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentHelper;
+import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.env.NodeEnvironment;
 import org.elasticsearch.gateway.local.state.meta.CorruptStateException;
 import org.elasticsearch.gateway.local.state.meta.MetaDataStateFormat;
 import org.elasticsearch.index.shard.ShardId;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 /**
  */
@@ -190,7 +195,7 @@ public class LocalGatewayShardsState extends AbstractComponent implements Cluste
 
     private void writeShardState(String reason, ShardId shardId, ShardStateInfo shardStateInfo, @Nullable ShardStateInfo previousStateInfo) throws Exception {
         logger.trace("{} writing shard state, reason [{}]", shardId, reason);
-        FORMAT.write(shardStateInfo, shardStateInfo.version, nodeEnv.shardLocations(shardId));
+        FORMAT.write(logger, shardStateInfo, shardStateInfo.version, nodeEnv.shardLocations(shardId));
     }
 
     private static MetaDataStateFormat<ShardStateInfo> newShardStateInfoFormat() {

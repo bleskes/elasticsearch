@@ -17,33 +17,20 @@
  * under the License.
  */
 package org.elasticsearch.gateway.local.state.meta;
+
 import com.carrotsearch.randomizedtesting.LifecycleScope;
 import com.google.common.collect.Iterators;
-
 import org.apache.lucene.codecs.CodecUtil;
-import org.apache.lucene.store.BaseDirectoryWrapper;
-import org.apache.lucene.store.ChecksumIndexInput;
-import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.IOContext;
-import org.apache.lucene.store.IndexInput;
-import org.apache.lucene.store.MockDirectoryWrapper;
-import org.apache.lucene.store.SimpleFSDirectory;
+import org.apache.lucene.store.*;
 import org.apache.lucene.util.TestRuleMarkFailure;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.ElasticsearchIllegalStateException;
-import org.elasticsearch.Version;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.cluster.metadata.MetaData;
 import org.elasticsearch.common.collect.ImmutableOpenMap;
-import org.elasticsearch.common.io.FileSystemUtils;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.settings.ImmutableSettings;
-import org.elasticsearch.common.xcontent.ToXContent;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentFactory;
-import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.common.xcontent.XContentType;
-import org.elasticsearch.gateway.local.state.shards.LocalGatewayShardsState;
+import org.elasticsearch.common.xcontent.*;
 import org.elasticsearch.test.ElasticsearchTestCase;
 import org.junit.Assert;
 import org.junit.Test;
@@ -56,19 +43,9 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.instanceOf;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.startsWith;
+import static org.hamcrest.Matchers.*;
 
 public class MetaDataStateFormatTest extends ElasticsearchTestCase {
     
@@ -112,7 +89,7 @@ public class MetaDataStateFormatTest extends ElasticsearchTestCase {
         Format format = new Format(randomFrom(XContentType.values()), "foo-");
         DummyState state = new DummyState(randomRealisticUnicodeOfCodepointLengthBetween(1, 1000), randomInt(), randomLong(), randomDouble(), randomBoolean());
         int version = between(0, Integer.MAX_VALUE/2);
-        format.write(state, version, toFiles(dirs));
+        format.write(logger, state, version, toFiles(dirs));
         for (Path file : dirs) {
             Path[] list = content("*", file);
             assertEquals(list.length, 1);
@@ -127,7 +104,7 @@ public class MetaDataStateFormatTest extends ElasticsearchTestCase {
         }
         final int version2 = between(version, Integer.MAX_VALUE);
         DummyState state2 = new DummyState(randomRealisticUnicodeOfCodepointLengthBetween(1, 1000), randomInt(), randomLong(), randomDouble(), randomBoolean());
-        format.write(state2, version2, toFiles(dirs));
+        format.write(logger, state2, version2, toFiles(dirs));
 
         for (Path file : dirs) {
             Path[] list = content("*", file);
@@ -155,7 +132,7 @@ public class MetaDataStateFormatTest extends ElasticsearchTestCase {
         Format format = new Format(randomFrom(XContentType.values()), "foo-");
         DummyState state = new DummyState(randomRealisticUnicodeOfCodepointLengthBetween(1, 1000), randomInt(), randomLong(), randomDouble(), randomBoolean());
         int version = between(0, Integer.MAX_VALUE/2);
-        format.write(state, version, toFiles(dirs));
+        format.write(logger, state, version, toFiles(dirs));
         for (Path file : dirs) {
             Path[] list = content("*", file);
             assertEquals(list.length, 1);
@@ -179,7 +156,7 @@ public class MetaDataStateFormatTest extends ElasticsearchTestCase {
         Format format = new Format(randomFrom(XContentType.values()), "foo-");
         DummyState state = new DummyState(randomRealisticUnicodeOfCodepointLengthBetween(1, 1000), randomInt(), randomLong(), randomDouble(), randomBoolean());
         int version = between(0, Integer.MAX_VALUE/2);
-        format.write(state, version, toFiles(dirs));
+        format.write(logger, state, version, toFiles(dirs));
         for (Path file : dirs) {
             Path[] list = content("*", file);
             assertEquals(list.length, 1);
@@ -255,7 +232,7 @@ public class MetaDataStateFormatTest extends ElasticsearchTestCase {
         final Path dir1 = randomFrom(dirs);
         final int v1 = randomInt(10);
         // write a first state file in the new format
-        format.write(randomMeta(), v1, toFiles(dir1));
+        format.write(logger, randomMeta(), v1, toFiles(dir1));
 
         // write older state files in the old format but with a newer version
         final int numLegacyFiles = randomIntBetween(1, 5);
@@ -277,7 +254,7 @@ public class MetaDataStateFormatTest extends ElasticsearchTestCase {
         }
         // write the next state file in the new format and ensure it get's a higher ID
         final MetaData meta = randomMeta();
-        format.write(meta, v1, toFiles(dirs));
+        format.write(logger, meta, v1, toFiles(dirs));
         final MetaData metaData = format.loadLatestState(logger, toFiles(dirs));
         assertEquals(meta.uuid(), metaData.uuid());
         final Path path = randomFrom(dirs);
@@ -313,7 +290,7 @@ public class MetaDataStateFormatTest extends ElasticsearchTestCase {
         }
 
         // write a second state file in the new format but with the same version
-        format.write(meta, v, toFiles(dirs));
+        format.write(logger, meta, v, toFiles(dirs));
 
         MetaData state = format.loadLatestState(logger, toFiles(dirs));
         final Path path = randomFrom(dirs);
@@ -350,7 +327,7 @@ public class MetaDataStateFormatTest extends ElasticsearchTestCase {
                 }
             }
             for (int j = numLegacy; j < numStates; j++) {
-                format.write(meta.get(j), j, dirs[i].toFile());
+                format.write(logger, meta.get(j), j, dirs[i].toFile());
                 if (randomBoolean() && (j < numStates - 1 || dirs.length > 0 && i != 0)) {  // corrupt a file that we do not necessarily need here....
                     Path file = dirs[i].resolve(MetaDataStateFormat.STATE_DIR_NAME).resolve("global-" + j + ".st");
                     corruptedFiles.add(file);
