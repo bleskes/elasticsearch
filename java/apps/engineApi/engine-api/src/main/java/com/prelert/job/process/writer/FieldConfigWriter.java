@@ -52,6 +52,8 @@ public class FieldConfigWriter
     private static final String DOT_PARTITION = ".partition";
     private static final String DOT_EXCLUDE_FREQUENT = ".excludefrequent";
     private static final String HYPHEN = "-";
+    private static final String INFLUENCERS = "influencers";
+    private static final char NEW_LINE = '\n';
 
     private final AnalysisConfig m_Config;
     private final OutputStreamWriter m_Writer;
@@ -76,6 +78,20 @@ public class FieldConfigWriter
         {
             contents.append(CATEGORIZATION_FIELD_KEY).append(EQUALS)
                     .append(m_Config.getCategorizationFieldName()).append(NEW_LINE);
+        }
+
+        if (m_Config.getInfluencers().size() > 0)
+        {
+            contents.append(INFLUENCERS).append(EQUALS);
+            StringBuilder fieldsBuilder = new StringBuilder();
+
+            for (String influencer : m_Config.getInfluencers())
+            {
+                fieldsBuilder.append(influencer).append(HYPHEN);
+            }
+            int lastHyphen = fieldsBuilder.lastIndexOf(HYPHEN);
+            fieldsBuilder.setLength(lastHyphen);
+            contents.append(fieldsBuilder.toString()).append(NEW_LINE);
         }
 
         Set<String> detectorKeys = new HashSet<>();

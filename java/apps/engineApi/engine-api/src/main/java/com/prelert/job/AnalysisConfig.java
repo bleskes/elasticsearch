@@ -67,6 +67,7 @@ public class AnalysisConfig implements Verifiable
     public static final String PERIOD = "period";
     public static final String SUMMARY_COUNT_FIELD_NAME = "summaryCountFieldName";
     public static final String DETECTORS = "detectors";
+    public static final String INFLUENCERS = "influencers";
 
     private static final String PRELERT_CATEGORY_FIELD = "prelertcategory";
     public static final Set<String> AUTO_CREATED_FIELDS = new HashSet<>(
@@ -82,6 +83,7 @@ public class AnalysisConfig implements Verifiable
     private Long m_Period;
     private String m_SummaryCountFieldName;
     private List<Detector> m_Detectors;
+    private List<String> m_Influencers;
 
     /**
      * Default constructor
@@ -89,6 +91,7 @@ public class AnalysisConfig implements Verifiable
     public AnalysisConfig()
     {
         m_Detectors = new ArrayList<>();
+        m_Influencers = new ArrayList<>();
     }
 
     /**
@@ -193,6 +196,20 @@ public class AnalysisConfig implements Verifiable
     }
 
     /**
+     * The list of influence field names
+     */
+    public List<String> getInfluencers()
+    {
+        return m_Influencers;
+    }
+
+    public void setInfluencers(List<String> influencers)
+    {
+        m_Influencers = influencers;
+    }
+
+
+    /**
      * Return the list of fields required by the analysis.
      * These are the metric field, partition field, by field and over
      * field of each detector, plus the summary count field and the
@@ -214,6 +231,10 @@ public class AnalysisConfig implements Verifiable
             addIfNotNull(fields, d.getByFieldName());
             addIfNotNull(fields, d.getOverFieldName());
             addIfNotNull(fields, d.getPartitionFieldName());
+        }
+        for (String i : getInfluencers())
+        {
+            addIfNotNull(fields, i);
         }
 
         // remove empty strings
@@ -304,14 +325,15 @@ public class AnalysisConfig implements Verifiable
                 Objects.equals(this.m_BatchSpan, that.m_BatchSpan) &&
                 Objects.equals(this.m_Latency, that.m_Latency) &&
                 Objects.equals(this.m_Period, that.m_Period) &&
-                Objects.equals(this.m_SummaryCountFieldName, that.m_SummaryCountFieldName);
+                Objects.equals(this.m_SummaryCountFieldName, that.m_SummaryCountFieldName) &&
+                Objects.equals(this.m_Influencers, that.m_Influencers);
     }
 
     @Override
     public int hashCode()
     {
         return Objects.hash(m_Detectors, m_BucketSpan, m_BatchSpan, m_Latency, m_Period,
-                m_SummaryCountFieldName);
+                m_SummaryCountFieldName, m_Influencers);
     }
 
     /**
