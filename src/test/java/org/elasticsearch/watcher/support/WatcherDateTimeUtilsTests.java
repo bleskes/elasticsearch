@@ -39,7 +39,7 @@ import static org.hamcrest.Matchers.notNullValue;
  */
 public class WatcherDateTimeUtilsTests extends ElasticsearchTestCase {
 
-    @Test
+    @Test(expected = WatcherDateTimeUtils.ParseException.class)
     public void testParseTimeValue_Numeric() throws Exception {
         TimeValue value = new TimeValue(randomInt(100), randomFrom(TimeUnit.values()));
 
@@ -48,7 +48,7 @@ public class WatcherDateTimeUtilsTests extends ElasticsearchTestCase {
         parser.nextToken(); // field name
         parser.nextToken(); // value
 
-        TimeValue parsed = WatcherDateTimeUtils.parseTimeValue(parser, null, "test");
+        TimeValue parsed = WatcherDateTimeUtils.parseTimeValue(parser, "test");
         assertThat(parsed, notNullValue());
         assertThat(parsed.millis(), is(value.millis()));
     }
@@ -62,7 +62,7 @@ public class WatcherDateTimeUtilsTests extends ElasticsearchTestCase {
         parser.nextToken(); // field name
         parser.nextToken(); // value
 
-        WatcherDateTimeUtils.parseTimeValue(parser, null, "test");
+        WatcherDateTimeUtils.parseTimeValue(parser, "test");
     }
 
     @Test
@@ -81,7 +81,7 @@ public class WatcherDateTimeUtilsTests extends ElasticsearchTestCase {
         parser.nextToken(); // field name
         parser.nextToken(); // value
 
-        TimeValue parsed = WatcherDateTimeUtils.parseTimeValue(parser, null, "test");
+        TimeValue parsed = WatcherDateTimeUtils.parseTimeValue(parser, "test");
         assertThat(parsed, notNullValue());
         assertThat(parsed.millis(), is(values.get(key).millis()));
     }
@@ -102,31 +102,16 @@ public class WatcherDateTimeUtilsTests extends ElasticsearchTestCase {
         parser.nextToken(); // field name
         parser.nextToken(); // value
 
-        WatcherDateTimeUtils.parseTimeValue(parser, null, "test");
+        WatcherDateTimeUtils.parseTimeValue(parser, "test");
     }
 
-    @Test
     public void testParseTimeValue_Null() throws Exception {
         XContentParser parser = xContentParser(jsonBuilder().startObject().nullField("value").endObject());
         parser.nextToken(); // start object
         parser.nextToken(); // field name
         parser.nextToken(); // value
 
-        TimeValue parsed = WatcherDateTimeUtils.parseTimeValue(parser, null, "test");
+        TimeValue parsed = WatcherDateTimeUtils.parseTimeValue(parser, "test");
         assertThat(parsed, nullValue());
-    }
-
-    @Test
-    public void testParseTimeValue_Null_DefaultValue() throws Exception {
-        XContentParser parser = xContentParser(jsonBuilder().startObject().nullField("value").endObject());
-        parser.nextToken(); // start object
-        parser.nextToken(); // field name
-        parser.nextToken(); // value
-
-        TimeValue defaultValue = new TimeValue(randomInt(100), randomFrom(TimeUnit.values()));
-
-        TimeValue parsed = WatcherDateTimeUtils.parseTimeValue(parser, defaultValue, "test");
-        assertThat(parsed, notNullValue());
-        assertThat(parsed, sameInstance(defaultValue));
     }
 }
