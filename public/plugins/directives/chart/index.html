@@ -1,5 +1,10 @@
 <h4>{{title}}</h4>
 <h2>{{total}} {{unit}}</h2>
-<div class="chart">
-  <div>Meaningful Chart Goes Here</div>
+<div class="vis-editor-canvas">
+  <div ng-if="!chart.data">Loading...</div>
+  <div ng-if="error">
+    <h4>Something's not quite right...</h4>
+    <div ng-bind="error"></div>
+  </div>
+  <nvd3 options="chart.options" data="chart.data"></nvd3>
 </div>
