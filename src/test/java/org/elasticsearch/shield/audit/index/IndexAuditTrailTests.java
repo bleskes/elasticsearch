@@ -222,6 +222,8 @@ public class IndexAuditTrailTests extends ShieldIntegrationTest {
         assertAuditMessage(hit, "rest", "anonymous_access_denied");
         assertThat("_hostname:9200", equalTo(hit.field("origin_address").getValue()));
         assertThat("_uri", equalTo(hit.field("uri").getValue()));
+        assertThat((String) hit.field("origin_type").getValue(), is("rest"));
+        assertThat(hit.field("request_body").getValue(), notNullValue());
     }
 
     @Test(expected = IndexMissingException.class)
@@ -308,9 +310,11 @@ public class IndexAuditTrailTests extends ShieldIntegrationTest {
         SearchHit hit = getIndexedAuditMessage();
 
         assertAuditMessage(hit, "rest", "authentication_failed");
-        assertThat(hit.field("principal").getValue(), is((Object)"_principal"));
+        assertThat(hit.field("principal").getValue(), is((Object) "_principal"));
         assertThat("_hostname:9200", equalTo(hit.field("origin_address").getValue()));
         assertThat("_uri", equalTo(hit.field("uri").getValue()));
+        assertThat((String) hit.field("origin_type").getValue(), is("rest"));
+        assertThat(hit.field("request_body").getValue(), notNullValue());
     }
 
     @Test
@@ -326,6 +330,8 @@ public class IndexAuditTrailTests extends ShieldIntegrationTest {
         assertThat(hit.field("principal"), nullValue());
         assertThat("_hostname:9200", equalTo(hit.field("origin_address").getValue()));
         assertThat("_uri", equalTo(hit.field("uri").getValue()));
+        assertThat((String) hit.field("origin_type").getValue(), is("rest"));
+        assertThat(hit.field("request_body").getValue(), notNullValue());
     }
 
     @Test(expected = IndexMissingException.class)
@@ -394,6 +400,8 @@ public class IndexAuditTrailTests extends ShieldIntegrationTest {
         assertThat("_hostname:9200", equalTo(hit.field("origin_address").getValue()));
         assertThat("_uri", equalTo(hit.field("uri").getValue()));
         assertEquals("_realm", hit.field("realm").getValue());
+        assertThat((String) hit.field("origin_type").getValue(), is("rest"));
+        assertThat(hit.field("request_body").getValue(), notNullValue());
     }
 
     @Test(expected = IndexMissingException.class)
@@ -659,7 +667,7 @@ public class IndexAuditTrailTests extends ShieldIntegrationTest {
     }
 
     private void awaitIndexCreation(final String indexName) throws InterruptedException {
-        awaitBusy(new Predicate<Void>() {
+        boolean found = awaitBusy(new Predicate<Void>() {
             @Override
             public boolean apply(Void o) {
                 try {
@@ -671,6 +679,7 @@ public class IndexAuditTrailTests extends ShieldIntegrationTest {
                 }
             }
         });
+        assertThat("[" + indexName + "] does not exist!", found, is(true));
 
         GetSettingsResponse response = getClient().admin().indices().prepareGetSettings(indexName).execute().actionGet();
         assertThat(response.getSetting(indexName, "index.number_of_shards"), is(Integer.toString(numShards)));
