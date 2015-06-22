@@ -2,6 +2,7 @@ define(['marvel/lib/format_number', 'text!marvel/plugins/directives/chart/index.
 function (formatNumber, template) {
   var module = require('modules').get('marvel/directives', []);
   var _ = require('lodash');
+  var moment = require('moment');
 
   var metricObjects = require('marvel/lib/metrics');
   // var formatNumber = require('marvel/lib/format_number');
@@ -32,14 +33,13 @@ function (formatNumber, template) {
         $scope.chart = makeChartObj(metricObj.units);
 
         var searchSource = makeSearchSource(marvelIndex, metricObj, function(values) {
-          // show the average?
-          $scope.total = formatNumber(getAverage(values));
+          $scope.total = formatNumber(values[values.length-1].y);
 
           // draw the chart, with updating the data
           $scope.chart.data = [{
             values: values,
-            key: $scope.title,
-            color: getNextColor()
+            key: $scope.title
+            // color: getNextColor()
           }];
           $scope.error = null;
         }, function(err) {
@@ -52,10 +52,11 @@ function (formatNumber, template) {
         $scope.unit = metricObj.units;
 
 
-          // listen for changes to the time for updates for now.
-          $scope.$listen(timefilter, 'fetch', searchSource.fetch);
+        // listen for changes to the time for updates for now.
+        $scope.$listen(timefilter, 'fetch', searchSource.fetch);
 
-          searchSource.fetch();
+        // Finally get the Data for the first time
+        searchSource.fetch();
 
       }
     };
@@ -139,7 +140,7 @@ function (formatNumber, template) {
     var colorOptionsArr = getColors(colorCount);
 
     return function() {
-      if (current === colorOptionsArr.length) {
+      if (currentIdx === colorOptionsArr.length) {
         currentIdx = 0;
       }
       return colorOptionsArr[currentIdx++];
@@ -152,19 +153,17 @@ function (formatNumber, template) {
       options: {
         chart: {
           type: 'lineChart',
-          height: 250,
+          height: 200,
           showLegend: false,
-          showXAxis: false,
-          showYAxis: false,
+          showXAxis: true,
+          showYAxis: true,
           useInteractiveGuideline: true,
           tooltips: true,
-          // When colors accepts a range use this too..
-          // color: ['#444', '#777', '#aaa'],
+          color: ['#000'],
           pointSize: 0,
-          strokeWidth: 10,
           margin: {
             top: 10,
-            left: 0,
+            left: 40,
             right: 0,
             bottom: 20
           },
