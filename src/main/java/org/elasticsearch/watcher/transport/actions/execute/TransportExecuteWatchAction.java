@@ -25,6 +25,7 @@ import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.block.ClusterBlockException;
 import org.elasticsearch.cluster.block.ClusterBlockLevel;
 import org.elasticsearch.common.inject.Inject;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.joda.time.DateTime;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
@@ -126,7 +127,7 @@ public class TransportExecuteWatchAction extends WatcherTransportAction<ExecuteW
             WatchRecord record = executionService.execute(ctxBuilder.build());
             XContentBuilder builder = XContentFactory.jsonBuilder();
             record.toXContent(builder, WatcherParams.builder().hideSecrets(true).debug(request.isDebug()).build());
-            ExecuteWatchResponse response = new ExecuteWatchResponse(record.id().value(), builder.bytes());
+            ExecuteWatchResponse response = new ExecuteWatchResponse(record.id().value(), builder.bytes(), XContentType.JSON);
             listener.onResponse(response);
         } catch (Exception e) {
             logger.error("failed to execute [{}]", e, request.getId());
