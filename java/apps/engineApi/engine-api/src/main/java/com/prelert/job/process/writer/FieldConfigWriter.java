@@ -79,7 +79,7 @@ public class FieldConfigWriter
                     .append(m_Config.getCategorizationFieldName()).append(NEW_LINE);
         }
 
-        if (m_Config.getInfluencers().size() > 0)
+        if (!m_Config.getInfluencers().isEmpty())
         {
             contents.append(INFLUENCERS).append(EQUALS);
             StringBuilder fieldsBuilder = new StringBuilder();
