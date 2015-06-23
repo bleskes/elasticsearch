@@ -12,11 +12,6 @@ function (formatNumber, template) {
     var Vis = Private(require('components/vis/vis'));
     var lineChartVis = Private(require('registry/vis_types')).byName.line;
 
-
-
-
-    var getNextColor = colorGenerator();
-
     return {
       restrict: 'E',
       scope: {
@@ -134,6 +129,7 @@ function (formatNumber, template) {
 
 
   // Simple wrapper for colors
+  /*
   function colorGenerator() {
     var colorCount = 3;
     var currentIdx = 0;
@@ -146,6 +142,7 @@ function (formatNumber, template) {
       return colorOptionsArr[currentIdx++];
     };
   }
+  */
 
   // TODO memoize...
   function makeChartObj(type) {
