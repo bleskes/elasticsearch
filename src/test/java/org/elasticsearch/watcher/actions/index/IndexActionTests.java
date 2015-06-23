@@ -211,8 +211,7 @@ public class IndexActionTests extends ElasticsearchIntegrationTest {
         }
         builder.endObject();
 
-        DynamicIndexName.Parser indexNameParser = new DynamicIndexName.Parser();
-        IndexActionFactory actionParser = new IndexActionFactory(Settings.EMPTY, ClientProxy.of(client()), indexNameParser);
+        IndexActionFactory actionParser = new IndexActionFactory(Settings.EMPTY, ClientProxy.of(client()));
         XContentParser parser = JsonXContent.jsonXContent.createParser(builder.bytes());
         parser.nextToken();
 
@@ -233,8 +232,7 @@ public class IndexActionTests extends ElasticsearchIntegrationTest {
                 .field(IndexAction.Field.DOC_TYPE.getPreferredName(), "test-type")
                 .endObject();
 
-        DynamicIndexName.Parser indexNameParser = new DynamicIndexName.Parser();
-        IndexActionFactory actionParser = new IndexActionFactory(Settings.EMPTY, ClientProxy.of(client()), indexNameParser);
+        IndexActionFactory actionParser = new IndexActionFactory(Settings.EMPTY, ClientProxy.of(client()));
         XContentParser parser = JsonXContent.jsonXContent.createParser(builder.bytes());
         parser.nextToken();
 
@@ -261,8 +259,7 @@ public class IndexActionTests extends ElasticsearchIntegrationTest {
             }
         }
         builder.endObject();
-        DynamicIndexName.Parser indexNameParser = new DynamicIndexName.Parser();
-        IndexActionFactory actionParser = new IndexActionFactory(Settings.EMPTY, ClientProxy.of(client()), indexNameParser);
+        IndexActionFactory actionParser = new IndexActionFactory(Settings.EMPTY, ClientProxy.of(client()));
         XContentParser parser = JsonXContent.jsonXContent.createParser(builder.bytes());
         parser.nextToken();
         try {

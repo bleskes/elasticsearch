@@ -83,7 +83,6 @@ public class WatcherModule extends AbstractModule implements SpawnModules {
         bind(WatcherLifeCycleService.class).asEagerSingleton();
         bind(TemplateUtils.class).asEagerSingleton();
         bind(WatcherSettingsValidation.class).asEagerSingleton();
-        bind(DynamicIndexName.Parser.class).asEagerSingleton();
     }
 
 }
