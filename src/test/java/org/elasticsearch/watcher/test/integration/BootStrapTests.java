@@ -58,6 +58,7 @@ import static org.hamcrest.core.IsEqual.equalTo;
 
 /**
  */
+@TestLogging("watcher:TRACE")
 public class BootStrapTests extends AbstractWatcherIntegrationTests {
 
     @Override
