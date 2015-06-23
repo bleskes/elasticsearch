@@ -20,6 +20,7 @@ package org.elasticsearch.watcher.actions.index;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.watcher.actions.ActionFactory;
 import org.elasticsearch.watcher.actions.email.ExecutableEmailAction;
@@ -35,6 +36,7 @@ public class IndexActionFactory extends ActionFactory<IndexAction, ExecutableInd
 
     private final ClientProxy client;
     private final DynamicIndexName.Parser indexNamesParser;
+    private final TimeValue defaultTimeout;
 
     @Inject
     public IndexActionFactory(Settings settings, ClientProxy client) {
@@ -42,6 +44,7 @@ public class IndexActionFactory extends ActionFactory<IndexAction, ExecutableInd
         this.client = client;
         String defaultDateFormat = DynamicIndexName.defaultDateFormat(settings, "watcher.actions.index");
         this.indexNamesParser = new DynamicIndexName.Parser(defaultDateFormat);
+        this.defaultTimeout = settings.getAsTime("watcher.action.index.default_timeout", TimeValue.timeValueSeconds(60));
     }
 
     @Override
@@ -51,7 +54,7 @@ public class IndexActionFactory extends ActionFactory<IndexAction, ExecutableInd
 
     @Override
     public IndexAction parseAction(String watchId, String actionId, XContentParser parser) throws IOException {
-        return IndexAction.parse(watchId, actionId, parser);
+        return IndexAction.parse(watchId, actionId, parser, defaultTimeout);
     }
 
     @Override

@@ -95,7 +95,7 @@ public class ExecutableIndexAction extends ExecutableAction<IndexAction> {
             return new IndexAction.Result.Simulated(indexRequest.index(), action.docType, new XContentSource(indexRequest.source(), XContentType.JSON));
         }
 
-        IndexResponse response = client.index(indexRequest);
+        IndexResponse response = client.index(indexRequest, action.timeout);
         XContentBuilder jsonBuilder = jsonBuilder();
         indexResponseToXContent(jsonBuilder, response);
         return new IndexAction.Result.Success(new XContentSource(jsonBuilder));
@@ -122,7 +122,7 @@ public class ExecutableIndexAction extends ExecutableAction<IndexAction> {
             indexRequest.source(jsonBuilder().prettyPrint().map(doc));
             bulkRequest.add(indexRequest);
         }
-        BulkResponse bulkResponse = client.bulk(bulkRequest);
+        BulkResponse bulkResponse = client.bulk(bulkRequest, action.timeout);
         XContentBuilder jsonBuilder = jsonBuilder().startArray();
         for (BulkItemResponse item : bulkResponse) {
             IndexResponse response = item.getResponse();
