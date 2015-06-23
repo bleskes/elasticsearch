@@ -97,6 +97,11 @@ public class WatcherParams extends ToXContent.DelegatingMapParams {
             return this;
         }
 
+        public Builder put(String key, Object value) {
+            params.put(key, String.valueOf(value));
+            return this;
+        }
+
         public WatcherParams build() {
             return new WatcherParams(params.build(), delegate);
         }
