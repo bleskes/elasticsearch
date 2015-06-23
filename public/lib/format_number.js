@@ -3,8 +3,13 @@ define(['moment', 'numeral'], function(moment, numeral) {
     var format = '0.00';
     var postfix = '';
     switch (which) {
+      case 'time_since':
+        return moment(moment() - num).from(moment(), true);
       case 'time':
         return moment(num).format('H:mm:ss');
+      case 'int_commas':
+        format = '0,0'
+        break;
       case 'byte':
         format += 'b';
         break;
