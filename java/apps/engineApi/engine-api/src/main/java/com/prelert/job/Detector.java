@@ -69,8 +69,8 @@ public class Detector
     public static final String LOW_DISTINCT_COUNT = "low_distinct_count";
     public static final String HIGH_DISTINCT_COUNT = "high_distinct_count";
     public static final String DC = "dc";
-    public static final String LDC = "ldc";
-    public static final String HDC = "hdc";
+    public static final String LOW_DC = "low_dc";
+    public static final String HIGH_DC = "high_dc";
     public static final String RARE = "rare";
     public static final String FREQ_RARE = "freq_rare";
     public static final String INFO_CONTENT = "info_content";
@@ -104,8 +104,8 @@ public class Detector
                 LOW_NON_ZERO_COUNT, LOW_NZC,
                 HIGH_NON_ZERO_COUNT, HIGH_NZC,
                 DISTINCT_COUNT, DC,
-                LOW_DISTINCT_COUNT, LDC,
-                HIGH_DISTINCT_COUNT, HDC,
+                LOW_DISTINCT_COUNT, LOW_DC,
+                HIGH_DISTINCT_COUNT, HIGH_DC,
                 RARE,
                 FREQ_RARE,
                 INFO_CONTENT,
@@ -144,8 +144,8 @@ public class Detector
     public static final Set<String> FIELD_NAME_FUNCTIONS =
             new HashSet<String>(Arrays.<String>asList(new String [] {
                 DISTINCT_COUNT, DC,
-                LOW_DISTINCT_COUNT, LDC,
-                HIGH_DISTINCT_COUNT, HDC,
+                LOW_DISTINCT_COUNT, LOW_DC,
+                HIGH_DISTINCT_COUNT, HIGH_DC,
                 INFO_CONTENT,
                 LOW_INFO_CONTENT,
                 HIGH_INFO_CONTENT,

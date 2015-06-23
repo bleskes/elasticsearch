@@ -229,7 +229,7 @@ public class DetectorTest
         // some functions require a fieldname
         d.setFieldName("f");
         for (String f : new String[] { Detector.DISTINCT_COUNT, Detector.DC,
-                Detector.HIGH_DISTINCT_COUNT, Detector.HDC, Detector.LOW_DISTINCT_COUNT, Detector.LDC,
+                Detector.HIGH_DISTINCT_COUNT, Detector.HIGH_DC, Detector.LOW_DISTINCT_COUNT, Detector.LOW_DC,
                 Detector.INFO_CONTENT, Detector.LOW_INFO_CONTENT, Detector.HIGH_INFO_CONTENT,
                 Detector.METRIC, Detector.MEAN, Detector.HIGH_MEAN, Detector.LOW_MEAN, Detector.AVG,
                 Detector.HIGH_AVG, Detector.LOW_AVG, Detector.MAX, Detector.MIN, Detector.SUM,
@@ -271,8 +271,8 @@ public class DetectorTest
         difference.remove(Detector.HIGH_DISTINCT_COUNT);
         difference.remove(Detector.LOW_DISTINCT_COUNT);
         difference.remove(Detector.DC);
-        difference.remove(Detector.LDC);
-        difference.remove(Detector.HDC);
+        difference.remove(Detector.LOW_DC);
+        difference.remove(Detector.HIGH_DC);
         difference.remove(Detector.INFO_CONTENT);
         difference.remove(Detector.LOW_INFO_CONTENT);
         difference.remove(Detector.HIGH_INFO_CONTENT);
@@ -323,7 +323,7 @@ public class DetectorTest
                 Detector.LOW_MEAN, Detector.AVG, Detector.HIGH_AVG, Detector.LOW_AVG, Detector.MAX,
                 Detector.MIN, Detector.SUM, Detector.LOW_SUM, Detector.HIGH_SUM, Detector.NON_NULL_SUM,
                 Detector.LOW_NON_NULL_SUM, Detector.HIGH_NON_NULL_SUM, Detector.DISTINCT_COUNT, Detector.DC,
-                Detector.HIGH_DISTINCT_COUNT, Detector.HDC, Detector.LOW_DISTINCT_COUNT, Detector.LDC,
+                Detector.HIGH_DISTINCT_COUNT, Detector.HIGH_DC, Detector.LOW_DISTINCT_COUNT, Detector.LOW_DC,
                 Detector.INFO_CONTENT, Detector.LOW_INFO_CONTENT, Detector.HIGH_INFO_CONTENT })
         {
             d.setFunction(f);
