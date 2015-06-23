@@ -1,4 +1,4 @@
-define(['marvel/lib/format_number', 'text!marvel/plugins/directives/chart/index.html', 'nvd3_directives'],
+define(['marvel/lib/format_number', 'text!marvel/directives/chart/index.html', 'nvd3_directives'],
 function (formatNumber, template) {
   var module = require('modules').get('marvel/directives', []);
   var _ = require('lodash');

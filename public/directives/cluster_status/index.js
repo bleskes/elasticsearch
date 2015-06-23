@@ -1,4 +1,4 @@
-define(['marvel/lib/format_number', 'text!marvel/plugins/directives/cluster_status/index.html'],
+define(['marvel/lib/format_number', 'text!marvel/directives/cluster_status/index.html'],
 function (formatNumber, template) {
   var module = require('modules').get('marvel/directives', []);
   module.directive('marvelClusterStatus', function ($route, courier) {
@@ -15,6 +15,7 @@ function (formatNumber, template) {
         var searchSource = new courier.SearchSource()
           .set('index', marvelIndex)
           .set('size', 1)
+          .set('sort', {'@timestamp': { order: 'desc' }})
           .set('query', '_type:cluster_stats');
 
         // Set the proper onResults resp
@@ -28,6 +29,7 @@ function (formatNumber, template) {
           console.log(err);
         });
 
+        // TODO NOOOO!!!!!
         searchSource.fetch();
       }
     };

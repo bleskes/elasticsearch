@@ -2,7 +2,7 @@ define(function (require) {
   var _ = require('lodash');
   var numeral = require('numeral');
   var moment = require('moment');
-  var template = require('text!marvel/plugins/directives/index_listing/index.html');
+  var template = require('text!marvel/directives/index_listing/index.html');
   var module = require('modules').get('marvel/directives', []);
   module.directive('marvelIndexListing', function () {
     return {
