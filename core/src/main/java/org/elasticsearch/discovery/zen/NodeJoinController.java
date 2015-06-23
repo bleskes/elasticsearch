@@ -120,7 +120,7 @@ public abstract class NodeJoinController {
         }
 
         private void electAsMaster(final ArrayList<Tuple<DiscoveryNode, MembershipAction.JoinCallback>> seedJoins) {
-            // from now on pass things through directly.. we don't care about concurrent times - we got enough joins so we can become master
+            // from now on pass things through directly.. we don't care about concurrent joins - we got enough joins so we can become master
             done.set(true);
             final int joinedReceived = seedJoins.size();
             final String source = "zen-disco-join(elected_as_master, [" + joinedReceived + "] joins received)";
