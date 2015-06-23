@@ -1,32 +1,35 @@
 define(function (require) {
   var _ = require('lodash');
   var angular = require('angular');
-  var injectCss = require('marvel/lib/inject_css');
 
-  require('plugins/visualize/saved_visualizations/saved_visualizations');
-  require('components/timepicker/timepicker');
-  injectCss(require('text!marvel/css/main.css'));
+  // require('plugins/visualize/saved_visualizations/saved_visualizations');
+  // require('components/timepicker/timepicker');
+  require('marvel/services/settings');
+  require('marvel/services/metrics');
 
   var module = require('modules').get('marvel', [
-    'marvel/directives'
+    'marvel/directives',
+    'marvel/settings',
+    'marvel/metrics'
   ]);
-
-  var apps = require('registry/apps');
-  apps.register(function () {
-    return {
-      id: 'marvel',
-      name: 'Marvel',
-      order: 1000
-    };
-  });
-
 
   require('routes')
   .when('/marvel', {
-    template: require('text!marvel/plugins/overview/index.html')
+    template: require('text!marvel/views/overview/index.html'),
+    resolve: {
+      settings: function (marvelSettings) {
+        return marvelSettings.fetch();
+      }
+    }
   });
 
-  module.controller('overview', function ($scope, timefilter, savedVisualizations, courier) {
+  module.controller('overview', function ($scope, timefilter, savedVisualizations, courier, marvelMetrics) {
+
+    marvelMetrics('os.cpu.user').then(function (metric) {
+      console.log(metric.threshold(3));
+    });
+
+
     $scope.issues = {
       cluster: [
         { status: 'red', field: 'Pending Tasks', message: 'is above 50 at 230' },
