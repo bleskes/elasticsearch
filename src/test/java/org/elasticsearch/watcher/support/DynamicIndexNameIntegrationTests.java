@@ -74,7 +74,7 @@ public class DynamicIndexNameIntegrationTests extends AbstractWatcherIntegration
 
         assertWatchWithMinimumPerformedActionsCount("_id", 1, false);
 
-        final String indexName = "idx-" + DateTimeFormat.forPattern("YYYY.MM.dd").print(timeWarp().clock().now());
+        final String indexName = "idx-" + DateTimeFormat.forPattern("YYYY.MM.dd").print(timeWarp().clock().nowUTC());
         logger.info("checking index [{}]", indexName);
         assertBusy(new Runnable() {
             @Override
@@ -89,7 +89,7 @@ public class DynamicIndexNameIntegrationTests extends AbstractWatcherIntegration
 
     @Test
     public void testDynamicIndexSearchInput() throws Exception {
-        final String indexName = "idx-" + DateTimeFormat.forPattern("YYYY.MM.dd").print(timeWarp().clock().now());
+        final String indexName = "idx-" + DateTimeFormat.forPattern("YYYY.MM.dd").print(timeWarp().clock().nowUTC());
         createIndex(indexName);
         index(indexName, "type", "1", "key", "value");
         flush();
@@ -114,7 +114,7 @@ public class DynamicIndexNameIntegrationTests extends AbstractWatcherIntegration
 
     @Test
     public void testDynamicIndexSearchTransform() throws Exception {
-        final String indexName = "idx-" + DateTimeFormat.forPattern("YYYY.MM.dd").print(timeWarp().clock().now());
+        final String indexName = "idx-" + DateTimeFormat.forPattern("YYYY.MM.dd").print(timeWarp().clock().nowUTC());
         createIndex(indexName);
         index(indexName, "type", "1", "key", "value");
         flush();
