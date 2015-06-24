@@ -293,7 +293,7 @@ public class BootStrapTests extends AbstractWatcherIntegrationTests {
                 // that numRecords watch records have been processed as part of starting up.
                 WatcherStatsResponse response = watcherClient().prepareWatcherStats().get();
                 assertThat(response.getWatcherState(), equalTo(WatcherState.STARTED));
-                assertThat(response.getExecutionQueueSize(), equalTo(0l));
+                assertThat(response.getThreadPoolQueueSize(), equalTo(0l));
 
                 // but even then since the execution of the watch record is async it may take a little bit before
                 // the actual documents are in the output index
@@ -345,7 +345,7 @@ public class BootStrapTests extends AbstractWatcherIntegrationTests {
                 // that numRecords watch records have been processed as part of starting up.
                 WatcherStatsResponse response = watcherClient().prepareWatcherStats().get();
                 assertThat(response.getWatcherState(), equalTo(WatcherState.STARTED));
-                assertThat(response.getExecutionQueueSize(), equalTo(0l));
+                assertThat(response.getThreadPoolQueueSize(), equalTo(0l));
 
                 // but even then since the execution of the watch record is async it may take a little bit before
                 // the actual documents are in the output index
