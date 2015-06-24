@@ -143,6 +143,8 @@ public class ZenDiscovery extends AbstractLifecycleComponent<Discovery> implemen
     @Nullable
     private NodeService nodeService;
 
+
+    // must initialized in doStart(), when we have the routingService set
     private volatile NodeJoinController nodeJoinController;
 
     @Inject
@@ -196,8 +198,6 @@ public class ZenDiscovery extends AbstractLifecycleComponent<Discovery> implemen
 
         this.joinThreadControl = new JoinThreadControl(threadPool);
 
-        this.nodeJoinController = new NodeJoinController.ImmediateProcessing(clusterService, allocationService, logger);
-
         transportService.registerRequestHandler(DISCOVERY_REJOIN_ACTION_NAME, RejoinClusterRequest.class, ThreadPool.Names.SAME, new RejoinClusterRequestHandler());
 
         dynamicSettings.addDynamicSetting(ElectMasterService.DISCOVERY_ZEN_MINIMUM_MASTER_NODES, new Validator() {
@@ -234,6 +234,7 @@ public class ZenDiscovery extends AbstractLifecycleComponent<Discovery> implemen
         nodesFD.setLocalNode(clusterService.localNode());
         joinThreadControl.start();
         pingService.start();
+        this.nodeJoinController = new NodeJoinController(clusterService, routingService, discoverySettings, logger);
 
         // start the join thread from a cluster state update. See {@link JoinThreadControl} for details.
         clusterService.submitStateUpdateTask("initial_join", new ClusterStateNonMasterUpdateTask() {
@@ -374,6 +375,7 @@ public class ZenDiscovery extends AbstractLifecycleComponent<Discovery> implemen
     private void innerJoinCluster() {
         DiscoveryNode masterNode = null;
         final Thread currentThread = Thread.currentThread();
+        nodeJoinController.startAccumulatingJoins();
         while (masterNode == null && joinThreadControl.joinThreadActive(currentThread)) {
             masterNode = findMaster();
         }
@@ -386,53 +388,32 @@ public class ZenDiscovery extends AbstractLifecycleComponent<Discovery> implemen
         if (clusterService.localNode().equals(masterNode)) {
             final int requiredJoins = Math.max(0, electMaster.minimumMasterNodes() - 1); // we count as one
             logger.debug("elected as master, waiting for incoming joins ([{}] needed)", requiredJoins);
-            NodeJoinController.AccumulateJoinsAndElectAsMaster masterElector = new NodeJoinController.AccumulateJoinsAndElectAsMaster(
-                    requiredJoins,
-                    clusterService, logger, allocationService, discoverySettings,
-                    new NodeJoinController.AccumulateJoinsAndElectAsMaster.Callback() {
+            nodeJoinController.waitToBeElectedAsMaster(requiredJoins, masterElectionWaitForJoinsTimeout,
+                    new NodeJoinController.Callback() {
                         @Override
                         public void onElectedAsMaster(ClusterState state) {
-                            // we only starts nodesFD if we are master (it may be that we received a cluster state while pinging)
+                            nodeJoinController.stopAccumulatingJoins();
                             joinThreadControl.markThreadAsDone(currentThread);
+                            // we only starts nodesFD if we are master (it may be that we received a cluster state while pinging)
                             nodesFD.updateNodesAndPing(state); // start the nodes FD
                             sendInitialStateEventIfNeeded();
                             long count = clusterJoinsCounter.incrementAndGet();
                             logger.trace("cluster joins counter set to [{}] (elected as master)", count);
-                            nodeJoinController = new NodeJoinController.ImmediateProcessing(clusterService, allocationService, logger);
                         }
 
                         @Override
                         public void onFailure(Throwable t) {
                             logger.trace("failed while waiting for nodes to join, rejoining", t);
+                            nodeJoinController.stopAccumulatingJoins();
                             joinThreadControl.markThreadAsDoneAndStartNew(currentThread);
-                            nodeJoinController = new NodeJoinController.ImmediateProcessing(clusterService, allocationService, logger);
                         }
                     }
 
             );
-
-            nodeJoinController = masterElector;
-            if (masterElector.waitToBeElectedAsMaster(masterElectionWaitForJoinsTimeout) == false) {
-                clusterService.submitStateUpdateTask("zen-disco-join (timed out waiting for joins)", new ClusterStateNonMasterUpdateTask() {
-                    @Override
-                    public ClusterState execute(ClusterState currentState) throws Exception {
-                        restartJoin();
-                        return currentState;
-                    }
-
-                    private void restartJoin() {
-                        joinThreadControl.markThreadAsDoneAndStartNew(currentThread);
-                        nodeJoinController = new NodeJoinController.ImmediateProcessing(clusterService, allocationService, logger);
-                    }
-
-                    @Override
-                    public void onFailure(String source, Throwable t) {
-                        logger.error("unexpected error while handling waiting for joins timeout", t);
-                        restartJoin();
-                    }
-                });
-            }
         } else {
+            // process any incoming joins (they will fail because we are not the master)
+            nodeJoinController.stopAccumulatingJoins();
+
             // send join request
             final boolean success = joinElectedMaster(masterNode);
 
@@ -922,6 +903,8 @@ public class ZenDiscovery extends AbstractLifecycleComponent<Discovery> implemen
         if (!transportService.addressSupported(node.address().getClass())) {
             // TODO, what should we do now? Maybe inform that node that its crap?
             logger.warn("received a wrong address type from [{}], ignoring...", node);
+        } else if (nodeJoinController == null) {
+            throw new IllegalStateException("discovery module is not yet started");
         } else {
             // The minimum supported version for a node joining a master:
             Version minimumNodeJoinVersion = localNode().getVersion().minimumCompatibilityVersion();

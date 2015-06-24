@@ -18,14 +18,14 @@
  */
 package org.elasticsearch.discovery.zen;
 
+import org.elasticsearch.ElasticsearchTimeoutException;
 import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.ProcessedClusterStateUpdateTask;
 import org.elasticsearch.cluster.block.ClusterBlocks;
 import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.node.DiscoveryNodes;
-import org.elasticsearch.cluster.routing.allocation.AllocationService;
-import org.elasticsearch.cluster.routing.allocation.RoutingAllocation;
+import org.elasticsearch.cluster.routing.RoutingService;
 import org.elasticsearch.common.Priority;
 import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.logging.ESLogger;
@@ -40,167 +40,175 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
-public abstract class NodeJoinController {
+public class NodeJoinController {
 
-    protected final ClusterService clusterService;
-    protected final ESLogger logger;
-    protected final AllocationService allocationService;
+    final ESLogger logger;
+    final ClusterService clusterService;
+    final RoutingService routingService;
+    final DiscoverySettings discoverySettings;
+    final AtomicBoolean accumulateJoins = new AtomicBoolean(false);
+
+    // this is site while trying to become a master
+    final AtomicReference<ElectionContext> electionContext = new AtomicReference<>();
 
 
-    protected final BlockingQueue<Tuple<DiscoveryNode, MembershipAction.JoinCallback>> processJoinRequests = ConcurrentCollections.newBlockingQueue();
+    protected final BlockingQueue<Tuple<DiscoveryNode, MembershipAction.JoinCallback>> pendingJoinRequests = ConcurrentCollections.newBlockingQueue();
 
-    protected NodeJoinController(ClusterService clusterService, AllocationService allocationService, ESLogger logger) {
+    public NodeJoinController(ClusterService clusterService, RoutingService routingService, DiscoverySettings discoverySettings, ESLogger logger) {
         this.clusterService = clusterService;
         this.logger = logger;
-        this.allocationService = allocationService;
+        this.routingService = routingService;
+        this.discoverySettings = discoverySettings;
+    }
+
+    public void waitToBeElectedAsMaster(int requiredJoins, TimeValue timeValue, final Callback callback) {
+        final CountDownLatch done = new CountDownLatch(1);
+        final ElectionContext newContext = new ElectionContext();
+        newContext.requiredJoins = requiredJoins;
+        newContext.callback = new Callback() {
+            @Override
+            public void onElectedAsMaster(ClusterState state) {
+                done.countDown();
+                if (electionContext.compareAndSet(newContext, null)) {
+                    callback.onElectedAsMaster(state);
+                }
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                done.countDown();
+                if (electionContext.compareAndSet(newContext, null)) {
+                    callback.onFailure(t);
+                }
+            }
+        };
+
+        if (electionContext.compareAndSet(null, newContext) == false) {
+            // should never happen, but be conservative
+            callback.onFailure(new IllegalStateException("double waiting for election"));
+            return;
+        }
+
+        // check what we have so far..
+        checkAndElect();
+
+        try {
+            if (done.await(timeValue.millis(), TimeUnit.MILLISECONDS)) {
+                // callback handles everything
+                return;
+            }
+        } catch (InterruptedException e) {
+
+        }
+        if (electionContext.compareAndSet(newContext, null)) {
+            logger.trace("timed out waiting to be elected. waited [{}]. pending joins [{}]", timeValue, pendingJoinRequests.size());
+            newContext.callback.onFailure(new ElasticsearchTimeoutException("timed out waiting to be elected"));
+        }
+    }
+
+    public void startAccumulatingJoins() {
+        boolean b = accumulateJoins.getAndSet(true);
+        assert b == false : "double startAccumulatingJoins() calls";
+        assert electionContext.get() == null : "startAccumulatingJoins() called, but there is an ongoing election context";
+    }
+
+    public void stopAccumulatingJoins() {
+        assert electionContext.get() == null : "stopAccumulatingJoins() called, but there is an ongoing election context";
+        boolean b = accumulateJoins.getAndSet(false);
+        assert b : "stopAccumulatingJoins() called but not accumulating";
+        if (pendingJoinRequests.size() > 0) {
+            processJoins("stopping to accumulate joins");
+        }
     }
 
     public void handleJoinRequest(final DiscoveryNode node, final MembershipAction.JoinCallback callback) {
-        processJoinRequests.add(new Tuple<>(node, callback));
-    }
-
-    public static class AccumulateJoinsAndElectAsMaster extends NodeJoinController {
-
-        private final int requiredJoins;
-        private final Callback listener;
-        private final DiscoverySettings discoverySettings;
-        private final CountDownLatch electedAsMaster = new CountDownLatch(1);
-        final AtomicBoolean done = new AtomicBoolean(false);
-
-        public interface Callback {
-            void onElectedAsMaster(ClusterState state);
-
-            void onFailure(Throwable t);
-        }
-
-        protected AccumulateJoinsAndElectAsMaster(int requiredJoins, ClusterService clusterService, ESLogger logger, AllocationService allocationService, DiscoverySettings discoverySettings, Callback listener) {
-            super(clusterService, allocationService, logger);
-            this.requiredJoins = requiredJoins;
-            this.listener = listener;
-            this.discoverySettings = discoverySettings;
-            if (requiredJoins <= 0) {
-                electAsMaster(new ArrayList<Tuple<DiscoveryNode, MembershipAction.JoinCallback>>());
-            }
-        }
-
-        public boolean waitToBeElectedAsMaster(TimeValue timeValue) {
-            try {
-                if (electedAsMaster.await(timeValue.millis(), TimeUnit.MILLISECONDS)) {
-                    assert done.get() : "elected as master but not done";
-                    return true;
-                }
-            } catch (InterruptedException e) {
-
-            }
-            logger.debug("timed out waiting to be elected, marking as done and failing incoming joins");
-            if (done.compareAndSet(false, true) == false) {
-                // master election started
-                return true;
-            }
-            // fail all the accumulated joins
-            clusterService.submitStateUpdateTask("zen-disco-join(failing pending joins after timeout)", Priority.URGENT, new ProcessJoinsTask());
-            return false;
-        }
-
-        // synchronize to try and be nice to join requests that come in while we become a master so we want reject them
-        @Override
-        public synchronized void handleJoinRequest(DiscoveryNode node, final MembershipAction.JoinCallback callback) {
-            super.handleJoinRequest(node, callback);
-            if (done.get()) {
-                clusterService.submitStateUpdateTask("zen-disco-receive(join from node[" + node + "])", Priority.URGENT, new ProcessJoinsTask());
-                return;
-            }
-            if (processJoinRequests.size() >= requiredJoins) {
-                ArrayList<Tuple<DiscoveryNode, MembershipAction.JoinCallback>> seedJoins = new ArrayList<>();
-                processJoinRequests.drainTo(seedJoins);
-                assert seedJoins.size() >= requiredJoins;
-                electAsMaster(seedJoins);
-            }
-        }
-
-        private void electAsMaster(final ArrayList<Tuple<DiscoveryNode, MembershipAction.JoinCallback>> seedJoins) {
-            // from now on pass things through directly.. we don't care about concurrent joins - we got enough joins so we can become master
-            done.set(true);
-            final int joinedReceived = seedJoins.size();
-            final String source = "zen-disco-join(elected_as_master, [" + joinedReceived + "] joins received)";
-            clusterService.submitStateUpdateTask(source, Priority.IMMEDIATE, new ProcessJoinsTask(seedJoins) {
-                @Override
-                public ClusterState execute(ClusterState currentState) {
-                    // Take into account the previous known nodes, if they happen not to be available
-                    // then fault detection will remove these nodes.
-
-                    if (currentState.nodes().masterNode() != null) {
-                        // TODO can we tie break here? we don't have a remote master cluster state version to decide on
-                        logger.trace("join thread elected local node as master, but there is already a master in place: {}", currentState.nodes().masterNode());
-                        throw new NotMasterException("Node [" + clusterService.localNode() + "] not master for join request");
-                    }
-
-                    DiscoveryNodes.Builder builder = new DiscoveryNodes.Builder(currentState.nodes()).masterNodeId(currentState.nodes().localNode().id());
-                    // update the fact that we are the master...
-                    ClusterBlocks clusterBlocks = ClusterBlocks.builder().blocks(currentState.blocks()).removeGlobalBlock(discoverySettings.getNoMasterBlock()).build();
-                    currentState = ClusterState.builder(currentState).nodes(builder).blocks(clusterBlocks).build();
-
-                    // add the incoming join requests
-                    currentState = super.execute(currentState);
-
-                    // eagerly run reroute to remove dead nodes from routing table
-                    RoutingAllocation.Result result = allocationService.reroute(currentState);
-                    return ClusterState.builder(currentState).routingResult(result).build();
-                }
-
-                @Override
-                public boolean runOnlyOnMaster() {
-                    return false;
-                }
-
-                @Override
-                public void onFailure(String source, Throwable t) {
-                    super.onFailure(source, t);
-                    listener.onFailure(t);
-                }
-
-                @Override
-                public void clusterStateProcessed(String source, ClusterState oldState, ClusterState newState) {
-                    super.clusterStateProcessed(source, oldState, newState);
-                    listener.onElectedAsMaster(newState);
-                    electedAsMaster.countDown();
-                }
-            });
+        pendingJoinRequests.add(new Tuple<>(node, callback));
+        if (accumulateJoins.get() == false) {
+            processJoins("join from node[" + node + "]");
+        } else {
+            checkAndElect();
         }
     }
 
-    public static class ImmediateProcessing extends NodeJoinController {
-
-        public ImmediateProcessing(ClusterService clusterService, AllocationService allocationService, ESLogger logger) {
-            super(clusterService, allocationService, logger);
+    private void checkAndElect() {
+        assert accumulateJoins.get() : "election check requested but we are not accumulating joins";
+        final ElectionContext context = electionContext.get();
+        if (context == null) {
+            return;
         }
-
-        @Override
-        public void handleJoinRequest(DiscoveryNode node, MembershipAction.JoinCallback callback) {
-            super.handleJoinRequest(node, callback);
-            clusterService.submitStateUpdateTask("zen-disco-receive(join from node[" + node + "])", Priority.URGENT, new ProcessJoinsTask());
+        final int pendingJoins = pendingJoinRequests.size();
+        if (pendingJoins < context.requiredJoins) {
+            logger.trace("not enough joins for election. Got [{}], required [{}]", pendingJoins, context.requiredJoins);
+            return;
         }
+        final String source = "zen-disco-join(elected_as_master, [" + pendingJoins + "] joins received)";
+        clusterService.submitStateUpdateTask(source, Priority.IMMEDIATE, new ProcessJoinsTask() {
+            @Override
+            public ClusterState execute(ClusterState currentState) {
+                // Take into account the previous known nodes, if they happen not to be available
+                // then fault detection will remove these nodes.
+
+                if (currentState.nodes().masterNode() != null) {
+                    // TODO can we tie break here? we don't have a remote master cluster state version to decide on
+                    logger.trace("join thread elected local node as master, but there is already a master in place: {}", currentState.nodes().masterNode());
+                    throw new NotMasterException("Node [" + clusterService.localNode() + "] not master for join request");
+                }
+
+                DiscoveryNodes.Builder builder = new DiscoveryNodes.Builder(currentState.nodes()).masterNodeId(currentState.nodes().localNode().id());
+                // update the fact that we are the master...
+                ClusterBlocks clusterBlocks = ClusterBlocks.builder().blocks(currentState.blocks()).removeGlobalBlock(discoverySettings.getNoMasterBlock()).build();
+                currentState = ClusterState.builder(currentState).nodes(builder).blocks(clusterBlocks).build();
+
+                // add the incoming join requests and reroute
+                return super.execute(currentState);
+            }
+
+            @Override
+            public boolean runOnlyOnMaster() {
+                return false;
+            }
+
+            @Override
+            public void onFailure(String source, Throwable t) {
+                super.onFailure(source, t);
+                context.callback.onFailure(t);
+            }
+
+            @Override
+            public void clusterStateProcessed(String source, ClusterState oldState, ClusterState newState) {
+                super.clusterStateProcessed(source, oldState, newState);
+                context.callback.onElectedAsMaster(newState);
+            }
+        });
+    }
+
+    private void processJoins(String reason) {
+        clusterService.submitStateUpdateTask("zen-disco-join(" + reason + ")", Priority.URGENT, new ProcessJoinsTask());
+    }
+
+
+    public interface Callback {
+        void onElectedAsMaster(ClusterState state);
+
+        void onFailure(Throwable t);
+    }
+
+    static class ElectionContext {
+        Callback callback;
+        int requiredJoins;
     }
 
 
     class ProcessJoinsTask extends ProcessedClusterStateUpdateTask {
 
-        private final List<Tuple<DiscoveryNode, MembershipAction.JoinCallback>> joinRequestsToProcess;
+        private final List<Tuple<DiscoveryNode, MembershipAction.JoinCallback>> joinRequestsToProcess = new ArrayList<>();
         private boolean nodeAdded = false;
-
-
-        ProcessJoinsTask() {
-            joinRequestsToProcess = new ArrayList<>();
-        }
-
-        ProcessJoinsTask(List<Tuple<DiscoveryNode, MembershipAction.JoinCallback>> nodesToProcess) {
-            this.joinRequestsToProcess = new ArrayList<>(nodesToProcess);
-        }
 
         @Override
         public ClusterState execute(ClusterState currentState) {
-            processJoinRequests.drainTo(joinRequestsToProcess);
+            pendingJoinRequests.drainTo(joinRequestsToProcess);
             if (joinRequestsToProcess.isEmpty()) {
                 return currentState;
             }
@@ -222,7 +230,6 @@ public abstract class NodeJoinController {
                 }
             }
 
-
             // we must return a new cluster state instance to force publishing. This is important
             // for the joining node to finalize it's join and set us as a master
             final ClusterState.Builder newState = ClusterState.builder(currentState);
@@ -236,8 +243,8 @@ public abstract class NodeJoinController {
         @Override
         public void onNoLongerMaster(String source) {
             // we are rejected, so drain all pending task (execute never run)
-            processJoinRequests.drainTo(joinRequestsToProcess);
-            Exception e = new NotMasterException("Node [" + clusterService.localNode() + "] not master [" + source + "]");
+            pendingJoinRequests.drainTo(joinRequestsToProcess);
+            Exception e = new NotMasterException("Node [" + clusterService.localNode() + "] not master for join request");
             innerOnFailure(e);
         }
 

@@ -276,8 +276,8 @@ public class DiscoveryWithServiceDisruptionsTests extends ElasticsearchIntegrati
         logger.info("--> isolating [{}]", nonMaster);
         addRandomIsolation(nonMaster).startDisrupting();
 
-        logger.info("--> waiting for master to remove it");
-        ensureStableCluster(1, master);
+        logger.info("--> waiting for master to remove it and step down");
+        assertNoMaster(master);
     }
 
     /**
