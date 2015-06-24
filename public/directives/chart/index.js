@@ -14,11 +14,7 @@ function (formatNumber, template) {
 
     return {
       restrict: 'E',
-      scope: {
-        title: '@',
-        total: '@',
-        unit: '@'
-      },
+      scope: {},
       template: template,
       link: function($scope, $elem, attrs) {
         // get the object with information about the metric
@@ -48,7 +44,10 @@ function (formatNumber, template) {
 
 
         // listen for changes to the time for updates for now.
-        $scope.$listen(timefilter, 'fetch', searchSource.fetch);
+        $scope.$listen(timefilter, 'fetch', function() {
+          searchSource.fetch();
+        });
+
 
         // Finally get the Data for the first time
         searchSource.fetch();
@@ -109,17 +108,6 @@ function (formatNumber, template) {
     return aggs;
   }
 
-  // Gets a range of colors evenly divided 
-  // TODO add a Range limit to the colors you can choose from 
-  function getColors(num, range) {
-    var maxNumber = Math.pow(16, 6);
-    var dividend = maxNumber / (num + 1); // +1 because we don't want black or white.
-    var colorArr = [];
-    for(var idx = num; idx > 0; idx--) {
-      colorArr.push("#" + (idx * dividend).toString(16));
-    }
-    return colorArr;
-  }
 
   function getAverage(values) {
     // Calculate the Average
@@ -127,22 +115,6 @@ function (formatNumber, template) {
     return sum / values.length;
   }
 
-
-  // Simple wrapper for colors
-  /*
-  function colorGenerator() {
-    var colorCount = 3;
-    var currentIdx = 0;
-    var colorOptionsArr = getColors(colorCount);
-
-    return function() {
-      if (currentIdx === colorOptionsArr.length) {
-        currentIdx = 0;
-      }
-      return colorOptionsArr[currentIdx++];
-    };
-  }
-  */
 
   // TODO memoize...
   function makeChartObj(type) {

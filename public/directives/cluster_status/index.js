@@ -1,13 +1,12 @@
 define(['marvel/lib/format_number', 'text!marvel/directives/cluster_status/index.html'],
 function (formatNumber, template) {
   var module = require('modules').get('marvel/directives', []);
-  module.directive('marvelClusterStatus', function ($route, courier) {
+  module.directive('marvelClusterStatus', function ($route, courier, timefilter) {
     var marvelIndex = $route.current.locals.indexPattern;
     return {
       restrict: 'E',
       template: template,
       scope: {
-        status: '@',
         issues: '='
       },
       link: function($scope) {
@@ -27,6 +26,11 @@ function (formatNumber, template) {
         // Handle errors
         searchSource.onError(function(err) {
           console.log(err);
+        });
+
+        // listen for changes to the time for updates for now.
+        $scope.$listen(timefilter, 'fetch', function() {
+          searchSource.fetch
         });
 
         // TODO NOOOO!!!!!
