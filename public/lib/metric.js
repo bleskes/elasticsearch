@@ -3,7 +3,10 @@
 // Mind the gap... UMD Below
 (function(define) {
   define(function (require, exports, module) {
+    var Model = require('./model');
     var _ = require('lodash');
+    var moment = require('moment');
+
     var lookup = {
       '<': { method: 'lt', message: _.template('is below <%= threshold %> at <%= value %>') },
       '<=': { method: 'lte', message: _.template('is below <%= threshold %> at <%= value %>') },
@@ -11,21 +14,33 @@
       '>=': { method: 'gte', message: _.template('is above <%= threshold %> at <%= value %>')}
     };
 
-    function evalThreshold(value, threshold) {
+    function parseThreshold(threshold) {
       var parts = threshold.match(/([<>=]{1,2})([\d\.]+)/);
-      var exp = parts[1];
-      var limit = Number(parts[2]);
-      if (lookup[exp]) {
-        if (_[lookup[exp].method](value, limit)) {
-          return lookup[exp].message({ threshold: limit, value: value });
-        }
+      return { exp: parts[1], limit: Number(parts[2]) };
+    }
+
+    function evalThreshold(value, threshold) {
+      var parts = parseThreshold(threshold);
+      if (lookup[parts.exp]) {
+        return _[lookup[parts.exp].method](value, parts.limit);
       }
     }
 
+    function createMessage(value, threshold) {
+      var parts = parseThreshold(threshold);
+      return lookup[parts.exp].message({ threshold: parts.limit, value: value });
+    }
 
-    function Metric(field, options, settings) {
-      this._field = field;
-      this._settings = settings;
+    function checkBuckets(metric, name) {
+      return function (value) {
+        return evalThreshold(value, metric.settings.get(name));
+      };
+    }
+
+    function Metric(id, options, settings) {
+      this.id = id;
+      this.field = options.field || id;
+      this.settings = new Model(settings.get(this.id));
       _.defaults(this, options);
     }
 
@@ -44,16 +59,25 @@
      * @returns object
      */
     Metric.prototype.threshold = function (value) {
-      var thresholds = this._settings.get(this._field);
-      var statusObj = { status: 'green', field: this._field, message: 'Ok', value: value };
-      var critical = evalThreshold(value, thresholds.critical);
-      var warning = evalThreshold(value, thresholds.warning);
+      var self = this;
+      var buckets = _.flatten([value]);
+      var last = _.last(buckets);
+      var statusObj = {
+        id: this.id,
+        status: 'green',
+        field: this.field,
+        message: 'Ok',
+        value: last,
+        timestamp: moment.utc()
+      };
+      var critical = _.every(buckets, checkBuckets(this, 'critical'));
+      var warning = _.every(buckets, checkBuckets(this, 'warning'));
       if (critical) {
         statusObj.status = 'red';
-        statusObj.message = critical;
+        statusObj.message = createMessage(last, this.settings.get('critical'));
       } else if (warning) {
         statusObj.status = 'yellow';
-        statusObj.message = warning;
+        statusObj.message = createMessage(last, this.settings.get('warning'));
       }
       return statusObj;
     };
