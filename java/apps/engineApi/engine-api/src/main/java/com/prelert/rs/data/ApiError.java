@@ -31,6 +31,7 @@ import java.util.Objects;
 import com.fasterxml.jackson.core.io.JsonStringEncoder;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.errorcodes.HasErrorCode;
+import com.prelert.job.exceptions.JobException;
 
 
 /**
@@ -47,6 +48,15 @@ public class ApiError implements HasErrorCode
     private ErrorCodes m_ErrorCode;
 	private String m_Message;
 	private Throwable m_Cause;
+
+
+	public static ApiError fromJobException(JobException e)
+	{
+        ApiError error = new ApiError(e.getErrorCode());
+        error.setMessage(e.getMessage());
+        error.setCause(e.getCause());
+        return error;
+	}
 
 	/**
 	 * Default cons for serialisation (Jackson)

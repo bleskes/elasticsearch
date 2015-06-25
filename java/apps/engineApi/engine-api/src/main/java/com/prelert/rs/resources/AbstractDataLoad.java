@@ -124,9 +124,7 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
             @PathParam("jobId") String jobId, InputStream input,
             @DefaultValue("") @QueryParam(RESET_START_PARAM) String resetStart,
             @DefaultValue("") @QueryParam(RESET_END_PARAM) String resetEnd)
-    throws IOException, UnknownJobException, NativeProcessRunException,
-            MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException,
-            OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException
+    throws IOException, UnknownJobException
     {
         LOGGER.debug("Post data to job(s) " + jobId);
 
@@ -140,9 +138,7 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
         String [] jobIds = jobId.split(JOB_SEPARATOR);
         if (jobIds.length == 1)
         {
-            DataStreamer dataStreamer = new DataStreamer(jobManager());
-            DataCounts stats = dataStreamer.streamData(contentEncoding, jobId, input, params);
-            return Response.accepted().entity(stats).build();
+            return streamToSingleJob(jobId, params, contentEncoding, input);
         }
         else
         {
@@ -150,9 +146,30 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
         }
     }
 
+    private Response streamToSingleJob(String jobId, DataLoadParams params,
+            String contentEncoding, InputStream input)
+     throws IOException
+    {
+        DataStreamer dataStreamer = new DataStreamer(jobManager());
+        MultiDataPostResult result = new MultiDataPostResult();
+
+        try
+        {
+            DataCounts stats = dataStreamer.streamData(contentEncoding, jobId, input, params);
+            result.addResult(new DataPostResult(jobId, stats));
+        }
+        catch (JobException e)
+        {
+            ApiError error = ApiError.fromJobException(e);
+            result.addResult(new DataPostResult(jobId, error));
+        }
+
+        return Response.accepted().entity(result).build();
+    }
 
     private Response streamToMultipleJobs(String [] jobIds, DataLoadParams params,
-                                            String encoding, InputStream input) throws IOException
+                                            String contentEncoding, InputStream input)
+    throws IOException
     {
         // remove duplicate job ids
         Set<String> idSet = new HashSet<>(Arrays.asList(jobIds));
@@ -165,7 +182,7 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
             InputStream duplicateInput = duplicator.createDuplicateStream();
 
             DataStreamer dataStreamer = new DataStreamer(jobManager());
-            DataStreamerThread thread = new DataStreamerThread(dataStreamer, job, encoding,
+            DataStreamerThread thread = new DataStreamerThread(dataStreamer, job, contentEncoding,
                                                                 params, duplicateInput);
             threads.add(thread);
             thread.start();
@@ -203,11 +220,7 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
         else if (th.getJobException().isPresent())
         {
             JobException e = th.getJobException().get();
-            ApiError error = new ApiError(e.getErrorCode());
-            error.setMessage(e.getMessage());
-            error.setCause(e.getCause());
-
-            return new DataPostResult(th.getJobId(), error);
+            return new DataPostResult(th.getJobId(), ApiError.fromJobException(e));
         }
         else
         {
