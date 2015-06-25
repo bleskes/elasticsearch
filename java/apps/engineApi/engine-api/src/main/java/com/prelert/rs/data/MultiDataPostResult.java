@@ -31,11 +31,14 @@ import java.util.List;
 import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 /**
  * List of {@linkplain DataPostResponse}
  */
 @JsonIgnoreProperties("anErrorOccurred")
+@JsonInclude(Include.NON_NULL)
 public class MultiDataPostResult
 {
     private List<DataPostResponse> m_Results;

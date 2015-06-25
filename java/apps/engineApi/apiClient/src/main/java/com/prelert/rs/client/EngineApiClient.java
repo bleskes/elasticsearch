@@ -68,6 +68,7 @@ import com.prelert.job.JobDetails;
 import com.prelert.job.alert.Alert;
 import com.prelert.job.results.CategoryDefinition;
 import com.prelert.rs.data.ApiError;
+import com.prelert.rs.data.DataPostResponse;
 import com.prelert.rs.data.MultiDataPostResult;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
@@ -373,8 +374,18 @@ public class EngineApiClient implements Closeable
 
                     LOGGER.error(msg);
 
-                    m_LastError = m_JsonMapper.readValue(content,
-                            new TypeReference<ApiError>() {} );
+                    uploadSummary = m_JsonMapper.readValue(content, new TypeReference<MultiDataPostResult>() {});
+
+                    m_LastError = null;
+                    for (DataPostResponse dpr : uploadSummary.getResponses())
+                    {
+                        if (dpr.getError() != null)
+                        {
+                            m_LastError = dpr.getError();
+                            break;
+                        }
+                    }
+
                 }
                 else
                 {
@@ -432,7 +443,7 @@ public class EngineApiClient implements Closeable
             postUrl += String.format("?resetStart=%s&resetEnd=%s",
                     nullToEmpty(resetStart), nullToEmpty(resetEnd));
         }
-        return uploadStream(inputStream, postUrl, compressed, new MultiDataPostResult(),
+        return uploadStream(inputStream, postUrl, compressed, new MultiDataPostResult(), true,
                 content -> m_JsonMapper.readValue(content, new TypeReference<MultiDataPostResult>() {}));
     }
 
@@ -459,7 +470,7 @@ public class EngineApiClient implements Closeable
 
         String postUrl = String.format("%s/data/%s", m_BaseUrl, joiner.toString());
 
-        return uploadStream(inputStream, postUrl, compressed, new MultiDataPostResult(),
+        return uploadStream(inputStream, postUrl, compressed, new MultiDataPostResult(), true,
                 content -> m_JsonMapper.readValue(content, new TypeReference<MultiDataPostResult>() {}));
     }
 
@@ -470,8 +481,9 @@ public class EngineApiClient implements Closeable
         R apply(T input) throws IOException;
     }
 
-    private <T> T uploadStream(InputStream inputStream, String postUrl, boolean compressed,
-            T defaultReturnValue, FunctionThatThrowsIoException<String, T> convertContentFunction)
+    private <T, E> T uploadStream(InputStream inputStream, String postUrl, boolean compressed,
+            T defaultReturnValue, boolean convertResponseOnError,
+            FunctionThatThrowsIoException<String, T> convertContentFunction)
     throws IOException
     {
         LOGGER.debug("Uploading data to " + postUrl);
@@ -501,6 +513,11 @@ public class EngineApiClient implements Closeable
 
                 LOGGER.error(msg);
 
+                if (convertResponseOnError)
+                {
+                    return convertContentFunction.apply(content);
+                }
+
                 if (content.isEmpty() == false)
                 {
                     m_LastError = m_JsonMapper.readValue(content,
@@ -510,6 +527,7 @@ public class EngineApiClient implements Closeable
                 {
                     m_LastError = null;
                 }
+
                 return defaultReturnValue;
             }
             return convertContentFunction.apply(content);
@@ -814,7 +832,7 @@ public class EngineApiClient implements Closeable
     throws IOException
     {
         String postUrl = String.format("%s/preview/%s", m_BaseUrl, jobId);
-        return uploadStream(inputStream, postUrl, false, "", content -> content);
+        return uploadStream(inputStream, postUrl, false, "", false, content -> content);
     }
 
     /**

@@ -713,21 +713,20 @@ public class JobsTest implements Closeable
         FileInputStream stream = new FileInputStream(dataFile);
         MultiDataPostResult result = m_WebServiceClient.streamingUpload(jobId, stream, compressed);
 
-        test(result.anErrorOccurred() == false);
         test(result.getResponses().size() == 1);
         ApiError error = result.getResponses().get(0).getError();
-        test(error == null);
-        test(result.getResponses().get(0).getUploadSummary().getProcessedRecordCount() > 0);
-        test(result.getResponses().get(0).getUploadSummary().getInvalidDateCount() == 0);
-
 
         if (shouldProcessRecords)
         {
+            test(error == null);
+            test(result.anErrorOccurred() == false);
             test(result.getResponses().get(0).getUploadSummary().getProcessedRecordCount() > 0);
         }
         else
         {
-            test(result.getResponses().get(0).getUploadSummary().getProcessedRecordCount() == 0);
+            test(error != null);
+            test(result.anErrorOccurred() == true);
+            test(result.getResponses().get(0).getUploadSummary() == null);
         }
 
         SingleDocument<JobDetails> job = m_WebServiceClient.getJob(jobId);
@@ -1810,7 +1809,6 @@ public class JobsTest implements Closeable
         start = new Date(1359406800000L);
         end = new Date(1359662400000L);
         test.testBucketDateFilters(doubleUploadTest, start, end);
-
 
         //==========================
         // Clean up test jobs
