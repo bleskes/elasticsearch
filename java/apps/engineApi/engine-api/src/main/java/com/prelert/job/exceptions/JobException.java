@@ -33,7 +33,7 @@ import com.prelert.job.errorcodes.HasErrorCode;
 /**
  * General job exception class with a specific error code and message.
  */
-public abstract class JobException extends Exception implements HasErrorCode
+public class JobException extends Exception implements HasErrorCode
 {
     private static final long serialVersionUID = -5289885963015348819L;
 

@@ -38,13 +38,12 @@ import java.util.Objects;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipException;
 
-import javax.ws.rs.core.Response;
-
 import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.DataCounts;
 import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.exceptions.JobException;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.TooManyJobsException;
 import com.prelert.job.exceptions.UnknownJobException;
@@ -56,7 +55,6 @@ import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.process.params.DataLoadParams;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
-import com.prelert.rs.provider.RestApiException;
 
 public class DataStreamer
 {
@@ -105,7 +103,7 @@ public class DataStreamer
     public DataCounts streamData(String contentEncoding, String jobId, InputStream input, DataLoadParams params)
             throws IOException, UnknownJobException, NativeProcessRunException,
             MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException,
-            OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException
+            OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException, JobException
     {
         LOGGER.debug("Handle Post data to job = " + jobId);
 
@@ -124,7 +122,7 @@ public class DataStreamer
     }
 
     private InputStream tryDecompressingInputStream(String contentEncoding,
-            String jobId, InputStream input) throws IOException
+            String jobId, InputStream input) throws IOException, JobException
     {
         if ("gzip".equals(contentEncoding))
         {
@@ -136,9 +134,8 @@ public class DataStreamer
             catch (ZipException ze)
             {
                 LOGGER.debug("Failed to decompress data file", ze);
-                throw new RestApiException(Messages.getMessage(Messages.REST_GZIP_ERROR),
-                        ErrorCodes.UNCOMPRESSED_DATA,
-                        Response.Status.BAD_REQUEST);
+                throw new JobException(Messages.getMessage(Messages.REST_GZIP_ERROR),
+                        ErrorCodes.UNCOMPRESSED_DATA);
             }
         }
         return input;
