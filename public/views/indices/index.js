@@ -10,7 +10,7 @@ define(function (require) {
 
   require('routes')
   .when('/marvel/indices', {
-    template: require('text!marvel/plugins/indices/index.html')
+    template: require('text!marvel/views/indices/index.html')
   });
 
   module.controller('indices', function ($scope) {

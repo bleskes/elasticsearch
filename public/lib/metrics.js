@@ -6,9 +6,9 @@ var metrics = {
     format: '0.00',
     metricAgg: 'max',
     units: 'rps',
-    defaults: { warning: '<800', critical: '>1000', interval: 60000 },
+    defaults: { warning: '>100', critical: '>5000', interval: '1m', periods: 1 },
     type: 'cluster',
-    derivitave: true
+    derivative: true
   },
   'index_request_rate': {
     field: 'primaries.indexing.index_total',
@@ -17,9 +17,9 @@ var metrics = {
     format: '0.00',
     metricAgg: 'max',
     units: 'rps',
-    defaults: { warning: '<1', critical: '<0.5', interval: 60000 },
+    defaults: { warning: '>1000', critical: '>5000', interval: '1m', periods: 1 },
     type: 'cluster',
-    derivitave: true
+    derivative: true
   },
   'query_latency': {
     field: 'total.search.query_latency',
@@ -42,7 +42,7 @@ var metrics = {
       }
     },
     units: 'ms',
-    defaults: { warning: '>100', critical: '<200', interval: 60000 },
+    defaults: { warning: '>100', critical: '>200', interval: '1m', periods: 1 },
     type: 'cluster',
     derivitave: false,
     calculation: function (last) {
@@ -61,28 +61,31 @@ var metrics = {
     label: 'CPU Utilization',
     description: 'The percentage of CPU usage.',
     format: '0.0%',
+    metricAgg: 'avg',
     units: '',
-    defaults: { warning: '>0.7', critical: '>0.9', interval: 60000 },
+    defaults: { warning: '>0.7', critical: '>0.9', interval: '1m', periods: 1 },
     type: 'node',
-    derivitave: false
+    derivative: false
   },
   'heap_used_percent': {
     field: 'jvm.mem.heap_used_percent',
     label: 'JVM Heap Usage',
     description: 'The amound of heap used by the JVM',
     format: '0.0%',
+    metricAgg: 'avg',
     units: '',
-    defaults: { warning: '>0.7', critical: '>0.9', interval: 60000  },
+    defaults: { warning: '>0.7', critical: '>0.9', interval: '1m', periods: 1  },
     type: 'node',
-    derivitave: false
+    derivative: false
   },
   'load_average_1m': {
     field: 'os.load_average.1m',
     label: 'CPU Load (1m)',
     description: 'The amount of load used for the last 1 minute.',
     format: '0.0%',
+    metricAgg: 'avg',
     units: '',
-    defaults: { warning: '>2', critical: '>4', interval: 60000 },
+    defaults: { warning: '>2', critical: '>4', interval: '1m', periods: 1 },
     type: 'node',
     derivative: false
   },
