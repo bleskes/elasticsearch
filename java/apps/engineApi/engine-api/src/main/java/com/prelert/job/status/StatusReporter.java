@@ -26,6 +26,8 @@
  ************************************************************/
 package com.prelert.job.status;
 
+import java.util.Date;
+
 import org.apache.log4j.Logger;
 
 import com.prelert.job.DataCounts;
@@ -125,6 +127,7 @@ public abstract class StatusReporter
      * Note this is not the number of processed fields (by field etc)
      * but the actual number of fields in the record
      * @param latestRecordTime The time of the latest record written
+     * in seconds from the epoch.
      *
      * @throws HighProportionOfBadTimestampsException
      * @throws OutOfOrderRecordsException
@@ -136,11 +139,11 @@ public abstract class StatusReporter
 
         m_TotalRecordStats.incrementInputFieldCount(inputFieldCount);
         m_TotalRecordStats.incrementProcessedRecordCount(1);
-        m_TotalRecordStats.setLatestRecordTime(latestRecordTime);
+        m_TotalRecordStats.setLatestRecordTimeStamp(new Date(latestRecordTime * 1000));
 
         m_IncrementalRecordStats.incrementInputFieldCount(inputFieldCount);
         m_IncrementalRecordStats.incrementProcessedRecordCount(1);
-        m_IncrementalRecordStats.setLatestRecordTime(latestRecordTime);
+        m_IncrementalRecordStats.setLatestRecordTimeStamp(new Date(latestRecordTime * 1000));
 
         // report at various boundaries
         long totalRecords = getInputRecordCount() ;
@@ -267,9 +270,9 @@ public abstract class StatusReporter
         return m_TotalRecordStats.getFailedTransformCount();
     }
 
-    public long getLatestRecordTime()
+    public Date getLatestRecordTime()
     {
-        return m_TotalRecordStats.getLatestRecordTime();
+        return m_TotalRecordStats.getLatestRecordTimeStamp();
     }
 
     public long getProcessedFieldCount()

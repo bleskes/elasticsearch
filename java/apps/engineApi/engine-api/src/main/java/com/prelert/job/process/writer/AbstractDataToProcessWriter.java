@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -84,7 +85,7 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
     private String [] m_ScratchArea;
     private String [][] m_ReadWriteArea;
 
-    private long m_LatestEpoch;
+    private long m_LatestEpoch;  // in seconds
 
 
     protected AbstractDataToProcessWriter(RecordWriter recordWriter,
@@ -102,7 +103,12 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
 
         m_PostDateTransforms = new ArrayList<>();
         m_DateInputTransforms = new ArrayList<>();
-        m_LatestEpoch = statusReporter.getLatestRecordTime();
+        Date date = statusReporter.getLatestRecordTime();
+        m_LatestEpoch = 0;
+        if (date != null)
+        {
+            m_LatestEpoch  = date.getTime() / 1000;
+        }
 
         m_ReadWriteArea = new String[3][];
     }

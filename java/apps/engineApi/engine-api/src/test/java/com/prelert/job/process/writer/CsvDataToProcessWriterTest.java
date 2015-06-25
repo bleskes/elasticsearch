@@ -43,6 +43,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 import org.apache.log4j.Logger;
@@ -204,7 +205,7 @@ public class CsvDataToProcessWriterTest
         input.append("2,bar,2.0\n");
         InputStream inputStream = createInputStream(input.toString());
 
-        when(m_StatusReporter.getLatestRecordTime()).thenReturn(5L);
+        when(m_StatusReporter.getLatestRecordTime()).thenReturn(new Date(5000L));
         CsvDataToProcessWriter writer = createWriter();
 
         writer.write(inputStream);

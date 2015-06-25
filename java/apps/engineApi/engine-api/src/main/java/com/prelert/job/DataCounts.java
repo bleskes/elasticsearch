@@ -27,6 +27,7 @@
 
 package com.prelert.job;
 
+import java.util.Date;
 import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -60,7 +61,7 @@ public class DataCounts
     public static final String MISSING_FIELD_COUNT = "missingFieldCount";
     public static final String OUT_OF_ORDER_TIME_COUNT = "outOfOrderTimeStampCount";
     public static final String FAILED_TRANSFORM_COUNT = "failedTransformCount";
-    public static final String LATEST_RECORD_TIME = "latestRecordTime";
+    public static final String LATEST_RECORD_TIME = "latestRecordTimeStamp";
 
 
     private Long m_BucketCount;
@@ -72,7 +73,7 @@ public class DataCounts
     private long m_MissingFieldCount;
     private long m_OutOfOrderTimeStampCount;
     private long m_FailedTransformCount;
-    private long m_LatestRecordTime;
+    private Date m_LatestRecordTime;
 
     public DataCounts()
     {
@@ -305,15 +306,15 @@ public class DataCounts
     }
 
     /**
-     * The time as Epoch of the latest record seen.
-     * @return Latest record time as Epoch (seconds).
+     * The time of the latest record seen.
+     * @return Latest record time
      */
-    public long getLatestRecordTime()
+    public Date getLatestRecordTimeStamp()
     {
         return m_LatestRecordTime;
     }
 
-    public void setLatestRecordTime(long latestRecordTime)
+    public void setLatestRecordTimeStamp(Date latestRecordTime)
     {
         m_LatestRecordTime = latestRecordTime;
     }
@@ -351,7 +352,7 @@ public class DataCounts
                 this.m_MissingFieldCount == that.m_MissingFieldCount &&
                 this.m_OutOfOrderTimeStampCount == that.m_OutOfOrderTimeStampCount &&
                 this.m_FailedTransformCount == that.m_FailedTransformCount &&
-                this.m_LatestRecordTime == that.m_LatestRecordTime;
+                Objects.equals(this.m_LatestRecordTime, that.m_LatestRecordTime);
     }
 
     @Override

@@ -149,7 +149,7 @@ public class ElasticsearchMappings
                                     .field(TYPE, LONG)
                                 .endObject()
                                 .startObject(DataCounts.LATEST_RECORD_TIME)
-                                    .field(TYPE, LONG)
+                                    .field(TYPE, DATE)
                                 .endObject()
                             .endObject()
                         .endObject()

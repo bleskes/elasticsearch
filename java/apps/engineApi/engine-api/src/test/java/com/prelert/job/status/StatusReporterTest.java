@@ -35,6 +35,7 @@ import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Date;
 
 import org.junit.Test;
 
@@ -119,7 +120,7 @@ public class StatusReporterTest
         assertEquals(1, reporter.incrementalStats().getProcessedRecordCount());
         assertEquals(3, reporter.incrementalStats().getProcessedFieldCount());
         assertEquals(1, reporter.incrementalStats().getFailedTransformCount());
-        assertEquals(1000, reporter.incrementalStats().getLatestRecordTime());
+        assertEquals(1000, reporter.incrementalStats().getLatestRecordTimeStamp().getTime() / 1000);
 
         assertEquals(reporter.incrementalStats(), reporter.runningTotalStats());
 
@@ -141,7 +142,7 @@ public class StatusReporterTest
         assertEquals(5, reporter.incrementalStats().getInputFieldCount());
         assertEquals(1, reporter.incrementalStats().getProcessedRecordCount());
         assertEquals(3, reporter.incrementalStats().getProcessedFieldCount());
-        assertEquals(2000, reporter.incrementalStats().getLatestRecordTime());
+        assertEquals(2000, reporter.incrementalStats().getLatestRecordTimeStamp().getTime() / 1000);
 
         reporter.reportRecordWritten(5, 3000);
         reporter.reportMissingField();
@@ -149,7 +150,7 @@ public class StatusReporterTest
         assertEquals(10, reporter.incrementalStats().getInputFieldCount());
         assertEquals(2, reporter.incrementalStats().getProcessedRecordCount());
         assertEquals(5, reporter.incrementalStats().getProcessedFieldCount());
-        assertEquals(3000, reporter.incrementalStats().getLatestRecordTime());
+        assertEquals(3000, reporter.incrementalStats().getLatestRecordTimeStamp().getTime() / 1000);
 
         assertEquals(reporter.incrementalStats(), reporter.runningTotalStats());
     }
@@ -160,6 +161,13 @@ public class StatusReporterTest
         for(PropertyDescriptor propertyDescriptor :
             Introspector.getBeanInfo(DataCounts.class, Object.class).getPropertyDescriptors())
         {
+            if (propertyDescriptor.getReadMethod().getName().equals("getLatestRecordTimeStamp"))
+            {
+                Date val = (Date)propertyDescriptor.getReadMethod().invoke(stats);
+                assertEquals(val, null);
+                continue;
+            }
+
             assertEquals(new Long(0), propertyDescriptor.getReadMethod().invoke(stats));
         }
     }

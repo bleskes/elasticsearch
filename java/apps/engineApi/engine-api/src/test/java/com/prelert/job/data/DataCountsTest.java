@@ -35,6 +35,7 @@ import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Date;
 
 import org.junit.Test;
 
@@ -155,7 +156,7 @@ public class DataCountsTest
         counts1.setOutOfOrderTimeStampCount(40);
         counts1.setProcessedFieldCount(5000);
         counts1.setProcessedRecordCount(10);
-        counts1.setLatestRecordTime(1435000000);
+        counts1.setLatestRecordTimeStamp(new Date(1435000000l));
 
         DataCounts counts2 = new DataCounts(counts1);
 
@@ -174,6 +175,14 @@ public class DataCountsTest
             {
                 continue;
             }
+
+            if (propertyDescriptor.getReadMethod().getName().equals("getLatestRecordTimeStamp"))
+            {
+                Date val = (Date)propertyDescriptor.getReadMethod().invoke(stats);
+                assertEquals(val, null);
+                continue;
+            }
+
             assertEquals(new Long(0), propertyDescriptor.getReadMethod().invoke(stats));
         }
     }
@@ -184,8 +193,16 @@ public class DataCountsTest
         for(PropertyDescriptor propertyDescriptor :
             Introspector.getBeanInfo(DataCounts.class, Object.class).getPropertyDescriptors())
         {
-            Long val = (Long)propertyDescriptor.getReadMethod().invoke(stats);
-            assertTrue("Field " + propertyDescriptor.getReadMethod().toString() + " not > 0", val > 0);
+            if (propertyDescriptor.getReadMethod().getName().equals("getLatestRecordTimeStamp"))
+            {
+                Date val = (Date)propertyDescriptor.getReadMethod().invoke(stats);
+                assertTrue("LastestRecordTimeStamp is not > 0", val.getTime() > 0);
+            }
+            else
+            {
+                Long val = (Long)propertyDescriptor.getReadMethod().invoke(stats);
+                assertTrue("Field " + propertyDescriptor.getReadMethod().toString() + " not > 0", val > 0);
+            }
         }
     }
 
@@ -205,7 +222,7 @@ public class DataCountsTest
         counts.setMissingFieldCount(missingFieldCount);
         counts.setOutOfOrderTimeStampCount(outOfOrderTimeStampCount);
         counts.setFailedTransformCount(failedTransformCount);
-        counts.setLatestRecordTime(latestRecordTime);
+        counts.setLatestRecordTimeStamp(new Date(latestRecordTime));
         return counts;
     }
 

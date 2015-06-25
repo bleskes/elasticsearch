@@ -28,6 +28,8 @@ package com.prelert.rs.data;
 
 import static org.junit.Assert.*;
 
+import java.util.Date;
+
 import org.junit.Test;
 
 import com.prelert.job.DataCounts;
@@ -72,7 +74,7 @@ public class DataPostResultTest
         counts.setMissingFieldCount(missingFieldCount);
         counts.setOutOfOrderTimeStampCount(outOfOrderTimeStampCount);
         counts.setFailedTransformCount(failedTransformCount);
-        counts.setLatestRecordTime(latestRecordTime);
+        counts.setLatestRecordTimeStamp(new Date(latestRecordTime));
         return counts;
     }
 

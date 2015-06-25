@@ -29,6 +29,7 @@ package com.prelert.rs.data;
 import static org.junit.Assert.*;
 
 import java.util.Arrays;
+import java.util.Date;
 
 import org.junit.Test;
 
@@ -78,7 +79,7 @@ public class MultiDataPostResultTest {
         counts.setMissingFieldCount(missingFieldCount);
         counts.setOutOfOrderTimeStampCount(outOfOrderTimeStampCount);
         counts.setFailedTransformCount(failedTransformCount);
-        counts.setLatestRecordTime(latestRecordTime);
+        counts.setLatestRecordTimeStamp(new Date(latestRecordTime));
         return counts;
     }
 }
