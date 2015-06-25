@@ -116,7 +116,7 @@ public class DataStreamerTest
             dataStreamer.streamData("gzip", "foo", inputStream, params);
             fail("content encoding : gzip with uncompressed data should throw");
         }
-        catch (RestApiException e)
+        catch (JobException e)
         {
             assertEquals(ErrorCodes.UNCOMPRESSED_DATA, e.getErrorCode());
         }
