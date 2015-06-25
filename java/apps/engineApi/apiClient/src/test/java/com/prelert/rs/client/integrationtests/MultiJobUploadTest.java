@@ -117,11 +117,11 @@ public class MultiJobUploadTest
 
         test(m_WebServiceClient.getLastError() == null);
 
-        test(results.getResults().size() == jobs.size());
-        test(results.getResults().size() > 0);
+        test(results.getResponses().size() == jobs.size());
+        test(results.getResponses().size() > 0);
 
-        test(results.getResults().get(0).getDataCounts().getInputRecordCount() > 0);
-        for (DataPostResult result : results.getResults())
+        test(results.getResponses().get(0).getUploadSummary().getInputRecordCount() > 0);
+        for (DataPostResult result : results.getResponses())
         {
             test(jobs.contains(result.getJobId()));
             test(result.getError() == null);

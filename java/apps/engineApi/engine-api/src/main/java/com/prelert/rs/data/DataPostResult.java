@@ -74,12 +74,12 @@ public class DataPostResult
         this.m_JobId = jobId;
     }
 
-    public DataCounts getDataCounts()
+    public DataCounts getUploadSummary()
     {
         return m_DataCounts;
     }
 
-    public void setDataCounts(DataCounts dataCounts)
+    public void setUploadSummary(DataCounts dataCounts)
     {
         this.m_DataCounts = dataCounts;
     }

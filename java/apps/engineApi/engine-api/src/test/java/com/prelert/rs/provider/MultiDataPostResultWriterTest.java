@@ -91,7 +91,7 @@ public class MultiDataPostResultWriterTest
         DataCounts dc = new DataCounts();
         dc.setInputBytes(1000L);
         result.setJobId("foo");
-        result.setDataCounts(dc);
+        result.setUploadSummary(dc);
         results.addResult(result);
 
         DataPostResult errorResult = new DataPostResult();

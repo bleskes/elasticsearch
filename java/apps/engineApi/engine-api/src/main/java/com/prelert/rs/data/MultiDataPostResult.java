@@ -42,12 +42,12 @@ public class MultiDataPostResult
         m_Results = new ArrayList<DataPostResult>();
     }
 
-    public List<DataPostResult> getResults()
+    public List<DataPostResult> getResponses()
     {
         return m_Results;
     }
 
-    public void setResults(List<DataPostResult> results)
+    public void setResponses(List<DataPostResult> results)
     {
         this.m_Results = results;
     }

@@ -55,7 +55,7 @@ public class MultiDataPostResultTest {
         assertFalse(a.equals(b));
         assertFalse(a.hashCode() == b.hashCode());
 
-        b.setResults(Arrays.asList(dp, errorDp));
+        b.setResponses(Arrays.asList(dp, errorDp));
 
         assertEquals(a, b);
         assertEquals(a.hashCode(), b.hashCode());
