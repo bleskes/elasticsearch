@@ -95,14 +95,15 @@ public class WatcherLifeCycleServiceTests extends ElasticsearchTestCase {
         ClusterState clusterState = ClusterState.builder(new ClusterName("my-cluster"))
                 .nodes(nodes).build();
         when(clusterService.state()).thenReturn(clusterState);
-        when(watcherService.state()).thenReturn(WatcherState.STOPPED);
         when(watcherService.validate(clusterState)).thenReturn(true);
 
 
+        when(watcherService.state()).thenReturn(WatcherState.STOPPED);
         lifeCycleService.start();
         verify(watcherService, times(1)).start(any(ClusterState.class));
         verify(watcherService, never()).stop();
 
+        when(watcherService.state()).thenReturn(WatcherState.STARTED);
         lifeCycleService.stop();
         verify(watcherService, times(1)).start(any(ClusterState.class));
         verify(watcherService, times(1)).stop();
@@ -122,7 +123,7 @@ public class WatcherLifeCycleServiceTests extends ElasticsearchTestCase {
         nodes = new DiscoveryNodes.Builder().masterNodeId("id1").localNodeId("id2");
         clusterState = ClusterState.builder(new ClusterName("my-cluster"))
                 .nodes(nodes).build();
-        when(watcherService.state()).thenReturn(WatcherState.STOPPED);
+        when(watcherService.state()).thenReturn(WatcherState.STARTED);
         lifeCycleService.clusterChanged(new ClusterChangedEvent("any", clusterState, clusterState));
         verify(watcherService, times(2)).start(any(ClusterState.class));
         verify(watcherService, times(2)).stop();
