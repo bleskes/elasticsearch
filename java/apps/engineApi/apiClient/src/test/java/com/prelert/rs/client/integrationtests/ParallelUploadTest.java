@@ -38,11 +38,11 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 
-import com.prelert.job.DataCounts;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.rs.client.EngineApiClient;
 import com.prelert.rs.client.datauploader.CsvDataRunner;
 import com.prelert.rs.data.ApiError;
+import com.prelert.rs.data.MultiDataPostResult;
 
 /**
  * This program tests the case where multiple processes try to write
@@ -119,19 +119,27 @@ public class ParallelUploadTest
 			// cannot write to the job when another process is writing to it
 			String data = CsvDataRunner.HEADER + "\n1000,metric,100\n";
 			InputStream is = new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
-			DataCounts counts = client.streamingUpload(jobId, is, false);
+			MultiDataPostResult result = client.streamingUpload(jobId, is, false);
 
-			if (counts.getProcessedRecordCount() > 0)
-			{
-				throw new IllegalStateException("Error wrote to job in use");
-			}
+	        if (!result.anErrorOccurred())
+	        {
+	            throw new IllegalStateException("Writing data: An error should have occurred");
+	        }
+	        if (result.getResponses().size() != 1)
+	        {
+	            throw new IllegalStateException("Writing data: Should have a single response");
+	        }
 
-			apiError = client.getLastError();
-			if (apiError.getErrorCode() != ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR)
-			{
-				throw new IllegalStateException("Writing data: Error code should be job in use error");
-			}
+	        apiError = result.getResponses().get(0).getError();
+	        if (apiError.getErrorCode() != ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR)
+            {
+                throw new IllegalStateException("Writing data: Error code should be job in use error");
+            }
 
+	        if (result.getResponses().get(0).getUploadSummary() != null)
+	        {
+	            throw new IllegalStateException("Error wrote to job in use");
+	        }
 
 			// cannot delete a job when another process is writing to it
 			boolean deleted = client.deleteJob(jobId);

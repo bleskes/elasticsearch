@@ -49,6 +49,7 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.DataCounts;
 import com.prelert.job.data.DataStreamer;
 import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.exceptions.JobException;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.TooManyJobsException;
 import com.prelert.job.exceptions.UnknownJobException;
@@ -81,7 +82,7 @@ public class DataStreamerTest
             throws UnknownJobException, NativeProcessRunException,
             MissingFieldException, JobInUseException,
             HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
-            TooManyJobsException, IOException, MalformedJsonException
+            TooManyJobsException, IOException, MalformedJsonException, JobException
     {
         JobManager jobManager = mock(JobManager.class);
         DataStreamer dataStreamer = new DataStreamer(jobManager);
@@ -103,7 +104,7 @@ public class DataStreamerTest
     throws JsonParseException, UnknownJobException, NativeProcessRunException,
             MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException,
             OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException,
-            IOException
+            IOException, JobException
     {
         JobManager jobManager = mock(JobManager.class);
         DataStreamer dataStreamer = new DataStreamer(jobManager);
@@ -126,7 +127,7 @@ public class DataStreamerTest
     throws JsonParseException, UnknownJobException, NativeProcessRunException,
             MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException,
             OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException,
-            IOException
+            IOException, JobException
     {
         PipedInputStream pipedIn = new PipedInputStream();
         PipedOutputStream pipedOut = new PipedOutputStream(pipedIn);

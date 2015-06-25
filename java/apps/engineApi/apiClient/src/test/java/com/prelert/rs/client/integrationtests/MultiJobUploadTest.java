@@ -49,7 +49,7 @@ import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
 import com.prelert.rs.client.EngineApiClient;
-import com.prelert.rs.data.DataPostResult;
+import com.prelert.rs.data.DataPostResponse;
 import com.prelert.rs.data.MultiDataPostResult;
 import com.prelert.rs.data.Pagination;
 
@@ -113,7 +113,7 @@ public class MultiJobUploadTest
     throws IOException
     {
         FileInputStream stream = new FileInputStream(dataFile);
-        MultiDataPostResult results = m_WebServiceClient.multipleUpload(jobs, stream, false);
+        MultiDataPostResult results = m_WebServiceClient.streamingUpload(jobs, stream, false);
 
         test(m_WebServiceClient.getLastError() == null);
 
@@ -121,7 +121,7 @@ public class MultiJobUploadTest
         test(results.getResponses().size() > 0);
 
         test(results.getResponses().get(0).getUploadSummary().getInputRecordCount() > 0);
-        for (DataPostResult result : results.getResponses())
+        for (DataPostResponse result : results.getResponses())
         {
             test(jobs.contains(result.getJobId()));
             test(result.getError() == null);

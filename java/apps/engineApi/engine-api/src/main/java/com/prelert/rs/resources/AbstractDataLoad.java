@@ -70,7 +70,7 @@ import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.rs.data.Acknowledgement;
 import com.prelert.rs.data.ApiError;
-import com.prelert.rs.data.DataPostResult;
+import com.prelert.rs.data.DataPostResponse;
 import com.prelert.rs.data.MultiDataPostResult;
 import com.prelert.rs.data.SingleDocument;
 import com.prelert.rs.provider.RestApiException;
@@ -135,18 +135,23 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
             checkBucketResettingIsSupported(jobId);
         }
 
+        MultiDataPostResult result = new MultiDataPostResult();
+
         String [] jobIds = jobId.split(JOB_SEPARATOR);
         if (jobIds.length == 1)
         {
-            return streamToSingleJob(jobId, params, contentEncoding, input);
+            result = streamToSingleJob(jobId, params, contentEncoding, input);
         }
         else
         {
-            return streamToMultipleJobs(jobIds, params, contentEncoding, input);
+            result = streamToMultipleJobs(jobIds, params, contentEncoding, input);
         }
+
+        Response.Status statusCode = statusCodeForResponse(result);
+        return Response.status(statusCode).entity(result).build();
     }
 
-    private Response streamToSingleJob(String jobId, DataLoadParams params,
+    private MultiDataPostResult streamToSingleJob(String jobId, DataLoadParams params,
             String contentEncoding, InputStream input)
      throws IOException
     {
@@ -156,18 +161,18 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
         try
         {
             DataCounts stats = dataStreamer.streamData(contentEncoding, jobId, input, params);
-            result.addResult(new DataPostResult(jobId, stats));
+            result.addResult(new DataPostResponse(jobId, stats));
         }
         catch (JobException e)
         {
             ApiError error = ApiError.fromJobException(e);
-            result.addResult(new DataPostResult(jobId, error));
+            result.addResult(new DataPostResponse(jobId, error));
         }
 
-        return Response.accepted().entity(result).build();
+        return result;
     }
 
-    private Response streamToMultipleJobs(String [] jobIds, DataLoadParams params,
+    private MultiDataPostResult streamToMultipleJobs(String [] jobIds, DataLoadParams params,
                                             String contentEncoding, InputStream input)
     throws IOException
     {
@@ -205,35 +210,30 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
         MultiDataPostResult results = new MultiDataPostResult();
         for (DataStreamerThread thread : threads)
         {
-            results.addResult(toDataPostResult(thread));
+            results.addResult(thread.toDataPostResult());
         }
 
-        return Response.accepted().entity(results).build();
+        return results;
     }
 
-    private DataPostResult toDataPostResult(DataStreamerThread th)
+    private Response.Status statusCodeForResponse(MultiDataPostResult result)
     {
-        if (th.getDataCounts() != null)
-        {
-            return new DataPostResult(th.getJobId(), th.getDataCounts());
-        }
-        else if (th.getJobException().isPresent())
-        {
-            JobException e = th.getJobException().get();
-            return new DataPostResult(th.getJobId(), ApiError.fromJobException(e));
-        }
-        else
-        {
-            ApiError error = new ApiError();
-            if (th.getIOException().isPresent())
-            {
-                IOException e = th.getIOException().get();
-                error.setMessage(e.getMessage());
-                error.setCause(e.getCause());
-            }
+        Response.Status status = Response.Status.ACCEPTED;
 
-            return new DataPostResult(th.getJobId(), error);
+        if (result.anErrorOccurred())
+        {
+            status = Response.Status.BAD_REQUEST;
+            for (DataPostResponse response : result.getResponses())
+            {
+                if (response.getError() != null &&
+                        response.getError().getErrorCode() == ErrorCodes.MISSING_JOB_ERROR)
+                {
+                    status = Response.Status.NOT_FOUND;
+                }
+            }
         }
+
+        return status;
     }
 
     private DataLoadParams createDataLoadParams(String resetStart, String resetEnd)

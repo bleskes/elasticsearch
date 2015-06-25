@@ -39,7 +39,7 @@ import com.prelert.job.DataCounts;
  * encapsulates this with the Job Id.
  */
 @JsonInclude(Include.NON_NULL)
-public class DataPostResult
+public class DataPostResponse
 {
     private String m_JobId;
     private DataCounts m_DataCounts;
@@ -48,17 +48,17 @@ public class DataPostResult
     /**
      * For serialisation
      */
-    public DataPostResult()
+    public DataPostResponse()
     {
     }
 
-    public DataPostResult(String jobId, DataCounts counts)
+    public DataPostResponse(String jobId, DataCounts counts)
     {
         m_JobId = jobId;
         m_DataCounts = counts;
     }
 
-    public DataPostResult(String jobId, ApiError error)
+    public DataPostResponse(String jobId, ApiError error)
     {
         m_JobId = jobId;
         m_Error = error;
@@ -119,7 +119,7 @@ public class DataPostResult
             return false;
         }
 
-        DataPostResult other = (DataPostResult) obj;
+        DataPostResponse other = (DataPostResponse) obj;
 
         return Objects.equals(this.m_DataCounts, other.m_DataCounts) &&
                    Objects.equals(this.m_JobId, other.m_JobId) &&

@@ -37,11 +37,11 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 
-import com.prelert.job.DataCounts;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.rs.client.EngineApiClient;
 import com.prelert.rs.data.ApiError;
+import com.prelert.rs.data.MultiDataPostResult;
 
 
 /**
@@ -97,14 +97,15 @@ public class BadRecordsTest implements Closeable
 
 		producerThread.start();
 
-		DataCounts counts = m_EngineApiClient.streamingUpload(jobId, inputStream, false);
+		MultiDataPostResult result = m_EngineApiClient.streamingUpload(jobId, inputStream, false);
 
-		ApiError error = m_EngineApiClient.getLastError();
+		test(result.anErrorOccurred());
+		test(result.getResponses().size() == 1);
+		ApiError error = result.getResponses().get(0).getError();
 		test(error != null);
 		test(error.getErrorCode() == ErrorCodes.TOO_MANY_BAD_DATES);
 
-		test(counts.getOutOfOrderTimeStampCount() == 0);
-        test(counts.getMissingFieldCount() == 0);
+		test(result.getResponses().get(0).getUploadSummary() == null);
 		LOGGER.info(error);
 
 
@@ -145,15 +146,15 @@ public class BadRecordsTest implements Closeable
 
 		producerThread.start();
 
-		DataCounts counts = m_EngineApiClient.streamingUpload(jobId, inputStream, false);
+		MultiDataPostResult result = m_EngineApiClient.streamingUpload(jobId, inputStream, false);
 
-		ApiError error = m_EngineApiClient.getLastError();
+		test(result.anErrorOccurred());
+		test(result.getResponses().size() == 1);
+		ApiError error = result.getResponses().get(0).getError();
 		test(error != null);
 		test(error.getErrorCode() == ErrorCodes.TOO_MANY_OUT_OF_ORDER_RECORDS);
-		LOGGER.info(error);
 
-		test(counts.getInvalidDateCount() == 0);
-		test(counts.getMissingFieldCount() == 0);
+		test(result.getResponses().get(0).getUploadSummary() == null);
 
 
 		m_EngineApiClient.closeJob(jobId);

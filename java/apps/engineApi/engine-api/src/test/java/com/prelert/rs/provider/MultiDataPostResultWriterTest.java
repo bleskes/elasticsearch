@@ -46,7 +46,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.prelert.job.DataCounts;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.rs.data.ApiError;
-import com.prelert.rs.data.DataPostResult;
+import com.prelert.rs.data.DataPostResponse;
 import com.prelert.rs.data.MultiDataPostResult;
 
 public class MultiDataPostResultWriterTest
@@ -87,14 +87,14 @@ public class MultiDataPostResultWriterTest
     {
         MultiDataPostResult results = new MultiDataPostResult();
 
-        DataPostResult result = new DataPostResult();
+        DataPostResponse result = new DataPostResponse();
         DataCounts dc = new DataCounts();
         dc.setInputBytes(1000L);
         result.setJobId("foo");
         result.setUploadSummary(dc);
         results.addResult(result);
 
-        DataPostResult errorResult = new DataPostResult();
+        DataPostResponse errorResult = new DataPostResponse();
         ApiError error = new ApiError(ErrorCodes.BUCKET_RESET_NOT_SUPPORTED);
         error.setMessage("bar");
         errorResult.setJobId("foo");

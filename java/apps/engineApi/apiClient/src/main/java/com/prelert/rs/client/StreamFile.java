@@ -33,7 +33,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
-import com.prelert.job.DataCounts;
+import com.prelert.rs.data.MultiDataPostResult;
 
 /**
  * Simple program to upload a file to the Prelert Engine API.
@@ -98,7 +98,7 @@ public class StreamFile
 		{
 			long start = System.currentTimeMillis();
 
-			DataCounts uploaded = engineApiClient.streamingUpload(jobId, fs, compressed);
+			MultiDataPostResult uploaded = engineApiClient.streamingUpload(jobId, fs, compressed);
 
 			if (close)
 			{
@@ -107,7 +107,7 @@ public class StreamFile
 
 			long end = System.currentTimeMillis();
 
-			if (uploaded.getProcessedRecordCount() > 0)
+			if (uploaded.anErrorOccurred() == false)
 			{
 				System.out.println(String.format("%s uploaded in %dms",
 						filename, end - start));

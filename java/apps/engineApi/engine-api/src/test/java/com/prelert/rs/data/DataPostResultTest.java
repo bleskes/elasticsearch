@@ -41,20 +41,20 @@ public class DataPostResultTest
     public void testEqualsAndHash()
     {
         DataCounts dc = createCounts(20, 30, 40, 10, 5, 15, 25, 35, 45, 50);
-        DataPostResult dp = new DataPostResult("foo", dc);
+        DataPostResponse dp = new DataPostResponse("foo", dc);
 
-        assertEquals(dp, new DataPostResult("foo", dc));
-        assertEquals(dp.hashCode(), new DataPostResult("foo", dc).hashCode());
+        assertEquals(dp, new DataPostResponse("foo", dc));
+        assertEquals(dp.hashCode(), new DataPostResponse("foo", dc).hashCode());
 
-        assertFalse(dp.equals(new DataPostResult("bar", dc)));
+        assertFalse(dp.equals(new DataPostResponse("bar", dc)));
 
         ApiError error = new ApiError(ErrorCodes.UNCOMPRESSED_DATA);
-        DataPostResult errorDp = new DataPostResult("foo", error);
+        DataPostResponse errorDp = new DataPostResponse("foo", error);
 
         assertFalse(dp.equals(errorDp));
         errorDp.setJobId("error");
-        assertEquals(errorDp, new DataPostResult("error", error));
-        assertEquals(errorDp.hashCode(), new DataPostResult("error", error).hashCode());
+        assertEquals(errorDp, new DataPostResponse("error", error));
+        assertEquals(errorDp.hashCode(), new DataPostResponse("error", error).hashCode());
     }
 
 

@@ -37,6 +37,7 @@ import org.junit.Test;
 
 import com.prelert.job.DataCounts;
 import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.exceptions.JobException;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.TooManyJobsException;
 import com.prelert.job.exceptions.UnknownJobException;
@@ -47,6 +48,7 @@ import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.process.params.DataLoadParams;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
+import com.prelert.rs.data.DataPostResponse;
 
 public class DataStreamerThreadTest
 {
@@ -55,7 +57,7 @@ public class DataStreamerThreadTest
     throws UnknownJobException, NativeProcessRunException,
     MissingFieldException, JobInUseException,
     HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
-    TooManyJobsException, MalformedJsonException, IOException
+    TooManyJobsException, MalformedJsonException, IOException, JobException
     {
         DataStreamer streamer = mock(DataStreamer.class);
         DataLoadParams params = mock(DataLoadParams.class);
@@ -74,6 +76,12 @@ public class DataStreamerThreadTest
         assertEquals(counts, th.getDataCounts());
         assertFalse(th.getIOException().isPresent());
         assertFalse(th.getJobException().isPresent());
+
+        DataPostResponse result = th.toDataPostResult();
+        assertNotNull(result.getUploadSummary());
+        assertEquals(counts, result.getUploadSummary());
+        assertEquals(null, result.getError());
+        assertEquals("foo", result.getJobId());
     }
 
     @Test
@@ -81,7 +89,7 @@ public class DataStreamerThreadTest
     throws UnknownJobException, NativeProcessRunException,
     MissingFieldException, JobInUseException,
     HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
-    TooManyJobsException, MalformedJsonException, IOException
+    TooManyJobsException, MalformedJsonException, IOException, JobException
     {
         DataStreamer streamer = mock(DataStreamer.class);
         DataLoadParams params = mock(DataLoadParams.class);
@@ -105,6 +113,13 @@ public class DataStreamerThreadTest
 
         String msg = Messages.getMessage(Messages.JOB_UNKNOWN_ID, "foo");
         assertEquals(msg, th.getJobException().get().getMessage());
+
+        DataPostResponse result = th.toDataPostResult();
+        assertEquals(null, result.getUploadSummary());
+        assertEquals("foo", result.getJobId());
+        assertNotNull(result.getError());
+        assertEquals(ErrorCodes.MISSING_JOB_ERROR, result.getError().getErrorCode());
+        assertEquals(msg, result.getError().getMessage());
     }
 
 
@@ -113,7 +128,7 @@ public class DataStreamerThreadTest
     throws UnknownJobException, NativeProcessRunException,
     MissingFieldException, JobInUseException,
     HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
-    TooManyJobsException, MalformedJsonException, IOException
+    TooManyJobsException, MalformedJsonException, IOException, JobException
     {
         DataStreamer streamer = mock(DataStreamer.class);
         DataLoadParams params = mock(DataLoadParams.class);
@@ -133,6 +148,14 @@ public class DataStreamerThreadTest
         assertTrue(th.getIOException().isPresent());
         assertFalse(th.getJobException().isPresent());
         assertEquals("io error", th.getIOException().get().getMessage());
+
+        DataPostResponse result = th.toDataPostResult();
+        assertNull(result.getUploadSummary());
+        assertEquals("foo", result.getJobId());
+        assertNotNull(result.getError());
+        assertEquals(ErrorCodes.UNKNOWN_ERROR, result.getError().getErrorCode());
+        assertEquals("io error", result.getError().getMessage());
+        assertTrue(result.getError().getCause() instanceof IOException);
     }
 
 }

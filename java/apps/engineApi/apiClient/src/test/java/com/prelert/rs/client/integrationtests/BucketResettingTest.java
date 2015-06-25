@@ -44,14 +44,16 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 
 import com.prelert.job.AnalysisConfig;
-import com.prelert.job.DataCounts;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
 import com.prelert.rs.client.EngineApiClient;
+import com.prelert.rs.data.ApiError;
+import com.prelert.rs.data.MultiDataPostResult;
 import com.prelert.rs.data.Pagination;
 
 
@@ -182,9 +184,16 @@ public class BucketResettingTest implements Closeable
         input += "2014-06-27 12:00:00Z,AAL,42.0,farequote\n";
         BufferedInputStream inputStream = new BufferedInputStream(new ByteArrayInputStream(
                 input.getBytes(StandardCharsets.UTF_8)));
-        DataCounts dataCounts = m_WebServiceClient.streamingUpload(TEST_JOB_ID,
+        MultiDataPostResult result = m_WebServiceClient.streamingUpload(TEST_JOB_ID,
                 inputStream, false, start, end);
-        test(dataCounts.getProcessedRecordCount() == 1);
+
+        test(result.anErrorOccurred() == false);
+        test(result.getResponses().size() == 1);
+        ApiError error = result.getResponses().get(0).getError();
+        test(error == null);
+        test(error.getErrorCode() == ErrorCodes.TOO_MANY_OUT_OF_ORDER_RECORDS);
+        test(result.getResponses().get(0).getUploadSummary().getProcessedRecordCount() == 1);
+
         m_WebServiceClient.flushJob(TEST_JOB_ID, true);
 
         buckets = m_WebServiceClient.prepareGetBuckets(TEST_JOB_ID)

@@ -63,7 +63,6 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.prelert.job.DataCounts;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
 import com.prelert.job.alert.Alert;
@@ -74,7 +73,7 @@ import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
 
 /**
- * A Http Client for the Prelert Engine RESTful API.
+ * A HTTP Client for the Prelert Engine RESTful API.
  *
  * <br>
  * Contains methods to create jobs, list jobs, upload data and query results.
@@ -337,7 +336,7 @@ public class EngineApiClient implements Closeable
      * @throws IOException
      * @see #streamingUpload(String, InputStream, boolean)
      */
-    public DataCounts chunkedUpload(String jobId, InputStream inputStream)
+    public MultiDataPostResult chunkedUpload(String jobId, InputStream inputStream)
     throws IOException
     {
         String postUrl = m_BaseUrl + "/data/" + jobId;
@@ -347,7 +346,7 @@ public class EngineApiClient implements Closeable
         byte [] buffer = new byte[BUFF_SIZE];
         int read = 0;
         int uploadCount = 0;
-        DataCounts uploadCounts = new DataCounts();
+        MultiDataPostResult uploadSummary = new MultiDataPostResult();
 
         while ((read = inputStream.read(buffer)) > -1)
         {
@@ -381,12 +380,12 @@ public class EngineApiClient implements Closeable
                 {
                     m_LastError = null;
 
-                    uploadCounts = m_JsonMapper.readValue(content, new TypeReference<DataCounts>() {});
+                    uploadSummary = m_JsonMapper.readValue(content, new TypeReference<MultiDataPostResult>() {});
                 }
             }
         }
 
-        return uploadCounts;
+        return uploadSummary;
     }
 
     /**
@@ -398,11 +397,11 @@ public class EngineApiClient implements Closeable
      * @param jobId The Job's unique Id
      * @param inputStream The data to write to the web service
      * @param compressed Is the data gzipped compressed?
-     * @return DataCounts
+     * @return MultiDataPostResult
      * @throws IOException
      * @see #chunkedUpload(String, InputStream)
      */
-    public DataCounts streamingUpload(String jobId, InputStream inputStream, boolean compressed)
+    public MultiDataPostResult streamingUpload(String jobId, InputStream inputStream, boolean compressed)
     throws IOException
     {
         return streamingUpload(jobId, inputStream, compressed, "", "");
@@ -423,7 +422,7 @@ public class EngineApiClient implements Closeable
      * @throws IOException
      * @see #chunkedUpload(String, InputStream)
      */
-    public DataCounts streamingUpload(String jobId, InputStream inputStream, boolean compressed,
+    public MultiDataPostResult streamingUpload(String jobId, InputStream inputStream, boolean compressed,
             String resetStart, String resetEnd)
     throws IOException
     {
@@ -433,8 +432,8 @@ public class EngineApiClient implements Closeable
             postUrl += String.format("?resetStart=%s&resetEnd=%s",
                     nullToEmpty(resetStart), nullToEmpty(resetEnd));
         }
-        return uploadStream(inputStream, postUrl, compressed, new DataCounts(),
-                content -> m_JsonMapper.readValue(content, new TypeReference<DataCounts>() {}));
+        return uploadStream(inputStream, postUrl, compressed, new MultiDataPostResult(),
+                content -> m_JsonMapper.readValue(content, new TypeReference<MultiDataPostResult>() {}));
     }
 
 
@@ -448,7 +447,7 @@ public class EngineApiClient implements Closeable
      * @return A list of processed data counts/errors.
      * @throws IOException
      */
-    public MultiDataPostResult multipleUpload(List<String> jobIds, InputStream inputStream,
+    public MultiDataPostResult streamingUpload(List<String> jobIds, InputStream inputStream,
                                             boolean compressed)
     throws IOException
     {
@@ -526,7 +525,7 @@ public class EngineApiClient implements Closeable
      * @return
      * @throws IOException
      */
-    public DataCounts fileUpload(String jobId, File dataFile, boolean compressed)
+    public MultiDataPostResult fileUpload(String jobId, File dataFile, boolean compressed)
     throws IOException
     {
         FileInputStream stream = new FileInputStream(dataFile);
@@ -545,7 +544,7 @@ public class EngineApiClient implements Closeable
      * @return
      * @throws IOException
      */
-    public DataCounts fileUpload(String jobId, File dataFile, boolean compressed,
+    public MultiDataPostResult fileUpload(String jobId, File dataFile, boolean compressed,
             String resetStart, String resetEnd) throws IOException
     {
         FileInputStream stream = new FileInputStream(dataFile);

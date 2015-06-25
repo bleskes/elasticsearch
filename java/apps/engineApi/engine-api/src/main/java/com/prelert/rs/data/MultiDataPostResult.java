@@ -30,31 +30,51 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 /**
- * List of {@linkplain DataPostResult}
+ * List of {@linkplain DataPostResponse}
  */
+@JsonIgnoreProperties("anErrorOccurred")
 public class MultiDataPostResult
 {
-    private List<DataPostResult> m_Results;
+    private List<DataPostResponse> m_Results;
 
     public MultiDataPostResult()
     {
-        m_Results = new ArrayList<DataPostResult>();
+        m_Results = new ArrayList<DataPostResponse>();
     }
 
-    public List<DataPostResult> getResponses()
+    public List<DataPostResponse> getResponses()
     {
         return m_Results;
     }
 
-    public void setResponses(List<DataPostResult> results)
+    public void setResponses(List<DataPostResponse> results)
     {
         this.m_Results = results;
     }
 
-    public void addResult(DataPostResult result)
+    public void addResult(DataPostResponse result)
     {
         this.m_Results.add(result);
+    }
+
+    /**
+     * Return true if any of the uploads errored.
+     * @return
+     */
+    public boolean anErrorOccurred()
+    {
+        for (DataPostResponse response : m_Results)
+        {
+            if (response.getError() != null)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     @Override

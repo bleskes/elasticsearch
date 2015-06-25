@@ -58,13 +58,13 @@ import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
-import com.prelert.job.DataCounts;
 import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobStatus;
 import com.prelert.rs.client.EngineApiClient;
 import com.prelert.rs.data.ApiError;
+import com.prelert.rs.data.MultiDataPostResult;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
 
@@ -711,14 +711,23 @@ public class JobsTest implements Closeable
             boolean shouldProcessRecords) throws IOException
     {
         FileInputStream stream = new FileInputStream(dataFile);
-        DataCounts counts = m_WebServiceClient.streamingUpload(jobId, stream, compressed);
+        MultiDataPostResult result = m_WebServiceClient.streamingUpload(jobId, stream, compressed);
+
+        test(result.anErrorOccurred() == false);
+        test(result.getResponses().size() == 1);
+        ApiError error = result.getResponses().get(0).getError();
+        test(error == null);
+        test(result.getResponses().get(0).getUploadSummary().getProcessedRecordCount() > 0);
+        test(result.getResponses().get(0).getUploadSummary().getInvalidDateCount() == 0);
+
+
         if (shouldProcessRecords)
         {
-            test(counts.getProcessedRecordCount() > 0);
+            test(result.getResponses().get(0).getUploadSummary().getProcessedRecordCount() > 0);
         }
         else
         {
-            test(counts.getProcessedRecordCount() == 0);
+            test(result.getResponses().get(0).getUploadSummary().getProcessedRecordCount() == 0);
         }
 
         SingleDocument<JobDetails> job = m_WebServiceClient.getJob(jobId);

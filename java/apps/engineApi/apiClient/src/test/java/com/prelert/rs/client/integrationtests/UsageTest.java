@@ -50,6 +50,8 @@ import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
 import com.prelert.rs.client.EngineApiClient;
+import com.prelert.rs.data.ApiError;
+import com.prelert.rs.data.MultiDataPostResult;
 import com.prelert.rs.data.SingleDocument;
 
 
@@ -134,14 +136,21 @@ public class UsageTest implements Closeable
 			test(jobId != null && jobId.isEmpty() == false);
 		}
 
-		DataCounts counts = m_WebServiceClient.fileUpload(jobId, dataFile, compressed);
-		if (counts.getInputRecordCount() == 0)
+		MultiDataPostResult result = m_WebServiceClient.fileUpload(jobId, dataFile, compressed);
+
+        test(result.anErrorOccurred() == false);
+        test(result.getResponses().size() == 1);
+        ApiError error = result.getResponses().get(0).getError();
+        test(error == null);
+
+		if (result.getResponses().get(0).getUploadSummary().getInputRecordCount() == 0)
 		{
-			LOGGER.error(m_WebServiceClient.getLastError().toJson());
+			LOGGER.error(error.toJson());
 			test(false);
 		}
 
-		validateFlightCentreCounts(counts, isJson, compressed, false);
+		validateFlightCentreCounts(result.getResponses().get(0).getUploadSummary(),
+		                        isJson, compressed, false);
 
 		m_WebServiceClient.closeJob(jobId);
 

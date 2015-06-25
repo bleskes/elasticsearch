@@ -42,10 +42,10 @@ public class MultiDataPostResultTest {
     public void testEqualsAndHashCode()
     {
         DataCounts dc = createCounts(20, 30, 40, 10, 5, 15, 25, 35, 45, 50);
-        DataPostResult dp = new DataPostResult("foo", dc);
+        DataPostResponse dp = new DataPostResponse("foo", dc);
 
         ApiError error = new ApiError(ErrorCodes.UNCOMPRESSED_DATA);
-        DataPostResult errorDp = new DataPostResult("foo", error);
+        DataPostResponse errorDp = new DataPostResponse("foo", error);
 
         MultiDataPostResult a = new MultiDataPostResult();
         a.addResult(dp);
@@ -59,6 +59,28 @@ public class MultiDataPostResultTest {
 
         assertEquals(a, b);
         assertEquals(a.hashCode(), b.hashCode());
+    }
+
+    @Test
+    public void testAnErrorOccorred()
+    {
+        ApiError error = new ApiError(ErrorCodes.UNCOMPRESSED_DATA);
+        DataPostResponse errorDp = new DataPostResponse("foo", error);
+
+        MultiDataPostResult result = new MultiDataPostResult();
+        result.addResult(errorDp);
+        assertTrue(result.anErrorOccurred());
+
+        DataCounts dc = createCounts(20, 30, 40, 10, 5, 15, 25, 35, 45, 50);
+        DataPostResponse dp = new DataPostResponse("foo", dc);
+
+        result = new MultiDataPostResult();
+        result.addResult(dp);
+        result.addResult(dp);
+        assertFalse(result.anErrorOccurred());
+
+        result.addResult(errorDp);
+        assertTrue(result.anErrorOccurred());
     }
 
 
