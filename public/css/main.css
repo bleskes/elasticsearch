@@ -173,3 +173,33 @@ marvel-index-listing .pagination li {
 .marvel-settings form > .row:first-child {
   border-top: 1px solid #EEE;
 }
+/***************************/
+/****** MarvelCharts! ******/
+/***************************/
+/* Hide the vertical x-axis lines   */
+.nv-axis.nv-x line {
+  display: none;
+}
+/* Hide the Left most vertical line */
+.nv-axis.nv-y .domain {
+  display: none;
+}
+/* increase the line stroke width */
+.nv-linesWrap .nv-line {
+  stroke-width: 2.5px !important;
+}
+/* Make the min max ticks not bold */
+.nvd3 .nv-axis .nv-axisMaxMin text {
+  font-weight: normal !important;
+}
+.nvd3 .nv-axis .nv-axisMaxMin text,
+.nv-axis .tick > text {
+  font-weight: normal !important;
+  color: #444;
+  fill: #444;
+  font-size: 10px;
+}
+.nvd3 .nv-axis.nv-x path.domain {
+  stroke-opacity: 1;
+  stroke: #e5e5e5;
+}

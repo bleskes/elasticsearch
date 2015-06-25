@@ -10,8 +10,11 @@ define(function (require) {
   var module = require('modules').get('marvel', [
     'marvel/directives',
     'marvel/settings',
-    'marvel/metrics'
+    'marvel/metrics',
+    'nvd3'
   ]);
+
+  var initMarvelIndex = require('marvel/lib/marvel_index_init');
 
   require('routes')
   .when('/marvel', {
@@ -19,16 +22,26 @@ define(function (require) {
     resolve: {
       settings: function (marvelSettings) {
         return marvelSettings.fetch();
+      },
+
+      indexPattern: function(Promise, Private, indexPatterns) {
+        var marvelIndex = null;
+        return new Promise(function(resolve) {
+          initMarvelIndex(indexPatterns, Private, function(indexPattern) {
+            resolve(indexPattern);
+          });
+        });
       }
     }
   });
 
   module.controller('overview', function ($scope, timefilter, savedVisualizations, courier, marvelMetrics) {
+    // turn on the timepicker;
+    timefilter.enabled = true;
 
-    marvelMetrics('os.cpu.user').then(function (metric) {
-      console.log(metric.threshold(3));
-    });
-
+    // marvelMetrics('os.cpu.user').then(function (metric) {
+      // console.log(metric.threshold(3));
+    // });
 
     $scope.issues = {
       cluster: [
@@ -53,31 +66,8 @@ define(function (require) {
         { status: 'yellow', field: 'logstash-2015.01.03', message: 'has 5 unassigned replica shards' }
       ]
     };
-    // savedVisualizations.get({ indexPattern: '[.marvel-]YYYY.MM.DD' }).then(function (newVis) {
 
-      // $scope.timefilter = timefilter;
-      // $scope.timefilter.enabled = true;
-
-      // var vis = newVis.vis;
-      // var searchSource = $scope.searchSource = newVis.searchSource;
-      // searchSource.set('filter', [
-      //   { term: { 'cluster_name.raw': 'slapbook-2' } }
-      // ]);
-
-      // searchSource.aggs(function () {
-      //   vis.requesting();
-      //   var dsl = vis.aggs.toDsl();
-      //   return dsl;
-      // });
-
-      // searchSource.onResults().then(function (resp) {
-      // });
-
-      // courier.fetch();
-
-
-    // });
-  });
+    });
 
 });
 

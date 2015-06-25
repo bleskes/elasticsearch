@@ -1,7 +1,13 @@
 require.config({
   paths: {
     'lodash-deep': '/marvel/bower_components/lodash-deep/lodash-deep',
-    'angular-resource': '/marvel/bower_components/angular-resource/angular-resource'
+    'angular-resource': '/marvel/bower_components/angular-resource/angular-resource',
+    'nvd3': 'marvel/bower_components/nvd3/build/nv.d3',
+    'nvd3_directives': 'marvel/bower_components/nvd3_directives/dist/angular-nvd3'
+  },
+  shim: {
+    'nvd3': ['css!marvel/bower_components/nvd3/build/nv.d3.css', 'd3'],
+    'nvd3_directives': ['angular', 'd3', 'nvd3']
   }
 });
 define(function (require) {

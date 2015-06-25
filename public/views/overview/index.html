@@ -2,9 +2,9 @@
   <marvel-nav></marvel-nav>
   <marvel-cluster-status status="yellow"></marvel-cluster-status>
   <div class="metrics">
-    <div><marvel-chart title="Indexing Rate" total="200" unit="rps"/></div>
-    <div><marvel-chart title="Query Latency" total="1349" unit="ms"/></div>
-    <div><marvel-chart title="Search Rate" total="59" unit="rps"/></div>
+    <div><marvel-chart metric="total.search.query_total" title="Indexing Rate" total="200" unit="rps"/></div>
+    <div><marvel-chart metric="jvm.mem.heap_used_percent" title="Query Latency" total="1349" unit="ms"/></div>
+    <div><marvel-chart metric="os.cpu.user" title="Search Rate" total="59" unit="rps"/></div>
   </div>
   <div class="metrics">
     <div><marvel-issues issues="issues.cluster" title="Cluster"/></div>
