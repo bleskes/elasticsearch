@@ -60,6 +60,7 @@ public abstract class StatusReporter
     public static final String ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS_PROP =
             "max.percent.outoforder.errors";
 
+    private static final int SECONDS_TO_MS = 1000;
 
     private DataCounts m_TotalRecordStats;
     private DataCounts m_IncrementalRecordStats;
@@ -139,11 +140,11 @@ public abstract class StatusReporter
 
         m_TotalRecordStats.incrementInputFieldCount(inputFieldCount);
         m_TotalRecordStats.incrementProcessedRecordCount(1);
-        m_TotalRecordStats.setLatestRecordTimeStamp(new Date(latestRecordTime * 1000));
+        m_TotalRecordStats.setLatestRecordTimeStamp(new Date(latestRecordTime * SECONDS_TO_MS));
 
         m_IncrementalRecordStats.incrementInputFieldCount(inputFieldCount);
         m_IncrementalRecordStats.incrementProcessedRecordCount(1);
-        m_IncrementalRecordStats.setLatestRecordTimeStamp(new Date(latestRecordTime * 1000));
+        m_IncrementalRecordStats.setLatestRecordTimeStamp(new Date(latestRecordTime * SECONDS_TO_MS));
 
         // report at various boundaries
         long totalRecords = getInputRecordCount() ;

@@ -49,15 +49,6 @@ public class ApiError implements HasErrorCode
 	private String m_Message;
 	private Throwable m_Cause;
 
-
-	public static ApiError fromJobException(JobException e)
-	{
-        ApiError error = new ApiError(e.getErrorCode());
-        error.setMessage(e.getMessage());
-        error.setCause(e.getCause());
-        return error;
-	}
-
 	/**
 	 * Default cons for serialisation (Jackson)
 	 */
@@ -132,6 +123,19 @@ public class ApiError implements HasErrorCode
 	public void setCause(Throwable e)
 	{
 		m_Cause = e;
+	}
+
+	/**
+	 * Static method to create an error from a {@linkplain JobException}
+	 * @param e
+	 * @return
+	 */
+	public static ApiError fromJobException(JobException e)
+	{
+	    ApiError error = new ApiError(e.getErrorCode());
+	    error.setMessage(e.getMessage());
+	    error.setCause(e.getCause());
+	    return error;
 	}
 
 	/**

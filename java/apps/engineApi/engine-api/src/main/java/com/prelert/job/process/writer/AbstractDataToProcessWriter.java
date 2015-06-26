@@ -66,6 +66,7 @@ import com.prelert.transforms.date.DoubleDateTransform;
 public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
 {
     protected static int TIME_FIELD_OUT_INDEX = 0;
+    private static int MS_IN_SECOND = 1000;
 
     protected final RecordWriter m_RecordWriter;
     protected final DataDescription m_DataDescription;
@@ -85,7 +86,8 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
     private String [] m_ScratchArea;
     private String [][] m_ReadWriteArea;
 
-    private long m_LatestEpoch;  // in seconds
+    // epoch in seconds
+    private long m_LatestEpoch;
 
 
     protected AbstractDataToProcessWriter(RecordWriter recordWriter,
@@ -107,7 +109,7 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
         m_LatestEpoch = 0;
         if (date != null)
         {
-            m_LatestEpoch  = date.getTime() / 1000;
+            m_LatestEpoch  = date.getTime() / MS_IN_SECOND;
         }
 
         m_ReadWriteArea = new String[3][];
