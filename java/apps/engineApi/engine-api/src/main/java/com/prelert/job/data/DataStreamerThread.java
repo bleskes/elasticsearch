@@ -31,6 +31,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
 
+import org.apache.log4j.Logger;
+
 import com.prelert.job.DataCounts;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobException;
@@ -40,6 +42,8 @@ import com.prelert.rs.data.DataPostResponse;
 
 public class DataStreamerThread extends Thread
 {
+    private static final Logger LOGGER = Logger.getLogger(DataStreamerThread.class);
+
     private DataCounts m_Stats;
     private final String m_JobId;
     private final String  m_ContentEncoding;
@@ -55,6 +59,8 @@ public class DataStreamerThread extends Thread
                             DataLoadParams params,
                             InputStream input)
     {
+        super("DataStreamer-" + jobId);
+
         m_DataStreamer = dataStreamer;
         m_JobId = jobId;
         m_ContentEncoding = contentEncoding;
@@ -76,6 +82,17 @@ public class DataStreamerThread extends Thread
         catch (IOException e)
         {
             m_IOException = e;
+        }
+        finally
+        {
+            try
+            {
+                m_Input.close();
+            }
+            catch (IOException e)
+            {
+                LOGGER.warn("Exception closing the data input stream", e);
+            }
         }
     }
 
