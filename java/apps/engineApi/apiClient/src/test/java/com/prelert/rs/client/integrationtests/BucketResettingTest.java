@@ -191,7 +191,6 @@ public class BucketResettingTest implements Closeable
         test(result.getResponses().size() == 1);
         ApiError error = result.getResponses().get(0).getError();
         test(error == null);
-        test(error.getErrorCode() == ErrorCodes.TOO_MANY_OUT_OF_ORDER_RECORDS);
         test(result.getResponses().get(0).getUploadSummary().getProcessedRecordCount() == 1);
 
         m_WebServiceClient.flushJob(TEST_JOB_ID, true);
