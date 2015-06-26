@@ -88,6 +88,7 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
 
     // epoch in seconds
     private long m_LatestEpoch;
+    private long m_LatestEpochThisUpload;
 
 
     protected AbstractDataToProcessWriter(RecordWriter recordWriter,
@@ -106,6 +107,7 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
         m_PostDateTransforms = new ArrayList<>();
         m_DateInputTransforms = new ArrayList<>();
         Date date = statusReporter.getLatestRecordTime();
+        m_LatestEpochThisUpload = 0;
         m_LatestEpoch = 0;
         if (date != null)
         {
@@ -306,6 +308,13 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
         {
             // out of order
             m_StatusReporter.reportOutOfOrderRecord(m_InFieldIndexes.size());
+
+            if (epoch > m_LatestEpochThisUpload)
+            {
+                // record this timestamp even if the record won't be processed
+                m_LatestEpochThisUpload = epoch;
+                m_StatusReporter.reportLatestTimeIncrementalStats(m_LatestEpochThisUpload);
+            }
             return false;
         }
 
@@ -316,6 +325,8 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
         }
 
         m_LatestEpoch = Math.max(m_LatestEpoch, epoch);
+        m_LatestEpochThisUpload = m_LatestEpoch;
+
 
         m_RecordWriter.writeRecord(output);
         m_JobDataPersister.persistRecord(epoch, output);

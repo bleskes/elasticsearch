@@ -190,6 +190,7 @@ public class CsvDataToProcessWriterTest
         assertWrittenRecordsEqualTo(expectedRecords);
 
         verify(m_StatusReporter, times(2)).reportOutOfOrderRecord(2);
+        verify(m_StatusReporter, never()).reportLatestTimeIncrementalStats(anyLong());
         verify(m_StatusReporter).finishReporting();
         verify(m_DataPersister).flushRecords();
     }
@@ -217,6 +218,7 @@ public class CsvDataToProcessWriterTest
         assertWrittenRecordsEqualTo(expectedRecords);
 
         verify(m_StatusReporter, times(2)).reportOutOfOrderRecord(2);
+        verify(m_StatusReporter, times(2)).reportLatestTimeIncrementalStats(anyLong());
         verify(m_StatusReporter, never()).reportRecordWritten(anyLong(), anyLong());
         verify(m_StatusReporter).finishReporting();
         verify(m_DataPersister).flushRecords();
@@ -253,6 +255,7 @@ public class CsvDataToProcessWriterTest
         assertWrittenRecordsEqualTo(expectedRecords);
 
         verify(m_StatusReporter, times(1)).reportOutOfOrderRecord(2);
+        verify(m_StatusReporter, never()).reportLatestTimeIncrementalStats(anyLong());
         verify(m_StatusReporter).finishReporting();
         verify(m_DataPersister).flushRecords();
     }

@@ -29,7 +29,9 @@ package com.prelert.job.process.writer;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyLong;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -148,6 +150,7 @@ public class JsonDataToProcessWriterTest
         assertWrittenRecordsEqualTo(expectedRecords);
 
         verify(m_StatusReporter, times(2)).reportOutOfOrderRecord(2);
+        verify(m_StatusReporter, never()).reportLatestTimeIncrementalStats(anyLong());
         verify(m_StatusReporter).finishReporting();
         verify(m_DataPersister).flushRecords();
     }
@@ -180,6 +183,7 @@ public class JsonDataToProcessWriterTest
         assertWrittenRecordsEqualTo(expectedRecords);
 
         verify(m_StatusReporter, times(1)).reportOutOfOrderRecord(2);
+        verify(m_StatusReporter, never()).reportLatestTimeIncrementalStats(anyLong());
         verify(m_StatusReporter).finishReporting();
         verify(m_DataPersister).flushRecords();
     }

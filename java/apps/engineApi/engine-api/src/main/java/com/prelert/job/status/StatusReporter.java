@@ -164,6 +164,14 @@ public abstract class StatusReporter
         }
     }
 
+    /**
+     * Update only the incremental stats with the newest record time
+     * @param latestRecordTime
+     */
+    public void reportLatestTimeIncrementalStats(long latestRecordTime)
+    {
+        m_IncrementalRecordStats.setLatestRecordTimeStamp(new Date(latestRecordTime * SECONDS_TO_MS));
+    }
 
     /**
      * Increments the date parse error count

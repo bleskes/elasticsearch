@@ -131,6 +131,15 @@ public class StatusReporterTest
     }
 
     @Test
+    public void testReportLatestTimeIncrementalStats()
+    {
+        DummyStatusReporter reporter = new DummyStatusReporter(mock(UsageReporter.class));
+        reporter.startNewIncrementalCount();
+        reporter.reportLatestTimeIncrementalStats(5001L);
+        assertEquals(5001L, reporter.incrementalStats().getLatestRecordTimeStamp().getTime() / 1000L);
+    }
+
+    @Test
     public void testReportRecordsWritten()
     throws HighProportionOfBadTimestampsException, OutOfOrderRecordsException
     {
