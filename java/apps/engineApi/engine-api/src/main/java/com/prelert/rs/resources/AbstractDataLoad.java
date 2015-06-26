@@ -86,14 +86,14 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
     public static final String CALC_INTERIM_PARAM = "calcInterim";
 
     /** Parameter to specify start time of buckets to be reset */
-    private static final String RESET_START_PARAM = "resetStart";
+    public static final String RESET_START_PARAM = "resetStart";
 
     /** Parameter to specify end time of buckets to be reset */
-    private static final String RESET_END_PARAM = "resetEnd";
+    public static final String RESET_END_PARAM = "resetEnd";
 
-    private static final int MILLISECONDS_IN_SECOND = 1000;
+    public static final int MILLISECONDS_IN_SECOND = 1000;
 
-    private static final String JOB_SEPARATOR = ",";
+    public static final String JOB_SEPARATOR = ",";
 
     /**
      * Data upload endpoint.
@@ -254,7 +254,7 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
         return status;
     }
 
-    private DataLoadParams createDataLoadParams(String resetStart, String resetEnd)
+    DataLoadParams createDataLoadParams(String resetStart, String resetEnd)
     throws InvalidParametersException
     {
         if (!isValidTimeRange(resetStart, resetEnd))
@@ -272,7 +272,7 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
         return !start.isEmpty() || (start.isEmpty() && end.isEmpty());
     }
 
-    private TimeRange createTimeRange(String startParam, String start, String endParam, String end)
+    TimeRange createTimeRange(String startParam, String start, String endParam, String end)
     throws InvalidParametersException
     {
         Long epochStart = null;
@@ -303,7 +303,7 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
         checkLatencyIsNonZero(config.getLatency());
     }
 
-    private void checkLatencyIsNonZero(Long latency)
+    void checkLatencyIsNonZero(Long latency)
     throws InvalidParametersException
     {
         if (latency == null || latency.longValue() == 0)

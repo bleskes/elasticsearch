@@ -59,6 +59,7 @@ import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.TooManyJobsException;
 import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.manager.JobManager;
+import com.prelert.job.messages.Messages;
 import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
@@ -145,37 +146,27 @@ public class DataTest extends ServiceTest
     }
 
     @Test
-    public void testStreamData_GivenNoLatencySpecified() throws UnknownJobException,
-    NativeProcessRunException, MissingFieldException, JobInUseException,
-    HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
-    TooManyJobsException, MalformedJsonException, IOException
+    public void testStreamData_GivenNoLatencySpecified()
+    throws InvalidParametersException
     {
-        HttpHeaders httpHeaders = mock(HttpHeaders.class);
-        InputStream inputStream = mock(InputStream.class);
-        givenLatency(null);
         m_ExpectedException.expect(InvalidParametersException.class);
         m_ExpectedException.expectMessage(
                 "Bucket resetting is not supported when no latency is configured.");
         m_ExpectedException.expect(hasErrorCode(ErrorCodes.BUCKET_RESET_NOT_SUPPORTED));
 
-        m_Data.streamData(httpHeaders, JOB_ID, inputStream, "1428591600", "");
+        m_Data.checkLatencyIsNonZero(null);
     }
 
     @Test
-    public void testStreamData_GivenZeroLatencySpecified() throws UnknownJobException,
-    NativeProcessRunException, MissingFieldException, JobInUseException,
-    HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
-    TooManyJobsException, MalformedJsonException, IOException
+    public void testStreamData_GivenZeroLatencySpecified()
+    throws InvalidParametersException
     {
-        HttpHeaders httpHeaders = mock(HttpHeaders.class);
-        InputStream inputStream = mock(InputStream.class);
-        givenLatency(0L);
         m_ExpectedException.expect(InvalidParametersException.class);
         m_ExpectedException.expectMessage(
                 "Bucket resetting is not supported when no latency is configured.");
         m_ExpectedException.expect(hasErrorCode(ErrorCodes.BUCKET_RESET_NOT_SUPPORTED));
 
-        m_Data.streamData(httpHeaders, JOB_ID, inputStream, "1428591600", "");
+        m_Data.checkLatencyIsNonZero(0L);
     }
 
     @Test
@@ -227,35 +218,29 @@ public class DataTest extends ServiceTest
     }
 
     @Test
-    public void testStreamData_GivenResetEndIsBeforeResetStart() throws UnknownJobException,
-            NativeProcessRunException, MissingFieldException, JobInUseException,
-            HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
-            TooManyJobsException, MalformedJsonException, IOException
+    public void testStreamData_GivenResetEndIsBeforeResetStart() throws InvalidParametersException
     {
-        HttpHeaders httpHeaders = mock(HttpHeaders.class);
-        InputStream inputStream = mock(InputStream.class);
+        String msg = Messages.getMessage(Messages.REST_START_AFTER_END, "1428591599", "1428591600");
+
         m_ExpectedException.expect(InvalidParametersException.class);
-        m_ExpectedException.expectMessage(
-                "Invalid time range: end time '1428591599' is earlier than start time '1428591600'.");
+        m_ExpectedException.expectMessage(msg);
         m_ExpectedException.expect(hasErrorCode(ErrorCodes.END_DATE_BEFORE_START_DATE));
 
-        m_Data.streamData(httpHeaders, JOB_ID, inputStream, "1428591600", "1428591599");
+
+        m_Data.createTimeRange(AbstractDataLoad.RESET_START_PARAM, "1428591600",
+                                AbstractDataLoad.RESET_END_PARAM, "1428591599");
     }
 
     @Test
-    public void testStreamData_GivenOnlyResetEndSpecified() throws UnknownJobException,
-            NativeProcessRunException, MissingFieldException, JobInUseException,
-            HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
-            TooManyJobsException, MalformedJsonException, IOException
+    public void testStreamData_GivenOnlyResetEndSpecified() throws InvalidParametersException
     {
-        HttpHeaders httpHeaders = mock(HttpHeaders.class);
-        InputStream inputStream = mock(InputStream.class);
+        String msg = Messages.getMessage(Messages.REST_INVALID_RESET_PARAMS, AbstractDataLoad.RESET_START_PARAM);
+
         m_ExpectedException.expect(InvalidParametersException.class);
-        m_ExpectedException.expectMessage(
-                "Invalid reset range parameters: 'resetStart' has not been specified.");
+        m_ExpectedException.expectMessage(msg);
         m_ExpectedException.expect(hasErrorCode(ErrorCodes.INVALID_BUCKET_RESET_RANGE_PARAMS));
 
-        m_Data.streamData(httpHeaders, JOB_ID, inputStream, "", "1428591599");
+        m_Data.createDataLoadParams("", "1428591599");
     }
 
     @Test
