@@ -27,6 +27,7 @@
 
 package com.prelert.rs.provider;
 
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 
@@ -39,14 +40,15 @@ import com.prelert.rs.data.ApiError;
 public class NativeProcessRunExceptionMapper implements ExceptionMapper<NativeProcessRunException>
 {
 
-	@Override
-	public Response toResponse(NativeProcessRunException e) 
-	{
-		ApiError error = new ApiError(e.getErrorCode());
-		error.setCause(e.getCause());
-		error.setMessage(e.getMessage());
-		
-		return Response.serverError()
-				.entity(error.toJson()).build();		
-	}
+    @Override
+    public Response toResponse(NativeProcessRunException e)
+    {
+        ApiError error = new ApiError(e.getErrorCode());
+        error.setCause(e.getCause());
+        error.setMessage(e.getMessage());
+
+        return Response.serverError()
+                .type(MediaType.APPLICATION_JSON)
+                .entity(error.toJson()).build();
+    }
 }

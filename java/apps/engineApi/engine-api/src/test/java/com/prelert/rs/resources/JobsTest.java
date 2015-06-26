@@ -60,6 +60,7 @@ import com.prelert.job.exceptions.JobIdAlreadyExistsException;
 import com.prelert.job.exceptions.TooManyJobsException;
 import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.process.params.ModelDebugConfig;
+import com.prelert.rs.data.Acknowledgement;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
 
@@ -178,6 +179,7 @@ public class JobsTest extends ServiceTest
     {
         Response response = m_Jobs.setModelDebugConfig("foo", 90.0, "someTerm");
         assertEquals(200, response.getStatus());
+        assertTrue(((Acknowledgement) response.getEntity()).getAcknowledgement());
 
         ArgumentCaptor<ModelDebugConfig> captor = ArgumentCaptor.forClass(ModelDebugConfig.class);
         verify(jobManager()).setModelDebugConfig(eq("foo"), captor.capture());
@@ -199,6 +201,7 @@ public class JobsTest extends ServiceTest
     {
         Response response = m_Jobs.deleteModelDebugConfig("foo");
         assertEquals(200, response.getStatus());
+        assertTrue(((Acknowledgement) response.getEntity()).getAcknowledgement());
 
         verify(jobManager()).setModelDebugConfig("foo", null);
     }

@@ -27,6 +27,7 @@
 
 package com.prelert.rs.provider;
 
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 
@@ -38,21 +39,22 @@ public class JobExceptionMapper
 implements ExceptionMapper<JobException>
 {
 
-	@Override
-	public Response toResponse(JobException e)
-	{
-		ApiError error = new ApiError(e.getErrorCode());
-		error.setCause(e.getCause());
-		error.setMessage(e.getMessage());
+    @Override
+    public Response toResponse(JobException e)
+    {
+        ApiError error = new ApiError(e.getErrorCode());
+        error.setCause(e.getCause());
+        error.setMessage(e.getMessage());
 
 
-		Response.Status statusCode = Response.Status.BAD_REQUEST;
-		if (e instanceof UnknownJobException)
-		{
-			statusCode = Response.Status.NOT_FOUND;
-		}
+        Response.Status statusCode = Response.Status.BAD_REQUEST;
+        if (e instanceof UnknownJobException)
+        {
+            statusCode = Response.Status.NOT_FOUND;
+        }
 
-		return Response.status(statusCode)
-				.entity(error.toJson()).build();
-	}
+        return Response.status(statusCode)
+                        .type(MediaType.APPLICATION_JSON)
+                        .entity(error.toJson()).build();
+    }
 }

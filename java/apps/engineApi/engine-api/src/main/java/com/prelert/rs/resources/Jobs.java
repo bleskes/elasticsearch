@@ -206,6 +206,7 @@ public class Jobs extends ResourceWithJobManager
     @PUT
 	@Path("/{jobId}/description")
     @Consumes({MediaType.TEXT_PLAIN, MediaType.APPLICATION_FORM_URLENCODED})
+    @Produces(MediaType.APPLICATION_JSON)
     public Response setDescription(@PathParam("jobId") String jobId,
     		String description)
     throws UnknownJobException, JsonProcessingException
@@ -215,11 +216,12 @@ public class Jobs extends ResourceWithJobManager
 		JobManager manager = jobManager();
 		manager.setDescription(jobId, description);
 
-		return Response.ok().build();
+		return Response.ok(new Acknowledgement()).build();
     }
 
     @PUT
     @Path("/{jobId}/modelDebug")
+    @Produces(MediaType.APPLICATION_JSON)
     public Response setModelDebugConfig(@PathParam("jobId") String jobId,
             @QueryParam(ModelDebugConfig.BOUNDS_PERCENTILE) Double boundsPercentile,
             @QueryParam(ModelDebugConfig.TERMS) String terms)
@@ -230,17 +232,18 @@ public class Jobs extends ResourceWithJobManager
         ModelDebugConfig modelDebugConfig = new ModelDebugConfig(boundsPercentile, terms);
         modelDebugConfig.verify();
         jobManager().setModelDebugConfig(jobId, modelDebugConfig);
-        return Response.ok().build();
+        return Response.ok(new Acknowledgement()).build();
     }
 
     @DELETE
     @Path("/{jobId}/modelDebug")
+    @Produces(MediaType.APPLICATION_JSON)
     public Response deleteModelDebugConfig(@PathParam("jobId") String jobId)
             throws UnknownJobException
     {
         LOGGER.debug("Deleting model debug config");
         jobManager().setModelDebugConfig(jobId, null);
-        return Response.ok().build();
+        return Response.ok(new Acknowledgement()).build();
     }
 
     /**
@@ -255,6 +258,7 @@ public class Jobs extends ResourceWithJobManager
      */
     @DELETE
 	@Path("/{jobId}")
+    @Produces(MediaType.APPLICATION_JSON)
     public Response deleteJob(@PathParam("jobId") String jobId)
     throws UnknownJobException, NativeProcessRunException, JobInUseException
     {

@@ -27,6 +27,7 @@
 
 package com.prelert.rs.provider;
 
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 
@@ -45,6 +46,8 @@ public class DataUploadExceptionMapper implements ExceptionMapper<DataUploadExce
         ApiError error = new ApiError(ErrorCodes.DATA_ERROR);
         error.setCause(e.getCause());
         error.setMessage(e.getMessage());
-        return Response.serverError().entity(error.toJson()).build();
+        return Response.serverError()
+                        .type(MediaType.APPLICATION_JSON)
+                        .entity(error.toJson()).build();
     }
 }

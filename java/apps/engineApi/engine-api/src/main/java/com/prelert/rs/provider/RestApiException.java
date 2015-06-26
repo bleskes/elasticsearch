@@ -27,6 +27,7 @@
 package com.prelert.rs.provider;
 
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import com.prelert.job.errorcodes.ErrorCodes;
@@ -58,6 +59,7 @@ public class RestApiException extends WebApplicationException implements HasErro
         error.setMessage(this.getMessage());
 
         return Response.status(m_Status)
+                .type(MediaType.APPLICATION_JSON)
                 .entity(error.toJson()).build();
     }
 

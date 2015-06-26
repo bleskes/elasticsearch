@@ -32,6 +32,7 @@ import java.io.Writer;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.core.MediaType;
 
 import org.apache.log4j.Logger;
 import org.eclipse.jetty.server.Request;
@@ -100,6 +101,7 @@ public class ApiErrorHandler extends ErrorHandler
 
         String errorText = builder.toString();
 
+        response.setContentType(MediaType.APPLICATION_JSON);
         response.setContentLength(errorText.length());
         Writer writer = response.getWriter();
         writer.write(errorText);
