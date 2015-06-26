@@ -1,10 +1,8 @@
 <div class="marvel-overview" ng-controller="overview">
   <marvel-nav></marvel-nav>
-  <marvel-cluster-status status="yellow"></marvel-cluster-status>
+  <marvel-cluster-status source="dataSources['cluster_status']"></marvel-cluster-status>
   <div class="metrics">
-    <div><marvel-chart metric="total.search.query_total" title="Indexing Rate" total="200" unit="rps"/></div>
-    <div><marvel-chart metric="jvm.mem.heap_used_percent" title="Query Latency" total="1349" unit="ms"/></div>
-    <div><marvel-chart metric="os.cpu.user" title="Search Rate" total="59" unit="rps"/></div>
+    <div ng-repeat="name in charts"><marvel-chart source="dataSources[name]"/></div>
   </div>
   <div class="metrics">
     <div><marvel-issues issues="issues.cluster" title="Cluster"/></div>

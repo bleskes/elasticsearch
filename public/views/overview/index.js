@@ -35,13 +35,43 @@ define(function (require) {
     }
   });
 
-  module.controller('overview', function ($scope, timefilter, savedVisualizations, courier, marvelMetrics) {
-    // turn on the timepicker;
+  module.controller('overview', function ($scope, timefilter, $route, courier, marvelMetrics, Private, Promise) {
+    var ChartDataSource = Private(require('marvel/directives/chart/data_source'));
+    var ClusterStatusDataSource = Private(require('marvel/directives/cluster_status/data_source'));
+    var indexPattern = $route.current.locals.indexPattern;
     timefilter.enabled = true;
 
-    // marvelMetrics('os.cpu.user').then(function (metric) {
-      // console.log(metric.threshold(3));
-    // });
+    // Define the metrics for the three charts at the top of the
+    // page. Use the metric keys from the metrics hash.
+    $scope.charts = [
+      'search_request_rate',
+      'index_request_rate',
+      'query_latency'
+    ];
+
+    // Setup the data sources for the charts
+    $scope.dataSources = {};
+
+    // Map the metric keys to ChartDataSources and register them with
+    // the courier. Once this is finished call courier fetch.
+    Promise
+      .all($scope.charts.map(function (name) {
+        return marvelMetrics(name).then(function (metric) {
+          var dataSource = new ChartDataSource(metric, indexPattern);
+          dataSource.register(courier);
+          $scope.dataSources[name] = dataSource;
+          return dataSource;
+        });
+      }))
+      .then(function () {
+        var dataSource = new ClusterStatusDataSource(indexPattern);
+        dataSource.register(courier);
+        $scope.dataSources.cluster_status = dataSource;
+        return dataSource;
+      })
+      .then(function () {
+        courier.fetch();
+      });
 
     $scope.issues = {
       cluster: [

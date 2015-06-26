@@ -1,11 +1,11 @@
-<div class="{{clusterInfo.status}}">
-  <div>Cluster <strong>{{clusterInfo.cluster_name}}</strong></div>
-  <div>Status <strong>{{clusterInfo.status|uppercase}}</strong></div>
-  <div>Nodes <strong>{{clusterInfo.nodes_count}}</strong></div>
-  <div>Shards <strong>{{clusterInfo.shards_count}}</strong></div>
-  <div>Replication Factor <strong>{{clusterInfo.replication_factor}}</strong></div>
-  <div>Documents <strong>{{clusterInfo.document_count}}</strong></div>
-  <div>Data <strong>{{clusterInfo.data}}</strong></div>
-  <div>Uptime <strong>{{clusterInfo.upTime}}</strong></div>
-  <div>Version <strong>{{clusterInfo.version}}</strong></div>
+<div class="{{source.data.status}}">
+  <div>Cluster <strong>{{source.data.cluster_name}}</strong></div>
+  <div>Status <strong>{{source.data.status|uppercase}}</strong></div>
+  <div>Nodes <strong>{{source.data.nodes_count}}</strong></div>
+  <div>Shards <strong>{{source.data.shards_count}}</strong></div>
+  <div>Replication Factor <strong>{{source.data.replication_factor}}</strong></div>
+  <div>Documents <strong>{{source.data.document_count}}</strong></div>
+  <div>Data <strong>{{source.data.data}}</strong></div>
+  <div>Uptime <strong>{{source.data.upTime}}</strong></div>
+  <div>Version <strong>{{source.data.version}}</strong></div>
 </div>

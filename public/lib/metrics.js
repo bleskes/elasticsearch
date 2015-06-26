@@ -22,7 +22,7 @@ var metrics = {
     derivative: true
   },
   'query_latency': {
-    field: 'total.search.query_latency',
+    field: 'total.search.query_total',
     label: 'Query Latency',
     description: 'The average query latency across the entire cluster.',
     format: '0.00',
@@ -54,6 +54,8 @@ var metrics = {
       if (required) {
         return last.query_time_in_millis_deriv.value / last.query_total_deriv.value;
       }
+
+      return 0;
     }
   },
   'cpu_utilization': {
