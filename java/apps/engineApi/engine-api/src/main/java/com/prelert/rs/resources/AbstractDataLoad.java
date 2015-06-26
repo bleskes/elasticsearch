@@ -73,7 +73,7 @@ import com.prelert.rs.data.ApiError;
 import com.prelert.rs.data.DataPostResponse;
 import com.prelert.rs.data.MultiDataPostResult;
 import com.prelert.rs.data.SingleDocument;
-import com.prelert.rs.provider.RestApiException;
+import com.prelert.rs.exception.InvalidParametersException;
 
 
 public abstract class AbstractDataLoad extends ResourceWithJobManager
@@ -124,20 +124,38 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
             @PathParam("jobId") String jobId, InputStream input,
             @DefaultValue("") @QueryParam(RESET_START_PARAM) String resetStart,
             @DefaultValue("") @QueryParam(RESET_END_PARAM) String resetEnd)
-    throws IOException, UnknownJobException
+    throws IOException
     {
         LOGGER.debug("Post data to job(s) " + jobId);
 
-        DataLoadParams params = createDataLoadParams(resetStart, resetEnd);
-        String contentEncoding = headers.getHeaderString(HttpHeaders.CONTENT_ENCODING);
-        if (params.isResettingBuckets())
-        {
-            checkBucketResettingIsSupported(jobId);
-        }
-
+        String [] jobIds = jobId.split(JOB_SEPARATOR);
         MultiDataPostResult result = new MultiDataPostResult();
 
-        String [] jobIds = jobId.split(JOB_SEPARATOR);
+        DataLoadParams params;
+        String contentEncoding;
+
+        // Validate request parameters
+        try
+        {
+            params = createDataLoadParams(resetStart, resetEnd);
+            contentEncoding = headers.getHeaderString(HttpHeaders.CONTENT_ENCODING);
+            if (params.isResettingBuckets())
+            {
+                checkBucketResettingIsSupported(jobId);
+            }
+        }
+        catch (JobException e)
+        {
+            for (String job : jobIds)
+            {
+                ApiError error = ApiError.fromJobException(e);
+                result.addResult(new DataPostResponse(job, error));
+            }
+
+            return Response.status(Response.Status.BAD_REQUEST).entity(result).build();
+        }
+
+
         if (jobIds.length == 1)
         {
             result = streamToSingleJob(jobId, params, contentEncoding, input);
@@ -237,13 +255,13 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
     }
 
     private DataLoadParams createDataLoadParams(String resetStart, String resetEnd)
+    throws InvalidParametersException
     {
         if (!isValidTimeRange(resetStart, resetEnd))
         {
             String msg = Messages.getMessage(Messages.REST_INVALID_RESET_PARAMS, RESET_START_PARAM);
             LOGGER.info(msg);
-            throw new RestApiException(msg, ErrorCodes.INVALID_BUCKET_RESET_RANGE_PARAMS,
-                    Response.Status.BAD_REQUEST);
+            throw new InvalidParametersException(msg, ErrorCodes.INVALID_BUCKET_RESET_RANGE_PARAMS);
         }
         TimeRange timeRange = createTimeRange(RESET_START_PARAM, resetStart, RESET_END_PARAM, resetEnd);
         return new DataLoadParams(shouldPersist(), timeRange);
@@ -255,6 +273,7 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
     }
 
     private TimeRange createTimeRange(String startParam, String start, String endParam, String end)
+    throws InvalidParametersException
     {
         Long epochStart = null;
         Long epochEnd = null;
@@ -270,14 +289,14 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
             {
                 String msg = Messages.getMessage(Messages.REST_START_AFTER_END, end, start);
                 LOGGER.info(msg);
-                throw new RestApiException(msg, ErrorCodes.END_DATE_BEFORE_START_DATE,
-                        Response.Status.BAD_REQUEST);
+                throw new InvalidParametersException(msg, ErrorCodes.END_DATE_BEFORE_START_DATE);
             }
         }
         return new TimeRange(epochStart, epochEnd);
     }
 
-    private void checkBucketResettingIsSupported(String jobId) throws UnknownJobException
+    private void checkBucketResettingIsSupported(String jobId)
+    throws UnknownJobException, InvalidParametersException
     {
         SingleDocument<JobDetails> job = jobManager().getJob(jobId);
         AnalysisConfig config = job.getDocument().getAnalysisConfig();
@@ -285,13 +304,13 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
     }
 
     private void checkLatencyIsNonZero(Long latency)
+    throws InvalidParametersException
     {
         if (latency == null || latency.longValue() == 0)
         {
             String message = Messages.getMessage(Messages.REST_RESET_BUCKET_NO_LATENCY);
             LOGGER.info(message);
-            throw new RestApiException(message,
-                    ErrorCodes.BUCKET_RESET_NOT_SUPPORTED, Response.Status.BAD_REQUEST);
+            throw new InvalidParametersException(message, ErrorCodes.BUCKET_RESET_NOT_SUPPORTED);
         }
     }
 
@@ -315,7 +334,7 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
             @DefaultValue("false") @QueryParam(CALC_INTERIM_PARAM) boolean calcInterim,
             @DefaultValue("") @QueryParam(START_QUERY_PARAM) String start,
             @DefaultValue("") @QueryParam(END_QUERY_PARAM) String end)
-    throws UnknownJobException, NativeProcessRunException, JobInUseException
+    throws UnknownJobException, NativeProcessRunException, JobInUseException, InvalidParametersException
     {
         LOGGER.debug("Post to flush data upload for job " + jobId +
                      " with " + CALC_INTERIM_PARAM + '=' + calcInterim);
@@ -326,6 +345,7 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
     }
 
     private void checkValidFlushArgumentsCombination(boolean calcInterim, String start, String end)
+    throws InvalidParametersException
     {
         if (calcInterim == false && (!start.isEmpty() || !end.isEmpty()))
         {
@@ -342,10 +362,10 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
     }
 
     private void throwInvalidFlushParamsException(String msg)
+    throws InvalidParametersException
     {
         LOGGER.info(msg);
-        throw new RestApiException(msg, ErrorCodes.INVALID_FLUSH_PARAMS,
-                Response.Status.BAD_REQUEST);
+        throw new InvalidParametersException(msg, ErrorCodes.INVALID_FLUSH_PARAMS);
     }
 
     /**

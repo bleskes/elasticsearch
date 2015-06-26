@@ -67,6 +67,7 @@ import com.prelert.job.process.params.InterimResultsParams;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.rs.data.SingleDocument;
+import com.prelert.rs.exception.InvalidParametersException;
 import com.prelert.rs.provider.RestApiException;
 
 
@@ -152,7 +153,7 @@ public class DataTest extends ServiceTest
         HttpHeaders httpHeaders = mock(HttpHeaders.class);
         InputStream inputStream = mock(InputStream.class);
         givenLatency(null);
-        m_ExpectedException.expect(RestApiException.class);
+        m_ExpectedException.expect(InvalidParametersException.class);
         m_ExpectedException.expectMessage(
                 "Bucket resetting is not supported when no latency is configured.");
         m_ExpectedException.expect(hasErrorCode(ErrorCodes.BUCKET_RESET_NOT_SUPPORTED));
@@ -169,7 +170,7 @@ public class DataTest extends ServiceTest
         HttpHeaders httpHeaders = mock(HttpHeaders.class);
         InputStream inputStream = mock(InputStream.class);
         givenLatency(0L);
-        m_ExpectedException.expect(RestApiException.class);
+        m_ExpectedException.expect(InvalidParametersException.class);
         m_ExpectedException.expectMessage(
                 "Bucket resetting is not supported when no latency is configured.");
         m_ExpectedException.expect(hasErrorCode(ErrorCodes.BUCKET_RESET_NOT_SUPPORTED));
@@ -233,7 +234,7 @@ public class DataTest extends ServiceTest
     {
         HttpHeaders httpHeaders = mock(HttpHeaders.class);
         InputStream inputStream = mock(InputStream.class);
-        m_ExpectedException.expect(RestApiException.class);
+        m_ExpectedException.expect(InvalidParametersException.class);
         m_ExpectedException.expectMessage(
                 "Invalid time range: end time '1428591599' is earlier than start time '1428591600'.");
         m_ExpectedException.expect(hasErrorCode(ErrorCodes.END_DATE_BEFORE_START_DATE));
@@ -249,7 +250,7 @@ public class DataTest extends ServiceTest
     {
         HttpHeaders httpHeaders = mock(HttpHeaders.class);
         InputStream inputStream = mock(InputStream.class);
-        m_ExpectedException.expect(RestApiException.class);
+        m_ExpectedException.expect(InvalidParametersException.class);
         m_ExpectedException.expectMessage(
                 "Invalid reset range parameters: 'resetStart' has not been specified.");
         m_ExpectedException.expect(hasErrorCode(ErrorCodes.INVALID_BUCKET_RESET_RANGE_PARAMS));
@@ -291,9 +292,9 @@ public class DataTest extends ServiceTest
 
     @Test
     public void testFlushUpload_GivenNoInterimResultsAndStartSpecified()
-            throws UnknownJobException, NativeProcessRunException, JobInUseException
+            throws UnknownJobException, NativeProcessRunException, JobInUseException, InvalidParametersException
     {
-        m_ExpectedException.expect(RestApiException.class);
+        m_ExpectedException.expect(InvalidParametersException.class);
         m_ExpectedException.expectMessage(
                 "Invalid flush parameters: unexpected 'start' and/or 'end'.");
         m_ExpectedException.expect(hasErrorCode(ErrorCodes.INVALID_FLUSH_PARAMS));
@@ -303,9 +304,9 @@ public class DataTest extends ServiceTest
 
     @Test
     public void testFlushUpload_GivenNoInterimResultsAndEndSpecified() throws UnknownJobException,
-            NativeProcessRunException, JobInUseException
+            NativeProcessRunException, JobInUseException, InvalidParametersException
     {
-        m_ExpectedException.expect(RestApiException.class);
+        m_ExpectedException.expect(InvalidParametersException.class);
         m_ExpectedException.expectMessage(
                 "Invalid flush parameters: unexpected 'start' and/or 'end'.");
         m_ExpectedException.expect(hasErrorCode(ErrorCodes.INVALID_FLUSH_PARAMS));
@@ -315,9 +316,9 @@ public class DataTest extends ServiceTest
 
     @Test
     public void testFlushUpload_GivenInterimResultsAndOnlyEndSpecified()
-            throws UnknownJobException, NativeProcessRunException, JobInUseException
+            throws UnknownJobException, NativeProcessRunException, JobInUseException, InvalidParametersException
     {
-        m_ExpectedException.expect(RestApiException.class);
+        m_ExpectedException.expect(InvalidParametersException.class);
         m_ExpectedException.expectMessage(
                 "Invalid flush parameters: 'start' has not been specified.");
         m_ExpectedException.expect(hasErrorCode(ErrorCodes.INVALID_FLUSH_PARAMS));
@@ -327,9 +328,9 @@ public class DataTest extends ServiceTest
 
     @Test
     public void testFlushUpload_GivenInterimResultsAndEndIsBeforeStart()
-            throws UnknownJobException, NativeProcessRunException, JobInUseException
+            throws UnknownJobException, NativeProcessRunException, JobInUseException, InvalidParametersException
     {
-        m_ExpectedException.expect(RestApiException.class);
+        m_ExpectedException.expect(InvalidParametersException.class);
         m_ExpectedException.expectMessage(
                 "Invalid time range: end time '1' is earlier than start time '2'.");
         m_ExpectedException.expect(hasErrorCode(ErrorCodes.END_DATE_BEFORE_START_DATE));
@@ -339,7 +340,7 @@ public class DataTest extends ServiceTest
 
     @Test
     public void testFlushUpload_GivenInterimResultsAndStartAndEndSpecifiedAsEpochs()
-            throws UnknownJobException, NativeProcessRunException, JobInUseException
+            throws UnknownJobException, NativeProcessRunException, JobInUseException, InvalidParametersException
     {
         m_Data.flushUpload(JOB_ID, true, "1428494400", "1428498000");
 
@@ -355,7 +356,7 @@ public class DataTest extends ServiceTest
 
     @Test
     public void testFlushUpload_GivenInterimResultsAndStartAndEndSpecifiedAsIso()
-            throws UnknownJobException, NativeProcessRunException, JobInUseException
+            throws UnknownJobException, NativeProcessRunException, JobInUseException, InvalidParametersException
     {
         m_Data.flushUpload(JOB_ID, true, "2015-04-08T12:00:00Z", "2015-04-08T13:00:00Z");
 
@@ -371,7 +372,7 @@ public class DataTest extends ServiceTest
 
     @Test
     public void testFlushUpload_GivenInterimResultsAndStartAndEndSpecifiedAsIsoMilliseconds()
-            throws UnknownJobException, NativeProcessRunException, JobInUseException
+            throws UnknownJobException, NativeProcessRunException, JobInUseException, InvalidParametersException
     {
         m_Data.flushUpload(JOB_ID, true, "2015-04-08T12:00:00.000Z", "2015-04-08T13:00:00.000Z");
 
@@ -387,7 +388,7 @@ public class DataTest extends ServiceTest
 
     @Test
     public void testFlushUpload_GivenInterimResultsAndSameStartAndEnd()
-            throws UnknownJobException, NativeProcessRunException, JobInUseException
+            throws UnknownJobException, NativeProcessRunException, JobInUseException, InvalidParametersException
     {
         m_Data.flushUpload(JOB_ID, true, "1428494400", "1428494400");
 
@@ -403,7 +404,7 @@ public class DataTest extends ServiceTest
 
     @Test
     public void testFlushUpload_GivenInterimResultsAndOnlyStartIsSpecified()
-            throws UnknownJobException, NativeProcessRunException, JobInUseException
+            throws UnknownJobException, NativeProcessRunException, JobInUseException, InvalidParametersException
     {
         m_Data.flushUpload("foo", true, "1428494400", "");
 
