@@ -4,8 +4,9 @@ define(function (require) {
   var MarvelDataSource = require('marvel/lib/marvel_data_source');
 
   return function clusterStatusDataSourceProvider() {
-    function ClusterStatusDataSource(index) {
-      MarvelDataSource.call(this, index);
+    function ClusterStatusDataSource(index, cluster, clusters) {
+      MarvelDataSource.call(this, index, cluster);
+      this.clusters = clusters;
     }
 
     ClusterStatusDataSource.prototype = new MarvelDataSource();
@@ -17,6 +18,7 @@ define(function (require) {
     };
 
     ClusterStatusDataSource.prototype.handleResponse = function (resp) {
+      if (resp.hits.total === 0) return;
       var source = resp.hits.hits[0]._source;
       function get(key) {
         return _.deepGet(source, key);

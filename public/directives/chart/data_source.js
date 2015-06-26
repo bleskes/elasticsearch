@@ -5,8 +5,8 @@ define(function (require) {
   return function chartDataSourceProvider(timefilter, Private) {
     var calcAuto = Private(require('components/time_buckets/calc_auto_interval'));
 
-    function ChartDataSource(metric, index) {
-      MarvelDataSource.call(this, index);
+    function ChartDataSource(metric, index, cluster) {
+      MarvelDataSource.call(this, index, cluster);
       this.metric = metric;
     }
 

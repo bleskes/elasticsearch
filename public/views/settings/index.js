@@ -16,17 +16,29 @@ define(function (require) {
   .when('/marvel/settings', {
     template: require('text!marvel/views/settings/index.html'),
     resolve: {
-      settings: function ($route, marvelSettings) {
-        return marvelSettings.fetch(true); // force fetch
+      marvel: function (Private) {
+        var routeInit = Private(require('marvel/lib/route_init'));
+        return routeInit({ force: { settings: true } });
       }
     }
   });
 
 
-  module.controller('settings', function ($scope, $route, Notifier) {
+  module.controller('settings', function (timefilter, courier, $scope, $route, Notifier, Private, globalState) {
+    var ClusterStatusDataSource = Private(require('marvel/directives/cluster_status/data_source'));
+
     var notify = new Notifier({ location: 'Marvel Settings' });
-    var settings = $route.current.locals.settings['metric-thresholds'];
+    var settings = $route.current.locals.marvel.settings['metric-thresholds'];
+    var indexPattern = $route.current.locals.marvel.indexPattern;
+    var clusters = $route.current.locals.marvel.clusters;
+
     $scope.metrics = metrics;
+    $scope.dataSources = {};
+
+    var dataSource = new ClusterStatusDataSource(indexPattern, globalState.cluster, clusters);
+    $scope.dataSources.cluster_status = dataSource;
+    dataSource.register(courier);
+    courier.fetch();
 
     // Create a model for the view to easily work with
     $scope.model = {};

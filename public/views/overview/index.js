@@ -6,6 +6,7 @@ define(function (require) {
   // require('components/timepicker/timepicker');
   require('marvel/services/settings');
   require('marvel/services/metrics');
+  require('marvel/services/clusters');
 
   var module = require('modules').get('marvel', [
     'marvel/directives',
@@ -14,31 +15,24 @@ define(function (require) {
     'nvd3'
   ]);
 
-  var initMarvelIndex = require('marvel/lib/marvel_index_init');
-
   require('routes')
   .when('/marvel', {
     template: require('text!marvel/views/overview/index.html'),
     resolve: {
-      settings: function (marvelSettings) {
-        return marvelSettings.fetch();
-      },
-
-      indexPattern: function(Promise, Private, indexPatterns) {
-        var marvelIndex = null;
-        return new Promise(function(resolve) {
-          initMarvelIndex(indexPatterns, Private, function(indexPattern) {
-            resolve(indexPattern);
-          });
-        });
+      marvel: function (Private) {
+        var routeInit = Private(require('marvel/lib/route_init'));
+        return routeInit();
       }
     }
   });
 
-  module.controller('overview', function ($scope, timefilter, $route, courier, marvelMetrics, Private, Promise) {
+  module.controller('overview', function (kbnUrl, globalState, $scope, timefilter, $route, courier, marvelMetrics, Private, Promise) {
     var ChartDataSource = Private(require('marvel/directives/chart/data_source'));
     var ClusterStatusDataSource = Private(require('marvel/directives/cluster_status/data_source'));
-    var indexPattern = $route.current.locals.indexPattern;
+
+    var indexPattern = $route.current.locals.marvel.indexPattern;
+    var clusters = $route.current.locals.marvel.clusters;
+
     timefilter.enabled = true;
 
     // Define the metrics for the three charts at the top of the
@@ -57,21 +51,23 @@ define(function (require) {
     Promise
       .all($scope.charts.map(function (name) {
         return marvelMetrics(name).then(function (metric) {
-          var dataSource = new ChartDataSource(metric, indexPattern);
+          var dataSource = new ChartDataSource(metric, indexPattern, globalState.cluster);
           dataSource.register(courier);
           $scope.dataSources[name] = dataSource;
           return dataSource;
         });
       }))
       .then(function () {
-        var dataSource = new ClusterStatusDataSource(indexPattern);
+        var dataSource = new ClusterStatusDataSource(indexPattern, globalState.cluster, clusters);
         dataSource.register(courier);
         $scope.dataSources.cluster_status = dataSource;
         return dataSource;
       })
-      .then(function () {
-        courier.fetch();
-      });
+      .then(fetch);
+
+    function fetch () {
+      return courier.fetch();
+    }
 
     $scope.issues = {
       cluster: [
