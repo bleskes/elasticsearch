@@ -40,7 +40,6 @@ import org.elasticsearch.search.internal.InternalSearchHit;
 import org.elasticsearch.search.internal.InternalSearchHits;
 import org.elasticsearch.test.ElasticsearchTestCase;
 import org.elasticsearch.watcher.WatcherException;
-import org.elasticsearch.watcher.support.TemplateUtils;
 import org.elasticsearch.watcher.support.init.proxy.ClientProxy;
 import org.junit.Before;
 import org.junit.Test;
@@ -58,15 +57,13 @@ public class WatchStoreTests extends ElasticsearchTestCase {
 
     private WatchStore watchStore;
     private ClientProxy clientProxy;
-    private TemplateUtils templateUtils;
     private Watch.Parser parser;
 
     @Before
     public void init() {
         clientProxy = mock(ClientProxy.class);
-        templateUtils = mock(TemplateUtils.class);
         parser = mock(Watch.Parser.class);
-        watchStore = new WatchStore(Settings.EMPTY, clientProxy, templateUtils, parser);
+        watchStore = new WatchStore(Settings.EMPTY, clientProxy, parser);
     }
 
     @Test
@@ -80,11 +77,9 @@ public class WatchStoreTests extends ElasticsearchTestCase {
         watchStore.start(cs);
         assertThat(watchStore.started(), is(true));
         assertThat(watchStore.watches().size(), equalTo(0));
-        verify(templateUtils, times(1)).putTemplate("watches", null);
         verifyZeroInteractions(clientProxy);
 
         watchStore.start(cs);
-        verifyNoMoreInteractions(templateUtils);
         verifyZeroInteractions(clientProxy);
     }
 
@@ -109,7 +104,6 @@ public class WatchStoreTests extends ElasticsearchTestCase {
 
         ClusterState cs = csBuilder.build();
         assertThat(watchStore.validate(cs), is(false));
-        verifyZeroInteractions(templateUtils);
         verifyZeroInteractions(clientProxy);
     }
 
@@ -143,7 +137,6 @@ public class WatchStoreTests extends ElasticsearchTestCase {
         } catch (WatcherException e) {
             assertThat(e.getMessage(), equalTo("not all required shards have been refreshed"));
         }
-        verifyZeroInteractions(templateUtils);
         verify(clientProxy, times(1)).refresh(any(RefreshRequest.class));
         verify(clientProxy, never()).search(any(SearchRequest.class), any(TimeValue.class));
         verify(clientProxy, never()).clearScroll(anyString());
@@ -183,7 +176,6 @@ public class WatchStoreTests extends ElasticsearchTestCase {
         } catch (ElasticsearchException e) {
             assertThat(e.getMessage(), equalTo("Partial response while loading watches"));
         }
-        verifyZeroInteractions(templateUtils);
         verify(clientProxy, times(1)).refresh(any(RefreshRequest.class));
         verify(clientProxy, times(1)).search(any(SearchRequest.class), any(TimeValue.class));
         verify(clientProxy, times(1)).clearScroll(anyString());
@@ -221,7 +213,6 @@ public class WatchStoreTests extends ElasticsearchTestCase {
         watchStore.start(cs);
         assertThat(watchStore.started(), is(true));
         assertThat(watchStore.watches().size(), equalTo(0));
-        verify(templateUtils, times(1)).putTemplate("watches", null);
         verify(clientProxy, times(1)).refresh(any(RefreshRequest.class));
         verify(clientProxy, times(1)).search(any(SearchRequest.class), any(TimeValue.class));
         verify(clientProxy, times(1)).clearScroll(anyString());
@@ -276,7 +267,6 @@ public class WatchStoreTests extends ElasticsearchTestCase {
         watchStore.start(cs);
         assertThat(watchStore.started(), is(true));
         assertThat(watchStore.watches().size(), equalTo(2));
-        verify(templateUtils, times(1)).putTemplate("watches", null);
         verify(clientProxy, times(1)).refresh(any(RefreshRequest.class));
         verify(clientProxy, times(1)).search(any(SearchRequest.class), any(TimeValue.class));
         verify(clientProxy, times(2)).searchScroll(anyString(), any(TimeValue.class));

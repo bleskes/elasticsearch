@@ -17,15 +17,14 @@
 
 package org.elasticsearch.watcher.execution;
 
-import org.joda.time.DateTime;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
-import org.elasticsearch.watcher.execution.*;
 import org.elasticsearch.watcher.test.AbstractWatcherIntegrationTests;
 import org.elasticsearch.watcher.test.WatcherTestUtils;
 import org.elasticsearch.watcher.trigger.schedule.ScheduleTriggerEvent;
 import org.elasticsearch.watcher.watch.Watch;
+import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
@@ -52,7 +51,7 @@ public class TriggeredWatchTests extends AbstractWatcherIntegrationTests {
     }
 
     private TriggeredWatch.Parser triggeredWatchParser() {
-        return internalTestCluster().getInstance(TriggeredWatch.Parser.class);
+        return internalCluster().getInstance(TriggeredWatch.Parser.class);
     }
 
 

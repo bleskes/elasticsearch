@@ -45,7 +45,6 @@ import org.elasticsearch.index.engine.DocumentMissingException;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.watcher.WatcherException;
-import org.elasticsearch.watcher.support.TemplateUtils;
 import org.elasticsearch.watcher.support.init.proxy.ClientProxy;
 
 import java.io.IOException;
@@ -57,11 +56,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class WatchStore extends AbstractComponent {
 
     public static final String INDEX = ".watches";
-    public static final String INDEX_TEMPLATE = "watches";
     public static final String DOC_TYPE = "watch";
 
     private final ClientProxy client;
-    private final TemplateUtils templateUtils;
     private final Watch.Parser watchParser;
 
     private final ConcurrentMap<String, Watch> watches;
@@ -71,10 +68,9 @@ public class WatchStore extends AbstractComponent {
     private final TimeValue scrollTimeout;
 
     @Inject
-    public WatchStore(Settings settings, ClientProxy client, TemplateUtils templateUtils, Watch.Parser watchParser) {
+    public WatchStore(Settings settings, ClientProxy client, Watch.Parser watchParser) {
         super(settings);
         this.client = client;
-        this.templateUtils = templateUtils;
         this.watchParser = watchParser;
         this.watches = ConcurrentCollections.newConcurrentMap();
 
@@ -93,7 +89,6 @@ public class WatchStore extends AbstractComponent {
             try {
                 int count = loadWatches(watchesIndexMetaData.numberOfShards());
                 logger.debug("loaded [{}] watches from the watches index [{}]", count, INDEX);
-                templateUtils.putTemplate(INDEX_TEMPLATE, null);
                 started.set(true);
             } catch (Exception e) {
                 logger.debug("failed to load watches for watch index [{}]", e, INDEX);
@@ -101,7 +96,6 @@ public class WatchStore extends AbstractComponent {
                 throw e;
             }
         } else {
-            templateUtils.putTemplate(INDEX_TEMPLATE, null);
             started.set(true);
         }
     }

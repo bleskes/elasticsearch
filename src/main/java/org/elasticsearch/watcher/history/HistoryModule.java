@@ -25,10 +25,8 @@ import org.elasticsearch.watcher.execution.InternalWatchExecutor;
  */
 public class HistoryModule extends AbstractModule {
 
-
     public HistoryModule() {
     }
-
 
     @Override
     protected void configure() {
