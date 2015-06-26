@@ -42,9 +42,8 @@ public class SearchInputFactory extends InputFactory<SearchInput, SearchInput.Re
     public SearchInputFactory(Settings settings, ClientProxy client) {
         super(Loggers.getLogger(ExecutableSimpleInput.class, settings));
         this.client = client;
-        String defaultDateFormat = DynamicIndexName.defaultDateFormat(settings, "watcher.input.search");
-        this.indexNameParser = new DynamicIndexName.Parser(defaultDateFormat);
-        this.defaultTimeout = settings.getAsTime("watcher.input.search.default_timeout", TimeValue.timeValueSeconds(30));
+        this.indexNameParser = new DynamicIndexName.Parser(settings, "watcher.input.search");
+        this.defaultTimeout = settings.getAsTime("watcher.input.search.default_timeout", null);
     }
 
     @Override
@@ -54,11 +53,11 @@ public class SearchInputFactory extends InputFactory<SearchInput, SearchInput.Re
 
     @Override
     public SearchInput parseInput(String watchId, XContentParser parser) throws IOException {
-        return SearchInput.parse(watchId, parser, defaultTimeout);
+        return SearchInput.parse(watchId, parser);
     }
 
     @Override
     public ExecutableSearchInput createExecutable(SearchInput input) {
-        return new ExecutableSearchInput(input, inputLogger, client, indexNameParser);
+        return new ExecutableSearchInput(input, inputLogger, client, defaultTimeout, indexNameParser);
     }
 }
