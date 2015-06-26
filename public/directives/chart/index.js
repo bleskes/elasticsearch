@@ -56,6 +56,7 @@ function (formatNumber, template) {
           showXAxis: true,
           showYAxis: true,
           useInteractiveGuideline: true,
+          interactive: false,
           tooltips: true,
           color: ['#000'],
           pointSize: 0,

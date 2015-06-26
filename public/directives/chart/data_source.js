@@ -24,7 +24,7 @@ define(function (require) {
         check: {
           date_histogram: {
             field: this.index.timeFieldName,
-            interval: calcAuto.near(50, duration).seconds() + 's'
+            interval: calcAuto.near(50, duration).asSeconds() + 's'
           },
           aggs: { metric: { } }
         }
