@@ -28,6 +28,8 @@ package com.prelert.rs.data;
 
 import java.util.Objects;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.io.JsonStringEncoder;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.errorcodes.HasErrorCode;
@@ -43,6 +45,7 @@ import com.prelert.job.exceptions.JobException;
  *
  * @see ErrorCodes
  */
+@JsonInclude(Include.NON_NULL)
 public class ApiError implements HasErrorCode
 {
     private ErrorCodes m_ErrorCode;
