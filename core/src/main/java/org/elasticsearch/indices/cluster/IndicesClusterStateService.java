@@ -310,7 +310,7 @@ public class IndicesClusterStateService extends AbstractLifecycleComponent<Indic
                 try {
                     indicesService.createIndex(indexMetaData.index(), indexMetaData.settings(), event.state().nodes().localNode().id());
                 } catch (Throwable e) {
-                    sendFailShard(shard, indexMetaData.getUUID(), "failed to create index", e);
+                    sendFailShard(shard, indexMetaData.getIndexUUID(), "failed to create index", e);
                 }
             }
         }
@@ -380,7 +380,7 @@ public class IndicesClusterStateService extends AbstractLifecycleComponent<Indic
                 }
                 if (!typesToRefresh.isEmpty() && sendRefreshMapping) {
                     nodeMappingRefreshAction.nodeMappingRefresh(event.state(),
-                            new NodeMappingRefreshAction.NodeMappingRefreshRequest(index, indexMetaData.uuid(),
+                            new NodeMappingRefreshAction.NodeMappingRefreshRequest(index, indexMetaData.indexUUID(),
                                     typesToRefresh.toArray(new String[typesToRefresh.size()]), event.state().nodes().localNodeId())
                     );
                 }
@@ -538,14 +538,14 @@ public class IndicesClusterStateService extends AbstractLifecycleComponent<Indic
             if (!indexService.hasShard(shardId) && shardRouting.started()) {
                 if (failedShards.containsKey(shardRouting.shardId())) {
                     if (nodes.masterNode() != null) {
-                        shardStateAction.resendShardFailed(shardRouting, indexMetaData.getUUID(),
+                        shardStateAction.resendShardFailed(shardRouting, indexMetaData.getIndexUUID(),
                                 "master " + nodes.masterNode() + " marked shard as started, but shard has previous failed. resending shard failure.",
                                 nodes.masterNode()
                         );
                     }
                 } else {
                     // the master thinks we are started, but we don't have this shard at all, mark it as failed
-                    sendFailShard(shardRouting, indexMetaData.getUUID(), "master [" + nodes.masterNode() + "] marked shard as started, but shard has not been created, mark shard as failed", null);
+                    sendFailShard(shardRouting, indexMetaData.getIndexUUID(), "master [" + nodes.masterNode() + "] marked shard as started, but shard has not been created, mark shard as failed", null);
                 }
                 continue;
             }
@@ -655,7 +655,7 @@ public class IndicesClusterStateService extends AbstractLifecycleComponent<Indic
                             indexShard.shardId(), indexShard.state(), nodes.masterNode());
                 }
                 if (nodes.masterNode() != null) {
-                    shardStateAction.shardStarted(shardRouting, indexMetaData.getUUID(),
+                    shardStateAction.shardStarted(shardRouting, indexMetaData.getIndexUUID(),
                             "master " + nodes.masterNode() + " marked shard as initializing, but shard state is [" + indexShard.state() + "], mark shard as started",
                             nodes.masterNode());
                 }
@@ -682,7 +682,7 @@ public class IndicesClusterStateService extends AbstractLifecycleComponent<Indic
         if (!indexService.hasShard(shardId)) {
             if (failedShards.containsKey(shardRouting.shardId())) {
                 if (nodes.masterNode() != null) {
-                    shardStateAction.resendShardFailed(shardRouting, indexMetaData.getUUID(),
+                    shardStateAction.resendShardFailed(shardRouting, indexMetaData.getIndexUUID(),
                             "master " + nodes.masterNode() + " marked shard as initializing, but shard is marked as failed, resend shard failure",
                             nodes.masterNode());
                 }
@@ -731,7 +731,7 @@ public class IndicesClusterStateService extends AbstractLifecycleComponent<Indic
             indexService.shard(shardId).recoverFromStore(indexShardRouting, new StoreRecoveryService.RecoveryListener() {
                 @Override
                 public void onRecoveryDone() {
-                    shardStateAction.shardStarted(shardRouting, indexMetaData.getUUID(), "after recovery from store");
+                    shardStateAction.shardStarted(shardRouting, indexMetaData.getIndexUUID(), "after recovery from store");
                 }
 
                 @Override
@@ -799,7 +799,7 @@ public class IndicesClusterStateService extends AbstractLifecycleComponent<Indic
 
         @Override
         public void onRecoveryDone(RecoveryState state) {
-            shardStateAction.shardStarted(shardRouting, indexMetaData.getUUID(), "after recovery (replica) from node [" + state.getSourceNode() + "]");
+            shardStateAction.shardStarted(shardRouting, indexMetaData.getIndexUUID(), "after recovery (replica) from node [" + state.getSourceNode() + "]");
         }
 
         @Override
