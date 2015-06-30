@@ -23,7 +23,6 @@ import org.elasticsearch.license.core.License;
 import java.util.Collection;
 
 
-//@ImplementedBy(LicensesService.class)
 public interface LicensesClientService {
 
     public interface Listener {
