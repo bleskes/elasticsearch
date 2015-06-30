@@ -17,9 +17,10 @@
 
 package org.elasticsearch.shield.authc.support;
 
-import com.carrotsearch.ant.tasks.junit4.dependencies.com.google.common.base.Charsets;
 import org.elasticsearch.test.ElasticsearchTestCase;
 import org.junit.Test;
+
+import java.nio.charset.StandardCharsets;
 
 import static org.hamcrest.Matchers.*;
 
@@ -103,7 +104,7 @@ public class SecuredStringTests extends ElasticsearchTestCase {
         String password = "эластичный поиск-弾性検索";
         SecuredString securePass = new SecuredString(password.toCharArray());
         byte[] utf8 = securePass.utf8Bytes();
-        String password2 = new String(utf8, Charsets.UTF_8);
+        String password2 = new String(utf8, StandardCharsets.UTF_8);
         assertThat(password2, equalTo(password));
     }
 
