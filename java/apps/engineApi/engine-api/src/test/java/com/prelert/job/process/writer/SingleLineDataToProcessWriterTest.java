@@ -201,7 +201,7 @@ public class SingleLineDataToProcessWriterTest
         writer.write(inputStream);
         verify(m_StatusReporter, times(1)).startNewIncrementalCount();
         verify(m_StatusReporter, times(1)).setAnalysedFieldsPerRecord(1);
-        verify(m_StatusReporter, times(1)).reportDateParseError(0);
+        verify(m_StatusReporter, times(1)).reportDateParseError(1);
         verify(m_StatusReporter, times(1)).incrementalStats();
 
         List<String[]> expectedRecords = new ArrayList<>();

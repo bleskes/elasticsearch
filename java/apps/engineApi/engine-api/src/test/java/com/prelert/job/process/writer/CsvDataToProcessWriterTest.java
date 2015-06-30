@@ -300,6 +300,44 @@ public class CsvDataToProcessWriterTest
         verify(m_DataPersister).flushRecords();
     }
 
+    @Test
+    public void testWrite_GivenDateTimeFieldIsOutputOfTransform() throws MissingFieldException,
+            HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException
+    {
+        TransformConfig transform = new TransformConfig();
+        transform.setTransform("concat");
+        transform.setInputs(Arrays.asList("date", "time-of-day"));
+        transform.setOutputs(Arrays.asList("datetime"));
+
+        DataDescription dd = new DataDescription();
+        dd.setFieldDelimiter(',');
+        dd.setTimeField("datetime");
+        dd.setFormat(DataFormat.DELIMITED);
+        dd.setTimeFormat("yyyy-MM-ddHH:mm:ssX");
+
+        CsvDataToProcessWriter writer = createWriter(dd, Arrays.asList(transform));
+
+        StringBuilder input = new StringBuilder();
+        input.append("date,time-of-day,metric,value\n");
+        input.append("1970-01-01,00:00:01Z,foo,5.0\n");
+        input.append("1970-01-01,00:00:02Z,foo,6.0\n");
+        InputStream inputStream = createInputStream(input.toString());
+
+        writer.write(inputStream);
+        verify(m_StatusReporter, times(1)).startNewIncrementalCount();
+
+        List<String[]> expectedRecords = new ArrayList<>();
+        // The final field is the control field
+        expectedRecords.add(new String[] {"datetime", "value", "."});
+        expectedRecords.add(new String[] {"1", "5.0", ""});
+        expectedRecords.add(new String[] {"2", "6.0", ""});
+        assertWrittenRecordsEqualTo(expectedRecords);
+
+        verify(m_StatusReporter).finishReporting();
+        verify(m_DataPersister).flushRecords();
+    }
+
+
     private static InputStream createInputStream(String input)
     {
         return new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
@@ -309,6 +347,14 @@ public class CsvDataToProcessWriterTest
     {
         return new CsvDataToProcessWriter(m_LengthEncodedWriter, m_DataDescription,
                 m_AnalysisConfig, new TransformConfigs(m_Transforms),
+                m_StatusReporter, m_DataPersister, m_Logger);
+    }
+
+    private CsvDataToProcessWriter createWriter(DataDescription dd,
+                                                List<TransformConfig> transforms)
+    {
+        return new CsvDataToProcessWriter(m_LengthEncodedWriter, dd,
+                m_AnalysisConfig, new TransformConfigs(transforms),
                 m_StatusReporter, m_DataPersister, m_Logger);
     }
 

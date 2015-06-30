@@ -77,7 +77,8 @@ class JsonRecordReader
      *
      * Array fields in the JSON are ignored
      *
-     * @param record Read fields are written to this array
+     * @param record Read fields are written to this array. This array is first filled with empty
+     * strings and will never contain a <code>null</code>
      * @param gotFields boolean array each element is true if that field
      * was read
      *

@@ -298,7 +298,7 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
         }
         catch (TransformException e)
         {
-            m_StatusReporter.reportDateParseError(m_InFieldIndexes.size());
+            m_StatusReporter.reportDateParseError(numberOfFieldsRead);
             m_Logger.error(e.getMessage());
             return false;
         }

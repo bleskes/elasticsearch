@@ -550,7 +550,6 @@ public class ProcessManager
             return ProcessStatus.COMPLETED;
         }
 
-        process.getLogger().info("Finishing job " + jobId);
 
         if (process.isInUse())
         {
@@ -560,6 +559,7 @@ public class ProcessManager
             throw new JobInUseException(jobId, msg, ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR);
         }
 
+        process.getLogger().info("Finishing job " + jobId);
 
         // cancel any time out futures
         ScheduledFuture<?> future = m_JobIdToTimeoutFuture.get(jobId);

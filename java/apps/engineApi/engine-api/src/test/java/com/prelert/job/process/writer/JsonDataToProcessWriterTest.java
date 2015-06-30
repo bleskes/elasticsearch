@@ -327,10 +327,48 @@ public class JsonDataToProcessWriterTest
         verify(m_StatusReporter, times(1)).reportRecordWritten(1, 2);
         verify(m_StatusReporter, times(1)).reportRecordWritten(1, 3);
         verify(m_StatusReporter, times(1)).reportRecordWritten(1, 4);
-        verify(m_StatusReporter, times(1)).reportDateParseError(3);
+        verify(m_StatusReporter, times(1)).reportDateParseError(0);
         verify(m_StatusReporter).finishReporting();
         verify(m_DataPersister).flushRecords();
     }
+
+    @Test
+    public void testWrite_GivenDateTimeFieldIsOutputOfTransform() throws MissingFieldException,
+            HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException,
+            MalformedJsonException
+    {
+        TransformConfig transform = new TransformConfig();
+        transform.setTransform("concat");
+        transform.setInputs(Arrays.asList("date", "time-of-day"));
+        transform.setOutputs(Arrays.asList("datetime"));
+
+        DataDescription dd = new DataDescription();
+        dd.setFieldDelimiter(',');
+        dd.setTimeField("datetime");
+        dd.setFormat(DataFormat.DELIMITED);
+        dd.setTimeFormat("yyyy-MM-ddHH:mm:ssX");
+
+        JsonDataToProcessWriter writer = createWriter(dd, Arrays.asList(transform));
+
+        StringBuilder input = new StringBuilder();
+        input.append("{\"date\":\"1970-01-01\", \"time-of-day\":\"00:00:01Z\", \"value\":\"5.0\"}");
+        input.append("{\"date\":\"1970-01-01\", \"time-of-day\":\"00:00:02Z\", \"value\":\"6.0\"}");
+        InputStream inputStream = createInputStream(input.toString());
+
+        writer.write(inputStream);
+        verify(m_StatusReporter, times(1)).startNewIncrementalCount();
+
+        List<String[]> expectedRecords = new ArrayList<>();
+        // The final field is the control field
+        expectedRecords.add(new String[] {"datetime", "value", "."});
+        expectedRecords.add(new String[] {"1", "5.0", ""});
+        expectedRecords.add(new String[] {"2", "6.0", ""});
+        assertWrittenRecordsEqualTo(expectedRecords);
+
+        verify(m_StatusReporter).finishReporting();
+        verify(m_DataPersister).flushRecords();
+    }
+
 
 
     private static InputStream createInputStream(String input)
@@ -342,6 +380,14 @@ public class JsonDataToProcessWriterTest
     {
         return new JsonDataToProcessWriter(m_LengthEncodedWriter, m_DataDescription,
                 m_AnalysisConfig, new TransformConfigs(Arrays.<TransformConfig>asList()),
+                m_StatusReporter, m_DataPersister, m_Logger);
+    }
+
+    private JsonDataToProcessWriter createWriter(DataDescription dd,
+            List<TransformConfig> transforms)
+    {
+        return new JsonDataToProcessWriter(m_LengthEncodedWriter, dd,
+                m_AnalysisConfig, new TransformConfigs(transforms),
                 m_StatusReporter, m_DataPersister, m_Logger);
     }
 

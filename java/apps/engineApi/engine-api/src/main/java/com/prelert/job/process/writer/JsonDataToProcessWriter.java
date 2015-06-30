@@ -130,8 +130,6 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter
         int recordsWritten = 0;
         int recordCount = 0;
 
-        int timeFieldIndex = m_InFieldIndexes.get(m_DataDescription.getTimeField());
-
         JsonRecordReader recordReader = new JsonRecordReader(parser, m_InFieldIndexes, m_Logger);
         long inputFieldCount = recordReader.read(input, gotFields);
         while (inputFieldCount >= 0)
@@ -140,30 +138,21 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter
 
             inputFieldCount = Math.max(inputFieldCount - 1, 0); // time field doesn't count
 
-
-            if (gotFields[timeFieldIndex])
+            long missing = missingFieldCount(gotFields);
+            if (missing > 0)
             {
-                long missing = missingFieldCount(gotFields);
-                if (missing > 0)
-                {
-                    m_StatusReporter.reportMissingFields(missing);
-                }
-
-                for (InputOutputMap inOut : m_InputOutputMap)
-                {
-                    String field = input[inOut.m_Input];
-                    record[inOut.m_Output] = (field == null) ? "" : field;
-                }
-
-                if (applyTransformsAndWrite(input, record, inputFieldCount))
-                {
-                    ++recordsWritten;
-                }
+                m_StatusReporter.reportMissingFields(missing);
             }
-            else
+
+            for (InputOutputMap inOut : m_InputOutputMap)
             {
-                m_Logger.warn("Missing time field from JSON document");
-                m_StatusReporter.reportDateParseError(numFields);
+                String field = input[inOut.m_Input];
+                record[inOut.m_Output] = (field == null) ? "" : field;
+            }
+
+            if (applyTransformsAndWrite(input, record, inputFieldCount))
+            {
+                ++recordsWritten;
             }
 
             ++recordCount;
