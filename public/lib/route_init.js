@@ -22,7 +22,7 @@ define(function (require) {
         })
         // Get the Marvel Settings
         .then(function (cluster) {
-          return marvelSettings.fetch(options.force.settings)
+          return marvelSettings.fetch(cluster, options.force.settings)
             .then(function (settings) {
               marvel.settings = settings;
               return settings;

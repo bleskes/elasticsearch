@@ -6,7 +6,7 @@ define(function (require) {
       restrict: 'E',
       scope: {
         title: '@',
-        issues: '=',
+        source: '=',
         link: '@'
       },
       template: template

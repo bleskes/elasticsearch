@@ -5,9 +5,9 @@ define(function (require) {
   var module = require('modules').get('marvel/metrics', [ 'marvel/settings' ]);
 
   module.service('marvelMetrics', function (marvelSettings, $resource, Promise, Private) {
-    return function (field) {
+    return function (cluster, field) {
       return marvelSettings.fetch().then(function (settings) {
-        var metric = new Metric(field, metrics[field], settings['metric-thresholds']);
+        var metric = new Metric(field, metrics[field], settings[cluster + ':metric-thresholds']);
         return metric;
       });
     };

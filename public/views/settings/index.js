@@ -28,7 +28,7 @@ define(function (require) {
     var ClusterStatusDataSource = Private(require('marvel/directives/cluster_status/data_source'));
 
     var notify = new Notifier({ location: 'Marvel Settings' });
-    var settings = $route.current.locals.marvel.settings['metric-thresholds'];
+    var settings = $route.current.locals.marvel.settings[globalState.cluster + ':metric-thresholds'];
     var indexPattern = $route.current.locals.marvel.indexPattern;
     var clusters = $route.current.locals.marvel.clusters;
 

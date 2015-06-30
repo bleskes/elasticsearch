@@ -5,9 +5,17 @@
     <div ng-repeat="name in charts"><marvel-chart source="dataSources[name]"/></div>
   </div>
   <div class="metrics">
-    <div><marvel-issues issues="issues.cluster" title="Cluster"/></div>
-    <div><marvel-issues issues="issues.nodes" title="Nodes" link="#/marvel/nodes"/></div>
-    <div><marvel-issues issues="issues.indices" title="Indices" link="#/marvel/indices"/></div>
+    <div><marvel-issues
+      source="dataSources.issues['cluster']"
+      title="Cluster"/></div>
+    <div><marvel-issues
+      source="dataSources.issues['node']"
+      title="Nodes"
+      link="#/marvel/nodes"/></div>
+    <div><marvel-issues
+      source="dataSources.issues['index']"
+      title="Indices"
+      link="#/marvel/indices"/></div>
   </div>
   <marvel-shard-activity/>
 </div>

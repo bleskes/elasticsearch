@@ -1,7 +1,7 @@
 var metrics = {
   'search_request_rate': {
     field: 'total.search.query_total',
-    label: 'Search Request Rate',
+    label: 'Search Rate',
     description: 'The cluster wide rate at which search reqeusts are being executed.',
     format: '0.00',
     metricAgg: 'max',
@@ -12,7 +12,7 @@ var metrics = {
   },
   'index_request_rate': {
     field: 'primaries.indexing.index_total',
-    label: 'Indexing Request Rate',
+    label: 'Indexing Rate',
     description: 'The cluster wide rate at which documents are being indexed.',
     format: '0.00',
     metricAgg: 'max',

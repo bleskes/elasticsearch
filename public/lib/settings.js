@@ -25,7 +25,7 @@ define(function (require) {
       });
     };
 
-    Settings.bulkFetch = function () {
+    Settings.bulkFetch = function (cluster) {
       return Resource.query().$promise.then(function (data) {
         return _.map(data, function (doc) {
           return new Settings(doc);

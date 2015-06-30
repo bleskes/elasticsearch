@@ -15,7 +15,7 @@ define(function (require) {
     var Settings = require('marvel/lib/settings')($resource);
     var defaults = { 'metric-thresholds': metrics };
 
-    function fetch(force) {
+    function fetch(cluster, force) {
       // If we have the settings and we don't need to refresh from server then
       // return the current settings. Otherwise make a request for the settings
       // from the server. The only time you should force the refresh is if you
@@ -26,7 +26,7 @@ define(function (require) {
 
       // Request the settings from the server.
       allSettings = {};
-      return Settings.bulkFetch().then(function (docs) {
+      return Settings.bulkFetch(cluster).then(function (docs) {
         _.each(docs, function (doc) {
           allSettings[doc.get('_id')] = doc;
         });
