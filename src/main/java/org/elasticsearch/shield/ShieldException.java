@@ -23,7 +23,7 @@ import org.elasticsearch.common.collect.Tuple;
 /**
  *
  */
-public class ShieldException extends ElasticsearchException.WithRestHeaders {
+public class ShieldException extends ElasticsearchException.WithRestHeadersException {
 
     public ShieldException(String msg, Tuple... headers) {
         super(msg, headers);
