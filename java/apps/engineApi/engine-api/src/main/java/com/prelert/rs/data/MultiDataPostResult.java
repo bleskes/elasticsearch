@@ -41,26 +41,26 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 @JsonInclude(Include.NON_NULL)
 public class MultiDataPostResult
 {
-    private List<DataPostResponse> m_Results;
+    private List<DataPostResponse> m_Responses;
 
     public MultiDataPostResult()
     {
-        m_Results = new ArrayList<DataPostResponse>();
+        m_Responses = new ArrayList<DataPostResponse>();
     }
 
     public List<DataPostResponse> getResponses()
     {
-        return m_Results;
+        return m_Responses;
     }
 
     public void setResponses(List<DataPostResponse> results)
     {
-        this.m_Results = results;
+        this.m_Responses = results;
     }
 
     public void addResult(DataPostResponse result)
     {
-        this.m_Results.add(result);
+        this.m_Responses.add(result);
     }
 
     /**
@@ -69,7 +69,7 @@ public class MultiDataPostResult
      */
     public boolean anErrorOccurred()
     {
-        for (DataPostResponse response : m_Results)
+        for (DataPostResponse response : m_Responses)
         {
             if (response.getError() != null)
             {
@@ -86,7 +86,7 @@ public class MultiDataPostResult
         final int prime = 31;
         int result = 1;
         result = prime * result
-                + ((m_Results == null) ? 0 : m_Results.hashCode());
+                + ((m_Responses == null) ? 0 : m_Responses.hashCode());
         return result;
     }
 
@@ -110,6 +110,6 @@ public class MultiDataPostResult
 
         MultiDataPostResult other = (MultiDataPostResult) obj;
 
-        return Objects.equals(this.m_Results, other.m_Results);
+        return Objects.equals(this.m_Responses, other.m_Responses);
     }
 }
