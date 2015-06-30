@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -155,14 +156,22 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
             return Response.status(Response.Status.BAD_REQUEST).entity(result).build();
         }
 
+        // remove duplicate and empty job ids
+        Set<String> idSet = new HashSet<>(Arrays.asList(jobIds));
+        idSet.remove(null);
+        idSet.remove("");
 
-        if (jobIds.length == 1)
+        if (idSet.size() == 0)
         {
-            result = streamToSingleJob(jobId, params, contentEncoding, input);
+            return Response.status(Response.Status.BAD_REQUEST).entity(result).build();
+        }
+        else if (idSet.size() == 1)
+        {
+            result = streamToSingleJob(idSet.iterator().next(), params, contentEncoding, input);
         }
         else
         {
-            result = streamToMultipleJobs(jobIds, params, contentEncoding, input);
+            result = streamToMultipleJobs(idSet, params, contentEncoding, input);
         }
 
         Response.Status statusCode = statusCodeForResponse(result);
@@ -190,17 +199,14 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
         return result;
     }
 
-    private MultiDataPostResult streamToMultipleJobs(String [] jobIds, DataLoadParams params,
+    private MultiDataPostResult streamToMultipleJobs(Collection<String> jobIds, DataLoadParams params,
                                             String contentEncoding, InputStream input)
     throws IOException
     {
-        // remove duplicate job ids
-        Set<String> idSet = new HashSet<>(Arrays.asList(jobIds));
-
         InputStreamDuplicator duplicator = new InputStreamDuplicator(input);
 
         List<DataStreamerThread> threads = new ArrayList<>();
-        for (String job : idSet)
+        for (String job : jobIds)
         {
             InputStream duplicateInput = duplicator.createDuplicateStream();
 
