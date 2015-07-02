@@ -17,10 +17,10 @@
 
 package org.elasticsearch.watcher.actions.email;
 
-import org.elasticsearch.common.bytes.BytesReference;
 import com.google.common.collect.ImmutableMap;
+import org.elasticsearch.ElasticsearchParseException;
+import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.collect.MapBuilder;
-import org.joda.time.DateTime;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
@@ -36,6 +36,7 @@ import org.elasticsearch.watcher.support.template.Template;
 import org.elasticsearch.watcher.support.template.TemplateEngine;
 import org.elasticsearch.watcher.support.xcontent.WatcherParams;
 import org.elasticsearch.watcher.watch.Payload;
+import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
@@ -370,7 +371,7 @@ public class EmailActionTests extends ElasticsearchTestCase {
         }
     }
 
-    @Test(expected = EmailActionException.class)
+    @Test(expected = ElasticsearchParseException.class)
     public void testParser_Invalid() throws Exception {
         EmailService emailService = mock(EmailService.class);
         TemplateEngine engine = mock(TemplateEngine.class);

@@ -18,7 +18,6 @@
 package org.elasticsearch.watcher.actions.email.service;
 
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.test.ElasticsearchTestCase;
 import org.elasticsearch.watcher.actions.email.service.support.EmailServer;
 import org.elasticsearch.watcher.support.secret.Secret;
@@ -59,6 +58,7 @@ public class AccountTests extends ElasticsearchTestCase {
 
     @Test
     public void testConfig() throws Exception {
+        String accountName = "_name";
 
         Settings.Builder builder = Settings.builder();
 
@@ -92,12 +92,12 @@ public class AccountTests extends ElasticsearchTestCase {
                 sb.put(Email.Field.SUBJECT.getPreferredName(), "_subject");
             }
             Settings settings = sb.build();
-            emailDefaults = new Account.Config.EmailDefaults(settings);
+            emailDefaults = new Account.Config.EmailDefaults(accountName, settings);
             for (String name : settings.names()) {
                 builder.put("email_defaults." + name, settings.get(name));
             }
         } else {
-            emailDefaults = new Account.Config.EmailDefaults(Settings.EMPTY);
+            emailDefaults = new Account.Config.EmailDefaults(accountName, Settings.EMPTY);
         }
 
         Properties smtpProps = new Properties();
@@ -148,7 +148,7 @@ public class AccountTests extends ElasticsearchTestCase {
 
         Settings settings = builder.build();
 
-        Account.Config config = new Account.Config("_name", settings);
+        Account.Config config = new Account.Config(accountName, settings);
 
         assertThat(config.profile, is(profile));
         assertThat(config.defaults, equalTo(emailDefaults));

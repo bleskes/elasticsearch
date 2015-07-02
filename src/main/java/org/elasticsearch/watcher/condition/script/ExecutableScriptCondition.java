@@ -27,6 +27,8 @@ import org.elasticsearch.watcher.support.init.proxy.ScriptServiceProxy;
 
 import java.util.Map;
 
+import static org.elasticsearch.watcher.support.Exceptions.invalidScript;
+
 /**
  * This class executes a script against the ctx payload and returns a boolean
  */
@@ -41,7 +43,7 @@ public class ExecutableScriptCondition extends ExecutableCondition<ScriptConditi
         try {
             compiledScript = scriptService.compile(condition.script);
         } catch (Exception e) {
-            throw new ScriptConditionValidationException("failed to compile script [{}] with lang [{}] of type [{}]", e, condition.script.script(), condition.script.lang(), condition.script.type(), e);
+            throw invalidScript("failed to compile script [{}] with lang [{}] of type [{}]", e, condition.script.script(), condition.script.lang(), condition.script.type(), e);
         }
     }
 
@@ -65,6 +67,6 @@ public class ExecutableScriptCondition extends ExecutableCondition<ScriptConditi
         if (value instanceof Boolean) {
             return (Boolean) value ? ScriptCondition.Result.MET : ScriptCondition.Result.UNMET;
         }
-        throw new ScriptConditionException("script [{}] must return a boolean value (true|false) but instead returned [{}]", type(), ctx.watch().id(), condition.script.script(), value);
+        throw invalidScript("condition [{}] must return a boolean value (true|false) but instead returned [{}]", type(), ctx.watch().id(), condition.script.script(), value);
     }
 }

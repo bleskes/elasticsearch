@@ -17,6 +17,7 @@
 
 package org.elasticsearch.watcher.trigger.schedule;
 
+import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
@@ -31,7 +32,7 @@ import static org.hamcrest.Matchers.*;
  */
 public class CronScheduleTests extends ScheduleTestCase {
 
-    @Test(expected = CronSchedule.ValidationException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testInvalid() throws Exception {
         new CronSchedule("0 * * *");
         fail("expecting a validation error to be thrown when creating a cron schedule with invalid cron expression");
@@ -75,13 +76,13 @@ public class CronScheduleTests extends ScheduleTestCase {
         try {
             new CronSchedule.Parser().parse(parser);
             fail("expected cron parsing to fail when using invalid cron expression");
-        } catch (ScheduleTriggerException ase) {
+        } catch (ElasticsearchParseException pe) {
             // expected
-            assertThat(ase.getCause(), instanceOf(CronSchedule.ValidationException.class));
+            assertThat(pe.getCause(), instanceOf(IllegalArgumentException.class));
         }
     }
 
-    @Test(expected = ScheduleTriggerException.class)
+    @Test(expected = ElasticsearchParseException.class)
     public void testParse_Invalid_Empty() throws Exception {
         XContentBuilder builder = jsonBuilder();
         BytesReference bytes = builder.bytes();
@@ -90,7 +91,7 @@ public class CronScheduleTests extends ScheduleTestCase {
         new CronSchedule.Parser().parse(parser);
     }
 
-    @Test(expected = ScheduleTriggerException.class)
+    @Test(expected = ElasticsearchParseException.class)
     public void testParse_Invalid_Object() throws Exception {
         XContentBuilder builder = jsonBuilder().startObject().endObject();
         BytesReference bytes = builder.bytes();
@@ -99,7 +100,7 @@ public class CronScheduleTests extends ScheduleTestCase {
         new CronSchedule.Parser().parse(parser);
     }
 
-    @Test(expected = ScheduleTriggerException.class)
+    @Test(expected = ElasticsearchParseException.class)
     public void testParse_Invalid_EmptyArray() throws Exception {
         XContentBuilder builder = jsonBuilder().value(new String[0]);
         BytesReference bytes = builder.bytes();

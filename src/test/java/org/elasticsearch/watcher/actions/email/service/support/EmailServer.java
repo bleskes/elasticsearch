@@ -17,9 +17,9 @@
 
 package org.elasticsearch.watcher.actions.email.service.support;
 
+import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.transport.PortsRange;
-import org.elasticsearch.watcher.WatcherException;
 import org.subethamail.smtp.TooMuchDataException;
 import org.subethamail.smtp.auth.EasyAuthenticationHandlerFactory;
 import org.subethamail.smtp.auth.LoginFailedException;
@@ -131,7 +131,7 @@ public class EmailServer {
             }
         });
         if (!bound || emailServer.get() == null) {
-            throw new WatcherException("could not bind to any of the port in [{}]" + portRangeStr);
+            throw new ElasticsearchException("could not bind to any of the port in [" + portRangeStr + "]");
         }
         return emailServer.get();
     }

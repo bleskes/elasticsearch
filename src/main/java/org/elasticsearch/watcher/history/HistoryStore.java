@@ -38,6 +38,8 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import static org.elasticsearch.watcher.support.Exceptions.ioException;
+
 /**
  */
 public class HistoryStore extends AbstractComponent {
@@ -95,9 +97,9 @@ public class HistoryStore extends AbstractComponent {
 
     }
 
-    public void put(WatchRecord watchRecord) throws HistoryException {
+    public void put(WatchRecord watchRecord) throws Exception {
         if (!started.get()) {
-            throw new HistoryException("unable to persist watch record history store is not ready");
+            throw new IllegalStateException("unable to persist watch record history store is not ready");
         }
         String index = getHistoryIndexNameForTime(watchRecord.triggerEvent().triggeredTime());
         putUpdateLock.lock();
@@ -106,8 +108,8 @@ public class HistoryStore extends AbstractComponent {
                     .source(XContentFactory.jsonBuilder().value(watchRecord))
                     .opType(IndexRequest.OpType.CREATE);
             client.index(request, (TimeValue) null);
-        } catch (IOException e) {
-            throw new HistoryException("failed to persist watch record [" + watchRecord + "]", e);
+        } catch (IOException ioe) {
+            throw ioException("failed to persist watch record [{}]", ioe, watchRecord);
         } finally {
             putUpdateLock.unlock();
         }

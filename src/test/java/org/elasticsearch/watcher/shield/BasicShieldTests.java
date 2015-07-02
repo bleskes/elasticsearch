@@ -21,7 +21,6 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.plugins.PluginsService;
 import org.elasticsearch.shield.ShieldPlugin;
 import org.elasticsearch.shield.authc.support.SecuredString;
-import org.elasticsearch.shield.authz.AuthorizationException;
 import org.elasticsearch.watcher.WatcherPlugin;
 import org.elasticsearch.watcher.WatcherState;
 import org.elasticsearch.watcher.test.AbstractWatcherIntegrationTests;
@@ -67,7 +66,7 @@ public class BasicShieldTests extends AbstractWatcherIntegrationTests {
         try {
             watcherClient().prepareWatcherStats().get();
             fail("authentication failure should have occurred");
-        } catch (AuthorizationException e) {
+        } catch (Exception e) {
             // transport_client is the default user
             assertThat(e.getMessage(), equalTo("action [cluster:monitor/watcher/stats] is unauthorized for user [transport_client]"));
         }
@@ -82,7 +81,7 @@ public class BasicShieldTests extends AbstractWatcherIntegrationTests {
                     .putHeader("Authorization", token)
                     .get();
             fail("authentication failure should have occurred");
-        } catch (AuthorizationException e) {
+        } catch (Exception e) {
             assertThat(e.getMessage(), equalTo("action [cluster:monitor/watcher/stats] is unauthorized for user [test]"));
         }
 
@@ -91,7 +90,7 @@ public class BasicShieldTests extends AbstractWatcherIntegrationTests {
                     .putHeader("Authorization", token)
                     .get();
             fail("authentication failure should have occurred");
-        } catch (AuthorizationException e) {
+        } catch (Exception e) {
             assertThat(e.getMessage(), equalTo("action [cluster:monitor/watcher/watch/get] is unauthorized for user [test]"));
         }
 
@@ -113,7 +112,7 @@ public class BasicShieldTests extends AbstractWatcherIntegrationTests {
                     .putHeader("Authorization", token)
                     .get();
             fail("authentication failure should have occurred");
-        } catch (AuthorizationException e) {
+        } catch (Exception e) {
             assertThat(e.getMessage(), equalTo("action [cluster:admin/watcher/watch/put] is unauthorized for user [monitor]"));
         }
     }
@@ -128,7 +127,7 @@ public class BasicShieldTests extends AbstractWatcherIntegrationTests {
                     .putHeader("Authorization", token)
                     .get();
             fail("authentication failure should have occurred");
-        } catch (AuthorizationException e) {
+        } catch (Exception e) {
             assertThat(e.getMessage(), equalTo("action [cluster:admin/watcher/watch/put] is unauthorized for user [test]"));
         }
 
@@ -139,7 +138,7 @@ public class BasicShieldTests extends AbstractWatcherIntegrationTests {
                     .putHeader("Authorization", token)
                     .get();
             fail("authentication failure should have occurred");
-        } catch (AuthorizationException e) {
+        } catch (Exception e) {
             assertThat(e.getMessage(), equalTo("action [cluster:admin/watcher/watch/execute] is unauthorized for user [test]"));
         }
 
@@ -148,7 +147,7 @@ public class BasicShieldTests extends AbstractWatcherIntegrationTests {
                     .putHeader("Authorization", token)
                     .get();
             fail("authentication failure should have occurred");
-        } catch (AuthorizationException e) {
+        } catch (Exception e) {
             assertThat(e.getMessage(), equalTo("action [cluster:admin/watcher/watch/delete] is unauthorized for user [test]"));
         }
 

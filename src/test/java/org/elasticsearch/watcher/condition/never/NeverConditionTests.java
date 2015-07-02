@@ -17,6 +17,7 @@
 
 package org.elasticsearch.watcher.condition.never;
 
+import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
@@ -53,7 +54,7 @@ public class NeverConditionTests extends ElasticsearchTestCase {
         assertFalse(executable.execute(null).met());
     }
 
-    @Test(expected = NeverConditionException.class)
+    @Test(expected = ElasticsearchParseException.class)
     public void testParser_Invalid() throws Exception {
         ConditionFactory factory = new NeverConditionFactory(Settings.settingsBuilder().build());
         XContentBuilder builder = jsonBuilder();

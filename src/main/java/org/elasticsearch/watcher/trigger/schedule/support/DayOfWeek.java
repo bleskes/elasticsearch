@@ -17,6 +17,7 @@
 
 package org.elasticsearch.watcher.trigger.schedule.support;
 
+import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 
@@ -69,7 +70,7 @@ public enum DayOfWeek implements ToXContent {
             case 6: return FRIDAY;
             case 7: return SATURDAY;
             default:
-                throw new WeekTimes.ParseException("unknown day of week number [" + day + "]");
+                throw new ElasticsearchParseException("unknown day of week number [{}]", day);
         }
     }
 
@@ -97,7 +98,7 @@ public enum DayOfWeek implements ToXContent {
             case "sat":
             case "saturday": return SATURDAY;
             default:
-                throw new WeekTimes.ParseException("unknown day of week [" + day + "]");
+                throw new ElasticsearchParseException("unknown day of week [{}]", day);
         }
     }
 

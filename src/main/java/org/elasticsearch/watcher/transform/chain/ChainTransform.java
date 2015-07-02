@@ -18,6 +18,7 @@
 package org.elasticsearch.watcher.transform.chain;
 
 import com.google.common.collect.ImmutableList;
+import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
@@ -79,7 +80,7 @@ public class ChainTransform implements Transform {
     public static ChainTransform parse(String watchId, XContentParser parser, TransformRegistry transformRegistry) throws IOException {
         XContentParser.Token token = parser.currentToken();
         if (token != XContentParser.Token.START_ARRAY) {
-            throw new ChainTransformException("could not parse [{}] transform for watch [{}]. expected an array of transform objects, but found [{}] instead", TYPE, watchId, token);
+            throw new ElasticsearchParseException("could not parse [{}] transform for watch [{}]. expected an array of transform objects, but found [{}] instead", TYPE, watchId, token);
         }
 
         ImmutableList.Builder<Transform> builder = ImmutableList.builder();
@@ -87,7 +88,7 @@ public class ChainTransform implements Transform {
         String currentFieldName = null;
         while ((token = parser.nextToken()) != XContentParser.Token.END_ARRAY) {
             if (token != XContentParser.Token.START_OBJECT) {
-                throw new ChainTransformException("could not parse [{}] transform for watch [{}]. expected a transform object, but found [{}] instead", TYPE, watchId, token);
+                throw new ElasticsearchParseException("could not parse [{}] transform for watch [{}]. expected a transform object, but found [{}] instead", TYPE, watchId, token);
             }
             while ((token = parser.nextToken()) != XContentParser.Token.END_OBJECT) {
                 if (token == XContentParser.Token.FIELD_NAME) {
@@ -115,6 +116,11 @@ public class ChainTransform implements Transform {
 
         public Result(Exception e, ImmutableList<Transform.Result> results) {
             super(TYPE, e);
+            this.results = results;
+        }
+
+        public Result(String errorMessage, ImmutableList<Transform.Result> results) {
+            super(TYPE, errorMessage);
             this.results = results;
         }
 

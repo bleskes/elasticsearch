@@ -17,6 +17,7 @@
 
 package org.elasticsearch.watcher.trigger.schedule.support;
 
+import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 
@@ -79,7 +80,7 @@ public enum Month implements ToXContent {
             case 11: return NOVEMBER;
             case 12: return DECEMBER;
             default:
-                throw new YearTimes.ParseException("unknown month number [" + month + "]");
+                throw new ElasticsearchParseException("unknown month number [{}]", month);
         }
     }
 
@@ -123,7 +124,7 @@ public enum Month implements ToXContent {
             case "last":
             case "december": return DECEMBER;
             default:
-                throw new YearTimes.ParseException("unknown month [" + day + "]");
+                throw new ElasticsearchParseException("unknown month [{}]", day);
         }
     }
 

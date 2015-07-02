@@ -17,6 +17,7 @@
 
 package org.elasticsearch.watcher.condition.always;
 
+import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
@@ -51,7 +52,7 @@ public class AlwaysConditionTests extends ElasticsearchTestCase {
         assertTrue(executable.execute(null).met());
     }
 
-    @Test(expected = AlwaysConditionException.class)
+    @Test(expected = ElasticsearchParseException.class)
     public void testParser_Invalid() throws Exception {
         ConditionFactory factor = new AlwaysConditionFactory(Settings.settingsBuilder().build());
         XContentBuilder builder = jsonBuilder()

@@ -19,6 +19,7 @@ package org.elasticsearch.watcher.watch;
 
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.ArrayUtils;
+import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParseFieldMatcher;
@@ -28,7 +29,6 @@ import org.elasticsearch.common.io.stream.Streamable;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.watcher.WatcherException;
 import org.elasticsearch.watcher.actions.Action;
 import org.elasticsearch.watcher.actions.ActionStatus;
 import org.elasticsearch.watcher.actions.throttler.AckThrottler;
@@ -260,13 +260,13 @@ public class WatchStatus implements ToXContent, Streamable {
                 if (token.isValue()) {
                     lastChecked = parseDate(currentFieldName, parser, DateTimeZone.UTC);
                 } else {
-                    throw new WatcherException("could not parse watch status for [{}]. expecting field [{}] to hold a date value, found [{}] instead", watchId, currentFieldName, token);
+                    throw new ElasticsearchParseException("could not parse watch status for [{}]. expecting field [{}] to hold a date value, found [{}] instead", watchId, currentFieldName, token);
                 }
             } else if (ParseFieldMatcher.STRICT.match(currentFieldName, Field.LAST_MET_CONDITION)) {
                 if (token.isValue()) {
                     lastMetCondition = parseDate(currentFieldName, parser, DateTimeZone.UTC);
                 } else {
-                    throw new WatcherException("could not parse watch status for [{}]. expecting field [{}] to hold a date value, found [{}] instead", watchId, currentFieldName, token);
+                    throw new ElasticsearchParseException("could not parse watch status for [{}]. expecting field [{}] to hold a date value, found [{}] instead", watchId, currentFieldName, token);
                 }
             } else if (ParseFieldMatcher.STRICT.match(currentFieldName, Field.ACTIONS)) {
                 actions = ImmutableMap.builder();
@@ -280,7 +280,7 @@ public class WatchStatus implements ToXContent, Streamable {
                         }
                     }
                 } else {
-                    throw new WatcherException("could not parse watch status for [{}]. expecting field [{}] to be an object, found [{}] instead", watchId, currentFieldName, token);
+                    throw new ElasticsearchParseException("could not parse watch status for [{}]. expecting field [{}] to be an object, found [{}] instead", watchId, currentFieldName, token);
                 }
             }
         }

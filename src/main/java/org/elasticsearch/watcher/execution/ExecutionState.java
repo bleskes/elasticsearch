@@ -17,8 +17,6 @@
 
 package org.elasticsearch.watcher.execution;
 
-import org.elasticsearch.watcher.WatcherException;
-
 import java.util.Locale;
 
 public enum ExecutionState {
@@ -34,11 +32,7 @@ public enum ExecutionState {
     }
 
     public static ExecutionState resolve(String id) {
-        try {
-            return valueOf(id.toUpperCase(Locale.ROOT));
-        } catch (IllegalArgumentException iae) {
-            throw new WatcherException("unknown execution state [{}]", id);
-        }
+        return valueOf(id.toUpperCase(Locale.ROOT));
     }
 
     @Override

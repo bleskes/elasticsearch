@@ -18,16 +18,17 @@
 package org.elasticsearch.watcher.trigger.schedule.support;
 
 import com.google.common.primitives.Ints;
+import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.watcher.WatcherException;
-import org.elasticsearch.watcher.trigger.schedule.ScheduleTriggerException;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import static org.elasticsearch.watcher.support.Exceptions.illegalArgument;
 
 /**
  *
@@ -72,7 +73,7 @@ public class DayTimes implements Times {
         return time;
     }
 
-    public static DayTimes parse(String time) throws ParseException {
+    public static DayTimes parse(String time) throws ElasticsearchParseException {
         if (NOON.time.equals(time)) {
             return NOON;
         }
@@ -83,41 +84,45 @@ public class DayTimes implements Times {
         int[] minute;
         int i = time.indexOf(":");
         if (i < 0) {
-            throw new ParseException("could not parse time [" + time + "]. time format must be in the form of hh:mm");
+            throw new ElasticsearchParseException("could not parse time [{}]. time format must be in the form of hh:mm", time);
         }
         if (i == time.length() - 1 || time.indexOf(":", i + 1) >= 0) {
-            throw new ParseException("could not parse time [" + time + "]. time format must be in the form of hh:mm");
+            throw new ElasticsearchParseException("could not parse time [{}]. time format must be in the form of hh:mm", time);
         }
         String hrStr = time.substring(0, i);
         String minStr = time.substring(i + 1);
         if (hrStr.length() != 1 && hrStr.length() != 2) {
-            throw new ParseException("could not parse time [" + time + "]. time format must be in the form of hh:mm");
+            throw new ElasticsearchParseException("could not parse time [{}]. time format must be in the form of hh:mm", time);
         }
         if (minStr.length() != 2) {
-            throw new ParseException("could not parse time [" + time + "]. time format must be in the form of hh:mm");
+            throw new ElasticsearchParseException("could not parse time [{}]. time format must be in the form of hh:mm", time);
         }
         try {
             hour = new int[] { Integer.parseInt(hrStr) };
         } catch (NumberFormatException nfe) {
-            throw new ParseException("could not parse time [" + time + "]. time hour [" + hrStr + "] is not a number ");
+            throw new ElasticsearchParseException("could not parse time [{}]. time hour [{}] is not a number", time, hrStr);
         }
         try {
             minute = new int[] { Integer.parseInt(minStr) };
         } catch (NumberFormatException nfe) {
-            throw new ParseException("could not parse time [" + time + "]. time minute [" + minStr + "] is not a number ");
+            throw new ElasticsearchParseException("could not parse time [{}]. time minute [{}] is not a number", time, minStr);
         }
-        return new DayTimes(time, hour, minute);
+        try {
+            return new DayTimes(time, hour, minute);
+        } catch (IllegalArgumentException iae) {
+            throw new ElasticsearchParseException("could not parse time [{}]", iae);
+        }
     }
 
     public void validate() {
         for (int i = 0; i < hour.length; i++) {
             if (!validHour(hour[i])) {
-                throw new ScheduleTriggerException("invalid time [" + this + "]. invalid time hour value [" + hour[i] + "]. time hours must be between 0 and 23 incl.");
+                throw illegalArgument("invalid time [{}]. invalid time hour value [{}]. time hours must be between 0 and 23 incl.", this, hour[i]);
             }
         }
         for (int i = 0; i < minute.length; i++) {
             if (!validMinute(minute[i])) {
-                throw new ScheduleTriggerException("invalid time [" + this + "]. invalid time minute value [" + minute[i] + "]. time minutes must be between 0 and 59 incl.");
+                throw illegalArgument("invalid time [{}]. invalid time minute value [{}]. time minutes must be between 0 and 59 incl.", this, minute[i]);
             }
         }
     }
@@ -191,12 +196,12 @@ public class DayTimes implements Times {
         return result;
     }
 
-    public static DayTimes parse(XContentParser parser, XContentParser.Token token) throws IOException, ParseException  {
+    public static DayTimes parse(XContentParser parser, XContentParser.Token token) throws IOException, ElasticsearchParseException  {
         if (token == XContentParser.Token.VALUE_STRING) {
             return DayTimes.parse(parser.text());
         }
         if (token != XContentParser.Token.START_OBJECT) {
-            throw new ParseException("could not parse time. expected string/number value or an object, but found [" + token + "]");
+            throw new ElasticsearchParseException("could not parse time. expected string/number value or an object, but found [{}]", token);
         }
         List<Integer> hours = new ArrayList<>();
         List<Integer> minutes = new ArrayList<>();
@@ -212,7 +217,7 @@ public class DayTimes implements Times {
                         hours.add(parseHourValue(parser, token));
                     }
                 } else {
-                    throw new ParseException("invalid time hour value. expected string/number value or an array of string/number values, but found [" + token + "]");
+                    throw new ElasticsearchParseException("invalid time hour value. expected string/number value or an array of string/number values, but found [{}]", token);
                 }
             } else if (ParseFieldMatcher.STRICT.match(currentFieldName, MINUTE_FIELD)) {
                 if (token.isValue()) {
@@ -222,7 +227,7 @@ public class DayTimes implements Times {
                         minutes.add(parseMinuteValue(parser, token));
                     }
                 } else {
-                    throw new ParseException("invalid time minute value. expected string/number value or an array of string/number values, but found [" + token + "]");
+                    throw new ElasticsearchParseException("invalid time minute value. expected string/number value or an array of string/number values, but found [{}]", token);
                 }
             }
         }
@@ -235,12 +240,12 @@ public class DayTimes implements Times {
         return new DayTimes(Ints.toArray(hours), Ints.toArray(minutes));
     }
 
-    public static int parseHourValue(XContentParser parser, XContentParser.Token token) throws IOException, ParseException {
+    public static int parseHourValue(XContentParser parser, XContentParser.Token token) throws IOException, ElasticsearchParseException {
         switch (token) {
             case VALUE_NUMBER:
                 int hour = parser.intValue();
                 if (!DayTimes.validHour(hour)) {
-                    throw new ParseException("invalid time hour value [" + hour + "] (possible values may be between 0 and 23 incl.)");
+                    throw new ElasticsearchParseException("invalid time hour value [{}] (possible values may be between 0 and 23 incl.)", hour);
                 }
                 return hour;
 
@@ -249,24 +254,24 @@ public class DayTimes implements Times {
                 try {
                     hour = Integer.valueOf(value);
                     if (!DayTimes.validHour(hour)) {
-                        throw new ParseException("invalid time hour value [" + hour + "] (possible values may be between 0 and 23 incl.)");
+                        throw new ElasticsearchParseException("invalid time hour value [{}] (possible values may be between 0 and 23 incl.)", hour);
                     }
                     return hour;
                 } catch (NumberFormatException nfe) {
-                    throw new ParseException("invalid time hour value [" + value + "]");
+                    throw new ElasticsearchParseException("invalid time hour value [{}]", value);
                 }
 
             default:
-                throw new ParseException("invalid hour value. expected string/number value, but found [" + token + "]");
+                throw new ElasticsearchParseException("invalid hour value. expected string/number value, but found [{}]", token);
         }
     }
 
-    public static int parseMinuteValue(XContentParser parser, XContentParser.Token token) throws IOException, ParseException {
+    public static int parseMinuteValue(XContentParser parser, XContentParser.Token token) throws IOException, ElasticsearchParseException {
         switch (token) {
             case VALUE_NUMBER:
                 int minute = parser.intValue();
                 if (!DayTimes.validMinute(minute)) {
-                    throw new ParseException("invalid time minute value [" + minute + "] (possible values may be between 0 and 59 incl.)");
+                    throw new ElasticsearchParseException("invalid time minute value [{}] (possible values may be between 0 and 59 incl.)", minute);
                 }
                 return minute;
 
@@ -275,26 +280,15 @@ public class DayTimes implements Times {
                 try {
                     minute = Integer.valueOf(value);
                     if (!DayTimes.validMinute(minute)) {
-                        throw new ParseException("invalid time minute value [" + minute + "] (possible values may be between 0 and 59 incl.)");
+                        throw new ElasticsearchParseException("invalid time minute value [{}] (possible values may be between 0 and 59 incl.)", minute);
                     }
                     return minute;
                 } catch (NumberFormatException nfe) {
-                    throw new ParseException("invalid time minute value [" + value + "]");
+                    throw new ElasticsearchParseException("invalid time minute value [{}]", value);
                 }
 
             default:
-                throw new ParseException("invalid time minute value. expected string/number value, but found [" + token + "]");
-        }
-    }
-
-    public static class ParseException extends WatcherException {
-
-        public ParseException(String msg) {
-            super(msg);
-        }
-
-        public ParseException(String msg, Throwable cause) {
-            super(msg, cause);
+                throw new ElasticsearchParseException("invalid time minute value. expected string/number value, but found [{}]", token);
         }
     }
 
