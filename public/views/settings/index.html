@@ -40,11 +40,11 @@
             <div class="form-group">
               <label>Time Period (in <a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/common-options.html#time-units" target="_BLANK">time units</a>)</label>
               <input
-                                                                                                                                              ng-model="model[id].interval"
-                                                                                                                                              ng-pattern="/\d+[yMwdhms]/"
-                                                                                                                                              type="text"
-                                                                                                                                              class="form-control"
-                                                                                                                                              placeholder="{{metric.defaults.interval}}">
+                ng-model="model[id].interval"
+                ng-pattern="/[\d\.]+[yMwdhms]/"
+                type="text"
+                class="form-control"
+                placeholder="{{metric.defaults.interval}}">
             </div>
           </div>
           <div class="col-xs-3">

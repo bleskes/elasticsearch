@@ -1,7 +1,7 @@
 define(function (require) {
   var _ = require('lodash');
 
-  return function issuesDataSourceProvider($resource) {
+  return function issuesDataSourceProvider(marvelClusters, marvelMetrics, $resource) {
 
     var Issues = $resource('/marvel/api/v1/issues/:cluster/:type');
     function IssueDataSource(cluster, type) {
@@ -19,9 +19,32 @@ define(function (require) {
 
     IssueDataSource.prototype.fetch = function () {
       var self = this;
-      Issues.query({ cluster: this.cluster, type: this.type }).$promise.then(function (data) {
-        self.data = data;
-      });
+     return  Issues.query({ cluster: this.cluster, type: this.type })
+       .$promise
+       .then(function (data) {
+          self.data = data;
+          return data;
+        })
+       .then(function (data) {
+          return Promise.all(_.map(data, function (issue) {
+            return marvelMetrics(self.cluster, issue.id)
+              .then(function (metric) {
+                issue.metric = metric;
+                return issue;
+              });
+          }));
+        })
+       .then(function (issues) {
+         return marvelClusters.fetch().then(function (clusters) {
+          var cluster = _.find(clusters, { _id: self.cluster });
+          return Promise.all(_.map(issues, function (issue) {
+            if (issue.node && cluster.nodes[issue.node]) {
+              issue.node = cluster.nodes[issue.node];
+            }
+            return issue;
+          }));
+         });
+        });
     };
 
     return IssueDataSource;

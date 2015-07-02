@@ -17,14 +17,20 @@ define(function (require) {
       this.searchSource.set('aggs', _.bindKey(this, 'toAggsObject'));
     };
 
+    ChartDataSource.prototype.getFilters = function () {
+      var filters = [ { term: { 'cluster_name.raw': this.cluster } } ];
+      return filters.concat(this.metric.filters || []);
+    };
+
     ChartDataSource.prototype.toAggsObject = function () {
       var bounds = timefilter.getBounds();
       var duration = moment.duration(bounds.max - bounds.min, 'ms');
+      this.bucketSize = calcAuto.near(100, duration).asSeconds();
       var aggs = {
         check: {
           date_histogram: {
             field: this.index.timeFieldName,
-            interval: calcAuto.near(50, duration).asSeconds() + 's'
+            interval: this.bucketSize + 's'
           },
           aggs: { metric: { } }
         }

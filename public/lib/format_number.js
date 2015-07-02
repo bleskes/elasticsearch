@@ -1,6 +1,6 @@
 define(['moment', 'numeral'], function(moment, numeral) {
   return function formatNumber(num, which) {
-    var format = '0.00';
+    var format = '0,0.0';
     var postfix = '';
     switch (which) {
       case 'time_since':
@@ -8,7 +8,7 @@ define(['moment', 'numeral'], function(moment, numeral) {
       case 'time':
         return moment(num).format('H:mm:ss');
       case 'int_commas':
-        format = '0,0'
+        format = '0,0';
         break;
       case 'byte':
         format += 'b';
@@ -16,7 +16,9 @@ define(['moment', 'numeral'], function(moment, numeral) {
       case 'ms':
         postfix = 'ms';
         break;
+      default:
+        if (which) format = which;
     }
     return numeral(num).format(format) + postfix;
-  }
+  };
 });

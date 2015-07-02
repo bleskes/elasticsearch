@@ -5,7 +5,6 @@ function (formatNumber, template) {
   var moment = require('moment');
 
   var metricObjects = require('marvel/lib/metrics');
-  // var formatNumber = require('marvel/lib/format_number');
 
   module.directive('marvelChart', function (marvelMetrics, $route, Private, courier, timefilter) {
     var marvelIndex = $route.current.locals.indexPattern;
@@ -29,8 +28,16 @@ function (formatNumber, template) {
 
         $scope.$watch('source.data', function (data) {
           if (data.length) {
-            var last = _.last(data);
-            $scope.total = formatNumber(last.y);
+            if (metric.units === 'rps') {
+              _.each(data, function (row) {
+                row.y = row.y/source.bucketSize;
+              });
+              data = _.filter(data, function (row) {
+                return row.y >= 0;
+              });
+            }
+            var last = data[data.length-1];
+            $scope.total = formatNumber(last.y, metric.format);
             $scope.chart.data = [{
               values: data,
               key: metric.label

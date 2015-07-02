@@ -7,8 +7,10 @@ define(function (require) {
   module.service('marvelMetrics', function (marvelSettings, $resource, Promise, Private) {
     return function (cluster, field) {
       return marvelSettings.fetch().then(function (settings) {
-        var metric = new Metric(field, metrics[field], settings[cluster + ':metric-thresholds']);
-        return metric;
+        if (metrics[field]) {
+          var metric = new Metric(field, metrics[field], settings[cluster + ':metric-thresholds']);
+          return metric;
+        }
       });
     };
   });

@@ -1,4 +1,4 @@
-
+var numeral = require('numeral');
 
 // Mind the gap... UMD Below
 (function(define) {
@@ -8,10 +8,10 @@
     var moment = require('moment');
 
     var lookup = {
-      '<': { method: 'lt', message: _.template('is below <%= threshold %> at <%= value %>') },
-      '<=': { method: 'lte', message: _.template('is below <%= threshold %> at <%= value %>') },
-      '>': { method: 'gt', message: _.template('is above <%= threshold %> at <%= value %>')},
-      '>=': { method: 'gte', message: _.template('is above <%= threshold %> at <%= value %>')}
+      '<': { method: 'lt', message: _.template('is below <%= threshold %><%= units %> at <%= value %><%= units %>') },
+      '<=': { method: 'lte', message: _.template('is below <%= threshold %><%= units %> at <%= value %><%= units %>') },
+      '>': { method: 'gt', message: _.template('is above <%= threshold %><%= units %> at <%= value %><%= units %>')},
+      '>=': { method: 'gte', message: _.template('is above <%= threshold %><%= units %> at <%= value %><%= units %>')}
     };
 
     function parseThreshold(threshold) {
@@ -19,21 +19,45 @@
       return { exp: parts[1], limit: Number(parts[2]) };
     }
 
-    function evalThreshold(value, threshold) {
+    var durations = {
+      y: 'years',
+      M: 'months',
+      w: 'weeks',
+      d: 'days',
+      h: 'hours',
+      m: 'minutes',
+      s: 'seconds'
+    };
+
+    function calculateValue(metric, value) {
+      if (metric.units === 'rps') {
+        var bucketParts = metric.settings.get('interval').match(/([\d]+)([yMwdhms])/);
+        if (bucketParts) {
+          var duration = moment.duration(Number(bucketParts[1]), durations[bucketParts[2]]);
+          if (duration.asSeconds() > 0) value = value / duration.asSeconds();
+        }
+      }
+      return value;
+    }
+
+    function evalThreshold(metric, value, threshold) {
+      value = calculateValue(metric, value);
       var parts = parseThreshold(threshold);
       if (lookup[parts.exp]) {
         return _[lookup[parts.exp].method](value, parts.limit);
       }
     }
 
-    function createMessage(value, threshold) {
+    function createMessage(metric, value, threshold, format, units) {
+      value = calculateValue(metric, value);
       var parts = parseThreshold(threshold);
-      return lookup[parts.exp].message({ threshold: parts.limit, value: value });
+      value = (value && format) ? numeral(value).format(format) : value;
+      return lookup[parts.exp].message({ units: units, threshold: numeral(parts.limit).format(format), value: value });
     }
 
     function checkBuckets(metric, name) {
       return function (value) {
-        return evalThreshold(value, metric.settings.get(name));
+        return evalThreshold(metric, value, metric.settings.get(name));
       };
     }
 
@@ -74,10 +98,10 @@
       var warning = _.every(buckets, checkBuckets(this, 'warning'));
       if (critical) {
         statusObj.status = 'red';
-        statusObj.message = createMessage(last, this.settings.get('critical'));
+        statusObj.message = createMessage(this, last, this.settings.get('critical'), this.format, this.units);
       } else if (warning) {
         statusObj.status = 'yellow';
-        statusObj.message = createMessage(last, this.settings.get('warning'));
+        statusObj.message = createMessage(this, last, this.settings.get('warning'), this.format, this.units);
       }
       return statusObj;
     };

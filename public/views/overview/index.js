@@ -35,13 +35,17 @@ define(function (require) {
     var clusters = $route.current.locals.marvel.clusters;
 
     timefilter.enabled = true;
+    if (timefilter.refreshInterval.value === 0) {
+      timefilter.refreshInterval.value = 10;
+      timefilter.refreshInterval.display = '10 Seconds';
+    }
 
     // Define the metrics for the three charts at the top of the
     // page. Use the metric keys from the metrics hash.
     $scope.charts = [
       'search_request_rate',
       'index_request_rate',
-      'query_latency'
+      'index_latency'
     ];
 
     // Setup the data sources for the charts
