@@ -390,7 +390,7 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
     throws UnknownJobException, NativeProcessRunException, JobInUseException
     {
         LOGGER.debug("Post to close data upload for job " + jobId);
-        jobManager().finishJob(jobId);
+        jobManager().closeJob(jobId);
         LOGGER.debug("Process finished successfully, Job Id = '" + jobId + "'");
         return Response.accepted().entity(new Acknowledgement()).build();
     }

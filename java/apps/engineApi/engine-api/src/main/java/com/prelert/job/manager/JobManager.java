@@ -542,7 +542,7 @@ public class JobManager
      * @throws JobInUseException if the job cannot be closed because data is
      * being streamed to it
      */
-    public void finishJob(String jobId)
+    public void closeJob(String jobId)
     throws UnknownJobException, NativeProcessRunException, JobInUseException
     {
         LOGGER.debug("Finish job " + jobId);
@@ -551,7 +551,7 @@ public class JobManager
         // this method throws if it isn't
         if (m_JobProvider.jobExists(jobId))
         {
-            m_ProcessManager.finishJob(jobId);
+            m_ProcessManager.closeJob(jobId);
         }
     }
 
@@ -593,7 +593,7 @@ public class JobManager
 
         if (m_ProcessManager.jobIsRunning(jobId))
         {
-            m_ProcessManager.finishJob(jobId);
+            m_ProcessManager.closeJob(jobId);
         }
 
         m_ProcessManager.deletePersistedData(jobId);
@@ -716,7 +716,7 @@ public class JobManager
     {
         try
         {
-            m_ProcessManager.finishJob(jobId);
+            m_ProcessManager.closeJob(jobId);
         }
         catch (NativeProcessRunException e)
         {

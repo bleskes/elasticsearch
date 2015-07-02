@@ -144,14 +144,14 @@ public class RestoreStateTest
 
             InputStream fs = new FileInputStream(new File(input_part_1));
             jobManager.submitDataLoadJob(job.getId(), fs, dataLoadParams);
-            jobManager.finishJob(job.getId());
+            jobManager.closeJob(job.getId());
 
             Thread.sleep(2000);
 
             // now send the next part
             fs = new FileInputStream(new File(input_part_2));
             jobManager.submitDataLoadJob(job.getId(), fs, dataLoadParams);
-            jobManager.finishJob(job.getId());
+            jobManager.closeJob(job.getId());
 
             Thread.sleep(1000);
 
