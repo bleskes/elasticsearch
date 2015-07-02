@@ -26,6 +26,7 @@
  ************************************************************/
 package com.prelert.job.data;
 
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -74,7 +75,7 @@ public class InputStreamDuplicator
     public InputStream createDuplicateStream() throws IOException
     {
         PipedInputStream pipedIn = new PipedInputStream();
-        PipedOutputStream pipedOut = new PipedOutputStream(pipedIn);
+        BufferedOutputStream pipedOut = new BufferedOutputStream(new PipedOutputStream(pipedIn));
         m_Outputs.add(pipedOut);
         return pipedIn;
     }
