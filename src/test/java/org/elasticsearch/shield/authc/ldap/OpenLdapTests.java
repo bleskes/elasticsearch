@@ -17,6 +17,7 @@
 
 package org.elasticsearch.shield.authc.ldap;
 
+import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.shield.authc.RealmConfig;
@@ -31,6 +32,7 @@ import org.elasticsearch.test.junit.annotations.Network;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.nio.file.Path;
 
 import static org.hamcrest.Matchers.containsString;
@@ -63,7 +65,7 @@ public class OpenLdapTests extends ElasticsearchTestCase {
     }
 
     @Test
-    public void testConnect() {
+    public void testConnect() throws Exception {
         //openldap does not use cn as naming attributes by default
         String groupSearchBase = "ou=people,dc=oldap,dc=test,dc=elasticsearch,dc=com";
         String userTemplate = "uid={0},ou=people,dc=oldap,dc=test,dc=elasticsearch,dc=com";
@@ -79,7 +81,7 @@ public class OpenLdapTests extends ElasticsearchTestCase {
     }
 
     @Test
-    public void testGroupSearchScopeBase() {
+    public void testGroupSearchScopeBase() throws Exception {
         //base search on a groups means that the user can be in just one group
 
         String groupSearchBase = "cn=Avengers,ou=people,dc=oldap,dc=test,dc=elasticsearch,dc=com";
@@ -96,7 +98,7 @@ public class OpenLdapTests extends ElasticsearchTestCase {
     }
 
     @Test
-    public void testCustomFilter() {
+    public void testCustomFilter() throws Exception {
         String groupSearchBase = "ou=people,dc=oldap,dc=test,dc=elasticsearch,dc=com";
         String userTemplate = "uid={0},ou=people,dc=oldap,dc=test,dc=elasticsearch,dc=com";
         Settings settings = Settings.builder()
@@ -114,7 +116,7 @@ public class OpenLdapTests extends ElasticsearchTestCase {
 
     @Test
     @AwaitsFix(bugUrl = "https://github.com/elasticsearch/elasticsearch-shield/issues/499")
-    public void testTcpTimeout() {
+    public void testTcpTimeout() throws Exception {
         String groupSearchBase = "ou=people,dc=oldap,dc=test,dc=elasticsearch,dc=com";
         String userTemplate = "uid={0},ou=people,dc=oldap,dc=test,dc=elasticsearch,dc=com";
         Settings settings = Settings.builder()
@@ -129,13 +131,13 @@ public class OpenLdapTests extends ElasticsearchTestCase {
             // In certain cases we may have a successful bind, but a search should take longer and cause a timeout
             ldap.groups();
             fail("The TCP connection should timeout before getting groups back");
-        } catch (ShieldLdapException e) {
+        } catch (ElasticsearchException e) {
             assertThat(e.getCause().getMessage(), containsString("A client-side timeout was encountered while waiting"));
         }
     }
 
     @Test
-    public void testStandardLdapConnectionHostnameVerification() {
+    public void testStandardLdapConnectionHostnameVerification() throws Exception {
         //openldap does not use cn as naming attributes by default
         String groupSearchBase = "ou=people,dc=oldap,dc=test,dc=elasticsearch,dc=com";
         String userTemplate = "uid={0},ou=people,dc=oldap,dc=test,dc=elasticsearch,dc=com";
@@ -150,7 +152,7 @@ public class OpenLdapTests extends ElasticsearchTestCase {
         String user = "blackwidow";
         try (LdapSession ldap = sessionFactory.session(user, SecuredStringTests.build(PASSWORD))) {
             fail("OpenLDAP certificate does not contain the correct hostname/ip so hostname verification should fail on open");
-        } catch (ShieldLdapException e) {
+        } catch (IOException e) {
             assertThat(e.getMessage(), containsString("failed to connect to any LDAP servers"));
         }
     }

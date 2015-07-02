@@ -17,10 +17,10 @@
 
 package org.elasticsearch.shield.ssl;
 
+import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.env.Environment;
-import org.elasticsearch.shield.ShieldSettingsException;
 import org.elasticsearch.shield.ShieldSettingsFilter;
 import org.elasticsearch.test.ElasticsearchTestCase;
 import org.junit.Before;
@@ -49,7 +49,7 @@ public class ServerSSLServiceTests extends ElasticsearchTestCase {
         env = new Environment(settingsBuilder().put("path.home", createTempDir()).build());
     }
 
-    @Test(expected = ElasticsearchSSLException.class)
+    @Test
     public void testThatInvalidProtocolThrowsException() throws Exception {
         Settings settings = settingsBuilder()
                 .put("shield.ssl.protocol", "non-existing")
@@ -58,7 +58,12 @@ public class ServerSSLServiceTests extends ElasticsearchTestCase {
                 .put("shield.ssl.truststore.path", testnodeStore)
                 .put("shield.ssl.truststore.password", "testnode")
                 .build();
-        new ServerSSLService(settings, settingsFilter, env).createSSLEngine();
+        try {
+            new ServerSSLService(settings, settingsFilter, env).createSSLEngine();
+            fail("expected an exception");
+        } catch (ElasticsearchException e) {
+            assertThat(e.getMessage(), containsString("failed to initialize the SSLContext"));
+        }
     }
 
     @Test
@@ -105,13 +110,18 @@ public class ServerSSLServiceTests extends ElasticsearchTestCase {
                 .build(), settingsFilter, env).createSSLEngine();
     }
 
-    @Test(expected = ElasticsearchSSLException.class)
+    @Test
     public void testIncorrectKeyPasswordThrowsException() throws Exception {
         Path differentPasswordsStore = getDataPath("/org/elasticsearch/shield/transport/ssl/certs/simple/testnode-different-passwords.jks");
-        new ServerSSLService(settingsBuilder()
-                .put("shield.ssl.keystore.path", differentPasswordsStore)
-                .put("shield.ssl.keystore.password", "testnode")
-                .build(), settingsFilter, env).createSSLEngine();
+        try {
+            new ServerSSLService(settingsBuilder()
+                    .put("shield.ssl.keystore.path", differentPasswordsStore)
+                    .put("shield.ssl.keystore.password", "testnode")
+                    .build(), settingsFilter, env).createSSLEngine();
+            fail("expected an exception");
+        } catch (ElasticsearchException e) {
+            assertThat(e.getMessage(), containsString("failed to initialize a KeyManagerFactory"));
+        }
     }
 
     @Test
@@ -148,13 +158,13 @@ public class ServerSSLServiceTests extends ElasticsearchTestCase {
         assertThat(context.getSessionTimeout(), equalTo(600));
     }
 
-    @Test(expected = ShieldSettingsException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testThatCreateSSLEngineWithoutAnySettingsDoesNotWork() throws Exception {
         ServerSSLService sslService = new ServerSSLService(Settings.EMPTY, settingsFilter, env);
         sslService.createSSLEngine();
     }
 
-    @Test(expected = ShieldSettingsException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testThatCreateSSLEngineWithOnlyTruststoreDoesNotWork() throws Exception {
         ServerSSLService sslService = new ServerSSLService(settingsBuilder()
                 .put("shield.ssl.truststore.path", testnodeStore)
@@ -164,7 +174,7 @@ public class ServerSSLServiceTests extends ElasticsearchTestCase {
         assertThat(sslEngine, notNullValue());
     }
 
-    @Test(expected = ShieldSettingsException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testThatTruststorePasswordIsRequired() throws Exception {
         ServerSSLService sslService = new ServerSSLService(settingsBuilder()
                 .put("shield.ssl.keystore.path", testnodeStore)
@@ -174,7 +184,7 @@ public class ServerSSLServiceTests extends ElasticsearchTestCase {
         sslService.sslContext();
     }
 
-    @Test(expected = ShieldSettingsException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testThatKeystorePasswordIsRequired() throws Exception {
         ServerSSLService sslService = new ServerSSLService(settingsBuilder()
                 .put("shield.ssl.keystore.path", testnodeStore)
@@ -198,7 +208,7 @@ public class ServerSSLServiceTests extends ElasticsearchTestCase {
         assertThat(Arrays.asList(enabledCiphers), not(contains("foo", "bar")));
     }
 
-    @Test(expected = ShieldSettingsException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void invalidCiphersOnlyThrowsException() throws Exception {
         ServerSSLService sslService = new ServerSSLService(settingsBuilder()
                 .put("shield.ssl.keystore.path", testnodeStore)

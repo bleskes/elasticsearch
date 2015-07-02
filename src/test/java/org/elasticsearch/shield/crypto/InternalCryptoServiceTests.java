@@ -111,7 +111,7 @@ public class InternalCryptoServiceTests extends ElasticsearchTestCase {
 
         try {
             service.unsignAndVerify(fakeSignedText);
-        } catch (SignatureException e) {
+        } catch (IllegalArgumentException e) {
             assertThat(e.getMessage(), is(equalTo("tampered signed text")));
             assertThat(e.getCause(), is(nullValue()));
         }
@@ -131,7 +131,7 @@ public class InternalCryptoServiceTests extends ElasticsearchTestCase {
 
         try {
             service.unsignAndVerify(fakeSignedText);
-        } catch (SignatureException e) {
+        } catch (IllegalArgumentException e) {
             assertThat(e.getMessage(), is(equalTo("tampered signed text")));
             assertThat(e.getCause(), is(nullValue()));
         }
@@ -151,7 +151,7 @@ public class InternalCryptoServiceTests extends ElasticsearchTestCase {
 
         try {
             service.unsignAndVerify(fakeSignedText);
-        } catch (SignatureException e) {
+        } catch (IllegalArgumentException e) {
             assertThat(e.getMessage(), is(equalTo("tampered signed text")));
         }
 
@@ -159,7 +159,7 @@ public class InternalCryptoServiceTests extends ElasticsearchTestCase {
         fakeSignedText = "$$" + randomIntBetween(length + 1, Integer.MAX_VALUE) + "$$" + fakeSignature + signed.substring(i + 2 + length);
         try {
             service.unsignAndVerify(fakeSignedText);
-        } catch (SignatureException e) {
+        } catch (IllegalArgumentException e) {
             assertThat(e.getMessage(), is(equalTo("tampered signed text")));
             assertThat(e.getCause(), is(nullValue()));
         }

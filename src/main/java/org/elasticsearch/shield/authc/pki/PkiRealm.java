@@ -23,7 +23,6 @@ import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.rest.RestRequest;
-import org.elasticsearch.shield.ShieldSettingsException;
 import org.elasticsearch.shield.ShieldSettingsFilter;
 import org.elasticsearch.shield.User;
 import org.elasticsearch.shield.authc.AuthenticationToken;
@@ -156,7 +155,7 @@ public class PkiRealm extends Realm<X509AuthenticationToken> {
 
         String password = settings.get("truststore.password");
         if (password == null) {
-            throw new ShieldSettingsException("no truststore password configured");
+            throw new IllegalArgumentException("no truststore password configured");
         }
 
         String trustStoreAlgorithm = settings.get("truststore.algorithm", System.getProperty("ssl.TrustManagerFactory.algorithm", TrustManagerFactory.getDefaultAlgorithm()));
@@ -171,7 +170,7 @@ public class PkiRealm extends Realm<X509AuthenticationToken> {
             trustFactory.init(ks);
             trustManagers = trustFactory.getTrustManagers();
         } catch (Exception e) {
-            throw new ShieldSettingsException("failed to load specified truststore", e);
+            throw new IllegalArgumentException("failed to load specified truststore", e);
         }
 
         List<X509TrustManager> trustManagerList = new ArrayList<>();
@@ -182,7 +181,7 @@ public class PkiRealm extends Realm<X509AuthenticationToken> {
         }
 
         if (trustManagerList.isEmpty()) {
-            throw new ShieldSettingsException("no valid certificates found in truststore");
+            throw new IllegalArgumentException("no valid certificates found in truststore");
         }
 
         return trustManagerList.toArray(new X509TrustManager[trustManagerList.size()]);

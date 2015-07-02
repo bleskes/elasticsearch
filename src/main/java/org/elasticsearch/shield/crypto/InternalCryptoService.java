@@ -24,9 +24,7 @@ import org.elasticsearch.common.component.AbstractLifecycleComponent;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
-import org.elasticsearch.shield.ShieldException;
 import org.elasticsearch.shield.ShieldPlugin;
-import org.elasticsearch.shield.ShieldSettingsException;
 import org.elasticsearch.shield.authc.support.CharArrays;
 import org.elasticsearch.watcher.FileChangesListener;
 import org.elasticsearch.watcher.FileWatcher;
@@ -94,15 +92,16 @@ public class InternalCryptoService extends AbstractLifecycleComponent<InternalCr
         this.listeners = new CopyOnWriteArrayList<>(listeners);
         this.encryptionAlgorithm = settings.get("shield.encryption.algorithm", DEFAULT_ENCRYPTION_ALGORITHM);
         this.keyLength = settings.getAsInt("shield.encryption_key.length", DEFAULT_KEY_LENGTH);
-        if (keyLength % 8 != 0) {
-            throw new ShieldSettingsException("invalid key length [" + keyLength + "]. value must be a multiple of 8");
-        }
         this.ivLength = keyLength / 8;
         this.keyAlgorithm = settings.get("shield.encryption_key.algorithm", DEFAULT_KEY_ALGORITH);
     }
 
     @Override
     protected void doStart() throws ElasticsearchException {
+        if (keyLength % 8 != 0) {
+            throw new IllegalArgumentException("invalid key length [" + keyLength + "]. value must be a multiple of 8");
+        }
+
         keyFile = resolveSystemKey(settings, env);
         systemKey = readSystemKey(keyFile);
         encryptionKey = encryptionKey(systemKey, keyLength, keyAlgorithm);
@@ -143,7 +142,7 @@ public class InternalCryptoService extends AbstractLifecycleComponent<InternalCr
             byte[] bytes = Files.readAllBytes(file);
             return new SecretKeySpec(bytes, KEY_ALGO);
         } catch (IOException e) {
-            throw new ShieldException("could not read secret key", e);
+            throw new ElasticsearchException("could not read secret key", e);
         }
     }
 
@@ -173,7 +172,7 @@ public class InternalCryptoService extends AbstractLifecycleComponent<InternalCr
         }
 
         if (!signedText.startsWith("$$") || signedText.length() < 2) {
-            throw new SignatureException("tampered signed text");
+            throw new IllegalArgumentException("tampered signed text");
         }
 
         String text;
@@ -186,7 +185,7 @@ public class InternalCryptoService extends AbstractLifecycleComponent<InternalCr
             text = signedText.substring(i + 2 + length);
         } catch (Throwable t) {
             logger.error("error occurred while parsing signed text", t);
-            throw new SignatureException("tampered signed text");
+            throw new IllegalArgumentException("tampered signed text");
         }
 
         try {
@@ -196,10 +195,10 @@ public class InternalCryptoService extends AbstractLifecycleComponent<InternalCr
             }
         } catch (Throwable t) {
             logger.error("error occurred while verifying signed text", t);
-            throw new SignatureException("error while verifying the signed text");
+            throw new IllegalStateException("error while verifying the signed text");
         }
 
-        throw new SignatureException("tampered signed text");
+        throw new IllegalArgumentException("tampered signed text");
     }
 
     @Override
@@ -255,7 +254,7 @@ public class InternalCryptoService extends AbstractLifecycleComponent<InternalCr
         try {
             bytes = Base64.decode(encrypted);
         } catch (IOException e) {
-            throw new ShieldException("unable to decode encrypted data", e);
+            throw new ElasticsearchException("unable to decode encrypted data", e);
         }
 
         byte[] decrypted = decryptInternal(bytes, key);
@@ -311,15 +310,15 @@ public class InternalCryptoService extends AbstractLifecycleComponent<InternalCr
             System.arraycopy(iv, 0, output, 0, iv.length);
             System.arraycopy(encrypted, 0, output, iv.length, encrypted.length);
             return output;
-        } catch (BadPaddingException |IllegalBlockSizeException e) {
-            throw new ShieldException("error encrypting data", e);
+        } catch (BadPaddingException|IllegalBlockSizeException e) {
+            throw new ElasticsearchException("error encrypting data", e);
         }
     }
 
     private byte[] decryptInternal(byte[] bytes, SecretKey key) {
         if (bytes.length < ivLength) {
             logger.error("received data for decryption with size [{}] that is less than IV length [{}]", bytes.length, ivLength);
-            throw new ShieldException("invalid data to decrypt");
+            throw new ElasticsearchException("invalid data to decrypt");
         }
 
         byte[] iv = new byte[ivLength];
@@ -331,7 +330,7 @@ public class InternalCryptoService extends AbstractLifecycleComponent<InternalCr
         try {
             return cipher.doFinal(data);
         } catch (BadPaddingException|IllegalBlockSizeException e) {
-            throw new ShieldException("error decrypting data", e);
+            throw new ElasticsearchException("error decrypting data", e);
         }
     }
 
@@ -351,7 +350,7 @@ public class InternalCryptoService extends AbstractLifecycleComponent<InternalCr
         try {
             return Base64.encodeBytes(sig, 0, sig.length, Base64.URL_SAFE);
         } catch (IOException e) {
-            throw new SignatureException("unable to encode signed data", e);
+            throw new IllegalArgumentException("unable to encode signed data", e);
         }
     }
 
@@ -362,7 +361,7 @@ public class InternalCryptoService extends AbstractLifecycleComponent<InternalCr
             cipher.init(mode, key, new IvParameterSpec(initializationVector));
             return cipher;
         } catch (Exception e) {
-            throw new ShieldException("error creating cipher", e);
+            throw new ElasticsearchException("error creating cipher", e);
         }
     }
 
@@ -374,7 +373,7 @@ public class InternalCryptoService extends AbstractLifecycleComponent<InternalCr
         try {
             byte[] bytes = systemKey.getEncoded();
             if ((bytes.length * 8) < keyLength) {
-                throw new ShieldException("at least " + keyLength +" bits should be provided as key data");
+                throw new IllegalArgumentException("at least " + keyLength +" bits should be provided as key data");
             }
 
             MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
@@ -382,13 +381,13 @@ public class InternalCryptoService extends AbstractLifecycleComponent<InternalCr
             assert digest.length == (256 / 8);
 
             if ((digest.length * 8) < keyLength) {
-                throw new ShieldException("requested key length is too large");
+                throw new IllegalArgumentException("requested key length is too large");
             }
             byte[] truncatedDigest = Arrays.copyOfRange(digest, 0, (keyLength / 8));
 
             return new SecretKeySpec(truncatedDigest, algorithm);
         } catch (NoSuchAlgorithmException e) {
-            throw new ShieldException("error getting encryption key", e);
+            throw new ElasticsearchException("error getting encryption key", e);
         }
     }
 
