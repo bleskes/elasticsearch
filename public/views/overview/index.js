@@ -29,6 +29,7 @@ define(function (require) {
   module.controller('overview', function (kbnUrl, globalState, $scope, timefilter, $route, courier, marvelMetrics, Private, Promise) {
     var ChartDataSource = Private(require('marvel/directives/chart/data_source'));
     var ClusterStatusDataSource = Private(require('marvel/directives/cluster_status/data_source'));
+    var ShardRecoveryDataSource = Private(require('marvel/directives/shard_activity/data_source'));
     var IssueDataSource = Private(require('marvel/directives/issues/data_source'));
 
     var indexPattern = $route.current.locals.marvel.indexPattern;
@@ -68,9 +69,17 @@ define(function (require) {
         $scope.dataSources.cluster_status = dataSource;
         return dataSource;
       })
+      .then(function() {
+        var dataSource = new ShardRecoveryDataSource(indexPattern, globalState.cluster);
+        dataSource.register(courier);
+        $scope.dataSources.shardActivity = dataSource;
+        return $scope.dataSources.shardActivity;
+      })
       .then(function () {
         $scope.dataSources.issues = {};
-        _.each(['cluster', 'node', 'index'], function (type) {
+        // _.each(['cluster', 'node', 'index'], function (type) {
+        // Index doesn't work, returns a 404
+        _.each(['cluster', 'node'], function (type) {
           var dataSource = new IssueDataSource(globalState.cluster, type);
           dataSource.register($scope);
           $scope.dataSources.issues[type] = dataSource;
