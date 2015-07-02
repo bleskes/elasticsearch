@@ -43,7 +43,8 @@ import com.prelert.job.transform.TransformConfigs;
 
 /**
  * The native process, settings objects and output parsers.
- *
+ * Before writing to the process's outputstream the semaphore {@linkplain #guard()}
+ * should be acquired and released immediately after.
  * ErrorReader is a buffered reader connected to the Process's error output.
  * {@link #getLogger} returns a logger that logs to the
  * jobs log directory
@@ -67,6 +68,10 @@ public class ProcessAndDataDescription
 	private List<File> m_FilesToDelete;
 
 	private final Semaphore m_ProcessGuard;
+
+	public enum Action {NONE, WRITING, FLUSHING, CLOSING};
+	private Action m_Action;
+
 
 	/**
 	 * Object for grouping the native process, its data description
@@ -116,6 +121,7 @@ public class ProcessAndDataDescription
 		m_FilesToDelete = filesToDelete;
 
 		m_ProcessGuard = new Semaphore(1);
+		m_Action = Action.NONE;
 	}
 
 	public Process getProcess()
@@ -128,11 +134,36 @@ public class ProcessAndDataDescription
 		return m_DataDescription;
 	}
 
-
-	public Semaphore guard()
+	/**
+	 * Non-blocking tryAcqurie call returns immediately.
+	 * If the result is false someone else has acquired the semaphore
+	 * If successful the {@linkplain #getAction()} member is set to <code>action</code>
+	 * @param action
+	 * @return
+	 */
+	public boolean tryAcquireGuard(Action action)
 	{
-	    return m_ProcessGuard;
+	    if (m_ProcessGuard.tryAcquire())
+	    {
+	        m_Action = action;
+	        return true;
+	    }
+	    return false;
 	}
+
+	/**
+	 * Release the semaphore and set {@linkplain #getAction()} to Action.NONE.
+	 * No checking is done that the thread that acquired the semaphore is
+	 * the same as the one releasing it, the client should only ever call this
+	 * method if {@linkplain #tryAcquireGuard(Action)} returned true.
+	 * @return
+	 */
+    public boolean releaseGuard()
+    {
+        m_Action = Action.NONE;
+        m_ProcessGuard.release();
+        return true;
+    }
 
 	/**
 	 * The timeout value in seconds.
@@ -184,6 +215,11 @@ public class ProcessAndDataDescription
 	public StatusReporter getStatusReporter()
 	{
 		return m_StatusReporter;
+	}
+
+	public Action getAction()
+	{
+	    return m_Action;
 	}
 
 

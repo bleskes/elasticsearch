@@ -55,6 +55,7 @@ import com.prelert.rs.data.MultiDataPostResult;
  * <li>Try to close a job when it is being streamed data</li>
  * <li>Try to flush a job when it is being streamed data</li>
  * <li>Try to write to a job when it is being streamed data</li>
+ * <li>Try to delete a job when it is being streamed data</li>
  * </ol>
  */
 public class ParallelUploadTest
@@ -123,6 +124,7 @@ public class ParallelUploadTest
 				throw new IllegalStateException("Closing Job: Error code should be job in use error");
 			}
 
+
             // 2. Cannot flush a job when another process is writing to it
             boolean flushed = client.flushJob(jobId, false);
             if (flushed)
@@ -137,7 +139,8 @@ public class ParallelUploadTest
                 throw new IllegalStateException("Flushing Job: Error code should be job in use error");
             }
 
-			// cannot write to the job when another process is writing to it
+
+            // 3. Cannot write to the job when another process is writing to it
 			String data = CsvDataRunner.HEADER + "\n1000,metric,100\n";
 			InputStream is = new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
 			MultiDataPostResult result = client.streamingUpload(jobId, is, false);
@@ -162,7 +165,7 @@ public class ParallelUploadTest
 	            throw new IllegalStateException("Error wrote to job in use");
 	        }
 
-			// cannot delete a job when another process is writing to it
+			// 4. Cannot delete a job when another process is writing to it
 			boolean deleted = client.deleteJob(jobId);
 			if (deleted)
 			{

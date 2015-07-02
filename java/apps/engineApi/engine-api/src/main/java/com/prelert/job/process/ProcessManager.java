@@ -67,6 +67,7 @@ import com.prelert.job.messages.Messages;
 import com.prelert.job.persistence.DataPersisterFactory;
 import com.prelert.job.persistence.JobDataPersister;
 import com.prelert.job.persistence.JobProvider;
+import com.prelert.job.process.ProcessAndDataDescription.Action;
 import com.prelert.job.process.exceptions.ClosedJobException;
 import com.prelert.job.process.exceptions.DataUploadException;
 import com.prelert.job.process.exceptions.MalformedJsonException;
@@ -171,6 +172,29 @@ public class ProcessManager
         Runtime.getRuntime().addShutdownHook(shutdownHook);
     }
 
+    private String actionToErrorString(Action action)
+    {
+        String s;
+        switch (action)
+        {
+        case CLOSING:
+            s = "closing";
+            break;
+        case FLUSHING:
+            s = "flushing";
+            break;
+        case WRITING:
+            s = "writing to";
+            break;
+        case NONE:
+        default:
+            s = "using";
+            break;
+        }
+
+        return s;
+    }
+
      /**
      * Passes data to the native process. There are 3 alternate cases handled
      * by this function
@@ -250,9 +274,10 @@ public class ProcessManager
         }
 
         // We can't write data if someone is already writing to the process.
-        if (process.guard().tryAcquire() == false)
+        if (process.tryAcquireGuard(Action.WRITING) == false)
         {
-            String msg = Messages.getMessage(Messages.JOB_DATA_CONCURRENT_USE_UPLOAD, jobId);
+            String otherAction = actionToErrorString(process.getAction());
+            String msg = Messages.getMessage(Messages.JOB_DATA_CONCURRENT_USE_UPLOAD, jobId, otherAction);
             LOGGER.warn(msg);
             throw new JobInUseException(jobId, msg, ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR);
         }
@@ -295,7 +320,7 @@ public class ProcessManager
         }
         finally
         {
-            process.guard().release();
+            process.releaseGuard();
 
             // start a new timer
             future = startShutdownTimer(jobId, process.getTimeout());
@@ -456,9 +481,10 @@ public class ProcessManager
 
         process.getLogger().info("Flushing job " + jobId);
 
-        if (process.guard().tryAcquire() == false)
+        if (process.tryAcquireGuard(Action.FLUSHING) == false)
         {
-            String msg = Messages.getMessage(Messages.JOB_DATA_CONCURRENT_USE_FLUSH, jobId);
+            String otherAction = actionToErrorString(process.getAction());
+            String msg = Messages.getMessage(Messages.JOB_DATA_CONCURRENT_USE_FLUSH, jobId, otherAction);
             LOGGER.info(msg);
             process.getLogger().info(msg);
             throw new JobInUseException(jobId, msg, ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR);
@@ -508,7 +534,7 @@ public class ProcessManager
         }
         finally
         {
-            process.guard().release();
+            process.releaseGuard();
         }
     }
 
@@ -550,9 +576,10 @@ public class ProcessManager
         }
 
 
-        if (process.guard().tryAcquire() == false)
+        if (process.tryAcquireGuard(Action.CLOSING) == false)
         {
-            String msg = Messages.getMessage(Messages.JOB_DATA_CONCURRENT_USE_CLOSE, jobId);
+            String otherAction = actionToErrorString(process.getAction());
+            String msg = Messages.getMessage(Messages.JOB_DATA_CONCURRENT_USE_CLOSE, jobId, otherAction);
             LOGGER.info(msg);
             process.getLogger().info(msg);
             throw new JobInUseException(jobId, msg, ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR);
@@ -560,6 +587,8 @@ public class ProcessManager
 
         try
         {
+            setJobStatus(jobId, process.getLogger(), JobStatus.CLOSING);
+
             process.getLogger().info("Closing job " + jobId);
 
             // cancel any time out futures
@@ -613,7 +642,7 @@ public class ProcessManager
         }
         finally
         {
-            process.guard().release();
+            process.releaseGuard();
         }
 
         return ProcessStatus.COMPLETED;
@@ -711,6 +740,20 @@ public class ProcessManager
         catch (IllegalThreadStateException e)
         {
             return true;
+        }
+    }
+
+    private void setJobStatus(String jobId, Logger processLogger, JobStatus status)
+    {
+        try
+        {
+            m_JobProvider.setJobStatus(jobId, status);
+        }
+        catch (UnknownJobException e)
+        {
+            String msg = String.format("Error cannot set job status to " + status);
+            processLogger.warn(msg, e);
+            LOGGER.warn(msg, e);
         }
     }
 

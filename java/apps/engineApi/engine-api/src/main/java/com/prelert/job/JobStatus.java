@@ -30,21 +30,9 @@ package com.prelert.job;
 /**
  * Jobs whether running or complete are in one of these states.
  * When a job is created it is initialised in to the status closed
- * i.e. it is not running. 
+ * i.e. it is not running.
  */
-public enum JobStatus 
+public enum JobStatus
 {
-	RUNNING
-	{
-		public boolean isRunning()
-		{
-			return true;
-		}
-	}, 
-	CLOSED, FAILED;
-	
-    public boolean isRunning()
-	{
-		return false;
-	}		
+	RUNNING, CLOSING, CLOSED, FAILED;
 }
