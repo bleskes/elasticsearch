@@ -53,6 +53,7 @@ import com.prelert.rs.data.MultiDataPostResult;
  * The tests are:
  * <ol>
  * <li>Try to close a job when it is being streamed data</li>
+ * <li>Try to flush a job when it is being streamed data</li>
  * <li>Try to write to a job when it is being streamed data</li>
  * </ol>
  */
@@ -60,6 +61,10 @@ public class ParallelUploadTest
 {
 	private static final Logger LOGGER = Logger.getLogger(ParallelUploadTest.class);
 
+    /**
+     * The default base Url used in the test
+     */
+    public static final String API_BASE_URL = "http://localhost:8080/engine/v1";
 
 	public static void main(String[] args)
 	throws FileNotFoundException, IOException
@@ -71,14 +76,16 @@ public class ParallelUploadTest
 		console.activateOptions();
 		Logger.getRootLogger().addAppender(console);
 
-		if (args.length == 0)
-		{
-			LOGGER.error("This program has one argument the base Url of the"
-					+ " REST API");
-			return;
-		}
-
-		String url = args[0];
+        String url = API_BASE_URL;
+        if (args.length > 0)
+        {
+            url = args[0];
+            LOGGER.info("Using URL " + url);
+        }
+        else
+        {
+            LOGGER.info("Using default URL " + url);
+        }
 
 		CsvDataRunner jobRunner = new CsvDataRunner(url);
 		String jobId = jobRunner.createJob();
@@ -102,7 +109,7 @@ public class ParallelUploadTest
 
 		try (EngineApiClient client = new EngineApiClient(url))
 		{
-			// cannot close a job when another process is writing to it
+			// 1. Cannot close a job when another process is writing to it
 			boolean closed = client.closeJob(jobId);
 			if (closed)
 			{
@@ -115,6 +122,20 @@ public class ParallelUploadTest
 			{
 				throw new IllegalStateException("Closing Job: Error code should be job in use error");
 			}
+
+            // 2. Cannot flush a job when another process is writing to it
+            boolean flushed = client.flushJob(jobId, false);
+            if (flushed)
+            {
+                throw new IllegalStateException("Error flushed job while writing to it");
+            }
+
+            apiError = client.getLastError();
+
+            if (apiError.getErrorCode() != ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR)
+            {
+                throw new IllegalStateException("Flushing Job: Error code should be job in use error");
+            }
 
 			// cannot write to the job when another process is writing to it
 			String data = CsvDataRunner.HEADER + "\n1000,metric,100\n";

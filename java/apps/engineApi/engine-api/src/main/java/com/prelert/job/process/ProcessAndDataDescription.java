@@ -31,6 +31,7 @@ import java.io.File;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.concurrent.Semaphore;
 
 import org.apache.log4j.Logger;
 
@@ -41,10 +42,9 @@ import com.prelert.job.status.StatusReporter;
 import com.prelert.job.transform.TransformConfigs;
 
 /**
- * The native process and its data description object.
- * {@link #isInUse()} is true if the processes stdin is
- * being written to. ErrorReader is a buffered reader \
- * connected to the Process's error output.
+ * The native process, settings objects and output parsers.
+ *
+ * ErrorReader is a buffered reader connected to the Process's error output.
  * {@link #getLogger} returns a logger that logs to the
  * jobs log directory
  */
@@ -52,11 +52,9 @@ public class ProcessAndDataDescription
 {
 	private final Process m_Process;
 	private final DataDescription m_DataDescription;
-	private volatile boolean m_IsInUse;
 	private final long m_TimeoutSeconds;
 	private final BufferedReader m_ErrorReader;
 	private final List<String> m_InterestingFields;
-
 
 	private ResultsReader m_OutputParser;
 	private Thread m_OutputParserThread;
@@ -64,12 +62,11 @@ public class ProcessAndDataDescription
 	private Logger m_JobLogger;
 
 	private StatusReporter m_StatusReporter;
-
 	private AnalysisConfig m_AnalysisConfig;
-
 	private TransformConfigs m_Transforms;
-
 	private List<File> m_FilesToDelete;
+
+	private final Semaphore m_ProcessGuard;
 
 	/**
 	 * Object for grouping the native process, its data description
@@ -97,7 +94,6 @@ public class ProcessAndDataDescription
 	{
 		m_Process = process;
 		m_DataDescription = dd;
-		m_IsInUse = false;
 		m_TimeoutSeconds = timeout;
 
 		m_ErrorReader = new BufferedReader(
@@ -118,6 +114,8 @@ public class ProcessAndDataDescription
 		m_OutputParserThread.start();
 
 		m_FilesToDelete = filesToDelete;
+
+		m_ProcessGuard = new Semaphore(1);
 	}
 
 	public Process getProcess()
@@ -130,24 +128,10 @@ public class ProcessAndDataDescription
 		return m_DataDescription;
 	}
 
-	/**
-	 * True if the process is currently in use
-	 * Thread safe without synchronisation as this is a volatile field
-	 * @return
-	 */
-	public boolean isInUse()
-	{
-		return m_IsInUse;
-	}
 
-	/**
-	 * Set the process as in use
-	 * Thread safe without synchronisation as this is a volatile field
-	 * @param inUse
-	 */
-	public void setInUse(boolean inUse)
+	public Semaphore guard()
 	{
-		m_IsInUse = inUse;
+	    return m_ProcessGuard;
 	}
 
 	/**

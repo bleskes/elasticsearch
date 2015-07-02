@@ -250,27 +250,27 @@ public class ProcessManager
         }
 
         // We can't write data if someone is already writing to the process.
-        if (process.isInUse())
+        if (process.guard().tryAcquire() == false)
         {
             String msg = Messages.getMessage(Messages.JOB_DATA_CONCURRENT_USE_UPLOAD, jobId);
             LOGGER.warn(msg);
             throw new JobInUseException(jobId, msg, ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR);
         }
 
-        // check the process is running, throws if not
-        processStillRunning(process);
+        DataCounts stats = new DataCounts();
 
-        // write the data to the process
-        DataCounts stats;
+        // the guard must be released after it is acquired
         try
         {
-            process.setInUse(true);
+            // check the process is running, throws if not
+            processStillRunning(process);
 
             if (params.isResettingBuckets())
             {
                 writeResetBucketsControlMessage(jobId, params, process, isExistingProcess);
             }
 
+            // write the data to the process
             stats = writeToJob(process.getDataDescription(), process.getAnalysisConfig(),
                     process.getTransforms(), input, process.getProcess().getOutputStream(),
                     process.getStatusReporter(),
@@ -295,7 +295,7 @@ public class ProcessManager
         }
         finally
         {
-            process.setInUse(false);
+            process.guard().release();
 
             // start a new timer
             future = startShutdownTimer(jobId, process.getTimeout());
@@ -456,7 +456,7 @@ public class ProcessManager
 
         process.getLogger().info("Flushing job " + jobId);
 
-        if (process.isInUse())
+        if (process.guard().tryAcquire() == false)
         {
             String msg = Messages.getMessage(Messages.JOB_DATA_CONCURRENT_USE_FLUSH, jobId);
             LOGGER.info(msg);
@@ -464,13 +464,12 @@ public class ProcessManager
             throw new JobInUseException(jobId, msg, ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR);
         }
 
-        // Check the process is running, throws if not
-        processStillRunning(process);
 
         // write the data to the process
         try
         {
-            process.setInUse(true);
+            // Check the process is running, throws if not
+            processStillRunning(process);
 
             ControlMsgToProcessWriter writer = ControlMsgToProcessWriter.create(
                     process.getProcess().getOutputStream(),
@@ -509,7 +508,7 @@ public class ProcessManager
         }
         finally
         {
-            process.setInUse(false);
+            process.guard().release();
         }
     }
 
@@ -530,7 +529,7 @@ public class ProcessManager
      * @throws JobInUseException if the job cannot be closed because data is
      * being streamed to it
      */
-    public ProcessStatus finishJob(String jobId)
+    public ProcessStatus closeJob(String jobId)
     throws NativeProcessRunException, JobInUseException
     {
         /*
@@ -538,7 +537,7 @@ public class ProcessManager
          * different places there are quite a lot of code paths through it.
          * Some code appears repeated but it is because of the multiple code paths
          */
-        LOGGER.info("Finishing job " + jobId);
+        LOGGER.info("Closing job " + jobId);
 
         ProcessAndDataDescription process = m_JobIdToProcessMap.get(jobId);
         if (process == null)
@@ -551,7 +550,7 @@ public class ProcessManager
         }
 
 
-        if (process.isInUse())
+        if (process.guard().tryAcquire() == false)
         {
             String msg = Messages.getMessage(Messages.JOB_DATA_CONCURRENT_USE_CLOSE, jobId);
             LOGGER.info(msg);
@@ -559,55 +558,62 @@ public class ProcessManager
             throw new JobInUseException(jobId, msg, ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR);
         }
 
-        process.getLogger().info("Finishing job " + jobId);
-
-        // cancel any time out futures
-        ScheduledFuture<?> future = m_JobIdToTimeoutFuture.get(jobId);
-        if (future != null && future.cancel(false) == false)
-        {
-            LOGGER.warn("Failed to cancel future in finishJob()");
-        }
-        else
-        {
-            LOGGER.debug("No future to cancel in finishJob()");
-        }
-        m_JobIdToTimeoutFuture.remove(jobId);
-
-
         try
         {
-            // check the process is running, throws if not
-            if (processStillRunning(process))
+            process.getLogger().info("Closing job " + jobId);
+
+            // cancel any time out futures
+            ScheduledFuture<?> future = m_JobIdToTimeoutFuture.get(jobId);
+            if (future != null && future.cancel(false) == false)
             {
-                m_JobIdToProcessMap.remove(jobId);
-                terminateProcess(jobId, process);
+                LOGGER.warn("Failed to cancel future in finishJob()");
             }
-        }
-        catch (NativeProcessRunException npre)
-        {
-            String msg = String.format("Native process for job '%s' has already exited",
-                    jobId);
-            LOGGER.error(msg);
-            process.getLogger().error(msg);
+            else
+            {
+                LOGGER.debug("No future to cancel in finishJob()");
+            }
+            m_JobIdToTimeoutFuture.remove(jobId);
 
-            // clean up resources and re-throw
-            process.deleteAssociatedFiles();
 
-            m_JobIdToProcessMap.remove(jobId);
             try
             {
-                process.getProcess().getOutputStream().close();
+                // check the process is running, throws if not
+                if (processStillRunning(process))
+                {
+                    m_JobIdToProcessMap.remove(jobId);
+                    terminateProcess(jobId, process);
+                }
             }
-            catch (IOException ioe)
+            catch (NativeProcessRunException npre)
             {
-                LOGGER.debug("Exception closing stopped process input stream", ioe);
+                String msg = String.format("Native process for job '%s' has already exited",
+                        jobId);
+                LOGGER.error(msg);
+                process.getLogger().error(msg);
+
+                // clean up resources and re-throw
+                process.deleteAssociatedFiles();
+
+                m_JobIdToProcessMap.remove(jobId);
+                try
+                {
+                    process.getProcess().getOutputStream().close();
+                }
+                catch (IOException ioe)
+                {
+                    LOGGER.debug("Exception closing stopped process input stream", ioe);
+                }
+
+                setJobFinishedTimeAndStatus(jobId, process.getLogger(), JobStatus.FAILED);
+                // free the logger resources
+                closeLogger(process.getLogger());
+
+                throw npre;
             }
-
-            setJobFinishedTimeAndStatus(jobId, process.getLogger(), JobStatus.FAILED);
-            // free the logger resources
-            closeLogger(process.getLogger());
-
-            throw npre;
+        }
+        finally
+        {
+            process.guard().release();
         }
 
         return ProcessStatus.COMPLETED;
@@ -892,7 +898,7 @@ public class ProcessManager
                 {
                     try
                     {
-                        finishJob(m_JobId);
+                        closeJob(m_JobId);
                         notFinished = false;
                     }
                     catch (JobInUseException e)
@@ -965,7 +971,7 @@ public class ProcessManager
                 {
                     try
                     {
-                        finishJob(jobId);
+                        closeJob(jobId);
                         notFinished = false;
                     }
                     catch (JobInUseException e)
