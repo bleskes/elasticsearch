@@ -36,7 +36,7 @@ define(function (require) {
 
     timefilter.enabled = true;
     if (timefilter.refreshInterval.value === 0) {
-      timefilter.refreshInterval.value = 10;
+      timefilter.refreshInterval.value = 10000;
       timefilter.refreshInterval.display = '10 Seconds';
     }
 
