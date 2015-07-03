@@ -56,7 +56,7 @@ public class TransportDeleteByQueryActionTests extends ElasticsearchSingleNodeTe
         newAsyncAction(delete, listener).executeScan();
         waitForCompletion("scan request should fail on missing index", listener);
 
-        assertFailure(listener, "no such index");
+        assertFailure(listener, "index not found");
         assertSearchContextsClosed();
     }
 
