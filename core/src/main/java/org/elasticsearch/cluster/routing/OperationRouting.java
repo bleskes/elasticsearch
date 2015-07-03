@@ -20,6 +20,7 @@
 package org.elasticsearch.cluster.routing;
 
 import com.google.common.collect.Lists;
+import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.Version;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
@@ -32,10 +33,7 @@ import org.elasticsearch.common.component.AbstractComponent;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.math.MathUtils;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.index.Index;
-import org.elasticsearch.index.IndexShardMissingException;
 import org.elasticsearch.index.shard.ShardId;
-import org.elasticsearch.indices.IndexMissingException;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -57,32 +55,32 @@ public class OperationRouting extends AbstractComponent {
         this.awarenessAllocationDecider = awarenessAllocationDecider;
     }
 
-    public ShardIterator indexShards(ClusterState clusterState, String index, String type, String id, @Nullable String routing) throws IndexMissingException, IndexShardMissingException {
+    public ShardIterator indexShards(ClusterState clusterState, String index, String type, String id, @Nullable String routing) {
         return shards(clusterState, index, type, id, routing).shardsIt();
     }
 
-    public ShardIterator deleteShards(ClusterState clusterState, String index, String type, String id, @Nullable String routing) throws IndexMissingException, IndexShardMissingException {
+    public ShardIterator deleteShards(ClusterState clusterState, String index, String type, String id, @Nullable String routing) {
         return shards(clusterState, index, type, id, routing).shardsIt();
     }
 
-    public ShardIterator getShards(ClusterState clusterState, String index, String type, String id, @Nullable String routing, @Nullable String preference) throws IndexMissingException, IndexShardMissingException {
+    public ShardIterator getShards(ClusterState clusterState, String index, String type, String id, @Nullable String routing, @Nullable String preference) {
         return preferenceActiveShardIterator(shards(clusterState, index, type, id, routing), clusterState.nodes().localNodeId(), clusterState.nodes(), preference);
     }
 
-    public ShardIterator getShards(ClusterState clusterState, String index, int shardId, @Nullable String preference) throws IndexMissingException, IndexShardMissingException {
+    public ShardIterator getShards(ClusterState clusterState, String index, int shardId, @Nullable String preference) {
         return preferenceActiveShardIterator(shards(clusterState, index, shardId), clusterState.nodes().localNodeId(), clusterState.nodes(), preference);
     }
 
-    public GroupShardsIterator broadcastDeleteShards(ClusterState clusterState, String index) throws IndexMissingException {
+    public GroupShardsIterator broadcastDeleteShards(ClusterState clusterState, String index) {
         return indexRoutingTable(clusterState, index).groupByShardsIt();
     }
 
-    public int searchShardsCount(ClusterState clusterState, String[] indices, String[] concreteIndices, @Nullable Map<String, Set<String>> routing, @Nullable String preference) throws IndexMissingException {
+    public int searchShardsCount(ClusterState clusterState, String[] indices, String[] concreteIndices, @Nullable Map<String, Set<String>> routing, @Nullable String preference) {
         final Set<IndexShardRoutingTable> shards = computeTargetedShards(clusterState, concreteIndices, routing);
         return shards.size();
     }
 
-    public GroupShardsIterator searchShards(ClusterState clusterState, String[] indices, String[] concreteIndices, @Nullable Map<String, Set<String>> routing, @Nullable String preference) throws IndexMissingException {
+    public GroupShardsIterator searchShards(ClusterState clusterState, String[] indices, String[] concreteIndices, @Nullable Map<String, Set<String>> routing, @Nullable String preference)  {
         final Set<IndexShardRoutingTable> shards = computeTargetedShards(clusterState, concreteIndices, routing);
         final Set<ShardIterator> set = new HashSet<>(shards.size());
         for (IndexShardRoutingTable shard : shards) {
@@ -96,7 +94,7 @@ public class OperationRouting extends AbstractComponent {
 
     private static final Map<String, Set<String>> EMPTY_ROUTING = Collections.emptyMap();
 
-    private Set<IndexShardRoutingTable> computeTargetedShards(ClusterState clusterState, String[] concreteIndices, @Nullable Map<String, Set<String>> routing) throws IndexMissingException {
+    private Set<IndexShardRoutingTable> computeTargetedShards(ClusterState clusterState, String[] concreteIndices, @Nullable Map<String, Set<String>> routing) {
         routing = routing == null ? EMPTY_ROUTING : routing; // just use an empty map
         final Set<IndexShardRoutingTable> set = new HashSet<>();
         // we use set here and not list since we might get duplicates
@@ -108,7 +106,7 @@ public class OperationRouting extends AbstractComponent {
                     int shardId = shardId(clusterState, index, null, null, r);
                     IndexShardRoutingTable indexShard = indexRouting.shard(shardId);
                     if (indexShard == null) {
-                        throw new IndexShardMissingException(new ShardId(index, shardId));
+                        throw new ResourceNotFoundException(new ShardId(index, shardId), "no such shard");
                     }
                     // we might get duplicates, but that's ok, they will override one another
                     set.add(indexShard);
@@ -202,7 +200,7 @@ public class OperationRouting extends AbstractComponent {
     public IndexMetaData indexMetaData(ClusterState clusterState, String index) {
         IndexMetaData indexMetaData = clusterState.metaData().index(index);
         if (indexMetaData == null) {
-            throw new IndexMissingException(new Index(index));
+            throw new ResourceNotFoundException(index, "index not found");
         }
         return indexMetaData;
     }
@@ -210,7 +208,7 @@ public class OperationRouting extends AbstractComponent {
     protected IndexRoutingTable indexRoutingTable(ClusterState clusterState, String index) {
         IndexRoutingTable indexRouting = clusterState.routingTable().index(index);
         if (indexRouting == null) {
-            throw new IndexMissingException(new Index(index));
+            throw new ResourceNotFoundException(index, "index not found");
         }
         return indexRouting;
     }
@@ -226,7 +224,7 @@ public class OperationRouting extends AbstractComponent {
     protected IndexShardRoutingTable shards(ClusterState clusterState, String index, int shardId) {
         IndexShardRoutingTable indexShard = indexRoutingTable(clusterState, index).shard(shardId);
         if (indexShard == null) {
-            throw new IndexShardMissingException(new ShardId(index, shardId));
+            throw new ResourceNotFoundException(new ShardId(index, shardId), "no such shard");
         }
         return indexShard;
     }

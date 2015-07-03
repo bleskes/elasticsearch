@@ -19,6 +19,7 @@
 
 package org.elasticsearch.indices.state;
 
+import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthStatus;
 import org.elasticsearch.action.admin.cluster.state.ClusterStateResponse;
@@ -32,7 +33,6 @@ import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.settings.SettingsException;
 import org.elasticsearch.indices.IndexClosedException;
-import org.elasticsearch.indices.IndexMissingException;
 import org.elasticsearch.indices.IndexPrimaryShardNotAllocatedException;
 import org.elasticsearch.test.ElasticsearchIntegrationTest;
 import org.junit.Test;
@@ -141,7 +141,7 @@ public class SimpleIndexStateTests extends ElasticsearchIntegrationTest {
         logger.info("--> deleting test index....");
         try {
             client().admin().indices().prepareDelete("test").get();
-        } catch (IndexMissingException ex) {
+        } catch (ResourceNotFoundException ex) {
             // Ignore
         }
 

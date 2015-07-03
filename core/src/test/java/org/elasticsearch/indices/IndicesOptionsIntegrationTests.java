@@ -18,6 +18,7 @@
  */
 package org.elasticsearch.indices;
 
+import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.action.ActionRequestBuilder;
 import org.elasticsearch.action.admin.cluster.repositories.put.PutRepositoryResponse;
 import org.elasticsearch.action.admin.cluster.snapshots.create.CreateSnapshotRequestBuilder;
@@ -525,7 +526,7 @@ public class IndicesOptionsIntegrationTests extends ElasticsearchIntegrationTest
                     .setQuery(matchAllQuery())
                     .execute().actionGet();
             fail("Exception should have been thrown.");
-        } catch (IndexMissingException e) {
+        } catch (ResourceNotFoundException e) {
         }
 
         try {
@@ -533,7 +534,7 @@ public class IndicesOptionsIntegrationTests extends ElasticsearchIntegrationTest
                     .setQuery(matchAllQuery())
                     .execute().actionGet();
             fail("Exception should have been thrown.");
-        } catch (IndexMissingException e) {
+        } catch (ResourceNotFoundException e) {
         }
 
         //you should still be able to run empty searches without things blowing up
@@ -893,7 +894,7 @@ public class IndicesOptionsIntegrationTests extends ElasticsearchIntegrationTest
                 try {
                     requestBuilder.get();
                     fail("IndexMissingException or IndexClosedException was expected");
-                } catch (IndexMissingException | IndexClosedException e) {}
+                } catch (ResourceNotFoundException | IndexClosedException e) {}
             }
         } else {
             if (requestBuilder instanceof SearchRequestBuilder) {

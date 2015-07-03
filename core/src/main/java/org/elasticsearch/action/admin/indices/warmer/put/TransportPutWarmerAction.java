@@ -20,6 +20,7 @@
 package org.elasticsearch.action.admin.indices.warmer.put;
 
 import org.elasticsearch.ElasticsearchException;
+import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
@@ -37,7 +38,6 @@ import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.index.Index;
-import org.elasticsearch.indices.IndexMissingException;
 import org.elasticsearch.search.warmer.IndexWarmersMetaData;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
@@ -127,7 +127,7 @@ public class TransportPutWarmerAction extends TransportMasterNodeAction<PutWarme
                         for (String index : concreteIndices) {
                             IndexMetaData indexMetaData = metaData.index(index);
                             if (indexMetaData == null) {
-                                throw new IndexMissingException(new Index(index));
+                                throw new ResourceNotFoundException(index, "index not found");
                             }
                             IndexWarmersMetaData warmers = indexMetaData.custom(IndexWarmersMetaData.TYPE);
                             if (warmers == null) {

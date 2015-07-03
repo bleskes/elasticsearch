@@ -19,6 +19,7 @@
 
 package org.elasticsearch.action.admin.indices.exists.indices;
 
+import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.IndicesOptions;
@@ -29,7 +30,6 @@ import org.elasticsearch.cluster.block.ClusterBlockException;
 import org.elasticsearch.cluster.block.ClusterBlockLevel;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.indices.IndexMissingException;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
 
@@ -69,7 +69,7 @@ public class TransportIndicesExistsAction extends TransportMasterNodeReadAction<
             // Similar as the previous behaviour, but now also aliases and wildcards are supported.
             clusterService.state().metaData().concreteIndices(request.indicesOptions(), request.indices());
             exists = true;
-        } catch (IndexMissingException e) {
+        } catch (ResourceNotFoundException e) {
             exists = false;
         }
         listener.onResponse(new IndicesExistsResponse(exists));

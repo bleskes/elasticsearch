@@ -22,6 +22,7 @@ package org.elasticsearch.cluster.metadata;
 import com.carrotsearch.hppc.cursors.ObjectCursor;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.admin.indices.alias.IndicesAliasesClusterStateUpdateRequest;
 import org.elasticsearch.cluster.AckedClusterStateUpdateTask;
@@ -33,10 +34,8 @@ import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.component.AbstractComponent;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.index.Index;
 import org.elasticsearch.index.mapper.MapperService;
 import org.elasticsearch.index.IndexService;
-import org.elasticsearch.indices.IndexMissingException;
 import org.elasticsearch.indices.IndicesService;
 
 import java.util.List;
@@ -76,7 +75,7 @@ public class MetaDataIndexAliasesService extends AbstractComponent {
                     for (AliasAction aliasAction : request.actions()) {
                         aliasValidator.validateAliasAction(aliasAction, currentState.metaData());
                         if (!currentState.metaData().hasIndex(aliasAction.index())) {
-                            throw new IndexMissingException(new Index(aliasAction.index()));
+                            throw new ResourceNotFoundException(aliasAction.index(), "index not found");
                         }
                     }
 
@@ -85,7 +84,7 @@ public class MetaDataIndexAliasesService extends AbstractComponent {
                     for (AliasAction aliasAction : request.actions()) {
                         IndexMetaData indexMetaData = builder.get(aliasAction.index());
                         if (indexMetaData == null) {
-                            throw new IndexMissingException(new Index(aliasAction.index()));
+                            throw new ResourceNotFoundException(aliasAction.index(), "index not found");
                         }
                         // TODO: not copy (putAll)
                         IndexMetaData.Builder indexMetaDataBuilder = IndexMetaData.builder(indexMetaData);

@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterators;
 
 import org.apache.lucene.util.IOUtils;
+import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.Strings;
@@ -173,10 +174,10 @@ public class IndexService extends AbstractIndexComponent implements IndexCompone
     /**
      * Return the shard with the provided id, or throw an exception if it doesn't exist.
      */
-    public IndexShard shardSafe(int shardId) throws IndexShardMissingException {
+    public IndexShard shardSafe(int shardId) {
         IndexShard indexShard = shard(shardId);
         if (indexShard == null) {
-            throw new IndexShardMissingException(new ShardId(index, shardId));
+            throw new ResourceNotFoundException(new ShardId(index, shardId), "no such shard");
         }
         return indexShard;
     }
@@ -242,10 +243,10 @@ public class IndexService extends AbstractIndexComponent implements IndexCompone
     /**
      * Return the shard injector for the provided id, or throw an exception if there is no such shard.
      */
-    public Injector shardInjectorSafe(int shardId) throws IndexShardMissingException {
+    public Injector shardInjectorSafe(int shardId)  {
         Tuple<IndexShard, Injector> tuple = shards.get(shardId);
         if (tuple == null) {
-            throw new IndexShardMissingException(new ShardId(index, shardId));
+            throw new ResourceNotFoundException(new ShardId(index, shardId), "no such shard");
         }
         return tuple.v2();
     }

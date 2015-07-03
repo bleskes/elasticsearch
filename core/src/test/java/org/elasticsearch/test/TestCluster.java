@@ -20,12 +20,12 @@
 package org.elasticsearch.test;
 
 import com.carrotsearch.hppc.ObjectArrayList;
+import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.action.admin.cluster.state.ClusterStateResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
-import org.elasticsearch.indices.IndexMissingException;
 import org.elasticsearch.indices.IndexTemplateMissingException;
 import org.elasticsearch.repositories.RepositoryMissingException;
 
@@ -135,7 +135,7 @@ public abstract class TestCluster implements Iterable<Client>, Closeable {
         if (size() > 0) {
             try {
                 assertAcked(client().admin().indices().prepareDelete(indices));
-            } catch (IndexMissingException e) {
+            } catch (ResourceNotFoundException e) {
                 // ignore
             } catch (IllegalArgumentException e) {
                 // Happens if `action.destructive_requires_name` is set to true

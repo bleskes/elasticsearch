@@ -19,6 +19,7 @@
 package org.elasticsearch.action.admin.indices.warmer.delete;
 
 import com.google.common.collect.Lists;
+import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.master.TransportMasterNodeAction;
@@ -33,7 +34,6 @@ import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.regex.Regex;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.index.Index;
-import org.elasticsearch.indices.IndexMissingException;
 import org.elasticsearch.search.warmer.IndexWarmerMissingException;
 import org.elasticsearch.search.warmer.IndexWarmersMetaData;
 import org.elasticsearch.threadpool.ThreadPool;
@@ -94,7 +94,7 @@ public class TransportDeleteWarmerAction extends TransportMasterNodeAction<Delet
                 for (String index : concreteIndices) {
                     IndexMetaData indexMetaData = currentState.metaData().index(index);
                     if (indexMetaData == null) {
-                        throw new IndexMissingException(new Index(index));
+                        throw new ResourceNotFoundException(index, "index not found");
                     }
                     IndexWarmersMetaData warmers = indexMetaData.custom(IndexWarmersMetaData.TYPE);
                     if (warmers != null) {
@@ -130,7 +130,7 @@ public class TransportDeleteWarmerAction extends TransportMasterNodeAction<Delet
                     for (String index : concreteIndices) {
                         IndexMetaData indexMetaData = currentState.metaData().index(index);
                         if (indexMetaData == null) {
-                            throw new IndexMissingException(new Index(index));
+                            throw new ResourceNotFoundException(index, "index not found");
                         }
                         IndexWarmersMetaData warmers = indexMetaData.custom(IndexWarmersMetaData.TYPE);
                         if (warmers != null) {

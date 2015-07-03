@@ -27,6 +27,7 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.*;
 
 import org.apache.lucene.util.CollectionUtil;
+import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.cluster.*;
 import org.elasticsearch.cluster.DiffableUtils.KeyedReader;
@@ -48,7 +49,6 @@ import org.elasticsearch.common.xcontent.*;
 import org.elasticsearch.discovery.DiscoverySettings;
 import org.elasticsearch.index.Index;
 import org.elasticsearch.indices.IndexClosedException;
-import org.elasticsearch.indices.IndexMissingException;
 import org.elasticsearch.indices.recovery.RecoverySettings;
 import org.elasticsearch.indices.store.IndicesStore;
 import org.elasticsearch.indices.ttl.IndicesTTLService;
@@ -652,13 +652,13 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData> {
      * @param indicesOptions   how the aliases or indices need to be resolved to concrete indices
      * @param aliasesOrIndices the aliases or indices to be resolved to concrete indices
      * @return the obtained concrete indices
-     * @throws IndexMissingException if one of the aliases or indices is missing and the provided indices options
+     * @throws ResourceNotFoundException if one of the aliases or indices is missing and the provided indices options
      * don't allow such a case, or if the final result of the indices resolution is no indices and the indices options
      * don't allow such a case.
      * @throws IllegalArgumentException if one of the aliases resolve to multiple indices and the provided
      * indices options don't allow such a case.
      */
-    public String[] concreteIndices(IndicesOptions indicesOptions, String... aliasesOrIndices) throws IndexMissingException, IllegalArgumentException {
+    public String[] concreteIndices(IndicesOptions indicesOptions, String... aliasesOrIndices) {
         if (indicesOptions.expandWildcardsOpen() || indicesOptions.expandWildcardsClosed()) {
             if (isAllIndices(aliasesOrIndices)) {
                 String[] concreteIndices;
@@ -671,7 +671,7 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData> {
                 }
 
                 if (!indicesOptions.allowNoIndices() && concreteIndices.length == 0) {
-                    throw new IndexMissingException(new Index("_all"));
+                    throw new ResourceNotFoundException("_all", "index not found");
                 }
                 return concreteIndices;
             }
@@ -729,7 +729,7 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData> {
         }
 
         if (!indicesOptions.allowNoIndices() && actualIndices.isEmpty()) {
-            throw new IndexMissingException(new Index(Arrays.toString(aliasesOrIndices)));
+            throw new ResourceNotFoundException(Arrays.toString(aliasesOrIndices), "indices or aliase not found");
         }
         return actualIndices.toArray(new String[actualIndices.size()]);
     }
@@ -743,10 +743,10 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData> {
      * @param indexOrAlias   the index or alias to be resolved to concrete index
      * @param indicesOptions the indices options to be used for the index resolution
      * @return the concrete index obtained as a result of the index resolution
-     * @throws IndexMissingException                 if the index or alias provided doesn't exist
+     * @throws ResourceNotFoundException if the index or alias provided doesn't exist
      * @throws IllegalArgumentException if the index resolution lead to more than one index
      */
-    public String concreteSingleIndex(String indexOrAlias, IndicesOptions indicesOptions) throws IndexMissingException, IllegalArgumentException {
+    public String concreteSingleIndex(String indexOrAlias, IndicesOptions indicesOptions) throws IllegalArgumentException {
         String[] indices = concreteIndices(indicesOptions, indexOrAlias);
         if (indices.length != 1) {
             throw new IllegalArgumentException("unable to return a single index as the index and options provided got resolved to multiple indices");
@@ -754,7 +754,7 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData> {
         return indices[0];
     }
 
-    private String[] concreteIndices(String aliasOrIndex, IndicesOptions options, boolean failNoIndices) throws IndexMissingException, IllegalArgumentException {
+    private String[] concreteIndices(String aliasOrIndex, IndicesOptions options, boolean failNoIndices) throws IllegalArgumentException {
         boolean failClosed = options.forbidClosedIndices() && !options.ignoreUnavailable();
 
         // a quick check, if this is an actual index, if so, return it
@@ -773,7 +773,7 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData> {
         // not an actual index, fetch from an alias
         String[] indices = aliasAndIndexToIndexMap.getOrDefault(aliasOrIndex, Strings.EMPTY_ARRAY);
         if (indices.length == 0 && failNoIndices) {
-            throw new IndexMissingException(new Index(aliasOrIndex));
+            throw new ResourceNotFoundException(aliasOrIndex, "index not found");
         }
         if (indices.length > 1 && !options.allowAliasesToMultipleIndices()) {
             throw new IllegalArgumentException("Alias [" + aliasOrIndex + "] has more than one indices associated with it [" + Arrays.toString(indices) + "], can't execute a single index op");
@@ -868,7 +868,7 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData> {
             }
             if (!Regex.isSimpleMatchPattern(aliasOrIndex)) {
                 if (!indicesOptions.ignoreUnavailable() && !aliasAndIndexToIndexMap.containsKey(aliasOrIndex)) {
-                    throw new IndexMissingException(new Index(aliasOrIndex));
+                    throw new ResourceNotFoundException(aliasOrIndex, "index not found");
                 }
                 if (result != null) {
                     if (add) {
@@ -920,14 +920,14 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData> {
                 }
             }
             if (!found && !indicesOptions.allowNoIndices()) {
-                throw new IndexMissingException(new Index(aliasOrIndex));
+                throw new ResourceNotFoundException(aliasOrIndex, "alias or index not found");
             }
         }
         if (result == null) {
             return aliasesOrIndices;
         }
         if (result.isEmpty() && !indicesOptions.allowNoIndices()) {
-            throw new IndexMissingException(new Index(Arrays.toString(aliasesOrIndices)));
+            throw new ResourceNotFoundException(Arrays.toString(aliasesOrIndices), "aliases or indices not found");
         }
         return result.toArray(new String[result.size()]);
     }
@@ -1009,7 +1009,7 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData> {
             IndexMetaData indexMetaData = this.indices.get(index);
             if (indexMetaData == null) {
                 // Shouldn't happen
-                throw new IndexMissingException(new Index(index));
+                throw new ResourceNotFoundException(index, "index not found");
             }
             AliasMetaData aliasMetaData = indexMetaData.aliases().get(alias);
             boolean filteringRequired = aliasMetaData != null && aliasMetaData.filteringRequired();
@@ -1027,7 +1027,7 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData> {
             IndexMetaData indexMetaData = this.indices.get(index);
             if (indexMetaData == null) {
                 // Shouldn't happen
-                throw new IndexMissingException(new Index(index));
+                throw new ResourceNotFoundException(index, "index not found");
             }
 
             AliasMetaData aliasMetaData = indexMetaData.aliases().get(alias);
@@ -1477,7 +1477,7 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData> {
             for (String index : indices) {
                 IndexMetaData indexMetaData = this.indices.get(index);
                 if (indexMetaData == null) {
-                    throw new IndexMissingException(new Index(index));
+                    throw new ResourceNotFoundException(index, "index not found");
                 }
                 put(IndexMetaData.builder(indexMetaData)
                         .settings(settingsBuilder().put(indexMetaData.settings()).put(settings)));
@@ -1492,7 +1492,7 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData> {
             for (String index : indices) {
                 IndexMetaData indexMetaData = this.indices.get(index);
                 if (indexMetaData == null) {
-                    throw new IndexMissingException(new Index(index));
+                    throw new ResourceNotFoundException(index, "index not found");
                 }
                 put(IndexMetaData.builder(indexMetaData).numberOfReplicas(numberOfReplicas));
             }

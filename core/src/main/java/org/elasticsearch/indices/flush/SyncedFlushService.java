@@ -19,6 +19,7 @@
 package org.elasticsearch.indices.flush;
 
 import org.elasticsearch.ElasticsearchException;
+import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.admin.indices.flush.FlushRequest;
 import org.elasticsearch.action.support.IndicesOptions;
@@ -38,13 +39,10 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.concurrent.ConcurrentCollections;
 import org.elasticsearch.common.util.concurrent.CountDown;
 import org.elasticsearch.index.IndexService;
-import org.elasticsearch.index.IndexShardMissingException;
 import org.elasticsearch.index.engine.Engine;
 import org.elasticsearch.index.shard.IndexShard;
-import org.elasticsearch.index.shard.IndexShardException;
 import org.elasticsearch.index.shard.ShardId;
 import org.elasticsearch.indices.IndexClosedException;
-import org.elasticsearch.indices.IndexMissingException;
 import org.elasticsearch.indices.IndicesLifecycle;
 import org.elasticsearch.indices.IndicesService;
 import org.elasticsearch.threadpool.ThreadPool;
@@ -236,11 +234,11 @@ public class SyncedFlushService extends AbstractComponent {
             if (index != null && index.state() == IndexMetaData.State.CLOSE) {
                 throw new IndexClosedException(shardId.index());
             }
-            throw new IndexMissingException(shardId.index());
+            throw new ResourceNotFoundException(shardId.index().getName(), "index not found");
         }
         final IndexShardRoutingTable shardRoutingTable = indexRoutingTable.shard(shardId.id());
         if (shardRoutingTable == null) {
-            throw new IndexShardMissingException(shardId);
+            throw new ResourceNotFoundException(shardId, "no such shard");
         }
         return shardRoutingTable;
     }
@@ -426,7 +424,7 @@ public class SyncedFlushService extends AbstractComponent {
         IndexService indexService = indicesService.indexServiceSafe(request.shardId().getIndex());
         IndexShard indexShard = indexService.shardSafe(request.shardId().id());
         if (indexShard.routingEntry().primary() == false) {
-            throw new IndexShardException(request.shardId(), "expected a primary shard");
+            throw new IllegalStateException("[" + request.shardId() +"] expected a primary shard");
         }
         int opCount = indexShard.getOperationsCount();
         logger.trace("{} in flight operations sampled at [{}]", request.shardId(), opCount);

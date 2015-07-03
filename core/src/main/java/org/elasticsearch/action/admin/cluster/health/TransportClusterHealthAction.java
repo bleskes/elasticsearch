@@ -19,6 +19,7 @@
 
 package org.elasticsearch.action.admin.cluster.health;
 
+import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.IndicesOptions;
@@ -31,7 +32,6 @@ import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.gateway.GatewayAllocator;
-import org.elasticsearch.indices.IndexMissingException;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
 
@@ -201,7 +201,7 @@ public class TransportClusterHealthAction extends TransportMasterNodeReadAction<
             try {
                 clusterState.metaData().concreteIndices(IndicesOptions.strictExpand(), request.indices());
                 waitForCounter++;
-            } catch (IndexMissingException e) {
+            } catch (ResourceNotFoundException e) {
                 response.status = ClusterHealthStatus.RED; // no indices, make sure its RED
                 // missing indices, wait a bit more...
             }
@@ -267,7 +267,7 @@ public class TransportClusterHealthAction extends TransportMasterNodeReadAction<
         String[] concreteIndices;
         try {
             concreteIndices = clusterState.metaData().concreteIndices(request.indicesOptions(), request.indices());
-        } catch (IndexMissingException e) {
+        } catch (ResourceNotFoundException e) {
             // one of the specified indices is not there - treat it as RED.
             ClusterHealthResponse response = new ClusterHealthResponse(clusterName.value(), Strings.EMPTY_ARRAY, clusterState,
                     numberOfPendingTasks, numberOfInFlightFetch, UnassignedInfo.getNumberOfDelayedUnassigned(settings, clusterState),

@@ -20,6 +20,7 @@
 package org.elasticsearch.rest.action.admin.indices.mapping.get;
 
 import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
+import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsRequest;
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsResponse;
 import org.elasticsearch.action.support.IndicesOptions;
@@ -32,7 +33,6 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentBuilderString;
 import org.elasticsearch.index.Index;
-import org.elasticsearch.indices.IndexMissingException;
 import org.elasticsearch.indices.TypeMissingException;
 import org.elasticsearch.rest.*;
 import org.elasticsearch.rest.action.support.RestBuilderListener;
@@ -71,7 +71,7 @@ public class RestGetMappingAction extends BaseRestHandler {
                     if (indices.length != 0 && types.length != 0) {
                         return new BytesRestResponse(OK, builder.endObject());
                     } else if (indices.length != 0) {
-                        return new BytesRestResponse(channel, new IndexMissingException(new Index(indices[0])));
+                        return new BytesRestResponse(channel, new ResourceNotFoundException(indices[0], "no such index"));
                     } else if (types.length != 0) {
                         return new BytesRestResponse(channel, new TypeMissingException(new Index("_all"), types[0]));
                     } else {

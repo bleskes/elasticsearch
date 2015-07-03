@@ -19,6 +19,7 @@
 
 package org.elasticsearch.cluster.metadata;
 
+import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.action.support.master.MasterNodeRequest;
 import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.cluster.ClusterState;
@@ -34,8 +35,6 @@ import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.util.concurrent.FutureUtils;
-import org.elasticsearch.index.Index;
-import org.elasticsearch.indices.IndexMissingException;
 import org.elasticsearch.threadpool.ThreadPool;
 
 import java.util.concurrent.ScheduledFuture;
@@ -116,7 +115,7 @@ public class MetaDataDeleteIndexService extends AbstractComponent {
             @Override
             public ClusterState execute(final ClusterState currentState) {
                 if (!currentState.metaData().hasConcreteIndex(request.index)) {
-                    throw new IndexMissingException(new Index(request.index));
+                    throw new ResourceNotFoundException(request.index, "index not found");
                 }
 
                 logger.info("[{}] deleting index", request.index);

@@ -21,6 +21,7 @@ package org.elasticsearch.action.percolate;
 
 import com.carrotsearch.hppc.IntArrayList;
 import org.elasticsearch.ExceptionsHelper;
+import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.UnavailableShardsException;
 import org.elasticsearch.action.get.*;
@@ -37,7 +38,6 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.concurrent.AtomicArray;
 import org.elasticsearch.index.engine.DocumentMissingException;
 import org.elasticsearch.index.shard.ShardId;
-import org.elasticsearch.indices.IndexMissingException;
 import org.elasticsearch.percolator.PercolatorService;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
@@ -165,7 +165,7 @@ public class TransportMultiPercolateAction extends HandledTransportAction<MultiP
                     String[] concreteIndices;
                     try {
                          concreteIndices = clusterState.metaData().concreteIndices(percolateRequest.indicesOptions(), percolateRequest.indices());
-                    } catch (IndexMissingException e) {
+                    } catch (ResourceNotFoundException e) {
                         reducedResponses.set(slot, e);
                         responsesByItemAndShard.set(slot, new AtomicReferenceArray(0));
                         expectedOperationsPerItem.set(slot, new AtomicInteger(0));
