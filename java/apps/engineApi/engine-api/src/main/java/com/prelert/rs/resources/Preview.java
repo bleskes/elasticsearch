@@ -81,7 +81,7 @@ public class Preview extends ResourceWithJobManager
     @POST
     @Path("/{jobId}")
     @Consumes({MediaType.APPLICATION_FORM_URLENCODED, MediaType.APPLICATION_JSON,
-        MediaType.APPLICATION_OCTET_STREAM})
+        MediaType.APPLICATION_OCTET_STREAM, MediaType.TEXT_PLAIN})
     @Produces(MediaType.TEXT_PLAIN)
     public Response streamData(@Context HttpHeaders headers,
             @PathParam("jobId") String jobId, InputStream input)
