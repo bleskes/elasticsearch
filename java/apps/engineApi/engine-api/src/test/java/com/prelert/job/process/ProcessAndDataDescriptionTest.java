@@ -27,6 +27,7 @@
 
 package com.prelert.job.process;
 
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -42,6 +43,7 @@ import org.junit.Test;
 
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
+import com.prelert.job.process.ProcessAndDataDescription.Action;
 import com.prelert.job.process.results.ResultsReader;
 import com.prelert.job.status.StatusReporter;
 import com.prelert.job.transform.TransformConfig;
@@ -53,28 +55,13 @@ public class ProcessAndDataDescriptionTest
     @Test
     public void testDeleteAssociatedFiles()
     {
-        Process process = mock(Process.class);
-        InputStream errorStream = mock(InputStream.class);
-        when(process.getErrorStream()).thenReturn(errorStream);
-
-        List<TransformConfig> transforms = new ArrayList<>();
-        TransformConfigs transformConfigs = new TransformConfigs(transforms);
         Logger logger = mock(Logger.class);
 
         File file1 = createFile("file1", true);
         File file2 = createFile("file2", false);
         List<File> filesToDelete = Arrays.asList(file1, file2);
-        ProcessAndDataDescription processAndDataDescription = new ProcessAndDataDescription(
-                process,
-                "foo",
-                new DataDescription(),
-                60L,
-                new AnalysisConfig(),
-                transformConfigs,
-                logger,
-                mock(StatusReporter.class),
-                mock(ResultsReader.class),
-                filesToDelete);
+
+        ProcessAndDataDescription processAndDataDescription = createProcess(filesToDelete, logger);
 
         processAndDataDescription.deleteAssociatedFiles();
 
@@ -91,5 +78,60 @@ public class ProcessAndDataDescriptionTest
         when(file.toString()).thenCallRealMethod();
         when(file.delete()).thenReturn(deletesSuccessfully);
         return file;
+    }
+
+    private ProcessAndDataDescription createProcess(List<File> filesToDelete, Logger logger)
+    {
+        Process process = mock(Process.class);
+        InputStream errorStream = mock(InputStream.class);
+        when(process.getErrorStream()).thenReturn(errorStream);
+
+        List<TransformConfig> transforms = new ArrayList<>();
+        TransformConfigs transformConfigs = new TransformConfigs(transforms);
+
+        ProcessAndDataDescription processAndDataDescription = new ProcessAndDataDescription(
+                process,
+                "foo",
+                new DataDescription(),
+                60L,
+                new AnalysisConfig(),
+                transformConfigs,
+                logger,
+                mock(StatusReporter.class),
+                mock(ResultsReader.class),
+                filesToDelete);
+
+        return processAndDataDescription;
+    }
+
+    @Test
+    public void testAcquireRelease()
+    {
+        Logger logger = mock(Logger.class);
+
+        File file1 = createFile("file1", true);
+        File file2 = createFile("file2", false);
+        List<File> filesToDelete = Arrays.asList(file1, file2);
+
+        ProcessAndDataDescription processAndDataDescription = createProcess(filesToDelete, logger);
+        assertEquals(Action.NONE, processAndDataDescription.getAction());
+
+        assertTrue(processAndDataDescription.tryAcquireGuard(Action.WRITING));
+        assertEquals(Action.WRITING, processAndDataDescription.getAction());
+
+        assertTrue(processAndDataDescription.releaseGuard());
+        assertEquals(Action.NONE, processAndDataDescription.getAction());
+
+
+        assertTrue(processAndDataDescription.tryAcquireGuard(Action.CLOSING));
+        assertEquals(Action.CLOSING, processAndDataDescription.getAction());
+
+        assertFalse(processAndDataDescription.tryAcquireGuard(Action.WRITING));
+        assertFalse(processAndDataDescription.tryAcquireGuard(Action.FLUSHING));
+
+        assertEquals(Action.CLOSING, processAndDataDescription.getAction());
+
+        assertTrue(processAndDataDescription.releaseGuard());
+        assertEquals(Action.NONE, processAndDataDescription.getAction());
     }
 }
