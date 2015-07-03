@@ -18,6 +18,7 @@
 package org.elasticsearch.integration;
 
 import org.apache.lucene.util.LuceneTestCase;
+import org.elasticsearch.ElasticsearchSecurityException;
 import org.elasticsearch.action.get.MultiGetResponse;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.MultiSearchResponse;
@@ -29,12 +30,12 @@ import org.elasticsearch.shield.authc.support.Hasher;
 import org.elasticsearch.shield.authc.support.SecuredString;
 import org.elasticsearch.shield.authc.support.SecuredStringTests;
 import org.elasticsearch.shield.authc.support.UsernamePasswordToken;
-import org.elasticsearch.shield.authz.AuthorizationException;
 import org.elasticsearch.test.ShieldIntegrationTest;
 import org.junit.Test;
 
 import static org.elasticsearch.client.Requests.searchRequest;
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
+import static org.elasticsearch.test.ShieldTestsUtils.assertAuthorizationException;
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertNoFailures;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
@@ -110,7 +111,7 @@ public class SearchGetAndSuggestPermissionsTests extends ShieldIntegrationTest {
                     .putHeader(UsernamePasswordToken.BASIC_AUTH_HEADER, userHeader("suggest_user", "passwd"))
                     .get();
             fail("a user with only a suggest privilege cannot execute search");
-        } catch (AuthorizationException e) {
+        } catch (ElasticsearchSecurityException e) {
             logger.error("failed to search", e);
             // expected
         }
@@ -136,9 +137,10 @@ public class SearchGetAndSuggestPermissionsTests extends ShieldIntegrationTest {
                     .putHeader(UsernamePasswordToken.BASIC_AUTH_HEADER, userHeader("search_user", "passwd"))
                     .get();
             fail("a user with only search privilege should not be authorized for a get request");
-        } catch (AuthorizationException ae) {
+        } catch (ElasticsearchSecurityException e) {
             // expected
-            logger.error("could not get document", ae);
+            assertAuthorizationException(e);
+            logger.error("could not get document", e);
         }
     }
 
@@ -169,9 +171,10 @@ public class SearchGetAndSuggestPermissionsTests extends ShieldIntegrationTest {
                     .putHeader(UsernamePasswordToken.BASIC_AUTH_HEADER, userHeader("search_user", "passwd"))
                     .get();
             fail("a user with only a search privilege should not be able to execute the mget API");
-        } catch (AuthorizationException ae) {
+        } catch (ElasticsearchSecurityException e) {
             // expected
-            logger.error("could not mget documents", ae);
+            assertAuthorizationException(e);
+            logger.error("could not mget documents", e);
         }
     }
 

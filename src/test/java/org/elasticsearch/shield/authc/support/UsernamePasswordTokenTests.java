@@ -18,16 +18,16 @@
 package org.elasticsearch.shield.authc.support;
 
 import com.google.common.base.Charsets;
+import org.elasticsearch.ElasticsearchSecurityException;
 import org.elasticsearch.common.Base64;
 import org.elasticsearch.rest.RestRequest;
-import org.elasticsearch.shield.authc.AuthenticationException;
 import org.elasticsearch.test.ElasticsearchTestCase;
 import org.elasticsearch.transport.TransportRequest;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import static org.elasticsearch.shield.test.ShieldAssertions.assertContainsWWWAuthenticateHeader;
+import static org.elasticsearch.test.ShieldTestsUtils.assertAuthenticationException;
 import static org.hamcrest.Matchers.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -77,8 +77,9 @@ public class UsernamePasswordTokenTests extends ElasticsearchTestCase {
             try {
                 UsernamePasswordToken.extractToken(request, null);
                 fail("Expected an authentication exception for invalid basic auth token [" + value + "]");
-            } catch (AuthenticationException ae) {
+            } catch (ElasticsearchSecurityException e) {
                 // expected
+                assertAuthenticationException(e);
             }
         }
     }
@@ -91,8 +92,8 @@ public class UsernamePasswordTokenTests extends ElasticsearchTestCase {
         try {
             UsernamePasswordToken.extractToken(request, null);
             fail("Expected exception but did not happen");
-        } catch (AuthenticationException e) {
-            assertContainsWWWAuthenticateHeader(e);
+        } catch (ElasticsearchSecurityException e) {
+            assertAuthenticationException(e);
         }
     }
 
@@ -113,7 +114,7 @@ public class UsernamePasswordTokenTests extends ElasticsearchTestCase {
 
     @Test
     public void testExtractTokenRest_WithInvalidToken1() throws Exception {
-        thrown.expect(AuthenticationException.class);
+        thrown.expect(ElasticsearchSecurityException.class);
         RestRequest request = mock(RestRequest.class);
         when(request.header(UsernamePasswordToken.BASIC_AUTH_HEADER)).thenReturn("invalid");
         UsernamePasswordToken.extractToken(request, null);
@@ -121,7 +122,7 @@ public class UsernamePasswordTokenTests extends ElasticsearchTestCase {
 
     @Test
     public void testExtractTokenRest_WithInvalidToken2() throws Exception {
-        thrown.expect(AuthenticationException.class);
+        thrown.expect(ElasticsearchSecurityException.class);
         RestRequest request = mock(RestRequest.class);
         when(request.header(UsernamePasswordToken.BASIC_AUTH_HEADER)).thenReturn("Basic");
         UsernamePasswordToken.extractToken(request, null);

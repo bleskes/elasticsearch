@@ -18,6 +18,7 @@
 package org.elasticsearch.integration;
 
 import org.apache.lucene.util.LuceneTestCase;
+import org.elasticsearch.ElasticsearchSecurityException;
 import org.elasticsearch.action.admin.indices.template.get.GetIndexTemplatesResponse;
 import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateResponse;
 import org.elasticsearch.client.Client;
@@ -26,13 +27,13 @@ import org.elasticsearch.shield.authc.support.Hasher;
 import org.elasticsearch.shield.authc.support.SecuredString;
 import org.elasticsearch.shield.authc.support.SecuredStringTests;
 import org.elasticsearch.shield.authc.support.UsernamePasswordToken;
-import org.elasticsearch.shield.authz.AuthorizationException;
 import org.elasticsearch.test.ShieldIntegrationTest;
 import org.junit.Test;
 
 import java.util.List;
 
 import static org.elasticsearch.shield.authc.support.UsernamePasswordToken.basicAuthHeaderValue;
+import static org.elasticsearch.test.ShieldTestsUtils.assertAuthorizationException;
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertAcked;
 import static org.hamcrest.Matchers.hasSize;
 
@@ -125,8 +126,9 @@ public class PermissionPrecedenceTests extends ShieldIntegrationTest {
                     .putHeader(UsernamePasswordToken.BASIC_AUTH_HEADER, basicAuthHeaderValue("user", transportClientPassword()))
                     .get();
             fail("expected an authorization exception as template APIs should require cluster ALL permission");
-        } catch (AuthorizationException ae) {
-            // expected;
+        } catch (ElasticsearchSecurityException e) {
+            // expected
+            assertAuthorizationException(e);
         }
 
         try {
@@ -134,8 +136,9 @@ public class PermissionPrecedenceTests extends ShieldIntegrationTest {
                     .putHeader("Authorization", basicAuthHeaderValue("user", SecuredStringTests.build("test123")))
                     .get();
             fail("expected an authorization exception as template APIs should require cluster ALL permission");
-        } catch (AuthorizationException ae) {
+        } catch (ElasticsearchSecurityException e) {
             // expected
+            assertAuthorizationException(e);
         }
     }
 }

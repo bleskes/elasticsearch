@@ -18,6 +18,7 @@
 package org.elasticsearch.shield.authz.indicesresolver;
 
 import org.apache.lucene.util.LuceneTestCase;
+import org.elasticsearch.ElasticsearchSecurityException;
 import org.elasticsearch.action.ActionRequestBuilder;
 import org.elasticsearch.action.admin.indices.alias.Alias;
 import org.elasticsearch.action.search.MultiSearchResponse;
@@ -26,7 +27,6 @@ import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.client.Requests;
 import org.elasticsearch.indices.IndexMissingException;
 import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.shield.authz.AuthorizationException;
 import org.elasticsearch.test.ShieldIntegrationTest;
 import org.elasticsearch.test.ShieldSettingsSource;
 import org.junit.Test;
@@ -34,6 +34,7 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.elasticsearch.test.ShieldTestsUtils.assertAuthorizationException;
 import static org.hamcrest.CoreMatchers.*;
 
 @LuceneTestCase.AwaitsFix(bugUrl = "https://github.com/elastic/elasticsearch-shield/issues/947")
@@ -209,8 +210,8 @@ public class IndicesResolverIntegrationTests extends ShieldIntegrationTest {
         try {
             actionRequestBuilder.get();
             fail("search should fail due to attempt to access non authorized indices");
-        } catch(AuthorizationException e) {
-            assertThat(e.getMessage(), containsString("is unauthorized for user ["));
+        } catch(ElasticsearchSecurityException e) {
+            assertAuthorizationException(e, containsString("is unauthorized for user ["));
         }
     }
 

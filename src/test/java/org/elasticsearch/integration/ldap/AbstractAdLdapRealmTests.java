@@ -18,6 +18,7 @@
 package org.elasticsearch.integration.ldap;
 
 import org.elasticsearch.ElasticsearchException;
+import org.elasticsearch.ElasticsearchSecurityException;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.common.logging.ESLoggerFactory;
@@ -27,7 +28,6 @@ import org.elasticsearch.shield.authc.ldap.LdapRealm;
 import org.elasticsearch.shield.authc.ldap.support.LdapSearchScope;
 import org.elasticsearch.shield.authc.support.SecuredString;
 import org.elasticsearch.shield.authc.support.UsernamePasswordToken;
-import org.elasticsearch.shield.authz.AuthorizationException;
 import org.elasticsearch.shield.transport.netty.ShieldNettyTransport;
 import org.elasticsearch.test.ElasticsearchIntegrationTest;
 import org.elasticsearch.test.ShieldIntegrationTest;
@@ -152,8 +152,8 @@ abstract public class AbstractAdLdapRealmTests extends ShieldIntegrationTest {
                     .putHeader(BASIC_AUTH_HEADER, userHeader(user, PASSWORD))
                     .execute().actionGet();
             fail("Write access to index " + index + " should not be allowed for user " + user);
-        } catch (AuthorizationException e) {
-
+        } catch (ElasticsearchSecurityException e) {
+            // expected
         }
         refresh();
     }

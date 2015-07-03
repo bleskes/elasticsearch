@@ -24,7 +24,6 @@ import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.shield.ShieldSettingsFilter;
-import org.elasticsearch.shield.authc.AuthenticationException;
 import org.elasticsearch.shield.authc.RealmConfig;
 import org.elasticsearch.shield.authc.ldap.support.LdapSearchScope;
 import org.elasticsearch.shield.authc.ldap.support.LdapSession;
@@ -32,6 +31,7 @@ import org.elasticsearch.shield.authc.ldap.support.LdapSession.GroupsResolver;
 import org.elasticsearch.shield.authc.ldap.support.SessionFactory;
 import org.elasticsearch.shield.authc.support.SecuredString;
 import org.elasticsearch.shield.ssl.ClientSSLService;
+import org.elasticsearch.shield.support.Exceptions;
 
 import javax.net.SocketFactory;
 import java.io.IOException;
@@ -100,6 +100,7 @@ public class LdapUserSearchSessionFactory extends SessionFactory {
             }
             return pool;
         } catch (LDAPException e) {
+            // TODO consider changing this to IOException and bubble it up
             throw new ElasticsearchException("unable to connect to any LDAP servers", e);
         }
     }
@@ -144,13 +145,13 @@ public class LdapUserSearchSessionFactory extends SessionFactory {
         try {
             SearchResultEntry entry = searchForEntry(connectionPool, request, logger);
             if (entry == null) {
-                throw new AuthenticationException("failed to find user [" + user + "] with search base [" + userSearchBaseDn + "] scope [" + scope.toString().toLowerCase(Locale.ENGLISH) +"]");
+                throw Exceptions.authenticationError("failed to find user [{}] with search base [{}] scope [{}]", user, userSearchBaseDn, scope.toString().toLowerCase(Locale.ENGLISH));
             }
             String dn = entry.getDN();
             tryBind(dn, password);
             return new LdapSession(logger, connectionPool, dn, groupResolver, timeout);
         } catch (LDAPException e) {
-            throw new AuthenticationException("failed to authenticate user [" + user + "]", e);
+            throw Exceptions.authenticationError("failed to authenticate user [{}]", e, user);
         }
     }
 
@@ -165,7 +166,7 @@ public class LdapUserSearchSessionFactory extends SessionFactory {
         try {
             bindConnection.bind(dn, new String(password.internalChars()));
         } catch (LDAPException e) {
-            throw new AuthenticationException("failed LDAP authentication for DN [" + dn + "]", e);
+            throw Exceptions.authenticationError("failed LDAP authentication for DN [{}]", e, dn);
         } finally {
             bindConnection.close();
         }

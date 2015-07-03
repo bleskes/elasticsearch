@@ -18,11 +18,11 @@
 package org.elasticsearch.shield.authc.ldap;
 
 import com.unboundid.ldap.sdk.*;
+import org.elasticsearch.ElasticsearchSecurityException;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.env.Environment;
-import org.elasticsearch.shield.authc.AuthenticationException;
 import org.elasticsearch.shield.authc.RealmConfig;
 import org.elasticsearch.shield.authc.activedirectory.ActiveDirectorySessionFactoryTests;
 import org.elasticsearch.shield.authc.ldap.support.LdapSearchScope;
@@ -41,6 +41,7 @@ import java.util.List;
 import java.util.Locale;
 
 import static org.elasticsearch.common.settings.Settings.settingsBuilder;
+import static org.elasticsearch.test.ShieldTestsUtils.assertAuthenticationException;
 import static org.hamcrest.Matchers.*;
 
 public class LdapUserSearchSessionFactoryTests extends LdapTest {
@@ -112,8 +113,8 @@ public class LdapUserSearchSessionFactoryTests extends LdapTest {
 
         try (LdapSession ldap = sessionFactory.session(user, userPass)) {
             fail("the user should not have been found");
-        } catch (AuthenticationException e) {
-            assertThat(e.getMessage(), containsString("failed to find user [William Bush] with search base [o=sevenSeas] scope [base]"));
+        } catch (ElasticsearchSecurityException e) {
+            assertAuthenticationException(e, containsString("failed to find user [William Bush] with search base [o=sevenSeas] scope [base]"));
         } finally {
             sessionFactory.shutdown();
         }
@@ -167,8 +168,8 @@ public class LdapUserSearchSessionFactoryTests extends LdapTest {
 
         try (LdapSession ldap = sessionFactory.session(user, userPass)) {
             fail("the user should not have been found");
-        } catch (AuthenticationException e) {
-            assertThat(e.getMessage(), containsString("failed to find user [William Bush] with search base [o=sevenSeas] scope [one_level]"));
+        } catch (ElasticsearchSecurityException e) {
+            assertAuthenticationException(e, containsString("failed to find user [William Bush] with search base [o=sevenSeas] scope [one_level]"));
         } finally {
             sessionFactory.shutdown();
         }
@@ -221,8 +222,8 @@ public class LdapUserSearchSessionFactoryTests extends LdapTest {
 
         try (LdapSession ldap = sessionFactory.session(user, userPass)) {
             fail("the user should not have been found");
-        } catch (AuthenticationException e) {
-            assertThat(e.getMessage(), containsString("failed to find user [William Bush] with search base [o=sevenSeas] scope [sub_tree]"));
+        } catch (ElasticsearchSecurityException e) {
+            assertAuthenticationException(e, containsString("failed to find user [William Bush] with search base [o=sevenSeas] scope [sub_tree]"));
         } finally {
             sessionFactory.shutdown();
         }

@@ -18,15 +18,16 @@
 package org.elasticsearch.integration;
 
 import org.apache.lucene.util.LuceneTestCase;
+import org.elasticsearch.ElasticsearchSecurityException;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.MultiSearchResponse;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.shield.authc.support.Hasher;
 import org.elasticsearch.shield.authc.support.SecuredString;
 import org.elasticsearch.shield.authc.support.SecuredStringTests;
 import org.elasticsearch.shield.authc.support.UsernamePasswordToken;
-import org.elasticsearch.shield.authz.AuthorizationException;
 import org.elasticsearch.test.ShieldIntegrationTest;
 import org.elasticsearch.test.ShieldSettingsSource;
 import org.junit.Test;
@@ -124,15 +125,17 @@ public class MultipleIndicesPermissionsTests extends ShieldIntegrationTest {
         try {
             client.prepareSearch("test2").setQuery(indicesQuery(matchAllQuery(), "test1")).get();
             fail("expected an authorization exception when searching a forbidden index");
-        } catch (AuthorizationException ae) {
+        } catch (ElasticsearchSecurityException e) {
             // expected
+            assertThat(e.status(), is(RestStatus.FORBIDDEN));
         }
 
         try {
             client.prepareSearch("test", "test2").setQuery(matchAllQuery()).get();
             fail("expected an authorization exception when one of mulitple indices is forbidden");
-        } catch (AuthorizationException ae) {
+        } catch (ElasticsearchSecurityException e) {
             // expected
+            assertThat(e.status(), is(RestStatus.FORBIDDEN));
         }
 
         MultiSearchResponse msearchResponse = client.prepareMultiSearch()
@@ -193,8 +196,9 @@ public class MultipleIndicesPermissionsTests extends ShieldIntegrationTest {
                     .putHeader(BASIC_AUTH_HEADER, userHeader("user_a", "passwd"))
                     .get();
             fail("expected an authorization excpetion when trying to search on multiple indices where there are no search permissions on one/some of them");
-        } catch (AuthorizationException ae) {
-            //expected
+        } catch (ElasticsearchSecurityException e) {
+            // expected
+            assertThat(e.status(), is(RestStatus.FORBIDDEN));
         }
 
         response = client.prepareSearch("b")
