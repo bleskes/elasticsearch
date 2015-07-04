@@ -19,14 +19,34 @@
 
 package org.elasticsearch.discovery.zen;
 
+import org.elasticsearch.Version;
 import org.elasticsearch.cluster.ClusterName;
 import org.elasticsearch.cluster.ClusterState;
+import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.node.DiscoveryNodes;
+import org.elasticsearch.cluster.settings.DynamicSettings;
+import org.elasticsearch.common.network.NetworkService;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.transport.DummyTransportAddress;
+import org.elasticsearch.discovery.DiscoverySettings;
+import org.elasticsearch.discovery.zen.elect.ElectMasterService;
+import org.elasticsearch.discovery.zen.membership.MembershipAction;
+import org.elasticsearch.discovery.zen.ping.ZenPingService;
+import org.elasticsearch.node.settings.NodeSettingsService;
 import org.elasticsearch.test.ElasticsearchTestCase;
+import org.elasticsearch.test.cluster.TestClusterService;
+import org.elasticsearch.test.transport.CapturingTransport;
+import org.elasticsearch.threadpool.ThreadPool;
+import org.elasticsearch.transport.TransportService;
+import org.junit.After;
+import org.junit.Before;
 
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.elasticsearch.discovery.zen.ZenDiscovery.ProcessClusterState;
 import static org.elasticsearch.discovery.zen.ZenDiscovery.shouldIgnoreOrRejectNewClusterState;
@@ -36,6 +56,66 @@ import static org.hamcrest.core.IsNull.nullValue;
 /**
  */
 public class ZenDiscoveryUnitTest extends ElasticsearchTestCase {
+
+    ThreadPool threadPool;
+
+    @Before
+    public void setUp() throws Exception {
+        super.setUp();
+        threadPool = new ThreadPool("ZenDiscoveryUnitTest");
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        ThreadPool.terminate(threadPool, 30, TimeUnit.SECONDS);
+        super.tearDown();
+    }
+
+    public void testClusterStateChangeExistingNodeJoin() throws InterruptedException {
+        // when an existing node joins, it is important that we publish a new cluster state
+        // even if no node was added. The reason is that the joining node needs to recieve
+        // a cluster state to finalize the join.
+
+        final NodeSettingsService nodeSettingsService = new NodeSettingsService(Settings.EMPTY);
+        final TransportService transportService = new TransportService(new CapturingTransport(), null);
+        final ElectMasterService electMasterService = new ElectMasterService(Settings.EMPTY, Version.CURRENT);
+        final ZenPingService pingService = new ZenPingService(Settings.EMPTY, threadPool, transportService, ClusterName.DEFAULT, new NetworkService(Settings.EMPTY), Version.CURRENT, electMasterService, null);
+        final TestClusterService clusterService = new TestClusterService();
+        ZenDiscovery zenDiscovery = new ZenDiscovery(Settings.EMPTY, ClusterName.DEFAULT, threadPool, transportService,
+                clusterService, nodeSettingsService, pingService, electMasterService, new DiscoverySettings(Settings.EMPTY, nodeSettingsService),
+                new DynamicSettings());
+
+        ClusterState state = clusterService.state();
+        final DiscoveryNodes.Builder nodesBuilder = DiscoveryNodes.builder(state.nodes());
+        nodesBuilder.masterNodeId(state.nodes().localNodeId());
+        final DiscoveryNode other_node = new DiscoveryNode("other_node", DummyTransportAddress.INSTANCE, Version.CURRENT);
+        nodesBuilder.put(other_node);
+        clusterService.setState(ClusterState.builder(state).nodes(nodesBuilder));
+
+        state = clusterService.state();
+        final CountDownLatch latch = new CountDownLatch(1);
+        final AtomicReference<Throwable> exception = new AtomicReference<>();
+        zenDiscovery.handleValidatedJoinRequest(other_node, new MembershipAction.JoinCallback() {
+            @Override
+            public void onSuccess() {
+                latch.countDown();
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                exception.set(t);
+                logger.error("unexpected exception during join", t);
+                latch.countDown();
+            }
+        });
+
+        latch.await();
+        if (exception.get() != null) {
+            fail("unexpected exception during join: " + exception.get().getMessage());
+        }
+
+        assertTrue("failed to publish a new state upon existing join", clusterService.state() != state);
+    }
 
     public void testShouldIgnoreNewClusterState() {
         ClusterName clusterName = new ClusterName("abc");

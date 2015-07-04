@@ -120,7 +120,7 @@ public class CapturingTransport implements Transport {
 
     @Override
     public boolean addressSupported(Class<? extends TransportAddress> address) {
-        return false;
+        return true;
     }
 
     @Override
