@@ -24,7 +24,6 @@ import org.elasticsearch.action.ActionRequestValidationException;
 import org.elasticsearch.action.IndicesRequest;
 import org.elasticsearch.action.WriteConsistencyLevel;
 import org.elasticsearch.action.support.IndicesOptions;
-import org.elasticsearch.cluster.routing.MutableShardRouting;
 import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.io.stream.StreamInput;
@@ -199,7 +198,7 @@ public abstract class ReplicationRequest<T extends ReplicationRequest> extends A
         index = in.readString();
         canHaveDuplicates = in.readBoolean();
         if (in.readBoolean()) {
-            primaryRouting = MutableShardRouting.readShardRoutingEntry(in);
+            primaryRouting = ShardRouting.readShardRoutingEntry(in);
         } else {
             primaryRouting = null;
         }
