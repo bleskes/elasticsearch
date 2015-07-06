@@ -19,7 +19,6 @@
 package org.elasticsearch.indices.flush;
 
 import org.elasticsearch.ElasticsearchException;
-import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.admin.indices.flush.FlushRequest;
 import org.elasticsearch.action.support.IndicesOptions;
@@ -38,10 +37,12 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.concurrent.ConcurrentCollections;
 import org.elasticsearch.common.util.concurrent.CountDown;
+import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.index.IndexService;
 import org.elasticsearch.index.engine.Engine;
 import org.elasticsearch.index.shard.IndexShard;
 import org.elasticsearch.index.shard.ShardId;
+import org.elasticsearch.index.shard.ShardNotFoundException;
 import org.elasticsearch.indices.IndexClosedException;
 import org.elasticsearch.indices.IndicesLifecycle;
 import org.elasticsearch.indices.IndicesService;
@@ -234,11 +235,11 @@ public class SyncedFlushService extends AbstractComponent {
             if (index != null && index.state() == IndexMetaData.State.CLOSE) {
                 throw new IndexClosedException(shardId.index());
             }
-            throw new ResourceNotFoundException(shardId.index().getName(), "index not found");
+            throw new IndexNotFoundException(shardId.index().getName());
         }
         final IndexShardRoutingTable shardRoutingTable = indexRoutingTable.shard(shardId.id());
         if (shardRoutingTable == null) {
-            throw new ResourceNotFoundException(shardId, "no such shard");
+            throw new ShardNotFoundException(shardId);
         }
         return shardRoutingTable;
     }

@@ -34,6 +34,7 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentLocation;
 import org.elasticsearch.index.Index;
+import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.index.query.QueryParsingException;
 import org.elasticsearch.index.query.TestQueryParsingException;
 import org.elasticsearch.rest.RestStatus;
@@ -78,11 +79,11 @@ public class ElasticsearchExceptionTests extends ElasticsearchTestCase {
 
     public void testGuessRootCause() {
         {
-            ElasticsearchException exception = new ElasticsearchException("foo", new ElasticsearchException("bar", new ResourceNotFoundException("foo", "index is closed", new RuntimeException("foobar"))));
+            ElasticsearchException exception = new ElasticsearchException("foo", new ElasticsearchException("bar", new IndexNotFoundException("foo", new RuntimeException("foobar"))));
             ElasticsearchException[] rootCauses = exception.guessRootCauses();
             assertEquals(rootCauses.length, 1);
-            assertEquals(ElasticsearchException.getExceptionName(rootCauses[0]), "resource_not_found_exception");
-            assertEquals(rootCauses[0].getMessage(), "index is closed");
+            assertEquals(ElasticsearchException.getExceptionName(rootCauses[0]), "index_not_found_exception");
+            assertEquals(rootCauses[0].getMessage(), "no such index");
             ShardSearchFailure failure = new ShardSearchFailure(new TestQueryParsingException(new Index("foo"), "foobar", null),
                     new SearchShardTarget("node_1", "foo", 1));
             ShardSearchFailure failure1 = new ShardSearchFailure(new TestQueryParsingException(new Index("foo"), "foobar", null),

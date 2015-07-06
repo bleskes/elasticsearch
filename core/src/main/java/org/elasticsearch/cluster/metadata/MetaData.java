@@ -48,6 +48,7 @@ import org.elasticsearch.common.settings.loader.SettingsLoader;
 import org.elasticsearch.common.xcontent.*;
 import org.elasticsearch.discovery.DiscoverySettings;
 import org.elasticsearch.index.Index;
+import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.indices.IndexClosedException;
 import org.elasticsearch.indices.recovery.RecoverySettings;
 import org.elasticsearch.indices.store.IndicesStore;
@@ -671,7 +672,7 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData> {
                 }
 
                 if (!indicesOptions.allowNoIndices() && concreteIndices.length == 0) {
-                    throw new ResourceNotFoundException("_all", "index not found");
+                    throw new IndexNotFoundException("_all");
                 }
                 return concreteIndices;
             }
@@ -773,7 +774,7 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData> {
         // not an actual index, fetch from an alias
         String[] indices = aliasAndIndexToIndexMap.getOrDefault(aliasOrIndex, Strings.EMPTY_ARRAY);
         if (indices.length == 0 && failNoIndices) {
-            throw new ResourceNotFoundException(aliasOrIndex, "index not found");
+            throw new IndexNotFoundException(aliasOrIndex);
         }
         if (indices.length > 1 && !options.allowAliasesToMultipleIndices()) {
             throw new IllegalArgumentException("Alias [" + aliasOrIndex + "] has more than one indices associated with it [" + Arrays.toString(indices) + "], can't execute a single index op");
@@ -868,7 +869,7 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData> {
             }
             if (!Regex.isSimpleMatchPattern(aliasOrIndex)) {
                 if (!indicesOptions.ignoreUnavailable() && !aliasAndIndexToIndexMap.containsKey(aliasOrIndex)) {
-                    throw new ResourceNotFoundException(aliasOrIndex, "index not found");
+                    throw new IndexNotFoundException(aliasOrIndex);
                 }
                 if (result != null) {
                     if (add) {
@@ -920,14 +921,18 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData> {
                 }
             }
             if (!found && !indicesOptions.allowNoIndices()) {
-                throw new ResourceNotFoundException(aliasOrIndex, "alias or index not found");
+                ResourceNotFoundException resourceNotFoundException = new ResourceNotFoundException("[{}] alias or index not found", aliasOrIndex);
+                resourceNotFoundException.addResource(aliasesOrIndices);
+                throw resourceNotFoundException;
             }
         }
         if (result == null) {
             return aliasesOrIndices;
         }
         if (result.isEmpty() && !indicesOptions.allowNoIndices()) {
-            throw new ResourceNotFoundException(Arrays.toString(aliasesOrIndices), "aliases or indices not found");
+            ResourceNotFoundException resourceNotFoundException = new ResourceNotFoundException("[{}] aliases or indices not found", Arrays.toString(aliasesOrIndices));
+            resourceNotFoundException.addResource(aliasesOrIndices);
+            throw resourceNotFoundException;
         }
         return result.toArray(new String[result.size()]);
     }
@@ -1009,7 +1014,7 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData> {
             IndexMetaData indexMetaData = this.indices.get(index);
             if (indexMetaData == null) {
                 // Shouldn't happen
-                throw new ResourceNotFoundException(index, "index not found");
+                throw new IndexNotFoundException(index);
             }
             AliasMetaData aliasMetaData = indexMetaData.aliases().get(alias);
             boolean filteringRequired = aliasMetaData != null && aliasMetaData.filteringRequired();
@@ -1027,7 +1032,7 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData> {
             IndexMetaData indexMetaData = this.indices.get(index);
             if (indexMetaData == null) {
                 // Shouldn't happen
-                throw new ResourceNotFoundException(index, "index not found");
+                throw new IndexNotFoundException(index);
             }
 
             AliasMetaData aliasMetaData = indexMetaData.aliases().get(alias);
@@ -1477,7 +1482,7 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData> {
             for (String index : indices) {
                 IndexMetaData indexMetaData = this.indices.get(index);
                 if (indexMetaData == null) {
-                    throw new ResourceNotFoundException(index, "index not found");
+                    throw new IndexNotFoundException(index);
                 }
                 put(IndexMetaData.builder(indexMetaData)
                         .settings(settingsBuilder().put(indexMetaData.settings()).put(settings)));
@@ -1492,7 +1497,7 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData> {
             for (String index : indices) {
                 IndexMetaData indexMetaData = this.indices.get(index);
                 if (indexMetaData == null) {
-                    throw new ResourceNotFoundException(index, "index not found");
+                    throw new IndexNotFoundException(index);
                 }
                 put(IndexMetaData.builder(indexMetaData).numberOfReplicas(numberOfReplicas));
             }

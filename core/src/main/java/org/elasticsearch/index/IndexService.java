@@ -177,7 +177,7 @@ public class IndexService extends AbstractIndexComponent implements IndexCompone
     public IndexShard shardSafe(int shardId) {
         IndexShard indexShard = shard(shardId);
         if (indexShard == null) {
-            throw new ResourceNotFoundException(new ShardId(index, shardId), "no such shard");
+            throw new ShardNotFoundException(new ShardId(index, shardId));
         }
         return indexShard;
     }
@@ -246,7 +246,7 @@ public class IndexService extends AbstractIndexComponent implements IndexCompone
     public Injector shardInjectorSafe(int shardId)  {
         Tuple<IndexShard, Injector> tuple = shards.get(shardId);
         if (tuple == null) {
-            throw new ResourceNotFoundException(new ShardId(index, shardId), "no such shard");
+            throw new ShardNotFoundException(new ShardId(index, shardId));
         }
         return tuple.v2();
     }

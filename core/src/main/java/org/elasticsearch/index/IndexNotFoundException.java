@@ -16,36 +16,24 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.elasticsearch;
+package org.elasticsearch.index;
 
+import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.common.io.stream.StreamInput;
-import org.elasticsearch.rest.RestStatus;
 
 import java.io.IOException;
 
-/**
- * Generic ResourceNotFoundException corresponding to the {@link RestStatus#NOT_FOUND} status code
- */
-public class ResourceNotFoundException extends ElasticsearchException {
-
-    public ResourceNotFoundException(String msg, Object... args) {
-        super(msg, args);
+public class IndexNotFoundException extends ResourceNotFoundException {
+    public IndexNotFoundException(String index) {
+        this(index, null);
     }
 
-    protected ResourceNotFoundException(String msg, Throwable cause, Object... args) {
-        super(msg, cause, args);
+    public IndexNotFoundException(String index, Throwable cause) {
+        super("no such index", cause);
+        addIndex(index);
     }
 
-    public ResourceNotFoundException(StreamInput in) throws IOException {
+    public IndexNotFoundException(StreamInput in) throws IOException {
         super(in);
-    }
-
-    @Override
-    public final RestStatus status() {
-        return RestStatus.NOT_FOUND;
-    }
-
-    public void addResource(String... resources) {
-        addHeader("es.internal.resource", resources);
     }
 }

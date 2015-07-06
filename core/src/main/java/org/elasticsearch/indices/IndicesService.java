@@ -276,7 +276,7 @@ public class IndicesService extends AbstractLifecycleComponent<IndicesService> i
     public IndexService indexServiceSafe(String index) {
         IndexService indexService = indexService(index);
         if (indexService == null) {
-            throw new ResourceNotFoundException(index, "index not found");
+            throw new IndexNotFoundException(index);
         }
         return indexService;
     }

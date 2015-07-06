@@ -38,6 +38,7 @@ import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.index.Index;
+import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.search.warmer.IndexWarmersMetaData;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
@@ -127,7 +128,7 @@ public class TransportPutWarmerAction extends TransportMasterNodeAction<PutWarme
                         for (String index : concreteIndices) {
                             IndexMetaData indexMetaData = metaData.index(index);
                             if (indexMetaData == null) {
-                                throw new ResourceNotFoundException(index, "index not found");
+                                throw new IndexNotFoundException(index);
                             }
                             IndexWarmersMetaData warmers = indexMetaData.custom(IndexWarmersMetaData.TYPE);
                             if (warmers == null) {

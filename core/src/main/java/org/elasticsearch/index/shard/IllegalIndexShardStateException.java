@@ -19,11 +19,9 @@
 
 package org.elasticsearch.index.shard;
 
-import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.rest.RestStatus;
 
 import java.io.IOException;
 
@@ -39,7 +37,8 @@ public class IllegalIndexShardStateException extends ResourceNotFoundException {
     }
 
     public IllegalIndexShardStateException(ShardId shardId, IndexShardState currentState, String msg, Throwable ex) {
-        super(shardId, "CurrentState[" + currentState + "] " + msg, ex);
+        super("CurrentState[" + currentState + "] " + msg, ex);
+        addShard(shardId);
         this.currentState = currentState;
     }
 

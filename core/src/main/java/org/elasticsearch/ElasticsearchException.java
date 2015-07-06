@@ -27,7 +27,9 @@ import org.elasticsearch.common.logging.support.LoggerMessageFormat;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.index.Index;
+import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.index.shard.ShardId;
+import org.elasticsearch.index.shard.ShardNotFoundException;
 import org.elasticsearch.rest.RestStatus;
 
 import java.io.IOException;
@@ -91,18 +93,16 @@ public class ElasticsearchException extends RuntimeException implements ToXConte
      * Adds a new header with the given key.
      * This method will replace existing header if a header with the same key already exists
      */
-    public ElasticsearchException addHeader(String key, String... value) {
+    public void addHeader(String key, String... value) {
         this.headers.put(key, Arrays.asList(value));
-        return this;
     }
 
     /**
      * Adds a new header with the given key.
      * This method will replace existing header if a header with the same key already exists
      */
-    public ElasticsearchException addHeader(String key, List<String> value) {
+    public void addHeader(String key, List<String> value) {
         this.headers.put(key, value);
-        return this;
     }
 
 
@@ -256,11 +256,11 @@ public class ElasticsearchException extends RuntimeException implements ToXConte
         } else {
             builder.field("type", getExceptionName());
             builder.field("reason", getMessage());
-            if (headers.containsKey(INDEX_HEADER_KEY)) {
-                builder.field("index", getIndex());
-            }
-            if (headers.containsKey(SHARD_HEADER_KEY)) {
-                builder.field("shard", getShardId());
+            for (String key : headers.keySet()) {
+                if (key.startsWith("es.internal.")) {
+                    List<String> values = headers.get(key);
+                    xContentHeader(builder, key.substring("es.internal.".length()), values);
+                }
             }
             innerToXContent(builder, params);
             renderHeader(builder, params);
@@ -291,7 +291,7 @@ public class ElasticsearchException extends RuntimeException implements ToXConte
     protected final void renderHeader(XContentBuilder builder, Params params) throws IOException {
         boolean hasHeader = false;
         for (String key : headers.keySet()) {
-            if (key.startsWith("internal.")) {
+            if (key.startsWith("es.internal.")) {
                 continue;
             }
             if (hasHeader == false) {
@@ -299,20 +299,24 @@ public class ElasticsearchException extends RuntimeException implements ToXConte
                 hasHeader = true;
             }
             List<String> values = headers.get(key);
-            if (values != null && values.isEmpty() == false) {
-                if(values.size() == 1) {
-                    builder.field(key, values.get(0));
-                } else {
-                    builder.startArray(key);
-                    for (String value : values) {
-                        builder.value(value);
-                    }
-                    builder.endArray();
-                }
-            }
+            xContentHeader(builder, key, values);
         }
         if (hasHeader) {
             builder.endObject();
+        }
+    }
+
+    private void xContentHeader(XContentBuilder builder, String key, List<String> values) throws IOException {
+        if (values != null && values.isEmpty() == false) {
+            if(values.size() == 1) {
+                builder.field(key, values.get(0));
+            } else {
+                builder.startArray(key);
+                for (String value : values) {
+                    builder.value(value);
+                }
+                builder.endArray();
+            }
         }
     }
 
@@ -577,6 +581,8 @@ public class ElasticsearchException extends RuntimeException implements ToXConte
                 org.elasticsearch.index.shard.IllegalIndexShardStateException.class,
                 ElasticsearchSecurityException.class,
                 ResourceNotFoundException.class,
+                IndexNotFoundException.class,
+                ShardNotFoundException.class,
                 NotSerializableExceptionWrapper.class
         };
         Map<String, Constructor<? extends ElasticsearchException>> mapping = new HashMap<>(exceptions.length);
@@ -613,8 +619,8 @@ public class ElasticsearchException extends RuntimeException implements ToXConte
         return null;
     }
 
-    private static final String INDEX_HEADER_KEY = "internal.index";
-    private static final String SHARD_HEADER_KEY = "internal.shard";
+    private static final String INDEX_HEADER_KEY = "es.internal.index";
+    private static final String SHARD_HEADER_KEY = "es.internal.shard";
 
     protected void addIndex(Index index) {
         if (index != null) {

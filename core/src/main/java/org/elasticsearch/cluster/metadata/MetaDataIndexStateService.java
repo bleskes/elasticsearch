@@ -40,6 +40,7 @@ import org.elasticsearch.common.component.AbstractComponent;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.index.Index;
+import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.indices.IndexPrimaryShardNotAllocatedException;
 import org.elasticsearch.rest.RestStatus;
 
@@ -86,7 +87,7 @@ public class MetaDataIndexStateService extends AbstractComponent {
                 for (String index : request.indices()) {
                     IndexMetaData indexMetaData = currentState.metaData().index(index);
                     if (indexMetaData == null) {
-                        throw new ResourceNotFoundException(index, "index not found");
+                        throw new IndexNotFoundException(index);
                     }
 
                     if (indexMetaData.state() != IndexMetaData.State.CLOSE) {
@@ -146,7 +147,7 @@ public class MetaDataIndexStateService extends AbstractComponent {
                 for (String index : request.indices()) {
                     IndexMetaData indexMetaData = currentState.metaData().index(index);
                     if (indexMetaData == null) {
-                        throw new ResourceNotFoundException(index, "index not found");
+                        throw new IndexNotFoundException(index);
                     }
                     if (indexMetaData.state() != IndexMetaData.State.OPEN) {
                         indicesToOpen.add(index);

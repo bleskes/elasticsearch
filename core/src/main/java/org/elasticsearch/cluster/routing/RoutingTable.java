@@ -28,6 +28,7 @@ import org.elasticsearch.cluster.metadata.MetaData;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.index.Index;
+import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.index.shard.ShardId;
 
 import java.io.IOException;
@@ -144,7 +145,7 @@ public class RoutingTable implements Iterable<IndexRoutingTable>, Diffable<Routi
         List<ShardRouting> shards = Lists.newArrayList();
         IndexRoutingTable indexRoutingTable = index(index);
         if (indexRoutingTable == null) {
-            throw new ResourceNotFoundException(index, "index not found");
+            throw new IndexNotFoundException(index);
         }
         for (IndexShardRoutingTable indexShardRoutingTable : indexRoutingTable) {
             for (ShardRouting shardRouting : indexShardRoutingTable) {
@@ -242,7 +243,7 @@ public class RoutingTable implements Iterable<IndexRoutingTable>, Diffable<Routi
         for (String index : indices) {
             IndexRoutingTable indexRoutingTable = index(index);
             if (indexRoutingTable == null) {
-                throw new ResourceNotFoundException(index, "index not found");
+                throw new IndexNotFoundException(index);
             }
             for (IndexShardRoutingTable indexShardRoutingTable : indexRoutingTable) {
                 ShardRouting primary = indexShardRoutingTable.primaryShard();

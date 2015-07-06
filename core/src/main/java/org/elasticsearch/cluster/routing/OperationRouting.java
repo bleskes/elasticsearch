@@ -20,7 +20,6 @@
 package org.elasticsearch.cluster.routing;
 
 import com.google.common.collect.Lists;
-import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.Version;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
@@ -33,7 +32,9 @@ import org.elasticsearch.common.component.AbstractComponent;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.math.MathUtils;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.index.shard.ShardId;
+import org.elasticsearch.index.shard.ShardNotFoundException;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -106,7 +107,7 @@ public class OperationRouting extends AbstractComponent {
                     int shardId = shardId(clusterState, index, null, null, r);
                     IndexShardRoutingTable indexShard = indexRouting.shard(shardId);
                     if (indexShard == null) {
-                        throw new ResourceNotFoundException(new ShardId(index, shardId), "no such shard");
+                        throw new ShardNotFoundException(new ShardId(index, shardId));
                     }
                     // we might get duplicates, but that's ok, they will override one another
                     set.add(indexShard);
@@ -200,7 +201,7 @@ public class OperationRouting extends AbstractComponent {
     public IndexMetaData indexMetaData(ClusterState clusterState, String index) {
         IndexMetaData indexMetaData = clusterState.metaData().index(index);
         if (indexMetaData == null) {
-            throw new ResourceNotFoundException(index, "index not found");
+            throw new IndexNotFoundException(index);
         }
         return indexMetaData;
     }
@@ -208,7 +209,7 @@ public class OperationRouting extends AbstractComponent {
     protected IndexRoutingTable indexRoutingTable(ClusterState clusterState, String index) {
         IndexRoutingTable indexRouting = clusterState.routingTable().index(index);
         if (indexRouting == null) {
-            throw new ResourceNotFoundException(index, "index not found");
+            throw new IndexNotFoundException(index);
         }
         return indexRouting;
     }
@@ -224,7 +225,7 @@ public class OperationRouting extends AbstractComponent {
     protected IndexShardRoutingTable shards(ClusterState clusterState, String index, int shardId) {
         IndexShardRoutingTable indexShard = indexRoutingTable(clusterState, index).shard(shardId);
         if (indexShard == null) {
-            throw new ResourceNotFoundException(new ShardId(index, shardId), "no such shard");
+            throw new ShardNotFoundException(new ShardId(index, shardId));
         }
         return indexShard;
     }

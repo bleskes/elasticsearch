@@ -44,6 +44,7 @@ import org.elasticsearch.common.unit.ByteSizeValue;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.util.CancellableThreads;
 import org.elasticsearch.common.util.concurrent.AbstractRunnable;
+import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.index.engine.RecoveryEngineException;
 import org.elasticsearch.index.mapper.MapperException;
 import org.elasticsearch.index.settings.IndexSettings;
@@ -230,7 +231,7 @@ public class RecoveryTarget extends AbstractComponent {
 
             // here, we would add checks against exception that need to be retried (and not removeAndClean in this case)
 
-            if (cause instanceof ResourceNotFoundException) {
+            if (cause instanceof IllegalIndexShardStateException || cause instanceof IndexNotFoundException || cause instanceof ShardNotFoundException) {
                 // if the target is not ready yet, retry
                 retryRecovery(recoveryStatus, "remote shard not ready", recoverySettings.retryDelayStateSync(), request);
                 return;

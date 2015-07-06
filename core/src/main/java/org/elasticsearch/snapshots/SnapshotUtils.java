@@ -23,6 +23,7 @@ import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.common.regex.Regex;
 import org.elasticsearch.index.Index;
+import org.elasticsearch.index.IndexNotFoundException;
 
 import java.util.HashSet;
 import java.util.List;
@@ -75,7 +76,7 @@ public class SnapshotUtils {
             if (indexOrPattern.isEmpty() || !Regex.isSimpleMatchPattern(indexOrPattern)) {
                 if (!availableIndices.contains(indexOrPattern)) {
                     if (!indicesOptions.ignoreUnavailable()) {
-                        throw new ResourceNotFoundException(indexOrPattern, "index not found");
+                        throw new IndexNotFoundException(indexOrPattern);
                     } else {
                         if (result == null) {
                             // add all the previous ones...
@@ -111,7 +112,7 @@ public class SnapshotUtils {
                 }
             }
             if (!found && !indicesOptions.allowNoIndices()) {
-                throw new ResourceNotFoundException(indexOrPattern, "index not found");
+                throw new IndexNotFoundException(indexOrPattern);
             }
         }
         if (result == null) {
