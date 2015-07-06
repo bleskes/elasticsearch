@@ -461,7 +461,7 @@ public class ElasticsearchJobProvider implements JobProvider
                 }
                 catch (VersionConflictEngineException e)
                 {
-                    LOGGER.warn("Conflict updating job document");
+                    LOGGER.warn("Conflict updating job document " + jobId);
                 }
             }
 

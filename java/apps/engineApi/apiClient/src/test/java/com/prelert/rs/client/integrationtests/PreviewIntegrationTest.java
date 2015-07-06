@@ -47,7 +47,6 @@ import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.transform.TransformConfig;
 import com.prelert.rs.client.EngineApiClient;
-import com.prelert.transforms.RegexExtract;
 
 
 /**
