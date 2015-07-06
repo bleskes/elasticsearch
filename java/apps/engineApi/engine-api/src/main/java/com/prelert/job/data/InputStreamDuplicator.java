@@ -75,8 +75,9 @@ public class InputStreamDuplicator
     public InputStream createDuplicateStream() throws IOException
     {
         PipedInputStream pipedIn = new PipedInputStream();
-        BufferedOutputStream pipedOut = new BufferedOutputStream(new PipedOutputStream(pipedIn), BUFFER_SIZE);
+        OutputStream pipedOut = new PipedOutputStream(pipedIn);
         m_Outputs.add(pipedOut);
+
         return pipedIn;
     }
 
