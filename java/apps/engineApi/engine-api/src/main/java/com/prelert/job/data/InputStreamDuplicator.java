@@ -96,17 +96,24 @@ public class InputStreamDuplicator
             {
                 writeToOutputs(buffer, n);
             }
-
-            // close streams
-            Iterator<OutputStream> iter = m_Outputs.iterator();
-            while (iter.hasNext())
-            {
-                iter.next().close();
-            }
         }
         catch (IOException e)
         {
             LOGGER.warn("IOException reading input", e);
+        }
+
+        // close streams
+        Iterator<OutputStream> iter = m_Outputs.iterator();
+        while (iter.hasNext())
+        {
+            try
+            {
+                iter.next().close();
+            }
+            catch (IOException e)
+            {
+                LOGGER.warn("Exception closing stream", e);
+            }
         }
 
         LOGGER.info("Duplicate write stream finished");
