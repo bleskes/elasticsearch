@@ -86,6 +86,7 @@ public class StatusReporterTest
         counts.setMissingFieldCount(4);
         counts.setOutOfOrderTimeStampCount(5);
         counts.setFailedTransformCount(6);
+        counts.setExcludedRecordCount(7);
 
         DummyStatusReporter reporter = new DummyStatusReporter(counts, mock(UsageReporter.class));
 
@@ -99,6 +100,7 @@ public class StatusReporterTest
         assertEquals(4, reporter.getMissingFieldErrorCount());
         assertEquals(5, reporter.getOutOfOrderRecordCount());
         assertEquals(6, reporter.getFailedTransformCount());
+        assertEquals(7, reporter.getExcludedRecordCount());
     }
 
     @Test
@@ -115,11 +117,13 @@ public class StatusReporterTest
 
         reporter.reportRecordWritten(5, 1000);
         reporter.reportFailedTransform();
-        assertEquals(1, reporter.incrementalStats().getInputRecordCount());
-        assertEquals(5, reporter.incrementalStats().getInputFieldCount());
+        reporter.reportExcludedRecord(5);
+        assertEquals(2, reporter.incrementalStats().getInputRecordCount());
+        assertEquals(10, reporter.incrementalStats().getInputFieldCount());
         assertEquals(1, reporter.incrementalStats().getProcessedRecordCount());
         assertEquals(3, reporter.incrementalStats().getProcessedFieldCount());
         assertEquals(1, reporter.incrementalStats().getFailedTransformCount());
+        assertEquals(1, reporter.incrementalStats().getExcludedRecordCount());
         assertEquals(1000, reporter.incrementalStats().getLatestRecordTimeStamp().getTime() / 1000);
 
         assertEquals(reporter.incrementalStats(), reporter.runningTotalStats());

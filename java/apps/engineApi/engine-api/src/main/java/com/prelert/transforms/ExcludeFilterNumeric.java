@@ -91,7 +91,7 @@ public class ExcludeFilterNumeric extends ExcludeFilter
     }
 
     /**
-     * Returns {@link TransformResult#FATAL_FAIL} if the value should be excluded
+     * Returns {@link TransformResult#EXCLUDE} if the value should be excluded
      */
     @Override
     public TransformResult transform(String[][] readWriteArea)
@@ -108,7 +108,7 @@ public class ExcludeFilterNumeric extends ExcludeFilter
 
                 if (getCondition().getOperator().test(value, m_FilterValue))
                 {
-                    result = TransformResult.FATAL_FAIL;
+                    result = TransformResult.EXCLUDE;
                     break;
                 }
             }

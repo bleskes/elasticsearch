@@ -236,6 +236,8 @@ public class TransformJobTest implements Closeable {
                 .getProcessedRecordCount() > 0);
         test(result.getResponses().get(0).getUploadSummary()
                 .getInvalidDateCount() == 0);
+        test(result.getResponses().get(0).getUploadSummary()
+                .getExcludedRecordCount() == 0);
 
         SingleDocument<JobDetails> job = m_WebServiceClient.getJob(jobId);
         test(job.isExists());

@@ -62,6 +62,7 @@ public class DataCounts
     public static final String OUT_OF_ORDER_TIME_COUNT = "outOfOrderTimeStampCount";
     public static final String FAILED_TRANSFORM_COUNT = "failedTransformCount";
     public static final String LATEST_RECORD_TIME = "latestRecordTimeStamp";
+    public static final String EXCLUDED_RECORD_COUNT = "excludedRecordCount";
 
 
     private Long m_BucketCount;
@@ -73,6 +74,7 @@ public class DataCounts
     private long m_MissingFieldCount;
     private long m_OutOfOrderTimeStampCount;
     private long m_FailedTransformCount;
+    private long m_ExcludedRecordCount;
     private Date m_LatestRecordTimeStamp;
 
     public DataCounts()
@@ -92,6 +94,7 @@ public class DataCounts
         m_OutOfOrderTimeStampCount = lhs.m_OutOfOrderTimeStampCount;
         m_FailedTransformCount = lhs.m_FailedTransformCount;
         m_LatestRecordTimeStamp = lhs.m_LatestRecordTimeStamp;
+        m_ExcludedRecordCount = lhs.m_ExcludedRecordCount;
     }
 
 
@@ -170,7 +173,7 @@ public class DataCounts
     public long getInputRecordCount()
     {
         return m_ProcessedRecordCount + m_OutOfOrderTimeStampCount
-                                + m_InvalidDateCount;
+                                + m_InvalidDateCount + m_ExcludedRecordCount;
     }
 
     /**
@@ -305,6 +308,30 @@ public class DataCounts
         this.m_FailedTransformCount = failedTransformCount;
     }
 
+    public void incrementFailedTransformCount(long additional)
+    {
+        m_FailedTransformCount += additional;
+    }
+
+    /**
+     * The number of records excluded by a transform
+     * @return
+     */
+    public long getExcludedRecordCount()
+    {
+        return m_ExcludedRecordCount;
+    }
+
+    public void setExcludedRecordCount(long excludedRecordCount)
+    {
+        m_ExcludedRecordCount = excludedRecordCount;
+    }
+
+    public void incrementExcludedRecordCount(long additional)
+    {
+        m_ExcludedRecordCount += additional;
+    }
+
     /**
      * The time of the latest record seen.
      * @return Latest record time
@@ -318,12 +345,6 @@ public class DataCounts
     {
         m_LatestRecordTimeStamp = latestRecordTime;
     }
-
-    public void incrementFailedTransformCount(long additional)
-    {
-        m_FailedTransformCount += additional;
-    }
-
 
     /**
      * Equality test
@@ -352,6 +373,7 @@ public class DataCounts
                 this.m_MissingFieldCount == that.m_MissingFieldCount &&
                 this.m_OutOfOrderTimeStampCount == that.m_OutOfOrderTimeStampCount &&
                 this.m_FailedTransformCount == that.m_FailedTransformCount &&
+                this.m_ExcludedRecordCount == that.m_ExcludedRecordCount &&
                 Objects.equals(this.m_LatestRecordTimeStamp, that.m_LatestRecordTimeStamp);
     }
 
@@ -360,6 +382,7 @@ public class DataCounts
     {
         return Objects.hash(m_BucketCount, m_ProcessedRecordCount, m_ProcessedFieldCount,
                 m_InputBytes, m_InputFieldCount, m_InvalidDateCount, m_MissingFieldCount,
-                m_OutOfOrderTimeStampCount, m_FailedTransformCount, m_LatestRecordTimeStamp);
+                m_OutOfOrderTimeStampCount, m_FailedTransformCount, m_ExcludedRecordCount,
+                m_LatestRecordTimeStamp);
     }
 }

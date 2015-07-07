@@ -48,9 +48,9 @@ public abstract class Transform
     /**
      * OK means the transform was successful,
      * FAIL means the transform failed but it's ok to continue processing
-     * FATAL_FAIL means the no further processing should take place
+     * EXCLUDE means the no further processing should take place and the record discarded
      */
-    public enum TransformResult {OK, FAIL, FATAL_FAIL};
+    public enum TransformResult {OK, FAIL, EXCLUDE};
 
     public static class TransformIndex
     {

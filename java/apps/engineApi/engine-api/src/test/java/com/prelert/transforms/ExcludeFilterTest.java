@@ -57,7 +57,7 @@ public class ExcludeFilterTest
         String [] output = {};
         String [][] readWriteArea = {input, scratch, output};
 
-        assertEquals(TransformResult.FATAL_FAIL, transform.transform(readWriteArea));
+        assertEquals(TransformResult.EXCLUDE, transform.transform(readWriteArea));
     }
 
     @Test
@@ -92,7 +92,7 @@ public class ExcludeFilterTest
         String [] output = new String [3];
         String [][] readWriteArea = {input, scratch, output};
 
-        assertEquals(TransformResult.FATAL_FAIL, transform.transform(readWriteArea));
+        assertEquals(TransformResult.EXCLUDE, transform.transform(readWriteArea));
 
         readWriteArea[0] = new String [] {"metric02-A"};
         assertEquals(TransformResult.OK, transform.transform(readWriteArea));
@@ -116,6 +116,6 @@ public class ExcludeFilterTest
         String [] output = {};
         String [][] readWriteArea = {input, scratch, output};
 
-        assertEquals(TransformResult.FATAL_FAIL, transform.transform(readWriteArea));
+        assertEquals(TransformResult.EXCLUDE, transform.transform(readWriteArea));
     }
 }

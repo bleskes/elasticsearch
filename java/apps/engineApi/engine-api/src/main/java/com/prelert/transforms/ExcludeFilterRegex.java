@@ -50,7 +50,7 @@ public class ExcludeFilterRegex extends ExcludeFilter
     }
 
     /**
-     * Returns {@link TransformResult#FATAL_FAIL} if the record matches the regex
+     * Returns {@link TransformResult#EXCLUDE} if the record matches the regex
      */
     @Override
     public TransformResult transform(String[][] readWriteArea)
@@ -64,7 +64,7 @@ public class ExcludeFilterRegex extends ExcludeFilter
 
             if (match.matches())
             {
-                result = TransformResult.FATAL_FAIL;
+                result = TransformResult.EXCLUDE;
                 break;
             }
         }

@@ -287,7 +287,7 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
         m_ReadWriteArea[TransformFactory.OUTPUT_ARRAY_INDEX] = output;
         Arrays.fill(m_ReadWriteArea[TransformFactory.SCRATCH_ARRAY_INDEX], "");
 
-        if (!applyTransforms(m_DateInputTransforms))
+        if (!applyTransforms(m_DateInputTransforms, numberOfFieldsRead))
         {
             return false;
         }
@@ -319,7 +319,7 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
         }
 
         // Now do the rest of the transforms
-        if (!applyTransforms(m_PostDateTransforms))
+        if (!applyTransforms(m_PostDateTransforms, numberOfFieldsRead))
         {
             return false;
         }
@@ -335,7 +335,12 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
         return true;
     }
 
-    private boolean applyTransforms(List<Transform> transforms)
+    /**
+     * If false then the transform is excluded
+     * @param transforms
+     * @return
+     */
+    private boolean applyTransforms(List<Transform> transforms, long inputFieldCount)
     {
         for (Transform tr : transforms)
         {
@@ -346,8 +351,9 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
                 {
                     m_StatusReporter.reportFailedTransform();
                 }
-                else if (result == TransformResult.FATAL_FAIL)
+                else if (result == TransformResult.EXCLUDE)
                 {
+                    m_StatusReporter.reportExcludedRecord(inputFieldCount);
                     return false;
                 }
             }

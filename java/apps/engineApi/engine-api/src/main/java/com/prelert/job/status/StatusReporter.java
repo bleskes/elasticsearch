@@ -174,6 +174,20 @@ public abstract class StatusReporter
     }
 
     /**
+     * Increment the excluded record count by 1 and the input field
+     * count by <code>inputFieldCount</code>
+     * @param inputFieldCount
+     */
+    public void reportExcludedRecord(long inputFieldCount)
+    {
+        m_TotalRecordStats.incrementExcludedRecordCount(1);
+        m_TotalRecordStats.incrementInputFieldCount(inputFieldCount);
+
+        m_IncrementalRecordStats.incrementExcludedRecordCount(1);
+        m_IncrementalRecordStats.incrementInputFieldCount(inputFieldCount);
+    }
+
+    /**
      * Increments the date parse error count
      */
     public void reportDateParseError(long inputFieldCount)
@@ -293,6 +307,11 @@ public abstract class StatusReporter
     public long getInputFieldCount()
     {
         return m_TotalRecordStats.getInputFieldCount();
+    }
+
+    public long getExcludedRecordCount()
+    {
+        return m_TotalRecordStats.getExcludedRecordCount();
     }
 
     public int getAcceptablePercentDateParseErrors()

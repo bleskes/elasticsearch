@@ -50,6 +50,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import com.prelert.job.AnalysisConfig;
@@ -416,7 +417,7 @@ public class AbstractDataToProcessWriterTest
      * @throws HighProportionOfBadTimestampsException
      */
     @Test
-    public void testApplyTransforms_transformReturnsFatalFail()
+    public void testApplyTransforms_transformReturnsExclude()
     throws MissingFieldException, IOException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException
     {
         DataDescription dd = new DataDescription();
@@ -451,15 +452,21 @@ public class AbstractDataToProcessWriterTest
 
         verify(m_LengthEncodedWriter, never()).writeRecord(output);
         verify(m_StatusReporter, never()).reportRecordWritten(anyLong(), anyLong());
+        verify(m_StatusReporter, times(1)).reportExcludedRecord(3);
         verify(m_DataPersister, never()).persistRecord(1, output);
+
+        // reset the call counts etc.
+        Mockito.reset(m_StatusReporter);
 
         // this is ok
         input = new String [] {"2", "metricB", "0"};
         String [] expectedOutput = {"2", null, null};
         assertTrue(writer.applyTransformsAndWrite(input, output, 3));
 
+
         verify(m_LengthEncodedWriter, times(1)).writeRecord(expectedOutput);
         verify(m_StatusReporter, times(1)).reportRecordWritten(3, 2);
+        verify(m_StatusReporter, never()).reportExcludedRecord(anyLong());
         verify(m_DataPersister, times(1)).persistRecord(2, expectedOutput);
     }
 

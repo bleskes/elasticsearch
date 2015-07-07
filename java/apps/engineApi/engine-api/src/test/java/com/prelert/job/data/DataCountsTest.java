@@ -47,8 +47,8 @@ public class DataCountsTest
     @Test
     public void testCountsEquals_GivenEqualCounts()
     {
-        DataCounts counts1 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
-        DataCounts counts2 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+        DataCounts counts1 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11);
+        DataCounts counts2 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11);
 
         assertTrue(counts1.equals(counts2));
         assertTrue(counts2.equals(counts1));
@@ -57,8 +57,8 @@ public class DataCountsTest
     @Test
     public void testCountsHashCode_GivenEqualCounts()
     {
-        DataCounts counts1 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
-        DataCounts counts2 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+        DataCounts counts1 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11);
+        DataCounts counts2 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11);
 
         assertEquals(counts1.hashCode(), counts2.hashCode());
     }
@@ -66,7 +66,7 @@ public class DataCountsTest
     @Test
     public void testCountsCopyConstructor()
     {
-        DataCounts counts1 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+        DataCounts counts1 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11);
         DataCounts counts2 = new DataCounts(counts1);
 
         assertEquals(counts1.hashCode(), counts2.hashCode());
@@ -83,7 +83,7 @@ public class DataCountsTest
     public void testCountCopyCreatedFieldsNotZero()
     throws IntrospectionException, IllegalAccessException, IllegalArgumentException, InvocationTargetException
     {
-        DataCounts counts1 = createCounts(1, 200, 400, 3, 4, 5, 6, 7, 8, 9);
+        DataCounts counts1 = createCounts(1, 200, 400, 3, 4, 5, 6, 7, 8, 9, 10);
         testAllFieldsGreaterThanZero(counts1);
 
         DataCounts counts2 = new DataCounts(counts1);
@@ -210,7 +210,8 @@ public class DataCountsTest
             long processedRecordCount, long processedFieldCount,
             long inputBytes, long inputFieldCount,
             long invalidDateCount, long missingFieldCount,
-            long outOfOrderTimeStampCount, long failedTransformCount, long latestRecordTime)
+            long outOfOrderTimeStampCount, long failedTransformCount,
+            long excludedRecordCount, long latestRecordTime)
     {
         DataCounts counts = new DataCounts();
         counts.setBucketCount(bucketCount);
@@ -222,6 +223,7 @@ public class DataCountsTest
         counts.setMissingFieldCount(missingFieldCount);
         counts.setOutOfOrderTimeStampCount(outOfOrderTimeStampCount);
         counts.setFailedTransformCount(failedTransformCount);
+        counts.setExcludedRecordCount(excludedRecordCount);
         counts.setLatestRecordTimeStamp(new Date(latestRecordTime));
         return counts;
     }

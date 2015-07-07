@@ -54,7 +54,7 @@ public class ExcludeFilterNumericTest
         String [] output = {};
         String [][] readWriteArea = {input, scratch, output};
 
-        assertEquals(TransformResult.FATAL_FAIL, transform.transform(readWriteArea));
+        assertEquals(TransformResult.EXCLUDE, transform.transform(readWriteArea));
 
         input[0] = "5.10000";
         assertEquals(TransformResult.OK, transform.transform(readWriteArea));
@@ -71,7 +71,7 @@ public class ExcludeFilterNumericTest
         String [] output = {};
         String [][] readWriteArea = {input, scratch, output};
 
-        assertEquals(TransformResult.FATAL_FAIL, transform.transform(readWriteArea));
+        assertEquals(TransformResult.EXCLUDE, transform.transform(readWriteArea));
 
         input[0] = "1.0";
         assertEquals(TransformResult.OK, transform.transform(readWriteArea));
@@ -88,10 +88,10 @@ public class ExcludeFilterNumericTest
         String [] output = {};
         String [][] readWriteArea = {input, scratch, output};
 
-        assertEquals(TransformResult.FATAL_FAIL, transform.transform(readWriteArea));
+        assertEquals(TransformResult.EXCLUDE, transform.transform(readWriteArea));
 
         input[0] = "10";
-        assertEquals(TransformResult.FATAL_FAIL, transform.transform(readWriteArea));
+        assertEquals(TransformResult.EXCLUDE, transform.transform(readWriteArea));
 
         input[0] = "9.5";
         assertEquals(TransformResult.OK, transform.transform(readWriteArea));
@@ -108,7 +108,7 @@ public class ExcludeFilterNumericTest
         String [] output = {};
         String [][] readWriteArea = {input, scratch, output};
 
-        assertEquals(TransformResult.FATAL_FAIL, transform.transform(readWriteArea));
+        assertEquals(TransformResult.EXCLUDE, transform.transform(readWriteArea));
 
         input[0] = "2005.0000";
         assertEquals(TransformResult.OK, transform.transform(readWriteArea));
@@ -125,10 +125,10 @@ public class ExcludeFilterNumericTest
         String [] output = {};
         String [][] readWriteArea = {input, scratch, output};
 
-        assertEquals(TransformResult.FATAL_FAIL, transform.transform(readWriteArea));
+        assertEquals(TransformResult.EXCLUDE, transform.transform(readWriteArea));
 
         input[0] = "2000.0000";
-        assertEquals(TransformResult.FATAL_FAIL, transform.transform(readWriteArea));
+        assertEquals(TransformResult.EXCLUDE, transform.transform(readWriteArea));
 
         input[0] = "9000.5";
         assertEquals(TransformResult.OK, transform.transform(readWriteArea));
