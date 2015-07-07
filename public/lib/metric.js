@@ -30,7 +30,7 @@ var numeral = require('numeral');
     };
 
     function calculateValue(metric, value) {
-      if (metric.units === 'rps') {
+      if (metric.units === '/s') {
         var bucketParts = metric.settings.get('interval').match(/([\d]+)([yMwdhms])/);
         if (bucketParts) {
           var duration = moment.duration(Number(bucketParts[1]), durations[bucketParts[2]]);

@@ -12,101 +12,54 @@
       <th>Translog</th>
     </tr>
   </thead>
-  <tbody>
-    <tr class="red">
+  <tbody bindonce>
+    <tr ng-repeat="activity in source.data" ng-class="{ done: activity.stage === 'DONE', red: activity.type === 'GATEWAY', yellow: activity.type === 'REPLICA' }">
       <td class="index">
-        <h5>logstash-2015.01.01</h5>
-        <p>Shard 4 | Primary</p>
+        <h5 bo-text="activity.index.name"></h5>
+        <p>Shard <span bo-text="activity.id"></span> | <span bo-text="lookup[activity.type]"></span></p>
       </td>
       <td class="stage">
-        <h6>INDEX</h6>
+        <h6 bo-text="activity.stage"></h6>
       </td>
       <td class="time">
-        <h6>01:23:20</h6>
+        <h6 bo-text="formatNumber(activity.total_time_in_millis/1000, '00:00:00')"></h6>
       </td>
       <td class="source-dest">
         <div>
-          <div><h6>n/a</h6></div>
+          <div>
+            <h6 ng-if="!activity.source.name">n/a</h6>
+            <div ng-if="activity.source.name">
+              <h6 bo-text="activity.source.name"></h6>
+              <p bo-text="getIpAndPort(activity.source.transport_address)"></p>
+            </div>
+          </div>
           <div><h6><i class="fa fa-arrow-right"></i></h6></div>
-          <div><div><h6>host-01</h6><p>192.168.1.30:9200</p></div></div>
+          <div>
+            <div>
+              <h6 bo-text="activity.target.name"></h6>
+              <p bo-text="getIpAndPort(activity.target.transport_address)"></p>
+            </div>
+          </div>
         </div>
       </td>
-      <td class="snapshot-repo"><h6>n/a</h6></td>
+      <td class="snapshot-repo" ng-if="activity">
+        <h6 ng-if="activity.type !== 'SNAPSHOT'">n/a</h6>
+        <div ng-if="activity.type === 'SNAPSHOT'"><p>logstash-data</p><p>logstash-s3-backup</p></div>
+      </td>
       <td class="files">
-        <h5>65.4%</h5>
-        <p>130/198</p>
+        <h5 bo-text="activity.index.files.percent"></h5>
+        <p><span bo-text="formatNumber(activity.index.files.reused, '0,0')"></span>/<span bo-text="formatNumber(activity.index.files.total, '0,0')"></span></p>
       </td>
       <td class="bytes">
-        <h5>12.3%</h5>
-        <p>95MB/722MB</p>
+        <h5 bo-text="activity.index.size.percent"></h5>
+        <p><span bo-text="formatNumber(activity.index.size.reused_in_bytes, 'byte')"></span>/<span bo-text="formatNumber(activity.index.size.total_in_bytes, 'byte')"></span></p>
       </td>
-      <td class="translog">
-        <h5>0.0%</h5>
-        <p>0/5742</p>
+      <td class="translog" ng-if="activity.translog.total <= 0">
+        <h5>n/a</h5>
       </td>
-    </tr>
-    <tr class="yellow">
-      <td class="index">
-        <h5>logstash-2015.01.01</h5>
-        <p>Shard 4 | Replica</p>
-      </td>
-      <td class="stage">
-        <h6>INDEX</h6>
-      </td>
-      <td class="time">
-        <h6>01:23:20</h6>
-      </td>
-      <td class="source-dest">
-        <div>
-          <div><h6>n/a</h6></div>
-          <div><h6><i class="fa fa-arrow-right"></i></h6></div>
-          <div><div><h6>host-01</h6><p>192.168.1.30:9200</p></div></div>
-        </div>
-      </td>
-      <td class="snapshot-repo"><h6>n/a</h6></td>
-      <td class="files">
-        <h5>65.4%</h5>
-        <p>130/198</p>
-      </td>
-      <td class="bytes">
-        <h5>12.3%</h5>
-        <p>95MB/722MB</p>
-      </td>
-      <td class="translog">
-        <h5>0.0%</h5>
-        <p>0/5742</p>
-      </td>
-    </tr>
-    <tr class="normal">
-      <td class="index">
-        <h5>restore-logstash-2014.01.01</h5>
-        <p>Shard 1 | snapshot</p>
-      </td>
-      <td class="stage">
-        <h6>INDEX</h6>
-      </td>
-      <td class="time">
-        <h6>01:23:20</h6>
-      </td>
-      <td class="source-dest">
-        <div>
-          <div><h6>n/a</h6></div>
-          <div><h6><i class="fa fa-arrow-right"></i></h6></div>
-          <div><div><h6>host-01</h6><p>192.168.1.30:9200</p></div></div>
-        </div>
-      </td>
-      <td class="snapshot-repo"><p>logstash-data</p><p>logstash-s3-backup</p></td>
-      <td class="files">
-        <h5>65.4%</h5>
-        <p>130/198</p>
-      </td>
-      <td class="bytes">
-        <h5>12.3%</h5>
-        <p>95MB/722MB</p>
-      </td>
-      <td class="translog">
-        <h5>100.0%</h5>
-        <p>0/0</p>
+      <td class="translog" ng-if="activity.translog.total > 0">
+        <h5 bo-text="activity.translog.percent"></h5>
+        <p><span bo-text="activity.translog.total"></span>/<span bo-text="activity.translog.total_on_start"><span></p>
       </td>
     </tr>
   </tbody>

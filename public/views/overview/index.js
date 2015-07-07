@@ -7,12 +7,14 @@ define(function (require) {
   require('marvel/services/settings');
   require('marvel/services/metrics');
   require('marvel/services/clusters');
+  require('angular-bindonce');
 
   var module = require('modules').get('marvel', [
     'marvel/directives',
     'marvel/settings',
     'marvel/metrics',
-    'nvd3'
+    'nvd3',
+    'pasvaz.bindonce'
   ]);
 
   require('routes')
@@ -79,7 +81,7 @@ define(function (require) {
         $scope.dataSources.issues = {};
         // _.each(['cluster', 'node', 'index'], function (type) {
         // Index doesn't work, returns a 404
-        _.each(['cluster', 'node'], function (type) {
+        _.each(['cluster', 'node', 'index'], function (type) {
           var dataSource = new IssueDataSource(globalState.cluster, type);
           dataSource.register($scope);
           $scope.dataSources.issues[type] = dataSource;

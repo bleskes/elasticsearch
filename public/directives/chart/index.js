@@ -28,7 +28,7 @@ function (formatNumber, template) {
 
         $scope.$watch('source.data', function (data) {
           if (data.length) {
-            if (metric.units === 'rps') {
+            if (metric.units === '/s') {
               _.each(data, function (row) {
                 row.y = row.y/source.bucketSize;
               });

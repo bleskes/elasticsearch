@@ -92,11 +92,23 @@ marvel-shard-activity {
   display: block;
   padding: 20px;
 }
+marvel-shard-activity tr.red.done td {
+  background-color: #FFF;
+}
 marvel-shard-activity tr.red td {
   background-color: rgba(255, 0, 0, 0.2);
 }
+marvel-shard-activity tr.yellow.done td {
+  background-color: #FFF;
+}
 marvel-shard-activity tr.yellow td {
   background: rgba(245, 166, 35, 0.2);
+}
+marvel-shard-activity tr.done {
+  color: #999;
+}
+marvel-shard-activity tr.done:hover {
+  color: #333;
 }
 marvel-shard-activity td {
   vertical-align: middle !important;
