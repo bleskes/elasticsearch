@@ -1,5 +1,6 @@
 var metrics = {
   'search_request_rate': {
+    active: true,
     field: 'total.search.query_total',
     label: 'Search Rate',
     description: 'The cluster wide rate at which search reqeusts are being executed.',
@@ -12,6 +13,7 @@ var metrics = {
     derivative: true
   },
   'index_request_rate': {
+    active: true,
     field: 'total.indexing.index_total',
     label: 'Indexing Rate',
     description: 'The cluster wide rate at which documents are being indexed.',
@@ -24,6 +26,7 @@ var metrics = {
     derivative: true
   },
   'index_latency': {
+    active: true,
     field: 'total.indexing.index_total',
     label: 'Indexing Latency',
     description: 'The average indexing latency across the entire cluster.',
@@ -62,6 +65,7 @@ var metrics = {
     }
   },
   'query_latency': {
+    active: true,
     field: 'total.search.query_total',
     label: 'Query Latency',
     description: 'The average query latency across the entire cluster.',
@@ -100,6 +104,7 @@ var metrics = {
     }
   },
   'cpu_utilization': {
+    active: true,
     field: 'os.cpu.user',
     label: 'CPU Utilization',
     description: 'The percentage of CPU usage.',
@@ -111,6 +116,7 @@ var metrics = {
     derivative: false
   },
   'heap_used_percent': {
+    active: true,
     field: 'jvm.mem.heap_used_percent',
     label: 'JVM Heap Usage',
     description: 'The amound of heap used by the JVM',
@@ -122,6 +128,7 @@ var metrics = {
     derivative: false
   },
   'load_average_1m': {
+    active: true,
     field: 'os.load_average.1m',
     label: 'CPU Load (1m)',
     description: 'The amount of load used for the last 1 minute.',
@@ -133,6 +140,7 @@ var metrics = {
     derivative: false
   },
   'index_throttle_time': {
+    active: true,
     field: 'primaries.indexing.throttle_time_in_millis',
     label: 'Indexing Throttle Time',
     description: 'The amount of load used for the last 1 minute.',
@@ -144,6 +152,7 @@ var metrics = {
     derivative: true
   },
   'index_shard_query_rate': {
+    active: true,
     field: 'total.search.query_total',
     label: 'Index Search Query Shard Rate',
     description: 'Total number of requests (GET /_search)across an index (and across all relevant shards for that index) / <time range>',
@@ -155,6 +164,7 @@ var metrics = {
     derivative: false
   },
   'index_document_count': {
+    active: false,
     field: 'primaries.docs.count',
     label: 'Indexing Document Count',
     description: 'Total number of documents (in primary shards) for an index',
