@@ -33,7 +33,6 @@ define(function (require) {
     var ClusterStatusDataSource = Private(require('marvel/directives/cluster_status/data_source'));
     var ShardRecoveryDataSource = Private(require('marvel/directives/shard_activity/data_source'));
     var IssueDataSource = Private(require('marvel/directives/issues/data_source'));
-
     var indexPattern = $route.current.locals.marvel.indexPattern;
     var clusters = $route.current.locals.marvel.clusters;
 
