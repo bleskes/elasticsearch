@@ -15,7 +15,7 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Elasticsearch Incorporated.
  */
-package org.elasticsearch.license.core.shaded;
+package org.elasticsearch.license.core;
 
 
 import org.elasticsearch.common.Base64;
