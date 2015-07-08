@@ -42,16 +42,19 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 
 import com.prelert.job.AnalysisConfig;
+import com.prelert.job.DataCounts;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
+import com.prelert.job.JobDetails;
 import com.prelert.job.transform.TransformConfig;
 import com.prelert.job.transform.condition.Condition;
 import com.prelert.job.transform.condition.Operator;
 import com.prelert.rs.client.EngineApiClient;
 import com.prelert.rs.data.ApiError;
 import com.prelert.rs.data.MultiDataPostResult;
+import com.prelert.rs.data.SingleDocument;
 
 /**
  * Tests the regex exclude transform functionality.
@@ -134,7 +137,7 @@ public class ExcludeTransformTest implements Closeable
         m_WebServiceClient.createJob(config);
     }
 
-    public void uploadData(File dataFile)
+    public void uploadDataAndVerify(File dataFile)
             throws IOException
     {
         FileInputStream stream = new FileInputStream(dataFile);
@@ -145,11 +148,31 @@ public class ExcludeTransformTest implements Closeable
         ApiError error = result.getResponses().get(0).getError();
         test(error == null);
 
-        test(result.getResponses().get(0).getUploadSummary().getInputRecordCount() == 999);
-        test(result.getResponses().get(0).getUploadSummary().getProcessedRecordCount() == 776);
-        test(result.getResponses().get(0).getUploadSummary().getExcludedRecordCount() == 223);
-        test(result.getResponses().get(0).getUploadSummary().getInputFieldCount() == 2997);
-        test(result.getResponses().get(0).getUploadSummary().getProcessedFieldCount() == 1552);
+        verifyCounts(result.getResponses().get(0).getUploadSummary());
+    }
+
+    public void closeJobAndVerify() throws IOException
+    {
+        m_WebServiceClient.closeJob(JOB_ID);
+
+        // check that the usage counts have been written to the job details
+        SingleDocument<JobDetails> job = m_WebServiceClient.getJob(JOB_ID);
+        test(job.isExists());
+
+        verifyCounts(job.getDocument().getCounts());
+    }
+
+    private void verifyCounts(DataCounts counts)
+    {
+        test(counts.getInputRecordCount() == 999);
+        test(counts.getProcessedRecordCount() == 776);
+        test(counts.getExcludedRecordCount() == 223);
+        test(counts.getInputFieldCount() == 2997);
+        test(counts.getProcessedFieldCount() == 1552);
+        test(counts.getInvalidDateCount() == 0);
+        test(counts.getMissingFieldCount() == 0);
+        test(counts.getFailedTransformCount() == 0);
+        test(counts.getOutOfOrderTimeStampCount() == 0);
     }
 
     /**
@@ -204,7 +227,10 @@ public class ExcludeTransformTest implements Closeable
             LOGGER.info("Running Exclude transform test");
 
             transformTest.createJob();
-            transformTest.uploadData(dnsDataFile);
+            transformTest.uploadDataAndVerify(dnsDataFile);
+            transformTest.closeJobAndVerify();
+
+            LOGGER.info("All tests passed Ok");
         }
     }
 }
