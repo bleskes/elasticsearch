@@ -28,6 +28,7 @@ define(function (require) {
   require('marvel/views/indices/index.js');
   require('marvel/views/overview/index.js');
   require('marvel/views/settings/index.js');
+  require('marvel/views/issues/issues_controller.js');
   require('marvel/views/setup/setup_controller.js');
 
 });

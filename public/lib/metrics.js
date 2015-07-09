@@ -152,7 +152,7 @@ var metrics = {
     derivative: true
   },
   'index_shard_query_rate': {
-    active: true,
+    active: false,
     field: 'total.search.query_total',
     label: 'Index Search Query Shard Rate',
     description: 'Total number of requests (GET /_search)across an index (and across all relevant shards for that index) / <time range>',
@@ -161,7 +161,7 @@ var metrics = {
     units: '',
     defaults: { warning: '>0', critical: '>0', interval: '1m', periods: 1 },
     type: 'index',
-    derivative: false
+    derivative: true
   },
   'index_document_count': {
     active: false,

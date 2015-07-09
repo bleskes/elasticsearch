@@ -48,11 +48,11 @@
       </td>
       <td class="files">
         <h5 bo-text="activity.index.files.percent"></h5>
-        <p><span bo-text="formatNumber(activity.index.files.reused, '0,0')"></span>/<span bo-text="formatNumber(activity.index.files.total, '0,0')"></span></p>
+        <p><span bo-text="formatNumber(activity.index.files.reused ? activity.index.files.reused : activity.index.files.recovered, '0,0')"></span>/<span bo-text="formatNumber(activity.index.files.total, '0,0')"></span></p>
       </td>
       <td class="bytes">
         <h5 bo-text="activity.index.size.percent"></h5>
-        <p><span bo-text="formatNumber(activity.index.size.reused_in_bytes, 'byte')"></span>/<span bo-text="formatNumber(activity.index.size.total_in_bytes, 'byte')"></span></p>
+        <p><span bo-text="formatNumber((activity.index.size.reused_in_bytes === activity.index.size.total_in_bytes)? activity.index.size.recovered_in_bytes : activity.index.size.reused_in_bytes, 'byte')"></span>/<span bo-text="formatNumber(activity.index.size.total_in_bytes, 'byte')"></span></p>
       </td>
       <td class="translog" ng-if="activity.translog.total <= 0">
         <h5>n/a</h5>

@@ -12,6 +12,7 @@ define(function (require) {
           { id: 'overview', display: 'Overview', url: '#/marvel' },
           { id: 'indices', display: 'Indices', url: '#/marvel/indices' },
           { id: 'nodes', display: 'Nodes', url: '#/marvel/nodes' },
+          { id: 'issues', display: 'Issues', url: '#/marvel/issues' },
           { id: 'settings', display: 'Settings', url: '#/marvel/settings' }
         ];
         $scope.sections = _.each($scope.sections, function (section) {

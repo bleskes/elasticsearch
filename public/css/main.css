@@ -125,7 +125,7 @@ marvel-shard-activity h5 {
   margin: 0;
 }
 marvel-shard-activity h6 {
-  font-size: 20px;
+  font-size: 18px;
   margin: 0;
 }
 marvel-shard-activity .source-dest > div {
@@ -217,4 +217,113 @@ marvel-index-listing .pagination li {
 .nvd3 .nv-axis.nv-x path.domain {
   stroke-opacity: 1;
   stroke: #e5e5e5;
+}
+.issues {
+  -webkit-flex-grow: 1;
+      -ms-flex-positive: 1;
+          flex-grow: 1;
+  background-color: #EEE;
+}
+.issues .view {
+  padding: 40px;
+}
+.issues .view .issues-table {
+  background-color: #FFF;
+  padding: 10px 10px 0;
+}
+.issues .view td {
+  font-size: 16px;
+}
+.issues .view .fa-bolt {
+  color: #F60006;
+}
+.issues .view span.node,
+.issues .view span.index,
+.issues .view span.field {
+  color: #000;
+}
+.issues .view span.node::after,
+.issues .view span.index::after {
+  content: ':';
+}
+.issues .view td {
+  color: #888;
+}
+.issues .view .type {
+  font-size: 14px;
+  text-transform: capitalize;
+}
+.issues .view .fa-warning {
+  color: #F5A623;
+}
+.issues .view .no-results {
+  color: #CCC;
+  text-align: center;
+}
+.issues .view .no-results h1 {
+  margin-top: 0;
+}
+.issues .view .no-results .fa {
+  font-size: 100px;
+}
+.issues .view div.filters {
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  background-color: #DDD;
+  margin-bottom: 20px;
+}
+.issues .view div.filters .totals {
+  color: #666;
+  -webkit-flex-grow: 1;
+      -ms-flex-positive: 1;
+          flex-grow: 1;
+  -webkit-align-self: center;
+      -ms-flex-item-align: center;
+          align-self: center;
+  text-align: right;
+  padding-right: 20px;
+}
+.issues .view div.filters .filter,
+.issues .view div.filters .filter-label {
+  -webkit-flex: 0 0 auto;
+      -ms-flex: 0 0 auto;
+          flex: 0 0 auto;
+}
+.issues .view div.filters .filter-label {
+  color: #000;
+  font-weight: bold;
+  margin: 10px;
+  padding: 0 0 0 10px;
+}
+.issues .view div.filters .filter {
+  cursor: pointer;
+  margin: 5px 1px;
+  background-color: #EEE;
+  color: #666;
+  padding: 5px 10px;
+  border: 1px solid #CCC;
+}
+.issues .view div.filters .filter .fa-warning,
+.issues .view div.filters .filter .fa-bolt {
+  color: #666;
+}
+.issues .view div.filters .filter.active {
+  background-color: #1FA5DE;
+  color: #FFF;
+}
+.issues .view div.filters .filter.active.red {
+  background-color: #C00;
+}
+.issues .view div.filters .filter.active.red .fa-warning,
+.issues .view div.filters .filter.active.red .fa-bolt {
+  color: #FFF;
+}
+.issues .view div.filters .filter.active.yellow {
+  background-color: #F5A623;
+  color: #000;
+}
+.issues .view div.filters .filter.active.yellow .fa-warning,
+.issues .view div.filters .filter.active.yellow .fa-bolt {
+  color: #000;
 }

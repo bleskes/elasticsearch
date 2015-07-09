@@ -15,7 +15,8 @@ define(function (require) {
         $scope.lookup = {
           GATEWAY: 'Primary',
           REPLICA: 'Replica',
-          SNAPSHOT: 'Snapshot'
+          SNAPSHOT: 'Snapshot',
+          RELOCATING: 'Relocating'
         };
 
         $scope.getIpAndPort = function (transport) {
