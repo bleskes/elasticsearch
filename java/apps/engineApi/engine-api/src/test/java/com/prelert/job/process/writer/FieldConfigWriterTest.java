@@ -36,6 +36,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import junit.framework.Assert;
@@ -126,6 +127,22 @@ public class FieldConfigWriterTest
         fieldConfigWriter.write();
 
         verify(writer).write("categorizationfield = foo\n");
+        verifyNoMoreInteractions(writer);
+    }
+
+    @Test
+    public void testWrite_GivenConfigHasInfluencers() throws IOException
+    {
+        AnalysisConfig config = new AnalysisConfig();
+        config.setInfluencers(Arrays.asList("sun", "moon", "earth"));
+
+        OutputStreamWriter writer = mock(OutputStreamWriter.class);
+        Logger logger = mock(Logger.class);
+        FieldConfigWriter fieldConfigWriter = new FieldConfigWriter(config, writer, logger);
+
+        fieldConfigWriter.write();
+
+        verify(writer).write("influencers = sun-moon-earth\n");
         verifyNoMoreInteractions(writer);
     }
 }

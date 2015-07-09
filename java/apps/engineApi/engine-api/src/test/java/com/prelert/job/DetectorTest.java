@@ -681,4 +681,29 @@ public class DetectorTest
 
         assertEquals(detector1.hashCode(), detector2.hashCode());
     }
+
+    @Test
+    public void testEquals()
+    {
+        Detector detector1 = createDetector();
+        Detector detector2 = createDetector();
+
+        assertEquals(detector1, detector2);
+
+        detector2.setByFieldName("aa");
+        Assert.assertFalse(detector1.equals(detector2));
+    }
+
+    private Detector createDetector()
+    {
+        Detector detector = new Detector();
+        detector.setFunction("mean");
+        detector.setFieldName("field");
+        detector.setByFieldName("by");
+        detector.setOverFieldName("over");
+        detector.setPartitionFieldName("partition");
+        detector.setUseNull(true);
+
+        return detector;
+    }
 }
