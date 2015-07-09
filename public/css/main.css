@@ -21,7 +21,7 @@ marvel-cluster-status > div {
   font-size: 14px;
   color: #000000;
   line-height: 16px;
-  background-image: #79D415;
+  background-color: #79D415;
   padding: 20px;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -31,10 +31,10 @@ marvel-cluster-status > div a.dropdown-toggle {
   color: #000000;
 }
 marvel-cluster-status > div.red {
-  background-image: #DC3C3C;
+  background-color: #DC3C3C;
 }
 marvel-cluster-status > div.yellow {
-  background-image: #F3BC18;
+  background-color: #F3BC18;
 }
 marvel-cluster-status > div > div {
   -webkit-flex: 1 1 auto;

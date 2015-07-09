@@ -21,17 +21,7 @@ define(function (require) {
     ShardRecoveryDataSource.prototype.handleResponse = function (resp) {
       if (resp.hits.total < 1) return;
       var self = this;
-      self.data = _.reduce(resp.hits.hits[0]._source, function (accum, details, index) {
-         if (index === 'cluster_name' || index === '@timestamp') return accum;
-         if (details.shards && details.shards.length) {
-          return accum.concat(details.shards.map(function (row) {
-            row.index.name = index;
-            return row;
-          }));
-         } else {
-          return accum;
-         }
-      }, []);
+      self.data = resp.hits.hits[0]._source.shards;
       self.data.sort(function (a, b) {
         return b.start_time_in_millis - a.start_time_in_millis;
       });
