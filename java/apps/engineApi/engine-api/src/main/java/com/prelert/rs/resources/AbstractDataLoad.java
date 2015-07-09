@@ -392,7 +392,7 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
         LOGGER.debug("Post to close data upload for job " + jobId);
         jobManager().closeJob(jobId);
         LOGGER.debug("Process finished successfully, Job Id = '" + jobId + "'");
-        return Response.accepted().entity(new Acknowledgement()).build();
+        return Response.ok().entity(new Acknowledgement()).build();
     }
 
     protected abstract boolean shouldPersist();

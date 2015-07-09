@@ -658,7 +658,8 @@ public class EngineApiClient implements Closeable
         {
             String content = EntityUtils.toString(response.getEntity());
 
-            if (response.getStatusLine().getStatusCode() != HttpStatus.SC_ACCEPTED)
+            int statusCode = response.getStatusLine().getStatusCode();
+            if (statusCode != HttpStatus.SC_ACCEPTED && statusCode != HttpStatus.SC_OK)
             {
                 String msg = String.format(
                         "Error closing job %s, status code = %d. "
