@@ -88,6 +88,16 @@ marvel-issues .fa-warning {
 marvel-issues li {
   padding-bottom: 5px;
 }
+marvel-issues li.no-results {
+  text-align: center;
+  color: #DDD;
+}
+marvel-issues li.no-results .fa {
+  font-size: 80px;
+}
+marvel-issues li.no-results h6 {
+  font-size: 28px;
+}
 marvel-shard-activity {
   display: block;
   padding: 20px;

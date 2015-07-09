@@ -4,4 +4,8 @@
   <li ng-repeat="issue in source.data|limitTo: 5">
     <span><i class="fa" ng-class="{ 'fa-fire': issue.status === 'red', 'fa-warning': issue.status === 'yellow' }"></i> <strong><a href="#/marvel/node/{{ issue.node._id }}"ng-if="issue.node">{{ issue.node.name || issue.node }}: </a><a ng-if="issue.index" href="#/marvel/index/{{ issue.index }}">{{ issue.index }}</a> <span ng-if="issue.id !== 'unassigned_primary' && issue.id !== 'unassigned_replica'">{{issue.metric && issue.metric.label || issue.field}}</span></strong> {{issue.message}}</span>
   </li>
+  <li class="no-results" ng-if="!source.data.length">
+    <div><i class="fa fa-thumbs-o-up"></i></div>
+    <h6>Hooray! There are no issues!</h6>
+  </li>
 </ul>
