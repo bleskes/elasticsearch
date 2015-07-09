@@ -112,7 +112,6 @@ public class AlertManager implements TimeoutHandler
     @Override
     public void handleTimeout(AsyncResponse response)
     {
-
         Alert alert = new Alert();
         alert.setTimeout(true);
 

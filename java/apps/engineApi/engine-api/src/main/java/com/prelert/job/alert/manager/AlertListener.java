@@ -107,6 +107,7 @@ class AlertListener extends AlertObserver
         if (isAnomalyScoreAlert(bucket.getAnomalyScore()))
         {
             bucket.setRecords(records);
+            bucket.setRecordCount(records.size());
             alert.setBucket(bucket);
         }
         else
