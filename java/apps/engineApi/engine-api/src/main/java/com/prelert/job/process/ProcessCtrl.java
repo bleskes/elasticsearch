@@ -171,7 +171,6 @@ public class ProcessCtrl
      * Arguments used by prelert_autodetect_api
      */
     public static final String BATCH_SPAN_ARG = "--batchspan=";
-    public static final String DELIMITER_ARG = "--delimiter=";
     public static final String FIELD_CONFIG_ARG = "--fieldconfig=";
     public static final String INFO_ARG = "--info";
     public static final String LIMIT_CONFIG_ARG = "--limitconfig=";
@@ -300,7 +299,7 @@ public class ProcessCtrl
      * Set up an environment containing the PRELERT_HOME and LD_LIBRARY_PATH
      * (or equivalent) environment variables.
      */
-    private static void buildEnvironment(ProcessBuilder pb)
+    static void buildEnvironment(ProcessBuilder pb)
     {
         // Always clear inherited environment variables
         pb.environment().clear();
@@ -453,8 +452,79 @@ public class ProcessCtrl
     {
         logger.info("PRELERT_HOME is set to " + PRELERT_HOME);
 
+        List<String> command = ProcessCtrl.buildAutoDetectCommand(job, logger);
+
+        if (job.getAnalysisLimits() != null)
+        {
+            File limitConfigFile = File.createTempFile("limitconfig", CONF_EXTENSION);
+            filesToDelete.add(limitConfigFile);
+            writeLimits(job.getAnalysisLimits(), limitConfigFile);
+            String limits = LIMIT_CONFIG_ARG + limitConfigFile.toString();
+            command.add(limits);
+        }
+
+        if (job.getModelDebugConfig() != null && job.getModelDebugConfig().isEnabled())
+        {
+            File modelDebugConfigFile = File.createTempFile("modeldebugconfig", CONF_EXTENSION);
+            filesToDelete.add(modelDebugConfigFile);
+            writeModelDebugConfig(job.getModelDebugConfig(), modelDebugConfigFile);
+            String modelDebugConfig = MODEL_DEBUG_CONFIG_ARG + modelDebugConfigFile.toString();
+            command.add(modelDebugConfig);
+        }
+
+        if (modelConfigFilePresent())
+        {
+            String modelConfigFile = new File(CONFIG_DIR, PRELERT_MODEL_CONF).toString();
+            command.add(MODEL_CONFIG_ARG + modelConfigFile);
+        }
+
+
+        // Restoring the quantiles
+        if (quantiles != null && !quantiles.getState().isEmpty())
+        {
+            logger.info("Restoring quantiles for job '" + job.getId() + "'");
+
+            Path normalisersStateFilePath =
+                    writeNormaliserInitState(job.getId(), quantiles.getState());
+
+            String quantilesStateFileArg = QUANTILES_STATE_PATH_ARG + normalisersStateFilePath;
+            command.add(quantilesStateFileArg);
+            command.add(DELETE_STATE_FILES_ARG);
+        }
+
+        // now the actual field args
+        if (job.getAnalysisConfig() != null)
+        {
+            // write to a temporary field config file
+            File fieldConfigFile = File.createTempFile("fieldconfig", CONF_EXTENSION);
+            filesToDelete.add(fieldConfigFile);
+            try (OutputStreamWriter osw = new OutputStreamWriter(
+                    new FileOutputStream(fieldConfigFile),
+                    StandardCharsets.UTF_8))
+            {
+                new FieldConfigWriter(job.getAnalysisConfig(), osw, logger).write();
+            }
+
+            String fieldConfig = FIELD_CONFIG_ARG + fieldConfigFile.toString();
+            command.add(fieldConfig);
+        }
+
+        // Build the process
+        logger.info("Starting autodetect process with command: " +  command);
+        ProcessBuilder pb = new ProcessBuilder(command);
+        buildEnvironment(pb);
+
+        return pb.start();
+    }
+
+    static List<String> buildAutoDetectCommand(JobDetails job, Logger logger)
+    {
         List<String> command = new ArrayList<>();
         command.add(AUTODETECT_PATH);
+
+        // the logging id is the job id
+        String logId = LOG_ID_ARG + job.getId();
+        command.add(logId);
 
         if (job.getAnalysisConfig() != null)
         {
@@ -485,30 +555,6 @@ public class ProcessCtrl
             }
         }
 
-        if (job.getAnalysisLimits() != null)
-        {
-            File limitConfigFile = File.createTempFile("limitconfig", CONF_EXTENSION);
-            filesToDelete.add(limitConfigFile);
-            writeLimits(job.getAnalysisLimits(), limitConfigFile);
-            String limits = LIMIT_CONFIG_ARG + limitConfigFile.toString();
-            command.add(limits);
-        }
-
-        if (job.getModelDebugConfig() != null && job.getModelDebugConfig().isEnabled())
-        {
-            File modelDebugConfigFile = File.createTempFile("modeldebugconfig", CONF_EXTENSION);
-            filesToDelete.add(modelDebugConfigFile);
-            writeModelDebugConfig(job.getModelDebugConfig(), modelDebugConfigFile);
-            String modelDebugConfig = MODEL_DEBUG_CONFIG_ARG + modelDebugConfigFile.toString();
-            command.add(modelDebugConfig);
-        }
-
-        if (modelConfigFilePresent())
-        {
-            String modelConfigFile = new File(CONFIG_DIR, PRELERT_MODEL_CONF).toString();
-            command.add(MODEL_CONFIG_ARG + modelConfigFile);
-        }
-
         // Input is always length encoded
         command.add(LENGTH_ENCODED_INPUT_ARG);
 
@@ -520,36 +566,15 @@ public class ProcessCtrl
         DataDescription dataDescription = job.getDataDescription();
         if (dataDescription != null)
         {
-            if (DataDescription.DEFAULT_DELIMITER != dataDescription.getFieldDelimiter())
-            {
-                String delimiterArg = DELIMITER_ARG
-                        +  dataDescription.getFieldDelimiter();
-                command.add(delimiterArg);
-            }
-
             if (dataDescription.getTimeField() != null &&
                     dataDescription.getTimeField().isEmpty() == false)
             {
                 timeField = dataDescription.getTimeField();
             }
-
         }
         // always set the time field
         String timeFieldArg = TIME_FIELD_ARG + timeField;
         command.add(timeFieldArg);
-
-        // Restoring the quantiles
-        if (quantiles != null && !quantiles.getState().isEmpty())
-        {
-            logger.info("Restoring quantiles for job '" + job.getId() + "'");
-
-            Path normalisersStateFilePath =
-                    writeNormaliserInitState(job.getId(), quantiles.getState());
-
-            String quantilesStateFileArg = QUANTILES_STATE_PATH_ARG + normalisersStateFilePath;
-            command.add(quantilesStateFileArg);
-            command.add(DELETE_STATE_FILES_ARG);
-        }
 
         // Supply a URL for persisting/restoring model state unless model
         // persistence has been explicitly disabled.
@@ -568,33 +593,7 @@ public class ProcessCtrl
             command.add(PERSIST_INTERVAL_ARG);
         }
 
-        // the logging id is the job id
-        String logId = LOG_ID_ARG + job.getId();
-        command.add(logId);
-
-        // now the actual field args
-        if (job.getAnalysisConfig() != null)
-        {
-            // write to a temporary field config file
-            File fieldConfigFile = File.createTempFile("fieldconfig", CONF_EXTENSION);
-            filesToDelete.add(fieldConfigFile);
-            try (OutputStreamWriter osw = new OutputStreamWriter(
-                    new FileOutputStream(fieldConfigFile),
-                    StandardCharsets.UTF_8))
-            {
-                new FieldConfigWriter(job.getAnalysisConfig(), osw, logger).write();
-            }
-
-            String fieldConfig = FIELD_CONFIG_ARG + fieldConfigFile.toString();
-            command.add(fieldConfig);
-        }
-
-        // Build the process
-        logger.info("Starting autodetect process with command: " +  command);
-        ProcessBuilder pb = new ProcessBuilder(command);
-        buildEnvironment(pb);
-
-        return pb.start();
+        return command;
     }
 
     /**
@@ -653,8 +652,7 @@ public class ProcessCtrl
     {
         logger.info("PRELERT_HOME is set to " + PRELERT_HOME);
 
-        List<String> command = new ArrayList<>();
-        command.add(NORMALIZE_PATH);
+        List<String> command = ProcessCtrl.buildNormaliserCommand(jobId, bucketSpan);
 
         if (quantilesState != null)
         {
@@ -664,17 +662,6 @@ public class ProcessCtrl
             command.add(stateFileArg);
             command.add(DELETE_STATE_FILES_ARG);
         }
-
-        if (bucketSpan != null)
-        {
-            String bucketSpanArg = BUCKET_SPAN_ARG + bucketSpan.toString();
-            command.add(bucketSpanArg);
-        }
-
-        String logId = LOG_ID_ARG + jobId;
-        command.add(logId);
-
-        command.add(LENGTH_ENCODED_INPUT_ARG);
 
         if (modelConfigFilePresent())
         {
@@ -688,6 +675,27 @@ public class ProcessCtrl
         buildEnvironment(pb);
 
         return pb.start();
+
+    }
+
+    static List<String> buildNormaliserCommand(String jobId, Integer bucketSpan)
+    throws IOException
+    {
+        List<String> command = new ArrayList<>();
+        command.add(NORMALIZE_PATH);
+
+        if (bucketSpan != null)
+        {
+            String bucketSpanArg = BUCKET_SPAN_ARG + bucketSpan.toString();
+            command.add(bucketSpanArg);
+        }
+
+        String logId = LOG_ID_ARG + jobId;
+        command.add(logId);
+
+        command.add(LENGTH_ENCODED_INPUT_ARG);
+
+        return command;
     }
 
 
