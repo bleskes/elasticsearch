@@ -31,7 +31,7 @@ define(function (require) {
       this.data.replication_factor = get('indices.shards.index.replication.min') || 'n/a';
       this.data.document_count = formatNumber(get('indices.docs.count'), 'int_commas');
       // TODO check this one, probably wrong
-      this.data.data = formatNumber(get('nodes.fs.available_in_bytes'), 'byte');
+      this.data.data = formatNumber(get('indices.store.size_in_bytes'), 'byte');
       this.data.upTime = formatNumber(get('nodes.jvm.max_uptime_in_millis'), 'time_since');
       this.data.version = get('nodes.versions[0]');
     };
