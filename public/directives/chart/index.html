@@ -1,10 +1,18 @@
-<h4>{{title}}</h4>
-<h2>{{total}} {{unit}}</h2>
-<div class="vis-editor-canvas">
-  <div ng-if="!chart.data">Loading...</div>
-  <div ng-if="error">
-    <h4>Something's not quite right...</h4>
-    <div ng-bind="error"></div>
+<div>
+  <h1>
+    <span ng-if="chart.data">{{title}}: {{total}} {{unit}}</span>
+    <span ng-if="!chart.data">&nbsp;</span>
+  </h1>
+  <div class="vis-canvas">
+    <div ng-if="!chart.data" class="loading">
+      <i class="fa fa-3x fa-refresh fa-spin"></i>
+    </div>
+    <div ng-if="error" class="error">
+      <h4>Something's not quite right...</h4>
+      <div ng-bind="error"></div>
+    </div>
+    <div ng-if="chart.data" class="nvd3">
+      <nvd3 options="chart.options" data="chart.data"></nvd3>
+    </div>
   </div>
-  <nvd3 options="chart.options" data="chart.data"></nvd3>
 </div>

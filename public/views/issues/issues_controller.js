@@ -77,9 +77,10 @@ define(function (require) {
     }
     fetch();
 
-    $scope.$on('courier:searchRefresh', function () {
+    var unsubscribe = $scope.$on('courier:searchRefresh', function () {
       fetch();
     });
+    $scope.$on('$destroy', unsubscribe);
 
     $scope.filters = [ ];
 

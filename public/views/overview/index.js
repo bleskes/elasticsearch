@@ -82,7 +82,8 @@ define(function (require) {
         // Index doesn't work, returns a 404
         _.each(['cluster', 'node', 'index'], function (type) {
           var dataSource = new IssueDataSource(globalState.cluster, type);
-          dataSource.register($scope);
+          var unsubscribe = dataSource.register($scope);
+          $scope.$on('$destoy', unsubscribe);
           $scope.dataSources.issues[type] = dataSource;
         });
         return $scope.dataSources.issues;

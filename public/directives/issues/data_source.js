@@ -12,7 +12,7 @@ define(function (require) {
 
     IssueDataSource.prototype.register = function ($scope) {
       var self = this;
-      $scope.$on('courier:searchRefresh', function () {
+      return $scope.$on('courier:searchRefresh', function () {
         self.fetch();
       });
     };

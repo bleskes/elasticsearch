@@ -1,21 +1,27 @@
-<div class="marvel-overview" ng-controller="overview">
-  <marvel-nav></marvel-nav>
+<marvel-nav></marvel-nav>
+<div class="marvel-overview marvel-view" ng-controller="overview">
   <marvel-cluster-status source="dataSources['cluster_status']"></marvel-cluster-status>
   <div class="metrics">
-    <div ng-repeat="name in charts"><marvel-chart source="dataSources[name]"/></div>
+    <div ng-repeat="name in charts" class="marvel-element"><marvel-chart source="dataSources[name]"/></div>
   </div>
   <div class="metrics">
-    <div><marvel-issues
-      source="dataSources.issues['cluster']"
-      title="Cluster"/></div>
-    <div><marvel-issues
-      source="dataSources.issues['node']"
-      title="Nodes"
-      link="#/marvel/nodes"/></div>
-    <div><marvel-issues
-      source="dataSources.issues['index']"
-      title="Indices"
-      link="#/marvel/indices"/></div>
+    <div class="marvel-element">
+        <marvel-issues
+        source="dataSources.issues['cluster']"
+        title="Cluster"/>
+    </div>
+    <div class="marvel-element">
+      <marvel-issues
+        source="dataSources.issues['node']"
+        title="Nodes"
+        link="#/marvel/nodes"/>
+    </div>
+    <div class="marvel-element">
+      <marvel-issues
+        source="dataSources.issues['index']"
+        title="Indices"
+        link="#/marvel/indices"/>
+    </div>
   </div>
   <marvel-shard-activity source="dataSources.shardActivity"/>
 </div>
