@@ -24,6 +24,7 @@ define(function (require) {
     };
   });
 
+  require('marvel/filters/index.js');
   require('marvel/directives/index.js');
   require('marvel/views/indices/index.js');
   require('marvel/views/overview/index.js');

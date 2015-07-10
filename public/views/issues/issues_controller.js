@@ -58,6 +58,20 @@ define(function (require) {
         data.sort(compareIssues);
         $scope.issues = filterIssues(data);
         $scope.allIssues = data;
+        $scope.summaries = {
+          total: { status: '', red: 0, yellow: 0 },
+          cluster: { status: '', red: 0, yellow: 0 },
+          node: { status: '', red: 0, yellow: 0 },
+          index: { status: '', red: 0, yellow: 0 },
+        };
+        _.each($scope.allIssues, function (issue) {
+          $scope.summaries.total[issue.status] += 1;
+          $scope.summaries[issue.type][issue.status] += 1;
+        });
+        _.each($scope.summaries, function (summaries, key) {
+          if (summaries.yellow > 0) summaries.status = 'yellow';
+          if (summaries.red > 0) summaries.status = 'red';
+        });
         return data;
       });
     }
@@ -91,6 +105,11 @@ define(function (require) {
 
     $scope.isActive = function (filter) {
       return !!(_.find($scope.filters, filter));
+    };
+
+    $scope.showAll = function () {
+      $scope.filters = [];
+      $scope.issues = filterIssues($scope.allIssues);
     };
 
     $scope.toggleFilter = function (filter) {

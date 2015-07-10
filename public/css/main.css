@@ -2,7 +2,7 @@
   display: -webkit-flex;
   display: -ms-flexbox;
   display: flex;
-  border-bottom: 1px solid #EEE;
+  border-bottom: 1px solid #a3a5ad;
 }
 .metrics > div {
   -webkit-flex: 1 1 33.3%;
@@ -11,35 +11,99 @@
   padding: 20px;
 }
 .metrics > div:first-child {
-  border-right: 1px solid #EEE;
+  border-right: 1px solid #a3a5ad;
 }
 .metrics > div:last-child {
-  border-left: 1px solid #EEE;
+  border-left: 1px solid #a3a5ad;
 }
 marvel-cluster-status > div {
-  font-family: HelveticaNeue;
-  font-size: 14px;
-  color: #000000;
-  line-height: 16px;
-  background-color: #79D415;
-  padding: 20px;
   display: -webkit-flex;
   display: -ms-flexbox;
   display: flex;
 }
-marvel-cluster-status > div a.dropdown-toggle {
-  color: #000000;
+marvel-cluster-status > div .clusters {
+  padding: 5px 10px;
+  -webkit-align-self: center;
+      -ms-flex-item-align: center;
+          align-self: center;
+  background-color: #666977;
+  color: #ffffff;
+  margin-right: 10px;
 }
-marvel-cluster-status > div.red {
-  background-color: #DC3C3C;
+marvel-cluster-status > div .clusters a.dropdown-toggle {
+  color: #ffffff;
 }
-marvel-cluster-status > div.yellow {
-  background-color: #F3BC18;
+marvel-cluster-status > div .clusters .dropdown-menu {
+  padding: 0;
+  margin: 0;
+  border-radius: 0;
 }
-marvel-cluster-status > div > div {
-  -webkit-flex: 1 1 auto;
-      -ms-flex: 1 1 auto;
-          flex: 1 1 auto;
+marvel-cluster-status > div .clusters .dropdown-menu > li {
+  padding: 0;
+  margin: 0;
+  border-top: 1px solid #d1d2d6;
+}
+marvel-cluster-status > div .clusters .dropdown-menu > li:first-child {
+  border-top: 0;
+}
+marvel-cluster-status > div .clusters .dropdown-menu > li > a {
+  padding: 5px 10px;
+}
+marvel-cluster-status > div .clusters .dropdown-menu > li.red {
+  border-left: 4px solid #dc3c3c;
+}
+marvel-cluster-status > div .clusters .dropdown-menu > li.red > a:hover {
+  background-color: #dc3c3c;
+}
+marvel-cluster-status > div .clusters .dropdown-menu > li.yellow {
+  border-left: 4px solid #f3bc18;
+}
+marvel-cluster-status > div .clusters .dropdown-menu > li.yellow > a:hover {
+  background-color: #f3bc18;
+  color: #232123;
+}
+marvel-cluster-status > div .clusters .dropdown-menu > li.green {
+  border-left: 4px solid #94c63d;
+}
+marvel-cluster-status > div .clusters .dropdown-menu > li.green > a:hover {
+  background-color: #94c63d;
+}
+marvel-cluster-status > div .stats {
+  background-color: #666977;
+  color: #ffffff;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-flex-grow: 1;
+      -ms-flex-positive: 1;
+          flex-grow: 1;
+}
+marvel-cluster-status > div .stats .status.green {
+  color: #ffffff;
+  background-color: #94c63d;
+}
+marvel-cluster-status > div .stats .status.green a {
+  color: #ffffff;
+}
+marvel-cluster-status > div .stats .status.red {
+  color: #ffffff;
+  background-color: #dc3c3c;
+}
+marvel-cluster-status > div .stats .status.red a {
+  color: #ffffff;
+}
+marvel-cluster-status > div .stats .status.yellow {
+  color: #232123;
+  background-color: #f3bc18;
+}
+marvel-cluster-status > div .stats .status.yellow a {
+  color: #232123;
+}
+marvel-cluster-status > div .stats > div {
+  -webkit-align-self: center;
+      -ms-flex-item-align: center;
+          align-self: center;
+  padding: 5px 10px;
 }
 marvel-chart h4 {
   text-align: right;
@@ -52,13 +116,13 @@ marvel-chart h2 {
 }
 marvel-chart .chart {
   min-height: 200px;
-  background-color: #EEE;
+  background-color: #a3a5ad;
   display: -webkit-flex;
   display: -ms-flexbox;
   display: flex;
 }
 marvel-chart .chart > div {
-  color: #CCC;
+  color: #d1d2d6;
   font-size: 17px;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -80,17 +144,17 @@ marvel-issues h3 .count {
   font-size: 0.6em;
 }
 marvel-issues .fa-fire {
-  color: #F60006;
+  color: #dc3c3c;
 }
 marvel-issues .fa-warning {
-  color: #F5A623;
+  color: #f3bc18;
 }
 marvel-issues li {
   padding-bottom: 5px;
 }
 marvel-issues li.no-results {
   text-align: center;
-  color: #DDD;
+  color: #a3a5ad;
 }
 marvel-issues li.no-results .fa {
   font-size: 80px;
@@ -102,23 +166,11 @@ marvel-shard-activity {
   display: block;
   padding: 20px;
 }
-marvel-shard-activity tr.red.done td {
-  background-color: #FFF;
-}
-marvel-shard-activity tr.red td {
-  background-color: rgba(255, 0, 0, 0.2);
-}
-marvel-shard-activity tr.yellow.done td {
-  background-color: #FFF;
-}
-marvel-shard-activity tr.yellow td {
-  background: rgba(245, 166, 35, 0.2);
-}
 marvel-shard-activity tr.done {
-  color: #999;
+  color: #a3a5ad;
 }
 marvel-shard-activity tr.done:hover {
-  color: #333;
+  color: #666977;
 }
 marvel-shard-activity td {
   vertical-align: middle !important;
@@ -127,7 +179,7 @@ marvel-shard-activity p {
   margin: 0;
 }
 marvel-shard-activity table {
-  border-bottom: 2px solid #ecf0f1;
+  border-bottom: 2px solid #a3a5ad;
 }
 marvel-shard-activity h5 {
   font-size: 20px;
@@ -159,7 +211,7 @@ marvel-index-listing {
   padding: 20px;
 }
 marvel-index-listing table {
-  border-bottom: 2px solid #ecf0f1;
+  border-bottom: 2px solid #a3a5ad;
 }
 marvel-index-listing td,
 marvel-index-listing th {
@@ -193,10 +245,10 @@ marvel-index-listing .pagination li {
   display: inline-block;
 }
 .marvel-settings form > .row {
-  border-bottom: 1px solid #EEE;
+  border-bottom: 1px solid #a3a5ad;
 }
 .marvel-settings form > .row:first-child {
-  border-top: 1px solid #EEE;
+  border-top: 1px solid #a3a5ad;
 }
 /***************************/
 /****** MarvelCharts! ******/
@@ -228,47 +280,138 @@ marvel-index-listing .pagination li {
   stroke-opacity: 1;
   stroke: #e5e5e5;
 }
-.issues {
+.marvel-view {
   -webkit-flex-grow: 1;
       -ms-flex-positive: 1;
           flex-grow: 1;
-  background-color: #EEE;
+  background-color: #eff0f1;
+  padding: 10px;
 }
-.issues .view {
-  padding: 40px;
+.marvel-view .marvel-element {
+  margin-bottom: 10px;
+}
+.marvel-view .table > thead > tr > th {
+  border-color: #a3a5ad;
+}
+.marvel-view .table > tbody > tr > th,
+.marvel-view .table > tfoot > tr > th,
+.marvel-view .table > thead > tr > td,
+.marvel-view .table > tbody > tr > td,
+.marvel-view .table > tfoot > tr > td {
+  border-color: #d1d2d6;
+}
+.marvel-view .table {
+  border-bottom: 1px solid #d1d2d6;
+  margin-bottom: 0;
+}
+.marvel-view th {
+  font-weight: normal;
+}
+.marvel-view .fa-bolt {
+  color: #dc3c3c;
+}
+.marvel-view .fa-warning {
+  color: #dc3c3c;
+}
+marvel-issue-summary > div {
+  padding: 5px;
+  background-color: #ffffff;
+  border-top: 2px solid #a3a5ad;
+}
+marvel-issue-summary > div.red {
+  border-color: #dc3c3c;
+}
+marvel-issue-summary > div.yellow {
+  border-color: #f3bc18;
+}
+marvel-issue-summary > div h1 {
+  font-size: 24px;
+  margin: 0 0 5px 0;
+  color: #232123;
+}
+marvel-issue-summary > div .summary {
+  color: #666977;
+  font-size: 24px;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+}
+marvel-issue-summary > div .summary .fa-bolt,
+marvel-issue-summary > div .summary .fa-warning {
+  color: #666977 !important;
+}
+marvel-issue-summary > div .summary.red .fa-bolt {
+  color: #dc3c3c !important;
+}
+marvel-issue-summary > div .summary.red .total {
+  color: #dc3c3c;
+}
+marvel-issue-summary > div .summary.yellow .fa-warning {
+  color: #f3bc18 !important;
+}
+marvel-issue-summary > div .summary.yellow .total {
+  color: #f3bc18;
+}
+marvel-issue-summary > div .summary .icon {
+  font-size: 0.8em;
+  min-width: 40px;
+  text-align: center;
+  -webkit-align-self: center;
+      -ms-flex-item-align: center;
+          align-self: center;
+}
+marvel-issue-summary > div .summary .total {
+  -webkit-flex-grow: 1;
+      -ms-flex-positive: 1;
+          flex-grow: 1;
+  text-align: right;
+}
+.issues .view .summary {
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+}
+.issues .view .summary marvel-issue-summary {
+  -webkit-flex: 1 1 auto;
+      -ms-flex: 1 1 auto;
+          flex: 1 1 auto;
+  margin: 0 5px;
 }
 .issues .view .issues-table {
-  background-color: #FFF;
-  padding: 10px 10px 0;
-}
-.issues .view td {
-  font-size: 16px;
+  background-color: #ffffff;
+  border-top: 2px solid #a3a5ad;
+  padding: 0 5px 5px;
 }
 .issues .view .fa-bolt {
-  color: #F60006;
+  color: #dc3c3c;
+}
+.issues .view span.icon {
+  display: inline-block;
+  width: 20px;
+  text-align: center;
 }
 .issues .view span.node,
 .issues .view span.index,
 .issues .view span.field {
-  color: #000;
+  color: #232123;
 }
 .issues .view span.node::after,
 .issues .view span.index::after {
   content: ':';
 }
 .issues .view td {
-  color: #888;
+  color: #a3a5ad;
 }
 .issues .view .type {
-  font-size: 14px;
   text-transform: capitalize;
 }
 .issues .view .fa-warning {
-  color: #F5A623;
+  color: #f3bc18;
 }
 .issues .view .no-results {
-  color: #CCC;
+  color: #a3a5ad;
   text-align: center;
+  padding: 40px;
 }
 .issues .view .no-results h1 {
   margin-top: 0;
@@ -280,11 +423,10 @@ marvel-index-listing .pagination li {
   display: -webkit-flex;
   display: -ms-flexbox;
   display: flex;
-  background-color: #DDD;
-  margin-bottom: 20px;
+  border-bottom: 2px solid #a3a5ad;
 }
 .issues .view div.filters .totals {
-  color: #666;
+  color: #666977;
   -webkit-flex-grow: 1;
       -ms-flex-positive: 1;
           flex-grow: 1;
@@ -294,6 +436,9 @@ marvel-index-listing .pagination li {
   text-align: right;
   padding-right: 20px;
 }
+.issues .view div.filters .totals a {
+  color: #666977;
+}
 .issues .view div.filters .filter,
 .issues .view div.filters .filter-label {
   -webkit-flex: 0 0 auto;
@@ -301,39 +446,55 @@ marvel-index-listing .pagination li {
           flex: 0 0 auto;
 }
 .issues .view div.filters .filter-label {
-  color: #000;
+  color: #666977;
   font-weight: bold;
-  margin: 10px;
-  padding: 0 0 0 10px;
+  margin: 0 20px 0 60px;
+  -webkit-align-self: center;
+      -ms-flex-item-align: center;
+          align-self: center;
+}
+.issues .view div.filters .filter-label:first-child {
+  margin: 0 20px 0 0;
 }
 .issues .view div.filters .filter {
   cursor: pointer;
   margin: 5px 1px;
-  background-color: #EEE;
-  color: #666;
+  background-color: #ffffff;
+  color: #666977;
   padding: 5px 10px;
-  border: 1px solid #CCC;
+  font-size: 0.9em;
+  border: 1px solid #d1d2d6;
 }
-.issues .view div.filters .filter .fa-warning,
-.issues .view div.filters .filter .fa-bolt {
-  color: #666;
+.issues .view div.filters .filter.red {
+  color: #dc3c3c;
+  border-color: #dc3c3c;
+}
+.issues .view div.filters .filter.red .fa-bolt {
+  color: #dc3c3c;
+}
+.issues .view div.filters .filter.yellow {
+  color: #f3bc18;
+  border-color: #f3bc18;
+}
+.issues .view div.filters .filter.yellow .fa-bolt {
+  color: #f3bc18;
 }
 .issues .view div.filters .filter.active {
-  background-color: #1FA5DE;
-  color: #FFF;
+  background-color: #a3a5ad;
+  color: #ffffff;
 }
 .issues .view div.filters .filter.active.red {
-  background-color: #C00;
+  background-color: #dc3c3c;
 }
 .issues .view div.filters .filter.active.red .fa-warning,
 .issues .view div.filters .filter.active.red .fa-bolt {
-  color: #FFF;
+  color: #ffffff;
 }
 .issues .view div.filters .filter.active.yellow {
-  background-color: #F5A623;
-  color: #000;
+  background-color: #f3bc18;
+  color: #232123;
 }
 .issues .view div.filters .filter.active.yellow .fa-warning,
 .issues .view div.filters .filter.active.yellow .fa-bolt {
-  color: #000;
+  color: #232123;
 }
