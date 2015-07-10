@@ -377,6 +377,12 @@ marvel-issue-summary > div .summary .total {
           flex: 1 1 auto;
   margin: 0 5px;
 }
+.issues .view .summary marvel-issue-summary:first-child {
+  margin: 0 5px 0 0;
+}
+.issues .view .summary marvel-issue-summary:last-child {
+  margin: 0 0 0 5px;
+}
 .issues .view .issues-table {
   background-color: #ffffff;
   border-top: 2px solid #a3a5ad;
