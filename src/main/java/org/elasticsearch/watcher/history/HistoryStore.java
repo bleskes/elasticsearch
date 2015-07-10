@@ -22,6 +22,7 @@ import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
+import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.common.component.AbstractComponent;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
@@ -51,6 +52,7 @@ public class HistoryStore extends AbstractComponent {
     private static final ImmutableSet<String> forbiddenIndexSettings = ImmutableSet.of("index.mapper.dynamic");
 
     private final ClientProxy client;
+    private final IndexNameExpressionResolver indexNameExpressionResolver;
 
     private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
     private final Lock putUpdateLock = readWriteLock.readLock();
@@ -58,9 +60,10 @@ public class HistoryStore extends AbstractComponent {
     private final AtomicBoolean started = new AtomicBoolean(false);
 
     @Inject
-    public HistoryStore(Settings settings, ClientProxy client) {
+    public HistoryStore(Settings settings, ClientProxy client, IndexNameExpressionResolver indexNameExpressionResolver) {
         super(settings);
         this.client = client;
+        this.indexNameExpressionResolver = indexNameExpressionResolver;
     }
 
     public void start() {
@@ -68,7 +71,7 @@ public class HistoryStore extends AbstractComponent {
     }
 
     public boolean validate(ClusterState state) {
-        String[] indices = state.metaData().concreteIndices(IndicesOptions.lenientExpandOpen(), INDEX_PREFIX + "*");
+        String[] indices = indexNameExpressionResolver.concreteIndices(state, IndicesOptions.lenientExpandOpen(), INDEX_PREFIX + "*");
         if (indices.length == 0) {
             logger.debug("no history indices exist, so we can load");
             return true;
