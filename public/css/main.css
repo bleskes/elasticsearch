@@ -1,10 +1,15 @@
 .marvel-view {
   background-color: #eff0f1;
-  color: #232123;
   -webkit-flex-grow: 1;
       -ms-flex-positive: 1;
           flex-grow: 1;
   padding: 10px;
+}
+.marvel-view .marvel-content {
+  display: block;
+  -webkit-flex-grow: 1;
+      -ms-flex-positive: 1;
+          flex-grow: 1;
 }
 .marvel-view .marvel-element {
   margin-bottom: 10px;
@@ -186,6 +191,12 @@ marvel-cluster-status > div .stats {
   -webkit-flex-grow: 1;
       -ms-flex-positive: 1;
           flex-grow: 1;
+}
+marvel-cluster-status > div .stats .loading {
+  -webkit-flex-grow: 1;
+      -ms-flex-positive: 1;
+          flex-grow: 1;
+  text-align: center;
 }
 marvel-cluster-status > div .stats .status.green {
   color: #ffffff;
@@ -491,7 +502,7 @@ marvel-shard-activity .source-dest > div > div {
   color: #f3bc18;
 }
 .issues .view .no-results {
-  color: #a3a5ad;
+  color: #d1d2d6;
   text-align: center;
   padding: 40px;
 }

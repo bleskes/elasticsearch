@@ -28,7 +28,7 @@ define(function (require) {
     }
   });
 
-  module.controller('overview', function (kbnUrl, globalState, $scope, timefilter, $route, courier, marvelMetrics, Private, Promise) {
+  module.controller('overview', function (kbnUrl, globalState, $scope, timefilter, $route, courier, marvelMetrics, Private, Promise, $timeout) {
     var ChartDataSource = Private(require('marvel/directives/chart/data_source'));
     var ClusterStatusDataSource = Private(require('marvel/directives/cluster_status/data_source'));
     var ShardRecoveryDataSource = Private(require('marvel/directives/shard_activity/data_source'));
@@ -105,31 +105,7 @@ define(function (require) {
       }
     });
 
-    $scope.issues = {
-      cluster: [
-        { status: 'red', field: 'Pending Tasks', message: 'is above 50 at 230' },
-        { status: 'red', field: 'Pending Tasks', message: 'is above 50 at 230' },
-        { status: 'yellow', field: 'Query Latency', message: 'is above 1000 ms at 1349' },
-        { status: 'yellow', field: 'Query Latency', message: 'is above 1000 ms at 1349' },
-        { status: 'yellow', field: 'Query Latency', message: 'is above 1000 ms at 1349' }
-      ],
-      nodes: [
-        { status: 'red', field: 'host-01', message: 'is 99% CPU utilization above 80%' },
-        { status: 'red', field: 'host-01', message: 'is 79% memory utilization above 75%' },
-        { status: 'yellow', field: 'host-03', message: 'is 63% memory utilization above 50%' },
-        { status: 'yellow', field: 'host-04', message: 'is 60% memory utilization above 50%' },
-        { status: 'yellow', field: 'host-04', message: 'is 60% CPU utilization above 50%' },
-      ],
-      indices: [
-        { status: 'red', field: 'logstash-2015.01.01', message: 'has 2 unassigned primary shard' },
-        { status: 'red', field: 'logstash-2015.01.01', message: 'has an unassigned primary shard' },
-        { status: 'yellow', field: 'logstash-2015.01.01', message: 'has 5 unassigned replica shards' },
-        { status: 'yellow', field: 'logstash-2015.01.02', message: 'has 5 unassigned replica shards' },
-        { status: 'yellow', field: 'logstash-2015.01.03', message: 'has 5 unassigned replica shards' }
-      ]
-    };
-
-    });
+  });
 
 });
 
