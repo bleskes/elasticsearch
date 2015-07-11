@@ -102,7 +102,7 @@ marvel-chart > div .chart > div {
 }
 /* increase the line stroke width */
 .nv-linesWrap .nv-line {
-  stroke-width: 2.5px !important;
+  stroke-width: 2px !important;
 }
 /* Make the min max ticks not bold */
 .nvd3 .nv-axis .nv-axisMaxMin text {
