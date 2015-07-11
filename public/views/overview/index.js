@@ -90,7 +90,7 @@ define(function (require) {
       })
       .then(fetch);
 
-    function fetch () {
+    function fetch (withoutCourier) {
       var tasks = [];
       _.each($scope.dataSources.issues, function (dataSource) {
         tasks.push(dataSource.fetch());

@@ -10,7 +10,7 @@ define(function (require) {
       });
 
       var marvel = {};
-      return marvelClusters.fetch()
+      return marvelClusters.fetch(true)
         // Get the clusters
         .then(function (clusters) {
           var cluster;
