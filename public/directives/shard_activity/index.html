@@ -1,4 +1,4 @@
-<h3>Shard Activity</h3>
+<h1>Shard Activity</h1>
 <table class="table table-condensed">
   <thead>
     <tr>
@@ -61,6 +61,9 @@
         <h5 bo-text="activity.translog.percent"></h5>
         <p><span bo-text="activity.translog.total"></span>/<span bo-text="activity.translog.total_on_start"><span></p>
       </td>
+    </tr>
+    <tr>
+      <td ng-if="!source.data.length" colspan="8" class="no-results">There are no recovery records for this cluster.</td>
     </tr>
   </tbody>
 </table>

@@ -12,7 +12,7 @@
       <div ng-bind="error"></div>
     </div>
     <div ng-if="chart.data" class="nvd3">
-      <nvd3 options="chart.options" config="{ deepWatchData:false, refreshDatOnly: true }" data="chart.data"></nvd3>
+      <nvd3 options="chart.options" config="{ deepWatchData: false, refreshDatOnly: false }" data="chart.data"></nvd3>
     </div>
   </div>
 </div>

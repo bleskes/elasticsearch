@@ -12,8 +12,15 @@ define(function (require) {
       template: template,
       link: function ($scope) {
         $scope.$watch('source.data', function () {
+          $scope.status = '';
+          if (_.some($scope.source.data, { status: 'yellow'})) {
+            $scope.status = 'yellow';
+          }
+          if (_.some($scope.source.data, { status: 'red' })) {
+            $scope.status = 'red';
+          }
           $scope.total = $scope.source.data.length;
-          $scope.displaying = ($scope.total <= 5) ? $scope.total : 5;
+          $scope.displaying = ($scope.total <= 6) ? $scope.total : 6;
         });
       }
     };
