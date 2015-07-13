@@ -19,6 +19,7 @@
 
 package org.elasticsearch.cluster.routing.allocation.allocator;
 
+import org.elasticsearch.cluster.routing.RoutingNodes;
 import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.cluster.routing.RoutingNode;
 import org.elasticsearch.cluster.routing.allocation.FailedRerouteAllocation;
@@ -70,8 +71,23 @@ public class ShardsAllocators extends AbstractComponent implements ShardsAllocat
     public boolean allocateUnassigned(RoutingAllocation allocation) {
         boolean changed = false;
         changed |= gatewayAllocator.allocateUnassigned(allocation);
+        assert verifyNoUnIgnoredUnassignedPrimaries(allocation);
         changed |= allocator.allocateUnassigned(allocation);
         return changed;
+    }
+
+    boolean verifyNoUnIgnoredUnassignedPrimaries(RoutingAllocation allocation) {
+        final RoutingNodes routingNodes = allocation.routingNodes();
+        for (ShardRouting shard : routingNodes.unassigned()) {
+            if (shard.primary() == false) {
+                continue;
+            }
+            if (routingNodes.routingTable().index(shard.index()).shard(shard.id()).primaryAllocatedPostApi() == false) {
+                continue;
+            }
+            assert false : "primary " + shard + " is still unassigned. GatewayAllocator should have either assigned it or moved it to the ignored unassigned list";
+        }
+        return true;
     }
 
     @Override

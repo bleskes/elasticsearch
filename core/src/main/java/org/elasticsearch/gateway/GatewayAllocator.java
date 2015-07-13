@@ -27,14 +27,16 @@ import com.google.common.collect.Sets;
 import org.apache.lucene.util.CollectionUtil;
 import org.elasticsearch.action.support.nodes.BaseNodeResponse;
 import org.elasticsearch.action.support.nodes.BaseNodesResponse;
-import org.elasticsearch.cluster.*;
+import org.elasticsearch.cluster.ClusterChangedEvent;
+import org.elasticsearch.cluster.ClusterService;
+import org.elasticsearch.cluster.ClusterStateListener;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.cluster.metadata.MetaData;
 import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.node.DiscoveryNodes;
-import org.elasticsearch.cluster.routing.*;
 import org.elasticsearch.cluster.routing.RoutingNode;
 import org.elasticsearch.cluster.routing.RoutingNodes;
+import org.elasticsearch.cluster.routing.RoutingService;
 import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.cluster.routing.allocation.FailedRerouteAllocation;
 import org.elasticsearch.cluster.routing.allocation.RoutingAllocation;
@@ -170,205 +172,14 @@ public class GatewayAllocator extends AbstractComponent {
                 continue;
             }
 
-            AsyncShardFetch<TransportNodesListGatewayStartedShards.NodeGatewayStartedShards> fetch = asyncFetchStarted.get(shard.shardId());
-            if (fetch == null) {
-                fetch = new InternalAsyncFetch<>(logger, "shard_started", shard.shardId(), startedAction);
-                asyncFetchStarted.put(shard.shardId(), fetch);
-            }
-            AsyncShardFetch.FetchResult<TransportNodesListGatewayStartedShards.NodeGatewayStartedShards> shardState = fetch.fetchData(nodes, metaData, allocation.getIgnoreNodes(shard.shardId()));
-            if (shardState.hasData() == false) {
-                logger.trace("{}: ignoring allocation, still fetching shard started state", shard);
-                unassignedIterator.remove();
+            boolean assigned = tryAllocatingPrimary(shard, allocation, nodes, routingNodes, metaData);
+
+            unassignedIterator.remove();
+            if (assigned == false) {
+                logger.trace("{} could not be assigned. Adding to ignore list so it will not be assigned by another allocator.", shard);
                 routingNodes.ignoredUnassigned().add(shard);
-                continue;
-            }
-            shardState.processAllocation(allocation);
-
-            IndexMetaData indexMetaData = metaData.index(shard.getIndex());
-
-            /**
-             * Build a map of DiscoveryNodes to shard state number for the given shard.
-             * A state of -1 means the shard does not exist on the node, where any
-             * shard state >= 0 is the state version of the shard on that node's disk.
-             *
-             * A shard on shared storage will return at least shard state 0 for all
-             * nodes, indicating that the shard can be allocated to any node.
-             */
-            ObjectLongHashMap<DiscoveryNode> nodesState = new ObjectLongHashMap<>();
-            for (TransportNodesListGatewayStartedShards.NodeGatewayStartedShards nodeShardState : shardState.getData().values()) {
-                long version = nodeShardState.version();
-                // -1 version means it does not exists, which is what the API returns, and what we expect to
-                logger.trace("[{}] on node [{}] has version [{}] of shard", shard, nodeShardState.getNode(), version);
-                nodesState.put(nodeShardState.getNode(), version);
-            }
-
-            int numberOfAllocationsFound = 0;
-            long highestVersion = -1;
-            final Map<DiscoveryNode, Long> nodesWithVersion = Maps.newHashMap();
-
-            assert !nodesState.containsKey(null);
-            final Object[] keys = nodesState.keys;
-            final long[] values = nodesState.values;
-            Settings idxSettings = indexMetaData.settings();
-            for (int i = 0; i < keys.length; i++) {
-                if (keys[i] == null) {
-                    continue;
-                }
-
-                DiscoveryNode node = (DiscoveryNode) keys[i];
-                long version = values[i];
-                // since we don't check in NO allocation, we need to double check here
-                if (allocation.shouldIgnoreShardForNode(shard.shardId(), node.id())) {
-                    continue;
-                }
-                if (recoverOnAnyNode(idxSettings)) {
-                    numberOfAllocationsFound++;
-                    if (version > highestVersion) {
-                        highestVersion = version;
-                    }
-                    // We always put the node without clearing the map
-                    nodesWithVersion.put(node, version);
-                } else if (version != -1) {
-                    numberOfAllocationsFound++;
-                    // If we've found a new "best" candidate, clear the
-                    // current candidates and add it
-                    if (version > highestVersion) {
-                        highestVersion = version;
-                        nodesWithVersion.clear();
-                        nodesWithVersion.put(node, version);
-                    } else if (version == highestVersion) {
-                        // If the candidate is the same, add it to the
-                        // list, but keep the current candidate
-                        nodesWithVersion.put(node, version);
-                    }
-                }
-            }
-            // Now that we have a map of nodes to versions along with the
-            // number of allocations found (and not ignored), we need to sort
-            // it so the node with the highest version is at the beginning
-            List<DiscoveryNode> nodesWithHighestVersion = Lists.newArrayList();
-            nodesWithHighestVersion.addAll(nodesWithVersion.keySet());
-            CollectionUtil.timSort(nodesWithHighestVersion, new Comparator<DiscoveryNode>() {
-                @Override
-                public int compare(DiscoveryNode o1, DiscoveryNode o2) {
-                    return Long.compare(nodesWithVersion.get(o2), nodesWithVersion.get(o1));
-                }
-            });
-
-            if (logger.isDebugEnabled()) {
-                logger.debug("[{}][{}] found {} allocations of {}, highest version: [{}]",
-                        shard.index(), shard.id(), numberOfAllocationsFound, shard, highestVersion);
-            }
-            if (logger.isTraceEnabled()) {
-                StringBuilder sb = new StringBuilder("[");
-                for (DiscoveryNode n : nodesWithHighestVersion) {
-                    sb.append("[");
-                    sb.append(n.getName());
-                    sb.append("]");
-                    sb.append(" -> ");
-                    sb.append(nodesWithVersion.get(n));
-                    sb.append(", ");
-                }
-                sb.append("]");
-                logger.trace("{} candidates for allocation: {}", shard, sb.toString());
-            }
-
-            // check if the counts meets the minimum set
-            int requiredAllocation = 1;
-            // if we restore from a repository one copy is more then enough
-            if (shard.restoreSource() == null) {
-                try {
-                    String initialShards = indexMetaData.settings().get(INDEX_RECOVERY_INITIAL_SHARDS, settings.get(INDEX_RECOVERY_INITIAL_SHARDS, this.initialShards));
-                    if ("quorum".equals(initialShards)) {
-                        if (indexMetaData.numberOfReplicas() > 1) {
-                            requiredAllocation = ((1 + indexMetaData.numberOfReplicas()) / 2) + 1;
-                        }
-                    } else if ("quorum-1".equals(initialShards) || "half".equals(initialShards)) {
-                        if (indexMetaData.numberOfReplicas() > 2) {
-                            requiredAllocation = ((1 + indexMetaData.numberOfReplicas()) / 2);
-                        }
-                    } else if ("one".equals(initialShards)) {
-                        requiredAllocation = 1;
-                    } else if ("full".equals(initialShards) || "all".equals(initialShards)) {
-                        requiredAllocation = indexMetaData.numberOfReplicas() + 1;
-                    } else if ("full-1".equals(initialShards) || "all-1".equals(initialShards)) {
-                        if (indexMetaData.numberOfReplicas() > 1) {
-                            requiredAllocation = indexMetaData.numberOfReplicas();
-                        }
-                    } else {
-                        requiredAllocation = Integer.parseInt(initialShards);
-                    }
-                } catch (Exception e) {
-                    logger.warn("[{}][{}] failed to derived initial_shards from value {}, ignore allocation for {}", shard.index(), shard.id(), initialShards, shard);
-                }
-            }
-
-            // not enough found for this shard, continue...
-            if (numberOfAllocationsFound < requiredAllocation) {
-                // if we are restoring this shard we still can allocate
-                if (shard.restoreSource() == null) {
-                    // we can't really allocate, so ignore it and continue
-                    unassignedIterator.remove();
-                    routingNodes.ignoredUnassigned().add(shard);
-                    if (logger.isDebugEnabled()) {
-                        logger.debug("[{}][{}]: not allocating, number_of_allocated_shards_found [{}], required_number [{}]", shard.index(), shard.id(), numberOfAllocationsFound, requiredAllocation);
-                    }
-                } else if (logger.isDebugEnabled()) {
-                    logger.debug("[{}][{}]: missing local data, will restore from [{}]", shard.index(), shard.id(), shard.restoreSource());
-                }
-                continue;
-            }
-
-            Set<DiscoveryNode> throttledNodes = Sets.newHashSet();
-            Set<DiscoveryNode> noNodes = Sets.newHashSet();
-            for (DiscoveryNode discoNode : nodesWithHighestVersion) {
-                RoutingNode node = routingNodes.node(discoNode.id());
-                if (node == null) {
-                    continue;
-                }
-
-                Decision decision = allocation.deciders().canAllocate(shard, node, allocation);
-                if (decision.type() == Decision.Type.THROTTLE) {
-                    throttledNodes.add(discoNode);
-                } else if (decision.type() == Decision.Type.NO) {
-                    noNodes.add(discoNode);
-                } else {
-                    if (logger.isDebugEnabled()) {
-                        logger.debug("[{}][{}]: allocating [{}] to [{}] on primary allocation", shard.index(), shard.id(), shard, discoNode);
-                    }
-                    // we found a match
-                    changed = true;
-                    // make sure we create one with the version from the recovered state
-                    routingNodes.assign(new ShardRouting(shard, highestVersion), node.nodeId());
-                    unassignedIterator.remove();
-
-                    // found a node, so no throttling, no "no", and break out of the loop
-                    throttledNodes.clear();
-                    noNodes.clear();
-                    break;
-                }
-            }
-            if (throttledNodes.isEmpty()) {
-                // if we have a node that we "can't" allocate to, force allocation, since this is our master data!
-                if (!noNodes.isEmpty()) {
-                    DiscoveryNode discoNode = noNodes.iterator().next();
-                    RoutingNode node = routingNodes.node(discoNode.id());
-                    if (logger.isDebugEnabled()) {
-                        logger.debug("[{}][{}]: forcing allocating [{}] to [{}] on primary allocation", shard.index(), shard.id(), shard, discoNode);
-                    }
-                    // we found a match
-                    changed = true;
-                    // make sure we create one with the version from the recovered state
-                    routingNodes.assign(new ShardRouting(shard, highestVersion), node.nodeId());
-                    unassignedIterator.remove();
-                }
             } else {
-                if (logger.isDebugEnabled()) {
-                    logger.debug("[{}][{}]: throttling allocation [{}] to [{}] on primary allocation", shard.index(), shard.id(), shard, throttledNodes);
-                }
-                // we are throttling this, but we have enough to allocate to this node, ignore it for now
-                unassignedIterator.remove();
-                routingNodes.ignoredUnassigned().add(shard);
+                changed = true;
             }
         }
 
@@ -381,162 +192,368 @@ public class GatewayAllocator extends AbstractComponent {
         while (unassignedIterator.hasNext()) {
             ShardRouting shard = unassignedIterator.next();
             if (shard.primary()) {
+                assert routingNodes.routingTable().index(shard.index()).shard(shard.id()).primaryAllocatedPostApi() == false :
+                        "non-new primary shards should have been dealt with in the primary loop";
                 continue;
             }
 
-            // pre-check if it can be allocated to any node that currently exists, so we won't list the store for it for nothing
-            boolean canBeAllocatedToAtLeastOneNode = false;
-            for (ObjectCursor<DiscoveryNode> cursor : nodes.dataNodes().values()) {
-                RoutingNode node = routingNodes.node(cursor.value.id());
-                if (node == null) {
-                    continue;
-                }
-                // if we can't allocate it on a node, ignore it, for example, this handles
-                // cases for only allocating a replica after a primary
-                Decision decision = allocation.deciders().canAllocate(shard, node, allocation);
-                if (decision.type() == Decision.Type.YES) {
-                    canBeAllocatedToAtLeastOneNode = true;
-                    break;
-                }
-            }
+            changed = changed || tryAllocatingReplica(shard, allocation, nodes, routingNodes, metaData, unassignedIterator);
+        }
+        return changed;
+    }
 
-            if (!canBeAllocatedToAtLeastOneNode) {
-                logger.trace("{}: ignoring allocation, can't be allocated on any node", shard);
-                unassignedIterator.remove();
-                routingNodes.ignoredUnassigned().add(shard);
+    /**
+     * try to allocated a replica shard
+     *
+     * @return true if the allocation have changed
+     */
+    protected boolean tryAllocatingReplica(final ShardRouting replica, final RoutingAllocation allocation, final DiscoveryNodes nodes,
+                                           final RoutingNodes routingNodes, final MetaData metaData, final Iterator<ShardRouting> unassignedIterator) {
+        // pre-check if it can be allocated to any node that currently exists, so we won't list the store for it for nothing
+        boolean canBeAllocatedToAtLeastOneNode = false;
+        for (ObjectCursor<DiscoveryNode> cursor : nodes.dataNodes().values()) {
+            RoutingNode node = routingNodes.node(cursor.value.id());
+            if (node == null) {
+                continue;
+            }
+            // if we can't allocate it on a node, ignore it, for example, this handles
+            // cases for only allocating a replica after a primary
+            Decision decision = allocation.deciders().canAllocate(replica, node, allocation);
+            if (decision.type() == Decision.Type.YES) {
+                canBeAllocatedToAtLeastOneNode = true;
+                break;
+            }
+        }
+
+        if (!canBeAllocatedToAtLeastOneNode) {
+            logger.trace("{}: ignoring allocation, can't be allocated on any node", replica);
+            unassignedIterator.remove();
+            routingNodes.ignoredUnassigned().add(replica);
+            return false;
+        }
+
+        AsyncShardFetch<TransportNodesListShardStoreMetaData.NodeStoreFilesMetaData> fetch = asyncFetchStore.get(replica.shardId());
+        if (fetch == null) {
+            fetch = new InternalAsyncFetch<>(logger, "shard_store", replica.shardId(), storeAction);
+            asyncFetchStore.put(replica.shardId(), fetch);
+        }
+        AsyncShardFetch.FetchResult<TransportNodesListShardStoreMetaData.NodeStoreFilesMetaData> shardStores = fetch.fetchData(nodes, metaData, allocation.getIgnoreNodes(replica.shardId()));
+        if (shardStores.hasData() == false) {
+            logger.trace("{}: ignoring allocation, still fetching shard stores", replica);
+            unassignedIterator.remove();
+            routingNodes.ignoredUnassigned().add(replica);
+            return false;
+        }
+        shardStores.processAllocation(allocation);
+
+        boolean changed = false;
+        long bestSizeMatched = 0;
+        DiscoveryNode bestDiscoNodeMatched = null;
+        RoutingNode bestNodeMatched = null;
+        boolean hasReplicaData = false;
+        IndexMetaData indexMetaData = metaData.index(replica.getIndex());
+
+        for (Map.Entry<DiscoveryNode, TransportNodesListShardStoreMetaData.NodeStoreFilesMetaData> nodeStoreEntry : shardStores.getData().entrySet()) {
+            DiscoveryNode discoNode = nodeStoreEntry.getKey();
+            TransportNodesListShardStoreMetaData.StoreFilesMetaData storeFilesMetaData = nodeStoreEntry.getValue().storeFilesMetaData();
+            logger.trace("{}: checking node [{}]", replica, discoNode);
+
+            if (storeFilesMetaData == null) {
+                // already allocated on that node...
                 continue;
             }
 
-            AsyncShardFetch<TransportNodesListShardStoreMetaData.NodeStoreFilesMetaData> fetch = asyncFetchStore.get(shard.shardId());
-            if (fetch == null) {
-                fetch = new InternalAsyncFetch<>(logger, "shard_store", shard.shardId(), storeAction);
-                asyncFetchStore.put(shard.shardId(), fetch);
+            RoutingNode node = routingNodes.node(discoNode.id());
+            if (node == null) {
+                continue;
             }
-            AsyncShardFetch.FetchResult<TransportNodesListShardStoreMetaData.NodeStoreFilesMetaData> shardStores = fetch.fetchData(nodes, metaData, allocation.getIgnoreNodes(shard.shardId()));
-            if (shardStores.hasData() == false) {
-                logger.trace("{}: ignoring allocation, still fetching shard stores", shard);
-                unassignedIterator.remove();
-                routingNodes.ignoredUnassigned().add(shard);
-                continue; // still fetching
+
+            // check if we can allocate on that node...
+            // we only check for NO, since if this node is THROTTLING and it has enough "same data"
+            // then we will try and assign it next time
+            Decision decision = allocation.deciders().canAllocate(replica, node, allocation);
+            if (decision.type() == Decision.Type.NO) {
+                continue;
             }
-            shardStores.processAllocation(allocation);
 
-            long lastSizeMatched = 0;
-            DiscoveryNode lastDiscoNodeMatched = null;
-            RoutingNode lastNodeMatched = null;
-            boolean hasReplicaData = false;
-            IndexMetaData indexMetaData = metaData.index(shard.getIndex());
+            // if it is already allocated, we can't assign to it...
+            if (storeFilesMetaData.allocated()) {
+                continue;
+            }
 
-            for (Map.Entry<DiscoveryNode, TransportNodesListShardStoreMetaData.NodeStoreFilesMetaData> nodeStoreEntry : shardStores.getData().entrySet()) {
-                DiscoveryNode discoNode = nodeStoreEntry.getKey();
-                TransportNodesListShardStoreMetaData.StoreFilesMetaData storeFilesMetaData = nodeStoreEntry.getValue().storeFilesMetaData();
-                logger.trace("{}: checking node [{}]", shard, discoNode);
+            hasReplicaData |= storeFilesMetaData.iterator().hasNext();
+            ShardRouting primaryShard = routingNodes.activePrimary(replica);
 
-                if (storeFilesMetaData == null) {
-                    // already allocated on that node...
-                    continue;
-                }
+            // no active primary, can't assign
+            if (primaryShard == null) {
+                continue;
+            }
 
-                RoutingNode node = routingNodes.node(discoNode.id());
-                if (node == null) {
-                    continue;
-                }
+            assert primaryShard.active();
+            DiscoveryNode primaryNode = nodes.get(primaryShard.currentNodeId());
+            if (primaryNode != null) {
+                TransportNodesListShardStoreMetaData.NodeStoreFilesMetaData primaryNodeFilesStore = shardStores.getData().get(primaryNode);
+                if (primaryNodeFilesStore != null) {
+                    TransportNodesListShardStoreMetaData.StoreFilesMetaData primaryNodeStore = primaryNodeFilesStore.storeFilesMetaData();
+                    if (primaryNodeStore != null && primaryNodeStore.allocated()) {
+                        long sizeMatched = 0;
 
-                // check if we can allocate on that node...
-                // we only check for NO, since if this node is THROTTLING and it has enough "same data"
-                // then we will try and assign it next time
-                Decision decision = allocation.deciders().canAllocate(shard, node, allocation);
-                if (decision.type() == Decision.Type.NO) {
-                    continue;
-                }
-
-                // if it is already allocated, we can't assign to it...
-                if (storeFilesMetaData.allocated()) {
-                    continue;
-                }
-
-                if (!shard.primary()) {
-                    hasReplicaData |= storeFilesMetaData.iterator().hasNext();
-                    ShardRouting primaryShard = routingNodes.activePrimary(shard);
-                    if (primaryShard != null) {
-                        assert primaryShard.active();
-                        DiscoveryNode primaryNode = nodes.get(primaryShard.currentNodeId());
-                        if (primaryNode != null) {
-                            TransportNodesListShardStoreMetaData.NodeStoreFilesMetaData primaryNodeFilesStore = shardStores.getData().get(primaryNode);
-                            if (primaryNodeFilesStore != null) {
-                                TransportNodesListShardStoreMetaData.StoreFilesMetaData primaryNodeStore = primaryNodeFilesStore.storeFilesMetaData();
-                                if (primaryNodeStore != null && primaryNodeStore.allocated()) {
-                                    long sizeMatched = 0;
-
-                                    String primarySyncId = primaryNodeStore.syncId();
-                                    String replicaSyncId = storeFilesMetaData.syncId();
-                                    // see if we have a sync id we can make use of
-                                    if (replicaSyncId != null && replicaSyncId.equals(primarySyncId)) {
-                                        logger.trace("{}: node [{}] has same sync id {} as primary", shard, discoNode.name(), replicaSyncId);
-                                        lastNodeMatched = node;
-                                        lastSizeMatched = Long.MAX_VALUE;
-                                        lastDiscoNodeMatched = discoNode;
-                                    } else {
-                                        for (StoreFileMetaData storeFileMetaData : storeFilesMetaData) {
-                                            String metaDataFileName = storeFileMetaData.name();
-                                            if (primaryNodeStore.fileExists(metaDataFileName) && primaryNodeStore.file(metaDataFileName).isSame(storeFileMetaData)) {
-                                                sizeMatched += storeFileMetaData.length();
-                                            }
-                                        }
-                                        logger.trace("{}: node [{}] has [{}/{}] bytes of re-usable data",
-                                                shard, discoNode.name(), new ByteSizeValue(sizeMatched), sizeMatched);
-                                        if (sizeMatched > lastSizeMatched) {
-                                            lastSizeMatched = sizeMatched;
-                                            lastDiscoNodeMatched = discoNode;
-                                            lastNodeMatched = node;
-                                        }
-                                    }
+                        String primarySyncId = primaryNodeStore.syncId();
+                        String replicaSyncId = storeFilesMetaData.syncId();
+                        // see if we have a sync id we can make use of
+                        if (replicaSyncId != null && replicaSyncId.equals(primarySyncId)) {
+                            logger.trace("{}: node [{}] has same sync id {} as primary", replica, discoNode.name(), replicaSyncId);
+                            bestNodeMatched = node;
+                            bestSizeMatched = Long.MAX_VALUE;
+                            bestDiscoNodeMatched = discoNode;
+                        } else {
+                            for (StoreFileMetaData storeFileMetaData : storeFilesMetaData) {
+                                String metaDataFileName = storeFileMetaData.name();
+                                if (primaryNodeStore.fileExists(metaDataFileName) && primaryNodeStore.file(metaDataFileName).isSame(storeFileMetaData)) {
+                                    sizeMatched += storeFileMetaData.length();
                                 }
+                            }
+                            logger.trace("{}: node [{}] has [{}/{}] bytes of re-usable data",
+                                    replica, discoNode.name(), new ByteSizeValue(sizeMatched), sizeMatched);
+                            if (sizeMatched > bestSizeMatched) {
+                                bestSizeMatched = sizeMatched;
+                                bestDiscoNodeMatched = discoNode;
+                                bestNodeMatched = node;
                             }
                         }
                     }
                 }
             }
+        }
 
-            if (lastNodeMatched != null) {
-                // we only check on THROTTLE since we checked before before on NO
-                Decision decision = allocation.deciders().canAllocate(shard, lastNodeMatched, allocation);
-                if (decision.type() == Decision.Type.THROTTLE) {
-                    if (logger.isDebugEnabled()) {
-                        logger.debug("[{}][{}]: throttling allocation [{}] to [{}] in order to reuse its unallocated persistent store with total_size [{}]", shard.index(), shard.id(), shard, lastDiscoNodeMatched, new ByteSizeValue(lastSizeMatched));
-                    }
-                    // we are throttling this, but we have enough to allocate to this node, ignore it for now
-                    unassignedIterator.remove();
-                    routingNodes.ignoredUnassigned().add(shard);
-                } else {
-                    if (logger.isDebugEnabled()) {
-                        logger.debug("[{}][{}]: allocating [{}] to [{}] in order to reuse its unallocated persistent store with total_size [{}]", shard.index(), shard.id(), shard, lastDiscoNodeMatched, new ByteSizeValue(lastSizeMatched));
-                    }
-                    // we found a match
-                    changed = true;
-                    routingNodes.assign(shard, lastNodeMatched.nodeId());
-                    unassignedIterator.remove();
+        if (bestNodeMatched != null) {
+            // we only check on THROTTLE since we checked before before on NO
+            Decision decision = allocation.deciders().canAllocate(replica, bestNodeMatched, allocation);
+            if (decision.type() == Decision.Type.THROTTLE) {
+                if (logger.isDebugEnabled()) {
+                    logger.debug("[{}][{}]: throttling allocation [{}] to [{}] in order to reuse its unallocated persistent store with total_size [{}]", replica.index(), replica.id(), replica, bestDiscoNodeMatched, new ByteSizeValue(bestSizeMatched));
                 }
-            } else if (hasReplicaData == false) {
-                // if we didn't manage to find *any* data (regardless of matching sizes), check if the allocation
-                // of the replica shard needs to be delayed, and if so, add it to the ignore unassigned list
-                // note: we only care about replica in delayed allocation, since if we have an unassigned primary it
-                //       will anyhow wait to find an existing copy of the shard to be allocated
-                // note: the other side of the equation is scheduling a reroute in a timely manner, which happens in the RoutingService
-                long delay = shard.unassignedInfo().getDelayAllocationExpirationIn(settings, indexMetaData.getSettings());
-                if (delay > 0) {
-                    logger.debug("[{}][{}]: delaying allocation of [{}] for [{}]", shard.index(), shard.id(), shard, TimeValue.timeValueMillis(delay));
-                    /**
-                     * mark it as changed, since we want to kick a publishing to schedule future allocation,
-                     * see {@link org.elasticsearch.cluster.routing.RoutingService#clusterChanged(ClusterChangedEvent)}).
-                     */
-                    changed = true;
-                    unassignedIterator.remove();
-                    routingNodes.ignoredUnassigned().add(shard);
+                // we are throttling this, but we have enough to allocate to this shard, ignore it for now
+                routingNodes.ignoredUnassigned().add(replica);
+            } else {
+                if (logger.isDebugEnabled()) {
+                    logger.debug("[{}][{}]: allocating [{}] to [{}] in order to reuse its unallocated persistent store with total_size [{}]", replica.index(), replica.id(), replica, bestDiscoNodeMatched, new ByteSizeValue(bestSizeMatched));
                 }
+                // we found a match
+                changed = true;
+                routingNodes.assign(replica, bestNodeMatched.nodeId());
+                unassignedIterator.remove();
+            }
+        } else if (hasReplicaData == false) {
+            // if we didn't manage to find *any* data (regardless of matching sizes), check if the allocation
+            // of the replica shard needs to be delayed, and if so, add it to the ignore unassigned list
+            // note: we only care about replica in delayed allocation, since if we have an unassigned primary it
+            //       will anyhow wait to find an existing copy of the shard to be allocated
+            // note: the other side of the equation is scheduling a reroute in a timely manner, which happens in the RoutingService
+            long delay = replica.unassignedInfo().getDelayAllocationExpirationIn(settings, indexMetaData.getSettings());
+            if (delay > 0) {
+                logger.debug("[{}][{}]: delaying allocation of [{}] for [{}]", replica.index(), replica.id(), replica, TimeValue.timeValueMillis(delay));
+                /**
+                 * mark it as changed, since we want to kick a publishing to schedule future allocation,
+                 * see {@link RoutingService#clusterChanged(ClusterChangedEvent)}).
+                 */
+                changed = true;
+                routingNodes.ignoredUnassigned().add(replica);
+                unassignedIterator.remove();
             }
         }
         return changed;
+    }
+
+    /** assigns a primary shard. return true of the shard was successfully assigned */
+    protected boolean tryAllocatingPrimary(ShardRouting shard, RoutingAllocation allocation, DiscoveryNodes nodes, RoutingNodes routingNodes, MetaData metaData) {
+        AsyncShardFetch<TransportNodesListGatewayStartedShards.NodeGatewayStartedShards> fetch = asyncFetchStarted.get(shard.shardId());
+        if (fetch == null) {
+            fetch = new InternalAsyncFetch<>(logger, "shard_started", shard.shardId(), startedAction);
+            asyncFetchStarted.put(shard.shardId(), fetch);
+        }
+        AsyncShardFetch.FetchResult<TransportNodesListGatewayStartedShards.NodeGatewayStartedShards> shardState = fetch.fetchData(nodes, metaData, allocation.getIgnoreNodes(shard.shardId()));
+        if (shardState.hasData() == false) {
+            logger.trace("{}: ignoring allocation, still fetching shard started state", shard);
+            return false;
+        }
+        shardState.processAllocation(allocation);
+
+        IndexMetaData indexMetaData = metaData.index(shard.getIndex());
+
+        /**
+         * Build a map of DiscoveryNodes to shard state number for the given shard.
+         * A state of -1 means the shard does not exist on the node, where any
+         * shard state >= 0 is the state version of the shard on that node's disk.
+         *
+         * A shard on shared storage will return at least shard state 0 for all
+         * nodes, indicating that the shard can be allocated to any node.
+         */
+        ObjectLongHashMap<DiscoveryNode> nodesState = new ObjectLongHashMap<>();
+        for (TransportNodesListGatewayStartedShards.NodeGatewayStartedShards nodeShardState : shardState.getData().values()) {
+            long version = nodeShardState.version();
+            // -1 version means it does not exists, which is what the API returns, and what we expect to
+            logger.trace("[{}] on node [{}] has version [{}] of shard", shard, nodeShardState.getNode(), version);
+            nodesState.put(nodeShardState.getNode(), version);
+        }
+
+        int numberOfAllocationsFound = 0;
+        long highestVersion = -1;
+        final Map<DiscoveryNode, Long> nodesWithVersion = Maps.newHashMap();
+
+        assert !nodesState.containsKey(null);
+        final Object[] keys = nodesState.keys;
+        final long[] values = nodesState.values;
+        Settings idxSettings = indexMetaData.settings();
+        for (int i = 0; i < keys.length; i++) {
+            if (keys[i] == null) {
+                continue;
+            }
+
+            DiscoveryNode node = (DiscoveryNode) keys[i];
+            long version = values[i];
+            // since we don't check in NO allocation, we need to double check here
+            if (allocation.shouldIgnoreShardForNode(shard.shardId(), node.id())) {
+                continue;
+            }
+            if (recoverOnAnyNode(idxSettings)) {
+                numberOfAllocationsFound++;
+                if (version > highestVersion) {
+                    highestVersion = version;
+                }
+                // We always put the node without clearing the map
+                nodesWithVersion.put(node, version);
+            } else if (version != -1) {
+                numberOfAllocationsFound++;
+                // If we've found a new "best" candidate, clear the
+                // current candidates and add it
+                if (version > highestVersion) {
+                    highestVersion = version;
+                    nodesWithVersion.clear();
+                    nodesWithVersion.put(node, version);
+                } else if (version == highestVersion) {
+                    // If the candidate is the same, add it to the
+                    // list, but keep the current candidate
+                    nodesWithVersion.put(node, version);
+                }
+            }
+        }
+        // Now that we have a map of nodes to versions along with the
+        // number of allocations found (and not ignored), we need to sort
+        // it so the node with the highest version is at the beginning
+        List<DiscoveryNode> nodesWithHighestVersion = Lists.newArrayList();
+        nodesWithHighestVersion.addAll(nodesWithVersion.keySet());
+        CollectionUtil.timSort(nodesWithHighestVersion, new Comparator<DiscoveryNode>() {
+            @Override
+            public int compare(DiscoveryNode o1, DiscoveryNode o2) {
+                return Long.compare(nodesWithVersion.get(o2), nodesWithVersion.get(o1));
+            }
+        });
+
+        if (logger.isDebugEnabled()) {
+            logger.debug("[{}][{}] found {} allocations of {}, highest version: [{}]",
+                    shard.index(), shard.id(), numberOfAllocationsFound, shard, highestVersion);
+        }
+        if (logger.isTraceEnabled()) {
+            StringBuilder sb = new StringBuilder("[");
+            for (DiscoveryNode n : nodesWithHighestVersion) {
+                sb.append("[");
+                sb.append(n.getName());
+                sb.append("]");
+                sb.append(" -> ");
+                sb.append(nodesWithVersion.get(n));
+                sb.append(", ");
+            }
+            sb.append("]");
+            logger.trace("{} candidates for allocation: {}", shard, sb.toString());
+        }
+
+        // check if the counts meets the minimum set
+        int requiredAllocation = 1;
+        // if we restore from a repository one copy is more then enough
+        if (shard.restoreSource() == null) {
+            try {
+                String initialShards = indexMetaData.settings().get(INDEX_RECOVERY_INITIAL_SHARDS, settings.get(INDEX_RECOVERY_INITIAL_SHARDS, this.initialShards));
+                if ("quorum".equals(initialShards)) {
+                    if (indexMetaData.numberOfReplicas() > 1) {
+                        requiredAllocation = ((1 + indexMetaData.numberOfReplicas()) / 2) + 1;
+                    }
+                } else if ("quorum-1".equals(initialShards) || "half".equals(initialShards)) {
+                    if (indexMetaData.numberOfReplicas() > 2) {
+                        requiredAllocation = ((1 + indexMetaData.numberOfReplicas()) / 2);
+                    }
+                } else if ("one".equals(initialShards)) {
+                    requiredAllocation = 1;
+                } else if ("full".equals(initialShards) || "all".equals(initialShards)) {
+                    requiredAllocation = indexMetaData.numberOfReplicas() + 1;
+                } else if ("full-1".equals(initialShards) || "all-1".equals(initialShards)) {
+                    if (indexMetaData.numberOfReplicas() > 1) {
+                        requiredAllocation = indexMetaData.numberOfReplicas();
+                    }
+                } else {
+                    requiredAllocation = Integer.parseInt(initialShards);
+                }
+            } catch (Exception e) {
+                logger.warn("[{}][{}] failed to derived initial_shards from value {}, ignore allocation for {}", shard.index(), shard.id(), initialShards, shard);
+            }
+        }
+
+        // not enough found for this shard, continue...
+        if (numberOfAllocationsFound < requiredAllocation) {
+            // if we are restoring this shard we still can allocate
+            if (shard.restoreSource() == null) {
+                // we can't really allocate, so ignore it and continue
+                if (logger.isDebugEnabled()) {
+                    logger.debug("[{}][{}]: not allocating, number_of_allocated_shards_found [{}], required_number [{}]", shard.index(), shard.id(), numberOfAllocationsFound, requiredAllocation);
+                }
+            } else if (logger.isDebugEnabled()) {
+                logger.debug("[{}][{}]: missing local data, will restore from [{}]", shard.index(), shard.id(), shard.restoreSource());
+            }
+            return false;
+        }
+
+        Set<DiscoveryNode> throttledNodes = Sets.newHashSet();
+        Set<DiscoveryNode> noNodes = Sets.newHashSet();
+        for (DiscoveryNode discoNode : nodesWithHighestVersion) {
+            RoutingNode node = routingNodes.node(discoNode.id());
+            if (node == null) {
+                continue;
+            }
+
+            Decision decision = allocation.deciders().canAllocate(shard, node, allocation);
+            if (decision.type() == Decision.Type.THROTTLE) {
+                throttledNodes.add(discoNode);
+            } else if (decision.type() == Decision.Type.NO) {
+                noNodes.add(discoNode);
+            } else {
+                if (logger.isDebugEnabled()) {
+                    logger.debug("[{}][{}]: allocating [{}] to [{}] on primary allocation", shard.index(), shard.id(), shard, discoNode);
+                }
+                // we found a match. make sure we create one with the version from the recovered state
+                routingNodes.assign(new ShardRouting(shard, highestVersion), node.nodeId());
+                return true;
+            }
+        }
+        if (throttledNodes.isEmpty()) {
+            // if we have a node that we "can't" allocate to, force allocation, since this is our master data!
+            if (!noNodes.isEmpty()) {
+                DiscoveryNode discoNode = noNodes.iterator().next();
+                RoutingNode node = routingNodes.node(discoNode.id());
+                if (logger.isDebugEnabled()) {
+                    logger.debug("[{}][{}]: forcing allocating [{}] to [{}] on primary allocation", shard.index(), shard.id(), shard, discoNode);
+                }
+                // we found a match.  make sure we create one with the version from the recovered state
+                routingNodes.assign(new ShardRouting(shard, highestVersion), node.nodeId());
+                return true;
+            }
+        } else {
+            // we are throttling this, but we have enough to allocate to this node, ignore it for now
+            if (logger.isDebugEnabled()) {
+                logger.debug("[{}][{}]: throttling allocation [{}] to [{}] on primary allocation", shard.index(), shard.id(), shard, throttledNodes);
+            }
+        }
+        assert routingNodes.assignedShards(shard).iterator().hasNext() == false : "primary " + shard + " wasn't assigned but we have assigned copies";
+        return false;
     }
 
     class InternalAsyncFetch<T extends BaseNodeResponse> extends AsyncShardFetch<T> {
