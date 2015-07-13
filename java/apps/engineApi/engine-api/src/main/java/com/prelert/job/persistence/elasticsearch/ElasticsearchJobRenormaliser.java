@@ -123,7 +123,7 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
     {
         try
         {
-            m_UpdatedQuantileQueue.add(new QuantileInfo(QuantileInfo.InfoType.END,
+            m_UpdatedQuantileQueue.put(new QuantileInfo(QuantileInfo.InfoType.END,
                     "", 0, logger));
             m_QuantileUpdateThread.join();
             logger.info("After shutting down renormaliser thread " +
@@ -156,8 +156,16 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
         {
             Date timestamp = quantiles.getTimestamp();
             long endBucketEpochMS = (timestamp == null ? new Date() : timestamp).getTime();
-            m_UpdatedQuantileQueue.add(new QuantileInfo(QuantileInfo.InfoType.RENORMALISATION,
+            try
+            {
+                m_UpdatedQuantileQueue.put(new QuantileInfo(QuantileInfo.InfoType.RENORMALISATION,
                     quantiles.getState(), endBucketEpochMS, logger));
+            }
+            catch (InterruptedException e)
+            {
+                Thread.currentThread().interrupt();
+                logger.error("Can't add item to queue: " + e);
+            }
         }
         else
         {
