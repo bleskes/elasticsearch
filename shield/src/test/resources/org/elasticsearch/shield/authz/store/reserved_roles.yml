@@ -1,0 +1,16 @@
+# All cluster rights
+# All operations on all indices
+admin:
+  cluster: all
+  indices:
+    '*': all
+
+reserved:
+  cluster: monitor
+  indices:
+    'index_a_*' : all
+
+__es_system_role:
+  cluster: all
+  indices:
+    '*' : all
