@@ -59,6 +59,8 @@ public class NormaliserTest
 {
     private static final double ERROR = 0.01;
     private static final String JOB_ID = "foo";
+    private static final String SUM = "sum";
+    private static final String BYTES = "bytes";
 
     @Rule public ExpectedException m_ExpectedException = ExpectedException.none();
 
@@ -120,16 +122,16 @@ public class NormaliserTest
         assertEquals(buckets, normalisedBuckets);
 
         InOrder inOrder = Mockito.inOrder(m_Process, writer);
-        inOrder.verify(writer).writeRecord(new String[] {"level", "partitionFieldName", "personFieldName", "rawScore"});
-        inOrder.verify(writer).writeRecord(new String[] {"root", "", "", "1.0"});
-        inOrder.verify(writer).writeRecord(new String[] {"leaf", "", "", "0.05"});
-        inOrder.verify(writer).writeRecord(new String[] {"leaf", "", "", "0.03"});
-        inOrder.verify(writer).writeRecord(new String[] {"root", "", "", "2.0"});
-        inOrder.verify(writer).writeRecord(new String[] {"leaf", "", "", "0.03"});
-        inOrder.verify(writer).writeRecord(new String[] {"leaf", "", "", "0.05"});
-        inOrder.verify(writer).writeRecord(new String[] {"root", "", "", "3.0"});
-        inOrder.verify(writer).writeRecord(new String[] {"leaf", "", "", "0.01"});
-        inOrder.verify(writer).writeRecord(new String[] {"leaf", "", "", "0.02"});
+        inOrder.verify(writer).writeRecord(new String[] {"level", "partitionFieldName", "personFieldName", "functionName", "rawScore"});
+        inOrder.verify(writer).writeRecord(new String[] {"root", "", "", "", "1.0"});
+        inOrder.verify(writer).writeRecord(new String[] {"leaf", "", "", "sum", "0.05"});
+        inOrder.verify(writer).writeRecord(new String[] {"leaf", "", "", "sum", "0.03"});
+        inOrder.verify(writer).writeRecord(new String[] {"root", "", "", "", "2.0"});
+        inOrder.verify(writer).writeRecord(new String[] {"leaf", "", "", "sum", "0.03"});
+        inOrder.verify(writer).writeRecord(new String[] {"leaf", "", "", "sum", "0.05"});
+        inOrder.verify(writer).writeRecord(new String[] {"root", "", "", "", "3.0"});
+        inOrder.verify(writer).writeRecord(new String[] {"leaf", "", "", "sum", "0.01"});
+        inOrder.verify(writer).writeRecord(new String[] {"leaf", "", "", "sum", "0.02"});
         inOrder.verify(m_Process).closeOutputStream();
 
         for (int bucketIndex = 0; bucketIndex < buckets.size(); bucketIndex++)
@@ -237,6 +239,8 @@ public class NormaliserTest
                 anomalyRecord.setAnomalyScore(anomalyScorePerBucket[bucketIndex]);
                 anomalyRecord.setProbability(normalizedProbabilityPerRecord[recordCount]);
                 anomalyRecord.setNormalizedProbability(normalizedProbabilityPerRecord[recordCount]);
+                anomalyRecord.setFunction(SUM);
+                anomalyRecord.setFieldName(BYTES);
                 records.add(anomalyRecord);
             }
             bucket.setRecords(records);
