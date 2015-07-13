@@ -41,7 +41,7 @@ public class RoutingMissingException extends ElasticsearchException {
         Objects.requireNonNull(index, "index must not be null");
         Objects.requireNonNull(type, "type must not be null");
         Objects.requireNonNull(id, "id must not be null");
-        addIndex(index);
+        setIndex(index);
         this.type = type;
         this.id = id;
     }

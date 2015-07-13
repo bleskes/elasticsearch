@@ -35,7 +35,7 @@ public class IndexShardSnapshotException extends ElasticsearchException {
 
     public IndexShardSnapshotException(ShardId shardId, String msg, Throwable cause) {
         super(msg, cause);
-        addShard(shardId);
+        setShard(shardId);
     }
 
     public IndexShardSnapshotException(StreamInput in) throws IOException{

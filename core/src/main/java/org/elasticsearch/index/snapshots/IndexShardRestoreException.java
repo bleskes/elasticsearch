@@ -35,7 +35,7 @@ public class IndexShardRestoreException extends ElasticsearchException {
 
     public IndexShardRestoreException(ShardId shardId, String msg, Throwable cause) {
         super(msg, cause);
-        addShard(shardId);
+        setShard(shardId);
     }
 
     public IndexShardRestoreException(StreamInput in) throws IOException{

@@ -36,7 +36,7 @@ public class EngineException extends ElasticsearchException {
 
     public EngineException(ShardId shardId, String msg, Throwable cause) {
         super(msg, cause);
-        addShard(shardId);
+        setShard(shardId);
     }
 
     public EngineException(StreamInput in) throws IOException{

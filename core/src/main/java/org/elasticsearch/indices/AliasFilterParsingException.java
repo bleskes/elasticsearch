@@ -32,7 +32,7 @@ public class AliasFilterParsingException extends ElasticsearchException {
 
     public AliasFilterParsingException(Index index, String name, String desc, Throwable ex) {
         super("[" + name + "], " + desc, ex);
-        addIndex(index);
+        setIndex(index);
     }
 
     public AliasFilterParsingException(StreamInput in) throws IOException{

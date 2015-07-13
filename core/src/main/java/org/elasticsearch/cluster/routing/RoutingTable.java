@@ -21,13 +21,11 @@ package org.elasticsearch.cluster.routing;
 
 import com.carrotsearch.hppc.IntSet;
 import com.google.common.collect.*;
-import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.cluster.*;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.cluster.metadata.MetaData;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.index.Index;
 import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.index.shard.ShardId;
 
@@ -139,7 +137,7 @@ public class RoutingTable implements Iterable<IndexRoutingTable>, Diffable<Routi
      *
      * @param index The index to return all the shards (replicas).
      * @return All the shards matching the specific index
-     * @throws ResourceNotFoundException If the index passed does not exists
+     * @throws IndexNotFoundException If the index passed does not exists
      */
     public List<ShardRouting> allShards(String index)  {
         List<ShardRouting> shards = Lists.newArrayList();
@@ -234,7 +232,7 @@ public class RoutingTable implements Iterable<IndexRoutingTable>, Diffable<Routi
      *
      * @param indices The indices to return all the shards (replicas)
      * @return All the primary shards grouped into a single shard element group each
-     * @throws ResourceNotFoundException If an index passed does not exists
+     * @throws IndexNotFoundException If an index passed does not exists
      * @see IndexRoutingTable#groupByAllIt()
      */
     public GroupShardsIterator activePrimaryShardsGrouped(String[] indices, boolean includeEmpty) {

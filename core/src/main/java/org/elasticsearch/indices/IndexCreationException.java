@@ -32,7 +32,7 @@ public class IndexCreationException extends ElasticsearchException implements El
 
     public IndexCreationException(Index index, Throwable cause) {
         super("failed to create index", cause);
-        addIndex(index);
+        setIndex(index);
     }
 
     public IndexCreationException(StreamInput in) throws IOException{

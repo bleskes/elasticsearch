@@ -45,7 +45,8 @@ public class ResourceNotFoundException extends ElasticsearchException {
         return RestStatus.NOT_FOUND;
     }
 
-    public void addResource(String... resources) {
-        addHeader("es.internal.resource", resources);
+    @Override
+    public void setResources(String type, String... id) {
+        super.setResources(type, id);
     }
 }

@@ -244,7 +244,7 @@ public abstract class TransportReplicationAction<Request extends ReplicationRequ
 
         public RetryOnReplicaException(ShardId shardId, String msg) {
             super(msg);
-            addShard(shardId);
+            setShard(shardId);
         }
 
         public RetryOnReplicaException(StreamInput in) throws IOException{
@@ -327,7 +327,7 @@ public abstract class TransportReplicationAction<Request extends ReplicationRequ
     public static class RetryOnPrimaryException extends ElasticsearchException {
         public RetryOnPrimaryException(ShardId shardId, String msg) {
             super(msg);
-            addShard(shardId);
+            setShard(shardId);
         }
 
         public RetryOnPrimaryException(StreamInput in) throws IOException{

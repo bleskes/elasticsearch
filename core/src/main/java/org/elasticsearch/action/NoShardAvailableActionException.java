@@ -41,7 +41,7 @@ public class NoShardAvailableActionException extends ElasticsearchException {
 
     public NoShardAvailableActionException(ShardId shardId, String msg, Throwable cause) {
         super(msg, cause);
-        addShard(shardId);
+        setShard(shardId);
     }
 
     @Override

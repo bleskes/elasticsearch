@@ -20,8 +20,8 @@
 package org.elasticsearch.action.support;
 
 import org.elasticsearch.ExceptionsHelper;
-import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.action.NoShardAvailableActionException;
+import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.index.shard.IllegalIndexShardStateException;
 import org.elasticsearch.index.shard.ShardNotFoundException;
 
@@ -32,8 +32,9 @@ public class TransportActions {
     public static boolean isShardNotAvailableException(Throwable t) {
         Throwable actual = ExceptionsHelper.unwrapCause(t);
         if (actual instanceof ShardNotFoundException ||
-            actual instanceof IllegalIndexShardStateException ||
-            actual instanceof NoShardAvailableActionException) {
+                actual instanceof IndexNotFoundException ||
+                actual instanceof IllegalIndexShardStateException ||
+                actual instanceof NoShardAvailableActionException) {
             return true;
         }
         return false;

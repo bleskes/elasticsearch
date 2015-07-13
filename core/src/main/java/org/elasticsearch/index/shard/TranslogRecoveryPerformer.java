@@ -96,7 +96,7 @@ public class TranslogRecoveryPerformer {
 
         public BatchOperationException(ShardId shardId, String msg, int completedOperations, Throwable cause) {
             super(msg, cause);
-            addShard(shardId);
+            setShard(shardId);
             this.completedOperations = completedOperations;
         }
 

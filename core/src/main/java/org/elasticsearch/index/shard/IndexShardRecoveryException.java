@@ -30,7 +30,7 @@ import java.io.IOException;
 public class IndexShardRecoveryException extends ElasticsearchException {
     public IndexShardRecoveryException(ShardId shardId, String msg, Throwable cause) {
         super(msg, cause);
-        addShard(shardId);
+        setShard(shardId);
     }
 
     public IndexShardRecoveryException(StreamInput in) throws IOException{

@@ -43,6 +43,11 @@ import java.util.*;
 public class ElasticsearchException extends RuntimeException implements ToXContent {
 
     public static final String REST_EXCEPTION_SKIP_CAUSE = "rest.exception.skip_cause";
+    private static final String INDEX_HEADER_KEY = "es.index";
+    private static final String SHARD_HEADER_KEY = "es.shard";
+    private static final String RESOURCE_HEADER_TYPE_KEY = "es.resource.type";
+    private static final String RESOURCE_HEADER_ID_KEY = "es.resource.id";
+
     private static final Map<String, Constructor<? extends ElasticsearchException>> MAPPING;
     private final Map<String, List<String>> headers = new HashMap<>();
 
@@ -257,9 +262,9 @@ public class ElasticsearchException extends RuntimeException implements ToXConte
             builder.field("type", getExceptionName());
             builder.field("reason", getMessage());
             for (String key : headers.keySet()) {
-                if (key.startsWith("es.internal.")) {
+                if (key.startsWith("es.")) {
                     List<String> values = headers.get(key);
-                    xContentHeader(builder, key.substring("es.internal.".length()), values);
+                    xContentHeader(builder, key.substring("es.".length()), values);
                 }
             }
             innerToXContent(builder, params);
@@ -291,7 +296,7 @@ public class ElasticsearchException extends RuntimeException implements ToXConte
     protected final void renderHeader(XContentBuilder builder, Params params) throws IOException {
         boolean hasHeader = false;
         for (String key : headers.keySet()) {
-            if (key.startsWith("es.internal.")) {
+            if (key.startsWith("es.")) {
                 continue;
             }
             if (hasHeader == false) {
@@ -471,7 +476,6 @@ public class ElasticsearchException extends RuntimeException implements ToXConte
                 org.elasticsearch.index.snapshots.IndexShardSnapshotException.class,
                 org.elasticsearch.search.query.QueryPhaseExecutionException.class,
                 org.elasticsearch.cluster.metadata.ProcessClusterEventTimeoutException.class,
-                org.elasticsearch.index.shard.IndexShardCreationException.class,
                 org.elasticsearch.index.percolator.PercolatorException.class,
                 org.elasticsearch.snapshots.ConcurrentSnapshotExecutionException.class,
                 org.elasticsearch.indices.IndexTemplateAlreadyExistsException.class,
@@ -619,26 +623,29 @@ public class ElasticsearchException extends RuntimeException implements ToXConte
         return null;
     }
 
-    private static final String INDEX_HEADER_KEY = "es.internal.index";
-    private static final String SHARD_HEADER_KEY = "es.internal.shard";
-
-    protected void addIndex(Index index) {
+    public void setIndex(Index index) {
         if (index != null) {
             addHeader(INDEX_HEADER_KEY, index.getName());
         }
     }
 
-    protected void addIndex(String index) {
+    public void setIndex(String index) {
         if (index != null) {
             addHeader(INDEX_HEADER_KEY, index);
         }
     }
 
-    protected void addShard(ShardId shardId) {
+    public void setShard(ShardId shardId) {
         if (shardId != null) {
             addHeader(INDEX_HEADER_KEY, shardId.getIndex());
             addHeader(SHARD_HEADER_KEY, Integer.toString(shardId.id()));
         }
+    }
+
+    protected void setResources(String type, String... id) {
+        assert type != null;
+        addHeader(RESOURCE_HEADER_ID_KEY, id);
+        addHeader(RESOURCE_HEADER_TYPE_KEY, type);
     }
 
 }

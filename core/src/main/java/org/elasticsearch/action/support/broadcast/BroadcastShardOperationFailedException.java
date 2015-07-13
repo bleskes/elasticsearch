@@ -43,7 +43,7 @@ public class BroadcastShardOperationFailedException extends ElasticsearchExcepti
 
     public BroadcastShardOperationFailedException(ShardId shardId, String msg, Throwable cause) {
         super(msg, cause);
-        addShard(shardId);
+        setShard(shardId);
     }
 
     public BroadcastShardOperationFailedException(StreamInput in) throws IOException{

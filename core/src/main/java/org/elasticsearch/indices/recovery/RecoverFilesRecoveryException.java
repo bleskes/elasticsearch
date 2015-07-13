@@ -41,7 +41,7 @@ public class RecoverFilesRecoveryException extends ElasticsearchException implem
     public RecoverFilesRecoveryException(ShardId shardId, int numberOfFiles, ByteSizeValue totalFilesSize, Throwable cause) {
         super("Failed to transfer [{}] files with total size of [{}]", cause, numberOfFiles, totalFilesSize);
         Objects.requireNonNull(totalFilesSize, "totalFilesSize must not be null");
-        addShard(shardId);
+        setShard(shardId);
         this.numberOfFiles = numberOfFiles;
         this.totalFilesSize = totalFilesSize;
     }

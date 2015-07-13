@@ -19,10 +19,8 @@
 package org.elasticsearch.snapshots;
 
 import com.google.common.collect.ImmutableList;
-import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.common.regex.Regex;
-import org.elasticsearch.index.Index;
 import org.elasticsearch.index.IndexNotFoundException;
 
 import java.util.HashSet;

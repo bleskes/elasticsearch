@@ -31,7 +31,7 @@ public class PercolatorException extends ElasticsearchException {
 
     public PercolatorException(Index index, String msg, Throwable cause) {
         super(msg, cause);
-        addIndex(index);
+        setIndex(index);
     }
 
     public PercolatorException(StreamInput in) throws IOException{

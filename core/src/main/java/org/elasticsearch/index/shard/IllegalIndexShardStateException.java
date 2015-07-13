@@ -38,7 +38,7 @@ public class IllegalIndexShardStateException extends ResourceNotFoundException {
 
     public IllegalIndexShardStateException(ShardId shardId, IndexShardState currentState, String msg, Throwable ex) {
         super("CurrentState[" + currentState + "] " + msg, ex);
-        addShard(shardId);
+        setShard(shardId);
         this.currentState = currentState;
     }
 

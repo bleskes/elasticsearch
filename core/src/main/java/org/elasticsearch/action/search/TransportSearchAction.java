@@ -19,7 +19,6 @@
 
 package org.elasticsearch.action.search;
 
-import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.search.type.*;
 import org.elasticsearch.action.support.ActionFilters;
@@ -86,7 +85,7 @@ public class TransportSearchAction extends HandledTransportAction<SearchRequest,
                     // if we only have one group, then we always want Q_A_F, no need for DFS, and no need to do THEN since we hit one shard
                     searchRequest.searchType(QUERY_AND_FETCH);
                 }
-            } catch (ResourceNotFoundException|IndexClosedException e) {
+            } catch (IndexNotFoundException | IndexClosedException e) {
                 // ignore these failures, we will notify the search response if its really the case from the actual action
             } catch (Exception e) {
                 logger.debug("failed to optimize search type, continue as normal", e);

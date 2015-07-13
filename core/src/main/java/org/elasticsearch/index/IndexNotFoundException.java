@@ -30,7 +30,7 @@ public class IndexNotFoundException extends ResourceNotFoundException {
 
     public IndexNotFoundException(String index, Throwable cause) {
         super("no such index", cause);
-        addIndex(index);
+        setIndex(index);
     }
 
     public IndexNotFoundException(StreamInput in) throws IOException {

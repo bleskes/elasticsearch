@@ -18,11 +18,8 @@
  */
 package org.elasticsearch.rest.action.admin.indices.alias.delete;
 
-import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.common.io.stream.StreamInput;
-import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.rest.RestStatus;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -34,7 +31,7 @@ public class AliasesMissingException extends ResourceNotFoundException {
 
     public AliasesMissingException(String... names) {
         super("aliases " +  Arrays.toString(names) + " missing");
-        this.addHeader("aliases", names);
+        this.setResources("aliases", names);
     }
 
     public AliasesMissingException(StreamInput in) throws IOException{

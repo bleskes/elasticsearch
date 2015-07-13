@@ -21,7 +21,6 @@ package org.elasticsearch.index.shard;
 
 import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.common.io.stream.StreamInput;
-import org.elasticsearch.common.io.stream.StreamOutput;
 
 import java.io.IOException;
 
@@ -35,7 +34,7 @@ public class ShardNotFoundException extends ResourceNotFoundException {
 
     public ShardNotFoundException(ShardId shardId, Throwable ex) {
         super("no such shard", ex);
-        addShard(shardId);
+        setShard(shardId);
 
     }
     public ShardNotFoundException(StreamInput in) throws IOException{

@@ -27,7 +27,6 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.*;
 
 import org.apache.lucene.util.CollectionUtil;
-import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.cluster.*;
 import org.elasticsearch.cluster.DiffableUtils.KeyedReader;
@@ -653,7 +652,7 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData> {
      * @param indicesOptions   how the aliases or indices need to be resolved to concrete indices
      * @param aliasesOrIndices the aliases or indices to be resolved to concrete indices
      * @return the obtained concrete indices
-     * @throws ResourceNotFoundException if one of the aliases or indices is missing and the provided indices options
+     * @throws IndexNotFoundException if one of the aliases or indices is missing and the provided indices options
      * don't allow such a case, or if the final result of the indices resolution is no indices and the indices options
      * don't allow such a case.
      * @throws IllegalArgumentException if one of the aliases resolve to multiple indices and the provided
@@ -730,7 +729,9 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData> {
         }
 
         if (!indicesOptions.allowNoIndices() && actualIndices.isEmpty()) {
-            throw new ResourceNotFoundException(Arrays.toString(aliasesOrIndices), "indices or aliase not found");
+            IndexNotFoundException resourceNotFoundException = new IndexNotFoundException("indices or aliase not found");
+            resourceNotFoundException.setResources("alias_or_index", aliasesOrIndices);
+            throw resourceNotFoundException;
         }
         return actualIndices.toArray(new String[actualIndices.size()]);
     }
@@ -744,7 +745,7 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData> {
      * @param indexOrAlias   the index or alias to be resolved to concrete index
      * @param indicesOptions the indices options to be used for the index resolution
      * @return the concrete index obtained as a result of the index resolution
-     * @throws ResourceNotFoundException if the index or alias provided doesn't exist
+     * @throws IndexNotFoundException if the index or alias provided doesn't exist
      * @throws IllegalArgumentException if the index resolution lead to more than one index
      */
     public String concreteSingleIndex(String indexOrAlias, IndicesOptions indicesOptions) throws IllegalArgumentException {
@@ -921,8 +922,8 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData> {
                 }
             }
             if (!found && !indicesOptions.allowNoIndices()) {
-                ResourceNotFoundException resourceNotFoundException = new ResourceNotFoundException("[{}] alias or index not found", aliasOrIndex);
-                resourceNotFoundException.addResource(aliasesOrIndices);
+                IndexNotFoundException resourceNotFoundException = new IndexNotFoundException(aliasOrIndex);
+                resourceNotFoundException.setResources("alias_or_index", aliasesOrIndices);
                 throw resourceNotFoundException;
             }
         }
@@ -930,8 +931,8 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData> {
             return aliasesOrIndices;
         }
         if (result.isEmpty() && !indicesOptions.allowNoIndices()) {
-            ResourceNotFoundException resourceNotFoundException = new ResourceNotFoundException("[{}] aliases or indices not found", Arrays.toString(aliasesOrIndices));
-            resourceNotFoundException.addResource(aliasesOrIndices);
+            IndexNotFoundException resourceNotFoundException = new IndexNotFoundException(Arrays.toString(aliasesOrIndices));
+            resourceNotFoundException.setResources("alias_or_index", aliasesOrIndices);
             throw resourceNotFoundException;
         }
         return result.toArray(new String[result.size()]);

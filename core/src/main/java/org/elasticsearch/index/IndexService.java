@@ -24,7 +24,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterators;
 
 import org.apache.lucene.util.IOUtils;
-import org.elasticsearch.ResourceNotFoundException;
+import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.Strings;
@@ -317,9 +317,13 @@ public class IndexService extends AbstractIndexComponent implements IndexCompone
             try {
                 shardInjector = modules.createChildInjector(injector);
             } catch (CreationException e) {
-                throw new IndexShardCreationException(shardId, Injectors.getFirstErrorFailure(e));
+                ElasticsearchException ex = new ElasticsearchException("failed to create shard", Injectors.getFirstErrorFailure(e));
+                ex.setShard(shardId);
+                throw ex;
             } catch (Throwable e) {
-                throw new IndexShardCreationException(shardId, e);
+                ElasticsearchException ex = new ElasticsearchException("failed to create shard", e);
+                ex.setShard(shardId);
+                throw ex;
             }
 
             IndexShard indexShard = shardInjector.getInstance(IndexShard.class);
@@ -329,8 +333,10 @@ public class IndexService extends AbstractIndexComponent implements IndexCompone
             shards = newMapBuilder(shards).put(shardId.id(), new Tuple<>(indexShard, shardInjector)).immutableMap();
             success = true;
             return indexShard;
-        } catch (IOException ex) {
-            throw new IndexShardCreationException(shardId, ex);
+        } catch (IOException e) {
+            ElasticsearchException ex = new ElasticsearchException("failed to create shard", e);
+            ex.setShard(shardId);
+            throw ex;
         } finally {
             if (success == false) {
                 IOUtils.closeWhileHandlingException(lock);

@@ -37,7 +37,7 @@ public class IndexAlreadyExistsException extends ElasticsearchException {
 
     public IndexAlreadyExistsException(Index index, String message) {
         super(message);
-        addIndex(index);
+        setIndex(index);
     }
 
     public IndexAlreadyExistsException(StreamInput in) throws IOException{

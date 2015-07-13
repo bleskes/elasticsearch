@@ -51,6 +51,7 @@ import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.suggest.SuggestBuilders;
 import org.elasticsearch.search.warmer.IndexWarmersMetaData;
@@ -526,7 +527,7 @@ public class IndicesOptionsIntegrationTests extends ElasticsearchIntegrationTest
                     .setQuery(matchAllQuery())
                     .execute().actionGet();
             fail("Exception should have been thrown.");
-        } catch (ResourceNotFoundException e) {
+        } catch (IndexNotFoundException e) {
         }
 
         try {
@@ -534,7 +535,7 @@ public class IndicesOptionsIntegrationTests extends ElasticsearchIntegrationTest
                     .setQuery(matchAllQuery())
                     .execute().actionGet();
             fail("Exception should have been thrown.");
-        } catch (ResourceNotFoundException e) {
+        } catch (IndexNotFoundException e) {
         }
 
         //you should still be able to run empty searches without things blowing up
@@ -893,8 +894,8 @@ public class IndicesOptionsIntegrationTests extends ElasticsearchIntegrationTest
             } else {
                 try {
                     requestBuilder.get();
-                    fail("IndexMissingException or IndexClosedException was expected");
-                } catch (ResourceNotFoundException | IndexClosedException e) {}
+                    fail("IndexNotFoundException or IndexClosedException was expected");
+                } catch (IndexNotFoundException | IndexClosedException e) {}
             }
         } else {
             if (requestBuilder instanceof SearchRequestBuilder) {
