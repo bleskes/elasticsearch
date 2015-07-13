@@ -1,0 +1,110 @@
+/*
+ * ELASTICSEARCH CONFIDENTIAL
+ * __________________
+ *
+ *  [2014] Elasticsearch Incorporated. All Rights Reserved.
+ *
+ * NOTICE:  All information contained herein is, and remains
+ * the property of Elasticsearch Incorporated and its suppliers,
+ * if any.  The intellectual and technical concepts contained
+ * herein are proprietary to Elasticsearch Incorporated
+ * and its suppliers and may be covered by U.S. and Foreign Patents,
+ * patents in process, and are protected by trade secret or copyright law.
+ * Dissemination of this information or reproduction of this material
+ * is strictly forbidden unless prior written permission is obtained
+ * from Elasticsearch Incorporated.
+ */
+
+package org.elasticsearch.watcher.condition.compare;
+
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.search.ShardSearchFailure;
+import org.elasticsearch.common.text.StringText;
+import org.elasticsearch.search.SearchShardTarget;
+import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
+import org.elasticsearch.search.aggregations.bucket.histogram.Histogram;
+import org.elasticsearch.search.internal.InternalSearchHit;
+import org.elasticsearch.search.internal.InternalSearchHits;
+import org.elasticsearch.search.internal.InternalSearchResponse;
+import org.elasticsearch.watcher.execution.WatchExecutionContext;
+import org.elasticsearch.watcher.support.clock.SystemClock;
+import org.elasticsearch.watcher.test.AbstractWatcherIntegrationTests;
+import org.elasticsearch.watcher.watch.Payload;
+import org.junit.Test;
+
+import java.util.Map;
+
+import static org.elasticsearch.watcher.test.WatcherTestUtils.mockExecutionContext;
+import static org.hamcrest.Matchers.*;
+import static org.mockito.Mockito.when;
+
+/**
+ */
+public class CompareConditionSearchTests extends AbstractWatcherIntegrationTests {
+
+    @Test
+    public void testExecute_withAggs() throws Exception {
+
+        client().admin().indices().prepareCreate("my-index")
+                .addMapping("my-type", "_timestamp", "enabled=true")
+                .get();
+
+        client().prepareIndex("my-index", "my-type").setTimestamp("2005-01-01T00:00").setSource("{}").get();
+        client().prepareIndex("my-index", "my-type").setTimestamp("2005-01-01T00:10").setSource("{}").get();
+        client().prepareIndex("my-index", "my-type").setTimestamp("2005-01-01T00:20").setSource("{}").get();
+        client().prepareIndex("my-index", "my-type").setTimestamp("2005-01-01T00:30").setSource("{}").get();
+        refresh();
+
+        SearchResponse response = client().prepareSearch("my-index")
+                .addAggregation(AggregationBuilders.dateHistogram("rate").field("_timestamp").interval(DateHistogramInterval.HOUR).order(Histogram.Order.COUNT_DESC))
+                .get();
+
+        ExecutableCompareCondition condition = new ExecutableCompareCondition(new CompareCondition("ctx.payload.aggregations.rate.buckets.0.doc_count", CompareCondition.Op.GTE, 5), logger, SystemClock.INSTANCE);
+        WatchExecutionContext ctx = mockExecutionContext("_name", new Payload.XContent(response));
+        CompareCondition.Result result = condition.execute(ctx);
+        assertThat(result.met(), is(false));
+        Map<String, Object> resolvedValues = result.getResolveValues();
+        assertThat(resolvedValues, notNullValue());
+        assertThat(resolvedValues.size(), is(1));
+        assertThat(resolvedValues, hasEntry("ctx.payload.aggregations.rate.buckets.0.doc_count", (Object) 4));
+
+        client().prepareIndex("my-index", "my-type").setTimestamp("2005-01-01T00:40").setSource("{}").get();
+        refresh();
+
+        response = client().prepareSearch("my-index")
+                .addAggregation(AggregationBuilders.dateHistogram("rate").field("_timestamp").interval(DateHistogramInterval.HOUR).order(Histogram.Order.COUNT_DESC))
+                .get();
+
+        ctx = mockExecutionContext("_name", new Payload.XContent(response));
+        result = condition.execute(ctx);
+        assertThat(result.met(), is(true));
+        resolvedValues = result.getResolveValues();
+        assertThat(resolvedValues, notNullValue());
+        assertThat(resolvedValues.size(), is(1));
+        assertThat(resolvedValues, hasEntry("ctx.payload.aggregations.rate.buckets.0.doc_count", (Object) 5));
+    }
+
+    @Test
+    public void testExecute_accessHits() throws Exception {
+        ExecutableCompareCondition condition = new ExecutableCompareCondition(new CompareCondition("ctx.payload.hits.hits.0._score", CompareCondition.Op.EQ, 1), logger, SystemClock.INSTANCE);
+        InternalSearchHit hit = new InternalSearchHit(0, "1", new StringText("type"), null);
+        hit.score(1f);
+        hit.shard(new SearchShardTarget("a", "a", 0));
+
+        InternalSearchResponse internalSearchResponse = new InternalSearchResponse(new InternalSearchHits(new InternalSearchHit[]{hit}, 1l, 1f), null, null, false, false);
+        SearchResponse response = new SearchResponse(internalSearchResponse, "", 3, 3, 500l, new ShardSearchFailure[0]);
+
+        WatchExecutionContext ctx = mockExecutionContext("_watch_name", new Payload.XContent(response));
+        assertThat(condition.execute(ctx).met(), is(true));
+        hit.score(2f);
+        when(ctx.payload()).thenReturn(new Payload.XContent(response));
+        CompareCondition.Result result = condition.execute(ctx);
+        assertThat(result.met(), is(false));
+        Map<String, Object> resolvedValues = result.getResolveValues();
+        assertThat(resolvedValues, notNullValue());
+        assertThat(resolvedValues.size(), is(1));
+        assertThat(resolvedValues, hasEntry(is("ctx.payload.hits.hits.0._score"), notNullValue()));
+    }
+
+}
