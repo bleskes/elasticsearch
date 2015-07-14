@@ -1,10 +1,7 @@
-<div ng-controller="settings">
-  <marvel-nav></marvel-nav>
+<marvel-nav></marvel-nav>
+<div ng-controller="settings" class="settings marvel-view">
   <marvel-cluster-status source="dataSources['cluster_status']"></marvel-cluster-status>
   <div class="marvel-settings container-fluid">
-    <div class="row">
-      <div class="col-xs-12"><h1>Settings</h1></div>
-    </div>
     <form name="settings" ng-submit="save()">
       <div class="row" ng-repeat="(id, metric) in metrics">
         <div class="col-xs-12">

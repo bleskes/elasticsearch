@@ -69,7 +69,8 @@ marvel-chart > div .loading {
       -ms-flex-item-align: center;
           align-self: center;
   text-align: center;
-  color: #d1d2d6;
+  font-size: 18px;
+  color: #a3a5ad;
 }
 marvel-chart > div .nvd3 {
   -webkit-flex-grow: 1;
@@ -196,7 +197,6 @@ marvel-cluster-status > div .stats .loading {
   -webkit-flex-grow: 1;
       -ms-flex-positive: 1;
           flex-grow: 1;
-  text-align: center;
 }
 marvel-cluster-status > div .stats .status.green {
   color: #ffffff;
@@ -347,6 +347,9 @@ marvel-issues > div h1 .count {
 marvel-issues > div h1 .count a {
   color: #a3a5ad;
 }
+marvel-issues > div h1 .count a:hover {
+  color: #232123;
+}
 marvel-issues > div .fa-bolt {
   color: #dc3c3c;
 }
@@ -400,9 +403,6 @@ marvel-shard-activity tr > td {
 marvel-shard-activity tr.done > td {
   color: #a3a5ad;
   background: #ffffff;
-}
-marvel-shard-activity tr.done:hover > td {
-  color: #232123;
 }
 marvel-shard-activity td {
   vertical-align: middle !important;
