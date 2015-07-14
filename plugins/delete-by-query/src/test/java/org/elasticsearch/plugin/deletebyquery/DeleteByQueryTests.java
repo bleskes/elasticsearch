@@ -20,7 +20,6 @@
 package org.elasticsearch.plugin.deletebyquery;
 
 import org.apache.lucene.util.LuceneTestCase.Slow;
-import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.action.ActionRequestValidationException;
 import org.elasticsearch.action.admin.cluster.node.stats.NodeStats;
 import org.elasticsearch.action.admin.cluster.node.stats.NodesStatsResponse;
@@ -34,6 +33,7 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.test.ElasticsearchIntegrationTest;
@@ -151,7 +151,7 @@ public class DeleteByQueryTests extends ElasticsearchIntegrationTest {
         try {
             delete.get();
             fail("should have thrown an exception because of a missing index");
-        } catch (ResourceNotFoundException e) {
+        } catch (IndexNotFoundException e) {
             // Ok
         }
 

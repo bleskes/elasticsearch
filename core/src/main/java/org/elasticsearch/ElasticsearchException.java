@@ -648,4 +648,16 @@ public class ElasticsearchException extends RuntimeException implements ToXConte
         addHeader(RESOURCE_HEADER_TYPE_KEY, type);
     }
 
+    public List<String> getResourceId() {
+        return getHeader(RESOURCE_HEADER_ID_KEY);
+    }
+
+    public String getResourceType() {
+        List<String> header = getHeader(RESOURCE_HEADER_TYPE_KEY);
+        if (header != null && header.isEmpty() == false) {
+            assert header.size() == 1;
+            return header.get(0);
+        }
+        return null;
+    }
 }

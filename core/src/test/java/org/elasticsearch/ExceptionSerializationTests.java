@@ -404,7 +404,8 @@ public class ExceptionSerializationTests extends ElasticsearchTestCase {
     public void testAliasesMissingException() throws IOException {
         AliasesMissingException ex = serialize(new AliasesMissingException("one", "two", "three"));
         assertEquals("aliases [one, two, three] missing", ex.getMessage());
-        assertArrayEquals(new String[]{"one", "two", "three"}, ex.getHeader("aliases").toArray(new String[0]));
+        assertEquals("aliases", ex.getResourceType());
+        assertArrayEquals(new String[]{"one", "two", "three"}, ex.getResourceId().toArray(new String[0]));
     }
 
     public void testSearchParseException() throws IOException {

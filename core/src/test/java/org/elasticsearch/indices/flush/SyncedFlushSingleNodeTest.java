@@ -28,6 +28,7 @@ import org.elasticsearch.index.IndexService;
 import org.elasticsearch.index.engine.Engine;
 import org.elasticsearch.index.shard.IndexShard;
 import org.elasticsearch.index.shard.ShardId;
+import org.elasticsearch.index.shard.ShardNotFoundException;
 import org.elasticsearch.indices.IndicesService;
 import org.elasticsearch.test.ElasticsearchSingleNodeTest;
 
@@ -137,7 +138,7 @@ public class SyncedFlushSingleNodeTest extends ElasticsearchSingleNodeTest {
         listener.latch.await();
         assertNotNull(listener.error);
         assertNull(listener.result);
-        assertEquals(IndexNotFoundException.class, listener.error.getClass());
+        assertEquals(ShardNotFoundException.class, listener.error.getClass());
         assertEquals("no such shard", listener.error.getMessage());
 
         final ShardId shardId = shard.shardId();
@@ -155,7 +156,7 @@ public class SyncedFlushSingleNodeTest extends ElasticsearchSingleNodeTest {
         listener.latch.await();
         assertNotNull(listener.error);
         assertNull(listener.result);
-        assertEquals("index not found", listener.error.getMessage());
+        assertEquals("no such index", listener.error.getMessage());
     }
     
     public void testFailAfterIntermediateCommit() throws InterruptedException {
