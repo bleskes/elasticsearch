@@ -5,7 +5,7 @@ define(function (require) {
     return function (options) {
       options = _.defaults(options || {}, {
         force: {
-          settings: false
+          settings: true
         }
       });
 

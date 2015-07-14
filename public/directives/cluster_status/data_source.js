@@ -18,12 +18,12 @@ define(function (require) {
     };
 
     ClusterStatusDataSource.prototype.handleResponse = function (resp) {
+      this.data = {};
       if (resp.hits.total === 0) return;
       var source = resp.hits.hits[0]._source;
       function get(key) {
         return _.deepGet(source, key);
       }
-      this.data = {};
       this.data.status = get('status');
       this.data.cluster_name = get('cluster_name');
       this.data.nodes_count = get('nodes.count.total');
