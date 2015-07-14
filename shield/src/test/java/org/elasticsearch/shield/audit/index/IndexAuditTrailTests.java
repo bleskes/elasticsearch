@@ -31,7 +31,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.transport.LocalTransportAddress;
 import org.elasticsearch.env.Environment;
-import org.elasticsearch.indices.IndexMissingException;
+import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.search.SearchHit;
@@ -202,7 +202,7 @@ public class IndexAuditTrailTests extends ShieldIntegrationTest {
         }
     }
 
-    @Test(expected = IndexMissingException.class)
+    @Test(expected = IndexNotFoundException.class)
     public void testAnonymousAccessDenied_Transport_Muted() throws Exception {
         initialize("anonymous_access_denied");
         TransportMessage message = randomFrom(new RemoteHostMockMessage(), new LocalHostMockMessage(), new MockIndicesTransportMessage());
@@ -227,7 +227,7 @@ public class IndexAuditTrailTests extends ShieldIntegrationTest {
         assertThat(hit.field("request_body").getValue(), notNullValue());
     }
 
-    @Test(expected = IndexMissingException.class)
+    @Test(expected = IndexNotFoundException.class)
     public void testAnonymousAccessDenied_Rest_Muted() throws Exception {
         initialize("anonymous_access_denied");
         RestRequest request = mockRestRequest();
@@ -284,7 +284,7 @@ public class IndexAuditTrailTests extends ShieldIntegrationTest {
         }
     }
 
-    @Test(expected = IndexMissingException.class)
+    @Test(expected = IndexNotFoundException.class)
     public void testAuthenticationFailed_Transport_Muted() throws Exception {
         initialize("authentication_failed");
         TransportMessage message = randomFrom(new RemoteHostMockMessage(), new LocalHostMockMessage(), new MockIndicesTransportMessage());
@@ -292,7 +292,7 @@ public class IndexAuditTrailTests extends ShieldIntegrationTest {
         getClient().prepareExists(resolveIndexName()).execute().actionGet();
     }
 
-    @Test(expected = IndexMissingException.class)
+    @Test(expected = IndexNotFoundException.class)
     public void testAuthenticationFailed_Transport_NoToken_Muted() throws Exception {
         initialize("authentication_failed");
         TransportMessage message = randomFrom(new RemoteHostMockMessage(), new LocalHostMockMessage(), new MockIndicesTransportMessage());
@@ -335,7 +335,7 @@ public class IndexAuditTrailTests extends ShieldIntegrationTest {
         assertThat(hit.field("request_body").getValue(), notNullValue());
     }
 
-    @Test(expected = IndexMissingException.class)
+    @Test(expected = IndexNotFoundException.class)
     public void testAuthenticationFailed_Rest_Muted() throws Exception {
         initialize("authentication_failed");
         RestRequest request = mockRestRequest();
@@ -343,7 +343,7 @@ public class IndexAuditTrailTests extends ShieldIntegrationTest {
         getClient().prepareExists(resolveIndexName()).execute().actionGet();
     }
 
-    @Test(expected = IndexMissingException.class)
+    @Test(expected = IndexNotFoundException.class)
     public void testAuthenticationFailed_Rest_NoToken_Muted() throws Exception {
         initialize("authentication_failed");
         RestRequest request = mockRestRequest();
@@ -379,7 +379,7 @@ public class IndexAuditTrailTests extends ShieldIntegrationTest {
         }
     }
 
-    @Test(expected = IndexMissingException.class)
+    @Test(expected = IndexNotFoundException.class)
     public void testAuthenticationFailed_Transport_Realm_Muted() throws Exception {
         initialize("authentication_failed");
         TransportMessage message = randomFrom(new RemoteHostMockMessage(), new LocalHostMockMessage(), new MockIndicesTransportMessage());
@@ -405,7 +405,7 @@ public class IndexAuditTrailTests extends ShieldIntegrationTest {
         assertThat(hit.field("request_body").getValue(), notNullValue());
     }
 
-    @Test(expected = IndexMissingException.class)
+    @Test(expected = IndexNotFoundException.class)
     public void testAuthenticationFailed_Rest_Realm_Muted() throws Exception {
         initialize("authentication_failed");
         RestRequest request = mockRestRequest();
@@ -432,7 +432,7 @@ public class IndexAuditTrailTests extends ShieldIntegrationTest {
         }
     }
 
-    @Test(expected = IndexMissingException.class)
+    @Test(expected = IndexNotFoundException.class)
     public void testAccessGranted_Muted() throws Exception {
         initialize("access_granted");
         TransportMessage message = randomFrom(new RemoteHostMockMessage(), new LocalHostMockMessage(), new MockIndicesTransportMessage());
@@ -454,7 +454,7 @@ public class IndexAuditTrailTests extends ShieldIntegrationTest {
         assertEquals("internal:_action", hit.field("action").getValue());
     }
 
-    @Test(expected = IndexMissingException.class)
+    @Test(expected = IndexNotFoundException.class)
     public void testSystemAccessGranted_Muted() throws Exception {
         initialize();
         TransportMessage message = randomBoolean() ? new RemoteHostMockMessage() : new LocalHostMockMessage();
@@ -482,7 +482,7 @@ public class IndexAuditTrailTests extends ShieldIntegrationTest {
         }
     }
 
-    @Test(expected = IndexMissingException.class)
+    @Test(expected = IndexNotFoundException.class)
     public void testAccessDenied_Muted() throws Exception {
         initialize("access_denied");
         TransportMessage message = randomFrom(new RemoteHostMockMessage(), new LocalHostMockMessage(), new MockIndicesTransportMessage());
@@ -506,7 +506,7 @@ public class IndexAuditTrailTests extends ShieldIntegrationTest {
         assertEquals("_action", hit.field("action").getValue());
     }
 
-    @Test(expected = IndexMissingException.class)
+    @Test(expected = IndexNotFoundException.class)
     public void testTamperedRequest_Muted() throws Exception {
         initialize("tampered_request");
         TransportRequest message = new RemoteHostMockTransportRequest();
@@ -530,7 +530,7 @@ public class IndexAuditTrailTests extends ShieldIntegrationTest {
         assertEquals("default", hit.field("transport_profile").getValue());
     }
 
-    @Test(expected = IndexMissingException.class)
+    @Test(expected = IndexNotFoundException.class)
     public void testConnectionGranted_Muted() throws Exception {
         initialize("connection_granted");
         InetAddress inetAddress = InetAddress.getLocalHost();
@@ -555,7 +555,7 @@ public class IndexAuditTrailTests extends ShieldIntegrationTest {
         assertEquals("default", hit.field("transport_profile").getValue());
     }
 
-    @Test(expected = IndexMissingException.class)
+    @Test(expected = IndexNotFoundException.class)
     public void testConnectionDenied_Muted() throws Exception {
         initialize("connection_denied");
         InetAddress inetAddress = InetAddress.getLocalHost();
