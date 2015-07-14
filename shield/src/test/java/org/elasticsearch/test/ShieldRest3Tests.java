@@ -1,5 +1,3 @@
-package org.elasticsearch.test;
-
 /*
  * ELASTICSEARCH CONFIDENTIAL
  * __________________
@@ -16,6 +14,8 @@ package org.elasticsearch.test;
  * is strictly forbidden unless prior written permission is obtained
  * from Elasticsearch Incorporated.
  */
+
+package org.elasticsearch.test;
 
 import com.carrotsearch.randomizedtesting.annotations.Name;
 import com.carrotsearch.randomizedtesting.annotations.ParametersFactory;
