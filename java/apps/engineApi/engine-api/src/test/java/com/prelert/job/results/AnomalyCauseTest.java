@@ -31,9 +31,18 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+
 import org.junit.Test;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonParser;
 import com.prelert.job.results.AnomalyCause;
+import com.prelert.utils.json.AutoDetectParseException;
 
 public class AnomalyCauseTest
 {
@@ -183,6 +192,63 @@ public class AnomalyCauseTest
 
         assertFalse(cause1.equals(cause2));
         assertFalse(cause2.equals(cause1));
+    }
+
+    @Test
+    public void testParseJson() throws JsonParseException, IOException, AutoDetectParseException
+    {
+        String json = "{"
+                + "\"fieldName\" : \"groundspeed\","
+                + "\"probability\" : 6.04434E-49,"
+                + "\"byFieldName\" : \"status\","
+                + "\"byFieldValue\" : \"Climb\","
+                + "\"partitionFieldName\" : \"aircrafttype\","
+                + "\"partitionFieldValue\" : \"A321\","
+                + "\"function\" : \"mean\","
+                + "\"typical\" : 442.616,"
+                + "\"actual\" : 10.0,"
+                + "\"influences\" : {"
+                   + "\"host\": [{\"web-server\": 0.8}, {\"localhost\": 0.7}],"
+                   + "\"user\": [{\"cat\": 1}]"
+                + "},"
+                + "\"overFieldName\" : \"callsign\","
+                + "\"overFieldValue\" : \"HVN600\""
+             + "}";
+
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
+        JsonParser parser = new JsonFactory().createParser(inputStream);
+
+        parser.nextToken();
+        AnomalyCause cause = AnomalyCause.parseJson(parser);
+
+        assertEquals(cause.getFieldName(), "groundspeed");
+        assertEquals(cause.getProbability(), 6.04434E-49, 0.0001);
+        assertEquals(cause.getByFieldName(), "status");
+        assertEquals(cause.getByFieldValue(), "Climb");
+        assertEquals(cause.getPartitionFieldName(), "aircrafttype");
+        assertEquals(cause.getPartitionFieldValue(), "A321");
+        assertEquals(cause.getFunction(), "mean");
+        assertEquals(cause.getTypical(), 442.616, 0.001);
+        assertEquals(cause.getActual(), 10.0, 0.0001);
+        assertEquals(cause.getFunction(), "mean");
+        assertEquals(cause.getOverFieldName(), "callsign");
+        assertEquals(cause.getOverFieldValue(), "HVN600");
+
+        List<Influence> influences = cause.getInfluences();
+
+        Influence host = influences.get(0);
+        assertEquals("host", host.getField());
+        assertEquals(2, host.getScores().size());
+        assertEquals("web-server", host.getScores().get(0).getFieldValue());
+        assertEquals(0.8, host.getScores().get(0).getInfluence(), 0.001);
+        assertEquals("localhost", host.getScores().get(1).getFieldValue());
+        assertEquals(0.7, host.getScores().get(1).getInfluence(), 0.001);
+
+        Influence user = influences.get(1);
+        assertEquals("user", user.getField());
+        assertEquals(1, user.getScores().size());
+        assertEquals("cat", user.getScores().get(0).getFieldValue());
+        assertEquals(1.0, user.getScores().get(0).getInfluence(), 0.001);
     }
 
     private static AnomalyCause createFullyPopulatedAnomalyCause()

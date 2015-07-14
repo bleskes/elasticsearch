@@ -28,6 +28,7 @@
 package com.prelert.job.results;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Objects;
 
 import org.apache.log4j.Logger;
@@ -60,6 +61,7 @@ public class AnomalyCause
     public static final String FUNCTION = "function";
     public static final String TYPICAL = "typical";
     public static final String ACTUAL = "actual";
+    public static final String INFLUENCES = "influences";
 
     /**
      * Metric Results
@@ -81,6 +83,8 @@ public class AnomalyCause
 
     private String m_OverFieldName;
     private String m_OverFieldValue;
+
+    private List<Influence> m_Influences;
 
 
     public double getProbability()
@@ -194,6 +198,15 @@ public class AnomalyCause
         m_OverFieldValue = value.intern();
     }
 
+    public List<Influence> getInfluences()
+    {
+        return m_Influences;
+    }
+
+    public void setInfluences(List<Influence> influences)
+    {
+        this.m_Influences = influences;
+    }
 
     /**
      * Create a new <code>AnomalyCause</code> and populate it from the JSON parser.
@@ -268,6 +281,9 @@ public class AnomalyCause
             case OVER_FIELD_VALUE:
                 cause.setOverFieldValue(parseAsStringOrNull(token, fieldName));
                 break;
+            case INFLUENCES:
+                cause.setInfluences(Influences.parseJson(m_Parser));
+                break;
             default:
                 LOGGER.warn(String.format("Parse error unknown field in Anomaly Cause %s:%s",
                         fieldName, token.asString()));
@@ -289,7 +305,8 @@ public class AnomalyCause
                 m_OverFieldName,
                 m_OverFieldValue,
                 m_PartitionFieldName,
-                m_PartitionFieldValue);
+                m_PartitionFieldValue,
+                m_Influences);
     }
 
     @Override
@@ -317,7 +334,8 @@ public class AnomalyCause
                 Objects.equals(this.m_PartitionFieldName, that.m_PartitionFieldName) &&
                 Objects.equals(this.m_PartitionFieldValue, that.m_PartitionFieldValue) &&
                 Objects.equals(this.m_OverFieldName, that.m_OverFieldName) &&
-                Objects.equals(this.m_OverFieldValue, that.m_OverFieldValue);
+                Objects.equals(this.m_OverFieldValue, that.m_OverFieldValue) &&
+                Objects.equals(this.m_Influences, that.m_Influences);
     }
 
 }

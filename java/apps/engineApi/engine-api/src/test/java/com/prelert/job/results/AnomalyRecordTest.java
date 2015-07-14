@@ -122,8 +122,12 @@ public class AnomalyRecordTest
                 + "\"fieldName\" : \"someFieldName\","
                 + "\"overFieldName\" : \"someOverFieldName\","
                 + "\"overFieldValue\" : \"someOverFieldValue\","
-                + "\"isInterim\" : true,"
-                + "\"causes\" : [{\"probability\" : 0.01}, {\"probability\" : 0.02}]"
+                + "\"causes\" : [{\"probability\" : 0.01}, {\"probability\" : 0.02}],"
+                + "\"influences\" : {"
+                    + "\"host\": [{\"web-server\": 0.8}, {\"localhost\": 0.7}],"
+                    + "\"user\": [{\"cat\": 1}, {\"dave\": 0.4},{\"jo\": 0.1}]"
+                    + "},"
+                + "\"isInterim\" : true"
                 + "}";
         JsonParser parser = createJsonParser(input);
         parser.nextToken();
@@ -145,6 +149,11 @@ public class AnomalyRecordTest
         assertEquals("someOverFieldValue", anomalyRecord.getOverFieldValue());
         assertTrue(anomalyRecord.isInterim());
         assertEquals(2, anomalyRecord.getCauses().size());
+
+        assertEquals(2, anomalyRecord.getInfluences().size());
+        assertEquals("host", anomalyRecord.getInfluences().get(0).getField());
+        assertEquals("user", anomalyRecord.getInfluences().get(1).getField());
+
 
         assertEquals(JsonToken.END_OBJECT, parser.getCurrentToken());
     }
