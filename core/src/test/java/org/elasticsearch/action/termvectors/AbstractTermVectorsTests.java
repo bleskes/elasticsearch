@@ -36,7 +36,6 @@ import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.RAMDirectory;
-import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.action.admin.indices.alias.Alias;
 import org.elasticsearch.common.inject.internal.Join;
 import org.elasticsearch.common.settings.Settings;
@@ -262,7 +261,7 @@ public abstract class AbstractTermVectorsTests extends ElasticsearchIntegrationT
         }
         // always adds a test that fails
         configs.add(new TestConfig(new TestDoc("doesnt_exist", new TestFieldSetting[]{}, new String[]{}).index("doesn't_exist").alias("doesn't_exist"),
-                new String[]{"doesnt_exist"}, true, true, true).expectedException(ResourceNotFoundException.class));
+                new String[]{"doesnt_exist"}, true, true, true).expectedException(IndexNotFoundException.class));
 
         refresh();
 

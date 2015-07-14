@@ -27,6 +27,7 @@ import org.elasticsearch.cluster.metadata.AliasMetaData;
 import org.elasticsearch.cluster.metadata.MappingMetaData;
 import org.elasticsearch.common.collect.ImmutableOpenMap;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.search.warmer.IndexWarmersMetaData.Entry;
 import org.elasticsearch.test.ElasticsearchIntegrationTest;
 import org.junit.Test;
@@ -68,7 +69,7 @@ public class GetIndexTests extends ElasticsearchIntegrationTest {
         assertWarmers(response, "idx");
     }
 
-    @Test(expected=ResourceNotFoundException.class)
+    @Test(expected=IndexNotFoundException.class)
     public void testSimpleUnknownIndex() {
         client().admin().indices().prepareGetIndex().addIndices("missing_idx").get();
     }

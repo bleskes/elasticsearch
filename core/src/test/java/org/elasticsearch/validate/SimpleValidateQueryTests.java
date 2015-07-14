@@ -20,7 +20,6 @@ package org.elasticsearch.validate;
 
 import com.google.common.base.Charsets;
 
-import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.action.admin.indices.alias.Alias;
 import org.elasticsearch.action.admin.indices.validate.query.ValidateQueryResponse;
 import org.elasticsearch.client.Client;
@@ -28,6 +27,7 @@ import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.Fuzziness;
 import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.test.ElasticsearchIntegrationTest;
@@ -145,7 +145,7 @@ public class SimpleValidateQueryTests extends ElasticsearchIntegrationTest {
         assertThat(response.isValid(), equalTo(true));
     }
 
-    @Test(expected = ResourceNotFoundException.class)
+    @Test(expected = IndexNotFoundException.class)
     public void validateEmptyCluster() {
         client().admin().indices().prepareValidateQuery().get();
     }

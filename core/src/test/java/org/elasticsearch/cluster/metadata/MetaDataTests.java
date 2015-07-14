@@ -21,11 +21,11 @@ package org.elasticsearch.cluster.metadata;
 
 import com.google.common.collect.Sets;
 
-import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.cluster.metadata.IndexMetaData.State;
 import org.elasticsearch.common.Strings;
+import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.indices.IndexClosedException;
 import org.elasticsearch.test.ElasticsearchTestCase;
 import org.junit.Test;
@@ -59,7 +59,7 @@ public class MetaDataTests extends ElasticsearchTestCase {
             try {
                 md.concreteIndices(options, "bar");
                 fail();
-            } catch (ResourceNotFoundException e) {
+            } catch (IndexNotFoundException e) {
                 assertThat(e.getIndex(), equalTo("bar"));
             }
 
@@ -74,14 +74,14 @@ public class MetaDataTests extends ElasticsearchTestCase {
             try {
                 md.concreteIndices(options, "bar");
                 fail();
-            } catch (ResourceNotFoundException e) {
+            } catch (IndexNotFoundException e) {
                 assertThat(e.getIndex(), equalTo("bar"));
             }
 
             try {
                 md.concreteIndices(options, "foo", "bar");
                 fail();
-            } catch (ResourceNotFoundException e) {
+            } catch (IndexNotFoundException e) {
                 assertThat(e.getIndex(), equalTo("bar"));
             }
 
@@ -92,7 +92,7 @@ public class MetaDataTests extends ElasticsearchTestCase {
             try {
                 md.concreteIndices(options, "barbaz", "bar");
                 fail();
-            } catch (ResourceNotFoundException e) {
+            } catch (IndexNotFoundException e) {
                 assertThat(e.getIndex(), equalTo("bar"));
             }
 
@@ -210,21 +210,21 @@ public class MetaDataTests extends ElasticsearchTestCase {
             try {
                 md.concreteIndices(options, "bar");
                 fail();
-            } catch(ResourceNotFoundException e) {
+            } catch(IndexNotFoundException e) {
                 assertThat(e.getIndex(), equalTo("bar"));
             }
 
             try {
                 md.concreteIndices(options, "baz*");
                 fail();
-            } catch (ResourceNotFoundException e) {
+            } catch (IndexNotFoundException e) {
                 assertThat(e.getIndex(), equalTo("baz*"));
             }
 
             try {
                 md.concreteIndices(options, "foo", "baz*");
                 fail();
-            } catch (ResourceNotFoundException e) {
+            } catch (IndexNotFoundException e) {
                 assertThat(e.getIndex(), equalTo("baz*"));
             }
         }
@@ -298,7 +298,7 @@ public class MetaDataTests extends ElasticsearchTestCase {
         try {
             md.concreteIndices(options, "-*");
             fail();
-        } catch (ResourceNotFoundException e) {
+        } catch (IndexNotFoundException e) {
             assertThat(e.getIndex(), equalTo("[-*]"));
         }
     }
@@ -341,7 +341,7 @@ public class MetaDataTests extends ElasticsearchTestCase {
             try {
                 md.concreteIndices(noExpandDisallowEmpty, "baz*");
                 fail();
-            } catch (ResourceNotFoundException e) {
+            } catch (IndexNotFoundException e) {
                 assertThat(e.getIndex(), equalTo("baz*"));
             }
 
@@ -364,7 +364,7 @@ public class MetaDataTests extends ElasticsearchTestCase {
             try {
                 md.concreteIndices(noExpandErrorUnavailable, "foo", "baz*");
                 fail();
-            } catch (ResourceNotFoundException e) {
+            } catch (IndexNotFoundException e) {
                 assertThat(e.getIndex(), equalTo("baz*"));
             }
 
@@ -380,14 +380,14 @@ public class MetaDataTests extends ElasticsearchTestCase {
             try {
                 md.concreteIndices(noExpandStrict, "baz*");
                 fail();
-            } catch (ResourceNotFoundException e) {
+            } catch (IndexNotFoundException e) {
                 assertThat(e.getIndex(), equalTo("baz*"));
             }
 
             try {
                 md.concreteIndices(noExpandStrict, "foo", "baz*");
                 fail();
-            } catch (ResourceNotFoundException e) {
+            } catch (IndexNotFoundException e) {
                 assertThat(e.getIndex(), equalTo("baz*"));
             }
 
@@ -411,14 +411,14 @@ public class MetaDataTests extends ElasticsearchTestCase {
         try {
             md.concreteIndices(IndicesOptions.strictSingleIndexNoExpandForbidClosed(), "baz*");
             fail();
-        } catch (ResourceNotFoundException e) {
+        } catch (IndexNotFoundException e) {
             assertThat(e.getIndex(), equalTo("baz*"));
         }
 
         try {
             md.concreteIndices(IndicesOptions.strictSingleIndexNoExpandForbidClosed(), "foo", "baz*");
             fail();
-        } catch (ResourceNotFoundException e) {
+        } catch (IndexNotFoundException e) {
             assertThat(e.getIndex(), equalTo("baz*"));
         }
 
@@ -459,7 +459,7 @@ public class MetaDataTests extends ElasticsearchTestCase {
         try {
             md.concreteIndices(options, "foo");
             fail();
-        } catch (ResourceNotFoundException e) {
+        } catch (IndexNotFoundException e) {
             assertThat(e.getIndex(), equalTo("foo"));
         }
         results = md.concreteIndices(options, "foo*");
@@ -467,7 +467,7 @@ public class MetaDataTests extends ElasticsearchTestCase {
         try {
             md.concreteIndices(options, "foo*", "bar");
             fail();
-        } catch (ResourceNotFoundException e) {
+        } catch (IndexNotFoundException e) {
             assertThat(e.getIndex(), equalTo("bar"));
         }
 
@@ -485,7 +485,7 @@ public class MetaDataTests extends ElasticsearchTestCase {
         options = IndicesOptions.fromOptions(true, false, true, false);
         try {
             md.concreteIndices(options, Strings.EMPTY_ARRAY);
-        } catch (ResourceNotFoundException e) {
+        } catch (IndexNotFoundException e) {
             assertThat(e.getIndex(), equalTo("_all"));
         }
     }
@@ -541,7 +541,7 @@ public class MetaDataTests extends ElasticsearchTestCase {
         return IndexMetaData.builder(index).settings(settings(Version.CURRENT).put(IndexMetaData.SETTING_NUMBER_OF_SHARDS, 1).put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, 0));
     }
 
-    @Test(expected = ResourceNotFoundException.class)
+    @Test(expected = IndexNotFoundException.class)
     public void testConcreteIndicesIgnoreIndicesOneMissingIndex() {
         MetaData.Builder mdBuilder = MetaData.builder()
                 .put(indexBuilder("testXXX"))
@@ -559,7 +559,7 @@ public class MetaDataTests extends ElasticsearchTestCase {
         assertThat(newHashSet(md.concreteIndices(IndicesOptions.lenientExpandOpen(), "testXXX", "testZZZ")), equalTo(newHashSet("testXXX")));
     }
 
-    @Test(expected = ResourceNotFoundException.class)
+    @Test(expected = IndexNotFoundException.class)
     public void testConcreteIndicesIgnoreIndicesAllMissing() {
         MetaData.Builder mdBuilder = MetaData.builder()
                 .put(indexBuilder("testXXX"))
@@ -662,7 +662,7 @@ public class MetaDataTests extends ElasticsearchTestCase {
             try {
                 metadata.concreteIndices(indicesOptions, allIndices);
                 fail("wildcard expansion on should trigger IndexMissingException");
-            } catch (ResourceNotFoundException e) {
+            } catch (IndexNotFoundException e) {
                 // expected
             }
         }
@@ -692,7 +692,7 @@ public class MetaDataTests extends ElasticsearchTestCase {
                 try {
                     metadata.concreteIndices(indicesOptions, "Foo*");
                     fail("expecting exeption when result empty and allowNoIndicec=false");
-                } catch (ResourceNotFoundException e) {
+                } catch (IndexNotFoundException e) {
                     // expected exception
                 }
             }

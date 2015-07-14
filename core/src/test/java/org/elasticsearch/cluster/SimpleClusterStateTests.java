@@ -19,7 +19,6 @@
 
 package org.elasticsearch.cluster;
 
-import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.action.admin.cluster.state.ClusterStateResponse;
 import org.elasticsearch.action.admin.indices.template.get.GetIndexTemplatesResponse;
 import org.elasticsearch.action.support.IndicesOptions;
@@ -31,6 +30,7 @@ import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.unit.ByteSizeValue;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.test.ElasticsearchIntegrationTest;
 import org.elasticsearch.test.hamcrest.CollectionAssertions;
 import org.junit.Before;
@@ -195,14 +195,14 @@ public class SimpleClusterStateTests extends ElasticsearchIntegrationTest {
         assertThat(clusterStateResponse.getState().metaData().indices().isEmpty(), is(true));
     }
 
-    @Test(expected=ResourceNotFoundException.class)
+    @Test(expected=IndexNotFoundException.class)
     public void testIndicesOptionsOnAllowNoIndicesFalse() throws Exception {
         // empty wildcard expansion throws exception when allowNoIndices is turned off
         IndicesOptions allowNoIndices = IndicesOptions.fromOptions(false, false, true, false);
         client().admin().cluster().prepareState().clear().setMetaData(true).setIndices("a*").setIndicesOptions(allowNoIndices).get();
     }
 
-    @Test(expected=ResourceNotFoundException.class)
+    @Test(expected=IndexNotFoundException.class)
     public void testIndicesIgnoreUnavailableFalse() throws Exception {
         // ignore_unavailable set to false throws exception when allowNoIndices is turned off
         IndicesOptions allowNoIndices = IndicesOptions.fromOptions(false, true, true, false);

@@ -18,12 +18,12 @@
  */
 package org.elasticsearch.indices.flush;
 
-import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.routing.IndexShardRoutingTable;
 import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.common.Strings;
+import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.index.IndexService;
 import org.elasticsearch.index.engine.Engine;
 import org.elasticsearch.index.shard.IndexShard;
@@ -137,7 +137,7 @@ public class SyncedFlushSingleNodeTest extends ElasticsearchSingleNodeTest {
         listener.latch.await();
         assertNotNull(listener.error);
         assertNull(listener.result);
-        assertEquals(ResourceNotFoundException.class, listener.error.getClass());
+        assertEquals(IndexNotFoundException.class, listener.error.getClass());
         assertEquals("no such shard", listener.error.getMessage());
 
         final ShardId shardId = shard.shardId();
