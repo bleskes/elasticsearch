@@ -32,8 +32,7 @@ import java.io.IOException;
 public class IndexClosedException extends ElasticsearchException {
 
     public IndexClosedException(Index index) {
-        super("closed");
-        setIndex(index);
+        super(index, "closed");
     }
 
     public IndexClosedException(StreamInput in) throws IOException{

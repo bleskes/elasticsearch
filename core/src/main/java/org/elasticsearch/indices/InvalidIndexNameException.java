@@ -32,8 +32,7 @@ import java.io.IOException;
 public class InvalidIndexNameException extends ElasticsearchException {
 
     public InvalidIndexNameException(Index index, String name, String desc) {
-        super("Invalid index name [" + name + "], " + desc);
-        setIndex(index);
+        super(index, "Invalid index name [" + name + "], " + desc);
     }
 
     public InvalidIndexNameException(StreamInput in) throws IOException{

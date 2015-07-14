@@ -30,8 +30,7 @@ import java.io.IOException;
 public class PercolatorException extends ElasticsearchException {
 
     public PercolatorException(Index index, String msg, Throwable cause) {
-        super(msg, cause);
-        setIndex(index);
+        super(index, msg, cause);
     }
 
     public PercolatorException(StreamInput in) throws IOException{

@@ -64,6 +64,21 @@ public class ElasticsearchException extends RuntimeException implements ToXConte
         super(LoggerMessageFormat.format(msg, args));
     }
 
+    public ElasticsearchException(String index, String msg, Object... args) {
+        this(msg, args);
+        setIndex(index);
+    }
+
+    public ElasticsearchException(Index index, String msg, Object... args) {
+        this(msg, args);
+        setIndex(index);
+    }
+
+    public ElasticsearchException(ShardId shardId, String msg, Object... args) {
+        this(msg, args);
+        setShard(shardId);
+    }
+
     /**
      * Construct a <code>ElasticsearchException</code> with the specified detail message
      * and nested exception.
@@ -78,6 +93,22 @@ public class ElasticsearchException extends RuntimeException implements ToXConte
     public ElasticsearchException(String msg, Throwable cause, Object... args) {
         super(LoggerMessageFormat.format(msg, args), cause);
     }
+
+    public ElasticsearchException(Index index, String msg, Throwable cause, Object... args) {
+        super(LoggerMessageFormat.format(msg, args), cause);
+        setIndex(index);
+    }
+
+    public ElasticsearchException(String index, String msg, Throwable cause, Object... args) {
+        super(LoggerMessageFormat.format(msg, args), cause);
+        setIndex(index);
+    }
+
+    public ElasticsearchException(ShardId shard, String msg, Throwable cause, Object... args) {
+        super(LoggerMessageFormat.format(msg, args), cause);
+        setShard(shard);
+    }
+
 
     public ElasticsearchException(StreamInput in) throws IOException {
         super(in.readOptionalString(), in.readThrowable());

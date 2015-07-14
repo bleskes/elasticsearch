@@ -44,8 +44,7 @@ public class QueryParsingException extends ElasticsearchException {
     }
 
     public QueryParsingException(QueryParseContext parseContext, String msg, Throwable cause, Object... args) {
-        super(msg, cause, args);
-        setIndex(parseContext.index());
+        super(parseContext.index(), msg, cause, args);
         int lineNumber = UNKNOWN_POSITION;
         int columnNumber = UNKNOWN_POSITION;
         XContentParser parser = parseContext.parser();
@@ -65,8 +64,7 @@ public class QueryParsingException extends ElasticsearchException {
      * {@link QueryParseContext} may not be available
      */
     public QueryParsingException(Index index, int line, int col, String msg, Throwable cause) {
-        super(msg, cause);
-        setIndex(index);
+        super(index, msg, cause);
         this.lineNumber = line;
         this.columnNumber = col;
     }

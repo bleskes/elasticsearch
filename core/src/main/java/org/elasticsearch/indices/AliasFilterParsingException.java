@@ -31,8 +31,7 @@ import java.io.IOException;
 public class AliasFilterParsingException extends ElasticsearchException {
 
     public AliasFilterParsingException(Index index, String name, String desc, Throwable ex) {
-        super("[" + name + "], " + desc, ex);
-        setIndex(index);
+        super(index, "[" + name + "], " + desc, ex);
     }
 
     public AliasFilterParsingException(StreamInput in) throws IOException{

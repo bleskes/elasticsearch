@@ -32,8 +32,7 @@ import java.io.IOException;
 public class InvalidAliasNameException extends ElasticsearchException {
 
     public InvalidAliasNameException(Index index, String name, String desc) {
-        super("Invalid alias name [{}], {}", name, desc);
-        setIndex(index);
+        super(index, "Invalid alias name [{}], {}", name, desc);
     }
 
     public InvalidAliasNameException(StreamInput in) throws IOException{

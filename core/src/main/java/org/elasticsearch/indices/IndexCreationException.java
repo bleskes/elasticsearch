@@ -31,8 +31,7 @@ import java.io.IOException;
 public class IndexCreationException extends ElasticsearchException implements ElasticsearchWrapperException {
 
     public IndexCreationException(Index index, Throwable cause) {
-        super("failed to create index", cause);
-        setIndex(index);
+        super(index, "failed to create index", cause);
     }
 
     public IndexCreationException(StreamInput in) throws IOException{

@@ -33,8 +33,7 @@ import java.util.Arrays;
 public class TypeMissingException extends ElasticsearchException {
 
     public TypeMissingException(Index index, String... types) {
-        super("type[" + Arrays.toString(types) + "] missing");
-        setIndex(index);
+        super(index, "type[" + Arrays.toString(types) + "] missing");
     }
 
     public TypeMissingException(StreamInput in) throws IOException{
