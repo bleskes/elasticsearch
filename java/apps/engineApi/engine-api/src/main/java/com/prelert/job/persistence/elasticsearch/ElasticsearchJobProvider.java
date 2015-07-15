@@ -83,6 +83,7 @@ import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.results.CategoryDefinition;
 import com.prelert.job.results.Detector;
+import com.prelert.job.results.Influencer;
 import com.prelert.job.usage.Usage;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
@@ -319,7 +320,16 @@ public class ElasticsearchJobProvider implements JobProvider
         List<JobDetails> jobs = new ArrayList<>();
         for (SearchHit hit : response.getHits().getHits())
         {
-            JobDetails job = m_ObjectMapper.convertValue(hit.getSource(), JobDetails.class);
+            JobDetails job;
+            try
+            {
+                job = m_ObjectMapper.convertValue(hit.getSource(), JobDetails.class);
+            }
+            catch (IllegalArgumentException e)
+            {
+                LOGGER.error("Cannot parse job from JSON", e);
+                continue;
+            }
 
             // Pull out the modelSizeStats document, and add this to the JobDetails
             GetResponse modelSizeStatsResponse = m_Client.prepareGet(
@@ -368,6 +378,7 @@ public class ElasticsearchJobProvider implements JobProvider
             XContentBuilder modelStateMapping = ElasticsearchMappings.modelStateMapping();
             XContentBuilder usageMapping = ElasticsearchMappings.usageMapping();
             XContentBuilder modelSizeStatsMapping = ElasticsearchMappings.modelSizeStatsMapping();
+            XContentBuilder influencerMapping = ElasticsearchMappings.influencerMapping();
 
             m_Client.admin().indices()
                     .prepareCreate(job.getId())
@@ -381,6 +392,7 @@ public class ElasticsearchJobProvider implements JobProvider
                     .addMapping(ModelState.TYPE, modelStateMapping)
                     .addMapping(Usage.TYPE, usageMapping)
                     .addMapping(ModelSizeStats.TYPE, modelSizeStatsMapping)
+                    .addMapping(Influencer.TYPE, influencerMapping)
                     .get();
             m_Client.admin().cluster().prepareHealth(job.getId()).setWaitForYellowStatus().execute().actionGet();
 

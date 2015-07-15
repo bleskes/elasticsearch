@@ -237,18 +237,18 @@ public class AnomalyCauseTest
         List<Influence> influences = cause.getInfluences();
 
         Influence host = influences.get(0);
-        assertEquals("host", host.getField());
-        assertEquals(2, host.getScores().size());
-        assertEquals("web-server", host.getScores().get(0).getFieldValue());
-        assertEquals(0.8, host.getScores().get(0).getInfluence(), 0.001);
-        assertEquals("localhost", host.getScores().get(1).getFieldValue());
-        assertEquals(0.7, host.getScores().get(1).getInfluence(), 0.001);
+        assertEquals("host", host.getInfluenceField());
+        assertEquals(2, host.getInfluenceScores().size());
+        assertEquals("web-server", host.getInfluenceScores().get(0).getFieldValue());
+        assertEquals(0.8, host.getInfluenceScores().get(0).getInfluence(), 0.001);
+        assertEquals("localhost", host.getInfluenceScores().get(1).getFieldValue());
+        assertEquals(0.7, host.getInfluenceScores().get(1).getInfluence(), 0.001);
 
         Influence user = influences.get(1);
-        assertEquals("user", user.getField());
-        assertEquals(1, user.getScores().size());
-        assertEquals("cat", user.getScores().get(0).getFieldValue());
-        assertEquals(1.0, user.getScores().get(0).getInfluence(), 0.001);
+        assertEquals("user", user.getInfluenceField());
+        assertEquals(1, user.getInfluenceScores().size());
+        assertEquals("cat", user.getInfluenceScores().get(0).getFieldValue());
+        assertEquals(1.0, user.getInfluenceScores().get(0).getInfluence(), 0.001);
     }
 
     private static AnomalyCause createFullyPopulatedAnomalyCause()

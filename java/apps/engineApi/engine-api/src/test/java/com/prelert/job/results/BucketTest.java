@@ -217,8 +217,8 @@ public class BucketTest
         Detector detector = new Detector();
         AnomalyRecord record = new AnomalyRecord();
         Influence influence = new Influence("testField");
-        influence.addScore(new InfluenceScore("fieldValA", 1.0));
-        influence.addScore(new InfluenceScore("fieldValB", 0.3));
+        influence.addInfluenceScore(new InfluenceScore("fieldValA", 1.0));
+        influence.addInfluenceScore(new InfluenceScore("fieldValB", 0.3));
         Date date = new Date();
 
         Bucket bucket1 = new Bucket();
@@ -287,9 +287,9 @@ public class BucketTest
         assertEquals(1, influences.size());
 
         Influence host = influences.get(0);
-        assertEquals("host", host.getField());
-        assertEquals(1, host.getScores().size());
-        assertEquals("web-server", host.getScores().get(0).getFieldValue());
-        assertEquals(0.8, host.getScores().get(0).getInfluence(), 0.001);
+        assertEquals("host", host.getInfluenceField());
+        assertEquals(1, host.getInfluenceScores().size());
+        assertEquals("web-server", host.getInfluenceScores().get(0).getFieldValue());
+        assertEquals(0.8, host.getInfluenceScores().get(0).getInfluence(), 0.001);
     }
 }

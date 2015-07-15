@@ -49,7 +49,7 @@ public class InfluencesTest
         @Override
         public int compare(Influence o1, Influence o2)
         {
-            return o1.getField().compareTo(o2.getField());
+            return o1.getInfluenceField().compareTo(o2.getInfluenceField());
         }
     }
 
@@ -67,12 +67,12 @@ public class InfluencesTest
         assertEquals(1, infs.size());
         Influence inf = infs.get(0);
 
-        assertEquals("host", inf.getField());
-        assertEquals(2, inf.getScores().size());
-        assertEquals("web-server", inf.getScores().get(0).getFieldValue());
-        assertEquals(0.8, inf.getScores().get(0).getInfluence(), 0.001);
-        assertEquals("localhost", inf.getScores().get(1).getFieldValue());
-        assertEquals(0.7, inf.getScores().get(1).getInfluence(), 0.001);
+        assertEquals("host", inf.getInfluenceField());
+        assertEquals(2, inf.getInfluenceScores().size());
+        assertEquals("web-server", inf.getInfluenceScores().get(0).getFieldValue());
+        assertEquals(0.8, inf.getInfluenceScores().get(0).getInfluence(), 0.001);
+        assertEquals("localhost", inf.getInfluenceScores().get(1).getFieldValue());
+        assertEquals(0.7, inf.getInfluenceScores().get(1).getInfluence(), 0.001);
     }
 
     @Test
@@ -89,8 +89,8 @@ public class InfluencesTest
         assertEquals(1, infs.size());
         Influence inf = infs.get(0);
 
-        assertEquals("user", inf.getField());
-        assertEquals(0, inf.getScores().size());
+        assertEquals("user", inf.getInfluenceField());
+        assertEquals(0, inf.getInfluenceScores().size());
     }
 
     @Test
@@ -109,22 +109,22 @@ public class InfluencesTest
         Collections.sort(infs, new InfluenceFieldComparator());
 
         Influence host = infs.get(0);
-        assertEquals("host", host.getField());
-        assertEquals(2, host.getScores().size());
-        assertEquals("web-server", host.getScores().get(0).getFieldValue());
-        assertEquals(0.8, host.getScores().get(0).getInfluence(), 0.001);
-        assertEquals("localhost", host.getScores().get(1).getFieldValue());
-        assertEquals(0.7, host.getScores().get(1).getInfluence(), 0.001);
+        assertEquals("host", host.getInfluenceField());
+        assertEquals(2, host.getInfluenceScores().size());
+        assertEquals("web-server", host.getInfluenceScores().get(0).getFieldValue());
+        assertEquals(0.8, host.getInfluenceScores().get(0).getInfluence(), 0.001);
+        assertEquals("localhost", host.getInfluenceScores().get(1).getFieldValue());
+        assertEquals(0.7, host.getInfluenceScores().get(1).getInfluence(), 0.001);
 
         Influence user = infs.get(1);
-        assertEquals("user", user.getField());
-        assertEquals(3, user.getScores().size());
-        assertEquals("cat", user.getScores().get(0).getFieldValue());
-        assertEquals(1.0, user.getScores().get(0).getInfluence(), 0.001);
-        assertEquals("dave", user.getScores().get(1).getFieldValue());
-        assertEquals(0.4, user.getScores().get(1).getInfluence(), 0.001);
-        assertEquals("jo", user.getScores().get(2).getFieldValue());
-        assertEquals(0.1, user.getScores().get(2).getInfluence(), 0.001);
+        assertEquals("user", user.getInfluenceField());
+        assertEquals(3, user.getInfluenceScores().size());
+        assertEquals("cat", user.getInfluenceScores().get(0).getFieldValue());
+        assertEquals(1.0, user.getInfluenceScores().get(0).getInfluence(), 0.001);
+        assertEquals("dave", user.getInfluenceScores().get(1).getFieldValue());
+        assertEquals(0.4, user.getInfluenceScores().get(1).getInfluence(), 0.001);
+        assertEquals("jo", user.getInfluenceScores().get(2).getFieldValue());
+        assertEquals(0.1, user.getInfluenceScores().get(2).getInfluence(), 0.001);
     }
 
 

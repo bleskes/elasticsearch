@@ -84,7 +84,7 @@ public class Influences
                 throws AutoDetectParseException, JsonParseException, IOException
         {
             Influence influence = new Influence();
-            influence.setField(fieldName);
+            influence.setInfluenceField(fieldName);
             JsonToken token = m_Parser.nextToken();
             parseScores(token, influence);
 
@@ -105,7 +105,7 @@ public class Influences
             while (token != JsonToken.END_ARRAY)
             {
                 InfluenceScore score = parseScore(token);
-                influence.addScore(score);
+                influence.addInfluenceScore(score);
 
                 token = m_Parser.nextToken();
             }

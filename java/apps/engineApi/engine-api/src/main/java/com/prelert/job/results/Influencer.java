@@ -26,55 +26,92 @@
  ************************************************************/
 package com.prelert.job.results;
 
-import java.util.ArrayList;
-import java.util.List;
-
-/**
- * Influence field name and list of influence field values/score pairs
- */
-public class Influence
+public class Influencer
 {
-    public static String INFLUCENCE_FIELD = "influenceField";
-    public static String INFLUCENCE_FIELD_VALUE = "fieldValue";
-    public static String SCORE = "score";
-    public static String INFLUCENCE_SCORES = "influenceScores";
+    /**
+     * Elasticsearch type
+     */
+    public static final String TYPE = "influencer";
 
-    private String m_Field;
-    private List<InfluenceScore> m_Scores;
+    /*
+     * Field names
+     */
+    public static final String PROBABILITY = "probability";
+    public static final String BUCKET_ID = "bucketId";
+    public static final String FIELD_NAME = "fieldName";
+    public static final String FIELD_VALUE = "fieldValue";
+    public static final String INFLUENCE_SCORE = "influenceScore";
 
-    public Influence()
+    private double m_Probability;
+    private String m_BucketId;
+
+    private String m_FieldName;
+    private String m_FieldValue;
+
+    private double m_InflucenceScore;
+
+
+    public Influencer()
     {
-        m_Scores = new ArrayList<InfluenceScore>();
     }
 
-    public Influence(String field)
+    public Influencer(String fieldName, String fieldValue)
     {
-        this();
-        m_Field = field;
+        m_FieldName = fieldName;
+        m_FieldValue = fieldValue;
     }
 
-    public String getInfluenceField()
+    public double getProbability()
     {
-        return m_Field;
+        return m_Probability;
     }
 
-    public void setInfluenceField(String field)
+    public void setProbability(double probability)
     {
-        this.m_Field = field;
+        this.m_Probability = probability;
     }
 
-    public List<InfluenceScore> getInfluenceScores()
+
+    public String getBucketId()
     {
-        return m_Scores;
+        return m_BucketId;
     }
 
-    public void setInfluenceScores(List<InfluenceScore> scores)
+    public void setBucketId(String bucketId)
     {
-        this.m_Scores = scores;
+        this.m_BucketId = bucketId;
     }
 
-    public void addInfluenceScore(InfluenceScore score)
+
+    public String getFieldName()
     {
-        m_Scores.add(score);
+        return m_FieldName;
+    }
+
+    public void setFieldName(String fieldName)
+    {
+        this.m_FieldName = fieldName;
+    }
+
+
+    public String getFieldValue()
+    {
+        return m_FieldValue;
+    }
+
+    public void setFieldValue(String fieldValue)
+    {
+        this.m_FieldValue = fieldValue;
+    }
+
+
+    public double getInflucenceScore()
+    {
+        return m_InflucenceScore;
+    }
+
+    public void setInflucenceScore(double influcenceScore)
+    {
+        this.m_InflucenceScore = influcenceScore;
     }
 }
