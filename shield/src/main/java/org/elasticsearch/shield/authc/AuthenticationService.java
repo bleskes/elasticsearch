@@ -22,6 +22,8 @@ import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.shield.User;
 import org.elasticsearch.transport.TransportMessage;
 
+import java.io.IOException;
+
 /**
  * Responsible for authenticating the Users behind requests
  */
@@ -58,7 +60,7 @@ public interface AuthenticationService {
      *                                          case where there was no user associated with the request, if the defautl
  *                                              token could not be authenticated.
      */
-    User authenticate(String action, TransportMessage message, User fallbackUser);
+    User authenticate(String action, TransportMessage message, User fallbackUser) throws IOException;
 
     /**
      * Checks if there's alreay a user header attached to the given message. If missing, a new header is
@@ -67,6 +69,6 @@ public interface AuthenticationService {
      * @param message   The message
      * @param user      The user to be attached if the header is missing
      */
-    void attachUserHeaderIfMissing(TransportMessage message, User user);
+    void attachUserHeaderIfMissing(TransportMessage message, User user) throws IOException;
 
 }

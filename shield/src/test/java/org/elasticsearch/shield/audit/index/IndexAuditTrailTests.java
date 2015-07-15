@@ -52,6 +52,7 @@ import org.joda.time.format.ISODateTimeFormat;
 import org.junit.After;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.List;
@@ -123,11 +124,11 @@ public class IndexAuditTrailTests extends ShieldIntegrationTest {
         return remoteIndexing ? remoteClient : client();
     }
 
-    private void initialize(String... excludes) {
+    private void initialize(String... excludes) throws IOException {
         initialize(null, excludes);
     }
 
-    private void initialize(String[] includes, String[] excludes) {
+    private void initialize(String[] includes, String[] excludes) throws IOException {
         rollover = randomFrom(HOURLY, DAILY, WEEKLY, MONTHLY);
         numReplicas = numberOfReplicas();
         numShards = numberOfShards();

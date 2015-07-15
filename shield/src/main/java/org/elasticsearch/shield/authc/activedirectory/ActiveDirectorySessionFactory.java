@@ -131,7 +131,6 @@ public class ActiveDirectorySessionFactory extends SessionFactory {
             return new LdapSession(connectionLogger, connection, dn, groupResolver, timeout);
         } catch (LDAPException e) {
             connection.close();
-            // TODO think more about this exception...
             throw authenticationError("unable to authenticate user [{}] to active directory domain [{}]", e, userName, domainName);
         }
     }

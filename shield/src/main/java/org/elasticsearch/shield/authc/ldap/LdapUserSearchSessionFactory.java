@@ -19,7 +19,6 @@ package org.elasticsearch.shield.authc.ldap;
 
 import com.google.common.primitives.Ints;
 import com.unboundid.ldap.sdk.*;
-import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
@@ -55,7 +54,7 @@ public class LdapUserSearchSessionFactory extends SessionFactory {
     private final String userAttribute;
     private final ServerSet serverSet;
 
-    public LdapUserSearchSessionFactory(RealmConfig config, ClientSSLService sslService) {
+    public LdapUserSearchSessionFactory(RealmConfig config, ClientSSLService sslService) throws IOException {
         super(config);
         Settings settings = config.settings();
         userSearchBaseDn = settings.get("user_search.base_dn");
@@ -67,8 +66,6 @@ public class LdapUserSearchSessionFactory extends SessionFactory {
         serverSet = serverSet(settings, sslService);
         connectionPool = connectionPool(config.settings(), serverSet, timeout);
         groupResolver = groupResolver(settings);
-
-
     }
 
     static void filterOutSensitiveSettings(String realmName, ShieldSettingsFilter filter) {
@@ -77,7 +74,7 @@ public class LdapUserSearchSessionFactory extends SessionFactory {
         filter.filterOut("shield.authc.realms." + realmName + "." + HOSTNAME_VERIFICATION_SETTING);
     }
 
-    static LDAPConnectionPool connectionPool(Settings settings, ServerSet serverSet, TimeValue timeout) {
+    static LDAPConnectionPool connectionPool(Settings settings, ServerSet serverSet, TimeValue timeout) throws IOException {
         SimpleBindRequest bindRequest = bindRequest(settings);
         int initialSize = settings.getAsInt("user_search.pool.initial_size", DEFAULT_CONNECTION_POOL_INITIAL_SIZE);
         int size = settings.getAsInt("user_search.pool.size", DEFAULT_CONNECTION_POOL_SIZE);
@@ -100,8 +97,7 @@ public class LdapUserSearchSessionFactory extends SessionFactory {
             }
             return pool;
         } catch (LDAPException e) {
-            // TODO consider changing this to IOException and bubble it up
-            throw new ElasticsearchException("unable to connect to any LDAP servers", e);
+            throw new IOException("unable to connect to any LDAP servers", e);
         }
     }
 
