@@ -41,7 +41,6 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
-import com.prelert.job.results.AnomalyRecord;
 import com.prelert.utils.json.AutoDetectParseException;
 
 public class AnomalyRecordTest
@@ -117,6 +116,7 @@ public class AnomalyRecordTest
                 + "\"partitionFieldName\" : \"somePartitionFieldName\","
                 + "\"partitionFieldValue\" : \"somePartitionFieldValue\","
                 + "\"function\" : \"someFunction\","
+                + "\"functionDescription\" : \"someFunctionDesc\","
                 + "\"typical\" : 3.3,"
                 + "\"actual\" : 1.3,"
                 + "\"fieldName\" : \"someFieldName\","
@@ -142,6 +142,7 @@ public class AnomalyRecordTest
         assertEquals("somePartitionFieldName", anomalyRecord.getPartitionFieldName());
         assertEquals("somePartitionFieldValue", anomalyRecord.getPartitionFieldValue());
         assertEquals("someFunction", anomalyRecord.getFunction());
+        assertEquals("someFunctionDesc", anomalyRecord.getFunctionDescription());
         assertEquals(3.3, anomalyRecord.getTypical(), ERROR);
         assertEquals(1.3, anomalyRecord.getActual(), ERROR);
         assertEquals("someFieldName", anomalyRecord.getFieldName());

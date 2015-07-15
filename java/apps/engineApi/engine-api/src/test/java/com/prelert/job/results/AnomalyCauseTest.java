@@ -41,7 +41,6 @@ import org.junit.Test;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
-import com.prelert.job.results.AnomalyCause;
 import com.prelert.utils.json.AutoDetectParseException;
 
 public class AnomalyCauseTest
@@ -134,6 +133,17 @@ public class AnomalyCauseTest
         AnomalyCause cause1 = createFullyPopulatedAnomalyCause();
         AnomalyCause cause2 = createFullyPopulatedAnomalyCause();
         cause2.setFunction("otherFunctionName");
+
+        assertFalse(cause1.equals(cause2));
+        assertFalse(cause2.equals(cause1));
+    }
+
+    @Test
+    public void testEquals_GivenAnomalyCausesThatDifferInFunctionDescription()
+    {
+        AnomalyCause cause1 = createFullyPopulatedAnomalyCause();
+        AnomalyCause cause2 = createFullyPopulatedAnomalyCause();
+        cause2.setFunctionDescription("otherFunctionDescription");
 
         assertFalse(cause1.equals(cause2));
         assertFalse(cause2.equals(cause1));
@@ -257,6 +267,7 @@ public class AnomalyCauseTest
         cause.setPartitionFieldName("partitionName");
         cause.setPartitionFieldValue("partitionValue");
         cause.setFunction("functionName");
+        cause.setFunctionDescription("functionDesc");
         cause.setTypical(42.0);
         cause.setActual(100.0);
         cause.setFieldName("fieldName");

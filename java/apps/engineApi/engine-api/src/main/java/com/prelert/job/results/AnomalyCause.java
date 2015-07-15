@@ -59,6 +59,7 @@ public class AnomalyCause
     public static final String PARTITION_FIELD_NAME = "partitionFieldName";
     public static final String PARTITION_FIELD_VALUE = "partitionFieldValue";
     public static final String FUNCTION = "function";
+    public static final String FUNCTION_DESCRIPTION = "functionDescription";
     public static final String TYPICAL = "typical";
     public static final String ACTUAL = "actual";
     public static final String INFLUENCES = "influences";
@@ -76,6 +77,7 @@ public class AnomalyCause
     private String m_PartitionFieldName;
     private String m_PartitionFieldValue;
     private String m_Function;
+    private String m_FunctionDescription;
     private double m_Typical;
     private double m_Actual;
 
@@ -146,6 +148,16 @@ public class AnomalyCause
     public void setFunction(String name)
     {
         m_Function = name.intern();
+    }
+
+    public String getFunctionDescription()
+    {
+        return m_FunctionDescription;
+    }
+
+    public void setFunctionDescription(String functionDescription)
+    {
+        m_FunctionDescription = functionDescription.intern();
     }
 
     public double getTypical()
@@ -266,6 +278,9 @@ public class AnomalyCause
             case FUNCTION:
                 cause.setFunction(parseAsStringOrNull(token, fieldName));
                 break;
+            case FUNCTION_DESCRIPTION:
+                cause.setFunctionDescription(parseAsStringOrNull(token, fieldName));
+                break;
             case TYPICAL:
                 cause.setTypical(parseAsDoubleOrZero(token, fieldName));
                 break;
@@ -302,6 +317,7 @@ public class AnomalyCause
                 m_ByFieldValue,
                 m_FieldName,
                 m_Function,
+                m_FunctionDescription,
                 m_OverFieldName,
                 m_OverFieldValue,
                 m_PartitionFieldName,
@@ -328,6 +344,7 @@ public class AnomalyCause
                 Objects.equals(this.m_Typical, that.m_Typical) &&
                 Objects.equals(this.m_Actual, that.m_Actual) &&
                 Objects.equals(this.m_Function, that.m_Function) &&
+                Objects.equals(this.m_FunctionDescription, that.m_FunctionDescription) &&
                 Objects.equals(this.m_FieldName, that.m_FieldName) &&
                 Objects.equals(this.m_ByFieldName, that.m_ByFieldName) &&
                 Objects.equals(this.m_ByFieldValue, that.m_ByFieldValue) &&
