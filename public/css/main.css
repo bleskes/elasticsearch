@@ -70,7 +70,7 @@ marvel-chart > div .loading {
           align-self: center;
   text-align: center;
   font-size: 18px;
-  color: #a3a5ad;
+  color: #666977;
 }
 marvel-chart > div .nvd3 {
   -webkit-flex-grow: 1;
@@ -184,6 +184,7 @@ marvel-cluster-status > div .clusters .dropdown-menu > li.green > a:hover {
   background-color: #94c63d;
 }
 marvel-cluster-status > div .stats {
+  border: 0;
   background-color: #666977;
   color: #ffffff;
   display: -webkit-flex;
@@ -197,6 +198,20 @@ marvel-cluster-status > div .stats .loading {
   -webkit-flex-grow: 1;
       -ms-flex-positive: 1;
           flex-grow: 1;
+}
+marvel-cluster-status > div .stats.yellow {
+  background-color: #f3bc18;
+  color: #232123;
+}
+marvel-cluster-status > div .stats.yellow i.fa {
+  color: #232123;
+}
+marvel-cluster-status > div .stats.red {
+  background-color: #dc3c3c;
+  color: #ffffff;
+}
+marvel-cluster-status > div .stats.red i.fa {
+  color: #ffffff;
 }
 marvel-cluster-status > div .stats .status.green {
   color: #ffffff;

@@ -5,16 +5,22 @@
       <li ng-repeat="cluster in source.clusters" ng-class="cluster.status|lowercase"><a ng-click="changeCluster(cluster._id)">{{ cluster._id }}</a></li>
     </ul>
   </div>
-  <div ng-if="source.data.status" class="stats">
-    <div class="status {{ source.data.status|lowercase }}"><a href="#/marvel/issues">Status: <strong>{{source.data.status|capitalize}}</strong> <i class="fa fa-chevron-right"></i></a></div>
+  <div ng-if="source.data.status && !laggingCluster" class="stats">
+    <div class="status {{ source.data.status|lowercase }}">Status: <strong>{{source.data.status|capitalize}}</strong></div>
     <div>Nodes: <strong>{{source.data.nodes_count}}</strong></div>
-    <div>Shards: <strong>{{source.data.shards_count}}</strong></div>
+    <div>Primary Shards: <strong>{{source.data.primiary_shards}}</strong></div>
+    <div>Replica Shards: <strong>{{source.data.replica_shards}}</strong></div>
     <div>Documents: <strong>{{source.data.document_count}}</strong></div>
     <div>Data: <strong>{{source.data.data}}</strong></div>
     <div>Uptime: <strong>{{source.data.upTime}}</strong></div>
     <div>Version: <strong>{{source.data.version}}</strong></div>
   </div>
-  <div ng-if="!source.data.status" class="stats">
+  <div ng-if="laggingCluster" class="stats red">
+      <div>
+        <i class="fa fa-warning"></i> The data for this cluster was last sent {{ lastSeen }} ago.
+      </div>
+  </div>
+  <div ng-if="!source.data.status && !laggingCluster" class="stats">
     <div class="loading">
       <i class="fa fa-spinner fa-pulse"></i> Loading Data...
     </div>

@@ -4,19 +4,5 @@
   <div class="metrics marvel-element">
     <div ng-repeat="name in charts" class="marvel-element"><marvel-chart source="dataSources[name]"/></div>
   </div>
-  <div class="metrics marvel-element">
-    <marvel-issues
-      source="dataSources.issues['cluster']"
-      title="Cluster"
-      link="#/marvel/issues"></marvel-issues>
-    <marvel-issues
-      source="dataSources.issues['node']"
-      title="Nodes"
-      link="#/marvel/issues"></marvel-issues>
-    <marvel-issues
-      source="dataSources.issues['index']"
-      title="Indices"
-      link="#/marvel/issues"></marvel-issues>
-  </div>
   <marvel-shard-activity source="dataSources.shardActivity"/>
 </div>

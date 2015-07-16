@@ -76,18 +76,6 @@ define(function (require) {
         $scope.dataSources.shardActivity = dataSource;
         return $scope.dataSources.shardActivity;
       })
-      .then(function () {
-        $scope.dataSources.issues = {};
-        // _.each(['cluster', 'node', 'index'], function (type) {
-        // Index doesn't work, returns a 404
-        _.each(['cluster', 'node', 'index'], function (type) {
-          var dataSource = new IssueDataSource(globalState.cluster, type);
-          var unsubscribe = dataSource.register($scope);
-          $scope.$on('$destoy', unsubscribe);
-          $scope.dataSources.issues[type] = dataSource;
-        });
-        return $scope.dataSources.issues;
-      })
       .then(fetch);
 
     function fetch (withoutCourier) {

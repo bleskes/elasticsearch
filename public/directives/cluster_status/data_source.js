@@ -27,7 +27,9 @@ define(function (require) {
       this.data.status = get('status');
       this.data.cluster_name = get('cluster_name');
       this.data.nodes_count = get('nodes.count.total');
-      this.data.shards_count = get('indices.shards.total') || 0;
+      this.data.total_shards = get('indices.shards.total') || 0;
+      this.data.primiary_shards = get('indices.shards.total') || 0;
+      this.data.replica_shards = this.data.total_shards - this.data.primiary_shards;
       this.data.replication_factor = get('indices.shards.index.replication.min') || 'n/a';
       this.data.document_count = formatNumber(get('indices.docs.count'), 'int_commas');
       // TODO check this one, probably wrong

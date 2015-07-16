@@ -3,7 +3,8 @@ require.config({
     'lodash-deep': '/marvel/bower_components/lodash-deep/lodash-deep',
     'angular-resource': '/marvel/bower_components/angular-resource/angular-resource',
     'nvd3': 'marvel/bower_components/nvd3/build/nv.d3',
-    'nvd3_directives': 'marvel/bower_components/nvd3_directives/dist/angular-nvd3'
+    'nvd3_directives': 'marvel/bower_components/nvd3_directives/dist/angular-nvd3',
+    'marvel/react': 'marvel/bower_components/react/react'
   },
   shim: {
     'nvd3': ['css!marvel/bower_components/nvd3/build/nv.d3.css', 'd3'],
