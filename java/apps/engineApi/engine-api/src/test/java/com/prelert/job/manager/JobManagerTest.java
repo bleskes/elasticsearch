@@ -38,7 +38,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 
-import org.elasticsearch.common.netty.logging.JBossLoggerFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;

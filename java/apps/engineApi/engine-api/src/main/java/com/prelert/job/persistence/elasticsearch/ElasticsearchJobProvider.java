@@ -903,6 +903,50 @@ public class ElasticsearchJobProvider implements JobProvider
     }
 
 
+    @Override
+    public Pagination<Influencer> influencers(String jobId, int skip, int take)
+    {
+        FilterBuilder fb = FilterBuilders.matchAllFilter();
+
+        SearchResponse response = m_Client.prepareSearch(jobId)
+                .setTypes(Influencer.TYPE)
+                .setPostFilter(fb)
+                .setFrom(skip).setSize(take)
+                .get();
+
+        List<Influencer> influencers = new ArrayList<>();
+        for (SearchHit hit : response.getHits().getHits())
+        {
+            Influencer influencer;
+            try
+            {
+                influencer = m_ObjectMapper.convertValue(hit.getSource(), Influencer.class);
+            }
+            catch (IllegalArgumentException e)
+            {
+                LOGGER.error("Cannot parse influencer from JSON", e);
+                continue;
+            }
+
+            influencers.add(influencer);
+        }
+
+        Pagination<Influencer> page = new Pagination<>();
+        page.setDocuments(influencers);
+        page.setHitCount(response.getHits().getTotalHits());
+        page.setSkip(skip);
+        page.setTake(take);
+
+        return page;
+    }
+
+    @Override
+    public SingleDocument<Influencer> influencer(String jobId, String influencerId)
+    {
+        throw new IllegalStateException();
+    }
+
+
     /**
      * Always returns true
      */

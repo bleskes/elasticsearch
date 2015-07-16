@@ -73,6 +73,7 @@ import com.prelert.job.process.writer.CsvRecordWriter;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.results.CategoryDefinition;
+import com.prelert.job.results.Influencer;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.job.status.none.NoneStatusReporter;
@@ -410,6 +411,19 @@ public class JobManager
             throws UnknownJobException
     {
         return m_JobProvider.categoryDefinition(jobId, categoryId);
+    }
+
+
+    public Pagination<Influencer> influencers(String jobId, int skip, int take)
+            throws UnknownJobException
+    {
+        return m_JobProvider.influencers(jobId, skip, take);
+    }
+
+    public SingleDocument<Influencer> influencer(String jobId, String influencerId)
+            throws UnknownJobException
+    {
+        return m_JobProvider.influencer(jobId, influencerId);
     }
 
     /**
