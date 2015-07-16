@@ -89,8 +89,6 @@ public class Jobs extends ResourceWithJobManager
 	/**
      * Message returned if deletion of a job fails
      */
-	public static final String DELETE_FAIL = "{\"acknowledged\":false}\n";
-
     private static final String RESULTS = "results";
 
 	/**
@@ -279,7 +277,7 @@ public class Jobs extends ResourceWithJobManager
 			String msg = "Error deleting job '" + jobId + "'";
 			LOGGER.warn(msg);
 
-			return Response.status(Response.Status.NOT_FOUND).entity(DELETE_FAIL).build();
+			return Response.status(Response.Status.NOT_FOUND).entity(new Acknowledgement(false)).build();
 		}
     }
 

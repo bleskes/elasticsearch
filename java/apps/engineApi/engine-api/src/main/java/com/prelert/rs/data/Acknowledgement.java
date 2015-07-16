@@ -34,21 +34,36 @@ package com.prelert.rs.data;
  */
 public class Acknowledgement
 {
+    private boolean m_Ack;
+
     /**
-     * Get the acknowledgement value. Always returns true
+     * Default is true
+     */
+    public Acknowledgement()
+    {
+        m_Ack = true;
+    }
+
+    public Acknowledgement(boolean ack)
+    {
+        m_Ack = ack;
+    }
+
+    /**
+     * Get the acknowledgement value.
      * @return true
      */
     public boolean getAcknowledgement()
     {
-        return true;
+        return m_Ack;
     }
 
     /**
      * Set the acknowledgement value.
-     * This method is only present for serialistion it doesn't do anything
-     * @param value Not used
+     * @param value
      */
     public void setAcknowledgement(boolean value)
     {
+        m_Ack = value;
     }
 }
