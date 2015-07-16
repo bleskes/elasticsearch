@@ -46,6 +46,7 @@ import org.junit.rules.ExpectedException;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -389,7 +390,7 @@ public class JobManagerTest
                 new JobDetails("foo", new JobConfiguration(new AnalysisConfig())));
 
         when(m_ProcessManager.numberOfRunningJobs()).thenReturn(3);
-        when(m_ProcessManager.writeToJob(any(), any(), any(), any(), any(), any(), any(), any()))
+        when(m_ProcessManager.writeToJob(any(CsvRecordWriter.class), any(), any(), any(), any(), any(), any(), any()))
                     .thenAnswer(writeToWriter());
 
         JobManager jobManager = new JobManager(m_JobProvider, m_ProcessManager);
