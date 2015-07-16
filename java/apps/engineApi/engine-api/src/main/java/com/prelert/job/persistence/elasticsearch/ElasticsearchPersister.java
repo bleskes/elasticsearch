@@ -30,6 +30,7 @@ package com.prelert.job.persistence.elasticsearch;
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -60,6 +61,9 @@ import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.results.CategoryDefinition;
 import com.prelert.job.results.Detector;
+import com.prelert.job.results.Influence;
+import com.prelert.job.results.Influencer;
+import com.prelert.job.results.InfluenceScore;
 
 /**
  * Saves result Buckets and Quantiles to Elasticsearch<br/>
@@ -168,30 +172,56 @@ public class ElasticsearchPersister implements JobResultsPersister
                             detector.getName()));
                 }
 
-                BulkRequestBuilder bulkRequest = m_Client.prepareBulk();
+                BulkRequestBuilder addInfluencersRequest = m_Client.prepareBulk();
+                BulkRequestBuilder addRecordsRequest = m_Client.prepareBulk();
                 int count = 1;
                 for (AnomalyRecord record : detector.getRecords())
                 {
                     content = serialiseRecord(record, bucket.getTimestamp());
 
                     String recordId = record.generateNewId(bucket.getId(), detector.getName(), count);
-                    bulkRequest.add(m_Client.prepareIndex(m_JobId, AnomalyRecord.TYPE, recordId)
+                    addRecordsRequest.add(m_Client.prepareIndex(m_JobId, AnomalyRecord.TYPE, recordId)
                             .setSource(content)
                             .setParent(bucket.getId()));
                     ++count;
+
+
+                    if (record.getInfluences() != null && record.getInfluences().isEmpty() == false)
+                    {
+                        List<Influencer> influencers = this.influencersFromRecord(record, bucket.getId());
+                        for (Influencer influencer : influencers)
+                        {
+                            content = serialiseInfluencer(influencer);
+                            addInfluencersRequest.add(
+                                    m_Client.prepareIndex(m_JobId, Influencer.TYPE)
+                                                .setSource(content));
+                        }
+                    }
                 }
 
-                BulkResponse bulkResponse = bulkRequest.execute().actionGet();
-                if (bulkResponse.hasFailures())
+                BulkResponse addRecordsResponse = addRecordsRequest.execute().actionGet();
+                if (addRecordsResponse.hasFailures())
                 {
-                    LOGGER.error("BulkResponse has errors");
-                    for (BulkItemResponse item : bulkResponse.getItems())
+                    LOGGER.error("Bulk index of AnomalyRecord has errors");
+                    for (BulkItemResponse item : addRecordsResponse.getItems())
                     {
                         LOGGER.error(item.getFailureMessage());
                     }
                 }
-            }
 
+                if (addInfluencersRequest.numberOfActions() > 0)
+                {
+                    BulkResponse addInfluencersResponse = addInfluencersRequest.execute().actionGet();
+                    if (addInfluencersResponse.hasFailures())
+                    {
+                        LOGGER.error("Bulk index of Influencers has errors");
+                        for (BulkItemResponse item : addInfluencersResponse.getItems())
+                        {
+                            LOGGER.error(item.getFailureMessage());
+                        }
+                    }
+                }
+            }
         }
         catch (IOException e)
         {
@@ -425,7 +455,6 @@ public class ElasticsearchPersister implements JobResultsPersister
                 .endObject();
     }
 
-
     /**
      * Return the anomaly record as serialisable content
      *
@@ -497,6 +526,15 @@ public class ElasticsearchPersister implements JobResultsPersister
             }
             builder.endArray();
         }
+        if (record.getInfluences() != null && record.getInfluences().isEmpty() == false)
+        {
+            builder.startArray(AnomalyRecord.INFLUENCES);
+            for (Influence influence: record.getInfluences())
+            {
+                serialiseInfluence(influence, builder);
+            }
+            builder.endArray();
+        }
 
         builder.endObject();
 
@@ -553,6 +591,73 @@ public class ElasticsearchPersister implements JobResultsPersister
         }
 
         builder.endObject();
+    }
+
+
+    /**
+     * Add the influence object to the content builder.
+     *
+     * @param influence Influence to serialise
+     * @param builder JSON builder to be augmented
+     * @throws IOException
+     */
+    private void serialiseInfluence(Influence influence, XContentBuilder builder)
+    throws IOException
+    {
+        builder.startObject().field(Influence.INFLUCENCE_FIELD, influence.getInfluenceField());
+
+        builder.startArray(Influence.INFLUCENCE_SCORES);
+        for (InfluenceScore score : influence.getInfluenceScores())
+        {
+            builder.startObject()
+                .field(Influence.INFLUCENCE_FIELD_VALUE, score.getFieldValue())
+                .field(Influence.SCORE, score.getInfluence())
+                .endObject();
+        }
+        builder.endArray();
+
+        builder.endObject();
+    }
+
+
+    private List<Influencer> influencersFromRecord(AnomalyRecord record, String bucketId)
+    {
+        List<Influencer> influencers = new ArrayList<Influencer>();
+        for (Influence inf: record.getInfluences())
+        {
+            String field = inf.getInfluenceField();
+            for (InfluenceScore is : inf.getInfluenceScores())
+            {
+                Influencer er = new Influencer(field, is.getFieldValue());
+                er.setInflucenceScore(is.getInfluence());
+                er.setProbability(record.getProbability());
+                er.setBucketId(bucketId);
+
+                influencers.add(er);
+            }
+        }
+
+        return influencers;
+    }
+
+    /**
+     * Return the bucket as serialisable content
+     * @param bucket
+     * @return
+     * @throws IOException
+     */
+    private XContentBuilder serialiseInfluencer(Influencer influencer)
+    throws IOException
+    {
+        XContentBuilder builder = jsonBuilder().startObject()
+                .field(Influencer.BUCKET_ID, influencer.getBucketId())
+                .field(Influencer.PROBABILITY, influencer.getProbability())
+                .field(Influencer.FIELD_NAME, influencer.getFieldName())
+                .field(Influencer.FIELD_VALUE, influencer.getFieldValue())
+                .field(Influencer.INFLUENCE_SCORE, influencer.getInflucenceScore())
+                .endObject();
+
+        return builder;
     }
 
 }

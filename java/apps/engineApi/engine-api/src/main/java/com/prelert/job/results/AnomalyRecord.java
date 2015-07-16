@@ -76,6 +76,8 @@ public class AnomalyRecord
     public static final String TYPICAL = "typical";
     public static final String ACTUAL = "actual";
     public static final String IS_INTERIM = "isInterim";
+    public static final String INFLUENCES = "influences";
+
 
     /**
      * Metric Results (including population metrics)
@@ -118,6 +120,8 @@ public class AnomalyRecord
     private double m_AnomalyScore;
     private double m_NormalizedProbability;
     private Date   m_Timestamp;
+
+    private List<Influence> m_Influences;
 
     private boolean m_HadBigNormalisedUpdate;
 
@@ -375,6 +379,18 @@ public class AnomalyRecord
         m_Parent = parent.intern();
     }
 
+    public List<Influence> getInfluences()
+    {
+        return m_Influences;
+    }
+
+    public void setInfluences(List<Influence> influences)
+    {
+        this.m_Influences = influences;
+    }
+
+
+
     private static class AnomalyRecordJsonParser extends FieldNameParser<AnomalyRecord> {
 
         public AnomalyRecordJsonParser(JsonParser jsonParser, Logger logger)
@@ -431,6 +447,9 @@ public class AnomalyRecord
             case IS_INTERIM:
                 record.setInterim(parseAsBooleanOrNull(token, fieldName));
                 break;
+            case INFLUENCES:
+                record.setInfluences(Influences.parseJson(m_Parser));
+                break;
             case CAUSES:
                 if (token != JsonToken.START_ARRAY)
                 {
@@ -454,7 +473,6 @@ public class AnomalyRecord
                 break;
             }
         }
-
     }
 
     /**
@@ -495,7 +513,7 @@ public class AnomalyRecord
         return Objects.hash(m_Probability, m_AnomalyScore, m_NormalizedProbability,
                 m_Typical, m_Actual, m_Function, m_FieldName, m_ByFieldName, m_ByFieldValue,
                 m_PartitionFieldName, m_PartitionFieldValue, m_OverFieldName, m_OverFieldValue,
-                m_Timestamp, m_Parent, m_IsInterim, m_Causes);
+                m_Timestamp, m_Parent, m_IsInterim, m_Causes, m_Influences);
     }
 
 
@@ -535,7 +553,8 @@ public class AnomalyRecord
                 && Objects.equals(this.m_Timestamp, that.m_Timestamp)
                 && Objects.equals(this.m_Parent, that.m_Parent)
                 && Objects.equals(this.m_IsInterim, that.m_IsInterim)
-                && Objects.equals(this.m_Causes, that.m_Causes);
+                && Objects.equals(this.m_Causes, that.m_Causes)
+                && Objects.equals(this.m_Influences, that.m_Influences);
     }
 
     public boolean hadBigNormalisedUpdate()

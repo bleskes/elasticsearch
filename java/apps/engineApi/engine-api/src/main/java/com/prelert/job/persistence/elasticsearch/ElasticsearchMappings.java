@@ -48,13 +48,21 @@ import com.prelert.job.results.AnomalyCause;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.results.CategoryDefinition;
+import com.prelert.job.results.Influence;
+import com.prelert.job.results.Influencer;
 import com.prelert.job.transform.TransformConfig;
 import com.prelert.job.usage.Usage;
 
 /**
  * Static methods to create Elasticsearch mappings for the autodetect
  * persisted objects/documents
-  */
+ *
+ * ElasticSearch automatically recognises array types so they are
+ * not explicitly mapped as such. For arrays of objects the type
+ * must be set to <i>nested</i> so the arrays are searched properly
+ * see https://www.elastic.co/guide/en/elasticsearch/guide/current/nested-objects.html
+ *
+ */
 public class ElasticsearchMappings
 {
     /**
@@ -77,6 +85,8 @@ public class ElasticsearchMappings
     private static final String OBJECT = "object";
     private static final String PROPERTIES = "properties";
     private static final String STRING = "string";
+    private static final String DOUBLE = "double";
+    private static final String BOOLEAN = "boolean";
     private static final String TYPE = "type";
 
     private ElasticsearchMappings()
@@ -221,7 +231,7 @@ public class ElasticsearchMappings
                                             .field(TYPE, STRING).field(INDEX, NOT_ANALYZED)
                                         .endObject()
                                         .startObject(Detector.USE_NULL)
-                                            .field(TYPE, "boolean")
+                                            .field(TYPE, BOOLEAN)
                                         .endObject()
                                     .endObject()
                                 .endObject()
@@ -279,7 +289,7 @@ public class ElasticsearchMappings
                             .field(TYPE, OBJECT)
                             .startObject(PROPERTIES)
                                 .startObject(ModelDebugConfig.BOUNDS_PERCENTILE)
-                                    .field(TYPE, "double").field(INDEX, NO)
+                                    .field(TYPE, DOUBLE).field(INDEX, NO)
                                 .endObject()
                                 .startObject(ModelDebugConfig.TERMS)
                                     .field(TYPE, STRING).field(INDEX, NO)
@@ -319,16 +329,16 @@ public class ElasticsearchMappings
                             .field(TYPE, DATE)
                         .endObject()
                         .startObject(Bucket.RAW_ANOMALY_SCORE)
-                            .field(TYPE, "double")
+                            .field(TYPE, DOUBLE)
                         .endObject()
                         .startObject(Bucket.ANOMALY_SCORE)
-                            .field(TYPE, "double")
+                            .field(TYPE, DOUBLE)
                         .endObject()
                         .startObject(Bucket.MAX_NORMALIZED_PROBABILITY)
-                            .field(TYPE, "double")
+                            .field(TYPE, DOUBLE)
                         .endObject()
                         .startObject(Bucket.IS_INTERIM)
-                            .field(TYPE, "boolean")
+                            .field(TYPE, BOOLEAN)
                         .endObject()
                         .startObject(Bucket.RECORD_COUNT)
                             .field(TYPE, LONG)
@@ -431,13 +441,13 @@ public class ElasticsearchMappings
                             .field(TYPE, DATE)
                         .endObject()
                         .startObject(AnomalyRecord.ACTUAL)
-                            .field(TYPE, "double")
+                            .field(TYPE, DOUBLE)
                         .endObject()
                         .startObject(AnomalyRecord.TYPICAL)
-                            .field(TYPE, "double")
+                            .field(TYPE, DOUBLE)
                         .endObject()
                         .startObject(AnomalyRecord.PROBABILITY)
-                            .field(TYPE, "double")
+                            .field(TYPE, DOUBLE)
                         .endObject()
                         .startObject(AnomalyRecord.FUNCTION)
                             .field(TYPE, STRING).field(INDEX, NOT_ANALYZED)
@@ -466,13 +476,13 @@ public class ElasticsearchMappings
                         .startObject(AnomalyRecord.CAUSES)
                             .startObject(PROPERTIES)
                                 .startObject(AnomalyCause.ACTUAL)
-                                    .field(TYPE, "double")
+                                    .field(TYPE, DOUBLE)
                                 .endObject()
                                 .startObject(AnomalyCause.TYPICAL)
-                                    .field(TYPE, "double")
+                                    .field(TYPE, DOUBLE)
                                 .endObject()
                                 .startObject(AnomalyCause.PROBABILITY)
-                                    .field(TYPE, "double")
+                                    .field(TYPE, DOUBLE)
                                 .endObject()
                                 .startObject(AnomalyCause.FUNCTION)
                                     .field(TYPE, STRING).field(INDEX, NOT_ANALYZED)
@@ -501,13 +511,33 @@ public class ElasticsearchMappings
                             .endObject()
                         .endObject()
                         .startObject(AnomalyRecord.ANOMALY_SCORE)
-                            .field(TYPE, "double")
+                            .field(TYPE, DOUBLE)
                         .endObject()
                         .startObject(AnomalyRecord.NORMALIZED_PROBABILITY)
-                            .field(TYPE, "double")
+                            .field(TYPE, DOUBLE)
                         .endObject()
                         .startObject(AnomalyRecord.IS_INTERIM)
-                            .field(TYPE, "boolean")
+                            .field(TYPE, BOOLEAN)
+                        .endObject()
+                        .startObject(AnomalyRecord.INFLUENCES)
+                            /* Array of influences */
+                            .field(TYPE, "nested")
+                            .startObject(PROPERTIES)
+                                .startObject(Influence.INFLUCENCE_FIELD)
+                                    .field(TYPE, STRING).field(INDEX, NOT_ANALYZED)
+                                .endObject()
+                                .startObject(Influence.INFLUCENCE_SCORES)
+                                    .field(TYPE, "nested")
+                                    .startObject(PROPERTIES)
+                                        .startObject(Influence.INFLUCENCE_FIELD_VALUE)
+                                            .field(TYPE, STRING).field(INDEX, NOT_ANALYZED)
+                                        .endObject()
+                                        .startObject(Influence.SCORE)
+                                            .field(TYPE, DOUBLE)
+                                        .endObject()
+                                    .endObject()
+                                .endObject()
+                            .endObject()
                         .endObject()
                     .endObject()
                 .endObject()
@@ -685,6 +715,38 @@ public class ElasticsearchMappings
                             .field(TYPE, STRING)
                             .field("index_name", "partitionField")
                             .field(INDEX, NOT_ANALYZED)
+                        .endObject()
+                    .endObject()
+                .endObject()
+            .endObject();
+    }
+
+    /**
+     * Influcence results mapping
+     * @return
+     * @throws IOException
+     */
+    public static XContentBuilder influencerMapping()
+    throws IOException
+    {
+        return jsonBuilder()
+            .startObject()
+                .startObject(Influencer.TYPE)
+                    .startObject("_all")
+                        .field("enabled", false)
+                    .endObject()
+                    .startObject(PROPERTIES)
+                        .startObject(Influencer.BUCKET_ID)
+                            .field(TYPE, STRING)
+                        .endObject()
+                        .startObject(Influencer.PROBABILITY)
+                            .field(TYPE, DOUBLE)
+                        .endObject()
+                        .startObject(Influencer.FIELD_NAME)
+                            .field(TYPE, STRING).field(INDEX, NOT_ANALYZED)
+                        .endObject()
+                        .startObject(Influencer.FIELD_NAME)
+                            .field(TYPE, STRING).field(INDEX, NOT_ANALYZED)
                         .endObject()
                     .endObject()
                 .endObject()

@@ -67,6 +67,7 @@ public class Bucket
     public static final String EVENT_COUNT = "eventCount";
     public static final String DETECTORS = "detectors";
     public static final String RECORDS = "records";
+    public static final String INFLUENCES = "influences";
 
 
     /**
@@ -86,6 +87,7 @@ public class Bucket
     private long m_EventCount;
     private Boolean m_IsInterim;
     private boolean m_HadBigNormalisedUpdate;
+    private List<Influence> m_Influences;
 
     public Bucket()
     {
@@ -289,6 +291,15 @@ public class Bucket
         }
     }
 
+    public List<Influence> getInfluences()
+    {
+        return m_Influences;
+    }
+
+    public void setInfluences(List<Influence> influences)
+    {
+        this.m_Influences = influences;
+    }
 
     /**
      * Create a new <code>Bucket</code> and populate it from the JSON parser.
@@ -355,6 +366,9 @@ public class Bucket
             case DETECTORS:
                 parseDetectors(token, bucket);
                 break;
+            case INFLUENCES:
+                bucket.setInfluences(Influences.parseJson(m_Parser));
+                break;
             default:
                 LOGGER.warn(String.format("Parse error unknown field in Bucket %s:%s",
                         fieldName, token.asString()));
@@ -403,7 +417,7 @@ public class Bucket
     {
         // m_HadBigNormalisedUpdate is deliberately excluded from the hash
         return Objects.hash(m_Timestamp, m_EventCount, m_RawAnomalyScore, m_AnomalyScore,
-                m_MaxNormalizedProbability, m_RecordCount, m_Records, m_IsInterim);
+                m_MaxNormalizedProbability, m_RecordCount, m_Records, m_IsInterim, m_Influences);
     }
 
     /**
@@ -435,7 +449,8 @@ public class Bucket
                 && (this.m_MaxNormalizedProbability == that.m_MaxNormalizedProbability)
                 && (this.m_RecordCount == that.m_RecordCount)
                 && Objects.equals(this.m_Records, that.m_Records)
-                && Objects.equals(this.m_IsInterim, that.m_IsInterim);
+                && Objects.equals(this.m_IsInterim, that.m_IsInterim)
+                && Objects.equals(this.m_Influences, that.m_Influences);
     }
 
 

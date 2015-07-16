@@ -27,14 +27,14 @@
 
 package com.prelert.job.manager;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.any;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 
@@ -47,17 +47,24 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 import com.fasterxml.jackson.core.JsonParseException;
+import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataCounts;
+import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobStatus;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.exceptions.JobConfigurationException;
+import com.prelert.job.exceptions.JobIdAlreadyExistsException;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.TooManyJobsException;
 import com.prelert.job.exceptions.UnknownJobException;
+import com.prelert.job.messages.Messages;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.process.ProcessManager;
 import com.prelert.job.process.exceptions.MalformedJsonException;
@@ -65,8 +72,10 @@ import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.process.params.DataLoadParams;
 import com.prelert.job.process.params.ModelDebugConfig;
+import com.prelert.job.process.writer.CsvRecordWriter;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
+import com.prelert.rs.data.SingleDocument;
 
 public class JobManagerTest
 {
@@ -247,9 +256,159 @@ public class JobManagerTest
         assertNull(jobUpdate.get("modelDebugConfig"));
     }
 
+    @Test
+    public void testSetDesciption() throws UnknownJobException
+    {
+        givenProcessInfo(5);
+        JobManager jobManager = new JobManager(m_JobProvider, m_ProcessManager);
+
+        jobManager.setDescription("foo", "foo job");
+
+        verify(m_JobProvider).updateJob(eq("foo"), m_JobUpdateCaptor.capture());
+        Map<String, Object> jobUpdate = m_JobUpdateCaptor.getValue();
+        assertEquals("foo job", jobUpdate.get(JobDetails.DESCRIPTION));
+    }
+
     private void givenProcessInfo(int maxLicenseJobs)
     {
         String info = String.format("{\"jobs\":\"%d\"}", maxLicenseJobs);
         when(m_ProcessManager.getInfo()).thenReturn(info);
+    }
+
+    private void givenLicenseConstraints(int maxJobs, int maxDetectors, int maxPartitions)
+    {
+        String info = String.format("{\"%s\":%d, \"%s\":%d, \"%s\":%d}",
+                                 JobManager.JOBS_LICENSE_CONSTRAINT, maxJobs,
+                                 JobManager.DETECTORS_LICENSE_CONSTRAINT, maxDetectors,
+                                 JobManager.PARTITIONS_LICENSE_CONSTRAINT, maxPartitions);
+
+        when(m_ProcessManager.getInfo()).thenReturn(info);
+    }
+
+    @Test
+    public void testGetJob() throws UnknownJobException
+    {
+        givenLicenseConstraints(2, 2, 0);
+        JobManager jobManager = new JobManager(m_JobProvider, m_ProcessManager);
+        when(m_JobProvider.getJobDetails("foo")).thenReturn(new JobDetails());
+
+        SingleDocument<JobDetails> doc = jobManager.getJob("foo");
+        assertEquals(JobDetails.TYPE, doc.getType());
+        assertEquals("foo", doc.getDocumentId());
+        assertTrue(doc.isExists());
+        assertNotNull(doc.getDocument());
+    }
+
+    @Test
+    public void createJob_licensingConstraintMaxJobs()
+    throws UnknownJobException, JobConfigurationException, JobIdAlreadyExistsException, IOException
+    {
+        givenLicenseConstraints(2, 2, 0);
+        when(m_ProcessManager.numberOfRunningJobs()).thenReturn(3);
+
+        JobManager jobManager = new JobManager(m_JobProvider, m_ProcessManager);
+
+        try
+        {
+            jobManager.createJob(new JobConfiguration());
+            fail();
+        }
+        catch (TooManyJobsException e)
+        {
+            assertEquals(ErrorCodes.LICENSE_VIOLATION, e.getErrorCode());
+
+            String message = Messages.getMessage(Messages.LICENSE_LIMIT_JOBS, 2);
+            assertEquals(message, e.getMessage());
+        }
+    }
+
+    @Test
+    public void createJob_licensingConstraintMaxDetectors()
+    throws UnknownJobException, JobIdAlreadyExistsException,
+            IOException, TooManyJobsException
+    {
+        givenLicenseConstraints(5, 1, 0);
+        when(m_ProcessManager.numberOfRunningJobs()).thenReturn(3);
+
+        JobManager jobManager = new JobManager(m_JobProvider, m_ProcessManager);
+
+        try
+        {
+            AnalysisConfig ac = new AnalysisConfig();
+            // create 2 detectors
+            ac.getDetectors().add(new Detector());
+            ac.getDetectors().add(new Detector());
+            jobManager.createJob(new JobConfiguration(ac));
+            fail();
+        }
+        catch (JobConfigurationException e)
+        {
+            assertEquals(ErrorCodes.LICENSE_VIOLATION, e.getErrorCode());
+
+            String message = Messages.getMessage(Messages.LICENSE_LIMIT_DETECTORS, 1, 2);
+            assertEquals(message, e.getMessage());
+        }
+    }
+
+    @Test
+    public void createJob_licensingConstraintMaxPartitions()
+    throws UnknownJobException, JobIdAlreadyExistsException,
+            IOException, TooManyJobsException
+    {
+        givenLicenseConstraints(5, -1, 0);
+        when(m_ProcessManager.numberOfRunningJobs()).thenReturn(3);
+
+        JobManager jobManager = new JobManager(m_JobProvider, m_ProcessManager);
+
+        try
+        {
+            AnalysisConfig ac = new AnalysisConfig();
+            // create 2 detectors
+            Detector d = new Detector();
+            d.setPartitionFieldName("pfield");
+            ac.getDetectors().add(d);
+            jobManager.createJob(new JobConfiguration(ac));
+            fail();
+        }
+        catch (JobConfigurationException e)
+        {
+            assertEquals(ErrorCodes.LICENSE_VIOLATION, e.getErrorCode());
+
+            String message = Messages.getMessage(Messages.LICENSE_LIMIT_PARTITIONS);
+            assertEquals(message, e.getMessage());
+        }
+    }
+
+    @Test
+    public void testPreviewTransforms()
+    throws JsonParseException, MissingFieldException, HighProportionOfBadTimestampsException,
+    OutOfOrderRecordsException, MalformedJsonException, IOException, UnknownJobException
+    {
+        givenLicenseConstraints(5, -1, 0);
+        when(m_JobProvider.getJobDetails("foo")).thenReturn(
+                new JobDetails("foo", new JobConfiguration(new AnalysisConfig())));
+
+        when(m_ProcessManager.numberOfRunningJobs()).thenReturn(3);
+        when(m_ProcessManager.writeToJob(any(), any(), any(), any(), any(), any(), any(), any()))
+                    .thenAnswer(writeToWriter());
+
+        JobManager jobManager = new JobManager(m_JobProvider, m_ProcessManager);
+        String answer = jobManager.previewTransforms("foo", mock(InputStream.class));
+
+        assertEquals("csv,header,one\n", answer);
+    }
+
+    private static Answer<Object> writeToWriter()
+    {
+        return new Answer<Object>()
+        {
+            @Override
+            public Object answer(InvocationOnMock invocation) throws IOException
+            {
+                CsvRecordWriter writer = (CsvRecordWriter) invocation.getArguments()[0];
+                writer.writeRecord(new String [] {"csv","header","one"});
+                return null;
+            }
+        };
     }
 }

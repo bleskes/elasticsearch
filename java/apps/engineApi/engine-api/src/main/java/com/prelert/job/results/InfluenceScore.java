@@ -24,46 +24,46 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-
-package com.prelert.rs.data;
+package com.prelert.job.results;
 
 /**
- * The acknowledgement message for the REST API.
- * Operations such as delete that don't return data
- * should return this.
+ * Simple class grouping the influence field value and influence score
  */
-public class Acknowledgement
+public class InfluenceScore
 {
-    private boolean m_Ack;
+    private String m_FieldValue;
+    private Double m_Influence;
 
-    /**
-     * Default is true
-     */
-    public Acknowledgement()
+    public InfluenceScore()
     {
-        m_Ack = true;
+        m_FieldValue = "";
+        m_Influence = 0.0;
     }
 
-    public Acknowledgement(boolean ack)
+    public InfluenceScore(String field, double influence)
     {
-        m_Ack = ack;
+        m_FieldValue = field;
+        m_Influence = influence;
     }
 
-    /**
-     * Get the acknowledgement value.
-     * @return true
-     */
-    public boolean getAcknowledgement()
+    public String getFieldValue()
     {
-        return m_Ack;
+        return m_FieldValue;
     }
 
-    /**
-     * Set the acknowledgement value.
-     * @param value
-     */
-    public void setAcknowledgement(boolean value)
+    public void setFieldValue(String fieldValue)
     {
-        m_Ack = value;
+        this.m_FieldValue = fieldValue;
     }
+
+    public Double getInfluence()
+    {
+        return m_Influence;
+    }
+
+    public void setInfluence(Double influence)
+    {
+        this.m_Influence = influence;
+    }
+
 }

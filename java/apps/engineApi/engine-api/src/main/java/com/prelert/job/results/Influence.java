@@ -24,46 +24,57 @@
  *                                                          *
  *                                                          *
  ************************************************************/
+package com.prelert.job.results;
 
-package com.prelert.rs.data;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * The acknowledgement message for the REST API.
- * Operations such as delete that don't return data
- * should return this.
+ * Influence field name and list of influence field values/score pairs
  */
-public class Acknowledgement
+public class Influence
 {
-    private boolean m_Ack;
+    public static String INFLUCENCE_FIELD = "influenceField";
+    public static String INFLUCENCE_FIELD_VALUE = "fieldValue";
+    public static String SCORE = "score";
+    public static String INFLUCENCE_SCORES = "influenceScores";
 
-    /**
-     * Default is true
-     */
-    public Acknowledgement()
+    private String m_Field;
+    private List<InfluenceScore> m_Scores;
+
+    public Influence()
     {
-        m_Ack = true;
+        m_Scores = new ArrayList<InfluenceScore>();
     }
 
-    public Acknowledgement(boolean ack)
+    public Influence(String field)
     {
-        m_Ack = ack;
+        this();
+        m_Field = field;
     }
 
-    /**
-     * Get the acknowledgement value.
-     * @return true
-     */
-    public boolean getAcknowledgement()
+    public String getInfluenceField()
     {
-        return m_Ack;
+        return m_Field;
     }
 
-    /**
-     * Set the acknowledgement value.
-     * @param value
-     */
-    public void setAcknowledgement(boolean value)
+    public void setInfluenceField(String field)
     {
-        m_Ack = value;
+        this.m_Field = field;
+    }
+
+    public List<InfluenceScore> getInfluenceScores()
+    {
+        return m_Scores;
+    }
+
+    public void setInfluenceScores(List<InfluenceScore> scores)
+    {
+        this.m_Scores = scores;
+    }
+
+    public void addInfluenceScore(InfluenceScore score)
+    {
+        m_Scores.add(score);
     }
 }

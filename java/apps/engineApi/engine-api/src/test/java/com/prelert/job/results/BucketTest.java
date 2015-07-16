@@ -27,17 +27,26 @@
 
 package com.prelert.job.results;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 
 import org.junit.Test;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonParser;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.results.Detector;
+import com.prelert.utils.json.AutoDetectParseException;
 
 public class BucketTest
 {
@@ -191,10 +200,25 @@ public class BucketTest
     }
 
     @Test
+    public void testEquals_GivenDifferentInfluences()
+    {
+        Bucket bucket1 = new Bucket();
+        Influence influence = new Influence("testField");
+        Bucket bucket2 = new Bucket();
+        bucket2.setInfluences(Arrays.asList(influence));
+
+        assertFalse(bucket1.equals(bucket2));
+        assertFalse(bucket2.equals(bucket1));
+    }
+
+    @Test
     public void testEquals_GivenEqualBuckets()
     {
         Detector detector = new Detector();
         AnomalyRecord record = new AnomalyRecord();
+        Influence influence = new Influence("testField");
+        influence.addInfluenceScore(new InfluenceScore("fieldValA", 1.0));
+        influence.addInfluenceScore(new InfluenceScore("fieldValB", 0.3));
         Date date = new Date();
 
         Bucket bucket1 = new Bucket();
@@ -207,6 +231,7 @@ public class BucketTest
         bucket1.setRawAnomalyScore(0.005);
         bucket1.setRecordCount(4);
         bucket1.setRecords(Arrays.asList(record));
+        bucket1.setInfluences(Arrays.asList(influence));
         bucket1.setTimestamp(date);
 
         Bucket bucket2 = new Bucket();
@@ -219,9 +244,52 @@ public class BucketTest
         bucket2.setRawAnomalyScore(0.005);
         bucket2.setRecordCount(4);
         bucket2.setRecords(Arrays.asList(record));
+        bucket2.setInfluences(Arrays.asList(influence));
         bucket2.setTimestamp(date);
 
         assertTrue(bucket1.equals(bucket2));
         assertTrue(bucket2.equals(bucket1));
+    }
+
+    @Test
+    public void testParseJson() throws JsonParseException, IOException, AutoDetectParseException
+    {
+        String json = "{"
+                + "\"timestamp\" : 1369437000,"
+                + "\"maxNormalizedProbability\" : 2.0,"
+                + "\"anomalyScore\" : 50.0,"
+                + "\"id\" : \"1369437000\","
+                + "\"rawAnomalyScore\" : 5.0,"
+                + "\"eventCount\" : 1693,"
+                + "\"isInterim\" : false,"
+                + "\"influences\" : {"
+                    + "\"host\": [{\"web-server\": 0.8}]"
+                  + "},"
+                + "\"detectors\" : []"
+                + "}";
+
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
+        JsonParser parser = new JsonFactory().createParser(inputStream);
+
+        parser.nextToken();
+        Bucket b = Bucket.parseJson(parser);
+        assertEquals(1369437000000l, b.getTimestamp().getTime());
+        assertEquals(2.0, b.getMaxNormalizedProbability(), 0.0001);
+        assertEquals(50.0, b.getAnomalyScore(), 0.0001);
+        assertEquals("1369437000", b.getId());
+        assertEquals(5.0, b.getRawAnomalyScore(), 0.001);
+        assertEquals(0, b.getRecordCount());
+        assertEquals(0, b.getDetectors().size());
+        assertEquals(1693, b.getEventCount());
+        assertFalse(b.isInterim());
+
+        List<Influence> influences = b.getInfluences();
+        assertEquals(1, influences.size());
+
+        Influence host = influences.get(0);
+        assertEquals("host", host.getInfluenceField());
+        assertEquals(1, host.getInfluenceScores().size());
+        assertEquals("web-server", host.getInfluenceScores().get(0).getFieldValue());
+        assertEquals(0.8, host.getInfluenceScores().get(0).getInfluence(), 0.001);
     }
 }

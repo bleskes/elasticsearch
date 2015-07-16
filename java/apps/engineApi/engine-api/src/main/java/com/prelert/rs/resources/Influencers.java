@@ -24,46 +24,61 @@
  *                                                          *
  *                                                          *
  ************************************************************/
+package com.prelert.rs.resources;
 
-package com.prelert.rs.data;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.MediaType;
 
-/**
- * The acknowledgement message for the REST API.
- * Operations such as delete that don't return data
- * should return this.
- */
-public class Acknowledgement
+import org.apache.log4j.Logger;
+
+import com.prelert.job.exceptions.UnknownJobException;
+import com.prelert.job.manager.JobManager;
+import com.prelert.job.results.Influencer;
+import com.prelert.rs.data.Pagination;
+
+@Path("/influencers")
+public class Influencers extends ResourceWithJobManager
 {
-    private boolean m_Ack;
+    private static final Logger LOGGER = Logger.getLogger(Influencers.class);
 
     /**
-     * Default is true
+     * The name of this endpoint
      */
-    public Acknowledgement()
-    {
-        m_Ack = true;
-    }
+    public static final String ENDPOINT = "influencers";
 
-    public Acknowledgement(boolean ack)
-    {
-        m_Ack = ack;
-    }
 
     /**
-     * Get the acknowledgement value.
-     * @return true
+     * Get influencers for the job
+     *
+     * @return Array of JSON objects string
+     * @throws UnknownJobException
      */
-    public boolean getAcknowledgement()
+    @GET
+    @Path("/{jobId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Pagination<Influencer> influencers(
+            @PathParam("jobId") String jobId,
+            @DefaultValue("0") @QueryParam("skip") int skip,
+            @DefaultValue(JobManager.DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take)
+    throws UnknownJobException
     {
-        return m_Ack;
-    }
+        LOGGER.debug("Get influcencers for job '" + jobId + "'");
 
-    /**
-     * Set the acknowledgement value.
-     * @param value
-     */
-    public void setAcknowledgement(boolean value)
-    {
-        m_Ack = value;
+        JobManager manager = jobManager();
+
+        Pagination<Influencer> results = manager.influencers(jobId, skip, take);
+
+        setPagingUrls(ENDPOINT, results);
+
+
+        LOGGER.debug(String.format("Returning %d of %d influencers",
+                results.getDocuments().size(), results.getHitCount()));
+
+        return results;
     }
 }

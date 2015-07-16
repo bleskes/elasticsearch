@@ -24,46 +24,94 @@
  *                                                          *
  *                                                          *
  ************************************************************/
+package com.prelert.job.results;
 
-package com.prelert.rs.data;
-
-/**
- * The acknowledgement message for the REST API.
- * Operations such as delete that don't return data
- * should return this.
- */
-public class Acknowledgement
+public class Influencer
 {
-    private boolean m_Ack;
-
     /**
-     * Default is true
+     * Elasticsearch type
      */
-    public Acknowledgement()
+    public static final String TYPE = "influencer";
+
+    /*
+     * Field names
+     */
+    public static final String PROBABILITY = "probability";
+    public static final String BUCKET_ID = "bucketId";
+    public static final String FIELD_NAME = "fieldName";
+    public static final String FIELD_VALUE = "fieldValue";
+    public static final String INFLUENCE_SCORE = "influenceScore";
+
+    private double m_Probability;
+    private String m_BucketId;
+
+    private String m_FieldName;
+    private String m_FieldValue;
+
+    private double m_InflucenceScore;
+
+
+    public Influencer()
     {
-        m_Ack = true;
     }
 
-    public Acknowledgement(boolean ack)
+    public Influencer(String fieldName, String fieldValue)
     {
-        m_Ack = ack;
+        m_FieldName = fieldName;
+        m_FieldValue = fieldValue;
     }
 
-    /**
-     * Get the acknowledgement value.
-     * @return true
-     */
-    public boolean getAcknowledgement()
+    public double getProbability()
     {
-        return m_Ack;
+        return m_Probability;
     }
 
-    /**
-     * Set the acknowledgement value.
-     * @param value
-     */
-    public void setAcknowledgement(boolean value)
+    public void setProbability(double probability)
     {
-        m_Ack = value;
+        this.m_Probability = probability;
+    }
+
+
+    public String getBucketId()
+    {
+        return m_BucketId;
+    }
+
+    public void setBucketId(String bucketId)
+    {
+        this.m_BucketId = bucketId;
+    }
+
+
+    public String getFieldName()
+    {
+        return m_FieldName;
+    }
+
+    public void setFieldName(String fieldName)
+    {
+        this.m_FieldName = fieldName;
+    }
+
+
+    public String getFieldValue()
+    {
+        return m_FieldValue;
+    }
+
+    public void setFieldValue(String fieldValue)
+    {
+        this.m_FieldValue = fieldValue;
+    }
+
+
+    public double getInflucenceScore()
+    {
+        return m_InflucenceScore;
+    }
+
+    public void setInflucenceScore(double influcenceScore)
+    {
+        this.m_InflucenceScore = influcenceScore;
     }
 }

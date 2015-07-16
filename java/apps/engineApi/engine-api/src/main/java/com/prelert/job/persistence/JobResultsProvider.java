@@ -33,6 +33,7 @@ import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.results.CategoryDefinition;
+import com.prelert.job.results.Influencer;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
 
@@ -195,4 +196,26 @@ public interface JobResultsProvider extends Closeable
             boolean includeInterim, String sortField, boolean sortDescending,
             double anomalyScoreThreshold, double normalizedProbabilityThreshold)
     throws UnknownJobException;
+
+
+    /**
+     * Return a page of influencers for the given job.
+     *
+     * @param jobId
+     * @param skip Skip the first N records. This parameter is for paging
+     * if not required set to 0.
+     * @param take Take only this number of records
+     * @return
+     */
+    Pagination<Influencer> influencers(String jobId, int skip, int take);
+
+
+    /**
+     * Get the influencer for the given job for id
+     *
+     * @param jobId
+     * @param influencerId The unique influencer Id
+     * @return
+     */
+    SingleDocument<Influencer> influencer(String jobId, String influencerId);
 }

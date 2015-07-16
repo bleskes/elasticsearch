@@ -83,6 +83,7 @@ import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.results.CategoryDefinition;
 import com.prelert.job.results.Detector;
+import com.prelert.job.results.Influencer;
 import com.prelert.job.usage.Usage;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
@@ -319,7 +320,16 @@ public class ElasticsearchJobProvider implements JobProvider
         List<JobDetails> jobs = new ArrayList<>();
         for (SearchHit hit : response.getHits().getHits())
         {
-            JobDetails job = m_ObjectMapper.convertValue(hit.getSource(), JobDetails.class);
+            JobDetails job;
+            try
+            {
+                job = m_ObjectMapper.convertValue(hit.getSource(), JobDetails.class);
+            }
+            catch (IllegalArgumentException e)
+            {
+                LOGGER.error("Cannot parse job from JSON", e);
+                continue;
+            }
 
             // Pull out the modelSizeStats document, and add this to the JobDetails
             GetResponse modelSizeStatsResponse = m_Client.prepareGet(
@@ -368,6 +378,7 @@ public class ElasticsearchJobProvider implements JobProvider
             XContentBuilder modelStateMapping = ElasticsearchMappings.modelStateMapping();
             XContentBuilder usageMapping = ElasticsearchMappings.usageMapping();
             XContentBuilder modelSizeStatsMapping = ElasticsearchMappings.modelSizeStatsMapping();
+            XContentBuilder influencerMapping = ElasticsearchMappings.influencerMapping();
 
             m_Client.admin().indices()
                     .prepareCreate(job.getId())
@@ -381,6 +392,7 @@ public class ElasticsearchJobProvider implements JobProvider
                     .addMapping(ModelState.TYPE, modelStateMapping)
                     .addMapping(Usage.TYPE, usageMapping)
                     .addMapping(ModelSizeStats.TYPE, modelSizeStatsMapping)
+                    .addMapping(Influencer.TYPE, influencerMapping)
                     .get();
             m_Client.admin().cluster().prepareHealth(job.getId()).setWaitForYellowStatus().execute().actionGet();
 
@@ -888,6 +900,50 @@ public class ElasticsearchJobProvider implements JobProvider
         page.setTake(take);
 
         return page;
+    }
+
+
+    @Override
+    public Pagination<Influencer> influencers(String jobId, int skip, int take)
+    {
+        FilterBuilder fb = FilterBuilders.matchAllFilter();
+
+        SearchResponse response = m_Client.prepareSearch(jobId)
+                .setTypes(Influencer.TYPE)
+                .setPostFilter(fb)
+                .setFrom(skip).setSize(take)
+                .get();
+
+        List<Influencer> influencers = new ArrayList<>();
+        for (SearchHit hit : response.getHits().getHits())
+        {
+            Influencer influencer;
+            try
+            {
+                influencer = m_ObjectMapper.convertValue(hit.getSource(), Influencer.class);
+            }
+            catch (IllegalArgumentException e)
+            {
+                LOGGER.error("Cannot parse influencer from JSON", e);
+                continue;
+            }
+
+            influencers.add(influencer);
+        }
+
+        Pagination<Influencer> page = new Pagination<>();
+        page.setDocuments(influencers);
+        page.setHitCount(response.getHits().getTotalHits());
+        page.setSkip(skip);
+        page.setTake(take);
+
+        return page;
+    }
+
+    @Override
+    public SingleDocument<Influencer> influencer(String jobId, String influencerId)
+    {
+        throw new IllegalStateException();
     }
 
 
