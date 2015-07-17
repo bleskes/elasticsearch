@@ -20,10 +20,10 @@
 /* jshint newcap: false */
 define(function (require) {
   'use strict';
-  var React = require('vendor/marvel/react/react');
+  var React = require('marvel/react');
   var D = React.DOM;
-  var Shards = require('./shards'); 
-  
+  var Shards = React.createFactory(require('./shards'));
+
   return React.createClass({
     displayName: 'Unassigned',
     render: function () {

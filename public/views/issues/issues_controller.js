@@ -6,7 +6,7 @@ define(function (require) {
   require('marvel/services/metrics');
   require('marvel/services/clusters');
 
-  var module = require('modules').get('marve', [
+  var module = require('modules').get('marvel', [
     'marvel/directives',
     'marvel/settings',
     'marvel/metrics',

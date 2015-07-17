@@ -21,14 +21,14 @@ define(function (require) {
   'use strict';
   var _ = require('lodash');
   var getValueFromArrayOrString = require('../lib/getValueFromArrayOrString');
+  var moment = require('moment');
   return function getTimelineDataProvider(es, timefilter) {
 
-    return function getTimelineData(config, size, timeRange, data, position) {
+    return function getTimelineData(indexPattern, cluster, size, timeRange, data) {
       var newPosition = false;
       var bounds = timefilter.getBounds();
       size = _.isUndefined(size) ? 300 : size;
       data = _.isUndefined(data) ? [] : data;
-      position = _.isUndefined(position) ? 0 : position;
 
       if (_.isUndefined(timeRange)) {
         timeRange = {
@@ -38,6 +38,7 @@ define(function (require) {
         };
       }
 
+      var header = { index: indexPattern.toIndexList(moment(timeRange.gte), moment(timeRange.lte)), type: 'cluster_state' };
       var body = {
         size: size,
         from: 0,
@@ -48,51 +49,48 @@ define(function (require) {
         query: {
           filtered: {
             filter: {
-              range: {
-                '@timestamp': timeRange
+              bool: {
+                must: [
+                  {
+                    range: {
+                      '@timestamp': timeRange
+                    }
+                  },
+                  {
+                    term: { 'cluster_name.raw': cluster }
+                  }
+                ]
               }
             }
           }
         }
       };
 
-      return es.search({
-        index: 'marvel-*',
-        type: 'cluster_state',
-        body: body
-      })
+      return es.msearch({ body: [ header, body ] })
         .then(function (resp) {
           var nextTimeRange;
-          var hits = resp.data.hits;
-          data.push.apply(data, hits.hits);
-
-          if (hits.hits.length === hits.total) {
-            position++;
-            newPosition = dashboard.indices[position] ? true : false;
-          }
-
+          var hits = resp.responses[0].hits;
           var to = timeRange.lte;
+
           if (hits.hits.length > 0) {
-            to = moment(getValueFromArrayOrString(hits.hits[hits.hits.length-1].fields['@timestamp'])).valueOf();
+            _.each(hits.hits, function (hit) {
+              if (!_.find(data, { _id: hit._id })) data.push(hit);
+            });
+            to = moment(getValueFromArrayOrString(_.last(hits.hits).fields['@timestamp'])).valueOf();
           }
 
-          if ((hits.total > size && hits.hits.length === size) || newPosition) {
+          if (hits.total > data.length && hits.hits.length === size) {
             nextTimeRange = {
-              lte: to,
               gte: timeRange.gte,
+              lte: to,
               format: 'epoch_millis'
             };
-            return getTimelineData(config, size, nextTimeRange, data, position); // call again
+            return getTimelineData(indexPattern, cluster, size, nextTimeRange, data); // call again
           }
           // flip data back to normal order
           return data.reverse();
         })
         .catch(function (resp) {
-          $scope.panel.error = resp.data.error;
-          position++;
-          if (dashboard.indices[position]) {
-            return getTimelineData(config, size, timeRange, data, position); // call again
-          }
           return data.reverse();
         });
     };

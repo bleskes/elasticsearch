@@ -20,16 +20,16 @@
 /* jshint maxlen:false, white:false, newcap:false  */
 define(function (require) {
   'use strict';
-  var React = require('vendor/marvel/react/react');
+  var React = require('marvel/react');
   var D = React.DOM;
-  var Unassigned = require('./unassigned');
-  var Assigned = require('./assigned');
-  var ParentItem = require('./parentItem');
+  var Unassigned = React.createFactory(require('./unassigned'));
+  var Assigned = React.createFactory(require('./assigned'));
+  var ParentItem = React.createFactory(require('./parentItem'));
 
   return React.createClass({
     displayName: 'TableBody',
     createRow: function (data) {
-      return D.tr(null, 
+      return D.tr(null,
         ParentItem({ data: data, key: data.name }),
         data.unassigned && data.unassigned.length > 0 ? Unassigned({ shards: data.unassigned }) : this.props.cols === 3 ? D.td() : null,
         Assigned({ data: data.children })
@@ -42,7 +42,7 @@ define(function (require) {
         return D.tbody(null, rows);
       }
       if (this.props.totalCount === 0) {
-        message = D.div(null, 
+        message = D.div(null,
           D.p({ style: { margin: '10px 0 0 0'  }, className: 'text-center lead'  },
             'Where\'s the data? It looks like you don\'t have any indexes in your cluster (or they are not visible).'
           ),
@@ -53,10 +53,10 @@ define(function (require) {
       } else {
         message = D.div({ padding: '10px' });
       }
-      return D.tbody(null, 
+      return D.tbody(null,
         D.tr(null, D.td({ colSpan: this.props.cols }, message))
       );
     }
-  }); 
+  });
 });
 

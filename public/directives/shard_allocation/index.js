@@ -47,7 +47,7 @@ define(function (require) {
   }
 
 
-  module.directive('marvelShardAllocation', function (timefilter, $timeout, Private) {
+  module.directive('marvelShardAllocation', function (timefilter, globalState, $timeout, Private) {
     var getTimeline = Private(require('marvel/directives/shard_allocation/requests/getTimelineData'));
     var getStateSource = Private(require('marvel/directives/shard_allocation/requests/getStateSource'));
 
@@ -55,19 +55,18 @@ define(function (require) {
       restrict: 'E',
       template: template,
       scope: {
-        source: '='
+        indexPattern: '='
       },
       link: function ($scope, el, attr) {
         var handleConnectionError = function () {
-          alertSrv.set('Error',
-              'The connection to Elasticsearch returned an error. Check your Elasticsearch instance.',
-              'error', 30000);
+          // alertSrv.set('Error',
+          //     'The connection to Elasticsearch returned an error. Check your Elasticsearch instance.',
+          //     'error', 30000);
         };
 
-        $scope.style = dashboard.current.style;
+        $scope.style = 'light';
         $scope.timelineData = [];
         $scope.showHead = false;
-        $scope.startup = true;
 
         $scope.player = {
           paused: false,
@@ -98,6 +97,7 @@ define(function (require) {
         };
 
         // Set the defaults for the $scope.panel (this is side effecting)
+        $scope.panel = {};
         _.defaults($scope.panel, defaults);
 
         // Change update the state of the ui based on the view
@@ -284,10 +284,6 @@ define(function (require) {
           // If we get nothing back we need to use the current state.
           resetCurrentAndPaused = _.isUndefined(resetCurrentAndPaused) ? true : resetCurrentAndPaused;
 
-          if (data.length === 0) {
-            data = [clusterStateToDataFormat($clusterState.state)];
-          }
-
           $scope.timelineData = data;
           $scope.timelineMarkers = extractMarkers(data);
           $scope.player.total = (data.length > 0 && data.length) || 1;
@@ -302,21 +298,34 @@ define(function (require) {
         var unsubscribe = $scope.$on('courier:searchRefresh', function () {
 
           var timeRange = getNewTimeRange();
+          var newTimeRange = {
+            lte: timeRange.lte,
+            gte: $scope.timeRange.lte,
+            format: 'epoch_millis'
+          };
           var timeChanged = (timeRange.gte !== $scope.timeRange.gte ||
               timeRange.lte !== $scope.timeRange.lte);
+          var data = $scope.timelineData;
+          var current = ($scope.player.current === $scope.player.total);
 
           if (timeChanged) {
             $scope.timeRange = timeRange;
-            getTimeline().then(handleTimeline, handleConnectionError).then(function () {
-              // Don't start listening to updates till we finish initlaizing
-              if ($scope.startup) {
-                $scope.startup = false;
-              }
+            fetch(10, newTimeRange).then(function (newData) {
+              data.push.apply(data, newData);
+              handleTimeline(data, current);
             });
           }
 
         });
         $scope.$on('$destroy', unsubscribe);
+
+        function fetch(size, timeRange) {
+          timeRange = timeRange || getNewTimeRange();
+          size = size || 300;
+          return getTimeline($scope.indexPattern, globalState.cluster, size, timeRange);
+        }
+
+        fetch().then(handleTimeline, handleConnectionError);
 
       }
     };

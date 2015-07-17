@@ -19,7 +19,7 @@
 
 define(function (require) {
   'use strict';
-  var React = require('vendor/marvel/react/react');
+  var React = require('marvel/react');
   var D = React.DOM;
   var generateQueryAndLink = require('../lib/generateQueryAndLink');
 
@@ -31,11 +31,11 @@ define(function (require) {
       if (data.unassignedPrimaries) {
         className.push('text-error');
       }
-      var name = D.a({ href:generateQueryAndLink(data) }, 
+      var name = D.a({ href:generateQueryAndLink(data) },
        D.span(null, data.name)
       );
       return D.td({ nowrap: true  },
-        D.div({ className: className.join(' ') }, 
+        D.div({ className: className.join(' ') },
           name,
           data.master ? D.span({ className: 'icon-star' }, null) : null
         ),

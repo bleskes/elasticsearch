@@ -13,10 +13,10 @@
     </tr>
   </thead>
   <tbody bindonce>
-    <tr ng-repeat="activity in source.data" ng-class="{ done: activity.stage === 'DONE', red: activity.type === 'GATEWAY', yellow: activity.type === 'REPLICA' }">
+    <tr ng-repeat="activity in data" ng-class="{ done: activity.stage === 'DONE', red: activity.primary, yellow: !activity.primary }">
       <td class="index">
         <h5 bo-text="activity.index.name"></h5>
-        <p>Shard <span bo-text="activity.id"></span> | <span bo-text="lookup[activity.type]"></span></p>
+        <p>Shard <span bo-text="activity.id"></span> | <span bo-text="lookup[activity.type]"></span><span ng-if="activity.type === 'RELOCATION'"> of {{ activity.primary ? 'Primary' : 'Replica' }}</span></p>
       </td>
       <td class="stage">
         <h6 bo-text="activity.stage"></h6>
@@ -63,7 +63,7 @@
       </td>
     </tr>
     <tr>
-      <td ng-if="!source.data.length" colspan="8" class="no-results">There are no recovery records for this cluster.</td>
+      <td ng-if="!data.length" colspan="8" class="no-results">There are no <span ng-if="onlyActive">active </span>recovery records for this cluster.</td>
     </tr>
   </tbody>
 </table>

@@ -1,5 +1,6 @@
 define(function (require) {
   var template = require('text!marvel/directives/nav/index.html');
+  var _ = require('lodash');
   var module = require('modules').get('marvel/directives', []);
   module.directive('marvelNav', function ($location) {
     return {
@@ -12,9 +13,10 @@ define(function (require) {
           { id: 'overview', display: 'Overview', url: '#/marvel' },
           { id: 'indices', display: 'Indices', url: '#/marvel/indices' },
           { id: 'nodes', display: 'Nodes', url: '#/marvel/nodes' },
+          { id: 'shard_allocation', display: 'Shard Allocation', url: '#/marvel/shard_allocation' },
         ];
         $scope.sections = _.each($scope.sections, function (section) {
-          section.class = (section.url === '#' + path)? 'active' : '';
+          section.class = (section.url === '#' + path) ? 'active' : '';
         });
       }
     };

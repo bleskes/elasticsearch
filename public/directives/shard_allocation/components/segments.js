@@ -20,7 +20,7 @@
 /* jshint newcap: false */
 define(function (require) {
   'use strict';
-  var React = require('vendor/marvel/react/react');
+  var React = require('marvel/react');
   var D = React.DOM;
   var _ = require('lodash');
 
@@ -41,12 +41,12 @@ define(function (require) {
     createSegment: function (data) {
       var className = 'segment '+data.status;
       var width = ((data.count/this.state.total)*100)+'%';
-      return D.div({ className: className, style: { width: width } }); 
+      return D.div({ className: className, style: { width: width } });
     },
     render: function () {
       var segments = _.map(this.state.colors, this.createSegment);
       return D.div(null, segments);
     }
   });
-    
+
 });

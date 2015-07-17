@@ -20,16 +20,16 @@
 /* jshint newcap: false */
 define(function (require) {
   'use strict';
-  var React = require('vendor/marvel/react/react');
+  var React = require('marvel/react');
   var D = React.DOM;
 
-  var TableHead = require('./tableHead');
-  var TableBody = require('./tableBody');
+  var TableHead = React.createFactory(require('./tableHead'));
+  var TableBody = React.createFactory(require('./tableBody'));
 
   return React.createClass({
     displayName: 'ClusterView',
     getInitialState: function () {
-      return { labels: this.props.scope.labels, showing: this.props.scope.showing || [] };
+      return { labels: this.props.scope.labels || [], showing: this.props.scope.showing || [] };
     },
     setLabels: function (data) {
       if (data) {

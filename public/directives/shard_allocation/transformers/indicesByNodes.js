@@ -19,16 +19,16 @@
 
 define(function (require) {
   'use strict';
-  var extractShards = require('lib/extractShards');
-  var _ = require('lodash');  
+  var extractShards = require('../lib/extractShards');
+  var _ = require('lodash');
 
   var filterHiddenIndices = require('../lib/filterHiddenIndices');
   var extractIp = require('../lib/extractIp');
 
   return function ($scope) {
-    return function nodesByIndices (state) {
+    return function nodesByIndices(state) {
 
-      function createIndex (obj, shard) {
+      function createIndex(obj, shard) {
         var id = shard.index;
         if (obj[id]) {
           return obj;
@@ -44,11 +44,11 @@ define(function (require) {
         return obj;
       }
 
-      function createNodeAddShard (obj, shard) {
+      function createNodeAddShard(obj, shard) {
         var node = shard.node;
         var index = shard.index;
 
-        // If the node is null then it's an unassigned shard and we need to 
+        // If the node is null then it's an unassigned shard and we need to
         // add it to the unassigned array.
         if (node === null) {
           obj[index].unassigned.push(shard);
@@ -80,7 +80,7 @@ define(function (require) {
       if (!$scope.panel.show_hidden) {
         shards = shards.filter(filterHiddenIndices);
       }
-      
+
       var data = _.reduce(shards, function (obj, shard) {
         obj = createIndex(obj, shard);
         obj = createNodeAddShard(obj, shard);
@@ -94,5 +94,5 @@ define(function (require) {
         .value();
     };
   };
-  
+
 });

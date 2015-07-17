@@ -32,5 +32,6 @@ define(function (require) {
   require('marvel/views/settings/index.js');
   require('marvel/views/issues/issues_controller.js');
   require('marvel/views/setup/setup_controller.js');
+  require('marvel/views/shard_allocation/shard_allocation_controller.js');
 
 });

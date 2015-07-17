@@ -2,6 +2,7 @@ define(function (require) {
   var template = require('text!marvel/directives/cluster_status/index.html');
   var module = require('modules').get('marvel/directives', []);
   var moment = require('moment');
+  var _ = require('lodash');
 
   module.directive('marvelClusterStatus', function ($location, globalState, kbnUrl, marvelClusters) {
     return {
@@ -29,12 +30,14 @@ define(function (require) {
 
         $scope.$watch('source.clusters', function (clusters) {
           var cluster = _.find(clusters, { _id: $scope.source.cluster });
-          $scope.lastUpdate = moment.utc(cluster.lastUpdate);
-          var now = moment.utc();
-          var diff = now.diff($scope.lastUpdate);
-          $scope.lastSeen = moment.duration(diff, 'ms').humanize();
-          if (diff > 120000) {
-            $scope.laggingCluster = true;
+          if (cluster) {
+            $scope.lastUpdate = moment.utc(cluster.lastUpdate);
+            var now = moment.utc();
+            var diff = now.diff($scope.lastUpdate);
+            $scope.lastSeen = moment.duration(diff, 'ms').humanize();
+            if (diff > 120000) {
+              $scope.laggingCluster = true;
+            }
           }
         });
       }

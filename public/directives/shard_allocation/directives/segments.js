@@ -22,7 +22,7 @@ define(function (require) {
 	var module = require('modules').get('marvel/directives', []);
   var React = require('marvel/react');
   var Segements = require('marvel/directives/shard_allocation/components/segments');
-	app.directive('segments', function () {
+	module.directive('segments', function () {
 		return {
 			restrict: 'E',
 			scope: {

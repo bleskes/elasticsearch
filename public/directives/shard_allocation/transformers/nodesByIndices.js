@@ -19,7 +19,7 @@
 
 define(function (require) {
   'use strict';
-  var extractShards = require('lib/extractShards');
+  var extractShards = require('../lib/extractShards');
   var _ = require('lodash');
 
   var filterHiddenIndices = require('../lib/filterHiddenIndices');
@@ -27,7 +27,7 @@ define(function (require) {
   var extractIp = require('../lib/extractIp');
 
   return function ($scope) {
-    return function nodesByIndices (state) {
+    return function nodesByIndices(state) {
 
       var getNodeType = function (node) {
         if (node.attributes.client === 'true') {
@@ -43,7 +43,7 @@ define(function (require) {
         return 'normal';
       };
 
-      function createNode (obj, node, id) {
+      function createNode(obj, node, id) {
         node.master = state.master_node === id;
         node.details = extractIp(node);
         node.ip_port = extractIp(node);
@@ -56,7 +56,7 @@ define(function (require) {
         return obj;
       }
 
-      function createIndexAddShard (obj, shard) {
+      function createIndexAddShard(obj, shard) {
         var node = shard.node || 'unassigned';
         var index = shard.index;
         var indexObj = _.find(obj[node].children, { id: index });
@@ -79,7 +79,7 @@ define(function (require) {
       }
 
       var data = _.reduce(state.nodes, createNode, {});
-      if (state.routing_nodes.unassigned.length !==0 ) {
+      if (state.routing_nodes.unassigned.length !== 0 ) {
         data.unassigned = {
           name: 'Unassigned',
           master: false,

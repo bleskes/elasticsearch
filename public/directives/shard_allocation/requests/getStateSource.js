@@ -21,14 +21,14 @@ define(function () {
   'use strict';
   return function getStateSourceProvider(es) {
     return function (obj) {
-      es.get({
+      return es.get({
         index: obj._index,
-        type: obj._type,
+        type: 'cluster_state',
         id: obj._id
       }).then(function (resp) {
         var state;
-        if (resp.data && resp.data._source) {
-          state = resp.data._source;
+        if (resp && resp._source) {
+          state = resp._source;
           state._id = obj._id;
           return state;
         }

@@ -19,23 +19,23 @@
 
 /* jshint newcap: false */
 define(function (require) {
-  var React = require('react');
-  var ClusterView = require('marvel/directives/shard_allocation/components/clusterView');
-	var module = require('modules').get('marvel/directives', []);
-	app.directive('clusterView', function () {
-		return {
-			restrict: 'E',
-			scope: {
-				totalCount: '=totalCount',
-				filter: '=filter',
-				showing: '=showing',
-				labels: '=labels'
-			},
-			link: function (scope, element) {
-				var clusterView = ClusterView({ scope: scope });
-				React.renderComponent(clusterView, element[0]);
-			}
-		};
-	});
+  var React = require('marvel/react');
+  var ClusterView = React.createFactory(require('marvel/directives/shard_allocation/components/clusterView'));
+  var module = require('modules').get('marvel/directives', []);
+  module.directive('clusterView', function ($parse) {
+    return {
+      restrict: 'E',
+      scope: {
+        totalCount: '=',
+        filter: '=',
+        showing: '=',
+        labels: '='
+      },
+      link: function (scope, element, attr) {
+        var clusterView = ClusterView({ scope: scope });
+        React.render(clusterView, element[0]);
+      }
+    };
+  });
 });
 

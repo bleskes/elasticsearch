@@ -19,7 +19,7 @@
 
 define(function (require) {
   'use strict';
-  var React = require('vendor/marvel/react/react');
+  var React = require('marvel/react');
   var D = React.DOM;
 
   return React.createClass({
