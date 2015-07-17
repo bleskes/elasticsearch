@@ -54,7 +54,7 @@ define(function (require) {
         cols: this.state.labels.length
       });
       return D.table(
-        { cellPadding: 0, cellSpacing: 0, className: 'table table-bordered' },
+        { cellPadding: 0, cellSpacing: 0, className: 'table' },
         tableHead,
         tableBody
       );

@@ -468,169 +468,14 @@ marvel-shard-activity .source-dest > div > div {
   display: -ms-flexbox;
   display: flex;
 }
-.issues .view .summary {
-  display: -webkit-flex;
-  display: -ms-flexbox;
-  display: flex;
-}
-.issues .view .summary marvel-issue-summary {
-  -webkit-flex: 1 1 auto;
-      -ms-flex: 1 1 auto;
-          flex: 1 1 auto;
-  margin: 0 5px;
-}
-.issues .view .summary marvel-issue-summary:first-child {
-  margin: 0 5px 0 0;
-}
-.issues .view .summary marvel-issue-summary:last-child {
-  margin: 0 0 0 5px;
-}
-.issues .view .issues-table {
-  background-color: #ffffff;
+marvel-shard-allocation {
+  display: block;
+  padding: 5px;
+  background: #ffffff;
   border-top: 2px solid #a3a5ad;
-  padding: 0 5px 5px;
 }
-.issues .view .fa-bolt {
-  color: #dc3c3c;
-}
-.issues .view span.icon {
-  display: inline-block;
-  width: 20px;
-  text-align: center;
-}
-.issues .view span.node,
-.issues .view span.index,
-.issues .view span.field {
-  color: #232123;
-}
-.issues .view span.node::after,
-.issues .view span.index::after {
-  content: ':';
-}
-.issues .view td {
-  color: #a3a5ad;
-}
-.issues .view .type {
-  text-transform: capitalize;
-}
-.issues .view .fa-warning {
-  color: #f3bc18;
-}
-.issues .view .no-results {
-  color: #d1d2d6;
-  text-align: center;
-  padding: 40px;
-}
-.issues .view .no-results h1 {
-  margin-top: 0;
-}
-.issues .view .no-results .fa {
-  font-size: 100px;
-}
-.issues .view div.filters {
-  display: -webkit-flex;
-  display: -ms-flexbox;
-  display: flex;
-  border-bottom: 2px solid #a3a5ad;
-}
-.issues .view div.filters .totals {
-  color: #666977;
-  -webkit-flex-grow: 1;
-      -ms-flex-positive: 1;
-          flex-grow: 1;
-  -webkit-align-self: center;
-      -ms-flex-item-align: center;
-          align-self: center;
-  text-align: right;
-  padding-right: 20px;
-}
-.issues .view div.filters .totals a {
-  color: #666977;
-}
-.issues .view div.filters .filter,
-.issues .view div.filters .filter-label {
-  -webkit-flex: 0 0 auto;
-      -ms-flex: 0 0 auto;
-          flex: 0 0 auto;
-}
-.issues .view div.filters .filter-label {
-  color: #666977;
-  font-weight: bold;
-  margin: 0 20px 0 60px;
-  -webkit-align-self: center;
-      -ms-flex-item-align: center;
-          align-self: center;
-}
-.issues .view div.filters .filter-label:first-child {
-  margin: 0 20px 0 0;
-}
-.issues .view div.filters .filter {
-  cursor: pointer;
-  margin: 5px 1px;
-  background-color: #ffffff;
-  color: #666977;
-  padding: 5px 10px;
-  font-size: 0.9em;
-  border: 1px solid #d1d2d6;
-}
-.issues .view div.filters .filter.red {
-  color: #dc3c3c;
-  border-color: #dc3c3c;
-}
-.issues .view div.filters .filter.red .fa-bolt {
-  color: #dc3c3c;
-}
-.issues .view div.filters .filter.yellow {
-  color: #f3bc18;
-  border-color: #f3bc18;
-}
-.issues .view div.filters .filter.yellow .fa-bolt {
-  color: #f3bc18;
-}
-.issues .view div.filters .filter.active {
-  background-color: #a3a5ad;
-  color: #ffffff;
-}
-.issues .view div.filters .filter.active.red {
-  background-color: #dc3c3c;
-}
-.issues .view div.filters .filter.active.red .fa-warning,
-.issues .view div.filters .filter.active.red .fa-bolt {
-  color: #ffffff;
-}
-.issues .view div.filters .filter.active.yellow {
-  background-color: #f3bc18;
-  color: #232123;
-}
-.issues .view div.filters .filter.active.yellow .fa-warning,
-.issues .view div.filters .filter.active.yellow .fa-bolt {
-  color: #232123;
-}
-.marvel-overview .metrics {
-  display: -webkit-flex;
-  display: -ms-flexbox;
-  display: flex;
-}
-.marvel-overview .metrics > div,
-.marvel-overview .metrics > marvel-issues {
-  -webkit-flex: 1 1 33.3%;
-      -ms-flex: 1 1 33.3%;
-          flex: 1 1 33.3%;
-  margin: 0 5px;
-}
-.marvel-overview .metrics > div:first-child,
-.marvel-overview .metrics > marvel-issues:first-child {
-  margin: 0 10px 0 0;
-}
-.marvel-overview .metrics > div:last-child,
-.marvel-overview .metrics > marvel-issues:last-child {
-  margin: 0 0 0 10px;
-}
-.marvel-settings form > .row {
-  border-bottom: 1px solid #a3a5ad;
-}
-.marvel-settings form > .row:first-child {
-  border-top: 1px solid #a3a5ad;
+.marvel-cluster-view cluster-view {
+  display: block;
 }
 .marvel-cluster-view .children {
   vertical-align: middle !important;
@@ -760,6 +605,7 @@ marvel-shard-activity .source-dest > div > div {
   background-size: 10px 10px;
 }
 .marvel-cluster-view .legend {
+  margin-top: 10px;
   font-size: 12px;
   border-top: 1px solid #333;
   background-color: #333;
@@ -779,8 +625,9 @@ marvel-shard-activity .source-dest > div > div {
 .marvel-cluster-view .player {
   background-color: #000;
   font-size: 12px;
-  height: 20px;
-  padding: 27px 0 0;
+  height: 44px;
+  padding: 27px 0 0 0;
+  margin: 0;
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
@@ -791,7 +638,7 @@ marvel-shard-activity .source-dest > div > div {
 }
 .marvel-cluster-view .player .display {
   position: relative;
-  top: -7px;
+  top: -2px;
   width: 200px;
   color: #999;
   padding-left: 5px;
@@ -804,10 +651,11 @@ marvel-shard-activity .source-dest > div > div {
   color: #FFF;
   text-align: center;
   font-size: 15px;
+  margin-top: -7px;
 }
 .marvel-cluster-view .player .control {
   position: relative;
-  top: -6px;
+  top: -7px;
   width: 180px;
   text-align: center;
 }
@@ -1088,4 +936,168 @@ marvel-shard-activity .source-dest > div > div {
 }
 .marvel-cluster-view.light .player .timeline .timeline-colors .segment.green {
   background-color: #7ce655;
+}
+.issues .view .summary {
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+}
+.issues .view .summary marvel-issue-summary {
+  -webkit-flex: 1 1 auto;
+      -ms-flex: 1 1 auto;
+          flex: 1 1 auto;
+  margin: 0 5px;
+}
+.issues .view .summary marvel-issue-summary:first-child {
+  margin: 0 5px 0 0;
+}
+.issues .view .summary marvel-issue-summary:last-child {
+  margin: 0 0 0 5px;
+}
+.issues .view .issues-table {
+  background-color: #ffffff;
+  border-top: 2px solid #a3a5ad;
+  padding: 0 5px 5px;
+}
+.issues .view .fa-bolt {
+  color: #dc3c3c;
+}
+.issues .view span.icon {
+  display: inline-block;
+  width: 20px;
+  text-align: center;
+}
+.issues .view span.node,
+.issues .view span.index,
+.issues .view span.field {
+  color: #232123;
+}
+.issues .view span.node::after,
+.issues .view span.index::after {
+  content: ':';
+}
+.issues .view td {
+  color: #a3a5ad;
+}
+.issues .view .type {
+  text-transform: capitalize;
+}
+.issues .view .fa-warning {
+  color: #f3bc18;
+}
+.issues .view .no-results {
+  color: #d1d2d6;
+  text-align: center;
+  padding: 40px;
+}
+.issues .view .no-results h1 {
+  margin-top: 0;
+}
+.issues .view .no-results .fa {
+  font-size: 100px;
+}
+.issues .view div.filters {
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  border-bottom: 2px solid #a3a5ad;
+}
+.issues .view div.filters .totals {
+  color: #666977;
+  -webkit-flex-grow: 1;
+      -ms-flex-positive: 1;
+          flex-grow: 1;
+  -webkit-align-self: center;
+      -ms-flex-item-align: center;
+          align-self: center;
+  text-align: right;
+  padding-right: 20px;
+}
+.issues .view div.filters .totals a {
+  color: #666977;
+}
+.issues .view div.filters .filter,
+.issues .view div.filters .filter-label {
+  -webkit-flex: 0 0 auto;
+      -ms-flex: 0 0 auto;
+          flex: 0 0 auto;
+}
+.issues .view div.filters .filter-label {
+  color: #666977;
+  font-weight: bold;
+  margin: 0 20px 0 60px;
+  -webkit-align-self: center;
+      -ms-flex-item-align: center;
+          align-self: center;
+}
+.issues .view div.filters .filter-label:first-child {
+  margin: 0 20px 0 0;
+}
+.issues .view div.filters .filter {
+  cursor: pointer;
+  margin: 5px 1px;
+  background-color: #ffffff;
+  color: #666977;
+  padding: 5px 10px;
+  font-size: 0.9em;
+  border: 1px solid #d1d2d6;
+}
+.issues .view div.filters .filter.red {
+  color: #dc3c3c;
+  border-color: #dc3c3c;
+}
+.issues .view div.filters .filter.red .fa-bolt {
+  color: #dc3c3c;
+}
+.issues .view div.filters .filter.yellow {
+  color: #f3bc18;
+  border-color: #f3bc18;
+}
+.issues .view div.filters .filter.yellow .fa-bolt {
+  color: #f3bc18;
+}
+.issues .view div.filters .filter.active {
+  background-color: #a3a5ad;
+  color: #ffffff;
+}
+.issues .view div.filters .filter.active.red {
+  background-color: #dc3c3c;
+}
+.issues .view div.filters .filter.active.red .fa-warning,
+.issues .view div.filters .filter.active.red .fa-bolt {
+  color: #ffffff;
+}
+.issues .view div.filters .filter.active.yellow {
+  background-color: #f3bc18;
+  color: #232123;
+}
+.issues .view div.filters .filter.active.yellow .fa-warning,
+.issues .view div.filters .filter.active.yellow .fa-bolt {
+  color: #232123;
+}
+.marvel-overview .metrics {
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+}
+.marvel-overview .metrics > div,
+.marvel-overview .metrics > marvel-issues {
+  -webkit-flex: 1 1 33.3%;
+      -ms-flex: 1 1 33.3%;
+          flex: 1 1 33.3%;
+  margin: 0 5px;
+}
+.marvel-overview .metrics > div:first-child,
+.marvel-overview .metrics > marvel-issues:first-child {
+  margin: 0 10px 0 0;
+}
+.marvel-overview .metrics > div:last-child,
+.marvel-overview .metrics > marvel-issues:last-child {
+  margin: 0 0 0 10px;
+}
+.marvel-settings form > .row {
+  border-bottom: 1px solid #a3a5ad;
+}
+.marvel-settings form > .row:first-child {
+  border-top: 1px solid #a3a5ad;
 }
