@@ -29,6 +29,7 @@ import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
+import org.elasticsearch.watcher.*;
 import org.elasticsearch.watcher.WatcherBuild;
 import org.elasticsearch.watcher.WatcherService;
 import org.elasticsearch.watcher.WatcherVersion;
@@ -43,14 +44,16 @@ public class TransportWatcherStatsAction extends WatcherTransportAction<WatcherS
 
     private final WatcherService watcherService;
     private final ExecutionService executionService;
+    private final WatcherLifeCycleService lifeCycleService;
 
     @Inject
     public TransportWatcherStatsAction(Settings settings, TransportService transportService, ClusterService clusterService,
                                        ThreadPool threadPool, ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver, WatcherService watcherService,
-                                       ExecutionService executionService, LicenseService licenseService) {
+                                       ExecutionService executionService, LicenseService licenseService, WatcherLifeCycleService lifeCycleService) {
         super(settings, WatcherStatsAction.NAME, transportService, clusterService, threadPool, actionFilters, indexNameExpressionResolver, licenseService, WatcherStatsRequest.class);
         this.watcherService = watcherService;
         this.executionService = executionService;
+        this.lifeCycleService = lifeCycleService;
     }
 
     @Override
@@ -73,6 +76,7 @@ public class TransportWatcherStatsAction extends WatcherTransportAction<WatcherS
         statsResponse.setThreadPoolMaxSize(executionService.executionThreadPoolMaxSize());
         statsResponse.setVersion(WatcherVersion.CURRENT);
         statsResponse.setBuild(WatcherBuild.CURRENT);
+        statsResponse.setWatcherMetaData(lifeCycleService.watcherMetaData());
 
         if (request.includeCurrentWatches()) {
             statsResponse.setSnapshots(executionService.currentExecutions());
