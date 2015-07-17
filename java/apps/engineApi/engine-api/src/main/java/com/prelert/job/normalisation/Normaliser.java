@@ -59,6 +59,7 @@ public class Normaliser
     private static final String PARTITION_FIELD_NAME = "partitionFieldName";
     private static final String PER_PERSON_FIELD_NAME = "personFieldName";
     private static final String FUNCTION_NAME = "functionName";
+    private static final String VALUE_FIELD_NAME = "valueFieldName";
     private static final String RAW_SCORE = "rawScore";
 
     /** Normalisation levels */
@@ -103,12 +104,12 @@ public class Normaliser
         try
         {
             writer.writeRecord(new String[] { NORMALIZATION_LEVEL, PARTITION_FIELD_NAME,
-                    PER_PERSON_FIELD_NAME, FUNCTION_NAME, RAW_SCORE });
+                    PER_PERSON_FIELD_NAME, FUNCTION_NAME, VALUE_FIELD_NAME, RAW_SCORE });
 
             for (Bucket bucket : buckets)
             {
                 writer.writeRecord(new String[] {
-                        ROOT, "", "", "", Double.toString(bucket.getRawAnomalyScore())});
+                        ROOT, "", "", "", "", Double.toString(bucket.getRawAnomalyScore())});
                 for (AnomalyRecord record : bucket.getRecords())
                 {
                     writer.writeRecord(new String[] {
@@ -116,6 +117,7 @@ public class Normaliser
                             Strings.nullToEmpty(record.getPartitionFieldName()),
                             Strings.nullToEmpty(getPersonFieldName(record)),
                             record.getFunction(),
+                            record.getFieldName(),
                             Double.toString(record.getProbability())
                             });
                 }

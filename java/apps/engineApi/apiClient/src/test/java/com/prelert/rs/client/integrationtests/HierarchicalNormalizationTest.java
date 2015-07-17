@@ -74,6 +74,7 @@ public class HierarchicalNormalizationTest implements Closeable
     private static final String DIFFERENT_PARTITIONS_JOB_ID = "partition-norm-test";
     private static final String DIFFERENT_PERSONS_JOB_ID = "person-norm-test";
     private static final String DIFFERENT_PERSONS_AND_FUNCTIONS_JOB_ID = "person-function-norm-test";
+    private static final String DIFFERENT_FUNCTION_FIELDS_JOB_ID = "function-fields-norm-test";
 
     /**
      * The default base Url used in the test
@@ -144,6 +145,21 @@ public class HierarchicalNormalizationTest implements Closeable
         d3.setByFieldName("instance");
 
         return createJob(Arrays.asList(d1, d2, d3), DIFFERENT_PERSONS_AND_FUNCTIONS_JOB_ID);
+    }
+
+    private String createDifferentFunctionFieldsJob() throws ClientProtocolException, IOException
+    {
+        Detector d1 = new Detector();
+        d1.setFunction("mean");
+        d1.setFieldName("value");
+        d1.setByFieldName("instance");
+
+        Detector d2 = new Detector();
+        d2.setFunction("mean");
+        d2.setFieldName("value2");
+        d2.setByFieldName("instance");
+
+        return createJob(Arrays.asList(d1, d2), DIFFERENT_FUNCTION_FIELDS_JOB_ID);
     }
 
     private String createJob(List<Detector> detectors, String jobId)
@@ -269,6 +285,39 @@ public class HierarchicalNormalizationTest implements Closeable
         return true;
     }
 
+    private boolean verifyDifferentFunctionFieldsJob() throws IOException
+    {
+        verifyConsistentMaxNormalizedProbability(DIFFERENT_FUNCTION_FIELDS_JOB_ID);
+
+        Pagination<AnomalyRecord> paginatedRecords =
+            m_WebServiceClient.prepareGetRecords(DIFFERENT_FUNCTION_FIELDS_JOB_ID)
+            .sortField(AnomalyRecord.NORMALIZED_PROBABILITY)
+            .descending(true)
+            .take(2)
+            .get();
+
+        List<AnomalyRecord> records = paginatedRecords.getDocuments();
+        test(records.size() == 2);
+
+        AnomalyRecord record1 = records.get(0);
+        test(record1.getNormalizedProbability() > 97.0);
+        test(record1.getAnomalyScore() > 82.0);
+        test(record1.getByFieldName().equals("instance"));
+        test(record1.getByFieldValue().equals("Europe-5"));
+        test(record1.getFunction().equals("mean"));
+        test(record1.getFieldName().equals("value2"));
+
+        AnomalyRecord record2 = records.get(1);
+        test(record2.getNormalizedProbability() > 97.0);
+        test(record2.getAnomalyScore() > 50.0);
+        test(record2.getByFieldName().equals("instance"));
+        test(record2.getByFieldValue().equals("US-1"));
+        test(record2.getFunction().equals("mean"));
+        test(record2.getFieldName().equals("value"));
+
+        return true;
+    }
+
     private void verifyConsistentMaxNormalizedProbability(String jobId) throws IOException
     {
         Pagination<Bucket> allBucketsExpanded = m_WebServiceClient.prepareGetBuckets(jobId)
@@ -343,6 +392,7 @@ public class HierarchicalNormalizationTest implements Closeable
         test.m_WebServiceClient.deleteJob(DIFFERENT_PARTITIONS_JOB_ID);
         test.m_WebServiceClient.deleteJob(DIFFERENT_PERSONS_JOB_ID);
         test.m_WebServiceClient.deleteJob(DIFFERENT_PERSONS_AND_FUNCTIONS_JOB_ID);
+        test.m_WebServiceClient.deleteJob(DIFFERENT_FUNCTION_FIELDS_JOB_ID);
 
         File data = new File(prelertTestDataHome
                 + "/engine_api_integration_test/hierarchical_normalisation_test.csv");
@@ -362,11 +412,17 @@ public class HierarchicalNormalizationTest implements Closeable
         test.m_WebServiceClient.closeJob(DIFFERENT_PERSONS_AND_FUNCTIONS_JOB_ID);
         test.verifyDifferentPersonsAndFunctionsJob();
 
+        test.createDifferentFunctionFieldsJob();
+        test.m_WebServiceClient.fileUpload(DIFFERENT_FUNCTION_FIELDS_JOB_ID, data, false);
+        test.m_WebServiceClient.closeJob(DIFFERENT_FUNCTION_FIELDS_JOB_ID);
+        test.verifyDifferentFunctionFieldsJob();
+
         //==========================
         // Clean up test jobs
         test(test.m_WebServiceClient.deleteJob(DIFFERENT_PARTITIONS_JOB_ID));
         test(test.m_WebServiceClient.deleteJob(DIFFERENT_PERSONS_JOB_ID));
         test(test.m_WebServiceClient.deleteJob(DIFFERENT_PERSONS_AND_FUNCTIONS_JOB_ID));
+        test(test.m_WebServiceClient.deleteJob(DIFFERENT_FUNCTION_FIELDS_JOB_ID));
 
         test.close();
 

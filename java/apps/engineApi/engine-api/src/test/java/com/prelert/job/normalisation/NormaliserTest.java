@@ -122,16 +122,17 @@ public class NormaliserTest
         assertEquals(buckets, normalisedBuckets);
 
         InOrder inOrder = Mockito.inOrder(m_Process, writer);
-        inOrder.verify(writer).writeRecord(new String[] {"level", "partitionFieldName", "personFieldName", "functionName", "rawScore"});
-        inOrder.verify(writer).writeRecord(new String[] {"root", "", "", "", "1.0"});
-        inOrder.verify(writer).writeRecord(new String[] {"leaf", "", "", "sum", "0.05"});
-        inOrder.verify(writer).writeRecord(new String[] {"leaf", "", "", "sum", "0.03"});
-        inOrder.verify(writer).writeRecord(new String[] {"root", "", "", "", "2.0"});
-        inOrder.verify(writer).writeRecord(new String[] {"leaf", "", "", "sum", "0.03"});
-        inOrder.verify(writer).writeRecord(new String[] {"leaf", "", "", "sum", "0.05"});
-        inOrder.verify(writer).writeRecord(new String[] {"root", "", "", "", "3.0"});
-        inOrder.verify(writer).writeRecord(new String[] {"leaf", "", "", "sum", "0.01"});
-        inOrder.verify(writer).writeRecord(new String[] {"leaf", "", "", "sum", "0.02"});
+        inOrder.verify(writer).writeRecord(
+                new String[] {"level", "partitionFieldName", "personFieldName", "functionName", "valueFieldName", "rawScore"});
+        inOrder.verify(writer).writeRecord(new String[] {"root", "", "", "", "", "1.0"});
+        inOrder.verify(writer).writeRecord(new String[] {"leaf", "", "", "sum", "bytes", "0.05"});
+        inOrder.verify(writer).writeRecord(new String[] {"leaf", "", "", "sum", "bytes", "0.03"});
+        inOrder.verify(writer).writeRecord(new String[] {"root", "", "", "", "", "2.0"});
+        inOrder.verify(writer).writeRecord(new String[] {"leaf", "", "", "sum", "bytes", "0.03"});
+        inOrder.verify(writer).writeRecord(new String[] {"leaf", "", "", "sum", "bytes", "0.05"});
+        inOrder.verify(writer).writeRecord(new String[] {"root", "", "", "", "", "3.0"});
+        inOrder.verify(writer).writeRecord(new String[] {"leaf", "", "", "sum", "bytes", "0.01"});
+        inOrder.verify(writer).writeRecord(new String[] {"leaf", "", "", "sum", "bytes", "0.02"});
         inOrder.verify(m_Process).closeOutputStream();
 
         for (int bucketIndex = 0; bucketIndex < buckets.size(); bucketIndex++)
