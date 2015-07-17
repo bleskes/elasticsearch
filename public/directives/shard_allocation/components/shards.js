@@ -22,10 +22,7 @@ define(function (require) {
   'use strict';
   var _ = require('lodash');
   var React = require('marvel/react');
-  var D = React.DOM;
   var calculateClass = require('../lib/calculateClass');
-  var $ = require('jquery');
-  var vents = require('../lib/vents');
 
   function sortByShard(shard) {
     if (shard.node) {
@@ -34,30 +31,29 @@ define(function (require) {
     return [!shard.primary, shard.shard];
   }
 
-  var Shard = React.createFactory(React.createClass({
+  var Shard = React.createClass({
     displayName: 'Shard',
     render: function () {
       var shard = this.props.shard;
       var options = {
         className: calculateClass(shard, 'shard')
       };
-      return D.div(options, shard.shard  );
+      return (React.createElement("div", {className:  calculateClass(shard, 'shard') },  shard.shard));
     }
-  }));
+  });
 
   return React.createClass({
-    displayName: 'Shards',
     createShard: function (shard) {
       var type = shard.primary ? 'primary' : 'replica';
       var additionId = shard.state === 'UNASSIGNED' ? Math.random() : '';
       var key = shard.index + '.' + shard.node + '.' + type + '.' + shard.state + '.' + shard.shard + additionId;
-      return Shard({ shard: shard, key: key });
+      return (React.createElement(Shard, {shard:  shard, key:  key }));
     },
     render: function () {
-      return D.div({ className: 'shards' },
-        _.sortBy(this.props.shards, sortByShard).map(this.createShard)
-      );
+      var shards = _.sortBy(this.props.shards, sortByShard).map(this.createShard);
+      return (React.createElement("div", {className: "shards"},  shards ));
     }
   });
 
 });
+

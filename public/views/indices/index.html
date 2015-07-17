@@ -1,8 +1,8 @@
-<div class="marvel-indices" ng-controller="indices">
-  <marvel-nav></marvel-nav>
+<marvel-nav></marvel-nav>
+<div class="marvel-indices marvel-view" ng-controller="indices">
   <marvel-cluster-status source="dataSources['cluster_status']"></marvel-cluster-status>
-  <div class="metrics">
-    <div ng-repeat="name in charts">
+  <div class="metrics marvel-element">
+    <div ng-repeat="name in charts" class="marvel-element">
       <marvel-chart source="dataSources[name]" />
     </div>
   </div>

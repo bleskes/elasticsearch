@@ -22,7 +22,7 @@ define(function (require) {
   'use strict';
   var React = require('marvel/react');
   var D = React.DOM;
-  var Shards = React.createFactory(require('./shards'));
+  var Shards = require('./shards');
   var calculateClass = require('../lib/calculateClass');
   var _ = require('lodash');
   var generateQueryAndLink = require('../lib/generateQueryAndLink');
@@ -35,26 +35,31 @@ define(function (require) {
   }
 
   return React.createClass({
-    displayName: 'Assigned',
     createChild: function (data) {
       var key = data.id;
-      var name = D.a({ href:generateQueryAndLink(data) },
-       D.span(null, data.name)
+      var name = (
+        React.createElement("a", {href:  generateQueryAndLink(data) }, 
+          React.createElement("span", null,  data.name)
+        )
       );
-      return D.div({ className: calculateClass(data, 'child'), key: key },
-        D.div({ className: 'title' },
-          name,
-          data.master ? D.span({ className: 'icon-star' }) : null
-        ),
-        Shards({ shards: data.children })
+      var master;
+      if (data.master) {
+        master = (
+          React.createElement("i", {className: "fa fa-star"})
+        );
+      }
+      return (
+        React.createElement("div", {className:  calculateClass(data, 'child'), key:  key }, 
+          React.createElement("div", {className: "title"},  name,  master ), 
+          React.createElement(Shards, {shards:  data.children})
+        )
       );
     },
     render: function () {
-      var data = _.sortBy(this.props.data, sortByName);
-      return D.td({ className: 'children' },
-        data.map(this.createChild)
+      var data = _.sortBy(this.props.data, sortByName).map(this.createChild);
+      return (
+        React.createElement("td", {className: "children"},  data )
       );
     }
   });
 });
-

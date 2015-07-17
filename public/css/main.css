@@ -5,6 +5,26 @@
           flex-grow: 1;
   padding: 10px;
 }
+.marvel-view .metrics {
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+}
+.marvel-view .metrics > div,
+.marvel-view .metrics > marvel-issues {
+  -webkit-flex: 1 1 33.3%;
+      -ms-flex: 1 1 33.3%;
+          flex: 1 1 33.3%;
+  margin: 0 5px;
+}
+.marvel-view .metrics > div:first-child,
+.marvel-view .metrics > marvel-issues:first-child {
+  margin: 0 10px 0 0;
+}
+.marvel-view .metrics > div:last-child,
+.marvel-view .metrics > marvel-issues:last-child {
+  margin: 0 0 0 10px;
+}
 .marvel-view .marvel-content {
   display: block;
   -webkit-flex-grow: 1;
@@ -1074,26 +1094,6 @@ marvel-shard-allocation {
 .issues .view div.filters .filter.active.yellow .fa-warning,
 .issues .view div.filters .filter.active.yellow .fa-bolt {
   color: #232123;
-}
-.marvel-overview .metrics {
-  display: -webkit-flex;
-  display: -ms-flexbox;
-  display: flex;
-}
-.marvel-overview .metrics > div,
-.marvel-overview .metrics > marvel-issues {
-  -webkit-flex: 1 1 33.3%;
-      -ms-flex: 1 1 33.3%;
-          flex: 1 1 33.3%;
-  margin: 0 5px;
-}
-.marvel-overview .metrics > div:first-child,
-.marvel-overview .metrics > marvel-issues:first-child {
-  margin: 0 10px 0 0;
-}
-.marvel-overview .metrics > div:last-child,
-.marvel-overview .metrics > marvel-issues:last-child {
-  margin: 0 0 0 10px;
 }
 .marvel-settings form > .row {
   border-bottom: 1px solid #a3a5ad;
