@@ -649,15 +649,13 @@ public class ElasticsearchPersister implements JobResultsPersister
     private XContentBuilder serialiseInfluencer(Influencer influencer)
     throws IOException
     {
-        XContentBuilder builder = jsonBuilder().startObject()
+        return jsonBuilder().startObject()
                 .field(Influencer.BUCKET_ID, influencer.getBucketId())
                 .field(Influencer.PROBABILITY, influencer.getProbability())
                 .field(Influencer.FIELD_NAME, influencer.getFieldName())
                 .field(Influencer.FIELD_VALUE, influencer.getFieldValue())
                 .field(Influencer.INFLUENCE_SCORE, influencer.getInflucenceScore())
                 .endObject();
-
-        return builder;
     }
 
 }

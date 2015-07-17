@@ -34,10 +34,10 @@ import java.util.List;
  */
 public class Influence
 {
-    public static String INFLUCENCE_FIELD = "influenceField";
-    public static String INFLUCENCE_FIELD_VALUE = "fieldValue";
-    public static String SCORE = "score";
-    public static String INFLUCENCE_SCORES = "influenceScores";
+    public static final String INFLUCENCE_FIELD = "influenceField";
+    public static final String INFLUCENCE_FIELD_VALUE = "fieldValue";
+    public static final String SCORE = "score";
+    public static final String INFLUCENCE_SCORES = "influenceScores";
 
     private String m_Field;
     private List<InfluenceScore> m_Scores;

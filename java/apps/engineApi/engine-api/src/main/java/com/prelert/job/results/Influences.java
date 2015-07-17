@@ -46,6 +46,10 @@ public class Influences
 {
     private static final Logger LOGGER = Logger.getLogger(Influences.class);
 
+    private Influences()
+    {
+    }
+
     /**
      * Create a new <code>List&ltInfluence&gt</code> and populate it from the JSON parser.
      * The parser must be pointing at the start of the object then all the object's

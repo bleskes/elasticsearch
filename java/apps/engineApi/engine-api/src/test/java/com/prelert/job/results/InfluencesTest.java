@@ -35,6 +35,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import org.elasticsearch.common.inject.Exposed;
 import org.junit.Test;
 
 import com.fasterxml.jackson.core.JsonFactory;
@@ -91,6 +92,42 @@ public class InfluencesTest
 
         assertEquals("user", inf.getInfluenceField());
         assertEquals(0, inf.getInfluenceScores().size());
+    }
+
+    @Test(expected = AutoDetectParseException.class)
+    public void testParseScores_noArray() throws JsonParseException, IOException, AutoDetectParseException
+    {
+        // invalid json
+        String json = "{"
+                + "\"user\": {}"
+                + "}";
+
+        JsonParser parser = createJsonParser(json);
+        parser.nextToken();
+        List<Influence> infs = Influences.parseJson(parser);
+    }
+
+    @Test
+    public void testParseScores_extraField() throws JsonParseException, IOException, AutoDetectParseException
+    {
+        // invalid json
+        String json = "{"
+                + "\"user\": [{\"bob\" : 1.0, \"wrong\" : 2.0}]"
+                + "}";
+
+        JsonParser parser = createJsonParser(json);
+        parser.nextToken();
+
+        List<Influence> infs = Influences.parseJson(parser);
+
+        assertEquals(1, infs.size());
+        Influence inf = infs.get(0);
+
+        assertEquals("user", inf.getInfluenceField());
+        assertEquals(1, inf.getInfluenceScores().size());
+
+        assertEquals("bob", inf.getInfluenceScores().get(0).getFieldValue());
+        assertEquals(1.0, inf.getInfluenceScores().get(0).getInfluence(), 0.001);
     }
 
     @Test
