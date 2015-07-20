@@ -197,6 +197,16 @@ public enum ErrorCodes
      */
     TRANSFORM_INVALID_OUTPUT_COUNT(10211),
 
+    /**
+     * Transform inputs cannot be empty strings.
+     */
+    TRANSFORM_INPUTS_CANNOT_BE_EMPTY_STRINGS(10212),
+
+    /**
+     * Transform outputs cannot be empty strings.
+     */
+    TRANSFORM_OUTPUTS_CANNOT_BE_EMPTY_STRINGS(10213),
+
 	// Data store errors
 	/**
 	 * A generic exception from the data store

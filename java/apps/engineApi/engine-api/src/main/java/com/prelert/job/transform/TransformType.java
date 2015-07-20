@@ -163,6 +163,13 @@ public enum TransformType
     private void checkInputs(TransformConfig tc) throws TransformConfigurationException
     {
         List<String> inputs = tc.getInputs();
+        checkValidInputCount(tc, inputs);
+        checkInputsAreNonEmptyStrings(tc, inputs);
+    }
+
+    private void checkValidInputCount(TransformConfig tc, List<String> inputs)
+            throws TransformConfigurationException
+    {
         int inputsSize = (inputs == null) ? 0 : inputs.size();
         if (!m_ArityRange.contains(inputsSize))
         {
@@ -170,6 +177,23 @@ public enum TransformType
                     tc.getTransform(), rangeAsString(m_ArityRange), inputsSize);
             throw new TransformConfigurationException(msg, ErrorCodes.TRANSFORM_INVALID_INPUT_COUNT);
         }
+    }
+
+    private void checkInputsAreNonEmptyStrings(TransformConfig tc, List<String> inputs)
+            throws TransformConfigurationException
+    {
+        if (containsEmptyString(inputs))
+        {
+            String msg = Messages.getMessage(
+                    Messages.JOB_CONFIG_TRANSFORM_INPUTS_CONTAIN_EMPTY_STRING, tc.getTransform());
+            throw new TransformConfigurationException(msg,
+                    ErrorCodes.TRANSFORM_INPUTS_CANNOT_BE_EMPTY_STRINGS);
+        }
+    }
+
+    private static boolean containsEmptyString(List<String> strings)
+    {
+        return strings.stream().anyMatch(s -> s.trim().isEmpty());
     }
 
     private void checkArguments(TransformConfig tc) throws TransformConfigurationException
@@ -187,12 +211,31 @@ public enum TransformType
     private void checkOutputs(TransformConfig tc) throws TransformConfigurationException
     {
         List<String> outputs = tc.getOutputs();
+        checkValidOutputCount(tc, outputs);
+        checkOutputsAreNonEmptyStrings(tc, outputs);
+    }
+
+    private void checkValidOutputCount(TransformConfig tc, List<String> outputs)
+            throws TransformConfigurationException
+    {
         int outputsSize = (outputs == null) ? 0 : outputs.size();
         if (!m_OutputsRange.contains(outputsSize))
         {
             String msg = Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_INVALID_OUTPUT_COUNT,
                     tc.getTransform(), rangeAsString(m_OutputsRange), outputsSize);
             throw new TransformConfigurationException(msg, ErrorCodes.TRANSFORM_INVALID_OUTPUT_COUNT);
+        }
+    }
+
+    private void checkOutputsAreNonEmptyStrings(TransformConfig tc, List<String> outputs)
+            throws TransformConfigurationException
+    {
+        if (containsEmptyString(outputs))
+        {
+            String msg = Messages.getMessage(
+                    Messages.JOB_CONFIG_TRANSFORM_OUTPUTS_CONTAIN_EMPTY_STRING, tc.getTransform());
+            throw new TransformConfigurationException(msg,
+                    ErrorCodes.TRANSFORM_OUTPUTS_CANNOT_BE_EMPTY_STRINGS);
         }
     }
 

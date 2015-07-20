@@ -119,7 +119,36 @@ public class TransformTypeTest
         conf.setInputs(Arrays.asList());
 
         TransformType.CONCAT.verify(conf);
+    }
 
+    @Test
+    public void testVerify_GivenInputsContainEmptyStrings() throws TransformConfigurationException
+    {
+        m_ExpectedException.expect(TransformConfigurationException.class);
+        m_ExpectedException.expectMessage("Transform type concat contains empty input");
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.TRANSFORM_INPUTS_CANNOT_BE_EMPTY_STRINGS));
+
+        TransformConfig conf = new TransformConfig();
+        conf.setTransform(TransformType.CONCAT.prettyName());
+        conf.setInputs(Arrays.asList(""));
+
+        TransformType.CONCAT.verify(conf);
+    }
+
+    @Test
+    public void testVerify_GivenInputsContainWhitespaceOnlyStrings() throws TransformConfigurationException
+    {
+        m_ExpectedException.expect(TransformConfigurationException.class);
+        m_ExpectedException.expectMessage("Transform type concat contains empty input");
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.TRANSFORM_INPUTS_CANNOT_BE_EMPTY_STRINGS));
+
+        TransformConfig conf = new TransformConfig();
+        conf.setTransform(TransformType.CONCAT.prettyName());
+        conf.setInputs(Arrays.asList("   "));
+
+        TransformType.CONCAT.verify(conf);
     }
 
     @Test
@@ -198,6 +227,38 @@ public class TransformTypeTest
 
         assertEquals(Arrays.asList("lowercase"), conf.getOutputs());
         assertTrue(TransformType.LOWERCASE.verify(conf));
+    }
+
+    @Test
+    public void testVerify_GivenOutputsContainEmptyStrings() throws TransformConfigurationException
+    {
+        m_ExpectedException.expect(TransformConfigurationException.class);
+        m_ExpectedException.expectMessage("Transform type concat contains empty output");
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.TRANSFORM_OUTPUTS_CANNOT_BE_EMPTY_STRINGS));
+
+        TransformConfig conf = new TransformConfig();
+        conf.setTransform(TransformType.CONCAT.prettyName());
+        conf.setInputs(Arrays.asList("input"));
+        conf.setOutputs(Arrays.asList(""));
+
+        TransformType.CONCAT.verify(conf);
+    }
+
+    @Test
+    public void testVerify_GivenOutputsContainWhitespaceOnlyStrings() throws TransformConfigurationException
+    {
+        m_ExpectedException.expect(TransformConfigurationException.class);
+        m_ExpectedException.expectMessage("Transform type concat contains empty output");
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.TRANSFORM_OUTPUTS_CANNOT_BE_EMPTY_STRINGS));
+
+        TransformConfig conf = new TransformConfig();
+        conf.setTransform(TransformType.CONCAT.prettyName());
+        conf.setInputs(Arrays.asList("input"));
+        conf.setOutputs(Arrays.asList("   "));
+
+        TransformType.CONCAT.verify(conf);
     }
 
     @Test
