@@ -1,3 +1,4 @@
+'use strict';
 define(function (require) {
   var _ = require('lodash');
   var angular = require('angular');
@@ -19,9 +20,10 @@ define(function (require) {
     }
   });
 
-  module.controller('indices', function ($scope, $route, timefilter, Private, Promise, marvelMetrics, globalState, courier) {
+  module.controller('indices', function ($scope, $route, timefilter, Private, Promise, marvelMetrics, globalState, courier, es) {
     var ChartDataSource = Private(require('marvel/directives/chart/data_source'));
     var ClusterStatusDataSource = Private(require('marvel/directives/cluster_status/data_source'));
+    var IndicesDataSource = Private(require('marvel/lib/indices_data_source'));
     var indexPattern = $route.current.locals.marvel.indexPattern;
     var clusters = $route.current.locals.marvel.clusters;
 
@@ -30,6 +32,7 @@ define(function (require) {
       timefilter.refreshInterval.value = 10000;
       timefilter.refreshInterval.display = '10 Seconds';
     }
+
 
     // Define the metrics for the three charts at the top of the
     // page. Use the metric keys from the metrics hash.
@@ -41,6 +44,34 @@ define(function (require) {
 
     // Setup the data sources for the charts
     $scope.dataSources = {};
+
+    $scope.tableOptions = {
+      dataKeys: [{
+          key: 'name',
+          sort: 0,
+          title: 'Name'
+        }, {
+          key: 'docCount',
+          sort: 0,
+          title: 'Document Count'
+        }, {
+          key: 'indexRate',
+          sort: 0,
+          title: 'Index Rate',
+        }, {
+          key: 'searchRate',
+          sort: 0,
+          title: 'Search Rate'
+        }, {
+          key: 'mergeRate',
+          sort: 0,
+          title: 'Merge Rate'
+        }, {
+          key: 'fieldData',
+          sort: 0,
+          title: 'FieldData'
+        }]
+    };
 
 
     // Map the metric keys to ChartDataSources and register them with
@@ -60,16 +91,23 @@ define(function (require) {
         $scope.dataSources.cluster_status = dataSource;
         return dataSource;
       })
+      .then(function () {
+        var dataSource = new IndicesDataSource(indexPattern, globalState.cluster, clusters);
+        dataSource.register(courier);
+        $scope.dataSources.indices = dataSource;
+        return dataSource;
+      })
       .then(fetch);
 
     function fetch() {
-      var tasks = [];
-      _.each($scope.dataSources.issues, function(dataSource) {
-        tasks.push(dataSource.fetch());
-      });
-      tasks.push(courier.fetch());
-      return Promise.all(tasks);
+      return Promise.all([courier.fetch()]);
     }
+    $scope.$listen(globalState, 'save_with_changes', function (changes) {
+      if (_.contains(changes, 'time')) {
+        console.log('fetch');
+        fetch();
+      }
+    });
   });
 
 

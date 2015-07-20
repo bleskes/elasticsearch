@@ -488,6 +488,7 @@ marvel-shard-activity .source-dest > div > div {
   display: -ms-flexbox;
   display: flex;
 }
+<<<<<<< Updated upstream
 marvel-shard-allocation {
   display: block;
   padding: 5px;
@@ -956,6 +957,48 @@ marvel-shard-allocation {
 }
 .marvel-cluster-view.light .player .timeline .timeline-colors .segment.green {
   background-color: #7ce655;
+=======
+kb-paginated-table {
+  display: block;
+}
+kb-paginated-table .paginated-table {
+  display: block;
+  padding: 20px;
+}
+kb-paginated-table table {
+  border-bottom: 2px solid #a3a5ad;
+}
+kb-paginated-table td,
+kb-paginated-table th {
+  text-align: right;
+}
+kb-paginated-table td:first-child,
+kb-paginated-table th:first-child {
+  text-align: left;
+}
+kb-paginated-table td {
+  font-size: 16px;
+}
+kb-paginated-table .pagination {
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+}
+kb-paginated-table .pagination ul {
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-flex: 1 1 auto;
+      -ms-flex: 1 1 auto;
+          flex: 1 1 auto;
+  -webkit-justify-content: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+}
+kb-paginated-table .pagination li {
+  padding: 0 5px;
+  display: inline-block;
+>>>>>>> Stashed changes
 }
 .issues .view .summary {
   display: -webkit-flex;
