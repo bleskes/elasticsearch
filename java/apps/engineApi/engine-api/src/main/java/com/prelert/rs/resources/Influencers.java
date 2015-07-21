@@ -68,7 +68,7 @@ public class Influencers extends ResourceWithJobManager
             @DefaultValue(JobManager.DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take)
     throws UnknownJobException
     {
-        LOGGER.debug("Get influcencers for job '" + jobId + "'");
+        LOGGER.debug("Get influencers for job '" + jobId + "'");
 
         new PaginationParamsValidator(skip, take).validate();
 

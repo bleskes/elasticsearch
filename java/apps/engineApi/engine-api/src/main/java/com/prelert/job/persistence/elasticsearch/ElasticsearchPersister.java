@@ -604,13 +604,13 @@ public class ElasticsearchPersister implements JobResultsPersister
     private void serialiseInfluence(Influence influence, XContentBuilder builder)
     throws IOException
     {
-        builder.startObject().field(Influence.INFLUCENCE_FIELD, influence.getInfluenceField());
+        builder.startObject().field(Influence.INFLUENCE_FIELD, influence.getInfluenceField());
 
-        builder.startArray(Influence.INFLUCENCE_SCORES);
+        builder.startArray(Influence.INFLUENCE_SCORES);
         for (InfluenceScore score : influence.getInfluenceScores())
         {
             builder.startObject()
-                .field(Influence.INFLUCENCE_FIELD_VALUE, score.getFieldValue())
+                .field(Influence.INFLUENCE_FIELD_VALUE, score.getFieldValue())
                 .field(Influence.SCORE, score.getInfluence())
                 .endObject();
         }
@@ -629,7 +629,7 @@ public class ElasticsearchPersister implements JobResultsPersister
             for (InfluenceScore is : inf.getInfluenceScores())
             {
                 Influencer er = new Influencer(field, is.getFieldValue());
-                er.setInflucenceScore(is.getInfluence());
+                er.setInfluenceScore(is.getInfluence());
                 er.setProbability(record.getProbability());
                 er.setBucketId(bucketId);
 
@@ -654,7 +654,7 @@ public class ElasticsearchPersister implements JobResultsPersister
                 .field(Influencer.PROBABILITY, influencer.getProbability())
                 .field(Influencer.FIELD_NAME, influencer.getFieldName())
                 .field(Influencer.FIELD_VALUE, influencer.getFieldValue())
-                .field(Influencer.INFLUENCE_SCORE, influencer.getInflucenceScore())
+                .field(Influencer.INFLUENCE_SCORE, influencer.getInfluenceScore())
                 .endObject();
     }
 

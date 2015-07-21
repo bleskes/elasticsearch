@@ -523,13 +523,13 @@ public class ElasticsearchMappings
                             /* Array of influences */
                             .field(TYPE, "nested")
                             .startObject(PROPERTIES)
-                                .startObject(Influence.INFLUCENCE_FIELD)
+                                .startObject(Influence.INFLUENCE_FIELD)
                                     .field(TYPE, STRING).field(INDEX, NOT_ANALYZED)
                                 .endObject()
-                                .startObject(Influence.INFLUCENCE_SCORES)
+                                .startObject(Influence.INFLUENCE_SCORES)
                                     .field(TYPE, "nested")
                                     .startObject(PROPERTIES)
-                                        .startObject(Influence.INFLUCENCE_FIELD_VALUE)
+                                        .startObject(Influence.INFLUENCE_FIELD_VALUE)
                                             .field(TYPE, STRING).field(INDEX, NOT_ANALYZED)
                                         .endObject()
                                         .startObject(Influence.SCORE)
@@ -722,7 +722,7 @@ public class ElasticsearchMappings
     }
 
     /**
-     * Influcence results mapping
+     * Influence results mapping
      * @return
      * @throws IOException
      */

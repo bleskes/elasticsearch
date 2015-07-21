@@ -48,7 +48,7 @@ public class Influencer
     private String m_FieldName;
     private String m_FieldValue;
 
-    private double m_InflucenceScore;
+    private double m_InfluenceScore;
 
 
     public Influencer()
@@ -105,13 +105,13 @@ public class Influencer
     }
 
 
-    public double getInflucenceScore()
+    public double getInfluenceScore()
     {
-        return m_InflucenceScore;
+        return m_InfluenceScore;
     }
 
-    public void setInflucenceScore(double influcenceScore)
+    public void setInfluenceScore(double influenceScore)
     {
-        this.m_InflucenceScore = influcenceScore;
+        this.m_InfluenceScore = influenceScore;
     }
 }
