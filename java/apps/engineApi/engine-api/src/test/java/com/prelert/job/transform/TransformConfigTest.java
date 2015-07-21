@@ -94,13 +94,6 @@ public class TransformConfigTest
         assertEquals(TransformType.CONCAT, tr.type());
 
         tr.setInputs(inputs);
-        for (int arg = 0; arg < 1; ++arg)
-        {
-            inputs.add(Integer.toString(arg));
-        }
-        tr.verify();
-
-        inputs.clear();
         for (int arg = 0; arg < 2; ++arg)
         {
             inputs.add(Integer.toString(arg));

@@ -47,7 +47,7 @@ public enum TransformType
     // Name, arity, arguments, outputs, default output names, has condition
     DOMAIN_SPLIT(Names.DOMAIN_SPLIT_NAME, Range.singleton(1), Range.singleton(0),
             Range.closed(1, 2), Arrays.asList("subDomain", "hrd")),
-    CONCAT(Names.CONCAT_NAME, Range.atLeast(1), Range.closed(0, 1), Range.singleton(1),
+    CONCAT(Names.CONCAT_NAME, Range.atLeast(2), Range.closed(0, 1), Range.singleton(1),
             Arrays.asList("concat")),
     REGEX_EXTRACT(Names.EXTRACT_NAME, Range.singleton(1), Range.singleton(1), Range.atLeast(1),
             Arrays.asList("extract")),

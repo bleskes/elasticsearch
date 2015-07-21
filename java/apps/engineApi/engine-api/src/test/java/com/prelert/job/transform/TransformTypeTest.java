@@ -95,7 +95,7 @@ public class TransformTypeTest
     public void testVerify_GivenNullInputs() throws TransformConfigurationException
     {
         m_ExpectedException.expect(TransformConfigurationException.class);
-        m_ExpectedException.expectMessage("Transform type concat expected [1‥+∞) input(s), got 0");
+        m_ExpectedException.expectMessage("Transform type concat expected [2‥+∞) input(s), got 0");
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.TRANSFORM_INVALID_INPUT_COUNT));
 
@@ -110,7 +110,7 @@ public class TransformTypeTest
     public void testVerify_GivenEmptyInputs() throws TransformConfigurationException
     {
         m_ExpectedException.expect(TransformConfigurationException.class);
-        m_ExpectedException.expectMessage("Transform type concat expected [1‥+∞) input(s), got 0");
+        m_ExpectedException.expectMessage("Transform type concat expected [2‥+∞) input(s), got 0");
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.TRANSFORM_INVALID_INPUT_COUNT));
 
@@ -131,7 +131,7 @@ public class TransformTypeTest
 
         TransformConfig conf = new TransformConfig();
         conf.setTransform(TransformType.CONCAT.prettyName());
-        conf.setInputs(Arrays.asList(""));
+        conf.setInputs(Arrays.asList("", "foo"));
 
         TransformType.CONCAT.verify(conf);
     }
@@ -146,7 +146,7 @@ public class TransformTypeTest
 
         TransformConfig conf = new TransformConfig();
         conf.setTransform(TransformType.CONCAT.prettyName());
-        conf.setInputs(Arrays.asList("   "));
+        conf.setInputs(Arrays.asList("   ", "foo"));
 
         TransformType.CONCAT.verify(conf);
     }
@@ -239,7 +239,7 @@ public class TransformTypeTest
 
         TransformConfig conf = new TransformConfig();
         conf.setTransform(TransformType.CONCAT.prettyName());
-        conf.setInputs(Arrays.asList("input"));
+        conf.setInputs(Arrays.asList("input1", "input2"));
         conf.setOutputs(Arrays.asList(""));
 
         TransformType.CONCAT.verify(conf);
@@ -255,7 +255,7 @@ public class TransformTypeTest
 
         TransformConfig conf = new TransformConfig();
         conf.setTransform(TransformType.CONCAT.prettyName());
-        conf.setInputs(Arrays.asList("input"));
+        conf.setInputs(Arrays.asList("input1", "input2"));
         conf.setOutputs(Arrays.asList("   "));
 
         TransformType.CONCAT.verify(conf);
