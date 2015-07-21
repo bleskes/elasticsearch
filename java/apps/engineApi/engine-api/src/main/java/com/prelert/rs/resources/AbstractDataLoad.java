@@ -261,7 +261,6 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
     }
 
     DataLoadParams createDataLoadParams(String resetStart, String resetEnd)
-    throws InvalidParametersException
     {
         if (!isValidTimeRange(resetStart, resetEnd))
         {
@@ -279,7 +278,6 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
     }
 
     TimeRange createTimeRange(String startParam, String start, String endParam, String end)
-    throws InvalidParametersException
     {
         Long epochStart = null;
         Long epochEnd = null;
@@ -301,8 +299,7 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
         return new TimeRange(epochStart, epochEnd);
     }
 
-    private void checkBucketResettingIsSupported(String jobId)
-    throws UnknownJobException, InvalidParametersException
+    private void checkBucketResettingIsSupported(String jobId) throws UnknownJobException
     {
         SingleDocument<JobDetails> job = jobManager().getJob(jobId);
         AnalysisConfig config = job.getDocument().getAnalysisConfig();
@@ -310,7 +307,6 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
     }
 
     void checkLatencyIsNonZero(Long latency)
-    throws InvalidParametersException
     {
         if (latency == null || latency.longValue() == 0)
         {
@@ -340,7 +336,7 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
             @DefaultValue("false") @QueryParam(CALC_INTERIM_PARAM) boolean calcInterim,
             @DefaultValue("") @QueryParam(START_QUERY_PARAM) String start,
             @DefaultValue("") @QueryParam(END_QUERY_PARAM) String end)
-    throws UnknownJobException, NativeProcessRunException, JobInUseException, InvalidParametersException
+    throws UnknownJobException, NativeProcessRunException, JobInUseException
     {
         LOGGER.debug("Post to flush data upload for job " + jobId +
                      " with " + CALC_INTERIM_PARAM + '=' + calcInterim);
@@ -351,7 +347,6 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
     }
 
     private void checkValidFlushArgumentsCombination(boolean calcInterim, String start, String end)
-    throws InvalidParametersException
     {
         if (calcInterim == false && (!start.isEmpty() || !end.isEmpty()))
         {
@@ -368,7 +363,6 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
     }
 
     private void throwInvalidFlushParamsException(String msg)
-    throws InvalidParametersException
     {
         LOGGER.info(msg);
         throw new InvalidParametersException(msg, ErrorCodes.INVALID_FLUSH_PARAMS);

@@ -41,11 +41,14 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import com.prelert.job.errorcodes.ErrorCodeMatcher;
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.results.Bucket;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
+import com.prelert.rs.exception.InvalidParametersException;
 
 public class BucketsTest extends ServiceTest
 {
@@ -58,6 +61,26 @@ public class BucketsTest extends ServiceTest
     {
         m_Buckets = new Buckets();
         configureService(m_Buckets);
+    }
+
+    @Test
+    public void testBuckets_GivenNegativeSkip() throws UnknownJobException, NativeProcessRunException
+    {
+        m_ExpectedException.expect(InvalidParametersException.class);
+        m_ExpectedException.expectMessage("Parameter 'skip' cannot be < 0");
+        m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_SKIP_PARAM));
+
+        m_Buckets.buckets("foo", false, false, -1, 100, "", "", 0, 0);
+    }
+
+    @Test
+    public void testBuckets_GivenNegativeTake() throws UnknownJobException, NativeProcessRunException
+    {
+        m_ExpectedException.expect(InvalidParametersException.class);
+        m_ExpectedException.expectMessage("Parameter 'take' cannot be < 0");
+        m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_TAKE_PARAM));
+
+        m_Buckets.buckets("foo", false, false, 0, -1, "", "", 0, 0);
     }
 
     @Test

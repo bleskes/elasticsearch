@@ -356,7 +356,17 @@ public enum ErrorCodes
 	/**
 	 * Bucket reset has been requested but no latency was specified.
 	 */
-	BUCKET_RESET_NOT_SUPPORTED(60109);
+	BUCKET_RESET_NOT_SUPPORTED(60109),
+
+    /**
+     * Pagination skip parameter cannot be < 0.
+     */
+    INVALID_SKIP_PARAM(60110),
+
+    /**
+     * Pagination take parameter cannot be < 0.
+     */
+    INVALID_TAKE_PARAM(60111);
 
 
 

@@ -36,12 +36,18 @@ import java.util.Arrays;
 import javax.ws.rs.core.Response;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
+import com.prelert.job.errorcodes.ErrorCodeMatcher;
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.UnknownJobException;
+import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.results.CategoryDefinition;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
+import com.prelert.rs.exception.InvalidParametersException;
 
 public class CategoryDefinitionsTest extends ServiceTest
 {
@@ -49,11 +55,34 @@ public class CategoryDefinitionsTest extends ServiceTest
 
     private CategoryDefinitions m_CategoryDefinitions;
 
+    @Rule
+    public ExpectedException m_ExpectedException = ExpectedException.none();
+
     @Before
     public void setUp() throws UnknownJobException
     {
         m_CategoryDefinitions = new CategoryDefinitions();
         configureService(m_CategoryDefinitions);
+    }
+
+    @Test
+    public void testCategoryDefinitions_GivenNegativeSkip() throws UnknownJobException, NativeProcessRunException
+    {
+        m_ExpectedException.expect(InvalidParametersException.class);
+        m_ExpectedException.expectMessage("Parameter 'skip' cannot be < 0");
+        m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_SKIP_PARAM));
+
+        m_CategoryDefinitions.categoryDefinitions(JOB_ID, -1, 100);
+    }
+
+    @Test
+    public void testCategoryDefinitions_GivenNegativeTake() throws UnknownJobException, NativeProcessRunException
+    {
+        m_ExpectedException.expect(InvalidParametersException.class);
+        m_ExpectedException.expectMessage("Parameter 'take' cannot be < 0");
+        m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_TAKE_PARAM));
+
+        m_CategoryDefinitions.categoryDefinitions(JOB_ID, 0, -1);
     }
 
     @Test

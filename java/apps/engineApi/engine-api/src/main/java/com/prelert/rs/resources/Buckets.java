@@ -47,6 +47,7 @@ import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.results.Bucket;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
+import com.prelert.rs.validation.PaginationParamsValidator;
 
 /**
  * API bucket results end point.
@@ -106,6 +107,8 @@ public class Buckets extends ResourceWithJobManager
                 expand ? "expanded " : "", jobId, skip, take, start, end,
                 anomalySoreFilter, normalizedProbabilityFilter,
                 includeInterim ? "including" : "excluding"));
+
+        new PaginationParamsValidator(skip, take).validate();
 
         long epochStart = paramToEpochIfValidOrThrow(START_QUERY_PARAM, start, LOGGER);
         long epochEnd = paramToEpochIfValidOrThrow(END_QUERY_PARAM, end, LOGGER);

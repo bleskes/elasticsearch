@@ -25,22 +25,51 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.rs.exception;
+package com.prelert.rs.resources;
 
-import javax.ws.rs.core.Response.Status;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
+import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.rs.provider.RestApiException;
+import com.prelert.job.exceptions.UnknownJobException;
+import com.prelert.job.process.exceptions.NativeProcessRunException;
+import com.prelert.rs.exception.InvalidParametersException;
 
-/**
- * When the parameters to a REST endpoint are invalid
- */
-public class InvalidParametersException extends RestApiException
+public class RecordsTest extends ServiceTest
 {
-    private static final long serialVersionUID = -20985394973498395L;
+    private static final String JOB_ID = "foo";
 
-    public InvalidParametersException(String msg, ErrorCodes errorCode)
+    @Rule
+    public ExpectedException m_ExpectedException = ExpectedException.none();
+
+    private final Records m_Records = new Records();
+
+    @Before
+    public void setUp()
     {
-        super(msg, errorCode, Status.BAD_REQUEST);
+        configureService(m_Records);
+    }
+
+    @Test
+    public void testRecords_GivenNegativeSkip() throws NativeProcessRunException, UnknownJobException
+    {
+        m_ExpectedException.expect(InvalidParametersException.class);
+        m_ExpectedException.expectMessage("Parameter 'skip' cannot be < 0");
+        m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_SKIP_PARAM));
+
+        m_Records.records(JOB_ID, -1, 100, "", "", false, "", false, 0, 0);
+    }
+
+    @Test
+    public void testRecords_GivenNegativeTake() throws NativeProcessRunException, UnknownJobException
+    {
+        m_ExpectedException.expect(InvalidParametersException.class);
+        m_ExpectedException.expectMessage("Parameter 'take' cannot be < 0");
+        m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_TAKE_PARAM));
+
+        m_Records.records(JOB_ID, 0, -1, "", "", false, "", false, 0, 0);
     }
 }
