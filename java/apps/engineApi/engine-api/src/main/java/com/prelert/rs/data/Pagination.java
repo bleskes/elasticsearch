@@ -175,5 +175,4 @@ public class Pagination<T>
     {
         return (m_Documents == null) ? false : m_Documents.size() == m_HitCount;
     }
-
 }

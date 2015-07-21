@@ -197,6 +197,16 @@ public enum ErrorCodes
      */
     TRANSFORM_INVALID_OUTPUT_COUNT(10211),
 
+    /**
+     * Transform inputs cannot be empty strings.
+     */
+    TRANSFORM_INPUTS_CANNOT_BE_EMPTY_STRINGS(10212),
+
+    /**
+     * Transform outputs cannot be empty strings.
+     */
+    TRANSFORM_OUTPUTS_CANNOT_BE_EMPTY_STRINGS(10213),
+
 	// Data store errors
 	/**
 	 * A generic exception from the data store
@@ -346,7 +356,17 @@ public enum ErrorCodes
 	/**
 	 * Bucket reset has been requested but no latency was specified.
 	 */
-	BUCKET_RESET_NOT_SUPPORTED(60109);
+	BUCKET_RESET_NOT_SUPPORTED(60109),
+
+    /**
+     * Pagination skip parameter cannot be < 0.
+     */
+    INVALID_SKIP_PARAM(60110),
+
+    /**
+     * Pagination take parameter cannot be < 0.
+     */
+    INVALID_TAKE_PARAM(60111);
 
 
 

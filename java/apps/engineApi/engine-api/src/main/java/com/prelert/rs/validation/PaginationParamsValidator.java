@@ -25,22 +25,34 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.rs.exception;
-
-import javax.ws.rs.core.Response.Status;
+package com.prelert.rs.validation;
 
 import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.rs.provider.RestApiException;
+import com.prelert.job.messages.Messages;
+import com.prelert.rs.exception.InvalidParametersException;
 
-/**
- * When the parameters to a REST endpoint are invalid
- */
-public class InvalidParametersException extends RestApiException
+public class PaginationParamsValidator
 {
-    private static final long serialVersionUID = -20985394973498395L;
+    private final int m_Skip;
+    private final int m_Take;
 
-    public InvalidParametersException(String msg, ErrorCodes errorCode)
+    public PaginationParamsValidator(int skip, int take)
     {
-        super(msg, errorCode, Status.BAD_REQUEST);
+        m_Skip = skip;
+        m_Take = take;
+    }
+
+    public void validate()
+    {
+        if (m_Skip < 0)
+        {
+            throw new InvalidParametersException(Messages.getMessage(Messages.REST_INVALID_SKIP),
+                    ErrorCodes.INVALID_SKIP_PARAM);
+        }
+        if (m_Take < 0)
+        {
+            throw new InvalidParametersException(Messages.getMessage(Messages.REST_INVALID_TAKE),
+                    ErrorCodes.INVALID_TAKE_PARAM);
+        }
     }
 }

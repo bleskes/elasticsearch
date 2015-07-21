@@ -60,6 +60,7 @@ import com.prelert.job.process.params.ModelDebugConfig;
 import com.prelert.rs.data.Acknowledgement;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
+import com.prelert.rs.validation.PaginationParamsValidator;
 
 
 /**
@@ -81,78 +82,80 @@ public class Jobs extends ResourceWithJobManager
 {
     private static final Logger LOGGER = Logger.getLogger(Jobs.class);
 
-	/**
-	 * The name of this endpoint
-	 */
-	public static final String ENDPOINT = "jobs";
+    /**
+     * The name of this endpoint
+     */
+    public static final String ENDPOINT = "jobs";
 
-	/**
+    /**
      * Message returned if deletion of a job fails
      */
     private static final String RESULTS = "results";
 
-	/**
-	 * Get all job details.
-	 *
-	 * @return Array of JSON objects string
-	 */
+    /**
+     * Get all job details.
+     *
+     * @return Array of JSON objects string
+     */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Pagination<JobDetails> jobs(
-    		@DefaultValue("0") @QueryParam("skip") int skip,
-    		@DefaultValue(JobManager.DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take)
+            @DefaultValue("0") @QueryParam("skip") int skip,
+            @DefaultValue(JobManager.DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take)
     {
-    	LOGGER.debug(String.format("Get all jobs, skip=%d, take=%d", skip, take));
+        LOGGER.debug(String.format("Get all jobs, skip=%d, take=%d", skip, take));
 
-    	JobManager manager = jobManager();
-    	Pagination<JobDetails> results = manager.getJobs(skip, take);
+        new PaginationParamsValidator(skip, take).validate();
 
-    	setPagingUrls(ENDPOINT, results);
+        JobManager manager = jobManager();
+        Pagination<JobDetails> results = manager.getJobs(skip, take);
 
-    	for (JobDetails job : results.getDocuments())
-    	{
-    		setEndPointLinks(job);
-    	}
+        setPagingUrls(ENDPOINT, results);
 
-    	LOGGER.debug(String.format("Returning %d of %d jobs",
-    			results.getDocuments().size(), results.getHitCount()));
+        for (JobDetails job : results.getDocuments())
+        {
+            setEndPointLinks(job);
+        }
 
-    	return results;
+        LOGGER.debug(String.format("Returning %d of %d jobs",
+                results.getDocuments().size(), results.getHitCount()));
+
+        return results;
     }
 
     @GET
-	@Path("/{jobId}")
+    @Path("/{jobId}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response job(@PathParam("jobId") String jobId)
     {
-    	LOGGER.debug("Get job '" + jobId + "'");
+        LOGGER.debug("Get job '" + jobId + "'");
 
-		JobManager manager = jobManager();
-		SingleDocument<JobDetails> job;
-		try
-		{
-			job = manager.getJob(jobId);
-			setEndPointLinks(job.getDocument());
-		}
-		catch (UnknownJobException e)
-		{
-			job = new SingleDocument<>();
-			job.setType(JobDetails.TYPE);
-			job.setDocumentId(jobId);
-		}
+        JobManager manager = jobManager();
+        SingleDocument<JobDetails> job;
+        try
+        {
+            job = manager.getJob(jobId);
+            setEndPointLinks(job.getDocument());
+        }
+        catch (UnknownJobException e)
+        {
+            job = new SingleDocument<>();
+            job.setType(JobDetails.TYPE);
+            job.setDocumentId(jobId);
+        }
 
-		if (job.isExists())
-		{
-			LOGGER.debug("Returning job '" + jobId + "'");
+        if (job.isExists())
+        {
+            LOGGER.debug("Returning job '" + jobId + "'");
 
-			return Response.ok(job).build();
-		}
-		else
-		{
-			LOGGER.debug(String.format("Cannot find job '%s'", jobId));
+            return Response.ok(job).build();
+        }
+        else
+        {
+            LOGGER.debug(String.format("Cannot find job '%s'", jobId));
 
-			return Response.status(Response.Status.NOT_FOUND).entity(job).build();
-		}
+            return Response.status(Response.Status.NOT_FOUND).entity(job).build();
+        }
     }
 
     @POST
@@ -160,36 +163,36 @@ public class Jobs extends ResourceWithJobManager
     @Produces(MediaType.APPLICATION_JSON)
     public Response createJob(JobConfiguration config)
     throws UnknownJobException, JobConfigurationException, IOException,
-			TooManyJobsException, JobIdAlreadyExistsException
+            TooManyJobsException, JobIdAlreadyExistsException
     {
-    	LOGGER.debug("Creating new job");
+        LOGGER.debug("Creating new job");
 
-    	// throws if a bad config
-    	try
-    	{
-    		config.verify();
-    	}
-    	catch (JobConfigurationException e)
-    	{
-    		// log error and rethrow
-    		LOGGER.error("Bad job configuration ", e);
-    		throw e;
-    	}
+        // throws if a bad config
+        try
+        {
+            config.verify();
+        }
+        catch (JobConfigurationException e)
+        {
+            // log error and rethrow
+            LOGGER.error("Bad job configuration ", e);
+            throw e;
+        }
 
-    	JobManager manager = jobManager();
-    	JobDetails job = manager.createJob(config);
-    	if (job == null)
-    	{
-    		LOGGER.debug("Failed to create job");
-    		return Response.serverError().build();
-    	}
+        JobManager manager = jobManager();
+        JobDetails job = manager.createJob(config);
+        if (job == null)
+        {
+            LOGGER.debug("Failed to create job");
+            return Response.serverError().build();
+        }
 
-    	setEndPointLinks(job);
+        setEndPointLinks(job);
 
-    	LOGGER.debug("Returning new job details location " + job.getLocation());
-    	String ent = String.format("{\"id\":\"%s\"}\n", job.getId());
+        LOGGER.debug("Returning new job details location " + job.getLocation());
+        String ent = String.format("{\"id\":\"%s\"}\n", job.getId());
 
-		return Response.created(job.getLocation()).entity(ent).build();
+        return Response.created(job.getLocation()).entity(ent).build();
     }
 
     /**
@@ -202,19 +205,19 @@ public class Jobs extends ResourceWithJobManager
      * @throws JsonProcessingException
      */
     @PUT
-	@Path("/{jobId}/description")
+    @Path("/{jobId}/description")
     @Consumes({MediaType.TEXT_PLAIN, MediaType.APPLICATION_FORM_URLENCODED})
     @Produces(MediaType.APPLICATION_JSON)
     public Response setDescription(@PathParam("jobId") String jobId,
-    		String description)
+            String description)
     throws UnknownJobException, JsonProcessingException
     {
-    	LOGGER.debug("Setting the job description");
+        LOGGER.debug("Setting the job description");
 
-		JobManager manager = jobManager();
-		manager.setDescription(jobId, description);
+        JobManager manager = jobManager();
+        manager.setDescription(jobId, description);
 
-		return Response.ok(new Acknowledgement()).build();
+        return Response.ok(new Acknowledgement()).build();
     }
 
     @PUT
@@ -252,33 +255,33 @@ public class Jobs extends ResourceWithJobManager
      * @throws NativeProcessRunException If there is an error deleting the job
      * @throws UnknownJobException If the job id is not known
      * @throws JobInUseException If the job cannot be deleted because the
-	 * native process is in use.
+     * native process is in use.
      */
     @DELETE
-	@Path("/{jobId}")
+    @Path("/{jobId}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response deleteJob(@PathParam("jobId") String jobId)
     throws UnknownJobException, NativeProcessRunException, JobInUseException
     {
-    	LOGGER.debug("Delete job '" + jobId + "'");
+        LOGGER.debug("Delete job '" + jobId + "'");
 
-		JobManager manager = jobManager();
-		boolean deleted = manager.deleteJob(jobId);
+        JobManager manager = jobManager();
+        boolean deleted = manager.deleteJob(jobId);
 
-		if (deleted)
-		{
-			new JobLogs().deleteLogs(jobId);
+        if (deleted)
+        {
+            new JobLogs().deleteLogs(jobId);
 
-			LOGGER.debug("Job '" + jobId + "' deleted");
-			return Response.ok().entity(new Acknowledgement()).build();
-		}
-		else
-		{
-			String msg = "Error deleting job '" + jobId + "'";
-			LOGGER.warn(msg);
+            LOGGER.debug("Job '" + jobId + "' deleted");
+            return Response.ok().entity(new Acknowledgement()).build();
+        }
+        else
+        {
+            String msg = "Error deleting job '" + jobId + "'";
+            LOGGER.warn(msg);
 
-			return Response.status(Response.Status.NOT_FOUND).entity(new Acknowledgement(false)).build();
-		}
+            return Response.status(Response.Status.NOT_FOUND).entity(new Acknowledgement(false)).build();
+        }
     }
 
 
@@ -289,24 +292,24 @@ public class Jobs extends ResourceWithJobManager
      */
     private void setEndPointLinks(JobDetails job)
     {
-    	URI location = m_UriInfo.getBaseUriBuilder()
-				.path(ENDPOINT)
-				.path(job.getId())
-				.build();
-    	job.setLocation(location);
+        URI location = m_UriInfo.getBaseUriBuilder()
+                .path(ENDPOINT)
+                .path(job.getId())
+                .build();
+        job.setLocation(location);
 
-    	URI data = m_UriInfo.getBaseUriBuilder()
-				.path(Data.ENDPOINT)
-				.path(job.getId())
-				.build();
-    	job.setDataEndpoint(data);
+        URI data = m_UriInfo.getBaseUriBuilder()
+                .path(Data.ENDPOINT)
+                .path(job.getId())
+                .build();
+        job.setDataEndpoint(data);
 
-    	URI buckets = m_UriInfo.getBaseUriBuilder()
-				.path(RESULTS)
-				.path(job.getId())
-				.path(Buckets.ENDPOINT)
-				.build();
-    	job.setBucketsEndpoint(buckets);
+        URI buckets = m_UriInfo.getBaseUriBuilder()
+                .path(RESULTS)
+                .path(job.getId())
+                .path(Buckets.ENDPOINT)
+                .build();
+        job.setBucketsEndpoint(buckets);
 
         URI categoryDefinitions = m_UriInfo.getBaseUriBuilder()
                 .path(RESULTS)
@@ -315,20 +318,20 @@ public class Jobs extends ResourceWithJobManager
                 .build();
         job.setCategoryDefinitionsEndpoint(categoryDefinitions);
 
-    	URI records = m_UriInfo.getBaseUriBuilder()
-				.path(RESULTS)
-				.path(job.getId())
-				.path(Records.ENDPOINT)
-				.build();
-    	job.setRecordsEndpoint(records);
+        URI records = m_UriInfo.getBaseUriBuilder()
+                .path(RESULTS)
+                .path(job.getId())
+                .path(Records.ENDPOINT)
+                .build();
+        job.setRecordsEndpoint(records);
 
-    	URI logs = m_UriInfo.getBaseUriBuilder()
-				.path(Logs.ENDPOINT)
-				.path(job.getId())
-				.build();
-    	job.setLogsEndpoint(logs);
+        URI logs = m_UriInfo.getBaseUriBuilder()
+                .path(Logs.ENDPOINT)
+                .path(job.getId())
+                .build();
+        job.setLogsEndpoint(logs);
 
-    	URI longpoll = m_UriInfo.getBaseUriBuilder()
+        URI longpoll = m_UriInfo.getBaseUriBuilder()
                 .path(AlertsLongPoll.ENDPOINT)
                 .path(job.getId())
                 .build();

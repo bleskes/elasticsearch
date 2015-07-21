@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -47,6 +47,7 @@ import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
 import com.prelert.rs.data.Pagination;
+import com.prelert.rs.validation.PaginationParamsValidator;
 
 /**
  * API record results end point.
@@ -112,6 +113,8 @@ public class Records extends ResourceWithJobManager
                 jobId, skip, take, start, end, sort, descending,
                 normalizedProbabilityFilter, anomalySoreFilter,
                 includeInterim ? "including" : "excluding"));
+
+        new PaginationParamsValidator(skip, take).validate();
 
         long epochStartMs = paramToEpochIfValidOrThrow(START_QUERY_PARAM, start, LOGGER);
         long epochEndMs = paramToEpochIfValidOrThrow(END_QUERY_PARAM, end, LOGGER);

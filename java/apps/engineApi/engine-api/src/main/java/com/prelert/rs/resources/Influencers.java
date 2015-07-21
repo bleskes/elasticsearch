@@ -40,6 +40,7 @@ import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.results.Influencer;
 import com.prelert.rs.data.Pagination;
+import com.prelert.rs.validation.PaginationParamsValidator;
 
 @Path("/influencers")
 public class Influencers extends ResourceWithJobManager
@@ -68,6 +69,8 @@ public class Influencers extends ResourceWithJobManager
     throws UnknownJobException
     {
         LOGGER.debug("Get influcencers for job '" + jobId + "'");
+
+        new PaginationParamsValidator(skip, take).validate();
 
         JobManager manager = jobManager();
 

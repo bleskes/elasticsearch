@@ -45,6 +45,7 @@ import com.prelert.job.manager.JobManager;
 import com.prelert.job.results.CategoryDefinition;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
+import com.prelert.rs.validation.PaginationParamsValidator;
 
 /**
  * API bucket results end point.
@@ -81,6 +82,8 @@ public class CategoryDefinitions extends ResourceWithJobManager
     throws UnknownJobException
     {
         LOGGER.debug(String.format("Get category definitions for job %s. take = %d", jobId, take));
+
+        new PaginationParamsValidator(skip, take).validate();
 
         Pagination<CategoryDefinition> categoryDefinitions =
                 jobManager().categoryDefinitions(jobId, skip, take);

@@ -55,6 +55,8 @@ import com.prelert.job.DataDescription;
 import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
+import com.prelert.job.errorcodes.ErrorCodeMatcher;
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobConfigurationException;
 import com.prelert.job.exceptions.JobIdAlreadyExistsException;
 import com.prelert.job.exceptions.TooManyJobsException;
@@ -63,6 +65,7 @@ import com.prelert.job.process.params.ModelDebugConfig;
 import com.prelert.rs.data.Acknowledgement;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
+import com.prelert.rs.exception.InvalidParametersException;
 
 public class JobsTest extends ServiceTest
 {
@@ -75,6 +78,26 @@ public class JobsTest extends ServiceTest
     {
         m_Jobs = new Jobs();
         configureService(m_Jobs);
+    }
+
+    @Test
+    public void testJobs_GivenNegativeSkip()
+    {
+        m_ExpectedException.expect(InvalidParametersException.class);
+        m_ExpectedException.expectMessage("Parameter 'skip' cannot be < 0");
+        m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_SKIP_PARAM));
+
+        m_Jobs.jobs(-1, 100);
+    }
+
+    @Test
+    public void testJobs_GivenNegativeTake()
+    {
+        m_ExpectedException.expect(InvalidParametersException.class);
+        m_ExpectedException.expectMessage("Parameter 'take' cannot be < 0");
+        m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_TAKE_PARAM));
+
+        m_Jobs.jobs(0, -1);
     }
 
     @Test

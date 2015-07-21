@@ -25,22 +25,51 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.rs.exception;
+package com.prelert.rs.resources;
 
-import javax.ws.rs.core.Response.Status;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
+import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.rs.provider.RestApiException;
+import com.prelert.job.exceptions.UnknownJobException;
+import com.prelert.rs.exception.InvalidParametersException;
 
-/**
- * When the parameters to a REST endpoint are invalid
- */
-public class InvalidParametersException extends RestApiException
+public class InfluencersTest extends ServiceTest
 {
-    private static final long serialVersionUID = -20985394973498395L;
+    private static final String JOB_ID = "foo";
 
-    public InvalidParametersException(String msg, ErrorCodes errorCode)
+    @Rule
+    public ExpectedException m_ExpectedException = ExpectedException.none();
+
+    private Influencers m_Influencers;
+
+    @Before
+    public void setUp() throws UnknownJobException
     {
-        super(msg, errorCode, Status.BAD_REQUEST);
+        m_Influencers = new Influencers();
+        configureService(m_Influencers);
+    }
+
+    @Test
+    public void testInfluencers_GivenNegativeSkip() throws UnknownJobException
+    {
+        m_ExpectedException.expect(InvalidParametersException.class);
+        m_ExpectedException.expectMessage("Parameter 'skip' cannot be < 0");
+        m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_SKIP_PARAM));
+
+        m_Influencers.influencers(JOB_ID, -1, 100);
+    }
+
+    @Test
+    public void testInfluencers_GivenNegativeTake() throws UnknownJobException
+    {
+        m_ExpectedException.expect(InvalidParametersException.class);
+        m_ExpectedException.expectMessage("Parameter 'take' cannot be < 0");
+        m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_TAKE_PARAM));
+
+        m_Influencers.influencers(JOB_ID, 0, -1);
     }
 }

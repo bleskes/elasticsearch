@@ -277,7 +277,7 @@ public class DataTest extends ServiceTest
 
     @Test
     public void testFlushUpload_GivenNoInterimResultsAndStartSpecified()
-            throws UnknownJobException, NativeProcessRunException, JobInUseException, InvalidParametersException
+            throws UnknownJobException, NativeProcessRunException, JobInUseException
     {
         m_ExpectedException.expect(InvalidParametersException.class);
         m_ExpectedException.expectMessage(
@@ -289,7 +289,7 @@ public class DataTest extends ServiceTest
 
     @Test
     public void testFlushUpload_GivenNoInterimResultsAndEndSpecified() throws UnknownJobException,
-            NativeProcessRunException, JobInUseException, InvalidParametersException
+            NativeProcessRunException, JobInUseException
     {
         m_ExpectedException.expect(InvalidParametersException.class);
         m_ExpectedException.expectMessage(
@@ -301,7 +301,7 @@ public class DataTest extends ServiceTest
 
     @Test
     public void testFlushUpload_GivenInterimResultsAndOnlyEndSpecified()
-            throws UnknownJobException, NativeProcessRunException, JobInUseException, InvalidParametersException
+            throws UnknownJobException, NativeProcessRunException, JobInUseException
     {
         m_ExpectedException.expect(InvalidParametersException.class);
         m_ExpectedException.expectMessage(
@@ -313,7 +313,7 @@ public class DataTest extends ServiceTest
 
     @Test
     public void testFlushUpload_GivenInterimResultsAndEndIsBeforeStart()
-            throws UnknownJobException, NativeProcessRunException, JobInUseException, InvalidParametersException
+            throws UnknownJobException, NativeProcessRunException, JobInUseException
     {
         m_ExpectedException.expect(InvalidParametersException.class);
         m_ExpectedException.expectMessage(
@@ -325,7 +325,7 @@ public class DataTest extends ServiceTest
 
     @Test
     public void testFlushUpload_GivenInterimResultsAndStartAndEndSpecifiedAsEpochs()
-            throws UnknownJobException, NativeProcessRunException, JobInUseException, InvalidParametersException
+            throws UnknownJobException, NativeProcessRunException, JobInUseException
     {
         m_Data.flushUpload(JOB_ID, true, "1428494400", "1428498000");
 
@@ -341,7 +341,7 @@ public class DataTest extends ServiceTest
 
     @Test
     public void testFlushUpload_GivenInterimResultsAndStartAndEndSpecifiedAsIso()
-            throws UnknownJobException, NativeProcessRunException, JobInUseException, InvalidParametersException
+            throws UnknownJobException, NativeProcessRunException, JobInUseException
     {
         m_Data.flushUpload(JOB_ID, true, "2015-04-08T12:00:00Z", "2015-04-08T13:00:00Z");
 
@@ -357,7 +357,7 @@ public class DataTest extends ServiceTest
 
     @Test
     public void testFlushUpload_GivenInterimResultsAndStartAndEndSpecifiedAsIsoMilliseconds()
-            throws UnknownJobException, NativeProcessRunException, JobInUseException, InvalidParametersException
+            throws UnknownJobException, NativeProcessRunException, JobInUseException
     {
         m_Data.flushUpload(JOB_ID, true, "2015-04-08T12:00:00.000Z", "2015-04-08T13:00:00.000Z");
 
@@ -373,7 +373,7 @@ public class DataTest extends ServiceTest
 
     @Test
     public void testFlushUpload_GivenInterimResultsAndSameStartAndEnd()
-            throws UnknownJobException, NativeProcessRunException, JobInUseException, InvalidParametersException
+            throws UnknownJobException, NativeProcessRunException, JobInUseException
     {
         m_Data.flushUpload(JOB_ID, true, "1428494400", "1428494400");
 
@@ -389,7 +389,7 @@ public class DataTest extends ServiceTest
 
     @Test
     public void testFlushUpload_GivenInterimResultsAndOnlyStartIsSpecified()
-            throws UnknownJobException, NativeProcessRunException, JobInUseException, InvalidParametersException
+            throws UnknownJobException, NativeProcessRunException, JobInUseException
     {
         m_Data.flushUpload("foo", true, "1428494400", "");
 
