@@ -35,7 +35,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import org.elasticsearch.common.inject.Exposed;
 import org.junit.Test;
 
 import com.fasterxml.jackson.core.JsonFactory;
@@ -95,7 +94,7 @@ public class InfluencesTest
     }
 
     @Test(expected = AutoDetectParseException.class)
-    public void testParseScores_noArray() throws JsonParseException, IOException, AutoDetectParseException
+    public void testParseScores_InvalidJson() throws JsonParseException, IOException, AutoDetectParseException
     {
         // invalid json
         String json = "{"
@@ -104,7 +103,7 @@ public class InfluencesTest
 
         JsonParser parser = createJsonParser(json);
         parser.nextToken();
-        List<Influence> infs = Influences.parseJson(parser);
+        Influences.parseJson(parser);
     }
 
     @Test
