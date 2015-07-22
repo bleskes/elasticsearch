@@ -51,7 +51,6 @@ public class WatcherPluginDisableTests extends ElasticsearchIntegrationTest {
         return Settings.settingsBuilder()
                 .put(super.nodeSettings(nodeOrdinal))
                 .put("plugin.types", WatcherPlugin.class.getName() + "," + LicensePlugin.class.getName())
-                .put(PluginsService.LOAD_PLUGIN_FROM_CLASSPATH, false)
                 .put(WatcherPlugin.ENABLED_SETTING, false)
                 .put(Node.HTTP_ENABLED, true)
                 .build();
@@ -61,7 +60,6 @@ public class WatcherPluginDisableTests extends ElasticsearchIntegrationTest {
     protected Settings transportClientSettings() {
         return Settings.builder()
                 .put(super.transportClientSettings())
-                .put(PluginsService.LOAD_PLUGIN_FROM_CLASSPATH, false)
                 .build();
     }
 
