@@ -31,7 +31,6 @@ import org.elasticsearch.license.plugin.core.LicensesService;
 import org.elasticsearch.marvel.MarvelPlugin;
 import org.elasticsearch.marvel.mode.Mode;
 import org.elasticsearch.plugins.AbstractPlugin;
-import org.elasticsearch.plugins.PluginsService;
 import org.elasticsearch.test.ElasticsearchIntegrationTest;
 import org.elasticsearch.test.ElasticsearchIntegrationTest.ClusterScope;
 import org.junit.Test;
@@ -51,7 +50,6 @@ public class LicenseIntegrationTests extends ElasticsearchIntegrationTest {
         return Settings.settingsBuilder()
                 .put(super.nodeSettings(nodeOrdinal))
                 .put("plugin.types", MarvelPlugin.class.getName() + "," + MockLicensePlugin.class.getName())
-                .put(PluginsService.LOAD_PLUGIN_FROM_CLASSPATH, false)
                 .build();
     }
 

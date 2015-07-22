@@ -107,7 +107,6 @@ public class SearchTransformTests extends ElasticsearchIntegrationTest {
         return settingsBuilder()
                 .put(super.nodeSettings(nodeOrdinal))
                 // we're not extending from the base watcher test case, so we should prevent the watcher plugin from being loaded
-                .put(PluginsService.LOAD_PLUGIN_FROM_CLASSPATH, false)
                 .put("path.conf", configPath).build();
     }
 
@@ -115,7 +114,6 @@ public class SearchTransformTests extends ElasticsearchIntegrationTest {
     protected Settings transportClientSettings() {
         return Settings.builder()
                 .put(super.transportClientSettings())
-                .put(PluginsService.LOAD_PLUGIN_FROM_CLASSPATH, false)
                 .build();
     }
 

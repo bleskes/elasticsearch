@@ -107,7 +107,6 @@ public class SearchInputTests extends ElasticsearchIntegrationTest {
 
         //Set path so ScriptService will pick up the test scripts
         return settingsBuilder().put(super.nodeSettings(nodeOrdinal))
-                .put(PluginsService.LOAD_PLUGIN_FROM_CLASSPATH, false)
                 .put("path.conf", configPath).build();
     }
 
@@ -115,7 +114,6 @@ public class SearchInputTests extends ElasticsearchIntegrationTest {
     protected Settings transportClientSettings() {
         return Settings.builder()
                 .put(super.transportClientSettings())
-                .put(PluginsService.LOAD_PLUGIN_FROM_CLASSPATH, false)
                 .build();
     }
 
