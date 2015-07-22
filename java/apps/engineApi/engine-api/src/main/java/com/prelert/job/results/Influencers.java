@@ -102,7 +102,7 @@ public class Influencers
                 influencer.setInfluencerFieldValue(parseAsStringOrNull(token, fieldName));
                 break;
             default:
-                LOGGER.warn(String.format("Parse error unknown field in Anomaly Record %s:%s",
+                LOGGER.warn(String.format("Parse error unknown field in Influencer %s:%s",
                         fieldName, token.asString()));
                 break;
             }
