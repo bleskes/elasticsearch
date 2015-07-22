@@ -22,6 +22,7 @@ import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.transport.TransportAddress;
+import org.elasticsearch.shield.ShieldPlugin;
 import org.elasticsearch.test.ShieldIntegrationTest;
 import org.elasticsearch.test.ShieldSettingsSource;
 import org.elasticsearch.transport.Transport;
@@ -223,6 +224,7 @@ public class SslMultiPortTests extends ShieldIntegrationTest {
                 .put("shield.user", DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
                 .put("cluster.name", internalTestCluster().getClusterName())
                 .put("path.home", createTempDir())
+                .put("plugin.types", ShieldPlugin.class.getName())
                 .build();
         try (TransportClient transportClient = TransportClient.builder().settings(settings).loadConfigSettings(false).build()) {
             transportClient.addTransportAddress(new InetSocketTransportAddress("localhost", getProfilePort("no_ssl")));
@@ -240,6 +242,7 @@ public class SslMultiPortTests extends ShieldIntegrationTest {
                 .put("shield.user", DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
                 .put("cluster.name", internalTestCluster().getClusterName())
                 .put("path.home", createTempDir())
+                .put("plugin.types", ShieldPlugin.class.getName())
                 .build();
         try (TransportClient transportClient = TransportClient.builder().settings(settings).loadConfigSettings(false).build()) {
             transportClient.addTransportAddress(internalTestCluster().getInstance(Transport.class).boundAddress().boundAddress());
@@ -257,6 +260,7 @@ public class SslMultiPortTests extends ShieldIntegrationTest {
                 .put("shield.user", DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
                 .put("cluster.name", internalTestCluster().getClusterName())
                 .put("path.home", createTempDir())
+                .put("plugin.types", ShieldPlugin.class.getName())
                 .build();
         try (TransportClient transportClient = TransportClient.builder().settings(settings).loadConfigSettings(false).build()) {
             transportClient.addTransportAddress(new InetSocketTransportAddress("localhost", getProfilePort("client")));
@@ -274,6 +278,7 @@ public class SslMultiPortTests extends ShieldIntegrationTest {
                 .put("shield.user", DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
                 .put("cluster.name", internalTestCluster().getClusterName())
                 .put("path.home", createTempDir())
+                .put("plugin.types", ShieldPlugin.class.getName())
                 .build();
         try (TransportClient transportClient = TransportClient.builder().settings(settings).loadConfigSettings(false).build()) {
             transportClient.addTransportAddress(new InetSocketTransportAddress("localhost", getProfilePort("no_client_auth")));
@@ -295,6 +300,7 @@ public class SslMultiPortTests extends ShieldIntegrationTest {
                 .put("shield.ssl.truststore.path", getDataPath("/org/elasticsearch/shield/transport/ssl/certs/simple/truststore-testnode-only.jks"))
                 .put("shield.ssl.truststore.password", "truststore-testnode-only")
                 .put("path.home", createTempDir())
+                .put("plugin.types", ShieldPlugin.class.getName())
                 .build();
         try (TransportClient transportClient = TransportClient.builder().settings(settings).loadConfigSettings(false).build()) {
             transportClient.addTransportAddress(new InetSocketTransportAddress("localhost", getProfilePort("no_client_auth")));
@@ -317,6 +323,7 @@ public class SslMultiPortTests extends ShieldIntegrationTest {
                 .put("shield.ssl.truststore.path", getDataPath("/org/elasticsearch/shield/transport/ssl/certs/simple/truststore-testnode-only.jks"))
                 .put("shield.ssl.truststore.password", "truststore-testnode-only")
                 .put("path.home", createTempDir())
+                .put("plugin.types", ShieldPlugin.class.getName())
                 .build();
         try (TransportClient transportClient = TransportClient.builder().settings(settings).loadConfigSettings(false).build()) {
             transportClient.addTransportAddress(new InetSocketTransportAddress("localhost", getProfilePort("client")));
@@ -339,6 +346,7 @@ public class SslMultiPortTests extends ShieldIntegrationTest {
                 .put("shield.ssl.truststore.path", getDataPath("/org/elasticsearch/shield/transport/ssl/certs/simple/truststore-testnode-only.jks"))
                 .put("shield.ssl.truststore.password", "truststore-testnode-only")
                 .put("path.home", createTempDir())
+                .put("plugin.types", ShieldPlugin.class.getName())
                 .build();
         try (TransportClient transportClient = TransportClient.builder().settings(settings).loadConfigSettings(false).build()) {
             transportClient.addTransportAddress(internalTestCluster().getInstance(Transport.class).boundAddress().boundAddress());
@@ -360,6 +368,7 @@ public class SslMultiPortTests extends ShieldIntegrationTest {
                 .put("shield.ssl.truststore.path", getDataPath("/org/elasticsearch/shield/transport/ssl/certs/simple/truststore-testnode-only.jks"))
                 .put("shield.ssl.truststore.password", "truststore-testnode-only")
                 .put("path.home", createTempDir())
+                .put("plugin.types", ShieldPlugin.class.getName())
                 .build();
         try (TransportClient transportClient = TransportClient.builder().settings(settings).loadConfigSettings(false).build()) {
             transportClient.addTransportAddress(new InetSocketTransportAddress("localhost", getProfilePort("no_ssl")));
@@ -379,6 +388,7 @@ public class SslMultiPortTests extends ShieldIntegrationTest {
                 .put("cluster.name", internalTestCluster().getClusterName())
                 .put("shield.transport.ssl", true)
                 .put("path.home", createTempDir())
+                .put("plugin.types", ShieldPlugin.class.getName())
                 .build();
         try (TransportClient transportClient = TransportClient.builder().settings(settings).loadConfigSettings(false).build()) {
             transportClient.addTransportAddress(internalTestCluster().getInstance(Transport.class).boundAddress().boundAddress());
@@ -398,6 +408,7 @@ public class SslMultiPortTests extends ShieldIntegrationTest {
                 .put("cluster.name", internalTestCluster().getClusterName())
                 .put("shield.transport.ssl", true)
                 .put("path.home", createTempDir())
+                .put("plugin.types", ShieldPlugin.class.getName())
                 .build();
         try (TransportClient transportClient = TransportClient.builder().settings(settings).loadConfigSettings(false).build()) {
             transportClient.addTransportAddress(new InetSocketTransportAddress("localhost", getProfilePort("client")));
@@ -417,6 +428,7 @@ public class SslMultiPortTests extends ShieldIntegrationTest {
                 .put("cluster.name", internalTestCluster().getClusterName())
                 .put("shield.transport.ssl", true)
                 .put("path.home", createTempDir())
+                .put("plugin.types", ShieldPlugin.class.getName())
                 .build();
         try (TransportClient transportClient = TransportClient.builder().settings(settings).loadConfigSettings(false).build()) {
             transportClient.addTransportAddress(new InetSocketTransportAddress("localhost", getProfilePort("no_client_auth")));
@@ -436,6 +448,7 @@ public class SslMultiPortTests extends ShieldIntegrationTest {
                 .put("cluster.name", internalTestCluster().getClusterName())
                 .put("shield.transport.ssl", true)
                 .put("path.home", createTempDir())
+                .put("plugin.types", ShieldPlugin.class.getName())
                 .build();
         try (TransportClient transportClient = TransportClient.builder().settings(settings).loadConfigSettings(false).build()) {
             transportClient.addTransportAddress(new InetSocketTransportAddress("localhost", getProfilePort("no_ssl")));
