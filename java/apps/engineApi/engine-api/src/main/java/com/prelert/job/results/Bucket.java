@@ -67,7 +67,7 @@ public class Bucket
     public static final String EVENT_COUNT = "eventCount";
     public static final String DETECTORS = "detectors";
     public static final String RECORDS = "records";
-    public static final String INFLUENCES = "influences";
+    public static final String INFLUENCERS = "influencers";
 
 
     /**
@@ -87,7 +87,7 @@ public class Bucket
     private long m_EventCount;
     private Boolean m_IsInterim;
     private boolean m_HadBigNormalisedUpdate;
-    private List<Influence> m_Influences;
+    private List<Influencer> m_Influencers;
 
     public Bucket()
     {
@@ -291,14 +291,14 @@ public class Bucket
         }
     }
 
-    public List<Influence> getInfluences()
+    public List<Influencer> getInfluencers()
     {
-        return m_Influences;
+        return m_Influencers;
     }
 
-    public void setInfluences(List<Influence> influences)
+    public void setInfluencers(List<Influencer> influences)
     {
-        this.m_Influences = influences;
+        this.m_Influencers = influences;
     }
 
     /**
@@ -366,8 +366,8 @@ public class Bucket
             case DETECTORS:
                 parseDetectors(token, bucket);
                 break;
-            case INFLUENCES:
-                bucket.setInfluences(Influences.parseJson(m_Parser));
+            case INFLUENCERS:
+                bucket.setInfluencers(parseInfluencers(token));
                 break;
             default:
                 LOGGER.warn(String.format("Parse error unknown field in Bucket %s:%s",
@@ -410,6 +410,30 @@ public class Bucket
                 token = m_Parser.nextToken();
             }
         }
+
+        private List<Influencer> parseInfluencers(JsonToken token)
+                throws AutoDetectParseException, IOException, JsonParseException
+        {
+            if (token != JsonToken.START_ARRAY)
+            {
+                String msg = "Invalid value Expecting an array of influencers";
+                LOGGER.warn(msg);
+                throw new AutoDetectParseException(msg);
+            }
+
+            List<Influencer> influencers = new ArrayList<Influencer>();
+
+            token = m_Parser.nextToken();
+            while (token != JsonToken.END_ARRAY)
+            {
+                Influencer inf = Influencers.parseJson(m_Parser);
+                influencers.add(inf);
+
+                token = m_Parser.nextToken();
+            }
+
+            return influencers;
+        }
     }
 
     @Override
@@ -417,7 +441,7 @@ public class Bucket
     {
         // m_HadBigNormalisedUpdate is deliberately excluded from the hash
         return Objects.hash(m_Timestamp, m_EventCount, m_RawAnomalyScore, m_AnomalyScore,
-                m_MaxNormalizedProbability, m_RecordCount, m_Records, m_IsInterim, m_Influences);
+                m_MaxNormalizedProbability, m_RecordCount, m_Records, m_IsInterim, m_Influencers);
     }
 
     /**
@@ -450,7 +474,7 @@ public class Bucket
                 && (this.m_RecordCount == that.m_RecordCount)
                 && Objects.equals(this.m_Records, that.m_Records)
                 && Objects.equals(this.m_IsInterim, that.m_IsInterim)
-                && Objects.equals(this.m_Influences, that.m_Influences);
+                && Objects.equals(this.m_Influencers, that.m_Influencers);
     }
 
 

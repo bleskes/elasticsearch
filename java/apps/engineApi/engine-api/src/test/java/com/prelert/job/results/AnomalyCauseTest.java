@@ -208,8 +208,8 @@ public class AnomalyCauseTest
                 + "\"typical\" : 442.616,"
                 + "\"actual\" : 10.0,"
                 + "\"influences\" : {"
-                   + "\"host\": [{\"web-server\": 0.8}, {\"localhost\": 0.7}],"
-                   + "\"user\": [{\"cat\": 1}]"
+                   + "\"host\": [\"web-server\", \"localhost\"],"
+                   + "\"user\": [\"cat\"]"
                 + "},"
                 + "\"overFieldName\" : \"callsign\","
                 + "\"overFieldValue\" : \"HVN600\""
@@ -237,18 +237,15 @@ public class AnomalyCauseTest
         List<Influence> influences = cause.getInfluences();
 
         Influence host = influences.get(0);
-        assertEquals("host", host.getInfluenceField());
-        assertEquals(2, host.getInfluenceScores().size());
-        assertEquals("web-server", host.getInfluenceScores().get(0).getFieldValue());
-        assertEquals(0.8, host.getInfluenceScores().get(0).getInfluence(), 0.001);
-        assertEquals("localhost", host.getInfluenceScores().get(1).getFieldValue());
-        assertEquals(0.7, host.getInfluenceScores().get(1).getInfluence(), 0.001);
+        assertEquals("host", host.getInfluenceFieldName());
+        assertEquals(2, host.getInfluenceFieldValues().size());
+        assertEquals("web-server", host.getInfluenceFieldValues().get(0));
+        assertEquals("localhost", host.getInfluenceFieldValues().get(1));
 
         Influence user = influences.get(1);
-        assertEquals("user", user.getInfluenceField());
-        assertEquals(1, user.getInfluenceScores().size());
-        assertEquals("cat", user.getInfluenceScores().get(0).getFieldValue());
-        assertEquals(1.0, user.getInfluenceScores().get(0).getInfluence(), 0.001);
+        assertEquals("user", user.getInfluenceFieldName());
+        assertEquals(1, user.getInfluenceFieldValues().size());
+        assertEquals("cat", user.getInfluenceFieldValues().get(0));
     }
 
     private static AnomalyCause createFullyPopulatedAnomalyCause()

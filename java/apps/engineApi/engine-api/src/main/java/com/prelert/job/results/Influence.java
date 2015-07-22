@@ -28,23 +28,23 @@ package com.prelert.job.results;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Influence field name and list of influence field values/score pairs
  */
 public class Influence
 {
-    public static final String INFLUENCE_FIELD = "influenceField";
-    public static final String INFLUENCE_FIELD_VALUE = "fieldValue";
-    public static final String SCORE = "score";
-    public static final String INFLUENCE_SCORES = "influenceScores";
+    public static final String INFLUENCE_FIELD_NAME = "influenceFieldName";
+    public static final String INFLUENCE_FIELD_VALUES = "influenceFieldValues";
+
 
     private String m_Field;
-    private List<InfluenceScore> m_Scores;
+    private List<String> m_FieldValues;
 
     public Influence()
     {
-        m_Scores = new ArrayList<InfluenceScore>();
+        m_FieldValues = new ArrayList<String>();
     }
 
     public Influence(String field)
@@ -53,28 +53,63 @@ public class Influence
         m_Field = field;
     }
 
-    public String getInfluenceField()
+    public String getInfluenceFieldName()
     {
         return m_Field;
     }
 
-    public void setInfluenceField(String field)
+    public void setInfluenceFieldName(String field)
     {
         this.m_Field = field;
     }
 
-    public List<InfluenceScore> getInfluenceScores()
+    public List<String> getInfluenceFieldValues()
     {
-        return m_Scores;
+        return m_FieldValues;
     }
 
-    public void setInfluenceScores(List<InfluenceScore> scores)
+    public void setInfluenceFieldValues(List<String> values)
     {
-        this.m_Scores = scores;
+        this.m_FieldValues = values;
     }
 
-    public void addInfluenceScore(InfluenceScore score)
+    public void addInfluenceFieldValue(String value)
     {
-        m_Scores.add(score);
+        m_FieldValues.add(value);
+    }
+
+    @Override
+    public int hashCode()
+    {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((m_Field == null) ? 0 : m_Field.hashCode());
+        result = prime * result
+                + ((m_FieldValues == null) ? 0 : m_FieldValues.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (this == obj)
+        {
+            return true;
+        }
+
+        if (obj == null)
+        {
+            return false;
+        }
+
+        if (getClass() != obj.getClass())
+        {
+            return false;
+        }
+
+        Influence other = (Influence) obj;
+
+        return Objects.equals(m_Field, other.m_Field) &&
+                Objects.equals(m_FieldValues, other.m_FieldValues);
     }
 }

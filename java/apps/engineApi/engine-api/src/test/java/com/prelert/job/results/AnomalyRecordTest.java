@@ -151,8 +151,8 @@ public class AnomalyRecordTest
         assertEquals(2, anomalyRecord.getCauses().size());
 
         assertEquals(2, anomalyRecord.getInfluences().size());
-        assertEquals("host", anomalyRecord.getInfluences().get(0).getInfluenceField());
-        assertEquals("user", anomalyRecord.getInfluences().get(1).getInfluenceField());
+        assertEquals("host", anomalyRecord.getInfluences().get(0).getInfluenceFieldName());
+        assertEquals("user", anomalyRecord.getInfluences().get(1).getInfluenceFieldName());
 
 
         assertEquals(JsonToken.END_OBJECT, parser.getCurrentToken());

@@ -26,44 +26,52 @@
  ************************************************************/
 package com.prelert.job.results;
 
-/**
- * Simple class grouping the influence field value and influence score
- */
-public class InfluenceScore
+import static org.junit.Assert.*;
+
+import org.junit.Test;
+
+public class InfluencerTest
 {
-    private String m_FieldValue;
-    private Double m_Influence;
-
-    public InfluenceScore()
+    @Test
+    public void testEquals()
     {
-        m_FieldValue = "";
-        m_Influence = 0.0;
+        Influencer inf = new Influencer();
+        inf.setBucketId("123");
+        inf.setInfluencerFieldName("a");
+        inf.setInfluencerFieldValue("f");
+        inf.setProbability(0.1);
+        inf.setInitialScore(2.0);
+
+        Influencer inf2 = new Influencer("a", "f");
+        inf2.setBucketId("123");
+        inf2.setProbability(0.1);
+        inf2.setInitialScore(2.0);
+
+        assertEquals(inf, inf2);
+
+        inf.setBucketId("321");
+        assertFalse(inf.equals(inf2));
     }
 
-    public InfluenceScore(String field, double influence)
+    @Test
+    public void testHash()
     {
-        m_FieldValue = field;
-        m_Influence = influence;
-    }
+        Influencer inf = new Influencer();
+        inf.setBucketId("123");
+        inf.setInfluencerFieldName("a");
+        inf.setInfluencerFieldValue("f");
+        inf.setProbability(0.1);
+        inf.setInitialScore(2.0);
 
-    public String getFieldValue()
-    {
-        return m_FieldValue;
-    }
+        Influencer inf2 = new Influencer("a", "f");
+        inf2.setBucketId("123");
+        inf2.setProbability(0.1);
+        inf2.setInitialScore(2.0);
 
-    public void setFieldValue(String fieldValue)
-    {
-        this.m_FieldValue = fieldValue;
-    }
+        assertEquals(inf.hashCode(), inf2.hashCode());
 
-    public Double getInfluence()
-    {
-        return m_Influence;
-    }
-
-    public void setInfluence(Double influence)
-    {
-        this.m_Influence = influence;
+        inf.setBucketId("321");
+        assertFalse(inf.hashCode() == inf2.hashCode());
     }
 
 }

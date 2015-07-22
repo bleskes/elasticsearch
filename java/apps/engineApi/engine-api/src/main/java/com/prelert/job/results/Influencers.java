@@ -27,8 +27,6 @@
 package com.prelert.job.results;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.apache.log4j.Logger;
 
@@ -39,19 +37,19 @@ import com.prelert.utils.json.AutoDetectParseException;
 import com.prelert.utils.json.FieldNameParser;
 
 /**
- * Static methods for Influences
+ * Static methods for {@linkplain Influencers}
  *
  */
-public class Influences
+public class Influencers
 {
-    private static final Logger LOGGER = Logger.getLogger(Influences.class);
+    private static final Logger LOGGER = Logger.getLogger(Influencers.class);
 
-    private Influences()
+    private Influencers()
     {
     }
 
     /**
-     * Create a new <code>List&ltInfluence&gt</code> and populate it from the JSON parser.
+     * Create a new <code>List&ltInfluencer&gt</code> and populate it from the JSON parser.
      * The parser must be pointing at the start of the object then all the object's
      * fields are read and if they match the property names then the appropriate
      * members are set.
@@ -66,64 +64,52 @@ public class Influences
      * @throws IOException
      * @throws AutoDetectParseException
      */
-    public static List<Influence> parseJson(JsonParser parser)
+    public static Influencer parseJson(JsonParser parser)
     throws JsonParseException, IOException, AutoDetectParseException
     {
-        List<Influence> records = new ArrayList<>();
-        InfluencesJsonParser influencesJsonParser = new InfluencesJsonParser(parser, LOGGER);
-        influencesJsonParser.parse(records);
-        return records;
+        Influencer influencer = new Influencer();
+        InfluencerJsonParser influencerJsonParser = new InfluencerJsonParser(parser, LOGGER);
+        influencerJsonParser.parse(influencer);
+
+        return influencer;
     }
 
-    private static class InfluencesJsonParser extends FieldNameParser<List<Influence>>
+    private static class InfluencerJsonParser extends FieldNameParser<Influencer>
     {
 
-        public InfluencesJsonParser(JsonParser jsonParser, Logger logger)
+        public InfluencerJsonParser(JsonParser jsonParser, Logger logger)
         {
-            super("Influences", jsonParser, logger);
+            super("Influencer", jsonParser, logger);
         }
 
         @Override
-        protected void handleFieldName(String fieldName, List<Influence> influences)
+        protected void handleFieldName(String fieldName, Influencer influencer)
                 throws AutoDetectParseException, JsonParseException, IOException
         {
-            Influence influence = new Influence();
-            influence.setInfluenceFieldName(fieldName);
             JsonToken token = m_Parser.nextToken();
-            parseValues(token, influence);
-
-            influences.add(influence);
-        }
-
-        private void parseValues(JsonToken token, Influence influence)
-                throws AutoDetectParseException, IOException, JsonParseException
-        {
-            if (token != JsonToken.START_ARRAY)
+            switch (fieldName)
             {
-                String msg = "Invalid value Expecting an array of influence scores";
-                LOGGER.warn(msg);
-                throw new AutoDetectParseException(msg);
-            }
-
-            token = m_Parser.nextToken();
-            while (token != JsonToken.END_ARRAY)
-            {
-                if (token == JsonToken.VALUE_STRING)
-                {
-                    String value = m_Parser.getText();
-                    if (value != null)
-                    {
-                        influence.addInfluenceFieldValue(value);
-                    }
-                }
-                else
-                {
-                    LOGGER.error("Expected a string value parsing influence field value not " + token);
-                }
-
-                token = m_Parser.nextToken();
+            case Influencer.PROBABILITY:
+                influencer.setProbability(parseAsDoubleOrZero(token, fieldName));
+                break;
+            case Influencer.INITIAL_SCORE:
+                influencer.setInitialScore(parseAsDoubleOrZero(token, fieldName));
+                break;
+            case Influencer.INFLUENCER_FIELD_NAME:
+                influencer.setInfluencerFieldName(parseAsStringOrNull(token, fieldName));
+                break;
+            case Influencer.INFLUENCER_VALUE_NAME:
+                influencer.setInfluencerFieldValue(parseAsStringOrNull(token, fieldName));
+                break;
+            default:
+                LOGGER.warn(String.format("Parse error unknown field in Anomaly Record %s:%s",
+                        fieldName, token.asString()));
+                break;
             }
         }
+
+
+
     }
 }
 

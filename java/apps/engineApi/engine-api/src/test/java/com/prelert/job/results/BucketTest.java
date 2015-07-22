@@ -200,12 +200,12 @@ public class BucketTest
     }
 
     @Test
-    public void testEquals_GivenDifferentInfluences()
+    public void testEquals_GivenDifferentInfluencers()
     {
         Bucket bucket1 = new Bucket();
-        Influence influence = new Influence("testField");
+        Influencer influencer = new Influencer("inf_field", "inf_value");
         Bucket bucket2 = new Bucket();
-        bucket2.setInfluences(Arrays.asList(influence));
+        bucket2.setInfluencers(Arrays.asList(influencer));
 
         assertFalse(bucket1.equals(bucket2));
         assertFalse(bucket2.equals(bucket1));
@@ -216,9 +216,9 @@ public class BucketTest
     {
         Detector detector = new Detector();
         AnomalyRecord record = new AnomalyRecord();
-        Influence influence = new Influence("testField");
-        influence.addInfluenceScore(new InfluenceScore("fieldValA", 1.0));
-        influence.addInfluenceScore(new InfluenceScore("fieldValB", 0.3));
+        Influencer influencer = new Influencer("testField", "testValue");
+        influencer.setProbability(0.1);
+        influencer.setInitialScore(10.0);
         Date date = new Date();
 
         Bucket bucket1 = new Bucket();
@@ -231,7 +231,7 @@ public class BucketTest
         bucket1.setRawAnomalyScore(0.005);
         bucket1.setRecordCount(4);
         bucket1.setRecords(Arrays.asList(record));
-        bucket1.setInfluences(Arrays.asList(influence));
+        bucket1.setInfluencers(Arrays.asList(influencer));
         bucket1.setTimestamp(date);
 
         Bucket bucket2 = new Bucket();
@@ -244,7 +244,7 @@ public class BucketTest
         bucket2.setRawAnomalyScore(0.005);
         bucket2.setRecordCount(4);
         bucket2.setRecords(Arrays.asList(record));
-        bucket2.setInfluences(Arrays.asList(influence));
+        bucket2.setInfluencers(Arrays.asList(influencer));
         bucket2.setTimestamp(date);
 
         assertTrue(bucket1.equals(bucket2));
@@ -262,9 +262,10 @@ public class BucketTest
                 + "\"rawAnomalyScore\" : 5.0,"
                 + "\"eventCount\" : 1693,"
                 + "\"isInterim\" : false,"
-                + "\"influences\" : {"
-                    + "\"host\": [{\"web-server\": 0.8}]"
-                  + "},"
+                + "\"influencers\" : ["
+                    + "{\"probability\":0.9,\"initialScore\":97.1948,\"influencerFieldName\":\"src_ip\",\"influencerFieldValue\":\"23.28.243.150\"},"
+                    + "{\"probability\":0.4,\"initialScore\":12.1948,\"influencerFieldName\":\"dst_ip\",\"influencerFieldValue\":\"23.28.243.1\"}"
+                  + "],"
                 + "\"detectors\" : []"
                 + "}";
 
@@ -283,13 +284,19 @@ public class BucketTest
         assertEquals(1693, b.getEventCount());
         assertFalse(b.isInterim());
 
-        List<Influence> influences = b.getInfluences();
-        assertEquals(1, influences.size());
+        List<Influencer> influencers = b.getInfluencers();
+        assertEquals(2, influencers.size());
 
-        Influence host = influences.get(0);
-        assertEquals("host", host.getInfluenceField());
-        assertEquals(1, host.getInfluenceScores().size());
-        assertEquals("web-server", host.getInfluenceScores().get(0).getFieldValue());
-        assertEquals(0.8, host.getInfluenceScores().get(0).getInfluence(), 0.001);
+        Influencer inf = influencers.get(0);
+        assertEquals("src_ip", inf.getInfluencerFieldName());
+        assertEquals("23.28.243.150", inf.getInfluencerFieldValue());
+        assertEquals(0.9, inf.getProbability(), 0.0001);
+        assertEquals(97.1948, inf.getInitialScore(), 0.0001);
+
+        inf = influencers.get(1);
+        assertEquals(0.4, inf.getProbability(), 0.0001);
+        assertEquals(12.1948, inf.getInitialScore(), 0.0001);
+        assertEquals("dst_ip", inf.getInfluencerFieldName());
+        assertEquals("23.28.243.1", inf.getInfluencerFieldValue());
     }
 }

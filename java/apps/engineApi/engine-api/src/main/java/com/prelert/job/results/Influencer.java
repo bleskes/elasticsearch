@@ -26,6 +26,8 @@
  ************************************************************/
 package com.prelert.job.results;
 
+import java.util.Objects;
+
 public class Influencer
 {
     /**
@@ -38,17 +40,17 @@ public class Influencer
      */
     public static final String PROBABILITY = "probability";
     public static final String BUCKET_ID = "bucketId";
-    public static final String FIELD_NAME = "fieldName";
-    public static final String FIELD_VALUE = "fieldValue";
-    public static final String INFLUENCE_SCORE = "influenceScore";
+    public static final String INFLUENCER_FIELD_NAME = "influencerFieldName";
+    public static final String INFLUENCER_VALUE_NAME = "influencerFieldValue";
+    public static final String INITIAL_SCORE = "initialScore";
 
     private double m_Probability;
     private String m_BucketId;
 
-    private String m_FieldName;
-    private String m_FieldValue;
+    private String m_InfluenceField;
+    private String m_InfluenceValue;
 
-    private double m_InfluenceScore;
+    private double m_InitialScore;
 
 
     public Influencer()
@@ -57,8 +59,8 @@ public class Influencer
 
     public Influencer(String fieldName, String fieldValue)
     {
-        m_FieldName = fieldName;
-        m_FieldValue = fieldValue;
+        m_InfluenceField = fieldName;
+        m_InfluenceValue = fieldValue;
     }
 
     public double getProbability()
@@ -83,35 +85,87 @@ public class Influencer
     }
 
 
-    public String getFieldName()
+    public String getInfluencerFieldName()
     {
-        return m_FieldName;
+        return m_InfluenceField;
     }
 
-    public void setFieldName(String fieldName)
+    public void setInfluencerFieldName(String fieldName)
     {
-        this.m_FieldName = fieldName;
-    }
-
-
-    public String getFieldValue()
-    {
-        return m_FieldValue;
-    }
-
-    public void setFieldValue(String fieldValue)
-    {
-        this.m_FieldValue = fieldValue;
+        this.m_InfluenceField = fieldName;
     }
 
 
-    public double getInfluenceScore()
+    public String getInfluencerFieldValue()
     {
-        return m_InfluenceScore;
+        return m_InfluenceValue;
     }
 
-    public void setInfluenceScore(double influenceScore)
+    public void setInfluencerFieldValue(String fieldValue)
     {
-        this.m_InfluenceScore = influenceScore;
+        this.m_InfluenceValue = fieldValue;
     }
+
+
+    public double getInitialScore()
+    {
+        return m_InitialScore;
+    }
+
+    public void setInitialScore(double influenceScore)
+    {
+        this.m_InitialScore = influenceScore;
+    }
+
+    @Override
+    public int hashCode()
+    {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result
+                + ((m_BucketId == null) ? 0 : m_BucketId.hashCode());
+        result = prime
+                * result
+                + ((m_InfluenceField == null) ? 0 : m_InfluenceField.hashCode());
+        result = prime
+                * result
+                + ((m_InfluenceValue == null) ? 0 : m_InfluenceValue
+                        .hashCode());
+
+        long temp;
+        temp = Double.doubleToLongBits(m_InitialScore);
+        result = prime * result + (int) (temp ^ (temp >>> 32));
+        temp = Double.doubleToLongBits(m_Probability);
+        result = prime * result + (int) (temp ^ (temp >>> 32));
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (this == obj)
+        {
+            return true;
+        }
+
+        if (obj == null)
+        {
+            return false;
+        }
+
+        if (getClass() != obj.getClass())
+        {
+            return false;
+        }
+
+        Influencer other = (Influencer) obj;
+
+        return Objects.equals(m_BucketId, other.m_BucketId) &&
+                Objects.equals(m_InfluenceField, other.m_InfluenceField) &&
+                Objects.equals(m_InfluenceValue, other.m_InfluenceValue) &&
+                Double.compare(m_InitialScore, other.m_InitialScore) == 0 &&
+                Double.compare(m_Probability, other.m_Probability) == 0;
+    }
+
+
 }
