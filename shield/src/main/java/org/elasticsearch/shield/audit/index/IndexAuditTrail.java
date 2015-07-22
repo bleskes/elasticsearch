@@ -49,7 +49,6 @@ import org.elasticsearch.common.xcontent.XContentBuilderString;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.gateway.GatewayService;
-import org.elasticsearch.plugins.PluginsService;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.shield.ShieldPlugin;
 import org.elasticsearch.shield.User;
@@ -67,6 +66,7 @@ import org.joda.time.DateTimeZone;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -496,7 +496,12 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail {
         }
         msg.builder.field(Field.REQUEST_BODY, restRequestContent(request));
         msg.builder.field(Field.ORIGIN_TYPE, "rest");
-        msg.builder.field(Field.ORIGIN_ADDRESS, request.getRemoteAddress());
+        SocketAddress address = request.getRemoteAddress();
+        if (address instanceof InetSocketAddress) {
+            msg.builder.field(Field.ORIGIN_ADDRESS, ((InetSocketAddress)request.getRemoteAddress()).getAddress().getHostAddress());
+        } else {
+            msg.builder.field(Field.ORIGIN_ADDRESS, request.getRemoteAddress());
+        }
         msg.builder.field(Field.URI, request.uri());
 
         return msg.end();
@@ -648,8 +653,11 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail {
                 request.settings(updatedSettings);
             }
 
-            authenticationService.attachUserHeaderIfMissing(request, auditUser.user());
             assert !Thread.currentThread().isInterrupted() : "current thread has been interrupted before putting index template!!!";
+
+            if (!indexToRemoteCluster) {
+                authenticationService.attachUserHeaderIfMissing(request, auditUser.user());
+            }
             PutIndexTemplateResponse response = client.admin().indices().putTemplate(request).actionGet();
             if (!response.isAcknowledged()) {
                 throw new IllegalStateException("failed to put index template for audit logging");
@@ -672,7 +680,9 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail {
             @Override
             public void beforeBulk(long executionId, BulkRequest request) {
                 try {
-                    authenticationService.attachUserHeaderIfMissing(request, auditUser.user());
+                    if (!indexToRemoteCluster) {
+                        authenticationService.attachUserHeaderIfMissing(request, auditUser.user());
+                    }
                 } catch (IOException e) {
                     throw new ElasticsearchException("failed to attach user header", e);
                 }
@@ -712,7 +722,9 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail {
                     IndexRequest indexRequest = client.prepareIndex()
                             .setIndex(resolve(INDEX_NAME_PREFIX, message.timestamp, rollover))
                             .setType(DOC_TYPE).setSource(message.builder).request();
-                    authenticationService.attachUserHeaderIfMissing(indexRequest, auditUser.user());
+                    if (!indexToRemoteCluster) {
+                        authenticationService.attachUserHeaderIfMissing(indexRequest, auditUser.user());
+                    }
                     bulkProcessor.add(indexRequest);
                 } catch (InterruptedException e) {
                     logger.debug("index audit queue consumer interrupted", e);
