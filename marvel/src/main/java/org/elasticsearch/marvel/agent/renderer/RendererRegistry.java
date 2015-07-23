@@ -15,31 +15,23 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.marvel.agent.exporter;
+package org.elasticsearch.marvel.agent.renderer;
 
-public abstract class MarvelDoc<T> {
+import com.google.common.collect.ImmutableMap;
+import org.elasticsearch.common.inject.Inject;
 
-    private final String clusterName;
-    private final String type;
-    private final long timestamp;
+import java.util.Map;
 
-    public MarvelDoc(String clusterName, String type, long timestamp) {
-        this.clusterName = clusterName;
-        this.type = type;
-        this.timestamp = timestamp;
+public class RendererRegistry {
+
+    private final Map<String, Renderer> renderers;
+
+    @Inject
+    public RendererRegistry(Map<String, Renderer> renderers) {
+        this.renderers = ImmutableMap.copyOf(renderers);
     }
 
-    public String clusterName() {
-        return clusterName;
+    public Renderer renderer(String type) {
+        return renderers.get(type);
     }
-
-    public String type() {
-        return type;
-    }
-
-    public long timestamp() {
-        return timestamp;
-    }
-
-    public abstract T payload();
 }

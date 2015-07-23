@@ -40,7 +40,7 @@ import java.util.Collection;
 public class IndexStatsCollector extends AbstractCollector<IndexStatsCollector> {
 
     public static final String NAME = "index-stats-collector";
-    protected static final String TYPE = "marvel_index";
+    public static final String TYPE = "marvel_index_stats";
 
     private final ClusterName clusterName;
     private final Client client;
@@ -78,10 +78,6 @@ public class IndexStatsCollector extends AbstractCollector<IndexStatsCollector> 
     }
 
     protected MarvelDoc buildMarvelDoc(String clusterName, String type, long timestamp, IndexStats indexStats) {
-        return IndexStatsMarvelDoc.createMarvelDoc(clusterName, type, timestamp,
-                indexStats.getIndex(),
-                indexStats.getTotal().getDocs().getCount(),
-                indexStats.getTotal().getStore().sizeInBytes(), indexStats.getTotal().getStore().throttleTime().millis(),
-                indexStats.getTotal().getIndexing().getTotal().getThrottleTimeInMillis());
+        return IndexStatsMarvelDoc.createMarvelDoc(clusterName, type, timestamp, indexStats);
     }
 }

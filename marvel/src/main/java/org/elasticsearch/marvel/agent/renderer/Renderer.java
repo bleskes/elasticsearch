@@ -15,31 +15,17 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.marvel.agent.exporter;
+package org.elasticsearch.marvel.agent.renderer;
 
-public abstract class MarvelDoc<T> {
+import org.elasticsearch.common.xcontent.XContentType;
 
-    private final String clusterName;
-    private final String type;
-    private final long timestamp;
+import java.io.IOException;
+import java.io.OutputStream;
 
-    public MarvelDoc(String clusterName, String type, long timestamp) {
-        this.clusterName = clusterName;
-        this.type = type;
-        this.timestamp = timestamp;
-    }
+/**
+ * Renderers are used to render documents using a given OutputStream.
+ */
+public interface Renderer<T> {
 
-    public String clusterName() {
-        return clusterName;
-    }
-
-    public String type() {
-        return type;
-    }
-
-    public long timestamp() {
-        return timestamp;
-    }
-
-    public abstract T payload();
+    void render(T document, XContentType xContentType, OutputStream os) throws IOException;
 }
