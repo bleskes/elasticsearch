@@ -73,6 +73,7 @@ public class AnomalyRecord
     public static final String PARTITION_FIELD_NAME = "partitionFieldName";
     public static final String PARTITION_FIELD_VALUE = "partitionFieldValue";
     public static final String FUNCTION = "function";
+    public static final String FUNCTION_DESCRIPTION = "functionDescription";
     public static final String TYPICAL = "typical";
     public static final String ACTUAL = "actual";
     public static final String IS_INTERIM = "isInterim";
@@ -107,6 +108,7 @@ public class AnomalyRecord
     private String m_PartitionFieldName;
     private String m_PartitionFieldValue;
     private String m_Function;
+    private String m_FunctionDescription;
     private Double m_Typical;
     private Double m_Actual;
     private Boolean m_IsInterim;
@@ -288,6 +290,16 @@ public class AnomalyRecord
         m_Function = name.intern();
     }
 
+    public String getFunctionDescription()
+    {
+        return m_FunctionDescription;
+    }
+
+    public void setFunctionDescription(String functionDescription)
+    {
+        m_FunctionDescription = functionDescription.intern();
+    }
+
     public Double getTypical()
     {
         return m_Typical;
@@ -429,6 +441,9 @@ public class AnomalyRecord
             case FUNCTION:
                 record.setFunction(parseAsStringOrNull(token, fieldName));
                 break;
+            case FUNCTION_DESCRIPTION:
+                record.setFunctionDescription(parseAsStringOrNull(token, fieldName));
+                break;
             case TYPICAL:
                 record.setTypical(parseAsDoubleOrZero(token, fieldName));
                 break;
@@ -511,9 +526,9 @@ public class AnomalyRecord
         // m_HadBigNormalisedUpdate is also deliberately excluded from the hash
 
         return Objects.hash(m_Probability, m_AnomalyScore, m_NormalizedProbability,
-                m_Typical, m_Actual, m_Function, m_FieldName, m_ByFieldName, m_ByFieldValue,
-                m_PartitionFieldName, m_PartitionFieldValue, m_OverFieldName, m_OverFieldValue,
-                m_Timestamp, m_Parent, m_IsInterim, m_Causes, m_Influences);
+                m_Typical, m_Actual, m_Function, m_FunctionDescription, m_FieldName, m_ByFieldName,
+                m_ByFieldValue, m_PartitionFieldName, m_PartitionFieldValue, m_OverFieldName,
+                m_OverFieldValue, m_Timestamp, m_Parent, m_IsInterim, m_Causes, m_Influences);
     }
 
 
@@ -543,6 +558,7 @@ public class AnomalyRecord
                 && Objects.equals(this.m_Typical, that.m_Typical)
                 && Objects.equals(this.m_Actual, that.m_Actual)
                 && Objects.equals(this.m_Function, that.m_Function)
+                && Objects.equals(this.m_FunctionDescription, that.m_FunctionDescription)
                 && Objects.equals(this.m_FieldName, that.m_FieldName)
                 && Objects.equals(this.m_ByFieldName, that.m_ByFieldName)
                 && Objects.equals(this.m_ByFieldValue, that.m_ByFieldValue)

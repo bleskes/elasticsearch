@@ -496,6 +496,10 @@ public class ElasticsearchPersister implements JobResultsPersister
         {
             builder.field(AnomalyRecord.FUNCTION, record.getFunction());
         }
+        if (record.getFunctionDescription() != null)
+        {
+            builder.field(AnomalyRecord.FUNCTION_DESCRIPTION, record.getFunctionDescription());
+        }
         if (record.getPartitionFieldName() != null)
         {
             builder.field(AnomalyRecord.PARTITION_FIELD_NAME, record.getPartitionFieldName());
@@ -536,7 +540,6 @@ public class ElasticsearchPersister implements JobResultsPersister
         return builder;
     }
 
-
     /**
      * Augment the anomaly record serialisable content with a cause
      *
@@ -567,6 +570,10 @@ public class ElasticsearchPersister implements JobResultsPersister
         if (cause.getFunction() != null)
         {
             builder.field(AnomalyCause.FUNCTION, cause.getFunction());
+        }
+        if (cause.getFunctionDescription() != null)
+        {
+            builder.field(AnomalyCause.FUNCTION_DESCRIPTION, cause.getFunctionDescription());
         }
         if (cause.getPartitionFieldName() != null)
         {
