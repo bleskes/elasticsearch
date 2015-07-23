@@ -31,6 +31,7 @@ import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import com.google.common.collect.Range;
 import com.prelert.job.errorcodes.ErrorCodes;
@@ -44,15 +45,15 @@ import com.prelert.job.transform.exceptions.TransformConfigurationException;
  */
 public enum TransformType
 {
-    // Name, arity, arguments, outputs, default output names, has condition
+    // Name, arity, arguments, outputs, default output names, has condition, argument validator
     DOMAIN_SPLIT(Names.DOMAIN_SPLIT_NAME, Range.singleton(1), Range.singleton(0),
             Range.closed(1, 2), Arrays.asList("subDomain", "hrd")),
     CONCAT(Names.CONCAT_NAME, Range.atLeast(2), Range.closed(0, 1), Range.singleton(1),
             Arrays.asList("concat")),
     REGEX_EXTRACT(Names.EXTRACT_NAME, Range.singleton(1), Range.singleton(1), Range.atLeast(1),
-            Arrays.asList("extract")),
+            Arrays.asList("extract"), false, ArgumentValidators::regexChecker),
     REGEX_SPLIT(Names.SPLIT_NAME, Range.singleton(1), Range.singleton(1), Range.atLeast(1),
-            Arrays.asList("split")),
+            Arrays.asList("split"), false, ArgumentValidators::regexChecker),
     EXCLUDE(Names.EXCLUDE_NAME, Range.atLeast(1), Range.singleton(0), Range.singleton(0),
             Arrays.asList(), true),
     LOWERCASE(Names.LOWERCASE_NAME, Range.singleton(1), Range.singleton(0), Range.singleton(1),
@@ -63,6 +64,8 @@ public enum TransformType
             Arrays.asList("trim"));
 
     /**
+     * Transform names.
+     *
      * Enums cannot use static fields in their constructors as the
      * enum values are initialised before the statics.
      * Having the static fields in nested class means they are created
@@ -90,17 +93,28 @@ public enum TransformType
     private final String m_PrettyName;
     private final List<String> m_DefaultOutputNames;
     private final boolean m_HasCondition;
+    private final Predicate<String> m_ArgumentVerifier;
 
     private TransformType(String prettyName, Range<Integer> arityRange,
             Range<Integer> argumentsRange, Range<Integer> outputsRange,
             List<String> defaultOutputNames)
     {
-        this(prettyName, arityRange, argumentsRange, outputsRange, defaultOutputNames, false);
+        this(prettyName, arityRange, argumentsRange, outputsRange, defaultOutputNames, false,
+              (arg) -> true);
     }
 
     private TransformType(String prettyName, Range<Integer> arityRange,
             Range<Integer> argumentsRange, Range<Integer> outputsRange,
             List<String> defaultOutputNames, boolean hasCondition)
+    {
+        this(prettyName, arityRange, argumentsRange, outputsRange, defaultOutputNames, hasCondition,
+                (arg) -> true);
+    }
+
+    private TransformType(String prettyName, Range<Integer> arityRange,
+            Range<Integer> argumentsRange, Range<Integer> outputsRange,
+            List<String> defaultOutputNames, boolean hasCondition,
+            Predicate<String> argumentVerifier)
     {
         m_ArityRange = arityRange;
         m_ArgumentsRange = argumentsRange;
@@ -108,6 +122,7 @@ public enum TransformType
         m_PrettyName = prettyName;
         m_DefaultOutputNames = defaultOutputNames;
         m_HasCondition = hasCondition;
+        m_ArgumentVerifier = argumentVerifier;
     }
 
     /**
@@ -205,6 +220,16 @@ public enum TransformType
             String msg = Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_INVALID_ARGUMENT_COUNT,
                     tc.getTransform(), rangeAsString(m_ArgumentsRange), argumentsSize);
             throw new TransformConfigurationException(msg, ErrorCodes.TRANSFORM_INVALID_ARGUMENT_COUNT);
+        }
+
+        for (String argument : arguments)
+        {
+            if (m_ArgumentVerifier.test(argument) == false)
+            {
+                String msg = Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_INVALID_ARGUMENT,
+                        tc.getTransform(), argument);
+                throw new TransformConfigurationException(msg, ErrorCodes.TRANSFORM_INVALID_ARGUMENT);
+            }
         }
     }
 

@@ -207,6 +207,11 @@ public enum ErrorCodes
      */
     TRANSFORM_OUTPUTS_CANNOT_BE_EMPTY_STRINGS(10213),
 
+    /**
+     * The transform argument is invalid
+     */
+    TRANSFORM_INVALID_ARGUMENT(10214),
+
 	// Data store errors
 	/**
 	 * A generic exception from the data store

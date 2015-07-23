@@ -76,6 +76,10 @@ public class TransformConfig implements Verifiable
         m_Inputs = fields;
     }
 
+    /**
+     * Transform name see {@linkplain TransformType.Names}
+     * @return
+     */
     public String getTransform()
     {
         return m_Name;
