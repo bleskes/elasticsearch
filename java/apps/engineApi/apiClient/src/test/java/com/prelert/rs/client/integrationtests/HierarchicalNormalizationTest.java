@@ -42,10 +42,10 @@ import org.apache.log4j.PatternLayout;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
-import com.prelert.job.results.AnomalyRecord;
-import com.prelert.job.results.Bucket;
 import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
+import com.prelert.job.results.AnomalyRecord;
+import com.prelert.job.results.Bucket;
 import com.prelert.rs.client.EngineApiClient;
 import com.prelert.rs.data.Pagination;
 
@@ -71,8 +71,10 @@ public class HierarchicalNormalizationTest implements Closeable
 {
     private static final Logger LOGGER = Logger.getLogger(HierarchicalNormalizationTest.class);
 
-    private static final String PARTITION_LEVEL_JOB_ID = "partition-norm-test";
-    private static final String PERSON_LEVEL_JOB_ID = "person-norm-test";
+    private static final String DIFFERENT_PARTITIONS_JOB_ID = "partition-norm-test";
+    private static final String DIFFERENT_PERSONS_JOB_ID = "person-norm-test";
+    private static final String DIFFERENT_PERSONS_AND_FUNCTIONS_JOB_ID = "person-function-norm-test";
+    private static final String DIFFERENT_FUNCTION_FIELDS_JOB_ID = "function-fields-norm-test";
 
     /**
      * The default base Url used in the test
@@ -95,7 +97,7 @@ public class HierarchicalNormalizationTest implements Closeable
         m_WebServiceClient.close();
     }
 
-    private String createPartitionLevelJob() throws ClientProtocolException, IOException
+    private String createDifferentPartitionsJob() throws ClientProtocolException, IOException
     {
         Detector d1 = new Detector();
         d1.setFunction("mean");
@@ -107,10 +109,25 @@ public class HierarchicalNormalizationTest implements Closeable
         d2.setFieldName("value");
         d2.setPartitionFieldName("instance");
 
-        return createJob(Arrays.asList(d1, d2), PARTITION_LEVEL_JOB_ID);
+        return createJob(Arrays.asList(d1, d2), DIFFERENT_PARTITIONS_JOB_ID);
     }
 
-    private String createPersonLevelJob() throws ClientProtocolException, IOException
+    private String createDifferentPersonsJob() throws ClientProtocolException, IOException
+    {
+        Detector d1 = new Detector();
+        d1.setFunction("mean");
+        d1.setFieldName("value");
+        d1.setByFieldName("region");
+
+        Detector d2 = new Detector();
+        d2.setFunction("mean");
+        d2.setFieldName("value");
+        d2.setByFieldName("instance");
+
+        return createJob(Arrays.asList(d1, d2), DIFFERENT_PERSONS_JOB_ID);
+    }
+
+    private String createDifferentPersonsAndFunctionsJob() throws ClientProtocolException, IOException
     {
         Detector d1 = new Detector();
         d1.setFunction("mean");
@@ -127,7 +144,22 @@ public class HierarchicalNormalizationTest implements Closeable
         d3.setFieldName("value");
         d3.setByFieldName("instance");
 
-        return createJob(Arrays.asList(d1, d2, d3), PERSON_LEVEL_JOB_ID);
+        return createJob(Arrays.asList(d1, d2, d3), DIFFERENT_PERSONS_AND_FUNCTIONS_JOB_ID);
+    }
+
+    private String createDifferentFunctionFieldsJob() throws ClientProtocolException, IOException
+    {
+        Detector d1 = new Detector();
+        d1.setFunction("mean");
+        d1.setFieldName("value");
+        d1.setByFieldName("instance");
+
+        Detector d2 = new Detector();
+        d2.setFunction("mean");
+        d2.setFieldName("value2");
+        d2.setByFieldName("instance");
+
+        return createJob(Arrays.asList(d1, d2), DIFFERENT_FUNCTION_FIELDS_JOB_ID);
     }
 
     private String createJob(List<Detector> detectors, String jobId)
@@ -159,11 +191,11 @@ public class HierarchicalNormalizationTest implements Closeable
         return returnedJobId;
     }
 
-    private boolean verifyPartitionLevelJob() throws IOException
+    private boolean verifyDifferentPartitionsJob() throws IOException
     {
-        verifyConsistentMaxNormalizedProbability(PARTITION_LEVEL_JOB_ID);
+        verifyConsistentMaxNormalizedProbability(DIFFERENT_PARTITIONS_JOB_ID);
 
-        Pagination<AnomalyRecord> paginatedRecords = m_WebServiceClient.prepareGetRecords(PARTITION_LEVEL_JOB_ID)
+        Pagination<AnomalyRecord> paginatedRecords = m_WebServiceClient.prepareGetRecords(DIFFERENT_PARTITIONS_JOB_ID)
             .sortField(AnomalyRecord.NORMALIZED_PROBABILITY)
             .descending(true)
             .take(2)
@@ -187,11 +219,11 @@ public class HierarchicalNormalizationTest implements Closeable
         return true;
     }
 
-    private boolean verifyPersonLevelJob() throws IOException
+    private boolean verifyDifferentPersonsJob() throws IOException
     {
-        verifyConsistentMaxNormalizedProbability(PERSON_LEVEL_JOB_ID);
+        verifyConsistentMaxNormalizedProbability(DIFFERENT_PERSONS_JOB_ID);
 
-        Pagination<AnomalyRecord> paginatedRecords = m_WebServiceClient.prepareGetRecords(PERSON_LEVEL_JOB_ID)
+        Pagination<AnomalyRecord> paginatedRecords = m_WebServiceClient.prepareGetRecords(DIFFERENT_PERSONS_JOB_ID)
             .sortField(AnomalyRecord.NORMALIZED_PROBABILITY)
             .descending(true)
             .take(2)
@@ -207,10 +239,81 @@ public class HierarchicalNormalizationTest implements Closeable
         test(record1.getByFieldValue().equals("US-1"));
 
         AnomalyRecord record2 = records.get(1);
-        test(record2.getNormalizedProbability() > 97.0);
+        test(record2.getNormalizedProbability() > 82.0);
         test(record2.getAnomalyScore() == record1.getAnomalyScore());
         test(record2.getByFieldName().equals("region"));
         test(record2.getByFieldValue().equals("Europe"));
+
+        return true;
+    }
+
+    private boolean verifyDifferentPersonsAndFunctionsJob() throws IOException
+    {
+        verifyConsistentMaxNormalizedProbability(DIFFERENT_PERSONS_AND_FUNCTIONS_JOB_ID);
+
+        Pagination<AnomalyRecord> paginatedRecords =
+            m_WebServiceClient.prepareGetRecords(DIFFERENT_PERSONS_AND_FUNCTIONS_JOB_ID)
+            .sortField(AnomalyRecord.NORMALIZED_PROBABILITY)
+            .descending(true)
+            .take(3)
+            .get();
+
+        List<AnomalyRecord> records = paginatedRecords.getDocuments();
+        test(records.size() == 3);
+
+        AnomalyRecord record1 = records.get(0);
+        test(record1.getNormalizedProbability() > 97.0);
+        test(record1.getAnomalyScore() > 82.0);
+        test(record1.getByFieldName().equals("instance"));
+        test(record1.getByFieldValue().equals("US-1"));
+        test(record1.getFunction().equals("mean"));
+
+        AnomalyRecord record2 = records.get(1);
+        test(record2.getNormalizedProbability() > 82.0);
+        test(record2.getAnomalyScore() == record1.getAnomalyScore());
+        test(record2.getByFieldName().equals("region"));
+        test(record2.getByFieldValue().equals("Europe"));
+        test(record2.getFunction().equals("mean"));
+
+        AnomalyRecord record3 = records.get(2);
+        test(record3.getNormalizedProbability() > 82.0);
+        test(record3.getAnomalyScore() > 6.0 && record3.getAnomalyScore() < 6.5);
+        test(record3.getByFieldName().equals("region"));
+        test(record3.getByFieldValue().equals("US"));
+        test(record3.getFunction().equals("min"));
+
+        return true;
+    }
+
+    private boolean verifyDifferentFunctionFieldsJob() throws IOException
+    {
+        verifyConsistentMaxNormalizedProbability(DIFFERENT_FUNCTION_FIELDS_JOB_ID);
+
+        Pagination<AnomalyRecord> paginatedRecords =
+            m_WebServiceClient.prepareGetRecords(DIFFERENT_FUNCTION_FIELDS_JOB_ID)
+            .sortField(AnomalyRecord.NORMALIZED_PROBABILITY)
+            .descending(true)
+            .take(2)
+            .get();
+
+        List<AnomalyRecord> records = paginatedRecords.getDocuments();
+        test(records.size() == 2);
+
+        AnomalyRecord record1 = records.get(0);
+        test(record1.getNormalizedProbability() > 97.0);
+        test(record1.getAnomalyScore() > 82.0);
+        test(record1.getByFieldName().equals("instance"));
+        test(record1.getByFieldValue().equals("Europe-5"));
+        test(record1.getFunction().equals("mean"));
+        test(record1.getFieldName().equals("value2"));
+
+        AnomalyRecord record2 = records.get(1);
+        test(record2.getNormalizedProbability() > 97.0);
+        test(record2.getAnomalyScore() > 50.0);
+        test(record2.getByFieldName().equals("instance"));
+        test(record2.getByFieldValue().equals("US-1"));
+        test(record2.getFunction().equals("mean"));
+        test(record2.getFieldName().equals("value"));
 
         return true;
     }
@@ -286,26 +389,40 @@ public class HierarchicalNormalizationTest implements Closeable
 
         // Always delete the test job first in case it is hanging around
         // from a previous run
-        test.m_WebServiceClient.deleteJob(PARTITION_LEVEL_JOB_ID);
-        test.m_WebServiceClient.deleteJob(PERSON_LEVEL_JOB_ID);
+        test.m_WebServiceClient.deleteJob(DIFFERENT_PARTITIONS_JOB_ID);
+        test.m_WebServiceClient.deleteJob(DIFFERENT_PERSONS_JOB_ID);
+        test.m_WebServiceClient.deleteJob(DIFFERENT_PERSONS_AND_FUNCTIONS_JOB_ID);
+        test.m_WebServiceClient.deleteJob(DIFFERENT_FUNCTION_FIELDS_JOB_ID);
 
         File data = new File(prelertTestDataHome
                 + "/engine_api_integration_test/hierarchical_normalisation_test.csv");
 
-        test.createPartitionLevelJob();
-        test.m_WebServiceClient.fileUpload(PARTITION_LEVEL_JOB_ID, data, false);
-        test.m_WebServiceClient.closeJob(PARTITION_LEVEL_JOB_ID);
-        test.verifyPartitionLevelJob();
+        test.createDifferentPartitionsJob();
+        test.m_WebServiceClient.fileUpload(DIFFERENT_PARTITIONS_JOB_ID, data, false);
+        test.m_WebServiceClient.closeJob(DIFFERENT_PARTITIONS_JOB_ID);
+        test.verifyDifferentPartitionsJob();
 
-        test.createPersonLevelJob();
-        test.m_WebServiceClient.fileUpload(PERSON_LEVEL_JOB_ID, data, false);
-        test.m_WebServiceClient.closeJob(PERSON_LEVEL_JOB_ID);
-        test.verifyPersonLevelJob();
+        test.createDifferentPersonsJob();
+        test.m_WebServiceClient.fileUpload(DIFFERENT_PERSONS_JOB_ID, data, false);
+        test.m_WebServiceClient.closeJob(DIFFERENT_PERSONS_JOB_ID);
+        test.verifyDifferentPersonsJob();
+
+        test.createDifferentPersonsAndFunctionsJob();
+        test.m_WebServiceClient.fileUpload(DIFFERENT_PERSONS_AND_FUNCTIONS_JOB_ID, data, false);
+        test.m_WebServiceClient.closeJob(DIFFERENT_PERSONS_AND_FUNCTIONS_JOB_ID);
+        test.verifyDifferentPersonsAndFunctionsJob();
+
+        test.createDifferentFunctionFieldsJob();
+        test.m_WebServiceClient.fileUpload(DIFFERENT_FUNCTION_FIELDS_JOB_ID, data, false);
+        test.m_WebServiceClient.closeJob(DIFFERENT_FUNCTION_FIELDS_JOB_ID);
+        test.verifyDifferentFunctionFieldsJob();
 
         //==========================
         // Clean up test jobs
-        test(test.m_WebServiceClient.deleteJob(PARTITION_LEVEL_JOB_ID));
-        test(test.m_WebServiceClient.deleteJob(PERSON_LEVEL_JOB_ID));
+        test(test.m_WebServiceClient.deleteJob(DIFFERENT_PARTITIONS_JOB_ID));
+        test(test.m_WebServiceClient.deleteJob(DIFFERENT_PERSONS_JOB_ID));
+        test(test.m_WebServiceClient.deleteJob(DIFFERENT_PERSONS_AND_FUNCTIONS_JOB_ID));
+        test(test.m_WebServiceClient.deleteJob(DIFFERENT_FUNCTION_FIELDS_JOB_ID));
 
         test.close();
 
