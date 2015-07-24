@@ -69,6 +69,12 @@ public class Bucket
     public static final String RECORDS = "records";
     public static final String INFLUENCERS = "influencers";
 
+    /**
+     * This is a debug only field. It is only written in ES; the Java objects
+     * never get these values.
+     */
+    public static final String INITIAL_ANOMALY_SCORE = "initialAnomalyScore";
+
 
     /**
      * Elasticsearch type

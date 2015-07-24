@@ -98,6 +98,12 @@ public class AnomalyRecord
     public static final String ANOMALY_SCORE = "anomalyScore";
     public static final String NORMALIZED_PROBABILITY = "normalizedProbability";
 
+    /**
+     * This is a debug only field. It is only written in ES; the Java objects
+     * never get these values.
+     */
+    public static final String INITIAL_NORMALIZED_PROBABILITY = "initialNormalizedProbability";
+
     private static final Logger LOGGER = Logger.getLogger(AnomalyRecord.class);
 
     private String m_DetectorName;
