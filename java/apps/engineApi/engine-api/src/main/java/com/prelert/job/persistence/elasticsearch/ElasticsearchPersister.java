@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -93,13 +93,6 @@ import com.prelert.job.results.Influencer;
 public class ElasticsearchPersister implements JobResultsPersister
 {
     private static final Logger LOGGER = Logger.getLogger(ElasticsearchPersister.class);
-
-    /**
-     * These are debug only fields. They are only written in ES, the Java objects
-     * never get these values.
-     */
-    private static final String INITIAL_ANOMALY_SCORE = "initialAnomalyScore";
-    private static final String INITIAL_NORMALIZED_PROBABILITY = "initialNormalizedProbability";
 
     private Client m_Client;
     private String m_JobId;
@@ -357,7 +350,7 @@ public class ElasticsearchPersister implements JobResultsPersister
                 .field(ElasticsearchMappings.ES_TIMESTAMP, bucket.getTimestamp())
                 .field(Bucket.RAW_ANOMALY_SCORE, bucket.getRawAnomalyScore())
                 .field(Bucket.ANOMALY_SCORE, bucket.getAnomalyScore())
-                .field(INITIAL_ANOMALY_SCORE, bucket.getAnomalyScore())
+                .field(Bucket.INITIAL_ANOMALY_SCORE, bucket.getAnomalyScore())
                 .field(Bucket.MAX_NORMALIZED_PROBABILITY, bucket.getMaxNormalizedProbability())
                 .field(Bucket.RECORD_COUNT, bucket.getRecordCount())
                 .field(Bucket.EVENT_COUNT, bucket.getEventCount());
@@ -465,7 +458,7 @@ public class ElasticsearchPersister implements JobResultsPersister
                 .field(AnomalyRecord.PROBABILITY, record.getProbability())
                 .field(AnomalyRecord.ANOMALY_SCORE, record.getAnomalyScore())
                 .field(AnomalyRecord.NORMALIZED_PROBABILITY, record.getNormalizedProbability())
-                .field(INITIAL_NORMALIZED_PROBABILITY, record.getNormalizedProbability())
+                .field(AnomalyRecord.INITIAL_NORMALIZED_PROBABILITY, record.getNormalizedProbability())
                 .field(ElasticsearchMappings.ES_TIMESTAMP, bucketTime);
 
         if (record.getByFieldName() != null)
