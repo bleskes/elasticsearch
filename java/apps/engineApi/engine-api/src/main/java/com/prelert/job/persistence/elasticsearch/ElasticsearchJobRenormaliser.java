@@ -476,17 +476,19 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
                         setIdleAndNotify();
                     }
                 }
-                setIdleAndNotify();
             }
             catch (InterruptedException e)
             {
                 Thread.currentThread().interrupt();
-                setIdleAndNotify();
                 // Thread will exit now
                 if (lastLogger != null)
                 {
                     lastLogger.info("Renormaliser thread interrupted - will not refresh indexes");
                 }
+            }
+            finally
+            {
+                setIdleAndNotify();
             }
         }
     }
