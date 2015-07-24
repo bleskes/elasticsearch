@@ -116,8 +116,8 @@ public class Normaliser
                             LEAF,
                             Strings.nullToEmpty(record.getPartitionFieldName()),
                             Strings.nullToEmpty(getPersonFieldName(record)),
-                            record.getFunction(),
-                            record.getFieldName(),
+                            Strings.nullToEmpty(record.getFunction()),
+                            Strings.nullToEmpty(record.getFieldName()),
                             Double.toString(record.getProbability())
                             });
                 }
