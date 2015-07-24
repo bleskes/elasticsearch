@@ -24,18 +24,13 @@
  *                                                          *
  *                                                          *
  ************************************************************/
+
 package com.prelert.job.transform;
 
-import static org.junit.Assert.*;
+import com.prelert.job.transform.exceptions.TransformConfigurationException;
 
-import org.junit.Test;
-
-public class ArgumentValidatorsTest
+@FunctionalInterface
+public interface ArgumentVerifier
 {
-    @Test
-    public void testRegexChecker()
-    {
-        assertTrue(ArgumentValidators.regexChecker("[a-z]+"));
-        assertFalse(ArgumentValidators.regexChecker("[+"));
-    }
+    void verify(String argument, TransformConfig tc) throws TransformConfigurationException;
 }

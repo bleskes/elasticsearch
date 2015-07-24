@@ -413,8 +413,7 @@ public class JobConfigurationTest
     {
         ArrayList<TransformConfig> transforms = new ArrayList<>();
         TransformConfig transform = new TransformConfig();
-        transform.setTransform("extract");
-        transform.setArguments(Arrays.asList(""));
+        transform.setTransform("trim");
         transform.setInputs(Arrays.asList("raw"));
         transform.setOutputs(Arrays.asList("time"));
         transforms.add(transform);

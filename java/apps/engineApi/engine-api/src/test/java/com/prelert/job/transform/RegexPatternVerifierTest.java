@@ -24,51 +24,41 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.transforms;
 
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+package com.prelert.job.transform;
 
-import org.apache.log4j.Logger;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
-public class RegexExtract extends Transform
+import com.prelert.job.errorcodes.ErrorCodeMatcher;
+import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.transform.RegexPatternVerifier;
+import com.prelert.job.transform.TransformConfig;
+import com.prelert.job.transform.exceptions.TransformConfigurationException;
+
+public class RegexPatternVerifierTest
 {
-    private final Pattern m_Pattern;
+    @Rule
+    public ExpectedException m_ExpectedException = ExpectedException.none();
 
-    public RegexExtract(String regex, List<TransformIndex> readIndicies,
-            List<TransformIndex> writeIndicies, Logger logger)
+    @Test
+    public void testVerify_GivenValidRegex() throws TransformConfigurationException
     {
-        super(readIndicies, writeIndicies, logger);
-
-        m_Pattern = Pattern.compile(regex);
+        new RegexPatternVerifier().verify("[a-z]+", new TransformConfig());
     }
 
-    @Override
-    public TransformResult transform(String[][] readWriteArea)
-    throws TransformException
+    @Test
+    public void testVerify_GivenInvalidRegex() throws TransformConfigurationException
     {
-        TransformIndex readIndex = m_ReadIndicies.get(0);
-        String field = readWriteArea[readIndex.array][readIndex.index];
+        m_ExpectedException.expect(TransformConfigurationException.class);
+        m_ExpectedException.expectMessage("Transform 'split' has invalid argument '[+'");
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.TRANSFORM_INVALID_ARGUMENT));
 
-        Matcher match = m_Pattern.matcher(field);
+        TransformConfig transformConfig = new TransformConfig();
+        transformConfig.setTransform("split");
 
-        if (match.find())
-        {
-            int maxMatches = Math.min(m_WriteIndicies.size(), match.groupCount());
-            for (int i=0; i<maxMatches; i++)
-            {
-                TransformIndex index = m_WriteIndicies.get(i);
-                readWriteArea[index.array][index.index] = match.group(i+1);
-            }
-
-            return TransformResult.OK;
-        }
-        else
-        {
-            m_Logger.warn("Transform 'extract' failed to match field: " + field);
-        }
-
-        return TransformResult.FAIL;
+        new RegexPatternVerifier().verify("[+", transformConfig);
     }
 }

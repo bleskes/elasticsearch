@@ -24,51 +24,33 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.transforms;
+
+package com.prelert.job.transform;
 
 import java.util.List;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.log4j.Logger;
+import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.messages.Messages;
+import com.prelert.job.transform.exceptions.TransformConfigurationException;
 
-public class RegexExtract extends Transform
+public class RegexExtractVerifier implements ArgumentVerifier
 {
-    private final Pattern m_Pattern;
-
-    public RegexExtract(String regex, List<TransformIndex> readIndicies,
-            List<TransformIndex> writeIndicies, Logger logger)
-    {
-        super(readIndicies, writeIndicies, logger);
-
-        m_Pattern = Pattern.compile(regex);
-    }
-
     @Override
-    public TransformResult transform(String[][] readWriteArea)
-    throws TransformException
+    public void verify(String arg, TransformConfig tc)
+            throws TransformConfigurationException
     {
-        TransformIndex readIndex = m_ReadIndicies.get(0);
-        String field = readWriteArea[readIndex.array][readIndex.index];
+        new RegexPatternVerifier().verify(arg, tc);
 
-        Matcher match = m_Pattern.matcher(field);
-
-        if (match.find())
+        Pattern pattern = Pattern.compile(arg);
+        int groupCount = pattern.matcher("").groupCount();
+        List<String> outputs = tc.getOutputs();
+        int outputCount = outputs == null ? 0 : outputs.size();
+        if (groupCount != outputCount)
         {
-            int maxMatches = Math.min(m_WriteIndicies.size(), match.groupCount());
-            for (int i=0; i<maxMatches; i++)
-            {
-                TransformIndex index = m_WriteIndicies.get(i);
-                readWriteArea[index.array][index.index] = match.group(i+1);
-            }
-
-            return TransformResult.OK;
+            String msg = Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_EXTRACT_GROUPS_SHOULD_MATCH_OUTPUT_COUNT,
+                    tc.getTransform(), outputCount, arg, groupCount);
+            throw new TransformConfigurationException(msg, ErrorCodes.TRANSFORM_INVALID_ARGUMENT);
         }
-        else
-        {
-            m_Logger.warn("Transform 'extract' failed to match field: " + field);
-        }
-
-        return TransformResult.FAIL;
     }
 }

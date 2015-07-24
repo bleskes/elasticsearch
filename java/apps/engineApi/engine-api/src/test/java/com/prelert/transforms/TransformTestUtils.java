@@ -29,6 +29,7 @@ package com.prelert.transforms;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiFunction;
 
 import com.google.common.collect.Range;
 import com.prelert.job.transform.TransformConfig;
@@ -56,9 +57,12 @@ public final class TransformTestUtils
 
     public static TransformConfig createValidTransform(TransformType type)
     {
-        List<String> inputs = createValidArgs(type.arityRange());
-        List<String> args = createValidArgs(type.argumentsRange());
-        List<String> outputs = createValidArgs(type.outputsRange());
+        List<String> inputs = createValidArgs(type.arityRange(), type,
+                (arg, t) -> Integer.toString(arg));
+        List<String> args = createValidArgs(type.argumentsRange(), type,
+                TransformTestUtils::createValidArgument);
+        List<String> outputs = createValidArgs(type.outputsRange(), type,
+                (arg, t) -> Integer.toString(arg));
 
         Condition condition = null;
         if (type.hasCondition())
@@ -75,15 +79,35 @@ public final class TransformTestUtils
         return tr;
     }
 
-    private static List<String> createValidArgs(Range<Integer> range)
+    private static List<String> createValidArgs(Range<Integer> range, TransformType type,
+            BiFunction<Integer, TransformType, String> argumentCreator)
     {
         List<String> args = new ArrayList<>();
         int validCount = getValidCount(range);
         for (int arg = 0; arg < validCount; ++arg)
         {
-            args.add(Integer.toString(arg));
+            args.add(argumentCreator.apply(arg, type));
         }
         return args;
+    }
+
+    private static String createValidArgument(int argNumber, TransformType type)
+    {
+        switch (type)
+        {
+            case REGEX_EXTRACT:
+                return Integer.toString(argNumber) + ".Foo ([0-9]+)";
+            case CONCAT:
+            case DOMAIN_SPLIT:
+            case EXCLUDE:
+            case LOWERCASE:
+            case REGEX_SPLIT:
+            case TRIM:
+            case UPPERCASE:
+                return Integer.toString(argNumber);
+            default:
+                throw new IllegalArgumentException();
+        }
     }
 
     private static int getValidCount(Range<Integer> range)

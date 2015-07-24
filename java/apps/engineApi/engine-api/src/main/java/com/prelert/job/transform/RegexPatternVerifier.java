@@ -30,34 +30,26 @@ package com.prelert.job.transform;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-/**
- * Transform argument validation methods
- */
-public class ArgumentValidators
+import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.messages.Messages;
+import com.prelert.job.transform.exceptions.TransformConfigurationException;
+
+public class RegexPatternVerifier implements ArgumentVerifier
 {
-    private ArgumentValidators()
-    {
 
-    }
-
-    /**
-     * Validate a regular expression argument
-     * If arg complies with {@linkplain Pattern#compile(String)} then
-     * it is valid
-     *
-     * @param arg
-     * @return Return true if arg is a valid regular expression else false.
-     */
-    public static boolean regexChecker(String arg)
+    @Override
+    public void verify(String arg, TransformConfig tc) throws TransformConfigurationException
     {
         try
         {
             Pattern.compile(arg);
-            return true;
         }
         catch (PatternSyntaxException e)
         {
-            return false;
+            String msg = Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_INVALID_ARGUMENT,
+                    tc.getTransform(), arg);
+            throw new TransformConfigurationException(msg, ErrorCodes.TRANSFORM_INVALID_ARGUMENT);
         }
     }
+
 }

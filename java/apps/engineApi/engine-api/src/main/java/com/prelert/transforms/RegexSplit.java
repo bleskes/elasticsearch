@@ -53,6 +53,8 @@ public class RegexSplit extends Transform
 
         String [] split = m_Pattern.split(field);
 
+        warnIfOutputCountIsNotMatched(split.length, field);
+
         int count = Math.min(split.length, m_WriteIndicies.size());
         for (int i=0; i<count; i++)
         {
@@ -60,8 +62,18 @@ public class RegexSplit extends Transform
             readWriteArea[index.array][index.index] = split[i];
         }
 
-
         return TransformResult.OK;
+    }
+
+    private void warnIfOutputCountIsNotMatched(int splitCount, String field)
+    {
+        if (splitCount != m_WriteIndicies.size())
+        {
+            String warning = String.format(
+                    "Transform 'split' has %d output(s) but splitting value '%s' resulted to %d part(s)",
+                    m_WriteIndicies.size(), field, splitCount);
+            m_Logger.warn(warning);
+        }
     }
 }
 
