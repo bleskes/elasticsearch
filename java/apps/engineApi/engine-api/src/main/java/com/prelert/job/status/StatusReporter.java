@@ -138,13 +138,15 @@ public abstract class StatusReporter
     {
         m_UsageReporter.addFieldsRecordsRead(inputFieldCount);
 
+        Date latestDate = new Date(latestRecordTime * SECONDS_TO_MS);
+
         m_TotalRecordStats.incrementInputFieldCount(inputFieldCount);
         m_TotalRecordStats.incrementProcessedRecordCount(1);
-        m_TotalRecordStats.setLatestRecordTimeStamp(new Date(latestRecordTime * SECONDS_TO_MS));
+        m_TotalRecordStats.setLatestRecordTimeStamp(latestDate);
 
         m_IncrementalRecordStats.incrementInputFieldCount(inputFieldCount);
         m_IncrementalRecordStats.incrementProcessedRecordCount(1);
-        m_IncrementalRecordStats.setLatestRecordTimeStamp(new Date(latestRecordTime * SECONDS_TO_MS));
+        m_IncrementalRecordStats.setLatestRecordTimeStamp(latestDate);
 
         // report at various boundaries
         long totalRecords = getInputRecordCount() ;

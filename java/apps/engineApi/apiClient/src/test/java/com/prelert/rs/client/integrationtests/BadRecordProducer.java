@@ -46,35 +46,35 @@ import com.prelert.job.JobConfiguration;
  *  Class to create bad records for testing error conditions in the API
  */
 public class BadRecordProducer implements Runnable
-{	
+{
 	private static final Logger LOGGER = Logger.getLogger(BadRecordProducer.class);
-	
+
 	public static final String HEADER = "time,metric,value";
-	
+
 	public enum TestType {OUT_OF_ORDER_RECORDS, BAD_TIMESTAMP};
 
 	private PipedOutputStream m_OutputStream;
 	private TestType m_TestType;
 	private long m_NumIterations;
-	
-	
+
+
 	/**
 	 * Create the bad record producer for the test type.
-	 * 
+	 *
 	 * @param testType The type of test to run
 	 * @param sink Data is written to this stream by connecting it
 	 * to a piped input stream.
 	 * @throws IOException
 	 */
-	public BadRecordProducer(TestType testType, PipedInputStream sink) 
+	public BadRecordProducer(TestType testType, PipedInputStream sink)
 	throws IOException
 	{
 		m_TestType = testType;
 		m_NumIterations = 1000;
 		m_OutputStream = new PipedOutputStream(sink);
 	}
-	
-	
+
+
 	/**
 	 * Create a new job configuration each call rather than
 	 * a member that could be mutated.
@@ -85,35 +85,36 @@ public class BadRecordProducer implements Runnable
 		Detector d = new Detector();
 		d.setFieldName("metric");
 		d.setByFieldName("value");
-		
+
 		AnalysisConfig ac = new AnalysisConfig();
 		ac.setDetectors(Arrays.asList(d));
-		
+
 		DataDescription dd = new DataDescription();
 		dd.setFieldDelimiter(',');
 		dd.setTimeField("time");
+		dd.setTimeFormat(DataDescription.EPOCH);
 
 		JobConfiguration jc = new JobConfiguration(ac);
 		jc.setDataDescription(dd);
-		
+
 		return jc;
 	}
-	
+
 	public void setNumIterations(long numIter)
 	{
 		m_NumIterations = numIter;
 	}
-	
+
 	@Override
 	public void run()
-	{					
-		// HACK wait for the parent thread to open the connection 
+	{
+		// HACK wait for the parent thread to open the connection
 		// before writing
-		try 
+		try
 		{
 			Thread.sleep(1000);
 		}
-		catch (InterruptedException e1) 
+		catch (InterruptedException e1)
 		{
 			LOGGER.error("Producer interruputed pausing before write start");
 		}
@@ -121,7 +122,7 @@ public class BadRecordProducer implements Runnable
 		try
 		{
 			int iterationCount = 0;
-			long epoch = new Date().getTime();
+			long epoch = new Date().getTime() / 1000;
 			writeHeader();
 
 			if (m_TestType == TestType.BAD_TIMESTAMP)
@@ -142,20 +143,22 @@ public class BadRecordProducer implements Runnable
 					writeTimeSeriesRow(1, epoch);
 					epoch++;
 				}
-				
-				// write a 
+
+				// write older records
 				epoch -= 60;
 				while (++iterationCount <= 300)
 				{
 					writeTimeSeriesRow(1, epoch);
 				}
-				
+
 			}
-					
-		} 
-		finally 
-		{				
-			try 
+
+			System.out.println("final epoch = " + epoch);
+
+		}
+		finally
+		{
+			try
 			{
 				m_OutputStream.close();
 			}
@@ -168,18 +171,18 @@ public class BadRecordProducer implements Runnable
 
 	private void writeHeader()
 	{
-		try 
+		try
 		{
 			m_OutputStream.write(HEADER.getBytes(StandardCharsets.UTF_8));
 			m_OutputStream.write(10); // newline char
-		} 
-		catch (IOException e) 
+		}
+		catch (IOException e)
 		{
 			LOGGER.error("Error writing csv header", e);
 		}
 	}
 
-	
+
 	/**
 	 * Generate a random value for the time series using ThreadLocalRandom
 	 * @param timeSeriesId
@@ -191,21 +194,21 @@ public class BadRecordProducer implements Runnable
 		int value = ThreadLocalRandom.current().nextInt(512);
 
 		String row = String.format("%d,%s,%d", epoch, timeSeries, value);
-		try 
+		try
 		{
 			m_OutputStream.write(row.getBytes(StandardCharsets.UTF_8));
 			m_OutputStream.write(10); // newline char
-		} 
-		catch (IOException e) 
+		}
+		catch (IOException e)
 		{
 			LOGGER.error("Error writing csv row", e);
-		}			
+		}
 	}
-	
-	
+
+
 	/**
 	 * Write a time series record with an unreadable timestamp
-	 * 
+	 *
 	 * @param timeSeriesId
 	 */
 	private void writeTimeSeriesBadTimestamp(long timeSeriesId)
@@ -214,14 +217,14 @@ public class BadRecordProducer implements Runnable
 		int value = ThreadLocalRandom.current().nextInt(512);
 
 		String row = String.format("%s,%s,%d", "", timeSeries, value);
-		try 
+		try
 		{
 			m_OutputStream.write(row.getBytes(StandardCharsets.UTF_8));
 			m_OutputStream.write(10); // newline char
-		} 
-		catch (IOException e) 
+		}
+		catch (IOException e)
 		{
 			LOGGER.error("Error writing csv row", e);
-		}	
+		}
 	}
 }
