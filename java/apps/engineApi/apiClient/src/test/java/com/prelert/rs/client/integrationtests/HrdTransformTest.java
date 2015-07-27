@@ -239,7 +239,9 @@ public class HrdTransformTest implements Closeable
             boolean looksLikeATopLevelDomain = r.getOverFieldValue().endsWith(".com") ||
                                     r.getOverFieldValue().endsWith(".net") ||
                                     r.getOverFieldValue().endsWith(".co.uk") ||
-                                    r.getOverFieldValue().endsWith(".io");
+                                    r.getOverFieldValue().endsWith(".io") ||
+                                    r.getOverFieldValue().endsWith(".net.au") ||
+                                    r.getOverFieldValue().endsWith(".edu.au");
 
             if (!looksLikeATopLevelDomain)
             {

@@ -165,7 +165,7 @@ public class BucketResettingTest implements Closeable
                 .includeInterim(true).start(start).end(end).get();
         test(buckets.getHitCount() == 1);
         bucket = buckets.getDocuments().get(0);
-        test(bucket.getRecordCount() == 0);
+        test(bucket.getMaxNormalizedProbability() < 1.0);
 
         records = getInterimResultsOnly(start, end);
         test(records.size() == 0);
@@ -286,7 +286,7 @@ public class BucketResettingTest implements Closeable
 
         String farequoteJob = TEST_JOB_ID;
 
-        BucketResettingTest test = new BucketResettingTest(prelertTestDataHome, API_BASE_URL);
+        BucketResettingTest test = new BucketResettingTest(prelertTestDataHome, baseUrl);
         List<String> jobUrls = new ArrayList<>();
 
         // Always delete the test job first in case it is hanging around
@@ -305,7 +305,7 @@ public class BucketResettingTest implements Closeable
         //==========================
         // Clean up test jobs
         BucketResettingTest.test(test.m_WebServiceClient.closeJob(farequoteJob) == true);
-        test.deleteJobs(jobUrls);
+        //test.deleteJobs(jobUrls);
 
         test.close();
 
