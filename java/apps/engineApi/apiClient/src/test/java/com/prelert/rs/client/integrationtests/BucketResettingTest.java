@@ -168,7 +168,10 @@ public class BucketResettingTest implements Closeable
         test(bucket.getMaxNormalizedProbability() < 1.0);
 
         records = getInterimResultsOnly(start, end);
-        test(records.size() == 0);
+        for (AnomalyRecord record : records)
+        {
+            test(record.getNormalizedProbability() < 1.0);
+        }
 
         // Finally delete first two available buckets and leave them empty
         start = "2014-06-27T10:00:00Z";
@@ -305,7 +308,7 @@ public class BucketResettingTest implements Closeable
         //==========================
         // Clean up test jobs
         BucketResettingTest.test(test.m_WebServiceClient.closeJob(farequoteJob) == true);
-        //test.deleteJobs(jobUrls);
+        test.deleteJobs(jobUrls);
 
         test.close();
 
