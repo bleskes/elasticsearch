@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -509,6 +509,10 @@ public class ProcessManager
             processStillRunning(process);
 
             process.getResultsReader().waitForFlushComplete(flushId);
+
+            // This test detects if the back-end process crashed while
+            // processing the flush.   Throws if it did.
+            processStillRunning(process);
         }
         catch (InterruptedException ie)
         {
