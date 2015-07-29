@@ -26,6 +26,7 @@
  ************************************************************/
 package com.prelert.job.results;
 
+import java.util.Date;
 import java.util.Objects;
 
 public class Influencer
@@ -39,13 +40,13 @@ public class Influencer
      * Field names
      */
     public static final String PROBABILITY = "probability";
-    public static final String BUCKET_ID = "bucketId";
+    public static final String TIMESTAMP = "timestamp";
     public static final String INFLUENCER_FIELD_NAME = "influencerFieldName";
     public static final String INFLUENCER_VALUE_NAME = "influencerFieldValue";
     public static final String INITIAL_SCORE = "initialScore";
 
     private double m_Probability;
-    private String m_BucketId;
+    private Date m_Timestamp;
 
     private String m_InfluenceField;
     private String m_InfluenceValue;
@@ -74,14 +75,14 @@ public class Influencer
     }
 
 
-    public String getBucketId()
+    public Date getTimestamp()
     {
-        return m_BucketId;
+        return m_Timestamp;
     }
 
-    public void setBucketId(String bucketId)
+    public void setTimestamp(Date date)
     {
-        this.m_BucketId = bucketId;
+        this.m_Timestamp = date;
     }
 
 
@@ -123,7 +124,7 @@ public class Influencer
         final int prime = 31;
         int result = 1;
         result = prime * result
-                + ((m_BucketId == null) ? 0 : m_BucketId.hashCode());
+                + ((m_Timestamp == null) ? 0 : m_Timestamp.hashCode());
         result = prime
                 * result
                 + ((m_InfluenceField == null) ? 0 : m_InfluenceField.hashCode());
@@ -160,7 +161,7 @@ public class Influencer
 
         Influencer other = (Influencer) obj;
 
-        return Objects.equals(m_BucketId, other.m_BucketId) &&
+        return Objects.equals(m_Timestamp, other.m_Timestamp) &&
                 Objects.equals(m_InfluenceField, other.m_InfluenceField) &&
                 Objects.equals(m_InfluenceValue, other.m_InfluenceValue) &&
                 Double.compare(m_InitialScore, other.m_InitialScore) == 0 &&

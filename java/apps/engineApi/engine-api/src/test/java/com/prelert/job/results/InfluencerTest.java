@@ -28,6 +28,8 @@ package com.prelert.job.results;
 
 import static org.junit.Assert.*;
 
+import java.util.Date;
+
 import org.junit.Test;
 
 public class InfluencerTest
@@ -36,20 +38,20 @@ public class InfluencerTest
     public void testEquals()
     {
         Influencer inf = new Influencer();
-        inf.setBucketId("123");
+        inf.setTimestamp(new Date(123));
         inf.setInfluencerFieldName("a");
         inf.setInfluencerFieldValue("f");
         inf.setProbability(0.1);
         inf.setInitialScore(2.0);
 
         Influencer inf2 = new Influencer("a", "f");
-        inf2.setBucketId("123");
+        inf2.setTimestamp(new Date(123));
         inf2.setProbability(0.1);
         inf2.setInitialScore(2.0);
 
         assertEquals(inf, inf2);
 
-        inf.setBucketId("321");
+        inf.setTimestamp(new Date(321));
         assertFalse(inf.equals(inf2));
     }
 
@@ -57,20 +59,20 @@ public class InfluencerTest
     public void testHash()
     {
         Influencer inf = new Influencer();
-        inf.setBucketId("123");
+        inf.setTimestamp(new Date(123));
         inf.setInfluencerFieldName("a");
         inf.setInfluencerFieldValue("f");
         inf.setProbability(0.1);
         inf.setInitialScore(2.0);
 
         Influencer inf2 = new Influencer("a", "f");
-        inf2.setBucketId("123");
+        inf2.setTimestamp(new Date(123));
         inf2.setProbability(0.1);
         inf2.setInitialScore(2.0);
 
         assertEquals(inf.hashCode(), inf2.hashCode());
 
-        inf.setBucketId("321");
+        inf.setTimestamp(new Date(321));
         assertFalse(inf.hashCode() == inf2.hashCode());
     }
 

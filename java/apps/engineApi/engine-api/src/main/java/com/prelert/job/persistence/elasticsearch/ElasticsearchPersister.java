@@ -151,7 +151,7 @@ public class ElasticsearchPersister implements JobResultsPersister
 
                 for (Influencer influencer : bucket.getInfluencers())
                 {
-                    influencer.setBucketId(bucket.getId());
+                    influencer.setTimestamp(bucket.getTimestamp());
                     content = serialiseInfluencer(influencer);
                     addInfluencersRequest.add(
                             m_Client.prepareIndex(m_JobId, Influencer.TYPE)
@@ -621,7 +621,7 @@ public class ElasticsearchPersister implements JobResultsPersister
     throws IOException
     {
         return jsonBuilder().startObject()
-                .field(Influencer.BUCKET_ID, influencer.getBucketId())
+                .field(Influencer.TIMESTAMP, influencer.getTimestamp())
                 .field(Influencer.PROBABILITY, influencer.getProbability())
                 .field(Influencer.INFLUENCER_FIELD_NAME, influencer.getInfluencerFieldName())
                 .field(Influencer.INFLUENCER_VALUE_NAME, influencer.getInfluencerFieldValue())
