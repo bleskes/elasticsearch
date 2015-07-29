@@ -23,6 +23,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.marvel.agent.exporter.MarvelDoc;
 import org.elasticsearch.marvel.agent.settings.MarvelSettingsService;
 import org.elasticsearch.test.ElasticsearchSingleNodeTest;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Collection;
@@ -34,6 +35,8 @@ import static org.hamcrest.Matchers.*;
 public class IndexStatsCollectorTests extends ElasticsearchSingleNodeTest {
 
     @Test
+    @AwaitsFix(bugUrl = "https://github.com/elastic/x-plugins/issues/357")
+    @Ignore
     public void testIndexStatsCollectorNoIndices() throws Exception {
         Collection<MarvelDoc> results = newIndexStatsCollector().doCollect();
         assertThat(results, is(empty()));
