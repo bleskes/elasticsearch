@@ -76,7 +76,7 @@ public class Influencers extends ResourceWithJobManager
 
         Pagination<Influencer> results = manager.influencers(jobId, skip, take);
 
-        setPagingUrls(ENDPOINT, results);
+        setPagingUrls(ENDPOINT + "/" + jobId, results);
 
 
         LOGGER.debug(String.format("Returning %d of %d influencers",
