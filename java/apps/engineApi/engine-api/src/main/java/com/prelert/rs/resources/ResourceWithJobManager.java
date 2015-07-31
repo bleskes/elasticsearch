@@ -50,6 +50,7 @@ import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.manager.JobManager;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.provider.RestApiException;
+import com.prelert.server.info.ServerInfoFactory;
 
 /**
  * Abstract resource class that knows how to access a
@@ -103,6 +104,7 @@ public abstract class ResourceWithJobManager
 
     private JobManager m_JobManager;
     private AlertManager m_AlertManager;
+    private ServerInfoFactory m_ServerInfo;
 
     /**
      *
@@ -195,6 +197,49 @@ public abstract class ResourceWithJobManager
 
         return m_AlertManager;
     }
+
+    /**
+     * Get the server info factory class
+     * @return
+     */
+    protected ServerInfoFactory serverInfo()
+    {
+        if (m_ServerInfo != null)
+        {
+            return m_ServerInfo;
+        }
+
+        if (m_RestApplication == null)
+        {
+            LOGGER.error("Application context has not been set in "
+                    + "the jobs resource");
+
+            throw new IllegalStateException("Application context has not been"
+                    + " set in the jobs resource");
+        }
+
+        Set<Object> singletons = m_RestApplication.getSingletons();
+        for (Object obj : singletons)
+        {
+            if (obj instanceof ServerInfoFactory)
+            {
+                m_ServerInfo = (ServerInfoFactory)obj;
+                break;
+            }
+        }
+
+        if (m_ServerInfo == null)
+        {
+            String msg = "Application singleton set doesn't contain an " +
+                    "instance of ServerInfoFactory";
+
+            LOGGER.error(msg);
+            throw new IllegalStateException(msg);
+        }
+
+        return m_ServerInfo;
+    }
+
 
     /**
      * Set the previous and next page URLs if appropriate.

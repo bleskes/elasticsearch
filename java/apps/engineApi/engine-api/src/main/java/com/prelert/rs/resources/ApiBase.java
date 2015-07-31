@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -34,6 +34,8 @@ import javax.ws.rs.core.MediaType;
 import org.apache.log4j.Logger;
 
 import com.prelert.job.manager.JobManager;
+import com.prelert.server.info.ServerInfo;
+import com.prelert.server.info.ServerInfoFactory;
 
 
 /**
@@ -52,8 +54,23 @@ public class ApiBase extends ResourceWithJobManager
 			+ "<h1>Prelert Engine API %s</h1>\n"
 			+ "<h2>Analytics Version:</h2>\n"
 			+ "<p>%s</p>\n"
+			+ "<div>%s</div>"
 			+ "</body>\n"
 			+ "</html>";
+
+
+	private static final String SERVER_INFO_TABLE =
+	         "<table>"
+                + "<tr><td>Hostname</td><td>%s</td></tr>"
+	            + "<tr><td>OS Name</td><td>%s</td></tr>"
+	            + "<tr><td>OS Version</td><td>%s</td></tr>"
+	            + "<tr><td>Processor</td><td>%s</td></tr>"
+	            + "<tr><td>Total Memory MB</td><td>%d</td></tr>"
+	            + "<tr><td>Total Disk MB</td><td>%d</td></tr>"
+	            + "<tr><td>Available Disk MB</td><td>%d</td></tr>"
+	        + "</table>";
+
+
 
     @GET
     @Produces(MediaType.TEXT_HTML)
@@ -66,6 +83,18 @@ public class ApiBase extends ResourceWithJobManager
     	String analyticsVersion = manager.getAnalyticsVersion();
     	analyticsVersion = analyticsVersion.replace("\n", "<br/>");
 
-    	return String.format(VERSION_HTML, apiVersion, analyticsVersion);
+    	ServerInfoFactory serverInfoFactory = serverInfo();
+
+    	ServerInfo serverInfo = serverInfoFactory.serverInfo();
+    	String serverTable = String.format(SERVER_INFO_TABLE,
+    	                                    serverInfo.getHostname(),
+    	                                    serverInfo.getOsName(),
+    	                                    serverInfo.getOsVersion(),
+    	                                    serverInfo.getCpuInfo().toString(),
+    	                                    serverInfo.getTotalMemoryMb(),
+    	                                    serverInfo.getTotalDiskMb(),
+    	                                    serverInfo.getAvailableDiskMb());
+
+    	return String.format(VERSION_HTML, apiVersion, analyticsVersion, serverTable);
     }
 }

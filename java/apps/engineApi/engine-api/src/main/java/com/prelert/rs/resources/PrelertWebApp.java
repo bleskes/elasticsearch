@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -51,6 +51,8 @@ import com.prelert.rs.provider.MultiDataPostResultWriter;
 import com.prelert.rs.provider.NativeProcessRunExceptionMapper;
 import com.prelert.rs.provider.PaginationWriter;
 import com.prelert.rs.provider.SingleDocumentWriter;
+import com.prelert.server.info.ServerInfoFactory;
+import com.prelert.server.info.elasticsearch.ElasticsearchServerInfo;
 
 /**
  * Web application class contains the singleton objects accessed by the
@@ -75,6 +77,7 @@ public class PrelertWebApp extends Application
 
 	private JobManager m_JobManager;
 	private AlertManager m_AlertManager;
+	private ServerInfoFactory m_ServerInfo;
 
 	public PrelertWebApp()
 	{
@@ -120,13 +123,15 @@ public class PrelertWebApp extends Application
 				elasticSearchClusterName, portRange);
 
 		m_JobManager = new JobManager(esJob, createProcessManager(esJob));
-
 		m_AlertManager = new AlertManager(esJob, m_JobManager);
+		m_ServerInfo = new ElasticsearchServerInfo(esJob.getClient());
+
 
 
 		m_Singletons = new HashSet<>();
 		m_Singletons.add(m_JobManager);
 		m_Singletons.add(m_AlertManager);
+		m_Singletons.add(m_ServerInfo);
 	}
 
 	private static ProcessManager createProcessManager(ElasticsearchJobProvider jobProvider)
