@@ -91,6 +91,9 @@ public class Detector
     public static final String NON_NULL_SUM = "non_null_sum";
     public static final String LOW_NON_NULL_SUM = "low_non_null_sum";
     public static final String HIGH_NON_NULL_SUM = "high_non_null_sum";
+    public static final String TIME_OF_DAY = "time_of_day";
+    public static final String TIME_OF_WEEK = "time_of_week";
+
 
     /**
      * The set of valid function names.
@@ -122,7 +125,8 @@ public class Detector
                 HIGH_SUM,
                 NON_NULL_SUM,
                 LOW_NON_NULL_SUM,
-                HIGH_NON_NULL_SUM
+                HIGH_NON_NULL_SUM,
+                TIME_OF_DAY, TIME_OF_WEEK
             }));
 
     /**
@@ -135,7 +139,8 @@ public class Detector
                 LOW_COUNT,
                 NON_ZERO_COUNT, NZC,
                 LOW_NON_ZERO_COUNT, LOW_NZC,
-                HIGH_NON_ZERO_COUNT, HIGH_NZC
+                HIGH_NON_ZERO_COUNT, HIGH_NZC,
+                TIME_OF_DAY, TIME_OF_WEEK
             }));
 
     /**
@@ -181,7 +186,7 @@ public class Detector
             }));
 
     /**
-     * The set of functions that cannot have an by fieldname
+     * The set of functions that cannot have a by fieldname
      */
     private static final Set<String> NO_BY_FIELD_NAME_FUNCTIONS =
             new HashSet<String>(Arrays.<String>asList(new String [] {

@@ -90,6 +90,8 @@ public class DetectorTest
         difference.remove(Detector.LOW_NZC);
         difference.remove(Detector.HIGH_NON_ZERO_COUNT);
         difference.remove(Detector.HIGH_NZC);
+        difference.remove(Detector.TIME_OF_DAY);
+        difference.remove(Detector.TIME_OF_WEEK);
         for (String f : difference)
         {
             try
@@ -186,6 +188,8 @@ public class DetectorTest
         difference.remove(Detector.COUNT);
         difference.remove(Detector.HIGH_COUNT);
         difference.remove(Detector.LOW_COUNT);
+        difference.remove(Detector.TIME_OF_DAY);
+        difference.remove(Detector.TIME_OF_WEEK);
         for (String f : difference)
         {
             d.setFunction(f);
@@ -348,7 +352,8 @@ public class DetectorTest
         // these functions don't work with fieldname
         for (String f : new String [] {Detector.COUNT, Detector.HIGH_COUNT,
                 Detector.LOW_COUNT, Detector.NON_ZERO_COUNT, Detector.NZC,
-                Detector.RARE, Detector.FREQ_RARE})
+                Detector.RARE, Detector.FREQ_RARE, Detector.TIME_OF_DAY,
+                Detector.TIME_OF_WEEK})
         {
             try
             {
@@ -375,7 +380,8 @@ public class DetectorTest
         d.setOverFieldName(null);
         for (String f : new String [] {Detector.HIGH_COUNT,
                 Detector.LOW_COUNT, Detector.NON_ZERO_COUNT, Detector.NZC,
-                Detector.RARE, Detector.FREQ_RARE})
+                Detector.RARE, Detector.FREQ_RARE, Detector.TIME_OF_DAY,
+                Detector.TIME_OF_WEEK})
         {
             try
             {
