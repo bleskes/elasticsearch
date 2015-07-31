@@ -92,9 +92,8 @@ public class ProcessCtrl
      */
     public static final String PRELERT_HOME;
     /**
-     * The base log file directory. Equivalent to $PRELERT_HOME/logs,
-     * however, always use this separate field as in future we may
-     * wish to store log files separately to $PRELERT_HOME on Windows.
+     * The base log file directory. Defaults to $PRELERT_HOME/logs
+     * but may be overridden with the PRELERT_LOGS_PROPERTY property
      */
     public static final String LOG_DIR;
     /**

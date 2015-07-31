@@ -27,16 +27,24 @@
 
 package com.prelert.rs.resources;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
 import javax.ws.rs.core.Application;
 
+import org.apache.log4j.Logger;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.prelert.job.alert.manager.AlertManager;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.persistence.elasticsearch.ElasticsearchDataPersisterFactory;
 import com.prelert.job.persistence.elasticsearch.ElasticsearchJobProvider;
 import com.prelert.job.persistence.elasticsearch.ElasticsearchResultsReaderFactory;
+import com.prelert.job.process.ProcessCtrl;
 import com.prelert.job.process.ProcessManager;
 import com.prelert.job.status.elasticsearch.ElasticsearchStatusReporterFactory;
 import com.prelert.job.usage.elasticsearch.ElasticsearchUsageReporterFactory;
@@ -51,6 +59,7 @@ import com.prelert.rs.provider.MultiDataPostResultWriter;
 import com.prelert.rs.provider.NativeProcessRunExceptionMapper;
 import com.prelert.rs.provider.PaginationWriter;
 import com.prelert.rs.provider.SingleDocumentWriter;
+import com.prelert.server.info.ServerInfo;
 import com.prelert.server.info.ServerInfoFactory;
 import com.prelert.server.info.elasticsearch.ElasticsearchServerInfo;
 
@@ -61,6 +70,8 @@ import com.prelert.server.info.elasticsearch.ElasticsearchServerInfo;
 
 public class PrelertWebApp extends Application
 {
+    private static Logger LOGGER = Logger.getLogger(PrelertWebApp.class);
+
 	/**
 	 * The default Elasticsearch Cluster name
 	 */
@@ -127,6 +138,21 @@ public class PrelertWebApp extends Application
 		m_ServerInfo = new ElasticsearchServerInfo(esJob.getClient());
 
 
+		// Write some server information
+		File serverInfoFile = new File(new File(ProcessCtrl.LOG_DIR, "engine_api"), "server.json");
+		try
+		{
+		    ServerInfo info = m_ServerInfo.serverInfo();
+		    ObjectWriter jsonWriter = new ObjectMapper()
+        		    .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
+        		    .writer().withDefaultPrettyPrinter();
+
+		    jsonWriter.writeValue(serverInfoFile, info);
+        }
+		catch (IOException e)
+		{
+            LOGGER.error("Error writing server info to file: " + serverInfoFile.getPath());
+        }
 
 		m_Singletons = new HashSet<>();
 		m_Singletons.add(m_JobManager);
