@@ -29,6 +29,9 @@ package com.prelert.rs.resources;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -138,10 +141,18 @@ public class PrelertWebApp extends Application
 		m_ServerInfo = new ElasticsearchServerInfo(esJob.getClient());
 
 
+		final String ENGINE_API_DIR = "engine_api";
 		// Write some server information
-		File serverInfoFile = new File(new File(ProcessCtrl.LOG_DIR, "engine_api"), "server.json");
+		File serverInfoFile = new File(new File(ProcessCtrl.LOG_DIR, ENGINE_API_DIR), "server.json");
 		try
 		{
+		    // create path if missing
+		    Path path = Paths.get(ProcessCtrl.LOG_DIR, ENGINE_API_DIR);
+		    if (!Files.isDirectory(path))
+		    {
+		        Files.createDirectory(path);
+		    }
+
 		    ServerInfo info = m_ServerInfo.serverInfo();
 		    ObjectWriter jsonWriter = new ObjectMapper()
         		    .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
