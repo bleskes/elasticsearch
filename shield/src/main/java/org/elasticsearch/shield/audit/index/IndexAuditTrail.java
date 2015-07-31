@@ -19,6 +19,7 @@ package org.elasticsearch.shield.audit.index;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.io.ByteStreams;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.admin.cluster.state.ClusterStateResponse;
 import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateRequest;
@@ -65,6 +66,7 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -653,8 +655,8 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail {
     }
 
     void putTemplate(Settings customSettings) {
-        try {
-            final byte[] template = Streams.copyToBytesFromClasspath("/" + INDEX_TEMPLATE_NAME + ".json");
+        try (InputStream is = getClass().getResourceAsStream("/" + INDEX_TEMPLATE_NAME + ".json")) {
+            final byte[] template = ByteStreams.toByteArray(is);
             PutIndexTemplateRequest request = new PutIndexTemplateRequest(INDEX_TEMPLATE_NAME).source(template);
             if (customSettings != null && customSettings.names().size() > 0) {
                 Settings updatedSettings = Settings.builder()
