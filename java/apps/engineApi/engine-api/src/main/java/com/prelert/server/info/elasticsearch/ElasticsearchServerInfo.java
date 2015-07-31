@@ -26,6 +26,8 @@
  ************************************************************/
 package com.prelert.server.info.elasticsearch;
 
+import java.io.IOException;
+import java.util.Date;
 import java.util.concurrent.ExecutionException;
 
 import org.apache.log4j.Logger;
@@ -36,6 +38,9 @@ import org.elasticsearch.action.admin.cluster.node.stats.NodeStats;
 import org.elasticsearch.action.admin.cluster.node.stats.NodesStatsRequestBuilder;
 import org.elasticsearch.action.admin.cluster.node.stats.NodesStatsResponse;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.common.xcontent.ToXContent;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.monitor.os.OsInfo;
 
 import com.prelert.server.info.CpuInfo;
@@ -144,6 +149,77 @@ public class ElasticsearchServerInfo implements ServerInfoFactory
         cpuInfo.setFrequencyMHz(cpu.getMhz());
     }
 
+
+    /**
+     * JSON formatted server stats.
+     * Includes CPU load, memory usage, disk usage and the size of the
+     * Elasticsearch indexes.
+     */
+    @Override
+    public String serverStats()
+    {
+        NodeInfo apiNodeInfo = null;
+        NodeStats apiNodeStats = null;
+        NodeInfo esNodeInfo = null;
+        NodeStats esNodeStats = null;
+
+        for (NodeInfo nodeInfo : nodesInfo())
+        {
+            if (nodeInfo.getNode().isClientNode() && nodeInfo.getNode().isDataNode() == false)
+            {
+                apiNodeInfo = nodeInfo;
+            }
+            else
+            {
+                esNodeInfo = nodeInfo;
+            }
+
+            if (apiNodeInfo != null && esNodeInfo != null)
+            {
+                break;
+            }
+        }
+
+        for (NodeStats nodeStats : nodesStats())
+        {
+            if (nodeStats.getNode().isClientNode() && nodeStats.getNode().isDataNode() == false)
+            {
+                apiNodeStats = nodeStats;
+            }
+            else
+            {
+                esNodeStats = nodeStats;
+            }
+
+            if (apiNodeStats != null && esNodeStats != null)
+            {
+                break;
+            }
+        }
+
+        try
+        {
+            XContentBuilder builder = XContentFactory.jsonBuilder();
+            builder.humanReadable(true).prettyPrint();
+
+            builder.startObject();
+            builder.field("timestamp", new Date());
+            writeApiServerNode(builder, apiNodeInfo);
+            writeElasticsearchNode(builder, esNodeInfo, esNodeStats);
+
+            builder.endObject();
+
+            return builder.bytes().toUtf8();
+        }
+        catch (IOException e)
+        {
+            LOGGER.error("Error serialising server stats", e);
+            return "";
+        }
+    }
+
+
+
     private NodeInfo[] nodesInfo()
     {
         try
@@ -174,5 +250,62 @@ public class ElasticsearchServerInfo implements ServerInfoFactory
             LOGGER.error("Error getting NodesStats", e);
             return new NodeStats[] {};
         }
+    }
+
+
+
+    private void writeApiServerNode(XContentBuilder builder, NodeInfo nodeInfo)
+    {
+        try
+        {
+            builder.startObject("apiServer");
+            if (nodeInfo != null)
+            {
+                nodeInfo.getJvm().toXContent(builder, ToXContent.EMPTY_PARAMS);
+                nodeInfo.getProcess().toXContent(builder, ToXContent.EMPTY_PARAMS);
+            }
+            builder.endObject();
+        }
+        catch (IOException e)
+        {
+            LOGGER.error("Error serialising NodeInfo", e);
+        }
+
+    }
+
+    private void writeElasticsearchNode(XContentBuilder builder, NodeInfo nodeInfo, NodeStats nodeStats)
+    {
+        try
+        {
+            builder.startObject("elasticsearch");
+            builder.field("host", nodeStats.getHostname());
+
+            if (nodeInfo != null)
+            {
+                builder.startObject("info");
+                nodeInfo.getOs().toXContent(builder, ToXContent.EMPTY_PARAMS);
+                nodeInfo.getJvm().toXContent(builder, ToXContent.EMPTY_PARAMS);
+                nodeInfo.getProcess().toXContent(builder, ToXContent.EMPTY_PARAMS);
+                builder.endObject();
+            }
+
+            if (nodeStats != null)
+            {
+                builder.startObject("stats");
+                nodeStats.getIndices().toXContent(builder, ToXContent.EMPTY_PARAMS);
+                nodeStats.getOs().toXContent(builder, ToXContent.EMPTY_PARAMS);
+                nodeStats.getProcess().toXContent(builder, ToXContent.EMPTY_PARAMS);
+                nodeStats.getJvm().toXContent(builder, ToXContent.EMPTY_PARAMS);
+                nodeStats.getFs().toXContent(builder, ToXContent.EMPTY_PARAMS);
+                builder.endObject();
+            }
+
+            builder.endObject();
+        }
+        catch (IOException e)
+        {
+            LOGGER.error("Error serialising Elasticsearch node info & stats", e);
+        }
+
     }
 }
