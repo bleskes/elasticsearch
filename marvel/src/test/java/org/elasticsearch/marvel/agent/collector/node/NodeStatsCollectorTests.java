@@ -17,7 +17,6 @@
 
 package org.elasticsearch.marvel.agent.collector.node;
 
-import org.apache.lucene.util.Constants;
 import org.elasticsearch.bootstrap.Bootstrap;
 import org.elasticsearch.cluster.ClusterName;
 import org.elasticsearch.cluster.ClusterService;
@@ -39,7 +38,6 @@ public class NodeStatsCollectorTests extends ElasticsearchIntegrationTest {
 
     @Test
     public void testNodeStatsCollector() throws Exception {
-        assumeFalse("test is muted on Windows. See https://github.com/elastic/x-plugins/issues/368", Constants.WINDOWS);
         String[] nodes = internalCluster().getNodeNames();
         for (String node : nodes) {
             logger.info("--> collecting node stats on node [{}]", node);
@@ -64,7 +62,6 @@ public class NodeStatsCollectorTests extends ElasticsearchIntegrationTest {
             assertNotNull(payload.getDiskThresholdWaterMarkHigh());
 
             assertNotNull(payload.getNodeStats());
-            assertThat(payload.getNodeStats().getProcess().getOpenFileDescriptors(), greaterThan(0L));
         }
     }
 
