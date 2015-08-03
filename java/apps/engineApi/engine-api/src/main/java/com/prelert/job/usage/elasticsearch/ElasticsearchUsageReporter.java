@@ -52,6 +52,7 @@ public class ElasticsearchUsageReporter extends UsageReporter
 	private SimpleDateFormat m_SimpleDateFormat;
 	private String m_DocId;
 	private long m_CurrentHour;
+    private Logger m_Logger;
 
 	private Map<String, Object> m_UpsertMap;
 
@@ -60,6 +61,7 @@ public class ElasticsearchUsageReporter extends UsageReporter
 		super(jobId, logger);
 		m_Client = client;
 		m_CurrentHour = 0;
+		m_Logger = logger;
 		m_SimpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXX");
 		m_UpsertMap = new HashMap<>();
 
@@ -107,6 +109,7 @@ public class ElasticsearchUsageReporter extends UsageReporter
 		m_UpsertMap.put(Usage.INPUT_FIELD_COUNT, new Long(additionalFields));
 		m_UpsertMap.put(Usage.INPUT_RECORD_COUNT, new Long(additionalRecords));
 
+        m_Logger.trace("ES API CALL: upsert ID " + id + " type " + Usage.TYPE + " in index " + index + " by running Groovy script update-usage with arguments bytes=" + additionalBytes + " fieldCount=" + additionalFields + " recordCount=" + additionalRecords);
 		m_Client.prepareUpdate(index, Usage.TYPE, id)
 				.setScript("update-usage", ScriptService.ScriptType.FILE)
 				.addScriptParam("bytes", additionalBytes)

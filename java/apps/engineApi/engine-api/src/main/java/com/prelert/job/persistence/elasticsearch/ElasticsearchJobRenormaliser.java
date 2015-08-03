@@ -255,6 +255,7 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
                     map.put(Bucket.ANOMALY_SCORE, bucket.getAnomalyScore());
                     map.put(Bucket.MAX_NORMALIZED_PROBABILITY, bucket.getMaxNormalizedProbability());
 
+                    logger.trace("ES API CALL: update " + Bucket.TYPE + " in index " + m_JobId + " with ID " + bucketId + " using map of new values");
                     m_JobProvider.getClient().prepareUpdate(m_JobId, Bucket.TYPE, bucketId)
                             .setDoc(map)
                             .execute().actionGet();
@@ -286,6 +287,7 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
                             map.put(AnomalyRecord.ANOMALY_SCORE, record.getAnomalyScore());
                             map.put(AnomalyRecord.NORMALIZED_PROBABILITY, record.getNormalizedProbability());
 
+                        logger.trace("ES BULK ACTION: update " + AnomalyRecord.TYPE + " in index " + m_JobId + " with ID " + recordId + " using map of new values");
                         bulkRequest.add(m_JobProvider.getClient()
                                 .prepareUpdate(m_JobId, AnomalyRecord.TYPE, recordId)
                                 .setDoc(map)
@@ -309,6 +311,7 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
 
             if (addedAny)
             {
+                logger.trace("ES API CALL: bulk request with " + bulkRequest.numberOfActions() + " actions");
                 BulkResponse bulkResponse = bulkRequest.execute().actionGet();
                 if (bulkResponse.hasFailures())
                 {
@@ -468,6 +471,7 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
                     // a) The next normalisation starting
                     // b) A request to close the job returning
                     lastLogger.info("Renormaliser thread about to refresh indexes");
+                    lastLogger.trace("ES API CALL: refresh index " + ElasticsearchJobRenormaliser.this.m_JobId);
                     ElasticsearchJobRenormaliser.this.m_JobProvider.getClient().admin().indices().refresh(
                             new RefreshRequest(ElasticsearchJobRenormaliser.this.m_JobId)).actionGet();
 
