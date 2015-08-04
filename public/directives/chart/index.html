@@ -1,0 +1,18 @@
+<div>
+  <h1>
+    <span ng-if="chart.data">{{title}}: {{total}} {{unit}}</span>
+    <span ng-if="!chart.data">&nbsp;</span>
+  </h1>
+  <div class="vis-canvas">
+    <div ng-if="!chart.data" class="loading">
+      <i class="fa fa-spinner fa-pulse"></i> Loading Data...
+    </div>
+    <div ng-if="error" class="error">
+      <h4>Something's not quite right...</h4>
+      <div ng-bind="error"></div>
+    </div>
+    <div ng-if="chart.data" class="nvd3">
+      <nvd3 options="chart.options" config="{ deepWatchData: false, refreshDatOnly: false }" data="chart.data"></nvd3>
+    </div>
+  </div>
+</div>
