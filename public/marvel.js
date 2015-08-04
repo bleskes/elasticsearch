@@ -1,17 +1,4 @@
-// require.config({
-//   paths: {
-//     'lodash-deep': '/marvel/bower_components/lodash-deep/lodash-deep',
-//     'angular-resource': '/marvel/bower_components/angular-resource/angular-resource',
-//     'nvd3': 'marvel/bower_components/nvd3/build/nv.d3',
-//     'nvd3_directives': 'marvel/bower_components/nvd3_directives/dist/angular-nvd3',
-//     'marvel/react': 'marvel/bower_components/react/react'
-//   },
-//   shim: {
-//     'nvd3': ['css!marvel/bower_components/nvd3/build/nv.d3.css', 'd3'],
-//     'nvd3_directives': ['angular', 'd3', 'nvd3']
-//   }
-// });
-// require('plugin/marvel/less/main.less');
+require('plugins/marvel/less/main.less');
 // require('plugin/marvel/services/cluster_state');
 // require('plugin/marvel/filters/index.js');
 // require('plugin/marvel/directives/index.js');
