@@ -1,7 +1,7 @@
 define(function (require) {
   var _ = require('lodash');
   var angular = require('angular');
-  var injectCss = require('plugin/marvel/lib/inject_css');
+  var injectCss = require('plugins/marvel/lib/inject_css');
   var moment = require('moment');
   injectCss(require('marvel/css/main.css'));
 
@@ -14,17 +14,17 @@ define(function (require) {
     template: require('marvel/views/indices/index.html'),
     resolve: {
       marvel: function (Private) {
-        var routeInit = Private(require('plugin/marvel/lib/route_init'));
+        var routeInit = Private(require('plugins/marvel/lib/route_init'));
         return routeInit();
       }
     }
   });
 
   module.controller('indices', function ($scope, $route, timefilter, Private, Promise, marvelMetrics, globalState, courier) {
-    var ChartDataSource = Private(require('plugin/marvel/directives/chart/data_source'));
-    var TableDataSource = Private(require('plugin/marvel/lib/table_data_source'));
-    var ClusterStatusDataSource = Private(require('plugin/marvel/directives/cluster_status/data_source'));
-    var IndicesDataSource = Private(require('plugin/marvel/directives/index_listing/indices_data_source'));
+    var ChartDataSource = Private(require('plugins/marvel/directives/chart/data_source'));
+    var TableDataSource = Private(require('plugins/marvel/lib/table_data_source'));
+    var ClusterStatusDataSource = Private(require('plugins/marvel/directives/cluster_status/data_source'));
+    var IndicesDataSource = Private(require('plugins/marvel/directives/index_listing/indices_data_source'));
     var indexPattern = $route.current.locals.marvel.indexPattern;
     var clusters = $route.current.locals.marvel.clusters;
 

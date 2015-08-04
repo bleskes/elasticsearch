@@ -1,7 +1,7 @@
 define(function (require) {
   var _ = require('lodash');
-  var formatNumber = require('plugin/marvel/lib/format_number');
-  var MarvelDataSource = require('plugin/marvel/lib/marvel_data_source');
+  var formatNumber = require('plugins/marvel/lib/format_number');
+  var MarvelDataSource = require('plugins/marvel/lib/marvel_data_source');
 
   return function clusterStatusDataSourceProvider() {
     function ClusterStatusDataSource(index, cluster, clusters) {

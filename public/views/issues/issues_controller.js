@@ -1,10 +1,10 @@
 define(function (require) {
   var _ = require('lodash');
   var angular = require('angular');
-  var compareIssues = require('plugin/marvel/lib/compare_issues');
-  require('plugin/marvel/services/settings');
-  require('plugin/marvel/services/metrics');
-  require('plugin/marvel/services/clusters');
+  var compareIssues = require('plugins/marvel/lib/compare_issues');
+  require('plugins/marvel/services/settings');
+  require('plugins/marvel/services/metrics');
+  require('plugins/marvel/services/clusters');
 
   var module = require('modules').get('marvel', [
     'marvel/directives',
@@ -17,7 +17,7 @@ define(function (require) {
     template: require('marvel/views/issues/issues_template.html'),
     resolve: {
       marvel: function (Private) {
-        var routeInit = Private(require('plugin/marvel/lib/route_init'));
+        var routeInit = Private(require('plugins/marvel/lib/route_init'));
         return routeInit();
       }
     }
@@ -26,8 +26,8 @@ define(function (require) {
   module.controller('issues', function (courier, $http, $route, $scope, Promise, Private, timefilter, globalState) {
     var clusters = $route.current.locals.marvel.clusters;
     var indexPattern = $route.current.locals.marvel.indexPattern;
-    var IssueDataSource = Private(require('plugin/marvel/directives/issues/data_source'));
-    var ClusterStatusDataSource = Private(require('plugin/marvel/directives/cluster_status/data_source'));
+    var IssueDataSource = Private(require('plugins/marvel/directives/issues/data_source'));
+    var ClusterStatusDataSource = Private(require('plugins/marvel/directives/cluster_status/data_source'));
 
     timefilter.enabled = true;
     if (timefilter.refreshInterval.value === 0) {

@@ -4,9 +4,9 @@ define(function (require) {
 
   // require('plugins/visualize/saved_visualizations/saved_visualizations');
   // require('components/timepicker/timepicker');
-  require('plugin/marvel/services/settings');
-  require('plugin/marvel/services/metrics');
-  require('plugin/marvel/services/clusters');
+  require('plugins/marvel/services/settings');
+  require('plugins/marvel/services/metrics');
+  require('plugins/marvel/services/clusters');
   require('components/notify/notify');
   require('angular-bindonce');
 
@@ -24,17 +24,17 @@ define(function (require) {
     template: require('marvel/views/overview/index.html'),
     resolve: {
       marvel: function (Private) {
-        var routeInit = Private(require('plugin/marvel/lib/route_init'));
+        var routeInit = Private(require('plugins/marvel/lib/route_init'));
         return routeInit();
       }
     }
   });
 
   module.controller('overview', function (kbnUrl, globalState, $scope, timefilter, $route, courier, marvelMetrics, Private, Promise, $timeout) {
-    var ChartDataSource = Private(require('plugin/marvel/directives/chart/data_source'));
-    var ClusterStatusDataSource = Private(require('plugin/marvel/directives/cluster_status/data_source'));
-    var ShardRecoveryDataSource = Private(require('plugin/marvel/directives/shard_activity/data_source'));
-    var IssueDataSource = Private(require('plugin/marvel/directives/issues/data_source'));
+    var ChartDataSource = Private(require('plugins/marvel/directives/chart/data_source'));
+    var ClusterStatusDataSource = Private(require('plugins/marvel/directives/cluster_status/data_source'));
+    var ShardRecoveryDataSource = Private(require('plugins/marvel/directives/shard_activity/data_source'));
+    var IssueDataSource = Private(require('plugins/marvel/directives/issues/data_source'));
     var indexPattern = $route.current.locals.marvel.indexPattern;
     var clusters = $route.current.locals.marvel.clusters;
 

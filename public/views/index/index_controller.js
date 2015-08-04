@@ -9,7 +9,7 @@ define(function (require) {
       template: require('marvel/views/index/index_template.html'),
       resolve: {
         marvel: function (Private) {
-          var routeInit = Private(require('plugin/marvel/lib/route_init'));
+          var routeInit = Private(require('plugins/marvel/lib/route_init'));
           return routeInit();
         }
       }
@@ -19,8 +19,8 @@ define(function (require) {
     var clusters = $route.current.locals.marvel.clusters;
     $scope.indexName = $routeParams.index;
     var indexPattern = $scope.indexPattern = $route.current.locals.marvel.indexPattern;
-    var ChartDataSource = Private(require('plugin/marvel/directives/chart/data_source'));
-    var ClusterStatusDataSource = Private(require('plugin/marvel/directives/cluster_status/data_source'));
+    var ChartDataSource = Private(require('plugins/marvel/directives/chart/data_source'));
+    var ClusterStatusDataSource = Private(require('plugins/marvel/directives/cluster_status/data_source'));
 
     timefilter.enabled = true;
     if (timefilter.refreshInterval.value === 0) {

@@ -6,10 +6,10 @@ define(function (require) {
   var React = require('react');
   var make = React.DOM;
 
-  var SparkLines = require('plugin/marvel/directives/marvel_sparkline');
+  var SparkLines = require('plugins/marvel/directives/marvel_sparkline');
 
 
-  var Table = require('plugin/marvel/directives/paginated_table/components/table');
+  var Table = require('plugins/marvel/directives/paginated_table/components/table');
 
 
   module.directive('marvelIndexListing', function () {

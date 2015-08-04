@@ -1,7 +1,7 @@
 define(function (require) {
   var angular = require('angular');
   var module = require('modules').get('marvel/services', [])
-  var calculateShardStats = require('plugin/marvel/lib/calculate_shard_stats');
+  var calculateShardStats = require('plugins/marvel/lib/calculate_shard_stats');
 
   module.factory('marvelClusterState', function (courier, $rootScope, globalState) {
     var searchSource = new courier.SearchSource();

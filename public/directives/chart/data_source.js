@@ -1,6 +1,6 @@
 define(function (require) {
   var moment = require('moment');
-  var MarvelDataSource = require('plugin/marvel/lib/marvel_data_source');
+  var MarvelDataSource = require('plugins/marvel/lib/marvel_data_source');
 
   return function chartDataSourceProvider(timefilter, Private) {
     var calcAuto = Private(require('components/time_buckets/calc_auto_interval'));

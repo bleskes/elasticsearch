@@ -2,7 +2,7 @@ define(function (require) {
   return function SettingModelProvider($resource) {
 
     var Resource = $resource('/marvel/api/v1/settings/:id', { id: '@_id' });
-    var Model = require('plugin/marvel/lib/model');
+    var Model = require('plugins/marvel/lib/model');
 
     function Settings(data, options) {
       Model.call(this, data, options);

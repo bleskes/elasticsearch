@@ -1,6 +1,6 @@
 define(function (require) {
   var _ = require('lodash');
-  var MarvelDataSource = require('plugin/marvel/lib/marvel_data_source');
+  var MarvelDataSource = require('plugins/marvel/lib/marvel_data_source');
 
   return function nodesDataSourceProvider() {
     function NodesDataSource(index, cluster, clusters) {

@@ -23,16 +23,16 @@ define(function (require) {
   var module = require('modules').get('marvel/directives', []);
 
   // Module specific application dependencies
-  var getValue = require('plugin/marvel/directives/shard_allocation/lib/getValueFromArrayOrString');
-  var labels = require('plugin/marvel/directives/shard_allocation/lib/labels');
-  var changeData = require('plugin/marvel/directives/shard_allocation/lib/changeData');
-  var updateColors = require('plugin/marvel/directives/shard_allocation/lib/updateColors');
-  var extractMarkers = require('plugin/marvel/directives/shard_allocation/lib/extractMarkers');
+  var getValue = require('plugins/marvel/directives/shard_allocation/lib/getValueFromArrayOrString');
+  var labels = require('plugins/marvel/directives/shard_allocation/lib/labels');
+  var changeData = require('plugins/marvel/directives/shard_allocation/lib/changeData');
+  var updateColors = require('plugins/marvel/directives/shard_allocation/lib/updateColors');
+  var extractMarkers = require('plugins/marvel/directives/shard_allocation/lib/extractMarkers');
   var template = require('marvel/directives/shard_allocation/index.html');
 
-  require('plugin/marvel/directives/shard_allocation/directives/shardGroups');
-  require('plugin/marvel/directives/shard_allocation/directives/segments');
-  require('plugin/marvel/directives/shard_allocation/directives/clusterView');
+  require('plugins/marvel/directives/shard_allocation/directives/shardGroups');
+  require('plugins/marvel/directives/shard_allocation/directives/segments');
+  require('plugins/marvel/directives/shard_allocation/directives/clusterView');
 
   module.filter('localTime', function () {
     return function (text) {
@@ -53,8 +53,8 @@ define(function (require) {
   });
 
   module.directive('marvelShardAllocation', function (timefilter, globalState, $timeout, Private, marvelClusterState) {
-    var getTimeline = Private(require('plugin/marvel/directives/shard_allocation/requests/getTimelineData'));
-    var getStateSource = Private(require('plugin/marvel/directives/shard_allocation/requests/getStateSource'));
+    var getTimeline = Private(require('plugins/marvel/directives/shard_allocation/requests/getTimelineData'));
+    var getStateSource = Private(require('plugins/marvel/directives/shard_allocation/requests/getStateSource'));
 
     return {
       restrict: 'E',

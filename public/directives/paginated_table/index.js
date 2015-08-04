@@ -4,7 +4,7 @@ define(function(require) {
   var _ = require('lodash');
   var $ = require('jquery');
 
-  var Table = require('plugin/marvel/directives/paginated_table/components/table');
+  var Table = require('plugins/marvel/directives/paginated_table/components/table');
 
   var module = require('modules').get('marvel/directives', []);
 

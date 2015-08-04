@@ -1,8 +1,8 @@
 define(function (require) {
   var _ = require('lodash');
-  var metrics = require('plugin/marvel/lib/metrics');
+  var metrics = require('plugins/marvel/lib/metrics');
   var angular = require('angular');
-  var Model = require('plugin/marvel/lib/model');
+  var Model = require('plugins/marvel/lib/model');
   require('angular-resource');
 
   // Get the module and declare the dependencies
@@ -12,7 +12,7 @@ define(function (require) {
   module.service('marvelSettings', function ($resource, Promise, Private) {
 
     var allSettings;
-    var Settings = require('plugin/marvel/lib/settings')($resource);
+    var Settings = require('plugins/marvel/lib/settings')($resource);
     var defaults = { 'metric-thresholds': metrics };
 
     function fetch(cluster, force) {

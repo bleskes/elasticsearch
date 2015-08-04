@@ -1,8 +1,8 @@
 define(function (require) {
-  var MarvelDataSource = require('plugin/marvel/lib/marvel_data_source');
+  var MarvelDataSource = require('plugins/marvel/lib/marvel_data_source');
   var _ = require('lodash');
   var moment = require('moment');
-  var metrics = require('plugin/marvel/lib/metrics');
+  var metrics = require('plugins/marvel/lib/metrics');
 
   return function tableDataSourceProvider(timefilter, Private) {
     var calcAuto = Private(require('components/time_buckets/calc_auto_interval'));

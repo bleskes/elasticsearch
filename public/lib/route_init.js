@@ -1,7 +1,7 @@
 define(function (require) {
   return function routeInitProvider(Notifier, marvelClusterState, marvelSettings, Private, marvelClusters, globalState, Promise, kbnUrl) {
 
-    var initMarvelIndex = Private(require('plugin/marvel/lib/marvel_index_init'));
+    var initMarvelIndex = Private(require('plugins/marvel/lib/marvel_index_init'));
     return function (options) {
       options = _.defaults(options || {}, {
         force: {

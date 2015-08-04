@@ -1,7 +1,7 @@
 define(function (require) {
   var template = require('marvel/directives/shard_activity/index.html');
   var module = require('modules').get('marvel/directives', []);
-  var formatNumber = require('plugin/marvel/lib/format_number');
+  var formatNumber = require('plugins/marvel/lib/format_number');
   var _ = require('lodash');
   module.directive('marvelShardActivity', function () {
     return {

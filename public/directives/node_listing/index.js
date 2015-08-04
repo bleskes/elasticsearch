@@ -7,7 +7,7 @@ define(function (require) {
   var make = React.DOM;
 
 
-  var Table = require('plugin/marvel/directives/paginated_table/components/table');
+  var Table = require('plugins/marvel/directives/paginated_table/components/table');
 
 
   module.directive('marvelNodesListing', function () {

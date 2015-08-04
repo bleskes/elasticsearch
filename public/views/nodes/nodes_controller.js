@@ -4,9 +4,9 @@ define(function (require) {
 
   // require('plugins/visualize/saved_visualizations/saved_visualizations');
   // require('components/timepicker/timepicker');
-  require('plugin/marvel/services/settings');
-  require('plugin/marvel/services/metrics');
-  require('plugin/marvel/services/clusters');
+  require('plugins/marvel/services/settings');
+  require('plugins/marvel/services/metrics');
+  require('plugins/marvel/services/clusters');
   require('angular-bindonce');
 
   var module = require('modules').get('marvel', [
@@ -22,16 +22,16 @@ define(function (require) {
     template: require('marvel/views/nodes/nodes_template.html'),
     resolve: {
       marvel: function (Private) {
-        var routeInit = Private(require('plugin/marvel/lib/route_init'));
+        var routeInit = Private(require('plugins/marvel/lib/route_init'));
         return routeInit();
       }
     }
   });
 
   module.controller('nodes', function (kbnUrl, globalState, $scope, timefilter, $route, courier, marvelMetrics, Private, Promise, es) {
-    var ChartDataSource = Private(require('plugin/marvel/directives/chart/data_source'));
-    var ClusterStatusDataSource = Private(require('plugin/marvel/directives/cluster_status/data_source'));
-    var NodesDataSource = Private(require('plugin/marvel/directives/node_listing/nodes_data_source'));
+    var ChartDataSource = Private(require('plugins/marvel/directives/chart/data_source'));
+    var ClusterStatusDataSource = Private(require('plugins/marvel/directives/cluster_status/data_source'));
+    var NodesDataSource = Private(require('plugins/marvel/directives/node_listing/nodes_data_source'));
     var indexPattern = $route.current.locals.marvel.indexPattern;
     var clusters = $route.current.locals.marvel.clusters;
 

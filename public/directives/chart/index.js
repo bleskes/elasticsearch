@@ -4,7 +4,7 @@ function (formatNumber, template) {
   var _ = require('lodash');
   var moment = require('moment');
 
-  var metricObjects = require('plugin/marvel/lib/metrics');
+  var metricObjects = require('plugins/marvel/lib/metrics');
 
   module.directive('marvelChart', function (marvelMetrics, $route, Private, courier, timefilter) {
     var marvelIndex = $route.current.locals.indexPattern;

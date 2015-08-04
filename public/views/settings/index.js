@@ -1,9 +1,9 @@
 define(function (require) {
   var _ = require('lodash');
   var angular = require('angular');
-  var metrics = require('plugin/marvel/lib/metrics');
+  var metrics = require('plugins/marvel/lib/metrics');
 
-  require('plugin/marvel/services/settings');
+  require('plugins/marvel/services/settings');
   require('components/notify/notify');
 
   var module = require('modules').get('marvel', [
@@ -17,7 +17,7 @@ define(function (require) {
     template: require('marvel/views/settings/index.html'),
     resolve: {
       marvel: function (Private) {
-        var routeInit = Private(require('plugin/marvel/lib/route_init'));
+        var routeInit = Private(require('plugins/marvel/lib/route_init'));
         return routeInit({ force: { settings: true } });
       }
     }
@@ -25,7 +25,7 @@ define(function (require) {
 
 
   module.controller('settings', function (timefilter, courier, $scope, $route, Notifier, Private, globalState) {
-    var ClusterStatusDataSource = Private(require('plugin/marvel/directives/cluster_status/data_source'));
+    var ClusterStatusDataSource = Private(require('plugins/marvel/directives/cluster_status/data_source'));
 
     var notify = new Notifier({ location: 'Marvel Settings' });
     var settings = $route.current.locals.marvel.settings[globalState.cluster + ':metric-thresholds'];
