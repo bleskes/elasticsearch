@@ -29,7 +29,7 @@ import org.elasticsearch.shield.authc.support.SecuredString;
 import org.elasticsearch.shield.authc.support.SecuredStringTests;
 import org.elasticsearch.shield.authc.support.UsernamePasswordToken;
 import org.elasticsearch.shield.client.ShieldClient;
-import org.elasticsearch.test.ShieldIntegrationTest;
+import org.elasticsearch.test.ShieldIntegTestCase;
 import org.elasticsearch.test.ShieldSettingsSource;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -44,7 +44,7 @@ import static org.hamcrest.Matchers.*;
 /**
  *
  */
-public class ClearRealmsCacheTests extends ShieldIntegrationTest {
+public class ClearRealmsCacheTests extends ShieldIntegTestCase {
 
     private static final String USERS_PASSWD_HASHED = new String(Hasher.BCRYPT.hash(new SecuredString("passwd".toCharArray())));
 

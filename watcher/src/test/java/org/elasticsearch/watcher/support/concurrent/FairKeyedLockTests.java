@@ -17,7 +17,7 @@
 
 package org.elasticsearch.watcher.support.concurrent;
 
-import org.elasticsearch.test.ElasticsearchTestCase;
+import org.elasticsearch.test.ESTestCase;
 import org.hamcrest.Matchers;
 import org.junit.Test;
 
@@ -34,7 +34,7 @@ import static org.hamcrest.Matchers.not;
 
 /**
  */
-public class FairKeyedLockTests extends ElasticsearchTestCase {
+public class FairKeyedLockTests extends ESTestCase {
 
     @Test
     public void checkIfMapEmptyAfterLotsOfAcquireAndReleases() throws InterruptedException {

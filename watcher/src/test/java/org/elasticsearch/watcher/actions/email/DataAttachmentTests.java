@@ -19,7 +19,7 @@ package org.elasticsearch.watcher.actions.email;
 
 import com.google.common.collect.ImmutableMap;
 import org.elasticsearch.common.io.Streams;
-import org.elasticsearch.test.ElasticsearchTestCase;
+import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.watcher.actions.email.service.Attachment;
 import org.junit.Test;
 
@@ -33,7 +33,7 @@ import static org.hamcrest.Matchers.is;
 /**
  *
  */
-public class DataAttachmentTests extends ElasticsearchTestCase {
+public class DataAttachmentTests extends ESTestCase {
 
     @Test
     public void testCreate_Json() throws Exception {

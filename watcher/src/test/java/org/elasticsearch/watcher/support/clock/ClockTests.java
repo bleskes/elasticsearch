@@ -17,7 +17,7 @@
 
 package org.elasticsearch.watcher.support.clock;
 
-import org.elasticsearch.test.ElasticsearchTestCase;
+import org.elasticsearch.test.ESTestCase;
 import org.junit.Test;
 
 import static org.joda.time.DateTimeZone.UTC;
@@ -25,7 +25,7 @@ import static org.hamcrest.Matchers.equalTo;
 
 /**
  */
-public class ClockTests extends ElasticsearchTestCase {
+public class ClockTests extends ESTestCase {
 
     @Test
     public void test_now_UTC() {

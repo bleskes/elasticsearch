@@ -21,7 +21,7 @@ import com.google.common.base.Charsets;
 import com.google.common.collect.Sets;
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
-import org.elasticsearch.test.ElasticsearchTestCase;
+import org.elasticsearch.test.ESTestCase;
 import org.junit.Test;
 
 import java.io.PrintWriter;
@@ -37,7 +37,7 @@ import static java.nio.file.attribute.PosixFilePermission.*;
 import static org.elasticsearch.shield.support.ShieldFiles.openAtomicMoveWriter;
 import static org.hamcrest.Matchers.*;
 
-public class ShieldFilesTests extends ElasticsearchTestCase {
+public class ShieldFilesTests extends ESTestCase {
 
     @Test
     public void testThatOriginalPermissionsAreKept() throws Exception {

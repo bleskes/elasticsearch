@@ -26,7 +26,7 @@ import org.elasticsearch.cluster.block.ClusterBlocks;
 import org.elasticsearch.cluster.node.DiscoveryNodes;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.gateway.GatewayService;
-import org.elasticsearch.test.ElasticsearchTestCase;
+import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.junit.Before;
 import org.junit.Test;
@@ -36,7 +36,7 @@ import static org.mockito.Mockito.*;
 
 /**
  */
-public class WatcherLifeCycleServiceTests extends ElasticsearchTestCase {
+public class WatcherLifeCycleServiceTests extends ESTestCase {
 
     private ClusterService clusterService;
     private WatcherService watcherService;

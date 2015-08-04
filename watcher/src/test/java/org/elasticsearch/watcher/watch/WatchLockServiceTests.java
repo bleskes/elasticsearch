@@ -19,7 +19,7 @@ package org.elasticsearch.watcher.watch;
 
 import org.elasticsearch.ElasticsearchTimeoutException;
 import org.elasticsearch.common.unit.TimeValue;
-import org.elasticsearch.test.ElasticsearchTestCase;
+import org.elasticsearch.test.ESTestCase;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -32,7 +32,7 @@ import static org.hamcrest.Matchers.*;
 
 /**
  */
-public class WatchLockServiceTests extends ElasticsearchTestCase {
+public class WatchLockServiceTests extends ESTestCase {
 
     @Test
     public void testLocking_notStarted() {

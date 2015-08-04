@@ -17,10 +17,9 @@
 
 package org.elasticsearch.watcher.trigger.schedule.engine;
 
-import org.apache.lucene.util.LuceneTestCase.Slow;
 import org.elasticsearch.watcher.support.clock.SystemClock;
 import org.joda.time.DateTime;
-import org.elasticsearch.test.ElasticsearchTestCase;
+import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.watcher.trigger.Trigger;
 import org.elasticsearch.watcher.trigger.TriggerEngine;
 import org.elasticsearch.watcher.trigger.TriggerEvent;
@@ -44,12 +43,7 @@ import static org.joda.time.DateTimeZone.UTC;
 import static org.elasticsearch.watcher.trigger.schedule.Schedules.*;
 import static org.hamcrest.Matchers.is;
 
-/**
- *
- */
-@Slow
-@Ignore
-public abstract class BaseTriggerEngineTests extends ElasticsearchTestCase {
+public abstract class BaseTriggerEngineTestCase extends ESTestCase {
 
     private TriggerEngine engine;
 
