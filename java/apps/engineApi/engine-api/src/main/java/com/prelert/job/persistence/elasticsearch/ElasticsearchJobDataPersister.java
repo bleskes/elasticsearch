@@ -192,7 +192,8 @@ public class ElasticsearchJobDataPersister extends JobDataPersister
 
                 jsonBuilder.endObject();
 
-                LOGGER.trace("ES BULK ACTION: index " + PERSISTED_RECORD_TYPE + " to index " + m_IndexName + " with auto-assigned ID");
+                LOGGER.trace("ES BULK ACTION: index type " + PERSISTED_RECORD_TYPE +
+                        " to index " + m_IndexName + " with auto-assigned ID");
                 bulkRequest.add(m_Client.prepareIndex(m_IndexName, PERSISTED_RECORD_TYPE)
                         .setSource(jsonBuilder));
 
@@ -204,7 +205,8 @@ public class ElasticsearchJobDataPersister extends JobDataPersister
             }
         }
 
-        LOGGER.trace("ES API CALL: bulk request with " + bulkRequest.numberOfActions() + " actions");
+        LOGGER.trace("ES API CALL: bulk request with " +
+                bulkRequest.numberOfActions() + " actions");
         BulkResponse bulkResponse = bulkRequest.execute().actionGet();
         if (bulkResponse.hasFailures())
         {

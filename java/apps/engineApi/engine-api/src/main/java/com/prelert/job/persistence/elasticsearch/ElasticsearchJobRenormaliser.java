@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -255,7 +255,8 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
                     map.put(Bucket.ANOMALY_SCORE, bucket.getAnomalyScore());
                     map.put(Bucket.MAX_NORMALIZED_PROBABILITY, bucket.getMaxNormalizedProbability());
 
-                    logger.trace("ES API CALL: update " + Bucket.TYPE + " in index " + m_JobId + " with ID " + bucketId + " using map of new values");
+                    logger.trace("ES API CALL: update ID " + bucketId + " type " + Bucket.TYPE +
+                            " in index " + m_JobId + " using map of new values");
                     m_JobProvider.getClient().prepareUpdate(m_JobId, Bucket.TYPE, bucketId)
                             .setDoc(map)
                             .execute().actionGet();
@@ -287,7 +288,8 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
                             map.put(AnomalyRecord.ANOMALY_SCORE, record.getAnomalyScore());
                             map.put(AnomalyRecord.NORMALIZED_PROBABILITY, record.getNormalizedProbability());
 
-                        logger.trace("ES BULK ACTION: update " + AnomalyRecord.TYPE + " in index " + m_JobId + " with ID " + recordId + " using map of new values");
+                        logger.trace("ES BULK ACTION: update ID " + recordId + " type " + AnomalyRecord.TYPE +
+                                " in index " + m_JobId + " using map of new values");
                         bulkRequest.add(m_JobProvider.getClient()
                                 .prepareUpdate(m_JobId, AnomalyRecord.TYPE, recordId)
                                 .setDoc(map)
@@ -311,7 +313,8 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
 
             if (addedAny)
             {
-                logger.trace("ES API CALL: bulk request with " + bulkRequest.numberOfActions() + " actions");
+                logger.trace("ES API CALL: bulk request with " +
+                        bulkRequest.numberOfActions() + " actions");
                 BulkResponse bulkResponse = bulkRequest.execute().actionGet();
                 if (bulkResponse.hasFailures())
                 {

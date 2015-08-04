@@ -133,7 +133,8 @@ public class ElasticsearchPersister implements JobResultsPersister
         {
             XContentBuilder content = serialiseBucket(bucket);
 
-            LOGGER.trace("ES API CALL: index " + Bucket.TYPE + " to index " + m_JobId + " with ID " + bucket.getId());
+            LOGGER.trace("ES API CALL: index type " + Bucket.TYPE +
+                    " to index " + m_JobId + " with ID " + bucket.getId());
             IndexResponse response = m_Client.prepareIndex(m_JobId, Bucket.TYPE, bucket.getId())
                     .setSource(content)
                     .execute().actionGet();
@@ -154,7 +155,8 @@ public class ElasticsearchPersister implements JobResultsPersister
                 {
                     influencer.setTimestamp(bucket.getTimestamp());
                     content = serialiseInfluencer(influencer);
-                    LOGGER.trace("ES BULK ACTION: index " + Influencer.TYPE + " to index " + m_JobId + " with auto-assigned ID");
+                    LOGGER.trace("ES BULK ACTION: index type " + Influencer.TYPE +
+                            " to index " + m_JobId + " with auto-assigned ID");
                     addInfluencersRequest.add(
                             m_Client.prepareIndex(m_JobId, Influencer.TYPE)
                             .setSource(content));
@@ -179,7 +181,8 @@ public class ElasticsearchPersister implements JobResultsPersister
                     m_DetectorNames.add(detector.getName());
                     // Write the detector
                     content = serialiseDetector(detector);
-                    LOGGER.trace("ES API CALL: index " + Detector.TYPE + " to index " + m_JobId + " with ID " + detector.getName());
+                    LOGGER.trace("ES API CALL: index type " + Detector.TYPE +
+                            " to index " + m_JobId + " with ID " + detector.getName());
                     response = m_Client.prepareIndex(m_JobId, Detector.TYPE, detector.getName())
                         .setSource(content)
                         .get();
@@ -198,7 +201,8 @@ public class ElasticsearchPersister implements JobResultsPersister
                     content = serialiseRecord(record, bucket.getTimestamp());
 
                     String recordId = record.generateNewId(bucket.getId(), detector.getName(), count);
-                    LOGGER.trace("ES BULK ACTION: index " + AnomalyRecord.TYPE + " to index " + m_JobId + " with ID " + recordId);
+                    LOGGER.trace("ES BULK ACTION: index type " + AnomalyRecord.TYPE +
+                            " to index " + m_JobId + " with ID " + recordId);
                     addRecordsRequest.add(m_Client.prepareIndex(m_JobId, AnomalyRecord.TYPE, recordId)
                             .setSource(content)
                             .setParent(bucket.getId()));
@@ -237,7 +241,8 @@ public class ElasticsearchPersister implements JobResultsPersister
             return;
         }
         String categoryId = String.valueOf(category.getCategoryId());
-        LOGGER.trace("ES API CALL: index " + CategoryDefinition.TYPE + " to index " + m_JobId + " with ID " + categoryId);
+        LOGGER.trace("ES API CALL: index type " + CategoryDefinition.TYPE +
+                " to index " + m_JobId + " with ID " + categoryId);
         m_Client.prepareIndex(m_JobId, CategoryDefinition.TYPE, categoryId)
                 .setSource(content)
                 .execute().actionGet();
@@ -265,7 +270,8 @@ public class ElasticsearchPersister implements JobResultsPersister
         {
             XContentBuilder content = serialiseQuantiles(quantiles);
 
-            LOGGER.trace("ES API CALL: index " + Quantiles.TYPE + " to index " + m_JobId + " with ID " + quantiles.getId());
+            LOGGER.trace("ES API CALL: index type " + Quantiles.TYPE +
+                    " to index " + m_JobId + " with ID " + quantiles.getId());
             m_Client.prepareIndex(m_JobId, Quantiles.TYPE, quantiles.getId())
                     .setSource(content)
                     .execute().actionGet();
@@ -305,7 +311,8 @@ public class ElasticsearchPersister implements JobResultsPersister
         {
             XContentBuilder content = serialiseModelSizeStats(modelSizeStats);
 
-            LOGGER.trace("ES API CALL: index " + ModelSizeStats.TYPE + " to index " + m_JobId + " with ID " + modelSizeStats.getId());
+            LOGGER.trace("ES API CALL: index type " + ModelSizeStats.TYPE +
+                    " to index " + m_JobId + " with ID " + modelSizeStats.getId());
             m_Client.prepareIndex(m_JobId, ModelSizeStats.TYPE, modelSizeStats.getId())
                     .setSource(content)
                     .execute().actionGet();
@@ -326,7 +333,9 @@ public class ElasticsearchPersister implements JobResultsPersister
     @Override
     public void incrementBucketCount(long count)
     {
-        LOGGER.trace("ES API CALL: update " + JobDetails.TYPE + " in index " + m_JobId + " with ID " + m_JobId + " by running Groovy script update-bucket-count with params count=" + count);
+        LOGGER.trace("ES API CALL: update ID " + m_JobId + " type " + JobDetails.TYPE +
+                " in index " + m_JobId +
+                " by running Groovy script update-bucket-count with params count=" + count);
         m_Client.prepareUpdate(m_JobId, JobDetails.TYPE, m_JobId)
                         .setScript("update-bucket-count", ScriptService.ScriptType.FILE)
                         .addScriptParam("count", count)
