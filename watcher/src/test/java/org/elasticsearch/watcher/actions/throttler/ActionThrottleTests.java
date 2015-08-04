@@ -62,7 +62,7 @@ import static org.elasticsearch.watcher.trigger.schedule.Schedules.interval;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 
-public class ActionThrottleIT extends AbstractWatcherIntegrationTests {
+public class ActionThrottleTests extends AbstractWatcherIntegrationTests {
 
     @Test
     public void testSingleActionAckThrottle() throws Exception {
