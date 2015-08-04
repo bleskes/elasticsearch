@@ -20,7 +20,6 @@ package org.elasticsearch.marvel.agent.exporter;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 
-import org.apache.lucene.util.LuceneTestCase;
 import org.elasticsearch.action.admin.indices.stats.IndexStats;
 import org.elasticsearch.cluster.metadata.IndexTemplateMetaData;
 import org.elasticsearch.common.Strings;
@@ -30,8 +29,8 @@ import org.elasticsearch.marvel.MarvelPlugin;
 import org.elasticsearch.marvel.agent.AgentService;
 import org.elasticsearch.marvel.agent.collector.indices.IndexStatsMarvelDoc;
 import org.elasticsearch.node.Node;
-import org.elasticsearch.test.ElasticsearchIntegrationTest;
-import org.elasticsearch.test.ElasticsearchIntegrationTest.ClusterScope;
+import org.elasticsearch.test.ESIntegTestCase;
+import org.elasticsearch.test.ESIntegTestCase.ClusterScope;
 import org.hamcrest.Matchers;
 import org.junit.Test;
 
@@ -44,8 +43,8 @@ import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertAcke
 
 
 // Transport Client instantiation also calls the marvel plugin, which then fails to find modules
-@ClusterScope(transportClientRatio = 0.0, scope = ElasticsearchIntegrationTest.Scope.TEST, numDataNodes = 0, numClientNodes = 0)
-public class HttpESExporterTests extends ElasticsearchIntegrationTest {
+@ClusterScope(transportClientRatio = 0.0, scope = ESIntegTestCase.Scope.TEST, numDataNodes = 0, numClientNodes = 0)
+public class HttpESExporterTests extends ESIntegTestCase {
 
     final static AtomicLong timeStampGenerator = new AtomicLong();
 
@@ -96,7 +95,6 @@ public class HttpESExporterTests extends ElasticsearchIntegrationTest {
     */
 
     @Test
-    @LuceneTestCase.Slow
     public void testTemplateAdditionDespiteOfLateClusterForming() {
         Settings.Builder builder = Settings.builder()
                 .put(AgentService.SETTINGS_INTERVAL, "200m")

@@ -28,7 +28,7 @@ import org.elasticsearch.indices.recovery.RecoveryState;
 import org.elasticsearch.marvel.agent.collector.indices.IndexRecoveryMarvelDoc;
 import org.elasticsearch.marvel.agent.renderer.Renderer;
 import org.elasticsearch.marvel.agent.renderer.RendererTestUtils;
-import org.elasticsearch.test.ElasticsearchTestCase;
+import org.elasticsearch.test.ESTestCase;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -36,7 +36,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class IndexRecoveryRendererTests extends ElasticsearchTestCase {
+public class IndexRecoveryRendererTests extends ESTestCase {
 
     private static final String SAMPLE_FILE = "/samples/marvel_index_recovery.json";
 

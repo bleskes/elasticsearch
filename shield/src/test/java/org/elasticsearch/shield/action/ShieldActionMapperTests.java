@@ -21,7 +21,7 @@ import org.elasticsearch.action.admin.indices.analyze.AnalyzeAction;
 import org.elasticsearch.action.admin.indices.analyze.AnalyzeRequest;
 import org.elasticsearch.action.search.ClearScrollAction;
 import org.elasticsearch.action.search.ClearScrollRequest;
-import org.elasticsearch.test.ElasticsearchTestCase;
+import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.transport.KnownActionsTests;
 import org.junit.Test;
 
@@ -31,7 +31,7 @@ import java.util.List;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 
-public class ShieldActionMapperTests extends ElasticsearchTestCase {
+public class ShieldActionMapperTests extends ESTestCase {
 
     @Test
     public void testThatAllOrdinaryActionsRemainTheSame() {

@@ -17,7 +17,7 @@
 
 package org.elasticsearch.shield.authz;
 
-import org.elasticsearch.test.ElasticsearchTestCase;
+import org.elasticsearch.test.ESTestCase;
 import org.junit.Test;
 
 import static org.hamcrest.Matchers.is;
@@ -25,7 +25,7 @@ import static org.hamcrest.Matchers.is;
 /**
  *
  */
-public class SystemRoleTests extends ElasticsearchTestCase {
+public class SystemRoleTests extends ESTestCase {
 
     @Test
     public void testCheck() throws Exception {

@@ -17,7 +17,7 @@
 
 package org.elasticsearch.shield.audit.index;
 
-import org.elasticsearch.test.ElasticsearchTestCase;
+import org.elasticsearch.test.ESTestCase;
 import org.junit.Test;
 
 import java.util.EnumSet;
@@ -25,7 +25,7 @@ import java.util.Locale;
 
 import static org.hamcrest.Matchers.*;
 
-public class IndexAuditLevelTests extends ElasticsearchTestCase {
+public class IndexAuditLevelTests extends ESTestCase {
 
     @Test
     public void testAllIndexAuditLevel() {

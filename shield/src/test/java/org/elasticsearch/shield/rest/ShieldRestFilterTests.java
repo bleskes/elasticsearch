@@ -25,7 +25,7 @@ import org.elasticsearch.rest.RestFilterChain;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.shield.User;
 import org.elasticsearch.shield.authc.AuthenticationService;
-import org.elasticsearch.test.ElasticsearchTestCase;
+import org.elasticsearch.test.ESTestCase;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -36,7 +36,7 @@ import static org.mockito.Mockito.*;
 /**
  *
  */
-public class ShieldRestFilterTests extends ElasticsearchTestCase {
+public class ShieldRestFilterTests extends ESTestCase {
 
     private AuthenticationService authcService;
     private RestChannel channel;

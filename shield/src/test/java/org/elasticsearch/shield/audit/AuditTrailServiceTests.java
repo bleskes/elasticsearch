@@ -24,7 +24,7 @@ import org.elasticsearch.shield.User;
 import org.elasticsearch.shield.authc.AuthenticationToken;
 import org.elasticsearch.shield.transport.filter.IPFilter;
 import org.elasticsearch.shield.transport.filter.ShieldIpFilterRule;
-import org.elasticsearch.test.ElasticsearchTestCase;
+import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.transport.TransportMessage;
 import org.junit.Before;
 import org.junit.Test;
@@ -38,7 +38,7 @@ import static org.mockito.Mockito.verify;
 /**
  *
  */
-public class AuditTrailServiceTests extends ElasticsearchTestCase {
+public class AuditTrailServiceTests extends ESTestCase {
 
     private Set<AuditTrail> auditTrails;
     private AuditTrailService service;
