@@ -42,11 +42,6 @@ public final class SystemClock implements Clock {
     }
 
     @Override
-    public DateTime now() {
-        return now(DateTimeZone.getDefault());
-    }
-
-    @Override
     public DateTime nowUTC() {
         return now(DateTimeZone.UTC);
     }

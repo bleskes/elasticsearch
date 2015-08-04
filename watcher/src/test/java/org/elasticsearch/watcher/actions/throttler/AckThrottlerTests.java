@@ -41,7 +41,7 @@ public class AckThrottlerTests extends ESTestCase {
 
     @Test
     public void testWhenAcked() throws Exception {
-        DateTime timestamp = SystemClock.INSTANCE.now();
+        DateTime timestamp = SystemClock.INSTANCE.nowUTC();
         WatchExecutionContext ctx = mockExecutionContext("_watch", EMPTY_PAYLOAD);
         Watch watch = ctx.watch();
         ActionStatus actionStatus = mock(ActionStatus.class);
@@ -57,7 +57,7 @@ public class AckThrottlerTests extends ESTestCase {
 
     @Test
     public void testThrottle_When_AwaitsSuccessfulExecution() throws Exception {
-        DateTime timestamp = SystemClock.INSTANCE.now();
+        DateTime timestamp = SystemClock.INSTANCE.nowUTC();
         WatchExecutionContext ctx = mockExecutionContext("_watch", EMPTY_PAYLOAD);
         Watch watch = ctx.watch();
         ActionStatus actionStatus = mock(ActionStatus.class);
@@ -73,7 +73,7 @@ public class AckThrottlerTests extends ESTestCase {
 
     @Test
     public void testThrottle_When_Ackable() throws Exception {
-        DateTime timestamp = SystemClock.INSTANCE.now();
+        DateTime timestamp = SystemClock.INSTANCE.nowUTC();
         WatchExecutionContext ctx = mockExecutionContext("_watch", EMPTY_PAYLOAD);
         Watch watch = ctx.watch();
         ActionStatus actionStatus = mock(ActionStatus.class);

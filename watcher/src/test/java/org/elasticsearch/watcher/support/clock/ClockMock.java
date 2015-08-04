@@ -28,7 +28,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class ClockMock implements Clock {
 
-    private DateTime now = DateTime.now(DateTimeZone.getDefault());
+    private DateTime now = DateTime.now(DateTimeZone.UTC);
 
     @Override
     public long millis() {
@@ -38,11 +38,6 @@ public class ClockMock implements Clock {
     @Override
     public long nanos() {
         return TimeUnit.MILLISECONDS.toNanos(now.getMillis());
-    }
-
-    @Override
-    public DateTime now() {
-        return now;
     }
 
     @Override
