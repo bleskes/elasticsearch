@@ -182,7 +182,23 @@ public class HighestRegisteredDomain extends Transform
      */
     public static String replaceDots(String input)
     {
-        return input.replaceAll("\u3002|\uFF0E|\uFF61", ".");
+        // This is structured to be fast in the case of no replacements
+        // being necessary, which is expected 99.9-100% of the time.
+        // In this case no new string is created.
+        String output = input;
+        if (output.indexOf('\u3002') >= 0)
+        {
+            output = output.replace('\u3002', '.');
+        }
+        if (output.indexOf('\uFF0E') >= 0)
+        {
+            output = output.replace('\uFF0E', '.');
+        }
+        if (output.indexOf('\uFF61') >= 0)
+        {
+            output = output.replace('\uFF61', '.');
+        }
+        return output;
     }
 
     /**
