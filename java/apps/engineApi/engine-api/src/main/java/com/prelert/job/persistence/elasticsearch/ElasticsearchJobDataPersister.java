@@ -111,10 +111,12 @@ public class ElasticsearchJobDataPersister extends JobDataPersister
         {
             XContentBuilder inputDataMapping = ElasticsearchMappings.inputDataMapping();
 
+            LOGGER.trace("ES API CALL: create index " + m_IndexName);
             m_Client.admin().indices()
                     .prepareCreate(m_IndexName)
                     .addMapping(ElasticsearchJobDataPersister.TYPE, inputDataMapping)
                     .get();
+            LOGGER.trace("ES API CALL: wait for yellow status " + m_IndexName);
             m_Client.admin().cluster().prepareHealth(m_IndexName).setWaitForYellowStatus().execute().actionGet();
         }
         catch (IOException e)
@@ -125,6 +127,7 @@ public class ElasticsearchJobDataPersister extends JobDataPersister
 
     private boolean isIndexExisting()
     {
+        LOGGER.trace("ES API CALL: index exists? " + m_IndexName);
         return m_Client.admin().indices().prepareExists(m_IndexName).get().isExists();
     }
 
@@ -189,12 +192,12 @@ public class ElasticsearchJobDataPersister extends JobDataPersister
 
                 jsonBuilder.endObject();
 
-
+                LOGGER.trace("ES BULK ACTION: index type " + PERSISTED_RECORD_TYPE +
+                        " to index " + m_IndexName + " with auto-assigned ID");
                 bulkRequest.add(m_Client.prepareIndex(m_IndexName, PERSISTED_RECORD_TYPE)
                         .setSource(jsonBuilder));
 
                 m_BufferedRecords[count] = null; // free mem
-
             }
             catch (IOException e)
             {
@@ -202,6 +205,8 @@ public class ElasticsearchJobDataPersister extends JobDataPersister
             }
         }
 
+        LOGGER.trace("ES API CALL: bulk request with " +
+                bulkRequest.numberOfActions() + " actions");
         BulkResponse bulkResponse = bulkRequest.execute().actionGet();
         if (bulkResponse.hasFailures())
         {
@@ -223,6 +228,7 @@ public class ElasticsearchJobDataPersister extends JobDataPersister
         // the index may not exist anyway
         try
         {
+            LOGGER.trace("ES API CALL: delete index " + m_IndexName);
             DeleteIndexResponse response = m_Client.admin()
                     .indices().delete(new DeleteIndexRequest(m_IndexName)).get();
 

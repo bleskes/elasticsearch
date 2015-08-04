@@ -186,6 +186,7 @@ public class ElasticsearchJobProvider implements JobProvider
     {
         try
         {
+            LOGGER.trace("ES API CALL: index exists? " + PRELERT_USAGE_INDEX);
             boolean indexExists = m_Client.admin().indices()
                     .exists(new IndicesExistsRequest(PRELERT_USAGE_INDEX))
                     .get().isExists();
@@ -196,9 +197,11 @@ public class ElasticsearchJobProvider implements JobProvider
 
                 XContentBuilder usageMapping = ElasticsearchMappings.usageMapping();
 
+                LOGGER.trace("ES API CALL: create index " + PRELERT_USAGE_INDEX);
                 m_Client.admin().indices().prepareCreate(PRELERT_USAGE_INDEX)
                                 .addMapping(Usage.TYPE, usageMapping)
                                 .get();
+                LOGGER.trace("ES API CALL: wait for yellow status " + PRELERT_USAGE_INDEX);
                 m_Client.admin().cluster().prepareHealth(PRELERT_USAGE_INDEX).setWaitForYellowStatus().execute().actionGet();
             }
         }
@@ -218,6 +221,8 @@ public class ElasticsearchJobProvider implements JobProvider
     {
         try
         {
+            LOGGER.trace("ES API CALL: get ID " + jobId +
+                    " type " + JobDetails.TYPE + " from index " + jobId);
             GetResponse response = m_Client.prepareGet(jobId, JobDetails.TYPE, jobId)
                             .setFetchSource(false)
                             .setFields()
@@ -255,6 +260,7 @@ public class ElasticsearchJobProvider implements JobProvider
 
     private boolean indexExists(String jobId)
     {
+        LOGGER.trace("ES API CALL: index exists? " + jobId);
         IndicesExistsResponse res =
                 m_Client.admin().indices().exists(new IndicesExistsRequest(jobId)).actionGet();
 
@@ -267,6 +273,8 @@ public class ElasticsearchJobProvider implements JobProvider
     {
         try
         {
+            LOGGER.trace("ES API CALL: get ID " + jobId +
+                    " type " + JobDetails.TYPE + " from index " + jobId);
             GetResponse response = m_Client.prepareGet(jobId, JobDetails.TYPE, jobId).get();
             if (!response.isExists())
             {
@@ -277,6 +285,8 @@ public class ElasticsearchJobProvider implements JobProvider
             JobDetails details = m_ObjectMapper.convertValue(response.getSource(), JobDetails.class);
 
             // Pull out the modelSizeStats document, and add this to the JobDetails
+            LOGGER.trace("ES API CALL: get ID " + ModelSizeStats.TYPE +
+                    " type " + ModelSizeStats.TYPE + " from index " + jobId);
             GetResponse modelSizeStatsResponse = m_Client.prepareGet(
                 jobId, ModelSizeStats.TYPE, ModelSizeStats.TYPE).get();
             if (!modelSizeStatsResponse.isExists())
@@ -310,6 +320,9 @@ public class ElasticsearchJobProvider implements JobProvider
                                 .unmappedType("string")
                                 .order(SortOrder.ASC);
 
+        LOGGER.trace("ES API CALL: search all of type " + JobDetails.TYPE +
+                " from all indexes sort ascending " + JobDetails.ID +
+                " skip " + skip + " take " + take);
         SearchResponse response = m_Client.prepareSearch("_all")
                 .setTypes(JobDetails.TYPE)
                 .setPostFilter(fb)
@@ -332,6 +345,8 @@ public class ElasticsearchJobProvider implements JobProvider
             }
 
             // Pull out the modelSizeStats document, and add this to the JobDetails
+            LOGGER.trace("ES API CALL: get ID " + ModelSizeStats.TYPE +
+                    " type " + ModelSizeStats.TYPE + " from index " + job.getId());
             GetResponse modelSizeStatsResponse = m_Client.prepareGet(
                 job.getId(), ModelSizeStats.TYPE, ModelSizeStats.TYPE).get();
 
@@ -380,6 +395,7 @@ public class ElasticsearchJobProvider implements JobProvider
             XContentBuilder modelSizeStatsMapping = ElasticsearchMappings.modelSizeStatsMapping();
             XContentBuilder influencerMapping = ElasticsearchMappings.influencerMapping();
 
+            LOGGER.trace("ES API CALL: create index " + job.getId());
             m_Client.admin().indices()
                     .prepareCreate(job.getId())
                     .addMapping(JobDetails.TYPE, jobMapping)
@@ -394,11 +410,14 @@ public class ElasticsearchJobProvider implements JobProvider
                     .addMapping(ModelSizeStats.TYPE, modelSizeStatsMapping)
                     .addMapping(Influencer.TYPE, influencerMapping)
                     .get();
+            LOGGER.trace("ES API CALL: wait for yellow status " + job.getId());
             m_Client.admin().cluster().prepareHealth(job.getId()).setWaitForYellowStatus().execute().actionGet();
 
 
             String json = m_ObjectMapper.writeValueAsString(job);
 
+            LOGGER.trace("ES API CALL: index " + JobDetails.TYPE +
+                    " to index " + job.getId() + " with ID " + job.getId());
             m_Client.prepareIndex(job.getId(), JobDetails.TYPE, job.getId())
                     .setSource(json)
                     .setRefresh(true)
@@ -429,6 +448,8 @@ public class ElasticsearchJobProvider implements JobProvider
     {
         try
         {
+            LOGGER.trace("ES API CALL: get ID " + jobId +
+                    " type " + JobDetails.TYPE + " from index " + jobId);
             GetResponse response = m_Client
                     .prepareGet(jobId, JobDetails.TYPE, jobId)
                     .setFields(fieldName)
@@ -465,6 +486,8 @@ public class ElasticsearchJobProvider implements JobProvider
             {
                 try
                 {
+                    LOGGER.trace("ES API CALL: update ID " + jobId + " type " + JobDetails.TYPE +
+                            " in index " + jobId + " using map of new values");
                     m_Client.prepareUpdate(jobId, JobDetails.TYPE, jobId)
                                         .setDoc(updates)
                                         .get();
@@ -519,6 +542,7 @@ public class ElasticsearchJobProvider implements JobProvider
         {
             if (indexExists(jobId))
             {
+                LOGGER.trace("ES API CALL: delete index " + jobId);
                 DeleteIndexResponse response = m_Client.admin()
                         .indices().delete(new DeleteIndexRequest(jobId)).get();
 
@@ -586,6 +610,9 @@ public class ElasticsearchJobProvider implements JobProvider
         SearchResponse searchResponse;
         try
         {
+            LOGGER.trace("ES API CALL: search all of type " + Bucket.TYPE +
+                    " from index " + jobId + " sort ascending " + Bucket.ID +
+                    " with filter after sort skip " + skip + " take " + take);
             searchResponse = m_Client.prepareSearch(jobId)
                                         .setTypes(Bucket.TYPE)
                                         .addSort(sb)
@@ -655,6 +682,8 @@ public class ElasticsearchJobProvider implements JobProvider
 
         try
         {
+            LOGGER.trace("ES API CALL: get ID " + bucketId + " type " + Bucket.TYPE +
+                    " from index " + jobId);
             response = m_Client.prepareGet(jobId, Bucket.TYPE, bucketId).get();
         }
         catch (IndexMissingException e)
@@ -741,6 +770,9 @@ public class ElasticsearchJobProvider implements JobProvider
     public Pagination<CategoryDefinition> categoryDefinitions(String jobId, int skip, int take)
             throws UnknownJobException
     {
+        LOGGER.trace("ES API CALL: search all of type " + CategoryDefinition.TYPE +
+                " from index " + jobId + " sort ascending " + CategoryDefinition.CATEGORY_ID +
+                " skip " + skip + " take " + take);
         SearchRequestBuilder searchBuilder = m_Client.prepareSearch(jobId)
                 .setTypes(CategoryDefinition.TYPE)
                 .setFrom(skip).setSize(take)
@@ -778,6 +810,8 @@ public class ElasticsearchJobProvider implements JobProvider
 
         try
         {
+            LOGGER.trace("ES API CALL: get ID " + categoryId + " type " + CategoryDefinition.TYPE +
+                    " from index " + jobId);
             response = m_Client.prepareGet(jobId, CategoryDefinition.TYPE, categoryId).get();
         }
         catch (IndexMissingException e)
@@ -868,6 +902,10 @@ public class ElasticsearchJobProvider implements JobProvider
         SearchResponse searchResponse;
         try
         {
+            LOGGER.trace("ES API CALL: search all of type " + AnomalyRecord.TYPE +
+                    " from index " + jobId + ((sb != null) ? " with sort" : "") +
+                    (secondarySort.isEmpty() ? "" : " with secondary sort") +
+                    " with filter after sort skip " + skip + " take " + take);
             searchResponse = searchBuilder.get();
         }
         catch (IndexMissingException e)
@@ -908,6 +946,9 @@ public class ElasticsearchJobProvider implements JobProvider
     {
         FilterBuilder fb = FilterBuilders.matchAllFilter();
 
+        LOGGER.trace("ES API CALL: search all of type " + Influencer.TYPE +
+                " from index " + jobId +
+                " with filter after sort skip " + skip + " take " + take);
         SearchResponse response = m_Client.prepareSearch(jobId)
                 .setTypes(Influencer.TYPE)
                 .setPostFilter(fb)
@@ -953,6 +994,8 @@ public class ElasticsearchJobProvider implements JobProvider
     @Override
     public boolean savePrelertInfo(String infoDoc)
     {
+        LOGGER.trace("ES API CALL: index type " + PRELERT_INFO_TYPE +
+                " in index " + PRELERT_INFO_INDEX + " with ID " + PRELERT_INFO_ID);
         m_Client.prepareIndex(PRELERT_INFO_INDEX, PRELERT_INFO_TYPE, PRELERT_INFO_ID)
                         .setSource(infoDoc)
                         .execute().actionGet();
@@ -967,6 +1010,8 @@ public class ElasticsearchJobProvider implements JobProvider
     {
         try
         {
+            LOGGER.trace("ES API CALL: get ID " + Quantiles.QUANTILES_ID +
+                    " type " + Quantiles.TYPE + " from index " + jobId);
             GetResponse response = m_Client.prepareGet(
                     jobId, Quantiles.TYPE, Quantiles.QUANTILES_ID).get();
             if (!response.isExists())

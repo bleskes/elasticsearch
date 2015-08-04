@@ -224,6 +224,7 @@ public class ElasticsearchServerInfo implements ServerInfoFactory
     {
         try
         {
+            LOGGER.trace("ES API CALL: node info all nodes");
             NodesInfoResponse response = m_Client.admin().cluster().nodesInfo(
                 new NodesInfoRequestBuilder(m_Client.admin().cluster()).all().request()).get();
 
@@ -240,6 +241,7 @@ public class ElasticsearchServerInfo implements ServerInfoFactory
     {
         try
         {
+            LOGGER.trace("ES API CALL: node stats all nodes");
             NodesStatsResponse response = m_Client.admin().cluster().nodesStats(
                 new NodesStatsRequestBuilder(m_Client.admin().cluster()).all().request()).get();
 

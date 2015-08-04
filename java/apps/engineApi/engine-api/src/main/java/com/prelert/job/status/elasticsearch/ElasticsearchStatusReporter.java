@@ -110,6 +110,8 @@ public class ElasticsearchStatusReporter extends StatusReporter
 
             updateBuilder.setDoc(counts).setRefresh(true);
 
+            m_Logger.trace("ES API CALL: update ID " + m_JobId + " type " + JobDetails.TYPE +
+                    " in index " + m_JobId + " using map of new values");
             m_Client.update(updateBuilder.request()).get();
         }
         catch (IndexMissingException | InterruptedException | ExecutionException e)
