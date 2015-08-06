@@ -23,7 +23,7 @@ define(function () {
     return function (obj) {
       return es.get({
         index: obj._index,
-        type: 'cluster_state',
+        type: 'marvel_cluster_state',
         id: obj._id
       }).then(function (resp) {
         var state;

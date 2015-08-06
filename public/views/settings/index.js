@@ -4,17 +4,17 @@ define(function (require) {
   var metrics = require('plugins/marvel/lib/metrics');
 
   require('plugins/marvel/services/settings');
-  require('components/notify/notify');
+  require('ui/notify/notify');
 
-  var module = require('modules').get('marvel', [
+  var module = require('ui/modules').get('marvel', [
     'kibana/notify',
     'marvel/directives',
     'marvel/settings'
   ]);
 
-  require('routes')
-  .when('/marvel/settings', {
-    template: require('marvel/views/settings/index.html'),
+  require('ui/routes')
+  .when('/settings', {
+    template: require('plugins/marvel/views/settings/index.html'),
     resolve: {
       marvel: function (Private) {
         var routeInit = Private(require('plugins/marvel/lib/route_init'));

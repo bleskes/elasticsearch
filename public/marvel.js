@@ -1,21 +1,21 @@
 require('plugins/marvel/less/main.less');
 require('plugins/marvel/services/cluster_state');
-// require('plugins/marvel/filters/index.js');
-// require('plugins/marvel/directives/index.js');
-// require('plugins/marvel/views/indices/index.js');
-// require('plugins/marvel/views/overview/index.js');
-// require('plugins/marvel/views/settings/index.js');
-// require('plugins/marvel/views/issues/issues_controller.js');
-// require('plugins/marvel/views/setup/setup_controller.js');
-// require('plugins/marvel/views/shard_allocation/shard_allocation_controller.js');
-// require('plugins/marvel/views/index/index_controller.js');
-// require('plugins/marvel/views/nodes/nodes_controller.js');
+require('plugins/marvel/filters/index.js');
+require('plugins/marvel/directives/index.js');
+require('plugins/marvel/views/indices/index.js');
+require('plugins/marvel/views/overview/index.js');
+require('plugins/marvel/views/settings/index.js');
+require('plugins/marvel/views/issues/issues_controller.js');
+require('plugins/marvel/views/setup/setup_controller.js');
+require('plugins/marvel/views/shard_allocation/shard_allocation_controller.js');
+require('plugins/marvel/views/index/index_controller.js');
+require('plugins/marvel/views/nodes/nodes_controller.js');
 
 var tabs = [
-  { id: 'marvel', title: 'Overview' },
-  { id: 'marvel/indices', title: 'Indices' },
-  { id: 'marvel/nodes', title: 'Nodes' },
-  { id: 'marvel/shard_allocation', title: 'Shard Allocation' }
+  { id: 'overview', title: 'Overview' },
+  { id: 'indices', title: 'Indices' },
+  { id: 'nodes', title: 'Nodes' },
+  { id: 'shard_allocation', title: 'Shard Allocation' }
 ];
 
 

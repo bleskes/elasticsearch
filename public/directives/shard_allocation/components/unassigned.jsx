@@ -21,7 +21,7 @@
 define(function (require) {
   'use strict';
   var React = require('react');
-  var Shard = require('./shard');
+  var Shard = require('./shard.jsx');
 
   return React.createClass({
     displayName: 'Unassigned',

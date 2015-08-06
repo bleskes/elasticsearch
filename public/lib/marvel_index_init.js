@@ -4,13 +4,13 @@ define(function(require) {
    *
    */
   return function marvelIndexPatternProvider(Private, indexPatterns) {
-    var refreshKibanaIndex = Private(require('plugins/settings/sections/indices/_refresh_kibana_index'));
+    var refreshKibanaIndex = Private(require('plugins/kibana/settings/sections/indices/_refresh_kibana_index'));
     return function () {
       // Setting the index pattern
       // FIXME Use Dependency Injection instead!!!
       var MarvelConfig = {
         indexPattern: '[.marvel-]YYYY.MM.DD',
-        timeField: '@timestamp',
+        timeField: 'timestamp',
         intervalNAme: 'days'
       };
 

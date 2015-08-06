@@ -1,17 +1,15 @@
 define(function (require) {
   var _ = require('lodash');
   var angular = require('angular');
-  var injectCss = require('plugins/marvel/lib/inject_css');
   var moment = require('moment');
-  injectCss(require('marvel/css/main.css'));
 
-  var module = require('modules').get('marvel', [
+  var module = require('ui/modules').get('marvel', [
     'marvel/directives'
   ]);
 
-  require('routes')
-  .when('/marvel/indices', {
-    template: require('marvel/views/indices/index.html'),
+  require('ui/routes')
+  .when('/indices', {
+    template: require('plugins/marvel/views/indices/index.html'),
     resolve: {
       marvel: function (Private) {
         var routeInit = Private(require('plugins/marvel/lib/route_init'));
@@ -24,7 +22,7 @@ define(function (require) {
     var ChartDataSource = Private(require('plugins/marvel/directives/chart/data_source'));
     var TableDataSource = Private(require('plugins/marvel/lib/table_data_source'));
     var ClusterStatusDataSource = Private(require('plugins/marvel/directives/cluster_status/data_source'));
-    var IndicesDataSource = Private(require('plugins/marvel/directives/index_listing/indices_data_source'));
+    // var IndicesDataSource = Private(require('plugins/marvel/directives/index_listing/indices_data_source'));
     var indexPattern = $route.current.locals.marvel.indexPattern;
     var clusters = $route.current.locals.marvel.clusters;
 
@@ -62,12 +60,12 @@ define(function (require) {
           return dataSource;
         });
       }))
-      .then(function () {
-        var dataSource = new IndicesDataSource(indexPattern, globalState.cluster, clusters);
-        dataSource.register(courier);
-        $scope.dataSources.indices = dataSource;
-        return dataSource;
-      })
+      // .then(function () {
+      //   var dataSource = new IndicesDataSource(indexPattern, globalState.cluster, clusters);
+      //   dataSource.register(courier);
+      //   $scope.dataSources.indices = dataSource;
+      //   return dataSource;
+      // })
       .then(function () {
         var dataSource = new ClusterStatusDataSource(indexPattern, globalState.cluster, clusters);
         dataSource.register(courier);

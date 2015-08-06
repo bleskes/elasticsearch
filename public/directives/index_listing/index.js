@@ -2,7 +2,7 @@ define(function (require) {
   var _ = require('lodash');
   var numeral = require('numeral');
   var moment = require('moment');
-  var module = require('modules').get('marvel/directives', []);
+  var module = require('ui/modules').get('marvel/directives', []);
   var React = require('react');
   var make = React.DOM;
 
@@ -25,23 +25,13 @@ define(function (require) {
       }());
       return sampleData;
     }
-    function calcSlope(data) {
-      var length = data.length;
-      var xSum = data.reduce(function(prev, curr) { return prev + curr.x; }, 0);
-      var ySum = data.reduce(function(prev, curr) { return prev + curr.y; }, 0);
-      var xySum = data.reduce(function(prev, curr) { return prev + (curr.y * curr.x); }, 0);
-      var xSqSum = data.reduce(function(prev, curr) { return prev + (curr.x * curr.x); }, 0);
-      var numerator = (length * xySum) - (xSum * ySum);
-      var denominator = (length * xSqSum) - (xSum * ySum);
-      return numerator / denominator;
-    }
     function makeTdWithPropKey(dataKey, idx) {
       var value = _.get(this.props, dataKey.key);
+      if (_.isObject(value) && value.metric) {
+        value = (value.metric.format) ? numeral(value.last).format(value.metric.format) : value.last;
+      }
       var chartData = _.get(this.props, dataKey.chart_data);
       var has_chart = !!dataKey.chart_data;
-      if (has_chart) {
-        value = calcSlope(chartData);
-      }
       return make.td({key: idx},
         make.div({className: (has_chart ? 'pull-right': '')}, value),
         (has_chart ? React.createElement(SparkLines, {data: chartData}) : null));
@@ -53,21 +43,21 @@ define(function (require) {
         sort: 1,
         title: 'Name'
       }, {
-        key: 'metrics.index_document_count.last',
+        key: 'metrics.index_document_count',
         sort: 0,
         title: 'Document Count'
       }, {
-        key: 'metrics.index_request_rate.last',
+        key: 'metrics.index_request_rate',
         sort: 0,
         chart_data: 'metrics.index_request_rate.data',
         title: 'Index Rate'
       }, {
-        key: 'metrics.index_search_request_rate.last',
+        key: 'metrics.index_search_request_rate',
         sort: 0,
         chart_data: 'metrics.index_search_request_rate.data',
         title: 'Search Rate'
       }, {
-        key: 'metrics.index_merge_rate.last',
+        key: 'metrics.index_merge_rate',
         sort: 0,
         title: 'Merge Rate',
       }]

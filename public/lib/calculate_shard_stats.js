@@ -22,13 +22,9 @@ define(function (require) {
       data[shard.index] = metrics;
     };
     if (state) {
-      var nodes = _.get(state, 'routing_nodes.nodes');
-      var unassigned = _.get(state, 'routing_nodes.unassigned');
       var clusterName = _.get(state, 'cluster_name');
-      _.each(nodes, function (shards) {
-        _.each(shards, processShards);
-      });
-      _.each(unassigned, processShards);
+      var shards = _.get(state, 'cluster_state.shards')
+      _.each(shards, processShards);
     }
     return data;
   }

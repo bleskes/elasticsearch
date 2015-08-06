@@ -20,7 +20,7 @@
 define(function (require) {
   var _ = require('lodash');
   var moment = require('moment');
-  var module = require('modules').get('marvel/directives', []);
+  var module = require('ui/modules').get('marvel/directives', []);
 
   // Module specific application dependencies
   var getValue = require('plugins/marvel/directives/shard_allocation/lib/getValueFromArrayOrString');
@@ -28,7 +28,7 @@ define(function (require) {
   var changeData = require('plugins/marvel/directives/shard_allocation/lib/changeData');
   var updateColors = require('plugins/marvel/directives/shard_allocation/lib/updateColors');
   var extractMarkers = require('plugins/marvel/directives/shard_allocation/lib/extractMarkers');
-  var template = require('marvel/directives/shard_allocation/index.html');
+  var template = require('plugins/marvel/directives/shard_allocation/index.html');
 
   require('plugins/marvel/directives/shard_allocation/directives/shardGroups');
   require('plugins/marvel/directives/shard_allocation/directives/segments');
@@ -64,7 +64,8 @@ define(function (require) {
         cluster: '=',
         filterBy: '=',
         view: '@',
-        hideUi: '='
+        hideUi: '=',
+        showHiddenIndices: '='
       },
       link: function ($scope, el, attr) {
         var handleConnectionError = function () {
@@ -99,7 +100,7 @@ define(function (require) {
 
         // Defaults for the panel.
         var defaults = {
-          show_hidden: false,
+          show_hidden: ($scope.showHiddenIndices != null) ? $scope.showHiddenIndices : true,
           view: $scope.view || 'nodes',
           labels: labels.nodes,
           rate: 500,
@@ -214,7 +215,7 @@ define(function (require) {
           var offsetX = _.isUndefined($event.offsetX) ? $event.originalEvent.layerX : $event.offsetX;
           var position = offsetX / $event.currentTarget.clientWidth;
           var current = Math.floor(position * $scope.player.total);
-          var timestamp = getValue($scope.timelineData[current].fields['@timestamp']);
+          var timestamp = getValue($scope.timelineData[current].fields['timestamp']);
           var message = getValue($scope.timelineData[current].fields.message);
           var status = getValue($scope.timelineData[current].fields.status);
 
@@ -285,7 +286,7 @@ define(function (require) {
             _type: state._type,
             _id: state._id,
             fields: {
-              '@timestamp': [ state['@timestamp'] ],
+              'timestamp': [ state['timestamp'] ],
               'status': [ state.status ],
               'message': [ state.message ]
             }
@@ -315,8 +316,8 @@ define(function (require) {
           var data = $scope.timelineData;
           var last = _.last(data);
           if (last) {
-            var newTimestamp = moment($scope.clusterState['@timestamp']).valueOf();
-            var lastTimestamp = moment(getValue(last.fields['@timestamp'])).valueOf();
+            var newTimestamp = moment($scope.clusterState['timestamp']).valueOf();
+            var lastTimestamp = moment(getValue(last.fields['timestamp'])).valueOf();
             var newTimeRange = { gte: lastTimestamp, lte: newTimestamp, format: 'epoch_millis' };
             if (lastTimestamp < newTimestamp) {
               fetch(100, newTimeRange, 'push');

@@ -6,7 +6,7 @@ define(function(require) {
 
   var Table = require('plugins/marvel/directives/paginated_table/components/table');
 
-  var module = require('modules').get('marvel/directives', []);
+  var module = require('ui/modules').get('marvel/directives', []);
 
   module.directive('kbPaginatedTable', function() {
     var directiveDefinition = {

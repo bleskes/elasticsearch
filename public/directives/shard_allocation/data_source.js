@@ -14,7 +14,7 @@ define(function (require) {
 
     TimelineDataSource.prototype.initSearchSource = function () {
       this.searchSource.set('size', 1);
-      this.searchSource.set('sort', {'@timestamp': { order: 'desc' }});
+      this.searchSource.set('sort', {'timestamp': { order: 'desc' }});
       this.searchSource.set('query', '_type:recovery');
     };
 

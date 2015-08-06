@@ -39,21 +39,21 @@ define(function (require) {
         };
       }
 
-      var header = { index: indices[position], type: 'cluster_state' };
+      var header = { index: indices[position], type: 'marvel_cluster_state' };
       var body = {
         size: size,
         from: 0,
-        fields: ['@timestamp', 'message', 'status'],
+        fields: ['timestamp', 'cluster_state.status'],
         sort: {
-          '@timestamp': { order: 'desc' }
+          'timestamp': { order: 'desc' }
         },
         query: {
           filtered: {
             filter: {
               bool: {
                 must: [
-                  { range: { '@timestamp': timeRange } },
-                  { term: { 'cluster_name.raw': cluster._id } }
+                  { range: { 'timestamp': timeRange } },
+                  { term: { 'cluster_name': cluster._id } }
                 ]
               }
             }
@@ -74,7 +74,7 @@ define(function (require) {
 
         var lte = moment(timeRange.lte).valueOf();
         if (hits.hits.length > 0) {
-          lte = moment(getValueFromArrayOrString(hits.hits[hits.hits.length-1].fields['@timestamp'])).valueOf();
+          lte = moment(getValueFromArrayOrString(hits.hits[hits.hits.length-1].fields['timestamp'])).valueOf();
         }
 
         console.log(indices[position] + ' (' + hits.total + ' > ' + size + ' && ' + hits.hits.length + ' === ' + size + ') || ' + newPosition);

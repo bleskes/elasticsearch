@@ -3,13 +3,13 @@ define(function (require) {
   var angular = require('angular');
 
   // require('plugins/visualize/saved_visualizations/saved_visualizations');
-  // require('components/timepicker/timepicker');
+  // require('ui/timepicker/timepicker');
   require('plugins/marvel/services/settings');
   require('plugins/marvel/services/metrics');
   require('plugins/marvel/services/clusters');
   require('angular-bindonce');
 
-  var module = require('modules').get('marvel', [
+  var module = require('ui/modules').get('marvel', [
     'marvel/directives',
     'marvel/settings',
     'marvel/metrics',
@@ -17,9 +17,9 @@ define(function (require) {
     'pasvaz.bindonce'
   ]);
 
-  require('routes')
-  .when('/marvel/nodes', {
-    template: require('marvel/views/nodes/nodes_template.html'),
+  require('ui/routes')
+  .when('/nodes', {
+    template: require('plugins/marvel/views/nodes/nodes_template.html'),
     resolve: {
       marvel: function (Private) {
         var routeInit = Private(require('plugins/marvel/lib/route_init'));

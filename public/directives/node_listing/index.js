@@ -2,7 +2,7 @@ define(function (require) {
   var _ = require('lodash');
   var numeral = require('numeral');
   var moment = require('moment');
-  var module = require('modules').get('marvel/directives', []);
+  var module = require('ui/modules').get('marvel/directives', []);
   var React = require('react');
   var make = React.DOM;
 

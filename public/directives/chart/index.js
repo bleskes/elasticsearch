@@ -1,6 +1,8 @@
-define(['marvel/lib/format_number', 'text!marvel/directives/chart/index.html', 'nvd3_directives'],
-function (formatNumber, template) {
-  var module = require('modules').get('marvel/directives', []);
+define(function (require) {
+  var formatNumber = require('plugins/marvel/lib/format_number');
+  var template = require('plugins/marvel/directives/chart/index.html');
+  require('angular-nvd3');
+  var module = require('ui/modules').get('marvel/directives', []);
   var _ = require('lodash');
   var moment = require('moment');
 
@@ -8,9 +10,8 @@ function (formatNumber, template) {
 
   module.directive('marvelChart', function (marvelMetrics, $route, Private, courier, timefilter) {
     var marvelIndex = $route.current.locals.indexPattern;
-    var Vis = Private(require('components/vis/vis'));
-    var lineChartVis = Private(require('registry/vis_types')).byName.line;
-    var calcAuto = Private(require('components/time_buckets/calc_auto_interval'));
+    var Vis = Private(require('ui/vis/vis'));
+    var calcAuto = Private(require('ui/time_buckets/calc_auto_interval'));
 
     return {
       restrict: 'E',

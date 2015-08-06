@@ -22,7 +22,7 @@ define(function (require) {
   'use strict';
   var React = require('react');
   var D = React.DOM;
-  var Shard = require('./shard');
+  var Shard = require('./shard.jsx');
   var calculateClass = require('../lib/calculateClass');
   var _ = require('lodash');
   var generateQueryAndLink = require('../lib/generateQueryAndLink');

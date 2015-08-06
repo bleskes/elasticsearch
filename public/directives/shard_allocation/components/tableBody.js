@@ -22,8 +22,8 @@ define(function (require) {
   'use strict';
   var React = require('react');
   var D = React.DOM;
-  var Unassigned = React.createFactory(require('./unassigned'));
-  var Assigned = React.createFactory(require('./assigned'));
+  var Unassigned = React.createFactory(require('./unassigned.jsx'));
+  var Assigned = React.createFactory(require('./assigned.jsx'));
   var ParentItem = React.createFactory(require('./parentItem'));
 
   return React.createClass({

@@ -2,7 +2,7 @@ define(function (require) {
   var angular = require('angular');
   require('angular-resource');
 
-  var module = require('modules').get('marvel/clusters', [ 'ngResource' ]);
+  var module = require('ui/modules').get('marvel/clusters', [ 'ngResource' ]);
   module.service('marvelClusters', function ($resource, Promise) {
 
     var Clusters = $resource('/marvel/api/v1/clusters/:id', { id: '@_id' });

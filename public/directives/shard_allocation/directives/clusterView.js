@@ -21,7 +21,7 @@
 define(function (require) {
   var React = require('react');
   var ClusterView = React.createFactory(require('plugins/marvel/directives/shard_allocation/components/clusterView'));
-  var module = require('modules').get('marvel/directives', []);
+  var module = require('ui/modules').get('marvel/directives', []);
   module.directive('clusterView', function ($parse) {
     return {
       restrict: 'E',

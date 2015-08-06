@@ -1,6 +1,6 @@
 define(function (require) {
-  var template = require('marvel/directives/cluster_status/index.html');
-  var module = require('modules').get('marvel/directives', []);
+  var template = require('plugins/marvel/directives/cluster_status/index.html');
+  var module = require('ui/modules').get('marvel/directives', []);
   var moment = require('moment');
   var _ = require('lodash');
 

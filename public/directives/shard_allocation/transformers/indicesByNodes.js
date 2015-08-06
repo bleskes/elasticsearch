@@ -63,10 +63,10 @@ define(function (require) {
         if (!nodeObj) {
           nodeObj = {
             id: node,
-            name: state.nodes[node].name,
+            name: state.cluster_state.nodes[node].name,
             type: 'node',
-            ip_port: extractIp(state.nodes[node]),
-            master: state.master_node === node,
+            ip_port: extractIp(state.cluster_state.nodes[node]),
+            master: state.cluster_state.master_node === node,
             children: []
           };
           obj[index].children.push(nodeObj);

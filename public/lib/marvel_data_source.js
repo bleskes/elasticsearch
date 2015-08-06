@@ -20,7 +20,7 @@ define(function (require) {
 
   MarvelDataSource.prototype.getFilters = function () {
     var id = (_.isObject(this.cluster)) ? this.cluster._id : this.cluster;
-    return [{ term: { 'cluster_name.raw': id } }];
+    return [{ term: { 'cluster_name': id } }];
   };
 
   MarvelDataSource.prototype.handleResponse = function (resp) {

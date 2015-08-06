@@ -18,7 +18,7 @@
 
 
 define(function (require) {
-	var module = require('modules').get('marvel/directives', []);
+	var module = require('ui/modules').get('marvel/directives', []);
   var calculateClass = require('../lib/calculateClass');
 	module.directive('shardGroups', function () {
 		return {

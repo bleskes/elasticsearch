@@ -4,15 +4,15 @@ define(function (require) {
 
   require('plugins/marvel/directives/shard_allocation/index');
 
-  var module = require('modules').get('marvel', [
+  var module = require('ui/modules').get('marvel', [
     'marvel/directives',
     'marvel/settings',
     'marvel/metrics',
     'pasvaz.bindonce'
   ]);
 
-  require('routes').when('/marvel/shard_allocation', {
-    template: require('marvel/views/shard_allocation/shard_allocation_template.html'),
+  require('ui/routes').when('/shard_allocation', {
+    template: require('plugins/marvel/views/shard_allocation/shard_allocation_template.html'),
     resolve: {
       marvel: function (Private) {
         var routeInit = Private(require('plugins/marvel/lib/route_init'));

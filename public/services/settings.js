@@ -6,7 +6,7 @@ define(function (require) {
   require('angular-resource');
 
   // Get the module and declare the dependencies
-  var module = require('modules').get('marvel/settings', [ 'ngResource' ]);
+  var module = require('ui/modules').get('marvel/settings', [ 'ngResource' ]);
 
   // Create the marvelSetting service which will fetch all the settings
   module.service('marvelSettings', function ($resource, Promise, Private) {

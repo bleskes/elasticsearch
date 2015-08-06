@@ -4,8 +4,19 @@ define(function (require) {
   var moment = require('moment');
   var metrics = require('plugins/marvel/lib/metrics');
 
+  function calcSlope(data) {
+    var length = data.length;
+    var xSum = data.reduce(function(prev, curr) { return prev + curr.x; }, 0);
+    var ySum = data.reduce(function(prev, curr) { return prev + curr.y; }, 0);
+    var xySum = data.reduce(function(prev, curr) { return prev + (curr.y * curr.x); }, 0);
+    var xSqSum = data.reduce(function(prev, curr) { return prev + (curr.x * curr.x); }, 0);
+    var numerator = (length * xySum) - (xSum * ySum);
+    var denominator = (length * xSqSum) - (xSum * ySum);
+    return numerator / denominator;
+  }
+
   return function tableDataSourceProvider(timefilter, Private) {
-    var calcAuto = Private(require('components/time_buckets/calc_auto_interval'));
+    var calcAuto = Private(require('ui/time_buckets/calc_auto_interval'));
 
     function TableDataSource(options) {
       MarvelDataSource.call(this, options.index, options.cluster);
@@ -30,7 +41,7 @@ define(function (require) {
       if (this.duration) {
         filters.push({
           range: {
-            '@timestamp': {
+            'timestamp': {
               gte: moment().subtract(this.duration.asMilliseconds(), 'ms').valueOf(),
               lte: moment().valueOf(),
               format: "epoch_millis"
@@ -50,13 +61,13 @@ define(function (require) {
       var cluster = this.getCluster();
       if (this.type === 'index') {
         return {
-          field: 'index.raw',
+          field: 'index_stats.index',
           size: cluster.counts.indices
         }
       }
       if (this.type === 'node') {
         return {
-          field: 'node.name.raw',
+          field: 'node_stats.name',
           size: cluster.counts.nodes
         }
       }
@@ -124,15 +135,17 @@ define(function (require) {
           _.each(self.metrics, function (id) {
             var metric = metrics[id];
             var data = _.map(item[id].buckets, mapChartData(metric));
-            var min = _.min(data, 1);
-            var max = _.max(data, 1);
-            var last = _.last(data);
+            var min = _.min(_.pluck(data, 'y'));
+            var max = _.max(_.pluck(data, 'y'));
+            var last = _.last(_.pluck(data, 'y'));
+            var slope = calcSlope(data);
             row.metrics[id] = {
               metric: metric,
               data: data,
-              min: min && min[1] || 0,
-              max: max && max[1] || 0,
-              last: last && last[1] || 0
+              min: min  || 0,
+              max: max || 0,
+              last: last || 0,
+              slope: slope
             };
           }); // end each
           return row;

@@ -1,6 +1,6 @@
 define(function (require) {
-  var template = require('marvel/directives/issues/index.html');
-  var module = require('modules').get('marvel/directives', []);
+  var template = require('plugins/marvel/directives/issues/index.html');
+  var module = require('ui/modules').get('marvel/directives', []);
   module.directive('marvelIssues', function (marvelMetrics) {
     return {
       restrict: 'E',

@@ -6,15 +6,15 @@ define(function (require) {
   require('plugins/marvel/services/metrics');
   require('plugins/marvel/services/clusters');
 
-  var module = require('modules').get('marvel', [
+  var module = require('ui/modules').get('marvel', [
     'marvel/directives',
     'marvel/settings',
     'marvel/metrics',
     'pasvaz.bindonce'
   ]);
 
-  require('routes').when('/marvel/issues', {
-    template: require('marvel/views/issues/issues_template.html'),
+  require('ui/routes').when('/issues', {
+    template: require('plugins/marvel/views/issues/issues_template.html'),
     resolve: {
       marvel: function (Private) {
         var routeInit = Private(require('plugins/marvel/lib/route_init'));

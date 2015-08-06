@@ -3,7 +3,7 @@ define(function (require) {
   var MarvelDataSource = require('plugins/marvel/lib/marvel_data_source');
 
   return function chartDataSourceProvider(timefilter, Private) {
-    var calcAuto = Private(require('components/time_buckets/calc_auto_interval'));
+    var calcAuto = Private(require('ui/time_buckets/calc_auto_interval'));
 
     function ChartDataSource(options) {
       MarvelDataSource.call(this, options.indexPattern, options.cluster);
@@ -19,7 +19,7 @@ define(function (require) {
     };
 
     ChartDataSource.prototype.getFilters = function () {
-      var filters = [ { term: { 'cluster_name.raw': this.cluster } } ];
+      var filters = [ { term: { 'cluster_name': this.cluster } } ];
       filters = filters.concat(this.metric.filters || []);
       return filters.concat(this.filters);
     };

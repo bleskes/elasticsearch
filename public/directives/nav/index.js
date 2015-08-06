@@ -1,7 +1,7 @@
 define(function (require) {
-  var template = require('marvel/directives/nav/index.html');
+  var template = require('plugins/marvel/directives/nav/index.html');
   var _ = require('lodash');
-  var module = require('modules').get('marvel/directives', []);
+  var module = require('ui/modules').get('marvel/directives', []);
   module.directive('marvelNav', function ($location) {
     return {
       restrict: 'E',

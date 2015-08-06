@@ -1,7 +1,7 @@
-var metrics = {
+module.exports = {
   'search_request_rate': {
     active: true,
-    field: 'total.search.query_total',
+    field: 'index_stats.total.search.query_total',
     label: 'Search Rate',
     description: 'The cluster wide rate at which search reqeusts are being executed.',
     format: '0,0.0',
@@ -9,35 +9,21 @@ var metrics = {
     units: '/s',
     defaults: { warning: '>100', critical: '>5000', interval: '1m', periods: 1 },
     type: 'cluster',
-    filters: [ { term: { _type: 'indices_stats' } } ],
-    derivative: true
-  },
-  'index_request_rate': {
-    active: true,
-    field: 'total.indexing.index_total',
-    label: 'Indexing Rate',
-    description: 'The cluster wide rate at which documents are being indexed.',
-    format: '0,0.0',
-    metricAgg: 'max',
-    units: '/s',
-    defaults: { warning: '>1000', critical: '>5000', interval: '1m', periods: 1 },
-    type: 'cluster',
-    filters: [ { term: { _type: 'indices_stats' } } ],
     derivative: true
   },
   'index_latency': {
     active: true,
-    field: 'total.indexing.index_total',
+    field: 'index_stats.total.indexing.index_total',
     label: 'Indexing Latency',
     description: 'The average indexing latency across the entire cluster.',
     format: '0,0.0',
     metricAgg: 'sum',
     aggs: {
       index_time_in_millis: {
-        max: { field: 'total.indexing.index_time_in_millis' }
+        max: { field: 'index_stats.total.indexing.index_time_in_millis' }
       },
       index_total: {
-        max: { field: 'total.indexing.index_total' }
+        max: { field: 'index_stats.total.indexing.index_total' }
       },
       index_time_in_millis_deriv: {
         derivative: { buckets_path: 'index_time_in_millis', gap_policy: 'insert_zeros' }
@@ -48,7 +34,6 @@ var metrics = {
     },
     units: 'ms',
     defaults: { warning: '>100', critical: '>200', interval: '1m', periods: 1 },
-    filters: [ { term: { _type: 'indices_stats' } } ],
     type: 'cluster',
     derivitave: false,
     calculation: function (last) {
@@ -66,17 +51,17 @@ var metrics = {
   },
   'query_latency': {
     active: true,
-    field: 'total.search.query_total',
+    field: 'index_stats.total.search.query_total',
     label: 'Query Latency',
     description: 'The average query latency across the entire cluster.',
     format: '0,0.0',
     metricAgg: 'sum',
     aggs: {
       query_time_in_millis: {
-        max: { field: 'total.search.query_time_in_millis' }
+        max: { field: 'index_stats.total.search.query_time_in_millis' }
       },
       query_total: {
-        max: { field: 'total.search.query_total' }
+        max: { field: 'index_stats.total.search.query_total' }
       },
       query_time_in_millis_deriv: {
         derivative: { buckets_path: 'query_time_in_millis', gap_policy: 'insert_zeros' }
@@ -87,7 +72,6 @@ var metrics = {
     },
     units: 'ms',
     defaults: { warning: '>100', critical: '>200', interval: '1m', periods: 1 },
-    filters: [ { term: { _type: 'indices_stats' } } ],
     type: 'cluster',
     derivitave: false,
     calculation: function (last) {
@@ -117,7 +101,7 @@ var metrics = {
   },
   'heap_used_percent': {
     active: true,
-    field: 'jvm.mem.heap_used_percent',
+    field: 'node_stats.jvm.mem.heap_used_percent',
     label: 'JVM Heap Usage',
     description: 'The amound of heap used by the JVM',
     format: '0,0.0',
@@ -129,7 +113,7 @@ var metrics = {
   },
   'load_average_1m': {
     active: true,
-    field: 'os.load_average.1m',
+    field: 'node_stats.os.load_average.1m',
     label: 'CPU Load (1m)',
     description: 'The amount of load used for the last 1 minute.',
     format: '0,0.0',
@@ -141,7 +125,7 @@ var metrics = {
   },
   'index_throttle_time': {
     active: true,
-    field: 'primaries.indexing.throttle_time_in_millis',
+    field: 'index_stats.primaries.indexing.throttle_time_in_millis',
     label: 'Indexing Throttle Time',
     description: 'The amount of load used for the last 1 minute.',
     format: '0,0.0',
@@ -153,7 +137,7 @@ var metrics = {
   },
   'index_shard_query_rate': {
     active: false,
-    field: 'total.search.query_total',
+    field: 'index_stats.total.search.query_total',
     label: 'Index Search Query Shard Rate',
     description: 'Total number of requests (GET /_search)across an index (and across all relevant shards for that index) / <time range>',
     format: '0.0',
@@ -165,7 +149,7 @@ var metrics = {
   },
   'index_document_count': {
     active: false,
-    field: 'primaries.docs.count',
+    field: 'index_stats.primaries.docs.count',
     label: 'Indexing Document Count',
     description: 'Total number of documents (in primary shards) for an index',
     format: '0,0',
@@ -177,7 +161,7 @@ var metrics = {
   },
   'index_search_request_rate': {
     active: true,
-    field: 'total.search.query_total',
+    field: 'index_stats.total.search.query_total',
     label: 'Search Rate',
     description: 'The per index rate at which search reqeusts are being executed.',
     format: '0,0.0',
@@ -189,7 +173,7 @@ var metrics = {
   },
   'index_request_rate': {
     active: true,
-    field: 'total.indexing.index_total',
+    field: 'index_stats.total.indexing.index_total',
     label: 'Indexing Rate',
     description: 'The per index rate at which documents are being indexed.',
     format: '0,0.0',
@@ -201,7 +185,7 @@ var metrics = {
   },
   'index_merge_rate': {
     active: true,
-    field: 'total.merges.total_size_in_bytes',
+    field: 'index_stats.total.merges.total_size_in_bytes',
     label: 'Indexing Rate',
     description: 'The per index rate at which segements are being merged.',
     format: '0,0.0',
@@ -213,7 +197,7 @@ var metrics = {
   },
   'index_size': {
     active: true,
-    field: 'total.store.size_in_bytes',
+    field: 'index_stats.total.store.size_in_bytes',
     label: 'Index Size',
     description: 'The size of the index.',
     format: '0,0.0b',
@@ -248,10 +232,3 @@ var metrics = {
     derivative: true
   }
 };
-
-// Mind the gap... UMD Below
-(function(define) {
-  define(function (require, exports, module) { return metrics; });
-}( // Help Node out by setting up define.
-   typeof module === 'object' && typeof define !== 'function' ? function (factory) { module.exports = factory(require, exports, module); } : define
-));

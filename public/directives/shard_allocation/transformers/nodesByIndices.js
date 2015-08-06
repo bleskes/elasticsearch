@@ -44,7 +44,7 @@ define(function (require) {
       };
 
       function createNode(obj, node, id) {
-        node.master = state.master_node === id;
+        node.master = state.cluster_state.master_node === id;
         node.details = extractIp(node);
         node.ip_port = extractIp(node);
         node.type = 'node';
@@ -78,8 +78,12 @@ define(function (require) {
         shards = shards.filter(filterHiddenIndices);
       }
 
-      var data = _.reduce(state.nodes, createNode, {});
-      if (state.routing_nodes.unassigned.length !== 0 ) {
+      function isUnassigned(shard) {
+        return shard.state === 'UNASSIGNED';
+      }
+
+      var data = _.reduce(state.cluster_state.nodes, createNode, {});
+      if (_.some(shards, isUnassigned)) {
         data.unassigned = {
           name: 'Unassigned',
           master: false,

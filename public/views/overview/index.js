@@ -3,14 +3,14 @@ define(function (require) {
   var angular = require('angular');
 
   // require('plugins/visualize/saved_visualizations/saved_visualizations');
-  // require('components/timepicker/timepicker');
+  // require('ui/timepicker/timepicker');
   require('plugins/marvel/services/settings');
   require('plugins/marvel/services/metrics');
   require('plugins/marvel/services/clusters');
-  require('components/notify/notify');
+  require('ui/notify/notify');
   require('angular-bindonce');
 
-  var module = require('modules').get('marvel', [
+  var module = require('ui/modules').get('marvel', [
     'marvel/directives',
     'marvel/settings',
     'marvel/metrics',
@@ -19,16 +19,17 @@ define(function (require) {
     'kibana/notify'
   ]);
 
-  require('routes')
-  .when('/marvel', {
-    template: require('marvel/views/overview/index.html'),
+  require('ui/routes')
+  .when('/overview', {
+    template: require('plugins/marvel/views/overview/index.html'),
     resolve: {
       marvel: function (Private) {
         var routeInit = Private(require('plugins/marvel/lib/route_init'));
         return routeInit();
       }
     }
-  });
+  })
+  .otherwise({ redirectTo: '/overview' });
 
   module.controller('overview', function (kbnUrl, globalState, $scope, timefilter, $route, courier, marvelMetrics, Private, Promise, $timeout) {
     var ChartDataSource = Private(require('plugins/marvel/directives/chart/data_source'));

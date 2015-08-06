@@ -2,11 +2,11 @@ define(function (require) {
   var _ = require('lodash');
   var angular = require('angular');
 
-  var module = require('modules').get('marvel', []);
+  var module = require('ui/modules').get('marvel', []);
 
-  require('routes')
-    .when('/marvel/index/:index', {
-      template: require('marvel/views/index/index_template.html'),
+  require('ui/routes')
+    .when('/index/:index', {
+      template: require('plugins/marvel/views/index/index_template.html'),
       resolve: {
         marvel: function (Private) {
           var routeInit = Private(require('plugins/marvel/lib/route_init'));

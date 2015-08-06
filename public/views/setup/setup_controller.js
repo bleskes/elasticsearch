@@ -2,10 +2,10 @@ define(function (require) {
   var _ = require('lodash');
   var angular = require('angular');
 
-  var module = require('modules').get('marvel', []);
+  var module = require('ui/modules').get('marvel', []);
 
-  require('routes').when('/marvel/setup', {
-    template: require('marvel/views/setup/setup_template.html')
+  require('ui/routes').when('/setup', {
+    template: require('plugins/marvel/views/setup/setup_template.html')
   });
 
 });

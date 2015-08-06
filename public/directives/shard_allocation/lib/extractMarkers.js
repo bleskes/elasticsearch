@@ -36,7 +36,7 @@ define(function (require) {
     var total = 0;
     var currentMarker = null;
     var markers = _.reduce(data, function (memo, item) {
-      var timestamp = getValue(item.fields['@timestamp']);
+      var timestamp = getValue(item.fields['timestamp']);
       var time = moment.utc(timestamp).startOf('day').format('YYYY-MM-DD');
       if (!currentMarker) {
         // first marker

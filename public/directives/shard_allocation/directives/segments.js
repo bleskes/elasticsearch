@@ -19,7 +19,7 @@
 
 /* jshint newcap: false */
 define(function (require) {
-	var module = require('modules').get('marvel/directives', []);
+	var module = require('ui/modules').get('marvel/directives', []);
   var React = require('react');
   var Segements = require('plugins/marvel/directives/shard_allocation/components/segments');
 	module.directive('segments', function () {
