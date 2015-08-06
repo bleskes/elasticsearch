@@ -30,8 +30,6 @@ public interface Clock {
 
     long nanos();
 
-    DateTime now();
-
     DateTime nowUTC();
 
     DateTime now(DateTimeZone timeZone);
