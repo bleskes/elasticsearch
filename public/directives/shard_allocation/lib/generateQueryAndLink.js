@@ -29,7 +29,7 @@ define(function (require) {
       type = 'node';
       ident = data.ip_port;
     }
-    return '#/marvel/' + data.type + '/' + ident;
+    return '#/' + data.type + '/' + ident;
   };
 
 });

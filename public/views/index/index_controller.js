@@ -58,7 +58,7 @@ define(function (require) {
             indexPattern: indexPattern,
             cluster: globalState.cluster,
             metric: metric,
-            filters: [{ term: { 'index.raw': $scope.indexName } }]
+            filters: [{ term: { 'index_stats.index': $scope.indexName } }]
           };
           var dataSource = new ChartDataSource(options);
           dataSource.register(courier);
