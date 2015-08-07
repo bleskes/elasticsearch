@@ -10,7 +10,6 @@ define(function (require) {
 
   module.directive('marvelChart', function (marvelMetrics, $route, Private, courier, timefilter) {
     var marvelIndex = $route.current.locals.indexPattern;
-    var Vis = Private(require('ui/vis/vis'));
     var calcAuto = Private(require('ui/time_buckets/calc_auto_interval'));
 
     return {
