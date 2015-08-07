@@ -66,6 +66,7 @@ import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.job.status.StatusReporter;
 import com.prelert.job.transform.TransformConfig;
 import com.prelert.job.transform.TransformConfigs;
+import com.prelert.job.transform.TransformType;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CsvDataToProcessWriterTest
@@ -309,13 +310,15 @@ public class CsvDataToProcessWriterTest
         transform.setInputs(Arrays.asList("date", "time-of-day"));
         transform.setOutputs(Arrays.asList("datetime"));
 
-        DataDescription dd = new DataDescription();
-        dd.setFieldDelimiter(',');
-        dd.setTimeField("datetime");
-        dd.setFormat(DataFormat.DELIMITED);
-        dd.setTimeFormat("yyyy-MM-ddHH:mm:ssX");
+        m_Transforms.add(transform);
 
-        CsvDataToProcessWriter writer = createWriter(dd, Arrays.asList(transform));
+        m_DataDescription = new DataDescription();
+        m_DataDescription.setFieldDelimiter(',');
+        m_DataDescription.setTimeField("datetime");
+        m_DataDescription.setFormat(DataFormat.DELIMITED);
+        m_DataDescription.setTimeFormat("yyyy-MM-ddHH:mm:ssX");
+
+        CsvDataToProcessWriter writer = createWriter();
 
         StringBuilder input = new StringBuilder();
         input.append("date,time-of-day,metric,value\n");
@@ -337,6 +340,49 @@ public class CsvDataToProcessWriterTest
         verify(m_DataPersister).flushRecords();
     }
 
+    @Test
+    public void testWrite_GivenChainedTransforms_SortsByDependencies() throws MissingFieldException,
+            HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException
+    {
+        TransformConfig tc1 = new TransformConfig();
+        tc1.setTransform(TransformType.Names.UPPERCASE_NAME);
+        tc1.setInputs(Arrays.asList("dns"));
+        tc1.setOutputs(Arrays.asList("dns_upper"));
+
+        TransformConfig tc2 = new TransformConfig();
+        tc2.setTransform(TransformType.Names.CONCAT_NAME);
+        tc2.setInputs(Arrays.asList("dns1", "dns2"));
+        tc2.setArguments(Arrays.asList("."));
+        tc2.setOutputs(Arrays.asList("dns"));
+
+        m_Transforms.add(tc1);
+        m_Transforms.add(tc2);
+
+        Detector detector = new Detector();
+        detector.setFieldName("value");
+        detector.setByFieldName("dns_upper");
+        m_AnalysisConfig.setDetectors(Arrays.asList(detector));
+
+        StringBuilder input = new StringBuilder();
+        input.append("time,dns1,dns2,value\n");
+        input.append("1,www,foo.com,1.0\n");
+        input.append("2,www,bar.com,2.0\n");
+        InputStream inputStream = createInputStream(input.toString());
+        CsvDataToProcessWriter writer = createWriter();
+
+        writer.write(inputStream);
+        verify(m_StatusReporter, times(1)).startNewIncrementalCount();
+
+        List<String[]> expectedRecords = new ArrayList<>();
+        // The final field is the control field
+        expectedRecords.add(new String[] {"time", "dns_upper", "value", "."});
+        expectedRecords.add(new String[] {"1", "WWW.FOO.COM","1.0", ""});
+        expectedRecords.add(new String[] {"2", "WWW.BAR.COM", "2.0", ""});
+        assertWrittenRecordsEqualTo(expectedRecords);
+
+        verify(m_StatusReporter).finishReporting();
+        verify(m_DataPersister).flushRecords();
+    }
 
     private static InputStream createInputStream(String input)
     {
@@ -347,14 +393,6 @@ public class CsvDataToProcessWriterTest
     {
         return new CsvDataToProcessWriter(m_LengthEncodedWriter, m_DataDescription,
                 m_AnalysisConfig, new TransformConfigs(m_Transforms),
-                m_StatusReporter, m_DataPersister, m_Logger);
-    }
-
-    private CsvDataToProcessWriter createWriter(DataDescription dd,
-                                                List<TransformConfig> transforms)
-    {
-        return new CsvDataToProcessWriter(m_LengthEncodedWriter, dd,
-                m_AnalysisConfig, new TransformConfigs(transforms),
                 m_StatusReporter, m_DataPersister, m_Logger);
     }
 

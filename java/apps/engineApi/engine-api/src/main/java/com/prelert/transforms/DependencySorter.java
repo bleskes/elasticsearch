@@ -218,7 +218,6 @@ public class DependencySorter
             {
                 if (tc.getOutputs().contains(input))
                 {
-                    itr.remove();
                     transforms = orderDependenciesRecursive(
                                     new LinkedList<TransformConfig>(transforms), dependencies);
 

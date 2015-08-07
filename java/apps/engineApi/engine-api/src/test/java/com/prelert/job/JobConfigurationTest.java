@@ -440,10 +440,6 @@ public class JobConfigurationTest
 
         DataDescription dc = new DataDescription();
 
-        TransformConfig tc = new TransformConfig();
-        tc.setTransform(TransformType.Names.DOMAIN_SPLIT_NAME);
-        tc.setInputs(Arrays.asList("dns"));
-
         jc.setAnalysisConfig(ac);
         jc.setDataDescription(dc);
 

@@ -189,6 +189,7 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
             }
         }
 
+        postDateTransforms = DependencySorter.sortByDependency(postDateTransforms);
         for (TransformConfig config : postDateTransforms)
         {
             try

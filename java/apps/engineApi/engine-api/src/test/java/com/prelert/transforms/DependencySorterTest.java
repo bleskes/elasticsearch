@@ -27,7 +27,8 @@
 
 package com.prelert.transforms;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -203,7 +204,7 @@ public class DependencySorterTest
     }
 
     @Test
-    public void testSortByDependency_3Chains()
+    public void testSortByDependency_3ChainsInOrder()
     {
         List<TransformConfig> transforms = new ArrayList<>();
 
@@ -229,6 +230,48 @@ public class DependencySorterTest
         TransformConfig noChainHrd = createHrdTransform(Arrays.asList("dns"),
                 Arrays.asList("subdomain"));
         transforms.add(noChainHrd);
+
+        List<TransformConfig> orderedDeps = DependencySorter.sortByDependency(transforms);
+
+        assertEquals(transforms.size(), orderedDeps.size());
+
+        int chain1ConcatIndex = orderedDeps.indexOf(chain1Concat);
+        assertTrue(chain1ConcatIndex >= 0);
+        int chain1HrdIndex = orderedDeps.indexOf(chain1Hrd);
+        assertTrue(chain1HrdIndex >= 0);
+        assertTrue(chain1ConcatIndex < chain1HrdIndex);
+
+        int chain2ConcatIndex = orderedDeps.indexOf(chain2Concat);
+        assertTrue(chain2ConcatIndex >= 0);
+        int chain2Concat2Index = orderedDeps.indexOf(chain2Concat2);
+        assertTrue(chain2Concat2Index >= 0);
+        assertTrue(chain2ConcatIndex < chain2Concat2Index);
+    }
+
+    @Test
+    public void testSortByDependency_3ChainsOutOfOrder()
+    {
+        List<TransformConfig> transforms = new ArrayList<>();
+
+        TransformConfig chain1Hrd = createHrdTransform(Arrays.asList("ab"),
+                Arrays.asList("subdomain", "hrd"));
+        transforms.add(chain1Hrd);
+
+        TransformConfig chain2Concat2 = createConcatTransform(Arrays.asList("cd", "ine"),
+                Arrays.asList("cde"));
+        transforms.add(chain2Concat2);
+
+        TransformConfig chain1Concat = createConcatTransform(Arrays.asList("ina", "inb"),
+                Arrays.asList("ab"));
+        transforms.add(chain1Concat);
+
+        TransformConfig noChainHrd = createHrdTransform(Arrays.asList("dns"),
+                Arrays.asList("subdomain"));
+        transforms.add(noChainHrd);
+
+        TransformConfig chain2Concat = createConcatTransform(Arrays.asList("inc", "ind"),
+                Arrays.asList("cd"));
+        transforms.add(chain2Concat);
 
         List<TransformConfig> orderedDeps = DependencySorter.sortByDependency(transforms);
 
