@@ -58,7 +58,12 @@ define(function (require) {
     Promise
       .all($scope.charts.map(function (name) {
         return marvelMetrics(globalState.cluster, name).then(function (metric) {
-          var dataSource = new ChartDataSource(metric, indexPattern, globalState.cluster);
+          var options = {
+            indexPattern: indexPattern,
+            metric: metric,
+            cluster: globalState.cluster
+          }
+          var dataSource = new ChartDataSource(options);
           dataSource.register(courier);
           $scope.dataSources[name] = dataSource;
           return dataSource;

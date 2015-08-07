@@ -21,10 +21,10 @@ define(function (require) {
       this.data = resp.hits.hits.map(function(hit) {
         var source = hit._source;
         return {
-          name: source.node.name,
-          address: source.node.ip_port,
-          ram: source.os.mem.actual_used_in_bytes,
-          upTime: source.os.uptime_in_millis
+          name: _.get(source, 'node_stats.name'),
+          address: _.get(source, 'node_stats.ip_port'),
+          ram: _.get(source, 'node_stats.os.mem.actual_used_in_bytes'),
+          upTime: _.get(source, 'node_stats.os.uptime_in_millis')
         }
       });
     };
