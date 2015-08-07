@@ -1,3 +1,4 @@
+<div class="filter pull-right" ng-click="toggleActive()" ng-class="{ active: onlyActive }"><span ng-if="onlyActive">Show</span><span ng-if="!onlyActive">Hide</span> History</div>
 <h1>Shard Activity</h1>
 <table class="table table-condensed">
   <thead>
@@ -13,7 +14,7 @@
     </tr>
   </thead>
   <tbody bindonce>
-    <tr ng-repeat="activity in data" ng-class="{ done: activity.stage === 'DONE', red: activity.primary, yellow: !activity.primary }">
+    <tr ng-repeat="activity in visibleData" ng-class="{ done: activity.stage === 'DONE', red: activity.primary, yellow: !activity.primary }">
       <td class="index">
         <h5 bo-text="activity.index.name"></h5>
         <p>Shard <span bo-text="activity.id"></span> | <span bo-text="lookup[activity.type]"></span><span ng-if="activity.type === 'RELOCATION'"> of {{ activity.primary ? 'Primary' : 'Replica' }}</span></p>

@@ -44,21 +44,25 @@ define(function (require) {
         title: 'Name'
       }, {
         key: 'metrics.index_document_count',
+        sortKey: 'metrics.index_document_count.last',
         sort: 0,
         title: 'Document Count'
       }, {
         key: 'metrics.index_request_rate',
         sort: 0,
+        sortKey: 'metrics.index_request_rate.last',
         chart_data: 'metrics.index_request_rate.data',
         title: 'Index Rate'
       }, {
         key: 'metrics.index_search_request_rate',
         sort: 0,
+        sortKey: 'metrics.index_search_request_rate.last',
         chart_data: 'metrics.index_search_request_rate.data',
         title: 'Search Rate'
       }, {
         key: 'metrics.index_merge_rate',
         sort: 0,
+        sortKey: 'metrics.index_merge_rate.last',
         title: 'Merge Rate',
       }]
     };

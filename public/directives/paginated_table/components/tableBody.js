@@ -28,8 +28,8 @@ define(function(require) {
       // Sort the Data
       var sortColumn = this.props.sortColObj;
       var sortedData = this.props.tableData.sort(function(a, b) {
-        var aVal = _.get(a, sortColumn.key);
-        var bVal = _.get(b, sortColumn.key);
+        var aVal = _.get(a, sortColumn.sortKey || sortColumn.key);
+        var bVal = _.get(b, sortColumn.sortKey || sortColumn.key);
         var sortDir = sortColumn.sort > 0 ? (aVal < bVal): (aVal > bVal);
         return sortDir ? -1 : 1;
       });

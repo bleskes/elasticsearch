@@ -4,6 +4,17 @@ marvel-shard-activity {
   background: @white;
   border-top: @thick solid @esGray;
 
+  .filter {
+    font-size: 10px;
+    cursor: pointer;
+    padding: 3px 10px;
+    border: 1px solid @esLightGray;
+    &.active {
+      background-color: @esGray;
+      color: @white;
+    }
+  }
+
   h1 {
     font-size: 20px;
     margin: 0;

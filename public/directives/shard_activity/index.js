@@ -8,11 +8,18 @@ define(function (require) {
       restrict: 'E',
       scope: {
         source: '=',
-        onlyActive: '='
+        onlyActive: '=?'
       },
       template: template,
       link: function ($scope) {
         $scope.formatNumber = formatNumber;
+        $scope.visibleData = [];
+        $scope.data = [];
+
+        $scope.toggleActive = function () {
+          $scope.onlyActive = !$scope.onlyActive;
+          filterData($scope.data);
+        }
 
         $scope.lookup = {
           GATEWAY: 'Primary',
@@ -21,11 +28,21 @@ define(function (require) {
           RELOCATION: 'Relocation'
         };
 
-        $scope.$watch('source.data', function (data) {
-          $scope.data = $scope.onlyActive ? _.filter(data, function (item) {
-            return item.stage !== 'DONE';
-          }) : data;
-        });
+        if ($scope.onlyActive != null) $scope.onlyActive = true;
+
+        function filterData() {
+          if ($scope.source && $scope.source.data) {
+            $scope.visibleData = _.filter($scope.source.data, function (item) {
+              if ($scope.onlyActive) {
+                return item.stage !== 'DONE';
+              }
+              return true;
+            });
+          }
+        }
+        filterData()
+
+        $scope.$watch('source.data', filterData);
 
         $scope.getIpAndPort = function (transport) {
           var matches = transport.match(/([\d\.:]+)\]$/);

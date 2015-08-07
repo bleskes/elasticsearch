@@ -3,5 +3,5 @@
   <div class="metrics marvel-element">
     <div ng-repeat="name in charts" class="marvel-element"><marvel-chart source="dataSources[name]"/></div>
   </div>
-  <marvel-shard-activity source="dataSources.shardActivity"/>
+  <marvel-shard-activity onlyActive="true" source="dataSources.shardActivity"/>
 </div>
