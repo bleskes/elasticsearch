@@ -45,20 +45,6 @@ public class AnalysisLimitsTest
     public ExpectedException m_ExpectedException = ExpectedException.none();
 
     @Test
-    public void testVerify_GivenNegativeModeLMemoryLimit() throws JobConfigurationException
-    {
-        m_ExpectedException.expect(JobConfigurationException.class);
-        m_ExpectedException.expectMessage("modelMemoryLimit cannot be < 0. Value = -1");
-        m_ExpectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
-
-        AnalysisLimits limits = new AnalysisLimits();
-        limits.setModelMemoryLimit(-1L);
-
-        limits.verify();
-    }
-
-    @Test
     public void testVerify_GivenNegativeCategorizationExamplesLimit()
             throws JobConfigurationException
     {

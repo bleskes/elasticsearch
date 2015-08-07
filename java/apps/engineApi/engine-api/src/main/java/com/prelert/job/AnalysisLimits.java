@@ -133,12 +133,6 @@ public class AnalysisLimits implements Verifiable
     @Override
     public boolean verify() throws JobConfigurationException
     {
-        if (m_ModelMemoryLimit < 0)
-        {
-            String msg = Messages.getMessage(Messages.JOB_CONFIG_NEGATIVE_FIELD_VALUE,
-                                                MODEL_MEMORY_LIMIT, m_ModelMemoryLimit);
-            throw new JobConfigurationException(msg, ErrorCodes.INVALID_VALUE);
-        }
         if (m_CategorizationExamplesLimit != null && m_CategorizationExamplesLimit < 0)
         {
             String msg = Messages.getMessage(Messages.JOB_CONFIG_NEGATIVE_FIELD_VALUE,
