@@ -198,11 +198,10 @@ public class JobConfigurationTest
         try
         {
             jc.verify();
-            Assert.assertTrue(false); // shouldn't get here
         }
         catch (JobConfigurationException e)
         {
-            Assert.assertEquals(ErrorCodes.INVALID_VALUE, e.getErrorCode());
+            Assert.assertTrue(false); // shouldn't get here
         }
 
         jc.setAnalysisLimits(new AnalysisLimits(1000, 4L));

@@ -57,8 +57,12 @@ public class AnalysisLimitsWriter
     public void write() throws IOException
     {
         StringBuilder contents = new StringBuilder("[memory]").append(NEW_LINE);
-        contents.append(MODEL_MEMORY_LIMIT_CONFIG_STR + EQUALS)
-                .append(m_Limits.getModelMemoryLimit()).append(NEW_LINE);
+        if (m_Limits.getModelMemoryLimit() != 0)
+        {
+            contents.append(MODEL_MEMORY_LIMIT_CONFIG_STR + EQUALS)
+                    .append(m_Limits.getModelMemoryLimit()).append(NEW_LINE);
+        }
+
         if (m_Limits.getCategorizationExamplesLimit() != null)
         {
             contents.append(CATEGORIZATION_EXAMPLES_LIMIT_CONFIG_STR + EQUALS)
