@@ -50,7 +50,11 @@ public class AnalysisLimits implements Verifiable
     public static final String MODEL_MEMORY_LIMIT = "modelMemoryLimit";
     public static final String CATEGORIZATION_EXAMPLES_LIMIT = "categorizationExamplesLimit";
 
-    /** It is initialised to 0. A value of 0 indicates it was not set. */
+    /**
+     * It is initialised to 0.  A value of 0 indicates it was not set, which in
+     * turn causes the C++ process to use its own default limit.  A negative
+     * value means no limit.  All negative input values are stored as -1.
+     */
     private long m_ModelMemoryLimit;
 
     /**
@@ -67,7 +71,15 @@ public class AnalysisLimits implements Verifiable
 
     public AnalysisLimits(long modelMemoryLimit, Long categorizationExamplesLimit)
     {
-        m_ModelMemoryLimit = modelMemoryLimit;
+        if (modelMemoryLimit < 0)
+        {
+            // All negative numbers mean "no limit"
+            m_ModelMemoryLimit = -1;
+        }
+        else
+        {
+            m_ModelMemoryLimit = modelMemoryLimit;
+        }
         m_CategorizationExamplesLimit = categorizationExamplesLimit;
     }
 
@@ -85,7 +97,15 @@ public class AnalysisLimits implements Verifiable
 
     public void setModelMemoryLimit(long value)
     {
-        m_ModelMemoryLimit = value;
+        if (value < 0)
+        {
+            // All negative numbers mean "no limit"
+            m_ModelMemoryLimit = -1;
+        }
+        else
+        {
+            m_ModelMemoryLimit = value;
+        }
     }
 
     /**
