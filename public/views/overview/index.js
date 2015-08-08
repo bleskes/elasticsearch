@@ -38,6 +38,8 @@ define(function (require) {
     var IssueDataSource = Private(require('plugins/marvel/directives/issues/data_source'));
     var indexPattern = $route.current.locals.marvel.indexPattern;
     var clusters = $route.current.locals.marvel.clusters;
+    var docTitle = Private(require('ui/doc_title'));
+    docTitle.change('Marvel', true);
 
     timefilter.enabled = true;
     if (timefilter.refreshInterval.value === 0) {

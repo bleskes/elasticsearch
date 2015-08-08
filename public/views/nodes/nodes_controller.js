@@ -34,6 +34,8 @@ define(function (require) {
     var NodesDataSource = Private(require('plugins/marvel/directives/node_listing/nodes_data_source'));
     var indexPattern = $route.current.locals.marvel.indexPattern;
     var clusters = $route.current.locals.marvel.clusters;
+    var docTitle = Private(require('ui/doc_title'));
+    docTitle.change('Marvel', true);
 
 
     timefilter.enabled = true;

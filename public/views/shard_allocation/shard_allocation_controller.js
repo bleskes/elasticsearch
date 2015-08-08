@@ -26,6 +26,8 @@ define(function (require) {
     var indexPattern = $scope.indexPattern = $route.current.locals.marvel.indexPattern;
     var ClusterStatusDataSource = Private(require('plugins/marvel/directives/cluster_status/data_source'));
     var ShardRecoveryDataSource = Private(require('plugins/marvel/directives/shard_activity/data_source'));
+    var docTitle = Private(require('ui/doc_title'));
+    docTitle.change('Marvel', true);
 
     timefilter.enabled = true;
     if (timefilter.refreshInterval.value === 0) {

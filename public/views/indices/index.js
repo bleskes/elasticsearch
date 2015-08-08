@@ -25,6 +25,8 @@ define(function (require) {
     // var IndicesDataSource = Private(require('plugins/marvel/directives/index_listing/indices_data_source'));
     var indexPattern = $route.current.locals.marvel.indexPattern;
     var clusters = $route.current.locals.marvel.clusters;
+    var docTitle = Private(require('ui/doc_title'));
+    docTitle.change('Marvel', true);
 
     timefilter.enabled = true;
     if (timefilter.refreshInterval.value === 0) {

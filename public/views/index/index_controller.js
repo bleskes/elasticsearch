@@ -21,6 +21,8 @@ define(function (require) {
     var indexPattern = $scope.indexPattern = $route.current.locals.marvel.indexPattern;
     var ChartDataSource = Private(require('plugins/marvel/directives/chart/data_source'));
     var ClusterStatusDataSource = Private(require('plugins/marvel/directives/cluster_status/data_source'));
+    var docTitle = Private(require('ui/doc_title'));
+    docTitle.change('Marvel - ' + $scope.indexName, true);
 
     timefilter.enabled = true;
     if (timefilter.refreshInterval.value === 0) {
