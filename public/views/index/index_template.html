@@ -1,0 +1,15 @@
+<div ng-controller="indexView" class="details marvel-view" ng-class="cluster.shards[indexName].status">
+  <marvel-cluster-status source="dataSources.clusterStatus"></marvel-cluster-status>
+  <div class="detail-metrics marvel-element">
+    <h1>{{ indexName }}</h1>
+    <div class="metrics marvel-element">
+      <div ng-repeat="name in charts" class="marvel-element">
+        <marvel-chart source="dataSources[name]" />
+      </div>
+    </div>
+  </div>
+  <div class="marvel-element">
+    <marvel-shard-allocation filter-by="indexName" hide-ui="true" view="indices" cluster="cluster" index-pattern="indexPattern"></marvel-shard-allocation>
+  </div>
+</div>
+

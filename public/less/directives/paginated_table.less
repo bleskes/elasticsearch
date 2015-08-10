@@ -1,0 +1,88 @@
+.paginated-table {
+  background-color: #ffffff;
+  border-top: 2px solid #a3a5ad;
+  padding: 10px;
+
+  &.loading {
+    text-align: center;
+    font-size: 36px;
+    font-weight: bold;
+    padding: 30px 0;
+  }
+
+  .filter-input {
+    border-radius: 3px;
+    border: 1px solid #d1d2d6;
+    height: 30px;
+    line-height: 28px;
+    margin-left: 15px;
+    margin-right: 15px;
+    padding-left: 7px;
+  }
+  .title-bar {
+    line-height: 30px;
+  }
+  .title {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+  .table {
+    th {
+      border-color: #a3a5ad;
+      border-width: 1px;
+      height: 20px;
+      padding-bottom: 2px;
+      cursor: pointer;
+      &:first-child { padding-left: 0; }
+      span { margin-right: 3px; }
+    }
+    td {
+      border-color: #bdc5c2;
+      height: 30px;
+      line-height: 30px;
+      padding: 0 10px;
+    }
+    td, th {
+      text-align: right;
+      font-size: 12px;
+      &:first-child {
+        text-align: left;
+      }
+    }
+  }
+  .tbody {
+    tr {
+      td:first-child {
+        border-left: 2px solid #94c63d;
+      }
+    }
+  }
+
+  @light-border-color: #eff0f1;
+
+  .footer {
+    text-align: center;
+    margin-top: 13px;
+    line-height: 30px;
+  }
+  .items-per-page span {
+    cursor: pointer;
+  }
+  .pagination {
+    border-top: 1px solid @light-border-color;
+    border-bottom: 1px solid @light-border-color;
+    margin-top: 0;
+    > li {
+      cursor: pointer;
+      height: 30px;
+      line-height: 30px;
+      width: 30px;
+      display: inline-block;
+      border-right: 1px solid @light-border-color;
+      &:first-child {
+        border-left: 1px solid @light-border-color;
+      }
+    }
+  }
+}
+

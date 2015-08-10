@@ -1,0 +1,140 @@
+.issues {
+  .view {
+    .summary {
+      display: flex;
+
+      marvel-issue-summary {
+        flex: 1 1 auto;
+        margin: 0 5px;
+      }
+
+      marvel-issue-summary:first-child {
+        margin: 0 5px 0 0;
+      }
+
+      marvel-issue-summary:last-child {
+        margin: 0 0 0 5px;
+      }
+
+    }
+
+    .issues-table {
+      background-color: @white;
+      border-top: @thick solid @esGray;
+      padding: 0 5px 5px;
+    }
+
+
+    .fa-bolt {
+      color: @esRed;
+    }
+
+    span.icon {
+      display: inline-block;
+      width: 20px;
+      text-align: center;
+    }
+
+    span.node, span.index, span.field {
+      color: @esBlack;
+    }
+
+    span.node, span.index {
+      &::after {
+        content: ':';
+      }
+    }
+
+    td {
+      color: @esGray;
+    }
+
+    .type {
+      text-transform: capitalize;
+    }
+
+    .fa-warning {
+      color: @esYellow;
+    }
+
+    .no-results {
+      color: @esLightGray;
+      text-align: center;
+      h1 {
+        margin-top: 0;
+      }
+      .fa {
+        font-size: 100px;
+      }
+      padding: 40px;
+    }
+
+    div.filters {
+      display: flex;
+      border-bottom: @thick solid @esGray;
+      .totals {
+        color: @esDarkGray;
+        flex-grow: 1;
+        align-self: center;
+        text-align: right;
+        padding-right: 20px;
+        a {
+          color: @esDarkGray;
+        }
+      }
+      .filter, .filter-label {
+        flex: 0 0 auto;
+      }
+      .filter-label {
+        color: @esDarkGray;
+        font-weight: bold;
+        margin: 0 20px 0 60px;
+        align-self: center;
+      }
+      .filter-label:first-child {
+        margin: 0 20px 0 0;
+      }
+      .filter {
+        cursor: pointer;
+        margin: 5px 1px;
+        background-color: @white;
+        color: @esDarkGray;
+        padding: 5px 10px;
+        font-size: 0.9em;
+        border: 1px solid @esLightGray;
+        &.red {
+          color: @esRed;
+          border-color: @esRed;
+          .fa-bolt {
+            color: @esRed;
+          }
+        }
+        &.yellow {
+          color: @esYellow;
+          border-color: @esYellow;
+          .fa-bolt {
+            color: @esYellow;
+          }
+        }
+        &.active {
+          background-color: @esGray;
+          color: @white;
+          &.red {
+            background-color: @esRed;
+            .fa-warning, .fa-bolt {
+              color: @white;
+            }
+          }
+          &.yellow {
+            background-color: @esYellow;
+            color: @esBlack;
+            .fa-warning, .fa-bolt {
+              color: @esBlack;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
