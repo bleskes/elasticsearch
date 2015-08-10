@@ -59,7 +59,7 @@ import com.prelert.rs.data.Pagination;
  * the normalized probability for the records that should
  * be normalized separately is higher than a certain threshold.
  *
- * <br/>
+ * <br>
  * The system property 'prelert.test.data.home' must be set and point
  * to a directory containing the file:
  * <ol>

@@ -548,7 +548,7 @@ public class JobManager
     }
 
     /**
-     * Stop the running job and mark it as finished.<br/>
+     * Stop the running job and mark it as finished.<br>
      *
      * @param jobId The job to stop
      * @throws UnknownJobException
@@ -741,7 +741,7 @@ public class JobManager
     /**
      * The job id is a concatenation of the date in 'yyyyMMddHHmmss' format
      * and a sequence number that is a minimum of 5 digits wide left padded
-     * with zeros.<br/>
+     * with zeros.<br>
      * e.g. the first Id created 23rd November 2013 at 11am
      *     '20131125110000-00001'
      *

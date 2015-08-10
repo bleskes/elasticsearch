@@ -53,7 +53,7 @@ import com.prelert.job.quantiles.Quantiles;
 
 
 /**
- * Utility class for running a Prelert process<br/>
+ * Utility class for running a Prelert process<br>
  * The environment variables PRELERT_HOME and LIB_PATH (or platform variants)
  * are set for the environment of the launched process, any inherited values
  * of LIB_PATH or PRELERT_HOME are overwritten.

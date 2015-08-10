@@ -60,7 +60,7 @@ import com.prelert.rs.data.SingleDocument;
 
 /**
  * Tests the interim results for both buckets and records endpoints.
- * <br/>
+ * <br>
  * The system property 'prelert.test.data.home' must be set and point
  * to a directory containing the file:
  * <ol>

@@ -110,7 +110,7 @@ public interface JobDetailsProvider extends Closeable
 
 	/**
 	 * Update the job document with the values in the <code>updates</code> map.
-	 * e.g. Map<String, Object> update = new HashMap<>();<br/>
+	 * e.g. Map<String, Object> update = new HashMap<>();<br>
 	 *      update.put(JobDetails.STATUS, JobStatus.CLOSED);
 	 *
 	 * @param jobId

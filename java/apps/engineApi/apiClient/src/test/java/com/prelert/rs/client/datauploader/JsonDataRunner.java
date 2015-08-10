@@ -45,7 +45,7 @@ import com.prelert.rs.data.ApiError;
 
 /**
  * Creates a simple job with a detector for for 'metric(metric_value) by metric_field'
- * then generates random JSON data and uploads it to the job.<br/>
+ * then generates random JSON data and uploads it to the job.<br>
  */
 public class JsonDataRunner implements Runnable
 {

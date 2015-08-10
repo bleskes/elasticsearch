@@ -64,7 +64,7 @@ import com.prelert.job.results.Influence;
 import com.prelert.job.results.Influencer;
 
 /**
- * Saves result Buckets and Quantiles to Elasticsearch<br/>
+ * Saves result Buckets and Quantiles to Elasticsearch<br>
  *
  * <b>Buckets</b> are written with the following structure:
  * <h2>Bucket</h2>
@@ -80,14 +80,14 @@ import com.prelert.job.results.Influencer;
  * The Job has a fixed number of detectors but there may not be output
  * for every detector in each bucket. The detector has a name/key every
  * record has a detector name field so you can search for records by
- * detector<br/>
- * <br/>
+ * detector<br>
+ * <br>
  * <b>Quantiles</b> may contain model quantiles used in normalisation
  * and are stored in documents of type {@link Quantiles.TYPE}
- * <br/>
+ * <br>
  * <h2>ModelSizeStats</h2>
  * This is stored in a flat structure
- * <br/>
+ * <br>
  * @see com.prelert.job.persistence.elasticsearch.ElasticsearchMappings
  */
 public class ElasticsearchPersister implements JobResultsPersister

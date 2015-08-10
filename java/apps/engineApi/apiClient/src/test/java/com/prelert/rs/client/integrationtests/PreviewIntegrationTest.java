@@ -52,7 +52,7 @@ import com.prelert.rs.client.EngineApiClient;
 /**
  * Integration test for the preview functionality.
  *
- * <br/>
+ * <br>
  * The system property 'prelert.test.data.home' must be set and point
  * to a directory containing the file:
  * <ol>

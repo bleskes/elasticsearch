@@ -66,14 +66,14 @@ import com.prelert.rs.validation.PaginationParamsValidator;
 /**
  * REST API Jobs end point use to create new Jobs list all jobs or get
  * details of a particular job.
- * <br/>
- * Jobs are created by POSTing to this endpoint:<br/>
+ * <br>
+ * Jobs are created by POSTing to this endpoint:<br>
  * <pre>curl -X POST -H 'Content-Type: application/json' 'http://localhost:8080/api/jobs'</pre>
- * Get details of a specific job:<br/>
+ * Get details of a specific job:<br>
  * <pre>curl 'http://localhost:8080/api/jobs/{job_id}'</pre>
- * or all jobs:<br/>
+ * or all jobs:<br>
  * <pre>curl 'http://localhost:8080/api/jobs'</pre>
- * Delete a job with:<br/>
+ * Delete a job with:<br>
  * <pre>curl -X DELETE 'http://localhost:8080/api/jobs/{job_id}'</pre>
  */
 

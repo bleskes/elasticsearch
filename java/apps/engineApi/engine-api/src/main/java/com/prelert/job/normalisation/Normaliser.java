@@ -44,11 +44,11 @@ import com.prelert.job.results.Bucket;
 /**
  * Normalises bucket scores and anomaly records for either
  * System Change, Unusual behaviour or both.
- * <br/>
+ * <br>
  * Creates and initialises the normaliser process, pipes the probabilities/
  * anomaly scores through them and adds the normalised values to
  * the records/buckets.
- * <br/>
+ * <br>
  * Relies on the C++ normaliser process returning an answer for every input
  * and in exactly the same order as the inputs.
  */

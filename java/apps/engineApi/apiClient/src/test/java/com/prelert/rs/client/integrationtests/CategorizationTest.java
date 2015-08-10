@@ -56,7 +56,7 @@ import com.prelert.rs.data.SingleDocument;
 
 /**
  * Integration test for the categorization functionality.
- * <br/>
+ * <br>
  * The system property 'prelert.test.data.home' must be set and point
  * to a directory containing the file:
  * <ol>

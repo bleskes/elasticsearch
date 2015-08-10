@@ -45,7 +45,7 @@ import com.prelert.job.verification.Verifiable;
  * This class encapsulates all the data required to create a new job it
  * does not represent the state of a created job (see {@linkplain JobDetails}
  * for that).
- * <p/>
+ * <p>
  * If a value has not been set it will be <code>null</code> Object wrappers
  * are used around integral types & booleans so they can take <code>null</code>
  * values.

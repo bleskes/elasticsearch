@@ -72,7 +72,7 @@ import com.prelert.rs.data.SingleDocument;
  * Test the Engine REST API endpoints.
  * Creates jobs, uploads data closes the jobs then gets the results.
  * Tests all the API endpoints and query parameters
- * <br/>
+ * <br>
  * The system property 'prelert.test.data.home' must be set and point
  * to a directory containing these 3 files:
  * <ol>

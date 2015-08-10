@@ -44,7 +44,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
  * first page of results {@link #getPreviousPage()} will return a non
  * <code>null</code> value. {@link #getDocuments()} Returns the actual list
  * of requested documents the size of that list will always be <= {@link #getTake()}
- * <br/>
+ * <br>
  * Skip and Take are set to the argument values used in the query.
  *
  * @param <T> The type of the result

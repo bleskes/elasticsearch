@@ -208,10 +208,10 @@ public class ProcessManager
      * This is a blocking call that won't return until all the data has been
      * written to the process. A new thread is launched to parse the process's
      * output.
-     * <br/>
+     * <br>
      * If there is an error due to the data being in the wrong format or some
      * other runtime error a {@linkplain NativeProcessRunException} is thrown
-     * <br/>
+     * <br>
      * For CSV data if a configured field is missing from the header
      * a {@linkplain MissingFieldException} is thrown
      *
@@ -546,7 +546,7 @@ public class ProcessManager
     /**
      * Stop the running process.
      * Closing the stream into the native process causes the process
-     * to terminate its IO loop and stop.<br/>
+     * to terminate its IO loop and stop.<br>
      * The return value is based on the status of the native process
      * ProcessStatus.IN_USE is returned if the process is currently processing
      * data in which case this function should be tried again after a wait period

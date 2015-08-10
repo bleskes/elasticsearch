@@ -42,7 +42,7 @@ import com.prelert.job.verification.Verifiable;
 /**
  * Describes the format of the data used in the job and how it should
  * be interpreted by autodetect.
- * <p/>
+ * <p>
  * Data must either be in a textual delineated format (e.g. csv, tsv) or JSON
  * the {@linkplain DataFormat} enum indicates which. {@link #getTimeField()}
  * is the name of the field containing the timestamp and {@link #getTimeFormat()}

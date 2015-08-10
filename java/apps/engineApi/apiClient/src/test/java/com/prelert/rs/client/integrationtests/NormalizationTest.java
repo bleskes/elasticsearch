@@ -57,7 +57,7 @@ import com.prelert.rs.data.Pagination;
  * Tests the normalisation of the API buckets and records endpoints.
  * Does not validate the actual normalised values other than to say
  * that for a given batch job at least 1 anomaly should be 100%.
- * <br/>
+ * <br>
  * The system property 'prelert.test.data.home' must be set and point
  * to a directory containing the file:
  * <ol>

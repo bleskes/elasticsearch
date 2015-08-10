@@ -33,7 +33,7 @@ import javax.ws.rs.Path;
  * Streaming data endpoint
  *
  * <pre>curl -X POST 'http://localhost:8080/api/data/<jobid>/' --data @<filename></pre>
- * <br/>
+ * <br>
  * Binary gzipped files must be POSTed with the --data-binary option
  * <pre>curl -X POST 'http://localhost:8080/api/data/<jobid>/' --data-binary @<filename.gz></pre>
  *

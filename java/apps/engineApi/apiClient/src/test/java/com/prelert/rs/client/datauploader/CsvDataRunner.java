@@ -42,7 +42,7 @@ import com.prelert.rs.client.EngineApiClient;
 
 /**
  * Creates a simple job with a detector for for 'metric(metric_value) by metric_field'
- * then generates random CSV data and uploads it to the job.<br/>
+ * then generates random CSV data and uploads it to the job.<br>
  * The data has the header {@value #HEADER}
  */
 public class CsvDataRunner implements Runnable

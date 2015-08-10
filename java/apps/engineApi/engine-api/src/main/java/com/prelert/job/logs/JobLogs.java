@@ -174,7 +174,7 @@ public class JobLogs
     /**
      * Return the last N lines from the file or less if the file
      * is shorter than N lines.
-     * <br/>
+     * <br>
      * The algorithm is imprecise in that it first takes a guess
      * how far back from the end of the file N lines is based on the
      * <code>expectedLineSize</code> parameter then counts the lines

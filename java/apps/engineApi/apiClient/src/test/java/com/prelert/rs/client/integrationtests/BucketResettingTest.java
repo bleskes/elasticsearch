@@ -58,7 +58,7 @@ import com.prelert.rs.data.Pagination;
 
 /**
  * Integration test for the bucket resetting functionality.
- * <br/>
+ * <br>
  * The system property 'prelert.test.data.home' must be set and point
  * to a directory containing the file:
  * <ol>

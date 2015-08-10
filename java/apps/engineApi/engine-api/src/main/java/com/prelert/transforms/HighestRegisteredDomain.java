@@ -37,7 +37,7 @@ import com.google.common.net.InternetDomainName;
 
 /**
  * Split a hostname into Highest Registered Domain and sub domain
- * using Google guava InternetDomainName<br/>
+ * using Google guava InternetDomainName<br>
  *
  * The logic is a little different as we wish to accept domains that
  * aren't recognised top level domains such as those ending '.local'.
@@ -204,7 +204,7 @@ public class HighestRegisteredDomain extends Transform
     /**
      * Split host into Highest Registered Domain and sub domain.
      * First the host argument is sanitised with {@link #sanitiseDomainName(String)}
-     * then split according to the following logic:<br/>
+     * then split according to the following logic:<br>
      *
      * <ol>
      * <li>An empty host returns empty domain and sub domain</li>

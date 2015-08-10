@@ -81,7 +81,7 @@ public class ApiBase extends ResourceWithJobManager
     	JobManager manager = jobManager();
     	String apiVersion = manager.apiVersion();
     	String analyticsVersion = manager.getAnalyticsVersion();
-    	analyticsVersion = analyticsVersion.replace("\n", "<br/>");
+    	analyticsVersion = analyticsVersion.replace("\n", "<br>");
 
     	ServerInfoFactory serverInfoFactory = serverInfo();
 
