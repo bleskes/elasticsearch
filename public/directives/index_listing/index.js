@@ -27,6 +27,9 @@ define(function (require) {
     }
     function makeTdWithPropKey(dataKey, idx) {
       var value = _.get(this.props, dataKey.key);
+      if (dataKey.key === 'name') {
+        value = make.a({ href: `#/index/${value}` }, value);
+      }
       if (_.isObject(value) && value.metric) {
         value = (value.metric.format) ? numeral(value.last).format(value.metric.format) : value.last;
       }

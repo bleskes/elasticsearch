@@ -56,7 +56,6 @@ define(function (require) {
         })
         // Finally return the Marvel object.
         .then(function () {
-          console.log('finished');
           return marvel;
         });
     };
