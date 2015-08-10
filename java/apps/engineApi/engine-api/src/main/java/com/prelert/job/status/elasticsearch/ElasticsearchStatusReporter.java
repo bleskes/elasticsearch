@@ -64,19 +64,13 @@ public class ElasticsearchStatusReporter extends StatusReporter
 
 
     /**
-     * Log a message then write to elastic search.
+     * Write to elastic search.
      */
     @Override
     protected void reportStatus(long totalRecords)
     {
-        String status = String.format("%d records written to autodetect with %d "
-                + "missing fields, %d were discarded because the date could not be "
-                + "read and %d were ignored because they weren't in ascending "
-                + "chronological order and %d transforms failed.", getProcessedRecordCount(),
-                getMissingFieldErrorCount(), getDateParseErrorsCount(),
-                getOutOfOrderRecordCount(), getFailedTransformCount());
-
-        m_Logger.info(status);
+        // Logging is not unique to Elasticsearch, so is handled in the base
+        // class
 
         persistStats();
     }
