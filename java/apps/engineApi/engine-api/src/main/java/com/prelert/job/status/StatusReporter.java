@@ -26,12 +26,16 @@
  ************************************************************/
 package com.prelert.job.status;
 
+import java.math.RoundingMode;
 import java.util.Date;
 
 import org.apache.log4j.Logger;
 
+import com.google.common.math.LongMath;
+
 import com.prelert.job.DataCounts;
 import com.prelert.job.usage.UsageReporter;
+
 
 /**
  * Abstract status reporter for tracking all the good/bad
@@ -70,6 +74,8 @@ public abstract class StatusReporter
 
     private long m_RecordCountDivisor = 100;
     private long m_LastRecordCountQuotient = 0;
+    private long m_LogEvery = 1;
+    private long m_LogCount = 0;
 
     private int m_AcceptablePercentDateParseErrors;
     private int m_AcceptablePercentOutOfOrderErrors;
@@ -152,6 +158,7 @@ public abstract class StatusReporter
         long totalRecords = getInputRecordCount() ;
         if (isReportingBoundary(totalRecords))
         {
+            logStatus(totalRecords);
             reportStatus(totalRecords);
             try
             {
@@ -370,17 +377,49 @@ public abstract class StatusReporter
         }
     }
 
+    /**
+     * Log the status.  This is done progressively less frequently as the job
+     * processes more data.  Logging every 10000 records when the data rate is
+     * 40000 per second quickly rolls the logs.
+     * @param totalRecords
+     */
+    private void logStatus(long totalRecords)
+    {
+        if (m_Logger == null)
+        {
+            // This can happen in unit tests
+            return;
+        }
+
+        if (++m_LogCount % m_LogEvery != 0)
+        {
+            return;
+        }
+
+        String status = String.format("%d records written to autodetect with %d "
+                + "missing fields, %d were discarded because the date could not be "
+                + "read and %d were ignored because they weren't in ascending "
+                + "chronological order and %d transforms failed.", getProcessedRecordCount(),
+                getMissingFieldErrorCount(), getDateParseErrorsCount(),
+                getOutOfOrderRecordCount(), getFailedTransformCount());
+
+        m_Logger.info(status);
+
+        int log10TotalRecords = LongMath.log10(totalRecords, RoundingMode.DOWN);
+        // Start reducing the logging rate after 10 million records have been seen
+        if (log10TotalRecords > 6)
+        {
+            m_LogEvery = LongMath.pow(10L, log10TotalRecords - 6);
+        }
+    }
 
     /**
-     * Don't update status for every update - instead update on these
-     * boundaries:
+     * Don't update status for every update instead update on these
+     * boundaries
      * <ol>
      * <li>For the first 1000 records update every 100</li>
      * <li>After 1000 records update every 1000</li>
      * <li>After 20000 records update every 10000</li>
-     * <li>After 500000 records update every 100000</li>
-     * <li>After 20000000 records update every 1000000</li>
-     * <li>After 500000000 records update every 10000000</li>
      * </ol>
      *
      * @param totalRecords
@@ -388,8 +427,8 @@ public abstract class StatusReporter
      */
     private boolean isReportingBoundary(long totalRecords)
     {
-        // after 500,000,000 records update every 10,000,000
-        long divisor = 10000000;
+        // after 20,000 records update every 10,000
+        int divisor = 10000;
 
         if (totalRecords <= 1000)
         {
@@ -400,21 +439,6 @@ public abstract class StatusReporter
         {
             // before 20,000 records update every 1000
             divisor = 1000;
-        }
-        else if (totalRecords <= 500000)
-        {
-            // before 500,000 records update every 10000
-            divisor = 10000;
-        }
-        else if (totalRecords <= 20000000)
-        {
-            // before 20,000,000 records update every 100000
-            divisor = 100000;
-        }
-        else if (totalRecords <= 500000000)
-        {
-            // before 500,000,000 records update every 1000000
-            divisor = 1000000;
         }
 
         if (divisor != m_RecordCountDivisor)
