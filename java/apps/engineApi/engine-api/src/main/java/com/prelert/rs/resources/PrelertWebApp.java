@@ -28,7 +28,9 @@
 package com.prelert.rs.resources;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -85,6 +87,8 @@ public class PrelertWebApp extends Application
 	public static final String ES_TRANSPORT_PORT_RANGE = "es.transport.port";
 
 	public static final String PERSIST_RECORDS = "persist.records";
+
+	private static final String SERVER_INFO_FILE =  "server.json";
 
 	private Set<Class<?>> m_ResourceClasses;
 	private Set<Object> m_Singletons;
@@ -143,7 +147,7 @@ public class PrelertWebApp extends Application
 
 		final String ENGINE_API_DIR = "engine_api";
 		// Write some server information
-		File serverInfoFile = new File(new File(ProcessCtrl.LOG_DIR, ENGINE_API_DIR), "server.json");
+		File serverInfoFile = new File(new File(ProcessCtrl.LOG_DIR, ENGINE_API_DIR), SERVER_INFO_FILE);
 		try
 		{
 		    // create path if missing
@@ -152,17 +156,37 @@ public class PrelertWebApp extends Application
 		    {
 		        Files.createDirectory(path);
 		    }
-
-		    ServerInfo info = m_ServerInfo.serverInfo();
-		    ObjectWriter jsonWriter = new ObjectMapper()
-        		    .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
-        		    .writer().withDefaultPrettyPrinter();
-
-		    jsonWriter.writeValue(serverInfoFile, info);
         }
-		catch (IOException e)
+        catch (IOException e)
+        {
+            LOGGER.error("Error creating log file directory", e);
+        }
+
+		ServerInfo info = m_ServerInfo.serverInfo();
+		ObjectWriter jsonWriter = new ObjectMapper()
+		.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
+		.writer().withDefaultPrettyPrinter();
+
+		// append to file
+		try (FileOutputStream fos = new FileOutputStream(serverInfoFile, true))
 		{
-            LOGGER.error("Error writing server info to file: " + serverInfoFile.getPath());
+		    jsonWriter.writeValue(fos, info);
+		}
+		catch (IOException e )
+		{
+		    LOGGER.error("Error writing server info to file: " + serverInfoFile.getPath(), e);
+		}
+
+        // The json writer closes the outputstream after its been used
+        // so it has to be reopened here
+        try (FileOutputStream fos = new FileOutputStream(serverInfoFile, true))
+        {
+            LOGGER.info("Writing host status and stats to " + serverInfoFile);
+            fos.write(m_ServerInfo.serverStats().getBytes(StandardCharsets.UTF_8));
+        }
+        catch (IOException e )
+        {
+            LOGGER.error("Error writing server stats to file: " + serverInfoFile.getPath(), e);
         }
 
 		m_Singletons = new HashSet<>();

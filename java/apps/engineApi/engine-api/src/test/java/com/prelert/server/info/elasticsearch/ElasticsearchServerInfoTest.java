@@ -27,10 +27,8 @@
 
 package com.prelert.server.info.elasticsearch;
 
-import static org.elasticsearch.node.NodeBuilder.nodeBuilder;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.concurrent.ExecutionException;
@@ -174,5 +172,4 @@ public class ElasticsearchServerInfoTest
         assertNull(info.getAvailableDiskMb());
 
     }
-
 }
