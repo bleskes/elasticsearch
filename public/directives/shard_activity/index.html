@@ -16,7 +16,7 @@
   <tbody bindonce>
     <tr ng-repeat="activity in visibleData" ng-class="{ done: activity.stage === 'DONE', red: activity.primary, yellow: !activity.primary }">
       <td class="index">
-        <h5 bo-text="activity.index.name"></h5>
+        <h5><a href="#/index/{{ activity.index.name }}">{{ activity.index.name }}</a></h5>
         <p>Shard <span bo-text="activity.id"></span> | <span bo-text="lookup[activity.type]"></span><span ng-if="activity.type === 'RELOCATION'"> of {{ activity.primary ? 'Primary' : 'Replica' }}</span></p>
       </td>
       <td class="stage">
@@ -64,7 +64,7 @@
       </td>
     </tr>
     <tr>
-      <td ng-if="!data.length" colspan="8" class="no-results">There are no <span ng-if="onlyActive">active </span>recovery records for this cluster.</td>
+      <td ng-if="!visibleData.length" colspan="8" class="no-results">There are no <span ng-if="onlyActive">active </span>recovery records for this cluster.</td>
     </tr>
   </tbody>
 </table>
