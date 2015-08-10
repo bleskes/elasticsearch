@@ -183,7 +183,7 @@ public class BucketsRequestBuilder extends BaseJobRequestBuilder<Bucket>
      * Returns the page with the buckets that were requested
      *
      * @return A {@link Pagination} object containing the resulted {@link Bucket} objects
-     * @throws IOException
+     * @throws IOException If HTTP GET fails
      */
     public Pagination<Bucket> get() throws IOException
     {

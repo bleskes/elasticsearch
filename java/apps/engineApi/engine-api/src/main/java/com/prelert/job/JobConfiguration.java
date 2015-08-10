@@ -47,7 +47,7 @@ import com.prelert.job.verification.Verifiable;
  * for that).
  * <p>
  * If a value has not been set it will be <code>null</code> Object wrappers
- * are used around integral types & booleans so they can take <code>null</code>
+ * are used around integral types &amp; booleans so they can take <code>null</code>
  * values.
  */
 public class JobConfiguration implements Verifiable
@@ -55,7 +55,7 @@ public class JobConfiguration implements Verifiable
     private static final int MAX_JOB_ID_LENGTH = 64;
 
     /**
-     * Characters that cannot be in a job id: '\\', '/', '*', '?', '"', '<', '>', '|', ' ', ','
+     * Characters that cannot be in a job id: '\\', '/', '*', '?', '&quot;', '&lt;', '&gt;', '|', ' ', ','
      */
     private static final Set<Character> PROHIBITED_JOB_ID_CHARACTERS_SET;
     private static final String PROHIBITED_JOB_ID_CHARACTERS;
@@ -118,7 +118,7 @@ public class JobConfiguration implements Verifiable
 
     /**
      * Set the job's ID
-     * @param name
+     * @param id the id of the job
      */
     public void setId(String id)
     {
@@ -127,7 +127,7 @@ public class JobConfiguration implements Verifiable
 
     /**
      * The job's human readable description
-     * @return
+     * @return the job description
      */
     public String getDescription()
     {
@@ -136,7 +136,6 @@ public class JobConfiguration implements Verifiable
 
     /**
      * Set the human readable description
-     * @return
      */
     public void setDescription(String description)
     {

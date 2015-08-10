@@ -72,7 +72,7 @@ public class DataDescription implements Verifiable
          * Case-insensitive from string method.
          * Works with either JSON, json, etc.
          *
-         * @param value
+         * @param value String representation
          * @return The data format
          */
         @JsonCreator

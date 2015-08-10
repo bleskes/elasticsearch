@@ -51,7 +51,7 @@ import com.prelert.job.verification.Verifiable;
  * be created for each detector configuration. The other fields
  * <code>bucketSpan, summaryCountFieldName</code> etc apply to all detectors.<p>
  * If a value has not been set it will be <code>null</code>
- * Object wrappers are used around integral types & booleans so they can take
+ * Object wrappers are used around integral types &amp; booleans so they can take
  * <code>null</code> values.
  */
 @JsonInclude(Include.NON_NULL)

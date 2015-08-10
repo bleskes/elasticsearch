@@ -170,7 +170,7 @@ public class EngineApiClient implements Closeable
      * Internally this function converts <code>jobConfig</code> to a JSON
      * string and calls {@link #createJob(String)}
      *
-     * @param jobConfig
+     * @param jobConfig the job configuration
      * @return The new job's Id or an empty string if there was an error
      * @throws ClientProtocolException
      * @throws IOException
@@ -254,7 +254,7 @@ public class EngineApiClient implements Closeable
      * @param jobId The job's unique ID
      * @param description New description field
      *
-     * @return True
+     * @return True if the job description added successfully
      * @throws IOException
      */
     public boolean setJobDescription(String jobId, String description)
@@ -408,7 +408,7 @@ public class EngineApiClient implements Closeable
      * @param jobId The Job's unique Id
      * @param inputStream The data to write to the web service
      * @param compressed Is the data gzipped compressed?
-     * @return MultiDataPostResult
+     * @return the multiple data upload results in {@linkplain MultiDataPostResult}
      * @throws IOException
      * @see #chunkedUpload(String, InputStream)
      */
@@ -429,7 +429,7 @@ public class EngineApiClient implements Closeable
      * @param compressed Is the data gzipped compressed?
      * @param resetStart The start of the time range to reset buckets for (inclusive)
      * @param resetEnd The end of the time range to reset buckets for (inclusive)
-     * @return DataCounts
+     * @return the multiple data upload results in {@linkplain MultiDataPostResult}
      * @throws IOException
      * @see #chunkedUpload(String, InputStream)
      */
@@ -450,12 +450,12 @@ public class EngineApiClient implements Closeable
 
     /**
      * Read data from <code>inputStream</code> and upload to multiple jobs
-     * simultaneously.
+     * simultaneously. The response is a list of processed data counts/errors.
      *
      * @param jobIds The list of jobs to send the data to
      * @param inputStream The data to write to the web service
      * @param compressed Is the data gzipped compressed?
-     * @return A list of processed data counts/errors.
+     * @return the multiple data upload results in {@linkplain MultiDataPostResult}
      * @throws IOException
      */
     public MultiDataPostResult streamingUpload(List<String> jobIds, InputStream inputStream,
@@ -540,7 +540,7 @@ public class EngineApiClient implements Closeable
      * @param jobId The Job's Id
      * @param dataFile Should match the data configuration format of the job
      * @param compressed Is the data gzipped compressed?
-     * @return
+     * @return the multiple data upload results in {@linkplain MultiDataPostResult}
      * @throws IOException
      */
     public MultiDataPostResult fileUpload(String jobId, File dataFile, boolean compressed)
@@ -559,7 +559,7 @@ public class EngineApiClient implements Closeable
      * @param compressed Is the data gzipped compressed?
      * @param resetStart The start of the time range to reset buckets for (inclusive)
      * @param resetEnd The end of the time range to reset buckets for (inclusive)
-     * @return
+     * @return the multiple data upload results in {@linkplain MultiDataPostResult}
      * @throws IOException
      */
     public MultiDataPostResult fileUpload(String jobId, File dataFile, boolean compressed,
@@ -725,6 +725,9 @@ public class EngineApiClient implements Closeable
 
     /**
      * Returns a single document with the category definition that was requested
+     *
+     * @param jobId the job id
+     * @param categoryId the job's category id
      *
      * @return A {@link SingleDocument} object containing the requested {@link CategoryDefinition}
      * object

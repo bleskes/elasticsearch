@@ -114,8 +114,8 @@ public class JobDetails
      * configuration parameters, where fields are not set in the
      * JobConfiguration defaults will be used.
      *
-     * @param jobId
-     * @param jobConfig
+     * @param jobId the job id
+     * @param jobConfig the job configuration
      */
     public JobDetails(String jobId, JobConfiguration jobConfig)
     {
@@ -142,9 +142,9 @@ public class JobDetails
      * values set in the <code>details</code> argument, any fields set in
      * <code>jobConfig</code> then override the settings in <code>details</code>.
      *
-     * @param jobId
-     * @param details
-     * @param jobConfig
+     * @param jobId the job id
+     * @param details the job details
+     * @param jobConfig the job configuration
      */
 
     public JobDetails(String jobId, JobDetails details, JobConfiguration jobConfig)
@@ -211,7 +211,7 @@ public class JobDetails
      * once set. This method is provided for the Jackson object mapper to
      * de-serialise this class from Json.
      *
-     * @param id
+     * @param id the job id
      */
     public void setId(String id)
     {
@@ -220,7 +220,7 @@ public class JobDetails
 
     /**
      * The job description
-     * @return
+     * @return job description
      */
     public String getDescription()
     {
@@ -509,7 +509,7 @@ public class JobDetails
 
     /**
      * Processed records count
-     * @return
+     * @return the processed records counts
      */
     public DataCounts getCounts()
     {
@@ -518,7 +518,7 @@ public class JobDetails
 
     /**
      * Processed records count
-     * @return
+     * @param counts the counts {@code DataCounts}
      */
     public void setCounts(DataCounts counts)
     {
