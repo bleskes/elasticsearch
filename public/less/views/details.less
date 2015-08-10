@@ -1,0 +1,28 @@
+.details {
+  &.red .detail-metrics {
+    border-top: 2px solid @esRed;
+  }
+  &.yellow .detail-metrics {
+    border-top: 2px solid @esYellow;
+  }
+  .detail-metrics {
+    background-color: @white;
+    h1 {
+      font-size: 24px;
+      margin: 10px 0 20px;
+    }
+    border-top: 2px solid @esGreen;
+    padding: 10px;
+
+    marvel-chart >div {
+      border-left: 1px solid @esGray;
+      border-right: 1px solid @esGray;
+      border-bottom: 1px solid @esGray;
+      >h1 {
+        font-size: 20px;
+        margin: 0;
+        padding: 5px;
+      }
+    }
+  }
+}
