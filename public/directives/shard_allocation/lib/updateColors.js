@@ -19,7 +19,7 @@
 
 define(function (require) {
   'use strict';
-  var _ = require('lodash');  
+  var _ = require('lodash');
   var getValue = require('./getValueFromArrayOrString');
   return function ($scope) {
     var colors = [];
@@ -27,12 +27,12 @@ define(function (require) {
     var runningTotal = 0;
     var grandTotal = $scope.timelineData.length;
     _.each($scope.timelineData, function (row) {
-      var status = getValue(row.fields.status) || 'green';
+      var status = getValue(row.fields['cluster_state.status']) || 'green';
       var last = _.last(colors);
       if (!last) {
         last = { status: status , count: 0 };
         colors.push(last);
-      } 
+      }
       if (last.status === status) {
         last.count++;
       } else {
