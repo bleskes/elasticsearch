@@ -28,22 +28,26 @@
 package com.prelert.rs.resources;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 
 import javax.ws.rs.core.Application;
 
 import org.apache.log4j.Logger;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import com.prelert.job.alert.manager.AlertManager;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.persistence.elasticsearch.ElasticsearchDataPersisterFactory;
@@ -64,8 +68,8 @@ import com.prelert.rs.provider.MultiDataPostResultWriter;
 import com.prelert.rs.provider.NativeProcessRunExceptionMapper;
 import com.prelert.rs.provider.PaginationWriter;
 import com.prelert.rs.provider.SingleDocumentWriter;
-import com.prelert.server.info.ServerInfo;
 import com.prelert.server.info.ServerInfoFactory;
+import com.prelert.server.info.ServerInfoWriter;
 import com.prelert.server.info.elasticsearch.ElasticsearchServerInfo;
 
 /**
@@ -96,6 +100,8 @@ public class PrelertWebApp extends Application
 	private JobManager m_JobManager;
 	private AlertManager m_AlertManager;
 	private ServerInfoFactory m_ServerInfo;
+
+    private ScheduledExecutorService m_ServerStatsSchedule;
 
 	public PrelertWebApp()
 	{
@@ -162,32 +168,12 @@ public class PrelertWebApp extends Application
             LOGGER.error("Error creating log file directory", e);
         }
 
-		ServerInfo info = m_ServerInfo.serverInfo();
-		ObjectWriter jsonWriter = new ObjectMapper()
-		.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
-		.writer().withDefaultPrettyPrinter();
+		ServerInfoWriter writer = new ServerInfoWriter(m_ServerInfo, serverInfoFile);
+		writer.writeInfo();
+		writer.writeStats();
 
-		// append to file
-		try (FileOutputStream fos = new FileOutputStream(serverInfoFile, true))
-		{
-		    jsonWriter.writeValue(fos, info);
-		}
-		catch (IOException e )
-		{
-		    LOGGER.error("Error writing server info to file: " + serverInfoFile.getPath(), e);
-		}
+		scheduleServerStatsDump(serverInfoFile);
 
-        // The json writer closes the outputstream after its been used
-        // so it has to be reopened here
-        try (FileOutputStream fos = new FileOutputStream(serverInfoFile, true))
-        {
-            LOGGER.info("Writing host status and stats to " + serverInfoFile);
-            fos.write(m_ServerInfo.serverStats().getBytes(StandardCharsets.UTF_8));
-        }
-        catch (IOException e )
-        {
-            LOGGER.error("Error writing server stats to file: " + serverInfoFile.getPath(), e);
-        }
 
 		m_Singletons = new HashSet<>();
 		m_Singletons.add(m_JobManager);
@@ -203,6 +189,41 @@ public class PrelertWebApp extends Application
                 new ElasticsearchUsageReporterFactory(jobProvider.getClient()),
                 new ElasticsearchDataPersisterFactory(jobProvider.getClient())
         );
+	}
+
+
+	/**
+	 * Starts a ScheduledExecutorService to write the server stats
+	 * every 24 hours.
+	 * To stop the scheduled executor keeping the JVM alive it has to
+	 * run in a daemon thread.
+	 *
+	 * @param file
+	 */
+	private void scheduleServerStatsDump(File file)
+	{
+	    // Create with a daemon thread factory
+	    m_ServerStatsSchedule = Executors.newSingleThreadScheduledExecutor(
+	                        new ThreadFactory() {
+	                            @Override public Thread newThread(Runnable runnable) {
+	                                Thread thread = Executors.defaultThreadFactory().newThread(runnable);
+	                                thread.setDaemon(true);
+	                                thread.setName("Server-Stats-Writer-Thread");
+	                                return thread;
+	                            }
+	                        } );
+
+	    ServerInfoWriter writer = new ServerInfoWriter(m_ServerInfo, file);
+
+	    LocalDate tomorrow = LocalDate.now(ZoneId.systemDefault()).plusDays(1l);
+	    ZonedDateTime tomorrorwMidnight = ZonedDateTime.of(tomorrow, LocalTime.MIDNIGHT,
+	                                                ZoneId.systemDefault());
+
+	    ZonedDateTime now = ZonedDateTime.now();
+	    long delaySeconds = now.until(tomorrorwMidnight, ChronoUnit.SECONDS);
+
+	    m_ServerStatsSchedule.scheduleAtFixedRate(() -> writer.writeStats(),
+	                                               delaySeconds, 3600l * 24l, TimeUnit.SECONDS);
 	}
 
 	@Override

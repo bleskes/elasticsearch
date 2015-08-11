@@ -91,8 +91,6 @@ public class ServerMain
 	public static void main(String[] args)
 	throws Exception
 	{
-
-
 		int jettyPort = JETTY_PORT;
 		try
 		{
