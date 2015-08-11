@@ -27,23 +27,36 @@
 
 package com.prelert.job.persistence;
 
-import com.prelert.job.exceptions.UnknownJobException;
-import com.prelert.job.quantiles.Quantiles;
+import java.util.List;
 
-public interface JobProvider extends JobDetailsProvider, JobResultsProvider, JobRenormaliser
+/**
+ * Generic wrapper class for a page of query results and the
+ * total number of query hits.<br>
+ * {@linkplain #hitCount()} is the total number of results
+ * but that value may not be equal to the actual length of
+ * the {@linkplain #queryResults()} list if skip & take or
+ * some cursor was used in the database query.
+ *
+ * @param <T>
+ */
+public final class QueryPage<T>
 {
-	/**
-	 * Get the persisted quantiles state for the job
-	 */
-	public Quantiles getQuantiles(String jobId)
-	throws UnknownJobException;
+    private List<T> m_QueryResults;
+    private long m_HitCount;
 
-	/**
-	 * Refresh the datastore index so that all recent changes are
-	 * available to search operations. This is a synchronous blocking
-	 * call that should not return until the index has been refreshed.
-	 *
-	 * @param jobId
-	 */
-	public void refreshIndex(String jobId);
+    public QueryPage(List<T> queryResults, long hitCount)
+    {
+        m_QueryResults = queryResults;
+        m_HitCount = hitCount;
+    }
+
+    public List<T> queryResults()
+    {
+        return m_QueryResults;
+    }
+
+    public long hitCount()
+    {
+        return m_HitCount;
+    }
 }

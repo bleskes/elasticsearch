@@ -37,6 +37,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -60,6 +61,7 @@ import com.prelert.job.exceptions.TooManyJobsException;
 import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.persistence.JobProvider;
+import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.persistence.none.NoneJobDataPersister;
 import com.prelert.job.process.ProcessManager;
 import com.prelert.job.process.exceptions.ClosedJobException;
@@ -204,7 +206,7 @@ public class JobManager
      */
     public Pagination<JobDetails> getJobs(int skip, int take)
     {
-        return m_JobProvider.getJobs(skip, take);
+        return paginationFromQueryPage(m_JobProvider.getJobs(skip, take), skip, take);
     }
 
     /**
@@ -318,8 +320,8 @@ public class JobManager
             String bucketId, boolean expand, boolean includeInterim)
     throws NativeProcessRunException, UnknownJobException
     {
-        SingleDocument<Bucket> bucket = m_JobProvider.bucket(jobId,
-                bucketId, expand, includeInterim);
+         Optional<Bucket> result = m_JobProvider.bucket(jobId, bucketId, expand, includeInterim);
+         SingleDocument<Bucket> bucket = singleDocFromOptional(result, bucketId, Bucket.TYPE);
 
         if (bucket.isExists() && !expand)
         {
@@ -350,8 +352,10 @@ public class JobManager
             double anomalyScoreThreshold, double normalizedProbabilityThreshold)
     throws UnknownJobException, NativeProcessRunException
     {
-        Pagination<Bucket> buckets = m_JobProvider.buckets(jobId, expand,
+        QueryPage<Bucket> page = m_JobProvider.buckets(jobId, expand,
                 includeInterim, skip, take, anomalyScoreThreshold, normalizedProbabilityThreshold);
+
+        Pagination<Bucket> buckets = paginationFromQueryPage(page, skip, take);
 
         if (!expand)
         {
@@ -386,9 +390,11 @@ public class JobManager
             double anomalyScoreThreshold, double normalizedProbabilityThreshold)
     throws UnknownJobException, NativeProcessRunException
     {
-        Pagination<Bucket> buckets =  m_JobProvider.buckets(jobId, expand,
+        QueryPage<Bucket> page =  m_JobProvider.buckets(jobId, expand,
                 includeInterim, skip, take, startEpochMs, endBucketMs,
                 anomalyScoreThreshold, normalizedProbabilityThreshold);
+
+        Pagination<Bucket> buckets = paginationFromQueryPage(page, skip, take);
 
         if (!expand)
         {
@@ -404,26 +410,28 @@ public class JobManager
     public Pagination<CategoryDefinition> categoryDefinitions(String jobId, int skip, int take)
             throws UnknownJobException
     {
-        return m_JobProvider.categoryDefinitions(jobId, skip, take);
+        return paginationFromQueryPage(m_JobProvider.categoryDefinitions(jobId, skip, take), skip, take);
     }
 
     public SingleDocument<CategoryDefinition> categoryDefinition(String jobId, String categoryId)
             throws UnknownJobException
     {
-        return m_JobProvider.categoryDefinition(jobId, categoryId);
+        return singleDocFromOptional(m_JobProvider.categoryDefinition(jobId, categoryId),
+                                        categoryId, CategoryDefinition.TYPE);
     }
 
 
     public Pagination<Influencer> influencers(String jobId, int skip, int take)
             throws UnknownJobException
     {
-        return m_JobProvider.influencers(jobId, skip, take);
+        return paginationFromQueryPage(m_JobProvider.influencers(jobId, skip, take), skip, take);
     }
 
     public SingleDocument<Influencer> influencer(String jobId, String influencerId)
             throws UnknownJobException
     {
-        return m_JobProvider.influencer(jobId, influencerId);
+        return singleDocFromOptional(m_JobProvider.influencer(jobId, influencerId),
+                                    influencerId, Influencer.TYPE);
     }
 
     /**
@@ -450,9 +458,10 @@ public class JobManager
             double anomalyScoreThreshold, double normalizedProbabilityThreshold)
     throws NativeProcessRunException, UnknownJobException
     {
-        return m_JobProvider.records(jobId,
-                skip, take, includeInterim, sortField, sortDescending,
-                anomalyScoreThreshold, normalizedProbabilityThreshold);
+        return paginationFromQueryPage(m_JobProvider.records(jobId,
+                                            skip, take, includeInterim, sortField, sortDescending,
+                                            anomalyScoreThreshold, normalizedProbabilityThreshold),
+                                       skip, take);
     }
 
 
@@ -483,9 +492,11 @@ public class JobManager
             double anomalyScoreThreshold, double normalizedProbabilityThreshold)
     throws NativeProcessRunException, UnknownJobException
     {
-        return m_JobProvider.records(jobId, skip, take,
-                epochStartMs, epochEndMs, includeInterim, sortField, sortDescending,
-                anomalyScoreThreshold, normalizedProbabilityThreshold);
+        return paginationFromQueryPage(
+                m_JobProvider.records(jobId, skip, take,
+                            epochStartMs, epochEndMs, includeInterim, sortField, sortDescending,
+                            anomalyScoreThreshold, normalizedProbabilityThreshold),
+                skip, take);
     }
 
     /**
@@ -953,5 +964,31 @@ public class JobManager
                     readMaxJobsFactor, DEFAULT_MAX_JOBS_FACTOR));
             return DEFAULT_MAX_JOBS_FACTOR;
         }
+    }
+
+    private <T> Pagination<T> paginationFromQueryPage(QueryPage<T> page, int skip, int take)
+    {
+        Pagination<T> pagination = new Pagination<T>();
+        pagination.setDocuments(page.queryResults());
+        pagination.setHitCount(page.hitCount());
+        pagination.setSkip(skip);
+        pagination.setTake(take);
+
+        return pagination;
+    }
+
+    private <T> SingleDocument<T> singleDocFromOptional(Optional<T> opt, String docId, String docType)
+    {
+        SingleDocument<T> doc = new SingleDocument<T>();
+        doc.setExists(opt.isPresent());
+        if (opt.isPresent())
+        {
+            doc.setDocument(opt.get());
+        }
+
+        doc.setDocumentId(docId);
+        doc.setType(docType);
+
+        return doc;
     }
 }

@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -33,6 +33,7 @@ import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.alert.AlertObserver;
+import com.prelert.job.normalisation.Renormaliser;
 import com.prelert.job.process.results.AutoDetectResultsParser;
 import com.prelert.job.process.results.ResultsReader;
 import com.prelert.job.process.results.ResultsReaderFactory;
@@ -74,7 +75,7 @@ public class ElasticsearchResultsReaderFactory implements ResultsReaderFactory
         private final InputStream m_Stream;
         private final Logger m_Logger;
         private final AutoDetectResultsParser m_Parser;
-        private final ElasticsearchJobRenormaliser m_Renormaliser;
+        private final Renormaliser m_Renormaliser;
 
         public ReadAutoDetectOutput(String jobId, InputStream stream, Logger logger)
         {
@@ -82,7 +83,7 @@ public class ElasticsearchResultsReaderFactory implements ResultsReaderFactory
             m_Stream = stream;
             m_Logger = logger;
             m_Parser = new AutoDetectResultsParser();
-            m_Renormaliser = new ElasticsearchJobRenormaliser(m_JobId, m_JobProvider);
+            m_Renormaliser = new Renormaliser(m_JobId, m_JobProvider);
         }
 
         @Override

@@ -33,8 +33,11 @@ import java.util.Map;
 
 /**
  * Persist the records sent the the API.
- * Only the analysis fields written, records are mapped by the
+ * Only the analysis fields are written. Records are mapped by the
  * by, over, partition and metric fields.
+ *
+ * Concrete classes need to implement the {@link #persistRecord(long, String[])},
+ * {@linkplain #deleteData()} and {@linkplain #flushRecords()} methods.
  */
 public abstract class JobDataPersister
 {
@@ -54,7 +57,7 @@ public abstract class JobDataPersister
 
 	/**
 	 * Find each of the lists of requried fields (by, over, etc)
-	 * in the header and save the indexes so the field mappings can
+	 * in <code>fieldMap</code> and save the indexes so the field mappings can
 	 * be used in calls to {@linkplain #persistRecord(long, String[])}
 	 *
 	 * @param fields
@@ -128,6 +131,8 @@ public abstract class JobDataPersister
 	/**
 	 * Save the record as per the field mappings
 	 * set up in {@linkplain #setFieldMappings(List, List, List, List, String[])}
+	 * setFieldMappings must have been called so this class knows where to
+	 *
 	 *
 	 * @param epoch
 	 * @param record

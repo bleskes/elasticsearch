@@ -27,9 +27,9 @@
 
 package com.prelert.job.persistence;
 
-import org.apache.log4j.Logger;
+import java.util.List;
 
-import com.prelert.job.quantiles.Quantiles;
+import com.prelert.job.results.AnomalyRecord;
 
 
 /**
@@ -40,11 +40,27 @@ import com.prelert.job.quantiles.Quantiles;
 public interface JobRenormaliser
 {
     /**
-     * Update the anomaly score field on all previously persisted buckets
-     * and all contained records
-     * @param quantiles
-     * @param logger
+     * Update the bucket with the new anomaly score and normalised
+     * probability.
+     *
+     * @param jobId Job to update
+     * @param bucketId Id of the bucket to update
+     * @param anomalyScore New anomaly score
+     * @param maxNormalizedProbability New max normalized probability
      */
-    public void renormalise(Quantiles quantiles, Logger logger);
+    public void updateBucket(String jobId, String bucketId, double anomalyScore,
+                            double maxNormalizedProbability);
+
+
+    /**
+     * Update the anomaly records for a particular bucket and job.
+     * The anomaly records are updated with the values in the
+     * <code>records</code> list.
+     *
+     * @param jobId Job to update
+     * @param bucketId Id of the bucket to update
+     * @param records The new record values
+     */
+    public void updateRecords(String jobId, String bucketId, List<AnomalyRecord> records);
 };
 
