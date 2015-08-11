@@ -70,6 +70,8 @@ import com.prelert.job.transform.condition.Condition;
 import com.prelert.job.transform.condition.Operator;
 import com.prelert.transforms.Concat;
 import com.prelert.transforms.HighestRegisteredDomain;
+import com.prelert.transforms.RegexSplit;
+import com.prelert.transforms.StringTransform;
 import com.prelert.transforms.Transform;
 import com.prelert.transforms.Transform.TransformIndex;
 
@@ -470,4 +472,54 @@ public class AbstractDataToProcessWriterTest
         verify(m_DataPersister, times(1)).persistRecord(2, expectedOutput);
     }
 
+
+    @Test
+    public void testBuildTransforms_DateTransformsAreSorted()
+    throws MissingFieldException, IOException
+    {
+        DummyJobDataPersister persister = new DummyJobDataPersister();
+
+        DataDescription dd = new DataDescription();
+        dd.setTimeField("datetime");
+
+        AnalysisConfig ac = new AnalysisConfig();
+        Detector detector = new Detector();
+        detector.setFieldName("value");
+        detector.setByFieldName("type");
+        ac.setDetectors(Arrays.asList(detector));
+
+        TransformConfig concatTc = new TransformConfig();
+        concatTc.setInputs(Arrays.asList("DATE", "time"));
+        concatTc.setOutputs(Arrays.asList("datetime"));
+        concatTc.setTransform(TransformType.Names.CONCAT_NAME);
+
+        TransformConfig upperTc = new TransformConfig();
+        upperTc.setInputs(Arrays.asList("date"));
+        upperTc.setOutputs(Arrays.asList("DATE"));
+        upperTc.setTransform(TransformType.Names.UPPERCASE_NAME);
+
+        TransformConfig splitTc = new TransformConfig();
+        splitTc.setInputs(Arrays.asList("date-somethingelse"));
+        splitTc.setOutputs(Arrays.asList("date"));
+        splitTc.setArguments(Arrays.asList("-"));
+        splitTc.setTransform(TransformType.Names.SPLIT_NAME);
+
+
+        TransformConfigs transforms = new TransformConfigs(Arrays.asList(upperTc, concatTc, splitTc));
+
+        AbstractDataToProcessWriter writer = new CsvDataToProcessWriter(m_LengthEncodedWriter,
+                   dd, ac, transforms, m_StatusReporter, persister, m_Logger);
+
+
+        String [] header = {"date-somethingelse", "time", "type", "value"};
+
+        writer.buildTransformsAndWriteHeader(header);
+
+        // the date input transforms should be in this order
+        List<Transform> trs = writer.m_DateInputTransforms;
+        assertEquals(3, trs.size());
+        assertTrue(trs.get(0) instanceof RegexSplit);
+        assertTrue(trs.get(1) instanceof StringTransform);
+        assertTrue(trs.get(2) instanceof Concat);
+    }
 }

@@ -124,11 +124,6 @@ public class DependencySorterTest
     {
         List<TransformConfig> transforms = new ArrayList<>();
 
-        List<String> inputs = Arrays.asList("ina", "inb");
-        List<String> outputs = Arrays.asList("ab");
-        TransformConfig concat = createConcatTransform(inputs, outputs);
-        transforms.add(concat);
-
         List<String> inputs2 = Arrays.asList("ab", "inc");
         List<String> outputs2 = Arrays.asList("abc");
         TransformConfig dependentConcat1 = createConcatTransform(inputs2, outputs2);
@@ -138,6 +133,11 @@ public class DependencySorterTest
         List<String> outputs3 = Arrays.asList("abd");
         TransformConfig dependentConcat2 = createConcatTransform(inputs3, outputs3);
         transforms.add(dependentConcat2);
+
+        List<String> inputs = Arrays.asList("ina", "inb");
+        List<String> outputs = Arrays.asList("ab");
+        TransformConfig concat = createConcatTransform(inputs, outputs);
+        transforms.add(concat);
 
         List<TransformConfig> deps = DependencySorter.findDependencies(Arrays.asList("abc", "abd"),
                                                                     transforms);
@@ -176,13 +176,13 @@ public class DependencySorterTest
         List<TransformConfig> transforms = new ArrayList<>();
 
         // Chain of 3 dependencies
+        TransformConfig chain1Hrd = createHrdTransform(Arrays.asList("ab"),
+                Arrays.asList("subdomain", "hrd"));
+        transforms.add(chain1Hrd);
+
         TransformConfig chain1Concat = createConcatTransform(Arrays.asList("ina", "inb"),
                                                             Arrays.asList("ab"));
         transforms.add(chain1Concat);
-
-        TransformConfig chain1Hrd = createHrdTransform(Arrays.asList("ab"),
-                                                        Arrays.asList("subdomain", "hrd"));
-        transforms.add(chain1Hrd);
 
         TransformConfig chain1Concat2 = createConcatTransform(Arrays.asList("subdomain", "port"),
                 Arrays.asList());
@@ -193,11 +193,11 @@ public class DependencySorterTest
         assertEquals(transforms.size(), orderedDeps.size());
 
         int chain1ConcatIndex = orderedDeps.indexOf(chain1Concat);
-        assertTrue(chain1ConcatIndex >= 0);
+        assertTrue(chain1ConcatIndex == 0);
         int chain1HrdIndex = orderedDeps.indexOf(chain1Hrd);
-        assertTrue(chain1HrdIndex >= 0);
+        assertTrue(chain1HrdIndex == 1);
         int chain1Concat2Index = orderedDeps.indexOf(chain1Concat2);
-        assertTrue(chain1Concat2Index >= 0);
+        assertTrue(chain1Concat2Index == 2);
 
         assertTrue(chain1ConcatIndex < chain1HrdIndex);
         assertTrue(chain1HrdIndex < chain1Concat2Index);
@@ -207,6 +207,11 @@ public class DependencySorterTest
     public void testSortByDependency_3ChainsInOrder()
     {
         List<TransformConfig> transforms = new ArrayList<>();
+
+        // Chain of 1
+        TransformConfig noChainHrd = createHrdTransform(Arrays.asList("dns"),
+                Arrays.asList("subdomain"));
+        transforms.add(noChainHrd);
 
         // Chain of 2 dependencies
         TransformConfig chain1Concat = createConcatTransform(Arrays.asList("ina", "inb"),
@@ -218,18 +223,15 @@ public class DependencySorterTest
         transforms.add(chain1Hrd);
 
         // Chain of 2 dependencies
-        TransformConfig chain2Concat = createConcatTransform(Arrays.asList("inc", "ind"),
-                Arrays.asList("cd"));
-        transforms.add(chain2Concat);
-
         TransformConfig chain2Concat2 = createConcatTransform(Arrays.asList("cd", "ine"),
                 Arrays.asList("cde"));
         transforms.add(chain2Concat2);
 
-        // Chain of 1
-        TransformConfig noChainHrd = createHrdTransform(Arrays.asList("dns"),
-                Arrays.asList("subdomain"));
-        transforms.add(noChainHrd);
+        TransformConfig chain2Concat = createConcatTransform(Arrays.asList("inc", "ind"),
+                Arrays.asList("cd"));
+        transforms.add(chain2Concat);
+
+
 
         List<TransformConfig> orderedDeps = DependencySorter.sortByDependency(transforms);
 
@@ -238,13 +240,13 @@ public class DependencySorterTest
         int chain1ConcatIndex = orderedDeps.indexOf(chain1Concat);
         assertTrue(chain1ConcatIndex >= 0);
         int chain1HrdIndex = orderedDeps.indexOf(chain1Hrd);
-        assertTrue(chain1HrdIndex >= 0);
+        assertTrue(chain1HrdIndex >= 1);
         assertTrue(chain1ConcatIndex < chain1HrdIndex);
 
         int chain2ConcatIndex = orderedDeps.indexOf(chain2Concat);
         assertTrue(chain2ConcatIndex >= 0);
         int chain2Concat2Index = orderedDeps.indexOf(chain2Concat2);
-        assertTrue(chain2Concat2Index >= 0);
+        assertTrue(chain2Concat2Index >= 1);
         assertTrue(chain2ConcatIndex < chain2Concat2Index);
     }
 
