@@ -45,6 +45,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Appender;
@@ -314,6 +315,13 @@ public class ProcessManager
                     .append('\n').append(e.toString()).append('\n');
             readProcessErrorOutput(process, sb);
             process.getLogger().error(sb);
+
+            if (e.getCause() instanceof TimeoutException)
+            {
+                process.getLogger().warn("Connection to process was dropped due to " +
+                        "a timeout - if you are feeding this job from a connector it " +
+                        "may be that your connector stalled for too long", e.getCause());
+            }
 
             throw new NativeProcessRunException(sb.toString(),
                     ErrorCodes.NATIVE_PROCESS_WRITE_ERROR);
