@@ -1,0 +1,9 @@
+<div class="marvel-indices marvel-view" ng-controller="indices">
+  <marvel-cluster-status source="dataSources['cluster_status']"></marvel-cluster-status>
+  <div class="metrics marvel-element">
+    <div ng-repeat="name in charts" class="marvel-element">
+      <marvel-chart source="dataSources[name]" />
+    </div>
+  </div>
+  <marvel-index-listing data="dataSources.indices_table.data"></marvel-index-listing>
+</div>

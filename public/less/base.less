@@ -1,0 +1,65 @@
+.marvel-view {
+  background-color: @esVeryLightGray;
+
+  .metrics {
+    display: flex;
+    flex-flow: row wrap;
+    >div, >marvel-issues {
+      flex: 1 1 30%;
+      &:nth-child(3n+1) {
+        margin: 0 10px 10px 0;
+      }
+      &:nth-child(3n+3) {
+        margin: 0 0 10px 10px;
+      }
+    }
+  }
+
+  .marvel-content {
+    display: block;
+    flex-grow: 1;
+  }
+
+  .marvel-element {
+    margin-bottom: 10px;
+  }
+
+  flex-grow: 1;
+  padding: 10px;
+
+  .table > thead > tr > th {
+    border-color: @esGray;
+  }
+
+  .table > tbody > tr > th,
+  .table > tfoot > tr > th,
+  .table > thead > tr > td,
+  .table > tbody > tr > td,
+  .table > tfoot > tr > td,
+  .table.table-condensed > tbody > tr > th,
+  .table.table-condensed > tfoot > tr > th,
+  .table.table-condensed > thead > tr > td,
+  .table.table-condensed > tbody > tr > td,
+  .table.table-condensed > tfoot > tr > td {
+    border-color: @esLightGray;
+  }
+
+  .table {
+    border-bottom: 1px solid @esLightGray;
+    margin-bottom: 0;
+  }
+
+  th {
+    font-weight: normal;
+  }
+
+  .fa-bolt {
+    color: @esRed;
+  }
+
+  .fa-warning {
+    color: @esYellow;
+  }
+
+}
+

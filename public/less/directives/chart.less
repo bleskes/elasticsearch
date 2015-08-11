@@ -1,0 +1,56 @@
+marvel-chart {
+  >div {
+    background-color: @white;
+    border-top: @thick solid @esGray;
+    padding: 5px;
+
+    h1 {
+      font-size: 20px;
+      margin-top: 0;
+    }
+
+    .vis-canvas {
+      padding: 0 5px 0 0;
+      min-height: 200px;
+      display: flex;
+    }
+
+    .loading {
+      flex-grow: 1;
+      justify-content: center;
+      align-self: center;
+      text-align: center;
+      font-size: 18px;
+      color: @esDarkGray;
+    }
+
+    .nvd3 {
+      flex-grow: 1;
+    }
+
+    .chart {
+      min-height: 200px;
+      background-color: @white;
+      display: flex;
+      >div {
+        color: @esLightGray;
+        font-size: 17px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex: 1 1 auto;
+      }
+    }
+  }
+}
+
+/***************************/
+/****** MarvelCharts! ******/
+/***************************/
+
+marvel-chart {
+  .x.axis .domain {
+    display: block;
+  }
+}
+
