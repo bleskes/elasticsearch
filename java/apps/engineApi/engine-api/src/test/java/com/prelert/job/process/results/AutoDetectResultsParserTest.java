@@ -46,12 +46,13 @@ import java.util.TreeMap;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.ModelSizeStats;
 import com.prelert.job.alert.AlertObserver;
 import com.prelert.job.exceptions.UnknownJobException;
-import com.prelert.job.persistence.JobRenormaliser;
+import com.prelert.job.normalisation.Renormaliser;
 import com.prelert.job.persistence.JobResultsPersister;
 import com.prelert.job.process.results.AutoDetectResultsParser;
 import com.prelert.job.quantiles.Quantiles;
@@ -187,20 +188,6 @@ public class AutoDetectResultsParserTest
     }
 
 
-    /**
-     * Simple renormaliser just logs when it's called
-     */
-    public class Renormaliser implements JobRenormaliser
-    {
-        @Override
-        public void renormalise(Quantiles quantiles, Logger logger)
-        {
-            logger.info("Renormalising for system changes to time " + quantiles.getTimestamp() +
-                        " using quantiles: " + quantiles.getState());
-        }
-    }
-
-
     public class AlertListener extends AlertObserver
     {
         public AlertListener(double normlizedProbThreshold, double anomalyThreshold)
@@ -235,7 +222,7 @@ public class AutoDetectResultsParserTest
 
         InputStream inputStream = new ByteArrayInputStream(METRIC_OUTPUT_SAMPLE.getBytes(StandardCharsets.UTF_8));
         ResultsPersister persister = new ResultsPersister();
-        Renormaliser renormaliser = new Renormaliser();
+        Renormaliser renormaliser = Mockito.mock(Renormaliser.class);
 
         AutoDetectResultsParser parser = new AutoDetectResultsParser();
 
@@ -341,7 +328,7 @@ public class AutoDetectResultsParserTest
 
         InputStream inputStream = new ByteArrayInputStream(POPULATION_OUTPUT_SAMPLE.getBytes(StandardCharsets.UTF_8));
         ResultsPersister persister = new ResultsPersister();
-        Renormaliser renormaliser = new Renormaliser();
+        Renormaliser renormaliser = Mockito.mock(Renormaliser.class);
 
         AutoDetectResultsParser parser = new AutoDetectResultsParser();
 
@@ -420,7 +407,7 @@ public class AutoDetectResultsParserTest
         // 1. normalised prob threshold
         InputStream inputStream = new ByteArrayInputStream(METRIC_OUTPUT_SAMPLE.getBytes(StandardCharsets.UTF_8));
         ResultsPersister persister = new ResultsPersister();
-        Renormaliser renormaliser = new Renormaliser();
+        Renormaliser renormaliser = Mockito.mock(Renormaliser.class);
 
         double probThreshold = 9.0;
         double scoreThreshold = 100.0;

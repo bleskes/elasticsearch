@@ -37,6 +37,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -46,6 +47,10 @@ import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
+import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
+import org.elasticsearch.action.bulk.BulkItemResponse;
+import org.elasticsearch.action.bulk.BulkRequestBuilder;
+import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
@@ -1057,6 +1062,80 @@ public class ElasticsearchJobProvider implements JobProvider
             quantiles.setState(state.toString());
         }
         return quantiles;
+    }
+
+    @Override
+    public void refreshIndex(String jobId)
+    {
+        m_Client.admin().indices().refresh(new RefreshRequest(jobId)).actionGet();
+    }
+
+    @Override
+    public void updateBucket(String jobId, String bucketId, double anomalyScore,
+                                double maxNormalizedProbability)
+    {
+        try
+        {
+            Map<String, Object> map = new TreeMap<>();
+            map.put(Bucket.ANOMALY_SCORE, anomalyScore);
+            map.put(Bucket.MAX_NORMALIZED_PROBABILITY, maxNormalizedProbability);
+
+            m_Client.prepareUpdate(jobId, Bucket.TYPE, bucketId)
+                            .setDoc(map)
+                            .execute().actionGet();
+        }
+        catch (ElasticsearchException e)
+        {
+            LOGGER.error("Error updating bucket state", e);
+        }
+
+    }
+
+    @Override
+    public void updateRecords(String jobId, String bucketId, List<AnomalyRecord> records)
+    {
+        try
+        {
+            // Now bulk update the records within the bucket
+            BulkRequestBuilder bulkRequest = m_Client.prepareBulk();
+            boolean addedAny = false;
+            for (AnomalyRecord record : records)
+            {
+                String recordId = record.getId();
+                Map<String, Object> map = new TreeMap<>();
+                map.put(AnomalyRecord.ANOMALY_SCORE, record.getAnomalyScore());
+                map.put(AnomalyRecord.NORMALIZED_PROBABILITY, record.getNormalizedProbability());
+
+                LOGGER.trace("ES BULK ACTION: update ID " + recordId + " type " + AnomalyRecord.TYPE +
+                        " in index " + jobId + " using map of new values");
+                bulkRequest.add(
+                        m_Client.prepareUpdate(jobId, AnomalyRecord.TYPE, recordId)
+                        .setDoc(map)
+                        // Need to specify the parent ID when updating a child
+                        .setParent(bucketId));
+
+                addedAny = true;
+            }
+
+            if (addedAny)
+            {
+                LOGGER.trace("ES API CALL: bulk request with " +
+                        bulkRequest.numberOfActions() + " actions");
+                BulkResponse bulkResponse = bulkRequest.execute().actionGet();
+                if (bulkResponse.hasFailures())
+                {
+                    LOGGER.error("BulkResponse has errors");
+                    for (BulkItemResponse item : bulkResponse.getItems())
+                    {
+                        LOGGER.error(item.getFailureMessage());
+                    }
+                }
+            }
+        }
+        catch (ElasticsearchException e)
+        {
+            LOGGER.error("Error updating anomaly records", e);
+        }
     }
 }
 

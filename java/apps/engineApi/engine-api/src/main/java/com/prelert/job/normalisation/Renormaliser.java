@@ -25,29 +25,21 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.persistence.elasticsearch;
+package com.prelert.job.normalisation;
 
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
 import org.apache.log4j.Logger;
-import org.elasticsearch.ElasticsearchException;
-import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
-import org.elasticsearch.action.bulk.BulkItemResponse;
-import org.elasticsearch.action.bulk.BulkRequestBuilder;
-import org.elasticsearch.action.bulk.BulkResponse;
 
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.JobDetails;
 import com.prelert.job.exceptions.UnknownJobException;
-import com.prelert.job.normalisation.Normaliser;
-import com.prelert.job.normalisation.NormaliserProcessFactory;
-import com.prelert.job.persistence.JobRenormaliser;
+import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.quantiles.Quantiles;
 import com.prelert.job.results.AnomalyRecord;
@@ -62,11 +54,14 @@ import com.prelert.rs.data.Pagination;
  *
  * This is done in a separate thread to avoid blocking the main
  * data processing during renormalisations.
+ *
+ * Access to the job results and updates to the results (buckets,
+ * records) is via the {@linkplain JobProvider} interface.
  */
-public class ElasticsearchJobRenormaliser implements JobRenormaliser
+public class Renormaliser
 {
     private String m_JobId;
-    private ElasticsearchJobProvider m_JobProvider;
+    private JobProvider m_JobProvider;
 
     /**
      * This read from the data store on first access
@@ -95,13 +90,13 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
     private static final int MAX_BUCKETS_PER_PAGE = 100;
 
     /**
-     * Create with the Elasticsearch client. Data will be written to
+     * Create with the job provider client. Data will be written to
      * the index <code>jobId</code>
      *
-     * @param jobId The job Id/Elasticsearch index
-     * @param jobProvider The Elasticsearch job provider
+     * @param jobId The job Id/datastore index
+     * @param jobProvider The job provider for accessing and updating job results
      */
-    public ElasticsearchJobRenormaliser(String jobId, ElasticsearchJobProvider jobProvider)
+    public Renormaliser(String jobId, JobProvider jobProvider)
     {
         m_JobId = jobId;
         m_JobProvider = jobProvider;
@@ -149,7 +144,6 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
      * @param endTime
      * @param logger
      */
-    @Override
     public synchronized void renormalise(Quantiles quantiles, Logger logger)
     {
         if (m_QuantileUpdateThread.isAlive())
@@ -243,24 +237,45 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
      */
     private void updateSingleBucket(Bucket bucket, Logger logger, int[] counts)
     {
-        try
+        // First update the bucket if worthwhile
+        String bucketId = bucket.getId();
+        if (bucketId != null)
         {
-            // First update the bucket if worthwhile
-            String bucketId = bucket.getId();
-            if (bucketId != null)
+            if (bucket.hadBigNormalisedUpdate())
             {
-                if (bucket.hadBigNormalisedUpdate())
+                logger.trace("ES API CALL: update ID " + bucketId + " type " + Bucket.TYPE +
+                        " in index " + m_JobId + " using map of new values");
+
+                m_JobProvider.updateBucket(m_JobId, bucketId, bucket.getAnomalyScore(),
+                        bucket.getMaxNormalizedProbability());
+
+                ++counts[0];
+            }
+            else
+            {
+                ++counts[1];
+            }
+        }
+        else
+        {
+            logger.warn("Failed to renormalise bucket - no ID");
+            ++counts[1];
+        }
+
+        // Now bulk update the records within the bucket
+        List<AnomalyRecord> toUpdate = new ArrayList<AnomalyRecord>();
+
+        for (AnomalyRecord record : bucket.getRecords())
+        {
+            String recordId = record.getId();
+            if (recordId != null)
+            {
+                if (record.hadBigNormalisedUpdate())
                 {
-                    Map<String, Object> map = new TreeMap<>();
-                    map.put(Bucket.ANOMALY_SCORE, bucket.getAnomalyScore());
-                    map.put(Bucket.MAX_NORMALIZED_PROBABILITY, bucket.getMaxNormalizedProbability());
+                    toUpdate.add(record);
 
-                    logger.trace("ES API CALL: update ID " + bucketId + " type " + Bucket.TYPE +
+                    logger.trace("ES BULK ACTION: update ID " + recordId + " type " + AnomalyRecord.TYPE +
                             " in index " + m_JobId + " using map of new values");
-                    m_JobProvider.getClient().prepareUpdate(m_JobId, Bucket.TYPE, bucketId)
-                            .setDoc(map)
-                            .execute().actionGet();
-
                     ++counts[0];
                 }
                 else
@@ -270,65 +285,9 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
             }
             else
             {
-                logger.warn("Failed to renormalise bucket - no ID");
+                logger.warn("Failed to renormalise record - no ID");
                 ++counts[1];
             }
-
-            // Now bulk update the records within the bucket
-            BulkRequestBuilder bulkRequest = m_JobProvider.getClient().prepareBulk();
-            boolean addedAny = false;
-            for (AnomalyRecord record : bucket.getRecords())
-            {
-                String recordId = record.getId();
-                if (recordId != null)
-                {
-                    if (record.hadBigNormalisedUpdate())
-                    {
-                        Map<String, Object> map = new TreeMap<>();
-                            map.put(AnomalyRecord.ANOMALY_SCORE, record.getAnomalyScore());
-                            map.put(AnomalyRecord.NORMALIZED_PROBABILITY, record.getNormalizedProbability());
-
-                        logger.trace("ES BULK ACTION: update ID " + recordId + " type " + AnomalyRecord.TYPE +
-                                " in index " + m_JobId + " using map of new values");
-                        bulkRequest.add(m_JobProvider.getClient()
-                                .prepareUpdate(m_JobId, AnomalyRecord.TYPE, recordId)
-                                .setDoc(map)
-                                // Need to specify the parent ID when updating a child
-                                .setParent(bucketId));
-
-                        addedAny = true;
-                        ++counts[0];
-                    }
-                    else
-                    {
-                        ++counts[1];
-                    }
-                }
-                else
-                {
-                    logger.warn("Failed to renormalise record - no ID");
-                    ++counts[1];
-                }
-            }
-
-            if (addedAny)
-            {
-                logger.trace("ES API CALL: bulk request with " +
-                        bulkRequest.numberOfActions() + " actions");
-                BulkResponse bulkResponse = bulkRequest.execute().actionGet();
-                if (bulkResponse.hasFailures())
-                {
-                    logger.error("BulkResponse has errors");
-                    for (BulkItemResponse item : bulkResponse.getItems())
-                    {
-                        logger.error(item.getFailureMessage());
-                    }
-                }
-            }
-        }
-        catch (ElasticsearchException e)
-        {
-            logger.error("Error updating bucket state", e);
         }
     }
 
@@ -438,7 +397,7 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
                     QuantileInfo latestInfo = null;
 
                     // take() will block if the queue is empty
-                    QuantileInfo info = ElasticsearchJobRenormaliser.this.m_UpdatedQuantileQueue.take();
+                    QuantileInfo info = Renormaliser.this.m_UpdatedQuantileQueue.take();
                     setIsNormalisationInProgress();
                     while (keepGoing && info != null)
                     {
@@ -460,12 +419,12 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
                                 throw new IllegalStateException();
                         }
                         // poll() will return null if the queue is empty
-                        info = ElasticsearchJobRenormaliser.this.m_UpdatedQuantileQueue.poll();
+                        info = Renormaliser.this.m_UpdatedQuantileQueue.poll();
                     }
 
                     if (latestInfo != null)
                     {
-                        ElasticsearchJobRenormaliser.this.updateScores(latestInfo.m_State,
+                        Renormaliser.this.updateScores(latestInfo.m_State,
                                 latestInfo.m_EndBucketEpochMs, latestInfo.m_Logger);
                     }
 
@@ -474,9 +433,8 @@ public class ElasticsearchJobRenormaliser implements JobRenormaliser
                     // a) The next normalisation starting
                     // b) A request to close the job returning
                     lastLogger.info("Renormaliser thread about to refresh indexes");
-                    lastLogger.trace("ES API CALL: refresh index " + ElasticsearchJobRenormaliser.this.m_JobId);
-                    ElasticsearchJobRenormaliser.this.m_JobProvider.getClient().admin().indices().refresh(
-                            new RefreshRequest(ElasticsearchJobRenormaliser.this.m_JobId)).actionGet();
+                    lastLogger.trace("ES API CALL: refresh index " + Renormaliser.this.m_JobId);
+                    m_JobProvider.refreshIndex(Renormaliser.this.m_JobId);
 
                     if (m_UpdatedQuantileQueue.isEmpty())
                     {

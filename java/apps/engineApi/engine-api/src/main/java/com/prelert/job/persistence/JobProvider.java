@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -30,11 +30,20 @@ package com.prelert.job.persistence;
 import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.quantiles.Quantiles;
 
-public interface JobProvider extends JobDetailsProvider, JobResultsProvider
+public interface JobProvider extends JobDetailsProvider, JobResultsProvider, JobRenormaliser
 {
 	/**
 	 * Get the persisted quantiles state for the job
 	 */
 	public Quantiles getQuantiles(String jobId)
 	throws UnknownJobException;
+
+	/**
+	 * Refresh the datastore index so that all recent changes are
+	 * available to search operations. This is a synchronous blocking
+	 * call that should not return until the index has been refreshed.
+	 *
+	 * @param jobId
+	 */
+	public void refreshIndex(String jobId);
 }

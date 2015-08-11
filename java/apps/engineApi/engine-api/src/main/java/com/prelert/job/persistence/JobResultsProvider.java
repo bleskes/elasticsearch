@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -207,7 +207,7 @@ public interface JobResultsProvider extends Closeable
      * @param take Take only this number of records
      * @return
      */
-    Pagination<Influencer> influencers(String jobId, int skip, int take);
+    public Pagination<Influencer> influencers(String jobId, int skip, int take);
 
 
     /**
@@ -217,5 +217,5 @@ public interface JobResultsProvider extends Closeable
      * @param influencerId The unique influencer Id
      * @return
      */
-    SingleDocument<Influencer> influencer(String jobId, String influencerId);
+    public SingleDocument<Influencer> influencer(String jobId, String influencerId);
 }
