@@ -56,9 +56,9 @@ public class ServerInfoWriter
     }
 
     /**
-     * Get the current server stats and append them to <code>file</code>.
+     * Get the static server info and append them to <code>file</code>.
      */
-    public void write()
+    public void writeInfo()
     {
         ServerInfo info = m_ServerInfo.serverInfo();
         ObjectWriter jsonWriter = new ObjectMapper()
@@ -74,7 +74,13 @@ public class ServerInfoWriter
         {
             LOGGER.error("Error writing server info to file: " + m_File.getPath(), e);
         }
+    }
 
+    /**
+     * Get the current server stats and append them to <code>file</code>.
+     */
+    public void writeStats()
+    {
         // The json writer closes the outputstream after its been used
         // so it has to be reopened here
         try (FileOutputStream fos = new FileOutputStream(m_File, true))
