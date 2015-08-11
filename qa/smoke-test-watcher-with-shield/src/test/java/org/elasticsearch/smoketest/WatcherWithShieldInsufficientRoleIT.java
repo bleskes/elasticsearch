@@ -15,30 +15,20 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.watcher.test.rest;
+package org.elasticsearch.smoketest;
 
 import com.carrotsearch.randomizedtesting.annotations.Name;
-import org.elasticsearch.client.support.Headers;
-import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.shield.authc.support.SecuredString;
 import org.elasticsearch.test.rest.RestTestCandidate;
 import org.junit.Test;
 
 import java.io.IOException;
 
-import static org.elasticsearch.shield.authc.support.UsernamePasswordToken.basicAuthHeaderValue;
+import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.containsString;
 
-/**
- */
-public class WatcherShieldAuthorizationFailedRestTests extends WatcherRestTests {
+public class WatcherWithShieldInsufficientRoleIT extends WatcherWithShieldIT {
 
-    @Override
-    protected boolean enableShield() {
-        return true; // Always run with Shield enabled:
-    }
-
-    public WatcherShieldAuthorizationFailedRestTests(@Name("yaml") RestTestCandidate testCandidate) {
+    public WatcherWithShieldInsufficientRoleIT(@Name("yaml") RestTestCandidate testCandidate) {
         super(testCandidate);
     }
 
@@ -48,16 +38,15 @@ public class WatcherShieldAuthorizationFailedRestTests extends WatcherRestTests 
             super.test();
             fail();
         } catch(AssertionError ae) {
+            assertThat(ae.getMessage(), anyOf(containsString("action [cluster:monitor/watcher/"), containsString("action [cluster:admin/watcher/")));
             assertThat(ae.getMessage(), containsString("returned [403 Forbidden]"));
-            assertThat(ae.getMessage(), containsString("is unauthorized for user [test]"));
+            assertThat(ae.getMessage(), containsString("is unauthorized for user [powerless_user]"));
         }
     }
 
     @Override
-    protected Settings restClientSettings() {
-        String token = basicAuthHeaderValue("test", new SecuredString("changeme".toCharArray()));
-        return Settings.builder()
-                .put(Headers.PREFIX + ".Authorization", token)
-                .build();
+    protected String[] getCredentials() {
+        return new String[]{"powerless_user", "changeme"};
     }
 }
+
