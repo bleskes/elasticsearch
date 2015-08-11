@@ -37,6 +37,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
@@ -83,6 +84,7 @@ import com.prelert.job.exceptions.JobIdAlreadyExistsException;
 import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.persistence.JobProvider;
+import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.quantiles.Quantiles;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
@@ -90,8 +92,6 @@ import com.prelert.job.results.CategoryDefinition;
 import com.prelert.job.results.Detector;
 import com.prelert.job.results.Influencer;
 import com.prelert.job.usage.Usage;
-import com.prelert.rs.data.Pagination;
-import com.prelert.rs.data.SingleDocument;
 
 public class ElasticsearchJobProvider implements JobProvider
 {
@@ -318,7 +318,7 @@ public class ElasticsearchJobProvider implements JobProvider
     }
 
     @Override
-    public Pagination<JobDetails> getJobs(int skip, int take)
+    public QueryPage<JobDetails> getJobs(int skip, int take)
     {
         FilterBuilder fb = FilterBuilders.matchAllFilter();
         SortBuilder sb = new FieldSortBuilder(JobDetails.ID)
@@ -369,12 +369,7 @@ public class ElasticsearchJobProvider implements JobProvider
             jobs.add(job);
         }
 
-        Pagination<JobDetails> page = new Pagination<>();
-        page.setDocuments(jobs);
-        page.setHitCount(response.getHits().getTotalHits());
-        page.setSkip(skip);
-        page.setTake(take);
-
+        QueryPage<JobDetails> page = new QueryPage<JobDetails>(jobs, response.getHits().getTotalHits());
         return page;
     }
 
@@ -579,7 +574,7 @@ public class ElasticsearchJobProvider implements JobProvider
 
     /* Results */
     @Override
-    public Pagination<Bucket> buckets(String jobId,
+    public QueryPage<Bucket> buckets(String jobId,
             boolean expand, boolean includeInterim, int skip, int take,
             double anomalyScoreThreshold, double normalizedProbabilityThreshold)
     throws UnknownJobException
@@ -589,7 +584,7 @@ public class ElasticsearchJobProvider implements JobProvider
     }
 
     @Override
-    public Pagination<Bucket> buckets(String jobId, boolean expand,
+    public QueryPage<Bucket> buckets(String jobId, boolean expand,
             boolean includeInterim, int skip, int take, long startEpochMs, long endEpochMs,
             double anomalyScoreThreshold, double normalizedProbabilityThreshold)
     throws UnknownJobException
@@ -603,7 +598,7 @@ public class ElasticsearchJobProvider implements JobProvider
         return buckets(jobId, expand, includeInterim, skip, take, fb);
     }
 
-    private Pagination<Bucket> buckets(String jobId,
+    private QueryPage<Bucket> buckets(String jobId,
             boolean expand, boolean includeInterim, int skip, int take,
             FilterBuilder fb)
     throws UnknownJobException
@@ -646,22 +641,22 @@ public class ElasticsearchJobProvider implements JobProvider
             {
                 int rskip = 0;
                 int rtake = 500;
-                Pagination<AnomalyRecord> page = this.bucketRecords(
+                QueryPage<AnomalyRecord> page = this.bucketRecords(
                         jobId, hit.getId(), rskip, rtake, includeInterim,
                         AnomalyRecord.PROBABILITY, false);
 
-                if (page.getHitCount() > 0)
+                if (page.hitCount() > 0)
                 {
-                    bucket.setRecords(page.getDocuments());
+                    bucket.setRecords(page.queryResults());
                 }
 
-                while (page.getHitCount() > rskip + rtake)
+                while (page.hitCount() > rskip + rtake)
                 {
                     rskip += rtake;
                     page = this.bucketRecords(
                             jobId, hit.getId(), rskip, rtake, includeInterim,
                             AnomalyRecord.PROBABILITY, false);
-                    bucket.getRecords().addAll(page.getDocuments());
+                    bucket.getRecords().addAll(page.queryResults());
                 }
             }
 
@@ -669,17 +664,11 @@ public class ElasticsearchJobProvider implements JobProvider
         }
 
 
-        Pagination<Bucket> page = new Pagination<>();
-        page.setDocuments(results);
-        page.setHitCount(searchResponse.getHits().getTotalHits());
-        page.setSkip(skip);
-        page.setTake(take);
-
-        return page;
+        return new QueryPage<>(results, searchResponse.getHits().getTotalHits());
     }
 
     @Override
-    public SingleDocument<Bucket> bucket(String jobId,
+    public Optional<Bucket> bucket(String jobId,
             String bucketId, boolean expand, boolean includeInterim)
     throws UnknownJobException
     {
@@ -696,9 +685,7 @@ public class ElasticsearchJobProvider implements JobProvider
             throw new UnknownJobException(jobId);
         }
 
-        SingleDocument<Bucket> doc = new SingleDocument<>();
-        doc.setType(Bucket.TYPE);
-        doc.setDocumentId(bucketId);
+        Optional<Bucket> doc = Optional.<Bucket>empty();
         if (response.isExists())
         {
             // Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch,
@@ -715,22 +702,22 @@ public class ElasticsearchJobProvider implements JobProvider
                 {
                     int rskip = 0;
                     int rtake = 500;
-                    Pagination<AnomalyRecord> page = this.bucketRecords(
+                    QueryPage<AnomalyRecord> page = this.bucketRecords(
                             jobId, bucketId, rskip, rtake, includeInterim,
                             AnomalyRecord.PROBABILITY, false);
-                    bucket.setRecords(page.getDocuments());
+                    bucket.setRecords(page.queryResults());
 
-                    while (page.getHitCount() > rskip + rtake)
+                    while (page.hitCount() > rskip + rtake)
                     {
                         rskip += rtake;
                         page = this.bucketRecords(
                                 jobId, bucketId, rskip, rtake, includeInterim,
                                 AnomalyRecord.PROBABILITY, false);
-                        bucket.getRecords().addAll(page.getDocuments());
+                        bucket.getRecords().addAll(page.queryResults());
                     }
                 }
 
-                doc.setDocument(bucket);
+                doc = Optional.of(bucket);
             }
         }
 
@@ -739,7 +726,7 @@ public class ElasticsearchJobProvider implements JobProvider
 
 
     @Override
-    public Pagination<AnomalyRecord> bucketRecords(String jobId,
+    public QueryPage<AnomalyRecord> bucketRecords(String jobId,
             String bucketId, int skip, int take, boolean includeInterim, String sortField, boolean descending)
     throws UnknownJobException
     {
@@ -772,7 +759,7 @@ public class ElasticsearchJobProvider implements JobProvider
 
 
     @Override
-    public Pagination<CategoryDefinition> categoryDefinitions(String jobId, int skip, int take)
+    public QueryPage<CategoryDefinition> categoryDefinitions(String jobId, int skip, int take)
             throws UnknownJobException
     {
         LOGGER.trace("ES API CALL: search all of type " + CategoryDefinition.TYPE +
@@ -797,18 +784,12 @@ public class ElasticsearchJobProvider implements JobProvider
                 .map(hit -> m_ObjectMapper.convertValue(hit.getSource(), CategoryDefinition.class))
                 .collect(Collectors.toList());
 
-        Pagination<CategoryDefinition> page = new Pagination<>();
-        page.setDocuments(results);
-        page.setHitCount(searchResponse.getHits().getTotalHits());
-        page.setSkip(skip);
-        page.setTake(take);
-
-        return page;
+        return new QueryPage<>(results, searchResponse.getHits().getTotalHits());
     }
 
 
     @Override
-    public SingleDocument<CategoryDefinition> categoryDefinition(String jobId, String categoryId)
+    public Optional<CategoryDefinition> categoryDefinition(String jobId, String categoryId)
             throws UnknownJobException
     {
         GetResponse response;
@@ -824,18 +805,18 @@ public class ElasticsearchJobProvider implements JobProvider
             throw new UnknownJobException(jobId);
         }
 
-        SingleDocument<CategoryDefinition> doc = new SingleDocument<>();
-        doc.setType(CategoryDefinition.TYPE);
-        doc.setDocumentId(categoryId);
         if (response.isExists())
         {
-            doc.setDocument(m_ObjectMapper.convertValue(response.getSource(), CategoryDefinition.class));
+            return Optional.of(m_ObjectMapper.convertValue(response.getSource(), CategoryDefinition.class));
         }
-        return doc;
+        else
+        {
+            return Optional.<CategoryDefinition>empty();
+        }
     }
 
     @Override
-    public Pagination<AnomalyRecord> records(String jobId,
+    public QueryPage<AnomalyRecord> records(String jobId,
             int skip, int take, boolean includeInterim, String sortField, boolean descending,
             double anomalyScoreThreshold, double normalizedProbabilityThreshold)
     throws UnknownJobException
@@ -845,7 +826,7 @@ public class ElasticsearchJobProvider implements JobProvider
     }
 
     @Override
-    public Pagination<AnomalyRecord> records(String jobId,
+    public QueryPage<AnomalyRecord> records(String jobId,
             int skip, int take, long startEpochMs, long endEpochMs,
             boolean includeInterim, String sortField, boolean descending,
             double anomalyScoreThreshold, double normalizedProbabilityThreshold)
@@ -860,7 +841,7 @@ public class ElasticsearchJobProvider implements JobProvider
         return records(jobId, skip, take, fb, sortField, descending);
     }
 
-    private Pagination<AnomalyRecord> records(String jobId,
+    private QueryPage<AnomalyRecord> records(String jobId,
             int skip, int take, FilterBuilder recordFilter,
             String sortField, boolean descending)
     throws UnknownJobException
@@ -880,7 +861,7 @@ public class ElasticsearchJobProvider implements JobProvider
     /**
      * The returned records have the parent bucket id set.
      */
-    private Pagination<AnomalyRecord> records(String jobId, int skip, int take,
+    private QueryPage<AnomalyRecord> records(String jobId, int skip, int take,
             FilterBuilder recordFilter, SortBuilder sb, List<String> secondarySort,
             boolean descending)
     throws UnknownJobException
@@ -936,18 +917,12 @@ public class ElasticsearchJobProvider implements JobProvider
             results.add(record);
         }
 
-        Pagination<AnomalyRecord> page = new Pagination<>();
-        page.setDocuments(results);
-        page.setHitCount(searchResponse.getHits().getTotalHits());
-        page.setSkip(skip);
-        page.setTake(take);
-
-        return page;
+        return new QueryPage<>(results, searchResponse.getHits().getTotalHits());
     }
 
 
     @Override
-    public Pagination<Influencer> influencers(String jobId, int skip, int take)
+    public QueryPage<Influencer> influencers(String jobId, int skip, int take)
     {
         FilterBuilder fb = FilterBuilders.matchAllFilter();
 
@@ -977,17 +952,11 @@ public class ElasticsearchJobProvider implements JobProvider
             influencers.add(influencer);
         }
 
-        Pagination<Influencer> page = new Pagination<>();
-        page.setDocuments(influencers);
-        page.setHitCount(response.getHits().getTotalHits());
-        page.setSkip(skip);
-        page.setTake(take);
-
-        return page;
+        return new QueryPage<>(influencers, response.getHits().getTotalHits());
     }
 
     @Override
-    public SingleDocument<Influencer> influencer(String jobId, String influencerId)
+    public Optional<Influencer> influencer(String jobId, String influencerId)
     {
         throw new IllegalStateException();
     }

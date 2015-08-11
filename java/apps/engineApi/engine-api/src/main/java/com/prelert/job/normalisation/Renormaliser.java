@@ -40,11 +40,11 @@ import com.prelert.job.AnalysisConfig;
 import com.prelert.job.JobDetails;
 import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.persistence.JobProvider;
+import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.quantiles.Quantiles;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
-import com.prelert.rs.data.Pagination;
 
 
 /**
@@ -182,17 +182,17 @@ public class Renormaliser
             Normaliser normaliser = new Normaliser(m_JobId, new NormaliserProcessFactory(), logger);
             int[] counts = { 0, 0 };
             int skip = 0;
-            Pagination<Bucket> page = m_JobProvider.buckets(m_JobId, true, false,
+            QueryPage<Bucket> page = m_JobProvider.buckets(m_JobId, true, false,
                         skip, MAX_BUCKETS_PER_PAGE, 0, endBucketEpochMs, 0.0, 0.0);
 
-            while (page.getHitCount() > skip)
+            while (page.hitCount() > skip)
             {
-                List<Bucket> buckets = page.getDocuments();
+                List<Bucket> buckets = page.queryResults();
                 if (buckets == null)
                 {
                     logger.warn("No buckets to renormalise for job " +
                                 m_JobId + " with skip " + skip + " and hit count " +
-                                page.getHitCount());
+                                page.hitCount());
                     break;
                 }
 
@@ -205,7 +205,7 @@ public class Renormaliser
                 }
 
                 skip += MAX_BUCKETS_PER_PAGE;
-                if (page.getHitCount() > skip)
+                if (page.hitCount() > skip)
                 {
                     page = m_JobProvider.buckets(m_JobId, true, false,
                             skip, MAX_BUCKETS_PER_PAGE, 0, endBucketEpochMs, 0.0, 0.0);

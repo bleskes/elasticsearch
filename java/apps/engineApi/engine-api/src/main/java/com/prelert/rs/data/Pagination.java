@@ -63,6 +63,10 @@ public class Pagination<T>
 
     private List<T> m_Documents;
 
+    public Pagination()
+    {
+    }
+
     /**
      * The number of hits in the request. This does not
      * necessarily match the length of the number of documents returned

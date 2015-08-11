@@ -28,14 +28,13 @@
 package com.prelert.job.persistence;
 
 import java.io.Closeable;
+import java.util.Optional;
 
 import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.results.CategoryDefinition;
 import com.prelert.job.results.Influencer;
-import com.prelert.rs.data.Pagination;
-import com.prelert.rs.data.SingleDocument;
 
 public interface JobResultsProvider extends Closeable
 {
@@ -53,10 +52,10 @@ public interface JobResultsProvider extends Closeable
      * @param normalizedProbabilityThreshold Return only buckets with a maxNormalizedProbability >=
      * this value
      *
-     * @return
+     * @return QueryPage of buckets
      * @throws UnknownJobException If the job id is no recognised
      */
-    public Pagination<Bucket> buckets(String jobId,
+    public QueryPage<Bucket> buckets(String jobId,
             boolean expand, boolean includeInterim, int skip, int take,
             double anomalyScoreThreshold, double normalizedProbabilityThreshold)
     throws UnknownJobException;
@@ -85,10 +84,10 @@ public interface JobResultsProvider extends Closeable
      * @param normalizedProbabilityThreshold Return only buckets with a maxNormalizedProbability >=
      * this value
      *
-     * @return
+     * @return QueryPage of Buckets
      * @throws UnknownJobException If the job id is no recognised
      */
-    public Pagination<Bucket> buckets(String jobId,
+    public QueryPage<Bucket> buckets(String jobId,
             boolean expand, boolean includeInterim, int skip, int take,
             long startEpochMs, long endEpochMs,
             double anomalyScoreThreshold, double normalizedProbabilityThreshold)
@@ -102,10 +101,10 @@ public interface JobResultsProvider extends Closeable
      * @param bucketId
      * @param expand Include anomaly records
      * @param includeInterim Include interim results
-     * @return
+     * @return Optional Bucket
      * @throws UnknownJobException If the job id is no recognised
      */
-    public SingleDocument<Bucket> bucket(String jobId,
+    public Optional<Bucket> bucket(String jobId,
             String bucketId, boolean expand, boolean includeInterim)
     throws UnknownJobException;
 
@@ -124,24 +123,41 @@ public interface JobResultsProvider extends Closeable
      * @param sortField The field to sort results by if <code>null</code> no
      * sort is applied
      * @param sortDescending Sort in descending order
-     * @return
+     * @return QueryPage of AnomalyRecords
      * @throws UnknownJobException If the job id is no recognised
      */
-    public Pagination<AnomalyRecord> bucketRecords(String jobId,
+    public QueryPage<AnomalyRecord> bucketRecords(String jobId,
             String bucketId, int skip, int take, boolean includeInterim, String sortField,
             boolean sortDescending)
     throws UnknownJobException;
 
-    public Pagination<CategoryDefinition> categoryDefinitions(String jobId, int skip, int take)
+    /**
+     * Get a page of {@linkplain CategoryDefinition}s for the given <code>jobId</code>.
+     *
+     * @param jobId
+     * @param skip Skip the first N categories. This parameter is for paging
+     * @param take Take only this number of categories
+     * @return QueryPage of CategoryDefinition
+     * @throws UnknownJobException If the job id is no recognised
+     */
+    public QueryPage<CategoryDefinition> categoryDefinitions(String jobId, int skip, int take)
     throws UnknownJobException;
 
-    public SingleDocument<CategoryDefinition> categoryDefinition(String jobId, String categoryId)
+    /**
+     * Get the specific CategoryDefinition for the given job and category id.
+     *
+     * @param jobId
+     * @param categoryId Unique id
+     * @return Optional CategoryDefinition
+     * @throws UnknownJobException
+     */
+    public Optional<CategoryDefinition> categoryDefinition(String jobId, String categoryId)
     throws UnknownJobException;
 
     /**
      * Get the anomaly records for all buckets.
-     * The returned records will have the <code>parent</code> member
-     * set to the parent bucket's id.
+     * The returned records will have the {@linkplain AnomalyRecord#getParent()}
+     *  member set to the parent bucket's id.
      *
      * @param jobId
      * @param skip Skip the first N records. This parameter is for paging
@@ -156,10 +172,10 @@ public interface JobResultsProvider extends Closeable
      * @param normalizedProbabilityThreshold Return only buckets with a maxNormalizedProbability >=
      * this value
      *
-     * @return
+     * @return QueryPage of AnomalyRecords
      * @throws UnknownJobException If the job id is no recognised
      */
-    public Pagination<AnomalyRecord> records(String jobId,
+    public QueryPage<AnomalyRecord> records(String jobId,
              int skip, int take, boolean includeInterim, String sortField, boolean sortDescending,
              double anomalyScoreThreshold, double normalizedProbabilityThreshold)
     throws UnknownJobException;
@@ -188,10 +204,10 @@ public interface JobResultsProvider extends Closeable
      * @param normalizedProbabilityThreshold Return only buckets with a maxNormalizedProbability >=
      * this value
      *
-     * @return
+     * @return QueryPage of AnomalyRecords
      * throws UnknownJobException If the job id is no recognised
      */
-    public Pagination<AnomalyRecord> records(String jobId,
+    public QueryPage<AnomalyRecord> records(String jobId,
             int skip, int take, long startEpochMs, long endEpochMs,
             boolean includeInterim, String sortField, boolean sortDescending,
             double anomalyScoreThreshold, double normalizedProbabilityThreshold)
@@ -205,9 +221,9 @@ public interface JobResultsProvider extends Closeable
      * @param skip Skip the first N records. This parameter is for paging
      * if not required set to 0.
      * @param take Take only this number of records
-     * @return
+     * @return QueryPage of Influencer
      */
-    public Pagination<Influencer> influencers(String jobId, int skip, int take);
+    public QueryPage<Influencer> influencers(String jobId, int skip, int take);
 
 
     /**
@@ -215,7 +231,7 @@ public interface JobResultsProvider extends Closeable
      *
      * @param jobId
      * @param influencerId The unique influencer Id
-     * @return
+     * @return Optional Influencer
      */
-    public SingleDocument<Influencer> influencer(String jobId, String influencerId);
+    public Optional<Influencer> influencer(String jobId, String influencerId);
 }

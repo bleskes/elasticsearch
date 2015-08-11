@@ -35,7 +35,6 @@ import com.prelert.job.JobDetails;
 import com.prelert.job.JobStatus;
 import com.prelert.job.exceptions.JobIdAlreadyExistsException;
 import com.prelert.job.exceptions.UnknownJobException;
-import com.prelert.rs.data.Pagination;
 
 /**
  * General interface for classes that persist Jobs and job data
@@ -62,7 +61,7 @@ public interface JobDetailsProvider extends Closeable
 
 	/**
 	 * Return true if the job id is unique else if it is already used
-	 * by another job throw <code>JobAliasAlreadyExistsException</code>
+	 * by another job throw <code>JobIdAlreadyExistsException</code>
 	 *
 	 * @param jobId
 	 * @return True
@@ -88,12 +87,11 @@ public interface JobDetailsProvider extends Closeable
 	 * @param skip Skip the first N Jobs. This parameter is for paging
 	 * results if not required set to 0.
 	 * @param take Take only this number of Jobs
-	 * @return A pagination object with hitCount set to the total number
+	 * @return A QueryPage object with hitCount set to the total number
 	 * of jobs not the only the number returned here as determined by the
-	 * <code>take</code>
-	 * parameter.
+	 * <code>take</code> parameter.
 	 */
-	public Pagination<JobDetails> getJobs(int skip, int take);
+	public QueryPage<JobDetails> getJobs(int skip, int take);
 
 
 	/**
