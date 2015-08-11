@@ -410,6 +410,7 @@ public abstract class StatusReporter
         if (log10TotalRecords > 6)
         {
             m_LogEvery = LongMath.pow(10L, log10TotalRecords - 6);
+            m_LogCount = 0;
         }
     }
 
