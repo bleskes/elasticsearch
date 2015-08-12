@@ -30,6 +30,7 @@ import org.apache.log4j.Logger;
 import org.elasticsearch.client.Client;
 
 import com.prelert.job.DataCounts;
+import com.prelert.job.persistence.elasticsearch.ElasticsearchJobDataCountsPersister;
 import com.prelert.job.status.StatusReporter;
 import com.prelert.job.status.StatusReporterFactory;
 import com.prelert.job.usage.UsageReporter;
@@ -52,7 +53,8 @@ public class ElasticsearchStatusReporterFactory implements StatusReporterFactory
 	public StatusReporter newStatusReporter(String jobId, DataCounts counts,
 			UsageReporter usageReporter, Logger logger)
 	{
-        return new ElasticsearchStatusReporter(m_Client, usageReporter, jobId,
-                counts, logger);
+        return new StatusReporter(jobId, counts, usageReporter,
+                                    new ElasticsearchJobDataCountsPersister(m_Client, logger),
+                                    logger);
 	}
 }

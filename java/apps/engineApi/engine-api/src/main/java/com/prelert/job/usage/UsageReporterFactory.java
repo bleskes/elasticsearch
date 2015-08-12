@@ -30,13 +30,13 @@ package com.prelert.job.usage;
 import org.apache.log4j.Logger;
 
 /**
- * Abstract Factory method for creating new {@link UsageReporter} 
- * instances. 
+ * Abstract Factory method for creating new {@link UsageReporter}
+ * instances.
  */
-public interface UsageReporterFactory 
+public interface UsageReporterFactory
 {
 	/**
-	 * Return a new UsageReporter for the given job id. 
+	 * Return a new UsageReporter for the given job id.
 	 * @param jobId
 	 * @param logger The job logger
 	 * @return

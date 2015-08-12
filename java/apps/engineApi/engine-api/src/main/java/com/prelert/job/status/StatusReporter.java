@@ -32,21 +32,21 @@ import java.util.Date;
 import org.apache.log4j.Logger;
 
 import com.google.common.math.LongMath;
-
 import com.prelert.job.DataCounts;
+import com.prelert.job.persistence.JobDataCountsPersister;
 import com.prelert.job.usage.UsageReporter;
 
 
 /**
- * Abstract status reporter for tracking all the good/bad
+ * Status reporter for tracking all the good/bad
  * records written to the API. Call one of the reportXXX() methods
  * to update the records counts if {@linkplain #isReportingBoundary(int)}
- * returns true then the count will be reported via the abstract
- * {@linkplain #reportStatus(int)} method. If there is a high proportion
- * of errors the {@linkplain StatusReporter#checkStatus(int)} method
- * throws an error.
+ * returns true then the count will be logged and the counts persisted
+ * via the {@linkplain JobDataCountsPersister}.
+ * If there is a high proportion of errors the
+ * {@linkplain StatusReporter#checkStatus(int)} method throws an exception.
  */
-public abstract class StatusReporter
+public class StatusReporter
 {
     /**
      * The max percentage of date parse errors allowed before
@@ -82,14 +82,16 @@ public abstract class StatusReporter
 
     private UsageReporter m_UsageReporter;
 
-    protected String m_JobId;
-    protected Logger m_Logger;
+    private String m_JobId;
+    private Logger m_Logger;
+    private JobDataCountsPersister m_DataCountsPersister;
 
-
-    protected StatusReporter(String jobId, UsageReporter usageReporter, Logger logger)
+    public StatusReporter(String jobId, UsageReporter usageReporter,
+                        JobDataCountsPersister dataCountsPersister, Logger logger)
     {
         m_JobId = jobId;
         m_UsageReporter = usageReporter;
+        m_DataCountsPersister = dataCountsPersister;
         m_Logger = logger;
 
         m_TotalRecordStats = new DataCounts();
@@ -119,9 +121,9 @@ public abstract class StatusReporter
     }
 
     public StatusReporter(String jobId, DataCounts counts,
-            UsageReporter usageReporter, Logger logger)
+            UsageReporter usageReporter, JobDataCountsPersister dataCountsPersister, Logger logger)
     {
-        this(jobId, usageReporter, logger);
+        this(jobId, usageReporter, dataCountsPersister, logger);
 
         m_TotalRecordStats = new DataCounts(counts);
     }
@@ -158,8 +160,10 @@ public abstract class StatusReporter
         long totalRecords = getInputRecordCount() ;
         if (isReportingBoundary(totalRecords))
         {
+            m_TotalRecordStats.calcProcessedFieldCount(getAnalysedFieldsPerRecord());
+
             logStatus(totalRecords);
-            reportStatus(totalRecords);
+            m_DataCountsPersister.persistDataCounts(m_JobId, m_TotalRecordStats);
             try
             {
                 checkStatus(totalRecords);
@@ -369,7 +373,7 @@ public abstract class StatusReporter
         m_UsageReporter.reportUsage();
 
         long totalRecords = getInputRecordCount();
-        reportStatus(totalRecords);
+        m_DataCountsPersister.persistDataCounts(m_JobId, m_TotalRecordStats);
 
         if (totalRecords > 0) // because of a divide by zero error
         {
@@ -507,12 +511,4 @@ public abstract class StatusReporter
         m_TotalRecordStats.calcProcessedFieldCount(getAnalysedFieldsPerRecord());
         return m_TotalRecordStats;
     }
-
-    /**
-     * Report the counts and stats for the records.
-     * How the stats are reported is decided by the implementing class.
-     *
-     * @param totalRecords
-     */
-    protected abstract void reportStatus(long totalRecords);
 }

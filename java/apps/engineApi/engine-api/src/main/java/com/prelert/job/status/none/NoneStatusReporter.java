@@ -29,6 +29,7 @@ package com.prelert.job.status.none;
 
 import org.apache.log4j.Logger;
 
+import com.prelert.job.persistence.none.NoneJobDataCountsPersister;
 import com.prelert.job.status.StatusReporter;
 import com.prelert.job.usage.none.NoneUsageReporter;
 
@@ -38,15 +39,6 @@ public class NoneStatusReporter extends StatusReporter
 
     public NoneStatusReporter(String jobId)
     {
-        super(jobId, new NoneUsageReporter(), LOGGER);
+        super(jobId, new NoneUsageReporter(), new NoneJobDataCountsPersister(), LOGGER);
     }
-
-    /**
-     * Does nothing
-     */
-    @Override
-    protected void reportStatus(long totalRecords)
-    {
-    }
-
 }

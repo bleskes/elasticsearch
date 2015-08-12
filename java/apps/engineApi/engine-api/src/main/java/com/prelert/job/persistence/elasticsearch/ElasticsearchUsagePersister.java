@@ -24,7 +24,9 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.usage.elasticsearch;
+package com.prelert.job.persistence.elasticsearch;
+
+import static com.prelert.job.persistence.elasticsearch.ElasticsearchJobProvider.PRELERT_USAGE_INDEX;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -35,18 +37,10 @@ import org.apache.log4j.Logger;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.script.ScriptService;
 
+import com.prelert.job.persistence.UsagePersister;
 import com.prelert.job.usage.Usage;
-import com.prelert.job.usage.UsageReporter;
 
-import static com.prelert.job.persistence.elasticsearch.ElasticsearchJobProvider.PRELERT_USAGE_INDEX;
-
-/**
- * Persist Usage (metering) data to elasticsearch.
- * Data is written per job to the job index and summed for
- * all jobs to the {@value com.prelert.job.manager.JobManager.PRELERT_METERING_INDEX}
- * index.
- */
-public class ElasticsearchUsageReporter extends UsageReporter
+public class ElasticsearchUsagePersister implements UsagePersister
 {
     private Client m_Client;
     private SimpleDateFormat m_SimpleDateFormat;
@@ -56,9 +50,8 @@ public class ElasticsearchUsageReporter extends UsageReporter
 
     private Map<String, Object> m_UpsertMap;
 
-    public ElasticsearchUsageReporter(Client client, String jobId, Logger logger)
+    public ElasticsearchUsagePersister(Client client, Logger logger)
     {
-        super(jobId, logger);
         m_Client = client;
         m_CurrentHour = 0;
         m_Logger = logger;
@@ -70,7 +63,7 @@ public class ElasticsearchUsageReporter extends UsageReporter
     }
 
     @Override
-    public boolean persistUsageCounts()
+    public void persistUsage(String jobId, long bytesRead, long fieldsRead, long recordsRead)
     {
         long hour =  System.currentTimeMillis() / 3600000; // ms in the hour
 
@@ -82,12 +75,8 @@ public class ElasticsearchUsageReporter extends UsageReporter
         }
 
         // update global count
-        updateDocument(PRELERT_USAGE_INDEX,  m_DocId, getBytesReadSinceLastReport(),
-                getFieldsReadSinceLastReport(), getRecordsReadSinceLastReport());
-        updateDocument(getJobId(), m_DocId, getBytesReadSinceLastReport(),
-                getFieldsReadSinceLastReport(), getRecordsReadSinceLastReport());
-
-        return true;
+        updateDocument(PRELERT_USAGE_INDEX,  m_DocId, bytesRead, fieldsRead, recordsRead);
+        updateDocument(jobId, m_DocId, bytesRead, fieldsRead, recordsRead);
     }
 
 

@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -24,70 +24,20 @@
  *                                                          *
  *                                                          *
  ************************************************************/
+package com.prelert.job.persistence;
 
-package com.prelert.job.usage;
-
-import org.apache.log4j.Logger;
-
-import com.prelert.job.persistence.UsagePersister;
-import com.prelert.job.persistence.none.NoneUsagePersister;
-import com.prelert.job.usage.UsageReporter;
-
-public class DummyUsageReporter extends UsageReporter
+/**
+ * Interface for classes that persist usage information
+ */
+public interface UsagePersister
 {
-	long m_TotalByteCount;
-	long m_TotalFieldCount;
-	long m_TotalRecordCount;
-
-	public DummyUsageReporter(String jobId, Logger logger)
-	{
-		super(jobId, new NoneUsagePersister(), logger);
-
-		m_TotalByteCount = 0;
-		m_TotalFieldCount = 0;
-		m_TotalRecordCount = 0;
-	}
-
-	public DummyUsageReporter(String jobId, UsagePersister persister, Logger logger)
-	{
-	    super(jobId, persister, logger);
-
-	    m_TotalByteCount = 0;
-	    m_TotalFieldCount = 0;
-	    m_TotalRecordCount = 0;
-	}
-
-
-	@Override
-    public void addBytesRead(long bytesRead)
-    {
-       super.addBytesRead(bytesRead);
-
-        m_TotalByteCount += bytesRead;
-    }
-
-    @Override
-    public void addFieldsRecordsRead(long fieldsRead)
-    {
-        super.addFieldsRecordsRead(fieldsRead);
-
-        m_TotalFieldCount += fieldsRead;
-        ++m_TotalRecordCount;
-    }
-
-	public long getTotalBytesRead()
-	{
-		return m_TotalByteCount;
-	}
-
-	public long getTotalFieldsRead()
-	{
-		return m_TotalFieldCount;
-	}
-
-	public long getTotalRecordsRead()
-	{
-		return m_TotalRecordCount;
-	}
-
+    /**
+     * Persist the usage info.
+     *
+     * @param jobId
+     * @param bytesRead
+     * @param fieldsRead
+     * @param recordsRead
+     */
+    public void persistUsage(String jobId, long bytesRead, long fieldsRead, long recordsRead);
 }

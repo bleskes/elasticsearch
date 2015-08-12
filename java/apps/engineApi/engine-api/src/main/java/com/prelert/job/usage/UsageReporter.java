@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -29,15 +29,15 @@ package com.prelert.job.usage;
 
 import org.apache.log4j.Logger;
 
+import com.prelert.job.persistence.UsagePersister;
+
 /**
- * Reports the number of bytes read.
- * This is an abstract class sub classes should implement
- * {@link UsageReporter#persistUsageCounts()}
- *
+ * Reports the number of bytes, fields and records read.
+ * Persistence is done via {@linkplain UsagePersister}
  * The main difference betweeen this and the {@linkplain com.prelert.job.status.StatusReporter}
  * is that this writes hourly reports i.e. how much data was read in an hour
  */
-public abstract class UsageReporter
+public class UsageReporter
 {
 	public static final String UPDATE_INTERVAL_PROP = "usage.update.interval";
 	private static final long UPDATE_AFTER_COUNT_SECS = 300;
@@ -52,13 +52,16 @@ public abstract class UsageReporter
 	private long m_LastUpdateTimeMs;
 	private long m_UpdateIntervalMs = UPDATE_AFTER_COUNT_SECS * 1000;
 
-	public UsageReporter(String jobId, Logger logger)
+	private UsagePersister m_Persister;
+
+	public UsageReporter(String jobId, UsagePersister persister, Logger logger)
 	{
 		m_BytesReadSinceLastReport = 0;
 		m_FieldsReadSinceLastReport = 0;
 		m_RecordsReadSinceLastReport = 0;
 
 		m_JobId = jobId;
+		m_Persister = persister;
 		m_Logger = logger;
 
 		m_LastUpdateTimeMs = System.currentTimeMillis();
@@ -148,7 +151,8 @@ public abstract class UsageReporter
 				m_BytesReadSinceLastReport >> 10, m_FieldsReadSinceLastReport,
 				m_RecordsReadSinceLastReport, m_JobId));
 
-		persistUsageCounts();
+		m_Persister.persistUsage(m_JobId, m_BytesReadSinceLastReport,
+		                            m_FieldsReadSinceLastReport, m_RecordsReadSinceLastReport);
 
 		m_LastUpdateTimeMs = epochMs;
 
@@ -156,11 +160,4 @@ public abstract class UsageReporter
 		m_FieldsReadSinceLastReport = 0;
 		m_RecordsReadSinceLastReport = 0;
 	}
-
-	/**
-	 * Persist the usage counts
-	 * @return
-	 */
-	protected abstract boolean persistUsageCounts();
-
 }

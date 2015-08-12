@@ -36,8 +36,9 @@ import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.prelert.job.persistence.none.NoneUsagePersister;
 import com.prelert.job.status.CountingInputStream;
-import com.prelert.job.usage.DummyUsageReporter;
+import com.prelert.job.usage.UsageReporter;
 
 
 public class CountingInputStreamTest
@@ -47,7 +48,7 @@ public class CountingInputStreamTest
 	@Test
 	public void testRead_OneByteAtATime() throws IOException
 	{
-		DummyUsageReporter usageReporter = new DummyUsageReporter("", LOGGER);
+		UsageReporter usageReporter = new UsageReporter("foo", new NoneUsagePersister(), LOGGER);
 		DummyStatusReporter statusReporter = new DummyStatusReporter(usageReporter);
 
 		final String TEXT = "123";
@@ -75,13 +76,10 @@ public class CountingInputStreamTest
 	    final String TEXT = "To the man who only has a hammer,"
 	              + " everything he encounters begins to look like a nail.";
 
-        DummyUsageReporter usageReporter = new DummyUsageReporter("", LOGGER);
+	    UsageReporter usageReporter = new UsageReporter("foo", new NoneUsagePersister(), LOGGER);
         DummyStatusReporter statusReporter = new DummyStatusReporter(usageReporter);
 
         InputStream source = new ByteArrayInputStream(TEXT.getBytes(StandardCharsets.UTF_8));
-
-		usageReporter = new DummyUsageReporter("", LOGGER);
-		statusReporter = new DummyStatusReporter(usageReporter);
 
 		try (CountingInputStream counting = new CountingInputStream(source,
 				statusReporter))
@@ -106,13 +104,10 @@ public class CountingInputStreamTest
         final String TEXT = "To the man who only has a hammer,"
                   + " everything he encounters begins to look like a nail.";
 
-        DummyUsageReporter usageReporter = new DummyUsageReporter("", LOGGER);
+        UsageReporter usageReporter = new UsageReporter("foo", new NoneUsagePersister(), LOGGER);
         DummyStatusReporter statusReporter = new DummyStatusReporter(usageReporter);
 
         InputStream source = new ByteArrayInputStream(TEXT.getBytes(StandardCharsets.UTF_8));
-
-		usageReporter = new DummyUsageReporter("", LOGGER);
-		statusReporter = new DummyStatusReporter(usageReporter);
 
 		try (CountingInputStream counting = new CountingInputStream(source,
 				statusReporter))

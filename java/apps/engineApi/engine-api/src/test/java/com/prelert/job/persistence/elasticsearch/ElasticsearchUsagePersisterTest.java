@@ -25,7 +25,7 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.usage.elasticsearch;
+package com.prelert.job.persistence.elasticsearch;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -52,9 +52,10 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
+import com.prelert.job.persistence.elasticsearch.ElasticsearchUsagePersister;
 import com.prelert.job.usage.Usage;
 
-public class ElasticsearchUsageReporterTest
+public class ElasticsearchUsagePersisterTest
 {
 
     private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXX");
@@ -66,14 +67,13 @@ public class ElasticsearchUsageReporterTest
         Client client = mock(Client.class);
         Logger logger = mock(Logger.class);
         final UpdateRequestBuilder updateRequestBuilder = createSelfReturningUpdateRequester();
+
         when(client.prepareUpdate(anyString(), anyString(), anyString())).thenReturn(
                 updateRequestBuilder);
-        ElasticsearchUsageReporter usageReporter = new ElasticsearchUsageReporter(client, "job1",
-                logger);
-        usageReporter.addBytesRead(10);
-        usageReporter.addFieldsRecordsRead(30);
 
-        usageReporter.persistUsageCounts();
+        ElasticsearchUsagePersister persister = new ElasticsearchUsagePersister(client, logger);
+
+        persister.persistUsage("job1", 10l, 30l, 1l);
 
         ArgumentCaptor<String> indexCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<String> idCaptor = ArgumentCaptor.forClass(String.class);

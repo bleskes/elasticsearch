@@ -31,6 +31,9 @@ import junit.framework.Assert;
 
 import org.apache.log4j.Logger;
 import org.junit.Test;
+import org.mockito.Mockito;
+
+import com.prelert.job.persistence.UsagePersister;
 
 public class UsageReporterTest
 {
@@ -41,7 +44,8 @@ public class UsageReporterTest
 		System.setProperty(UsageReporter.UPDATE_INTERVAL_PROP, "1");
 
 		Logger logger = Logger.getLogger(UsageReporterTest.class);
-		DummyUsageReporter usage = new DummyUsageReporter("job1", logger);
+		UsagePersister persister = Mockito.mock(UsagePersister.class);
+		UsageReporter usage = new UsageReporter("job1", persister, logger);
 
 		usage.addBytesRead(10);
 		usage.addFieldsRecordsRead(5);
@@ -60,11 +64,7 @@ public class UsageReporterTest
 		}
 
 		usage.addBytesRead(50);
-		Assert.assertTrue(usage.persistUsageWasCalled());
-
-		Assert.assertEquals(usage.m_TotalByteCount, 60);
-		Assert.assertEquals(usage.m_TotalFieldCount, 5);
-		Assert.assertEquals(usage.m_TotalRecordCount, 1);
+		Mockito.verify(persister, Mockito.times(1)).persistUsage("job1", 60l, 5l, 1l);
 
 		Assert.assertEquals(0, usage.getBytesReadSinceLastReport());
 		Assert.assertEquals(0, usage.getFieldsReadSinceLastReport());
@@ -90,11 +90,7 @@ public class UsageReporterTest
 		}
 
 		usage.addBytesRead(10);
-		Assert.assertTrue(usage.persistUsageWasCalled());
-
-		Assert.assertEquals(usage.m_TotalByteCount, 90);
-		Assert.assertEquals(usage.m_TotalFieldCount, 15);
-		Assert.assertEquals(usage.m_TotalRecordCount, 2);
+		Mockito.verify(persister, Mockito.times(1)).persistUsage("job1", 30l, 10l, 1l);
 
 		Assert.assertEquals(0, usage.getBytesReadSinceLastReport());
 		Assert.assertEquals(0, usage.getFieldsReadSinceLastReport());

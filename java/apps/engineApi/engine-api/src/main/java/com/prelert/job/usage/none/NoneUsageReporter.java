@@ -29,6 +29,7 @@ package com.prelert.job.usage.none;
 
 import org.apache.log4j.Logger;
 
+import com.prelert.job.persistence.none.NoneUsagePersister;
 import com.prelert.job.usage.UsageReporter;
 
 public class NoneUsageReporter extends UsageReporter
@@ -37,15 +38,8 @@ public class NoneUsageReporter extends UsageReporter
 
     public NoneUsageReporter()
     {
-        super("non-job", LOGGER);
+        super("non-job", new NoneUsagePersister(), LOGGER);
     }
 
-    /**
-     * Returns true
-     */
-    @Override
-    protected boolean persistUsageCounts()
-    {
-        return true;
-    }
+
 }

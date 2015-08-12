@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -28,6 +28,7 @@
 package com.prelert.job.status;
 
 import com.prelert.job.DataCounts;
+import com.prelert.job.persistence.none.NoneJobDataCountsPersister;
 import com.prelert.job.status.StatusReporter;
 import com.prelert.job.usage.UsageReporter;
 
@@ -39,20 +40,15 @@ public class DummyStatusReporter extends StatusReporter
 	boolean m_StatusReported = false;
 	public DummyStatusReporter(UsageReporter usageReporter)
 	{
-		super("DummyJobId", usageReporter, null);
+		super("DummyJobId", usageReporter, new NoneJobDataCountsPersister(), null);
 	}
 
 	public DummyStatusReporter(DataCounts counts,
                             UsageReporter usageReporter)
 	{
-	    super("DummyJobId", counts, usageReporter, null);
+	    super("DummyJobId", counts, usageReporter, new NoneJobDataCountsPersister(), null);
 	}
 
-	@Override
-	protected void reportStatus(long totalRecords)
-	{
-		m_StatusReported = true;
-	}
 
 	public boolean isStatusReported()
 	{
