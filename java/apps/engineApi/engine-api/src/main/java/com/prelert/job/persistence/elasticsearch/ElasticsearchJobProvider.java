@@ -80,7 +80,6 @@ import com.prelert.job.JobStatus;
 import com.prelert.job.ModelSizeStats;
 import com.prelert.job.ModelState;
 import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.exceptions.JobIdAlreadyExistsException;
 import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.persistence.JobProvider;
@@ -222,7 +221,7 @@ public class ElasticsearchJobProvider implements JobProvider
     }
 
     @Override
-    public boolean jobExists(String jobId) throws UnknownJobException
+    public boolean jobExists(String jobId)
     {
         try
         {
@@ -237,7 +236,7 @@ public class ElasticsearchJobProvider implements JobProvider
             {
                 String msg = "No job document with id " + jobId;
                 LOGGER.warn(msg);
-                throw new UnknownJobException(jobId);
+                return false;
             }
         }
         catch (IndexMissingException e)
@@ -245,7 +244,7 @@ public class ElasticsearchJobProvider implements JobProvider
             // the job does not exist
             String msg = "Missing Index: no job with id " + jobId;
             LOGGER.warn(msg);
-            throw new UnknownJobException(jobId);
+            return false;
         }
 
         return true;
@@ -253,14 +252,9 @@ public class ElasticsearchJobProvider implements JobProvider
 
 
     @Override
-    public boolean jobIdIsUnique(String jobId) throws JobIdAlreadyExistsException
+    public boolean jobIdIsUnique(String jobId)
     {
-        if (indexExists(jobId))
-        {
-            throw new JobIdAlreadyExistsException(jobId);
-        }
-
-        return true;
+        return indexExists(jobId) == false;
     }
 
     private boolean indexExists(String jobId)
@@ -274,7 +268,7 @@ public class ElasticsearchJobProvider implements JobProvider
 
 
     @Override
-    public JobDetails getJobDetails(String jobId) throws UnknownJobException
+    public Optional<JobDetails> getJobDetails(String jobId)
     {
         try
         {
@@ -285,7 +279,7 @@ public class ElasticsearchJobProvider implements JobProvider
             {
                 String msg = "No details for job with id " + jobId;
                 LOGGER.warn(msg);
-                throw new UnknownJobException(jobId);
+                return Optional.empty();
             }
             JobDetails details = m_ObjectMapper.convertValue(response.getSource(), JobDetails.class);
 
@@ -306,14 +300,15 @@ public class ElasticsearchJobProvider implements JobProvider
                     modelSizeStatsResponse.getSource(), ModelSizeStats.class);
                 details.setModelSizeStats(modelSizeStats);
             }
-            return details;
+
+            return Optional.of(details);
         }
         catch (IndexMissingException e)
         {
             // the job does not exist
             String msg = "Missing Index no job with id " + jobId;
             LOGGER.warn(msg);
-            throw new UnknownJobException(jobId);
+            return Optional.empty();
         }
     }
 
@@ -379,7 +374,6 @@ public class ElasticsearchJobProvider implements JobProvider
      */
     @Override
     public boolean createJob(JobDetails job)
-    throws JobIdAlreadyExistsException
     {
         try
         {
@@ -477,7 +471,6 @@ public class ElasticsearchJobProvider implements JobProvider
 
     @Override
     public boolean updateJob(String jobId, Map<String, Object> updates)
-    throws UnknownJobException
     {
         if (jobExists(jobId))
         {
@@ -515,7 +508,6 @@ public class ElasticsearchJobProvider implements JobProvider
 
     @Override
     public boolean setJobStatus(String jobId, JobStatus status)
-    throws UnknownJobException
     {
         Map<String, Object> update = new HashMap<>();
         update.put(JobDetails.STATUS, status);
@@ -524,9 +516,7 @@ public class ElasticsearchJobProvider implements JobProvider
     }
 
     @Override
-    public boolean setJobFinishedTimeandStatus(String jobId, Date time,
-            JobStatus status)
-    throws UnknownJobException
+    public boolean setJobFinishedTimeandStatus(String jobId, Date time, JobStatus status)
     {
         Map<String, Object> update = new HashMap<>();
         update.put(JobDetails.FINISHED_TIME, time);

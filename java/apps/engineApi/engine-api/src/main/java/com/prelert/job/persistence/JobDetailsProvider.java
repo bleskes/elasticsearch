@@ -30,6 +30,7 @@ package com.prelert.job.persistence;
 import java.io.Closeable;
 import java.util.Date;
 import java.util.Map;
+import java.util.Optional;
 
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobStatus;
@@ -50,24 +51,21 @@ public interface JobDetailsProvider extends Closeable
 	public boolean savePrelertInfo(String infoDoc);
 
 	/**
-	 * Returns true if the job exists else an
-	 * <code>UnknownJobException</code> is thrown.
+	 * Returns true if the job exists.
 	 *
 	 * @param jobId
 	 * @return True
-	 * @throws UnknownJobException
 	 */
-	public boolean jobExists(String jobId) throws UnknownJobException;
+	public boolean jobExists(String jobId);
 
 	/**
 	 * Return true if the job id is unique else if it is already used
-	 * by another job throw <code>JobIdAlreadyExistsException</code>
+	 * by another job false is returned
 	 *
 	 * @param jobId
-	 * @return True
-	 * @throws JobIdAlreadyExistsException
+	 * @return true or false
 	 */
-	public boolean jobIdIsUnique(String jobId) throws JobIdAlreadyExistsException;
+	public boolean jobIdIsUnique(String jobId);
 
 
 	/**
@@ -76,9 +74,8 @@ public interface JobDetailsProvider extends Closeable
 	 *
 	 * @param jobId
 	 * @return The JobDetails
-	 * @throws UnknownJobException if the job details document cannot be found
 	 */
-	public JobDetails getJobDetails(String jobId) throws UnknownJobException;
+	public Optional<JobDetails> getJobDetails(String jobId);
 
 
 	/**
