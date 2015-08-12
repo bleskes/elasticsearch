@@ -146,7 +146,7 @@ public class JobsTest extends ServiceTest
     @Test
     public void testJob_GivenUnknownJob() throws UnknownJobException
     {
-        doThrow(new UnknownJobException("foo")).when(jobManager()).getJob("foo");
+        when(jobManager().getJob("foo")).thenReturn(Optional.empty());
 
         Response response = m_Jobs.job("foo");
         assertEquals(404, response.getStatus());
