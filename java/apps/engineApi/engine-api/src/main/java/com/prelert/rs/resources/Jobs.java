@@ -29,6 +29,7 @@ package com.prelert.rs.resources;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.Optional;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -133,13 +134,13 @@ public class Jobs extends ResourceWithJobManager
 
         JobManager manager = jobManager();
         SingleDocument<JobDetails> job;
-        try
-        {
-            job = singleDocFromOptional(manager.getJob(jobId), jobId, JobDetails.TYPE);
 
-            setEndPointLinks(job.getDocument());
+        Optional<JobDetails> result = manager.getJob(jobId);
+        if (result.isPresent())
+        {
+            job = singleDocFromOptional(result, jobId, JobDetails.TYPE);
         }
-        catch (UnknownJobException e)
+        else
         {
             job = new SingleDocument<>();
             job.setType(JobDetails.TYPE);

@@ -179,7 +179,6 @@ public class JobManager
      * @return The JobDetails or throws UnknownJobException
      */
     public Optional<JobDetails> getJob(String jobId)
-    throws UnknownJobException
     {
         return m_JobProvider.getJobDetails(jobId);
     }
@@ -256,7 +255,10 @@ public class JobManager
         }
         else
         {
-            m_JobProvider.jobIdIsUnique(jobId);
+            if (!m_JobProvider.jobIdIsUnique(jobId))
+            {
+                throw new JobIdAlreadyExistsException(jobId);
+            }
         }
 
         JobDetails jobDetails;

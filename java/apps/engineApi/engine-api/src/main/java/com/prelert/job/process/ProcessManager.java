@@ -40,6 +40,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
@@ -389,9 +390,14 @@ public class ProcessManager
     public ProcessAndDataDescription createProcess(String jobId)
     throws UnknownJobException, NativeProcessRunException
     {
-        JobDetails job = m_JobProvider.getJobDetails(jobId).get();
+        Optional<JobDetails> job = m_JobProvider.getJobDetails(jobId);
 
-        return createProcess(job, true);
+        if (!job.isPresent())
+        {
+            throw new UnknownJobException(jobId);
+        }
+
+        return createProcess(job.get(), true);
     }
 
     /**
