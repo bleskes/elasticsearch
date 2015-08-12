@@ -139,6 +139,7 @@ public class Jobs extends ResourceWithJobManager
         if (result.isPresent())
         {
             job = singleDocFromOptional(result, jobId, JobDetails.TYPE);
+            setEndPointLinks(job.getDocument());
         }
         else
         {

@@ -77,7 +77,7 @@ public class ElasticsearchJobDataCountsPersister implements JobDataCountsPersist
             Map<String, Object> countUpdates = new HashMap<>();
             countUpdates.put(JobDetails.COUNTS, updates);
 
-            updateBuilder.setDoc(counts).setRefresh(true);
+            updateBuilder.setDoc(countUpdates).setRefresh(true);
 
             m_Logger.trace("ES API CALL: update ID " + jobId + " type " + JobDetails.TYPE +
                     " in index " + jobId + " using map of new values");
