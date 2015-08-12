@@ -17,9 +17,7 @@
 
 package org.elasticsearch.watcher.actions.throttler;
 
-import org.apache.lucene.util.LuceneTestCase.Slow;
 import org.elasticsearch.ElasticsearchException;
-import org.joda.time.DateTime;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.watcher.actions.Action;
 import org.elasticsearch.watcher.actions.ActionWrapper;
@@ -46,6 +44,7 @@ import org.elasticsearch.watcher.trigger.manual.ManualTriggerEvent;
 import org.elasticsearch.watcher.trigger.schedule.IntervalSchedule;
 import org.elasticsearch.watcher.trigger.schedule.ScheduleTrigger;
 import org.elasticsearch.watcher.trigger.schedule.ScheduleTriggerEvent;
+import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
@@ -63,11 +62,9 @@ import static org.elasticsearch.watcher.trigger.schedule.Schedules.interval;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 
-/**
- */
 public class ActionThrottleTests extends AbstractWatcherIntegrationTests {
 
-    @Test @Slow
+    @Test
     public void testSingleActionAckThrottle() throws Exception {
         boolean useClientForAcking = randomBoolean();
 
@@ -107,7 +104,7 @@ public class ActionThrottleTests extends AbstractWatcherIntegrationTests {
         }
     }
 
-    @Test @Slow
+    @Test
     public void testRandomMultiActionAckThrottle() throws Exception {
         boolean useClientForAcking = randomBoolean();
 
@@ -155,7 +152,7 @@ public class ActionThrottleTests extends AbstractWatcherIntegrationTests {
         }
     }
 
-    @Test @Slow
+    @Test
     public void testDifferentThrottlePeriods() throws Exception {
         WatchSourceBuilder watchSourceBuilder = watchBuilder()
                 .trigger(schedule(interval("60m")));
@@ -205,7 +202,7 @@ public class ActionThrottleTests extends AbstractWatcherIntegrationTests {
 
     }
 
-    @Test @Slow
+    @Test
     public void testDefaultThrottlePeriod() throws Exception {
         WatchSourceBuilder watchSourceBuilder = watchBuilder()
                 .trigger(schedule(interval("60m")));
@@ -267,7 +264,7 @@ public class ActionThrottleTests extends AbstractWatcherIntegrationTests {
         }, 6, TimeUnit.SECONDS);
     }
 
-    @Test @Slow
+    @Test
     public void testWatchThrottlePeriod() throws Exception {
         WatchSourceBuilder watchSourceBuilder = watchBuilder()
                 .trigger(schedule(interval("60m")))
@@ -329,7 +326,7 @@ public class ActionThrottleTests extends AbstractWatcherIntegrationTests {
         }, 20, TimeUnit.SECONDS);
     }
 
-    @Test @Slow
+    @Test
     public void testFailingActionDoesGetThrottled() throws Exception {
         TimeValue throttlePeriod = new TimeValue(60, TimeUnit.MINUTES);
 

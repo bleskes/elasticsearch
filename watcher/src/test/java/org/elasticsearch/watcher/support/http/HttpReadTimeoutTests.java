@@ -24,7 +24,7 @@ import org.elasticsearch.ElasticsearchTimeoutException;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.env.Environment;
-import org.elasticsearch.test.ElasticsearchTestCase;
+import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.watcher.support.http.auth.HttpAuthRegistry;
 import org.elasticsearch.watcher.support.secret.SecretService;
 import org.junit.After;
@@ -39,7 +39,7 @@ import static org.mockito.Mockito.mock;
 
 /**
  */
-public class HttpReadTimeoutTests extends ElasticsearchTestCase {
+public class HttpReadTimeoutTests extends ESTestCase {
 
     private MockWebServer webServer;
     private SecretService secretService;

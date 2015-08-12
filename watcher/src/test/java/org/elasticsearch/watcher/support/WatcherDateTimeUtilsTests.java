@@ -23,7 +23,7 @@ import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.test.ElasticsearchTestCase;
+import org.elasticsearch.test.ESTestCase;
 import org.junit.Test;
 
 import java.util.concurrent.TimeUnit;
@@ -38,7 +38,7 @@ import static org.hamcrest.Matchers.notNullValue;
 /**
  *
  */
-public class WatcherDateTimeUtilsTests extends ElasticsearchTestCase {
+public class WatcherDateTimeUtilsTests extends ESTestCase {
 
     @Test(expected = ElasticsearchParseException.class)
     public void testParseTimeValue_Numeric() throws Exception {

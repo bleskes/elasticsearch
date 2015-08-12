@@ -17,7 +17,7 @@
 
 package org.elasticsearch.watcher;
 
-import org.elasticsearch.test.ElasticsearchTestCase;
+import org.elasticsearch.test.ESTestCase;
 import org.junit.Test;
 
 import static org.hamcrest.Matchers.equalTo;
@@ -26,7 +26,7 @@ import static org.hamcrest.Matchers.is;
 /**
  *
  */
-public class WatcherVersionTests extends ElasticsearchTestCase {
+public class WatcherVersionTests extends ESTestCase {
 
     @Test
     public void testStrings() throws Exception {

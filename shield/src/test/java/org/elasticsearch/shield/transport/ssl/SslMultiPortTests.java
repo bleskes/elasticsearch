@@ -23,7 +23,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.shield.ShieldPlugin;
-import org.elasticsearch.test.ShieldIntegrationTest;
+import org.elasticsearch.test.ShieldIntegTestCase;
 import org.elasticsearch.test.ShieldSettingsSource;
 import org.elasticsearch.transport.Transport;
 import org.junit.BeforeClass;
@@ -37,7 +37,7 @@ import static org.elasticsearch.test.ShieldSettingsSource.DEFAULT_PASSWORD;
 import static org.elasticsearch.test.ShieldSettingsSource.DEFAULT_USER_NAME;
 import static org.hamcrest.CoreMatchers.is;
 
-public class SslMultiPortTests extends ShieldIntegrationTest {
+public class SslMultiPortTests extends ShieldIntegTestCase {
 
     private static int randomClientPort;
     private static int randomNonSslPort;

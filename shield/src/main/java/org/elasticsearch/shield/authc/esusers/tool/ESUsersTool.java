@@ -54,8 +54,8 @@ public class ESUsersTool extends CliTool {
             .build();
 
     public static void main(String[] args) {
-        int status = new ESUsersTool().execute(args);
-        System.exit(status);
+        ExitStatus exitStatus = new ESUsersTool().execute(args);
+        System.exit(exitStatus.status());
     }
 
     public ESUsersTool() {
