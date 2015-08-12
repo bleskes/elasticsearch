@@ -41,6 +41,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import javax.ws.rs.core.HttpHeaders;
 
@@ -67,7 +68,6 @@ import com.prelert.job.process.params.DataLoadParams;
 import com.prelert.job.process.params.InterimResultsParams;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
-import com.prelert.rs.data.SingleDocument;
 import com.prelert.rs.exception.InvalidParametersException;
 import com.prelert.rs.provider.RestApiException;
 
@@ -93,10 +93,10 @@ public class DataTest extends ServiceTest
         m_AnalysisConfig.setDetectors(m_Detectors);
         m_AnalysisConfig.setLatency(null);
         configureService(m_Data);
-        SingleDocument<JobDetails> job = new SingleDocument<>();
         JobDetails jobDetails = new JobDetails();
         jobDetails.setAnalysisConfig(m_AnalysisConfig);
-        job.setDocument(jobDetails);
+        Optional<JobDetails> job = Optional.of(jobDetails);
+
         when(jobManager().getJob(JOB_ID)).thenReturn(job);
     }
 

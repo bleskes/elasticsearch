@@ -39,6 +39,7 @@ import org.junit.rules.ExpectedException;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.UnknownJobException;
+import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.results.Influencer;
 import com.prelert.rs.data.Pagination;
@@ -83,16 +84,19 @@ public class InfluencersEndpointTest extends ServiceTest
     @Test
     public void testCategoryDefinitions_GivenAllResultsInOnePage() throws UnknownJobException
     {
-        Pagination<Influencer> results = new Pagination<>();
-        results.setHitCount(3);
         Influencer inf1 = new Influencer();
         Influencer inf2 = new Influencer();
         Influencer inf3 = new Influencer();
-        results.setDocuments(Arrays.asList(inf1, inf2, inf3));
+        QueryPage<Influencer> page = new QueryPage<>(Arrays.asList(inf1, inf2, inf3), 3);
 
-        when(jobManager().influencers(JOB_ID, 0, 100)).thenReturn(results);
+        when(jobManager().influencers(JOB_ID, 0, 100)).thenReturn(page);
 
-        assertEquals(results, m_Influencers.influencers(JOB_ID, 0, 100));
+        Pagination<Influencer> results =  m_Influencers.influencers(JOB_ID, 0, 100);
+
+        assertEquals(3, results.getHitCount());
+        assertEquals(inf1, results.getDocuments().get(0));
+        assertEquals(inf2, results.getDocuments().get(1));
+        assertEquals(inf3, results.getDocuments().get(2));
 
         assertNull(results.getNextPage());
         assertNull(results.getPreviousPage());

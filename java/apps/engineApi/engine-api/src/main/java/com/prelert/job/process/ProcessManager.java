@@ -389,7 +389,7 @@ public class ProcessManager
     public ProcessAndDataDescription createProcess(String jobId)
     throws UnknownJobException, NativeProcessRunException
     {
-        JobDetails job = m_JobProvider.getJobDetails(jobId);
+        JobDetails job = m_JobProvider.getJobDetails(jobId).get();
 
         return createProcess(job, true);
     }

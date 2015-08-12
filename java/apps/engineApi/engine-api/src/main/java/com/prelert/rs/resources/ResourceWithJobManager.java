@@ -34,6 +34,7 @@ import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.ws.rs.core.Application;
@@ -48,7 +49,9 @@ import com.google.common.annotations.VisibleForTesting;
 import com.prelert.job.alert.manager.AlertManager;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.manager.JobManager;
+import com.prelert.job.persistence.QueryPage;
 import com.prelert.rs.data.Pagination;
+import com.prelert.rs.data.SingleDocument;
 import com.prelert.rs.provider.RestApiException;
 import com.prelert.server.info.ServerInfoFactory;
 
@@ -429,5 +432,45 @@ public abstract class ResourceWithJobManager
         {
             return m_Value;
         }
+    }
+
+    /**
+     * Utility method for creating generic pagination objects
+     * @param page
+     * @param skip
+     * @param take
+     * @return
+     */
+    protected <T> Pagination<T> paginationFromQueryPage(QueryPage<T> page, int skip, int take)
+    {
+        Pagination<T> pagination = new Pagination<T>();
+        pagination.setDocuments(page.queryResults());
+        pagination.setHitCount(page.hitCount());
+        pagination.setSkip(skip);
+        pagination.setTake(take);
+
+        return pagination;
+    }
+
+    /**
+     * Utility method for creating generic single document objects
+     * @param opt
+     * @param docId
+     * @param docType
+     * @return
+     */
+    protected <T> SingleDocument<T> singleDocFromOptional(Optional<T> opt, String docId, String docType)
+    {
+        SingleDocument<T> doc = new SingleDocument<T>();
+        doc.setExists(opt.isPresent());
+        if (opt.isPresent())
+        {
+            doc.setDocument(opt.get());
+        }
+
+        doc.setDocumentId(docId);
+        doc.setType(docType);
+
+        return doc;
     }
 }

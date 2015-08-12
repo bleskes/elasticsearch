@@ -38,6 +38,7 @@ import org.apache.log4j.Logger;
 
 import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.manager.JobManager;
+import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.results.Influencer;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.validation.PaginationParamsValidator;
@@ -74,7 +75,9 @@ public class Influencers extends ResourceWithJobManager
 
         JobManager manager = jobManager();
 
-        Pagination<Influencer> results = manager.influencers(jobId, skip, take);
+        QueryPage<Influencer> page = manager.influencers(jobId, skip, take);
+        Pagination<Influencer> results = paginationFromQueryPage(page, skip, take);
+
 
         setPagingUrls(ENDPOINT + "/" + jobId, results);
 

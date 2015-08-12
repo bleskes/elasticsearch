@@ -42,6 +42,7 @@ import org.apache.log4j.Logger;
 
 import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.manager.JobManager;
+import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.persistence.elasticsearch.ElasticsearchMappings;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.results.AnomalyRecord;
@@ -120,8 +121,8 @@ public class Records extends ResourceWithJobManager
         long epochEndMs = paramToEpochIfValidOrThrow(END_QUERY_PARAM, end, LOGGER);
 
         JobManager manager = jobManager();
-        Pagination<AnomalyRecord> records;
 
+        QueryPage<AnomalyRecord> queryResults;
 
         // HACK - the API renames @timestamp to timestamp
         // but it is @timestamp in the database for Kibana
@@ -132,14 +133,16 @@ public class Records extends ResourceWithJobManager
 
         if (epochStartMs > 0 || epochEndMs > 0)
         {
-            records = manager.records(jobId, skip, take, epochStartMs, epochEndMs, includeInterim, sort,
+            queryResults = manager.records(jobId, skip, take, epochStartMs, epochEndMs, includeInterim, sort,
                     descending, anomalySoreFilter, normalizedProbabilityFilter);
         }
         else
         {
-            records = manager.records(jobId, skip, take, includeInterim, sort, descending,
+            queryResults = manager.records(jobId, skip, take, includeInterim, sort, descending,
                     anomalySoreFilter, normalizedProbabilityFilter);
         }
+
+        Pagination<AnomalyRecord> records = paginationFromQueryPage(queryResults, skip, take);
 
         // paging
         if (records.isAllResults() == false)

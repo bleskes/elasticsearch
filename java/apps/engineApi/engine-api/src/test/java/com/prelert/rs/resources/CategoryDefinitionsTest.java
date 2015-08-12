@@ -32,6 +32,7 @@ import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
+import java.util.Optional;
 
 import javax.ws.rs.core.Response;
 
@@ -43,6 +44,7 @@ import org.junit.rules.ExpectedException;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.UnknownJobException;
+import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.results.CategoryDefinition;
 import com.prelert.rs.data.Pagination;
@@ -88,50 +90,56 @@ public class CategoryDefinitionsTest extends ServiceTest
     @Test
     public void testCategoryDefinitions_GivenAllResultsInOnePage() throws UnknownJobException
     {
-        Pagination<CategoryDefinition> results = new Pagination<>();
-        results.setHitCount(3);
         CategoryDefinition category1 = new CategoryDefinition();
         category1.setCategoryId(1);
         CategoryDefinition category2 = new CategoryDefinition();
         category2.setCategoryId(2);
         CategoryDefinition category3 = new CategoryDefinition();
         category3.setCategoryId(3);
-        results.setDocuments(Arrays.asList(category1, category2, category3));
 
-        when(jobManager().categoryDefinitions(JOB_ID, 0, 100)).thenReturn(results);
+        QueryPage<CategoryDefinition> page = new QueryPage<>(Arrays.asList(category1, category2, category3), 3);
 
-        assertEquals(results, m_CategoryDefinitions.categoryDefinitions(JOB_ID, 0, 100));
+        when(jobManager().categoryDefinitions(JOB_ID, 0, 100)).thenReturn(page);
 
-        assertNull(results.getNextPage());
-        assertNull(results.getPreviousPage());
+        Pagination<CategoryDefinition> result =
+                                    m_CategoryDefinitions.categoryDefinitions(JOB_ID, 0, 100);
+
+        assertNull(result.getNextPage());
+        assertNull(result.getPreviousPage());
     }
 
     @Test
     public void testCategoryDefinition_GivenExistingCategoryId() throws UnknownJobException
     {
-        SingleDocument<CategoryDefinition> result = new SingleDocument<>();
         CategoryDefinition category = new CategoryDefinition();
         category.setCategoryId(7);
-        result.setDocument(category);
+        Optional<CategoryDefinition> result = Optional.of(category);
+
         when(jobManager().categoryDefinition(JOB_ID, "7")).thenReturn(result);
 
         Response response = m_CategoryDefinitions.categoryDefinition(JOB_ID, "7");
 
-        assertEquals(result, response.getEntity());
+        @SuppressWarnings("unchecked")
+        SingleDocument<CategoryDefinition> doc = (SingleDocument<CategoryDefinition>)response.getEntity();
+
+        assertEquals(category, doc.getDocument());
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
     }
 
     @Test
     public void testCategoryDefinition_GivenNonExistingCategoryId() throws UnknownJobException
     {
-        SingleDocument<CategoryDefinition> result = new SingleDocument<>();
-        CategoryDefinition category = new CategoryDefinition();
-        category.setCategoryId(7);
+        Optional<CategoryDefinition> result = Optional.empty();
+
         when(jobManager().categoryDefinition(JOB_ID, "7")).thenReturn(result);
 
         Response response = m_CategoryDefinitions.categoryDefinition(JOB_ID, "7");
+        @SuppressWarnings("unchecked")
+        SingleDocument<CategoryDefinition> doc = (SingleDocument<CategoryDefinition>)response.getEntity();
 
-        assertEquals(result, response.getEntity());
+        assertEquals(CategoryDefinition.TYPE, doc.getType());
+        assertEquals("7", doc.getDocumentId());
+        assertEquals(false, doc.isExists());
         assertEquals(Response.Status.NOT_FOUND.getStatusCode(), response.getStatus());
     }
 }

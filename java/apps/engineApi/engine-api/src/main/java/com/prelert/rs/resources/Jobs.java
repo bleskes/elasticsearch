@@ -108,7 +108,8 @@ public class Jobs extends ResourceWithJobManager
         new PaginationParamsValidator(skip, take).validate();
 
         JobManager manager = jobManager();
-        Pagination<JobDetails> results = manager.getJobs(skip, take);
+        Pagination<JobDetails> results = this.paginationFromQueryPage(
+                                                        manager.getJobs(skip, take), skip, take);
 
         setPagingUrls(ENDPOINT, results);
 
@@ -134,7 +135,8 @@ public class Jobs extends ResourceWithJobManager
         SingleDocument<JobDetails> job;
         try
         {
-            job = manager.getJob(jobId);
+            job = singleDocFromOptional(manager.getJob(jobId), jobId, JobDetails.TYPE);
+
             setEndPointLinks(job.getDocument());
         }
         catch (UnknownJobException e)
