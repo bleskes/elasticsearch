@@ -19,6 +19,7 @@ package org.elasticsearch.marvel.agent.collector.indices;
 
 import com.google.common.collect.ImmutableList;
 import org.elasticsearch.action.admin.indices.recovery.RecoveryResponse;
+import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.ClusterName;
 import org.elasticsearch.cluster.ClusterService;
@@ -60,6 +61,8 @@ public class IndexRecoveryCollector extends AbstractCollector<IndexRecoveryColle
         ImmutableList.Builder<MarvelDoc> results = ImmutableList.builder();
 
         RecoveryResponse recoveryResponse = client.admin().indices().prepareRecoveries()
+                .setIndices(marvelSettings.indices())
+                .setIndicesOptions(IndicesOptions.lenientExpandOpen())
                 .setActiveOnly(marvelSettings.recoveryActiveOnly())
                 .get(marvelSettings.recoveryTimeout());
 
