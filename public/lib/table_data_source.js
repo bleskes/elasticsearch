@@ -15,7 +15,7 @@ define(function (require) {
     return numerator / denominator;
   }
 
-  return function tableDataSourceProvider(timefilter, Private) {
+  return function tableDataSourceProvider(maxBucketSize, timefilter, Private) {
     var calcAuto = Private(require('ui/time_buckets/calc_auto_interval'));
 
     function TableDataSource(options) {
@@ -62,13 +62,13 @@ define(function (require) {
       if (this.type === 'index') {
         return {
           field: 'index_stats.index',
-          size: cluster.counts.indices
+          size: maxBucketSize
         }
       }
       if (this.type === 'node') {
         return {
           field: 'node_stats.name',
-          size: cluster.counts.nodes
+          size: maxBucketSize
         }
       }
     }

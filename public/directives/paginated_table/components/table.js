@@ -1,6 +1,6 @@
-'use strict';
-define(function(require) {
+define(function (require) {
   var React = require('react');
+  var _ = require('lodash');
   var TableHead = require('./tableHead');
   var TableBody = require('./tableBody');
   var Pagination = require('./pagination');
@@ -8,7 +8,7 @@ define(function(require) {
 
 
   function getFilteredData(data, filter) {
-    return data.filter(function(obj) {
+    return data.filter(function (obj) {
       var concatValues = _.values(obj).join('|');
       return (concatValues.indexOf(filter) !== -1);
     });
@@ -17,40 +17,31 @@ define(function(require) {
   var Table = React.createClass({
     displayName: 'Table',
     getInitialState: function () {
+      var sortColObj = null;
+      if (this.props.options.dataKeys) {
+        sortColObj = this.props.options.dataKeys.reduce((prev, dataKey) => {
+          return prev || (dataKey.sort !== 0 ? dataKey : null);
+        }, null);
+      }
       return {
         itemsPerPage: 20,
         pageIdx: 0,
-        dataKeys: [],
-        sortColObj: null,
+        sortColObj: sortColObj,
         filter: '',
         title: 'Kb Paginated Table!',
         template: null,
         tableData: null
       };
     },
-    componentWillMount: function() {
-      this.props.scope.$watch('data', this.setData);
-      this.props.scope.$watch('options', this.setOptions);
-    },
-    setData: function(data) {
+    setData: function (data) {
       if (data) {
-        if(!data.length) {
+        if (!data.length) {
           data = null;
         }
         this.setState({tableData: data});
       }
     },
-    setOptions: function(opts) {
-      if (opts) {
-        if (opts.dataKeys) {
-          opts.sortColObj = opts.dataKeys.reduce(function(prev, dataKey) {
-            return prev || (dataKey.sort !== 0 ? dataKey : null);
-          }, null);
-        }
-        this.setState(opts);
-      }
-    },
-    setSortCol: function(colObj) {
+    setSortCol: function (colObj) {
       if (colObj) {
         if (this.state.sortColObj && colObj !== this.state.sortColObj) {
           this.state.sortColObj.sort = 0;
@@ -58,16 +49,13 @@ define(function(require) {
         this.setState({sortColObj: colObj});
       }
     },
-    setFilter: function(str) {
+    setFilter: function (str) {
       str = str || '';
       this.setState({filter: str, pageIdx: 0});
     },
-    setDataKeys: function(dataKeys) {
-      this.setState({dataKeys: dataKeys});
-    },
-    setItemsPerPage: function(num) {
+    setItemsPerPage: function (num) {
       // Must be all;
-      if ( _.isNaN(+num) ) {
+      if (_.isNaN(+num)) {
         num = 0;
       }
       this.setState({
@@ -75,23 +63,23 @@ define(function(require) {
         pageIdx: 0
       });
     },
-    setCurrPage: function(idx) {
+    setCurrPage: function (idx) {
       this.setState({pageIdx: idx});
     },
-    render: function() {
+    render: function () {
       var isLoading = (this.state.tableData === null);
       if (isLoading) {
         return make.div({className: 'paginated-table loading'}, 'Loading...');
       }
 
       // Make the Title Bar
-      var $title = make.h3({className: 'pull-left title'}, this.state.title);
+      var $title = make.h3({className: 'pull-left title'}, this.props.options.title);
       var that = this;
       var $filter = make.input({
         type: 'text',
         className: 'pull-left filter-input',
         placeholder: 'Filter Indices',
-        onKeyUp: function(evt) {
+        onKeyUp: function (evt) {
           that.setFilter(evt.target.value);
         }
       });
@@ -104,12 +92,12 @@ define(function(require) {
       // Make the Table
       var $tableHead = React.createElement(TableHead, {
         setSortCol: this.setSortCol,
-        dataKeys: this.state.dataKeys,
+        dataKeys: this.props.options.dataKeys,
         sortColObj: this.state.sortColObj
       });
       var $tableBody = React.createElement(TableBody, {
         tableData: filteredTableData,
-        dataKeys: this.state.dataKeys,
+        dataKeys: this.props.options.dataKeys,
         sortColObj: this.state.sortColObj,
         pageIdx: this.state.pageIdx,
         itemsPerPage: this.state.itemsPerPage,
