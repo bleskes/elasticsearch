@@ -33,9 +33,13 @@ import com.prelert.job.persistence.UsagePersister;
  */
 public class NoneUsagePersister implements UsagePersister
 {
+    /**
+     * Does nothing
+     */
     @Override
     public void persistUsage(String jobId, long bytesRead,
                             long fieldsRead, long recordsRead)
     {
+        // empty function
     }
 }

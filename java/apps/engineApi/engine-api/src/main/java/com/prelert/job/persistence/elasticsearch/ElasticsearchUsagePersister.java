@@ -42,6 +42,8 @@ import com.prelert.job.usage.Usage;
 
 public class ElasticsearchUsagePersister implements UsagePersister
 {
+    private static final int MS_IN_HOUR = 60 * 60 * 1000;
+
     private Client m_Client;
     private SimpleDateFormat m_SimpleDateFormat;
     private String m_DocId;
@@ -65,11 +67,11 @@ public class ElasticsearchUsagePersister implements UsagePersister
     @Override
     public void persistUsage(String jobId, long bytesRead, long fieldsRead, long recordsRead)
     {
-        long hour =  System.currentTimeMillis() / 3600000; // ms in the hour
+        long hour =  System.currentTimeMillis() / MS_IN_HOUR;
 
         if (m_CurrentHour != hour)
         {
-            Date date = new Date(hour * 3600000);
+            Date date = new Date(hour * MS_IN_HOUR);
             m_DocId = "usage-" + m_SimpleDateFormat.format(date);
             m_UpsertMap.put(Usage.TIMESTAMP, date);
         }
