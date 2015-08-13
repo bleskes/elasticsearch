@@ -15,7 +15,7 @@ define(function (require) {
   ]);
 
   require('ui/routes')
-  .when('/marvel/nodes', {
+  .when('/nodes', {
     template: require('plugins/marvel/views/nodes/nodes_template.html'),
     resolve: {
       marvel: function (Private) {
@@ -39,32 +39,16 @@ define(function (require) {
       timefilter.refreshInterval.display = '10 Seconds';
     }
 
-    // Define the metrics for the three charts at the top of the
-    // page. Use the metric keys from the metrics hash.
-    $scope.charts = [
-      'search_request_rate',
-      'index_request_rate',
-      'index_latency'
-    ];
-
     // Setup the data sources for the charts
-    $scope.dataSources = {};
+    $scope.sources = {};
 
     // Map the metric keys to ChartDataSources and register them with
     // the courier. Once this is finished call courier fetch.
-    Promise
-      .all($scope.charts.map(function (name) {
-        return marvelMetrics(globalState.cluster, name).then(function (metric) {
-          var dataSource = new ChartDataSource(metric, indexPattern, globalState.cluster);
-          dataSource.register(courier);
-          $scope.dataSources[name] = dataSource;
-          return dataSource;
-        });
-      }))
+    new Promise()
       .then(function () {
         var dataSource = new ClusterStatusDataSource(indexPattern, globalState.cluster, clusters);
         dataSource.register(courier);
-        $scope.dataSources.cluster_status = dataSource;
+        $scope.sources.cluster_status = dataSource;
         return dataSource;
       })
       .then(function() {
@@ -81,7 +65,7 @@ define(function (require) {
           duration: moment.duration(10, 'minutes')
         });
         dataSource.register(courier);
-        $scope.dataSources.nodes_table = dataSource;
+        $scope.sources.nodes_table = dataSource;
         return dataSource;
       })
       .then(fetch);

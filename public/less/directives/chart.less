@@ -2,7 +2,7 @@ marvel-chart {
   >div {
     background-color: @white;
     border-top: @thick solid @esGray;
-    padding: 5px;
+    padding: 15px;
 
     h1 {
       font-size: 20px;
@@ -34,6 +34,8 @@ marvel-chart {
         > path { stroke: #444; }
       }
       .axis.y > path { display: none; }
+      .axis.y > line { stroke: #d1d2d6; }
+      .axis.x > line { stroke: #eff0f1; }
     }
   }
 }
