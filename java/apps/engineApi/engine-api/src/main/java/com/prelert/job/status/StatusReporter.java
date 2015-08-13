@@ -160,10 +160,8 @@ public class StatusReporter
         long totalRecords = getInputRecordCount() ;
         if (isReportingBoundary(totalRecords))
         {
-            m_TotalRecordStats.calcProcessedFieldCount(getAnalysedFieldsPerRecord());
-
             logStatus(totalRecords);
-            m_DataCountsPersister.persistDataCounts(m_JobId, m_TotalRecordStats);
+            m_DataCountsPersister.persistDataCounts(m_JobId, runningTotalStats());
             try
             {
                 checkStatus(totalRecords);
@@ -373,7 +371,7 @@ public class StatusReporter
         m_UsageReporter.reportUsage();
 
         long totalRecords = getInputRecordCount();
-        m_DataCountsPersister.persistDataCounts(m_JobId, m_TotalRecordStats);
+        m_DataCountsPersister.persistDataCounts(m_JobId, runningTotalStats());
 
         if (totalRecords > 0) // because of a divide by zero error
         {

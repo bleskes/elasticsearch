@@ -24,10 +24,7 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-
-
 package com.prelert.rs.client.integrationtests;
-
 
 import java.io.Closeable;
 import java.io.File;
@@ -54,19 +51,15 @@ import com.prelert.rs.data.ApiError;
 import com.prelert.rs.data.MultiDataPostResult;
 import com.prelert.rs.data.SingleDocument;
 
-
 /**
- *
- * Usage data is not available in the API it has to be queried
- * from Elasticsearch (although the total counts are in the job
- * the hourly data is only in Elasticsearch).
- *
- * This test will only work if port 9300 (or whatever the ES port
- * is) is open
+ * Test the data counts (num records, fields, buckets, etc)
+ * after uploading data to a job. Verifys both the counts
+ * returned by the data upload and the counts object inside
+ * the {@linkplain JobDetails} instance.
  */
-public class UsageTest implements Closeable
+public class DataCountsTest implements Closeable
 {
-	private static final Logger LOGGER = Logger.getLogger(UsageTest.class);
+	private static final Logger LOGGER = Logger.getLogger(DataCountsTest.class);
 
 	/**
 	 * The default base Url used in the test
@@ -84,7 +77,7 @@ public class UsageTest implements Closeable
 
 	private EngineApiClient m_WebServiceClient;
 
-	public UsageTest(String baseUrl)
+	public DataCountsTest(String baseUrl)
 	{
 		m_WebServiceClient = new EngineApiClient(baseUrl);
 	}
@@ -204,10 +197,6 @@ public class UsageTest implements Closeable
 		test(counts.getOutOfOrderTimeStampCount() == 0);
 	}
 
-
-
-
-
 	/**
 	 * Throws an IllegalStateException if <code>condition</code> is false.
 	 *
@@ -222,8 +211,6 @@ public class UsageTest implements Closeable
 			throw new IllegalStateException();
 		}
 	}
-
-
 
 	public static void main(String[] args)
 	throws IOException, InterruptedException
@@ -257,7 +244,7 @@ public class UsageTest implements Closeable
 		File flightCentreDataJson = new File(prelertTestDataHome +
 				"/engine_api_integration_test/flightcentre.json");
 
-		try (UsageTest test = new UsageTest(baseUrl))
+		try (DataCountsTest test = new DataCountsTest(baseUrl))
 		{
 			List<String> jobs = new ArrayList<>();
 
@@ -283,8 +270,6 @@ public class UsageTest implements Closeable
 
 			jobs.add(jobId);
 
-
-
 			for (String id : jobs)
 			{
 				test.m_WebServiceClient.deleteJob(id);
@@ -292,7 +277,6 @@ public class UsageTest implements Closeable
 		}
 
 		LOGGER.info("All tests passed Ok");
-
 	}
 }
 

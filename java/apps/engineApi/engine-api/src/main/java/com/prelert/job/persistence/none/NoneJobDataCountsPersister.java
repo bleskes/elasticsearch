@@ -22,7 +22,7 @@
  *                                                          *
  *----------------------------------------------------------*
  *                                                          *
- *                                                          *
+ *                                                          *w
  ************************************************************/
 package com.prelert.job.persistence.none;
 
@@ -31,8 +31,12 @@ import com.prelert.job.persistence.JobDataCountsPersister;
 
 public class NoneJobDataCountsPersister implements JobDataCountsPersister
 {
+    /**
+     * Does nothing
+     */
     @Override
     public void persistDataCounts(String jobId, DataCounts counts)
     {
+        //  does nothing
     }
 }
