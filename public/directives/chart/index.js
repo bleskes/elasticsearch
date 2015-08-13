@@ -31,7 +31,6 @@ define(function (require) {
   var MarvelSparkLine = React.createClass({
     componentDidMount: function() { this.drawJubileeChart(); },
     componentDidUpdate: function() { this.drawJubileeChart(); },
-    shouldComponentUpdate: function() { return false; },
     render: function() {
       var metric = this.props.scope.source.metric;
       var lastPoint = _.last(this.props.scope.source.data);
@@ -42,7 +41,8 @@ define(function (require) {
       return make.div(null, $title, $chartWrapper);
     },
     drawJubileeChart: function() {
-      d3.select(this.getDOMNode())
+      var children = React.findDOMNode(this).children;
+      d3.select(children[children.length - 1])
         .datum(this.props.scope.source.data || [])
         .call(this.jLineChart);
     },
@@ -69,7 +69,7 @@ define(function (require) {
       var lineChart = new jubilee.chart.line()
         .height(300)
         .yScale({nice: true})
-        .margin({left: 20, right: 0})
+        .margin({left: 30, right: 10})
         .lines({
           stroke: '#000',
           strokeWidth: '2px',

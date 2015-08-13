@@ -28,18 +28,12 @@ marvel-chart {
       flex-grow: 1;
     }
 
-    .chart {
-      min-height: 200px;
-      background-color: @white;
-      display: flex;
-      >div {
-        color: @esLightGray;
-        font-size: 17px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        flex: 1 1 auto;
+    .jubilee {
+      g {
+        > line { stroke: #999; }
+        > path { stroke: #444; }
       }
+      .axis.y > path { display: none; }
     }
   }
 }
