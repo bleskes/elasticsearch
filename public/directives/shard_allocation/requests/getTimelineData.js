@@ -77,7 +77,6 @@ define(function (require) {
           lte = moment(getValueFromArrayOrString(hits.hits[hits.hits.length-1].fields['timestamp'])).valueOf();
         }
 
-        console.log(indices[position] + ' (' + hits.total + ' > ' + size + ' && ' + hits.hits.length + ' === ' + size + ') || ' + newPosition);
         if ((hits.total > size && hits.hits.length === size) || newPosition) {
           nextTimeRange = {
             lte: lte,
