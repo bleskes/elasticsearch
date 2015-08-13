@@ -52,6 +52,7 @@ import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.TooManyJobsException;
 import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.manager.JobManager;
+import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.persistence.elasticsearch.ElasticsearchJobProvider;
 import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;
@@ -61,7 +62,6 @@ import com.prelert.job.process.params.TimeRange;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
-import com.prelert.rs.data.Pagination;
 
 
 public class RestoreStateTest
@@ -155,11 +155,11 @@ public class RestoreStateTest
 
             Thread.sleep(1000);
 
-            Pagination<Bucket> buckets =
+            QueryPage<Bucket> buckets =
                     jobManager.buckets(job.getId(), false, false, 0, 100, 0.0, 0.0);
 
             List<Double> anomalyScores = new ArrayList<>();
-            for (Bucket bucket : buckets.getDocuments())
+            for (Bucket bucket : buckets.queryResults())
             {
                 anomalyScores.add(bucket.getAnomalyScore());
             }

@@ -33,7 +33,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -41,6 +40,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
+import java.util.Optional;
 
 import javax.ws.rs.core.Response;
 
@@ -61,6 +61,7 @@ import com.prelert.job.exceptions.JobConfigurationException;
 import com.prelert.job.exceptions.JobIdAlreadyExistsException;
 import com.prelert.job.exceptions.TooManyJobsException;
 import com.prelert.job.exceptions.UnknownJobException;
+import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.process.params.ModelDebugConfig;
 import com.prelert.rs.data.Acknowledgement;
 import com.prelert.rs.data.Pagination;
@@ -103,15 +104,13 @@ public class JobsTest extends ServiceTest
     @Test
     public void testJobs() throws UnknownJobException
     {
-        Pagination<JobDetails> results = new Pagination<>();
-        results.setHitCount(3);
         JobDetails job1 = new JobDetails();
         job1.setId("job_1");
         JobDetails job2 = new JobDetails();
         job2.setId("job_2");
         JobDetails job3 = new JobDetails();
         job3.setId("job_3");
-        results.setDocuments(Arrays.asList(job1, job2, job3));
+        QueryPage<JobDetails> results = new QueryPage<>(Arrays.asList(job1, job2, job3), 3);
 
         when(jobManager().getJobs(0, 10)).thenReturn(results);
 
@@ -127,23 +126,26 @@ public class JobsTest extends ServiceTest
     @Test
     public void testJob_GivenExistingJob() throws UnknownJobException
     {
-        SingleDocument<JobDetails> result = new SingleDocument<>();
         JobDetails job = new JobDetails();
         job.setId("foo");
-        result.setDocument(job);
-        result.setExists(true);
+        Optional<JobDetails> result = Optional.of(job);
 
         when(jobManager().getJob("foo")).thenReturn(result);
 
         Response response = m_Jobs.job("foo");
 
-        assertEquals(result, response.getEntity());
+        @SuppressWarnings("unchecked")
+        SingleDocument<JobDetails> entity = (SingleDocument<JobDetails>) response.getEntity();
+        assertTrue(entity.isExists());
+        assertEquals("foo", entity.getDocumentId());
+        assertEquals(JobDetails.TYPE, entity.getType());
+        assertEquals(job, entity.getDocument());
     }
 
     @Test
     public void testJob_GivenUnknownJob() throws UnknownJobException
     {
-        doThrow(new UnknownJobException("foo")).when(jobManager()).getJob("foo");
+        when(jobManager().getJob("foo")).thenReturn(Optional.empty());
 
         Response response = m_Jobs.job("foo");
         assertEquals(404, response.getStatus());

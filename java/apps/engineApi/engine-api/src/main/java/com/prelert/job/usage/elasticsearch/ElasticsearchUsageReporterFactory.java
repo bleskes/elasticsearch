@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -29,17 +29,18 @@ package com.prelert.job.usage.elasticsearch;
 import org.apache.log4j.Logger;
 import org.elasticsearch.client.Client;
 
+import com.prelert.job.persistence.elasticsearch.ElasticsearchUsagePersister;
 import com.prelert.job.usage.UsageReporter;
 import com.prelert.job.usage.UsageReporterFactory;
 
 
-public class ElasticsearchUsageReporterFactory implements UsageReporterFactory 
+public class ElasticsearchUsageReporterFactory implements UsageReporterFactory
 {
 	private Client m_Client;
-	
+
 	/**
 	 * Construct the factory
-	 * 
+	 *
 	 * @param node The Elasticsearch node
 	 */
 	public ElasticsearchUsageReporterFactory(Client client)
@@ -48,8 +49,10 @@ public class ElasticsearchUsageReporterFactory implements UsageReporterFactory
 	}
 
 	@Override
-	public UsageReporter newUsageReporter(String jobId, Logger logger) 
+	public UsageReporter newUsageReporter(String jobId, Logger logger)
 	{
-		return new ElasticsearchUsageReporter(m_Client, jobId, logger);
+		return new UsageReporter(jobId,
+		                        new ElasticsearchUsagePersister(m_Client, logger),
+		                        logger);
 	}
 }

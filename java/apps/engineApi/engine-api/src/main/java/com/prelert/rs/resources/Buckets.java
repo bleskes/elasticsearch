@@ -29,6 +29,7 @@ package com.prelert.rs.resources;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -43,6 +44,7 @@ import org.apache.log4j.Logger;
 
 import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.manager.JobManager;
+import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.results.Bucket;
 import com.prelert.rs.data.Pagination;
@@ -100,7 +102,7 @@ public class Buckets extends ResourceWithJobManager
             @DefaultValue("") @QueryParam(END_QUERY_PARAM) String end,
             @DefaultValue("0.0") @QueryParam(Bucket.ANOMALY_SCORE) double anomalySoreFilter,
             @DefaultValue("0.0") @QueryParam(Bucket.MAX_NORMALIZED_PROBABILITY) double normalizedProbabilityFilter)
-    throws UnknownJobException, NativeProcessRunException
+    throws UnknownJobException
     {
         LOGGER.debug(String.format("Get %sbuckets for job %s. skip = %d, take = %d"
                 + " start = '%s', end='%s', anomaly score filter=%f, unsual score filter= %f, %s interim results",
@@ -114,18 +116,20 @@ public class Buckets extends ResourceWithJobManager
         long epochEnd = paramToEpochIfValidOrThrow(END_QUERY_PARAM, end, LOGGER);
 
         JobManager manager = jobManager();
-        Pagination<Bucket> buckets;
+        QueryPage<Bucket> page;
 
         if (epochStart > 0 || epochEnd > 0)
         {
-            buckets = manager.buckets(jobId, expand, includeInterim, skip, take, epochStart, epochEnd,
+            page = manager.buckets(jobId, expand, includeInterim, skip, take, epochStart, epochEnd,
                     anomalySoreFilter, normalizedProbabilityFilter);
         }
         else
         {
-            buckets = manager.buckets(jobId, expand, includeInterim, skip, take,
+            page = manager.buckets(jobId, expand, includeInterim, skip, take,
                     anomalySoreFilter, normalizedProbabilityFilter);
         }
+
+        Pagination<Bucket> buckets =paginationFromQueryPage(page, skip, take);
 
         // paging
         if (buckets.isAllResults() == false)
@@ -187,7 +191,8 @@ public class Buckets extends ResourceWithJobManager
                 includeInterim ? "including" : "excluding"));
 
         JobManager manager = jobManager();
-        SingleDocument<Bucket> bucket = manager.bucket(jobId, bucketId, expand, includeInterim);
+        Optional<Bucket> b = manager.bucket(jobId, bucketId, expand, includeInterim);
+        SingleDocument<Bucket> bucket = singleDocFromOptional(b, bucketId, Bucket.TYPE);
 
         if (bucket.isExists())
         {

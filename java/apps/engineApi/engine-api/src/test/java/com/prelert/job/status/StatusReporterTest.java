@@ -37,9 +37,13 @@ import java.beans.PropertyDescriptor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Date;
 
+import org.apache.log4j.Logger;
 import org.junit.Test;
+import org.mockito.Mockito;
+import static org.mockito.Mockito.*;
 
 import com.prelert.job.DataCounts;
+import com.prelert.job.persistence.JobDataCountsPersister;
 import com.prelert.job.usage.UsageReporter;
 
 public class StatusReporterTest
@@ -56,7 +60,7 @@ public class StatusReporterTest
         System.setProperty(StatusReporter.ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS_PROP,
                 Integer.toString(MAX_PERCENT_OUT_OF_ORDER_ERRORS));
 
-        DummyStatusReporter reporter = new DummyStatusReporter(mock(UsageReporter.class));
+        StatusReporter reporter = createStatusReporter("SR");
 
         assertEquals(reporter.getAcceptablePercentDateParseErrors(), MAX_PERCENT_DATE_PARSE_ERRORS);
         assertEquals(reporter.getAcceptablePercentOutOfOrderErrors(), MAX_PERCENT_OUT_OF_ORDER_ERRORS);
@@ -66,7 +70,7 @@ public class StatusReporterTest
     public void testSimpleConstructor()
     throws IntrospectionException, IllegalAccessException, IllegalArgumentException, InvocationTargetException
     {
-        DummyStatusReporter reporter = new DummyStatusReporter(mock(UsageReporter.class));
+        StatusReporter reporter = createStatusReporter("SR");
 
         DataCounts stats = reporter.incrementalStats();
         assertNotNull(stats);
@@ -88,7 +92,8 @@ public class StatusReporterTest
         counts.setFailedTransformCount(6);
         counts.setExcludedRecordCount(7);
 
-        DummyStatusReporter reporter = new DummyStatusReporter(counts, mock(UsageReporter.class));
+        StatusReporter reporter = new StatusReporter("SR", counts, mock(UsageReporter.class),
+                mock(JobDataCountsPersister.class), mock(Logger.class));
 
         DataCounts stats = reporter.incrementalStats();
         assertNotNull(stats);
@@ -108,7 +113,7 @@ public class StatusReporterTest
     throws IllegalAccessException, IllegalArgumentException, InvocationTargetException,
         IntrospectionException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException
     {
-        DummyStatusReporter reporter = new DummyStatusReporter(mock(UsageReporter.class));
+        StatusReporter reporter = createStatusReporter("SR");
         DataCounts stats = reporter.incrementalStats();
         assertNotNull(stats);
         testAllFieldsEqualZero(stats);
@@ -137,7 +142,7 @@ public class StatusReporterTest
     @Test
     public void testReportLatestTimeIncrementalStats()
     {
-        DummyStatusReporter reporter = new DummyStatusReporter(mock(UsageReporter.class));
+        StatusReporter reporter = createStatusReporter("SR");
         reporter.startNewIncrementalCount();
         reporter.reportLatestTimeIncrementalStats(5001L);
         assertEquals(5001L, reporter.incrementalStats().getLatestRecordTimeStamp().getTime() / 1000L);
@@ -147,7 +152,7 @@ public class StatusReporterTest
     public void testReportRecordsWritten()
     throws HighProportionOfBadTimestampsException, OutOfOrderRecordsException
     {
-        DummyStatusReporter reporter = new DummyStatusReporter(mock(UsageReporter.class));
+        StatusReporter reporter = createStatusReporter("SR");
         reporter.setAnalysedFieldsPerRecord(3);
 
         reporter.reportRecordWritten(5, 2000);
@@ -168,6 +173,24 @@ public class StatusReporterTest
         assertEquals(reporter.incrementalStats(), reporter.runningTotalStats());
     }
 
+    @Test
+    public void testFinishReporting()
+    throws HighProportionOfBadTimestampsException, OutOfOrderRecordsException
+    {
+        UsageReporter usage = mock(UsageReporter.class);
+        JobDataCountsPersister perister = mock(JobDataCountsPersister.class);
+
+        StatusReporter reporter = new StatusReporter("SR", usage, perister, mock(Logger.class));
+        reporter.setAnalysedFieldsPerRecord(3);
+
+        reporter.reportRecordWritten(5, 2000);
+        reporter.reportRecordWritten(5, 3000);
+        reporter.finishReporting();
+
+        Mockito.verify(usage, Mockito.times(1)).reportUsage();
+        Mockito.verify(perister, Mockito.times(1)).persistDataCounts(eq("SR"), any());
+    }
+
     private void testAllFieldsEqualZero(DataCounts stats)
     throws IntrospectionException, IllegalAccessException, IllegalArgumentException, InvocationTargetException
     {
@@ -183,6 +206,12 @@ public class StatusReporterTest
 
             assertEquals(new Long(0), propertyDescriptor.getReadMethod().invoke(stats));
         }
+    }
+
+    private StatusReporter createStatusReporter(String jobId)
+    {
+        return new StatusReporter(jobId, mock(UsageReporter.class),
+                            mock(JobDataCountsPersister.class), mock(Logger.class));
     }
 
 }

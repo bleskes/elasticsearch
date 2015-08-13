@@ -136,6 +136,15 @@ public class Renormaliser
         return true;
     }
 
+    /**
+     * Is the worker thread running
+     * @return
+     */
+    public boolean isWorkerThreadRunning()
+    {
+        return m_QuantileUpdateThread.isAlive();
+    }
+
 
     /**
      * Update the anomaly score field on all previously persisted buckets
@@ -288,6 +297,11 @@ public class Renormaliser
                 logger.warn("Failed to renormalise record - no ID");
                 ++counts[1];
             }
+        }
+
+        if (!toUpdate.isEmpty())
+        {
+            m_JobProvider.updateRecords(m_JobId, bucketId, toUpdate);
         }
     }
 

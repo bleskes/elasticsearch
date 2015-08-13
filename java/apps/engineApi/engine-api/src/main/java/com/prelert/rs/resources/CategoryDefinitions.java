@@ -28,6 +28,7 @@
 package com.prelert.rs.resources;
 
 import java.util.ArrayList;
+import java.util.Optional;
 
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -42,9 +43,9 @@ import org.apache.log4j.Logger;
 
 import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.manager.JobManager;
+import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.results.CategoryDefinition;
 import com.prelert.rs.data.Pagination;
-import com.prelert.rs.data.SingleDocument;
 import com.prelert.rs.validation.PaginationParamsValidator;
 
 /**
@@ -85,8 +86,11 @@ public class CategoryDefinitions extends ResourceWithJobManager
 
         new PaginationParamsValidator(skip, take).validate();
 
-        Pagination<CategoryDefinition> categoryDefinitions =
+        QueryPage<CategoryDefinition> queryResults =
                 jobManager().categoryDefinitions(jobId, skip, take);
+
+        Pagination<CategoryDefinition> categoryDefinitions =
+                    paginationFromQueryPage(queryResults, skip, take);
 
         if (categoryDefinitions.isAllResults() == false)
         {
@@ -123,9 +127,9 @@ public class CategoryDefinitions extends ResourceWithJobManager
     {
         LOGGER.debug(String.format("Get category definition for job %s with id %s.", jobId, categoryId));
 
-        SingleDocument<CategoryDefinition> category = jobManager().categoryDefinition(jobId, categoryId);
+        Optional<CategoryDefinition> category = jobManager().categoryDefinition(jobId, categoryId);
 
-        if (category.isExists())
+        if (category.isPresent())
         {
             LOGGER.debug(String.format("Returning category definition %s for job %s",
                     categoryId, jobId));
@@ -135,9 +139,10 @@ public class CategoryDefinitions extends ResourceWithJobManager
             LOGGER.debug(String.format("Cannot find category definition %s for job %s",
                     categoryId, jobId));
 
-            return Response.status(Response.Status.NOT_FOUND).entity(category).build();
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(singleDocFromOptional(category,categoryId, CategoryDefinition.TYPE)).build();
         }
 
-        return Response.ok(category).build();
+        return Response.ok(singleDocFromOptional(category,categoryId, CategoryDefinition.TYPE)).build();
     }
 }

@@ -29,10 +29,12 @@ package com.prelert.rs.resources;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
 import java.net.URISyntaxException;
 import java.util.Arrays;
+import java.util.Optional;
 
 import javax.ws.rs.core.Response;
 
@@ -44,6 +46,7 @@ import org.junit.rules.ExpectedException;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.UnknownJobException;
+import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.results.Bucket;
 import com.prelert.rs.data.Pagination;
@@ -86,27 +89,27 @@ public class BucketsTest extends ServiceTest
     @Test
     public void testBuckets_GivenOnePage() throws UnknownJobException, NativeProcessRunException, URISyntaxException
     {
-        Pagination<Bucket> results = new Pagination<>();
-        results.setHitCount(1);
-        results.setDocuments(Arrays.asList(new Bucket()));
+        QueryPage<Bucket> queryResult = new QueryPage<>(Arrays.asList(new Bucket()), 1);
 
-        when(jobManager().buckets("foo", false, false, 0, 100, 0.0, 0.0)).thenReturn(results);
+        when(jobManager().buckets("foo", false, false, 0, 100, 0.0, 0.0)).thenReturn(queryResult);
 
-        assertEquals(results, m_Buckets.buckets("foo", false, false, 0, 100, "", "", 0.0, 0.0));
-        assertNull(results.getPreviousPage());
-        assertNull(results.getNextPage());
+        Pagination<Bucket> results = m_Buckets.buckets("foo", false, false, 0, 100, "", "", 0.0, 0.0);
+        assertEquals(1, results.getHitCount());
+        assertEquals(100, results.getTake());
+
     }
 
     @Test
     public void testBuckets_GivenNoStartOrEndParams() throws UnknownJobException, NativeProcessRunException, URISyntaxException
     {
-        Pagination<Bucket> results = new Pagination<>();
-        results.setHitCount(300);
-        results.setTake(100);
+        QueryPage<Bucket> queryResult = new QueryPage<>(Arrays.asList(new Bucket()), 300);
 
-        when(jobManager().buckets("foo", false, false, 0, 100, 0.0, 0.0)).thenReturn(results);
+        when(jobManager().buckets("foo", false, false, 0, 100, 0.0, 0.0)).thenReturn(queryResult);
 
-        assertEquals(results, m_Buckets.buckets("foo", false, false, 0, 100, "", "", 0.0, 0.0));
+        Pagination<Bucket> results = m_Buckets.buckets("foo", false, false, 0, 100, "", "", 0.0, 0.0);
+        assertEquals(300, results.getHitCount());
+        assertEquals(100, results.getTake());
+
         assertNull(results.getPreviousPage());
         String nextPageUri = results.getNextPage().toString();
         assertEquals("http://localhost/test/results/foo/buckets?skip=100&take=100&expand=false&"
@@ -117,15 +120,18 @@ public class BucketsTest extends ServiceTest
     @Test
     public void testBuckets_GivenStartAndEndParams() throws UnknownJobException, NativeProcessRunException
     {
-        Pagination<Bucket> results = new Pagination<>();
-        results.setHitCount(300);
-        results.setTake(100);
+        QueryPage<Bucket> queryResult = new QueryPage<>(Arrays.asList(new Bucket()), 300);
 
-        when(jobManager().buckets("foo", false, false, 0, 100, 1000, 2000, 0.0, 0.0)).thenReturn(results);
+        when(jobManager().buckets("foo", false, false, 0, 100, 1000, 2000, 0.0, 0.0)).thenReturn(queryResult);
 
-        assertEquals(results, m_Buckets.buckets("foo", false, false, 0, 100, "1", "2", 0.0, 0.0));
-        assertNull(results.getPreviousPage());
-        String nextPageUri = results.getNextPage().toString();
+        Pagination<Bucket> buckets = m_Buckets.buckets("foo", false, false, 0, 100, "1", "2", 0.0, 0.0);
+
+        assertEquals(300l, buckets.getHitCount());
+        assertEquals(100l, buckets.getTake());
+        assertEquals(0l, buckets.getSkip());
+
+        assertNull(buckets.getPreviousPage());
+        String nextPageUri = buckets.getNextPage().toString();
         assertEquals("http://localhost/test/results/foo/buckets?skip=100&take=100&start=1&end=2&"
                 + "expand=false&includeInterim=false&anomalyScore=0.0&maxNormalizedProbability=0.0",
                 nextPageUri);
@@ -134,32 +140,33 @@ public class BucketsTest extends ServiceTest
     @Test
     public void testBucket_GivenExistingBucket() throws NativeProcessRunException, UnknownJobException
     {
-        SingleDocument<Bucket> result = new SingleDocument<>();
-        Bucket bucket = new Bucket();
-        bucket.setId("42");
-        result.setDocument(bucket);
-        result.setExists(true);
+        Optional<Bucket> queryResult = Optional.of(new Bucket());
 
-        when(jobManager().bucket("bar", "42", false, true)).thenReturn(result);
+        when(jobManager().bucket("bar", "42", false, true)).thenReturn(queryResult);
 
         Response response = m_Buckets.bucket("bar", "42", false, true);
 
-        assertEquals(result, response.getEntity());
+        @SuppressWarnings("unchecked")
+        SingleDocument<Bucket> result = (SingleDocument<Bucket>)response.getEntity();
+        assertTrue(result.isExists());
+        assertEquals("42", result.getDocumentId());
+        assertEquals(Bucket.TYPE, result.getType());
+
         assertEquals(200, response.getStatus());
     }
 
     @Test
     public void testBucket_GivenNonExistingBucket() throws NativeProcessRunException, UnknownJobException
     {
-        SingleDocument<Bucket> result = new SingleDocument<>();
-        result.setDocumentId("42");
-        result.setExists(false);
+        Optional<Bucket> queryResult = Optional.empty();
 
-        when(jobManager().bucket("bar", "42", false, true)).thenReturn(result);
+        when(jobManager().bucket("bar", "42", false, true)).thenReturn(queryResult);
 
         Response response = m_Buckets.bucket("bar", "42", false, true);
+        @SuppressWarnings("unchecked")
+        SingleDocument<Bucket> result = (SingleDocument<Bucket>)response.getEntity();
 
-        assertEquals(result, response.getEntity());
+        assertEquals(false, result.isExists());
         assertEquals(404, response.getStatus());
     }
 }

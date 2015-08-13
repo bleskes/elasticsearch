@@ -1,24 +1,3 @@
-package com.prelert.job.alert.manager;
-
-import static org.junit.Assert.*;
-
-import java.net.URI;
-import java.util.concurrent.TimeUnit;
-
-import javax.ws.rs.container.AsyncResponse;
-import javax.ws.rs.core.UriBuilder;
-
-import org.junit.Test;
-import org.mockito.*;
-
-import static org.mockito.Mockito.*;
-
-import com.prelert.job.alert.Alert;
-import com.prelert.job.exceptions.UnknownJobException;
-import com.prelert.job.manager.JobManager;
-import com.prelert.job.persistence.JobProvider;
-import com.prelert.job.process.exceptions.ClosedJobException;
-
 /************************************************************
  *                                                          *
  * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
@@ -46,6 +25,27 @@ import com.prelert.job.process.exceptions.ClosedJobException;
  *                                                          *
  ***********************************************************/
 
+package com.prelert.job.alert.manager;
+
+import static org.junit.Assert.*;
+
+import java.net.URI;
+import java.util.concurrent.TimeUnit;
+
+import javax.ws.rs.container.AsyncResponse;
+import javax.ws.rs.core.UriBuilder;
+
+import org.junit.Test;
+import org.mockito.*;
+
+import static org.mockito.Mockito.*;
+
+import com.prelert.job.alert.Alert;
+import com.prelert.job.exceptions.UnknownJobException;
+import com.prelert.job.manager.JobManager;
+import com.prelert.job.persistence.JobProvider;
+import com.prelert.job.process.exceptions.ClosedJobException;
+
 public class AlertManagerTest {
 
     @Test
@@ -54,6 +54,7 @@ public class AlertManagerTest {
     {
         JobManager jobManager = mock(JobManager.class);
         JobProvider jobProvider = mock(JobProvider.class);
+        when(jobProvider.jobExists("foo")).thenReturn(true);
 
         AlertManager am = new AlertManager(jobProvider, jobManager);
 
@@ -73,6 +74,7 @@ public class AlertManagerTest {
     {
         JobManager jobManager = mock(JobManager.class);
         JobProvider jobProvider = mock(JobProvider.class);
+        when(jobProvider.jobExists("foo")).thenReturn(true);
 
         AlertManager am = new AlertManager(jobProvider, jobManager);
 

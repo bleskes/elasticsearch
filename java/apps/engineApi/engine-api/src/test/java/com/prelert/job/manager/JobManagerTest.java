@@ -37,6 +37,7 @@ import static org.mockito.Mockito.any;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
+import java.util.Optional;
 
 import org.junit.After;
 import org.junit.Before;
@@ -75,7 +76,6 @@ import com.prelert.job.process.params.ModelDebugConfig;
 import com.prelert.job.process.writer.CsvRecordWriter;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
-import com.prelert.rs.data.SingleDocument;
 
 public class JobManagerTest
 {
@@ -107,7 +107,7 @@ public class JobManagerTest
             OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException
     {
         when(m_JobProvider.getJobDetails("foo")).thenReturn(
-                new JobDetails("foo", new JobConfiguration()));
+                Optional.of(new JobDetails("foo", new JobConfiguration())));
         givenProcessInfo(2);
         when(m_ProcessManager.jobIsRunning("foo")).thenReturn(false);
         when(m_ProcessManager.numberOfRunningJobs()).thenReturn(2);
@@ -132,7 +132,7 @@ public class JobManagerTest
             OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException
     {
         when(m_JobProvider.getJobDetails("foo")).thenReturn(
-                new JobDetails("foo", new JobConfiguration()));
+                Optional.of(new JobDetails("foo", new JobConfiguration())));
         givenProcessInfo(5);
         when(m_ProcessManager.jobIsRunning("foo")).thenReturn(false);
         when(m_ProcessManager.numberOfRunningJobs()).thenReturn(10000);
@@ -157,7 +157,7 @@ public class JobManagerTest
     {
         System.setProperty("prelert.max.jobs.factor", "5.0");
         when(m_JobProvider.getJobDetails("foo")).thenReturn(
-                new JobDetails("foo", new JobConfiguration()));
+                Optional.of(new JobDetails("foo", new JobConfiguration())));
         givenProcessInfo(5);
         when(m_ProcessManager.jobIsRunning("foo")).thenReturn(false);
         when(m_ProcessManager.numberOfRunningJobs()).thenReturn(10000);
@@ -182,7 +182,7 @@ public class JobManagerTest
     {
         System.setProperty("prelert.max.jobs.factor", "invalid");
         when(m_JobProvider.getJobDetails("foo")).thenReturn(
-                new JobDetails("foo", new JobConfiguration()));
+                Optional.of(new JobDetails("foo", new JobConfiguration())));
         givenProcessInfo(5);
         when(m_ProcessManager.jobIsRunning("foo")).thenReturn(false);
         when(m_ProcessManager.numberOfRunningJobs()).thenReturn(10000);
@@ -209,7 +209,7 @@ public class JobManagerTest
         InputStream inputStream = mock(InputStream.class);
         DataLoadParams params = mock(DataLoadParams.class);
         when(m_JobProvider.getJobDetails("foo")).thenReturn(
-                new JobDetails("foo", new JobConfiguration()));
+                Optional.of(new JobDetails("foo", new JobConfiguration())));
         givenProcessInfo(5);
         when(m_ProcessManager.jobIsRunning("foo")).thenReturn(false);
         when(m_ProcessManager.numberOfRunningJobs()).thenReturn(0);
@@ -290,13 +290,10 @@ public class JobManagerTest
     {
         givenLicenseConstraints(2, 2, 0);
         JobManager jobManager = new JobManager(m_JobProvider, m_ProcessManager);
-        when(m_JobProvider.getJobDetails("foo")).thenReturn(new JobDetails());
+        when(m_JobProvider.getJobDetails("foo")).thenReturn(Optional.of(new JobDetails()));
 
-        SingleDocument<JobDetails> doc = jobManager.getJob("foo");
-        assertEquals(JobDetails.TYPE, doc.getType());
-        assertEquals("foo", doc.getDocumentId());
-        assertTrue(doc.isExists());
-        assertNotNull(doc.getDocument());
+        Optional<JobDetails> doc = jobManager.getJob("foo");
+        assertTrue(doc.isPresent());
     }
 
     @Test
@@ -386,7 +383,7 @@ public class JobManagerTest
     {
         givenLicenseConstraints(5, -1, 0);
         when(m_JobProvider.getJobDetails("foo")).thenReturn(
-                new JobDetails("foo", new JobConfiguration(new AnalysisConfig())));
+                Optional.of(new JobDetails("foo", new JobConfiguration(new AnalysisConfig()))));
 
         when(m_ProcessManager.numberOfRunningJobs()).thenReturn(3);
         when(m_ProcessManager.writeToJob(any(CsvRecordWriter.class), any(), any(), any(), any(), any(), any(), any()))

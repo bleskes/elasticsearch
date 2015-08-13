@@ -24,9 +24,7 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-
-package com.prelert.job.status.elasticsearch;
-
+package com.prelert.job.persistence.elasticsearch;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -39,79 +37,56 @@ import org.elasticsearch.indices.IndexMissingException;
 
 import com.prelert.job.DataCounts;
 import com.prelert.job.JobDetails;
-import com.prelert.job.status.StatusReporter;
-import com.prelert.job.usage.UsageReporter;
+import com.prelert.job.persistence.JobDataCountsPersister;
 
-
-/**
- * The {@link #reportStatus(int)} function logs a status message
- * and updates the jobs ProcessedRecordCount, InvalidDateCount,
- * MissingFieldCount and OutOfOrderTimeStampCount values in the
- * Elasticsearch document.
- */
-public class ElasticsearchStatusReporter extends StatusReporter
+public class ElasticsearchJobDataCountsPersister implements JobDataCountsPersister
 {
     private static final int RETRY_ON_CONFLICT = 3;
 
     private Client m_Client;
+    private Logger m_Logger;
 
-    public ElasticsearchStatusReporter(Client client, UsageReporter usageReporter,
-            String jobId, DataCounts counts, Logger logger)
+    public ElasticsearchJobDataCountsPersister(Client client, Logger logger)
     {
-        super(jobId, counts, usageReporter, logger);
         m_Client = client;
+        m_Logger = logger;
     }
 
-
-    /**
-     * Write to elastic search.
-     */
     @Override
-    protected void reportStatus(long totalRecords)
-    {
-        // Logging is not unique to Elasticsearch, so is handled in the base
-        // class
-
-        persistStats();
-    }
-
-    /**
-     * Write the status counts to the datastore
-     */
-    private void persistStats()
+    public void persistDataCounts(String jobId, DataCounts counts)
     {
         try
         {
-            UpdateRequestBuilder updateBuilder = m_Client.prepareUpdate(m_JobId,
-                    JobDetails.TYPE, m_JobId);
+            UpdateRequestBuilder updateBuilder = m_Client.prepareUpdate(jobId,
+                    JobDetails.TYPE, jobId);
             updateBuilder.setRetryOnConflict(RETRY_ON_CONFLICT);
 
             Map<String, Object> updates = new HashMap<>();
-            updates.put(DataCounts.PROCESSED_RECORD_COUNT, getProcessedRecordCount());
-            updates.put(DataCounts.PROCESSED_FIELD_COUNT, getProcessedFieldCount());
-            updates.put(DataCounts.INPUT_RECORD_COUNT, getInputRecordCount());
-            updates.put(DataCounts.INPUT_BYTES, getBytesRead());
-            updates.put(DataCounts.INPUT_FIELD_COUNT, getInputFieldCount());
-            updates.put(DataCounts.INVALID_DATE_COUNT, getDateParseErrorsCount());
-            updates.put(DataCounts.MISSING_FIELD_COUNT, getMissingFieldErrorCount());
-            updates.put(DataCounts.OUT_OF_ORDER_TIME_COUNT, getOutOfOrderRecordCount());
-            updates.put(DataCounts.FAILED_TRANSFORM_COUNT, getFailedTransformCount());
-            updates.put(DataCounts.EXCLUDED_RECORD_COUNT, getExcludedRecordCount());
-            updates.put(DataCounts.LATEST_RECORD_TIME, getLatestRecordTime());
+            updates.put(DataCounts.PROCESSED_RECORD_COUNT, counts.getProcessedRecordCount());
+            updates.put(DataCounts.PROCESSED_FIELD_COUNT, counts.getProcessedFieldCount());
+            updates.put(DataCounts.INPUT_RECORD_COUNT, counts.getInputRecordCount());
+            updates.put(DataCounts.INPUT_BYTES, counts.getInputBytes());
+            updates.put(DataCounts.INPUT_FIELD_COUNT, counts.getInputFieldCount());
+            updates.put(DataCounts.INVALID_DATE_COUNT, counts.getInvalidDateCount());
+            updates.put(DataCounts.MISSING_FIELD_COUNT, counts.getMissingFieldCount());
+            updates.put(DataCounts.OUT_OF_ORDER_TIME_COUNT, counts.getOutOfOrderTimeStampCount());
+            updates.put(DataCounts.FAILED_TRANSFORM_COUNT, counts.getFailedTransformCount());
+            updates.put(DataCounts.EXCLUDED_RECORD_COUNT, counts.getExcludedRecordCount());
+            updates.put(DataCounts.LATEST_RECORD_TIME, counts.getLatestRecordTimeStamp());
 
-            Map<String, Object> counts = new HashMap<>();
-            counts.put(JobDetails.COUNTS, updates);
+            Map<String, Object> countUpdates = new HashMap<>();
+            countUpdates.put(JobDetails.COUNTS, updates);
 
-            updateBuilder.setDoc(counts).setRefresh(true);
+            updateBuilder.setDoc(countUpdates).setRefresh(true);
 
-            m_Logger.trace("ES API CALL: update ID " + m_JobId + " type " + JobDetails.TYPE +
-                    " in index " + m_JobId + " using map of new values");
+            m_Logger.trace("ES API CALL: update ID " + jobId + " type " + JobDetails.TYPE +
+                    " in index " + jobId + " using map of new values");
             m_Client.update(updateBuilder.request()).get();
         }
         catch (IndexMissingException | InterruptedException | ExecutionException e)
         {
             String msg = String.format("Error writing the job '%s' status stats.",
-                    m_JobId);
+                    jobId);
 
             m_Logger.warn(msg, e);
         }

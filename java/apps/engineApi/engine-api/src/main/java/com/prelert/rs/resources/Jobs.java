@@ -29,6 +29,7 @@ package com.prelert.rs.resources;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.Optional;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -108,7 +109,8 @@ public class Jobs extends ResourceWithJobManager
         new PaginationParamsValidator(skip, take).validate();
 
         JobManager manager = jobManager();
-        Pagination<JobDetails> results = manager.getJobs(skip, take);
+        Pagination<JobDetails> results = this.paginationFromQueryPage(
+                                                        manager.getJobs(skip, take), skip, take);
 
         setPagingUrls(ENDPOINT, results);
 
@@ -132,12 +134,14 @@ public class Jobs extends ResourceWithJobManager
 
         JobManager manager = jobManager();
         SingleDocument<JobDetails> job;
-        try
+
+        Optional<JobDetails> result = manager.getJob(jobId);
+        if (result.isPresent())
         {
-            job = manager.getJob(jobId);
+            job = singleDocFromOptional(result, jobId, JobDetails.TYPE);
             setEndPointLinks(job.getDocument());
         }
-        catch (UnknownJobException e)
+        else
         {
             job = new SingleDocument<>();
             job.setType(JobDetails.TYPE);

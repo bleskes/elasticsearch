@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -41,13 +41,17 @@ import junit.framework.Assert;
 
 import org.apache.log4j.Logger;
 import org.junit.Test;
+import org.mockito.Mockito;
+import static org.mockito.Mockito.*;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.Detector;
+import com.prelert.job.persistence.JobDataCountsPersister;
 import com.prelert.job.persistence.JobDataPersister;
+import com.prelert.job.persistence.UsagePersister;
 import com.prelert.job.persistence.none.NoneJobDataPersister;
 import com.prelert.job.process.ProcessManager;
 import com.prelert.job.process.exceptions.MalformedJsonException;
@@ -159,8 +163,12 @@ public class DataFormatWarningsTest
 			System.setProperty(StatusReporter.ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS_PROP,
 					Integer.toString(MAX_PERCENT_OUT_OF_ORDER_ERRORS));
 
-			DummyUsageReporter usageReporter = new DummyUsageReporter("test-job", LOGGER);
-			DummyStatusReporter statusReporter = new DummyStatusReporter(usageReporter);
+			JobDataCountsPersister countsPersister = Mockito.mock(JobDataCountsPersister.class);
+			UsagePersister usagePersister = Mockito.mock(UsagePersister.class);
+
+			DummyUsageReporter usageReporter = new DummyUsageReporter("test-job", usagePersister, LOGGER);
+			StatusReporter statusReporter = new StatusReporter("test-job", usageReporter,
+			        countsPersister, LOGGER);
 			JobDataPersister dp = new NoneJobDataPersister();
 
 			Assert.assertEquals(MAX_PERCENT_DATE_PARSE_ERRORS,
@@ -179,8 +187,8 @@ public class DataFormatWarningsTest
 			{
 				long percentBad = (e.getNumberBad() * 100 )/ e.getTotalNumber();
 
-                Assert.assertTrue(statusReporter.isStatusReported());
-                Assert.assertTrue(usageReporter.persistUsageWasCalled());
+                Mockito.verify(countsPersister).persistDataCounts(Mockito.anyString(), Mockito.any());
+                Mockito.verify(usagePersister, times(1)).persistUsage(anyString(), anyLong(), anyLong(), anyLong());
 
                 Assert.assertEquals(statusReporter.getBytesRead(),
                         usageReporter.getTotalBytesRead());
@@ -287,8 +295,12 @@ public class DataFormatWarningsTest
 			System.setProperty(StatusReporter.ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS_PROP,
 					Integer.toString(MAX_PERCENT_OUT_OF_ORDER_ERRORS));
 
-			DummyUsageReporter usageReporter = new DummyUsageReporter("test-job", LOGGER);
-			DummyStatusReporter statusReporter = new DummyStatusReporter(usageReporter);
+            JobDataCountsPersister countsPersister = Mockito.mock(JobDataCountsPersister.class);
+            UsagePersister usagePersister = Mockito.mock(UsagePersister.class);
+
+            DummyUsageReporter usageReporter = new DummyUsageReporter("test-job", usagePersister, LOGGER);
+            StatusReporter statusReporter = new StatusReporter("test-job", usageReporter,
+                    countsPersister, LOGGER);
 			JobDataPersister dp = new NoneJobDataPersister();
 
 			Assert.assertEquals(MAX_PERCENT_DATE_PARSE_ERRORS,
@@ -306,8 +318,8 @@ public class DataFormatWarningsTest
 			{
 				long percentBad = (e.getNumberBad() * 100 )/ e.getTotalNumber();
 
-                Assert.assertTrue(statusReporter.isStatusReported());
-                Assert.assertTrue(usageReporter.persistUsageWasCalled());
+                Mockito.verify(countsPersister).persistDataCounts(Mockito.any(), Mockito.any());
+                Mockito.verify(usagePersister, times(1)).persistUsage(anyString(), anyLong(), anyLong(), anyLong());
 
                 Assert.assertEquals(statusReporter.getBytesRead(),
                         usageReporter.getTotalBytesRead());
@@ -415,8 +427,12 @@ public class DataFormatWarningsTest
 			System.setProperty(StatusReporter.ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS_PROP,
 					Integer.toString(MAX_PERCENT_OUT_OF_ORDER_ERRORS));
 
-			DummyUsageReporter usageReporter = new DummyUsageReporter("test-job", LOGGER);
-			DummyStatusReporter statusReporter = new DummyStatusReporter(usageReporter);
+            JobDataCountsPersister countsPersister = Mockito.mock(JobDataCountsPersister.class);
+            UsagePersister usagePersister = Mockito.mock(UsagePersister.class);
+
+            DummyUsageReporter usageReporter = new DummyUsageReporter("test-job", usagePersister, LOGGER);
+            StatusReporter statusReporter = new StatusReporter("test-job", usageReporter,
+                    countsPersister, LOGGER);
 			JobDataPersister dp = new NoneJobDataPersister();
 
 			Assert.assertEquals(MAX_PERCENT_DATE_PARSE_ERRORS,
@@ -434,8 +450,8 @@ public class DataFormatWarningsTest
 			{
 				long percentBad = (e.getNumberOutOfOrder() * 100 )/ e.getTotalNumber();
 
-                Assert.assertTrue(statusReporter.isStatusReported());
-                Assert.assertTrue(usageReporter.persistUsageWasCalled());
+                Mockito.verify(countsPersister).persistDataCounts(Mockito.anyString(), Mockito.any());
+                Mockito.verify(usagePersister, times(1)).persistUsage(anyString(), anyLong(), anyLong(), anyLong());
 
                 Assert.assertEquals(statusReporter.getBytesRead(),
                         usageReporter.getTotalBytesRead());
@@ -542,8 +558,12 @@ public class DataFormatWarningsTest
 			System.setProperty(StatusReporter.ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS_PROP,
 					Integer.toString(MAX_PERCENT_OUT_OF_ORDER_ERRORS));
 
-			DummyUsageReporter usageReporter = new DummyUsageReporter("test-job", LOGGER);
-			DummyStatusReporter statusReporter = new DummyStatusReporter(usageReporter);
+            JobDataCountsPersister countsPersister = Mockito.mock(JobDataCountsPersister.class);
+            UsagePersister usagePersister = Mockito.mock(UsagePersister.class);
+
+            DummyUsageReporter usageReporter = new DummyUsageReporter("test-job", usagePersister, LOGGER);
+            StatusReporter statusReporter = new StatusReporter("test-job", usageReporter,
+                    countsPersister, LOGGER);
 			JobDataPersister dp = new NoneJobDataPersister();
 
 			Assert.assertEquals(MAX_PERCENT_DATE_PARSE_ERRORS,
@@ -561,8 +581,8 @@ public class DataFormatWarningsTest
 			{
 				long percentBad = (e.getNumberOutOfOrder() * 100 )/ e.getTotalNumber();
 
-				Assert.assertTrue(statusReporter.isStatusReported());
-				Assert.assertTrue(usageReporter.persistUsageWasCalled());
+                Mockito.verify(countsPersister).persistDataCounts(Mockito.anyString(), Mockito.any());
+                Mockito.verify(usagePersister, times(1)).persistUsage(anyString(), anyLong(), anyLong(), anyLong());
 
 				Assert.assertEquals(statusReporter.getBytesRead(),
 						usageReporter.getTotalBytesRead());

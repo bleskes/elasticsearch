@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -24,70 +24,36 @@
  *                                                          *
  *                                                          *
  ************************************************************/
+package com.prelert.job.normalisation;
 
-package com.prelert.job.usage;
+import static org.junit.Assert.*;
 
 import org.apache.log4j.Logger;
+import org.junit.Test;
 
-import com.prelert.job.persistence.UsagePersister;
-import com.prelert.job.persistence.none.NoneUsagePersister;
-import com.prelert.job.usage.UsageReporter;
+import static org.mockito.Mockito.mock;
 
-public class DummyUsageReporter extends UsageReporter
+import com.prelert.job.persistence.JobProvider;
+
+/**
+ * This class is hard to unit test because it creates
+ * a normalisation process and depends on that.
+ * Some refactoring is required ideally so that the
+ * normaliser process isn't created inside the updateScores
+ * method.
+ */
+public class RenormaliserTest
 {
-	long m_TotalByteCount;
-	long m_TotalFieldCount;
-	long m_TotalRecordCount;
-
-	public DummyUsageReporter(String jobId, Logger logger)
-	{
-		super(jobId, new NoneUsagePersister(), logger);
-
-		m_TotalByteCount = 0;
-		m_TotalFieldCount = 0;
-		m_TotalRecordCount = 0;
-	}
-
-	public DummyUsageReporter(String jobId, UsagePersister persister, Logger logger)
-	{
-	    super(jobId, persister, logger);
-
-	    m_TotalByteCount = 0;
-	    m_TotalFieldCount = 0;
-	    m_TotalRecordCount = 0;
-	}
-
-
-	@Override
-    public void addBytesRead(long bytesRead)
+    @Test
+    public void testShutdown()
     {
-       super.addBytesRead(bytesRead);
+        JobProvider jobProvider = mock(JobProvider.class);
+        Renormaliser normaliser = new Renormaliser("foo", jobProvider);
 
-        m_TotalByteCount += bytesRead;
+        normaliser.shutdown(mock(Logger.class));
+
+        assertEquals(false, normaliser.isWorkerThreadRunning());
     }
 
-    @Override
-    public void addFieldsRecordsRead(long fieldsRead)
-    {
-        super.addFieldsRecordsRead(fieldsRead);
-
-        m_TotalFieldCount += fieldsRead;
-        ++m_TotalRecordCount;
-    }
-
-	public long getTotalBytesRead()
-	{
-		return m_TotalByteCount;
-	}
-
-	public long getTotalFieldsRead()
-	{
-		return m_TotalFieldCount;
-	}
-
-	public long getTotalRecordsRead()
-	{
-		return m_TotalRecordCount;
-	}
 
 }

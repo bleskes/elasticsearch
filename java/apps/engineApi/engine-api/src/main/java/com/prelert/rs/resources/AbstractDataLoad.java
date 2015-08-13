@@ -33,6 +33,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.ws.rs.Consumes;
@@ -73,7 +74,6 @@ import com.prelert.rs.data.Acknowledgement;
 import com.prelert.rs.data.ApiError;
 import com.prelert.rs.data.DataPostResponse;
 import com.prelert.rs.data.MultiDataPostResult;
-import com.prelert.rs.data.SingleDocument;
 import com.prelert.rs.exception.InvalidParametersException;
 
 
@@ -301,8 +301,8 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
 
     private void checkBucketResettingIsSupported(String jobId) throws UnknownJobException
     {
-        SingleDocument<JobDetails> job = jobManager().getJob(jobId);
-        AnalysisConfig config = job.getDocument().getAnalysisConfig();
+        Optional<JobDetails> job = jobManager().getJob(jobId);
+        AnalysisConfig config = job.get().getAnalysisConfig();
         checkLatencyIsNonZero(config.getLatency());
     }
 
