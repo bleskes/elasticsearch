@@ -24,40 +24,9 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.process.results;
+package com.prelert.job.persistence;
 
-import java.io.InputStream;
-
-import org.apache.log4j.Logger;
-
-import com.prelert.job.persistence.JobProviderFactory;
-import com.prelert.job.persistence.JobResultsPeristerFactory;
-
-/**
- * Factory method for creating new {@linkplain ResultsReader} objects
- * to parse the autodetect output.
- * Requires 2 other factories for creating the
- *
- */
-public class ResultsReaderFactory
+public interface UsagePersisterFactory
 {
-    private JobResultsPeristerFactory m_PersisterFactory;
-    private JobProviderFactory m_ProviderFactory;
 
-    public ResultsReaderFactory(JobProviderFactory providerFactory,
-                                JobResultsPeristerFactory persisterFactory)
-    {
-        m_ProviderFactory = providerFactory;
-        m_PersisterFactory = persisterFactory;
-    }
-
-	public ResultsReader newResultsParser(String jobId, InputStream autoDetectOutputStream,
-			Logger logger)
-	{
-	    return new ResultsReader(jobId,
-	                             m_PersisterFactory.jobResultsPersister(jobId),
-	                             m_ProviderFactory.jobProvider(),
-	                             autoDetectOutputStream,
-	                             logger);
-    }
 }

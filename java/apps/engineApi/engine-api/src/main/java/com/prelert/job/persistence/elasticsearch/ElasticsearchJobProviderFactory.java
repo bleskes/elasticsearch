@@ -24,40 +24,28 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.process.results;
+package com.prelert.job.persistence.elasticsearch;
 
-import java.io.InputStream;
-
-import org.apache.log4j.Logger;
-
+import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.persistence.JobProviderFactory;
-import com.prelert.job.persistence.JobResultsPeristerFactory;
+
 
 /**
- * Factory method for creating new {@linkplain ResultsReader} objects
- * to parse the autodetect output.
- * Requires 2 other factories for creating the
- *
+ * Reuses the same {@linkplain ElasticsearchJobProvider}
  */
-public class ResultsReaderFactory
+public class ElasticsearchJobProviderFactory implements JobProviderFactory
 {
-    private JobResultsPeristerFactory m_PersisterFactory;
-    private JobProviderFactory m_ProviderFactory;
+    private ElasticsearchJobProvider m_JobProvider;
 
-    public ResultsReaderFactory(JobProviderFactory providerFactory,
-                                JobResultsPeristerFactory persisterFactory)
+    public ElasticsearchJobProviderFactory(ElasticsearchJobProvider jobProvider)
     {
-        m_ProviderFactory = providerFactory;
-        m_PersisterFactory = persisterFactory;
+        m_JobProvider = jobProvider;
     }
 
-	public ResultsReader newResultsParser(String jobId, InputStream autoDetectOutputStream,
-			Logger logger)
-	{
-	    return new ResultsReader(jobId,
-	                             m_PersisterFactory.jobResultsPersister(jobId),
-	                             m_ProviderFactory.jobProvider(),
-	                             autoDetectOutputStream,
-	                             logger);
+    @Override
+    public JobProvider jobProvider()
+    {
+        return m_JobProvider;
     }
+
 }

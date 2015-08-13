@@ -27,19 +27,111 @@
 
 package com.prelert.job.process.results;
 
+import java.io.IOException;
+import java.io.InputStream;
+
+import org.apache.log4j.Logger;
+
+import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.alert.AlertObserver;
+import com.prelert.job.normalisation.Renormaliser;
+import com.prelert.job.persistence.JobProvider;
+import com.prelert.job.persistence.JobResultsPersister;
+import com.prelert.utils.json.AutoDetectParseException;
 
 /**
- * A runnable class that reads the autodetect results.
+ * A runnable class that reads the autodetect process output
+ * and writes the results via the {@linkplain JobResultsPersister}
+ * passed in the constructor.
+ *
  * Has methods to register and remove alert observers.
  * Also has a method to wait for a flush to be complete.
  */
-public interface ResultsReader extends Runnable
+public class ResultsReader implements Runnable
 {
-    public void addAlertObserver(AlertObserver ao);
+    private final String m_JobId;
+    private final InputStream m_Stream;
+    private final Logger m_Logger;
+    private final AutoDetectResultsParser m_Parser;
+    private final Renormaliser m_Renormaliser;
+    private final JobResultsPersister m_ResultsPersister;
 
-    public boolean removeAlertObserver(AlertObserver ao);
+    public ResultsReader(String jobId, JobResultsPersister persister, JobProvider jobProvider,
+            InputStream stream, Logger logger)
+    {
+        m_JobId = jobId;
+        m_Stream = stream;
+        m_Logger = logger;
+        m_Parser = new AutoDetectResultsParser();
+        m_Renormaliser = new Renormaliser(m_JobId, jobProvider);
+        m_ResultsPersister = persister;
+    }
+
+    @Override
+    public void run()
+    {
+        try
+        {
+            m_Parser.parseResults(m_Stream, m_ResultsPersister, m_Renormaliser, m_Logger);
+        }
+        catch (JsonParseException e)
+        {
+            m_Logger.info("Error parsing autodetect_api output", e);
+        }
+        catch (IOException e)
+        {
+            m_Logger.info("Error parsing autodetect_api output", e);
+        }
+        catch (AutoDetectParseException e)
+        {
+            m_Logger.info("Error parsing autodetect_api output", e);
+        }
+        finally
+        {
+            try
+            {
+                // read anything left in the stream before
+                // closing the stream otherwise it the proccess
+                // tries to write more after the close it gets
+                // a SIGPIPE
+                byte [] buff = new byte [512];
+                while (m_Stream.read(buff) >= 0)
+                {
+                    // Do nothing
+                }
+                m_Stream.close();
+            }
+            catch (IOException e)
+            {
+                m_Logger.warn("Error closing result parser input stream", e);
+            }
+
+            // The renormaliser may have started another thread,
+            // so give it a chance to shut this down
+            m_Renormaliser.shutdown(m_Logger);
+        }
+
+        m_Logger.info("Parse results Complete");
+    }
+
+    public void addAlertObserver(AlertObserver ao)
+    {
+        m_Parser.addObserver(ao);
+    }
+
+    public boolean removeAlertObserver(AlertObserver ao)
+    {
+        return m_Parser.removeObserver(ao);
+    }
 
     public void waitForFlushComplete(String flushId)
-    throws InterruptedException;
+            throws InterruptedException
+    {
+        m_Parser.waitForFlushAcknowledgement(flushId);
+
+        // We also have to wait for the normaliser to become idle so that we block
+        // clients from querying results in the middle of normalisation.
+        m_Renormaliser.waitUntilIdle();
+    }
 }
+

@@ -52,9 +52,11 @@ import com.prelert.job.alert.manager.AlertManager;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.persistence.elasticsearch.ElasticsearchDataPersisterFactory;
 import com.prelert.job.persistence.elasticsearch.ElasticsearchJobProvider;
-import com.prelert.job.persistence.elasticsearch.ElasticsearchResultsReaderFactory;
+import com.prelert.job.persistence.elasticsearch.ElasticsearchJobProviderFactory;
+import com.prelert.job.persistence.elasticsearch.ElasticsearchJobResultsPeristerFactory;
 import com.prelert.job.process.ProcessCtrl;
 import com.prelert.job.process.ProcessManager;
+import com.prelert.job.process.results.ResultsReaderFactory;
 import com.prelert.job.status.elasticsearch.ElasticsearchStatusReporterFactory;
 import com.prelert.job.usage.elasticsearch.ElasticsearchUsageReporterFactory;
 import com.prelert.rs.provider.AcknowledgementWriter;
@@ -184,7 +186,9 @@ public class PrelertWebApp extends Application
 	private static ProcessManager createProcessManager(ElasticsearchJobProvider jobProvider)
 	{
 	    return new ProcessManager(jobProvider,
-                new ElasticsearchResultsReaderFactory(jobProvider),
+                new ResultsReaderFactory(
+                        new ElasticsearchJobProviderFactory(jobProvider),
+                        new ElasticsearchJobResultsPeristerFactory(jobProvider.getClient())),
                 new ElasticsearchStatusReporterFactory(jobProvider.getClient()),
                 new ElasticsearchUsageReporterFactory(jobProvider.getClient()),
                 new ElasticsearchDataPersisterFactory(jobProvider.getClient())
