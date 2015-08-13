@@ -35,7 +35,6 @@ import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobConfigurationException;
 import com.prelert.job.messages.Messages;
-import com.prelert.job.process.params.ModelDebugConfig;
 import com.prelert.job.transform.TransformConfig;
 import com.prelert.job.transform.TransformConfigs;
 import com.prelert.job.transform.exceptions.TransformConfigurationException;

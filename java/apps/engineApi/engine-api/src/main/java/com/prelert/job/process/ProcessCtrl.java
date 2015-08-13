@@ -45,7 +45,7 @@ import org.apache.log4j.Logger;
 import com.prelert.job.AnalysisLimits;
 import com.prelert.job.DataDescription;
 import com.prelert.job.JobDetails;
-import com.prelert.job.process.params.ModelDebugConfig;
+import com.prelert.job.ModelDebugConfig;
 import com.prelert.job.process.writer.AnalysisLimitsWriter;
 import com.prelert.job.process.writer.FieldConfigWriter;
 import com.prelert.job.process.writer.ModelDebugConfigWriter;

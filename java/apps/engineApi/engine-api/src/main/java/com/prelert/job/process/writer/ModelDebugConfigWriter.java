@@ -36,7 +36,7 @@ import java.util.Objects;
 
 import org.elasticsearch.common.base.Strings;
 
-import com.prelert.job.process.params.ModelDebugConfig;
+import com.prelert.job.ModelDebugConfig;
 
 public class ModelDebugConfigWriter
 {

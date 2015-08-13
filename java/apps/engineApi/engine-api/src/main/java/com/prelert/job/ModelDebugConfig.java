@@ -25,7 +25,7 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.process.params;
+package com.prelert.job;
 
 import java.util.Objects;
 
