@@ -4,7 +4,7 @@ define(function (require) {
   var moment = require('moment');
 
   var module = require('ui/modules').get('marvel', [
-    'marvel/directives'
+    'plugins/marvel/directives'
   ]);
 
   require('ui/routes')
@@ -61,15 +61,6 @@ define(function (require) {
           return dataSource;
         });
       }))
-<<<<<<< HEAD:app/views/indices/index.js
-=======
-      // .then(function () {
-      //   var dataSource = new IndicesDataSource(indexPattern, globalState.cluster, clusters);
-      //   dataSource.register(courier);
-      //   $scope.dataSources.indices = dataSource;
-      //   return dataSource;
-      // })
->>>>>>> upstream/master:public/views/indices/index.js
       .then(function () {
         var dataSource = new ClusterStatusDataSource(indexPattern, globalState.cluster, clusters);
         dataSource.register(courier);

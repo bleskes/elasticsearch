@@ -2,10 +2,6 @@ define(function (require) {
   var MarvelDataSource = require('plugins/marvel/lib/marvel_data_source');
   var _ = require('lodash');
   var moment = require('moment');
-<<<<<<< HEAD:app/lib/table_data_source.js
-  var metrics = require('marvel/lib/metrics');
-  var numeral = require('numeral');
-=======
   var metrics = require('plugins/marvel/lib/metrics');
 
   function calcSlope(data) {
@@ -18,7 +14,6 @@ define(function (require) {
     var denominator = (length * xSqSum) - (xSum * ySum);
     return numerator / denominator;
   }
->>>>>>> upstream/master:public/lib/table_data_source.js
 
   return function tableDataSourceProvider(timefilter, Private) {
     var calcAuto = Private(require('ui/time_buckets/calc_auto_interval'));
@@ -140,17 +135,6 @@ define(function (require) {
           _.each(self.metrics, function (id) {
             var metric = metrics[id];
             var data = _.map(item[id].buckets, mapChartData(metric));
-<<<<<<< HEAD:app/lib/table_data_source.js
-            var min = _.min(data, 1);
-            var max = _.max(data, 1);
-            var last = numeral(_.last(data).y).format(metric.format) + metric.units;
-            row.metrics[id] = {
-              metric: metric,
-              data: data,
-              min: min && min[1] || 0,
-              max: max && max[1] || 0,
-              last: last || 0
-=======
             var min = _.min(_.pluck(data, 'y'));
             var max = _.max(_.pluck(data, 'y'));
             var last = _.last(_.pluck(data, 'y'));
@@ -162,7 +146,6 @@ define(function (require) {
               max: max || 0,
               last: last || 0,
               slope: slope
->>>>>>> upstream/master:public/lib/table_data_source.js
             };
           }); // end each
           return row;

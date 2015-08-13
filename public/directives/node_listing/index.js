@@ -2,26 +2,18 @@ define(function (require) {
   var _ = require('lodash');
   var numeral = require('numeral');
   var moment = require('moment');
-  var module = require('modules').get('marvel/directives', []);
+  var module = require('ui/modules').get('marvel/directives', []);
   var React = require('react');
   var make = React.DOM;
 
 
-  var Table = require('marvel/directives/paginated_table/components/table');
-  var SparkLines = require('marvel/directives/marvel_sparkline');
+  var Table = require('plugins/marvel/directives/paginated_table/components/table');
 
 
   module.directive('marvelNodesListing', function () {
-    function makeTdWithPropKey(dataKey, idx) {
-      var value = _.get(this.props, dataKey.key);
-      var chartData = _.get(this.props, dataKey.chart_data);
-      var has_chart = !!dataKey.chart_data;
-      return make.td({key: idx},
-        make.div({className: (has_chart ? 'pull-right': '')}, value),
-        (has_chart ? React.createElement(SparkLines, {data: chartData}) : null));
-
+    function makeTdWithPropKey(propKey, idx) {
+      return make.td({key: idx}, this.props[propKey]);
     }
-    // FIXME make it so this pulls from the metrics list
     var initialTableOptions = {
       title: 'Nodes',
       dataKeys: [{
@@ -29,20 +21,17 @@ define(function (require) {
         sort: 1,
         title: 'Name'
       }, {
-        key: 'metrics.node_cpu_usage.last',
-        chart_data: 'metrics.node_cpu_usage.data',
+        key: 'address',
         sort: 0,
-        title: 'CPU Usage'
+        title: 'IP Address'
       }, {
-        key: 'metrics.node_heap_used.last',
-        chart_data: 'metrics.node_heap_used.data',
+        key: 'ram',
         sort: 0,
-        title: 'Heap Used'
+        title: 'RAM used'
       }, {
-        key: 'metrics.node_load.last',
-        chart_data: 'metrics.node_load.data',
+        key: 'upTime',
         sort: 0,
-        title: 'CPU Usage'
+        title: 'Time Alive'
       }]
     };
     return {
@@ -51,8 +40,9 @@ define(function (require) {
       link: function ($scope, $el) {
         var tableRowTemplate = React.createFactory(React.createClass({
           render: function() {
+            var dataProps = _.pluck(initialTableOptions.dataKeys, 'key');
             var boundTemplateFn = makeTdWithPropKey.bind(this);
-            var $tdsArr = initialTableOptions.dataKeys.map(boundTemplateFn);
+            var $tdsArr = dataProps.map(boundTemplateFn);
             return make.tr({key: this.props.name}, $tdsArr);
           }
         }));

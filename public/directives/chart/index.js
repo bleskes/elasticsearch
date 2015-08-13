@@ -1,9 +1,10 @@
 define(function (require) {
+  'use strict';
   var React = require('react');
   var _ = require('lodash');
-  var formatNumber = require('marvel/lib/format_number');
-  var jubilee = require('jubilee');
-  var module = require('modules').get('marvel/directives', []);
+  var formatNumber = require('plugins/marvel/lib/format_number');
+  var jubilee = require('jubilee/build/jubilee');
+  var module = require('ui/modules').get('plugins/marvel/directives', []);
 
   module.directive('marvelChart', function (marvelMetrics, $route, Private, courier, timefilter) {
     return {
@@ -30,7 +31,7 @@ define(function (require) {
   var MarvelSparkLine = React.createClass({
     componentDidMount: function() { this.drawJubileeChart(); },
     componentDidUpdate: function() { this.drawJubileeChart(); },
-    componentShouldUpdate: function() { return false; },
+    shouldComponentUpdate: function() { return false; },
     render: function() {
       var metric = this.props.scope.source.metric;
       var lastPoint = _.last(this.props.scope.source.data);
@@ -41,23 +42,12 @@ define(function (require) {
       return make.div(null, $title, $chartWrapper);
     },
     drawJubileeChart: function() {
-      // All of the options are set in componentWillMount, however
-      // all of the other options have to be done up here.
-      //
-      // Convince Shelby that perhaps the width auto would be good based off
-      // Actuall using the charting library
-      // Also, Why not use _.assign and such especially for options?
-      // What about prototype and such for a reduction in duplication of efforts
-      // Whenever you add an option you have to
-      // write it in 3 different places, including the accessor
-
-      this.jLineChart.width(this.getDOMNode().getBoundingClientRect().width - 40);
       d3.select(this.getDOMNode())
         .datum(this.props.scope.source.data || [])
         .call(this.jLineChart);
     },
     setData: function(data) {
-      if (data) {
+      if (data && data.length) {
         var source = this.props.scope.source;
         var metric = source.metric;
         if (metric.units === '/s') {
@@ -89,9 +79,7 @@ define(function (require) {
           tick: {
             outerTickSize: 0,
             showGridLines: true,
-            text: {
-              x: -5
-            }
+            text: { x: -5 }
           }
         })
         .xAxis({
