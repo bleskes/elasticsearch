@@ -24,43 +24,40 @@
  *                                                          *
  *                                                          *
  ************************************************************/
+package com.prelert.job.process.output.parsing;
 
-package com.prelert.job;
+import java.io.InputStream;
 
-import static org.junit.Assert.assertEquals;
+import org.apache.log4j.Logger;
 
-import org.junit.Test;
+import com.prelert.job.persistence.JobProviderFactory;
+import com.prelert.job.persistence.JobResultsPeristerFactory;
 
-public class ModelSizeStatsTest
+/**
+ * Factory method for creating new {@linkplain ResultsReader} objects
+ * to parse the autodetect output.
+ * Requires 2 other factories for creating the
+ *
+ */
+public class ResultsReaderFactory
 {
+    private JobResultsPeristerFactory m_PersisterFactory;
+    private JobProviderFactory m_ProviderFactory;
 
-    @Test
-    public void testSetMemoryStatus_GivenNull()
+    public ResultsReaderFactory(JobProviderFactory providerFactory,
+                                JobResultsPeristerFactory persisterFactory)
     {
-        ModelSizeStats stats = new ModelSizeStats();
-
-        stats.setMemoryStatus(null);
-
-        assertEquals("OK", stats.getMemoryStatus());
+        m_ProviderFactory = providerFactory;
+        m_PersisterFactory = persisterFactory;
     }
 
-    @Test
-    public void testSetMemoryStatus_GivenEmpty()
-    {
-        ModelSizeStats stats = new ModelSizeStats();
-
-        stats.setMemoryStatus("");
-
-        assertEquals("OK", stats.getMemoryStatus());
-    }
-
-    @Test
-    public void testSetMemoryStatus_GivenSoftLimit()
-    {
-        ModelSizeStats stats = new ModelSizeStats();
-
-        stats.setMemoryStatus("SOFT_LIMIT");
-
-        assertEquals("SOFT_LIMIT", stats.getMemoryStatus());
+	public ResultsReader newResultsParser(String jobId, InputStream autoDetectOutputStream,
+			Logger logger)
+	{
+	    return new ResultsReader(jobId,
+	                             m_PersisterFactory.jobResultsPersister(jobId),
+	                             m_ProviderFactory.jobProvider(),
+	                             autoDetectOutputStream,
+	                             logger);
     }
 }

@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -24,7 +24,7 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job;
+package com.prelert.job.process.output.parsing;
 
 import java.io.IOException;
 
@@ -33,32 +33,17 @@ import org.apache.log4j.Logger;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
+import com.prelert.job.process.output.FlushAcknowledgement;
 import com.prelert.utils.json.AutoDetectParseException;
 import com.prelert.utils.json.FieldNameParser;
 
-/**
- * Simple class to parse and store a flush ID.
- */
-public class FlushAcknowledgement
+public class FlushAcknowledgementParser
 {
-    /**
-     * Field Names
-     */
-    public static final String FLUSH = "flush";
+    private static final Logger LOGGER = Logger.getLogger(FlushAcknowledgementParser.class);
 
-    private static final Logger LOGGER = Logger.getLogger(FlushAcknowledgement.class);
-
-    private String m_Id;
-
-    public String getId()
+    private FlushAcknowledgementParser()
     {
-        return m_Id;
-    }
 
-
-    public void setId(String id)
-    {
-        m_Id = id;
     }
 
 
@@ -129,7 +114,7 @@ public class FlushAcknowledgement
                 throws AutoDetectParseException, JsonParseException, IOException
         {
             JsonToken token = m_Parser.nextToken();
-            if (FLUSH.equals(fieldName))
+            if (FlushAcknowledgement.FLUSH.equals(fieldName))
             {
                 ack.setId(parseAsStringOrNull(token, fieldName));
             }

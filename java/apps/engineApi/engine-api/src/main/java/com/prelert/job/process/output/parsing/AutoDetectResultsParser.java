@@ -25,7 +25,7 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.process.results;
+package com.prelert.job.process.output.parsing;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -41,11 +41,11 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
-import com.prelert.job.FlushAcknowledgement;
 import com.prelert.job.ModelSizeStats;
 import com.prelert.job.alert.AlertObserver;
 import com.prelert.job.normalisation.Renormaliser;
 import com.prelert.job.persistence.JobResultsPersister;
+import com.prelert.job.process.output.FlushAcknowledgement;
 import com.prelert.job.quantiles.Quantiles;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.results.CategoryDefinition;
@@ -230,7 +230,7 @@ public class AutoDetectResultsParser
                     switch (fieldName)
                     {
                     case Bucket.TIMESTAMP:
-                        Bucket bucket = Bucket.parseJsonAfterStartObject(parser);
+                        Bucket bucket = BucketParser.parseJsonAfterStartObject(parser);
                         persister.persistBucket(bucket);
                         persister.incrementBucketCount(1);
                         notifyObservers(bucket);
@@ -238,7 +238,7 @@ public class AutoDetectResultsParser
                         logger.debug("Bucket number " + ++bucketCount + " parsed from output");
                         break;
                     case Quantiles.QUANTILE_STATE:
-                        Quantiles quantiles = Quantiles.parseJsonAfterStartObject(parser);
+                        Quantiles quantiles = QuantilesParser.parseJsonAfterStartObject(parser);
                         persister.persistQuantiles(quantiles);
 
                         logger.debug("Quantiles parsed from output - will " +
@@ -246,7 +246,7 @@ public class AutoDetectResultsParser
                         renormaliser.renormalise(quantiles, logger);
                         break;
                     case ModelSizeStats.TYPE:
-                        ModelSizeStats modelSizeStats = ModelSizeStats.parseJsonAfterStartObject(parser);
+                        ModelSizeStats modelSizeStats = ModelSizeStatsParser.parseJsonAfterStartObject(parser);
                         logger.trace(String.format("Parsed ModelSizeStats: %d / %d / %d / %d / %d / %s",
                             modelSizeStats.getModelBytes(),
                             modelSizeStats.getTotalByFieldCount(),
@@ -258,7 +258,7 @@ public class AutoDetectResultsParser
                         persister.persistModelSizeStats(modelSizeStats);
                         break;
                     case FlushAcknowledgement.FLUSH:
-                        FlushAcknowledgement ack = FlushAcknowledgement.parseJsonAfterStartObject(parser);
+                        FlushAcknowledgement ack = FlushAcknowledgementParser.parseJsonAfterStartObject(parser);
                         logger.debug("Flush acknowledgement parsed from output for ID " +
                                     ack.getId());
                         // Commit previous writes here, effectively continuing
@@ -272,7 +272,7 @@ public class AutoDetectResultsParser
                         }
                         break;
                     case CategoryDefinition.TYPE:
-                        CategoryDefinition category = CategoryDefinition.parseJsonAfterStartObject(parser);
+                        CategoryDefinition category = CategoryDefinitionParser.parseJsonAfterStartObject(parser);
                         persister.persistCategoryDefinition(category);
                         break;
                     default:

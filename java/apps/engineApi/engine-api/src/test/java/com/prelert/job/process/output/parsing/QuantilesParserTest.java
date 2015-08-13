@@ -24,40 +24,49 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.process.results;
+package com.prelert.job.process.output.parsing;
 
-import java.io.InputStream;
+import static org.junit.Assert.*;
 
-import org.apache.log4j.Logger;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.util.Date;
 
-import com.prelert.job.persistence.JobProviderFactory;
-import com.prelert.job.persistence.JobResultsPeristerFactory;
+import org.junit.Test;
 
-/**
- * Factory method for creating new {@linkplain ResultsReader} objects
- * to parse the autodetect output.
- * Requires 2 other factories for creating the
- *
- */
-public class ResultsReaderFactory
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
+import com.prelert.job.quantiles.Quantiles;
+import com.prelert.utils.json.AutoDetectParseException;
+
+public class QuantilesParserTest
 {
-    private JobResultsPeristerFactory m_PersisterFactory;
-    private JobProviderFactory m_ProviderFactory;
-
-    public ResultsReaderFactory(JobProviderFactory providerFactory,
-                                JobResultsPeristerFactory persisterFactory)
+    @Test
+    public void testParseJson()
+            throws JsonParseException, IOException, AutoDetectParseException
     {
-        m_ProviderFactory = providerFactory;
-        m_PersisterFactory = persisterFactory;
+        String input = "{\"timestamp\": 1,"
+                     + " \"quantileState\": \"quantile-state\"}";
+        JsonParser parser = createJsonParser(input);
+        parser.nextToken();
+
+        Quantiles quantile = QuantilesParser.parseJson(parser);
+        assertEquals("quantile-state", quantile.getState());
+        assertEquals(new Date(1000l), quantile.getTimestamp());
+        assertEquals(Quantiles.QUANTILES_ID, quantile.getId());
+        assertEquals(Quantiles.CURRENT_VERSION, quantile.getVersion());
+
+
+        assertEquals(JsonToken.END_OBJECT, parser.getCurrentToken());
     }
 
-	public ResultsReader newResultsParser(String jobId, InputStream autoDetectOutputStream,
-			Logger logger)
-	{
-	    return new ResultsReader(jobId,
-	                             m_PersisterFactory.jobResultsPersister(jobId),
-	                             m_ProviderFactory.jobProvider(),
-	                             autoDetectOutputStream,
-	                             logger);
+    private static final JsonParser createJsonParser(String input) throws JsonParseException,
+            IOException
+    {
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(input.getBytes());
+        return new JsonFactory().createParser(inputStream);
     }
+
 }

@@ -24,43 +24,29 @@
  *                                                          *
  *                                                          *
  ************************************************************/
+package com.prelert.job.process.output;
 
-package com.prelert.job;
-
-import static org.junit.Assert.assertEquals;
-
-import org.junit.Test;
-
-public class ModelSizeStatsTest
+/**
+ * Simple class to parse and store a flush ID.
+ */
+public class FlushAcknowledgement
 {
+    /**
+     * Field Names
+     */
+    public static final String FLUSH = "flush";
 
-    @Test
-    public void testSetMemoryStatus_GivenNull()
+    private String m_Id;
+
+    public String getId()
     {
-        ModelSizeStats stats = new ModelSizeStats();
-
-        stats.setMemoryStatus(null);
-
-        assertEquals("OK", stats.getMemoryStatus());
+        return m_Id;
     }
 
-    @Test
-    public void testSetMemoryStatus_GivenEmpty()
+
+    public void setId(String id)
     {
-        ModelSizeStats stats = new ModelSizeStats();
-
-        stats.setMemoryStatus("");
-
-        assertEquals("OK", stats.getMemoryStatus());
-    }
-
-    @Test
-    public void testSetMemoryStatus_GivenSoftLimit()
-    {
-        ModelSizeStats stats = new ModelSizeStats();
-
-        stats.setMemoryStatus("SOFT_LIMIT");
-
-        assertEquals("SOFT_LIMIT", stats.getMemoryStatus());
+        m_Id = id;
     }
 }
+

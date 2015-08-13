@@ -24,7 +24,7 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.results;
+package com.prelert.job.process.output.parsing;
 
 import static org.junit.Assert.*;
 
@@ -40,9 +40,11 @@ import org.junit.Test;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
+import com.prelert.job.process.output.parsing.InfluenceParser;
+import com.prelert.job.results.Influence;
 import com.prelert.utils.json.AutoDetectParseException;
 
-public class InfluencesTest
+public class InfluenceParserTest
 {
     private class InfluenceFieldComparator implements Comparator<Influence>
     {
@@ -62,7 +64,7 @@ public class InfluencesTest
 
         JsonParser parser = createJsonParser(json);
         parser.nextToken();
-        List<Influence> infs = Influences.parseJson(parser);
+        List<Influence> infs = InfluenceParser.parseJson(parser);
 
         assertEquals(1, infs.size());
         Influence inf = infs.get(0);
@@ -82,7 +84,7 @@ public class InfluencesTest
 
         JsonParser parser = createJsonParser(json);
         parser.nextToken();
-        List<Influence> infs = Influences.parseJson(parser);
+        List<Influence> infs = InfluenceParser.parseJson(parser);
 
         assertEquals(1, infs.size());
         Influence inf = infs.get(0);
@@ -101,7 +103,7 @@ public class InfluencesTest
 
         JsonParser parser = createJsonParser(json);
         parser.nextToken();
-        Influences.parseJson(parser);
+        InfluenceParser.parseJson(parser);
     }
 
     @Test
@@ -114,7 +116,7 @@ public class InfluencesTest
 
         JsonParser parser = createJsonParser(json);
         parser.nextToken();
-        List<Influence> infs = Influences.parseJson(parser);
+        List<Influence> infs = InfluenceParser.parseJson(parser);
 
         assertEquals(2, infs.size());
         Collections.sort(infs, new InfluenceFieldComparator());

@@ -27,19 +27,11 @@
 
 package com.prelert.job.results;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 
-import org.apache.log4j.Logger;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
-import com.prelert.utils.json.AutoDetectParseException;
-import com.prelert.utils.json.FieldNameParser;
 
 /**
  * Anomaly Cause POJO.
@@ -68,8 +60,6 @@ public class AnomalyCause
      * Metric Results
      */
     public static final String FIELD_NAME = "fieldName";
-
-    private static final Logger LOGGER = Logger.getLogger(AnomalyCause.class);
 
     private double m_Probability;
     private String m_ByFieldName;
@@ -218,93 +208,6 @@ public class AnomalyCause
     public void setInfluences(List<Influence> influences)
     {
         this.m_Influences = influences;
-    }
-
-    /**
-     * Create a new <code>AnomalyCause</code> and populate it from the JSON parser.
-     * The parser must be pointing at the start of the object then all the object's
-     * fields are read and if they match the property names then the appropriate
-     * members are set.
-     *
-     * Does not validate that all the properties (or any) have been set but if
-     * parsing fails an exception will be thrown.
-     *
-     * @param parser The JSON Parser should be pointing to the start of the object,
-     * when the function returns it will be pointing to the end.
-     * @return The new AnomalyCause
-     * @throws JsonParseException
-     * @throws IOException
-     * @throws AutoDetectParseException
-     */
-    public static AnomalyCause parseJson(JsonParser parser)
-    throws JsonParseException, IOException, AutoDetectParseException
-    {
-        AnomalyCause cause = new AnomalyCause();
-        AnomalyCauseJsonParser anomalyCauseJsonParser = new AnomalyCauseJsonParser(parser, LOGGER);
-        anomalyCauseJsonParser.parse(cause);
-        return cause;
-    }
-
-    private static class AnomalyCauseJsonParser extends FieldNameParser<AnomalyCause>
-    {
-
-        public AnomalyCauseJsonParser(JsonParser jsonParser, Logger logger)
-        {
-            super("AnomalyCause", jsonParser, logger);
-        }
-
-        @Override
-        protected void handleFieldName(String fieldName, AnomalyCause cause)
-                throws AutoDetectParseException, JsonParseException, IOException
-        {
-            JsonToken token = m_Parser.nextToken();
-            switch (fieldName)
-            {
-            case PROBABILITY:
-                cause.setProbability(parseAsDoubleOrZero(token, fieldName));
-                break;
-            case BY_FIELD_NAME:
-                cause.setByFieldName(parseAsStringOrNull(token, fieldName));
-                break;
-            case BY_FIELD_VALUE:
-                cause.setByFieldValue(parseAsStringOrNull(token, fieldName));
-                break;
-            case PARTITION_FIELD_NAME:
-                cause.setPartitionFieldName(parseAsStringOrNull(token, fieldName));
-                break;
-            case PARTITION_FIELD_VALUE:
-                cause.setPartitionFieldValue(parseAsStringOrNull(token, fieldName));
-                break;
-            case FUNCTION:
-                cause.setFunction(parseAsStringOrNull(token, fieldName));
-                break;
-            case FUNCTION_DESCRIPTION:
-                cause.setFunctionDescription(parseAsStringOrNull(token, fieldName));
-                break;
-            case TYPICAL:
-                cause.setTypical(parseAsDoubleOrZero(token, fieldName));
-                break;
-            case ACTUAL:
-                cause.setActual(parseAsDoubleOrZero(token, fieldName));
-                break;
-            case FIELD_NAME:
-                cause.setFieldName(parseAsStringOrNull(token, fieldName));
-                break;
-            case OVER_FIELD_NAME:
-                cause.setOverFieldName(parseAsStringOrNull(token, fieldName));
-                break;
-            case OVER_FIELD_VALUE:
-                cause.setOverFieldValue(parseAsStringOrNull(token, fieldName));
-                break;
-            case INFLUENCES:
-                cause.setInfluences(Influences.parseJson(m_Parser));
-                break;
-            default:
-                LOGGER.warn(String.format("Parse error unknown field in Anomaly Cause %s:%s",
-                        fieldName, token.asString()));
-                break;
-            }
-        }
     }
 
     @Override

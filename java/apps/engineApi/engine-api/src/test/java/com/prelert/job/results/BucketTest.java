@@ -27,26 +27,17 @@
 
 package com.prelert.job.results;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.List;
 
 import org.junit.Test;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonParser;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.results.Detector;
-import com.prelert.utils.json.AutoDetectParseException;
 
 public class BucketTest
 {
@@ -251,52 +242,4 @@ public class BucketTest
         assertTrue(bucket2.equals(bucket1));
     }
 
-    @Test
-    public void testParseJson() throws JsonParseException, IOException, AutoDetectParseException
-    {
-        String json = "{"
-                + "\"timestamp\" : 1369437000,"
-                + "\"maxNormalizedProbability\" : 2.0,"
-                + "\"anomalyScore\" : 50.0,"
-                + "\"id\" : \"1369437000\","
-                + "\"rawAnomalyScore\" : 5.0,"
-                + "\"eventCount\" : 1693,"
-                + "\"isInterim\" : false,"
-                + "\"influencers\" : ["
-                    + "{\"probability\":0.9,\"initialScore\":97.1948,\"influencerFieldName\":\"src_ip\",\"influencerFieldValue\":\"23.28.243.150\"},"
-                    + "{\"probability\":0.4,\"initialScore\":12.1948,\"influencerFieldName\":\"dst_ip\",\"influencerFieldValue\":\"23.28.243.1\"}"
-                  + "],"
-                + "\"detectors\" : []"
-                + "}";
-
-        ByteArrayInputStream inputStream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
-        JsonParser parser = new JsonFactory().createParser(inputStream);
-
-        parser.nextToken();
-        Bucket b = Bucket.parseJson(parser);
-        assertEquals(1369437000000l, b.getTimestamp().getTime());
-        assertEquals(2.0, b.getMaxNormalizedProbability(), 0.0001);
-        assertEquals(50.0, b.getAnomalyScore(), 0.0001);
-        assertEquals("1369437000", b.getId());
-        assertEquals(5.0, b.getRawAnomalyScore(), 0.001);
-        assertEquals(0, b.getRecordCount());
-        assertEquals(0, b.getDetectors().size());
-        assertEquals(1693, b.getEventCount());
-        assertFalse(b.isInterim());
-
-        List<Influencer> influencers = b.getInfluencers();
-        assertEquals(2, influencers.size());
-
-        Influencer inf = influencers.get(0);
-        assertEquals("src_ip", inf.getInfluencerFieldName());
-        assertEquals("23.28.243.150", inf.getInfluencerFieldValue());
-        assertEquals(0.9, inf.getProbability(), 0.0001);
-        assertEquals(97.1948, inf.getInitialScore(), 0.0001);
-
-        inf = influencers.get(1);
-        assertEquals(0.4, inf.getProbability(), 0.0001);
-        assertEquals(12.1948, inf.getInitialScore(), 0.0001);
-        assertEquals("dst_ip", inf.getInfluencerFieldName());
-        assertEquals("23.28.243.1", inf.getInfluencerFieldValue());
-    }
 }

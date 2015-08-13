@@ -24,43 +24,50 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-
-package com.prelert.job;
+package com.prelert.job.process.output.parsing;
 
 import static org.junit.Assert.assertEquals;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+
 import org.junit.Test;
 
-public class ModelSizeStatsTest
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonParser;
+import com.prelert.job.ModelSizeStats;
+import com.prelert.utils.json.AutoDetectParseException;
+
+public class ModelSizeStatsParserTest
 {
-
     @Test
-    public void testSetMemoryStatus_GivenNull()
+    public void testParse() throws JsonParseException, IOException, AutoDetectParseException
     {
-        ModelSizeStats stats = new ModelSizeStats();
+        String input = "{\"modelSizeStats\": 1,"
+                + "\"totalByFieldCount\" : 2,"
+                + "\"totalOverFieldCount\" : 3,"
+                + "\"totalPartitionFieldCount\" : 4,"
+                + "\"bucketAllocationFailuresCount\" : 5,"
+                + "\"memoryStatus\" : \"OK\""
+                + "}";
+        JsonParser parser = createJsonParser(input);
+        parser.nextToken();
 
-        stats.setMemoryStatus(null);
+        ModelSizeStats stats = ModelSizeStatsParser.parseJson(parser);
 
+        assertEquals(1L, stats.getModelBytes());
+        assertEquals(2L, stats.getTotalByFieldCount());
+        assertEquals(3L, stats.getTotalOverFieldCount());
+        assertEquals(4L, stats.getTotalPartitionFieldCount());
+        assertEquals(5L, stats.getBucketAllocationFailuresCount());
         assertEquals("OK", stats.getMemoryStatus());
     }
 
-    @Test
-    public void testSetMemoryStatus_GivenEmpty()
+    private static final JsonParser createJsonParser(String input) throws JsonParseException,
+            IOException
     {
-        ModelSizeStats stats = new ModelSizeStats();
-
-        stats.setMemoryStatus("");
-
-        assertEquals("OK", stats.getMemoryStatus());
-    }
-
-    @Test
-    public void testSetMemoryStatus_GivenSoftLimit()
-    {
-        ModelSizeStats stats = new ModelSizeStats();
-
-        stats.setMemoryStatus("SOFT_LIMIT");
-
-        assertEquals("SOFT_LIMIT", stats.getMemoryStatus());
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(input.getBytes());
+        return new JsonFactory().createParser(inputStream);
     }
 }

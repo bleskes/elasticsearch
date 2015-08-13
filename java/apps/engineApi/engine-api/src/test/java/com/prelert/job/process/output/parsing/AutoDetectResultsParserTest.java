@@ -25,7 +25,7 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.process.results;
+package com.prelert.job.process.output.parsing;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -54,7 +54,7 @@ import com.prelert.job.alert.AlertObserver;
 import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.normalisation.Renormaliser;
 import com.prelert.job.persistence.JobResultsPersister;
-import com.prelert.job.process.results.AutoDetectResultsParser;
+import com.prelert.job.process.output.parsing.AutoDetectResultsParser;
 import com.prelert.job.quantiles.Quantiles;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.results.CategoryDefinition;

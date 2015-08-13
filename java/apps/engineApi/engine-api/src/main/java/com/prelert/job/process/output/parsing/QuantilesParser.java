@@ -24,34 +24,33 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.results;
+package com.prelert.job.process.output.parsing;
 
 import java.io.IOException;
+import java.util.Date;
 
 import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
+import com.prelert.job.quantiles.Quantiles;
 import com.prelert.utils.json.AutoDetectParseException;
 import com.prelert.utils.json.FieldNameParser;
 
-/**
- * Static methods for {@linkplain Influencers}
- *
- */
-public class Influencers
+public class QuantilesParser
 {
-    private static final Logger LOGGER = Logger.getLogger(Influencers.class);
+    private static final Logger LOGGER = Logger.getLogger(QuantilesParser.class);
 
-    private Influencers()
+    private QuantilesParser()
     {
     }
 
+
     /**
-     * Create a new <code>List&ltInfluencer&gt</code> and populate it from the JSON parser.
+     * Create a new <code>Quantiles</code> and populate it from the JSON parser.
      * The parser must be pointing at the start of the object then all the object's
-     * fields are read and if they match the property names then the appropriate
+     * fields are read and if they match the property names the appropriate
      * members are set.
      *
      * Does not validate that all the properties (or any) have been set but if
@@ -59,57 +58,75 @@ public class Influencers
      *
      * @param parser The JSON Parser should be pointing to the start of the object,
      * when the function returns it will be pointing to the end.
-     * @return List of {@linkplain Influence}
+     * @return The new quantiles
      * @throws JsonParseException
      * @throws IOException
      * @throws AutoDetectParseException
      */
-    public static Influencer parseJson(JsonParser parser)
+    public static Quantiles parseJson(JsonParser parser)
     throws JsonParseException, IOException, AutoDetectParseException
     {
-        Influencer influencer = new Influencer();
-        InfluencerJsonParser influencerJsonParser = new InfluencerJsonParser(parser, LOGGER);
-        influencerJsonParser.parse(influencer);
-
-        return influencer;
+        Quantiles quantiles = new Quantiles();
+        QuantilesJsonParser quantilesJsonParser = new QuantilesJsonParser(parser, LOGGER);
+        quantilesJsonParser.parse(quantiles);
+        return quantiles;
     }
 
-    private static class InfluencerJsonParser extends FieldNameParser<Influencer>
+
+    /**
+     * Create a new <code>Quantiles</code> and populate it from the JSON parser.
+     * The parser must be pointing at the first token inside the object.  It
+     * is assumed that prior code has validated that the previous token was
+     * the start of an object.  Then all the object's fields are read and if
+     * they match the property names the appropriate members are set.
+     *
+     * Does not validate that all the properties (or any) have been set but if
+     * parsing fails an exception will be thrown.
+     *
+     * @param parser The JSON Parser should be pointing to the start of the object,
+     * when the function returns it will be pointing to the end.
+     * @return The new quantiles
+     * @throws JsonParseException
+     * @throws IOException
+     * @throws AutoDetectParseException
+     */
+    public static Quantiles parseJsonAfterStartObject(JsonParser parser)
+    throws JsonParseException, IOException, AutoDetectParseException
+    {
+        Quantiles quantiles = new Quantiles();
+        QuantilesJsonParser quantilesJsonParser = new QuantilesJsonParser(parser, LOGGER);
+        quantilesJsonParser.parseAfterStartObject(quantiles);
+        return quantiles;
+    }
+
+    private static class QuantilesJsonParser extends FieldNameParser<Quantiles>
     {
 
-        public InfluencerJsonParser(JsonParser jsonParser, Logger logger)
+        public QuantilesJsonParser(JsonParser jsonParser, Logger logger)
         {
-            super("Influencer", jsonParser, logger);
+            super("Quantiles", jsonParser, logger);
         }
 
         @Override
-        protected void handleFieldName(String fieldName, Influencer influencer)
+        protected void handleFieldName(String fieldName, Quantiles quantiles)
                 throws AutoDetectParseException, JsonParseException, IOException
         {
             JsonToken token = m_Parser.nextToken();
             switch (fieldName)
             {
-            case Influencer.PROBABILITY:
-                influencer.setProbability(parseAsDoubleOrZero(token, fieldName));
+            case Quantiles.TIMESTAMP:
+                long seconds = parseAsLongOrZero(token, fieldName);
+                // convert seconds to ms
+                quantiles.setTimestamp(new Date(seconds * 1000));
                 break;
-            case Influencer.INITIAL_SCORE:
-                influencer.setInitialScore(parseAsDoubleOrZero(token, fieldName));
-                break;
-            case Influencer.INFLUENCER_FIELD_NAME:
-                influencer.setInfluencerFieldName(parseAsStringOrNull(token, fieldName));
-                break;
-            case Influencer.INFLUENCER_VALUE_NAME:
-                influencer.setInfluencerFieldValue(parseAsStringOrNull(token, fieldName));
+            case Quantiles.QUANTILE_STATE:
+                quantiles.setState(parseAsStringOrNull(token, fieldName));
                 break;
             default:
-                LOGGER.warn(String.format("Parse error unknown field in Influencer %s:%s",
+                LOGGER.warn(String.format("Parse error unknown field in Quantiles %s:%s",
                         fieldName, token.asString()));
                 break;
             }
         }
-
-
-
     }
 }
-
