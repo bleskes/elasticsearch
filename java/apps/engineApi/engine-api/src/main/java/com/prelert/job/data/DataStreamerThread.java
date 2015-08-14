@@ -34,11 +34,8 @@ import java.util.Optional;
 import org.apache.log4j.Logger;
 
 import com.prelert.job.DataCounts;
-import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobException;
 import com.prelert.job.process.params.DataLoadParams;
-import com.prelert.rs.data.ApiError;
-import com.prelert.rs.data.DataPostResponse;
 
 public class DataStreamerThread extends Thread
 {
@@ -130,39 +127,5 @@ public class DataStreamerThread extends Thread
     public String getJobId()
     {
         return m_JobId;
-    }
-
-
-    public DataPostResponse toDataPostResult()
-    {
-        if (this.getDataCounts() != null)
-        {
-            return new DataPostResponse(this.getJobId(), this.getDataCounts());
-        }
-        else if (this.getJobException().isPresent())
-        {
-            JobException e = this.getJobException().get();
-            return new DataPostResponse(this.getJobId(), ApiError.fromJobException(e));
-        }
-        else
-        {
-            ApiError error = new ApiError();
-            if (this.getIOException().isPresent())
-            {
-                IOException e = this.getIOException().get();
-                error.setErrorCode(ErrorCodes.UNKNOWN_ERROR);
-                error.setMessage(e.getMessage());
-                if (e.getCause() != null)
-                {
-                    error.setCause(e.getCause());
-                }
-                else
-                {
-                    error.setCause(e);
-                }
-            }
-
-            return new DataPostResponse(this.getJobId(), error);
-        }
     }
 }

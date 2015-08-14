@@ -24,61 +24,43 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.alert;
 
-import com.prelert.job.results.Bucket;
+package com.prelert.job.errorcodes;
 
-/**
- * The observer class for alerting
- *
- * Abstract class, concrete sub-classes should implement {@linkplain #fire(Bucket)}
- */
-public abstract class AlertObserver
-{
-    /** If null it means it was not specified. */
-    private final Double m_AnomalyThreshold;
+import org.hamcrest.Description;
+import org.junit.internal.matchers.TypeSafeMatcher;
 
-    /** If null it means it was not specified. */
-    private final Double m_NormalisedThreshold;
+import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.errorcodes.HasErrorCode;
 
-    public AlertObserver(Double normlizedProbThreshold, Double anomalyThreshold)
+public class ErrorCodeMatcher extends TypeSafeMatcher<HasErrorCode> {
+
+    private ErrorCodes m_ExpectedErrorCode;
+    private ErrorCodes m_ActualErrorCode;
+
+    public static ErrorCodeMatcher hasErrorCode(ErrorCodes expected)
     {
-        m_AnomalyThreshold = anomalyThreshold;
-        m_NormalisedThreshold = normlizedProbThreshold;
+        return new ErrorCodeMatcher(expected);
     }
 
-    /**
-     * Return true if the alert should be fired for these values.
-     *
-     * @param anomalyScore
-     * @param normalisedProb
-     * @return
-     */
-    public boolean evaluate(double anomalyScore, double normalisedProb)
+    private ErrorCodeMatcher(ErrorCodes expectedErrorCode)
     {
-        return isGreaterOrEqual(normalisedProb, m_NormalisedThreshold)
-                || isGreaterOrEqual(anomalyScore, m_AnomalyThreshold);
+        m_ExpectedErrorCode = expectedErrorCode;
     }
 
-    private static boolean isGreaterOrEqual(double value, Double threshold)
+    @Override
+    public void describeTo(Description description)
     {
-        return threshold == null ? false : value >= threshold;
+        description.appendValue(m_ActualErrorCode)
+                .appendText(" was found instead of ")
+                .appendValue(m_ExpectedErrorCode);
     }
 
-    public boolean isAnomalyScoreAlert(double anomalyScore)
+    @Override
+    public boolean matchesSafely(HasErrorCode item)
     {
-        return isGreaterOrEqual(anomalyScore, m_AnomalyThreshold);
+        m_ActualErrorCode = item.getErrorCode();
+        return m_ActualErrorCode.equals(m_ExpectedErrorCode);
     }
 
-    /**
-     * Fire the alert with the bucket the alert came from
-     *
-     * @param bucket
-     */
-    public abstract void fire(Bucket bucket);
-
-    public double getNormalisedProbThreshold()
-    {
-        return m_NormalisedThreshold == null ? 101.0 : m_NormalisedThreshold;
-    }
 }

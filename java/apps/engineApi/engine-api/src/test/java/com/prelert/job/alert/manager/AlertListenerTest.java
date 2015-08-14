@@ -52,7 +52,6 @@ import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.results.Detector;
-import com.prelert.rs.resources.Buckets;
 
 public class AlertListenerTest
 {
@@ -217,9 +216,9 @@ public class AlertListenerTest
         URI uri = UriBuilder.fromUri(baseUri)
                                 .path("results")
                                 .path("foo")
-                                .path(Buckets.ENDPOINT)
+                                .path("buckets")
                                 .path(bucket.getId())
-                                .queryParam(Buckets.EXPAND_QUERY_PARAM, true)
+                                .queryParam("expand", true)
                                 .build();
         assertEquals(uri, argument.getValue().getUri());
     }

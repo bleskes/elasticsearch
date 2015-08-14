@@ -75,8 +75,8 @@ public class AlertsLongPollTest extends ServiceTest
         m_ExpectedException.expectMessage("Invalid alert parameters."
                 + " score (-0.01) must be in the range 0-100");
         m_ExpectedException.expect(
-
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_THRESHOLD_ARGUMENT));
+
         m_Alerts.pollJob(JOB_ID, 90, -0.01, null, mock(AsyncResponse.class));
     }
 

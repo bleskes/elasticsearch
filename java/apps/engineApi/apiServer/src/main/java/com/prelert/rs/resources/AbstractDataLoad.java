@@ -234,7 +234,7 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
         MultiDataPostResult results = new MultiDataPostResult();
         for (DataStreamerThread thread : threads)
         {
-            results.addResult(thread.toDataPostResult());
+            results.addResult(toDataPostResult(thread));
         }
 
         return results;
@@ -387,6 +387,40 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
         jobManager().closeJob(jobId);
         LOGGER.debug("Process finished successfully, Job Id = '" + jobId + "'");
         return Response.ok().entity(new Acknowledgement()).build();
+    }
+
+
+    public DataPostResponse toDataPostResult(DataStreamerThread dataStreamer)
+    {
+        if (dataStreamer.getDataCounts() != null)
+        {
+            return new DataPostResponse(dataStreamer.getJobId(), dataStreamer.getDataCounts());
+        }
+        else if (dataStreamer.getJobException().isPresent())
+        {
+            JobException e = dataStreamer.getJobException().get();
+            return new DataPostResponse(dataStreamer.getJobId(), ApiError.fromJobException(e));
+        }
+        else
+        {
+            ApiError error = new ApiError();
+            if (dataStreamer.getIOException().isPresent())
+            {
+                IOException e = dataStreamer.getIOException().get();
+                error.setErrorCode(ErrorCodes.UNKNOWN_ERROR);
+                error.setMessage(e.getMessage());
+                if (e.getCause() != null)
+                {
+                    error.setCause(e.getCause());
+                }
+                else
+                {
+                    error.setCause(e);
+                }
+            }
+
+            return new DataPostResponse(dataStreamer.getJobId(), error);
+        }
     }
 
     protected abstract boolean shouldPersist();
