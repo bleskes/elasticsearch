@@ -10,6 +10,7 @@ define(function (require) {
 
   var Table = require('plugins/marvel/directives/paginated_table/components/table');
   var MarvelChart = require('plugins/marvel/directives/chart/chart_component');
+  var ToggleOnClickComponent = require('plugins/marvel/directives/node_listing/toggle_on_click_component');
 
 
   module.directive('marvelNodesListing', function () {
@@ -22,14 +23,20 @@ define(function (require) {
           make.div({className: 'small'}, '192.168.1.1'));
       }
       if (_.isObject(value) && value.metric) {
+        var formatNumber = (function(metric) {
+          return function(val) {
+            if (!metric.format) { return val; }
+            return numeral(val).format(metric.format) + metric.units;
+          }
+        }(value.metric));
         var metric = value.metric;
-        var rawValue = (value.metric.format) ? numeral(value.last).format(value.metric.format) : value.last;
+        var rawValue = formatNumber(value.last);
         $content = make.div(null,
           make.div({className: 'big inline'}, rawValue),
           make.i({className: 'inline big fa fa-long-arrow-' + (value.slope > 0 ? 'up' : 'down')}),
           make.div({className: 'inline'},
-            make.div({className: 'small'}, value.max + ' max'),
-            make.div({className: 'small'}, value.min + ' min')));
+            make.div({className: 'small'}, formatNumber(value.max) + ' max'),
+            make.div({className: 'small'}, formatNumber(value.min) + ' min')));
       }
       return make.td({key: idx}, $content);
     }
@@ -51,29 +58,12 @@ define(function (require) {
         title: 'RAM used'
       }]
     };
-    function makeCharts() {
-      var count = 3;
-      var $charts = [];
-      while(--count >= 0) {
-        $charts.push(React.createElement(MarvelChart, {
-          className: 'col-md-4 marvel-chart',
-          data: makeSampleData(),
-          source: {metric: metrics.load_average_1m}
-        }));
-      }
-      return $charts;
-    }
-    function makeSampleData() {
-      var count = 60;
-      var data = [];
-      var date = (new Date()).getTime();
-      while(--count > 0) {
-        data.push({
-          x: date + (1000*60)*count,
-          y: Math.round(100 * Math.random())
-        });
-      }
-      return data;
+    function makeChart(data, metric) {
+      return React.createElement(MarvelChart, {
+        className: 'col-md-4 marvel-chart',
+        data: data,
+        source: {metric: metric}
+      });
     }
     return {
       restrict: 'E',
@@ -87,8 +77,12 @@ define(function (require) {
               key: 'stats',
               className: 'big'
             };
+            var that = this;
+            var $chartsArr = _.keys(this.props.metrics).map(function(key) {
+              var source = that.props.metrics[key];
+              return makeChart(source.data, source.metric);
+            });
             var numCols = initialTableOptions.dataKeys.length;
-            var $chartsArr = makeCharts();
             return make.tr({className: 'big no-border', key: 'row-' + this.props.name},
               make.td({colSpan: numCols, key: 'table-td-wrap'},
                 make.table({className: 'nested-table', key: 'table'},
@@ -110,28 +104,6 @@ define(function (require) {
         React.render($table, $el[0]);
       }
     };
-  });
-  var ToggleOnClickComponent = React.createClass({
-    getInitialState: function() {
-      return { visible: this.props.initiallyVisible || false };
-    },
-    toggleVisibility: function() {
-      this.setState({visible: !this.state.visible});
-    },
-    render: function() {
-      var activator = this.props.activator;
-      var visible = this.state.visible;
-      var content = visible ? this.props.content : null;
-
-      var wrapperStr = this.props.elWrapper || null;
-      wrapperStr = wrapperStr.split('.');
-
-      var wrapper = wrapperStr.shift();
-      return make[wrapper]({
-        className: wrapperStr.join(' '),
-        onClick: this.toggleVisibility
-      }, activator, content);
-    }
   });
 });
 

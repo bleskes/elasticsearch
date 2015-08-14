@@ -40,9 +40,19 @@ marvel-chart {
     > line { stroke: #999; }
     > path { stroke: #444; }
   }
-  .axis.y > path { display: none; }
-  .axis.y > line { stroke: #d1d2d6; }
-  .axis.x > line { stroke: #eff0f1; }
-  .axis.x .domain { display: block; }
+  .axis {
+    text {
+      font-size: 13px;
+      color: #444;
+    }
+    .y {
+      > path { display: none; }
+      > line { stroke: #d1d2d6; }
+    }
+    .x {
+      > line { stroke: #eff0f1; }
+      .domain { display: block; }
+    }
+  }
 }
 
