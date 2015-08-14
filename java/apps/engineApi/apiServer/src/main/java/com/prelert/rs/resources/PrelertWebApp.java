@@ -51,14 +51,14 @@ import org.apache.log4j.Logger;
 import com.prelert.job.alert.manager.AlertManager;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.persistence.elasticsearch.ElasticsearchDataPersisterFactory;
+import com.prelert.job.persistence.elasticsearch.ElasticsearchJobDataCountsPersisterFactory;
 import com.prelert.job.persistence.elasticsearch.ElasticsearchJobProvider;
 import com.prelert.job.persistence.elasticsearch.ElasticsearchJobProviderFactory;
 import com.prelert.job.persistence.elasticsearch.ElasticsearchJobResultsPeristerFactory;
+import com.prelert.job.persistence.elasticsearch.ElasticsearchUsagePersisterFactory;
 import com.prelert.job.process.ProcessCtrl;
 import com.prelert.job.process.autodetect.ProcessManager;
 import com.prelert.job.process.output.parsing.ResultsReaderFactory;
-import com.prelert.job.status.elasticsearch.ElasticsearchStatusReporterFactory;
-import com.prelert.job.usage.elasticsearch.ElasticsearchUsageReporterFactory;
 import com.prelert.rs.provider.AcknowledgementWriter;
 import com.prelert.rs.provider.AlertMessageBodyWriter;
 import com.prelert.rs.provider.DataCountsWriter;
@@ -189,8 +189,8 @@ public class PrelertWebApp extends Application
                 new ResultsReaderFactory(
                         new ElasticsearchJobProviderFactory(jobProvider),
                         new ElasticsearchJobResultsPeristerFactory(jobProvider.getClient())),
-                new ElasticsearchStatusReporterFactory(jobProvider.getClient()),
-                new ElasticsearchUsageReporterFactory(jobProvider.getClient()),
+                new ElasticsearchJobDataCountsPersisterFactory(jobProvider.getClient()),
+                new ElasticsearchUsagePersisterFactory(jobProvider.getClient()),
                 new ElasticsearchDataPersisterFactory(jobProvider.getClient())
         );
 	}

@@ -67,8 +67,10 @@ import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.persistence.DataPersisterFactory;
+import com.prelert.job.persistence.JobDataCountsPersisterFactory;
 import com.prelert.job.persistence.JobDataPersister;
 import com.prelert.job.persistence.JobProvider;
+import com.prelert.job.persistence.UsagePersisterFactory;
 import com.prelert.job.process.ProcessCtrl;
 import com.prelert.job.process.autodetect.ProcessAndDataDescription.Action;
 import com.prelert.job.process.exceptions.ClosedJobException;
@@ -88,9 +90,8 @@ import com.prelert.job.quantiles.Quantiles;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.job.status.StatusReporter;
-import com.prelert.job.status.StatusReporterFactory;
 import com.prelert.job.transform.TransformConfigs;
-import com.prelert.job.usage.UsageReporterFactory;
+import com.prelert.job.usage.UsageReporter;
 
 /**
  * Manages the native autodetect processes channelling
@@ -141,14 +142,14 @@ public class ProcessManager
     private JobProvider m_JobProvider;
 
     private ResultsReaderFactory m_ResultsReaderFactory;
-    private StatusReporterFactory m_StatusReporterFactory;
-    private UsageReporterFactory m_UsageReporterFactory;
+    private JobDataCountsPersisterFactory m_dataCountsPersisterFactory;
+    private UsagePersisterFactory m_UsagePersisterFactory;
     private DataPersisterFactory m_DataPersisterFactory;
 
     public ProcessManager(JobProvider jobProvider,
                             ResultsReaderFactory readerFactory,
-                            StatusReporterFactory statusReporterFactory,
-                            UsageReporterFactory usageFactory,
+                            JobDataCountsPersisterFactory dataCountsPersisterFactory,
+                            UsagePersisterFactory usagePersisterFactory,
                             DataPersisterFactory dataPersisterFactory)
     {
         m_ProcessCtrl = new ProcessCtrl();
@@ -160,9 +161,9 @@ public class ProcessManager
 
         m_JobProvider = jobProvider;
         m_ResultsReaderFactory = readerFactory;
-        m_UsageReporterFactory = usageFactory;
+        m_UsagePersisterFactory = usagePersisterFactory;
 
-        m_StatusReporterFactory = statusReporterFactory;
+        m_dataCountsPersisterFactory = dataCountsPersisterFactory;
 
         m_DataPersisterFactory = dataPersisterFactory;
 
@@ -450,8 +451,11 @@ public class ProcessManager
                 nativeProcess, jobId,
                 job.getDataDescription(), job.getTimeout(), job.getAnalysisConfig(),
                 new TransformConfigs(job.getTransforms()), logger,
-                m_StatusReporterFactory.newStatusReporter(jobId, job.getCounts(),
-                        m_UsageReporterFactory.newUsageReporter(jobId, logger),
+                new StatusReporter(jobId,
+                        new UsageReporter(jobId,
+                                          m_UsagePersisterFactory.getInstance(logger),
+                                          logger),
+                         m_dataCountsPersisterFactory.getInstance(logger),
                          logger),
                 m_ResultsReaderFactory.newResultsParser(jobId,
                         nativeProcess.getInputStream(),

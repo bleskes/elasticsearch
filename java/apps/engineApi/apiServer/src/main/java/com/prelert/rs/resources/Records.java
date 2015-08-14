@@ -43,7 +43,6 @@ import org.apache.log4j.Logger;
 import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.persistence.QueryPage;
-import com.prelert.job.persistence.elasticsearch.ElasticsearchMappings;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
@@ -128,7 +127,7 @@ public class Records extends ResourceWithJobManager
         // but it is @timestamp in the database for Kibana
         if (Bucket.TIMESTAMP.equals(sort))
         {
-            sort = ElasticsearchMappings.ES_TIMESTAMP;
+            sort = Bucket.ES_TIMESTAMP;
         }
 
         if (epochStartMs > 0 || epochEndMs > 0)

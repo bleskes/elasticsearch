@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -24,37 +24,33 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.status.elasticsearch;
+package com.prelert.job.persistence.elasticsearch;
 
 import org.apache.log4j.Logger;
 import org.elasticsearch.client.Client;
 
-import com.prelert.job.DataCounts;
-import com.prelert.job.persistence.elasticsearch.ElasticsearchJobDataCountsPersister;
-import com.prelert.job.status.StatusReporter;
-import com.prelert.job.status.StatusReporterFactory;
-import com.prelert.job.usage.UsageReporter;
+import com.prelert.job.persistence.JobDataCountsPersister;
+import com.prelert.job.persistence.JobDataCountsPersisterFactory;
 
-public class ElasticsearchStatusReporterFactory implements StatusReporterFactory
+public class ElasticsearchJobDataCountsPersisterFactory implements JobDataCountsPersisterFactory
 {
-	private Client m_Client;
+    private Client m_Client;
 
-	/**
-	 * Construct the factory
-	 *
-	 * @param node The Elasticsearch node
-	 */
-	public ElasticsearchStatusReporterFactory(Client client)
-	{
-		m_Client = client;
-	}
+    /**
+     * Construct the factory
+     *
+     * @param client The Elasticsearch client
+     */
+    public ElasticsearchJobDataCountsPersisterFactory(Client client)
+    {
+        m_Client = client;
+    }
 
-	@Override
-	public StatusReporter newStatusReporter(String jobId, DataCounts counts,
-			UsageReporter usageReporter, Logger logger)
-	{
-        return new StatusReporter(jobId, counts, usageReporter,
-                                    new ElasticsearchJobDataCountsPersister(m_Client, logger),
-                                    logger);
-	}
+
+    @Override
+    public JobDataCountsPersister getInstance(Logger logger)
+    {
+        return new ElasticsearchJobDataCountsPersister(m_Client, logger);
+    }
+
 }

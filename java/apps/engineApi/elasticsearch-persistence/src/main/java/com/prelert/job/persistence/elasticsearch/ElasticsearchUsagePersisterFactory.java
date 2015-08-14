@@ -24,15 +24,32 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.persistence;
+package com.prelert.job.persistence.elasticsearch;
 
 import org.apache.log4j.Logger;
+import org.elasticsearch.client.Client;
 
-public interface UsagePersisterFactory
+import com.prelert.job.persistence.UsagePersister;
+import com.prelert.job.persistence.UsagePersisterFactory;
+
+public class ElasticsearchUsagePersisterFactory implements UsagePersisterFactory
 {
+    private Client m_Client;
+
     /**
-     * Get an instance of a {@linkplain UsagePersister}
-     * @return
+     * Construct the factory
+     *
+     * @param client The Elasticsearch client
      */
-    UsagePersister getInstance(Logger logger);
+    public ElasticsearchUsagePersisterFactory(Client client)
+    {
+        m_Client = client;
+    }
+
+    @Override
+    public UsagePersister getInstance(Logger logger)
+    {
+        return new ElasticsearchUsagePersister(m_Client, logger);
+    }
+
 }

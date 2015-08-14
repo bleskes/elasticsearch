@@ -24,35 +24,43 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.usage.elasticsearch;
 
-import org.apache.log4j.Logger;
-import org.elasticsearch.client.Client;
+package com.prelert.job.errorcodes;
 
-import com.prelert.job.persistence.elasticsearch.ElasticsearchUsagePersister;
-import com.prelert.job.usage.UsageReporter;
-import com.prelert.job.usage.UsageReporterFactory;
+import org.hamcrest.Description;
+import org.junit.internal.matchers.TypeSafeMatcher;
 
+import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.errorcodes.HasErrorCode;
 
-public class ElasticsearchUsageReporterFactory implements UsageReporterFactory
-{
-	private Client m_Client;
+public class ErrorCodeMatcher extends TypeSafeMatcher<HasErrorCode> {
 
-	/**
-	 * Construct the factory
-	 *
-	 * @param node The Elasticsearch node
-	 */
-	public ElasticsearchUsageReporterFactory(Client client)
-	{
-		m_Client = client;
-	}
+    private ErrorCodes m_ExpectedErrorCode;
+    private ErrorCodes m_ActualErrorCode;
 
-	@Override
-	public UsageReporter newUsageReporter(String jobId, Logger logger)
-	{
-		return new UsageReporter(jobId,
-		                        new ElasticsearchUsagePersister(m_Client, logger),
-		                        logger);
-	}
+    public static ErrorCodeMatcher hasErrorCode(ErrorCodes expected)
+    {
+        return new ErrorCodeMatcher(expected);
+    }
+
+    private ErrorCodeMatcher(ErrorCodes expectedErrorCode)
+    {
+        m_ExpectedErrorCode = expectedErrorCode;
+    }
+
+    @Override
+    public void describeTo(Description description)
+    {
+        description.appendValue(m_ActualErrorCode)
+                .appendText(" was found instead of ")
+                .appendValue(m_ExpectedErrorCode);
+    }
+
+    @Override
+    public boolean matchesSafely(HasErrorCode item)
+    {
+        m_ActualErrorCode = item.getErrorCode();
+        return m_ActualErrorCode.equals(m_ExpectedErrorCode);
+    }
+
 }

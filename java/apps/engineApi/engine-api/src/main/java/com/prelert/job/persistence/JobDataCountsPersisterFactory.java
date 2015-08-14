@@ -28,11 +28,11 @@ package com.prelert.job.persistence;
 
 import org.apache.log4j.Logger;
 
-public interface UsagePersisterFactory
+public interface JobDataCountsPersisterFactory
 {
     /**
-     * Get an instance of a {@linkplain UsagePersister}
+     * Get an instance of a {@linkplain JobDataCountsPersister}
      * @return
      */
-    UsagePersister getInstance(Logger logger);
+    JobDataCountsPersister getInstance(Logger logger);
 }
