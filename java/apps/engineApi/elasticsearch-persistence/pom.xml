@@ -32,7 +32,7 @@
 
     <dependency>
       <groupId>com.prelert</groupId>
-      <artifactId>engine-api</artifactId>
+      <artifactId>api-common</artifactId>
       <scope>provided</scope>
     </dependency>
 

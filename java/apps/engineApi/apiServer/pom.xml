@@ -40,7 +40,13 @@
       <artifactId>jersey-container-jetty-servlet</artifactId>
       <version>2.5.1</version>
     </dependency>
-    
+
+    <!-- prelert jars -->
+    <dependency>
+      <groupId>com.prelert</groupId>
+      <artifactId>api-common</artifactId>
+      <scope>provided</scope>
+    </dependency>
     <dependency>
       <groupId>com.prelert</groupId>
       <artifactId>engine-api</artifactId>
@@ -52,12 +58,13 @@
       <scope>provided</scope>
     </dependency>
 
-
+    <!--
     <dependency>
       <groupId>org.elasticsearch</groupId>
       <artifactId>elasticsearch</artifactId>
       <scope>provided</scope>
     </dependency>
+  -->
   </dependencies>
 
 
